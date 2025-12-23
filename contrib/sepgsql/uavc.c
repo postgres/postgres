@@ -66,8 +66,8 @@ static char *avc_unlabeled;		/* system 'unlabeled' label */
 static uint32
 sepgsql_avc_hash(const char *scontext, const char *tcontext, uint16 tclass)
 {
-	return hash_any((const unsigned char *) scontext, strlen(scontext))
-		^ hash_any((const unsigned char *) tcontext, strlen(tcontext))
+	return hash_bytes((const unsigned char *) scontext, strlen(scontext))
+		^ hash_bytes((const unsigned char *) tcontext, strlen(tcontext))
 		^ tclass;
 }
 
@@ -257,7 +257,7 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 	 */
 	oldctx = MemoryContextSwitchTo(avc_mem_cxt);
 
-	cache = palloc0(sizeof(avc_cache));
+	cache = palloc0_object(avc_cache);
 
 	cache->hash = hash;
 	cache->scontext = pstrdup(scontext);

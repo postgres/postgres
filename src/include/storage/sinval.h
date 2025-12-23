@@ -119,7 +119,7 @@ typedef struct
 	Oid			dbId;			/* database ID */
 	Oid			relid;			/* relation ID, or 0 if whole
 								 * RelationSyncCache */
-}			SharedInvalRelSyncMsg;
+} SharedInvalRelSyncMsg;
 
 typedef union
 {

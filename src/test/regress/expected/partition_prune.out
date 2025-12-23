@@ -627,8 +627,9 @@ explain (costs off) select * from rlp3 where a = 20;   /* empty */
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on rlp3
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- redundant clauses are eliminated
 explain (costs off) select * from rlp where a > 1 and a = 10;	/* only default */
@@ -670,8 +671,9 @@ explain (costs off) select * from rlp where a = 1 and a = 3;	/* empty */
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on rlp
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from rlp where (a = 1 and a = 3) or (a > 1 and a = 15);
                             QUERY PLAN                             
@@ -1254,25 +1256,28 @@ select * from boolpart where a is not unknown;
 
 -- check that all partitions are pruned when faced with conflicting clauses
 explain (costs off) select * from boolpart where a is not unknown and a is unknown;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on boolpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where a is false and a is unknown;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on boolpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where a is true and a is unknown;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on boolpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- inverse boolean partitioning - a seemingly unlikely design, but we've got
 -- code for it, so we'd better test it.
@@ -1568,11 +1573,12 @@ explain (costs off) select * from coercepart where a = any ('{ab,null}');
 (2 rows)
 
 explain (costs off) select * from coercepart where a = any (null::text[]);
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from coercepart where a = all ('{ab}');
                   QUERY PLAN                  
@@ -1582,25 +1588,28 @@ explain (costs off) select * from coercepart where a = all ('{ab}');
 (2 rows)
 
 explain (costs off) select * from coercepart where a = all ('{ab,bc}');
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from coercepart where a = all ('{ab,null}');
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from coercepart where a = all (null::text[]);
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table coercepart;
 CREATE TABLE part (a INT, b INT) PARTITION BY LIST (a);
@@ -1772,8 +1781,9 @@ explain (costs off) select * from lp where a <> 'a' and a is null;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on lp
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
                                   QUERY PLAN                                  
@@ -1866,22 +1876,24 @@ create table lparted_by_int2 (a smallint) partition by list (a);
 create table lparted_by_int2_1 partition of lparted_by_int2 for values in (1);
 create table lparted_by_int2_16384 partition of lparted_by_int2 for values in (16384);
 explain (costs off) select * from lparted_by_int2 where a = 100_000_000_000_000;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on lparted_by_int2
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 create table rparted_by_int2 (a smallint) partition by range (a);
 create table rparted_by_int2_1 partition of rparted_by_int2 for values from (1) to (10);
 create table rparted_by_int2_16384 partition of rparted_by_int2 for values from (10) to (16384);
 -- all partitions pruned
 explain (costs off) select * from rparted_by_int2 where a > 100_000_000_000_000;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on rparted_by_int2
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
 -- all partitions but rparted_by_int2_maxvalue pruned
@@ -1903,21 +1915,21 @@ select * from
    from int4_tbl touter) ss,
   asptab
 where asptab.id > ss.b::int;
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Nested Loop
    ->  Seq Scan on int4_tbl touter
    ->  Append
          ->  Index Only Scan using asptab0_pkey on asptab0 asptab_1
-               Index Cond: (id > (EXISTS(SubPlan 3))::integer)
-               SubPlan 4
+               Index Cond: (id > (EXISTS(SubPlan exists_3))::integer)
+               SubPlan exists_4
                  ->  Seq Scan on int4_tbl tinner_2
          ->  Index Only Scan using asptab1_pkey on asptab1 asptab_2
-               Index Cond: (id > (EXISTS(SubPlan 3))::integer)
-         SubPlan 3
+               Index Cond: (id > (EXISTS(SubPlan exists_3))::integer)
+         SubPlan exists_3
            ->  Seq Scan on int4_tbl tinner_1
                  Filter: (f1 = touter.f1)
-   SubPlan 2
+   SubPlan exists_2
      ->  Seq Scan on int4_tbl tinner
 (14 rows)
 
@@ -2131,8 +2143,9 @@ explain (costs off) select * from hp where a = 1 and b = 'abcde' and
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on hp
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 --
 -- Test runtime partition pruning
@@ -2223,36 +2236,36 @@ explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q1
 prepare ab_q2 (int, int) as
 select a from ab where a between $1 and $2 and b < (select 3);
 explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q2 (2, 2);
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
    Subplans Removed: 6
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Seq Scan on ab_a2_b1 ab_1 (actual rows=0.00 loops=1)
-         Filter: ((a >= $1) AND (a <= $2) AND (b < (InitPlan 1).col1))
+         Filter: ((a >= $1) AND (a <= $2) AND (b < (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0.00 loops=1)
-         Filter: ((a >= $1) AND (a <= $2) AND (b < (InitPlan 1).col1))
+         Filter: ((a >= $1) AND (a <= $2) AND (b < (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a2_b3 ab_3 (never executed)
-         Filter: ((a >= $1) AND (a <= $2) AND (b < (InitPlan 1).col1))
+         Filter: ((a >= $1) AND (a <= $2) AND (b < (InitPlan expr_1).col1))
 (10 rows)
 
 -- As above, but swap the PARAM_EXEC Param to the first partition level
 prepare ab_q3 (int, int) as
 select a from ab where b between $1 and $2 and a < (select 3);
 explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q3 (2, 2);
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
    Subplans Removed: 6
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Seq Scan on ab_a1_b2 ab_1 (actual rows=0.00 loops=1)
-         Filter: ((b >= $1) AND (b <= $2) AND (a < (InitPlan 1).col1))
+         Filter: ((b >= $1) AND (b <= $2) AND (a < (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0.00 loops=1)
-         Filter: ((b >= $1) AND (b <= $2) AND (a < (InitPlan 1).col1))
+         Filter: ((b >= $1) AND (b <= $2) AND (a < (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a3_b2 ab_3 (never executed)
-         Filter: ((b >= $1) AND (b <= $2) AND (a < (InitPlan 1).col1))
+         Filter: ((b >= $1) AND (b <= $2) AND (a < (InitPlan expr_1).col1))
 (10 rows)
 
 --
@@ -2462,23 +2475,23 @@ select explain_parallel_append('execute ab_q5 (33, 44, 55)');
 
 -- Test Parallel Append with PARAM_EXEC Params
 select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
-                                    explain_parallel_append                                     
-------------------------------------------------------------------------------------------------
+                                         explain_parallel_append                                          
+----------------------------------------------------------------------------------------------------------
  Aggregate (actual rows=N loops=N)
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=N loops=N)
-   InitPlan 2
+   InitPlan expr_2
      ->  Result (actual rows=N loops=N)
    ->  Gather (actual rows=N loops=N)
          Workers Planned: 2
          Workers Launched: N
          ->  Parallel Append (actual rows=N loops=N)
                ->  Parallel Seq Scan on ab_a1_b2 ab_1 (actual rows=N loops=N)
-                     Filter: ((b = 2) AND ((a = (InitPlan 1).col1) OR (a = (InitPlan 2).col1)))
+                     Filter: ((b = 2) AND ((a = (InitPlan expr_1).col1) OR (a = (InitPlan expr_2).col1)))
                ->  Parallel Seq Scan on ab_a2_b2 ab_2 (never executed)
-                     Filter: ((b = 2) AND ((a = (InitPlan 1).col1) OR (a = (InitPlan 2).col1)))
+                     Filter: ((b = 2) AND ((a = (InitPlan expr_1).col1) OR (a = (InitPlan expr_2).col1)))
                ->  Parallel Seq Scan on ab_a3_b2 ab_3 (actual rows=N loops=N)
-                     Filter: ((b = 2) AND ((a = (InitPlan 1).col1) OR (a = (InitPlan 2).col1)))
+                     Filter: ((b = 2) AND ((a = (InitPlan expr_1).col1) OR (a = (InitPlan expr_2).col1)))
 (15 rows)
 
 -- Test pruning during parallel nested loop query
@@ -2679,65 +2692,65 @@ select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 
                                  QUERY PLAN                                 
 ----------------------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Aggregate (actual rows=1.00 loops=1)
            ->  Seq Scan on lprt_a (actual rows=102.00 loops=1)
-   InitPlan 2
+   InitPlan expr_2
      ->  Aggregate (actual rows=1.00 loops=1)
            ->  Seq Scan on lprt_a lprt_a_1 (actual rows=102.00 loops=1)
    ->  Bitmap Heap Scan on ab_a1_b1 ab_1 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a1_b1_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a1_b2 ab_2 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a1_b3 ab_3 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a2_b1 ab_4 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a2_b1_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a2_b2 ab_5 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a2_b2_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a2_b3 ab_6 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a2_b3_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a3_b1 ab_7 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a3_b1_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
    ->  Bitmap Heap Scan on ab_a3_b2 ab_8 (actual rows=0.00 loops=1)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a3_b2_a_idx (actual rows=0.00 loops=1)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 1
    ->  Bitmap Heap Scan on ab_a3_b3 ab_9 (never executed)
-         Recheck Cond: (a = (InitPlan 1).col1)
-         Filter: (b = (InitPlan 2).col1)
+         Recheck Cond: (a = (InitPlan expr_1).col1)
+         Filter: (b = (InitPlan expr_2).col1)
          ->  Bitmap Index Scan on ab_a3_b3_a_idx (never executed)
-               Index Cond: (a = (InitPlan 1).col1)
+               Index Cond: (a = (InitPlan expr_1).col1)
                Index Searches: 0
 (61 rows)
 
@@ -2747,45 +2760,45 @@ select * from (select * from ab where a = 1 union all select * from ab) ab where
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Append (actual rows=0.00 loops=1)
          ->  Bitmap Heap Scan on ab_a1_b1 ab_11 (actual rows=0.00 loops=1)
                Recheck Cond: (a = 1)
-               Filter: (b = (InitPlan 1).col1)
+               Filter: (b = (InitPlan expr_1).col1)
                ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0.00 loops=1)
                      Index Cond: (a = 1)
                      Index Searches: 1
          ->  Bitmap Heap Scan on ab_a1_b2 ab_12 (never executed)
                Recheck Cond: (a = 1)
-               Filter: (b = (InitPlan 1).col1)
+               Filter: (b = (InitPlan expr_1).col1)
                ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                      Index Cond: (a = 1)
                      Index Searches: 0
          ->  Bitmap Heap Scan on ab_a1_b3 ab_13 (never executed)
                Recheck Cond: (a = 1)
-               Filter: (b = (InitPlan 1).col1)
+               Filter: (b = (InitPlan expr_1).col1)
                ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                      Index Cond: (a = 1)
                      Index Searches: 0
    ->  Seq Scan on ab_a1_b1 ab_1 (actual rows=0.00 loops=1)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a1_b3 ab_3 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a2_b1 ab_4 (actual rows=0.00 loops=1)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a2_b2 ab_5 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a2_b3 ab_6 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a3_b1 ab_7 (actual rows=0.00 loops=1)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a3_b2 ab_8 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a3_b3 ab_9 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
 (40 rows)
 
 -- A case containing a UNION ALL with a non-partitioned child.
@@ -2794,47 +2807,47 @@ select * from (select * from ab where a = 1 union all (values(10,5)) union all s
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Append (actual rows=0.00 loops=1)
          ->  Bitmap Heap Scan on ab_a1_b1 ab_11 (actual rows=0.00 loops=1)
                Recheck Cond: (a = 1)
-               Filter: (b = (InitPlan 1).col1)
+               Filter: (b = (InitPlan expr_1).col1)
                ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0.00 loops=1)
                      Index Cond: (a = 1)
                      Index Searches: 1
          ->  Bitmap Heap Scan on ab_a1_b2 ab_12 (never executed)
                Recheck Cond: (a = 1)
-               Filter: (b = (InitPlan 1).col1)
+               Filter: (b = (InitPlan expr_1).col1)
                ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                      Index Cond: (a = 1)
                      Index Searches: 0
          ->  Bitmap Heap Scan on ab_a1_b3 ab_13 (never executed)
                Recheck Cond: (a = 1)
-               Filter: (b = (InitPlan 1).col1)
+               Filter: (b = (InitPlan expr_1).col1)
                ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                      Index Cond: (a = 1)
                      Index Searches: 0
    ->  Result (actual rows=0.00 loops=1)
-         One-Time Filter: (5 = (InitPlan 1).col1)
+         One-Time Filter: (5 = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a1_b1 ab_1 (actual rows=0.00 loops=1)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a1_b3 ab_3 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a2_b1 ab_4 (actual rows=0.00 loops=1)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a2_b2 ab_5 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a2_b3 ab_6 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a3_b1 ab_7 (actual rows=0.00 loops=1)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a3_b2 ab_8 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
    ->  Seq Scan on ab_a3_b3 ab_9 (never executed)
-         Filter: (b = (InitPlan 1).col1)
+         Filter: (b = (InitPlan expr_1).col1)
 (42 rows)
 
 -- Another UNION ALL test, but containing a mix of exec init and exec run-time pruning.
@@ -2852,27 +2865,27 @@ union all
 ) ab where a = $1 and b = (select -10);
 -- Ensure the xy_1 subplan is not pruned.
 explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q6(1);
-                       QUERY PLAN                       
---------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
    Subplans Removed: 12
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Seq Scan on ab_a1_b1 ab_1 (never executed)
-         Filter: ((a = $1) AND (b = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
-         Filter: ((a = $1) AND (b = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a1_b3 ab_3 (never executed)
-         Filter: ((a = $1) AND (b = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = (InitPlan expr_1).col1))
    ->  Seq Scan on xy_1 (actual rows=0.00 loops=1)
-         Filter: ((x = $1) AND (y = (InitPlan 1).col1))
+         Filter: ((x = $1) AND (y = (InitPlan expr_1).col1))
          Rows Removed by Filter: 1
    ->  Seq Scan on ab_a1_b1 ab_4 (never executed)
-         Filter: ((a = $1) AND (b = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a1_b2 ab_5 (never executed)
-         Filter: ((a = $1) AND (b = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = (InitPlan expr_1).col1))
    ->  Seq Scan on ab_a1_b3 ab_6 (never executed)
-         Filter: ((a = $1) AND (b = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = (InitPlan expr_1).col1))
 (19 rows)
 
 -- Ensure we see just the xy_1 row.
@@ -2958,7 +2971,7 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);');
    Update on ab_a1_b1 ab_a1_1
    Update on ab_a1_b2 ab_a1_2
    Update on ab_a1_b3 ab_a1_3
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Nested Loop (actual rows=3.00 loops=1)
          ->  Append (actual rows=3.00 loops=1)
@@ -2969,11 +2982,11 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);');
                Storage: Memory  Maximum Storage: NkB
                ->  Append (actual rows=1.00 loops=1)
                      ->  Seq Scan on ab_a2_b1 ab_a2_1 (actual rows=1.00 loops=1)
-                           Filter: (b = (InitPlan 1).col1)
+                           Filter: (b = (InitPlan expr_1).col1)
                      ->  Seq Scan on ab_a2_b2 ab_a2_2 (never executed)
-                           Filter: (b = (InitPlan 1).col1)
+                           Filter: (b = (InitPlan expr_1).col1)
                      ->  Seq Scan on ab_a2_b3 ab_a2_3 (never executed)
-                           Filter: (b = (InitPlan 1).col1)
+                           Filter: (b = (InitPlan expr_1).col1)
 (20 rows)
 
 select tableoid::regclass, * from ab;
@@ -3343,12 +3356,12 @@ select * from listp where a = (select null::int);
                       QUERY PLAN                      
 ------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Seq Scan on listp_1_1 listp_1 (never executed)
-         Filter: (a = (InitPlan 1).col1)
+         Filter: (a = (InitPlan expr_1).col1)
    ->  Seq Scan on listp_2_1 listp_2 (never executed)
-         Filter: (a = (InitPlan 1).col1)
+         Filter: (a = (InitPlan expr_1).col1)
 (7 rows)
 
 drop table listp;
@@ -3390,11 +3403,12 @@ select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2010-02-01', '2020-01-01']::timestamp[]);
-            QUERY PLAN             
------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Result (actual rows=0.00 loops=1)
+   Replaces: Scan on stable_qual_pruning
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
@@ -3486,14 +3500,14 @@ prepare ps1 as
   select * from mc3p where a = $1 and abs(b) < (select 3);
 explain (analyze, costs off, summary off, timing off, buffers off)
 execute ps1(1);
-                         QUERY PLAN                          
--------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Append (actual rows=1.00 loops=1)
    Subplans Removed: 2
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Seq Scan on mc3p1 mc3p_1 (actual rows=1.00 loops=1)
-         Filter: ((a = $1) AND (abs(b) < (InitPlan 1).col1))
+         Filter: ((a = $1) AND (abs(b) < (InitPlan expr_1).col1))
 (6 rows)
 
 deallocate ps1;
@@ -3501,16 +3515,16 @@ prepare ps2 as
   select * from mc3p where a <= $1 and abs(b) < (select 3);
 explain (analyze, costs off, summary off, timing off, buffers off)
 execute ps2(1);
-                          QUERY PLAN                          
---------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Append (actual rows=2.00 loops=1)
    Subplans Removed: 1
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
    ->  Seq Scan on mc3p0 mc3p_1 (actual rows=1.00 loops=1)
-         Filter: ((a <= $1) AND (abs(b) < (InitPlan 1).col1))
+         Filter: ((a <= $1) AND (abs(b) < (InitPlan expr_1).col1))
    ->  Seq Scan on mc3p1 mc3p_2 (actual rows=1.00 loops=1)
-         Filter: ((a <= $1) AND (abs(b) < (InitPlan 1).col1))
+         Filter: ((a <= $1) AND (abs(b) < (InitPlan expr_1).col1))
 (8 rows)
 
 deallocate ps2;
@@ -3526,14 +3540,14 @@ select * from boolp where a = (select value from boolvalues where value);
                           QUERY PLAN                          
 --------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Seq Scan on boolvalues (actual rows=1.00 loops=1)
            Filter: value
            Rows Removed by Filter: 1
    ->  Seq Scan on boolp_f boolp_1 (never executed)
-         Filter: (a = (InitPlan 1).col1)
+         Filter: (a = (InitPlan expr_1).col1)
    ->  Seq Scan on boolp_t boolp_2 (actual rows=0.00 loops=1)
-         Filter: (a = (InitPlan 1).col1)
+         Filter: (a = (InitPlan expr_1).col1)
 (9 rows)
 
 explain (analyze, costs off, summary off, timing off, buffers off)
@@ -3541,14 +3555,14 @@ select * from boolp where a = (select value from boolvalues where not value);
                           QUERY PLAN                          
 --------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Seq Scan on boolvalues (actual rows=1.00 loops=1)
            Filter: (NOT value)
            Rows Removed by Filter: 1
    ->  Seq Scan on boolp_f boolp_1 (actual rows=0.00 loops=1)
-         Filter: (a = (InitPlan 1).col1)
+         Filter: (a = (InitPlan expr_1).col1)
    ->  Seq Scan on boolp_t boolp_2 (never executed)
-         Filter: (a = (InitPlan 1).col1)
+         Filter: (a = (InitPlan expr_1).col1)
 (9 rows)
 
 drop table boolp;
@@ -3640,23 +3654,24 @@ explain (analyze, costs off, summary off, timing off, buffers off) select * from
 --------------------------------------------------------------------------------------------------
  Merge Append (actual rows=20.00 loops=1)
    Sort Key: ma_test.b
-   InitPlan 2
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
-           InitPlan 1
+           Replaces: MinMaxAggregate
+           InitPlan minmax_1
              ->  Limit (actual rows=1.00 loops=1)
                    ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=1.00 loops=1)
                          Index Cond: (b IS NOT NULL)
                          Index Searches: 1
    ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 ma_test_1 (never executed)
-         Filter: (a >= (InitPlan 2).col1)
+         Filter: (a >= (InitPlan expr_1).col1)
          Index Searches: 0
    ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 ma_test_2 (actual rows=10.00 loops=1)
-         Filter: (a >= (InitPlan 2).col1)
+         Filter: (a >= (InitPlan expr_1).col1)
          Index Searches: 1
    ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_3 (actual rows=10.00 loops=1)
-         Filter: (a >= (InitPlan 2).col1)
+         Filter: (a >= (InitPlan expr_1).col1)
          Index Searches: 1
-(18 rows)
+(19 rows)
 
 reset enable_seqscan;
 reset enable_sort;
@@ -3678,11 +3693,12 @@ explain (costs off) select * from pp_arrpart where a = '{1}';
 (2 rows)
 
 explain (costs off) select * from pp_arrpart where a = '{1, 2}';
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on pp_arrpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
                               QUERY PLAN                              
@@ -3764,11 +3780,12 @@ explain (costs off) select * from pp_enumpart where a = 'blue';
 (2 rows)
 
 explain (costs off) select * from pp_enumpart where a = 'black';
-        QUERY PLAN        
---------------------------
+           QUERY PLAN            
+---------------------------------
  Result
+   Replaces: Scan on pp_enumpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table pp_enumpart;
 drop type pp_colors;
@@ -3785,11 +3802,12 @@ explain (costs off) select * from pp_recpart where a = '(1,1)'::pp_rectype;
 (2 rows)
 
 explain (costs off) select * from pp_recpart where a = '(1,2)'::pp_rectype;
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on pp_recpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table pp_recpart;
 drop type pp_rectype;
@@ -3805,11 +3823,12 @@ explain (costs off) select * from pp_intrangepart where a = '[1,2]'::int4range;
 (2 rows)
 
 explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on pp_intrangepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table pp_intrangepart;
 --
@@ -4024,17 +4043,17 @@ from (
       select 1, 1, 1
      ) s(a, b, c)
 where s.a = 1 and s.b = 1 and s.c = (select 1);
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Append
-   InitPlan 1
+   InitPlan expr_1
      ->  Result
    ->  Seq Scan on p1 p
-         Filter: ((a = 1) AND (b = 1) AND (c = (InitPlan 1).col1))
+         Filter: ((a = 1) AND (b = 1) AND (c = (InitPlan expr_1).col1))
    ->  Seq Scan on q111 q1
-         Filter: ((a = 1) AND (b = 1) AND (c = (InitPlan 1).col1))
+         Filter: ((a = 1) AND (b = 1) AND (c = (InitPlan expr_1).col1))
    ->  Result
-         One-Time Filter: (1 = (InitPlan 1).col1)
+         One-Time Filter: (1 = (InitPlan expr_1).col1)
 (9 rows)
 
 select *
@@ -4062,18 +4081,18 @@ from (
      ) s(a, b, c)
 where s.a = $1 and s.b = $2 and s.c = (select 1);
 explain (costs off) execute q (1, 1);
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Append
    Subplans Removed: 1
-   InitPlan 1
+   InitPlan expr_1
      ->  Result
    ->  Seq Scan on p1 p
-         Filter: ((a = $1) AND (b = $2) AND (c = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = $2) AND (c = (InitPlan expr_1).col1))
    ->  Seq Scan on q111 q1
-         Filter: ((a = $1) AND (b = $2) AND (c = (InitPlan 1).col1))
+         Filter: ((a = $1) AND (b = $2) AND (c = (InitPlan expr_1).col1))
    ->  Result
-         One-Time Filter: ((1 = $1) AND (1 = $2) AND (1 = (InitPlan 1).col1))
+         One-Time Filter: ((1 = $1) AND (1 = $2) AND (1 = (InitPlan expr_1).col1))
 (10 rows)
 
 execute q (1, 1);
@@ -4091,11 +4110,11 @@ create table listp2 partition of listp for values in(2) partition by list(b);
 create table listp2_10 partition of listp2 for values in (10);
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from listp where a = (select 2) and b <> 10;
-                     QUERY PLAN                      
------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Seq Scan on listp1 listp (actual rows=0.00 loops=1)
-   Filter: ((b <> 10) AND (a = (InitPlan 1).col1))
-   InitPlan 1
+   Filter: ((b <> 10) AND (a = (InitPlan expr_1).col1))
+   InitPlan expr_1
      ->  Result (never executed)
 (4 rows)
 
@@ -4125,19 +4144,21 @@ explain (costs off) update listp1 set a = 1 where a = 2;
 -- constraint exclusion enabled
 set constraint_exclusion to 'on';
 explain (costs off) select * from listp1 where a = 2;
-        QUERY PLAN        
---------------------------
+         QUERY PLAN         
+----------------------------
  Result
+   Replaces: Scan on listp1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) update listp1 set a = 1 where a = 2;
-           QUERY PLAN           
---------------------------------
+            QUERY PLAN            
+----------------------------------
  Update on listp1
    ->  Result
+         Replaces: Scan on listp1
          One-Time Filter: false
-(3 rows)
+(4 rows)
 
 reset constraint_exclusion;
 reset enable_partition_pruning;
@@ -4161,13 +4182,13 @@ select explain_parallel_append('select * from listp where a = (select 1);');
  Gather (actual rows=N loops=N)
    Workers Planned: 2
    Workers Launched: N
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=N loops=N)
    ->  Parallel Append (actual rows=N loops=N)
          ->  Seq Scan on listp_12_1 listp_1 (actual rows=N loops=N)
-               Filter: (a = (InitPlan 1).col1)
+               Filter: (a = (InitPlan expr_1).col1)
          ->  Parallel Seq Scan on listp_12_2 listp_2 (never executed)
-               Filter: (a = (InitPlan 1).col1)
+               Filter: (a = (InitPlan expr_1).col1)
 (10 rows)
 
 -- Like the above but throw some more complexity at the planner by adding
@@ -4184,19 +4205,19 @@ select * from listp where a = (select 2);');
    Workers Launched: N
    ->  Parallel Append (actual rows=N loops=N)
          ->  Parallel Append (actual rows=N loops=N)
-               InitPlan 2
+               InitPlan expr_2
                  ->  Result (actual rows=N loops=N)
                ->  Seq Scan on listp_12_1 listp_1 (never executed)
-                     Filter: (a = (InitPlan 2).col1)
+                     Filter: (a = (InitPlan expr_2).col1)
                ->  Parallel Seq Scan on listp_12_2 listp_2 (actual rows=N loops=N)
-                     Filter: (a = (InitPlan 2).col1)
+                     Filter: (a = (InitPlan expr_2).col1)
          ->  Parallel Append (actual rows=N loops=N)
-               InitPlan 1
+               InitPlan expr_1
                  ->  Result (actual rows=N loops=N)
                ->  Seq Scan on listp_12_1 listp_4 (actual rows=N loops=N)
-                     Filter: (a = (InitPlan 1).col1)
+                     Filter: (a = (InitPlan expr_1).col1)
                ->  Parallel Seq Scan on listp_12_2 listp_5 (never executed)
-                     Filter: (a = (InitPlan 1).col1)
+                     Filter: (a = (InitPlan expr_1).col1)
 (18 rows)
 
 drop table listp;
@@ -4219,23 +4240,23 @@ select * from rangep where b IN((select 1),(select 2)) order by a;
                                                   QUERY PLAN                                                   
 ---------------------------------------------------------------------------------------------------------------
  Append (actual rows=0.00 loops=1)
-   InitPlan 1
+   InitPlan expr_1
      ->  Result (actual rows=1.00 loops=1)
-   InitPlan 2
+   InitPlan expr_2
      ->  Result (actual rows=1.00 loops=1)
    ->  Merge Append (actual rows=0.00 loops=1)
          Sort Key: rangep_2.a
          ->  Index Scan using rangep_0_to_100_1_a_idx on rangep_0_to_100_1 rangep_2 (actual rows=0.00 loops=1)
-               Filter: (b = ANY (ARRAY[(InitPlan 1).col1, (InitPlan 2).col1]))
+               Filter: (b = ANY (ARRAY[(InitPlan expr_1).col1, (InitPlan expr_2).col1]))
                Index Searches: 1
          ->  Index Scan using rangep_0_to_100_2_a_idx on rangep_0_to_100_2 rangep_3 (actual rows=0.00 loops=1)
-               Filter: (b = ANY (ARRAY[(InitPlan 1).col1, (InitPlan 2).col1]))
+               Filter: (b = ANY (ARRAY[(InitPlan expr_1).col1, (InitPlan expr_2).col1]))
                Index Searches: 1
          ->  Index Scan using rangep_0_to_100_3_a_idx on rangep_0_to_100_3 rangep_4 (never executed)
-               Filter: (b = ANY (ARRAY[(InitPlan 1).col1, (InitPlan 2).col1]))
+               Filter: (b = ANY (ARRAY[(InitPlan expr_1).col1, (InitPlan expr_2).col1]))
                Index Searches: 0
    ->  Index Scan using rangep_100_to_200_a_idx on rangep_100_to_200 rangep_5 (actual rows=0.00 loops=1)
-         Filter: (b = ANY (ARRAY[(InitPlan 1).col1, (InitPlan 2).col1]))
+         Filter: (b = ANY (ARRAY[(InitPlan expr_1).col1, (InitPlan expr_2).col1]))
          Index Searches: 1
 (19 rows)
 
@@ -4524,18 +4545,20 @@ create table hp_contradict_test (a int, b int) partition by hash (a part_test_in
 create table hp_contradict_test_p1 partition of hp_contradict_test for values with (modulus 2, remainder 0);
 create table hp_contradict_test_p2 partition of hp_contradict_test for values with (modulus 2, remainder 1);
 explain (costs off) select * from hp_contradict_test where a is null and a === 1 and b === 1;
-        QUERY PLAN        
---------------------------
+               QUERY PLAN               
+----------------------------------------
  Result
+   Replaces: Scan on hp_contradict_test
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from hp_contradict_test where a === 1 and b === 1 and a is null;
-        QUERY PLAN        
---------------------------
+               QUERY PLAN               
+----------------------------------------
  Result
+   Replaces: Scan on hp_contradict_test
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table hp_contradict_test;
 drop operator class part_test_int4_ops2 using hash;
@@ -4763,7 +4786,7 @@ select min(a) over (partition by a order by a) from part_abc where a >= stable_o
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
  Append
-   ->  Subquery Scan on "*SELECT* 1_1"
+   ->  Subquery Scan on unnamed_subquery_2
          ->  WindowAgg
                Window: w1 AS (PARTITION BY part_abc.a ORDER BY part_abc.a)
                ->  Append
@@ -4780,7 +4803,7 @@ select min(a) over (partition by a order by a) from part_abc where a >= stable_o
                            ->  Index Scan using part_abc_3_2_a_idx on part_abc_3_2 part_abc_4
                                  Index Cond: (a >= (stable_one() + 1))
                                  Filter: (d <= stable_one())
-   ->  Subquery Scan on "*SELECT* 2"
+   ->  Subquery Scan on unnamed_subquery_1
          ->  WindowAgg
                Window: w1 AS (PARTITION BY part_abc_5.a ORDER BY part_abc_5.a)
                ->  Append

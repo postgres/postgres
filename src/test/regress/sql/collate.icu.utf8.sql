@@ -568,6 +568,9 @@ SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_inse
 SELECT array_sort('{a,B}'::text[] COLLATE case_insensitive);
 SELECT array_sort('{a,B}'::text[] COLLATE "C");
 
+-- test replace() at the end of the string (bug #19341)
+SELECT replace('testX' COLLATE case_insensitive, 'x' COLLATE case_insensitive, 'er');
+
 -- test language tags
 CREATE COLLATION lt_insensitive (provider = icu, locale = 'en-u-ks-level1', deterministic = false);
 SELECT 'aBcD' COLLATE lt_insensitive = 'AbCd' COLLATE lt_insensitive;
@@ -997,6 +1000,19 @@ INSERT INTO t5 (a, b) values (1, 'D1'), (2, 'D2'), (3, 'd1');
 -- rewriting.)
 SELECT * FROM t5 ORDER BY c ASC, a ASC;
 
+-- Check that DEFAULT expressions in SQL/JSON functions use the same collation
+-- as the RETURNING type.  Mismatched collations should raise an error.
+CREATE DOMAIN d1 AS text COLLATE case_insensitive;
+CREATE DOMAIN d2 AS text COLLATE "C";
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT ('C' COLLATE "C") COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C'::d2 ON EMPTY) = 'a'; -- error
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' COLLATE "C" ON EMPTY) = 'a'; -- error
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A'::d2 ON EMPTY) = 'a'; -- error
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE "C" ON EMPTY) = 'a'; -- error
+DROP DOMAIN d1, d2;
 
 -- cleanup
 RESET search_path;

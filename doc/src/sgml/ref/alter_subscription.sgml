@@ -26,6 +26,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET PUBLICA
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ADD PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DROP PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="parameter">refresh_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> REFRESH SEQUENCES
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DISABLE
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
@@ -139,9 +140,10 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
         <term><literal>refresh</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
-          When false, the command will not try to refresh table information.
-          <literal>REFRESH PUBLICATION</literal> should then be executed separately.
-          The default is <literal>true</literal>.
+          When <literal>false</literal>, the command will not try to refresh
+          table and sequence information. <literal>REFRESH PUBLICATION</literal>
+          should then be executed separately. The default is
+          <literal>true</literal>.
          </para>
         </listitem>
        </varlistentry>
@@ -158,11 +160,17 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <term><literal>REFRESH PUBLICATION</literal></term>
     <listitem>
      <para>
-      Fetch missing table information from publisher.  This will start
+      Fetch missing table and sequence information from the publisher.  This will start
       replication of tables that were added to the subscribed-to publications
       since <link linkend="sql-createsubscription">
       <command>CREATE SUBSCRIPTION</command></link> or
       the last invocation of <command>REFRESH PUBLICATION</command>.
+     </para>
+
+     <para>
+      The system catalog <link linkend="catalog-pg-subscription-rel">pg_subscription_rel</link>
+      is updated to record all tables and sequences known to the subscription,
+      that are still part of the publication.
      </para>
 
      <para>
@@ -174,13 +182,24 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
         <term><literal>copy_data</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
-          Specifies whether to copy pre-existing data in the publications
-          that are being subscribed to when the replication starts.
-          The default is <literal>true</literal>.
+          Specifies whether to copy pre-existing data for tables and synchronize
+          sequences in the publications that are being subscribed to when the replication
+          starts. The default is <literal>true</literal>.
          </para>
          <para>
           Previously subscribed tables are not copied, even if a table's row
           filter <literal>WHERE</literal> clause has since been modified.
+         </para>
+         <para>
+          Previously subscribed sequences are not re-synchronized. To do that,
+          use <link linkend="sql-altersubscription-params-refresh-sequences">
+          <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.
+         </para>
+         <para>
+          See <xref linkend="sequence-definition-mismatches"/> for recommendations on how
+          to handle any warnings about sequence definition differences between
+          the publisher and the subscriber, which might occur when
+          <literal>copy_data = true</literal>.
          </para>
          <para>
           See <xref linkend="sql-createsubscription-notes"/> for details of
@@ -197,6 +216,30 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
         </listitem>
        </varlistentry>
       </variablelist></para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-altersubscription-params-refresh-sequences">
+    <term><literal>REFRESH SEQUENCES</literal></term>
+    <listitem>
+     <para>
+      Re-synchronize sequence data with the publisher. Unlike
+      <link linkend="sql-altersubscription-params-refresh-publication">
+      <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link> which
+      only has the ability to synchronize newly added sequences,
+      <literal>REFRESH SEQUENCES</literal> will re-synchronize the sequence
+      data for all currently subscribed sequences. It does not add or remove
+      sequences from the subscription to match the publication.
+     </para>
+     <para>
+      See <xref linkend="sequence-definition-mismatches"/> for
+      recommendations on how to handle any warnings about sequence definition
+      differences between the publisher and the subscriber.
+     </para>
+     <para>
+      See <xref linkend="sequences-out-of-sync"/> for recommendations on how to
+      identify and handle out-of-sync sequences.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -235,8 +278,10 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <link linkend="sql-createsubscription-params-with-password-required"><literal>password_required</literal></link>,
       <link linkend="sql-createsubscription-params-with-run-as-owner"><literal>run_as_owner</literal></link>,
       <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>,
-      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>, and
-      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>.
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>,
+      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>,
+      <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-max-retention-duration"><literal>max_retention_duration</literal></link>.
       Only a superuser can set <literal>password_required = false</literal>.
      </para>
 
@@ -261,8 +306,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
      </para>
 
      <para>
-      The <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
-      and <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+      The <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>,
+      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
       parameters can only be altered when the subscription is disabled.
      </para>
 
@@ -284,6 +330,14 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       to find the required prepared transactions. After the <literal>two_phase</literal>
       option is changed from <literal>true</literal> to <literal>false</literal>,
       the publisher will replicate the transactions again when they are committed.
+     </para>
+
+     <para>
+      If the <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+      option is altered to <literal>false</literal> and no other subscription
+      has this option enabled, the replication slot named
+      <quote><literal>pg_conflict_detection</literal></quote>, created to retain
+      dead tuples for conflict detection, will be dropped.
      </para>
     </listitem>
    </varlistentry>

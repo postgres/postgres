@@ -34,6 +34,7 @@
 #include "common/relpath.h"
 #include "copy_file.h"
 #include "fe_utils/option_utils.h"
+#include "fe_utils/version.h"
 #include "getopt_long.h"
 #include "lib/stringinfo.h"
 #include "load_manifest.h"
@@ -117,7 +118,6 @@ static void process_directory_recursively(Oid tsoid,
 										  manifest_data **manifests,
 										  manifest_writer *mwriter,
 										  cb_options *opt);
-static int	read_pg_version_file(char *directory);
 static void remember_to_cleanup_directory(char *target_path, bool rmtopdir);
 static void reset_directory_cleanup_list(void);
 static cb_tablespace *scan_for_existing_tablespaces(char *pathname,
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	int			c;
 	int			n_backups;
 	int			n_prior_backups;
-	int			version;
+	uint32		version;
 	uint64		system_identifier;
 	char	  **prior_backup_dirs;
 	cb_options	opt;
@@ -162,6 +162,7 @@ main(int argc, char *argv[])
 	StringInfo	last_backup_label;
 	manifest_data **manifests;
 	manifest_writer *mwriter;
+	char	   *pgdata;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -241,6 +242,10 @@ main(int argc, char *argv[])
 	if (opt.no_manifest)
 		opt.manifest_checksums = CHECKSUM_TYPE_NONE;
 
+	if (opt.dry_run)
+		pg_log_info("Executing in dry-run mode.\n"
+					"The target directory will not be modified.");
+
 	/* Check that the platform supports the requested copy method. */
 	if (opt.copy_method == COPY_METHOD_CLONE)
 	{
@@ -271,7 +276,12 @@ main(int argc, char *argv[])
 	}
 
 	/* Read the server version from the final backup. */
-	version = read_pg_version_file(argv[argc - 1]);
+	pgdata = argv[argc - 1];
+	version = get_pg_version(pgdata, NULL);
+	if (GET_PG_MAJORVERSION_NUM(version) < 10)
+		pg_fatal("server version too old");
+	pg_log_debug("read server version %u from file \"%s/%s\"",
+				 GET_PG_MAJORVERSION_NUM(version), pgdata, "PG_VERSION");
 
 	/* Sanity-check control files. */
 	n_backups = argc - optind;
@@ -425,7 +435,7 @@ main(int argc, char *argv[])
 		else
 		{
 			pg_log_debug("recursively fsyncing \"%s\"", opt.output);
-			sync_pgdata(opt.output, version * 10000, opt.sync_method, true);
+			sync_pgdata(opt.output, version, opt.sync_method, true);
 		}
 	}
 
@@ -569,7 +579,7 @@ check_backup_label_files(int n_backups, char **backup_dirs)
 			pg_fatal("backup at \"%s\" starts on timeline %u, but expected %u",
 					 backup_dirs[i], start_tli, check_tli);
 		if (i < n_backups - 1 && start_lsn != check_lsn)
-			pg_fatal("backup at \"%s\" starts at LSN %X/%X, but expected %X/%X",
+			pg_fatal("backup at \"%s\" starts at LSN %X/%08X, but expected %X/%08X",
 					 backup_dirs[i],
 					 LSN_FORMAT_ARGS(start_lsn),
 					 LSN_FORMAT_ARGS(check_lsn));
@@ -1153,59 +1163,6 @@ process_directory_recursively(Oid tsoid,
 	}
 
 	closedir(dir);
-}
-
-/*
- * Read the version number from PG_VERSION and convert it to the usual server
- * version number format. (e.g. If PG_VERSION contains "14\n" this function
- * will return 140000)
- */
-static int
-read_pg_version_file(char *directory)
-{
-	char		filename[MAXPGPATH];
-	StringInfoData buf;
-	int			fd;
-	int			version;
-	char	   *ep;
-
-	/* Construct pathname. */
-	snprintf(filename, MAXPGPATH, "%s/PG_VERSION", directory);
-
-	/* Open file. */
-	if ((fd = open(filename, O_RDONLY, 0)) < 0)
-		pg_fatal("could not open file \"%s\": %m", filename);
-
-	/* Read into memory. Length limit of 128 should be more than generous. */
-	initStringInfo(&buf);
-	slurp_file(fd, filename, &buf, 128);
-
-	/* Close the file. */
-	if (close(fd) != 0)
-		pg_fatal("could not close file \"%s\": %m", filename);
-
-	/* Convert to integer. */
-	errno = 0;
-	version = strtoul(buf.data, &ep, 10);
-	if (errno != 0 || *ep != '\n')
-	{
-		/*
-		 * Incremental backup is not relevant to very old server versions that
-		 * used multi-part version number (e.g. 9.6, or 8.4). So if we see
-		 * what looks like the beginning of such a version number, just bail
-		 * out.
-		 */
-		if (version < 10 && *ep == '.')
-			pg_fatal("%s: server version too old", filename);
-		pg_fatal("%s: could not parse version number", filename);
-	}
-
-	/* Debugging output. */
-	pg_log_debug("read server version %d from file \"%s\"", version, filename);
-
-	/* Release memory and return result. */
-	pfree(buf.data);
-	return version * 10000;
 }
 
 /*

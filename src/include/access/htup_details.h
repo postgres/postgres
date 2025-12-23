@@ -264,19 +264,19 @@ HEAP_LOCKED_UPGRADED(uint16 infomask)
  * Use these to test whether a particular lock is applied to a tuple
  */
 static inline bool
-HEAP_XMAX_IS_SHR_LOCKED(int16 infomask)
+HEAP_XMAX_IS_SHR_LOCKED(uint16 infomask)
 {
 	return (infomask & HEAP_LOCK_MASK) == HEAP_XMAX_SHR_LOCK;
 }
 
 static inline bool
-HEAP_XMAX_IS_EXCL_LOCKED(int16 infomask)
+HEAP_XMAX_IS_EXCL_LOCKED(uint16 infomask)
 {
 	return (infomask & HEAP_LOCK_MASK) == HEAP_XMAX_EXCL_LOCK;
 }
 
 static inline bool
-HEAP_XMAX_IS_KEYSHR_LOCKED(int16 infomask)
+HEAP_XMAX_IS_KEYSHR_LOCKED(uint16 infomask)
 {
 	return (infomask & HEAP_LOCK_MASK) == HEAP_XMAX_KEYSHR_LOCK;
 }
@@ -634,7 +634,7 @@ BITMAPLEN(int NATTS)
  * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of
  * data fields of char(n) and similar types.  It need not have anything
  * directly to do with the *actual* upper limit of varlena values, which
- * is currently 1Gb (see TOAST structures in postgres.h).  I've set it
+ * is currently 1Gb (see TOAST structures in varatt.h).  I've set it
  * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
  */
 #define MaxAttrSize		(10 * 1024 * 1024)
@@ -884,7 +884,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 		if (att_isnull(attnum - 1, tup->t_data->t_bits))
 		{
 			*isnull = true;
-			return (Datum) NULL;
+			return (Datum) 0;
 		}
 		else
 			return nocachegetattr(tup, attnum, tupleDesc);

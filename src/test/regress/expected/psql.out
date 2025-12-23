@@ -160,12 +160,12 @@ LINE 1: SELECT $1, $2
  foo4     | bar4
 (1 row)
 
--- \close (extended query protocol)
-\close
-\close: missing required argument
-\close ''
-\close stmt2
-\close stmt2
+-- \close_prepared (extended query protocol)
+\close_prepared
+\close_prepared: missing required argument
+\close_prepared ''
+\close_prepared stmt2
+\close_prepared stmt2
 SELECT name, statement FROM pg_prepared_statements ORDER BY name;
  name  |   statement    
 -------+----------------
@@ -445,6 +445,8 @@ environment value
 border                   1
 columns                  0
 csv_fieldsep             ','
+display_false            'f'
+display_true             't'
 expanded                 off
 fieldsep                 '|'
 fieldsep_zero            off
@@ -464,6 +466,36 @@ unicode_border_linestyle single
 unicode_column_linestyle single
 unicode_header_linestyle single
 xheader_width            full
+-- test the simple display substitution settings
+prepare q as select null as n, true as t, false as f;
+\pset null '(null)'
+\pset display_true 'true'
+\pset display_false 'false'
+execute q;
+   n    |  t   |   f   
+--------+------+-------
+ (null) | true | false
+(1 row)
+
+\pset null
+\pset display_true
+\pset display_false
+execute q;
+   n    |  t   |   f   
+--------+------+-------
+ (null) | true | false
+(1 row)
+
+\pset null ''
+\pset display_true 't'
+\pset display_false 'f'
+execute q;
+ n | t | f 
+---+---+---
+   | t | f
+(1 row)
+
+deallocate q;
 -- test multi-line headers, wrapping, and newline indicators
 -- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
@@ -4666,7 +4698,7 @@ bar 'bar' "bar"
 	\C arg1
 	\c arg1 arg2 arg3 arg4
 	\cd arg1
-	\close stmt1
+	\close_prepared stmt1
 	\conninfo
 	\copy arg1 arg2 arg3 arg4 arg5 arg6
 	\copyright
@@ -4705,6 +4737,7 @@ invalid command \lo
 	\pset arg1 arg2
 	\q
 	\reset
+	\restrict test
 	\s arg1
 	\sendpipeline
 	\set arg1 arg2 arg3 arg4 arg5 arg6 arg7
@@ -4716,6 +4749,7 @@ invalid command \lo
 	\t arg1
 	\T arg1
 	\timing arg1
+	\unrestrict not_valid
 	\unset arg1
 	\w arg1
 	\watch arg1 arg2
@@ -6443,9 +6477,9 @@ List of schemas
 (0 rows)
 
 \dRp "no.such.publication"
-                                        List of publications
- Name | Owner | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
-------+-------+------------+---------+---------+---------+-----------+-------------------+----------
+                                                List of publications
+ Name | Owner | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
+------+-------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
 (0 rows)
 
 \dRs "no.such.subscription"

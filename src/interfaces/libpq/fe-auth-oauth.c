@@ -183,7 +183,14 @@ struct json_ctx
 #define oauth_json_has_error(ctx) \
 	(PQExpBufferDataBroken((ctx)->errbuf) || (ctx)->errmsg)
 
-#define oauth_json_set_error(ctx, ...) \
+#define oauth_json_set_error(ctx, fmt, ...) \
+	do { \
+		appendPQExpBuffer(&(ctx)->errbuf, libpq_gettext(fmt), ##__VA_ARGS__); \
+		(ctx)->errmsg = (ctx)->errbuf.data; \
+	} while (0)
+
+/* An untranslated version of oauth_json_set_error(). */
+#define oauth_json_set_error_internal(ctx, ...) \
 	do { \
 		appendPQExpBuffer(&(ctx)->errbuf, __VA_ARGS__); \
 		(ctx)->errmsg = (ctx)->errbuf.data; \
@@ -199,13 +206,13 @@ oauth_json_object_start(void *state)
 		Assert(ctx->nested == 1);
 
 		oauth_json_set_error(ctx,
-							 libpq_gettext("field \"%s\" must be a string"),
+							 "field \"%s\" must be a string",
 							 ctx->target_field_name);
 	}
 
 	++ctx->nested;
 	if (ctx->nested > MAX_SASL_NESTING_LEVEL)
-		oauth_json_set_error(ctx, libpq_gettext("JSON is too deeply nested"));
+		oauth_json_set_error(ctx, "JSON is too deeply nested");
 
 	return oauth_json_has_error(ctx) ? JSON_SEM_ACTION_FAILED : JSON_SUCCESS;
 }
@@ -254,20 +261,20 @@ oauth_json_array_start(void *state)
 
 	if (!ctx->nested)
 	{
-		ctx->errmsg = libpq_gettext("top-level element must be an object");
+		oauth_json_set_error(ctx, "top-level element must be an object");
 	}
 	else if (ctx->target_field)
 	{
 		Assert(ctx->nested == 1);
 
 		oauth_json_set_error(ctx,
-							 libpq_gettext("field \"%s\" must be a string"),
+							 "field \"%s\" must be a string",
 							 ctx->target_field_name);
 	}
 
 	++ctx->nested;
 	if (ctx->nested > MAX_SASL_NESTING_LEVEL)
-		oauth_json_set_error(ctx, libpq_gettext("JSON is too deeply nested"));
+		oauth_json_set_error(ctx, "JSON is too deeply nested");
 
 	return oauth_json_has_error(ctx) ? JSON_SEM_ACTION_FAILED : JSON_SUCCESS;
 }
@@ -288,7 +295,7 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 
 	if (!ctx->nested)
 	{
-		ctx->errmsg = libpq_gettext("top-level element must be an object");
+		oauth_json_set_error(ctx, "top-level element must be an object");
 		return JSON_SEM_ACTION_FAILED;
 	}
 
@@ -301,9 +308,9 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			 * Assert and don't continue any further for production builds.
 			 */
 			Assert(false);
-			oauth_json_set_error(ctx,
-								 "internal error: target scalar found at nesting level %d during OAUTHBEARER parsing",
-								 ctx->nested);
+			oauth_json_set_error_internal(ctx,
+										  "internal error: target scalar found at nesting level %d during OAUTHBEARER parsing",
+										  ctx->nested);
 			return JSON_SEM_ACTION_FAILED;
 		}
 
@@ -314,7 +321,7 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 		if (*ctx->target_field)
 		{
 			oauth_json_set_error(ctx,
-								 libpq_gettext("field \"%s\" is duplicated"),
+								 "field \"%s\" is duplicated",
 								 ctx->target_field_name);
 			return JSON_SEM_ACTION_FAILED;
 		}
@@ -323,7 +330,7 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 		if (type != JSON_TOKEN_STRING)
 		{
 			oauth_json_set_error(ctx,
-								 libpq_gettext("field \"%s\" must be a string"),
+								 "field \"%s\" must be a string",
 								 ctx->target_field_name);
 			return JSON_SEM_ACTION_FAILED;
 		}

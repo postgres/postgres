@@ -265,26 +265,26 @@ my ($ret, $stdout, $stderr) = $node_primary->psql(
 	'postgres', 'SHOW ALL;',
 	on_error_die => 1,
 	extra_params => [ '--dbname' => $connstr_rep ]);
-ok($ret == 0, "SHOW ALL with replication role and physical replication");
+is($ret, 0, "SHOW ALL with replication role and physical replication");
 ($ret, $stdout, $stderr) = $node_primary->psql(
 	'postgres', 'SHOW ALL;',
 	on_error_die => 1,
 	extra_params => [ '--dbname' => $connstr_db ]);
-ok($ret == 0, "SHOW ALL with replication role and logical replication");
+is($ret, 0, "SHOW ALL with replication role and logical replication");
 
 # Test SHOW with a user-settable parameter
 ($ret, $stdout, $stderr) = $node_primary->psql(
 	'postgres', 'SHOW work_mem;',
 	on_error_die => 1,
 	extra_params => [ '--dbname' => $connstr_rep ]);
-ok( $ret == 0,
+is($ret, 0,
 	"SHOW with user-settable parameter, replication role and physical replication"
 );
 ($ret, $stdout, $stderr) = $node_primary->psql(
 	'postgres', 'SHOW work_mem;',
 	on_error_die => 1,
 	extra_params => [ '--dbname' => $connstr_db ]);
-ok( $ret == 0,
+is($ret, 0,
 	"SHOW with user-settable parameter, replication role and logical replication"
 );
 
@@ -293,14 +293,14 @@ ok( $ret == 0,
 	'postgres', 'SHOW primary_conninfo;',
 	on_error_die => 1,
 	extra_params => [ '--dbname' => $connstr_rep ]);
-ok( $ret == 0,
+is($ret, 0,
 	"SHOW with superuser-settable parameter, replication role and physical replication"
 );
 ($ret, $stdout, $stderr) = $node_primary->psql(
 	'postgres', 'SHOW primary_conninfo;',
 	on_error_die => 1,
 	extra_params => [ '--dbname' => $connstr_db ]);
-ok( $ret == 0,
+is($ret, 0,
 	"SHOW with superuser-settable parameter, replication role and logical replication"
 );
 
@@ -312,7 +312,7 @@ my $slotname = 'test_read_replication_slot_physical';
 	'postgres',
 	'READ_REPLICATION_SLOT non_existent_slot;',
 	extra_params => [ '--dbname' => $connstr_rep ]);
-ok($ret == 0, "READ_REPLICATION_SLOT exit code 0 on success");
+is($ret, 0, "READ_REPLICATION_SLOT exit code 0 on success");
 like($stdout, qr/^\|\|$/,
 	"READ_REPLICATION_SLOT returns NULL values if slot does not exist");
 
@@ -325,7 +325,7 @@ $node_primary->psql(
 	'postgres',
 	"READ_REPLICATION_SLOT $slotname;",
 	extra_params => [ '--dbname' => $connstr_rep ]);
-ok($ret == 0, "READ_REPLICATION_SLOT success with existing slot");
+is($ret, 0, "READ_REPLICATION_SLOT success with existing slot");
 like($stdout, qr/^physical\|[^|]*\|1$/,
 	"READ_REPLICATION_SLOT returns tuple with slot information");
 
@@ -577,7 +577,7 @@ my $phys_restart_lsn_post = $node_primary->safe_psql('postgres',
 	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';"
 );
 chomp($phys_restart_lsn_post);
-ok( ($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
+is($phys_restart_lsn_pre, $phys_restart_lsn_post,
 	"physical slot advance persists across restarts");
 
 # Check if the previous segment gets correctly recycled after the

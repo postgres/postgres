@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/relation.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
@@ -59,7 +60,7 @@ compare_int16(const void *a, const void *b)
  *		CREATE STATISTICS
  */
 ObjectAddress
-CreateStatistics(CreateStatsStmt *stmt)
+CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 {
 	int16		attnums[STATS_MAX_DIMENSIONS];
 	int			nattnums = 0;
@@ -134,7 +135,13 @@ CreateStatistics(CreateStatsStmt *stmt)
 							RelationGetRelationName(rel)),
 					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
-		/* You must own the relation to create stats on it */
+		/*
+		 * You must own the relation to create stats on it.
+		 *
+		 * NB: Concurrent changes could cause this function's lookup to find a
+		 * different relation than a previous lookup by the caller, so we must
+		 * perform this check even when check_rights == false.
+		 */
 		if (!object_ownercheck(RelationRelationId, RelationGetRelid(rel), stxowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
@@ -168,6 +175,21 @@ CreateStatistics(CreateStatsStmt *stmt)
 											  namespaceId);
 	}
 	namestrcpy(&stxname, namestr);
+
+	/*
+	 * Check we have creation rights in target namespace.  Skip check if
+	 * caller doesn't want it.
+	 */
+	if (check_rights)
+	{
+		AclResult	aclresult;
+
+		aclresult = object_aclcheck(NamespaceRelationId, namespaceId,
+									GetUserId(), ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_SCHEMA,
+						   get_namespace_name(namespaceId));
+	}
 
 	/*
 	 * Deal with the possibility that the statistics object already exists.

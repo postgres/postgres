@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -88,7 +89,7 @@ typedef struct JsonAggState
 static void composite_to_json(Datum composite, StringInfo result,
 							  bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
-							  Datum *vals, bool *nulls, int *valcount,
+							  const Datum *vals, const bool *nulls, int *valcount,
 							  JsonTypeCategory tcategory, Oid outfuncoid,
 							  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
@@ -428,8 +429,8 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
  * ourselves recursively to process the next dimension.
  */
 static void
-array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
-				  bool *nulls, int *valcount, JsonTypeCategory tcategory,
+array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, const Datum *vals,
+				  const bool *nulls, int *valcount, JsonTypeCategory tcategory,
 				  Oid outfuncoid, bool use_line_feeds)
 {
 	int			i;
@@ -630,13 +631,13 @@ Datum
 array_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	array_to_json_internal(array, result, false);
+	array_to_json_internal(array, &result, false);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -647,13 +648,13 @@ array_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	array_to_json_internal(array, result, use_line_feeds);
+	array_to_json_internal(array, &result, use_line_feeds);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -663,13 +664,13 @@ Datum
 row_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	composite_to_json(array, result, false);
+	composite_to_json(array, &result, false);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -680,13 +681,13 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	composite_to_json(array, result, use_line_feeds);
+	composite_to_json(array, &result, use_line_feeds);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -762,12 +763,13 @@ to_json(PG_FUNCTION_ARGS)
 Datum
 datum_to_json(Datum val, JsonTypeCategory tcategory, Oid outfuncoid)
 {
-	StringInfo	result = makeStringInfo();
+	StringInfoData result;
 
-	datum_to_json_internal(val, false, result, tcategory, outfuncoid,
+	initStringInfo(&result);
+	datum_to_json_internal(val, false, &result, tcategory, outfuncoid,
 						   false);
 
-	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+	return PointerGetDatum(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -805,7 +807,7 @@ json_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 		 * use the right context to enlarge the object if necessary.
 		 */
 		oldcontext = MemoryContextSwitchTo(aggcontext);
-		state = (JsonAggState *) palloc(sizeof(JsonAggState));
+		state = palloc_object(JsonAggState);
 		state->str = makeStringInfo();
 		MemoryContextSwitchTo(oldcontext);
 
@@ -904,7 +906,7 @@ json_unique_hash(const void *key, Size keysize)
 
 	hash ^= hash_bytes((const unsigned char *) entry->key, entry->key_len);
 
-	return DatumGetUInt32(hash);
+	return hash;
 }
 
 static int
@@ -1027,7 +1029,7 @@ json_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 		 * sure they use the right context to enlarge the object if necessary.
 		 */
 		oldcontext = MemoryContextSwitchTo(aggcontext);
-		state = (JsonAggState *) palloc(sizeof(JsonAggState));
+		state = palloc_object(JsonAggState);
 		state->str = makeStringInfo();
 		if (unique_keys)
 			json_unique_builder_init(&state->unique_check);
@@ -1346,25 +1348,25 @@ json_build_array_worker(int nargs, const Datum *args, const bool *nulls, const O
 {
 	int			i;
 	const char *sep = "";
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	appendStringInfoChar(result, '[');
+	appendStringInfoChar(&result, '[');
 
 	for (i = 0; i < nargs; i++)
 	{
 		if (absent_on_null && nulls[i])
 			continue;
 
-		appendStringInfoString(result, sep);
+		appendStringInfoString(&result, sep);
 		sep = ", ";
-		add_json(args[i], nulls[i], result, types[i], false);
+		add_json(args[i], nulls[i], &result, types[i], false);
 	}
 
-	appendStringInfoChar(result, ']');
+	appendStringInfoChar(&result, ']');
 
-	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+	return PointerGetDatum(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -1760,7 +1762,7 @@ json_unique_object_start(void *_state)
 		return JSON_SUCCESS;
 
 	/* push object entry to stack */
-	entry = palloc(sizeof(*entry));
+	entry = palloc_object(JsonUniqueStackEntry);
 	entry->object_id = state->id_counter++;
 	entry->parent = state->stack;
 	state->stack = entry;

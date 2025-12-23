@@ -23,11 +23,12 @@ static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_user_defined_postfix_ops(ClusterInfo *cluster);
 static void check_for_incompatible_polymorphics(ClusterInfo *cluster);
 static void check_for_tables_with_oids(ClusterInfo *cluster);
+static void check_for_not_null_inheritance(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
 static void check_for_unicode_update(ClusterInfo *cluster);
-static void check_new_cluster_logical_replication_slots(void);
+static void check_new_cluster_replication_slots(void);
 static void check_new_cluster_subscription_configuration(void);
 static void check_old_cluster_for_valid_slots(void);
 static void check_old_cluster_subscription_state(void);
@@ -168,6 +169,7 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 		/* pg_class.oid is preserved, so 'regclass' is OK */
 		"           'regcollation', "
 		"           'regconfig', "
+		/* pg_database.oid is preserved, so 'regdatabase' is OK */
 		"           'regdictionary', "
 		"           'regnamespace', "
 		"           'regoper', "
@@ -419,7 +421,7 @@ process_data_type_check(DbInfo *dbinfo, PGresult *res, void *arg)
 	if (!state->result)
 	{
 		pg_log(PG_REPORT, "failed check: %s", _(state->check->status));
-		appendPQExpBuffer(*state->report, "\n%s\n%s    %s\n",
+		appendPQExpBuffer(*state->report, "\n%s\n%s\n    %s\n",
 						  _(state->check->report_text),
 						  _("A list of the problem columns is in the file:"),
 						  output_path);
@@ -629,7 +631,7 @@ check_and_dump_old_cluster(void)
 		 * Before that the logical slots are not upgraded, so we will not be
 		 * able to upgrade the logical replication clusters completely.
 		 */
-		get_subscription_count(&old_cluster);
+		get_subscription_info(&old_cluster);
 		check_old_cluster_subscription_state();
 	}
 
@@ -670,6 +672,14 @@ check_and_dump_old_cluster(void)
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1100)
 		check_for_tables_with_oids(&old_cluster);
+
+	/*
+	 * Pre-PG 18 allowed child tables to omit not-null constraints that their
+	 * parents columns have, but schema restore fails for them.  Verify there
+	 * are none, iff applicable.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1800)
+		check_for_not_null_inheritance(&old_cluster);
 
 	/*
 	 * Pre-PG 10 allowed tables with 'unknown' type columns and non WAL logged
@@ -754,7 +764,7 @@ check_new_cluster(void)
 
 	check_for_new_tablespace_dir();
 
-	check_new_cluster_logical_replication_slots();
+	check_new_cluster_replication_slots();
 
 	check_new_cluster_subscription_configuration();
 }
@@ -885,7 +895,7 @@ check_cluster_versions(void)
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1800 &&
 		user_opts.char_signedness != -1)
-		pg_fatal("%s option cannot be used to upgrade from PostgreSQL %s and later.",
+		pg_fatal("The option %s cannot be used for upgrades from PostgreSQL %s and later.",
 				 "--set-char-signedness", "18");
 
 	check_ok();
@@ -946,12 +956,12 @@ check_for_new_tablespace_dir(void)
 
 	prep_status("Checking for new cluster tablespace directories");
 
-	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < new_cluster.num_tablespaces; tblnum++)
 	{
 		struct stat statbuf;
 
 		snprintf(new_tablespace_dir, MAXPGPATH, "%s%s",
-				 os_info.old_tablespaces[tblnum],
+				 new_cluster.tablespaces[tblnum],
 				 new_cluster.tablespace_suffix);
 
 		if (stat(new_tablespace_dir, &statbuf) == 0 || errno != ENOENT)
@@ -1003,17 +1013,17 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	 * directory.  We can't create a proper old cluster delete script in that
 	 * case.
 	 */
-	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < new_cluster.num_tablespaces; tblnum++)
 	{
-		char		old_tablespace_dir[MAXPGPATH];
+		char		new_tablespace_dir[MAXPGPATH];
 
-		strlcpy(old_tablespace_dir, os_info.old_tablespaces[tblnum], MAXPGPATH);
-		canonicalize_path(old_tablespace_dir);
-		if (path_is_prefix_of_path(old_cluster_pgdata, old_tablespace_dir))
+		strlcpy(new_tablespace_dir, new_cluster.tablespaces[tblnum], MAXPGPATH);
+		canonicalize_path(new_tablespace_dir);
+		if (path_is_prefix_of_path(old_cluster_pgdata, new_tablespace_dir))
 		{
 			/* reproduce warning from CREATE TABLESPACE that is in the log */
 			pg_log(PG_WARNING,
-				   "\nWARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s", old_tablespace_dir);
+				   "\nWARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s", new_tablespace_dir);
 
 			/* Unlink file in case it is left over from a previous run. */
 			unlink(*deletion_script_file_name);
@@ -1041,9 +1051,9 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	/* delete old cluster's alternate tablespaces */
 	old_tblspc_suffix = pg_strdup(old_cluster.tablespace_suffix);
 	fix_path_separator(old_tblspc_suffix);
-	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < old_cluster.num_tablespaces; tblnum++)
 		fprintf(script, RMDIR_CMD " %c%s%s%c\n", PATH_QUOTE,
-				fix_path_separator(os_info.old_tablespaces[tblnum]),
+				fix_path_separator(old_cluster.tablespaces[tblnum]),
 				old_tblspc_suffix, PATH_QUOTE);
 	pfree(old_tblspc_suffix);
 
@@ -1623,6 +1633,93 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 		check_ok();
 }
 
+/*
+ * Callback function for processing results of query for
+ * check_for_not_null_inheritance.
+ */
+static void
+process_inconsistent_notnull(DbInfo *dbinfo, PGresult *res, void *arg)
+{
+	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
+	int			ntups = PQntuples(res);
+	int			i_nspname = PQfnumber(res, "nspname");
+	int			i_relname = PQfnumber(res, "relname");
+	int			i_attname = PQfnumber(res, "attname");
+
+	AssertVariableIsOfType(&process_inconsistent_notnull,
+						   UpgradeTaskProcessCB);
+
+	if (ntups == 0)
+		return;
+
+	if (report->file == NULL &&
+		(report->file = fopen_priv(report->path, "w")) == NULL)
+		pg_fatal("could not open file \"%s\": %m", report->path);
+
+	fprintf(report->file, "In database: %s\n", dbinfo->db_name);
+
+	for (int rowno = 0; rowno < ntups; rowno++)
+	{
+		fprintf(report->file, "  %s.%s.%s\n",
+				PQgetvalue(res, rowno, i_nspname),
+				PQgetvalue(res, rowno, i_relname),
+				PQgetvalue(res, rowno, i_attname));
+	}
+}
+
+/*
+ * check_for_not_null_inheritance()
+ *
+ * An attempt to create child tables lacking not-null constraints that are
+ * present in their parents errors out.  This can no longer occur since 18,
+ * but previously there were various ways for that to happen.  Check that
+ * the cluster to be upgraded doesn't have any of those problems.
+ */
+static void
+check_for_not_null_inheritance(ClusterInfo *cluster)
+{
+	UpgradeTaskReport report;
+	UpgradeTask *task;
+	const char *query;
+
+	prep_status("Checking for not-null constraint inconsistencies");
+
+	report.file = NULL;
+	snprintf(report.path, sizeof(report.path), "%s/%s",
+			 log_opts.basedir,
+			 "not_null_inconsistent_columns.txt");
+
+	query = "SELECT nspname, cc.relname, ac.attname "
+		"FROM pg_catalog.pg_inherits i, pg_catalog.pg_attribute ac, "
+		"     pg_catalog.pg_attribute ap, pg_catalog.pg_class cc, "
+		"     pg_catalog.pg_namespace nc "
+		"WHERE cc.oid = ac.attrelid AND i.inhrelid = ac.attrelid "
+		"      AND i.inhparent = ap.attrelid AND ac.attname = ap.attname "
+		"      AND cc.relnamespace = nc.oid "
+		"      AND ap.attnum > 0 and ap.attnotnull AND NOT ac.attnotnull";
+
+	task = upgrade_task_create();
+	upgrade_task_add_step(task, query,
+						  process_inconsistent_notnull,
+						  true, &report);
+	upgrade_task_run(task, cluster);
+	upgrade_task_free(task);
+
+	if (report.file)
+	{
+		fclose(report.file);
+		pg_log(PG_REPORT, "fatal");
+		pg_fatal("Your installation contains inconsistent NOT NULL constraints.\n"
+				 "If the parent column(s) are NOT NULL, then the child column must\n"
+				 "also be marked NOT NULL, or the upgrade will fail.\n"
+				 "You can fix this by running\n"
+				 "    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+				 "on each column listed in the file:\n"
+				 "    %s", report.path);
+	}
+	else
+		check_ok();
+}
 
 /*
  * check_for_pg_role_prefix()
@@ -1874,14 +1971,19 @@ check_for_unicode_update(ClusterInfo *cluster)
 		"  SELECT oper.oid, oper.oprcode, collid FROM pg_operator oper, collations "
 		"  WHERE oprname IN ('~', '~*', '!~', '!~*', '~~*', '!~~*') AND "
 		"        oprnamespace='pg_catalog'::regnamespace AND "
-		"        oprright='text'::regtype "
+		"        oprright='pg_catalog.text'::pg_catalog.regtype "
 		"), "
 	/* functions that use the input collation for character semantics */
 		"coll_functions(procid, collid) AS ( "
 		"  SELECT proc.oid, collid FROM pg_proc proc, collations "
-		"  WHERE proname IN ('lower','initcap','upper') AND "
-		"        pronamespace='pg_catalog'::regnamespace AND "
-		"        proargtypes[0] = 'text'::regtype "
+		"  WHERE pronamespace='pg_catalog'::regnamespace AND "
+		"        ((proname IN ('lower','initcap','upper','casefold') AND "
+		"          pronargs = 1 AND "
+		"          proargtypes[0] = 'pg_catalog.text'::pg_catalog.regtype) OR "
+		"         (proname = 'substring' AND pronargs = 2 AND "
+		"          proargtypes[0] = 'pg_catalog.text'::pg_catalog.regtype AND "
+		"          proargtypes[1] = 'pg_catalog.text'::pg_catalog.regtype) OR "
+		"         proname LIKE 'regexp_%') "
 	/* include functions behind the operators listed above */
 		"  UNION "
 		"  SELECT procid, collid FROM coll_operators "
@@ -1934,7 +2036,7 @@ check_for_unicode_update(ClusterInfo *cluster)
 	{
 		fclose(report.file);
 		report_status(PG_WARNING, "warning");
-		pg_log(PG_WARNING, "Your installation contains relations that may be affected by a new version of Unicode.\n"
+		pg_log(PG_WARNING, "Your installation contains relations that might be affected by a new version of Unicode.\n"
 			   "A list of potentially-affected relations is in the file:\n"
 			   "    %s", report.path);
 	}
@@ -1943,48 +2045,80 @@ check_for_unicode_update(ClusterInfo *cluster)
 }
 
 /*
- * check_new_cluster_logical_replication_slots()
+ * check_new_cluster_replication_slots()
  *
- * Verify that there are no logical replication slots on the new cluster and
- * that the parameter settings necessary for creating slots are sufficient.
+ * Validate the new cluster's readiness for migrating replication slots:
+ * - Ensures no existing logical replication slots on the new cluster when
+ *   migrating logical slots.
+ * - Ensure conflict detection slot does not exist on the new cluster when
+ *   migrating subscriptions with retain_dead_tuples enabled.
+ * - Ensure that the parameter settings on the new cluster necessary for
+ *   creating slots are sufficient.
  */
 static void
-check_new_cluster_logical_replication_slots(void)
+check_new_cluster_replication_slots(void)
 {
 	PGresult   *res;
 	PGconn	   *conn;
 	int			nslots_on_old;
 	int			nslots_on_new;
+	int			rdt_slot_on_new;
 	int			max_replication_slots;
 	char	   *wal_level;
+	int			i_nslots_on_new;
+	int			i_rdt_slot_on_new;
 
-	/* Logical slots can be migrated since PG17. */
+	/*
+	 * Logical slots can be migrated since PG17 and a physical slot
+	 * CONFLICT_DETECTION_SLOT can be migrated since PG19.
+	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1600)
 		return;
 
 	nslots_on_old = count_old_cluster_logical_slots();
 
-	/* Quick return if there are no logical slots to be migrated. */
-	if (nslots_on_old == 0)
+	/*
+	 * Quick return if there are no slots to be migrated and no subscriptions
+	 * have the retain_dead_tuples option enabled.
+	 */
+	if (nslots_on_old == 0 && !old_cluster.sub_retain_dead_tuples)
 		return;
 
 	conn = connectToServer(&new_cluster, "template1");
 
-	prep_status("Checking for new cluster logical replication slots");
+	prep_status("Checking for new cluster replication slots");
 
-	res = executeQueryOrDie(conn, "SELECT count(*) "
-							"FROM pg_catalog.pg_replication_slots "
-							"WHERE slot_type = 'logical' AND "
-							"temporary IS FALSE;");
+	res = executeQueryOrDie(conn, "SELECT %s AS nslots_on_new, %s AS rdt_slot_on_new "
+							"FROM pg_catalog.pg_replication_slots",
+							nslots_on_old > 0
+							? "COUNT(*) FILTER (WHERE slot_type = 'logical' AND temporary IS FALSE)"
+							: "0",
+							old_cluster.sub_retain_dead_tuples
+							? "COUNT(*) FILTER (WHERE slot_name = 'pg_conflict_detection')"
+							: "0");
 
 	if (PQntuples(res) != 1)
-		pg_fatal("could not count the number of logical replication slots");
+		pg_fatal("could not count the number of replication slots");
 
-	nslots_on_new = atoi(PQgetvalue(res, 0, 0));
+	i_nslots_on_new = PQfnumber(res, "nslots_on_new");
+	i_rdt_slot_on_new = PQfnumber(res, "rdt_slot_on_new");
+
+	nslots_on_new = atoi(PQgetvalue(res, 0, i_nslots_on_new));
 
 	if (nslots_on_new)
+	{
+		Assert(nslots_on_old);
 		pg_fatal("expected 0 logical replication slots but found %d",
 				 nslots_on_new);
+	}
+
+	rdt_slot_on_new = atoi(PQgetvalue(res, 0, i_rdt_slot_on_new));
+
+	if (rdt_slot_on_new)
+	{
+		Assert(old_cluster.sub_retain_dead_tuples);
+		pg_fatal("The replication slot \"pg_conflict_detection\" already exists on the new cluster");
+	}
 
 	PQclear(res);
 
@@ -1997,11 +2131,19 @@ check_new_cluster_logical_replication_slots(void)
 
 	wal_level = PQgetvalue(res, 0, 0);
 
-	if (strcmp(wal_level, "logical") != 0)
-		pg_fatal("\"wal_level\" must be \"logical\" but is set to \"%s\"",
+	if ((nslots_on_old > 0 || old_cluster.sub_retain_dead_tuples) &&
+		strcmp(wal_level, "minimal") == 0)
+		pg_fatal("\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\"",
 				 wal_level);
 
 	max_replication_slots = atoi(PQgetvalue(res, 1, 0));
+
+	if (old_cluster.sub_retain_dead_tuples &&
+		nslots_on_old + 1 > max_replication_slots)
+		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
+				 "logical replication slots on the old cluster plus one additional slot required "
+				 "for retaining conflict detection information (%d)",
+				 max_replication_slots, nslots_on_old + 1);
 
 	if (nslots_on_old > max_replication_slots)
 		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
@@ -2112,6 +2254,22 @@ check_old_cluster_for_valid_slots(void)
 
 				fprintf(script,
 						"The slot \"%s\" has not consumed the WAL yet\n",
+						slot->slotname);
+			}
+
+			/*
+			 * The name "pg_conflict_detection" (defined as
+			 * CONFLICT_DETECTION_SLOT) has been reserved for logical
+			 * replication conflict detection slot since PG19.
+			 */
+			if (strcmp(slot->slotname, "pg_conflict_detection") == 0)
+			{
+				if (script == NULL &&
+					(script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %m", output_path);
+
+				fprintf(script,
+						"The slot name \"%s\" is reserved\n",
 						slot->slotname);
 			}
 		}

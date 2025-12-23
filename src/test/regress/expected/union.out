@@ -942,7 +942,7 @@ SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1;
 ERROR:  column "q2" does not exist
 LINE 1: ... int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1...
                                                              ^
-DETAIL:  There is a column named "q2" in table "*SELECT* 2", but it cannot be referenced from this part of the query.
+DETAIL:  There is a column named "q2" in table "unnamed_subquery", but it cannot be referenced from this part of the query.
 -- But this should work:
 SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1))) ORDER BY 1;
         q1        
@@ -1216,6 +1216,167 @@ select event_id
 
 drop table events_child, events, other_events;
 reset enable_indexonlyscan;
+--
+-- Test handling of UNION / EXCEPT / INTERSECT with provably empty inputs
+--
+-- Ensure the empty UNION input is pruned and de-duplication is done for the
+-- remaining relation.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+UNION
+SELECT four FROM tenk1
+ORDER BY 1;
+              QUERY PLAN              
+--------------------------------------
+ Sort
+   Output: tenk1.four
+   Sort Key: tenk1.four
+   ->  HashAggregate
+         Output: tenk1.four
+         Group Key: tenk1.four
+         ->  Seq Scan on public.tenk1
+               Output: tenk1.four
+(8 rows)
+
+-- Validate that the results of the above are correct
+SELECT two FROM tenk1 WHERE 1=2
+UNION
+SELECT four FROM tenk1
+ORDER BY 1;
+ two 
+-----
+   0
+   1
+   2
+   3
+(4 rows)
+
+-- All UNION inputs are proven empty.  Ensure the planner provides a
+-- const-false Result node
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+UNION
+SELECT four FROM tenk1 WHERE 1=2
+UNION
+SELECT ten FROM tenk1 WHERE 1=2
+ORDER BY 1;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.two
+   Sort Key: unnamed_subquery.two
+   ->  Result
+         Output: unnamed_subquery.two
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1, unnamed_subquery_2
+         One-Time Filter: false
+(7 rows)
+
+-- Ensure the planner provides a const-false Result node
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+INTERSECT
+SELECT four FROM tenk1
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.two
+   Sort Key: unnamed_subquery.two
+   ->  Result
+         Output: unnamed_subquery.two
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- As above, with the inputs swapped
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT four FROM tenk1
+INTERSECT
+SELECT two FROM tenk1 WHERE 1=2
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.four
+   Sort Key: unnamed_subquery.four
+   ->  Result
+         Output: unnamed_subquery.four
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- Try with both inputs dummy
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT four FROM tenk1 WHERE 1=2
+INTERSECT
+SELECT two FROM tenk1 WHERE 1=2
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.four
+   Sort Key: unnamed_subquery.four
+   ->  Result
+         Output: unnamed_subquery.four
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- Ensure the planner provides a const-false Result node when the left input
+-- is empty
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+EXCEPT
+SELECT four FROM tenk1
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.two
+   Sort Key: unnamed_subquery.two
+   ->  Result
+         Output: unnamed_subquery.two
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- Ensure the planner only scans the left input when right input is empty
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1
+EXCEPT ALL
+SELECT four FROM tenk1 WHERE 1=2
+ORDER BY 1;
+           QUERY PLAN           
+--------------------------------
+ Sort
+   Output: tenk1.two
+   Sort Key: tenk1.two
+   ->  Seq Scan on public.tenk1
+         Output: tenk1.two
+(5 rows)
+
+-- Try a mixed setop case.  Ensure the right-hand UNION child gets removed.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 t1
+EXCEPT
+SELECT four FROM tenk1 t2
+UNION
+SELECT ten FROM tenk1 dummy WHERE 1=2;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Unique
+   Output: t1.two
+   ->  Sort
+         Output: t1.two
+         Sort Key: t1.two
+         ->  HashSetOp Except
+               Output: t1.two
+               ->  Seq Scan on public.tenk1 t1
+                     Output: t1.two
+               ->  Seq Scan on public.tenk1 t2
+                     Output: t2.four
+(11 rows)
+
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
  SELECT * FROM
@@ -1338,14 +1499,14 @@ where q2 = q2;
 ----------------------------------------------------------
  Unique
    ->  Merge Append
-         Sort Key: "*SELECT* 1".q1
-         ->  Subquery Scan on "*SELECT* 1"
+         Sort Key: unnamed_subquery.q1
+         ->  Subquery Scan on unnamed_subquery
                ->  Unique
                      ->  Sort
                            Sort Key: i81.q1, i81.q2
                            ->  Seq Scan on int8_tbl i81
                                  Filter: (q2 IS NOT NULL)
-         ->  Subquery Scan on "*SELECT* 2"
+         ->  Subquery Scan on unnamed_subquery_1
                ->  Unique
                      ->  Sort
                            Sort Key: i82.q1, i82.q2
@@ -1374,14 +1535,14 @@ where -q1 = q2;
 --------------------------------------------------------
  Unique
    ->  Merge Append
-         Sort Key: "*SELECT* 1".q1
-         ->  Subquery Scan on "*SELECT* 1"
+         Sort Key: unnamed_subquery.q1
+         ->  Subquery Scan on unnamed_subquery
                ->  Unique
                      ->  Sort
                            Sort Key: i81.q1, i81.q2
                            ->  Seq Scan on int8_tbl i81
                                  Filter: ((- q1) = q2)
-         ->  Subquery Scan on "*SELECT* 2"
+         ->  Subquery Scan on unnamed_subquery_1
                ->  Unique
                      ->  Sort
                            Sort Key: i82.q1, i82.q2

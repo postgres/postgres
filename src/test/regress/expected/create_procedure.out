@@ -2,7 +2,7 @@ CALL nonexistent();  -- error
 ERROR:  procedure nonexistent() does not exist
 LINE 1: CALL nonexistent();
              ^
-HINT:  No procedure matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  There is no procedure of that name.
 CALL random();  -- error
 ERROR:  random() is not a procedure
 LINE 1: CALL random();
@@ -299,7 +299,8 @@ CALL ptest9(1./0.);  -- error
 ERROR:  procedure ptest9(numeric) does not exist
 LINE 1: CALL ptest9(1./0.);
              ^
-HINT:  No procedure matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No procedure of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 -- check named-parameter matching
 CREATE PROCEDURE ptest10(OUT a int, IN b int, IN c int)
 LANGUAGE SQL AS $$ SELECT b - c $$;

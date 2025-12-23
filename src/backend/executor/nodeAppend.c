@@ -263,7 +263,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 		{
 			AsyncRequest *areq;
 
-			areq = palloc(sizeof(AsyncRequest));
+			areq = palloc_object(AsyncRequest);
 			areq->requestor = (PlanState *) appendstate;
 			areq->requestee = appendplanstates[i];
 			areq->request_index = i;

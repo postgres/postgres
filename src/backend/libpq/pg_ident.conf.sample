@@ -13,25 +13,25 @@
 # user names to their corresponding PostgreSQL user names.  Records
 # are of the form:
 #
-# MAPNAME  SYSTEM-USERNAME  PG-USERNAME
+# MAPNAME  SYSTEM-USERNAME  DATABASE-USERNAME
 #
 # (The uppercase quantities must be replaced by actual values.)
 #
 # MAPNAME is the (otherwise freely chosen) map name that was used in
 # pg_hba.conf.  SYSTEM-USERNAME is the detected user name of the
-# client.  PG-USERNAME is the requested PostgreSQL user name.  The
-# existence of a record specifies that SYSTEM-USERNAME may connect as
-# PG-USERNAME.
+# client.  DATABASE-USERNAME is the requested PostgreSQL user name.
+# The existence of a record specifies that SYSTEM-USERNAME may connect
+# as DATABASE-USERNAME.
 #
-# If SYSTEM-USERNAME starts with a slash (/), it will be treated as a
-# regular expression.  Optionally this can contain a capture (a
-# parenthesized subexpression).  The substring matching the capture
-# will be substituted for \1 (backslash-one) if present in
-# PG-USERNAME.
+# If SYSTEM-USERNAME starts with a slash (/), the rest of it will be
+# treated as a regular expression.  Optionally this can contain a capture
+# (a parenthesized subexpression).  The substring matching the capture
+# will be substituted for \1 (backslash-one) if that appears in
+# DATABASE-USERNAME.
 #
-# PG-USERNAME can be "all", a user name, a group name prefixed with "+", or
-# a regular expression (if it starts with a slash (/)).  If it is a regular
-# expression, the substring matching with \1 has no effect.
+# DATABASE-USERNAME can be "all", a user name, a group name prefixed with "+",
+# or a regular expression (if it starts with a slash (/)).  If it is a regular
+# expression, no substitution for \1 will occur.
 #
 # Multiple maps may be specified in this file and used by pg_hba.conf.
 #
@@ -69,4 +69,4 @@
 # Put your actual configuration here
 # ----------------------------------
 
-# MAPNAME       SYSTEM-USERNAME         PG-USERNAME
+# MAPNAME       SYSTEM-USERNAME         DATABASE-USERNAME

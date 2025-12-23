@@ -532,6 +532,21 @@ dsa_attach(dsa_handle handle)
 }
 
 /*
+ * Returns whether the area with the given handle was already attached by the
+ * current process.  The area must have been created with dsa_create (not
+ * dsa_create_in_place).
+ */
+bool
+dsa_is_attached(dsa_handle handle)
+{
+	/*
+	 * An area handle is really a DSM segment handle for the first segment, so
+	 * we can just search for that.
+	 */
+	return dsm_find_mapping(handle) != NULL;
+}
+
+/*
  * Attach to an area that was created with dsa_create_in_place.  The caller
  * must somehow know the location in memory that was used when the area was
  * created, though it may be mapped at a different virtual address in this
@@ -1028,9 +1043,44 @@ dsa_get_total_size(dsa_area *area)
 {
 	size_t		size;
 
-	LWLockAcquire(DSA_AREA_LOCK(area), LW_EXCLUSIVE);
+	LWLockAcquire(DSA_AREA_LOCK(area), LW_SHARED);
 	size = area->control->total_segment_size;
 	LWLockRelease(DSA_AREA_LOCK(area));
+
+	return size;
+}
+
+/*
+ * Same as dsa_get_total_size(), but accepts a DSA handle.  The area must have
+ * been created with dsa_create (not dsa_create_in_place).
+ */
+size_t
+dsa_get_total_size_from_handle(dsa_handle handle)
+{
+	size_t		size;
+	bool		already_attached;
+	dsm_segment *segment;
+	dsa_area_control *control;
+
+	already_attached = dsa_is_attached(handle);
+	if (already_attached)
+		segment = dsm_find_mapping(handle);
+	else
+		segment = dsm_attach(handle);
+
+	if (segment == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("could not attach to dynamic shared area")));
+
+	control = (dsa_area_control *) dsm_segment_address(segment);
+
+	LWLockAcquire(&control->lock, LW_SHARED);
+	size = control->total_segment_size;
+	LWLockRelease(&control->lock);
+
+	if (!already_attached)
+		dsm_detach(segment);
 
 	return size;
 }
@@ -1280,7 +1330,7 @@ create_internal(void *place, size_t size,
 	 * area.  Other backends will need to obtain their own dsa_area object by
 	 * attaching.
 	 */
-	area = palloc(sizeof(dsa_area));
+	area = palloc_object(dsa_area);
 	area->control = control;
 	area->resowner = CurrentResourceOwner;
 	memset(area->segment_maps, 0, sizeof(dsa_segment_map) * DSA_MAX_SEGMENTS);
@@ -1336,7 +1386,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 		   (DSA_SEGMENT_HEADER_MAGIC ^ handle ^ 0));
 
 	/* Build the backend-local area object. */
-	area = palloc(sizeof(dsa_area));
+	area = palloc_object(dsa_area);
 	area->control = control;
 	area->resowner = CurrentResourceOwner;
 	memset(&area->segment_maps[0], 0,

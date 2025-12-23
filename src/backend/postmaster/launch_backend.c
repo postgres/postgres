@@ -101,7 +101,9 @@ typedef struct
 	struct InjectionPointsCtl *ActiveInjectionPoints;
 #endif
 	int			NamedLWLockTrancheRequests;
-	NamedLWLockTranche *NamedLWLockTrancheArray;
+	NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray;
+	char	  **LWLockTrancheNames;
+	int		   *LWLockCounter;
 	LWLockPadded *MainLWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
@@ -177,34 +179,10 @@ typedef struct
 } child_process_kind;
 
 static child_process_kind child_process_kinds[] = {
-	[B_INVALID] = {"invalid", NULL, false},
-
-	[B_BACKEND] = {"backend", BackendMain, true},
-	[B_DEAD_END_BACKEND] = {"dead-end backend", BackendMain, true},
-	[B_AUTOVAC_LAUNCHER] = {"autovacuum launcher", AutoVacLauncherMain, true},
-	[B_AUTOVAC_WORKER] = {"autovacuum worker", AutoVacWorkerMain, true},
-	[B_BG_WORKER] = {"bgworker", BackgroundWorkerMain, true},
-
-	/*
-	 * WAL senders start their life as regular backend processes, and change
-	 * their type after authenticating the client for replication.  We list it
-	 * here for PostmasterChildName() but cannot launch them directly.
-	 */
-	[B_WAL_SENDER] = {"wal sender", NULL, true},
-	[B_SLOTSYNC_WORKER] = {"slot sync worker", ReplSlotSyncWorkerMain, true},
-
-	[B_STANDALONE_BACKEND] = {"standalone backend", NULL, false},
-
-	[B_ARCHIVER] = {"archiver", PgArchiverMain, true},
-	[B_BG_WRITER] = {"bgwriter", BackgroundWriterMain, true},
-	[B_CHECKPOINTER] = {"checkpointer", CheckpointerMain, true},
-	[B_IO_WORKER] = {"io_worker", IoWorkerMain, true},
-	[B_STARTUP] = {"startup", StartupProcessMain, true},
-	[B_WAL_RECEIVER] = {"wal_receiver", WalReceiverMain, true},
-	[B_WAL_SUMMARIZER] = {"wal_summarizer", WalSummarizerMain, true},
-	[B_WAL_WRITER] = {"wal_writer", WalWriterMain, true},
-
-	[B_LOGGER] = {"syslogger", SysLoggerMain, false},
+#define PG_PROCTYPE(bktype, description, main_func, shmem_attach) \
+	[bktype] = {description, main_func, shmem_attach},
+#include "postmaster/proctypelist.h"
+#undef PG_PROCTYPE
 };
 
 const char *
@@ -227,7 +205,7 @@ PostmasterChildName(BackendType child_type)
  */
 pid_t
 postmaster_child_launch(BackendType child_type, int child_slot,
-						const void *startup_data, size_t startup_data_len,
+						void *startup_data, size_t startup_data_len,
 						ClientSocket *client_sock)
 {
 	pid_t		pid;
@@ -280,7 +258,7 @@ postmaster_child_launch(BackendType child_type, int child_slot,
 		MyPMChildSlot = child_slot;
 		if (client_sock)
 		{
-			MyClientSocket = palloc(sizeof(ClientSocket));
+			MyClientSocket = palloc_object(ClientSocket);
 			memcpy(MyClientSocket, client_sock, sizeof(ClientSocket));
 		}
 
@@ -760,7 +738,9 @@ save_backend_variables(BackendParameters *param,
 #endif
 
 	param->NamedLWLockTrancheRequests = NamedLWLockTrancheRequests;
-	param->NamedLWLockTrancheArray = NamedLWLockTrancheArray;
+	param->NamedLWLockTrancheRequestArray = NamedLWLockTrancheRequestArray;
+	param->LWLockTrancheNames = LWLockTrancheNames;
+	param->LWLockCounter = LWLockCounter;
 	param->MainLWLockArray = MainLWLockArray;
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
@@ -1020,7 +1000,9 @@ restore_backend_variables(BackendParameters *param)
 #endif
 
 	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
-	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
+	NamedLWLockTrancheRequestArray = param->NamedLWLockTrancheRequestArray;
+	LWLockTrancheNames = param->LWLockTrancheNames;
+	LWLockCounter = param->LWLockCounter;
 	MainLWLockArray = param->MainLWLockArray;
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;

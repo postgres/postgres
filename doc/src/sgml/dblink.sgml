@@ -444,7 +444,7 @@ dblink(text sql [, bool fail_on_error]) returns setof record
      <listitem>
       <para>
        The SQL query that you wish to execute in the remote database,
-       for example <literal>select * from foo</literal>.
+       for example <literal>SELECT * FROM foo</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -478,7 +478,7 @@ dblink(text sql [, bool fail_on_error]) returns setof record
 <programlisting>
 SELECT *
     FROM dblink('dbname=mydb options=-csearch_path=',
-                'select proname, prosrc from pg_proc')
+                'SELECT proname, prosrc FROM pg_proc')
       AS t1(proname name, prosrc text)
     WHERE proname LIKE 'bytea%';
 </programlisting>
@@ -513,7 +513,7 @@ SELECT *
 CREATE VIEW myremote_pg_proc AS
   SELECT *
     FROM dblink('dbname=postgres options=-csearch_path=',
-                'select proname, prosrc from pg_proc')
+                'SELECT proname, prosrc FROM pg_proc')
     AS t1(proname name, prosrc text);
 
 SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
@@ -525,7 +525,7 @@ SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
 
 <screen>
 SELECT * FROM dblink('dbname=postgres options=-csearch_path=',
-                     'select proname, prosrc from pg_proc')
+                     'SELECT proname, prosrc FROM pg_proc')
   AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -549,7 +549,7 @@ SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  OK
 (1 row)
 
-SELECT * FROM dblink('select proname, prosrc from pg_proc')
+SELECT * FROM dblink('SELECT proname, prosrc FROM pg_proc')
   AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -573,7 +573,7 @@ SELECT dblink_connect('myconn', 'dbname=regression options=-csearch_path=');
  OK
 (1 row)
 
-SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
+SELECT * FROM dblink('myconn', 'SELECT proname, prosrc FROM pg_proc')
   AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -666,7 +666,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
       <para>
        The SQL command that you wish to execute in the remote database,
        for example
-       <literal>insert into foo values(0, 'a', '{"a0","b0","c0"}')</literal>.
+       <literal>INSERT INTO foo VALUES (0, 'a', '{"a0","b0","c0"}')</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -793,7 +793,7 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
      <listitem>
       <para>
        The <command>SELECT</command> statement that you wish to execute in the remote
-       database, for example <literal>select * from pg_class</literal>.
+       database, for example <literal>SELECT * FROM pg_class</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -848,7 +848,7 @@ SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  OK
 (1 row)
 
-SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
+SELECT dblink_open('foo', 'SELECT proname, prosrc FROM pg_proc');
  dblink_open
 -------------
  OK
@@ -969,7 +969,7 @@ SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  OK
 (1 row)
 
-SELECT dblink_open('foo', 'select proname, prosrc from pg_proc where proname like ''bytea%''');
+SELECT dblink_open('foo', 'SELECT proname, prosrc FROM pg_proc WHERE proname LIKE ''bytea%''');
  dblink_open
 -------------
  OK
@@ -1106,7 +1106,7 @@ SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  OK
 (1 row)
 
-SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
+SELECT dblink_open('foo', 'SELECT proname, prosrc FROM pg_proc');
  dblink_open
 -------------
  OK
@@ -1301,7 +1301,7 @@ dblink_send_query(text connname, text sql) returns int
      <listitem>
       <para>
        The SQL statement that you wish to execute in the remote database,
-       for example <literal>select * from pg_class</literal>.
+       for example <literal>SELECT * FROM pg_class</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -1583,7 +1583,7 @@ contrib_regression=# SELECT dblink_connect('dtest1', 'dbname=contrib_regression'
 (1 row)
 
 contrib_regression=# SELECT * FROM
-contrib_regression-# dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3') AS t1;
+contrib_regression-# dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3') AS t1;
  t1
 ----
   1
@@ -1603,7 +1603,7 @@ contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 
 (0 rows)
 
 contrib_regression=# SELECT * FROM
-contrib_regression-# dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3; select * from foo where f1 &gt; 6') AS t1;
+contrib_regression-# dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3; SELECT * FROM foo WHERE f1 &gt; 6') AS t1;
  t1
 ----
   1

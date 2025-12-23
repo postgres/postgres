@@ -102,7 +102,7 @@ astreamer_gzip_writer_new(char *pathname, FILE *file,
 #ifdef HAVE_LIBZ
 	astreamer_gzip_writer *streamer;
 
-	streamer = palloc0(sizeof(astreamer_gzip_writer));
+	streamer = palloc0_object(astreamer_gzip_writer);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_gzip_writer_ops;
 
@@ -241,7 +241,7 @@ astreamer_gzip_decompressor_new(astreamer *next)
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(astreamer_gzip_decompressor));
+	streamer = palloc0_object(astreamer_gzip_decompressor);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_gzip_decompressor_ops;
 

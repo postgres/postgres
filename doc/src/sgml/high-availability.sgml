@@ -151,7 +151,7 @@ protocol to make nodes agree on a serializable transactional order.
     </para>
     <para>
      A standby server can be implemented using file-based log shipping
-     (<xref linkend="warm-standby"/>) or streaming replication (see
+     (<xref linkend="warm-standby"/>) or streaming physical replication (see
      <xref linkend="streaming-replication"/>), or a combination of both. For
      information on hot standby, see <xref linkend="hot-standby"/>.
     </para>
@@ -628,7 +628,7 @@ protocol to make nodes agree on a serializable transactional order.
     In standby mode, the server continuously applies WAL received from the
     primary server. The standby server can read WAL from a WAL archive
     (see <xref linkend="guc-restore-command"/>) or directly from the primary
-    over a TCP connection (streaming replication). The standby server will
+    over a TCP connection (streaming physical replication). The standby server will
     also attempt to restore any WAL found in the standby cluster's
     <filename>pg_wal</filename> directory. That typically happens after a server
     restart, when the standby replays again WAL that was streamed from the
@@ -745,8 +745,8 @@ protocol to make nodes agree on a serializable transactional order.
     A simple example of configuration is:
 <programlisting>
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass options=''-c wal_sender_timeout=5000'''
-restore_command = 'cp /path/to/archive/%f %p'
-archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
+restore_command = 'cp "/path/to/archive/%f" "%p"'
+archive_cleanup_command = 'pg_archivecleanup /path/to/archive "%r"'
 </programlisting>
    </para>
 
@@ -771,6 +771,14 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
     to the primary, which streams WAL records to the standby as they're
     generated, without waiting for the WAL file to be filled.
    </para>
+
+   <note>
+    <para>
+     This discussion of streaming replication assumes physical replication.
+     Although you could treat a logical replication subscriber as a warm standby,
+     it would require some differences to what is described here.
+    </para>
+   </note>
 
    <para>
     Streaming replication is asynchronous by default
@@ -925,11 +933,11 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </indexterm>
    <para>
     Replication slots provide an automated way to ensure that the
-    primary server does
-    not remove WAL segments until they have been received by all standbys,
-    and that the primary does not remove rows which could cause a
-    <link linkend="hot-standby-conflict">recovery conflict</link> even when the
-    standby is disconnected.
+    primary server does not remove WAL segments until they have been
+    received, physically or logically, by all standbys/subscribers,
+    and that the primary does not remove rows which could cause a <link
+    linkend="hot-standby-conflict">recovery conflict</link> on physical
+    replicas even when the standby is disconnected.
    </para>
    <para>
     In lieu of using replication slots, it is possible to prevent the removal
@@ -943,9 +951,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
    <para>
     Similarly, <xref linkend="guc-hot-standby-feedback"/> on its own, without
-    also using a replication slot, provides protection against relevant rows
+    also using a physical replication slot, provides protection against relevant rows
     being removed by vacuum, but provides no protection during any time period
-    when the standby is not connected.
+    when the physical replication standby is disconnected.
    </para>
 
    <caution>
@@ -978,7 +986,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <sect3 id="streaming-replication-slots-config">
     <title>Configuration Example</title>
     <para>
-     You can create a replication slot like this:
+     You can create a physical replication slot on the primary like this:
 <programlisting>
 postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
   slot_name  | lsn
@@ -1374,6 +1382,60 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    </sect3>
+  </sect2>
+
+  <sect2 id="read-your-writes-consistency">
+   <title>Read-Your-Writes Consistency</title>
+
+   <para>
+    In asynchronous replication, there is always a short window where changes
+    on the primary may not yet be visible on the standby due to replication
+    lag. This can lead to inconsistencies when an application writes data on
+    the primary and then immediately issues a read query on the standby.
+    However, it is possible to address this without switching to synchronous
+    replication.
+   </para>
+
+   <para>
+    To address this, PostgreSQL offers a mechanism for read-your-writes
+    consistency. The key idea is to ensure that a client sees its own writes
+    by synchronizing the WAL replay on the standby with the known point of
+    change on the primary.
+   </para>
+
+   <para>
+    This is achieved by the following steps.  After performing write
+    operations, the application retrieves the current WAL location using a
+    function call like this.
+
+    <programlisting>
+postgres=# SELECT pg_current_wal_insert_lsn();
+pg_current_wal_insert_lsn
+--------------------
+0/306EE20
+(1 row)
+    </programlisting>
+   </para>
+
+   <para>
+    The <acronym>LSN</acronym> obtained from the primary is then communicated
+    to the standby server. This can be managed at the application level or
+    via the connection pooler.  On the standby, the application issues the
+    <xref linkend="sql-wait-for"/> command to block further processing until
+    the standby's WAL replay process reaches (or exceeds) the specified
+    <acronym>LSN</acronym>.
+
+    <programlisting>
+postgres=# WAIT FOR LSN '0/306EE20';
+ status
+--------
+ success
+(1 row)
+    </programlisting>
+    Once the command returns a status of success, it guarantees that all
+    changes up to the provided <acronym>LSN</acronym> have been applied,
+    ensuring that subsequent read queries will reflect the latest updates.
+   </para>
   </sect2>
 
   <sect2 id="continuous-archiving-in-standby">

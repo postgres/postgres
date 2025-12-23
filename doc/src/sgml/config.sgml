@@ -1234,7 +1234,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        The library/libraries to use for validating OAuth connection tokens. If
+        Sets the library/libraries to use for validating OAuth connection tokens. If
         only one validator library is provided, it will be used by default for
         any OAuth connections; otherwise, all
         <link linkend="auth-oauth"><literal>oauth</literal> HBA entries</link>
@@ -1400,7 +1400,7 @@ include_dir 'conf.d'
        <para>
         Specifies a list of cipher suites that are allowed by connections using
         <acronym>TLS</acronym> version 1.3.  Multiple cipher suites can be
-        specified by using a colon separated list. If left blank, the default
+        specified by using a colon-separated list. If left blank, the default
         set of cipher suites in <productname>OpenSSL</productname> will be used.
        </para>
 
@@ -1680,13 +1680,19 @@ include_dir 'conf.d'
         This parameter determines whether the passphrase command set by
         <varname>ssl_passphrase_command</varname> will also be called during a
         configuration reload if a key file needs a passphrase.  If this
-        parameter is off (the default), then
+        parameter is <literal>off</literal> (the default), then
         <varname>ssl_passphrase_command</varname> will be ignored during a
         reload and the SSL configuration will not be reloaded if a passphrase
         is needed.  That setting is appropriate for a command that requires a
         TTY for prompting, which might not be available when the server is
         running.  Setting this parameter to on might be appropriate if the
         passphrase is obtained from a file, for example.
+       </para>
+       <para>
+        This parameter must be set to <literal>on</literal> when running on
+        <systemitem class="osname">Windows</systemitem> since all connections
+        will perform a configuration reload due to the different process model
+        of that platform.
        </para>
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
@@ -1760,7 +1766,8 @@ include_dir 'conf.d'
        <para>
         Controls whether huge pages are requested for the main shared memory
         area. Valid values are <literal>try</literal> (the default),
-        <literal>on</literal>, and <literal>off</literal>.  With
+        <literal>on</literal>, and <literal>off</literal>.
+        This parameter can only be set at server start. With
         <varname>huge_pages</varname> set to <literal>try</literal>, the
         server will try to request huge pages, but fall back to the default if
         that fails. With <literal>on</literal>, failure to request huge pages
@@ -2068,7 +2075,7 @@ include_dir 'conf.d'
        <para>
         Specifies the maximum amount of memory to be used by logical decoding,
         before some of the decoded changes are written to local disk. This
-        limits the amount of memory used by logical streaming replication
+        limits the amount of memory used by streaming logical replication
         connections. It defaults to 64 megabytes (<literal>64MB</literal>).
         Since each replication connection only uses a single buffer of this size,
         and an installation normally doesn't have many such connections
@@ -2273,6 +2280,7 @@ include_dir 'conf.d'
         platform, is generally discouraged because it typically requires
         non-default kernel settings to allow for large allocations (see <xref
         linkend="sysvipc"/>).
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -2300,6 +2308,7 @@ include_dir 'conf.d'
         however, it may be useful for debugging, when the
         <literal>pg_dynshmem</literal> directory is stored on a RAM disk, or when
         other shared memory facilities are not available.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -2363,7 +2372,7 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc_file_copy_method" xreflabel="file_copy_method">
+     <varlistentry id="guc-file-copy-method" xreflabel="file_copy_method">
       <term><varname>file_copy_method</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>file_copy_method</varname> configuration parameter</primary>
@@ -2413,6 +2422,7 @@ include_dir 'conf.d'
         <xref linkend="sql-notify"/> / <xref linkend="sql-listen"/> queue.
         The default value is 1048576. For 8 KB pages it allows to consume
         up to 8 GB of disk space.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -2432,8 +2442,8 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Sets the maximum number of open files each server subprocess is
-        allowed to open simultaneously;  files already opened in the
+        Sets the maximum number of files each server subprocess is
+        allowed to have open simultaneously;  files already opened in the
         postmaster are not counted toward this limit. The default is one
         thousand files.
        </para>
@@ -2694,9 +2704,9 @@ include_dir 'conf.d'
         <para>
          Controls the largest I/O size in operations that combine I/O, and silently
          limits the user-settable parameter <varname>io_combine_limit</varname>.
-         This parameter can only be set in
-         the <filename>postgresql.conf</filename> file or on the server
-         command line.
+         This parameter can only be set at server start.
+         If this value is specified without units, it is taken as blocks,
+         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
          The maximum possible size depends on the operating system and block
          size, but is typically 1MB on Unix and 128kB on Windows.
          The default is 128kB.
@@ -2716,6 +2726,8 @@ include_dir 'conf.d'
          higher than the <varname>io_max_combine_limit</varname> parameter, the
          lower value will silently be used instead, so both may need to be raised
          to increase the I/O size.
+         If this value is specified without units, it is taken as blocks,
+         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
          The maximum possible size depends on the operating system and block
          size, but is typically 1MB on Unix and 128kB on Windows.
          The default is 128kB.
@@ -2779,6 +2791,7 @@ include_dir 'conf.d'
            </para>
           </listitem>
          </itemizedlist>
+         The default is <literal>worker</literal>.
         </para>
         <para>
          This parameter can only be set at server start.
@@ -2787,7 +2800,7 @@ include_dir 'conf.d'
       </varlistentry>
 
       <varlistentry id="guc-io-workers" xreflabel="io_workers">
-       <term><varname>io_workers</varname> (<type>int</type>)
+       <term><varname>io_workers</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>io_workers</varname> configuration parameter</primary>
        </indexterm>
@@ -2893,7 +2906,8 @@ include_dir 'conf.d'
          Sets the maximum number of parallel workers that can be
          started by a single utility command.  Currently, the parallel
          utility commands that support the use of parallel workers are
-         <command>CREATE INDEX</command> when building a B-tree or BRIN index,
+         <command>CREATE INDEX</command> when building a B-tree,
+         GIN, or BRIN index,
          and <command>VACUUM</command> without <literal>FULL</literal>
          option.  Parallel workers are taken from the pool of processes
          established by <xref linkend="guc-max-worker-processes"/>, limited
@@ -3031,6 +3045,17 @@ include_dir 'conf.d'
         tables are configured for <literal>REPLICA IDENTITY FULL</literal> and
         many <command>UPDATE</command> and <command>DELETE</command> statements are
         executed.
+       </para>
+       <para>
+        It is important to note that when <varname>wal_level</varname> is set to
+        <literal>replica</literal>, the effective WAL level can automatically change
+        based on the presence of <link linkend="logicaldecoding-replication-slots">
+        logical replication slots</link>. The system automatically increases the
+        effective WAL level to <literal>logical</literal> when creating the first
+        logical replication slot, and decreases it back to <literal>replica</literal>
+        when dropping or invalidating the last logical replication slot. The current
+        effective WAL level can be monitored through
+        <xref linkend="guc-effective-wal-level"/> parameter.
        </para>
        <para>
         In releases prior to 9.6, this parameter also allowed the
@@ -3397,8 +3422,9 @@ include_dir 'conf.d'
         This parameter enables compression of WAL using the specified
         compression method.
         When enabled, the <productname>PostgreSQL</productname>
-        server compresses full page images written to WAL when
-        <xref linkend="guc-full-page-writes"/> is on or during a base backup.
+        server compresses full page images written to WAL (e.g. when
+        <xref linkend="guc-full-page-writes"/> is on, during a base backup,
+        etc.).
         A compressed page image will be decompressed during WAL replay.
         The supported methods are <literal>pglz</literal>,
         <literal>lz4</literal> (if <productname>PostgreSQL</productname>
@@ -3785,7 +3811,7 @@ include_dir 'conf.d'
         difference between the two modes, but when set to <literal>always</literal>
         the WAL archiver is enabled also during archive recovery or standby
         mode. In <literal>always</literal> mode, all files restored from the archive
-        or streamed with streaming replication will be archived (again). See
+        or streamed with streaming physical replication will be archived (again). See
         <xref linkend="continuous-archiving-in-standby"/> for details.
        </para>
        <para>
@@ -3891,7 +3917,7 @@ include_dir 'conf.d'
         full files.  Therefore, it is unwise to use a very short
         <varname>archive_timeout</varname> &mdash; it will bloat your archive
         storage.  <varname>archive_timeout</varname> settings of a minute or so are
-        usually reasonable.  You should consider using streaming replication,
+        usually reasonable.  You should consider using streaming physical replication,
         instead of archiving, if you want data to be copied off the primary
         server more quickly than that.
         If this value is specified without units, it is taken as seconds.
@@ -3916,7 +3942,7 @@ include_dir 'conf.d'
 
     <para>
      This section describes the settings that apply to recovery in general,
-     affecting crash recovery, streaming replication and archive-based
+     affecting crash recovery, streaming physical replication and archive-based
      replication.
     </para>
 
@@ -3960,6 +3986,7 @@ include_dir 'conf.d'
         blocks to prefetch.  If this value is specified without units, it is
         taken as bytes.
         The default is 512kB.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -4026,7 +4053,7 @@ include_dir 'conf.d'
        <para>
         The local shell command to execute to retrieve an archived segment of
         the WAL file series. This parameter is required for archive recovery,
-        but optional for streaming replication.
+        but optional for streaming physical replication.
         Any <literal>%f</literal> in the string is
         replaced by the name of the file to retrieve from the archive,
         and any <literal>%p</literal> is replaced by the copy destination path name
@@ -4034,7 +4061,7 @@ include_dir 'conf.d'
         (The path name is relative to the current working directory,
         i.e., the cluster's data directory.)
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point. That is the earliest file that must be kept
+        last valid restartpoint. That is the earliest file that must be kept
         to allow a restore to be restartable, so this information can be used
         to truncate the archive to just the minimum required to support
         restarting from the current restore. <literal>%r</literal> is typically only
@@ -4049,7 +4076,7 @@ include_dir 'conf.d'
         names that are not present in the archive; it must return nonzero
         when so asked.  Examples:
 <programlisting>
-restore_command = 'cp /mnt/server/archivedir/%f "%p"'
+restore_command = 'cp "/mnt/server/archivedir/%f" "%p"'
 restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 </programlisting>
         An exception is that if the command was terminated by a signal (other
@@ -4079,7 +4106,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         cleaning up old archived WAL files that are no longer needed by the
         standby server.
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point.
+        last valid restartpoint.
         That is the earliest file that must be <emphasis>kept</emphasis> to allow a
         restore to be restartable, and so all files earlier than <literal>%r</literal>
         may be safely removed.
@@ -4088,7 +4115,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The <xref linkend="pgarchivecleanup"/> module
         is often used in <varname>archive_cleanup_command</varname> for
         single-standby configurations, for example:
-<programlisting>archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r'</programlisting>
+<programlisting>archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir "%r"'</programlisting>
         Note however that if multiple standby servers are restoring from the
         same archive directory, you will need to ensure that you do not delete
         WAL files until they are no longer needed by any of the servers.
@@ -4123,7 +4150,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <varname>recovery_end_command</varname> is to provide a mechanism for cleanup
         following replication or recovery.
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point, like in <xref linkend="guc-archive-cleanup-command"/>.
+        last valid restartpoint, like in <xref linkend="guc-archive-cleanup-command"/>.
        </para>
        <para>
         If the command returns a nonzero exit status then a warning log
@@ -4452,15 +4479,16 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
     <title>Replication</title>
 
     <para>
-     These settings control the behavior of the built-in
-     <firstterm>streaming replication</firstterm> feature (see
-     <xref linkend="streaming-replication"/>), and the built-in
-     <firstterm>logical replication</firstterm> feature (see
+     These settings control the behavior of
+     <firstterm>streaming replication</firstterm>,
+     both <firstterm>physical replication</firstterm>
+     (see <xref linkend="streaming-replication"/>) and
+     <firstterm>logical replication</firstterm> (see
      <xref linkend="logical-replication"/>).
     </para>
 
     <para>
-     For <emphasis>streaming replication</emphasis>, servers will be either a
+     For <emphasis>physical replication</emphasis>, servers will be either a
      primary or a standby server.  Primaries can send data, while standbys
      are always receivers of replicated data.  When cascading replication
      (see <xref linkend="cascading-replication"/>) is used, standby servers
@@ -4616,10 +4644,12 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        Invalidate replication slots that have remained idle longer than this
-        duration. If this value is specified without units, it is taken as
-        minutes. A value of zero (the default) disables the idle timeout
-        invalidation mechanism. This parameter can only be set in the
+        Invalidate replication slots that have remained inactive (not used by
+        a <link linkend="protocol-replication">replication connection</link>)
+        for longer than this duration.
+        If this value is specified without units, it is taken as seconds.
+        A value of zero (the default) disables the idle timeout
+        invalidation mechanism.  This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command
         line.
        </para>
@@ -4683,9 +4713,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        Record commit time of transactions. This parameter
-        can only be set in <filename>postgresql.conf</filename> file or on the server
-        command line. The default value is <literal>off</literal>.
+        Record commit time of transactions.
+        This parameter can only be set at server start.
+        The default value is <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -4889,7 +4919,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       These settings control the behavior of a
       <link linkend="standby-server-operation">standby server</link>
       that is
-      to receive replication data.  Their values on the primary server
+      to receive physical replication data.  Their values on the primary server
       are irrelevant.
      </para>
 
@@ -4961,6 +4991,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           new setting.
           This setting has no effect if <varname>primary_conninfo</varname> is not
           set or the server is not in standby mode.
+          The name cannot be <literal>pg_conflict_detection</literal> as it is
+          reserved for the conflict detection slot.
          </para>
         </listitem>
        </varlistentry>
@@ -5027,7 +5059,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         conflict with about-to-be-applied WAL entries, as described in
         <xref linkend="hot-standby-conflict"/>.
         <varname>max_standby_streaming_delay</varname> applies when WAL data is
-        being received via streaming replication.
+        being received via streaming physical replication.
         If this value is specified without units, it is taken as milliseconds.
         The default is 30 seconds.
         A value of -1 allows the standby to wait forever for conflicting
@@ -5163,7 +5195,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies how long the standby server should wait when WAL data is not
-        available from any sources (streaming replication,
+        available from any sources (streaming physical replication,
         local <filename>pg_wal</filename> or WAL archive) before trying
         again to retrieve WAL data.
         If this value is specified without units, it is taken as milliseconds.
@@ -5185,8 +5217,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        </para>
        <para>
         In logical replication, this parameter also limits how often a failing
-        replication apply worker or table synchronization worker will be
-        respawned.
+        replication apply worker or table/sequence synchronization worker will
+        be respawned.
        </para>
       </listitem>
      </varlistentry>
@@ -5240,7 +5272,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         <filename>pg_wal</filename> directory.
        </para>
        <para>
-        This parameter is intended for use with streaming replication deployments;
+        This parameter is intended for use with streaming physical replication deployments;
         however, if the parameter is specified it will be honored in all cases
         except crash recovery.
 
@@ -5327,8 +5359,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies maximum number of logical replication workers. This includes
-        leader apply workers, parallel apply workers, and table synchronization
-        workers.
+        leader apply workers, parallel apply workers, and table/sequence
+        synchronization workers.
        </para>
        <para>
         Logical replication workers are taken from the pool defined by
@@ -5351,10 +5383,14 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Maximum number of synchronization workers per subscription. This
         parameter controls the amount of parallelism of the initial data copy
-        during the subscription initialization or when new tables are added.
+        for tables during the subscription initialization or when new tables
+        are added. One additional worker is also needed for sequence
+        synchronization.
        </para>
        <para>
-        Currently, there can be only one synchronization worker per table.
+        Currently, there can be only one table synchronization worker per table
+        and one sequence synchronization worker to synchronize per
+        subscription.
        </para>
        <para>
         The synchronization workers are taken from the pool defined by
@@ -5464,6 +5500,21 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's ability to reorder DISTINCT
         keys to match the input path's pathkeys. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-eager-aggregate" xreflabel="enable_eager_aggregate">
+      <term><varname>enable_eager_aggregate</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_eager_aggregate</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's ability to partially push
+        aggregation past a join, and finalize it once all the relations are
+        joined. The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -5764,7 +5815,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable_self_join_elimination" xreflabel="enable_self_join_elimination">
+     <varlistentry id="guc-enable-self-join-elimination" xreflabel="enable_self_join_elimination">
       <term><varname>enable_self_join_elimination</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_self_join_elimination</varname> configuration parameter</primary>
@@ -5902,24 +5953,24 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        </para>
 
        <para>
-        Random access to mechanical disk storage is normally much more expensive
-        than four times sequential access.  However, a lower default is used
-        (4.0) because the majority of random accesses to disk, such as indexed
-        reads, are assumed to be in cache.  The default value can be thought of
-        as modeling random access as 40 times slower than sequential, while
-        expecting 90% of random reads to be cached.
+        Random access to durable storage is normally much more expensive
+        than four times sequential access.  However, a lower default is
+        used (4.0) because the majority of random accesses to storage,
+        such as indexed reads, are assumed to be in cache.  Also, the
+        latency of network-attached storage tends to reduce the relative
+        overhead of random access.
        </para>
 
        <para>
-        If you believe a 90% cache rate is an incorrect assumption
-        for your workload, you can increase random_page_cost to better
-        reflect the true cost of random storage reads. Correspondingly,
-        if your data is likely to be completely in cache, such as when
-        the database is smaller than the total server memory, decreasing
-        random_page_cost can be appropriate.  Storage that has a low random
-        read cost relative to sequential, e.g., solid-state drives, might
-        also be better modeled with a lower value for random_page_cost,
-        e.g., <literal>1.1</literal>.
+        If you believe caching is less frequent than the default
+        value reflects, and network latency is minimal, you can increase
+        random_page_cost to better reflect the true cost of random storage
+        reads.  Storage that has a higher random read cost relative to
+        sequential, like magnetic disks, might also be better modeled with
+        a higher value for random_page_cost.  Correspondingly, if your data
+        is likely to be completely in cache, such as when the database
+        is smaller than the total server memory, or network latency is
+        high, decreasing random_page_cost might be appropriate.
        </para>
 
        <tip>
@@ -6084,6 +6135,22 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         The default is 4 gigabytes (<literal>4GB</literal>).
         (If <symbol>BLCKSZ</symbol> is not 8kB, the default value scales
         proportionally to it.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-min-eager-agg-group-size" xreflabel="min_eager_agg_group_size">
+      <term><varname>min_eager_agg_group_size</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>min_eager_agg_group_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the minimum average group size required to consider applying
+        eager aggregation. This helps avoid the overhead of eager
+        aggregation when it does not offer significant row count reduction.
+        The default is <literal>8</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -6356,8 +6423,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
 <programlisting>
 CREATE TABLE parent(key integer, ...);
-CREATE TABLE child1000(check (key between 1000 and 1999)) INHERITS(parent);
-CREATE TABLE child2000(check (key between 2000 and 2999)) INHERITS(parent);
+CREATE TABLE child1000(CHECK (key BETWEEN 1000 AND 1999)) INHERITS(parent);
+CREATE TABLE child2000(CHECK (key BETWEEN 2000 AND 2999)) INHERITS(parent);
 ...
 SELECT * FROM parent WHERE key = 2400;
 </programlisting>
@@ -7001,8 +7068,7 @@ local0.*    /var/log/postgresql
         determines the program name used to identify
         <productname>PostgreSQL</productname> messages in
         the log. The default is <literal>PostgreSQL</literal>.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -7376,6 +7442,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-debug-print-parse">
+      <term><varname>debug_print_raw_parse</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_print_raw_parse</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
       <term><varname>debug_print_parse</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_parse</varname> configuration parameter</primary>
@@ -7394,8 +7465,8 @@ local0.*    /var/log/postgresql
       <listitem>
        <para>
         These parameters enable various debugging output to be emitted.
-        When set, they print the resulting parse tree, the query rewriter
-        output, or the execution plan for each executed query.
+        When set, they print the resulting raw parse tree, the parse tree, the query
+        rewriter output, or the execution plan for each executed query.
         These messages are emitted at <literal>LOG</literal> message level, so by
         default they will appear in the server log but will not be sent to the
         client.  You can change that by adjusting
@@ -7415,7 +7486,8 @@ local0.*    /var/log/postgresql
       <listitem>
        <para>
         When set, <varname>debug_pretty_print</varname> indents the messages
-        produced by <varname>debug_print_parse</varname>,
+        produced by <varname>debug_print_raw_parse</varname>,
+        <varname>debug_print_parse</varname>,
         <varname>debug_print_rewritten</varname>, or
         <varname>debug_print_plan</varname>.  This results in more readable
         but much longer output than the <quote>compact</quote> format used when
@@ -7433,17 +7505,44 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
        <para>
-        Causes each action executed by autovacuum to be logged if it ran for at
+        Causes vacuum action executed by autovacuum to be logged if it ran for at
         least the specified amount of time.  Setting this to zero logs
-        all autovacuum actions. <literal>-1</literal> disables logging autovacuum
-        actions. If this value is specified without units, it is taken as milliseconds.
-        For example, if you set this to
-        <literal>250ms</literal> then all automatic vacuums and analyzes that run
+        all vacuum actions by autovacuum. <literal>-1</literal> disables logging
+        vacuum actions by autovacuum. If this value is specified without units,
+        it is taken as milliseconds. For example, if you set this to
+        <literal>250ms</literal> then all automatic vacuums that run
         250ms or longer will be logged.  In addition, when this parameter is
         set to any value other than <literal>-1</literal>, a message will be
-        logged if an autovacuum action is skipped due to a conflicting lock or a
+        logged if a vacuum action by autovacuum is skipped due to a conflicting lock or a
         concurrently dropped relation. The default is <literal>10min</literal>.
-        Enabling this parameter can be helpful in tracking autovacuum activity.
+        Enabling this parameter can be helpful in tracking vacuum activity by autovacuum.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line; but the setting can be overridden for
+        individual tables by changing table storage parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-autoanalyze-min-duration" xreflabel="log_autoanalyze_min_duration">
+      <term><varname>log_autoanalyze_min_duration</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>log_autoanalyze_min_duration</varname></primary>
+       <secondary>configuration parameter</secondary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Causes analyze action executed by autovacuum to be logged if it ran for at
+        least the specified amount of time.  Setting this to zero logs
+        all analyze actions by autovacuum. <literal>-1</literal> disables logging
+        analyze actions by autovacuum. If this value is specified without units,
+        it is taken as milliseconds. For example, if you set this to
+        <literal>250ms</literal> then all automatic analyzes that run
+        250ms or longer will be logged.  In addition, when this parameter is
+        set to any value other than <literal>-1</literal>, a message will be
+        logged if an analyze action by autovacuum is skipped due to a conflicting lock or a
+        concurrently dropped relation. The default is <literal>10min</literal>.
+        Enabling this parameter can be helpful in tracking analyze activity by autovacuum.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line; but the setting can be overridden for
         individual tables by changing table storage parameters.
@@ -7527,12 +7626,12 @@ local0.*    /var/log/postgresql
            <entry><literal>setup_durations</literal></entry>
            <entry>
             Logs the time spent establishing the connection and setting up the
-            backend at the time the connection is ready to execute its first
-            query. The log message includes the total setup duration, starting
-            from the postmaster accepting the incoming connection and ending
-            when the connection is ready for query. It also includes the time
-            it took to fork the new backend and the time it took to
-            authenticate the user.
+            backend until the connection is ready to execute its first
+            query. The log message includes three durations:  the total
+            setup duration (starting from the postmaster accepting the
+            incoming connection and ending when the connection is ready
+            for query), the time it took to fork the new backend, and
+            the time it took to authenticate the user.
            </entry>
           </row>
 
@@ -7916,17 +8015,17 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         Controls whether a log message is produced when a session waits
         longer than <xref linkend="guc-deadlock-timeout"/> to acquire a
         lock.  This is useful in determining if lock waits are causing
-        poor performance.  The default is <literal>off</literal>.
+        poor performance.  The default is <literal>on</literal>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-log-lock-failure" xreflabel="log_lock_failure">
-      <term><varname>log_lock_failure</varname> (<type>boolean</type>)
+     <varlistentry id="guc-log-lock-failures" xreflabel="log_lock_failures">
+      <term><varname>log_lock_failures</varname> (<type>boolean</type>)
       <indexterm>
-       <primary><varname>log_lock_failure</varname> configuration parameter</primary>
+       <primary><varname>log_lock_failures</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -8600,7 +8699,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         timing information is displayed in
         <link linkend="vacuum-progress-reporting"><structname>pg_stat_progress_vacuum</structname></link>,
         <link linkend="analyze-progress-reporting"><structname>pg_stat_progress_analyze</structname></link>,
-        in the output of <xref linkend="sql-vacuum"/> when the
+        in the output of <xref linkend="sql-vacuum"/> and
+        <xref linkend="sql-analyze"/> when the
         <literal>VERBOSE</literal> option is used, and by autovacuum for
         auto-vacuums and auto-analyzes when
         <xref linkend="guc-log-autovacuum-min-duration"/> is set.
@@ -9338,7 +9438,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <varlistentry id="guc-vacuum-truncate" xreflabel="vacuum_truncate">
        <term><varname>vacuum_truncate</varname> (<type>boolean</type>)
        <indexterm>
-        <primary><varname>vacuum_truncate</varname> configuration parameter</primary>
+        <primary><varname>vacuum_truncate</varname></primary>
+        <secondary>configuration parameter</secondary>
        </indexterm>
        </term>
        <listitem>
@@ -9542,7 +9643,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-vacuum-max-eager-freeze-failure-rate" xreflabel="vacuum_max_eager_freeze_failure_rate">
       <term><varname>vacuum_max_eager_freeze_failure_rate</varname> (<type>floating point</type>)
       <indexterm>
-       <primary><varname>vacuum_max_eager_freeze_failure_rate</varname> configuration parameter</primary>
+       <primary><varname>vacuum_max_eager_freeze_failure_rate</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -11050,6 +11152,12 @@ extension_control_path = 'C:\tools\postgresql;H:\my_project\share;$system'
        </para>
 
        <para>
+        If extensions with equal names are present in multiple directories in
+        the configured path, only the instance found first in the path will be
+        used.
+       </para>
+
+       <para>
         This parameter can be changed at run time by superusers and users
         with the appropriate <literal>SET</literal> privilege, but a
         setting done that way will only persist until the end of the
@@ -11737,6 +11845,55 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-debug-exec-backend" xreflabel="debug_exec_backend">
+      <term><varname>debug_exec_backend</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_exec_backend</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports whether <productname>PostgreSQL</productname> has been built
+        with <literal>EXEC_BACKEND</literal> enabled. That is the case on
+        <systemitem class="osname">Windows</systemitem> or if the
+        macro <symbol>EXEC_BACKEND</symbol> is defined
+        when <productname>PostgreSQL</productname> is built.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-effective-wal-level" xreflabel="effective_wal_level">
+      <term><varname>effective_wal_level</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>effective_wal_level</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports the actual WAL logging level currently in effect in the
+        system. This parameter shares the same set of values as
+        <xref linkend="guc-wal-level"/>, but reflects the operational WAL
+        level rather than the configured setting. For descriptions of
+        possible values, refer to the <varname>wal_level</varname>
+        parameter documentation.
+       </para>
+       <para>
+        The effective WAL level can differ from the configured
+        <varname>wal_level</varname> in certain situations. For example,
+        when <varname>wal_level</varname> is set to <literal>replica</literal>
+        and the system has one or more logical replication slots,
+        <varname>effective_wal_level</varname> will show <literal>logical</literal>
+        to indicate that the system is maintaining WAL records at
+        <literal>logical</literal> level equivalent.
+       </para>
+       <para>
+        On standby servers, <varname>effective_wal_level</varname> matches
+        the value of <varname>effective_wal_level</varname> from the most
+        upstream server in the replication chain.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-huge-pages-status" xreflabel="huge_pages_status">
       <term><varname>huge_pages_status</varname> (<type>enum</type>)
       <indexterm>
@@ -12189,6 +12346,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
         main data files, <literal>wal</literal> for WAL files, and
         <literal>wal_init</literal> for WAL files when being initially
         allocated.
+        This parameter can only be set at server start.
        </para>
        <para>
         Some operating systems and file systems do not support direct I/O, so

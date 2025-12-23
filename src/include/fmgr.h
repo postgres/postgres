@@ -19,14 +19,14 @@
 #define FMGR_H
 
 /* We don't want to include primnodes.h here, so make some stub references */
-typedef struct Node *fmNodePtr;
-typedef struct Aggref *fmAggrefPtr;
+typedef struct Node Node;
+typedef struct Aggref Aggref;
 
 /* Likewise, avoid including execnodes.h here */
-typedef void (*fmExprContextCallbackFunction) (Datum arg);
+typedef void (*ExprContextCallbackFunction) (Datum arg);
 
 /* Likewise, avoid including stringinfo.h here */
-typedef struct StringInfoData *fmStringInfo;
+typedef struct StringInfoData *StringInfo;
 
 
 /*
@@ -63,7 +63,7 @@ typedef struct FmgrInfo
 	unsigned char fn_stats;		/* collect stats if track_functions > this */
 	void	   *fn_extra;		/* extra space for use by handler */
 	MemoryContext fn_mcxt;		/* memory context to store fn_extra in */
-	fmNodePtr	fn_expr;		/* expression parse tree for call, or NULL */
+	Node	   *fn_expr;		/* expression parse tree for call, or NULL */
 } FmgrInfo;
 
 /*
@@ -85,8 +85,8 @@ typedef struct FmgrInfo
 typedef struct FunctionCallInfoBaseData
 {
 	FmgrInfo   *flinfo;			/* ptr to lookup info used for this call */
-	fmNodePtr	context;		/* pass info about context of call */
-	fmNodePtr	resultinfo;		/* pass or return extra info about result */
+	Node	   *context;		/* pass info about context of call */
+	Node	   *resultinfo;		/* pass or return extra info about result */
 	Oid			fncollation;	/* collation for function to use */
 #define FIELDNO_FUNCTIONCALLINFODATA_ISNULL 4
 	bool		isnull;			/* function must set true if result is NULL */
@@ -259,7 +259,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
  */
 #define PG_FREE_IF_COPY(ptr,n) \
 	do { \
-		if ((Pointer) (ptr) != PG_GETARG_POINTER(n)) \
+		if ((ptr) != PG_GETARG_POINTER(n)) \
 			pfree(ptr); \
 	} while (0)
 
@@ -469,7 +469,7 @@ typedef struct
 	int			funcmaxargs;	/* FUNC_MAX_ARGS */
 	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
 	int			namedatalen;	/* NAMEDATALEN */
-	int			float8byval;	/* FLOAT8PASSBYVAL */
+	int			float8byval;	/* FLOAT8PASSBYVAL (now vestigial) */
 	char		abi_extra[32];	/* see pg_config_manual.h */
 } Pg_abi_values;
 
@@ -742,19 +742,19 @@ extern Datum InputFunctionCall(FmgrInfo *flinfo, char *str,
 							   Oid typioparam, int32 typmod);
 extern bool InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 								  Oid typioparam, int32 typmod,
-								  fmNodePtr escontext,
+								  Node *escontext,
 								  Datum *result);
 extern bool DirectInputFunctionCallSafe(PGFunction func, char *str,
 										Oid typioparam, int32 typmod,
-										fmNodePtr escontext,
+										Node *escontext,
 										Datum *result);
 extern Datum OidInputFunctionCall(Oid functionId, char *str,
 								  Oid typioparam, int32 typmod);
 extern char *OutputFunctionCall(FmgrInfo *flinfo, Datum val);
 extern char *OidOutputFunctionCall(Oid functionId, Datum val);
-extern Datum ReceiveFunctionCall(FmgrInfo *flinfo, fmStringInfo buf,
+extern Datum ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
 								 Oid typioparam, int32 typmod);
-extern Datum OidReceiveFunctionCall(Oid functionId, fmStringInfo buf,
+extern Datum OidReceiveFunctionCall(Oid functionId, StringInfo buf,
 									Oid typioparam, int32 typmod);
 extern bytea *SendFunctionCall(FmgrInfo *flinfo, Datum val);
 extern bytea *OidSendFunctionCall(Oid functionId, Datum val);
@@ -767,9 +767,9 @@ extern const Pg_finfo_record *fetch_finfo_record(void *filehandle, const char *f
 extern Oid	fmgr_internal_function(const char *proname);
 extern Oid	get_fn_expr_rettype(FmgrInfo *flinfo);
 extern Oid	get_fn_expr_argtype(FmgrInfo *flinfo, int argnum);
-extern Oid	get_call_expr_argtype(fmNodePtr expr, int argnum);
+extern Oid	get_call_expr_argtype(Node *expr, int argnum);
 extern bool get_fn_expr_arg_stable(FmgrInfo *flinfo, int argnum);
-extern bool get_call_expr_arg_stable(fmNodePtr expr, int argnum);
+extern bool get_call_expr_arg_stable(Node *expr, int argnum);
 extern bool get_fn_expr_variadic(FmgrInfo *flinfo);
 extern bytea *get_fn_opclass_options(FmgrInfo *flinfo);
 extern bool has_fn_opclass_options(FmgrInfo *flinfo);
@@ -814,11 +814,11 @@ extern void RestoreLibraryState(char *start_address);
 
 extern int	AggCheckCallContext(FunctionCallInfo fcinfo,
 								MemoryContext *aggcontext);
-extern fmAggrefPtr AggGetAggref(FunctionCallInfo fcinfo);
+extern Aggref *AggGetAggref(FunctionCallInfo fcinfo);
 extern MemoryContext AggGetTempMemoryContext(FunctionCallInfo fcinfo);
 extern bool AggStateIsShared(FunctionCallInfo fcinfo);
 extern void AggRegisterCallback(FunctionCallInfo fcinfo,
-								fmExprContextCallbackFunction func,
+								ExprContextCallbackFunction func,
 								Datum arg);
 
 /*

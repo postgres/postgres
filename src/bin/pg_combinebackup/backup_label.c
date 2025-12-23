@@ -247,7 +247,7 @@ parse_lsn(char *s, char *e, XLogRecPtr *lsn, char **c)
 	unsigned	lo;
 
 	*e = '\0';
-	success = (sscanf(s, "%X/%X%n", &hi, &lo, &nchars) == 2);
+	success = (sscanf(s, "%X/%08X%n", &hi, &lo, &nchars) == 2);
 	*e = save;
 
 	if (success)

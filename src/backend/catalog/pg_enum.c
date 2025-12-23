@@ -110,12 +110,6 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 
 	num_elems = list_length(vals);
 
-	/*
-	 * We do not bother to check the list of values for duplicates --- if you
-	 * have any, you'll get a less-than-friendly unique-index violation. It is
-	 * probably not worth trying harder.
-	 */
-
 	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	/*
@@ -126,7 +120,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 * allocating the next), trouble could only occur if the OID counter wraps
 	 * all the way around before we finish. Which seems unlikely.
 	 */
-	oids = (Oid *) palloc(num_elems * sizeof(Oid));
+	oids = palloc_array(Oid, num_elems);
 
 	for (elemno = 0; elemno < num_elems; elemno++)
 	{
@@ -154,7 +148,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	/* allocate the slots to use and initialize them */
 	nslots = Min(num_elems,
 				 MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_enum));
-	slot = palloc(sizeof(TupleTableSlot *) * nslots);
+	slot = palloc_array(TupleTableSlot *, nslots);
 	for (int i = 0; i < nslots; i++)
 		slot[i] = MakeSingleTupleTableSlot(RelationGetDescr(pg_enum),
 										   &TTSOpsHeapTuple);
@@ -164,6 +158,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	{
 		char	   *lab = strVal(lfirst(lc));
 		Name		enumlabel = palloc0(NAMEDATALEN);
+		ListCell   *lc2;
 
 		/*
 		 * labels are stored in a name field, for easier syscache lookup, so
@@ -176,6 +171,24 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 					 errdetail("Labels must be %d bytes or less.",
 							   NAMEDATALEN - 1)));
 
+		/*
+		 * Check for duplicate labels. The unique index on pg_enum would catch
+		 * that anyway, but we prefer a friendlier error message.
+		 */
+		foreach(lc2, vals)
+		{
+			/* Only need to compare lc to earlier entries */
+			if (lc2 == lc)
+				break;
+
+			if (strcmp(lab, strVal(lfirst(lc2))) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("enum label \"%s\" used more than once",
+								lab)));
+		}
+
+		/* OK, construct a tuple for this label */
 		ExecClearTuple(slot[slotCount]);
 
 		memset(slot[slotCount]->tts_isnull, false,
@@ -362,7 +375,7 @@ restart:
 	nelems = list->n_members;
 
 	/* Sort the existing members by enumsortorder */
-	existing = (HeapTuple *) palloc(nelems * sizeof(HeapTuple));
+	existing = palloc_array(HeapTuple, nelems);
 	for (i = 0; i < nelems; i++)
 		existing[i] = &(list->members[i]->tuple);
 

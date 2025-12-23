@@ -21,7 +21,7 @@
 
   <para>
    <productname>PostgreSQL</productname> supports prefix
-   and infix operators.  Operators can be
+   and binary (or infix) operators.  Operators can be
    overloaded;<indexterm><primary>overloading</primary><secondary>operators</secondary></indexterm>
    that is, the same operator name can be used for different operators
    that have different numbers and types of operands.  When a query is

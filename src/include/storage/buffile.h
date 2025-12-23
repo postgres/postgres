@@ -42,8 +42,8 @@ pg_nodiscard extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
 extern void BufFileReadExact(BufFile *file, void *ptr, size_t size);
 extern size_t BufFileReadMaybeEOF(BufFile *file, void *ptr, size_t size, bool eofOK);
 extern void BufFileWrite(BufFile *file, const void *ptr, size_t size);
-extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
-extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
+extern int	BufFileSeek(BufFile *file, int fileno, pgoff_t offset, int whence);
+extern void BufFileTell(BufFile *file, int *fileno, pgoff_t *offset);
 extern int	BufFileSeekBlock(BufFile *file, int64 blknum);
 extern int64 BufFileSize(BufFile *file);
 extern int64 BufFileAppend(BufFile *target, BufFile *source);
@@ -54,6 +54,6 @@ extern BufFile *BufFileOpenFileSet(FileSet *fileset, const char *name,
 								   int mode, bool missing_ok);
 extern void BufFileDeleteFileSet(FileSet *fileset, const char *name,
 								 bool missing_ok);
-extern void BufFileTruncateFileSet(BufFile *file, int fileno, off_t offset);
+extern void BufFileTruncateFileSet(BufFile *file, int fileno, pgoff_t offset);
 
 #endif							/* BUFFILE_H */

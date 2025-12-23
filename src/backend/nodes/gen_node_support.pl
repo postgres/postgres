@@ -1039,6 +1039,11 @@ _read${n}(void)
 			print $off "\tWRITE_UINT_FIELD($f);\n";
 			print $rff "\tREAD_UINT_FIELD($f);\n" unless $no_read;
 		}
+		elsif ($t eq 'int64')
+		{
+			print $off "\tWRITE_INT64_FIELD($f);\n";
+			print $rff "\tREAD_INT64_FIELD($f);\n" unless $no_read;
+		}
 		elsif ($t eq 'uint64'
 			|| $t eq 'AclMode')
 		{
@@ -1324,7 +1329,7 @@ _jumble${n}(JumbleState *jstate, Node *node)
 			# Node type.  Squash constants if requested.
 			if ($query_jumble_squash)
 			{
-				print $jff "\tJUMBLE_ELEMENTS($f);\n"
+				print $jff "\tJUMBLE_ELEMENTS($f, node);\n"
 				  unless $query_jumble_ignore;
 			}
 			else

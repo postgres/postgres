@@ -36,7 +36,7 @@ typedef enum IoMethod
 #ifdef IOMETHOD_IO_URING_ENABLED
 	IOMETHOD_IO_URING,
 #endif
-} IoMethod;
+}			IoMethod;
 
 /* We'll default to worker based execution. */
 #define DEFAULT_IO_METHOD IOMETHOD_WORKER
@@ -201,7 +201,7 @@ typedef enum PgAioHandleCallbackID
 } PgAioHandleCallbackID;
 
 #define PGAIO_HCB_MAX	PGAIO_HCB_LOCAL_BUFFER_READV
-StaticAssertDecl(PGAIO_HCB_MAX <= (1 << PGAIO_RESULT_ID_BITS),
+StaticAssertDecl(PGAIO_HCB_MAX < (1 << PGAIO_RESULT_ID_BITS),
 				 "PGAIO_HCB_MAX is too big for PGAIO_RESULT_ID_BITS");
 
 

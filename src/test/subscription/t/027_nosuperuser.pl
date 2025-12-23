@@ -399,8 +399,9 @@ SKIP:
 	isnt($ret, 0,
 		"non zero exit for subscription whose owner is a non-superuser must specify password parameter of the connection string"
 	);
-	ok( $stderr =~
-		  m/DETAIL:  Non-superusers must provide a password in the connection string./,
+	like(
+		$stderr,
+		qr/DETAIL:  Non-superusers must provide a password in the connection string./,
 		'subscription whose owner is a non-superuser must specify password parameter of the connection string'
 	);
 

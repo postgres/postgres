@@ -962,10 +962,11 @@ create table list_parted_tbl (a int,b int) partition by list (a);
 create table list_parted_tbl1 partition of list_parted_tbl
   for values in (1) partition by list(b);
 explain (costs off) select * from list_parted_tbl;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on list_parted_tbl
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table list_parted_tbl;

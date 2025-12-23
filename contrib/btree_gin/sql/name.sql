@@ -19,3 +19,14 @@ EXPLAIN (COSTS OFF) SELECT * FROM test_name WHERE i<='abc' ORDER BY i;
 EXPLAIN (COSTS OFF) SELECT * FROM test_name WHERE i='abc' ORDER BY i;
 EXPLAIN (COSTS OFF) SELECT * FROM test_name WHERE i>='abc' ORDER BY i;
 EXPLAIN (COSTS OFF) SELECT * FROM test_name WHERE i>'abc' ORDER BY i;
+
+explain (costs off)
+SELECT * FROM test_name WHERE i<'abc'::text ORDER BY i;
+
+SELECT * FROM test_name WHERE i<'abc'::text ORDER BY i;
+SELECT * FROM test_name WHERE i<='abc'::text ORDER BY i;
+SELECT * FROM test_name WHERE i='abc'::text ORDER BY i;
+SELECT * FROM test_name WHERE i>='abc'::text ORDER BY i;
+SELECT * FROM test_name WHERE i>'abc'::text ORDER BY i;
+
+SELECT * FROM test_name WHERE i<=repeat('abc', 100) ORDER BY i;

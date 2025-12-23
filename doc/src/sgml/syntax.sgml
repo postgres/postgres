@@ -1834,8 +1834,8 @@ FROM generate_series(1,10) AS s(i);
     The syntax of a window function call is one of the following:
 
 <synopsis>
-<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER <replaceable>window_name</replaceable>
-<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
+<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) <optional>null treatment</optional> [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER <replaceable>window_name</replaceable>
+<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) <optional>null treatment</optional> [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
 <replaceable>function_name</replaceable> ( * ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER <replaceable>window_name</replaceable>
 <replaceable>function_name</replaceable> ( * ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
 </synopsis>
@@ -1873,7 +1873,9 @@ EXCLUDE NO OTHERS
 
    <para>
     Here, <replaceable>expression</replaceable> represents any value
-    expression that does not itself contain window function calls.
+    expression that does not itself contain window function calls. Some
+    non-aggregate functions allow a <literal>null treatment</literal> clause,
+    described in <xref linkend="functions-window"/>.
    </para>
 
    <para>
@@ -2048,7 +2050,7 @@ EXCLUDE NO OTHERS
 
    <para>
     The built-in window functions are described in <xref
-    linkend="functions-window-table"/>.  Other window functions can be added by
+    linkend="functions-window-table"/>. Other window functions can be added by
     the user.  Also, any built-in or user-defined general-purpose or
     statistical aggregate can be used as a window function.  (Ordered-set
     and hypothetical-set aggregates cannot presently be used as window functions.)
@@ -2428,8 +2430,8 @@ SELECT ROW(1,2.5,'this is a test');
     which will be expanded to a list of the elements of the row value,
     just as occurs when the <literal>.*</literal> syntax is used at the top level
     of a <command>SELECT</command> list (see <xref linkend="rowtypes-usage"/>).
-    For example, if table <literal>t</literal> has
-    columns <literal>f1</literal> and <literal>f2</literal>, these are the same:
+    For example, if table <structname>t</structname> has
+    columns <structfield>f1</structfield> and <structfield>f2</structfield>, these are the same:
 <programlisting>
 SELECT ROW(t.*, 42) FROM t;
 SELECT ROW(t.f1, t.f2, 42) FROM t;

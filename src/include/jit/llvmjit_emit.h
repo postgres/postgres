@@ -87,6 +87,15 @@ l_sizet_const(size_t i)
 }
 
 /*
+ * Emit constant integer.
+ */
+static inline LLVMValueRef
+l_datum_const(Datum i)
+{
+	return LLVMConstInt(TypeDatum, i, false);
+}
+
+/*
  * Emit constant boolean, as used for storage (e.g. global vars, structs).
  */
 static inline LLVMValueRef
@@ -313,7 +322,7 @@ l_funcnull(LLVMBuilderRef b, LLVMValueRef v_fcinfo, size_t argno)
 static inline LLVMValueRef
 l_funcvalue(LLVMBuilderRef b, LLVMValueRef v_fcinfo, size_t argno)
 {
-	return l_load(b, TypeSizeT, l_funcvaluep(b, v_fcinfo, argno), "");
+	return l_load(b, TypeDatum, l_funcvaluep(b, v_fcinfo, argno), "");
 }
 
 #endif							/* USE_LLVM */

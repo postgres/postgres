@@ -396,8 +396,8 @@ SELECT modify_rel_block('tmp_corr', 1, corrupt_header=>true);
 	{
 		my $invalid_page_re =
 		  $tblname eq 'tbl_corr'
-		  ? qr/invalid page in block 1 of relation base\/\d+\/\d+/
-		  : qr/invalid page in block 1 of relation base\/\d+\/t\d+_\d+/;
+		  ? qr/invalid page in block 1 of relation "base\/\d+\/\d+/
+		  : qr/invalid page in block 1 of relation "base\/\d+\/t\d+_\d+/;
 
 		# verify the error is reported in custom C code
 		psql_like(
@@ -798,7 +798,7 @@ SELECT inj_io_short_read_attach(8192);
 		"shortened multi-block read detects invalid page",
 		qq(SELECT count(*) FROM tbl_corr WHERE ctid < '(2, 1)'),
 		qr/^$/,
-		qr/ERROR:.*invalid page in block 1 of relation base\/.*/);
+		qr/ERROR:.*invalid page in block 1 of relation "base\/.*/);
 
 	# trigger a hard error, should error out
 	$psql->query_safe(
@@ -985,7 +985,7 @@ SELECT modify_rel_block('tbl_zero', 0, corrupt_header=>true);
 			qq(
 SELECT read_rel_block_ll('tbl_zero', 0, zero_on_error=>false)),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 0 of relation base\/.*\/.*$/
+			qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 0 of relation "base\/.*\/.*$/
 		);
 
 		# Check that page validity errors are zeroed
@@ -996,7 +996,7 @@ SELECT read_rel_block_ll('tbl_zero', 0, zero_on_error=>false)),
 			qq(
 SELECT read_rel_block_ll('tbl_zero', 0, zero_on_error=>true)),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 0 of relation base\/.*\/.*; zeroing out page$/
+			qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 0 of relation "base\/.*\/.*"; zeroing out page$/
 		);
 
 		# And that once the corruption is fixed, we can read again
@@ -1027,7 +1027,7 @@ SELECT modify_rel_block('tbl_zero', 3, corrupt_header=>true);
 			"$persistency: test zeroing of invalid block 3",
 			qq(SELECT read_rel_block_ll('tbl_zero', 3, zero_on_error=>true);),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 3 of relation base\/.*\/.*; zeroing out page$/
+			qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 3 of relation "base\/.*\/.*"; zeroing out page$/
 		);
 
 
@@ -1044,7 +1044,7 @@ SELECT modify_rel_block('tbl_zero', 3, corrupt_header=>true);
 			"$persistency: test reading of invalid block 2,3 in larger read",
 			qq(SELECT read_rel_block_ll('tbl_zero', 1, nblocks=>4, zero_on_error=>false)),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: ERROR:  2 invalid pages among blocks 1..4 of relation base\/.*\/.*\nDETAIL:  Block 2 held first invalid page\.\nHINT:[^\n]+$/
+			qr/^psql:<stdin>:\d+: ERROR:  2 invalid pages among blocks 1..4 of relation "base\/.*\/.*\nDETAIL:  Block 2 held the first invalid page\.\nHINT:[^\n]+$/
 		);
 
 		# Then test zeroing via ZERO_ON_ERROR flag
@@ -1054,7 +1054,7 @@ SELECT modify_rel_block('tbl_zero', 3, corrupt_header=>true);
 			"$persistency: test zeroing of invalid block 2,3 in larger read, ZERO_ON_ERROR",
 			qq(SELECT read_rel_block_ll('tbl_zero', 1, nblocks=>4, zero_on_error=>true)),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: WARNING:  zeroing out 2 invalid pages among blocks 1..4 of relation base\/.*\/.*\nDETAIL:  Block 2 held first zeroed page\.\nHINT:[^\n]+$/
+			qr/^psql:<stdin>:\d+: WARNING:  zeroing out 2 invalid pages among blocks 1..4 of relation "base\/.*\/.*\nDETAIL:  Block 2 held the first zeroed page\.\nHINT:[^\n]+$/
 		);
 
 		# Then test zeroing via zero_damaged_pages
@@ -1069,7 +1069,7 @@ SELECT read_rel_block_ll('tbl_zero', 1, nblocks=>4, zero_on_error=>false)
 COMMIT;
 ),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: WARNING:  zeroing out 2 invalid pages among blocks 1..4 of relation base\/.*\/.*\nDETAIL:  Block 2 held first zeroed page\.\nHINT:[^\n]+$/
+			qr/^psql:<stdin>:\d+: WARNING:  zeroing out 2 invalid pages among blocks 1..4 of relation "base\/.*\/.*\nDETAIL:  Block 2 held the first zeroed page\.\nHINT:[^\n]+$/
 		);
 
 		$psql_a->query_safe(qq(COMMIT));
@@ -1091,7 +1091,7 @@ SELECT modify_rel_block('tbl_zero', 3, zero=>true);
 			qq(
 SELECT count(*) FROM tbl_zero),
 			qr/^$/,
-			qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 2 of relation base\/.*\/.*$/
+			qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 2 of relation "base\/.*\/.*$/
 		);
 
 		# Verify that bufmgr.c IO zeroes out pages with page validity errors
@@ -1106,7 +1106,7 @@ SELECT count(*) FROM tbl_zero;
 COMMIT;
 ),
 			qr/^\d+$/,
-			qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 2 of relation base\/.*\/.*$/
+			qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 2 of relation "base\/.*\/.*$/
 		);
 
 		# Check that warnings/errors about page validity in an IO started by
@@ -1123,7 +1123,8 @@ COMMIT;
 		{
 			# Create a corruption and then read the block without waiting for
 			# completion.
-			$psql_a->query(qq(
+			$psql_a->query(
+				qq(
 SELECT modify_rel_block('tbl_zero', 1, corrupt_header=>true);
 SELECT read_rel_block_ll('tbl_zero', 1, wait_complete=>false, zero_on_error=>true)
 ));
@@ -1133,7 +1134,8 @@ SELECT read_rel_block_ll('tbl_zero', 1, wait_complete=>false, zero_on_error=>tru
 				$psql_b,
 				"$persistency: test completing read by other session doesn't generate warning",
 				qq(SELECT count(*) > 0 FROM tbl_zero;),
-			qr/^t$/, qr/^$/);
+				qr/^t$/,
+				qr/^$/);
 		}
 
 		# Clean up
@@ -1190,7 +1192,7 @@ SELECT modify_rel_block('pg_shseclabel', 3, corrupt_checksum=>true);
 		qq(
 SELECT read_rel_block_ll('tbl_normal', 3, nblocks=>1, zero_on_error=>false);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 3 of relation base\/\d+\/\d+$/
+		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 3 of relation "base\/\d+\/\d+"$/
 	);
 
 	my ($cs_count_after, $cs_ts_after) =
@@ -1212,7 +1214,7 @@ SELECT read_rel_block_ll('tbl_normal', 3, nblocks=>1, zero_on_error=>false);),
 		qq(
 SELECT read_rel_block_ll('tbl_temp', 4, nblocks=>2, zero_on_error=>false);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 4 of relation base\/\d+\/t\d+_\d+$/
+		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 4 of relation "base\/\d+\/t\d+_\d+"$/
 	);
 
 	($cs_count_after, $cs_ts_after) = checksum_failures($psql_a, 'postgres');
@@ -1233,7 +1235,7 @@ SELECT read_rel_block_ll('tbl_temp', 4, nblocks=>2, zero_on_error=>false);),
 		qq(
 SELECT read_rel_block_ll('pg_shseclabel', 2, nblocks=>2, zero_on_error=>false);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: ERROR:  2 invalid pages among blocks 2..3 of relation global\/\d+\nDETAIL:  Block 2 held first invalid page\.\nHINT:[^\n]+$/
+		qr/^psql:<stdin>:\d+: ERROR:  2 invalid pages among blocks 2..3 of relation "global\/\d+"\nDETAIL:  Block 2 held the first invalid page\.\nHINT:[^\n]+$/
 	);
 
 	($cs_count_after, $cs_ts_after) = checksum_failures($psql_a);
@@ -1298,7 +1300,7 @@ STRATEGY wal_log;
 		"create database w/ wal strategy, invalid source",
 		$createdb_sql,
 		qr/^$/,
-		qr/psql:<stdin>:\d+: ERROR:  invalid page in block 1 of relation base\/\d+\/\d+$/
+		qr/psql:<stdin>:\d+: ERROR:  invalid page in block 1 of relation "base\/\d+\/\d+"$/
 	);
 	my ($cs_count_after, $cs_ts_after) =
 	  checksum_failures($psql, 'regression_createdb_source');
@@ -1355,18 +1357,24 @@ SELECT modify_rel_block('tbl_cs_fail', 6, corrupt_checksum=>true);
 ));
 
 	$psql->query_safe($invalidate_sql);
-	psql_like($io_method, $psql,
+	psql_like(
+		$io_method,
+		$psql,
 		"reading block w/ wrong checksum with ignore_checksum_failure=off fails",
-		$count_sql, qr/^$/, qr/ERROR:  invalid page in block/);
+		$count_sql,
+		qr/^$/,
+		qr/ERROR:  invalid page in block/);
 
 	$psql->query_safe("SET ignore_checksum_failure=on");
 
 	$psql->query_safe($invalidate_sql);
-	psql_like($io_method, $psql,
-			  "reading block w/ wrong checksum with ignore_checksum_failure=off succeeds",
-			  $count_sql,
-			  qr/^$expect$/,
-			  qr/WARNING:  ignoring (checksum failure|\d checksum failures)/);
+	psql_like(
+		$io_method,
+		$psql,
+		"reading block w/ wrong checksum with ignore_checksum_failure=off succeeds",
+		$count_sql,
+		qr/^$expect$/,
+		qr/WARNING:  ignoring (checksum failure|\d checksum failures)/);
 
 
 	# Verify that ignore_checksum_failure=off works in multi-block reads
@@ -1401,7 +1409,7 @@ SELECT read_rel_block_ll('tbl_cs_fail', 3, nblocks=>1, zero_on_error=>false);),
 		qq(
 SELECT read_rel_block_ll('tbl_cs_fail', 2, nblocks=>3, zero_on_error=>false);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 4 of relation base\/\d+\/\d+$/
+		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 4 of relation "base\/\d+\/\d+"$/
 	);
 
 	# Test multi-block read with different problems in different blocks
@@ -1423,7 +1431,7 @@ SELECT modify_rel_block('tbl_cs_fail', 5, corrupt_header=>true);
 		qq(
 SELECT read_rel_block_ll('tbl_cs_fail', 1, nblocks=>5, zero_on_error=>true);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: WARNING:  zeroing 3 page\(s\) and ignoring 2 checksum failure\(s\) among blocks 1..5 of relation/
+		qr/^psql:<stdin>:\d+: WARNING:  zeroing 3 page\(s\) and ignoring 2 checksum failure\(s\) among blocks 1..5 of relation "/
 	);
 
 
@@ -1432,19 +1440,22 @@ SELECT read_rel_block_ll('tbl_cs_fail', 1, nblocks=>5, zero_on_error=>true);),
 	# file.
 
 	$node->wait_for_log(qr/LOG:  ignoring checksum failure in block 2/,
-						$log_location);
+		$log_location);
 	ok(1, "$io_method: found information about checksum failure in block 2");
 
-	$node->wait_for_log(qr/LOG:  invalid page in block 3 of relation base.*; zeroing out page/,
-						$log_location);
+	$node->wait_for_log(
+		qr/LOG:  invalid page in block 3 of relation "base.*"; zeroing out page/,
+		$log_location);
 	ok(1, "$io_method: found information about invalid page in block 3");
 
-	$node->wait_for_log(qr/LOG:  invalid page in block 4 of relation base.*; zeroing out page/,
-						$log_location);
+	$node->wait_for_log(
+		qr/LOG:  invalid page in block 4 of relation "base.*"; zeroing out page/,
+		$log_location);
 	ok(1, "$io_method: found information about checksum failure in block 4");
 
-	$node->wait_for_log(qr/LOG:  invalid page in block 5 of relation base.*; zeroing out page/,
-						$log_location);
+	$node->wait_for_log(
+		qr/LOG:  invalid page in block 5 of relation "base.*"; zeroing out page/,
+		$log_location);
 	ok(1, "$io_method: found information about checksum failure in block 5");
 
 
@@ -1462,8 +1473,7 @@ SELECT modify_rel_block('tbl_cs_fail', 3, corrupt_checksum=>true, corrupt_header
 		qq(
 SELECT read_rel_block_ll('tbl_cs_fail', 3, nblocks=>1, zero_on_error=>false);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 3 of relation/
-	);
+		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 3 of relation "/);
 
 	psql_like(
 		$io_method,
@@ -1472,7 +1482,7 @@ SELECT read_rel_block_ll('tbl_cs_fail', 3, nblocks=>1, zero_on_error=>false);),
 		qq(
 SELECT read_rel_block_ll('tbl_cs_fail', 3, nblocks=>1, zero_on_error=>true);),
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 3 of relation base\/.*; zeroing out page/
+		qr/^psql:<stdin>:\d+: WARNING:  invalid page in block 3 of relation "base\/.*"; zeroing out page/
 	);
 
 

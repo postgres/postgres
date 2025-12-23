@@ -445,7 +445,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	/* Get LSN start position if necessary */
 	if (startpos != NULL)
 	{
-		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
+		if (sscanf(PQgetvalue(res, 0, 2), "%X/%08X", &hi, &lo) != 2)
 		{
 			pg_log_error("could not parse write-ahead log location \"%s\"",
 						 PQgetvalue(res, 0, 2));
@@ -551,7 +551,7 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 		uint32		hi,
 					lo;
 
-		if (sscanf(PQgetvalue(res, 0, 1), "%X/%X", &hi, &lo) != 2)
+		if (sscanf(PQgetvalue(res, 0, 1), "%X/%08X", &hi, &lo) != 2)
 		{
 			pg_log_error("could not parse restart_lsn \"%s\" for replication slot \"%s\"",
 						 PQgetvalue(res, 0, 1), slot_name);

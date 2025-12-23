@@ -38,7 +38,7 @@ struct QueryEnvironment
 QueryEnvironment *
 create_queryEnv(void)
 {
-	return (QueryEnvironment *) palloc0(sizeof(QueryEnvironment));
+	return palloc0_object(QueryEnvironment);
 }
 
 EphemeralNamedRelationMetadata

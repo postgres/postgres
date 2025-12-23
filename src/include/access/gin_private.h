@@ -13,6 +13,7 @@
 #include "access/amapi.h"
 #include "access/gin.h"
 #include "access/ginblock.h"
+#include "access/htup_details.h"
 #include "access/itup.h"
 #include "common/int.h"
 #include "catalog/pg_am_d.h"
@@ -332,7 +333,7 @@ typedef struct GinScanKeyData
 	bool		curItemMatches;
 	bool		recheckCurItem;
 	bool		isFinished;
-}			GinScanKeyData;
+} GinScanKeyData;
 
 typedef struct GinScanEntryData
 {
@@ -372,7 +373,7 @@ typedef struct GinScanEntryData
 	bool		reduceResult;
 	uint32		predictNumberResult;
 	GinBtreeData btree;
-}			GinScanEntryData;
+} GinScanEntryData;
 
 typedef struct GinScanOpaqueData
 {
@@ -477,7 +478,7 @@ extern void ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 /* ginpostinglist.c */
 
-extern GinPostingList *ginCompressPostingList(const ItemPointer ipd, int nipd,
+extern GinPostingList *ginCompressPostingList(const ItemPointerData *ipd, int nipd,
 											  int maxsize, int *nwritten);
 extern int	ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len, TIDBitmap *tbm);
 

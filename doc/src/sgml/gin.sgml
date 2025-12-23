@@ -394,7 +394,11 @@
                               Pointer extra_data)</function></term>
      <listitem>
       <para>
-       Compare a partial-match query key to an index key.  Returns an integer
+       Compare a partial-match query key to an index key.
+       <literal>partial_key</literal> is a query key that was returned
+       by <function>extractQuery</function> with an indication that it
+       requires partial match, and <literal>key</literal> is an index entry.
+       Returns an integer
        whose sign indicates the result: less than zero means the index key
        does not match the query, but the index scan should continue; zero
        means that the index key does match the query; greater than zero

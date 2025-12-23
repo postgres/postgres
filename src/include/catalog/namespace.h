@@ -40,6 +40,24 @@ typedef struct _FuncCandidateList
 }		   *FuncCandidateList;
 
 /*
+ * FuncnameGetCandidates also returns a bitmask containing these flags,
+ * which report on what it found or didn't find.  They can help callers
+ * produce better error reports after a function lookup failure.
+ */
+#define FGC_SCHEMA_GIVEN	0x0001	/* Func name includes a schema */
+#define FGC_SCHEMA_EXISTS	0x0002	/* Found the explicitly-specified schema */
+#define FGC_NAME_EXISTS		0x0004	/* Found a routine by that name */
+#define FGC_NAME_VISIBLE	0x0008	/* Found a routine name/schema match */
+#define FGC_ARGCOUNT_MATCH	0x0010	/* Found a func with right # of args */
+/* These bits relate only to calls using named or mixed arguments: */
+#define FGC_ARGNAMES_MATCH	0x0020	/* Found a func matching all argnames */
+#define FGC_ARGNAMES_NONDUP	0x0040	/* argnames don't overlap positional args */
+#define FGC_ARGNAMES_ALL	0x0080	/* Found a func with no missing args */
+#define FGC_ARGNAMES_VALID	0x0100	/* Found a fully-valid use of argnames */
+/* These bits are actually filled by func_get_detail: */
+#define FGC_VARIADIC_FAIL	0x0200	/* Disallowed VARIADIC with named args */
+
+/*
  * Result of checkTempNamespaceStatus
  */
 typedef enum TempNamespaceStatus
@@ -102,12 +120,14 @@ extern FuncCandidateList FuncnameGetCandidates(List *names,
 											   bool expand_variadic,
 											   bool expand_defaults,
 											   bool include_out_arguments,
-											   bool missing_ok);
+											   bool missing_ok,
+											   int *fgc_flags);
 extern bool FunctionIsVisible(Oid funcid);
 
 extern Oid	OpernameGetOprid(List *names, Oid oprleft, Oid oprright);
 extern FuncCandidateList OpernameGetCandidates(List *names, char oprkind,
-											   bool missing_schema_ok);
+											   bool missing_schema_ok,
+											   int *fgc_flags);
 extern bool OperatorIsVisible(Oid oprid);
 
 extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);

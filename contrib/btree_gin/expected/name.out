@@ -95,3 +95,62 @@ EXPLAIN (COSTS OFF) SELECT * FROM test_name WHERE i>'abc' ORDER BY i;
                Index Cond: (i > 'abc'::name)
 (6 rows)
 
+explain (costs off)
+SELECT * FROM test_name WHERE i<'abc'::text ORDER BY i;
+                 QUERY PLAN                  
+---------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_name
+         Recheck Cond: (i < 'abc'::text)
+         ->  Bitmap Index Scan on idx_name
+               Index Cond: (i < 'abc'::text)
+(6 rows)
+
+SELECT * FROM test_name WHERE i<'abc'::text ORDER BY i;
+  i  
+-----
+ a
+ ab
+ abb
+(3 rows)
+
+SELECT * FROM test_name WHERE i<='abc'::text ORDER BY i;
+  i  
+-----
+ a
+ ab
+ abb
+ abc
+(4 rows)
+
+SELECT * FROM test_name WHERE i='abc'::text ORDER BY i;
+  i  
+-----
+ abc
+(1 row)
+
+SELECT * FROM test_name WHERE i>='abc'::text ORDER BY i;
+  i  
+-----
+ abc
+ axy
+ xyz
+(3 rows)
+
+SELECT * FROM test_name WHERE i>'abc'::text ORDER BY i;
+  i  
+-----
+ axy
+ xyz
+(2 rows)
+
+SELECT * FROM test_name WHERE i<=repeat('abc', 100) ORDER BY i;
+  i  
+-----
+ a
+ ab
+ abb
+ abc
+(4 rows)
+

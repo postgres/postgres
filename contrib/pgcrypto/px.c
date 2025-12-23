@@ -291,7 +291,7 @@ px_find_combo(const char *name, PX_Combo **res)
 
 	PX_Combo   *cx;
 
-	cx = palloc0(sizeof(*cx));
+	cx = palloc0_object(PX_Combo);
 	buf = pstrdup(name);
 
 	err = parse_cipher_name(buf, &s_cipher, &s_pad);

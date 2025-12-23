@@ -278,32 +278,12 @@ btint8cmp(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
-#if SIZEOF_DATUM < 8
-static int
-btint8fastcmp(Datum x, Datum y, SortSupport ssup)
-{
-	int64		a = DatumGetInt64(x);
-	int64		b = DatumGetInt64(y);
-
-	if (a > b)
-		return A_GREATER_THAN_B;
-	else if (a == b)
-		return 0;
-	else
-		return A_LESS_THAN_B;
-}
-#endif
-
 Datum
 btint8sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-#if SIZEOF_DATUM >= 8
 	ssup->comparator = ssup_datum_signed_cmp;
-#else
-	ssup->comparator = btint8fastcmp;
-#endif
 	PG_RETURN_VOID();
 }
 
@@ -555,7 +535,7 @@ btcharcmp(PG_FUNCTION_ARGS)
 static Datum
 char_decrement(Relation rel, Datum existing, bool *underflow)
 {
-	uint8		cexisting = UInt8GetDatum(existing);
+	uint8		cexisting = DatumGetUInt8(existing);
 
 	if (cexisting == 0)
 	{
@@ -571,7 +551,7 @@ char_decrement(Relation rel, Datum existing, bool *underflow)
 static Datum
 char_increment(Relation rel, Datum existing, bool *overflow)
 {
-	uint8		cexisting = UInt8GetDatum(existing);
+	uint8		cexisting = DatumGetUInt8(existing);
 
 	if (cexisting == UCHAR_MAX)
 	{

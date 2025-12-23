@@ -782,8 +782,8 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("mismatched array dimensions")));
 
-	keys = (char **) palloc(sizeof(char *) * key_count);
-	values = (char **) palloc(sizeof(char *) * val_count);
+	keys = palloc_array(char *, key_count);
+	values = palloc_array(char *, val_count);
 
 	for (i = 0; i < key_count; i++)
 	{
@@ -937,7 +937,7 @@ pgp_armor_headers(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		state = (pgp_armor_headers_state *) palloc(sizeof(pgp_armor_headers_state));
+		state = palloc_object(pgp_armor_headers_state);
 
 		res = pgp_extract_armor_headers((uint8 *) VARDATA_ANY(data),
 										VARSIZE_ANY_EXHDR(data),

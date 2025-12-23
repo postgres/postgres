@@ -496,6 +496,12 @@ COPY gtest1 FROM stdin;
 COPY gtest1 (a, b) FROM stdin;
 ERROR:  column "b" is a generated column
 DETAIL:  Generated columns cannot be used in COPY.
+COPY gtest1 FROM stdin WHERE b <> 10;
+ERROR:  generated columns are not supported in COPY FROM WHERE conditions
+DETAIL:  Column "b" is a generated column.
+COPY gtest1 FROM stdin WHERE gtest1 IS NULL;
+ERROR:  generated columns are not supported in COPY FROM WHERE conditions
+DETAIL:  Column "b" is a generated column.
 SELECT * FROM gtest1 ORDER BY a;
  a | b 
 ---+---
@@ -553,15 +559,11 @@ CREATE TABLE gtest4 (
     a int,
     b double_int GENERATED ALWAYS AS ((a * 2, a * 3)) VIRTUAL
 );
-INSERT INTO gtest4 VALUES (1), (6);
-SELECT * FROM gtest4;
- a |    b    
----+---------
- 1 | (2,3)
- 6 | (12,18)
-(2 rows)
-
-DROP TABLE gtest4;
+ERROR:  virtual generated column "b" cannot have a user-defined type
+DETAIL:  Virtual generated columns that make use of user-defined types are not yet supported.
+--INSERT INTO gtest4 VALUES (1), (6);
+--SELECT * FROM gtest4;
+--DROP TABLE gtest4;
 DROP TYPE double_int;
 -- using tableoid is allowed
 CREATE TABLE gtest_tableoid (
@@ -604,9 +606,13 @@ INSERT INTO gtest11 VALUES (1, 10), (2, 20);
 GRANT SELECT (a, c) ON gtest11 TO regress_user11;
 CREATE FUNCTION gf1(a int) RETURNS int AS $$ SELECT a * 3 $$ IMMUTABLE LANGUAGE SQL;
 REVOKE ALL ON FUNCTION gf1(int) FROM PUBLIC;
-CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);
-INSERT INTO gtest12 VALUES (1, 10), (2, 20);
-GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
+CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);  -- fails, user-defined function
+ERROR:  generation expression uses user-defined function
+LINE 1: ...nt PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VI...
+                                                             ^
+DETAIL:  Virtual generated columns that make use of user-defined functions are not yet supported.
+--INSERT INTO gtest12 VALUES (1, 10), (2, 20);
+--GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
 SET ROLE regress_user11;
 SELECT a, b FROM gtest11;  -- not allowed
 ERROR:  permission denied for table gtest11
@@ -619,15 +625,12 @@ SELECT a, c FROM gtest11;  -- allowed
 
 SELECT gf1(10);  -- not allowed
 ERROR:  permission denied for function gf1
-INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
-SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
-ERROR:  permission denied for function gf1
+--INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
+--SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
 RESET ROLE;
-DROP FUNCTION gf1(int);  -- fail
-ERROR:  cannot drop function gf1(integer) because other objects depend on it
-DETAIL:  column c of table gtest12 depends on function gf1(integer)
-HINT:  Use DROP ... CASCADE to drop the dependent objects too.
-DROP TABLE gtest11, gtest12;
+--DROP FUNCTION gf1(int);  -- fail
+DROP TABLE gtest11;
+--DROP TABLE gtest12;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;
 -- check constraints
@@ -637,10 +640,10 @@ INSERT INTO gtest20 (a) VALUES (30);  -- violates constraint
 ERROR:  new row for relation "gtest20" violates check constraint "gtest20_b_check"
 DETAIL:  Failing row contains (30, virtual).
 ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 100);  -- violates constraint (currently not supported)
-ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables with check constraints
 DETAIL:  Column "b" of relation "gtest20" is a virtual generated column.
 ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 3);  -- ok (currently not supported)
-ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables with check constraints
 DETAIL:  Column "b" of relation "gtest20" is a virtual generated column.
 CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 INSERT INTO gtest20a (a) VALUES (10);
@@ -800,11 +803,23 @@ CREATE TABLE gtest24r (a int PRIMARY KEY, b gtestdomain1range GENERATED ALWAYS A
 ERROR:  virtual generated column "b" cannot have a domain type
 --INSERT INTO gtest24r (a) VALUES (4);  -- ok
 --INSERT INTO gtest24r (a) VALUES (6);  -- error
+CREATE TABLE gtest24at (a int PRIMARY KEY);
+ALTER TABLE gtest24at ADD COLUMN b gtestdomain1 GENERATED ALWAYS AS (a * 2) VIRTUAL;  -- error
+ERROR:  virtual generated column "b" cannot have a domain type
+CREATE TABLE gtest24ata (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
+ALTER TABLE gtest24ata ALTER COLUMN b TYPE gtestdomain1;  -- error
+ERROR:  virtual generated column "b" cannot have a domain type
 CREATE DOMAIN gtestdomainnn AS int CHECK (VALUE IS NOT NULL);
 CREATE TABLE gtest24nn (a int, b gtestdomainnn GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ERROR:  virtual generated column "b" cannot have a domain type
 --INSERT INTO gtest24nn (a) VALUES (4);  -- ok
 --INSERT INTO gtest24nn (a) VALUES (NULL);  -- error
+-- using user-defined type not yet supported
+CREATE TABLE gtest24xxx (a gtestdomain1, b gtestdomain1, c int GENERATED ALWAYS AS (greatest(a, b)) VIRTUAL);  -- error
+ERROR:  generation expression uses user-defined type
+LINE 1: ...main1, b gtestdomain1, c int GENERATED ALWAYS AS (greatest(a...
+                                                             ^
+DETAIL:  Virtual generated columns that make use of user-defined types are not yet supported.
 -- typed tables (currently not supported)
 CREATE TYPE gtest_type AS (f1 integer, f2 text, f3 bigint);
 CREATE TABLE gtest28 OF gtest_type (f1 WITH OPTIONS GENERATED ALWAYS AS (f2 *2) VIRTUAL);
@@ -1027,9 +1042,24 @@ ERROR:  cannot use generated column in partition key
 LINE 1: ...NERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE (f3);
                                                                    ^
 DETAIL:  Column "f3" is a generated column.
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3));
+ERROR:  cannot use generated column in partition key
+LINE 1: ...RATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3));
+                                                                 ^
+DETAIL:  Column "f3" is a generated column.
 CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3 * 3));
 ERROR:  cannot use generated column in partition key
 LINE 1: ...D ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3 * 3));
+                                                             ^
+DETAIL:  Column "f3" is a generated column.
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((gtest_part_key));
+ERROR:  cannot use generated column in partition key
+LINE 1: ...D ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((gtest_par...
+                                                             ^
+DETAIL:  Column "f3" is a generated column.
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((gtest_part_key is not null));
+ERROR:  cannot use generated column in partition key
+LINE 1: ...D ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((gtest_par...
                                                              ^
 DETAIL:  Column "f3" is a generated column.
 -- ALTER TABLE ... ADD COLUMN
@@ -1274,6 +1304,15 @@ CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c t
 CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
 ERROR:  cannot alter table "gtest31_1" because column "gtest31_2.y" uses its row type
+-- bug #18970
+ALTER TABLE gtest31_2 ADD CONSTRAINT cc CHECK ((y).b IS NOT NULL);
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello1');
+ALTER TABLE gtest31_2 DROP CONSTRAINT cc;
+CREATE STATISTICS gtest31_2_stat ON ((y).b is not null) FROM gtest31_2;
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello2');
+DROP STATISTICS gtest31_2_stat;
+CREATE INDEX gtest31_2_y_idx ON gtest31_2(((y).b));
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello3');
 DROP TABLE gtest31_1, gtest31_2;
 -- Check it for a partitioned table, too
 CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c text) PARTITION BY LIST (a);
@@ -1470,7 +1509,8 @@ create table gtest32 (
   a int primary key,
   b int generated always as (a * 2),
   c int generated always as (10 + 10),
-  d int generated always as (coalesce(a, 100))
+  d int generated always as (coalesce(a, 100)),
+  e int
 );
 insert into gtest32 values (1), (2);
 analyze gtest32;
@@ -1531,11 +1571,11 @@ where coalesce(t2.b, 1) = 2;
 explain (costs off)
 select t1.a from gtest32 t1 left join gtest32 t2 on t1.a = t2.a
 where coalesce(t2.b, 1) = 2 or t1.a is null;
-                         QUERY PLAN                          
--------------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Hash Left Join
    Hash Cond: (t1.a = t2.a)
-   Filter: ((COALESCE((t2.a * 2), 1) = 2) OR (t1.a IS NULL))
+   Filter: (COALESCE((t2.a * 2), 1) = 2)
    ->  Seq Scan on gtest32 t1
    ->  Hash
          ->  Seq Scan on gtest32 t2
@@ -1551,44 +1591,95 @@ where coalesce(t2.b, 1) = 2 or t1.a is null;
 -- Ensure that the generation expressions are wrapped into PHVs if needed
 explain (verbose, costs off)
 select t2.* from gtest32 t1 left join gtest32 t2 on false;
-                      QUERY PLAN                      
-------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Nested Loop Left Join
-   Output: a, (a * 2), (20), (COALESCE(a, 100))
+   Output: t2.a, (t2.a * 2), (20), (COALESCE(t2.a, 100)), t2.e
    Join Filter: false
    ->  Seq Scan on generated_virtual_tests.gtest32 t1
-         Output: t1.a, t1.b, t1.c, t1.d
+         Output: t1.a, t1.b, t1.c, t1.d, t1.e
    ->  Result
-         Output: a, 20, COALESCE(a, 100)
+         Output: t2.a, t2.e, 20, COALESCE(t2.a, 100)
+         Replaces: Scan on t2
          One-Time Filter: false
-(8 rows)
+(9 rows)
 
 select t2.* from gtest32 t1 left join gtest32 t2 on false;
- a | b | c | d 
----+---+---+---
-   |   |   |  
-   |   |   |  
+ a | b | c | d | e 
+---+---+---+---+---
+   |   |   |   |  
+   |   |   |   |  
 (2 rows)
 
 explain (verbose, costs off)
-select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
                      QUERY PLAN                      
 -----------------------------------------------------
  HashAggregate
-   Output: a, ((a * 2)), (20), (COALESCE(a, 100))
+   Output: a, ((a * 2)), (20), (COALESCE(a, 100)), e
    Hash Key: t.a
    Hash Key: (t.a * 2)
    Hash Key: 20
    Hash Key: COALESCE(t.a, 100)
+   Hash Key: t.e
    Filter: ((20) = 20)
    ->  Seq Scan on generated_virtual_tests.gtest32 t
-         Output: a, (a * 2), 20, COALESCE(a, 100)
-(9 rows)
+         Output: a, (a * 2), 20, COALESCE(a, 100), e
+(10 rows)
 
-select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
- a | b | c  | d 
----+---+----+---
-   |   | 20 |  
+select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
+ a | b | c  | d | e 
+---+---+----+---+---
+   |   | 20 |   |  
+(1 row)
+
+-- Ensure that the virtual generated columns in ALTER COLUMN TYPE USING expression are expanded
+alter table gtest32 alter column e type bigint using b;
+-- Ensure that virtual generated column references within SubLinks that should
+-- be transformed into joins can get expanded
+explain (costs off)
+select 1 from gtest32 t1 where exists
+  (select 1 from gtest32 t2 where t1.a > t2.a and t2.b = 2);
+             QUERY PLAN              
+-------------------------------------
+ Nested Loop Semi Join
+   Join Filter: (t1.a > t2.a)
+   ->  Seq Scan on gtest32 t1
+   ->  Materialize
+         ->  Seq Scan on gtest32 t2
+               Filter: ((a * 2) = 2)
+(6 rows)
+
+select 1 from gtest32 t1 where exists
+  (select 1 from gtest32 t2 where t1.a > t2.a and t2.b = 2);
+ ?column? 
+----------
+        1
 (1 row)
 
 drop table gtest32;
+-- Ensure that virtual generated columns in constraint expressions are expanded
+create table gtest33 (a int, b int generated always as (a * 2) virtual not null, check (b > 10));
+set constraint_exclusion to on;
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b < 10;
+         QUERY PLAN          
+-----------------------------
+ Result
+   Replaces: Scan on gtest33
+   One-Time Filter: false
+(3 rows)
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b is null;
+         QUERY PLAN          
+-----------------------------
+ Result
+   Replaces: Scan on gtest33
+   One-Time Filter: false
+(3 rows)
+
+reset constraint_exclusion;
+drop table gtest33;

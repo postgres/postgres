@@ -322,7 +322,8 @@ typedef struct AutoVacOpts
 	int			multixact_freeze_min_age;
 	int			multixact_freeze_max_age;
 	int			multixact_freeze_table_age;
-	int			log_min_duration;
+	int			log_vacuum_min_duration;
+	int			log_analyze_min_duration;
 	float8		vacuum_cost_delay;
 	float8		vacuum_scale_factor;
 	float8		vacuum_ins_scale_factor;
@@ -486,9 +487,7 @@ typedef struct ViewOptions
  * RelationIsValid
  *		True iff relation descriptor is valid.
  */
-#define RelationIsValid(relation) PointerIsValid(relation)
-
-#define InvalidRelation ((Relation) NULL)
+#define RelationIsValid(relation) ((relation) != NULL)
 
 /*
  * RelationHasReferenceCountZero

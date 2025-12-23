@@ -506,6 +506,7 @@ insert into gb18030_inputs  values
   ('\x666f6fcff3',	'valid'),
   ('\x666f6f8431a530',	'valid, no translation to UTF-8'),
   ('\x666f6f84309c38',	'valid, translates to UTF-8 by mapping function'),
+  ('\xa6d9',  'valid, changed from version 2000 to 2022'),
   ('\x666f6f84309c',	'incomplete char '),
   ('\x666f6f84309c0a',	'incomplete char, followed by newline '),
   ('\x666f6f84',		'incomplete char at end'),
@@ -521,12 +522,13 @@ select description, inbytes, (test_conv(inbytes::text::bytea, 'gb18030', 'gb1803
  valid                                          | \x666f6fcff3       | \x666f6fcff3     |              | 
  valid, no translation to UTF-8                 | \x666f6f8431a530   | \x666f6f8431a530 |              | 
  valid, translates to UTF-8 by mapping function | \x666f6f84309c38   | \x666f6f84309c38 |              | 
+ valid, changed from version 2000 to 2022       | \xa6d9             | \xa6d9           |              | 
  incomplete char                                | \x666f6f84309c     | \x666f6f         | \x84309c     | invalid byte sequence for encoding "GB18030": 0x84 0x30 0x9c
  incomplete char, followed by newline           | \x666f6f84309c0a   | \x666f6f         | \x84309c0a   | invalid byte sequence for encoding "GB18030": 0x84 0x30 0x9c 0x0a
  incomplete char at end                         | \x666f6f84         | \x666f6f         | \x84         | invalid byte sequence for encoding "GB18030": 0x84
  invalid, NUL byte                              | \x666f6f84309c3800 | \x666f6f84309c38 | \x00         | invalid byte sequence for encoding "GB18030": 0x00
  invalid, NUL byte                              | \x666f6f84309c0038 | \x666f6f         | \x84309c0038 | invalid byte sequence for encoding "GB18030": 0x84 0x30 0x9c 0x00
-(9 rows)
+(10 rows)
 
 -- Test conversions from GB18030
 select description, inbytes, (test_conv(inbytes, 'gb18030', 'utf8')).* from gb18030_inputs;
@@ -536,12 +538,13 @@ select description, inbytes, (test_conv(inbytes, 'gb18030', 'utf8')).* from gb18
  valid                                          | \x666f6fcff3       | \x666f6fe8b1a1 |              | 
  valid, no translation to UTF-8                 | \x666f6f8431a530   | \x666f6f       | \x8431a530   | character with byte sequence 0x84 0x31 0xa5 0x30 in encoding "GB18030" has no equivalent in encoding "UTF8"
  valid, translates to UTF-8 by mapping function | \x666f6f84309c38   | \x666f6fefa8aa |              | 
+ valid, changed from version 2000 to 2022       | \xa6d9             | \xefb890       |              | 
  incomplete char                                | \x666f6f84309c     | \x666f6f       | \x84309c     | invalid byte sequence for encoding "GB18030": 0x84 0x30 0x9c
  incomplete char, followed by newline           | \x666f6f84309c0a   | \x666f6f       | \x84309c0a   | invalid byte sequence for encoding "GB18030": 0x84 0x30 0x9c 0x0a
  incomplete char at end                         | \x666f6f84         | \x666f6f       | \x84         | invalid byte sequence for encoding "GB18030": 0x84
  invalid, NUL byte                              | \x666f6f84309c3800 | \x666f6fefa8aa | \x00         | invalid byte sequence for encoding "GB18030": 0x00
  invalid, NUL byte                              | \x666f6f84309c0038 | \x666f6f       | \x84309c0038 | invalid byte sequence for encoding "GB18030": 0x84 0x30 0x9c 0x00
-(9 rows)
+(10 rows)
 
 --
 -- ISO-8859-5

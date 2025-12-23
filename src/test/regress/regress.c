@@ -28,6 +28,7 @@
 #include "commands/sequence.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+#include "executor/functions.h"
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -39,12 +40,17 @@
 #include "port/atomics.h"
 #include "postmaster/postmaster.h"	/* for MAX_BACKENDS */
 #include "storage/spin.h"
+#include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
+
+/* define our text domain for translations */
+#undef TEXTDOMAIN
+#define TEXTDOMAIN PG_TEXTDOMAIN("postgresql-regress")
 
 #define EXPECT_TRUE(expr)	\
 	do { \
@@ -196,7 +202,7 @@ widget_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"widget", str)));
 
-	result = (WIDGET *) palloc(sizeof(WIDGET));
+	result = palloc_object(WIDGET);
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
@@ -432,7 +438,7 @@ PG_FUNCTION_INFO_V1(get_environ);
 Datum
 get_environ(PG_FUNCTION_ARGS)
 {
-#if !defined(WIN32) || defined(_MSC_VER)
+#if !defined(WIN32)
 	extern char **environ;
 #endif
 	int			nvals = 0;
@@ -727,7 +733,7 @@ PG_FUNCTION_INFO_V1(is_catalog_text_unique_index_oid);
 Datum
 is_catalog_text_unique_index_oid(PG_FUNCTION_ARGS)
 {
-	return IsCatalogTextUniqueIndexOid(PG_GETARG_OID(0));
+	return BoolGetDatum(IsCatalogTextUniqueIndexOid(PG_GETARG_OID(0)));
 }
 
 PG_FUNCTION_INFO_V1(test_support_func);
@@ -801,6 +807,125 @@ test_support_func(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_POINTER(ret);
+}
+
+PG_FUNCTION_INFO_V1(test_inline_in_from_support_func);
+Datum
+test_inline_in_from_support_func(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestInlineInFrom))
+	{
+		/*
+		 * Assume that the target is foo_from_bar; that's safe as long as we
+		 * don't attach this to any other function.
+		 */
+		SupportRequestInlineInFrom *req = (SupportRequestInlineInFrom *) rawreq;
+		StringInfoData sql;
+		RangeTblFunction *rtfunc = req->rtfunc;
+		FuncExpr   *expr = (FuncExpr *) rtfunc->funcexpr;
+		Node	   *node;
+		Const	   *c;
+		char	   *colname;
+		char	   *tablename;
+		SQLFunctionParseInfoPtr pinfo;
+		List	   *raw_parsetree_list;
+		List	   *querytree_list;
+		Query	   *querytree;
+
+		if (list_length(expr->args) != 3)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with %d args but expected 3", list_length(expr->args))));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		/* Get colname */
+		node = linitial(expr->args);
+		if (!IsA(node, Const))
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-Const parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		c = (Const *) node;
+		if (c->consttype != TEXTOID || c->constisnull)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-TEXT parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+		colname = TextDatumGetCString(c->constvalue);
+
+		/* Get tablename */
+		node = lsecond(expr->args);
+		if (!IsA(node, Const))
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-Const parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		c = (Const *) node;
+		if (c->consttype != TEXTOID || c->constisnull)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-TEXT parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+		tablename = TextDatumGetCString(c->constvalue);
+
+		/* Begin constructing replacement SELECT query. */
+		initStringInfo(&sql);
+		appendStringInfo(&sql, "SELECT %s::text FROM %s",
+						 quote_identifier(colname),
+						 quote_identifier(tablename));
+
+		/* Add filter expression if present. */
+		node = lthird(expr->args);
+		if (!(IsA(node, Const) && ((Const *) node)->constisnull))
+		{
+			/*
+			 * We only filter if $3 is not constant-NULL.  This is not a very
+			 * exact implementation of the PL/pgSQL original, but it's close
+			 * enough for demonstration purposes.
+			 */
+			appendStringInfo(&sql, " WHERE %s::text = $3",
+							 quote_identifier(colname));
+		}
+
+		/* Build a SQLFunctionParseInfo with the parameters of my function. */
+		pinfo = prepare_sql_fn_parse_info(req->proc,
+										  (Node *) expr,
+										  expr->inputcollid);
+
+		/* Parse the generated SQL. */
+		raw_parsetree_list = pg_parse_query(sql.data);
+		if (list_length(raw_parsetree_list) != 1)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func parsed to more than one node")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		/* Analyze the parse tree as if it were a SQL-language body. */
+		querytree_list = pg_analyze_and_rewrite_withcb(linitial(raw_parsetree_list),
+													   sql.data,
+													   (ParserSetupHook) sql_fn_parser_setup,
+													   pinfo, NULL);
+		if (list_length(querytree_list) != 1)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func rewrote to more than one node")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		querytree = linitial(querytree_list);
+		if (!IsA(querytree, Query))
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func didn't parse to a Query")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		PG_RETURN_POINTER(querytree);
+	}
+
+	PG_RETURN_POINTER(NULL);
 }
 
 PG_FUNCTION_INFO_V1(test_opclass_options_func);
@@ -1025,6 +1150,91 @@ test_relpath(PG_FUNCTION_ARGS)
 	if (strlen(rpath.str) != REL_PATH_STR_MAXLEN)
 		elog(WARNING, "maximum length relpath is if length %zu instead of %zu",
 			 strlen(rpath.str), REL_PATH_STR_MAXLEN);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * Simple test to verify NLS support, particularly that the PRI* macros work.
+ *
+ * A secondary objective is to verify that <inttypes.h>'s values for the
+ * PRI* macros match what our snprintf.c code will do.  Therefore, we run
+ * the ereport() calls even when we know that translation will not happen.
+ */
+PG_FUNCTION_INFO_V1(test_translation);
+Datum
+test_translation(PG_FUNCTION_ARGS)
+{
+#ifdef ENABLE_NLS
+	static bool inited = false;
+
+	/*
+	 * Ideally we'd do this bit in a _PG_init() hook.  However, it seems best
+	 * that the Solaris hack only get applied in the nls.sql test, so it
+	 * doesn't risk affecting other tests that load this module.
+	 */
+	if (!inited)
+	{
+		/*
+		 * Solaris' built-in gettext is not bright about associating locales
+		 * with message catalogs that are named after just the language.
+		 * Apparently the customary workaround is for users to set the
+		 * LANGUAGE environment variable to provide a mapping.  Do so here to
+		 * ensure that the nls.sql regression test will work.
+		 */
+#if defined(__sun__)
+		setenv("LANGUAGE", "es_ES.UTF-8:es", 1);
+#endif
+		pg_bindtextdomain(TEXTDOMAIN);
+		inited = true;
+	}
+
+	/*
+	 * If nls.sql failed to select a non-C locale, no translation will happen.
+	 * Report that so that we can distinguish this outcome from brokenness.
+	 * (We do this here, not in nls.sql, so as to need only 3 expected files.)
+	 */
+	if (strcmp(GetConfigOption("lc_messages", false, false), "C") == 0)
+		elog(NOTICE, "lc_messages is 'C'");
+#else
+	elog(NOTICE, "NLS is not enabled");
+#endif
+
+	ereport(NOTICE,
+			errmsg("translated PRId64 = %" PRId64, (int64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRId32 = %" PRId32, (int32) -1234));
+	ereport(NOTICE,
+			errmsg("translated PRIdMAX = %" PRIdMAX, (intmax_t) -123456789012));
+	ereport(NOTICE,
+			errmsg("translated PRIdPTR = %" PRIdPTR, (intptr_t) -9999));
+
+	ereport(NOTICE,
+			errmsg("translated PRIu64 = %" PRIu64, (uint64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRIu32 = %" PRIu32, (uint32) -1234));
+	ereport(NOTICE,
+			errmsg("translated PRIuMAX = %" PRIuMAX, (uintmax_t) 123456789012));
+	ereport(NOTICE,
+			errmsg("translated PRIuPTR = %" PRIuPTR, (uintptr_t) 9999));
+
+	ereport(NOTICE,
+			errmsg("translated PRIx64 = %" PRIx64, (uint64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRIx32 = %" PRIx32, (uint32) -1234));
+	ereport(NOTICE,
+			errmsg("translated PRIxMAX = %" PRIxMAX, (uintmax_t) 123456789012));
+	ereport(NOTICE,
+			errmsg("translated PRIxPTR = %" PRIxPTR, (uintptr_t) 9999));
+
+	ereport(NOTICE,
+			errmsg("translated PRIX64 = %" PRIX64, (uint64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRIX32 = %" PRIX32, (uint32) -1234));
+	ereport(NOTICE,
+			errmsg("translated PRIXMAX = %" PRIXMAX, (uintmax_t) 123456789012));
+	ereport(NOTICE,
+			errmsg("translated PRIXPTR = %" PRIXPTR, (uintptr_t) 9999));
 
 	PG_RETURN_VOID();
 }

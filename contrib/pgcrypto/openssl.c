@@ -197,7 +197,7 @@ px_find_digest(const char *name, PX_MD **res)
 	ResourceOwnerRememberOSSLDigest(digest->owner, digest);
 
 	/* The PX_MD object is allocated in the current memory context. */
-	h = palloc(sizeof(*h));
+	h = palloc_object(PX_MD);
 	h->result_size = digest_result_size;
 	h->block_size = digest_block_size;
 	h->reset = digest_reset;
@@ -813,7 +813,7 @@ px_find_cipher(const char *name, PX_Cipher **res)
 		od->evp_ciph = i->ciph->cipher_func();
 
 	/* The PX_Cipher is allocated in current memory context */
-	c = palloc(sizeof(*c));
+	c = palloc_object(PX_Cipher);
 	c->block_size = gen_ossl_block_size;
 	c->key_size = gen_ossl_key_size;
 	c->iv_size = gen_ossl_iv_size;

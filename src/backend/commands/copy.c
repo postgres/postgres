@@ -133,6 +133,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		if (stmt->whereClause)
 		{
+			Bitmapset  *expr_attrs = NULL;
+			int			i;
+
 			/* add nsitem to query namespace */
 			addNSItemToQuery(pstate, nsitem, false, true, true);
 
@@ -144,6 +147,42 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 			/* we have to fix its collations too */
 			assign_expr_collations(pstate, whereClause);
+
+			/*
+			 * Examine all the columns in the WHERE clause expression.  When
+			 * the whole-row reference is present, examine all the columns of
+			 * the table.
+			 */
+			pull_varattnos(whereClause, 1, &expr_attrs);
+			if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber, expr_attrs))
+			{
+				expr_attrs = bms_add_range(expr_attrs,
+										   1 - FirstLowInvalidHeapAttributeNumber,
+										   RelationGetNumberOfAttributes(rel) - FirstLowInvalidHeapAttributeNumber);
+				expr_attrs = bms_del_member(expr_attrs, 0 - FirstLowInvalidHeapAttributeNumber);
+			}
+
+			i = -1;
+			while ((i = bms_next_member(expr_attrs, i)) >= 0)
+			{
+				AttrNumber	attno = i + FirstLowInvalidHeapAttributeNumber;
+
+				Assert(attno != 0);
+
+				/*
+				 * Prohibit generated columns in the WHERE clause.  Stored
+				 * generated columns are not yet computed when the filtering
+				 * happens.  Virtual generated columns could probably work (we
+				 * would need to expand them somewhere around here), but for
+				 * now we keep them consistent with the stored variant.
+				 */
+				if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+							errmsg("generated columns are not supported in COPY FROM WHERE conditions"),
+							errdetail("Column \"%s\" is a generated column.",
+									  get_attname(RelationGetRelid(rel), attno, false)));
+			}
 
 			whereClause = eval_const_expressions(NULL, whereClause);
 
@@ -251,11 +290,15 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			 * relation which we have opened and locked.  Use "ONLY" so that
 			 * COPY retrieves rows from only the target table not any
 			 * inheritance children, the same as when RLS doesn't apply.
+			 *
+			 * However, when copying data from a partitioned table, we don't
+			 * use "ONLY", since we need to retrieve rows from its descendant
+			 * tables too.
 			 */
 			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 								pstrdup(RelationGetRelationName(rel)),
 								-1);
-			from->inh = false;	/* apply ONLY */
+			from->inh = (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 			/* Build query */
 			select = makeNode(SelectStmt);
@@ -322,11 +365,13 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 }
 
 /*
- * Extract a CopyHeaderChoice value from a DefElem.  This is like
- * defGetBoolean() but also accepts the special value "match".
+ * Extract the CopyFormatOptions.header_line value from a DefElem.
+ *
+ * Parses the HEADER option for COPY, which can be a boolean, a non-negative
+ * integer (number of lines to skip), or the special value "match".
  */
-static CopyHeaderChoice
-defGetCopyHeaderChoice(DefElem *def, bool is_from)
+static int
+defGetCopyHeaderOption(DefElem *def, bool is_from)
 {
 	/*
 	 * If no parameter value given, assume "true" is meant.
@@ -335,20 +380,27 @@ defGetCopyHeaderChoice(DefElem *def, bool is_from)
 		return COPY_HEADER_TRUE;
 
 	/*
-	 * Allow 0, 1, "true", "false", "on", "off", or "match".
+	 * Allow 0, 1, "true", "false", "on", "off", a non-negative integer, or
+	 * "match".
 	 */
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
-			switch (intVal(def->arg))
 			{
-				case 0:
-					return COPY_HEADER_FALSE;
-				case 1:
-					return COPY_HEADER_TRUE;
-				default:
-					/* otherwise, error out below */
-					break;
+				int			ival = intVal(def->arg);
+
+				if (ival < 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("a negative integer value cannot be "
+									"specified for %s", def->defname)));
+
+				if (!is_from && ival > 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot use multi-line header in COPY TO")));
+
+				return ival;
 			}
 			break;
 		default:
@@ -381,7 +433,8 @@ defGetCopyHeaderChoice(DefElem *def, bool is_from)
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s requires a Boolean value or \"match\"",
+			 errmsg("%s requires a Boolean value, a non-negative integer, "
+					"or the string \"match\"",
 					def->defname)));
 	return COPY_HEADER_FALSE;	/* keep compiler quiet */
 }
@@ -508,7 +561,7 @@ ProcessCopyOptions(ParseState *pstate,
 
 	/* Support external use for option sanity checking */
 	if (opts_out == NULL)
-		opts_out = (CopyFormatOptions *) palloc0(sizeof(CopyFormatOptions));
+		opts_out = palloc0_object(CopyFormatOptions);
 
 	opts_out->file_encoding = -1;
 
@@ -566,7 +619,7 @@ ProcessCopyOptions(ParseState *pstate,
 			if (header_specified)
 				errorConflictingDefElem(defel, pstate);
 			header_specified = true;
-			opts_out->header_line = defGetCopyHeaderChoice(defel, is_from);
+			opts_out->header_line = defGetCopyHeaderOption(defel, is_from);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{
@@ -769,7 +822,7 @@ ProcessCopyOptions(ParseState *pstate,
 				 errmsg("COPY delimiter cannot be \"%s\"", opts_out->delim)));
 
 	/* Check header */
-	if (opts_out->binary && opts_out->header_line)
+	if (opts_out->binary && opts_out->header_line != COPY_HEADER_FALSE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*- translator: %s is the name of a COPY option, e.g. ON_ERROR */

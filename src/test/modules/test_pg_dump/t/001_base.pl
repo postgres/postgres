@@ -981,7 +981,8 @@ foreach my $run (sort keys %pgdump_runs)
 		if ($tests{$test}->{like}->{$test_key}
 			&& !defined($tests{$test}->{unlike}->{$test_key}))
 		{
-			if (!ok($output_file =~ $tests{$test}->{regexp},
+			if (!like(
+					$output_file, $tests{$test}->{regexp},
 					"$run: should dump $test"))
 			{
 				diag("Review $run results in $tempdir");
@@ -989,7 +990,8 @@ foreach my $run (sort keys %pgdump_runs)
 		}
 		else
 		{
-			if (!ok($output_file !~ $tests{$test}->{regexp},
+			if (!unlike(
+					$output_file, $tests{$test}->{regexp},
 					"$run: should not dump $test"))
 			{
 				diag("Review $run results in $tempdir");

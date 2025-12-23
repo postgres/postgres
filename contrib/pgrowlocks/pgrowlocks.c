@@ -141,8 +141,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		 */
 		if (htsu == TM_BeingModified)
 		{
-			values[Atnum_tid] = (char *) DirectFunctionCall1(tidout,
-															 PointerGetDatum(&tuple->t_self));
+			values[Atnum_tid] = DatumGetCString(DirectFunctionCall1(tidout,
+																	PointerGetDatum(&tuple->t_self)));
 
 			values[Atnum_xmax] = palloc(NCHARS * sizeof(char));
 			snprintf(values[Atnum_xmax], NCHARS, "%u", xmax);

@@ -25,9 +25,10 @@
  * We don't print the timezone on Windows, because the names are long and
  * localized, which means they may contain characters in various random
  * encodings; this has been seen to cause encoding errors when reading the
- * dump script.  Think not to get around that by using %z, because
- * (1) %z is not portable to pre-C99 systems, and
- * (2) %z doesn't actually act differently from %Z on Windows anyway.
+ * dump script.  One could now possibly get around that by using %z, but %z
+ * was previously not portable to pre-C99 systems, and also previously %z
+ * didn't actually act differently from %Z on Windows.  But of these problems
+ * might be obsolete now.
  */
 #ifndef WIN32
 #define PGDUMP_STRFTIME_FMT  "%Y-%m-%d %H:%M:%S %Z"
@@ -36,6 +37,7 @@
 #endif
 
 
+extern char *sanitize_line(const char *str, bool want_hyphen);
 extern bool buildACLCommands(const char *name, const char *subname, const char *nspname,
 							 const char *type, const char *acls, const char *baseacls,
 							 const char *owner, const char *prefix, int remoteVersion,
@@ -63,5 +65,8 @@ extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
 								   const char *type2, const char *name2,
 								   PQExpBuffer buf);
 extern void create_or_open_dir(const char *dirname);
+
+extern char *generate_restrict_key(void);
+extern bool valid_restrict_key(const char *restrict_key);
 
 #endif							/* DUMPUTILS_H */

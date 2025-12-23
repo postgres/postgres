@@ -70,14 +70,14 @@ static int	CheckMD5Auth(Port *port, char *shadow_pass,
 /* Standard TCP port number for Ident service.  Assigned by IANA */
 #define IDENT_PORT 113
 
-static int	ident_inet(hbaPort *port);
+static int	ident_inet(Port *port);
 
 
 /*----------------------------------------------------------------
  * Peer authentication
  *----------------------------------------------------------------
  */
-static int	auth_peer(hbaPort *port);
+static int	auth_peer(Port *port);
 
 
 /*----------------------------------------------------------------
@@ -94,8 +94,16 @@ static int	auth_peer(hbaPort *port);
 
 #define PGSQL_PAM_SERVICE "postgresql"	/* Service name passed to PAM */
 
+/* Work around original Solaris' lack of "const" in the conv_proc signature */
+#ifdef _PAM_LEGACY_NONCONST
+#define PG_PAM_CONST
+#else
+#define PG_PAM_CONST const
+#endif
+
 static int	CheckPAMAuth(Port *port, const char *user, const char *password);
-static int	pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
+static int	pam_passwd_conv_proc(int num_msg,
+								 PG_PAM_CONST struct pam_message **msg,
 								 struct pam_response **resp, void *appdata_ptr);
 
 static struct pam_conv pam_passw_conv = {
@@ -990,8 +998,8 @@ pg_GSS_recvauth(Port *port)
 		gbuf.length = buf.len;
 		gbuf.value = buf.data;
 
-		elog(DEBUG4, "processing received GSS token of length %u",
-			 (unsigned int) gbuf.length);
+		elog(DEBUG4, "processing received GSS token of length %zu",
+			 gbuf.length);
 
 		maj_stat = gss_accept_sec_context(&min_stat,
 										  &port->gss->ctx,
@@ -1009,9 +1017,9 @@ pg_GSS_recvauth(Port *port)
 		pfree(buf.data);
 
 		elog(DEBUG5, "gss_accept_sec_context major: %u, "
-			 "minor: %u, outlen: %u, outflags: %x",
+			 "minor: %u, outlen: %zu, outflags: %x",
 			 maj_stat, min_stat,
-			 (unsigned int) port->gss->outbuf.length, gflags);
+			 port->gss->outbuf.length, gflags);
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1026,8 +1034,8 @@ pg_GSS_recvauth(Port *port)
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
-			elog(DEBUG4, "sending GSS response token of length %u",
-				 (unsigned int) port->gss->outbuf.length);
+			elog(DEBUG4, "sending GSS response token of length %zu",
+				 port->gss->outbuf.length);
 
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT,
 							port->gss->outbuf.value, port->gss->outbuf.length);
@@ -1573,6 +1581,15 @@ pg_SSPI_make_upn(char *accountname,
  */
 
 /*
+ * Per RFC 1413, space and tab are whitespace in ident messages.
+ */
+static bool
+is_ident_whitespace(const char c)
+{
+	return c == ' ' || c == '\t';
+}
+
+/*
  *	Parse the string "*ident_response" as a response from a query to an Ident
  *	server.  If it's a normal response indicating a user name, return true
  *	and store the user name at *ident_user. If it's anything else,
@@ -1605,14 +1622,14 @@ interpret_ident_response(const char *ident_response,
 			int			i;		/* Index into *response_type */
 
 			cursor++;			/* Go over colon */
-			while (pg_isblank(*cursor))
+			while (is_ident_whitespace(*cursor))
 				cursor++;		/* skip blanks */
 			i = 0;
-			while (*cursor != ':' && *cursor != '\r' && !pg_isblank(*cursor) &&
+			while (*cursor != ':' && *cursor != '\r' && !is_ident_whitespace(*cursor) &&
 				   i < (int) (sizeof(response_type) - 1))
 				response_type[i++] = *cursor++;
 			response_type[i] = '\0';
-			while (pg_isblank(*cursor))
+			while (is_ident_whitespace(*cursor))
 				cursor++;		/* skip blanks */
 			if (strcmp(response_type, "USERID") != 0)
 				return false;
@@ -1635,7 +1652,7 @@ interpret_ident_response(const char *ident_response,
 					else
 					{
 						cursor++;	/* Go over colon */
-						while (pg_isblank(*cursor))
+						while (is_ident_whitespace(*cursor))
 							cursor++;	/* skip blanks */
 						/* Rest of line is user name.  Copy it over. */
 						i = 0;
@@ -1660,7 +1677,7 @@ interpret_ident_response(const char *ident_response,
  *	latch was set would improve the responsiveness to timeouts/cancellations.
  */
 static int
-ident_inet(hbaPort *port)
+ident_inet(Port *port)
 {
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
@@ -1845,7 +1862,7 @@ ident_inet_done:
  *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
 static int
-auth_peer(hbaPort *port)
+auth_peer(Port *port)
 {
 	uid_t		uid;
 	gid_t		gid;
@@ -1917,7 +1934,7 @@ auth_peer(hbaPort *port)
  */
 
 static int
-pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
+pam_passwd_conv_proc(int num_msg, PG_PAM_CONST struct pam_message **msg,
 					 struct pam_response **resp, void *appdata_ptr)
 {
 	const char *passwd;
@@ -2223,8 +2240,8 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	if (!*ldap)
 	{
 		ereport(LOG,
-				(errmsg("could not initialize LDAP: error code %d",
-						(int) LdapGetLastError())));
+				(errmsg("could not initialize LDAP: error code %lu",
+						LdapGetLastError())));
 
 		return STATUS_ERROR;
 	}

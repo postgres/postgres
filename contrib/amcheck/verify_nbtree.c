@@ -382,7 +382,6 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	BTMetaPageData *metad;
 	uint32		previouslevel;
 	BtreeLevel	current;
-	Snapshot	snapshot = SnapshotAny;
 
 	if (!readonly)
 		elog(DEBUG1, "verifying consistency of tree structure for index \"%s\"",
@@ -400,7 +399,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	/*
 	 * Initialize state for entire verification operation
 	 */
-	state = palloc0(sizeof(BtreeCheckState));
+	state = palloc0_object(BtreeCheckState);
 	state->rel = rel;
 	state->heaprel = heaprel;
 	state->heapkeyspace = heapkeyspace;
@@ -433,54 +432,46 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		state->heaptuplespresent = 0;
 
 		/*
-		 * Register our own snapshot in !readonly case, rather than asking
+		 * Register our own snapshot for heapallindexed, rather than asking
 		 * table_index_build_scan() to do this for us later.  This needs to
 		 * happen before index fingerprinting begins, so we can later be
 		 * certain that index fingerprinting should have reached all tuples
 		 * returned by table_index_build_scan().
 		 */
-		if (!state->readonly)
-		{
-			snapshot = RegisterSnapshot(GetTransactionSnapshot());
+		state->snapshot = RegisterSnapshot(GetTransactionSnapshot());
 
-			/*
-			 * GetTransactionSnapshot() always acquires a new MVCC snapshot in
-			 * READ COMMITTED mode.  A new snapshot is guaranteed to have all
-			 * the entries it requires in the index.
-			 *
-			 * We must defend against the possibility that an old xact
-			 * snapshot was returned at higher isolation levels when that
-			 * snapshot is not safe for index scans of the target index.  This
-			 * is possible when the snapshot sees tuples that are before the
-			 * index's indcheckxmin horizon.  Throwing an error here should be
-			 * very rare.  It doesn't seem worth using a secondary snapshot to
-			 * avoid this.
-			 */
-			if (IsolationUsesXactSnapshot() && rel->rd_index->indcheckxmin &&
-				!TransactionIdPrecedes(HeapTupleHeaderGetXmin(rel->rd_indextuple->t_data),
-									   snapshot->xmin))
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("index \"%s\" cannot be verified using transaction snapshot",
-								RelationGetRelationName(rel))));
-		}
+		/*
+		 * GetTransactionSnapshot() always acquires a new MVCC snapshot in
+		 * READ COMMITTED mode.  A new snapshot is guaranteed to have all the
+		 * entries it requires in the index.
+		 *
+		 * We must defend against the possibility that an old xact snapshot
+		 * was returned at higher isolation levels when that snapshot is not
+		 * safe for index scans of the target index.  This is possible when
+		 * the snapshot sees tuples that are before the index's indcheckxmin
+		 * horizon.  Throwing an error here should be very rare.  It doesn't
+		 * seem worth using a secondary snapshot to avoid this.
+		 */
+		if (IsolationUsesXactSnapshot() && rel->rd_index->indcheckxmin &&
+			!TransactionIdPrecedes(HeapTupleHeaderGetXmin(rel->rd_indextuple->t_data),
+								   state->snapshot->xmin))
+			ereport(ERROR,
+					errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+					errmsg("index \"%s\" cannot be verified using transaction snapshot",
+						   RelationGetRelationName(rel)));
 	}
 
 	/*
-	 * We need a snapshot to check the uniqueness of the index. For better
-	 * performance take it once per index check. If snapshot already taken
-	 * reuse it.
+	 * We need a snapshot to check the uniqueness of the index.  For better
+	 * performance, take it once per index check.  If one was already taken
+	 * above, use that.
 	 */
 	if (state->checkunique)
 	{
 		state->indexinfo = BuildIndexInfo(state->rel);
-		if (state->indexinfo->ii_Unique)
-		{
-			if (snapshot != SnapshotAny)
-				state->snapshot = snapshot;
-			else
-				state->snapshot = RegisterSnapshot(GetTransactionSnapshot());
-		}
+
+		if (state->indexinfo->ii_Unique && state->snapshot == InvalidSnapshot)
+			state->snapshot = RegisterSnapshot(GetTransactionSnapshot());
 	}
 
 	Assert(!state->rootdescend || state->readonly);
@@ -555,13 +546,12 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		/*
 		 * Create our own scan for table_index_build_scan(), rather than
 		 * getting it to do so for us.  This is required so that we can
-		 * actually use the MVCC snapshot registered earlier in !readonly
-		 * case.
+		 * actually use the MVCC snapshot registered earlier.
 		 *
 		 * Note that table_index_build_scan() calls heap_endscan() for us.
 		 */
 		scan = table_beginscan_strat(state->heaprel,	/* relation */
-									 snapshot,	/* snapshot */
+									 state->snapshot,	/* snapshot */
 									 0, /* number of keys */
 									 NULL,	/* scan key */
 									 true,	/* buffer access strategy OK */
@@ -569,16 +559,15 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 
 		/*
 		 * Scan will behave as the first scan of a CREATE INDEX CONCURRENTLY
-		 * behaves in !readonly case.
+		 * behaves.
 		 *
 		 * It's okay that we don't actually use the same lock strength for the
-		 * heap relation as any other ii_Concurrent caller would in !readonly
-		 * case.  We have no reason to care about a concurrent VACUUM
-		 * operation, since there isn't going to be a second scan of the heap
-		 * that needs to be sure that there was no concurrent recycling of
-		 * TIDs.
+		 * heap relation as any other ii_Concurrent caller would.  We have no
+		 * reason to care about a concurrent VACUUM operation, since there
+		 * isn't going to be a second scan of the heap that needs to be sure
+		 * that there was no concurrent recycling of TIDs.
 		 */
-		indexinfo->ii_Concurrent = !state->readonly;
+		indexinfo->ii_Concurrent = true;
 
 		/*
 		 * Don't wait for uncommitted tuple xact commit/abort when index is a
@@ -602,14 +591,11 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 								 state->heaptuplespresent, RelationGetRelationName(heaprel),
 								 100.0 * bloom_prop_bits_set(state->filter))));
 
-		if (snapshot != SnapshotAny)
-			UnregisterSnapshot(snapshot);
-
 		bloom_free(state->filter);
 	}
 
 	/* Be tidy: */
-	if (snapshot == SnapshotAny && state->snapshot != InvalidSnapshot)
+	if (state->snapshot != InvalidSnapshot)
 		UnregisterSnapshot(state->snapshot);
 	MemoryContextDelete(state->targetcontext);
 }
@@ -721,7 +707,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 							 errmsg("block %u is not leftmost in index \"%s\"",
 									current, RelationGetRelationName(state->rel))));
 
-				if (level.istruerootlevel && !P_ISROOT(opaque))
+				if (level.istruerootlevel && (!P_ISROOT(opaque) && !P_INCOMPLETE_SPLIT(opaque)))
 					ereport(ERROR,
 							(errcode(ERRCODE_INDEX_CORRUPTED),
 							 errmsg("block %u is not true root in index \"%s\"",
@@ -913,7 +899,7 @@ bt_report_duplicate(BtreeCheckState *state,
 			(errcode(ERRCODE_INDEX_CORRUPTED),
 			 errmsg("index uniqueness is violated for index \"%s\"",
 					RelationGetRelationName(state->rel)),
-			 errdetail("Index %s%s and%s%s (point to heap %s and %s) page lsn=%X/%X.",
+			 errdetail("Index %s%s and%s%s (point to heap %s and %s) page lsn=%X/%08X.",
 					   itid, pposting, nitid, pnposting, htid, nhtid,
 					   LSN_FORMAT_ARGS(state->targetlsn))));
 }
@@ -1058,7 +1044,7 @@ bt_leftmost_ignoring_half_dead(BtreeCheckState *state,
 					(errcode(ERRCODE_NO_DATA),
 					 errmsg_internal("harmless interrupted page deletion detected in index \"%s\"",
 									 RelationGetRelationName(state->rel)),
-					 errdetail_internal("Block=%u right block=%u page lsn=%X/%X.",
+					 errdetail_internal("Block=%u right block=%u page lsn=%X/%08X.",
 										reached, reached_from,
 										LSN_FORMAT_ARGS(pagelsn))));
 
@@ -1283,7 +1269,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("wrong number of high key index tuple attributes in index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index block=%u natts=%u block type=%s page lsn=%X/%X.",
+					 errdetail_internal("Index block=%u natts=%u block type=%s page lsn=%X/%08X.",
 										state->targetblock,
 										BTreeTupleGetNAtts(itup, state->rel),
 										P_ISLEAF(topaque) ? "heap" : "index",
@@ -1332,7 +1318,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("index tuple size does not equal lp_len in index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index tid=(%u,%u) tuple size=%zu lp_len=%u page lsn=%X/%X.",
+					 errdetail_internal("Index tid=(%u,%u) tuple size=%zu lp_len=%u page lsn=%X/%08X.",
 										state->targetblock, offset,
 										tupsize, ItemIdGetLength(itemid),
 										LSN_FORMAT_ARGS(state->targetlsn)),
@@ -1356,7 +1342,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("wrong number of index tuple attributes in index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index tid=%s natts=%u points to %s tid=%s page lsn=%X/%X.",
+					 errdetail_internal("Index tid=%s natts=%u points to %s tid=%s page lsn=%X/%08X.",
 										itid,
 										BTreeTupleGetNAtts(itup, state->rel),
 										P_ISLEAF(topaque) ? "heap" : "index",
@@ -1406,7 +1392,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("could not find tuple using search from root page in index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index tid=%s points to heap tid=%s page lsn=%X/%X.",
+					 errdetail_internal("Index tid=%s points to heap tid=%s page lsn=%X/%08X.",
 										itid, htid,
 										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
@@ -1435,7 +1421,7 @@ bt_target_page_check(BtreeCheckState *state)
 							(errcode(ERRCODE_INDEX_CORRUPTED),
 							 errmsg_internal("posting list contains misplaced TID in index \"%s\"",
 											 RelationGetRelationName(state->rel)),
-							 errdetail_internal("Index tid=%s posting list offset=%d page lsn=%X/%X.",
+							 errdetail_internal("Index tid=%s posting list offset=%d page lsn=%X/%08X.",
 												itid, i,
 												LSN_FORMAT_ARGS(state->targetlsn))));
 				}
@@ -1488,7 +1474,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("index row size %zu exceeds maximum for index \"%s\"",
 							tupsize, RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index tid=%s points to %s tid=%s page lsn=%X/%X.",
+					 errdetail_internal("Index tid=%s points to %s tid=%s page lsn=%X/%08X.",
 										itid,
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
@@ -1595,7 +1581,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("high key invariant violated for index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index tid=%s points to %s tid=%s page lsn=%X/%X.",
+					 errdetail_internal("Index tid=%s points to %s tid=%s page lsn=%X/%08X.",
 										itid,
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
@@ -1641,9 +1627,7 @@ bt_target_page_check(BtreeCheckState *state)
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("item order invariant violated for index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Lower index tid=%s (points to %s tid=%s) "
-										"higher index tid=%s (points to %s tid=%s) "
-										"page lsn=%X/%X.",
+					 errdetail_internal("Lower index tid=%s (points to %s tid=%s) higher index tid=%s (points to %s tid=%s) page lsn=%X/%08X.",
 										itid,
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
@@ -1760,7 +1744,7 @@ bt_target_page_check(BtreeCheckState *state)
 						(errcode(ERRCODE_INDEX_CORRUPTED),
 						 errmsg("cross page item order invariant violated for index \"%s\"",
 								RelationGetRelationName(state->rel)),
-						 errdetail_internal("Last item on page tid=(%u,%u) page lsn=%X/%X.",
+						 errdetail_internal("Last item on page tid=(%u,%u) page lsn=%X/%08X.",
 											state->targetblock, offset,
 											LSN_FORMAT_ARGS(state->targetlsn))));
 			}
@@ -1813,7 +1797,7 @@ bt_target_page_check(BtreeCheckState *state)
 								(errcode(ERRCODE_INDEX_CORRUPTED),
 								 errmsg("right block of leaf block is non-leaf for index \"%s\"",
 										RelationGetRelationName(state->rel)),
-								 errdetail_internal("Block=%u page lsn=%X/%X.",
+								 errdetail_internal("Block=%u page lsn=%X/%08X.",
 													state->targetblock,
 													LSN_FORMAT_ARGS(state->targetlsn))));
 
@@ -2237,7 +2221,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("the first child of leftmost target page is not leftmost of its level in index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
+					 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%08X.",
 										state->targetblock, blkno,
 										LSN_FORMAT_ARGS(state->targetlsn))));
 
@@ -2270,7 +2254,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 		 * If we visit page with high key, check that it is equal to the
 		 * target key next to corresponding downlink.
 		 */
-		if (!rightsplit && !P_RIGHTMOST(opaque))
+		if (!rightsplit && !P_RIGHTMOST(opaque) && !P_ISHALFDEAD(opaque))
 		{
 			BTPageOpaque topaque;
 			IndexTuple	highkey;
@@ -2323,7 +2307,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 								(errcode(ERRCODE_INDEX_CORRUPTED),
 								 errmsg("child high key is greater than rightmost pivot key on target level in index \"%s\"",
 										RelationGetRelationName(state->rel)),
-								 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
+								 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%08X.",
 													state->targetblock, blkno,
 													LSN_FORMAT_ARGS(state->targetlsn))));
 					pivotkey_offset = P_HIKEY;
@@ -2353,7 +2337,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 							(errcode(ERRCODE_INDEX_CORRUPTED),
 							 errmsg("can't find left sibling high key in index \"%s\"",
 									RelationGetRelationName(state->rel)),
-							 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
+							 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%08X.",
 												state->targetblock, blkno,
 												LSN_FORMAT_ARGS(state->targetlsn))));
 				itup = state->lowkey;
@@ -2365,7 +2349,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
 						 errmsg("mismatch between parent key and child high key in index \"%s\"",
 								RelationGetRelationName(state->rel)),
-						 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
+						 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%08X.",
 											state->targetblock, blkno,
 											LSN_FORMAT_ARGS(state->targetlsn))));
 			}
@@ -2505,7 +2489,7 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("downlink to deleted page found in index \"%s\"",
 						RelationGetRelationName(state->rel)),
-				 errdetail_internal("Parent block=%u child block=%u parent page lsn=%X/%X.",
+				 errdetail_internal("Parent block=%u child block=%u parent page lsn=%X/%08X.",
 									state->targetblock, childblock,
 									LSN_FORMAT_ARGS(state->targetlsn))));
 
@@ -2546,7 +2530,7 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("down-link lower bound invariant violated for index \"%s\"",
 							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Parent block=%u child index tid=(%u,%u) parent page lsn=%X/%X.",
+					 errdetail_internal("Parent block=%u child index tid=(%u,%u) parent page lsn=%X/%08X.",
 										state->targetblock, childblock, offset,
 										LSN_FORMAT_ARGS(state->targetlsn))));
 	}
@@ -2616,7 +2600,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 				(errcode(ERRCODE_NO_DATA),
 				 errmsg_internal("harmless interrupted page split detected in index \"%s\"",
 								 RelationGetRelationName(state->rel)),
-				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%X.",
+				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%08X.",
 									blkno, opaque->btpo_level,
 									opaque->btpo_prev,
 									LSN_FORMAT_ARGS(pagelsn))));
@@ -2638,7 +2622,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("leaf index block lacks downlink in index \"%s\"",
 						RelationGetRelationName(state->rel)),
-				 errdetail_internal("Block=%u page lsn=%X/%X.",
+				 errdetail_internal("Block=%u page lsn=%X/%08X.",
 									blkno,
 									LSN_FORMAT_ARGS(pagelsn))));
 
@@ -2704,7 +2688,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg_internal("downlink to deleted leaf page found in index \"%s\"",
 								 RelationGetRelationName(state->rel)),
-				 errdetail_internal("Top parent/target block=%u leaf block=%u top parent/under check lsn=%X/%X.",
+				 errdetail_internal("Top parent/target block=%u leaf block=%u top parent/under check lsn=%X/%08X.",
 									blkno, childblk,
 									LSN_FORMAT_ARGS(pagelsn))));
 
@@ -2730,7 +2714,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 			(errcode(ERRCODE_INDEX_CORRUPTED),
 			 errmsg("internal index block lacks downlink in index \"%s\"",
 					RelationGetRelationName(state->rel)),
-			 errdetail_internal("Block=%u level=%u page lsn=%X/%X.",
+			 errdetail_internal("Block=%u level=%u page lsn=%X/%08X.",
 								blkno, opaque->btpo_level,
 								LSN_FORMAT_ARGS(pagelsn))));
 }

@@ -301,7 +301,7 @@ COMMENT ON
   <title>Examples</title>
 
   <para>
-   Attach a comment to the table <literal>mytable</literal>:
+   Attach a comment to the table <structname>mytable</structname>:
 
 <programlisting>
 COMMENT ON TABLE mytable IS 'This is my table.';

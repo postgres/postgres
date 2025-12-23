@@ -421,6 +421,16 @@ CREATE TABLE people (
     </listitem>
     <listitem>
      <para>
+      A virtual generated column cannot have a user-defined type, and the
+      generation expression of a virtual generated column must not reference
+      user-defined functions or types, that is, it can only use built-in
+      functions or types.  This applies also indirectly, such as for functions
+      or types that underlie operators or casts.  (This restriction does not
+      exist for stored generated columns.)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       A generated column cannot have a column default or an identity definition.
      </para>
     </listitem>
@@ -1343,7 +1353,7 @@ CREATE TABLE posts (
 );
 </programlisting>
     Without the specification of the column, the foreign key would also set
-    the column <literal>tenant_id</literal> to null, but that column is still
+    the column <structfield>tenant_id</structfield> to null, but that column is still
     required as part of the primary key.
    </para>
 
@@ -1573,6 +1583,297 @@ CREATE TABLE circles (
     Also, only commands that actually modify the database contents will
     consume a command identifier.
    </para>
+ </sect1>
+
+ <sect1 id="ddl-temporal-tables">
+  <title>Temporal Tables</title>
+
+  <indexterm zone="ddl-temporal-tables">
+   <primary>temporal</primary>
+  </indexterm>
+
+  <para>
+   <firstterm>Temporal tables</firstterm> allow users to track different
+   dimensions of history.  <firstterm>Application time</firstterm> tracks the
+   history of a thing out in the world, and <firstterm>system time</firstterm>
+   tracks the history of the database itself.  (A database that does both is
+   also called <firstterm>bitemporal</firstterm>.)  This section describes how
+   to express and manage such histories in temporal tables.
+  </para>
+
+  <sect2 id="ddl-application-time">
+   <title>Application Time</title>
+
+   <indexterm zone="ddl-application-time">
+    <primary>application time</primary>
+   </indexterm>
+
+   <para>
+    <firstterm>Application time</firstterm> refers to a history of the entity
+    described by a table.  In a typical non-temporal table, there is a single
+    row for each entity.  In a temporal table, an entity may have multiple
+    rows, as long as those rows describe non-overlapping periods from its
+    history.  Application time requires each row to have a start and end time,
+    expressing when the row is applicable.
+   </para>
+
+   <para>
+    The following SQL creates a temporal table that can store application time:
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    price numeric,
+    <emphasis>valid_at daterange</emphasis>
+);
+</programlisting>
+   </para>
+
+   <para>
+    Records in a temporal table can be imagined on a timeline, as in <xref
+    linkend="temporal-entities-figure"/>.  Here we show three records
+    describing two products.  Each record is a tuple with three attributes:
+    the product number, the price, and the application time.  So product 5 was
+    first offered for a price of 5.00 starting January 1, 2020, but then
+    became 8.00 starting January 1, 2022.  Its second record has no specified
+    end time, indicating that it is true indefinitely, or for all future time.
+    The last record shows that product 6 was introduced January 1, 2021 for
+    9.00, then canceled January 1, 2024.
+   </para>
+
+   <figure id="temporal-entities-figure">
+    <title>Application Time Example</title>
+    <mediaobject>
+     <imageobject>
+      <imagedata fileref="images/temporal-entities.svg" format="SVG" width="100%"/>
+     </imageobject>
+    </mediaobject>
+   </figure>
+
+   <para>
+    In a table, these records would be:
+<programlisting>
+ product_no | price |        valid_at
+------------+-------+-------------------------
+          5 |  5.00 | [2020-01-01,2022-01-01)
+          5 |  8.00 | [2022-01-01,)
+          6 |  9.00 | [2021-01-01,2024-01-01)
+</programlisting>
+   </para>
+
+   <para>
+    We show the application time using range-type notation, because it is
+    stored as a single column (either a range or multirange).  Ranges include
+    their start point but exclude their end point.  That way two adjacent
+    ranges cover all points without overlapping.  See <xref
+    linkend="rangetypes"/> for more information about range types.
+   </para>
+
+   <para>
+    In principle, a table with application-time ranges/multiranges is
+    equivalent to a table that stores application-time
+    <quote>instants</quote>: one for each second, millisecond, nanosecond, or
+    whatever finest granularity is available.  But such a table would contain
+    far too many rows, so ranges/multiranges offer an optimization to
+    represent the same information in a compact form.  In addition, ranges and
+    multiranges offer a more convenient interface for typical temporal
+    operations, where records change infrequently enough that separate
+    <quote>versions</quote> persist for extended periods of time.
+   </para>
+
+   <sect3 id="ddl-application-time-primary-keys">
+    <title>Temporal Primary Keys and Unique Constraints</title>
+
+    <para>
+     A table with application time has a different concept of entity
+     uniqueness than a non-temporal table.  Temporal entity uniqueness can be
+     enforced with a temporal primary key.  A regular primary key has at least
+     one column, all columns are <literal>NOT NULL</literal>, and the combined
+     value of all columns is unique.  A temporal primary key also has at least
+     one such column, but in addition it has a final column that is of a range
+     type or multirange type that shows when the row is applicable.  The
+     regular parts of the key must be unique for any moment in time, but
+     non-unique rows are allowed if their application time does not overlap.
+    </para>
+
+    <para>
+     The syntax to create a temporal primary key is as follows:
+
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    price numeric,
+    valid_at daterange,
+    <emphasis>PRIMARY KEY (product_no, valid_at WITHOUT OVERLAPS)</emphasis>
+);
+</programlisting>
+
+     In this example, <literal>product_no</literal> is the non-temporal part
+     of the key, and <literal>valid_at</literal> is a range column containing
+     the application time.
+    </para>
+
+    <para>
+     The <literal>WITHOUT OVERLAPS</literal> column is implicitly <literal>NOT
+     NULL</literal> (like the other parts of the key).  In addition it may not
+     contain empty values, that is, a range of <literal>'empty'</literal> or a
+     multirange of <literal>{}</literal>.  An empty application time would
+     have no meaning.
+    </para>
+
+    <para>
+     It is also possible to create a temporal unique constraint that is
+     not a primary key. The syntax is similar:
+
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    price numeric,
+    valid_at daterange,
+    <emphasis>UNIQUE (product_no, valid_at WITHOUT OVERLAPS)</emphasis>
+);
+</programlisting>
+
+     Temporal unique constraints also forbid empty ranges/multiranges for
+     their application time, but that column is permitted to be null (like the
+     other columns of the unique constraint).
+    </para>
+
+    <para>
+     Temporal primary keys and unique constraints are backed by GiST indexes
+     (see <xref linkend="gist"/>) rather than B-Tree indexes.  In practice,
+     creating a temporal primary key or constraint requires installing the
+     <xref linkend="btree-gist"/> extension, so that the database has GiST
+     operator classes for the non-temporal parts of the key.
+    </para>
+
+    <para>
+     Temporal primary keys and unique constraints have the same behavior as
+     exclusion constraints (see <xref linkend="ddl-constraints-exclusion"/>),
+     where each regular key part is compared with equality, and the
+     application time is compared with overlaps, for example <literal>EXCLUDE
+     USING gist (id WITH =, valid_at WITH &amp;&amp;)</literal>. The only
+     difference is that they also forbid an empty application time.
+    </para>
+   </sect3>
+
+   <sect3 id="ddl-application-time-foreign-keys">
+    <title>Temporal Foreign Keys</title>
+
+    <para>
+     A temporal foreign key is a reference from one application-time table to
+     another application-time table.  Just as a non-temporal reference
+     requires a referenced key to exist, so a temporal reference requires a
+     referenced key to exist, but during whatever history the reference exists
+     (at least).  So if the <literal>products</literal> table is referenced by
+     a <literal>variants</literal> table, and a variant of product 5 has an
+     application-time of <literal>[2020-01-01,2026-01-01)</literal>, then
+     product 5 must exist throughout that period.
+    </para>
+
+    <para>
+     We can create the <literal>variants</literal> table with the following
+     schema (without a foreign key yet):
+
+<programlisting>
+CREATE TABLE variants (
+  id         integer,
+  product_no integer,
+  name       text,
+  valid_at   daterange,
+  PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+</programlisting>
+
+     We have included a temporal primary key as a best practice, but it is not
+     strictly required by foreign keys.
+    </para>
+
+    <para>
+     <xref linkend="temporal-references-figure"/> plots product 5 (in green)
+     and two variants referencing it (in yellow) on the same timeline.
+     Variant 8 (Medium) was introduced first, then variant 9 (XXL).  Both
+     satisfy the foreign key constraint, because the referenced product exists
+     throughout their entire history.
+    </para>
+
+    <figure id="temporal-references-figure">
+     <title>Temporal Foreign Key Example</title>
+     <mediaobject>
+      <imageobject>
+       <imagedata fileref="images/temporal-references.svg" format="SVG" width="100%"/>
+      </imageobject>
+     </mediaobject>
+    </figure>
+
+    <para>
+     In a table, these records would be:
+<programlisting>
+ id | product_no |  name  |        valid_at
+----+------------+--------+-------------------------
+  8 |          5 | Medium | [2021-01-01,2023-06-01)
+  9 |          5 | XXL    | [2022-03-01,2024-06-01)
+</programlisting>
+    </para>
+
+    <para>
+     Note that a temporal reference need not be fulfilled by a single row in
+     the referenced table.  Product 5 had a price change in the middle of
+     variant 8's history, but the reference is still valid.  The combination
+     of all matching rows is used to test whether the referenced history
+     contains the referencing row.
+    </para>
+
+    <para>
+     The syntax to add a temporal foreign key to our table is:
+
+<programlisting>
+CREATE TABLE variants (
+  id         integer,
+  product_no integer,
+  name       text,
+  valid_at   daterange,
+  PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+  <emphasis>FOREIGN KEY (product_no, PERIOD valid_at) REFERENCES products (product_no, PERIOD valid_at)</emphasis>
+);
+</programlisting>
+
+     Note that the keyword <literal>PERIOD</literal> must be used for the
+     application-time column in both the referencing and referenced table.
+    </para>
+
+    <para>
+     A temporal primary key or unique constraint matching the referenced columns
+     must exist on the referenced table.
+    </para>
+
+    <para>
+     <productname>PostgreSQL</productname> supports temporal foreign keys with
+     action <literal>NO ACTION</literal>, but not <literal>RESTRICT</literal>,
+     <literal>CASCADE</literal>, <literal>SET NULL</literal>, or <literal>SET
+     DEFAULT</literal>.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="ddl-system-time">
+   <title>System Time</title>
+
+   <indexterm zone="ddl-system-time">
+    <primary>system time</primary>
+   </indexterm>
+
+   <para>
+    <firstterm>System time</firstterm> refers to the history of the database
+    table, not the entity it describes.  It captures when each row was
+    inserted/updated/deleted.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> does not currently support system
+    time, but it could be emulated using triggers, and there are external
+    extensions that provide such functionality.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="ddl-alter">
@@ -1949,6 +2250,8 @@ ALTER TABLE <replaceable>table_name</replaceable> OWNER TO <replaceable>new_owne
    Superusers can always do this; ordinary roles can only do it if they are
    both the current owner of the object (or inherit the privileges of the
    owning role) and able to <literal>SET ROLE</literal> to the new owning role.
+   All object privileges of the old owner are transferred to the new owner
+   along with the ownership.
   </para>
 
   <para>
@@ -2223,8 +2526,9 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <para>
       Allows <command>VACUUM</command>, <command>ANALYZE</command>,
       <command>CLUSTER</command>, <command>REFRESH MATERIALIZED VIEW</command>,
-      <command>REINDEX</command>, and <command>LOCK TABLE</command> on a
-      relation.
+      <command>REINDEX</command>, <command>LOCK TABLE</command>,
+      and database object statistics manipulation functions
+      (see <xref linkend="functions-admin-statsmod"/>) on a relation.
      </para>
     </listitem>
    </varlistentry>
@@ -2528,7 +2832,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    As an example, suppose that user <literal>miriam</literal> creates
-   table <literal>mytable</literal> and does:
+   table <structname>mytable</structname> and does:
 <programlisting>
 GRANT SELECT ON mytable TO PUBLIC;
 GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
@@ -2756,7 +3060,7 @@ CREATE POLICY user_mod_policy ON users
 
   <para>
    Below is a larger example of how this feature can be used in production
-   environments.  The table <literal>passwd</literal> emulates a Unix password
+   environments.  The table <structname>passwd</structname> emulates a Unix password
    file:
   </para>
 
@@ -2823,9 +3127,9 @@ GRANT UPDATE
 
 <programlisting>
 -- admin can view all rows and fields
-postgres=&gt; set role admin;
+postgres=&gt; SET ROLE admin;
 SET
-postgres=&gt; table passwd;
+postgres=&gt; TABLE passwd;
  user_name | pwhash | uid | gid | real_name |  home_phone  | extra_info | home_dir    |   shell
 -----------+--------+-----+-----+-----------+--------------+------------+-------------+-----------
  admin     | xxx    |   0 |   0 | Admin     | 111-222-3333 |            | /root       | /bin/dash
@@ -2834,11 +3138,11 @@ postgres=&gt; table passwd;
 (3 rows)
 
 -- Test what Alice is able to do
-postgres=&gt; set role alice;
+postgres=&gt; SET ROLE alice;
 SET
-postgres=&gt; table passwd;
+postgres=&gt; TABLE passwd;
 ERROR:  permission denied for table passwd
-postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell from passwd;
+postgres=&gt; SELECT user_name, real_name, home_phone, extra_info, home_dir, shell FROM passwd;
  user_name | real_name |  home_phone  | extra_info | home_dir    |   shell
 -----------+-----------+--------------+------------+-------------+-----------
  admin     | Admin     | 111-222-3333 |            | /root       | /bin/dash
@@ -2846,21 +3150,21 @@ postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell fr
  alice     | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
 (3 rows)
 
-postgres=&gt; update passwd set user_name = 'joe';
+postgres=&gt; UPDATE passwd SET user_name = 'joe';
 ERROR:  permission denied for table passwd
 -- Alice is allowed to change her own real_name, but no others
-postgres=&gt; update passwd set real_name = 'Alice Doe';
+postgres=&gt; UPDATE passwd SET real_name = 'Alice Doe';
 UPDATE 1
-postgres=&gt; update passwd set real_name = 'John Doe' where user_name = 'admin';
+postgres=&gt; UPDATE passwd SET real_name = 'John Doe' WHERE user_name = 'admin';
 UPDATE 0
-postgres=&gt; update passwd set shell = '/bin/xx';
+postgres=&gt; UPDATE passwd SET shell = '/bin/xx';
 ERROR:  new row violates WITH CHECK OPTION for "passwd"
-postgres=&gt; delete from passwd;
+postgres=&gt; DELETE FROM passwd;
 ERROR:  permission denied for table passwd
-postgres=&gt; insert into passwd (user_name) values ('xxx');
+postgres=&gt; INSERT INTO passwd (user_name) VALUES ('xxx');
 ERROR:  permission denied for table passwd
 -- Alice can change her own password; RLS silently prevents updating other rows
-postgres=&gt; update passwd set pwhash = 'abc';
+postgres=&gt; UPDATE passwd SET pwhash = 'abc';
 UPDATE 1
 </programlisting>
 
@@ -2893,7 +3197,7 @@ CREATE POLICY admin_local_only ON passwd AS RESTRICTIVE TO admin
  admin
 (1 row)
 
-=&gt; select inet_client_addr();
+=&gt; SELECT inet_client_addr();
  inet_client_addr
 ------------------
  127.0.0.1
@@ -2904,7 +3208,7 @@ CREATE POLICY admin_local_only ON passwd AS RESTRICTIVE TO admin
 -----------+--------+-----+-----+-----------+------------+------------+----------+-------
 (0 rows)
 
-=&gt; UPDATE passwd set pwhash = NULL;
+=&gt; UPDATE passwd SET pwhash = NULL;
 UPDATE 0
 </programlisting>
 
@@ -4441,6 +4745,44 @@ ALTER INDEX measurement_city_id_logdate_key
 ...
 </programlisting>
     </para>
+
+    <para>
+     There is also an option for merging multiple table partitions into
+     a single partition using the
+     <link linkend="sql-altertable-merge-partitions"><command>ALTER TABLE ... MERGE PARTITIONS</command></link>.
+     This feature simplifies the management of partitioned tables by allowing
+     users to combine partitions that are no longer needed as
+     separate entities.  It's important to note that this operation is not
+     supported for hash-partitioned tables and acquires an
+     <literal>ACCESS EXCLUSIVE</literal> lock, which could impact high-load
+     systems due to the lock's restrictive nature.  For example, we can
+     merge three monthly partitions into one quarter partition:
+<programlisting>
+ALTER TABLE measurement
+    MERGE PARTITIONS (measurement_y2006m01,
+                      measurement_y2006m02,
+                      measurement_y2006m03) INTO measurement_y2006q1;
+</programlisting>
+    </para>
+
+    <para>
+     Similarly to merging multiple table partitions, there is an option for
+     splitting a single partition into multiple using the
+     <link linkend="sql-altertable-split-partition"><command>ALTER TABLE ... SPLIT PARTITION</command></link>.
+     This feature could come in handy when one partition grows too big
+     and needs to be split into multiple.  It's important to note that
+     this operation is not supported for hash-partitioned tables and acquires
+     an <literal>ACCESS EXCLUSIVE</literal> lock, which could impact high-load
+     systems due to the lock's restrictive nature.  For example, we can split
+     the quarter partition back to monthly partitions:
+<programlisting>
+ALTER TABLE measurement SPLIT PARTITION measurement_y2006q1 INTO
+   (PARTITION measurement_y2006m01 FOR VALUES FROM ('2006-01-01') TO ('2006-02-01'),
+    PARTITION measurement_y2006m02 FOR VALUES FROM ('2006-02-01') TO ('2006-03-01'),
+    PARTITION measurement_y2006m03 FOR VALUES FROM ('2006-03-01') TO ('2006-04-01'));
+</programlisting>
+    </para>
+
    </sect3>
 
    <sect3 id="ddl-partitioning-declarative-limitations">

@@ -1484,6 +1484,13 @@ SELECT array_sort('{a,B}'::text[] COLLATE "C");
  {B,a}
 (1 row)
 
+-- test replace() at the end of the string (bug #19341)
+SELECT replace('testX' COLLATE case_insensitive, 'x' COLLATE case_insensitive, 'er');
+ replace 
+---------
+ tester
+(1 row)
+
 -- test language tags
 CREATE COLLATION lt_insensitive (provider = icu, locale = 'en-u-ks-level1', deterministic = false);
 SELECT 'aBcD' COLLATE lt_insensitive = 'AbCd' COLLATE lt_insensitive;
@@ -2437,11 +2444,11 @@ SELECT c collate "C", count(c) FROM pagg_tab3 GROUP BY c collate "C" ORDER BY 1;
 SET enable_partitionwise_join TO false;
 EXPLAIN (COSTS OFF)
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
-                         QUERY PLAN                          
--------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Sort
    Sort Key: t1.c COLLATE "C"
-   ->  HashAggregate
+   ->  Finalize HashAggregate
          Group Key: t1.c
          ->  Hash Join
                Hash Cond: (t1.c = t2.c)
@@ -2449,10 +2456,12 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
                      ->  Seq Scan on pagg_tab3_p2 t1_1
                      ->  Seq Scan on pagg_tab3_p1 t1_2
                ->  Hash
-                     ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
-(13 rows)
+                     ->  Partial HashAggregate
+                           Group Key: t2.c
+                           ->  Append
+                                 ->  Seq Scan on pagg_tab3_p2 t2_1
+                                 ->  Seq Scan on pagg_tab3_p1 t2_2
+(15 rows)
 
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
  c | count 
@@ -2464,11 +2473,11 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
 SET enable_partitionwise_join TO true;
 EXPLAIN (COSTS OFF)
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
-                         QUERY PLAN                          
--------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Sort
    Sort Key: t1.c COLLATE "C"
-   ->  HashAggregate
+   ->  Finalize HashAggregate
          Group Key: t1.c
          ->  Hash Join
                Hash Cond: (t1.c = t2.c)
@@ -2476,10 +2485,12 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
                      ->  Seq Scan on pagg_tab3_p2 t1_1
                      ->  Seq Scan on pagg_tab3_p1 t1_2
                ->  Hash
-                     ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
-(13 rows)
+                     ->  Partial HashAggregate
+                           Group Key: t2.c
+                           ->  Append
+                                 ->  Seq Scan on pagg_tab3_p2 t2_1
+                                 ->  Seq Scan on pagg_tab3_p1 t2_2
+(15 rows)
 
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
  c | count 
@@ -2690,6 +2701,55 @@ SELECT * FROM t5 ORDER BY c ASC, a ASC;
  3 | d1 | d1
 (3 rows)
 
+-- Check that DEFAULT expressions in SQL/JSON functions use the same collation
+-- as the RETURNING type.  Mismatched collations should raise an error.
+CREATE DOMAIN d1 AS text COLLATE case_insensitive;
+CREATE DOMAIN d2 AS text COLLATE "C";
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT ('C' COLLATE "C") COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C'::d2 ON EMPTY) = 'a'; -- error
+ERROR:  collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C'::d2 ON...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' COLLATE "C" ON EMPTY) = 'a'; -- error
+ERROR:  collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' COLLAT...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A'::d2 ON EMPTY) = 'a'; -- error
+ERROR:  collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A'::d2 ON...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE "C" ON EMPTY) = 'a'; -- error
+ERROR:  collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLAT...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+DROP DOMAIN d1, d2;
 -- cleanup
 RESET search_path;
 SET client_min_messages TO warning;

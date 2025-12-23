@@ -69,7 +69,7 @@ struct PLyDatumToOb
 		PLyArrayToOb array;
 		PLyTupleToOb tuple;
 		PLyTransformToOb transform;
-	}			u;
+	};
 };
 
 /*
@@ -143,7 +143,7 @@ struct PLyObToDatum
 		PLyObToTuple tuple;
 		PLyObToDomain domain;
 		PLyObToTransform transform;
-	}			u;
+	};
 };
 
 

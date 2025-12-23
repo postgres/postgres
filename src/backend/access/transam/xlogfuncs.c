@@ -90,7 +90,7 @@ pg_backup_start(PG_FUNCTION_ARGS)
 	}
 
 	oldcontext = MemoryContextSwitchTo(backupcontext);
-	backup_state = (BackupState *) palloc0(sizeof(BackupState));
+	backup_state = palloc0_object(BackupState);
 	tablespace_map = makeStringInfo();
 	MemoryContextSwitchTo(oldcontext);
 
@@ -341,7 +341,7 @@ pg_last_wal_receive_lsn(PG_FUNCTION_ARGS)
 
 	recptr = GetWalRcvFlushRecPtr(NULL, NULL);
 
-	if (recptr == 0)
+	if (!XLogRecPtrIsValid(recptr))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(recptr);
@@ -360,7 +360,7 @@ pg_last_wal_replay_lsn(PG_FUNCTION_ARGS)
 
 	recptr = GetXLogReplayRecPtr(NULL);
 
-	if (recptr == 0)
+	if (!XLogRecPtrIsValid(recptr))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(recptr);
@@ -479,7 +479,7 @@ pg_split_walfile_name(PG_FUNCTION_ARGS)
 
 	/* Capitalize WAL file name. */
 	for (p = fname_upper; *p; p++)
-		*p = pg_toupper((unsigned char) *p);
+		*p = pg_ascii_toupper((unsigned char) *p);
 
 	if (!IsXLogFileName(fname_upper))
 		ereport(ERROR,

@@ -267,14 +267,17 @@ PostgreSQL documentation
       A safe value for the next multitransaction ID (first part) can be
       determined by looking for the numerically largest file name in the
       directory <filename>pg_multixact/offsets</filename> under the data directory,
-      adding one, and then multiplying by 65536 (0x10000).  Conversely, a safe
+      adding one, and then multiplying by 32768 (0x8000).  Conversely, a safe
       value for the oldest multitransaction ID (second part of
       <option>-m</option>) can be determined by looking for the numerically smallest
-      file name in the same directory and multiplying by 65536.  The file
-      names are in hexadecimal, so the easiest way to do this is to specify
-      the option value in hexadecimal and append four zeroes.
+      file name in the same directory and multiplying by 32768 (0x8000).
+      Note that the file names are in hexadecimal.  It is usually easiest
+      to specify the option value in hexadecimal too.  For example, if
+      <filename>000F</filename> and <filename>0007</filename> are the greatest and
+      smallest entries in <filename>pg_multixact/offsets</filename>,
+      <literal>-m 0x80000,0x38000</literal> will work.
      </para>
-     <!-- 65536 = SLRU_PAGES_PER_SEGMENT * BLCKSZ / sizeof(MultiXactOffset) -->
+     <!-- 32768 = SLRU_PAGES_PER_SEGMENT * BLCKSZ / sizeof(MultiXactOffset) -->
     </listitem>
    </varlistentry>
 

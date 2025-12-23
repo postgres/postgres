@@ -78,6 +78,18 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 								 * slots) in the upstream database are enabled
 								 * to be synchronized to the standbys. */
 
+	bool		subretaindeadtuples;	/* True if dead tuples useful for
+										 * conflict detection are retained */
+
+	int32		submaxretention;	/* The maximum duration (in milliseconds)
+									 * for which information useful for
+									 * conflict detection can be retained */
+
+	bool		subretentionactive; /* True if retain_dead_tuples is enabled
+									 * and the retention duration has not
+									 * exceeded max_retention_duration, when
+									 * defined */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
 	text		subconninfo BKI_FORCE_NOT_NULL;
@@ -131,6 +143,15 @@ typedef struct Subscription
 								 * (i.e. the main slot and the table sync
 								 * slots) in the upstream database are enabled
 								 * to be synchronized to the standbys. */
+	bool		retaindeadtuples;	/* True if dead tuples useful for conflict
+									 * detection are retained */
+	int32		maxretention;	/* The maximum duration (in milliseconds) for
+								 * which information useful for conflict
+								 * detection can be retained */
+	bool		retentionactive;	/* True if retain_dead_tuples is enabled
+									 * and the retention duration has not
+									 * exceeded max_retention_duration, when
+									 * defined */
 	char	   *conninfo;		/* Connection string to the publisher */
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */

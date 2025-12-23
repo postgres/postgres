@@ -22,10 +22,7 @@ typedef struct JsonPathString
 	int			total;
 } JsonPathString;
 
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
-#endif
 
 #include "utils/jsonpath.h"
 #include "jsonpath_gram.h"

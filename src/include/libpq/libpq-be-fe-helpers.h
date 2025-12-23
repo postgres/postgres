@@ -30,17 +30,7 @@
 #ifndef LIBPQ_BE_FE_HELPERS_H
 #define LIBPQ_BE_FE_HELPERS_H
 
-/*
- * Despite the name, BUILDING_DLL is set only when building code directly part
- * of the backend. Which also is where libpq isn't allowed to be
- * used. Obviously this doesn't protect against libpq-fe.h getting included
- * otherwise, but perhaps still protects against a few mistakes...
- */
-#ifdef BUILDING_DLL
-#error "libpq may not be used code directly built into the backend"
-#endif
-
-#include "libpq-fe.h"
+#include "libpq/libpq-be-fe.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/latch.h"
@@ -79,7 +69,7 @@ libpqsrv_connect(const char *conninfo, uint32 wait_event_info)
 /*
  * Like libpqsrv_connect(), except that this is a wrapper for
  * PQconnectdbParams().
-  */
+ */
 static inline PGconn *
 libpqsrv_connect_params(const char *const *keywords,
 						const char *const *values,
@@ -289,41 +279,30 @@ libpqsrv_exec_params(PGconn *conn,
 static inline PGresult *
 libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info)
 {
-	PGresult   *volatile lastResult = NULL;
+	PGresult   *lastResult = NULL;
 
-	/* In what follows, do not leak any PGresults on an error. */
-	PG_TRY();
+	for (;;)
 	{
-		for (;;)
-		{
-			/* Wait for, and collect, the next PGresult. */
-			PGresult   *result;
+		/* Wait for, and collect, the next PGresult. */
+		PGresult   *result;
 
-			result = libpqsrv_get_result(conn, wait_event_info);
-			if (result == NULL)
-				break;			/* query is complete, or failure */
+		result = libpqsrv_get_result(conn, wait_event_info);
+		if (result == NULL)
+			break;				/* query is complete, or failure */
 
-			/*
-			 * Emulate PQexec()'s behavior of returning the last result when
-			 * there are many.
-			 */
-			PQclear(lastResult);
-			lastResult = result;
-
-			if (PQresultStatus(lastResult) == PGRES_COPY_IN ||
-				PQresultStatus(lastResult) == PGRES_COPY_OUT ||
-				PQresultStatus(lastResult) == PGRES_COPY_BOTH ||
-				PQstatus(conn) == CONNECTION_BAD)
-				break;
-		}
-	}
-	PG_CATCH();
-	{
+		/*
+		 * Emulate PQexec()'s behavior of returning the last result when there
+		 * are many.
+		 */
 		PQclear(lastResult);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+		lastResult = result;
 
+		if (PQresultStatus(lastResult) == PGRES_COPY_IN ||
+			PQresultStatus(lastResult) == PGRES_COPY_OUT ||
+			PQresultStatus(lastResult) == PGRES_COPY_BOTH ||
+			PQstatus(conn) == CONNECTION_BAD)
+			break;
+	}
 	return lastResult;
 }
 
@@ -453,5 +432,46 @@ exit:	;
 
 	return error;
 }
+
+/*
+ * libpqsrv_notice_receiver
+ *
+ * Custom notice receiver for libpq connections.
+ *
+ * This function is intended to be set via PQsetNoticeReceiver() so that
+ * NOTICE, WARNING, and similar messages from the connection are reported via
+ * ereport(), instead of being printed to stderr.
+ *
+ * Because this will be called from libpq with a "real" (not wrapped)
+ * PGresult, we need to temporarily ignore libpq-be-fe.h's wrapper macros
+ * for PGresult and also PQresultErrorMessage, and put back the wrappers
+ * afterwards.  That's not pretty, but there seems no better alternative.
+ */
+#undef PGresult
+#undef PQresultErrorMessage
+
+static inline void
+libpqsrv_notice_receiver(void *arg, const PGresult *res)
+{
+	const char *message;
+	int			len;
+	const char *prefix = (const char *) arg;
+
+	/*
+	 * Trim the trailing newline from the message text returned from
+	 * PQresultErrorMessage(), as it always includes one, to produce cleaner
+	 * log output.
+	 */
+	message = PQresultErrorMessage(res);
+	len = strlen(message);
+	if (len > 0 && message[len - 1] == '\n')
+		len--;
+
+	ereport(LOG,
+			errmsg_internal("%s: %.*s", prefix, len, message));
+}
+
+#define PGresult libpqsrv_PGresult
+#define PQresultErrorMessage libpqsrv_PQresultErrorMessage
 
 #endif							/* LIBPQ_BE_FE_HELPERS_H */

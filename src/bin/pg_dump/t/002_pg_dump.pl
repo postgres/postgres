@@ -20,21 +20,11 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 # test_key indicates that a given run should simply use the same
 # set of like/unlike tests as another run, and which run that is.
 #
-# compile_option indicates if the commands run depend on a compilation
-# option, if any.  This can be used to control if tests should be
-# skipped when a build dependency is not satisfied.
-#
 # dump_cmd is the pg_dump command to run, which is an array of
 # the full command and arguments to run.  Note that this is run
 # using $node->command_ok(), so the port does not need to be
 # specified and is pulled from $PGPORT, which is set by the
 # PostgreSQL::Test::Cluster system.
-#
-# compress_cmd is the utility command for (de)compression, if any.
-# Note that this should generally be used on pg_dump's output
-# either to generate a text file to run the through the tests, or
-# to test pg_restore's ability to parse manually compressed files
-# that otherwise pg_dump does not compress on its own (e.g. *.toc).
 #
 # glob_patterns is an optional array consisting of strings compilable
 # with glob() to check the files generated after a dump.
@@ -55,8 +45,6 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 my $supports_icu = ($ENV{with_icu} eq 'yes');
 my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
-my $supports_lz4 = check_pg_config("#define USE_LZ4 1");
-my $supports_zstd = check_pg_config("#define USE_ZSTD 1");
 
 my %pgdump_runs = (
 	binary_upgrade => {
@@ -68,6 +56,7 @@ my %pgdump_runs = (
 			'--no-data',
 			'--sequence-data',
 			'--binary-upgrade',
+			'--statistics',
 			'--dbname' => 'postgres',    # alternative way to specify database
 		],
 		restore_cmd => [
@@ -75,234 +64,9 @@ my %pgdump_runs = (
 			'--format' => 'custom',
 			'--verbose',
 			'--file' => "$tempdir/binary_upgrade.sql",
+			'--statistics',
 			"$tempdir/binary_upgrade.dump",
 		],
-	},
-
-	# Do not use --no-sync to give test coverage for data sync.
-	compression_gzip_custom => {
-		test_key => 'compression',
-		compile_option => 'gzip',
-		dump_cmd => [
-			'pg_dump',
-			'--format' => 'custom',
-			'--compress' => '1',
-			'--file' => "$tempdir/compression_gzip_custom.dump",
-			'postgres',
-		],
-		restore_cmd => [
-			'pg_restore',
-			'--file' => "$tempdir/compression_gzip_custom.sql",
-			"$tempdir/compression_gzip_custom.dump",
-		],
-		command_like => {
-			command => [
-				'pg_restore', '--list',
-				"$tempdir/compression_gzip_custom.dump",
-			],
-			expected => qr/Compression: gzip/,
-			name => 'data content is gzip-compressed'
-		},
-	},
-
-	# Do not use --no-sync to give test coverage for data sync.
-	compression_gzip_dir => {
-		test_key => 'compression',
-		compile_option => 'gzip',
-		dump_cmd => [
-			'pg_dump',
-			'--jobs' => '2',
-			'--format' => 'directory',
-			'--compress' => 'gzip:1',
-			'--file' => "$tempdir/compression_gzip_dir",
-			'postgres',
-		],
-		# Give coverage for manually compressed blobs.toc files during
-		# restore.
-		compress_cmd => {
-			program => $ENV{'GZIP_PROGRAM'},
-			args => [ '-f', "$tempdir/compression_gzip_dir/blobs_*.toc", ],
-		},
-		# Verify that only data files were compressed
-		glob_patterns => [
-			"$tempdir/compression_gzip_dir/toc.dat",
-			"$tempdir/compression_gzip_dir/*.dat.gz",
-		],
-		restore_cmd => [
-			'pg_restore',
-			'--jobs' => '2',
-			'--file' => "$tempdir/compression_gzip_dir.sql",
-			"$tempdir/compression_gzip_dir",
-		],
-	},
-
-	compression_gzip_plain => {
-		test_key => 'compression',
-		compile_option => 'gzip',
-		dump_cmd => [
-			'pg_dump',
-			'--format' => 'plain',
-			'--compress' => '1',
-			'--file' => "$tempdir/compression_gzip_plain.sql.gz",
-			'postgres',
-		],
-		# Decompress the generated file to run through the tests.
-		compress_cmd => {
-			program => $ENV{'GZIP_PROGRAM'},
-			args => [ '-d', "$tempdir/compression_gzip_plain.sql.gz", ],
-		},
-	},
-
-	# Do not use --no-sync to give test coverage for data sync.
-	compression_lz4_custom => {
-		test_key => 'compression',
-		compile_option => 'lz4',
-		dump_cmd => [
-			'pg_dump',
-			'--format' => 'custom',
-			'--compress' => 'lz4',
-			'--file' => "$tempdir/compression_lz4_custom.dump",
-			'postgres',
-		],
-		restore_cmd => [
-			'pg_restore',
-			'--file' => "$tempdir/compression_lz4_custom.sql",
-			"$tempdir/compression_lz4_custom.dump",
-		],
-		command_like => {
-			command => [
-				'pg_restore', '--list',
-				"$tempdir/compression_lz4_custom.dump",
-			],
-			expected => qr/Compression: lz4/,
-			name => 'data content is lz4 compressed'
-		},
-	},
-
-	# Do not use --no-sync to give test coverage for data sync.
-	compression_lz4_dir => {
-		test_key => 'compression',
-		compile_option => 'lz4',
-		dump_cmd => [
-			'pg_dump',
-			'--jobs' => '2',
-			'--format' => 'directory',
-			'--compress' => 'lz4:1',
-			'--file' => "$tempdir/compression_lz4_dir",
-			'postgres',
-		],
-		# Verify that data files were compressed
-		glob_patterns => [
-			"$tempdir/compression_lz4_dir/toc.dat",
-			"$tempdir/compression_lz4_dir/*.dat.lz4",
-		],
-		restore_cmd => [
-			'pg_restore',
-			'--jobs' => '2',
-			'--file' => "$tempdir/compression_lz4_dir.sql",
-			"$tempdir/compression_lz4_dir",
-		],
-	},
-
-	compression_lz4_plain => {
-		test_key => 'compression',
-		compile_option => 'lz4',
-		dump_cmd => [
-			'pg_dump',
-			'--format' => 'plain',
-			'--compress' => 'lz4',
-			'--file' => "$tempdir/compression_lz4_plain.sql.lz4",
-			'postgres',
-		],
-		# Decompress the generated file to run through the tests.
-		compress_cmd => {
-			program => $ENV{'LZ4'},
-			args => [
-				'-d', '-f',
-				"$tempdir/compression_lz4_plain.sql.lz4",
-				"$tempdir/compression_lz4_plain.sql",
-			],
-		},
-	},
-
-	compression_zstd_custom => {
-		test_key => 'compression',
-		compile_option => 'zstd',
-		dump_cmd => [
-			'pg_dump',
-			'--format' => 'custom',
-			'--compress' => 'zstd',
-			'--file' => "$tempdir/compression_zstd_custom.dump",
-			'postgres',
-		],
-		restore_cmd => [
-			'pg_restore',
-			'--file' => "$tempdir/compression_zstd_custom.sql",
-			"$tempdir/compression_zstd_custom.dump",
-		],
-		command_like => {
-			command => [
-				'pg_restore', '--list',
-				"$tempdir/compression_zstd_custom.dump",
-			],
-			expected => qr/Compression: zstd/,
-			name => 'data content is zstd compressed'
-		},
-	},
-
-	compression_zstd_dir => {
-		test_key => 'compression',
-		compile_option => 'zstd',
-		dump_cmd => [
-			'pg_dump',
-			'--jobs' => '2',
-			'--format' => 'directory',
-			'--compress' => 'zstd:1',
-			'--file' => "$tempdir/compression_zstd_dir",
-			'postgres',
-		],
-		# Give coverage for manually compressed blobs.toc files during
-		# restore.
-		compress_cmd => {
-			program => $ENV{'ZSTD'},
-			args => [
-				'-z', '-f',
-				'--rm', "$tempdir/compression_zstd_dir/blobs_*.toc",
-			],
-		},
-		# Verify that data files were compressed
-		glob_patterns => [
-			"$tempdir/compression_zstd_dir/toc.dat",
-			"$tempdir/compression_zstd_dir/*.dat.zst",
-		],
-		restore_cmd => [
-			'pg_restore',
-			'--jobs' => '2',
-			'--file' => "$tempdir/compression_zstd_dir.sql",
-			"$tempdir/compression_zstd_dir",
-		],
-	},
-
-	# Exercise long mode for test coverage
-	compression_zstd_plain => {
-		test_key => 'compression',
-		compile_option => 'zstd',
-		dump_cmd => [
-			'pg_dump',
-			'--format' => 'plain',
-			'--compress' => 'zstd:long',
-			'--file' => "$tempdir/compression_zstd_plain.sql.zst",
-			'postgres',
-		],
-		# Decompress the generated file to run through the tests.
-		compress_cmd => {
-			program => $ENV{'ZSTD'},
-			args => [
-				'-d', '-f',
-				"$tempdir/compression_zstd_plain.sql.zst", "-o",
-				"$tempdir/compression_zstd_plain.sql",
-			],
-		},
 	},
 
 	clean => {
@@ -310,6 +74,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/clean.sql",
 			'--clean',
+			'--statistics',
 			'--dbname' => 'postgres',    # alternative way to specify database
 		],
 	},
@@ -320,6 +85,7 @@ my %pgdump_runs = (
 			'--clean',
 			'--if-exists',
 			'--encoding' => 'UTF8',      # no-op, just for testing
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -338,6 +104,7 @@ my %pgdump_runs = (
 			'--create',
 			'--no-reconnect',    # no-op, just for testing
 			'--verbose',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -348,7 +115,7 @@ my %pgdump_runs = (
 			'--data-only',
 			'--superuser' => 'test_superuser',
 			'--disable-triggers',
-			'--verbose',         # no-op, just make sure it works
+			'--verbose',    # no-op, just make sure it works
 			'postgres',
 		],
 	},
@@ -356,6 +123,7 @@ my %pgdump_runs = (
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/defaults.sql",
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -364,6 +132,7 @@ my %pgdump_runs = (
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/defaults_no_public.sql",
+			'--statistics',
 			'regress_pg_dump_test',
 		],
 	},
@@ -373,6 +142,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--clean',
 			'--file' => "$tempdir/defaults_no_public_clean.sql",
+			'--statistics',
 			'regress_pg_dump_test',
 		],
 	},
@@ -381,6 +151,7 @@ my %pgdump_runs = (
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/defaults_public_owner.sql",
+			'--statistics',
 			'regress_public_owner',
 		],
 	},
@@ -395,12 +166,14 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--format' => 'custom',
 			'--file' => "$tempdir/defaults_custom_format.dump",
+			'--statistics',
 			'postgres',
 		],
 		restore_cmd => [
 			'pg_restore',
 			'--format' => 'custom',
 			'--file' => "$tempdir/defaults_custom_format.sql",
+			'--statistics',
 			"$tempdir/defaults_custom_format.dump",
 		],
 		command_like => {
@@ -425,12 +198,14 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--format' => 'directory',
 			'--file' => "$tempdir/defaults_dir_format",
+			'--statistics',
 			'postgres',
 		],
 		restore_cmd => [
 			'pg_restore',
 			'--format' => 'directory',
 			'--file' => "$tempdir/defaults_dir_format.sql",
+			'--statistics',
 			"$tempdir/defaults_dir_format",
 		],
 		command_like => {
@@ -456,11 +231,13 @@ my %pgdump_runs = (
 			'--format' => 'directory',
 			'--jobs' => 2,
 			'--file' => "$tempdir/defaults_parallel",
+			'--statistics',
 			'postgres',
 		],
 		restore_cmd => [
 			'pg_restore',
 			'--file' => "$tempdir/defaults_parallel.sql",
+			'--statistics',
 			"$tempdir/defaults_parallel",
 		],
 	},
@@ -472,12 +249,14 @@ my %pgdump_runs = (
 			'pg_dump',
 			'--format' => 'tar',
 			'--file' => "$tempdir/defaults_tar_format.tar",
+			'--statistics',
 			'postgres',
 		],
 		restore_cmd => [
 			'pg_restore',
 			'--format' => 'tar',
 			'--file' => "$tempdir/defaults_tar_format.sql",
+			'--statistics',
 			"$tempdir/defaults_tar_format.tar",
 		],
 	},
@@ -486,6 +265,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/exclude_dump_test_schema.sql",
 			'--exclude-schema' => 'dump_test',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -494,6 +274,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/exclude_test_table.sql",
 			'--exclude-table' => 'dump_test.test_table',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -502,6 +283,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/exclude_measurement.sql",
 			'--exclude-table-and-children' => 'dump_test.measurement',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -511,6 +293,7 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/exclude_measurement_data.sql",
 			'--exclude-table-data-and-children' => 'dump_test.measurement',
 			'--no-unlogged-table-data',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -520,6 +303,7 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/exclude_test_table_data.sql",
 			'--exclude-table-data' => 'dump_test.test_table',
 			'--no-unlogged-table-data',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -538,6 +322,7 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/pg_dumpall_globals.sql",
 			'--globals-only',
 			'--no-sync',
+			'--statistics',
 		],
 	},
 	pg_dumpall_globals_clean => {
@@ -547,12 +332,14 @@ my %pgdump_runs = (
 			'--globals-only',
 			'--clean',
 			'--no-sync',
+			'--statistics',
 		],
 	},
 	pg_dumpall_dbprivs => {
 		dump_cmd => [
 			'pg_dumpall', '--no-sync',
 			'--file' => "$tempdir/pg_dumpall_dbprivs.sql",
+			'--statistics',
 		],
 	},
 	pg_dumpall_exclude => {
@@ -562,6 +349,7 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/pg_dumpall_exclude.sql",
 			'--exclude-database' => '*dump_test*',
 			'--no-sync',
+			'--statistics',
 		],
 	},
 	no_toast_compression => {
@@ -569,6 +357,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/no_toast_compression.sql",
 			'--no-toast-compression',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -577,6 +366,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/no_large_objects.sql",
 			'--no-large-objects',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -585,7 +375,25 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/no_policies.sql",
 			'--no-policies',
+			'--statistics',
 			'postgres',
+		],
+	},
+	no_policies_restore => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--format' => 'custom',
+			'--file' => "$tempdir/no_policies_restore.dump",
+			'--statistics',
+			'postgres',
+		],
+		restore_cmd => [
+			'pg_restore',
+			'--format' => 'custom',
+			'--file' => "$tempdir/no_policies_restore.sql",
+			'--no-policies',
+			'--statistics',
+			"$tempdir/no_policies_restore.dump",
 		],
 	},
 	no_privs => {
@@ -593,6 +401,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/no_privs.sql",
 			'--no-privileges',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -601,7 +410,34 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/no_owner.sql",
 			'--no-owner',
+			'--statistics',
 			'postgres',
+		],
+	},
+	no_subscriptions => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--file' => "$tempdir/no_subscriptions.sql",
+			'--no-subscriptions',
+			'--statistics',
+			'postgres',
+		],
+	},
+	no_subscriptions_restore => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--format' => 'custom',
+			'--file' => "$tempdir/no_subscriptions_restore.dump",
+			'--statistics',
+			'postgres',
+		],
+		restore_cmd => [
+			'pg_restore',
+			'--format' => 'custom',
+			'--file' => "$tempdir/no_subscriptions_restore.sql",
+			'--no-subscriptions',
+			'--statistics',
+			"$tempdir/no_subscriptions_restore.dump",
 		],
 	},
 	no_table_access_method => {
@@ -609,6 +445,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/no_table_access_method.sql",
 			'--no-table-access-method',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -617,6 +454,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/only_dump_test_schema.sql",
 			'--schema' => 'dump_test',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -627,6 +465,7 @@ my %pgdump_runs = (
 			'--table' => 'dump_test.test_table',
 			'--lock-wait-timeout' =>
 			  (1000 * $PostgreSQL::Test::Utils::timeout_default),
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -637,6 +476,7 @@ my %pgdump_runs = (
 			'--table-and-children' => 'dump_test.measurement',
 			'--lock-wait-timeout' =>
 			  (1000 * $PostgreSQL::Test::Utils::timeout_default),
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -646,6 +486,7 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/role.sql",
 			'--role' => 'regress_dump_test_role',
 			'--schema' => 'dump_test_second_schema',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -658,11 +499,13 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/role_parallel",
 			'--role' => 'regress_dump_test_role',
 			'--schema' => 'dump_test_second_schema',
+			'--statistics',
 			'postgres',
 		],
 		restore_cmd => [
 			'pg_restore',
 			'--file' => "$tempdir/role_parallel.sql",
+			'--statistics',
 			"$tempdir/role_parallel",
 		],
 	},
@@ -691,6 +534,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/section_pre_data.sql",
 			'--section' => 'pre-data',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -699,6 +543,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/section_data.sql",
 			'--section' => 'data',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -707,6 +552,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/section_post_data.sql",
 			'--section' => 'post-data',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -717,6 +563,7 @@ my %pgdump_runs = (
 			'--schema' => 'dump_test',
 			'--large-objects',
 			'--no-large-objects',
+			'--statistics',
 			'postgres',
 		],
 	},
@@ -732,6 +579,7 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync',
 			"--file=$tempdir/no_data_no_schema.sql", '--no-data',
 			'--no-schema', 'postgres',
+			'--statistics',
 		],
 	},
 	statistics_only => {
@@ -741,18 +589,11 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
-	schema_only_with_statistics => {
-		dump_cmd => [
-			'pg_dump', '--no-sync',
-			"--file=$tempdir/schema_only_with_statistics.sql",
-			'--schema-only', '--with-statistics', 'postgres',
-		],
-	},
 	no_schema => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			"--file=$tempdir/no_schema.sql", '--no-schema',
-			'postgres',
+			'--statistics', 'postgres',
 		],
 	},);
 
@@ -788,10 +629,6 @@ my %pgdump_runs = (
 # of the pg_dump runs happening.  This is what "seeds" the
 # system with objects to be dumped out.
 #
-# There can be a flag called 'lz4', which can be set if the test
-# case depends on LZ4.  Tests marked with this flag are skipped if
-# the build used does not support LZ4.
-#
 # Building of this hash takes a bit of time as all of the regexps
 # included in it are compiled.  This greatly improves performance
 # as the regexps are used for each run the test applies to.
@@ -808,7 +645,6 @@ my %full_runs = (
 	binary_upgrade => 1,
 	clean => 1,
 	clean_if_exists => 1,
-	compression => 1,
 	createdb => 1,
 	defaults => 1,
 	exclude_dump_test_schema => 1,
@@ -820,8 +656,11 @@ my %full_runs = (
 	no_large_objects => 1,
 	no_owner => 1,
 	no_policies => 1,
+	no_policies_restore => 1,
 	no_privs => 1,
 	no_statistics => 1,
+	no_subscriptions => 1,
+	no_subscriptions_restore => 1,
 	no_table_access_method => 1,
 	pg_dumpall_dbprivs => 1,
 	pg_dumpall_exclude => 1,
@@ -830,6 +669,16 @@ my %full_runs = (
 
 # This is where the actual tests are defined.
 my %tests = (
+	'restrict' => {
+		all_runs => 1,
+		regexp => qr/^\\restrict [a-zA-Z0-9]+$/m,
+	},
+
+	'unrestrict' => {
+		all_runs => 1,
+		regexp => qr/^\\unrestrict [a-zA-Z0-9]+$/m,
+	},
+
 	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role GRANT' => {
 		create_order => 14,
 		create_sql => 'ALTER DEFAULT PRIVILEGES
@@ -1029,6 +878,7 @@ my %tests = (
 			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
+			binary_upgrade => 1,
 			no_large_objects => 1,
 			no_owner => 1,
 			schema_only => 1,
@@ -1132,13 +982,43 @@ my %tests = (
 							) INHERITS (dump_test.test_table_nn, dump_test.test_table_nn_2);
 			ALTER TABLE dump_test.test_table_nn ADD CONSTRAINT nn NOT NULL col1 NOT VALID;
 			ALTER TABLE dump_test.test_table_nn_chld1 VALIDATE CONSTRAINT nn;
-			ALTER TABLE dump_test.test_table_nn_chld2 VALIDATE CONSTRAINT nn;',
+			ALTER TABLE dump_test.test_table_nn_chld2 VALIDATE CONSTRAINT nn;
+			COMMENT ON CONSTRAINT nn ON dump_test.test_table_nn IS \'nn comment is valid\';
+			COMMENT ON CONSTRAINT nn ON dump_test.test_table_nn_chld2 IS \'nn_chld2 comment is valid\';',
 		regexp => qr/^
 			\QALTER TABLE dump_test.test_table_nn\E \n^\s+
 			\QADD CONSTRAINT nn NOT NULL col1 NOT VALID;\E
 			/xm,
 		like => {
 			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	# This constraint is invalid therefore it goes in SECTION_POST_DATA
+	'COMMENT ON CONSTRAINT ON test_table_nn' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT nn ON dump_test.test_table_nn IS\E
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	# This constraint is valid therefore it goes in SECTION_PRE_DATA
+	'COMMENT ON CONSTRAINT ON test_table_chld2' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT nn ON dump_test.test_table_nn_chld2 IS\E
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
 		},
 		unlike => {
 			exclude_dump_test_schema => 1,
@@ -1420,6 +1300,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1517,6 +1398,7 @@ my %tests = (
 			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
+			binary_upgrade => 1,
 			schema_only => 1,
 			schema_only_with_statistics => 1,
 			no_large_objects => 1,
@@ -1737,6 +1619,27 @@ my %tests = (
 		},
 	},
 
+	'COMMENT ON POLICY p1' => {
+		create_order => 55,
+		create_sql => 'COMMENT ON POLICY p1 ON dump_test.test_table
+					   IS \'comment on policy\';',
+		regexp =>
+		  qr/^COMMENT ON POLICY p1 ON dump_test.test_table IS 'comment on policy';/m,
+		like => {
+			%full_runs,
+			%dump_test_schema_runs,
+			only_dump_test_table => 1,
+			section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			exclude_test_table => 1,
+			no_policies => 1,
+			no_policies_restore => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
 	'COMMENT ON PUBLICATION pub1' => {
 		create_order => 55,
 		create_sql => 'COMMENT ON PUBLICATION pub1
@@ -1753,6 +1656,10 @@ my %tests = (
 		regexp =>
 		  qr/^COMMENT ON SUBSCRIPTION sub1 IS 'comment on subscription';/m,
 		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
+		},
 	},
 
 	'COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1' => {
@@ -2141,6 +2048,27 @@ my %tests = (
 		},
 	},
 
+	'newline of role or table name in comment' => {
+		create_sql => qq{CREATE ROLE regress_newline;
+						 ALTER ROLE regress_newline SET enable_seqscan = off;
+						 ALTER ROLE regress_newline
+							RENAME TO "regress_newline\nattack";
+
+						 -- meet getPartitioningInfo() "unsafe" condition
+						 CREATE TYPE pp_colors AS
+							ENUM ('green', 'blue', 'black');
+						 CREATE TABLE pp_enumpart (a pp_colors)
+							PARTITION BY HASH (a);
+						 CREATE TABLE pp_enumpart1 PARTITION OF pp_enumpart
+							FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+						 CREATE TABLE pp_enumpart2 PARTITION OF pp_enumpart
+							FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+						 ALTER TABLE pp_enumpart
+							RENAME TO "pp_enumpart\nattack";},
+		regexp => qr/\n--[^\n]*\nattack/s,
+		like => {},
+	},
+
 	'CREATE TABLESPACE regress_dump_tablespace' => {
 		create_order => 2,
 		create_sql => q(
@@ -2289,18 +2217,44 @@ my %tests = (
 		create_sql => 'CREATE DOMAIN dump_test.us_postal_code AS TEXT
 		               COLLATE "C"
 					   DEFAULT \'10014\'
+					   CONSTRAINT nn NOT NULL
 					   CHECK(VALUE ~ \'^\d{5}$\' OR
 							 VALUE ~ \'^\d{5}-\d{4}$\');
+					   COMMENT ON CONSTRAINT nn
+						 ON DOMAIN dump_test.us_postal_code IS \'not null\';
 					   COMMENT ON CONSTRAINT us_postal_code_check
 						 ON DOMAIN dump_test.us_postal_code IS \'check it\';',
 		regexp => qr/^
-			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" DEFAULT '10014'::text\E\n\s+
+			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" CONSTRAINT nn NOT NULL DEFAULT '10014'::text\E\n\s+
 			\QCONSTRAINT us_postal_code_check CHECK \E
 			\Q(((VALUE ~ '^\d{5}\E
 			\$\Q'::text) OR (VALUE ~ '^\d{5}-\d{4}\E\$
 			\Q'::text)));\E(.|\n)*
-			\QCOMMENT ON CONSTRAINT us_postal_code_check ON DOMAIN dump_test.us_postal_code IS 'check it';\E
 			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'COMMENT ON CONSTRAINT ON DOMAIN (1)' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT nn ON DOMAIN dump_test.us_postal_code IS 'not null';\E
+		/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'COMMENT ON CONSTRAINT ON DOMAIN (2)' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT us_postal_code_check ON DOMAIN dump_test.us_postal_code IS 'check it';\E
+		/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -2989,31 +2943,6 @@ my %tests = (
 		},
 	},
 
-	'CREATE MATERIALIZED VIEW matview_compression' => {
-		create_order => 20,
-		create_sql => 'CREATE MATERIALIZED VIEW
-						   dump_test.matview_compression (col2) AS
-						   SELECT col2 FROM dump_test.test_table;
-						   ALTER MATERIALIZED VIEW dump_test.matview_compression
-						   ALTER COLUMN col2 SET COMPRESSION lz4;',
-		regexp => qr/^
-			\QCREATE MATERIALIZED VIEW dump_test.matview_compression AS\E
-			\n\s+\QSELECT col2\E
-			\n\s+\QFROM dump_test.test_table\E
-			\n\s+\QWITH NO DATA;\E
-			.*
-			\QALTER TABLE ONLY dump_test.matview_compression ALTER COLUMN col2 SET COMPRESSION lz4;\E\n
-			/xms,
-		lz4 => 1,
-		like =>
-		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => {
-			exclude_dump_test_schema => 1,
-			no_toast_compression => 1,
-			only_dump_measurement => 1,
-		},
-	},
-
 	'Check ordering of a matview that depends on a primary key' => {
 		create_order => 42,
 		create_sql => '
@@ -3052,6 +2981,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3074,6 +3004,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3096,6 +3027,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3118,6 +3050,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3140,6 +3073,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3162,6 +3096,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			no_policies => 1,
+			no_policies_restore => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3214,6 +3149,27 @@ my %tests = (
 		like => { %full_runs, section_post_data => 1, },
 	},
 
+	'CREATE PUBLICATION pub6' => {
+		create_order => 50,
+		create_sql => 'CREATE PUBLICATION pub6
+						 FOR ALL SEQUENCES;',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub6 FOR ALL SEQUENCES WITH (publish = 'insert, update, delete, truncate');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'CREATE PUBLICATION pub7' => {
+		create_order => 50,
+		create_sql => 'CREATE PUBLICATION pub7
+						 FOR ALL SEQUENCES, ALL TABLES
+						 WITH (publish = \'\');',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub7 FOR ALL TABLES, ALL SEQUENCES WITH (publish = '');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
 	'CREATE SUBSCRIPTION sub1' => {
 		create_order => 50,
 		create_sql => 'CREATE SUBSCRIPTION sub1
@@ -3223,6 +3179,10 @@ my %tests = (
 			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub1', streaming = parallel);\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
+		},
 	},
 
 	'CREATE SUBSCRIPTION sub2' => {
@@ -3234,6 +3194,10 @@ my %tests = (
 			\QCREATE SUBSCRIPTION sub2 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub2', streaming = off, origin = none);\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
+		},
 	},
 
 	'CREATE SUBSCRIPTION sub3' => {
@@ -3245,6 +3209,10 @@ my %tests = (
 			\QCREATE SUBSCRIPTION sub3 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub3', streaming = on);\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
+		},
 	},
 
 
@@ -3431,51 +3399,6 @@ my %tests = (
 		},
 	},
 
-	'CREATE TABLE test_compression_method' => {
-		create_order => 110,
-		create_sql => 'CREATE TABLE dump_test.test_compression_method (
-						   col1 text
-					   );',
-		regexp => qr/^
-			\QCREATE TABLE dump_test.test_compression_method (\E\n
-			\s+\Qcol1 text\E\n
-			\Q);\E
-			/xm,
-		like => {
-			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
-		},
-		unlike => {
-			exclude_dump_test_schema => 1,
-			only_dump_measurement => 1,
-		},
-	},
-
-	# Insert enough data to surpass DEFAULT_IO_BUFFER_SIZE during
-	# (de)compression operations
-	'COPY test_compression_method' => {
-		create_order => 111,
-		create_sql => 'INSERT INTO dump_test.test_compression_method (col1) '
-		  . 'SELECT string_agg(a::text, \'\') FROM generate_series(1,4096) a;',
-		regexp => qr/^
-			\QCOPY dump_test.test_compression_method (col1) FROM stdin;\E
-			\n(?:\d{15277}\n){1}\\\.\n
-			/xm,
-		like => {
-			%full_runs,
-			data_only => 1,
-			no_schema => 1,
-			section_data => 1,
-			only_dump_test_schema => 1,
-			test_schema_plus_large_objects => 1,
-		},
-		unlike => {
-			binary_upgrade => 1,
-			exclude_dump_test_schema => 1,
-			schema_only => 1,
-			schema_only_with_statistics => 1,
-		},
-	},
-
 	'CREATE TABLE fk_reference_test_table' => {
 		create_order => 21,
 		create_sql => 'CREATE TABLE dump_test.fk_reference_test_table (
@@ -3510,30 +3433,6 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			only_dump_measurement => 1,
-		},
-	},
-
-	'CREATE TABLE test_compression' => {
-		create_order => 3,
-		create_sql => 'CREATE TABLE dump_test.test_compression (
-						   col1 int,
-						   col2 text COMPRESSION lz4
-					   );',
-		regexp => qr/^
-			\QCREATE TABLE dump_test.test_compression (\E\n
-			\s+\Qcol1 integer,\E\n
-			\s+\Qcol2 text\E\n
-			\);\n
-			.*
-			\QALTER TABLE ONLY dump_test.test_compression ALTER COLUMN col2 SET COMPRESSION lz4;\E\n
-			/xms,
-		lz4 => 1,
-		like =>
-		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => {
-			exclude_dump_test_schema => 1,
-			no_toast_compression => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -4109,7 +4008,6 @@ my %tests = (
 	},
 
 	'ALTER TABLE measurement PRIMARY KEY' => {
-		all_runs => 1,
 		catch_all => 'CREATE ... commands',
 		create_order => 93,
 		create_sql =>
@@ -4161,7 +4059,6 @@ my %tests = (
 	},
 
 	'ALTER INDEX ... ATTACH PARTITION (primary key)' => {
-		all_runs => 1,
 		catch_all => 'CREATE ... commands',
 		regexp => qr/^
 		\QALTER INDEX dump_test.measurement_pkey ATTACH PARTITION dump_test_second_schema.measurement_y2006m2_pkey\E
@@ -4524,9 +4421,9 @@ my %tests = (
 			no_schema => 1,
 			section_data => 1,
 			test_schema_plus_large_objects => 1,
-			binary_upgrade => 1,
 		},
 		unlike => {
+			binary_upgrade => 1,
 			no_large_objects => 1,
 			no_privs => 1,
 			schema_only => 1,
@@ -5022,13 +4919,6 @@ foreach my $test (
 			next;
 		}
 
-		# Skip tests specific to LZ4 if this build does not support
-		# this option.
-		if (!$supports_lz4 && defined($tests{$test}->{lz4}))
-		{
-			next;
-		}
-
 		# Normalize command ending: strip all line endings, add
 		# semicolon if missing, add two newlines.
 		my $create_sql = $tests{$test}->{create_sql};
@@ -5096,6 +4986,17 @@ command_fails_like(
 		'pg_dump',
 		'--port' => $port,
 		'--strict-names',
+		'--schema-only',
+		'--statistics',
+	],
+	qr/\Qpg_dump: error: options -s\/--schema-only and --statistics cannot be used together\E/,
+	'cannot use --schema-only and --statistics together');
+
+command_fails_like(
+	[
+		'pg_dump',
+		'--port' => $port,
+		'--strict-names',
 		'--table' => 'nonexistent*'
 	],
 	qr/\Qpg_dump: error: no matching tables were found for pattern\E/,
@@ -5118,7 +5019,12 @@ $node->command_fails_like(
 # Test dumping pg_catalog (for research -- cannot be reloaded)
 
 $node->command_ok(
-	[ 'pg_dump', '--port' => $port, '--schema' => 'pg_catalog' ],
+	[
+		'pg_dump',
+		'--port' => $port,
+		'--schema' => 'pg_catalog',
+		'--file' => "$tempdir/pgdump_pgcatalog.dmp"
+	],
 	'pg_dump: option -n pg_catalog');
 
 #########################################
@@ -5128,7 +5034,8 @@ $node->command_ok(
 	[
 		'pg_dumpall',
 		'--port' => $port,
-		'--exclude-database' => '"myhost.mydb"'
+		'--exclude-database' => '"myhost.mydb"',
+		'--file' => "$tempdir/pgdumpall.dmp"
 	],
 	'pg_dumpall: option --exclude-database handles database names with embedded dots'
 );
@@ -5194,41 +5101,8 @@ foreach my $run (sort keys %pgdump_runs)
 	my $test_key = $run;
 	my $run_db = 'postgres';
 
-	# Skip command-level tests for gzip/lz4/zstd if the tool is not supported
-	if ($pgdump_runs{$run}->{compile_option}
-		&& (($pgdump_runs{$run}->{compile_option} eq 'gzip'
-				&& !$supports_gzip)
-			|| ($pgdump_runs{$run}->{compile_option} eq 'lz4'
-				&& !$supports_lz4)
-			|| ($pgdump_runs{$run}->{compile_option} eq 'zstd'
-				&& !$supports_zstd)))
-	{
-		note
-		  "$run: skipped due to no $pgdump_runs{$run}->{compile_option} support";
-		next;
-	}
-
 	$node->command_ok(\@{ $pgdump_runs{$run}->{dump_cmd} },
 		"$run: pg_dump runs");
-
-	if ($pgdump_runs{$run}->{compress_cmd})
-	{
-		my ($compress_cmd) = $pgdump_runs{$run}->{compress_cmd};
-		my $compress_program = $compress_cmd->{program};
-
-		# Skip the rest of the test if the compression program is
-		# not defined.
-		next if (!defined($compress_program) || $compress_program eq '');
-
-		# Arguments may require globbing.
-		my @full_compress_cmd = ($compress_program);
-		foreach my $arg (@{ $compress_cmd->{args} })
-		{
-			push @full_compress_cmd, glob($arg);
-		}
-
-		command_ok(\@full_compress_cmd, "$run: compression commands");
-	}
 
 	if ($pgdump_runs{$run}->{glob_patterns})
 	{
@@ -5236,8 +5110,12 @@ foreach my $run (sort keys %pgdump_runs)
 		foreach my $glob_pattern (@{$glob_patterns})
 		{
 			my @glob_output = glob($glob_pattern);
-			is(scalar(@glob_output) > 0,
-				1, "$run: glob check for $glob_pattern");
+			my $ok = 0;
+			# certainly found some files if glob() returned multiple matches
+			$ok = 1 if (scalar(@glob_output) > 1);
+			# if just one match, we need to check if it's real
+			$ok = 1 if (scalar(@glob_output) == 1 && -f $glob_output[0]);
+			is($ok, 1, "$run: glob check for $glob_pattern");
 		}
 	}
 
@@ -5283,9 +5161,10 @@ foreach my $run (sort keys %pgdump_runs)
 
 		# Check for proper test definitions
 		#
-		# There should be a "like" list, even if it is empty.  (This
-		# makes the test more self-documenting.)
-		if (!defined($tests{$test}->{like}))
+		# Either "all_runs" should be set or there should be a "like" list,
+		# even if it is empty.  (This makes the test more self-documenting.)
+		if (!defined($tests{$test}->{all_runs})
+			&& !defined($tests{$test}->{like}))
 		{
 			die "missing \"like\" in test \"$test\"";
 		}
@@ -5309,24 +5188,19 @@ foreach my $run (sort keys %pgdump_runs)
 			next;
 		}
 
-		# Skip tests specific to LZ4 if this build does not support
-		# this option.
-		if (!$supports_lz4 && defined($tests{$test}->{lz4}))
-		{
-			next;
-		}
-
 		if ($run_db ne $test_db)
 		{
 			next;
 		}
 
-		# Run the test listed as a like, unless it is specifically noted
-		# as an unlike (generally due to an explicit exclusion or similar).
-		if ($tests{$test}->{like}->{$test_key}
+		# Run the test if all_runs is set or if listed as a like, unless it is
+		# specifically noted as an unlike (generally due to an explicit
+		# exclusion or similar).
+		if (($tests{$test}->{like}->{$test_key} || $tests{$test}->{all_runs})
 			&& !defined($tests{$test}->{unlike}->{$test_key}))
 		{
-			if (!ok($output_file =~ $tests{$test}->{regexp},
+			if (!like(
+					$output_file, $tests{$test}->{regexp},
 					"$run: should dump $test"))
 			{
 				diag("Review $run results in $tempdir");
@@ -5334,7 +5208,8 @@ foreach my $run (sort keys %pgdump_runs)
 		}
 		else
 		{
-			if (!ok($output_file !~ $tests{$test}->{regexp},
+			if (!unlike(
+					$output_file, $tests{$test}->{regexp},
 					"$run: should not dump $test"))
 			{
 				diag("Review $run results in $tempdir");

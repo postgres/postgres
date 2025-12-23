@@ -19,12 +19,12 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_tablespace.h"
-#include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/relfilenumbermap.h"
@@ -937,6 +937,9 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
  * tables.
  *
  * We don't fail but return NULL if we cannot find a mapping.
+ *
+ * Temporary relations are not detected, returning NULL (see
+ * RelidByRelfilenumber() for the reasons).
  *
  * InvalidOid can be passed instead of the current database's default
  * tablespace.

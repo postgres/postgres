@@ -86,7 +86,6 @@ static inline uint32 vector8_highbit_mask(const Vector8 v);
 static inline Vector8 vector8_or(const Vector8 v1, const Vector8 v2);
 #ifndef USE_NO_SIMD
 static inline Vector32 vector32_or(const Vector32 v1, const Vector32 v2);
-static inline Vector8 vector8_ssub(const Vector8 v1, const Vector8 v2);
 #endif
 
 /*
@@ -124,6 +123,21 @@ vector32_load(Vector32 *v, const uint32 *s)
 	*v = _mm_loadu_si128((const __m128i *) s);
 #elif defined(USE_NEON)
 	*v = vld1q_u32(s);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Store a vector into the given memory address.
+ */
+#ifndef USE_NO_SIMD
+static inline void
+vector8_store(uint8 *s, Vector8 v)
+{
+#ifdef USE_SSE2
+	_mm_storeu_si128((Vector8 *) s, v);
+#elif defined(USE_NEON)
+	vst1q_u8(s, v);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -213,6 +227,10 @@ static inline bool
 vector8_has_le(const Vector8 v, const uint8 c)
 {
 	bool		result = false;
+#ifdef USE_SSE2
+	Vector8		umin;
+	Vector8		cmpe;
+#endif
 
 	/* pre-compute the result for assert checking */
 #ifdef USE_ASSERT_CHECKING
@@ -250,19 +268,36 @@ vector8_has_le(const Vector8 v, const uint8 c)
 			}
 		}
 	}
-#else
-
-	/*
-	 * Use saturating subtraction to find bytes <= c, which will present as
-	 * NUL bytes.  This approach is a workaround for the lack of unsigned
-	 * comparison instructions on some architectures.
-	 */
-	result = vector8_has_zero(vector8_ssub(v, vector8_broadcast(c)));
+#elif defined(USE_SSE2)
+	umin = vector8_min(v, vector8_broadcast(c));
+	cmpe = vector8_eq(umin, v);
+	result = vector8_is_highbit_set(cmpe);
+#elif defined(USE_NEON)
+	result = vminvq_u8(v) <= c;
 #endif
 
 	Assert(assert_result == result);
 	return result;
 }
+
+/*
+ * Returns true if any elements in the vector are greater than or equal to the
+ * given scalar.
+ */
+#ifndef USE_NO_SIMD
+static inline bool
+vector8_has_ge(const Vector8 v, const uint8 c)
+{
+#ifdef USE_SSE2
+	Vector8		umax = _mm_max_epu8(v, vector8_broadcast(c));
+	Vector8		cmpe = vector8_eq(umax, v);
+
+	return vector8_is_highbit_set(cmpe);
+#elif defined(USE_NEON)
+	return vmaxvq_u8(v) >= c;
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
 
 /*
  * Return true if the high bit of any element is set
@@ -359,19 +394,50 @@ vector32_or(const Vector32 v1, const Vector32 v2)
 #endif							/* ! USE_NO_SIMD */
 
 /*
- * Return the result of subtracting the respective elements of the input
- * vectors using saturation (i.e., if the operation would yield a value less
- * than zero, zero is returned instead).  For more information on saturation
- * arithmetic, see https://en.wikipedia.org/wiki/Saturation_arithmetic
+ * Return the bitwise AND of the inputs.
  */
 #ifndef USE_NO_SIMD
 static inline Vector8
-vector8_ssub(const Vector8 v1, const Vector8 v2)
+vector8_and(const Vector8 v1, const Vector8 v2)
 {
 #ifdef USE_SSE2
-	return _mm_subs_epu8(v1, v2);
+	return _mm_and_si128(v1, v2);
 #elif defined(USE_NEON)
-	return vqsubq_u8(v1, v2);
+	return vandq_u8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Return the result of adding the respective elements of the input vectors.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_add(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_add_epi8(v1, v2);
+#elif defined(USE_NEON)
+	return vaddq_u8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Return the result of subtracting the respective elements of the input
+ * vectors using signed saturation (i.e., if the operation would yield a value
+ * less than -128, -128 is returned instead).  For more information on
+ * saturation arithmetic, see
+ * https://en.wikipedia.org/wiki/Saturation_arithmetic
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_issub(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_subs_epi8(v1, v2);
+#elif defined(USE_NEON)
+	return (Vector8) vqsubq_s8((int8x16_t) v1, (int8x16_t) v2);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -405,6 +471,23 @@ vector32_eq(const Vector32 v1, const Vector32 v2)
 #endif							/* ! USE_NO_SIMD */
 
 /*
+ * Return a vector with all bits set for each lane of v1 that is greater than
+ * the corresponding lane of v2.  NB: The comparison treats the elements as
+ * signed.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_gt(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_cmpgt_epi8(v1, v2);
+#elif defined(USE_NEON)
+	return vcgtq_s8((int8x16_t) v1, (int8x16_t) v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
  * Given two vectors, return a vector with the minimum element of each.
  */
 #ifndef USE_NO_SIMD
@@ -415,6 +498,117 @@ vector8_min(const Vector8 v1, const Vector8 v2)
 	return _mm_min_epu8(v1, v2);
 #elif defined(USE_NEON)
 	return vminq_u8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Interleave elements of low halves (e.g., for SSE2, bits 0-63) of given
+ * vectors.  Bytes 0, 2, 4, etc. use v1, and bytes 1, 3, 5, etc. use v2.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_interleave_low(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_unpacklo_epi8(v1, v2);
+#elif defined(USE_NEON)
+	return vzip1q_u8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Interleave elements of high halves (e.g., for SSE2, bits 64-127) of given
+ * vectors.  Bytes 0, 2, 4, etc. use v1, and bytes 1, 3, 5, etc. use v2.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_interleave_high(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_unpackhi_epi8(v1, v2);
+#elif defined(USE_NEON)
+	return vzip2q_u8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Pack 16-bit elements in the given vectors into a single vector of 8-bit
+ * elements.  The first half of the return vector (e.g., for SSE2, bits 0-63)
+ * uses v1, and the second half (e.g., for SSE2, bits 64-127) uses v2.
+ *
+ * NB: The upper 8-bits of each 16-bit element must be zeros, else this will
+ * produce different results on different architectures.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_pack_16(const Vector8 v1, const Vector8 v2)
+{
+	Vector8		mask PG_USED_FOR_ASSERTS_ONLY;
+
+	mask = vector8_interleave_low(vector8_broadcast(0), vector8_broadcast(0xff));
+	Assert(!vector8_has_ge(vector8_and(v1, mask), 1));
+	Assert(!vector8_has_ge(vector8_and(v2, mask), 1));
+#ifdef USE_SSE2
+	return _mm_packus_epi16(v1, v2);
+#elif defined(USE_NEON)
+	return vuzp1q_u8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Unsigned shift left of each 32-bit element in the vector by "i" bits.
+ *
+ * XXX AArch64 requires an integer literal, so we have to list all expected
+ * values of "i" from all callers in a switch statement.  If you add a new
+ * caller, be sure your expected values of "i" are handled.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_shift_left(const Vector8 v1, int i)
+{
+#ifdef USE_SSE2
+	return _mm_slli_epi32(v1, i);
+#elif defined(USE_NEON)
+	switch (i)
+	{
+		case 4:
+			return (Vector8) vshlq_n_u32((Vector32) v1, 4);
+		default:
+			Assert(false);
+			return vector8_broadcast(0);
+	}
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Unsigned shift right of each 32-bit element in the vector by "i" bits.
+ *
+ * XXX AArch64 requires an integer literal, so we have to list all expected
+ * values of "i" from all callers in a switch statement.  If you add a new
+ * caller, be sure your expected values of "i" are handled.
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_shift_right(const Vector8 v1, int i)
+{
+#ifdef USE_SSE2
+	return _mm_srli_epi32(v1, i);
+#elif defined(USE_NEON)
+	switch (i)
+	{
+		case 4:
+			return (Vector8) vshrq_n_u32((Vector32) v1, 4);
+		case 8:
+			return (Vector8) vshrq_n_u32((Vector32) v1, 8);
+		default:
+			Assert(false);
+			return vector8_broadcast(0);
+	}
 #endif
 }
 #endif							/* ! USE_NO_SIMD */

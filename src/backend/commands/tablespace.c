@@ -500,7 +500,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		 * mustn't delete.  So instead, we force a checkpoint which will clean
 		 * out any lingering files, and try again.
 		 */
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
 		 * On Windows, an unlinked file persists in the directory listing

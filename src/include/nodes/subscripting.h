@@ -15,10 +15,10 @@
 
 #include "nodes/primnodes.h"
 
-/* Forward declarations, to avoid including other headers */
-struct ParseState;
-struct SubscriptingRefState;
-struct SubscriptExecSteps;
+/* to avoid including other headers */
+typedef struct ParseState ParseState;
+typedef struct SubscriptingRefState SubscriptingRefState;
+typedef struct SubscriptExecSteps SubscriptExecSteps;
 
 /*
  * The SQL-visible function that defines a subscripting method is declared
@@ -35,14 +35,14 @@ struct SubscriptExecSteps;
  * several bool flags that specify properties of the subscripting actions
  * this data type can perform:
  *
- * fetch_strict indicates that a fetch SubscriptRef is strict, i.e., returns
+ * fetch_strict indicates that a fetch SubscriptingRef is strict, i.e., returns
  * NULL if any input (either the container or any subscript) is NULL.
  *
- * fetch_leakproof indicates that a fetch SubscriptRef is leakproof, i.e.,
+ * fetch_leakproof indicates that a fetch SubscriptingRef is leakproof, i.e.,
  * will not throw any data-value-dependent errors.  Typically this requires
  * silently returning NULL for invalid subscripts.
  *
- * store_leakproof similarly indicates whether an assignment SubscriptRef is
+ * store_leakproof similarly indicates whether an assignment SubscriptingRef is
  * leakproof.  (It is common to prefer throwing errors for invalid subscripts
  * in assignments; that's fine, but it makes the operation not leakproof.
  * In current usage there is no advantage in making assignments leakproof.)
@@ -51,7 +51,7 @@ struct SubscriptExecSteps;
  * undesirable, since for example a null subscript in an assignment would
  * cause the entire container to become NULL.
  *
- * Regardless of these flags, all SubscriptRefs are expected to be immutable,
+ * Regardless of these flags, all SubscriptingRefs are expected to be immutable,
  * that is they must always give the same results for the same inputs.
  * They are expected to always be parallel-safe, as well.
  */
@@ -94,7 +94,7 @@ struct SubscriptExecSteps;
  */
 typedef void (*SubscriptTransform) (SubscriptingRef *sbsref,
 									List *indirection,
-									struct ParseState *pstate,
+									ParseState *pstate,
 									bool isSlice,
 									bool isAssignment);
 
@@ -151,17 +151,18 @@ typedef void (*SubscriptTransform) (SubscriptingRef *sbsref,
  * Set the relevant pointers to NULL for any omitted methods.
  */
 typedef void (*SubscriptExecSetup) (const SubscriptingRef *sbsref,
-									struct SubscriptingRefState *sbsrefstate,
-									struct SubscriptExecSteps *methods);
+									SubscriptingRefState *sbsrefstate,
+									SubscriptExecSteps *methods);
 
 /* Struct returned by the SQL-visible subscript handler function */
 typedef struct SubscriptRoutines
 {
 	SubscriptTransform transform;	/* parse analysis function */
 	SubscriptExecSetup exec_setup;	/* expression compilation function */
-	bool		fetch_strict;	/* is fetch SubscriptRef strict? */
-	bool		fetch_leakproof;	/* is fetch SubscriptRef leakproof? */
-	bool		store_leakproof;	/* is assignment SubscriptRef leakproof? */
+	bool		fetch_strict;	/* is fetch SubscriptingRef strict? */
+	bool		fetch_leakproof;	/* is fetch SubscriptingRef leakproof? */
+	bool		store_leakproof;	/* is assignment SubscriptingRef
+									 * leakproof? */
 } SubscriptRoutines;
 
 #endif							/* SUBSCRIPTING_H */

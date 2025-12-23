@@ -54,6 +54,12 @@ tests += {
       't/043_no_contrecord_switch.pl',
       't/044_invalidate_inactive_slots.pl',
       't/045_archive_restartpoint.pl',
+      't/046_checkpoint_logical_slot.pl',
+      't/047_checkpoint_physical_slot.pl',
+      't/048_vacuum_horizon_floor.pl',
+      't/049_wait_for_lsn.pl',
+      't/050_redo_segment_missing.pl',
+      't/051_effective_wal_level.pl',
     ],
   },
 }

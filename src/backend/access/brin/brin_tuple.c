@@ -119,13 +119,12 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 	Assert(brdesc->bd_totalstored > 0);
 
-	values = (Datum *) palloc(sizeof(Datum) * brdesc->bd_totalstored);
-	nulls = (bool *) palloc0(sizeof(bool) * brdesc->bd_totalstored);
-	phony_nullbitmap = (bits8 *)
-		palloc(sizeof(bits8) * BITMAPLEN(brdesc->bd_totalstored));
+	values = palloc_array(Datum, brdesc->bd_totalstored);
+	nulls = palloc0_array(bool, brdesc->bd_totalstored);
+	phony_nullbitmap = palloc_array(bits8, BITMAPLEN(brdesc->bd_totalstored));
 
 #ifdef TOAST_INDEX_HACK
-	untoasted_values = (Datum *) palloc(sizeof(Datum) * brdesc->bd_totalstored);
+	untoasted_values = palloc_array(Datum, brdesc->bd_totalstored);
 #endif
 
 	/*
@@ -488,9 +487,9 @@ brin_new_memtuple(BrinDesc *brdesc)
 						sizeof(BrinValues) * brdesc->bd_tupdesc->natts);
 	dtup = palloc0(basesize + sizeof(Datum) * brdesc->bd_totalstored);
 
-	dtup->bt_values = palloc(sizeof(Datum) * brdesc->bd_totalstored);
-	dtup->bt_allnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
-	dtup->bt_hasnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
+	dtup->bt_values = palloc_array(Datum, brdesc->bd_totalstored);
+	dtup->bt_allnulls = palloc_array(bool, brdesc->bd_tupdesc->natts);
+	dtup->bt_hasnulls = palloc_array(bool, brdesc->bd_tupdesc->natts);
 
 	dtup->bt_empty_range = true;
 

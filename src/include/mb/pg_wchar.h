@@ -532,25 +532,25 @@ typedef uint32 (*utf_local_conversion_func) (uint32 code);
  * Some handy functions for Unicode-specific tests.
  */
 static inline bool
-is_valid_unicode_codepoint(pg_wchar c)
+is_valid_unicode_codepoint(char32_t c)
 {
 	return (c > 0 && c <= 0x10FFFF);
 }
 
 static inline bool
-is_utf16_surrogate_first(pg_wchar c)
+is_utf16_surrogate_first(char32_t c)
 {
 	return (c >= 0xD800 && c <= 0xDBFF);
 }
 
 static inline bool
-is_utf16_surrogate_second(pg_wchar c)
+is_utf16_surrogate_second(char32_t c)
 {
 	return (c >= 0xDC00 && c <= 0xDFFF);
 }
 
-static inline pg_wchar
-surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
+static inline char32_t
+surrogate_pair_to_codepoint(char16_t first, char16_t second)
 {
 	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
 }
@@ -561,20 +561,20 @@ surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
  *
  * No error checks here, c must point to a long-enough string.
  */
-static inline pg_wchar
+static inline char32_t
 utf8_to_unicode(const unsigned char *c)
 {
 	if ((*c & 0x80) == 0)
-		return (pg_wchar) c[0];
+		return (char32_t) c[0];
 	else if ((*c & 0xe0) == 0xc0)
-		return (pg_wchar) (((c[0] & 0x1f) << 6) |
+		return (char32_t) (((c[0] & 0x1f) << 6) |
 						   (c[1] & 0x3f));
 	else if ((*c & 0xf0) == 0xe0)
-		return (pg_wchar) (((c[0] & 0x0f) << 12) |
+		return (char32_t) (((c[0] & 0x0f) << 12) |
 						   ((c[1] & 0x3f) << 6) |
 						   (c[2] & 0x3f));
 	else if ((*c & 0xf8) == 0xf0)
-		return (pg_wchar) (((c[0] & 0x07) << 18) |
+		return (char32_t) (((c[0] & 0x07) << 18) |
 						   ((c[1] & 0x3f) << 12) |
 						   ((c[2] & 0x3f) << 6) |
 						   (c[3] & 0x3f));
@@ -588,7 +588,7 @@ utf8_to_unicode(const unsigned char *c)
  * unicode_utf8len(c) bytes available.
  */
 static inline unsigned char *
-unicode_to_utf8(pg_wchar c, unsigned char *utf8string)
+unicode_to_utf8(char32_t c, unsigned char *utf8string)
 {
 	if (c <= 0x7F)
 	{
@@ -620,7 +620,7 @@ unicode_to_utf8(pg_wchar c, unsigned char *utf8string)
  * Number of bytes needed to represent the given char in UTF8.
  */
 static inline int
-unicode_utf8len(pg_wchar c)
+unicode_utf8len(char32_t c)
 {
 	if (c <= 0x7F)
 		return 1;
@@ -676,8 +676,6 @@ extern int	pg_valid_server_encoding(const char *name);
 extern bool is_encoding_supported_by_icu(int encoding);
 extern const char *get_encoding_name_for_icu(int encoding);
 
-extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
-extern pg_wchar utf8_to_unicode(const unsigned char *c);
 extern bool pg_utf8_islegal(const unsigned char *source, int length);
 extern int	pg_utf_mblen(const unsigned char *s);
 extern int	pg_mule_mblen(const unsigned char *s);
@@ -739,8 +737,8 @@ extern char *pg_server_to_client(const char *s, int len);
 extern char *pg_any_to_server(const char *s, int len, int encoding);
 extern char *pg_server_to_any(const char *s, int len, int encoding);
 
-extern void pg_unicode_to_server(pg_wchar c, unsigned char *s);
-extern bool pg_unicode_to_server_noerror(pg_wchar c, unsigned char *s);
+extern void pg_unicode_to_server(char32_t c, unsigned char *s);
+extern bool pg_unicode_to_server_noerror(char32_t c, unsigned char *s);
 
 extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);

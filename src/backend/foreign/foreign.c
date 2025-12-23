@@ -66,7 +66,7 @@ GetForeignDataWrapperExtended(Oid fdwid, bits16 flags)
 
 	fdwform = (Form_pg_foreign_data_wrapper) GETSTRUCT(tp);
 
-	fdw = (ForeignDataWrapper *) palloc(sizeof(ForeignDataWrapper));
+	fdw = palloc_object(ForeignDataWrapper);
 	fdw->fdwid = fdwid;
 	fdw->owner = fdwform->fdwowner;
 	fdw->fdwname = pstrdup(NameStr(fdwform->fdwname));
@@ -140,7 +140,7 @@ GetForeignServerExtended(Oid serverid, bits16 flags)
 
 	serverform = (Form_pg_foreign_server) GETSTRUCT(tp);
 
-	server = (ForeignServer *) palloc(sizeof(ForeignServer));
+	server = palloc_object(ForeignServer);
 	server->serverid = serverid;
 	server->servername = pstrdup(NameStr(serverform->srvname));
 	server->owner = serverform->srvowner;
@@ -227,7 +227,7 @@ GetUserMapping(Oid userid, Oid serverid)
 						MappingUserName(userid), server->servername)));
 	}
 
-	um = (UserMapping *) palloc(sizeof(UserMapping));
+	um = palloc_object(UserMapping);
 	um->umid = ((Form_pg_user_mapping) GETSTRUCT(tp))->oid;
 	um->userid = userid;
 	um->serverid = serverid;
@@ -265,7 +265,7 @@ GetForeignTable(Oid relid)
 		elog(ERROR, "cache lookup failed for foreign table %u", relid);
 	tableform = (Form_pg_foreign_table) GETSTRUCT(tp);
 
-	ft = (ForeignTable *) palloc(sizeof(ForeignTable));
+	ft = palloc_object(ForeignTable);
 	ft->relid = relid;
 	ft->serverid = tableform->ftserver;
 
@@ -463,7 +463,7 @@ GetFdwRoutineForRelation(Relation relation, bool makecopy)
 	/* We have valid cached data --- does the caller want a copy? */
 	if (makecopy)
 	{
-		fdwroutine = (FdwRoutine *) palloc(sizeof(FdwRoutine));
+		fdwroutine = palloc_object(FdwRoutine);
 		memcpy(fdwroutine, relation->rd_fdwroutine, sizeof(FdwRoutine));
 		return fdwroutine;
 	}

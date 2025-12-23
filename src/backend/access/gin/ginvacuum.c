@@ -65,7 +65,7 @@ ginVacuumItemPointers(GinVacuumState *gvs, ItemPointerData *items,
 				 * First TID to be deleted: allocate memory to hold the
 				 * remaining items.
 				 */
-				tmpitems = palloc(sizeof(ItemPointerData) * nitem);
+				tmpitems = palloc_array(ItemPointerData, nitem);
 				memcpy(tmpitems, items, sizeof(ItemPointerData) * i);
 			}
 		}
@@ -260,7 +260,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot,
 	{
 		if (!parent->child)
 		{
-			me = (DataPageDeleteStack *) palloc0(sizeof(DataPageDeleteStack));
+			me = palloc0_object(DataPageDeleteStack);
 			me->parent = parent;
 			parent->child = me;
 			me->leftBuffer = InvalidBuffer;
@@ -547,7 +547,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 					pfree(plist);
 				PageIndexTupleDelete(tmppage, i);
 
-				if (PageAddItem(tmppage, (Item) itup, IndexTupleSize(itup), i, false, false) != i)
+				if (PageAddItem(tmppage, itup, IndexTupleSize(itup), i, false, false) != i)
 					elog(ERROR, "failed to add item to index page in \"%s\"",
 						 RelationGetRelationName(gvs->index));
 
@@ -584,7 +584,7 @@ ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	if (stats == NULL)
 	{
 		/* Yes, so initialize stats to zeroes */
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 
 		/*
 		 * and cleanup any pending inserts
@@ -714,7 +714,7 @@ ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	if (stats == NULL)
 	{
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 		initGinState(&ginstate, index);
 		ginInsertCleanup(&ginstate, !AmAutoVacuumWorkerProcess(),
 						 false, true, stats);
@@ -753,7 +753,7 @@ ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, GIN_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (GinPageIsRecyclable(page))
 		{

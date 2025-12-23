@@ -760,6 +760,16 @@ SELECT date_trunc( 'week', timestamp with time zone '2004-02-29 15:44:17.71393' 
  Mon Feb 23 00:00:00 2004 PST
 (1 row)
 
+SELECT date_trunc( 'week', timestamp with time zone 'infinity' ) AS inf_trunc;
+ inf_trunc 
+-----------
+ infinity
+(1 row)
+
+SELECT date_trunc( 'timezone', timestamp with time zone '2004-02-29 15:44:17.71393' ) AS notsupp_trunc;
+ERROR:  unit "timezone" not supported for type timestamp with time zone
+SELECT date_trunc( 'timezone', timestamp with time zone 'infinity' ) AS notsupp_inf_trunc;
+ERROR:  unit "timezone" not supported for type timestamp with time zone
 SELECT date_trunc( 'ago', timestamp with time zone 'infinity' ) AS invalid_trunc;
 ERROR:  unit "ago" not recognized for type timestamp with time zone
 SELECT date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'Australia/Sydney') as sydney_trunc;  -- zone name
@@ -778,6 +788,14 @@ SELECT date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'VET
           vet_trunc           
 ------------------------------
  Thu Feb 15 20:00:00 2001 PST
+(1 row)
+
+SELECT date_trunc('timezone', timestamp with time zone 'infinity', 'GMT') AS notsupp_zone_trunc;
+ERROR:  unit "timezone" not supported for type timestamp with time zone
+SELECT date_trunc( 'week', timestamp with time zone 'infinity', 'GMT') AS inf_zone_trunc;
+ inf_zone_trunc 
+----------------
+ infinity
 (1 row)
 
 SELECT date_trunc('ago', timestamp with time zone 'infinity', 'GMT') AS invalid_zone_trunc;

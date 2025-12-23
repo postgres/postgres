@@ -65,7 +65,7 @@ static int	cmp_orderbyvals(const Datum *adist, const bool *anulls,
 static int	reorderqueue_cmp(const pairingheap_node *a,
 							 const pairingheap_node *b, void *arg);
 static void reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
-							  Datum *orderbyvals, bool *orderbynulls);
+							  const Datum *orderbyvals, const bool *orderbynulls);
 static HeapTuple reorderqueue_pop(IndexScanState *node);
 
 
@@ -458,7 +458,7 @@ reorderqueue_cmp(const pairingheap_node *a, const pairingheap_node *b,
  */
 static void
 reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
-				  Datum *orderbyvals, bool *orderbynulls)
+				  const Datum *orderbyvals, const bool *orderbynulls)
 {
 	IndexScanDesc scandesc = node->iss_ScanDesc;
 	EState	   *estate = node->ss.ps.state;
@@ -466,12 +466,10 @@ reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 	ReorderTuple *rt;
 	int			i;
 
-	rt = (ReorderTuple *) palloc(sizeof(ReorderTuple));
+	rt = palloc_object(ReorderTuple);
 	rt->htup = ExecCopySlotHeapTuple(slot);
-	rt->orderbyvals =
-		(Datum *) palloc(sizeof(Datum) * scandesc->numberOfOrderBys);
-	rt->orderbynulls =
-		(bool *) palloc(sizeof(bool) * scandesc->numberOfOrderBys);
+	rt->orderbyvals = palloc_array(Datum, scandesc->numberOfOrderBys);
+	rt->orderbynulls = palloc_array(bool, scandesc->numberOfOrderBys);
 	for (i = 0; i < node->iss_NumOrderByKeys; i++)
 	{
 		if (!orderbynulls[i])

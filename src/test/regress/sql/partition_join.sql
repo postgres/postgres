@@ -35,9 +35,14 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b =
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b = 0 ORDER BY t1.a, t2.b;
 
 -- inner join with partially-redundant join clauses
+-- (avoid a mergejoin, because the planner thinks that an non-partitionwise
+-- merge join is the cheapest plan, and we want to test a partitionwise join)
+BEGIN;
+SET LOCAL enable_mergejoin = false;
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.a AND t1.a = t2.b ORDER BY t1.a, t2.b;
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.a AND t1.a = t2.b ORDER BY t1.a, t2.b;
+COMMIT;
 
 -- left outer join, 3-way
 EXPLAIN (COSTS OFF)
@@ -219,13 +224,14 @@ EXPLAIN (COSTS OFF)
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
 
--- test merge joins
+-- test merge joins, slightly modifying the query to ensure that we still
+-- get a fully partitionwise join
 SET enable_hashjoin TO off;
 SET enable_nestloop TO off;
 
 EXPLAIN (COSTS OFF)
-SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
-SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
+SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) ORDER BY t1.a;
+SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) ORDER BY t1.a;
 
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2 ON t1.a = t2.b) RIGHT JOIN prt1_e t3 ON (t1.a = (t3.a + t3.b)/2) WHERE t3.c = 0 ORDER BY t1.a, t2.b, t3.a + t3.b;
@@ -1155,8 +1161,8 @@ ANALYZE plt3_adv;
 -- merged partition when re-called with plt1_adv_p1 for the second list value
 -- '0001' of that partition
 EXPLAIN (COSTS OFF)
-SELECT t1.a, t1.c, t2.a, t2.c, t3.a, t3.c FROM (plt1_adv t1 LEFT JOIN plt2_adv t2 ON (t1.c = t2.c)) FULL JOIN plt3_adv t3 ON (t1.c = t3.c) WHERE coalesce(t1.a, 0) % 5 != 3 AND coalesce(t1.a, 0) % 5 != 4 ORDER BY t1.c, t1.a, t2.a, t3.a;
-SELECT t1.a, t1.c, t2.a, t2.c, t3.a, t3.c FROM (plt1_adv t1 LEFT JOIN plt2_adv t2 ON (t1.c = t2.c)) FULL JOIN plt3_adv t3 ON (t1.c = t3.c) WHERE coalesce(t1.a, 0) % 5 != 3 AND coalesce(t1.a, 0) % 5 != 4 ORDER BY t1.c, t1.a, t2.a, t3.a;
+SELECT t1.a, t1.c, t2.a, t2.c, t3.a, t3.c FROM (plt1_adv t1 LEFT JOIN plt2_adv t2 ON (t1.a = t2.a AND t1.c = t2.c)) FULL JOIN plt3_adv t3 ON (t1.a = t3.a AND t1.c = t3.c) WHERE coalesce(t1.a, 0) % 5 != 3 AND coalesce(t1.a, 0) % 5 != 4 ORDER BY t1.c, t1.a, t2.a, t3.a;
+SELECT t1.a, t1.c, t2.a, t2.c, t3.a, t3.c FROM (plt1_adv t1 LEFT JOIN plt2_adv t2 ON (t1.a = t2.a AND t1.c = t2.c)) FULL JOIN plt3_adv t3 ON (t1.a = t3.a AND t1.c = t3.c) WHERE coalesce(t1.a, 0) % 5 != 3 AND coalesce(t1.a, 0) % 5 != 4 ORDER BY t1.c, t1.a, t2.a, t3.a;
 
 DROP TABLE plt1_adv;
 DROP TABLE plt2_adv;
@@ -1216,8 +1222,11 @@ INSERT INTO fract_t (id) (SELECT generate_series(0, 1999));
 ANALYZE fract_t;
 
 -- verify plan; nested index only scans
+-- (avoid merge joins, because the costs of partitionwise and non-partitionwise
+-- merge joins tend to be almost equal, and we want this test to be stable)
 SET max_parallel_workers_per_gather = 0;
 SET enable_partitionwise_join = on;
+SET enable_mergejoin = off;
 
 EXPLAIN (COSTS OFF)
 SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id ASC LIMIT 10;
@@ -1240,6 +1249,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 100;
 -- If almost all the data should be fetched - prefer SeqScan
 EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 1000;
 
+RESET enable_mergejoin;
 SET max_parallel_workers_per_gather = 1;
 SET debug_parallel_query = on;
 -- Partial paths should also be smart enough to employ limits

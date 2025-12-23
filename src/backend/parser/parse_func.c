@@ -42,6 +42,8 @@ typedef enum
 	FUNCLOOKUP_AMBIGUOUS,
 } FuncLookupError;
 
+static int	func_lookup_failure_details(int fgc_flags, List *argnames,
+										bool proc_call);
 static void unify_hypothetical_args(ParseState *pstate,
 									List *fargs, int numAggregatedArgs,
 									Oid *actual_arg_types, Oid *declared_arg_types);
@@ -98,6 +100,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	bool		agg_star = (fn ? fn->agg_star : false);
 	bool		agg_distinct = (fn ? fn->agg_distinct : false);
 	bool		func_variadic = (fn ? fn->func_variadic : false);
+	int			ignore_nulls = (fn ? fn->ignore_nulls : NO_NULLTREATMENT);
 	CoercionForm funcformat = (fn ? fn->funcformat : COERCE_EXPLICIT_CALL);
 	bool		could_be_projection;
 	Oid			rettype;
@@ -115,6 +118,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	int			nvargs;
 	Oid			vatype;
 	FuncDetailCode fdresult;
+	int			fgc_flags;
 	char		aggkind = 0;
 	ParseCallbackState pcbstate;
 
@@ -266,6 +270,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	fdresult = func_get_detail(funcname, fargs, argnames, nargs,
 							   actual_arg_types,
 							   !func_variadic, true, proc_call,
+							   &fgc_flags,
 							   &funcid, &rettype, &retset,
 							   &nvargs, &vatype,
 							   &declared_arg_types, &argdefaults);
@@ -514,6 +519,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						 errmsg("%s is not an ordered-set aggregate, so it cannot have WITHIN GROUP",
 								NameListToString(funcname)),
 						 parser_errposition(pstate, location)));
+
+			/* It also can't treat nulls as a window function */
+			if (ignore_nulls != NO_NULLTREATMENT)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("aggregate functions do not accept RESPECT/IGNORE NULLS"),
+						 parser_errposition(pstate, location)));
 		}
 	}
 	else if (fdresult == FUNCDETAIL_WINDOWFUNC)
@@ -563,8 +575,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("procedure %s is not unique",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-					 errhint("Could not choose a best candidate procedure. "
-							 "You might need to add explicit type casts."),
+					 errdetail("Could not choose a best candidate procedure."),
+					 errhint("You might need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
@@ -572,8 +584,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s is not unique",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-					 errhint("Could not choose a best candidate function. "
-							 "You might need to add explicit type casts."),
+					 errdetail("Could not choose a best candidate function."),
+					 errhint("You might need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
 	}
 	else
@@ -601,7 +613,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		/*
 		 * No function, and no column either.  Since we're dealing with
-		 * function notation, report "function does not exist".
+		 * function notation, report "function/procedure does not exist".
+		 * Depending on what was returned in fgc_flags, we can add some color
+		 * to that with detail or hint messages.
 		 */
 		if (list_length(agg_order) > 1 && !agg_within_group)
 		{
@@ -611,8 +625,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s does not exist",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-					 errhint("No aggregate function matches the given name and argument types. "
-							 "Perhaps you misplaced ORDER BY; ORDER BY must appear "
+					 errdetail("No aggregate function matches the given name and argument types."),
+					 errhint("Perhaps you misplaced ORDER BY; ORDER BY must appear "
 							 "after all regular arguments of the aggregate."),
 					 parser_errposition(pstate, location)));
 		}
@@ -622,8 +636,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("procedure %s does not exist",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-					 errhint("No procedure matches the given name and argument types. "
-							 "You might need to add explicit type casts."),
+					 func_lookup_failure_details(fgc_flags, argnames,
+												 proc_call),
 					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
@@ -631,8 +645,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s does not exist",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-					 errhint("No function matches the given name and argument types. "
-							 "You might need to add explicit type casts."),
+					 func_lookup_failure_details(fgc_flags, argnames,
+												 proc_call),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -834,6 +848,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		wfunc->winstar = agg_star;
 		wfunc->winagg = (fdresult == FUNCDETAIL_AGGREGATE);
 		wfunc->aggfilter = agg_filter;
+		wfunc->ignore_nulls = ignore_nulls;
 		wfunc->runCondition = NIL;
 		wfunc->location = location;
 
@@ -903,6 +918,104 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		pstate->p_last_srf = retval;
 
 	return retval;
+}
+
+/*
+ * Interpret the fgc_flags and issue a suitable detail or hint message.
+ *
+ * Helper function to reduce code duplication while throwing a
+ * function-not-found error.
+ */
+static int
+func_lookup_failure_details(int fgc_flags, List *argnames, bool proc_call)
+{
+	/*
+	 * If not FGC_NAME_VISIBLE, we shouldn't raise the question of whether the
+	 * arguments are wrong.  If the function name was not schema-qualified,
+	 * it's helpful to distinguish between doesn't-exist-anywhere and
+	 * not-in-search-path; but if it was, there's really nothing to add to the
+	 * basic "function/procedure %s does not exist" message.
+	 *
+	 * Note: we passed missing_ok = false to FuncnameGetCandidates, so there's
+	 * no need to consider FGC_SCHEMA_EXISTS here: we'd have already thrown an
+	 * error if an explicitly-given schema doesn't exist.
+	 */
+	if (!(fgc_flags & FGC_NAME_VISIBLE))
+	{
+		if (fgc_flags & FGC_SCHEMA_GIVEN)
+			return 0;			/* schema-qualified name */
+		else if (!(fgc_flags & FGC_NAME_EXISTS))
+		{
+			if (proc_call)
+				return errdetail("There is no procedure of that name.");
+			else
+				return errdetail("There is no function of that name.");
+		}
+		else
+		{
+			if (proc_call)
+				return errdetail("A procedure of that name exists, but it is not in the search_path.");
+			else
+				return errdetail("A function of that name exists, but it is not in the search_path.");
+		}
+	}
+
+	/*
+	 * Next, complain if nothing had the right number of arguments.  (This
+	 * takes precedence over wrong-argnames cases because we won't even look
+	 * at the argnames unless there's a workable number of arguments.)
+	 */
+	if (!(fgc_flags & FGC_ARGCOUNT_MATCH))
+	{
+		if (proc_call)
+			return errdetail("No procedure of that name accepts the given number of arguments.");
+		else
+			return errdetail("No function of that name accepts the given number of arguments.");
+	}
+
+	/*
+	 * If there are argnames, and we failed to match them, again we should
+	 * mention that and not bring up the argument types.
+	 */
+	if (argnames != NIL && !(fgc_flags & FGC_ARGNAMES_MATCH))
+	{
+		if (proc_call)
+			return errdetail("No procedure of that name accepts the given argument names.");
+		else
+			return errdetail("No function of that name accepts the given argument names.");
+	}
+
+	/*
+	 * We could have matched all the given argnames and still not have had a
+	 * valid call, either because of improper use of mixed notation, or
+	 * because of missing arguments, or because the user misused VARIADIC. The
+	 * rules about named-argument matching are finicky enough that it's worth
+	 * trying to be specific about the problem.  (The messages here are chosen
+	 * with full knowledge of the steps that namespace.c uses while checking a
+	 * potential match.)
+	 */
+	if (argnames != NIL && !(fgc_flags & FGC_ARGNAMES_NONDUP))
+		return errdetail("In the closest available match, "
+						 "an argument was specified both positionally and by name.");
+
+	if (argnames != NIL && !(fgc_flags & FGC_ARGNAMES_ALL))
+		return errdetail("In the closest available match, "
+						 "not all required arguments were supplied.");
+
+	if (argnames != NIL && !(fgc_flags & FGC_ARGNAMES_VALID))
+		return errhint("This call would be correct if the variadic array were labeled VARIADIC and placed last.");
+
+	if (fgc_flags & FGC_VARIADIC_FAIL)
+		return errhint("The VARIADIC parameter must be placed last, even when using argument names.");
+
+	/*
+	 * Otherwise, the problem must be incorrect argument types.
+	 */
+	if (proc_call)
+		(void) errdetail("No procedure of that name accepts the given argument types.");
+	else
+		(void) errdetail("No function of that name accepts the given argument types.");
+	return errhint("You might need to add explicit type casts.");
 }
 
 
@@ -1372,9 +1485,14 @@ func_select_candidate(int nargs,
  *	1) check for possible interpretation as a type coercion request
  *	2) apply the ambiguous-function resolution rules
  *
- * Return values *funcid through *true_typeids receive info about the function.
- * If argdefaults isn't NULL, *argdefaults receives a list of any default
- * argument expressions that need to be added to the given arguments.
+ * If there is no match at all, we return FUNCDETAIL_NOTFOUND, and *fgc_flags
+ * is filled with some flags that may be useful for issuing an on-point error
+ * message (see FuncnameGetCandidates).
+ *
+ * On success, return values *funcid through *true_typeids receive info about
+ * the function.  If argdefaults isn't NULL, *argdefaults receives a list of
+ * any default argument expressions that need to be added to the given
+ * arguments.
  *
  * When processing a named- or mixed-notation call (ie, fargnames isn't NIL),
  * the returned true_typeids and argdefaults are ordered according to the
@@ -1400,6 +1518,7 @@ func_get_detail(List *funcname,
 				bool expand_variadic,
 				bool expand_defaults,
 				bool include_out_arguments,
+				int *fgc_flags, /* return value */
 				Oid *funcid,	/* return value */
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
@@ -1424,7 +1543,8 @@ func_get_detail(List *funcname,
 	/* Get list of possible candidates from namespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults,
-										   include_out_arguments, false);
+										   include_out_arguments, false,
+										   fgc_flags);
 
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
@@ -1594,7 +1714,10 @@ func_get_detail(List *funcname,
 		 */
 		if (fargnames != NIL && !expand_variadic && nargs > 0 &&
 			best_candidate->argnumbers[nargs - 1] != nargs - 1)
+		{
+			*fgc_flags |= FGC_VARIADIC_FAIL;
 			return FUNCDETAIL_NOTFOUND;
+		}
 
 		*funcid = best_candidate->oid;
 		*nvargs = best_candidate->nvargs;
@@ -2053,6 +2176,7 @@ LookupFuncNameInternal(ObjectType objtype, List *funcname,
 {
 	Oid			result = InvalidOid;
 	FuncCandidateList clist;
+	int			fgc_flags;
 
 	/* NULL argtypes allowed for nullary functions only */
 	Assert(argtypes != NULL || nargs == 0);
@@ -2062,7 +2186,8 @@ LookupFuncNameInternal(ObjectType objtype, List *funcname,
 
 	/* Get list of candidate objects */
 	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false,
-								  include_out_arguments, missing_ok);
+								  include_out_arguments, missing_ok,
+								  &fgc_flags);
 
 	/* Scan list for a match to the arg types (if specified) and the objtype */
 	for (; clist != NULL; clist = clist->next)

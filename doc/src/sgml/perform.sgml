@@ -1485,12 +1485,27 @@ CREATE STATISTICS stts (dependencies) ON city, zip FROM zipcodes;
 
 ANALYZE zipcodes;
 
-SELECT stxname, stxkeys, stxddependencies
-  FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid)
+SELECT stxkeys AS k, jsonb_pretty(stxddependencies::text::jsonb) AS dep
+  FROM pg_statistic_ext JOIN pg_statistic_ext_data ON (oid = stxoid)
   WHERE stxname = 'stts';
- stxname | stxkeys |             stxddependencies
----------+---------+------------------------------------------
- stts    | 1 5     | {"1 => 5": 1.000000, "5 => 1": 0.423130}
+-[ RECORD 1 ]--------------------
+k   | 1 5
+dep | [                          +
+    |     {                      +
+    |         "degree": 1.000000,+
+    |         "attributes": [    +
+    |             1              +
+    |         ],                 +
+    |         "dependency": 5    +
+    |     },                     +
+    |     {                      +
+    |         "degree": 0.423130,+
+    |         "attributes": [    +
+    |             5              +
+    |         ],                 +
+    |         "dependency": 1    +
+    |     }                      +
+    | ]
 (1 row)
 </programlisting>
      Here it can be seen that column 1 (zip code) fully determines column
@@ -1576,12 +1591,42 @@ CREATE STATISTICS stts2 (ndistinct) ON city, state, zip FROM zipcodes;
 
 ANALYZE zipcodes;
 
-SELECT stxkeys AS k, stxdndistinct AS nd
-  FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid)
+SELECT stxkeys AS k, jsonb_pretty(stxdndistinct::text::jsonb) AS nd
+  FROM pg_statistic_ext JOIN pg_statistic_ext_data on (oid = stxoid)
   WHERE stxname = 'stts2';
--[ RECORD 1 ]------------------------------------------------------&zwsp;--
+-[ RECORD 1 ]-------------------
 k  | 1 2 5
-nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
+nd | [                          +
+   |     {                      +
+   |         "ndistinct": 33178,+
+   |         "attributes": [    +
+   |             1,             +
+   |             2              +
+   |         ]                  +
+   |     },                     +
+   |     {                      +
+   |         "ndistinct": 33178,+
+   |         "attributes": [    +
+   |             1,             +
+   |             5              +
+   |         ]                  +
+   |     },                     +
+   |     {                      +
+   |         "ndistinct": 27435,+
+   |         "attributes": [    +
+   |             2,             +
+   |             5              +
+   |         ]                  +
+   |     },                     +
+   |     {                      +
+   |         "ndistinct": 33178,+
+   |         "attributes": [    +
+   |             1,             +
+   |             2,             +
+   |             5              +
+   |         ]                  +
+   |     }                      +
+   | ]
 (1 row)
 </programlisting>
      This indicates that there are three combinations of columns that

@@ -56,6 +56,9 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
 	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
 	 (snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
 
+#define IsHistoricMVCCSnapshot(snapshot)  \
+	((snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
+
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);
@@ -117,6 +120,7 @@ extern bool HistoricSnapshotActive(void);
 extern Size EstimateSnapshotSpace(Snapshot snapshot);
 extern void SerializeSnapshot(Snapshot snapshot, char *start_address);
 extern Snapshot RestoreSnapshot(char *start_address);
-extern void RestoreTransactionSnapshot(Snapshot snapshot, void *source_pgproc);
+struct PGPROC;
+extern void RestoreTransactionSnapshot(Snapshot snapshot, struct PGPROC *source_pgproc);
 
 #endif							/* SNAPMGR_H */

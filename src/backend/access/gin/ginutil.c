@@ -500,9 +500,9 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	if (isNull)
 	{
 		*nentries = 1;
-		entries = (Datum *) palloc(sizeof(Datum));
+		entries = palloc_object(Datum);
 		entries[0] = (Datum) 0;
-		*categories = (GinNullCategory *) palloc(sizeof(GinNullCategory));
+		*categories = palloc_object(GinNullCategory);
 		(*categories)[0] = GIN_CAT_NULL_ITEM;
 		return entries;
 	}
@@ -522,9 +522,9 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	if (entries == NULL || *nentries <= 0)
 	{
 		*nentries = 1;
-		entries = (Datum *) palloc(sizeof(Datum));
+		entries = palloc_object(Datum);
 		entries[0] = (Datum) 0;
-		*categories = (GinNullCategory *) palloc(sizeof(GinNullCategory));
+		*categories = palloc_object(GinNullCategory);
 		(*categories)[0] = GIN_CAT_EMPTY_ITEM;
 		return entries;
 	}
@@ -548,7 +548,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 		keyEntryData *keydata;
 		cmpEntriesArg arg;
 
-		keydata = (keyEntryData *) palloc(*nentries * sizeof(keyEntryData));
+		keydata = palloc_array(keyEntryData, *nentries);
 		for (i = 0; i < *nentries; i++)
 		{
 			keydata[i].datum = entries[i];

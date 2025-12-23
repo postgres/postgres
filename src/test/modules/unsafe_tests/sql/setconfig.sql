@@ -50,6 +50,19 @@ DO $$BEGIN EXECUTE format(
 	'ALTER DATABASE %I RESET role', current_catalog); END$$;
 
 
+-- Test some error cases
+-- We have to use terse mode so that the database name doesn't
+-- appear in the error output.
+
+\set VERBOSITY terse
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I SET bogus = 0', current_catalog); END$$;
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I RESET bogus', current_catalog); END$$;
+ALTER USER regress_authenticated_user_db_ssa RESET bogus;
+\set VERBOSITY default
+
+
 -- Test connection string options
 
 \c -reuse-previous=on "user=regress_authenticated_user_db_sr options=-crole=regress_current_user"

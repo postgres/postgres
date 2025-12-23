@@ -495,3 +495,33 @@ RESET ROLE;
 DROP TABLE vacowned;
 DROP TABLE vacowned_parted;
 DROP ROLE regress_vacuum;
+
+-- Test checking how new toast values are allocated on rewrite.
+-- Create table with plain storage (forces inline storage initially).
+CREATE TABLE vac_rewrite_toast (id int, f1 TEXT STORAGE plain);
+-- Insert tuple large enough to trigger toast storage on rewrite, still
+-- small enough to fit on a page.
+INSERT INTO vac_rewrite_toast values (1, repeat('a', 7000));
+-- Switch to external storage to force toast table usage.
+ALTER TABLE vac_rewrite_toast ALTER COLUMN f1 SET STORAGE EXTERNAL;
+-- This second tuple is toasted, its value should still be the
+-- same after rewrite.
+INSERT INTO vac_rewrite_toast values (2, repeat('a', 7000));
+SELECT pg_column_toast_chunk_id(f1) AS id_2_chunk FROM vac_rewrite_toast
+  WHERE id = 2 \gset
+-- Check initial state of the data.
+SELECT id, pg_column_toast_chunk_id(f1) IS NULL AS f1_chunk_null,
+  substr(f1, 5, 10) AS f1_data,
+  pg_column_compression(f1) AS f1_comp
+  FROM vac_rewrite_toast ORDER BY id;
+-- VACUUM FULL forces toast data rewrite.
+VACUUM FULL vac_rewrite_toast;
+-- Check after rewrite.
+SELECT id, pg_column_toast_chunk_id(f1) IS NULL AS f1_chunk_null,
+  substr(f1, 5, 10) AS f1_data,
+  pg_column_compression(f1) AS f1_comp
+  FROM vac_rewrite_toast ORDER BY id;
+-- The same value is reused for the tuple toasted before the rewrite.
+SELECT pg_column_toast_chunk_id(f1) = :'id_2_chunk' AS same_chunk
+  FROM vac_rewrite_toast WHERE id = 2;
+DROP TABLE vac_rewrite_toast;

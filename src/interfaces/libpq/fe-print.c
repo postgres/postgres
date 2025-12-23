@@ -33,6 +33,7 @@
 #endif
 #endif
 
+#include "common/int.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 
@@ -103,6 +104,16 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			int			ws_col;
 		}			screen_size;
 #endif
+
+		/*
+		 * Quick sanity check on po->fieldSep, since we make heavy use of int
+		 * math throughout.
+		 */
+		if (fs_len < strlen(po->fieldSep))
+		{
+			fprintf(stderr, libpq_gettext("overlong field separator\n"));
+			goto exit;
+		}
 
 		nTups = PQntuples(res);
 		fieldNames = (const char **) calloc(nFields, sizeof(char *));
@@ -391,7 +402,7 @@ do_field(const PQprintOpt *po, const PGresult *res,
 		{
 			if (plen > fieldMax[j])
 				fieldMax[j] = plen;
-			if (!(fields[i * nFields + j] = (char *) malloc(plen + 1)))
+			if (!(fields[i * nFields + j] = (char *) malloc((size_t) plen + 1)))
 			{
 				fprintf(stderr, libpq_gettext("out of memory\n"));
 				return false;
@@ -453,15 +464,31 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		fputs("<tr>", fout);
 	else
 	{
-		int			tot = 0;
+		size_t		tot = 0;
 		int			n = 0;
 		char	   *p = NULL;
 
+		/* Calculate the border size, checking for overflow. */
 		for (; n < nFields; n++)
-			tot += fieldMax[n] + fs_len + (po->standard ? 2 : 0);
+		{
+			/* Field plus separator, plus 2 extra '-' in standard format. */
+			if (pg_add_size_overflow(tot, fieldMax[n], &tot) ||
+				pg_add_size_overflow(tot, fs_len, &tot) ||
+				(po->standard && pg_add_size_overflow(tot, 2, &tot)))
+				goto overflow;
+		}
 		if (po->standard)
-			tot += fs_len * 2 + 2;
-		border = malloc(tot + 1);
+		{
+			/* An extra separator at the front and back. */
+			if (pg_add_size_overflow(tot, fs_len, &tot) ||
+				pg_add_size_overflow(tot, fs_len, &tot) ||
+				pg_add_size_overflow(tot, 2, &tot))
+				goto overflow;
+		}
+		if (pg_add_size_overflow(tot, 1, &tot)) /* terminator */
+			goto overflow;
+
+		border = malloc(tot);
 		if (!border)
 		{
 			fprintf(stderr, libpq_gettext("out of memory\n"));
@@ -524,6 +551,10 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 	else
 		fprintf(fout, "\n%s\n", border);
 	return border;
+
+overflow:
+	fprintf(stderr, libpq_gettext("header size exceeds the maximum allowed\n"));
+	return NULL;
 }
 
 

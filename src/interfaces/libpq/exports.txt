@@ -205,9 +205,8 @@ PQcancelFinish            202
 PQsocketPoll              203
 PQsetChunkedRowsMode      204
 PQgetCurrentTimeUSec      205
-PQservice                 206
-PQsetAuthDataHook         207
-PQgetAuthDataHook         208
-PQdefaultAuthDataHook     209
-PQfullProtocolVersion     210
-appendPQExpBufferVA       211
+PQsetAuthDataHook         206
+PQgetAuthDataHook         207
+PQdefaultAuthDataHook     208
+PQfullProtocolVersion     209
+appendPQExpBufferVA       210

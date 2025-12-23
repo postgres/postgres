@@ -14,8 +14,6 @@
 #ifndef UNICODE_NORM_H
 #define UNICODE_NORM_H
 
-#include "mb/pg_wchar.h"
-
 typedef enum
 {
 	UNICODE_NFC = 0,
@@ -32,8 +30,8 @@ typedef enum
 	UNICODE_NORM_QC_MAYBE = -1,
 } UnicodeNormalizationQC;
 
-extern pg_wchar *unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input);
+extern char32_t *unicode_normalize(UnicodeNormalizationForm form, const char32_t *input);
 
-extern UnicodeNormalizationQC unicode_is_normalized_quickcheck(UnicodeNormalizationForm form, const pg_wchar *input);
+extern UnicodeNormalizationQC unicode_is_normalized_quickcheck(UnicodeNormalizationForm form, const char32_t *input);
 
 #endif							/* UNICODE_NORM_H */

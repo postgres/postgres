@@ -43,7 +43,7 @@ static void gistprunepage(Relation rel, Page page, Buffer buffer,
 
 
 #define ROTATEDIST(d) do { \
-	SplitPageLayout *tmp = (SplitPageLayout *) palloc0(sizeof(SplitPageLayout)); \
+	SplitPageLayout *tmp = palloc0_object(SplitPageLayout); \
 	tmp->block.blkno = InvalidBlockNumber;	\
 	tmp->buffer = InvalidBuffer;	\
 	tmp->next = (d); \
@@ -392,7 +392,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			/* Prepare a vector of all the downlinks */
 			for (ptr = dist; ptr; ptr = ptr->next)
 				ndownlinks++;
-			downlinks = palloc(sizeof(IndexTuple) * ndownlinks);
+			downlinks = palloc_array(IndexTuple, ndownlinks);
 			for (i = 0, ptr = dist; ptr; ptr = ptr->next)
 				downlinks[i++] = ptr->itup;
 
@@ -410,7 +410,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			/* Prepare split-info to be returned to caller */
 			for (ptr = dist; ptr; ptr = ptr->next)
 			{
-				GISTPageSplitInfo *si = palloc(sizeof(GISTPageSplitInfo));
+				GISTPageSplitInfo *si = palloc_object(GISTPageSplitInfo);
 
 				si->buf = ptr->buffer;
 				si->downlink = ptr->itup;
@@ -430,7 +430,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			{
 				IndexTuple	thistup = (IndexTuple) data;
 
-				if (PageAddItem(ptr->page, (Item) data, IndexTupleSize(thistup), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
+				if (PageAddItem(ptr->page, data, IndexTupleSize(thistup), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(rel));
 
 				/*
@@ -551,8 +551,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			if (ntup == 1)
 			{
 				/* One-for-one replacement, so use PageIndexTupleOverwrite */
-				if (!PageIndexTupleOverwrite(page, oldoffnum, (Item) *itup,
-											 IndexTupleSize(*itup)))
+				if (!PageIndexTupleOverwrite(page, oldoffnum, *itup, IndexTupleSize(*itup)))
 					elog(ERROR, "failed to add item to index page in \"%s\"",
 						 RelationGetRelationName(rel));
 			}
@@ -683,7 +682,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			state.stack = stack = stack->parent;
 		}
 
-		if (XLogRecPtrIsInvalid(stack->lsn))
+		if (!XLogRecPtrIsValid(stack->lsn))
 			stack->buffer = ReadBuffer(state.r, stack->blkno);
 
 		/*
@@ -696,10 +695,10 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			gistcheckpage(state.r, stack->buffer);
 		}
 
-		stack->page = (Page) BufferGetPage(stack->buffer);
+		stack->page = BufferGetPage(stack->buffer);
 		stack->lsn = xlocked ?
 			PageGetLSN(stack->page) : BufferGetLSNAtomic(stack->buffer);
-		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
+		Assert(!RelationNeedsWAL(state.r) || XLogRecPtrIsValid(stack->lsn));
 
 		/*
 		 * If this page was split but the downlink was never inserted to the
@@ -783,7 +782,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 					LockBuffer(stack->buffer, GIST_UNLOCK);
 					LockBuffer(stack->buffer, GIST_EXCLUSIVE);
 					xlocked = true;
-					stack->page = (Page) BufferGetPage(stack->buffer);
+					stack->page = BufferGetPage(stack->buffer);
 
 					if (PageGetLSN(stack->page) != stack->lsn)
 					{
@@ -824,7 +823,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			xlocked = false;
 
 			/* descend to the chosen child */
-			item = (GISTInsertStack *) palloc0(sizeof(GISTInsertStack));
+			item = palloc0_object(GISTInsertStack);
 			item->blkno = childblkno;
 			item->parent = stack;
 			item->downlinkoffnum = downlinkoffnum;
@@ -847,7 +846,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 				LockBuffer(stack->buffer, GIST_UNLOCK);
 				LockBuffer(stack->buffer, GIST_EXCLUSIVE);
 				xlocked = true;
-				stack->page = (Page) BufferGetPage(stack->buffer);
+				stack->page = BufferGetPage(stack->buffer);
 				stack->lsn = PageGetLSN(stack->page);
 
 				if (stack->blkno == GIST_ROOT_BLKNO)
@@ -924,7 +923,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 			   *ptr;
 	BlockNumber blkno;
 
-	top = (GISTInsertStack *) palloc0(sizeof(GISTInsertStack));
+	top = palloc0_object(GISTInsertStack);
 	top->blkno = GIST_ROOT_BLKNO;
 	top->downlinkoffnum = InvalidOffsetNumber;
 
@@ -938,7 +937,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		buffer = ReadBuffer(r, top->blkno);
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(r, buffer);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (GistPageIsLeaf(page))
 		{
@@ -976,7 +975,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 			 * leaf pages, and we assume that there can't be any non-leaf
 			 * pages behind leaf pages.
 			 */
-			ptr = (GISTInsertStack *) palloc0(sizeof(GISTInsertStack));
+			ptr = palloc0_object(GISTInsertStack);
 			ptr->blkno = GistPageGetOpaque(page)->rightlink;
 			ptr->downlinkoffnum = InvalidOffsetNumber;
 			ptr->parent = top->parent;
@@ -1001,7 +1000,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 			else
 			{
 				/* Append this child to the list of pages to visit later */
-				ptr = (GISTInsertStack *) palloc0(sizeof(GISTInsertStack));
+				ptr = palloc0_object(GISTInsertStack);
 				ptr->blkno = blkno;
 				ptr->downlinkoffnum = i;
 				ptr->parent = top;
@@ -1033,7 +1032,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 	GISTInsertStack *ptr;
 
 	gistcheckpage(r, parent->buffer);
-	parent->page = (Page) BufferGetPage(parent->buffer);
+	parent->page = BufferGetPage(parent->buffer);
 	maxoff = PageGetMaxOffsetNumber(parent->page);
 
 	/* Check if the downlink is still where it was before */
@@ -1098,7 +1097,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 		parent->buffer = ReadBuffer(r, parent->blkno);
 		LockBuffer(parent->buffer, GIST_EXCLUSIVE);
 		gistcheckpage(r, parent->buffer);
-		parent->page = (Page) BufferGetPage(parent->buffer);
+		parent->page = BufferGetPage(parent->buffer);
 	}
 
 	/*
@@ -1121,7 +1120,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 	while (ptr)
 	{
 		ptr->buffer = ReadBuffer(r, ptr->blkno);
-		ptr->page = (Page) BufferGetPage(ptr->buffer);
+		ptr->page = BufferGetPage(ptr->buffer);
 		ptr = ptr->parent;
 	}
 
@@ -1219,7 +1218,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
 	 */
 	for (;;)
 	{
-		GISTPageSplitInfo *si = palloc(sizeof(GISTPageSplitInfo));
+		GISTPageSplitInfo *si = palloc_object(GISTPageSplitInfo);
 		IndexTuple	downlink;
 
 		page = BufferGetPage(buf);
@@ -1483,8 +1482,8 @@ gistSplit(Relation r,
 	gistSplitByKey(r, page, itup, len, giststate, &v, 0);
 
 	/* form left and right vector */
-	lvectup = (IndexTuple *) palloc(sizeof(IndexTuple) * (len + 1));
-	rvectup = (IndexTuple *) palloc(sizeof(IndexTuple) * (len + 1));
+	lvectup = palloc_array(IndexTuple, len + 1);
+	rvectup = palloc_array(IndexTuple, len + 1);
 
 	for (i = 0; i < v.splitVector.spl_nleft; i++)
 		lvectup[i] = itup[v.splitVector.spl_left[i] - 1];
@@ -1553,7 +1552,7 @@ initGISTstate(Relation index)
 	oldCxt = MemoryContextSwitchTo(scanCxt);
 
 	/* Create and fill in the GISTSTATE */
-	giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
+	giststate = palloc_object(GISTSTATE);
 
 	giststate->scanCxt = scanCxt;
 	giststate->tempCxt = scanCxt;	/* caller must change this if needed */

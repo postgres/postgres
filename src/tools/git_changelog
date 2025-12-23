@@ -59,6 +59,7 @@ require IPC::Open2;
 # (We could get this from "git branches", but not worth the trouble.)
 # NB: master must be first!
 my @BRANCHES = qw(master
+  REL_18_STABLE
   REL_17_STABLE REL_16_STABLE REL_15_STABLE REL_14_STABLE REL_13_STABLE
   REL_12_STABLE REL_11_STABLE REL_10_STABLE REL9_6_STABLE REL9_5_STABLE
   REL9_4_STABLE REL9_3_STABLE REL9_2_STABLE REL9_1_STABLE REL9_0_STABLE

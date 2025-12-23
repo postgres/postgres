@@ -646,3 +646,30 @@ SELECT * FROM recursive_trigger_test;
   1 | 2
 (2 rows)
 
+-- event triggers
+CREATE OR REPLACE FUNCTION pysnitch() RETURNS event_trigger
+LANGUAGE plpython3u
+AS $$
+  plpy.notice("TD[event] => " + TD["event"] + " ; TD[tag] => " + TD["tag"]);
+$$;
+CREATE EVENT TRIGGER python_a_snitch ON ddl_command_start
+   EXECUTE PROCEDURE pysnitch();
+CREATE EVENT TRIGGER python_b_snitch ON ddl_command_end
+   EXECUTE PROCEDURE pysnitch();
+CREATE OR REPLACE FUNCTION foobar() RETURNS int LANGUAGE sql AS $$SELECT 1;$$;
+NOTICE:  TD[event] => ddl_command_start ; TD[tag] => CREATE FUNCTION
+NOTICE:  TD[event] => ddl_command_end ; TD[tag] => CREATE FUNCTION
+ALTER FUNCTION foobar() COST 77;
+NOTICE:  TD[event] => ddl_command_start ; TD[tag] => ALTER FUNCTION
+NOTICE:  TD[event] => ddl_command_end ; TD[tag] => ALTER FUNCTION
+DROP FUNCTION foobar();
+NOTICE:  TD[event] => ddl_command_start ; TD[tag] => DROP FUNCTION
+NOTICE:  TD[event] => ddl_command_end ; TD[tag] => DROP FUNCTION
+CREATE TABLE foo();
+NOTICE:  TD[event] => ddl_command_start ; TD[tag] => CREATE TABLE
+NOTICE:  TD[event] => ddl_command_end ; TD[tag] => CREATE TABLE
+DROP TABLE foo;
+NOTICE:  TD[event] => ddl_command_start ; TD[tag] => DROP TABLE
+NOTICE:  TD[event] => ddl_command_end ; TD[tag] => DROP TABLE
+DROP EVENT TRIGGER python_a_snitch;
+DROP EVENT TRIGGER python_b_snitch;

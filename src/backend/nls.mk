@@ -28,7 +28,7 @@ GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
                    error_cb:2:c-format
 
 gettext-files: generated-parser-sources generated-headers
-	find $(srcdir) $(srcdir)/../common $(srcdir)/../port -name '*.c' -print | LC_ALL=C sort >$@
+	find $(srcdir) $(srcdir)/../common $(srcdir)/../port $(srcdir)/../include/ \( -name '*.c' -o -name "proctypelist.h" \) -print | LC_ALL=C sort >$@
 
 my-clean:
 	rm -f gettext-files

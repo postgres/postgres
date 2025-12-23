@@ -224,9 +224,14 @@ typedef struct VacuumParams
 	int			multixact_freeze_table_age; /* multixact age at which to scan
 											 * whole table */
 	bool		is_wraparound;	/* force a for-wraparound vacuum */
-	int			log_min_duration;	/* minimum execution threshold in ms at
-									 * which autovacuum is logged, -1 to use
-									 * default */
+	int			log_vacuum_min_duration;	/* minimum execution threshold in
+											 * ms at which vacuum by
+											 * autovacuum is logged, -1 to use
+											 * default */
+	int			log_analyze_min_duration;	/* minimum execution threshold in
+											 * ms at which analyze by
+											 * autovacuum is logged, -1 to use
+											 * default */
 	VacOptValue index_cleanup;	/* Do index vacuum and cleanup */
 	VacOptValue truncate;		/* Truncate empty pages at the end */
 	Oid			toast_parent;	/* for privilege checks when recursing */
@@ -336,7 +341,7 @@ extern PGDLLIMPORT int64 parallel_vacuum_worker_delay_ns;
 
 /* in commands/vacuum.c */
 extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
-extern void vacuum(List *relations, VacuumParams *params,
+extern void vacuum(List *relations, const VacuumParams params,
 				   BufferAccessStrategy bstrategy, MemoryContext vac_context,
 				   bool isTopLevel);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
@@ -357,7 +362,7 @@ extern void vac_update_relstats(Relation relation,
 								bool *frozenxid_updated,
 								bool *minmulti_updated,
 								bool in_outer_xact);
-extern bool vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
+extern bool vacuum_get_cutoffs(Relation rel, const VacuumParams params,
 							   struct VacuumCutoffs *cutoffs);
 extern bool vacuum_xid_failsafe_check(const struct VacuumCutoffs *cutoffs);
 extern void vac_update_datfrozenxid(void);
@@ -398,7 +403,7 @@ extern void parallel_vacuum_main(dsm_segment *seg, shm_toc *toc);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, RangeVar *relation,
-						VacuumParams *params, List *va_cols, bool in_outer_xact,
+						const VacuumParams params, List *va_cols, bool in_outer_xact,
 						BufferAccessStrategy bstrategy);
 extern bool std_typanalyze(VacAttrStats *stats);
 

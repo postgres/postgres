@@ -94,7 +94,7 @@ typedef struct
 	bool		eof_reached;	/* read has reached EOF */
 	int			current;		/* next array index to read */
 	int			file;			/* temp file# */
-	off_t		offset;			/* byte offset in file */
+	pgoff_t		offset;			/* byte offset in file */
 } TSReadPointer;
 
 /*
@@ -179,7 +179,7 @@ struct Tuplestorestate
 	int			readptrsize;	/* allocated length of readptrs array */
 
 	int			writepos_file;	/* file# (valid if READFILE state) */
-	off_t		writepos_offset;	/* offset (valid if READFILE state) */
+	pgoff_t		writepos_offset;	/* offset (valid if READFILE state) */
 };
 
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
@@ -257,7 +257,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 {
 	Tuplestorestate *state;
 
-	state = (Tuplestorestate *) palloc0(sizeof(Tuplestorestate));
+	state = palloc0_object(Tuplestorestate);
 
 	state->status = TSS_INMEM;
 	state->eflags = eflags;
@@ -1051,7 +1051,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 * Back up to fetch previously-returned tuple's ending length
 			 * word. If seek fails, assume we are at start of file.
 			 */
-			if (BufFileSeek(state->myfile, 0, -(long) sizeof(unsigned int),
+			if (BufFileSeek(state->myfile, 0, -(pgoff_t) sizeof(unsigned int),
 							SEEK_CUR) != 0)
 			{
 				/* even a failed backwards fetch gets you out of eof state */
@@ -1072,7 +1072,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				 * Back up to get ending length word of tuple before it.
 				 */
 				if (BufFileSeek(state->myfile, 0,
-								-(long) (tuplen + 2 * sizeof(unsigned int)),
+								-(pgoff_t) (tuplen + 2 * sizeof(unsigned int)),
 								SEEK_CUR) != 0)
 				{
 					/*
@@ -1082,7 +1082,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 					 * what in-memory case does).
 					 */
 					if (BufFileSeek(state->myfile, 0,
-									-(long) (tuplen + sizeof(unsigned int)),
+									-(pgoff_t) (tuplen + sizeof(unsigned int)),
 									SEEK_CUR) != 0)
 						ereport(ERROR,
 								(errcode_for_file_access(),
@@ -1099,7 +1099,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 * length word of the tuple, so back up to that point.
 			 */
 			if (BufFileSeek(state->myfile, 0,
-							-(long) tuplen,
+							-(pgoff_t) tuplen,
 							SEEK_CUR) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),

@@ -8,6 +8,7 @@
 #include "fmgr.h"
 #include "utils/fmgrprotos.h"
 #include "utils/fmgroids.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 /* enums are really Oids, so we just use the same structure */
@@ -193,8 +194,8 @@ gbt_enum_ssup_cmp(Datum x, Datum y, SortSupport ssup)
 	return DatumGetInt32(CallerFInfoFunctionCall2(enum_cmp,
 												  ssup->ssup_extra,
 												  InvalidOid,
-												  arg1->lower,
-												  arg2->lower));
+												  ObjectIdGetDatum(arg1->lower),
+												  ObjectIdGetDatum(arg2->lower)));
 }
 
 Datum

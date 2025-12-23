@@ -49,7 +49,7 @@ break is not needed in a wider output rendering.
    </para>
 
    <para>
-    After you have successfully completed this tutorial you will want to
+    After you have successfully completed this tutorial, you will want to
     read the <xref linkend="sql"/> section to gain a better understanding
     of the SQL language, or <xref linkend="client-interfaces"/> for
     information about developing applications with

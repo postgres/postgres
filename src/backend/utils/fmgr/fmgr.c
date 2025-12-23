@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
+#include "access/htup_details.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -1570,7 +1571,6 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
  * This is basically like InputFunctionCall, but the converted Datum is
  * returned into *result while the function result is true for success or
  * false for failure.  Also, the caller may pass an ErrorSaveContext node.
- * (We declare that as "fmNodePtr" to avoid including nodes.h in fmgr.h.)
  *
  * If escontext points to an ErrorSaveContext, any "soft" errors detected by
  * the input function will be reported by filling the escontext struct and
@@ -1584,7 +1584,7 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 bool
 InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 					  Oid typioparam, int32 typmod,
-					  fmNodePtr escontext,
+					  Node *escontext,
 					  Datum *result)
 {
 	LOCAL_FCINFO(fcinfo, 3);
@@ -1639,7 +1639,7 @@ InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 bool
 DirectInputFunctionCallSafe(PGFunction func, char *str,
 							Oid typioparam, int32 typmod,
-							fmNodePtr escontext,
+							Node *escontext,
 							Datum *result)
 {
 	LOCAL_FCINFO(fcinfo, 3);
@@ -1786,41 +1786,6 @@ OidSendFunctionCall(Oid functionId, Datum val)
 	fmgr_info(functionId, &flinfo);
 	return SendFunctionCall(&flinfo, val);
 }
-
-
-/*-------------------------------------------------------------------------
- *		Support routines for standard maybe-pass-by-reference datatypes
- *
- * int8 and float8 can be passed by value if Datum is wide enough.
- * (For backwards-compatibility reasons, we allow pass-by-ref to be chosen
- * at compile time even if pass-by-val is possible.)
- *
- * Note: there is only one switch controlling the pass-by-value option for
- * both int8 and float8; this is to avoid making things unduly complicated
- * for the timestamp types, which might have either representation.
- *-------------------------------------------------------------------------
- */
-
-#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-
-Datum
-Int64GetDatum(int64 X)
-{
-	int64	   *retval = (int64 *) palloc(sizeof(int64));
-
-	*retval = X;
-	return PointerGetDatum(retval);
-}
-
-Datum
-Float8GetDatum(float8 X)
-{
-	float8	   *retval = (float8 *) palloc(sizeof(float8));
-
-	*retval = X;
-	return PointerGetDatum(retval);
-}
-#endif							/* USE_FLOAT8_BYVAL */
 
 
 /*-------------------------------------------------------------------------

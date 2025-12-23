@@ -28,8 +28,10 @@ hash_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_hash_init_meta_page *xlrec = (xl_hash_init_meta_page *) rec;
 
-				appendStringInfo(buf, "num_tuples %g, fillfactor %d",
-								 xlrec->num_tuples, xlrec->ffactor);
+				appendStringInfo(buf, "num_tuples %g, procid %u, fillfactor %d",
+								 xlrec->num_tuples,
+								 xlrec->procid,
+								 xlrec->ffactor);
 				break;
 			}
 		case XLOG_HASH_INIT_BITMAP_PAGE:
@@ -58,8 +60,10 @@ hash_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_hash_split_allocate_page *xlrec = (xl_hash_split_allocate_page *) rec;
 
-				appendStringInfo(buf, "new_bucket %u, meta_page_masks_updated %c, issplitpoint_changed %c",
+				appendStringInfo(buf, "new_bucket %u, old_bucket_flag %u, new_bucket_flag %u, meta_page_masks_updated %c, issplitpoint_changed %c",
 								 xlrec->new_bucket,
+								 xlrec->old_bucket_flag,
+								 xlrec->new_bucket_flag,
 								 (xlrec->flags & XLH_SPLIT_META_UPDATE_MASKS) ? 'T' : 'F',
 								 (xlrec->flags & XLH_SPLIT_META_UPDATE_SPLITPOINT) ? 'T' : 'F');
 				break;
@@ -85,11 +89,12 @@ hash_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_hash_squeeze_page *xlrec = (xl_hash_squeeze_page *) rec;
 
-				appendStringInfo(buf, "prevblkno %u, nextblkno %u, ntups %d, is_primary %c",
+				appendStringInfo(buf, "prevblkno %u, nextblkno %u, ntups %d, is_primary %c, is_previous %c",
 								 xlrec->prevblkno,
 								 xlrec->nextblkno,
 								 xlrec->ntups,
-								 xlrec->is_prim_bucket_same_wrt ? 'T' : 'F');
+								 xlrec->is_prim_bucket_same_wrt ? 'T' : 'F',
+								 xlrec->is_prev_bucket_same_wrt ? 'T' : 'F');
 				break;
 			}
 		case XLOG_HASH_DELETE:

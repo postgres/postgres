@@ -322,8 +322,17 @@ static relopt_int intRelOpts[] =
 	{
 		{
 			"log_autovacuum_min_duration",
-			"Sets the minimum execution time above which autovacuum actions will be logged",
+			"Sets the minimum execution time above which vacuum actions by autovacuum will be logged",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		},
+		-1, -1, INT_MAX
+	},
+	{
+		{
+			"log_autoanalyze_min_duration",
+			"Sets the minimum execution time above which analyze actions by autovacuum will be logged",
+			RELOPT_KIND_HEAP,
 			ShareUpdateExclusiveLock
 		},
 		-1, -1, INT_MAX
@@ -767,7 +776,7 @@ register_reloptions_validator(local_relopts *relopts, relopts_validator validato
 static void
 add_local_reloption(local_relopts *relopts, relopt_gen *newoption, int offset)
 {
-	local_relopt *opt = palloc(sizeof(*opt));
+	local_relopt *opt = palloc_object(local_relopt);
 
 	Assert(offset < relopts->relopt_struct_size);
 
@@ -1164,7 +1173,7 @@ add_local_string_reloption(local_relopts *relopts, const char *name,
  * but we declare them as Datums to avoid including array.h in reloptions.h.
  */
 Datum
-transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
+transformRelOptions(Datum oldOptions, List *defList, const char *nameSpace,
 					const char *const validnsps[], bool acceptOidsOff, bool isReset)
 {
 	Datum		result;
@@ -1179,7 +1188,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 	astate = NULL;
 
 	/* Copy any oldOptions that aren't to be replaced */
-	if (PointerIsValid(DatumGetPointer(oldOptions)))
+	if (DatumGetPointer(oldOptions) != NULL)
 	{
 		ArrayType  *array = DatumGetArrayTypeP(oldOptions);
 		Datum	   *oldoptions;
@@ -1190,8 +1199,8 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 
 		for (i = 0; i < noldoptions; i++)
 		{
-			char	   *text_str = VARDATA(oldoptions[i]);
-			int			text_len = VARSIZE(oldoptions[i]) - VARHDRSZ;
+			char	   *text_str = VARDATA(DatumGetPointer(oldoptions[i]));
+			int			text_len = VARSIZE(DatumGetPointer(oldoptions[i])) - VARHDRSZ;
 
 			/* Search for a match in defList */
 			foreach(cell, defList)
@@ -1200,14 +1209,14 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 				int			kw_len;
 
 				/* ignore if not in the same namespace */
-				if (namspace == NULL)
+				if (nameSpace == NULL)
 				{
 					if (def->defnamespace != NULL)
 						continue;
 				}
 				else if (def->defnamespace == NULL)
 					continue;
-				else if (strcmp(def->defnamespace, namspace) != 0)
+				else if (strcmp(def->defnamespace, nameSpace) != 0)
 					continue;
 
 				kw_len = strlen(def->defname);
@@ -1243,8 +1252,9 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 		}
 		else
 		{
-			text	   *t;
+			const char *name;
 			const char *value;
+			text	   *t;
 			Size		len;
 
 			/*
@@ -1276,14 +1286,14 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 			}
 
 			/* ignore if not in the same namespace */
-			if (namspace == NULL)
+			if (nameSpace == NULL)
 			{
 				if (def->defnamespace != NULL)
 					continue;
 			}
 			else if (def->defnamespace == NULL)
 				continue;
-			else if (strcmp(def->defnamespace, namspace) != 0)
+			else if (strcmp(def->defnamespace, nameSpace) != 0)
 				continue;
 
 			/*
@@ -1291,10 +1301,18 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 			 * have just "name", assume "name=true" is meant.  Note: the
 			 * namespace is not output.
 			 */
+			name = def->defname;
 			if (def->arg != NULL)
 				value = defGetString(def);
 			else
 				value = "true";
+
+			/* Insist that name not contain "=", else "a=b=c" is ambiguous */
+			if (strchr(name, '=') != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid option name \"%s\": must not contain \"=\"",
+								name)));
 
 			/*
 			 * This is not a great place for this test, but there's no other
@@ -1303,7 +1321,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 			 * amount of ugly.
 			 */
 			if (acceptOidsOff && def->defnamespace == NULL &&
-				strcmp(def->defname, "oids") == 0)
+				strcmp(name, "oids") == 0)
 			{
 				if (defGetBoolean(def))
 					ereport(ERROR,
@@ -1313,11 +1331,11 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 				continue;
 			}
 
-			len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
+			len = VARHDRSZ + strlen(name) + 1 + strlen(value);
 			/* +1 leaves room for sprintf's trailing null */
 			t = (text *) palloc(len + 1);
 			SET_VARSIZE(t, len);
-			sprintf(VARDATA(t), "%s=%s", def->defname, value);
+			sprintf(VARDATA(t), "%s=%s", name, value);
 
 			astate = accumArrayResult(astate, PointerGetDatum(t),
 									  false, TEXTOID,
@@ -1348,7 +1366,7 @@ untransformRelOptions(Datum options)
 	int			i;
 
 	/* Nothing to do if no options */
-	if (!PointerIsValid(DatumGetPointer(options)))
+	if (DatumGetPointer(options) == NULL)
 		return result;
 
 	array = DatumGetArrayTypeP(options);
@@ -1447,8 +1465,8 @@ parseRelOptionsInternal(Datum options, bool validate,
 
 	for (i = 0; i < noptions; i++)
 	{
-		char	   *text_str = VARDATA(optiondatums[i]);
-		int			text_len = VARSIZE(optiondatums[i]) - VARHDRSZ;
+		char	   *text_str = VARDATA(DatumGetPointer(optiondatums[i]));
+		int			text_len = VARSIZE(DatumGetPointer(optiondatums[i])) - VARHDRSZ;
 		int			j;
 
 		/* Search for a match in reloptions */
@@ -1540,7 +1558,7 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 	}
 
 	/* Done if no options */
-	if (PointerIsValid(DatumGetPointer(options)))
+	if (DatumGetPointer(options) != NULL)
 		parseRelOptionsInternal(options, validate, reloptions, numoptions);
 
 	*numrelopts = numoptions;
@@ -1552,7 +1570,7 @@ static relopt_value *
 parseLocalRelOptions(local_relopts *relopts, Datum options, bool validate)
 {
 	int			nopts = list_length(relopts->options);
-	relopt_value *values = palloc(sizeof(*values) * nopts);
+	relopt_value *values = palloc_array(relopt_value, nopts);
 	ListCell   *lc;
 	int			i = 0;
 
@@ -1886,7 +1904,9 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"autovacuum_multixact_freeze_table_age", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_table_age)},
 		{"log_autovacuum_min_duration", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_min_duration)},
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_vacuum_min_duration)},
+		{"log_autoanalyze_min_duration", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_analyze_min_duration)},
 		{"toast_tuple_target", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, toast_tuple_target)},
 		{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_REAL,
@@ -1971,7 +1991,7 @@ void *
 build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 {
 	int			noptions = list_length(relopts->options);
-	relopt_parse_elt *elems = palloc(sizeof(*elems) * noptions);
+	relopt_parse_elt *elems = palloc_array(relopt_parse_elt, noptions);
 	relopt_value *vals;
 	void	   *opts;
 	int			i = 0;
@@ -2083,7 +2103,7 @@ index_reloptions(amoptions_function amoptions, Datum reloptions, bool validate)
 	Assert(amoptions != NULL);
 
 	/* Assume function is strict */
-	if (!PointerIsValid(DatumGetPointer(reloptions)))
+	if (DatumGetPointer(reloptions) == NULL)
 		return NULL;
 
 	return amoptions(reloptions, validate);

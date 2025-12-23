@@ -17,7 +17,10 @@
 <!ENTITY datatype   SYSTEM "datatype.sgml">
 <!ENTITY ddl        SYSTEM "ddl.sgml">
 <!ENTITY dml        SYSTEM "dml.sgml">
-<!ENTITY func       SYSTEM "func.sgml">
+
+<!ENTITY % allfiles_func   SYSTEM "func/allfiles.sgml">
+%allfiles_func;
+
 <!ENTITY indices    SYSTEM "indices.sgml">
 <!ENTITY json       SYSTEM "json.sgml">
 <!ENTITY mvcc       SYSTEM "mvcc.sgml">
@@ -180,7 +183,7 @@
 <!ENTITY sourcerepo SYSTEM "sourcerepo.sgml">
 
 <!ENTITY release    SYSTEM "release.sgml">
-<!ENTITY release-18 SYSTEM "release-18.sgml">
+<!ENTITY release-19 SYSTEM "release-19.sgml">
 
 <!ENTITY limits     SYSTEM "limits.sgml">
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">

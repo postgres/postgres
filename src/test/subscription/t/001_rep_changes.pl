@@ -364,14 +364,17 @@ $node_publisher->safe_psql('postgres', "DELETE FROM tab_full_pk WHERE a = 2");
 $node_publisher->wait_for_catchup('tap_sub');
 
 my $logfile = slurp_file($node_subscriber->logfile, $log_location);
-ok( $logfile =~
-	  qr/conflict detected on relation "public.tab_full_pk": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote tuple \(1, quux\); replica identity \(a\)=\(1\)/m,
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab_full_pk": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(1, quux\); replica identity \(a\)=\(1\)/m,
 	'update target row is missing');
-ok( $logfile =~
-	  qr/conflict detected on relation "public.tab_full": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote tuple \(26\); replica identity full \(25\)/m,
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab_full": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(26\); replica identity full \(25\)/m,
 	'update target row is missing');
-ok( $logfile =~
-	  qr/conflict detected on relation "public.tab_full_pk": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(2\)/m,
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab_full_pk": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(2\)/m,
 	'delete target row is missing');
 
 $node_subscriber->append_conf('postgresql.conf',
@@ -515,7 +518,9 @@ $node_publisher->safe_psql('postgres', "INSERT INTO tab_notrep VALUES (11)");
 $node_publisher->wait_for_catchup('tap_sub');
 
 $logfile = slurp_file($node_publisher->logfile, $log_location);
-ok($logfile =~ qr/skipped replication of an empty transaction with XID/,
+like(
+	$logfile,
+	qr/skipped replication of an empty transaction with XID/,
 	'empty transaction is skipped');
 
 $result =
@@ -588,8 +593,9 @@ CREATE TABLE skip_wal();
 CREATE PUBLICATION tap_pub2 FOR TABLE skip_wal;
 ROLLBACK;
 });
-ok( $reterr =~
-	  m/WARNING:  "wal_level" is insufficient to publish logical changes/,
+like(
+	$reterr,
+	qr/WARNING:  logical decoding must be enabled to publish logical changes/,
 	'CREATE PUBLICATION while "wal_level=minimal"');
 
 done_testing();

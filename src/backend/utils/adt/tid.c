@@ -42,7 +42,7 @@
 #define DELIM			','
 #define NTIDARGS		2
 
-static ItemPointer currtid_for_view(Relation viewrel, ItemPointer tid);
+static ItemPointer currtid_for_view(Relation viewrel, const ItemPointerData *tid);
 
 /* ----------------------------------------------------------------
  *		tidin
@@ -84,7 +84,7 @@ tidin(PG_FUNCTION_ARGS)
 	/*
 	 * Cope with possibility that unsigned long is wider than BlockNumber, in
 	 * which case strtoul will not raise an error for some values that are out
-	 * of the range of BlockNumber.  (See similar code in oidin().)
+	 * of the range of BlockNumber.  (See similar code in uint32in_subr().)
 	 */
 #if SIZEOF_LONG > 4
 	if (cvt != (unsigned long) blockNumber &&
@@ -104,7 +104,7 @@ tidin(PG_FUNCTION_ARGS)
 						"tid", str)));
 	offsetNumber = (OffsetNumber) cvt;
 
-	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+	result = (ItemPointer) palloc_object(ItemPointerData);
 
 	ItemPointerSet(result, blockNumber, offsetNumber);
 
@@ -146,7 +146,7 @@ tidrecv(PG_FUNCTION_ARGS)
 	blockNumber = pq_getmsgint(buf, sizeof(blockNumber));
 	offsetNumber = pq_getmsgint(buf, sizeof(offsetNumber));
 
-	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+	result = (ItemPointer) palloc_object(ItemPointerData);
 
 	ItemPointerSet(result, blockNumber, offsetNumber);
 
@@ -293,14 +293,14 @@ hashtidextended(PG_FUNCTION_ARGS)
  *		relation "rel".
  */
 static ItemPointer
-currtid_internal(Relation rel, ItemPointer tid)
+currtid_internal(Relation rel, const ItemPointerData *tid)
 {
 	ItemPointer result;
 	AclResult	aclresult;
 	Snapshot	snapshot;
 	TableScanDesc scan;
 
-	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+	result = (ItemPointer) palloc_object(ItemPointerData);
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_SELECT);
@@ -335,7 +335,7 @@ currtid_internal(Relation rel, ItemPointer tid)
  *		correspond to the CTID of a base relation.
  */
 static ItemPointer
-currtid_for_view(Relation viewrel, ItemPointer tid)
+currtid_for_view(Relation viewrel, const ItemPointerData *tid)
 {
 	TupleDesc	att = RelationGetDescr(viewrel);
 	RuleLock   *rulelock;

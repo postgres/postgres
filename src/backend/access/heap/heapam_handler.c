@@ -81,7 +81,7 @@ heapam_slot_callbacks(Relation relation)
 static IndexFetchTableData *
 heapam_index_fetch_begin(Relation rel)
 {
-	IndexFetchHeapData *hscan = palloc0(sizeof(IndexFetchHeapData));
+	IndexFetchHeapData *hscan = palloc0_object(IndexFetchHeapData);
 
 	hscan->xs_base.rel = rel;
 	hscan->xs_cbuf = InvalidBuffer;
@@ -464,7 +464,7 @@ tuple_lock_retry:
 									return TM_WouldBlock;
 								break;
 							case LockWaitError:
-								if (!ConditionalXactLockTableWait(SnapshotDirty.xmax, log_lock_failure))
+								if (!ConditionalXactLockTableWait(SnapshotDirty.xmax, log_lock_failures))
 									ereport(ERROR,
 											(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 											 errmsg("could not obtain lock on row in relation \"%s\"",
@@ -717,8 +717,8 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	/* Preallocate values/isnull arrays */
 	natts = newTupDesc->natts;
-	values = (Datum *) palloc(natts * sizeof(Datum));
-	isnull = (bool *) palloc(natts * sizeof(bool));
+	values = palloc_array(Datum, natts);
+	isnull = palloc_array(bool, natts);
 
 	/* Initialize the rewrite operation */
 	rwstate = begin_heap_rewrite(OldHeap, NewHeap, OldestXmin, *xid_cutoff,
@@ -2280,7 +2280,7 @@ heapam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 	if (!pagemode)
 		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-	page = (Page) BufferGetPage(hscan->rs_cbuf);
+	page = BufferGetPage(hscan->rs_cbuf);
 	all_visible = PageIsAllVisible(page) &&
 		!scan->rs_snapshot->takenDuringRecovery;
 	maxoffset = PageGetMaxOffsetNumber(page);

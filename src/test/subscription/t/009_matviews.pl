@@ -19,18 +19,18 @@ $node_subscriber->start;
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 
 $node_publisher->safe_psql('postgres',
+	q{CREATE TABLE test1 (a int PRIMARY KEY, b text)});
+$node_subscriber->safe_psql('postgres',
+	q{CREATE TABLE test1 (a int PRIMARY KEY, b text);});
+
+$node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION mypub FOR ALL TABLES;");
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION mysub CONNECTION '$publisher_connstr' PUBLICATION mypub;"
 );
 
 $node_publisher->safe_psql('postgres',
-	q{CREATE TABLE test1 (a int PRIMARY KEY, b text)});
-$node_publisher->safe_psql('postgres',
 	q{INSERT INTO test1 (a, b) VALUES (1, 'one'), (2, 'two');});
-
-$node_subscriber->safe_psql('postgres',
-	q{CREATE TABLE test1 (a int PRIMARY KEY, b text);});
 
 $node_publisher->wait_for_catchup('mysub');
 

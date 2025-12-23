@@ -18,7 +18,6 @@
  */
 
 #include "common/unicode_case.h"
-#include "mb/pg_wchar.h"
 
 /*
  * The maximum number of codepoints that can result from case mapping
@@ -45,7 +44,7 @@ typedef enum
 typedef struct
 {
 	int16		conditions;
-	pg_wchar	map[NCaseKind][MAX_CASE_EXPANSION];
+	char32_t	map[NCaseKind][MAX_CASE_EXPANSION];
 } pg_special_case;
 
 /*
@@ -166,7 +165,7 @@ static const pg_special_case special_case[106] =
  * The entry case_map_lower[case_index(codepoint)] is the mapping for the
  * given codepoint.
  */
-static const pg_wchar case_map_lower[1704] =
+static const char32_t case_map_lower[1704] =
 {
 	0x000000,					/* reserved */
 	0x000000,					/* U+000000 */
@@ -1879,7 +1878,7 @@ static const pg_wchar case_map_lower[1704] =
  * The entry case_map_title[case_index(codepoint)] is the mapping for the
  * given codepoint.
  */
-static const pg_wchar case_map_title[1704] =
+static const char32_t case_map_title[1704] =
 {
 	0x000000,					/* reserved */
 	0x000000,					/* U+000000 */
@@ -3592,7 +3591,7 @@ static const pg_wchar case_map_title[1704] =
  * The entry case_map_upper[case_index(codepoint)] is the mapping for the
  * given codepoint.
  */
-static const pg_wchar case_map_upper[1704] =
+static const char32_t case_map_upper[1704] =
 {
 	0x000000,					/* reserved */
 	0x000000,					/* U+000000 */
@@ -5305,7 +5304,7 @@ static const pg_wchar case_map_upper[1704] =
  * The entry case_map_fold[case_index(codepoint)] is the mapping for the
  * given codepoint.
  */
-static const pg_wchar case_map_fold[1704] =
+static const char32_t case_map_fold[1704] =
 {
 	0x000000,					/* reserved */
 	0x000000,					/* U+000000 */
@@ -13522,7 +13521,7 @@ static const uint16 case_map[4778] =
  * the offset into the mapping tables.
  */
 static inline uint16
-case_index(pg_wchar cp)
+case_index(char32_t cp)
 {
 	/* Fast path for codepoints < 0x0588 */
 	if (cp < 0x0588)

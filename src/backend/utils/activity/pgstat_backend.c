@@ -25,6 +25,7 @@
 #include "postgres.h"
 
 #include "access/xlog.h"
+#include "executor/instrument.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -41,9 +42,9 @@ static bool backend_has_iostats = false;
 
 /*
  * WAL usage counters saved from pgWalUsage at the previous call to
- * pgstat_report_wal().  This is used to calculate how much WAL usage
- * happens between pgstat_report_wal() calls, by subtracting the previous
- * counters from the current ones.
+ * pgstat_flush_backend().  This is used to calculate how much WAL usage
+ * happens between pgstat_flush_backend() calls, by subtracting the
+ * previous counters from the current ones.
  */
 static WalUsage prevBackendWalUsage;
 
@@ -66,6 +67,7 @@ pgstat_count_backend_io_op_time(IOObject io_object, IOContext io_context,
 				   io_time);
 
 	backend_has_iostats = true;
+	pgstat_report_fixed = true;
 }
 
 void
@@ -81,6 +83,7 @@ pgstat_count_backend_io_op(IOObject io_object, IOContext io_context,
 	PendingBackendStats.pending_io.bytes[io_object][io_context][io_op] += bytes;
 
 	backend_has_iostats = true;
+	pgstat_report_fixed = true;
 }
 
 /*
@@ -249,6 +252,7 @@ pgstat_flush_backend_entry_wal(PgStat_EntryRef *entry_ref)
 	WALSTAT_ACC(wal_records, wal_usage_diff);
 	WALSTAT_ACC(wal_fpi, wal_usage_diff);
 	WALSTAT_ACC(wal_bytes, wal_usage_diff);
+	WALSTAT_ACC(wal_fpi_bytes, wal_usage_diff);
 #undef WALSTAT_ACC
 
 	/*
@@ -299,18 +303,6 @@ pgstat_flush_backend(bool nowait, bits32 flags)
 	pgstat_unlock_entry(entry_ref);
 
 	return false;
-}
-
-/*
- * Check if there are any backend stats waiting for flush.
- */
-bool
-pgstat_backend_have_pending_cb(void)
-{
-	if (!pgstat_tracks_backend_bktype(MyBackendType))
-		return false;
-
-	return (backend_has_iostats || pgstat_backend_wal_have_pending());
 }
 
 /*

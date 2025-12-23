@@ -40,6 +40,9 @@ ifdef krb_srvtab
 override CPPFLAGS += -DPG_KRB_SRVTAB='"$(krb_srvtab)"'
 endif
 
+# Force this dependency to be known even without dependency info built:
+guc_tables.o: guc_tables.c $(top_builddir)/src/backend/utils/guc_tables.inc.c
+
 include $(top_srcdir)/src/backend/common.mk
 
 clean:

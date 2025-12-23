@@ -47,7 +47,7 @@
 
 /* Prototypes for local functions */
 static int	codepoint_range_cmp(const void *a, const void *b);
-static bool is_code_in_table(pg_wchar code, const pg_wchar *map, int mapsize);
+static bool is_code_in_table(char32_t code, const char32_t *map, int mapsize);
 static int	pg_utf8_string_len(const char *source);
 
 /*
@@ -64,7 +64,7 @@ static int	pg_utf8_string_len(const char *source);
  *
  * These are all mapped to the ASCII space character (U+00A0).
  */
-static const pg_wchar non_ascii_space_ranges[] =
+static const char32_t non_ascii_space_ranges[] =
 {
 	0x00A0, 0x00A0,
 	0x1680, 0x1680,
@@ -79,7 +79,7 @@ static const pg_wchar non_ascii_space_ranges[] =
  *
  * If any of these appear in the input, they are removed.
  */
-static const pg_wchar commonly_mapped_to_nothing_ranges[] =
+static const char32_t commonly_mapped_to_nothing_ranges[] =
 {
 	0x00AD, 0x00AD,
 	0x034F, 0x034F,
@@ -114,7 +114,7 @@ static const pg_wchar commonly_mapped_to_nothing_ranges[] =
  * tables, so one code might originate from multiple source tables.
  * Adjacent ranges have also been merged together, to save space.
  */
-static const pg_wchar prohibited_output_ranges[] =
+static const char32_t prohibited_output_ranges[] =
 {
 	0x0000, 0x001F,				/* C.2.1 */
 	0x007F, 0x00A0,				/* C.1.2, C.2.1, C.2.2 */
@@ -155,7 +155,7 @@ static const pg_wchar prohibited_output_ranges[] =
 };
 
 /* A.1 Unassigned code points in Unicode 3.2 */
-static const pg_wchar unassigned_codepoint_ranges[] =
+static const char32_t unassigned_codepoint_ranges[] =
 {
 	0x0221, 0x0221,
 	0x0234, 0x024F,
@@ -556,7 +556,7 @@ static const pg_wchar unassigned_codepoint_ranges[] =
 };
 
 /* D.1 Characters with bidirectional property "R" or "AL" */
-static const pg_wchar RandALCat_codepoint_ranges[] =
+static const char32_t RandALCat_codepoint_ranges[] =
 {
 	0x05BE, 0x05BE,
 	0x05C0, 0x05C0,
@@ -595,7 +595,7 @@ static const pg_wchar RandALCat_codepoint_ranges[] =
 };
 
 /* D.2 Characters with bidirectional property "L" */
-static const pg_wchar LCat_codepoint_ranges[] =
+static const char32_t LCat_codepoint_ranges[] =
 {
 	0x0041, 0x005A,
 	0x0061, 0x007A,
@@ -968,8 +968,8 @@ static const pg_wchar LCat_codepoint_ranges[] =
 static int
 codepoint_range_cmp(const void *a, const void *b)
 {
-	const pg_wchar *key = (const pg_wchar *) a;
-	const pg_wchar *range = (const pg_wchar *) b;
+	const char32_t *key = (const char32_t *) a;
+	const char32_t *range = (const char32_t *) b;
 
 	if (*key < range[0])
 		return -1;				/* less than lower bound */
@@ -980,14 +980,14 @@ codepoint_range_cmp(const void *a, const void *b)
 }
 
 static bool
-is_code_in_table(pg_wchar code, const pg_wchar *map, int mapsize)
+is_code_in_table(char32_t code, const char32_t *map, int mapsize)
 {
 	Assert(mapsize % 2 == 0);
 
 	if (code < map[0] || code > map[mapsize - 1])
 		return false;
 
-	if (bsearch(&code, map, mapsize / 2, sizeof(pg_wchar) * 2,
+	if (bsearch(&code, map, mapsize / 2, sizeof(char32_t) * 2,
 				codepoint_range_cmp))
 		return true;
 	else
@@ -1046,8 +1046,8 @@ pg_utf8_string_len(const char *source)
 pg_saslprep_rc
 pg_saslprep(const char *input, char **output)
 {
-	pg_wchar   *input_chars = NULL;
-	pg_wchar   *output_chars = NULL;
+	char32_t   *input_chars = NULL;
+	char32_t   *output_chars = NULL;
 	int			input_size;
 	char	   *result;
 	int			result_size;
@@ -1055,7 +1055,7 @@ pg_saslprep(const char *input, char **output)
 	int			i;
 	bool		contains_RandALCat;
 	unsigned char *p;
-	pg_wchar   *wp;
+	char32_t   *wp;
 
 	/* Ensure we return *output as NULL on failure */
 	*output = NULL;
@@ -1080,10 +1080,10 @@ pg_saslprep(const char *input, char **output)
 	input_size = pg_utf8_string_len(input);
 	if (input_size < 0)
 		return SASLPREP_INVALID_UTF8;
-	if (input_size >= MaxAllocSize / sizeof(pg_wchar))
+	if (input_size >= MaxAllocSize / sizeof(char32_t))
 		goto oom;
 
-	input_chars = ALLOC((input_size + 1) * sizeof(pg_wchar));
+	input_chars = ALLOC((input_size + 1) * sizeof(char32_t));
 	if (!input_chars)
 		goto oom;
 
@@ -1093,7 +1093,7 @@ pg_saslprep(const char *input, char **output)
 		input_chars[i] = utf8_to_unicode(p);
 		p += pg_utf_mblen(p);
 	}
-	input_chars[i] = (pg_wchar) '\0';
+	input_chars[i] = (char32_t) '\0';
 
 	/*
 	 * The steps below correspond to the steps listed in [RFC3454], Section
@@ -1107,7 +1107,7 @@ pg_saslprep(const char *input, char **output)
 	count = 0;
 	for (i = 0; i < input_size; i++)
 	{
-		pg_wchar	code = input_chars[i];
+		char32_t	code = input_chars[i];
 
 		if (IS_CODE_IN_TABLE(code, non_ascii_space_ranges))
 			input_chars[count++] = 0x0020;
@@ -1118,7 +1118,7 @@ pg_saslprep(const char *input, char **output)
 		else
 			input_chars[count++] = code;
 	}
-	input_chars[count] = (pg_wchar) '\0';
+	input_chars[count] = (char32_t) '\0';
 	input_size = count;
 
 	if (input_size == 0)
@@ -1138,7 +1138,7 @@ pg_saslprep(const char *input, char **output)
 	 */
 	for (i = 0; i < input_size; i++)
 	{
-		pg_wchar	code = input_chars[i];
+		char32_t	code = input_chars[i];
 
 		if (IS_CODE_IN_TABLE(code, prohibited_output_ranges))
 			goto prohibited;
@@ -1170,7 +1170,7 @@ pg_saslprep(const char *input, char **output)
 	contains_RandALCat = false;
 	for (i = 0; i < input_size; i++)
 	{
-		pg_wchar	code = input_chars[i];
+		char32_t	code = input_chars[i];
 
 		if (IS_CODE_IN_TABLE(code, RandALCat_codepoint_ranges))
 		{
@@ -1181,12 +1181,12 @@ pg_saslprep(const char *input, char **output)
 
 	if (contains_RandALCat)
 	{
-		pg_wchar	first = input_chars[0];
-		pg_wchar	last = input_chars[input_size - 1];
+		char32_t	first = input_chars[0];
+		char32_t	last = input_chars[input_size - 1];
 
 		for (i = 0; i < input_size; i++)
 		{
-			pg_wchar	code = input_chars[i];
+			char32_t	code = input_chars[i];
 
 			if (IS_CODE_IN_TABLE(code, LCat_codepoint_ranges))
 				goto prohibited;

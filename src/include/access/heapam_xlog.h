@@ -249,7 +249,7 @@ typedef struct xl_heap_update
  * Main data section:
  *
  *	xl_heap_prune
- *		uint8				flags
+ *		uint16				flags
  *	TransactionId			snapshot_conflict_horizon
  *
  * Block 0 data section:
@@ -284,8 +284,7 @@ typedef struct xl_heap_update
  */
 typedef struct xl_heap_prune
 {
-	uint8		reason;
-	uint8		flags;
+	uint16		flags;
 
 	/*
 	 * If XLHP_HAS_CONFLICT_HORIZON is set, the conflict horizon XID follows,
@@ -293,7 +292,7 @@ typedef struct xl_heap_prune
 	 */
 } xl_heap_prune;
 
-#define SizeOfHeapPrune (offsetof(xl_heap_prune, flags) + sizeof(uint8))
+#define SizeOfHeapPrune (offsetof(xl_heap_prune, flags) + sizeof(uint16))
 
 /* to handle recovery conflict during logical decoding on standby */
 #define		XLHP_IS_CATALOG_REL			(1 << 1)
@@ -330,6 +329,15 @@ typedef struct xl_heap_prune
 #define		XLHP_HAS_REDIRECTIONS		(1 << 5)
 #define		XLHP_HAS_DEAD_ITEMS	        (1 << 6)
 #define		XLHP_HAS_NOW_UNUSED_ITEMS   (1 << 7)
+
+/*
+ * The xl_heap_prune record's flags may also contain which VM bits to set.
+ * xl_heap_prune should always use the XLHP_VM_ALL_VISIBLE and
+ * XLHP_VM_ALL_FROZEN flags and translate them to their visibilitymapdefs.h
+ * equivalents, VISIBILITYMAP_ALL_VISIBLE and VISIBILITYMAP_ALL_FROZEN.
+ */
+#define		XLHP_VM_ALL_VISIBLE			(1 << 8)
+#define		XLHP_VM_ALL_FROZEN			(1 << 9)
 
 /*
  * xlhp_freeze_plan describes how to freeze a group of one or more heap tuples
@@ -498,7 +506,7 @@ extern XLogRecPtr log_heap_visible(Relation rel, Buffer heap_buffer,
 								   uint8 vmflags);
 
 /* in heapdesc.c, so it can be shared between frontend/backend code */
-extern void heap_xlog_deserialize_prune_and_freeze(char *cursor, uint8 flags,
+extern void heap_xlog_deserialize_prune_and_freeze(char *cursor, uint16 flags,
 												   int *nplans, xlhp_freeze_plan **plans,
 												   OffsetNumber **frz_offsets,
 												   int *nredirected, OffsetNumber **redirected,

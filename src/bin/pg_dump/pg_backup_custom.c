@@ -624,12 +624,19 @@ _skipData(ArchiveHandle *AH)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	size_t		blkLen;
 	char	   *buf = NULL;
-	int			buflen = 0;
+	size_t		buflen = 0;
 
 	blkLen = ReadInt(AH);
 	while (blkLen != 0)
 	{
-		if (ctx->hasSeek)
+		/*
+		 * Seeks of less than stdio's buffer size are less efficient than just
+		 * reading the data, at least on common platforms.  We don't know the
+		 * buffer size for sure, but 4kB is the usual value.  (While pg_dump
+		 * currently tries to avoid producing such short data blocks, older
+		 * dump files often contain them.)
+		 */
+		if (ctx->hasSeek && blkLen >= 4 * 1024)
 		{
 			if (fseeko(AH->FH, blkLen, SEEK_CUR) != 0)
 				pg_fatal("error during file seek: %m");
@@ -639,8 +646,8 @@ _skipData(ArchiveHandle *AH)
 			if (blkLen > buflen)
 			{
 				free(buf);
-				buf = (char *) pg_malloc(blkLen);
-				buflen = blkLen;
+				buflen = Max(blkLen, 4 * 1024);
+				buf = (char *) pg_malloc(buflen);
 			}
 			if (fread(buf, 1, blkLen, AH->FH) != blkLen)
 			{

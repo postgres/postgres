@@ -25,6 +25,7 @@
 #include "access/detoast.h"
 #include "access/tupconvert.h"
 #include "executor/tstoreReceiver.h"
+#include "varatt.h"
 
 
 typedef struct
@@ -237,7 +238,7 @@ tstoreDestroyReceiver(DestReceiver *self)
 DestReceiver *
 CreateTuplestoreDestReceiver(void)
 {
-	TStoreState *self = (TStoreState *) palloc0(sizeof(TStoreState));
+	TStoreState *self = palloc0_object(TStoreState);
 
 	self->pub.receiveSlot = tstoreReceiveSlot_notoast;	/* might change */
 	self->pub.rStartup = tstoreStartupReceiver;

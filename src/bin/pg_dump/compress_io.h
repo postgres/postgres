@@ -22,9 +22,9 @@
  *
  * When changing this value, it's necessary to check the relevant test cases
  * still exercise all the branches. This applies especially if the value is
- * increased, in which case the overflow buffer may not be needed.
+ * increased, in which case some loops may not get iterated.
  */
-#define DEFAULT_IO_BUFFER_SIZE	4096
+#define DEFAULT_IO_BUFFER_SIZE	(128 * 1024)
 
 extern char *supports_compression(const pg_compress_specification compression_spec);
 
@@ -123,21 +123,22 @@ struct CompressFileHandle
 									CompressFileHandle *CFH);
 
 	/*
-	 * Read 'size' bytes of data from the file and store them into 'ptr'.
-	 * Optionally it will store the number of bytes read in 'rsize'.
+	 * Read up to 'size' bytes of data from the file and store them into
+	 * 'ptr'.
 	 *
-	 * Returns true on success and throws an internal error otherwise.
+	 * Returns number of bytes read (this might be less than 'size' if EOF was
+	 * reached).  Exits via pg_fatal for all error conditions.
 	 */
-	bool		(*read_func) (void *ptr, size_t size, size_t *rsize,
+	size_t		(*read_func) (void *ptr, size_t size,
 							  CompressFileHandle *CFH);
 
 	/*
 	 * Write 'size' bytes of data into the file from 'ptr'.
 	 *
-	 * Returns true on success and false on error.
+	 * Returns nothing, exits via pg_fatal for all error conditions.
 	 */
-	bool		(*write_func) (const void *ptr, size_t size,
-							   struct CompressFileHandle *CFH);
+	void		(*write_func) (const void *ptr, size_t size,
+							   CompressFileHandle *CFH);
 
 	/*
 	 * Read at most size - 1 characters from the compress file handle into

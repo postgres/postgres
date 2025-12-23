@@ -42,7 +42,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 		/*
 		 * Extract all the VAL items as things we want GIN to check for.
 		 */
-		res = (Datum *) palloc(sizeof(Datum) * query->size);
+		res = palloc_array(Datum, query->size);
 		*nentries = 0;
 
 		for (i = 0; i < query->size; i++)
@@ -65,7 +65,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 			int32	   *arr;
 			int32		i;
 
-			res = (Datum *) palloc(sizeof(Datum) * (*nentries));
+			res = palloc_array(Datum, *nentries);
 
 			arr = ARRPTR(query);
 			for (i = 0; i < *nentries; i++)

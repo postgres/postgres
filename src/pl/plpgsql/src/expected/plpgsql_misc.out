@@ -65,3 +65,39 @@ do $$ declare x public.foo%rowtype; begin end $$;
 ERROR:  relation "public.foo" does not exist
 CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
 do $$ declare x public.misc_table%rowtype; begin end $$;
+-- Test handling of an unreserved keyword as a variable name
+-- and record field name.
+do $$
+declare
+  execute int;
+  r record;
+begin
+  execute := 10;
+  raise notice 'execute = %', execute;
+  select 1 as strict into r;
+  raise notice 'r.strict = %', r.strict;
+end $$;
+NOTICE:  execute = 10
+NOTICE:  r.strict = 1
+-- Test handling of a reserved keyword as a record field name.
+do $$ declare r record;
+begin
+  select 1 as x, 2 as foreach into r;
+  raise notice 'r.x = %', r.x;
+  raise notice 'r.foreach = %', r.foreach;  -- fails
+end $$;
+NOTICE:  r.x = 1
+ERROR:  field name "foreach" is a reserved key word
+LINE 1: r.foreach
+        ^
+HINT:  Use double quotes to quote it.
+QUERY:  r.foreach
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at RAISE
+do $$ declare r record;
+begin
+  select 1 as x, 2 as foreach into r;
+  raise notice 'r.x = %', r.x;
+  raise notice 'r."foreach" = %', r."foreach";  -- ok
+end $$;
+NOTICE:  r.x = 1
+NOTICE:  r."foreach" = 2

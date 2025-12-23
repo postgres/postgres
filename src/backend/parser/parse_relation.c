@@ -18,11 +18,9 @@
 
 #include "access/htup_details.h"
 #include "access/relation.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -33,7 +31,6 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
@@ -103,7 +100,6 @@ static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 static int	specialAttNum(const char *attname);
 static bool rte_visible_if_lateral(ParseState *pstate, RangeTblEntry *rte);
 static bool rte_visible_if_qualified(ParseState *pstate, RangeTblEntry *rte);
-static bool isQueryUsingTempRelation_walker(Node *node, void *context);
 
 
 /*
@@ -968,7 +964,7 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, const char *colnam
 					   int location)
 {
 	ParseState *orig_pstate = pstate;
-	FuzzyAttrMatchState *fuzzystate = palloc(sizeof(FuzzyAttrMatchState));
+	FuzzyAttrMatchState *fuzzystate = palloc_object(FuzzyAttrMatchState);
 
 	fuzzystate->distance = MAX_FUZZY_DISTANCE + 1;
 	fuzzystate->rfirst = NULL;
@@ -1340,7 +1336,7 @@ buildNSItemFromTupleDesc(RangeTblEntry *rte, Index rtindex,
 	}
 
 	/* ... and build the nsitem */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_rtindex = rtindex;
@@ -1404,7 +1400,7 @@ buildNSItemFromLists(RangeTblEntry *rte, Index rtindex,
 	}
 
 	/* ... and build the nsitem */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_rtindex = rtindex;
@@ -1795,7 +1791,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->eref = eref;
 
 	/* Process each function ... */
-	functupdescs = (TupleDesc *) palloc(nfuncs * sizeof(TupleDesc));
+	functupdescs = palloc_array(TupleDesc, nfuncs);
 
 	totalatts = 0;
 	funcno = 0;
@@ -2306,7 +2302,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
 	 * list --- caller must do that if appropriate.
 	 */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_perminfo = NULL;
@@ -3489,13 +3485,13 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 						if (tupdesc)
 						{
 							/* Composite data type, e.g. a table's row type */
-							Form_pg_attribute att_tup;
+							CompactAttribute *att;
 
 							Assert(tupdesc);
 							Assert(attnum - atts_done <= tupdesc->natts);
-							att_tup = TupleDescAttr(tupdesc,
-													attnum - atts_done - 1);
-							return att_tup->attisdropped;
+							att = TupleDescCompactAttr(tupdesc,
+													   attnum - atts_done - 1);
+							return att->attisdropped;
 						}
 						/* Otherwise, it can't have any dropped columns */
 						return false;
@@ -3921,53 +3917,6 @@ rte_visible_if_qualified(ParseState *pstate, RangeTblEntry *rte)
 	return false;
 }
 
-
-/*
- * Examine a fully-parsed query, and return true iff any relation underlying
- * the query is a temporary relation (table, view, or materialized view).
- */
-bool
-isQueryUsingTempRelation(Query *query)
-{
-	return isQueryUsingTempRelation_walker((Node *) query, NULL);
-}
-
-static bool
-isQueryUsingTempRelation_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Query))
-	{
-		Query	   *query = (Query *) node;
-		ListCell   *rtable;
-
-		foreach(rtable, query->rtable)
-		{
-			RangeTblEntry *rte = lfirst(rtable);
-
-			if (rte->rtekind == RTE_RELATION)
-			{
-				Relation	rel = table_open(rte->relid, AccessShareLock);
-				char		relpersistence = rel->rd_rel->relpersistence;
-
-				table_close(rel, AccessShareLock);
-				if (relpersistence == RELPERSISTENCE_TEMP)
-					return true;
-			}
-		}
-
-		return query_tree_walker(query,
-								 isQueryUsingTempRelation_walker,
-								 context,
-								 QTW_IGNORE_JOINALIASES);
-	}
-
-	return expression_tree_walker(node,
-								  isQueryUsingTempRelation_walker,
-								  context);
-}
 
 /*
  * addRTEPermissionInfo

@@ -48,7 +48,7 @@ os.chdir(args.privatedir)
 # contents. Set FLEX_TMP_DIR to the target private directory to avoid
 # that. That environment variable isn't consulted on other platforms, so we
 # don't even need to make this conditional.
-env = {'FLEX_TMP_DIR': args.privatedir}
+os.environ['FLEX_TMP_DIR'] = args.privatedir
 
 # build flex invocation
 command = [args.flex, '-o', args.output_file]
@@ -58,7 +58,7 @@ command += args.flex_flags
 command += [args.input_file]
 
 # create .c file from .l file
-sp = subprocess.run(command, env=env)
+sp = subprocess.run(command)
 if sp.returncode != 0:
     sys.exit(sp.returncode)
 

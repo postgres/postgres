@@ -20,15 +20,15 @@
  */
 typedef struct
 {
-	uint32		first;			/* Unicode codepoint */
-	uint32		last;			/* Unicode codepoint */
+	char32_t	first;			/* Unicode codepoint */
+	char32_t	last;			/* Unicode codepoint */
 	uint8		category;		/* General Category */
 } pg_category_range;
 
 typedef struct
 {
-	uint32		first;			/* Unicode codepoint */
-	uint32		last;			/* Unicode codepoint */
+	char32_t	first;			/* Unicode codepoint */
+	char32_t	last;			/* Unicode codepoint */
 } pg_unicode_range;
 
 typedef struct

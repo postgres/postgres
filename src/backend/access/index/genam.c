@@ -81,7 +81,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 {
 	IndexScanDesc scan;
 
-	scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
+	scan = palloc_object(IndexScanDescData);
 
 	scan->heapRelation = NULL;	/* may be set later */
 	scan->xs_heapfetch = NULL;
@@ -94,11 +94,11 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	 * We allocate key workspace here, but it won't get filled until amrescan.
 	 */
 	if (nkeys > 0)
-		scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
+		scan->keyData = palloc_array(ScanKeyData, nkeys);
 	else
 		scan->keyData = NULL;
 	if (norderbys > 0)
-		scan->orderByData = (ScanKey) palloc(sizeof(ScanKeyData) * norderbys);
+		scan->orderByData = palloc_array(ScanKeyData, norderbys);
 	else
 		scan->orderByData = NULL;
 
@@ -310,8 +310,8 @@ index_compute_xid_horizon_for_tuples(Relation irel,
 	delstate.bottomup = false;
 	delstate.bottomupfreespace = 0;
 	delstate.ndeltids = 0;
-	delstate.deltids = palloc(nitems * sizeof(TM_IndexDelete));
-	delstate.status = palloc(nitems * sizeof(TM_IndexStatus));
+	delstate.deltids = palloc_array(TM_IndexDelete, nitems);
+	delstate.status = palloc_array(TM_IndexStatus, nitems);
 
 	/* identify what the index tuples about to be deleted point to */
 	for (int i = 0; i < nitems; i++)
@@ -401,7 +401,7 @@ systable_beginscan(Relation heapRelation,
 	else
 		irel = NULL;
 
-	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+	sysscan = palloc_object(SysScanDescData);
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = irel;
@@ -488,7 +488,7 @@ systable_beginscan(Relation heapRelation,
  * is declared.
  */
 static inline void
-HandleConcurrentAbort()
+HandleConcurrentAbort(void)
 {
 	if (TransactionIdIsValid(CheckXidAlive) &&
 		!TransactionIdIsInProgress(CheckXidAlive) &&
@@ -667,7 +667,7 @@ systable_beginscan_ordered(Relation heapRelation,
 		elog(WARNING, "using index \"%s\" despite IgnoreSystemIndexes",
 			 RelationGetRelationName(indexRelation));
 
-	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+	sysscan = palloc_object(SysScanDescData);
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = indexRelation;
@@ -781,10 +781,11 @@ systable_endscan_ordered(SysScanDesc sysscan)
  * systable_inplace_update_begin --- update a row "in place" (overwrite it)
  *
  * Overwriting violates both MVCC and transactional safety, so the uses of
- * this function in Postgres are extremely limited.  Nonetheless we find some
- * places to use it.  See README.tuplock section "Locking to write
- * inplace-updated tables" and later sections for expectations of readers and
- * writers of a table that gets inplace updates.  Standard flow:
+ * this function in Postgres are extremely limited.  This makes no effort to
+ * support updating cache key columns or other indexed columns.  Nonetheless
+ * we find some places to use it.  See README.tuplock section "Locking to
+ * write inplace-updated tables" and later sections for expectations of
+ * readers and writers of a table that gets inplace updates.  Standard flow:
  *
  * ... [any slow preparation not requiring oldtup] ...
  * systable_inplace_update_begin([...], &tup, &inplace_state);

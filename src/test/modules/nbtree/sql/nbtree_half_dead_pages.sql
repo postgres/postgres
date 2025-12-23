@@ -1,0 +1,51 @@
+--
+-- Test half-dead pages in B-tree indexes.
+--
+-- Half-dead pages is an intermediate state while vacuum is deleting a
+-- page. You can encounter them if you query concurrently with vacuum,
+-- or if vacuum is interrupted while it's deleting a page. A B-tree
+-- with half-dead pages is a valid state, but they rarely observed by
+-- other backends in practice because, so it's good to have some
+-- targeted tests to exercise them.
+--
+
+-- This uses injection points to interrupt some page deletions
+set client_min_messages TO 'warning';
+create extension if not exists injection_points;
+create extension if not exists amcheck;
+reset client_min_messages;
+
+-- Make all injection points local to this process, for concurrency.
+SELECT injection_points_set_local();
+
+-- Use the index for all the queries
+set enable_seqscan=off;
+
+-- Print a NOTICE whenever a half-dead page is deleted
+SELECT injection_points_attach('nbtree-finish-half-dead-page-vacuum', 'notice');
+
+create table nbtree_half_dead_pages(id bigint) with (autovacuum_enabled = off);
+
+insert into nbtree_half_dead_pages SELECT g from generate_series(1, 150000) g;
+
+create index nbtree_half_dead_pages_id_idx on nbtree_half_dead_pages using btree (id);
+
+delete from nbtree_half_dead_pages where id > 100000 and id < 120000;
+
+-- Run VACUUM and interrupt it so that it leaves behind a half-dead page
+SELECT injection_points_attach('nbtree-leave-page-half-dead', 'error');
+vacuum nbtree_half_dead_pages;
+SELECT injection_points_detach('nbtree-leave-page-half-dead');
+
+select * from nbtree_half_dead_pages where id > 99998 and id < 120002;
+
+-- Also check the index with amcheck
+select bt_index_parent_check('nbtree_half_dead_pages_id_idx'::regclass, true, true);
+
+-- Finish the deletion and re-check
+vacuum nbtree_half_dead_pages;
+select * from nbtree_half_dead_pages where id > 99998 and id < 120002;
+select bt_index_parent_check('nbtree_half_dead_pages_id_idx'::regclass, true, true);
+
+drop extension amcheck;
+drop extension injection_points;

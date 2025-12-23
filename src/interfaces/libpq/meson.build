@@ -85,6 +85,24 @@ libpq = declare_dependency(
   include_directories: [include_directories('.')]
 )
 
+# Check for functions that libpq must not call.  See libpq_check.pl for the
+# full set of platform rules.  Skip the test when profiling, as gcc may
+# insert exit() calls for that.
+if nm.found() and not get_option('b_coverage')
+  custom_target(
+    'libpq_check',
+    input: libpq_so,
+    output: 'libpq-refs-stamp',
+    command: [
+      perl, files('libpq_check.pl'),
+      '--input_file', '@INPUT@',
+      '--stamp_file', '@OUTPUT@',
+      '--nm', nm.full_path(),
+    ],
+    build_by_default: true,
+  )
+endif
+
 private_deps = [
   frontend_stlib_code,
   libpq_deps,

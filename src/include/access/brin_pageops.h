@@ -23,7 +23,7 @@ extern bool brin_can_do_samepage_update(Buffer buffer, Size origsz,
 										Size newsz);
 extern OffsetNumber brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 								  BrinRevmap *revmap, Buffer *buffer, BlockNumber heapBlk,
-								  BrinTuple *tup, Size itemsz);
+								  const BrinTuple *tup, Size itemsz);
 
 extern void brin_page_init(Page page, uint16 type);
 extern void brin_metapage_init(Page page, BlockNumber pagesPerRange,

@@ -15,7 +15,8 @@ select polyf(point(3,4));  -- fail for lack of + operator
 ERROR:  operator does not exist: point + integer
 LINE 2:   select x + 1
                    ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 QUERY:  
   select x + 1
 
@@ -95,7 +96,8 @@ select polyf(int4range(42, 49), 11, 4.5) as fail;  -- range type doesn't fit
 ERROR:  function polyf(int4range, integer, numeric) does not exist
 LINE 1: select polyf(int4range(42, 49), 11, 4.5) as fail;
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function polyf(x anycompatiblerange, y anycompatible, z anycompatible);
 create function polyf(x anycompatiblemultirange, y anycompatible, z anycompatible) returns anycompatiblearray as $$
   select array[lower(x), upper(x), y, z]
@@ -110,7 +112,8 @@ select polyf(multirange(int4range(42, 49)), 11, 4.5) as fail;  -- range type doe
 ERROR:  function polyf(int4multirange, integer, numeric) does not exist
 LINE 1: select polyf(multirange(int4range(42, 49)), 11, 4.5) as fail...
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function polyf(x anycompatiblemultirange, y anycompatible, z anycompatible);
 -- fail, can't infer type:
 create function polyf(x anycompatible) returns anycompatiblerange as $$
@@ -176,7 +179,8 @@ select x, pg_typeof(x), y, pg_typeof(y)
 ERROR:  function polyf(integer, numeric[], integer, numeric) does not exist
 LINE 2:   from polyf(11, array[1, 2.2], 42, 34.5);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function polyf(a anyelement, b anyarray,
                     c anycompatible, d anycompatible);
 create function polyf(anyrange) returns anymultirange
@@ -990,7 +994,7 @@ select myleast(); -- fail
 ERROR:  function myleast() does not exist
 LINE 1: select myleast();
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given number of arguments.
 -- test with variadic call parameter
 select myleast(variadic array[1,2,3,4,-1]);
  myleast 
@@ -1060,17 +1064,20 @@ select formarray(1.1, array[1.2,55.5]); -- fail without variadic
 ERROR:  function formarray(numeric, numeric[]) does not exist
 LINE 1: select formarray(1.1, array[1.2,55.5]);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select formarray(1, 'x'::text); -- fail, type mismatch
 ERROR:  function formarray(integer, text) does not exist
 LINE 1: select formarray(1, 'x'::text);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select formarray(1, variadic array['x'::text]); -- fail, type mismatch
 ERROR:  function formarray(integer, text[]) does not exist
 LINE 1: select formarray(1, variadic array['x'::text]);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function formarray(anyelement, variadic anyarray);
 -- test pg_typeof() function
 select pg_typeof(null);           -- unknown
@@ -1154,7 +1161,7 @@ select dfunc(10, 20, 30);  -- fail
 ERROR:  function dfunc(integer, integer, integer) does not exist
 LINE 1: select dfunc(10, 20, 30);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given number of arguments.
 drop function dfunc();  -- fail
 ERROR:  function dfunc() does not exist
 drop function dfunc(int);  -- fail
@@ -1203,7 +1210,8 @@ select dfunc();  -- fail: which dfunc should be called? int or text
 ERROR:  function dfunc() is not unique
 LINE 1: select dfunc();
                ^
-HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+DETAIL:  Could not choose a best candidate function.
+HINT:  You might need to add explicit type casts.
 select dfunc('Hi');  -- ok
    dfunc   
 -----------
@@ -1242,17 +1250,20 @@ select dfunc();  -- fail
 ERROR:  function dfunc() is not unique
 LINE 1: select dfunc();
                ^
-HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+DETAIL:  Could not choose a best candidate function.
+HINT:  You might need to add explicit type casts.
 select dfunc(1);  -- fail
 ERROR:  function dfunc(integer) is not unique
 LINE 1: select dfunc(1);
                ^
-HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+DETAIL:  Could not choose a best candidate function.
+HINT:  You might need to add explicit type casts.
 select dfunc(1, 2);  -- fail
 ERROR:  function dfunc(integer, integer) is not unique
 LINE 1: select dfunc(1, 2);
                ^
-HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+DETAIL:  Could not choose a best candidate function.
+HINT:  You might need to add explicit type casts.
 select dfunc(1, 2, 3);  -- ok
  dfunc 
 -------
@@ -1310,7 +1321,7 @@ select dfunc();  -- fail
 ERROR:  function dfunc() does not exist
 LINE 1: select dfunc();
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given number of arguments.
 select dfunc(10);
  dfunc 
 -------
@@ -1371,7 +1382,8 @@ select dfunc(1);  -- fail
 ERROR:  function dfunc(integer) is not unique
 LINE 1: select dfunc(1);
                ^
-HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+DETAIL:  Could not choose a best candidate function.
+HINT:  You might need to add explicit type casts.
 -- but this works since the ambiguous functions aren't preferred anyway
 select dfunc('Hi');
  dfunc 
@@ -1417,7 +1429,7 @@ select * from dfunc(0);  -- fail
 ERROR:  function dfunc(integer) does not exist
 LINE 1: select * from dfunc(0);
                       ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given number of arguments.
 select * from dfunc(1,2);
  a | b | c | d 
 ---+---+---+---
@@ -1448,18 +1460,72 @@ select * from dfunc(x := 10, b := 20, c := 30);  -- fail, unknown param
 ERROR:  function dfunc(x => integer, b => integer, c => integer) does not exist
 LINE 1: select * from dfunc(x := 10, b := 20, c := 30);
                       ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument names.
 select * from dfunc(10, 10, a := 20);  -- fail, a overlaps positional parameter
 ERROR:  function dfunc(integer, integer, a => integer) does not exist
 LINE 1: select * from dfunc(10, 10, a := 20);
                       ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  In the closest available match, an argument was specified both positionally and by name.
 select * from dfunc(1,c := 2,d := 3); -- fail, no value for b
 ERROR:  function dfunc(integer, c => integer, d => integer) does not exist
 LINE 1: select * from dfunc(1,c := 2,d := 3);
                       ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  In the closest available match, not all required arguments were supplied.
 drop function dfunc(int, int, int, int);
+create function xleast(x numeric, variadic arr numeric[])
+  returns numeric as $$
+  select least(x, min(arr[i])) from generate_subscripts(arr, 1) g(i);
+$$ language sql;
+select xleast(x => 1, variadic arr => array[2,3]);
+ xleast 
+--------
+      1
+(1 row)
+
+select xleast(1, variadic arr => array[2,3]);
+ xleast 
+--------
+      1
+(1 row)
+
+set search_path = pg_catalog;
+select xleast(1, variadic arr => array[2,3]);  -- wrong schema
+ERROR:  function xleast(integer, arr => integer[]) does not exist
+LINE 1: select xleast(1, variadic arr => array[2,3]);
+               ^
+DETAIL:  A function of that name exists, but it is not in the search_path.
+reset search_path;
+select xleast(foo => 1, variadic arr => array[2,3]);  -- wrong argument name
+ERROR:  function xleast(foo => integer, arr => integer[]) does not exist
+LINE 1: select xleast(foo => 1, variadic arr => array[2,3]);
+               ^
+DETAIL:  No function of that name accepts the given argument names.
+select xleast(x => 1, variadic array[2,3]);  -- misuse of mixed notation
+ERROR:  positional argument cannot follow named argument
+LINE 1: select xleast(x => 1, variadic array[2,3]);
+                                       ^
+select xleast(1, variadic x => array[2,3]);  -- misuse of mixed notation
+ERROR:  function xleast(integer, x => integer[]) does not exist
+LINE 1: select xleast(1, variadic x => array[2,3]);
+               ^
+DETAIL:  In the closest available match, an argument was specified both positionally and by name.
+select xleast(arr => array[1], variadic x => 3);  -- wrong arg is VARIADIC
+ERROR:  function xleast(arr => integer[], x => integer) does not exist
+LINE 1: select xleast(arr => array[1], variadic x => 3);
+               ^
+HINT:  The VARIADIC parameter must be placed last, even when using argument names.
+select xleast(arr => array[1], x => 3);  -- failed to use VARIADIC
+ERROR:  function xleast(arr => integer[], x => integer) does not exist
+LINE 1: select xleast(arr => array[1], x => 3);
+               ^
+HINT:  This call would be correct if the variadic array were labeled VARIADIC and placed last.
+select xleast(arr => 1, variadic x => array[2,3]);  -- mixed-up args
+ERROR:  function xleast(arr => integer, x => integer[]) does not exist
+LINE 1: select xleast(arr => 1, variadic x => array[2,3]);
+               ^
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
+drop function xleast(x numeric, variadic arr numeric[]);
 -- test with different parameter types
 create function dfunc(a varchar, b numeric, c date = current_date)
   returns table (a varchar, b numeric, c date) as $$
@@ -1499,7 +1565,8 @@ select * from dfunc('Hello World', c := 20, b := '2009-07-25'::date);  -- fail
 ERROR:  function dfunc(unknown, c => integer, b => date) does not exist
 LINE 1: select * from dfunc('Hello World', c := 20, b := '2009-07-25...
                       ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function dfunc(varchar, numeric, date);
 -- test out parameters with named params
 create function dfunc(a varchar = 'def a', out _a varchar, c numeric = NULL, out _c numeric)
@@ -1844,7 +1911,8 @@ select x, pg_typeof(x) from anyctest(11, point(1,2)) x;  -- fail
 ERROR:  function anyctest(integer, point) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, point(1,2)) x;
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest('11', '12.3') x;  -- defaults to text
   x   | pg_typeof 
 ------+-----------
@@ -1872,7 +1940,8 @@ select x, pg_typeof(x) from anyctest(11, array[1,2]) x;  -- fail
 ERROR:  function anyctest(integer, integer[]) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, array[1,2]) x;
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyctest(anycompatible, anycompatible);
 create function anyctest(anycompatible, anycompatiblearray)
 returns anycompatiblearray as $$
@@ -1906,12 +1975,14 @@ select x, pg_typeof(x) from anyctest(11, array[point(1,2)]) x;  -- fail
 ERROR:  function anyctest(integer, point[]) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, array[point(1,2)]) ...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest(11, 12) x;  -- fail
 ERROR:  function anyctest(integer, integer) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, 12) x;
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyctest(anycompatible, anycompatiblearray);
 create function anyctest(anycompatible, anycompatiblerange)
 returns anycompatiblerange as $$
@@ -1933,12 +2004,14 @@ select x, pg_typeof(x) from anyctest(11, 12) x;  -- fail
 ERROR:  function anyctest(integer, integer) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, 12) x;
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest(11.2, int4range(4,7)) x;  -- fail
 ERROR:  function anyctest(numeric, int4range) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11.2, int4range(4,7)) x...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest(11.2, '[4,7)') x;  -- fail
 ERROR:  could not determine polymorphic type anycompatiblerange because input has type unknown
 drop function anyctest(anycompatible, anycompatiblerange);
@@ -1956,7 +2029,8 @@ select x, pg_typeof(x) from anyctest(int4range(11,12), numrange(4,7)) x; -- fail
 ERROR:  function anyctest(int4range, numrange) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(int4range(11,12), numra...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyctest(anycompatiblerange, anycompatiblerange);
 -- fail, can't infer result type:
 create function anyctest(anycompatible)
@@ -1985,12 +2059,14 @@ select x, pg_typeof(x) from anyctest(11, 12) x;  -- fail
 ERROR:  function anyctest(integer, integer) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, 12) x;
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest(11.2, multirange(int4range(4,7))) x;  -- fail
 ERROR:  function anyctest(numeric, int4multirange) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11.2, multirange(int4ra...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest(11.2, '{[4,7)}') x;  -- fail
 ERROR:  could not determine polymorphic type anycompatiblemultirange because input has type unknown
 drop function anyctest(anycompatible, anycompatiblemultirange);
@@ -2008,7 +2084,8 @@ select x, pg_typeof(x) from anyctest(multirange(int4range(11,12)), multirange(nu
 ERROR:  function anyctest(int4multirange, nummultirange) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(multirange(int4range(11...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyctest(anycompatiblemultirange, anycompatiblemultirange);
 -- fail, can't infer result type:
 create function anyctest(anycompatible)
@@ -2037,7 +2114,8 @@ select x, pg_typeof(x) from anyctest(array[11], array[1,2]) x;  -- fail
 ERROR:  function anyctest(integer[], integer[]) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(array[11], array[1,2]) ...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyctest(anycompatiblenonarray, anycompatiblenonarray);
 create function anyctest(a anyelement, b anyarray,
                          c anycompatible, d anycompatible)
@@ -2066,7 +2144,8 @@ select x, pg_typeof(x) from anyctest(11, array[1, 2.2], 42, 34.5) x;  -- fail
 ERROR:  function anyctest(integer, numeric[], integer, numeric) does not exist
 LINE 1: select x, pg_typeof(x) from anyctest(11, array[1, 2.2], 42, ...
                                     ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyctest(a anyelement, b anyarray,
                        c anycompatible, d anycompatible);
 create function anyctest(variadic anycompatiblearray)

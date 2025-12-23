@@ -254,7 +254,7 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 PG_SYSROOT = @PG_SYSROOT@
 
-override CPPFLAGS := $(ICU_CFLAGS) $(LIBNUMA_CFLAGS) $(LIBURING_CFLAGS) $(CPPFLAGS)
+override CPPFLAGS += $(ICU_CFLAGS) $(LIBNUMA_CFLAGS) $(LIBURING_CFLAGS)
 
 ifdef PGXS
 override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)
@@ -267,7 +267,6 @@ endif # not PGXS
 
 CC = @CC@
 GCC = @GCC@
-SUN_STUDIO_CC = @SUN_STUDIO_CC@
 CXX = @CXX@
 CFLAGS = @CFLAGS@
 CFLAGS_SL = @CFLAGS_SL@
@@ -293,6 +292,7 @@ FLEX = @FLEX@
 FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
 DTRACE = @DTRACE@
 DTRACEFLAGS = @DTRACEFLAGS@
+NM = @NM@
 ZIC = @ZIC@
 
 # Linking
@@ -795,9 +795,6 @@ LIBS := -lpgcommon -lpgport $(LIBS)
 ifeq ($(PORTNAME),win32)
 LIBS += -lws2_32
 endif
-
-# Not really standard libc functions, used by the backend.
-TAS         = @TAS@
 
 
 ##########################################################################

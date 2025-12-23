@@ -179,6 +179,9 @@ typedef struct ginxlogUpdateMeta
 
 #define XLOG_GIN_INSERT_LISTPAGE  0x70
 
+/*
+ * Backup Blk 0: list page with inserted tuples
+ */
 typedef struct ginxlogInsertListPage
 {
 	BlockNumber rightlink;

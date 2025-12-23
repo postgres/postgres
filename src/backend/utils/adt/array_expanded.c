@@ -271,8 +271,8 @@ EA_get_flat_size(ExpandedObjectHeader *eohptr)
 		if (!AllocSizeIsValid(nbytes))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("array size exceeds the maximum allowed (%d)",
-							(int) MaxAllocSize)));
+					 errmsg("array size exceeds the maximum allowed (%zu)",
+							MaxAllocSize)));
 	}
 
 	if (dnulls)

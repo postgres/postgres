@@ -54,6 +54,14 @@ set jit = off;
 -- enabled.
 set track_io_timing = off;
 -- Simple cases
+explain (costs off) select 1 as a, 2 as b having false;
+        QUERY PLAN        
+--------------------------
+ Result
+   Replaces: Aggregate
+   One-Time Filter: false
+(3 rows)
+
 select explain_filter('explain select * from int8_tbl i8');
                      explain_filter                      
 ---------------------------------------------------------

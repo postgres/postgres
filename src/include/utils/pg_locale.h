@@ -12,12 +12,33 @@
 #ifndef _PG_LOCALE_
 #define _PG_LOCALE_
 
+#include "mb/pg_wchar.h"
+
 #ifdef USE_ICU
+/* only include the C APIs, to avoid errors in cpluspluscheck */
+#undef U_SHOW_CPLUSPLUS_API
+#define U_SHOW_CPLUSPLUS_API 0
+#undef U_SHOW_CPLUSPLUS_HEADER_API
+#define U_SHOW_CPLUSPLUS_HEADER_API 0
 #include <unicode/ucol.h>
 #endif
 
 /* use for libc locale names */
 #define LOCALE_NAME_BUFLEN 128
+
+/*
+ * Maximum number of bytes needed to map a single codepoint. Useful for
+ * mapping and processing a single input codepoint at a time with a
+ * statically-allocated buffer.
+ *
+ * With full case mapping, an input codepoint may be mapped to as many as
+ * three output codepoints. See Unicode 16.0.0, section 5.18.2, "Change in
+ * Length":
+ *
+ * https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-5/#G29675
+ */
+#define UNICODE_CASEMAP_LEN		3
+#define UNICODE_CASEMAP_BUFSZ	(UNICODE_CASEMAP_LEN * MAX_MULTIBYTE_CHAR_LEN)
 
 /* GUC settings */
 extern PGDLLIMPORT char *locale_messages;
@@ -31,9 +52,6 @@ extern PGDLLIMPORT char *localized_abbrev_days[];
 extern PGDLLIMPORT char *localized_full_days[];
 extern PGDLLIMPORT char *localized_abbrev_months[];
 extern PGDLLIMPORT char *localized_full_months[];
-
-/* is the databases's LC_CTYPE the C locale? */
-extern PGDLLIMPORT bool database_ctype_is_c;
 
 extern bool check_locale(int category, const char *locale, char **canonname);
 extern char *pg_perm_setlocale(int category, const char *locale);
@@ -77,6 +95,41 @@ struct collate_methods
 	bool		strxfrm_is_safe;
 };
 
+struct ctype_methods
+{
+	/* case mapping: LOWER()/INITCAP()/UPPER() */
+	size_t		(*strlower) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+	size_t		(*strtitle) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+	size_t		(*strupper) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+	size_t		(*strfold) (char *dest, size_t destsize,
+							const char *src, ssize_t srclen,
+							pg_locale_t locale);
+	size_t		(*downcase_ident) (char *dest, size_t destsize,
+								   const char *src, ssize_t srclen,
+								   pg_locale_t locale);
+
+	/* required */
+	bool		(*wc_isdigit) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isalpha) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isalnum) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isupper) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_islower) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isgraph) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isprint) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_ispunct) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isspace) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isxdigit) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_iscased) (pg_wchar wc, pg_locale_t locale);
+	pg_wchar	(*wc_toupper) (pg_wchar wc, pg_locale_t locale);
+	pg_wchar	(*wc_tolower) (pg_wchar wc, pg_locale_t locale);
+};
+
 /*
  * We use a discriminated union to hold either a locale_t or an ICU collator.
  * pg_locale_t is occasionally checked for truth, so make it a pointer.
@@ -88,20 +141,18 @@ struct collate_methods
  * "default" collation, there are separate static cache variables, since
  * consulting the pg_collation catalog doesn't tell us what we need.
  *
- * Note that some code relies on the flags not reporting false negatives
- * (that is, saying it's not C when it is).  For example, char2wchar()
- * could fail if the locale is C, so str_tolower() shouldn't call it
- * in that case.
+ * Note that some code, such as wchar2char(), relies on the flags not
+ * reporting false negatives (that is, saying it's not C when it is).
  */
 struct pg_locale_struct
 {
-	char		provider;
 	bool		deterministic;
 	bool		collate_is_c;
 	bool		ctype_is_c;
 	bool		is_default;
 
 	const struct collate_methods *collate;	/* NULL if collate_is_c */
+	const struct ctype_methods *ctype;	/* NULL if ctype_is_c */
 
 	union
 	{
@@ -116,15 +167,18 @@ struct pg_locale_struct
 		{
 			const char *locale;
 			UCollator  *ucol;
+			locale_t	lt;
 		}			icu;
 #endif
-	}			info;
+	};
 };
 
 extern void init_database_collation(void);
+extern pg_locale_t pg_database_locale(void);
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 extern char *get_collation_actual_version(char collprovider, const char *collcollate);
+
 extern size_t pg_strlower(char *dst, size_t dstsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);
@@ -137,6 +191,8 @@ extern size_t pg_strupper(char *dst, size_t dstsize,
 extern size_t pg_strfold(char *dst, size_t dstsize,
 						 const char *src, ssize_t srclen,
 						 pg_locale_t locale);
+extern size_t pg_downcase_ident(char *dst, size_t dstsize,
+								const char *src, ssize_t srclen);
 extern int	pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);
 extern int	pg_strncoll(const char *arg1, ssize_t len1,
 						const char *arg2, ssize_t len2, pg_locale_t locale);
@@ -151,16 +207,28 @@ extern size_t pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 extern size_t pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 								 ssize_t srclen, pg_locale_t locale);
 
+extern bool pg_iswdigit(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswalpha(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswalnum(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswupper(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswlower(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswgraph(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswprint(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswpunct(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswspace(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswxdigit(pg_wchar wc, pg_locale_t locale);
+extern bool pg_iswcased(pg_wchar wc, pg_locale_t locale);
+extern pg_wchar pg_towupper(pg_wchar wc, pg_locale_t locale);
+extern pg_wchar pg_towlower(pg_wchar wc, pg_locale_t locale);
+
 extern int	builtin_locale_encoding(const char *locale);
 extern const char *builtin_validate_locale(int encoding, const char *locale);
 extern void icu_validate_locale(const char *loc_str);
 extern char *icu_language_tag(const char *loc_str, int elevel);
 extern void report_newlocale_failure(const char *localename);
 
-/* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
+/* This function converts from libc's wchar_t, *not* pg_wchar */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,
-						 pg_locale_t locale);
-extern size_t char2wchar(wchar_t *to, size_t tolen,
-						 const char *from, size_t fromlen, pg_locale_t locale);
+						 locale_t loc);
 
 #endif							/* _PG_LOCALE_ */

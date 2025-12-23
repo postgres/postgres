@@ -6,6 +6,19 @@
 
 static struct variable *allvariables = NULL;
 
+/* this probably belongs in util.c, but for now it's only needed here */
+static char *
+loc_nstrdup(const char *in, size_t len)
+{
+	char	   *out;
+
+	out = loc_alloc(len + 1);
+	memcpy(out, in, len);
+	out[len] = '\0';
+
+	return out;
+}
+
 struct variable *
 new_variable(const char *name, struct ECPGtype *type, int brace_level)
 {
@@ -21,22 +34,34 @@ new_variable(const char *name, struct ECPGtype *type, int brace_level)
 	return p;
 }
 
+/*
+ * Perform lookup of a field within a struct
+ *
+ * 'name' is the entire C variable name
+ * 'str' points just before the next field name to parse
+ * 'members' and 'brace_level' describe the struct we are looking into
+ *
+ * Returns NULL if field is not found.
+ *
+ * This recurses if needed to handle sub-fields.
+ */
 static struct variable *
-find_struct_member(const char *name, char *str, struct ECPGstruct_member *members, int brace_level)
+find_struct_member(const char *name, const char *str,
+				   struct ECPGstruct_member *members, int brace_level)
 {
-	char	   *next = strpbrk(++str, ".-["),
+	/* ++ here skips over the '.', or the '>' of '->' */
+	const char *next = strpbrk(++str, ".-["),
 			   *end,
-				c = '\0';
+			   *field;
 
 	if (next != NULL)
-	{
-		c = *next;
-		*next = '\0';
-	}
+		field = loc_nstrdup(str, next - str);
+	else
+		field = str;
 
 	for (; members; members = members->next)
 	{
-		if (strcmp(members->name, str) == 0)
+		if (strcmp(members->name, field) == 0)
 		{
 			if (next == NULL)
 			{
@@ -54,14 +79,13 @@ find_struct_member(const char *name, char *str, struct ECPGstruct_member *member
 			}
 			else
 			{
-				*next = c;
-				if (c == '[')
+				if (*next == '[')
 				{
 					int			count;
 
 					/*
 					 * We don't care about what's inside the array brackets so
-					 * just eat up the character
+					 * just scan to find the matching right bracket.
 					 */
 					for (count = 1, end = next + 1; count; end++)
 					{
@@ -122,26 +146,35 @@ find_struct_member(const char *name, char *str, struct ECPGstruct_member *member
 	return NULL;
 }
 
+/*
+ * Do struct lookup when we have found var.field, var->field, or var[n].field
+ *
+ * 'name' is the entire C variable name
+ * 'next' points at the character after the base name
+ * 'end' points at the character after the subscript, if there was a
+ * subscript, else it's the same as 'next'.
+ *
+ * This is used only at the first level of field reference; sub-fields will
+ * be handled by internal recursion in find_struct_member.
+ */
 static struct variable *
-find_struct(const char *name, char *next, char *end)
+find_struct(const char *name, const char *next, const char *end)
 {
+	char	   *prefix;
 	struct variable *p;
-	char		c = *next;
 
 	/* first get the mother structure entry */
-	*next = '\0';
-	p = find_variable(name);
+	prefix = loc_nstrdup(name, next - name);
+	p = find_variable(prefix);
 
-	if (c == '-')
+	if (*next == '-')
 	{
+		/* We have var->field */
 		if (p->type->type != ECPGt_array)
-			mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer", name);
+			mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer", prefix);
 
 		if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
-			mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer to a structure or a union", name);
-
-		/* restore the name, we will need it later */
-		*next = c;
+			mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer to a structure or a union", prefix);
 
 		return find_struct_member(name, ++end, p->type->u.element->u.members, p->brace_level);
 	}
@@ -149,30 +182,27 @@ find_struct(const char *name, char *next, char *end)
 	{
 		if (next == end)
 		{
+			/* We have var.field */
 			if (p->type->type != ECPGt_struct && p->type->type != ECPGt_union)
-				mmfatal(PARSE_ERROR, "variable \"%s\" is neither a structure nor a union", name);
-
-			/* restore the name, we will need it later */
-			*next = c;
+				mmfatal(PARSE_ERROR, "variable \"%s\" is neither a structure nor a union", prefix);
 
 			return find_struct_member(name, end, p->type->u.members, p->brace_level);
 		}
 		else
 		{
+			/* We have var[n].field */
 			if (p->type->type != ECPGt_array)
-				mmfatal(PARSE_ERROR, "variable \"%s\" is not an array", name);
+				mmfatal(PARSE_ERROR, "variable \"%s\" is not an array", prefix);
 
 			if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
-				mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer to a structure or a union", name);
-
-			/* restore the name, we will need it later */
-			*next = c;
+				mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer to a structure or a union", prefix);
 
 			return find_struct_member(name, end, p->type->u.element->u.members, p->brace_level);
 		}
 	}
 }
 
+/* Look up a variable given its base name */
 static struct variable *
 find_simple(const char *name)
 {
@@ -187,12 +217,24 @@ find_simple(const char *name)
 	return NULL;
 }
 
-/* Note that this function will end the program in case of an unknown */
-/* variable */
+/*
+ * Build a "struct variable" for a C variable reference.
+ *
+ * The given "name" string is a CVARIABLE per pgc.l, so it can include not
+ * only a base variable name but also ".field", "->field", or "[subscript]"
+ * decoration.  We don't need to understand that fully, because we always
+ * duplicate the whole string into the name field of the result variable
+ * and emit it literally to the output file; the C compiler will make sense
+ * of it later.  What we do need to do here is identify the type of the
+ * target field or array element so that we can attach a correct ECPGtype
+ * struct to the result.
+ *
+ * Note that this function will end the program in case of an unknown variable.
+ */
 struct variable *
 find_variable(const char *name)
 {
-	char	   *next,
+	const char *next,
 			   *end;
 	struct variable *p;
 	int			count;
@@ -200,11 +242,12 @@ find_variable(const char *name)
 	next = strpbrk(name, ".[-");
 	if (next)
 	{
+		/* Deal with field/subscript decoration */
 		if (*next == '[')
 		{
 			/*
 			 * We don't care about what's inside the array brackets so just
-			 * eat up the characters
+			 * scan to find the matching right bracket.
 			 */
 			for (count = 1, end = next + 1; count; end++)
 			{
@@ -224,18 +267,25 @@ find_variable(const char *name)
 				}
 			}
 			if (*end == '.')
+			{
+				/* We have var[n].field */
 				p = find_struct(name, next, end);
+			}
 			else
 			{
-				char		c = *next;
+				/*
+				 * Note: this part assumes we must just have var[n] without
+				 * any further decoration, which fails to handle cases such as
+				 * var[n]->field.  For now, that's okay because
+				 * pointer-to-pointer variables are rejected elsewhere.
+				 */
+				char	   *prefix = loc_nstrdup(name, next - name);
 
-				*next = '\0';
-				p = find_simple(name);
+				p = find_simple(prefix);
 				if (p == NULL)
-					mmfatal(PARSE_ERROR, "variable \"%s\" is not declared", name);
+					mmfatal(PARSE_ERROR, "variable \"%s\" is not declared", prefix);
 				if (p->type->type != ECPGt_array)
-					mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer", name);
-				*next = c;
+					mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer", prefix);
 				switch (p->type->u.element->type)
 				{
 					case ECPGt_array:
@@ -249,7 +299,10 @@ find_variable(const char *name)
 			}
 		}
 		else
+		{
+			/* Must be var.field or var->field */
 			p = find_struct(name, next, next);
+		}
 	}
 	else
 		p = find_simple(name);

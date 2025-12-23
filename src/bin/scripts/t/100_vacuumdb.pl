@@ -169,6 +169,10 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--schema' => '"Foo"', 'postgres' ],
 	qr/VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar/,
 	'vacuumdb --schema');
+$node->issues_sql_unlike(
+	[ 'vacuumdb', '--schema' => '"Foo"', 'postgres', '--dry-run' ],
+	qr/VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar/,
+	'vacuumdb --dry-run');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--schema' => '"Foo"', '--schema' => '"Bar"', 'postgres' ],
 	qr/VACUUM\ \(SKIP_DATABASE_STATS\)\ "Foo".bar
@@ -237,64 +241,133 @@ $node->command_fails_like(
 	qr/cannot vacuum all databases and a specific one at the same time/,
 	'cannot use option --all and a dbname as argument at the same time');
 
-$node->safe_psql('postgres',
-	'CREATE TABLE regression_vacuumdb_test AS select generate_series(1, 10) a, generate_series(2, 11) b;');
+$node->safe_psql('postgres', q|
+  CREATE TABLE regression_vacuumdb_test AS select generate_series(1, 10) a, generate_series(2, 11) b;
+  ALTER TABLE regression_vacuumdb_test ADD COLUMN c INT GENERATED ALWAYS AS (a + b);
+|);
+$node->issues_sql_unlike(
+	[
+		'vacuumdb', '--analyze-only', '--dry-run',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
+	qr/statement:\ ANALYZE/sx,
+	'--missing-stats-only --dry-run');
 $node->issues_sql_like(
-	[ 'vacuumdb', '--analyze-only', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-only',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with missing stats');
 $node->issues_sql_unlike(
-	[ 'vacuumdb', '--analyze-only', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-only',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with no missing stats');
 
 $node->safe_psql('postgres',
-	'CREATE INDEX regression_vacuumdb_test_idx ON regression_vacuumdb_test (mod(a, 2));');
+	'CREATE INDEX regression_vacuumdb_test_idx ON regression_vacuumdb_test (mod(a, 2));'
+);
 $node->issues_sql_like(
-	[ 'vacuumdb', '--analyze-in-stages', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-in-stages',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with missing index expression stats');
 $node->issues_sql_unlike(
-	[ 'vacuumdb', '--analyze-in-stages', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-in-stages',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with no missing index expression stats');
 
 $node->safe_psql('postgres',
-	'CREATE STATISTICS regression_vacuumdb_test_stat ON a, b FROM regression_vacuumdb_test;');
+	'CREATE STATISTICS regression_vacuumdb_test_stat ON a, b FROM regression_vacuumdb_test;'
+);
 $node->issues_sql_like(
-	[ 'vacuumdb', '--analyze-only', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-only',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with missing extended stats');
 $node->issues_sql_unlike(
-	[ 'vacuumdb', '--analyze-only', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-only',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with no missing extended stats');
 
 $node->safe_psql('postgres',
 	"CREATE TABLE regression_vacuumdb_child (a INT) INHERITS (regression_vacuumdb_test);\n"
-	. "INSERT INTO regression_vacuumdb_child VALUES (1, 2);\n"
-	. "ANALYZE regression_vacuumdb_child;\n");
+	  . "INSERT INTO regression_vacuumdb_child VALUES (1, 2);\n"
+	  . "ANALYZE regression_vacuumdb_child;\n");
 $node->issues_sql_like(
-	[ 'vacuumdb', '--analyze-in-stages', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-in-stages',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with missing inherited stats');
 $node->issues_sql_unlike(
-	[ 'vacuumdb', '--analyze-in-stages', '--missing-stats-only', '-t', 'regression_vacuumdb_test', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-in-stages',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with no missing inherited stats');
 
 $node->safe_psql('postgres',
 	"CREATE TABLE regression_vacuumdb_parted (a INT) PARTITION BY LIST (a);\n"
-	. "CREATE TABLE regression_vacuumdb_part1 PARTITION OF regression_vacuumdb_parted FOR VALUES IN (1);\n"
-	. "INSERT INTO regression_vacuumdb_parted VALUES (1);\n"
-	. "ANALYZE regression_vacuumdb_part1;\n");
+	  . "CREATE TABLE regression_vacuumdb_part1 PARTITION OF regression_vacuumdb_parted FOR VALUES IN (1);\n"
+	  . "INSERT INTO regression_vacuumdb_parted VALUES (1);\n"
+	  . "ANALYZE regression_vacuumdb_part1;\n");
 $node->issues_sql_like(
-	[ 'vacuumdb', '--analyze-only', '--missing-stats-only', '-t', 'regression_vacuumdb_parted', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-only',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_parted', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with missing partition stats');
 $node->issues_sql_unlike(
-	[ 'vacuumdb', '--analyze-only', '--missing-stats-only', '-t', 'regression_vacuumdb_parted', 'postgres' ],
+	[
+		'vacuumdb', '--analyze-only',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_parted', 'postgres'
+	],
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with no missing partition stats');
+
+$node->safe_psql('postgres',
+	"CREATE TABLE parent_table (a INT) PARTITION BY LIST (a);\n"
+	  . "CREATE TABLE child_table PARTITION OF parent_table FOR VALUES IN (1);\n"
+	  . "INSERT INTO parent_table VALUES (1);\n");
+$node->issues_sql_like(
+	[
+		'vacuumdb', '--analyze-only', 'postgres'
+	],
+	qr/statement: ANALYZE public.parent_table/s,
+	'--analyze-only updates statistics for partitioned tables');
+$node->issues_sql_unlike(
+	[
+		'vacuumdb', '--analyze-only', 'postgres'
+	],
+	qr/statement:\ VACUUM/sx,
+	'--analyze-only does not run vacuum');
 
 done_testing();

@@ -453,7 +453,7 @@ range(struct vars *v,			/* context */
 
 	for (c = a; c <= b; c++)
 	{
-		cc = pg_wc_tolower(c);
+		cc = regc_wc_tolower(c);
 		if (cc != c &&
 			(before(cc, a) || before(b, cc)))
 		{
@@ -464,7 +464,7 @@ range(struct vars *v,			/* context */
 			}
 			addchr(cv, cc);
 		}
-		cc = pg_wc_toupper(c);
+		cc = regc_wc_toupper(c);
 		if (cc != c &&
 			(before(cc, a) || before(b, cc)))
 		{
@@ -562,7 +562,7 @@ lookupcclass(struct vars *v,	/* context (for returning errors) */
  * Must include case counterparts if "cases" is true.
  *
  * The returned cvec might be either a transient cvec gotten from getcvec(),
- * or a permanently cached one from pg_ctype_get_cache().  This is okay
+ * or a permanently cached one from regc_ctype_get_cache().  This is okay
  * because callers are not supposed to explicitly free the result either way.
  */
 static struct cvec *
@@ -584,7 +584,7 @@ cclasscvec(struct vars *v,		/* context */
 	/*
 	 * Now compute the character class contents.  For classes that are based
 	 * on the behavior of a <wctype.h> or <ctype.h> function, we use
-	 * pg_ctype_get_cache so that we can cache the results.  Other classes
+	 * regc_ctype_get_cache so that we can cache the results.  Other classes
 	 * have definitions that are hard-wired here, and for those we just
 	 * construct a transient cvec on the fly.
 	 *
@@ -594,16 +594,16 @@ cclasscvec(struct vars *v,		/* context */
 	switch (cclasscode)
 	{
 		case CC_PRINT:
-			cv = pg_ctype_get_cache(pg_wc_isprint, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isprint, cclasscode);
 			break;
 		case CC_ALNUM:
-			cv = pg_ctype_get_cache(pg_wc_isalnum, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isalnum, cclasscode);
 			break;
 		case CC_ALPHA:
-			cv = pg_ctype_get_cache(pg_wc_isalpha, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isalpha, cclasscode);
 			break;
 		case CC_WORD:
-			cv = pg_ctype_get_cache(pg_wc_isword, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isword, cclasscode);
 			break;
 		case CC_ASCII:
 			/* hard-wired meaning */
@@ -624,10 +624,10 @@ cclasscvec(struct vars *v,		/* context */
 			addrange(cv, 0x7f, 0x9f);
 			break;
 		case CC_DIGIT:
-			cv = pg_ctype_get_cache(pg_wc_isdigit, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isdigit, cclasscode);
 			break;
 		case CC_PUNCT:
-			cv = pg_ctype_get_cache(pg_wc_ispunct, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_ispunct, cclasscode);
 			break;
 		case CC_XDIGIT:
 
@@ -645,16 +645,16 @@ cclasscvec(struct vars *v,		/* context */
 			}
 			break;
 		case CC_SPACE:
-			cv = pg_ctype_get_cache(pg_wc_isspace, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isspace, cclasscode);
 			break;
 		case CC_LOWER:
-			cv = pg_ctype_get_cache(pg_wc_islower, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_islower, cclasscode);
 			break;
 		case CC_UPPER:
-			cv = pg_ctype_get_cache(pg_wc_isupper, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isupper, cclasscode);
 			break;
 		case CC_GRAPH:
-			cv = pg_ctype_get_cache(pg_wc_isgraph, cclasscode);
+			cv = regc_ctype_get_cache(regc_wc_isgraph, cclasscode);
 			break;
 	}
 
@@ -679,29 +679,29 @@ cclass_column_index(struct colormap *cm, chr c)
 	 * Note: we should not see requests to consider cclasses that are not
 	 * treated as locale-specific by cclasscvec(), above.
 	 */
-	if (cm->classbits[CC_PRINT] && pg_wc_isprint(c))
+	if (cm->classbits[CC_PRINT] && regc_wc_isprint(c))
 		colnum |= cm->classbits[CC_PRINT];
-	if (cm->classbits[CC_ALNUM] && pg_wc_isalnum(c))
+	if (cm->classbits[CC_ALNUM] && regc_wc_isalnum(c))
 		colnum |= cm->classbits[CC_ALNUM];
-	if (cm->classbits[CC_ALPHA] && pg_wc_isalpha(c))
+	if (cm->classbits[CC_ALPHA] && regc_wc_isalpha(c))
 		colnum |= cm->classbits[CC_ALPHA];
-	if (cm->classbits[CC_WORD] && pg_wc_isword(c))
+	if (cm->classbits[CC_WORD] && regc_wc_isword(c))
 		colnum |= cm->classbits[CC_WORD];
 	assert(cm->classbits[CC_ASCII] == 0);
 	assert(cm->classbits[CC_BLANK] == 0);
 	assert(cm->classbits[CC_CNTRL] == 0);
-	if (cm->classbits[CC_DIGIT] && pg_wc_isdigit(c))
+	if (cm->classbits[CC_DIGIT] && regc_wc_isdigit(c))
 		colnum |= cm->classbits[CC_DIGIT];
-	if (cm->classbits[CC_PUNCT] && pg_wc_ispunct(c))
+	if (cm->classbits[CC_PUNCT] && regc_wc_ispunct(c))
 		colnum |= cm->classbits[CC_PUNCT];
 	assert(cm->classbits[CC_XDIGIT] == 0);
-	if (cm->classbits[CC_SPACE] && pg_wc_isspace(c))
+	if (cm->classbits[CC_SPACE] && regc_wc_isspace(c))
 		colnum |= cm->classbits[CC_SPACE];
-	if (cm->classbits[CC_LOWER] && pg_wc_islower(c))
+	if (cm->classbits[CC_LOWER] && regc_wc_islower(c))
 		colnum |= cm->classbits[CC_LOWER];
-	if (cm->classbits[CC_UPPER] && pg_wc_isupper(c))
+	if (cm->classbits[CC_UPPER] && regc_wc_isupper(c))
 		colnum |= cm->classbits[CC_UPPER];
-	if (cm->classbits[CC_GRAPH] && pg_wc_isgraph(c))
+	if (cm->classbits[CC_GRAPH] && regc_wc_isgraph(c))
 		colnum |= cm->classbits[CC_GRAPH];
 
 	return colnum;
@@ -721,8 +721,8 @@ allcases(struct vars *v,		/* context */
 	chr			lc,
 				uc;
 
-	lc = pg_wc_tolower(c);
-	uc = pg_wc_toupper(c);
+	lc = regc_wc_tolower(c);
+	uc = regc_wc_toupper(c);
 
 	cv = getcvec(v, 2, 0);
 	addchr(cv, lc);
@@ -760,7 +760,7 @@ casecmp(const chr *x, const chr *y, /* strings to compare */
 {
 	for (; len > 0; len--, x++, y++)
 	{
-		if ((*x != *y) && (pg_wc_tolower(*x) != pg_wc_tolower(*y)))
+		if ((*x != *y) && (regc_wc_tolower(*x) != regc_wc_tolower(*y)))
 			return 1;
 	}
 	return 0;

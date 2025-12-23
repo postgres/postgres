@@ -34,6 +34,7 @@ SELECT subpath('Top.Child1.Child2',0,0);
 SELECT subpath('Top.Child1.Child2',1,0);
 SELECT subpath('Top.Child1.Child2',0);
 SELECT subpath('Top.Child1.Child2',1);
+SELECT subpath('Top.Child1.Child2',-4);  -- error
 
 
 SELECT index('1.2.3.4.5.6','1.2');

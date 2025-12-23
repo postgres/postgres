@@ -189,7 +189,7 @@
   </sect2>
 
   <sect2 id="protocol-versions">
-   <title>Protocol versions</title>
+   <title>Protocol Versions</title>
 
    <para>
     The current, latest version of the protocol is version 3.2. However, for
@@ -226,7 +226,7 @@
    </para>
 
    <table id="protocol-versions-table">
-    <title>Protocol versions</title>
+    <title>Protocol Versions</title>
 
     <tgroup cols="3">
      <thead>
@@ -536,6 +536,11 @@
         save if it wants to be able to issue cancel requests later.
         The frontend should not respond to this message, but should
         continue listening for a ReadyForQuery message.
+       </para>
+       <para>
+        The <productname>PostgreSQL</productname> server will always send this
+        message, but some third party backend implementations of the protocol
+        that don't support query cancellation are known not to.
        </para>
       </listitem>
      </varlistentry>
@@ -885,6 +890,16 @@ SELCT 1/0;<!-- this typo is intentional -->
      difference that the first <command>INSERT</command> is not committed.
      Errors detected at semantic analysis or later, such as a misspelled
      table or column name, do not have this effect.
+    </para>
+
+    <para>
+     Lastly, note that all the statements within the Query message will
+     observe the same value of <function>statement_timestamp()</function>,
+     since that timestamp is updated only upon receipt of the Query
+     message.  This will result in them all observing the same
+     value of <function>transaction_timestamp()</function> as well,
+     except in cases where the query string ends a previously-started
+     transaction and begins a new one.
     </para>
    </sect3>
   </sect2>
@@ -1621,7 +1636,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    <para>
      Likewise the server expects the client to not begin
      the <acronym>SSL</acronym> negotiation until it receives the server's
-     single byte response to the <acronym>SSL</acronym> request.  If the
+     single-byte response to the <acronym>SSL</acronym> request.  If the
      client begins the <acronym>SSL</acronym> negotiation immediately without
      waiting for the server response to be received it can reduce connection
      latency by one round-trip.  However this comes at the cost of not being
@@ -2225,6 +2240,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          <para>
           The name of the slot to create. Must be a valid replication slot
           name (see <xref linkend="streaming-replication-slots-manipulation"/>).
+          The name cannot be <literal>pg_conflict_detection</literal> as it
+          is reserved for the conflict detection.
          </para>
         </listitem>
        </varlistentry>
@@ -2538,8 +2555,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       </para>
 
       <variablelist>
-       <varlistentry id="protocol-replication-xlogdata">
-        <term>XLogData (B)</term>
+       <varlistentry id="protocol-replication-waldata">
+        <term>WALData (B)</term>
         <listitem>
          <variablelist>
           <varlistentry>
@@ -2587,11 +2604,11 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
             </para>
 
             <para>
-             A single WAL record is never split across two XLogData messages.
+             A single WAL record is never split across two WALData messages.
              When a WAL record crosses a WAL page boundary, and is therefore
              already split using continuation records, it can be split at the page
              boundary. In other words, the first main WAL record and its
-             continuation records can be sent in different XLogData messages.
+             continuation records can be sent in different WALData messages.
             </para>
            </listitem>
           </varlistentry>
@@ -2637,6 +2654,65 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
             <para>
              1 means that the client should reply to this message as soon as
              possible, to avoid a timeout disconnect. 0 otherwise.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry id="protocol-replication-primary-status-update">
+        <term>Primary status update (B)</term>
+        <listitem>
+         <variablelist>
+          <varlistentry>
+           <term>Byte1('s')</term>
+           <listitem>
+            <para>
+             Identifies the message as a primary status update.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The latest WAL write position on the server.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The oldest transaction ID that is currently in the commit phase on
+             the server, along with its epoch. The most significant 32 bits are
+             the epoch. The least significant 32 bits are the transaction ID.
+             If no transactions are active on the server, this number will be
+             the next transaction ID to be assigned.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The next transaction ID to be assigned on the server, along with
+             its epoch. The most significant 32 bits are the epoch. The least
+             significant 32 bits are the transaction ID.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The server's system clock at the time of transmission, as
+             microseconds since midnight on 2000-01-01.
             </para>
            </listitem>
           </varlistentry>
@@ -2787,6 +2863,33 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          </variablelist>
         </listitem>
        </varlistentry>
+
+       <varlistentry id="protocol-replication-standby-wal-status-request">
+        <term>Request primary status update (F)</term>
+        <listitem>
+         <variablelist>
+          <varlistentry>
+           <term>Byte1('p')</term>
+           <listitem>
+            <para>
+             Identifies the message as a request for a primary status update.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The client's system clock at the time of transmission, as
+             microseconds since midnight on 2000-01-01.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </listitem>
+       </varlistentry>
+
       </variablelist>
      </listitem>
     </varlistentry>
@@ -2852,7 +2955,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <listitem>
          <para>
           The name of an option passed to the slot's logical decoding output
-          plugin.  See <xref linkend="protocol-logical-replication"/> for
+          plugin.  See <xref linkend="logicaldecoding-pgoutput-options"/> for
           options that are accepted by the standard (<literal>pgoutput</literal>)
           plugin.
          </para>
@@ -3420,128 +3523,15 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
   the physical streaming replication protocol.
  </para>
 
- <para>
-  <productname>PostgreSQL</productname> logical decoding supports output
-  plugins.  <literal>pgoutput</literal> is the standard one used for
-  the built-in logical replication.
- </para>
-
  <sect2 id="protocol-logical-replication-params">
   <title>Logical Streaming Replication Parameters</title>
 
   <para>
-   Using the <literal>START_REPLICATION</literal> command,
-   <literal>pgoutput</literal> accepts the following options:
-
-   <variablelist>
-    <varlistentry>
-     <term>
-      proto_version
-     </term>
-     <listitem>
-      <para>
-       Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
-       <literal>3</literal>, and <literal>4</literal> are supported.  A valid
-       version is required.
-      </para>
-      <para>
-       Version <literal>2</literal> is supported only for server version 14
-       and above, and it allows streaming of large in-progress transactions.
-      </para>
-      <para>
-       Version <literal>3</literal> is supported only for server version 15
-       and above, and it allows streaming of two-phase commits.
-      </para>
-      <para>
-       Version <literal>4</literal> is supported only for server version 16
-       and above, and it allows streams of large in-progress transactions to
-       be applied in parallel.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      publication_names
-     </term>
-     <listitem>
-      <para>
-       Comma-separated list of publication names for which to subscribe
-       (receive changes). The individual publication names are treated
-       as standard objects names and can be quoted the same as needed.
-       At least one publication name is required.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      binary
-     </term>
-     <listitem>
-      <para>
-       Boolean option to use binary transfer mode.  Binary mode is faster
-       than the text mode but slightly less robust.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      messages
-     </term>
-     <listitem>
-      <para>
-       Boolean option to enable sending the messages that are written
-       by <function>pg_logical_emit_message</function>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      streaming
-     </term>
-     <listitem>
-      <para>
-       Boolean option to enable streaming of in-progress transactions.
-       It accepts an additional value "parallel" to enable sending extra
-       information with some messages to be used for parallelisation.
-       Minimum protocol version 2 is required to turn it on.  Minimum protocol
-       version 4 is required for the "parallel" option.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      two_phase
-     </term>
-     <listitem>
-      <para>
-       Boolean option to enable two-phase transactions.   Minimum protocol
-       version 3 is required to turn it on.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      origin
-     </term>
-     <listitem>
-      <para>
-       Option to send changes by their origin.  Possible values are
-       <literal>none</literal> to only send the changes that have no origin
-       associated, or <literal>any</literal>
-       to send the changes regardless of their origin.  This can be used
-       to avoid loops (infinite replication of the same data) among
-       replication nodes.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-
+   The <literal>START_REPLICATION</literal> command can pass
+   options to the logical decoding output plugin associated
+   with the specified replication slot.
+   See <xref linkend="logicaldecoding-pgoutput-options"/> for options
+   that are accepted by the standard (<literal>pgoutput</literal>) plugin.
   </para>
  </sect2>
 
@@ -4146,7 +4136,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          message, indicated by the length field.
         </para>
         <para>
-          The maximum key length is 256 bytes. The
+          The minimum and maximum key length are 4 and 256 bytes, respectively. The
           <productname>PostgreSQL</productname> server only sends keys up to
           32 bytes, but the larger maximum size allows for future server
           versions, as well as connection poolers and other middleware, to use
@@ -4337,7 +4327,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
     <listitem>
      <variablelist>
       <varlistentry>
-       <term>Int32(16)</term>
+       <term>Int32</term>
        <listitem>
         <para>
          Length of message contents in bytes, including self.
@@ -6081,13 +6071,14 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       </varlistentry>
 
       <varlistentry>
-       <term>Int32(196608)</term>
+       <term>Int32</term>
        <listitem>
         <para>
          The protocol version number.  The most significant 16 bits are
-         the major version number (3 for the protocol described here).
-         The least significant 16 bits are the minor version number
-         (0 for the protocol described here).
+         the major version number. The least significant 16 bits are the minor
+         version number. As an example protocol version 3.2 is represented as
+         <literal>196610</literal> in decimal or more clearly as
+         <literal>0x00030002</literal> in hexadecimal.
         </para>
        </listitem>
       </varlistentry>
@@ -7292,8 +7283,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The LSN of the abort. This field is available since protocol version
-         4.
+         The LSN of the abort operation, present only when streaming is set to parallel.
+         This field is available since protocol version 4.
         </para>
        </listitem>
       </varlistentry>
@@ -7302,9 +7293,9 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (TimestampTz)</term>
        <listitem>
         <para>
-         Abort timestamp of the transaction. The value is in number
-         of microseconds since PostgreSQL epoch (2000-01-01). This field is
-         available since protocol version 4.
+         Abort timestamp of the transaction, present only when streaming is set to
+         parallel. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
+         This field is available since protocol version 4.
         </para>
        </listitem>
       </varlistentry>

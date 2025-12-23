@@ -65,8 +65,8 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	nargs = list ? PySequence_Length(list) : 0;
 
 	plan->nargs = nargs;
-	plan->types = nargs ? palloc0(sizeof(Oid) * nargs) : NULL;
-	plan->args = nargs ? palloc0(sizeof(PLyObToDatum) * nargs) : NULL;
+	plan->types = nargs ? palloc0_array(Oid, nargs) : NULL;
+	plan->args = nargs ? palloc0_array(PLyObToDatum, nargs) : NULL;
 
 	MemoryContextSwitchTo(oldcontext);
 

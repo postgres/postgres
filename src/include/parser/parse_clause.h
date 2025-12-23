@@ -26,6 +26,7 @@ extern Node *transformLimitClause(ParseState *pstate, Node *clause,
 								  ParseExprKind exprKind, const char *constructName,
 								  LimitOption limitOption);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
+								  bool groupByAll,
 								  List **groupingSets,
 								  List **targetlist, List *sortClause,
 								  ParseExprKind exprKind, bool useSQL99);

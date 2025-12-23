@@ -170,36 +170,6 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-R <replaceable class="parameter">objtype</replaceable></option></term>
-     <term><option>--remove=<replaceable class="parameter">objtype</replaceable></option></term>
-     <listitem>
-      <para>
-       Remove all objects of the specified type from specified databases on the
-       target server.
-      </para>
-      <para>
-       <itemizedlist>
-        <listitem>
-         <para>
-          <literal>publications</literal>:
-          The <literal>FOR ALL TABLES</literal> publications established for this
-          subscriber are always removed; specifying this object type causes all
-          other publications replicated from the source server to be dropped as
-          well.
-         </para>
-        </listitem>
-       </itemizedlist>
-      </para>
-      <para>
-       The objects selected to be dropped are individually logged, including during
-       a <option>--dry-run</option>.  There is no opportunity to affect or stop the
-       dropping of the selected objects, so consider taking a backup of them
-       using <application>pg_dump</application>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-s <replaceable class="parameter">dir</replaceable></option></term>
      <term><option>--socketdir=<replaceable class="parameter">dir</replaceable></option></term>
      <listitem>
@@ -260,6 +230,35 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>--clean=<replaceable class="parameter">objtype</replaceable></option></term>
+     <listitem>
+      <para>
+       Drop all objects of the specified type from specified databases on the
+       target server.
+      </para>
+      <para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>publications</literal>:
+          The <literal>FOR ALL TABLES</literal> publications established for this
+          subscriber are always dropped; specifying this object type causes all
+          other publications replicated from the source server to be dropped as
+          well.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+      <para>
+       The objects selected to be dropped are individually logged, including during
+       a <option>--dry-run</option>.  There is no opportunity to affect or stop the
+       dropping of the selected objects, so consider taking a backup of them
+       using <application>pg_dump</application>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>--config-file=<replaceable class="parameter">filename</replaceable></option></term>
      <listitem>
       <para>
@@ -285,6 +284,14 @@ PostgreSQL documentation
        match the order of database switches.  If this option is not specified,
        a generated name is assigned to the publication name. This option cannot
        be used together with <option>--all</option>.
+      </para>
+      <para>
+       If a specified publication already exists on the publisher, it is reused.
+       It is useful to partially replicate the database if the specified
+       publication includes a list of tables. If the publication does not exist,
+       it is automatically created with <literal>FOR ALL TABLES</literal>. Use
+       <option>--dry-run</option> option to preview which publications will be
+       reused and which will be created.
       </para>
      </listitem>
     </varlistentry>
@@ -380,12 +387,12 @@ PostgreSQL documentation
    <para>
     The source server must accept connections from the target server.  The
     source server must not be in recovery. The source server must have <xref
-    linkend="guc-wal-level"/> as <literal>logical</literal>.  The source server
-    must have <xref linkend="guc-max-replication-slots"/> configured to a value
-    greater than or equal to the number of specified databases plus existing
-    replication slots.  The source server must have <xref
-    linkend="guc-max-wal-senders"/> configured to a value greater than or equal
-    to the number of specified databases and existing WAL sender processes.
+    linkend="guc-wal-level"/> as <literal>replica</literal> or <literal>logical</literal>.
+    The source server must have <xref linkend="guc-max-replication-slots"/>
+    configured to a value greater than or equal to the number of specified
+    databases plus existing replication slots.  The source server must have
+    <xref linkend="guc-max-wal-senders"/> configured to a value greater than or
+    equal to the number of specified databases and existing WAL sender processes.
    </para>
   </refsect2>
 

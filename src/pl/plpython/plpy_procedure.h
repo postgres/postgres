@@ -11,6 +11,16 @@
 extern void init_procedure_caches(void);
 
 
+/*
+ * Trigger type
+ */
+typedef enum PLyTrigType
+{
+	PLPY_TRIGGER,
+	PLPY_EVENT_TRIGGER,
+	PLPY_NOT_TRIGGER,
+} PLyTrigType;
+
 /* saved arguments for outer recursion level or set-returning function */
 typedef struct PLySavedArgs
 {
@@ -33,7 +43,7 @@ typedef struct PLyProcedure
 	bool		fn_readonly;
 	bool		is_setof;		/* true, if function returns result set */
 	bool		is_procedure;
-	bool		is_trigger;		/* called as trigger? */
+	PLyTrigType is_trigger;		/* called as trigger? */
 	PLyObToDatum result;		/* Function result output conversion info */
 	PLyDatumToOb result_in;		/* For converting input tuples in a trigger */
 	char	   *src;			/* textual procedure code, after mangling */
@@ -65,7 +75,7 @@ typedef struct PLyProcedureEntry
 
 /* PLyProcedure manipulation */
 extern char *PLy_procedure_name(PLyProcedure *proc);
-extern PLyProcedure *PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger);
+extern PLyProcedure *PLy_procedure_get(Oid fn_oid, Oid fn_rel, PLyTrigType is_trigger);
 extern void PLy_procedure_compile(PLyProcedure *proc, const char *src);
 extern void PLy_procedure_delete(PLyProcedure *proc);
 

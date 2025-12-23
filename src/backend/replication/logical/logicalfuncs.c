@@ -107,7 +107,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	XLogRecPtr	end_of_wal;
 	XLogRecPtr	wait_for_wal_lsn;
 	LogicalDecodingContext *ctx;
-	ResourceOwner old_resowner = CurrentResourceOwner;
+	ResourceOwner old_resowner PG_USED_FOR_ASSERTS_ONLY = CurrentResourceOwner;
 	ArrayType  *arr;
 	Size		ndim;
 	List	   *options = NIL;
@@ -129,7 +129,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		upto_lsn = PG_GETARG_LSN(1);
 
 	if (PG_ARGISNULL(2))
-		upto_nchanges = InvalidXLogRecPtr;
+		upto_nchanges = 0;
 	else
 		upto_nchanges = PG_GETARG_INT32(2);
 
@@ -140,7 +140,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	arr = PG_GETARG_ARRAYTYPE_P(3);
 
 	/* state to write output to */
-	p = palloc0(sizeof(DecodingOutputState));
+	p = palloc0_object(DecodingOutputState);
 
 	p->binary_output = binary;
 
@@ -229,7 +229,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		 * Wait for specified streaming replication standby servers (if any)
 		 * to confirm receipt of WAL up to wait_for_wal_lsn.
 		 */
-		if (XLogRecPtrIsInvalid(upto_lsn))
+		if (!XLogRecPtrIsValid(upto_lsn))
 			wait_for_wal_lsn = end_of_wal;
 		else
 			wait_for_wal_lsn = Min(upto_lsn, end_of_wal);
@@ -263,10 +263,20 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			 * store the description into our tuplestore.
 			 */
 			if (record != NULL)
+			{
 				LogicalDecodingProcessRecord(ctx, ctx->reader);
 
+				/*
+				 * We used to have bugs where logical decoding would fail to
+				 * preserve the resource owner.  Verify that that doesn't
+				 * happen anymore.  XXX this could be removed once it's been
+				 * battle-tested.
+				 */
+				Assert(CurrentResourceOwner == old_resowner);
+			}
+
 			/* check limits */
-			if (upto_lsn != InvalidXLogRecPtr &&
+			if (XLogRecPtrIsValid(upto_lsn) &&
 				upto_lsn <= ctx->reader->EndRecPtr)
 				break;
 			if (upto_nchanges != 0 &&
@@ -276,17 +286,10 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		}
 
 		/*
-		 * Logical decoding could have clobbered CurrentResourceOwner during
-		 * transaction management, so restore the executor's value.  (This is
-		 * a kluge, but it's not worth cleaning up right now.)
-		 */
-		CurrentResourceOwner = old_resowner;
-
-		/*
 		 * Next time, start where we left off. (Hunting things, the family
 		 * business..)
 		 */
-		if (ctx->reader->EndRecPtr != InvalidXLogRecPtr && confirm)
+		if (XLogRecPtrIsValid(ctx->reader->EndRecPtr) && confirm)
 		{
 			LogicalConfirmReceivedLocation(ctx->reader->EndRecPtr);
 

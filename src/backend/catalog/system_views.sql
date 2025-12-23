@@ -394,6 +394,16 @@ CREATE VIEW pg_publication_tables AS
          pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
     WHERE C.oid = GPT.relid;
 
+CREATE VIEW pg_publication_sequences AS
+    SELECT
+        P.pubname AS pubname,
+        N.nspname AS schemaname,
+        C.relname AS sequencename
+    FROM pg_publication P,
+         LATERAL pg_get_publication_sequences(P.pubname) GPS,
+         pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
+    WHERE C.oid = GPS.relid;
+
 CREATE VIEW pg_locks AS
     SELECT * FROM pg_lock_status() AS L;
 
@@ -666,6 +676,14 @@ GRANT SELECT ON pg_shmem_allocations_numa TO pg_read_all_stats;
 REVOKE EXECUTE ON FUNCTION pg_get_shmem_allocations_numa() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pg_get_shmem_allocations_numa() TO pg_read_all_stats;
 
+CREATE VIEW pg_dsm_registry_allocations AS
+    SELECT * FROM pg_get_dsm_registry_allocations();
+
+REVOKE ALL ON pg_dsm_registry_allocations FROM PUBLIC;
+GRANT SELECT ON pg_dsm_registry_allocations TO pg_read_all_stats;
+REVOKE EXECUTE ON FUNCTION pg_get_dsm_registry_allocations() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pg_get_dsm_registry_allocations() TO pg_read_all_stats;
+
 CREATE VIEW pg_backend_memory_contexts AS
     SELECT * FROM pg_get_backend_memory_contexts();
 
@@ -708,7 +726,8 @@ CREATE VIEW pg_stat_all_tables AS
             pg_stat_get_total_vacuum_time(C.oid) AS total_vacuum_time,
             pg_stat_get_total_autovacuum_time(C.oid) AS total_autovacuum_time,
             pg_stat_get_total_analyze_time(C.oid) AS total_analyze_time,
-            pg_stat_get_total_autoanalyze_time(C.oid) AS total_autoanalyze_time
+            pg_stat_get_total_autoanalyze_time(C.oid) AS total_autoanalyze_time,
+            pg_stat_get_stat_reset_time(C.oid) AS stats_reset
     FROM pg_class C LEFT JOIN
          pg_index I ON C.oid = I.indrelid
          LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
@@ -770,7 +789,8 @@ CREATE VIEW pg_statio_all_tables AS
                     pg_stat_get_blocks_hit(T.oid) AS toast_blks_read,
             pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit,
             X.idx_blks_read AS tidx_blks_read,
-            X.idx_blks_hit AS tidx_blks_hit
+            X.idx_blks_hit AS tidx_blks_hit,
+            pg_stat_get_stat_reset_time(C.oid) AS stats_reset
     FROM pg_class C LEFT JOIN
             pg_class T ON C.reltoastrelid = T.oid
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
@@ -810,7 +830,8 @@ CREATE VIEW pg_stat_all_indexes AS
             pg_stat_get_numscans(I.oid) AS idx_scan,
             pg_stat_get_lastscan(I.oid) AS last_idx_scan,
             pg_stat_get_tuples_returned(I.oid) AS idx_tup_read,
-            pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch
+            pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch,
+            pg_stat_get_stat_reset_time(I.oid) AS stats_reset
     FROM pg_class C JOIN
             pg_index X ON C.oid = X.indrelid JOIN
             pg_class I ON I.oid = X.indexrelid
@@ -836,7 +857,8 @@ CREATE VIEW pg_statio_all_indexes AS
             I.relname AS indexrelname,
             pg_stat_get_blocks_fetched(I.oid) -
                     pg_stat_get_blocks_hit(I.oid) AS idx_blks_read,
-            pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit
+            pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit,
+            pg_stat_get_stat_reset_time(I.oid) AS stats_reset
     FROM pg_class C JOIN
             pg_index X ON C.oid = X.indrelid JOIN
             pg_class I ON I.oid = X.indexrelid
@@ -895,7 +917,7 @@ CREATE VIEW pg_stat_activity AS
             S.wait_event,
             S.state,
             S.backend_xid,
-            s.backend_xmin,
+            S.backend_xmin,
             S.query_id,
             S.query,
             S.backend_type
@@ -1038,7 +1060,8 @@ CREATE VIEW pg_replication_slots AS
             L.conflicting,
             L.invalidation_reason,
             L.failover,
-            L.synced
+            L.synced,
+            L.slotsync_skip_reason
     FROM pg_get_replication_slots() AS L
             LEFT JOIN pg_database D ON (L.datoid = D.oid);
 
@@ -1051,8 +1074,11 @@ CREATE VIEW pg_stat_replication_slots AS
             s.stream_txns,
             s.stream_count,
             s.stream_bytes,
+            s.mem_exceeded_count,
             s.total_txns,
             s.total_bytes,
+            s.slotsync_skip_count,
+            s.slotsync_last_skip,
             s.stats_reset
     FROM pg_replication_slots as r,
         LATERAL pg_stat_get_replication_slot(slot_name) as s
@@ -1119,7 +1145,8 @@ CREATE VIEW pg_stat_user_functions AS
             P.proname AS funcname,
             pg_stat_get_function_calls(P.oid) AS calls,
             pg_stat_get_function_total_time(P.oid) AS total_time,
-            pg_stat_get_function_self_time(P.oid) AS self_time
+            pg_stat_get_function_self_time(P.oid) AS self_time,
+            pg_stat_get_function_stat_reset_time(P.oid) AS stats_reset
     FROM pg_proc P LEFT JOIN pg_namespace N ON (N.oid = P.pronamespace)
     WHERE P.prolang != 12  -- fast check to eliminate built-in functions
           AND pg_stat_get_function_calls(P.oid) IS NOT NULL;
@@ -1197,6 +1224,7 @@ CREATE VIEW pg_stat_wal AS
         w.wal_records,
         w.wal_fpi,
         w.wal_bytes,
+        w.wal_fpi_bytes,
         w.wal_buffers_full,
         w.stats_reset
     FROM pg_stat_get_wal() w;
@@ -1219,7 +1247,10 @@ CREATE VIEW pg_stat_progress_analyze AS
         S.param6 AS child_tables_total,
         S.param7 AS child_tables_done,
         CAST(S.param8 AS oid) AS current_child_table_relid,
-        S.param9 / 1000000::double precision AS delay_time
+        S.param9 / 1000000::double precision AS delay_time,
+        CASE S.param10 WHEN 1 THEN 'manual'
+                       WHEN 2 THEN 'autovacuum'
+                       ELSE NULL END AS started_by
     FROM pg_stat_get_progress_info('ANALYZE') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
@@ -1240,7 +1271,15 @@ CREATE VIEW pg_stat_progress_vacuum AS
         S.param6 AS max_dead_tuple_bytes, S.param7 AS dead_tuple_bytes,
         S.param8 AS num_dead_item_ids, S.param9 AS indexes_total,
         S.param10 AS indexes_processed,
-        S.param11 / 1000000::double precision AS delay_time
+        S.param11 / 1000000::double precision AS delay_time,
+        CASE S.param12 WHEN 1 THEN 'normal'
+                       WHEN 2 THEN 'aggressive'
+                       WHEN 3 THEN 'failsafe'
+                       ELSE NULL END AS mode,
+        CASE S.param13 WHEN 1 THEN 'manual'
+                       WHEN 2 THEN 'autovacuum'
+                       WHEN 3 THEN 'autovacuum_wraparound'
+                       ELSE NULL END AS started_by
     FROM pg_stat_get_progress_info('VACUUM') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
@@ -1319,7 +1358,10 @@ CREATE VIEW pg_stat_progress_basebackup AS
         CASE S.param2 WHEN -1 THEN NULL ELSE S.param2 END AS backup_total,
         S.param3 AS backup_streamed,
         S.param4 AS tablespaces_total,
-        S.param5 AS tablespaces_streamed
+        S.param5 AS tablespaces_streamed,
+        CASE S.param6 WHEN 1 THEN 'full'
+                      WHEN 2 THEN 'incremental'
+                      END AS backup_type
     FROM pg_stat_get_progress_info('BASEBACKUP') AS S;
 
 
@@ -1378,6 +1420,7 @@ REVOKE ALL ON pg_subscription FROM public;
 GRANT SELECT (oid, subdbid, subskiplsn, subname, subowner, subenabled,
               subbinary, substream, subtwophasestate, subdisableonerr,
 			  subpasswordrequired, subrunasowner, subfailover,
+              subretaindeadtuples, submaxretention, subretentionactive,
               subslotname, subsynccommit, subpublications, suborigin)
     ON pg_subscription TO public;
 
@@ -1386,10 +1429,12 @@ CREATE VIEW pg_stat_subscription_stats AS
         ss.subid,
         s.subname,
         ss.apply_error_count,
-        ss.sync_error_count,
+        ss.sync_seq_error_count,
+        ss.sync_table_error_count,
         ss.confl_insert_exists,
         ss.confl_update_origin_differs,
         ss.confl_update_exists,
+        ss.confl_update_deleted,
         ss.confl_update_missing,
         ss.confl_delete_origin_differs,
         ss.confl_delete_missing,

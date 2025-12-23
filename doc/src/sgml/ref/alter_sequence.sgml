@@ -207,8 +207,8 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         The optional clause <literal>RESTART [ WITH <replaceable
         class="parameter">restart</replaceable> ]</literal> changes the
         current value of the sequence.  This is similar to calling the
-        <function>setval</function> function with <literal>is_called</literal> =
-        <literal>false</literal>: the specified value will be returned by the
+        <function>setval</function> function with <structfield>is_called</structfield>
+        = <literal>false</literal>: the specified value will be returned by the
         <emphasis>next</emphasis> call of <function>nextval</function>.
         Writing <literal>RESTART</literal> with no <replaceable
         class="parameter">restart</replaceable> value is equivalent to supplying

@@ -1,0 +1,5 @@
+# test_binaryheap extension
+comment = 'Test code for binaryheap'
+default_version = '1.0'
+module_pathname = '$libdir/test_binaryheap'
+relocatable = true

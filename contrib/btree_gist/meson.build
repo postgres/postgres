@@ -51,7 +51,6 @@ install_data(
   'btree_gist--1.5--1.6.sql',
   'btree_gist--1.6--1.7.sql',
   'btree_gist--1.7--1.8.sql',
-  'btree_gist--1.8--1.9.sql',
   kwargs: contrib_data_args,
 )
 

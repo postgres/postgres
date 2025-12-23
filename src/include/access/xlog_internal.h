@@ -31,7 +31,7 @@
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD118	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD11A	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -315,16 +315,6 @@ typedef struct XLogRecData
 	const void *data;			/* start of rmgr data to include */
 	uint32		len;			/* length of rmgr data to include */
 } XLogRecData;
-
-/*
- * Recovery target action.
- */
-typedef enum
-{
-	RECOVERY_TARGET_ACTION_PAUSE,
-	RECOVERY_TARGET_ACTION_PROMOTE,
-	RECOVERY_TARGET_ACTION_SHUTDOWN,
-}			RecoveryTargetAction;
 
 struct LogicalDecodingContext;
 struct XLogRecordBuffer;

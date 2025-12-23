@@ -61,7 +61,7 @@ typedef struct spgBulkDeleteState
  * ensures that scans of the list don't miss items added during the scan.
  */
 static void
-spgAddPendingTID(spgBulkDeleteState *bds, ItemPointer tid)
+spgAddPendingTID(spgBulkDeleteState *bds, const ItemPointerData *tid)
 {
 	spgVacPendingItem *pitem;
 	spgVacPendingItem **listLink;
@@ -76,7 +76,7 @@ spgAddPendingTID(spgBulkDeleteState *bds, ItemPointer tid)
 		listLink = &pitem->next;
 	}
 	/* not there, so append new entry */
-	pitem = (spgVacPendingItem *) palloc(sizeof(spgVacPendingItem));
+	pitem = palloc_object(spgVacPendingItem);
 	pitem->tid = *tid;
 	pitem->done = false;
 	pitem->next = NULL;
@@ -626,7 +626,7 @@ spgvacuumpage(spgBulkDeleteState *bds, Buffer buffer)
 	Page		page;
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer);
 
 	if (PageIsNew(page))
 	{
@@ -707,7 +707,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, bds->info->strategy);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (PageIsNew(page) || SpGistPageIsDeleted(page))
 		{
@@ -954,7 +954,7 @@ spgbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 	/* allocate stats if first time through, else re-use existing struct */
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 	bds.info = info;
 	bds.stats = stats;
 	bds.callback = callback;
@@ -994,7 +994,7 @@ spgvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	if (stats == NULL)
 	{
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 		bds.info = info;
 		bds.stats = stats;
 		bds.callback = dummy_callback;

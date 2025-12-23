@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "port/pg_bswap.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 #include "utils/uuid.h"
 
@@ -107,7 +108,7 @@ gbt_uuid_compress(PG_FUNCTION_ARGS)
 		char	   *r = (char *) palloc(2 * UUID_LEN);
 		pg_uuid_t  *key = DatumGetUUIDP(entry->key);
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 
 		memcpy(r, key, UUID_LEN);
 		memcpy(r + UUID_LEN, key, UUID_LEN);

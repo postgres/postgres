@@ -54,6 +54,25 @@ CREATE STATISTICS tst ON (x || 'x'), (x || 'x'), y FROM ext_stats_test;
 ERROR:  duplicate expression in statistics definition
 CREATE STATISTICS tst (unrecognized) ON x, y FROM ext_stats_test;
 ERROR:  unrecognized statistics kind "unrecognized"
+-- unsupported targets
+CREATE STATISTICS tst ON a FROM (VALUES (x)) AS foo;
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+CREATE STATISTICS tst ON a FROM foo NATURAL JOIN bar;
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+CREATE STATISTICS tst ON a FROM (SELECT * FROM ext_stats_test) AS foo;
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+CREATE STATISTICS tst ON a FROM ext_stats_test s TABLESAMPLE system (x);
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+CREATE STATISTICS tst ON a FROM XMLTABLE('foo' PASSING 'bar' COLUMNS a text);
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+CREATE STATISTICS tst ON a FROM JSON_TABLE(jsonb '123', '$' COLUMNS (item int));
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+CREATE FUNCTION tftest(int) returns table(a int, b int) as $$
+SELECT $1, $1+i FROM generate_series(1,5) g(i);
+$$ LANGUAGE sql IMMUTABLE STRICT;
+CREATE STATISTICS alt_stat2 ON a FROM tftest(1);
+ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
+DROP FUNCTION tftest;
 -- incorrect expressions
 CREATE STATISTICS tst ON (y) FROM ext_stats_test; -- single column reference
 ERROR:  extended statistics require at least 2 columns
@@ -103,6 +122,20 @@ ALTER STATISTICS ab1_a_b_stats RENAME TO ab1_a_b_stats_new;
 ERROR:  must be owner of statistics object ab1_a_b_stats
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_stats_ext;
+CREATE STATISTICS pg_temp.stats_ext_temp ON a, b FROM ab1;
+SELECT regexp_replace(pg_describe_object(tableoid, oid, 0),
+                      'pg_temp_[0-9]*', 'pg_temp_REDACTED') AS descr,
+       pg_statistics_obj_is_visible(oid) AS visible
+  FROM pg_statistic_ext
+ WHERE stxname = 'stats_ext_temp';
+                       descr                       | visible 
+---------------------------------------------------+---------
+ statistics object pg_temp_REDACTED.stats_ext_temp | f
+(1 row)
+
+DROP STATISTICS stats_ext_temp;  -- shall fail
+ERROR:  statistics object "stats_ext_temp" does not exist
+DROP STATISTICS pg_temp.stats_ext_temp;
 CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
 NOTICE:  statistics object "ab1_a_b_stats" already exists, skipping
 DROP STATISTICS ab1_a_b_stats;
@@ -163,7 +196,10 @@ Statistics objects:
     "public.ab1_a_b_stats" ON a, b FROM ab1; STATISTICS 0
 
 ANALYZE ab1;
-SELECT stxname, stxdndistinct, stxddependencies, stxdmcv, stxdinherit
+SELECT stxname,
+       replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct,
+       replace(d.stxddependencies, '}, ', E'},\n') AS stxddependencies,
+       stxdmcv, stxdinherit
   FROM pg_statistic_ext s LEFT JOIN pg_statistic_ext_data d ON (d.stxoid = s.oid)
  WHERE s.stxname = 'ab1_a_b_stats';
     stxname    | stxdndistinct | stxddependencies | stxdmcv | stxdinherit 
@@ -443,13 +479,16 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 -- correct command
 CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                    stxdndistinct                    
----------+-----------------------------------------------------
- {d,f,m} | {"3, 4": 11, "3, 6": 11, "4, 6": 11, "3, 4, 6": 11}
+ stxkind |                stxdndistinct                
+---------+---------------------------------------------
+ {d,f,m} | [{"attributes": [3, 4], "ndistinct": 11},  +
+         | {"attributes": [3, 6], "ndistinct": 11},   +
+         | {"attributes": [4, 6], "ndistinct": 11},   +
+         | {"attributes": [3, 4, 6], "ndistinct": 11}]
 (1 row)
 
 -- minor improvement, make sure the ctid does not break the matching
@@ -525,13 +564,16 @@ INSERT INTO ndistinct (a, b, c, filler1)
             mod(i,23) || ' dollars and zero cents'
        FROM generate_series(1,1000) s(i);
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                      stxdndistinct                       
----------+----------------------------------------------------------
- {d,f,m} | {"3, 4": 221, "3, 6": 247, "4, 6": 323, "3, 4, 6": 1000}
+ stxkind |                 stxdndistinct                 
+---------+-----------------------------------------------
+ {d,f,m} | [{"attributes": [3, 4], "ndistinct": 221},   +
+         | {"attributes": [3, 6], "ndistinct": 247},    +
+         | {"attributes": [4, 6], "ndistinct": 323},    +
+         | {"attributes": [3, 4, 6], "ndistinct": 1000}]
 (1 row)
 
 -- correct estimates
@@ -590,7 +632,7 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 (1 row)
 
 DROP STATISTICS s10;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -674,13 +716,16 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 
 CREATE STATISTICS s10 (ndistinct) ON (a+1), (b+100), (2*c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                           stxdndistinct                           
----------+-------------------------------------------------------------------
- {d,e}   | {"-1, -2": 221, "-1, -3": 247, "-2, -3": 323, "-1, -2, -3": 1000}
+ stxkind |                  stxdndistinct                   
+---------+--------------------------------------------------
+ {d,e}   | [{"attributes": [-1, -2], "ndistinct": 221},    +
+         | {"attributes": [-1, -3], "ndistinct": 247},     +
+         | {"attributes": [-2, -3], "ndistinct": 323},     +
+         | {"attributes": [-1, -2, -3], "ndistinct": 1000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY (a+1), (b+100)');
@@ -723,13 +768,16 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
 
 CREATE STATISTICS s10 (ndistinct) ON a, b, (2*c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                        stxdndistinct                        
----------+-------------------------------------------------------------
- {d,e}   | {"3, 4": 221, "3, -1": 247, "4, -1": 323, "3, 4, -1": 1000}
+ stxkind |                 stxdndistinct                  
+---------+------------------------------------------------
+ {d,e}   | [{"attributes": [3, 4], "ndistinct": 221},    +
+         | {"attributes": [3, -1], "ndistinct": 247},    +
+         | {"attributes": [4, -1], "ndistinct": 323},    +
+         | {"attributes": [3, 4, -1], "ndistinct": 1000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
@@ -1280,10 +1328,14 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
 -- print the detected dependencies
-SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
-                                                dependencies                                                
-------------------------------------------------------------------------------------------------------------
- {"3 => 4": 1.000000, "3 => 6": 1.000000, "4 => 6": 1.000000, "3, 4 => 6": 1.000000, "3, 6 => 4": 1.000000}
+SELECT replace(dependencies, '}, ', E'},\n') AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+                         dependencies                         
+--------------------------------------------------------------
+ [{"attributes": [3], "dependency": 4, "degree": 1.000000},  +
+ {"attributes": [3], "dependency": 6, "degree": 1.000000},   +
+ {"attributes": [4], "dependency": 6, "degree": 1.000000},   +
+ {"attributes": [3, 4], "dependency": 6, "degree": 1.000000},+
+ {"attributes": [3, 6], "dependency": 4, "degree": 1.000000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
@@ -1622,10 +1674,14 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 CREATE STATISTICS func_deps_stat (dependencies) ON (a * 2), upper(b), (c + 1) FROM functional_dependencies;
 ANALYZE functional_dependencies;
 -- print the detected dependencies
-SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
-                                                      dependencies                                                      
-------------------------------------------------------------------------------------------------------------------------
- {"-1 => -2": 1.000000, "-1 => -3": 1.000000, "-2 => -3": 1.000000, "-1, -2 => -3": 1.000000, "-1, -3 => -2": 1.000000}
+SELECT replace(dependencies, '}, ', E'},\n') AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+                          dependencies                           
+-----------------------------------------------------------------
+ [{"attributes": [-1], "dependency": -2, "degree": 1.000000},   +
+ {"attributes": [-1], "dependency": -3, "degree": 1.000000},    +
+ {"attributes": [-2], "dependency": -3, "degree": 1.000000},    +
+ {"attributes": [-1, -2], "dependency": -3, "degree": 1.000000},+
+ {"attributes": [-1, -3], "dependency": -2, "degree": 1.000000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1''');
@@ -3275,9 +3331,17 @@ CREATE FUNCTION op_leak(int, int) RETURNS bool
     LANGUAGE plpgsql;
 CREATE OPERATOR <<< (procedure = op_leak, leftarg = int, rightarg = int,
                      restrict = scalarltsel);
+CREATE FUNCTION op_leak(record, record) RETURNS bool
+    AS 'BEGIN RAISE NOTICE ''op_leak => %, %'', $1, $2; RETURN $1 < $2; END'
+    LANGUAGE plpgsql;
+CREATE OPERATOR <<< (procedure = op_leak, leftarg = record, rightarg = record,
+                     restrict = scalarltsel);
 SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Permission denied
 ERROR:  permission denied for table priv_test_tbl
-SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 OR b <<< 0;
+SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 OR b <<< 0; -- Permission denied
+ERROR:  permission denied for table priv_test_tbl
+SELECT * FROM tststats.priv_test_tbl t
+ WHERE a <<< 0 AND (b <<< 0 OR t.* <<< (1, 1) IS NOT NULL); -- Permission denied
 ERROR:  permission denied for table priv_test_tbl
 DELETE FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Permission denied
 ERROR:  permission denied for table priv_test_tbl
@@ -3298,10 +3362,17 @@ SELECT * FROM tststats.priv_test_view WHERE a <<< 0 OR b <<< 0; -- Should not le
 ---+---
 (0 rows)
 
+SELECT * FROM tststats.priv_test_view t
+ WHERE a <<< 0 AND (b <<< 0 OR t.* <<< (1, 1) IS NOT NULL); -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
 DELETE FROM tststats.priv_test_view WHERE a <<< 0 AND b <<< 0; -- Should not leak
 -- Grant table access, but hide all data with RLS
 RESET SESSION AUTHORIZATION;
 ALTER TABLE tststats.priv_test_tbl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY priv_test_tbl_pol ON tststats.priv_test_tbl USING (2 * a < 0);
 GRANT SELECT, DELETE ON tststats.priv_test_tbl TO regress_stats_user1;
 -- Should now have direct table access, but see nothing and leak nothing
 SET SESSION AUTHORIZATION regress_stats_user1;
@@ -3310,12 +3381,57 @@ SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Should not le
 ---+---
 (0 rows)
 
-SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 OR b <<< 0;
+SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 OR b <<< 0; -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM tststats.priv_test_tbl t
+ WHERE a <<< 0 AND (b <<< 0 OR t.* <<< (1, 1) IS NOT NULL); -- Should not leak
  a | b 
 ---+---
 (0 rows)
 
 DELETE FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Should not leak
+-- Create plain inheritance parent table with no access permissions
+RESET SESSION AUTHORIZATION;
+CREATE TABLE tststats.priv_test_parent_tbl (a int, b int);
+ALTER TABLE tststats.priv_test_tbl INHERIT tststats.priv_test_parent_tbl;
+-- Should not have access to parent, and should leak nothing
+SET SESSION AUTHORIZATION regress_stats_user1;
+SELECT * FROM tststats.priv_test_parent_tbl WHERE a <<< 0 AND b <<< 0; -- Permission denied
+ERROR:  permission denied for table priv_test_parent_tbl
+SELECT * FROM tststats.priv_test_parent_tbl WHERE a <<< 0 OR b <<< 0; -- Permission denied
+ERROR:  permission denied for table priv_test_parent_tbl
+SELECT * FROM tststats.priv_test_parent_tbl t
+ WHERE a <<< 0 AND (b <<< 0 OR t.* <<< (1, 1) IS NOT NULL); -- Permission denied
+ERROR:  permission denied for table priv_test_parent_tbl
+DELETE FROM tststats.priv_test_parent_tbl WHERE a <<< 0 AND b <<< 0; -- Permission denied
+ERROR:  permission denied for table priv_test_parent_tbl
+-- Grant table access to parent, but hide all data with RLS
+RESET SESSION AUTHORIZATION;
+ALTER TABLE tststats.priv_test_parent_tbl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY priv_test_parent_tbl_pol ON tststats.priv_test_parent_tbl USING (2 * a < 0);
+GRANT SELECT, DELETE ON tststats.priv_test_parent_tbl TO regress_stats_user1;
+-- Should now have direct table access to parent, but see nothing and leak nothing
+SET SESSION AUTHORIZATION regress_stats_user1;
+SELECT * FROM tststats.priv_test_parent_tbl WHERE a <<< 0 AND b <<< 0; -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM tststats.priv_test_parent_tbl WHERE a <<< 0 OR b <<< 0; -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM tststats.priv_test_parent_tbl t
+ WHERE a <<< 0 AND (b <<< 0 OR t.* <<< (1, 1) IS NOT NULL); -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
+DELETE FROM tststats.priv_test_parent_tbl WHERE a <<< 0 AND b <<< 0; -- Should not leak
 -- privilege checks for pg_stats_ext and pg_stats_ext_exprs
 RESET SESSION AUTHORIZATION;
 CREATE TABLE stats_ext_tbl (id INT PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY, col TEXT);
@@ -3358,15 +3474,55 @@ SELECT statistics_name, most_common_vals FROM pg_stats_ext_exprs x
  s_expr          | {1}
 (2 rows)
 
+-- CREATE STATISTICS checks for CREATE on the schema
+RESET SESSION AUTHORIZATION;
+CREATE SCHEMA sts_sch1 CREATE TABLE sts_sch1.tbl (a INT, b INT, c INT GENERATED ALWAYS AS (b * 2) STORED);
+CREATE SCHEMA sts_sch2;
+GRANT USAGE ON SCHEMA sts_sch1, sts_sch2 TO regress_stats_user1;
+ALTER TABLE sts_sch1.tbl OWNER TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b, c FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch1
+CREATE STATISTICS sts_sch2.fail ON a, b, c FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch2
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON SCHEMA sts_sch1 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b, c FROM sts_sch1.tbl;
+CREATE STATISTICS sts_sch2.fail ON a, b, c FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch2
+RESET SESSION AUTHORIZATION;
+REVOKE CREATE ON SCHEMA sts_sch1 FROM regress_stats_user1;
+GRANT CREATE ON SCHEMA sts_sch2 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b, c FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch1
+CREATE STATISTICS sts_sch2.pass1 ON a, b, c FROM sts_sch1.tbl;
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON SCHEMA sts_sch1, sts_sch2 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b, c FROM sts_sch1.tbl;
+CREATE STATISTICS sts_sch2.pass2 ON a, b, c FROM sts_sch1.tbl;
+-- re-creating statistics via ALTER TABLE bypasses checks for CREATE on schema
+RESET SESSION AUTHORIZATION;
+REVOKE CREATE ON SCHEMA sts_sch1, sts_sch2 FROM regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+ALTER TABLE sts_sch1.tbl ALTER COLUMN a TYPE SMALLINT;
+ALTER TABLE sts_sch1.tbl ALTER COLUMN c SET EXPRESSION AS (a * 3);
 -- Tidy up
 DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
+DROP OPERATOR <<< (record, record);
+DROP FUNCTION op_leak(record, record);
 RESET SESSION AUTHORIZATION;
 DROP TABLE stats_ext_tbl;
 DROP SCHEMA tststats CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table tststats.priv_test_tbl
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table tststats.priv_test_parent_tbl
+drop cascades to table tststats.priv_test_tbl
 drop cascades to view tststats.priv_test_view
+DROP SCHEMA sts_sch1, sts_sch2 CASCADE;
+NOTICE:  drop cascades to table sts_sch1.tbl
 DROP USER regress_stats_user1;
 CREATE TABLE grouping_unique (x integer);
 INSERT INTO grouping_unique (x) SELECT gs FROM generate_series(1,1000) AS gs;
@@ -3455,4 +3611,20 @@ SELECT FROM sb_1 LEFT JOIN sb_2
 
 RESET enable_nestloop;
 RESET enable_mergejoin;
+-- Check that we can use statistics on a bool-valued function.
+SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE numeric_lt(y, 1.0)');
+ estimated | actual 
+-----------+--------
+      3333 |    196
+(1 row)
+
+CREATE STATISTICS extstat_sb_2_small ON numeric_lt(y, 1.0) FROM sb_2;
+ANALYZE sb_2;
+SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE numeric_lt(y, 1.0)');
+ estimated | actual 
+-----------+--------
+       196 |    196
+(1 row)
+
+-- Tidy up
 DROP TABLE sb_1, sb_2 CASCADE;

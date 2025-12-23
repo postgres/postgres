@@ -21,12 +21,12 @@
 #include <math.h>
 #include <unistd.h>
 
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/system_fk_info.h"
-#include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "common/keywords.h"
 #include "funcapi.h"
@@ -186,6 +186,20 @@ pg_num_nonnulls(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(nargs - nulls);
 }
 
+/*
+ * error_on_null()
+ *	Check if the input is the NULL value
+ */
+Datum
+pg_error_on_null(PG_FUNCTION_ARGS)
+{
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("null value not allowed")));
+
+	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+}
 
 /*
  * current_database()
@@ -301,66 +315,12 @@ Datum
 pg_tablespace_location(PG_FUNCTION_ARGS)
 {
 	Oid			tablespaceOid = PG_GETARG_OID(0);
-	char		sourcepath[MAXPGPATH];
-	char		targetpath[MAXPGPATH];
-	int			rllen;
-	struct stat st;
+	char	   *tablespaceLoc;
 
-	/*
-	 * It's useful to apply this function to pg_class.reltablespace, wherein
-	 * zero means "the database's default tablespace".  So, rather than
-	 * throwing an error for zero, we choose to assume that's what is meant.
-	 */
-	if (tablespaceOid == InvalidOid)
-		tablespaceOid = MyDatabaseTableSpace;
+	/* Get LOCATION string from its OID */
+	tablespaceLoc = get_tablespace_location(tablespaceOid);
 
-	/*
-	 * Return empty string for the cluster's default tablespaces
-	 */
-	if (tablespaceOid == DEFAULTTABLESPACE_OID ||
-		tablespaceOid == GLOBALTABLESPACE_OID)
-		PG_RETURN_TEXT_P(cstring_to_text(""));
-
-	/*
-	 * Find the location of the tablespace by reading the symbolic link that
-	 * is in pg_tblspc/<oid>.
-	 */
-	snprintf(sourcepath, sizeof(sourcepath), "%s/%u", PG_TBLSPC_DIR, tablespaceOid);
-
-	/*
-	 * Before reading the link, check if the source path is a link or a
-	 * junction point.  Note that a directory is possible for a tablespace
-	 * created with allow_in_place_tablespaces enabled.  If a directory is
-	 * found, a relative path to the data directory is returned.
-	 */
-	if (lstat(sourcepath, &st) < 0)
-	{
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not stat file \"%s\": %m",
-						sourcepath)));
-	}
-
-	if (!S_ISLNK(st.st_mode))
-		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
-
-	/*
-	 * In presence of a link or a junction point, return the path pointing to.
-	 */
-	rllen = readlink(sourcepath, targetpath, sizeof(targetpath));
-	if (rllen < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read symbolic link \"%s\": %m",
-						sourcepath)));
-	if (rllen >= sizeof(targetpath))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("symbolic link \"%s\" target is too long",
-						sourcepath)));
-	targetpath[rllen] = '\0';
-
-	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
+	PG_RETURN_TEXT_P(cstring_to_text(tablespaceLoc));
 }
 
 /*
@@ -370,7 +330,20 @@ Datum
 pg_sleep(PG_FUNCTION_ARGS)
 {
 	float8		secs = PG_GETARG_FLOAT8(0);
-	float8		endtime;
+	int64		usecs;
+	TimestampTz endtime;
+
+	/*
+	 * Convert the delay to int64 microseconds, rounding up any fraction, and
+	 * silently limiting it to PG_INT64_MAX/2 microseconds (about 150K years)
+	 * to ensure the computation of endtime won't overflow.  Historically
+	 * we've treated NaN as "no wait", not an error, so keep that behavior.
+	 */
+	if (isnan(secs) || secs <= 0.0)
+		PG_RETURN_VOID();
+	secs *= USECS_PER_SEC;		/* we assume overflow will produce +Inf */
+	secs = ceil(secs);			/* round up any fractional microsecond */
+	usecs = (int64) Min(secs, (float8) (PG_INT64_MAX / 2));
 
 	/*
 	 * We sleep using WaitLatch, to ensure that we'll wake up promptly if an
@@ -384,22 +357,20 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * less than the specified time when WaitLatch is terminated early by a
 	 * non-query-canceling signal such as SIGHUP.
 	 */
-#define GetNowFloat()	((float8) GetCurrentTimestamp() / 1000000.0)
-
-	endtime = GetNowFloat() + secs;
+	endtime = GetCurrentTimestamp() + usecs;
 
 	for (;;)
 	{
-		float8		delay;
+		TimestampTz delay;
 		long		delay_ms;
 
 		CHECK_FOR_INTERRUPTS();
 
-		delay = endtime - GetNowFloat();
-		if (delay >= 600.0)
+		delay = endtime - GetCurrentTimestamp();
+		if (delay >= 600 * USECS_PER_SEC)
 			delay_ms = 600000;
-		else if (delay > 0.0)
-			delay_ms = (long) ceil(delay * 1000.0);
+		else if (delay > 0)
+			delay_ms = (long) ((delay + 999) / 1000);
 		else
 			break;
 
@@ -516,7 +487,7 @@ pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
 		 * array_in, and it wouldn't be very efficient if we could.  Fill an
 		 * FmgrInfo to use for the call.
 		 */
-		arrayinp = (FmgrInfo *) palloc(sizeof(FmgrInfo));
+		arrayinp = palloc_object(FmgrInfo);
 		fmgr_info(F_ARRAY_IN, arrayinp);
 		funcctx->user_fctx = arrayinp;
 

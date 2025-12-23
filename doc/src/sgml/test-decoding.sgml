@@ -25,16 +25,16 @@
 
 <programlisting>
 postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'include-xids', '0');
-   lsn     | xid |                       data
------------+-----+--------------------------------------------------
- 0/16D30F8 | 691 | BEGIN
- 0/16D32A0 | 691 | table public.data: INSERT: id[int4]:2 data[text]:'arg'
- 0/16D32A0 | 691 | table public.data: INSERT: id[int4]:3 data[text]:'demo'
- 0/16D32A0 | 691 | COMMIT
- 0/16D32D8 | 692 | BEGIN
- 0/16D3398 | 692 | table public.data: DELETE: id[int4]:2
- 0/16D3398 | 692 | table public.data: DELETE: id[int4]:3
- 0/16D3398 | 692 | COMMIT
+    lsn     | xid |                       data
+------------+-----+--------------------------------------------------
+ 0/016D30F8 | 691 | BEGIN
+ 0/016D32A0 | 691 | table public.data: INSERT: id[int4]:2 data[text]:'arg'
+ 0/016D32A0 | 691 | table public.data: INSERT: id[int4]:3 data[text]:'demo'
+ 0/016D32A0 | 691 | COMMIT
+ 0/016D32D8 | 692 | BEGIN
+ 0/016D3398 | 692 | table public.data: DELETE: id[int4]:2
+ 0/016D3398 | 692 | table public.data: DELETE: id[int4]:3
+ 0/016D3398 | 692 | COMMIT
 (8 rows)
 </programlisting>
  </para>
@@ -45,18 +45,18 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'i
 
 <programlisting>
 postgres[33712]=#* SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'stream-changes', '1');
-    lsn    | xid |                       data
------------+-----+--------------------------------------------------
- 0/16B21F8 | 503 | opening a streamed block for transaction TXN 503
- 0/16B21F8 | 503 | streaming change for TXN 503
- 0/16B2300 | 503 | streaming change for TXN 503
- 0/16B2408 | 503 | streaming change for TXN 503
- 0/16BEBA0 | 503 | closing a streamed block for transaction TXN 503
- 0/16B21F8 | 503 | opening a streamed block for transaction TXN 503
- 0/16BECA8 | 503 | streaming change for TXN 503
- 0/16BEDB0 | 503 | streaming change for TXN 503
- 0/16BEEB8 | 503 | streaming change for TXN 503
- 0/16BEBA0 | 503 | closing a streamed block for transaction TXN 503
+    lsn     | xid |                       data
+------------+-----+--------------------------------------------------
+ 0/016B21F8 | 503 | opening a streamed block for transaction TXN 503
+ 0/016B21F8 | 503 | streaming change for TXN 503
+ 0/016B2300 | 503 | streaming change for TXN 503
+ 0/016B2408 | 503 | streaming change for TXN 503
+ 0/016BEBA0 | 503 | closing a streamed block for transaction TXN 503
+ 0/016B21F8 | 503 | opening a streamed block for transaction TXN 503
+ 0/016BECA8 | 503 | streaming change for TXN 503
+ 0/016BEDB0 | 503 | streaming change for TXN 503
+ 0/016BEEB8 | 503 | streaming change for TXN 503
+ 0/016BEBA0 | 503 | closing a streamed block for transaction TXN 503
 (10 rows)
 </programlisting>
  </para>

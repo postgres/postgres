@@ -542,11 +542,20 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	/* Emit the message to the right places */
 	EmitErrorReport();
 
-	/* Now free up subsidiary data attached to stack entry, and release it */
-	FreeErrorDataContents(edata);
-	errordata_stack_depth--;
+	/*
+	 * If this is the outermost recursion level, we can clean up by resetting
+	 * ErrorContext altogether (compare FlushErrorState), which is good
+	 * because it cleans up any random leakages that might have occurred in
+	 * places such as context callback functions.  If we're nested, we can
+	 * only safely remove the subsidiary data of the current stack entry.
+	 */
+	if (errordata_stack_depth == 0 && recursion_depth == 1)
+		MemoryContextReset(ErrorContext);
+	else
+		FreeErrorDataContents(edata);
 
-	/* Exit error-handling context */
+	/* Release stack entry and exit error-handling context */
+	errordata_stack_depth--;
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 
@@ -1128,12 +1137,15 @@ set_backtrace(ErrorData *edata, int num_skip)
 
 		nframes = backtrace(buf, lengthof(buf));
 		strfrms = backtrace_symbols(buf, nframes);
-		if (strfrms == NULL)
-			return;
-
-		for (int i = num_skip; i < nframes; i++)
-			appendStringInfo(&errtrace, "\n%s", strfrms[i]);
-		free(strfrms);
+		if (strfrms != NULL)
+		{
+			for (int i = num_skip; i < nframes; i++)
+				appendStringInfo(&errtrace, "\n%s", strfrms[i]);
+			free(strfrms);
+		}
+		else
+			appendStringInfoString(&errtrace,
+								   "insufficient memory for backtrace generation");
 	}
 #else
 	appendStringInfoString(&errtrace,
@@ -1762,7 +1774,7 @@ CopyErrorData(void)
 	Assert(CurrentMemoryContext != ErrorContext);
 
 	/* Copy the struct itself */
-	newedata = (ErrorData *) palloc(sizeof(ErrorData));
+	newedata = palloc_object(ErrorData);
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/*
@@ -2956,12 +2968,12 @@ log_status_format(StringInfo buf, const char *format, ErrorData *edata)
 				{
 					char		strfbuf[128];
 
-					snprintf(strfbuf, sizeof(strfbuf) - 1, INT64_HEX_FORMAT ".%x",
+					snprintf(strfbuf, sizeof(strfbuf) - 1, "%" PRIx64 ".%x",
 							 MyStartTime, MyProcPid);
 					appendStringInfo(buf, "%*s", padding, strfbuf);
 				}
 				else
-					appendStringInfo(buf, INT64_HEX_FORMAT ".%x", MyStartTime, MyProcPid);
+					appendStringInfo(buf, "%" PRIx64 ".%x", MyStartTime, MyProcPid);
 				break;
 			case 'p':
 				if (padding != 0)
@@ -3783,13 +3795,24 @@ write_stderr(const char *fmt,...)
 {
 	va_list		ap;
 
+	va_start(ap, fmt);
+	vwrite_stderr(fmt, ap);
+	va_end(ap);
+}
+
+
+/*
+ * Write errors to stderr (or by equal means when stderr is
+ * not available) - va_list version
+ */
+void
+vwrite_stderr(const char *fmt, va_list ap)
+{
 #ifdef WIN32
 	char		errbuf[2048];	/* Arbitrary size? */
 #endif
 
 	fmt = _(fmt);
-
-	va_start(ap, fmt);
 #ifndef WIN32
 	/* On Unix, we just fprintf to stderr */
 	vfprintf(stderr, fmt, ap);
@@ -3812,5 +3835,4 @@ write_stderr(const char *fmt,...)
 		fflush(stderr);
 	}
 #endif
-	va_end(ap);
 }

@@ -179,7 +179,7 @@ system_time_samplescangetsamplesize(PlannerInfo *root,
 static void
 system_time_initsamplescan(SampleScanState *node, int eflags)
 {
-	node->tsm_state = palloc0(sizeof(SystemTimeSamplerData));
+	node->tsm_state = palloc0_object(SystemTimeSamplerData);
 	/* Note the above leaves tsm_state->step equal to zero */
 }
 

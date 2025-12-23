@@ -693,7 +693,7 @@ static
 const char *
 get_expectfile(const char *testname, const char *file)
 {
-	char	   *file_type;
+	const char *file_type;
 	_resultmap *rm;
 
 	/*
@@ -1968,10 +1968,10 @@ create_database(const char *dbname)
 	 */
 	if (encoding)
 		psql_add_command(buf, "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'%s", dbname, encoding,
-						 (nolocale) ? " LOCALE='C'" : "");
+						 (nolocale) ? " LOCALE='C' LOCALE_PROVIDER='builtin'" : "");
 	else
 		psql_add_command(buf, "CREATE DATABASE \"%s\" TEMPLATE=template0%s", dbname,
-						 (nolocale) ? " LOCALE='C'" : "");
+						 (nolocale) ? " LOCALE='C' LOCALE_PROVIDER='builtin'" : "");
 	psql_add_command(buf,
 					 "ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
 					 "ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
@@ -2401,6 +2401,7 @@ regression_main(int argc, char *argv[],
 
 		fputs("\n# Configuration added by pg_regress\n\n", pg_conf);
 		fputs("log_autovacuum_min_duration = 0\n", pg_conf);
+		fputs("log_autoanalyze_min_duration = 0\n", pg_conf);
 		fputs("log_checkpoints = on\n", pg_conf);
 		fputs("log_line_prefix = '%m %b[%p] %q%a '\n", pg_conf);
 		fputs("log_lock_waits = on\n", pg_conf);

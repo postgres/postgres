@@ -30,5 +30,7 @@ extern void add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 										SpecialJoinInfo *sjinfo);
 extern bool contain_placeholder_references_to(PlannerInfo *root, Node *clause,
 											  int relid);
+extern Relids get_placeholder_nulling_relids(PlannerInfo *root,
+											 PlaceHolderInfo *phinfo);
 
 #endif							/* PLACEHOLDER_H */

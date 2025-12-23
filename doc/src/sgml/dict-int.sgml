@@ -80,7 +80,7 @@ ALTER TEXT SEARCH DICTIONARY
    To test the dictionary, you can try
 
 <programlisting>
-mydb# select ts_lexize('intdict', '12345678');
+mydb# SELECT ts_lexize('intdict', '12345678');
  ts_lexize
 -----------
  {123456}

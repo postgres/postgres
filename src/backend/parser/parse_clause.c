@@ -733,7 +733,7 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 	tf->ordinalitycol = -1;
 
 	/* Process column specs */
-	names = palloc(sizeof(char *) * list_length(rtf->columns));
+	names = palloc_array(char *, list_length(rtf->columns));
 
 	colno = 0;
 	foreach(col, rtf->columns)
@@ -1573,7 +1573,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		{
 			ParseNamespaceItem *jnsitem;
 
-			jnsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+			jnsitem = palloc_object(ParseNamespaceItem);
 			jnsitem->p_names = j->join_using_alias;
 			jnsitem->p_rte = nsitem->p_rte;
 			jnsitem->p_rtindex = nsitem->p_rtindex;
@@ -2598,6 +2598,9 @@ transformGroupingSet(List **flatresult,
  * GROUP BY items will be added to the targetlist (as resjunk columns)
  * if not already present, so the targetlist must be passed by reference.
  *
+ * If GROUP BY ALL is specified, the groupClause will be inferred to be all
+ * non-aggregate, non-window expressions in the targetlist.
+ *
  * This is also used for window PARTITION BY clauses (which act almost the
  * same, but are always interpreted per SQL99 rules).
  *
@@ -2622,6 +2625,7 @@ transformGroupingSet(List **flatresult,
  *
  * pstate		ParseState
  * grouplist	clause to transform
+ * groupByAll	is this a GROUP BY ALL statement?
  * groupingSets reference to list to contain the grouping set tree
  * targetlist	reference to TargetEntry list
  * sortClause	ORDER BY clause (SortGroupClause nodes)
@@ -2629,7 +2633,8 @@ transformGroupingSet(List **flatresult,
  * useSQL99		SQL99 rather than SQL92 syntax
  */
 List *
-transformGroupClause(ParseState *pstate, List *grouplist, List **groupingSets,
+transformGroupClause(ParseState *pstate, List *grouplist, bool groupByAll,
+					 List **groupingSets,
 					 List **targetlist, List *sortClause,
 					 ParseExprKind exprKind, bool useSQL99)
 {
@@ -2639,6 +2644,63 @@ transformGroupClause(ParseState *pstate, List *grouplist, List **groupingSets,
 	ListCell   *gl;
 	bool		hasGroupingSets = false;
 	Bitmapset  *seen_local = NULL;
+
+	/* Handle GROUP BY ALL */
+	if (groupByAll)
+	{
+		/* There cannot have been any explicit grouplist items */
+		Assert(grouplist == NIL);
+
+		/* Iterate over targets, adding acceptable ones to the result list */
+		foreach_ptr(TargetEntry, tle, *targetlist)
+		{
+			/* Ignore junk TLEs */
+			if (tle->resjunk)
+				continue;
+
+			/*
+			 * TLEs containing aggregates are not okay to add to GROUP BY
+			 * (compare checkTargetlistEntrySQL92).  But the SQL standard
+			 * directs us to skip them, so it's fine.
+			 */
+			if (pstate->p_hasAggs &&
+				contain_aggs_of_level((Node *) tle->expr, 0))
+				continue;
+
+			/*
+			 * Likewise, TLEs containing window functions are not okay to add
+			 * to GROUP BY.  At this writing, the SQL standard is silent on
+			 * what to do with them, but by analogy to aggregates we'll just
+			 * skip them.
+			 */
+			if (pstate->p_hasWindowFuncs &&
+				contain_windowfuncs((Node *) tle->expr))
+				continue;
+
+			/*
+			 * Otherwise, add the TLE to the result using default sort/group
+			 * semantics.  We specify the parse location as the TLE's
+			 * location, despite the comment for addTargetToGroupList
+			 * discouraging that.  The only other thing we could point to is
+			 * the ALL keyword, which seems unhelpful when there are multiple
+			 * TLEs.
+			 */
+			result = addTargetToGroupList(pstate, tle,
+										  result, *targetlist,
+										  exprLocation((Node *) tle->expr));
+		}
+
+		/* If we found any acceptable targets, we're done */
+		if (result != NIL)
+			return result;
+
+		/*
+		 * Otherwise, the SQL standard says to treat it like "GROUP BY ()".
+		 * Build a representation of that, and let the rest of this function
+		 * handle it.
+		 */
+		grouplist = list_make1(makeGroupingSet(GROUPING_SET_EMPTY, NIL, -1));
+	}
 
 	/*
 	 * Recursively flatten implicit RowExprs. (Technically this is only needed
@@ -2818,6 +2880,7 @@ transformWindowDefinitions(ParseState *pstate,
 										  true /* force SQL99 rules */ );
 		partitionClause = transformGroupClause(pstate,
 											   windef->partitionClause,
+											   false /* not GROUP BY ALL */ ,
 											   NULL,
 											   targetlist,
 											   orderClause,
@@ -3214,24 +3277,32 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 		 * Raw grammar re-uses CREATE INDEX infrastructure for unique index
 		 * inference clause, and so will accept opclasses by name and so on.
 		 *
-		 * Make no attempt to match ASC or DESC ordering or NULLS FIRST/NULLS
-		 * LAST ordering, since those are not significant for inference
-		 * purposes (any unique index matching the inference specification in
-		 * other regards is accepted indifferently).  Actively reject this as
-		 * wrong-headed.
+		 * Make no attempt to match ASC or DESC ordering, NULLS FIRST/NULLS
+		 * LAST ordering or opclass options, since those are not significant
+		 * for inference purposes (any unique index matching the inference
+		 * specification in other regards is accepted indifferently). Actively
+		 * reject this as wrong-headed.
 		 */
 		if (ielem->ordering != SORTBY_DEFAULT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("ASC/DESC is not allowed in ON CONFLICT clause"),
+					 errmsg("%s is not allowed in ON CONFLICT clause",
+							"ASC/DESC"),
 					 parser_errposition(pstate,
 										exprLocation((Node *) infer))));
 		if (ielem->nulls_ordering != SORTBY_NULLS_DEFAULT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("NULLS FIRST/LAST is not allowed in ON CONFLICT clause"),
+					 errmsg("%s is not allowed in ON CONFLICT clause",
+							"NULLS FIRST/LAST"),
 					 parser_errposition(pstate,
 										exprLocation((Node *) infer))));
+		if (ielem->opclassopts)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("operator class options are not allowed in ON CONFLICT clause"),
+					parser_errposition(pstate,
+									   exprLocation((Node *) infer)));
 
 		if (!ielem->expr)
 		{

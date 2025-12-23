@@ -99,15 +99,19 @@ step "merge_bal_pa"
 }
 step "merge_bal_tg"
 {
-  MERGE INTO target_tg t
-  USING (SELECT 1 as key) s
-  ON s.key = t.key
-  WHEN MATCHED AND balance < 100 THEN
-	UPDATE SET balance = balance * 2, val = t.val || ' when1'
-  WHEN MATCHED AND balance < 200 THEN
-	UPDATE SET balance = balance * 4, val = t.val || ' when2'
-  WHEN MATCHED AND balance < 300 THEN
-	UPDATE SET balance = balance * 8, val = t.val || ' when3';
+  WITH t AS (
+    MERGE INTO target_tg t
+    USING (SELECT 1 as key) s
+    ON s.key = t.key
+    WHEN MATCHED AND balance < 100 THEN
+      UPDATE SET balance = balance * 2, val = t.val || ' when1'
+    WHEN MATCHED AND balance < 200 THEN
+      UPDATE SET balance = balance * 4, val = t.val || ' when2'
+    WHEN MATCHED AND balance < 300 THEN
+      UPDATE SET balance = balance * 8, val = t.val || ' when3'
+    RETURNING t.*
+  )
+  SELECT * FROM t;
 }
 
 step "merge_delete"
@@ -142,6 +146,8 @@ setup
   BEGIN ISOLATION LEVEL READ COMMITTED;
 }
 step "update1" { UPDATE target t SET balance = balance + 10, val = t.val || ' updated by update1' WHERE t.key = 1; }
+step "update1_pa" { UPDATE target_pa t SET balance = balance + 10, val = t.val || ' updated by update1_pa' WHERE t.key = 1; }
+step "update1_pa_move" { UPDATE target_pa t SET balance = 210, val = t.val || ' updated by update1_pa_move' WHERE t.key = 1; }
 step "update1_tg" { UPDATE target_tg t SET balance = balance + 10, val = t.val || ' updated by update1_tg' WHERE t.key = 1; }
 step "update2" { UPDATE target t SET status = 's2', val = t.val || ' updated by update2' WHERE t.key = 1; }
 step "update2_tg" { UPDATE target_tg t SET status = 's2', val = t.val || ' updated by update2_tg' WHERE t.key = 1; }
@@ -149,6 +155,10 @@ step "update3" { UPDATE target t SET status = 's3', val = t.val || ' updated by 
 step "update3_tg" { UPDATE target_tg t SET status = 's3', val = t.val || ' updated by update3_tg' WHERE t.key = 1; }
 step "update5" { UPDATE target t SET status = 's5', val = t.val || ' updated by update5' WHERE t.key = 1; }
 step "update5_tg" { UPDATE target_tg t SET status = 's5', val = t.val || ' updated by update5_tg' WHERE t.key = 1; }
+step "update6" { UPDATE target t SET balance = balance - 100, val = t.val || ' updated by update6' WHERE t.key = 1; }
+step "update6_pa" { UPDATE target_pa t SET balance = balance - 100, val = t.val || ' updated by update6_pa' WHERE t.key = 1; }
+step "update6_tg" { UPDATE target_tg t SET balance = balance - 100, val = t.val || ' updated by update6_tg' WHERE t.key = 1; }
+step "update7" { UPDATE target t SET balance = 350, val = t.val || ' updated by update7' WHERE t.key = 1; }
 step "update_bal1" { UPDATE target t SET balance = 50, val = t.val || ' updated by update_bal1' WHERE t.key = 1; }
 step "update_bal1_pa" { UPDATE target_pa t SET balance = 50, val = t.val || ' updated by update_bal1_pa' WHERE t.key = 1; }
 step "update_bal1_tg" { UPDATE target_tg t SET balance = 50, val = t.val || ' updated by update_bal1_tg' WHERE t.key = 1; }
@@ -174,6 +184,18 @@ permutation "update5_tg" "merge_status_tg" "c2" "select1_tg" "c1"
 permutation "update_bal1" "merge_bal" "c2" "select1" "c1"
 permutation "update_bal1_pa" "merge_bal_pa" "c2" "select1_pa" "c1"
 permutation "update_bal1_tg" "merge_bal_tg" "c2" "select1_tg" "c1"
+
+# merge_bal sees row concurrently updated twice and rechecks WHEN conditions, different check passes, so final balance = 140
+permutation "update1" "update6" "merge_bal" "c2" "select1" "c1"
+permutation "update1_pa" "update6_pa" "merge_bal_pa" "c2" "select1_pa" "c1"
+permutation "update1_tg" "update6_tg" "merge_bal_tg" "c2" "select1_tg" "c1"
+
+# merge_bal sees row concurrently updated twice, first update would cause all checks to fail, second update causes different check to pass, so final balance = 2000
+permutation "update7" "update6" "merge_bal" "c2" "select1" "c1"
+
+# merge_bal sees concurrently updated row moved to new partition, so fails
+permutation "update1_pa_move" "merge_bal_pa" "c2" "c1"
+permutation "update1_pa" "update1_pa_move" "merge_bal_pa" "c2" "c1"
 
 # merge_delete sees concurrently updated row and rechecks WHEN conditions, but recheck passes and row is deleted
 permutation "update1" "merge_delete" "c2" "select1" "c1"

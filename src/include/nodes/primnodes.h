@@ -389,14 +389,16 @@ typedef enum ParamKind
 
 typedef struct Param
 {
+	pg_node_attr(custom_query_jumble)
+
 	Expr		xpr;
 	ParamKind	paramkind;		/* kind of parameter. See above */
 	int			paramid;		/* numeric ID for parameter */
 	Oid			paramtype;		/* pg_type OID of parameter's datatype */
 	/* typmod value, if known */
-	int32		paramtypmod pg_node_attr(query_jumble_ignore);
+	int32		paramtypmod;
 	/* OID of collation, or InvalidOid if none */
-	Oid			paramcollid pg_node_attr(query_jumble_ignore);
+	Oid			paramcollid;
 	/* token location, or -1 if unknown */
 	ParseLoc	location;
 } Param;
@@ -577,6 +579,17 @@ typedef struct GroupingFunc
  * Collation information is irrelevant for the query jumbling, as is the
  * internal state information of the node like "winstar" and "winagg".
  */
+
+/*
+ * Null Treatment options. If specified, initially set to PARSER_IGNORE_NULLS
+ * which is then converted to IGNORE_NULLS if the window function allows the
+ * null treatment clause.
+ */
+#define NO_NULLTREATMENT 0
+#define PARSER_IGNORE_NULLS 1
+#define PARSER_RESPECT_NULLS 2
+#define IGNORE_NULLS 3
+
 typedef struct WindowFunc
 {
 	Expr		xpr;
@@ -600,6 +613,8 @@ typedef struct WindowFunc
 	bool		winstar pg_node_attr(query_jumble_ignore);
 	/* is function a simple aggregate? */
 	bool		winagg pg_node_attr(query_jumble_ignore);
+	/* ignore nulls. One of the Null Treatment options */
+	int			ignore_nulls;
 	/* token location, or -1 if unknown */
 	ParseLoc	location;
 } WindowFunc;
@@ -1093,6 +1108,7 @@ typedef struct SubPlan
 	Oid			firstColCollation;	/* Collation of first column of subplan
 									 * result */
 	/* Information about execution strategy: */
+	bool		isInitPlan;		/* true if it's an InitPlan */
 	bool		useHashTable;	/* true to store subselect output in a hash
 								 * table (implies we are doing "IN") */
 	bool		unknownEqFalse; /* true if it's okay to return FALSE when the
@@ -1397,6 +1413,10 @@ typedef struct ArrayExpr
 	List	   *elements pg_node_attr(query_jumble_squash);
 	/* true if elements are sub-arrays */
 	bool		multidims pg_node_attr(query_jumble_ignore);
+	/* location of the start of the elements list */
+	ParseLoc	list_start;
+	/* location of the end of the elements list */
+	ParseLoc	list_end;
 	/* token location, or -1 if unknown */
 	ParseLoc	location;
 } ArrayExpr;

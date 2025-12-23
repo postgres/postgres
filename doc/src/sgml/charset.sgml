@@ -100,7 +100,7 @@ initdb --locale=sv_SE
       <tbody>
        <row>
         <entry><envar>LC_COLLATE</envar></entry>
-        <entry>String sort order</entry>
+        <entry>String sort order (ignored unless the provider is <literal>libc</literal>)</entry>
        </row>
        <row>
         <entry><envar>LC_CTYPE</envar></entry>
@@ -570,13 +570,13 @@ CREATE COLLATION
 
 <screen>
 CREATE COLLATION mycollation5 (provider = icu, deterministic = false, locale = 'en-US-u-kn-ks-level2');
-SELECT 'aB' = 'Ab' COLLATE mycollation5 as result;
+SELECT 'aB' = 'Ab' COLLATE mycollation5 AS result;
  result
 --------
  t
 (1 row)
 
-SELECT 'N-45' &lt; 'N-123' COLLATE mycollation5 as result;
+SELECT 'N-45' &lt; 'N-123' COLLATE mycollation5 AS result;
  result
 --------
  t
@@ -1876,7 +1876,7 @@ ORDER BY c COLLATE ebcdic;
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
-         <entry>National Standard</entry>
+         <entry>National Standard, version 2022</entry>
          <entry>Chinese</entry>
          <entry>No</entry>
          <entry>No</entry>

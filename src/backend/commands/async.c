@@ -446,9 +446,8 @@ static double asyncQueueUsage(void);
 static void asyncQueueFillWarning(void);
 static void SignalBackends(void);
 static void asyncQueueReadAllNotifications(void);
-static bool asyncQueueProcessPageEntries(volatile QueuePosition *current,
+static bool asyncQueueProcessPageEntries(QueuePosition *current,
 										 QueuePosition stop,
-										 char *page_buffer,
 										 Snapshot snapshot);
 static void asyncQueueAdvanceTail(void);
 static void ProcessIncomingNotify(bool flush);
@@ -1419,6 +1418,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 			 */
 			qe.length = QUEUE_PAGESIZE - offset;
 			qe.dboid = InvalidOid;
+			qe.xid = InvalidTransactionId;
 			qe.data[0] = '\0';	/* empty channel */
 			qe.data[1] = '\0';	/* empty payload */
 		}
@@ -1850,16 +1850,9 @@ ProcessNotifyInterrupt(bool flush)
 static void
 asyncQueueReadAllNotifications(void)
 {
-	volatile QueuePosition pos;
+	QueuePosition pos;
 	QueuePosition head;
 	Snapshot	snapshot;
-
-	/* page_buffer must be adequately aligned, so use a union */
-	union
-	{
-		char		buf[QUEUE_PAGESIZE];
-		AsyncQueueEntry align;
-	}			page_buffer;
 
 	/* Fetch current state */
 	LWLockAcquire(NotifyQueueLock, LW_SHARED);
@@ -1920,49 +1913,27 @@ asyncQueueReadAllNotifications(void)
 	 * It is possible that we fail while trying to send a message to our
 	 * frontend (for example, because of encoding conversion failure).  If
 	 * that happens it is critical that we not try to send the same message
-	 * over and over again.  Therefore, we place a PG_TRY block here that will
-	 * forcibly advance our queue position before we lose control to an error.
-	 * (We could alternatively retake NotifyQueueLock and move the position
-	 * before handling each individual message, but that seems like too much
-	 * lock traffic.)
+	 * over and over again.  Therefore, we set ExitOnAnyError to upgrade any
+	 * ERRORs to FATAL, causing the client connection to be closed on error.
+	 *
+	 * We used to only skip over the offending message and try to soldier on,
+	 * but it was somewhat questionable to lose a notification and give the
+	 * client an ERROR instead.  A client application is not be prepared for
+	 * that and can't tell that a notification was missed.  It was also not
+	 * very useful in practice because notifications are often processed while
+	 * a connection is idle and reading a message from the client, and in that
+	 * state, any error is upgraded to FATAL anyway.  Closing the connection
+	 * is a clear signal to the application that it might have missed
+	 * notifications.
 	 */
-	PG_TRY();
 	{
+		bool		save_ExitOnAnyError = ExitOnAnyError;
 		bool		reachedStop;
+
+		ExitOnAnyError = true;
 
 		do
 		{
-			int64		curpage = QUEUE_POS_PAGE(pos);
-			int			curoffset = QUEUE_POS_OFFSET(pos);
-			int			slotno;
-			int			copysize;
-
-			/*
-			 * We copy the data from SLRU into a local buffer, so as to avoid
-			 * holding the SLRU lock while we are examining the entries and
-			 * possibly transmitting them to our frontend.  Copy only the part
-			 * of the page we will actually inspect.
-			 */
-			slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage,
-												InvalidTransactionId);
-			if (curpage == QUEUE_POS_PAGE(head))
-			{
-				/* we only want to read as far as head */
-				copysize = QUEUE_POS_OFFSET(head) - curoffset;
-				if (copysize < 0)
-					copysize = 0;	/* just for safety */
-			}
-			else
-			{
-				/* fetch all the rest of the page */
-				copysize = QUEUE_PAGESIZE - curoffset;
-			}
-			memcpy(page_buffer.buf + curoffset,
-				   NotifyCtl->shared->page_buffer[slotno] + curoffset,
-				   copysize);
-			/* Release lock that we got from SimpleLruReadPage_ReadOnly() */
-			LWLockRelease(SimpleLruGetBankLock(NotifyCtl, curpage));
-
 			/*
 			 * Process messages up to the stop position, end of page, or an
 			 * uncommitted message.
@@ -1978,19 +1949,16 @@ asyncQueueReadAllNotifications(void)
 			 * rewrite pages under us. Especially we don't want to hold a lock
 			 * while sending the notifications to the frontend.
 			 */
-			reachedStop = asyncQueueProcessPageEntries(&pos, head,
-													   page_buffer.buf,
-													   snapshot);
+			reachedStop = asyncQueueProcessPageEntries(&pos, head, snapshot);
 		} while (!reachedStop);
-	}
-	PG_FINALLY();
-	{
+
 		/* Update shared state */
 		LWLockAcquire(NotifyQueueLock, LW_SHARED);
 		QUEUE_BACKEND_POS(MyProcNumber) = pos;
 		LWLockRelease(NotifyQueueLock);
+
+		ExitOnAnyError = save_ExitOnAnyError;
 	}
-	PG_END_TRY();
 
 	/* Done with snapshot */
 	UnregisterSnapshot(snapshot);
@@ -2000,31 +1968,38 @@ asyncQueueReadAllNotifications(void)
  * Fetch notifications from the shared queue, beginning at position current,
  * and deliver relevant ones to my frontend.
  *
- * The current page must have been fetched into page_buffer from shared
- * memory.  (We could access the page right in shared memory, but that
- * would imply holding the SLRU bank lock throughout this routine.)
- *
- * We stop if we reach the "stop" position, or reach a notification from an
- * uncommitted transaction, or reach the end of the page.
- *
  * The function returns true once we have reached the stop position or an
  * uncommitted notification, and false if we have finished with the page.
  * In other words: once it returns true there is no need to look further.
  * The QueuePosition *current is advanced past all processed messages.
  */
 static bool
-asyncQueueProcessPageEntries(volatile QueuePosition *current,
+asyncQueueProcessPageEntries(QueuePosition *current,
 							 QueuePosition stop,
-							 char *page_buffer,
 							 Snapshot snapshot)
 {
+	int64		curpage = QUEUE_POS_PAGE(*current);
+	int			slotno;
+	char	   *page_buffer;
 	bool		reachedStop = false;
 	bool		reachedEndOfPage;
-	AsyncQueueEntry *qe;
+
+	/*
+	 * We copy the entries into a local buffer to avoid holding the SLRU lock
+	 * while we transmit them to our frontend.  The local buffer must be
+	 * adequately aligned.
+	 */
+	alignas(AsyncQueueEntry) char local_buf[QUEUE_PAGESIZE];
+	char	   *local_buf_end = local_buf;
+
+	slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage,
+										InvalidTransactionId);
+	page_buffer = NotifyCtl->shared->page_buffer[slotno];
 
 	do
 	{
 		QueuePosition thisentry = *current;
+		AsyncQueueEntry *qe;
 
 		if (QUEUE_POS_EQUAL(thisentry, stop))
 			break;
@@ -2066,18 +2041,23 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 				reachedStop = true;
 				break;
 			}
-			else if (TransactionIdDidCommit(qe->xid))
+
+			/*
+			 * Quick check for the case that we're not listening on any
+			 * channels, before calling TransactionIdDidCommit().  This makes
+			 * that case a little faster, but more importantly, it ensures
+			 * that if there's a bad entry in the queue for which
+			 * TransactionIdDidCommit() fails for some reason, we can skip
+			 * over it on the first LISTEN in a session, and not get stuck on
+			 * it indefinitely.
+			 */
+			if (listenChannels == NIL)
+				continue;
+
+			if (TransactionIdDidCommit(qe->xid))
 			{
-				/* qe->data is the null-terminated channel name */
-				char	   *channel = qe->data;
-
-				if (IsListeningOn(channel))
-				{
-					/* payload follows channel name */
-					char	   *payload = qe->data + strlen(channel) + 1;
-
-					NotifyMyFrontEnd(channel, payload, qe->srcPid);
-				}
+				memcpy(local_buf_end, qe, qe->length);
+				local_buf_end += qe->length;
 			}
 			else
 			{
@@ -2090,6 +2070,32 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 
 		/* Loop back if we're not at end of page */
 	} while (!reachedEndOfPage);
+
+	/* Release lock that we got from SimpleLruReadPage_ReadOnly() */
+	LWLockRelease(SimpleLruGetBankLock(NotifyCtl, curpage));
+
+	/*
+	 * Now that we have let go of the SLRU bank lock, send the notifications
+	 * to our backend
+	 */
+	Assert(local_buf_end - local_buf <= BLCKSZ);
+	for (char *p = local_buf; p < local_buf_end;)
+	{
+		AsyncQueueEntry *qe = (AsyncQueueEntry *) p;
+
+		/* qe->data is the null-terminated channel name */
+		char	   *channel = qe->data;
+
+		if (IsListeningOn(channel))
+		{
+			/* payload follows channel name */
+			char	   *payload = qe->data + strlen(channel) + 1;
+
+			NotifyMyFrontEnd(channel, payload, qe->srcPid);
+		}
+
+		p += qe->length;
+	}
 
 	if (QUEUE_POS_EQUAL(*current, stop))
 		reachedStop = true;
@@ -2163,6 +2169,120 @@ asyncQueueAdvanceTail(void)
 		LWLockAcquire(NotifyQueueLock, LW_EXCLUSIVE);
 		QUEUE_STOP_PAGE = newtailpage;
 		LWLockRelease(NotifyQueueLock);
+	}
+
+	LWLockRelease(NotifyQueueTailLock);
+}
+
+/*
+ * AsyncNotifyFreezeXids
+ *
+ * Prepare the async notification queue for CLOG truncation by freezing
+ * transaction IDs that are about to become inaccessible.
+ *
+ * This function is called by VACUUM before advancing datfrozenxid. It scans
+ * the notification queue and replaces XIDs that would become inaccessible
+ * after CLOG truncation with special markers:
+ * - Committed transactions are set to FrozenTransactionId
+ * - Aborted/crashed transactions are set to InvalidTransactionId
+ *
+ * Only XIDs < newFrozenXid are processed, as those are the ones whose CLOG
+ * pages will be truncated. If XID < newFrozenXid, it cannot still be running
+ * (or it would have held back newFrozenXid through ProcArray).
+ * Therefore, if TransactionIdDidCommit returns false, we know the transaction
+ * either aborted explicitly or crashed, and we can safely mark it invalid.
+ */
+void
+AsyncNotifyFreezeXids(TransactionId newFrozenXid)
+{
+	QueuePosition pos;
+	QueuePosition head;
+	int64		curpage = -1;
+	int			slotno = -1;
+	char	   *page_buffer = NULL;
+	bool		page_dirty = false;
+
+	/*
+	 * Acquire locks in the correct order to avoid deadlocks. As per the
+	 * locking protocol: NotifyQueueTailLock, then NotifyQueueLock, then SLRU
+	 * bank locks.
+	 *
+	 * We only need SHARED mode since we're just reading the head/tail
+	 * positions, not modifying them.
+	 */
+	LWLockAcquire(NotifyQueueTailLock, LW_SHARED);
+	LWLockAcquire(NotifyQueueLock, LW_SHARED);
+
+	pos = QUEUE_TAIL;
+	head = QUEUE_HEAD;
+
+	/* Release NotifyQueueLock early, we only needed to read the positions */
+	LWLockRelease(NotifyQueueLock);
+
+	/*
+	 * Scan the queue from tail to head, freezing XIDs as needed. We hold
+	 * NotifyQueueTailLock throughout to ensure the tail doesn't move while
+	 * we're working.
+	 */
+	while (!QUEUE_POS_EQUAL(pos, head))
+	{
+		AsyncQueueEntry *qe;
+		TransactionId xid;
+		int64		pageno = QUEUE_POS_PAGE(pos);
+		int			offset = QUEUE_POS_OFFSET(pos);
+
+		/* If we need a different page, release old lock and get new one */
+		if (pageno != curpage)
+		{
+			LWLock	   *lock;
+
+			/* Release previous page if any */
+			if (slotno >= 0)
+			{
+				if (page_dirty)
+				{
+					NotifyCtl->shared->page_dirty[slotno] = true;
+					page_dirty = false;
+				}
+				LWLockRelease(SimpleLruGetBankLock(NotifyCtl, curpage));
+			}
+
+			lock = SimpleLruGetBankLock(NotifyCtl, pageno);
+			LWLockAcquire(lock, LW_EXCLUSIVE);
+			slotno = SimpleLruReadPage(NotifyCtl, pageno, true,
+									   InvalidTransactionId);
+			page_buffer = NotifyCtl->shared->page_buffer[slotno];
+			curpage = pageno;
+		}
+
+		qe = (AsyncQueueEntry *) (page_buffer + offset);
+		xid = qe->xid;
+
+		if (TransactionIdIsNormal(xid) &&
+			TransactionIdPrecedes(xid, newFrozenXid))
+		{
+			if (TransactionIdDidCommit(xid))
+			{
+				qe->xid = FrozenTransactionId;
+				page_dirty = true;
+			}
+			else
+			{
+				qe->xid = InvalidTransactionId;
+				page_dirty = true;
+			}
+		}
+
+		/* Advance to next entry */
+		asyncQueueAdvance(&pos, qe->length);
+	}
+
+	/* Release final page lock if we acquired one */
+	if (slotno >= 0)
+	{
+		if (page_dirty)
+			NotifyCtl->shared->page_dirty[slotno] = true;
+		LWLockRelease(SimpleLruGetBankLock(NotifyCtl, curpage));
 	}
 
 	LWLockRelease(NotifyQueueTailLock);

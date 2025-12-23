@@ -1,0 +1,85 @@
+  <sect1 id="functions-statistics">
+   <title>Statistics Information Functions</title>
+
+   <indexterm zone="functions-statistics">
+    <primary>function</primary>
+    <secondary>statistics</secondary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</productname> provides a function to inspect complex
+    statistics defined using the <command>CREATE STATISTICS</command> command.
+   </para>
+
+  <sect2 id="functions-statistics-mcv">
+   <title>Inspecting MCV Lists</title>
+
+   <indexterm>
+    <primary>pg_mcv_list_items</primary>
+   </indexterm>
+
+<synopsis>
+<function>pg_mcv_list_items</function> ( <type>pg_mcv_list</type> ) <returnvalue>setof record</returnvalue>
+</synopsis>
+
+   <para>
+    <function>pg_mcv_list_items</function> returns a set of records describing
+    all items stored in a multi-column <acronym>MCV</acronym> list.  It
+    returns the following columns:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>index</literal></entry>
+        <entry><type>integer</type></entry>
+        <entry>index of the item in the <acronym>MCV</acronym> list</entry>
+       </row>
+       <row>
+        <entry><literal>values</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>values stored in the MCV item</entry>
+       </row>
+       <row>
+        <entry><literal>nulls</literal></entry>
+        <entry><type>boolean[]</type></entry>
+        <entry>flags identifying <literal>NULL</literal> values</entry>
+       </row>
+       <row>
+        <entry><literal>frequency</literal></entry>
+        <entry><type>double precision</type></entry>
+        <entry>frequency of this <acronym>MCV</acronym> item</entry>
+       </row>
+       <row>
+        <entry><literal>base_frequency</literal></entry>
+        <entry><type>double precision</type></entry>
+        <entry>base frequency of this <acronym>MCV</acronym> item</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+
+   <para>
+    The <function>pg_mcv_list_items</function> function can be used like this:
+
+<programlisting>
+SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
+                pg_mcv_list_items(stxdmcv) m WHERE stxname = 'stts';
+</programlisting>
+
+    Values of the <type>pg_mcv_list</type> type can be obtained only from the
+    <structname>pg_statistic_ext_data</structname>.<structfield>stxdmcv</structfield>
+    column.
+   </para>
+  </sect2>
+
+  </sect1>

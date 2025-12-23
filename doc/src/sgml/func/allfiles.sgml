@@ -1,0 +1,40 @@
+<!--
+doc/src/sgml/func/allfiles.sgml
+PostgreSQL documentation
+Complete list of usable sgml source files in this directory.
+-->
+
+<!-- function references -->
+
+<!ENTITY func                       SYSTEM "func.sgml">
+<!ENTITY func-logical               SYSTEM "func-logical.sgml">
+<!ENTITY func-comparison            SYSTEM "func-comparison.sgml">
+<!ENTITY func-math                  SYSTEM "func-math.sgml">
+<!ENTITY func-string                SYSTEM "func-string.sgml">
+<!ENTITY func-binarystring          SYSTEM "func-binarystring.sgml">
+<!ENTITY func-bitstring             SYSTEM "func-bitstring.sgml">
+<!ENTITY func-matching              SYSTEM "func-matching.sgml">
+<!ENTITY func-formatting            SYSTEM "func-formatting.sgml">
+<!ENTITY func-datetime              SYSTEM "func-datetime.sgml">
+<!ENTITY func-enum                  SYSTEM "func-enum.sgml">
+<!ENTITY func-geometry              SYSTEM "func-geometry.sgml">
+<!ENTITY func-net                   SYSTEM "func-net.sgml">
+<!ENTITY func-textsearch            SYSTEM "func-textsearch.sgml">
+<!ENTITY func-uuid                  SYSTEM "func-uuid.sgml">
+<!ENTITY func-xml                   SYSTEM "func-xml.sgml">
+<!ENTITY func-json                  SYSTEM "func-json.sgml">
+<!ENTITY func-sequence              SYSTEM "func-sequence.sgml">
+<!ENTITY func-conditional           SYSTEM "func-conditional.sgml">
+<!ENTITY func-array                 SYSTEM "func-array.sgml">
+<!ENTITY func-range                 SYSTEM "func-range.sgml">
+<!ENTITY func-aggregate             SYSTEM "func-aggregate.sgml">
+<!ENTITY func-window                SYSTEM "func-window.sgml">
+<!ENTITY func-merge-support         SYSTEM "func-merge-support.sgml">
+<!ENTITY func-subquery              SYSTEM "func-subquery.sgml">
+<!ENTITY func-comparisons           SYSTEM "func-comparisons.sgml">
+<!ENTITY func-srf                   SYSTEM "func-srf.sgml">
+<!ENTITY func-info                  SYSTEM "func-info.sgml">
+<!ENTITY func-admin                 SYSTEM "func-admin.sgml">
+<!ENTITY func-trigger               SYSTEM "func-trigger.sgml">
+<!ENTITY func-event-triggers        SYSTEM "func-event-triggers.sgml">
+<!ENTITY func-statistics            SYSTEM "func-statistics.sgml">

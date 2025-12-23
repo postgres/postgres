@@ -40,6 +40,7 @@
 
 #include <limits.h>
 
+#include "access/htup_details.h"
 #include "common/hashfn.h"
 #include "common/int.h"
 #include "nodes/bitmapset.h"
@@ -363,15 +364,14 @@ tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp)
  * TBMIterateResult when any of these tuples are reported out.
  */
 void
-tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
+tbm_add_tuples(TIDBitmap *tbm, const ItemPointerData *tids, int ntids,
 			   bool recheck)
 {
 	BlockNumber currblk = InvalidBlockNumber;
 	PagetableEntry *page = NULL;	/* only valid when currblk is valid */
-	int			i;
 
 	Assert(tbm->iterating == TBM_NOT_ITERATING);
-	for (i = 0; i < ntids; i++)
+	for (int i = 0; i < ntids; i++)
 	{
 		BlockNumber blk = ItemPointerGetBlockNumber(tids + i);
 		OffsetNumber off = ItemPointerGetOffsetNumber(tids + i);
@@ -470,12 +470,11 @@ static void
 tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 {
 	PagetableEntry *apage;
-	int			wordnum;
 
 	if (bpage->ischunk)
 	{
 		/* Scan b's chunk, mark each indicated page lossy in a */
-		for (wordnum = 0; wordnum < WORDS_PER_CHUNK; wordnum++)
+		for (int wordnum = 0; wordnum < WORDS_PER_CHUNK; wordnum++)
 		{
 			bitmapword	w = bpage->words[wordnum];
 
@@ -510,7 +509,7 @@ tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 		else
 		{
 			/* Both pages are exact, merge at the bit level */
-			for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
+			for (int wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
 				apage->words[wordnum] |= bpage->words[wordnum];
 			apage->recheck |= bpage->recheck;
 		}
@@ -578,14 +577,13 @@ static bool
 tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 {
 	const PagetableEntry *bpage;
-	int			wordnum;
 
 	if (apage->ischunk)
 	{
 		/* Scan each bit in chunk, try to clear */
 		bool		candelete = true;
 
-		for (wordnum = 0; wordnum < WORDS_PER_CHUNK; wordnum++)
+		for (int wordnum = 0; wordnum < WORDS_PER_CHUNK; wordnum++)
 		{
 			bitmapword	w = apage->words[wordnum];
 
@@ -639,7 +637,7 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 		{
 			/* Both pages are exact, merge at the bit level */
 			Assert(!bpage->ischunk);
-			for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
+			for (int wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
 			{
 				apage->words[wordnum] &= bpage->words[wordnum];
 				if (apage->words[wordnum] != 0)
@@ -685,7 +683,7 @@ tbm_begin_private_iterate(TIDBitmap *tbm)
 	 * Create the TBMPrivateIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMPrivateIterator *) palloc(sizeof(TBMPrivateIterator));
+	iterator = palloc_object(TBMPrivateIterator);
 	iterator->tbm = tbm;
 
 	/*
@@ -903,10 +901,9 @@ tbm_extract_page_tuple(TBMIterateResult *iteritem,
 					   uint32 max_offsets)
 {
 	PagetableEntry *page = iteritem->internal_page;
-	int			wordnum;
 	int			ntuples = 0;
 
-	for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
+	for (int wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
 	{
 		bitmapword	w = page->words[wordnum];
 
@@ -1471,7 +1468,7 @@ tbm_attach_shared_iterate(dsa_area *dsa, dsa_pointer dp)
 	 * Create the TBMSharedIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator));
+	iterator = palloc0_object(TBMSharedIterator);
 
 	istate = (TBMSharedIteratorState *) dsa_get_address(dsa, dp);
 

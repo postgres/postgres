@@ -283,7 +283,7 @@ record_config_file_error(const char *errmsg,
 {
 	ConfigVariable *item;
 
-	item = palloc(sizeof *item);
+	item = palloc_object(ConfigVariable);
 	item->name = NULL;
 	item->value = NULL;
 	item->errmsg = pstrdup(errmsg);
@@ -482,7 +482,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		else
 		{
 			/* ordinary variable, append to list */
-			item = palloc(sizeof *item);
+			item = palloc_object(ConfigVariable);
 			item->name = opt_name;
 			item->value = opt_value;
 			item->errmsg = NULL;

@@ -101,11 +101,11 @@ static void materializeQueryResult(FunctionCallInfo fcinfo,
 								   const char *conname,
 								   const char *sql,
 								   bool fail);
-static PGresult *storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql);
-static void storeRow(volatile storeInfo *sinfo, PGresult *res, bool first);
+static PGresult *storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql);
+static void storeRow(storeInfo *sinfo, PGresult *res, bool first);
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
-static void createNewConnection(const char *name, remoteConn *rconn);
+static remoteConn *createNewConnection(const char *name);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Relation rel, int16 *indnkeyatts);
 static char **get_text_array_contents(ArrayType *array, int *numitems);
@@ -119,7 +119,8 @@ static Relation get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclM
 static char *generate_relation_name(Relation rel);
 static void dblink_connstr_check(const char *connstr);
 static bool dblink_connstr_has_pw(const char *connstr);
-static void dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr);
+static void dblink_security_check(PGconn *conn, const char *connname,
+								  const char *connstr);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 							 bool fail, const char *fmt,...) pg_attribute_printf(5, 6);
 static char *get_connect_string(const char *servername);
@@ -147,28 +148,26 @@ static uint32 dblink_we_get_conn = 0;
 static uint32 dblink_we_get_result = 0;
 
 /*
- *	Following is list that holds multiple remote connections.
+ *	Following is hash that holds multiple remote connections.
  *	Calling convention of each dblink function changes to accept
- *	connection name as the first parameter. The connection list is
+ *	connection name as the first parameter. The connection hash is
  *	much like ecpg e.g. a mapping between a name and a PGconn object.
+ *
+ *	To avoid potentially leaking a PGconn object in case of out-of-memory
+ *	errors, we first create the hash entry, then open the PGconn.
+ *	Hence, a hash entry whose rconn.conn pointer is NULL must be
+ *	understood as a leftover from a failed create; it should be ignored
+ *	by lookup operations, and silently replaced by create operations.
  */
 
 typedef struct remoteConnHashEnt
 {
 	char		name[NAMEDATALEN];
-	remoteConn *rconn;
+	remoteConn	rconn;
 } remoteConnHashEnt;
 
 /* initial number of connection hashes */
 #define NUMCONN 16
-
-static char *
-xpstrdup(const char *in)
-{
-	if (in == NULL)
-		return NULL;
-	return pstrdup(in);
-}
 
 pg_noreturn static void
 dblink_res_internalerror(PGconn *conn, PGresult *res, const char *p2)
@@ -233,7 +232,11 @@ dblink_get_conn(char *conname_or_str,
 					 errmsg("could not establish connection"),
 					 errdetail_internal("%s", msg)));
 		}
-		dblink_security_check(conn, rconn, connstr);
+
+		PQsetNoticeReceiver(conn, libpqsrv_notice_receiver,
+							"received message via remote connection");
+
+		dblink_security_check(conn, NULL, connstr);
 		if (PQclientEncoding(conn) != GetDatabaseEncoding())
 			PQsetClientEncoding(conn, GetDatabaseEncodingName());
 		freeconn = true;
@@ -296,15 +299,6 @@ dblink_connect(PG_FUNCTION_ARGS)
 	else if (PG_NARGS() == 1)
 		conname_or_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	if (connname)
-	{
-		rconn = (remoteConn *) MemoryContextAlloc(TopMemoryContext,
-												  sizeof(remoteConn));
-		rconn->conn = NULL;
-		rconn->openCursorCount = 0;
-		rconn->newXactForCursor = false;
-	}
-
 	/* first check for valid foreign data server */
 	connstr = get_connect_string(conname_or_str);
 	if (connstr == NULL)
@@ -317,6 +311,13 @@ dblink_connect(PG_FUNCTION_ARGS)
 	if (dblink_we_connect == 0)
 		dblink_we_connect = WaitEventExtensionNew("DblinkConnect");
 
+	/* if we need a hashtable entry, make that first, since it might fail */
+	if (connname)
+	{
+		rconn = createNewConnection(connname);
+		Assert(rconn->conn == NULL);
+	}
+
 	/* OK to make connection */
 	conn = libpqsrv_connect(connstr, dblink_we_connect);
 
@@ -324,8 +325,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 	{
 		msg = pchomp(PQerrorMessage(conn));
 		libpqsrv_disconnect(conn);
-		if (rconn)
-			pfree(rconn);
+		if (connname)
+			deleteConnection(connname);
 
 		ereport(ERROR,
 				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
@@ -333,17 +334,20 @@ dblink_connect(PG_FUNCTION_ARGS)
 				 errdetail_internal("%s", msg)));
 	}
 
+	PQsetNoticeReceiver(conn, libpqsrv_notice_receiver,
+						"received message via remote connection");
+
 	/* check password actually used if not superuser */
-	dblink_security_check(conn, rconn, connstr);
+	dblink_security_check(conn, connname, connstr);
 
 	/* attempt to set client encoding to match server encoding, if needed */
 	if (PQclientEncoding(conn) != GetDatabaseEncoding())
 		PQsetClientEncoding(conn, GetDatabaseEncodingName());
 
+	/* all OK, save away the conn */
 	if (connname)
 	{
 		rconn->conn = conn;
-		createNewConnection(connname, rconn);
 	}
 	else
 	{
@@ -383,10 +387,7 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 
 	libpqsrv_disconnect(conn);
 	if (rconn)
-	{
 		deleteConnection(conname);
-		pfree(rconn);
-	}
 	else
 		pconn->conn = NULL;
 
@@ -861,131 +862,123 @@ static void
 materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	bool		is_sql_cmd;
+	int			ntuples;
+	int			nfields;
 
 	/* prepTuplestoreResult must have been called previously */
 	Assert(rsinfo->returnMode == SFRM_Materialize);
 
-	PG_TRY();
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
-		TupleDesc	tupdesc;
-		bool		is_sql_cmd;
-		int			ntuples;
-		int			nfields;
-
-		if (PQresultStatus(res) == PGRES_COMMAND_OK)
-		{
-			is_sql_cmd = true;
-
-			/*
-			 * need a tuple descriptor representing one TEXT column to return
-			 * the command status string as our result tuple
-			 */
-			tupdesc = CreateTemplateTupleDesc(1);
-			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-							   TEXTOID, -1, 0);
-			ntuples = 1;
-			nfields = 1;
-		}
-		else
-		{
-			Assert(PQresultStatus(res) == PGRES_TUPLES_OK);
-
-			is_sql_cmd = false;
-
-			/* get a tuple descriptor for our result type */
-			switch (get_call_result_type(fcinfo, NULL, &tupdesc))
-			{
-				case TYPEFUNC_COMPOSITE:
-					/* success */
-					break;
-				case TYPEFUNC_RECORD:
-					/* failed to determine actual type of RECORD */
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
-									"that cannot accept type record")));
-					break;
-				default:
-					/* result type isn't composite */
-					elog(ERROR, "return type must be a row type");
-					break;
-			}
-
-			/* make sure we have a persistent copy of the tupdesc */
-			tupdesc = CreateTupleDescCopy(tupdesc);
-			ntuples = PQntuples(res);
-			nfields = PQnfields(res);
-		}
+		is_sql_cmd = true;
 
 		/*
-		 * check result and tuple descriptor have the same number of columns
+		 * need a tuple descriptor representing one TEXT column to return the
+		 * command status string as our result tuple
 		 */
-		if (nfields != tupdesc->natts)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("remote query result rowtype does not match "
-							"the specified FROM clause rowtype")));
+		tupdesc = CreateTemplateTupleDesc(1);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
+						   TEXTOID, -1, 0);
+		ntuples = 1;
+		nfields = 1;
+	}
+	else
+	{
+		Assert(PQresultStatus(res) == PGRES_TUPLES_OK);
 
-		if (ntuples > 0)
+		is_sql_cmd = false;
+
+		/* get a tuple descriptor for our result type */
+		switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 		{
-			AttInMetadata *attinmeta;
-			int			nestlevel = -1;
-			Tuplestorestate *tupstore;
-			MemoryContext oldcontext;
-			int			row;
-			char	  **values;
+			case TYPEFUNC_COMPOSITE:
+				/* success */
+				break;
+			case TYPEFUNC_RECORD:
+				/* failed to determine actual type of RECORD */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("function returning record called in context "
+								"that cannot accept type record")));
+				break;
+			default:
+				/* result type isn't composite */
+				elog(ERROR, "return type must be a row type");
+				break;
+		}
 
-			attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		/* make sure we have a persistent copy of the tupdesc */
+		tupdesc = CreateTupleDescCopy(tupdesc);
+		ntuples = PQntuples(res);
+		nfields = PQnfields(res);
+	}
 
-			/* Set GUCs to ensure we read GUC-sensitive data types correctly */
+	/*
+	 * check result and tuple descriptor have the same number of columns
+	 */
+	if (nfields != tupdesc->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("remote query result rowtype does not match "
+						"the specified FROM clause rowtype")));
+
+	if (ntuples > 0)
+	{
+		AttInMetadata *attinmeta;
+		int			nestlevel = -1;
+		Tuplestorestate *tupstore;
+		MemoryContext oldcontext;
+		int			row;
+		char	  **values;
+
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+		/* Set GUCs to ensure we read GUC-sensitive data types correctly */
+		if (!is_sql_cmd)
+			nestlevel = applyRemoteGucs(conn);
+
+		oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+		tupstore = tuplestore_begin_heap(true, false, work_mem);
+		rsinfo->setResult = tupstore;
+		rsinfo->setDesc = tupdesc;
+		MemoryContextSwitchTo(oldcontext);
+
+		values = palloc_array(char *, nfields);
+
+		/* put all tuples into the tuplestore */
+		for (row = 0; row < ntuples; row++)
+		{
+			HeapTuple	tuple;
+
 			if (!is_sql_cmd)
-				nestlevel = applyRemoteGucs(conn);
-
-			oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-			tupstore = tuplestore_begin_heap(true, false, work_mem);
-			rsinfo->setResult = tupstore;
-			rsinfo->setDesc = tupdesc;
-			MemoryContextSwitchTo(oldcontext);
-
-			values = palloc_array(char *, nfields);
-
-			/* put all tuples into the tuplestore */
-			for (row = 0; row < ntuples; row++)
 			{
-				HeapTuple	tuple;
+				int			i;
 
-				if (!is_sql_cmd)
+				for (i = 0; i < nfields; i++)
 				{
-					int			i;
-
-					for (i = 0; i < nfields; i++)
-					{
-						if (PQgetisnull(res, row, i))
-							values[i] = NULL;
-						else
-							values[i] = PQgetvalue(res, row, i);
-					}
+					if (PQgetisnull(res, row, i))
+						values[i] = NULL;
+					else
+						values[i] = PQgetvalue(res, row, i);
 				}
-				else
-				{
-					values[0] = PQcmdStatus(res);
-				}
-
-				/* build the tuple and put it into the tuplestore. */
-				tuple = BuildTupleFromCStrings(attinmeta, values);
-				tuplestore_puttuple(tupstore, tuple);
+			}
+			else
+			{
+				values[0] = PQcmdStatus(res);
 			}
 
-			/* clean up GUC settings, if we changed any */
-			restoreLocalGucs(nestlevel);
+			/* build the tuple and put it into the tuplestore. */
+			tuple = BuildTupleFromCStrings(attinmeta, values);
+			tuplestore_puttuple(tupstore, tuple);
 		}
+
+		/* clean up GUC settings, if we changed any */
+		restoreLocalGucs(nestlevel);
 	}
-	PG_FINALLY();
-	{
-		/* be sure to release the libpq result */
-		PQclear(res);
-	}
-	PG_END_TRY();
+
+	PQclear(res);
 }
 
 /*
@@ -1004,16 +997,17 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 					   bool fail)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	PGresult   *volatile res = NULL;
-	volatile storeInfo sinfo = {0};
 
 	/* prepTuplestoreResult must have been called previously */
 	Assert(rsinfo->returnMode == SFRM_Materialize);
 
-	sinfo.fcinfo = fcinfo;
-
+	/* Use a PG_TRY block to ensure we pump libpq dry of results */
 	PG_TRY();
 	{
+		storeInfo	sinfo = {0};
+		PGresult   *res;
+
+		sinfo.fcinfo = fcinfo;
 		/* Create short-lived memory context for data conversions */
 		sinfo.tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
 												 "dblink temporary context",
@@ -1026,14 +1020,7 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-			/*
-			 * dblink_res_error will clear the passed PGresult, so we need
-			 * this ugly dance to avoid doing so twice during error exit
-			 */
-			PGresult   *res1 = res;
-
-			res = NULL;
-			dblink_res_error(conn, conname, res1, fail,
+			dblink_res_error(conn, conname, res, fail,
 							 "while executing query");
 			/* if fail isn't set, we'll return an empty query result */
 		}
@@ -1072,7 +1059,6 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			tuplestore_puttuple(tupstore, tuple);
 
 			PQclear(res);
-			res = NULL;
 		}
 		else
 		{
@@ -1081,26 +1067,20 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			Assert(rsinfo->setResult != NULL);
 
 			PQclear(res);
-			res = NULL;
 		}
 
 		/* clean up data conversion short-lived memory context */
 		if (sinfo.tmpcontext != NULL)
 			MemoryContextDelete(sinfo.tmpcontext);
-		sinfo.tmpcontext = NULL;
 
 		PQclear(sinfo.last_res);
-		sinfo.last_res = NULL;
 		PQclear(sinfo.cur_res);
-		sinfo.cur_res = NULL;
 	}
 	PG_CATCH();
 	{
-		/* be sure to release any libpq result we collected */
-		PQclear(res);
-		PQclear(sinfo.last_res);
-		PQclear(sinfo.cur_res);
-		/* and clear out any pending data in libpq */
+		PGresult   *res;
+
+		/* be sure to clear out any pending data in libpq */
 		while ((res = libpqsrv_get_result(conn, dblink_we_get_result)) !=
 			   NULL)
 			PQclear(res);
@@ -1113,7 +1093,7 @@ materializeQueryResult(FunctionCallInfo fcinfo,
  * Execute query, and send any result rows to sinfo->tuplestore.
  */
 static PGresult *
-storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
+storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql)
 {
 	bool		first = true;
 	int			nestlevel = -1;
@@ -1181,7 +1161,7 @@ storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
  * (in this case the PGresult might contain either zero or one row).
  */
 static void
-storeRow(volatile storeInfo *sinfo, PGresult *res, bool first)
+storeRow(storeInfo *sinfo, PGresult *res, bool first)
 {
 	int			nfields = PQnfields(res);
 	HeapTuple	tuple;
@@ -1304,6 +1284,9 @@ dblink_get_connections(PG_FUNCTION_ARGS)
 		hash_seq_init(&status, remoteConnHash);
 		while ((hentry = (remoteConnHashEnt *) hash_seq_search(&status)) != NULL)
 		{
+			/* ignore it if it's not an open connection */
+			if (hentry->rconn.conn == NULL)
+				continue;
 			/* stash away current value */
 			astate = accumArrayResult(astate,
 									  CStringGetTextDatum(hentry->name),
@@ -2477,6 +2460,21 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	return NULL;
 }
 
+static void
+RangeVarCallbackForDblink(const RangeVar *relation,
+						  Oid relId, Oid oldRelId, void *arg)
+{
+	AclResult	aclresult;
+
+	if (!OidIsValid(relId))
+		return;
+
+	aclresult = pg_class_aclcheck(relId, GetUserId(), *((AclMode *) arg));
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(relId)),
+					   relation->relname);
+}
+
 /*
  * Open the relation named by relname_text, acquire specified type of lock,
  * verify we have specified permissions.
@@ -2486,19 +2484,13 @@ static Relation
 get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode)
 {
 	RangeVar   *relvar;
-	Relation	rel;
-	AclResult	aclresult;
+	Oid			relid;
 
 	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text));
-	rel = table_openrv(relvar, lockmode);
+	relid = RangeVarGetRelidExtended(relvar, lockmode, 0,
+									 RangeVarCallbackForDblink, &aclmode);
 
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  aclmode);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
-					   RelationGetRelationName(rel));
-
-	return rel;
+	return table_open(relid, NoLock);
 }
 
 /*
@@ -2539,8 +2531,8 @@ getConnectionByName(const char *name)
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_FIND, NULL);
 
-	if (hentry)
-		return hentry->rconn;
+	if (hentry && hentry->rconn.conn != NULL)
+		return &hentry->rconn;
 
 	return NULL;
 }
@@ -2557,8 +2549,8 @@ createConnHash(void)
 					   HASH_ELEM | HASH_STRINGS);
 }
 
-static void
-createNewConnection(const char *name, remoteConn *rconn)
+static remoteConn *
+createNewConnection(const char *name)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;
@@ -2572,17 +2564,15 @@ createNewConnection(const char *name, remoteConn *rconn)
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
 											   HASH_ENTER, &found);
 
-	if (found)
-	{
-		libpqsrv_disconnect(rconn->conn);
-		pfree(rconn);
-
+	if (found && hentry->rconn.conn != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
-	}
 
-	hentry->rconn = rconn;
+	/* New, or reusable, so initialize the rconn struct to zeroes */
+	memset(&hentry->rconn, 0, sizeof(remoteConn));
+
+	return &hentry->rconn;
 }
 
 static void
@@ -2662,7 +2652,7 @@ dblink_connstr_has_required_scram_options(const char *connstr)
 		PQconninfoFree(options);
 	}
 
-	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort->has_scram_keys;
+	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort != NULL && MyProcPort->has_scram_keys;
 
 	return (has_scram_keys && has_require_auth);
 }
@@ -2671,9 +2661,12 @@ dblink_connstr_has_required_scram_options(const char *connstr)
  * We need to make sure that the connection made used credentials
  * which were provided by the user, so check what credentials were
  * used to connect and then make sure that they came from the user.
+ *
+ * On failure, we close "conn" and also delete the hashtable entry
+ * identified by "connname" (if that's not NULL).
  */
 static void
-dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
+dblink_security_check(PGconn *conn, const char *connname, const char *connstr)
 {
 	/* Superuser bypasses security check */
 	if (superuser())
@@ -2692,7 +2685,7 @@ dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
 	 * only added if UseScramPassthrough is set, and the user is not allowed
 	 * to add the SCRAM keys on fdw and user mapping options.
 	 */
-	if (MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
 		return;
 
 #ifdef ENABLE_GSS
@@ -2703,8 +2696,8 @@ dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
 
 	/* Otherwise, fail out */
 	libpqsrv_disconnect(conn);
-	if (rconn)
-		pfree(rconn);
+	if (connname)
+		deleteConnection(connname);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
@@ -2765,7 +2758,7 @@ dblink_connstr_check(const char *connstr)
 	if (dblink_connstr_has_pw(connstr))
 		return;
 
-	if (MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
 		return;
 
 #ifdef ENABLE_GSS
@@ -2782,10 +2775,13 @@ dblink_connstr_check(const char *connstr)
 /*
  * Report an error received from the remote server
  *
- * res: the received error result (will be freed)
+ * res: the received error result
  * fail: true for ERROR ereport, false for NOTICE
  * fmt and following args: sprintf-style format and values for errcontext;
  * the resulting string should be worded like "while <some action>"
+ *
+ * If "res" is not NULL, it'll be PQclear'ed here (unless we throw error,
+ * in which case memory context cleanup will clear it eventually).
  */
 static void
 dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
@@ -2793,15 +2789,11 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 {
 	int			level;
 	char	   *pg_diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-	char	   *pg_diag_message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
-	char	   *pg_diag_message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
-	char	   *pg_diag_message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
-	char	   *pg_diag_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
+	char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+	char	   *message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
+	char	   *message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
+	char	   *message_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
 	int			sqlstate;
-	char	   *message_primary;
-	char	   *message_detail;
-	char	   *message_hint;
-	char	   *message_context;
 	va_list		ap;
 	char		dblink_context_msg[512];
 
@@ -2819,11 +2811,6 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	else
 		sqlstate = ERRCODE_CONNECTION_FAILURE;
 
-	message_primary = xpstrdup(pg_diag_message_primary);
-	message_detail = xpstrdup(pg_diag_message_detail);
-	message_hint = xpstrdup(pg_diag_message_hint);
-	message_context = xpstrdup(pg_diag_context);
-
 	/*
 	 * If we don't get a message from the PGresult, try the PGconn.  This is
 	 * needed because for connection-level failures, PQgetResult may just
@@ -2831,14 +2818,6 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	 */
 	if (message_primary == NULL)
 		message_primary = pchomp(PQerrorMessage(conn));
-
-	/*
-	 * Now that we've copied all the data we need out of the PGresult, it's
-	 * safe to free it.  We must do this to avoid PGresult leakage.  We're
-	 * leaking all the strings too, but those are in palloc'd memory that will
-	 * get cleaned up eventually.
-	 */
-	PQclear(res);
 
 	/*
 	 * Format the basic errcontext string.  Below, we'll add on something
@@ -2864,6 +2843,7 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 						 dblink_context_msg, conname)) :
 			 (errcontext("%s on unnamed dblink connection",
 						 dblink_context_msg))));
+	PQclear(res);
 }
 
 /*
@@ -2925,7 +2905,7 @@ get_connect_string(const char *servername)
 		 * the user overwrites these options we can ereport on
 		 * dblink_connstr_check and dblink_security_check.
 		 */
-		if (MyProcPort->has_scram_keys && UseScramPassthrough(foreign_server, user_mapping))
+		if (MyProcPort != NULL && MyProcPort->has_scram_keys && UseScramPassthrough(foreign_server, user_mapping))
 			appendSCRAMKeysInfo(&buf);
 
 		foreach(cell, fdw->options)
@@ -3040,7 +3020,7 @@ validate_pkattnums(Relation rel,
 		for (j = 0; j < natts; j++)
 		{
 			/* dropped columns don't count */
-			if (TupleDescAttr(tupdesc, j)->attisdropped)
+			if (TupleDescCompactAttr(tupdesc, j)->attisdropped)
 				continue;
 
 			if (++lnum == pkattnum)

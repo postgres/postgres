@@ -59,7 +59,7 @@ struct HSpool
 HSpool *
 _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 {
-	HSpool	   *hspool = (HSpool *) palloc0(sizeof(HSpool));
+	HSpool	   *hspool = palloc0_object(HSpool);
 
 	hspool->index = index;
 
@@ -106,7 +106,7 @@ _h_spooldestroy(HSpool *hspool)
  * spool an index entry into the sort file.
  */
 void
-_h_spool(HSpool *hspool, ItemPointer self, const Datum *values, const bool *isnull)
+_h_spool(HSpool *hspool, const ItemPointerData *self, const Datum *values, const bool *isnull)
 {
 	tuplesort_putindextuplevalues(hspool->sortstate, hspool->index,
 								  self, values, isnull);

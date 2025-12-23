@@ -5,7 +5,10 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
-    'env': {'with_icu': icu.found() ? 'yes' : 'no'},
+    'env': {
+      'with_icu': icu.found() ? 'yes' : 'no',
+      'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
+    },
     'tests': [
       't/001_rep_changes.pl',
       't/002_types.pl',
@@ -42,6 +45,7 @@ tests += {
       't/033_run_as_table_owner.pl',
       't/034_temporal.pl',
       't/035_conflicts.pl',
+      't/036_sequences.pl',
       't/100_bugs.pl',
     ],
   },

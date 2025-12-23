@@ -627,7 +627,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     character in the command.  The simplest useful command is something
     like:
 <programlisting>
-archive_command = 'test ! -f /mnt/server/archivedir/%f &amp;&amp; cp %p /mnt/server/archivedir/%f'  # Unix
+archive_command = 'test ! -f "/mnt/server/archivedir/%f" &amp;&amp; cp "%p" "/mnt/server/archivedir/%f"'  # Unix
 archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
 </programlisting>
     which will copy archivable WAL segments to the directory
@@ -991,7 +991,7 @@ SELECT pg_backup_start(label => 'label', fast => false);
      usually preferable as it minimizes the impact on the running system.  If you
      want to start the backup as soon as possible, pass <literal>true</literal> as
      the second parameter to <function>pg_backup_start</function> and it will
-     request an immediate checkpoint, which will finish as fast as possible using
+     request a fast checkpoint, which will finish as fast as possible using
      as much I/O as possible.
     </para>
 
@@ -1294,7 +1294,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
     character in the command.  The simplest useful command is
     something like:
 <programlisting>
-restore_command = 'cp /mnt/server/archivedir/%f %p'
+restore_command = 'cp "/mnt/server/archivedir/%f" "%p"'
 </programlisting>
     which will copy previously archived WAL segments from the directory
     <filename>/mnt/server/archivedir</filename>.  Of course, you can use something
@@ -1493,11 +1493,11 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
       If archive storage size is a concern, you can use
       <application>gzip</application> to compress the archive files:
 <programlisting>
-archive_command = 'gzip &lt; %p &gt; /mnt/server/archivedir/%f.gz'
+archive_command = 'gzip &lt; "%p" &gt; "/mnt/server/archivedir/%f.gz"'
 </programlisting>
       You will then need to use <application>gunzip</application> during recovery:
 <programlisting>
-restore_command = 'gunzip &lt; /mnt/server/archivedir/%f.gz &gt; %p'
+restore_command = 'gunzip &lt; "/mnt/server/archivedir/%f.gz" &gt; "%p"'
 </programlisting>
      </para>
     </sect3>

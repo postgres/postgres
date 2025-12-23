@@ -47,7 +47,7 @@
 
    <para>
     Before you can use logical decoding, you must set
-    <xref linkend="guc-wal-level"/> to <literal>logical</literal> and
+    <xref linkend="guc-wal-level"/> to <literal>replica</literal> or higher and
     <xref linkend="guc-max-replication-slots"/> to at least 1.  Then, you
     should connect to the target database (in the example
     below, <literal>postgres</literal>) as a superuser.
@@ -57,14 +57,14 @@
 postgres=# -- Create a slot named 'regression_slot' using the output plugin 'test_decoding'
 postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding', false, true);
     slot_name    |    lsn
------------------+-----------
- regression_slot | 0/16B1970
+-----------------+------------
+ regression_slot | 0/016B1970
 (1 row)
 
 postgres=# SELECT slot_name, plugin, slot_type, database, active, restart_lsn, confirmed_flush_lsn FROM pg_replication_slots;
     slot_name    |    plugin     | slot_type | database | active | restart_lsn | confirmed_flush_lsn
------------------+---------------+-----------+----------+--------+-------------+-----------------
- regression_slot | test_decoding | logical   | postgres | f      | 0/16A4408   | 0/16A4440
+-----------------+---------------+-----------+----------+--------+-------------+---------------------
+ regression_slot | test_decoding | logical   | postgres | f      | 0/016A4408  | 0/016A4440
 (1 row)
 
 postgres=# -- There are no changes to see yet
@@ -73,15 +73,15 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NU
 -----+-----+------
 (0 rows)
 
-postgres=# CREATE TABLE data(id serial primary key, data text);
+postgres=# CREATE TABLE data(id serial PRIMARY KEY, data text);
 CREATE TABLE
 
 postgres=# -- DDL isn't replicated, so all you'll see is the transaction
 postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
-    lsn    |  xid  |     data
------------+-------+--------------
- 0/BA2DA58 | 10297 | BEGIN 10297
- 0/BA5A5A0 | 10297 | COMMIT 10297
+    lsn     |  xid  |     data
+------------+-------+--------------
+ 0/0BA2DA58 | 10297 | BEGIN 10297
+ 0/0BA5A5A0 | 10297 | COMMIT 10297
 (2 rows)
 
 postgres=# -- Once changes are read, they're consumed and not emitted
@@ -97,41 +97,41 @@ postgres=*# INSERT INTO data(data) VALUES('2');
 postgres=*# COMMIT;
 
 postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
-    lsn    |  xid  |                          data
------------+-------+---------------------------------------------------------
- 0/BA5A688 | 10298 | BEGIN 10298
- 0/BA5A6F0 | 10298 | table public.data: INSERT: id[integer]:1 data[text]:'1'
- 0/BA5A7F8 | 10298 | table public.data: INSERT: id[integer]:2 data[text]:'2'
- 0/BA5A8A8 | 10298 | COMMIT 10298
+    lsn     |  xid  |                          data
+------------+-------+---------------------------------------------------------
+ 0/0BA5A688 | 10298 | BEGIN 10298
+ 0/0BA5A6F0 | 10298 | table public.data: INSERT: id[integer]:1 data[text]:'1'
+ 0/0BA5A7F8 | 10298 | table public.data: INSERT: id[integer]:2 data[text]:'2'
+ 0/0BA5A8A8 | 10298 | COMMIT 10298
 (4 rows)
 
 postgres=# INSERT INTO data(data) VALUES('3');
 
 postgres=# -- You can also peek ahead in the change stream without consuming changes
 postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL);
-    lsn    |  xid  |                          data
------------+-------+---------------------------------------------------------
- 0/BA5A8E0 | 10299 | BEGIN 10299
- 0/BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
- 0/BA5A990 | 10299 | COMMIT 10299
+    lsn     |  xid  |                          data
+------------+-------+---------------------------------------------------------
+ 0/0BA5A8E0 | 10299 | BEGIN 10299
+ 0/0BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
+ 0/0BA5A990 | 10299 | COMMIT 10299
 (3 rows)
 
 postgres=# -- The next call to pg_logical_slot_peek_changes() returns the same changes again
 postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL);
-    lsn    |  xid  |                          data
------------+-------+---------------------------------------------------------
- 0/BA5A8E0 | 10299 | BEGIN 10299
- 0/BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
- 0/BA5A990 | 10299 | COMMIT 10299
+    lsn     |  xid  |                          data
+------------+-------+---------------------------------------------------------
+ 0/0BA5A8E0 | 10299 | BEGIN 10299
+ 0/0BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
+ 0/0BA5A990 | 10299 | COMMIT 10299
 (3 rows)
 
 postgres=# -- options can be passed to output plugin, to influence the formatting
 postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-timestamp', 'on');
-    lsn    |  xid  |                          data
------------+-------+---------------------------------------------------------
- 0/BA5A8E0 | 10299 | BEGIN 10299
- 0/BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
- 0/BA5A990 | 10299 | COMMIT 10299 (at 2017-05-10 12:07:21.272494-04)
+    lsn     |  xid  |                          data
+------------+-------+---------------------------------------------------------
+ 0/0BA5A8E0 | 10299 | BEGIN 10299
+ 0/0BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
+ 0/0BA5A990 | 10299 | COMMIT 10299 (at 2017-05-10 12:07:21.272494-04)
 (3 rows)
 
 postgres=# -- Remember to destroy a slot you no longer need to stop it consuming
@@ -169,7 +169,7 @@ COMMIT 693
 $ pg_recvlogical -d postgres --slot=test --drop-slot
 
 Example 2:
-$ pg_recvlogical -d postgres --slot=test --create-slot --two-phase
+$ pg_recvlogical -d postgres --slot=test --create-slot --enable-two-phase
 $ pg_recvlogical -d postgres --slot=test --start -f -
 <keycombo action="simul"><keycap>Control</keycap><keycap>Z</keycap></keycombo>
 $ psql -d postgres -c "BEGIN;INSERT INTO data(data) VALUES('5');PREPARE TRANSACTION 'test';"
@@ -200,37 +200,37 @@ postgres=*# INSERT INTO data(data) VALUES('5');
 postgres=*# PREPARE TRANSACTION 'test_prepared1';
 
 postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
-    lsn    | xid |                          data
------------+-----+---------------------------------------------------------
- 0/1689DC0 | 529 | BEGIN 529
- 0/1689DC0 | 529 | table public.data: INSERT: id[integer]:3 data[text]:'5'
- 0/1689FC0 | 529 | PREPARE TRANSACTION 'test_prepared1', txid 529
+    lsn     | xid |                          data
+------------+-----+---------------------------------------------------------
+ 0/01689DC0 | 529 | BEGIN 529
+ 0/01689DC0 | 529 | table public.data: INSERT: id[integer]:3 data[text]:'5'
+ 0/01689FC0 | 529 | PREPARE TRANSACTION 'test_prepared1', txid 529
 (3 rows)
 
 postgres=# COMMIT PREPARED 'test_prepared1';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
-    lsn    | xid |                    data
------------+-----+--------------------------------------------
- 0/168A060 | 529 | COMMIT PREPARED 'test_prepared1', txid 529
+postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+    lsn     | xid |                    data
+------------+-----+--------------------------------------------
+ 0/0168A060 | 529 | COMMIT PREPARED 'test_prepared1', txid 529
 (4 row)
 
 postgres=#-- you can also rollback a prepared transaction
 postgres=# BEGIN;
 postgres=*# INSERT INTO data(data) VALUES('6');
 postgres=*# PREPARE TRANSACTION 'test_prepared2';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
-    lsn    | xid |                          data
------------+-----+---------------------------------------------------------
- 0/168A180 | 530 | BEGIN 530
- 0/168A1E8 | 530 | table public.data: INSERT: id[integer]:4 data[text]:'6'
- 0/168A430 | 530 | PREPARE TRANSACTION 'test_prepared2', txid 530
+postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+    lsn     | xid |                          data
+------------+-----+---------------------------------------------------------
+ 0/0168A180 | 530 | BEGIN 530
+ 0/0168A1E8 | 530 | table public.data: INSERT: id[integer]:4 data[text]:'6'
+ 0/0168A430 | 530 | PREPARE TRANSACTION 'test_prepared2', txid 530
 (3 rows)
 
 postgres=# ROLLBACK PREPARED 'test_prepared2';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
-    lsn    | xid |                     data
------------+-----+----------------------------------------------
- 0/168A4B8 | 530 | ROLLBACK PREPARED 'test_prepared2', txid 530
+postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+    lsn     | xid |                     data
+------------+-----+----------------------------------------------
+ 0/0168A4B8 | 530 | ROLLBACK PREPARED 'test_prepared2', txid 530
 (1 row)
 </programlisting>
 </sect1>
@@ -257,6 +257,47 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      log</link>, which describe changes on a storage level, into an
      application-specific form such as a stream of tuples or SQL statements.
     </para>
+
+    <para>
+     Logical decoding becomes available in two conditions:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       When <xref linkend="guc-wal-level"/> is set to <literal>logical</literal>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       When <xref linkend="guc-wal-level"/> is set to <literal>replica</literal>
+       and at least one valid logical replication slot exists on the system.
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     If either condition is met, the operational WAL level becomes equivalent
+     to <literal>logical</literal>, which can be monitored through the
+     <xref linkend="guc-effective-wal-level"/> parameter.
+    </para>
+    <para>
+     When <varname>wal_level</varname> is set to <literal>replica</literal>,
+     logical decoding is automatically activated upon creation of the first
+     logical replication slot. This activation process involves several steps
+     and requires synchronization among processes, ensuring system-wide
+     consistency. Conversely, if <varname>wal_level</varname> is set to
+     <literal>replica</literal> and the last logical replication slot is dropped
+     or invalidated, logical decoding is automatically disabled. Note that the
+     deactivation of logical decoding might take some time as it is performed
+     asynchronously by the checkpointer process.
+    </para>
+
+    <caution>
+     <para>
+      When <varname>wal_level</varname> is set to <literal>replica</literal>,
+      dropping or invalidating the last logical slot disables logical decoding
+      on the primary, resulting in slots on standbys being invalidated.
+     </para>
+    </caution>
    </sect2>
 
    <sect2 id="logicaldecoding-replication-slots">
@@ -275,9 +316,9 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     </para>
 
     <note>
-     <para><productname>PostgreSQL</productname> also has streaming replication slots
-     (see <xref linkend="streaming-replication"/>), but they are used somewhat
-     differently there.
+     <para><productname>PostgreSQL</productname> can also use streaming replication slots
+     to maintain a standby server (see <xref linkend="streaming-replication"/>), but
+     typically those use physical replication, not logical.
      </para>
     </note>
 
@@ -290,7 +331,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     <para>
      A logical slot will emit each change just once in normal operation.
      The current position of each slot is persisted only at checkpoint, so in
-     the case of a crash the slot may return to an earlier LSN, which will
+     the case of a crash the slot might return to an earlier LSN, which will
      then cause recent changes to be sent again when the server restarts.
      Logical decoding clients are responsible for avoiding ill effects from
      handling the same message more than once.  Clients may wish to record
@@ -328,7 +369,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      that could be needed by the logical decoding on the standby (as it does
      not know about the <literal>catalog_xmin</literal> on the standby).
      Existing logical slots on standby also get invalidated if
-     <varname>wal_level</varname> on the primary is reduced to less than
+     <varname>effective_wal_level</varname> on the primary is reduced to less than
      <literal>logical</literal>.
      This is done as soon as the standby detects such a change in the WAL stream.
      It means that, for walsenders that are lagging (if any), some WAL records up
@@ -370,10 +411,10 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      <function>pg_create_logical_replication_slot</function></link>, or by
      using the <link linkend="sql-createsubscription-params-with-failover">
      <literal>failover</literal></link> option of
-     <command>CREATE SUBSCRIPTION</command> during slot creation, and then calling
-     <link linkend="pg-sync-replication-slots">
-     <function>pg_sync_replication_slots</function></link>
-     on the standby. By setting <link linkend="guc-sync-replication-slots">
+     <command>CREATE SUBSCRIPTION</command> during slot creation.
+     Additionally, enabling <link linkend="guc-sync-replication-slots">
+     <varname>sync_replication_slots</varname></link> on the standby
+     is required. By enabling <link linkend="guc-sync-replication-slots">
      <varname>sync_replication_slots</varname></link>
      on the standby, the failover slots can be synchronized periodically in
      the slotsync worker. For the synchronization to work, it is mandatory to
@@ -396,6 +437,50 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      standbys, associated with the physical replication slots specified
      in <varname>synchronized_standby_slots</varname>, have confirmed
      receiving the WAL up to the latest flushed position on the primary server.
+    </para>
+
+    <note>
+     <para>
+      While enabling <link linkend="guc-sync-replication-slots">
+      <varname>sync_replication_slots</varname></link> allows for automatic
+      periodic synchronization of failover slots, they can also be manually
+      synchronized using the <link linkend="pg-sync-replication-slots">
+      <function>pg_sync_replication_slots</function></link> function on the standby.
+      However, unlike automatic synchronization, it does not perform incremental
+      updates. It retries cyclically until all the failover slots that existed on
+      primary at the start of the function call are synchronized. Any slots created
+      after the function begins will not be synchronized. In contrast, automatic
+      synchronization via <varname>sync_replication_slots</varname> provides
+      continuous slot updates, enabling seamless failover and supporting high
+      availability. Therefore, it is the recommended method for synchronizing slots.
+     </para>
+    </note>
+
+    <para>
+     When slot synchronization is configured as recommended,
+     and the initial synchronization is performed either automatically or
+     manually via <function>pg_sync_replication_slots</function>, the standby
+     can persist the synchronized slot only if the following condition is met:
+     The logical replication slot on the primary must retain WALs and system
+     catalog rows that are still available on the standby. This ensures data
+     integrity and allows logical replication to continue smoothly after
+     promotion.
+     If the required WALs or catalog rows have already been purged from the
+     standby, the slot will not be persisted to avoid data loss. In such
+     cases, the following log message may appear:
+<programlisting>
+LOG:  could not synchronize replication slot "failover_slot"
+DETAIL:  Synchronization could lead to data loss, because the remote slot needs WAL at LSN 0/03003F28 and catalog xmin 754, but the standby has LSN 0/03003F28 and catalog xmin 756.
+</programlisting>
+     If the logical replication slot is actively used by a consumer, no
+     manual intervention is needed; the slot will advance automatically,
+     and synchronization will resume in the next cycle. However, if no
+     consumer is configured, it is advisable to manually advance the slot
+     on the primary using <link linkend="pg-logical-slot-get-changes">
+     <function>pg_logical_slot_get_changes</function></link> or
+     <link linkend="pg-logical-slot-get-binary-changes">
+     <function>pg_logical_slot_get_binary_changes</function></link>,
+     allowing synchronization to proceed.
     </para>
 
     <para>
@@ -528,6 +613,170 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
 
   <sect1 id="logicaldecoding-output-plugin">
    <title>Logical Decoding Output Plugins</title>
+
+   <para>
+    <productname>PostgreSQL</productname> provides two logical decoding
+    output plugins, <xref linkend="logicaldecoding-pgoutput"/> and
+    <xref linkend="test-decoding"/>.  You can also develop custom output plugins
+    (see <xref linkend="logicaldecoding-output-plugin-writing"/> for details).
+   </para>
+
+   <sect2 id="logicaldecoding-pgoutput" xreflabel="pgoutput">
+    <title>pgoutput &mdash; Standard Logical Decoding Output Plugin</title>
+
+    <indexterm zone="logicaldecoding-pgoutput">
+     <primary>pgoutput</primary>
+    </indexterm>
+
+    <para>
+     <filename>pgoutput</filename> is the standard logical decoding output
+     plugin provided by <productname>PostgreSQL</productname>.
+     It's used for the built-in <link linkend="logical-replication">
+     logical replication</link>.
+    </para>
+
+    <sect3 id="logicaldecoding-pgoutput-options">
+     <title>Options</title>
+
+     <variablelist>
+      <varlistentry id="pgoutput-options-proto-version">
+       <term><varname>proto_version</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         Specifies the protocol version.
+         Currently versions <literal>1</literal>, <literal>2</literal>,
+         <literal>3</literal>, and <literal>4</literal> are supported.  A valid
+         version is required.
+        </para>
+        <para>
+         Version <literal>2</literal> is supported on server version 14
+         and above, and is required when <varname>streaming</varname>
+         is set to <literal>on</literal> to stream large in-progress
+         transactions.
+        </para>
+        <para>
+         Version <literal>3</literal> is supported on server version 15
+         and above, and is required when <varname>two_phase</varname>
+         is enabled to stream two-phase commits.
+        </para>
+        <para>
+         Version <literal>4</literal> is supported on server version 16
+         and above, and is required when <varname>streaming</varname>
+         is set to <literal>parallel</literal> to stream large in-progress
+         transactions to be applied in parallel.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="pgoutput-options-publication-names">
+       <term><varname>publication_names</varname> (<type>string</type>)</term>
+       <listitem>
+        <para>
+         A comma-separated list of publication names to subscribe to.
+         The individual publication names are treated
+         as standard objects names and can be quoted the same as needed.
+         At least one publication name is required.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="pgoutput-options-binary">
+       <term><varname>binary</varname> (<type>boolean</type>)</term>
+       <listitem>
+        <para>
+         Enables binary transfer mode.  Binary mode is faster
+         than the text mode but slightly less robust.
+         The default is <literal>off</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="pgoutput-options-messages">
+       <term><varname>messages</varname> (<type>boolean</type>)</term>
+       <listitem>
+        <para>
+         Enables sending the messages that are written by
+         <function><link linkend="pg-logical-emit-message">pg_logical_emit_message</link></function>.
+         The default is <literal>off</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="pgoutput-options-streaming">
+       <term><varname>streaming</varname> (<type>enum</type>)</term>
+       <listitem>
+        <para>
+         Enables streaming of in-progress transactions. Valid values are
+         <literal>off</literal> (the default), <literal>on</literal> and
+         <literal>parallel</literal>.
+        </para>
+        <para>
+         When set to <literal>off</literal>, <filename>pgoutput</filename>
+         fully decodes a transaction before sending it as a whole.
+         This mode works with any protocol version.
+        </para>
+        <para>
+         When set to <literal>on</literal>, <filename>pgoutput</filename>
+         streams large in-progress transactions.
+         This requires protocol version 2 or higher.
+        </para>
+        <para>
+         When set to <literal>parallel</literal>, <filename>pgoutput</filename>
+         streams large in-progress transactions and also sends
+         extra information in some messages to support parallel processing.
+         This requires protocol version 4 or higher.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="pgoutput-options-two-phase">
+       <term><varname>two_phase</varname> (<type>boolean</type>)</term>
+       <listitem>
+        <para>
+         Enables sending two-phase transactions.
+         Minimum protocol version 3 is required to turn it on.
+         The default is <literal>off</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="pgoutput-options-origin">
+       <term><varname>origin</varname> (<type>enum</type>)</term>
+       <listitem>
+        <para>
+         Specifies whether to send changes by their origin.  Possible values are
+         <literal>none</literal> to only send the changes that have no origin
+         associated, or <literal>any</literal>
+         to send the changes regardless of their origin.  This can be used
+         to avoid loops (infinite replication of the same data) among
+         replication nodes.
+         The default is <literal>any</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+
+    </sect3>
+
+    <sect3 id="logicaldecoding-pgoutput-notes">
+     <title>Notes</title>
+
+     <para>
+      <filename>pgoutput</filename> produces binary output,
+      so functions expecting textual data (
+      <function><link linkend="pg-logical-slot-peek-changes">pg_logical_slot_peek_changes</link></function> and
+      <function><link linkend="pg-logical-slot-get-changes">pg_logical_slot_get_changes</link></function>)
+      cannot be used with it.  Use
+      <function><link linkend="pg-logical-slot-peek-binary-changes">pg_logical_slot_peek_binary_changes</link></function> or
+      <function><link linkend="pg-logical-slot-get-binary-changes">pg_logical_slot_get_binary_changes</link></function>
+      instead.
+     </para>
+    </sect3>
+   </sect2>
+  </sect1>
+
+  <sect1 id="logicaldecoding-output-plugin-writing">
+   <title>Writing Logical Decoding Output Plugins</title>
    <para>
     An example output plugin can be found in the
     <link linkend="test-decoding">
@@ -1366,7 +1615,7 @@ commit_prepared_cb(...);  &lt;-- commit of the prepared transaction
     currently used for decoded changes) is selected and streamed.  However, in
     some cases we still have to spill to disk even if streaming is enabled
     because we exceed the memory threshold but still have not decoded the
-    complete tuple e.g., only decoded toast table insert but not the main table
+    complete tuple e.g., only decoded TOAST table insert but not the main table
     insert.
    </para>
 

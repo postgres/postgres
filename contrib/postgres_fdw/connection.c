@@ -16,6 +16,7 @@
 #include <poll.h>
 #endif
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
@@ -142,6 +143,8 @@ static void do_sql_command_begin(PGconn *conn, const char *sql);
 static void do_sql_command_end(PGconn *conn, const char *sql,
 							   bool consume_input);
 static void begin_remote_xact(ConnCacheEntry *entry);
+static void pgfdw_report_internal(int elevel, PGresult *res, PGconn *conn,
+								  const char *sql);
 static void pgfdw_xact_callback(XactEvent event, void *arg);
 static void pgfdw_subxact_callback(SubXactEvent event,
 								   SubTransactionId mySubid,
@@ -462,7 +465,7 @@ pgfdw_security_check(const char **keywords, const char **values, UserMapping *us
 	 * assume that UseScramPassthrough is also true since SCRAM options are
 	 * only set when UseScramPassthrough is enabled.
 	 */
-	if (MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
 		return;
 
 	ereport(ERROR,
@@ -568,7 +571,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		n++;
 
 		/* Add required SCRAM pass-through connection options if it's enabled. */
-		if (MyProcPort->has_scram_keys && UseScramPassthrough(server, user))
+		if (MyProcPort != NULL && MyProcPort->has_scram_keys && UseScramPassthrough(server, user))
 		{
 			int			len;
 			int			encoded_len;
@@ -624,6 +627,9 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 					 errmsg("could not connect to server \"%s\"",
 							server->servername),
 					 errdetail_internal("%s", pchomp(PQerrorMessage(conn)))));
+
+		PQsetNoticeReceiver(conn, libpqsrv_notice_receiver,
+							"received message via remote connection");
 
 		/* Perform post-connection security checks. */
 		pgfdw_security_check(keywords, values, user, conn);
@@ -743,7 +749,7 @@ check_conn_params(const char **keywords, const char **values, UserMapping *user)
 	 * assume that UseScramPassthrough is also true since SCRAM options are
 	 * only set when UseScramPassthrough is enabled.
 	 */
-	if (MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
 		return;
 
 	ereport(ERROR,
@@ -812,7 +818,7 @@ static void
 do_sql_command_begin(PGconn *conn, const char *sql)
 {
 	if (!PQsendQuery(conn, sql))
-		pgfdw_report_error(ERROR, NULL, conn, false, sql);
+		pgfdw_report_error(NULL, conn, sql);
 }
 
 static void
@@ -827,10 +833,10 @@ do_sql_command_end(PGconn *conn, const char *sql, bool consume_input)
 	 * would be large compared to the overhead of PQconsumeInput.)
 	 */
 	if (consume_input && !PQconsumeInput(conn))
-		pgfdw_report_error(ERROR, NULL, conn, false, sql);
+		pgfdw_report_error(NULL, conn, sql);
 	res = pgfdw_get_result(conn);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, conn, true, sql);
+		pgfdw_report_error(res, conn, sql);
 	PQclear(res);
 }
 
@@ -963,63 +969,73 @@ pgfdw_get_result(PGconn *conn)
 /*
  * Report an error we got from the remote server.
  *
- * elevel: error level to use (typically ERROR, but might be less)
- * res: PGresult containing the error
+ * Callers should use pgfdw_report_error() to throw an error, or use
+ * pgfdw_report() for lesser message levels.  (We make this distinction
+ * so that pgfdw_report_error() can be marked noreturn.)
+ *
+ * res: PGresult containing the error (might be NULL)
  * conn: connection we did the query on
- * clear: if true, PQclear the result (otherwise caller will handle it)
  * sql: NULL, or text of remote command we tried to execute
+ *
+ * If "res" is not NULL, it'll be PQclear'ed here (unless we throw error,
+ * in which case memory context cleanup will clear it eventually).
  *
  * Note: callers that choose not to throw ERROR for a remote error are
  * responsible for making sure that the associated ConnCacheEntry gets
  * marked with have_error = true.
  */
 void
-pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
-				   bool clear, const char *sql)
+pgfdw_report_error(PGresult *res, PGconn *conn, const char *sql)
 {
-	/* If requested, PGresult must be released before leaving this function. */
-	PG_TRY();
-	{
-		char	   *diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-		char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
-		char	   *message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
-		char	   *message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
-		char	   *message_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
-		int			sqlstate;
+	pgfdw_report_internal(ERROR, res, conn, sql);
+	pg_unreachable();
+}
 
-		if (diag_sqlstate)
-			sqlstate = MAKE_SQLSTATE(diag_sqlstate[0],
-									 diag_sqlstate[1],
-									 diag_sqlstate[2],
-									 diag_sqlstate[3],
-									 diag_sqlstate[4]);
-		else
-			sqlstate = ERRCODE_CONNECTION_FAILURE;
+void
+pgfdw_report(int elevel, PGresult *res, PGconn *conn, const char *sql)
+{
+	Assert(elevel < ERROR);		/* use pgfdw_report_error for that */
+	pgfdw_report_internal(elevel, res, conn, sql);
+}
 
-		/*
-		 * If we don't get a message from the PGresult, try the PGconn.  This
-		 * is needed because for connection-level failures, PQgetResult may
-		 * just return NULL, not a PGresult at all.
-		 */
-		if (message_primary == NULL)
-			message_primary = pchomp(PQerrorMessage(conn));
+static void
+pgfdw_report_internal(int elevel, PGresult *res, PGconn *conn,
+					  const char *sql)
+{
+	char	   *diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+	char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+	char	   *message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
+	char	   *message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
+	char	   *message_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
+	int			sqlstate;
 
-		ereport(elevel,
-				(errcode(sqlstate),
-				 (message_primary != NULL && message_primary[0] != '\0') ?
-				 errmsg_internal("%s", message_primary) :
-				 errmsg("could not obtain message string for remote error"),
-				 message_detail ? errdetail_internal("%s", message_detail) : 0,
-				 message_hint ? errhint("%s", message_hint) : 0,
-				 message_context ? errcontext("%s", message_context) : 0,
-				 sql ? errcontext("remote SQL command: %s", sql) : 0));
-	}
-	PG_FINALLY();
-	{
-		if (clear)
-			PQclear(res);
-	}
-	PG_END_TRY();
+	if (diag_sqlstate)
+		sqlstate = MAKE_SQLSTATE(diag_sqlstate[0],
+								 diag_sqlstate[1],
+								 diag_sqlstate[2],
+								 diag_sqlstate[3],
+								 diag_sqlstate[4]);
+	else
+		sqlstate = ERRCODE_CONNECTION_FAILURE;
+
+	/*
+	 * If we don't get a message from the PGresult, try the PGconn.  This is
+	 * needed because for connection-level failures, PQgetResult may just
+	 * return NULL, not a PGresult at all.
+	 */
+	if (message_primary == NULL)
+		message_primary = pchomp(PQerrorMessage(conn));
+
+	ereport(elevel,
+			(errcode(sqlstate),
+			 (message_primary != NULL && message_primary[0] != '\0') ?
+			 errmsg_internal("%s", message_primary) :
+			 errmsg("could not obtain message string for remote error"),
+			 message_detail ? errdetail_internal("%s", message_detail) : 0,
+			 message_hint ? errhint("%s", message_hint) : 0,
+			 message_context ? errcontext("%s", message_context) : 0,
+			 sql ? errcontext("remote SQL command: %s", sql) : 0));
+	PQclear(res);
 }
 
 /*
@@ -1542,7 +1558,7 @@ pgfdw_exec_cleanup_query_begin(PGconn *conn, const char *query)
 	 */
 	if (!PQsendQuery(conn, query))
 	{
-		pgfdw_report_error(WARNING, NULL, conn, false, query);
+		pgfdw_report(WARNING, NULL, conn, query);
 		return false;
 	}
 
@@ -1567,7 +1583,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	 */
 	if (consume_input && !PQconsumeInput(conn))
 	{
-		pgfdw_report_error(WARNING, NULL, conn, false, query);
+		pgfdw_report(WARNING, NULL, conn, query);
 		return false;
 	}
 
@@ -1579,7 +1595,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 					(errmsg("could not get query result due to timeout"),
 					 errcontext("remote SQL command: %s", query)));
 		else
-			pgfdw_report_error(WARNING, NULL, conn, false, query);
+			pgfdw_report(WARNING, NULL, conn, query);
 
 		return false;
 	}
@@ -1587,7 +1603,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	/* Issue a warning if not successful. */
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		pgfdw_report_error(WARNING, result, conn, true, query);
+		pgfdw_report(WARNING, result, conn, query);
 		return ignore_errors;
 	}
 	PQclear(result);
@@ -1615,103 +1631,90 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 						 PGresult **result,
 						 bool *timed_out)
 {
-	volatile bool failed = false;
-	PGresult   *volatile last_res = NULL;
+	bool		failed = false;
+	PGresult   *last_res = NULL;
+	int			canceldelta = RETRY_CANCEL_TIMEOUT * 2;
 
 	*result = NULL;
 	*timed_out = false;
-
-	/* In what follows, do not leak any PGresults on an error. */
-	PG_TRY();
+	for (;;)
 	{
-		int			canceldelta = RETRY_CANCEL_TIMEOUT * 2;
+		PGresult   *res;
 
-		for (;;)
+		while (PQisBusy(conn))
 		{
-			PGresult   *res;
+			int			wc;
+			TimestampTz now = GetCurrentTimestamp();
+			long		cur_timeout;
 
-			while (PQisBusy(conn))
+			/* If timeout has expired, give up. */
+			if (now >= endtime)
 			{
-				int			wc;
-				TimestampTz now = GetCurrentTimestamp();
-				long		cur_timeout;
-
-				/* If timeout has expired, give up. */
-				if (now >= endtime)
-				{
-					*timed_out = true;
-					failed = true;
-					goto exit;
-				}
-
-				/* If we need to re-issue the cancel request, do that. */
-				if (now >= retrycanceltime)
-				{
-					/* We ignore failure to issue the repeated request. */
-					(void) libpqsrv_cancel(conn, endtime);
-
-					/* Recompute "now" in case that took measurable time. */
-					now = GetCurrentTimestamp();
-
-					/* Adjust re-cancel timeout in increasing steps. */
-					retrycanceltime = TimestampTzPlusMilliseconds(now,
-																  canceldelta);
-					canceldelta += canceldelta;
-				}
-
-				/* If timeout has expired, give up, else get sleep time. */
-				cur_timeout = TimestampDifferenceMilliseconds(now,
-															  Min(endtime,
-																  retrycanceltime));
-				if (cur_timeout <= 0)
-				{
-					*timed_out = true;
-					failed = true;
-					goto exit;
-				}
-
-				/* first time, allocate or get the custom wait event */
-				if (pgfdw_we_cleanup_result == 0)
-					pgfdw_we_cleanup_result = WaitEventExtensionNew("PostgresFdwCleanupResult");
-
-				/* Sleep until there's something to do */
-				wc = WaitLatchOrSocket(MyLatch,
-									   WL_LATCH_SET | WL_SOCKET_READABLE |
-									   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-									   PQsocket(conn),
-									   cur_timeout, pgfdw_we_cleanup_result);
-				ResetLatch(MyLatch);
-
-				CHECK_FOR_INTERRUPTS();
-
-				/* Data available in socket? */
-				if (wc & WL_SOCKET_READABLE)
-				{
-					if (!PQconsumeInput(conn))
-					{
-						/* connection trouble */
-						failed = true;
-						goto exit;
-					}
-				}
+				*timed_out = true;
+				failed = true;
+				goto exit;
 			}
 
-			res = PQgetResult(conn);
-			if (res == NULL)
-				break;			/* query is complete */
+			/* If we need to re-issue the cancel request, do that. */
+			if (now >= retrycanceltime)
+			{
+				/* We ignore failure to issue the repeated request. */
+				(void) libpqsrv_cancel(conn, endtime);
 
-			PQclear(last_res);
-			last_res = res;
+				/* Recompute "now" in case that took measurable time. */
+				now = GetCurrentTimestamp();
+
+				/* Adjust re-cancel timeout in increasing steps. */
+				retrycanceltime = TimestampTzPlusMilliseconds(now,
+															  canceldelta);
+				canceldelta += canceldelta;
+			}
+
+			/* If timeout has expired, give up, else get sleep time. */
+			cur_timeout = TimestampDifferenceMilliseconds(now,
+														  Min(endtime,
+															  retrycanceltime));
+			if (cur_timeout <= 0)
+			{
+				*timed_out = true;
+				failed = true;
+				goto exit;
+			}
+
+			/* first time, allocate or get the custom wait event */
+			if (pgfdw_we_cleanup_result == 0)
+				pgfdw_we_cleanup_result = WaitEventExtensionNew("PostgresFdwCleanupResult");
+
+			/* Sleep until there's something to do */
+			wc = WaitLatchOrSocket(MyLatch,
+								   WL_LATCH_SET | WL_SOCKET_READABLE |
+								   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								   PQsocket(conn),
+								   cur_timeout, pgfdw_we_cleanup_result);
+			ResetLatch(MyLatch);
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* Data available in socket? */
+			if (wc & WL_SOCKET_READABLE)
+			{
+				if (!PQconsumeInput(conn))
+				{
+					/* connection trouble */
+					failed = true;
+					goto exit;
+				}
+			}
 		}
-exit:	;
-	}
-	PG_CATCH();
-	{
-		PQclear(last_res);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
+		res = PQgetResult(conn);
+		if (res == NULL)
+			break;				/* query is complete */
+
+		PQclear(last_res);
+		last_res = res;
+	}
+exit:
 	if (failed)
 		PQclear(last_res);
 	else
@@ -2557,7 +2560,7 @@ pgfdw_has_required_scram_options(const char **keywords, const char **values)
 		}
 	}
 
-	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort->has_scram_keys;
+	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort != NULL && MyProcPort->has_scram_keys;
 
 	return (has_scram_keys && has_require_auth);
 }

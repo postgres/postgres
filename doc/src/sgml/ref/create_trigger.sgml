@@ -29,7 +29,7 @@ PostgreSQL documentation
 CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="parameter">event</replaceable> [ OR ... ] }
     ON <replaceable class="parameter">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
-    [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ]
+    [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ] [ ENFORCED ]
     [ REFERENCING { { OLD | NEW } TABLE [ AS ] <replaceable class="parameter">transition_relation_name</replaceable> } [ ... ] ]
     [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
@@ -197,9 +197,11 @@ CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name
    of the rows inserted, deleted, or modified by the current SQL statement.
    This feature lets the trigger see a global view of what the statement did,
    not just one row at a time.  This option is only allowed for
-   an <literal>AFTER</literal> trigger that is not a constraint trigger; also, if
-   the trigger is an <literal>UPDATE</literal> trigger, it must not specify
-   a <replaceable class="parameter">column_name</replaceable> list.
+   an <literal>AFTER</literal> trigger on a plain table (not a foreign table).
+   The trigger should not be a constraint trigger.  Also, if the trigger is
+   an <literal>UPDATE</literal> trigger, it must not specify
+   a <replaceable class="parameter">column_name</replaceable> list when using
+   this option.
    <literal>OLD TABLE</literal> may only be specified once, and only for a trigger
    that can fire on <literal>UPDATE</literal> or <literal>DELETE</literal>; it creates a
    transition relation containing the <firstterm>before-images</firstterm> of all rows
@@ -317,6 +319,15 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       See the <xref linkend="sql-createtable"/> documentation for details of
       these constraint options.  This can only be specified for constraint
       triggers.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ENFORCED</literal></term>
+    <listitem>
+     <para>
+      This is a noise word.  Constraint triggers are always enforced.
      </para>
     </listitem>
    </varlistentry>
@@ -474,7 +485,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    to change even when the trigger is not fired, because changes made to the
    row's contents by <literal>BEFORE UPDATE</literal> triggers are not considered.
    Conversely, a command such as <literal>UPDATE ... SET x = x ...</literal>
-   will fire a trigger on column <literal>x</literal>, even though the column's
+   will fire a trigger on column <structfield>x</structfield>, even though the column's
    value did not change.
   </para>
 
@@ -587,7 +598,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
 
   <para>
    Execute the function <function>check_account_update</function> whenever
-   a row of the table <literal>accounts</literal> is about to be updated:
+   a row of the table <structname>accounts</structname> is about to be updated:
 
 <programlisting>
 CREATE TRIGGER check_update
@@ -597,7 +608,7 @@ CREATE TRIGGER check_update
 </programlisting>
 
    Modify that trigger definition to only execute the function if
-   column <literal>balance</literal> is specified as a target in
+   column <structfield>balance</structfield> is specified as a target in
    the <command>UPDATE</command> command:
 
 <programlisting>
@@ -607,7 +618,7 @@ CREATE OR REPLACE TRIGGER check_update
     EXECUTE FUNCTION check_account_update();
 </programlisting>
 
-   This form only executes the function if column <literal>balance</literal>
+   This form only executes the function if column <structfield>balance</structfield>
    has in fact changed value:
 
 <programlisting>
@@ -618,7 +629,7 @@ CREATE TRIGGER check_update
     EXECUTE FUNCTION check_account_update();
 </programlisting>
 
-   Call a function to log updates of <literal>accounts</literal>, but only if
+   Call a function to log updates of <structname>accounts</structname>, but only if
    something changed:
 
 <programlisting>

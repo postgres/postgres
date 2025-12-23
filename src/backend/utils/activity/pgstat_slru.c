@@ -55,47 +55,33 @@ pgstat_reset_slru(const char *name)
  * SLRU statistics count accumulation functions --- called from slru.c
  */
 
-void
-pgstat_count_slru_page_zeroed(int slru_idx)
-{
-	get_slru_entry(slru_idx)->blocks_zeroed += 1;
+#define PGSTAT_COUNT_SLRU(stat)						\
+void												\
+CppConcat(pgstat_count_slru_,stat)(int slru_idx)	\
+{													\
+	get_slru_entry(slru_idx)->stat += 1;			\
 }
 
-void
-pgstat_count_slru_page_hit(int slru_idx)
-{
-	get_slru_entry(slru_idx)->blocks_hit += 1;
-}
+/* pgstat_count_slru_blocks_zeroed */
+PGSTAT_COUNT_SLRU(blocks_zeroed)
 
-void
-pgstat_count_slru_page_exists(int slru_idx)
-{
-	get_slru_entry(slru_idx)->blocks_exists += 1;
-}
+/* pgstat_count_slru_blocks_hit */
+PGSTAT_COUNT_SLRU(blocks_hit)
 
-void
-pgstat_count_slru_page_read(int slru_idx)
-{
-	get_slru_entry(slru_idx)->blocks_read += 1;
-}
+/* pgstat_count_slru_blocks_exists */
+PGSTAT_COUNT_SLRU(blocks_exists)
 
-void
-pgstat_count_slru_page_written(int slru_idx)
-{
-	get_slru_entry(slru_idx)->blocks_written += 1;
-}
+/* pgstat_count_slru_blocks_read */
+PGSTAT_COUNT_SLRU(blocks_read)
 
-void
-pgstat_count_slru_flush(int slru_idx)
-{
-	get_slru_entry(slru_idx)->flush += 1;
-}
+/* pgstat_count_slru_blocks_written */
+PGSTAT_COUNT_SLRU(blocks_written)
 
-void
-pgstat_count_slru_truncate(int slru_idx)
-{
-	get_slru_entry(slru_idx)->truncate += 1;
-}
+/* pgstat_count_slru_flush */
+PGSTAT_COUNT_SLRU(flush)
+
+/* pgstat_count_slru_truncate */
+PGSTAT_COUNT_SLRU(truncate)
 
 /*
  * Support function for the SQL-callable pgstat* functions. Returns
@@ -141,15 +127,6 @@ pgstat_get_slru_index(const char *name)
 
 	/* return index of the last entry (which is the "other" one) */
 	return (SLRU_NUM_ELEMENTS - 1);
-}
-
-/*
- * Check if there are any SLRU stats entries waiting for flush.
- */
-bool
-pgstat_slru_have_pending_cb(void)
-{
-	return have_slrustats;
 }
 
 /*
@@ -247,6 +224,7 @@ get_slru_entry(int slru_idx)
 	Assert((slru_idx >= 0) && (slru_idx < SLRU_NUM_ELEMENTS));
 
 	have_slrustats = true;
+	pgstat_report_fixed = true;
 
 	return &pending_SLRUStats[slru_idx];
 }

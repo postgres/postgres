@@ -82,7 +82,7 @@ typedef ItemPointerData *ItemPointer;
 static inline bool
 ItemPointerIsValid(const ItemPointerData *pointer)
 {
-	return PointerIsValid(pointer) && pointer->ip_posid != 0;
+	return pointer && pointer->ip_posid != 0;
 }
 
 /*
@@ -134,7 +134,7 @@ ItemPointerGetOffsetNumber(const ItemPointerData *pointer)
 static inline void
 ItemPointerSet(ItemPointerData *pointer, BlockNumber blockNumber, OffsetNumber offNum)
 {
-	Assert(PointerIsValid(pointer));
+	Assert(pointer);
 	BlockIdSet(&pointer->ip_blkid, blockNumber);
 	pointer->ip_posid = offNum;
 }
@@ -146,7 +146,7 @@ ItemPointerSet(ItemPointerData *pointer, BlockNumber blockNumber, OffsetNumber o
 static inline void
 ItemPointerSetBlockNumber(ItemPointerData *pointer, BlockNumber blockNumber)
 {
-	Assert(PointerIsValid(pointer));
+	Assert(pointer);
 	BlockIdSet(&pointer->ip_blkid, blockNumber);
 }
 
@@ -157,7 +157,7 @@ ItemPointerSetBlockNumber(ItemPointerData *pointer, BlockNumber blockNumber)
 static inline void
 ItemPointerSetOffsetNumber(ItemPointerData *pointer, OffsetNumber offsetNumber)
 {
-	Assert(PointerIsValid(pointer));
+	Assert(pointer);
 	pointer->ip_posid = offsetNumber;
 }
 
@@ -171,8 +171,8 @@ ItemPointerSetOffsetNumber(ItemPointerData *pointer, OffsetNumber offsetNumber)
 static inline void
 ItemPointerCopy(const ItemPointerData *fromPointer, ItemPointerData *toPointer)
 {
-	Assert(PointerIsValid(toPointer));
-	Assert(PointerIsValid(fromPointer));
+	Assert(toPointer);
+	Assert(fromPointer);
 	*toPointer = *fromPointer;
 }
 
@@ -183,7 +183,7 @@ ItemPointerCopy(const ItemPointerData *fromPointer, ItemPointerData *toPointer)
 static inline void
 ItemPointerSetInvalid(ItemPointerData *pointer)
 {
-	Assert(PointerIsValid(pointer));
+	Assert(pointer);
 	BlockIdSet(&pointer->ip_blkid, InvalidBlockNumber);
 	pointer->ip_posid = InvalidOffsetNumber;
 }
@@ -217,8 +217,8 @@ ItemPointerSetMovedPartitions(ItemPointerData *pointer)
  * ----------------
  */
 
-extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
-extern int32 ItemPointerCompare(ItemPointer arg1, ItemPointer arg2);
+extern bool ItemPointerEquals(const ItemPointerData *pointer1, const ItemPointerData *pointer2);
+extern int32 ItemPointerCompare(const ItemPointerData *arg1, const ItemPointerData *arg2);
 extern void ItemPointerInc(ItemPointer pointer);
 extern void ItemPointerDec(ItemPointer pointer);
 

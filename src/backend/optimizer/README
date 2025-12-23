@@ -640,7 +640,6 @@ RelOptInfo      - a relation or joined relations
   GroupResultPath - childless Result plan node (used for degenerate grouping)
   MaterialPath  - a Material plan node
   MemoizePath   - a Memoize plan node for caching tuples from sub-paths
-  UniquePath    - remove duplicate rows (either by hashing or sorting)
   GatherPath    - collect the results of parallel workers
   GatherMergePath - collect parallel results, preserving their common sort order
   ProjectionPath - a Result plan node with child (used for projection)
@@ -648,7 +647,7 @@ RelOptInfo      - a relation or joined relations
   SortPath      - a Sort plan node applied to some sub-path
   IncrementalSortPath - an IncrementalSort plan node applied to some sub-path
   GroupPath     - a Group plan node applied to some sub-path
-  UpperUniquePath - a Unique plan node applied to some sub-path
+  UniquePath    - a Unique plan node applied to some sub-path
   AggPath       - an Agg plan node applied to some sub-path
   GroupingSetsPath - an Agg plan node used to implement GROUPING SETS
   MinMaxAggPath - a Result plan node with subplans performing MIN/MAX
@@ -1501,3 +1500,113 @@ breaking down aggregation or grouping over a partitioned relation into
 aggregation or grouping over its partitions is called partitionwise
 aggregation.  Especially when the partition keys match the GROUP BY clause,
 this can be significantly faster than the regular method.
+
+Eager aggregation
+-----------------
+
+Eager aggregation is a query optimization technique that partially
+pushes aggregation past a join, and finalizes it once all the
+relations are joined.  Eager aggregation may reduce the number of
+input rows to the join and thus could result in a better overall plan.
+
+To prove that the transformation is correct, let's first consider the
+case where only inner joins are involved.  In this case, we partition
+the tables in the FROM clause into two groups: those that contain at
+least one aggregation column, and those that do not contain any
+aggregation columns.  Each group can be treated as a single relation
+formed by the Cartesian product of the tables within that group.
+Therefore, without loss of generality, we can assume that the FROM
+clause contains exactly two relations, R1 and R2, where R1 represents
+the relation containing all aggregation columns, and R2 represents the
+relation without any aggregation columns.
+
+Let the query be of the form:
+
+SELECT G, AGG(A)
+FROM R1 JOIN R2 ON J
+GROUP BY G;
+
+where G is the set of grouping keys that may include columns from R1
+and/or R2; AGG(A) is an aggregate function over columns A from R1; J
+is the join condition between R1 and R2.
+
+The transformation of eager aggregation is:
+
+    GROUP BY G, AGG(A) on (R1 JOIN R2 ON J)
+    =
+    GROUP BY G, AGG(agg_A) on ((GROUP BY G1, AGG(A) AS agg_A on R1) JOIN R2 ON J)
+
+This equivalence holds under the following conditions:
+
+1) AGG is decomposable, meaning that it can be computed in two stages:
+a partial aggregation followed by a final aggregation;
+2) The set G1 used in the pre-aggregation of R1 includes:
+    * all columns from R1 that are part of the grouping keys G, and
+    * all columns from R1 that appear in the join condition J.
+3) The grouping operator for any column in G1 must be compatible with
+the operator used for that column in the join condition J.
+
+Since G1 includes all columns from R1 that appear in either the
+grouping keys G or the join condition J, all rows within each partial
+group have identical values for both the grouping keys and the
+join-relevant columns from R1, assuming compatible operators are used.
+As a result, the rows within a partial group are indistinguishable in
+terms of their contribution to the aggregation and their behavior in
+the join.  This ensures that all rows in the same partial group share
+the same "destiny": they either all match or all fail to match a given
+row in R2.  Because the aggregate function AGG is decomposable,
+aggregating the partial results after the join yields the same final
+result as aggregating after the full join, thereby preserving query
+semantics.  Q.E.D.
+
+In the case where there are any outer joins, the situation becomes
+more complex due to join order constraints and the semantics of
+null-extension in outer joins.  If the relations that contain at least
+one aggregation column cannot be treated as a single relation because
+of the join order constraints, partial aggregation paths will not be
+generated, and thus the transformation is not applicable.  Otherwise,
+let R1 be the relation containing all aggregation columns, and R2, R3,
+... be the remaining relations.  From the inner join case, under the
+aforementioned conditions, we have the equivalence:
+
+    GROUP BY G, AGG(A) on (R1 JOIN R2 JOIN R3 ...)
+    =
+    GROUP BY G, AGG(agg_A) on ((GROUP BY G1, AGG(A) AS agg_A on R1) JOIN R2 JOIN R3 ...)
+
+To preserve correctness when outer joins are involved, we require an
+additional condition:
+
+4) R1 must not be on the nullable side of any outer join.
+
+This condition ensures that partial aggregation over R1 does not
+suppress any null-extended rows that would be introduced by outer
+joins.  If R1 is on the nullable side of an outer join, the
+NULL-extended rows produced by the outer join would not be available
+when we perform the partial aggregation, while with a
+non-eager-aggregation plan these rows are available for the top-level
+aggregation.  Pushing partial aggregation in this case may result in
+the rows being grouped differently than expected, or produce incorrect
+values from the aggregate functions.
+
+During the construction of the join tree, we evaluate each base or
+join relation to determine if eager aggregation can be applied.  If
+feasible, we create a separate RelOptInfo called a "grouped relation"
+and generate grouped paths by adding sorted and hashed partial
+aggregation paths on top of the non-grouped paths.  To limit planning
+time, we consider only the cheapest or suitably-sorted non-grouped
+paths in this step.
+
+Another way to generate grouped paths is to join a grouped relation
+with a non-grouped relation.  Joining two grouped relations is
+currently not supported.
+
+To further limit planning time, we currently adopt a strategy where
+partial aggregation is pushed only to the lowest feasible level in the
+join tree where it provides a significant reduction in row count.
+This strategy also helps ensure that all grouped paths for the same
+grouped relation produce the same set of rows, which is important to
+support a fundamental assumption of the planner.
+
+If we have generated a grouped relation for the topmost join relation,
+we need to finalize its paths at the end.  The final paths will
+compete in the usual way with paths built from regular planning.

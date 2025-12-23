@@ -47,6 +47,7 @@
  */
 PGFunction	TypePGFunction;
 size_t		TypeSizeT;
+Datum		TypeDatum;
 bool		TypeStorageBool;
 
 ExecEvalSubroutine TypeExecEvalSubroutine;

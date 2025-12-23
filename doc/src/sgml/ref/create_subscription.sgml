@@ -127,10 +127,10 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
          <para>
           Since no connection is made when this option is
-          <literal>false</literal>, no tables are subscribed. To initiate
-          replication, you must manually create the replication slot, enable
-          the failover if required, enable the subscription, and refresh the
-          subscription. See
+          <literal>false</literal>, no tables and sequences are subscribed. To
+          initiate replication, you must manually create the replication slot,
+          enable the failover if required, enable the subscription, and refresh
+          the subscription. See
           <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
           for examples.
          </para>
@@ -169,7 +169,9 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <listitem>
          <para>
           Name of the publisher's replication slot to use.  The default is
-          to use the name of the subscription for the slot name.
+          to use the name of the subscription for the slot name. The name cannot
+          be <literal>pg_conflict_detection</literal> as it is reserved for the
+          conflict detection.
          </para>
 
          <para>
@@ -226,7 +228,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           the initial synchronization requires all data types to have binary
           send and receive functions, otherwise the synchronization will fail
           (see <xref linkend="sql-createtype"/> for more about send/receive
-          functions).
+          functions). This parameter has no effect for sequences.
          </para>
 
          <para>
@@ -263,6 +265,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           <literal>copy_data = true</literal> can interact with the
           <literal>origin</literal> parameter.
          </para>
+         <para>
+          See <xref linkend="sequence-definition-mismatches"/>
+          for recommendations on how to handle any warnings about sequence
+          definition differences between the publisher and the subscriber,
+          which might occur when <literal>copy_data = true</literal>.
+         </para>
         </listitem>
        </varlistentry>
 
@@ -278,6 +286,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           temporary files and applied after the transaction is committed. Note
           that if an error happens in a parallel apply worker, the finish LSN
           of the remote transaction might not be reported in the server log.
+          This parameter has no effect for sequences.
          </para>
 
          <caution>
@@ -308,7 +317,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           The value of this parameter overrides the
           <xref linkend="guc-synchronous-commit"/> setting within this
           subscription's apply worker processes.  The default value
-          is <literal>off</literal>.
+          is <literal>off</literal>. This parameter has no effect for
+          sequences.
          </para>
 
          <para>
@@ -338,7 +348,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <listitem>
          <para>
           Specifies whether two-phase commit is enabled for this subscription.
-          The default is <literal>false</literal>.
+          The default is <literal>false</literal>. This parameter has no effect
+          for sequences.
          </para>
 
          <para>
@@ -396,8 +407,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          <para>
           If true, all replication actions are performed as the subscription
           owner. If false, replication workers will perform actions on each
-          table as the owner of that table. The latter configuration is
-          generally much more secure; for details, see
+          table or sequence as the owner of that relation. The latter
+          configuration is generally much more secure; for details, see
           <xref linkend="logical-replication-security" />.
           The default is <literal>false</literal>.
          </para>
@@ -415,6 +426,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           changes that don't have an origin. Setting <literal>origin</literal>
           to <literal>any</literal> means that the publisher sends changes
           regardless of their origin. The default is <literal>any</literal>.
+          This parameter has no effect for sequences.
          </para>
          <para>
           See <xref linkend="sql-createsubscription-notes"/> for details of how
@@ -433,6 +445,133 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           replication can be resumed from the new primary after failover.
           The default is <literal>false</literal>.
          </para>
+        </listitem>
+       </varlistentry>
+
+      <varlistentry id="sql-createsubscription-params-with-retain-dead-tuples">
+        <term><literal>retain_dead_tuples</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the information (e.g., dead tuples, commit
+          timestamps, and origins) required for conflict detection on the
+          subscriber is retained. The default is <literal>false</literal>.
+          If set to <literal>true</literal>, the detection of
+          <xref linkend="conflict-update-deleted"/> is enabled, and a physical
+          replication slot named <quote><literal>pg_conflict_detection</literal></quote>
+          is created on the subscriber to prevent the information for detecting
+          conflicts from being removed. This parameter has no effect for
+          sequences.
+         </para>
+
+         <para>
+          Note that the information useful for conflict detection is retained
+          only after the creation of the slot. You can verify the existence of
+          this slot by querying <link linkend="view-pg-replication-slots">pg_replication_slots</link>.
+          And even if multiple subscriptions on one node enable this option,
+          only one replication slot will be created. Also,
+          <varname>wal_level</varname> must be set to <literal>replica</literal>
+          or higher to allow the replication slot to be used.
+         </para>
+
+         <caution>
+          <para>
+           Note that the information for conflict detection cannot be purged if
+           the subscription is disabled; thus, the information will accumulate
+           until the subscription is enabled. To prevent excessive accumulation,
+           it is recommended to disable <literal>retain_dead_tuples</literal>
+           if the subscription will be inactive for an extended period.
+          </para>
+
+          <para>
+           Additionally when enabling <literal>retain_dead_tuples</literal> for
+           conflict detection in logical replication, it is important to design the
+           replication topology to balance data retention requirements with
+           overall system performance. This option provides minimal performance
+           overhead when applied appropriately. The following scenarios illustrate
+           effective usage patterns when enabling this option.
+          </para>
+
+          <para>
+           a. Large Tables with Bidirectional Writes:
+           For large tables subject to concurrent writes on both publisher and
+           subscriber nodes, publishers can define row filters when creating
+           publications to segment data. This allows multiple subscriptions
+           to replicate exclusive subsets of the table in parallel, optimizing
+           the throughput.
+          </para>
+
+          <para>
+           b. Write-Enabled Subscribers:
+           If a subscriber node is expected to perform write operations, replication
+           can be structured using multiple publications and subscriptions. By
+           distributing tables across these publications, the workload is spread among
+           several apply workers, improving concurrency and reducing contention.
+          </para>
+
+          <para>
+           c. Read-Only Subscribers:
+           In configurations involving single or multiple publisher nodes
+           performing concurrent write operations, read-only subscriber nodes may
+           replicate changes without seeing a performance impact if it does index
+           scan. However, if the subscriber is impacted due to replication lag or
+           scan performance (say due to sequential scans), it needs to follow one
+           of the two previous strategies to distribute the workload on the
+           subscriber.
+          </para>
+         </caution>
+
+         <para>
+          This option cannot be enabled if the publisher is a physical standby.
+         </para>
+
+         <para>
+          Enabling this option ensures retention of information useful for
+          conflict detection solely for changes occurring locally on the
+          publisher. For the changes originating from different origins,
+          reliable conflict detection cannot be guaranteed.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry id="sql-createsubscription-params-with-max-retention-duration">
+        <term><literal>max_retention_duration</literal> (<type>integer</type>)</term>
+        <listitem>
+         <para>
+          Maximum duration in milliseconds for which this subscription's apply worker
+          is allowed to retain the information useful for conflict detection when
+          <literal>retain_dead_tuples</literal> is enabled. The default value
+          is <literal>0</literal>, indicating that the information is retained
+          until it is no longer needed for detection purposes.
+         </para>
+         <para>
+          The information useful for conflict detection is no longer retained if
+          all apply workers associated with the subscriptions, where
+          <literal>retain_dead_tuples</literal> is enabled, confirm that the
+          retention duration has exceeded the
+          <literal>max_retention_duration</literal> set within the corresponding
+          subscription. The retention will automatically resume when at least one
+          apply worker confirms that the retention duration is within the
+          specified limit, or when a new subscription is created with
+          <literal>retain_dead_tuples = true</literal>. Alternatively, retention
+          can be manually resumed by re-enabling <literal>retain_dead_tuples</literal>.
+         </para>
+         <para>
+          Note that overall retention will not stop if other subscriptions that
+          have a value greater than 0 for this parameter have not exceeded it,
+          or if they set this option to 0.
+         </para>
+         <para>
+          This option is effective only when
+          <literal>retain_conflict_info</literal> is enabled and the apply
+          worker associated with the subscription is active.
+         </para>
+         <warning>
+          <para>
+           Note that setting a non-zero value for this option could lead to
+           information for conflict detection being removed prematurely,
+           potentially resulting in incorrect conflict detection.
+          </para>
+         </warning>
         </listitem>
        </varlistentry>
       </variablelist></para>

@@ -8,6 +8,23 @@
  * context-type-specific operations via the function pointers in a
  * context's MemoryContextMethods struct.
  *
+ * A note about Valgrind support: when USE_VALGRIND is defined, we provide
+ * support for memory leak tracking at the allocation-unit level.  Valgrind
+ * does leak detection by tracking allocated "chunks", which can be grouped
+ * into "pools".  The "chunk" terminology is overloaded, since we use that
+ * word for our allocation units, and it's sometimes important to distinguish
+ * those from the Valgrind objects that describe them.  To reduce confusion,
+ * let's use the terms "vchunk" and "vpool" for the Valgrind objects.
+ *
+ * We use a separate vpool for each memory context.  The context-type-specific
+ * code is responsible for creating and deleting the vpools, and also for
+ * creating vchunks to cover its management data structures such as block
+ * headers.  (There must be a vchunk that includes every pointer we want
+ * Valgrind to consider for leak-tracking purposes.)  This module creates
+ * and deletes the vchunks that cover the caller-visible allocated chunks.
+ * However, the context-type-specific code must handle cleaning up those
+ * vchunks too during memory context reset operations.
+ *
  *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -156,6 +173,9 @@ MemoryContext CurTransactionContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
+
+/* Is memory context logging currently in progress? */
+static bool LogMemoryContextInProgress = false;
 
 static void MemoryContextDeleteOnly(MemoryContext context);
 static void MemoryContextCallResetCallbacks(MemoryContext context);
@@ -418,8 +438,6 @@ MemoryContextResetOnly(MemoryContext context)
 
 		context->methods->reset(context);
 		context->isReset = true;
-		VALGRIND_DESTROY_MEMPOOL(context);
-		VALGRIND_CREATE_MEMPOOL(context, 0, false);
 	}
 }
 
@@ -526,8 +544,6 @@ MemoryContextDeleteOnly(MemoryContext context)
 	context->ident = NULL;
 
 	context->methods->delete_context(context);
-
-	VALGRIND_DESTROY_MEMPOOL(context);
 }
 
 /*
@@ -560,9 +576,7 @@ MemoryContextDeleteChildren(MemoryContext context)
  * the specified context, since that means it will automatically be freed
  * when no longer needed.
  *
- * There is no API for deregistering a callback once registered.  If you
- * want it to not do anything anymore, adjust the state pointed to by its
- * "arg" to indicate that.
+ * Note that callers can assume this cannot fail.
  */
 void
 MemoryContextRegisterResetCallback(MemoryContext context,
@@ -575,6 +589,41 @@ MemoryContextRegisterResetCallback(MemoryContext context,
 	context->reset_cbs = cb;
 	/* Mark the context as non-reset (it probably is already). */
 	context->isReset = false;
+}
+
+/*
+ * MemoryContextUnregisterResetCallback
+ *		Undo the effects of MemoryContextRegisterResetCallback.
+ *
+ * This can be used if a callback's effects are no longer required
+ * at some point before the context has been reset/deleted.  It is the
+ * caller's responsibility to pfree the callback struct (if needed).
+ *
+ * An assertion failure occurs if the callback was not registered.
+ * We could alternatively define that case as a no-op, but that seems too
+ * likely to mask programming errors such as passing the wrong context.
+ */
+void
+MemoryContextUnregisterResetCallback(MemoryContext context,
+									 MemoryContextCallback *cb)
+{
+	MemoryContextCallback *prev,
+			   *cur;
+
+	Assert(MemoryContextIsValid(context));
+
+	for (prev = NULL, cur = context->reset_cbs; cur != NULL;
+		 prev = cur, cur = cur->next)
+	{
+		if (cur != cb)
+			continue;
+		if (prev)
+			prev->next = cur->next;
+		else
+			context->reset_cbs = cur->next;
+		return;
+	}
+	Assert(false);
 }
 
 /*
@@ -1137,8 +1186,6 @@ MemoryContextCreate(MemoryContext node,
 		node->nextchild = NULL;
 		node->allowInCritSection = false;
 	}
-
-	VALGRIND_CREATE_MEMPOOL(node, 0, false);
 }
 
 /*
@@ -1295,26 +1342,45 @@ ProcessLogMemoryContextInterrupt(void)
 	LogMemoryContextPending = false;
 
 	/*
-	 * Use LOG_SERVER_ONLY to prevent this message from being sent to the
-	 * connected client.
+	 * Exit immediately if memory context logging is already in progress. This
+	 * prevents recursive calls, which could occur if logging is requested
+	 * repeatedly and rapidly, potentially leading to infinite recursion and a
+	 * crash.
 	 */
-	ereport(LOG_SERVER_ONLY,
-			(errhidestmt(true),
-			 errhidecontext(true),
-			 errmsg("logging memory contexts of PID %d", MyProcPid)));
+	if (LogMemoryContextInProgress)
+		return;
+	LogMemoryContextInProgress = true;
 
-	/*
-	 * When a backend process is consuming huge memory, logging all its memory
-	 * contexts might overrun available disk space. To prevent this, we limit
-	 * the depth of the hierarchy, as well as the number of child contexts to
-	 * log per parent to 100.
-	 *
-	 * As with MemoryContextStats(), we suppose that practical cases where the
-	 * dump gets long will typically be huge numbers of siblings under the
-	 * same parent context; while the additional debugging value from seeing
-	 * details about individual siblings beyond 100 will not be large.
-	 */
-	MemoryContextStatsDetail(TopMemoryContext, 100, 100, false);
+	PG_TRY();
+	{
+		/*
+		 * Use LOG_SERVER_ONLY to prevent this message from being sent to the
+		 * connected client.
+		 */
+		ereport(LOG_SERVER_ONLY,
+				(errhidestmt(true),
+				 errhidecontext(true),
+				 errmsg("logging memory contexts of PID %d", MyProcPid)));
+
+		/*
+		 * When a backend process is consuming huge memory, logging all its
+		 * memory contexts might overrun available disk space. To prevent
+		 * this, we limit the depth of the hierarchy, as well as the number of
+		 * child contexts to log per parent to 100.
+		 *
+		 * As with MemoryContextStats(), we suppose that practical cases where
+		 * the dump gets long will typically be huge numbers of siblings under
+		 * the same parent context; while the additional debugging value from
+		 * seeing details about individual siblings beyond 100 will not be
+		 * large.
+		 */
+		MemoryContextStatsDetail(TopMemoryContext, 100, 100, false);
+	}
+	PG_FINALLY();
+	{
+		LogMemoryContextInProgress = false;
+	}
+	PG_END_TRY();
 }
 
 void *
@@ -1421,7 +1487,13 @@ MemoryContextAllocAligned(MemoryContext context,
 	void	   *unaligned;
 	void	   *aligned;
 
-	/* wouldn't make much sense to waste that much space */
+	/*
+	 * Restrict alignto to ensure that it can fit into the "value" field of
+	 * the redirection MemoryChunk, and that the distance back to the start of
+	 * the unaligned chunk will fit into the space available for that.  This
+	 * isn't a limitation in practice, since it wouldn't make much sense to
+	 * waste that much space.
+	 */
 	Assert(alignto < (128 * 1024 * 1024));
 
 	/* ensure alignto is a power of 2 */
@@ -1458,10 +1530,15 @@ MemoryContextAllocAligned(MemoryContext context,
 	alloc_size += 1;
 #endif
 
-	/* perform the actual allocation */
-	unaligned = MemoryContextAllocExtended(context, alloc_size, flags);
+	/*
+	 * Perform the actual allocation, but do not pass down MCXT_ALLOC_ZERO.
+	 * This ensures that wasted bytes beyond the aligned chunk do not become
+	 * DEFINED.
+	 */
+	unaligned = MemoryContextAllocExtended(context, alloc_size,
+										   flags & ~MCXT_ALLOC_ZERO);
 
-	/* set the aligned pointer */
+	/* compute the aligned pointer */
 	aligned = (void *) TYPEALIGN(alignto, (char *) unaligned +
 								 sizeof(MemoryChunk));
 
@@ -1489,12 +1566,23 @@ MemoryContextAllocAligned(MemoryContext context,
 	set_sentinel(aligned, size);
 #endif
 
-	/* Mark the bytes before the redirection header as noaccess */
-	VALGRIND_MAKE_MEM_NOACCESS(unaligned,
-							   (char *) alignedchunk - (char *) unaligned);
+	/*
+	 * MemoryContextAllocExtended marked the whole unaligned chunk as a
+	 * vchunk.  Undo that, instead making just the aligned chunk be a vchunk.
+	 * This prevents Valgrind from complaining that the vchunk is possibly
+	 * leaked, since only pointers to the aligned chunk will exist.
+	 *
+	 * After these calls, the aligned chunk will be marked UNDEFINED, and all
+	 * the rest of the unaligned chunk (the redirection chunk header, the
+	 * padding bytes before it, and any wasted trailing bytes) will be marked
+	 * NOACCESS, which is what we want.
+	 */
+	VALGRIND_MEMPOOL_FREE(context, unaligned);
+	VALGRIND_MEMPOOL_ALLOC(context, aligned, size);
 
-	/* Disallow access to the redirection chunk header. */
-	VALGRIND_MAKE_MEM_NOACCESS(alignedchunk, sizeof(MemoryChunk));
+	/* Now zero (and make DEFINED) just the aligned chunk, if requested */
+	if ((flags & MCXT_ALLOC_ZERO) != 0)
+		MemSetAligned(aligned, 0, size);
 
 	return aligned;
 }
@@ -1528,16 +1616,12 @@ void
 pfree(void *pointer)
 {
 #ifdef USE_VALGRIND
-	MemoryContextMethodID method = GetMemoryChunkMethodID(pointer);
 	MemoryContext context = GetMemoryChunkContext(pointer);
 #endif
 
 	MCXT_METHOD(pointer, free_p) (pointer);
 
-#ifdef USE_VALGRIND
-	if (method != MCTX_ALIGNED_REDIRECT_ID)
-		VALGRIND_MEMPOOL_FREE(context, pointer);
-#endif
+	VALGRIND_MEMPOOL_FREE(context, pointer);
 }
 
 /*
@@ -1547,9 +1631,6 @@ pfree(void *pointer)
 void *
 repalloc(void *pointer, Size size)
 {
-#ifdef USE_VALGRIND
-	MemoryContextMethodID method = GetMemoryChunkMethodID(pointer);
-#endif
 #if defined(USE_ASSERT_CHECKING) || defined(USE_VALGRIND)
 	MemoryContext context = GetMemoryChunkContext(pointer);
 #endif
@@ -1572,10 +1653,7 @@ repalloc(void *pointer, Size size)
 	 */
 	ret = MCXT_METHOD(pointer, realloc) (pointer, size, 0);
 
-#ifdef USE_VALGRIND
-	if (method != MCTX_ALIGNED_REDIRECT_ID)
-		VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
-#endif
+	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
 	return ret;
 }

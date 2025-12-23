@@ -10,23 +10,30 @@ SUBDIRS = \
 		  delay_execution \
 		  dummy_index_am \
 		  dummy_seclabel \
+		  index \
 		  libpq_pipeline \
 		  oauth_validator \
 		  plsample \
 		  spgist_name_ops \
 		  test_aio \
+		  test_binaryheap \
+		  test_bitmapset \
 		  test_bloomfilter \
+		  test_cloexec \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
+		  test_custom_stats \
 		  test_ddl_deparse \
 		  test_dsa \
 		  test_dsm_registry \
 		  test_escape \
 		  test_extensions \
 		  test_ginpostinglist \
+		  test_int128 \
 		  test_integerset \
 		  test_json_parser \
 		  test_lfind \
+		  test_lwlock_tranches \
 		  test_misc \
 		  test_oat_hooks \
 		  test_parser \

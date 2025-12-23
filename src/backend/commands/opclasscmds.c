@@ -523,7 +523,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 #endif
 
 				/* Save the info */
-				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
+				member = palloc0_object(OpFamilyMember);
 				member->is_func = false;
 				member->object = operOid;
 				member->number = item->number;
@@ -547,7 +547,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 								   get_func_name(funcOid));
 #endif
 				/* Save the info */
-				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
+				member = palloc0_object(OpFamilyMember);
 				member->is_func = true;
 				member->object = funcOid;
 				member->number = item->number;
@@ -940,7 +940,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 #endif
 
 				/* Save the info */
-				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
+				member = palloc0_object(OpFamilyMember);
 				member->is_func = false;
 				member->object = operOid;
 				member->number = item->number;
@@ -970,7 +970,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 #endif
 
 				/* Save the info */
-				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
+				member = palloc0_object(OpFamilyMember);
 				member->is_func = true;
 				member->object = funcOid;
 				member->number = item->number;
@@ -1058,7 +1058,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 									item->number, maxOpNumber)));
 				processTypesSpec(item->class_args, &lefttype, &righttype);
 				/* Save the info */
-				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
+				member = palloc0_object(OpFamilyMember);
 				member->is_func = false;
 				member->number = item->number;
 				member->lefttype = lefttype;
@@ -1074,7 +1074,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 									item->number, maxProcNumber)));
 				processTypesSpec(item->class_args, &lefttype, &righttype);
 				/* Save the info */
-				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
+				member = palloc0_object(OpFamilyMember);
 				member->is_func = true;
 				member->number = item->number;
 				member->lefttype = lefttype;

@@ -321,7 +321,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	if (nrefs < 1)
 		/* internal error */
 		elog(ERROR, "check_foreign_key: %d (< 1) number of references specified", nrefs);
-	action = tolower((unsigned char) *(args[1]));
+	action = pg_ascii_tolower((unsigned char) *(args[1]));
 	if (action != 'r' && action != 'c' && action != 's')
 		/* internal error */
 		elog(ERROR, "check_foreign_key: invalid action %s", args[1]);
@@ -651,7 +651,7 @@ find_plan(char *ident, EPlan **eplan, int *nplans)
 	}
 	else
 	{
-		newp = *eplan = (EPlan *) palloc(sizeof(EPlan));
+		newp = *eplan = palloc_object(EPlan);
 		(*nplans) = i = 0;
 	}
 

@@ -53,7 +53,7 @@
     <tbody>
      <row>
       <entry><link linkend="view-pg-aios"><structname>pg_aios</structname></link></entry>
-      <entry>In-use asynchronous IO handles</entry>
+      <entry>in-use asynchronous IO handles</entry>
      </row>
 
      <row>
@@ -79,6 +79,11 @@
      <row>
       <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
       <entry>open cursors</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-dsm-registry-allocations"><structname>pg_dsm_registry_allocations</structname></link></entry>
+      <entry>shared memory allocations tracked in the DSM registry</entry>
      </row>
 
      <row>
@@ -129,6 +134,11 @@
      <row>
       <entry><link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link></entry>
       <entry>prepared transactions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-publication-sequences"><structname>pg_publication_sequences</structname></link></entry>
+      <entry>publications and information of their associated sequences</entry>
      </row>
 
      <row>
@@ -1084,6 +1094,75 @@ AND c1.path[c2.level] = c2.path[c2.level];
    The <structname>pg_cursors</structname> view is read-only.
   </para>
 
+ </sect1>
+
+ <sect1 id="view-pg-dsm-registry-allocations">
+  <title><structname>pg_dsm_registry_allocations</structname></title>
+
+  <indexterm zone="view-pg-dsm-registry-allocations">
+   <primary>pg_dsm_registry_allocations</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_dsm_registry_allocations</structname> view shows shared
+   memory allocations tracked in the dynamic shared memory (DSM) registry.
+   This includes memory allocated by extensions using the mechanisms detailed
+   in <xref linkend="xfunc-shared-addin-after-startup" />.
+  </para>
+
+  <table>
+   <title><structname>pg_dsm_registry_allocations</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of the allocation in the DSM registry.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>type</structfield> <type>text</type>
+      </para>
+      <para>
+       The type of allocation.  Possible values are <literal>segment</literal>,
+       <literal>area</literal>, and <literal>hash</literal>, which correspond
+       to dynamic shared memory segments, areas, and hash tables, respectively.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>size</structfield> <type>int8</type>
+      </para>
+      <para>
+       Size of the allocation in bytes.  NULL for entries that failed
+       initialization.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   By default, the <structname>pg_dsm_registry_allocations</structname> view
+   can be read only by superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-file-settings">
@@ -2475,6 +2554,67 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
  </sect1>
 
+ <sect1 id="view-pg-publication-sequences">
+  <title><structname>pg_publication_sequences</structname></title>
+
+  <indexterm zone="view-pg-publication-sequences">
+   <primary>pg_publication_sequences</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_publication_sequences</structname> provides
+   information about the mapping between publications and sequences.
+  </para>
+
+  <table>
+   <title><structname>pg_publication_sequences</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pubname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-publication"><structname>pg_publication</structname></link>.<structfield>pubname</structfield>)
+      </para>
+      <para>
+       Name of publication
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sequencename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of sequence
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="view-pg-publication-tables">
   <title><structname>pg_publication_tables</structname></title>
 
@@ -2819,21 +2959,18 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
          <para>
           <literal>unreserved</literal> means that the slot no longer
           retains the required WAL files and some of them are to be removed at
-          the next checkpoint.  This state can return
+          the next checkpoint.  This typically occurs when
+          <xref linkend="guc-max-slot-wal-keep-size"/> is set to
+          a non-negative value.  This state can return
           to <literal>reserved</literal> or <literal>extended</literal>.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>lost</literal> means that some required WAL files have
-          been removed and this slot is no longer usable.
+          <literal>lost</literal> means that this slot is no longer usable.
          </para>
         </listitem>
        </itemizedlist>
-       The last two states are seen only when
-       <xref linkend="guc-max-slot-wal-keep-size"/> is
-       non-negative. If <structfield>restart_lsn</structfield> is NULL, this
-       field is null.
       </para></entry>
      </row>
 
@@ -2925,14 +3062,15 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
         <listitem>
          <para>
           <literal>wal_level_insufficient</literal> means that the
-          primary doesn't have a <xref linkend="guc-wal-level"/> sufficient to
-          perform logical decoding.  It is set only for logical slots.
+          primary doesn't have an <xref linkend="guc-effective-wal-level"/>
+          sufficient to perform logical decoding. It is set only for logical
+          slots.
          </para>
         </listitem>
         <listitem>
          <para>
           <literal>idle_timeout</literal> means that the slot has remained
-          idle longer than the configured
+          inactive longer than the configured
           <xref linkend="guc-idle-replication-slot-timeout"/> duration.
          </para>
         </listitem>
@@ -2965,6 +3103,49 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para></entry>
      </row>
 
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>slotsync_skip_reason</structfield><type>text</type>
+      </para>
+      <para>
+       The reason for the last slot synchronization skip. Slot
+       synchronization occurs only on standby servers and thus this column has
+       no meaning on the primary server. It is relevant mainly for logical slots
+       on standby servers whose <structfield>synced</structfield> field is
+       <literal>true</literal>. It is <literal>NULL</literal> if slot
+       synchronization is successful.
+       Possible values are:
+       <itemizedlist spacing="compact">
+        <listitem>
+         <para>
+          <literal>wal_or_rows_removed</literal> means that the required WALs or
+          catalog rows have already been removed or are at the risk of removal
+          from the standby.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>wal_not_flushed</literal> means that the standby had not
+          flushed the WAL corresponding to the position reserved on the failover
+          slot.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>no_consistent_snapshot</literal> means that the standby could
+          not build a consistent snapshot to decode WALs from
+          <structfield>restart_lsn</structfield>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>slot_invalidated</literal> means that the synced slot is
+          invalidated.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -3932,7 +4113,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>passwd</structfield> <type>text</type>
       </para>
       <para>
-       Password (possibly encrypted); null if none.  See
+       Encrypted password; null if none.  See
        <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>
        for details of how encrypted passwords are stored.
       </para></entry>

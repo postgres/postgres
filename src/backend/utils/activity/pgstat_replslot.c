@@ -94,9 +94,40 @@ pgstat_report_replslot(ReplicationSlot *slot, const PgStat_StatReplSlotEntry *re
 	REPLSLOT_ACC(stream_txns);
 	REPLSLOT_ACC(stream_count);
 	REPLSLOT_ACC(stream_bytes);
+	REPLSLOT_ACC(mem_exceeded_count);
 	REPLSLOT_ACC(total_txns);
 	REPLSLOT_ACC(total_bytes);
 #undef REPLSLOT_ACC
+
+	pgstat_unlock_entry(entry_ref);
+}
+
+/*
+ * Report replication slot sync skip statistics.
+ *
+ * Similar to pgstat_report_replslot(), we can rely on the stats for the
+ * slot to exist and to belong to this slot.
+ */
+void
+pgstat_report_replslotsync(ReplicationSlot *slot)
+{
+	PgStat_EntryRef *entry_ref;
+	PgStatShared_ReplSlot *shstatent;
+	PgStat_StatReplSlotEntry *statent;
+
+	/* Slot sync stats are valid only for synced logical slots on standby. */
+	Assert(slot->data.synced);
+	Assert(RecoveryInProgress());
+
+	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_REPLSLOT, InvalidOid,
+											ReplicationSlotIndex(slot), false);
+	Assert(entry_ref != NULL);
+
+	shstatent = (PgStatShared_ReplSlot *) entry_ref->shared_stats;
+	statent = &shstatent->stats;
+
+	statent->slotsync_skip_count += 1;
+	statent->slotsync_last_skip = GetCurrentTimestamp();
 
 	pgstat_unlock_entry(entry_ref);
 }
@@ -132,7 +163,7 @@ pgstat_create_replslot(ReplicationSlot *slot)
  * Report replication slot has been acquired.
  *
  * This guarantees that a stats entry exists during later
- * pgstat_report_replslot() calls.
+ * pgstat_report_replslot() or pgstat_report_replslotsync() calls.
  *
  * If we previously crashed, no stats data exists. But if we did not crash,
  * the stats do belong to this slot:

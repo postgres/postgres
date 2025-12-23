@@ -1218,6 +1218,100 @@ subid|id
 (1 row)
 
 
+starting permutation: tid1 tid2 c1 c2 read
+step tid1: UPDATE accounts SET balance = balance + 100 WHERE ctid = '(0,1)' RETURNING accountid, balance;
+accountid|balance
+---------+-------
+checking |    700
+(1 row)
+
+step tid2: UPDATE accounts SET balance = balance + 200 WHERE ctid = '(0,1)' RETURNING accountid, balance; <waiting ...>
+step c1: COMMIT;
+step tid2: <... completed>
+accountid|balance
+---------+-------
+(0 rows)
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    700|    1400
+savings  |    600|    1200
+(2 rows)
+
+
+starting permutation: tid1 tidsucceed2 c1 c2 read
+step tid1: UPDATE accounts SET balance = balance + 100 WHERE ctid = '(0,1)' RETURNING accountid, balance;
+accountid|balance
+---------+-------
+checking |    700
+(1 row)
+
+step tidsucceed2: UPDATE accounts SET balance = balance + 200 WHERE ctid = '(0,1)' OR ctid = '(0,3)' RETURNING accountid, balance; <waiting ...>
+step c1: COMMIT;
+step tidsucceed2: <... completed>
+accountid|balance
+---------+-------
+checking |    900
+(1 row)
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    900|    1800
+savings  |    600|    1200
+(2 rows)
+
+
+starting permutation: tidrange1 tidrange2 c1 c2 read
+step tidrange1: UPDATE accounts SET balance = balance + 100 WHERE ctid BETWEEN '(0,1)' AND '(0,1)' RETURNING accountid, balance;
+accountid|balance
+---------+-------
+checking |    700
+(1 row)
+
+step tidrange2: UPDATE accounts SET balance = balance + 200 WHERE ctid BETWEEN '(0,1)' AND '(0,1)' RETURNING accountid, balance; <waiting ...>
+step c1: COMMIT;
+step tidrange2: <... completed>
+accountid|balance
+---------+-------
+(0 rows)
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    700|    1400
+savings  |    600|    1200
+(2 rows)
+
+
+starting permutation: tid1 tid2 r1 c2 read
+step tid1: UPDATE accounts SET balance = balance + 100 WHERE ctid = '(0,1)' RETURNING accountid, balance;
+accountid|balance
+---------+-------
+checking |    700
+(1 row)
+
+step tid2: UPDATE accounts SET balance = balance + 200 WHERE ctid = '(0,1)' RETURNING accountid, balance; <waiting ...>
+step r1: ROLLBACK;
+step tid2: <... completed>
+accountid|balance
+---------+-------
+checking |    800
+(1 row)
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    800|    1600
+savings  |    600|    1200
+(2 rows)
+
+
 starting permutation: simplepartupdate conditionalpartupdate c1 c2 read_part
 step simplepartupdate: 
 	update parttbl set b = b + 10;
@@ -1362,4 +1456,20 @@ step sysmerge2:
  <waiting ...>
 step c1: COMMIT;
 step sysmerge2: <... completed>
+step c2: COMMIT;
+
+starting permutation: s1pp1 s2pp1 s2pp2 s2pp3 c1 c2
+step s1pp1: UPDATE another_parttbl SET b = b + 1 WHERE a = 1;
+step s2pp1: SET plan_cache_mode TO force_generic_plan;
+step s2pp2: PREPARE epd AS DELETE FROM another_parttbl WHERE a = $1;
+step s2pp3: EXECUTE epd(1); <waiting ...>
+step c1: COMMIT;
+step s2pp3: <... completed>
+step c2: COMMIT;
+
+starting permutation: s1pp1 s2pp4 c1 c2
+step s1pp1: UPDATE another_parttbl SET b = b + 1 WHERE a = 1;
+step s2pp4: DELETE FROM another_parttbl WHERE a = (SELECT 1); <waiting ...>
+step c1: COMMIT;
+step s2pp4: <... completed>
 step c2: COMMIT;

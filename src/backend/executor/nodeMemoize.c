@@ -66,6 +66,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "common/hashfn.h"
 #include "executor/executor.h"
 #include "executor/nodeMemoize.h"
@@ -554,7 +555,7 @@ cache_lookup(MemoizeState *mstate, bool *found)
 	oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
 	/* Allocate a new key */
-	entry->key = key = (MemoizeKey *) palloc(sizeof(MemoizeKey));
+	entry->key = key = palloc_object(MemoizeKey);
 	key->params = ExecCopySlotMinimalTuple(mstate->probeslot);
 
 	/* Update the total cache memory utilization */
@@ -633,7 +634,7 @@ cache_store_tuple(MemoizeState *mstate, TupleTableSlot *slot)
 
 	oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
-	tuple = (MemoizeTuple *) palloc(sizeof(MemoizeTuple));
+	tuple = palloc_object(MemoizeTuple);
 	tuple->mintuple = ExecCopySlotMinimalTuple(slot);
 	tuple->next = NULL;
 

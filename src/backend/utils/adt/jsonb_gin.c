@@ -163,7 +163,7 @@ static void
 init_gin_entries(GinEntries *entries, int preallocated)
 {
 	entries->allocated = preallocated;
-	entries->buf = preallocated ? palloc(sizeof(Datum) * preallocated) : NULL;
+	entries->buf = preallocated ? palloc_array(Datum, preallocated) : NULL;
 	entries->count = 0;
 }
 
@@ -178,13 +178,14 @@ add_gin_entry(GinEntries *entries, Datum entry)
 		if (entries->allocated)
 		{
 			entries->allocated *= 2;
-			entries->buf = repalloc(entries->buf,
-									sizeof(Datum) * entries->allocated);
+			entries->buf = repalloc_array(entries->buf,
+										  Datum,
+										  entries->allocated);
 		}
 		else
 		{
 			entries->allocated = 8;
-			entries->buf = palloc(sizeof(Datum) * entries->allocated);
+			entries->buf = palloc_array(Datum, entries->allocated);
 		}
 	}
 
@@ -307,7 +308,7 @@ jsonb_ops__add_path_item(JsonPathGinPath *path, JsonPathItem *jsp)
 			return false;
 	}
 
-	pentry = palloc(sizeof(*pentry));
+	pentry = palloc_object(JsonPathGinPathItem);
 
 	pentry->type = jsp->type;
 	pentry->keyName = keyName;
@@ -785,7 +786,7 @@ extract_jsp_query(JsonPath *jp, StrategyNumber strat, bool pathOps,
 	if (!*nentries)
 		return NULL;
 
-	*extra_data = palloc0(sizeof(**extra_data) * entries.count);
+	*extra_data = palloc0_array(Pointer, entries.count);
 	**extra_data = (Pointer) node;
 
 	return entries.buf;
@@ -869,7 +870,7 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 		text	   *query = PG_GETARG_TEXT_PP(0);
 
 		*nentries = 1;
-		entries = (Datum *) palloc(sizeof(Datum));
+		entries = palloc_object(Datum);
 		entries[0] = make_text_key(JGINFLAG_KEY,
 								   VARDATA_ANY(query),
 								   VARSIZE_ANY_EXHDR(query));
@@ -887,7 +888,7 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 
 		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
-		entries = (Datum *) palloc(sizeof(Datum) * key_count);
+		entries = palloc_array(Datum, key_count);
 
 		for (i = 0, j = 0; i < key_count; i++)
 		{
@@ -896,8 +897,8 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 				continue;
 			/* We rely on the array elements not being toasted */
 			entries[j++] = make_text_key(JGINFLAG_KEY,
-										 VARDATA_ANY(key_datums[i]),
-										 VARSIZE_ANY_EXHDR(key_datums[i]));
+										 VARDATA_ANY(DatumGetPointer(key_datums[i])),
+										 VARSIZE_ANY_EXHDR(DatumGetPointer(key_datums[i])));
 		}
 
 		*nentries = j;
@@ -999,8 +1000,7 @@ gin_consistent_jsonb(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   false) != GIN_FALSE;
+			res = execute_jsp_gin_node(extra_data[0], check, false) != GIN_FALSE;
 		}
 	}
 	else
@@ -1060,8 +1060,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   true);
+			res = execute_jsp_gin_node(extra_data[0], check, true);
 
 			/* Should always recheck the result */
 			if (res == GIN_TRUE)
@@ -1126,7 +1125,7 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 			case WJB_BEGIN_OBJECT:
 				/* Push a stack level for this object */
 				parent = stack;
-				stack = (PathHashStack *) palloc(sizeof(PathHashStack));
+				stack = palloc_object(PathHashStack);
 
 				/*
 				 * We pass forward hashes from outer nesting levels so that
@@ -1258,8 +1257,7 @@ gin_consistent_jsonb_path(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   false) != GIN_FALSE;
+			res = execute_jsp_gin_node(extra_data[0], check, false) != GIN_FALSE;
 		}
 	}
 	else
@@ -1302,8 +1300,7 @@ gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   true);
+			res = execute_jsp_gin_node(extra_data[0], check, true);
 
 			/* Should always recheck the result */
 			if (res == GIN_TRUE)

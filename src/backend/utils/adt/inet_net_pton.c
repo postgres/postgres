@@ -115,8 +115,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 		src++;					/* skip x or X. */
 		while ((ch = *src++) != '\0' && isxdigit((unsigned char) ch))
 		{
-			if (isupper((unsigned char) ch))
-				ch = tolower((unsigned char) ch);
+			ch = pg_ascii_tolower((unsigned char) ch);
 			n = strchr(xdigits, ch) - xdigits;
 			assert(n >= 0 && n <= 15);
 			if (dirty == 0)

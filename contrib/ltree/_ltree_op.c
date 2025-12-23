@@ -307,7 +307,7 @@ _lca(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("array must not contain nulls")));
 
-	a = (ltree **) palloc(sizeof(ltree *) * num);
+	a = palloc_array(ltree *, num);
 	while (num > 0)
 	{
 		num--;

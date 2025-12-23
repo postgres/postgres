@@ -440,7 +440,8 @@ $$;
 ERROR:  procedure test_proc12(integer, integer, text[]) does not exist
 LINE 1: CALL test_proc12(_a, _b, _c)
              ^
-HINT:  No procedure matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No procedure of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 QUERY:  CALL test_proc12(_a, _b, _c)
 CONTEXT:  PL/pgSQL function inline_code_block line 5 at CALL
 -- transition variable assignment

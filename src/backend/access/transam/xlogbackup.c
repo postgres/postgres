@@ -31,10 +31,11 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 	char		startstrbuf[128];
 	char		startxlogfile[MAXFNAMELEN]; /* backup start WAL file */
 	XLogSegNo	startsegno;
-	StringInfo	result = makeStringInfo();
-	char	   *data;
+	StringInfoData result;
 
 	Assert(state != NULL);
+
+	initStringInfo(&result);
 
 	/* Use the log timezone here, not the session timezone */
 	pg_strftime(startstrbuf, sizeof(startstrbuf), "%Y-%m-%d %H:%M:%S %Z",
@@ -42,7 +43,7 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 
 	XLByteToSeg(state->startpoint, startsegno, wal_segment_size);
 	XLogFileName(startxlogfile, state->starttli, startsegno, wal_segment_size);
-	appendStringInfo(result, "START WAL LOCATION: %X/%X (file %s)\n",
+	appendStringInfo(&result, "START WAL LOCATION: %X/%08X (file %s)\n",
 					 LSN_FORMAT_ARGS(state->startpoint), startxlogfile);
 
 	if (ishistoryfile)
@@ -52,18 +53,18 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 
 		XLByteToSeg(state->stoppoint, stopsegno, wal_segment_size);
 		XLogFileName(stopxlogfile, state->stoptli, stopsegno, wal_segment_size);
-		appendStringInfo(result, "STOP WAL LOCATION: %X/%X (file %s)\n",
+		appendStringInfo(&result, "STOP WAL LOCATION: %X/%08X (file %s)\n",
 						 LSN_FORMAT_ARGS(state->stoppoint), stopxlogfile);
 	}
 
-	appendStringInfo(result, "CHECKPOINT LOCATION: %X/%X\n",
+	appendStringInfo(&result, "CHECKPOINT LOCATION: %X/%08X\n",
 					 LSN_FORMAT_ARGS(state->checkpointloc));
-	appendStringInfoString(result, "BACKUP METHOD: streamed\n");
-	appendStringInfo(result, "BACKUP FROM: %s\n",
+	appendStringInfoString(&result, "BACKUP METHOD: streamed\n");
+	appendStringInfo(&result, "BACKUP FROM: %s\n",
 					 state->started_in_recovery ? "standby" : "primary");
-	appendStringInfo(result, "START TIME: %s\n", startstrbuf);
-	appendStringInfo(result, "LABEL: %s\n", state->name);
-	appendStringInfo(result, "START TIMELINE: %u\n", state->starttli);
+	appendStringInfo(&result, "START TIME: %s\n", startstrbuf);
+	appendStringInfo(&result, "LABEL: %s\n", state->name);
+	appendStringInfo(&result, "START TIMELINE: %u\n", state->starttli);
 
 	if (ishistoryfile)
 	{
@@ -73,22 +74,19 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 		pg_strftime(stopstrfbuf, sizeof(stopstrfbuf), "%Y-%m-%d %H:%M:%S %Z",
 					pg_localtime(&state->stoptime, log_timezone));
 
-		appendStringInfo(result, "STOP TIME: %s\n", stopstrfbuf);
-		appendStringInfo(result, "STOP TIMELINE: %u\n", state->stoptli);
+		appendStringInfo(&result, "STOP TIME: %s\n", stopstrfbuf);
+		appendStringInfo(&result, "STOP TIMELINE: %u\n", state->stoptli);
 	}
 
 	/* either both istartpoint and istarttli should be set, or neither */
-	Assert(XLogRecPtrIsInvalid(state->istartpoint) == (state->istarttli == 0));
-	if (!XLogRecPtrIsInvalid(state->istartpoint))
+	Assert(XLogRecPtrIsValid(state->istartpoint) == (state->istarttli != 0));
+	if (XLogRecPtrIsValid(state->istartpoint))
 	{
-		appendStringInfo(result, "INCREMENTAL FROM LSN: %X/%X\n",
+		appendStringInfo(&result, "INCREMENTAL FROM LSN: %X/%08X\n",
 						 LSN_FORMAT_ARGS(state->istartpoint));
-		appendStringInfo(result, "INCREMENTAL FROM TLI: %u\n",
+		appendStringInfo(&result, "INCREMENTAL FROM TLI: %u\n",
 						 state->istarttli);
 	}
 
-	data = result->data;
-	pfree(result);
-
-	return data;
+	return result.data;
 }

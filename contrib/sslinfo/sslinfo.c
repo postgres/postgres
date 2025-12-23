@@ -374,7 +374,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Create a user function context for cross-call persistence */
-		fctx = (SSLExtensionInfoContext *) palloc(sizeof(SSLExtensionInfoContext));
+		fctx = palloc_object(SSLExtensionInfoContext);
 
 		/* Construct tuple descriptor */
 		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)

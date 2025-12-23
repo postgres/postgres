@@ -24,12 +24,17 @@ extern PGDLLIMPORT int pg_numa_get_max_node(void);
  * This is required on Linux, before pg_numa_query_pages() as we
  * need to page-fault before move_pages(2) syscall returns valid results.
  */
-#define pg_numa_touch_mem_if_required(ro_volatile_var, ptr) \
-	ro_volatile_var = *(volatile uint64 *) ptr
+static inline void
+pg_numa_touch_mem_if_required(void *ptr)
+{
+	volatile uint64 touch pg_attribute_unused();
+
+	touch = *(volatile uint64 *) ptr;
+}
 
 #else
 
-#define pg_numa_touch_mem_if_required(ro_volatile_var, ptr) \
+#define pg_numa_touch_mem_if_required(ptr) \
 	do {} while(0)
 
 #endif

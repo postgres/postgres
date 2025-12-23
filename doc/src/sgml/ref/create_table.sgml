@@ -448,11 +448,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Partitioned tables do not support <literal>EXCLUDE</literal> constraints;
-      however, you can define these constraints on individual partitions.
-     </para>
-
-     <para>
       See <xref linkend="ddl-partitioning"/> for more discussion on table
       partitioning.
      </para>
@@ -867,7 +862,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Currently, <literal>CHECK</literal> expressions cannot contain
       subqueries nor refer to variables other than columns of the
       current row (see <xref linkend="ddl-constraints-check-constraints"/>).
-      The system column <literal>tableoid</literal>
+      The system column <structfield>tableoid</structfield>
       may be referenced, but not any other system column.
      </para>
 
@@ -928,6 +923,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The generation expression can refer to other columns in the table, but
       not other generated columns.  Any functions and operators used must be
       immutable.  References to other tables are not allowed.
+     </para>
+
+     <para>
+      A virtual generated column cannot have a user-defined type, and the
+      generation expression of a virtual generated column must not reference
+      user-defined functions or types, that is, it can only use built-in
+      functions or types.  This applies also indirectly, such as for functions
+      or types that underlie operators or casts.  (This restriction does not
+      exist for stored generated columns.)
      </para>
     </listitem>
    </varlistentry>
@@ -1162,6 +1166,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       exclusion constraint on a subset of the table; internally this creates a
       partial index. Note that parentheses are required around the predicate.
      </para>
+
+     <para>
+      When establishing an exclusion constraint for a multi-level partition
+      hierarchy, all the columns in the partition key of the target
+      partitioned table, as well as those of all its descendant partitioned
+      tables, must be included in the constraint definition.  Additionally,
+      those columns must be compared using the equality operator.  These
+      restrictions ensure that potentially-conflicting rows will exist in the
+      same partition.  The constraint may also refer to other columns which
+      are not a part of any partition key, which can be compared using any
+      appropriate operator.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -1363,8 +1379,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <literal>REFERENCES</literal> (foreign key) constraints accept this
       clause.  <literal>NOT NULL</literal> and <literal>CHECK</literal> constraints are not
       deferrable.  Note that deferrable constraints cannot be used as
-      conflict arbitrators in an <command>INSERT</command> statement that
-      includes an <literal>ON CONFLICT DO UPDATE</literal> clause.
+      conflict arbiters in an <command>INSERT</command> statement that
+      includes an <literal>ON CONFLICT</literal> clause.
      </para>
     </listitem>
    </varlistentry>
@@ -1687,7 +1703,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    <varlistentry id="reloption-vacuum-truncate" xreflabel="vacuum_truncate">
     <term><literal>vacuum_truncate</literal>, <literal>toast.vacuum_truncate</literal> (<type>boolean</type>)
     <indexterm>
-     <primary><varname>vacuum_truncate</varname> storage parameter</primary>
+     <primary><varname>vacuum_truncate</varname></primary>
+     <secondary>storage parameter</secondary>
     </indexterm>
     </term>
     <listitem>
@@ -1944,6 +1961,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-log-autovacuum-min-duration"/>
+      parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="reloption-log-autoanalyze-min-duration" xreflabel="log_autoanalyze_min_duration">
+    <term><literal>log_autoanalyze_min_duration</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>log_autoanalyze_min_duration</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Per-table value for <xref linkend="guc-log-autoanalyze-min-duration"/>
       parameter.
      </para>
     </listitem>
@@ -2225,7 +2257,7 @@ CREATE TABLE employees OF employee_type (
    Create a range partitioned table:
 <programlisting>
 CREATE TABLE measurement (
-    logdate         date not null,
+    logdate         date NOT NULL,
     peaktemp        int,
     unitsales       int
 ) PARTITION BY RANGE (logdate);
@@ -2235,7 +2267,7 @@ CREATE TABLE measurement (
    Create a range partitioned table with multiple columns in the partition key:
 <programlisting>
 CREATE TABLE measurement_year_month (
-    logdate         date not null,
+    logdate         date NOT NULL,
     peaktemp        int,
     unitsales       int
 ) PARTITION BY RANGE (EXTRACT(YEAR FROM logdate), EXTRACT(MONTH FROM logdate));
@@ -2245,8 +2277,8 @@ CREATE TABLE measurement_year_month (
    Create a list partitioned table:
 <programlisting>
 CREATE TABLE cities (
-    city_id      bigserial not null,
-    name         text not null,
+    city_id      bigserial NOT NULL,
+    name         text NOT NULL,
     population   bigint
 ) PARTITION BY LIST (left(lower(name), 1));
 </programlisting></para>
@@ -2255,8 +2287,8 @@ CREATE TABLE cities (
    Create a hash partitioned table:
 <programlisting>
 CREATE TABLE orders (
-    order_id     bigint not null,
-    cust_id      bigint not null,
+    order_id     bigint NOT NULL,
+    cust_id      bigint NOT NULL,
     status       text
 ) PARTITION BY HASH (order_id);
 </programlisting></para>

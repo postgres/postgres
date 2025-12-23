@@ -47,6 +47,8 @@ int			Geqo_generations;
 double		Geqo_selection_bias;
 double		Geqo_seed;
 
+/* GEQO is treated as an in-core planner extension */
+int			Geqo_planner_extension_id = -1;
 
 static int	gimme_pool_size(int nr_rel);
 static int	gimme_number_generations(int pool_size);
@@ -98,9 +100,15 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	int			mutations = 0;
 #endif
 
+	if (Geqo_planner_extension_id < 0)
+		Geqo_planner_extension_id = GetPlannerExtensionId("geqo");
+
 /* set up private information */
-	root->join_search_private = &private;
+	SetPlannerInfoExtensionState(root, Geqo_planner_extension_id, &private);
 	private.initial_rels = initial_rels;
+
+/* inform core planner that we may replan */
+	root->assumeReplanning = true;
 
 /* initialize private number generator */
 	geqo_set_seed(root, Geqo_seed);
@@ -304,7 +312,7 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	free_pool(root, pool);
 
 	/* ... clear root pointer to our private storage */
-	root->join_search_private = NULL;
+	SetPlannerInfoExtensionState(root, Geqo_planner_extension_id, NULL);
 
 	return best_rel;
 }

@@ -53,6 +53,7 @@ OBJS = \
 	schemacmds.o \
 	seclabel.o \
 	sequence.o \
+	sequence_xlog.o \
 	statscmds.o \
 	subscriptioncmds.o \
 	tablecmds.o \
@@ -64,6 +65,7 @@ OBJS = \
 	vacuum.o \
 	vacuumparallel.o \
 	variable.o \
-	view.o
+	view.o \
+	wait.o
 
 include $(top_srcdir)/src/backend/common.mk

@@ -31,6 +31,7 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
+#include "parser/parse_agg.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -631,6 +632,7 @@ remove_leftjoinrel_from_query(PlannerInfo *root, int relid,
 	 * remove_join_clause_from_rels will touch it.)
 	 */
 	root->simple_rel_array[relid] = NULL;
+	root->simple_rte_array[relid] = NULL;
 
 	/* And nuke the RelOptInfo, just in case there's another access path */
 	pfree(rel);
@@ -990,11 +992,10 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 	{
 		/*
 		 * Examine the indexes to see if we have a matching unique index.
-		 * relation_has_unique_index_ext automatically adds any usable
+		 * relation_has_unique_index_for automatically adds any usable
 		 * restriction clauses for the rel, so we needn't do that here.
 		 */
-		if (relation_has_unique_index_ext(root, rel, clause_list, NIL, NIL,
-										  extra_clauses))
+		if (relation_has_unique_index_for(root, rel, clause_list, extra_clauses))
 			return true;
 	}
 	else if (rel->rtekind == RTE_SUBQUERY)
@@ -1175,6 +1176,8 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	}
 	else if (query->groupingSets)
 	{
+		List	   *gsets;
+
 		/*
 		 * If we have grouping sets with expressions, we probably don't have
 		 * uniqueness and analysis would be hard. Punt.
@@ -1184,15 +1187,17 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 		/*
 		 * If we have no groupClause (therefore no grouping expressions), we
-		 * might have one or many empty grouping sets. If there's just one,
-		 * then we're returning only one row and are certainly unique. But
-		 * otherwise, we know we're certainly not unique.
+		 * might have one or many empty grouping sets.  If there's just one,
+		 * or if the DISTINCT clause is used on the GROUP BY, then we're
+		 * returning only one row and are certainly unique.  But otherwise, we
+		 * know we're certainly not unique.
 		 */
-		if (list_length(query->groupingSets) == 1 &&
-			((GroupingSet *) linitial(query->groupingSets))->kind == GROUPING_SET_EMPTY)
+		if (query->groupDistinct)
 			return true;
-		else
-			return false;
+
+		gsets = expand_grouping_sets(query->groupingSets, false, -1);
+
+		return (list_length(gsets) == 1);
 	}
 	else
 	{
@@ -1425,17 +1430,14 @@ innerrel_is_unique_ext(PlannerInfo *root,
 		 *
 		 * However, in normal planning mode, caching this knowledge is totally
 		 * pointless; it won't be queried again, because we build up joinrels
-		 * from smaller to larger.  It is useful in GEQO mode, where the
-		 * knowledge can be carried across successive planning attempts; and
-		 * it's likely to be useful when using join-search plugins, too. Hence
-		 * cache when join_search_private is non-NULL.  (Yeah, that's a hack,
-		 * but it seems reasonable.)
+		 * from smaller to larger.  It's only useful when using GEQO or
+		 * another planner extension that attempts planning multiple times.
 		 *
 		 * Also, allow callers to override that heuristic and force caching;
 		 * that's useful for reduce_unique_semijoins, which calls here before
 		 * the normal join search starts.
 		 */
-		if (force_cache || root->join_search_private)
+		if (force_cache || root->assumeReplanning)
 		{
 			old_context = MemoryContextSwitchTo(root->planner_cxt);
 			innerrel->non_unique_for_rels =
@@ -1686,14 +1688,14 @@ add_non_redundant_clauses(PlannerInfo *root,
 }
 
 /*
- * A custom callback for ChangeVarNodesExtended() providing
- * Self-join elimination (SJE) related functionality
+ * A custom callback for ChangeVarNodesExtended() providing Self-join
+ * elimination (SJE) related functionality
  *
- * SJE needs to skip the RangeTblRef node
- * type.  During SJE's last step, remove_rel_from_joinlist() removes
- * remaining RangeTblRefs with target relid.  If ChangeVarNodes() replaces
- * the target relid before, remove_rel_from_joinlist() fails to identify
- * the nodes to delete.
+ * SJE needs to skip the RangeTblRef node type.  During SJE's last
+ * step, remove_rel_from_joinlist() removes remaining RangeTblRefs
+ * with target relid.  If ChangeVarNodes() replaces the target relid
+ * before, remove_rel_from_joinlist() would fail to identify the nodes
+ * to delete.
  *
  * SJE also needs to change the relids within RestrictInfo's.
  */
@@ -1772,8 +1774,8 @@ replace_relid_callback(Node *node, ChangeVarNodes_context *context)
 			/*
 			 * For self-join elimination, changing varnos could transform
 			 * "t1.a = t2.a" into "t1.a = t1.a".  That is always true as long
-			 * as "t1.a" is not null.  We use qual() to check for such a case,
-			 * and then we replace the qual for a check for not null
+			 * as "t1.a" is not null.  We use equal() to check for such a
+			 * case, and then we replace the qual with a check for not null
 			 * (NullTest).
 			 */
 			if (leftOp != NULL && equal(leftOp, rightOp))
@@ -1979,9 +1981,11 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	 * remove_join_clause_from_rels will touch it.)
 	 */
 	root->simple_rel_array[toRemove->relid] = NULL;
+	root->simple_rte_array[toRemove->relid] = NULL;
 
 	/* And nuke the RelOptInfo, just in case there's another access path. */
 	pfree(toRemove);
+
 
 	/*
 	 * Now repeat construction of attr_needed bits coming from all other
@@ -2142,21 +2146,21 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 
 	while ((r = bms_next_member(relids, r)) > 0)
 	{
-		RelOptInfo *inner = root->simple_rel_array[r];
+		RelOptInfo *rrel = root->simple_rel_array[r];
 
 		k = r;
 
 		while ((k = bms_next_member(relids, k)) > 0)
 		{
 			Relids		joinrelids = NULL;
-			RelOptInfo *outer = root->simple_rel_array[k];
+			RelOptInfo *krel = root->simple_rel_array[k];
 			List	   *restrictlist;
 			List	   *selfjoinquals;
 			List	   *otherjoinquals;
 			ListCell   *lc;
 			bool		jinfo_check = true;
-			PlanRowMark *omark = NULL;
-			PlanRowMark *imark = NULL;
+			PlanRowMark *kmark = NULL;
+			PlanRowMark *rmark = NULL;
 			List	   *uclauses = NIL;
 
 			/* A sanity check: the relations have the same Oid. */
@@ -2194,21 +2198,21 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			{
 				PlanRowMark *rowMark = (PlanRowMark *) lfirst(lc);
 
-				if (rowMark->rti == k)
+				if (rowMark->rti == r)
 				{
-					Assert(imark == NULL);
-					imark = rowMark;
+					Assert(rmark == NULL);
+					rmark = rowMark;
 				}
-				else if (rowMark->rti == r)
+				else if (rowMark->rti == k)
 				{
-					Assert(omark == NULL);
-					omark = rowMark;
+					Assert(kmark == NULL);
+					kmark = rowMark;
 				}
 
-				if (omark && imark)
+				if (kmark && rmark)
 					break;
 			}
-			if (omark && imark && omark->markType != imark->markType)
+			if (kmark && rmark && kmark->markType != rmark->markType)
 				continue;
 
 			/*
@@ -2229,8 +2233,8 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			 * build_joinrel_restrictlist() routine.
 			 */
 			restrictlist = generate_join_implied_equalities(root, joinrelids,
-															inner->relids,
-															outer, NULL);
+															rrel->relids,
+															krel, NULL);
 			if (restrictlist == NIL)
 				continue;
 
@@ -2240,7 +2244,7 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			 * otherjoinquals.
 			 */
 			split_selfjoin_quals(root, restrictlist, &selfjoinquals,
-								 &otherjoinquals, inner->relid, outer->relid);
+								 &otherjoinquals, rrel->relid, krel->relid);
 
 			Assert(list_length(restrictlist) ==
 				   (list_length(selfjoinquals) + list_length(otherjoinquals)));
@@ -2251,17 +2255,17 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			 * degenerate case works only if both sides have the same clause.
 			 * So doesn't matter which side to add.
 			 */
-			selfjoinquals = list_concat(selfjoinquals, outer->baserestrictinfo);
+			selfjoinquals = list_concat(selfjoinquals, krel->baserestrictinfo);
 
 			/*
-			 * Determine if the inner table can duplicate outer rows.  We must
-			 * bypass the unique rel cache here since we're possibly using a
-			 * subset of join quals. We can use 'force_cache' == true when all
-			 * join quals are self-join quals.  Otherwise, we could end up
-			 * putting false negatives in the cache.
+			 * Determine if the rrel can duplicate outer rows. We must bypass
+			 * the unique rel cache here since we're possibly using a subset
+			 * of join quals. We can use 'force_cache' == true when all join
+			 * quals are self-join quals.  Otherwise, we could end up putting
+			 * false negatives in the cache.
 			 */
-			if (!innerrel_is_unique_ext(root, joinrelids, inner->relids,
-										outer, JOIN_INNER, selfjoinquals,
+			if (!innerrel_is_unique_ext(root, joinrelids, rrel->relids,
+										krel, JOIN_INNER, selfjoinquals,
 										list_length(otherjoinquals) == 0,
 										&uclauses))
 				continue;
@@ -2277,14 +2281,14 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			 * expressions, or we won't match the same row on each side of the
 			 * join.
 			 */
-			if (!match_unique_clauses(root, inner, uclauses, outer->relid))
+			if (!match_unique_clauses(root, rrel, uclauses, krel->relid))
 				continue;
 
 			/*
-			 * We can remove either relation, so remove the inner one in order
-			 * to simplify this loop.
+			 * Remove rrel ReloptInfo from the planner structures and the
+			 * corresponding row mark.
 			 */
-			remove_self_join_rel(root, omark, imark, outer, inner, restrictlist);
+			remove_self_join_rel(root, kmark, rmark, krel, rrel, restrictlist);
 
 			result = bms_add_member(result, r);
 
@@ -2359,8 +2363,7 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist, Relids toRemove)
 	 * In order to find relations with the same oid we first build an array of
 	 * candidates and then sort it by oid.
 	 */
-	candidates = (SelfJoinCandidate *) palloc(sizeof(SelfJoinCandidate) *
-											  numRels);
+	candidates = palloc_array(SelfJoinCandidate, numRels);
 	i = -1;
 	j = 0;
 	while ((i = bms_next_member(relids, i)) >= 0)

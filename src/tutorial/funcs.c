@@ -13,6 +13,7 @@
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/fmgrprotos.h"	/* for text_starts_with() */
 #include "utils/geo_decls.h"	/* for point type */
+#include "varatt.h"				/* for VARDATA/VARSIZE macros */
 
 PG_MODULE_MAGIC;
 
@@ -49,7 +50,7 @@ makepoint(PG_FUNCTION_ARGS)
 {
 	Point	   *pointx = PG_GETARG_POINT_P(0);
 	Point	   *pointy = PG_GETARG_POINT_P(1);
-	Point	   *new_point = (Point *) palloc(sizeof(Point));
+	Point	   *new_point = palloc_object(Point);
 
 	new_point->x = pointx->x;
 	new_point->y = pointy->y;

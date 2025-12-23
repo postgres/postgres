@@ -14,7 +14,7 @@
 #define _TABLEFUNC_H
 
 /* Forward-declare this to avoid including execnodes.h here */
-struct TableFuncScanState;
+typedef struct TableFuncScanState TableFuncScanState;
 
 /*
  * TableFuncRoutine holds function pointers used for generating content of
@@ -51,17 +51,17 @@ struct TableFuncScanState;
  */
 typedef struct TableFuncRoutine
 {
-	void		(*InitOpaque) (struct TableFuncScanState *state, int natts);
-	void		(*SetDocument) (struct TableFuncScanState *state, Datum value);
-	void		(*SetNamespace) (struct TableFuncScanState *state, const char *name,
+	void		(*InitOpaque) (TableFuncScanState *state, int natts);
+	void		(*SetDocument) (TableFuncScanState *state, Datum value);
+	void		(*SetNamespace) (TableFuncScanState *state, const char *name,
 								 const char *uri);
-	void		(*SetRowFilter) (struct TableFuncScanState *state, const char *path);
-	void		(*SetColumnFilter) (struct TableFuncScanState *state,
+	void		(*SetRowFilter) (TableFuncScanState *state, const char *path);
+	void		(*SetColumnFilter) (TableFuncScanState *state,
 									const char *path, int colnum);
-	bool		(*FetchRow) (struct TableFuncScanState *state);
-	Datum		(*GetValue) (struct TableFuncScanState *state, int colnum,
+	bool		(*FetchRow) (TableFuncScanState *state);
+	Datum		(*GetValue) (TableFuncScanState *state, int colnum,
 							 Oid typid, int32 typmod, bool *isnull);
-	void		(*DestroyOpaque) (struct TableFuncScanState *state);
+	void		(*DestroyOpaque) (TableFuncScanState *state);
 } TableFuncRoutine;
 
 #endif							/* _TABLEFUNC_H */

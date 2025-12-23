@@ -1355,7 +1355,7 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
     </itemizedlist>
 
     <warning>
-     <title>Warning: Cross-site scripting (XSS) safety</title>
+     <title>Warning: Cross-site Scripting (XSS) Safety</title>
      <para>
       The output from <function>ts_headline</function> is not guaranteed to
       be safe for direct inclusion in web pages. When
@@ -1974,12 +1974,12 @@ SELECT title, body FROM messages WHERE tsv @@ to_tsquery('title &amp; body');
 
 <programlisting>
 CREATE FUNCTION messages_trigger() RETURNS trigger AS $$
-begin
+BEGIN
   new.tsv :=
      setweight(to_tsvector('pg_catalog.english', coalesce(new.title,'')), 'A') ||
      setweight(to_tsvector('pg_catalog.english', coalesce(new.body,'')), 'D');
-  return new;
-end
+  RETURN new;
+END
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE

@@ -10,6 +10,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/timestamp.h"
 #include "utils/float.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 typedef struct
@@ -33,13 +34,6 @@ PG_FUNCTION_INFO_V1(gbt_ts_same);
 PG_FUNCTION_INFO_V1(gbt_ts_sortsupport);
 
 
-#ifdef USE_FLOAT8_BYVAL
-#define TimestampGetDatumFast(X) TimestampGetDatum(X)
-#else
-#define TimestampGetDatumFast(X) PointerGetDatum(&(X))
-#endif
-
-
 /* define for comparison */
 
 static bool
@@ -49,8 +43,8 @@ gbt_tsgt(const void *a, const void *b, FmgrInfo *flinfo)
 	const Timestamp *bb = (const Timestamp *) b;
 
 	return DatumGetBool(DirectFunctionCall2(timestamp_gt,
-											TimestampGetDatumFast(*aa),
-											TimestampGetDatumFast(*bb)));
+											TimestampGetDatum(*aa),
+											TimestampGetDatum(*bb)));
 }
 
 static bool
@@ -60,8 +54,8 @@ gbt_tsge(const void *a, const void *b, FmgrInfo *flinfo)
 	const Timestamp *bb = (const Timestamp *) b;
 
 	return DatumGetBool(DirectFunctionCall2(timestamp_ge,
-											TimestampGetDatumFast(*aa),
-											TimestampGetDatumFast(*bb)));
+											TimestampGetDatum(*aa),
+											TimestampGetDatum(*bb)));
 }
 
 static bool
@@ -71,8 +65,8 @@ gbt_tseq(const void *a, const void *b, FmgrInfo *flinfo)
 	const Timestamp *bb = (const Timestamp *) b;
 
 	return DatumGetBool(DirectFunctionCall2(timestamp_eq,
-											TimestampGetDatumFast(*aa),
-											TimestampGetDatumFast(*bb)));
+											TimestampGetDatum(*aa),
+											TimestampGetDatum(*bb)));
 }
 
 static bool
@@ -82,8 +76,8 @@ gbt_tsle(const void *a, const void *b, FmgrInfo *flinfo)
 	const Timestamp *bb = (const Timestamp *) b;
 
 	return DatumGetBool(DirectFunctionCall2(timestamp_le,
-											TimestampGetDatumFast(*aa),
-											TimestampGetDatumFast(*bb)));
+											TimestampGetDatum(*aa),
+											TimestampGetDatum(*bb)));
 }
 
 static bool
@@ -93,8 +87,8 @@ gbt_tslt(const void *a, const void *b, FmgrInfo *flinfo)
 	const Timestamp *bb = (const Timestamp *) b;
 
 	return DatumGetBool(DirectFunctionCall2(timestamp_lt,
-											TimestampGetDatumFast(*aa),
-											TimestampGetDatumFast(*bb)));
+											TimestampGetDatum(*aa),
+											TimestampGetDatum(*bb)));
 }
 
 static int
@@ -104,9 +98,9 @@ gbt_tskey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 	tsKEY	   *ib = (tsKEY *) (((const Nsrt *) b)->t);
 	int			res;
 
-	res = DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatumFast(ia->lower), TimestampGetDatumFast(ib->lower)));
+	res = DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatum(ia->lower), TimestampGetDatum(ib->lower)));
 	if (res == 0)
-		return DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatumFast(ia->upper), TimestampGetDatumFast(ib->upper)));
+		return DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatum(ia->upper), TimestampGetDatum(ib->upper)));
 
 	return res;
 }
@@ -122,8 +116,8 @@ gbt_ts_dist(const void *a, const void *b, FmgrInfo *flinfo)
 		return get_float8_infinity();
 
 	i = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
-											  TimestampGetDatumFast(*aa),
-											  TimestampGetDatumFast(*bb)));
+											  TimestampGetDatum(*aa),
+											  TimestampGetDatum(*bb)));
 	return fabs(INTERVAL_TO_SEC(i));
 }
 
@@ -152,7 +146,7 @@ ts_dist(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(a) || TIMESTAMP_NOT_FINITE(b))
 	{
-		Interval   *p = palloc(sizeof(Interval));
+		Interval   *p = palloc_object(Interval);
 
 		p->day = INT_MAX;
 		p->month = INT_MAX;
@@ -176,7 +170,7 @@ tstz_dist(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(a) || TIMESTAMP_NOT_FINITE(b))
 	{
-		Interval   *p = palloc(sizeof(Interval));
+		Interval   *p = palloc_object(Interval);
 
 		p->day = INT_MAX;
 		p->month = INT_MAX;
@@ -218,13 +212,13 @@ gbt_tstz_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		tsKEY	   *r = (tsKEY *) palloc(sizeof(tsKEY));
+		tsKEY	   *r = palloc_object(tsKEY);
 		TimestampTz ts = DatumGetTimestampTz(entry->key);
 		Timestamp	gmt;
 
 		gmt = tstz_to_ts_gmt(ts);
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		r->lower = r->upper = gmt;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
@@ -404,8 +398,8 @@ gbt_ts_ssup_cmp(Datum x, Datum y, SortSupport ssup)
 
 	/* for leaf items we expect lower == upper, so only compare lower */
 	return DatumGetInt32(DirectFunctionCall2(timestamp_cmp,
-											 TimestampGetDatumFast(arg1->lower),
-											 TimestampGetDatumFast(arg2->lower)));
+											 TimestampGetDatum(arg1->lower),
+											 TimestampGetDatum(arg2->lower)));
 }
 
 Datum

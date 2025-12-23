@@ -257,32 +257,6 @@ clamp_width_est(int64 tuple_width)
 	return (int32) tuple_width;
 }
 
-/*
- * clamp_cardinality_to_long
- *		Cast a Cardinality value to a sane long value.
- */
-long
-clamp_cardinality_to_long(Cardinality x)
-{
-	/*
-	 * Just for paranoia's sake, ensure we do something sane with negative or
-	 * NaN values.
-	 */
-	if (isnan(x))
-		return LONG_MAX;
-	if (x <= 0)
-		return 0;
-
-	/*
-	 * If "long" is 64 bits, then LONG_MAX cannot be represented exactly as a
-	 * double.  Casting it to double and back may well result in overflow due
-	 * to rounding, so avoid doing that.  We trust that any double value that
-	 * compares strictly less than "(double) LONG_MAX" will cast to a
-	 * representable "long" value.
-	 */
-	return (x < (double) LONG_MAX) ? (long) x : LONG_MAX;
-}
-
 
 /*
  * cost_seqscan
@@ -1366,8 +1340,9 @@ cost_tidrangescan(Path *path, PlannerInfo *root,
 {
 	Selectivity selectivity;
 	double		pages;
-	Cost		startup_cost = 0;
-	Cost		run_cost = 0;
+	Cost		startup_cost;
+	Cost		cpu_run_cost;
+	Cost		disk_run_cost;
 	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 	QualCost	tid_qual_cost;
@@ -1399,8 +1374,8 @@ cost_tidrangescan(Path *path, PlannerInfo *root,
 	 * page is just a normal sequential page read. NOTE: it's desirable for
 	 * TID Range Scans to cost more than the equivalent Sequential Scans,
 	 * because Seq Scans have some performance advantages such as scan
-	 * synchronization and parallelizability, and we'd prefer one of them to
-	 * be picked unless a TID Range Scan really is better.
+	 * synchronization, and we'd prefer one of them to be picked unless a TID
+	 * Range Scan really is better.
 	 */
 	ntuples = selectivity * baserel->tuples;
 	nseqpages = pages - 1.0;
@@ -1417,7 +1392,7 @@ cost_tidrangescan(Path *path, PlannerInfo *root,
 							  &spc_seq_page_cost);
 
 	/* disk costs; 1 random page and the remainder as seq pages */
-	run_cost += spc_random_page_cost + spc_seq_page_cost * nseqpages;
+	disk_run_cost = spc_random_page_cost + spc_seq_page_cost * nseqpages;
 
 	/* Add scanning CPU costs */
 	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
@@ -1429,20 +1404,35 @@ cost_tidrangescan(Path *path, PlannerInfo *root,
 	 * can't be removed, this is a mistake and we're going to underestimate
 	 * the CPU cost a bit.)
 	 */
-	startup_cost += qpqual_cost.startup + tid_qual_cost.per_tuple;
+	startup_cost = qpqual_cost.startup + tid_qual_cost.per_tuple;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple -
 		tid_qual_cost.per_tuple;
-	run_cost += cpu_per_tuple * ntuples;
+	cpu_run_cost = cpu_per_tuple * ntuples;
 
 	/* tlist eval costs are paid per output row, not per tuple scanned */
 	startup_cost += path->pathtarget->cost.startup;
-	run_cost += path->pathtarget->cost.per_tuple * path->rows;
+	cpu_run_cost += path->pathtarget->cost.per_tuple * path->rows;
+
+	/* Adjust costing for parallelism, if used. */
+	if (path->parallel_workers > 0)
+	{
+		double		parallel_divisor = get_parallel_divisor(path);
+
+		/* The CPU cost is divided among all the workers. */
+		cpu_run_cost /= parallel_divisor;
+
+		/*
+		 * In the case of a parallel plan, the row count needs to represent
+		 * the number of tuples processed per worker.
+		 */
+		path->rows = clamp_row_est(path->rows / parallel_divisor);
+	}
 
 	/* we should not generate this path type when enable_tidscan=false */
 	Assert(enable_tidscan);
 	path->disabled_nodes = 0;
 	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + run_cost;
+	path->total_cost = startup_cost + cpu_run_cost + disk_run_cost;
 }
 
 /*
@@ -2189,7 +2179,7 @@ append_nonpartial_cost(List *subpaths, int numpaths, int parallel_workers)
 	 * whichever is less.
 	 */
 	arrlen = Min(parallel_workers, numpaths);
-	costarr = (Cost *) palloc(sizeof(Cost) * arrlen);
+	costarr = palloc_array(Cost, arrlen);
 
 	/* The first few paths will each be claimed by a different worker. */
 	path_index = 0;
@@ -2247,7 +2237,7 @@ append_nonpartial_cost(List *subpaths, int numpaths, int parallel_workers)
  *	  Determines and returns the cost of an Append node.
  */
 void
-cost_append(AppendPath *apath)
+cost_append(AppendPath *apath, PlannerInfo *root)
 {
 	ListCell   *l;
 
@@ -2309,26 +2299,52 @@ cost_append(AppendPath *apath)
 			foreach(l, apath->subpaths)
 			{
 				Path	   *subpath = (Path *) lfirst(l);
-				Path		sort_path;	/* dummy for result of cost_sort */
+				int			presorted_keys;
+				Path		sort_path;	/* dummy for result of
+										 * cost_sort/cost_incremental_sort */
 
-				if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
+				if (!pathkeys_count_contained_in(pathkeys, subpath->pathkeys,
+												 &presorted_keys))
 				{
 					/*
 					 * We'll need to insert a Sort node, so include costs for
-					 * that.  We can use the parent's LIMIT if any, since we
+					 * that.  We choose to use incremental sort if it is
+					 * enabled and there are presorted keys; otherwise we use
+					 * full sort.
+					 *
+					 * We can use the parent's LIMIT if any, since we
 					 * certainly won't pull more than that many tuples from
 					 * any child.
 					 */
-					cost_sort(&sort_path,
-							  NULL, /* doesn't currently need root */
-							  pathkeys,
-							  subpath->disabled_nodes,
-							  subpath->total_cost,
-							  subpath->rows,
-							  subpath->pathtarget->width,
-							  0.0,
-							  work_mem,
-							  apath->limit_tuples);
+					if (enable_incremental_sort && presorted_keys > 0)
+					{
+						cost_incremental_sort(&sort_path,
+											  root,
+											  pathkeys,
+											  presorted_keys,
+											  subpath->disabled_nodes,
+											  subpath->startup_cost,
+											  subpath->total_cost,
+											  subpath->rows,
+											  subpath->pathtarget->width,
+											  0.0,
+											  work_mem,
+											  apath->limit_tuples);
+					}
+					else
+					{
+						cost_sort(&sort_path,
+								  root,
+								  pathkeys,
+								  subpath->disabled_nodes,
+								  subpath->total_cost,
+								  subpath->rows,
+								  subpath->pathtarget->width,
+								  0.0,
+								  work_mem,
+								  apath->limit_tuples);
+					}
+
 					subpath = &sort_path;
 				}
 
@@ -2546,13 +2562,13 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	Cost		input_startup_cost = mpath->subpath->startup_cost;
 	Cost		input_total_cost = mpath->subpath->total_cost;
 	double		tuples = mpath->subpath->rows;
-	double		calls = mpath->calls;
+	Cardinality est_calls = mpath->est_calls;
 	int			width = mpath->subpath->pathtarget->width;
 
 	double		hash_mem_bytes;
 	double		est_entry_bytes;
-	double		est_cache_entries;
-	double		ndistinct;
+	Cardinality est_cache_entries;
+	Cardinality ndistinct;
 	double		evict_ratio;
 	double		hit_ratio;
 	Cost		startup_cost;
@@ -2578,7 +2594,7 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	est_cache_entries = floor(hash_mem_bytes / est_entry_bytes);
 
 	/* estimate on the distinct number of parameter values */
-	ndistinct = estimate_num_groups(root, mpath->param_exprs, calls, NULL,
+	ndistinct = estimate_num_groups(root, mpath->param_exprs, est_calls, NULL,
 									&estinfo);
 
 	/*
@@ -2590,7 +2606,10 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	 * certainly mean a MemoizePath will never survive add_path().
 	 */
 	if ((estinfo.flags & SELFLAG_USED_DEFAULT) != 0)
-		ndistinct = calls;
+		ndistinct = est_calls;
+
+	/* Remember the ndistinct estimate for EXPLAIN */
+	mpath->est_unique_keys = ndistinct;
 
 	/*
 	 * Since we've already estimated the maximum number of entries we can
@@ -2618,8 +2637,11 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	 * must look at how many scans are estimated in total for this node and
 	 * how many of those scans we expect to get a cache hit.
 	 */
-	hit_ratio = ((calls - ndistinct) / calls) *
+	hit_ratio = ((est_calls - ndistinct) / est_calls) *
 		(est_cache_entries / Max(ndistinct, est_cache_entries));
+
+	/* Remember the hit ratio estimate for EXPLAIN */
+	mpath->est_hit_ratio = hit_ratio;
 
 	Assert(hit_ratio >= 0 && hit_ratio <= 1.0);
 
@@ -3934,10 +3956,12 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	 * when we should not.  Can we do better without expensive selectivity
 	 * computations?
 	 *
-	 * The whole issue is moot if we are working from a unique-ified outer
-	 * input, or if we know we don't need to mark/restore at all.
+	 * The whole issue is moot if we know we don't need to mark/restore at
+	 * all, or if we are working from a unique-ified outer input.
 	 */
-	if (IsA(outer_path, UniquePath) || path->skip_mark_restore)
+	if (path->skip_mark_restore ||
+		RELATION_WAS_MADE_UNIQUE(outer_path->parent, extra->sjinfo,
+								 path->jpath.jointype))
 		rescannedtuples = 0;
 	else
 	{
@@ -4113,7 +4137,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	/* Cache the result in suitably long-lived workspace */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	cache = (MergeScanSelCache *) palloc(sizeof(MergeScanSelCache));
+	cache = palloc_object(MergeScanSelCache);
 	cache->opfamily = pathkey->pk_opfamily;
 	cache->collation = pathkey->pk_eclass->ec_collation;
 	cache->cmptype = pathkey->pk_cmptype;
@@ -4332,7 +4356,8 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	 * because we avoid contaminating the cache with a value that's wrong for
 	 * non-unique-ified paths.
 	 */
-	if (IsA(inner_path, UniquePath))
+	if (RELATION_WAS_MADE_UNIQUE(inner_path->parent, extra->sjinfo,
+								 path->jpath.jointype))
 	{
 		innerbucketsize = 1.0 / virtualbuckets;
 		innermcvfreq = 0.0;
@@ -4535,10 +4560,24 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
 {
 	QualCost	sp_cost;
 
-	/* Figure any cost for evaluating the testexpr */
+	/*
+	 * Figure any cost for evaluating the testexpr.
+	 *
+	 * Usually, SubPlan nodes are built very early, before we have constructed
+	 * any RelOptInfos for the parent query level, which means the parent root
+	 * does not yet contain enough information to safely consult statistics.
+	 * Therefore, we pass root as NULL here.  cost_qual_eval() is already
+	 * well-equipped to handle a NULL root.
+	 *
+	 * One exception is SubPlan nodes built for the initplans of MIN/MAX
+	 * aggregates from indexes (cf. SS_make_initplan_from_plan).  In this
+	 * case, having a NULL root is safe because testexpr will be NULL.
+	 * Besides, an initplan will by definition not consult anything from the
+	 * parent plan.
+	 */
 	cost_qual_eval(&sp_cost,
 				   make_ands_implicit((Expr *) subplan->testexpr),
-				   root);
+				   NULL);
 
 	if (subplan->useHashTable)
 	{

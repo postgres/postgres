@@ -23,7 +23,6 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
-#include "commands/dbcommands.h"
 #include "commands/seclabel.h"
 #include "libpq/auth.h"
 #include "libpq/libpq-be.h"
@@ -146,7 +145,7 @@ sepgsql_set_client_label(const char *new_label)
 	 */
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 
-	plabel = palloc0(sizeof(pending_label));
+	plabel = palloc0_object(pending_label);
 	plabel->subid = GetCurrentSubTransactionId();
 	if (new_label)
 		plabel->label = pstrdup(new_label);

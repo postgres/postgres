@@ -97,10 +97,7 @@ extern void SyncRepUpdateSyncStandbysDefined(void);
  * in syncrep_gram.y and syncrep_scanner.l
  */
 union YYSTYPE;
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
-#endif
 extern int	syncrep_yyparse(SyncRepConfigData **syncrep_parse_result_p, char **syncrep_parse_error_msg_p, yyscan_t yyscanner);
 extern int	syncrep_yylex(union YYSTYPE *yylval_param, char **syncrep_parse_error_msg_p, yyscan_t yyscanner);
 extern void syncrep_yyerror(SyncRepConfigData **syncrep_parse_result_p, char **syncrep_parse_error_msg_p, yyscan_t yyscanner, const char *str);

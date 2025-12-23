@@ -57,3 +57,5 @@ tests += {
     'dbname': 'regression',
   },
 }
+
+subdir('po', if_found: libintl)

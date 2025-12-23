@@ -38,7 +38,7 @@ hash_xlog_init_meta_page(XLogReaderState *record)
 	Assert(BufferIsValid(metabuf));
 	_hash_init_metabuffer(metabuf, xlrec->num_tuples, xlrec->procid,
 						  xlrec->ffactor, true);
-	page = (Page) BufferGetPage(metabuf);
+	page = BufferGetPage(metabuf);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(metabuf);
 
@@ -137,8 +137,7 @@ hash_xlog_insert(XLogReaderState *record)
 
 		page = BufferGetPage(buffer);
 
-		if (PageAddItem(page, (Item) datapos, datalen, xlrec->offnum,
-						false, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, datapos, datalen, xlrec->offnum, false, false) == InvalidOffsetNumber)
 			elog(PANIC, "hash_xlog_insert: failed to add item");
 
 		PageSetLSN(page, lsn);
@@ -235,7 +234,7 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 
 		if (XLogReadBufferForRedo(record, 2, &mapbuffer) == BLK_NEEDS_REDO)
 		{
-			Page		mappage = (Page) BufferGetPage(mapbuffer);
+			Page		mappage = BufferGetPage(mapbuffer);
 			uint32	   *freep = NULL;
 			uint32	   *bitmap_page_bit;
 
@@ -315,8 +314,6 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 	Buffer		oldbuf;
 	Buffer		newbuf;
 	Buffer		metabuf;
-	Size		datalen PG_USED_FOR_ASSERTS_ONLY;
-	char	   *data;
 	XLogRedoAction action;
 
 	/*
@@ -376,6 +373,10 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 	{
 		Page		page;
 		HashMetaPage metap;
+		Size		datalen;
+		char	   *data;
+		uint32	   *uidata;
+		int			uidatacount;
 
 		page = BufferGetPage(metabuf);
 		metap = HashPageGetMeta(page);
@@ -383,34 +384,31 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 
 		data = XLogRecGetBlockData(record, 2, &datalen);
 
+		/*
+		 * This cast is ok because XLogRecGetBlockData() returns a MAXALIGNed
+		 * buffer.
+		 */
+		uidata = (uint32 *) data;
+		uidatacount = 0;
+
 		if (xlrec->flags & XLH_SPLIT_META_UPDATE_MASKS)
 		{
-			uint32		lowmask;
-			uint32	   *highmask;
-
-			/* extract low and high masks. */
-			memcpy(&lowmask, data, sizeof(uint32));
-			highmask = (uint32 *) ((char *) data + sizeof(uint32));
+			uint32		lowmask = uidata[uidatacount++];
+			uint32		highmask = uidata[uidatacount++];
 
 			/* update metapage */
 			metap->hashm_lowmask = lowmask;
-			metap->hashm_highmask = *highmask;
-
-			data += sizeof(uint32) * 2;
+			metap->hashm_highmask = highmask;
 		}
 
 		if (xlrec->flags & XLH_SPLIT_META_UPDATE_SPLITPOINT)
 		{
-			uint32		ovflpoint;
-			uint32	   *ovflpages;
-
-			/* extract information of overflow pages. */
-			memcpy(&ovflpoint, data, sizeof(uint32));
-			ovflpages = (uint32 *) ((char *) data + sizeof(uint32));
+			uint32		ovflpoint = uidata[uidatacount++];
+			uint32		ovflpages = uidata[uidatacount++];
 
 			/* update metapage */
-			metap->hashm_spares[ovflpoint] = *ovflpages;
 			metap->hashm_ovflpoint = ovflpoint;
+			metap->hashm_spares[ovflpoint] = ovflpages;
 		}
 
 		MarkBufferDirty(metabuf);
@@ -538,7 +536,7 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 
 		data = begin = XLogRecGetBlockData(record, 1, &datalen);
 
-		writepage = (Page) BufferGetPage(writebuf);
+		writepage = BufferGetPage(writebuf);
 
 		if (xldata->ntups > 0)
 		{
@@ -557,10 +555,9 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 
 				data += itemsz;
 
-				l = PageAddItem(writepage, (Item) itup, itemsz, towrite[ninserted], false, false);
+				l = PageAddItem(writepage, itup, itemsz, towrite[ninserted], false, false);
 				if (l == InvalidOffsetNumber)
-					elog(ERROR, "hash_xlog_move_page_contents: failed to add item to hash index page, size %d bytes",
-						 (int) itemsz);
+					elog(ERROR, "hash_xlog_move_page_contents: failed to add item to hash index page, size %zu bytes", itemsz);
 
 				ninserted++;
 			}
@@ -584,7 +581,7 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 
 		ptr = XLogRecGetBlockData(record, 2, &len);
 
-		page = (Page) BufferGetPage(deletebuf);
+		page = BufferGetPage(deletebuf);
 
 		if (len > 0)
 		{
@@ -592,7 +589,7 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 			OffsetNumber *unend;
 
 			unused = (OffsetNumber *) ptr;
-			unend = (OffsetNumber *) ((char *) ptr + len);
+			unend = (OffsetNumber *) (ptr + len);
 
 			if ((unend - unused) > 0)
 				PageIndexMultiDelete(page, unused, unend - unused);
@@ -670,7 +667,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 		data = begin = XLogRecGetBlockData(record, 1, &datalen);
 
-		writepage = (Page) BufferGetPage(writebuf);
+		writepage = BufferGetPage(writebuf);
 
 		if (xldata->ntups > 0)
 		{
@@ -689,10 +686,9 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 				data += itemsz;
 
-				l = PageAddItem(writepage, (Item) itup, itemsz, towrite[ninserted], false, false);
+				l = PageAddItem(writepage, itup, itemsz, towrite[ninserted], false, false);
 				if (l == InvalidOffsetNumber)
-					elog(ERROR, "hash_xlog_squeeze_page: failed to add item to hash index page, size %d bytes",
-						 (int) itemsz);
+					elog(ERROR, "hash_xlog_squeeze_page: failed to add item to hash index page, size %zu bytes", itemsz);
 
 				ninserted++;
 			}
@@ -807,7 +803,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 	/* replay the record for bitmap page */
 	if (XLogReadBufferForRedo(record, 5, &mapbuf) == BLK_NEEDS_REDO)
 	{
-		Page		mappage = (Page) BufferGetPage(mapbuf);
+		Page		mappage = BufferGetPage(mapbuf);
 		uint32	   *freep = NULL;
 		char	   *data;
 		uint32	   *bitmap_page_bit;
@@ -895,7 +891,7 @@ hash_xlog_delete(XLogReaderState *record)
 
 		ptr = XLogRecGetBlockData(record, 1, &len);
 
-		page = (Page) BufferGetPage(deletebuf);
+		page = BufferGetPage(deletebuf);
 
 		if (len > 0)
 		{
@@ -903,7 +899,7 @@ hash_xlog_delete(XLogReaderState *record)
 			OffsetNumber *unend;
 
 			unused = (OffsetNumber *) ptr;
-			unend = (OffsetNumber *) ((char *) ptr + len);
+			unend = (OffsetNumber *) (ptr + len);
 
 			if ((unend - unused) > 0)
 				PageIndexMultiDelete(page, unused, unend - unused);
@@ -946,7 +942,7 @@ hash_xlog_split_cleanup(XLogReaderState *record)
 	{
 		HashPageOpaque bucket_opaque;
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		bucket_opaque = HashPageGetOpaque(page);
 		bucket_opaque->hasho_flag &= ~LH_BUCKET_NEEDS_SPLIT_CLEANUP;
@@ -1029,7 +1025,7 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 
 	if (action == BLK_NEEDS_REDO)
 	{
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		PageIndexMultiDelete(page, toDelete, xldata->ntuples);
 

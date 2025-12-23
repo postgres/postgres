@@ -20,4 +20,6 @@ extern SetOpState *ExecInitSetOp(SetOp *node, EState *estate, int eflags);
 extern void ExecEndSetOp(SetOpState *node);
 extern void ExecReScanSetOp(SetOpState *node);
 
+extern Size EstimateSetOpHashTableSpace(double nentries, Size tupleWidth);
+
 #endif							/* NODESETOP_H */

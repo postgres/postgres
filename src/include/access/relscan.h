@@ -96,6 +96,8 @@ typedef struct ParallelBlockTableScanDescData
 	BlockNumber phs_nblocks;	/* # blocks in relation at start of scan */
 	slock_t		phs_mutex;		/* mutual exclusion for setting startblock */
 	BlockNumber phs_startblock; /* starting block number */
+	BlockNumber phs_numblock;	/* # blocks to scan, or InvalidBlockNumber if
+								 * no limit */
 	pg_atomic_uint64 phs_nallocated;	/* number of blocks allocated to
 										 * workers so far. */
 }			ParallelBlockTableScanDescData;
@@ -189,7 +191,7 @@ typedef struct IndexScanDescData
 
 	/* parallel index scan information, in shared memory */
 	struct ParallelIndexScanDescData *parallel_scan;
-}			IndexScanDescData;
+} IndexScanDescData;
 
 /* Generic structure for parallel scans */
 typedef struct ParallelIndexScanDescData
@@ -212,6 +214,6 @@ typedef struct SysScanDescData
 	struct IndexScanDescData *iscan;	/* only valid in index-scan case */
 	struct SnapshotData *snapshot;	/* snapshot to unregister at end of scan */
 	struct TupleTableSlot *slot;
-}			SysScanDescData;
+} SysScanDescData;
 
 #endif							/* RELSCAN_H */

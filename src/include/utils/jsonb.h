@@ -67,8 +67,10 @@ typedef enum
 #define JGINFLAG_HASHED 0x10	/* OR'd into flag if value was hashed */
 #define JGIN_MAXLENGTH	125		/* max length of text part before hashing */
 
+/* Forward struct references */
 typedef struct JsonbPair JsonbPair;
 typedef struct JsonbValue JsonbValue;
+typedef struct JsonbParseState JsonbParseState;
 
 /*
  * Jsonbs are varlena objects, so must meet the varlena convention that the
@@ -315,15 +317,40 @@ struct JsonbPair
 	uint32		order;			/* Pair's index in original sequence */
 };
 
-/* Conversion state used when parsing Jsonb from text, or for type coercion */
-typedef struct JsonbParseState
+/*
+ * State used while constructing or manipulating a JsonbValue.
+ * For example, when parsing Jsonb from text, we construct a JsonbValue
+ * data structure and then flatten that into the Jsonb on-disk format.
+ * JsonbValues are also useful in aggregation and type coercion.
+ *
+ * Callers providing a JsonbInState must initialize it to zeroes/nulls,
+ * except for optionally setting outcontext (if that's left NULL,
+ * CurrentMemoryContext is used) and escontext (if that's left NULL,
+ * parsing errors are thrown via ereport).
+ */
+typedef struct JsonbInState
 {
-	JsonbValue	contVal;
-	Size		size;
-	struct JsonbParseState *next;
+	JsonbValue *result;			/* The completed value; NULL until complete */
+	MemoryContext outcontext;	/* The context to build it in, or NULL */
+	struct Node *escontext;		/* Optional soft-error-reporting context */
+	/* Remaining fields should be treated as private to jsonb.c/jsonb_util.c */
+	JsonbParseState *parseState;	/* Stack of parsing contexts */
+	bool		unique_keys;	/* Check object key uniqueness */
+} JsonbInState;
+
+/*
+ * Parsing context for one level of Jsonb array or object nesting.
+ * The contVal will be part of the constructed JsonbValue tree,
+ * but the other fields are just transient state.
+ */
+struct JsonbParseState
+{
+	JsonbValue	contVal;		/* An array or object JsonbValue */
+	Size		size;			/* Allocated length of array or object */
+	JsonbParseState *next;		/* Link to next outer level, if any */
 	bool		unique_keys;	/* Check object key uniqueness */
 	bool		skip_nulls;		/* Skip null object fields */
-} JsonbParseState;
+};
 
 /*
  * JsonbIterator holds details of the type for each iteration. It also stores a
@@ -404,8 +431,8 @@ extern JsonbValue *getKeyJsonValueFromContainer(JsonbContainer *container,
 												JsonbValue *res);
 extern JsonbValue *getIthJsonbValueFromContainer(JsonbContainer *container,
 												 uint32 i);
-extern JsonbValue *pushJsonbValue(JsonbParseState **pstate,
-								  JsonbIteratorToken seq, JsonbValue *jbval);
+extern void pushJsonbValue(JsonbInState *pstate,
+						   JsonbIteratorToken seq, JsonbValue *jbval);
 extern JsonbIterator *JsonbIteratorInit(JsonbContainer *container);
 extern JsonbIteratorToken JsonbIteratorNext(JsonbIterator **it, JsonbValue *val,
 											bool skipNested);
@@ -426,9 +453,9 @@ extern char *JsonbUnquote(Jsonb *jb);
 extern bool JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res);
 extern const char *JsonbTypeName(JsonbValue *val);
 
-extern Datum jsonb_set_element(Jsonb *jb, Datum *path, int path_len,
+extern Datum jsonb_set_element(Jsonb *jb, const Datum *path, int path_len,
 							   JsonbValue *newval);
-extern Datum jsonb_get_element(Jsonb *jb, Datum *path, int npath,
+extern Datum jsonb_get_element(Jsonb *jb, const Datum *path, int npath,
 							   bool *isnull, bool as_text);
 extern bool to_jsonb_is_immutable(Oid typoid);
 extern Datum jsonb_build_object_worker(int nargs, const Datum *args, const bool *nulls,

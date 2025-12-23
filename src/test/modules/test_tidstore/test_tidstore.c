@@ -103,8 +103,7 @@ test_create(PG_FUNCTION_ARGS)
 	{
 		int			tranche_id;
 
-		tranche_id = LWLockNewTrancheId();
-		LWLockRegisterTranche(tranche_id, "test_tidstore");
+		tranche_id = LWLockNewTrancheId("test_tidstore");
 
 		tidstore = TidStoreCreateShared(tidstore_max_size, tranche_id);
 

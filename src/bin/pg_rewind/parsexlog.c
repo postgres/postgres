@@ -89,11 +89,11 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 			XLogRecPtr	errptr = xlogreader->EndRecPtr;
 
 			if (errormsg)
-				pg_fatal("could not read WAL record at %X/%X: %s",
+				pg_fatal("could not read WAL record at %X/%08X: %s",
 						 LSN_FORMAT_ARGS(errptr),
 						 errormsg);
 			else
-				pg_fatal("could not read WAL record at %X/%X",
+				pg_fatal("could not read WAL record at %X/%08X",
 						 LSN_FORMAT_ARGS(errptr));
 		}
 
@@ -105,7 +105,7 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 	 * messed up.
 	 */
 	if (xlogreader->EndRecPtr != endpoint)
-		pg_fatal("end pointer %X/%X is not a valid end point; expected %X/%X",
+		pg_fatal("end pointer %X/%08X is not a valid end point; expected %X/%08X",
 				 LSN_FORMAT_ARGS(endpoint), LSN_FORMAT_ARGS(xlogreader->EndRecPtr));
 
 	XLogReaderFree(xlogreader);
@@ -143,10 +143,10 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex,
 	if (record == NULL)
 	{
 		if (errormsg)
-			pg_fatal("could not read WAL record at %X/%X: %s",
+			pg_fatal("could not read WAL record at %X/%08X: %s",
 					 LSN_FORMAT_ARGS(ptr), errormsg);
 		else
-			pg_fatal("could not read WAL record at %X/%X",
+			pg_fatal("could not read WAL record at %X/%08X",
 					 LSN_FORMAT_ARGS(ptr));
 	}
 	endptr = xlogreader->EndRecPtr;
@@ -211,11 +211,11 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 		if (record == NULL)
 		{
 			if (errormsg)
-				pg_fatal("could not find previous WAL record at %X/%X: %s",
+				pg_fatal("could not find previous WAL record at %X/%08X: %s",
 						 LSN_FORMAT_ARGS(searchptr),
 						 errormsg);
 			else
-				pg_fatal("could not find previous WAL record at %X/%X",
+				pg_fatal("could not find previous WAL record at %X/%08X",
 						 LSN_FORMAT_ARGS(searchptr));
 		}
 
@@ -458,8 +458,8 @@ extractPageInfo(XLogReaderState *record)
 		 * we don't recognize the type. That's bad - we don't know how to
 		 * track that change.
 		 */
-		pg_fatal("WAL record modifies a relation, but record type is not recognized: "
-				 "lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X",
+		pg_fatal("WAL record modifies a relation, but record type is not recognized:\n"
+				 "lsn: %X/%08X, rmid: %d, rmgr: %s, info: %02X",
 				 LSN_FORMAT_ARGS(record->ReadRecPtr),
 				 rmid, RmgrName(rmid), info);
 	}

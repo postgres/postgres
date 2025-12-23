@@ -16,8 +16,8 @@
 #include "nodes/execnodes.h"
 #include "nodes/pathnodes.h"
 
-/* To avoid including explain.h here, reference ExplainState thus: */
-struct ExplainState;
+/* avoid including explain_state.h here */
+typedef struct ExplainState ExplainState;
 
 
 /*
@@ -137,16 +137,16 @@ typedef void (*RefetchForeignRow_function) (EState *estate,
 											bool *updated);
 
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
-											 struct ExplainState *es);
+											 ExplainState *es);
 
 typedef void (*ExplainForeignModify_function) (ModifyTableState *mtstate,
 											   ResultRelInfo *rinfo,
 											   List *fdw_private,
 											   int subplan_index,
-											   struct ExplainState *es);
+											   ExplainState *es);
 
 typedef void (*ExplainDirectModify_function) (ForeignScanState *node,
-											  struct ExplainState *es);
+											  ExplainState *es);
 
 typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
 									  HeapTuple *rows, int targrows,

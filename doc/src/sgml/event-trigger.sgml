@@ -433,7 +433,7 @@ $$
 ---
 DECLARE
   table_oid oid := pg_event_trigger_table_rewrite_oid();
-  current_hour integer := extract('hour' from current_time);
+  current_hour integer := extract('hour' FROM current_time);
   pages integer;
   max_pages integer := 100;
 BEGIN

@@ -71,15 +71,26 @@ optionListToArray(List *options)
 	foreach(cell, options)
 	{
 		DefElem    *def = lfirst(cell);
+		const char *name;
 		const char *value;
 		Size		len;
 		text	   *t;
 
+		name = def->defname;
 		value = defGetString(def);
-		len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
+
+		/* Insist that name not contain "=", else "a=b=c" is ambiguous */
+		if (strchr(name, '=') != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid option name \"%s\": must not contain \"=\"",
+							name)));
+
+		len = VARHDRSZ + strlen(name) + 1 + strlen(value);
+		/* +1 leaves room for sprintf's trailing null */
 		t = palloc(len + 1);
 		SET_VARSIZE(t, len);
-		sprintf(VARDATA(t), "%s=%s", def->defname, value);
+		sprintf(VARDATA(t), "%s=%s", name, value);
 
 		astate = accumArrayResult(astate, PointerGetDatum(t),
 								  false, TEXTOID,
@@ -621,7 +632,7 @@ CreateForeignDataWrapper(ParseState *pstate, CreateFdwStmt *stmt)
 										 stmt->options,
 										 fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(fdwoptions)))
+	if (DatumGetPointer(fdwoptions) != NULL)
 		values[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = fdwoptions;
 	else
 		nulls[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
@@ -772,7 +783,7 @@ AlterForeignDataWrapper(ParseState *pstate, AlterFdwStmt *stmt)
 										stmt->options,
 										fdwvalidator);
 
-		if (PointerIsValid(DatumGetPointer(datum)))
+		if (DatumGetPointer(datum) != NULL)
 			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
@@ -932,7 +943,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 										 stmt->options,
 										 fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(srvoptions)))
+	if (DatumGetPointer(srvoptions) != NULL)
 		values[Anum_pg_foreign_server_srvoptions - 1] = srvoptions;
 	else
 		nulls[Anum_pg_foreign_server_srvoptions - 1] = true;
@@ -1040,7 +1051,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 										stmt->options,
 										fdw->fdwvalidator);
 
-		if (PointerIsValid(DatumGetPointer(datum)))
+		if (DatumGetPointer(datum) != NULL)
 			repl_val[Anum_pg_foreign_server_srvoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_foreign_server_srvoptions - 1] = true;
@@ -1176,7 +1187,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 										 stmt->options,
 										 fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(useoptions)))
+	if (DatumGetPointer(useoptions) != NULL)
 		values[Anum_pg_user_mapping_umoptions - 1] = useoptions;
 	else
 		nulls[Anum_pg_user_mapping_umoptions - 1] = true;
@@ -1290,7 +1301,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 										stmt->options,
 										fdw->fdwvalidator);
 
-		if (PointerIsValid(DatumGetPointer(datum)))
+		if (DatumGetPointer(datum) != NULL)
 			repl_val[Anum_pg_user_mapping_umoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_user_mapping_umoptions - 1] = true;
@@ -1453,7 +1464,7 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 										stmt->options,
 										fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(ftoptions)))
+	if (DatumGetPointer(ftoptions) != NULL)
 		values[Anum_pg_foreign_table_ftoptions - 1] = ftoptions;
 	else
 		nulls[Anum_pg_foreign_table_ftoptions - 1] = true;
@@ -1577,6 +1588,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 			pstmt->utilityStmt = (Node *) cstmt;
 			pstmt->stmt_location = rs->stmt_location;
 			pstmt->stmt_len = rs->stmt_len;
+			pstmt->planOrigin = PLAN_STMT_INTERNAL;
 
 			/* Execute statement */
 			ProcessUtility(pstmt, cmd, false,

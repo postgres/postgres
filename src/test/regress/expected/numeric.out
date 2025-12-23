@@ -1464,9 +1464,21 @@ ERROR:  count must be greater than zero
 SELECT width_bucket(3.5::float8, 3.0::float8, 3.0::float8, 888);
 ERROR:  lower bound cannot equal upper bound
 SELECT width_bucket('NaN', 3.0, 4.0, 888);
-ERROR:  operand, lower bound, and upper bound cannot be NaN
+ width_bucket 
+--------------
+          889
+(1 row)
+
+SELECT width_bucket('NaN'::float8, 3.0::float8, 4.0::float8, 888);
+ width_bucket 
+--------------
+          889
+(1 row)
+
+SELECT width_bucket(0, 'NaN', 4.0, 888);
+ERROR:  lower and upper bounds cannot be NaN
 SELECT width_bucket(0::float8, 'NaN', 4.0::float8, 888);
-ERROR:  operand, lower bound, and upper bound cannot be NaN
+ERROR:  lower and upper bounds cannot be NaN
 SELECT width_bucket(2.0, 3.0, '-inf', 888);
 ERROR:  lower and upper bounds must be finite
 SELECT width_bucket(0::float8, '-inf', 4.0::float8, 888);
@@ -3860,15 +3872,15 @@ ERROR:  factorial of a negative number is undefined
 -- Tests for pg_lsn()
 --
 SELECT pg_lsn(23783416::numeric);
-  pg_lsn   
------------
- 0/16AE7F8
+   pg_lsn   
+------------
+ 0/016AE7F8
 (1 row)
 
 SELECT pg_lsn(0::numeric);
- pg_lsn 
---------
- 0/0
+   pg_lsn   
+------------
+ 0/00000000
 (1 row)
 
 SELECT pg_lsn(18446744073709551615::numeric);

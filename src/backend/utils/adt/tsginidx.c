@@ -73,7 +73,7 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 		int			i;
 		WordEntry  *we = ARRPTR(vector);
 
-		entries = (Datum *) palloc(sizeof(Datum) * vector->size);
+		entries = palloc_array(Datum, vector->size);
 
 		for (i = 0; i < vector->size; i++)
 		{
@@ -133,16 +133,16 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 		}
 		*nentries = j;
 
-		entries = (Datum *) palloc(sizeof(Datum) * j);
-		partialmatch = *ptr_partialmatch = (bool *) palloc(sizeof(bool) * j);
+		entries = palloc_array(Datum, j);
+		partialmatch = *ptr_partialmatch = palloc_array(bool, j);
 
 		/*
 		 * Make map to convert item's number to corresponding operand's (the
 		 * same, entry's) number. Entry's number is used in check array in
 		 * consistent method. We use the same map for each entry.
 		 */
-		*extra_data = (Pointer *) palloc(sizeof(Pointer) * j);
-		map_item_operand = (int *) palloc0(sizeof(int) * query->size);
+		*extra_data = palloc_array(Pointer, j);
+		map_item_operand = palloc0_array(int, query->size);
 
 		/* Now rescan the VAL items and fill in the arrays */
 		j = 0;

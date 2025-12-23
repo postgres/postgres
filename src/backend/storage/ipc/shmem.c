@@ -65,6 +65,7 @@
 
 #include "postgres.h"
 
+#include "common/int.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -76,6 +77,7 @@
 #include "utils/builtins.h"
 
 static void *ShmemAllocRaw(Size size, Size *allocated_size);
+static void *ShmemAllocUnlocked(Size size);
 
 /* shared memory global variables */
 
@@ -234,7 +236,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
  *
  * We consider maxalign, rather than cachealign, sufficient here.
  */
-void *
+static void *
 ShmemAllocUnlocked(Size size)
 {
 	Size		newStart;
@@ -330,8 +332,8 @@ InitShmemIndex(void)
  */
 HTAB *
 ShmemInitHash(const char *name,		/* table string name for shmem index */
-			  long init_size,	/* initial table size */
-			  long max_size,	/* max size of the table */
+			  int64 init_size,	/* initial table size */
+			  int64 max_size,	/* max size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {
@@ -494,9 +496,7 @@ add_size(Size s1, Size s2)
 {
 	Size		result;
 
-	result = s1 + s2;
-	/* We are assuming Size is an unsigned type here... */
-	if (result < s1 || result < s2)
+	if (pg_add_size_overflow(s1, s2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("requested shared memory size overflows size_t")));
@@ -511,11 +511,7 @@ mul_size(Size s1, Size s2)
 {
 	Size		result;
 
-	if (s1 == 0 || s2 == 0)
-		return 0;
-	result = s1 * s2;
-	/* We are assuming Size is an unsigned type here... */
-	if (result / s2 != s1)
+	if (pg_mul_size_overflow(s1, s2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("requested shared memory size overflows size_t")));
@@ -603,19 +599,16 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	InitMaterializedSRF(fcinfo, 0);
 
 	max_nodes = pg_numa_get_max_node();
-	nodes = palloc(sizeof(Size) * (max_nodes + 1));
+	nodes = palloc_array(Size, max_nodes + 1);
 
 	/*
-	 * Different database block sizes (4kB, 8kB, ..., 32kB) can be used, while
-	 * the OS may have different memory page sizes.
+	 * Shared memory allocations can vary in size and may not align with OS
+	 * memory page boundaries, while NUMA queries work on pages.
 	 *
-	 * To correctly map between them, we need to: 1. Determine the OS memory
-	 * page size 2. Calculate how many OS pages are used by all buffer blocks
-	 * 3. Calculate how many OS pages are contained within each database
-	 * block.
-	 *
-	 * This information is needed before calling move_pages() for NUMA memory
-	 * node inquiry.
+	 * To correctly map each allocation to NUMA nodes, we need to: 1.
+	 * Determine the OS memory page size. 2. Align each allocation's start/end
+	 * addresses to page boundaries. 3. Query NUMA node information for all
+	 * pages spanning the allocation.
 	 */
 	os_page_size = pg_get_shmem_pagesize();
 
@@ -631,8 +624,8 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	 * them using only fraction of the total pages.
 	 */
 	shm_total_page_count = (ShmemSegHdr->totalsize / os_page_size) + 1;
-	page_ptrs = palloc0(sizeof(void *) * shm_total_page_count);
-	pages_status = palloc(sizeof(int) * shm_total_page_count);
+	page_ptrs = palloc0_array(void *, shm_total_page_count);
+	pages_status = palloc_array(int, shm_total_page_count);
 
 	if (firstNumaTouch)
 		elog(DEBUG1, "NUMA: page-faulting shared memory segments for proper NUMA readouts");
@@ -679,12 +672,10 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 		 */
 		for (i = 0; i < shm_ent_page_count; i++)
 		{
-			volatile uint64 touch pg_attribute_unused();
-
 			page_ptrs[i] = startptr + (i * os_page_size);
 
 			if (firstNumaTouch)
-				pg_numa_touch_mem_if_required(touch, page_ptrs[i]);
+				pg_numa_touch_mem_if_required(page_ptrs[i]);
 
 			CHECK_FOR_INTERRUPTS();
 		}
@@ -716,7 +707,7 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 		for (i = 0; i <= max_nodes; i++)
 		{
 			values[0] = CStringGetTextDatum(ent->key);
-			values[1] = i;
+			values[1] = Int32GetDatum(i);
 			values[2] = Int64GetDatum(nodes[i] * os_page_size);
 
 			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,

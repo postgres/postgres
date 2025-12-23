@@ -702,9 +702,18 @@ ParseFraction(char *cp, double *frac)
 	}
 	else
 	{
+		/*
+		 * On the other hand, let's reject anything that's not digits after
+		 * the ".".  strtod is happy with input like ".123e9", but that'd
+		 * break callers' expectation that the result is in 0..1.  (It's quite
+		 * difficult to get here with such input, but not impossible.)
+		 */
+		if (strspn(cp + 1, "0123456789") != strlen(cp + 1))
+			return DTERR_BAD_FORMAT;
+
 		errno = 0;
 		*frac = strtod(cp, &cp);
-		/* check for parse failure */
+		/* check for parse failure (probably redundant given prior check) */
 		if (*cp != '\0' || errno != 0)
 			return DTERR_BAD_FORMAT;
 	}
@@ -2959,30 +2968,27 @@ DecodeNumberField(int len, char *str, int fmask,
 	char	   *cp;
 
 	/*
+	 * This function was originally meant to cope only with DTK_NUMBER fields,
+	 * but we now sometimes abuse it to parse (parts of) DTK_DATE fields,
+	 * which can contain letters and other punctuation.  Reject if it's not a
+	 * valid DTK_NUMBER, that is digits and decimal point(s).  (ParseFraction
+	 * will reject if there's more than one decimal point.)
+	 */
+	if (strspn(str, "0123456789.") != len)
+		return DTERR_BAD_FORMAT;
+
+	/*
 	 * Have a decimal point? Then this is a date or something with a seconds
 	 * field...
 	 */
 	if ((cp = strchr(str, '.')) != NULL)
 	{
-		/*
-		 * Can we use ParseFractionalSecond here?  Not clear whether trailing
-		 * junk should be rejected ...
-		 */
-		if (cp[1] == '\0')
-		{
-			/* avoid assuming that strtod will accept "." */
-			*fsec = 0;
-		}
-		else
-		{
-			double		frac;
+		int			dterr;
 
-			errno = 0;
-			frac = strtod(cp, NULL);
-			if (errno != 0)
-				return DTERR_BAD_FORMAT;
-			*fsec = rint(frac * 1000000);
-		}
+		/* Convert the fraction and store at *fsec */
+		dterr = ParseFractionalSecond(cp, fsec);
+		if (dterr)
+			return dterr;
 		/* Now truncate off the fraction for further processing */
 		*cp = '\0';
 		len = strlen(str);
@@ -5146,7 +5152,7 @@ pg_timezone_abbrevs_zone(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
-		pindex = (int *) palloc(sizeof(int));
+		pindex = palloc_object(int);
 		*pindex = 0;
 		funcctx->user_fctx = pindex;
 
@@ -5181,7 +5187,7 @@ pg_timezone_abbrevs_zone(PG_FUNCTION_ARGS)
 		/* Convert offset (in seconds) to an interval; can't overflow */
 		MemSet(&itm_in, 0, sizeof(struct pg_itm_in));
 		itm_in.tm_usec = (int64) gmtoff * USECS_PER_SEC;
-		resInterval = (Interval *) palloc(sizeof(Interval));
+		resInterval = palloc_object(Interval);
 		(void) itmin2interval(&itm_in, resInterval);
 		values[1] = IntervalPGetDatum(resInterval);
 
@@ -5233,7 +5239,7 @@ pg_timezone_abbrevs_abbrevs(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
-		pindex = (int *) palloc(sizeof(int));
+		pindex = palloc_object(int);
 		*pindex = 0;
 		funcctx->user_fctx = pindex;
 
@@ -5304,7 +5310,7 @@ pg_timezone_abbrevs_abbrevs(PG_FUNCTION_ARGS)
 	/* Convert offset (in seconds) to an interval; can't overflow */
 	MemSet(&itm_in, 0, sizeof(struct pg_itm_in));
 	itm_in.tm_usec = (int64) gmtoffset * USECS_PER_SEC;
-	resInterval = (Interval *) palloc(sizeof(Interval));
+	resInterval = palloc_object(Interval);
 	(void) itmin2interval(&itm_in, resInterval);
 	values[1] = IntervalPGetDatum(resInterval);
 
@@ -5372,7 +5378,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 		/* Convert tzoff to an interval; can't overflow */
 		MemSet(&itm_in, 0, sizeof(struct pg_itm_in));
 		itm_in.tm_usec = (int64) -tzoff * USECS_PER_SEC;
-		resInterval = (Interval *) palloc(sizeof(Interval));
+		resInterval = palloc_object(Interval);
 		(void) itmin2interval(&itm_in, resInterval);
 		values[2] = IntervalPGetDatum(resInterval);
 

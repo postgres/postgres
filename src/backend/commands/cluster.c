@@ -124,8 +124,8 @@ cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized CLUSTER option \"%s\"",
-							opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"CLUSTER", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 
@@ -917,7 +917,7 @@ copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex, bool verb
 	 * not to be aggressive about this.
 	 */
 	memset(&params, 0, sizeof(VacuumParams));
-	vacuum_get_cutoffs(OldHeap, &params, &cutoffs);
+	vacuum_get_cutoffs(OldHeap, params, &cutoffs);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
@@ -1672,7 +1672,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 		/* Use a permanent memory context for the result list */
 		old_context = MemoryContextSwitchTo(cluster_context);
 
-		rtc = (RelToCluster *) palloc(sizeof(RelToCluster));
+		rtc = palloc_object(RelToCluster);
 		rtc->tableOid = index->indrelid;
 		rtc->indexOid = index->indexrelid;
 		rtcs = lappend(rtcs, rtc);
@@ -1726,7 +1726,7 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 		/* Use a permanent memory context for the result list */
 		old_context = MemoryContextSwitchTo(cluster_context);
 
-		rtc = (RelToCluster *) palloc(sizeof(RelToCluster));
+		rtc = palloc_object(RelToCluster);
 		rtc->tableOid = relid;
 		rtc->indexOid = indexrelid;
 		rtcs = lappend(rtcs, rtc);

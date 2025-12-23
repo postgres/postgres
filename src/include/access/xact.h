@@ -43,10 +43,11 @@ extern PGDLLIMPORT int XactIsoLevel;
 
 /*
  * We implement three isolation levels internally.
- * The two stronger ones use one snapshot per database transaction;
- * the others use one snapshot per statement.
- * Serializable uses predicate locks in addition to snapshots.
- * These macros should be used to check which isolation level is selected.
+ * The weakest uses one snapshot per statement;
+ * the two stronger levels use one snapshot per database transaction.
+ * Serializable uses predicate locks in addition to the snapshot.
+ * These macros can be used to determine which implementation to use
+ * depending on the prevailing serialization level.
  */
 #define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ)
 #define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)

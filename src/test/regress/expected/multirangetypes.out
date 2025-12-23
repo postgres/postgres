@@ -2200,6 +2200,122 @@ SELECT nummultirange(numrange(1,2), numrange(4,5)) - nummultirange(numrange(-2,0
  {[1,2),[4,5)}
 (1 row)
 
+-- multirange_minus_multi
+SELECT multirange_minus_multi(nummultirange(), nummultirange());
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(), nummultirange(numrange(1,2)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange());
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(3,4)), nummultirange());
+ multirange_minus_multi 
+------------------------
+ {[1,2),[3,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange(numrange(1,2)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange(numrange(2,4)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange(numrange(3,4)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(1,2)));
+ multirange_minus_multi 
+------------------------
+ {[2,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(2,3)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[3,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(0,8)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(0,2)));
+ multirange_minus_multi 
+------------------------
+ {[2,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,8)), nummultirange(numrange(0,2), numrange(3,4)));
+ multirange_minus_multi 
+------------------------
+ {[2,3),[4,8)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,8)), nummultirange(numrange(2,3), numrange(5,null)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[3,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(-2,0)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(2,4)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(3,5)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(0,9)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,3), numrange(4,5)), nummultirange(numrange(2,9)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(8,9)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(-2,0), numrange(8,9)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
 -- intersection
 SELECT nummultirange() * nummultirange();
  ?column? 
@@ -3096,7 +3212,8 @@ select multirange_of_text(textrange2('a','Z'));  -- should fail
 ERROR:  function multirange_of_text(textrange2) does not exist
 LINE 1: select multirange_of_text(textrange2('a','Z'));
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select multirange_of_text(textrange1('a','Z')) @> 'b'::text;
 ERROR:  range lower bound must be less than or equal to range upper bound
 select unnest(multirange_of_text(textrange1('a','b'), textrange1('d','e')));
@@ -3160,7 +3277,8 @@ select anyarray_anymultirange_func(ARRAY[1,2], nummultirange(numrange(10,20)));
 ERROR:  function anyarray_anymultirange_func(integer[], nummultirange) does not exist
 LINE 1: select anyarray_anymultirange_func(ARRAY[1,2], nummultirange...
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyarray_anymultirange_func(anyarray, anymultirange);
 -- should fail
 create function bogus_func(anyelement)
@@ -3199,7 +3317,8 @@ select multirangetypes_sql(nummultirange(numrange(1,10)), ARRAY[2,20]);  -- matc
 ERROR:  function multirangetypes_sql(nummultirange, integer[]) does not exist
 LINE 1: select multirangetypes_sql(nummultirange(numrange(1,10)), AR...
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 create function anycompatiblearray_anycompatiblemultirange_func(a anycompatiblearray, mr anycompatiblemultirange)
   returns anycompatible as 'select $1[1] + lower($2);' language sql;
 select anycompatiblearray_anycompatiblemultirange_func(ARRAY[1,2], multirange(int4range(10,20)));
@@ -3219,7 +3338,8 @@ select anycompatiblearray_anycompatiblemultirange_func(ARRAY[1.1,2], multirange(
 ERROR:  function anycompatiblearray_anycompatiblemultirange_func(numeric[], int4multirange) does not exist
 LINE 1: select anycompatiblearray_anycompatiblemultirange_func(ARRAY...
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anycompatiblearray_anycompatiblemultirange_func(anycompatiblearray, anycompatiblemultirange);
 create function anycompatiblerange_anycompatiblemultirange_func(r anycompatiblerange, mr anycompatiblemultirange)
   returns anycompatible as 'select lower($1) + lower($2);' language sql;
@@ -3234,7 +3354,8 @@ select anycompatiblerange_anycompatiblemultirange_func(numrange(1,2), multirange
 ERROR:  function anycompatiblerange_anycompatiblemultirange_func(numrange, int4multirange) does not exist
 LINE 1: select anycompatiblerange_anycompatiblemultirange_func(numra...
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anycompatiblerange_anycompatiblemultirange_func(anycompatiblerange, anycompatiblemultirange);
 -- should fail
 create function bogus_func(anycompatible)

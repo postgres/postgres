@@ -179,13 +179,13 @@ static List *get_steps_using_prefix_recurse(GeneratePruningStepsContext *context
 											List *step_exprs,
 											List *step_cmpfns);
 static PruneStepResult *get_matching_hash_bounds(PartitionPruneContext *context,
-												 StrategyNumber opstrategy, Datum *values, int nvalues,
+												 StrategyNumber opstrategy, const Datum *values, int nvalues,
 												 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static PruneStepResult *get_matching_list_bounds(PartitionPruneContext *context,
 												 StrategyNumber opstrategy, Datum value, int nvalues,
 												 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static PruneStepResult *get_matching_range_bounds(PartitionPruneContext *context,
-												  StrategyNumber opstrategy, Datum *values, int nvalues,
+												  StrategyNumber opstrategy, const Datum *values, int nvalues,
 												  FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static Bitmapset *pull_exec_paramids(Expr *expr);
 static bool pull_exec_paramids_walker(Node *node, Bitmapset **context);
@@ -246,7 +246,7 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	 * that zero can represent an un-filled array entry.
 	 */
 	allpartrelids = NIL;
-	relid_subplan_map = palloc0(sizeof(int) * root->simple_rel_array_size);
+	relid_subplan_map = palloc0_array(int, root->simple_rel_array_size);
 
 	i = 1;
 	foreach(lc, subpaths)
@@ -465,7 +465,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	 * In this phase we discover whether runtime pruning is needed at all; if
 	 * not, we can avoid doing further work.
 	 */
-	relid_subpart_map = palloc0(sizeof(int) * root->simple_rel_array_size);
+	relid_subpart_map = palloc0_array(int, root->simple_rel_array_size);
 
 	i = 1;
 	rti = -1;
@@ -818,9 +818,8 @@ prune_append_rel_partitions(RelOptInfo *rel)
 	context.boundinfo = rel->boundinfo;
 	context.partcollation = rel->part_scheme->partcollation;
 	context.partsupfunc = rel->part_scheme->partsupfunc;
-	context.stepcmpfuncs = (FmgrInfo *) palloc0(sizeof(FmgrInfo) *
-												context.partnatts *
-												list_length(pruning_steps));
+	context.stepcmpfuncs = palloc0_array(FmgrInfo,
+										 context.partnatts * list_length(pruning_steps));
 	context.ppccontext = CurrentMemoryContext;
 
 	/* These are not valid when being called from the planner */
@@ -1890,7 +1889,7 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 			return PARTCLAUSE_MATCH_STEPS;
 		}
 
-		partclause = (PartClauseInfo *) palloc(sizeof(PartClauseInfo));
+		partclause = palloc_object(PartClauseInfo);
 		partclause->keyno = partkeyidx;
 		/* Do pruning with the Boolean equality operator. */
 		partclause->opno = BooleanEqualOperator;
@@ -2147,7 +2146,7 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 		/*
 		 * Build the clause, passing the negator if applicable.
 		 */
-		partclause = (PartClauseInfo *) palloc(sizeof(PartClauseInfo));
+		partclause = palloc_object(PartClauseInfo);
 		partclause->keyno = partkeyidx;
 		if (is_opne_listp)
 		{
@@ -2690,10 +2689,10 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
  */
 static PruneStepResult *
 get_matching_hash_bounds(PartitionPruneContext *context,
-						 StrategyNumber opstrategy, Datum *values, int nvalues,
+						 StrategyNumber opstrategy, const Datum *values, int nvalues,
 						 FmgrInfo *partsupfunc, Bitmapset *nullkeys)
 {
-	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
+	PruneStepResult *result = palloc0_object(PruneStepResult);
 	PartitionBoundInfo boundinfo = context->boundinfo;
 	int		   *partindices = boundinfo->indexes;
 	int			partnatts = context->partnatts;
@@ -2770,7 +2769,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 						 StrategyNumber opstrategy, Datum value, int nvalues,
 						 FmgrInfo *partsupfunc, Bitmapset *nullkeys)
 {
-	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
+	PruneStepResult *result = palloc0_object(PruneStepResult);
 	PartitionBoundInfo boundinfo = context->boundinfo;
 	int			off,
 				minoff,
@@ -2978,10 +2977,10 @@ get_matching_list_bounds(PartitionPruneContext *context,
  */
 static PruneStepResult *
 get_matching_range_bounds(PartitionPruneContext *context,
-						  StrategyNumber opstrategy, Datum *values, int nvalues,
+						  StrategyNumber opstrategy, const Datum *values, int nvalues,
 						  FmgrInfo *partsupfunc, Bitmapset *nullkeys)
 {
-	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
+	PruneStepResult *result = palloc0_object(PruneStepResult);
 	PartitionBoundInfo boundinfo = context->boundinfo;
 	Oid		   *partcollation = context->partcollation;
 	int			partnatts = context->partnatts;
@@ -3504,7 +3503,7 @@ perform_pruning_base_step(PartitionPruneContext *context,
 			{
 				PruneStepResult *result;
 
-				result = (PruneStepResult *) palloc(sizeof(PruneStepResult));
+				result = palloc_object(PruneStepResult);
 				result->bound_offsets = NULL;
 				result->scan_default = false;
 				result->scan_null = false;
@@ -3593,7 +3592,7 @@ perform_pruning_combine_step(PartitionPruneContext *context,
 							 PartitionPruneStepCombine *cstep,
 							 PruneStepResult **step_results)
 {
-	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
+	PruneStepResult *result = palloc0_object(PruneStepResult);
 	bool		firststep;
 	ListCell   *lc1;
 

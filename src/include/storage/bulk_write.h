@@ -28,10 +28,10 @@ typedef struct BulkWriteState BulkWriteState;
 typedef PGIOAlignedBlock *BulkWriteBuffer;
 
 /* forward declared from smgr.h */
-struct SMgrRelationData;
+typedef struct SMgrRelationData *SMgrRelation;
 
 extern BulkWriteState *smgr_bulk_start_rel(Relation rel, ForkNumber forknum);
-extern BulkWriteState *smgr_bulk_start_smgr(struct SMgrRelationData *smgr, ForkNumber forknum, bool use_wal);
+extern BulkWriteState *smgr_bulk_start_smgr(SMgrRelation smgr, ForkNumber forknum, bool use_wal);
 
 extern BulkWriteBuffer smgr_bulk_get_buf(BulkWriteState *bulkstate);
 extern void smgr_bulk_write(BulkWriteState *bulkstate, BlockNumber blocknum, BulkWriteBuffer buf, bool page_std);

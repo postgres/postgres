@@ -60,7 +60,7 @@ static int	ExplainExtensionOptionsAllocated = 0;
 ExplainState *
 NewExplainState(void)
 {
-	ExplainState *es = (ExplainState *) palloc0(sizeof(ExplainState));
+	ExplainState *es = palloc0_object(ExplainState);
 
 	/* Set default options (most fields can be left as zeroes). */
 	es->costs = true;
@@ -130,8 +130,8 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-									opt->defname, p),
+							 errmsg("unrecognized value for %s option \"%s\": \"%s\"",
+									"EXPLAIN", opt->defname, p),
 							 parser_errposition(pstate, opt->location)));
 			}
 			else
@@ -155,15 +155,15 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-								opt->defname, p),
+						 errmsg("unrecognized value for %s option \"%s\": \"%s\"",
+								"EXPLAIN", opt->defname, p),
 						 parser_errposition(pstate, opt->location)));
 		}
 		else if (!ApplyExtensionExplainOption(es, opt, pstate))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized EXPLAIN option \"%s\"",
-							opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"EXPLAIN", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 
@@ -195,7 +195,8 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 	if (es->generic && es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN options ANALYZE and GENERIC_PLAN cannot be used together")));
+				 errmsg("%s options %s and %s cannot be used together",
+						"EXPLAIN", "ANALYZE", "GENERIC_PLAN")));
 
 	/* if the summary was not set explicitly, set default value */
 	es->summary = (summary_set) ? es->summary : es->analyze;
@@ -281,7 +282,8 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 	/* If there is no array yet, create one. */
 	if (es->extension_state == NULL)
 	{
-		es->extension_state_allocated = 16;
+		es->extension_state_allocated =
+			Max(16, pg_nextpower2_32(extension_id + 1));
 		es->extension_state =
 			palloc0(es->extension_state_allocated * sizeof(void *));
 	}
@@ -291,11 +293,8 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 	{
 		int			i;
 
-		i = pg_nextpower2_32(es->extension_state_allocated + 1);
-		es->extension_state = (void **)
-			repalloc0(es->extension_state,
-					  es->extension_state_allocated * sizeof(void *),
-					  i * sizeof(void *));
+		i = pg_nextpower2_32(extension_id + 1);
+		es->extension_state = repalloc0_array(es->extension_state, void *, es->extension_state_allocated, i);
 		es->extension_state_allocated = i;
 	}
 

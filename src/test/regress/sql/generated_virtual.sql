@@ -217,6 +217,10 @@ COPY gtest1 FROM stdin;
 
 COPY gtest1 (a, b) FROM stdin;
 
+COPY gtest1 FROM stdin WHERE b <> 10;
+
+COPY gtest1 FROM stdin WHERE gtest1 IS NULL;
+
 SELECT * FROM gtest1 ORDER BY a;
 
 TRUNCATE gtest3;
@@ -253,10 +257,10 @@ CREATE TABLE gtest4 (
     a int,
     b double_int GENERATED ALWAYS AS ((a * 2, a * 3)) VIRTUAL
 );
-INSERT INTO gtest4 VALUES (1), (6);
-SELECT * FROM gtest4;
+--INSERT INTO gtest4 VALUES (1), (6);
+--SELECT * FROM gtest4;
 
-DROP TABLE gtest4;
+--DROP TABLE gtest4;
 DROP TYPE double_int;
 
 -- using tableoid is allowed
@@ -290,20 +294,21 @@ GRANT SELECT (a, c) ON gtest11 TO regress_user11;
 CREATE FUNCTION gf1(a int) RETURNS int AS $$ SELECT a * 3 $$ IMMUTABLE LANGUAGE SQL;
 REVOKE ALL ON FUNCTION gf1(int) FROM PUBLIC;
 
-CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);
-INSERT INTO gtest12 VALUES (1, 10), (2, 20);
-GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
+CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);  -- fails, user-defined function
+--INSERT INTO gtest12 VALUES (1, 10), (2, 20);
+--GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
 
 SET ROLE regress_user11;
 SELECT a, b FROM gtest11;  -- not allowed
 SELECT a, c FROM gtest11;  -- allowed
 SELECT gf1(10);  -- not allowed
-INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
-SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
+--INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
+--SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
 RESET ROLE;
 
-DROP FUNCTION gf1(int);  -- fail
-DROP TABLE gtest11, gtest12;
+--DROP FUNCTION gf1(int);  -- fail
+DROP TABLE gtest11;
+--DROP TABLE gtest12;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;
 
@@ -453,10 +458,18 @@ CREATE TABLE gtest24r (a int PRIMARY KEY, b gtestdomain1range GENERATED ALWAYS A
 --INSERT INTO gtest24r (a) VALUES (4);  -- ok
 --INSERT INTO gtest24r (a) VALUES (6);  -- error
 
+CREATE TABLE gtest24at (a int PRIMARY KEY);
+ALTER TABLE gtest24at ADD COLUMN b gtestdomain1 GENERATED ALWAYS AS (a * 2) VIRTUAL;  -- error
+CREATE TABLE gtest24ata (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
+ALTER TABLE gtest24ata ALTER COLUMN b TYPE gtestdomain1;  -- error
+
 CREATE DOMAIN gtestdomainnn AS int CHECK (VALUE IS NOT NULL);
 CREATE TABLE gtest24nn (a int, b gtestdomainnn GENERATED ALWAYS AS (a * 2) VIRTUAL);
 --INSERT INTO gtest24nn (a) VALUES (4);  -- ok
 --INSERT INTO gtest24nn (a) VALUES (NULL);  -- error
+
+-- using user-defined type not yet supported
+CREATE TABLE gtest24xxx (a gtestdomain1, b gtestdomain1, c int GENERATED ALWAYS AS (greatest(a, b)) VIRTUAL);  -- error
 
 -- typed tables (currently not supported)
 CREATE TYPE gtest_type AS (f1 integer, f2 text, f3 bigint);
@@ -534,7 +547,10 @@ SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
 
 -- generated columns in partition key (not allowed)
 CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE (f3);
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3));
 CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3 * 3));
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((gtest_part_key));
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((gtest_part_key is not null));
 
 -- ALTER TABLE ... ADD COLUMN
 CREATE TABLE gtest25 (a int PRIMARY KEY);
@@ -637,6 +653,19 @@ ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
 CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c text);
 CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
+
+-- bug #18970
+ALTER TABLE gtest31_2 ADD CONSTRAINT cc CHECK ((y).b IS NOT NULL);
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello1');
+ALTER TABLE gtest31_2 DROP CONSTRAINT cc;
+
+CREATE STATISTICS gtest31_2_stat ON ((y).b is not null) FROM gtest31_2;
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello2');
+DROP STATISTICS gtest31_2_stat;
+
+CREATE INDEX gtest31_2_y_idx ON gtest31_2(((y).b));
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello3');
+
 DROP TABLE gtest31_1, gtest31_2;
 
 -- Check it for a partitioned table, too
@@ -788,7 +817,8 @@ create table gtest32 (
   a int primary key,
   b int generated always as (a * 2),
   c int generated always as (10 + 10),
-  d int generated always as (coalesce(a, 100))
+  d int generated always as (coalesce(a, 100)),
+  e int
 );
 
 insert into gtest32 values (1), (2);
@@ -829,7 +859,34 @@ select t2.* from gtest32 t1 left join gtest32 t2 on false;
 select t2.* from gtest32 t1 left join gtest32 t2 on false;
 
 explain (verbose, costs off)
-select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
-select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
+
+-- Ensure that the virtual generated columns in ALTER COLUMN TYPE USING expression are expanded
+alter table gtest32 alter column e type bigint using b;
+
+-- Ensure that virtual generated column references within SubLinks that should
+-- be transformed into joins can get expanded
+explain (costs off)
+select 1 from gtest32 t1 where exists
+  (select 1 from gtest32 t2 where t1.a > t2.a and t2.b = 2);
+
+select 1 from gtest32 t1 where exists
+  (select 1 from gtest32 t2 where t1.a > t2.a and t2.b = 2);
 
 drop table gtest32;
+
+-- Ensure that virtual generated columns in constraint expressions are expanded
+create table gtest33 (a int, b int generated always as (a * 2) virtual not null, check (b > 10));
+set constraint_exclusion to on;
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b < 10;
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b is null;
+
+reset constraint_exclusion;
+drop table gtest33;

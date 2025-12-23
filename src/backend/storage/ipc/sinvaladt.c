@@ -331,7 +331,7 @@ CleanupInvalidationState(int status, Datum arg)
 	ProcState  *stateP;
 	int			i;
 
-	Assert(PointerIsValid(segP));
+	Assert(segP);
 
 	LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
 

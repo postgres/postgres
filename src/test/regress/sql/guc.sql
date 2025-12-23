@@ -12,6 +12,15 @@ SHOW vacuum_cost_delay;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 
+-- Check handling of list GUCs
+SET search_path = 'pg_catalog', Foo, 'Bar', '';
+SHOW search_path;
+SET search_path = null;  -- means empty list
+SHOW search_path;
+SET search_path = null, null;  -- syntax error
+SET enable_seqscan = null;  -- error
+RESET search_path;
+
 -- SET LOCAL has no effect outside of a transaction
 SET LOCAL vacuum_cost_delay TO 50;
 SHOW vacuum_cost_delay;

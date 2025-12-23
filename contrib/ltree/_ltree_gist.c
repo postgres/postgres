@@ -79,12 +79,12 @@ _ltree_compress(PG_FUNCTION_ARGS)
 			item = NEXTVAL(item);
 		}
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
 					  entry->offset, false);
 	}
-	else if (!LTG_ISALLTRUE(entry->key))
+	else if (!LTG_ISALLTRUE(DatumGetPointer(entry->key)))
 	{
 		int32		i;
 		ltree_gist *key;
@@ -97,7 +97,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		}
 
 		key = ltree_gist_alloc(true, sign, siglen, NULL, NULL);
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -310,7 +310,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	costvector = palloc_array(SPLITCOST, maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

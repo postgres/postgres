@@ -33,7 +33,8 @@
   descr => 'sorts by Unicode code point; Unicode and POSIX character semantics',
   collname => 'pg_c_utf8', collprovider => 'b', collencoding => '6',
   colllocale => 'C.UTF-8', collversion => '1' },
-{ oid => '9535', descr => 'sorts by Unicode code point; Unicode character semantics',
+{ oid => '6411',
+  descr => 'sorts by Unicode code point; Unicode character semantics',
   collname => 'pg_unicode_fast', collprovider => 'b', collencoding => '6',
   colllocale => 'PG_UNICODE_FAST', collversion => '1' },
 

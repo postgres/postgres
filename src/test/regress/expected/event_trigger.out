@@ -228,9 +228,15 @@ INSERT INTO undroppable_objs VALUES
 ('table', 'schema_one.table_three'),
 ('table', 'audit_tbls.schema_two_table_three');
 CREATE TABLE dropped_objects (
-	type text,
-	schema text,
-	object text
+	object_type text,
+	schema_name text,
+	object_name text,
+	object_identity text,
+	address_names text[],
+	address_args text[],
+	is_temporary bool,
+	original bool,
+	normal bool
 );
 -- This tests errors raised within event triggers; the one in audit_tbls
 -- uses 2nd-level recursive invocation via test_evtrig_dropped_objects().
@@ -268,8 +274,12 @@ BEGIN
         END IF;
 
 	INSERT INTO dropped_objects
-		(type, schema, object) VALUES
-		(obj.object_type, obj.schema_name, obj.object_identity);
+		(object_type, schema_name, object_name,
+		 object_identity, address_names, address_args,
+		 is_temporary, original, normal) VALUES
+		(obj.object_type, obj.schema_name, obj.object_name,
+		 obj.object_identity, obj.address_names, obj.address_args,
+		 obj.is_temporary, obj.original, obj.normal);
     END LOOP;
 END
 $$;
@@ -325,42 +335,44 @@ NOTICE:  table "audit_tbls_schema_two_table_three" does not exist, skipping
 NOTICE:  table "schema_one_table_one" does not exist, skipping
 NOTICE:  table "schema_one_table two" does not exist, skipping
 NOTICE:  table "schema_one_table_three" does not exist, skipping
-SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
-     type     |   schema   |               object                
---------------+------------+-------------------------------------
- table column | schema_one | schema_one.table_one.a
- schema       |            | schema_two
- table        | schema_two | schema_two.table_two
- type         | schema_two | schema_two.table_two
- type         | schema_two | schema_two.table_two[]
- table        | audit_tbls | audit_tbls.schema_two_table_three
- type         | audit_tbls | audit_tbls.schema_two_table_three
- type         | audit_tbls | audit_tbls.schema_two_table_three[]
- table        | schema_two | schema_two.table_three
- type         | schema_two | schema_two.table_three
- type         | schema_two | schema_two.table_three[]
- function     | schema_two | schema_two.add(integer,integer)
- aggregate    | schema_two | schema_two.newton(integer)
- schema       |            | schema_one
- table        | schema_one | schema_one.table_one
- type         | schema_one | schema_one.table_one
- type         | schema_one | schema_one.table_one[]
- table        | schema_one | schema_one."table two"
- type         | schema_one | schema_one."table two"
- type         | schema_one | schema_one."table two"[]
- table        | schema_one | schema_one.table_three
- type         | schema_one | schema_one.table_three
- type         | schema_one | schema_one.table_three[]
+-- exclude TOAST objects because they have unstable names
+SELECT * FROM dropped_objects
+  WHERE schema_name IS NULL OR schema_name <> 'pg_toast';
+ object_type  | schema_name |       object_name       |           object_identity           |             address_names             |   address_args    | is_temporary | original | normal 
+--------------+-------------+-------------------------+-------------------------------------+---------------------------------------+-------------------+--------------+----------+--------
+ table column | schema_one  |                         | schema_one.table_one.a              | {schema_one,table_one,a}              | {}                | f            | t        | f
+ schema       |             | schema_two              | schema_two                          | {schema_two}                          | {}                | f            | t        | f
+ table        | schema_two  | table_two               | schema_two.table_two                | {schema_two,table_two}                | {}                | f            | f        | t
+ type         | schema_two  | table_two               | schema_two.table_two                | {schema_two.table_two}                | {}                | f            | f        | f
+ type         | schema_two  | _table_two              | schema_two.table_two[]              | {schema_two.table_two[]}              | {}                | f            | f        | f
+ table        | audit_tbls  | schema_two_table_three  | audit_tbls.schema_two_table_three   | {audit_tbls,schema_two_table_three}   | {}                | f            | t        | f
+ type         | audit_tbls  | schema_two_table_three  | audit_tbls.schema_two_table_three   | {audit_tbls.schema_two_table_three}   | {}                | f            | f        | f
+ type         | audit_tbls  | _schema_two_table_three | audit_tbls.schema_two_table_three[] | {audit_tbls.schema_two_table_three[]} | {}                | f            | f        | f
+ table        | schema_two  | table_three             | schema_two.table_three              | {schema_two,table_three}              | {}                | f            | f        | t
+ type         | schema_two  | table_three             | schema_two.table_three              | {schema_two.table_three}              | {}                | f            | f        | f
+ type         | schema_two  | _table_three            | schema_two.table_three[]            | {schema_two.table_three[]}            | {}                | f            | f        | f
+ function     | schema_two  |                         | schema_two.add(integer,integer)     | {schema_two,add}                      | {integer,integer} | f            | f        | t
+ aggregate    | schema_two  |                         | schema_two.newton(integer)          | {schema_two,newton}                   | {integer}         | f            | f        | t
+ schema       |             | schema_one              | schema_one                          | {schema_one}                          | {}                | f            | t        | f
+ table        | schema_one  | table_one               | schema_one.table_one                | {schema_one,table_one}                | {}                | f            | f        | t
+ type         | schema_one  | table_one               | schema_one.table_one                | {schema_one.table_one}                | {}                | f            | f        | f
+ type         | schema_one  | _table_one              | schema_one.table_one[]              | {schema_one.table_one[]}              | {}                | f            | f        | f
+ table        | schema_one  | table two               | schema_one."table two"              | {schema_one,"table two"}              | {}                | f            | f        | t
+ type         | schema_one  | table two               | schema_one."table two"              | {"schema_one.\"table two\""}          | {}                | f            | f        | f
+ type         | schema_one  | _table two              | schema_one."table two"[]            | {"schema_one.\"table two\"[]"}        | {}                | f            | f        | f
+ table        | schema_one  | table_three             | schema_one.table_three              | {schema_one,table_three}              | {}                | f            | f        | t
+ type         | schema_one  | table_three             | schema_one.table_three              | {schema_one.table_three}              | {}                | f            | f        | f
+ type         | schema_one  | _table_three            | schema_one.table_three[]            | {schema_one.table_three[]}            | {}                | f            | f        | f
 (23 rows)
 
 DROP OWNED BY regress_evt_user;
 NOTICE:  schema "audit_tbls" does not exist, skipping
-SELECT * FROM dropped_objects WHERE type = 'schema';
-  type  | schema |   object   
---------+--------+------------
- schema |        | schema_two
- schema |        | schema_one
- schema |        | audit_tbls
+SELECT * FROM dropped_objects WHERE object_type = 'schema';
+ object_type | schema_name | object_name | object_identity | address_names | address_args | is_temporary | original | normal 
+-------------+-------------+-------------+-----------------+---------------+--------------+--------------+----------+--------
+ schema      |             | schema_two  | schema_two      | {schema_two}  | {}           | f            | t        | f
+ schema      |             | schema_one  | schema_one      | {schema_one}  | {}           | f            | t        | f
+ schema      |             | audit_tbls  | audit_tbls      | {audit_tbls}  | {}           | f            | t        | f
 (3 rows)
 
 DROP ROLE regress_evt_user;
@@ -378,9 +390,10 @@ BEGIN
     IF NOT r.normal AND NOT r.original THEN
         CONTINUE;
     END IF;
-    RAISE NOTICE 'NORMAL: orig=% normal=% istemp=% type=% identity=% name=% args=%',
+    RAISE NOTICE 'NORMAL: orig=% normal=% istemp=% type=% identity=% schema=% name=% addr=% args=%',
         r.original, r.normal, r.is_temporary, r.object_type,
-        r.object_identity, r.address_names, r.address_args;
+        r.object_identity, r.schema_name, r.object_name,
+        r.address_names, r.address_args;
     END LOOP;
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
@@ -436,18 +449,18 @@ CREATE TABLE evttrig.part_15_20 PARTITION OF evttrig.part_10_20 (id)
   FOR VALUES FROM (15) TO (20);
 NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.part_15_20
 ALTER TABLE evttrig.two DROP COLUMN col_c;
-NOTICE:  NORMAL: orig=t normal=f istemp=f type=table column identity=evttrig.two.col_c name={evttrig,two,col_c} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table constraint identity=two_col_c_check on evttrig.two name={evttrig,two,two_col_c_check} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table column identity=evttrig.two.col_c schema=evttrig name=<NULL> addr={evttrig,two,col_c} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table constraint identity=two_col_c_check on evttrig.two schema=evttrig name=<NULL> addr={evttrig,two,two_col_c_check} args={}
 NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.two
 ALTER TABLE evttrig.one ALTER COLUMN col_b DROP DEFAULT;
-NOTICE:  NORMAL: orig=t normal=f istemp=f type=default value identity=for evttrig.one.col_b name={evttrig,one,col_b} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=default value identity=for evttrig.one.col_b schema=evttrig name=<NULL> addr={evttrig,one,col_b} args={}
 NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
 ALTER TABLE evttrig.one DROP CONSTRAINT one_pkey;
-NOTICE:  NORMAL: orig=t normal=f istemp=f type=table constraint identity=one_pkey on evttrig.one name={evttrig,one,one_pkey} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table constraint identity=one_pkey on evttrig.one schema=evttrig name=<NULL> addr={evttrig,one,one_pkey} args={}
 NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
 ALTER TABLE evttrig.one DROP COLUMN col_c;
-NOTICE:  NORMAL: orig=t normal=f istemp=f type=table column identity=evttrig.one.col_c name={evttrig,one,col_c} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=default value identity=for evttrig.one.col_c name={evttrig,one,col_c} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table column identity=evttrig.one.col_c schema=evttrig name=<NULL> addr={evttrig,one,col_c} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=default value identity=for evttrig.one.col_c schema=evttrig name=<NULL> addr={evttrig,one,col_c} args={}
 NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
 ALTER TABLE evttrig.id ALTER COLUMN col_d SET DATA TYPE bigint;
 NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.id_col_d_seq
@@ -456,26 +469,90 @@ ALTER TABLE evttrig.id ALTER COLUMN col_d DROP IDENTITY,
   ALTER COLUMN col_d SET DATA TYPE int;
 NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.id
 DROP INDEX evttrig.one_idx;
-NOTICE:  NORMAL: orig=t normal=f istemp=f type=index identity=evttrig.one_idx name={evttrig,one_idx} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=index identity=evttrig.one_idx schema=evttrig name=one_idx addr={evttrig,one_idx} args={}
 DROP SCHEMA evttrig CASCADE;
 NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table evttrig.one
 drop cascades to table evttrig.two
 drop cascades to table evttrig.id
 drop cascades to table evttrig.parted
-NOTICE:  NORMAL: orig=t normal=f istemp=f type=schema identity=evttrig name={evttrig} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.one name={evttrig,one} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=sequence identity=evttrig.one_col_a_seq name={evttrig,one_col_a_seq} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=default value identity=for evttrig.one.col_a name={evttrig,one,col_a} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.two name={evttrig,two} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.id name={evttrig,id} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.parted name={evttrig,parted} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_1_10 name={evttrig,part_1_10} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_20 name={evttrig,part_10_20} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_15 name={evttrig,part_10_15} args={}
-NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_15_20 name={evttrig,part_15_20} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=schema identity=evttrig schema=<NULL> name=evttrig addr={evttrig} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.one schema=evttrig name=one addr={evttrig,one} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=sequence identity=evttrig.one_col_a_seq schema=evttrig name=one_col_a_seq addr={evttrig,one_col_a_seq} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=default value identity=for evttrig.one.col_a schema=evttrig name=<NULL> addr={evttrig,one,col_a} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.two schema=evttrig name=two addr={evttrig,two} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.id schema=evttrig name=id addr={evttrig,id} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.parted schema=evttrig name=parted addr={evttrig,parted} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_1_10 schema=evttrig name=part_1_10 addr={evttrig,part_1_10} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_20 schema=evttrig name=part_10_20 addr={evttrig,part_10_20} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_15 schema=evttrig name=part_10_15 addr={evttrig,part_10_15} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_15_20 schema=evttrig name=part_15_20 addr={evttrig,part_15_20} args={}
 DROP TABLE a_temp_tbl;
-NOTICE:  NORMAL: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl schema=pg_temp name=a_temp_tbl addr={pg_temp,a_temp_tbl} args={}
+-- check unfiltered results, too
+CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT * from pg_event_trigger_dropped_objects()
+    LOOP
+    RAISE NOTICE 'DROP: orig=% normal=% istemp=% type=% identity=% schema=% name=% addr=% args=%',
+        r.original, r.normal, r.is_temporary, r.object_type,
+        r.object_identity, r.schema_name, r.object_name,
+        r.address_names, r.address_args;
+    END LOOP;
+END; $$;
+NOTICE:  END: command_tag=CREATE FUNCTION type=function identity=public.event_trigger_report_dropped()
+CREATE FUNCTION event_trigger_dummy_trigger()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN new;
+END; $$;
+NOTICE:  END: command_tag=CREATE FUNCTION type=function identity=public.event_trigger_dummy_trigger()
+CREATE TABLE evtrg_nontemp_table (f1 int primary key, f2 int default 42);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=public.evtrg_nontemp_table
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=public.evtrg_nontemp_table_pkey
+CREATE TRIGGER evtrg_nontemp_trig
+  BEFORE INSERT ON evtrg_nontemp_table
+  EXECUTE FUNCTION event_trigger_dummy_trigger();
+NOTICE:  END: command_tag=CREATE TRIGGER type=trigger identity=evtrg_nontemp_trig on public.evtrg_nontemp_table
+CREATE POLICY evtrg_nontemp_pol ON evtrg_nontemp_table USING (f2 > 0);
+NOTICE:  END: command_tag=CREATE POLICY type=policy identity=evtrg_nontemp_pol on public.evtrg_nontemp_table
+DROP TABLE evtrg_nontemp_table;
+NOTICE:  DROP: orig=t normal=f istemp=f type=table identity=public.evtrg_nontemp_table schema=public name=evtrg_nontemp_table addr={public,evtrg_nontemp_table} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=type identity=public.evtrg_nontemp_table schema=public name=evtrg_nontemp_table addr={public.evtrg_nontemp_table} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=type identity=public.evtrg_nontemp_table[] schema=public name=_evtrg_nontemp_table addr={public.evtrg_nontemp_table[]} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=default value identity=for public.evtrg_nontemp_table.f2 schema=public name=<NULL> addr={public,evtrg_nontemp_table,f2} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=table constraint identity=evtrg_nontemp_table_f1_not_null on public.evtrg_nontemp_table schema=public name=<NULL> addr={public,evtrg_nontemp_table,evtrg_nontemp_table_f1_not_null} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=table constraint identity=evtrg_nontemp_table_pkey on public.evtrg_nontemp_table schema=public name=<NULL> addr={public,evtrg_nontemp_table,evtrg_nontemp_table_pkey} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=index identity=public.evtrg_nontemp_table_pkey schema=public name=evtrg_nontemp_table_pkey addr={public,evtrg_nontemp_table_pkey} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=trigger identity=evtrg_nontemp_trig on public.evtrg_nontemp_table schema=public name=<NULL> addr={public,evtrg_nontemp_table,evtrg_nontemp_trig} args={}
+NOTICE:  DROP: orig=f normal=t istemp=f type=policy identity=evtrg_nontemp_pol on public.evtrg_nontemp_table schema=public name=<NULL> addr={public,evtrg_nontemp_table,evtrg_nontemp_pol} args={}
+CREATE TEMP TABLE a_temp_tbl (f1 int primary key, f2 int default 42);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=pg_temp.a_temp_tbl
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=pg_temp.a_temp_tbl_pkey
+CREATE TRIGGER a_temp_trig
+  BEFORE INSERT ON a_temp_tbl
+  EXECUTE FUNCTION event_trigger_dummy_trigger();
+NOTICE:  END: command_tag=CREATE TRIGGER type=trigger identity=a_temp_trig on pg_temp.a_temp_tbl
+CREATE POLICY a_temp_pol ON a_temp_tbl USING (f2 > 0);
+NOTICE:  END: command_tag=CREATE POLICY type=policy identity=a_temp_pol on pg_temp.a_temp_tbl
+DROP TABLE a_temp_tbl;
+NOTICE:  DROP: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl schema=pg_temp name=a_temp_tbl addr={pg_temp,a_temp_tbl} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=type identity=pg_temp.a_temp_tbl schema=pg_temp name=a_temp_tbl addr={pg_temp.a_temp_tbl} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=type identity=pg_temp.a_temp_tbl[] schema=pg_temp name=_a_temp_tbl addr={pg_temp.a_temp_tbl[]} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=default value identity=for pg_temp.a_temp_tbl.f2 schema=pg_temp name=<NULL> addr={pg_temp,a_temp_tbl,f2} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=table constraint identity=a_temp_tbl_f1_not_null on pg_temp.a_temp_tbl schema=pg_temp name=<NULL> addr={pg_temp,a_temp_tbl,a_temp_tbl_f1_not_null} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=table constraint identity=a_temp_tbl_pkey on pg_temp.a_temp_tbl schema=pg_temp name=<NULL> addr={pg_temp,a_temp_tbl,a_temp_tbl_pkey} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=index identity=pg_temp.a_temp_tbl_pkey schema=pg_temp name=a_temp_tbl_pkey addr={pg_temp,a_temp_tbl_pkey} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=trigger identity=a_temp_trig on pg_temp.a_temp_tbl schema=pg_temp name=<NULL> addr={pg_temp,a_temp_tbl,a_temp_trig} args={}
+NOTICE:  DROP: orig=f normal=t istemp=t type=policy identity=a_temp_pol on pg_temp.a_temp_tbl schema=pg_temp name=<NULL> addr={pg_temp,a_temp_tbl,a_temp_pol} args={}
+DROP FUNCTION event_trigger_dummy_trigger();
+NOTICE:  DROP: orig=t normal=f istemp=f type=function identity=public.event_trigger_dummy_trigger() schema=public name=<NULL> addr={public,event_trigger_dummy_trigger} args={}
 -- CREATE OPERATOR CLASS without FAMILY clause should report
 -- both CREATE OPERATOR FAMILY and CREATE OPERATOR CLASS
 CREATE OPERATOR CLASS evttrigopclass FOR TYPE int USING btree AS STORAGE int;

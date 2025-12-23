@@ -1609,13 +1609,13 @@ from tenk1 t, generate_series(1, 1000);
 ---------------------------------------------------------------------------------
  Unique
    ->  Sort
-         Sort Key: t.unique1, ((SubPlan 1))
+         Sort Key: t.unique1, ((SubPlan expr_1))
          ->  Gather
                Workers Planned: 2
                ->  Nested Loop
                      ->  Parallel Index Only Scan using tenk1_unique1 on tenk1 t
                      ->  Function Scan on generate_series
-               SubPlan 1
+               SubPlan expr_1
                  ->  Index Only Scan using tenk1_unique1 on tenk1
                        Index Cond: (unique1 = t.unique1)
 (11 rows)
@@ -1628,13 +1628,13 @@ order by 1, 2;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
  Sort
-   Sort Key: t.unique1, ((SubPlan 1))
+   Sort Key: t.unique1, ((SubPlan expr_1))
    ->  Gather
          Workers Planned: 2
          ->  Nested Loop
                ->  Parallel Index Only Scan using tenk1_unique1 on tenk1 t
                ->  Function Scan on generate_series
-         SubPlan 1
+         SubPlan expr_1
            ->  Index Only Scan using tenk1_unique1 on tenk1
                  Index Cond: (unique1 = t.unique1)
 (10 rows)
@@ -1722,3 +1722,43 @@ order by t1.four, t1.two limit 1;
                ->  Seq Scan on tenk1 t2
 (12 rows)
 
+--
+-- Test incremental sort for Append/MergeAppend
+--
+create table prt_tbl (a int, b int) partition by range (a);
+create table prt_tbl_1 partition of prt_tbl for values from (0) to (100);
+create table prt_tbl_2 partition of prt_tbl for values from (100) to (200);
+insert into prt_tbl select i%200, i from generate_series(1,1000)i;
+create index on prt_tbl_1(a);
+create index on prt_tbl_2(a, b);
+analyze prt_tbl;
+set enable_seqscan to off;
+set enable_bitmapscan to off;
+-- Ensure we get an incremental sort for the subpath of Append
+explain (costs off) select * from prt_tbl order by a, b;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Append
+   ->  Incremental Sort
+         Sort Key: prt_tbl_1.a, prt_tbl_1.b
+         Presorted Key: prt_tbl_1.a
+         ->  Index Scan using prt_tbl_1_a_idx on prt_tbl_1
+   ->  Index Only Scan using prt_tbl_2_a_b_idx on prt_tbl_2
+(6 rows)
+
+-- Ensure we get an incremental sort for the subpath of MergeAppend
+explain (costs off) select * from prt_tbl_1 union all select * from prt_tbl_2 order by a, b;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Merge Append
+   Sort Key: prt_tbl_1.a, prt_tbl_1.b
+   ->  Incremental Sort
+         Sort Key: prt_tbl_1.a, prt_tbl_1.b
+         Presorted Key: prt_tbl_1.a
+         ->  Index Scan using prt_tbl_1_a_idx on prt_tbl_1
+   ->  Index Only Scan using prt_tbl_2_a_b_idx on prt_tbl_2
+(7 rows)
+
+reset enable_bitmapscan;
+reset enable_seqscan;
+drop table prt_tbl;

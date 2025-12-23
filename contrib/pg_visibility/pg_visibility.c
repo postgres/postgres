@@ -741,7 +741,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 	 * number of entries allocated.  We'll repurpose these fields before
 	 * returning.
 	 */
-	items = palloc0(sizeof(corrupt_items));
+	items = palloc0_object(corrupt_items);
 	items->next = 0;
 	items->count = 64;
 	items->tids = palloc(items->count * sizeof(ItemPointerData));

@@ -397,8 +397,8 @@ SELECT tf1(17, 100.0);
     <para>
      In this example, we chose the name <literal>accountno</literal> for the first
      argument, but this is the same as the name of a column in the
-     <literal>bank</literal> table.  Within the <command>UPDATE</command> command,
-     <literal>accountno</literal> refers to the column <literal>bank.accountno</literal>,
+     <structname>bank</structname> table.  Within the <command>UPDATE</command> command,
+     <literal>accountno</literal> refers to the column <structfield>bank.accountno</structfield>,
      so <literal>tf1.accountno</literal> must be used to refer to the argument.
      We could of course avoid this by using a different name for the argument.
     </para>
@@ -1016,7 +1016,7 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
      This feature is normally used when calling the function in the <literal>FROM</literal>
      clause.  In this case each row returned by the function becomes
      a row of the table seen by the query.  For example, assume that
-     table <literal>foo</literal> has the same contents as above, and we say:
+     table <structname>foo</structname> has the same contents as above, and we say:
 
 <programlisting>
 CREATE FUNCTION getfoo(int) RETURNS SETOF foo AS $$
@@ -1409,7 +1409,7 @@ DETAIL:  A result of type anyelement requires at least one input of type anyelem
      For example:
 <screen>
 CREATE FUNCTION dup (f1 anyelement, OUT f2 anyelement, OUT f3 anyarray)
-AS 'select $1, array[$1,$1]' LANGUAGE SQL;
+AS 'SELECT $1, ARRAY[$1, $1]' LANGUAGE SQL;
 
 SELECT * FROM dup(22);
  f2 |   f3
@@ -2051,8 +2051,7 @@ PG_MODULE_MAGIC_EXT(
     </para>
 
     <para>
-     By-value  types  can  only be 1, 2, or 4 bytes in length
-     (also 8 bytes, if <literal>sizeof(Datum)</literal> is 8 on your machine).
+     By-value types can only be 1, 2, 4, or 8 bytes in length.
      You should be careful to define your types such that they will be the
      same size (in bytes) on all architectures.  For example, the
      <literal>long</literal> type is dangerous because it is 4 bytes on some
@@ -2165,7 +2164,7 @@ memcpy(destination->data, buffer, 40);
      it's considered good style to use the macro <literal>VARHDRSZ</literal>
      to refer to the size of the overhead for a variable-length type.
      Also, the length field <emphasis>must</emphasis> be set using the
-     <literal>SET_VARSIZE</literal> macro, not by simple assignment.
+     <literal>SET_VARSIZE</literal> function, not by simple assignment.
     </para>
 
     <para>
@@ -2400,7 +2399,7 @@ PG_FUNCTION_INFO_V1(funcname);
      To call another version-1 function, you can use
      <function>DirectFunctionCall<replaceable>n</replaceable>(func,
      arg1, ..., argn)</function>.  This is particularly useful when you want
-     to call functions defined in the standard internal library, by using an
+     to call functions defined in the standard internal function library by using an
      interface similar to their SQL signature.
     </para>
 
@@ -2492,7 +2491,7 @@ makepoint(PG_FUNCTION_ARGS)
     /* Here, the pass-by-reference nature of Point is not hidden. */
     Point     *pointx = PG_GETARG_POINT_P(0);
     Point     *pointy = PG_GETARG_POINT_P(1);
-    Point     *new_point = (Point *) palloc(sizeof(Point));
+    Point     *new_point = palloc_object(Point);
 
     new_point->x = pointx->x;
     new_point->y = pointy->y;
@@ -3669,11 +3668,14 @@ LWLockRelease(AddinShmemInitLock);
 </programlisting>
       <literal>shmem_startup_hook</literal> provides a convenient place for the
       initialization code, but it is not strictly required that all such code
-      be placed in this hook.  Each backend will execute the registered
-      <literal>shmem_startup_hook</literal> shortly after it attaches to shared
-      memory.  Note that add-ins should still acquire
+      be placed in this hook.  On Windows (and anywhere else where
+      <literal>EXEC_BACKEND</literal> is defined), each backend executes the
+      registered <literal>shmem_startup_hook</literal> shortly after it
+      attaches to shared memory, so add-ins should still acquire
       <function>AddinShmemInitLock</function> within this hook, as shown in the
-      example above.
+      example above.  On other platforms, only the postmaster process executes
+      the <literal>shmem_startup_hook</literal>, and each backend automatically
+      inherits the pointers to shared memory.
      </para>
 
      <para>
@@ -3694,15 +3696,18 @@ LWLockRelease(AddinShmemInitLock);
       use the shared memory should obtain a pointer to it by calling:
 <programlisting>
 void *GetNamedDSMSegment(const char *name, size_t size,
-                         void (*init_callback) (void *ptr),
-                         bool *found)
+                         void (*init_callback) (void *ptr, void *arg),
+                         bool *found, void *arg)
 </programlisting>
       If a dynamic shared memory segment with the given name does not yet
       exist, this function will allocate it and initialize it with the provided
       <function>init_callback</function> callback function.  If the segment has
       already been allocated and initialized by another backend, this function
       simply attaches the existing dynamic shared memory segment to the current
-      backend.
+      backend.  In the former case, <function>GetNamedDSMSegment</function>
+      passes the <literal>void *arg</literal> argument to the
+      <function>init_callback</function>.  This is particularly useful for
+      reusing an initialization callback function for multiple DSM segments.
      </para>
 
      <para>
@@ -3760,7 +3765,7 @@ LWLockPadded *GetNamedLWLockTranche(const char *tranche_name)
       <literal>shmem_request_hook</literal>.  To do so, first allocate a
       <literal>tranche_id</literal> by calling:
 <programlisting>
-int LWLockNewTrancheId(void)
+int LWLockNewTrancheId(const char *name)
 </programlisting>
       Next, initialize each LWLock, passing the new
       <literal>tranche_id</literal> as an argument:
@@ -3778,17 +3783,8 @@ void LWLockInitialize(LWLock *lock, int tranche_id)
      </para>
 
      <para>
-      Finally, each backend using the <literal>tranche_id</literal> should
-      associate it with a <literal>tranche_name</literal> by calling:
-<programlisting>
-void LWLockRegisterTranche(int tranche_id, const char *tranche_name)
-</programlisting>
-     </para>
-
-     <para>
-      A complete usage example of <function>LWLockNewTrancheId</function>,
-      <function>LWLockInitialize</function>, and
-      <function>LWLockRegisterTranche</function> can be found in
+      A complete usage example of <function>LWLockNewTrancheId</function> and
+      <function>LWLockInitialize</function> can be found in
       <filename>contrib/pg_prewarm/autoprewarm.c</filename> in the
       <productname>PostgreSQL</productname> source tree.
      </para>
@@ -3947,7 +3943,7 @@ extern bool InjectionPointDetach(const char *name);
     </para>
 
     <para>
-     Enabling injections points requires
+     Enabling injection points requires
      <option>--enable-injection-points</option> with
      <command>configure</command> or <option>-Dinjection_points=true</option>
      with <application>Meson</application>.
@@ -4012,7 +4008,7 @@ extern PgStat_Kind pgstat_register_kind(PgStat_Kind kind,
 
     <para>
      An example describing how to register and use custom statistics can be
-     found in <filename>src/test/modules/injection_points</filename>.
+     found in <filename>src/test/modules/test_custom_stats</filename>.
     </para>
    </sect2>
 
@@ -4164,6 +4160,31 @@ supportfn(internal) returns internal
     never call the target function in cases that the support function could
     simplify.  Ensure rigorous equivalence between the simplified
     expression and an actual execution of the target function.
+   </para>
+
+   <para>
+    <literal>SupportRequestSimplify</literal> is not used
+    for <link linkend="queries-tablefunctions">set-returning
+    functions</link>.  Instead, support functions can implement
+    the <literal>SupportRequestInlineInFrom</literal> request to expand
+    function calls appearing in the <literal>FROM</literal> clause of a
+    query.  (It's also allowed to support this request for
+    non-set-returning functions, although
+    typically <literal>SupportRequestSimplify</literal> would serve as
+    well.)  For this request type, a successful result must be
+    a <literal>SELECT</literal> Query tree, which will replace
+    the <literal>FROM</literal> item as though a sub-select had been
+    written instead.  The Query tree must appear as it would after parse
+    analysis and rewrite processing.  One way to ensure that that's true
+    is to build a SQL string then feed it
+    through <function>pg_parse_query</function>
+    and <function>pg_analyze_and_rewrite</function>, or related
+    functions.  <literal>PARAM_EXTERN</literal> <structname>Param</structname>
+    nodes can appear within the Query to represent the function's
+    arguments; they will be replaced by the actual argument expressions.
+    As with <literal>SupportRequestSimplify</literal>, it is the support
+    function's responsibility that the replacement Query be equivalent to
+    normal execution of the target function.
    </para>
 
    <para>

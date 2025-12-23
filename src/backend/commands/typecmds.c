@@ -126,7 +126,7 @@ static Oid	findTypeSubscriptingFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubOpclass(List *opcname, Oid subtype);
 static Oid	findRangeCanonicalFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubtypeDiffFunction(List *procname, Oid subtype);
-static void validateDomainCheckConstraint(Oid domainoid, const char *ccbin);
+static void validateDomainCheckConstraint(Oid domainoid, const char *ccbin, LOCKMODE lockmode);
 static void validateDomainNotNullConstraint(Oid domainoid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void checkEnumOwner(HeapTuple tup);
@@ -939,11 +939,19 @@ DefineDomain(ParseState *pstate, CreateDomainStmt *stmt)
 				break;
 
 			case CONSTR_NOTNULL:
-				if (nullDefined && !typNotNull)
+				if (nullDefined)
+				{
+					if (!typNotNull)
+						ereport(ERROR,
+								errcode(ERRCODE_SYNTAX_ERROR),
+								errmsg("conflicting NULL/NOT NULL constraints"),
+								parser_errposition(pstate, constr->location));
+
 					ereport(ERROR,
-							errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("conflicting NULL/NOT NULL constraints"),
+							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							errmsg("redundant NOT NULL constraint definition"),
 							parser_errposition(pstate, constr->location));
+				}
 				if (constr->is_no_inherit)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1734,6 +1742,9 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
 			   false,			/* Type NOT NULL */
 			   InvalidOid);		/* typcollation */
 
+	/* Ensure these new types are visible to ProcedureCreate */
+	CommandCounterIncrement();
+
 	/* And create the constructor functions for this range type */
 	makeRangeConstructors(typeName, typeNamespace, typoid, rangeSubtype);
 	makeMultirangeConstructors(multirangeTypeName, typeNamespace,
@@ -1756,7 +1767,7 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
  * impossible to define a polymorphic constructor; we have to generate new
  * constructor functions explicitly for each range type.
  *
- * We actually define 4 functions, with 0 through 3 arguments.  This is just
+ * We actually define 2 functions, with 2 through 3 arguments.  This is just
  * to offer more convenience for the user.
  */
 static void
@@ -2978,7 +2989,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
 		 * to.
 		 */
 		if (!constr->skip_validation)
-			validateDomainCheckConstraint(domainoid, ccbin);
+			validateDomainCheckConstraint(domainoid, ccbin, ShareLock);
 
 		/*
 		 * We must send out an sinval message for the domain, to ensure that
@@ -3090,7 +3101,12 @@ AlterDomainValidateConstraint(List *names, const char *constrName)
 	val = SysCacheGetAttrNotNull(CONSTROID, tuple, Anum_pg_constraint_conbin);
 	conbin = TextDatumGetCString(val);
 
-	validateDomainCheckConstraint(domainoid, conbin);
+	/*
+	 * Locking related relations with ShareUpdateExclusiveLock is ok because
+	 * not-yet-valid constraints are still enforced against concurrent inserts
+	 * or updates.
+	 */
+	validateDomainCheckConstraint(domainoid, conbin, ShareUpdateExclusiveLock);
 
 	/*
 	 * Now update the catalog, while we have the door open.
@@ -3183,9 +3199,16 @@ validateDomainNotNullConstraint(Oid domainoid)
 /*
  * Verify that all columns currently using the domain satisfy the given check
  * constraint expression.
+ *
+ * It is used to validate existing constraints and to add newly created check
+ * constraints to a domain.
+ *
+ * The lockmode is used for relations using the domain.  It should be
+ * ShareLock when adding a new constraint to domain.  It can be
+ * ShareUpdateExclusiveLock when validating an existing constraint.
  */
 static void
-validateDomainCheckConstraint(Oid domainoid, const char *ccbin)
+validateDomainCheckConstraint(Oid domainoid, const char *ccbin, LOCKMODE lockmode)
 {
 	Expr	   *expr = (Expr *) stringToNode(ccbin);
 	List	   *rels;
@@ -3202,9 +3225,7 @@ validateDomainCheckConstraint(Oid domainoid, const char *ccbin)
 	exprstate = ExecPrepareExpr(expr, estate);
 
 	/* Fetch relation list with attributes based on this domain */
-	/* ShareLock is sufficient to prevent concurrent data changes */
-
-	rels = get_rels_with_domain(domainoid, ShareLock);
+	rels = get_rels_with_domain(domainoid, lockmode);
 
 	foreach(rt, rels)
 	{
@@ -3230,7 +3251,6 @@ validateDomainCheckConstraint(Oid domainoid, const char *ccbin)
 				Datum		d;
 				bool		isNull;
 				Datum		conResult;
-				Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 
 				d = slot_getattr(slot, attnum, &isNull);
 
@@ -3243,6 +3263,8 @@ validateDomainCheckConstraint(Oid domainoid, const char *ccbin)
 
 				if (!isNull && !DatumGetBool(conResult))
 				{
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
 					/*
 					 * In principle the auxiliary information for this error
 					 * should be errdomainconstraint(), but errtablecol()
@@ -3425,10 +3447,10 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			}
 
 			/* Build the RelToCheck entry with enough space for all atts */
-			rtc = (RelToCheck *) palloc(sizeof(RelToCheck));
+			rtc = palloc_object(RelToCheck);
 			rtc->rel = rel;
 			rtc->natts = 0;
-			rtc->atts = (int *) palloc(sizeof(int) * RelationGetNumberOfAttributes(rel));
+			rtc->atts = palloc_array(int, RelationGetNumberOfAttributes(rel));
 			result = lappend(result, rtc);
 		}
 

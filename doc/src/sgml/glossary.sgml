@@ -81,6 +81,21 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-application-time">
+   <glossterm>Application time</glossterm>
+   <glossdef>
+    <para>
+     In a <glossterm linkend="glossary-temporal-table">temporal table</glossterm>,
+     the dimension of time that represents when the entity described by the table
+     changed (as opposed to the table itself).
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="ddl-temporal-tables"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-aio">
    <glossterm>Asynchronous <acronym>I/O</acronym></glossterm>
    <acronym>AIO</acronym>
@@ -1419,11 +1434,15 @@
    <glossterm>Relation</glossterm>
    <glossdef>
     <para>
-     The generic term for all objects in a
-     <glossterm linkend="glossary-database">database</glossterm>
-     that have a name and a list of
-     <glossterm linkend="glossary-attribute">attributes</glossterm>
-     defined in a specific order.
+     Mathematically, a <firstterm>relation</firstterm> is a set of
+     <glossterm linkend="glossary-tuple">tuples</glossterm>;
+     this is the sense meant in the term "relational database".
+    </para>
+
+    <para>
+     In <productname>PostgreSQL</productname>, "relation" is commonly used to
+     mean an <glossterm linkend="glossary-sql-object">SQL object</glossterm>
+     that has a name and a list of attributes defined in a specific order.
      <glossterm linkend="glossary-table">Tables</glossterm>,
      <glossterm linkend="glossary-sequence">sequences</glossterm>,
      <glossterm linkend="glossary-view">views</glossterm>,
@@ -1431,15 +1450,14 @@
      <glossterm linkend="glossary-materialized-view">materialized views</glossterm>,
      composite types, and
      <glossterm linkend="glossary-index">indexes</glossterm> are all relations.
+     A relation in this sense is a container or a descriptor for a set of tuples.
     </para>
+
     <para>
-     More generically, a relation is a set of tuples; for example,
-     the result of a query is also a relation.
-    </para>
-    <para>
-     In <productname>PostgreSQL</productname>,
-     <firstterm>Class</firstterm> is an archaic synonym for
-     <firstterm>relation</firstterm>.
+     <firstterm>Class</firstterm> is an alternative but archaic term.
+     The system catalog
+     <link linkend="catalog-pg-class"><structname>pg_class</structname></link>
+     holds an entry for each <productname>PostgreSQL</productname> relation.
     </para>
    </glossdef>
   </glossentry>
@@ -1844,6 +1862,22 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-system-time">
+   <glossterm>System time</glossterm>
+   <glossdef>
+    <para>
+     In a <glossterm linkend="glossary-temporal-table">temporal table</glossterm>,
+     the dimension of time that represents when the table itself was changed
+     (as opposed to the entity the table describes).
+     Often used for auditing, compliance, and debugging.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="ddl-temporal-tables"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-table">
    <glossterm>Table</glossterm>
    <glossdef>
@@ -1878,6 +1912,22 @@
     <para>
      For more information, see
      <xref linkend="manage-ag-tablespaces"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-temporal-table">
+   <glossterm>Temporal table</glossterm>
+   <glossdef>
+    <para>
+     <glossterm linkend="glossary-table">Tables</glossterm>
+     that track <glossterm linkend="glossary-application-time">application time</glossterm>
+     or <glossterm linkend="glossary-system-time">system time</glossterm> (or both).
+     Not to be confused with <glossterm linkend="glossary-temporary-table">temporary tables</glossterm>.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="ddl-temporal-tables"/>.
     </para>
    </glossdef>
   </glossentry>

@@ -266,27 +266,30 @@ SELECT *
 -- Tests for constant subexpression simplification
 explain (costs off)
 SELECT * FROM CASE_TBL WHERE NULLIF(1, 2) = 2;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on case_tbl
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off)
 SELECT * FROM CASE_TBL WHERE NULLIF(1, 1) IS NOT NULL;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on case_tbl
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off)
 SELECT * FROM CASE_TBL WHERE NULLIF(1, null) = 2;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on case_tbl
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 --
 -- Examples of updates involving tables

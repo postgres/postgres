@@ -120,7 +120,7 @@ CreateTupleQueueDestReceiver(shm_mq_handle *handle)
 {
 	TQueueDestReceiver *self;
 
-	self = (TQueueDestReceiver *) palloc0(sizeof(TQueueDestReceiver));
+	self = palloc0_object(TQueueDestReceiver);
 
 	self->pub.receiveSlot = tqueueReceiveSlot;
 	self->pub.rStartup = tqueueStartupReceiver;
@@ -138,7 +138,7 @@ CreateTupleQueueDestReceiver(shm_mq_handle *handle)
 TupleQueueReader *
 CreateTupleQueueReader(shm_mq_handle *handle)
 {
-	TupleQueueReader *reader = palloc0(sizeof(TupleQueueReader));
+	TupleQueueReader *reader = palloc0_object(TupleQueueReader);
 
 	reader->queue = handle;
 

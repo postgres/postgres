@@ -1,0 +1,7 @@
+-- Tests for TOAST compression with lz4
+SELECT NOT(enumvals @> '{lz4}') AS skip_test FROM pg_settings WHERE
+  name = 'default_toast_compression' \gset
+\if :skip_test
+   \echo '*** skipping TOAST tests with lz4 (not supported) ***'
+*** skipping TOAST tests with lz4 (not supported) ***
+   \quit

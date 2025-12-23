@@ -85,9 +85,22 @@ ecpg_register_prepared_stmt(struct statement *stmt)
 	/* create statement */
 	prep_stmt->lineno = lineno;
 	prep_stmt->connection = con;
-	prep_stmt->command = ecpg_strdup(stmt->command, lineno);
+	prep_stmt->command = ecpg_strdup(stmt->command, lineno, NULL);
+	if (!prep_stmt->command)
+	{
+		ecpg_free(prep_stmt);
+		ecpg_free(this);
+		return false;
+	}
 	prep_stmt->inlist = prep_stmt->outlist = NULL;
-	this->name = ecpg_strdup(stmt->name, lineno);
+	this->name = ecpg_strdup(stmt->name, lineno, NULL);
+	if (!this->name)
+	{
+		ecpg_free(prep_stmt->command);
+		ecpg_free(prep_stmt);
+		ecpg_free(this);
+		return false;
+	}
 	this->stmt = prep_stmt;
 	this->prepared = true;
 
@@ -125,14 +138,14 @@ replace_variables(char **text, int lineno)
 			char	   *buffer,
 					   *newcopy;
 
-			if (!(buffer = (char *) ecpg_alloc(buffersize, lineno)))
+			if (!(buffer = ecpg_alloc(buffersize, lineno)))
 				return false;
 
 			snprintf(buffer, buffersize, "$%d", counter++);
 
 			for (len = 1; (*text)[ptr + len] && isvarchar((*text)[ptr + len]); len++)
 				 /* skip */ ;
-			if (!(newcopy = (char *) ecpg_alloc(strlen(*text) - len + strlen(buffer) + 1, lineno)))
+			if (!(newcopy = ecpg_alloc(strlen(*text) - len + strlen(buffer) + 1, lineno)))
 			{
 				ecpg_free(buffer);
 				return false;
@@ -177,14 +190,33 @@ prepare_common(int lineno, struct connection *con, const char *name, const char 
 	/* create statement */
 	stmt->lineno = lineno;
 	stmt->connection = con;
-	stmt->command = ecpg_strdup(variable, lineno);
+	stmt->command = ecpg_strdup(variable, lineno, NULL);
+	if (!stmt->command)
+	{
+		ecpg_free(stmt);
+		ecpg_free(this);
+		return false;
+	}
 	stmt->inlist = stmt->outlist = NULL;
 
 	/* if we have C variables in our statement replace them with '?' */
-	replace_variables(&(stmt->command), lineno);
+	if (!replace_variables(&(stmt->command), lineno))
+	{
+		ecpg_free(stmt->command);
+		ecpg_free(stmt);
+		ecpg_free(this);
+		return false;
+	}
 
 	/* add prepared statement to our list */
-	this->name = ecpg_strdup(name, lineno);
+	this->name = ecpg_strdup(name, lineno, NULL);
+	if (!this->name)
+	{
+		ecpg_free(stmt->command);
+		ecpg_free(stmt);
+		ecpg_free(this);
+		return false;
+	}
 	this->stmt = stmt;
 
 	/* and finally really prepare the statement */
@@ -270,7 +302,7 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
 		char	   *text;
 		PGresult   *query;
 
-		text = (char *) ecpg_alloc(strlen("deallocate \"\" ") + strlen(this->name), this->stmt->lineno);
+		text = ecpg_alloc(strlen("deallocate \"\" ") + strlen(this->name), this->stmt->lineno);
 
 		if (text)
 		{
@@ -477,7 +509,7 @@ ecpg_freeStmtCacheEntry(int lineno, int compat,
 	if (entry->ecpgQuery)
 	{
 		ecpg_free(entry->ecpgQuery);
-		entry->ecpgQuery = 0;
+		entry->ecpgQuery = NULL;
 	}
 
 	return entNo;
@@ -540,7 +572,9 @@ AddStmtToCache(int lineno,		/* line # of statement */
 	/* add the query to the entry */
 	entry = &stmtCacheEntries[entNo];
 	entry->lineno = lineno;
-	entry->ecpgQuery = ecpg_strdup(ecpgQuery, lineno);
+	entry->ecpgQuery = ecpg_strdup(ecpgQuery, lineno, NULL);
+	if (!entry->ecpgQuery)
+		return -1;
 	entry->connection = connection;
 	entry->execs = 0;
 	memcpy(entry->stmtID, stmtID, sizeof(entry->stmtID));
@@ -567,14 +601,19 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 		ecpg_log("ecpg_auto_prepare on line %d: statement found in cache; entry %d\n", lineno, entNo);
 
 		stmtID = stmtCacheEntries[entNo].stmtID;
+		*name = ecpg_strdup(stmtID, lineno, NULL);
+		if (*name == NULL)
+			return false;
 
 		con = ecpg_get_connection(connection_name);
 		prep = ecpg_find_prepared_statement(stmtID, con, NULL);
 		/* This prepared name doesn't exist on this connection. */
 		if (!prep && !prepare_common(lineno, con, stmtID, query))
+		{
+			ecpg_free(*name);
 			return false;
+		}
 
-		*name = ecpg_strdup(stmtID, lineno);
 	}
 	else
 	{
@@ -584,15 +623,22 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 
 		/* generate a statement ID */
 		sprintf(stmtID, "ecpg%d", nextStmtID++);
+		*name = ecpg_strdup(stmtID, lineno, NULL);
+		if (*name == NULL)
+			return false;
 
 		if (!ECPGprepare(lineno, connection_name, 0, stmtID, query))
+		{
+			ecpg_free(*name);
 			return false;
+		}
 
 		entNo = AddStmtToCache(lineno, stmtID, connection_name, compat, query);
 		if (entNo < 0)
+		{
+			ecpg_free(*name);
 			return false;
-
-		*name = ecpg_strdup(stmtID, lineno);
+		}
 	}
 
 	/* increase usage counter */

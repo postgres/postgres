@@ -30,7 +30,6 @@
 #include "access/xact.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
-#include "catalog/pg_proc.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
@@ -46,7 +45,6 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/rangetypes.h"
 #include "utils/rel.h"
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
@@ -128,9 +126,11 @@ typedef struct RI_ConstraintInfo
 	Oid			pf_eq_oprs[RI_MAX_NUMKEYS]; /* equality operators (PK = FK) */
 	Oid			pp_eq_oprs[RI_MAX_NUMKEYS]; /* equality operators (PK = PK) */
 	Oid			ff_eq_oprs[RI_MAX_NUMKEYS]; /* equality operators (FK = FK) */
-	Oid			period_contained_by_oper;	/* anyrange <@ anyrange */
+	Oid			period_contained_by_oper;	/* anyrange <@ anyrange (or
+											 * multiranges) */
 	Oid			agged_period_contained_by_oper; /* fkattr <@ range_agg(pkattr) */
-	Oid			period_intersect_oper;	/* anyrange * anyrange */
+	Oid			period_intersect_oper;	/* anyrange * anyrange (or
+										 * multiranges) */
 	dlist_node	valid_link;		/* Link in list of valid entries */
 } RI_ConstraintInfo;
 

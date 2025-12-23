@@ -52,6 +52,13 @@ CREATE INDEX bttest_a_brin_idx ON bttest_a USING brin(id);
 SELECT bt_index_parent_check('bttest_a_brin_idx');
 ROLLBACK;
 
+-- verify partitioned indexes are rejected (error)
+BEGIN;
+CREATE TABLE bttest_partitioned (a int, b int) PARTITION BY list (a);
+CREATE INDEX bttest_btree_partitioned_idx ON bttest_partitioned USING btree (b);
+SELECT bt_index_parent_check('bttest_btree_partitioned_idx');
+ROLLBACK;
+
 -- normal check outside of xact
 SELECT bt_index_check('bttest_a_idx');
 -- more expansive tests

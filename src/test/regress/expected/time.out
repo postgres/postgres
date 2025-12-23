@@ -157,7 +157,8 @@ SELECT f1 + time '00:01' AS "Illegal" FROM TIME_TBL;
 ERROR:  operator is not unique: time without time zone + time without time zone
 LINE 1: SELECT f1 + time '00:01' AS "Illegal" FROM TIME_TBL;
                   ^
-HINT:  Could not choose a best candidate operator. You might need to add explicit type casts.
+DETAIL:  Could not choose a best candidate operator.
+HINT:  You might need to add explicit type casts.
 --
 -- test EXTRACT
 --

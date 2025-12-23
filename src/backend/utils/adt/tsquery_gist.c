@@ -33,7 +33,7 @@ gtsquery_compress(PG_FUNCTION_ARGS)
 	{
 		TSQuerySign sign;
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		sign = makeTSQuerySign(DatumGetTSQuery(entry->key));
 
 		gistentryinit(*retval, TSQuerySignGetDatum(sign),
@@ -213,7 +213,7 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 	datum_r = GETENTRY(entryvec, seed_2);
 
 	maxoff = OffsetNumberNext(maxoff);
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	costvector = palloc_array(SPLITCOST, maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

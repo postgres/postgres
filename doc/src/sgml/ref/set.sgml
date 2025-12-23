@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SET [ SESSION | LOCAL ] <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | DEFAULT }
-SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | LOCAL | DEFAULT }
+SET [ SESSION | LOCAL ] <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> [, ...] | DEFAULT }
+SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">value</replaceable> | LOCAL | DEFAULT }
 </synopsis>
  </refsynopsisdiv>
 
@@ -123,7 +123,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">value</replac
     <term><replaceable class="parameter">configuration_parameter</replaceable></term>
     <listitem>
      <para>
-      Name of a settable run-time parameter.  Available parameters are
+      Name of a settable configuration parameter.  Available parameters are
       documented in <xref linkend="runtime-config"/> and below.
      </para>
     </listitem>
@@ -133,9 +133,12 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">value</replac
     <term><replaceable class="parameter">value</replaceable></term>
     <listitem>
      <para>
-      New value of parameter.  Values can be specified as string
+      New value of the parameter.  Values can be specified as string
       constants, identifiers, numbers, or comma-separated lists of
       these, as appropriate for the particular parameter.
+      Values that are neither numbers nor valid identifiers must be quoted.
+      If the parameter accepts a list of values, <literal>NULL</literal>
+      can be written to specify an empty list.
       <literal>DEFAULT</literal> can be written to specify
       resetting the parameter to its default value (that is, whatever
       value it would have had if no <command>SET</command> had been executed
@@ -283,6 +286,19 @@ SELECT setseed(<replaceable>value</replaceable>);
    Set the schema search path:
 <programlisting>
 SET search_path TO my_schema, public;
+</programlisting>
+   Note that this is not the same as
+<programlisting>
+SET search_path TO 'my_schema, public';
+</programlisting>
+   which would have the effect of setting <varname>search_path</varname>
+   to contain a single, probably-nonexistent schema name.
+  </para>
+
+  <para>
+   Set the list of temporary tablespace names to be empty:
+<programlisting>
+SET temp_tablespaces TO NULL;
 </programlisting>
   </para>
 

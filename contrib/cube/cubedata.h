@@ -62,10 +62,7 @@ typedef struct NDBOX
 /* for cubescan.l and cubeparse.y */
 /* All grammar constructs return strings */
 #define YYSTYPE char *
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
-#endif
 
 /* in cubescan.l */
 extern int	cube_yylex(YYSTYPE *yylval_param, yyscan_t yyscanner);

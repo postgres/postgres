@@ -59,7 +59,7 @@ static const bbsink_ops bbsink_server_ops = {
 bbsink *
 bbsink_server_new(bbsink *next, char *pathname)
 {
-	bbsink_server *sink = palloc0(sizeof(bbsink_server));
+	bbsink_server *sink = palloc0_object(bbsink_server);
 
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_server_ops;
 	sink->pathname = pathname;
@@ -176,9 +176,9 @@ bbsink_server_archive_contents(bbsink *sink, size_t len)
 		/* short write: complain appropriately */
 		ereport(ERROR,
 				(errcode(ERRCODE_DISK_FULL),
-				 errmsg("could not write file \"%s\": wrote only %d of %d bytes at offset %u",
+				 errmsg("could not write file \"%s\": wrote only %d of %zu bytes at offset %u",
 						FilePathName(mysink->file),
-						nbytes, (int) len, (unsigned) mysink->filepos),
+						nbytes, len, (unsigned) mysink->filepos),
 				 errhint("Check free disk space.")));
 	}
 
@@ -269,9 +269,9 @@ bbsink_server_manifest_contents(bbsink *sink, size_t len)
 		/* short write: complain appropriately */
 		ereport(ERROR,
 				(errcode(ERRCODE_DISK_FULL),
-				 errmsg("could not write file \"%s\": wrote only %d of %d bytes at offset %u",
+				 errmsg("could not write file \"%s\": wrote only %d of %zu bytes at offset %u",
 						FilePathName(mysink->file),
-						nbytes, (int) len, (unsigned) mysink->filepos),
+						nbytes, len, (unsigned) mysink->filepos),
 				 errhint("Check free disk space.")));
 	}
 

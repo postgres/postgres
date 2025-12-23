@@ -114,13 +114,13 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
 	dsa_allocate_extended(area, size, DSA_ALLOC_ZERO)
 
 /* Create dsa_area with default segment sizes */
-#define dsa_create(tranch_id) \
-	dsa_create_ext(tranch_id, DSA_DEFAULT_INIT_SEGMENT_SIZE, \
+#define dsa_create(tranche_id) \
+	dsa_create_ext(tranche_id, DSA_DEFAULT_INIT_SEGMENT_SIZE, \
 				   DSA_MAX_SEGMENT_SIZE)
 
 /* Create dsa_area with default segment sizes in an existing share memory space */
-#define dsa_create_in_place(place, size, tranch_id, segment) \
-	dsa_create_in_place_ext(place, size, tranch_id, segment, \
+#define dsa_create_in_place(place, size, tranche_id, segment) \
+	dsa_create_in_place_ext(place, size, tranche_id, segment, \
 							DSA_DEFAULT_INIT_SEGMENT_SIZE, \
 							DSA_MAX_SEGMENT_SIZE)
 
@@ -145,6 +145,7 @@ extern dsa_area *dsa_create_in_place_ext(void *place, size_t size,
 										 size_t init_segment_size,
 										 size_t max_segment_size);
 extern dsa_area *dsa_attach(dsa_handle handle);
+extern bool dsa_is_attached(dsa_handle handle);
 extern dsa_area *dsa_attach_in_place(void *place, dsm_segment *segment);
 extern void dsa_release_in_place(void *place);
 extern void dsa_on_dsm_detach_release_in_place(dsm_segment *, Datum);
@@ -160,6 +161,7 @@ extern dsa_pointer dsa_allocate_extended(dsa_area *area, size_t size, int flags)
 extern void dsa_free(dsa_area *area, dsa_pointer dp);
 extern void *dsa_get_address(dsa_area *area, dsa_pointer dp);
 extern size_t dsa_get_total_size(dsa_area *area);
+extern size_t dsa_get_total_size_from_handle(dsa_handle handle);
 extern void dsa_trim(dsa_area *area);
 extern void dsa_dump(dsa_area *area);
 

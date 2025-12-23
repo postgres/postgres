@@ -30,26 +30,34 @@
 #define pg_compiler_barrier_impl()	__asm__ __volatile__("" ::: "memory")
 
 /*
- * If we're on GCC 4.1.0 or higher, we should be able to get a memory barrier
+ * If we're on GCC, we should be able to get a memory barrier
  * out of this compiler built-in.  But we prefer to rely on platform specific
  * definitions where possible, and use this only as a fallback.
  */
 #if !defined(pg_memory_barrier_impl)
 #	if defined(HAVE_GCC__ATOMIC_INT32_CAS)
 #		define pg_memory_barrier_impl()		__atomic_thread_fence(__ATOMIC_SEQ_CST)
-#	elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#	elif defined(__GNUC__)
 #		define pg_memory_barrier_impl()		__sync_synchronize()
 #	endif
 #endif /* !defined(pg_memory_barrier_impl) */
 
 #if !defined(pg_read_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
 /* acquire semantics include read barrier semantics */
-#		define pg_read_barrier_impl()		__atomic_thread_fence(__ATOMIC_ACQUIRE)
+#		define pg_read_barrier_impl() do \
+{ \
+	pg_compiler_barrier_impl(); \
+	__atomic_thread_fence(__ATOMIC_ACQUIRE); \
+} while (0)
 #endif
 
 #if !defined(pg_write_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
 /* release semantics include write barrier semantics */
-#		define pg_write_barrier_impl()		__atomic_thread_fence(__ATOMIC_RELEASE)
+#		define pg_write_barrier_impl() do \
+{ \
+	pg_compiler_barrier_impl(); \
+	__atomic_thread_fence(__ATOMIC_RELEASE); \
+} while (0)
 #endif
 
 
@@ -92,10 +100,9 @@ typedef struct pg_atomic_uint32
 	&& (defined(HAVE_GCC__ATOMIC_INT64_CAS) || defined(HAVE_GCC__SYNC_INT64_CAS))
 
 #define PG_HAVE_ATOMIC_U64_SUPPORT
-
 typedef struct pg_atomic_uint64
 {
-	volatile uint64 value pg_attribute_aligned(8);
+	alignas(8) volatile uint64 value;
 } pg_atomic_uint64;
 
 #endif /* defined(HAVE_GCC__ATOMIC_INT64_CAS) || defined(HAVE_GCC__SYNC_INT64_CAS) */

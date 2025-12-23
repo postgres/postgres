@@ -4,10 +4,10 @@
  *	  Planner preprocessing for subqueries and join tree manipulation.
  *
  * NOTE: the intended sequence for invoking these operations is
+ *		preprocess_relation_rtes
  *		replace_empty_jointree
  *		pull_up_sublinks
  *		preprocess_function_rtes
- *		expand_virtual_generated_columns
  *		pull_up_subqueries
  *		flatten_simple_union_all
  *		do expression preprocessing (including flattening JOIN alias vars)
@@ -36,6 +36,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/placeholder.h"
+#include "optimizer/plancat.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
@@ -102,6 +103,9 @@ typedef struct reduce_outer_joins_partial_state
 	Relids		unreduced_side; /* relids in its still-nullable side */
 } reduce_outer_joins_partial_state;
 
+static Query *expand_virtual_generated_columns(PlannerInfo *root, Query *parse,
+											   RangeTblEntry *rte, int rt_index,
+											   Relation relation);
 static Node *pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 											   Relids *relids);
 static Node *pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
@@ -393,6 +397,181 @@ transform_MERGE_to_join(Query *parse)
 }
 
 /*
+ * preprocess_relation_rtes
+ *		Do the preprocessing work for any relation RTEs in the FROM clause.
+ *
+ * This scans the rangetable for relation RTEs and retrieves the necessary
+ * catalog information for each relation.  Using this information, it clears
+ * the inh flag for any relation that has no children, collects not-null
+ * attribute numbers for any relation that has column not-null constraints, and
+ * expands virtual generated columns for any relation that contains them.
+ *
+ * Note that expanding virtual generated columns may cause the query tree to
+ * have new copies of rangetable entries.  Therefore, we have to use list_nth
+ * instead of foreach when iterating over the query's rangetable.
+ *
+ * Returns a modified copy of the query tree, if any relations with virtual
+ * generated columns are present.
+ */
+Query *
+preprocess_relation_rtes(PlannerInfo *root)
+{
+	Query	   *parse = root->parse;
+	int			rtable_size;
+	int			rt_index;
+
+	rtable_size = list_length(parse->rtable);
+
+	for (rt_index = 0; rt_index < rtable_size; rt_index++)
+	{
+		RangeTblEntry *rte = rt_fetch(rt_index + 1, parse->rtable);
+		Relation	relation;
+
+		/* We only care about relation RTEs. */
+		if (rte->rtekind != RTE_RELATION)
+			continue;
+
+		/*
+		 * We need not lock the relation since it was already locked by the
+		 * rewriter.
+		 */
+		relation = table_open(rte->relid, NoLock);
+
+		/*
+		 * Check to see if the relation actually has any children; if not,
+		 * clear the inh flag so we can treat it as a plain base relation.
+		 *
+		 * Note: this could give a false-positive result, if the rel once had
+		 * children but no longer does.  We used to be able to clear rte->inh
+		 * later on when we discovered that, but no more; we have to handle
+		 * such cases as full-fledged inheritance.
+		 */
+		if (rte->inh)
+			rte->inh = relation->rd_rel->relhassubclass;
+
+		/*
+		 * Check to see if the relation has any column not-null constraints;
+		 * if so, retrieve the constraint information and store it in a
+		 * relation OID based hash table.
+		 */
+		get_relation_notnullatts(root, relation);
+
+		/*
+		 * Check to see if the relation has any virtual generated columns; if
+		 * so, replace all Var nodes in the query that reference these columns
+		 * with the generation expressions.
+		 */
+		parse = expand_virtual_generated_columns(root, parse,
+												 rte, rt_index + 1,
+												 relation);
+
+		table_close(relation, NoLock);
+	}
+
+	return parse;
+}
+
+/*
+ * expand_virtual_generated_columns
+ *		Expand virtual generated columns for the given relation.
+ *
+ * This checks whether the given relation has any virtual generated columns,
+ * and if so, replaces all Var nodes in the query that reference those columns
+ * with their generation expressions.
+ *
+ * Returns a modified copy of the query tree if the relation contains virtual
+ * generated columns.
+ */
+static Query *
+expand_virtual_generated_columns(PlannerInfo *root, Query *parse,
+								 RangeTblEntry *rte, int rt_index,
+								 Relation relation)
+{
+	TupleDesc	tupdesc;
+
+	/* Only normal relations can have virtual generated columns */
+	Assert(rte->rtekind == RTE_RELATION);
+
+	tupdesc = RelationGetDescr(relation);
+	if (tupdesc->constr && tupdesc->constr->has_generated_virtual)
+	{
+		List	   *tlist = NIL;
+		pullup_replace_vars_context rvcontext;
+
+		for (int i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+			TargetEntry *tle;
+
+			if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+			{
+				Node	   *defexpr;
+
+				defexpr = build_generation_expression(relation, i + 1);
+				ChangeVarNodes(defexpr, 1, rt_index, 0);
+
+				tle = makeTargetEntry((Expr *) defexpr, i + 1, 0, false);
+				tlist = lappend(tlist, tle);
+			}
+			else
+			{
+				Var		   *var;
+
+				var = makeVar(rt_index,
+							  i + 1,
+							  attr->atttypid,
+							  attr->atttypmod,
+							  attr->attcollation,
+							  0);
+
+				tle = makeTargetEntry((Expr *) var, i + 1, 0, false);
+				tlist = lappend(tlist, tle);
+			}
+		}
+
+		Assert(list_length(tlist) > 0);
+		Assert(!rte->lateral);
+
+		/*
+		 * The relation's targetlist items are now in the appropriate form to
+		 * insert into the query, except that we may need to wrap them in
+		 * PlaceHolderVars.  Set up required context data for
+		 * pullup_replace_vars.
+		 */
+		rvcontext.root = root;
+		rvcontext.targetlist = tlist;
+		rvcontext.target_rte = rte;
+		rvcontext.result_relation = parse->resultRelation;
+		/* won't need these values */
+		rvcontext.relids = NULL;
+		rvcontext.nullinfo = NULL;
+		/* pass NULL for outer_hasSubLinks */
+		rvcontext.outer_hasSubLinks = NULL;
+		rvcontext.varno = rt_index;
+		/* this flag will be set below, if needed */
+		rvcontext.wrap_option = REPLACE_WRAP_NONE;
+		/* initialize cache array with indexes 0 .. length(tlist) */
+		rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
+									 sizeof(Node *));
+
+		/*
+		 * If the query uses grouping sets, we need a PlaceHolderVar for each
+		 * expression of the relation's targetlist items.  (See comments in
+		 * pull_up_simple_subquery().)
+		 */
+		if (parse->groupingSets)
+			rvcontext.wrap_option = REPLACE_WRAP_ALL;
+
+		/*
+		 * Apply pullup variable replacement throughout the query tree.
+		 */
+		parse = (Query *) pullup_replace_vars((Node *) parse, &rvcontext);
+	}
+
+	return parse;
+}
+
+/*
  * replace_empty_jointree
  *		If the Query's jointree is empty, replace it with a dummy RTE_RESULT
  *		relation.
@@ -562,7 +741,7 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		 * Make a modifiable copy of join node, but don't bother copying its
 		 * subnodes (yet).
 		 */
-		j = (JoinExpr *) palloc(sizeof(JoinExpr));
+		j = palloc_object(JoinExpr);
 		memcpy(j, jtnode, sizeof(JoinExpr));
 		jtlink = (Node *) j;
 
@@ -887,13 +1066,15 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 /*
  * preprocess_function_rtes
  *		Constant-simplify any FUNCTION RTEs in the FROM clause, and then
- *		attempt to "inline" any that are set-returning functions.
+ *		attempt to "inline" any that can be converted to simple subqueries.
  *
- * If an RTE_FUNCTION rtable entry invokes a set-returning function that
+ * If an RTE_FUNCTION rtable entry invokes a set-returning SQL function that
  * contains just a simple SELECT, we can convert the rtable entry to an
- * RTE_SUBQUERY entry exposing the SELECT directly.  This is especially
- * useful if the subquery can then be "pulled up" for further optimization,
- * but we do it even if not, to reduce executor overhead.
+ * RTE_SUBQUERY entry exposing the SELECT directly.  Other sorts of functions
+ * are also inline-able if they have a support function that can generate
+ * the replacement sub-Query.  This is especially useful if the subquery can
+ * then be "pulled up" for further optimization, but we do it even if not,
+ * to reduce executor overhead.
  *
  * This has to be done before we have started to do any optimization of
  * subqueries, else any such steps wouldn't get applied to subqueries
@@ -928,7 +1109,7 @@ preprocess_function_rtes(PlannerInfo *root)
 				eval_const_expressions(root, (Node *) rte->functions);
 
 			/* Check safety of expansion, and expand if possible */
-			funcquery = inline_set_returning_function(root, rte);
+			funcquery = inline_function_in_from(root, rte);
 			if (funcquery)
 			{
 				/* Successful expansion, convert the RTE to a subquery */
@@ -947,128 +1128,6 @@ preprocess_function_rtes(PlannerInfo *root)
 			}
 		}
 	}
-}
-
-/*
- * expand_virtual_generated_columns
- *		Expand all virtual generated column references in a query.
- *
- * This scans the rangetable for relations with virtual generated columns, and
- * replaces all Var nodes in the query that reference these columns with the
- * generation expressions.  Note that we do not descend into subqueries; that
- * is taken care of when the subqueries are planned.
- *
- * This has to be done after we have pulled up any SubLinks within the query's
- * quals; otherwise any virtual generated column references within the SubLinks
- * that should be transformed into joins wouldn't get expanded.
- *
- * Returns a modified copy of the query tree, if any relations with virtual
- * generated columns are present.
- */
-Query *
-expand_virtual_generated_columns(PlannerInfo *root)
-{
-	Query	   *parse = root->parse;
-	int			rt_index;
-	ListCell   *lc;
-
-	rt_index = 0;
-	foreach(lc, parse->rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-		Relation	rel;
-		TupleDesc	tupdesc;
-
-		++rt_index;
-
-		/*
-		 * Only normal relations can have virtual generated columns.
-		 */
-		if (rte->rtekind != RTE_RELATION)
-			continue;
-
-		rel = table_open(rte->relid, NoLock);
-
-		tupdesc = RelationGetDescr(rel);
-		if (tupdesc->constr && tupdesc->constr->has_generated_virtual)
-		{
-			List	   *tlist = NIL;
-			pullup_replace_vars_context rvcontext;
-
-			for (int i = 0; i < tupdesc->natts; i++)
-			{
-				Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
-				TargetEntry *tle;
-
-				if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
-				{
-					Node	   *defexpr;
-
-					defexpr = build_generation_expression(rel, i + 1);
-					ChangeVarNodes(defexpr, 1, rt_index, 0);
-
-					tle = makeTargetEntry((Expr *) defexpr, i + 1, 0, false);
-					tlist = lappend(tlist, tle);
-				}
-				else
-				{
-					Var		   *var;
-
-					var = makeVar(rt_index,
-								  i + 1,
-								  attr->atttypid,
-								  attr->atttypmod,
-								  attr->attcollation,
-								  0);
-
-					tle = makeTargetEntry((Expr *) var, i + 1, 0, false);
-					tlist = lappend(tlist, tle);
-				}
-			}
-
-			Assert(list_length(tlist) > 0);
-			Assert(!rte->lateral);
-
-			/*
-			 * The relation's targetlist items are now in the appropriate form
-			 * to insert into the query, except that we may need to wrap them
-			 * in PlaceHolderVars.  Set up required context data for
-			 * pullup_replace_vars.
-			 */
-			rvcontext.root = root;
-			rvcontext.targetlist = tlist;
-			rvcontext.target_rte = rte;
-			rvcontext.result_relation = parse->resultRelation;
-			/* won't need these values */
-			rvcontext.relids = NULL;
-			rvcontext.nullinfo = NULL;
-			/* pass NULL for outer_hasSubLinks */
-			rvcontext.outer_hasSubLinks = NULL;
-			rvcontext.varno = rt_index;
-			/* this flag will be set below, if needed */
-			rvcontext.wrap_option = REPLACE_WRAP_NONE;
-			/* initialize cache array with indexes 0 .. length(tlist) */
-			rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
-										 sizeof(Node *));
-
-			/*
-			 * If the query uses grouping sets, we need a PlaceHolderVar for
-			 * each expression of the relation's targetlist items.  (See
-			 * comments in pull_up_simple_subquery().)
-			 */
-			if (parse->groupingSets)
-				rvcontext.wrap_option = REPLACE_WRAP_ALL;
-
-			/*
-			 * Apply pullup variable replacement throughout the query tree.
-			 */
-			parse = (Query *) pullup_replace_vars((Node *) parse, &rvcontext);
-		}
-
-		table_close(rel, NoLock);
-	}
-
-	return parse;
 }
 
 /*
@@ -1299,6 +1358,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->parse = subquery;
 	subroot->glob = root->glob;
 	subroot->query_level = root->query_level;
+	subroot->plan_name = root->plan_name;
 	subroot->parent_root = root->parent_root;
 	subroot->plan_params = NIL;
 	subroot->outer_params = NULL;
@@ -1326,12 +1386,23 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->qual_security_level = 0;
 	subroot->placeholdersFrozen = false;
 	subroot->hasRecursion = false;
+	subroot->assumeReplanning = false;
 	subroot->wt_param_id = -1;
 	subroot->non_recursive_path = NULL;
 	/* We don't currently need a top JoinDomain for the subroot */
 
 	/* No CTEs to worry about */
 	Assert(subquery->cteList == NIL);
+
+	/*
+	 * Scan the rangetable for relation RTEs and retrieve the necessary
+	 * catalog information for each relation.  Using this information, clear
+	 * the inh flag for any relation that has no children, collect not-null
+	 * attribute numbers for any relation that has column not-null
+	 * constraints, and expand virtual generated columns for any relation that
+	 * contains them.
+	 */
+	subquery = subroot->parse = preprocess_relation_rtes(subroot);
 
 	/*
 	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
@@ -1351,13 +1422,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * functions in its rangetable.
 	 */
 	preprocess_function_rtes(subroot);
-
-	/*
-	 * Scan the rangetable for relations with virtual generated columns, and
-	 * replace all Var nodes in the query that reference these columns with
-	 * the generation expressions.
-	 */
-	subquery = subroot->parse = expand_virtual_generated_columns(subroot);
 
 	/*
 	 * Recursively pull up the subquery's subqueries, so that
@@ -3176,8 +3240,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 {
 	reduce_outer_joins_pass1_state *result;
 
-	result = (reduce_outer_joins_pass1_state *)
-		palloc(sizeof(reduce_outer_joins_pass1_state));
+	result = palloc_object(reduce_outer_joins_pass1_state);
 	result->relids = NULL;
 	result->contains_outer = false;
 	result->sub_states = NIL;
@@ -3529,7 +3592,7 @@ report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 {
 	reduce_outer_joins_partial_state *statep;
 
-	statep = palloc(sizeof(reduce_outer_joins_partial_state));
+	statep = palloc_object(reduce_outer_joins_partial_state);
 	statep->full_join_rti = rtindex;
 	statep->unreduced_side = relids;
 	state2->partial_reduced = lappend(state2->partial_reduced, statep);

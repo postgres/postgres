@@ -172,7 +172,7 @@ it splits the page, and constructs the new downlink tuples for the split
 pages. The caller must then call gistplacetopage() on the parent page to
 insert the downlink tuples. The parent page that holds the downlink to
 the child might have migrated as a result of concurrent splits of the
-parent, gistFindCorrectParent() is used to find the parent page.
+parent, so gistFindCorrectParent() is used to find the parent page.
 
 Splitting the root page works slightly differently. At root split,
 gistplacetopage() allocates the new child pages and replaces the old root
@@ -291,7 +291,7 @@ Buffering build algorithm
 -------------------------
 
 In the buffering index build algorithm, some or all internal nodes have a
-buffer attached to them. When a tuple is inserted at the top, the descend down
+buffer attached to them. When a tuple is inserted at the top, the descent down
 the tree is stopped as soon as a buffer is reached, and the tuple is pushed to
 the buffer. When a buffer gets too full, all the tuples in it are flushed to
 the lower level, where they again hit lower level buffers or leaf pages. This
@@ -455,8 +455,8 @@ be reused. In order to delete an empty page, its downlink must be removed from
 the parent. We scan all the internal pages, whose block numbers we memorized
 in the first stage, and look for downlinks to pages that we have memorized as
 being empty. Whenever we find one, we acquire a lock on the parent and child
-page, re-check that the child page is still empty. Then, we remove the
-downlink and mark the child as deleted, and release the locks.
+page and re-check that the child page is still empty. Then we remove the
+downlink, mark the child as deleted, and release the locks.
 
 The insertion algorithm would get confused, if an internal page was completely
 empty. So we never delete the last child of an internal page, even if it's

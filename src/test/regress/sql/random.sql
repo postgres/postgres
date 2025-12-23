@@ -277,3 +277,29 @@ SELECT random(-1e30, 1e30) FROM generate_series(1, 10);
 SELECT random(-0.4, 0.4) FROM generate_series(1, 10);
 SELECT random(0, 1 - 1e-30) FROM generate_series(1, 10);
 SELECT n, random(0, trim_scale(abs(1 - 10.0^(-n)))) FROM generate_series(-20, 20) n;
+
+-- random dates
+SELECT random('1979-02-08'::date,'2025-07-03'::date) AS random_date_multiple_years;
+SELECT random('4714-11-24 BC'::date,'5874897-12-31 AD'::date) AS random_date_maximum_range;
+SELECT random('1979-02-08'::date,'1979-02-08'::date) AS random_date_empty_range;
+SELECT random('2024-12-31'::date, '2024-01-01'::date); -- fail
+SELECT random('-infinity'::date, '2024-01-01'::date); -- fail
+SELECT random('2024-12-31'::date, 'infinity'::date); -- fail
+
+-- random timestamps
+SELECT random('1979-02-08'::timestamp,'2025-07-03'::timestamp) AS random_timestamp_multiple_years;
+SELECT random('4714-11-24 BC'::timestamp,'294276-12-31 23:59:59.999999'::timestamp) AS random_timestamp_maximum_range;
+SELECT random('2024-07-01 12:00:00.000001'::timestamp, '2024-07-01 12:00:00.999999'::timestamp) AS random_narrow_range;
+SELECT random('1979-02-08'::timestamp,'1979-02-08'::timestamp) AS random_timestamp_empty_range;
+SELECT random('2024-12-31'::timestamp, '2024-01-01'::timestamp); -- fail
+SELECT random('-infinity'::timestamp, '2024-01-01'::timestamp); -- fail
+SELECT random('2024-12-31'::timestamp, 'infinity'::timestamp); -- fail
+
+-- random timestamps with timezone
+SELECT random('1979-02-08 +01'::timestamptz,'2025-07-03 +02'::timestamptz) AS random_timestamptz_multiple_years;
+SELECT random('4714-11-24 BC +00'::timestamptz,'294276-12-31 23:59:59.999999 +00'::timestamptz) AS random_timestamptz_maximum_range;
+SELECT random('2024-07-01 12:00:00.000001 +04'::timestamptz, '2024-07-01 12:00:00.999999 +04'::timestamptz) AS random_timestamptz_narrow_range;
+SELECT random('1979-02-08 +05'::timestamptz,'1979-02-08 +05'::timestamptz) AS random_timestamptz_empty_range;
+SELECT random('2024-01-01 +06'::timestamptz, '2024-01-01 +07'::timestamptz); -- fail
+SELECT random('-infinity'::timestamptz, '2024-01-01 +07'::timestamptz); -- fail
+SELECT random('2024-01-01 +06'::timestamptz, 'infinity'::timestamptz); -- fail

@@ -21,6 +21,7 @@
 #include "access/skey.h"
 #include "access/table.h"		/* for backward compatibility */
 #include "access/tableam.h"
+#include "commands/vacuum.h"
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "storage/bufpage.h"
@@ -43,7 +44,8 @@
 #define HEAP_PAGE_PRUNE_FREEZE				(1 << 1)
 
 typedef struct BulkInsertStateData *BulkInsertState;
-struct TupleTableSlot;
+typedef struct GlobalVisState GlobalVisState;
+typedef struct TupleTableSlot TupleTableSlot;
 struct VacuumCutoffs;
 
 #define MaxLockTupleMode	LockTupleExclusive
@@ -96,7 +98,7 @@ typedef struct HeapScanDescData
 	uint32		rs_cindex;		/* current tuple's index in vistuples */
 	uint32		rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
-}			HeapScanDescData;
+} HeapScanDescData;
 typedef struct HeapScanDescData *HeapScanDesc;
 
 typedef struct BitmapHeapScanDescData
@@ -104,7 +106,7 @@ typedef struct BitmapHeapScanDescData
 	HeapScanDescData rs_heap_base;
 
 	/* Holds no data */
-}			BitmapHeapScanDescData;
+} BitmapHeapScanDescData;
 typedef struct BitmapHeapScanDescData *BitmapHeapScanDesc;
 
 /*
@@ -219,6 +221,56 @@ typedef struct HeapPageFreeze
 
 } HeapPageFreeze;
 
+
+/* 'reason' codes for heap_page_prune_and_freeze() */
+typedef enum
+{
+	PRUNE_ON_ACCESS,			/* on-access pruning */
+	PRUNE_VACUUM_SCAN,			/* VACUUM 1st heap pass */
+	PRUNE_VACUUM_CLEANUP,		/* VACUUM 2nd heap pass */
+} PruneReason;
+
+/*
+ * Input parameters to heap_page_prune_and_freeze()
+ */
+typedef struct PruneFreezeParams
+{
+	Relation	relation;		/* relation containing buffer to be pruned */
+	Buffer		buffer;			/* buffer to be pruned */
+
+	/*
+	 * The reason pruning was performed.  It is used to set the WAL record
+	 * opcode which is used for debugging and analysis purposes.
+	 */
+	PruneReason reason;
+
+	/*
+	 * Contains flag bits:
+	 *
+	 * HEAP_PAGE_PRUNE_MARK_UNUSED_NOW indicates that dead items can be set
+	 * LP_UNUSED during pruning.
+	 *
+	 * HEAP_PAGE_PRUNE_FREEZE indicates that we will also freeze tuples, and
+	 * will return 'all_visible', 'all_frozen' flags to the caller.
+	 */
+	int			options;
+
+	/*
+	 * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
+	 * (see heap_prune_satisfies_vacuum).
+	 */
+	GlobalVisState *vistest;
+
+	/*
+	 * Contains the cutoffs used for freezing. They are required if the
+	 * HEAP_PAGE_PRUNE_FREEZE option is set. cutoffs->OldestXmin is also used
+	 * to determine if dead tuples are HEAPTUPLE_RECENTLY_DEAD or
+	 * HEAPTUPLE_DEAD. Currently only vacuum passes in cutoffs. Vacuum
+	 * calculates them once, at the beginning of vacuuming the relation.
+	 */
+	struct VacuumCutoffs *cutoffs;
+} PruneFreezeParams;
+
 /*
  * Per-page state returned by heap_page_prune_and_freeze()
  */
@@ -262,13 +314,6 @@ typedef struct PruneFreezeResult
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
 } PruneFreezeResult;
 
-/* 'reason' codes for heap_page_prune_and_freeze() */
-typedef enum
-{
-	PRUNE_ON_ACCESS,			/* on-access pruning */
-	PRUNE_VACUUM_SCAN,			/* VACUUM 1st heap pass */
-	PRUNE_VACUUM_CLEANUP,		/* VACUUM 2nd heap pass */
-} PruneReason;
 
 /* ----------------
  *		function prototypes for heap access method
@@ -278,12 +323,6 @@ typedef enum
  * ----------------
  */
 
-
-/*
- * HeapScanIsValid
- *		True iff the heap scan is valid.
- */
-#define HeapScanIsValid(scan) PointerIsValid(scan)
 
 extern TableScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 									int nkeys, ScanKey key,
@@ -297,7 +336,7 @@ extern void heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 extern void heap_endscan(TableScanDesc sscan);
 extern HeapTuple heap_getnext(TableScanDesc sscan, ScanDirection direction);
 extern bool heap_getnextslot(TableScanDesc sscan,
-							 ScanDirection direction, struct TupleTableSlot *slot);
+							 ScanDirection direction, TupleTableSlot *slot);
 extern void heap_set_tidrange(TableScanDesc sscan, ItemPointer mintid,
 							  ItemPointer maxtid);
 extern bool heap_getnextslot_tidrange(TableScanDesc sscan,
@@ -317,23 +356,23 @@ extern void ReleaseBulkInsertStatePin(BulkInsertState bistate);
 
 extern void heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 						int options, BulkInsertState bistate);
-extern void heap_multi_insert(Relation relation, struct TupleTableSlot **slots,
+extern void heap_multi_insert(Relation relation, TupleTableSlot **slots,
 							  int ntuples, CommandId cid, int options,
 							  BulkInsertState bistate);
-extern TM_Result heap_delete(Relation relation, ItemPointer tid,
+extern TM_Result heap_delete(Relation relation, const ItemPointerData *tid,
 							 CommandId cid, Snapshot crosscheck, bool wait,
-							 struct TM_FailureData *tmfd, bool changingPart);
-extern void heap_finish_speculative(Relation relation, ItemPointer tid);
-extern void heap_abort_speculative(Relation relation, ItemPointer tid);
-extern TM_Result heap_update(Relation relation, ItemPointer otid,
+							 TM_FailureData *tmfd, bool changingPart);
+extern void heap_finish_speculative(Relation relation, const ItemPointerData *tid);
+extern void heap_abort_speculative(Relation relation, const ItemPointerData *tid);
+extern TM_Result heap_update(Relation relation, const ItemPointerData *otid,
 							 HeapTuple newtup,
 							 CommandId cid, Snapshot crosscheck, bool wait,
-							 struct TM_FailureData *tmfd, LockTupleMode *lockmode,
+							 TM_FailureData *tmfd, LockTupleMode *lockmode,
 							 TU_UpdateIndexes *update_indexes);
 extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 								 CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
 								 bool follow_updates,
-								 Buffer *buffer, struct TM_FailureData *tmfd);
+								 Buffer *buffer, TM_FailureData *tmfd);
 
 extern bool heap_inplace_lock(Relation relation,
 							  HeapTuple oldtup_ptr, Buffer buffer,
@@ -362,22 +401,17 @@ extern bool heap_tuple_should_freeze(HeapTupleHeader tuple,
 extern bool heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple);
 
 extern void simple_heap_insert(Relation relation, HeapTuple tup);
-extern void simple_heap_delete(Relation relation, ItemPointer tid);
-extern void simple_heap_update(Relation relation, ItemPointer otid,
+extern void simple_heap_delete(Relation relation, const ItemPointerData *tid);
+extern void simple_heap_update(Relation relation, const ItemPointerData *otid,
 							   HeapTuple tup, TU_UpdateIndexes *update_indexes);
 
 extern TransactionId heap_index_delete_tuples(Relation rel,
 											  TM_IndexDeleteOp *delstate);
 
 /* in heap/pruneheap.c */
-struct GlobalVisState;
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
-extern void heap_page_prune_and_freeze(Relation relation, Buffer buffer,
-									   struct GlobalVisState *vistest,
-									   int options,
-									   struct VacuumCutoffs *cutoffs,
+extern void heap_page_prune_and_freeze(PruneFreezeParams *params,
 									   PruneFreezeResult *presult,
-									   PruneReason reason,
 									   OffsetNumber *off_loc,
 									   TransactionId *new_relfrozen_xid,
 									   MultiXactId *new_relmin_mxid);
@@ -387,6 +421,7 @@ extern void heap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
 									OffsetNumber *nowunused, int nunused);
 extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
 extern void log_heap_prune_and_freeze(Relation relation, Buffer buffer,
+									  Buffer vmbuffer, uint8 vmflags,
 									  TransactionId conflict_xid,
 									  bool cleanup_lock,
 									  PruneReason reason,
@@ -396,9 +431,8 @@ extern void log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 									  OffsetNumber *unused, int nunused);
 
 /* in heap/vacuumlazy.c */
-struct VacuumParams;
 extern void heap_vacuum_rel(Relation rel,
-							struct VacuumParams *params, BufferAccessStrategy bstrategy);
+							const VacuumParams params, BufferAccessStrategy bstrategy);
 
 /* in heap/heapam_visibility.c */
 extern bool HeapTupleSatisfiesVisibility(HeapTuple htup, Snapshot snapshot,
@@ -413,7 +447,7 @@ extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
 								 uint16 infomask, TransactionId xid);
 extern bool HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple);
 extern bool HeapTupleIsSurelyDead(HeapTuple htup,
-								  struct GlobalVisState *vistest);
+								  GlobalVisState *vistest);
 
 /*
  * To avoid leaking too much knowledge about reorderbuffer implementation

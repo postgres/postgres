@@ -495,7 +495,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 	}
 
 	/* No matching var found, so make a new clause-pair data structure */
-	rqelem = (RangeQueryClause *) palloc(sizeof(RangeQueryClause));
+	rqelem = palloc_object(RangeQueryClause);
 	rqelem->var = var;
 	if (is_lobound)
 	{
@@ -874,6 +874,10 @@ clause_selectivity_ext(PlannerInfo *root,
 								  varRelid,
 								  jointype,
 								  sjinfo);
+
+		/* If no support, fall back on boolvarsel */
+		if (s1 < 0)
+			s1 = boolvarsel(root, clause, varRelid);
 	}
 	else if (IsA(clause, ScalarArrayOpExpr))
 	{

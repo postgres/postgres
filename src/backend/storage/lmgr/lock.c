@@ -51,7 +51,7 @@
 
 /* GUC variables */
 int			max_locks_per_xact; /* used to set the lock table size */
-bool		log_lock_failure = false;
+bool		log_lock_failures = false;
 
 #define NLOCKENTS() \
 	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
@@ -415,6 +415,7 @@ static void GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner);
 static void BeginStrongLockAcquire(LOCALLOCK *locallock, uint32 fasthashcode);
 static void FinishStrongLockAcquire(void);
 static ProcWaitStatus WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner);
+static void waitonlock_error_callback(void *arg);
 static void ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock);
 static void LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent);
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
@@ -443,7 +444,7 @@ void
 LockManagerShmemInit(void)
 {
 	HASHCTL		info;
-	long		init_table_size,
+	int64		init_table_size,
 				max_table_size;
 	bool		found;
 
@@ -589,7 +590,7 @@ proclock_hash(const void *key, Size keysize)
 	 * intermediate variable to suppress cast-pointer-to-int warnings.
 	 */
 	procptr = PointerGetDatum(proclocktag->myProc);
-	lockhash ^= ((uint32) procptr) << LOG2_NUM_LOCK_PARTITIONS;
+	lockhash ^= DatumGetUInt32(procptr) << LOG2_NUM_LOCK_PARTITIONS;
 
 	return lockhash;
 }
@@ -610,7 +611,7 @@ ProcLockHashCode(const PROCLOCKTAG *proclocktag, uint32 hashcode)
 	 * This must match proclock_hash()!
 	 */
 	procptr = PointerGetDatum(proclocktag->myProc);
-	lockhash ^= ((uint32) procptr) << LOG2_NUM_LOCK_PARTITIONS;
+	lockhash ^= DatumGetUInt32(procptr) << LOG2_NUM_LOCK_PARTITIONS;
 
 	return lockhash;
 }
@@ -1931,6 +1932,7 @@ static ProcWaitStatus
 WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 {
 	ProcWaitStatus result;
+	ErrorContextCallback waiterrcontext;
 
 	TRACE_POSTGRESQL_LOCK_WAIT_START(locallock->tag.lock.locktag_field1,
 									 locallock->tag.lock.locktag_field2,
@@ -1938,6 +1940,12 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 									 locallock->tag.lock.locktag_field4,
 									 locallock->tag.lock.locktag_type,
 									 locallock->tag.mode);
+
+	/* Setup error traceback support for ereport() */
+	waiterrcontext.callback = waitonlock_error_callback;
+	waiterrcontext.arg = locallock;
+	waiterrcontext.previous = error_context_stack;
+	error_context_stack = &waiterrcontext;
 
 	/* adjust the process title to indicate that it's waiting */
 	set_ps_display_suffix("waiting");
@@ -1990,6 +1998,8 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	/* reset ps display to remove the suffix */
 	set_ps_display_remove_suffix();
 
+	error_context_stack = waiterrcontext.previous;
+
 	TRACE_POSTGRESQL_LOCK_WAIT_DONE(locallock->tag.lock.locktag_field1,
 									locallock->tag.lock.locktag_field2,
 									locallock->tag.lock.locktag_field3,
@@ -1998,6 +2008,28 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 									locallock->tag.mode);
 
 	return result;
+}
+
+/*
+ * error context callback for failures in WaitOnLock
+ *
+ * We report which lock was being waited on, in the same style used in
+ * deadlock reports.  This helps with lock timeout errors in particular.
+ */
+static void
+waitonlock_error_callback(void *arg)
+{
+	LOCALLOCK  *locallock = (LOCALLOCK *) arg;
+	const LOCKTAG *tag = &locallock->tag.lock;
+	LOCKMODE	mode = locallock->tag.mode;
+	StringInfoData locktagbuf;
+
+	initStringInfo(&locktagbuf);
+	DescribeLockTag(&locktagbuf, tag);
+
+	errcontext("waiting for %s on %s",
+			   GetLockmodeName(tag->locktag_lockmethodid, mode),
+			   locktagbuf.data);
 }
 
 /*
@@ -3068,9 +3100,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 								   (MaxBackends + max_prepared_xacts + 1));
 	}
 	else
-		vxids = (VirtualTransactionId *)
-			palloc0(sizeof(VirtualTransactionId) *
-					(MaxBackends + max_prepared_xacts + 1));
+		vxids = palloc0_array(VirtualTransactionId, (MaxBackends + max_prepared_xacts + 1));
 
 	/* Compute hash code and partition lock, and look up conflicting modes. */
 	hashcode = LockTagHashCode(locktag);
@@ -3539,9 +3569,9 @@ AtPrepare_Locks(void)
  * but that probably costs more cycles.
  */
 void
-PostPrepare_Locks(TransactionId xid)
+PostPrepare_Locks(FullTransactionId fxid)
 {
-	PGPROC	   *newproc = TwoPhaseGetDummyProc(xid, false);
+	PGPROC	   *newproc = TwoPhaseGetDummyProc(fxid, false);
 	HASH_SEQ_STATUS status;
 	LOCALLOCK  *locallock;
 	LOCK	   *lock;
@@ -3769,12 +3799,12 @@ GetLockStatusData(void)
 	int			el;
 	int			i;
 
-	data = (LockData *) palloc(sizeof(LockData));
+	data = palloc_object(LockData);
 
 	/* Guess how much space we'll need. */
 	els = MaxBackends;
 	el = 0;
-	data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * els);
+	data->locks = palloc_array(LockInstanceData, els);
 
 	/*
 	 * First, we iterate through the per-backend fast-path arrays, locking
@@ -3969,7 +3999,7 @@ GetBlockerStatusData(int blocked_pid)
 	PGPROC	   *proc;
 	int			i;
 
-	data = (BlockedProcsData *) palloc(sizeof(BlockedProcsData));
+	data = palloc_object(BlockedProcsData);
 
 	/*
 	 * Guess how much space we'll need, and preallocate.  Most of the time
@@ -3979,9 +4009,9 @@ GetBlockerStatusData(int blocked_pid)
 	 */
 	data->nprocs = data->nlocks = data->npids = 0;
 	data->maxprocs = data->maxlocks = data->maxpids = MaxBackends;
-	data->procs = (BlockedProcData *) palloc(sizeof(BlockedProcData) * data->maxprocs);
-	data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * data->maxlocks);
-	data->waiter_pids = (int *) palloc(sizeof(int) * data->maxpids);
+	data->procs = palloc_array(BlockedProcData, data->maxprocs);
+	data->locks = palloc_array(LockInstanceData, data->maxlocks);
+	data->waiter_pids = palloc_array(int, data->maxpids);
 
 	/*
 	 * In order to search the ProcArray for blocked_pid and assume that that
@@ -4324,11 +4354,11 @@ DumpAllLocks(void)
  * and PANIC anyway.
  */
 void
-lock_twophase_recover(TransactionId xid, uint16 info,
+lock_twophase_recover(FullTransactionId fxid, uint16 info,
 					  void *recdata, uint32 len)
 {
 	TwoPhaseLockRecord *rec = (TwoPhaseLockRecord *) recdata;
-	PGPROC	   *proc = TwoPhaseGetDummyProc(xid, false);
+	PGPROC	   *proc = TwoPhaseGetDummyProc(fxid, false);
 	LOCKTAG    *locktag;
 	LOCKMODE	lockmode;
 	LOCKMETHODID lockmethodid;
@@ -4505,7 +4535,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
  * starting up into hot standby mode.
  */
 void
-lock_twophase_standby_recover(TransactionId xid, uint16 info,
+lock_twophase_standby_recover(FullTransactionId fxid, uint16 info,
 							  void *recdata, uint32 len)
 {
 	TwoPhaseLockRecord *rec = (TwoPhaseLockRecord *) recdata;
@@ -4524,7 +4554,7 @@ lock_twophase_standby_recover(TransactionId xid, uint16 info,
 	if (lockmode == AccessExclusiveLock &&
 		locktag->locktag_type == LOCKTAG_RELATION)
 	{
-		StandbyAcquireAccessExclusiveLock(xid,
+		StandbyAcquireAccessExclusiveLock(XidFromFullTransactionId(fxid),
 										  locktag->locktag_field1 /* dboid */ ,
 										  locktag->locktag_field2 /* reloid */ );
 	}
@@ -4537,11 +4567,11 @@ lock_twophase_standby_recover(TransactionId xid, uint16 info,
  * Find and release the lock indicated by the 2PC record.
  */
 void
-lock_twophase_postcommit(TransactionId xid, uint16 info,
+lock_twophase_postcommit(FullTransactionId fxid, uint16 info,
 						 void *recdata, uint32 len)
 {
 	TwoPhaseLockRecord *rec = (TwoPhaseLockRecord *) recdata;
-	PGPROC	   *proc = TwoPhaseGetDummyProc(xid, true);
+	PGPROC	   *proc = TwoPhaseGetDummyProc(fxid, true);
 	LOCKTAG    *locktag;
 	LOCKMETHODID lockmethodid;
 	LockMethod	lockMethodTable;
@@ -4563,10 +4593,10 @@ lock_twophase_postcommit(TransactionId xid, uint16 info,
  * This is actually just the same as the COMMIT case.
  */
 void
-lock_twophase_postabort(TransactionId xid, uint16 info,
+lock_twophase_postabort(FullTransactionId fxid, uint16 info,
 						void *recdata, uint32 len)
 {
-	lock_twophase_postcommit(xid, info, recdata, len);
+	lock_twophase_postcommit(fxid, info, recdata, len);
 }
 
 /*

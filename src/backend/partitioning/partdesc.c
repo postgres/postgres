@@ -37,7 +37,7 @@ typedef struct PartitionDirectoryData
 	MemoryContext pdir_mcxt;
 	HTAB	   *pdir_hash;
 	bool		omit_detached;
-}			PartitionDirectoryData;
+} PartitionDirectoryData;
 
 typedef struct PartitionDirectoryEntry
 {
@@ -426,7 +426,7 @@ CreatePartitionDirectory(MemoryContext mcxt, bool omit_detached)
 	PartitionDirectory pdir;
 	HASHCTL		ctl;
 
-	pdir = palloc(sizeof(PartitionDirectoryData));
+	pdir = palloc_object(PartitionDirectoryData);
 	pdir->pdir_mcxt = mcxt;
 
 	ctl.keysize = sizeof(Oid);

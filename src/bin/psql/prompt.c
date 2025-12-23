@@ -34,6 +34,7 @@
  * %P - pipeline status: on, off or abort
  * %> - database server port number
  * %n - database user name
+ * %S - search_path
  * %s - service
  * %/ - current database
  * %~ - like %/ but "~" when database name equals user name
@@ -167,10 +168,24 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					if (pset.db)
 						strlcpy(buf, session_username(), sizeof(buf));
 					break;
+					/* search_path */
+				case 'S':
+					if (pset.db)
+					{
+						const char *sp = PQparameterStatus(pset.db, "search_path");
+
+						/* Use ? for versions that don't report search_path. */
+						strlcpy(buf, sp ? sp : "?", sizeof(buf));
+					}
+					break;
 					/* service name */
 				case 's':
-					if (pset.db && PQservice(pset.db))
-						strlcpy(buf, PQservice(pset.db), sizeof(buf));
+					{
+						const char *service_name = GetVariable(pset.vars, "SERVICE");
+
+						if (service_name)
+							strlcpy(buf, service_name, sizeof(buf));
+					}
 					break;
 					/* backend pid */
 				case 'p':

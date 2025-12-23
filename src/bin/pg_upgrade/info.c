@@ -443,10 +443,26 @@ get_db_infos(ClusterInfo *cluster)
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
+		char	   *spcloc = PQgetvalue(res, tupnum, i_spclocation);
+		bool		inplace = spcloc[0] && !is_absolute_path(spcloc);
+
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
 		dbinfos[tupnum].db_name = pg_strdup(PQgetvalue(res, tupnum, i_datname));
-		snprintf(dbinfos[tupnum].db_tablespace, sizeof(dbinfos[tupnum].db_tablespace), "%s",
-				 PQgetvalue(res, tupnum, i_spclocation));
+
+		/*
+		 * The tablespace location might be "", meaning the cluster default
+		 * location, i.e. pg_default or pg_global.  For in-place tablespaces,
+		 * pg_tablespace_location() returns a path relative to the data
+		 * directory.
+		 */
+		if (inplace)
+			snprintf(dbinfos[tupnum].db_tablespace,
+					 sizeof(dbinfos[tupnum].db_tablespace),
+					 "%s/%s", cluster->pgdata, spcloc);
+		else
+			snprintf(dbinfos[tupnum].db_tablespace,
+					 sizeof(dbinfos[tupnum].db_tablespace),
+					 "%s", spcloc);
 	}
 	PQclear(res);
 
@@ -482,7 +498,10 @@ get_rel_infos_query(void)
 	 *
 	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * output, so we have to copy that system table.  It's easiest to do that
-	 * by treating it as a user table.
+	 * by treating it as a user table.  We can do the same for
+	 * pg_largeobject_metadata for upgrades from v16 and newer.  pg_upgrade
+	 * can't copy/link the files from older versions because aclitem (needed
+	 * by pg_largeobject_metadata.lomacl) changed its storage format in v16.
 	 */
 	appendPQExpBuffer(&query,
 					  "WITH regular_heap (reloid, indtable, toastheap) AS ( "
@@ -498,10 +517,12 @@ get_rel_infos_query(void)
 					  "                        'binary_upgrade', 'pg_toast') AND "
 					  "      c.oid >= %u::pg_catalog.oid) OR "
 					  "     (n.nspname = 'pg_catalog' AND "
-					  "      relname IN ('pg_largeobject') ))), ",
+					  "      relname IN ('pg_largeobject'%s) ))), ",
 					  (user_opts.transfer_mode == TRANSFER_MODE_SWAP) ?
 					  ", " CppAsString2(RELKIND_SEQUENCE) : "",
-					  FirstNormalObjectId);
+					  FirstNormalObjectId,
+					  (GET_MAJOR_VERSION(old_cluster.major_version) >= 1600) ?
+					  ", 'pg_largeobject_metadata'" : "");
 
 	/*
 	 * Add a CTE that collects OIDs of toast tables belonging to the tables
@@ -616,11 +637,21 @@ process_rel_infos(DbInfo *dbinfo, PGresult *res, void *arg)
 		/* Is the tablespace oid non-default? */
 		if (atooid(PQgetvalue(res, relnum, i_reltablespace)) != 0)
 		{
+			char	   *spcloc = PQgetvalue(res, relnum, i_spclocation);
+			bool		inplace = spcloc[0] && !is_absolute_path(spcloc);
+
 			/*
 			 * The tablespace location might be "", meaning the cluster
-			 * default location, i.e. pg_default or pg_global.
+			 * default location, i.e. pg_default or pg_global.  For in-place
+			 * tablespaces, pg_tablespace_location() returns a path relative
+			 * to the data directory.
 			 */
-			tablespace = PQgetvalue(res, relnum, i_spclocation);
+			if (inplace)
+				tablespace = psprintf("%s/%s",
+									  os_info.running_cluster->pgdata,
+									  spcloc);
+			else
+				tablespace = spcloc;
 
 			/* Can we reuse the previous string allocation? */
 			if (last_tablespace && strcmp(tablespace, last_tablespace) == 0)
@@ -630,6 +661,10 @@ process_rel_infos(DbInfo *dbinfo, PGresult *res, void *arg)
 				last_tablespace = curr->tablespace = pg_strdup(tablespace);
 				curr->tblsp_alloc = true;
 			}
+
+			/* Free palloc'd string for in-place tablespaces. */
+			if (inplace)
+				pfree(tablespace);
 		}
 		else
 			/* A zero reltablespace oid indicates the database tablespace. */
@@ -752,20 +787,33 @@ count_old_cluster_logical_slots(void)
 }
 
 /*
- * get_subscription_count()
+ * get_subscription_info()
  *
- * Gets the number of subscriptions in the cluster.
+ * Gets the information of subscriptions in the cluster.
  */
 void
-get_subscription_count(ClusterInfo *cluster)
+get_subscription_info(ClusterInfo *cluster)
 {
 	PGconn	   *conn;
 	PGresult   *res;
+	int			i_nsub;
+	int			i_retain_dead_tuples;
 
 	conn = connectToServer(cluster, "template1");
-	res = executeQueryOrDie(conn, "SELECT count(*) "
-							"FROM pg_catalog.pg_subscription");
-	cluster->nsubs = atoi(PQgetvalue(res, 0, 0));
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 1900)
+		res = executeQueryOrDie(conn, "SELECT count(*) AS nsub,"
+								"COUNT(CASE WHEN subretaindeadtuples THEN 1 END) > 0 AS retain_dead_tuples "
+								"FROM pg_catalog.pg_subscription");
+	else
+		res = executeQueryOrDie(conn, "SELECT count(*) AS nsub,"
+								"'f' AS retain_dead_tuples "
+								"FROM pg_catalog.pg_subscription");
+
+	i_nsub = PQfnumber(res, "nsub");
+	i_retain_dead_tuples = PQfnumber(res, "retain_dead_tuples");
+
+	cluster->nsubs = atoi(PQgetvalue(res, 0, i_nsub));
+	cluster->sub_retain_dead_tuples = (strcmp(PQgetvalue(res, 0, i_retain_dead_tuples), "t") == 0);
 
 	PQclear(res);
 	PQfinish(conn);

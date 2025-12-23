@@ -614,8 +614,8 @@
     examine this information is to execute queries such as:
 
 <programlisting>
-SELECT c.oid::regclass as table_name,
-       greatest(age(c.relfrozenxid),age(t.relfrozenxid)) as age
+SELECT c.oid::regclass AS table_name,
+       greatest(age(c.relfrozenxid), age(t.relfrozenxid)) AS age
 FROM pg_class c
 LEFT JOIN pg_class t ON c.reltoastrelid = t.oid
 WHERE c.relkind IN ('r', 'm');
@@ -779,7 +779,10 @@ HINT:  Execute a database-wide VACUUM in that database.
      careful aging management, storage cleanup, and wraparound handling.
      There is a separate storage area which holds the list of members in
      each multixact, which also uses a 32-bit counter and which must also
-     be managed.
+     be managed.  The system function
+     <function>pg_get_multixact_members()</function> described in
+     <xref linkend="functions-pg-snapshot"/> can be used to examine the
+     transaction IDs associated with a multixact ID.
     </para>
 
     <para>
@@ -889,7 +892,8 @@ HINT:  Execute a database-wide VACUUM in that database.
     the next database will be processed as soon as the first worker finishes.
     Each worker process will check each table within its database and
     execute <command>VACUUM</command> and/or <command>ANALYZE</command> as needed.
-    <xref linkend="guc-log-autovacuum-min-duration"/> can be set to monitor
+    <xref linkend="guc-log-autovacuum-min-duration"/> and
+    <xref linkend="guc-log-autoanalyze-min-duration"/> can be set to monitor
     autovacuum workers' activity.
    </para>
 
@@ -930,12 +934,16 @@ vacuum threshold = Minimum(vacuum max threshold, vacuum base threshold + vacuum 
     The table is also vacuumed if the number of tuples inserted since the last
     vacuum has exceeded the defined insert threshold, which is defined as:
 <programlisting>
-vacuum insert threshold = vacuum base insert threshold + vacuum insert scale factor * number of tuples
+vacuum insert threshold = vacuum base insert threshold + vacuum insert scale factor * number of tuples * percent of table not frozen
 </programlisting>
     where the vacuum insert base threshold is
     <xref linkend="guc-autovacuum-vacuum-insert-threshold"/>,
-    and vacuum insert scale factor is
-    <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>.
+    the vacuum insert scale factor is
+    <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>,
+    the number of tuples is
+    <structname>pg_class</structname>.<structfield>reltuples</structfield>,
+    and the percent of the table not frozen is
+    <literal>1 - pg_class.relallfrozen / pg_class.relpages</literal>.
     Such vacuums may allow portions of the table to be marked as
     <firstterm>all visible</firstterm> and also allow tuples to be frozen, which
     can reduce the work required in subsequent vacuums.
@@ -1010,8 +1018,11 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     see <xref linkend="table-lock-compatibility"/>.  However, if the autovacuum
     is running to prevent transaction ID wraparound (i.e., the autovacuum query
     name in the <structname>pg_stat_activity</structname> view ends with
-    <literal>(to prevent wraparound)</literal>), the autovacuum is not
-    automatically interrupted.
+    <literal>(to prevent wraparound)</literal> or the
+    <structfield>started_by</structfield> column in the
+    <structname>pg_stat_progress_vacuum</structname> view shows
+    <literal>autovacuum_wraparound</literal> value), the autovacuum is
+    not automatically interrupted.
    </para>
 
    <warning>

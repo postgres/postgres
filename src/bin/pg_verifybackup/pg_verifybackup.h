@@ -96,9 +96,9 @@ typedef struct verifier_context
 } verifier_context;
 
 extern void report_backup_error(verifier_context *context,
-								const char *pg_restrict fmt,...)
+								const char *restrict fmt,...)
 			pg_attribute_printf(2, 3);
-pg_noreturn extern void report_fatal_error(const char *pg_restrict fmt,...)
+pg_noreturn extern void report_fatal_error(const char *restrict fmt,...)
 			pg_attribute_printf(1, 2);
 extern bool should_ignore_relpath(verifier_context *context,
 								  const char *relpath);

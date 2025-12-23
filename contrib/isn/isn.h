@@ -24,8 +24,6 @@
  */
 typedef uint64 ean13;
 
-#define EAN13_FORMAT UINT64_FORMAT
-
 #define PG_GETARG_EAN13(n) PG_GETARG_INT64(n)
 #define PG_RETURN_EAN13(x) PG_RETURN_INT64(x)
 

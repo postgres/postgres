@@ -75,7 +75,7 @@ typedef HeapTupleData *HeapTuple;
 /*
  * Accessor macros to be used with HeapTuple pointers.
  */
-#define HeapTupleIsValid(tuple) PointerIsValid(tuple)
+#define HeapTupleIsValid(tuple) ((tuple) != NULL)
 
 /* HeapTupleHeader functions implemented in utils/time/combocid.c */
 extern CommandId HeapTupleHeaderGetCmin(const HeapTupleHeaderData *tup);

@@ -445,7 +445,7 @@
      join sequence.  The planner preferentially considers joins between any
      two relations for which there exists a corresponding join clause in the
      <literal>WHERE</literal> qualification (i.e., for
-     which a restriction like <literal>where rel1.attr1=rel2.attr2</literal>
+     which a restriction like <literal>WHERE rel1.attr1 = rel2.attr2</literal>
      exists). Join pairs with no join clause are considered only when there
      is no other choice, that is, a particular relation has no available
      join clauses to any other relation. All possible plans are generated for

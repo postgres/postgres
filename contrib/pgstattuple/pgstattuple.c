@@ -378,7 +378,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 			buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
 										RBM_NORMAL, hscan->rs_strategy);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
-			stat.free_space += PageGetExactFreeSpace((Page) BufferGetPage(buffer));
+			stat.free_space += PageGetExactFreeSpace(BufferGetPage(buffer));
 			UnlockReleaseBuffer(buffer);
 			block++;
 		}
@@ -391,7 +391,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
 									RBM_NORMAL, hscan->rs_strategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		stat.free_space += PageGetExactFreeSpace((Page) BufferGetPage(buffer));
+		stat.free_space += PageGetExactFreeSpace(BufferGetPage(buffer));
 		UnlockReleaseBuffer(buffer);
 		block++;
 	}
@@ -424,7 +424,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 		/* fully empty page */
 		stat->free_space += BLCKSZ;
 	}
-	else
+	else if (PageGetSpecialSize(page) == MAXALIGN(sizeof(BTPageOpaqueData)))
 	{
 		BTPageOpaque opaque;
 
@@ -458,10 +458,16 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	Buffer		buf;
 	Page		page;
 
-	buf = _hash_getbuf_with_strategy(rel, blkno, HASH_READ, 0, bstrategy);
+	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
+	LockBuffer(buf, HASH_READ);
 	page = BufferGetPage(buf);
 
-	if (PageGetSpecialSize(page) == MAXALIGN(sizeof(HashPageOpaqueData)))
+	if (PageIsNew(page))
+	{
+		/* fully empty page */
+		stat->free_space += BLCKSZ;
+	}
+	else if (PageGetSpecialSize(page) == MAXALIGN(sizeof(HashPageOpaqueData)))
 	{
 		HashPageOpaque opaque;
 
@@ -502,17 +508,23 @@ pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 	LockBuffer(buf, GIST_SHARE);
-	gistcheckpage(rel, buf);
 	page = BufferGetPage(buf);
-
-	if (GistPageIsLeaf(page))
+	if (PageIsNew(page))
 	{
-		pgstat_index_page(stat, page, FirstOffsetNumber,
-						  PageGetMaxOffsetNumber(page));
+		/* fully empty page */
+		stat->free_space += BLCKSZ;
 	}
-	else
+	else if (PageGetSpecialSize(page) == MAXALIGN(sizeof(GISTPageOpaqueData)))
 	{
-		/* root or node */
+		if (GistPageIsLeaf(page))
+		{
+			pgstat_index_page(stat, page, FirstOffsetNumber,
+							  PageGetMaxOffsetNumber(page));
+		}
+		else
+		{
+			/* root or node */
+		}
 	}
 
 	UnlockReleaseBuffer(buf);

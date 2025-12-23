@@ -243,9 +243,7 @@ typedef struct TParser
 	/* string and position information */
 	char	   *str;			/* multibyte string */
 	int			lenstr;			/* length of mbstring */
-	wchar_t    *wstr;			/* wide character string */
 	pg_wchar   *pgwstr;			/* wide character string for C-locale */
-	bool		usewide;
 
 	/* State of parse */
 	int			charmaxlen;
@@ -271,7 +269,7 @@ static bool TParserGet(TParser *prs);
 static TParserPosition *
 newTParserPosition(TParserPosition *prev)
 {
-	TParserPosition *res = (TParserPosition *) palloc(sizeof(TParserPosition));
+	TParserPosition *res = palloc_object(TParserPosition);
 
 	if (prev)
 		memcpy(res, prev, sizeof(TParserPosition));
@@ -288,38 +286,13 @@ newTParserPosition(TParserPosition *prev)
 static TParser *
 TParserInit(char *str, int len)
 {
-	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
+	TParser    *prs = palloc0_object(TParser);
 
 	prs->charmaxlen = pg_database_encoding_max_length();
 	prs->str = str;
 	prs->lenstr = len;
-
-	/*
-	 * Use wide char code only when max encoding length > 1.
-	 */
-	if (prs->charmaxlen > 1)
-	{
-		pg_locale_t mylocale = 0;	/* TODO */
-
-		prs->usewide = true;
-		if (database_ctype_is_c)
-		{
-			/*
-			 * char2wchar doesn't work for C-locale and sizeof(pg_wchar) could
-			 * be different from sizeof(wchar_t)
-			 */
-			prs->pgwstr = (pg_wchar *) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
-			pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
-		}
-		else
-		{
-			prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr + 1));
-			char2wchar(prs->wstr, prs->lenstr + 1, prs->str, prs->lenstr,
-					   mylocale);
-		}
-	}
-	else
-		prs->usewide = false;
+	prs->pgwstr = palloc_array(pg_wchar, prs->lenstr + 1);
+	pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
 
 	prs->state = newTParserPosition(NULL);
 	prs->state->state = TPS_Base;
@@ -345,17 +318,14 @@ TParserInit(char *str, int len)
 static TParser *
 TParserCopyInit(const TParser *orig)
 {
-	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
+	TParser    *prs = palloc0_object(TParser);
 
 	prs->charmaxlen = orig->charmaxlen;
 	prs->str = orig->str + orig->state->posbyte;
 	prs->lenstr = orig->lenstr - orig->state->posbyte;
-	prs->usewide = orig->usewide;
 
 	if (orig->pgwstr)
 		prs->pgwstr = orig->pgwstr + orig->state->poschar;
-	if (orig->wstr)
-		prs->wstr = orig->wstr + orig->state->poschar;
 
 	prs->state = newTParserPosition(NULL);
 	prs->state->state = TPS_Base;
@@ -379,8 +349,6 @@ TParserClose(TParser *prs)
 		prs->state = ptr;
 	}
 
-	if (prs->wstr)
-		pfree(prs->wstr);
 	if (prs->pgwstr)
 		pfree(prs->pgwstr);
 
@@ -412,13 +380,9 @@ TParserCopyClose(TParser *prs)
 
 
 /*
- * Character-type support functions, equivalent to is* macros, but
- * working with any possible encodings and locales. Notes:
- *	- with multibyte encoding and C-locale isw* function may fail
- *	  or give wrong result.
- *	- multibyte encoding and C-locale often are used for
- *	  Asian languages.
- *	- if locale is C then we use pgwstr instead of wstr.
+ * Character-type support functions using the database default locale. If the
+ * locale is C, and the input character is non-ascii, the value to be returned
+ * is determined by the 'nonascii' macro argument.
  */
 
 #define p_iswhat(type, nonascii)											\
@@ -426,19 +390,13 @@ TParserCopyClose(TParser *prs)
 static int																	\
 p_is##type(TParser *prs)													\
 {																			\
+	pg_locale_t locale = pg_database_locale();								\
+	pg_wchar	wc;															\
 	Assert(prs->state);														\
-	if (prs->usewide)														\
-	{																		\
-		if (prs->pgwstr)													\
-		{																	\
-			unsigned int c = *(prs->pgwstr + prs->state->poschar);			\
-			if (c > 0x7f)													\
-				return nonascii;											\
-			return is##type(c);												\
-		}																	\
-		return isw##type(*(prs->wstr + prs->state->poschar));				\
-	}																		\
-	return is##type(*(unsigned char *) (prs->str + prs->state->posbyte));	\
+	wc = prs->pgwstr[prs->state->poschar];									\
+	if (prs->charmaxlen > 1 && locale->ctype_is_c && wc > 0x7f)				\
+		return nonascii;													\
+	return pg_isw##type(wc, pg_database_locale());						\
 }																			\
 																			\
 static int																	\
@@ -703,7 +661,7 @@ p_isspecial(TParser *prs)
 	 * Check that only in utf encoding, because other encodings aren't
 	 * supported by postgres or even exists.
 	 */
-	if (GetDatabaseEncoding() == PG_UTF8 && prs->usewide)
+	if (GetDatabaseEncoding() == PG_UTF8)
 	{
 		static const pg_wchar strange_letter[] = {
 			/*
@@ -944,10 +902,7 @@ p_isspecial(TParser *prs)
 				   *StopMiddle;
 		pg_wchar	c;
 
-		if (prs->pgwstr)
-			c = *(prs->pgwstr + prs->state->poschar);
-		else
-			c = (pg_wchar) *(prs->wstr + prs->state->poschar);
+		c = *(prs->pgwstr + prs->state->poschar);
 
 		while (StopLow < StopHigh)
 		{
@@ -1877,7 +1832,7 @@ TParserGet(TParser *prs)
 Datum
 prsd_lextype(PG_FUNCTION_ARGS)
 {
-	LexDescr   *descr = (LexDescr *) palloc(sizeof(LexDescr) * (LASTNUM + 1));
+	LexDescr   *descr = palloc_array(LexDescr, LASTNUM + 1);
 	int			i;
 
 	for (i = 1; i <= LASTNUM; i++)
@@ -1994,7 +1949,7 @@ checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 
 			if (!data->pos)
 			{
-				data->pos = palloc(sizeof(WordEntryPos) * checkval->len);
+				data->pos = palloc_array(WordEntryPos, checkval->len);
 				data->allocated = true;
 				data->npos = 1;
 				data->pos[0] = checkval->words[i].pos;

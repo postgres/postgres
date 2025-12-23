@@ -15,6 +15,7 @@
 
 #include "access/table.h"
 #include "access/tableam.h"
+#include "catalog/index.h"
 #include "catalog/partition.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
@@ -173,11 +174,11 @@ static void FormPartitionKeyDatum(PartitionDispatch pd,
 								  EState *estate,
 								  Datum *values,
 								  bool *isnull);
-static int	get_partition_for_tuple(PartitionDispatch pd, Datum *values,
-									bool *isnull);
+static int	get_partition_for_tuple(PartitionDispatch pd, const Datum *values,
+									const bool *isnull);
 static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
-												  Datum *values,
-												  bool *isnull,
+												  const Datum *values,
+												  const bool *isnull,
 												  int maxfieldlen);
 static List *adjust_partition_colnos(List *colnos, ResultRelInfo *leaf_part_rri);
 static List *adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap);
@@ -226,7 +227,7 @@ ExecSetupPartitionTupleRouting(EState *estate, Relation rel)
 	 * The reason for this is that a common case is for INSERT to insert a
 	 * single tuple into a partitioned table and this must be fast.
 	 */
-	proute = (PartitionTupleRouting *) palloc0(sizeof(PartitionTupleRouting));
+	proute = palloc0_object(PartitionTupleRouting);
 	proute->partition_root = rel;
 	proute->memcxt = CurrentMemoryContext;
 	/* Rest of members initialized by zeroing */
@@ -360,8 +361,12 @@ ExecFindPartition(ModifyTableState *mtstate,
 											   true, false);
 				if (rri)
 				{
+					ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+
 					/* Verify this ResultRelInfo allows INSERTs */
-					CheckValidResultRel(rri, CMD_INSERT, NIL);
+					CheckValidResultRel(rri, CMD_INSERT,
+										node ? node->onConflictAction : ONCONFLICT_NONE,
+										NIL);
 
 					/*
 					 * Initialize information needed to insert this and
@@ -487,6 +492,65 @@ ExecFindPartition(ModifyTableState *mtstate,
 }
 
 /*
+ * IsIndexCompatibleAsArbiter
+ *		Return true if two indexes are identical for INSERT ON CONFLICT
+ *		purposes.
+ *
+ * Only indexes of the same relation are supported.
+ */
+static bool
+IsIndexCompatibleAsArbiter(Relation arbiterIndexRelation,
+						   IndexInfo *arbiterIndexInfo,
+						   Relation indexRelation,
+						   IndexInfo *indexInfo)
+{
+	Assert(arbiterIndexRelation->rd_index->indrelid == indexRelation->rd_index->indrelid);
+
+	/* must match whether they're unique */
+	if (arbiterIndexInfo->ii_Unique != indexInfo->ii_Unique)
+		return false;
+
+	/* No support currently for comparing exclusion indexes. */
+	if (arbiterIndexInfo->ii_ExclusionOps != NULL ||
+		indexInfo->ii_ExclusionOps != NULL)
+		return false;
+
+	/* the "nulls not distinct" criterion must match */
+	if (arbiterIndexInfo->ii_NullsNotDistinct !=
+		indexInfo->ii_NullsNotDistinct)
+		return false;
+
+	/* number of key attributes must match */
+	if (arbiterIndexInfo->ii_NumIndexKeyAttrs !=
+		indexInfo->ii_NumIndexKeyAttrs)
+		return false;
+
+	for (int i = 0; i < arbiterIndexInfo->ii_NumIndexKeyAttrs; i++)
+	{
+		if (arbiterIndexRelation->rd_indcollation[i] !=
+			indexRelation->rd_indcollation[i])
+			return false;
+
+		if (arbiterIndexRelation->rd_opfamily[i] !=
+			indexRelation->rd_opfamily[i])
+			return false;
+
+		if (arbiterIndexRelation->rd_index->indkey.values[i] !=
+			indexRelation->rd_index->indkey.values[i])
+			return false;
+	}
+
+	if (list_difference(RelationGetIndexExpressions(arbiterIndexRelation),
+						RelationGetIndexExpressions(indexRelation)) != NIL)
+		return false;
+
+	if (list_difference(RelationGetIndexPredicate(arbiterIndexRelation),
+						RelationGetIndexPredicate(indexRelation)) != NIL)
+		return false;
+	return true;
+}
+
+/*
  * ExecInitPartitionInfo
  *		Lock the partition and initialize ResultRelInfo.  Also setup other
  *		information for the partition and store it in the next empty slot in
@@ -527,7 +591,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * partition-key becomes a DELETE+INSERT operation, so this check is still
 	 * required when the operation is CMD_UPDATE.
 	 */
-	CheckValidResultRel(leaf_part_rri, CMD_INSERT, NIL);
+	CheckValidResultRel(leaf_part_rri, CMD_INSERT,
+						node ? node->onConflictAction : ONCONFLICT_NONE, NIL);
 
 	/*
 	 * Open partition indices.  The user may have asked to check for conflicts
@@ -684,44 +749,117 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	{
 		TupleDesc	partrelDesc = RelationGetDescr(partrel);
 		ExprContext *econtext = mtstate->ps.ps_ExprContext;
-		ListCell   *lc;
 		List	   *arbiterIndexes = NIL;
+		int			additional_arbiters = 0;
 
 		/*
 		 * If there is a list of arbiter indexes, map it to a list of indexes
-		 * in the partition.  We do that by scanning the partition's index
-		 * list and searching for ancestry relationships to each index in the
-		 * ancestor table.
+		 * in the partition.  We also add any "identical indexes" to any of
+		 * those, to cover the case where one of them is concurrently being
+		 * reindexed.
 		 */
 		if (rootResultRelInfo->ri_onConflictArbiterIndexes != NIL)
 		{
-			List	   *childIdxs;
+			List	   *unparented_idxs = NIL,
+					   *arbiters_listidxs = NIL;
 
-			childIdxs = RelationGetIndexList(leaf_part_rri->ri_RelationDesc);
-
-			foreach(lc, childIdxs)
+			for (int listidx = 0; listidx < leaf_part_rri->ri_NumIndices; listidx++)
 			{
-				Oid			childIdx = lfirst_oid(lc);
+				Oid			indexoid;
 				List	   *ancestors;
-				ListCell   *lc2;
 
-				ancestors = get_partition_ancestors(childIdx);
-				foreach(lc2, rootResultRelInfo->ri_onConflictArbiterIndexes)
+				/*
+				 * If one of this index's ancestors is in the root's arbiter
+				 * list, then use this index as arbiter for this partition.
+				 * Otherwise, if this index has no parent, track it for later,
+				 * in case REINDEX CONCURRENTLY is working on one of the
+				 * arbiters.
+				 *
+				 * XXX get_partition_ancestors is slow: it scans pg_inherits
+				 * each time.  Consider a syscache or some other way to cache?
+				 */
+				indexoid = RelationGetRelid(leaf_part_rri->ri_IndexRelationDescs[listidx]);
+				ancestors = get_partition_ancestors(indexoid);
+				if (ancestors != NIL)
 				{
-					if (list_member_oid(ancestors, lfirst_oid(lc2)))
-						arbiterIndexes = lappend_oid(arbiterIndexes, childIdx);
+					foreach_oid(parent_idx, rootResultRelInfo->ri_onConflictArbiterIndexes)
+					{
+						if (list_member_oid(ancestors, parent_idx))
+						{
+							arbiterIndexes = lappend_oid(arbiterIndexes, indexoid);
+							arbiters_listidxs = lappend_int(arbiters_listidxs, listidx);
+							break;
+						}
+					}
 				}
+				else
+					unparented_idxs = lappend_int(unparented_idxs, listidx);
 				list_free(ancestors);
 			}
+
+			/*
+			 * If we found any indexes with no ancestors, it's possible that
+			 * some arbiter index is undergoing concurrent reindex.  Match all
+			 * unparented indexes against arbiters; add unparented matching
+			 * ones as "additional arbiters".
+			 *
+			 * This is critical so that all concurrent transactions use the
+			 * same set as arbiters during REINDEX CONCURRENTLY, to avoid
+			 * spurious "duplicate key" errors.
+			 */
+			if (unparented_idxs && arbiterIndexes)
+			{
+				foreach_int(unparented_i, unparented_idxs)
+				{
+					Relation	unparented_rel;
+					IndexInfo  *unparenred_ii;
+
+					unparented_rel = leaf_part_rri->ri_IndexRelationDescs[unparented_i];
+					unparenred_ii = leaf_part_rri->ri_IndexRelationInfo[unparented_i];
+
+					Assert(!list_member_oid(arbiterIndexes,
+											unparented_rel->rd_index->indexrelid));
+
+					/* Ignore indexes not ready */
+					if (!unparenred_ii->ii_ReadyForInserts)
+						continue;
+
+					foreach_int(arbiter_i, arbiters_listidxs)
+					{
+						Relation	arbiter_rel;
+						IndexInfo  *arbiter_ii;
+
+						arbiter_rel = leaf_part_rri->ri_IndexRelationDescs[arbiter_i];
+						arbiter_ii = leaf_part_rri->ri_IndexRelationInfo[arbiter_i];
+
+						/*
+						 * If the non-ancestor index is compatible with the
+						 * arbiter, use the non-ancestor as arbiter too.
+						 */
+						if (IsIndexCompatibleAsArbiter(arbiter_rel,
+													   arbiter_ii,
+													   unparented_rel,
+													   unparenred_ii))
+						{
+							arbiterIndexes = lappend_oid(arbiterIndexes,
+														 unparented_rel->rd_index->indexrelid);
+							additional_arbiters++;
+							break;
+						}
+					}
+				}
+			}
+			list_free(unparented_idxs);
+			list_free(arbiters_listidxs);
 		}
 
 		/*
-		 * If the resulting lists are of inequal length, something is wrong.
-		 * (This shouldn't happen, since arbiter index selection should not
-		 * pick up an invalid index.)
+		 * We expect to find as many arbiter indexes on this partition as the
+		 * root has, plus however many "additional arbiters" (to wit: those
+		 * being concurrently rebuilt) we found.
 		 */
 		if (list_length(rootResultRelInfo->ri_onConflictArbiterIndexes) !=
-			list_length(arbiterIndexes))
+			list_length(arbiterIndexes) - additional_arbiters)
 			elog(ERROR, "invalid arbiter index list");
 		leaf_part_rri->ri_onConflictArbiterIndexes = arbiterIndexes;
 
@@ -850,7 +988,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 											&found_whole_row);
 					/* We ignore the value of found_whole_row. */
 					onconfl->oc_WhereClause =
-						ExecInitQual((List *) clause, &mtstate->ps);
+						ExecInitQual(clause, &mtstate->ps);
 				}
 			}
 		}
@@ -1060,10 +1198,8 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		if (proute->max_partitions == 0)
 		{
 			proute->max_partitions = 8;
-			proute->partitions = (ResultRelInfo **)
-				palloc(sizeof(ResultRelInfo *) * proute->max_partitions);
-			proute->is_borrowed_rel = (bool *)
-				palloc(sizeof(bool) * proute->max_partitions);
+			proute->partitions = palloc_array(ResultRelInfo *, proute->max_partitions);
+			proute->is_borrowed_rel = palloc_array(bool, proute->max_partitions);
 		}
 		else
 		{
@@ -1178,10 +1314,8 @@ ExecInitPartitionDispatchInfo(EState *estate,
 		if (proute->max_dispatch == 0)
 		{
 			proute->max_dispatch = 4;
-			proute->partition_dispatch_info = (PartitionDispatch *)
-				palloc(sizeof(PartitionDispatch) * proute->max_dispatch);
-			proute->nonleaf_partitions = (ResultRelInfo **)
-				palloc(sizeof(ResultRelInfo *) * proute->max_dispatch);
+			proute->partition_dispatch_info = palloc_array(PartitionDispatch, proute->max_dispatch);
+			proute->nonleaf_partitions = palloc_array(ResultRelInfo *, proute->max_dispatch);
 		}
 		else
 		{
@@ -1391,7 +1525,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
  * found or -1 if none found.
  */
 static int
-get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
+get_partition_for_tuple(PartitionDispatch pd, const Datum *values, const bool *isnull)
 {
 	int			bound_offset = -1;
 	int			part_index = -1;
@@ -1612,8 +1746,8 @@ get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
  */
 static char *
 ExecBuildSlotPartitionKeyDescription(Relation rel,
-									 Datum *values,
-									 bool *isnull,
+									 const Datum *values,
+									 const bool *isnull,
 									 int maxfieldlen)
 {
 	StringInfoData buf;
@@ -2073,7 +2207,7 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 			 * arrays are in partition bounds order.
 			 */
 			pprune->nparts = partdesc->nparts;
-			pprune->subplan_map = palloc(sizeof(int) * partdesc->nparts);
+			pprune->subplan_map = palloc_array(int, partdesc->nparts);
 
 			if (partdesc->nparts == pinfo->nparts &&
 				memcmp(partdesc->oids, pinfo->relid_map,
@@ -2100,8 +2234,8 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 				 * attached.  Cope with that by creating a map that skips any
 				 * mismatches.
 				 */
-				pprune->subpart_map = palloc(sizeof(int) * partdesc->nparts);
-				pprune->leafpart_rti_map = palloc(sizeof(int) * partdesc->nparts);
+				pprune->subpart_map = palloc_array(int, partdesc->nparts);
+				pprune->leafpart_rti_map = palloc_array(int, partdesc->nparts);
 
 				for (pp_idx = 0; pp_idx < partdesc->nparts; pp_idx++)
 				{
@@ -2252,16 +2386,14 @@ InitPartitionPruneContext(PartitionPruneContext *context,
 	context->partsupfunc = partkey->partsupfunc;
 
 	/* We'll look up type-specific support functions as needed */
-	context->stepcmpfuncs = (FmgrInfo *)
-		palloc0(sizeof(FmgrInfo) * n_steps * partnatts);
+	context->stepcmpfuncs = palloc0_array(FmgrInfo, n_steps * partnatts);
 
 	context->ppccontext = CurrentMemoryContext;
 	context->planstate = planstate;
 	context->exprcontext = econtext;
 
 	/* Initialize expression state for each expression we need */
-	context->exprstates = (ExprState **)
-		palloc0(sizeof(ExprState *) * n_steps * partnatts);
+	context->exprstates = palloc0_array(ExprState *, n_steps * partnatts);
 	foreach(lc, pruning_steps)
 	{
 		PartitionPruneStepOp *step = (PartitionPruneStepOp *) lfirst(lc);
@@ -2362,7 +2494,7 @@ InitExecPartitionPruneContexts(PartitionPruneState *prunestate,
 		 * indexes to new ones.  For convenience of initialization, we use
 		 * 1-based indexes in this array and leave pruned items as 0.
 		 */
-		new_subplan_indexes = (int *) palloc0(sizeof(int) * n_total_subplans);
+		new_subplan_indexes = palloc0_array(int, n_total_subplans);
 		newidx = 1;
 		i = -1;
 		while ((i = bms_next_member(initially_valid_subplans, i)) >= 0)

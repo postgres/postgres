@@ -322,7 +322,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 						   PlanRowMark *top_parentrc, LOCKMODE lockmode)
 {
 	PartitionDesc partdesc;
-	Bitmapset  *live_parts;
 	int			num_live_parts;
 	int			i;
 
@@ -336,16 +335,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	/* A partitioned table should always have a partition descriptor. */
 	Assert(partdesc);
 
-	/*
-	 * Note down whether any partition key cols are being updated. Though it's
-	 * the root partitioned table's updatedCols we are interested in,
-	 * parent_updatedCols provided by the caller contains the root partrel's
-	 * updatedCols translated to match the attribute ordering of parentrel.
-	 */
-	if (!root->partColsUpdated)
-		root->partColsUpdated =
-			has_partition_attrs(parentrel, parent_updatedCols, NULL);
-
 	/* Nothing further to do here if there are no partitions. */
 	if (partdesc->nparts == 0)
 		return;
@@ -356,10 +345,10 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	 * that survive pruning.  Below, we will initialize child objects for the
 	 * surviving partitions.
 	 */
-	relinfo->live_parts = live_parts = prune_append_rel_partitions(relinfo);
+	relinfo->live_parts = prune_append_rel_partitions(relinfo);
 
 	/* Expand simple_rel_array and friends to hold child objects. */
-	num_live_parts = bms_num_members(live_parts);
+	num_live_parts = bms_num_members(relinfo->live_parts);
 	if (num_live_parts > 0)
 		expand_planner_arrays(root, num_live_parts);
 
@@ -378,7 +367,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	 * table itself, because it's not going to be scanned.
 	 */
 	i = -1;
-	while ((i = bms_next_member(live_parts, i)) >= 0)
+	while ((i = bms_next_member(relinfo->live_parts, i)) >= 0)
 	{
 		Oid			childOID = partdesc->oids[i];
 		Relation	childrel;
@@ -466,8 +455,7 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 								Index *childRTindex_p)
 {
 	Query	   *parse = root->parse;
-	Oid			parentOID PG_USED_FOR_ASSERTS_ONLY =
-		RelationGetRelid(parentrel);
+	Oid			parentOID = RelationGetRelid(parentrel);
 	Oid			childOID = RelationGetRelid(childrel);
 	RangeTblEntry *childrte;
 	Index		childRTindex;
@@ -512,6 +500,13 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	childRTindex = list_length(parse->rtable);
 	*childrte_p = childrte;
 	*childRTindex_p = childRTindex;
+
+	/*
+	 * Retrieve column not-null constraint information for the child relation
+	 * if its relation OID is different from the parent's.
+	 */
+	if (childOID != parentOID)
+		get_relation_notnullatts(root, childrel);
 
 	/*
 	 * Build an AppendRelInfo struct for each parent/child pair.

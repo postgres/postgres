@@ -16,7 +16,6 @@
 
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"

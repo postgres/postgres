@@ -70,7 +70,7 @@ bbsink_zstd_new(bbsink *next, pg_compress_specification *compress)
 
 	Assert(next != NULL);
 
-	sink = palloc0(sizeof(bbsink_zstd));
+	sink = palloc0_object(bbsink_zstd);
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_zstd_ops;
 	sink->base.bbs_next = next;
 	sink->compress = compress;

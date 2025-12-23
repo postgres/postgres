@@ -1,0 +1,355 @@
+Parsed test spec with 1 sessions
+
+starting permutation: create_table fill_500 create_btree flush disable_seq disable_bitmap measure access flush result measure access flush result delete flush measure access flush result measure access flush result drop_table
+step create_table: CREATE TEMPORARY TABLE kill_prior_tuple(key int not null, cat text not null);
+step fill_500: INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM generate_series(1, 500) g(i);
+step create_btree: CREATE INDEX kill_prior_tuple_btree ON kill_prior_tuple USING btree (key);
+step flush: SELECT FROM pg_stat_force_next_flush();
+step disable_seq: SET enable_seqscan = false;
+step disable_bitmap: SET enable_bitmapscan = false;
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                            
+--------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_btree on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                               
+  Index Searches: 1                                                                   
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                            
+--------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_btree on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                               
+  Index Searches: 1                                                                   
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step delete: DELETE FROM kill_prior_tuple;
+step flush: SELECT FROM pg_stat_force_next_flush();
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                            
+--------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_btree on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                               
+  Index Searches: 1                                                                   
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                            
+--------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_btree on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                               
+  Index Searches: 1                                                                   
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                0
+(1 row)
+
+step drop_table: DROP TABLE IF EXISTS kill_prior_tuple;
+
+starting permutation: create_table fill_500 create_ext_btree_gist create_gist flush disable_seq disable_bitmap measure access flush result measure access flush result delete flush measure access flush result measure access flush result drop_table drop_ext_btree_gist
+step create_table: CREATE TEMPORARY TABLE kill_prior_tuple(key int not null, cat text not null);
+step fill_500: INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM generate_series(1, 500) g(i);
+step create_ext_btree_gist: CREATE EXTENSION btree_gist;
+step create_gist: CREATE INDEX kill_prior_tuple_gist ON kill_prior_tuple USING gist (key);
+step flush: SELECT FROM pg_stat_force_next_flush();
+step disable_seq: SET enable_seqscan = false;
+step disable_bitmap: SET enable_bitmapscan = false;
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step delete: DELETE FROM kill_prior_tuple;
+step flush: SELECT FROM pg_stat_force_next_flush();
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                0
+(1 row)
+
+step drop_table: DROP TABLE IF EXISTS kill_prior_tuple;
+step drop_ext_btree_gist: DROP EXTENSION btree_gist;
+
+starting permutation: create_table fill_10 create_ext_btree_gist create_gist flush disable_seq disable_bitmap measure access flush result measure access flush result delete flush measure access flush result measure access flush result drop_table drop_ext_btree_gist
+step create_table: CREATE TEMPORARY TABLE kill_prior_tuple(key int not null, cat text not null);
+step fill_10: INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM generate_series(1, 10) g(i);
+step create_ext_btree_gist: CREATE EXTENSION btree_gist;
+step create_gist: CREATE INDEX kill_prior_tuple_gist ON kill_prior_tuple USING gist (key);
+step flush: SELECT FROM pg_stat_force_next_flush();
+step disable_seq: SET enable_seqscan = false;
+step disable_bitmap: SET enable_bitmapscan = false;
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step delete: DELETE FROM kill_prior_tuple;
+step flush: SELECT FROM pg_stat_force_next_flush();
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_gist on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step drop_table: DROP TABLE IF EXISTS kill_prior_tuple;
+step drop_ext_btree_gist: DROP EXTENSION btree_gist;
+
+starting permutation: create_table fill_500 create_hash flush disable_seq disable_bitmap measure access flush result measure access flush result delete flush measure access flush result measure access flush result drop_table
+step create_table: CREATE TEMPORARY TABLE kill_prior_tuple(key int not null, cat text not null);
+step fill_500: INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM generate_series(1, 500) g(i);
+step create_hash: CREATE INDEX kill_prior_tuple_hash ON kill_prior_tuple USING hash (key);
+step flush: SELECT FROM pg_stat_force_next_flush();
+step disable_seq: SET enable_seqscan = false;
+step disable_bitmap: SET enable_bitmapscan = false;
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_hash on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_hash on kill_prior_tuple (actual rows=1.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step delete: DELETE FROM kill_prior_tuple;
+step flush: SELECT FROM pg_stat_force_next_flush();
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_hash on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                           
+-------------------------------------------------------------------------------------
+Index Scan using kill_prior_tuple_hash on kill_prior_tuple (actual rows=0.00 loops=1)
+  Index Cond: (key = 1)                                                              
+  Index Searches: 1                                                                  
+(3 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                0
+(1 row)
+
+step drop_table: DROP TABLE IF EXISTS kill_prior_tuple;
+
+starting permutation: create_table fill_500 create_ext_btree_gin create_gin flush disable_seq delete flush measure access flush result measure access flush result drop_table drop_ext_btree_gin
+step create_table: CREATE TEMPORARY TABLE kill_prior_tuple(key int not null, cat text not null);
+step fill_500: INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM generate_series(1, 500) g(i);
+step create_ext_btree_gin: CREATE EXTENSION btree_gin;
+step create_gin: CREATE INDEX kill_prior_tuple_gin ON kill_prior_tuple USING gin (key);
+step flush: SELECT FROM pg_stat_force_next_flush();
+step disable_seq: SET enable_seqscan = false;
+step delete: DELETE FROM kill_prior_tuple;
+step flush: SELECT FROM pg_stat_force_next_flush();
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                
+--------------------------------------------------------------------------
+Bitmap Heap Scan on kill_prior_tuple (actual rows=0.00 loops=1)           
+  Recheck Cond: (key = 1)                                                 
+  Heap Blocks: exact=1                                                    
+  ->  Bitmap Index Scan on kill_prior_tuple_gin (actual rows=1.00 loops=1)
+        Index Cond: (key = 1)                                             
+        Index Searches: 1                                                 
+(6 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step measure: UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple');
+step access: EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1;
+QUERY PLAN                                                                
+--------------------------------------------------------------------------
+Bitmap Heap Scan on kill_prior_tuple (actual rows=0.00 loops=1)           
+  Recheck Cond: (key = 1)                                                 
+  Heap Blocks: exact=1                                                    
+  ->  Bitmap Index Scan on kill_prior_tuple_gin (actual rows=1.00 loops=1)
+        Index Cond: (key = 1)                                             
+        Index Searches: 1                                                 
+(6 rows)
+
+step flush: SELECT FROM pg_stat_force_next_flush();
+step result: SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple';
+new_heap_accesses
+-----------------
+                1
+(1 row)
+
+step drop_table: DROP TABLE IF EXISTS kill_prior_tuple;
+step drop_ext_btree_gin: DROP EXTENSION btree_gin;

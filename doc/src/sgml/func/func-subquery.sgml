@@ -1,0 +1,349 @@
+ <sect1 id="functions-subquery">
+  <title>Subquery Expressions</title>
+
+  <indexterm>
+   <primary>EXISTS</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>IN</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>NOT IN</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>ANY</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>ALL</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>SOME</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>subquery</primary>
+  </indexterm>
+
+  <para>
+   This section describes the <acronym>SQL</acronym>-compliant subquery
+   expressions available in <productname>PostgreSQL</productname>.
+   All of the expression forms documented in this section return
+   Boolean (true/false) results.
+  </para>
+
+  <sect2 id="functions-subquery-exists">
+   <title><literal>EXISTS</literal></title>
+
+<synopsis>
+EXISTS (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The argument of <token>EXISTS</token> is an arbitrary <command>SELECT</command> statement,
+   or <firstterm>subquery</firstterm>.  The
+   subquery is evaluated to determine whether it returns any rows.
+   If it returns at least one row, the result of <token>EXISTS</token> is
+   <quote>true</quote>; if the subquery returns no rows, the result of <token>EXISTS</token>
+   is <quote>false</quote>.
+  </para>
+
+  <para>
+   The subquery can refer to variables from the surrounding query,
+   which will act as constants during any one evaluation of the subquery.
+  </para>
+
+  <para>
+   The subquery will generally only be executed long enough to determine
+   whether at least one row is returned, not all the way to completion.
+   It is unwise to write a subquery that has side effects (such as
+   calling sequence functions); whether the side effects occur
+   might be unpredictable.
+  </para>
+
+  <para>
+   Since the result depends only on whether any rows are returned,
+   and not on the contents of those rows, the output list of the
+   subquery is normally unimportant.  A common coding convention is
+   to write all <literal>EXISTS</literal> tests in the form
+   <literal>EXISTS(SELECT 1 WHERE ...)</literal>.  There are exceptions to
+   this rule however, such as subqueries that use <token>INTERSECT</token>.
+  </para>
+
+  <para>
+   This simple example is like an inner join on <literal>col2</literal>, but
+   it produces at most one output row for each <literal>tab1</literal> row,
+   even if there are several matching <literal>tab2</literal> rows:
+<screen>
+SELECT col1
+FROM tab1
+WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
+</screen>
+  </para>
+  </sect2>
+
+  <sect2 id="functions-subquery-in">
+   <title><literal>IN</literal></title>
+
+<synopsis>
+<replaceable>expression</replaceable> IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result.
+   The result of <token>IN</token> is <quote>true</quote> if any equal subquery row is found.
+   The result is <quote>false</quote> if no equal row is found (including the
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   Note that if the left-hand expression yields null, or if there are
+   no equal right-hand values and at least one right-hand row yields
+   null, the result of the <token>IN</token> construct will be null, not false.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</token>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The left-hand side of this form of <token>IN</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
+   The right-hand side is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand row.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result.
+   The result of <token>IN</token> is <quote>true</quote> if any equal subquery row is found.
+   The result is <quote>false</quote> if no equal row is found (including the
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   As usual, null values in the rows are combined per
+   the normal rules of SQL Boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of that row comparison is unknown (null).
+   If all the per-row results are either unequal or null, with at least one
+   null, then the result of <token>IN</token> is null.
+  </para>
+  </sect2>
+
+  <sect2 id="functions-subquery-notin">
+   <title><literal>NOT IN</literal></title>
+
+<synopsis>
+<replaceable>expression</replaceable> NOT IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result.
+   The result of <token>NOT IN</token> is <quote>true</quote> if only unequal subquery rows
+   are found (including the case where the subquery returns no rows).
+   The result is <quote>false</quote> if any equal row is found.
+  </para>
+
+  <para>
+   Note that if the left-hand expression yields null, or if there are
+   no equal right-hand values and at least one right-hand row yields
+   null, the result of the <token>NOT IN</token> construct will be null, not true.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</token>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> NOT IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The left-hand side of this form of <token>NOT IN</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
+   The right-hand side is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand row.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result.
+   The result of <token>NOT IN</token> is <quote>true</quote> if only unequal subquery rows
+   are found (including the case where the subquery returns no rows).
+   The result is <quote>false</quote> if any equal row is found.
+  </para>
+
+  <para>
+   As usual, null values in the rows are combined per
+   the normal rules of SQL Boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of that row comparison is unknown (null).
+   If all the per-row results are either unequal or null, with at least one
+   null, then the result of <token>NOT IN</token> is null.
+  </para>
+  </sect2>
+
+  <sect2 id="functions-subquery-any-some">
+   <title><literal>ANY</literal>/<literal>SOME</literal></title>
+
+<synopsis>
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> ANY (<replaceable>subquery</replaceable>)
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> SOME (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result using the
+   given <replaceable>operator</replaceable>, which must yield a Boolean
+   result.
+   The result of <token>ANY</token> is <quote>true</quote> if any true result is obtained.
+   The result is <quote>false</quote> if no true result is found (including the
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   <token>SOME</token> is a synonym for <token>ANY</token>.
+   <token>IN</token> is equivalent to <literal>= ANY</literal>.
+  </para>
+
+  <para>
+   Note that if there are no successes and at least one right-hand row yields
+   null for the operator's result, the result of the <token>ANY</token> construct
+   will be null, not false.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</token>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> ANY (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> SOME (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The left-hand side of this form of <token>ANY</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
+   The right-hand side is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand row.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result,
+   using the given <replaceable>operator</replaceable>.
+   The result of <token>ANY</token> is <quote>true</quote> if the comparison
+   returns true for any subquery row.
+   The result is <quote>false</quote> if the comparison returns false for every
+   subquery row (including the case where the subquery returns no
+   rows).
+   The result is NULL if no comparison with a subquery row returns true,
+   and at least one comparison returns NULL.
+  </para>
+
+  <para>
+   See <xref linkend="row-wise-comparison"/> for details about the meaning
+   of a row constructor comparison.
+  </para>
+  </sect2>
+
+  <sect2 id="functions-subquery-all">
+   <title><literal>ALL</literal></title>
+
+<synopsis>
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> ALL (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result using the
+   given <replaceable>operator</replaceable>, which must yield a Boolean
+   result.
+   The result of <token>ALL</token> is <quote>true</quote> if all rows yield true
+   (including the case where the subquery returns no rows).
+   The result is <quote>false</quote> if any false result is found.
+   The result is NULL if no comparison with a subquery row returns false,
+   and at least one comparison returns NULL.
+  </para>
+
+  <para>
+   <token>NOT IN</token> is equivalent to <literal>&lt;&gt; ALL</literal>.
+  </para>
+
+  <para>
+   As with <token>EXISTS</token>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> ALL (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The left-hand side of this form of <token>ALL</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
+   The right-hand side is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand row.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result,
+   using the given <replaceable>operator</replaceable>.
+   The result of <token>ALL</token> is <quote>true</quote> if the comparison
+   returns true for all subquery rows (including the
+   case where the subquery returns no rows).
+   The result is <quote>false</quote> if the comparison returns false for any
+   subquery row.
+   The result is NULL if no comparison with a subquery row returns false,
+   and at least one comparison returns NULL.
+  </para>
+
+  <para>
+   See <xref linkend="row-wise-comparison"/> for details about the meaning
+   of a row constructor comparison.
+  </para>
+  </sect2>
+
+  <sect2 id="functions-subquery-single-row-comp">
+   <title>Single-Row Comparison</title>
+
+   <indexterm zone="functions-subquery">
+    <primary>comparison</primary>
+    <secondary>subquery result row</secondary>
+   </indexterm>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The left-hand side is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
+   The right-hand side is a parenthesized subquery, which must return exactly
+   as many columns as there are expressions in the left-hand row. Furthermore,
+   the subquery cannot return more than one row.  (If it returns zero rows,
+   the result is taken to be null.)  The left-hand side is evaluated and
+   compared row-wise to the single subquery result row.
+  </para>
+
+  <para>
+   See <xref linkend="row-wise-comparison"/> for details about the meaning
+   of a row constructor comparison.
+  </para>
+  </sect2>
+ </sect1>

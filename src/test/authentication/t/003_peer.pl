@@ -171,7 +171,8 @@ test_role(
 
 # Test with regular expression in user name map.
 # Extract the last 3 characters from the system_user
-# or the entire system_user (if its length is <= -3).
+# or the entire system_user name (if its length is <= 3).
+# We trust this will not include any regex metacharacters.
 my $regex_test_string = substr($system_user, -3);
 
 # Success as the system user regular expression matches.
@@ -210,12 +211,17 @@ test_role(
 	log_like =>
 	  [qr/connection authenticated: identity="$system_user" method=peer/]);
 
+# Create target role for \1 tests.
+my $mapped_name = "test${regex_test_string}map${regex_test_string}user";
+$node->safe_psql('postgres', "CREATE ROLE $mapped_name LOGIN");
+
 # Success as the regular expression matches and \1 is replaced in the given
 # subexpression.
-reset_pg_ident($node, 'mypeermap', qq{/^$system_user(.*)\$}, 'test\1mapuser');
+reset_pg_ident($node, 'mypeermap', qq{/^.*($regex_test_string)\$},
+	'test\1map\1user');
 test_role(
 	$node,
-	qq{testmapuser},
+	$mapped_name,
 	'peer',
 	0,
 	'with regular expression in user name map with \1 replaced',
@@ -224,11 +230,11 @@ test_role(
 
 # Success as the regular expression matches and \1 is replaced in the given
 # subexpression, even if quoted.
-reset_pg_ident($node, 'mypeermap', qq{/^$system_user(.*)\$},
-	'"test\1mapuser"');
+reset_pg_ident($node, 'mypeermap', qq{/^.*($regex_test_string)\$},
+	'"test\1map\1user"');
 test_role(
 	$node,
-	qq{testmapuser},
+	$mapped_name,
 	'peer',
 	0,
 	'with regular expression in user name map with quoted \1 replaced',

@@ -1,8 +1,6 @@
 This directory contains a general purpose data structures, for use anywhere
 in the backend:
 
-binaryheap.c - a binary heap
-
 bipartite_match.c - Hopcroft-Karp maximum cardinality algorithm for bipartite graphs
 
 bloomfilter.c - probabilistic, space-efficient set membership testing
@@ -20,8 +18,6 @@ knapsack.c - knapsack problem solver
 pairingheap.c - a pairing heap
 
 rbtree.c - a red-black tree
-
-stringinfo.c - an extensible string type
 
 
 Aside from the inherent characteristics of the data structures, there are a

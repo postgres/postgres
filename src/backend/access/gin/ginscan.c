@@ -33,7 +33,7 @@ ginbeginscan(Relation rel, int nkeys, int norderbys)
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
 	/* allocate private workspace */
-	so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
+	so = (GinScanOpaque) palloc_object(GinScanOpaqueData);
 	so->keys = NULL;
 	so->nkeys = 0;
 	so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
@@ -98,7 +98,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	}
 
 	/* Nope, create a new entry */
-	scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData));
+	scanEntry = palloc_object(GinScanEntryData);
 	scanEntry->queryKey = queryKey;
 	scanEntry->queryCategory = queryCategory;
 	scanEntry->isPartialMatch = isPartialMatch;
@@ -123,8 +123,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	if (so->totalentries >= so->allocentries)
 	{
 		so->allocentries *= 2;
-		so->entries = (GinScanEntry *)
-			repalloc(so->entries, so->allocentries * sizeof(GinScanEntry));
+		so->entries = repalloc_array(so->entries, GinScanEntry, so->allocentries);
 	}
 	so->entries[so->totalentries++] = scanEntry;
 
@@ -170,10 +169,8 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	key->nuserentries = nQueryValues;
 
 	/* Allocate one extra array slot for possible "hidden" entry */
-	key->scanEntry = (GinScanEntry *) palloc(sizeof(GinScanEntry) *
-											 (nQueryValues + 1));
-	key->entryRes = (GinTernaryValue *) palloc0(sizeof(GinTernaryValue) *
-												(nQueryValues + 1));
+	key->scanEntry = palloc_array(GinScanEntry, nQueryValues + 1);
+	key->entryRes = palloc0_array(GinTernaryValue, nQueryValues + 1);
 
 	key->query = query;
 	key->queryValues = queryValues;
@@ -271,6 +268,7 @@ ginNewScanKey(IndexScanDesc scan)
 	ScanKey		scankey = scan->keyData;
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 	int			i;
+	int			numExcludeOnly;
 	bool		hasNullQuery = false;
 	bool		attrHasNormalScan[INDEX_MAX_KEYS] = {false};
 	MemoryContext oldCtx;
@@ -393,6 +391,7 @@ ginNewScanKey(IndexScanDesc scan)
 	 * excludeOnly scan key must receive a GIN_CAT_EMPTY_QUERY hidden entry
 	 * and be set to normal (excludeOnly = false).
 	 */
+	numExcludeOnly = 0;
 	for (i = 0; i < so->nkeys; i++)
 	{
 		GinScanKey	key = &so->keys[i];
@@ -406,6 +405,47 @@ ginNewScanKey(IndexScanDesc scan)
 			ginScanKeyAddHiddenEntry(so, key, GIN_CAT_EMPTY_QUERY);
 			attrHasNormalScan[key->attnum - 1] = true;
 		}
+		else
+			numExcludeOnly++;
+	}
+
+	/*
+	 * If we left any excludeOnly scan keys as-is, move them to the end of the
+	 * scan key array: they must appear after normal key(s).
+	 */
+	if (numExcludeOnly > 0)
+	{
+		GinScanKey	tmpkeys;
+		int			iNormalKey;
+		int			iExcludeOnly;
+
+		/* We'd better have made at least one normal key */
+		Assert(numExcludeOnly < so->nkeys);
+		/* Make a temporary array to hold the re-ordered scan keys */
+		tmpkeys = (GinScanKey) palloc(so->nkeys * sizeof(GinScanKeyData));
+		/* Re-order the keys ... */
+		iNormalKey = 0;
+		iExcludeOnly = so->nkeys - numExcludeOnly;
+		for (i = 0; i < so->nkeys; i++)
+		{
+			GinScanKey	key = &so->keys[i];
+
+			if (key->excludeOnly)
+			{
+				memcpy(tmpkeys + iExcludeOnly, key, sizeof(GinScanKeyData));
+				iExcludeOnly++;
+			}
+			else
+			{
+				memcpy(tmpkeys + iNormalKey, key, sizeof(GinScanKeyData));
+				iNormalKey++;
+			}
+		}
+		Assert(iNormalKey == so->nkeys - numExcludeOnly);
+		Assert(iExcludeOnly == so->nkeys);
+		/* ... and copy them back to so->keys[] */
+		memcpy(so->keys, tmpkeys, so->nkeys * sizeof(GinScanKeyData));
+		pfree(tmpkeys);
 	}
 
 	/*

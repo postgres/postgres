@@ -44,6 +44,8 @@ CXXFLAGS=${CXXFLAGS:- -fsyntax-only -Wall}
 MGLOB="$builddir/src/Makefile.global"
 CPPFLAGS=`sed -n 's/^CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CFLAGS=`sed -n 's/^CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
+ICU_CFLAGS=`sed -n 's/^ICU_CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
+LLVM_CPPFLAGS=`sed -n 's/^LLVM_CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CC=`sed -n 's/^CC[ 	]*=[ 	]*//p' "$MGLOB"`
 CXX=`sed -n 's/^CXX[ 	]*=[ 	]*//p' "$MGLOB"`
 PG_SYSROOT=`sed -n 's/^PG_SYSROOT[ 	]*=[ 	]*//p' "$MGLOB"`
@@ -64,15 +66,17 @@ if $cplusplus; then
 	    -I*|-D*) CXXPPFLAGS="$CXXPPFLAGS $flag";;
 	  esac
 	done
-	COMPILER_FLAGS="$CXXPPFLAGS $CXXFLAGS"
+	COMPILER_FLAGS="$CXXPPFLAGS $CXXFLAGS $ICU_CFLAGS $LLVM_CPPFLAGS"
 else
 	ext=c
 	COMPILER=${CC:-gcc}
-	COMPILER_FLAGS="$CPPFLAGS $CFLAGS"
+	COMPILER_FLAGS="$CPPFLAGS $CFLAGS $ICU_CFLAGS $LLVM_CPPFLAGS"
 fi
 
-# Create temp directory.
-tmp=`mktemp -d /tmp/$me.XXXXXX`
+# Create temp directory.  Help ccache by using a stable name.  Include
+# extension to allow running C and C++ checks in parallel.
+tmp="tmp_${me}_${ext}"
+mkdir -p "$tmp"
 
 trap "ret=$?; rm -rf $tmp; exit $ret" 0 1 2 3 15
 
@@ -97,7 +101,7 @@ do
 	# Additional Windows-specific headers.
 	test "$f" = src/include/port/win32_port.h && continue
 	test "$f" = src/include/port/win32/netdb.h && continue
-	$cplusplus && test "$f" = src/include/port/win32/sys/resource.h && continue
+	test "$f" = src/include/port/win32/sys/resource.h && continue
 	test "$f" = src/include/port/win32/sys/socket.h && continue
 	test "$f" = src/include/port/win32_msvc/dirent.h && continue
 	test "$f" = src/include/port/win32_msvc/utime.h && continue
@@ -113,7 +117,6 @@ do
 	test "$f" = src/include/port/atomics/generic.h && continue
 	test "$f" = src/include/port/atomics/generic-gcc.h && continue
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
-	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
 
 	# sepgsql.h depends on headers that aren't there on most platforms.
 	test "$f" = contrib/sepgsql/sepgsql.h && continue
@@ -126,13 +129,14 @@ do
 	# they contain lists that might have multiple use-cases.
 	test "$f" = src/include/access/rmgrlist.h && continue
 	test "$f" = src/include/parser/kwlist.h && continue
-	test "$f" = src/pl/plpgsql/src/pl_reserved_kwlist.h && continue
-	test "$f" = src/pl/plpgsql/src/pl_unreserved_kwlist.h && continue
-	test "$f" = src/interfaces/ecpg/preproc/c_kwlist.h && continue
-	test "$f" = src/interfaces/ecpg/preproc/ecpg_kwlist.h && continue
+	test "$f" = src/include/postmaster/proctypelist.h && continue
 	test "$f" = src/include/regex/regerrs.h && continue
 	test "$f" = src/include/storage/lwlocklist.h && continue
 	test "$f" = src/include/tcop/cmdtaglist.h && continue
+	test "$f" = src/interfaces/ecpg/preproc/c_kwlist.h && continue
+	test "$f" = src/interfaces/ecpg/preproc/ecpg_kwlist.h && continue
+	test "$f" = src/pl/plpgsql/src/pl_reserved_kwlist.h && continue
+	test "$f" = src/pl/plpgsql/src/pl_unreserved_kwlist.h && continue
 	test "$f" = src/pl/plpgsql/src/plerrcodes.h && continue
 	test "$f" = src/pl/plpython/spiexceptions.h && continue
 	test "$f" = src/pl/tcl/pltclerrcodes.h && continue
@@ -198,6 +202,9 @@ do
 		test "$f" = src/bin/pg_dump/pg_dump.h && continue
 	fi
 
+	# Help ccache by using a stable name.  Remove slashes and dots.
+	test_file_name=$(printf '%s' "$f" | tr '/.' '__')
+
 	# OK, create .c file to include this .h file.
 	{
 	    $cplusplus && echo 'extern "C" {'
@@ -230,7 +237,7 @@ do
 	    esac
 	    echo "#include \"$f\""
 	    $cplusplus && echo '};'
-	} >$tmp/test.$ext
+	} >$tmp/$test_file_name.$ext
 
 	# Some subdirectories need extra -I switches.
 	case "$f" in
@@ -252,10 +259,12 @@ do
 	if ! $COMPILER $COMPILER_FLAGS -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
-		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.$ext -o $tmp/test.o
+		$EXTRAINCLUDES $EXTRAFLAGS -c "$tmp/$test_file_name.$ext" -o "$tmp/$test_file_name.o"
 	then
 		exit_status=1
 	fi
+
+	rm -f "$tmp/$test_file_name.$ext" "$tmp/$test_file_name.o"
 done
 
 exit $exit_status

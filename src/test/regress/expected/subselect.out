@@ -205,11 +205,11 @@ SELECT f1 AS "Correlated Field"
 -- Check ROWCOMPARE cases, both correlated and not
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT ROW(1, 2) = (SELECT f1, f2) AS eq FROM SUBSELECT_TBL;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Seq Scan on public.subselect_tbl
-   Output: (((1 = (SubPlan 1).col1) AND (2 = (SubPlan 1).col2)))
-   SubPlan 1
+   Output: (((1 = (SubPlan rowcompare_1).col1) AND (2 = (SubPlan rowcompare_1).col2)))
+   SubPlan rowcompare_1
      ->  Result
            Output: subselect_tbl.f1, subselect_tbl.f2
 (5 rows)
@@ -229,11 +229,11 @@ SELECT ROW(1, 2) = (SELECT f1, f2) AS eq FROM SUBSELECT_TBL;
 
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT ROW(1, 2) = (SELECT 3, 4) AS eq FROM SUBSELECT_TBL;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Seq Scan on public.subselect_tbl
-   Output: ((1 = (InitPlan 1).col1) AND (2 = (InitPlan 1).col2))
-   InitPlan 1
+   Output: ((1 = (InitPlan rowcompare_1).col1) AND (2 = (InitPlan rowcompare_1).col2))
+   InitPlan rowcompare_1
      ->  Result
            Output: 3, 4
 (5 rows)
@@ -375,18 +375,18 @@ explain (verbose, costs off) select '42' union all select 43;
 -- check materialization of an initplan reference (bug #14524)
 explain (verbose, costs off)
 select 1 = all (select (select 1));
-                QUERY PLAN                 
--------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Result
-   Output: (ALL (1 = (SubPlan 2).col1))
-   SubPlan 2
+   Output: (ALL (1 = (SubPlan all_1).col1))
+   SubPlan all_1
      ->  Materialize
-           Output: ((InitPlan 1).col1)
-           InitPlan 1
+           Output: ((InitPlan expr_1).col1)
+           InitPlan expr_1
              ->  Result
                    Output: 1
            ->  Result
-                 Output: (InitPlan 1).col1
+                 Output: (InitPlan expr_1).col1
 (10 rows)
 
 select 1 = all (select (select 1));
@@ -428,8 +428,8 @@ select * from int4_tbl o where exists
               QUERY PLAN              
 --------------------------------------
  Seq Scan on int4_tbl o
-   Filter: EXISTS(SubPlan 1)
-   SubPlan 1
+   Filter: EXISTS(SubPlan exists_1)
+   SubPlan exists_1
      ->  Limit
            ->  Seq Scan on int4_tbl i
                  Filter: (f1 = o.f1)
@@ -708,6 +708,199 @@ select * from numeric_table
 (4 rows)
 
 --
+-- Test that a semijoin implemented by unique-ifying the RHS can explore
+-- different paths of the RHS rel.
+--
+create table semijoin_unique_tbl (a int, b int);
+insert into semijoin_unique_tbl select i%10, i%10 from generate_series(1,1000)i;
+create index on semijoin_unique_tbl(a, b);
+analyze semijoin_unique_tbl;
+-- Ensure that we get a plan with Unique + IndexScan
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a, b from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.a, t1.b, t2.a, t2.b
+   ->  Merge Join
+         Output: t1.a, t1.b, t3.b
+         Merge Cond: (t3.a = t1.a)
+         ->  Unique
+               Output: t3.a, t3.b
+               ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t3
+                     Output: t3.a, t3.b
+         ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t1
+               Output: t1.a, t1.b
+   ->  Memoize
+         Output: t2.a, t2.b
+         Cache Key: t3.b
+         Cache Mode: logical
+         ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t2
+               Output: t2.a, t2.b
+               Index Cond: (t2.a = t3.b)
+(18 rows)
+
+-- Ensure that we can unique-ify expressions more complex than plain Vars
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a+1, b+1 from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Incremental Sort
+   Output: t1.a, t1.b, t2.a, t2.b
+   Sort Key: t1.a, t2.a
+   Presorted Key: t1.a
+   ->  Merge Join
+         Output: t1.a, t1.b, t2.a, t2.b
+         Merge Cond: (t1.a = ((t3.a + 1)))
+         ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t1
+               Output: t1.a, t1.b
+         ->  Sort
+               Output: t2.a, t2.b, t3.a, ((t3.a + 1))
+               Sort Key: ((t3.a + 1))
+               ->  Hash Join
+                     Output: t2.a, t2.b, t3.a, (t3.a + 1)
+                     Hash Cond: (t2.a = (t3.b + 1))
+                     ->  Seq Scan on public.semijoin_unique_tbl t2
+                           Output: t2.a, t2.b
+                     ->  Hash
+                           Output: t3.a, t3.b
+                           ->  HashAggregate
+                                 Output: t3.a, t3.b
+                                 Group Key: (t3.a + 1), (t3.b + 1)
+                                 ->  Seq Scan on public.semijoin_unique_tbl t3
+                                       Output: t3.a, t3.b, (t3.a + 1), (t3.b + 1)
+(24 rows)
+
+-- encourage use of parallel plans
+set parallel_setup_cost=0;
+set parallel_tuple_cost=0;
+set min_parallel_table_scan_size=0;
+set max_parallel_workers_per_gather=4;
+set enable_indexscan to off;
+-- Ensure that we get a parallel plan for the unique-ification
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a, b from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.a, t1.b, t2.a, t2.b
+   ->  Merge Join
+         Output: t1.a, t1.b, t3.b
+         Merge Cond: (t3.a = t1.a)
+         ->  Unique
+               Output: t3.a, t3.b
+               ->  Gather Merge
+                     Output: t3.a, t3.b
+                     Workers Planned: 2
+                     ->  Sort
+                           Output: t3.a, t3.b
+                           Sort Key: t3.a, t3.b
+                           ->  HashAggregate
+                                 Output: t3.a, t3.b
+                                 Group Key: t3.a, t3.b
+                                 ->  Parallel Seq Scan on public.semijoin_unique_tbl t3
+                                       Output: t3.a, t3.b
+         ->  Materialize
+               Output: t1.a, t1.b
+               ->  Gather Merge
+                     Output: t1.a, t1.b
+                     Workers Planned: 2
+                     ->  Sort
+                           Output: t1.a, t1.b
+                           Sort Key: t1.a
+                           ->  Parallel Seq Scan on public.semijoin_unique_tbl t1
+                                 Output: t1.a, t1.b
+   ->  Memoize
+         Output: t2.a, t2.b
+         Cache Key: t3.b
+         Cache Mode: logical
+         ->  Bitmap Heap Scan on public.semijoin_unique_tbl t2
+               Output: t2.a, t2.b
+               Recheck Cond: (t2.a = t3.b)
+               ->  Bitmap Index Scan on semijoin_unique_tbl_a_b_idx
+                     Index Cond: (t2.a = t3.b)
+(37 rows)
+
+reset enable_indexscan;
+reset max_parallel_workers_per_gather;
+reset min_parallel_table_scan_size;
+reset parallel_tuple_cost;
+reset parallel_setup_cost;
+drop table semijoin_unique_tbl;
+create table unique_tbl_p (a int, b int) partition by range(a);
+create table unique_tbl_p1 partition of unique_tbl_p for values from (0) to (5);
+create table unique_tbl_p2 partition of unique_tbl_p for values from (5) to (10);
+create table unique_tbl_p3 partition of unique_tbl_p for values from (10) to (20);
+insert into unique_tbl_p select i%12, i from generate_series(0, 1000)i;
+create index on unique_tbl_p1(a);
+create index on unique_tbl_p2(a);
+create index on unique_tbl_p3(a);
+analyze unique_tbl_p;
+set enable_partitionwise_join to on;
+-- Ensure that the unique-ification works for partition-wise join
+-- (Only one of the two joins will be done partitionwise, but that's good
+-- enough for our purposes.)
+explain (verbose, costs off)
+select * from unique_tbl_p t1, unique_tbl_p t2
+where (t1.a, t2.a) in (select a, a from unique_tbl_p t3)
+order by t1.a, t2.a;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Merge Join
+   Output: t1.a, t1.b, t2.a, t2.b
+   Merge Cond: (t1.a = t2.a)
+   ->  Merge Append
+         Sort Key: t1.a
+         ->  Nested Loop
+               Output: t1_1.a, t1_1.b, t3_1.a
+               ->  Unique
+                     Output: t3_1.a
+                     ->  Index Only Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t3_1
+                           Output: t3_1.a
+               ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t1_1
+                     Output: t1_1.a, t1_1.b
+                     Index Cond: (t1_1.a = t3_1.a)
+         ->  Nested Loop
+               Output: t1_2.a, t1_2.b, t3_2.a
+               ->  Unique
+                     Output: t3_2.a
+                     ->  Index Only Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t3_2
+                           Output: t3_2.a
+               ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t1_2
+                     Output: t1_2.a, t1_2.b
+                     Index Cond: (t1_2.a = t3_2.a)
+         ->  Nested Loop
+               Output: t1_3.a, t1_3.b, t3_3.a
+               ->  Unique
+                     Output: t3_3.a
+                     ->  Sort
+                           Output: t3_3.a
+                           Sort Key: t3_3.a
+                           ->  Seq Scan on public.unique_tbl_p3 t3_3
+                                 Output: t3_3.a
+               ->  Index Scan using unique_tbl_p3_a_idx on public.unique_tbl_p3 t1_3
+                     Output: t1_3.a, t1_3.b
+                     Index Cond: (t1_3.a = t3_3.a)
+   ->  Materialize
+         Output: t2.a, t2.b
+         ->  Append
+               ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t2_1
+                     Output: t2_1.a, t2_1.b
+               ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t2_2
+                     Output: t2_2.a, t2_2.b
+               ->  Index Scan using unique_tbl_p3_a_idx on public.unique_tbl_p3 t2_3
+                     Output: t2_3.a, t2_3.b
+(44 rows)
+
+reset enable_partitionwise_join;
+drop table unique_tbl_p;
+--
 -- Test case for bug #4290: bogus calculation of subplan param sets
 --
 create temp table ta (id int primary key, val int);
@@ -771,6 +964,25 @@ select (select (a.*)::text) from view_a a;
   a   
 ------
  (42)
+(1 row)
+
+--
+-- Test case for bug #19037: no relation entry for relid N
+--
+explain (costs off)
+select (1 = any(array_agg(f1))) = any (select false) from int4_tbl;
+         QUERY PLAN         
+----------------------------
+ Aggregate
+   ->  Seq Scan on int4_tbl
+   SubPlan any_1
+     ->  Result
+(4 rows)
+
+select (1 = any(array_agg(f1))) = any (select false) from int4_tbl;
+ ?column? 
+----------
+ t
 (1 row)
 
 --
@@ -891,11 +1103,11 @@ select * from outer_text where (f1, f2) not in (select * from inner_text);
 --
 explain (verbose, costs off)
 select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
-                       QUERY PLAN                        
----------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Result
-   Output: (ANY ('foo'::text = (hashed SubPlan 1).col1))
-   SubPlan 1
+   Output: (ANY ('foo'::text = (hashed SubPlan any_1).col1))
+   SubPlan any_1
      ->  Append
            ->  Result
                  Output: 'bar'::name
@@ -915,11 +1127,11 @@ select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
 --
 explain (verbose, costs off)
 select row(row(row(1))) = any (select row(row(1)));
-                       QUERY PLAN                       
---------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Result
-   Output: (ANY ('("(1)")'::record = (SubPlan 1).col1))
-   SubPlan 1
+   Output: (ANY ('("(1)")'::record = (SubPlan any_1).col1))
+   SubPlan any_1
      ->  Materialize
            Output: '("(1)")'::record
            ->  Result
@@ -950,7 +1162,8 @@ select * from int8_tbl where q1 in (select c1 from inner_text);
 ERROR:  operator does not exist: bigint = text
 LINE 1: select * from int8_tbl where q1 in (select c1 from inner_tex...
                                         ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 begin;
 -- make an operator to allow it to succeed
 create function bogus_int8_text_eq(int8, text) returns boolean
@@ -958,11 +1171,11 @@ language sql as 'select $1::text = $2';
 create operator = (procedure=bogus_int8_text_eq, leftarg=int8, rightarg=text);
 explain (costs off)
 select * from int8_tbl where q1 in (select c1 from inner_text);
-                       QUERY PLAN                       
---------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Seq Scan on int8_tbl
-   Filter: (ANY ((q1)::text = (hashed SubPlan 1).col1))
-   SubPlan 1
+   Filter: (ANY ((q1)::text = (hashed SubPlan any_1).col1))
+   SubPlan any_1
      ->  Seq Scan on inner_text
 (4 rows)
 
@@ -979,11 +1192,11 @@ create or replace function bogus_int8_text_eq(int8, text) returns boolean
 language sql as 'select $1::text = $2 and $1::text = $2';
 explain (costs off)
 select * from int8_tbl where q1 in (select c1 from inner_text);
-                                             QUERY PLAN                                              
------------------------------------------------------------------------------------------------------
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl
-   Filter: (ANY (((q1)::text = (hashed SubPlan 1).col1) AND ((q1)::text = (hashed SubPlan 1).col1)))
-   SubPlan 1
+   Filter: (ANY (((q1)::text = (hashed SubPlan any_1).col1) AND ((q1)::text = (hashed SubPlan any_1).col1)))
+   SubPlan any_1
      ->  Seq Scan on inner_text
 (4 rows)
 
@@ -1000,11 +1213,11 @@ create or replace function bogus_int8_text_eq(int8, text) returns boolean
 language sql as 'select $2 = $1::text';
 explain (costs off)
 select * from int8_tbl where q1 in (select c1 from inner_text);
-                   QUERY PLAN                    
--------------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Seq Scan on int8_tbl
-   Filter: (ANY ((SubPlan 1).col1 = (q1)::text))
-   SubPlan 1
+   Filter: (ANY ((SubPlan any_1).col1 = (q1)::text))
+   SubPlan any_1
      ->  Materialize
            ->  Seq Scan on inner_text
 (5 rows)
@@ -1023,12 +1236,12 @@ rollback;  -- to get rid of the bogus operator
 explain (costs off)
 select count(*) from tenk1 t
 where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0);
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Aggregate
    ->  Seq Scan on tenk1 t
-         Filter: ((ANY (unique2 = (hashed SubPlan 2).col1)) OR (ten < 0))
-         SubPlan 2
+         Filter: ((ANY (unique2 = (hashed SubPlan exists_2).col1)) OR (ten < 0))
+         SubPlan exists_2
            ->  Index Only Scan using tenk1_unique1 on tenk1 k
 (5 rows)
 
@@ -1048,10 +1261,10 @@ where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0)
  Aggregate
    ->  Bitmap Heap Scan on tenk1 t
          Recheck Cond: (thousand = 1)
-         Filter: (EXISTS(SubPlan 1) OR (ten < 0))
+         Filter: (EXISTS(SubPlan exists_1) OR (ten < 0))
          ->  Bitmap Index Scan on tenk1_thous_tenthous
                Index Cond: (thousand = 1)
-         SubPlan 1
+         SubPlan exists_1
            ->  Index Only Scan using tenk1_unique1 on tenk1 k
                  Index Cond: (unique1 = t.unique2)
 (9 rows)
@@ -1073,20 +1286,20 @@ analyze exists_tbl;
 explain (costs off)
 select * from exists_tbl t1
   where (exists(select 1 from exists_tbl t2 where t1.c1 = t2.c2) or c3 < 0);
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
  Append
    ->  Seq Scan on exists_tbl_null t1_1
-         Filter: (EXISTS(SubPlan 1) OR (c3 < 0))
-         SubPlan 1
+         Filter: (EXISTS(SubPlan exists_1) OR (c3 < 0))
+         SubPlan exists_1
            ->  Append
                  ->  Seq Scan on exists_tbl_null t2_1
                        Filter: (t1_1.c1 = c2)
                  ->  Seq Scan on exists_tbl_def t2_2
                        Filter: (t1_1.c1 = c2)
    ->  Seq Scan on exists_tbl_def t1_2
-         Filter: ((ANY (c1 = (hashed SubPlan 2).col1)) OR (c3 < 0))
-         SubPlan 2
+         Filter: ((ANY (c1 = (hashed SubPlan exists_2).col1)) OR (c3 < 0))
+         SubPlan exists_2
            ->  Append
                  ->  Seq Scan on exists_tbl_null t2_4
                  ->  Seq Scan on exists_tbl_def t2_5
@@ -1122,14 +1335,14 @@ where a.thousand = b.thousand
 explain (verbose, costs off)
   select x, x from
     (select (select now()) as x from (values(1),(2)) v(y)) ss;
-                   QUERY PLAN                   
-------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Values Scan on "*VALUES*"
-   Output: (InitPlan 1).col1, (InitPlan 2).col1
-   InitPlan 1
+   Output: (InitPlan expr_1).col1, (InitPlan expr_2).col1
+   InitPlan expr_1
      ->  Result
            Output: now()
-   InitPlan 2
+   InitPlan expr_2
      ->  Result
            Output: now()
 (8 rows)
@@ -1137,13 +1350,13 @@ explain (verbose, costs off)
 explain (verbose, costs off)
   select x, x from
     (select (select random()) as x from (values(1),(2)) v(y)) ss;
-            QUERY PLAN             
------------------------------------
+               QUERY PLAN               
+----------------------------------------
  Subquery Scan on ss
    Output: ss.x, ss.x
    ->  Values Scan on "*VALUES*"
-         Output: (InitPlan 1).col1
-         InitPlan 1
+         Output: (InitPlan expr_1).col1
+         InitPlan expr_1
            ->  Result
                  Output: random()
 (7 rows)
@@ -1154,12 +1367,12 @@ explain (verbose, costs off)
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Values Scan on "*VALUES*"
-   Output: (SubPlan 1), (SubPlan 2)
-   SubPlan 1
+   Output: (SubPlan expr_1), (SubPlan expr_2)
+   SubPlan expr_1
      ->  Result
            Output: now()
            One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
-   SubPlan 2
+   SubPlan expr_2
      ->  Result
            Output: now()
            One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
@@ -1173,8 +1386,8 @@ explain (verbose, costs off)
  Subquery Scan on ss
    Output: ss.x, ss.x
    ->  Values Scan on "*VALUES*"
-         Output: (SubPlan 1)
-         SubPlan 1
+         Output: (SubPlan expr_1)
+         SubPlan expr_1
            ->  Result
                  Output: random()
                  One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
@@ -1194,16 +1407,16 @@ where o.ten = 0;
                                                                                          QUERY PLAN                                                                                          
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Aggregate
-   Output: sum((((ANY (i.ten = (hashed SubPlan 1).col1))))::integer)
+   Output: sum((((ANY (i.ten = (hashed SubPlan any_1).col1))))::integer)
    ->  Nested Loop
-         Output: ((ANY (i.ten = (hashed SubPlan 1).col1)))
+         Output: ((ANY (i.ten = (hashed SubPlan any_1).col1)))
          ->  Seq Scan on public.onek o
                Output: o.unique1, o.unique2, o.two, o.four, o.ten, o.twenty, o.hundred, o.thousand, o.twothousand, o.fivethous, o.tenthous, o.odd, o.even, o.stringu1, o.stringu2, o.string4
                Filter: (o.ten = 0)
          ->  Index Scan using onek_unique1 on public.onek i
-               Output: (ANY (i.ten = (hashed SubPlan 1).col1)), random()
+               Output: (ANY (i.ten = (hashed SubPlan any_1).col1)), random()
                Index Cond: (i.unique1 = o.unique1)
-               SubPlan 1
+               SubPlan any_1
                  ->  Seq Scan on public.int4_tbl
                        Output: int4_tbl.f1
                        Filter: (int4_tbl.f1 <= o.hundred)
@@ -1412,7 +1625,7 @@ select * from
 ----------------------------------------
  Values Scan on "*VALUES*"
    Output: "*VALUES*".column1
-   SubPlan 1
+   SubPlan any_1
      ->  Values Scan on "*VALUES*_1"
            Output: "*VALUES*_1".column1
 (5 rows)
@@ -1439,12 +1652,12 @@ select * from int4_tbl where
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Nested Loop Semi Join
    Output: int4_tbl.f1
-   Join Filter: (CASE WHEN (ANY (int4_tbl.f1 = (hashed SubPlan 1).col1)) THEN int4_tbl.f1 ELSE NULL::integer END = b.ten)
+   Join Filter: (CASE WHEN (ANY (int4_tbl.f1 = (hashed SubPlan any_1).col1)) THEN int4_tbl.f1 ELSE NULL::integer END = b.ten)
    ->  Seq Scan on public.int4_tbl
          Output: int4_tbl.f1
    ->  Seq Scan on public.tenk1 b
          Output: b.unique1, b.unique2, b.two, b.four, b.ten, b.twenty, b.hundred, b.thousand, b.twothousand, b.fivethous, b.tenthous, b.odd, b.even, b.stringu1, b.stringu2, b.string4
-   SubPlan 1
+   SubPlan any_1
      ->  Index Only Scan using tenk1_unique1 on public.tenk1 a
            Output: a.unique1
 (10 rows)
@@ -1467,14 +1680,14 @@ select * from int4_tbl o where (f1, f1) in
 -------------------------------------------------------------------
  Nested Loop Semi Join
    Output: o.f1
-   Join Filter: (o.f1 = "ANY_subquery".f1)
+   Join Filter: (o.f1 = unnamed_subquery.f1)
    ->  Seq Scan on public.int4_tbl o
          Output: o.f1
    ->  Materialize
-         Output: "ANY_subquery".f1, "ANY_subquery".g
-         ->  Subquery Scan on "ANY_subquery"
-               Output: "ANY_subquery".f1, "ANY_subquery".g
-               Filter: ("ANY_subquery".f1 = "ANY_subquery".g)
+         Output: unnamed_subquery.f1, unnamed_subquery.g
+         ->  Subquery Scan on unnamed_subquery
+               Output: unnamed_subquery.f1, unnamed_subquery.g
+               Filter: (unnamed_subquery.f1 = unnamed_subquery.g)
                ->  Result
                      Output: i.f1, ((generate_series(1, 50)) / 10)
                      ->  ProjectSet
@@ -1763,6 +1976,35 @@ fetch backward all in c1;
 (2 rows)
 
 commit;
+--
+-- Check that JsonConstructorExpr is treated as non-strict, and thus can be
+-- wrapped in a PlaceHolderVar
+--
+begin;
+create temp table json_tab (a int);
+insert into json_tab values (1);
+explain (verbose, costs off)
+select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.a, (JSON_ARRAY(1, t2.a RETURNING json))
+   Join Filter: false
+   ->  Seq Scan on pg_temp.json_tab t1
+         Output: t1.a
+   ->  Result
+         Output: JSON_ARRAY(1, t2.a RETURNING json)
+         Replaces: Scan on t2
+         One-Time Filter: false
+(9 rows)
+
+select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
+ a | json_array 
+---+------------
+ 1 | 
+(1 row)
+
+rollback;
 --
 -- Verify that we correctly flatten cases involving a subquery output
 -- expression that doesn't need to be wrapped in a PlaceHolderVar
@@ -2127,30 +2369,30 @@ explain (verbose, costs off)
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Sort
-   Output: (COALESCE(t3.q1)), t4.q1, t4.q2
-   Sort Key: (COALESCE(t3.q1)), t4.q1, t4.q2
+   Output: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
+   Sort Key: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
    ->  Hash Right Join
-         Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+         Output: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
          Hash Cond: (t4.q1 = t1.q2)
          ->  Hash Join
-               Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+               Output: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
                Hash Cond: (t2.q2 = t4.q1)
                ->  Hash Left Join
-                     Output: t2.q2, (COALESCE(t3.q1))
+                     Output: t2.q2, (COALESCE(t3.q1, t3.q1))
                      Hash Cond: (t2.q1 = t3.q2)
                      ->  Seq Scan on public.int8_tbl t2
                            Output: t2.q1, t2.q2
                      ->  Hash
-                           Output: t3.q2, (COALESCE(t3.q1))
+                           Output: t3.q2, (COALESCE(t3.q1, t3.q1))
                            ->  Seq Scan on public.int8_tbl t3
-                                 Output: t3.q2, COALESCE(t3.q1)
+                                 Output: t3.q2, COALESCE(t3.q1, t3.q1)
                ->  Hash
                      Output: t4.q1, t4.q2
                      ->  Seq Scan on public.int8_tbl t4
@@ -2164,7 +2406,7 @@ order by 1, 2, 3;
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
@@ -2201,32 +2443,32 @@ explain (verbose, costs off)
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Sort
-   Output: ((COALESCE(t3.q1))), t4.q1, t4.q2
-   Sort Key: ((COALESCE(t3.q1))), t4.q1, t4.q2
+   Output: ((COALESCE(t3.q1, t3.q1))), t4.q1, t4.q2
+   Sort Key: ((COALESCE(t3.q1, t3.q1))), t4.q1, t4.q2
    ->  Hash Right Join
-         Output: ((COALESCE(t3.q1))), t4.q1, t4.q2
+         Output: ((COALESCE(t3.q1, t3.q1))), t4.q1, t4.q2
          Hash Cond: (t4.q1 = t1.q2)
          ->  Nested Loop
-               Output: t4.q1, t4.q2, ((COALESCE(t3.q1)))
+               Output: t4.q1, t4.q2, ((COALESCE(t3.q1, t3.q1)))
                Join Filter: (t2.q2 = t4.q1)
                ->  Hash Left Join
-                     Output: t2.q2, (COALESCE(t3.q1))
+                     Output: t2.q2, (COALESCE(t3.q1, t3.q1))
                      Hash Cond: (t2.q1 = t3.q2)
                      ->  Seq Scan on public.int8_tbl t2
                            Output: t2.q1, t2.q2
                      ->  Hash
-                           Output: t3.q2, (COALESCE(t3.q1))
+                           Output: t3.q2, (COALESCE(t3.q1, t3.q1))
                            ->  Seq Scan on public.int8_tbl t3
-                                 Output: t3.q2, COALESCE(t3.q1)
+                                 Output: t3.q2, COALESCE(t3.q1, t3.q1)
                ->  Seq Scan on public.int8_tbl t4
-                     Output: t4.q1, t4.q2, (COALESCE(t3.q1))
+                     Output: t4.q1, t4.q2, (COALESCE(t3.q1, t3.q1))
          ->  Hash
                Output: t1.q2
                ->  Seq Scan on public.int8_tbl t1
@@ -2236,7 +2478,7 @@ order by 1, 2, 3;
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
@@ -2543,14 +2785,14 @@ select * from tenk1 A where exists
 (select 1 from tenk2 B
 where A.hundred in (select C.hundred FROM tenk2 C
 WHERE c.odd = b.odd));
-                     QUERY PLAN                      
------------------------------------------------------
+                       QUERY PLAN                        
+---------------------------------------------------------
  Nested Loop Semi Join
-   Join Filter: (ANY (a.hundred = (SubPlan 1).col1))
+   Join Filter: (ANY (a.hundred = (SubPlan any_1).col1))
    ->  Seq Scan on tenk1 a
    ->  Materialize
          ->  Seq Scan on tenk2 b
-   SubPlan 1
+   SubPlan any_1
      ->  Seq Scan on tenk2 c
            Filter: (odd = b.odd)
 (8 rows)
@@ -2560,14 +2802,14 @@ WHERE c.odd = b.odd));
 explain (costs off)
 SELECT * FROM tenk1 A LEFT JOIN tenk2 B
 ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
-                     QUERY PLAN                      
------------------------------------------------------
+                       QUERY PLAN                        
+---------------------------------------------------------
  Nested Loop Left Join
-   Join Filter: (ANY (a.hundred = (SubPlan 1).col1))
+   Join Filter: (ANY (a.hundred = (SubPlan any_1).col1))
    ->  Seq Scan on tenk1 a
    ->  Materialize
          ->  Seq Scan on tenk2 b
-   SubPlan 1
+   SubPlan any_1
      ->  Seq Scan on tenk2 c
            Filter: (odd = b.odd)
 (8 rows)
@@ -2577,14 +2819,14 @@ ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
 explain (costs off)
 SELECT * FROM tenk1 A LEFT JOIN tenk2 B
 ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = a.odd);
-                     QUERY PLAN                      
------------------------------------------------------
+                       QUERY PLAN                        
+---------------------------------------------------------
  Nested Loop Left Join
-   Join Filter: (ANY (b.hundred = (SubPlan 1).col1))
+   Join Filter: (ANY (b.hundred = (SubPlan any_1).col1))
    ->  Seq Scan on tenk1 a
    ->  Materialize
          ->  Seq Scan on tenk2 b
-   SubPlan 1
+   SubPlan any_1
      ->  Seq Scan on tenk2 c
            Filter: (odd = a.odd)
 (8 rows)
@@ -2642,15 +2884,16 @@ ON B.hundred in (SELECT min(c.hundred) FROM tenk2 C WHERE c.odd = b.odd);
                ->  Memoize
                      Cache Key: b.hundred, b.odd
                      Cache Mode: binary
-                     ->  Subquery Scan on "ANY_subquery"
-                           Filter: (b.hundred = "ANY_subquery".min)
+                     ->  Subquery Scan on unnamed_subquery
+                           Filter: (b.hundred = unnamed_subquery.min)
                            ->  Result
-                                 InitPlan 1
+                                 Replaces: MinMaxAggregate
+                                 InitPlan minmax_1
                                    ->  Limit
                                          ->  Index Scan using tenk2_hundred on tenk2 c
                                                Index Cond: (hundred IS NOT NULL)
                                                Filter: (odd = b.odd)
-(16 rows)
+(17 rows)
 
 --
 -- Test VALUES to ARRAY (VtA) transformation
@@ -2672,18 +2915,17 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM onek
   WHERE (unique1,ten) IN (VALUES (1,1), (20,0), (99,9), (17,99))
   ORDER BY unique1;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Sort
-   Sort Key: onek.unique1
-   ->  Nested Loop
-         ->  HashAggregate
-               Group Key: "*VALUES*".column1, "*VALUES*".column2
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Nested Loop
+   ->  Unique
+         ->  Sort
+               Sort Key: "*VALUES*".column1, "*VALUES*".column2
                ->  Values Scan on "*VALUES*"
-         ->  Index Scan using onek_unique1 on onek
-               Index Cond: (unique1 = "*VALUES*".column1)
-               Filter: ("*VALUES*".column2 = ten)
-(9 rows)
+   ->  Index Scan using onek_unique1 on onek
+         Index Cond: (unique1 = "*VALUES*".column1)
+         Filter: ("*VALUES*".column2 = ten)
+(8 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM onek
@@ -2814,8 +3056,9 @@ EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, NULL);
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on onek
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, '-1.5');
                                                                      QUERY PLAN                                                                      
@@ -2858,12 +3101,10 @@ SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) ORDER BY 1);
    ->  Unique
          ->  Sort
                Sort Key: "*VALUES*".column1
-               ->  Sort
-                     Sort Key: "*VALUES*".column1
-                     ->  Values Scan on "*VALUES*"
+               ->  Values Scan on "*VALUES*"
    ->  Index Scan using onek_unique1 on onek
          Index Cond: (unique1 = "*VALUES*".column1)
-(9 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) LIMIT 1);
@@ -2888,7 +3129,7 @@ WHERE unique1 IN (VALUES (0), ((2 IN (SELECT unique2 FROM onek c
    ->  Seq Scan on onek t
    ->  Values Scan on "*VALUES*"
          Filter: (t.unique1 = column1)
-         SubPlan 1
+         SubPlan any_1
            ->  Index Only Scan using onek_unique2 on onek c
                  Index Cond: (unique2 = t.unique1)
 (7 rows)
@@ -2904,7 +3145,7 @@ WHERE unique1 IN (VALUES (0), ((2 IN (SELECT unique2 FROM onek c
          ->  Sort
                Sort Key: "*VALUES*".column1
                ->  Values Scan on "*VALUES*"
-                     SubPlan 1
+                     SubPlan any_1
                        ->  Index Only Scan using onek_unique2 on onek c
                              Filter: ((unique2)::double precision = ANY ('{0.479425538604203,2}'::double precision[]))
    ->  Index Scan using onek_unique1 on onek t
@@ -2923,7 +3164,7 @@ SELECT ten FROM onek t WHERE unique1 IN (VALUES (0), ((2 IN
          ->  Sort
                Sort Key: "*VALUES*".column1
                ->  Values Scan on "*VALUES*"
-                     SubPlan 1
+                     SubPlan any_1
                        ->  Result
    ->  Index Scan using onek_unique1 on onek t
          Index Cond: (unique1 = "*VALUES*".column1)

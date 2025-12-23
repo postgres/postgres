@@ -43,7 +43,7 @@ generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp submak
 submake-adt-headers:
 	$(MAKE) -C adt jsonpath_gram.h
 
-$(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h
+$(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h guc_tables.inc.c
 
 # fmgr-stamp records the last time we ran Gen_fmgrtab.pl.  We don't rely on
 # the timestamps of the individual output files, because the Perl script
@@ -54,6 +54,9 @@ fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/ca
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 	$(PERL) $(srcdir)/generate-errcodes.pl --outfile $@ $<
+
+guc_tables.inc.c: $(top_srcdir)/src/backend/utils/misc/guc_parameters.dat $(top_srcdir)/src/backend/utils/misc/gen_guc_tables.pl
+	$(PERL) $(top_srcdir)/src/backend/utils/misc/gen_guc_tables.pl $< $@
 
 ifeq ($(enable_dtrace), yes)
 probes.h: postprocess_dtrace.sed probes.h.tmp
@@ -70,8 +73,8 @@ endif
 # These generated headers must be symlinked into src/include/.
 # We use header-stamp to record that we've done this because the symlinks
 # themselves may appear older than fmgr-stamp.
-$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h probes.h
-	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h probes.h; do \
+$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h probes.h guc_tables.inc.c
+	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h probes.h guc_tables.inc.c; do \
 	  rm -f $$file && $(LN_S) "../../../$(subdir)/$$file" . ; \
 	done
 	touch $@
@@ -89,4 +92,4 @@ uninstall-data:
 
 clean:
 	rm -f probes.h probes.h.tmp
-	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h
+	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h guc_tables.inc.c

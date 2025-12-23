@@ -115,8 +115,10 @@ check_publication_add_schema(Oid schemaid)
  * Returns if relation represented by oid and Form_pg_class entry
  * is publishable.
  *
- * Does same checks as check_publication_add_relation() above, but does not
- * need relation to be opened and also does not throw errors.
+ * Does same checks as check_publication_add_relation() above except for
+ * RELKIND_SEQUENCE, but does not need relation to be opened and also does
+ * not throw errors. Here, the additional check is to support ALL SEQUENCES
+ * publication.
  *
  * XXX  This also excludes all tables with relid < FirstNormalObjectId,
  * ie all tables created during initdb.  This mainly affects the preinstalled
@@ -134,7 +136,8 @@ static bool
 is_publishable_class(Oid relid, Form_pg_class reltuple)
 {
 	return (reltuple->relkind == RELKIND_RELATION ||
-			reltuple->relkind == RELKIND_PARTITIONED_TABLE) &&
+			reltuple->relkind == RELKIND_PARTITIONED_TABLE ||
+			reltuple->relkind == RELKIND_SEQUENCE) &&
 		!IsCatalogRelationOid(relid) &&
 		reltuple->relpersistence == RELPERSISTENCE_PERMANENT &&
 		relid >= FirstNormalObjectId;
@@ -773,8 +776,8 @@ GetRelationPublications(Oid relid)
 /*
  * Gets list of relation oids for a publication.
  *
- * This should only be used FOR TABLE publications, the FOR ALL TABLES
- * should use GetAllTablesPublicationRelations().
+ * This should only be used FOR TABLE publications, the FOR ALL TABLES/SEQUENCES
+ * should use GetAllPublicationRelations().
  */
 List *
 GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt)
@@ -785,7 +788,7 @@ GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	/* Find all publications associated with the relation. */
+	/* Find all relations associated with the publication. */
 	pubrelsrel = table_open(PublicationRelRelationId, AccessShareLock);
 
 	ScanKeyInit(&scankey,
@@ -854,14 +857,16 @@ GetAllTablesPublications(void)
 }
 
 /*
- * Gets list of all relation published by FOR ALL TABLES publication(s).
+ * Gets list of all relations published by FOR ALL TABLES/SEQUENCES
+ * publication(s).
  *
  * If the publication publishes partition changes via their respective root
  * partitioned tables, we must exclude partitions in favor of including the
- * root partitioned tables.
+ * root partitioned tables. This is not applicable to FOR ALL SEQUENCES
+ * publication.
  */
 List *
-GetAllTablesPublicationRelations(bool pubviaroot)
+GetAllPublicationRelations(char relkind, bool pubviaroot)
 {
 	Relation	classRel;
 	ScanKeyData key[1];
@@ -869,12 +874,14 @@ GetAllTablesPublicationRelations(bool pubviaroot)
 	HeapTuple	tuple;
 	List	   *result = NIL;
 
+	Assert(!(relkind == RELKIND_SEQUENCE && pubviaroot));
+
 	classRel = table_open(RelationRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_class_relkind,
 				BTEqualStrategyNumber, F_CHAREQ,
-				CharGetDatum(RELKIND_RELATION));
+				CharGetDatum(relkind));
 
 	scan = table_beginscan_catalog(classRel, 1, key);
 
@@ -1001,7 +1008,7 @@ GetSchemaPublicationRelations(Oid schemaid, PublicationPartOpt pub_partopt)
 	ScanKeyInit(&key[0],
 				Anum_pg_class_relnamespace,
 				BTEqualStrategyNumber, F_OIDEQ,
-				schemaid);
+				ObjectIdGetDatum(schemaid));
 
 	/* get all the relations present in the specified schema */
 	scan = table_beginscan_catalog(classRel, 1, key);
@@ -1079,10 +1086,11 @@ GetPublication(Oid pubid)
 
 	pubform = (Form_pg_publication) GETSTRUCT(tup);
 
-	pub = (Publication *) palloc(sizeof(Publication));
+	pub = palloc_object(Publication);
 	pub->oid = pubid;
 	pub->name = pstrdup(NameStr(pubform->pubname));
 	pub->alltables = pubform->puballtables;
+	pub->allsequences = pubform->puballsequences;
 	pub->pubactions.pubinsert = pubform->pubinsert;
 	pub->pubactions.pubupdate = pubform->pubupdate;
 	pub->pubactions.pubdelete = pubform->pubdelete;
@@ -1160,7 +1168,8 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			 * those. Otherwise, get the partitioned table itself.
 			 */
 			if (pub_elem->alltables)
-				pub_elem_tables = GetAllTablesPublicationRelations(pub_elem->pubviaroot);
+				pub_elem_tables = GetAllPublicationRelations(RELKIND_RELATION,
+															 pub_elem->pubviaroot);
 			else
 			{
 				List	   *relids,
@@ -1187,7 +1196,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			 */
 			foreach(lc, pub_elem_tables)
 			{
-				published_rel *table_info = (published_rel *) palloc(sizeof(published_rel));
+				published_rel *table_info = palloc_object(published_rel);
 
 				table_info->relid = lfirst_oid(lc);
 				table_info->pubid = pub_elem->oid;
@@ -1290,7 +1299,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			TupleDesc	desc = RelationGetDescr(rel);
 			int			i;
 
-			attnums = (int16 *) palloc(desc->natts * sizeof(int16));
+			attnums = palloc_array(int16, desc->natts);
 
 			for (i = 0; i < desc->natts; i++)
 			{
@@ -1328,6 +1337,52 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		rettuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(rettuple));
+	}
+
+	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * Returns Oids of sequences in a publication.
+ */
+Datum
+pg_get_publication_sequences(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	List	   *sequences = NIL;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		char	   *pubname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+		Publication *publication;
+		MemoryContext oldcontext;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* switch to memory context appropriate for multiple function calls */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		publication = GetPublicationByName(pubname, false);
+
+		if (publication->allsequences)
+			sequences = GetAllPublicationRelations(RELKIND_SEQUENCE, false);
+
+		funcctx->user_fctx = sequences;
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	sequences = (List *) funcctx->user_fctx;
+
+	if (funcctx->call_cntr < list_length(sequences))
+	{
+		Oid			relid = list_nth_oid(sequences, funcctx->call_cntr);
+
+		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
 	}
 
 	SRF_RETURN_DONE(funcctx);

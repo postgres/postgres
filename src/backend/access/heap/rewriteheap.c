@@ -150,7 +150,7 @@ typedef struct RewriteStateData
 	HTAB	   *rs_old_new_tid_map; /* unmatched B tuples */
 	HTAB	   *rs_logical_mappings;	/* logical remapping files */
 	uint32		rs_num_rewrite_mappings;	/* # in memory mappings */
-}			RewriteStateData;
+} RewriteStateData;
 
 /*
  * The lookup keys for the hash tables are tuple TID and xmin (we must check
@@ -249,7 +249,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	old_cxt = MemoryContextSwitchTo(rw_cxt);
 
 	/* Create and fill in the state struct */
-	state = palloc0(sizeof(RewriteStateData));
+	state = palloc0_object(RewriteStateData);
 
 	state->rs_old_rel = old_heap;
 	state->rs_new_rel = new_heap;
@@ -673,8 +673,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	}
 
 	/* And now we can insert the tuple into the page */
-	newoff = PageAddItem(page, (Item) heaptup->t_data, heaptup->t_len,
-						 InvalidOffsetNumber, false, true);
+	newoff = PageAddItem(page, heaptup->t_data, heaptup->t_len, InvalidOffsetNumber, false, true);
 	if (newoff == InvalidOffsetNumber)
 		elog(ERROR, "failed to add tuple");
 
@@ -1170,7 +1169,7 @@ CheckPointLogicalRewriteHeap(void)
 	cutoff = ReplicationSlotsComputeLogicalRestartLSN();
 
 	/* don't start earlier than the restart lsn */
-	if (cutoff != InvalidXLogRecPtr && redo < cutoff)
+	if (XLogRecPtrIsValid(cutoff) && redo < cutoff)
 		cutoff = redo;
 
 	mappings_dir = AllocateDir(PG_LOGICAL_MAPPINGS_DIR);
@@ -1205,7 +1204,7 @@ CheckPointLogicalRewriteHeap(void)
 
 		lsn = ((uint64) hi) << 32 | lo;
 
-		if (lsn < cutoff || cutoff == InvalidXLogRecPtr)
+		if (lsn < cutoff || !XLogRecPtrIsValid(cutoff))
 		{
 			elog(DEBUG1, "removing logical rewrite file \"%s\"", path);
 			if (unlink(path) < 0)

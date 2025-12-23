@@ -1,0 +1,29 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_begin s1_update s2_store_chunk_ids s2_cluster s1_commit s2_verify_chunk_ids
+step s1_begin: BEGIN;
+step s1_update: UPDATE cluster_toast_value SET flag = 1 WHERE TRUE;
+step s2_store_chunk_ids: 
+  CREATE TABLE cluster_chunk_id AS
+    SELECT c.id, pg_column_toast_chunk_id(c.value) AS chunk_id
+    FROM cluster_toast_value c;
+  SELECT count(*) FROM cluster_chunk_id;
+
+count
+-----
+    1
+(1 row)
+
+step s2_cluster: CLUSTER cluster_toast_value; <waiting ...>
+step s1_commit: COMMIT;
+step s2_cluster: <... completed>
+step s2_verify_chunk_ids: 
+  SELECT o.id AS chunk_ids_preserved
+    FROM cluster_chunk_id o
+    JOIN cluster_toast_value c ON o.id = c.id
+    WHERE o.chunk_id != pg_column_toast_chunk_id(c.value);
+
+chunk_ids_preserved
+-------------------
+(0 rows)
+

@@ -17,6 +17,7 @@
 #include "access/relation.h"
 #include "access/table.h"
 #include "access/tableam.h"
+#include "catalog/namespace.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"
@@ -319,7 +320,7 @@ partition_bounds_create(PartitionBoundSpec **boundspecs, int nparts,
 	 * Initialize mapping array with invalid values, this is filled within
 	 * each sub-routine below depending on the bound type.
 	 */
-	*mapping = (int *) palloc(sizeof(int) * nparts);
+	*mapping = palloc_array(int, nparts);
 	for (i = 0; i < nparts; i++)
 		(*mapping)[i] = -1;
 
@@ -353,15 +354,13 @@ create_hash_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	int			greatest_modulus;
 	Datum	   *boundDatums;
 
-	boundinfo = (PartitionBoundInfoData *)
-		palloc0(sizeof(PartitionBoundInfoData));
+	boundinfo = palloc0_object(PartitionBoundInfoData);
 	boundinfo->strategy = key->strategy;
 	/* No special hash partitions. */
 	boundinfo->null_index = -1;
 	boundinfo->default_index = -1;
 
-	hbounds = (PartitionHashBound *)
-		palloc(nparts * sizeof(PartitionHashBound));
+	hbounds = palloc_array(PartitionHashBound, nparts);
 
 	/* Convert from node to the internal representation */
 	for (i = 0; i < nparts; i++)
@@ -384,7 +383,7 @@ create_hash_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	greatest_modulus = hbounds[nparts - 1].modulus;
 
 	boundinfo->ndatums = nparts;
-	boundinfo->datums = (Datum **) palloc0(nparts * sizeof(Datum *));
+	boundinfo->datums = palloc0_array(Datum *, nparts);
 	boundinfo->kind = NULL;
 	boundinfo->interleaved_parts = NULL;
 	boundinfo->nindexes = greatest_modulus;
@@ -472,8 +471,7 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	int			null_index = -1;
 	Datum	   *boundDatums;
 
-	boundinfo = (PartitionBoundInfoData *)
-		palloc0(sizeof(PartitionBoundInfoData));
+	boundinfo = palloc0_object(PartitionBoundInfoData);
 	boundinfo->strategy = key->strategy;
 	/* Will be set correctly below. */
 	boundinfo->null_index = -1;
@@ -533,7 +531,7 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 			  qsort_partition_list_value_cmp, key);
 
 	boundinfo->ndatums = ndatums;
-	boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
+	boundinfo->datums = palloc0_array(Datum *, ndatums);
 	boundinfo->kind = NULL;
 	boundinfo->interleaved_parts = NULL;
 	boundinfo->nindexes = ndatums;
@@ -690,16 +688,14 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	Datum	   *boundDatums;
 	PartitionRangeDatumKind *boundKinds;
 
-	boundinfo = (PartitionBoundInfoData *)
-		palloc0(sizeof(PartitionBoundInfoData));
+	boundinfo = palloc0_object(PartitionBoundInfoData);
 	boundinfo->strategy = key->strategy;
 	/* There is no special null-accepting range partition. */
 	boundinfo->null_index = -1;
 	/* Will be set correctly below. */
 	boundinfo->default_index = -1;
 
-	all_bounds = (PartitionRangeBound **)
-		palloc0(2 * nparts * sizeof(PartitionRangeBound *));
+	all_bounds = palloc0_array(PartitionRangeBound *, 2 * nparts);
 
 	/* Create a unified list of range bounds across all the partitions. */
 	ndatums = 0;
@@ -803,10 +799,8 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	 * bound.
 	 */
 	boundinfo->ndatums = ndatums;
-	boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
-	boundinfo->kind = (PartitionRangeDatumKind **)
-		palloc(ndatums *
-			   sizeof(PartitionRangeDatumKind *));
+	boundinfo->datums = palloc0_array(Datum *, ndatums);
+	boundinfo->kind = palloc0_array(PartitionRangeDatumKind *, ndatums);
 	boundinfo->interleaved_parts = NULL;
 
 	/*
@@ -814,7 +808,7 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	 * element of the indexes[] array.
 	 */
 	boundinfo->nindexes = ndatums + 1;
-	boundinfo->indexes = (int *) palloc((ndatums + 1) * sizeof(int));
+	boundinfo->indexes = palloc_array(int, (ndatums + 1));
 
 	/*
 	 * In the loop below, to save from allocating a series of small arrays,
@@ -824,8 +818,7 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	 */
 	partnatts = key->partnatts;
 	boundDatums = (Datum *) palloc(ndatums * partnatts * sizeof(Datum));
-	boundKinds = (PartitionRangeDatumKind *) palloc(ndatums * partnatts *
-													sizeof(PartitionRangeDatumKind));
+	boundKinds = palloc_array(PartitionRangeDatumKind, ndatums * partnatts);
 
 	for (i = 0; i < ndatums; i++)
 	{
@@ -1007,11 +1000,8 @@ partition_bounds_copy(PartitionBoundInfo src,
 	int			ndatums;
 	int			nindexes;
 	int			partnatts;
-	bool		hash_part;
-	int			natts;
-	Datum	   *boundDatums;
 
-	dest = (PartitionBoundInfo) palloc(sizeof(PartitionBoundInfoData));
+	dest = (PartitionBoundInfo) palloc_object(PartitionBoundInfoData);
 
 	dest->strategy = src->strategy;
 	ndatums = dest->ndatums = src->ndatums;
@@ -1021,9 +1011,9 @@ partition_bounds_copy(PartitionBoundInfo src,
 	/* List partitioned tables have only a single partition key. */
 	Assert(key->strategy != PARTITION_STRATEGY_LIST || partnatts == 1);
 
-	dest->datums = (Datum **) palloc(sizeof(Datum *) * ndatums);
+	dest->datums = palloc_array(Datum *, ndatums);
 
-	if (src->kind != NULL)
+	if (src->kind != NULL && ndatums > 0)
 	{
 		PartitionRangeDatumKind *boundKinds;
 
@@ -1058,40 +1048,44 @@ partition_bounds_copy(PartitionBoundInfo src,
 	 * For hash partitioning, datums array will have two elements - modulus
 	 * and remainder.
 	 */
-	hash_part = (key->strategy == PARTITION_STRATEGY_HASH);
-	natts = hash_part ? 2 : partnatts;
-	boundDatums = palloc(ndatums * natts * sizeof(Datum));
-
-	for (i = 0; i < ndatums; i++)
+	if (ndatums > 0)
 	{
-		int			j;
+		bool		hash_part = (key->strategy == PARTITION_STRATEGY_HASH);
+		int			natts = hash_part ? 2 : partnatts;
+		Datum	   *boundDatums = palloc(ndatums * natts * sizeof(Datum));
 
-		dest->datums[i] = &boundDatums[i * natts];
-
-		for (j = 0; j < natts; j++)
+		for (i = 0; i < ndatums; i++)
 		{
-			bool		byval;
-			int			typlen;
+			int			j;
 
-			if (hash_part)
-			{
-				typlen = sizeof(int32); /* Always int4 */
-				byval = true;	/* int4 is pass-by-value */
-			}
-			else
-			{
-				byval = key->parttypbyval[j];
-				typlen = key->parttyplen[j];
-			}
+			dest->datums[i] = &boundDatums[i * natts];
 
-			if (dest->kind == NULL ||
-				dest->kind[i][j] == PARTITION_RANGE_DATUM_VALUE)
-				dest->datums[i][j] = datumCopy(src->datums[i][j],
-											   byval, typlen);
+			for (j = 0; j < natts; j++)
+			{
+				if (dest->kind == NULL ||
+					dest->kind[i][j] == PARTITION_RANGE_DATUM_VALUE)
+				{
+					bool		byval;
+					int			typlen;
+
+					if (hash_part)
+					{
+						typlen = sizeof(int32); /* Always int4 */
+						byval = true;	/* int4 is pass-by-value */
+					}
+					else
+					{
+						byval = key->parttypbyval[j];
+						typlen = key->parttyplen[j];
+					}
+					dest->datums[i][j] = datumCopy(src->datums[i][j],
+												   byval, typlen);
+				}
+			}
 		}
 	}
 
-	dest->indexes = (int *) palloc(sizeof(int) * nindexes);
+	dest->indexes = palloc_array(int, nindexes);
 	memcpy(dest->indexes, src->indexes, sizeof(int) * nindexes);
 
 	dest->null_index = src->null_index;
@@ -1814,10 +1808,10 @@ init_partition_map(RelOptInfo *rel, PartitionMap *map)
 	int			i;
 
 	map->nparts = nparts;
-	map->merged_indexes = (int *) palloc(sizeof(int) * nparts);
-	map->merged = (bool *) palloc(sizeof(bool) * nparts);
+	map->merged_indexes = palloc_array(int, nparts);
+	map->merged = palloc_array(bool, nparts);
 	map->did_remapping = false;
-	map->old_indexes = (int *) palloc(sizeof(int) * nparts);
+	map->old_indexes = palloc_array(int, nparts);
 	for (i = 0; i < nparts; i++)
 	{
 		map->merged_indexes[i] = map->old_indexes[i] = -1;
@@ -2392,7 +2386,7 @@ fix_merged_indexes(PartitionMap *outer_map, PartitionMap *inner_map,
 
 	Assert(nmerged > 0);
 
-	new_indexes = (int *) palloc(sizeof(int) * nmerged);
+	new_indexes = palloc_array(int, nmerged);
 	for (i = 0; i < nmerged; i++)
 		new_indexes[i] = -1;
 
@@ -2452,8 +2446,8 @@ generate_matching_part_pairs(RelOptInfo *outer_rel, RelOptInfo *inner_rel,
 	Assert(*outer_parts == NIL);
 	Assert(*inner_parts == NIL);
 
-	outer_indexes = (int *) palloc(sizeof(int) * nmerged);
-	inner_indexes = (int *) palloc(sizeof(int) * nmerged);
+	outer_indexes = palloc_array(int, nmerged);
+	inner_indexes = palloc_array(int, nmerged);
 	for (i = 0; i < nmerged; i++)
 		outer_indexes[i] = inner_indexes[i] = -1;
 
@@ -2524,11 +2518,11 @@ build_merged_partition_bounds(char strategy, List *merged_datums,
 	int			pos;
 	ListCell   *lc;
 
-	merged_bounds = (PartitionBoundInfo) palloc(sizeof(PartitionBoundInfoData));
+	merged_bounds = palloc_object(PartitionBoundInfoData);
 	merged_bounds->strategy = strategy;
 	merged_bounds->ndatums = ndatums;
 
-	merged_bounds->datums = (Datum **) palloc(sizeof(Datum *) * ndatums);
+	merged_bounds->datums = palloc_array(Datum *, ndatums);
 	pos = 0;
 	foreach(lc, merged_datums)
 		merged_bounds->datums[pos++] = (Datum *) lfirst(lc);
@@ -2536,8 +2530,7 @@ build_merged_partition_bounds(char strategy, List *merged_datums,
 	if (strategy == PARTITION_STRATEGY_RANGE)
 	{
 		Assert(list_length(merged_kinds) == ndatums);
-		merged_bounds->kind = (PartitionRangeDatumKind **)
-			palloc(sizeof(PartitionRangeDatumKind *) * ndatums);
+		merged_bounds->kind = palloc_array(PartitionRangeDatumKind *, ndatums);
 		pos = 0;
 		foreach(lc, merged_kinds)
 			merged_bounds->kind[pos++] = (PartitionRangeDatumKind *) lfirst(lc);
@@ -2558,7 +2551,7 @@ build_merged_partition_bounds(char strategy, List *merged_datums,
 
 	Assert(list_length(merged_indexes) == ndatums);
 	merged_bounds->nindexes = ndatums;
-	merged_bounds->indexes = (int *) palloc(sizeof(int) * ndatums);
+	merged_bounds->indexes = palloc_array(int, ndatums);
 	pos = 0;
 	foreach(lc, merged_indexes)
 		merged_bounds->indexes[pos++] = lfirst_int(lc);
@@ -3433,11 +3426,10 @@ make_one_partition_rbound(PartitionKey key, int index, List *datums, bool lower)
 
 	Assert(datums != NIL);
 
-	bound = (PartitionRangeBound *) palloc0(sizeof(PartitionRangeBound));
+	bound = palloc0_object(PartitionRangeBound);
 	bound->index = index;
-	bound->datums = (Datum *) palloc0(key->partnatts * sizeof(Datum));
-	bound->kind = (PartitionRangeDatumKind *) palloc0(key->partnatts *
-													  sizeof(PartitionRangeDatumKind));
+	bound->datums = palloc0_array(Datum, key->partnatts);
+	bound->kind = palloc0_array(PartitionRangeDatumKind, key->partnatts);
 	bound->lower = lower;
 
 	i = 0;
@@ -3554,8 +3546,8 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
  */
 int32
 partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
-						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
-						   Datum *tuple_datums, int n_tuple_datums)
+						   const Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
+						   const Datum *tuple_datums, int n_tuple_datums)
 {
 	int			i;
 	int32		cmpval = -1;
@@ -3694,7 +3686,7 @@ partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 int
 partition_range_datum_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 							  PartitionBoundInfo boundinfo,
-							  int nvalues, Datum *values, bool *is_equal)
+							  int nvalues, const Datum *values, bool *is_equal)
 {
 	int			lo,
 				hi,
@@ -4976,4 +4968,908 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BOOL(rowHash % modulus == remainder);
+}
+
+/*
+ * check_two_partitions_bounds_range
+ *
+ * (function for BY RANGE partitioning)
+ *
+ * This is a helper function for check_partitions_for_split() and
+ * calculate_partition_bound_for_merge().  This function compares the upper
+ * bound of first_bound and the lower bound of second_bound.  These bounds
+ * should be equal except when "defaultPart == true" (this means that one of
+ * the split partitions is DEFAULT).  In this case, the upper bound of
+ * first_bound can be less than the lower bound of second_bound because
+ * the space between these bounds will be included in the DEFAULT partition.
+ *
+ * parent:			partitioned table
+ * first_name:		name of the first partition
+ * first_bound:		bound of the first partition
+ * second_name:		name of the second partition
+ * second_bound:	bound of the second partition
+ * defaultPart:		true if one of the new partitions is DEFAULT
+ * is_merge:		true ndicates the operation is MERGE PARTITIONS;
+ * 					false indicates the operation is SPLIT PARTITION.
+ * pstate:			pointer to ParseState struct for determining error position
+ */
+static void
+check_two_partitions_bounds_range(Relation parent,
+								  RangeVar *first_name,
+								  PartitionBoundSpec *first_bound,
+								  RangeVar *second_name,
+								  PartitionBoundSpec *second_bound,
+								  bool defaultPart,
+								  bool is_merge,
+								  ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionRangeBound *first_upper;
+	PartitionRangeBound *second_lower;
+	int			cmpval;
+
+	Assert(key->strategy == PARTITION_STRATEGY_RANGE);
+
+	first_upper = make_one_partition_rbound(key, -1, first_bound->upperdatums, false);
+	second_lower = make_one_partition_rbound(key, -1, second_bound->lowerdatums, true);
+
+	/*
+	 * lower1 argument of partition_rbound_cmp() is set to false for the
+	 * correct comparison result of the lower and upper bounds.
+	 */
+	cmpval = partition_rbound_cmp(key->partnatts,
+								  key->partsupfunc,
+								  key->partcollation,
+								  second_lower->datums, second_lower->kind,
+								  false, first_upper);
+	if ((!defaultPart && cmpval) || (defaultPart && cmpval < 0))
+	{
+		PartitionRangeDatum *datum = linitial(second_bound->lowerdatums);
+
+		if (is_merge)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg("can not merge partition \"%s\" together with partition \"%s\"",
+						   second_name->relname, first_name->relname),
+					errdetail("lower bound of partition \"%s\" is not equal to the upper bound of partition \"%s\"",
+							  second_name->relname, first_name->relname),
+					errhint("ALTER TABLE ... MERGE PARTITIONS requires the partition bounds to be adjacent."),
+					parser_errposition(pstate, datum->location));
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg("can not split to partition \"%s\" together with partition \"%s\"",
+						   second_name->relname, first_name->relname),
+					errdetail("lower bound of partition \"%s\" is not equal to the upper bound of partition \"%s\"",
+							  second_name->relname, first_name->relname),
+					errhint("ALTER TABLE ... SPLIT PARTITION requires the partition bounds to be adjacent."),
+					parser_errposition(pstate, datum->location));
+	}
+}
+
+/*
+ * get_partition_bound_spec
+ *
+ * Returns the PartitionBoundSpec for the partition with the given OID partOid.
+ */
+static PartitionBoundSpec *
+get_partition_bound_spec(Oid partOid)
+{
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		isnull;
+	PartitionBoundSpec *boundspec = NULL;
+
+	/* Try fetching the tuple from the catcache, for speed. */
+	tuple = SearchSysCache1(RELOID, partOid);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", partOid);
+
+	datum = SysCacheGetAttr(RELOID, tuple,
+							Anum_pg_class_relpartbound,
+							&isnull);
+	if (isnull)
+		elog(ERROR, "partition bound for relation %u is null",
+			 partOid);
+
+	boundspec = stringToNode(TextDatumGetCString(datum));
+
+	if (!IsA(boundspec, PartitionBoundSpec))
+		elog(ERROR, "expected PartitionBoundSpec for relation %u",
+			 partOid);
+
+	ReleaseSysCache(tuple);
+	return boundspec;
+}
+
+/*
+ * calculate_partition_bound_for_merge
+ *
+ * Calculates the bound of the merged partition "spec" by using the bounds of
+ * the partitions to be merged.
+ *
+ * parent:			partitioned table
+ * partNames:		names of partitions to be merged
+ * partOids:		Oids of partitions to be merged
+ * spec (out):		bounds specification of the merged partition
+ * pstate:			pointer to ParseState struct to determine error position
+ */
+void
+calculate_partition_bound_for_merge(Relation parent,
+									List *partNames,
+									List *partOids,
+									PartitionBoundSpec *spec,
+									ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionBoundSpec *bound;
+
+	Assert(!spec->is_default);
+
+	switch (key->strategy)
+	{
+		case PARTITION_STRATEGY_RANGE:
+			{
+				int			i;
+				PartitionRangeBound **lower_bounds;
+				int			nparts = list_length(partOids);
+				List	   *bounds = NIL;
+
+				lower_bounds = palloc0_array(PartitionRangeBound *, nparts);
+
+				/*
+				 * Create an array of lower bounds and a list of
+				 * PartitionBoundSpec.
+				 */
+				foreach_oid(partoid, partOids)
+				{
+					bound = get_partition_bound_spec(partoid);
+					i = foreach_current_index(partoid);
+
+					lower_bounds[i] = make_one_partition_rbound(key, i, bound->lowerdatums, true);
+					bounds = lappend(bounds, bound);
+				}
+
+				/* Sort the array of lower bounds. */
+				qsort_arg(lower_bounds, nparts, sizeof(PartitionRangeBound *),
+						  qsort_partition_rbound_cmp, key);
+
+				/* Ranges of partitions should be adjacent. */
+				for (i = 1; i < nparts; i++)
+				{
+					int			index = lower_bounds[i]->index;
+					int			prev_index = lower_bounds[i - 1]->index;
+
+					check_two_partitions_bounds_range(parent,
+													  (RangeVar *) list_nth(partNames, prev_index),
+													  (PartitionBoundSpec *) list_nth(bounds, prev_index),
+													  (RangeVar *) list_nth(partNames, index),
+													  (PartitionBoundSpec *) list_nth(bounds, index),
+													  false,
+													  true,
+													  pstate);
+				}
+
+				/*
+				 * The lower bound of the first partition is the lower bound
+				 * of the merged partition.
+				 */
+				spec->lowerdatums =
+					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[0]->index))->lowerdatums;
+
+				/*
+				 * The upper bound of the last partition is the upper bound of
+				 * the merged partition.
+				 */
+				spec->upperdatums =
+					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[nparts - 1]->index))->upperdatums;
+
+				pfree(lower_bounds);
+				list_free(bounds);
+				break;
+			}
+
+		case PARTITION_STRATEGY_LIST:
+			{
+				/* Consolidate bounds for all partitions in the list. */
+				foreach_oid(partoid, partOids)
+				{
+					bound = get_partition_bound_spec(partoid);
+					spec->listdatums = list_concat(spec->listdatums, bound->listdatums);
+				}
+				break;
+			}
+
+		default:
+			elog(ERROR, "unexpected partition strategy: %d",
+				 (int) key->strategy);
+	}
+}
+
+/*
+ * partitions_listdatum_intersection
+ *
+ * (function for BY LIST partitioning)
+ *
+ * Function compares lists of values for different partitions.
+ * Return a list that contains *one* cell that is present in both list1 and
+ * list2.  The returned list is freshly allocated via palloc(), but the
+ * cells themselves point to the same objects as the cells of the
+ * input lists.
+ *
+ * Currently, there is no need to collect all common partition datums from the
+ * two lists.
+ */
+static List *
+partitions_listdatum_intersection(FmgrInfo *partsupfunc, Oid *partcollation,
+								  const List *list1, const List *list2)
+{
+	List	   *result = NIL;
+
+	if (list1 == NIL || list2 == NIL)
+		return result;
+
+	foreach_node(Const, val1, list1)
+	{
+		bool		isnull1 = val1->constisnull;
+
+		foreach_node(Const, val2, list2)
+		{
+			if (val2->constisnull)
+			{
+				if (isnull1)
+				{
+					result = lappend(result, val1);
+					return result;
+				}
+				continue;
+			}
+			else if (isnull1)
+				continue;
+
+			/* Compare two datum values. */
+			if (DatumGetInt32(FunctionCall2Coll(&partsupfunc[0],
+												partcollation[0],
+												val1->constvalue,
+												val2->constvalue)) == 0)
+			{
+				result = lappend(result, val1);
+				return result;
+			}
+		}
+	}
+
+	return result;
+}
+
+/*
+ * check_partitions_not_overlap_list
+ *
+ * (function for BY LIST partitioning)
+ *
+ * This is a helper function for check_partitions_for_split().
+ * Checks that the values of the new partitions do not overlap.
+ *
+ * parent:	partitioned table
+ * parts:	array of SinglePartitionSpec structs with info about split partitions
+ * nparts:	size of array "parts"
+ */
+static void
+check_partitions_not_overlap_list(Relation parent,
+								  SinglePartitionSpec **parts,
+								  int nparts,
+								  ParseState *pstate)
+{
+	PartitionKey key PG_USED_FOR_ASSERTS_ONLY = RelationGetPartitionKey(parent);
+	int			i,
+				j;
+	SinglePartitionSpec *sps1,
+			   *sps2;
+	List	   *overlap;
+
+	Assert(key->strategy == PARTITION_STRATEGY_LIST);
+
+	for (i = 0; i < nparts; i++)
+	{
+		sps1 = parts[i];
+
+		for (j = i + 1; j < nparts; j++)
+		{
+			sps2 = parts[j];
+
+			overlap = partitions_listdatum_intersection(&key->partsupfunc[0],
+														key->partcollation,
+														sps1->bound->listdatums,
+														sps2->bound->listdatums);
+			if (list_length(overlap) > 0)
+			{
+				Const	   *val = (Const *) linitial_node(Const, overlap);
+
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						errmsg("new partition \"%s\" would overlap with another new partition \"%s\"",
+							   sps1->name->relname, sps2->name->relname),
+						parser_errposition(pstate, exprLocation((Node *) val)));
+			}
+		}
+	}
+}
+
+/*
+ * check_partition_bounds_for_split_range
+ *
+ * (function for BY RANGE partitioning)
+ *
+ * Checks that bounds of new partition "spec" are inside bounds of split
+ * partition (with Oid splitPartOid). If first=true (this means that "spec" is
+ * the first of the new partitions), then the lower bound of "spec" should be
+ * equal (or greater than or equal in case defaultPart=true) to the lower
+ * bound of the split partition. If last=true (this means that "spec" is the
+ * last of the new partitions), then the upper bound of "spec" should be
+ * equal (or less than or equal in case defaultPart=true) to the upper bound
+ * of the split partition.
+ *
+ * parent:			partitioned table
+ * relname:			name of the new partition
+ * spec:			bounds specification of the new partition
+ * splitPartOid:	split partition Oid
+ * first:			true iff the new partition "spec" is the first of the
+ *					new partitions
+ * last:			true iff the new partition "spec" is the last of the
+ *					new partitions
+ * defaultPart:		true iff new partitions contain the DEFAULT partition
+ * pstate:			pointer to ParseState struct to determine error position
+ */
+static void
+check_partition_bounds_for_split_range(Relation parent,
+									   char *relname,
+									   PartitionBoundSpec *spec,
+									   Oid splitPartOid,
+									   bool first,
+									   bool last,
+									   bool defaultPart,
+									   ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionRangeBound *lower,
+			   *upper;
+	int			cmpval;
+
+	Assert(key->strategy == PARTITION_STRATEGY_RANGE);
+	Assert(spec->strategy == PARTITION_STRATEGY_RANGE);
+
+	lower = make_one_partition_rbound(key, -1, spec->lowerdatums, true);
+	upper = make_one_partition_rbound(key, -1, spec->upperdatums, false);
+
+	/*
+	 * First, check if the resulting range would be empty with the specified
+	 * lower and upper bounds.  partition_rbound_cmp cannot return zero here,
+	 * since the lower-bound flags are different.
+	 */
+	cmpval = partition_rbound_cmp(key->partnatts,
+								  key->partsupfunc,
+								  key->partcollation,
+								  lower->datums, lower->kind,
+								  true, upper);
+	Assert(cmpval != 0);
+	if (cmpval > 0)
+	{
+		/* Point to the problematic key in the lower datums list. */
+		PartitionRangeDatum *datum = list_nth(spec->lowerdatums, cmpval - 1);
+
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("empty range bound specified for partition \"%s\"",
+					   relname),
+				errdetail("Specified lower bound %s is greater than or equal to upper bound %s.",
+						  get_range_partbound_string(spec->lowerdatums),
+						  get_range_partbound_string(spec->upperdatums)),
+				parser_errposition(pstate, exprLocation((Node *) datum)));
+	}
+
+	/*
+	 * Need to check first and last partitions (from the set of new
+	 * partitions)
+	 */
+	if (first || last)
+	{
+		PartitionBoundSpec *split_spec = get_partition_bound_spec(splitPartOid);
+		PartitionRangeDatum *datum;
+
+		if (first)
+		{
+			PartitionRangeBound *split_lower;
+
+			split_lower = make_one_partition_rbound(key, -1, split_spec->lowerdatums, true);
+
+			cmpval = partition_rbound_cmp(key->partnatts,
+										  key->partsupfunc,
+										  key->partcollation,
+										  lower->datums, lower->kind,
+										  true, split_lower);
+			if (cmpval != 0)
+				datum = list_nth(spec->lowerdatums, abs(cmpval) - 1);
+
+			/*
+			 * The lower bound of "spec" must equal the lower bound of the
+			 * split partition.  However, if one of the new partitions is
+			 * DEFAULT, then it is ok for the new partition's lower bound to
+			 * be greater than that of the split partition.
+			 */
+			if (!defaultPart)
+			{
+				if (cmpval != 0)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							errmsg("lower bound of partition \"%s\" is not equal to lower bound of split partition \"%s\"",
+								   relname,
+								   get_rel_name(splitPartOid)),
+							errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+									"ALTER TABLE ... SPLIT PARTITION"),
+							parser_errposition(pstate, exprLocation((Node *) datum)));
+			}
+			else if (cmpval < 0)
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						errmsg("lower bound of partition \"%s\" is less than lower bound of split partition \"%s\"",
+							   relname,
+							   get_rel_name(splitPartOid)),
+						errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+								"ALTER TABLE ... SPLIT PARTITION"),
+						parser_errposition(pstate, exprLocation((Node *) datum)));
+		}
+		else
+		{
+			PartitionRangeBound *split_upper;
+
+			split_upper = make_one_partition_rbound(key, -1, split_spec->upperdatums, false);
+
+			cmpval = partition_rbound_cmp(key->partnatts,
+										  key->partsupfunc,
+										  key->partcollation,
+										  upper->datums, upper->kind,
+										  false, split_upper);
+			if (cmpval != 0)
+				datum = list_nth(spec->upperdatums, abs(cmpval) - 1);
+
+			/*
+			 * The upper bound of "spec" must equal the upper bound of the
+			 * split partition.  However, if one of the new partitions is
+			 * DEFAULT, then it is ok for the new partition's upper bound to
+			 * be less than that of the split partition.
+			 */
+			if (!defaultPart)
+			{
+				if (cmpval != 0)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							errmsg("upper bound of partition \"%s\" is not equal to upper bound of split partition \"%s\"",
+								   relname,
+								   get_rel_name(splitPartOid)),
+							errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+									"ALTER TABLE ... SPLIT PARTITION"),
+							parser_errposition(pstate, exprLocation((Node *) datum)));
+			}
+			else if (cmpval > 0)
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						errmsg("upper bound of partition \"%s\" is greater than upper bound of split partition \"%s\"",
+							   relname,
+							   get_rel_name(splitPartOid)),
+						errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+								"ALTER TABLE ... SPLIT PARTITION"),
+						parser_errposition(pstate, exprLocation((Node *) datum)));
+		}
+	}
+}
+
+/*
+ * check_partition_bounds_for_split_list
+ *
+ * (function for BY LIST partitioning)
+ *
+ * Checks that the bounds of the new partition are inside the bounds of the
+ * split partition (with Oid splitPartOid).
+ *
+ * parent:			partitioned table
+ * relname:			name of the new partition
+ * spec:			bounds specification of the new partition
+ * splitPartOid:	split partition Oid
+ * pstate:			pointer to ParseState struct to determine error position
+ */
+static void
+check_partition_bounds_for_split_list(Relation parent, char *relname,
+									  PartitionBoundSpec *spec,
+									  Oid splitPartOid,
+									  ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionDesc partdesc = RelationGetPartitionDesc(parent, false);
+	PartitionBoundInfo boundinfo = partdesc->boundinfo;
+	int			with = -1;
+	bool		overlap = false;
+	int			overlap_location = -1;
+
+	Assert(key->strategy == PARTITION_STRATEGY_LIST);
+	Assert(spec->strategy == PARTITION_STRATEGY_LIST);
+	Assert(boundinfo && boundinfo->strategy == PARTITION_STRATEGY_LIST);
+
+	/*
+	 * Search each value of the new partition "spec" in the existing
+	 * partitions.  All of them should be in the split partition (with Oid
+	 * splitPartOid).
+	 */
+	foreach_node(Const, val, spec->listdatums)
+	{
+		overlap_location = exprLocation((Node *) val);
+		if (!val->constisnull)
+		{
+			int			offset;
+			bool		equal;
+
+			offset = partition_list_bsearch(&key->partsupfunc[0],
+											key->partcollation,
+											boundinfo,
+											val->constvalue,
+											&equal);
+			if (offset >= 0 && equal)
+			{
+				with = boundinfo->indexes[offset];
+				if (partdesc->oids[with] != splitPartOid)
+				{
+					overlap = true;
+					break;
+				}
+			}
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						errmsg("new partition \"%s\" cannot have this value because split partition \"%s\" does not have",
+							   relname,
+							   get_rel_name(splitPartOid)),
+						parser_errposition(pstate, overlap_location));
+		}
+		else if (partition_bound_accepts_nulls(boundinfo))
+		{
+			with = boundinfo->null_index;
+			if (partdesc->oids[with] != splitPartOid)
+			{
+				overlap = true;
+				break;
+			}
+		}
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg("new partition \"%s\" cannot have NULL value because split partition \"%s\" does not have",
+						   relname,
+						   get_rel_name(splitPartOid)),
+					parser_errposition(pstate, overlap_location));
+	}
+
+	if (overlap)
+	{
+		Assert(with >= 0);
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("new partition \"%s\" would overlap with another (not split) partition \"%s\"",
+					   relname, get_rel_name(partdesc->oids[with])),
+				parser_errposition(pstate, overlap_location));
+	}
+}
+
+/*
+ * find_value_in_new_partitions_list
+ *
+ * (function for BY LIST partitioning)
+ *
+ * Function returns true iff any of the new partitions contains the value
+ * "value".
+ *
+ * partsupfunc:		information about the comparison function associated with
+ *					the partition key
+ * partcollation:	partitioning collation
+ * parts:			pointer to an array with new partition descriptions
+ * nparts:			number of new partitions
+ * value:			the value that we are looking for
+ * isnull:			true if the value that we are looking for is NULL
+ */
+static bool
+find_value_in_new_partitions_list(FmgrInfo *partsupfunc,
+								  Oid *partcollation,
+								  SinglePartitionSpec **parts,
+								  int nparts,
+								  Datum value,
+								  bool isnull)
+{
+	for (int i = 0; i < nparts; i++)
+	{
+		SinglePartitionSpec *sps = parts[i];
+
+		foreach_node(Const, val, sps->bound->listdatums)
+		{
+			if (isnull && val->constisnull)
+				return true;
+
+			if (!isnull && !val->constisnull)
+			{
+				if (DatumGetInt32(FunctionCall2Coll(&partsupfunc[0],
+													partcollation[0],
+													val->constvalue,
+													value)) == 0)
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
+ * check_parent_values_in_new_partitions
+ *
+ * (function for BY LIST partitioning)
+ *
+ * Checks that all values of split partition (with Oid partOid) are contained
+ * in new partitions.
+ *
+ * parent:	partitioned table
+ * partOid:	split partition Oid
+ * parts:	pointer to an array with new partition descriptions
+ * nparts:	number of new partitions
+ * pstate:	pointer to ParseState struct to determine error position
+ */
+static void
+check_parent_values_in_new_partitions(Relation parent,
+									  Oid partOid,
+									  SinglePartitionSpec **parts,
+									  int nparts,
+									  ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionDesc partdesc = RelationGetPartitionDesc(parent, false);
+	PartitionBoundInfo boundinfo = partdesc->boundinfo;
+	int			i;
+	bool		found = true;
+	Datum		datum = PointerGetDatum(NULL);
+
+	Assert(key->strategy == PARTITION_STRATEGY_LIST);
+
+	/*
+	 * Special processing for NULL value. Search for a NULL value if the split
+	 * partition (partOid) contains it.
+	 */
+	if (partition_bound_accepts_nulls(boundinfo) &&
+		partdesc->oids[boundinfo->null_index] == partOid)
+	{
+		if (!find_value_in_new_partitions_list(&key->partsupfunc[0],
+											   key->partcollation, parts, nparts, datum, true))
+			found = false;
+	}
+
+	if (!found)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("new partitions combined partition bounds do not contain value (%s) but split partition \"%s\" does",
+					   "NULL",
+					   get_rel_name(partOid)),
+				errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+						"ALTER TABLE ... SPLIT PARTITION"));
+
+	/*
+	 * Search all values of split partition with partOid in the PartitionDesc
+	 * of partitioned table.
+	 */
+	for (i = 0; i < boundinfo->ndatums; i++)
+	{
+		if (partdesc->oids[boundinfo->indexes[i]] == partOid)
+		{
+			/* We found the value that the split partition contains. */
+			datum = boundinfo->datums[i][0];
+			if (!find_value_in_new_partitions_list(&key->partsupfunc[0],
+												   key->partcollation, parts, nparts, datum, false))
+			{
+				found = false;
+				break;
+			}
+		}
+	}
+
+	if (!found)
+	{
+		Const	   *notFoundVal;
+
+		/*
+		 * Make a Const for getting the string representation of the missing
+		 * value.
+		 */
+		notFoundVal = makeConst(key->parttypid[0],
+								key->parttypmod[0],
+								key->parttypcoll[0],
+								key->parttyplen[0],
+								datum,
+								false,	/* isnull */
+								key->parttypbyval[0]);
+
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("new partitions combined partition bounds do not contain value (%s) but split partition \"%s\" does",
+					   deparse_expression((Node *) notFoundVal, NIL, false, false),
+					   get_rel_name(partOid)),
+				errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+						"ALTER TABLE ... SPLIT PARTITION"));
+	}
+}
+
+/*
+ * check_partitions_for_split
+ *
+ * Checks new partitions for the SPLIT PARTITION command:
+ * 1. Bounds of new partitions should not overlap with new and existing
+ *	  partitions.
+ * 2. In the case when new or existing partitions contain the DEFAULT
+ *	  partition, new partitions can have any bounds inside the split partition
+ *	  bound (can be spaces between partition bounds).
+ * 3. In case new partitions don't contain the DEFAULT partition and the
+ *	  partitioned table does not have the DEFAULT partition, the following
+ *	  should be true: the sum of the bounds of new partitions should be equal
+ &	  to the bound of the split partition.
+ *
+ * parent:			partitioned table
+ * splitPartOid:	split partition Oid
+ * partlist:		list of new partitions after partition split
+ * pstate:			pointer to ParseState struct for determine error position
+ */
+void
+check_partitions_for_split(Relation parent,
+						   Oid splitPartOid,
+						   List *partlist,
+						   ParseState *pstate)
+{
+	PartitionKey key;
+	char		strategy;
+	Oid			defaultPartOid;
+	bool		isSplitPartDefault;
+	bool		createDefaultPart = false;
+	int			default_index = -1;
+	int			i;
+	SinglePartitionSpec **new_parts;
+	SinglePartitionSpec *spsPrev = NULL;
+
+	/*
+	 * nparts counts the number of split partitions, but it exclude the
+	 * default partition.
+	 */
+	int			nparts = 0;
+
+	key = RelationGetPartitionKey(parent);
+	strategy = get_partition_strategy(key);
+
+	defaultPartOid =
+		get_default_oid_from_partdesc(RelationGetPartitionDesc(parent, true));
+
+	Assert(strategy == PARTITION_STRATEGY_RANGE ||
+		   strategy == PARTITION_STRATEGY_LIST);
+
+	/*
+	 * Make an array new_parts with new partitions except the DEFAULT
+	 * partition.
+	 */
+	new_parts = palloc0_array(SinglePartitionSpec *, list_length(partlist));
+
+	/* isSplitPartDefault flag: is split partition a DEFAULT partition? */
+	isSplitPartDefault = (defaultPartOid == splitPartOid);
+
+	foreach_node(SinglePartitionSpec, sps, partlist)
+	{
+		if (sps->bound->is_default)
+			default_index = foreach_current_index(sps);
+		else
+			new_parts[nparts++] = sps;
+	}
+
+	/* An indicator that the DEFAULT partition will be created. */
+	if (default_index != -1)
+	{
+		createDefaultPart = true;
+		Assert(nparts == list_length(partlist) - 1);
+	}
+
+	if (strategy == PARTITION_STRATEGY_RANGE)
+	{
+		PartitionRangeBound **lower_bounds;
+		SinglePartitionSpec **tmp_new_parts;
+
+		/*
+		 * To simplify the check for ranges of new partitions, we need to sort
+		 * all partitions in ascending order of their bounds (we compare the
+		 * lower bound only).
+		 */
+		lower_bounds = palloc0_array(PartitionRangeBound *, nparts);
+
+		/* Create an array of lower bounds. */
+		for (i = 0; i < nparts; i++)
+		{
+			lower_bounds[i] = make_one_partition_rbound(key, i,
+														new_parts[i]->bound->lowerdatums, true);
+		}
+
+		/* Sort the array of lower bounds. */
+		qsort_arg(lower_bounds, nparts, sizeof(PartitionRangeBound *),
+				  qsort_partition_rbound_cmp, (void *) key);
+
+		/* Reorder the array of partitions. */
+		tmp_new_parts = new_parts;
+		new_parts = palloc0_array(SinglePartitionSpec *, nparts);
+		for (i = 0; i < nparts; i++)
+			new_parts[i] = tmp_new_parts[lower_bounds[i]->index];
+
+		pfree(tmp_new_parts);
+		pfree(lower_bounds);
+	}
+
+	for (i = 0; i < nparts; i++)
+	{
+		SinglePartitionSpec *sps = new_parts[i];
+
+		if (isSplitPartDefault)
+		{
+			/*
+			 * When the split partition is the DEFAULT partition, we can use
+			 * any free ranges - as when creating a new partition.
+			 */
+			check_new_partition_bound(sps->name->relname, parent, sps->bound,
+									  pstate);
+		}
+		else
+		{
+			/*
+			 * Checks that the bounds of the current partition are inside the
+			 * bounds of the split partition. For range partitioning: checks
+			 * that the upper bound of the previous partition is equal to the
+			 * lower bound of the current partition. For list partitioning:
+			 * checks that the split partition contains all values of the
+			 * current partition.
+			 */
+			if (strategy == PARTITION_STRATEGY_RANGE)
+			{
+				bool		first = (i == 0);
+				bool		last = (i == (nparts - 1));
+
+				check_partition_bounds_for_split_range(parent, sps->name->relname, sps->bound,
+													   splitPartOid, first, last,
+													   createDefaultPart, pstate);
+			}
+			else
+				check_partition_bounds_for_split_list(parent, sps->name->relname,
+													  sps->bound, splitPartOid, pstate);
+		}
+
+		/* Ranges of new partitions should not overlap. */
+		if (strategy == PARTITION_STRATEGY_RANGE && spsPrev)
+			check_two_partitions_bounds_range(parent, spsPrev->name, spsPrev->bound,
+											  sps->name, sps->bound,
+											  createDefaultPart,
+											  false,
+											  pstate);
+
+		spsPrev = sps;
+	}
+
+	if (strategy == PARTITION_STRATEGY_LIST)
+	{
+		/* Values of new partitions should not overlap. */
+		check_partitions_not_overlap_list(parent, new_parts, nparts,
+										  pstate);
+
+		/*
+		 * Need to check that all values of the split partition are contained
+		 * in the new partitions. Skip this check if the DEFAULT partition
+		 * exists.
+		 */
+		if (!createDefaultPart)
+			check_parent_values_in_new_partitions(parent, splitPartOid,
+												  new_parts, nparts, pstate);
+	}
+
+	pfree(new_parts);
 }

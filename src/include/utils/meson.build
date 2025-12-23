@@ -30,6 +30,13 @@ errcodes = custom_target('errcodes',
 )
 generated_headers += errcodes
 
+guc_tables = custom_target('guc_tables',
+  input: files('../../backend/utils/misc/guc_parameters.dat'),
+  output: ['guc_tables.inc.c'],
+  depend_files: catalog_pm,
+  command: [perl, files('../../backend/utils/misc/gen_guc_tables.pl'), '@INPUT@', '@OUTPUT@'])
+generated_headers += guc_tables
+
 if dtrace.found()
   probes_tmp = custom_target('probes.h.tmp',
     input: files('../../backend/utils/probes.d'),

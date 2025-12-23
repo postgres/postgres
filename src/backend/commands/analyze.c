@@ -29,7 +29,6 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_inherits.h"
-#include "commands/dbcommands.h"
 #include "commands/progress.h"
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
@@ -76,7 +75,7 @@ static BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel,
-						   VacuumParams *params, List *va_cols,
+						   const VacuumParams params, List *va_cols,
 						   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 						   bool inh, bool in_outer_xact, int elevel);
 static void compute_index_stats(Relation onerel, double totalrows,
@@ -107,7 +106,7 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
  */
 void
 analyze_rel(Oid relid, RangeVar *relation,
-			VacuumParams *params, List *va_cols, bool in_outer_xact,
+			const VacuumParams params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
@@ -116,7 +115,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 	BlockNumber relpages = 0;
 
 	/* Select logging level */
-	if (params->options & VACOPT_VERBOSE)
+	if (params.options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -138,8 +137,8 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 *
 	 * Make sure to generate only logs for ANALYZE in this case.
 	 */
-	onerel = vacuum_open_relation(relid, relation, params->options & ~(VACOPT_VACUUM),
-								  params->log_min_duration >= 0,
+	onerel = vacuum_open_relation(relid, relation, params.options & ~(VACOPT_VACUUM),
+								  params.log_analyze_min_duration >= 0,
 								  ShareUpdateExclusiveLock);
 
 	/* leave if relation could not be opened or locked */
@@ -155,7 +154,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 */
 	if (!vacuum_is_permitted_for_relation(RelationGetRelid(onerel),
 										  onerel->rd_rel,
-										  params->options & ~VACOPT_VACUUM))
+										  params.options & ~VACOPT_VACUUM))
 	{
 		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
@@ -227,7 +226,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 	else
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(params->options & VACOPT_VACUUM))
+		if (!(params.options & VACOPT_VACUUM))
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
 							RelationGetRelationName(onerel))));
@@ -240,6 +239,12 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 */
 	pgstat_progress_start_command(PROGRESS_COMMAND_ANALYZE,
 								  RelationGetRelid(onerel));
+	if (AmAutoVacuumWorkerProcess())
+		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
+									 PROGRESS_ANALYZE_STARTED_BY_AUTOVACUUM);
+	else
+		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
+									 PROGRESS_ANALYZE_STARTED_BY_MANUAL);
 
 	/*
 	 * Do the normal non-recursive ANALYZE.  We can skip this for partitioned
@@ -275,7 +280,7 @@ analyze_rel(Oid relid, RangeVar *relation,
  * appropriate acquirefunc for each child table.
  */
 static void
-do_analyze_rel(Relation onerel, VacuumParams *params,
+do_analyze_rel(Relation onerel, const VacuumParams params,
 			   List *va_cols, AcquireSampleRowsFunc acquirefunc,
 			   BlockNumber relpages, bool inh, bool in_outer_xact,
 			   int elevel)
@@ -309,9 +314,9 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	PgStat_Counter startreadtime = 0;
 	PgStat_Counter startwritetime = 0;
 
-	verbose = (params->options & VACOPT_VERBOSE) != 0;
+	verbose = (params.options & VACOPT_VERBOSE) != 0;
 	instrument = (verbose || (AmAutoVacuumWorkerProcess() &&
-							  params->log_min_duration >= 0));
+							  params.log_analyze_min_duration >= 0));
 	if (inh)
 		ereport(elevel,
 				(errmsg("analyzing \"%s.%s\" inheritance tree",
@@ -690,8 +695,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	 * only do it for inherited stats. (We're never called for not-inherited
 	 * stats on partitioned tables anyway.)
 	 *
-	 * Reset the changes_since_analyze counter only if we analyzed all
-	 * columns; otherwise, there is still work for auto-analyze to do.
+	 * Reset the mod_since_analyze counter only if we analyzed all columns;
+	 * otherwise, there is still work for auto-analyze to do.
 	 */
 	if (!inh)
 		pgstat_report_analyze(onerel, totalrows, totaldeadrows,
@@ -706,7 +711,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	 * amvacuumcleanup() when called in ANALYZE-only mode.  The only exception
 	 * among core index AMs is GIN/ginvacuumcleanup().
 	 */
-	if (!(params->options & VACOPT_VACUUM))
+	if (!(params.options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -736,9 +741,9 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	{
 		TimestampTz endtime = GetCurrentTimestamp();
 
-		if (verbose || params->log_min_duration == 0 ||
+		if (verbose || params.log_analyze_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, endtime,
-									   params->log_min_duration))
+									   params.log_analyze_min_duration))
 		{
 			long		delay_in_ms;
 			WalUsage	walusage;
@@ -832,10 +837,11 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							 total_blks_read,
 							 total_blks_dirtied);
 			appendStringInfo(&buf,
-							 _("WAL usage: %" PRId64 " records, %" PRId64 " full page images, %" PRIu64 " bytes, %" PRId64 " buffers full\n"),
+							 _("WAL usage: %" PRId64 " records, %" PRId64 " full page images, %" PRIu64 " bytes, %" PRIu64 " full page image bytes, %" PRId64 " buffers full\n"),
 							 walusage.wal_records,
 							 walusage.wal_fpi,
 							 walusage.wal_bytes,
+							 walusage.wal_fpi_bytes,
 							 walusage.wal_buffers_full);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
@@ -1073,7 +1079,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	/*
 	 * Create the VacAttrStats struct.
 	 */
-	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
+	stats = palloc0_object(VacAttrStats);
 	stats->attstattarget = attstattarget;
 
 	/*
@@ -1712,10 +1718,9 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		i = Anum_pg_statistic_stanumbers1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			int			nnum = stats->numnumbers[k];
-
-			if (nnum > 0)
+			if (stats->stanumbers[k] != NULL)
 			{
+				int			nnum = stats->numnumbers[k];
 				Datum	   *numdatums = (Datum *) palloc(nnum * sizeof(Datum));
 				ArrayType  *arry;
 
@@ -1733,7 +1738,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		i = Anum_pg_statistic_stavalues1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			if (stats->numvalues[k] > 0)
+			if (stats->stavalues[k] != NULL)
 			{
 				ArrayType  *arry;
 
@@ -1905,7 +1910,7 @@ std_typanalyze(VacAttrStats *stats)
 							 NULL);
 
 	/* Save the operator info for compute_stats routines */
-	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
+	mystats = palloc_object(StdAnalyzeData);
 	mystats->eqopr = eqopr;
 	mystats->eqfunc = OidIsValid(eqopr) ? get_opcode(eqopr) : InvalidOid;
 	mystats->ltopr = ltopr;
@@ -2860,7 +2865,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 			/* Must copy the target values into anl_context */
 			old_context = MemoryContextSwitchTo(stats->anl_context);
-			corrs = (float4 *) palloc(sizeof(float4));
+			corrs = palloc_object(float4);
 			MemoryContextSwitchTo(old_context);
 
 			/*----------

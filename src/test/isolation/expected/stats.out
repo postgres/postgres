@@ -1025,7 +1025,7 @@ test_stat_func|                          |                |
 (1 row)
 
 
-starting permutation: s1_track_funcs_all s2_track_funcs_all s1_func_call s2_func_call s2_func_call2 s1_ff s2_ff s1_func_stats s2_func_call s2_func_call2 s2_ff s1_func_stats s1_func_stats2 s1_func_stats s1_func_stats_reset s1_func_stats s1_func_stats2 s1_func_stats
+starting permutation: s1_track_funcs_all s2_track_funcs_all s1_func_call s2_func_call s2_func_call2 s1_ff s2_ff s1_func_stats s2_func_call s2_func_call2 s2_ff s1_func_stats s1_func_stats2 s1_func_stats s1_func_stats_reset_check s1_func_stats_reset s1_func_stats s1_func_stats2 s1_func_stats s1_func_stats_reset_check
 pg_stat_force_next_flush
 ------------------------
                         
@@ -1137,6 +1137,15 @@ name          |pg_stat_get_function_calls|total_above_zero|self_above_zero
 test_stat_func|                         3|t               |t              
 (1 row)
 
+step s1_func_stats_reset_check: 
+    SELECT pg_stat_get_function_stat_reset_time('test_stat_func'::regproc)
+        IS NOT NULL AS has_stats_reset;
+
+has_stats_reset
+---------------
+f              
+(1 row)
+
 step s1_func_stats_reset: SELECT pg_stat_reset_single_function_counters('test_stat_func'::regproc);
 pg_stat_reset_single_function_counters
 --------------------------------------
@@ -1183,6 +1192,15 @@ step s1_func_stats:
 name          |pg_stat_get_function_calls|total_above_zero|self_above_zero
 --------------+--------------------------+----------------+---------------
 test_stat_func|                         0|f               |f              
+(1 row)
+
+step s1_func_stats_reset_check: 
+    SELECT pg_stat_get_function_stat_reset_time('test_stat_func'::regproc)
+        IS NOT NULL AS has_stats_reset;
+
+has_stats_reset
+---------------
+t              
 (1 row)
 
 

@@ -15,6 +15,18 @@ AS 'MODULE_PATHNAME', 'injection_points_attach'
 LANGUAGE C STRICT PARALLEL UNSAFE;
 
 --
+-- injection_points_attach()
+--
+-- Attaches a function to the given injection point, with library name,
+-- function name and private data.
+--
+CREATE FUNCTION injection_points_attach(IN point_name TEXT,
+    IN library_name TEXT, IN function_name TEXT, IN private_data BYTEA)
+RETURNS void
+AS 'MODULE_PATHNAME', 'injection_points_attach_func'
+LANGUAGE C PARALLEL UNSAFE;
+
+--
 -- injection_points_load()
 --
 -- Load an injection point already attached.
@@ -78,37 +90,16 @@ AS 'MODULE_PATHNAME', 'injection_points_detach'
 LANGUAGE C STRICT PARALLEL UNSAFE;
 
 --
--- injection_points_stats_numcalls()
+-- injection_points_list()
 --
--- Reports statistics, if any, related to the given injection point.
+-- List of all the injection points currently attached.
 --
-CREATE FUNCTION injection_points_stats_numcalls(IN point_name TEXT)
-RETURNS bigint
-AS 'MODULE_PATHNAME', 'injection_points_stats_numcalls'
-LANGUAGE C STRICT;
-
---
--- injection_points_stats_drop()
---
--- Drop all statistics of injection points.
---
-CREATE FUNCTION injection_points_stats_drop()
-RETURNS void
-AS 'MODULE_PATHNAME', 'injection_points_stats_drop'
-LANGUAGE C STRICT;
-
---
--- injection_points_stats_fixed()
---
--- Reports fixed-numbered statistics for injection points.
-CREATE FUNCTION injection_points_stats_fixed(OUT numattach int8,
-   OUT numdetach int8,
-   OUT numrun int8,
-   OUT numcached int8,
-   OUT numloaded int8)
-RETURNS record
-AS 'MODULE_PATHNAME', 'injection_points_stats_fixed'
-LANGUAGE C STRICT;
+CREATE FUNCTION injection_points_list(OUT point_name text,
+   OUT library text,
+   OUT function text)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME', 'injection_points_list'
+LANGUAGE C STRICT VOLATILE PARALLEL RESTRICTED;
 
 --
 -- regress_injection.c functions

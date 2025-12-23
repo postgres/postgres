@@ -50,3 +50,13 @@ SELECT gin_index_check('gin_check_jsonb_idx');
 
 -- cleanup
 DROP TABLE gin_check_jsonb;
+
+-- Test GIN multicolumn index
+CREATE TABLE "gin_check_multicolumn"(a text[], b text[]);
+INSERT INTO gin_check_multicolumn (a,b) values ('{a,c,e}','{b,d,f}');
+CREATE INDEX "gin_check_multicolumn_idx" on gin_check_multicolumn USING GIN(a,b);
+
+SELECT gin_index_check('gin_check_multicolumn_idx');
+
+-- cleanup
+DROP TABLE gin_check_multicolumn;

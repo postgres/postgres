@@ -61,7 +61,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 	ptr = res;
 	while (ptr->lexeme)
 		ptr++;
-	da = (Datum *) palloc(sizeof(Datum) * (ptr - res));
+	da = (Datum *) palloc_array(Datum, ptr - res);
 	ptr = res;
 	while (ptr->lexeme)
 	{

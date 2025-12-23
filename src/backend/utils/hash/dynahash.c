@@ -22,10 +22,11 @@
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
- * For hash tables in shared memory, the memory allocator function should
- * match malloc's semantics of returning NULL on failure.  For hash tables
- * in local memory, we typically use palloc() which will throw error on
- * failure.  The code in this file has to cope with both cases.
+ * The memory allocator function should match malloc's semantics of returning
+ * NULL on failure.  (This is essential for hash tables in shared memory.
+ * For hash tables in local memory, we used to use palloc() which will throw
+ * error on failure; but we no longer do, so it's untested whether this
+ * module will still cope with that behavior.)
  *
  * dynahash.c provides support for these types of lookup keys:
  *
@@ -79,9 +80,8 @@
  * are not implemented; otherwise functionality is identical.
  *
  * Compilation controls:
- * HASH_DEBUG controls some informative traces, mainly for debugging.
- * HASH_STATISTICS causes HashAccesses and HashCollisions to be maintained;
- * when combined with HASH_DEBUG, these are displayed by hdestroy().
+ * HASH_STATISTICS causes some usage statistics to be maintained, which can be
+ * logged by calling hash_stats().
  *
  * Problems & fixes to ejp@ausmelb.oz. WARNING: relies on pre-processor
  * concatenation property, in probably unnecessary code 'optimization'.
@@ -98,10 +98,10 @@
 
 #include "access/xact.h"
 #include "common/hashfn.h"
+#include "lib/ilist.h"
 #include "port/pg_bitutils.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
-#include "utils/dynahash.h"
 #include "utils/memutils.h"
 
 
@@ -153,7 +153,7 @@ typedef HASHBUCKET *HASHSEGMENT;
 typedef struct
 {
 	slock_t		mutex;			/* spinlock for this freelist */
-	long		nentries;		/* number of entries in associated buckets */
+	int64		nentries;		/* number of entries in associated buckets */
 	HASHELEMENT *freeList;		/* chain of free elements */
 } FreeListData;
 
@@ -181,8 +181,8 @@ struct HASHHDR
 
 	/* These fields can change, but not in a partitioned table */
 	/* Also, dsize can't change in a shared table, even if unpartitioned */
-	long		dsize;			/* directory size */
-	long		nsegs;			/* number of allocated segments (<= dsize) */
+	int64		dsize;			/* directory size */
+	int64		nsegs;			/* number of allocated segments (<= dsize) */
 	uint32		max_bucket;		/* ID of maximum bucket in use */
 	uint32		high_mask;		/* mask to modulo into entire table */
 	uint32		low_mask;		/* mask to modulo into lower half of table */
@@ -190,11 +190,12 @@ struct HASHHDR
 	/* These fields are fixed at hashtable creation */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
-	long		num_partitions; /* # partitions (must be power of 2), or 0 */
-	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
-	long		ssize;			/* segment size --- must be power of 2 */
+	int64		num_partitions; /* # partitions (must be power of 2), or 0 */
+	int64		max_dsize;		/* 'dsize' limit if directory is fixed size */
+	int64		ssize;			/* segment size --- must be power of 2 */
 	int			sshift;			/* segment shift = log2(ssize) */
 	int			nelem_alloc;	/* number of entries to allocate at once */
+	bool		isfixed;		/* if true, don't enlarge */
 
 #ifdef HASH_STATISTICS
 
@@ -202,8 +203,9 @@ struct HASHHDR
 	 * Count statistics here.  NB: stats code doesn't bother with mutex, so
 	 * counts could be corrupted a bit in a partitioned table.
 	 */
-	long		accesses;
-	long		collisions;
+	uint64		accesses;
+	uint64		collisions;
+	uint64		expansions;
 #endif
 };
 
@@ -227,15 +229,24 @@ struct HTAB
 	MemoryContext hcxt;			/* memory context if default allocator used */
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
-	bool		isfixed;		/* if true, don't enlarge */
 
 	/* freezing a shared table isn't allowed, so we can keep state here */
 	bool		frozen;			/* true = no more inserts allowed */
 
 	/* We keep local copies of these fixed values to reduce contention */
 	Size		keysize;		/* hash key length in bytes */
-	long		ssize;			/* segment size --- must be power of 2 */
+	int64		ssize;			/* segment size --- must be power of 2 */
 	int			sshift;			/* segment shift = log2(ssize) */
+
+	/*
+	 * In a USE_VALGRIND build, non-shared hashtables keep an slist chain of
+	 * all the element blocks they have allocated.  This pacifies Valgrind,
+	 * which would otherwise often claim that the element blocks are "possibly
+	 * lost" for lack of any non-interior pointers to their starts.
+	 */
+#ifdef USE_VALGRIND
+	slist_head	element_blocks;
+#endif
 };
 
 /*
@@ -254,12 +265,6 @@ struct HTAB
  */
 #define MOD(x,y)			   ((x) & ((y)-1))
 
-#ifdef HASH_STATISTICS
-static long hash_accesses,
-			hash_collisions,
-			hash_expansions;
-#endif
-
 /*
  * Private function prototypes
  */
@@ -271,12 +276,13 @@ static bool expand_table(HTAB *hashp);
 static HASHBUCKET get_hash_entry(HTAB *hashp, int freelist_idx);
 static void hdefault(HTAB *hashp);
 static int	choose_nelem_alloc(Size entrysize);
-static bool init_htab(HTAB *hashp, long nelem);
+static bool init_htab(HTAB *hashp, int64 nelem);
 pg_noreturn static void hash_corrupted(HTAB *hashp);
 static uint32 hash_initial_lookup(HTAB *hashp, uint32 hashvalue,
 								  HASHBUCKET **bucketptr);
-static long next_pow2_long(long num);
-static int	next_pow2_int(long num);
+static int	my_log2(int64 num);
+static int64 next_pow2_int64(int64 num);
+static int	next_pow2_int(int64 num);
 static void register_seq_scan(HTAB *hashp);
 static void deregister_seq_scan(HTAB *hashp);
 static bool has_seq_scans(HTAB *hashp);
@@ -349,7 +355,7 @@ string_compare(const char *key1, const char *key2, Size keysize)
  * large nelem will penalize hash_seq_search speed without buying much.
  */
 HTAB *
-hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
+hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 {
 	HTAB	   *hashp;
 	HASHHDR    *hctl;
@@ -618,8 +624,10 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 		}
 	}
 
+	/* Set isfixed if requested, but not till after we build initial entries */
 	if (flags & HASH_FIXED_SIZE)
-		hashp->isfixed = true;
+		hctl->isfixed = true;
+
 	return hashp;
 }
 
@@ -644,8 +652,10 @@ hdefault(HTAB *hashp)
 	hctl->ssize = DEF_SEGSIZE;
 	hctl->sshift = DEF_SEGSIZE_SHIFT;
 
+	hctl->isfixed = false;		/* can be enlarged */
+
 #ifdef HASH_STATISTICS
-	hctl->accesses = hctl->collisions = 0;
+	hctl->accesses = hctl->collisions = hctl->expansions = 0;
 #endif
 }
 
@@ -687,7 +697,7 @@ choose_nelem_alloc(Size entrysize)
  * arrays
  */
 static bool
-init_htab(HTAB *hashp, long nelem)
+init_htab(HTAB *hashp, int64 nelem)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	HASHSEGMENT *segp;
@@ -759,17 +769,6 @@ init_htab(HTAB *hashp, long nelem)
 	/* Choose number of entries to allocate at a time */
 	hctl->nelem_alloc = choose_nelem_alloc(hctl->entrysize);
 
-#ifdef HASH_DEBUG
-	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n",
-			"TABLE POINTER   ", hashp,
-			"DIRECTORY SIZE  ", hctl->dsize,
-			"SEGMENT SIZE    ", hctl->ssize,
-			"SEGMENT SHIFT   ", hctl->sshift,
-			"MAX BUCKET      ", hctl->max_bucket,
-			"HIGH MASK       ", hctl->high_mask,
-			"LOW  MASK       ", hctl->low_mask,
-			"NSEGS           ", hctl->nsegs);
-#endif
 	return true;
 }
 
@@ -781,10 +780,10 @@ init_htab(HTAB *hashp, long nelem)
  * NB: assumes that all hash structure parameters have default values!
  */
 Size
-hash_estimate_size(long num_entries, Size entrysize)
+hash_estimate_size(int64 num_entries, Size entrysize)
 {
 	Size		size;
-	long		nBuckets,
+	int64		nBuckets,
 				nSegments,
 				nDirEntries,
 				nElementAllocs,
@@ -792,9 +791,9 @@ hash_estimate_size(long num_entries, Size entrysize)
 				elementAllocCnt;
 
 	/* estimate number of buckets wanted */
-	nBuckets = next_pow2_long(num_entries);
+	nBuckets = next_pow2_int64(num_entries);
 	/* # of segments needed for nBuckets */
-	nSegments = next_pow2_long((nBuckets - 1) / DEF_SEGSIZE + 1);
+	nSegments = next_pow2_int64((nBuckets - 1) / DEF_SEGSIZE + 1);
 	/* directory entries */
 	nDirEntries = DEF_DIRSIZE;
 	while (nDirEntries < nSegments)
@@ -827,17 +826,17 @@ hash_estimate_size(long num_entries, Size entrysize)
  *
  * XXX this had better agree with the behavior of init_htab()...
  */
-long
-hash_select_dirsize(long num_entries)
+int64
+hash_select_dirsize(int64 num_entries)
 {
-	long		nBuckets,
+	int64		nBuckets,
 				nSegments,
 				nDirEntries;
 
 	/* estimate number of buckets wanted */
-	nBuckets = next_pow2_long(num_entries);
+	nBuckets = next_pow2_int64(num_entries);
 	/* # of segments needed for nBuckets */
-	nSegments = next_pow2_long((nBuckets - 1) / DEF_SEGSIZE + 1);
+	nSegments = next_pow2_int64((nBuckets - 1) / DEF_SEGSIZE + 1);
 	/* directory entries */
 	nDirEntries = DEF_DIRSIZE;
 	while (nDirEntries < nSegments)
@@ -872,7 +871,7 @@ hash_destroy(HTAB *hashp)
 		/* so this hashtable must have its own context */
 		Assert(hashp->hcxt != NULL);
 
-		hash_stats("destroy", hashp);
+		hash_stats(__func__, hashp);
 
 		/*
 		 * Free everything by destroying the hash table's memory context.
@@ -882,19 +881,16 @@ hash_destroy(HTAB *hashp)
 }
 
 void
-hash_stats(const char *where, HTAB *hashp)
+hash_stats(const char *caller, HTAB *hashp)
 {
 #ifdef HASH_STATISTICS
-	fprintf(stderr, "%s: this HTAB -- accesses %ld collisions %ld\n",
-			where, hashp->hctl->accesses, hashp->hctl->collisions);
+	HASHHDR    *hctl = hashp->hctl;
 
-	fprintf(stderr, "hash_stats: entries %ld keysize %ld maxp %u segmentcount %ld\n",
-			hash_get_num_entries(hashp), (long) hashp->hctl->keysize,
-			hashp->hctl->max_bucket, hashp->hctl->nsegs);
-	fprintf(stderr, "%s: total accesses %ld total collisions %ld\n",
-			where, hash_accesses, hash_collisions);
-	fprintf(stderr, "hash_stats: total expansions %ld\n",
-			hash_expansions);
+	elog(DEBUG4,
+		 "hash_stats:  Caller: %s  Table Name: \"%s\"  Accesses: " UINT64_FORMAT "  Collisions: " UINT64_FORMAT "  Expansions: " UINT64_FORMAT "  Entries: " INT64_FORMAT "  Key Size: %zu  Max Bucket: %u  Segment Count: " INT64_FORMAT,
+		 caller != NULL ? caller : "(unknown)", hashp->tabname, hctl->accesses,
+		 hctl->collisions, hctl->expansions, hash_get_num_entries(hashp),
+		 hctl->keysize, hctl->max_bucket, hctl->nsegs);
 #endif
 }
 
@@ -980,7 +976,6 @@ hash_search_with_hash_value(HTAB *hashp,
 	HashCompareFunc match;
 
 #ifdef HASH_STATISTICS
-	hash_accesses++;
 	hctl->accesses++;
 #endif
 
@@ -998,7 +993,7 @@ hash_search_with_hash_value(HTAB *hashp,
 		 * Can't split if running in partitioned mode, nor if frozen, nor if
 		 * table is the subject of any active hash_seq_search scans.
 		 */
-		if (hctl->freeList[0].nentries > (long) hctl->max_bucket &&
+		if (hctl->freeList[0].nentries > (int64) hctl->max_bucket &&
 			!IS_PARTITIONED(hctl) && !hashp->frozen &&
 			!has_seq_scans(hashp))
 			(void) expand_table(hashp);
@@ -1024,7 +1019,6 @@ hash_search_with_hash_value(HTAB *hashp,
 		prevBucketPtr = &(currBucket->link);
 		currBucket = *prevBucketPtr;
 #ifdef HASH_STATISTICS
-		hash_collisions++;
 		hctl->collisions++;
 #endif
 	}
@@ -1158,7 +1152,8 @@ hash_update_hash_key(HTAB *hashp,
 	HashCompareFunc match;
 
 #ifdef HASH_STATISTICS
-	hash_accesses++;
+	HASHHDR    *hctl = hashp->hctl;
+
 	hctl->accesses++;
 #endif
 
@@ -1212,7 +1207,6 @@ hash_update_hash_key(HTAB *hashp,
 		prevBucketPtr = &(currBucket->link);
 		currBucket = *prevBucketPtr;
 #ifdef HASH_STATISTICS
-		hash_collisions++;
 		hctl->collisions++;
 #endif
 	}
@@ -1338,11 +1332,11 @@ get_hash_entry(HTAB *hashp, int freelist_idx)
 /*
  * hash_get_num_entries -- get the number of entries in a hashtable
  */
-long
+int64
 hash_get_num_entries(HTAB *hashp)
 {
 	int			i;
-	long		sum = hashp->hctl->freeList[0].nentries;
+	int64		sum = hashp->hctl->freeList[0].nentries;
 
 	/*
 	 * We currently don't bother with acquiring the mutexes; it's only
@@ -1423,9 +1417,9 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	HTAB	   *hashp;
 	HASHHDR    *hctl;
 	uint32		max_bucket;
-	long		ssize;
-	long		segment_num;
-	long		segment_ndx;
+	int64		ssize;
+	int64		segment_num;
+	int64		segment_ndx;
 	HASHSEGMENT segp;
 	uint32		curBucket;
 	HASHELEMENT *curElem;
@@ -1554,11 +1548,11 @@ expand_table(HTAB *hashp)
 	HASHHDR    *hctl = hashp->hctl;
 	HASHSEGMENT old_seg,
 				new_seg;
-	long		old_bucket,
+	int64		old_bucket,
 				new_bucket;
-	long		new_segnum,
+	int64		new_segnum,
 				new_segndx;
-	long		old_segnum,
+	int64		old_segnum,
 				old_segndx;
 	HASHBUCKET *oldlink,
 			   *newlink;
@@ -1568,7 +1562,7 @@ expand_table(HTAB *hashp)
 	Assert(!IS_PARTITIONED(hctl));
 
 #ifdef HASH_STATISTICS
-	hash_expansions++;
+	hctl->expansions++;
 #endif
 
 	new_bucket = hctl->max_bucket + 1;
@@ -1626,7 +1620,7 @@ expand_table(HTAB *hashp)
 		 currElement = nextElement)
 	{
 		nextElement = currElement->link;
-		if ((long) calc_bucket(hctl, currElement->hashvalue) == old_bucket)
+		if ((int64) calc_bucket(hctl, currElement->hashvalue) == old_bucket)
 		{
 			*oldlink = currElement;
 			oldlink = &currElement->link;
@@ -1650,9 +1644,9 @@ dir_realloc(HTAB *hashp)
 {
 	HASHSEGMENT *p;
 	HASHSEGMENT *old_p;
-	long		new_dsize;
-	long		old_dirsize;
-	long		new_dirsize;
+	int64		new_dsize;
+	int64		old_dirsize;
+	int64		new_dirsize;
 
 	if (hashp->hctl->max_dsize != NO_MAX_DSIZE)
 		return false;
@@ -1708,22 +1702,50 @@ element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	Size		elementSize;
+	Size		requestSize;
+	char	   *allocedBlock;
 	HASHELEMENT *firstElement;
 	HASHELEMENT *tmpElement;
 	HASHELEMENT *prevElement;
 	int			i;
 
-	if (hashp->isfixed)
+	if (hctl->isfixed)
 		return false;
 
 	/* Each element has a HASHELEMENT header plus user data. */
 	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
 
-	CurrentDynaHashCxt = hashp->hcxt;
-	firstElement = (HASHELEMENT *) hashp->alloc(nelem * elementSize);
+	requestSize = nelem * elementSize;
 
-	if (!firstElement)
+	/* Add space for slist_node list link if we need one. */
+#ifdef USE_VALGRIND
+	if (!hashp->isshared)
+		requestSize += MAXALIGN(sizeof(slist_node));
+#endif
+
+	/* Allocate the memory. */
+	CurrentDynaHashCxt = hashp->hcxt;
+	allocedBlock = hashp->alloc(requestSize);
+
+	if (!allocedBlock)
 		return false;
+
+	/*
+	 * If USE_VALGRIND, each allocated block of elements of a non-shared
+	 * hashtable is chained into a list, so that Valgrind won't think it's
+	 * been leaked.
+	 */
+#ifdef USE_VALGRIND
+	if (hashp->isshared)
+		firstElement = (HASHELEMENT *) allocedBlock;
+	else
+	{
+		slist_push_head(&hashp->element_blocks, (slist_node *) allocedBlock);
+		firstElement = (HASHELEMENT *) (allocedBlock + MAXALIGN(sizeof(slist_node)));
+	}
+#else
+	firstElement = (HASHELEMENT *) allocedBlock;
+#endif
 
 	/* prepare to link all the new entries into the freelist */
 	prevElement = NULL;
@@ -1758,8 +1780,8 @@ hash_initial_lookup(HTAB *hashp, uint32 hashvalue, HASHBUCKET **bucketptr)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	HASHSEGMENT segp;
-	long		segment_num;
-	long		segment_ndx;
+	int64		segment_num;
+	int64		segment_ndx;
 	uint32		bucket;
 
 	bucket = calc_bucket(hctl, hashvalue);
@@ -1791,26 +1813,22 @@ hash_corrupted(HTAB *hashp)
 }
 
 /* calculate ceil(log base 2) of num */
-int
-my_log2(long num)
+static int
+my_log2(int64 num)
 {
 	/*
 	 * guard against too-large input, which would be invalid for
 	 * pg_ceil_log2_*()
 	 */
-	if (num > LONG_MAX / 2)
-		num = LONG_MAX / 2;
+	if (num > PG_INT64_MAX / 2)
+		num = PG_INT64_MAX / 2;
 
-#if SIZEOF_LONG < 8
-	return pg_ceil_log2_32(num);
-#else
 	return pg_ceil_log2_64(num);
-#endif
 }
 
-/* calculate first power of 2 >= num, bounded to what will fit in a long */
-static long
-next_pow2_long(long num)
+/* calculate first power of 2 >= num, bounded to what will fit in a int64 */
+static int64
+next_pow2_int64(int64 num)
 {
 	/* my_log2's internal range check is sufficient */
 	return 1L << my_log2(num);
@@ -1818,7 +1836,7 @@ next_pow2_long(long num)
 
 /* calculate first power of 2 >= num, bounded to what will fit in an int */
 static int
-next_pow2_int(long num)
+next_pow2_int(int64 num)
 {
 	if (num > INT_MAX / 2)
 		num = INT_MAX / 2;

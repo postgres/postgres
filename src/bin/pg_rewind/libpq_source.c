@@ -215,7 +215,7 @@ libpq_get_current_wal_insert_lsn(rewind_source *source)
 
 	val = run_simple_query(conn, "SELECT pg_current_wal_insert_lsn()");
 
-	if (sscanf(val, "%X/%X", &hi, &lo) != 2)
+	if (sscanf(val, "%X/%08X", &hi, &lo) != 2)
 		pg_fatal("unrecognized result \"%s\" for current WAL insert location", val);
 
 	result = ((uint64) hi) << 32 | lo;
@@ -459,7 +459,7 @@ process_queued_fetch_requests(libpq_source *src)
 
 		appendArrayEscapedString(&src->paths, rq->path);
 		appendStringInfo(&src->offsets, INT64_FORMAT, (int64) rq->offset);
-		appendStringInfo(&src->lengths, INT64_FORMAT, (int64) rq->length);
+		appendStringInfo(&src->lengths, "%zu", rq->length);
 	}
 	appendStringInfoChar(&src->paths, '}');
 	appendStringInfoChar(&src->offsets, '}');

@@ -167,7 +167,14 @@ main(int argc, char *argv[])
 
 	/* get a copy of the control file */
 	ControlFile = get_controlfile(DataDir, &crc_ok);
-	if (!crc_ok)
+	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
+	{
+		pg_log_warning("control file version (%u) does not match the version understood by this program (%u)",
+					   ControlFile->pg_control_version, PG_CONTROL_VERSION);
+		pg_log_warning_detail("Either the control file has been created with a different version of PostgreSQL, "
+							  "or it is corrupt.  The results below are untrustworthy.");
+	}
+	else if (!crc_ok)
 	{
 		pg_log_warning("calculated CRC checksum does not match value stored in control file");
 		pg_log_warning_detail("Either the control file is corrupt, or it has a different layout than this program "
@@ -245,9 +252,9 @@ main(int argc, char *argv[])
 		   dbState(ControlFile->state));
 	printf(_("pg_control last modified:             %s\n"),
 		   pgctime_str);
-	printf(_("Latest checkpoint location:           %X/%X\n"),
+	printf(_("Latest checkpoint location:           %X/%08X\n"),
 		   LSN_FORMAT_ARGS(ControlFile->checkPoint));
-	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
+	printf(_("Latest checkpoint's REDO location:    %X/%08X\n"),
 		   LSN_FORMAT_ARGS(ControlFile->checkPointCopy.redo));
 	printf(_("Latest checkpoint's REDO WAL file:    %s\n"),
 		   xlogfilename);
@@ -264,7 +271,7 @@ main(int argc, char *argv[])
 		   ControlFile->checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
 		   ControlFile->checkPointCopy.nextMulti);
-	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
+	printf(_("Latest checkpoint's NextMultiOffset:  %" PRIu64 "\n"),
 		   ControlFile->checkPointCopy.nextMultiOffset);
 	printf(_("Latest checkpoint's oldestXID:        %u\n"),
 		   ControlFile->checkPointCopy.oldestXid);
@@ -282,15 +289,15 @@ main(int argc, char *argv[])
 		   ControlFile->checkPointCopy.newestCommitTsXid);
 	printf(_("Time of latest checkpoint:            %s\n"),
 		   ckpttime_str);
-	printf(_("Fake LSN counter for unlogged rels:   %X/%X\n"),
+	printf(_("Fake LSN counter for unlogged rels:   %X/%08X\n"),
 		   LSN_FORMAT_ARGS(ControlFile->unloggedLSN));
-	printf(_("Minimum recovery ending location:     %X/%X\n"),
+	printf(_("Minimum recovery ending location:     %X/%08X\n"),
 		   LSN_FORMAT_ARGS(ControlFile->minRecoveryPoint));
 	printf(_("Min recovery ending loc's timeline:   %u\n"),
 		   ControlFile->minRecoveryPointTLI);
-	printf(_("Backup start location:                %X/%X\n"),
+	printf(_("Backup start location:                %X/%08X\n"),
 		   LSN_FORMAT_ARGS(ControlFile->backupStartPoint));
-	printf(_("Backup end location:                  %X/%X\n"),
+	printf(_("Backup end location:                  %X/%08X\n"),
 		   LSN_FORMAT_ARGS(ControlFile->backupEndPoint));
 	printf(_("End-of-backup record required:        %s\n"),
 		   ControlFile->backupEndRequired ? _("yes") : _("no"));
@@ -317,6 +324,8 @@ main(int argc, char *argv[])
 		   ControlFile->blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"),
 		   ControlFile->relseg_size);
+	printf(_("Pages per SLRU segment:               %u\n"),
+		   ControlFile->slru_pages_per_segment);
 	printf(_("WAL block size:                       %u\n"),
 		   ControlFile->xlog_blcksz);
 	printf(_("Bytes per WAL segment:                %u\n"),

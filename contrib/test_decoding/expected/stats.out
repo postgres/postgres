@@ -37,12 +37,12 @@ SELECT pg_stat_force_next_flush();
  
 (1 row)
 
-SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots ORDER BY slot_name;
-       slot_name        | spill_txns | spill_count | total_txns | total_bytes 
-------------------------+------------+-------------+------------+-------------
- regression_slot_stats1 | t          | t           | t          | t
- regression_slot_stats2 | t          | t           | t          | t
- regression_slot_stats3 | t          | t           | t          | t
+SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes, mem_exceeded_count = 0 AS mem_exceeded_count FROM pg_stat_replication_slots ORDER BY slot_name;
+       slot_name        | spill_txns | spill_count | total_txns | total_bytes | mem_exceeded_count 
+------------------------+------------+-------------+------------+-------------+--------------------
+ regression_slot_stats1 | t          | t           | t          | t           | t
+ regression_slot_stats2 | t          | t           | t          | t           | t
+ regression_slot_stats3 | t          | t           | t          | t           | t
 (3 rows)
 
 RESET logical_decoding_work_mem;
@@ -53,12 +53,12 @@ SELECT pg_stat_reset_replication_slot('regression_slot_stats1');
  
 (1 row)
 
-SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots ORDER BY slot_name;
-       slot_name        | spill_txns | spill_count | total_txns | total_bytes 
-------------------------+------------+-------------+------------+-------------
- regression_slot_stats1 | t          | t           | f          | f
- regression_slot_stats2 | t          | t           | t          | t
- regression_slot_stats3 | t          | t           | t          | t
+SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes, mem_exceeded_count = 0 AS mem_exceeded_count FROM pg_stat_replication_slots ORDER BY slot_name;
+       slot_name        | spill_txns | spill_count | total_txns | total_bytes | mem_exceeded_count 
+------------------------+------------+-------------+------------+-------------+--------------------
+ regression_slot_stats1 | t          | t           | f          | f           | t
+ regression_slot_stats2 | t          | t           | t          | t           | t
+ regression_slot_stats3 | t          | t           | t          | t           | t
 (3 rows)
 
 -- reset stats for all slots
@@ -68,27 +68,27 @@ SELECT pg_stat_reset_replication_slot(NULL);
  
 (1 row)
 
-SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots ORDER BY slot_name;
-       slot_name        | spill_txns | spill_count | total_txns | total_bytes 
-------------------------+------------+-------------+------------+-------------
- regression_slot_stats1 | t          | t           | f          | f
- regression_slot_stats2 | t          | t           | f          | f
- regression_slot_stats3 | t          | t           | f          | f
+SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes, mem_exceeded_count = 0 AS mem_exceeded_count FROM pg_stat_replication_slots ORDER BY slot_name;
+       slot_name        | spill_txns | spill_count | total_txns | total_bytes | mem_exceeded_count 
+------------------------+------------+-------------+------------+-------------+--------------------
+ regression_slot_stats1 | t          | t           | f          | f           | t
+ regression_slot_stats2 | t          | t           | f          | f           | t
+ regression_slot_stats3 | t          | t           | f          | f           | t
 (3 rows)
 
 -- verify accessing/resetting stats for non-existent slot does something reasonable
 SELECT * FROM pg_stat_get_replication_slot('do-not-exist');
-  slot_name   | spill_txns | spill_count | spill_bytes | stream_txns | stream_count | stream_bytes | total_txns | total_bytes | stats_reset 
---------------+------------+-------------+-------------+-------------+--------------+--------------+------------+-------------+-------------
- do-not-exist |          0 |           0 |           0 |           0 |            0 |            0 |          0 |           0 | 
+  slot_name   | spill_txns | spill_count | spill_bytes | stream_txns | stream_count | stream_bytes | mem_exceeded_count | total_txns | total_bytes | slotsync_skip_count | slotsync_last_skip | stats_reset 
+--------------+------------+-------------+-------------+-------------+--------------+--------------+--------------------+------------+-------------+---------------------+--------------------+-------------
+ do-not-exist |          0 |           0 |           0 |           0 |            0 |            0 |                  0 |          0 |           0 |                   0 |                    | 
 (1 row)
 
 SELECT pg_stat_reset_replication_slot('do-not-exist');
 ERROR:  replication slot "do-not-exist" does not exist
 SELECT * FROM pg_stat_get_replication_slot('do-not-exist');
-  slot_name   | spill_txns | spill_count | spill_bytes | stream_txns | stream_count | stream_bytes | total_txns | total_bytes | stats_reset 
---------------+------------+-------------+-------------+-------------+--------------+--------------+------------+-------------+-------------
- do-not-exist |          0 |           0 |           0 |           0 |            0 |            0 |          0 |           0 | 
+  slot_name   | spill_txns | spill_count | spill_bytes | stream_txns | stream_count | stream_bytes | mem_exceeded_count | total_txns | total_bytes | slotsync_skip_count | slotsync_last_skip | stats_reset 
+--------------+------------+-------------+-------------+-------------+--------------+--------------+--------------------+------------+-------------+---------------------+--------------------+-------------
+ do-not-exist |          0 |           0 |           0 |           0 |            0 |            0 |                  0 |          0 |           0 |                   0 |                    | 
 (1 row)
 
 -- spilling the xact
@@ -110,12 +110,12 @@ SELECT pg_stat_force_next_flush();
  
 (1 row)
 
-SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
-       slot_name        | spill_txns | spill_count 
-------------------------+------------+-------------
- regression_slot_stats1 | t          | t
- regression_slot_stats2 | f          | f
- regression_slot_stats3 | f          | f
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, mem_exceeded_count > 0 AS mem_exceeded_count FROM pg_stat_replication_slots;
+       slot_name        | spill_txns | spill_count | mem_exceeded_count 
+------------------------+------------+-------------+--------------------
+ regression_slot_stats1 | t          | t           | t
+ regression_slot_stats2 | f          | f           | f
+ regression_slot_stats3 | f          | f           | f
 (3 rows)
 
 -- Ensure stats can be repeatedly accessed using the same stats snapshot. See
@@ -159,16 +159,19 @@ SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot_stats4_twophas
 (1 row)
 
 -- Verify that the decoding doesn't spill already-aborted transaction's changes.
+-- Given that there is no concurrent activities that are capturable by logical decoding,
+-- mem_exceeded_count should theoretically be 1 but we check if >0 here since it's
+-- more flexible for potential future changes and adequate for the testing purpose.
 SELECT pg_stat_force_next_flush();
  pg_stat_force_next_flush 
 --------------------------
  
 (1 row)
 
-SELECT slot_name, spill_txns, spill_count FROM pg_stat_replication_slots WHERE slot_name = 'regression_slot_stats4_twophase';
-            slot_name            | spill_txns | spill_count 
----------------------------------+------------+-------------
- regression_slot_stats4_twophase |          0 |           0
+SELECT slot_name, spill_txns, spill_count, mem_exceeded_count > 0 as mem_exceeded_count FROM pg_stat_replication_slots WHERE slot_name = 'regression_slot_stats4_twophase';
+            slot_name            | spill_txns | spill_count | mem_exceeded_count 
+---------------------------------+------------+-------------+--------------------
+ regression_slot_stats4_twophase |          0 |           0 | t
 (1 row)
 
 DROP TABLE stats_test;

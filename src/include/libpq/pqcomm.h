@@ -40,7 +40,6 @@ typedef struct
 } AddrInfo;
 
 /* Configure the UNIX socket location for the well known port. */
-
 #define UNIXSOCK_PATH(path, port, sockdir) \
 	   (AssertMacro(sockdir), \
 		AssertMacro(*(sockdir) != '\0'), \
@@ -69,6 +68,7 @@ is_unixsock_path(const char *path)
 	return is_absolute_path(path) || path[0] == '@';
 }
 
+
 /*
  * These manipulate the frontend/backend protocol version number.
  *
@@ -83,7 +83,6 @@ is_unixsock_path(const char *path)
  * A frontend isn't required to support anything other than the current
  * version.
  */
-
 #define PG_PROTOCOL_MAJOR(v)	((v) >> 16)
 #define PG_PROTOCOL_MINOR(v)	((v) & 0x0000ffff)
 #define PG_PROTOCOL_FULL(v)	(PG_PROTOCOL_MAJOR(v) * 10000 + PG_PROTOCOL_MINOR(v))
@@ -92,12 +91,29 @@ is_unixsock_path(const char *path)
 /*
  * The earliest and latest frontend/backend protocol version supported.
  */
-
 #define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(3,0)
 #define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,2)
 
-typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
+/*
+ * Reserved protocol numbers, which have special semantics:
+ */
 
+/*
+ * A client can send a cancel-current-operation request to the postmaster.
+ * This is uglier than sending it directly to the client's backend, but it
+ * avoids depending on out-of-band communication facilities.
+ */
+#define CANCEL_REQUEST_CODE		PG_PROTOCOL(1234,5678)
+
+/*
+ * A client can also start by sending a SSL or GSSAPI negotiation request to
+ * get a secure channel.
+ */
+#define NEGOTIATE_SSL_CODE		PG_PROTOCOL(1234,5679)
+#define NEGOTIATE_GSS_CODE		PG_PROTOCOL(1234,5680)
+
+
+typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
 typedef ProtocolVersion MsgType;
 
 
@@ -106,7 +122,6 @@ typedef ProtocolVersion MsgType;
  *
  * The initial length is omitted from the packet layouts appearing below.
  */
-
 typedef uint32 PacketLen;
 
 /*
@@ -118,24 +133,16 @@ typedef uint32 PacketLen;
 #define MAX_STARTUP_PACKET_LENGTH 10000
 
 
-typedef uint32 AuthRequest;
+typedef uint32 AuthRequest;		/* an AUTH_REQ_* code */
 
 
 /*
- * A client can also send a cancel-current-operation request to the postmaster.
- * This is uglier than sending it directly to the client's backend, but it
- * avoids depending on out-of-band communication facilities.
- *
- * The cancel request code must not match any protocol version number
- * we're ever likely to use.  This random choice should do.
+ * The packet used with a CANCEL_REQUEST_CODE.
  *
  * Before PostgreSQL v18 and the protocol version bump from 3.0 to 3.2, the
  * cancel key was always 4 bytes.  With protocol version 3.2, it's variable
  * length.
  */
-
-#define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
-
 typedef struct CancelRequestPacket
 {
 	/* Note that each field is stored in network byte order! */
@@ -145,7 +152,9 @@ typedef struct CancelRequestPacket
 														 * authorize cancel */
 } CancelRequestPacket;
 
-/* Application-Layer Protocol Negotiation is required for direct connections
+
+/*
+ * Application-Layer Protocol Negotiation is required for direct connections
  * to avoid protocol confusion attacks (e.g https://alpaca-attack.com/).
  *
  * ALPN is specified in RFC 7301
@@ -164,12 +173,5 @@ typedef struct CancelRequestPacket
  */
 #define PG_ALPN_PROTOCOL "postgresql"
 #define PG_ALPN_PROTOCOL_VECTOR { 10, 'p','o','s','t','g','r','e','s','q','l' }
-
-/*
- * A client can also start by sending a SSL or GSSAPI negotiation request to
- * get a secure channel.
- */
-#define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
-#define NEGOTIATE_GSS_CODE PG_PROTOCOL(1234,5680)
 
 #endif							/* PQCOMM_H */

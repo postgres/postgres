@@ -465,9 +465,9 @@ try a similar case with <literal>~</literal>, we get:
 <screen>
 SELECT ~ '20' AS "negation";
 
-ERROR:  operator is not unique: ~ "unknown"
-HINT:  Could not choose a best candidate operator. You might need to add
-explicit type casts.
+ERROR:  operator is not unique: ~ unknown
+DETAIL:  Could not choose a best candidate operator.
+HINT:  You might need to add explicit type casts.
 </screen>
 This happens because the system cannot decide which of the several
 possible <literal>~</literal> operators should be preferred.  We can help
@@ -490,7 +490,7 @@ SELECT ~ CAST('20' AS int8) AS "negation";
 Here is another example of resolving an operator with one known and one
 unknown input:
 <screen>
-SELECT array[1,2] &lt;@ '{1,2,3}' as "is subset";
+SELECT ARRAY[1, 2] &lt;@ '{1,2,3}' AS "is subset";
 
  is subset
 -----------
@@ -901,8 +901,8 @@ the parser will try to convert that to <type>text</type>:
 <screen>
 SELECT substr(1234, 3);
 ERROR:  function substr(integer, integer) does not exist
-HINT:  No function matches the given name and argument types. You might need
-to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 </screen>
 
 This does not work because <type>integer</type> does not have an implicit cast

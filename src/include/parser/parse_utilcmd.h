@@ -16,7 +16,7 @@
 
 #include "parser/parse_node.h"
 
-struct AttrMap;					/* avoid including attmap.h here */
+typedef struct AttrMap AttrMap; /* avoid including attmap.h here */
 
 
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
@@ -38,7 +38,7 @@ extern List *expandTableLikeClause(RangeVar *heapRel,
 								   TableLikeClause *table_like_clause);
 extern IndexStmt *generateClonedIndexStmt(RangeVar *heapRel,
 										  Relation source_idx,
-										  const struct AttrMap *attmap,
+										  const AttrMap *attmap,
 										  Oid *constraintOid);
 
 #endif							/* PARSE_UTILCMD_H */

@@ -30,7 +30,7 @@
 
 /* these headers are used by this particular worker's code */
 #include "access/xact.h"
-#include "commands/dbcommands.h"
+#include "catalog/pg_database.h"
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"
@@ -142,7 +142,7 @@ worker_spi_main(Datum main_arg)
 	char	   *p;
 	bits32		flags = 0;
 
-	table = palloc(sizeof(worktable));
+	table = palloc_object(worktable);
 	sprintf(name, "schema%d", index);
 	table->schema = pstrdup(name);
 	table->name = pstrdup("counted");

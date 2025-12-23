@@ -113,36 +113,6 @@ CREATE USER regress_priv_user2;
 CREATE USER regress_priv_user3;
 CREATE USER regress_priv_user4;
 CREATE USER regress_priv_user5;
--- DROP OWNED should also act on granted and granted-to roles
-GRANT regress_priv_user1 TO regress_priv_user2;
-GRANT regress_priv_user2 TO regress_priv_user3;
-SELECT roleid::regrole, member::regrole FROM pg_auth_members
-  WHERE roleid IN ('regress_priv_user1'::regrole,'regress_priv_user2'::regrole)
-  ORDER BY roleid::regrole::text;
-       roleid       |       member       
---------------------+--------------------
- regress_priv_user1 | regress_priv_user2
- regress_priv_user2 | regress_priv_user3
-(2 rows)
-
-REASSIGN OWNED BY regress_priv_user2 TO regress_priv_user4;  -- no effect
-SELECT roleid::regrole, member::regrole FROM pg_auth_members
-  WHERE roleid IN ('regress_priv_user1'::regrole,'regress_priv_user2'::regrole)
-  ORDER BY roleid::regrole::text;
-       roleid       |       member       
---------------------+--------------------
- regress_priv_user1 | regress_priv_user2
- regress_priv_user2 | regress_priv_user3
-(2 rows)
-
-DROP OWNED BY regress_priv_user2;  -- removes both grants
-SELECT roleid::regrole, member::regrole FROM pg_auth_members
-  WHERE roleid IN ('regress_priv_user1'::regrole,'regress_priv_user2'::regrole)
-  ORDER BY roleid::regrole::text;
- roleid | member 
---------+--------
-(0 rows)
-
 GRANT pg_read_all_data TO regress_priv_user6;
 GRANT pg_write_all_data TO regress_priv_user7;
 GRANT pg_read_all_settings TO regress_priv_user8 WITH ADMIN OPTION;
@@ -513,8 +483,6 @@ CREATE VIEW atest12v AS
   SELECT * FROM atest12 WHERE b <<< 5;
 CREATE VIEW atest12sbv WITH (security_barrier=true) AS
   SELECT * FROM atest12 WHERE b <<< 5;
-GRANT SELECT ON atest12v TO PUBLIC;
-GRANT SELECT ON atest12sbv TO PUBLIC;
 -- This plan should use nestloop, knowing that few rows will be selected.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
                    QUERY PLAN                    
@@ -560,9 +528,18 @@ CREATE FUNCTION leak2(integer,integer) RETURNS boolean
   LANGUAGE plpgsql immutable;
 CREATE OPERATOR >>> (procedure = leak2, leftarg = integer, rightarg = integer,
                      restrict = scalargtsel);
--- This should not show any "leak" notices before failing.
+-- These should not show any "leak" notices before failing.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
 ERROR:  permission denied for table atest12
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v WHERE a >>> 0;
+ERROR:  permission denied for view atest12v
+EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv WHERE a >>> 0;
+ERROR:  permission denied for view atest12sbv
+-- Now regress_priv_user1 grants access to regress_priv_user2 via the views.
+SET SESSION AUTHORIZATION regress_priv_user1;
+GRANT SELECT ON atest12v TO PUBLIC;
+GRANT SELECT ON atest12sbv TO PUBLIC;
+SET SESSION AUTHORIZATION regress_priv_user2;
 -- These plans should continue to use a nestloop, since they execute with the
 -- privileges of the view owner.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
@@ -2568,6 +2545,26 @@ SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 	'SELECT, fake_privilege', FALSE);  -- error
 ERROR:  unrecognized privilege type: "fake_privilege"
+-- Test quoting and dequoting of user names in ACLs
+CREATE ROLE "regress_""quoted";
+SELECT makeaclitem('regress_"quoted'::regrole, 'regress_"quoted'::regrole,
+                   'SELECT', TRUE);
+               makeaclitem                
+------------------------------------------
+ "regress_""quoted"=r*/"regress_""quoted"
+(1 row)
+
+SELECT '"regress_""quoted"=r*/"regress_""quoted"'::aclitem;
+                 aclitem                  
+------------------------------------------
+ "regress_""quoted"=r*/"regress_""quoted"
+(1 row)
+
+SELECT '""=r*/""'::aclitem;  -- used to be misparsed as """"
+ERROR:  a name must follow the "/" sign
+LINE 1: SELECT '""=r*/""'::aclitem;
+               ^
+DROP ROLE "regress_""quoted";
 -- Test non-throwing aclitem I/O
 SELECT pg_input_is_valid('regress_priv_user1=r/regress_priv_user2', 'aclitem');
  pg_input_is_valid 
@@ -3126,6 +3123,11 @@ DROP USER regress_priv_user6;
 DROP USER regress_priv_user7;
 DROP USER regress_priv_user8; -- does not exist
 ERROR:  role "regress_priv_user8" does not exist
+-- leave some default ACLs for pg_upgrade's dump-restore test input.
+ALTER DEFAULT PRIVILEGES FOR ROLE pg_signal_backend
+	REVOKE USAGE ON TYPES FROM pg_signal_backend;
+ALTER DEFAULT PRIVILEGES FOR ROLE pg_read_all_settings
+	REVOKE USAGE ON TYPES FROM pg_read_all_settings;
 -- permissions with LOCK TABLE
 CREATE USER regress_locktable_user;
 CREATE TABLE lock_table (a int);
@@ -3220,7 +3222,8 @@ REVOKE MAINTAIN ON lock_table FROM regress_locktable_user;
 DROP TABLE lock_table;
 DROP USER regress_locktable_user;
 -- test to check privileges of system views pg_shmem_allocations,
--- pg_shmem_allocations_numa and pg_backend_memory_contexts.
+-- pg_shmem_allocations_numa, pg_dsm_registry_allocations, and
+-- pg_backend_memory_contexts.
 -- switch to superuser
 \c -
 CREATE ROLE regress_readallstats;
@@ -3248,6 +3251,12 @@ SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations_numa','S
  f
 (1 row)
 
+SELECT has_table_privilege('regress_readallstats','pg_dsm_registry_allocations','SELECT'); -- no
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
 GRANT pg_read_all_stats TO regress_readallstats;
 SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- yes
  has_table_privilege 
@@ -3268,6 +3277,12 @@ SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT
 (1 row)
 
 SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations_numa','SELECT'); -- yes
+ has_table_privilege 
+---------------------
+ t
+(1 row)
+
+SELECT has_table_privilege('regress_readallstats','pg_dsm_registry_allocations','SELECT'); -- yes
  has_table_privilege 
 ---------------------
  t

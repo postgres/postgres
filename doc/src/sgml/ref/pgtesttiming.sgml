@@ -30,10 +30,22 @@ PostgreSQL documentation
   <title>Description</title>
 
  <para>
-  <application>pg_test_timing</application> is a tool to measure the timing overhead
-  on your system and confirm that the system time never moves backwards.
+  <application>pg_test_timing</application> is a tool to measure the
+  timing overhead on your system and confirm that the system time never
+  moves backwards.  It simply reads the system clock over and over again
+  as fast as it can for a specified length of time, and then prints
+  statistics about the observed differences in successive clock readings.
+ </para>
+ <para>
+  Smaller (but not zero) differences are better, since they imply both
+  more-precise clock hardware and less overhead to collect a clock reading.
   Systems that are slow to collect timing data can give less accurate
   <command>EXPLAIN ANALYZE</command> results.
+ </para>
+ <para>
+  This tool is also helpful to determine if
+  the <varname>track_io_timing</varname> configuration parameter is likely
+  to produce useful results.
  </para>
  </refsect1>
 
@@ -55,6 +67,21 @@ PostgreSQL documentation
         give slightly better accuracy, and are more likely to discover
         problems with the system clock moving backwards. The default
         test duration is 3 seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-c <replaceable class="parameter">cutoff</replaceable></option></term>
+      <term><option>--cutoff=<replaceable class="parameter">cutoff</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the cutoff percentage for the list of exact observed
+        timing durations (that is, the changes in the system clock value
+        from one reading to the next).  The list will end once the running
+        percentage total reaches or exceeds this value, except that the
+        largest observed duration will always be printed.  The default
+        cutoff is 99.99.
        </para>
       </listitem>
      </varlistentry>
@@ -92,205 +119,83 @@ PostgreSQL documentation
   <title>Interpreting Results</title>
 
   <para>
-   Good results will show most (>90%) individual timing calls take less than
-   one microsecond. Average per loop overhead will be even lower, below 100
-   nanoseconds. This example from an Intel i7-860 system using a TSC clock
-   source shows excellent performance:
+   The first block of output has four columns, with rows showing a
+   shifted-by-one log2(ns) histogram of timing durations (that is, the
+   differences between successive clock readings).  This is not the
+   classic log2(n+1) histogram as it counts zeros separately and then
+   switches to log2(ns) starting from value 1.
+  </para>
+  <para>
+   The columns are:
+   <itemizedlist spacing="compact">
+    <listitem>
+     <simpara>nanosecond value that is &gt;= the durations in this
+     bucket</simpara>
+    </listitem>
+    <listitem>
+     <simpara>percentage of durations in this bucket</simpara>
+    </listitem>
+    <listitem>
+     <simpara>running-sum percentage of durations in this and previous
+     buckets</simpara>
+    </listitem>
+    <listitem>
+     <simpara>count of durations in this bucket</simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   The second block of output goes into more detail, showing the exact
+   timing differences observed.  For brevity this list is cut off when the
+   running-sum percentage exceeds the user-selectable cutoff value.
+   However, the largest observed difference is always shown.
+  </para>
+  <para>
+   The example results below show that 99.99% of timing loops took between
+   8 and 31 nanoseconds, with the worst case somewhere between 32768 and
+   65535 nanoseconds.  In the second block, we can see that typical loop
+   time is 16 nanoseconds, and the readings appear to have full nanosecond
+   precision.
+  </para>
 
+  <para>
 <screen><![CDATA[
 Testing timing overhead for 3 seconds.
-Per loop time including overhead: 35.96 ns
+Average loop time including overhead: 16.40 ns
 Histogram of timing durations:
-  < us   % of total      count
-     1     96.40465   80435604
-     2      3.59518    2999652
-     4      0.00015        126
-     8      0.00002         13
-    16      0.00000          2
+   <= ns   % of total  running %      count
+       0       0.0000     0.0000          0
+       1       0.0000     0.0000          0
+       3       0.0000     0.0000          0
+       7       0.0000     0.0000          0
+      15       4.5452     4.5452    8313178
+      31      95.4527    99.9979  174581501
+      63       0.0001    99.9981        253
+     127       0.0001    99.9982        165
+     255       0.0000    99.9982         35
+     511       0.0000    99.9982          1
+    1023       0.0013    99.9994       2300
+    2047       0.0004    99.9998        690
+    4095       0.0000    99.9998          9
+    8191       0.0000    99.9998          8
+   16383       0.0002   100.0000        337
+   32767       0.0000   100.0000          2
+   65535       0.0000   100.0000          1
+
+Observed timing durations up to 99.9900%:
+      ns   % of total  running %      count
+      15       4.5452     4.5452    8313178
+      16      58.3785    62.9237  106773354
+      17      33.6840    96.6078   61607584
+      18       3.1151    99.7229    5697480
+      19       0.2638    99.9867     482570
+      20       0.0093    99.9960      17054
+...
+   38051       0.0000   100.0000          1
 ]]></screen>
   </para>
 
-  <para>
-   Note that different units are used for the per loop time than the
-   histogram. The loop can have resolution within a few nanoseconds (ns),
-   while the individual timing calls can only resolve down to one microsecond
-   (us).
-  </para>
-
  </refsect2>
- <refsect2>
-  <title>Measuring Executor Timing Overhead</title>
-
-  <para>
-   When the query executor is running a statement using
-   <command>EXPLAIN ANALYZE</command>, individual operations are timed as well
-   as showing a summary.  The overhead of your system can be checked by
-   counting rows with the <application>psql</application> program:
-
-<screen>
-CREATE TABLE t AS SELECT * FROM generate_series(1,100000);
-\timing
-SELECT COUNT(*) FROM t;
-EXPLAIN ANALYZE SELECT COUNT(*) FROM t;
-</screen>
-  </para>
-
-  <para>
-   The i7-860 system measured runs the count query in 9.8 ms while
-   the <command>EXPLAIN ANALYZE</command> version takes 16.6 ms, each
-   processing just over 100,000 rows.  That 6.8 ms difference means the timing
-   overhead per row is 68 ns, about twice what pg_test_timing estimated it
-   would be.  Even that relatively small amount of overhead is making the fully
-   timed count statement take almost 70% longer.  On more substantial queries,
-   the timing overhead would be less problematic.
-  </para>
-
- </refsect2>
-
- <refsect2>
-  <title>Changing Time Sources</title>
-  <para>
-   On some newer Linux systems, it's possible to change the clock source used
-   to collect timing data at any time.  A second example shows the slowdown
-   possible from switching to the slower acpi_pm time source, on the same
-   system used for the fast results above:
-
-<screen><![CDATA[
-# cat /sys/devices/system/clocksource/clocksource0/available_clocksource
-tsc hpet acpi_pm
-# echo acpi_pm > /sys/devices/system/clocksource/clocksource0/current_clocksource
-# pg_test_timing
-Per loop time including overhead: 722.92 ns
-Histogram of timing durations:
-  < us   % of total      count
-     1     27.84870    1155682
-     2     72.05956    2990371
-     4      0.07810       3241
-     8      0.01357        563
-    16      0.00007          3
-]]></screen>
-  </para>
-
-  <para>
-   In this configuration, the sample <command>EXPLAIN ANALYZE</command> above
-   takes 115.9 ms.  That's 1061 ns of timing overhead, again a small multiple
-   of what's measured directly by this utility.  That much timing overhead
-   means the actual query itself is only taking a tiny fraction of the
-   accounted for time, most of it is being consumed in overhead instead.  In
-   this configuration, any <command>EXPLAIN ANALYZE</command> totals involving
-   many timed operations would be inflated significantly by timing overhead.
-  </para>
-
-  <para>
-   FreeBSD also allows changing the time source on the fly, and it logs
-   information about the timer selected during boot:
-
-<screen>
-# dmesg | grep "Timecounter"
-Timecounter "ACPI-fast" frequency 3579545 Hz quality 900
-Timecounter "i8254" frequency 1193182 Hz quality 0
-Timecounters tick every 10.000 msec
-Timecounter "TSC" frequency 2531787134 Hz quality 800
-# sysctl kern.timecounter.hardware=TSC
-kern.timecounter.hardware: ACPI-fast -> TSC
-</screen>
-  </para>
-
-  <para>
-   Other systems may only allow setting the time source on boot.  On older
-   Linux systems the "clock" kernel setting is the only way to make this sort
-   of change.  And even on some more recent ones, the only option you'll see
-   for a clock source is "jiffies".  Jiffies are the older Linux software clock
-   implementation, which can have good resolution when it's backed by fast
-   enough timing hardware, as in this example:
-
-<screen><![CDATA[
-$ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
-jiffies
-$ dmesg | grep time.c
-time.c: Using 3.579545 MHz WALL PM GTOD PIT/TSC timer.
-time.c: Detected 2400.153 MHz processor.
-$ pg_test_timing
-Testing timing overhead for 3 seconds.
-Per timing duration including loop overhead: 97.75 ns
-Histogram of timing durations:
-  < us   % of total      count
-     1     90.23734   27694571
-     2      9.75277    2993204
-     4      0.00981       3010
-     8      0.00007         22
-    16      0.00000          1
-    32      0.00000          1
-]]></screen></para>
-
- </refsect2>
-
- <refsect2>
-  <title>Clock Hardware and Timing Accuracy</title>
-
-  <para>
-   Collecting accurate timing information is normally done on computers using
-   hardware clocks with various levels of accuracy.  With some hardware the
-   operating systems can pass the system clock time almost directly to
-   programs.  A system clock can also be derived from a chip that simply
-   provides timing interrupts, periodic ticks at some known time interval.  In
-   either case, operating system kernels provide a clock source that hides
-   these details.  But the accuracy of that clock source and how quickly it can
-   return results varies based on the underlying hardware.
-  </para>
-
-  <para>
-   Inaccurate time keeping can result in system instability.  Test any change
-   to the clock source very carefully.  Operating system defaults are sometimes
-   made to favor reliability over best accuracy. And if you are using a virtual
-   machine, look into the recommended time sources compatible with it.  Virtual
-   hardware faces additional difficulties when emulating timers, and there are
-   often per operating system settings suggested by vendors.
-  </para>
-
-  <para>
-   The Time Stamp Counter (TSC) clock source is the most accurate one available
-   on current generation CPUs. It's the preferred way to track the system time
-   when it's supported by the operating system and the TSC clock is
-   reliable. There are several ways that TSC can fail to provide an accurate
-   timing source, making it unreliable. Older systems can have a TSC clock that
-   varies based on the CPU temperature, making it unusable for timing. Trying
-   to use TSC on some older multicore CPUs can give a reported time that's
-   inconsistent among multiple cores. This can result in the time going
-   backwards, a problem this program checks for.  And even the newest systems
-   can fail to provide accurate TSC timing with very aggressive power saving
-   configurations.
-  </para>
-
-  <para>
-   Newer operating systems may check for the known TSC problems and switch to a
-   slower, more stable clock source when they are seen.  If your system
-   supports TSC time but doesn't default to that, it may be disabled for a good
-   reason.  And some operating systems may not detect all the possible problems
-   correctly, or will allow using TSC even in situations where it's known to be
-   inaccurate.
-  </para>
-
-  <para>
-   The High Precision Event Timer (HPET) is the preferred timer on systems
-   where it's available and TSC is not accurate.  The timer chip itself is
-   programmable to allow up to 100 nanosecond resolution, but you may not see
-   that much accuracy in your system clock.
-  </para>
-
-  <para>
-   Advanced Configuration and Power Interface (ACPI) provides a Power
-   Management (PM) Timer, which Linux refers to as the acpi_pm.  The clock
-   derived from acpi_pm will at best provide 300 nanosecond resolution.
-  </para>
-
-  <para>
-   Timers used on older PC hardware include the 8254 Programmable Interval
-   Timer (PIT), the real-time clock (RTC), the Advanced Programmable Interrupt
-   Controller (APIC) timer, and the Cyclone timer.  These timers aim for
-   millisecond resolution.
-  </para>
-  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -298,6 +203,8 @@ Histogram of timing durations:
 
   <simplelist type="inline">
    <member><xref linkend="sql-explain"/></member>
+   <member><ulink url="https://wiki.postgresql.org/wiki/Pg_test_timing">Wiki
+   discussion about timing</ulink></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -58,9 +58,7 @@ RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
-						 tuple->t_len, InvalidOffsetNumber, false, true);
-
+	offnum = PageAddItem(pageHeader, tuple->t_data, tuple->t_len, InvalidOffsetNumber, false, true);
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "failed to add tuple to page");
 

@@ -191,7 +191,7 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
  */
 OffsetNumber
 PageAddItemExtended(Page page,
-					Item item,
+					const void *item,
 					Size size,
 					OffsetNumber offsetNumber,
 					int flags)
@@ -785,8 +785,8 @@ PageRepairFragmentation(Page page)
 		if (totallen > (Size) (pd_special - pd_lower))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted item lengths: total %u, available space %u",
-							(unsigned int) totallen, pd_special - pd_lower)));
+					 errmsg("corrupted item lengths: total %zu, available space %u",
+							totallen, pd_special - pd_lower)));
 
 		compactify_tuples(itemidbase, nstorage, page, presorted);
 	}
@@ -1088,8 +1088,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		offset != MAXALIGN(offset))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("corrupted line pointer: offset = %u, size = %u",
-						offset, (unsigned int) size)));
+				 errmsg("corrupted line pointer: offset = %u, size = %zu",
+						offset, size)));
 
 	/* Amount of space to actually be deleted */
 	size = MAXALIGN(size);
@@ -1229,8 +1229,8 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 			offset != MAXALIGN(offset))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted line pointer: offset = %u, size = %u",
-							offset, (unsigned int) size)));
+					 errmsg("corrupted line pointer: offset = %u, size = %zu",
+							offset, size)));
 
 		if (nextitm < nitems && offnum == itemnos[nextitm])
 		{
@@ -1262,8 +1262,8 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	if (totallen > (Size) (pd_special - pd_lower))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("corrupted item lengths: total %u, available space %u",
-						(unsigned int) totallen, pd_special - pd_lower)));
+				 errmsg("corrupted item lengths: total %zu, available space %u",
+						totallen, pd_special - pd_lower)));
 
 	/*
 	 * Looks good. Overwrite the line pointers with the copy, from which we've
@@ -1326,8 +1326,8 @@ PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offnum)
 		offset != MAXALIGN(offset))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("corrupted line pointer: offset = %u, size = %u",
-						offset, (unsigned int) size)));
+				 errmsg("corrupted line pointer: offset = %u, size = %zu",
+						offset, size)));
 
 	/* Amount of space to actually be deleted */
 	size = MAXALIGN(size);
@@ -1402,7 +1402,7 @@ PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offnum)
  */
 bool
 PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
-						Item newtup, Size newsize)
+						const void *newtup, Size newsize)
 {
 	PageHeader	phdr = (PageHeader) page;
 	ItemId		tupid;
@@ -1438,8 +1438,8 @@ PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 		offset != MAXALIGN(offset))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("corrupted line pointer: offset = %u, size = %u",
-						offset, (unsigned int) oldsize)));
+				 errmsg("corrupted line pointer: offset = %u, size = %d",
+						offset, oldsize)));
 
 	/*
 	 * Determine actual change in space requirement, check for page overflow.

@@ -219,8 +219,8 @@ test_slru_shmem_startup(void)
 	 */
 	const bool	long_segment_names = true;
 	const char	slru_dir_name[] = "pg_test_slru";
-	int			test_tranche_id;
-	int			test_buffer_tranche_id;
+	int			test_tranche_id = -1;
+	int			test_buffer_tranche_id = -1;
 
 	if (prev_shmem_startup_hook)
 		prev_shmem_startup_hook();
@@ -231,12 +231,18 @@ test_slru_shmem_startup(void)
 	 */
 	(void) MakePGDirectory(slru_dir_name);
 
-	/* initialize the SLRU facility */
-	test_tranche_id = LWLockNewTrancheId();
-	LWLockRegisterTranche(test_tranche_id, "test_slru_tranche");
-
-	test_buffer_tranche_id = LWLockNewTrancheId();
-	LWLockRegisterTranche(test_tranche_id, "test_buffer_tranche");
+	/*
+	 * Initialize the SLRU facility.  In EXEC_BACKEND builds, the
+	 * shmem_startup_hook is called in the postmaster and in each backend, but
+	 * we only need to generate the LWLock tranches once.  Note that these
+	 * tranche ID variables are not used by SimpleLruInit() when
+	 * IsUnderPostmaster is true.
+	 */
+	if (!IsUnderPostmaster)
+	{
+		test_tranche_id = LWLockNewTrancheId("test_slru_tranche");
+		test_buffer_tranche_id = LWLockNewTrancheId("test_buffer_tranche");
+	}
 
 	TestSlruCtl->PagePrecedes = test_slru_page_precedes_logically;
 	SimpleLruInit(TestSlruCtl, "TestSLRU",

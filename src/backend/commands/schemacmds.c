@@ -25,7 +25,6 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
-#include "commands/dbcommands.h"
 #include "commands/event_trigger.h"
 #include "commands/schemacmds.h"
 #include "miscadmin.h"
@@ -34,6 +33,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -215,6 +215,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 		wrapper->utilityStmt = stmt;
 		wrapper->stmt_location = stmt_location;
 		wrapper->stmt_len = stmt_len;
+		wrapper->planOrigin = PLAN_STMT_INTERNAL;
 
 		/* do this step */
 		ProcessUtility(wrapper,

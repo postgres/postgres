@@ -142,8 +142,11 @@ extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 /* timestamp comparison works for timestamptz also */
 #define timestamptz_cmp_internal(dt1,dt2)	timestamp_cmp_internal(dt1, dt2)
 
-extern TimestampTz timestamp2timestamptz_opt_overflow(Timestamp timestamp,
-													  int *overflow);
+extern TimestampTz timestamp2timestamptz_safe(Timestamp timestamp,
+											  Node *escontext);
+extern Timestamp timestamptz2timestamp_safe(TimestampTz timestamp,
+											Node *escontext);
+
 extern int32 timestamp_cmp_timestamptz_internal(Timestamp timestampVal,
 												TimestampTz dt2);
 

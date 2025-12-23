@@ -869,6 +869,8 @@ SELECT width_bucket(5.0::float8, 3.0::float8, 4.0::float8, 0);
 SELECT width_bucket(5.0::float8, 3.0::float8, 4.0::float8, -5);
 SELECT width_bucket(3.5::float8, 3.0::float8, 3.0::float8, 888);
 SELECT width_bucket('NaN', 3.0, 4.0, 888);
+SELECT width_bucket('NaN'::float8, 3.0::float8, 4.0::float8, 888);
+SELECT width_bucket(0, 'NaN', 4.0, 888);
 SELECT width_bucket(0::float8, 'NaN', 4.0::float8, 888);
 SELECT width_bucket(2.0, 3.0, '-inf', 888);
 SELECT width_bucket(0::float8, '-inf', 4.0::float8, 888);

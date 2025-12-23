@@ -22,6 +22,7 @@
 
 #include "common/unicode_category.h"
 #include "common/unicode_version.h"
+#include "mb/pg_wchar.h"
 
 static int	pg_unicode_version = 0;
 #ifdef USE_ICU
@@ -59,7 +60,7 @@ icu_test()
 	int			pg_skipped_codepoints = 0;
 	int			icu_skipped_codepoints = 0;
 
-	for (pg_wchar code = 0; code <= 0x10ffff; code++)
+	for (char32_t code = 0; code <= 0x10ffff; code++)
 	{
 		uint8_t		pg_category = unicode_category(code);
 		uint8_t		icu_category = u_charType(code);

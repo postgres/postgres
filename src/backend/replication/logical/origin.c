@@ -789,20 +789,19 @@ StartupReplicationOrigin(void)
 
 		readBytes = read(fd, &disk_state, sizeof(disk_state));
 
-		/* no further data */
-		if (readBytes == sizeof(crc))
-		{
-			/* not pretty, but simple ... */
-			file_crc = *(pg_crc32c *) &disk_state;
-			break;
-		}
-
 		if (readBytes < 0)
 		{
 			ereport(PANIC,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
 							path)));
+		}
+
+		/* no further data */
+		if (readBytes == sizeof(crc))
+		{
+			memcpy(&file_crc, &disk_state, sizeof(file_crc));
+			break;
 		}
 
 		if (readBytes != sizeof(disk_state))
@@ -826,9 +825,9 @@ StartupReplicationOrigin(void)
 		last_state++;
 
 		ereport(LOG,
-				(errmsg("recovered replication state of node %d to %X/%X",
-						disk_state.roident,
-						LSN_FORMAT_ARGS(disk_state.remote_lsn))));
+				errmsg("recovered replication state of node %d to %X/%08X",
+					   disk_state.roident,
+					   LSN_FORMAT_ARGS(disk_state.remote_lsn)));
 	}
 
 	/* now check checksum */
@@ -984,8 +983,8 @@ replorigin_advance(RepOriginId node,
 		/* initialize new slot */
 		LWLockAcquire(&free_state->lock, LW_EXCLUSIVE);
 		replication_state = free_state;
-		Assert(replication_state->remote_lsn == InvalidXLogRecPtr);
-		Assert(replication_state->local_lsn == InvalidXLogRecPtr);
+		Assert(!XLogRecPtrIsValid(replication_state->remote_lsn));
+		Assert(!XLogRecPtrIsValid(replication_state->local_lsn));
 		replication_state->roident = node;
 	}
 
@@ -1020,7 +1019,7 @@ replorigin_advance(RepOriginId node,
 	 */
 	if (go_backward || replication_state->remote_lsn < remote_commit)
 		replication_state->remote_lsn = remote_commit;
-	if (local_commit != InvalidXLogRecPtr &&
+	if (XLogRecPtrIsValid(local_commit) &&
 		(go_backward || replication_state->local_lsn < local_commit))
 		replication_state->local_lsn = local_commit;
 	LWLockRelease(&replication_state->lock);
@@ -1064,7 +1063,7 @@ replorigin_get_progress(RepOriginId node, bool flush)
 
 	LWLockRelease(ReplicationOriginLock);
 
-	if (flush && local_lsn != InvalidXLogRecPtr)
+	if (flush && XLogRecPtrIsValid(local_lsn))
 		XLogFlush(local_lsn);
 
 	return remote_lsn;
@@ -1167,6 +1166,14 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 							curstate->roident, curstate->acquired_by)));
 		}
 
+		else if (curstate->acquired_by != acquired_by)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("could not find replication state slot for replication origin with OID %u which was acquired by %d",
+							node, acquired_by)));
+		}
+
 		/* ok, found slot */
 		session_replication_state = curstate;
 		break;
@@ -1181,10 +1188,16 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 				 errhint("Increase \"max_active_replication_origins\" and try again.")));
 	else if (session_replication_state == NULL)
 	{
+		if (acquired_by)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cannot use PID %d for inactive replication origin with ID %d",
+							acquired_by, node)));
+
 		/* initialize new slot */
 		session_replication_state = &replication_states[free_slot];
-		Assert(session_replication_state->remote_lsn == InvalidXLogRecPtr);
-		Assert(session_replication_state->local_lsn == InvalidXLogRecPtr);
+		Assert(!XLogRecPtrIsValid(session_replication_state->remote_lsn));
+		Assert(!XLogRecPtrIsValid(session_replication_state->local_lsn));
 		session_replication_state->roident = node;
 	}
 
@@ -1193,9 +1206,8 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 
 	if (acquired_by == 0)
 		session_replication_state->acquired_by = MyProcPid;
-	else if (session_replication_state->acquired_by != acquired_by)
-		elog(ERROR, "could not find replication state slot for replication origin with OID %u which was acquired by %d",
-			 node, acquired_by);
+	else
+		Assert(session_replication_state->acquired_by == acquired_by);
 
 	LWLockRelease(ReplicationOriginLock);
 
@@ -1269,7 +1281,7 @@ replorigin_session_get_progress(bool flush)
 	local_lsn = session_replication_state->local_lsn;
 	LWLockRelease(&session_replication_state->lock);
 
-	if (flush && local_lsn != InvalidXLogRecPtr)
+	if (flush && XLogRecPtrIsValid(local_lsn))
 		XLogFlush(local_lsn);
 
 	return remote_lsn;
@@ -1374,12 +1386,14 @@ pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 {
 	char	   *name;
 	RepOriginId origin;
+	int			pid;
 
 	replorigin_check_prerequisites(true, false);
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 	origin = replorigin_by_name(name, false);
-	replorigin_session_setup(origin, 0);
+	pid = PG_GETARG_INT32(1);
+	replorigin_session_setup(origin, pid);
 
 	replorigin_session_origin = origin;
 
@@ -1439,7 +1453,7 @@ pg_replication_origin_session_progress(PG_FUNCTION_ARGS)
 
 	remote_lsn = replorigin_session_get_progress(flush);
 
-	if (remote_lsn == InvalidXLogRecPtr)
+	if (!XLogRecPtrIsValid(remote_lsn))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(remote_lsn);
@@ -1528,7 +1542,7 @@ pg_replication_origin_progress(PG_FUNCTION_ARGS)
 
 	remote_lsn = replorigin_get_progress(roident, flush);
 
-	if (remote_lsn == InvalidXLogRecPtr)
+	if (!XLogRecPtrIsValid(remote_lsn))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(remote_lsn);

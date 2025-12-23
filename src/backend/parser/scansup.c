@@ -18,6 +18,7 @@
 
 #include "mb/pg_wchar.h"
 #include "parser/scansup.h"
+#include "utils/pg_locale.h"
 
 
 /*
@@ -46,35 +47,22 @@ char *
 downcase_identifier(const char *ident, int len, bool warn, bool truncate)
 {
 	char	   *result;
-	int			i;
-	bool		enc_is_single_byte;
-
-	result = palloc(len + 1);
-	enc_is_single_byte = pg_database_encoding_max_length() == 1;
+	size_t		needed pg_attribute_unused();
 
 	/*
-	 * SQL99 specifies Unicode-aware case normalization, which we don't yet
-	 * have the infrastructure for.  Instead we use tolower() to provide a
-	 * locale-aware translation.  However, there are some locales where this
-	 * is not right either (eg, Turkish may do strange things with 'i' and
-	 * 'I').  Our current compromise is to use tolower() for characters with
-	 * the high bit set, as long as they aren't part of a multi-byte
-	 * character, and use an ASCII-only downcasing for 7-bit characters.
+	 * Preserves string length.
+	 *
+	 * NB: if we decide to support Unicode-aware identifier case folding, then
+	 * we need to account for a change in string length.
 	 */
-	for (i = 0; i < len; i++)
-	{
-		unsigned char ch = (unsigned char) ident[i];
+	result = palloc(len + 1);
 
-		if (ch >= 'A' && ch <= 'Z')
-			ch += 'a' - 'A';
-		else if (enc_is_single_byte && IS_HIGHBIT_SET(ch) && isupper(ch))
-			ch = tolower(ch);
-		result[i] = (char) ch;
-	}
-	result[i] = '\0';
+	needed = pg_downcase_ident(result, len + 1, ident, len);
+	Assert(needed == len);
+	Assert(result[len] == '\0');
 
-	if (i >= NAMEDATALEN && truncate)
-		truncate_identifier(result, i, warn);
+	if (len >= NAMEDATALEN && truncate)
+		truncate_identifier(result, len, warn);
 
 	return result;
 }

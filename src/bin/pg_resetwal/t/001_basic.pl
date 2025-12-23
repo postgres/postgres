@@ -103,7 +103,7 @@ command_fails_like(
 	'fails with incorrect -e option');
 command_fails_like(
 	[ 'pg_resetwal', '-e' => '-1', $node->data_dir ],
-	qr/must not be -1/,
+	qr/error: invalid argument for option -e/,
 	'fails with -e value -1');
 # -l
 command_fails_like(
@@ -122,11 +122,11 @@ command_fails_like(
 command_fails_like(
 	[ 'pg_resetwal', '-m' => '0,10', $node->data_dir ],
 	qr/must not be 0/,
-	'fails with -m value 0 part 1');
+	'fails with -m value 0 in the first part');
 command_fails_like(
 	[ 'pg_resetwal', '-m' => '10,0', $node->data_dir ],
 	qr/must not be 0/,
-	'fails with -m value 0 part 2');
+	'fails with -m value 0 in the second part');
 # -o
 command_fails_like(
 	[ 'pg_resetwal', '-o' => 'foo', $node->data_dir ],
@@ -143,7 +143,7 @@ command_fails_like(
 	'fails with incorrect -O option');
 command_fails_like(
 	[ 'pg_resetwal', '-O' => '-1', $node->data_dir ],
-	qr/must not be -1/,
+	qr/error: invalid argument for option -O/,
 	'fails with -O value -1');
 # --wal-segsize
 command_fails_like(
@@ -172,6 +172,21 @@ command_fails_like(
 	[ 'pg_resetwal', '-x' => '1', $node->data_dir ],
 	qr/must be greater than/,
 	'fails with -x value too small');
+
+# Check out of range values with -x. These are forbidden for all other
+# 32-bit values too, but we use just -x to exercise the parsing.
+command_fails_like(
+	[ 'pg_resetwal', '-x' => '-1', $node->data_dir ],
+	qr/error: invalid argument for option -x/,
+	'fails with -x value -1');
+command_fails_like(
+	[ 'pg_resetwal', '-x' => '-100', $node->data_dir ],
+	qr/error: invalid argument for option -x/,
+	'fails with negative -x value');
+command_fails_like(
+	[ 'pg_resetwal', '-x' => '10000000000', $node->data_dir ],
+	qr/error: invalid argument for option -x/,
+	'fails with -x value too large');
 
 # --char-signedness
 command_fails_like(
@@ -213,7 +228,7 @@ push @cmd,
   sprintf("%d,%d", hex($files[0]) == 0 ? 3 : hex($files[0]), hex($files[-1]));
 
 @files = get_slru_files('pg_multixact/offsets');
-$mult = 32 * $blcksz / 4;
+$mult = 32 * $blcksz / 8;
 # --multixact-ids argument is "new,old"
 push @cmd,
   '--multixact-ids' => sprintf("%d,%d",

@@ -17,7 +17,7 @@
 #include "nodes/parsenodes.h"
 #include "utils/portal.h"
 
-struct PlannedStmt;				/* avoid including plannodes.h here */
+typedef struct PlannedStmt PlannedStmt; /* avoid including plannodes.h here */
 
 
 extern PGDLLIMPORT Portal ActivePortal;
@@ -44,7 +44,7 @@ extern uint64 PortalRunFetch(Portal portal,
 							 long count,
 							 DestReceiver *dest);
 
-extern bool PlannedStmtRequiresSnapshot(struct PlannedStmt *pstmt);
+extern bool PlannedStmtRequiresSnapshot(PlannedStmt *pstmt);
 
 extern void EnsurePortalSnapshotExists(void);
 

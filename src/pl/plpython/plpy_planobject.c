@@ -45,9 +45,9 @@ static PyType_Slot PLyPlan_slots[] =
 static PyType_Spec PLyPlan_spec =
 {
 	.name = "PLyPlan",
-		.basicsize = sizeof(PLyPlanObject),
-		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-		.slots = PLyPlan_slots,
+	.basicsize = sizeof(PLyPlanObject),
+	.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.slots = PLyPlan_slots,
 };
 
 static PyTypeObject *PLy_PlanType;

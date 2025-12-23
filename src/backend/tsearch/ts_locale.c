@@ -20,45 +20,33 @@
 static void tsearch_readline_callback(void *arg);
 
 
-/*
- * The reason these functions use a 3-wchar_t output buffer, not 2 as you
- * might expect, is that on Windows "wchar_t" is 16 bits and what we'll be
- * getting from char2wchar() is UTF16 not UTF32.  A single input character
- * may therefore produce a surrogate pair rather than just one wchar_t;
- * we also need room for a trailing null.  When we do get a surrogate pair,
- * we pass just the first code to iswdigit() etc, so that these functions will
- * always return false for characters outside the Basic Multilingual Plane.
- */
-#define WC_BUF_LEN  3
+/* space for a single character plus a trailing NUL */
+#define WC_BUF_LEN  2
 
 int
 t_isalpha(const char *ptr)
 {
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
+	pg_wchar	wstr[WC_BUF_LEN];
+	int			wlen pg_attribute_unused();
 
-	if (clen == 1 || database_ctype_is_c)
-		return isalpha(TOUCHAR(ptr));
+	wlen = pg_mb2wchar_with_len(ptr, wstr, pg_mblen(ptr));
+	Assert(wlen <= 1);
 
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswalpha((wint_t) character[0]);
+	/* pass single character, or NUL if empty */
+	return pg_iswalpha(wstr[0], pg_database_locale());
 }
 
 int
 t_isalnum(const char *ptr)
 {
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
+	pg_wchar	wstr[WC_BUF_LEN];
+	int			wlen pg_attribute_unused();
 
-	if (clen == 1 || database_ctype_is_c)
-		return isalnum(TOUCHAR(ptr));
+	wlen = pg_mb2wchar_with_len(ptr, wstr, pg_mblen(ptr));
+	Assert(wlen <= 1);
 
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswalnum((wint_t) character[0]);
+	/* pass single character, or NUL if empty */
+	return pg_iswalnum(wstr[0], pg_database_locale());
 }
 
 

@@ -33,25 +33,17 @@ typedef struct
 	slock_t		buffer_strategy_lock;
 
 	/*
-	 * Clock sweep hand: index of next buffer to consider grabbing. Note that
+	 * clock-sweep hand: index of next buffer to consider grabbing. Note that
 	 * this isn't a concrete buffer - we only ever increase the value. So, to
 	 * get an actual buffer, it needs to be used modulo NBuffers.
 	 */
 	pg_atomic_uint32 nextVictimBuffer;
 
-	int			firstFreeBuffer;	/* Head of list of unused buffers */
-	int			lastFreeBuffer; /* Tail of list of unused buffers */
-
-	/*
-	 * NOTE: lastFreeBuffer is undefined when firstFreeBuffer is -1 (that is,
-	 * when the list is empty)
-	 */
-
 	/*
 	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
 	 */
-	uint32		completePasses; /* Complete cycles of the clock sweep */
+	uint32		completePasses; /* Complete cycles of the clock-sweep */
 	pg_atomic_uint32 numBufferAllocs;	/* Buffers allocated since last reset */
 
 	/*
@@ -164,33 +156,19 @@ ClockSweepTick(void)
 }
 
 /*
- * have_free_buffer -- a lockless check to see if there is a free buffer in
- *					   buffer pool.
- *
- * If the result is true that will become stale once free buffers are moved out
- * by other operations, so the caller who strictly want to use a free buffer
- * should not call this.
- */
-bool
-have_free_buffer(void)
-{
-	if (StrategyControl->firstFreeBuffer >= 0)
-		return true;
-	else
-		return false;
-}
-
-/*
  * StrategyGetBuffer
  *
  *	Called by the bufmgr to get the next candidate buffer to use in
- *	BufferAlloc(). The only hard requirement BufferAlloc() has is that
+ *	GetVictimBuffer(). The only hard requirement GetVictimBuffer() has is that
  *	the selected buffer must not currently be pinned by anyone.
  *
  *	strategy is a BufferAccessStrategy object, or NULL for default strategy.
  *
- *	To ensure that no one else can pin the buffer before we do, we must
- *	return the buffer with the buffer header spinlock still held.
+ *	It is the callers responsibility to ensure the buffer ownership can be
+ *	tracked via TrackNewBufferPin().
+ *
+ *	The buffer is pinned and marked as owned, using TrackNewBufferPin(),
+ *	before returning.
  */
 BufferDesc *
 StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_ring)
@@ -198,7 +176,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 	BufferDesc *buf;
 	int			bgwprocno;
 	int			trycounter;
-	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
 
 	*from_ring = false;
 
@@ -249,134 +226,84 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 	 */
 	pg_atomic_fetch_add_u32(&StrategyControl->numBufferAllocs, 1);
 
-	/*
-	 * First check, without acquiring the lock, whether there's buffers in the
-	 * freelist. Since we otherwise don't require the spinlock in every
-	 * StrategyGetBuffer() invocation, it'd be sad to acquire it here -
-	 * uselessly in most cases. That obviously leaves a race where a buffer is
-	 * put on the freelist but we don't see the store yet - but that's pretty
-	 * harmless, it'll just get used during the next buffer acquisition.
-	 *
-	 * If there's buffers on the freelist, acquire the spinlock to pop one
-	 * buffer of the freelist. Then check whether that buffer is usable and
-	 * repeat if not.
-	 *
-	 * Note that the freeNext fields are considered to be protected by the
-	 * buffer_strategy_lock not the individual buffer spinlocks, so it's OK to
-	 * manipulate them without holding the spinlock.
-	 */
-	if (StrategyControl->firstFreeBuffer >= 0)
-	{
-		while (true)
-		{
-			/* Acquire the spinlock to remove element from the freelist */
-			SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-
-			if (StrategyControl->firstFreeBuffer < 0)
-			{
-				SpinLockRelease(&StrategyControl->buffer_strategy_lock);
-				break;
-			}
-
-			buf = GetBufferDescriptor(StrategyControl->firstFreeBuffer);
-			Assert(buf->freeNext != FREENEXT_NOT_IN_LIST);
-
-			/* Unconditionally remove buffer from freelist */
-			StrategyControl->firstFreeBuffer = buf->freeNext;
-			buf->freeNext = FREENEXT_NOT_IN_LIST;
-
-			/*
-			 * Release the lock so someone else can access the freelist while
-			 * we check out this buffer.
-			 */
-			SpinLockRelease(&StrategyControl->buffer_strategy_lock);
-
-			/*
-			 * If the buffer is pinned or has a nonzero usage_count, we cannot
-			 * use it; discard it and retry.  (This can only happen if VACUUM
-			 * put a valid buffer in the freelist and then someone else used
-			 * it before we got to it.  It's probably impossible altogether as
-			 * of 8.3, but we'd better check anyway.)
-			 */
-			local_buf_state = LockBufHdr(buf);
-			if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
-				&& BUF_STATE_GET_USAGECOUNT(local_buf_state) == 0)
-			{
-				if (strategy != NULL)
-					AddBufferToRing(strategy, buf);
-				*buf_state = local_buf_state;
-				return buf;
-			}
-			UnlockBufHdr(buf, local_buf_state);
-		}
-	}
-
-	/* Nothing on the freelist, so run the "clock sweep" algorithm */
+	/* Use the "clock sweep" algorithm to find a free buffer */
 	trycounter = NBuffers;
 	for (;;)
 	{
+		uint32		old_buf_state;
+		uint32		local_buf_state;
+
 		buf = GetBufferDescriptor(ClockSweepTick());
 
 		/*
-		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
-		 * it; decrement the usage_count (unless pinned) and keep scanning.
+		 * Check whether the buffer can be used and pin it if so. Do this
+		 * using a CAS loop, to avoid having to lock the buffer header.
 		 */
-		local_buf_state = LockBufHdr(buf);
-
-		if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0)
+		old_buf_state = pg_atomic_read_u32(&buf->state);
+		for (;;)
 		{
+			local_buf_state = old_buf_state;
+
+			/*
+			 * If the buffer is pinned or has a nonzero usage_count, we cannot
+			 * use it; decrement the usage_count (unless pinned) and keep
+			 * scanning.
+			 */
+
+			if (BUF_STATE_GET_REFCOUNT(local_buf_state) != 0)
+			{
+				if (--trycounter == 0)
+				{
+					/*
+					 * We've scanned all the buffers without making any state
+					 * changes, so all the buffers are pinned (or were when we
+					 * looked at them). We could hope that someone will free
+					 * one eventually, but it's probably better to fail than
+					 * to risk getting stuck in an infinite loop.
+					 */
+					elog(ERROR, "no unpinned buffers available");
+				}
+				break;
+			}
+
+			/* See equivalent code in PinBuffer() */
+			if (unlikely(local_buf_state & BM_LOCKED))
+			{
+				old_buf_state = WaitBufHdrUnlocked(buf);
+				continue;
+			}
+
 			if (BUF_STATE_GET_USAGECOUNT(local_buf_state) != 0)
 			{
 				local_buf_state -= BUF_USAGECOUNT_ONE;
 
-				trycounter = NBuffers;
+				if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+												   local_buf_state))
+				{
+					trycounter = NBuffers;
+					break;
+				}
 			}
 			else
 			{
-				/* Found a usable buffer */
-				if (strategy != NULL)
-					AddBufferToRing(strategy, buf);
-				*buf_state = local_buf_state;
-				return buf;
+				/* pin the buffer if the CAS succeeds */
+				local_buf_state += BUF_REFCOUNT_ONE;
+
+				if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+												   local_buf_state))
+				{
+					/* Found a usable buffer */
+					if (strategy != NULL)
+						AddBufferToRing(strategy, buf);
+					*buf_state = local_buf_state;
+
+					TrackNewBufferPin(BufferDescriptorGetBuffer(buf));
+
+					return buf;
+				}
 			}
 		}
-		else if (--trycounter == 0)
-		{
-			/*
-			 * We've scanned all the buffers without making any state changes,
-			 * so all the buffers are pinned (or were when we looked at them).
-			 * We could hope that someone will free one eventually, but it's
-			 * probably better to fail than to risk getting stuck in an
-			 * infinite loop.
-			 */
-			UnlockBufHdr(buf, local_buf_state);
-			elog(ERROR, "no unpinned buffers available");
-		}
-		UnlockBufHdr(buf, local_buf_state);
 	}
-}
-
-/*
- * StrategyFreeBuffer: put a buffer on the freelist
- */
-void
-StrategyFreeBuffer(BufferDesc *buf)
-{
-	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-
-	/*
-	 * It is possible that we are told to put something in the freelist that
-	 * is already in it; don't screw up the list if so.
-	 */
-	if (buf->freeNext == FREENEXT_NOT_IN_LIST)
-	{
-		buf->freeNext = StrategyControl->firstFreeBuffer;
-		if (buf->freeNext < 0)
-			StrategyControl->lastFreeBuffer = buf->buf_id;
-		StrategyControl->firstFreeBuffer = buf->buf_id;
-	}
-
-	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 }
 
 /*
@@ -504,14 +431,7 @@ StrategyInitialize(bool init)
 
 		SpinLockInit(&StrategyControl->buffer_strategy_lock);
 
-		/*
-		 * Grab the whole linked list of free buffers for our strategy. We
-		 * assume it was previously set up by BufferManagerShmemInit().
-		 */
-		StrategyControl->firstFreeBuffer = 0;
-		StrategyControl->lastFreeBuffer = NBuffers - 1;
-
-		/* Initialize the clock sweep pointer */
+		/* Initialize the clock-sweep pointer */
 		pg_atomic_init_u32(&StrategyControl->nextVictimBuffer, 0);
 
 		/* Clear statistics */
@@ -731,13 +651,15 @@ FreeAccessStrategy(BufferAccessStrategy strategy)
  * GetBufferFromRing -- returns a buffer from the ring, or NULL if the
  *		ring is empty / not usable.
  *
- * The bufhdr spin lock is held on the returned buffer.
+ * The buffer is pinned and marked as owned, using TrackNewBufferPin(), before
+ * returning.
  */
 static BufferDesc *
 GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 {
 	BufferDesc *buf;
 	Buffer		bufnum;
+	uint32		old_buf_state;
 	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
 
 
@@ -754,24 +676,49 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	if (bufnum == InvalidBuffer)
 		return NULL;
 
-	/*
-	 * If the buffer is pinned we cannot use it under any circumstances.
-	 *
-	 * If usage_count is 0 or 1 then the buffer is fair game (we expect 1,
-	 * since our own previous usage of the ring element would have left it
-	 * there, but it might've been decremented by clock sweep since then). A
-	 * higher usage_count indicates someone else has touched the buffer, so we
-	 * shouldn't re-use it.
-	 */
 	buf = GetBufferDescriptor(bufnum - 1);
-	local_buf_state = LockBufHdr(buf);
-	if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
-		&& BUF_STATE_GET_USAGECOUNT(local_buf_state) <= 1)
+
+	/*
+	 * Check whether the buffer can be used and pin it if so. Do this using a
+	 * CAS loop, to avoid having to lock the buffer header.
+	 */
+	old_buf_state = pg_atomic_read_u32(&buf->state);
+	for (;;)
 	{
-		*buf_state = local_buf_state;
-		return buf;
+		local_buf_state = old_buf_state;
+
+		/*
+		 * If the buffer is pinned we cannot use it under any circumstances.
+		 *
+		 * If usage_count is 0 or 1 then the buffer is fair game (we expect 1,
+		 * since our own previous usage of the ring element would have left it
+		 * there, but it might've been decremented by clock-sweep since then).
+		 * A higher usage_count indicates someone else has touched the buffer,
+		 * so we shouldn't re-use it.
+		 */
+		if (BUF_STATE_GET_REFCOUNT(local_buf_state) != 0
+			|| BUF_STATE_GET_USAGECOUNT(local_buf_state) > 1)
+			break;
+
+		/* See equivalent code in PinBuffer() */
+		if (unlikely(local_buf_state & BM_LOCKED))
+		{
+			old_buf_state = WaitBufHdrUnlocked(buf);
+			continue;
+		}
+
+		/* pin the buffer if the CAS succeeds */
+		local_buf_state += BUF_REFCOUNT_ONE;
+
+		if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+										   local_buf_state))
+		{
+			*buf_state = local_buf_state;
+
+			TrackNewBufferPin(BufferDescriptorGetBuffer(buf));
+			return buf;
+		}
 	}
-	UnlockBufHdr(buf, local_buf_state);
 
 	/*
 	 * Tell caller to allocate a new buffer with the normal allocation

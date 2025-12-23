@@ -58,15 +58,22 @@
 
 /*
  * A Datum contains either a value of a pass-by-value type or a pointer to a
- * value of a pass-by-reference type.  Therefore, we require:
- *
- * sizeof(Datum) == sizeof(void *) == 4 or 8
+ * value of a pass-by-reference type.  Therefore, we must have
+ * sizeof(Datum) >= sizeof(void *).  No current or foreseeable Postgres
+ * platform has pointers wider than 8 bytes, and standardizing on Datum being
+ * exactly 8 bytes has advantages in reducing cross-platform differences.
  *
  * The functions below and the analogous functions for other types should be used to
  * convert between a Datum and the appropriate C type.
  */
 
-typedef uintptr_t Datum;
+typedef uint64_t Datum;
+
+/*
+ * This symbol is now vestigial, but we continue to define it so as not to
+ * unnecessarily break extension code.
+ */
+#define SIZEOF_DATUM 8
 
 /*
  * A NullableDatum is used in places where both a Datum and its nullness needs
@@ -82,8 +89,6 @@ typedef struct NullableDatum
 	bool		isnull;
 	/* due to alignment padding this could be used for flags for free */
 } NullableDatum;
-
-#define SIZEOF_DATUM SIZEOF_VOID_P
 
 /*
  * DatumGetBool
@@ -316,7 +321,7 @@ CommandIdGetDatum(CommandId X)
 static inline Pointer
 DatumGetPointer(Datum X)
 {
-	return (Pointer) X;
+	return (Pointer) (uintptr_t) X;
 }
 
 /*
@@ -326,7 +331,7 @@ DatumGetPointer(Datum X)
 static inline Datum
 PointerGetDatum(const void *X)
 {
-	return (Datum) X;
+	return (Datum) (uintptr_t) X;
 }
 
 /*
@@ -383,68 +388,41 @@ NameGetDatum(const NameData *X)
 /*
  * DatumGetInt64
  *		Returns 64-bit integer value of a datum.
- *
- * Note: this function hides whether int64 is pass by value or by reference.
  */
 static inline int64
 DatumGetInt64(Datum X)
 {
-#ifdef USE_FLOAT8_BYVAL
 	return (int64) X;
-#else
-	return *((int64 *) DatumGetPointer(X));
-#endif
 }
 
 /*
  * Int64GetDatum
  *		Returns datum representation for a 64-bit integer.
- *
- * Note: if int64 is pass by reference, this function returns a reference
- * to palloc'd space.
  */
-#ifdef USE_FLOAT8_BYVAL
 static inline Datum
 Int64GetDatum(int64 X)
 {
 	return (Datum) X;
 }
-#else
-extern Datum Int64GetDatum(int64 X);
-#endif
-
 
 /*
  * DatumGetUInt64
  *		Returns 64-bit unsigned integer value of a datum.
- *
- * Note: this function hides whether int64 is pass by value or by reference.
  */
 static inline uint64
 DatumGetUInt64(Datum X)
 {
-#ifdef USE_FLOAT8_BYVAL
 	return (uint64) X;
-#else
-	return *((uint64 *) DatumGetPointer(X));
-#endif
 }
 
 /*
  * UInt64GetDatum
  *		Returns datum representation for a 64-bit unsigned integer.
- *
- * Note: if int64 is pass by reference, this function returns a reference
- * to palloc'd space.
  */
 static inline Datum
 UInt64GetDatum(uint64 X)
 {
-#ifdef USE_FLOAT8_BYVAL
 	return (Datum) X;
-#else
-	return Int64GetDatum((int64) X);
-#endif
 }
 
 /*
@@ -492,13 +470,10 @@ Float4GetDatum(float4 X)
 /*
  * DatumGetFloat8
  *		Returns 8-byte floating point value of a datum.
- *
- * Note: this function hides whether float8 is pass by value or by reference.
  */
 static inline float8
 DatumGetFloat8(Datum X)
 {
-#ifdef USE_FLOAT8_BYVAL
 	union
 	{
 		int64		value;
@@ -507,19 +482,12 @@ DatumGetFloat8(Datum X)
 
 	myunion.value = DatumGetInt64(X);
 	return myunion.retval;
-#else
-	return *((float8 *) DatumGetPointer(X));
-#endif
 }
 
 /*
  * Float8GetDatum
  *		Returns datum representation for an 8-byte floating point number.
- *
- * Note: if float8 is pass by reference, this function returns a reference
- * to palloc'd space.
  */
-#ifdef USE_FLOAT8_BYVAL
 static inline Datum
 Float8GetDatum(float8 X)
 {
@@ -532,35 +500,22 @@ Float8GetDatum(float8 X)
 	myunion.value = X;
 	return Int64GetDatum(myunion.retval);
 }
-#else
-extern Datum Float8GetDatum(float8 X);
-#endif
-
 
 /*
  * Int64GetDatumFast
  * Float8GetDatumFast
  *
- * These macros are intended to allow writing code that does not depend on
+ * These macros were intended to allow writing code that does not depend on
  * whether int64 and float8 are pass-by-reference types, while not
- * sacrificing performance when they are.  The argument must be a variable
- * that will exist and have the same value for as long as the Datum is needed.
- * In the pass-by-ref case, the address of the variable is taken to use as
- * the Datum.  In the pass-by-val case, these are the same as the non-Fast
- * functions, except for asserting that the variable is of the correct type.
+ * sacrificing performance when they are.  They are no longer different
+ * from the regular functions, though we keep the assertions to protect
+ * code that might get back-patched into older branches.
  */
 
-#ifdef USE_FLOAT8_BYVAL
 #define Int64GetDatumFast(X) \
 	(AssertVariableIsOfTypeMacro(X, int64), Int64GetDatum(X))
 #define Float8GetDatumFast(X) \
 	(AssertVariableIsOfTypeMacro(X, double), Float8GetDatum(X))
-#else
-#define Int64GetDatumFast(X) \
-	(AssertVariableIsOfTypeMacro(X, int64), PointerGetDatum(&(X)))
-#define Float8GetDatumFast(X) \
-	(AssertVariableIsOfTypeMacro(X, double), PointerGetDatum(&(X)))
-#endif
 
 
 /* ----------------------------------------------------------------

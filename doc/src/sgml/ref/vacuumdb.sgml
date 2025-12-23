@@ -172,6 +172,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--dry-run</option></term>
+      <listitem>
+       <para>
+        Print, but do not execute, the vacuum and analyze commands that would
+        have been sent to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-e</option></term>
       <term><option>--echo</option></term>
       <listitem>
@@ -282,13 +292,23 @@ PostgreSQL documentation
       <listitem>
        <para>
         Only analyze relations that are missing statistics for a column, index
-        expression, or extended statistics object.  This option prevents
-        <application>vacuumdb</application> from deleting existing statistics
-        so that the query optimizer's choices do not become transiently worse.
+        expression, or extended statistics object.  When used with
+        <option>--analyze-in-stages</option>, this option prevents
+        <application>vacuumdb</application> from temporarily replacing existing
+        statistics with ones generated with lower statistics targets, thus
+        avoiding transiently worse query optimizer choices.
        </para>
        <para>
         This option can only be used in conjunction with
         <option>--analyze-only</option> or <option>--analyze-in-stages</option>.
+       </para>
+       <para>
+        Note that <option>--missing-stats-only</option> requires
+        <literal>SELECT</literal> privileges on
+        <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+        and
+        <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>,
+        which are restricted to superusers by default.
        </para>
       </listitem>
      </varlistentry>
@@ -394,6 +414,15 @@ PostgreSQL documentation
         the <option>--analyze</option> or <option>--analyze-only</option> options.
         Multiple tables can be vacuumed by writing multiple
         <option>-t</option> switches.
+       </para>
+       <para>
+        If no tables are specified with the <option>--table</option> option,
+        <application>vacuumdb</application> will clean all regular tables
+        and materialized views in the connected database.
+        If <option>--analyze-only</option> or
+        <option>--analyze-in-stages</option> is also specified,
+        it will analyze all regular tables, partitioned tables,
+        and materialized views (but not foreign tables).
        </para>
        <tip>
         <para>

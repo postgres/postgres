@@ -584,7 +584,7 @@ verifybackup_per_wal_range_cb(JsonManifestParseContext *context,
 	manifest_wal_range *range;
 
 	/* Allocate and initialize a struct describing this WAL range. */
-	range = palloc(sizeof(manifest_wal_range));
+	range = palloc_object(manifest_wal_range);
 	range->tli = tli;
 	range->start_lsn = start_lsn;
 	range->end_lsn = end_lsn;
@@ -1207,7 +1207,7 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
 	{
 		char	   *pg_waldump_cmd;
 
-		pg_waldump_cmd = psprintf("\"%s\" --quiet --path=\"%s\" --timeline=%u --start=%X/%X --end=%X/%X\n",
+		pg_waldump_cmd = psprintf("\"%s\" --quiet --path=\"%s\" --timeline=%u --start=%X/%08X --end=%X/%08X\n",
 								  pg_waldump_path, wal_directory, this_wal_range->tli,
 								  LSN_FORMAT_ARGS(this_wal_range->start_lsn),
 								  LSN_FORMAT_ARGS(this_wal_range->end_lsn));
@@ -1228,7 +1228,7 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
  * context says we should.
  */
 void
-report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
+report_backup_error(verifier_context *context, const char *restrict fmt,...)
 {
 	va_list		ap;
 
@@ -1245,7 +1245,7 @@ report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
  * Report a fatal error and exit
  */
 void
-report_fatal_error(const char *pg_restrict fmt,...)
+report_fatal_error(const char *restrict fmt,...)
 {
 	va_list		ap;
 

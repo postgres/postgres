@@ -86,7 +86,7 @@ makeDefaultBloomOptions(void)
 	BloomOptions *opts;
 	int			i;
 
-	opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
+	opts = palloc0_object(BloomOptions);
 	/* Convert DEFAULT_BLOOM_LENGTH from # of bits to # of words */
 	opts->bloomLength = (DEFAULT_BLOOM_LENGTH + SIGNWORDBITS - 1) / SIGNWORDBITS;
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -324,7 +324,7 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 {
 	BloomTuple *itup;
 	BloomPageOpaque opaque;
-	Pointer		ptr;
+	char	   *ptr;
 
 	/* We shouldn't be pointed to an invalid page */
 	Assert(!PageIsNew(page) && !BloomPageIsDeleted(page));
@@ -336,11 +336,11 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 	/* Copy new tuple to the end of page */
 	opaque = BloomPageGetOpaque(page);
 	itup = BloomPageGetTuple(state, page, opaque->maxoff + 1);
-	memcpy((Pointer) itup, (Pointer) tuple, state->sizeOfBloomTuple);
+	memcpy(itup, tuple, state->sizeOfBloomTuple);
 
 	/* Adjust maxoff and pd_lower */
 	opaque->maxoff++;
-	ptr = (Pointer) BloomPageGetTuple(state, page, opaque->maxoff + 1);
+	ptr = (char *) BloomPageGetTuple(state, page, opaque->maxoff + 1);
 	((PageHeader) page)->pd_lower = ptr - page;
 
 	/* Assert we didn't overrun available space */

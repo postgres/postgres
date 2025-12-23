@@ -157,19 +157,12 @@ ld -Bshareable -o foo.so foo.o
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
-      <option>-KPIC</option> with the Sun compiler and
       <option>-fPIC</option> with <application>GCC</application>.  To
       link shared libraries, the compiler option is
-      <option>-G</option> with either compiler or alternatively
       <option>-shared</option> with <application>GCC</application>.
 <programlisting>
-cc -KPIC -c foo.c
-cc -G -o foo.so foo.o
-</programlisting>
-      or
-<programlisting>
 gcc -fPIC -c foo.c
-gcc -G -o foo.so foo.o
+gcc -shared -o foo.so foo.o
 </programlisting>
      </para>
     </listitem>

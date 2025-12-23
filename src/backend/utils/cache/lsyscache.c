@@ -26,6 +26,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -701,8 +702,7 @@ get_op_index_interpretation(Oid opno)
 		if (cmptype == COMPARE_INVALID)
 			continue;
 
-		thisresult = (OpIndexInterpretation *)
-			palloc(sizeof(OpIndexInterpretation));
+		thisresult = palloc_object(OpIndexInterpretation);
 		thisresult->opfamily_id = op_form->amopfamily;
 		thisresult->cmptype = cmptype;
 		thisresult->oplefttype = op_form->amoplefttype;
@@ -747,8 +747,7 @@ get_op_index_interpretation(Oid opno)
 					continue;
 
 				/* OK, report it as COMPARE_NE */
-				thisresult = (OpIndexInterpretation *)
-					palloc(sizeof(OpIndexInterpretation));
+				thisresult = palloc_object(OpIndexInterpretation);
 				thisresult->opfamily_id = op_form->amopfamily;
 				thisresult->cmptype = COMPARE_NE;
 				thisresult->oplefttype = op_form->amoplefttype;
@@ -1246,6 +1245,32 @@ get_constraint_type(Oid conoid)
 
 	return contype;
 }
+
+/*				---------- DATABASE CACHE ----------					 */
+
+/*
+ * get_database_name - given a database OID, look up the name
+ *
+ * Returns a palloc'd string, or NULL if no such database.
+ */
+char *
+get_database_name(Oid dbid)
+{
+	HeapTuple	dbtuple;
+	char	   *result;
+
+	dbtuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
+	if (HeapTupleIsValid(dbtuple))
+	{
+		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));
+		ReleaseSysCache(dbtuple);
+	}
+	else
+		result = NULL;
+
+	return result;
+}
+
 
 /*				---------- LANGUAGE CACHE ----------					 */
 
@@ -3817,7 +3842,7 @@ get_subscription_oid(const char *subname, bool missing_ok)
 	Oid			oid;
 
 	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
-						  MyDatabaseId, CStringGetDatum(subname));
+						  ObjectIdGetDatum(MyDatabaseId), CStringGetDatum(subname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

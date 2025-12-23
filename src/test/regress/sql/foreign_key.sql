@@ -1296,7 +1296,7 @@ UPDATE fk_notpartitioned_pk SET b = 2504 WHERE a = 2500;
 -- check psql behavior
 \d fk_notpartitioned_pk
 
--- Check the exsting FK trigger
+-- Check the existing FK trigger
 SELECT conname, tgrelid::regclass as tgrel, regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype
 FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
 WHERE tgrelid IN (SELECT relid FROM pg_partition_tree('fk_partitioned_fk'::regclass)
@@ -1389,21 +1389,43 @@ WHERE conrelid::regclass::text like 'fk_partitioned_fk%' ORDER BY oid::regclass:
 
 DROP TABLE fk_partitioned_fk, fk_notpartitioned_pk;
 
--- NOT VALID foreign key on a non-partitioned table referencing a partitioned table
+-- NOT VALID and NOT ENFORCED foreign key on a non-partitioned table
+-- referencing a partitioned table
 CREATE TABLE fk_partitioned_pk (a int, b int, PRIMARY KEY (a, b)) PARTITION BY RANGE (a, b);
 CREATE TABLE fk_partitioned_pk_1 PARTITION OF fk_partitioned_pk FOR VALUES FROM (0,0) TO (1000,1000);
+CREATE TABLE fk_partitioned_pk_2 PARTITION OF fk_partitioned_pk FOR VALUES FROM (1000,1000) TO (2000,2000);
 CREATE TABLE fk_notpartitioned_fk (b int, a int);
-ALTER TABLE fk_notpartitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
+INSERT INTO fk_partitioned_pk VALUES(100,100), (1000,1000);
+INSERT INTO fk_notpartitioned_fk VALUES(100,100), (1000,1000);
+ALTER TABLE fk_notpartitioned_fk ADD CONSTRAINT fk_notpartitioned_fk_a_b_fkey
+	FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
+ALTER TABLE fk_notpartitioned_fk ADD CONSTRAINT fk_notpartitioned_fk_a_b_fkey2
+	FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT ENFORCED;
 
--- Constraint will be invalid.
-SELECT conname, convalidated FROM pg_constraint
+-- All constraints will be invalid, and _fkey2 constraints will not be enforced.
+SELECT conname, conenforced, convalidated FROM pg_constraint
 WHERE conrelid = 'fk_notpartitioned_fk'::regclass ORDER BY oid::regclass::text;
 
 ALTER TABLE fk_notpartitioned_fk VALIDATE CONSTRAINT fk_notpartitioned_fk_a_b_fkey;
+ALTER TABLE fk_notpartitioned_fk ALTER CONSTRAINT fk_notpartitioned_fk_a_b_fkey2 ENFORCED;
 
--- All constraints are now valid.
-SELECT conname, convalidated FROM pg_constraint
+-- All constraints are now valid and enforced.
+SELECT conname, conenforced, convalidated FROM pg_constraint
 WHERE conrelid = 'fk_notpartitioned_fk'::regclass ORDER BY oid::regclass::text;
+
+-- test a self-referential FK
+ALTER TABLE fk_partitioned_pk ADD CONSTRAINT selffk FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
+CREATE TABLE fk_partitioned_pk_3 PARTITION OF fk_partitioned_pk FOR VALUES FROM (2000,2000) TO (3000,3000)
+  PARTITION BY RANGE (a);
+CREATE TABLE fk_partitioned_pk_3_1 PARTITION OF fk_partitioned_pk_3 FOR VALUES FROM (2000) TO (2100);
+SELECT conname, conenforced, convalidated FROM pg_constraint
+WHERE conrelid = 'fk_partitioned_pk'::regclass AND contype = 'f'
+ORDER BY oid::regclass::text;
+ALTER TABLE fk_partitioned_pk_2 VALIDATE CONSTRAINT selffk;
+ALTER TABLE fk_partitioned_pk VALIDATE CONSTRAINT selffk;
+SELECT conname, conenforced, convalidated FROM pg_constraint
+WHERE conrelid = 'fk_partitioned_pk'::regclass AND contype = 'f'
+ORDER BY oid::regclass::text;
 
 DROP TABLE fk_notpartitioned_fk, fk_partitioned_pk;
 
@@ -2363,4 +2385,52 @@ ALTER TABLE fk_r_2 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
 SET client_min_messages TO warning;
 DROP SCHEMA fkpart12 CASCADE;
 RESET client_min_messages;
+RESET search_path;
+
+-- Exercise the column mapping code with foreign keys.  In this test we'll
+-- create a partitioned table which has a partition with a dropped column and
+-- check to ensure that an UPDATE cascades the changes correctly to the
+-- partitioned table.
+CREATE SCHEMA fkpart13;
+SET search_path TO fkpart13;
+
+CREATE TABLE fkpart13_t1 (a int PRIMARY KEY);
+
+CREATE TABLE fkpart13_t2 (
+  part_id int PRIMARY KEY,
+  column_to_drop int,
+  FOREIGN KEY (part_id) REFERENCES fkpart13_t1 ON UPDATE CASCADE ON DELETE CASCADE
+) PARTITION BY LIST (part_id);
+
+CREATE TABLE fkpart13_t2_p1 PARTITION OF fkpart13_t2 FOR VALUES IN (1);
+
+-- drop the column
+ALTER TABLE fkpart13_t2 DROP COLUMN column_to_drop;
+
+-- create a new partition without the dropped column
+CREATE TABLE fkpart13_t2_p2 PARTITION OF fkpart13_t2 FOR VALUES IN (2);
+
+CREATE TABLE fkpart13_t3 (
+  a int NOT NULL,
+  FOREIGN KEY (a)
+    REFERENCES fkpart13_t2
+    ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+INSERT INTO fkpart13_t1 (a) VALUES (1);
+INSERT INTO fkpart13_t2 (part_id) VALUES (1);
+INSERT INTO fkpart13_t3 (a) VALUES (1);
+
+-- Test a cascading update works correctly with with the dropped column
+UPDATE fkpart13_t1 SET a = 2 WHERE a = 1;
+SELECT tableoid::regclass,* FROM fkpart13_t2;
+SELECT tableoid::regclass,* FROM fkpart13_t3;
+
+-- Exercise code in ExecGetTriggerResultRel() as there's been previous issues
+-- with ResultRelInfos being returned with the incorrect ri_RootResultRelInfo
+WITH cte AS (
+  UPDATE fkpart13_t2_p1 SET part_id = part_id
+) UPDATE fkpart13_t1 SET a = 2 WHERE a = 1;
+
+DROP SCHEMA fkpart13 CASCADE;
 RESET search_path;

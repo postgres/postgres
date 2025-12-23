@@ -36,6 +36,7 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xlogutils.h"
+#include "access/xlogwait.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
@@ -60,7 +61,7 @@ int			LockTimeout = 0;
 int			IdleInTransactionSessionTimeout = 0;
 int			TransactionTimeout = 0;
 int			IdleSessionTimeout = 0;
-bool		log_lock_waits = false;
+bool		log_lock_waits = true;
 
 /* Pointer to this process's PGPROC struct, if any */
 PGPROC	   *MyProc = NULL;
@@ -144,6 +145,7 @@ ProcGlobalShmemSize(void)
 	size = add_size(size, sizeof(PROC_HDR));
 	size = add_size(size, sizeof(slock_t));
 
+	size = add_size(size, PGSemaphoreShmemSize(ProcGlobalSemas()));
 	size = add_size(size, PGProcShmemSize());
 	size = add_size(size, FastPathLockShmemSize());
 
@@ -242,7 +244,7 @@ InitProcGlobal(void)
 	MemSet(ptr, 0, requestSize);
 
 	procs = (PGPROC *) ptr;
-	ptr = (char *) ptr + TotalProcs * sizeof(PGPROC);
+	ptr = ptr + TotalProcs * sizeof(PGPROC);
 
 	ProcGlobal->allProcs = procs;
 	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
@@ -256,13 +258,13 @@ InitProcGlobal(void)
 	 * how hotly they are accessed.
 	 */
 	ProcGlobal->xids = (TransactionId *) ptr;
-	ptr = (char *) ptr + (TotalProcs * sizeof(*ProcGlobal->xids));
+	ptr = ptr + (TotalProcs * sizeof(*ProcGlobal->xids));
 
 	ProcGlobal->subxidStates = (XidCacheStatus *) ptr;
-	ptr = (char *) ptr + (TotalProcs * sizeof(*ProcGlobal->subxidStates));
+	ptr = ptr + (TotalProcs * sizeof(*ProcGlobal->subxidStates));
 
 	ProcGlobal->statusFlags = (uint8 *) ptr;
-	ptr = (char *) ptr + (TotalProcs * sizeof(*ProcGlobal->statusFlags));
+	ptr = ptr + (TotalProcs * sizeof(*ProcGlobal->statusFlags));
 
 	/* make sure wer didn't overflow */
 	Assert((ptr > (char *) procs) && (ptr <= (char *) procs + requestSize));
@@ -285,6 +287,9 @@ InitProcGlobal(void)
 
 	/* For asserts checking we did not overflow. */
 	fpEndPtr = fpPtr + requestSize;
+
+	/* Reserve space for semaphores. */
+	PGReserveSemaphores(ProcGlobalSemas());
 
 	for (i = 0; i < TotalProcs; i++)
 	{
@@ -946,6 +951,11 @@ ProcKill(int code, Datum arg)
 	 * facility by releasing our PGPROC ...
 	 */
 	LWLockReleaseAll();
+
+	/*
+	 * Cleanup waiting for LSN if any.
+	 */
+	WaitLSNCleanup();
 
 	/* Cancel any pending condition variable sleep, too */
 	ConditionVariableCancelSleep();

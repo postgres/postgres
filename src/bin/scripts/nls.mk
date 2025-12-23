@@ -7,6 +7,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    dropuser.c \
                    clusterdb.c \
                    vacuumdb.c \
+                   vacuuming.c \
                    reindexdb.c \
                    pg_isready.c \
                    common.c \

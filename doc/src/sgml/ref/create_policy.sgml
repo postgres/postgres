@@ -49,6 +49,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    in <literal>WITH CHECK</literal>.  When a <literal>USING</literal>
    expression returns true for a given row then that row is visible to the
    user, while if false or null is returned then the row is not visible.
+   Typically, no error occurs when a row is not visible, but see
+   <xref linkend="sql-createpolicy-summary"/> for exceptions.
    When a <literal>WITH CHECK</literal> expression returns true for a row
    then that row is inserted or updated, while if false or null is returned
    then an error occurs.
@@ -194,8 +196,9 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       rows for which the expression returns false or null will not be
       visible to the user (in a <command>SELECT</command>), and will not be
       available for modification (in an <command>UPDATE</command>
-      or <command>DELETE</command>).  Such rows are silently suppressed; no error
-      is reported.
+      or <command>DELETE</command>).  Typically, such rows are silently
+      suppressed; no error is reported (but see
+      <xref linkend="sql-createpolicy-summary"/> for exceptions).
      </para>
     </listitem>
    </varlistentry>
@@ -251,8 +254,10 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          otherwise).  If an <command>INSERT</command>
          or <command>UPDATE</command> command attempts to add rows to the
          table that do not pass the <literal>ALL</literal>
-         policy's <literal>WITH CHECK</literal> expression, the entire
-         command will be aborted.
+         policy's <literal>WITH CHECK</literal> expression (or its
+         <literal>USING</literal> expression, if it does not have a
+         <literal>WITH CHECK</literal> expression), the entire command will
+         be aborted.
        </para>
       </listitem>
      </varlistentry>
@@ -268,11 +273,50 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          relation that pass the <literal>SELECT</literal> policy will be
          returned during a <literal>SELECT</literal> query, and that queries
          that require <literal>SELECT</literal> permissions, such as
-         <literal>UPDATE</literal>, will also only see those records
+         <literal>UPDATE</literal>, <literal>DELETE</literal>, and
+         <literal>MERGE</literal>, will also only see those records
          that are allowed by the <literal>SELECT</literal> policy.
          A <literal>SELECT</literal> policy cannot have a <literal>WITH
          CHECK</literal> expression, as it only applies in cases where
-         records are being retrieved from the relation.
+         records are being retrieved from the relation, except as described
+         below.
+       </para>
+       <para>
+         If a data-modifying query has a <literal>RETURNING</literal> clause,
+         <literal>SELECT</literal> permissions are required on the relation,
+         and any newly inserted or updated rows from the relation must satisfy
+         the relation's <literal>SELECT</literal> policies in order to be
+         available to the <literal>RETURNING</literal> clause.  If a newly
+         inserted or updated row does not satisfy the relation's
+         <literal>SELECT</literal> policies, an error will be thrown (inserted
+         or updated rows to be returned are <emphasis>never</emphasis>
+         silently ignored).
+       </para>
+       <para>
+         If an <literal>INSERT</literal> has an <literal>ON CONFLICT DO
+         NOTHING/UPDATE</literal> clause, <literal>SELECT</literal>
+         permissions are required on the relation, and the rows proposed for
+         insertion are checked using the relation's <literal>SELECT</literal>
+         policies.  If a row proposed for insertion does not satisfy the
+         relation's <literal>SELECT</literal> policies, an error is thrown
+         (the <literal>INSERT</literal> is <emphasis>never</emphasis> silently
+         avoided).  In addition, if the <literal>UPDATE</literal> path is
+         taken, the row to be updated and the new updated row are checked
+         against the relation's <literal>SELECT</literal> policies, and an
+         error is thrown if they are not satisfied (an auxiliary
+         <literal>UPDATE</literal> is <emphasis>never</emphasis> silently
+         avoided).
+       </para>
+       <para>
+         A <literal>MERGE</literal> command requires <literal>SELECT</literal>
+         permissions on both the source and target relations, and so each
+         relation's <literal>SELECT</literal> policies are applied before they
+         are joined, and the <literal>MERGE</literal> actions will only see
+         those records that are allowed by those policies.  In addition, if
+         an <literal>UPDATE</literal> action is executed, the target relation's
+         <literal>SELECT</literal> policies are applied to the updated row, as
+         for a standalone <literal>UPDATE</literal>, except that an error is
+         thrown if they are not satisfied.
        </para>
       </listitem>
      </varlistentry>
@@ -292,10 +336,11 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          where records are being added to the relation.
        </para>
        <para>
-         Note that <literal>INSERT</literal> with <literal>ON CONFLICT DO
-         UPDATE</literal> checks <literal>INSERT</literal> policies'
-         <literal>WITH CHECK</literal> expressions only for rows appended
-         to the relation by the <literal>INSERT</literal> path.
+         Note that an <literal>INSERT</literal> with an <literal>ON CONFLICT
+         DO NOTHING/UPDATE</literal> clause will check the
+         <literal>INSERT</literal> policies' <literal>WITH CHECK</literal>
+         expressions for all rows proposed for insertion, regardless of
+         whether or not they end up being inserted.
        </para>
       </listitem>
      </varlistentry>
@@ -305,12 +350,12 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>UPDATE</literal> for a policy means that it will apply
-         to <literal>UPDATE</literal>, <literal>SELECT FOR UPDATE</literal>
+         to <literal>UPDATE</literal>, <literal>SELECT FOR UPDATE</literal>,
          and <literal>SELECT FOR SHARE</literal> commands, as well as
          auxiliary <literal>ON CONFLICT DO UPDATE</literal> clauses of
-         <literal>INSERT</literal> commands.
-         <literal>MERGE</literal> commands containing <literal>UPDATE</literal>
-         actions are affected as well.  Since <literal>UPDATE</literal>
+         <literal>INSERT</literal> commands, and <literal>MERGE</literal>
+         commands containing <literal>UPDATE</literal> actions.
+         Since an <literal>UPDATE</literal> command
          involves pulling an existing record and replacing it with a new
          modified record, <literal>UPDATE</literal>
          policies accept both a <literal>USING</literal> expression and
@@ -356,7 +401,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          command, if the existing row does not pass the
          <literal>USING</literal> expressions, an error will be thrown (the
          <literal>UPDATE</literal> path will <emphasis>never</emphasis> be silently
-         avoided).
+         avoided).  The same applies to an <literal>UPDATE</literal> action
+         of a <command>MERGE</command> command.
        </para>
       </listitem>
      </varlistentry>
@@ -366,12 +412,18 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>DELETE</literal> for a policy means that it will apply
-         to <literal>DELETE</literal> commands.  Only rows that pass this
-         policy will be seen by a <literal>DELETE</literal> command.  There can
-         be rows that are visible through a <literal>SELECT</literal> that are
-         not available for deletion, if they do not pass the
-         <literal>USING</literal> expression for
-         the <literal>DELETE</literal> policy.
+         to <literal>DELETE</literal> commands and <literal>MERGE</literal>
+         commands containing <literal>DELETE</literal> actions.  For a
+         <literal>DELETE</literal> command, only rows that pass this policy
+         will be seen by the <literal>DELETE</literal> command.  There can
+         be rows that are visible through a <literal>SELECT</literal> policy
+         that are not available for deletion, if they do not pass the
+         <literal>USING</literal> expression for the <literal>DELETE</literal>
+         policy.  Note, however, that a <literal>DELETE</literal> action in a
+         <literal>MERGE</literal> command will see rows that are visible
+         through <literal>SELECT</literal> policies, and if the
+         <literal>DELETE</literal> policy does not pass for such a row, an
+         error will be thrown.
        </para>
 
        <para>
@@ -400,6 +452,15 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
 
    </variablelist>
 
+   <para>
+    <xref linkend="sql-createpolicy-summary"/> summarizes how the different
+    types of policy apply to specific commands.  In the table,
+    <quote>check</quote> means that the policy expression is checked and an
+    error is thrown if it returns false or null, whereas <quote>filter</quote>
+    means that the row is silently ignored if the policy expression returns
+    false or null.
+   </para>
+
    <table id="sql-createpolicy-summary">
     <title>Policies Applied by Command Type</title>
     <tgroup cols="6">
@@ -424,8 +485,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      </thead>
      <tbody>
       <row>
-       <entry><command>SELECT</command></entry>
-       <entry>Existing row</entry>
+       <entry><command>SELECT</command> / <command>COPY ... TO</command></entry>
+       <entry>Filter existing row</entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
@@ -433,63 +494,117 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       </row>
       <row>
        <entry><command>SELECT FOR UPDATE/SHARE</command></entry>
-       <entry>Existing row</entry>
+       <entry>Filter existing row</entry>
        <entry>&mdash;</entry>
-       <entry>Existing row</entry>
-       <entry>&mdash;</entry>
-       <entry>&mdash;</entry>
-      </row>
-      <row>
-       <entry><command>INSERT</command> / <command>MERGE ... THEN INSERT</command></entry>
-       <entry>&mdash;</entry>
-       <entry>New row</entry>
-       <entry>&mdash;</entry>
+       <entry>Filter existing row</entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
       </row>
       <row>
-       <entry><command>INSERT ... RETURNING</command></entry>
+       <entry><command>INSERT</command></entry>
        <entry>
-        New row <footnote id="rls-select-priv">
+        Check new row&nbsp;<footnote id="rls-select-priv">
          <para>
-          If read access is required to the existing or new row (for example,
-          a <literal>WHERE</literal> or <literal>RETURNING</literal> clause
-          that refers to columns from the relation).
+          If read access is required to either the existing or new row (for
+          example, a <literal>WHERE</literal> or <literal>RETURNING</literal>
+          clause that refers to columns from the relation).
          </para>
         </footnote>
        </entry>
-       <entry>New row</entry>
+       <entry>Check new row</entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
       </row>
       <row>
-       <entry><command>UPDATE</command> / <command>MERGE ... THEN UPDATE</command></entry>
+       <entry><command>UPDATE</command></entry>
        <entry>
-        Existing &amp; new rows <footnoteref linkend="rls-select-priv"/>
+        Filter existing row&nbsp;<footnoteref linkend="rls-select-priv"/> &amp;
+        check new row&nbsp;<footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
-       <entry>Existing row</entry>
-       <entry>New row</entry>
+       <entry>Filter existing row</entry>
+       <entry>Check new row</entry>
        <entry>&mdash;</entry>
       </row>
       <row>
        <entry><command>DELETE</command></entry>
        <entry>
-        Existing row <footnoteref linkend="rls-select-priv"/>
+        Filter existing row&nbsp;<footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
-       <entry>Existing row</entry>
+       <entry>Filter existing row</entry>
+      </row>
+      <row>
+       <entry><command>INSERT ... ON CONFLICT</command></entry>
+       <entry>
+        Check new row&nbsp;<footnote id="rls-on-conflict-priv">
+         <para>
+          Row proposed for insertion is checked regardless of whether or not a
+          conflict occurs.
+         </para>
+        </footnote>
+       </entry>
+       <entry>
+        Check new row&nbsp;<footnoteref linkend="rls-on-conflict-priv"/>
+       </entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
       </row>
       <row>
        <entry><command>ON CONFLICT DO UPDATE</command></entry>
-       <entry>Existing &amp; new rows</entry>
+       <entry>
+        Check existing &amp; new rows&nbsp;<footnote id="rls-on-conflict-update-priv">
+         <para>
+          New row of the auxiliary <command>UPDATE</command> command, which
+          might be different from the new row of the original
+          <command>INSERT</command> command.
+         </para>
+        </footnote>
+       </entry>
        <entry>&mdash;</entry>
-       <entry>Existing row</entry>
-       <entry>New row</entry>
+       <entry>Check existing row</entry>
+       <entry>
+        Check new row&nbsp;<footnoteref linkend="rls-on-conflict-update-priv"/>
+       </entry>
        <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>MERGE</command></entry>
+       <entry>Filter source &amp; target rows</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>MERGE ... THEN INSERT</command></entry>
+       <entry>
+        Check new row&nbsp;<footnoteref linkend="rls-select-priv"/>
+       </entry>
+       <entry>Check new row</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>MERGE ... THEN UPDATE</command></entry>
+       <entry>Check new row</entry>
+       <entry>&mdash;</entry>
+       <entry>Check existing row</entry>
+       <entry>Check new row</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>MERGE ... THEN DELETE</command></entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>Check existing row</entry>
       </row>
      </tbody>
     </tgroup>

@@ -20,6 +20,24 @@
 
 extern PGDLLIMPORT int debug_discard_caches;
 
+#define MIN_DEBUG_DISCARD_CACHES 0
+
+#ifdef DISCARD_CACHES_ENABLED
+ /* Set default based on older compile-time-only cache clobber macros */
+#if defined(CLOBBER_CACHE_RECURSIVELY)
+#define DEFAULT_DEBUG_DISCARD_CACHES 3
+#elif defined(CLOBBER_CACHE_ALWAYS)
+#define DEFAULT_DEBUG_DISCARD_CACHES 1
+#else
+#define DEFAULT_DEBUG_DISCARD_CACHES 0
+#endif
+#define MAX_DEBUG_DISCARD_CACHES 5
+#else							/* not DISCARD_CACHES_ENABLED */
+#define DEFAULT_DEBUG_DISCARD_CACHES 0
+#define MAX_DEBUG_DISCARD_CACHES 0
+#endif							/* not DISCARD_CACHES_ENABLED */
+
+
 typedef void (*SyscacheCallbackFunction) (Datum arg, int cacheid, uint32 hashvalue);
 typedef void (*RelcacheCallbackFunction) (Datum arg, Oid relid);
 typedef void (*RelSyncCallbackFunction) (Datum arg, Oid relid);
@@ -43,8 +61,7 @@ extern void CacheInvalidateHeapTuple(Relation relation,
 									 HeapTuple tuple,
 									 HeapTuple newtuple);
 extern void CacheInvalidateHeapTupleInplace(Relation relation,
-											HeapTuple tuple,
-											HeapTuple newtuple);
+											HeapTuple key_equivalent_tuple);
 
 extern void CacheInvalidateCatalog(Oid catalogId);
 

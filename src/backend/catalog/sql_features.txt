@@ -518,7 +518,7 @@ T612	Advanced OLAP operations			YES
 T613	Sampling			YES	
 T614	NTILE function			YES	
 T615	LEAD and LAG functions			YES	
-T616	Null treatment option for LEAD and LAG functions			NO	
+T616	Null treatment option for LEAD and LAG functions			YES	
 T617	FIRST_VALUE and LAST_VALUE functions			YES	
 T618	NTH_VALUE function			NO	function exists, but some options missing
 T619	Nested window functions			NO	

@@ -24,7 +24,7 @@
 #include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
 #include "utils/builtins.h"
-
+#include "utils/fmgroids.h"
 
 typedef struct
 {
@@ -718,76 +718,29 @@ int8lcm(PG_FUNCTION_ARGS)
 Datum
 int8inc(PG_FUNCTION_ARGS)
 {
-	/*
-	 * When int8 is pass-by-reference, we provide this special case to avoid
-	 * palloc overhead for COUNT(): when called as an aggregate, we know that
-	 * the argument is modifiable local storage, so just update it in-place.
-	 * (If int8 is pass-by-value, then of course this is useless as well as
-	 * incorrect, so just ifdef it out.)
-	 */
-#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (AggCheckCallContext(fcinfo, NULL))
-	{
-		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
 
-		if (unlikely(pg_add_s64_overflow(*arg, 1, arg)))
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("bigint out of range")));
+	if (unlikely(pg_add_s64_overflow(arg, 1, &result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
 
-		PG_RETURN_POINTER(arg);
-	}
-	else
-#endif
-	{
-		/* Not called as an aggregate, so just do it the dumb way */
-		int64		arg = PG_GETARG_INT64(0);
-		int64		result;
-
-		if (unlikely(pg_add_s64_overflow(arg, 1, &result)))
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("bigint out of range")));
-
-		PG_RETURN_INT64(result);
-	}
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int8dec(PG_FUNCTION_ARGS)
 {
-	/*
-	 * When int8 is pass-by-reference, we provide this special case to avoid
-	 * palloc overhead for COUNT(): when called as an aggregate, we know that
-	 * the argument is modifiable local storage, so just update it in-place.
-	 * (If int8 is pass-by-value, then of course this is useless as well as
-	 * incorrect, so just ifdef it out.)
-	 */
-#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (AggCheckCallContext(fcinfo, NULL))
-	{
-		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
 
-		if (unlikely(pg_sub_s64_overflow(*arg, 1, arg)))
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("bigint out of range")));
-		PG_RETURN_POINTER(arg);
-	}
-	else
-#endif
-	{
-		/* Not called as an aggregate, so just do it the dumb way */
-		int64		arg = PG_GETARG_INT64(0);
-		int64		result;
+	if (unlikely(pg_sub_s64_overflow(arg, 1, &result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
 
-		if (unlikely(pg_sub_s64_overflow(arg, 1, &result)))
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("bigint out of range")));
-
-		PG_RETURN_INT64(result);
-	}
+	PG_RETURN_INT64(result);
 }
 
 
@@ -856,6 +809,53 @@ int8inc_support(PG_FUNCTION_ARGS)
 
 		req->monotonic = monotonic;
 		PG_RETURN_POINTER(req);
+	}
+
+	if (IsA(rawreq, SupportRequestSimplifyAggref))
+	{
+		SupportRequestSimplifyAggref *req = (SupportRequestSimplifyAggref *) rawreq;
+		Aggref	   *agg = req->aggref;
+
+		/*
+		 * Check for COUNT(ANY) and try to convert to COUNT(*). The input
+		 * argument cannot be NULL, we can't have an ORDER BY / DISTINCT in
+		 * the aggregate, and agglevelsup must be 0.
+		 *
+		 * Technically COUNT(ANY) must have 1 arg, but be paranoid and check.
+		 */
+		if (agg->aggfnoid == F_COUNT_ANY && list_length(agg->args) == 1)
+		{
+			TargetEntry *tle = (TargetEntry *) linitial(agg->args);
+			Expr	   *arg = tle->expr;
+
+			/* Check for unsupported cases */
+			if (agg->aggdistinct != NIL || agg->aggorder != NIL ||
+				agg->agglevelsup != 0)
+				PG_RETURN_POINTER(NULL);
+
+			/* If the arg isn't NULLable, do the conversion */
+			if (expr_is_nonnullable(req->root, arg, false))
+			{
+				Aggref	   *newagg;
+
+				/* We don't expect these to have been set yet */
+				Assert(agg->aggtransno == -1);
+				Assert(agg->aggtranstype == InvalidOid);
+
+				/* Convert COUNT(ANY) to COUNT(*) by making a new Aggref */
+				newagg = makeNode(Aggref);
+				memcpy(newagg, agg, sizeof(Aggref));
+				newagg->aggfnoid = F_COUNT_;
+
+				/* count(*) has no args */
+				newagg->aggargtypes = NULL;
+				newagg->args = NULL;
+				newagg->aggstar = true;
+				newagg->location = -1;
+
+				PG_RETURN_POINTER(newagg);
+			}
+		}
 	}
 
 	PG_RETURN_POINTER(NULL);
@@ -1411,7 +1411,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
-		fctx = (generate_series_fctx *) palloc(sizeof(generate_series_fctx));
+		fctx = palloc_object(generate_series_fctx);
 
 		/*
 		 * Use fctx to keep state from call to call. Seed current with the

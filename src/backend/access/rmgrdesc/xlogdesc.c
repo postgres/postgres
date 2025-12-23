@@ -65,8 +65,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-		appendStringInfo(buf, "redo %X/%X; "
-						 "tli %u; prev tli %u; fpw %s; wal_level %s; xid %u:%u; oid %u; multi %u; offset %u; "
+		appendStringInfo(buf, "redo %X/%08X; "
+						 "tli %u; prev tli %u; fpw %s; wal_level %s; logical decoding %s; xid %u:%u; oid %u; multi %u; offset %" PRIu64 "; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
 						 "oldest running xid %u; %s",
@@ -75,6 +75,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 checkpoint->PrevTimeLineID,
 						 checkpoint->fullPageWrites ? "true" : "false",
 						 get_wal_level_string(checkpoint->wal_level),
+						 checkpoint->logicalDecodingEnabled ? "true" : "false",
 						 EpochFromFullTransactionId(checkpoint->nextXid),
 						 XidFromFullTransactionId(checkpoint->nextXid),
 						 checkpoint->nextOid,
@@ -111,7 +112,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		XLogRecPtr	startpoint;
 
 		memcpy(&startpoint, rec, sizeof(XLogRecPtr));
-		appendStringInfo(buf, "%X/%X", LSN_FORMAT_ARGS(startpoint));
+		appendStringInfo(buf, "%X/%08X", LSN_FORMAT_ARGS(startpoint));
 	}
 	else if (info == XLOG_PARAMETER_CHANGE)
 	{
@@ -156,7 +157,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		xl_overwrite_contrecord xlrec;
 
 		memcpy(&xlrec, rec, sizeof(xl_overwrite_contrecord));
-		appendStringInfo(buf, "lsn %X/%X; time %s",
+		appendStringInfo(buf, "lsn %X/%08X; time %s",
 						 LSN_FORMAT_ARGS(xlrec.overwritten_lsn),
 						 timestamptz_to_str(xlrec.overwrite_time));
 	}
@@ -166,6 +167,13 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 
 		memcpy(&wal_level, rec, sizeof(int));
 		appendStringInfo(buf, "wal_level %s", get_wal_level_string(wal_level));
+	}
+	else if (info == XLOG_LOGICAL_DECODING_STATUS_CHANGE)
+	{
+		bool		enabled;
+
+		memcpy(&enabled, rec, sizeof(bool));
+		appendStringInfoString(buf, enabled ? "true" : "false");
 	}
 }
 
@@ -217,6 +225,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_CHECKPOINT_REDO:
 			id = "CHECKPOINT_REDO";
+			break;
+		case XLOG_LOGICAL_DECODING_STATUS_CHANGE:
+			id = "LOGICAL_DECODING_STATUS_CHANGE";
 			break;
 	}
 

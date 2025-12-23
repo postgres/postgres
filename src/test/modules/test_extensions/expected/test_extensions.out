@@ -333,7 +333,7 @@ SELECT ext_cor_func();
 ERROR:  function ext_cor_func() does not exist
 LINE 1: SELECT ext_cor_func();
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  There is no function of that name.
 SELECT * FROM ext_cor_view;
           col           
 ------------------------
@@ -649,7 +649,6 @@ SELECT dep_req3b();  -- fails
 ERROR:  function public.dep_req2() does not exist
 LINE 1:  SELECT public.dep_req2() || ' req3b' 
                 ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 QUERY:   SELECT public.dep_req2() || ' req3b' 
 CONTEXT:  SQL function "dep_req3b" statement 1
 DROP EXTENSION test_ext_req_schema3;

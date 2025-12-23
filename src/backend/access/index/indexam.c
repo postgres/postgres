@@ -75,7 +75,7 @@
 #define RELATION_CHECKS \
 do { \
 	Assert(RelationIsValid(indexRelation)); \
-	Assert(PointerIsValid(indexRelation->rd_indam)); \
+	Assert(indexRelation->rd_indam); \
 	if (unlikely(ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))) \
 		ereport(ERROR, \
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
@@ -85,9 +85,9 @@ do { \
 
 #define SCAN_CHECKS \
 ( \
-	AssertMacro(IndexScanIsValid(scan)), \
+	AssertMacro(scan), \
 	AssertMacro(RelationIsValid(scan->indexRelation)), \
-	AssertMacro(PointerIsValid(scan->indexRelation->rd_indam)) \
+	AssertMacro(scan->indexRelation->rd_indam) \
 )
 
 #define CHECK_REL_PROCEDURE(pname) \
@@ -262,6 +262,16 @@ index_beginscan(Relation heapRelation,
 	IndexScanDesc scan;
 
 	Assert(snapshot != InvalidSnapshot);
+
+	/* Check that a historic snapshot is not used for non-catalog tables */
+	if (IsHistoricMVCCSnapshot(snapshot) &&
+		!RelationIsAccessibleInLogicalDecoding(heapRelation))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot query non-catalog table \"%s\" during logical decoding",
+						RelationGetRelationName(heapRelation))));
+	}
 
 	scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot, NULL, false);
 
@@ -986,11 +996,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 	{
 		if (orderByTypes[i] == FLOAT8OID)
 		{
-#ifndef USE_FLOAT8_BYVAL
-			/* must free any old value to avoid memory leakage */
-			if (!scan->xs_orderbynulls[i])
-				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
-#endif
 			if (distances && !distances[i].isnull)
 			{
 				scan->xs_orderbyvals[i] = Float8GetDatum(distances[i].value);

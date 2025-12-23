@@ -38,7 +38,7 @@ static bool hk_depth_search(BipartiteMatchState *state, int u);
 BipartiteMatchState *
 BipartiteMatch(int u_size, int v_size, short **adjacency)
 {
-	BipartiteMatchState *state = palloc(sizeof(BipartiteMatchState));
+	BipartiteMatchState *state = palloc_object(BipartiteMatchState);
 
 	if (u_size < 0 || u_size >= SHRT_MAX ||
 		v_size < 0 || v_size >= SHRT_MAX)

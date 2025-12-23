@@ -481,6 +481,60 @@ select range_minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
  empty
 (1 row)
 
+select range_minus_multi('empty'::numrange, numrange(2.0, 3.0));
+ range_minus_multi 
+-------------------
+(0 rows)
+
+select range_minus_multi(numrange(1.1, 2.2), 'empty'::numrange);
+ range_minus_multi 
+-------------------
+ [1.1,2.2)
+(1 row)
+
+select range_minus_multi(numrange(1.1, 2.2), numrange(2.0, 3.0));
+ range_minus_multi 
+-------------------
+ [1.1,2.0)
+(1 row)
+
+select range_minus_multi(numrange(1.1, 2.2), numrange(2.2, 3.0));
+ range_minus_multi 
+-------------------
+ [1.1,2.2)
+(1 row)
+
+select range_minus_multi(numrange(1.1, 2.2,'[]'), numrange(2.0, 3.0));
+ range_minus_multi 
+-------------------
+ [1.1,2.0)
+(1 row)
+
+select range_minus_multi(numrange(1.0, 3.0), numrange(1.5, 2.0));
+ range_minus_multi 
+-------------------
+ [1.0,1.5)
+ [2.0,3.0)
+(2 rows)
+
+select range_minus_multi(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
+ range_minus_multi 
+-------------------
+ [10.1,12.2]
+(1 row)
+
+select range_minus_multi(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
+ range_minus_multi 
+-------------------
+(0 rows)
+
+select range_minus_multi(numrange(1.0,3.0,'[]'), numrange(1.5,2.0,'(]'));
+ range_minus_multi 
+-------------------
+ [1.0,1.5]
+ (2.0,3.0]
+(2 rows)
+
 select numrange(4.5, 5.5, '[]') && numrange(5.5, 6.5);
  ?column? 
 ----------
@@ -1630,7 +1684,8 @@ select anyarray_anyrange_func(ARRAY[1,2], numrange(10,20));
 ERROR:  function anyarray_anyrange_func(integer[], numrange) does not exist
 LINE 1: select anyarray_anyrange_func(ARRAY[1,2], numrange(10,20));
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anyarray_anyrange_func(anyarray, anyrange);
 -- should fail
 create function bogus_func(anyelement)
@@ -1669,7 +1724,8 @@ select rangetypes_sql(numrange(1,10), ARRAY[2,20]);  -- match failure
 ERROR:  function rangetypes_sql(numrange, integer[]) does not exist
 LINE 1: select rangetypes_sql(numrange(1,10), ARRAY[2,20]);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 create function anycompatiblearray_anycompatiblerange_func(a anycompatiblearray, r anycompatiblerange)
   returns anycompatible as 'select $1[1] + lower($2);' language sql;
 select anycompatiblearray_anycompatiblerange_func(ARRAY[1,2], int4range(10,20));
@@ -1689,7 +1745,8 @@ select anycompatiblearray_anycompatiblerange_func(ARRAY[1.1,2], int4range(10,20)
 ERROR:  function anycompatiblearray_anycompatiblerange_func(numeric[], int4range) does not exist
 LINE 1: select anycompatiblearray_anycompatiblerange_func(ARRAY[1.1,...
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 drop function anycompatiblearray_anycompatiblerange_func(anycompatiblearray, anycompatiblerange);
 -- should fail
 create function bogus_func(anycompatible)

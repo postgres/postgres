@@ -9,6 +9,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "miscadmin.h"
@@ -38,17 +39,14 @@ PG_FUNCTION_INFO_V1(plpython3_call_handler);
 PG_FUNCTION_INFO_V1(plpython3_inline_handler);
 
 
-static bool PLy_procedure_is_trigger(Form_pg_proc procStruct);
+static void PLy_initialize(void);
+static PLyTrigType PLy_procedure_is_trigger(Form_pg_proc procStruct);
 static void plpython_error_callback(void *arg);
 static void plpython_inline_error_callback(void *arg);
 static void PLy_init_interp(void);
 
 static PLyExecutionContext *PLy_push_execution_context(bool atomic_context);
 static void PLy_pop_execution_context(void);
-
-/* static state for Python library conflict detection */
-static int *plpython_version_bitmask_ptr = NULL;
-static int	plpython_version_bitmask = 0;
 
 /* initialize global variables */
 PyObject   *PLy_interp_globals = NULL;
@@ -60,62 +58,17 @@ static PLyExecutionContext *PLy_execution_contexts = NULL;
 void
 _PG_init(void)
 {
-	int		  **bitmask_ptr;
-
-	/*
-	 * Set up a shared bitmask variable telling which Python version(s) are
-	 * loaded into this process's address space.  If there's more than one, we
-	 * cannot call into libpython for fear of causing crashes.  But postpone
-	 * the actual failure for later, so that operations like pg_restore can
-	 * load more than one plpython library so long as they don't try to do
-	 * anything much with the language.
-	 *
-	 * While we only support Python 3 these days, somebody might create an
-	 * out-of-tree version adding back support for Python 2. Conflicts with
-	 * such an extension should be detected.
-	 */
-	bitmask_ptr = (int **) find_rendezvous_variable("plpython_version_bitmask");
-	if (!(*bitmask_ptr))		/* am I the first? */
-		*bitmask_ptr = &plpython_version_bitmask;
-	/* Retain pointer to the agreed-on shared variable ... */
-	plpython_version_bitmask_ptr = *bitmask_ptr;
-	/* ... and announce my presence */
-	*plpython_version_bitmask_ptr |= (1 << PY_MAJOR_VERSION);
-
-	/*
-	 * This should be safe even in the presence of conflicting plpythons, and
-	 * it's necessary to do it before possibly throwing a conflict error, or
-	 * the error message won't get localized.
-	 */
 	pg_bindtextdomain(TEXTDOMAIN);
+
+	PLy_initialize();
 }
 
 /*
- * Perform one-time setup of PL/Python, after checking for a conflict
- * with other versions of Python.
+ * Perform one-time setup of PL/Python.
  */
 static void
 PLy_initialize(void)
 {
-	static bool inited = false;
-
-	/*
-	 * Check for multiple Python libraries before actively doing anything with
-	 * libpython.  This must be repeated on each entry to PL/Python, in case a
-	 * conflicting library got loaded since we last looked.
-	 *
-	 * It is attractive to weaken this error from FATAL to ERROR, but there
-	 * would be corner cases, so it seems best to be conservative.
-	 */
-	if (*plpython_version_bitmask_ptr != (1 << PY_MAJOR_VERSION))
-		ereport(FATAL,
-				(errmsg("multiple Python libraries are present in session"),
-				 errdetail("Only one Python major version can be used in one session.")));
-
-	/* The rest should only be done once per session */
-	if (inited)
-		return;
-
 	PyImport_AppendInittab("plpy", PyInit_plpy);
 	Py_Initialize();
 	PyImport_ImportModule("plpy");
@@ -129,8 +82,6 @@ PLy_initialize(void)
 	explicit_subtransactions = NIL;
 
 	PLy_execution_contexts = NULL;
-
-	inited = true;
 }
 
 /*
@@ -163,16 +114,13 @@ plpython3_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
 	Form_pg_proc procStruct;
-	bool		is_trigger;
+	PLyTrigType is_trigger;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
 
 	if (!check_function_bodies)
 		PG_RETURN_VOID();
-
-	/* Do this only after making sure we need to do something */
-	PLy_initialize();
 
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
@@ -185,7 +133,7 @@ plpython3_validator(PG_FUNCTION_ARGS)
 	ReleaseSysCache(tuple);
 
 	/* We can't validate triggers against any particular table ... */
-	PLy_procedure_get(funcoid, InvalidOid, is_trigger);
+	(void) PLy_procedure_get(funcoid, InvalidOid, is_trigger);
 
 	PG_RETURN_VOID();
 }
@@ -197,8 +145,6 @@ plpython3_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
-
-	PLy_initialize();
 
 	nonatomic = fcinfo->context &&
 		IsA(fcinfo->context, CallContext) &&
@@ -235,14 +181,21 @@ plpython3_call_handler(PG_FUNCTION_ARGS)
 			Relation	tgrel = ((TriggerData *) fcinfo->context)->tg_relation;
 			HeapTuple	trv;
 
-			proc = PLy_procedure_get(funcoid, RelationGetRelid(tgrel), true);
+			proc = PLy_procedure_get(funcoid, RelationGetRelid(tgrel), PLPY_TRIGGER);
 			exec_ctx->curr_proc = proc;
 			trv = PLy_exec_trigger(fcinfo, proc);
 			retval = PointerGetDatum(trv);
 		}
+		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+		{
+			proc = PLy_procedure_get(funcoid, InvalidOid, PLPY_EVENT_TRIGGER);
+			exec_ctx->curr_proc = proc;
+			PLy_exec_event_trigger(fcinfo, proc);
+			retval = (Datum) 0;
+		}
 		else
 		{
-			proc = PLy_procedure_get(funcoid, InvalidOid, false);
+			proc = PLy_procedure_get(funcoid, InvalidOid, PLPY_NOT_TRIGGER);
 			exec_ctx->curr_proc = proc;
 			retval = PLy_exec_function(fcinfo, proc);
 		}
@@ -270,8 +223,6 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 	PLyProcedure proc;
 	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
-
-	PLy_initialize();
 
 	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
 	SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC);
@@ -336,10 +287,25 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-static bool
+static PLyTrigType
 PLy_procedure_is_trigger(Form_pg_proc procStruct)
 {
-	return (procStruct->prorettype == TRIGGEROID);
+	PLyTrigType ret;
+
+	switch (procStruct->prorettype)
+	{
+		case TRIGGEROID:
+			ret = PLPY_TRIGGER;
+			break;
+		case EVENT_TRIGGEROID:
+			ret = PLPY_EVENT_TRIGGER;
+			break;
+		default:
+			ret = PLPY_NOT_TRIGGER;
+			break;
+	}
+
+	return ret;
 }
 
 static void

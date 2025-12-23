@@ -20,7 +20,15 @@
  </indexterm>
 
  <indexterm>
+  <primary>pg_buffercache_numa</primary>
+ </indexterm>
+
+ <indexterm>
   <primary>pg_buffercache_summary</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_usage_counts</primary>
  </indexterm>
 
  <indexterm>
@@ -35,16 +43,32 @@
   <primary>pg_buffercache_evict_all</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>pg_buffercache_mark_dirty</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_mark_dirty_relation</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_mark_dirty_all</primary>
+ </indexterm>
+
  <para>
   This module provides the <function>pg_buffercache_pages()</function>
-  function (wrapped in the <structname>pg_buffercache</structname> view),
-  <function>pg_buffercache_numa_pages()</function> function (wrapped in the
-  <structname>pg_buffercache_numa</structname> view), the
+  function (wrapped in the <structname>pg_buffercache</structname> view), the
+  <function>pg_buffercache_os_pages()</function> function (wrapped in the
+  <structname>pg_buffercache_os_pages</structname> and
+  <structname>pg_buffercache_numa</structname> views), the
   <function>pg_buffercache_summary()</function> function, the
   <function>pg_buffercache_usage_counts()</function> function, the
-  <function>pg_buffercache_evict()</function>, the
-  <function>pg_buffercache_evict_relation()</function> function and the
-  <function>pg_buffercache_evict_all()</function> function.
+  <function>pg_buffercache_evict()</function> function, the
+  <function>pg_buffercache_evict_relation()</function> function, the
+  <function>pg_buffercache_evict_all()</function> function, the
+  <function>pg_buffercache_mark_dirty()</function> function, the
+  <function>pg_buffercache_mark_dirty_relation()</function> function and the
+  <function>pg_buffercache_mark_dirty_all()</function> function.
  </para>
 
  <para>
@@ -55,12 +79,16 @@
  </para>
 
  <para>
-  The <function>pg_buffercache_numa_pages()</function> provides
-  <acronym>NUMA</acronym> node mappings for shared buffer entries. This
-  information is not part of <function>pg_buffercache_pages()</function>
-  itself, as it is much slower to retrieve.
-  The <structname>pg_buffercache_numa</structname> view wraps the function for
-  convenient use.
+  The <function>pg_buffercache_os_pages()</function> function provides OS
+  pages mappings for shared buffer entries. When its argument is
+  <literal>true</literal>, it also provides <acronym>NUMA</acronym> node
+  mappings for shared buffer entries (this information is not part of
+  <function>pg_buffercache_pages()</function> itself, as it is much
+  slower to retrieve).
+  The <structname>pg_buffercache_os_pages</structname> and
+  <structname>pg_buffercache_numa</structname> views wrap the function for
+  convenient use, with its argument set to <literal>false</literal> and
+  <literal>true</literal> respectively.
  </para>
 
  <para>
@@ -97,6 +125,25 @@
   The <function>pg_buffercache_evict_all()</function> function allows all
   unpinned shared buffers to be evicted in the buffer pool.  Use of this
   function is restricted to superusers only.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_mark_dirty()</function> function allows a block
+  to be marked as dirty in the buffer pool given a buffer identifier.  Use of
+  this function is restricted to superusers only.
+ </para>
+
+<para>
+  The <function>pg_buffercache_mark_dirty_relation()</function> function
+  allows all unpinned shared buffers in the relation to be marked as dirty in
+  the buffer pool given a relation identifier.  Use of this function is
+  restricted to superusers only.
+</para>
+
+ <para>
+  The <function>pg_buffercache_mark_dirty_all()</function> function allows all
+  unpinned shared buffers to be marked as dirty in the buffer pool. Use of
+  this function is restricted to superusers only.
  </para>
 
  <sect2 id="pgbuffercache-pg-buffercache">
@@ -234,6 +281,53 @@
   </para>
  </sect2>
 
+ <sect2 id="pgbuffercache-pg-buffercache-os-pages">
+  <title>The <structname>pg_buffercache_os_pages</structname> View</title>
+
+  <para>
+   The definitions of the columns exposed by the view are shown in
+   <xref linkend="pgbuffercache-os-pages-columns"/>.
+  </para>
+
+  <table id="pgbuffercache-os-pages-columns">
+   <title><structname>pg_buffercache_os_pages</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>bufferid</structfield> <type>integer</type>
+      </para>
+      <para>
+       ID, in the range 1..<varname>shared_buffers</varname>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>os_page_num</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of OS memory page for this buffer
+      </para></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
+
  <sect2 id="pgbuffercache-pg-buffercache-numa">
   <title>The <structname>pg_buffercache_numa</structname> View</title>
 
@@ -270,7 +364,7 @@
        <structfield>os_page_num</structfield> <type>bigint</type>
       </para>
       <para>
-       number of OS memory page for this buffer
+       Number of OS memory page for this buffer
       </para></entry>
      </row>
 
@@ -476,10 +570,12 @@
    The <function>pg_buffercache_evict()</function> function takes a buffer
    identifier, as shown in the <structfield>bufferid</structfield> column of
    the <structname>pg_buffercache</structname> view.  It returns information
-   about whether the buffer was evicted and flushed.  The buffer_evicted
+   about whether the buffer was evicted and flushed.
+   The <structfield>buffer_evicted</structfield>
    column is true on success, and false if the buffer wasn't valid, if it
    couldn't be evicted because it was pinned, or if it became dirty again
-   after an attempt to write it out.  The buffer_flushed column is true if the
+   after an attempt to write it out.
+   The <structfield>buffer_flushed</structfield> column is true if the
    buffer was flushed.  This does not necessarily mean that buffer was flushed
    by us, it might be flushed by someone else.  The result is immediately out
    of date upon return, as the buffer might become valid again at any time due
@@ -489,7 +585,7 @@
  </sect2>
 
  <sect2 id="pgbuffercache-pg-buffercache-evict-relation">
-  <title>The <structname>pg_buffercache_evict_relation</structname> Function</title>
+  <title>The <function>pg_buffercache_evict_relation()</function> Function</title>
   <para>
    The <function>pg_buffercache_evict_relation()</function> function is very
    similar to the <function>pg_buffercache_evict()</function> function.  The
@@ -507,7 +603,7 @@
  </sect2>
 
  <sect2 id="pgbuffercache-pg-buffercache-evict-all">
-  <title>The <structname>pg_buffercache_evict_all</structname> Function</title>
+  <title>The <function>pg_buffercache_evict_all()</function> Function</title>
   <para>
    The <function>pg_buffercache_evict_all()</function> function is very
    similar to the <function>pg_buffercache_evict()</function> function.  The
@@ -518,6 +614,61 @@
    necessarily been flushed by us, they might have been flushed by someone
    else.  The result is immediately out of date upon return, as buffers might
    immediately be read back in due to concurrent activity.  The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-mark-dirty">
+  <title>The <function>pg_buffercache_mark_dirty()</function> Function</title>
+  <para>
+   The <function>pg_buffercache_mark_dirty()</function> function takes a
+   buffer identifier, as shown in the <structfield>bufferid</structfield>
+   column of the <structname>pg_buffercache</structname> view.  It returns
+   information about whether the buffer was marked as dirty.
+   The <structfield>buffer_dirtied</structfield> column is true on success,
+   and false if the buffer was already dirty if the buffer was not valid or
+   if it could not be marked as dirty because it was pinned.
+   The <structfield>buffer_already_dirty</structfield> column is true if
+   the buffer couldn't be marked as dirty because it was already dirty. The
+   result is immediately out of date upon return, as the buffer might become
+   valid again at any time due to concurrent activity. The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-mark-dirty-relation">
+  <title>The <function>pg_buffercache_mark_dirty_relation()</function> Function</title>
+  <para>
+   The <function>pg_buffercache_mark_dirty_relation()</function> function is
+   very similar to the
+   <function>pg_buffercache_mark_dirty()</function> function.
+   The difference is that the
+   <function>pg_buffercache_mark_dirty_relation()</function> function takes a
+   relation identifier instead of buffer identifier. It tries to mark all
+   buffers dirty for all forks in that relation.
+   It returns the number of buffers marked as dirty, the number of buffers
+   already dirty and the number of buffers skipped because already pinned or
+   invalid.
+   The result is immediately out of date upon return, as the buffer might
+   become valid again at any time due to concurrent activity. The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-mark-dirty-all">
+  <title>The <function>pg_buffercache_mark_dirty_all()</function> Function</title>
+  <para>
+   The <function>pg_buffercache_mark_dirty_all()</function> function is
+   very similar to the <function>pg_buffercache_mark_dirty()</function>
+   function.
+   The difference is that the
+   <function>pg_buffercache_mark_dirty_all()</function> tries to mark all
+   buffers dirty in the buffer pool.
+   It returns the number of buffers marked as dirty, the number of buffers
+   already dirty and the number of buffers skipped because already pinned or
+   invalid.
+   The result is immediately out of date upon return, as the buffer might
+   become valid again at any time due to concurrent activity. The function is
    intended for developer testing only.
   </para>
  </sect2>
@@ -550,6 +701,46 @@ regression=# SELECT n.nspname, c.relname, count(*) AS buffers
  public     | spgist_text_tbl        |     182
 (10 rows)
 
+regression=# SELECT pages_per_buffer, COUNT(*) as buffer_count
+             FROM (
+                   SELECT bufferid, COUNT(*) as pages_per_buffer
+                   FROM pg_buffercache_os_pages
+                   GROUP BY bufferid
+                  )
+             GROUP BY pages_per_buffer
+             ORDER BY pages_per_buffer;
+
+ pages_per_buffer | buffer_count
+------------------+--------------
+                1 |       261120
+                2 |         1024
+(2 rows)
+
+regression=# SELECT n.nspname, c.relname, count(*) AS buffers_on_multiple_pages
+             FROM pg_buffercache b JOIN pg_class c
+             ON b.relfilenode = pg_relation_filenode(c.oid) AND
+                b.reldatabase IN (0, (SELECT oid FROM pg_database
+                                      WHERE datname = current_database()))
+             JOIN pg_namespace n ON n.oid = c.relnamespace
+             JOIN (SELECT bufferid FROM pg_buffercache_os_pages
+                   GROUP BY bufferid HAVING count(*) > 1) m on m.bufferid = b.bufferid
+             GROUP BY n.nspname, c.relname
+             ORDER BY 3 DESC
+             LIMIT 10;
+
+  nspname   |           relname            | buffers_on_multiple_pages
+------------+------------------------------+---------------------------
+ public     | delete_test_table            |                         3
+ public     | gin_test_idx                 |                         2
+ pg_catalog | pg_depend                    |                         2
+ public     | quad_poly_tbl                |                         2
+ pg_catalog | pg_depend_reference_index    |                         1
+ pg_catalog | pg_index_indexrelid_index    |                         1
+ pg_catalog | pg_constraint_contypid_index |                         1
+ pg_catalog | pg_statistic                 |                         1
+ pg_catalog | pg_depend_depender_index     |                         1
+ pg_catalog | pg_operator                  |                         1
+(10 rows)
 
 regression=# SELECT * FROM pg_buffercache_summary();
  buffers_used | buffers_unused | buffers_dirty | buffers_pinned | usagecount_avg

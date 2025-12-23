@@ -202,9 +202,15 @@ INSERT INTO undroppable_objs VALUES
 ('table', 'audit_tbls.schema_two_table_three');
 
 CREATE TABLE dropped_objects (
-	type text,
-	schema text,
-	object text
+	object_type text,
+	schema_name text,
+	object_name text,
+	object_identity text,
+	address_names text[],
+	address_args text[],
+	is_temporary bool,
+	original bool,
+	normal bool
 );
 
 -- This tests errors raised within event triggers; the one in audit_tbls
@@ -245,8 +251,12 @@ BEGIN
         END IF;
 
 	INSERT INTO dropped_objects
-		(type, schema, object) VALUES
-		(obj.object_type, obj.schema_name, obj.object_identity);
+		(object_type, schema_name, object_name,
+		 object_identity, address_names, address_args,
+		 is_temporary, original, normal) VALUES
+		(obj.object_type, obj.schema_name, obj.object_name,
+		 obj.object_identity, obj.address_names, obj.address_args,
+		 obj.is_temporary, obj.original, obj.normal);
     END LOOP;
 END
 $$;
@@ -263,10 +273,12 @@ DROP SCHEMA schema_one, schema_two CASCADE;
 DELETE FROM undroppable_objs WHERE object_identity = 'schema_one.table_three';
 DROP SCHEMA schema_one, schema_two CASCADE;
 
-SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
+-- exclude TOAST objects because they have unstable names
+SELECT * FROM dropped_objects
+  WHERE schema_name IS NULL OR schema_name <> 'pg_toast';
 
 DROP OWNED BY regress_evt_user;
-SELECT * FROM dropped_objects WHERE type = 'schema';
+SELECT * FROM dropped_objects WHERE object_type = 'schema';
 
 DROP ROLE regress_evt_user;
 
@@ -285,9 +297,10 @@ BEGIN
     IF NOT r.normal AND NOT r.original THEN
         CONTINUE;
     END IF;
-    RAISE NOTICE 'NORMAL: orig=% normal=% istemp=% type=% identity=% name=% args=%',
+    RAISE NOTICE 'NORMAL: orig=% normal=% istemp=% type=% identity=% schema=% name=% addr=% args=%',
         r.original, r.normal, r.is_temporary, r.object_type,
-        r.object_identity, r.address_names, r.address_args;
+        r.object_identity, r.schema_name, r.object_name,
+        r.address_names, r.address_args;
     END LOOP;
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
@@ -336,6 +349,46 @@ ALTER TABLE evttrig.id ALTER COLUMN col_d DROP IDENTITY,
 DROP INDEX evttrig.one_idx;
 DROP SCHEMA evttrig CASCADE;
 DROP TABLE a_temp_tbl;
+
+-- check unfiltered results, too
+CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT * from pg_event_trigger_dropped_objects()
+    LOOP
+    RAISE NOTICE 'DROP: orig=% normal=% istemp=% type=% identity=% schema=% name=% addr=% args=%',
+        r.original, r.normal, r.is_temporary, r.object_type,
+        r.object_identity, r.schema_name, r.object_name,
+        r.address_names, r.address_args;
+    END LOOP;
+END; $$;
+
+CREATE FUNCTION event_trigger_dummy_trigger()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN new;
+END; $$;
+
+CREATE TABLE evtrg_nontemp_table (f1 int primary key, f2 int default 42);
+CREATE TRIGGER evtrg_nontemp_trig
+  BEFORE INSERT ON evtrg_nontemp_table
+  EXECUTE FUNCTION event_trigger_dummy_trigger();
+CREATE POLICY evtrg_nontemp_pol ON evtrg_nontemp_table USING (f2 > 0);
+DROP TABLE evtrg_nontemp_table;
+
+CREATE TEMP TABLE a_temp_tbl (f1 int primary key, f2 int default 42);
+CREATE TRIGGER a_temp_trig
+  BEFORE INSERT ON a_temp_tbl
+  EXECUTE FUNCTION event_trigger_dummy_trigger();
+CREATE POLICY a_temp_pol ON a_temp_tbl USING (f2 > 0);
+DROP TABLE a_temp_tbl;
+
+DROP FUNCTION event_trigger_dummy_trigger();
 
 -- CREATE OPERATOR CLASS without FAMILY clause should report
 -- both CREATE OPERATOR FAMILY and CREATE OPERATOR CLASS

@@ -39,9 +39,6 @@ att_isnull(int ATT, const bits8 *BITS)
  * return the correct number of bytes fetched from the data area and extended
  * to Datum form.
  *
- * On machines where Datum is 8 bytes, we support fetching 8-byte byval
- * attributes; otherwise, only 1, 2, and 4-byte values are supported.
- *
  * Note that T must already be properly aligned for this to work correctly.
  */
 #define fetchatt(A,T) fetch_att(T, (A)->attbyval, (A)->attlen)
@@ -62,10 +59,8 @@ fetch_att(const void *T, bool attbyval, int attlen)
 				return Int16GetDatum(*((const int16 *) T));
 			case sizeof(int32):
 				return Int32GetDatum(*((const int32 *) T));
-#if SIZEOF_DATUM == 8
-			case sizeof(Datum):
-				return *((const Datum *) T);
-#endif
+			case sizeof(int64):
+				return Int64GetDatum(*((const int64 *) T));
 			default:
 				elog(ERROR, "unsupported byval length: %d", attlen);
 				return 0;
@@ -221,11 +216,9 @@ store_att_byval(void *T, Datum newdatum, int attlen)
 		case sizeof(int32):
 			*(int32 *) T = DatumGetInt32(newdatum);
 			break;
-#if SIZEOF_DATUM == 8
-		case sizeof(Datum):
-			*(Datum *) T = newdatum;
+		case sizeof(int64):
+			*(int64 *) T = DatumGetInt64(newdatum);
 			break;
-#endif
 		default:
 			elog(ERROR, "unsupported byval length: %d", attlen);
 	}

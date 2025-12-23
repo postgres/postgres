@@ -31,9 +31,9 @@ log_error(const char *fmt,...)
 
 	va_start(ap, fmt);
 #ifndef FRONTEND
-	write_stderr(fmt, ap);
+	vwrite_stderr(fmt, ap);
 #else
-	fprintf(stderr, fmt, ap);
+	vfprintf(stderr, fmt, ap);
 #endif
 	va_end(ap);
 }

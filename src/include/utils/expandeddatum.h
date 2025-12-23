@@ -95,7 +95,7 @@ typedef struct ExpandedObjectMethods
  * But note that these pointers are just a convenience; a pointer object
  * appearing somewhere else would still be legal.
  *
- * The typedef declaration for this appears in postgres.h.
+ * The typedef declaration for this appears in varatt.h.
  */
 struct ExpandedObjectHeader
 {

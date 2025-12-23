@@ -101,7 +101,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 
 	result->a = a;
 	result->b = b;
@@ -142,7 +142,7 @@ macaddr_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	macaddr    *addr;
 
-	addr = (macaddr *) palloc(sizeof(macaddr));
+	addr = palloc_object(macaddr);
 
 	addr->a = pq_getmsgbyte(buf);
 	addr->b = pq_getmsgbyte(buf);
@@ -289,7 +289,7 @@ macaddr_not(PG_FUNCTION_ARGS)
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 	result->a = ~addr->a;
 	result->b = ~addr->b;
 	result->c = ~addr->c;
@@ -306,7 +306,7 @@ macaddr_and(PG_FUNCTION_ARGS)
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 	result->a = addr1->a & addr2->a;
 	result->b = addr1->b & addr2->b;
 	result->c = addr1->c & addr2->c;
@@ -323,7 +323,7 @@ macaddr_or(PG_FUNCTION_ARGS)
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 	result->a = addr1->a | addr2->a;
 	result->b = addr1->b | addr2->b;
 	result->c = addr1->c | addr2->c;
@@ -343,7 +343,7 @@ macaddr_trunc(PG_FUNCTION_ARGS)
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 
 	result->a = addr->a;
 	result->b = addr->b;
@@ -374,7 +374,7 @@ macaddr_sortsupport(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		uss = palloc(sizeof(macaddr_sortsupport_state));
+		uss = palloc_object(macaddr_sortsupport_state);
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);
@@ -481,33 +481,26 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 	Datum		res;
 
 	/*
-	 * On a 64-bit machine, zero out the 8-byte datum and copy the 6 bytes of
-	 * the MAC address in. There will be two bytes of zero padding on the end
-	 * of the least significant bits.
+	 * Zero out the 8-byte Datum and copy in the 6 bytes of the MAC address.
+	 * There will be two bytes of zero padding on the end of the least
+	 * significant bits.
 	 */
-#if SIZEOF_DATUM == 8
-	memset(&res, 0, SIZEOF_DATUM);
+	StaticAssertDecl(sizeof(res) >= sizeof(macaddr),
+					 "Datum is too small for macaddr");
+	memset(&res, 0, sizeof(res));
 	memcpy(&res, authoritative, sizeof(macaddr));
-#else							/* SIZEOF_DATUM != 8 */
-	memcpy(&res, authoritative, SIZEOF_DATUM);
-#endif
 	uss->input_count += 1;
 
 	/*
-	 * Cardinality estimation. The estimate uses uint32, so on a 64-bit
-	 * architecture, XOR the two 32-bit halves together to produce slightly
-	 * more entropy. The two zeroed bytes won't have any practical impact on
-	 * this operation.
+	 * Cardinality estimation. The estimate uses uint32, so XOR the two 32-bit
+	 * halves together to produce slightly more entropy. The two zeroed bytes
+	 * won't have any practical impact on this operation.
 	 */
 	if (uss->estimating)
 	{
 		uint32		tmp;
 
-#if SIZEOF_DATUM == 8
-		tmp = (uint32) res ^ (uint32) ((uint64) res >> 32);
-#else							/* SIZEOF_DATUM != 8 */
-		tmp = (uint32) res;
-#endif
+		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
 
 		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
 	}

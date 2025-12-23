@@ -18,7 +18,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "access/table.h"
 #include "access/tableam.h"
+#include "catalog/pg_inherits.h"
 #include "commands/copyapi.h"
 #include "commands/progress.h"
 #include "executor/execdesc.h"
@@ -86,6 +88,7 @@ typedef struct CopyToStateData
 
 	CopyFormatOptions opts;
 	Node	   *whereClause;	/* WHERE condition (or NULL) */
+	List	   *partitions;		/* OID list of partitions to copy data from */
 
 	/*
 	 * Working state
@@ -116,6 +119,8 @@ static void CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot);
 static void CopyAttributeOutText(CopyToState cstate, const char *string);
 static void CopyAttributeOutCSV(CopyToState cstate, const char *string,
 								bool use_quote);
+static void CopyRelationTo(CopyToState cstate, Relation rel, Relation root_rel,
+						   uint64 *processed);
 
 /* built-in format-specific routines */
 static void CopyToTextLikeStart(CopyToState cstate, TupleDesc tupDesc);
@@ -199,7 +204,7 @@ CopyToTextLikeStart(CopyToState cstate, TupleDesc tupDesc)
 														  cstate->file_encoding);
 
 	/* if a header has been requested send the line */
-	if (cstate->opts.header_line)
+	if (cstate->opts.header_line == COPY_HEADER_TRUE)
 	{
 		ListCell   *cur;
 		bool		hdr_delim = false;
@@ -581,7 +586,7 @@ ClosePipeToProgram(CopyToState cstate)
 }
 
 /*
- * Release resources allocated in a cstate for COPY TO/FROM.
+ * Release resources allocated in a cstate for COPY TO.
  */
 static void
 EndCopy(CopyToState cstate)
@@ -602,6 +607,10 @@ EndCopy(CopyToState cstate)
 	pgstat_progress_end_command();
 
 	MemoryContextDelete(cstate->copycontext);
+
+	if (cstate->partitions)
+		list_free(cstate->partitions);
+
 	pfree(cstate);
 }
 
@@ -643,6 +652,7 @@ BeginCopyTo(ParseState *pstate,
 		PROGRESS_COPY_COMMAND_TO,
 		0
 	};
+	List	   *children = NIL;
 
 	if (rel != NULL && rel->rd_rel->relkind != RELKIND_RELATION)
 	{
@@ -673,11 +683,34 @@ BeginCopyTo(ParseState *pstate,
 					 errmsg("cannot copy from sequence \"%s\"",
 							RelationGetRelationName(rel))));
 		else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot copy from partitioned table \"%s\"",
-							RelationGetRelationName(rel)),
-					 errhint("Try the COPY (SELECT ...) TO variant.")));
+		{
+			/*
+			 * Collect OIDs of relation containing data, so that later
+			 * DoCopyTo can copy the data from them.
+			 */
+			children = find_all_inheritors(RelationGetRelid(rel), AccessShareLock, NULL);
+
+			foreach_oid(child, children)
+			{
+				char		relkind = get_rel_relkind(child);
+
+				if (relkind == RELKIND_FOREIGN_TABLE)
+				{
+					char	   *relation_name = get_rel_name(child);
+
+					ereport(ERROR,
+							errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							errmsg("cannot copy from foreign table \"%s\"", relation_name),
+							errdetail("Partition \"%s\" is a foreign table in partitioned table \"%s\"",
+									  relation_name, RelationGetRelationName(rel)),
+							errhint("Try the COPY (SELECT ...) TO variant."));
+				}
+
+				/* Exclude tables with no data */
+				if (RELKIND_HAS_PARTITIONS(relkind))
+					children = foreach_delete_current(children, child);
+			}
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -687,7 +720,7 @@ BeginCopyTo(ParseState *pstate,
 
 
 	/* Allocate workspace and zero all fields */
-	cstate = (CopyToStateData *) palloc0(sizeof(CopyToStateData));
+	cstate = palloc0_object(CopyToStateData);
 
 	/*
 	 * We allocate everything used by a cstate in a new memory context. This
@@ -713,6 +746,7 @@ BeginCopyTo(ParseState *pstate,
 		cstate->rel = rel;
 
 		tupDesc = RelationGetDescr(cstate->rel);
+		cstate->partitions = children;
 	}
 	else
 	{
@@ -722,6 +756,7 @@ BeginCopyTo(ParseState *pstate,
 		DestReceiver *dest;
 
 		cstate->rel = NULL;
+		cstate->partitions = NIL;
 
 		/*
 		 * Run parse analysis and rewrite.  Note this also acquires sufficient
@@ -796,7 +831,7 @@ BeginCopyTo(ParseState *pstate,
 
 		/* plan the query */
 		plan = pg_plan_query(query, pstate->p_sourcetext,
-							 CURSOR_OPT_PARALLEL_OK, NULL);
+							 CURSOR_OPT_PARALLEL_OK, NULL, NULL);
 
 		/*
 		 * With row-level security and a user using "COPY relation TO", we
@@ -1030,7 +1065,7 @@ DoCopyTo(CopyToState cstate)
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
 	ListCell   *cur;
-	uint64		processed;
+	uint64		processed = 0;
 
 	if (fe_copy)
 		SendCopyBegin(cstate);
@@ -1070,33 +1105,24 @@ DoCopyTo(CopyToState cstate)
 
 	if (cstate->rel)
 	{
-		TupleTableSlot *slot;
-		TableScanDesc scandesc;
-
-		scandesc = table_beginscan(cstate->rel, GetActiveSnapshot(), 0, NULL);
-		slot = table_slot_create(cstate->rel, NULL);
-
-		processed = 0;
-		while (table_scan_getnextslot(scandesc, ForwardScanDirection, slot))
+		/*
+		 * If COPY TO source table is a partitioned table, then open each
+		 * partition and process each individual partition.
+		 */
+		if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		{
-			CHECK_FOR_INTERRUPTS();
+			foreach_oid(child, cstate->partitions)
+			{
+				Relation	scan_rel;
 
-			/* Deconstruct the tuple ... */
-			slot_getallattrs(slot);
-
-			/* Format and send the data */
-			CopyOneRowTo(cstate, slot);
-
-			/*
-			 * Increment the number of processed tuples, and report the
-			 * progress.
-			 */
-			pgstat_progress_update_param(PROGRESS_COPY_TUPLES_PROCESSED,
-										 ++processed);
+				/* We already got the lock in BeginCopyTo */
+				scan_rel = table_open(child, NoLock);
+				CopyRelationTo(cstate, scan_rel, cstate->rel, &processed);
+				table_close(scan_rel, NoLock);
+			}
 		}
-
-		ExecDropSingleTupleTableSlot(slot);
-		table_endscan(scandesc);
+		else
+			CopyRelationTo(cstate, cstate->rel, NULL, &processed);
 	}
 	else
 	{
@@ -1113,6 +1139,73 @@ DoCopyTo(CopyToState cstate)
 		SendCopyEnd(cstate);
 
 	return processed;
+}
+
+/*
+ * Scans a single table and exports its rows to the COPY destination.
+ *
+ * root_rel can be set to the root table of rel if rel is a partition
+ * table so that we can send tuples in root_rel's rowtype, which might
+ * differ from individual partitions.
+*/
+static void
+CopyRelationTo(CopyToState cstate, Relation rel, Relation root_rel, uint64 *processed)
+{
+	TupleTableSlot *slot;
+	TableScanDesc scandesc;
+	AttrMap    *map = NULL;
+	TupleTableSlot *root_slot = NULL;
+
+	scandesc = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
+	slot = table_slot_create(rel, NULL);
+
+	/*
+	 * If we are exporting partition data here, we check if converting tuples
+	 * to the root table's rowtype, because a partition might have column
+	 * order different than its root table.
+	 */
+	if (root_rel != NULL)
+	{
+		root_slot = table_slot_create(root_rel, NULL);
+		map = build_attrmap_by_name_if_req(RelationGetDescr(root_rel),
+										   RelationGetDescr(rel),
+										   false);
+	}
+
+	while (table_scan_getnextslot(scandesc, ForwardScanDirection, slot))
+	{
+		TupleTableSlot *copyslot;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (map != NULL)
+			copyslot = execute_attr_map_slot(map, slot, root_slot);
+		else
+		{
+			/* Deconstruct the tuple */
+			slot_getallattrs(slot);
+			copyslot = slot;
+		}
+
+		/* Format and send the data */
+		CopyOneRowTo(cstate, copyslot);
+
+		/*
+		 * Increment the number of processed tuples, and report the progress.
+		 */
+		pgstat_progress_update_param(PROGRESS_COPY_TUPLES_PROCESSED,
+									 ++(*processed));
+	}
+
+	ExecDropSingleTupleTableSlot(slot);
+
+	if (root_slot != NULL)
+		ExecDropSingleTupleTableSlot(root_slot);
+
+	if (map != NULL)
+		free_attrmap(map);
+
+	table_endscan(scandesc);
 }
 
 /*
@@ -1434,7 +1527,7 @@ copy_dest_destroy(DestReceiver *self)
 DestReceiver *
 CreateCopyDestReceiver(void)
 {
-	DR_copy    *self = (DR_copy *) palloc(sizeof(DR_copy));
+	DR_copy    *self = palloc_object(DR_copy);
 
 	self->pub.receiveSlot = copy_dest_receive;
 	self->pub.rStartup = copy_dest_startup;

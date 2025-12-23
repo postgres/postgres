@@ -592,7 +592,10 @@ rewriteRuleAction(Query *parsetree,
 			}
 		}
 
-		/* OK, it's safe to combine the CTE lists */
+		/*
+		 * OK, it's safe to combine the CTE lists.  Beware that RewriteQuery
+		 * knows we concatenate the lists in this order.
+		 */
 		sub_action->cteList = list_concat(sub_action->cteList,
 										  copyObject(parsetree->cteList));
 		/* ... and don't forget about the associated flags */
@@ -923,8 +926,9 @@ rewriteTargetListIU(List *targetList,
 				apply_default = true;
 
 			/*
-			 * Can only insert DEFAULT into generated columns, regardless of
-			 * any OVERRIDING clauses.
+			 * Can only insert DEFAULT into generated columns.  (The
+			 * OVERRIDING clause does not apply to generated columns, so we
+			 * don't consider it here.)
 			 */
 			if (att_tup->attgenerated && !apply_default)
 			{
@@ -2616,7 +2620,7 @@ view_col_is_auto_updatable(RangeTblRef *rtr, TargetEntry *tle)
  * view_query_is_auto_updatable - test whether the specified view definition
  * represents an auto-updatable view. Returns NULL (if the view can be updated)
  * or a message string giving the reason that it cannot be.
-
+ *
  * The returned string has not been translated; if it is shown as an error
  * message, the caller should apply _() to translate it.
  *
@@ -3780,7 +3784,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 				parsetree->hasSubLinks = checkExprHasSubLink(viewqual);
 		}
 		else
-			AddQual(parsetree, (Node *) viewqual);
+			AddQual(parsetree, viewqual);
 	}
 
 	/*
@@ -3871,9 +3875,13 @@ rewriteTargetView(Query *parsetree, Relation view)
  * orig_rt_length is the length of the originating query's rtable, for product
  * queries created by fireRules(), and 0 otherwise.  This is used to skip any
  * already-processed VALUES RTEs from the original query.
+ *
+ * num_ctes_processed is the number of CTEs at the end of the query's cteList
+ * that have already been rewritten, and must not be rewritten again.
  */
 static List *
-RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
+RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
+			 int num_ctes_processed)
 {
 	CmdType		event = parsetree->commandType;
 	bool		instead = false;
@@ -3887,17 +3895,29 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 	 * First, recursively process any insert/update/delete/merge statements in
 	 * WITH clauses.  (We have to do this first because the WITH clauses may
 	 * get copied into rule actions below.)
+	 *
+	 * Any new WITH clauses from rule actions are processed when we recurse
+	 * into product queries below.  However, when recursing, we must take care
+	 * to avoid rewriting a CTE query more than once (because expanding
+	 * generated columns in the targetlist more than once would fail).  Since
+	 * new CTEs from product queries are added to the start of the list (see
+	 * rewriteRuleAction), we just skip the last num_ctes_processed items.
 	 */
 	foreach(lc1, parsetree->cteList)
 	{
 		CommonTableExpr *cte = lfirst_node(CommonTableExpr, lc1);
 		Query	   *ctequery = castNode(Query, cte->ctequery);
+		int			i = foreach_current_index(lc1);
 		List	   *newstuff;
+
+		/* Skip already-processed CTEs at the end of the list */
+		if (i >= list_length(parsetree->cteList) - num_ctes_processed)
+			break;
 
 		if (ctequery->commandType == CMD_SELECT)
 			continue;
 
-		newstuff = RewriteQuery(ctequery, rewrite_events, 0);
+		newstuff = RewriteQuery(ctequery, rewrite_events, 0, 0);
 
 		/*
 		 * Currently we can only handle unconditional, single-statement DO
@@ -3957,6 +3977,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 					 errmsg("multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH")));
 		}
 	}
+	num_ctes_processed = list_length(parsetree->cteList);
 
 	/*
 	 * If the statement is an insert, update, delete, or merge, adjust its
@@ -4266,7 +4287,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 									RelationGetRelationName(rt_entry_relation))));
 			}
 
-			rev = (rewrite_event *) palloc(sizeof(rewrite_event));
+			rev = palloc_object(rewrite_event);
 			rev->relation = RelationGetRelid(rt_entry_relation);
 			rev->event = event;
 			rewrite_events = lappend(rewrite_events, rev);
@@ -4288,7 +4309,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 				newstuff = RewriteQuery(pt, rewrite_events,
 										pt == parsetree ?
 										orig_rt_length :
-										product_orig_rt_length);
+										product_orig_rt_length,
+										num_ctes_processed);
 				rewritten = list_concat(rewritten, newstuff);
 			}
 
@@ -4544,7 +4566,7 @@ build_generation_expression(Relation rel, int attrno)
 List *
 QueryRewrite(Query *parsetree)
 {
-	uint64		input_query_id = parsetree->queryId;
+	int64		input_query_id = parsetree->queryId;
 	List	   *querylist;
 	List	   *results;
 	ListCell   *l;
@@ -4563,7 +4585,7 @@ QueryRewrite(Query *parsetree)
 	 *
 	 * Apply all non-SELECT rules possibly getting 0 or many queries
 	 */
-	querylist = RewriteQuery(parsetree, NIL, 0);
+	querylist = RewriteQuery(parsetree, NIL, 0, 0);
 
 	/*
 	 * Step 2

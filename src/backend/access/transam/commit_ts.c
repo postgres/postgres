@@ -114,11 +114,9 @@ static void SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
 									 RepOriginId nodeid, int slotno);
 static void error_commit_ts_disabled(void);
-static int	ZeroCommitTsPage(int64 pageno, bool writeXlog);
 static bool CommitTsPagePrecedes(int64 page1, int64 page2);
 static void ActivateCommitTs(void);
 static void DeactivateCommitTs(void);
-static void WriteZeroPageXlogRec(int64 pageno);
 static void WriteTruncateXlogRec(int64 pageno, TransactionId oldestXid);
 
 /*
@@ -603,28 +601,6 @@ BootStrapCommitTs(void)
 }
 
 /*
- * Initialize (or reinitialize) a page of CommitTs to zeroes.
- * If writeXlog is true, also emit an XLOG record saying we did this.
- *
- * The page is not actually written, just set up in shared memory.
- * The slot number of the new page is returned.
- *
- * Control lock must be held at entry, and will be held at exit.
- */
-static int
-ZeroCommitTsPage(int64 pageno, bool writeXlog)
-{
-	int			slotno;
-
-	slotno = SimpleLruZeroPage(CommitTsCtl, pageno);
-
-	if (writeXlog)
-		WriteZeroPageXlogRec(pageno);
-
-	return slotno;
-}
-
-/*
  * This must be called ONCE during postmaster or standalone-backend startup,
  * after StartupXLOG has initialized TransamVariables->nextXid.
  */
@@ -707,6 +683,13 @@ ActivateCommitTs(void)
 	TransactionId xid;
 	int64		pageno;
 
+	/*
+	 * During bootstrap, we should not register commit timestamps so skip the
+	 * activation in this case.
+	 */
+	if (IsBootstrapProcessingMode())
+		return;
+
 	/* If we've done this already, there's nothing to do */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
 	if (commitTsShared->commitTsActive)
@@ -747,16 +730,7 @@ ActivateCommitTs(void)
 
 	/* Create the current segment file, if necessary */
 	if (!SimpleLruDoesPhysicalPageExist(CommitTsCtl, pageno))
-	{
-		LWLock	   *lock = SimpleLruGetBankLock(CommitTsCtl, pageno);
-		int			slotno;
-
-		LWLockAcquire(lock, LW_EXCLUSIVE);
-		slotno = ZeroCommitTsPage(pageno, false);
-		SimpleLruWritePage(CommitTsCtl, slotno);
-		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
-		LWLockRelease(lock);
-	}
+		SimpleLruZeroAndWritePage(CommitTsCtl, pageno);
 
 	/* Change the activation status in shared memory. */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
@@ -867,8 +841,12 @@ ExtendCommitTs(TransactionId newestXact)
 
 	LWLockAcquire(lock, LW_EXCLUSIVE);
 
-	/* Zero the page and make an XLOG entry about it */
-	ZeroCommitTsPage(pageno, !InRecovery);
+	/* Zero the page ... */
+	SimpleLruZeroPage(CommitTsCtl, pageno);
+
+	/* and make a WAL entry about that, unless we're in REDO */
+	if (!InRecovery)
+		XLogSimpleInsertInt64(RM_COMMIT_TS_ID, COMMIT_TS_ZEROPAGE, pageno);
 
 	LWLockRelease(lock);
 }
@@ -983,17 +961,6 @@ CommitTsPagePrecedes(int64 page1, int64 page2)
 
 
 /*
- * Write a ZEROPAGE xlog record
- */
-static void
-WriteZeroPageXlogRec(int64 pageno)
-{
-	XLogBeginInsert();
-	XLogRegisterData(&pageno, sizeof(pageno));
-	(void) XLogInsert(RM_COMMIT_TS_ID, COMMIT_TS_ZEROPAGE);
-}
-
-/*
  * Write a TRUNCATE xlog record
  */
 static void
@@ -1023,19 +990,9 @@ commit_ts_redo(XLogReaderState *record)
 	if (info == COMMIT_TS_ZEROPAGE)
 	{
 		int64		pageno;
-		int			slotno;
-		LWLock	   *lock;
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(pageno));
-
-		lock = SimpleLruGetBankLock(CommitTsCtl, pageno);
-		LWLockAcquire(lock, LW_EXCLUSIVE);
-
-		slotno = ZeroCommitTsPage(pageno, false);
-		SimpleLruWritePage(CommitTsCtl, slotno);
-		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
-
-		LWLockRelease(lock);
+		SimpleLruZeroAndWritePage(CommitTsCtl, pageno);
 	}
 	else if (info == COMMIT_TS_TRUNCATE)
 	{

@@ -1,0 +1,25 @@
+CREATE EXTENSION test_lwlock_tranches;
+SELECT test_lwlock_tranches();
+ test_lwlock_tranches 
+----------------------
+ 
+(1 row)
+
+SELECT test_lwlock_tranche_creation(NULL);
+ERROR:  tranche name cannot be NULL
+SELECT test_lwlock_tranche_creation(repeat('a', 64));
+ERROR:  tranche name too long
+DETAIL:  LWLock tranche names must be no longer than 63 bytes.
+SELECT test_lwlock_tranche_creation('test');
+ERROR:  maximum number of tranches already registered
+DETAIL:  No more than 256 tranches may be registered.
+SELECT test_lwlock_tranche_lookup('test_lwlock_tranches_startup');
+ test_lwlock_tranche_lookup 
+----------------------------
+ 
+(1 row)
+
+SELECT test_lwlock_tranche_lookup('bogus');
+ERROR:  requested tranche is not registered
+SELECT test_lwlock_initialize(65535);
+ERROR:  tranche 65535 is not registered

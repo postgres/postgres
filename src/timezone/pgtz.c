@@ -364,8 +364,8 @@ pg_timezone_initialize(void)
 	 * We may not yet know where PGSHAREDIR is (in particular this is true in
 	 * an EXEC_BACKEND subprocess).  So use "GMT", which pg_tzset forces to be
 	 * interpreted without reference to the filesystem.  This corresponds to
-	 * the bootstrap default for these variables in guc_tables.c, although in
-	 * principle it could be different.
+	 * the bootstrap default for these variables in guc_parameters.dat,
+	 * although in principle it could be different.
 	 */
 	session_timezone = pg_tzset("GMT");
 	log_timezone = session_timezone;
@@ -396,7 +396,7 @@ struct pg_tzenum
 pg_tzenum *
 pg_tzenumerate_start(void)
 {
-	pg_tzenum  *ret = (pg_tzenum *) palloc0(sizeof(pg_tzenum));
+	pg_tzenum  *ret = palloc0_object(pg_tzenum);
 	char	   *startdir = pstrdup(pg_TZDIR());
 
 	ret->baselen = strlen(startdir) + 1;

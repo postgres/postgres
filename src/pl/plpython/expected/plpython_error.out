@@ -63,7 +63,7 @@ SELECT exception_index_invalid_nested();
 ERROR:  spiexceptions.UndefinedFunction: function test5(unknown) does not exist
 LINE 1: SELECT test5('foo')
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  There is no function of that name.
 QUERY:  SELECT test5('foo')
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "exception_index_invalid_nested", line 1, in <module>
@@ -243,7 +243,7 @@ $$
 plpy.nonexistent
 $$ LANGUAGE plpython3u;
 SELECT toplevel_attribute_error();
-ERROR:  AttributeError: 'module' object has no attribute 'nonexistent'
+ERROR:  AttributeError: module 'plpy' has no attribute 'nonexistent'
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "toplevel_attribute_error", line 2, in <module>
     plpy.nonexistent

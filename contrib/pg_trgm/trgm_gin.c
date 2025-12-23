@@ -51,7 +51,7 @@ gin_extract_value_trgm(PG_FUNCTION_ARGS)
 		int32		i;
 
 		*nentries = trglen;
-		entries = (Datum *) palloc(sizeof(Datum) * trglen);
+		entries = palloc_array(Datum, trglen);
 
 		ptr = GETARR(trg);
 		for (i = 0; i < trglen; i++)
@@ -123,7 +123,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 				 * Pointers, but we just put the same value in each element.
 				 */
 				trglen = ARRNELEM(trg);
-				*extra_data = (Pointer *) palloc(sizeof(Pointer) * trglen);
+				*extra_data = palloc_array(Pointer, trglen);
 				for (i = 0; i < trglen; i++)
 					(*extra_data)[i] = (Pointer) graph;
 			}
@@ -146,7 +146,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 
 	if (trglen > 0)
 	{
-		entries = (Datum *) palloc(sizeof(Datum) * trglen);
+		entries = palloc_array(Datum, trglen);
 		ptr = GETARR(trg);
 		for (i = 0; i < trglen; i++)
 		{
@@ -247,8 +247,7 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 				res = true;
 			}
 			else
-				res = trigramsMatchGraph((TrgmPackedGraph *) extra_data[0],
-										 check);
+				res = trigramsMatchGraph(extra_data[0], check);
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -339,11 +338,10 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 				 * function, promoting all GIN_MAYBE keys to GIN_TRUE will
 				 * give a conservative result.
 				 */
-				boolcheck = (bool *) palloc(sizeof(bool) * nkeys);
+				boolcheck = palloc_array(bool, nkeys);
 				for (i = 0; i < nkeys; i++)
 					boolcheck[i] = (check[i] != GIN_FALSE);
-				if (!trigramsMatchGraph((TrgmPackedGraph *) extra_data[0],
-										boolcheck))
+				if (!trigramsMatchGraph(extra_data[0], boolcheck))
 					res = GIN_FALSE;
 				pfree(boolcheck);
 			}

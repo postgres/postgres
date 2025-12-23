@@ -11,6 +11,7 @@
 #include "datapagemap.h"
 #include "storage/block.h"
 #include "storage/relfilelocator.h"
+#include "access/xlogdefs.h"
 
 /* these enum values are sorted in the order we want actions to be processed */
 typedef enum
@@ -36,6 +37,13 @@ typedef enum
 	FILE_TYPE_SYMLINK,
 } file_type_t;
 
+typedef enum
+{
+	FILE_CONTENT_TYPE_OTHER = 0,
+	FILE_CONTENT_TYPE_RELATION,
+	FILE_CONTENT_TYPE_WAL
+} file_content_type_t;
+
 /*
  * For every file found in the local or remote system, we have a file entry
  * that contains information about the file on both systems.  For relation
@@ -51,7 +59,7 @@ typedef struct file_entry_t
 	uint32		status;			/* hash status */
 
 	const char *path;
-	bool		isrelfile;		/* is it a relation data file? */
+	file_content_type_t content_type;
 
 	/*
 	 * Status of the file in the target.
@@ -106,7 +114,7 @@ extern void process_target_wal_block_change(ForkNumber forknum,
 											RelFileLocator rlocator,
 											BlockNumber blkno);
 
-extern filemap_t *decide_file_actions(void);
+extern filemap_t *decide_file_actions(XLogSegNo last_common_segno);
 extern void calculate_totals(filemap_t *filemap);
 extern void print_filemap(filemap_t *filemap);
 

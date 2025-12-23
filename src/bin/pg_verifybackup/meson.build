@@ -23,10 +23,10 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
-    'env': {'GZIP_PROGRAM': gzip.found() ? gzip.path() : '',
-            'TAR': tar.found() ? tar.path() : '',
-            'LZ4': program_lz4.found() ? program_lz4.path() : '',
-            'ZSTD': program_zstd.found() ? program_zstd.path() : ''},
+    'env': {'GZIP_PROGRAM': gzip.found() ? gzip.full_path() : '',
+            'TAR': tar.found() ? tar.full_path() : '',
+            'LZ4': program_lz4.found() ? program_lz4.full_path() : '',
+            'ZSTD': program_zstd.found() ? program_zstd.full_path() : ''},
     'tests': [
       't/001_basic.pl',
       't/002_algorithm.pl',

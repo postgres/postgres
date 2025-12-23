@@ -17,6 +17,7 @@
 
 #include "common/pg_prng.h"
 #include "miscadmin.h"
+#include "utils/date.h"
 #include "utils/fmgrprotos.h"
 #include "utils/numeric.h"
 #include "utils/timestamp.h"
@@ -24,6 +25,18 @@
 /* Shared PRNG state used by all the random functions */
 static pg_prng_state prng_state;
 static bool prng_seed_set = false;
+
+/*
+ * Macro for checking the range bounds of random(min, max) functions. Throws
+ * an error if they're the wrong way round.
+ */
+#define CHECK_RANGE_BOUNDS(rmin, rmax) \
+	do { \
+		if ((rmin) > (rmax)) \
+			ereport(ERROR, \
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
+					errmsg("lower bound must be less than or equal to upper bound")); \
+	} while (0)
 
 /*
  * initialize_prng() -
@@ -129,10 +142,7 @@ int4random(PG_FUNCTION_ARGS)
 	int32		rmax = PG_GETARG_INT32(1);
 	int32		result;
 
-	if (rmin > rmax)
-		ereport(ERROR,
-				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("lower bound must be less than or equal to upper bound"));
+	CHECK_RANGE_BOUNDS(rmin, rmax);
 
 	initialize_prng();
 
@@ -153,10 +163,7 @@ int8random(PG_FUNCTION_ARGS)
 	int64		rmax = PG_GETARG_INT64(1);
 	int64		result;
 
-	if (rmin > rmax)
-		ereport(ERROR,
-				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("lower bound must be less than or equal to upper bound"));
+	CHECK_RANGE_BOUNDS(rmin, rmax);
 
 	initialize_prng();
 
@@ -177,9 +184,90 @@ numeric_random(PG_FUNCTION_ARGS)
 	Numeric		rmax = PG_GETARG_NUMERIC(1);
 	Numeric		result;
 
+	/* Leave range bound checking to random_numeric() */
+
 	initialize_prng();
 
 	result = random_numeric(&prng_state, rmin, rmax);
 
 	PG_RETURN_NUMERIC(result);
+}
+
+
+/*
+ * date_random() -
+ *
+ *	Returns a random date chosen uniformly in the specified range.
+ */
+Datum
+date_random(PG_FUNCTION_ARGS)
+{
+	int32		rmin = (int32) PG_GETARG_DATEADT(0);
+	int32		rmax = (int32) PG_GETARG_DATEADT(1);
+	DateADT		result;
+
+	CHECK_RANGE_BOUNDS(rmin, rmax);
+
+	if (DATE_IS_NOBEGIN(rmin) || DATE_IS_NOEND(rmax))
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("lower and upper bounds must be finite"));
+
+	initialize_prng();
+
+	result = (DateADT) pg_prng_int64_range(&prng_state, rmin, rmax);
+
+	PG_RETURN_DATEADT(result);
+}
+
+/*
+ * timestamp_random() -
+ *
+ *	Returns a random timestamp chosen uniformly in the specified range.
+ */
+Datum
+timestamp_random(PG_FUNCTION_ARGS)
+{
+	int64		rmin = (int64) PG_GETARG_TIMESTAMP(0);
+	int64		rmax = (int64) PG_GETARG_TIMESTAMP(1);
+	Timestamp	result;
+
+	CHECK_RANGE_BOUNDS(rmin, rmax);
+
+	if (TIMESTAMP_IS_NOBEGIN(rmin) || TIMESTAMP_IS_NOEND(rmax))
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("lower and upper bounds must be finite"));
+
+	initialize_prng();
+
+	result = (Timestamp) pg_prng_int64_range(&prng_state, rmin, rmax);
+
+	PG_RETURN_TIMESTAMP(result);
+}
+
+/*
+ * timestamptz_random() -
+ *
+ *	Returns a random timestamptz chosen uniformly in the specified range.
+ */
+Datum
+timestamptz_random(PG_FUNCTION_ARGS)
+{
+	int64		rmin = (int64) PG_GETARG_TIMESTAMPTZ(0);
+	int64		rmax = (int64) PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz result;
+
+	CHECK_RANGE_BOUNDS(rmin, rmax);
+
+	if (TIMESTAMP_IS_NOBEGIN(rmin) || TIMESTAMP_IS_NOEND(rmax))
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("lower and upper bounds must be finite"));
+
+	initialize_prng();
+
+	result = (TimestampTz) pg_prng_int64_range(&prng_state, rmin, rmax);
+
+	PG_RETURN_TIMESTAMPTZ(result);
 }

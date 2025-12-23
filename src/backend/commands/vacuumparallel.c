@@ -63,7 +63,7 @@ typedef struct PVShared
 	 */
 	Oid			relid;
 	int			elevel;
-	uint64		queryid;
+	int64		queryid;
 
 	/*
 	 * Fields for both index vacuum and cleanup.
@@ -268,7 +268,7 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 	/*
 	 * Compute the number of parallel vacuum workers to launch
 	 */
-	will_parallel_vacuum = (bool *) palloc0(sizeof(bool) * nindexes);
+	will_parallel_vacuum = palloc0_array(bool, nindexes);
 	parallel_workers = parallel_vacuum_compute_workers(indrels, nindexes,
 													   nrequested_workers,
 													   will_parallel_vacuum);
@@ -279,7 +279,7 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 		return NULL;
 	}
 
-	pvs = (ParallelVacuumState *) palloc0(sizeof(ParallelVacuumState));
+	pvs = palloc0_object(ParallelVacuumState);
 	pvs->indrels = indrels;
 	pvs->nindexes = nindexes;
 	pvs->will_parallel_vacuum = will_parallel_vacuum;
@@ -444,7 +444,7 @@ parallel_vacuum_end(ParallelVacuumState *pvs, IndexBulkDeleteResult **istats)
 
 		if (indstats->istat_updated)
 		{
-			istats[i] = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+			istats[i] = palloc0_object(IndexBulkDeleteResult);
 			memcpy(istats[i], &indstats->istat, sizeof(IndexBulkDeleteResult));
 		}
 		else

@@ -17,7 +17,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/pathnodes.h"
 
-struct AttrMap;					/* avoid including attmap.h here */
+typedef struct AttrMap AttrMap; /* avoid including attmap.h here */
 
 
 typedef struct replace_rte_variables_context replace_rte_variables_context;
@@ -101,7 +101,7 @@ extern Node *replace_rte_variables_mutator(Node *node,
 
 extern Node *map_variable_attnos(Node *node,
 								 int target_varno, int sublevels_up,
-								 const struct AttrMap *attno_map,
+								 const AttrMap *attno_map,
 								 Oid to_rowtype, bool *found_whole_row);
 
 extern Node *ReplaceVarFromTargetList(Var *var,

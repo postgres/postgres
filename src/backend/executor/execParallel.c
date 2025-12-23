@@ -40,6 +40,7 @@
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
+#include "executor/nodeTidrangescan.h"
 #include "executor/tqueue.h"
 #include "jit/jit.h"
 #include "nodes/nodeFuncs.h"
@@ -189,6 +190,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->permInfos = estate->es_rteperminfos;
 	pstmt->resultRelations = NIL;
 	pstmt->appendRelations = NIL;
+	pstmt->planOrigin = PLAN_STMT_INTERNAL;
 
 	/*
 	 * Transfer only parallel-safe subplans, leaving a NULL "hole" in the list
@@ -264,6 +266,11 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 			if (planstate->plan->parallel_aware)
 				ExecForeignScanEstimate((ForeignScanState *) planstate,
 										e->pcxt);
+			break;
+		case T_TidRangeScanState:
+			if (planstate->plan->parallel_aware)
+				ExecTidRangeScanEstimate((TidRangeScanState *) planstate,
+										 e->pcxt);
 			break;
 		case T_AppendState:
 			if (planstate->plan->parallel_aware)
@@ -492,6 +499,11 @@ ExecParallelInitializeDSM(PlanState *planstate,
 				ExecForeignScanInitializeDSM((ForeignScanState *) planstate,
 											 d->pcxt);
 			break;
+		case T_TidRangeScanState:
+			if (planstate->plan->parallel_aware)
+				ExecTidRangeScanInitializeDSM((TidRangeScanState *) planstate,
+											  d->pcxt);
+			break;
 		case T_AppendState:
 			if (planstate->plan->parallel_aware)
 				ExecAppendInitializeDSM((AppendState *) planstate,
@@ -635,7 +647,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate));
 
 	/* Allocate object for return value. */
-	pei = palloc0(sizeof(ParallelExecutorInfo));
+	pei = palloc0_object(ParallelExecutorInfo);
 	pei->finished = false;
 	pei->planstate = planstate;
 
@@ -992,6 +1004,11 @@ ExecParallelReInitializeDSM(PlanState *planstate,
 			if (planstate->plan->parallel_aware)
 				ExecForeignScanReInitializeDSM((ForeignScanState *) planstate,
 											   pcxt);
+			break;
+		case T_TidRangeScanState:
+			if (planstate->plan->parallel_aware)
+				ExecTidRangeScanReInitializeDSM((TidRangeScanState *) planstate,
+												pcxt);
 			break;
 		case T_AppendState:
 			if (planstate->plan->parallel_aware)
@@ -1360,6 +1377,11 @@ ExecParallelInitializeWorker(PlanState *planstate, ParallelWorkerContext *pwcxt)
 			if (planstate->plan->parallel_aware)
 				ExecForeignScanInitializeWorker((ForeignScanState *) planstate,
 												pwcxt);
+			break;
+		case T_TidRangeScanState:
+			if (planstate->plan->parallel_aware)
+				ExecTidRangeScanInitializeWorker((TidRangeScanState *) planstate,
+												 pwcxt);
 			break;
 		case T_AppendState:
 			if (planstate->plan->parallel_aware)

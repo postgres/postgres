@@ -265,9 +265,9 @@ SELECT fsm_page_contents(decode(repeat('00', :block_size), 'hex'));
 (1 row)
 
 SELECT page_header(decode(repeat('00', :block_size), 'hex'));
-      page_header      
------------------------
- (0/0,0,0,0,0,0,0,0,0)
+         page_header          
+------------------------------
+ (0/00000000,0,0,0,0,0,0,0,0)
 (1 row)
 
 SELECT page_checksum(decode(repeat('00', :block_size), 'hex'), 1);

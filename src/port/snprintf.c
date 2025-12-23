@@ -557,33 +557,20 @@ nextch2:
 					fmtpos = accum;
 				accum = 0;
 				goto nextch2;
-#ifdef WIN32
-			case 'I':
-				/* Windows PRI*{32,64,PTR} size */
-				if (format[0] == '3' && format[1] == '2')
-					format += 2;
-				else if (format[0] == '6' && format[1] == '4')
-				{
-					format += 2;
-					longlongflag = 1;
-				}
-				else
-				{
-#if SIZEOF_VOID_P == SIZEOF_LONG
-					longflag = 1;
-#elif SIZEOF_VOID_P == SIZEOF_LONG_LONG
-					longlongflag = 1;
-#else
-#error "cannot find integer type of the same size as intptr_t"
-#endif
-				}
-				goto nextch2;
-#endif
 			case 'l':
 				if (longflag)
 					longlongflag = 1;
 				else
 					longflag = 1;
+				goto nextch2;
+			case 'j':
+#if SIZEOF_INTMAX_T == SIZEOF_LONG
+				longflag = 1;
+#elif SIZEOF_INTMAX_T == SIZEOF_LONG_LONG
+				longlongflag = 1;
+#else
+#error "cannot find integer type of the same size as intmax_t"
+#endif
 				goto nextch2;
 			case 'z':
 #if SIZEOF_SIZE_T == SIZEOF_LONG
@@ -842,33 +829,20 @@ nextch1:
 					fmtpos = accum;
 				accum = 0;
 				goto nextch1;
-#ifdef WIN32
-			case 'I':
-				/* Windows PRI*{32,64,PTR} size */
-				if (format[0] == '3' && format[1] == '2')
-					format += 2;
-				else if (format[0] == '6' && format[1] == '4')
-				{
-					format += 2;
-					longlongflag = 1;
-				}
-				else
-				{
-#if SIZEOF_VOID_P == SIZEOF_LONG
-					longflag = 1;
-#elif SIZEOF_VOID_P == SIZEOF_LONG_LONG
-					longlongflag = 1;
-#else
-#error "cannot find integer type of the same size as intptr_t"
-#endif
-				}
-				goto nextch1;
-#endif
 			case 'l':
 				if (longflag)
 					longlongflag = 1;
 				else
 					longflag = 1;
+				goto nextch1;
+			case 'j':
+#if SIZEOF_INTMAX_T == SIZEOF_LONG
+				longflag = 1;
+#elif SIZEOF_INTMAX_T == SIZEOF_LONG_LONG
+				longlongflag = 1;
+#else
+#error "cannot find integer type of the same size as intmax_t"
+#endif
 				goto nextch1;
 			case 'z':
 #if SIZEOF_SIZE_T == SIZEOF_LONG
@@ -1249,22 +1223,6 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		}
 		if (vallen < 0)
 			goto fail;
-
-		/*
-		 * Windows, alone among our supported platforms, likes to emit
-		 * three-digit exponent fields even when two digits would do.  Hack
-		 * such results to look like the way everyone else does it.
-		 */
-#ifdef WIN32
-		if (vallen >= 6 &&
-			convert[vallen - 5] == 'e' &&
-			convert[vallen - 3] == '0')
-		{
-			convert[vallen - 3] = convert[vallen - 2];
-			convert[vallen - 2] = convert[vallen - 1];
-			vallen--;
-		}
-#endif
 	}
 
 	padlen = compute_padlen(minlen, vallen + zeropadlen, leftjust);
@@ -1380,17 +1338,6 @@ pg_strfromd(char *str, size_t count, int precision, double value)
 				target.failed = true;
 				goto fail;
 			}
-
-#ifdef WIN32
-			if (vallen >= 6 &&
-				convert[vallen - 5] == 'e' &&
-				convert[vallen - 3] == '0')
-			{
-				convert[vallen - 3] = convert[vallen - 2];
-				convert[vallen - 2] = convert[vallen - 1];
-				vallen--;
-			}
-#endif
 		}
 	}
 

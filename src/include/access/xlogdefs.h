@@ -25,7 +25,8 @@ typedef uint64 XLogRecPtr;
  * WAL segment, initializing the first WAL page at WAL segment size, so no XLOG
  * record can begin at zero.
  */
-#define InvalidXLogRecPtr	0
+#define InvalidXLogRecPtr		0
+#define XLogRecPtrIsValid(r)	((r) != InvalidXLogRecPtr)
 #define XLogRecPtrIsInvalid(r)	((r) == InvalidXLogRecPtr)
 
 /*
@@ -38,7 +39,10 @@ typedef uint64 XLogRecPtr;
 /*
  * Handy macro for printing XLogRecPtr in conventional format, e.g.,
  *
- * printf("%X/%X", LSN_FORMAT_ARGS(lsn));
+ * printf("%X/%08X", LSN_FORMAT_ARGS(lsn));
+ *
+ * To avoid breaking translatable messages, we're directly applying the
+ * LSN format instead of using a macro.
  */
 #define LSN_FORMAT_ARGS(lsn) (AssertVariableIsOfTypeMacro((lsn), XLogRecPtr), (uint32) ((lsn) >> 32)), ((uint32) (lsn))
 

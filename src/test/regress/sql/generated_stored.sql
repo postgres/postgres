@@ -217,6 +217,10 @@ COPY gtest1 FROM stdin;
 
 COPY gtest1 (a, b) FROM stdin;
 
+COPY gtest1 FROM stdin WHERE b <> 10;
+
+COPY gtest1 FROM stdin WHERE gtest1 IS NULL;
+
 SELECT * FROM gtest1 ORDER BY a;
 
 TRUNCATE gtest3;
@@ -500,7 +504,10 @@ SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
 
 -- generated columns in partition key (not allowed)
 CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f3);
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((f3));
 CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((f3 * 3));
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((gtest_part_key));
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((gtest_part_key is not null));
 
 -- ALTER TABLE ... ADD COLUMN
 CREATE TABLE gtest25 (a int PRIMARY KEY);
@@ -595,6 +602,19 @@ ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
 CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') STORED, c text);
 CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
+
+-- bug #18970: these cases are unsupported, but make sure they fail cleanly
+ALTER TABLE gtest31_2 ADD CONSTRAINT cc CHECK ((y).b IS NOT NULL);
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello1');
+ALTER TABLE gtest31_2 DROP CONSTRAINT cc;
+
+CREATE STATISTICS gtest31_2_stat ON ((y).b is not null) FROM gtest31_2;
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello2');
+DROP STATISTICS gtest31_2_stat;
+
+CREATE INDEX gtest31_2_y_idx ON gtest31_2(((y).b));
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello3');
+
 DROP TABLE gtest31_1, gtest31_2;
 
 -- Check it for a partitioned table, too

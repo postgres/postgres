@@ -42,3 +42,324 @@ SELECT * FROM test_float4 WHERE i>1::float4 ORDER BY i;
  3
 (2 rows)
 
+explain (costs off)
+SELECT * FROM test_float4 WHERE i<1::float8 ORDER BY i;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_float4
+         Recheck Cond: (i < '1'::double precision)
+         ->  Bitmap Index Scan on idx_float4
+               Index Cond: (i < '1'::double precision)
+(6 rows)
+
+SELECT * FROM test_float4 WHERE i<1::float8 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+(3 rows)
+
+SELECT * FROM test_float4 WHERE i<=1::float8 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+  1
+(4 rows)
+
+SELECT * FROM test_float4 WHERE i=1::float8 ORDER BY i;
+ i 
+---
+ 1
+(1 row)
+
+SELECT * FROM test_float4 WHERE i>=1::float8 ORDER BY i;
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+SELECT * FROM test_float4 WHERE i>1::float8 ORDER BY i;
+ i 
+---
+ 2
+ 3
+(2 rows)
+
+-- Check endpoint and out-of-range cases
+INSERT INTO test_float4 VALUES ('NaN'), ('Inf'), ('-Inf');
+SELECT gin_clean_pending_list('idx_float4');
+ gin_clean_pending_list 
+------------------------
+                      1
+(1 row)
+
+SELECT * FROM test_float4 WHERE i<'-Inf'::float8 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_float4 WHERE i<='-Inf'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+(1 row)
+
+SELECT * FROM test_float4 WHERE i='-Inf'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+(1 row)
+
+SELECT * FROM test_float4 WHERE i>='-Inf'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+  Infinity
+       NaN
+(9 rows)
+
+SELECT * FROM test_float4 WHERE i>'-Inf'::float8 ORDER BY i;
+    i     
+----------
+       -2
+       -1
+        0
+        1
+        2
+        3
+ Infinity
+      NaN
+(8 rows)
+
+SELECT * FROM test_float4 WHERE i<'Inf'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+(7 rows)
+
+SELECT * FROM test_float4 WHERE i<='Inf'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+  Infinity
+(8 rows)
+
+SELECT * FROM test_float4 WHERE i='Inf'::float8 ORDER BY i;
+    i     
+----------
+ Infinity
+(1 row)
+
+SELECT * FROM test_float4 WHERE i>='Inf'::float8 ORDER BY i;
+    i     
+----------
+ Infinity
+      NaN
+(2 rows)
+
+SELECT * FROM test_float4 WHERE i>'Inf'::float8 ORDER BY i;
+  i  
+-----
+ NaN
+(1 row)
+
+SELECT * FROM test_float4 WHERE i<'1e300'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+(7 rows)
+
+SELECT * FROM test_float4 WHERE i<='1e300'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+(7 rows)
+
+SELECT * FROM test_float4 WHERE i='1e300'::float8 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_float4 WHERE i>='1e300'::float8 ORDER BY i;
+    i     
+----------
+ Infinity
+      NaN
+(2 rows)
+
+SELECT * FROM test_float4 WHERE i>'1e300'::float8 ORDER BY i;
+    i     
+----------
+ Infinity
+      NaN
+(2 rows)
+
+SELECT * FROM test_float4 WHERE i<'NaN'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+  Infinity
+(8 rows)
+
+SELECT * FROM test_float4 WHERE i<='NaN'::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+         1
+         2
+         3
+  Infinity
+       NaN
+(9 rows)
+
+SELECT * FROM test_float4 WHERE i='NaN'::float8 ORDER BY i;
+  i  
+-----
+ NaN
+(1 row)
+
+SELECT * FROM test_float4 WHERE i>='NaN'::float8 ORDER BY i;
+  i  
+-----
+ NaN
+(1 row)
+
+SELECT * FROM test_float4 WHERE i>'NaN'::float8 ORDER BY i;
+ i 
+---
+(0 rows)
+
+-- Check rounding cases
+-- 1e-300 rounds to 0 for float4 but not for float8
+SELECT * FROM test_float4 WHERE i < -1e-300::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+(3 rows)
+
+SELECT * FROM test_float4 WHERE i <= -1e-300::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+(3 rows)
+
+SELECT * FROM test_float4 WHERE i = -1e-300::float8 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_float4 WHERE i > -1e-300::float8 ORDER BY i;
+    i     
+----------
+        0
+        1
+        2
+        3
+ Infinity
+      NaN
+(6 rows)
+
+SELECT * FROM test_float4 WHERE i >= -1e-300::float8 ORDER BY i;
+    i     
+----------
+        0
+        1
+        2
+        3
+ Infinity
+      NaN
+(6 rows)
+
+SELECT * FROM test_float4 WHERE i < 1e-300::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+(4 rows)
+
+SELECT * FROM test_float4 WHERE i <= 1e-300::float8 ORDER BY i;
+     i     
+-----------
+ -Infinity
+        -2
+        -1
+         0
+(4 rows)
+
+SELECT * FROM test_float4 WHERE i = 1e-300::float8 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_float4 WHERE i > 1e-300::float8 ORDER BY i;
+    i     
+----------
+        1
+        2
+        3
+ Infinity
+      NaN
+(5 rows)
+
+SELECT * FROM test_float4 WHERE i >= 1e-300::float8 ORDER BY i;
+    i     
+----------
+        1
+        2
+        3
+ Infinity
+      NaN
+(5 rows)
+

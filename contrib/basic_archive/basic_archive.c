@@ -65,7 +65,7 @@ void
 _PG_init(void)
 {
 	DefineCustomStringVariable("basic_archive.archive_directory",
-							   gettext_noop("Archive file destination directory."),
+							   "Archive file destination directory.",
 							   NULL,
 							   &archive_directory,
 							   "",

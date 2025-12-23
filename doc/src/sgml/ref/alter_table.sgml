@@ -37,6 +37,12 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     ATTACH PARTITION <replaceable class="parameter">partition_name</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
 ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     DETACH PARTITION <replaceable class="parameter">partition_name</replaceable> [ CONCURRENTLY | FINALIZE ]
+ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    MERGE PARTITIONS (<replaceable class="parameter">partition_name1</replaceable>, <replaceable class="parameter">partition_name2</replaceable> [, ...]) INTO <replaceable class="parameter">partition_name</replaceable>
+ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    SPLIT PARTITION <replaceable class="parameter">partition_name</replaceable> INTO
+        (PARTITION <replaceable class="parameter">partition_name1</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT },
+         PARTITION <replaceable class="parameter">partition_name2</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT } [, ...])
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
@@ -210,6 +216,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       When this form is used, the column's statistics are removed,
       so running <link linkend="sql-analyze"><command>ANALYZE</command></link>
       on the table afterwards is recommended.
+      For a virtual generated column, <command>ANALYZE</command>
+      is not necessary because such columns never have statistics.
      </para>
     </listitem>
    </varlistentry>
@@ -240,9 +248,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       provided none of the records in the table contain a
       <literal>NULL</literal> value for the column.  Ordinarily this is
       checked during the <literal>ALTER TABLE</literal> by scanning the
-      entire table; however, if a valid <literal>CHECK</literal> constraint is
-      found which proves no <literal>NULL</literal> can exist, then the
-      table scan is skipped.
+      entire table, unless <literal>NOT VALID</literal> is specified;
+      however, if a valid <literal>CHECK</literal> constraint exists
+      (and is not dropped in the same command) which proves no
+      <literal>NULL</literal> can exist, then the table scan is skipped.
       If a column has an invalid not-null constraint,
       <literal>SET NOT NULL</literal> validates it.
      </para>
@@ -269,6 +278,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This form replaces the expression of a generated column.  Existing data
       in a stored generated column is rewritten and all the future changes
       will apply the new generation expression.
+     </para>
+
+     <para>
+      When this form is used on a stored generated column, its statistics
+      are removed, so running
+      <link linkend="sql-analyze"><command>ANALYZE</command></link>
+      on the table afterwards is recommended.
+      For a virtual generated column, <command>ANALYZE</command>
+      is not necessary because such columns never have statistics.
      </para>
     </listitem>
    </varlistentry>
@@ -364,24 +382,22 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <literal>n_distinct_inherited</literal>, which override the
       number-of-distinct-values estimates made by subsequent
       <link linkend="sql-analyze"><command>ANALYZE</command></link>
-      operations.  <literal>n_distinct</literal> affects the statistics for the table
-      itself, while <literal>n_distinct_inherited</literal> affects the statistics
-      gathered for the table plus its inheritance children.  When set to a
-      positive value, <command>ANALYZE</command> will assume that the column contains
-      exactly the specified number of distinct nonnull values.  When set to a
-      negative value, which must be greater
-      than or equal to -1, <command>ANALYZE</command> will assume that the number of
-      distinct nonnull values in the column is linear in the size of the
-      table; the exact count is to be computed by multiplying the estimated
-      table size by the absolute value of the given number.  For example,
-      a value of -1 implies that all values in the column are distinct, while
-      a value of -0.5 implies that each value appears twice on the average.
-      This can be useful when the size of the table changes over time, since
-      the multiplication by the number of rows in the table is not performed
-      until query planning time.  Specify a value of 0 to revert to estimating
-      the number of distinct values normally.  For more information on the use
-      of statistics by the <productname>PostgreSQL</productname> query
-      planner, refer to <xref linkend="planner-stats"/>.
+      operations. <literal>n_distinct</literal> affects the statistics for the
+      table itself, while <literal>n_distinct_inherited</literal> affects the
+      statistics gathered for the table plus its inheritance children, and for
+      the statistics gathered for partitioned tables.  When the value
+      specified is a positive value, the query planner will assume that the
+      column contains exactly the specified number of distinct nonnull values.
+      Fractional values may also be specified by using values below 0 and
+      above or equal to -1.  This instructs the query planner to estimate the
+      number of distinct values by multiplying the absolute value of the
+      specified number by the estimated number of rows in the table.  For
+      example, a value of -1 implies that all values in the column are
+      distinct, while a value of -0.5 implies that each value appears twice on
+      average.  This can be useful when the size of the table changes over
+      time.  For more information on the use of statistics by the
+      <productname>PostgreSQL</productname> query planner, refer to
+      <xref linkend="planner-stats"/>.
      </para>
      <para>
       Changing per-attribute options acquires a
@@ -460,8 +476,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This form adds a new constraint to a table using the same constraint
       syntax as <link linkend="sql-createtable"><command>CREATE TABLE</command></link>, plus the option <literal>NOT
-      VALID</literal>, which is currently only allowed for foreign key,
-      <literal>CHECK</literal> constraints and not-null constraints.
+      VALID</literal>, which is currently only allowed for foreign-key,
+      <literal>CHECK</literal>, and not-null constraints.
      </para>
 
      <para>
@@ -469,7 +485,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       existing rows in the table satisfy the new constraint.  But if
       the <literal>NOT VALID</literal> option is used, this
       potentially-lengthy scan is skipped.  The constraint will still be
-      enforced against subsequent inserts or updates (that is, they'll fail
+      applied against subsequent inserts or updates (that is, they'll fail
       unless there is a matching row in the referenced table, in the case
       of foreign keys, or they'll fail unless the new row matches the
       specified check condition).  But the
@@ -591,7 +607,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This form validates a foreign key, check, or not-null constraint that was
       previously created as <literal>NOT VALID</literal>, by scanning the
       table to ensure there are no rows for which the constraint is not
-      satisfied.  If the constraint is not enforced, an error is thrown.
+      satisfied.  If the constraint was set to <literal>NOT ENFORCED</literal>, an error is thrown.
       Nothing happens if the constraint is already marked valid.
       (See <xref linkend="sql-altertable-notes"/> below for an explanation
       of the usefulness of this command.)
@@ -852,7 +868,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for
-      fillfactor, toast and autovacuum storage parameters, as well as the
+      fillfactor, TOAST and autovacuum storage parameters, as well as the
       planner parameter <varname>parallel_workers</varname>.
      </para>
     </listitem>
@@ -1147,18 +1163,206 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry id="sql-altertable-merge-partitions">
+    <term><literal>MERGE PARTITIONS (<replaceable class="parameter">partition_name1</replaceable>, <replaceable class="parameter">partition_name2</replaceable> [, ...]) INTO <replaceable class="parameter">partition_name</replaceable></literal></term>
+
+    <listitem>
+     <para>
+      This form merges several partitions of the target table into a new partition.
+      Hash-partitioned target table is not supported.
+      Only simple, non-partitioned partitions can be merged.
+      The new partition (<replaceable class="parameter">partition_name</replaceable>)
+      can have the same name as one of the merged partitions
+      (<literal><replaceable class="parameter">partition_name1</replaceable>,
+      <replaceable class="parameter">partition_name2</replaceable> [, ...]</literal>).
+     </para>
+
+     <para>
+      If the <literal>DEFAULT</literal> partition is not in the
+      list of merged partitions:
+      <itemizedlist>
+       <listitem>
+        <para>
+         For range-partitioned tables, the ranges of merged partitions
+         must be adjacent in order to be merged.
+         The partition bounds of merged partitions are combined to form the new partition bound for
+         <replaceable class="parameter">partition_name</replaceable>.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         For list-partitioned tables, the partition bounds of
+         merged partitions are combined to form the new partition bound for
+         <replaceable class="parameter">partition_name</replaceable>.
+        </para>
+       </listitem>
+      </itemizedlist>
+      If the <literal>DEFAULT</literal> partition is in the list of merged partitions:
+      <itemizedlist>
+       <listitem>
+        <para>
+         The partition <replaceable class="parameter">partition_name</replaceable>
+         will be the new <literal>DEFAULT</literal> partition of the target table.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         The partition bound specifications for merged partitions can be arbitrary.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+     <para>
+      All merged partitions must have the same owner.
+      The owner of merged partitions will be the owner of the new partition.
+      It is the user's responsibility to setup <acronym>ACL</acronym> on
+      the new partition.
+     </para>
+
+     <para>
+       <command>ALTER TABLE MERGE PARTITION</command> uses the partitioned
+       table itself as the template to construct the new partition.
+       The new partition will inherit the same table access method, persistence
+       type, and tablespace as the partitioned table.
+
+       Constraints, column defaults, column generation expressions, identity
+       columns, indexes, and triggers are copied from the partitioned table to
+       the new partition.  But extended statistics, security policies, etc,
+       won't be copied from the partitioned table.
+       Indexes and identity columns copied from the partitioned table will be
+       created afterward, once the data has been moved into the new partition.
+     </para>
+
+     <para>
+      When partitions are merged, any objects depending on this partition,
+      such as constraints, triggers, extended statistics, etc, will be
+      dropped.
+      Eventually, we will drop all the merged partitions
+      (using <literal>RESTRICT</literal> mode) too;  therefore, if any objects
+      are still dependent on them,
+      <command>ALTER TABLE MERGE PARTITION</command> would fail.
+      (see <xref linkend="ddl-depend"/>).
+     </para>
+
+     <note>
+      <para>
+       Merging partitions acquires an <literal>ACCESS EXCLUSIVE</literal> lock on
+       the parent table, in addition to the <literal>ACCESS EXCLUSIVE</literal>
+       locks on the tables being merged and on the default partition (if any).
+      </para>
+     </note>
+     <note>
+      <para>
+       <command>ALTER TABLE MERGE PARTITIONS</command> creates a new partition and
+       moves data from all merging partitions into it, which can take a long time.
+       So it is not recommended to use the command to merge very big partitions
+       with small ones.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-altertable-split-partition">
+    <term>
+    <literal>SPLIT PARTITION <replaceable class="parameter">partition_name</replaceable> INTO (
+      PARTITION <replaceable class="parameter">partition_name1</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT },
+      PARTITION <replaceable class="parameter">partition_name2</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
+      [, ...])</literal>
+    </term>
+
+    <listitem>
+     <para>
+      This form splits a single partition of the target table into new
+      partitions. Hash-partitioned target table is not supported.
+      Only a simple, non-partitioned partition can be split.
+      If the split partition is the <literal>DEFAULT</literal> partition,
+      one of the new partitions must be <literal>DEFAULT</literal>.
+      If the partitioned table does not have a <literal>DEFAULT</literal>
+      partition, a <literal>DEFAULT</literal> partition can be defined as one
+      of the new partitions.
+     </para>
+
+     <para>
+      The bounds of new partitions should not overlap with those of new or
+      existing partitions (except <replaceable class="parameter">partition_name</replaceable>).
+      The combined bounds of new partitions <literal>
+      <replaceable class="parameter">partition_name1</replaceable>,
+      <replaceable class="parameter">partition_name2</replaceable>[, ...]
+      </literal> should be equal to the bounds of the split partition
+      <replaceable class="parameter">partition_name</replaceable>.
+      One of the new partitions can have the same name as the split partition
+      <replaceable class="parameter">partition_name</replaceable>
+      (this is suitable in case of splitting the <literal>DEFAULT</literal>
+      partition: after the split, the <literal>DEFAULT</literal> partition
+      remains with the same name, but its partition bound changes).
+     </para>
+
+     <para>
+      New partitions will have the same owner as the parent partition.
+      It is the user's responsibility to setup <acronym>ACL</acronym> on new
+      partitions.
+     </para>
+
+     <para>
+       <command>ALTER TABLE SPLIT PARTITION</command> uses the partitioned
+       table itself as the template to construct new partitions.
+       New partitions will inherit the same table access method, persistence
+       type, and tablespace as the partitioned table.
+     </para>
+
+     <para>
+       Constraints, column defaults, column generation expressions,
+       identity columns, indexes, and triggers are copied from the partitioned
+       table to the new partitions.  But extended statistics, security
+       policies, etc, won't be copied from the partitioned table.
+       Indexes and identity columns copied from the partitioned table will be
+       created afterward, once the data has been moved into the new partitions.
+     </para>
+
+     <para>
+      When a partition is split, any objects that depend on this partition,
+      such as constraints, triggers, extended statistics, etc, will be dropped.
+      This occurs because <command>ALTER TABLE SPLIT PARTITION</command> uses
+      the partitioned table itself as the template to reconstruct these
+      objects later.
+      Eventually, we will drop the split partition
+      (using <literal>RESTRICT</literal> mode) too;  therefore, if any objects
+      are still dependent on it, <command>ALTER TABLE SPLIT PARTITION</command>
+      would fail (see <xref linkend="ddl-depend"/>).
+     </para>
+
+     <note>
+      <para>
+       Split partition acquires an <literal>ACCESS EXCLUSIVE</literal> lock on
+       the parent table, in addition to the <literal>ACCESS EXCLUSIVE</literal>
+       lock on the table being split.
+      </para>
+     </note>
+     <note>
+
+      <para>
+       <command>ALTER TABLE SPLIT PARTITION</command> creates new partitions and
+       moves data from the split partition into them, which can take a long
+       time.  So it is not recommended to use the command for splitting a
+       small fraction of rows out of a very big partition.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
   </para>
 
   <para>
    All the forms of <command>ALTER TABLE</command> that act on a single table,
    except <literal>RENAME</literal>, <literal>SET SCHEMA</literal>,
-   <literal>ATTACH PARTITION</literal>, and
-   <literal>DETACH PARTITION</literal> can be combined into
+   <literal>ATTACH PARTITION</literal>, <literal>DETACH PARTITION</literal>,
+   <literal>MERGE PARTITIONS</literal>, and <literal>SPLIT PARTITION</literal>
+   can be combined into
    a list of multiple alterations to be applied together.  For example, it
    is possible to add several columns and/or alter the type of several
    columns in a single command.  This is particularly useful with large
-   tables, since only one pass over the table need be made.
+   tables, since only one pass over the table needs to be made.
   </para>
 
   <para>
@@ -1397,7 +1601,19 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <term><replaceable class="parameter">partition_name</replaceable></term>
       <listitem>
        <para>
-        The name of the table to attach as a new partition or to detach from this table.
+        The name of the table to attach as a new partition or to detach from this table,
+        or the name of split partition, or the name of the new merged partition.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="sql-altertable-parms-partition-name1">
+      <term><replaceable class="parameter">partition_name1</replaceable></term>
+      <term><replaceable class="parameter">partition_name2</replaceable></term>
+      <listitem>
+       <para>
+        The names of the tables being merged into the new partition or split into
+        new partitions.
        </para>
       </listitem>
      </varlistentry>
@@ -1466,11 +1682,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </para>
 
    <para>
-    Adding an enforced <literal>CHECK</literal> or <literal>NOT NULL</literal>
+    Adding a <literal>CHECK</literal> or <literal>NOT NULL</literal>
     constraint requires scanning the table to verify that existing rows meet the
     constraint, but does not require a table rewrite.  If a <literal>CHECK</literal>
-    constraint is added as <literal>NOT ENFORCED</literal>, the validation will
-    not be performed.
+    constraint is added as <literal>NOT ENFORCED</literal>, no verification will
+    be performed.
    </para>
 
    <para>
@@ -1485,7 +1701,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </para>
 
    <para>
-    Scanning a large table to verify a new foreign key or check constraint
+    Scanning a large table to verify new foreign-key, check, or not-null constraints
     can take a long time, and other updates to the table are locked out
     until the <command>ALTER TABLE ADD CONSTRAINT</command> command is
     committed.  The main purpose of the <literal>NOT VALID</literal>
@@ -1632,7 +1848,7 @@ ALTER TABLE measurements
 <programlisting>
 ALTER TABLE transactions
   ADD COLUMN status varchar(30) DEFAULT 'old',
-  ALTER COLUMN status SET default 'current';
+  ALTER COLUMN status SET DEFAULT 'current';
 </programlisting>
    Existing rows will be filled with <literal>old</literal>, but then
    the default for subsequent commands will be <literal>current</literal>.
@@ -1828,6 +2044,31 @@ ALTER TABLE cities
 <programlisting>
 ALTER TABLE measurement
     DETACH PARTITION measurement_y2015m12;
+</programlisting></para>
+
+  <para>
+   To split a single partition of the range-partitioned table:
+<programlisting>
+ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2023 INTO
+   (PARTITION sales_feb2023 FOR VALUES FROM ('2023-02-01') TO ('2023-03-01'),
+    PARTITION sales_mar2023 FOR VALUES FROM ('2023-03-01') TO ('2023-04-01'),
+    PARTITION sales_apr2023 FOR VALUES FROM ('2023-04-01') TO ('2023-05-01'));
+</programlisting></para>
+
+  <para>
+   To split a single partition of the list-partitioned table:
+<programlisting>
+ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
+   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
+    PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
+</programlisting></para>
+
+  <para>
+   To merge several partitions into one partition of the target table:
+<programlisting>
+ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_central)
+    INTO sales_all;
 </programlisting></para>
 
  </refsect1>

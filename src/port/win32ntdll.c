@@ -62,7 +62,7 @@ initialize_ntdll(void)
 			return -1;
 		}
 
-		*(pg_funcptr_t *) routines[i].address = address;
+		*routines[i].address = address;
 	}
 
 	initialized = true;

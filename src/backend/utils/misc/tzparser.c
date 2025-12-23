@@ -466,7 +466,7 @@ load_tzoffsets(const char *filename)
 
 	/* Initialize array at a reasonable size */
 	arraysize = 128;
-	array = (tzEntry *) palloc(arraysize * sizeof(tzEntry));
+	array = palloc_array(tzEntry, arraysize);
 
 	/* Parse the file(s) */
 	n = ParseTzFile(filename, 0, &array, &arraysize, 0);

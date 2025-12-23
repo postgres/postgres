@@ -376,10 +376,7 @@ endif
 ifdef REGRESS
 # things created by various check targets
 	rm -rf $(pg_regress_clean_files)
-ifeq ($(PORTNAME), win)
-	rm -f regress.def
 endif
-endif # REGRESS
 ifdef TAP_TESTS
 	rm -rf tmp_check/
 endif

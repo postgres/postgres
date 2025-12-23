@@ -89,20 +89,35 @@ typedef enum vartag_external
 	VARTAG_ONDISK = 18
 } vartag_external;
 
+/* Is a TOAST pointer either type of expanded-object pointer? */
 /* this test relies on the specific tag values above */
-#define VARTAG_IS_EXPANDED(tag) \
-	(((tag) & ~1) == VARTAG_EXPANDED_RO)
+static inline bool
+VARTAG_IS_EXPANDED(vartag_external tag)
+{
+	return ((tag & ~1) == VARTAG_EXPANDED_RO);
+}
 
-#define VARTAG_SIZE(tag) \
-	((tag) == VARTAG_INDIRECT ? sizeof(varatt_indirect) : \
-	 VARTAG_IS_EXPANDED(tag) ? sizeof(varatt_expanded) : \
-	 (tag) == VARTAG_ONDISK ? sizeof(varatt_external) : \
-	 (AssertMacro(false), 0))
+/* Size of the data part of a "TOAST pointer" datum */
+static inline Size
+VARTAG_SIZE(vartag_external tag)
+{
+	if (tag == VARTAG_INDIRECT)
+		return sizeof(varatt_indirect);
+	else if (VARTAG_IS_EXPANDED(tag))
+		return sizeof(varatt_expanded);
+	else if (tag == VARTAG_ONDISK)
+		return sizeof(varatt_external);
+	else
+	{
+		Assert(false);
+		return 0;
+	}
+}
 
 /*
  * These structs describe the header of a varlena object that may have been
  * TOASTed.  Generally, don't reference these structs directly, but use the
- * macros below.
+ * functions and macros below.
  *
  * We use separate structs for the aligned and unaligned cases because the
  * compiler might otherwise think it could generate code that assumes
@@ -166,7 +181,9 @@ typedef struct
 
 /*
  * Endian-dependent macros.  These are considered internal --- use the
- * external macros below instead of using these directly.
+ * external functions below instead of using these directly.  All of these
+ * expect an argument that is a pointer, not a Datum.  Some of them have
+ * multiple-evaluation hazards, too.
  *
  * Note: IS_1B is true for external toast records but VARSIZE_1B will return 0
  * for such records. Hence you should usually check for IS_EXTERNAL before
@@ -194,7 +211,7 @@ typedef struct
 #define VARSIZE_1B(PTR) \
 	(((varattrib_1b *) (PTR))->va_header & 0x7F)
 #define VARTAG_1B_E(PTR) \
-	(((varattrib_1b_e *) (PTR))->va_tag)
+	((vartag_external) ((varattrib_1b_e *) (PTR))->va_tag)
 
 #define SET_VARSIZE_4B(PTR,len) \
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = (len) & 0x3FFFFFFF)
@@ -227,7 +244,7 @@ typedef struct
 #define VARSIZE_1B(PTR) \
 	((((varattrib_1b *) (PTR))->va_header >> 1) & 0x7F)
 #define VARTAG_1B_E(PTR) \
-	(((varattrib_1b_e *) (PTR))->va_tag)
+	((vartag_external) ((varattrib_1b_e *) (PTR))->va_tag)
 
 #define SET_VARSIZE_4B(PTR,len) \
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2))
@@ -247,19 +264,19 @@ typedef struct
 #define VARDATA_1B_E(PTR)	(((varattrib_1b_e *) (PTR))->va_data)
 
 /*
- * Externally visible TOAST macros begin here.
+ * Externally visible TOAST functions and macros begin here.  All of these
+ * were originally macros, accounting for the upper-case naming.
+ *
+ * Most of these functions accept a pointer to a value of a toastable data
+ * type.  The caller's variable might be declared "text *" or the like,
+ * so we use "void *" here.  Callers that are working with a Datum variable
+ * must apply DatumGetPointer before calling these functions.
  */
 
 #define VARHDRSZ_EXTERNAL		offsetof(varattrib_1b_e, va_data)
 #define VARHDRSZ_COMPRESSED		offsetof(varattrib_4b, va_compressed.va_data)
 #define VARHDRSZ_SHORT			offsetof(varattrib_1b, va_data)
-
 #define VARATT_SHORT_MAX		0x7F
-#define VARATT_CAN_MAKE_SHORT(PTR) \
-	(VARATT_IS_4B_U(PTR) && \
-	 (VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT) <= VARATT_SHORT_MAX)
-#define VARATT_CONVERTED_SHORT_SIZE(PTR) \
-	(VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT)
 
 /*
  * In consumers oblivious to data alignment, call PG_DETOAST_DATUM_PACKED(),
@@ -272,70 +289,234 @@ typedef struct
  * Code assembling a new datum should call VARDATA() and SET_VARSIZE().
  * (Datums begin life untoasted.)
  *
- * Other macros here should usually be used only by tuple assembly/disassembly
+ * Other functions here should usually be used only by tuple assembly/disassembly
  * code and code that specifically wants to work with still-toasted Datums.
  */
-#define VARDATA(PTR)						VARDATA_4B(PTR)
-#define VARSIZE(PTR)						VARSIZE_4B(PTR)
 
-#define VARSIZE_SHORT(PTR)					VARSIZE_1B(PTR)
-#define VARDATA_SHORT(PTR)					VARDATA_1B(PTR)
+/* Size of a known-not-toasted varlena datum, including header */
+static inline Size
+VARSIZE(const void *PTR)
+{
+	return VARSIZE_4B(PTR);
+}
 
-#define VARTAG_EXTERNAL(PTR)				VARTAG_1B_E(PTR)
-#define VARSIZE_EXTERNAL(PTR)				(VARHDRSZ_EXTERNAL + VARTAG_SIZE(VARTAG_EXTERNAL(PTR)))
-#define VARDATA_EXTERNAL(PTR)				VARDATA_1B_E(PTR)
+/* Start of data area of a known-not-toasted varlena datum */
+static inline char *
+VARDATA(const void *PTR)
+{
+	return VARDATA_4B(PTR);
+}
 
-#define VARATT_IS_COMPRESSED(PTR)			VARATT_IS_4B_C(PTR)
-#define VARATT_IS_EXTERNAL(PTR)				VARATT_IS_1B_E(PTR)
-#define VARATT_IS_EXTERNAL_ONDISK(PTR) \
-	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_ONDISK)
-#define VARATT_IS_EXTERNAL_INDIRECT(PTR) \
-	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_INDIRECT)
-#define VARATT_IS_EXTERNAL_EXPANDED_RO(PTR) \
-	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_EXPANDED_RO)
-#define VARATT_IS_EXTERNAL_EXPANDED_RW(PTR) \
-	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_EXPANDED_RW)
-#define VARATT_IS_EXTERNAL_EXPANDED(PTR) \
-	(VARATT_IS_EXTERNAL(PTR) && VARTAG_IS_EXPANDED(VARTAG_EXTERNAL(PTR)))
-#define VARATT_IS_EXTERNAL_NON_EXPANDED(PTR) \
-	(VARATT_IS_EXTERNAL(PTR) && !VARTAG_IS_EXPANDED(VARTAG_EXTERNAL(PTR)))
-#define VARATT_IS_SHORT(PTR)				VARATT_IS_1B(PTR)
-#define VARATT_IS_EXTENDED(PTR)				(!VARATT_IS_4B_U(PTR))
+/* Size of a known-short-header varlena datum, including header */
+static inline Size
+VARSIZE_SHORT(const void *PTR)
+{
+	return VARSIZE_1B(PTR);
+}
 
-#define SET_VARSIZE(PTR, len)				SET_VARSIZE_4B(PTR, len)
-#define SET_VARSIZE_SHORT(PTR, len)			SET_VARSIZE_1B(PTR, len)
-#define SET_VARSIZE_COMPRESSED(PTR, len)	SET_VARSIZE_4B_C(PTR, len)
+/* Start of data area of a known-short-header varlena datum */
+static inline char *
+VARDATA_SHORT(const void *PTR)
+{
+	return VARDATA_1B(PTR);
+}
 
-#define SET_VARTAG_EXTERNAL(PTR, tag)		SET_VARTAG_1B_E(PTR, tag)
+/* Type tag of a "TOAST pointer" datum */
+static inline vartag_external
+VARTAG_EXTERNAL(const void *PTR)
+{
+	return VARTAG_1B_E(PTR);
+}
 
-#define VARSIZE_ANY(PTR) \
-	(VARATT_IS_1B_E(PTR) ? VARSIZE_EXTERNAL(PTR) : \
-	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR) : \
-	  VARSIZE_4B(PTR)))
+/* Size of a "TOAST pointer" datum, including header */
+static inline Size
+VARSIZE_EXTERNAL(const void *PTR)
+{
+	return VARHDRSZ_EXTERNAL + VARTAG_SIZE(VARTAG_EXTERNAL(PTR));
+}
 
-/* Size of a varlena data, excluding header */
-#define VARSIZE_ANY_EXHDR(PTR) \
-	(VARATT_IS_1B_E(PTR) ? VARSIZE_EXTERNAL(PTR)-VARHDRSZ_EXTERNAL : \
-	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR)-VARHDRSZ_SHORT : \
-	  VARSIZE_4B(PTR)-VARHDRSZ))
+/* Start of data area of a "TOAST pointer" datum */
+static inline char *
+VARDATA_EXTERNAL(const void *PTR)
+{
+	return VARDATA_1B_E(PTR);
+}
 
+/* Is varlena datum in inline-compressed format? */
+static inline bool
+VARATT_IS_COMPRESSED(const void *PTR)
+{
+	return VARATT_IS_4B_C(PTR);
+}
+
+/* Is varlena datum a "TOAST pointer" datum? */
+static inline bool
+VARATT_IS_EXTERNAL(const void *PTR)
+{
+	return VARATT_IS_1B_E(PTR);
+}
+
+/* Is varlena datum a pointer to on-disk toasted data? */
+static inline bool
+VARATT_IS_EXTERNAL_ONDISK(const void *PTR)
+{
+	return VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_ONDISK;
+}
+
+/* Is varlena datum an indirect pointer? */
+static inline bool
+VARATT_IS_EXTERNAL_INDIRECT(const void *PTR)
+{
+	return VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_INDIRECT;
+}
+
+/* Is varlena datum a read-only pointer to an expanded object? */
+static inline bool
+VARATT_IS_EXTERNAL_EXPANDED_RO(const void *PTR)
+{
+	return VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_EXPANDED_RO;
+}
+
+/* Is varlena datum a read-write pointer to an expanded object? */
+static inline bool
+VARATT_IS_EXTERNAL_EXPANDED_RW(const void *PTR)
+{
+	return VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_EXPANDED_RW;
+}
+
+/* Is varlena datum either type of pointer to an expanded object? */
+static inline bool
+VARATT_IS_EXTERNAL_EXPANDED(const void *PTR)
+{
+	return VARATT_IS_EXTERNAL(PTR) && VARTAG_IS_EXPANDED(VARTAG_EXTERNAL(PTR));
+}
+
+/* Is varlena datum a "TOAST pointer", but not for an expanded object? */
+static inline bool
+VARATT_IS_EXTERNAL_NON_EXPANDED(const void *PTR)
+{
+	return VARATT_IS_EXTERNAL(PTR) && !VARTAG_IS_EXPANDED(VARTAG_EXTERNAL(PTR));
+}
+
+/* Is varlena datum a short-header datum? */
+static inline bool
+VARATT_IS_SHORT(const void *PTR)
+{
+	return VARATT_IS_1B(PTR);
+}
+
+/* Is varlena datum not in traditional (4-byte-header, uncompressed) format? */
+static inline bool
+VARATT_IS_EXTENDED(const void *PTR)
+{
+	return !VARATT_IS_4B_U(PTR);
+}
+
+/* Is varlena datum short enough to convert to short-header format? */
+static inline bool
+VARATT_CAN_MAKE_SHORT(const void *PTR)
+{
+	return VARATT_IS_4B_U(PTR) &&
+		(VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT) <= VARATT_SHORT_MAX;
+}
+
+/* Size that datum will have in short-header format, including header */
+static inline Size
+VARATT_CONVERTED_SHORT_SIZE(const void *PTR)
+{
+	return VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT;
+}
+
+/* Set the size (including header) of a 4-byte-header varlena datum */
+static inline void
+SET_VARSIZE(void *PTR, Size len)
+{
+	SET_VARSIZE_4B(PTR, len);
+}
+
+/* Set the size (including header) of a short-header varlena datum */
+static inline void
+SET_VARSIZE_SHORT(void *PTR, Size len)
+{
+	SET_VARSIZE_1B(PTR, len);
+}
+
+/* Set the size (including header) of an inline-compressed varlena datum */
+static inline void
+SET_VARSIZE_COMPRESSED(void *PTR, Size len)
+{
+	SET_VARSIZE_4B_C(PTR, len);
+}
+
+/* Set the type tag of a "TOAST pointer" datum */
+static inline void
+SET_VARTAG_EXTERNAL(void *PTR, vartag_external tag)
+{
+	SET_VARTAG_1B_E(PTR, tag);
+}
+
+/* Size of a varlena datum of any format, including header */
+static inline Size
+VARSIZE_ANY(const void *PTR)
+{
+	if (VARATT_IS_1B_E(PTR))
+		return VARSIZE_EXTERNAL(PTR);
+	else if (VARATT_IS_1B(PTR))
+		return VARSIZE_1B(PTR);
+	else
+		return VARSIZE_4B(PTR);
+}
+
+/* Size of a varlena datum of any format, excluding header */
+static inline Size
+VARSIZE_ANY_EXHDR(const void *PTR)
+{
+	if (VARATT_IS_1B_E(PTR))
+		return VARSIZE_EXTERNAL(PTR) - VARHDRSZ_EXTERNAL;
+	else if (VARATT_IS_1B(PTR))
+		return VARSIZE_1B(PTR) - VARHDRSZ_SHORT;
+	else
+		return VARSIZE_4B(PTR) - VARHDRSZ;
+}
+
+/* Start of data area of a plain or short-header varlena datum */
 /* caution: this will not work on an external or compressed-in-line Datum */
 /* caution: this will return a possibly unaligned pointer */
-#define VARDATA_ANY(PTR) \
-	 (VARATT_IS_1B(PTR) ? VARDATA_1B(PTR) : VARDATA_4B(PTR))
+static inline char *
+VARDATA_ANY(const void *PTR)
+{
+	return VARATT_IS_1B(PTR) ? VARDATA_1B(PTR) : VARDATA_4B(PTR);
+}
 
-/* Decompressed size and compression method of a compressed-in-line Datum */
-#define VARDATA_COMPRESSED_GET_EXTSIZE(PTR) \
-	(((varattrib_4b *) (PTR))->va_compressed.va_tcinfo & VARLENA_EXTSIZE_MASK)
-#define VARDATA_COMPRESSED_GET_COMPRESS_METHOD(PTR) \
-	(((varattrib_4b *) (PTR))->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS)
+/* Decompressed size of a compressed-in-line varlena datum */
+static inline Size
+VARDATA_COMPRESSED_GET_EXTSIZE(const void *PTR)
+{
+	return ((varattrib_4b *) PTR)->va_compressed.va_tcinfo & VARLENA_EXTSIZE_MASK;
+}
+
+/* Compression method of a compressed-in-line varlena datum */
+static inline uint32
+VARDATA_COMPRESSED_GET_COMPRESS_METHOD(const void *PTR)
+{
+	return ((varattrib_4b *) PTR)->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS;
+}
 
 /* Same for external Datums; but note argument is a struct varatt_external */
-#define VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) \
-	((toast_pointer).va_extinfo & VARLENA_EXTSIZE_MASK)
-#define VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer) \
-	((toast_pointer).va_extinfo >> VARLENA_EXTSIZE_BITS)
+static inline Size
+VARATT_EXTERNAL_GET_EXTSIZE(struct varatt_external toast_pointer)
+{
+	return toast_pointer.va_extinfo & VARLENA_EXTSIZE_MASK;
+}
 
+static inline uint32
+VARATT_EXTERNAL_GET_COMPRESS_METHOD(struct varatt_external toast_pointer)
+{
+	return toast_pointer.va_extinfo >> VARLENA_EXTSIZE_BITS;
+}
+
+/* Set size and compress method of an externally-stored varlena datum */
+/* This has to remain a macro; beware multiple evaluations! */
 #define VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, len, cm) \
 	do { \
 		Assert((cm) == TOAST_PGLZ_COMPRESSION_ID || \
@@ -351,8 +532,11 @@ typedef struct
  * VARHDRSZ overhead, the former doesn't.  We never use compression unless it
  * actually saves space, so we expect either equality or less-than.
  */
-#define VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) \
-	(VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) < \
-	 (toast_pointer).va_rawsize - VARHDRSZ)
+static inline bool
+VARATT_EXTERNAL_IS_COMPRESSED(struct varatt_external toast_pointer)
+{
+	return VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) <
+		(Size) (toast_pointer.va_rawsize - VARHDRSZ);
+}
 
 #endif

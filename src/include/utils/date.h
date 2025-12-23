@@ -31,6 +31,14 @@ typedef struct
 } TimeTzADT;
 
 /*
+ * sizeof(TimeTzADT) will be 16 on most platforms due to alignment padding.
+ * However, timetz's typlen is 12 according to pg_type.  In most places
+ * we can get away with using sizeof(TimeTzADT), but where it's important
+ * to match the declared typlen, use TIMETZ_TYPLEN.
+ */
+#define TIMETZ_TYPLEN		12
+
+/*
  * Infinity and minus infinity must be the max and min values of DateADT.
  */
 #define DATEVAL_NOBEGIN		((DateADT) PG_INT32_MIN)
@@ -98,8 +106,10 @@ TimeTzADTPGetDatum(const TimeTzADT *X)
 /* date.c */
 extern int32 anytime_typmod_check(bool istz, int32 typmod);
 extern double date2timestamp_no_overflow(DateADT dateVal);
-extern Timestamp date2timestamp_opt_overflow(DateADT dateVal, int *overflow);
-extern TimestampTz date2timestamptz_opt_overflow(DateADT dateVal, int *overflow);
+extern Timestamp date2timestamp_safe(DateADT dateVal, Node *escontext);
+extern TimestampTz date2timestamptz_safe(DateADT dateVal, Node *escontext);
+extern DateADT timestamp2date_safe(Timestamp timestamp, Node *escontext);
+extern DateADT timestamptz2date_safe(TimestampTz timestamp, Node *escontext);
 extern int32 date_cmp_timestamp_internal(DateADT dateVal, Timestamp dt2);
 extern int32 date_cmp_timestamptz_internal(DateADT dateVal, TimestampTz dt2);
 

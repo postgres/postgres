@@ -171,6 +171,10 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
 	HELP0("  \\q                     quit psql\n");
+	HELP0("  \\restrict RESTRICT_KEY\n"
+		  "                         enter restricted mode with provided key\n");
+	HELP0("  \\unrestrict RESTRICT_KEY\n"
+		  "                         exit restricted mode if key matches\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
 		  "                         execute query every SEC seconds, up to N times,\n"
 		  "                         stop if less than MIN rows are returned\n");
@@ -252,7 +256,8 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\dO[Sx+] [PATTERN]     list collations\n");
 	HELP0("  \\dp[Sx]  [PATTERN]     list table, view, and sequence access privileges\n");
 	HELP0("  \\dP[itnx+] [PATTERN]   list [only index/table] partitioned relations [n=nested]\n");
-	HELP0("  \\drds[x] [ROLEPTRN [DBPTRN]] list per-database role settings\n");
+	HELP0("  \\drds[x] [ROLEPTRN [DBPTRN]]\n"
+		  "                         list per-database role settings\n");
 	HELP0("  \\drg[Sx] [PATTERN]     list role grants\n");
 	HELP0("  \\dRp[x+] [PATTERN]     list replication publications\n");
 	HELP0("  \\dRs[x+] [PATTERN]     list replication subscriptions\n");
@@ -285,12 +290,7 @@ slashUsage(unsigned short int pager)
 	HELPN("  \\H                     toggle HTML output mode (currently %s)\n",
 		  ON(pset.popt.topt.format == PRINT_HTML));
 	HELP0("  \\pset [NAME [VALUE]]   set table output option\n"
-		  "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
-		  "                         fieldsep_zero|footer|format|linestyle|null|\n"
-		  "                         numericlocale|pager|pager_min_lines|recordsep|\n"
-		  "                         recordsep_zero|tableattr|title|tuples_only|\n"
-		  "                         unicode_border_linestyle|unicode_column_linestyle|\n"
-		  "                         unicode_header_linestyle|xheader_width)\n");
+		  "                         see \"\\? variables\" for valid options\n");
 	HELPN("  \\t [on|off]            show only rows (currently %s)\n",
 		  ON(pset.popt.topt.tuples_only));
 	HELP0("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n");
@@ -330,12 +330,12 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\bind [PARAM]...       set query parameters\n");
 	HELP0("  \\bind_named STMT_NAME [PARAM]...\n"
 		  "                         set query parameters for an existing prepared statement\n");
-	HELP0("  \\close STMT_NAME       close an existing prepared statement\n");
+	HELP0("  \\close_prepared STMT_NAME\n"
+		  "                         close an existing prepared statement\n");
 	HELP0("  \\endpipeline           exit pipeline mode\n");
 	HELP0("  \\flush                 flush output data to the server\n");
 	HELP0("  \\flushrequest          send request to the server to flush its output buffer\n");
-	HELP0("  \\getresults [NUM_RES]  read NUM_RES pending results. All pending results are\n"
-		  "                         read if no argument is provided\n");
+	HELP0("  \\getresults [NUM_RES]  read NUM_RES pending results, or all if no argument\n");
 	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\sendpipeline          send an extended query to an ongoing pipeline\n");
 	HELP0("  \\startpipeline         enter pipeline mode\n");
@@ -463,8 +463,9 @@ helpVariables(unsigned short int pager)
 		  "  VERSION_NAME\n"
 		  "  VERSION_NUM\n"
 		  "    psql's version (in verbose string, short string, or numeric format)\n");
-	HELP0("  WATCH_INTERVAL\n"
-		  "    if set to a number, overrides the default two second \\watch interval\n");
+	HELPN("  WATCH_INTERVAL\n"
+		  "    number of seconds \\watch waits between executions (default %s)\n",
+		  DEFAULT_WATCH_INTERVAL);
 
 	HELP0("\nDisplay settings:\n");
 	HELP0("Usage:\n");
@@ -474,6 +475,13 @@ helpVariables(unsigned short int pager)
 		  "    border style (number)\n");
 	HELP0("  columns\n"
 		  "    target width for the wrapped format\n");
+	HELPN("  csv_fieldsep\n"
+		  "    field separator for CSV output format (default \"%c\")\n",
+		  DEFAULT_CSV_FIELD_SEP);
+	HELP0("  display_false\n"
+		  "    set the string to be printed in place of a boolean 'false'\n");
+	HELP0("  display_true\n"
+		  "    set the string to be printed in place of a boolean 'true'\n");
 	HELP0("  expanded (or x)\n"
 		  "    expanded output [on, off, auto]\n");
 	HELPN("  fieldsep\n"
@@ -746,7 +754,7 @@ void
 print_copyright(void)
 {
 	puts("PostgreSQL Database Management System\n"
-		 "(formerly known as Postgres, then as Postgres95)\n\n"
+		 "(also known as Postgres, formerly known as Postgres95)\n\n"
 		 "Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 		 "Permission to use, copy, modify, and distribute this software and its\n"

@@ -2747,7 +2747,8 @@ SELECT width_bucket('5'::text, ARRAY[3, 4]::integer[]);
 ERROR:  function width_bucket(text, integer[]) does not exist
 LINE 1: SELECT width_bucket('5'::text, ARRAY[3, 4]::integer[]);
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 SELECT width_bucket(5, ARRAY[3, 4, NULL]);
 ERROR:  thresholds array must not contain NULLs
 SELECT width_bucket(5, ARRAY[ARRAY[1, 2], ARRAY[3, 4]]);

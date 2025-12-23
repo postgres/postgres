@@ -192,8 +192,8 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	scanstate->notnulls = tf->notnulls;
 
 	/* these are allocated now and initialized later */
-	scanstate->in_functions = palloc(sizeof(FmgrInfo) * tupdesc->natts);
-	scanstate->typioparams = palloc(sizeof(Oid) * tupdesc->natts);
+	scanstate->in_functions = palloc_array(FmgrInfo, tupdesc->natts);
+	scanstate->typioparams = palloc_array(Oid, tupdesc->natts);
 
 	/*
 	 * Fill in the necessary fmgr infos.
@@ -363,7 +363,7 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 		char	   *ns_uri;
 		char	   *ns_name;
 
-		value = ExecEvalExpr((ExprState *) expr, econtext, &isnull);
+		value = ExecEvalExpr(expr, econtext, &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),

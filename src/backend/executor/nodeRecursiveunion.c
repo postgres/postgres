@@ -35,7 +35,6 @@ build_hash_table(RecursiveUnionState *rustate)
 	TupleDesc	desc = ExecGetResultType(outerPlanState(rustate));
 
 	Assert(node->numCols > 0);
-	Assert(node->numGroups > 0);
 
 	/*
 	 * If both child plans deliver the same fixed tuple slot type, we can tell
@@ -53,7 +52,7 @@ build_hash_table(RecursiveUnionState *rustate)
 											 node->numGroups,
 											 0,
 											 rustate->ps.state->es_query_cxt,
-											 rustate->tableContext,
+											 rustate->tuplesContext,
 											 rustate->tempContext,
 											 false);
 }
@@ -197,7 +196,7 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	rustate->hashfunctions = NULL;
 	rustate->hashtable = NULL;
 	rustate->tempContext = NULL;
-	rustate->tableContext = NULL;
+	rustate->tuplesContext = NULL;
 
 	/* initialize processing state */
 	rustate->recursing = false;
@@ -209,7 +208,8 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * If hashing, we need a per-tuple memory context for comparisons, and a
 	 * longer-lived context to store the hash table.  The table can't just be
 	 * kept in the per-query context because we want to be able to throw it
-	 * away when rescanning.
+	 * away when rescanning.  We can use a BumpContext to save storage,
+	 * because we will have no need to delete individual table entries.
 	 */
 	if (node->numCols > 0)
 	{
@@ -217,10 +217,10 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "RecursiveUnion",
 								  ALLOCSET_DEFAULT_SIZES);
-		rustate->tableContext =
-			AllocSetContextCreate(CurrentMemoryContext,
-								  "RecursiveUnion hash table",
-								  ALLOCSET_DEFAULT_SIZES);
+		rustate->tuplesContext =
+			BumpContextCreate(CurrentMemoryContext,
+							  "RecursiveUnion hashed tuples",
+							  ALLOCSET_DEFAULT_SIZES);
 	}
 
 	/*
@@ -288,11 +288,11 @@ ExecEndRecursiveUnion(RecursiveUnionState *node)
 	tuplestore_end(node->working_table);
 	tuplestore_end(node->intermediate_table);
 
-	/* free subsidiary stuff including hashtable */
+	/* free subsidiary stuff including hashtable data */
 	if (node->tempContext)
 		MemoryContextDelete(node->tempContext);
-	if (node->tableContext)
-		MemoryContextDelete(node->tableContext);
+	if (node->tuplesContext)
+		MemoryContextDelete(node->tuplesContext);
 
 	/*
 	 * close down subplans
@@ -327,10 +327,6 @@ ExecReScanRecursiveUnion(RecursiveUnionState *node)
 	 */
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan);
-
-	/* Release any hashtable storage */
-	if (node->tableContext)
-		MemoryContextReset(node->tableContext);
 
 	/* Empty hashtable if needed */
 	if (plan->numCols > 0)

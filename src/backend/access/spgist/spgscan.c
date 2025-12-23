@@ -309,9 +309,9 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 
 	scan = RelationGetIndexScan(rel, keysz, orderbysz);
 
-	so = (SpGistScanOpaque) palloc0(sizeof(SpGistScanOpaqueData));
+	so = palloc0_object(SpGistScanOpaqueData);
 	if (keysz > 0)
-		so->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * keysz);
+		so->keyData = palloc_array(ScanKeyData, keysz);
 	else
 		so->keyData = NULL;
 	initSpGistState(&so->state, scan->indexRelation);
@@ -336,16 +336,12 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 	if (scan->numberOfOrderBys > 0)
 	{
 		/* This will be filled in spgrescan, but allocate the space here */
-		so->orderByTypes = (Oid *)
-			palloc(sizeof(Oid) * scan->numberOfOrderBys);
-		so->nonNullOrderByOffsets = (int *)
-			palloc(sizeof(int) * scan->numberOfOrderBys);
+		so->orderByTypes = palloc_array(Oid, scan->numberOfOrderBys);
+		so->nonNullOrderByOffsets = palloc_array(int, scan->numberOfOrderBys);
 
 		/* These arrays have constant contents, so we can fill them now */
-		so->zeroDistances = (double *)
-			palloc(sizeof(double) * scan->numberOfOrderBys);
-		so->infDistances = (double *)
-			palloc(sizeof(double) * scan->numberOfOrderBys);
+		so->zeroDistances = palloc_array(double, scan->numberOfOrderBys);
+		so->infDistances = palloc_array(double, scan->numberOfOrderBys);
 
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
@@ -353,10 +349,8 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 			so->infDistances[i] = get_float8_infinity();
 		}
 
-		scan->xs_orderbyvals = (Datum *)
-			palloc0(sizeof(Datum) * scan->numberOfOrderBys);
-		scan->xs_orderbynulls = (bool *)
-			palloc(sizeof(bool) * scan->numberOfOrderBys);
+		scan->xs_orderbyvals = palloc0_array(Datum, scan->numberOfOrderBys);
+		scan->xs_orderbynulls = palloc_array(bool, scan->numberOfOrderBys);
 		memset(scan->xs_orderbynulls, true,
 			   sizeof(bool) * scan->numberOfOrderBys);
 	}
@@ -690,7 +684,7 @@ spgInnerTest(SpGistScanOpaque so, SpGistSearchItem *item,
 	{
 		/* force all children to be visited */
 		out.nNodes = nNodes;
-		out.nodeNumbers = (int *) palloc(sizeof(int) * nNodes);
+		out.nodeNumbers = palloc_array(int, nNodes);
 		for (i = 0; i < nNodes; i++)
 			out.nodeNumbers[i] = i;
 	}
@@ -703,7 +697,7 @@ spgInnerTest(SpGistScanOpaque so, SpGistSearchItem *item,
 	{
 		/* collect node pointers */
 		SpGistNodeTuple node;
-		SpGistNodeTuple *nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) * nNodes);
+		SpGistNodeTuple *nodes = palloc_array(SpGistNodeTuple, nNodes);
 
 		SGITITERATE(innerTuple, i, node)
 		{
@@ -972,8 +966,8 @@ storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
 			so->distances[so->nPtrs] = NULL;
 		else
 		{
-			IndexOrderByDistance *distances =
-				palloc(sizeof(distances[0]) * so->numberOfOrderBys);
+			IndexOrderByDistance *distances = palloc_array(IndexOrderByDistance,
+														   so->numberOfOrderBys);
 			int			i;
 
 			for (i = 0; i < so->numberOfOrderBys; i++)

@@ -61,6 +61,7 @@ set track_io_timing = off;
 
 -- Simple cases
 
+explain (costs off) select 1 as a, 2 as b having false;
 select explain_filter('explain select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers off) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers off, verbose) select * from int8_tbl i8');

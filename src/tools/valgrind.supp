@@ -180,3 +180,50 @@
    Memcheck:Cond
    fun:PyObject_Realloc
 }
+
+# NUMA introspection requires touching memory first, and some of it may
+# be marked as noacess (e.g. unpinned buffers). So just ignore that.
+{
+   pg_numa_touch_mem_if_required
+   Memcheck:Addr4
+   fun:pg_numa_touch_mem_if_required
+}
+
+{
+   pg_numa_touch_mem_if_required
+   Memcheck:Addr8
+   fun:pg_numa_touch_mem_if_required
+}
+
+
+# Memory-leak suppressions
+# Note that a suppression rule will silence complaints about memory blocks
+# allocated in matching places, but it won't prevent "indirectly lost"
+# complaints about blocks that are only reachable via the suppressed blocks.
+
+# Suppress complaints about stuff leaked during function cache loading.
+# Both the PL/pgSQL and SQL-function parsing processes generate some cruft
+# within the function's cache context, which doesn't seem worth the trouble
+# to get rid of.  Moreover, there are cases where CachedFunction structs
+# are intentionally leaked because we're unsure if any fn_extra pointers
+# remain.
+{
+   hide_function_cache_leaks
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,indirect
+
+   ...
+   fun:cached_function_compile
+}
+
+# Suppress complaints about stuff leaked during TS dictionary loading.
+# Not very much is typically lost there, and preventing it would
+# require a risky API change for TS tmplinit functions.
+{
+   hide_ts_dictionary_leaks
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,indirect
+
+   ...
+   fun:lookup_ts_dictionary_cache
+}

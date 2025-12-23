@@ -117,7 +117,7 @@
 
       <row>
        <entry><type>double precision</type></entry>
-       <entry><type>float8</type></entry>
+       <entry><type>float</type>, <type>float8</type></entry>
        <entry>double precision floating-point number (8 bytes)</entry>
       </row>
 
@@ -315,6 +315,7 @@
     <type>character varying</type>, <type>character</type>,
     <type>varchar</type>, <type>date</type>, <type>double
     precision</type>, <type>integer</type>, <type>interval</type>,
+    <type>json</type>,
     <type>numeric</type>, <type>decimal</type>, <type>real</type>,
     <type>smallint</type>, <type>time</type> (with or without time zone),
     <type>timestamp</type> (with or without time zone),
@@ -717,7 +718,7 @@ NUMERIC(3, 5)
 SELECT x,
   round(x::numeric) AS num_round,
   round(x::double precision) AS dbl_round
-FROM generate_series(-3.5, 3.5, 1) as x;
+FROM generate_series(-3.5, 3.5, 1) AS x;
   x   | num_round | dbl_round
 ------+-----------+-----------
  -3.5 |        -4 |        -4
@@ -1259,7 +1260,7 @@ SELECT '52093.89'::money::numeric::float8;
     semantically insignificant and disregarded when comparing two values
     of type <type>character</type>.  In collations where whitespace
     is significant, this behavior can produce unexpected results;
-    for example <command>SELECT 'a '::CHAR(2) collate "C" &lt;
+    for example <command>SELECT 'a '::CHAR(2) COLLATE "C" &lt;
     E'a\n'::CHAR(2)</command> returns true, even though <literal>C</literal>
     locale would consider a space to be greater than a newline.
     Trailing spaces are removed when converting a <type>character</type> value
@@ -2054,8 +2055,6 @@ MINUTE TO SECOND
       <table id="datatype-datetime-time-table">
        <title>Time Input</title>
        <tgroup cols="2">
-        <colspec colname="col1" colwidth="3*"/>
-        <colspec colname="col2" colwidth="2*"/>
         <thead>
          <row>
           <entry>Example</entry>
@@ -4738,6 +4737,10 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </indexterm>
 
    <indexterm zone="datatype-oid">
+    <primary>regdatabase</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
     <primary>regdictionary</primary>
    </indexterm>
 
@@ -4876,6 +4879,13 @@ SELECT * FROM pg_attribute
         <entry><structname>pg_ts_config</structname></entry>
         <entry>text search configuration</entry>
         <entry><literal>english</literal></entry>
+       </row>
+
+       <row>
+        <entry><type>regdatabase</type></entry>
+        <entry><structname>pg_database</structname></entry>
+        <entry>database name</entry>
+        <entry><literal>template1</literal></entry>
        </row>
 
        <row>
@@ -5049,8 +5059,8 @@ WHERE ...
     be dropped without first removing the default expression.  The
     alternative of <literal>nextval('my_seq'::text)</literal> does not
     create a dependency.
-    (<type>regrole</type> is an exception to this property. Constants of this
-    type are not allowed in stored expressions.)
+    (<type>regdatabase</type> and <type>regrole</type> are exceptions to this
+    property.  Constants of these types are not allowed in stored expressions.)
    </para>
 
    <para>
@@ -5110,7 +5120,7 @@ WHERE ...
     <literal>+(pg_lsn,numeric)</literal> and
     <literal>-(pg_lsn,numeric)</literal> operators, respectively. Note that
     the calculated LSN should be in the range of <type>pg_lsn</type> type,
-    i.e., between <literal>0/0</literal> and
+    i.e., between <literal>0/00000000</literal> and
     <literal>FFFFFFFF/FFFFFFFF</literal>.
    </para>
   </sect1>
@@ -5234,8 +5244,8 @@ WHERE ...
     <table id="datatype-pseudotypes-table">
      <title>Pseudo-Types</title>
      <tgroup cols="2">
-      <colspec colname="col1" colwidth="2*"/>
-      <colspec colname="col2" colwidth="3*"/>
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="2*"/>
       <thead>
        <row>
         <entry>Name</entry>

@@ -64,6 +64,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
@@ -430,7 +431,7 @@ ScanSourceDatabasePgClassTuple(HeapTupleData *tuple, Oid tbid, Oid dbid,
 			 classForm->oid);
 
 	/* Prepare a rel info element and add it to the list. */
-	relinfo = (CreateDBRelInfo *) palloc(sizeof(CreateDBRelInfo));
+	relinfo = palloc_object(CreateDBRelInfo);
 	if (OidIsValid(classForm->reltablespace))
 		relinfo->rlocator.spcOid = classForm->reltablespace;
 	else
@@ -570,8 +571,8 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * any CREATE DATABASE commands.
 	 */
 	if (!IsBinaryUpgrade)
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
-						  CHECKPOINT_WAIT | CHECKPOINT_FLUSH_ALL);
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE |
+						  CHECKPOINT_WAIT | CHECKPOINT_FLUSH_UNLOGGED);
 
 	/*
 	 * Iterate through all tablespaces of the template database, and copy each
@@ -673,7 +674,7 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * strategy that avoids these problems.
 	 */
 	if (!IsBinaryUpgrade)
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE |
 						  CHECKPOINT_WAIT);
 }
 
@@ -1052,7 +1053,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dbctype = src_ctype;
 	if (dblocprovider == '\0')
 		dblocprovider = src_locprovider;
-	if (dblocale == NULL)
+	if (dblocale == NULL && dblocprovider == src_locprovider)
 		dblocale = src_locale;
 	if (dbicurules == NULL)
 		dbicurules = src_icurules;
@@ -1065,16 +1066,41 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 	/* Check that the chosen locales are valid, and get canonical spellings */
 	if (!check_locale(LC_COLLATE, dbcollate, &canonname))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate),
-				 errhint("If the locale name is specific to ICU, use ICU_LOCALE.")));
+	{
+		if (dblocprovider == COLLPROVIDER_BUILTIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate),
+					 errhint("If the locale name is specific to the builtin provider, use BUILTIN_LOCALE.")));
+		else if (dblocprovider == COLLPROVIDER_ICU)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate),
+					 errhint("If the locale name is specific to the ICU provider, use ICU_LOCALE.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate)));
+	}
 	dbcollate = canonname;
 	if (!check_locale(LC_CTYPE, dbctype, &canonname))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype),
-				 errhint("If the locale name is specific to ICU, use ICU_LOCALE.")));
+	{
+		if (dblocprovider == COLLPROVIDER_BUILTIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype),
+					 errhint("If the locale name is specific to the builtin provider, use BUILTIN_LOCALE.")));
+		else if (dblocprovider == COLLPROVIDER_ICU)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype),
+					 errhint("If the locale name is specific to the ICU provider, use ICU_LOCALE.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype)));
+	}
+
 	dbctype = canonname;
 
 	check_encoding_locale_matches(encoding, dbcollate, dbctype);
@@ -1845,7 +1871,7 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	 * Force a checkpoint to make sure the checkpointer has received the
 	 * message sent by ForgetDatabaseSyncRequests.
 	 */
-	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+	RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 	/* Close all smgr fds in all backends. */
 	WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
@@ -2095,8 +2121,8 @@ movedb(const char *dbname, const char *tblspcname)
 	 * On Windows, this also ensures that background procs don't hold any open
 	 * files, which would cause rmdir() to fail.
 	 */
-	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT
-					  | CHECKPOINT_FLUSH_ALL);
+	RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT
+					  | CHECKPOINT_FLUSH_UNLOGGED);
 
 	/* Close all smgr fds in all backends. */
 	WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
@@ -2227,7 +2253,7 @@ movedb(const char *dbname, const char *tblspcname)
 		 * any unlogged operations done in the new DB tablespace before the
 		 * next checkpoint.
 		 */
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
 		 * Force synchronous commit, thus minimizing the window between
@@ -2328,7 +2354,8 @@ DropDatabase(ParseState *pstate, DropdbStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized DROP DATABASE option \"%s\"", opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"DROP DATABASE", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 
@@ -3180,30 +3207,6 @@ get_database_oid(const char *dbname, bool missing_ok)
 
 
 /*
- * get_database_name - given a database OID, look up the name
- *
- * Returns a palloc'd string, or NULL if no such database.
- */
-char *
-get_database_name(Oid dbid)
-{
-	HeapTuple	dbtuple;
-	char	   *result;
-
-	dbtuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
-	if (HeapTupleIsValid(dbtuple))
-	{
-		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));
-		ReleaseSysCache(dbtuple);
-	}
-	else
-		result = NULL;
-
-	return result;
-}
-
-
-/*
  * While dropping a database the pg_database row is marked invalid, but the
  * catalog contents still exist. Connections to such a database are not
  * allowed.
@@ -3373,6 +3376,7 @@ dbase_redo(XLogReaderState *record)
 		parent_path = pstrdup(dbpath);
 		get_parent_directory(parent_path);
 		recovery_create_dbdir(parent_path, true);
+		pfree(parent_path);
 
 		/* Create the database directory with the version file. */
 		CreateDirAndVersionFile(dbpath, xlrec->db_id, xlrec->tablespace_id,

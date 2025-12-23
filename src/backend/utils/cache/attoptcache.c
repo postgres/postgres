@@ -86,7 +86,7 @@ relatt_cache_syshash(const void *key, Size keysize)
 	const AttoptCacheKey *ckey = key;
 
 	Assert(keysize == sizeof(*ckey));
-	return GetSysCacheHashValue2(ATTNUM, ckey->attrelid, ckey->attnum);
+	return GetSysCacheHashValue2(ATTNUM, ObjectIdGetDatum(ckey->attrelid), Int32GetDatum(ckey->attnum));
 }
 
 /*

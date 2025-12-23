@@ -105,8 +105,8 @@ copy(
 
 $node_replica->start;
 
-ok($node_replica->safe_psql('postgres', $canary_query) == 0,
-	'canary is missing');
+is($node_replica->safe_psql('postgres', $canary_query),
+	'0', 'canary is missing');
 
 # Check log to ensure that crash recovery was used as there is no
 # backup_label.
@@ -134,8 +134,8 @@ $node_replica->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
 $node_replica->start;
 
-ok($node_replica->safe_psql('postgres', $canary_query) == 1,
-	'canary is present');
+is($node_replica->safe_psql('postgres', $canary_query),
+	'1', 'canary is present');
 
 # Check log to ensure that backup_label was used for recovery.
 ok($node_replica->log_contains('starting backup recovery with redo LSN'),

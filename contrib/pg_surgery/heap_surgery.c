@@ -356,8 +356,8 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 static int32
 tidcmp(const void *a, const void *b)
 {
-	ItemPointer iptr1 = ((const ItemPointer) a);
-	ItemPointer iptr2 = ((const ItemPointer) b);
+	const ItemPointerData *iptr1 = a;
+	const ItemPointerData *iptr2 = b;
 
 	return ItemPointerCompare(iptr1, iptr2);
 }

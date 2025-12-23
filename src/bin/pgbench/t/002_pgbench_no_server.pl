@@ -233,21 +233,9 @@ for my $o (@options)
 		'pgbench option error: ' . $name);
 }
 
-# Help
-pgbench(
-	'--help', 0,
-	[
-		qr{benchmarking tool for PostgreSQL},
-		qr{Usage},
-		qr{Initialization options:},
-		qr{Common options:},
-		qr{Report bugs to}
-	],
-	[qr{^$}],
-	'pgbench help');
-
-# Version
-pgbench('-V', 0, [qr{^pgbench .PostgreSQL. }], [qr{^$}], 'pgbench version');
+program_help_ok('pgbench');
+program_version_ok('pgbench');
+program_options_handling_ok('pgbench');
 
 # list of builtins
 pgbench(

@@ -62,6 +62,19 @@ SELECT current_user, session_user;
 SET ROLE NONE;
 DO $$BEGIN EXECUTE format(
 	'ALTER DATABASE %I RESET role', current_catalog); END$$;
+-- Test some error cases
+-- We have to use terse mode so that the database name doesn't
+-- appear in the error output.
+\set VERBOSITY terse
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I SET bogus = 0', current_catalog); END$$;
+ERROR:  unrecognized configuration parameter "bogus"
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I RESET bogus', current_catalog); END$$;
+ERROR:  unrecognized configuration parameter "bogus"
+ALTER USER regress_authenticated_user_db_ssa RESET bogus;
+ERROR:  unrecognized configuration parameter "bogus"
+\set VERBOSITY default
 -- Test connection string options
 \c -reuse-previous=on "user=regress_authenticated_user_db_sr options=-crole=regress_current_user"
 SELECT current_user, session_user;

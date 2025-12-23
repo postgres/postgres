@@ -601,6 +601,73 @@ pg_neg_u64_overflow(uint64 a, int64 *result)
 #endif
 }
 
+/*
+ * size_t
+ */
+static inline bool
+pg_add_size_overflow(size_t a, size_t b, size_t *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_add_overflow(a, b, result);
+#else
+	size_t		res = a + b;
+
+	if (res < a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_sub_size_overflow(size_t a, size_t b, size_t *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(a, b, result);
+#else
+	if (b > a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = a - b;
+	return false;
+#endif
+}
+
+static inline bool
+pg_mul_size_overflow(size_t a, size_t b, size_t *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_mul_overflow(a, b, result);
+#else
+	size_t		res = a * b;
+
+	if (a != 0 && b != res / a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#endif
+}
+
+/*
+ * pg_neg_size_overflow is currently omitted, to avoid having to reason about
+ * the portability of SSIZE_MIN/_MAX before a use case exists.
+ */
+/*
+ * static inline bool
+ * pg_neg_size_overflow(size_t a, ssize_t *result)
+ * {
+ *     ...
+ * }
+ */
+
 /*------------------------------------------------------------------------
  *
  * Comparison routines for integer types.

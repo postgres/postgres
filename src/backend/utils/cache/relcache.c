@@ -422,7 +422,7 @@ AllocateRelationDesc(Form_pg_class relp)
 	/*
 	 * allocate and zero space for new relation descriptor
 	 */
-	relation = (Relation) palloc0(sizeof(RelationData));
+	relation = palloc0_object(RelationData);
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1902,7 +1902,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * allocate new relation desc, clear all fields of reldesc
 	 */
-	relation = (Relation) palloc0(sizeof(RelationData));
+	relation = palloc0_object(RelationData);
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1994,7 +1994,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/* mark not-null status */
 	if (has_not_null)
 	{
-		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+		TupleConstr *constr = palloc0_object(TupleConstr);
 
 		constr->has_not_null = true;
 		relation->rd_att->constr = constr;
@@ -2896,7 +2896,7 @@ RelationForgetRelation(Oid rid)
 
 	RelationIdCacheLookup(rid, relation);
 
-	if (!PointerIsValid(relation))
+	if (!relation)
 		return;					/* not in cache, nothing to do */
 
 	if (!RelationHasReferenceCountZero(relation))
@@ -2941,7 +2941,7 @@ RelationCacheInvalidateEntry(Oid relationId)
 
 	RelationIdCacheLookup(relationId, relation);
 
-	if (PointerIsValid(relation))
+	if (relation)
 	{
 		relcacheInvalsReceived++;
 		RelationFlushRelation(relation);
@@ -3184,7 +3184,7 @@ AssertPendingSyncs_RelationCache(void)
 		if ((LockTagType) locallock->tag.lock.locktag_type !=
 			LOCKTAG_RELATION)
 			continue;
-		relid = ObjectIdGetDatum(locallock->tag.lock.locktag_field2);
+		relid = locallock->tag.lock.locktag_field2;
 		r = RelationIdGetRelation(relid);
 		if (!RelationIsValid(r))
 			continue;
@@ -3579,7 +3579,7 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * allocate a new relation descriptor and fill in basic state fields.
 	 */
-	rel = (Relation) palloc0(sizeof(RelationData));
+	rel = palloc0_object(RelationData);
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
@@ -3627,7 +3627,7 @@ RelationBuildLocalRelation(const char *relname,
 
 	if (has_not_null)
 	{
-		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+		TupleConstr *constr = palloc0_object(TupleConstr);
 
 		constr->has_not_null = true;
 		rel->rd_att->constr = constr;
@@ -4658,12 +4658,6 @@ CheckNNConstraintFetch(Relation relation)
 			break;
 		}
 
-		check[found].ccenforced = conform->conenforced;
-		check[found].ccvalid = conform->convalidated;
-		check[found].ccnoinherit = conform->connoinherit;
-		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
-												  NameStr(conform->conname));
-
 		/* Grab and test conbin is actually set */
 		val = fastgetattr(htup,
 						  Anum_pg_constraint_conbin,
@@ -4676,7 +4670,13 @@ CheckNNConstraintFetch(Relation relation)
 			/* detoast and convert to cstring in caller's context */
 			char	   *s = TextDatumGetCString(val);
 
+			check[found].ccenforced = conform->conenforced;
+			check[found].ccvalid = conform->convalidated;
+			check[found].ccnoinherit = conform->connoinherit;
+			check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
+													  NameStr(conform->conname));
 			check[found].ccbin = MemoryContextStrdup(CacheMemoryContext, s);
+
 			pfree(s);
 			found++;
 		}
@@ -5643,7 +5643,7 @@ RelationGetIdentityKeyBitmap(Relation relation)
  * This should be called only for an index that is known to have an associated
  * exclusion constraint or primary key/unique constraint using WITHOUT
  * OVERLAPS.
-
+ *
  * It returns arrays (palloc'd in caller's context) of the exclusion operator
  * OIDs, their underlying functions' OIDs, and their strategy numbers in the
  * index's opclasses.  We cache all this information since it requires a fair
@@ -5670,9 +5670,9 @@ RelationGetExclusionInfo(Relation indexRelation,
 	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(indexRelation);
 
 	/* Allocate result space in caller context */
-	*operators = ops = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	*procs = funcs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	*strategies = strats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
+	*operators = ops = palloc_array(Oid, indnkeyatts);
+	*procs = funcs = palloc_array(Oid, indnkeyatts);
+	*strategies = strats = palloc_array(uint16, indnkeyatts);
 
 	/* Quick exit if we have the data cached already */
 	if (indexRelation->rd_exclstrats != NULL)
@@ -5763,9 +5763,9 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 	/* Save a copy of the results in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(indexRelation->rd_indexcxt);
-	indexRelation->rd_exclops = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	indexRelation->rd_exclprocs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	indexRelation->rd_exclstrats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
+	indexRelation->rd_exclops = palloc_array(Oid, indnkeyatts);
+	indexRelation->rd_exclprocs = palloc_array(Oid, indnkeyatts);
+	indexRelation->rd_exclstrats = palloc_array(uint16, indnkeyatts);
 	memcpy(indexRelation->rd_exclops, ops, sizeof(Oid) * indnkeyatts);
 	memcpy(indexRelation->rd_exclprocs, funcs, sizeof(Oid) * indnkeyatts);
 	memcpy(indexRelation->rd_exclstrats, strats, sizeof(uint16) * indnkeyatts);
@@ -5959,7 +5959,7 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 
 	/* Now save copy of the descriptor in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	relation->rd_pubdesc = palloc(sizeof(PublicationDesc));
+	relation->rd_pubdesc = palloc_object(PublicationDesc);
 	memcpy(relation->rd_pubdesc, pubdesc, sizeof(PublicationDesc));
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -5967,7 +5967,7 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 static bytea **
 CopyIndexAttOptions(bytea **srcopts, int natts)
 {
-	bytea	  **opts = palloc(sizeof(*opts) * natts);
+	bytea	  **opts = palloc_array(bytea *, natts);
 
 	for (int i = 0; i < natts; i++)
 	{
@@ -5999,7 +5999,7 @@ RelationGetIndexAttOptions(Relation relation, bool copy)
 		return copy ? CopyIndexAttOptions(opts, natts) : opts;
 
 	/* Get and parse opclass options. */
-	opts = palloc0(sizeof(*opts) * natts);
+	opts = palloc0_array(bytea *, natts);
 
 	for (i = 0; i < natts; i++)
 	{
@@ -6292,7 +6292,7 @@ load_relcache_init_file(bool shared)
 		/* mark not-null status */
 		if (has_not_null)
 		{
-			TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+			TupleConstr *constr = palloc0_object(TupleConstr);
 
 			constr->has_not_null = true;
 			rel->rd_att->constr = constr;
@@ -6991,5 +6991,5 @@ ResOwnerReleaseRelation(Datum res)
 	Assert(rel->rd_refcnt > 0);
 	rel->rd_refcnt -= 1;
 
-	RelationCloseCleanup((Relation) res);
+	RelationCloseCleanup((Relation) DatumGetPointer(res));
 }

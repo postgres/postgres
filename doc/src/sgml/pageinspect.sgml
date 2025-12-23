@@ -73,9 +73,9 @@
       passed as argument.  For example:
 <screen>
 test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
-    lsn    | checksum | flags  | lower | upper | special | pagesize | version | prune_xid
------------+----------+--------+-------+-------+---------+----------+---------+-----------
- 0/24A1B50 |        0 |      1 |   232 |   368 |    8192 |     8192 |       4 |         0
+    lsn     | checksum | flags  | lower | upper | special | pagesize | version | prune_xid
+------------+----------+--------+-------+-------+---------+----------+---------+-----------
+ 0/024A1B50 |        0 |      1 |   232 |   368 |    8192 |     8192 |       4 |         0
 </screen>
       The returned columns correspond to the fields in the
       <structname>PageHeaderData</structname> struct.
@@ -741,9 +741,9 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
       For example:
 <screen>
 test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
- lsn | nsn | rightlink | flags
------+-----+-----------+--------
- 0/1 | 0/0 |         1 | {leaf}
+    lsn     |    nsn     | rightlink | flags
+------------+------------+-----------+--------
+ 0/0B5FE088 | 0/00000000 |         1 | {leaf}
 (1 row)
 </screen>
      </para>
@@ -932,8 +932,8 @@ test=# SELECT * FROM hash_bitmap_info('con_hash_index', 2052);
 <screen>
 test=# SELECT magic, version, ntuples, ffactor, bsize, bmsize, bmshift,
 test-#     maxbucket, highmask, lowmask, ovflpoint, firstfree, nmaps, procid,
-test-#     regexp_replace(spares::text, '(,0)*}', '}') as spares,
-test-#     regexp_replace(mapp::text, '(,0)*}', '}') as mapp
+test-#     regexp_replace(spares::text, '(,0)*}', '}') AS spares,
+test-#     regexp_replace(mapp::text, '(,0)*}', '}') AS mapp
 test-# FROM hash_metapage_info(get_raw_page('con_hash_index', 0));
 -[ RECORD 1 ]-------------------------------------------------&zwsp;------------------------------
 magic     | 105121344

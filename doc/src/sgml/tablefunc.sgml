@@ -293,10 +293,10 @@ INSERT INTO ct(rowid, attribute, value) VALUES('test2','att4','val8');
 
 SELECT *
 FROM crosstab(
-  'select rowid, attribute, value
-   from ct
-   where attribute = ''att2'' or attribute = ''att3''
-   order by 1,2')
+  'SELECT rowid, attribute, value
+   FROM ct
+   WHERE attribute = ''att2'' OR attribute = ''att3''
+   ORDER BY 1, 2')
 AS ct(row_name text, category_1 text, category_2 text, category_3 text);
 
  row_name | category_1 | category_2 | category_3
@@ -371,10 +371,10 @@ CREATE TYPE tablefunc_crosstab_N AS (
 <programlisting>
 SELECT *
 FROM crosstab3(
-  'select rowid, attribute, value
-   from ct
-   where attribute = ''att2'' or attribute = ''att3''
-   order by 1,2');
+  'SELECT rowid, attribute, value
+   FROM ct
+   WHERE attribute = ''att2'' OR attribute = ''att3''
+   ORDER BY 1, 2');
 </programlisting>
     </para>
 
@@ -407,7 +407,7 @@ CREATE TYPE my_crosstab_float8_5_cols AS (
 );
 
 CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
-    RETURNS setof my_crosstab_float8_5_cols
+    RETURNS SETOF my_crosstab_float8_5_cols
     AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
 </programlisting>
       </para>
@@ -426,7 +426,7 @@ CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(
     OUT my_category_3 float8,
     OUT my_category_4 float8,
     OUT my_category_5 float8)
-  RETURNS setof record
+  RETURNS SETOF record
   AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
 </programlisting>
       </para>
@@ -572,18 +572,18 @@ row_name   extra   cat1   cat2   cat3   cat4
    <para>
     Here are two complete examples:
 <programlisting>
-create table sales(year int, month int, qty int);
-insert into sales values(2007, 1, 1000);
-insert into sales values(2007, 2, 1500);
-insert into sales values(2007, 7, 500);
-insert into sales values(2007, 11, 1500);
-insert into sales values(2007, 12, 2000);
-insert into sales values(2008, 1, 1000);
+CREATE TABLE sales (year int, month int, qty int);
+INSERT INTO sales VALUES (2007,  1, 1000);
+INSERT INTO sales VALUES (2007,  2, 1500);
+INSERT INTO sales VALUES (2007,  7,  500);
+INSERT INTO sales VALUES (2007, 11, 1500);
+INSERT INTO sales VALUES (2007, 12, 2000);
+INSERT INTO sales VALUES (2008,  1, 1000);
 
-select * from crosstab(
-  'select year, month, qty from sales order by 1',
-  'select m from generate_series(1,12) m'
-) as (
+SELECT * FROM crosstab(
+  'SELECT year, month, qty FROM sales ORDER BY 1',
+  'SELECT m FROM generate_series(1, 12) m'
+) AS (
   year int,
   "Jan" int,
   "Feb" int,

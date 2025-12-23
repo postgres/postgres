@@ -113,7 +113,7 @@ static const int8 hexlookup[128] = {
  * pg_strtoint16() will throw ereport() upon bad input format or overflow;
  * while pg_strtoint16_safe() instead returns such complaints in *escontext,
  * if it's an ErrorSaveContext.
-*
+ *
  * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
  * signed positive number.

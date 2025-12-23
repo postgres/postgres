@@ -540,7 +540,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 -------+------+----------------------------------------------------
      2 |    0 | DEALLOCATE $1
      2 |    0 | DEALLOCATE ALL
-     2 |    2 | SELECT $1 AS a
+     2 |    2 | PREPARE stat_select AS SELECT $1 AS a
      1 |    1 | SELECT $1 as a
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (5 rows)
@@ -702,7 +702,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |   13 | CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas
      1 |   10 | CREATE TABLE pgss_ctas AS SELECT a, $1 b FROM generate_series($2, $3) a
      1 |    0 | DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv
-     1 |    5 | FETCH FORWARD 5 pgss_cursor
+     1 |    5 | FETCH FORWARD $1 pgss_cursor
      1 |    7 | FETCH FORWARD ALL pgss_cursor
      1 |    1 | FETCH NEXT pgss_cursor
      1 |   13 | REFRESH MATERIALIZED VIEW pgss_matv

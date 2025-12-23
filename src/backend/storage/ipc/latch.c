@@ -187,9 +187,11 @@ WaitLatch(Latch *latch, int wakeEvents, long timeout,
 	if (!(wakeEvents & WL_LATCH_SET))
 		latch = NULL;
 	ModifyWaitEvent(LatchWaitSet, LatchWaitSetLatchPos, WL_LATCH_SET, latch);
-	ModifyWaitEvent(LatchWaitSet, LatchWaitSetPostmasterDeathPos,
-					(wakeEvents & (WL_EXIT_ON_PM_DEATH | WL_POSTMASTER_DEATH)),
-					NULL);
+
+	if (IsUnderPostmaster)
+		ModifyWaitEvent(LatchWaitSet, LatchWaitSetPostmasterDeathPos,
+						(wakeEvents & (WL_EXIT_ON_PM_DEATH | WL_POSTMASTER_DEATH)),
+						NULL);
 
 	if (WaitEventSetWait(LatchWaitSet,
 						 (wakeEvents & WL_TIMEOUT) ? timeout : -1,

@@ -78,12 +78,12 @@ newLexeme(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 posinsubst)
 		if (d->ntwrds == 0)
 		{
 			d->ntwrds = 16;
-			d->wrds = (TheLexeme *) palloc(sizeof(TheLexeme) * d->ntwrds);
+			d->wrds = palloc_array(TheLexeme, d->ntwrds);
 		}
 		else
 		{
 			d->ntwrds *= 2;
-			d->wrds = (TheLexeme *) repalloc(d->wrds, sizeof(TheLexeme) * d->ntwrds);
+			d->wrds = repalloc_array(d->wrds, TheLexeme, d->ntwrds);
 		}
 	}
 
@@ -95,7 +95,7 @@ newLexeme(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 posinsubst)
 	memcpy(ptr->lexeme, b, e - b);
 	ptr->lexeme[e - b] = '\0';
 
-	ptr->entries = (LexemeInfo *) palloc(sizeof(LexemeInfo));
+	ptr->entries = palloc_object(LexemeInfo);
 
 	ptr->entries->nextentry = NULL;
 	ptr->entries->idsubst = idsubst;
@@ -118,12 +118,12 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 			if (d->nsubst == 0)
 			{
 				d->nsubst = 16;
-				d->subst = (TheSubstitute *) palloc(sizeof(TheSubstitute) * d->nsubst);
+				d->subst = palloc_array(TheSubstitute, d->nsubst);
 			}
 			else
 			{
 				d->nsubst *= 2;
-				d->subst = (TheSubstitute *) repalloc(d->subst, sizeof(TheSubstitute) * d->nsubst);
+				d->subst = repalloc_array(d->subst, TheSubstitute, d->nsubst);
 			}
 		}
 	}
@@ -137,12 +137,12 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 		if (ntres == 0)
 		{
 			ntres = 2;
-			ptr->res = (TSLexeme *) palloc(sizeof(TSLexeme) * ntres);
+			ptr->res = palloc_array(TSLexeme, ntres);
 		}
 		else
 		{
 			ntres *= 2;
-			ptr->res = (TSLexeme *) repalloc(ptr->res, sizeof(TSLexeme) * ntres);
+			ptr->res = repalloc_array(ptr->res, TSLexeme, ntres);
 		}
 	}
 
@@ -167,17 +167,17 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 static void
 thesaurusRead(const char *filename, DictThesaurus *d)
 {
+	char	   *real_filename = get_tsearch_config_filename(filename, "ths");
 	tsearch_readline_state trst;
 	uint32		idsubst = 0;
 	bool		useasis = false;
 	char	   *line;
 
-	filename = get_tsearch_config_filename(filename, "ths");
-	if (!tsearch_readline_begin(&trst, filename))
+	if (!tsearch_readline_begin(&trst, real_filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open thesaurus file \"%s\": %m",
-						filename)));
+						real_filename)));
 
 	while ((line = tsearch_readline(&trst)) != NULL)
 	{
@@ -297,6 +297,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 	d->nsubst = idsubst;
 
 	tsearch_readline_end(&trst);
+	pfree(real_filename);
 }
 
 static TheLexeme *
@@ -308,7 +309,7 @@ addCompiledLexeme(TheLexeme *newwrds, int *nnw, int *tnm, TSLexeme *lexeme, Lexe
 		newwrds = (TheLexeme *) repalloc(newwrds, sizeof(TheLexeme) * *tnm);
 	}
 
-	newwrds[*nnw].entries = (LexemeInfo *) palloc(sizeof(LexemeInfo));
+	newwrds[*nnw].entries = palloc_object(LexemeInfo);
 
 	if (lexeme && lexeme->lexeme)
 	{
@@ -393,7 +394,7 @@ compileTheLexeme(DictThesaurus *d)
 	int			i,
 				nnw = 0,
 				tnm = 16;
-	TheLexeme  *newwrds = (TheLexeme *) palloc(sizeof(TheLexeme) * tnm),
+	TheLexeme  *newwrds = palloc_array(TheLexeme, tnm),
 			   *ptrwrds;
 
 	for (i = 0; i < d->nwrds; i++)
@@ -510,7 +511,7 @@ compileTheSubstitute(DictThesaurus *d)
 				   *inptr;
 		int			n = 2;
 
-		outptr = d->subst[i].res = (TSLexeme *) palloc(sizeof(TSLexeme) * n);
+		outptr = d->subst[i].res = palloc_array(TSLexeme, n);
 		outptr->lexeme = NULL;
 		inptr = rem;
 
@@ -602,7 +603,7 @@ thesaurus_init(PG_FUNCTION_ARGS)
 	List	   *namelist;
 	ListCell   *l;
 
-	d = (DictThesaurus *) palloc0(sizeof(DictThesaurus));
+	d = palloc0_object(DictThesaurus);
 
 	foreach(l, dictoptions)
 	{
@@ -755,7 +756,7 @@ copyTSLexeme(TheSubstitute *ts)
 	TSLexeme   *res;
 	uint16		i;
 
-	res = (TSLexeme *) palloc(sizeof(TSLexeme) * (ts->reslen + 1));
+	res = palloc_array(TSLexeme, ts->reslen + 1);
 	for (i = 0; i < ts->reslen; i++)
 	{
 		res[i] = ts->res[i];
@@ -833,7 +834,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 				ptr++;
 			}
 
-			infos = (LexemeInfo **) palloc(sizeof(LexemeInfo *) * nlex);
+			infos = palloc_array(LexemeInfo *, nlex);
 			for (i = 0; i < nlex; i++)
 				if ((infos[i] = findTheLexeme(d, basevar[i].lexeme)) == NULL)
 					break;

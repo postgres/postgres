@@ -378,7 +378,7 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	if (typmodout == InvalidOid)
 	{
 		/* Default behavior: just print the integer typmod with parens */
-		res = psprintf("%s(%d)", typname, (int) typmod);
+		res = psprintf("%s(%d)", typname, typmod);
 	}
 	else
 	{

@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "utils/fmgrprotos.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 #include "utils/timestamp.h"
 
@@ -149,7 +150,7 @@ gbt_intv_compress(PG_FUNCTION_ARGS)
 	{
 		char	   *r = (char *) palloc(2 * INTERVALSIZE);
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 
 		if (entry->leafkey)
 		{
@@ -189,10 +190,10 @@ gbt_intv_decompress(PG_FUNCTION_ARGS)
 
 	if (INTERVALSIZE != sizeof(Interval))
 	{
-		intvKEY    *r = palloc(sizeof(intvKEY));
+		intvKEY    *r = palloc_object(intvKEY);
 		char	   *key = DatumGetPointer(entry->key);
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		memcpy(&r->lower, key, INTERVALSIZE);
 		memcpy(&r->upper, key + INTERVALSIZE, INTERVALSIZE);
 

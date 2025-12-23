@@ -53,6 +53,16 @@ PostgreSQL documentation
    (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>)
    or <systemitem>SIGTERM</systemitem> signal.
   </para>
+
+  <para>
+   When <application>pg_recvlogical</application> receives
+   a <systemitem>SIGHUP</systemitem> signal, it closes the current output file
+   and opens a new one using the filename specified by
+   the <option>--file</option> option.  This allows us to rotate
+   the output file by first renaming the current file and then sending
+   a <systemitem>SIGHUP</systemitem> signal to
+   <application>pg_recvlogical</application>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -74,13 +84,13 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--slot</option> and <option>--dbname</option> are required
+        The <option>--slot</option> and <option>--dbname</option> options are required
         for this action.
        </para>
 
        <para>
-        The <option>--two-phase</option> and <option>--failover</option> options
-        can be specified with <option>--create-slot</option>.
+        The <option>--enable-two-phase</option> and <option>--enable-failover</option>
+        options can be specified with <option>--create-slot</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -94,7 +104,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--slot</option> is required for this action.
+        The <option>--slot</option> option is required for this action.
        </para>
       </listitem>
      </varlistentry>
@@ -111,8 +121,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--slot</option> and <option>--dbname</option>,
-        <option>--file</option> are required for this action.
+        The <option>--slot</option>, <option>--dbname</option>, and
+        <option>--file</option> options are required for this action.
        </para>
 
        <para>
@@ -166,7 +176,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--failover</option></term>
+      <term><option>--enable-failover</option></term>
       <listitem>
        <para>
         Enables the slot to be synchronized to the standbys. This option may
@@ -196,7 +206,7 @@ PostgreSQL documentation
        <para>
         Specifies how often <application>pg_recvlogical</application> should
         issue <function>fsync()</function> calls to ensure the output file is
-        safely flushed to disk.
+        safely flushed to disk. The default value is 10 seconds.
        </para>
 
        <para>
@@ -265,8 +275,10 @@ PostgreSQL documentation
       <listitem>
        <para>
         When creating a slot, use the specified logical decoding output
-        plugin. See <xref linkend="logicaldecoding"/>. This option has no
-        effect if the slot already exists.
+        plugin. See <xref linkend="logicaldecoding-output-plugin"/> for
+        information about the plugins <productname>PostgreSQL</productname>
+        provides. The default is <xref linkend="test-decoding"/>.
+        This option has no effect if the slot already exists.
        </para>
       </listitem>
      </varlistentry>
@@ -300,7 +312,8 @@ PostgreSQL documentation
 
      <varlistentry>
        <term><option>-t</option></term>
-       <term><option>--two-phase</option></term>
+       <term><option>--enable-two-phase</option></term>
+       <term><option>--two-phase</option> (deprecated)</term>
        <listitem>
        <para>
         Enables decoding of prepared transactions. This option may only be specified with

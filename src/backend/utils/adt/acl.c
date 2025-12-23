@@ -31,7 +31,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "common/hashfn.h"
@@ -135,6 +134,22 @@ static void RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue
 
 
 /*
+ * Test whether an identifier char can be left unquoted in ACLs.
+ *
+ * Formerly, we used isalnum() even on non-ASCII characters, resulting in
+ * unportable behavior.  To ensure dump compatibility with old versions,
+ * we now treat high-bit-set characters as always requiring quoting during
+ * putid(), but getid() will always accept them without quotes.
+ */
+static inline bool
+is_safe_acl_char(unsigned char c, bool is_getid)
+{
+	if (IS_HIGHBIT_SET(c))
+		return is_getid;
+	return isalnum(c) || c == '_';
+}
+
+/*
  * getid
  *		Consumes the first alphanumeric string (identifier) found in string
  *		's', ignoring any leading white space.  If it finds a double quote
@@ -159,21 +174,22 @@ getid(const char *s, char *n, Node *escontext)
 
 	while (isspace((unsigned char) *s))
 		s++;
-	/* This code had better match what putid() does, below */
 	for (;
 		 *s != '\0' &&
-		 (isalnum((unsigned char) *s) ||
-		  *s == '_' ||
-		  *s == '"' ||
-		  in_quotes);
+		 (in_quotes || *s == '"' || is_safe_acl_char(*s, true));
 		 s++)
 	{
 		if (*s == '"')
 		{
+			if (!in_quotes)
+			{
+				in_quotes = true;
+				continue;
+			}
 			/* safe to look at next char (could be '\0' though) */
 			if (*(s + 1) != '"')
 			{
-				in_quotes = !in_quotes;
+				in_quotes = false;
 				continue;
 			}
 			/* it's an escaped double quote; skip the escaping char */
@@ -207,10 +223,10 @@ putid(char *p, const char *s)
 	const char *src;
 	bool		safe = true;
 
+	/* Detect whether we need to use double quotes */
 	for (src = s; *src; src++)
 	{
-		/* This test had better match what getid() does, above */
-		if (!isalnum((unsigned char) *src) && *src != '_')
+		if (!is_safe_acl_char(*src, false))
 		{
 			safe = false;
 			break;
@@ -602,7 +618,7 @@ aclitemin(PG_FUNCTION_ARGS)
 	Node	   *escontext = fcinfo->context;
 	AclItem    *aip;
 
-	aip = (AclItem *) palloc(sizeof(AclItem));
+	aip = palloc_object(AclItem);
 
 	s = aclparse(s, aip, escontext);
 	if (s == NULL)
@@ -1645,7 +1661,7 @@ makeaclitem(PG_FUNCTION_ARGS)
 
 	priv = convert_any_priv_string(privtext, any_priv_map);
 
-	result = (AclItem *) palloc(sizeof(AclItem));
+	result = palloc_object(AclItem);
 
 	result->ai_grantee = grantee;
 	result->ai_grantor = grantor;
@@ -1805,7 +1821,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/* allocate memory for user context */
-		idx = (int *) palloc(sizeof(int[2]));
+		idx = palloc_array(int, 2);
 		idx[0] = 0;				/* ACL array item index */
 		idx[1] = -1;			/* privilege type counter */
 		funcctx->user_fctx = idx;
@@ -5143,7 +5159,7 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 	MemoryContext oldctx;
 	bloom_filter *bf = NULL;
 
-	Assert(OidIsValid(admin_of) == PointerIsValid(admin_role));
+	Assert(OidIsValid(admin_of) == (admin_role != NULL));
 	if (admin_role != NULL)
 		*admin_role = InvalidOid;
 

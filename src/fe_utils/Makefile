@@ -37,7 +37,8 @@ OBJS = \
 	query_utils.o \
 	recovery_gen.o \
 	simple_list.o \
-	string_utils.o
+	string_utils.o \
+	version.o
 
 ifeq ($(PORTNAME), win32)
 override CPPFLAGS += -DFD_SETSIZE=1024

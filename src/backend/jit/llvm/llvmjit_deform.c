@@ -156,12 +156,12 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 	b = LLVMCreateBuilderInContext(lc);
 
-	attcheckattnoblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attstartblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attisnullblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attcheckalignblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attalignblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attstoreblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	attcheckattnoblocks = palloc_array(LLVMBasicBlockRef, natts);
+	attstartblocks = palloc_array(LLVMBasicBlockRef, natts);
+	attisnullblocks = palloc_array(LLVMBasicBlockRef, natts);
+	attcheckalignblocks = palloc_array(LLVMBasicBlockRef, natts);
+	attalignblocks = palloc_array(LLVMBasicBlockRef, natts);
+	attstoreblocks = palloc_array(LLVMBasicBlockRef, natts);
 
 	known_alignment = 0;
 
@@ -479,8 +479,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 						   l_gep(b, LLVMInt8TypeInContext(lc), v_tts_nulls, &l_attno, 1, ""));
 			/* store zero datum */
 			LLVMBuildStore(b,
-						   l_sizet_const(0),
-						   l_gep(b, TypeSizeT, v_tts_values, &l_attno, 1, ""));
+						   l_datum_const(0),
+						   l_gep(b, TypeDatum, v_tts_values, &l_attno, 1, ""));
 
 			LLVMBuildBr(b, b_next);
 			attguaranteedalign = false;
@@ -644,7 +644,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		}
 
 		/* compute address to store value at */
-		v_resultp = l_gep(b, TypeSizeT, v_tts_values, &l_attno, 1, "");
+		v_resultp = l_gep(b, TypeDatum, v_tts_values, &l_attno, 1, "");
 
 		/* store null-byte (false) */
 		LLVMBuildStore(b, l_int8_const(lc, 0),
@@ -663,7 +663,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			v_tmp_loaddata =
 				LLVMBuildPointerCast(b, v_attdatap, vartypep, "");
 			v_tmp_loaddata = l_load(b, vartype, v_tmp_loaddata, "attr_byval");
-			v_tmp_loaddata = LLVMBuildZExt(b, v_tmp_loaddata, TypeSizeT, "");
+			v_tmp_loaddata = LLVMBuildSExt(b, v_tmp_loaddata, TypeDatum, "");
 
 			LLVMBuildStore(b, v_tmp_loaddata, v_resultp);
 		}
@@ -675,7 +675,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			v_tmp_loaddata =
 				LLVMBuildPtrToInt(b,
 								  v_attdatap,
-								  TypeSizeT,
+								  TypeDatum,
 								  "attr_ptr");
 			LLVMBuildStore(b, v_tmp_loaddata, v_resultp);
 		}

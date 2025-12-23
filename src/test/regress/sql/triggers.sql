@@ -1577,6 +1577,19 @@ drop table parted;
 drop function parted_trigfunc();
 
 --
+-- Constraint triggers
+--
+create constraint trigger crtr
+  after insert on foo not valid
+  for each row execute procedure foo ();
+create constraint trigger crtr
+  after insert on foo no inherit
+  for each row execute procedure foo ();
+create constraint trigger crtr
+  after insert on foo not enforced
+  for each row execute procedure foo ();
+
+--
 -- Constraint triggers and partitioned tables
 create table parted_constr_ancestor (a int, b text)
   partition by range (b);
@@ -1591,7 +1604,7 @@ create constraint trigger parted_trig after insert on parted_constr_ancestor
   deferrable
   for each row execute procedure trigger_notice_ab();
 create constraint trigger parted_trig_two after insert on parted_constr
-  deferrable initially deferred
+  deferrable initially deferred enforced
   for each row when (bark(new.b) AND new.a % 2 = 1)
   execute procedure trigger_notice_ab();
 
@@ -1922,6 +1935,11 @@ BBB	42
 CCC	42
 \.
 
+-- check detach/reattach behavior; statement triggers with transition tables
+-- should not prevent a table from becoming a partition again
+alter table parent detach partition child1;
+alter table parent attach partition child1 for values in ('AAA');
+
 -- DML affecting parent sees tuples collected from children even if
 -- there is no transition table trigger on the children
 drop trigger child1_insert_trig on child1;
@@ -2140,6 +2158,11 @@ create index on parent(b);
 copy parent (a, b) from stdin;
 DDD	42
 \.
+
+-- check disinherit/reinherit behavior; statement triggers with transition
+-- tables should not prevent a table from becoming an inheritance child again
+alter table child1 no inherit parent;
+alter table child1 inherit parent;
 
 -- DML affecting parent sees tuples collected from children even if
 -- there is no transition table trigger on the children
@@ -2701,8 +2724,8 @@ drop function f();
 -- Test who runs deferred trigger functions
 
 -- setup
-create role regress_groot;
-create role regress_outis;
+create role regress_caller;
+create role regress_fn_owner;
 create function whoami() returns trigger language plpgsql
 as $$
 begin
@@ -2710,7 +2733,7 @@ begin
   return null;
 end;
 $$;
-alter function whoami() owner to regress_outis;
+alter function whoami() owner to regress_fn_owner;
 
 create table defer_trig (id integer);
 grant insert on defer_trig to public;
@@ -2721,10 +2744,10 @@ create constraint trigger whoami after insert on defer_trig
 
 -- deferred triggers must run as the user that queued the trigger
 begin;
-set role regress_groot;
+set role regress_caller;
 insert into defer_trig values (1);
 reset role;
-set role regress_outis;
+set role regress_fn_owner;
 insert into defer_trig values (2);
 reset role;
 commit;
@@ -2732,7 +2755,7 @@ commit;
 -- security definer functions override the user who queued the trigger
 alter function whoami() security definer;
 begin;
-set role regress_groot;
+set role regress_caller;
 insert into defer_trig values (3);
 reset role;
 commit;
@@ -2749,7 +2772,7 @@ end;
 $$;
 
 begin;
-set role regress_groot;
+set role regress_caller;
 insert into defer_trig values (4);
 reset role;
 commit;  -- error expected
@@ -2758,5 +2781,5 @@ select current_user = session_user;
 -- clean up
 drop table defer_trig;
 drop function whoami();
-drop role regress_outis;
-drop role regress_groot;
+drop role regress_fn_owner;
+drop role regress_caller;

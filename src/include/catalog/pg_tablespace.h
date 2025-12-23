@@ -54,4 +54,6 @@ DECLARE_UNIQUE_INDEX(pg_tablespace_spcname_index, 2698, TablespaceNameIndexId, p
 
 MAKE_SYSCACHE(TABLESPACEOID, pg_tablespace_oid_index, 4);
 
+extern char *get_tablespace_location(Oid tablespaceOid);
+
 #endif							/* PG_TABLESPACE_H */

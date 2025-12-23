@@ -20,6 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -141,7 +142,8 @@ ProcedureCreate(const char *procedureName,
 	TupleDesc	tupDesc;
 	bool		is_update;
 	ObjectAddress myself,
-				referenced;
+				referenced,
+				temp_object;
 	char	   *detailmsg;
 	int			i;
 	ObjectAddresses *addrs;
@@ -149,7 +151,7 @@ ProcedureCreate(const char *procedureName,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(prosrc));
+	Assert(prosrc);
 
 	parameterCount = parameterTypes->dim1;
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
@@ -658,17 +660,40 @@ ProcedureCreate(const char *procedureName,
 		add_exact_object_address(&referenced, addrs);
 	}
 
-	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
-	free_object_addresses(addrs);
-
-	/* dependency on SQL routine body */
+	/* dependencies appearing in new-style SQL routine body */
 	if (languageObjectId == SQLlanguageId && prosqlbody)
-		recordDependencyOnExpr(&myself, prosqlbody, NIL, DEPENDENCY_NORMAL);
+		collectDependenciesOfExpr(addrs, prosqlbody, NIL);
 
 	/* dependency on parameter default expressions */
 	if (parameterDefaults)
-		recordDependencyOnExpr(&myself, (Node *) parameterDefaults,
-							   NIL, DEPENDENCY_NORMAL);
+		collectDependenciesOfExpr(addrs, (Node *) parameterDefaults, NIL);
+
+	/*
+	 * Now that we have all the normal dependencies, thumb through them and
+	 * warn if any are to temporary objects.  This informs the user if their
+	 * supposedly non-temp function will silently go away at session exit, due
+	 * to a dependency on a temp object.  However, do not complain when a
+	 * function created in our own pg_temp namespace refers to other objects
+	 * in that namespace, since then they'll have similar lifespans anyway.
+	 */
+	if (find_temp_object(addrs, isTempNamespace(procNamespace), &temp_object))
+		ereport(NOTICE,
+				(errmsg("function \"%s\" will be effectively temporary",
+						procedureName),
+				 errdetail("It depends on temporary %s.",
+						   getObjectDescription(&temp_object, false))));
+
+	/*
+	 * Now record all normal dependencies at once.  This will also remove any
+	 * duplicates in the list.  (Role and extension dependencies are handled
+	 * separately below.  Role dependencies would have to be separate anyway
+	 * since they are shared dependencies.  An extension dependency could be
+	 * folded into the addrs list, but pg_depend.c doesn't make that easy, and
+	 * it won't duplicate anything we've collected so far anyway.)
+	 */
+	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+
+	free_object_addresses(addrs);
 
 	/* dependency on owner */
 	if (!is_update)
@@ -1212,6 +1237,6 @@ oid_array_to_list(Datum datum)
 
 	deconstruct_array_builtin(array, OIDOID, &values, NULL, &nelems);
 	for (i = 0; i < nelems; i++)
-		result = lappend_oid(result, values[i]);
+		result = lappend_oid(result, DatumGetObjectId(values[i]));
 	return result;
 }

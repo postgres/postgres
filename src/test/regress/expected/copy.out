@@ -81,6 +81,29 @@ copy copytest4 to stdout (header);
 c1	colname with tab: \t
 1	a
 2	b
+-- test multi-line header line feature
+create temp table copytest5 (c1 int);
+copy copytest5 from stdin (format csv, header 2);
+copy copytest5 to stdout (header);
+c1
+1
+2
+truncate copytest5;
+copy copytest5 from stdin (format csv, header 4);
+select count(*) from copytest5;
+ count 
+-------
+     0
+(1 row)
+
+truncate copytest5;
+copy copytest5 from stdin (format csv, header 5);
+select count(*) from copytest5;
+ count 
+-------
+     0
+(1 row)
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,
@@ -224,7 +247,7 @@ alter table header_copytest add column c text;
 copy header_copytest to stdout with (header match);
 ERROR:  cannot use "match" with HEADER in COPY TO
 copy header_copytest from stdin with (header wrong_choice);
-ERROR:  header requires a Boolean value or "match"
+ERROR:  header requires a Boolean value, a non-negative integer, or the string "match"
 -- works
 copy header_copytest from stdin with (header match);
 copy header_copytest (c, a, b) from stdin with (header match);
@@ -350,3 +373,23 @@ COPY copytest_mv(id) TO stdout WITH (header);
 id
 1
 DROP MATERIALIZED VIEW copytest_mv;
+-- Tests for COPY TO with partitioned tables.
+-- The child table pp_2 has a different column order than the root table pp.
+-- Check if COPY TO exports tuples as the root table's column order.
+CREATE TABLE pp (id int,val int) PARTITION BY RANGE (id);
+CREATE TABLE pp_1 (val int, id int) PARTITION BY RANGE (id);
+CREATE TABLE pp_2 (id int, val int) PARTITION BY RANGE (id);
+ALTER TABLE pp ATTACH PARTITION pp_1 FOR VALUES FROM (1) TO (5);
+ALTER TABLE pp ATTACH PARTITION pp_2 FOR VALUES FROM (5) TO (10);
+CREATE TABLE pp_15 PARTITION OF pp_1 FOR VALUES FROM (1) TO (5);
+CREATE TABLE pp_510 PARTITION OF pp_2 FOR VALUES FROM (5) TO (10);
+INSERT INTO pp SELECT g, 10 + g FROM generate_series(1,6) g;
+COPY pp TO stdout(header);
+id	val
+1	11
+2	12
+3	13
+4	14
+5	15
+6	16
+DROP TABLE PP;

@@ -57,7 +57,8 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
    to compute and return value(s) based on each row actually updated.
    Any expression using the table's columns, and/or columns of other
    tables mentioned in <literal>FROM</literal>, can be computed.
-   The new (post-update) values of the table's columns are used.
+   By default, the new (post-update) values of the table's columns are used,
+   but it is also possible to request the old (pre-update) values.
    The syntax of the <literal>RETURNING</literal> list is identical to that of the
    output list of <command>SELECT</command>.
   </para>

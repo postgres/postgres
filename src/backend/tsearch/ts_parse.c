@@ -99,7 +99,7 @@ LPLRemoveHead(ListParsedLex *list)
 static void
 LexizeAddLemm(LexizeData *ld, int type, char *lemm, int lenlemm)
 {
-	ParsedLex  *newpl = (ParsedLex *) palloc(sizeof(ParsedLex));
+	ParsedLex  *newpl = palloc_object(ParsedLex);
 
 	newpl->type = type;
 	newpl->lemm = lemm;
@@ -218,7 +218,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 					 * position and go to multiword mode
 					 */
 
-					ld->curDictId = DatumGetObjectId(map->dictIds[i]);
+					ld->curDictId = map->dictIds[i];
 					ld->posDict = i + 1;
 					ld->curSub = curVal->next;
 					if (res)
@@ -275,7 +275,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 				 * dictionaries ?
 				 */
 				for (i = 0; i < map->len && !dictExists; i++)
-					if (ld->curDictId == DatumGetObjectId(map->dictIds[i]))
+					if (ld->curDictId == map->dictIds[i])
 						dictExists = true;
 
 				if (!dictExists)

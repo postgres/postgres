@@ -218,7 +218,8 @@ select '(0,0)'::point in ('(0,0,0,0)'::box, point(0,0));
 ERROR:  operator does not exist: point = box
 LINE 1: select '(0,0)'::point in ('(0,0,0,0)'::box, point(0,0));
                               ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 --
 -- Tests for ScalarArrayOpExpr with a hashfn
 --

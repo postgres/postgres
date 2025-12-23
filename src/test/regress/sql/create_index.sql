@@ -635,7 +635,7 @@ DROP TABLE cwi_test;
 CREATE TABLE syscol_table (a INT);
 
 -- System columns cannot be indexed
-CREATE INDEX ON syscolcol_table (ctid);
+CREATE INDEX ON syscol_table (ctid);
 
 -- nor used in expressions
 CREATE INDEX ON syscol_table ((ctid >= '(1000,0)'));

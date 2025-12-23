@@ -4,19 +4,26 @@ MODULE_big = injection_points
 OBJS = \
 	$(WIN32RES) \
 	injection_points.o \
-	injection_stats.o \
-	injection_stats_fixed.o \
 	regress_injection.o
 EXTENSION = injection_points
 DATA = injection_points--1.0.sql
 PGFILEDESC = "injection_points - facility for injection points"
 
-REGRESS = injection_points hashagg reindex_conc
+REGRESS = injection_points hashagg reindex_conc vacuum
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
-ISOLATION = basic inplace syscache-update-pruned
+ISOLATION = basic \
+	    inplace \
+	    syscache-update-pruned \
+	    heap_lock_update
 
-TAP_TESTS = 1
+# Temporarily disabled because of flakiness
+#ISOLATION =+
+#	    index-concurrently-upsert \
+#	    index-concurrently-upsert-predicate \
+#	    reindex-concurrently-upsert \
+#	    reindex-concurrently-upsert-on-constraint \
+#	    reindex-concurrently-upsert-partitioned
 
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1

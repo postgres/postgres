@@ -192,7 +192,7 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 
 		*result = 0.0;
 
-		if (DirectFunctionCall2(numeric_gt, NumericGetDatum(ds), NumericGetDatum(nul)))
+		if (DatumGetBool(DirectFunctionCall2(numeric_gt, NumericGetDatum(ds), NumericGetDatum(nul))))
 		{
 			*result += FLT_MIN;
 			os = DatumGetNumeric(DirectFunctionCall2(numeric_div,

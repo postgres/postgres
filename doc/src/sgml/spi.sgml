@@ -846,7 +846,7 @@ int SPI_execute_extended(const char *<parameter>command</parameter>,
 <synopsis>
 int SPI_execute_with_args(const char *<parameter>command</parameter>,
                           int <parameter>nargs</parameter>, Oid *<parameter>argtypes</parameter>,
-                          Datum *<parameter>values</parameter>, const char *<parameter>nulls</parameter>,
+                          const Datum *<parameter>values</parameter>, const char *<parameter>nulls</parameter>,
                           bool <parameter>read_only</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
@@ -1671,7 +1671,7 @@ bool SPI_is_cursor_plan(SPIPlanPtr <parameter>plan</parameter>)
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
+int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, const Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
                      bool <parameter>read_only</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
@@ -2317,7 +2317,7 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
 Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
                                  const char *<parameter>command</parameter>,
                                  int <parameter>nargs</parameter>, Oid *<parameter>argtypes</parameter>,
-                                 Datum *<parameter>values</parameter>, const char *<parameter>nulls</parameter>,
+                                 const Datum *<parameter>values</parameter>, const char *<parameter>nulls</parameter>,
                                  bool <parameter>read_only</parameter>, int <parameter>cursorOptions</parameter>)
 </synopsis>
  </refsynopsisdiv>

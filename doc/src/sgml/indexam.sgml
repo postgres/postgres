@@ -147,7 +147,7 @@ typedef struct IndexAmRoutine
     ambuild_function ambuild;
     ambuildempty_function ambuildempty;
     aminsert_function aminsert;
-    aminsertcleanup_function aminsertcleanup;
+    aminsertcleanup_function aminsertcleanup;   /* can be NULL */
     ambulkdelete_function ambulkdelete;
     amvacuumcleanup_function amvacuumcleanup;
     amcanreturn_function amcanreturn;   /* can be NULL */

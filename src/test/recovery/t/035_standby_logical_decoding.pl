@@ -8,6 +8,7 @@ use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
+use Time::HiRes qw(usleep);
 use Test::More;
 
 if ($ENV{enable_injection_points} ne 'yes')
@@ -393,8 +394,9 @@ foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 
 # Confirm that the server startup fails with an expected error
 my $logfile = slurp_file($node_standby->logfile());
-ok( $logfile =~
-	  qr/FATAL: .* logical replication slot ".*" exists on the standby, but "hot_standby" = "off"/,
+like(
+	$logfile,
+	qr/FATAL: .* logical replication slot ".*" exists on the standby, but "hot_standby" = "off"/,
 	"the standby ends with an error during startup because hot_standby was disabled"
 );
 $node_standby->adjust_conf('postgresql.conf', 'hot_standby', 'on');
@@ -486,8 +488,9 @@ $node_primary->wait_for_replay_catchup($node_standby);
 ($result, $stdout, $stderr) = $node_standby->psql('otherdb',
 	"SELECT lsn FROM pg_logical_slot_peek_changes('behaves_ok_activeslot', NULL, NULL) ORDER BY lsn DESC LIMIT 1;"
 );
-ok( $stderr =~
-	  m/replication slot "behaves_ok_activeslot" was not created in this database/,
+like(
+	$stderr,
+	qr/replication slot "behaves_ok_activeslot" was not created in this database/,
 	"replaying logical slot from another database fails");
 
 ##################################################
@@ -619,11 +622,12 @@ check_pg_recvlogical_stderr($handle,
 	'postgres',
 	qq[select pg_copy_logical_replication_slot('vacuum_full_inactiveslot', 'vacuum_full_inactiveslot_copy');],
 	replication => 'database');
-ok( $stderr =~
-	  /ERROR:  cannot copy invalidated replication slot "vacuum_full_inactiveslot"/,
+like(
+	$stderr,
+	qr/ERROR:  cannot copy invalidated replication slot "vacuum_full_inactiveslot"/,
 	"invalidated slot cannot be copied");
 
-# Turn hot_standby_feedback back on
+# Set hot_standby_feedback to on
 change_hot_standby_feedback_and_wait_for_xmins(1, 1);
 
 ##################################################
@@ -754,12 +758,12 @@ wait_until_vacuum_can_remove(
 
 # message should not be issued
 ok( !$node_standby->log_contains(
-		"invalidating obsolete slot \"no_conflict_inactiveslot\"", $logstart),
+		"invalidating obsolete replication slot \"no_conflict_inactiveslot\"", $logstart),
 	'inactiveslot slot invalidation is not logged with vacuum on conflict_test'
 );
 
 ok( !$node_standby->log_contains(
-		"invalidating obsolete slot \"no_conflict_activeslot\"", $logstart),
+		"invalidating obsolete replication slot \"no_conflict_activeslot\"", $logstart),
 	'activeslot slot invalidation is not logged with vacuum on conflict_test'
 );
 
@@ -874,9 +878,10 @@ check_slots_conflict_reason('wal_level_', 'wal_level_insufficient');
 
 $handle =
   make_slot_active($node_standby, 'wal_level_', 0, \$stdout, \$stderr);
-# We are not able to read from the slot as it requires wal_level >= logical on the primary server
+# We are not able to read from the slot as it requires effective_wal_level >= logical on
+# the primary server
 check_pg_recvlogical_stderr($handle,
-	"logical decoding on standby requires \"wal_level\" >= \"logical\" on the primary"
+	"logical decoding on standby requires \"effective_wal_level\" >= \"logical\" on the primary"
 );
 
 # Restore primary wal_level

@@ -22,6 +22,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
@@ -320,13 +321,63 @@ performDeletion(const ObjectAddress *object,
 }
 
 /*
- * performMultipleDeletions: Similar to performDeletion, but act on multiple
+ * performDeletionCheck: Check whether a specific object can be safely deleted.
+ * This function does not perform any deletion; instead, it raises an error
+ * if the object cannot be deleted due to existing dependencies.
+ *
+ * It can be useful when you need to delete some objects later.  See comments
+ * in performDeletion too.
+ * The behavior must be specified as DROP_RESTRICT.
+ */
+void
+performDeletionCheck(const ObjectAddress *object,
+					 DropBehavior behavior, int flags)
+{
+	Relation	depRel;
+	ObjectAddresses *targetObjects;
+
+	Assert(behavior == DROP_RESTRICT);
+
+	depRel = table_open(DependRelationId, RowExclusiveLock);
+
+	AcquireDeletionLock(object, 0);
+
+	/*
+	 * Construct a list of objects we want to delete later (ie, the given
+	 * object plus everything directly or indirectly dependent on it).
+	 */
+	targetObjects = new_object_addresses();
+
+	findDependentObjects(object,
+						 DEPFLAG_ORIGINAL,
+						 flags,
+						 NULL,	/* empty stack */
+						 targetObjects,
+						 NULL,	/* no pendingObjects */
+						 &depRel);
+
+	/*
+	 * Check if deletion is allowed.
+	 */
+	reportDependentObjects(targetObjects,
+						   behavior,
+						   flags,
+						   object);
+
+	/* And clean up */
+	free_object_addresses(targetObjects);
+
+	table_close(depRel, RowExclusiveLock);
+}
+
+/*
+ * performMultipleDeletions: Similar to performDeletion, but acts on multiple
  * objects at once.
  *
  * The main difference from issuing multiple performDeletion calls is that the
  * list of objects that would be implicitly dropped, for each object to be
  * dropped, is the union of the implicit-object list for all objects.  This
- * makes each check be more relaxed.
+ * makes each check more relaxed.
  */
 void
 performMultipleDeletions(const ObjectAddresses *objects,
@@ -800,8 +851,7 @@ findDependentObjects(const ObjectAddress *object,
 	 * regression testing.)
 	 */
 	maxDependentObjects = 128;	/* arbitrary initial allocation */
-	dependentObjects = (ObjectAddressAndFlags *)
-		palloc(maxDependentObjects * sizeof(ObjectAddressAndFlags));
+	dependentObjects = palloc_array(ObjectAddressAndFlags, maxDependentObjects);
 	numDependentObjects = 0;
 
 	ScanKeyInit(&key[0],
@@ -1554,25 +1604,57 @@ recordDependencyOnExpr(const ObjectAddress *depender,
 					   Node *expr, List *rtable,
 					   DependencyType behavior)
 {
+	ObjectAddresses *addrs;
+
+	addrs = new_object_addresses();
+
+	/* Collect all dependencies from the expression */
+	collectDependenciesOfExpr(addrs, expr, rtable);
+
+	/* Remove duplicates */
+	eliminate_duplicate_dependencies(addrs);
+
+	/* And record 'em */
+	recordMultipleDependencies(depender,
+							   addrs->refs, addrs->numrefs,
+							   behavior);
+
+	free_object_addresses(addrs);
+}
+
+/*
+ * collectDependenciesOfExpr - collect expression dependencies
+ *
+ * This function analyzes an expression or query in node-tree form to
+ * find all the objects it refers to (tables, columns, operators,
+ * functions, etc.) and adds them to the provided ObjectAddresses
+ * structure. Unlike recordDependencyOnExpr, this function does not
+ * immediately record the dependencies, allowing the caller to add to,
+ * filter, or modify the collected dependencies before recording them.
+ *
+ * rtable is the rangetable to be used to interpret Vars with varlevelsup=0.
+ * It can be NIL if no such variables are expected.
+ *
+ * Note: the returned list may well contain duplicates.  The caller should
+ * de-duplicate before recording the dependencies.  Within this file, callers
+ * must call eliminate_duplicate_dependencies().  External callers typically
+ * go through record_object_address_dependencies() which will see to that.
+ * This choice allows collecting dependencies from multiple sources without
+ * redundant de-duplication work.
+ */
+void
+collectDependenciesOfExpr(ObjectAddresses *addrs,
+						  Node *expr, List *rtable)
+{
 	find_expr_references_context context;
 
-	context.addrs = new_object_addresses();
+	context.addrs = addrs;
 
 	/* Set up interpretation for Vars at varlevelsup = 0 */
 	context.rtables = list_make1(rtable);
 
 	/* Scan the expression tree for referenceable objects */
 	find_expr_references_walker(expr, &context);
-
-	/* Remove any duplicates */
-	eliminate_duplicate_dependencies(context.addrs);
-
-	/* And record 'em */
-	recordMultipleDependencies(depender,
-							   context.addrs->refs, context.addrs->numrefs,
-							   behavior);
-
-	free_object_addresses(context.addrs);
 }
 
 /*
@@ -1849,6 +1931,17 @@ find_expr_references_walker(Node *node,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("constant of the type %s cannot be used here",
 									"regrole")));
+					break;
+
+					/*
+					 * Dependencies for regdatabase should be shared among all
+					 * databases, so explicitly inhibit to have dependencies.
+					 */
+				case REGDATABASEOID:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("constant of the type %s cannot be used here",
+									"regdatabase")));
 					break;
 			}
 		}
@@ -2392,6 +2485,75 @@ process_function_rte_ref(RangeTblEntry *rte, AttrNumber attnum,
 }
 
 /*
+ * find_temp_object - search an array of dependency references for temp objects
+ *
+ * Scan an ObjectAddresses array for references to temporary objects (objects
+ * in temporary namespaces), ignoring those in our own temp namespace if
+ * local_temp_okay is true.  If one is found, return true after storing its
+ * address in *foundobj.
+ *
+ * Current callers only use this to deliver helpful notices, so reporting
+ * one such object seems sufficient.  We return the first one, which should
+ * be a stable result for a given query since it depends only on the order
+ * in which this module searches query trees.  (However, it's important to
+ * call this before de-duplicating the objects, else OID order would affect
+ * the result.)
+ */
+bool
+find_temp_object(const ObjectAddresses *addrs, bool local_temp_okay,
+				 ObjectAddress *foundobj)
+{
+	for (int i = 0; i < addrs->numrefs; i++)
+	{
+		const ObjectAddress *thisobj = addrs->refs + i;
+		Oid			objnamespace;
+
+		/*
+		 * Use get_object_namespace() to see if this object belongs to a
+		 * schema.  If not, we can skip it.
+		 */
+		objnamespace = get_object_namespace(thisobj);
+
+		/*
+		 * If the object is in a temporary namespace, complain, except if
+		 * local_temp_okay and it's our own temp namespace.
+		 */
+		if (OidIsValid(objnamespace) && isAnyTempNamespace(objnamespace) &&
+			!(local_temp_okay && isTempNamespace(objnamespace)))
+		{
+			*foundobj = *thisobj;
+			return true;
+		}
+	}
+	return false;
+}
+
+/*
+ * query_uses_temp_object - convenience wrapper for find_temp_object
+ *
+ * If the Query includes any use of a temporary object, fill *temp_object
+ * with the address of one such object and return true.
+ */
+bool
+query_uses_temp_object(Query *query, ObjectAddress *temp_object)
+{
+	bool		result;
+	ObjectAddresses *addrs;
+
+	addrs = new_object_addresses();
+
+	/* Collect all dependencies from the Query */
+	collectDependenciesOfExpr(addrs, (Node *) query, NIL);
+
+	/* Look for one that is temp */
+	result = find_temp_object(addrs, false, temp_object);
+
+	free_object_addresses(addrs);
+
+	return result;
+}
+
+/*
  * Given an array of dependency references, eliminate any duplicates.
  */
 static void
@@ -2503,12 +2665,11 @@ new_object_addresses(void)
 {
 	ObjectAddresses *addrs;
 
-	addrs = palloc(sizeof(ObjectAddresses));
+	addrs = palloc_object(ObjectAddresses);
 
 	addrs->numrefs = 0;
 	addrs->maxrefs = 32;
-	addrs->refs = (ObjectAddress *)
-		palloc(addrs->maxrefs * sizeof(ObjectAddress));
+	addrs->refs = palloc_array(ObjectAddress, addrs->maxrefs);
 	addrs->extras = NULL;		/* until/unless needed */
 
 	return addrs;

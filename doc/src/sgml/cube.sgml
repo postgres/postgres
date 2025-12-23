@@ -249,7 +249,7 @@
    For example, the nearest neighbor of the 3-D point (0.5, 0.5, 0.5)
    could be found efficiently with:
 <programlisting>
-SELECT c FROM test ORDER BY c &lt;-&gt; cube(array[0.5,0.5,0.5]) LIMIT 1;
+SELECT c FROM test ORDER BY c &lt;-&gt; cube(ARRAY[0.5, 0.5, 0.5]) LIMIT 1;
 </programlisting>
   </para>
 
@@ -540,7 +540,7 @@ SELECT c FROM test ORDER BY c ~&gt; 3 DESC LIMIT 5;
    This union:
   </para>
 <programlisting>
-select cube_union('(0,5,2),(2,3,1)', '0');
+SELECT cube_union('(0,5,2),(2,3,1)', '0');
 cube_union
 -------------------
 (0, 0, 0),(2, 5, 2)
@@ -552,7 +552,7 @@ cube_union
    </para>
 
 <programlisting>
-select cube_inter('(0,-1),(1,1)', '(-2),(2)');
+SELECT cube_inter('(0,-1),(1,1)', '(-2),(2)');
 cube_inter
 -------------
 (0, 0),(1, 0)
@@ -579,7 +579,7 @@ cube_inter('(0,-1),(1,1)','(-2,0),(2,0)');
    </para>
 
 <programlisting>
-select cube_contains('(0,0),(1,1)', '0.5,0.5');
+SELECT cube_contains('(0,0),(1,1)', '0.5,0.5');
 cube_contains
 --------------
 t

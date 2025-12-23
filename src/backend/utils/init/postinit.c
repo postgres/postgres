@@ -417,12 +417,11 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datctype);
 	ctype = TextDatumGetCString(datum);
 
-	if (pg_perm_setlocale(LC_COLLATE, collate) == NULL)
-		ereport(FATAL,
-				(errmsg("database locale is incompatible with operating system"),
-				 errdetail("The database was initialized with LC_COLLATE \"%s\", "
-						   " which is not recognized by setlocale().", collate),
-				 errhint("Recreate the database with another locale or install the missing locale.")));
+	/*
+	 * Historcally, we set LC_COLLATE from datcollate, as well. That's no
+	 * longer necessary because all collation behavior is handled through
+	 * pg_locale_t.
+	 */
 
 	if (pg_perm_setlocale(LC_CTYPE, ctype) == NULL)
 		ereport(FATAL,
@@ -430,10 +429,6 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 				 errdetail("The database was initialized with LC_CTYPE \"%s\", "
 						   " which is not recognized by setlocale().", ctype),
 				 errhint("Recreate the database with another locale or install the missing locale.")));
-
-	if (strcmp(ctype, "C") == 0 ||
-		strcmp(ctype, "POSIX") == 0)
-		database_ctype_is_c = true;
 
 	init_database_collation();
 
@@ -657,6 +652,9 @@ BaseInit(void)
 
 	/* Initialize lock manager's local structs */
 	InitLockManagerAccess();
+
+	/* Initialize logical info WAL logging state */
+	InitializeProcessXLogLogicalInfo();
 
 	/*
 	 * Initialize replication slots after pgstat. The exit hook might need to
@@ -1265,7 +1263,7 @@ process_startup_options(Port *port, bool am_superuser)
 
 		maxac = 2 + (strlen(port->cmdline_options) + 1) / 2;
 
-		av = (char **) palloc(maxac * sizeof(char *));
+		av = palloc_array(char *, maxac);
 		ac = 0;
 
 		av[ac++] = "postgres";

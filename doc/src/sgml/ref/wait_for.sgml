@@ -1,0 +1,234 @@
+<!--
+doc/src/sgml/ref/wait_for.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-wait-for">
+ <indexterm zone="sql-wait-for">
+  <primary>WAIT FOR</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>WAIT FOR</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>WAIT FOR</refname>
+  <refpurpose>wait for target <acronym>LSN</acronym> to be replayed, optionally with a timeout</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>' [ WITH ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
+
+    TIMEOUT '<replaceable class="parameter">timeout</replaceable>'
+    NO_THROW
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+    Waits until recovery replays <parameter>lsn</parameter>.
+    If no <parameter>timeout</parameter> is specified or it is set to
+    zero, this command waits indefinitely for the
+    <parameter>lsn</parameter>.
+    On timeout, or if the server is promoted before
+    <parameter>lsn</parameter> is reached, an error is emitted,
+    unless <literal>NO_THROW</literal> is specified in the WITH clause.
+    If <parameter>NO_THROW</parameter> is specified, then the command
+    doesn't throw errors.
+  </para>
+
+  <para>
+    The possible return values are <literal>success</literal>,
+    <literal>timeout</literal>, and <literal>not in recovery</literal>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">lsn</replaceable></term>
+    <listitem>
+     <para>
+      Specifies the target <acronym>LSN</acronym> to wait for.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH ( <replaceable class="parameter">option</replaceable> [, ...] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies optional parameters for the wait operation.
+      The following parameters are supported:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>TIMEOUT</literal> '<replaceable class="parameter">timeout</replaceable>'</term>
+        <listitem>
+         <para>
+          When specified and <parameter>timeout</parameter> is greater than zero,
+          the command waits until <parameter>lsn</parameter> is reached or
+          the specified <parameter>timeout</parameter> has elapsed.
+         </para>
+         <para>
+          The <parameter>timeout</parameter> might be given as integer number of
+          milliseconds.  Also it might be given as string literal with
+          integer number of milliseconds or a number with unit
+          (see <xref linkend="config-setting-names-values"/>).
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>NO_THROW</literal></term>
+        <listitem>
+         <para>
+          Specify to not throw an error in the case of timeout or
+          running on the primary.  In this case the result status can be get from
+          the return value.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Outputs</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>success</literal></term>
+    <listitem>
+     <para>
+      This return value denotes that we have successfully reached
+      the target <parameter>lsn</parameter>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>timeout</literal></term>
+    <listitem>
+     <para>
+      This return value denotes that the timeout happened before reaching
+      the target <parameter>lsn</parameter>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>not in recovery</literal></term>
+    <listitem>
+     <para>
+      This return value denotes that the database server is not in a recovery
+      state.  This might mean either the database server was not in recovery
+      at the moment of receiving the command, or it was promoted before
+      reaching the target <parameter>lsn</parameter>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+    <command>WAIT FOR</command> command waits till
+    <parameter>lsn</parameter> to be replayed on standby.
+    That is, after this command execution, the value returned by
+    <function>pg_last_wal_replay_lsn</function> should be greater or equal
+    to the <parameter>lsn</parameter> value.  This is useful to achieve
+    read-your-writes-consistency, while using async replica for reads and
+    primary for writes.  In that case, the <acronym>lsn</acronym> of the last
+    modification should be stored on the client application side or the
+    connection pooler side.
+  </para>
+
+  <para>
+    <command>WAIT FOR</command> command should be called on standby.
+    If a user runs <command>WAIT FOR</command> on primary, it
+    will error out unless <parameter>NO_THROW</parameter> is specified in the WITH clause.
+    However, if <command>WAIT FOR</command> is
+    called on primary promoted from standby and <literal>lsn</literal>
+    was already replayed, then the <command>WAIT FOR</command> command just
+    exits immediately.
+  </para>
+
+</refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+    You can use <command>WAIT FOR</command> command to wait for
+    the <type>pg_lsn</type> value.  For example, an application could update
+    the <literal>movie</literal> table and get the <acronym>lsn</acronym> after
+    changes just made.  This example uses <function>pg_current_wal_insert_lsn</function>
+    on primary server to get the <acronym>lsn</acronym> given that
+    <varname>synchronous_commit</varname> could be set to
+    <literal>off</literal>.
+
+   <programlisting>
+postgres=# UPDATE movie SET genre = 'Dramatic' WHERE genre = 'Drama';
+UPDATE 100
+postgres=# SELECT pg_current_wal_insert_lsn();
+pg_current_wal_insert_lsn
+--------------------
+0/306EE20
+(1 row)
+</programlisting>
+
+   Then an application could run <command>WAIT FOR</command>
+   with the <parameter>lsn</parameter> obtained from primary.  After that the
+   changes made on primary should be guaranteed to be visible on replica.
+
+<programlisting>
+postgres=# WAIT FOR LSN '0/306EE20';
+ status
+--------
+ success
+(1 row)
+postgres=# SELECT * FROM movie WHERE genre = 'Drama';
+ genre
+-------
+(0 rows)
+</programlisting>
+  </para>
+
+  <para>
+    If the target LSN is not reached before the timeout, the error is thrown.
+
+<programlisting>
+postgres=# WAIT FOR LSN '0/306EE20' WITH (TIMEOUT '0.1s');
+ERROR:  timed out while waiting for target LSN 0/306EE20 to be replayed; current replay LSN 0/306EA60
+</programlisting>
+  </para>
+
+  <para>
+   The same example uses <command>WAIT FOR</command> with
+   <parameter>NO_THROW</parameter> option.
+<programlisting>
+postgres=# WAIT FOR LSN '0/306EE20' WITH (TIMEOUT '100ms', NO_THROW);
+ status
+--------
+ timeout
+(1 row)
+</programlisting>
+  </para>
+ </refsect1>
+</refentry>

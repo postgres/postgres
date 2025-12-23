@@ -40,6 +40,7 @@ typedef struct
 	char	   *old_pgdata;
 	char	   *new_pgdata;
 	char	   *old_tablespace;
+	char	   *new_tablespace;
 } transfer_thread_arg;
 
 static exec_thread_arg **exec_thread_args;
@@ -171,7 +172,7 @@ win32_exec_prog(exec_thread_arg *args)
 void
 parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 							  char *old_pgdata, char *new_pgdata,
-							  char *old_tablespace)
+							  char *old_tablespace, char *new_tablespace)
 {
 #ifndef WIN32
 	pid_t		child;
@@ -181,7 +182,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 #endif
 
 	if (user_opts.jobs <= 1)
-		transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata, new_pgdata, NULL);
+		transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata, new_pgdata, NULL, NULL);
 	else
 	{
 		/* parallel */
@@ -225,7 +226,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		if (child == 0)
 		{
 			transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata, new_pgdata,
-								 old_tablespace);
+								 old_tablespace, new_tablespace);
 			/* if we take another exit path, it will be non-zero */
 			/* use _exit to skip atexit() functions */
 			_exit(0);
@@ -246,6 +247,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		new_arg->new_pgdata = pg_strdup(new_pgdata);
 		pg_free(new_arg->old_tablespace);
 		new_arg->old_tablespace = old_tablespace ? pg_strdup(old_tablespace) : NULL;
+		new_arg->new_tablespace = new_tablespace ? pg_strdup(new_tablespace) : NULL;
 
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_transfer_all_new_dbs,
 										new_arg, 0, NULL);
@@ -263,7 +265,8 @@ DWORD
 win32_transfer_all_new_dbs(transfer_thread_arg *args)
 {
 	transfer_all_new_dbs(args->old_db_arr, args->new_db_arr, args->old_pgdata,
-						 args->new_pgdata, args->old_tablespace);
+						 args->new_pgdata, args->old_tablespace,
+						 args->new_tablespace);
 
 	/* terminates thread */
 	return 0;

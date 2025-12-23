@@ -14,12 +14,14 @@
 
 #include "postgres.h"
 
+#include "access/commit_ts.h"
 #include "access/genam.h"
 #include "access/gist.h"
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "access/heapam.h"
 #include "catalog/pg_am_d.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
@@ -36,7 +38,7 @@
 
 
 static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
-						 TypeCacheEntry **eq);
+						 TypeCacheEntry **eq, Bitmapset *columns);
 
 /*
  * Setup a ScanKey for a search in the relation 'rel' for a tuple 'key' that
@@ -219,9 +221,9 @@ retry:
 		if (!isIdxSafeToSkipDuplicates)
 		{
 			if (eq == NULL)
-				eq = palloc0(sizeof(*eq) * outslot->tts_tupleDescriptor->natts);
+				eq = palloc0_array(TypeCacheEntry *, outslot->tts_tupleDescriptor->natts);
 
-			if (!tuples_equal(outslot, searchslot, eq))
+			if (!tuples_equal(outslot, searchslot, eq, NULL))
 				continue;
 		}
 
@@ -277,10 +279,13 @@ retry:
 
 /*
  * Compare the tuples in the slots by checking if they have equal values.
+ *
+ * If 'columns' is not null, only the columns specified within it will be
+ * considered for the equality check, ignoring all other columns.
  */
 static bool
 tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
-			 TypeCacheEntry **eq)
+			 TypeCacheEntry **eq, Bitmapset *columns)
 {
 	int			attrnum;
 
@@ -303,6 +308,14 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 		 * those
 		 */
 		if (att->attisdropped || att->attgenerated)
+			continue;
+
+		/*
+		 * Ignore columns that are not listed for checking.
+		 */
+		if (columns &&
+			!bms_is_member(att->attnum - FirstLowInvalidHeapAttributeNumber,
+						   columns))
 			continue;
 
 		/*
@@ -365,7 +378,7 @@ RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 
 	Assert(equalTupleDescs(desc, outslot->tts_tupleDescriptor));
 
-	eq = palloc0(sizeof(*eq) * outslot->tts_tupleDescriptor->natts);
+	eq = palloc0_array(TypeCacheEntry *, outslot->tts_tupleDescriptor->natts);
 
 	/* Start a heap scan. */
 	InitDirtySnapshot(snap);
@@ -380,7 +393,7 @@ retry:
 	/* Try to find the tuple */
 	while (table_scan_getnextslot(scan, ForwardScanDirection, scanslot))
 	{
-		if (!tuples_equal(scanslot, searchslot, eq))
+		if (!tuples_equal(scanslot, searchslot, eq, NULL))
 			continue;
 
 		found = true;
@@ -453,6 +466,236 @@ BuildConflictIndexInfo(ResultRelInfo *resultRelInfo, Oid conflictindex)
 
 		BuildSpeculativeIndexInfo(indexRelation, indexRelationInfo);
 	}
+}
+
+/*
+ * If the tuple is recently dead and was deleted by a transaction with a newer
+ * commit timestamp than previously recorded, update the associated transaction
+ * ID, commit time, and origin. This helps ensure that conflict detection uses
+ * the most recent and relevant deletion metadata.
+ */
+static void
+update_most_recent_deletion_info(TupleTableSlot *scanslot,
+								 TransactionId oldestxmin,
+								 TransactionId *delete_xid,
+								 TimestampTz *delete_time,
+								 RepOriginId *delete_origin)
+{
+	BufferHeapTupleTableSlot *hslot;
+	HeapTuple	tuple;
+	Buffer		buf;
+	bool		recently_dead = false;
+	TransactionId xmax;
+	TimestampTz localts;
+	RepOriginId localorigin;
+
+	hslot = (BufferHeapTupleTableSlot *) scanslot;
+
+	tuple = ExecFetchSlotHeapTuple(scanslot, false, NULL);
+	buf = hslot->buffer;
+
+	LockBuffer(buf, BUFFER_LOCK_SHARE);
+
+	/*
+	 * We do not consider HEAPTUPLE_DEAD status because it indicates either
+	 * tuples whose inserting transaction was aborted (meaning there is no
+	 * commit timestamp or origin), or tuples deleted by a transaction older
+	 * than oldestxmin, making it safe to ignore them during conflict
+	 * detection (See comments atop worker.c for details).
+	 */
+	if (HeapTupleSatisfiesVacuum(tuple, oldestxmin, buf) == HEAPTUPLE_RECENTLY_DEAD)
+		recently_dead = true;
+
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
+	if (!recently_dead)
+		return;
+
+	xmax = HeapTupleHeaderGetUpdateXid(tuple->t_data);
+	if (!TransactionIdIsValid(xmax))
+		return;
+
+	/* Select the dead tuple with the most recent commit timestamp */
+	if (TransactionIdGetCommitTsData(xmax, &localts, &localorigin) &&
+		TimestampDifferenceExceeds(*delete_time, localts, 0))
+	{
+		*delete_xid = xmax;
+		*delete_time = localts;
+		*delete_origin = localorigin;
+	}
+}
+
+/*
+ * Searches the relation 'rel' for the most recently deleted tuple that matches
+ * the values in 'searchslot' and is not yet removable by VACUUM. The function
+ * returns the transaction ID, origin, and commit timestamp of the transaction
+ * that deleted this tuple.
+ *
+ * 'oldestxmin' acts as a cutoff transaction ID. Tuples deleted by transactions
+ * with IDs >= 'oldestxmin' are considered recently dead and are eligible for
+ * conflict detection.
+ *
+ * Instead of stopping at the first match, we scan all matching dead tuples to
+ * identify most recent deletion. This is crucial because only the latest
+ * deletion is relevant for resolving conflicts.
+ *
+ * For example, consider a scenario on the subscriber where a row is deleted,
+ * re-inserted, and then deleted again only on the subscriber:
+ *
+ *   - (pk, 1) - deleted at 9:00,
+ *   - (pk, 1) - deleted at 9:02,
+ *
+ * Now, a remote update arrives: (pk, 1) -> (pk, 2), timestamped at 9:01.
+ *
+ * If we mistakenly return the older deletion (9:00), the system may wrongly
+ * apply the remote update using a last-update-wins strategy. Instead, we must
+ * recognize the more recent deletion at 9:02 and skip the update. See
+ * comments atop worker.c for details. Note, as of now, conflict resolution
+ * is not implemented. Consequently, the system may incorrectly report the
+ * older tuple as the conflicted one, leading to misleading results.
+ *
+ * The commit timestamp of the deleting transaction is used to determine which
+ * tuple was deleted most recently.
+ */
+bool
+RelationFindDeletedTupleInfoSeq(Relation rel, TupleTableSlot *searchslot,
+								TransactionId oldestxmin,
+								TransactionId *delete_xid,
+								RepOriginId *delete_origin,
+								TimestampTz *delete_time)
+{
+	TupleTableSlot *scanslot;
+	TableScanDesc scan;
+	TypeCacheEntry **eq;
+	Bitmapset  *indexbitmap;
+	TupleDesc	desc PG_USED_FOR_ASSERTS_ONLY = RelationGetDescr(rel);
+
+	Assert(equalTupleDescs(desc, searchslot->tts_tupleDescriptor));
+
+	*delete_xid = InvalidTransactionId;
+	*delete_origin = InvalidRepOriginId;
+	*delete_time = 0;
+
+	/*
+	 * If the relation has a replica identity key or a primary key that is
+	 * unusable for locating deleted tuples (see
+	 * IsIndexUsableForFindingDeletedTuple), a full table scan becomes
+	 * necessary. In such cases, comparing the entire tuple is not required,
+	 * since the remote tuple might not include all column values. Instead,
+	 * the indexed columns alone are sufficient to identify the target tuple
+	 * (see logicalrep_rel_mark_updatable).
+	 */
+	indexbitmap = RelationGetIndexAttrBitmap(rel,
+											 INDEX_ATTR_BITMAP_IDENTITY_KEY);
+
+	/* fallback to PK if no replica identity */
+	if (!indexbitmap)
+		indexbitmap = RelationGetIndexAttrBitmap(rel,
+												 INDEX_ATTR_BITMAP_PRIMARY_KEY);
+
+	eq = palloc0_array(TypeCacheEntry *, searchslot->tts_tupleDescriptor->natts);
+
+	/*
+	 * Start a heap scan using SnapshotAny to identify dead tuples that are
+	 * not visible under a standard MVCC snapshot. Tuples from transactions
+	 * not yet committed or those just committed prior to the scan are
+	 * excluded in update_most_recent_deletion_info().
+	 */
+	scan = table_beginscan(rel, SnapshotAny, 0, NULL);
+	scanslot = table_slot_create(rel, NULL);
+
+	table_rescan(scan, NULL);
+
+	/* Try to find the tuple */
+	while (table_scan_getnextslot(scan, ForwardScanDirection, scanslot))
+	{
+		if (!tuples_equal(scanslot, searchslot, eq, indexbitmap))
+			continue;
+
+		update_most_recent_deletion_info(scanslot, oldestxmin, delete_xid,
+										 delete_time, delete_origin);
+	}
+
+	table_endscan(scan);
+	ExecDropSingleTupleTableSlot(scanslot);
+
+	return *delete_time != 0;
+}
+
+/*
+ * Similar to RelationFindDeletedTupleInfoSeq() but using index scan to locate
+ * the deleted tuple.
+ */
+bool
+RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
+									TupleTableSlot *searchslot,
+									TransactionId oldestxmin,
+									TransactionId *delete_xid,
+									RepOriginId *delete_origin,
+									TimestampTz *delete_time)
+{
+	Relation	idxrel;
+	ScanKeyData skey[INDEX_MAX_KEYS];
+	int			skey_attoff;
+	IndexScanDesc scan;
+	TupleTableSlot *scanslot;
+	TypeCacheEntry **eq = NULL;
+	bool		isIdxSafeToSkipDuplicates;
+	TupleDesc	desc PG_USED_FOR_ASSERTS_ONLY = RelationGetDescr(rel);
+
+	Assert(equalTupleDescs(desc, searchslot->tts_tupleDescriptor));
+	Assert(OidIsValid(idxoid));
+
+	*delete_xid = InvalidTransactionId;
+	*delete_time = 0;
+	*delete_origin = InvalidRepOriginId;
+
+	isIdxSafeToSkipDuplicates = (GetRelationIdentityOrPK(rel) == idxoid);
+
+	scanslot = table_slot_create(rel, NULL);
+
+	idxrel = index_open(idxoid, RowExclusiveLock);
+
+	/* Build scan key. */
+	skey_attoff = build_replindex_scan_key(skey, rel, idxrel, searchslot);
+
+	/*
+	 * Start an index scan using SnapshotAny to identify dead tuples that are
+	 * not visible under a standard MVCC snapshot. Tuples from transactions
+	 * not yet committed or those just committed prior to the scan are
+	 * excluded in update_most_recent_deletion_info().
+	 */
+	scan = index_beginscan(rel, idxrel, SnapshotAny, NULL, skey_attoff, 0);
+
+	index_rescan(scan, skey, skey_attoff, NULL, 0);
+
+	/* Try to find the tuple */
+	while (index_getnext_slot(scan, ForwardScanDirection, scanslot))
+	{
+		/*
+		 * Avoid expensive equality check if the index is primary key or
+		 * replica identity index.
+		 */
+		if (!isIdxSafeToSkipDuplicates)
+		{
+			if (eq == NULL)
+				eq = palloc0_array(TypeCacheEntry *, scanslot->tts_tupleDescriptor->natts);
+
+			if (!tuples_equal(scanslot, searchslot, eq, NULL))
+				continue;
+		}
+
+		update_most_recent_deletion_info(scanslot, oldestxmin, delete_xid,
+										 delete_time, delete_origin);
+	}
+
+	index_endscan(scan);
+
+	index_close(idxrel, NoLock);
+
+	ExecDropSingleTupleTableSlot(scanslot);
+
+	return *delete_time != 0;
 }
 
 /*
@@ -609,10 +852,10 @@ ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
 												   conflictindexes, false);
 
 		/*
-		 * Checks the conflict indexes to fetch the conflicting local tuple
-		 * and reports the conflict. We perform this check here, instead of
+		 * Checks the conflict indexes to fetch the conflicting local row and
+		 * reports the conflict. We perform this check here, instead of
 		 * performing an additional index scan before the actual insertion and
-		 * reporting the conflict if any conflicting tuples are found. This is
+		 * reporting the conflict if any conflicting rows are found. This is
 		 * to avoid the overhead of executing the extra scan for each INSERT
 		 * operation, even when no conflict arises, which could introduce
 		 * significant overhead to replication, particularly in cases where
@@ -670,7 +913,7 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
 		if (!ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-								  tid, NULL, slot, NULL, NULL))
+								  tid, NULL, slot, NULL, NULL, false))
 			skip_tuple = true;	/* "do nothing" */
 	}
 
@@ -746,7 +989,7 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 		resultRelInfo->ri_TrigDesc->trig_delete_before_row)
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-										   tid, NULL, NULL, NULL, NULL);
+										   tid, NULL, NULL, NULL, NULL, false);
 	}
 
 	if (!skip_tuple)
@@ -869,18 +1112,36 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 
 
 /*
- * Check if we support writing into specific relkind.
+ * Check if we support writing into specific relkind of local relation and check
+ * if it aligns with the relkind of the relation on the publisher.
  *
  * The nspname and relname are only needed for error reporting.
  */
 void
-CheckSubscriptionRelkind(char relkind, const char *nspname,
-						 const char *relname)
+CheckSubscriptionRelkind(char localrelkind, char remoterelkind,
+						 const char *nspname, const char *relname)
 {
-	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
+	if (localrelkind != RELKIND_RELATION &&
+		localrelkind != RELKIND_PARTITIONED_TABLE &&
+		localrelkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
 						nspname, relname),
-				 errdetail_relkind_not_supported(relkind)));
+				 errdetail_relkind_not_supported(localrelkind)));
+
+	/*
+	 * Allow RELKIND_RELATION and RELKIND_PARTITIONED_TABLE to be treated
+	 * interchangeably, but ensure that sequences (RELKIND_SEQUENCE) match
+	 * exactly on both publisher and subscriber.
+	 */
+	if ((localrelkind == RELKIND_SEQUENCE && remoterelkind != RELKIND_SEQUENCE) ||
+		(localrelkind != RELKIND_SEQUENCE && remoterelkind == RELKIND_SEQUENCE))
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+		/* translator: 3rd and 4th %s are "sequence" or "table" */
+				errmsg("relation \"%s.%s\" type mismatch: source \"%s\", target \"%s\"",
+					   nspname, relname,
+					   remoterelkind == RELKIND_SEQUENCE ? "sequence" : "table",
+					   localrelkind == RELKIND_SEQUENCE ? "sequence" : "table"));
 }

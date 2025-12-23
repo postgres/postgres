@@ -236,6 +236,12 @@ SELECT E'De\\678dBeEf'::bytea;
 ERROR:  invalid input syntax for type bytea
 LINE 1: SELECT E'De\\678dBeEf'::bytea;
                ^
+SELECT E'DeAd\\\\BeEf'::bytea;
+        bytea         
+----------------------
+ \x446541645c42654566
+(1 row)
+
 SELECT reverse(''::bytea);
  reverse 
 ---------
@@ -254,6 +260,64 @@ SELECT reverse('\xabcd'::bytea);
  \xcdab
 (1 row)
 
+SELECT ('\x' || repeat(' ', 32))::bytea;
+ bytea 
+-------
+ \x
+(1 row)
+
+SELECT ('\x' || repeat('!', 32))::bytea;
+ERROR:  invalid hexadecimal digit: "!"
+SELECT ('\x' || repeat('/', 34))::bytea;
+ERROR:  invalid hexadecimal digit: "/"
+SELECT ('\x' || repeat('0', 34))::bytea;
+                bytea                 
+--------------------------------------
+ \x0000000000000000000000000000000000
+(1 row)
+
+SELECT ('\x' || repeat('9', 32))::bytea;
+               bytea                
+------------------------------------
+ \x99999999999999999999999999999999
+(1 row)
+
+SELECT ('\x' || repeat(':', 32))::bytea;
+ERROR:  invalid hexadecimal digit: ":"
+SELECT ('\x' || repeat('@', 34))::bytea;
+ERROR:  invalid hexadecimal digit: "@"
+SELECT ('\x' || repeat('A', 34))::bytea;
+                bytea                 
+--------------------------------------
+ \xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+(1 row)
+
+SELECT ('\x' || repeat('F', 32))::bytea;
+               bytea                
+------------------------------------
+ \xffffffffffffffffffffffffffffffff
+(1 row)
+
+SELECT ('\x' || repeat('G', 32))::bytea;
+ERROR:  invalid hexadecimal digit: "G"
+SELECT ('\x' || repeat('`', 34))::bytea;
+ERROR:  invalid hexadecimal digit: "`"
+SELECT ('\x' || repeat('a', 34))::bytea;
+                bytea                 
+--------------------------------------
+ \xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+(1 row)
+
+SELECT ('\x' || repeat('f', 32))::bytea;
+               bytea                
+------------------------------------
+ \xffffffffffffffffffffffffffffffff
+(1 row)
+
+SELECT ('\x' || repeat('g', 32))::bytea;
+ERROR:  invalid hexadecimal digit: "g"
+SELECT ('\x' || repeat('~', 34))::bytea;
+ERROR:  invalid hexadecimal digit: "~"
 SET bytea_output TO escape;
 SELECT E'\\xDeAdBeEf'::bytea;
       bytea       
@@ -289,6 +353,12 @@ SELECT E'De\\123dBeEf'::bytea;
   bytea   
 ----------
  DeSdBeEf
+(1 row)
+
+SELECT E'DeAd\\\\BeEf'::bytea;
+   bytea    
+------------
+ DeAd\\BeEf
 (1 row)
 
 -- Test non-error-throwing API too
@@ -614,6 +684,82 @@ SELECT 'abcdefg' SIMILAR TO '_bcd%' ESCAPE NULL AS null;
 SELECT 'abcdefg' SIMILAR TO '_bcd#%' ESCAPE '##' AS error;
 ERROR:  invalid escape string
 HINT:  Escape string must be empty or one character.
+-- Characters that should be left alone in character classes when a
+-- SIMILAR TO regexp pattern is converted to POSIX style.
+-- Underscore "_"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '_[_[:alpha:]_]_';
+                   QUERY PLAN                   
+------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:.[_[:alpha:]_].)$'::text)
+(2 rows)
+
+-- Percentage "%"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '%[%[:alnum:]%]%';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:.*[%[:alnum:]%].*)$'::text)
+(2 rows)
+
+-- Dot "."
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '.[.[:alnum:].].';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:\.[.[:alnum:].]\.)$'::text)
+(2 rows)
+
+-- Dollar "$"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '$[$[:alnum:]$]$';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:\$[$[:alnum:]$]\$)$'::text)
+(2 rows)
+
+-- Opening parenthesis "("
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '()[([:alnum:](]()';
+                      QUERY PLAN                      
+------------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:(?:)[([:alnum:](](?:))$'::text)
+(2 rows)
+
+-- Caret "^"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '^[^[:alnum:]^[^^][[^^]][\^][[\^]]\^]^';
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:\^[^[:alnum:]^[^^][[^^]][\^][[\^]]\^]\^)$'::text)
+(2 rows)
+
+-- Closing square bracket "]" at the beginning of character class
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[]%][^]%][^%]%';
+                   QUERY PLAN                   
+------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:[]%][^]%][^%].*)$'::text)
+(2 rows)
+
+-- Closing square bracket effective after two carets at the beginning
+-- of character class.
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[^^]^';
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:[^^]\^)$'::text)
+(2 rows)
+
+-- Closing square bracket after an escape sequence at the beginning of
+-- a character closes the character class
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[|a]%' ESCAPE '|';
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:[\a].*)$'::text)
+(2 rows)
+
 -- Test backslash escapes in regexp_replace's replacement string
 SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
  regexp_replace 
@@ -2012,6 +2158,40 @@ SELECT c FROM toasttest;
 (1 row)
 
 DROP TABLE toasttest;
+-- test with short varlenas (up to 126 data bytes reduced to a 1-byte header)
+-- being toasted.
+CREATE TABLE toasttest (f1 text, f2 text);
+ALTER TABLE toasttest SET (toast_tuple_target = 128);
+ALTER TABLE toasttest ALTER COLUMN f1 SET STORAGE EXTERNAL;
+ALTER TABLE toasttest ALTER COLUMN f2 SET STORAGE EXTERNAL;
+-- Here, the first value is a varlena large enough to make it toasted and
+-- stored uncompressed.  The second value is a short varlena, toasted
+-- and stored uncompressed.
+INSERT INTO toasttest values(repeat('1234', 1000), repeat('5678', 30));
+SELECT reltoastrelid::regclass AS reltoastname FROM pg_class
+  WHERE oid = 'toasttest'::regclass \gset
+-- There should be two values inserted in the toast relation.
+SELECT count(*) FROM :reltoastname WHERE chunk_seq = 0;
+ count 
+-------
+     2
+(1 row)
+
+SELECT substr(f1, 5, 10) AS f1_data, substr(f2, 5, 10) AS f2_data
+  FROM toasttest;
+  f1_data   |  f2_data   
+------------+------------
+ 1234123412 | 5678567856
+(1 row)
+
+SELECT pg_column_compression(f1) AS f1_comp, pg_column_compression(f2) AS f2_comp
+  FROM toasttest;
+ f1_comp | f2_comp 
+---------+---------
+         | 
+(1 row)
+
+DROP TABLE toasttest;
 --
 -- test length
 --
@@ -2393,6 +2573,163 @@ SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
         decode        
 ----------------------
  \x1234567890abcdef00
+(1 row)
+
+-- report an error with a hint listing valid encodings when an invalid encoding is specified
+SELECT encode('\x01'::bytea, 'invalid');  -- error
+ERROR:  unrecognized encoding: "invalid"
+HINT:  Valid encodings are "base64", "base64url", "escape", and "hex".
+SELECT decode('00', 'invalid');           -- error
+ERROR:  unrecognized encoding: "invalid"
+HINT:  Valid encodings are "base64", "base64url", "escape", and "hex".
+--
+-- base64url encoding/decoding
+--
+SET bytea_output TO hex;
+-- Simple encoding/decoding
+SELECT encode('\x69b73eff', 'base64url');  -- abc-_w
+ encode 
+--------
+ abc-_w
+(1 row)
+
+SELECT decode('abc-_w', 'base64url');      -- \x69b73eff
+   decode   
+------------
+ \x69b73eff
+(1 row)
+
+-- Round-trip: decode(encode(x)) = x
+SELECT decode(encode('\x1234567890abcdef00', 'base64url'), 'base64url');  -- \x1234567890abcdef00
+        decode        
+----------------------
+ \x1234567890abcdef00
+(1 row)
+
+-- Empty input
+SELECT encode('', 'base64url');  -- ''
+ encode 
+--------
+ 
+(1 row)
+
+SELECT decode('', 'base64url');  -- ''
+ decode 
+--------
+ \x
+(1 row)
+
+-- 1 byte input
+SELECT encode('\x01', 'base64url');  -- AQ
+ encode 
+--------
+ AQ
+(1 row)
+
+SELECT decode('AQ', 'base64url');    -- \x01
+ decode 
+--------
+ \x01
+(1 row)
+
+-- 2 byte input
+SELECT encode('\x0102'::bytea, 'base64url');  -- AQI
+ encode 
+--------
+ AQI
+(1 row)
+
+SELECT decode('AQI', 'base64url');            -- \x0102
+ decode 
+--------
+ \x0102
+(1 row)
+
+-- 3 byte input (no padding needed)
+SELECT encode('\x010203'::bytea, 'base64url');  -- AQID
+ encode 
+--------
+ AQID
+(1 row)
+
+SELECT decode('AQID', 'base64url');             -- \x010203
+  decode  
+----------
+ \x010203
+(1 row)
+
+-- 4 byte input (results in 6 base64 chars)
+SELECT encode('\xdeadbeef'::bytea, 'base64url');  -- 3q2-7w
+ encode 
+--------
+ 3q2-7w
+(1 row)
+
+SELECT decode('3q2-7w', 'base64url');             -- \xdeadbeef
+   decode   
+------------
+ \xdeadbeef
+(1 row)
+
+-- Round-trip test for all lengths from 0–4
+SELECT encode(decode(encode(E'\\x', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ 
+(1 row)
+
+SELECT encode(decode(encode(E'\\x00', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AA
+(1 row)
+
+SELECT encode(decode(encode(E'\\x0001', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AAE
+(1 row)
+
+SELECT encode(decode(encode(E'\\x000102', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AAEC
+(1 row)
+
+SELECT encode(decode(encode(E'\\x00010203', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AAECAw
+(1 row)
+
+-- Invalid inputs (should ERROR)
+-- invalid character '@'
+SELECT decode('QQ@=', 'base64url');
+ERROR:  invalid symbol "@" found while decoding base64url sequence
+-- missing characters (incomplete group)
+SELECT decode('QQ', 'base64url');  -- ok (1 byte)
+ decode 
+--------
+ \x41
+(1 row)
+
+SELECT decode('QQI', 'base64url'); -- ok (2 bytes)
+ decode 
+--------
+ \x4102
+(1 row)
+
+SELECT decode('QQIDQ', 'base64url'); -- ERROR: invalid base64url end sequence
+ERROR:  invalid base64url end sequence
+HINT:  Input data is missing padding, is truncated, or is otherwise corrupted.
+-- unexpected '=' at start
+SELECT decode('=QQQ', 'base64url');
+ERROR:  unexpected "=" while decoding base64url sequence
+-- valid base64 padding in base64url (optional, but accepted)
+SELECT decode('abc-_w==', 'base64url');  -- should decode to \x69b73eff
+   decode   
+------------
+ \x69b73eff
 (1 row)
 
 --

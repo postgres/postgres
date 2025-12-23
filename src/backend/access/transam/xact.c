@@ -31,6 +31,7 @@
 #include "access/xloginsert.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
+#include "access/xlogwait.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_enum.h"
@@ -551,9 +552,9 @@ MarkCurrentTransactionIdLoggedIfAny(void)
  * operation in a subtransaction.  We require that for logical decoding, see
  * LogicalDecodingProcessRecord.
  *
- * This returns true if wal_level >= logical and we are inside a valid
- * subtransaction, for which the assignment was not yet written to any WAL
- * record.
+ * This returns true if effective_wal_level is logical and we are inside
+ * a valid subtransaction, for which the assignment was not yet written to
+ * any WAL record.
  */
 bool
 IsSubxactTopXidLogPending(void)
@@ -562,7 +563,7 @@ IsSubxactTopXidLogPending(void)
 	if (CurrentTransactionState->topXidLogged)
 		return false;
 
-	/* wal_level has to be logical */
+	/* effective_wal_level has to be logical */
 	if (!XLogLogicalInfoActive())
 		return false;
 
@@ -663,7 +664,7 @@ AssignTransactionId(TransactionState s)
 		TransactionState *parents;
 		size_t		parentOffset = 0;
 
-		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
+		parents = palloc_array(TransactionState, s->nestingLevel);
 		while (p != NULL && !FullTransactionIdIsValid(p->fullTransactionId))
 		{
 			parents[parentOffset++] = p;
@@ -681,14 +682,14 @@ AssignTransactionId(TransactionState s)
 	}
 
 	/*
-	 * When wal_level=logical, guarantee that a subtransaction's xid can only
-	 * be seen in the WAL stream if its toplevel xid has been logged before.
-	 * If necessary we log an xact_assignment record with fewer than
-	 * PGPROC_MAX_CACHED_SUBXIDS. Note that it is fine if didLogXid isn't set
-	 * for a transaction even though it appears in a WAL record, we just might
-	 * superfluously log something. That can happen when an xid is included
-	 * somewhere inside a wal record, but not in XLogRecord->xl_xid, like in
-	 * xl_standby_locks.
+	 * When effective_wal_level is logical, guarantee that a subtransaction's
+	 * xid can only be seen in the WAL stream if its toplevel xid has been
+	 * logged before. If necessary we log an xact_assignment record with fewer
+	 * than PGPROC_MAX_CACHED_SUBXIDS. Note that it is fine if didLogXid isn't
+	 * set for a transaction even though it appears in a WAL record, we just
+	 * might superfluously log something. That can happen when an xid is
+	 * included somewhere inside a wal record, but not in XLogRecord->xl_xid,
+	 * like in xl_standby_locks.
 	 */
 	if (isSubXact && XLogLogicalInfoActive() &&
 		!TopTransactionStateData.didLogXid)
@@ -1431,10 +1432,22 @@ RecordTransactionCommit(void)
 		 * without holding the ProcArrayLock, since we're the only one
 		 * modifying it.  This makes checkpoint's determination of which xacts
 		 * are delaying the checkpoint a bit fuzzy, but it doesn't matter.
+		 *
+		 * Note, it is important to get the commit timestamp after marking the
+		 * transaction in the commit critical section. See
+		 * RecordTransactionCommitPrepared.
 		 */
-		Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+		Assert((MyProc->delayChkptFlags & DELAY_CHKPT_IN_COMMIT) == 0);
 		START_CRIT_SECTION();
-		MyProc->delayChkptFlags |= DELAY_CHKPT_START;
+		MyProc->delayChkptFlags |= DELAY_CHKPT_IN_COMMIT;
+
+		Assert(xactStopTimestamp == 0);
+
+		/*
+		 * Ensures the DELAY_CHKPT_IN_COMMIT flag write is globally visible
+		 * before commit time is written.
+		 */
+		pg_write_barrier();
 
 		/*
 		 * Insert the commit XLOG record.
@@ -1537,7 +1550,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
+		MyProc->delayChkptFlags &= ~DELAY_CHKPT_IN_COMMIT;
 		END_CRIT_SECTION();
 	}
 
@@ -2476,6 +2489,7 @@ CommitTransaction(void)
 	AtEOXact_Snapshot(true, false);
 	AtEOXact_ApplyLauncher(true);
 	AtEOXact_LogicalRepWorkers(true);
+	AtEOXact_LogicalCtl();
 	pgstat_report_xact_timestamp(0);
 
 	ResourceOwnerDelete(TopTransactionResourceOwner);
@@ -2515,7 +2529,7 @@ static void
 PrepareTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
-	TransactionId xid = GetCurrentTransactionId();
+	FullTransactionId fxid = GetCurrentFullTransactionId();
 	GlobalTransaction gxact;
 	TimestampTz prepared_at;
 
@@ -2644,7 +2658,7 @@ PrepareTransaction(void)
 	 * Reserve the GID for this transaction. This could fail if the requested
 	 * GID is invalid or already in use.
 	 */
-	gxact = MarkAsPreparing(xid, prepareGID, prepared_at,
+	gxact = MarkAsPreparing(fxid, prepareGID, prepared_at,
 							GetUserId(), MyDatabaseId);
 	prepareGID = NULL;
 
@@ -2694,7 +2708,7 @@ PrepareTransaction(void)
 	 * ProcArrayClearTransaction().  Otherwise, a GetLockConflicts() would
 	 * conclude "xact already committed or aborted" for our locks.
 	 */
-	PostPrepare_Locks(xid);
+	PostPrepare_Locks(fxid);
 
 	/*
 	 * Let others know about no transaction in progress by me.  This has to be
@@ -2738,9 +2752,9 @@ PrepareTransaction(void)
 
 	PostPrepare_smgr();
 
-	PostPrepare_MultiXact(xid);
+	PostPrepare_MultiXact(fxid);
 
-	PostPrepare_PredicateLocks(xid);
+	PostPrepare_PredicateLocks(fxid);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
@@ -2771,6 +2785,7 @@ PrepareTransaction(void)
 	/* we treat PREPARE as ROLLBACK so far as waking workers goes */
 	AtEOXact_ApplyLauncher(false);
 	AtEOXact_LogicalRepWorkers(false);
+	AtEOXact_LogicalCtl();
 	pgstat_report_xact_timestamp(0);
 
 	CurrentResourceOwner = NULL;
@@ -2830,6 +2845,11 @@ AbortTransaction(void)
 	 * while cleaning up!
 	 */
 	LWLockReleaseAll();
+
+	/*
+	 * Cleanup waiting for LSN if any.
+	 */
+	WaitLSNCleanup();
 
 	/* Clear wait information and command progress indicator */
 	pgstat_report_wait_end();
@@ -2993,6 +3013,7 @@ AbortTransaction(void)
 		AtEOXact_PgStat(false, is_parallel_worker);
 		AtEOXact_ApplyLauncher(false);
 		AtEOXact_LogicalRepWorkers(false);
+		AtEOXact_LogicalCtl();
 		pgstat_report_xact_timestamp(0);
 	}
 
@@ -4523,13 +4544,13 @@ ReleaseSavepoint(const char *name)
 			break;
 	}
 
-	for (target = s; PointerIsValid(target); target = target->parent)
+	for (target = s; target; target = target->parent)
 	{
-		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
+		if (target->name && strcmp(target->name, name) == 0)
 			break;
 	}
 
-	if (!PointerIsValid(target))
+	if (!target)
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
 				 errmsg("savepoint \"%s\" does not exist", name)));
@@ -4553,7 +4574,7 @@ ReleaseSavepoint(const char *name)
 		if (xact == target)
 			break;
 		xact = xact->parent;
-		Assert(PointerIsValid(xact));
+		Assert(xact);
 	}
 }
 
@@ -4632,13 +4653,13 @@ RollbackToSavepoint(const char *name)
 			break;
 	}
 
-	for (target = s; PointerIsValid(target); target = target->parent)
+	for (target = s; target; target = target->parent)
 	{
-		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
+		if (target->name && strcmp(target->name, name) == 0)
 			break;
 	}
 
-	if (!PointerIsValid(target))
+	if (!target)
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
 				 errmsg("savepoint \"%s\" does not exist", name)));
@@ -4667,7 +4688,7 @@ RollbackToSavepoint(const char *name)
 			elog(FATAL, "RollbackToSavepoint: unexpected state %s",
 				 BlockStateAsString(xact->blockState));
 		xact = xact->parent;
-		Assert(PointerIsValid(xact));
+		Assert(xact);
 	}
 
 	/* And mark the target as "restart pending" */
@@ -5688,12 +5709,12 @@ ShowTransactionStateRec(const char *str, TransactionState s)
 	ereport(DEBUG5,
 			(errmsg_internal("%s(%d) name: %s; blockState: %s; state: %s, xid/subid/cid: %u/%u/%u%s%s",
 							 str, s->nestingLevel,
-							 PointerIsValid(s->name) ? s->name : "unnamed",
+							 s->name ? s->name : "unnamed",
 							 BlockStateAsString(s->blockState),
 							 TransStateAsString(s->state),
-							 (unsigned int) XidFromFullTransactionId(s->fullTransactionId),
-							 (unsigned int) s->subTransactionId,
-							 (unsigned int) currentCommandId,
+							 XidFromFullTransactionId(s->fullTransactionId),
+							 s->subTransactionId,
+							 currentCommandId,
 							 currentCommandIdUsed ? " (used)" : "",
 							 buf.data)));
 	pfree(buf.data);
@@ -6420,7 +6441,8 @@ xact_redo(XLogReaderState *record)
 		 * gxact entry.
 		 */
 		LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
-		PrepareRedoAdd(XLogRecGetData(record),
+		PrepareRedoAdd(InvalidFullTransactionId,
+					   XLogRecGetData(record),
 					   record->ReadRecPtr,
 					   record->EndRecPtr,
 					   XLogRecGetOrigin(record));

@@ -1,0 +1,54 @@
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
+CREATE FUNCTION test_translation()
+    RETURNS void
+    AS :'regresslib'
+    LANGUAGE C;
+-- There's less standardization in locale name spellings than one could wish.
+-- While some platforms insist on having a codeset name in lc_messages,
+-- fortunately it seems that it need not match the actual database encoding.
+-- However, if no es_ES locale is installed at all, this'll fail.
+SET lc_messages = 'C';
+do $$
+declare locale text; ok bool;
+begin
+  for locale in values('es_ES'), ('es_ES.UTF-8'), ('es_ES.utf8')
+  loop
+    ok = true;
+    begin
+      execute format('set lc_messages = %L', locale);
+    exception when invalid_parameter_value then
+      ok = false;
+    end;
+    exit when ok;
+  end loop;
+  -- Don't clutter the expected results with this info, just log it
+  raise log 'NLS regression test: lc_messages = %',
+    current_setting('lc_messages');
+end $$;
+SELECT test_translation();
+NOTICE:  NLS is not enabled
+NOTICE:  translated PRId64 = 424242424242
+NOTICE:  translated PRId32 = -1234
+NOTICE:  translated PRIdMAX = -123456789012
+NOTICE:  translated PRIdPTR = -9999
+NOTICE:  translated PRIu64 = 424242424242
+NOTICE:  translated PRIu32 = 4294966062
+NOTICE:  translated PRIuMAX = 123456789012
+NOTICE:  translated PRIuPTR = 9999
+NOTICE:  translated PRIx64 = 62c6d1a9b2
+NOTICE:  translated PRIx32 = fffffb2e
+NOTICE:  translated PRIxMAX = 1cbe991a14
+NOTICE:  translated PRIxPTR = 270f
+NOTICE:  translated PRIX64 = 62C6D1A9B2
+NOTICE:  translated PRIX32 = FFFFFB2E
+NOTICE:  translated PRIXMAX = 1CBE991A14
+NOTICE:  translated PRIXPTR = 270F
+ test_translation 
+------------------
+ 
+(1 row)
+
+RESET lc_messages;

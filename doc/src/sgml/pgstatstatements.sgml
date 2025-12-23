@@ -556,6 +556,24 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>generic_plan_calls</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the statement has been executed using a generic plan
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>custom_plan_calls</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the statement has been executed using a custom plan
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>stats_since</structfield> <type>timestamp with time zone</type>
       </para>
       <para>

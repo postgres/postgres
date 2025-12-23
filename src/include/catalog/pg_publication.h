@@ -40,6 +40,12 @@ CATALOG(pg_publication,6104,PublicationRelationId)
 	 */
 	bool		puballtables;
 
+	/*
+	 * indicates that this is special publication which should encompass all
+	 * sequences in the database (except for the unlogged and temp ones)
+	 */
+	bool		puballsequences;
+
 	/* true if inserts are published */
 	bool		pubinsert;
 
@@ -129,6 +135,7 @@ typedef struct Publication
 	Oid			oid;
 	char	   *name;
 	bool		alltables;
+	bool		allsequences;
 	bool		pubviaroot;
 	PublishGencolsType pubgencols_type;
 	PublicationActions pubactions;
@@ -146,7 +153,7 @@ extern Publication *GetPublicationByName(const char *pubname, bool missing_ok);
 extern List *GetRelationPublications(Oid relid);
 
 /*---------
- * Expected values for pub_partopt parameter of GetRelationPublications(),
+ * Expected values for pub_partopt parameter of GetPublicationRelations(),
  * which allows callers to specify which partitions of partitioned tables
  * mentioned in the publication they expect to see.
  *
@@ -163,7 +170,7 @@ typedef enum PublicationPartOpt
 
 extern List *GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt);
 extern List *GetAllTablesPublications(void);
-extern List *GetAllTablesPublicationRelations(bool pubviaroot);
+extern List *GetAllPublicationRelations(char relkind, bool pubviaroot);
 extern List *GetPublicationSchemas(Oid pubid);
 extern List *GetSchemaPublications(Oid schemaid);
 extern List *GetSchemaPublicationRelations(Oid schemaid,

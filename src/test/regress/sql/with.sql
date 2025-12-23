@@ -1098,6 +1098,30 @@ select ( with cte(foo) as ( values(f1) )
 from int4_tbl;
 
 --
+-- test for bug #19055: interaction of WITH with aggregates
+--
+-- For now, we just throw an error if there's a use of a CTE below the
+-- semantic level that the SQL standard assigns to the aggregate.
+-- It's not entirely clear what we could do instead that doesn't risk
+-- breaking more things than it fixes.
+select f1, (with cte1(x,y) as (select 1,2)
+            select count((select i4.f1 from cte1))) as ss
+from int4_tbl i4;
+
+--
+-- test for bug #19106: interaction of WITH with aggregates
+--
+-- the initial fix for #19055 was too aggressive and broke this case
+explain (verbose, costs off)
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
+
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
+
+--
 -- test for nested-recursive-WITH bug
 --
 WITH RECURSIVE t(j) AS (
@@ -1335,6 +1359,29 @@ WITH t1 AS ( DELETE FROM bug6051_3 RETURNING * )
 COMMIT;
 
 SELECT * FROM bug6051_3;
+
+-- check that recursive CTE processing doesn't rewrite a CTE more than once
+-- (must not try to expand GENERATED ALWAYS IDENTITY columns more than once)
+CREATE TEMP TABLE id_alw1 (i int GENERATED ALWAYS AS IDENTITY);
+
+CREATE TEMP TABLE id_alw2 (i int GENERATED ALWAYS AS IDENTITY);
+CREATE TEMP VIEW id_alw2_view AS SELECT * FROM id_alw2;
+
+CREATE TEMP TABLE id_alw3 (i int GENERATED ALWAYS AS IDENTITY);
+CREATE RULE id_alw3_ins AS ON INSERT TO id_alw3 DO INSTEAD
+  WITH t1 AS (INSERT INTO id_alw1 DEFAULT VALUES RETURNING i)
+    INSERT INTO id_alw2_view DEFAULT VALUES RETURNING i;
+CREATE TEMP VIEW id_alw3_view AS SELECT * FROM id_alw3;
+
+CREATE TEMP TABLE id_alw4 (i int GENERATED ALWAYS AS IDENTITY);
+
+WITH t4 AS (INSERT INTO id_alw4 DEFAULT VALUES RETURNING i)
+  INSERT INTO id_alw3_view DEFAULT VALUES RETURNING i;
+
+SELECT * from id_alw1;
+SELECT * from id_alw2;
+SELECT * from id_alw3;
+SELECT * from id_alw4;
 
 -- check case where CTE reference is removed due to optimization
 EXPLAIN (VERBOSE, COSTS OFF)

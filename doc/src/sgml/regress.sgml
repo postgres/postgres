@@ -125,6 +125,18 @@ make installcheck-parallel
   </para>
   </sect2>
 
+  <sect2 id="regress-subset">
+   <title>Running Specific Tests</title>
+
+   <para>
+    A subset of the regression tests can be run with the command
+    <literal>make check-tests TESTS="boolean char"</literal> or
+    <literal>make installcheck-tests TESTS="boolean char"</literal>.
+    Note that sometimes tests have dependencies on objects created by other
+    tests, which can cause unexpected failures.
+   </para>
+  </sect2>
+
   <sect2 id="regress-additional">
    <title>Additional Test Suites</title>
 
@@ -254,7 +266,7 @@ make check-world -j8 >/dev/null
   <para>
    Some test suites are not run by default, either because they are not secure
    to run on a multiuser system, because they require special software or
-   because they are resource intensive.  You can decide which test suites to
+   because they are resource-intensive.  You can decide which test suites to
    run additionally by setting the <command>make</command> or environment
    variable <varname>PG_TEST_EXTRA</varname> to a whitespace-separated list,
    for example:
@@ -285,6 +297,52 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
+     <term><literal>libpq_encryption</literal></term>
+     <listitem>
+      <para>
+       Runs the test <filename>src/interfaces/libpq/t/005_negotiate_encryption.pl</filename>.
+       This opens TCP/IP listen sockets. If <varname>PG_TEST_EXTRA</varname>
+       also includes <literal>kerberos</literal>, additional tests that require
+       an MIT Kerberos installation are enabled.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>load_balance</literal></term>
+     <listitem>
+      <para>
+       Runs the test <filename>src/interfaces/libpq/t/004_load_balance_dns.pl</filename>.
+       This requires editing the system <filename>hosts</filename> file and
+       opens TCP/IP listen sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>oauth</literal></term>
+     <listitem>
+      <para>
+       Runs the test suite under <filename>src/test/modules/oauth_validator</filename>.
+       This opens TCP/IP listen sockets for a test server running HTTPS.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>regress_dump_restore</literal></term>
+     <listitem>
+      <para>
+       Runs an additional test suite in
+       <filename>src/bin/pg_upgrade/t/002_pg_upgrade.pl</filename> which
+       cycles the regression database through <command>pg_dump</command>/
+       <command>pg_restore</command>.  Not enabled by default because it
+       is resource-intensive.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>sepgsql</literal></term>
      <listitem>
       <para>
@@ -305,35 +363,12 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
-     <term><literal>load_balance</literal></term>
-     <listitem>
-      <para>
-       Runs the test <filename>src/interfaces/libpq/t/004_load_balance_dns.pl</filename>.
-       This requires editing the system <filename>hosts</filename> file and
-       opens TCP/IP listen sockets.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>libpq_encryption</literal></term>
-     <listitem>
-      <para>
-       Runs the test <filename>src/interfaces/libpq/t/005_negotiate_encryption.pl</filename>.
-       This opens TCP/IP listen sockets. If <varname>PG_TEST_EXTRA</varname>
-       also includes <literal>kerberos</literal>, additional tests that require
-       an MIT Kerberos installation are enabled.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><literal>wal_consistency_checking</literal></term>
      <listitem>
       <para>
        Uses <literal>wal_consistency_checking=all</literal> while running
        certain tests under <filename>src/test/recovery</filename>.  Not
-       enabled by default because it is resource intensive.
+       enabled by default because it is resource-intensive.
       </para>
      </listitem>
     </varlistentry>
@@ -343,17 +378,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
      <listitem>
       <para>
        Runs the test suite under <filename>src/test/modules/xid_wraparound</filename>.
-       Not enabled by default because it is resource intensive.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>oauth</literal></term>
-     <listitem>
-      <para>
-       Runs the test suite under <filename>src/test/modules/oauth_validator</filename>.
-       This opens TCP/IP listen sockets for a test server running HTTPS.
+       Not enabled by default because it is resource-intensive.
       </para>
      </listitem>
     </varlistentry>
@@ -891,6 +916,14 @@ PG_TEST_NOCLEAN=1 make -C src/bin/pg_dump check
     hosts may lead to load-induced timeouts.  Setting the environment variable
     <varname>PG_TEST_TIMEOUT_DEFAULT</varname> to a higher number will change
     the default to avoid this.
+   </para>
+
+   <para>
+    For certain tests, the environment variable
+    <envar>PG_TEST_FILE_READ_LINES</envar> can be set to limit the number of
+    lines read from large output files (head and tail). This is useful when
+    the test output contains a lot of unnecessary content, allowing the test
+    framework to read only a limited number of lines for its reports.
    </para>
   </sect2>
 

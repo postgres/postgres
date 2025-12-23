@@ -125,6 +125,7 @@
 #define SH_ITERATE SH_MAKE_NAME(iterate)
 #define SH_ALLOCATE SH_MAKE_NAME(allocate)
 #define SH_FREE SH_MAKE_NAME(free)
+#define SH_ESTIMATE_SPACE SH_MAKE_NAME(estimate_space)
 #define SH_STAT SH_MAKE_NAME(stat)
 
 /* internal helper functions (no externally visible prototypes) */
@@ -242,7 +243,10 @@ SH_SCOPE void SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at);
 /* <element> *<prefix>_iterate(<prefix>_hash *tb, <prefix>_iterator *iter) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
 
-/* void <prefix>_stat(<prefix>_hash *tb */
+/* size_t <prefix>_estimate_space(double nentries) */
+SH_SCOPE size_t SH_ESTIMATE_SPACE(double nentries);
+
+/* void <prefix>_stat(<prefix>_hash *tb) */
 SH_SCOPE void SH_STAT(SH_TYPE * tb);
 
 #endif							/* SH_DECLARE */
@@ -305,7 +309,7 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 
 /*
  * Compute allocation size for hashtable. Result can be passed to
- * SH_UPDATE_PARAMETERS.
+ * SH_UPDATE_PARAMETERS.  (Keep SH_ESTIMATE_SPACE in sync with this!)
  */
 static inline uint64
 SH_COMPUTE_SIZE(uint64 newsize)
@@ -1044,6 +1048,10 @@ SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at)
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter)
 {
+	/* validate sanity of the given iterator */
+	Assert(iter->cur < tb->size);
+	Assert(iter->end < tb->size);
+
 	while (!iter->done)
 	{
 		SH_ELEMENT_TYPE *elem;
@@ -1062,6 +1070,47 @@ SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter)
 	}
 
 	return NULL;
+}
+
+/*
+ * Estimate the amount of space needed for a hashtable with nentries entries.
+ * Return SIZE_MAX if that's too many entries.
+ *
+ * nentries is "double" because this is meant for use by the planner,
+ * which typically works with double rowcount estimates.  So we'd need to
+ * clamp to integer somewhere and that might as well be here.  We do expect
+ * the value not to be NaN or negative, else the result will be garbage.
+ */
+SH_SCOPE size_t
+SH_ESTIMATE_SPACE(double nentries)
+{
+	uint64		size;
+	uint64		space;
+
+	/* scale request by SH_FILLFACTOR, as SH_CREATE does */
+	nentries = nentries / SH_FILLFACTOR;
+
+	/* fail if we'd overrun SH_MAX_SIZE entries */
+	if (nentries >= SH_MAX_SIZE)
+		return SIZE_MAX;
+
+	/* should be safe to convert to uint64 */
+	size = (uint64) nentries;
+
+	/* supporting zero sized hashes would complicate matters */
+	size = Max(size, 2);
+
+	/* round up size to the next power of 2, that's how bucketing works */
+	size = pg_nextpower2_64(size);
+
+	/* calculate space needed for ->data */
+	space = ((uint64) sizeof(SH_ELEMENT_TYPE)) * size;
+
+	/* verify that allocation of ->data is possible on this platform */
+	if (space >= SIZE_MAX / 2)
+		return SIZE_MAX;
+
+	return (size_t) space + sizeof(SH_TYPE);
 }
 
 /*
@@ -1191,6 +1240,7 @@ SH_STAT(SH_TYPE * tb)
 #undef SH_ITERATE
 #undef SH_ALLOCATE
 #undef SH_FREE
+#undef SH_ESTIMATE_SPACE
 #undef SH_STAT
 
 /* internal function names */

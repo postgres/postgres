@@ -307,8 +307,12 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 		PlanRowMark *rc = lfirst_node(PlanRowMark, lc);
 		PlanRowMark *newrc;
 
+		/* sanity check on existing row marks */
+		Assert(root->simple_rel_array[rc->rti] != NULL &&
+			   root->simple_rte_array[rc->rti] != NULL);
+
 		/* flat copy is enough since all fields are scalars */
-		newrc = (PlanRowMark *) palloc(sizeof(PlanRowMark));
+		newrc = palloc_object(PlanRowMark);
 		memcpy(newrc, rc, sizeof(PlanRowMark));
 
 		/* adjust indexes ... but *not* the rowmarkId */
@@ -541,7 +545,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, List *rteperminfos,
 	RangeTblEntry *newrte;
 
 	/* flat copy to duplicate all the scalar fields */
-	newrte = (RangeTblEntry *) palloc(sizeof(RangeTblEntry));
+	newrte = palloc_object(RangeTblEntry);
 	memcpy(newrte, rte, sizeof(RangeTblEntry));
 
 	/* zap unneeded sub-structure */
@@ -1030,16 +1034,35 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					 * expected to occur here, it seems safer to special-case
 					 * it here and keep the assertions that ROWID_VARs
 					 * shouldn't be seen by fix_scan_expr.
+					 *
+					 * We also must handle the case where set operations have
+					 * been short-circuited resulting in a dummy Result node.
+					 * prepunion.c uses varno==0 for the set op targetlist.
+					 * See generate_setop_tlist() and generate_setop_tlist().
+					 * Here we rewrite these to use varno==1, which is the
+					 * varno of the first set-op child.  Without this, EXPLAIN
+					 * will have trouble displaying targetlists of dummy set
+					 * operations.
 					 */
 					foreach(l, splan->plan.targetlist)
 					{
 						TargetEntry *tle = (TargetEntry *) lfirst(l);
 						Var		   *var = (Var *) tle->expr;
 
-						if (var && IsA(var, Var) && var->varno == ROWID_VAR)
-							tle->expr = (Expr *) makeNullConst(var->vartype,
-															   var->vartypmod,
-															   var->varcollid);
+						if (var && IsA(var, Var))
+						{
+							if (var->varno == ROWID_VAR)
+								tle->expr = (Expr *) makeNullConst(var->vartype,
+																   var->vartypmod,
+																   var->varcollid);
+							else if (var->varno == 0)
+								tle->expr = (Expr *) makeVar(1,
+															 var->varattno,
+															 var->vartype,
+															 var->vartypmod,
+															 var->varcollid,
+															 var->varlevelsup);
+						}
 					}
 
 					splan->plan.targetlist =
@@ -1052,6 +1075,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				/* resconstantqual can't contain any subplan variable refs */
 				splan->resconstantqual =
 					fix_scan_expr(root, splan->resconstantqual, rtoffset, 1);
+				/* adjust the relids set */
+				splan->relids = offset_relid_set(splan->relids, rtoffset);
 			}
 			break;
 		case T_ProjectSet:
@@ -2003,7 +2028,7 @@ offset_relid_set(Relids relids, int rtoffset)
 static inline Var *
 copyVar(Var *var)
 {
-	Var		   *newvar = (Var *) palloc(sizeof(Var));
+	Var		   *newvar = palloc_object(Var);
 
 	*newvar = *var;
 	return newvar;

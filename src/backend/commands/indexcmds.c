@@ -38,7 +38,6 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
-#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/progress.h"
@@ -1790,6 +1789,7 @@ DefineIndex(Oid tableId,
 	 * before the reference snap was taken, we have to wait out any
 	 * transactions that might have older snapshots.
 	 */
+	INJECTION_POINT("define-index-before-set-valid", NULL);
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
 								 PROGRESS_CREATEIDX_PHASE_WAIT_3);
 	WaitForOlderSnapshots(limitXmin, true);
@@ -2469,8 +2469,8 @@ GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
 					cmptype == COMPARE_EQ ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
 					cmptype == COMPARE_OVERLAP ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
 					cmptype == COMPARE_CONTAINED_BY ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
-					errdetail("Could not translate compare type %d for operator family \"%s\", input type %s, access method \"%s\".",
-							  cmptype, get_opfamily_name(opfamily, false), format_type_be(opcintype), get_am_name(amid)));
+					errdetail("Could not translate compare type %d for operator family \"%s\" of access method \"%s\".",
+							  cmptype, get_opfamily_name(opfamily, false), get_am_name(amid)));
 
 		/*
 		 * We parameterize rhstype so foreign keys can ask for a <@ operator
@@ -2592,7 +2592,9 @@ makeObjectName(const char *name1, const char *name2, const char *label)
  * constraint names.)
  *
  * Note: it is theoretically possible to get a collision anyway, if someone
- * else chooses the same name concurrently.  This is fairly unlikely to be
+ * else chooses the same name concurrently.  We shorten the race condition
+ * window by checking for conflicting relations using SnapshotDirty, but
+ * that doesn't close the window entirely.  This is fairly unlikely to be
  * a problem in practice, especially if one is holding an exclusive lock on
  * the relation identified by name1.  However, if choosing multiple names
  * within a single command, you'd better create the new object and do
@@ -2608,15 +2610,45 @@ ChooseRelationName(const char *name1, const char *name2,
 	int			pass = 0;
 	char	   *relname = NULL;
 	char		modlabel[NAMEDATALEN];
+	SnapshotData SnapshotDirty;
+	Relation	pgclassrel;
+
+	/* prepare to search pg_class with a dirty snapshot */
+	InitDirtySnapshot(SnapshotDirty);
+	pgclassrel = table_open(RelationRelationId, AccessShareLock);
 
 	/* try the unmodified label first */
 	strlcpy(modlabel, label, sizeof(modlabel));
 
 	for (;;)
 	{
+		ScanKeyData key[2];
+		SysScanDesc scan;
+		bool		collides;
+
 		relname = makeObjectName(name1, name2, modlabel);
 
-		if (!OidIsValid(get_relname_relid(relname, namespaceid)))
+		/* is there any conflicting relation name? */
+		ScanKeyInit(&key[0],
+					Anum_pg_class_relname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(relname));
+		ScanKeyInit(&key[1],
+					Anum_pg_class_relnamespace,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(namespaceid));
+
+		scan = systable_beginscan(pgclassrel, ClassNameNspIndexId,
+								  true /* indexOK */ ,
+								  &SnapshotDirty,
+								  2, key);
+
+		collides = HeapTupleIsValid(systable_getnext(scan));
+
+		systable_endscan(scan);
+
+		/* break out of loop if no conflict */
+		if (!collides)
 		{
 			if (!isconstraint ||
 				!ConstraintNameExists(relname, namespaceid))
@@ -2627,6 +2659,8 @@ ChooseRelationName(const char *name1, const char *name2,
 		pfree(relname);
 		snprintf(modlabel, sizeof(modlabel), "%s%d", label, ++pass);
 	}
+
+	table_close(pgclassrel, AccessShareLock);
 
 	return relname;
 }
@@ -2809,8 +2843,8 @@ ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized REINDEX option \"%s\"",
-							opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"REINDEX", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 
@@ -2943,6 +2977,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	struct ReindexIndexCallbackState *state = arg;
 	LOCKMODE	table_lockmode;
 	Oid			table_oid;
+	AclResult	aclresult;
 
 	/*
 	 * Lock level here should match table lock in reindex_index() for
@@ -2967,43 +3002,42 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	if (!OidIsValid(relId))
 		return;
 
-	/*
-	 * If the relation does exist, check whether it's an index.  But note that
-	 * the relation might have been dropped between the time we did the name
-	 * lookup and now.  In that case, there's nothing to do.
-	 */
+	/* If the relation does exist, check whether it's an index. */
 	relkind = get_rel_relkind(relId);
-	if (!relkind)
-		return;
 	if (relkind != RELKIND_INDEX &&
 		relkind != RELKIND_PARTITIONED_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not an index", relation->relname)));
 
-	/* Check permissions */
-	table_oid = IndexGetRelation(relId, true);
-	if (OidIsValid(table_oid))
-	{
-		AclResult	aclresult;
+	/* Look up the index's table. */
+	table_oid = IndexGetRelation(relId, false);
 
-		aclresult = pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, OBJECT_INDEX, relation->relname);
-	}
+	/*
+	 * In the unlikely event that, upon retry, we get the same index OID with
+	 * a different table OID, fail.  RangeVarGetRelidExtended() will have
+	 * already locked the index in this case, and it won't retry again, so we
+	 * can't lock the newly discovered table OID without risking deadlock.
+	 * Also, while this corner case is indeed possible, it is extremely
+	 * unlikely to happen in practice, so it's probably not worth any more
+	 * effort than this.
+	 */
+	if (relId == oldRelId && table_oid != state->locked_table_oid)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("index \"%s\" was concurrently dropped",
+						relation->relname)));
+
+	/* Check permissions. */
+	aclresult = pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, OBJECT_INDEX, relation->relname);
 
 	/* Lock heap before index to avoid deadlock. */
 	if (relId != oldRelId)
 	{
-		/*
-		 * If the OID isn't valid, it means the index was concurrently
-		 * dropped, which is not a problem for us; just return normally.
-		 */
-		if (OidIsValid(table_oid))
-		{
-			LockRelationOid(table_oid, table_lockmode);
-			state->locked_table_oid = table_oid;
-		}
+		LockRelationOid(table_oid, table_lockmode);
+		state->locked_table_oid = table_oid;
 	}
 }
 
@@ -4196,6 +4230,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	 * indexes with the correct names.
 	 */
 
+	INJECTION_POINT("reindex-relation-concurrently-before-swap", NULL);
 	StartTransactionCommand();
 
 	/*
@@ -4226,7 +4261,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 									 false);
 
 		/*
-		 * Updating pg_index might involve TOAST table access, so ensure we
+		 * Swapping the indexes might involve TOAST table access, so ensure we
 		 * have a valid snapshot.
 		 */
 		PushActiveSnapshot(GetTransactionSnapshot());
@@ -4274,6 +4309,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	 * index_drop() for more details.
 	 */
 
+	INJECTION_POINT("reindex-relation-concurrently-before-set-dead", NULL);
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
 								 PROGRESS_CREATEIDX_PHASE_WAIT_4);
 	WaitForLockersMultiple(lockTags, AccessExclusiveLock, true);

@@ -208,7 +208,7 @@ typedef struct PortalData
  * PortalIsValid
  *		True iff portal is valid.
  */
-#define PortalIsValid(p) PointerIsValid(p)
+#define PortalIsValid(p) ((p) != NULL)
 
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */

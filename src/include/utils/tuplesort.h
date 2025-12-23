@@ -57,7 +57,7 @@ typedef struct SortCoordinateData
 
 	/* Private opaque state (points to shared memory) */
 	Sharedsort *sharedsort;
-}			SortCoordinateData;
+} SortCoordinateData;
 
 typedef struct SortCoordinateData *SortCoordinate;
 
@@ -458,7 +458,7 @@ extern void tuplesort_puttupleslot(Tuplesortstate *state,
 								   TupleTableSlot *slot);
 extern void tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup);
 extern void tuplesort_putindextuplevalues(Tuplesortstate *state,
-										  Relation rel, ItemPointer self,
+										  Relation rel, const ItemPointerData *self,
 										  const Datum *values, const bool *isnull);
 extern void tuplesort_putbrintuple(Tuplesortstate *state, BrinTuple *tuple, Size size);
 extern void tuplesort_putgintuple(Tuplesortstate *state, GinTuple *tuple, Size size);

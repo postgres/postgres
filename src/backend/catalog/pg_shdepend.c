@@ -47,7 +47,6 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/alter.h"
-#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/policy.h"
@@ -61,6 +60,7 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
@@ -791,7 +791,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			}
 			if (!stored)
 			{
-				dep = (remoteDep *) palloc(sizeof(remoteDep));
+				dep = palloc_object(remoteDep);
 				dep->dbOid = sdepForm->dbid;
 				dep->count = 1;
 				remDeps = lappend(remDeps, dep);
@@ -913,7 +913,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	 * know that they will be used.
 	 */
 	max_slots = MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_shdepend);
-	slot = palloc(sizeof(TupleTableSlot *) * max_slots);
+	slot = palloc_array(TupleTableSlot *, max_slots);
 
 	indstate = CatalogOpenIndexes(sdepRel);
 
@@ -956,12 +956,12 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 		shdep = (Form_pg_shdepend) GETSTRUCT(tup);
 
 		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_dbid - 1] = ObjectIdGetDatum(newDbId);
-		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_classid - 1] = shdep->classid;
-		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_objid - 1] = shdep->objid;
-		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_objsubid - 1] = shdep->objsubid;
-		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_refclassid - 1] = shdep->refclassid;
-		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_refobjid - 1] = shdep->refobjid;
-		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_deptype - 1] = shdep->deptype;
+		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_classid - 1] = ObjectIdGetDatum(shdep->classid);
+		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_objid - 1] = ObjectIdGetDatum(shdep->objid);
+		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_objsubid - 1] = Int32GetDatum(shdep->objsubid);
+		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_refclassid - 1] = ObjectIdGetDatum(shdep->refclassid);
+		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_refobjid - 1] = ObjectIdGetDatum(shdep->refobjid);
+		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_deptype - 1] = CharGetDatum(shdep->deptype);
 
 		ExecStoreVirtualTuple(slot[slot_stored_count]);
 		slot_stored_count++;

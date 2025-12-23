@@ -38,7 +38,7 @@ PrepareSkipSupportFromOpclass(Oid opfamily, Oid opcintype, bool reverse)
 	if (!OidIsValid(skipSupportFunction))
 		return NULL;
 
-	sksup = palloc(sizeof(SkipSupportData));
+	sksup = palloc_object(SkipSupportData);
 	OidFunctionCall1(skipSupportFunction, PointerGetDatum(sksup));
 
 	if (reverse)

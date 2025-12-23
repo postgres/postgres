@@ -6,7 +6,7 @@
  <para>
   Logical replication is a method of replicating data objects and their
   changes, based upon their replication identity (usually a primary key).  We
-  use the term logical in contrast to physical replication, which uses exact
+  use the term logical replication in contrast to physical replication, which uses exact
   block addresses and byte-by-byte replication.  PostgreSQL supports both
   mechanisms concurrently, see <xref linkend="high-availability"/>.  Logical
   replication allows fine-grained control over both data replication and
@@ -41,27 +41,27 @@
    <listitem>
     <para>
      Sending incremental changes in a single database or a subset of a
-     database to subscribers as they occur.
+     database to subscribers as they occur
     </para>
    </listitem>
 
    <listitem>
     <para>
-     Firing triggers for individual changes as they arrive on the
-     subscriber.
+     Sending a subset of the database to multiple databases (i.e.,
+     broadcast)
     </para>
    </listitem>
 
    <listitem>
     <para>
-     Consolidating multiple databases into a single one (for example for
-     analytical purposes).
+     Consolidating multiple databases into a single one (e.g., for
+     analytics).
     </para>
    </listitem>
 
    <listitem>
     <para>
-     Replicating between different major versions of PostgreSQL.
+     Replicating between different major versions of PostgreSQL
     </para>
    </listitem>
 
@@ -80,7 +80,8 @@
 
    <listitem>
     <para>
-     Sharing a subset of the database between multiple databases.
+     Firing triggers for individual changes as they arrive on the
+     subscriber.
     </para>
    </listitem>
   </itemizedlist>
@@ -102,16 +103,20 @@
    A <firstterm>publication</firstterm> can be defined on any physical
    replication primary.  The node where a publication is defined is referred to
    as <firstterm>publisher</firstterm>.  A publication is a set of changes
-   generated from a table or a group of tables, and might also be described as
-   a change set or replication set.  Each publication exists in only one database.
+   generated from a table, a group of tables or the current state of all
+   sequences, and might also be described as a change set or replication set.
+   Each publication exists in only one database.
   </para>
 
   <para>
    Publications are different from schemas and do not affect how the table is
    accessed.  Each table can be added to multiple publications if needed.
-   Publications may currently only contain tables and all tables in schema.
-   Objects must be added explicitly, except when a publication is created for
-   <literal>ALL TABLES</literal>.
+   Publications may currently only contain tables or sequences. Objects must be
+   added explicitly, except when a publication is created using
+   <literal>FOR TABLES IN SCHEMA</literal>, <literal>FOR ALL TABLES</literal>,
+   or <literal>FOR ALL SEQUENCES</literal>. Unlike tables, sequences can be
+   synchronized at any time. For more information, see
+   <xref linkend="logical-replication-sequences"/>.
   </para>
 
   <para>
@@ -220,8 +225,10 @@
   </para>
 
   <para>
-   Each subscription will receive changes via one replication slot (see
-   <xref linkend="streaming-replication-slots"/>).  Additional replication
+   By default a new subscription creates a logical replication slot on
+   the publisher and then uses this slot to track relevant transaction
+   activity and preserve necessary WAL (see <xref
+   linkend="streaming-replication-slots"/>).  Additional replication
    slots may be required for the initial data synchronization of
    pre-existing table data and those will be dropped at the end of data
    synchronization.
@@ -283,10 +290,10 @@
   </para>
 
   <sect2 id="logical-replication-subscription-slot">
-   <title>Replication Slot Management</title>
+   <title>Logical Replication Slot Management</title>
 
    <para>
-    As mentioned earlier, each (active) subscription receives changes from a
+    As mentioned earlier, each (active) subscription uses a logical
     replication slot on the remote (publishing) side.
    </para>
    <para>
@@ -298,7 +305,7 @@
     Table <parameter>relid</parameter>, system identifier <parameter>sysid</parameter>)
    </para>
    <para>
-    Normally, the remote replication slot is created automatically when the
+    Normally, the remote logical replication slot is created automatically when the
     subscription is created using <link linkend="sql-createsubscription">
     <command>CREATE SUBSCRIPTION</command></link> and it
     is dropped automatically when the subscription is dropped using
@@ -437,7 +444,7 @@
     <para>
      Furthermore, because the initial data copy ignores the <literal>publish</literal>
      operation, and because publication <literal>pub3a</literal> has no row filter,
-     it means the copied table <literal>t3</literal> contains all rows even when
+     it means the copied table <structname>t3</structname> contains all rows even when
      they do not match the row filter of publication <literal>pub3b</literal>.
 <programlisting>
 /* sub # */ SELECT * FROM t3;
@@ -533,17 +540,17 @@
   </sect2>
 
   <sect2 id="logical-replication-subscription-examples-deferred-slot">
-   <title>Examples: Deferred Replication Slot Creation</title>
+   <title>Examples: Deferred Logical Replication Slot Creation</title>
 
    <para>
     There are some cases (e.g.
     <xref linkend="logical-replication-subscription-slot"/>) where, if the
-    remote replication slot was not created automatically, the user must create
+    remote logical replication slot was not created automatically, the user must create
     it manually before the subscription can be activated. The steps to create
     the slot and activate the subscription are shown in the following examples.
     These examples specify the standard logical decoding output plugin
-    (<literal>pgoutput</literal>), which is what the built-in logical
-    replication uses.
+    (<xref linkend="logicaldecoding-pgoutput"/>),
+    which is what the built-in logical replication uses.
    </para>
    <para>
     First, create a publication for the examples to use.
@@ -575,8 +582,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting>
 /* pub # */ SELECT * FROM pg_create_logical_replication_slot('sub1', 'pgoutput');
  slot_name |    lsn
------------+-----------
- sub1      | 0/19404D0
+-----------+------------
+ sub1      | 0/019404D0
 (1 row)
 </programlisting></para>
      </listitem>
@@ -617,8 +624,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting>
 /* pub # */ SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
  slot_name |    lsn
------------+-----------
- myslot    | 0/19059A0
+-----------+------------
+ myslot    | 0/019059A0
 (1 row)
 </programlisting></para>
      </listitem>
@@ -655,8 +662,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting>
 /* pub # */ SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
  slot_name |    lsn
------------+-----------
- myslot    | 0/1905930
+-----------+------------
+ myslot    | 0/01905930
 (1 row)
 </programlisting></para>
      </listitem>
@@ -709,8 +716,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
   </para>
 
   <para>
-   To confirm that the standby server is indeed ready for failover, follow these
-   steps to verify that all necessary logical replication slots have been
+   To confirm that the standby server is indeed ready for failover for a given subscriber, follow these
+   steps to verify that all the logical replication slots required by that subscriber have been
    synchronized to the standby server:
   </para>
 
@@ -764,7 +771,7 @@ HINT:  To initiate replication, you must manually create the replication slot, e
      Check that the logical replication slots identified above exist on
      the standby server and are ready for failover.
 <programlisting>
-/* standby # */ SELECT slot_name, (synced AND NOT temporary AND NOT conflicting) AS failover_ready
+/* standby # */ SELECT slot_name, (synced AND NOT temporary AND invalidation_reason IS NULL) AS failover_ready
                FROM pg_replication_slots
                WHERE slot_name IN
                    ('sub1','sub2','sub3', 'pg_16394_sync_16385_7394666715149055164');
@@ -782,10 +789,42 @@ HINT:  To initiate replication, you must manually create the replication slot, e
   <para>
    If all the slots are present on the standby server and the result
    (<literal>failover_ready</literal>) of the above SQL query is true, then
-   existing subscriptions can continue subscribing to publications now on the
-   new primary server.
+   existing subscriptions can continue subscribing to publications on the new
+   primary server.
   </para>
 
+  <para>
+   The first two steps in the above procedure are meant for a
+   <productname>PostgreSQL</productname> subscriber. It is recommended to run
+   these steps on each subscriber node, that will be served by the designated
+   standby after failover, to obtain the complete list of replication
+   slots. This list can then be verified in Step 3 to ensure failover readiness.
+   Non-<productname>PostgreSQL</productname> subscribers, on the other hand, may
+   use their own methods to identify the replication slots used by their
+   respective subscriptions.
+  </para>
+
+  <para>
+   In some cases, such as during a planned failover, it is necessary to confirm
+   that all subscribers, whether <productname>PostgreSQL</productname> or
+   non-<productname>PostgreSQL</productname>, will be able to continue
+   replication after failover to a given standby server. In such cases, use the
+   following SQL, instead of performing the first two steps above, to identify
+   which replication slots on the primary need to be synced to the standby that
+   is intended for promotion. This query returns the relevant replication slots
+   associated with all the failover-enabled subscriptions.
+  </para>
+
+   <para>
+<programlisting>
+/* primary # */ SELECT array_agg(quote_literal(r.slot_name)) AS slots
+               FROM pg_replication_slots r
+               WHERE r.failover AND NOT r.temporary;
+ slots
+-------
+ {'sub1','sub2','sub3', 'pg_16394_sync_16385_7394666715149055164'}
+(1 row)
+</programlisting></para>
  </sect1>
 
  <sect1 id="logical-replication-row-filter">
@@ -1002,8 +1041,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
    <para>
     Create some publications. Publication <literal>p1</literal> has one table
     (<literal>t1</literal>) and that table has a row filter. Publication
-    <literal>p2</literal> has two tables. Table <literal>t1</literal> has no row
-    filter, and table <literal>t2</literal> has a row filter. Publication
+    <literal>p2</literal> has two tables. Table <structname>t1</structname> has no row
+    filter, and table <structname>t2</structname> has a row filter. Publication
     <literal>p3</literal> has two tables, and both of them have a row filter.
 <programlisting><![CDATA[
 /* pub # */ CREATE PUBLICATION p1 FOR TABLE t1 WHERE (a > 5 AND c = 'NSW');
@@ -1016,35 +1055,35 @@ HINT:  To initiate replication, you must manually create the replication slot, e
     defined) for each publication.
 <programlisting><![CDATA[
 /* pub # */ \dRp+
-          Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                         Publication p1
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
- "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
+    "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
 
-          Publication p2
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                                Publication p2
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
- "public.t1"
- "public.t2" WHERE (e = 99)
+    "public.t1"
+    "public.t2" WHERE (e = 99)
 
-          Publication p3
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                                Publication p3
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
- "public.t2" WHERE (d = 10)
- "public.t3" WHERE (g = 10)
+    "public.t2" WHERE (d = 10)
+    "public.t3" WHERE (g = 10)
 ]]></programlisting></para>
 
    <para>
     <command>psql</command> can be used to show the row filter expressions (if
-    defined) for each table. See that table <literal>t1</literal> is a member
+    defined) for each table. See that table <structname>t1</structname> is a member
     of two publications, but has a row filter only in <literal>p1</literal>.
-    See that table <literal>t2</literal> is a member of two publications, and
+    See that table <structname>t2</structname> is a member of two publications, and
     has a different row filter in each of them.
 <programlisting><![CDATA[
 /* pub # */ \d t1
@@ -1087,7 +1126,7 @@ Publications:
 ]]></programlisting></para>
 
    <para>
-    On the subscriber node, create a table <literal>t1</literal> with the same
+    On the subscriber node, create a table <structname>t1</structname> with the same
     definition as the one on the publisher, and also create the subscription
     <literal>s1</literal> that subscribes to the publication <literal>p1</literal>.
 <programlisting>
@@ -1440,14 +1479,14 @@ Publications:
    <title>Examples</title>
 
    <para>
-    Create a table <literal>t1</literal> to be used in the following example.
+    Create a table <structname>t1</structname> to be used in the following example.
 <programlisting>
 /* pub # */ CREATE TABLE t1(id int, a text, b text, c text, d text, e text, PRIMARY KEY(id));
 </programlisting></para>
 
    <para>
     Create a publication <literal>p1</literal>. A column list is defined for
-    table <literal>t1</literal> to reduce the number of columns that will be
+    table <structname>t1</structname> to reduce the number of columns that will be
     replicated. Notice that the order of column names in the column list does
     not matter.
 <programlisting>
@@ -1459,10 +1498,10 @@ Publications:
      for each publication.
 <programlisting>
 /* pub # */ \dRp+
-                               Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                                Publication p1
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
     "public.t1" (id, a, b, d)
 </programlisting></para>
@@ -1488,9 +1527,9 @@ Publications:
 </programlisting></para>
 
     <para>
-     On the subscriber node, create a table <literal>t1</literal> which now
+     On the subscriber node, create a table <structname>t1</structname> which now
      only needs a subset of the columns that were on the publisher table
-     <literal>t1</literal>, and also create the subscription
+     <structname>t1</structname>, and also create the subscription
      <literal>s1</literal> that subscribes to the publication
      <literal>p1</literal>.
 <programlisting>
@@ -1501,7 +1540,7 @@ Publications:
 </programlisting></para>
 
     <para>
-     On the publisher node, insert some rows to table <literal>t1</literal>.
+     On the publisher node, insert some rows to table <structname>t1</structname>.
 <programlisting>
 /* pub # */ INSERT INTO t1 VALUES(1, 'a-1', 'b-1', 'c-1', 'd-1', 'e-1');
 /* pub # */ INSERT INTO t1 VALUES(2, 'a-2', 'b-2', 'c-2', 'd-2', 'e-2');
@@ -1560,7 +1599,7 @@ Publications:
 
 /* sub # */ CREATE TABLE tab_gen_to_gen (a int, b int GENERATED ALWAYS AS (a * 100) STORED);
 /* sub # */ CREATE SUBSCRIPTION sub1 CONNECTION 'dbname=test_pub' PUBLICATION pub1;
-/* sub # */ SELECT * from tab_gen_to_gen;
+/* sub # */ SELECT * FROM tab_gen_to_gen;
  a | b
 ---+----
  1 | 100
@@ -1711,6 +1750,247 @@ Publications:
   </note>
  </sect1>
 
+ <sect1 id="logical-replication-sequences">
+  <title>Replicating Sequences</title>
+
+  <para>
+   To synchronize sequences from a publisher to a subscriber, first publish
+   them using <link linkend="sql-createpublication-params-for-all-sequences">
+   <command>CREATE PUBLICATION ... FOR ALL SEQUENCES</command></link> and then
+   on the subscriber:
+  </para>
+
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      use <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>
+      to initially synchronize the published sequences.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      use <link linkend="sql-altersubscription-params-refresh-publication">
+      <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link>
+      to synchronize only newly added sequences.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      use <link linkend="sql-altersubscription-params-refresh-sequences">
+      <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>
+      to re-synchronize all sequences currently known to the subscription.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   A <firstterm>sequence synchronization worker</firstterm> will be started
+   after executing any of the above subscriber commands, and will exit once the
+   sequences are synchronized.
+  </para>
+  <para>
+   The ability to launch a sequence synchronization worker is limited by the
+   <link linkend="guc-max-sync-workers-per-subscription">
+   <varname>max_sync_workers_per_subscription</varname></link>
+   configuration.
+  </para>
+
+  <sect2 id="sequence-definition-mismatches">
+   <title>Sequence Definition Mismatches</title>
+   <para>
+    The sequence synchronization worker validates that sequence definitions
+    match between publisher and subscriber. If mismatches exist, the worker
+    logs an error identifying them and exits. The apply worker continues
+    respawning the sequence synchronization worker until synchronization
+    succeeds. See also
+    <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link>.
+   </para>
+   <para>
+    To resolve this, use
+    <link linkend="sql-altersequence"><command>ALTER SEQUENCE</command></link>
+    to align the subscriber's sequence parameters with those of the publisher.
+   </para>
+  </sect2>
+
+  <sect2 id="sequences-out-of-sync">
+   <title>Refreshing Out-of-Sync Sequences</title>
+   <para>
+    Subscriber sequence values will become out of sync as the publisher
+    advances them.
+   </para>
+   <para>
+    To detect this, compare the
+    <link linkend="catalog-pg-subscription-rel">pg_subscription_rel</link>.<structfield>srsublsn</structfield>
+    on the subscriber with the <structfield>page_lsn</structfield> obtained
+    from the <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data</function></link>
+    function for the sequence on the publisher. Then run
+    <link linkend="sql-altersubscription-params-refresh-sequences">
+    <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link> to
+    re-synchronize if necessary.
+   </para>
+   <warning>
+    <para>
+     Each sequence caches a block of values (typically 32) in memory before
+     generating a new WAL record, so its LSN advances only after the entire
+     cached batch has been consumed. As a result, sequence value drift cannot
+     be detected by LSN comparison when sequence increments fall within the
+     same cached block (typically 32 values).
+    </para>
+   </warning>
+  </sect2>
+
+  <sect2 id="logical-replication-sequences-examples">
+   <title>Examples</title>
+
+   <para>
+    Create some sequences on the publisher.
+<programlisting>
+/* pub # */ CREATE SEQUENCE s1 START WITH 10 INCREMENT BY 1;
+/* pub # */ CREATE SEQUENCE s2 START WITH 100 INCREMENT BY 10;
+</programlisting></para>
+
+   <para>
+    Create the same sequences on the subscriber.
+<programlisting>
+/* sub # */ CREATE SEQUENCE s1 START WITH 10 INCREMENT BY 1;
+/* sub # */ CREATE SEQUENCE s2 START WITH 100 INCREMENT BY 10;
+</programlisting></para>
+
+   <para>
+    Advance the sequences on the publisher a few times.
+<programlisting>
+/* pub # */ SELECT nextval('s1');
+ nextval
+---------
+      10
+(1 row)
+/* pub # */ SELECT nextval('s1');
+ nextval
+---------
+      11
+(1 row)
+/* pub # */ SELECT nextval('s2');
+ nextval
+---------
+     100
+(1 row)
+/* pub # */ SELECT nextval('s2');
+ nextval
+---------
+     110
+(1 row)
+</programlisting></para>
+
+   <para>
+    Check the sequence page LSNs on the publisher.
+<programlisting>
+/* pub # */ SELECT * FROM pg_get_sequence_data('s1');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+         11 | t         | 0/0178F9E0
+(1 row)
+/* pub # */ SELECT * FROM pg_get_sequence_data('s2');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+        110 | t         | 0/0178FAB0
+(1 row)
+</programlisting></para>
+
+   <para>
+    Create a publication for the sequences.
+<programlisting>
+/* pub # */ CREATE PUBLICATION pub1 FOR ALL SEQUENCES;
+</programlisting></para>
+
+   <para>
+    Subscribe to the publication.
+<programlisting>
+/* sub # */ CREATE SUBSCRIPTION sub1
+/* sub - */ CONNECTION 'host=localhost dbname=test_pub application_name=sub1'
+/* sub - */ PUBLICATION pub1;
+</programlisting></para>
+
+   <para>
+    Verify that the initial sequence values are synchronized.
+<programlisting>
+/* sub # */ SELECT last_value, is_called FROM s1;
+ last_value | is_called
+------------+-----------
+         11 | t
+(1 row)
+
+/* sub # */ SELECT last_value, is_called FROM s2;
+ last_value | is_called
+------------+-----------
+        110 | t
+(1 row)
+</programlisting></para>
+
+   <para>
+    Confirm that the sequence page LSNs on the publisher have been recorded
+    on the subscriber.
+<programlisting>
+/* sub # */ SELECT srrelid::regclass, srsublsn FROM pg_subscription_rel;
+ srrelid |  srsublsn
+---------+------------
+ s1      | 0/0178F9E0
+ s2      | 0/0178FAB0
+(2 rows)
+</programlisting></para>
+
+   <para>
+    Advance the sequences on the publisher 50 more times.
+<programlisting>
+/* pub # */  SELECT nextval('s1') FROM generate_series(1,50);
+/* pub # */  SELECT nextval('s2') FROM generate_series(1,50);
+</programlisting></para>
+
+   <para>
+    Check the sequence page LSNs on the publisher.
+<programlisting>
+/* pub # */ SELECT * FROM pg_get_sequence_data('s1');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+         61 | t         | 0/017CED28
+(1 row)
+
+/* pub # */ SELECT * FROM pg_get_sequence_data('s2');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+        610 | t         | 0/017CEDF8
+(1 row)
+</programlisting></para>
+
+   <para>
+    The difference between the sequence page LSNs on the publisher and the
+    sequence page LSNs on the subscriber indicates that the sequences are out
+    of sync. Re-synchronize all sequences known to the subscriber using
+    <link linkend="sql-altersubscription-params-refresh-sequences">
+    <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.
+<programlisting>
+/* sub # */ ALTER SUBSCRIPTION sub1 REFRESH SEQUENCES;
+</programlisting></para>
+
+   <para>
+    Recheck the sequences on the subscriber.
+<programlisting>
+/* sub # */ SELECT last_value, is_called FROM s1;
+ last_value | is_called
+------------+-----------
+         61 | t
+(1 row)
+
+/* sub # */ SELECT last_value, is_called FROM s2;
+ last_value | is_called
+------------+-----------
+        610 | t
+(1 row)
+</programlisting></para>
+  </sect2>
+ </sect1>
+
  <sect1 id="logical-replication-conflicts">
   <title>Conflicts</title>
 
@@ -1772,11 +2052,27 @@ Publications:
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry id="conflict-update-deleted" xreflabel="update_deleted">
+     <term><literal>update_deleted</literal></term>
+     <listitem>
+      <para>
+       The tuple to be updated was concurrently deleted by another origin. The
+       update will simply be skipped in this scenario. Note that this conflict
+       can only be detected when
+       <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+       and <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+       are enabled. Note that if a tuple cannot be found due to the table being
+       truncated, only a <literal>update_missing</literal> conflict will
+       arise. Additionally, if the tuple was deleted by the same origin, an
+       <literal>update_missing</literal> conflict will arise.
+      </para>
+     </listitem>
+    </varlistentry>
     <varlistentry id="conflict-update-missing" xreflabel="update_missing">
      <term><literal>update_missing</literal></term>
      <listitem>
       <para>
-       The tuple to be updated was not found. The update will simply be
+       The row to be updated was not found. The update will simply be
        skipped in this scenario.
       </para>
      </listitem>
@@ -1797,7 +2093,7 @@ Publications:
      <term><literal>delete_missing</literal></term>
      <listitem>
       <para>
-       The tuple to be deleted was not found. The delete will simply be
+       The row to be deleted was not found. The delete will simply be
        skipped in this scenario.
       </para>
      </listitem>
@@ -1831,8 +2127,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
 <phrase>where <replaceable class="parameter">detail_values</replaceable> is one of:</phrase>
 
     <literal>Key</literal> (<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>)
-    <literal>existing local tuple</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
-    <literal>remote tuple</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
+    <literal>existing local row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
+    <literal>remote row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
     <literal>replica identity</literal> {(<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>) | full <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)}
 </synopsis>
 
@@ -1866,32 +2162,32 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          <replaceable class="parameter">detailed_explanation</replaceable> includes
          the origin, transaction ID, and commit timestamp of the transaction that
-         modified the existing local tuple, if available.
+         modified the existing local row, if available.
         </para>
        </listitem>
        <listitem>
         <para>
          The <literal>Key</literal> section includes the key values of the local
-         tuple that violated a unique constraint for
+         row that violated a unique constraint for
          <literal>insert_exists</literal>, <literal>update_exists</literal> or
          <literal>multiple_unique_conflicts</literal> conflicts.
         </para>
        </listitem>
        <listitem>
         <para>
-         The <literal>existing local tuple</literal> section includes the local
-         tuple if its origin differs from the remote tuple for
+         The <literal>existing local row</literal> section includes the local
+         row if its origin differs from the remote row for
          <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
-         conflicts, or if the key value conflicts with the remote tuple for
+         conflicts, or if the key value conflicts with the remote row for
          <literal>insert_exists</literal>, <literal>update_exists</literal> or
          <literal>multiple_unique_conflicts</literal> conflicts.
         </para>
        </listitem>
        <listitem>
         <para>
-         The <literal>remote tuple</literal> section includes the new tuple from
+         The <literal>remote row</literal> section includes the new row from
          the remote insert or update operation that caused the conflict. Note that
-         for an update operation, the column value of the new tuple will be null
+         for an update operation, the column value of the new row will be null
          if the value is unchanged and toasted.
         </para>
        </listitem>
@@ -1899,7 +2195,7 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          The <literal>replica identity</literal> section includes the replica
          identity key values that were used to search for the existing local
-         tuple to be updated or deleted. This may include the full tuple value
+         row to be updated or deleted. This may include the full row value
          if the local relation is marked with
          <link linkend="sql-altertable-replica-identity-full"><literal>REPLICA IDENTITY FULL</literal></link>.
         </para>
@@ -1907,7 +2203,7 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
        <listitem>
         <para>
          <replaceable class="parameter">column_name</replaceable> is the column name.
-         For <literal>existing local tuple</literal>, <literal>remote tuple</literal>,
+         For <literal>existing local row</literal>, <literal>remote row</literal>,
          and <literal>replica identity full</literal> cases, column names are
          logged only if the user lacks the privilege to access all columns of
          the table. If column names are present, they appear in the same order
@@ -1964,16 +2260,16 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
 <screen>
 ERROR:  conflict detected on relation "public.test": conflict=insert_exists
 DETAIL:  Key already exists in unique index "t_pkey", which was modified locally in transaction 740 at 2024-06-26 10:47:04.727375+08.
-Key (c)=(1); existing local tuple (1, 'local'); remote tuple (1, 'remote').
-CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/14C0378
+Key (c)=(1); existing local row (1, 'local'); remote row (1, 'remote').
+CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/014C0378
 </screen>
    The LSN of the transaction that contains the change violating the constraint and
-   the replication origin name can be found from the server log (LSN 0/14C0378 and
+   the replication origin name can be found from the server log (LSN 0/014C0378 and
    replication origin <literal>pg_16395</literal> in the above case).  The
    transaction that produced the conflict can be skipped by using
    <link linkend="sql-altersubscription-params-skip"><command>ALTER SUBSCRIPTION ... SKIP</command></link>
    with the finish LSN
-   (i.e., LSN 0/14C0378).  The finish LSN could be an LSN at which the transaction
+   (i.e., LSN 0/014C0378).  The finish LSN could be an LSN at which the transaction
    is committed or prepared on the publisher.  Alternatively, the transaction can
    also be skipped by calling the <link linkend="pg-replication-origin-advance">
    <function>pg_replication_origin_advance()</function></link> function.
@@ -1984,7 +2280,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>
    option. Then, you can use <function>pg_replication_origin_advance()</function>
    function with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
-   and the next LSN of the finish LSN (i.e., 0/14C0379).  The current position of
+   and the next LSN of the finish LSN (i.e., 0/014C0379).  The current position of
    origins can be seen in the <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname></link> system view.
    Please note that skipping the whole transaction includes skipping changes that
@@ -2040,16 +2336,19 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <listitem>
     <para>
-     Sequence data is not replicated.  The data in serial or identity columns
-     backed by sequences will of course be replicated as part of the table,
-     but the sequence itself would still show the start value on the
-     subscriber.  If the subscriber is used as a read-only database, then this
-     should typically not be a problem.  If, however, some kind of switchover
-     or failover to the subscriber database is intended, then the sequences
-     would need to be updated to the latest values, either by copying the
-     current data from the publisher (perhaps
-     using <command>pg_dump</command>) or by determining a sufficiently high
-     value from the tables themselves.
+     Incremental sequence changes are not replicated.  Although the data in
+     serial or identity columns backed by sequences will be replicated as part
+     of the table, the sequences themselves do not replicate ongoing changes.
+     On the subscriber, a sequence will retain the last value it synchronized
+     from the publisher. If the subscriber is used as a read-only database,
+     then this should typically not be a problem.  If, however, some kind of
+     switchover or failover to the subscriber database is intended, then the
+     sequences would need to be updated to the latest values, either by
+     executing <link linkend="sql-altersubscription-params-refresh-sequences">
+     <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>
+     or by copying the current data from the publisher (perhaps using
+     <command>pg_dump</command>) or by determining a sufficiently high value
+     from the tables themselves.
     </para>
    </listitem>
 
@@ -2125,8 +2424,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    implemented by <literal>walsender</literal> and <literal>apply</literal>
    processes.  The walsender process starts logical decoding (described
    in <xref linkend="logicaldecoding"/>) of the WAL and loads the standard
-   logical decoding output plugin (<literal>pgoutput</literal>).  The plugin
-   transforms the changes read
+   logical decoding output plugin (<xref linkend="logicaldecoding-pgoutput"/>).
+   The plugin transforms the changes read
    from WAL to the logical replication protocol
    (see <xref linkend="protocol-logical-replication"/>) and filters the data
    according to the publication specification.  The data is then continuously
@@ -2197,8 +2496,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <title>Monitoring</title>
 
   <para>
-   Because logical replication is based on a similar architecture as
-   <link linkend="streaming-replication">physical streaming replication</link>,
+   Because streaming logical replication is based on a similar architecture as
+   <link linkend="streaming-replication">streaming physical replication</link>,
    the monitoring on a publication node is similar to monitoring of a
    physical replication primary
    (see <xref linkend="streaming-replication-monitoring"/>).
@@ -2240,9 +2539,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
-   In order to be able to copy the initial table data, the role used for the
-   replication connection must have the <literal>SELECT</literal> privilege on
-   a published table (or be a superuser).
+   In order to be able to copy the initial table or sequence data, the role
+   used for the replication connection must have the <literal>SELECT</literal>
+   privilege on a published table or sequence (or be a superuser).
   </para>
 
   <para>
@@ -2253,8 +2552,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <para>
    To add tables to a publication, the user must have ownership rights on the
    table. To add all tables in schema to a publication, the user must be a
-   superuser. To create a publication that publishes all tables or all tables in
-   schema automatically, the user must be a superuser.
+   superuser. To create a publication that publishes all tables, all tables in
+   schema, or all sequences automatically, the user must be a superuser.
   </para>
 
   <para>
@@ -2279,8 +2578,11 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    privileges of the subscription owner. However, when performing an insert,
    update, delete, or truncate operation on a particular table, it will switch
    roles to the table owner and perform the operation with the table owner's
-   privileges. This means that the subscription owner needs to be able to
-   <literal>SET ROLE</literal> to each role that owns a replicated table.
+   privileges. Similarly, when synchronizing sequence data, it will switch to
+   the sequence owner's role and perform the operation using the sequence
+   owner's privileges. This means that the subscription owner needs to be able
+   to <literal>SET ROLE</literal> to each role that owns a replicated table or
+   sequence.
   </para>
 
   <para>
@@ -2327,7 +2629,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <para>
     <link linkend="guc-wal-level"><varname>wal_level</varname></link> must be
-    set to <literal>logical</literal>.
+    set to <literal>replica</literal> or <literal>logical</literal>.
    </para>
 
    <para>
@@ -2365,10 +2667,16 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    </para>
 
    <para>
+    <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+    must be set to at least 1 when <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+    is enabled for any subscription.
+   </para>
+
+   <para>
     <link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
     must be set to at least the number of subscriptions (for leader apply
-    workers), plus some reserve for the table synchronization workers and
-    parallel apply workers.
+    workers), plus some reserve for the parallel apply workers, and
+    table/sequence synchronization workers.
    </para>
 
    <para>
@@ -2381,8 +2689,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <para>
     <link linkend="guc-max-sync-workers-per-subscription"><varname>max_sync_workers_per_subscription</varname></link>
-     controls the amount of parallelism of the initial data copy during the
-     subscription initialization or when new tables are added.
+     controls how many tables can be synchronized in parallel during
+     subscription initialization or when new tables are added. One additional
+     worker is also needed for sequence synchronization.
    </para>
 
    <para>
@@ -2413,7 +2722,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <sect2 id="prepare-publisher-upgrades">
-   <title>Prepare for publisher upgrades</title>
+   <title>Prepare for Publisher Upgrades</title>
 
    <para>
     <application>pg_upgrade</application> attempts to migrate logical
@@ -2442,7 +2751,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      <para>
       The new cluster must have
       <link linkend="guc-wal-level"><varname>wal_level</varname></link> as
-      <literal>logical</literal>.
+      <literal>replica</literal> or <literal>logical</literal>.
      </para>
     </listitem>
     <listitem>
@@ -2485,7 +2794,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </sect2>
 
   <sect2 id="prepare-subscriber-upgrades">
-   <title>Prepare for subscriber upgrades</title>
+   <title>Prepare for Subscriber Upgrades</title>
 
    <para>
     Setup the <link linkend="logical-replication-config-subscriber">
@@ -2499,6 +2808,22 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     supported when the old cluster is version 17.0 or later. Subscription
     dependencies on clusters before version 17.0 will silently be ignored.
    </para>
+
+   <note>
+    <para>
+     Commit timestamps and origin data are not preserved during the upgrade.
+     As a result, even if
+     <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+     is enabled, the upgraded subscriber may be unable to detect conflicts or
+     log relevant commit timestamps and origins when applying changes from the
+     publisher occurred before the upgrade. Additionally, immediately after the
+     upgrade, the vacuum may remove the deleted rows that are required for
+     conflict detection. This can affect the changes that were not replicated
+     before the upgrade. To ensure consistent conflict tracking, users should
+     ensure that all potentially conflicting changes are replicated to the
+     subscriber before initiating the upgrade.
+    </para>
+   </note>
 
    <para>
     There are some prerequisites for <application>pg_upgrade</application> to
@@ -2531,11 +2856,21 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
       subscriptions present in the old cluster.
      </para>
     </listitem>
+    <listitem>
+     <para>
+      If there are subscriptions with retain_dead_tuples enabled, the reserved
+      replication slot <quote><literal>pg_conflict_detection</literal></quote>
+      must not exist on the new cluster. Additionally, the
+      <link linkend="guc-wal-level"><varname>wal_level</varname></link> on the
+      new cluster must be set to <literal>replica</literal> or
+      <literal>logical</literal>.
+     </para>
+    </listitem>
    </itemizedlist>
   </sect2>
 
   <sect2 id="upgrading-logical-replication-clusters">
-   <title>Upgrading logical replication clusters</title>
+   <title>Upgrading Logical Replication Clusters</title>
 
    <para>
     While upgrading a subscriber, write operations can be performed in the
@@ -2599,7 +2934,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    </para>
 
    <sect3 id="steps-two-node-logical-replication-cluster">
-    <title>Steps to upgrade a two-node logical replication cluster</title>
+    <title>Steps to Upgrade a Two-node Logical Replication Cluster</title>
      <para>
       Let's say publisher is in <literal>node1</literal> and subscriber is
       in <literal>node2</literal>. The subscriber <literal>node2</literal> has
@@ -2743,7 +3078,7 @@ pg_ctl -D /opt/PostgreSQL/data2_upgraded start -l logfile
     </sect3>
 
     <sect3 id="steps-cascaded-logical-replication-cluster">
-     <title>Steps to upgrade a cascaded logical replication cluster</title>
+     <title>Steps to Upgrade a Cascaded Logical Replication Cluster</title>
      <para>
       Let's say we have a cascaded logical replication setup
       <literal>node1</literal>-><literal>node2</literal>-><literal>node3</literal>.
@@ -2972,7 +3307,7 @@ pg_ctl -D /opt/PostgreSQL/data3_upgraded start -l logfile
     </sect3>
 
     <sect3 id="steps-two-node-circular-logical-replication-cluster">
-     <title>Steps to upgrade a two-node circular logical replication cluster</title>
+     <title>Steps to Upgrade a Two-node Circular Logical Replication Cluster</title>
      <para>
       Let's say we have a circular logical replication setup
       <literal>node1</literal>-><literal>node2</literal> and
@@ -3203,8 +3538,8 @@ CREATE SUBSCRIPTION mysub CONNECTION 'dbname=foo host=bar user=repuser' PUBLICAT
 
   <para>
    The above will start the replication process, which synchronizes the
-   initial table contents of the tables <literal>users</literal> and
-   <literal>departments</literal> and then starts replicating
+   initial table contents of the tables <structname>users</structname> and
+   <structname>departments</structname> and then starts replicating
    incremental changes to those tables.
   </para>
  </sect1>

@@ -73,7 +73,7 @@ pg_mkdir_p(char *path, int omode)
 		if (p[0] == '/' && p[1] == '/')
 		{
 			/* network drive */
-			p = strstr(p + 2, "/");
+			p = strchr(p + 2, '/');
 			if (p == NULL)
 			{
 				errno = EINVAL;

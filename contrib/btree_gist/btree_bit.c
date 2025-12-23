@@ -8,6 +8,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/sortsupport.h"
 #include "utils/varbit.h"
+#include "varatt.h"
 
 /* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_bit_compress);

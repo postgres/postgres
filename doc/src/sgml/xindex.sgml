@@ -598,7 +598,7 @@
        <entry>11</entry>
       </row>
       <row>
-       <entry><function>stratnum</function></entry>
+       <entry><function>translate_cmptype</function></entry>
        <entry>translate compare types to strategy numbers
         used by the operator class (optional)</entry>
        <entry>12</entry>

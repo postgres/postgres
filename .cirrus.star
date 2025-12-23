@@ -7,7 +7,7 @@ https://github.com/bazelbuild/starlark/blob/master/spec.md
 See also .cirrus.yml and src/tools/ci/README
 """
 
-load("cirrus", "env", "fs")
+load("cirrus", "env", "fs", "re", "yaml")
 
 
 def main():
@@ -18,19 +18,36 @@ def main():
 
     1) the contents of .cirrus.yml
 
-    2) if defined, the contents of the file referenced by the, repository
+    2) computed environment variables
+
+    3) if defined, the contents of the file referenced by the, repository
        level, REPO_CI_CONFIG_GIT_URL variable (see
        https://cirrus-ci.org/guide/programming-tasks/#fs for the accepted
        format)
 
-    3) .cirrus.tasks.yml
+    4) .cirrus.tasks.yml
     """
 
     output = ""
 
     # 1) is evaluated implicitly
 
+
     # Add 2)
+    additional_env = compute_environment_vars()
+    env_fmt = """
+###
+# Computed environment variables start here
+###
+{0}
+###
+# Computed environment variables end here
+###
+"""
+    output += env_fmt.format(yaml.dumps({'env': additional_env}))
+
+
+    # Add 3)
     repo_config_url = env.get("REPO_CI_CONFIG_GIT_URL")
     if repo_config_url != None:
         print("loading additional configuration from \"{}\"".format(repo_config_url))
@@ -38,10 +55,73 @@ def main():
     else:
         output += "\n# REPO_CI_CONFIG_URL was not set\n"
 
-    # Add 3)
+
+    # Add 4)
     output += config_from(".cirrus.tasks.yml")
 
+
     return output
+
+
+def compute_environment_vars():
+    cenv = {}
+
+    ###
+    # Some tasks are manually triggered by default because they might use too
+    # many resources for users of free Cirrus credits, but they can be
+    # triggered automatically by naming them in an environment variable e.g.
+    # REPO_CI_AUTOMATIC_TRIGGER_TASKS="task_name other_task" under "Repository
+    # Settings" on Cirrus CI's website.
+
+    default_manual_trigger_tasks = ['mingw', 'netbsd', 'openbsd']
+
+    repo_ci_automatic_trigger_tasks = env.get('REPO_CI_AUTOMATIC_TRIGGER_TASKS', '')
+    for task in default_manual_trigger_tasks:
+        name = 'CI_TRIGGER_TYPE_' + task.upper()
+        if repo_ci_automatic_trigger_tasks.find(task) != -1:
+            value = 'automatic'
+        else:
+            value = 'manual'
+        cenv[name] = value
+    ###
+
+    ###
+    # Parse "ci-os-only:" tag in commit message and set
+    # CI_{$OS}_ENABLED variable for each OS
+
+    # We want to disable SanityCheck if testing just a specific OS. This
+    # shortens push-wait-for-ci cycle time a bit when debugging operating
+    # system specific failures. Just treating it as an OS in that case
+    # suffices.
+
+    operating_systems = [
+      'compilerwarnings',
+      'freebsd',
+      'linux',
+      'macos',
+      'mingw',
+      'netbsd',
+      'openbsd',
+      'sanitycheck',
+      'windows',
+    ]
+    commit_message = env.get('CIRRUS_CHANGE_MESSAGE')
+    match_re = r"(^|.*\n)ci-os-only: ([^\n]+)($|\n.*)"
+
+    # re.match() returns an array with a tuple of (matched-string, match_1, ...)
+    m = re.match(match_re, commit_message)
+    if m and len(m) > 0:
+        os_only = m[0][2]
+        os_only_list = re.split(r'[, ]+', os_only)
+    else:
+        os_only_list = operating_systems
+
+    for os in operating_systems:
+        os_enabled = os in os_only_list
+        cenv['CI_{0}_ENABLED'.format(os.upper())] = os_enabled
+    ###
+
+    return cenv
 
 
 def config_from(config_src):

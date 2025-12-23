@@ -497,7 +497,8 @@ pg_do_encoding_conversion_buf(Oid proc,
  * Convert string to encoding encoding_name. The source
  * encoding is the DB encoding.
  *
- * BYTEA convert_to(TEXT string, NAME encoding_name) */
+ * BYTEA convert_to(TEXT string, NAME encoding_name)
+ */
 Datum
 pg_convert_to(PG_FUNCTION_ARGS)
 {
@@ -522,7 +523,8 @@ pg_convert_to(PG_FUNCTION_ARGS)
  * Convert string from encoding encoding_name. The destination
  * encoding is the DB encoding.
  *
- * TEXT convert_from(BYTEA string, NAME encoding_name) */
+ * TEXT convert_from(BYTEA string, NAME encoding_name)
+ */
 Datum
 pg_convert_from(PG_FUNCTION_ARGS)
 {
@@ -862,7 +864,7 @@ perform_default_encoding_conversion(const char *src, int len,
  * may call this outside any transaction, or in an aborted transaction.
  */
 void
-pg_unicode_to_server(pg_wchar c, unsigned char *s)
+pg_unicode_to_server(char32_t c, unsigned char *s)
 {
 	unsigned char c_as_utf8[MAX_MULTIBYTE_CHAR_LEN + 1];
 	int			c_as_utf8_len;
@@ -924,7 +926,7 @@ pg_unicode_to_server(pg_wchar c, unsigned char *s)
  * but simply return false on conversion failure.
  */
 bool
-pg_unicode_to_server_noerror(pg_wchar c, unsigned char *s)
+pg_unicode_to_server_noerror(char32_t c, unsigned char *s)
 {
 	unsigned char c_as_utf8[MAX_MULTIBYTE_CHAR_LEN + 1];
 	int			c_as_utf8_len;
@@ -1792,7 +1794,7 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 	 */
 	if (codepage != 0)
 	{
-		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
+		utf16 = palloc_array(WCHAR, len + 1);
 		dstlen = MultiByteToWideChar(codepage, 0, str, len, utf16, len);
 		utf16[dstlen] = (WCHAR) 0;
 	}
@@ -1816,7 +1818,7 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 		else
 			utf8 = (char *) str;
 
-		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
+		utf16 = palloc_array(WCHAR, len + 1);
 		dstlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, utf16, len);
 		utf16[dstlen] = (WCHAR) 0;
 

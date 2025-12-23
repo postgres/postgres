@@ -25,13 +25,6 @@
 /* Radians per degree, a.k.a. PI / 180 */
 #define RADIANS_PER_DEGREE 0.0174532925199432957692
 
-/* Visual C++ etc lacks NAN, and won't accept 0.0/0.0. */
-#if defined(WIN32) && !defined(NAN)
-static const uint32 nan[2] = {0xffffffff, 0x7fffffff};
-
-#define NAN (*(const float8 *) nan)
-#endif
-
 extern PGDLLIMPORT int extra_float_digits;
 
 /*
@@ -52,84 +45,46 @@ extern int	float4_cmp_internal(float4 a, float4 b);
 extern int	float8_cmp_internal(float8 a, float8 b);
 
 /*
- * Routines to provide reasonably platform-independent handling of
- * infinity and NaN
+ * Postgres requires IEEE-standard float arithmetic, including infinities
+ * and NaNs.  We used to support pre-C99 compilers on which <math.h> might
+ * not supply the standard macros INFINITY and NAN.  We no longer do so,
+ * but these wrapper functions are still preferred over using those macros
+ * directly.
  *
- * We assume that isinf() and isnan() are available and work per spec.
- * (On some platforms, we have to supply our own; see src/port.)  However,
- * generating an Infinity or NaN in the first place is less well standardized;
- * pre-C99 systems tend not to have C99's INFINITY and NaN macros.  We
- * centralize our workarounds for this here.
+ * If you change these functions, see copies in interfaces/ecpg/ecpglib/data.c.
  */
 
-/*
- * The funny placements of the two #pragmas is necessary because of a
- * long lived bug in the Microsoft compilers.
- * See http://support.microsoft.com/kb/120968/en-us for details
- */
-#ifdef _MSC_VER
-#pragma warning(disable:4756)
-#endif
 static inline float4
 get_float4_infinity(void)
 {
-#ifdef INFINITY
 	/* C99 standard way */
 	return (float4) INFINITY;
-#else
-#ifdef _MSC_VER
-#pragma warning(default:4756)
-#endif
-
-	/*
-	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
-	 * largest normal float8.  We assume forcing an overflow will get us a
-	 * true infinity.
-	 */
-	return (float4) (HUGE_VAL * HUGE_VAL);
-#endif
 }
 
 static inline float8
 get_float8_infinity(void)
 {
-#ifdef INFINITY
 	/* C99 standard way */
 	return (float8) INFINITY;
-#else
-
-	/*
-	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
-	 * largest normal float8.  We assume forcing an overflow will get us a
-	 * true infinity.
-	 */
-	return (float8) (HUGE_VAL * HUGE_VAL);
-#endif
 }
+
+/* The C standard allows implementations to omit NAN, but we don't */
+#ifndef NAN
+#error "Postgres requires support for IEEE quiet NaNs"
+#endif
 
 static inline float4
 get_float4_nan(void)
 {
-#ifdef NAN
 	/* C99 standard way */
 	return (float4) NAN;
-#else
-	/* Assume we can get a NAN via zero divide */
-	return (float4) (0.0 / 0.0);
-#endif
 }
 
 static inline float8
 get_float8_nan(void)
 {
-	/* (float8) NAN doesn't work on some NetBSD/MIPS releases */
-#if defined(NAN) && !(defined(__NetBSD__) && defined(__mips__))
 	/* C99 standard way */
 	return (float8) NAN;
-#else
-	/* Assume we can get a NaN via zero divide */
-	return (float8) (0.0 / 0.0);
-#endif
 }
 
 /*

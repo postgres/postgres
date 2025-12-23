@@ -23,37 +23,37 @@ PostgreSQL documentation
 <synopsis>
 [ WITH <replaceable class="parameter">with_query</replaceable> [, ...] ]
 MERGE INTO [ ONLY ] <replaceable class="parameter">target_table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">target_alias</replaceable> ]
-USING <replaceable class="parameter">data_source</replaceable> ON <replaceable class="parameter">join_condition</replaceable>
-<replaceable class="parameter">when_clause</replaceable> [...]
-[ RETURNING [ WITH ( { OLD | NEW } AS <replaceable class="parameter">output_alias</replaceable> [, ...] ) ]
-            { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
+    USING <replaceable class="parameter">data_source</replaceable> ON <replaceable class="parameter">join_condition</replaceable>
+    <replaceable class="parameter">when_clause</replaceable> [...]
+    [ RETURNING [ WITH ( { OLD | NEW } AS <replaceable class="parameter">output_alias</replaceable> [, ...] ) ]
+                { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
 
 <phrase>where <replaceable class="parameter">data_source</replaceable> is:</phrase>
 
-{ [ ONLY ] <replaceable class="parameter">source_table_name</replaceable> [ * ] | ( <replaceable class="parameter">source_query</replaceable> ) } [ [ AS ] <replaceable class="parameter">source_alias</replaceable> ]
+    { [ ONLY ] <replaceable class="parameter">source_table_name</replaceable> [ * ] | ( <replaceable class="parameter">source_query</replaceable> ) } [ [ AS ] <replaceable class="parameter">source_alias</replaceable> ]
 
 <phrase>and <replaceable class="parameter">when_clause</replaceable> is:</phrase>
 
-{ WHEN MATCHED [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
-  WHEN NOT MATCHED BY SOURCE [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
-  WHEN NOT MATCHED [ BY TARGET ] [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_insert</replaceable> | DO NOTHING } }
+    { WHEN MATCHED [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
+      WHEN NOT MATCHED BY SOURCE [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
+      WHEN NOT MATCHED [ BY TARGET ] [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_insert</replaceable> | DO NOTHING } }
 
 <phrase>and <replaceable class="parameter">merge_insert</replaceable> is:</phrase>
 
-INSERT [( <replaceable class="parameter">column_name</replaceable> [, ...] )]
-[ OVERRIDING { SYSTEM | USER } VALUE ]
-{ VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) | DEFAULT VALUES }
+    INSERT [( <replaceable class="parameter">column_name</replaceable> [, ...] )]
+        [ OVERRIDING { SYSTEM | USER } VALUE ]
+        { VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) | DEFAULT VALUES }
 
 <phrase>and <replaceable class="parameter">merge_update</replaceable> is:</phrase>
 
-UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
-             ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
-             ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
-           } [, ...]
+    UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
+                 ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
+                 ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
+               } [, ...]
 
 <phrase>and <replaceable class="parameter">merge_delete</replaceable> is:</phrase>
 
-DELETE
+    DELETE
 </synopsis>
  </refsynopsisdiv>
 
@@ -106,10 +106,11 @@ DELETE
    to compute and return value(s) based on each row inserted, updated, or
    deleted.  Any expression using the source or target table's columns, or
    the <link linkend="merge-action"><function>merge_action()</function></link>
-   function can be computed.  When an <command>INSERT</command> or
+   function can be computed.  By default, when an <command>INSERT</command> or
    <command>UPDATE</command> action is performed, the new values of the target
-   table's columns are used.  When a <command>DELETE</command> is performed,
-   the old values of the target table's columns are used.  The syntax of the
+   table's columns are used, and when a <command>DELETE</command> is performed,
+   the old values of the target table's columns are used, but it is also
+   possible to explicitly request old and new values.  The syntax of the
    <literal>RETURNING</literal> list is identical to that of the output list
    of <command>SELECT</command>.
   </para>

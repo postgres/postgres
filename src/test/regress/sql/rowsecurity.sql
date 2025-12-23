@@ -41,6 +41,145 @@ CREATE OR REPLACE FUNCTION f_leak(text) RETURNS bool
     AS 'BEGIN RAISE NOTICE ''f_leak => %'', $1; RETURN true; END';
 GRANT EXECUTE ON FUNCTION f_leak(text) TO public;
 
+--
+-- Test policies applied by command type
+--
+SET SESSION AUTHORIZATION regress_rls_alice;
+
+-- setup source table (for MERGE operations)
+CREATE TABLE rls_test_src (a int PRIMARY KEY, b text);
+ALTER TABLE rls_test_src ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, UPDATE ON rls_test_src TO public;
+INSERT INTO rls_test_src VALUES (1, 'src a');
+
+-- setup target table with a column set by a BEFORE ROW trigger
+-- (policies should always see values set by the trigger)
+CREATE TABLE rls_test_tgt (a int PRIMARY KEY, b text, c text);
+ALTER TABLE rls_test_tgt ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON rls_test_tgt TO public;
+
+CREATE FUNCTION rls_test_tgt_set_c() RETURNS trigger AS
+  $$ BEGIN new.c = upper(new.b); RETURN new; END; $$
+  LANGUAGE plpgsql;
+CREATE TRIGGER rls_test_tgt_set_c BEFORE INSERT OR UPDATE ON rls_test_tgt
+  FOR EACH ROW EXECUTE FUNCTION rls_test_tgt_set_c();
+
+-- setup a complete set of policies that emit NOTICE messages when applied
+CREATE FUNCTION rls_test_policy_fn(text, record) RETURNS bool AS
+  $$ BEGIN RAISE NOTICE '%.%', $1, $2; RETURN true; END; $$
+  LANGUAGE plpgsql;
+
+CREATE POLICY sel_pol ON rls_test_src FOR SELECT
+  USING (rls_test_policy_fn('SELECT USING on rls_test_src', rls_test_src));
+CREATE POLICY upd_pol ON rls_test_src FOR UPDATE
+  USING (rls_test_policy_fn('UPDATE USING on rls_test_src', rls_test_src))
+  WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_src', rls_test_src));
+
+CREATE POLICY sel_pol ON rls_test_tgt FOR SELECT
+  USING (rls_test_policy_fn('SELECT USING on rls_test_tgt', rls_test_tgt));
+CREATE POLICY ins_pol ON rls_test_tgt FOR INSERT
+  WITH CHECK (rls_test_policy_fn('INSERT CHECK on rls_test_tgt', rls_test_tgt));
+CREATE POLICY upd_pol ON rls_test_tgt FOR UPDATE
+  USING (rls_test_policy_fn('UPDATE USING on rls_test_tgt', rls_test_tgt))
+  WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_tgt', rls_test_tgt));
+CREATE POLICY del_pol ON rls_test_tgt FOR DELETE
+  USING (rls_test_policy_fn('DELETE USING on rls_test_tgt', rls_test_tgt));
+
+-- test policies applied to regress_rls_bob
+SET SESSION AUTHORIZATION regress_rls_bob;
+
+-- SELECT, COPY ... TO, and TABLE should only apply SELECT USING policy clause
+SELECT * FROM rls_test_src;
+COPY rls_test_src TO stdout;
+TABLE rls_test_src;
+
+-- SELECT ... FOR UPDATE/SHARE should also apply UPDATE USING policy clause
+SELECT * FROM rls_test_src FOR UPDATE;
+SELECT * FROM rls_test_src FOR NO KEY UPDATE;
+SELECT * FROM rls_test_src FOR SHARE;
+SELECT * FROM rls_test_src FOR KEY SHARE;
+
+-- plain INSERT should apply INSERT CHECK policy clause
+INSERT INTO rls_test_tgt VALUES (1, 'tgt a');
+
+-- INSERT ... RETURNING should also apply SELECT USING policy clause
+TRUNCATE rls_test_tgt;
+INSERT INTO rls_test_tgt VALUES (1, 'tgt a') RETURNING *;
+
+-- UPDATE without WHERE or RETURNING should only apply UPDATE policy clauses
+UPDATE rls_test_tgt SET b = 'tgt b';
+
+-- UPDATE with WHERE or RETURNING should also apply SELECT USING policy clause
+-- (to both old and new values)
+UPDATE rls_test_tgt SET b = 'tgt c' WHERE a = 1;
+UPDATE rls_test_tgt SET b = 'tgt d' RETURNING *;
+
+-- DELETE without WHERE or RETURNING should only apply DELETE USING policy clause
+BEGIN; DELETE FROM rls_test_tgt; ROLLBACK;
+
+-- DELETE with WHERE or RETURNING should also apply SELECT USING policy clause
+BEGIN; DELETE FROM rls_test_tgt WHERE a = 1; ROLLBACK;
+DELETE FROM rls_test_tgt RETURNING *;
+
+-- INSERT ... ON CONFLICT DO NOTHING should apply INSERT CHECK and SELECT USING
+-- policy clauses (to new value, whether it conflicts or not)
+INSERT INTO rls_test_tgt VALUES (1, 'tgt a') ON CONFLICT (a) DO NOTHING;
+INSERT INTO rls_test_tgt VALUES (1, 'tgt b') ON CONFLICT (a) DO NOTHING;
+
+-- INSERT ... ON CONFLICT DO NOTHING without an arbiter clause only applies
+-- INSERT CHECK policy clause
+INSERT INTO rls_test_tgt VALUES (1, 'tgt b') ON CONFLICT DO NOTHING;
+
+-- INSERT ... ON CONFLICT DO UPDATE should apply INSERT CHECK and SELECT USING
+-- policy clauses to values proposed for insert. In the event of a conflict it
+-- should also apply UPDATE and SELECT policies to old and new values, like
+-- UPDATE ... WHERE.
+BEGIN;
+INSERT INTO rls_test_tgt VALUES (2, 'tgt a') ON CONFLICT (a) DO UPDATE SET b = 'tgt b';
+INSERT INTO rls_test_tgt VALUES (2, 'tgt c') ON CONFLICT (a) DO UPDATE SET b = 'tgt d';
+INSERT INTO rls_test_tgt VALUES (3, 'tgt a') ON CONFLICT (a) DO UPDATE SET b = 'tgt b' RETURNING *;
+INSERT INTO rls_test_tgt VALUES (3, 'tgt c') ON CONFLICT (a) DO UPDATE SET b = 'tgt d' RETURNING *;
+ROLLBACK;
+
+-- MERGE should always apply SELECT USING policy clauses to both source and
+-- target rows
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN NOT MATCHED THEN DO NOTHING;
+
+-- MERGE ... INSERT should behave like INSERT on target table
+-- (SELECT policy applied to target, if RETURNING is specified)
+TRUNCATE rls_test_tgt;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN NOT MATCHED THEN INSERT VALUES (1, 'tgt a');
+TRUNCATE rls_test_tgt;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN NOT MATCHED THEN INSERT VALUES (1, 'tgt a')
+  RETURNING *;
+
+-- MERGE ... UPDATE should behave like UPDATE ... WHERE on target table
+-- (join clause is like WHERE, so SELECT policies are always applied)
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN UPDATE SET b = 'tgt b';
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN UPDATE SET b = 'tgt c'
+  RETURNING *;
+
+-- MERGE ... DELETE should behave like DELETE ... WHERE on target table
+-- (join clause is like WHERE, so SELECT policies are always applied)
+BEGIN;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN DELETE;
+ROLLBACK;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN DELETE
+  RETURNING *;
+
+-- Tidy up
+RESET SESSION AUTHORIZATION;
+DROP TABLE rls_test_src, rls_test_tgt;
+DROP FUNCTION rls_test_tgt_set_c;
+DROP FUNCTION rls_test_policy_fn;
+
 -- BASIC Row-Level Security Scenario
 
 SET SESSION AUTHORIZATION regress_rls_alice;
@@ -362,16 +501,19 @@ SELECT * FROM pg_policies WHERE schemaname = 'regress_rls_schema' AND tablename 
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO ON;
 SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+COPY part_document TO stdout WITH (DELIMITER ',');
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
 
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+COPY part_document TO stdout WITH (DELIMITER ',');
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
 
 -- viewpoint from regress_rls_dave
 SET SESSION AUTHORIZATION regress_rls_dave;
 SELECT * FROM part_document WHERE f_leak(dtitle) ORDER BY did;
+COPY part_document TO stdout WITH (DELIMITER ',');
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
 
 -- pp1 ERROR
@@ -2189,7 +2331,7 @@ DROP VIEW rls_view;
 DROP TABLE rls_tbl;
 DROP TABLE ref_tbl;
 
--- Leaky operator test
+-- Leaky operator tests
 CREATE TABLE rls_tbl (a int);
 INSERT INTO rls_tbl SELECT x/10 FROM generate_series(1, 100) x;
 ANALYZE rls_tbl;
@@ -2205,9 +2347,58 @@ CREATE OPERATOR <<< (procedure = op_leak, leftarg = int, rightarg = int,
                      restrict = scalarltsel);
 SELECT * FROM rls_tbl WHERE a <<< 1000;
 EXPLAIN (COSTS OFF) SELECT * FROM rls_tbl WHERE a <<< 1000 or a <<< 900;
+RESET SESSION AUTHORIZATION;
+
+CREATE TABLE rls_child_tbl () INHERITS (rls_tbl);
+INSERT INTO rls_child_tbl SELECT x/10 FROM generate_series(1, 100) x;
+ANALYZE rls_child_tbl;
+
+CREATE TABLE rls_ptbl (a int) PARTITION BY RANGE (a);
+CREATE TABLE rls_part PARTITION OF rls_ptbl FOR VALUES FROM (-100) TO (100);
+INSERT INTO rls_ptbl SELECT x/10 FROM generate_series(1, 100) x;
+ANALYZE rls_ptbl, rls_part;
+
+ALTER TABLE rls_ptbl ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_part ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON rls_ptbl TO regress_rls_alice;
+GRANT SELECT ON rls_part TO regress_rls_alice;
+CREATE POLICY p1 ON rls_tbl USING (a < 0);
+CREATE POLICY p2 ON rls_ptbl USING (a < 0);
+CREATE POLICY p3 ON rls_part USING (a < 0);
+
+SET SESSION AUTHORIZATION regress_rls_alice;
+SELECT * FROM rls_tbl WHERE a <<< 1000;
+SELECT * FROM rls_child_tbl WHERE a <<< 1000;
+SELECT * FROM rls_ptbl WHERE a <<< 1000;
+SELECT * FROM rls_part WHERE a <<< 1000;
+SELECT * FROM (SELECT * FROM rls_tbl UNION ALL
+               SELECT * FROM rls_tbl) t WHERE a <<< 1000;
+SELECT * FROM (SELECT * FROM rls_child_tbl UNION ALL
+               SELECT * FROM rls_child_tbl) t WHERE a <<< 1000;
+RESET SESSION AUTHORIZATION;
+
+REVOKE SELECT ON rls_tbl FROM regress_rls_alice;
+CREATE VIEW rls_tbl_view AS SELECT * FROM rls_tbl;
+
+ALTER TABLE rls_child_tbl ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON rls_child_tbl TO regress_rls_alice;
+CREATE POLICY p4 ON rls_child_tbl USING (a < 0);
+
+SET SESSION AUTHORIZATION regress_rls_alice;
+SELECT * FROM rls_tbl WHERE a <<< 1000;
+SELECT * FROM rls_tbl_view WHERE a <<< 1000;
+SELECT * FROM rls_child_tbl WHERE a <<< 1000;
+SELECT * FROM (SELECT * FROM rls_tbl UNION ALL
+               SELECT * FROM rls_tbl) t WHERE a <<< 1000;
+SELECT * FROM (SELECT * FROM rls_child_tbl UNION ALL
+               SELECT * FROM rls_child_tbl) t WHERE a <<< 1000;
 DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
 RESET SESSION AUTHORIZATION;
+DROP TABLE rls_part;
+DROP TABLE rls_ptbl;
+DROP TABLE rls_child_tbl;
+DROP VIEW rls_tbl_view;
 DROP TABLE rls_tbl;
 
 -- Bug #16006: whole-row Vars in a policy don't play nice with sub-selects

@@ -85,7 +85,7 @@ ginFindLeafPage(GinBtree btree, bool searchMode,
 {
 	GinBtreeStack *stack;
 
-	stack = (GinBtreeStack *) palloc(sizeof(GinBtreeStack));
+	stack = palloc_object(GinBtreeStack);
 	stack->blkno = btree->rootBlkno;
 	stack->buffer = ReadBuffer(btree->index, btree->rootBlkno);
 	stack->parent = NULL;
@@ -152,7 +152,7 @@ ginFindLeafPage(GinBtree btree, bool searchMode,
 		}
 		else
 		{
-			GinBtreeStack *ptr = (GinBtreeStack *) palloc(sizeof(GinBtreeStack));
+			GinBtreeStack *ptr = palloc_object(GinBtreeStack);
 
 			ptr->parent = stack;
 			stack = ptr;
@@ -246,7 +246,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack)
 	blkno = root->blkno;
 	buffer = root->buffer;
 
-	ptr = (GinBtreeStack *) palloc(sizeof(GinBtreeStack));
+	ptr = palloc_object(GinBtreeStack);
 
 	for (;;)
 	{

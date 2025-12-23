@@ -58,7 +58,7 @@ init_tsvector_parser(char *input, int flags, Node *escontext)
 {
 	TSVectorParseState state;
 
-	state = (TSVectorParseState) palloc(sizeof(struct TSVectorParseStateData));
+	state = palloc_object(struct TSVectorParseStateData);
 	state->prsbuf = input;
 	state->bufstart = input;
 	state->len = 32;
@@ -322,13 +322,13 @@ gettoken_tsvector(TSVectorParseState state,
 				if (posalen == 0)
 				{
 					posalen = 4;
-					pos = (WordEntryPos *) palloc(sizeof(WordEntryPos) * posalen);
+					pos = palloc_array(WordEntryPos, posalen);
 					npos = 0;
 				}
 				else if (npos + 1 >= posalen)
 				{
 					posalen *= 2;
-					pos = (WordEntryPos *) repalloc(pos, sizeof(WordEntryPos) * posalen);
+					pos = repalloc_array(pos, WordEntryPos, posalen);
 				}
 				npos++;
 				WEP_SETPOS(pos[npos - 1], LIMITPOS(atoi(state->prsbuf)));

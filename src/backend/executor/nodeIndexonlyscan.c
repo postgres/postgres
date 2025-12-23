@@ -693,8 +693,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 		 * Now create an array to mark the attribute numbers of the keys that
 		 * need to be converted from cstring to name.
 		 */
-		indexstate->ioss_NameCStringAttNums = (AttrNumber *)
-			palloc(sizeof(AttrNumber) * namecount);
+		indexstate->ioss_NameCStringAttNums = palloc_array(AttrNumber, namecount);
 
 		for (int attnum = 0; attnum < indnkeyatts; attnum++)
 		{

@@ -67,7 +67,7 @@ pgp_cfb_create(PGP_CFB **ctx_p, int algo, const uint8 *key, int key_len,
 		return res;
 	}
 
-	ctx = palloc0(sizeof(*ctx));
+	ctx = palloc0_object(PGP_CFB);
 	ctx->ciph = ciph;
 	ctx->block_size = px_cipher_block_size(ciph);
 	ctx->resync = resync;

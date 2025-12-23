@@ -649,7 +649,7 @@ END
     parameters.  Thus for example these declarations conflict:
 <programlisting>
 CREATE FUNCTION foo(int) ...
-CREATE FUNCTION foo(int, out text) ...
+CREATE FUNCTION foo(int, OUT text) ...
 </programlisting>
    </para>
 
@@ -709,7 +709,7 @@ CREATE FUNCTION foo(int, int default 42) ...
    Add two integers using an SQL function:
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
-    AS 'select $1 + $2;'
+    AS 'SELECT $1 + $2;'
     LANGUAGE SQL
     IMMUTABLE
     RETURNS NULL ON NULL INPUT;
@@ -740,7 +740,7 @@ $$ LANGUAGE plpgsql;
   <para>
    Return a record containing multiple output parameters:
 <programlisting>
-CREATE FUNCTION dup(in int, out f1 int, out f2 text)
+CREATE FUNCTION dup(IN int, OUT f1 int, OUT f2 text)
     AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$
     LANGUAGE SQL;
 
@@ -817,10 +817,10 @@ $$  LANGUAGE plpgsql
     SET search_path = admin, pg_temp;
 </programlisting>
 
-    This function's intention is to access a table <literal>admin.pwds</literal>.
+    This function's intention is to access a table <structname>admin.pwds</structname>.
     But without the <literal>SET</literal> clause, or with a <literal>SET</literal> clause
     mentioning only <literal>admin</literal>, the function could be subverted by
-    creating a temporary table named <literal>pwds</literal>.
+    creating a temporary table named <structname>pwds</structname>.
    </para>
 
    <para>

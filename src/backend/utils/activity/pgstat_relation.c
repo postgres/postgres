@@ -3,7 +3,7 @@
  * pgstat_relation.c
  *	  Implementation of relation statistics.
  *
- * This file contains the implementation of function relation. It is kept
+ * This file contains the implementation of relation statistics. It is kept
  * separate from pgstat.c to enforce the line between the statistics access /
  * storage implementation and the details about individual types of
  * statistics.
@@ -207,14 +207,13 @@ pgstat_drop_relation(Relation rel)
  * Report that the table was just vacuumed and flush IO statistics.
  */
 void
-pgstat_report_vacuum(Oid tableoid, bool shared,
-					 PgStat_Counter livetuples, PgStat_Counter deadtuples,
-					 TimestampTz starttime)
+pgstat_report_vacuum(Relation rel, PgStat_Counter livetuples,
+					 PgStat_Counter deadtuples, TimestampTz starttime)
 {
 	PgStat_EntryRef *entry_ref;
 	PgStatShared_Relation *shtabentry;
 	PgStat_StatTabEntry *tabentry;
-	Oid			dboid = (shared ? InvalidOid : MyDatabaseId);
+	Oid			dboid = (rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId);
 	TimestampTz ts;
 	PgStat_Counter elapsedtime;
 
@@ -226,8 +225,8 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	elapsedtime = TimestampDifferenceMilliseconds(starttime, ts);
 
 	/* block acquiring lock for the same reason as pgstat_report_autovac() */
-	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_RELATION,
-											dboid, tableoid, false);
+	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_RELATION, dboid,
+											RelationGetRelid(rel), false);
 
 	shtabentry = (PgStatShared_Relation *) entry_ref->shared_stats;
 	tabentry = &shtabentry->stats;
@@ -514,7 +513,7 @@ find_tabstat_entry(Oid rel_id)
 	}
 
 	tabentry = (PgStat_TableStatus *) entry_ref->pending;
-	tablestatus = palloc(sizeof(PgStat_TableStatus));
+	tablestatus = palloc_object(PgStat_TableStatus);
 	*tablestatus = *tabentry;
 
 	/*
@@ -744,7 +743,7 @@ PostPrepare_PgStat_Relations(PgStat_SubXactStatus *xact_state)
  * Load the saved counts into our local pgstats state.
  */
 void
-pgstat_twophase_postcommit(TransactionId xid, uint16 info,
+pgstat_twophase_postcommit(FullTransactionId fxid, uint16 info,
 						   void *recdata, uint32 len)
 {
 	TwoPhasePgStatRecord *rec = (TwoPhasePgStatRecord *) recdata;
@@ -780,7 +779,7 @@ pgstat_twophase_postcommit(TransactionId xid, uint16 info,
  * as aborted.
  */
 void
-pgstat_twophase_postabort(TransactionId xid, uint16 info,
+pgstat_twophase_postabort(FullTransactionId fxid, uint16 info,
 						  void *recdata, uint32 len)
 {
 	TwoPhasePgStatRecord *rec = (TwoPhasePgStatRecord *) recdata;
@@ -908,6 +907,12 @@ pgstat_relation_delete_pending_cb(PgStat_EntryRef *entry_ref)
 
 	if (pending->relation)
 		pgstat_unlink_relation(pending->relation);
+}
+
+void
+pgstat_relation_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts)
+{
+	((PgStatShared_Relation *) header)->stats.stat_reset_time = ts;
 }
 
 /*

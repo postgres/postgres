@@ -13,3 +13,21 @@ SELECT * FROM test_int4 WHERE i<=1::int4 ORDER BY i;
 SELECT * FROM test_int4 WHERE i=1::int4 ORDER BY i;
 SELECT * FROM test_int4 WHERE i>=1::int4 ORDER BY i;
 SELECT * FROM test_int4 WHERE i>1::int4 ORDER BY i;
+
+explain (costs off)
+SELECT * FROM test_int4 WHERE i<1::int2 ORDER BY i;
+
+SELECT * FROM test_int4 WHERE i<1::int2 ORDER BY i;
+SELECT * FROM test_int4 WHERE i<=1::int2 ORDER BY i;
+SELECT * FROM test_int4 WHERE i=1::int2 ORDER BY i;
+SELECT * FROM test_int4 WHERE i>=1::int2 ORDER BY i;
+SELECT * FROM test_int4 WHERE i>1::int2 ORDER BY i;
+
+explain (costs off)
+SELECT * FROM test_int4 WHERE i<1::int8 ORDER BY i;
+
+SELECT * FROM test_int4 WHERE i<1::int8 ORDER BY i;
+SELECT * FROM test_int4 WHERE i<=1::int8 ORDER BY i;
+SELECT * FROM test_int4 WHERE i=1::int8 ORDER BY i;
+SELECT * FROM test_int4 WHERE i>=1::int8 ORDER BY i;
+SELECT * FROM test_int4 WHERE i>1::int8 ORDER BY i;

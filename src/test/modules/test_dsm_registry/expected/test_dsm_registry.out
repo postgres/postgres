@@ -1,7 +1,20 @@
+SELECT name, type, size > 0 AS size_ok
+FROM pg_dsm_registry_allocations
+WHERE name like 'test_dsm_registry%' ORDER BY name;
+ name | type | size_ok 
+------+------+---------
+(0 rows)
+
 CREATE EXTENSION test_dsm_registry;
 SELECT set_val_in_shmem(1236);
  set_val_in_shmem 
 ------------------
+ 
+(1 row)
+
+SELECT set_val_in_hash('test', '1414');
+ set_val_in_hash 
+-----------------
  
 (1 row)
 
@@ -11,4 +24,21 @@ SELECT get_val_in_shmem();
 ------------------
              1236
 (1 row)
+
+SELECT get_val_in_hash('test');
+ get_val_in_hash 
+-----------------
+ 1414
+(1 row)
+
+\c
+SELECT name, type, size > 0 AS size_ok
+FROM pg_dsm_registry_allocations
+WHERE name like 'test_dsm_registry%' ORDER BY name;
+          name          |  type   | size_ok 
+------------------------+---------+---------
+ test_dsm_registry_dsa  | area    | t
+ test_dsm_registry_dsm  | segment | t
+ test_dsm_registry_hash | hash    | t
+(3 rows)
 

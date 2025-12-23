@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/objectaddress.h"
 #include "common/ip.h"
 #include "funcapi.h"

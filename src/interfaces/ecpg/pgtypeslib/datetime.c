@@ -335,8 +335,8 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 	 */
 	int			token[3][2];
 	int			token_values[3] = {-1, -1, -1};
-	char	   *fmt_token_order;
-	char	   *fmt_ystart,
+	const char *fmt_token_order;
+	const char *fmt_ystart,
 			   *fmt_mstart,
 			   *fmt_dstart;
 	unsigned int i;

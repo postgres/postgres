@@ -296,6 +296,11 @@ The CRL directory to use. Implementation is SSL backend specific.
 The passphrase command to use. If not set, an empty passphrase command will
 be set.
 
+=item passphrase_cmd_reload => B<value>
+
+Whether or not to allow passphrase command reloading. If set the passphrase
+command reload configuration setting will be set to the value.
+
 =item restart => B<value>
 
 If set to 'no', the server won't be restarted after updating the settings.
@@ -315,16 +320,22 @@ sub switch_server_cert
 	my $pgdata = $node->data_dir;
 
 	ok(unlink($node->data_dir . '/sslconfig.conf'));
-	$node->append_conf('sslconfig.conf', "ssl=on");
+	$node->append_conf('sslconfig.conf', 'ssl=on');
 	$node->append_conf('sslconfig.conf', $backend->set_server_cert(\%params));
 	# use lists of ECDH curves and cipher suites for syntax testing
-	$node->append_conf('sslconfig.conf', 'ssl_groups=X25519:prime256v1:secp521r1');
+	$node->append_conf('sslconfig.conf',
+		'ssl_groups=X25519:prime256v1:secp521r1');
 	$node->append_conf('sslconfig.conf',
 		'ssl_tls13_ciphers=TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256');
 
 	$node->append_conf('sslconfig.conf',
-		"ssl_passphrase_command='" . $params{passphrase_cmd} . "'")
+		'ssl_passphrase_command=\'' . $params{passphrase_cmd} . '\'')
 	  if defined $params{passphrase_cmd};
+
+	$node->append_conf('sslconfig.conf',
+		'ssl_passphrase_command_supports_reload=\''
+		  . $params{passphrase_cmd_reload} . '\'')
+	  if defined $params{passphrase_cmd_reload};
 
 	return if (defined($params{restart}) && $params{restart} eq 'no');
 

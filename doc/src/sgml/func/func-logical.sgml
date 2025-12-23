@@ -1,0 +1,146 @@
+  <sect1 id="functions-logical">
+   <title>Logical Operators</title>
+
+   <indexterm zone="functions-logical">
+    <primary>operator</primary>
+    <secondary>logical</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>Boolean</primary>
+    <secondary>operators</secondary>
+    <see>operators, logical</see>
+   </indexterm>
+
+   <para>
+    The usual logical operators are available:
+
+    <indexterm>
+     <primary>AND (operator)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>OR (operator)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>NOT (operator)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>conjunction</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>disjunction</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>negation</primary>
+    </indexterm>
+
+<synopsis>
+<type>boolean</type> <literal>AND</literal> <type>boolean</type> <returnvalue>boolean</returnvalue>
+<type>boolean</type> <literal>OR</literal> <type>boolean</type> <returnvalue>boolean</returnvalue>
+<literal>NOT</literal> <type>boolean</type> <returnvalue>boolean</returnvalue>
+</synopsis>
+
+    <acronym>SQL</acronym> uses a three-valued logic system with true,
+    false, and <literal>null</literal>, which represents <quote>unknown</quote>.
+    Observe the following truth tables:
+
+    <informaltable>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry><replaceable>a</replaceable></entry>
+        <entry><replaceable>b</replaceable></entry>
+        <entry><replaceable>a</replaceable> AND <replaceable>b</replaceable></entry>
+        <entry><replaceable>a</replaceable> OR <replaceable>b</replaceable></entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry>TRUE</entry>
+        <entry>TRUE</entry>
+        <entry>TRUE</entry>
+        <entry>TRUE</entry>
+       </row>
+
+       <row>
+        <entry>TRUE</entry>
+        <entry>FALSE</entry>
+        <entry>FALSE</entry>
+        <entry>TRUE</entry>
+       </row>
+
+       <row>
+        <entry>TRUE</entry>
+        <entry>NULL</entry>
+        <entry>NULL</entry>
+        <entry>TRUE</entry>
+       </row>
+
+       <row>
+        <entry>FALSE</entry>
+        <entry>FALSE</entry>
+        <entry>FALSE</entry>
+        <entry>FALSE</entry>
+       </row>
+
+       <row>
+        <entry>FALSE</entry>
+        <entry>NULL</entry>
+        <entry>FALSE</entry>
+        <entry>NULL</entry>
+       </row>
+
+       <row>
+        <entry>NULL</entry>
+        <entry>NULL</entry>
+        <entry>NULL</entry>
+        <entry>NULL</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry><replaceable>a</replaceable></entry>
+        <entry>NOT <replaceable>a</replaceable></entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry>TRUE</entry>
+        <entry>FALSE</entry>
+       </row>
+
+       <row>
+        <entry>FALSE</entry>
+        <entry>TRUE</entry>
+       </row>
+
+       <row>
+        <entry>NULL</entry>
+        <entry>NULL</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+
+   <para>
+    The operators <literal>AND</literal> and <literal>OR</literal> are
+    commutative, that is, you can switch the left and right operands
+    without affecting the result.  (However, it is not guaranteed that
+    the left operand is evaluated before the right operand.  See <xref
+    linkend="syntax-express-eval"/> for more information about the
+    order of evaluation of subexpressions.)
+   </para>
+  </sect1>

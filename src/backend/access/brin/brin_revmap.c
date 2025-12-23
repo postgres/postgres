@@ -79,7 +79,7 @@ brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange)
 	page = BufferGetPage(meta);
 	metadata = (BrinMetaPageData *) PageGetContents(page);
 
-	revmap = palloc(sizeof(BrinRevmap));
+	revmap = palloc_object(BrinRevmap);
 	revmap->rm_irel = idxrel;
 	revmap->rm_pagesPerRange = metadata->pagesPerRange;
 	revmap->rm_lastRevmapPage = metadata->lastRevmapPage;

@@ -531,7 +531,7 @@ fileGetForeignRelSize(PlannerInfo *root,
 	 * we might as well get everything and not need to re-fetch it later in
 	 * planning.
 	 */
-	fdw_private = (FileFdwPlanState *) palloc(sizeof(FileFdwPlanState));
+	fdw_private = palloc_object(FileFdwPlanState);
 	fileGetOptions(foreigntableid,
 				   &fdw_private->filename,
 				   &fdw_private->is_program,
@@ -712,7 +712,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	 * Save state in node->fdw_state.  We must save enough information to call
 	 * BeginCopyFrom() again.
 	 */
-	festate = (FileFdwExecutionState *) palloc(sizeof(FileFdwExecutionState));
+	festate = palloc_object(FileFdwExecutionState);
 	festate->filename = filename;
 	festate->is_program = is_program;
 	festate->options = options;
@@ -1026,9 +1026,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	numattrs = 0;
 	for (i = 0; i < tupleDesc->natts; i++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(tupleDesc, i);
-
-		if (attr->attisdropped)
+		if (TupleDescCompactAttr(tupleDesc, i)->attisdropped)
 			continue;
 		numattrs++;
 	}

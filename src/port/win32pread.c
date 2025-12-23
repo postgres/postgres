@@ -17,7 +17,7 @@
 #include <windows.h>
 
 ssize_t
-pg_pread(int fd, void *buf, size_t size, off_t offset)
+pg_pread(int fd, void *buf, size_t size, pgoff_t offset)
 {
 	OVERLAPPED	overlapped = {0};
 	HANDLE		handle;
@@ -34,7 +34,9 @@ pg_pread(int fd, void *buf, size_t size, off_t offset)
 	size = Min(size, 1024 * 1024 * 1024);
 
 	/* Note that this changes the file position, despite not using it. */
-	overlapped.Offset = offset;
+	overlapped.Offset = (DWORD) offset;
+	overlapped.OffsetHigh = (DWORD) (offset >> 32);
+
 	if (!ReadFile(handle, buf, size, &result, &overlapped))
 	{
 		if (GetLastError() == ERROR_HANDLE_EOF)

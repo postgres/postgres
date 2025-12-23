@@ -178,7 +178,7 @@ encrypt_init(PushFilter *next, void *init_arg, void **priv_p)
 	if (res < 0)
 		return res;
 
-	st = palloc0(sizeof(*st));
+	st = palloc0_object(struct EncStat);
 	st->ciph = ciph;
 
 	*priv_p = st;
@@ -240,7 +240,7 @@ pkt_stream_init(PushFilter *next, void *init_arg, void **priv_p)
 {
 	struct PktStreamStat *st;
 
-	st = palloc(sizeof(*st));
+	st = palloc_object(struct PktStreamStat);
 	st->final_done = 0;
 	st->pkt_block = 1 << STREAM_BLOCK_SHIFT;
 	*priv_p = st;

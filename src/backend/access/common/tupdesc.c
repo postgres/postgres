@@ -142,9 +142,16 @@ void
 verify_compact_attribute(TupleDesc tupdesc, int attnum)
 {
 #ifdef USE_ASSERT_CHECKING
-	CompactAttribute *cattr = &tupdesc->compact_attrs[attnum];
+	CompactAttribute cattr;
 	Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
 	CompactAttribute tmp;
+
+	/*
+	 * Make a temp copy of the TupleDesc's CompactAttribute.  This may be a
+	 * shared TupleDesc and the attcacheoff might get changed by another
+	 * backend.
+	 */
+	memcpy(&cattr, &tupdesc->compact_attrs[attnum], sizeof(CompactAttribute));
 
 	/*
 	 * Populate the temporary CompactAttribute from the corresponding
@@ -156,11 +163,11 @@ verify_compact_attribute(TupleDesc tupdesc, int attnum)
 	 * Make the attcacheoff match since it's been reset to -1 by
 	 * populate_compact_attribute_internal.  Same with attnullability.
 	 */
-	tmp.attcacheoff = cattr->attcacheoff;
-	tmp.attnullability = cattr->attnullability;
+	tmp.attcacheoff = cattr.attcacheoff;
+	tmp.attnullability = cattr.attnullability;
 
 	/* Check the freshly populated CompactAttribute matches the TupleDesc's */
-	Assert(memcmp(&tmp, cattr, sizeof(CompactAttribute)) == 0);
+	Assert(memcmp(&tmp, &cattr, sizeof(CompactAttribute)) == 0);
 #endif
 }
 
@@ -354,7 +361,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	/* Copy the TupleConstr data structure, if any */
 	if (constr)
 	{
-		TupleConstr *cpy = (TupleConstr *) palloc0(sizeof(TupleConstr));
+		TupleConstr *cpy = palloc0_object(TupleConstr);
 
 		cpy->has_not_null = constr->has_not_null;
 		cpy->has_generated_stored = constr->has_generated_stored;
@@ -467,8 +474,8 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(src));
-	Assert(PointerIsValid(dst));
+	Assert(src);
+	Assert(dst);
 	Assert(srcAttno >= 1);
 	Assert(srcAttno <= src->natts);
 	Assert(dstAttno >= 1);
@@ -808,10 +815,10 @@ hashRowType(TupleDesc desc)
 	uint32		s;
 	int			i;
 
-	s = hash_combine(0, hash_uint32(desc->natts));
-	s = hash_combine(s, hash_uint32(desc->tdtypeid));
+	s = hash_combine(0, hash_bytes_uint32(desc->natts));
+	s = hash_combine(s, hash_bytes_uint32(desc->tdtypeid));
 	for (i = 0; i < desc->natts; ++i)
-		s = hash_combine(s, hash_uint32(TupleDescAttr(desc, i)->atttypid));
+		s = hash_combine(s, hash_bytes_uint32(TupleDescAttr(desc, i)->atttypid));
 
 	return s;
 }
@@ -846,7 +853,7 @@ TupleDescInitEntry(TupleDesc desc,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(desc));
+	Assert(desc);
 	Assert(attributeNumber >= 1);
 	Assert(attributeNumber <= desc->natts);
 	Assert(attdim >= 0);
@@ -918,7 +925,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 	Form_pg_attribute att;
 
 	/* sanity checks */
-	Assert(PointerIsValid(desc));
+	Assert(desc);
 	Assert(attributeNumber >= 1);
 	Assert(attributeNumber <= desc->natts);
 	Assert(attdim >= 0);
@@ -986,7 +993,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 
 		case INT8OID:
 			att->attlen = 8;
-			att->attbyval = FLOAT8PASSBYVAL;
+			att->attbyval = true;
 			att->attalign = TYPALIGN_DOUBLE;
 			att->attstorage = TYPSTORAGE_PLAIN;
 			att->attcompression = InvalidCompressionMethod;
@@ -1023,7 +1030,7 @@ TupleDescInitEntryCollation(TupleDesc desc,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(desc));
+	Assert(desc);
 	Assert(attributeNumber >= 1);
 	Assert(attributeNumber <= desc->natts);
 

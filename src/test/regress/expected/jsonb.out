@@ -1582,6 +1582,38 @@ SELECT jsonb_object_agg(1, NULL::jsonb);
 
 SELECT jsonb_object_agg(NULL, '{"a":1}');
 ERROR:  field name must not be null
+SELECT jsonb_object_agg_unique(i, null) OVER (ORDER BY i)
+  FROM generate_series(1, 10) g(i);
+                                             jsonb_object_agg_unique                                             
+-----------------------------------------------------------------------------------------------------------------
+ {"1": null}
+ {"1": null, "2": null}
+ {"1": null, "2": null, "3": null}
+ {"1": null, "2": null, "3": null, "4": null}
+ {"1": null, "2": null, "3": null, "4": null, "5": null}
+ {"1": null, "2": null, "3": null, "4": null, "5": null, "6": null}
+ {"1": null, "2": null, "3": null, "4": null, "5": null, "6": null, "7": null}
+ {"1": null, "2": null, "3": null, "4": null, "5": null, "6": null, "7": null, "8": null}
+ {"1": null, "2": null, "3": null, "4": null, "5": null, "6": null, "7": null, "8": null, "9": null}
+ {"1": null, "2": null, "3": null, "4": null, "5": null, "6": null, "7": null, "8": null, "9": null, "10": null}
+(10 rows)
+
+SELECT jsonb_object_agg_unique_strict(i, null) OVER (ORDER BY i)
+  FROM generate_series(1, 10) g(i);
+ jsonb_object_agg_unique_strict 
+--------------------------------
+ {}
+ {}
+ {}
+ {}
+ {}
+ {}
+ {}
+ {}
+ {}
+ {}
+(10 rows)
+
 CREATE TEMP TABLE foo (serial_num int, name text, type text);
 INSERT INTO foo VALUES (847001,'t15','GE1043');
 INSERT INTO foo VALUES (847002,'t16','GE1043');

@@ -239,7 +239,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 	TimeLineID	endtli;
 	backup_manifest_info manifest;
 	BackupState *backup_state;
-	StringInfo	tablespace_map;
+	StringInfoData tablespace_map;
 
 	/* Initial backup state, insofar as we know it now. */
 	state.tablespaces = NIL;
@@ -262,12 +262,12 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 	total_checksum_failures = 0;
 
 	/* Allocate backup related variables. */
-	backup_state = (BackupState *) palloc0(sizeof(BackupState));
-	tablespace_map = makeStringInfo();
+	backup_state = palloc0_object(BackupState);
+	initStringInfo(&tablespace_map);
 
 	basebackup_progress_wait_checkpoint();
 	do_pg_backup_start(opt->label, opt->fastcheckpoint, &state.tablespaces,
-					   backup_state, tablespace_map);
+					   backup_state, &tablespace_map);
 
 	state.startptr = backup_state->startpoint;
 	state.starttli = backup_state->starttli;
@@ -289,7 +289,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 			PrepareForIncrementalBackup(ib, backup_state);
 
 		/* Add a node for the base directory at the end */
-		newti = palloc0(sizeof(tablespaceinfo));
+		newti = palloc0_object(tablespaceinfo);
 		newti->size = -1;
 		state.tablespaces = lappend(state.tablespaces, newti);
 
@@ -342,7 +342,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 				if (opt->sendtblspcmapfile)
 				{
 					sendFileWithContent(sink, TABLESPACE_MAP,
-										tablespace_map->data, -1, &manifest);
+										tablespace_map.data, -1, &manifest);
 					sendtblspclinks = false;
 				}
 
@@ -399,7 +399,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 		endtli = backup_state->stoptli;
 
 		/* Deallocate backup-related variables. */
-		destroyStringInfo(tablespace_map);
+		pfree(tablespace_map.data);
 		pfree(backup_state);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));
@@ -808,8 +808,8 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 			if (maxrate < MAX_RATE_LOWER || maxrate > MAX_RATE_UPPER)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-								(int) maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
+						 errmsg("%" PRId64 " is outside the valid range for parameter \"%s\" (%d .. %d)",
+								maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
 
 			opt->maxrate = (uint32) maxrate;
 			o_maxrate = true;
@@ -1048,7 +1048,7 @@ SendBaseBackup(BaseBackupCmd *cmd, IncrementalBackupInfo *ib)
 		sink = bbsink_zstd_new(sink, &opt.compression_specification);
 
 	/* Set up progress reporting. */
-	sink = bbsink_progress_new(sink, opt.progress);
+	sink = bbsink_progress_new(sink, opt.progress, opt.incremental);
 
 	/*
 	 * Perform the base backup, but make sure we clean up the bbsink even if
@@ -1206,7 +1206,7 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 	 * But we don't need it at all if this is not an incremental backup.
 	 */
 	if (ib != NULL)
-		relative_block_numbers = palloc(sizeof(BlockNumber) * RELSEG_SIZE);
+		relative_block_numbers = palloc_array(BlockNumber, RELSEG_SIZE);
 
 	/*
 	 * Determine if the current path is a database directory that can contain

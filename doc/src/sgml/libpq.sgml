@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/libpq.sgml -->
 
-<chapter id="libpq">
+<chapter id="libpq" xreflabel="libpq">
  <title><application>libpq</application> &mdash; C Library</title>
 
  <indexterm zone="libpq">
@@ -2168,6 +2168,24 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-ssl-max-protocol-version" xreflabel="ssl_max_protocol_version">
+      <term><literal>ssl_max_protocol_version</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the maximum SSL/TLS protocol version to allow
+        for the connection. Valid values are <literal>TLSv1</literal>,
+        <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
+        <literal>TLSv1.3</literal>. The supported protocols depend on the
+        version of <productname>OpenSSL</productname> used, older versions
+        not supporting the most modern protocol versions. If not set, this
+        parameter is ignored and the connection will use the maximum bound
+        defined by the backend, if set. Setting the maximum protocol version
+        is mainly useful for testing or if some component has issues working
+        with a newer protocol.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-min-protocol-version" xreflabel="min_protocol_version">
       <term><literal>min_protocol_version</literal></term>
       <listitem>
@@ -2202,7 +2220,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         server does not support the protocol version requested by the client,
         the connection is automatically downgraded to a lower minor protocol
         version that the server supports. After the connection attempt has
-        completed you can use <xref linkend="libpq-PQprotocolVersion"/> to
+        completed you can use <xref linkend="libpq-PQfullProtocolVersion"/> to
         find out which exact protocol version was negotiated.
        </para>
 
@@ -2212,24 +2230,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         and <literal>latest</literal>. The <literal>latest</literal> value is
         equivalent to the latest protocol version supported by the libpq
         version being used, which is currently <literal>3.2</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="libpq-connect-ssl-max-protocol-version" xreflabel="ssl_max_protocol_version">
-      <term><literal>ssl_max_protocol_version</literal></term>
-      <listitem>
-       <para>
-        This parameter specifies the maximum SSL/TLS protocol version to allow
-        for the connection. Valid values are <literal>TLSv1</literal>,
-        <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
-        <literal>TLSv1.3</literal>. The supported protocols depend on the
-        version of <productname>OpenSSL</productname> used, older versions
-        not supporting the most modern protocol versions. If not set, this
-        parameter is ignored and the connection will use the maximum bound
-        defined by the backend, if set. Setting the maximum protocol version
-        is mainly useful for testing or if some component has issues working
-        with a newer protocol.
        </para>
       </listitem>
      </varlistentry>
@@ -2316,6 +2316,19 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         name in <filename>pg_service.conf</filename> that holds additional connection parameters.
         This allows applications to specify only a service name so connection parameters
         can be centrally maintained. See <xref linkend="libpq-pgservice"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-servicefile" xreflabel="servicefile">
+      <term><literal>servicefile</literal></term>
+      <listitem>
+       <para>
+        This option specifies the name of the per-user connection service file
+        (see <xref linkend="libpq-pgservice"/>).
+        Defaults to <filename>~/.pg_service.conf</filename>, or
+        <filename>%APPDATA%\postgresql\.pg_service.conf</filename> on
+        Microsoft Windows.
        </para>
       </listitem>
      </varlistentry>
@@ -2736,26 +2749,6 @@ char *PQport(const PGconn *conn);
        not possible to rely on the result of <xref linkend="libpq-PQport"/> until
        the connection is established.  The status of the connection can be
        checked using the function <xref linkend="libpq-PQstatus"/>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry id="libpq-PQservice">
-     <term><function>PQservice</function><indexterm><primary>PQservice</primary></indexterm></term>
-
-     <listitem>
-      <para>
-       Returns the service of the active connection.
-
-<synopsis>
-char *PQservice(const PGconn *conn);
-</synopsis>
-      </para>
-
-      <para>
-       <xref linkend="libpq-PQservice"/> returns <symbol>NULL</symbol> if the
-       <parameter>conn</parameter> argument is <symbol>NULL</symbol>.
-       Otherwise, if there was no service provided, it returns an empty string.
       </para>
      </listitem>
     </varlistentry>
@@ -4515,7 +4508,7 @@ Oid PQftable(const PGresult *res,
       <para>
        <literal>InvalidOid</literal> is returned if the column number is out of range,
        or if the specified column is not a simple reference to a table column.
-       You can query the system table <literal>pg_class</literal> to determine
+       You can query the system table <structname>pg_class</structname> to determine
        exactly which table is referenced.
       </para>
 
@@ -4585,7 +4578,7 @@ Oid PQftype(const PGresult *res,
       </para>
 
       <para>
-       You can query the system table <literal>pg_type</literal> to
+       You can query the system table <structname>pg_type</structname> to
        obtain the names and properties of the various data types. The
        <acronym>OID</acronym>s of the built-in data types are defined
        in the file <filename>catalog/pg_type_d.h</filename>
@@ -9160,12 +9153,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSERVICEFILE</envar></primary>
       </indexterm>
-      <envar>PGSERVICEFILE</envar> specifies the name of the per-user
-      connection service file
-      (see <xref linkend="libpq-pgservice"/>).
-      Defaults to <filename>~/.pg_service.conf</filename>, or
-      <filename>%APPDATA%\postgresql\.pg_service.conf</filename> on
-      Microsoft Windows.
+      <envar>PGSERVICEFILE</envar> behaves the same as the
+      <xref linkend="libpq-connect-servicefile"/> connection parameter.
      </para>
     </listitem>
 
@@ -9596,7 +9585,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    On Microsoft Windows, it is named
    <filename>%APPDATA%\postgresql\.pg_service.conf</filename> (where
    <filename>%APPDATA%</filename> refers to the Application Data subdirectory
-   in the user's profile).  A different file name can be specified by
+   in the user's profile).  A different file name can be specified using the
+   <literal>servicefile</literal> key word in a libpq connection string or by
    setting the environment variable <envar>PGSERVICEFILE</envar>.
    The system-wide file is named <filename>pg_service.conf</filename>.
    By default it is sought in the <filename>etc</filename> directory
@@ -10432,10 +10422,14 @@ typedef struct PGoauthBearerRequest
 
     /* Hook outputs */
 
-    /* Callback implementing a custom asynchronous OAuth flow. */
+    /*
+     * Callback implementing a custom asynchronous OAuth flow. The signature is
+     * platform-dependent: PQ_SOCKTYPE is SOCKET on Windows, and int everywhere
+     * else.
+     */
     PostgresPollingStatusType (*async) (PGconn *conn,
                                         struct PGoauthBearerRequest *request,
-                                        SOCKTYPE *altsock);
+                                        PQ_SOCKTYPE *altsock);
 
     /* Callback to clean up custom allocations. */
     void        (*cleanup) (PGconn *conn, struct PGoauthBearerRequest *request);
@@ -10492,7 +10486,7 @@ typedef struct PGoauthBearerRequest
          hook. When the callback cannot make further progress without blocking,
          it should return either <symbol>PGRES_POLLING_READING</symbol> or
          <symbol>PGRES_POLLING_WRITING</symbol> after setting
-         <literal>*pgsocket</literal> to the file descriptor that will be marked
+         <literal>*altsock</literal> to the file descriptor that will be marked
          ready to read/write when progress can be made again. (This descriptor
          is then provided to the top-level polling loop via
          <function>PQsocket()</function>.) Return <symbol>PGRES_POLLING_OK</symbol>
@@ -10871,7 +10865,7 @@ main(int argc, char **argv)
     /*
      * Our test case here involves using a cursor, for which we must be inside
      * a transaction block.  We could do the whole thing with a single
-     * PQexec() of "select * from pg_database", but that's too trivial to make
+     * PQexec() of "SELECT * FROM pg_database", but that's too trivial to make
      * a good example.
      */
 
@@ -10888,7 +10882,7 @@ main(int argc, char **argv)
     /*
      * Fetch rows from pg_database, the system catalog of databases
      */
-    res = PQexec(conn, "DECLARE myportal CURSOR FOR select * from pg_database");
+    res = PQexec(conn, "DECLARE myportal CURSOR FOR SELECT * FROM pg_database");
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "DECLARE CURSOR failed: %s", PQerrorMessage(conn));

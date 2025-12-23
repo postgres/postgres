@@ -269,8 +269,7 @@ wait_on_slots(ParallelSlotArray *sa)
 			else
 			{
 				/* This connection has become idle */
-				sa->slots[i].inUse = false;
-				ParallelSlotClearHandler(&sa->slots[i]);
+				ParallelSlotSetIdle(&sa->slots[i]);
 				break;
 			}
 		}
@@ -509,8 +508,7 @@ ParallelSlotsWaitCompletion(ParallelSlotArray *sa)
 		if (!consumeQueryResult(&sa->slots[i]))
 			return false;
 		/* Mark connection as idle */
-		sa->slots[i].inUse = false;
-		ParallelSlotClearHandler(&sa->slots[i]);
+		ParallelSlotSetIdle(&sa->slots[i]);
 	}
 
 	return true;

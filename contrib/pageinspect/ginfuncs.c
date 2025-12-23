@@ -222,7 +222,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 							   opaq->flags,
 							   (GIN_DATA | GIN_LEAF | GIN_COMPRESSED))));
 
-		inter_call_data = palloc(sizeof(gin_leafpage_items_state));
+		inter_call_data = palloc_object(gin_leafpage_items_state);
 
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)

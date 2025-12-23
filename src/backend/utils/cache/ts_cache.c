@@ -321,7 +321,9 @@ lookup_ts_dictionary_cache(Oid dictId)
 
 			/*
 			 * Init method runs in dictionary's private memory context, and we
-			 * make sure the options are stored there too
+			 * make sure the options are stored there too.  This typically
+			 * results in a small amount of memory leakage, but it's not worth
+			 * complicating the API for tmplinit functions to avoid it.
 			 */
 			oldcontext = MemoryContextSwitchTo(entry->dictCtx);
 

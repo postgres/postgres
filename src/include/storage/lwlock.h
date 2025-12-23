@@ -73,15 +73,13 @@ typedef union LWLockPadded
 
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 
-/* struct for storing named tranche information */
-typedef struct NamedLWLockTranche
-{
-	int			trancheId;
-	char	   *trancheName;
-} NamedLWLockTranche;
+/* forward declaration of private type for use only by lwlock.c */
+typedef struct NamedLWLockTrancheRequest NamedLWLockTrancheRequest;
 
-extern PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
+extern PGDLLIMPORT char **LWLockTrancheNames;
 extern PGDLLIMPORT int NamedLWLockTrancheRequests;
+extern PGDLLIMPORT NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray;
+extern PGDLLIMPORT int *LWLockCounter;
 
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS
@@ -157,70 +155,34 @@ extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
 
 /*
  * There is another, more flexible method of obtaining lwlocks. First, call
- * LWLockNewTrancheId just once to obtain a tranche ID; this allocates from
- * a shared counter.  Next, each individual process using the tranche should
- * call LWLockRegisterTranche() to associate that tranche ID with a name.
- * Finally, LWLockInitialize should be called just once per lwlock, passing
- * the tranche ID as an argument.
- *
- * It may seem strange that each process using the tranche must register it
- * separately, but dynamic shared memory segments aren't guaranteed to be
- * mapped at the same address in all coordinating backends, so storing the
- * registration in the main shared memory segment wouldn't work for that case.
+ * LWLockNewTrancheId to obtain a tranche ID; this allocates from a shared
+ * counter.  Second, LWLockInitialize should be called just once per lwlock,
+ * passing the tranche ID as an argument.
  */
-extern int	LWLockNewTrancheId(void);
-extern void LWLockRegisterTranche(int tranche_id, const char *tranche_name);
+extern int	LWLockNewTrancheId(const char *name);
 extern void LWLockInitialize(LWLock *lock, int tranche_id);
 
 /*
  * Every tranche ID less than NUM_INDIVIDUAL_LWLOCKS is reserved; also,
  * we reserve additional tranche IDs for builtin tranches not included in
  * the set of individual LWLocks.  A call to LWLockNewTrancheId will never
- * return a value less than LWTRANCHE_FIRST_USER_DEFINED.
+ * return a value less than LWTRANCHE_FIRST_USER_DEFINED.  The actual list of
+ * built-in tranches is kept in lwlocklist.h.
  */
 typedef enum BuiltinTrancheIds
 {
-	LWTRANCHE_XACT_BUFFER = NUM_INDIVIDUAL_LWLOCKS,
-	LWTRANCHE_COMMITTS_BUFFER,
-	LWTRANCHE_SUBTRANS_BUFFER,
-	LWTRANCHE_MULTIXACTOFFSET_BUFFER,
-	LWTRANCHE_MULTIXACTMEMBER_BUFFER,
-	LWTRANCHE_NOTIFY_BUFFER,
-	LWTRANCHE_SERIAL_BUFFER,
-	LWTRANCHE_WAL_INSERT,
-	LWTRANCHE_BUFFER_CONTENT,
-	LWTRANCHE_REPLICATION_ORIGIN_STATE,
-	LWTRANCHE_REPLICATION_SLOT_IO,
-	LWTRANCHE_LOCK_FASTPATH,
-	LWTRANCHE_BUFFER_MAPPING,
-	LWTRANCHE_LOCK_MANAGER,
-	LWTRANCHE_PREDICATE_LOCK_MANAGER,
-	LWTRANCHE_PARALLEL_HASH_JOIN,
-	LWTRANCHE_PARALLEL_BTREE_SCAN,
-	LWTRANCHE_PARALLEL_QUERY_DSA,
-	LWTRANCHE_PER_SESSION_DSA,
-	LWTRANCHE_PER_SESSION_RECORD_TYPE,
-	LWTRANCHE_PER_SESSION_RECORD_TYPMOD,
-	LWTRANCHE_SHARED_TUPLESTORE,
-	LWTRANCHE_SHARED_TIDBITMAP,
-	LWTRANCHE_PARALLEL_APPEND,
-	LWTRANCHE_PER_XACT_PREDICATE_LIST,
-	LWTRANCHE_PGSTATS_DSA,
-	LWTRANCHE_PGSTATS_HASH,
-	LWTRANCHE_PGSTATS_DATA,
-	LWTRANCHE_LAUNCHER_DSA,
-	LWTRANCHE_LAUNCHER_HASH,
-	LWTRANCHE_DSM_REGISTRY_DSA,
-	LWTRANCHE_DSM_REGISTRY_HASH,
-	LWTRANCHE_COMMITTS_SLRU,
-	LWTRANCHE_MULTIXACTMEMBER_SLRU,
-	LWTRANCHE_MULTIXACTOFFSET_SLRU,
-	LWTRANCHE_NOTIFY_SLRU,
-	LWTRANCHE_SERIAL_SLRU,
-	LWTRANCHE_SUBTRANS_SLRU,
-	LWTRANCHE_XACT_SLRU,
-	LWTRANCHE_PARALLEL_VACUUM_DSA,
-	LWTRANCHE_AIO_URING_COMPLETION,
+	/*
+	 * LWTRANCHE_INVALID is an unused value that only exists to initialize the
+	 * rest of the tranches to appropriate values.
+	 */
+	LWTRANCHE_INVALID = NUM_INDIVIDUAL_LWLOCKS - 1,
+
+#define PG_LWLOCK(id, name)
+#define PG_LWLOCKTRANCHE(id, name) LWTRANCHE_##id,
+#include "storage/lwlocklist.h"
+#undef PG_LWLOCK
+#undef PG_LWLOCKTRANCHE
+
 	LWTRANCHE_FIRST_USER_DEFINED,
 }			BuiltinTrancheIds;
 

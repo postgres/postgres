@@ -1307,10 +1307,7 @@ extern void plpgsql_dumptree(PLpgSQL_function *func);
  */
 union YYSTYPE;
 #define YYLTYPE int
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
-#endif
 extern int	plpgsql_yylex(union YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 extern int	plpgsql_token_length(yyscan_t yyscanner);
 extern void plpgsql_push_back_token(int token, union YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);

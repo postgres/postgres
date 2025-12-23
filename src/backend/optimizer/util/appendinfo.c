@@ -517,6 +517,57 @@ adjust_appendrel_attrs_mutator(Node *node,
 	}
 
 	/*
+	 * We have to process RelAggInfo nodes specially.
+	 */
+	if (IsA(node, RelAggInfo))
+	{
+		RelAggInfo *oldinfo = (RelAggInfo *) node;
+		RelAggInfo *newinfo = makeNode(RelAggInfo);
+
+		newinfo->target = (PathTarget *)
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->target,
+										   context);
+
+		newinfo->agg_input = (PathTarget *)
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->agg_input,
+										   context);
+
+		newinfo->group_clauses = oldinfo->group_clauses;
+
+		newinfo->group_exprs = (List *)
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->group_exprs,
+										   context);
+
+		return (Node *) newinfo;
+	}
+
+	/*
+	 * We have to process PathTarget nodes specially.
+	 */
+	if (IsA(node, PathTarget))
+	{
+		PathTarget *oldtarget = (PathTarget *) node;
+		PathTarget *newtarget = makeNode(PathTarget);
+
+		/* Copy all flat-copiable fields */
+		memcpy(newtarget, oldtarget, sizeof(PathTarget));
+
+		newtarget->exprs = (List *)
+			adjust_appendrel_attrs_mutator((Node *) oldtarget->exprs,
+										   context);
+
+		if (oldtarget->sortgrouprefs)
+		{
+			Size		nbytes = list_length(oldtarget->exprs) * sizeof(Index);
+
+			newtarget->sortgrouprefs = (Index *) palloc(nbytes);
+			memcpy(newtarget->sortgrouprefs, oldtarget->sortgrouprefs, nbytes);
+		}
+
+		return (Node *) newtarget;
+	}
+
+	/*
 	 * NOTE: we do not need to recurse into sublinks, because they should
 	 * already have been converted to subplans before we see them.
 	 */
@@ -757,8 +808,7 @@ find_appinfos_by_relids(PlannerInfo *root, Relids relids, int *nappinfos)
 	int			i;
 
 	/* Allocate an array that's certainly big enough */
-	appinfos = (AppendRelInfo **)
-		palloc(sizeof(AppendRelInfo *) * bms_num_members(relids));
+	appinfos = palloc_array(AppendRelInfo *, bms_num_members(relids));
 
 	i = -1;
 	while ((i = bms_next_member(relids, i)) >= 0)

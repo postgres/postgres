@@ -814,7 +814,7 @@ Indexes:
    leveraging multiple CPUs in order to process the table rows faster.
    This feature is known as <firstterm>parallel index
    build</firstterm>.  For index methods that support building indexes
-   in parallel (currently, B-tree and BRIN),
+   in parallel (currently, B-tree, GIN, and BRIN),
    <varname>maintenance_work_mem</varname> specifies the maximum
    amount of memory that can be used by each index build operation as
    a whole, regardless of how many worker processes were started.
@@ -898,17 +898,17 @@ Indexes:
   <title>Examples</title>
 
   <para>
-   To create a unique B-tree index on the column <literal>title</literal> in
-   the table <literal>films</literal>:
+   To create a unique B-tree index on the column <structfield>title</structfield> in
+   the table <structname>films</structname>:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title);
 </programlisting>
   </para>
 
   <para>
-   To create a unique B-tree index on the column <literal>title</literal>
-   with included columns <literal>director</literal>
-   and <literal>rating</literal> in the table <literal>films</literal>:
+   To create a unique B-tree index on the column <structfield>title</structfield>
+   with included columns <structfield>director</structfield>
+   and <structfield>rating</structfield> in the table <structname>films</structname>:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title) INCLUDE (director, rating);
 </programlisting>
@@ -960,8 +960,8 @@ CREATE INDEX gin_idx ON documents_table USING GIN (locations) WITH (fastupdate =
   </para>
 
   <para>
-   To create an index on the column <literal>code</literal> in the table
-   <literal>films</literal> and have the index reside in the tablespace
+   To create an index on the column <structfield>code</structfield> in the table
+   <structname>films</structname> and have the index reside in the tablespace
    <literal>indexspace</literal>:
 <programlisting>
 CREATE INDEX code_idx ON films (code) TABLESPACE indexspace;

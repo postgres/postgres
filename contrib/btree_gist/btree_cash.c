@@ -7,6 +7,7 @@
 #include "btree_utils_num.h"
 #include "common/int.h"
 #include "utils/cash.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 typedef struct

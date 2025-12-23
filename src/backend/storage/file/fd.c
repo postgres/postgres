@@ -201,7 +201,7 @@ typedef struct vfd
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
-	off_t		fileSize;		/* current size of file (0 if not temporary) */
+	pgoff_t		fileSize;		/* current size of file (0 if not temporary) */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
 	int			fileFlags;		/* open(2) flags for (re)opening the file */
@@ -400,25 +400,22 @@ pg_fsync(int fd)
 	 * portable, even if it runs ok on the current system.
 	 *
 	 * We assert here that a descriptor for a file was opened with write
-	 * permissions (either O_RDWR or O_WRONLY) and for a directory without
-	 * write permissions (O_RDONLY).
+	 * permissions (i.e., not O_RDONLY) and for a directory without write
+	 * permissions (O_RDONLY).  Notice that the assertion check is made even
+	 * if fsync() is disabled.
 	 *
-	 * Ignore any fstat errors and let the follow-up fsync() do its work.
-	 * Doing this sanity check here counts for the case where fsync() is
-	 * disabled.
+	 * If fstat() fails, ignore it and let the follow-up fsync() complain.
 	 */
 	if (fstat(fd, &st) == 0)
 	{
 		int			desc_flags = fcntl(fd, F_GETFL);
 
-		/*
-		 * O_RDONLY is historically 0, so just make sure that for directories
-		 * no write flags are used.
-		 */
+		desc_flags &= O_ACCMODE;
+
 		if (S_ISDIR(st.st_mode))
-			Assert((desc_flags & (O_RDWR | O_WRONLY)) == 0);
+			Assert(desc_flags == O_RDONLY);
 		else
-			Assert((desc_flags & (O_RDWR | O_WRONLY)) != 0);
+			Assert(desc_flags != O_RDONLY);
 	}
 	errno = 0;
 #endif
@@ -522,7 +519,7 @@ pg_file_exists(const char *name)
  * offset of 0 with nbytes 0 means that the entire file should be flushed
  */
 void
-pg_flush_data(int fd, off_t offset, off_t nbytes)
+pg_flush_data(int fd, pgoff_t offset, pgoff_t nbytes)
 {
 	/*
 	 * Right now file flushing is primarily used to avoid making later
@@ -638,7 +635,7 @@ retry:
 		 * may simply not be enough address space.  If so, silently fall
 		 * through to the next implementation.
 		 */
-		if (nbytes <= (off_t) SSIZE_MAX)
+		if (nbytes <= (pgoff_t) SSIZE_MAX)
 			p = mmap(NULL, nbytes, PROT_READ, MAP_SHARED, fd, offset);
 		else
 			p = MAP_FAILED;
@@ -700,7 +697,7 @@ retry:
  * Truncate an open file to a given length.
  */
 static int
-pg_ftruncate(int fd, off_t length)
+pg_ftruncate(int fd, pgoff_t length)
 {
 	int			ret;
 
@@ -717,7 +714,7 @@ retry:
  * Truncate a file to a given length by name.
  */
 int
-pg_truncate(const char *path, off_t length)
+pg_truncate(const char *path, pgoff_t length)
 {
 	int			ret;
 #ifdef WIN32
@@ -1114,23 +1111,6 @@ BasicOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 
 tryAgain:
 #ifdef PG_O_DIRECT_USE_F_NOCACHE
-
-	/*
-	 * The value we defined to stand in for O_DIRECT when simulating it with
-	 * F_NOCACHE had better not collide with any of the standard flags.
-	 */
-	StaticAssertStmt((PG_O_DIRECT &
-					  (O_APPEND |
-					   O_CLOEXEC |
-					   O_CREAT |
-					   O_DSYNC |
-					   O_EXCL |
-					   O_RDWR |
-					   O_RDONLY |
-					   O_SYNC |
-					   O_TRUNC |
-					   O_WRONLY)) == 0,
-					 "PG_O_DIRECT value collides with standard flag");
 	fd = open(fileName, fileFlags & ~PG_O_DIRECT, fileMode);
 #else
 	fd = open(fileName, fileFlags, fileMode);
@@ -1529,7 +1509,7 @@ FileAccess(File file)
  * Called whenever a temporary file is deleted to report its size.
  */
 static void
-ReportTemporaryFileUsage(const char *path, off_t size)
+ReportTemporaryFileUsage(const char *path, pgoff_t size)
 {
 	pgstat_report_tempfile(size);
 
@@ -2080,7 +2060,7 @@ FileClose(File file)
  * this.
  */
 int
-FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info)
+FilePrefetch(File file, pgoff_t offset, pgoff_t amount, uint32 wait_event_info)
 {
 	Assert(FileIsValid(file));
 
@@ -2136,7 +2116,7 @@ retry:
 }
 
 void
-FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
+FileWriteback(File file, pgoff_t offset, pgoff_t nbytes, uint32 wait_event_info)
 {
 	int			returnCode;
 
@@ -2162,7 +2142,7 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 }
 
 ssize_t
-FileReadV(File file, const struct iovec *iov, int iovcnt, off_t offset,
+FileReadV(File file, const struct iovec *iov, int iovcnt, pgoff_t offset,
 		  uint32 wait_event_info)
 {
 	ssize_t		returnCode;
@@ -2219,7 +2199,7 @@ retry:
 
 int
 FileStartReadV(PgAioHandle *ioh, File file,
-			   int iovcnt, off_t offset,
+			   int iovcnt, pgoff_t offset,
 			   uint32 wait_event_info)
 {
 	int			returnCode;
@@ -2244,7 +2224,7 @@ FileStartReadV(PgAioHandle *ioh, File file,
 }
 
 ssize_t
-FileWriteV(File file, const struct iovec *iov, int iovcnt, off_t offset,
+FileWriteV(File file, const struct iovec *iov, int iovcnt, pgoff_t offset,
 		   uint32 wait_event_info)
 {
 	ssize_t		returnCode;
@@ -2273,7 +2253,7 @@ FileWriteV(File file, const struct iovec *iov, int iovcnt, off_t offset,
 	 */
 	if (temp_file_limit >= 0 && (vfdP->fdstate & FD_TEMP_FILE_LIMIT))
 	{
-		off_t		past_write = offset;
+		pgoff_t		past_write = offset;
 
 		for (int i = 0; i < iovcnt; ++i)
 			past_write += iov[i].iov_len;
@@ -2312,7 +2292,7 @@ retry:
 		 */
 		if (vfdP->fdstate & FD_TEMP_FILE_LIMIT)
 		{
-			off_t		past_write = offset + returnCode;
+			pgoff_t		past_write = offset + returnCode;
 
 			if (past_write > vfdP->fileSize)
 			{
@@ -2376,7 +2356,7 @@ FileSync(File file, uint32 wait_event_info)
  * appropriate error.
  */
 int
-FileZero(File file, off_t offset, off_t amount, uint32 wait_event_info)
+FileZero(File file, pgoff_t offset, pgoff_t amount, uint32 wait_event_info)
 {
 	int			returnCode;
 	ssize_t		written;
@@ -2421,7 +2401,7 @@ FileZero(File file, off_t offset, off_t amount, uint32 wait_event_info)
  * appropriate error.
  */
 int
-FileFallocate(File file, off_t offset, off_t amount, uint32 wait_event_info)
+FileFallocate(File file, pgoff_t offset, pgoff_t amount, uint32 wait_event_info)
 {
 #ifdef HAVE_POSIX_FALLOCATE
 	int			returnCode;
@@ -2460,7 +2440,7 @@ retry:
 	return FileZero(file, offset, amount, wait_event_info);
 }
 
-off_t
+pgoff_t
 FileSize(File file)
 {
 	Assert(FileIsValid(file));
@@ -2471,14 +2451,14 @@ FileSize(File file)
 	if (FileIsNotOpen(file))
 	{
 		if (FileAccess(file) < 0)
-			return (off_t) -1;
+			return (pgoff_t) -1;
 	}
 
 	return lseek(VfdCache[file].fd, 0, SEEK_END);
 }
 
 int
-FileTruncate(File file, off_t offset, uint32 wait_event_info)
+FileTruncate(File file, pgoff_t offset, uint32 wait_event_info)
 {
 	int			returnCode;
 
@@ -3188,9 +3168,10 @@ GetNextTempTableSpace(void)
 /*
  * AtEOSubXact_Files
  *
- * Take care of subtransaction commit/abort.  At abort, we close temp files
- * that the subtransaction may have opened.  At commit, we reassign the
- * files that were opened to the parent subtransaction.
+ * Take care of subtransaction commit/abort.  At abort, we close AllocateDescs
+ * that the subtransaction may have opened.  At commit, we reassign them to
+ * the parent subtransaction.  (Temporary files are tracked by ResourceOwners
+ * instead.)
  */
 void
 AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,

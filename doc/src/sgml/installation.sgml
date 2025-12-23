@@ -65,16 +65,15 @@
      </para>
 
      <para>
-      The minimum required version of <application>Meson</application> is 0.54.
+      The minimum required version of <application>Meson</application> is 0.57.2.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      You need an <acronym>ISO</acronym>/<acronym>ANSI</acronym> C compiler (at least
-      C99-compliant). Recent
-      versions of <productname>GCC</productname> are recommended, but
-      <productname>PostgreSQL</productname> is known to build using a wide variety
+      You need a C compiler that supports at least C11.  Recent versions of
+      <productname>GCC</productname> are recommended, but
+      <productname>PostgreSQL</productname> is known to build using a variety
       of compilers from different vendors.
      </para>
     </listitem>
@@ -1678,10 +1677,6 @@ build-postgresql:
 <screen>
 ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
 </screen>
-         Using Sun's compiler:
-<screen>
-./configure CC='/opt/SUNWspro/bin/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64' ...
-</screen>
         </para>
        </listitem>
       </varlistentry>
@@ -3175,7 +3170,7 @@ ninja install
        <para>
         Enable additional test suites, which are not run by default because
         they are not secure to run on a multiuser system, require special
-        software to run, or are resource intensive.  The argument is a
+        software to run, or are resource-intensive.  The argument is a
         whitespace-separated list of tests to enable. See
         <xref linkend="regress-additional"/> for details. If the
         <envar>PG_TEST_EXTRA</envar> environment variable is set when the
@@ -3714,24 +3709,13 @@ xcrun --show-sdk-path
     <title>Required Tools</title>
 
     <para>
-     You can build with either GCC or Sun's compiler suite.  For
-     better code optimization, Sun's compiler is strongly recommended
-     on the SPARC architecture.  If
-     you are using Sun's compiler, be careful not to select
-     <filename>/usr/ucb/cc</filename>;
-     use <filename>/opt/SUNWspro/bin/cc</filename>.
+     Only GCC is supported as the compiler.  Sun's compiler suite is no longer
+     supported.
     </para>
 
     <para>
-     You can download Sun Studio
-     from <ulink url="https://www.oracle.com/technetwork/server-storage/solarisstudio/downloads/"></ulink>.
-     Many GNU tools are integrated into Solaris 10, or they are
-     present on the Solaris companion CD.  If you need packages for
-     older versions of Solaris, you can find these tools
-     at <ulink url="http://www.sunfreeware.com"></ulink>.
-     If you prefer
-     sources, look
-     at <ulink url="https://www.gnu.org/prep/ftp"></ulink>.
+     Many additional dependencies can be installed via the package management
+     system.
     </para>
    </sect3>
 
@@ -3754,49 +3738,12 @@ configure ... LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
     </para>
    </sect3>
 
-   <sect3 id="installation-notes-solaris-comp-opt-perf">
-    <title>Compiling for Optimal Performance</title>
-
-    <para>
-     On the SPARC architecture, Sun Studio is strongly recommended for
-     compilation.  Try using the <option>-xO5</option> optimization
-     flag to generate significantly faster binaries.  Do not use any
-     flags that modify behavior of floating-point operations
-     and <varname>errno</varname> processing (e.g.,
-     <option>-fast</option>).
-    </para>
-
-    <para>
-     If you do not have a reason to use 64-bit binaries on SPARC,
-     prefer the 32-bit version.  The 64-bit operations are slower and
-     64-bit binaries are slower than the 32-bit variants.  On the
-     other hand, 32-bit code on the AMD64 CPU family is not native,
-     so 32-bit code is significantly slower on that CPU family.
-    </para>
-   </sect3>
-
    <sect3 id="installation-notes-solaris-using-dtrace">
     <title>Using DTrace for Tracing PostgreSQL</title>
 
     <para>
      Yes, using DTrace is possible.  See <xref linkend="dynamic-trace"/> for
      further information.
-    </para>
-
-    <para>
-     If you see the linking of the <command>postgres</command> executable abort with an
-     error message like:
-<screen>
-Undefined                       first referenced
- symbol                             in file
-AbortTransaction                    utils/probes.o
-CommitTransaction                   utils/probes.o
-ld: fatal: Symbol referencing errors. No output written to postgres
-collect2: ld returned 1 exit status
-make: *** [postgres] Error 1
-</screen>
-     your DTrace installation is too old to handle probes in static
-     functions.  You need Solaris 10u4 or newer to use DTrace.
     </para>
    </sect3>
   </sect2>
@@ -3847,17 +3794,13 @@ make: *** [postgres] Error 1
    <para>
     Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
     32-bit PostgreSQL builds are possible with
-    <productname>Visual Studio 2015</productname> to
+    <productname>Visual Studio 2019</productname> to
     <productname>Visual Studio 2022</productname>,
     as well as standalone Windows SDK releases 10 and above.
     64-bit PostgreSQL builds are supported with
     <productname>Microsoft Windows SDK</productname> version 10 and above or
-    <productname>Visual Studio 2015</productname> and above.
+    <productname>Visual Studio 2019</productname> and above.
     <!--
-        For 2015 requirements:
-        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2015-sysrequirements-vs
-        For 2017 requirements:
-        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2017-system-requirements-vs
         For 2019 requirements:
         https://docs.microsoft.com/en-us/visualstudio/releases/2019/system-requirements
         For 2022 requirements:

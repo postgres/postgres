@@ -51,7 +51,7 @@ gistunionsubkeyvec(GISTSTATE *giststate, IndexTuple *itvec,
 	int			i,
 				cleanedLen = 0;
 
-	cleanedItVec = (IndexTuple *) palloc(sizeof(IndexTuple) * gsvp->len);
+	cleanedItVec = palloc_array(IndexTuple, gsvp->len);
 
 	for (i = 0; i < gsvp->len; i++)
 	{
@@ -501,7 +501,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 		 * Locate don't-care tuples, if any.  If there are none, the split is
 		 * optimal, so just fall out and return false.
 		 */
-		v->spl_dontcare = (bool *) palloc0(sizeof(bool) * (entryvec->n + 1));
+		v->spl_dontcare = palloc0_array(bool, entryvec->n + 1);
 
 		NumDontCare = findDontCares(r, giststate, entryvec->vector, v, attno);
 
@@ -738,9 +738,9 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				 * call will overwrite that with its own result.
 				 */
 				backupSplit = v->splitVector;
-				backupSplit.spl_left = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);
+				backupSplit.spl_left = palloc_array(OffsetNumber, len);
 				memcpy(backupSplit.spl_left, v->splitVector.spl_left, sizeof(OffsetNumber) * v->splitVector.spl_nleft);
-				backupSplit.spl_right = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);
+				backupSplit.spl_right = palloc_array(OffsetNumber, len);
 				memcpy(backupSplit.spl_right, v->splitVector.spl_right, sizeof(OffsetNumber) * v->splitVector.spl_nright);
 
 				/* Recursively decide how to split the don't-care tuples */

@@ -475,7 +475,7 @@ build_inet_union_key(int family, int minbits, int commonbits,
 	GistInetKey *result;
 
 	/* Make sure any unused bits are zeroed. */
-	result = (GistInetKey *) palloc0(sizeof(GistInetKey));
+	result = palloc0_object(GistInetKey);
 
 	gk_ip_family(result) = family;
 	gk_ip_minbits(result) = minbits;
@@ -546,13 +546,13 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		if (DatumGetPointer(entry->key) != NULL)
 		{
 			inet	   *in = DatumGetInetPP(entry->key);
 			GistInetKey *r;
 
-			r = (GistInetKey *) palloc0(sizeof(GistInetKey));
+			r = palloc0_object(GistInetKey);
 
 			gk_ip_family(r) = ip_family(in);
 			gk_ip_minbits(r) = ip_bits(in);
@@ -594,14 +594,14 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
 	GISTENTRY  *retval;
 	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	ip_family(dst) = gk_ip_family(key);
 	ip_bits(dst) = gk_ip_minbits(key);
 	memcpy(ip_addr(dst), gk_ip_addr(key), ip_addrsize(dst));
 	SET_INET_VARSIZE(dst);
 
-	retval = palloc(sizeof(GISTENTRY));
+	retval = palloc_object(GISTENTRY);
 	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
 				  entry->offset, false);
 

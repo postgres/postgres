@@ -1053,11 +1053,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
      <row>
-      <entry><literal>BufferPin</literal></entry>
-      <entry>The server process is waiting for exclusive access to
-       a data buffer.  Buffer pin waits can be protracted if
-       another process holds an open cursor that last read data from the
-       buffer in question. See <xref linkend="wait-event-bufferpin-table"/>.
+      <entry><literal>Buffer</literal></entry>
+      <entry>The server process is waiting for access to a data buffer.
+      See <xref linkend="wait-event-buffer-table"/>.
       </entry>
      </row>
      <row>
@@ -1137,7 +1135,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      Here are examples of how wait events can be viewed:
 
 <programlisting>
-SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
+SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event IS NOT NULL;
  pid  | wait_event_type | wait_event
 ------+-----------------+------------
  2540 | Lock            | relation
@@ -1150,7 +1148,7 @@ SELECT a.pid, a.wait_event, w.description
   FROM pg_stat_activity a JOIN
        pg_wait_events w ON (a.wait_event_type = w.type AND
                             a.wait_event = w.name)
-  WHERE a.wait_event is NOT NULL and a.state = 'active';
+  WHERE a.wait_event IS NOT NULL AND a.state = 'active';
 -[ RECORD 1 ]------------------------------------------------------&zwsp;------------
 pid         | 686674
 wait_event  | WALInitSync
@@ -1287,6 +1285,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       <para>
        This standby's <literal>xmin</literal> horizon reported
        by <xref linkend="guc-hot-standby-feedback"/>.
+       This field will be null if a replication slot is used (in this case,
+       the standby's <literal>xmin</literal> is shown in
+       <link linkend="view-pg-replication-slots">pg_replication_slots</link>)
+       or if <varname>hot_standby_feedback</varname> is disabled.
       </para></entry>
      </row>
 
@@ -1622,6 +1624,17 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>mem_exceeded_count</structfield><type>bigint</type>
+       </para>
+       <para>
+        Number of times the memory used by logical decoding has exceeded
+        <literal>logical_decoding_work_mem</literal>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
         <structfield>total_txns</structfield> <type>bigint</type>
        </para>
        <para>
@@ -1640,6 +1653,30 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         Amount of transaction data decoded for sending transactions to the
         decoding output plugin while decoding changes from WAL for this slot.
         Note that this includes data that is streamed and/or spilled.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>slotsync_skip_count</structfield><type>bigint</type>
+       </para>
+       <para>
+        Number of times the slot synchronization is skipped. Slot
+        synchronization occurs only on standby servers and thus this column has
+        no meaning on the primary server.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>slotsync_last_skip</structfield><type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which last slot synchronization was skipped. Slot
+        synchronization occurs only on standby servers and thus this column has
+        no meaning on the primary server.
        </para>
       </entry>
      </row>
@@ -2030,8 +2067,9 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Type of the subscription worker process.  Possible types are
-       <literal>apply</literal>, <literal>parallel apply</literal>, and
-       <literal>table synchronization</literal>.
+       <literal>apply</literal>, <literal>parallel apply</literal>,
+       <literal>table synchronization</literal>, and
+       <literal>sequence synchronization</literal>.
       </para></entry>
      </row>
 
@@ -2179,7 +2217,18 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>sync_error_count</structfield> <type>bigint</type>
+       <structfield>sync_seq_error_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times an error occurred in the sequence synchronization
+       worker. A single worker synchronizes all sequences, so one error
+       increment may represent failures across multiple sequences.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sync_table_error_count</structfield> <type>bigint</type>
       </para>
       <para>
        Number of times an error occurred during the initial table
@@ -2219,6 +2268,17 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        Number of times that an updated row value violated a
        <literal>NOT DEFERRABLE</literal> unique constraint during the
        application of changes. See <xref linkend="conflict-update-exists"/>
+       for details about this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_update_deleted</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the tuple to be updated was concurrently deleted by
+       another source during the application of changes. See <xref linkend="conflict-update-deleted"/>
        for details about this conflict.
       </para></entry>
      </row>
@@ -3299,6 +3359,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_fpi_bytes</structfield> <type>numeric</type>
+      </para>
+      <para>
+       Total amount of WAL full page images in bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>wal_buffers_full</structfield> <type>bigint</type>
       </para>
       <para>
@@ -3980,6 +4049,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Estimated number of rows inserted since this table was last vacuumed
+       (not counting <command>VACUUM FULL</command>)
       </para></entry>
      </row>
 
@@ -4066,7 +4136,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>total_vacuum_time</structfield> <type>double precision</type>
       </para>
       <para>
-       Total time this table has been manually vacuumed, in milliseconds.
+       Total time this table has been manually vacuumed, in milliseconds
+       (not counting <command>VACUUM FULL</command>).
        (This includes the time spent sleeping due to cost-based delays.)
       </para></entry>
      </row>
@@ -4101,6 +4172,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        in milliseconds. (This includes the time spent sleeping due to
        cost-based delays.)
       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para></entry>
      </row>
     </tbody>
    </tgroup>
@@ -4221,6 +4301,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        Number of live table rows fetched by simple index scans using this
        index
       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para></entry>
      </row>
     </tbody>
    </tgroup>
@@ -4419,6 +4508,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        Number of buffer hits in this table's TOAST table indexes (if any)
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -4518,6 +4616,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       <para>
        Number of buffer hits in this index
       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para></entry>
      </row>
     </tbody>
    </tgroup>
@@ -4686,6 +4793,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        Total time spent in this function itself, not including
        other functions called by it, in milliseconds
       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para></entry>
      </row>
     </tbody>
    </tgroup>
@@ -5649,9 +5765,34 @@ FROM pg_stat_get_backend_idset() AS backendid;
       </para>
       <para>
        Total time spent sleeping due to cost-based delay (see
-       <xref linkend="runtime-config-resource-vacuum-cost"/>, in milliseconds
+       <xref linkend="runtime-config-resource-vacuum-cost"/>), in milliseconds
        (if <xref linkend="guc-track-cost-delay-timing"/> is enabled, otherwise
        zero).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>started_by</structfield> <type>text</type>
+      </para>
+      <para>
+       Shows what caused the current <command>ANALYZE</command> operation to be
+       started. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>manual</literal>: The analyze was started by an explicit
+          <command>ANALYZE</command>, or by <command>VACUUM</command> with
+          the <option>ANALYZE</option> option.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>autovacuum</literal>: The analyze was started by an
+          autovacuum worker.
+         </para>
+        </listitem>
+       </itemizedlist>
       </para></entry>
      </row>
     </tbody>
@@ -6594,6 +6735,81 @@ FROM pg_stat_get_backend_idset() AS backendid;
        stale.
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>mode</structfield> <type>text</type>
+      </para>
+      <para>
+       The mode in which the current <command>VACUUM</command> operation is
+       running. See <xref linkend="vacuum-for-wraparound"/> for details of each
+       mode. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>normal</literal>: The operation is performing a standard
+          vacuum. It is neither required to run in aggressive mode nor operating
+          in failsafe mode.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>aggressive</literal>: The operation is running an aggressive
+          vacuum, which must scan every page that is not marked all-frozen.
+          The parameters <xref linkend="guc-vacuum-freeze-table-age"/> and
+          <xref linkend="guc-vacuum-multixact-freeze-table-age"/> determine when a
+          table requires aggressive vacuuming.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>failsafe</literal>: The vacuum has entered failsafe mode,
+          in which it performs only the minimum work necessary to avoid
+          transaction ID or multixact ID wraparound failure.
+          The parameters <xref linkend="guc-vacuum-failsafe-age"/> and
+          <xref linkend="guc-vacuum-multixact-failsafe-age"/> determine when the
+          vacuum enters failsafe mode. The vacuum may start in this mode or
+          switch to it while running; the value of the
+          <structfield>mode</structfield> column may transition from another
+          mode to <literal>failsafe</literal> during the operation.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>started_by</structfield> <type>text</type>
+      </para>
+      <para>
+       Shows what caused the current <command>VACUUM</command> operation to be
+       started. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>manual</literal>: The vacuum was started by an explicit
+          <command>VACUUM</command> command.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>autovacuum</literal>: The vacuum was started by an autovacuum
+          worker. Vacuums run by autovacuum workers may be interrupted due to
+          lock conflicts.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>autovacuum_wraparound</literal>: The vacuum was started by an
+          autovacuum worker to prevent transaction ID or multixact ID
+          wraparound. Vacuums run for wraparound protection are not interrupted
+          due to lock conflicts.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -6776,6 +6992,16 @@ FROM pg_stat_get_backend_idset() AS backendid;
       <para>
        Number of tablespaces streamed. This counter only
        advances when the phase is <literal>streaming database files</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backup_type</structfield> <type>text</type>
+      </para>
+      <para>
+        Backup type. Either <literal>full</literal> or
+        <literal>incremental</literal>.
       </para></entry>
      </row>
     </tbody>

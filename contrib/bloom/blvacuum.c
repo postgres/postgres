@@ -42,7 +42,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	GenericXLogState *gxlogState;
 
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 
 	initBloomState(&state, index);
 
@@ -94,8 +94,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			{
 				/* No; copy it to itupPtr++, but skip copy if not needed */
 				if (itupPtr != itup)
-					memmove((Pointer) itupPtr, (Pointer) itup,
-							state.sizeOfBloomTuple);
+					memmove(itupPtr, itup, state.sizeOfBloomTuple);
 				itupPtr = BloomPageGetNextTuple(&state, itupPtr);
 			}
 
@@ -122,7 +121,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			if (BloomPageGetMaxOffset(page) == 0)
 				BloomPageSetDeleted(page);
 			/* Adjust pd_lower */
-			((PageHeader) page)->pd_lower = (Pointer) itupPtr - page;
+			((PageHeader) page)->pd_lower = (char *) itupPtr - page;
 			/* Finish WAL-logging */
 			GenericXLogFinish(gxlogState);
 		}
@@ -172,7 +171,7 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		return stats;
 
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 
 	/*
 	 * Iterate over the pages: insert deleted pages into FSM and collect
@@ -192,7 +191,7 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (PageIsNew(page) || BloomPageIsDeleted(page))
 		{

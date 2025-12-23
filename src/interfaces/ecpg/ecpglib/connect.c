@@ -58,7 +58,12 @@ ecpg_get_connection_nr(const char *connection_name)
 
 		for (con = all_connections; con != NULL; con = con->next)
 		{
-			if (strcmp(connection_name, con->name) == 0)
+			/*
+			 * Check for the case of a NULL connection name, stored as such in
+			 * the connection information by ECPGconnect() when the database
+			 * name is not specified by its caller.
+			 */
+			if (con->name != NULL && strcmp(connection_name, con->name) == 0)
 				break;
 		}
 		ret = con;
@@ -259,7 +264,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct connection *this;
 	int			i,
 				connect_params = 0;
-	char	   *dbname = name ? ecpg_strdup(name, lineno) : NULL,
+	bool		alloc_failed = (sqlca == NULL);
+	char	   *dbname = name ? ecpg_strdup(name, lineno, &alloc_failed) : NULL,
 			   *host = NULL,
 			   *tmp,
 			   *port = NULL,
@@ -268,11 +274,12 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	const char **conn_keywords;
 	const char **conn_values;
 
-	if (sqlca == NULL)
+	if (alloc_failed)
 	{
 		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
 				   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
-		ecpg_free(dbname);
+		if (dbname)
+			ecpg_free(dbname);
 		return false;
 	}
 
@@ -297,7 +304,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		if (envname)
 		{
 			ecpg_free(dbname);
-			dbname = ecpg_strdup(envname, lineno);
+			dbname = ecpg_strdup(envname, lineno, &alloc_failed);
 		}
 	}
 
@@ -349,7 +356,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				tmp = strrchr(dbname + offset, '?');
 				if (tmp != NULL)	/* options given */
 				{
-					options = ecpg_strdup(tmp + 1, lineno);
+					options = ecpg_strdup(tmp + 1, lineno, &alloc_failed);
 					*tmp = '\0';
 				}
 
@@ -358,7 +365,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				{
 					if (tmp[1] != '\0') /* non-empty database name */
 					{
-						realname = ecpg_strdup(tmp + 1, lineno);
+						realname = ecpg_strdup(tmp + 1, lineno, &alloc_failed);
 						connect_params++;
 					}
 					*tmp = '\0';
@@ -368,7 +375,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				if (tmp != NULL)	/* port number given */
 				{
 					*tmp = '\0';
-					port = ecpg_strdup(tmp + 1, lineno);
+					port = ecpg_strdup(tmp + 1, lineno, &alloc_failed);
 					connect_params++;
 				}
 
@@ -402,7 +409,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				{
 					if (*(dbname + offset) != '\0')
 					{
-						host = ecpg_strdup(dbname + offset, lineno);
+						host = ecpg_strdup(dbname + offset, lineno, &alloc_failed);
 						connect_params++;
 					}
 				}
@@ -414,7 +421,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			tmp = strrchr(dbname, ':');
 			if (tmp != NULL)	/* port number given */
 			{
-				port = ecpg_strdup(tmp + 1, lineno);
+				port = ecpg_strdup(tmp + 1, lineno, &alloc_failed);
 				connect_params++;
 				*tmp = '\0';
 			}
@@ -422,14 +429,14 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			tmp = strrchr(dbname, '@');
 			if (tmp != NULL)	/* host name given */
 			{
-				host = ecpg_strdup(tmp + 1, lineno);
+				host = ecpg_strdup(tmp + 1, lineno, &alloc_failed);
 				connect_params++;
 				*tmp = '\0';
 			}
 
 			if (strlen(dbname) > 0)
 			{
-				realname = ecpg_strdup(dbname, lineno);
+				realname = ecpg_strdup(dbname, lineno, &alloc_failed);
 				connect_params++;
 			}
 			else
@@ -460,7 +467,18 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	 */
 	conn_keywords = (const char **) ecpg_alloc((connect_params + 1) * sizeof(char *), lineno);
 	conn_values = (const char **) ecpg_alloc(connect_params * sizeof(char *), lineno);
-	if (conn_keywords == NULL || conn_values == NULL)
+
+	/* Decide on a connection name */
+	if (connection_name != NULL || realname != NULL)
+	{
+		this->name = ecpg_strdup(connection_name ? connection_name : realname,
+								 lineno, &alloc_failed);
+	}
+	else
+		this->name = NULL;
+
+	/* Deal with any failed allocations above */
+	if (conn_keywords == NULL || conn_values == NULL || alloc_failed)
 	{
 		if (host)
 			ecpg_free(host);
@@ -476,6 +494,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			ecpg_free(conn_keywords);
 		if (conn_values)
 			ecpg_free(conn_values);
+		if (this->name)
+			ecpg_free(this->name);
 		free(this);
 		return false;
 	}
@@ -510,16 +530,13 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				ecpg_free(conn_keywords);
 			if (conn_values)
 				ecpg_free(conn_values);
+			if (this->name)
+				ecpg_free(this->name);
 			free(this);
 			return false;
 		}
 	}
 #endif
-
-	if (connection_name != NULL)
-		this->name = ecpg_strdup(connection_name, lineno);
-	else
-		this->name = ecpg_strdup(realname, lineno);
 
 	this->cache_head = NULL;
 	this->prep_stmts = NULL;

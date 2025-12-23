@@ -167,18 +167,18 @@ RelationBuildPartitionKey(Relation relation)
 
 	/* Allocate assorted arrays in the partkeycxt, which we'll fill below */
 	oldcxt = MemoryContextSwitchTo(partkeycxt);
-	key->partattrs = (AttrNumber *) palloc0(key->partnatts * sizeof(AttrNumber));
-	key->partopfamily = (Oid *) palloc0(key->partnatts * sizeof(Oid));
-	key->partopcintype = (Oid *) palloc0(key->partnatts * sizeof(Oid));
-	key->partsupfunc = (FmgrInfo *) palloc0(key->partnatts * sizeof(FmgrInfo));
+	key->partattrs = palloc0_array(AttrNumber, key->partnatts);
+	key->partopfamily = palloc0_array(Oid, key->partnatts);
+	key->partopcintype = palloc0_array(Oid, key->partnatts);
+	key->partsupfunc = palloc0_array(FmgrInfo, key->partnatts);
 
-	key->partcollation = (Oid *) palloc0(key->partnatts * sizeof(Oid));
-	key->parttypid = (Oid *) palloc0(key->partnatts * sizeof(Oid));
-	key->parttypmod = (int32 *) palloc0(key->partnatts * sizeof(int32));
-	key->parttyplen = (int16 *) palloc0(key->partnatts * sizeof(int16));
-	key->parttypbyval = (bool *) palloc0(key->partnatts * sizeof(bool));
-	key->parttypalign = (char *) palloc0(key->partnatts * sizeof(char));
-	key->parttypcoll = (Oid *) palloc0(key->partnatts * sizeof(Oid));
+	key->partcollation = palloc0_array(Oid, key->partnatts);
+	key->parttypid = palloc0_array(Oid, key->partnatts);
+	key->parttypmod = palloc0_array(int32, key->partnatts);
+	key->parttyplen = palloc0_array(int16, key->partnatts);
+	key->parttypbyval = palloc0_array(bool, key->partnatts);
+	key->parttypalign = palloc0_array(char, key->partnatts);
+	key->parttypcoll = palloc0_array(Oid, key->partnatts);
 	MemoryContextSwitchTo(oldcxt);
 
 	/* determine support function number to search for */

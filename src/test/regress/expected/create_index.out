@@ -593,7 +593,7 @@ SELECT point(x,x), (SELECT f1 FROM gpolygon_tbl ORDER BY f1 <-> point(x,x) LIMIT
                                          QUERY PLAN                                         
 --------------------------------------------------------------------------------------------
  Function Scan on generate_series x
-   SubPlan 1
+   SubPlan expr_1
      ->  Limit
            ->  Index Scan using ggpolygonind on gpolygon_tbl
                  Order By: (f1 <-> point((x.x)::double precision, (x.x)::double precision))
@@ -1624,8 +1624,8 @@ DROP TABLE cwi_test;
 --
 CREATE TABLE syscol_table (a INT);
 -- System columns cannot be indexed
-CREATE INDEX ON syscolcol_table (ctid);
-ERROR:  relation "syscolcol_table" does not exist
+CREATE INDEX ON syscol_table (ctid);
+ERROR:  index creation on system columns is not supported
 -- nor used in expressions
 CREATE INDEX ON syscol_table ((ctid >= '(1000,0)'));
 ERROR:  index creation on system columns is not supported
@@ -1908,11 +1908,11 @@ SELECT * FROM tenk1
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = (SELECT 1 + 2) OR tenthous = 42);
-                                       QUERY PLAN                                       
-----------------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Index Scan using tenk1_thous_tenthous on tenk1
-   Index Cond: ((thousand = 42) AND (tenthous = ANY (ARRAY[1, (InitPlan 1).col1, 42])))
-   InitPlan 1
+   Index Cond: ((thousand = 42) AND (tenthous = ANY (ARRAY[1, (InitPlan expr_1).col1, 42])))
+   InitPlan expr_1
      ->  Result
 (4 rows)
 
@@ -2043,8 +2043,8 @@ SELECT count(*) FROM tenk1 t1
 ----------------------------------------------------------------------------
  Aggregate
    ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t1
-         Filter: ((thousand = 42) OR (thousand = (SubPlan 1)))
-         SubPlan 1
+         Filter: ((thousand = 42) OR (thousand = (SubPlan expr_1)))
+         SubPlan expr_1
            ->  Limit
                  ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
                        Index Cond: (thousand = (t1.tenthous + 1))

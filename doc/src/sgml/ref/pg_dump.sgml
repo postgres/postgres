@@ -18,7 +18,7 @@ PostgreSQL documentation
   <refname>pg_dump</refname>
 
   <refpurpose>
-   extract a <productname>PostgreSQL</productname> database into a script file or other archive file
+   export a <productname>PostgreSQL</productname> database as an SQL script or to other formats
   </refpurpose>
  </refnamediv>
 
@@ -95,6 +95,18 @@ PostgreSQL documentation
    output for any warnings (printed on standard error), especially in
    light of the limitations listed below.
   </para>
+
+  <warning>
+   <para>
+    Restoring a dump causes the destination to execute arbitrary code of the
+    source superusers' choice.  Partial dumps and partial restores do not limit
+    that.  If the source superusers are not trusted, the dumped SQL statements
+    must be inspected before restoring.  Non-plain-text dumps can be inspected
+    by using <application>pg_restore</application>'s <option>--file</option>
+    option.  Note that the client running the dump and restore need not trust
+    the source or destination superusers.
+   </para>
+  </warning>
 
  </refsect1>
 
@@ -285,8 +297,8 @@ PostgreSQL documentation
         file based output formats, in which case the standard output is used.
         It must be given for the directory output format however, where it
         specifies the target directory instead of a file. In this case the
-        directory is created by <command>pg_dump</command> and must not exist
-        before.
+        directory is created by <command>pg_dump</command> unless the directory
+        exists and is empty.
        </para>
       </listitem>
      </varlistentry>
@@ -1134,7 +1146,7 @@ PostgreSQL documentation
       <term><option>--no-statistics</option></term>
       <listitem>
        <para>
-        Do not dump statistics.
+        Do not dump statistics. This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -1253,6 +1265,29 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--restrict-key=<replaceable class="parameter">restrict_key</replaceable></option></term>
+      <listitem>
+       <para>
+        Use the provided string as the <application>psql</application>
+        <command>\restrict</command> key in the dump output.  This can only be
+        specified for plain-text dumps, i.e., when <option>--format</option> is
+        set to <literal>plain</literal> or the <option>--format</option> option
+        is omitted.  If no restrict key is specified,
+        <application>pg_dump</application> will generate a random one as
+        needed.  Keys may contain only alphanumeric characters.
+       </para>
+       <para>
+        This option is primarily intended for testing purposes and other
+        scenarios that require repeatable output (e.g., comparing dump files).
+        It is not recommended for general use, as a malicious server with
+        advance knowledge of the key may be able to inject arbitrary code that
+        will be executed on the machine that runs
+        <application>psql</application> with the dump output.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--rows-per-insert=<replaceable class="parameter">nrows</replaceable></option></term>
       <listitem>
        <para>
@@ -1277,11 +1312,11 @@ PostgreSQL documentation
          </para>
          <para>
           The data section contains actual table data, large-object
-          contents, statistics for tables and materialized views and
-          sequence values.
+          contents, sequence values, and statistics for tables,
+          materialized views, and foreign tables.
           Post-data items include definitions of indexes, triggers, rules,
           statistics for indexes, and constraints other than validated check
-          constraints.
+          and not-null constraints.
           Pre-data items include all other data definition items.
          </para>
        </listitem>
@@ -1355,11 +1390,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics</option></term>
+      <listitem>
+       <para>
+        Dump optimizer statistics.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--statistics-only</option></term>
       <listitem>
        <para>
         Dump only the statistics, not the schema (data definitions) or data.
-        Statistics for tables, materialized views, and indexes are dumped.
+        Optimizer statistics for tables, materialized views, foreign tables,
+        and indexes are dumped.
        </para>
       </listitem>
      </varlistentry>
@@ -1435,33 +1480,6 @@ PostgreSQL documentation
         properly.  Also, a dump using <command>SET SESSION AUTHORIZATION</command>
         will certainly require superuser privileges to restore correctly,
         whereas <command>ALTER OWNER</command> requires lesser privileges.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-data</option></term>
-      <listitem>
-       <para>
-        Dump data. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-schema</option></term>
-      <listitem>
-       <para>
-        Dump schema (data definitions). This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-statistics</option></term>
-      <listitem>
-       <para>
-        Dump statistics. This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -1681,14 +1699,15 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   By default, <command>pg_dump</command> will include most optimizer
-   statistics in the resulting dump file.  However, some statistics may not be
-   included, such as those created explicitly with <xref
-   linkend="sql-createstatistics"/> or custom statistics added by an
-   extension.  Therefore, it may be useful to run <command>ANALYZE</command>
-   after restoring from a dump file to ensure optimal performance; see <xref
-   linkend="vacuum-for-statistics"/> and <xref linkend="autovacuum"/> for more
-   information.
+   When <option>--statistics</option> is specified,
+   <command>pg_dump</command> will include most optimizer statistics in the
+   resulting dump file.  This does not include all statistics, such as
+   those created explicitly with <xref linkend="sql-createstatistics"/>,
+   custom statistics added by an extension, or statistics collected by the
+   cumulative statistics system. Therefore, it may still be useful to
+   run <command>ANALYZE</command> after restoring from a dump file to ensure
+   optimal performance; see <xref linkend="vacuum-for-statistics"/> and <xref
+   linkend="autovacuum"/> for more information.
   </para>
 
   <para>
@@ -1860,7 +1879,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    To dump all tables whose names start with <literal>mytable</literal>, except
-   for table <literal>mytable2</literal>, specify a filter file
+   for table <structname>mytable2</structname>, specify a filter file
    <filename>filter.txt</filename> like:
 <programlisting>
 include table mytable*

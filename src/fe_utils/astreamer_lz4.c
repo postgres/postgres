@@ -78,7 +78,7 @@ astreamer_lz4_compressor_new(astreamer *next, pg_compress_specification *compres
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(astreamer_lz4_frame));
+	streamer = palloc0_object(astreamer_lz4_frame);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_lz4_compressor_ops;
 
@@ -282,7 +282,7 @@ astreamer_lz4_decompressor_new(astreamer *next)
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(astreamer_lz4_frame));
+	streamer = palloc0_object(astreamer_lz4_frame);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_lz4_decompressor_ops;
 
@@ -322,9 +322,9 @@ astreamer_lz4_decompressor_content(astreamer *streamer,
 
 	mystreamer = (astreamer_lz4_frame *) streamer;
 	next_in = (uint8 *) data;
-	next_out = (uint8 *) mystreamer->base.bbs_buffer.data;
+	next_out = (uint8 *) mystreamer->base.bbs_buffer.data + mystreamer->bytes_written;
 	avail_in = len;
-	avail_out = mystreamer->base.bbs_buffer.maxlen;
+	avail_out = mystreamer->base.bbs_buffer.maxlen - mystreamer->bytes_written;
 
 	while (avail_in > 0)
 	{

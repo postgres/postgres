@@ -67,7 +67,8 @@ extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 extern TidRangePath *create_tidrangescan_path(PlannerInfo *root,
 											  RelOptInfo *rel,
 											  List *tidrangequals,
-											  Relids required_outer);
+											  Relids required_outer,
+											  int parallel_workers);
 extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
 									  List *subpaths, List *partial_subpaths,
 									  List *pathkeys, Relids required_outer,
@@ -90,9 +91,7 @@ extern MemoizePath *create_memoize_path(PlannerInfo *root,
 										List *hash_operators,
 										bool singlerow,
 										bool binary_mode,
-										double calls);
-extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
-									  Path *subpath, SpecialJoinInfo *sjinfo);
+										Cardinality est_calls);
 extern GatherPath *create_gather_path(PlannerInfo *root,
 									  RelOptInfo *rel, Path *subpath, PathTarget *target,
 									  Relids required_outer, double *rows);
@@ -223,11 +222,11 @@ extern GroupPath *create_group_path(PlannerInfo *root,
 									List *groupClause,
 									List *qual,
 									double numGroups);
-extern UpperUniquePath *create_upper_unique_path(PlannerInfo *root,
-												 RelOptInfo *rel,
-												 Path *subpath,
-												 int numCols,
-												 double numGroups);
+extern UniquePath *create_unique_path(PlannerInfo *root,
+									  RelOptInfo *rel,
+									  Path *subpath,
+									  int numCols,
+									  double numGroups);
 extern AggPath *create_agg_path(PlannerInfo *root,
 								RelOptInfo *rel,
 								Path *subpath,
@@ -283,7 +282,6 @@ extern ModifyTablePath *create_modifytable_path(PlannerInfo *root,
 												Path *subpath,
 												CmdType operation, bool canSetTag,
 												Index nominalRelation, Index rootRelation,
-												bool partColsUpdated,
 												List *resultRelations,
 												List *updateColnosLists,
 												List *withCheckOptionLists, List *returningLists,
@@ -314,6 +312,8 @@ extern void setup_simple_rel_arrays(PlannerInfo *root);
 extern void expand_planner_arrays(PlannerInfo *root, int add_size);
 extern RelOptInfo *build_simple_rel(PlannerInfo *root, int relid,
 									RelOptInfo *parent);
+extern RelOptInfo *build_simple_grouped_rel(PlannerInfo *root, RelOptInfo *rel);
+extern RelOptInfo *build_grouped_rel(PlannerInfo *root, RelOptInfo *rel);
 extern RelOptInfo *find_base_rel(PlannerInfo *root, int relid);
 extern RelOptInfo *find_base_rel_noerr(PlannerInfo *root, int relid);
 extern RelOptInfo *find_base_rel_ignore_join(PlannerInfo *root, int relid);
@@ -353,4 +353,6 @@ extern RelOptInfo *build_child_join_rel(PlannerInfo *root,
 										SpecialJoinInfo *sjinfo,
 										int nappinfos, AppendRelInfo **appinfos);
 
+extern RelAggInfo *create_rel_agg_info(PlannerInfo *root, RelOptInfo *rel,
+									   bool calculate_grouped_rows);
 #endif							/* PATHNODE_H */

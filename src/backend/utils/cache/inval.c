@@ -98,9 +98,9 @@
  *	likewise send the invalidation immediately, before ending the change's
  *	critical section.  This includes inplace heap updates, relmap, and smgr.
  *
- *	When wal_level=logical, write invalidations into WAL at each command end to
- *	support the decoding of the in-progress transactions.  See
- *	CommandEndInvalidationMessages.
+ *	When effective_wal_level is 'logical', write invalidations into WAL at
+ *	each command end to support the decoding of the in-progress transactions.
+ *	See CommandEndInvalidationMessages.
  *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -758,7 +758,7 @@ PrepareInplaceInvalidationState(void)
 	Assert(inplaceInvalInfo == NULL);
 
 	/* gone after WAL insertion CritSection ends, so use current context */
-	myInfo = (InvalidationInfo *) palloc0(sizeof(InvalidationInfo));
+	myInfo = palloc0_object(InvalidationInfo);
 
 	/* Stash our messages past end of the transactional messages, if any. */
 	if (transInvalInfo != NULL)
@@ -1419,7 +1419,7 @@ CommandEndInvalidationMessages(void)
 	ProcessInvalidationMessages(&transInvalInfo->ii.CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
 
-	/* WAL Log per-command invalidation messages for wal_level=logical */
+	/* WAL Log per-command invalidation messages for logical decoding */
 	if (XLogLogicalInfoActive())
 		LogLogicalInvalidations();
 
@@ -1480,7 +1480,7 @@ CacheInvalidateHeapTupleCommon(Relation relation,
 	else
 		PrepareToInvalidateCacheTuple(relation, tuple, newtuple,
 									  RegisterCatcacheInvalidation,
-									  (void *) info);
+									  info);
 
 	/*
 	 * Now, is this tuple one of the primary definers of a relcache entry? See
@@ -1583,13 +1583,17 @@ CacheInvalidateHeapTuple(Relation relation,
  *		implied.
  *
  * Like CacheInvalidateHeapTuple(), but for inplace updates.
+ *
+ * Just before and just after the inplace update, the tuple's cache keys must
+ * match those in key_equivalent_tuple.  Cache keys consist of catcache lookup
+ * key columns and columns referencing pg_class.oid values,
+ * e.g. pg_constraint.conrelid, which would trigger relcache inval.
  */
 void
 CacheInvalidateHeapTupleInplace(Relation relation,
-								HeapTuple tuple,
-								HeapTuple newtuple)
+								HeapTuple key_equivalent_tuple)
 {
-	CacheInvalidateHeapTupleCommon(relation, tuple, newtuple,
+	CacheInvalidateHeapTupleCommon(relation, key_equivalent_tuple, NULL,
 								   PrepareInplaceInvalidationState);
 }
 
@@ -1753,7 +1757,7 @@ CacheInvalidateSmgr(RelFileLocatorBackend rlocator)
 	SharedInvalidationMessage msg;
 
 	/* verify optimization stated above stays valid */
-	StaticAssertStmt(MAX_BACKENDS_BITS <= 23,
+	StaticAssertDecl(MAX_BACKENDS_BITS <= 23,
 					 "MAX_BACKENDS_BITS is too big for inval.c");
 
 	msg.sm.id = SHAREDINVALSMGR_ID;

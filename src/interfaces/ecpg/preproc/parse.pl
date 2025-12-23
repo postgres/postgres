@@ -256,9 +256,9 @@ sub main
 			$has_if_command = 1 if /^\s*if/;
 		}
 
-		# Make sure any braces are split into separate fields
-		s/{/ { /g;
-		s/}/ } /g;
+		# Make sure any (unquoted) braces are split into separate fields
+		s/(?<!')\{(?!')/ { /g;
+		s/(?<!')\}(?!')/ } /g;
 
 		# Likewise for comment start/end markers
 		s|\/\*| /* |g;

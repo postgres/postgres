@@ -77,7 +77,7 @@ test_shm_mq_main(Datum main_arg)
 	 * exit, which is fine.  If there were a ResourceOwner, it would acquire
 	 * ownership of the mapping, but we have no need for that.
 	 */
-	seg = dsm_attach(DatumGetInt32(main_arg));
+	seg = dsm_attach(DatumGetUInt32(main_arg));
 	if (seg == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

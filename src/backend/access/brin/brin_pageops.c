@@ -176,7 +176,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		brin_can_do_samepage_update(oldbuf, origsz, newsz))
 	{
 		START_CRIT_SECTION();
-		if (!PageIndexTupleOverwrite(oldpage, oldoff, (Item) unconstify(BrinTuple *, newtup), newsz))
+		if (!PageIndexTupleOverwrite(oldpage, oldoff, newtup, newsz))
 			elog(ERROR, "failed to replace BRIN tuple");
 		MarkBufferDirty(oldbuf);
 
@@ -250,8 +250,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			brin_page_init(newpage, BRIN_PAGETYPE_REGULAR);
 
 		PageIndexTupleDeleteNoCompact(oldpage, oldoff);
-		newoff = PageAddItem(newpage, (Item) unconstify(BrinTuple *, newtup), newsz,
-							 InvalidOffsetNumber, false, false);
+		newoff = PageAddItem(newpage, newtup, newsz, InvalidOffsetNumber, false, false);
 		if (newoff == InvalidOffsetNumber)
 			elog(ERROR, "failed to add BRIN tuple to new page");
 		MarkBufferDirty(oldbuf);
@@ -341,7 +340,7 @@ brin_can_do_samepage_update(Buffer buffer, Size origsz, Size newsz)
 OffsetNumber
 brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 			  BrinRevmap *revmap, Buffer *buffer, BlockNumber heapBlk,
-			  BrinTuple *tup, Size itemsz)
+			  const BrinTuple *tup, Size itemsz)
 {
 	Page		page;
 	BlockNumber blk;
@@ -408,8 +407,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	START_CRIT_SECTION();
 	if (extended)
 		brin_page_init(page, BRIN_PAGETYPE_REGULAR);
-	off = PageAddItem(page, (Item) tup, itemsz, InvalidOffsetNumber,
-					  false, false);
+	off = PageAddItem(page, tup, itemsz, InvalidOffsetNumber, false, false);
 	if (off == InvalidOffsetNumber)
 		elog(ERROR, "failed to add BRIN tuple to new page");
 	MarkBufferDirty(*buffer);
@@ -893,7 +891,11 @@ brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer)
 	page = BufferGetPage(buffer);
 	brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 	MarkBufferDirty(buffer);
-	log_newpage_buffer(buffer, true);
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(idxrel))
+		log_newpage_buffer(buffer, true);
+
 	END_CRIT_SECTION();
 
 	/*

@@ -20,15 +20,12 @@
 #include "tcop/dest.h"
 
 /*
- * Represents whether a header line should be present, and whether it must
- * match the actual names (which implies "true").
+ * Represents whether a header line must match the actual names
+ * (which implies "true"), and whether it should be present.
  */
-typedef enum CopyHeaderChoice
-{
-	COPY_HEADER_FALSE = 0,
-	COPY_HEADER_TRUE,
-	COPY_HEADER_MATCH,
-} CopyHeaderChoice;
+#define COPY_HEADER_MATCH	-1
+#define COPY_HEADER_FALSE	0
+#define COPY_HEADER_TRUE	1
 
 /*
  * Represents where to save input processing errors.  More values to be added
@@ -64,7 +61,8 @@ typedef struct CopyFormatOptions
 	bool		binary;			/* binary format? */
 	bool		freeze;			/* freeze rows on loading? */
 	bool		csv_mode;		/* Comma Separated Value format? */
-	CopyHeaderChoice header_line;	/* header line? */
+	int			header_line;	/* number of lines to skip or COPY_HEADER_XXX
+								 * value (see the above) */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
 	int			null_print_len; /* length of same */
 	char	   *null_print_client;	/* same converted to file encoding */

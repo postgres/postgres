@@ -171,7 +171,7 @@ ginReadTuple(GinState *ginstate, OffsetNumber attnum, IndexTuple itup,
 	{
 		if (nipd > 0)
 		{
-			ipd = ginPostingListDecode((GinPostingList *) ptr, &ndecoded);
+			ipd = ginPostingListDecode(ptr, &ndecoded);
 			if (nipd != ndecoded)
 				elog(ERROR, "number of items mismatch in GIN entry tuple, %d in tuple header, %d decoded",
 					 nipd, ndecoded);
@@ -183,7 +183,7 @@ ginReadTuple(GinState *ginstate, OffsetNumber attnum, IndexTuple itup,
 	}
 	else
 	{
-		ipd = (ItemPointer) palloc(sizeof(ItemPointerData) * nipd);
+		ipd = palloc_array(ItemPointerData, nipd);
 		memcpy(ipd, ptr, sizeof(ItemPointerData) * nipd);
 	}
 	*nitems = nipd;
@@ -563,7 +563,7 @@ entryExecPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	entryPreparePage(btree, page, off, insertData, updateblkno);
 
 	placed = PageAddItem(page,
-						 (Item) insertData->entry,
+						 insertData->entry,
 						 IndexTupleSize(insertData->entry),
 						 off, false, false);
 	if (placed != off)
@@ -684,7 +684,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 			lsize += MAXALIGN(IndexTupleSize(itup)) + sizeof(ItemIdData);
 		}
 
-		if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to index page in \"%s\"",
 				 RelationGetRelationName(btree->index));
 		ptr += MAXALIGN(IndexTupleSize(itup));
@@ -708,7 +708,7 @@ entryPrepareDownlink(GinBtree btree, Buffer lbuf)
 
 	itup = getRightMostTuple(lpage);
 
-	insertData = palloc(sizeof(GinBtreeEntryInsertData));
+	insertData = palloc_object(GinBtreeEntryInsertData);
 	insertData->entry = GinFormInteriorTuple(itup, lpage, lblkno);
 	insertData->isDelete = false;
 
@@ -727,12 +727,12 @@ ginEntryFillRoot(GinBtree btree, Page root,
 	IndexTuple	itup;
 
 	itup = GinFormInteriorTuple(getRightMostTuple(lpage), lpage, lblkno);
-	if (PageAddItem(root, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
+	if (PageAddItem(root, itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
 	pfree(itup);
 
 	itup = GinFormInteriorTuple(getRightMostTuple(rpage), rpage, rblkno);
-	if (PageAddItem(root, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
+	if (PageAddItem(root, itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
 	pfree(itup);
 }

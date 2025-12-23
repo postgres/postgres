@@ -415,7 +415,8 @@ select row(0,1)::dcomptype;  -- fail
 ERROR:  value for domain dcomptype violates check constraint "c1"
 alter type comptype alter attribute r type varchar;  -- fail
 ERROR:  operator does not exist: character varying > double precision
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 alter type comptype alter attribute r type bigint;
 alter type comptype drop attribute r;  -- fail
 ERROR:  cannot drop column r of composite type comptype because other objects depend on it
@@ -1019,6 +1020,11 @@ insert into domain_test values (1, 2);
 -- should fail
 alter table domain_test add column c str_domain;
 ERROR:  domain str_domain does not allow null values
+-- disallow duplicated not-null constraints
+create domain int_domain1 as int constraint nn1 not null constraint nn2 not null;
+ERROR:  redundant NOT NULL constraint definition
+LINE 1: ...domain int_domain1 as int constraint nn1 not null constraint...
+                                                             ^
 create domain str_domain2 as text check (value <> 'foo') default 'foo';
 -- should fail
 alter table domain_test add column d str_domain2;

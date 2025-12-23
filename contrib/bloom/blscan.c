@@ -29,7 +29,7 @@ blbeginscan(Relation r, int nkeys, int norderbys)
 
 	scan = RelationGetIndexScan(r, nkeys, norderbys);
 
-	so = (BloomScanOpaque) palloc(sizeof(BloomScanOpaqueData));
+	so = (BloomScanOpaque) palloc_object(BloomScanOpaqueData);
 	initBloomState(&so->state, scan->indexRelation);
 	so->sign = NULL;
 
@@ -86,7 +86,7 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		/* New search: have to calculate search signature */
 		ScanKey		skey = scan->keyData;
 
-		so->sign = palloc0(sizeof(BloomSignatureWord) * so->state.opts.bloomLength);
+		so->sign = palloc0_array(BloomSignatureWord, so->state.opts.bloomLength);
 
 		for (i = 0; i < scan->numberOfKeys; i++)
 		{

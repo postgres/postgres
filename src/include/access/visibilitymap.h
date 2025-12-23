@@ -18,6 +18,7 @@
 #include "access/xlogdefs.h"
 #include "storage/block.h"
 #include "storage/buf.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 
 /* Macros for visibilitymap test */
@@ -37,6 +38,9 @@ extern uint8 visibilitymap_set(Relation rel,
 							   Buffer vmBuf,
 							   TransactionId cutoff_xid,
 							   uint8 flags);
+extern uint8 visibilitymap_set_vmbits(BlockNumber heapBlk,
+									  Buffer vmBuf, uint8 flags,
+									  const RelFileLocator rlocator);
 extern uint8 visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf);
 extern void visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen);
 extern BlockNumber visibilitymap_prepare_truncate(Relation rel,

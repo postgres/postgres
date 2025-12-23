@@ -50,7 +50,7 @@ CREATE PUBLICATION addr_pub_schema FOR TABLES IN SCHEMA addr_nsp;
 RESET client_min_messages;
 CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');

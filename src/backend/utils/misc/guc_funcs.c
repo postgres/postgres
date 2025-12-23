@@ -210,12 +210,29 @@ flatten_set_variable_args(const char *name, List *args)
 	else
 		flags = 0;
 
-	/* Complain if list input and non-list variable */
-	if ((flags & GUC_LIST_INPUT) == 0 &&
-		list_length(args) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("SET %s takes only one argument", name)));
+	/*
+	 * Handle special cases for list input.
+	 */
+	if (flags & GUC_LIST_INPUT)
+	{
+		/* NULL represents an empty list. */
+		if (list_length(args) == 1)
+		{
+			Node	   *arg = (Node *) linitial(args);
+
+			if (IsA(arg, A_Const) &&
+				((A_Const *) arg)->isnull)
+				return pstrdup("");
+		}
+	}
+	else
+	{
+		/* Complain if list input and non-list variable. */
+		if (list_length(args) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("SET %s takes only one argument", name)));
+	}
 
 	initStringInfo(&buf);
 
@@ -246,6 +263,12 @@ flatten_set_variable_args(const char *name, List *args)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(arg));
 		con = (A_Const *) arg;
 
+		/* Complain if NULL is used with a non-list variable. */
+		if (con->isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("NULL is an invalid value for %s", name)));
+
 		switch (nodeTag(&con->val))
 		{
 			case T_Integer:
@@ -268,6 +291,9 @@ flatten_set_variable_args(const char *name, List *args)
 					int32		typmod;
 					Datum		interval;
 					char	   *intervalout;
+
+					/* gram.y ensures this is only reachable for TIME ZONE */
+					Assert(!(flags & GUC_LIST_QUOTE));
 
 					typenameTypeIdAndMod(NULL, typeName, &typoid, &typmod);
 					Assert(typoid == INTERVALOID);
@@ -578,7 +604,7 @@ pg_settings_get_flags(PG_FUNCTION_ARGS)
  * Return whether or not the GUC variable is visible to the current user.
  */
 bool
-ConfigOptionIsVisible(struct config_generic *conf)
+ConfigOptionIsVisible(const struct config_generic *conf)
 {
 	if ((conf->flags & GUC_SUPERUSER_ONLY) &&
 		!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_SETTINGS))
@@ -591,7 +617,7 @@ ConfigOptionIsVisible(struct config_generic *conf)
  * Extract fields to show in pg_settings for given variable.
  */
 static void
-GetConfigOptionValues(struct config_generic *conf, const char **values)
+GetConfigOptionValues(const struct config_generic *conf, const char **values)
 {
 	char		buffer[256];
 
@@ -629,7 +655,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 	{
 		case PGC_BOOL:
 			{
-				struct config_bool *lconf = (struct config_bool *) conf;
+				const struct config_bool *lconf = &conf->_bool;
 
 				/* min_val */
 				values[9] = NULL;
@@ -650,7 +676,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_INT:
 			{
-				struct config_int *lconf = (struct config_int *) conf;
+				const struct config_int *lconf = &conf->_int;
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%d", lconf->min);
@@ -675,7 +701,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_REAL:
 			{
-				struct config_real *lconf = (struct config_real *) conf;
+				const struct config_real *lconf = &conf->_real;
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%g", lconf->min);
@@ -700,7 +726,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_STRING:
 			{
-				struct config_string *lconf = (struct config_string *) conf;
+				const struct config_string *lconf = &conf->_string;
 
 				/* min_val */
 				values[9] = NULL;
@@ -727,7 +753,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_ENUM:
 			{
-				struct config_enum *lconf = (struct config_enum *) conf;
+				const struct config_enum *lconf = &conf->_enum;
 
 				/* min_val */
 				values[9] = NULL;
@@ -741,15 +767,15 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 				 * NOTE! enumvals with double quotes in them are not
 				 * supported!
 				 */
-				values[11] = config_enum_get_options((struct config_enum *) conf,
+				values[11] = config_enum_get_options(lconf,
 													 "{\"", "\"}", "\",\"");
 
 				/* boot_val */
-				values[12] = pstrdup(config_enum_lookup_by_value(lconf,
+				values[12] = pstrdup(config_enum_lookup_by_value(conf,
 																 lconf->boot_val));
 
 				/* reset_val */
-				values[13] = pstrdup(config_enum_lookup_by_value(lconf,
+				values[13] = pstrdup(config_enum_lookup_by_value(conf,
 																 lconf->reset_val));
 			}
 			break;
@@ -986,7 +1012,6 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 #define NUM_PG_FILE_SETTINGS_ATTS 7
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	ConfigVariable *conf;
-	int			seqno;
 
 	/* Scan the config files using current context as workspace */
 	conf = ProcessConfigFileInternal(PGC_SIGHUP, false, DEBUG3);
@@ -995,7 +1020,7 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 	InitMaterializedSRF(fcinfo, 0);
 
 	/* Process the results and create a tuplestore */
-	for (seqno = 1; conf != NULL; conf = conf->next, seqno++)
+	for (int seqno = 1; conf != NULL; conf = conf->next, seqno++)
 	{
 		Datum		values[NUM_PG_FILE_SETTINGS_ATTS];
 		bool		nulls[NUM_PG_FILE_SETTINGS_ATTS];

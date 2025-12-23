@@ -88,7 +88,6 @@ build_hash_table(SetOpState *setopstate)
 	TupleDesc	desc = ExecGetResultType(outerPlanState(setopstate));
 
 	Assert(node->strategy == SETOP_HASHED);
-	Assert(node->numGroups > 0);
 
 	/*
 	 * If both child plans deliver the same fixed tuple slot type, we can tell
@@ -106,9 +105,18 @@ build_hash_table(SetOpState *setopstate)
 												node->numGroups,
 												sizeof(SetOpStatePerGroupData),
 												setopstate->ps.state->es_query_cxt,
-												setopstate->tableContext,
+												setopstate->tuplesContext,
 												econtext->ecxt_per_tuple_memory,
 												false);
+}
+
+/* Planner support routine to estimate space needed for hash table */
+Size
+EstimateSetOpHashTableSpace(double nentries, Size tupleWidth)
+{
+	return EstimateTupleHashTableSpace(nentries,
+									   tupleWidth,
+									   sizeof(SetOpStatePerGroupData));
 }
 
 /*
@@ -589,13 +597,15 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	/*
 	 * If hashing, we also need a longer-lived context to store the hash
 	 * table.  The table can't just be kept in the per-query context because
-	 * we want to be able to throw it away in ExecReScanSetOp.
+	 * we want to be able to throw it away in ExecReScanSetOp.  We can use a
+	 * BumpContext to save storage, because we will have no need to delete
+	 * individual table entries.
 	 */
 	if (node->strategy == SETOP_HASHED)
-		setopstate->tableContext =
-			AllocSetContextCreate(CurrentMemoryContext,
-								  "SetOp hash table",
-								  ALLOCSET_DEFAULT_SIZES);
+		setopstate->tuplesContext =
+			BumpContextCreate(CurrentMemoryContext,
+							  "SetOp hashed tuples",
+							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * initialize child nodes
@@ -680,9 +690,9 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 void
 ExecEndSetOp(SetOpState *node)
 {
-	/* free subsidiary stuff including hashtable */
-	if (node->tableContext)
-		MemoryContextDelete(node->tableContext);
+	/* free subsidiary stuff including hashtable data */
+	if (node->tuplesContext)
+		MemoryContextDelete(node->tuplesContext);
 
 	ExecEndNode(outerPlanState(node));
 	ExecEndNode(innerPlanState(node));
@@ -721,11 +731,7 @@ ExecReScanSetOp(SetOpState *node)
 			return;
 		}
 
-		/* Release any hashtable storage */
-		if (node->tableContext)
-			MemoryContextReset(node->tableContext);
-
-		/* And rebuild an empty hashtable */
+		/* Else, we must rebuild the hashtable */
 		ResetTupleHashTable(node->hashtable);
 		node->table_filled = false;
 	}

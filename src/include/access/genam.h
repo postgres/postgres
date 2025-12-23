@@ -20,11 +20,15 @@
 #include "nodes/tidbitmap.h"
 #include "storage/buf.h"
 #include "storage/lockdefs.h"
-#include "utils/relcache.h"
 #include "utils/snapshot.h"
 
 /* We don't want this file to depend on execnodes.h. */
-struct IndexInfo;
+typedef struct IndexInfo IndexInfo;
+typedef struct TupleTableSlot TupleTableSlot;
+
+/* or relcache.h */
+typedef struct RelationData *Relation;
+
 
 /*
  * Struct for statistics maintained by amgettuple and amgetbitmap
@@ -155,12 +159,6 @@ typedef struct IndexOrderByDistance
  * generalized index_ interface routines (in indexam.c)
  */
 
-/*
- * IndexScanIsValid
- *		True iff the index scan is valid.
- */
-#define IndexScanIsValid(scan) PointerIsValid(scan)
-
 extern Relation index_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_index_open(Oid relationId, LOCKMODE lockmode);
 extern void index_close(Relation relation, LOCKMODE lockmode);
@@ -171,9 +169,9 @@ extern bool index_insert(Relation indexRelation,
 						 Relation heapRelation,
 						 IndexUniqueCheck checkUnique,
 						 bool indexUnchanged,
-						 struct IndexInfo *indexInfo);
+						 IndexInfo *indexInfo);
 extern void index_insert_cleanup(Relation indexRelation,
-								 struct IndexInfo *indexInfo);
+								 IndexInfo *indexInfo);
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 									 Relation indexRelation,
@@ -208,10 +206,9 @@ extern IndexScanDesc index_beginscan_parallel(Relation heaprel,
 											  ParallelIndexScanDesc pscan);
 extern ItemPointer index_getnext_tid(IndexScanDesc scan,
 									 ScanDirection direction);
-struct TupleTableSlot;
-extern bool index_fetch_heap(IndexScanDesc scan, struct TupleTableSlot *slot);
+extern bool index_fetch_heap(IndexScanDesc scan, TupleTableSlot *slot);
 extern bool index_getnext_slot(IndexScanDesc scan, ScanDirection direction,
-							   struct TupleTableSlot *slot);
+							   TupleTableSlot *slot);
 extern int64 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap);
 
 extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,

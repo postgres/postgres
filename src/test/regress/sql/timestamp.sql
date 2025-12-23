@@ -175,7 +175,9 @@ SELECT d1 - timestamp without time zone '1997-01-02' AS diff
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
 SELECT date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
-
+SELECT date_trunc( 'week', timestamp 'infinity' ) AS inf_trunc;
+SELECT date_trunc( 'timezone', timestamp '2004-02-29 15:44:17.71393' ) AS notsupp_trunc;
+SELECT date_trunc( 'timezone', timestamp 'infinity' ) AS notsupp_inf_trunc;
 SELECT date_trunc( 'ago', timestamp 'infinity' ) AS invalid_trunc;
 
 -- verify date_bin behaves the same as date_trunc for relevant intervals

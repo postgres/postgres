@@ -59,7 +59,7 @@ GENERATED_SGML = version.sgml \
 	features-supported.sgml features-unsupported.sgml errcodes-table.sgml \
 	keywords-table.sgml targets-meson.sgml wait_event_types.sgml
 
-ALL_SGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
+ALL_SGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/func/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 
 ALL_IMAGES := $(wildcard $(srcdir)/images/*.svg)
 
@@ -263,14 +263,14 @@ endif # sqlmansectnum != 7
 
 # tabs are harmless, but it is best to avoid them in SGML files
 check-tabs:
-	@( ! grep '	' $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.xsl) ) || \
+	@( ! grep '	' $(wildcard $(srcdir)/*.sgml $(srcdir)/func/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.xsl) ) || \
 	(echo "Tabs appear in SGML/XML files" 1>&2;  exit 1)
 
 # Non-breaking spaces are harmless, but it is best to avoid them in SGML files.
 # Use perl command because non-GNU grep or sed could not have hex escape sequence.
 check-nbsp:
 	@ ( $(PERL) -ne '/\xC2\xA0/ and print("$$ARGV:$$_"),$$n++; END {exit($$n>0)}' \
-	  $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.xsl $(srcdir)/images/*.xsl) ) || \
+	  $(wildcard $(srcdir)/*.sgml $(srcdir)/func/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.xsl $(srcdir)/images/*.xsl) ) || \
 	(echo "Non-breaking spaces appear in SGML/XML files" 1>&2;  exit 1)
 
 ##

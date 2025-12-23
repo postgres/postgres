@@ -70,7 +70,7 @@ SELECT * FROM <replaceable>name</replaceable>;
 </programlisting>
 
    to examine the parameters and current state of a sequence.  In particular,
-   the <literal>last_value</literal> field of the sequence shows the last value
+   the <structfield>last_value</structfield> field of the sequence shows the last value
    allocated by any session.  (Of course, this value might be obsolete
    by the time it's printed, if other sessions are actively doing
    <function>nextval</function> calls.)
@@ -295,7 +295,7 @@ SELECT * FROM <replaceable>name</replaceable>;
    used for a sequence object that will be used concurrently by
    multiple sessions.  Each session will allocate and cache successive
    sequence values during one access to the sequence object and
-   increase the sequence object's <literal>last_value</literal> accordingly.
+   increase the sequence object's <structfield>last_value</structfield> accordingly.
    Then, the next <replaceable class="parameter">cache</replaceable>-1
    uses of <function>nextval</function> within that session simply return the
    preallocated values without touching the sequence object.  So, any
@@ -319,7 +319,7 @@ SELECT * FROM <replaceable>name</replaceable>;
    class="parameter">cache</replaceable> setting greater than one you
    should only assume that the <function>nextval</function> values are all
    distinct, not that they are generated purely sequentially.  Also,
-   <literal>last_value</literal> will reflect the latest value reserved by
+   <structfield>last_value</structfield> will reflect the latest value reserved by
    any session, whether or not it has yet been returned by
    <function>nextval</function>.
   </para>

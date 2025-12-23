@@ -174,7 +174,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 			ptr++;
 		}
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -195,7 +195,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 		}
 
 		res = _intbig_alloc(true, siglen, sign);
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -385,7 +385,7 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	costvector = palloc_array(SPLITCOST, maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

@@ -25,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_ts_config.h"
@@ -70,6 +71,7 @@ regprocin(PG_FUNCTION_ARGS)
 	RegProcedure result;
 	List	   *names;
 	FuncCandidateList clist;
+	int			fgc_flags;
 
 	/* Handle "-" or numeric OID */
 	if (parseDashOrOid(pro_name_or_oid, &result, escontext))
@@ -92,7 +94,8 @@ regprocin(PG_FUNCTION_ARGS)
 	if (names == NIL)
 		PG_RETURN_NULL();
 
-	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
+	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true,
+								  &fgc_flags);
 
 	if (clist == NULL)
 		ereturn(escontext, (Datum) 0,
@@ -163,13 +166,15 @@ regprocout(PG_FUNCTION_ARGS)
 		{
 			char	   *nspname;
 			FuncCandidateList clist;
+			int			fgc_flags;
 
 			/*
 			 * Would this proc be found (uniquely!) by regprocin? If not,
 			 * qualify it.
 			 */
 			clist = FuncnameGetCandidates(list_make1(makeString(proname)),
-										  -1, NIL, false, false, false, false);
+										  -1, NIL, false, false, false, false,
+										  &fgc_flags);
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == proid)
 				nspname = NULL;
@@ -230,6 +235,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	FuncCandidateList clist;
+	int			fgc_flags;
 
 	/* Handle "-" or numeric OID */
 	if (parseDashOrOid(pro_name_or_oid, &result, escontext))
@@ -250,8 +256,8 @@ regprocedurein(PG_FUNCTION_ARGS)
 							  escontext))
 		PG_RETURN_NULL();
 
-	clist = FuncnameGetCandidates(names, nargs, NIL, false, false,
-								  false, true);
+	clist = FuncnameGetCandidates(names, nargs, NIL, false, false, false, true,
+								  &fgc_flags);
 
 	for (; clist; clist = clist->next)
 	{
@@ -482,6 +488,7 @@ regoperin(PG_FUNCTION_ARGS)
 	Oid			result;
 	List	   *names;
 	FuncCandidateList clist;
+	int			fgc_flags;
 
 	/* Handle "0" or numeric OID */
 	if (parseNumericOid(opr_name_or_oid, &result, escontext))
@@ -501,7 +508,7 @@ regoperin(PG_FUNCTION_ARGS)
 	if (names == NIL)
 		PG_RETURN_NULL();
 
-	clist = OpernameGetCandidates(names, '\0', true);
+	clist = OpernameGetCandidates(names, '\0', true, &fgc_flags);
 
 	if (clist == NULL)
 		ereturn(escontext, (Datum) 0,
@@ -571,13 +578,14 @@ regoperout(PG_FUNCTION_ARGS)
 		else
 		{
 			FuncCandidateList clist;
+			int			fgc_flags;
 
 			/*
 			 * Would this oper be found (uniquely!) by regoperin? If not,
 			 * qualify it.
 			 */
 			clist = OpernameGetCandidates(list_make1(makeString(oprname)),
-										  '\0', false);
+										  '\0', false, &fgc_flags);
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == oprid)
 				result = pstrdup(oprname);
@@ -1758,6 +1766,123 @@ regnamespacerecv(PG_FUNCTION_ARGS)
  */
 Datum
 regnamespacesend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
+/*
+ * regdatabasein - converts database name to database OID
+ *
+ * We also accept a numeric OID, for symmetry with the output routine.
+ *
+ * '-' signifies unknown (OID 0).  In all other cases, the input must
+ * match an existing pg_database entry.
+ */
+Datum
+regdatabasein(PG_FUNCTION_ARGS)
+{
+	char	   *db_name_or_oid = PG_GETARG_CSTRING(0);
+	Node	   *escontext = fcinfo->context;
+	Oid			result;
+	List	   *names;
+
+	/* Handle "-" or numeric OID */
+	if (parseDashOrOid(db_name_or_oid, &result, escontext))
+		PG_RETURN_OID(result);
+
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regdatabase values must be OIDs in bootstrap mode");
+
+	/* Normal case: see if the name matches any pg_database entry. */
+	names = stringToQualifiedNameList(db_name_or_oid, escontext);
+	if (names == NIL)
+		PG_RETURN_NULL();
+
+	if (list_length(names) != 1)
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid name syntax")));
+
+	result = get_database_oid(strVal(linitial(names)), true);
+
+	if (!OidIsValid(result))
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("database \"%s\" does not exist",
+						strVal(linitial(names)))));
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * to_regdatabase - converts database name to database OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regdatabase(PG_FUNCTION_ARGS)
+{
+	char	   *db_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Datum		result;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+	if (!DirectInputFunctionCallSafe(regdatabasein, db_name,
+									 InvalidOid, -1,
+									 (Node *) &escontext,
+									 &result))
+		PG_RETURN_NULL();
+	PG_RETURN_DATUM(result);
+}
+
+/*
+ * regdatabaseout - converts database OID to database name
+ */
+Datum
+regdatabaseout(PG_FUNCTION_ARGS)
+{
+	Oid			dboid = PG_GETARG_OID(0);
+	char	   *result;
+
+	if (dboid == InvalidOid)
+	{
+		result = pstrdup("-");
+		PG_RETURN_CSTRING(result);
+	}
+
+	result = get_database_name(dboid);
+
+	if (result)
+	{
+		/* pstrdup is not really necessary, but it avoids a compiler warning */
+		result = pstrdup(quote_identifier(result));
+	}
+	else
+	{
+		/* If OID doesn't match any database, return it numerically */
+		result = (char *) palloc(NAMEDATALEN);
+		snprintf(result, NAMEDATALEN, "%u", dboid);
+	}
+
+	PG_RETURN_CSTRING(result);
+}
+
+/*
+ * regdatabaserecv - converts external binary format to regdatabase
+ */
+Datum
+regdatabaserecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ * regdatabasesend - converts regdatabase to binary format
+ */
+Datum
+regdatabasesend(PG_FUNCTION_ARGS)
 {
 	/* Exactly the same as oidsend, so share code */
 	return oidsend(fcinfo);

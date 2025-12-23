@@ -1,0 +1,4 @@
+comment = 'Test code for LWLock tranches allocated by extensions'
+default_version = '1.0'
+module_pathname = '$libdir/test_lwlock_tranches'
+relocatable = true

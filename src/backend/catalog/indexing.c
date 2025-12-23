@@ -310,7 +310,7 @@ CatalogTuplesMultiInsertWithInfo(Relation heapRel, TupleTableSlot **slot,
  * (Use CatalogTupleUpdateWithInfo in such cases.)
  */
 void
-CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
+CatalogTupleUpdate(Relation heapRel, const ItemPointerData *otid, HeapTuple tup)
 {
 	CatalogIndexState indstate;
 	TU_UpdateIndexes updateIndexes = TU_All;
@@ -334,7 +334,7 @@ CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
  * so that callers needn't trouble over this ... but we don't do so today.
  */
 void
-CatalogTupleUpdateWithInfo(Relation heapRel, ItemPointer otid, HeapTuple tup,
+CatalogTupleUpdateWithInfo(Relation heapRel, const ItemPointerData *otid, HeapTuple tup,
 						   CatalogIndexState indstate)
 {
 	TU_UpdateIndexes updateIndexes = TU_All;
@@ -362,7 +362,7 @@ CatalogTupleUpdateWithInfo(Relation heapRel, ItemPointer otid, HeapTuple tup,
  * it might be better to do something about caching CatalogIndexState.
  */
 void
-CatalogTupleDelete(Relation heapRel, ItemPointer tid)
+CatalogTupleDelete(Relation heapRel, const ItemPointerData *tid)
 {
 	simple_heap_delete(heapRel, tid);
 }

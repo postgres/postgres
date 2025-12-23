@@ -169,7 +169,7 @@ backend_mod_code = declare_dependency(
   compile_args: pg_mod_c_args,
   include_directories: postgres_inc,
   link_args: pg_mod_link_args,
-  sources: generated_headers + generated_backend_headers,
+  sources: generated_backend_headers_stamp,
   dependencies: backend_mod_deps,
 )
 

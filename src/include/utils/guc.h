@@ -106,7 +106,7 @@ typedef enum
  * will show as "default" in pg_settings.  If there is a specific reason not
  * to want that, use source == PGC_S_OVERRIDE.
  *
- * NB: see GucSource_Names in guc.c if you change this.
+ * NB: see GucSource_Names in guc_tables.c if you change this.
  */
 typedef enum
 {
@@ -247,6 +247,7 @@ typedef enum
 /* GUC vars that are actually defined in guc_tables.c, rather than elsewhere */
 extern PGDLLIMPORT bool Debug_print_plan;
 extern PGDLLIMPORT bool Debug_print_parse;
+extern PGDLLIMPORT bool Debug_print_raw_parse;
 extern PGDLLIMPORT bool Debug_print_rewritten;
 extern PGDLLIMPORT bool Debug_pretty_print;
 
@@ -254,7 +255,30 @@ extern PGDLLIMPORT bool Debug_pretty_print;
 extern PGDLLIMPORT bool Debug_copy_parse_plan_trees;
 extern PGDLLIMPORT bool Debug_write_read_parse_plan_trees;
 extern PGDLLIMPORT bool Debug_raw_expression_coverage_test;
+
+/*
+ * support for legacy compile-time settings
+ */
+
+#ifdef COPY_PARSE_PLAN_TREES
+#define DEFAULT_DEBUG_COPY_PARSE_PLAN_TREES true
+#else
+#define DEFAULT_DEBUG_COPY_PARSE_PLAN_TREES false
 #endif
+
+#ifdef READ_WRITE_PARSE_PLAN_TREES
+#define DEFAULT_DEBUG_READ_WRITE_PARSE_PLAN_TREES true
+#else
+#define DEFAULT_DEBUG_READ_WRITE_PARSE_PLAN_TREES false
+#endif
+
+#ifdef RAW_EXPRESSION_COVERAGE_TEST
+#define DEFAULT_DEBUG_RAW_EXPRESSION_COVERAGE_TEST true
+#else
+#define DEFAULT_DEBUG_RAW_EXPRESSION_COVERAGE_TEST false
+#endif
+
+#endif							/* DEBUG_NODE_TESTS_ENABLED */
 
 extern PGDLLIMPORT bool log_parser_stats;
 extern PGDLLIMPORT bool log_planner_stats;

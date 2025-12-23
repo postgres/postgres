@@ -3,8 +3,7 @@
 PGFILEDESC = "pg_upgrade - an in-place binary upgrade utility"
 PGAPPICON = win32
 
-# required for 003_upgrade_logical_replication_slots.pl
-EXTRA_INSTALL=contrib/test_decoding
+EXTRA_INSTALL=contrib/test_decoding src/test/modules/dummy_seclabel
 
 subdir = src/bin/pg_upgrade
 top_builddir = ../../..
@@ -19,11 +18,14 @@ OBJS = \
 	file.o \
 	function.o \
 	info.o \
+	multixact_read_v18.o \
+	multixact_rewrite.o \
 	option.o \
 	parallel.o \
 	pg_upgrade.o \
 	relfilenumber.o \
 	server.o \
+	slru_io.o \
 	tablespace.o \
 	task.o \
 	util.o \

@@ -30,7 +30,7 @@
  *
  * palloc() enforces MaxAllocSize, chosen to correspond to the limiting size
  * of varlena objects under TOAST.  See VARSIZE_4B() and related macros in
- * postgres.h.  Many datatypes assume that any allocatable size can be
+ * varatt.h.  Many datatypes assume that any allocatable size can be
  * represented in a varlena header.  This limit also permits a caller to use
  * an "int" variable for an index into or length of an allocation.  Callers
  * careful to avoid these hazards can access the higher limit with

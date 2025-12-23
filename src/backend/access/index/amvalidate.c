@@ -118,7 +118,7 @@ identify_opfamily_groups(CatCList *oprlist, CatCList *proclist)
 		}
 
 		/* Time for a new group */
-		thisgroup = (OpFamilyOpFuncGroup *) palloc(sizeof(OpFamilyOpFuncGroup));
+		thisgroup = palloc_object(OpFamilyOpFuncGroup);
 		if (oprform &&
 			(!procform ||
 			 (oprform->amoplefttype < procform->amproclefttype ||

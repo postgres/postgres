@@ -115,6 +115,24 @@ SELECT * FROM pred_tab t1
     LEFT JOIN pred_tab t2 ON t1.a = 1
     LEFT JOIN pred_tab t3 ON t2.a IS NULL OR t2.c IS NULL;
 
+--
+-- Tests for NullTest reduction in EXISTS sublink
+--
+
+-- Ensure the IS_NOT_NULL qual is ignored
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON EXISTS
+        (SELECT 1 FROM pred_tab t3, pred_tab t4, pred_tab t5, pred_tab t6
+         WHERE t1.a = t3.a AND t6.a IS NOT NULL);
+
+-- Ensure the IS_NULL qual is reduced to constant-FALSE
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON EXISTS
+        (SELECT 1 FROM pred_tab t3, pred_tab t4, pred_tab t5, pred_tab t6
+         WHERE t1.a = t3.a AND t6.a IS NULL);
+
 DROP TABLE pred_tab;
 
 -- Validate we handle IS NULL and IS NOT NULL quals correctly with inheritance
@@ -183,3 +201,42 @@ SELECT * FROM pred_tab t1
 
 DROP TABLE pred_tab;
 DROP TABLE pred_tab_notnull;
+
+-- Validate that NullTest quals in constraint expressions are reduced correctly
+CREATE TABLE pred_tab1 (a int NOT NULL, b int,
+	CONSTRAINT check_tab1 CHECK (a IS NULL OR b > 2));
+CREATE TABLE pred_tab2 (a int, b int,
+	CONSTRAINT check_a CHECK (a IS NOT NULL));
+
+SET constraint_exclusion TO ON;
+
+-- Ensure that we get a dummy plan
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab1, pred_tab2 WHERE pred_tab2.a IS NULL;
+
+-- Ensure that we get a dummy plan
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab2, pred_tab1 WHERE pred_tab1.a IS NULL OR pred_tab1.b < 2;
+
+RESET constraint_exclusion;
+DROP TABLE pred_tab1;
+DROP TABLE pred_tab2;
+
+-- Validate that NullTest quals in index expressions and predicate are reduced correctly
+CREATE TABLE pred_tab (a int, b int NOT NULL, c int NOT NULL);
+INSERT INTO pred_tab SELECT i, i, i FROM generate_series(1, 1000) i;
+CREATE INDEX pred_tab_exprs_idx ON pred_tab ((a < 5 AND b IS NOT NULL AND c IS NOT NULL));
+CREATE INDEX pred_tab_pred_idx ON pred_tab (a) WHERE b IS NOT NULL AND c IS NOT NULL;
+ANALYZE pred_tab;
+
+-- Ensure that index pred_tab_exprs_idx is used
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE (a < 5 AND b IS NOT NULL AND c IS NOT NULL) IS TRUE;
+SELECT * FROM pred_tab WHERE (a < 5 AND b IS NOT NULL AND c IS NOT NULL) IS TRUE;
+
+-- Ensure that index pred_tab_pred_idx is used
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
+SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
+
+DROP TABLE pred_tab;

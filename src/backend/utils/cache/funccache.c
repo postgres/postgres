@@ -491,6 +491,7 @@ cached_function_compile(FunctionCallInfo fcinfo,
 	CachedFunctionHashKey hashkey;
 	bool		function_valid = false;
 	bool		hashkey_valid = false;
+	bool		new_function = false;
 
 	/*
 	 * Lookup the pg_proc tuple by Oid; we'll need it in any case
@@ -570,13 +571,15 @@ recheck:
 
 		/*
 		 * Create the new function struct, if not done already.  The function
-		 * structs are never thrown away, so keep them in TopMemoryContext.
+		 * cache entry will be kept for the life of the backend, so put it in
+		 * TopMemoryContext.
 		 */
 		Assert(cacheEntrySize >= sizeof(CachedFunction));
 		if (function == NULL)
 		{
 			function = (CachedFunction *)
 				MemoryContextAllocZero(TopMemoryContext, cacheEntrySize);
+			new_function = true;
 		}
 		else
 		{
@@ -585,17 +588,36 @@ recheck:
 		}
 
 		/*
-		 * Fill in the CachedFunction part.  fn_hashkey and use_count remain
-		 * zeroes for now.
+		 * However, if function compilation fails, we'd like not to leak the
+		 * function struct, so use a PG_TRY block to prevent that.  (It's up
+		 * to the compile callback function to avoid its own internal leakage
+		 * in such cases.)  Unfortunately, freeing the struct is only safe if
+		 * we just allocated it: otherwise there are probably fn_extra
+		 * pointers to it.
+		 */
+		PG_TRY();
+		{
+			/*
+			 * Do the hard, language-specific part.
+			 */
+			ccallback(fcinfo, procTup, &hashkey, function, forValidator);
+		}
+		PG_CATCH();
+		{
+			if (new_function)
+				pfree(function);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+
+		/*
+		 * Fill in the CachedFunction part.  (We do this last to prevent the
+		 * function from looking valid before it's fully built.)  fn_hashkey
+		 * will be set by cfunc_hashtable_insert; use_count remains zero.
 		 */
 		function->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 		function->fn_tid = procTup->t_self;
 		function->dcallback = dcallback;
-
-		/*
-		 * Do the hard, language-specific part.
-		 */
-		ccallback(fcinfo, procTup, &hashkey, function, forValidator);
 
 		/*
 		 * Add the completed struct to the hash table.

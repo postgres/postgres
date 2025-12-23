@@ -62,7 +62,7 @@ LOGICAL_APPLY_MAIN	"Waiting in main loop of logical replication apply process."
 LOGICAL_LAUNCHER_MAIN	"Waiting in main loop of logical replication launcher process."
 LOGICAL_PARALLEL_APPLY_MAIN	"Waiting in main loop of logical replication parallel apply process."
 RECOVERY_WAL_STREAM	"Waiting in main loop of startup process for WAL to arrive, during streaming recovery."
-REPLICATION_SLOTSYNC_MAIN	"Waiting in main loop of slot sync worker."
+REPLICATION_SLOTSYNC_MAIN	"Waiting in main loop of slot synchronization."
 REPLICATION_SLOTSYNC_SHUTDOWN	"Waiting for slot sync worker to shut down."
 SYSLOGGER_MAIN	"Waiting in main loop of syslogger process."
 WAL_RECEIVER_MAIN	"Waiting in main loop of WAL receiver process."
@@ -89,6 +89,8 @@ LIBPQWALRECEIVER_CONNECT	"Waiting in WAL receiver to establish connection to rem
 LIBPQWALRECEIVER_RECEIVE	"Waiting in WAL receiver to receive data from remote server."
 SSL_OPEN_SERVER	"Waiting for SSL while attempting connection."
 WAIT_FOR_STANDBY_CONFIRMATION	"Waiting for WAL to be received and flushed by the physical standby."
+WAIT_FOR_WAL_FLUSH	"Waiting for WAL flush to reach a target LSN on a primary."
+WAIT_FOR_WAL_REPLAY	"Waiting for WAL replay to reach a target LSN on a standby."
 WAL_SENDER_WAIT_FOR_WAL	"Waiting for WAL to be flushed in WAL sender process."
 WAL_SENDER_WRITE_DATA	"Waiting for any activity when processing replies from WAL receiver in WAL sender process."
 
@@ -156,7 +158,6 @@ REPLICATION_SLOT_DROP	"Waiting for a replication slot to become inactive so it c
 RESTORE_COMMAND	"Waiting for <xref linkend="guc-restore-command"/> to complete."
 SAFE_SNAPSHOT	"Waiting to obtain a valid snapshot for a <literal>READ ONLY DEFERRABLE</literal> transaction."
 SYNC_REP	"Waiting for confirmation from a remote server during synchronous replication."
-WAL_BUFFER_INIT	"Waiting on WAL buffer to be initialized."
 WAL_RECEIVER_EXIT	"Waiting for the WAL receiver to exit."
 WAL_RECEIVER_WAIT_START	"Waiting for startup process to send initial data for streaming replication."
 WAL_SUMMARY_READY	"Waiting for a new WAL summary to be generated."
@@ -174,6 +175,7 @@ Section: ClassName - WaitEventTimeout
 
 BASE_BACKUP_THROTTLE	"Waiting during base backup when throttling activity."
 CHECKPOINT_WRITE_DELAY	"Waiting between writes while performing a checkpoint."
+COMMIT_DELAY	"Waiting for commit delay before WAL flush."
 PG_SLEEP	"Waiting due to a call to <function>pg_sleep</function> or a sibling function."
 RECOVERY_APPLY_DELAY	"Waiting to apply WAL during recovery because of a delay setting."
 RECOVERY_RETRIEVE_RETRY_INTERVAL	"Waiting during recovery when WAL data is not available from any source (<filename>pg_wal</filename>, archive or stream)."
@@ -278,12 +280,12 @@ WAL_WRITE	"Waiting for a write to a WAL file."
 ABI_compatibility:
 
 #
-# Wait Events - Buffer Pin
+# Wait Events - Buffer
 #
 
-Section: ClassName - WaitEventBufferPin
+Section: ClassName - WaitEventBuffer
 
-BUFFER_PIN	"Waiting to acquire an exclusive pin on a buffer."
+BUFFER_CLEANUP	"Waiting to acquire an exclusive pin on a buffer. Buffer pin waits can be protracted if another process holds an open cursor that last read data from the buffer in question."
 
 ABI_compatibility:
 
@@ -303,9 +305,12 @@ ABI_compatibility:
 # This class of wait events has its own set of C structure, so these are
 # only used for the documentation.
 #
-# NB: Predefined LWLocks (i.e., those declared in lwlocklist.h) must be
-# listed in the top section of locks and must be listed in the same order as in
-# lwlocklist.h.
+# NB: Predefined LWLocks (i.e., those declared with PG_LWLOCK in lwlocklist.h)
+# must be listed before the "END OF PREDEFINED LWLOCKS" comment and must be
+# listed in the same order as in lwlocklist.h.  Likewise, the built-in LWLock
+# tranches (i.e., those declared with PG_LWLOCKTRANCHE in lwlocklist.h) must be
+# listed after the "END OF PREDEFINED LWLOCKS" comment and must be listed in
+# the same order as lwlocklist.h.
 #
 
 Section: ClassName - WaitEventLWLock
@@ -316,6 +321,7 @@ XidGen	"Waiting to allocate a new transaction ID."
 ProcArray	"Waiting to access the shared per-process data structures (typically, to get a snapshot or report a session's transaction ID)."
 SInvalRead	"Waiting to retrieve messages from the shared catalog invalidation queue."
 SInvalWrite	"Waiting to add a message to the shared catalog invalidation queue."
+WALBufMapping	"Waiting to replace a page in WAL buffers."
 WALWrite	"Waiting for WAL buffers to be written to disk."
 ControlFile	"Waiting to read or update the <filename>pg_control</filename> file or create a new WAL file."
 MultiXactGen	"Waiting to read or update shared multixact state."
@@ -352,13 +358,11 @@ DSMRegistry	"Waiting to read or update the dynamic shared memory registry."
 InjectionPoint	"Waiting to read or update information related to injection points."
 SerialControl	"Waiting to read or update shared <filename>pg_serial</filename> state."
 AioWorkerSubmissionQueue	"Waiting to access AIO worker submission queue."
+WaitLSN	"Waiting to read or update shared Wait-for-LSN state."
+LogicalDecodingControl	"Waiting to read or update logical decoding status information."
 
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
-#
-# Predefined LWLocks (i.e., those declared in lwlocknames.h) must be listed
-# in the section above and must be listed in the same order as in
-# lwlocknames.h.  Other LWLocks must be listed in the section below.
 #
 
 XactBuffer	"Waiting for I/O on a transaction status SLRU buffer."
@@ -401,6 +405,7 @@ SerialSLRU	"Waiting to access the serializable transaction conflict SLRU cache."
 SubtransSLRU	"Waiting to access the sub-transaction SLRU cache."
 XactSLRU	"Waiting to access the transaction status SLRU cache."
 ParallelVacuumDSA	"Waiting for parallel vacuum dynamic shared memory allocation."
+AioUringCompletion	"Waiting for another process to complete IO via io_uring."
 
 # No "ABI_compatibility" region here as WaitEventLWLock has its own C code.
 

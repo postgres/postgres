@@ -62,7 +62,7 @@ getopt_long(int argc, char *const argv[],
 			const struct option *longopts, int *longindex)
 {
 	static char *place = EMSG;	/* option letter processing */
-	char	   *oli;			/* option letter list index */
+	const char *oli;			/* option letter list index */
 	static int	nonopt_start = -1;
 	static bool force_nonopt = false;
 

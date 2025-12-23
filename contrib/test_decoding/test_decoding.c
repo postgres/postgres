@@ -163,7 +163,7 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	TestDecodingData *data;
 	bool		enable_streaming = false;
 
-	data = palloc0(sizeof(TestDecodingData));
+	data = palloc0_object(TestDecodingData);
 	data->context = AllocSetContextCreate(ctx->context,
 										  "text conversion context",
 										  ALLOCSET_DEFAULT_SIZES);
@@ -340,7 +340,7 @@ pg_decode_commit_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
-						 timestamptz_to_str(txn->xact_time.commit_time));
+						 timestamptz_to_str(txn->commit_time));
 
 	OutputPluginWrite(ctx, true);
 }
@@ -391,7 +391,7 @@ pg_decode_prepare_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
-						 timestamptz_to_str(txn->xact_time.prepare_time));
+						 timestamptz_to_str(txn->prepare_time));
 
 	OutputPluginWrite(ctx, true);
 }
@@ -413,7 +413,7 @@ pg_decode_commit_prepared_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
-						 timestamptz_to_str(txn->xact_time.commit_time));
+						 timestamptz_to_str(txn->commit_time));
 
 	OutputPluginWrite(ctx, true);
 }
@@ -437,7 +437,7 @@ pg_decode_rollback_prepared_txn(LogicalDecodingContext *ctx,
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
-						 timestamptz_to_str(txn->xact_time.commit_time));
+						 timestamptz_to_str(txn->commit_time));
 
 	OutputPluginWrite(ctx, true);
 }
@@ -581,7 +581,7 @@ tuple_to_stringinfo(StringInfo s, TupleDesc tupdesc, HeapTuple tuple, bool skip_
 		/* print data */
 		if (isnull)
 			appendStringInfoString(s, "null");
-		else if (typisvarlena && VARATT_IS_EXTERNAL_ONDISK(origval))
+		else if (typisvarlena && VARATT_IS_EXTERNAL_ONDISK(DatumGetPointer(origval)))
 			appendStringInfoString(s, "unchanged-toast-datum");
 		else if (!typisvarlena)
 			print_literal(s, typid,
@@ -874,7 +874,7 @@ pg_decode_stream_prepare(LogicalDecodingContext *ctx,
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
-						 timestamptz_to_str(txn->xact_time.prepare_time));
+						 timestamptz_to_str(txn->prepare_time));
 
 	OutputPluginWrite(ctx, true);
 }
@@ -903,7 +903,7 @@ pg_decode_stream_commit(LogicalDecodingContext *ctx,
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
-						 timestamptz_to_str(txn->xact_time.commit_time));
+						 timestamptz_to_str(txn->commit_time));
 
 	OutputPluginWrite(ctx, true);
 }

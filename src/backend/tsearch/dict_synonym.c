@@ -134,7 +134,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 				 errmsg("could not open synonym file \"%s\": %m",
 						filename)));
 
-	d = (DictSyn *) palloc0(sizeof(DictSyn));
+	d = palloc0_object(DictSyn);
 
 	while ((line = tsearch_readline(&trst)) != NULL)
 	{
@@ -169,12 +169,12 @@ dsynonym_init(PG_FUNCTION_ARGS)
 			if (d->len == 0)
 			{
 				d->len = 64;
-				d->syn = (Syn *) palloc(sizeof(Syn) * d->len);
+				d->syn = palloc_array(Syn, d->len);
 			}
 			else
 			{
 				d->len *= 2;
-				d->syn = (Syn *) repalloc(d->syn, sizeof(Syn) * d->len);
+				d->syn = repalloc_array(d->syn, Syn, d->len);
 			}
 		}
 
@@ -199,6 +199,7 @@ skipline:
 	}
 
 	tsearch_readline_end(&trst);
+	pfree(filename);
 
 	d->len = cur;
 	qsort(d->syn, d->len, sizeof(Syn), compareSyn);
@@ -235,7 +236,7 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	if (!found)
 		PG_RETURN_POINTER(NULL);
 
-	res = palloc0(sizeof(TSLexeme) * 2);
+	res = palloc0_array(TSLexeme, 2);
 	res[0].lexeme = pnstrdup(found->out, found->outlen);
 	res[0].flags = found->flags;
 

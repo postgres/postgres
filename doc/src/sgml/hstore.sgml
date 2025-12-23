@@ -600,7 +600,7 @@ b
         Extracts an <type>hstore</type>'s keys and values as a set of records.
        </para>
        <para>
-        <literal>select * from each('a=&gt;1,b=&gt;2')</literal>
+        <literal>SELECT * FROM each('a=&gt;1,b=&gt;2')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  key | value
@@ -799,7 +799,7 @@ UPDATE tab SET h = h || hstore('c', '3');
    If multiple keys are to be added or changed in one operation,
    the concatenation approach is more efficient than subscripting:
 <programlisting>
-UPDATE tab SET h = h || hstore(array['q', 'w'], array['11', '12']);
+UPDATE tab SET h = h || hstore(ARRAY['q', 'w'], ARRAY['11', '12']);
 </programlisting>
   </para>
 

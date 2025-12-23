@@ -1023,7 +1023,7 @@ IF count(*) &gt; 0 FROM my_table THEN ...
 tax := subtotal * 0.06;
 my_record.user_id := 20;
 my_array[j] := 20;
-my_array[1:3] := array[1,2,3];
+my_array[1:3] := ARRAY[1, 2, 3];
 complex_array[n].realpart = 12.3;
 </programlisting>
     </para>
@@ -1037,7 +1037,7 @@ complex_array[n].realpart = 12.3;
      within a <application>PL/pgSQL</application> function just by writing
      the command.  For example, you could create and fill a table by writing
 <programlisting>
-CREATE TABLE mytable (id int primary key, data text);
+CREATE TABLE mytable (id int PRIMARY KEY, data text);
 INSERT INTO mytable VALUES (1,'one'), (2,'two');
 </programlisting>
     </para>
@@ -4962,13 +4962,13 @@ $$ LANGUAGE plpgsql;
    <para>
     Variable substitution currently works only in <command>SELECT</command>,
     <command>INSERT</command>, <command>UPDATE</command>,
-    <command>DELETE</command>, and commands containing one of
-    these (such as <command>EXPLAIN</command> and <command>CREATE TABLE
-    ... AS SELECT</command>),
-    because the main SQL engine allows query parameters only in these
-    commands.  To use a non-constant name or value in other statement
-    types (generically called utility statements), you must construct
-    the utility statement as a string and <command>EXECUTE</command> it.
+    <command>DELETE</command>, <command>MERGE</command> and commands
+    containing one of these (such as <command>EXPLAIN</command> and
+    <command>CREATE TABLE ... AS SELECT</command>), because the main SQL
+    engine allows query parameters only in these commands.  To use a
+    non-constant name or value in other statement types (generically called
+    utility statements), you must construct the utility statement as a string
+    and <command>EXECUTE</command> it.
    </para>
 
   </sect2>
@@ -5294,24 +5294,24 @@ a_output := a_output || $$ AND name LIKE 'foobar'$$
       <xref linkend="plpgsql-porting-ex2"/>.
       For example:
 <programlisting>
-a_output := a_output || '' if v_'' ||
-    referrer_keys.kind || '' like ''''''''''
+a_output := a_output || '' IF v_'' ||
+    referrer_keys.kind || '' LIKE ''''''''''
     || referrer_keys.key_string || ''''''''''
-    then return ''''''  || referrer_keys.referrer_type
-    || ''''''; end if;'';
+    THEN RETURN '''''' || referrer_keys.referrer_type
+    || ''''''; END IF;'';
 </programlisting>
       The value of <literal>a_output</literal> would then be:
 <programlisting>
-if v_... like ''...'' then return ''...''; end if;
+IF v_... LIKE ''...'' THEN RETURN ''...''; END IF;
 </programlisting>
      </para>
      <para>
       In the dollar-quoting approach, this becomes:
 <programlisting>
-a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
+a_output := a_output || $$ IF v_$$ || referrer_keys.kind || $$ LIKE '$$
     || referrer_keys.key_string || $$'
-    then return '$$  || referrer_keys.referrer_type
-    || $$'; end if;$$;
+    THEN RETURN '$$ || referrer_keys.referrer_type
+    || $$'; END IF;$$;
 </programlisting>
       where we assume we only need to put single quote marks into
       <literal>a_output</literal>, because it will be re-quoted before use.

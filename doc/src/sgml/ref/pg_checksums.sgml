@@ -247,5 +247,9 @@ PostgreSQL documentation
    remains unchanged, and <application>pg_checksums</application> can be
    re-run to perform the same operation.
   </para>
+  <para>
+   The target cluster must have the same major version as
+   <application>pg_checksums</application>.
+  </para>
  </refsect1>
 </refentry>

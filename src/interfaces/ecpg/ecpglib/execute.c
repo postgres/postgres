@@ -54,7 +54,7 @@ quote_postgres(char *arg, bool quote, int lineno)
 	{
 		length = strlen(arg);
 		buffer_len = 2 * length + 1;
-		res = (char *) ecpg_alloc(buffer_len + 3, lineno);
+		res = ecpg_alloc(buffer_len + 3, lineno);
 		if (!res)
 			return res;
 		escaped_len = PQescapeString(res + 1, arg, buffer_len);
@@ -263,7 +263,7 @@ ecpg_is_type_an_array(int type, const struct statement *stmt, const struct varia
 			return cache_entry->isarray;
 	}
 
-	array_query = (char *) ecpg_alloc(strlen("select typlen from pg_type where oid= and typelem<>0") + 11, stmt->lineno);
+	array_query = ecpg_alloc(strlen("select typlen from pg_type where oid= and typelem<>0") + 11, stmt->lineno);
 	if (array_query == NULL)
 		return ECPG_ARRAY_ERROR;
 
@@ -391,7 +391,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 		}
 
 		ecpg_log("ecpg_store_result on line %d: allocating memory for %d tuples\n", stmt->lineno, ntuples);
-		var->value = (char *) ecpg_auto_alloc(len, stmt->lineno);
+		var->value = ecpg_auto_alloc(len, stmt->lineno);
 		if (!var->value)
 			return false;
 		*((char **) var->pointer) = var->value;
@@ -402,7 +402,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 	{
 		int			len = var->ind_offset * ntuples;
 
-		var->ind_value = (char *) ecpg_auto_alloc(len, stmt->lineno);
+		var->ind_value = ecpg_auto_alloc(len, stmt->lineno);
 		if (!var->ind_value)
 			return false;
 		*((char **) var->ind_pointer) = var->ind_value;
@@ -822,7 +822,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					struct ECPGgeneric_bytea *variable =
 						(struct ECPGgeneric_bytea *) (var->value);
 
-					if (!(mallocedval = (char *) ecpg_alloc(variable->len, lineno)))
+					if (!(mallocedval = ecpg_alloc(variable->len, lineno)))
 						return false;
 
 					memcpy(mallocedval, variable->arr, variable->len);
@@ -835,7 +835,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					struct ECPGgeneric_varchar *variable =
 						(struct ECPGgeneric_varchar *) (var->value);
 
-					if (!(newcopy = (char *) ecpg_alloc(variable->len + 1, lineno)))
+					if (!(newcopy = ecpg_alloc(variable->len + 1, lineno)))
 						return false;
 
 					strncpy(newcopy, variable->arr, variable->len);
@@ -860,9 +860,9 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					numeric    *nval;
 
 					if (var->arrsize > 1)
-						mallocedval = ecpg_strdup("{", lineno);
+						mallocedval = ecpg_strdup("{", lineno, NULL);
 					else
-						mallocedval = ecpg_strdup("", lineno);
+						mallocedval = ecpg_strdup("", lineno, NULL);
 
 					if (!mallocedval)
 						return false;
@@ -923,9 +923,9 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					int			slen;
 
 					if (var->arrsize > 1)
-						mallocedval = ecpg_strdup("{", lineno);
+						mallocedval = ecpg_strdup("{", lineno, NULL);
 					else
-						mallocedval = ecpg_strdup("", lineno);
+						mallocedval = ecpg_strdup("", lineno, NULL);
 
 					if (!mallocedval)
 						return false;
@@ -970,9 +970,9 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					int			slen;
 
 					if (var->arrsize > 1)
-						mallocedval = ecpg_strdup("{", lineno);
+						mallocedval = ecpg_strdup("{", lineno, NULL);
 					else
-						mallocedval = ecpg_strdup("", lineno);
+						mallocedval = ecpg_strdup("", lineno, NULL);
 
 					if (!mallocedval)
 						return false;
@@ -1017,9 +1017,9 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					int			slen;
 
 					if (var->arrsize > 1)
-						mallocedval = ecpg_strdup("{", lineno);
+						mallocedval = ecpg_strdup("{", lineno, NULL);
 					else
-						mallocedval = ecpg_strdup("", lineno);
+						mallocedval = ecpg_strdup("", lineno, NULL);
 
 					if (!mallocedval)
 						return false;
@@ -1128,9 +1128,7 @@ insert_tobeinserted(int position, int ph_len, struct statement *stmt, char *tobe
 {
 	char	   *newcopy;
 
-	if (!(newcopy = (char *) ecpg_alloc(strlen(stmt->command)
-										+ strlen(tobeinserted)
-										+ 1, stmt->lineno)))
+	if (!(newcopy = ecpg_alloc(strlen(stmt->command) + strlen(tobeinserted) + 1, stmt->lineno)))
 	{
 		ecpg_free(tobeinserted);
 		return false;
@@ -1536,7 +1534,7 @@ ecpg_build_params(struct statement *stmt)
 				int			buffersize = sizeof(int) * CHAR_BIT * 10 / 3;	/* a rough guess of the
 																			 * size we need */
 
-				if (!(tobeinserted = (char *) ecpg_alloc(buffersize, stmt->lineno)))
+				if (!(tobeinserted = ecpg_alloc(buffersize, stmt->lineno)))
 				{
 					ecpg_free_params(stmt, false);
 					return false;
@@ -2001,7 +1999,8 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		return false;
 	}
 #endif
-	stmt->oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
+	stmt->oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno,
+								  NULL);
 	if (stmt->oldlocale == NULL)
 	{
 		ecpg_do_epilogue(stmt);
@@ -2030,7 +2029,14 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		statement_type = ECPGst_execute;
 	}
 	else
-		stmt->command = ecpg_strdup(query, lineno);
+	{
+		stmt->command = ecpg_strdup(query, lineno, NULL);
+		if (!stmt->command)
+		{
+			ecpg_do_epilogue(stmt);
+			return false;
+		}
+	}
 
 	stmt->name = NULL;
 
@@ -2042,7 +2048,12 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		if (command)
 		{
 			stmt->name = stmt->command;
-			stmt->command = ecpg_strdup(command, lineno);
+			stmt->command = ecpg_strdup(command, lineno, NULL);
+			if (!stmt->command)
+			{
+				ecpg_do_epilogue(stmt);
+				return false;
+			}
 		}
 		else
 		{
@@ -2175,7 +2186,12 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 
 			if (!is_prepared_name_set && stmt->statement_type == ECPGst_prepare)
 			{
-				stmt->name = ecpg_strdup(var->value, lineno);
+				stmt->name = ecpg_strdup(var->value, lineno, NULL);
+				if (!stmt->name)
+				{
+					ecpg_do_epilogue(stmt);
+					return false;
+				}
 				is_prepared_name_set = true;
 			}
 		}

@@ -437,7 +437,7 @@ ltsGetPreallocBlock(LogicalTapeSet *lts, LogicalTape *lt)
 	if (lt->prealloc == NULL)
 	{
 		lt->prealloc_size = TAPE_WRITE_PREALLOC_MIN;
-		lt->prealloc = (int64 *) palloc(sizeof(int64) * lt->prealloc_size);
+		lt->prealloc = palloc_array(int64, lt->prealloc_size);
 	}
 	else if (lt->prealloc_size < TAPE_WRITE_PREALLOC_MAX)
 	{
@@ -560,7 +560,7 @@ LogicalTapeSetCreate(bool preallocate, SharedFileSet *fileset, int worker)
 	/*
 	 * Create top-level struct including per-tape LogicalTape structs.
 	 */
-	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet));
+	lts = palloc_object(LogicalTapeSet);
 	lts->nBlocksAllocated = 0L;
 	lts->nBlocksWritten = 0L;
 	lts->nHoleBlocks = 0L;
@@ -681,7 +681,7 @@ LogicalTapeCreate(LogicalTapeSet *lts)
 {
 	/*
 	 * The only thing that currently prevents creating new tapes in leader is
-	 * the fact that BufFiles opened using BufFileOpenShared() are read-only
+	 * the fact that BufFiles opened using BufFileOpenFileSet() are read-only
 	 * by definition, but that could be changed if it seemed worthwhile.  For
 	 * now, writing to the leader tape will raise a "Bad file descriptor"
 	 * error, so tuplesort must avoid writing to the leader tape altogether.
@@ -700,7 +700,7 @@ ltsCreateTape(LogicalTapeSet *lts)
 	/*
 	 * Create per-tape struct.  Note we allocate the I/O buffer lazily.
 	 */
-	lt = palloc(sizeof(LogicalTape));
+	lt = palloc_object(LogicalTape);
 	lt->tapeSet = lts;
 	lt->writing = true;
 	lt->frozen = false;

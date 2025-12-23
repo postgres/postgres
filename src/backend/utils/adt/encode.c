@@ -16,6 +16,7 @@
 #include <ctype.h>
 
 #include "mb/pg_wchar.h"
+#include "port/simd.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "varatt.h"
@@ -63,7 +64,9 @@ binary_encode(PG_FUNCTION_ARGS)
 	if (enc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
+				 errmsg("unrecognized encoding: \"%s\"", namebuf),
+				 errhint("Valid encodings are \"%s\", \"%s\", \"%s\", and \"%s\".",
+						 "base64", "base64url", "escape", "hex")));
 
 	dataptr = VARDATA_ANY(data);
 	datalen = VARSIZE_ANY_EXHDR(data);
@@ -111,7 +114,9 @@ binary_decode(PG_FUNCTION_ARGS)
 	if (enc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
+				 errmsg("unrecognized encoding: \"%s\"", namebuf),
+				 errhint("Valid encodings are \"%s\", \"%s\", \"%s\", and \"%s\".",
+						 "base64", "base64url", "escape", "hex")));
 
 	dataptr = VARDATA_ANY(data);
 	datalen = VARSIZE_ANY_EXHDR(data);
@@ -177,8 +182,8 @@ static const int8 hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-uint64
-hex_encode(const char *src, size_t len, char *dst)
+static inline uint64
+hex_encode_scalar(const char *src, size_t len, char *dst)
 {
 	const char *end = src + len;
 
@@ -191,6 +196,55 @@ hex_encode(const char *src, size_t len, char *dst)
 		dst += 2;
 	}
 	return (uint64) len * 2;
+}
+
+uint64
+hex_encode(const char *src, size_t len, char *dst)
+{
+#ifdef USE_NO_SIMD
+	return hex_encode_scalar(src, len, dst);
+#else
+	const uint64 tail_idx = len & ~(sizeof(Vector8) - 1);
+	uint64		i;
+
+	/*
+	 * This splits the high and low nibbles of each byte into separate
+	 * vectors, adds the vectors to a mask that converts the nibbles to their
+	 * equivalent ASCII bytes, and interleaves those bytes back together to
+	 * form the final hex-encoded string.
+	 */
+	for (i = 0; i < tail_idx; i += sizeof(Vector8))
+	{
+		Vector8		srcv;
+		Vector8		lo;
+		Vector8		hi;
+		Vector8		mask;
+
+		vector8_load(&srcv, (const uint8 *) &src[i]);
+
+		lo = vector8_and(srcv, vector8_broadcast(0x0f));
+		mask = vector8_gt(lo, vector8_broadcast(0x9));
+		mask = vector8_and(mask, vector8_broadcast('a' - '0' - 10));
+		mask = vector8_add(mask, vector8_broadcast('0'));
+		lo = vector8_add(lo, mask);
+
+		hi = vector8_and(srcv, vector8_broadcast(0xf0));
+		hi = vector8_shift_right(hi, 4);
+		mask = vector8_gt(hi, vector8_broadcast(0x9));
+		mask = vector8_and(mask, vector8_broadcast('a' - '0' - 10));
+		mask = vector8_add(mask, vector8_broadcast('0'));
+		hi = vector8_add(hi, mask);
+
+		vector8_store((uint8 *) &dst[i * 2],
+					  vector8_interleave_low(hi, lo));
+		vector8_store((uint8 *) &dst[i * 2 + sizeof(Vector8)],
+					  vector8_interleave_high(hi, lo));
+	}
+
+	(void) hex_encode_scalar(src + i, len - i, dst + i * 2);
+
+	return (uint64) len * 2;
+#endif
 }
 
 static inline bool
@@ -213,8 +267,8 @@ hex_decode(const char *src, size_t len, char *dst)
 	return hex_decode_safe(src, len, dst, NULL);
 }
 
-uint64
-hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
+static inline uint64
+hex_decode_safe_scalar(const char *src, size_t len, char *dst, Node *escontext)
 {
 	const char *s,
 			   *srcend;
@@ -254,6 +308,85 @@ hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
 	return p - dst;
 }
 
+/*
+ * This helper converts each byte to its binary-equivalent nibble by
+ * subtraction and combines them to form the return bytes (separated by zero
+ * bytes).  Returns false if any input bytes are outside the expected ranges of
+ * ASCII values.  Otherwise, returns true.
+ */
+#ifndef USE_NO_SIMD
+static inline bool
+hex_decode_simd_helper(const Vector8 src, Vector8 *dst)
+{
+	Vector8		sub;
+	Vector8		mask_hi = vector8_interleave_low(vector8_broadcast(0), vector8_broadcast(0x0f));
+	Vector8		mask_lo = vector8_interleave_low(vector8_broadcast(0x0f), vector8_broadcast(0));
+	Vector8		tmp;
+	bool		ret;
+
+	tmp = vector8_gt(vector8_broadcast('9' + 1), src);
+	sub = vector8_and(tmp, vector8_broadcast('0'));
+
+	tmp = vector8_gt(src, vector8_broadcast('A' - 1));
+	tmp = vector8_and(tmp, vector8_broadcast('A' - 10));
+	sub = vector8_add(sub, tmp);
+
+	tmp = vector8_gt(src, vector8_broadcast('a' - 1));
+	tmp = vector8_and(tmp, vector8_broadcast('a' - 'A'));
+	sub = vector8_add(sub, tmp);
+
+	*dst = vector8_issub(src, sub);
+	ret = !vector8_has_ge(*dst, 0x10);
+
+	tmp = vector8_and(*dst, mask_hi);
+	tmp = vector8_shift_right(tmp, 8);
+	*dst = vector8_and(*dst, mask_lo);
+	*dst = vector8_shift_left(*dst, 4);
+	*dst = vector8_or(*dst, tmp);
+	return ret;
+}
+#endif							/* ! USE_NO_SIMD */
+
+uint64
+hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
+{
+#ifdef USE_NO_SIMD
+	return hex_decode_safe_scalar(src, len, dst, escontext);
+#else
+	const uint64 tail_idx = len & ~(sizeof(Vector8) * 2 - 1);
+	uint64		i;
+	bool		success = true;
+
+	/*
+	 * We must process 2 vectors at a time since the output will be half the
+	 * length of the input.
+	 */
+	for (i = 0; i < tail_idx; i += sizeof(Vector8) * 2)
+	{
+		Vector8		srcv;
+		Vector8		dstv1;
+		Vector8		dstv2;
+
+		vector8_load(&srcv, (const uint8 *) &src[i]);
+		success &= hex_decode_simd_helper(srcv, &dstv1);
+
+		vector8_load(&srcv, (const uint8 *) &src[i + sizeof(Vector8)]);
+		success &= hex_decode_simd_helper(srcv, &dstv2);
+
+		vector8_store((uint8 *) &dst[i / 2], vector8_pack_16(dstv1, dstv2));
+	}
+
+	/*
+	 * If something didn't look right in the vector path, try again in the
+	 * scalar path so that we can handle it correctly.
+	 */
+	if (!success)
+		i = 0;
+
+	return i / 2 + hex_decode_safe_scalar(src + i, len - i, dst + i / 2, escontext);
+#endif
+}
+
 static uint64
 hex_enc_len(const char *src, size_t srclen)
 {
@@ -267,11 +400,14 @@ hex_dec_len(const char *src, size_t srclen)
 }
 
 /*
- * BASE64
+ * BASE64 and BASE64URL
  */
 
 static const char _base64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static const char _base64url[] =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static const int8 b64lookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -284,8 +420,15 @@ static const int8 b64lookup[128] = {
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
 };
 
+/*
+ * pg_base64_encode_internal
+ *
+ * Helper for decoding base64 or base64url.  When url is passed as true the
+ * input will be encoded using base64url.  len bytes in src is encoded into
+ * dst.
+ */
 static uint64
-pg_base64_encode(const char *src, size_t len, char *dst)
+pg_base64_encode_internal(const char *src, size_t len, char *dst, bool url)
 {
 	char	   *p,
 			   *lend = dst + 76;
@@ -293,6 +436,7 @@ pg_base64_encode(const char *src, size_t len, char *dst)
 			   *end = src + len;
 	int			pos = 2;
 	uint32		buf = 0;
+	const char *alphabet = url ? _base64url : _base64;
 
 	s = src;
 	p = dst;
@@ -306,33 +450,64 @@ pg_base64_encode(const char *src, size_t len, char *dst)
 		/* write it out */
 		if (pos < 0)
 		{
-			*p++ = _base64[(buf >> 18) & 0x3f];
-			*p++ = _base64[(buf >> 12) & 0x3f];
-			*p++ = _base64[(buf >> 6) & 0x3f];
-			*p++ = _base64[buf & 0x3f];
+			*p++ = alphabet[(buf >> 18) & 0x3f];
+			*p++ = alphabet[(buf >> 12) & 0x3f];
+			*p++ = alphabet[(buf >> 6) & 0x3f];
+			*p++ = alphabet[buf & 0x3f];
 
 			pos = 2;
 			buf = 0;
-		}
-		if (p >= lend)
-		{
-			*p++ = '\n';
-			lend = p + 76;
+
+			if (!url && p >= lend)
+			{
+				*p++ = '\n';
+				lend = p + 76;
+			}
 		}
 	}
+
+	/* Handle remaining bytes in buf */
 	if (pos != 2)
 	{
-		*p++ = _base64[(buf >> 18) & 0x3f];
-		*p++ = _base64[(buf >> 12) & 0x3f];
-		*p++ = (pos == 0) ? _base64[(buf >> 6) & 0x3f] : '=';
-		*p++ = '=';
+		*p++ = alphabet[(buf >> 18) & 0x3f];
+		*p++ = alphabet[(buf >> 12) & 0x3f];
+
+		if (pos == 0)
+		{
+			*p++ = alphabet[(buf >> 6) & 0x3f];
+			if (!url)
+				*p++ = '=';
+		}
+		else if (!url)
+		{
+			*p++ = '=';
+			*p++ = '=';
+		}
 	}
 
 	return p - dst;
 }
 
 static uint64
-pg_base64_decode(const char *src, size_t len, char *dst)
+pg_base64_encode(const char *src, size_t len, char *dst)
+{
+	return pg_base64_encode_internal(src, len, dst, false);
+}
+
+static uint64
+pg_base64url_encode(const char *src, size_t len, char *dst)
+{
+	return pg_base64_encode_internal(src, len, dst, true);
+}
+
+/*
+ * pg_base64_decode_internal
+ *
+ * Helper for decoding base64 or base64url. When url is passed as true the
+ * input will be assumed to be encoded using base64url.
+ */
+static uint64
+pg_base64_decode_internal(const char *src, size_t len, char *dst, bool url)
 {
 	const char *srcend = src + len,
 			   *s = src;
@@ -350,6 +525,15 @@ pg_base64_decode(const char *src, size_t len, char *dst)
 		if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
 			continue;
 
+		/* convert base64url to base64 */
+		if (url)
+		{
+			if (c == '-')
+				c = '+';
+			else if (c == '_')
+				c = '/';
+		}
+
 		if (c == '=')
 		{
 			/* end sequence */
@@ -360,9 +544,12 @@ pg_base64_decode(const char *src, size_t len, char *dst)
 				else if (pos == 3)
 					end = 2;
 				else
+				{
+					/* translator: %s is the name of an encoding scheme */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unexpected \"=\" while decoding base64 sequence")));
+							 errmsg("unexpected \"=\" while decoding %s sequence", url ? "base64url" : "base64")));
+				}
 			}
 			b = 0;
 		}
@@ -372,10 +559,14 @@ pg_base64_decode(const char *src, size_t len, char *dst)
 			if (c > 0 && c < 127)
 				b = b64lookup[(unsigned char) c];
 			if (b < 0)
+			{
+				/* translator: %s is the name of an encoding scheme */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid symbol \"%.*s\" found while decoding base64 sequence",
-								pg_mblen(s - 1), s - 1)));
+						 errmsg("invalid symbol \"%.*s\" found while decoding %s sequence",
+								pg_mblen(s - 1), s - 1,
+								url ? "base64url" : "base64")));
+			}
 		}
 		/* add it to buffer */
 		buf = (buf << 6) + b;
@@ -392,15 +583,40 @@ pg_base64_decode(const char *src, size_t len, char *dst)
 		}
 	}
 
-	if (pos != 0)
+	if (pos == 2)
+	{
+		buf <<= 12;
+		*p++ = (buf >> 16) & 0xFF;
+	}
+	else if (pos == 3)
+	{
+		buf <<= 6;
+		*p++ = (buf >> 16) & 0xFF;
+		*p++ = (buf >> 8) & 0xFF;
+	}
+	else if (pos != 0)
+	{
+		/* translator: %s is the name of an encoding scheme */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid base64 end sequence"),
+				 errmsg("invalid %s end sequence", url ? "base64url" : "base64"),
 				 errhint("Input data is missing padding, is truncated, or is otherwise corrupted.")));
+	}
 
 	return p - dst;
 }
 
+static uint64
+pg_base64_decode(const char *src, size_t len, char *dst)
+{
+	return pg_base64_decode_internal(src, len, dst, false);
+}
+
+static uint64
+pg_base64url_decode(const char *src, size_t len, char *dst)
+{
+	return pg_base64_decode_internal(src, len, dst, true);
+}
 
 static uint64
 pg_base64_enc_len(const char *src, size_t srclen)
@@ -413,6 +629,32 @@ static uint64
 pg_base64_dec_len(const char *src, size_t srclen)
 {
 	return ((uint64) srclen * 3) >> 2;
+}
+
+static uint64
+pg_base64url_enc_len(const char *src, size_t srclen)
+{
+	/*
+	 * Unlike standard base64, base64url doesn't use padding characters when
+	 * the input length is not divisible by 3
+	 */
+	return (srclen + 2) / 3 * 4;
+}
+
+static uint64
+pg_base64url_dec_len(const char *src, size_t srclen)
+{
+	/*
+	 * For base64, each 4 characters of input produce at most 3 bytes of
+	 * output.  For base64url without padding, we need to round up to the
+	 * nearest 4
+	 */
+	size_t		adjusted_len = srclen;
+
+	if (srclen % 4 != 0)
+		adjusted_len += 4 - (srclen % 4);
+
+	return (adjusted_len * 3) / 4;
 }
 
 /*
@@ -604,6 +846,12 @@ static const struct
 		"base64",
 		{
 			pg_base64_enc_len, pg_base64_dec_len, pg_base64_encode, pg_base64_decode
+		}
+	},
+	{
+		"base64url",
+		{
+			pg_base64url_enc_len, pg_base64url_dec_len, pg_base64url_encode, pg_base64url_decode
 		}
 	},
 	{

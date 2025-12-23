@@ -316,23 +316,15 @@ subpath(PG_FUNCTION_ARGS)
 	int32		end;
 	ltree	   *res;
 
-	end = start + len;
-
 	if (start < 0)
-	{
 		start = t->numlevel + start;
-		end = start + len;
-	}
-	if (start < 0)
-	{							/* start > t->numlevel */
-		start = t->numlevel + start;
-		end = start + len;
-	}
 
 	if (len < 0)
 		end = t->numlevel + len;
 	else if (len == 0)
-		end = (fcinfo->nargs == 3) ? start : 0xffff;
+		end = (fcinfo->nargs == 3) ? start : LTREE_MAX_LEVELS;
+	else
+		end = start + len;
 
 	res = inner_subltree(t, start, end);
 
@@ -574,7 +566,7 @@ lca(PG_FUNCTION_ARGS)
 	ltree	  **a,
 			   *res;
 
-	a = (ltree **) palloc(sizeof(ltree *) * fcinfo->nargs);
+	a = palloc_array(ltree *, fcinfo->nargs);
 	for (i = 0; i < fcinfo->nargs; i++)
 		a[i] = PG_GETARG_LTREE_P(i);
 	res = lca_inner(a, (int) fcinfo->nargs);

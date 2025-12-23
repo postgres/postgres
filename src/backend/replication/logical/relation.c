@@ -188,14 +188,25 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 	entry->remoterel.nspname = pstrdup(remoterel->nspname);
 	entry->remoterel.relname = pstrdup(remoterel->relname);
 	entry->remoterel.natts = remoterel->natts;
-	entry->remoterel.attnames = palloc(remoterel->natts * sizeof(char *));
-	entry->remoterel.atttyps = palloc(remoterel->natts * sizeof(Oid));
+	entry->remoterel.attnames = palloc_array(char *, remoterel->natts);
+	entry->remoterel.atttyps = palloc_array(Oid, remoterel->natts);
 	for (i = 0; i < remoterel->natts; i++)
 	{
 		entry->remoterel.attnames[i] = pstrdup(remoterel->attnames[i]);
 		entry->remoterel.atttyps[i] = remoterel->atttyps[i];
 	}
 	entry->remoterel.replident = remoterel->replident;
+
+	/*
+	 * XXX The walsender currently does not transmit the relkind of the remote
+	 * relation when replicating changes. Since we support replicating only
+	 * table changes at present, we default to initializing relkind as
+	 * RELKIND_RELATION. This is needed in CheckSubscriptionRelkind() to check
+	 * if the publisher and subscriber relation kinds are compatible.
+	 */
+	entry->remoterel.relkind =
+		(remoterel->relkind == 0) ? RELKIND_RELATION : remoterel->relkind;
+
 	entry->remoterel.attkeys = bms_copy(remoterel->attkeys);
 	MemoryContextSwitchTo(oldctx);
 }
@@ -238,6 +249,7 @@ logicalrep_get_attrs_str(LogicalRepRelation *remoterel, Bitmapset *atts)
 	{
 		attcnt++;
 		if (attcnt > 1)
+			/* translator: This is a separator in a list of entity names. */
 			appendStringInfoString(&attsbuf, _(", "));
 
 		appendStringInfo(&attsbuf, _("\"%s\""), remoterel->attnames[i]);
@@ -425,6 +437,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 		/* Check for supported relkind. */
 		CheckSubscriptionRelkind(entry->localrel->rd_rel->relkind,
+								 remoterel->relkind,
 								 remoterel->nspname, remoterel->relname);
 
 		/*
@@ -691,8 +704,8 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 		entry->remoterel.nspname = pstrdup(remoterel->nspname);
 		entry->remoterel.relname = pstrdup(remoterel->relname);
 		entry->remoterel.natts = remoterel->natts;
-		entry->remoterel.attnames = palloc(remoterel->natts * sizeof(char *));
-		entry->remoterel.atttyps = palloc(remoterel->natts * sizeof(Oid));
+		entry->remoterel.attnames = palloc_array(char *, remoterel->natts);
+		entry->remoterel.atttyps = palloc_array(Oid, remoterel->natts);
 		for (i = 0; i < remoterel->natts; i++)
 		{
 			entry->remoterel.attnames[i] = pstrdup(remoterel->attnames[i]);

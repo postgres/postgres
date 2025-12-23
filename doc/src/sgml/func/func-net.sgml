@@ -1,0 +1,592 @@
+ <sect1 id="functions-net">
+  <title>Network Address Functions and Operators</title>
+
+  <para>
+   The IP network address types, <type>cidr</type> and <type>inet</type>,
+   support the usual comparison operators shown in
+   <xref linkend="functions-comparison-op-table"/>
+   as well as the specialized operators and functions shown in
+   <xref linkend="cidr-inet-operators-table"/> and
+   <xref linkend="cidr-inet-functions-table"/>.
+  </para>
+
+  <para>
+   Any <type>cidr</type> value can be cast to <type>inet</type> implicitly;
+   therefore, the operators and functions shown below as operating on
+   <type>inet</type> also work on <type>cidr</type> values.  (Where there are
+   separate functions for <type>inet</type> and <type>cidr</type>, it is
+   because the behavior should be different for the two cases.)
+   Also, it is permitted to cast an <type>inet</type> value
+   to <type>cidr</type>.  When this is done, any bits to the right of the
+   netmask are silently zeroed to create a valid <type>cidr</type> value.
+  </para>
+
+   <table id="cidr-inet-operators-table">
+    <title>IP Address Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>&lt;&lt;</literal> <type>inet</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is subnet strictly contained by subnet?
+        This operator, and the next four, test for subnet inclusion.  They
+        consider only the network parts of the two addresses (ignoring any
+        bits to the right of the netmasks) and determine whether one network
+        is identical to or a subnet of the other.
+       </para>
+       <para>
+        <literal>inet '192.168.1.5' &lt;&lt; inet '192.168.1/24'</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>inet '192.168.0.5' &lt;&lt; inet '192.168.1/24'</literal>
+        <returnvalue>f</returnvalue>
+       </para>
+       <para>
+        <literal>inet '192.168.1/24' &lt;&lt; inet '192.168.1/24'</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>&lt;&lt;=</literal> <type>inet</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is subnet contained by or equal to subnet?
+       </para>
+       <para>
+        <literal>inet '192.168.1/24' &lt;&lt;= inet '192.168.1/24'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>&gt;&gt;</literal> <type>inet</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does subnet strictly contain subnet?
+       </para>
+       <para>
+        <literal>inet '192.168.1/24' &gt;&gt; inet '192.168.1.5'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>&gt;&gt;=</literal> <type>inet</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does subnet contain or equal subnet?
+       </para>
+       <para>
+        <literal>inet '192.168.1/24' &gt;&gt;= inet '192.168.1/24'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>&amp;&amp;</literal> <type>inet</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does either subnet contain or equal the other?
+       </para>
+       <para>
+        <literal>inet '192.168.1/24' &amp;&amp; inet '192.168.1.80/28'</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>inet '192.168.1/24' &amp;&amp; inet '192.168.2.0/28'</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>~</literal> <type>inet</type>
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Computes bitwise NOT.
+       </para>
+       <para>
+        <literal>~ inet '192.168.1.6'</literal>
+        <returnvalue>63.87.254.249</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>&amp;</literal> <type>inet</type>
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Computes bitwise AND.
+       </para>
+       <para>
+        <literal>inet '192.168.1.6' &amp; inet '0.0.0.255'</literal>
+        <returnvalue>0.0.0.6</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>|</literal> <type>inet</type>
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Computes bitwise OR.
+       </para>
+       <para>
+        <literal>inet '192.168.1.6' | inet '0.0.0.255'</literal>
+        <returnvalue>192.168.1.255</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>+</literal> <type>bigint</type>
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Adds an offset to an address.
+       </para>
+       <para>
+        <literal>inet '192.168.1.6' + 25</literal>
+        <returnvalue>192.168.1.31</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bigint</type> <literal>+</literal> <type>inet</type>
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Adds an offset to an address.
+       </para>
+       <para>
+        <literal>200 + inet '::ffff:fff0:1'</literal>
+        <returnvalue>::ffff:255.240.0.201</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>-</literal> <type>bigint</type>
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Subtracts an offset from an address.
+       </para>
+       <para>
+        <literal>inet '192.168.1.43' - 36</literal>
+        <returnvalue>192.168.1.7</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>inet</type> <literal>-</literal> <type>inet</type>
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the difference of two addresses.
+       </para>
+       <para>
+        <literal>inet '192.168.1.43' - inet '192.168.1.19'</literal>
+        <returnvalue>24</returnvalue>
+       </para>
+       <para>
+        <literal>inet '::1' - inet '::ffff:1'</literal>
+        <returnvalue>-4294901760</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <table id="cidr-inet-functions-table">
+    <title>IP Address Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>abbrev</primary>
+        </indexterm>
+        <function>abbrev</function> ( <type>inet</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Creates an abbreviated display format as text.
+        (The result is the same as the <type>inet</type> output function
+        produces; it is <quote>abbreviated</quote> only in comparison to the
+        result of an explicit cast to <type>text</type>, which for historical
+        reasons will never suppress the netmask part.)
+       </para>
+       <para>
+        <literal>abbrev(inet '10.1.0.0/32')</literal>
+        <returnvalue>10.1.0.0</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>abbrev</function> ( <type>cidr</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Creates an abbreviated display format as text.
+        (The abbreviation consists of dropping all-zero octets to the right
+        of the netmask; more examples are in
+        <xref linkend="datatype-net-cidr-table"/>.)
+       </para>
+       <para>
+        <literal>abbrev(cidr '10.1.0.0/16')</literal>
+        <returnvalue>10.1/16</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>broadcast</primary>
+        </indexterm>
+        <function>broadcast</function> ( <type>inet</type> )
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Computes the broadcast address for the address's network.
+       </para>
+       <para>
+        <literal>broadcast(inet '192.168.1.5/24')</literal>
+        <returnvalue>192.168.1.255/24</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>family</primary>
+        </indexterm>
+        <function>family</function> ( <type>inet</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the address's family: <literal>4</literal> for IPv4,
+        <literal>6</literal> for IPv6.
+       </para>
+       <para>
+        <literal>family(inet '::1')</literal>
+        <returnvalue>6</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>host</primary>
+        </indexterm>
+        <function>host</function> ( <type>inet</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the IP address as text, ignoring the netmask.
+       </para>
+       <para>
+        <literal>host(inet '192.168.1.0/24')</literal>
+        <returnvalue>192.168.1.0</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>hostmask</primary>
+        </indexterm>
+        <function>hostmask</function> ( <type>inet</type> )
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Computes the host mask for the address's network.
+       </para>
+       <para>
+        <literal>hostmask(inet '192.168.23.20/30')</literal>
+        <returnvalue>0.0.0.3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>inet_merge</primary>
+        </indexterm>
+        <function>inet_merge</function> ( <type>inet</type>, <type>inet</type> )
+        <returnvalue>cidr</returnvalue>
+       </para>
+       <para>
+        Computes the smallest network that includes both of the given networks.
+       </para>
+       <para>
+        <literal>inet_merge(inet '192.168.1.5/24', inet '192.168.2.5/24')</literal>
+        <returnvalue>192.168.0.0/22</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>inet_same_family</primary>
+        </indexterm>
+        <function>inet_same_family</function> ( <type>inet</type>, <type>inet</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Tests whether the addresses belong to the same IP family.
+       </para>
+       <para>
+        <literal>inet_same_family(inet '192.168.1.5/24', inet '::1')</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>masklen</primary>
+        </indexterm>
+        <function>masklen</function> ( <type>inet</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the netmask length in bits.
+       </para>
+       <para>
+        <literal>masklen(inet '192.168.1.5/24')</literal>
+        <returnvalue>24</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>netmask</primary>
+        </indexterm>
+        <function>netmask</function> ( <type>inet</type> )
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Computes the network mask for the address's network.
+       </para>
+       <para>
+        <literal>netmask(inet '192.168.1.5/24')</literal>
+        <returnvalue>255.255.255.0</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>network</primary>
+        </indexterm>
+        <function>network</function> ( <type>inet</type> )
+        <returnvalue>cidr</returnvalue>
+       </para>
+       <para>
+        Returns the network part of the address, zeroing out
+        whatever is to the right of the netmask.
+        (This is equivalent to casting the value to <type>cidr</type>.)
+       </para>
+       <para>
+        <literal>network(inet '192.168.1.5/24')</literal>
+        <returnvalue>192.168.1.0/24</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>set_masklen</primary>
+        </indexterm>
+        <function>set_masklen</function> ( <type>inet</type>, <type>integer</type> )
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Sets the netmask length for an <type>inet</type> value.
+        The address part does not change.
+       </para>
+       <para>
+        <literal>set_masklen(inet '192.168.1.5/24', 16)</literal>
+        <returnvalue>192.168.1.5/16</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>set_masklen</function> ( <type>cidr</type>, <type>integer</type> )
+        <returnvalue>cidr</returnvalue>
+       </para>
+       <para>
+        Sets the netmask length for a <type>cidr</type> value.
+        Address bits to the right of the new netmask are set to zero.
+       </para>
+       <para>
+        <literal>set_masklen(cidr '192.168.1.0/24', 16)</literal>
+        <returnvalue>192.168.0.0/16</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>text</primary>
+        </indexterm>
+        <function>text</function> ( <type>inet</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the unabbreviated IP address and netmask length as text.
+        (This has the same result as an explicit cast to <type>text</type>.)
+       </para>
+       <para>
+        <literal>text(inet '192.168.1.5')</literal>
+        <returnvalue>192.168.1.5/32</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <tip>
+   <para>
+    The <function>abbrev</function>, <function>host</function>,
+    and <function>text</function> functions are primarily intended to offer
+    alternative display formats for IP addresses.
+   </para>
+  </tip>
+
+  <para>
+   The MAC address types, <type>macaddr</type> and <type>macaddr8</type>,
+   support the usual comparison operators shown in
+   <xref linkend="functions-comparison-op-table"/>
+   as well as the specialized functions shown in
+   <xref linkend="macaddr-functions-table"/>.
+   In addition, they support the bitwise logical operators
+   <literal>~</literal>, <literal>&amp;</literal> and <literal>|</literal>
+   (NOT, AND and OR), just as shown above for IP addresses.
+  </para>
+
+   <table id="macaddr-functions-table">
+    <title>MAC Address Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>trunc</primary>
+        </indexterm>
+        <function>trunc</function> ( <type>macaddr</type> )
+        <returnvalue>macaddr</returnvalue>
+       </para>
+       <para>
+        Sets the last 3 bytes of the address to zero.  The remaining prefix
+        can be associated with a particular manufacturer (using data not
+        included in <productname>PostgreSQL</productname>).
+       </para>
+       <para>
+        <literal>trunc(macaddr '12:34:56:78:90:ab')</literal>
+        <returnvalue>12:34:56:00:00:00</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>trunc</function> ( <type>macaddr8</type> )
+        <returnvalue>macaddr8</returnvalue>
+       </para>
+       <para>
+        Sets the last 5 bytes of the address to zero.  The remaining prefix
+        can be associated with a particular manufacturer (using data not
+        included in <productname>PostgreSQL</productname>).
+       </para>
+       <para>
+        <literal>trunc(macaddr8 '12:34:56:78:90:ab:cd:ef')</literal>
+        <returnvalue>12:34:56:00:00:00:00:00</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>macaddr8_set7bit</primary>
+        </indexterm>
+        <function>macaddr8_set7bit</function> ( <type>macaddr8</type> )
+        <returnvalue>macaddr8</returnvalue>
+       </para>
+       <para>
+        Sets the 7th bit of the address to one, creating what is known as
+        modified EUI-64, for inclusion in an IPv6 address.
+       </para>
+       <para>
+        <literal>macaddr8_set7bit(macaddr8 '00:34:56:ab:cd:ef')</literal>
+        <returnvalue>02:34:56:ff:fe:ab:cd:ef</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect1>

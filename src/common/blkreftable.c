@@ -234,7 +234,7 @@ static void BlockRefTableFileTerminate(BlockRefTableBuffer *buffer);
 BlockRefTable *
 CreateEmptyBlockRefTable(void)
 {
-	BlockRefTable *brtab = palloc(sizeof(BlockRefTable));
+	BlockRefTable *brtab = palloc_object(BlockRefTable);
 
 	/*
 	 * Even completely empty database has a few hundred relation forks, so it
@@ -497,7 +497,7 @@ WriteBlockRefTable(BlockRefTable *brtab,
 
 		/* Extract entries into serializable format and sort them. */
 		sdata =
-			palloc(brtab->hash->members * sizeof(BlockRefTableSerializedEntry));
+			palloc_array(BlockRefTableSerializedEntry, brtab->hash->members);
 		blockreftable_start_iterate(brtab->hash, &it);
 		while ((brtentry = blockreftable_iterate(brtab->hash, &it)) != NULL)
 		{
@@ -584,7 +584,7 @@ CreateBlockRefTableReader(io_callback_fn read_callback,
 	uint32		magic;
 
 	/* Initialize data structure. */
-	reader = palloc0(sizeof(BlockRefTableReader));
+	reader = palloc0_object(BlockRefTableReader);
 	reader->buffer.io_callback = read_callback;
 	reader->buffer.io_callback_arg = read_callback_arg;
 	reader->error_filename = error_filename;
@@ -660,7 +660,7 @@ BlockRefTableReaderNextRelation(BlockRefTableReader *reader,
 	/* Read chunk size array. */
 	if (reader->chunk_size != NULL)
 		pfree(reader->chunk_size);
-	reader->chunk_size = palloc(sentry.nchunks * sizeof(uint16));
+	reader->chunk_size = palloc_array(uint16, sentry.nchunks);
 	BlockRefTableRead(reader, reader->chunk_size,
 					  sentry.nchunks * sizeof(uint16));
 
@@ -794,7 +794,7 @@ CreateBlockRefTableWriter(io_callback_fn write_callback,
 	uint32		magic = BLOCKREFTABLE_MAGIC;
 
 	/* Prepare buffer and CRC check and save callbacks. */
-	writer = palloc0(sizeof(BlockRefTableWriter));
+	writer = palloc0_object(BlockRefTableWriter);
 	writer->buffer.io_callback = write_callback;
 	writer->buffer.io_callback_arg = write_callback_arg;
 	INIT_CRC32C(writer->buffer.crc);
@@ -874,7 +874,7 @@ DestroyBlockRefTableWriter(BlockRefTableWriter *writer)
 BlockRefTableEntry *
 CreateBlockRefTableEntry(RelFileLocator rlocator, ForkNumber forknum)
 {
-	BlockRefTableEntry *entry = palloc0(sizeof(BlockRefTableEntry));
+	BlockRefTableEntry *entry = palloc0_object(BlockRefTableEntry);
 
 	memcpy(&entry->key.rlocator, &rlocator, sizeof(RelFileLocator));
 	entry->key.forknum = forknum;
@@ -997,10 +997,9 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 
 		if (entry->nchunks == 0)
 		{
-			entry->chunk_size = palloc0(sizeof(uint16) * max_chunks);
-			entry->chunk_usage = palloc0(sizeof(uint16) * max_chunks);
-			entry->chunk_data =
-				palloc0(sizeof(BlockRefTableChunk) * max_chunks);
+			entry->chunk_size = palloc0_array(uint16, max_chunks);
+			entry->chunk_usage = palloc0_array(uint16, max_chunks);
+			entry->chunk_data = palloc0_array(BlockRefTableChunk, max_chunks);
 		}
 		else
 		{
@@ -1029,7 +1028,7 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 	if (entry->chunk_size[chunkno] == 0)
 	{
 		entry->chunk_data[chunkno] =
-			palloc(sizeof(uint16) * INITIAL_ENTRIES_PER_CHUNK);
+			palloc_array(uint16, INITIAL_ENTRIES_PER_CHUNK);
 		entry->chunk_size[chunkno] = INITIAL_ENTRIES_PER_CHUNK;
 		entry->chunk_data[chunkno][0] = chunkoffset;
 		entry->chunk_usage[chunkno] = 1;

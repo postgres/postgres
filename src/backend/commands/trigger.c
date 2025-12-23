@@ -30,7 +30,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -80,6 +79,7 @@ static bool GetTupleForTrigger(EState *estate,
 							   ItemPointer tid,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
+							   bool do_epq_recheck,
 							   TupleTableSlot **epqslot,
 							   TM_Result *tmresultp,
 							   TM_FailureData *tmfdp);
@@ -871,7 +871,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 															 CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
-	values[Anum_pg_trigger_tgenabled - 1] = trigger_fires_when;
+	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(trigger_fires_when);
 	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal);
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
@@ -1991,7 +1991,7 @@ RelationBuildTriggers(Relation relation)
 	}
 
 	/* Build trigdesc */
-	trigdesc = (TriggerDesc *) palloc0(sizeof(TriggerDesc));
+	trigdesc = palloc0_object(TriggerDesc);
 	trigdesc->triggers = triggers;
 	trigdesc->numtriggers = numtrigs;
 	for (i = 0; i < numtrigs; i++)
@@ -2096,7 +2096,7 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 	if (trigdesc == NULL || trigdesc->numtriggers <= 0)
 		return NULL;
 
-	newdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
+	newdesc = palloc_object(TriggerDesc);
 	memcpy(newdesc, trigdesc, sizeof(TriggerDesc));
 
 	trigger = (Trigger *) palloc(trigdesc->numtriggers * sizeof(Trigger));
@@ -2284,6 +2284,8 @@ FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc)
 		{
 			Trigger    *trigger = &trigdesc->triggers[i];
 
+			if (!TRIGGER_FOR_ROW(trigger->tgtype))
+				continue;
 			if (trigger->tgoldtable != NULL || trigger->tgnewtable != NULL)
 				return trigger->tgname;
 		}
@@ -2544,6 +2546,15 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
+	if (relinfo->ri_FdwRoutine && transition_capture &&
+		transition_capture->tcs_insert_new_table)
+	{
+		Assert(relinfo->ri_RootResultRelInfo);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot collect transition tuples from child foreign tables")));
+	}
+
 	if ((trigdesc && trigdesc->trig_insert_after_row) ||
 		(transition_capture && transition_capture->tcs_insert_new_table))
 		AfterTriggerSaveEvent(estate, relinfo, NULL, NULL,
@@ -2693,7 +2704,8 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 					 HeapTuple fdw_trigtuple,
 					 TupleTableSlot **epqslot,
 					 TM_Result *tmresult,
-					 TM_FailureData *tmfd)
+					 TM_FailureData *tmfd,
+					 bool is_merge_delete)
 {
 	TupleTableSlot *slot = ExecGetTriggerOldSlot(estate, relinfo);
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -2708,9 +2720,17 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 	{
 		TupleTableSlot *epqslot_candidate = NULL;
 
+		/*
+		 * Get a copy of the on-disk tuple we are planning to delete.  In
+		 * general, if the tuple has been concurrently updated, we should
+		 * recheck it using EPQ.  However, if this is a MERGE DELETE action,
+		 * we skip this EPQ recheck and leave it to the caller (it must do
+		 * additional rechecking, and might end up executing a different
+		 * action entirely).
+		 */
 		if (!GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
-								LockTupleExclusive, slot, &epqslot_candidate,
-								tmresult, tmfd))
+								LockTupleExclusive, slot, !is_merge_delete,
+								&epqslot_candidate, tmresult, tmfd))
 			return false;
 
 		/*
@@ -2787,6 +2807,15 @@ ExecARDeleteTriggers(EState *estate,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
+	if (relinfo->ri_FdwRoutine && transition_capture &&
+		transition_capture->tcs_delete_old_table)
+	{
+		Assert(relinfo->ri_RootResultRelInfo);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot collect transition tuples from child foreign tables")));
+	}
+
 	if ((trigdesc && trigdesc->trig_delete_after_row) ||
 		(transition_capture && transition_capture->tcs_delete_old_table))
 	{
@@ -2800,6 +2829,7 @@ ExecARDeleteTriggers(EState *estate,
 							   tupleid,
 							   LockTupleExclusive,
 							   slot,
+							   false,
 							   NULL,
 							   NULL,
 							   NULL);
@@ -2944,7 +2974,8 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 HeapTuple fdw_trigtuple,
 					 TupleTableSlot *newslot,
 					 TM_Result *tmresult,
-					 TM_FailureData *tmfd)
+					 TM_FailureData *tmfd,
+					 bool is_merge_update)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	TupleTableSlot *oldslot = ExecGetTriggerOldSlot(estate, relinfo);
@@ -2965,10 +2996,17 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	{
 		TupleTableSlot *epqslot_candidate = NULL;
 
-		/* get a copy of the on-disk tuple we are planning to update */
+		/*
+		 * Get a copy of the on-disk tuple we are planning to update.  In
+		 * general, if the tuple has been concurrently updated, we should
+		 * recheck it using EPQ.  However, if this is a MERGE UPDATE action,
+		 * we skip this EPQ recheck and leave it to the caller (it must do
+		 * additional rechecking, and might end up executing a different
+		 * action entirely).
+		 */
 		if (!GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
-								lockmode, oldslot, &epqslot_candidate,
-								tmresult, tmfd))
+								lockmode, oldslot, !is_merge_update,
+								&epqslot_candidate, tmresult, tmfd))
 			return false;		/* cancel the update action */
 
 		/*
@@ -3115,6 +3153,16 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
+	if (relinfo->ri_FdwRoutine && transition_capture &&
+		(transition_capture->tcs_update_old_table ||
+		 transition_capture->tcs_update_new_table))
+	{
+		Assert(relinfo->ri_RootResultRelInfo);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot collect transition tuples from child foreign tables")));
+	}
+
 	if ((trigdesc && trigdesc->trig_update_after_row) ||
 		(transition_capture &&
 		 (transition_capture->tcs_update_old_table ||
@@ -3142,6 +3190,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							   tupleid,
 							   LockTupleExclusive,
 							   oldslot,
+							   false,
 							   NULL,
 							   NULL,
 							   NULL);
@@ -3298,6 +3347,7 @@ GetTupleForTrigger(EState *estate,
 				   ItemPointer tid,
 				   LockTupleMode lockmode,
 				   TupleTableSlot *oldslot,
+				   bool do_epq_recheck,
 				   TupleTableSlot **epqslot,
 				   TM_Result *tmresultp,
 				   TM_FailureData *tmfdp)
@@ -3357,29 +3407,30 @@ GetTupleForTrigger(EState *estate,
 				if (tmfd.traversed)
 				{
 					/*
-					 * Recheck the tuple using EPQ. For MERGE, we leave this
-					 * to the caller (it must do additional rechecking, and
-					 * might end up executing a different action entirely).
+					 * Recheck the tuple using EPQ, if requested.  Otherwise,
+					 * just return that it was concurrently updated.
 					 */
-					if (estate->es_plannedstmt->commandType == CMD_MERGE)
+					if (do_epq_recheck)
+					{
+						*epqslot = EvalPlanQual(epqstate,
+												relation,
+												relinfo->ri_RangeTableIndex,
+												oldslot);
+
+						/*
+						 * If PlanQual failed for updated tuple - we must not
+						 * process this tuple!
+						 */
+						if (TupIsNull(*epqslot))
+						{
+							*epqslot = NULL;
+							return false;
+						}
+					}
+					else
 					{
 						if (tmresultp)
 							*tmresultp = TM_Updated;
-						return false;
-					}
-
-					*epqslot = EvalPlanQual(epqstate,
-											relation,
-											relinfo->ri_RangeTableIndex,
-											oldslot);
-
-					/*
-					 * If PlanQual failed for updated tuple - we must not
-					 * process this tuple!
-					 */
-					if (TupIsNull(*epqslot))
-					{
-						*epqslot = NULL;
 						return false;
 					}
 				}
@@ -4850,7 +4901,7 @@ GetAfterTriggersTableData(Oid relid, CmdType cmdType)
 
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 
-	table = (AfterTriggersTableData *) palloc0(sizeof(AfterTriggersTableData));
+	table = palloc0_object(AfterTriggersTableData);
 	table->relid = relid;
 	table->cmdType = cmdType;
 	qs->tables = lappend(qs->tables, table);
@@ -4999,7 +5050,7 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	MemoryContextSwitchTo(oldcxt);
 
 	/* Now build the TransitionCaptureState struct, in caller's context */
-	state = (TransitionCaptureState *) palloc0(sizeof(TransitionCaptureState));
+	state = palloc0_object(TransitionCaptureState);
 	state->tcs_delete_old_table = need_old_del;
 	state->tcs_update_old_table = need_old_upd;
 	state->tcs_update_new_table = need_new_upd;

@@ -21,6 +21,7 @@
 #include "dumputils.h"
 #include "fe_utils/string_utils.h"
 
+static const char restrict_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 static bool parseAclItem(const char *item, const char *type,
 						 const char *name, const char *subname, int remoteVersion,
@@ -29,6 +30,43 @@ static bool parseAclItem(const char *item, const char *type,
 static char *dequoteAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
 				   const char *subname);
+
+
+/*
+ * Sanitize a string to be included in an SQL comment or TOC listing, by
+ * replacing any newlines with spaces.  This ensures each logical output line
+ * is in fact one physical output line, to prevent corruption of the dump
+ * (which could, in the worst case, present an SQL injection vulnerability
+ * if someone were to incautiously load a dump containing objects with
+ * maliciously crafted names).
+ *
+ * The result is a freshly malloc'd string.  If the input string is NULL,
+ * return a malloc'ed empty string, unless want_hyphen, in which case return a
+ * malloc'ed hyphen.
+ *
+ * Note that we currently don't bother to quote names, meaning that the name
+ * fields aren't automatically parseable.  "pg_restore -L" doesn't care because
+ * it only examines the dumpId field, but someday we might want to try harder.
+ */
+char *
+sanitize_line(const char *str, bool want_hyphen)
+{
+	char	   *result;
+	char	   *s;
+
+	if (!str)
+		return pg_strdup(want_hyphen ? "-" : "");
+
+	result = pg_strdup(str);
+
+	for (s = result; *s != '\0'; s++)
+	{
+		if (*s == '\n' || *s == '\r')
+			*s = ' ';
+	}
+
+	return result;
+}
 
 
 /*
@@ -686,7 +724,7 @@ emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
  * currently known to guc.c, so that it'd be unsafe for extensions to declare
  * GUC_LIST_QUOTE variables anyway.  Lacking a solution for that, it doesn't
  * seem worth the work to do more than have this list, which must be kept in
- * sync with the variables actually marked GUC_LIST_QUOTE in guc_tables.c.
+ * sync with the variables actually marked GUC_LIST_QUOTE in guc_parameters.dat.
  */
 bool
 variable_is_guc_list_quote(const char *name)
@@ -743,7 +781,7 @@ SplitGUCList(char *rawstring, char separator,
 		nextp++;				/* skip leading whitespace */
 
 	if (*nextp == '\0')
-		return true;			/* allow empty string */
+		return true;			/* empty string represents empty list */
 
 	/* At the top of the loop, we are at start of a new identifier. */
 	do
@@ -855,6 +893,7 @@ makeAlterConfigCommand(PGconn *conn, const char *configitem,
 	 * elements as string literals.  (The elements may be double-quoted as-is,
 	 * but we can't just feed them to the SQL parser; it would do the wrong
 	 * thing with elements that are zero-length or longer than NAMEDATALEN.)
+	 * Also, we need a special case for empty lists.
 	 *
 	 * Variables that are not so marked should just be emitted as simple
 	 * string literals.  If the variable is not known to
@@ -870,6 +909,9 @@ makeAlterConfigCommand(PGconn *conn, const char *configitem,
 		/* this shouldn't fail really */
 		if (SplitGUCList(pos, ',', &namelist))
 		{
+			/* Special case: represent an empty list as NULL */
+			if (*namelist == NULL)
+				appendPQExpBufferStr(buf, "NULL");
 			for (nameptr = namelist; *nameptr; nameptr++)
 			{
 				if (nameptr != namelist)
@@ -919,4 +961,41 @@ create_or_open_dir(const char *dirname)
 			/* exists and is not empty */
 			pg_fatal("directory \"%s\" is not empty", dirname);
 	}
+}
+
+/*
+ * Generates a valid restrict key (i.e., an alphanumeric string) for use with
+ * psql's \restrict and \unrestrict meta-commands.  For safety, the value is
+ * chosen at random.
+ */
+char *
+generate_restrict_key(void)
+{
+	uint8		buf[64];
+	char	   *ret = palloc(sizeof(buf));
+
+	if (!pg_strong_random(buf, sizeof(buf)))
+		return NULL;
+
+	for (int i = 0; i < sizeof(buf) - 1; i++)
+	{
+		uint8		idx = buf[i] % strlen(restrict_chars);
+
+		ret[i] = restrict_chars[idx];
+	}
+	ret[sizeof(buf) - 1] = '\0';
+
+	return ret;
+}
+
+/*
+ * Checks that a given restrict key (intended for use with psql's \restrict and
+ * \unrestrict meta-commands) contains only alphanumeric characters.
+ */
+bool
+valid_restrict_key(const char *restrict_key)
+{
+	return restrict_key != NULL &&
+		restrict_key[0] != '\0' &&
+		strspn(restrict_key, restrict_chars) == strlen(restrict_key);
 }

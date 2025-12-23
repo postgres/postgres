@@ -2,23 +2,16 @@
 -- create FDW objects
 -- ===================================================================
 CREATE EXTENSION postgres_fdw;
+SELECT current_database() AS current_database,
+  current_setting('port') AS current_port
+\gset
 CREATE SERVER testserver1 FOREIGN DATA WRAPPER postgres_fdw;
-DO $d$
-    BEGIN
-        EXECUTE $$CREATE SERVER loopback FOREIGN DATA WRAPPER postgres_fdw
-            OPTIONS (dbname '$$||current_database()||$$',
-                     port '$$||current_setting('port')||$$'
-            )$$;
-        EXECUTE $$CREATE SERVER loopback2 FOREIGN DATA WRAPPER postgres_fdw
-            OPTIONS (dbname '$$||current_database()||$$',
-                     port '$$||current_setting('port')||$$'
-            )$$;
-        EXECUTE $$CREATE SERVER loopback3 FOREIGN DATA WRAPPER postgres_fdw
-            OPTIONS (dbname '$$||current_database()||$$',
-                     port '$$||current_setting('port')||$$'
-            )$$;
-    END;
-$d$;
+CREATE SERVER loopback FOREIGN DATA WRAPPER postgres_fdw
+	OPTIONS (dbname :'current_database', port :'current_port');
+CREATE SERVER loopback2 FOREIGN DATA WRAPPER postgres_fdw
+	OPTIONS (dbname :'current_database', port :'current_port');
+CREATE SERVER loopback3 FOREIGN DATA WRAPPER postgres_fdw
+	OPTIONS (dbname :'current_database', port :'current_port');
 CREATE USER MAPPING FOR public SERVER testserver1
 	OPTIONS (user 'value', password 'value');
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
@@ -235,12 +228,7 @@ SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work
 ALTER SERVER loopback OPTIONS (SET dbname 'no such database');
 SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
 ERROR:  could not connect to server "loopback"
-DO $d$
-    BEGIN
-        EXECUTE $$ALTER SERVER loopback
-            OPTIONS (SET dbname '$$||current_database()||$$')$$;
-    END;
-$d$;
+ALTER SERVER loopback OPTIONS (SET dbname :'current_database');
 SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
   c3   |              c4              
 -------+------------------------------
@@ -710,12 +698,12 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = -c1;          -- Op
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = (- "C 1")))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE (c1 IS NOT NULL) IS DISTINCT FROM (c1 IS NOT NULL); -- DistinctExpr
-                                                                 QUERY PLAN                                                                 
---------------------------------------------------------------------------------------------------------------------------------------------
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE (c3 IS NOT NULL) IS DISTINCT FROM (c3 IS NOT NULL); -- DistinctExpr
+                                                              QUERY PLAN                                                              
+--------------------------------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
    Output: c1, c2, c3, c4, c5, c6, c7, c8
-   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((("C 1" IS NOT NULL) IS DISTINCT FROM ("C 1" IS NOT NULL)))
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (((c3 IS NOT NULL) IS DISTINCT FROM (c3 IS NOT NULL)))
 (3 rows)
 
 EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = ANY(ARRAY[c2, 1, c1 + 0]); -- ScalarArrayOpExpr
@@ -1180,6 +1168,27 @@ SELECT * FROM ft1 WHERE CASE c3 COLLATE "C" WHEN c6 THEN true ELSE c3 < 'bar' EN
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
 (4 rows)
 
+-- Test array type conversion pushdown
+SET plan_cache_mode = force_generic_plan;
+PREPARE s(varchar[]) AS SELECT count(*) FROM ft2 WHERE c6 = ANY ($1);
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE s(ARRAY['1','2']);
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(*))
+   Relations: Aggregate on (public.ft2)
+   Remote SQL: SELECT count(*) FROM "S 1"."T 1" WHERE ((c6 = ANY ($1::character varying[])))
+(4 rows)
+
+EXECUTE s(ARRAY['1','2']);
+ count 
+-------
+   200
+(1 row)
+
+DEALLOCATE s;
+RESET plan_cache_mode;
 -- a regconfig constant referring to this text search configuration
 -- is initially unshippable
 CREATE TEXT SEARCH CONFIGURATION public.custom_search
@@ -2966,9 +2975,9 @@ select sum(t1.c1), count(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c1 = t2.c1)
                                                          QUERY PLAN                                                         
 ----------------------------------------------------------------------------------------------------------------------------
  Aggregate
-   Output: sum(t1.c1), count(t2.c1)
+   Output: sum(t1.c1), count(*)
    ->  Foreign Scan
-         Output: t1.c1, t2.c1
+         Output: t1.c1
          Filter: (((((t1.c1 * t2.c1) / (t1.c1 * t2.c1)))::double precision * random()) <= '1'::double precision)
          Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
          Remote SQL: SELECT r1."C 1", r2."C 1" FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r2."C 1" = r1."C 1"))))
@@ -3064,12 +3073,12 @@ select c2 * (random() <= 1)::int as c2 from ft2 group by c2 * (random() <= 1)::i
 -- GROUP BY clause in various forms, cardinal, alias and constant expression
 explain (verbose, costs off)
 select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
-                                                 QUERY PLAN                                                 
-------------------------------------------------------------------------------------------------------------
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
  Foreign Scan
-   Output: (count(c2)), c2, 5, 7.0, 9
+   Output: (count(*)), c2, 5, 7.0, 9
    Relations: Aggregate on (public.ft1)
-   Remote SQL: SELECT count(c2), c2, 5, 7.0, 9 FROM "S 1"."T 1" GROUP BY 2, 3, 5 ORDER BY c2 ASC NULLS LAST
+   Remote SQL: SELECT count(*), c2, 5, 7.0, 9 FROM "S 1"."T 1" GROUP BY 2, 3, 5 ORDER BY c2 ASC NULLS LAST
 (4 rows)
 
 select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
@@ -3166,13 +3175,13 @@ select sum(c1) from ft1 group by c2 having avg(c1 * (random() <= 1)::int) > 100 
 -- of an initplan) can be trouble, per bug #15781
 explain (verbose, costs off)
 select exists(select 1 from pg_enum), sum(c1) from ft1;
-                    QUERY PLAN                    
---------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Foreign Scan
-   Output: (InitPlan 1).col1, (sum(ft1.c1))
+   Output: (InitPlan exists_1).col1, (sum(ft1.c1))
    Relations: Aggregate on (public.ft1)
    Remote SQL: SELECT sum("C 1") FROM "S 1"."T 1"
-   InitPlan 1
+   InitPlan exists_1
      ->  Seq Scan on pg_catalog.pg_enum
 (6 rows)
 
@@ -3187,8 +3196,8 @@ select exists(select 1 from pg_enum), sum(c1) from ft1 group by 1;
                     QUERY PLAN                     
 ---------------------------------------------------
  GroupAggregate
-   Output: (InitPlan 1).col1, sum(ft1.c1)
-   InitPlan 1
+   Output: (InitPlan exists_1).col1, sum(ft1.c1)
+   InitPlan exists_1
      ->  Seq Scan on pg_catalog.pg_enum
    ->  Foreign Scan on public.ft1
          Output: ft1.c1
@@ -3347,15 +3356,15 @@ select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft
                                                           QUERY PLAN                                                          
 ------------------------------------------------------------------------------------------------------------------------------
  Unique
-   Output: ((SubPlan 1))
+   Output: ((SubPlan expr_1))
    ->  Sort
-         Output: ((SubPlan 1))
-         Sort Key: ((SubPlan 1))
+         Output: ((SubPlan expr_1))
+         Sort Key: ((SubPlan expr_1))
          ->  Foreign Scan
-               Output: (SubPlan 1)
+               Output: (SubPlan expr_1)
                Relations: Aggregate on (public.ft2 t2)
                Remote SQL: SELECT count(*) FILTER (WHERE ((c2 = 6) AND ("C 1" < 10))) FROM "S 1"."T 1" WHERE (((c2 % 6) = 0))
-               SubPlan 1
+               SubPlan expr_1
                  ->  Foreign Scan on public.ft1 t1
                        Output: (count(*) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
                        Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE (("C 1" = 6))
@@ -3370,21 +3379,21 @@ select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft
 -- Inner query is aggregation query
 explain (verbose, costs off)
 select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 where t2.c2 % 6 = 0 order by 1;
-                                                                      QUERY PLAN                                                                      
-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
  Unique
-   Output: ((SubPlan 1))
+   Output: ((SubPlan expr_1))
    ->  Sort
-         Output: ((SubPlan 1))
-         Sort Key: ((SubPlan 1))
+         Output: ((SubPlan expr_1))
+         Sort Key: ((SubPlan expr_1))
          ->  Foreign Scan on public.ft2 t2
-               Output: (SubPlan 1)
+               Output: (SubPlan expr_1)
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (((c2 % 6) = 0))
-               SubPlan 1
+               SubPlan expr_1
                  ->  Foreign Scan
-                       Output: (count(t1.c1) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
+                       Output: (count(*) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
                        Relations: Aggregate on (public.ft1 t1)
-                       Remote SQL: SELECT count("C 1") FILTER (WHERE (($1::integer = 6) AND ($2::integer < 10))) FROM "S 1"."T 1" WHERE (("C 1" = 6))
+                       Remote SQL: SELECT count(*) FILTER (WHERE (($1::integer = 6) AND ($2::integer < 10))) FROM "S 1"."T 1" WHERE (("C 1" = 6))
 (13 rows)
 
 select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 where t2.c2 % 6 = 0 order by 1;
@@ -3412,14 +3421,14 @@ select sum(c1) filter (where (c1 / c1) * random() <= 1) from ft1 group by c2 ord
 
 explain (verbose, costs off)
 select sum(c2) filter (where c2 in (select c2 from ft1 where c2 < 5)) from ft1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Aggregate
-   Output: sum(ft1.c2) FILTER (WHERE (ANY (ft1.c2 = (hashed SubPlan 1).col1)))
+   Output: sum(ft1.c2) FILTER (WHERE (ANY (ft1.c2 = (hashed SubPlan any_1).col1)))
    ->  Foreign Scan on public.ft1
          Output: ft1.c2
          Remote SQL: SELECT c2 FROM "S 1"."T 1"
-   SubPlan 1
+   SubPlan any_1
      ->  Foreign Scan on public.ft1 ft1_1
            Output: ft1_1.c2
            Remote SQL: SELECT c2 FROM "S 1"."T 1" WHERE ((c2 < 5))
@@ -3692,30 +3701,33 @@ select count(t1.c3) from ft2 t1 left join ft2 t2 on (t1.c1 = random() * t2.c2);
 -- Subquery in FROM clause having aggregate
 explain (verbose, costs off)
 select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Sort
-   Output: (count(*)), x.b
-   Sort Key: (count(*)), x.b
-   ->  HashAggregate
-         Output: count(*), x.b
-         Group Key: x.b
-         ->  Hash Join
-               Output: x.b
-               Inner Unique: true
-               Hash Cond: (ft1.c2 = x.a)
-               ->  Foreign Scan on public.ft1
-                     Output: ft1.c2
-                     Remote SQL: SELECT c2 FROM "S 1"."T 1"
-               ->  Hash
-                     Output: x.b, x.a
-                     ->  Subquery Scan on x
-                           Output: x.b, x.a
-                           ->  Foreign Scan
-                                 Output: ft1_1.c2, (sum(ft1_1.c1))
-                                 Relations: Aggregate on (public.ft1 ft1_1)
-                                 Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY 1
-(21 rows)
+   Output: (count(*)), (sum(ft1_1.c1))
+   Sort Key: (count(*)), (sum(ft1_1.c1))
+   ->  Finalize GroupAggregate
+         Output: count(*), (sum(ft1_1.c1))
+         Group Key: (sum(ft1_1.c1))
+         ->  Sort
+               Output: (sum(ft1_1.c1)), (PARTIAL count(*))
+               Sort Key: (sum(ft1_1.c1))
+               ->  Hash Join
+                     Output: (sum(ft1_1.c1)), (PARTIAL count(*))
+                     Hash Cond: (ft1_1.c2 = ft1.c2)
+                     ->  Foreign Scan
+                           Output: ft1_1.c2, (sum(ft1_1.c1))
+                           Relations: Aggregate on (public.ft1 ft1_1)
+                           Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY 1
+                     ->  Hash
+                           Output: ft1.c2, (PARTIAL count(*))
+                           ->  Partial HashAggregate
+                                 Output: ft1.c2, PARTIAL count(*)
+                                 Group Key: ft1.c2
+                                 ->  Foreign Scan on public.ft1
+                                       Output: ft1.c2
+                                       Remote SQL: SELECT c2 FROM "S 1"."T 1"
+(24 rows)
 
 select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
  count |   b   
@@ -4600,11 +4612,13 @@ SELECT * FROM ft1 WHERE 'foo' = c8 LIMIT 1;
 -- with that remote type
 SELECT * FROM ft1 WHERE c8 LIKE 'foo' LIMIT 1; -- ERROR
 ERROR:  operator does not exist: public.user_enum ~~ unknown
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 CONTEXT:  remote SQL command: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((c8 ~~ 'foo')) LIMIT 1::bigint
 SELECT * FROM ft1 WHERE c8::text LIKE 'foo' LIMIT 1; -- ERROR; cast not pushed down
 ERROR:  operator does not exist: public.user_enum ~~ unknown
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 CONTEXT:  remote SQL command: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((c8 ~~ 'foo')) LIMIT 1::bigint
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE user_enum;
 -- ===================================================================
@@ -5077,13 +5091,13 @@ SELECT ft1.c1 FROM ft1 JOIN ft2 on ft1.c1 = ft2.c1 WHERE
 -- ===================================================================
 EXPLAIN (verbose, costs off)
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
-                                                                                                                      QUERY PLAN                                                                                                                      
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                               QUERY PLAN                                                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Insert on public.ft2
    Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
    Batch Size: 1
-   ->  Subquery Scan on "*SELECT*"
-         Output: "*SELECT*"."?column?", "*SELECT*"."?column?_1", NULL::integer, "*SELECT*"."?column?_2", NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying(10), 'ft2       '::character(10), NULL::user_enum
+   ->  Subquery Scan on unnamed_subquery
+         Output: unnamed_subquery."?column?", unnamed_subquery."?column?_1", NULL::integer, unnamed_subquery."?column?_2", NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying(10), 'ft2       '::character(10), NULL::user_enum
          ->  Foreign Scan on public.ft2 ft2_1
                Output: (ft2_1.c1 + 1000), (ft2_1.c2 + 100), (ft2_1.c3 || ft2_1.c3)
                Remote SQL: SELECT "C 1", c2, c3 FROM "S 1"."T 1" LIMIT 20::bigint
@@ -6433,14 +6447,14 @@ UPDATE ft2 AS target SET (c2, c7) = (
         FROM ft2 AS src
         WHERE target.c1 = src.c1
 ) WHERE c1 > 1100;
-                                                      QUERY PLAN                                                       
------------------------------------------------------------------------------------------------------------------------
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
  Update on public.ft2 target
    Remote SQL: UPDATE "S 1"."T 1" SET c2 = $2, c7 = $3 WHERE ctid = $1
    ->  Foreign Scan on public.ft2 target
-         Output: (SubPlan 1).col1, (SubPlan 1).col2, (rescan SubPlan 1), target.ctid, target.*
+         Output: (SubPlan multiexpr_1).col1, (SubPlan multiexpr_1).col2, (rescan SubPlan multiexpr_1), target.ctid, target.*
          Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" > 1100)) FOR UPDATE
-         SubPlan 1
+         SubPlan multiexpr_1
            ->  Foreign Scan on public.ft2 src
                  Output: (src.c2 * 10), src.c7
                  Remote SQL: SELECT c2, c7 FROM "S 1"."T 1" WHERE (($1::integer = "C 1"))
@@ -7148,8 +7162,9 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 < 0;
  Aggregate
    Output: count(*)
    ->  Result
+         Replaces: Scan on ft1
          One-Time Filter: false
-(4 rows)
+(5 rows)
 
 SELECT count(*) FROM ft1 WHERE c2 < 0;
  count 
@@ -7192,8 +7207,9 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 >= 0;
  Aggregate
    Output: count(*)
    ->  Result
+         Replaces: Scan on ft1
          One-Time Filter: false
-(4 rows)
+(5 rows)
 
 SELECT count(*) FROM ft1 WHERE c2 >= 0;
  count 
@@ -8021,8 +8037,9 @@ DELETE FROM rem1 WHERE false;     -- currently can't be pushed down
    Remote SQL: DELETE FROM public.loc1 WHERE ctid = $1
    ->  Result
          Output: ctid
+         Replaces: Scan on rem1
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- Test with statement-level triggers
 CREATE TRIGGER trig_stmt_before
@@ -8212,6 +8229,119 @@ DELETE FROM rem1;                 -- can't be pushed down
 (5 rows)
 
 DROP TRIGGER trig_row_after_delete ON rem1;
+-- We are allowed to create transition-table triggers on both kinds of
+-- inheritance even if they contain foreign tables as children, but currently
+-- collecting transition tuples from such foreign tables is not supported.
+CREATE TABLE local_tbl (a text, b int);
+CREATE FOREIGN TABLE foreign_tbl (a text, b int)
+  SERVER loopback OPTIONS (table_name 'local_tbl');
+INSERT INTO foreign_tbl VALUES ('AAA', 42);
+-- Test case for partition hierarchy
+CREATE TABLE parent_tbl (a text, b int) PARTITION BY LIST (a);
+ALTER TABLE parent_tbl ATTACH PARTITION foreign_tbl FOR VALUES IN ('AAA');
+CREATE TRIGGER parent_tbl_insert_trig
+  AFTER INSERT ON parent_tbl REFERENCING NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER parent_tbl_update_trig
+  AFTER UPDATE ON parent_tbl REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER parent_tbl_delete_trig
+  AFTER DELETE ON parent_tbl REFERENCING OLD TABLE AS old_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+INSERT INTO parent_tbl VALUES ('AAA', 42);
+ERROR:  cannot collect transition tuples from child foreign tables
+COPY parent_tbl (a, b) FROM stdin;
+ERROR:  cannot collect transition tuples from child foreign tables
+CONTEXT:  COPY parent_tbl, line 1: "AAA	42"
+ALTER SERVER loopback OPTIONS (ADD batch_size '10');
+INSERT INTO parent_tbl VALUES ('AAA', 42);
+ERROR:  cannot collect transition tuples from child foreign tables
+COPY parent_tbl (a, b) FROM stdin;
+ERROR:  cannot collect transition tuples from child foreign tables
+CONTEXT:  COPY parent_tbl, line 1: "AAA	42"
+ALTER SERVER loopback OPTIONS (DROP batch_size);
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE parent_tbl SET b = b + 1;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Update on public.parent_tbl
+   Foreign Update on public.foreign_tbl parent_tbl_1
+     Remote SQL: UPDATE public.local_tbl SET b = $2 WHERE ctid = $1
+   ->  Foreign Scan on public.foreign_tbl parent_tbl_1
+         Output: (parent_tbl_1.b + 1), parent_tbl_1.tableoid, parent_tbl_1.ctid, parent_tbl_1.*
+         Remote SQL: SELECT a, b, ctid FROM public.local_tbl FOR UPDATE
+(6 rows)
+
+UPDATE parent_tbl SET b = b + 1;
+ERROR:  cannot collect transition tuples from child foreign tables
+EXPLAIN (VERBOSE, COSTS OFF)
+DELETE FROM parent_tbl;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Delete on public.parent_tbl
+   Foreign Delete on public.foreign_tbl parent_tbl_1
+     Remote SQL: DELETE FROM public.local_tbl WHERE ctid = $1
+   ->  Foreign Scan on public.foreign_tbl parent_tbl_1
+         Output: parent_tbl_1.tableoid, parent_tbl_1.ctid
+         Remote SQL: SELECT ctid FROM public.local_tbl FOR UPDATE
+(6 rows)
+
+DELETE FROM parent_tbl;
+ERROR:  cannot collect transition tuples from child foreign tables
+ALTER TABLE parent_tbl DETACH PARTITION foreign_tbl;
+DROP TABLE parent_tbl;
+-- Test case for non-partition hierarchy
+CREATE TABLE parent_tbl (a text, b int);
+ALTER FOREIGN TABLE foreign_tbl INHERIT parent_tbl;
+CREATE TRIGGER parent_tbl_update_trig
+  AFTER UPDATE ON parent_tbl REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER parent_tbl_delete_trig
+  AFTER DELETE ON parent_tbl REFERENCING OLD TABLE AS old_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE parent_tbl SET b = b + 1;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Update on public.parent_tbl
+   Update on public.parent_tbl parent_tbl_1
+   Foreign Update on public.foreign_tbl parent_tbl_2
+     Remote SQL: UPDATE public.local_tbl SET b = $2 WHERE ctid = $1
+   ->  Result
+         Output: (parent_tbl.b + 1), parent_tbl.tableoid, parent_tbl.ctid, (NULL::record)
+         ->  Append
+               ->  Seq Scan on public.parent_tbl parent_tbl_1
+                     Output: parent_tbl_1.b, parent_tbl_1.tableoid, parent_tbl_1.ctid, NULL::record
+               ->  Foreign Scan on public.foreign_tbl parent_tbl_2
+                     Output: parent_tbl_2.b, parent_tbl_2.tableoid, parent_tbl_2.ctid, parent_tbl_2.*
+                     Remote SQL: SELECT a, b, ctid FROM public.local_tbl FOR UPDATE
+(12 rows)
+
+UPDATE parent_tbl SET b = b + 1;
+ERROR:  cannot collect transition tuples from child foreign tables
+EXPLAIN (VERBOSE, COSTS OFF)
+DELETE FROM parent_tbl;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Delete on public.parent_tbl
+   Delete on public.parent_tbl parent_tbl_1
+   Foreign Delete on public.foreign_tbl parent_tbl_2
+     Remote SQL: DELETE FROM public.local_tbl WHERE ctid = $1
+   ->  Append
+         ->  Seq Scan on public.parent_tbl parent_tbl_1
+               Output: parent_tbl_1.tableoid, parent_tbl_1.ctid
+         ->  Foreign Scan on public.foreign_tbl parent_tbl_2
+               Output: parent_tbl_2.tableoid, parent_tbl_2.ctid
+               Remote SQL: SELECT ctid FROM public.local_tbl FOR UPDATE
+(10 rows)
+
+DELETE FROM parent_tbl;
+ERROR:  cannot collect transition tuples from child foreign tables
+ALTER FOREIGN TABLE foreign_tbl NO INHERIT parent_tbl;
+DROP TABLE parent_tbl;
+-- Cleanup
+DROP FOREIGN TABLE foreign_tbl;
+DROP TABLE local_tbl;
 -- ===================================================================
 -- test inheritance features
 -- ===================================================================
@@ -10509,14 +10639,8 @@ SHOW is_superuser;
 (1 row)
 
 -- This will be OK, we can create the FDW
-DO $d$
-    BEGIN
-        EXECUTE $$CREATE SERVER loopback_nopw FOREIGN DATA WRAPPER postgres_fdw
-            OPTIONS (dbname '$$||current_database()||$$',
-                     port '$$||current_setting('port')||$$'
-            )$$;
-    END;
-$d$;
+CREATE SERVER loopback_nopw FOREIGN DATA WRAPPER postgres_fdw
+	OPTIONS (dbname :'current_database', port :'current_port');
 -- But creation of user mappings for non-superusers should fail
 CREATE USER MAPPING FOR public SERVER loopback_nopw;
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
@@ -11475,6 +11599,11 @@ SELECT * FROM result_tbl ORDER BY a;
 (3 rows)
 
 DELETE FROM result_tbl;
+-- Test COPY TO when foreign table is partition
+COPY async_pt TO stdout; --error
+ERROR:  cannot copy from foreign table "async_p1"
+DETAIL:  Partition "async_p1" is a foreign table in partitioned table "async_pt"
+HINT:  Try the COPY (SELECT ...) TO variant.
 DROP FOREIGN TABLE async_p3;
 DROP TABLE base_tbl3;
 -- Check case where the partitioned table has local/remote partitions
@@ -12011,12 +12140,12 @@ INSERT INTO local_tbl VALUES (1505, 505, 'foo');
 ANALYZE local_tbl;
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
-                                       QUERY PLAN                                       
-----------------------------------------------------------------------------------------
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
  Nested Loop Left Join
-   Output: t1.a, t1.b, t1.c, async_pt.a, async_pt.b, async_pt.c, ((InitPlan 1).col1)
+   Output: t1.a, t1.b, t1.c, async_pt.a, async_pt.b, async_pt.c, ((InitPlan expr_1).col1)
    Join Filter: (t1.a = async_pt.a)
-   InitPlan 1
+   InitPlan expr_1
      ->  Aggregate
            Output: count(*)
            ->  Append
@@ -12028,10 +12157,10 @@ SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt W
          Output: t1.a, t1.b, t1.c
    ->  Append
          ->  Async Foreign Scan on public.async_p1 async_pt_1
-               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c, (InitPlan 1).col1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c, (InitPlan expr_1).col1
                Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 3000))
          ->  Async Foreign Scan on public.async_p2 async_pt_2
-               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c, (InitPlan 1).col1
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c, (InitPlan expr_1).col1
                Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < 3000))
 (20 rows)
 
@@ -12042,7 +12171,7 @@ SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt W
  Nested Loop Left Join (actual rows=1.00 loops=1)
    Join Filter: (t1.a = async_pt.a)
    Rows Removed by Join Filter: 399
-   InitPlan 1
+   InitPlan expr_1
      ->  Aggregate (actual rows=1.00 loops=1)
            ->  Append (actual rows=400.00 loops=1)
                  ->  Async Foreign Scan on async_p1 async_pt_4 (actual rows=200.00 loops=1)
@@ -12265,12 +12394,12 @@ CREATE FOREIGN TABLE foreign_tbl2 () INHERITS (foreign_tbl)
   SERVER loopback OPTIONS (table_name 'base_tbl');
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM foreign_tbl);
-                                                  QUERY PLAN                                                   
----------------------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Seq Scan on public.base_tbl
    Output: base_tbl.a
-   Filter: (ANY ((base_tbl.a = (SubPlan 1).col1) AND ((random() > '0'::double precision) = (SubPlan 1).col2)))
-   SubPlan 1
+   Filter: (ANY ((base_tbl.a = (SubPlan any_1).col1) AND ((random() > '0'::double precision) = (SubPlan any_1).col2)))
+   SubPlan any_1
      ->  Result
            Output: base_tbl.a, (random() > '0'::double precision)
            ->  Append
@@ -12515,7 +12644,7 @@ ALTER SERVER loopback2 OPTIONS (DROP parallel_abort);
 -- ===================================================================
 CREATE TABLE analyze_table (id int, a text, b bigint);
 CREATE FOREIGN TABLE analyze_ftable (id int, a text, b bigint)
-       SERVER loopback OPTIONS (table_name 'analyze_rtable1');
+       SERVER loopback OPTIONS (table_name 'analyze_table');
 INSERT INTO analyze_table (SELECT x FROM generate_series(1,1000) x);
 ANALYZE analyze_table;
 SET default_statistics_target = 10;
@@ -12523,15 +12652,15 @@ ANALYZE analyze_table;
 ALTER SERVER loopback OPTIONS (analyze_sampling 'invalid');
 ERROR:  invalid value for string option "analyze_sampling": invalid
 ALTER SERVER loopback OPTIONS (analyze_sampling 'auto');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'system');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'bernoulli');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'random');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'off');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 -- cleanup
 DROP FOREIGN TABLE analyze_ftable;
 DROP TABLE analyze_table;

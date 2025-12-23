@@ -151,9 +151,9 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	has_subdiff = OidIsValid(typcache->rng_subdiff_finfo.fn_oid);
 
 	/* Allocate memory to hold range bounds and lengths of the sample ranges. */
-	lowers = (RangeBound *) palloc(sizeof(RangeBound) * samplerows);
-	uppers = (RangeBound *) palloc(sizeof(RangeBound) * samplerows);
-	lengths = (float8 *) palloc(sizeof(float8) * samplerows);
+	lowers = palloc_array(RangeBound, samplerows);
+	uppers = palloc_array(RangeBound, samplerows);
+	lengths = palloc_array(float8, samplerows);
 
 	/* Loop over the sample ranges. */
 	for (range_no = 0; range_no < samplerows; range_no++)
@@ -397,11 +397,11 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		stats->numvalues[slot_idx] = num_hist;
 		stats->statypid[slot_idx] = FLOAT8OID;
 		stats->statyplen[slot_idx] = sizeof(float8);
-		stats->statypbyval[slot_idx] = FLOAT8PASSBYVAL;
+		stats->statypbyval[slot_idx] = true;
 		stats->statypalign[slot_idx] = 'd';
 
 		/* Store the fraction of empty ranges */
-		emptyfrac = (float4 *) palloc(sizeof(float4));
+		emptyfrac = palloc_object(float4);
 		*emptyfrac = ((double) empty_cnt) / ((double) non_null_cnt);
 		stats->stanumbers[slot_idx] = emptyfrac;
 		stats->numnumbers[slot_idx] = 1;

@@ -144,7 +144,7 @@ policy_role_list_to_array(List *roles, int *num_roles)
 	if (roles == NIL)
 	{
 		*num_roles = 1;
-		role_oids = (Datum *) palloc(*num_roles * sizeof(Datum));
+		role_oids = palloc_array(Datum, *num_roles);
 		role_oids[0] = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
 		return role_oids;
@@ -471,7 +471,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 	 * Ordinarily there'd be exactly one, but we must cope with duplicate
 	 * mentions, since CREATE/ALTER POLICY historically have allowed that.
 	 */
-	role_oids = (Datum *) palloc(num_roles * sizeof(Datum));
+	role_oids = palloc_array(Datum, num_roles);
 	for (i = 0, j = 0; i < num_roles; i++)
 	{
 		if (roles[i] != roleid)
@@ -945,7 +945,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 
 		nitems = ARR_DIMS(policy_roles)[0];
 
-		role_oids = (Datum *) palloc(nitems * sizeof(Datum));
+		role_oids = palloc_array(Datum, nitems);
 
 		for (i = 0; i < nitems; i++)
 			role_oids[i] = ObjectIdGetDatum(roles[i]);

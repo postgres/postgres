@@ -23,7 +23,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 
-#if !defined(WIN32) || defined(_MSC_VER)
+#if !defined(WIN32)
 extern char **environ;
 #endif
 
@@ -52,7 +52,7 @@ bool		update_process_title = DEFAULT_UPDATE_PROCESS_TITLE;
 #define PS_USE_SETPROCTITLE_FAST
 #elif defined(HAVE_SETPROCTITLE)
 #define PS_USE_SETPROCTITLE
-#elif defined(__linux__) || defined(__sun) || defined(__darwin__)
+#elif defined(__linux__) || defined(__sun) || defined(__darwin__) || defined(__GNU__)
 #define PS_USE_CLOBBER_ARGV
 #elif defined(WIN32)
 #define PS_USE_WIN32
@@ -62,7 +62,7 @@ bool		update_process_title = DEFAULT_UPDATE_PROCESS_TITLE;
 
 
 /* Different systems want the buffer padded differently */
-#if defined(__linux__) || defined(__darwin__)
+#if defined(__linux__) || defined(__darwin__) || defined(__GNU__)
 #define PS_PADDING '\0'
 #else
 #define PS_PADDING ' '
@@ -99,6 +99,17 @@ static void flush_ps_display(void);
 /* save the original argv[] location here */
 static int	save_argc;
 static char **save_argv;
+
+/*
+ * Valgrind seems not to consider the global "environ" variable as a valid
+ * root pointer; so when we allocate a new environment array, it claims that
+ * data is leaked.  To fix that, keep our own statically-allocated copy of the
+ * pointer.  (Oddly, this doesn't seem to be a problem for "argv".)
+ */
+#if defined(PS_USE_CLOBBER_ARGV) && defined(USE_VALGRIND)
+extern char **ps_status_new_environ;
+char	  **ps_status_new_environ;
+#endif
 
 
 /*
@@ -206,6 +217,11 @@ save_ps_display_args(int argc, char **argv)
 		}
 		new_environ[i] = NULL;
 		environ = new_environ;
+
+		/* See notes about Valgrind above. */
+#ifdef USE_VALGRIND
+		ps_status_new_environ = new_environ;
+#endif
 	}
 
 	/*

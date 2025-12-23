@@ -44,6 +44,7 @@
 extern void XLogBeginInsert(void);
 extern void XLogSetRecordFlags(uint8 flags);
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info);
+extern XLogRecPtr XLogSimpleInsertInt64(RmgrId rmid, uint8 info, int64 value);
 extern void XLogEnsureRecordSpace(int max_block_id, int ndatas);
 extern void XLogRegisterData(const void *data, uint32 len);
 extern void XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags);

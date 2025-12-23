@@ -23,6 +23,18 @@
  */
 
 /*
+ * We buffer outgoing data, just to ensure that data blocks written to the
+ * archive file are of reasonable size.  The read side could use this struct,
+ * but there's no need because it does not retain data across calls.
+ */
+typedef struct NoneCompressorState
+{
+	char	   *buffer;			/* buffer for unwritten data */
+	size_t		buflen;			/* allocated size of buffer */
+	size_t		bufdata;		/* amount of valid data currently in buffer */
+} NoneCompressorState;
+
+/*
  * Private routines
  */
 
@@ -49,13 +61,45 @@ static void
 WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 					   const void *data, size_t dLen)
 {
-	cs->writeF(AH, data, dLen);
+	NoneCompressorState *nonecs = (NoneCompressorState *) cs->private_data;
+	size_t		remaining = dLen;
+
+	while (remaining > 0)
+	{
+		size_t		chunk;
+
+		/* Dump buffer if full */
+		if (nonecs->bufdata >= nonecs->buflen)
+		{
+			cs->writeF(AH, nonecs->buffer, nonecs->bufdata);
+			nonecs->bufdata = 0;
+		}
+		/* And fill it */
+		chunk = nonecs->buflen - nonecs->bufdata;
+		if (chunk > remaining)
+			chunk = remaining;
+		memcpy(nonecs->buffer + nonecs->bufdata, data, chunk);
+		nonecs->bufdata += chunk;
+		data = ((const char *) data) + chunk;
+		remaining -= chunk;
+	}
 }
 
 static void
 EndCompressorNone(ArchiveHandle *AH, CompressorState *cs)
 {
-	/* no op */
+	NoneCompressorState *nonecs = (NoneCompressorState *) cs->private_data;
+
+	if (nonecs)
+	{
+		/* Dump buffer if nonempty */
+		if (nonecs->bufdata > 0)
+			cs->writeF(AH, nonecs->buffer, nonecs->bufdata);
+		/* Free working state */
+		pg_free(nonecs->buffer);
+		pg_free(nonecs);
+		cs->private_data = NULL;
+	}
 }
 
 /*
@@ -71,6 +115,22 @@ InitCompressorNone(CompressorState *cs,
 	cs->end = EndCompressorNone;
 
 	cs->compression_spec = compression_spec;
+
+	/*
+	 * If the caller has defined a write function, prepare the necessary
+	 * buffer.
+	 */
+	if (cs->writeF)
+	{
+		NoneCompressorState *nonecs;
+
+		nonecs = (NoneCompressorState *) pg_malloc(sizeof(NoneCompressorState));
+		nonecs->buflen = DEFAULT_IO_BUFFER_SIZE;
+		nonecs->buffer = pg_malloc(nonecs->buflen);
+		nonecs->bufdata = 0;
+
+		cs->private_data = nonecs;
+	}
 }
 
 
@@ -83,35 +143,31 @@ InitCompressorNone(CompressorState *cs,
  * Private routines
  */
 
-static bool
-read_none(void *ptr, size_t size, size_t *rsize, CompressFileHandle *CFH)
+static size_t
+read_none(void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	FILE	   *fp = (FILE *) CFH->private_data;
 	size_t		ret;
 
-	if (size == 0)
-		return true;
-
 	ret = fread(ptr, 1, size, fp);
-	if (ret != size && !feof(fp))
+	if (ferror(fp))
 		pg_fatal("could not read from input file: %m");
 
-	if (rsize)
-		*rsize = ret;
-
-	return true;
+	return ret;
 }
 
-static bool
+static void
 write_none(const void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	size_t		ret;
 
+	errno = 0;
 	ret = fwrite(ptr, 1, size, (FILE *) CFH->private_data);
 	if (ret != size)
-		return false;
-
-	return true;
+	{
+		errno = (errno) ? errno : ENOSPC;
+		pg_fatal("could not write to file: %m");
+	}
 }
 
 static const char *
@@ -153,7 +209,12 @@ close_none(CompressFileHandle *CFH)
 	CFH->private_data = NULL;
 
 	if (fp)
+	{
+		errno = 0;
 		ret = fclose(fp);
+		if (ret != 0)
+			pg_log_error("could not close file: %m");
+	}
 
 	return ret == 0;
 }

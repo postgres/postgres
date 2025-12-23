@@ -1,6 +1,7 @@
 # src/interfaces/libpq/nls.mk
 CATALOG_NAME     = libpq
 GETTEXT_FILES    = fe-auth.c \
+                   fe-auth-oauth.c \
                    fe-auth-scram.c \
                    fe-cancel.c \
                    fe-connect.c \
@@ -21,6 +22,7 @@ GETTEXT_TRIGGERS = actx_error:2 \
                    libpq_append_error:2 \
                    libpq_gettext \
                    libpq_ngettext:1,2 \
+                   oauth_json_set_error:2 \
                    oauth_parse_set_error:2 \
                    pqInternalNotice:2
 GETTEXT_FLAGS    = actx_error:2:c-format \
@@ -29,5 +31,6 @@ GETTEXT_FLAGS    = actx_error:2:c-format \
                    libpq_gettext:1:pass-c-format \
                    libpq_ngettext:1:pass-c-format \
                    libpq_ngettext:2:pass-c-format \
+                   oauth_json_set_error:2:c-format \
                    oauth_parse_set_error:2:c-format \
                    pqInternalNotice:2:c-format

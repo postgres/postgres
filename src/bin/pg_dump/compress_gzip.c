@@ -20,6 +20,15 @@
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 
+/*
+ * We don't use the gzgetc() macro, because zlib's configuration logic is not
+ * robust enough to guarantee that the macro will have the same ideas about
+ * struct field layout as the library itself does; see for example
+ * https://gnats.netbsd.org/cgi-bin/query-pr-single.pl?number=59711
+ * Instead, #undef the macro and fall back to the underlying function.
+ */
+#undef gzgetc
+
 /*----------------------
  * Compressor API
  *----------------------
@@ -251,34 +260,53 @@ InitCompressorGzip(CompressorState *cs,
  *----------------------
  */
 
-static bool
-Gzip_read(void *ptr, size_t size, size_t *rsize, CompressFileHandle *CFH)
+static size_t
+Gzip_read(void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	gzFile		gzfp = (gzFile) CFH->private_data;
 	int			gzret;
 
+	/* Reading zero bytes must be a no-op */
+	if (size == 0)
+		return 0;
+
 	gzret = gzread(gzfp, ptr, size);
-	if (gzret <= 0 && !gzeof(gzfp))
+
+	/*
+	 * gzread returns zero on EOF as well as some error conditions, and less
+	 * than zero on other error conditions, so we need to inspect for EOF on
+	 * zero.
+	 */
+	if (gzret <= 0)
 	{
 		int			errnum;
-		const char *errmsg = gzerror(gzfp, &errnum);
+		const char *errmsg;
+
+		if (gzret == 0 && gzeof(gzfp))
+			return 0;
+
+		errmsg = gzerror(gzfp, &errnum);
 
 		pg_fatal("could not read from input file: %s",
 				 errnum == Z_ERRNO ? strerror(errno) : errmsg);
 	}
 
-	if (rsize)
-		*rsize = (size_t) gzret;
-
-	return true;
+	return (size_t) gzret;
 }
 
-static bool
+static void
 Gzip_write(const void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	gzFile		gzfp = (gzFile) CFH->private_data;
+	int			errnum;
+	const char *errmsg;
 
-	return gzwrite(gzfp, ptr, size) > 0;
+	if (gzwrite(gzfp, ptr, size) != size)
+	{
+		errmsg = gzerror(gzfp, &errnum);
+		pg_fatal("could not write to file: %s",
+				 errnum == Z_ERRNO ? strerror(errno) : errmsg);
+	}
 }
 
 static int

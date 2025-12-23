@@ -30,7 +30,6 @@
 #include "commands/defrem.h"
 #include "commands/seclabel.h"
 #include "commands/user.h"
-#include "lib/qunique.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
@@ -490,7 +489,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 * Advance command counter so we can see new record; else tests in
 	 * AddRoleMems may fail.
 	 */
-	CommandCounterIncrement();
+	if (addroleto || adminmembers || rolemembers)
+		CommandCounterIncrement();
 
 	/* Default grant. */
 	InitGrantRoleOptions(&popt);
@@ -1904,8 +1904,7 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 		else
 		{
 			Oid			objectId;
-			Oid		   *newmembers = (Oid *) palloc(3 * sizeof(Oid));
-			int			nnewmembers;
+			Oid		   *newmembers = palloc_object(Oid);
 
 			/*
 			 * The values for these options can be taken directly from 'popt'.
@@ -1924,7 +1923,7 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 			 */
 			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0)
 				new_record[Anum_pg_auth_members_inherit_option - 1] =
-					popt->inherit;
+					BoolGetDatum(popt->inherit);
 			else
 			{
 				HeapTuple	mrtup;
@@ -1935,34 +1934,24 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 					elog(ERROR, "cache lookup failed for role %u", memberid);
 				mrform = (Form_pg_authid) GETSTRUCT(mrtup);
 				new_record[Anum_pg_auth_members_inherit_option - 1] =
-					mrform->rolinherit;
+					BoolGetDatum(mrform->rolinherit);
 				ReleaseSysCache(mrtup);
 			}
 
 			/* get an OID for the new row and insert it */
 			objectId = GetNewOidWithIndex(pg_authmem_rel, AuthMemOidIndexId,
 										  Anum_pg_auth_members_oid);
-			new_record[Anum_pg_auth_members_oid - 1] = objectId;
+			new_record[Anum_pg_auth_members_oid - 1] = ObjectIdGetDatum(objectId);
 			tuple = heap_form_tuple(pg_authmem_dsc,
 									new_record, new_record_nulls);
 			CatalogTupleInsert(pg_authmem_rel, tuple);
 
-			/*
-			 * Record dependencies on the roleid, member, and grantor, as if a
-			 * pg_auth_members entry were an object ACL.
-			 * updateAclDependencies() requires an input array that is
-			 * palloc'd (it will free it), sorted, and de-duped.
-			 */
-			newmembers[0] = roleid;
-			newmembers[1] = memberid;
-			newmembers[2] = grantorId;
-			qsort(newmembers, 3, sizeof(Oid), oid_cmp);
-			nnewmembers = qunique(newmembers, 3, sizeof(Oid), oid_cmp);
-
+			/* updateAclDependencies wants to pfree array inputs */
+			newmembers[0] = grantorId;
 			updateAclDependencies(AuthMemRelationId, objectId,
 								  0, InvalidOid,
 								  0, NULL,
-								  nnewmembers, newmembers);
+								  1, newmembers);
 		}
 
 		/* CCI after each change, in case there are duplicates in list */
@@ -2306,7 +2295,7 @@ initialize_revoke_actions(CatCList *memlist)
 	if (memlist->n_members == 0)
 		return NULL;
 
-	result = palloc(sizeof(RevokeRoleGrantAction) * memlist->n_members);
+	result = palloc_array(RevokeRoleGrantAction, memlist->n_members);
 	for (i = 0; i < memlist->n_members; i++)
 		result[i] = RRG_NOOP;
 	return result;

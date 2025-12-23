@@ -7,8 +7,8 @@ INSERT INTO test_timestamp VALUES
 	( '2004-10-26 04:55:08' ),
 	( '2004-10-26 05:55:08' ),
 	( '2004-10-26 08:55:08' ),
-	( '2004-10-26 09:55:08' ),
-	( '2004-10-26 10:55:08' )
+	( '2004-10-27 09:55:08' ),
+	( '2004-10-27 10:55:08' )
 ;
 CREATE INDEX idx_timestamp ON test_timestamp USING gin (i);
 SELECT * FROM test_timestamp WHERE i<'2004-10-26 08:55:08'::timestamp ORDER BY i;
@@ -38,14 +38,308 @@ SELECT * FROM test_timestamp WHERE i>='2004-10-26 08:55:08'::timestamp ORDER BY 
             i             
 --------------------------
  Tue Oct 26 08:55:08 2004
- Tue Oct 26 09:55:08 2004
- Tue Oct 26 10:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
 (3 rows)
 
 SELECT * FROM test_timestamp WHERE i>'2004-10-26 08:55:08'::timestamp ORDER BY i;
             i             
 --------------------------
- Tue Oct 26 09:55:08 2004
- Tue Oct 26 10:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
 (2 rows)
+
+explain (costs off)
+SELECT * FROM test_timestamp WHERE i<'2004-10-27'::date ORDER BY i;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_timestamp
+         Recheck Cond: (i < '10-27-2004'::date)
+         ->  Bitmap Index Scan on idx_timestamp
+               Index Cond: (i < '10-27-2004'::date)
+(6 rows)
+
+SELECT * FROM test_timestamp WHERE i<'2004-10-27'::date ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+(4 rows)
+
+SELECT * FROM test_timestamp WHERE i<='2004-10-27'::date ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+(4 rows)
+
+SELECT * FROM test_timestamp WHERE i='2004-10-27'::date ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_timestamp WHERE i>='2004-10-27'::date ORDER BY i;
+            i             
+--------------------------
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+(2 rows)
+
+SELECT * FROM test_timestamp WHERE i>'2004-10-27'::date ORDER BY i;
+            i             
+--------------------------
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+(2 rows)
+
+explain (costs off)
+SELECT * FROM test_timestamp WHERE i<'2004-10-26 08:55:08'::timestamptz ORDER BY i;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_timestamp
+         Recheck Cond: (i < 'Tue Oct 26 08:55:08 2004 PDT'::timestamp with time zone)
+         ->  Bitmap Index Scan on idx_timestamp
+               Index Cond: (i < 'Tue Oct 26 08:55:08 2004 PDT'::timestamp with time zone)
+(6 rows)
+
+SELECT * FROM test_timestamp WHERE i<'2004-10-26 08:55:08'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+(3 rows)
+
+SELECT * FROM test_timestamp WHERE i<='2004-10-26 08:55:08'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+(4 rows)
+
+SELECT * FROM test_timestamp WHERE i='2004-10-26 08:55:08'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 08:55:08 2004
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>='2004-10-26 08:55:08'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+(3 rows)
+
+SELECT * FROM test_timestamp WHERE i>'2004-10-26 08:55:08'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+(2 rows)
+
+-- Check endpoint and out-of-range cases
+INSERT INTO test_timestamp VALUES ('-infinity'), ('infinity');
+SELECT gin_clean_pending_list('idx_timestamp');
+ gin_clean_pending_list 
+------------------------
+                      1
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i<'-infinity'::date ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_timestamp WHERE i<='-infinity'::date ORDER BY i;
+     i     
+-----------
+ -infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i='-infinity'::date ORDER BY i;
+     i     
+-----------
+ -infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>='-infinity'::date ORDER BY i;
+            i             
+--------------------------
+ -infinity
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(8 rows)
+
+SELECT * FROM test_timestamp WHERE i>'-infinity'::date ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(7 rows)
+
+SELECT * FROM test_timestamp WHERE i<'infinity'::date ORDER BY i;
+            i             
+--------------------------
+ -infinity
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+(7 rows)
+
+SELECT * FROM test_timestamp WHERE i<='infinity'::date ORDER BY i;
+            i             
+--------------------------
+ -infinity
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(8 rows)
+
+SELECT * FROM test_timestamp WHERE i='infinity'::date ORDER BY i;
+    i     
+----------
+ infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>='infinity'::date ORDER BY i;
+    i     
+----------
+ infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>'infinity'::date ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_timestamp WHERE i<'-infinity'::timestamptz ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_timestamp WHERE i<='-infinity'::timestamptz ORDER BY i;
+     i     
+-----------
+ -infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i='-infinity'::timestamptz ORDER BY i;
+     i     
+-----------
+ -infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>='-infinity'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ -infinity
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(8 rows)
+
+SELECT * FROM test_timestamp WHERE i>'-infinity'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(7 rows)
+
+SELECT * FROM test_timestamp WHERE i<'infinity'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ -infinity
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+(7 rows)
+
+SELECT * FROM test_timestamp WHERE i<='infinity'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ -infinity
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(8 rows)
+
+SELECT * FROM test_timestamp WHERE i='infinity'::timestamptz ORDER BY i;
+    i     
+----------
+ infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>='infinity'::timestamptz ORDER BY i;
+    i     
+----------
+ infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>'infinity'::timestamptz ORDER BY i;
+ i 
+---
+(0 rows)
+
+-- This PST timestamptz will underflow if converted to timestamp
+SELECT * FROM test_timestamp WHERE i<='4714-11-23 17:00 BC'::timestamptz ORDER BY i;
+     i     
+-----------
+ -infinity
+(1 row)
+
+SELECT * FROM test_timestamp WHERE i>'4714-11-23 17:00 BC'::timestamptz ORDER BY i;
+            i             
+--------------------------
+ Tue Oct 26 03:55:08 2004
+ Tue Oct 26 04:55:08 2004
+ Tue Oct 26 05:55:08 2004
+ Tue Oct 26 08:55:08 2004
+ Wed Oct 27 09:55:08 2004
+ Wed Oct 27 10:55:08 2004
+ infinity
+(7 rows)
 

@@ -894,14 +894,14 @@ FreePageBtreeGetRecycled(FreePageManager *fpm)
 }
 
 /*
- * Insert an item into an internal page.
+ * Insert an item into an internal page (there must be room).
  */
 static void
 FreePageBtreeInsertInternal(char *base, FreePageBtree *btp, Size index,
 							Size first_page, FreePageBtree *child)
 {
 	Assert(btp->hdr.magic == FREE_PAGE_INTERNAL_MAGIC);
-	Assert(btp->hdr.nused <= FPM_ITEMS_PER_INTERNAL_PAGE);
+	Assert(btp->hdr.nused < FPM_ITEMS_PER_INTERNAL_PAGE);
 	Assert(index <= btp->hdr.nused);
 	memmove(&btp->u.internal_key[index + 1], &btp->u.internal_key[index],
 			sizeof(FreePageBtreeInternalKey) * (btp->hdr.nused - index));
@@ -911,14 +911,14 @@ FreePageBtreeInsertInternal(char *base, FreePageBtree *btp, Size index,
 }
 
 /*
- * Insert an item into a leaf page.
+ * Insert an item into a leaf page (there must be room).
  */
 static void
 FreePageBtreeInsertLeaf(FreePageBtree *btp, Size index, Size first_page,
 						Size npages)
 {
 	Assert(btp->hdr.magic == FREE_PAGE_LEAF_MAGIC);
-	Assert(btp->hdr.nused <= FPM_ITEMS_PER_LEAF_PAGE);
+	Assert(btp->hdr.nused < FPM_ITEMS_PER_LEAF_PAGE);
 	Assert(index <= btp->hdr.nused);
 	memmove(&btp->u.leaf_key[index + 1], &btp->u.leaf_key[index],
 			sizeof(FreePageBtreeLeafKey) * (btp->hdr.nused - index));

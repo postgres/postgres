@@ -113,7 +113,7 @@ pqTraceOutputByte1(FILE *pfdebug, const char *data, int *cursor)
 	 * that completes ErrorResponse and NoticeResponse messages.
 	 */
 	if (!isprint((unsigned char) *v))
-		fprintf(pfdebug, " \\x%02x", *v);
+		fprintf(pfdebug, " \\x%02x", (unsigned char) *v);
 	else
 		fprintf(pfdebug, " %c", *v);
 	*cursor += 1;
@@ -212,7 +212,7 @@ pqTraceOutputNchar(FILE *pfdebug, int len, const char *data, int *cursor, bool s
 		else
 		{
 			fwrite(v + next, 1, i - next, pfdebug);
-			fprintf(pfdebug, "\\x%02x", v[i]);
+			fprintf(pfdebug, "\\x%02x", (unsigned char) v[i]);
 			next = i + 1;
 		}
 	}

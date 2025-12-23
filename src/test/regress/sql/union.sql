@@ -459,6 +459,78 @@ drop table events_child, events, other_events;
 
 reset enable_indexonlyscan;
 
+--
+-- Test handling of UNION / EXCEPT / INTERSECT with provably empty inputs
+--
+
+-- Ensure the empty UNION input is pruned and de-duplication is done for the
+-- remaining relation.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+UNION
+SELECT four FROM tenk1
+ORDER BY 1;
+
+-- Validate that the results of the above are correct
+SELECT two FROM tenk1 WHERE 1=2
+UNION
+SELECT four FROM tenk1
+ORDER BY 1;
+
+-- All UNION inputs are proven empty.  Ensure the planner provides a
+-- const-false Result node
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+UNION
+SELECT four FROM tenk1 WHERE 1=2
+UNION
+SELECT ten FROM tenk1 WHERE 1=2
+ORDER BY 1;
+
+-- Ensure the planner provides a const-false Result node
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+INTERSECT
+SELECT four FROM tenk1
+ORDER BY 1;
+
+-- As above, with the inputs swapped
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT four FROM tenk1
+INTERSECT
+SELECT two FROM tenk1 WHERE 1=2
+ORDER BY 1;
+
+-- Try with both inputs dummy
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT four FROM tenk1 WHERE 1=2
+INTERSECT
+SELECT two FROM tenk1 WHERE 1=2
+ORDER BY 1;
+
+-- Ensure the planner provides a const-false Result node when the left input
+-- is empty
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+EXCEPT
+SELECT four FROM tenk1
+ORDER BY 1;
+
+-- Ensure the planner only scans the left input when right input is empty
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1
+EXCEPT ALL
+SELECT four FROM tenk1 WHERE 1=2
+ORDER BY 1;
+
+-- Try a mixed setop case.  Ensure the right-hand UNION child gets removed.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 t1
+EXCEPT
+SELECT four FROM tenk1 t2
+UNION
+SELECT ten FROM tenk1 dummy WHERE 1=2;
+
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
  SELECT * FROM

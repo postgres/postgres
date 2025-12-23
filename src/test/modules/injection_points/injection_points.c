@@ -18,7 +18,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
-#include "injection_stats.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "nodes/value.h"
@@ -106,15 +106,6 @@ extern PGDLLEXPORT void injection_wait(const char *name,
 /* track if injection points attached in this process are linked to it */
 static bool injection_point_local = false;
 
-/*
- * GUC variable
- *
- * This GUC is useful to control if statistics should be enabled or not
- * during a test with injection points, like for example if a test relies
- * on a callback run in a critical section where no allocation should happen.
- */
-bool		inj_stats_enabled = false;
-
 /* Shared memory init callbacks */
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
@@ -124,7 +115,7 @@ static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
  * when initializing dynamically with a DSM or when loading the module.
  */
 static void
-injection_point_init_state(void *ptr)
+injection_point_init_state(void *ptr, void *arg)
 {
 	InjectionPointSharedState *state = (InjectionPointSharedState *) ptr;
 
@@ -168,7 +159,7 @@ injection_shmem_startup(void)
 		 * First time through, so initialize.  This is shared with the dynamic
 		 * initialization using a DSM.
 		 */
-		injection_point_init_state(inj_state);
+		injection_point_init_state(inj_state, NULL);
 	}
 
 	LWLockRelease(AddinShmemInitLock);
@@ -188,7 +179,7 @@ injection_init_shmem(void)
 	inj_state = GetNamedDSMSegment("injection_points",
 								   sizeof(InjectionPointSharedState),
 								   injection_point_init_state,
-								   &found);
+								   &found, NULL);
 }
 
 /*
@@ -234,9 +225,6 @@ injection_points_cleanup(int code, Datum arg)
 		char	   *name = strVal(lfirst(lc));
 
 		(void) InjectionPointDetach(name);
-
-		/* Remove stats entry */
-		pgstat_drop_inj(name);
 	}
 }
 
@@ -249,8 +237,6 @@ injection_error(const char *name, const void *private_data, void *arg)
 
 	if (!injection_point_allowed(condition))
 		return;
-
-	pgstat_report_inj(name);
 
 	if (argstr)
 		elog(ERROR, "error triggered for injection point %s (%s)",
@@ -267,8 +253,6 @@ injection_notice(const char *name, const void *private_data, void *arg)
 
 	if (!injection_point_allowed(condition))
 		return;
-
-	pgstat_report_inj(name);
 
 	if (argstr)
 		elog(NOTICE, "notice triggered for injection point %s (%s)",
@@ -291,8 +275,6 @@ injection_wait(const char *name, const void *private_data, void *arg)
 
 	if (!injection_point_allowed(condition))
 		return;
-
-	pgstat_report_inj(name);
 
 	/*
 	 * Use the injection point name for this custom wait event.  Note that
@@ -370,7 +352,6 @@ injection_points_attach(PG_FUNCTION_ARGS)
 		condition.pid = MyProcPid;
 	}
 
-	pgstat_report_inj_fixed(1, 0, 0, 0, 0);
 	InjectionPointAttach(name, "injection_points", function, &condition,
 						 sizeof(InjectionPointCondition));
 
@@ -384,9 +365,46 @@ injection_points_attach(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldctx);
 	}
 
-	/* Add entry for stats */
-	pgstat_create_inj(name);
+	PG_RETURN_VOID();
+}
 
+/*
+ * SQL function for creating an injection point with library name, function
+ * name and private data.
+ */
+PG_FUNCTION_INFO_V1(injection_points_attach_func);
+Datum
+injection_points_attach_func(PG_FUNCTION_ARGS)
+{
+	char	   *name;
+	char	   *lib_name;
+	char	   *function;
+	bytea	   *private_data = NULL;
+	int			private_data_size = 0;
+
+	if (PG_ARGISNULL(0))
+		elog(ERROR, "injection point name cannot be NULL");
+	if (PG_ARGISNULL(1))
+		elog(ERROR, "injection point library cannot be NULL");
+	if (PG_ARGISNULL(2))
+		elog(ERROR, "injection point function cannot be NULL");
+
+	name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	lib_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	function = text_to_cstring(PG_GETARG_TEXT_PP(2));
+
+	if (!PG_ARGISNULL(3))
+	{
+		private_data = PG_GETARG_BYTEA_PP(3);
+		private_data_size = VARSIZE_ANY_EXHDR(private_data);
+	}
+
+	if (private_data != NULL)
+		InjectionPointAttach(name, lib_name, function, VARDATA_ANY(private_data),
+							 private_data_size);
+	else
+		InjectionPointAttach(name, lib_name, function, NULL,
+							 0);
 	PG_RETURN_VOID();
 }
 
@@ -402,7 +420,6 @@ injection_points_load(PG_FUNCTION_ARGS)
 	if (inj_state == NULL)
 		injection_init_shmem();
 
-	pgstat_report_inj_fixed(0, 0, 0, 0, 1);
 	INJECTION_POINT_LOAD(name);
 
 	PG_RETURN_VOID();
@@ -425,7 +442,6 @@ injection_points_run(PG_FUNCTION_ARGS)
 	if (!PG_ARGISNULL(1))
 		arg = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-	pgstat_report_inj_fixed(0, 0, 1, 0, 0);
 	INJECTION_POINT(name, arg);
 
 	PG_RETURN_VOID();
@@ -448,7 +464,6 @@ injection_points_cached(PG_FUNCTION_ARGS)
 	if (!PG_ARGISNULL(1))
 		arg = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-	pgstat_report_inj_fixed(0, 0, 0, 1, 0);
 	INJECTION_POINT_CACHED(name, arg);
 
 	PG_RETURN_VOID();
@@ -525,7 +540,6 @@ injection_points_detach(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	pgstat_report_inj_fixed(0, 1, 0, 0, 0);
 	if (!InjectionPointDetach(name))
 		elog(ERROR, "could not detach injection point \"%s\"", name);
 
@@ -539,12 +553,46 @@ injection_points_detach(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldctx);
 	}
 
-	/* Remove stats entry */
-	pgstat_drop_inj(name);
-
 	PG_RETURN_VOID();
 }
 
+/*
+ * SQL function for listing all the injection points attached.
+ */
+PG_FUNCTION_INFO_V1(injection_points_list);
+Datum
+injection_points_list(PG_FUNCTION_ARGS)
+{
+#define NUM_INJECTION_POINTS_LIST 3
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	List	   *inj_points;
+	ListCell   *lc;
+
+	/* Build a tuplestore to return our results in */
+	InitMaterializedSRF(fcinfo, 0);
+
+	inj_points = InjectionPointList();
+
+	foreach(lc, inj_points)
+	{
+		Datum		values[NUM_INJECTION_POINTS_LIST];
+		bool		nulls[NUM_INJECTION_POINTS_LIST];
+		InjectionPointData *inj_point = lfirst(lc);
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
+
+		values[0] = PointerGetDatum(cstring_to_text(inj_point->name));
+		values[1] = PointerGetDatum(cstring_to_text(inj_point->library));
+		values[2] = PointerGetDatum(cstring_to_text(inj_point->function));
+
+		/* shove row into tuplestore */
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
+	}
+
+	return (Datum) 0;
+#undef NUM_INJECTION_POINTS_LIST
+}
 
 void
 _PG_init(void)
@@ -552,25 +600,9 @@ _PG_init(void)
 	if (!process_shared_preload_libraries_in_progress)
 		return;
 
-	DefineCustomBoolVariable("injection_points.stats",
-							 "Enables statistics for injection points.",
-							 NULL,
-							 &inj_stats_enabled,
-							 false,
-							 PGC_POSTMASTER,
-							 0,
-							 NULL,
-							 NULL,
-							 NULL);
-
-	MarkGUCPrefixReserved("injection_points");
-
 	/* Shared memory initialization */
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = injection_shmem_request;
 	prev_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = injection_shmem_startup;
-
-	pgstat_register_inj();
-	pgstat_register_inj_fixed();
 }

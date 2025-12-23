@@ -490,9 +490,8 @@ ec_member_matches_ctid(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * create_tidscan_paths
- *	  Create paths corresponding to direct TID scans of the given rel.
- *
- *	  Candidate paths are added to the rel's pathlist (using add_path).
+ *	  Create paths corresponding to direct TID scans of the given rel and add
+ *	  them to the corresponding path list via add_path or add_partial_path.
  */
 bool
 create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
@@ -553,7 +552,24 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 
 		add_path(rel, (Path *) create_tidrangescan_path(root, rel,
 														tidrangequals,
-														required_outer));
+														required_outer,
+														0));
+
+		/* If appropriate, consider parallel tid range scan. */
+		if (rel->consider_parallel && required_outer == NULL)
+		{
+			int			parallel_workers;
+
+			parallel_workers = compute_parallel_worker(rel, rel->pages, -1,
+													   max_parallel_workers_per_gather);
+
+			if (parallel_workers > 0)
+				add_partial_path(rel, (Path *) create_tidrangescan_path(root,
+																		rel,
+																		tidrangequals,
+																		required_outer,
+																		parallel_workers));
+		}
 	}
 
 	/*

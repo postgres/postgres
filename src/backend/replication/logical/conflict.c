@@ -29,6 +29,7 @@ static const char *const ConflictTypeNames[] = {
 	[CT_UPDATE_EXISTS] = "update_exists",
 	[CT_UPDATE_MISSING] = "update_missing",
 	[CT_DELETE_ORIGIN_DIFFERS] = "delete_origin_differs",
+	[CT_UPDATE_DELETED] = "update_deleted",
 	[CT_DELETE_MISSING] = "delete_missing",
 	[CT_MULTIPLE_UNIQUE_CONFLICTS] = "multiple_unique_conflicts"
 };
@@ -54,7 +55,7 @@ static char *build_index_value_desc(EState *estate, Relation localrel,
 
 /*
  * Get the xmin and commit timestamp data (origin and timestamp) associated
- * with the provided local tuple.
+ * with the provided local row.
  *
  * Return true if the commit timestamp data was found, false otherwise.
  */
@@ -88,12 +89,12 @@ GetTupleTransactionInfo(TupleTableSlot *localslot, TransactionId *xmin,
  * This function is used to report a conflict while applying replication
  * changes.
  *
- * 'searchslot' should contain the tuple used to search the local tuple to be
+ * 'searchslot' should contain the tuple used to search the local row to be
  * updated or deleted.
  *
  * 'remoteslot' should contain the remote new tuple, if any.
  *
- * conflicttuples is a list of local tuples that caused the conflict and the
+ * conflicttuples is a list of local rows that caused the conflict and the
  * conflict related information. See ConflictTupleInfo.
  *
  * The caller must ensure that all the indexes passed in ConflictTupleInfo are
@@ -176,6 +177,7 @@ errcode_apply_conflict(ConflictType type)
 		case CT_UPDATE_ORIGIN_DIFFERS:
 		case CT_UPDATE_MISSING:
 		case CT_DELETE_ORIGIN_DIFFERS:
+		case CT_UPDATE_DELETED:
 		case CT_DELETE_MISSING:
 			return errcode(ERRCODE_T_R_SERIALIZATION_FAILURE);
 	}
@@ -189,9 +191,9 @@ errcode_apply_conflict(ConflictType type)
  *
  * The DETAIL line comprises of two parts:
  * 1. Explanation of the conflict type, including the origin and commit
- *    timestamp of the existing local tuple.
- * 2. Display of conflicting key, existing local tuple, remote new tuple, and
- *    replica identity columns, if any. The remote old tuple is excluded as its
+ *    timestamp of the existing local row.
+ * 2. Display of conflicting key, existing local row, remote new row, and
+ *    replica identity columns, if any. The remote old row is excluded as its
  *    information is covered in the replica identity columns.
  */
 static void
@@ -261,6 +263,26 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 
 			break;
 
+		case CT_UPDATE_DELETED:
+			if (localts)
+			{
+				if (localorigin == InvalidRepOriginId)
+					appendStringInfo(&err_detail, _("The row to be updated was deleted locally in transaction %u at %s."),
+									 localxmin, timestamptz_to_str(localts));
+				else if (replorigin_by_oid(localorigin, true, &origin_name))
+					appendStringInfo(&err_detail, _("The row to be updated was deleted by a different origin \"%s\" in transaction %u at %s."),
+									 origin_name, localxmin, timestamptz_to_str(localts));
+
+				/* The origin that modified this row has been removed. */
+				else
+					appendStringInfo(&err_detail, _("The row to be updated was deleted by a non-existent origin in transaction %u at %s."),
+									 localxmin, timestamptz_to_str(localts));
+			}
+			else
+				appendStringInfo(&err_detail, _("The row to be updated was deleted."));
+
+			break;
+
 		case CT_UPDATE_MISSING:
 			appendStringInfoString(&err_detail, _("Could not find the row to be updated."));
 			break;
@@ -291,7 +313,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 										 localslot, remoteslot, indexoid);
 
 	/*
-	 * Next, append the key values, existing local tuple, remote tuple and
+	 * Next, append the key values, existing local row, remote row, and
 	 * replica identity columns after the message.
 	 */
 	if (val_desc)
@@ -309,7 +331,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 
 /*
  * Helper function to build the additional details for conflicting key,
- * existing local tuple, remote tuple, and replica identity columns.
+ * existing local row, remote row, and replica identity columns.
  *
  * If the return value is NULL, it indicates that the current user lacks
  * permissions to view the columns involved.
@@ -351,7 +373,7 @@ build_tuple_value_details(EState *estate, ResultRelInfo *relinfo,
 	{
 		/*
 		 * The 'modifiedCols' only applies to the new tuple, hence we pass
-		 * NULL for the existing local tuple.
+		 * NULL for the existing local row.
 		 */
 		desc = ExecBuildSlotValueDescription(relid, localslot, tupdesc,
 											 NULL, 64);
@@ -361,12 +383,12 @@ build_tuple_value_details(EState *estate, ResultRelInfo *relinfo,
 			if (tuple_value.len > 0)
 			{
 				appendStringInfoString(&tuple_value, "; ");
-				appendStringInfo(&tuple_value, _("existing local tuple %s"),
+				appendStringInfo(&tuple_value, _("existing local row %s"),
 								 desc);
 			}
 			else
 			{
-				appendStringInfo(&tuple_value, _("Existing local tuple %s"),
+				appendStringInfo(&tuple_value, _("Existing local row %s"),
 								 desc);
 			}
 		}
@@ -393,11 +415,11 @@ build_tuple_value_details(EState *estate, ResultRelInfo *relinfo,
 			if (tuple_value.len > 0)
 			{
 				appendStringInfoString(&tuple_value, "; ");
-				appendStringInfo(&tuple_value, _("remote tuple %s"), desc);
+				appendStringInfo(&tuple_value, _("remote row %s"), desc);
 			}
 			else
 			{
-				appendStringInfo(&tuple_value, _("Remote tuple %s"), desc);
+				appendStringInfo(&tuple_value, _("Remote row %s"), desc);
 			}
 		}
 	}

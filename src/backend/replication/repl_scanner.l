@@ -155,7 +155,7 @@ UPLOAD_MANIFEST		{ return K_UPLOAD_MANIFEST; }
 {hexdigit}+\/{hexdigit}+		{
 					uint32	hi,
 							lo;
-					if (sscanf(yytext, "%X/%X", &hi, &lo) != 2)
+					if (sscanf(yytext, "%X/%08X", &hi, &lo) != 2)
 						replication_yyerror(NULL, yyscanner, "invalid streaming start location");
 					yylval->recptr = ((uint64) hi) << 32 | lo;
 					return RECPTR;

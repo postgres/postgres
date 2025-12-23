@@ -74,7 +74,7 @@ alloc_city_table(PlannerInfo *root, int num_gene)
 	 * palloc one extra location so that nodes numbered 1..n can be indexed
 	 * directly; 0 will not be used
 	 */
-	city_table = (City *) palloc((num_gene + 1) * sizeof(City));
+	city_table = palloc_array(City, num_gene + 1);
 
 	return city_table;
 }

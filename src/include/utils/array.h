@@ -65,8 +65,8 @@
 #include "utils/expandeddatum.h"
 
 /* avoid including execnodes.h here */
-struct ExprState;
-struct ExprContext;
+typedef struct ExprState ExprState;
+typedef struct ExprContext ExprContext;
 
 
 /*
@@ -352,8 +352,8 @@ extern PGDLLIMPORT bool Array_nulls;
  * prototypes for functions defined in arrayfuncs.c
  */
 extern void CopyArrayEls(ArrayType *array,
-						 Datum *values,
-						 bool *nulls,
+						 const Datum *values,
+						 const bool *nulls,
 						 int nitems,
 						 int typlen,
 						 bool typbyval,
@@ -384,7 +384,7 @@ extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
 							int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
 extern Datum array_map(Datum arrayd,
-					   struct ExprState *exprstate, struct ExprContext *econtext,
+					   ExprState *exprstate, ExprContext *econtext,
 					   Oid retType, ArrayMapState *amstate);
 
 extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
@@ -405,14 +405,14 @@ extern ArrayType *construct_empty_array(Oid elmtype);
 extern ExpandedArrayHeader *construct_empty_expanded_array(Oid element_type,
 														   MemoryContext parentcontext,
 														   ArrayMetaState *metacache);
-extern void deconstruct_array(ArrayType *array,
+extern void deconstruct_array(const ArrayType *array,
 							  Oid elmtype,
 							  int elmlen, bool elmbyval, char elmalign,
 							  Datum **elemsp, bool **nullsp, int *nelemsp);
-extern void deconstruct_array_builtin(ArrayType *array,
+extern void deconstruct_array_builtin(const ArrayType *array,
 									  Oid elmtype,
 									  Datum **elemsp, bool **nullsp, int *nelemsp);
-extern bool array_contains_nulls(ArrayType *array);
+extern bool array_contains_nulls(const ArrayType *array);
 
 extern ArrayBuildState *initArrayResult(Oid element_type,
 										MemoryContext rcontext, bool subcontext);

@@ -40,7 +40,7 @@ make_parsestate(ParseState *parentParseState)
 {
 	ParseState *pstate;
 
-	pstate = palloc0(sizeof(ParseState));
+	pstate = palloc0_object(ParseState);
 
 	pstate->parentParseState = parentParseState;
 
@@ -408,7 +408,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 
 						typeid = INT8OID;
 						typelen = sizeof(int64);
-						typebyval = FLOAT8PASSBYVAL;	/* int8 and float8 alike */
+						typebyval = true;
 					}
 				}
 				else

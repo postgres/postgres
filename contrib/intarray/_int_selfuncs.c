@@ -177,7 +177,7 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	if (query->size == 0)
 	{
 		ReleaseVariableStats(vardata);
-		return (Selectivity) 0.0;
+		PG_RETURN_FLOAT8(0.0);
 	}
 
 	/*
@@ -210,8 +210,8 @@ _int_matchsel(PG_FUNCTION_ARGS)
 			 */
 			if (sslot.nnumbers == sslot.nvalues + 3)
 			{
-				/* Grab the lowest frequency. */
-				minfreq = sslot.numbers[sslot.nnumbers - (sslot.nnumbers - sslot.nvalues)];
+				/* Grab the minimal MCE frequency. */
+				minfreq = sslot.numbers[sslot.nvalues];
 
 				mcelems = sslot.values;
 				mcefreqs = sslot.numbers;
@@ -269,8 +269,11 @@ int_query_opr_selec(ITEM *item, Datum *mcelems, float4 *mcefreqs,
 		else
 		{
 			/*
-			 * The element is not in MCELEM.  Punt, but assume that the
-			 * selectivity cannot be more than minfreq / 2.
+			 * The element is not in MCELEM.  Estimate its frequency as half
+			 * that of the least-frequent MCE.  (We know it cannot be more
+			 * than minfreq, and it could be a great deal less.  Half seems
+			 * like a good compromise.)  For probably-historical reasons,
+			 * clamp to not more than DEFAULT_EQ_SEL.
 			 */
 			selec = Min(DEFAULT_EQ_SEL, minfreq / 2);
 		}

@@ -24,8 +24,8 @@
 
 
 /* Forward declarations, to avoid including parsenodes.h here */
-struct Query;
-struct RawStmt;
+typedef struct Query Query;
+typedef struct RawStmt RawStmt;
 
 /* possible values for plan_cache_mode */
 typedef enum
@@ -105,8 +105,8 @@ typedef void (*PostRewriteHook) (List *querytree_list, void *arg);
 typedef struct CachedPlanSource
 {
 	int			magic;			/* should equal CACHEDPLANSOURCE_MAGIC */
-	struct RawStmt *raw_parse_tree; /* output of raw_parser(), or NULL */
-	struct Query *analyzed_parse_tree;	/* analyzed parse tree, or NULL */
+	RawStmt    *raw_parse_tree; /* output of raw_parser(), or NULL */
+	Query	   *analyzed_parse_tree;	/* analyzed parse tree, or NULL */
 	const char *query_string;	/* source text of query */
 	CommandTag	commandTag;		/* command tag for query */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
@@ -202,13 +202,13 @@ extern void ResetPlanCache(void);
 
 extern void ReleaseAllPlanCacheRefsInOwner(ResourceOwner owner);
 
-extern CachedPlanSource *CreateCachedPlan(struct RawStmt *raw_parse_tree,
+extern CachedPlanSource *CreateCachedPlan(RawStmt *raw_parse_tree,
 										  const char *query_string,
 										  CommandTag commandTag);
-extern CachedPlanSource *CreateCachedPlanForQuery(struct Query *analyzed_parse_tree,
+extern CachedPlanSource *CreateCachedPlanForQuery(Query *analyzed_parse_tree,
 												  const char *query_string,
 												  CommandTag commandTag);
-extern CachedPlanSource *CreateOneShotCachedPlan(struct RawStmt *raw_parse_tree,
+extern CachedPlanSource *CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
 												 const char *query_string,
 												 CommandTag commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,

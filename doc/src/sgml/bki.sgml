@@ -1042,7 +1042,7 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
     </listitem>
     <listitem>
      <para>
-      Define indexes and toast tables.
+      Define indexes and TOAST tables.
      </para>
     </listitem>
     <listitem>

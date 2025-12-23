@@ -80,8 +80,8 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
  * The maximum allowed value of usage_count represents a tradeoff between
  * accuracy and speed of the clock-sweep buffer management algorithm.  A
  * large value (comparable to NBuffers) would approximate LRU semantics.
- * But it can take as many as BM_MAX_USAGE_COUNT+1 complete cycles of
- * clock sweeps to find a free buffer, so in practice we don't want the
+ * But it can take as many as BM_MAX_USAGE_COUNT+1 complete cycles of the
+ * clock-sweep hand to find a free buffer, so in practice we don't want the
  * value to be very large.
  */
 #define BM_MAX_USAGE_COUNT	5
@@ -211,29 +211,36 @@ BufMappingPartitionLockByIndex(uint32 index)
 /*
  *	BufferDesc -- shared descriptor/state data for a single shared buffer.
  *
- * Note: Buffer header lock (BM_LOCKED flag) must be held to examine or change
- * tag, state or wait_backend_pgprocno fields.  In general, buffer header lock
- * is a spinlock which is combined with flags, refcount and usagecount into
- * single atomic variable.  This layout allow us to do some operations in a
- * single atomic operation, without actually acquiring and releasing spinlock;
- * for instance, increase or decrease refcount.  buf_id field never changes
- * after initialization, so does not need locking.  freeNext is protected by
- * the buffer_strategy_lock not buffer header lock.  The LWLock can take care
- * of itself.  The buffer header lock is *not* used to control access to the
- * data in the buffer!
+ * The state of the buffer is controlled by the, drumroll, state variable. It
+ * only may be modified using atomic operations.  The state variable combines
+ * various flags, the buffer's refcount and usage count. See comment above
+ * BUF_REFCOUNT_BITS for details about the division.  This layout allow us to
+ * do some operations in a single atomic operation, without actually acquiring
+ * and releasing the spinlock; for instance, increasing or decreasing the
+ * refcount.
  *
- * It's assumed that nobody changes the state field while buffer header lock
- * is held.  Thus buffer header lock holder can do complex updates of the
- * state variable in single write, simultaneously with lock release (cleaning
- * BM_LOCKED flag).  On the other hand, updating of state without holding
- * buffer header lock is restricted to CAS, which ensures that BM_LOCKED flag
- * is not set.  Atomic increment/decrement, OR/AND etc. are not allowed.
+ * One of the aforementioned flags is BM_LOCKED, used to implement the buffer
+ * header lock. See the following paragraphs, as well as the documentation for
+ * individual fields, for more details.
  *
- * An exception is that if we have the buffer pinned, its tag can't change
- * underneath us, so we can examine the tag without locking the buffer header.
- * Also, in places we do one-time reads of the flags without bothering to
- * lock the buffer header; this is generally for situations where we don't
- * expect the flag bit being tested to be changing.
+ * The identity of the buffer (BufferDesc.tag) can only be changed by the
+ * backend holding the buffer header lock.
+ *
+ * If the lock is held by another backend, neither additional buffer pins may
+ * be established (we would like to relax this eventually), nor can flags be
+ * set/cleared. These operations either need to acquire the buffer header
+ * spinlock, or need to use a CAS loop, waiting for the lock to be released if
+ * it is held.  However, existing buffer pins may be released while the buffer
+ * header spinlock is held, using an atomic subtraction.
+ *
+ * The LWLock can take care of itself.  The buffer header lock is *not* used
+ * to control access to the data in the buffer!
+ *
+ * If we have the buffer pinned, its tag can't change underneath us, so we can
+ * examine the tag without locking the buffer header.  Also, in places we do
+ * one-time reads of the flags without bothering to lock the buffer header;
+ * this is generally for situations where we don't expect the flag bit being
+ * tested to be changing.
  *
  * We can't physically remove items from a disk page if another backend has
  * the buffer pinned.  Hence, a backend may need to wait for all other pins
@@ -257,14 +264,29 @@ BufMappingPartitionLockByIndex(uint32 index)
  */
 typedef struct BufferDesc
 {
-	BufferTag	tag;			/* ID of page contained in buffer */
-	int			buf_id;			/* buffer's index number (from 0) */
+	/*
+	 * ID of page contained in buffer. The buffer header spinlock needs to be
+	 * held to modify this field.
+	 */
+	BufferTag	tag;
 
-	/* state of the tag, containing flags, refcount and usagecount */
+	/*
+	 * Buffer's index number (from 0). The field never changes after
+	 * initialization, so does not need locking.
+	 */
+	int			buf_id;
+
+	/*
+	 * State of the buffer, containing flags, refcount and usagecount. See
+	 * BUF_* and BM_* defines at the top of this file.
+	 */
 	pg_atomic_uint32 state;
 
-	int			wait_backend_pgprocno;	/* backend of pin-count waiter */
-	int			freeNext;		/* link in freelist chain */
+	/*
+	 * Backend of pin-count waiter. The buffer header spinlock needs to be
+	 * held to modify this field.
+	 */
+	int			wait_backend_pgprocno;
 
 	PgAioWaitRef io_wref;		/* set iff AIO is in progress */
 	LWLock		content_lock;	/* to lock access to buffer contents */
@@ -361,24 +383,60 @@ BufferDescriptorGetContentLock(const BufferDesc *bdesc)
 }
 
 /*
- * The freeNext field is either the index of the next freelist entry,
- * or one of these special values:
- */
-#define FREENEXT_END_OF_LIST	(-1)
-#define FREENEXT_NOT_IN_LIST	(-2)
-
-/*
  * Functions for acquiring/releasing a shared buffer header's spinlock.  Do
  * not apply these to local buffers!
  */
 extern uint32 LockBufHdr(BufferDesc *desc);
 
+/*
+ * Unlock the buffer header.
+ *
+ * This can only be used if the caller did not modify BufferDesc.state. To
+ * set/unset flag bits or change the refcount use UnlockBufHdrExt().
+ */
 static inline void
-UnlockBufHdr(BufferDesc *desc, uint32 buf_state)
+UnlockBufHdr(BufferDesc *desc)
 {
-	pg_write_barrier();
-	pg_atomic_write_u32(&desc->state, buf_state & (~BM_LOCKED));
+	Assert(pg_atomic_read_u32(&desc->state) & BM_LOCKED);
+
+	pg_atomic_fetch_sub_u32(&desc->state, BM_LOCKED);
 }
+
+/*
+ * Unlock the buffer header, while atomically adding the flags in set_bits,
+ * unsetting the ones in unset_bits and changing the refcount by
+ * refcount_change.
+ *
+ * Note that this approach would not work for usagecount, since we need to cap
+ * the usagecount at BM_MAX_USAGE_COUNT.
+ */
+static inline uint32
+UnlockBufHdrExt(BufferDesc *desc, uint32 old_buf_state,
+				uint32 set_bits, uint32 unset_bits,
+				int refcount_change)
+{
+	for (;;)
+	{
+		uint32		buf_state = old_buf_state;
+
+		Assert(buf_state & BM_LOCKED);
+
+		buf_state |= set_bits;
+		buf_state &= ~unset_bits;
+		buf_state &= ~BM_LOCKED;
+
+		if (refcount_change != 0)
+			buf_state += BUF_REFCOUNT_ONE * refcount_change;
+
+		if (pg_atomic_compare_exchange_u32(&desc->state, &old_buf_state,
+										   buf_state))
+		{
+			return old_buf_state;
+		}
+	}
+}
+
+extern uint32 WaitBufHdrUnlocked(BufferDesc *buf);
 
 /* in bufmgr.c */
 
@@ -434,6 +492,8 @@ extern void IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_co
 extern void ScheduleBufferTagForWriteback(WritebackContext *wb_context,
 										  IOContext io_context, BufferTag *tag);
 
+extern void TrackNewBufferPin(Buffer buf);
+
 /* solely to make it easier to write tests */
 extern bool StartBufferIO(BufferDesc *buf, bool forInput, bool nowait);
 extern void TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits,
@@ -444,7 +504,6 @@ extern void TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag
 extern IOContext IOContextForStrategy(BufferAccessStrategy strategy);
 extern BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy,
 									 uint32 *buf_state, bool *from_ring);
-extern void StrategyFreeBuffer(BufferDesc *buf);
 extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
 								 BufferDesc *buf, bool from_ring);
 
@@ -453,7 +512,6 @@ extern void StrategyNotifyBgWriter(int bgwprocno);
 
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
-extern bool have_free_buffer(void);
 
 /* buf_table.c */
 extern Size BufTableShmemSize(int size);
@@ -486,8 +544,8 @@ extern bool StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool nowait);
 extern void FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln);
 extern void InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced);
 extern void DropRelationLocalBuffers(RelFileLocator rlocator,
-									 ForkNumber forkNum,
-									 BlockNumber firstDelBlock);
+									 ForkNumber *forkNum, int nforks,
+									 BlockNumber *firstDelBlock);
 extern void DropRelationAllLocalBuffers(RelFileLocator rlocator);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 

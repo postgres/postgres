@@ -25,8 +25,11 @@
 #define NUM_BUFFERCACHE_EVICT_ELEM 2
 #define NUM_BUFFERCACHE_EVICT_RELATION_ELEM 3
 #define NUM_BUFFERCACHE_EVICT_ALL_ELEM 3
+#define NUM_BUFFERCACHE_MARK_DIRTY_ELEM 2
+#define NUM_BUFFERCACHE_MARK_DIRTY_RELATION_ELEM 3
+#define NUM_BUFFERCACHE_MARK_DIRTY_ALL_ELEM 3
 
-#define NUM_BUFFERCACHE_NUMA_ELEM	3
+#define NUM_BUFFERCACHE_OS_PAGES_ELEM	3
 
 PG_MODULE_MAGIC_EXT(
 					.name = "pg_buffercache",
@@ -67,14 +70,16 @@ typedef struct
 } BufferCachePagesContext;
 
 /*
- * Record structure holding the to be exposed cache data.
+ * Record structure holding the to be exposed cache data for OS pages.  This
+ * structure is used by pg_buffercache_os_pages(), where NUMA information may
+ * or may not be included.
  */
 typedef struct
 {
 	uint32		bufferid;
 	int64		page_num;
 	int32		numa_node;
-} BufferCacheNumaRec;
+} BufferCacheOsPagesRec;
 
 /*
  * Function context for data persisting over repeated calls.
@@ -82,11 +87,9 @@ typedef struct
 typedef struct
 {
 	TupleDesc	tupdesc;
-	int			buffers_per_page;
-	int			pages_per_buffer;
-	int			os_page_size;
-	BufferCacheNumaRec *record;
-} BufferCacheNumaContext;
+	bool		include_numa;
+	BufferCacheOsPagesRec *record;
+} BufferCacheOsPagesContext;
 
 
 /*
@@ -94,12 +97,16 @@ typedef struct
  * relation node/tablespace/database/blocknum and dirty indicator.
  */
 PG_FUNCTION_INFO_V1(pg_buffercache_pages);
+PG_FUNCTION_INFO_V1(pg_buffercache_os_pages);
 PG_FUNCTION_INFO_V1(pg_buffercache_numa_pages);
 PG_FUNCTION_INFO_V1(pg_buffercache_summary);
 PG_FUNCTION_INFO_V1(pg_buffercache_usage_counts);
 PG_FUNCTION_INFO_V1(pg_buffercache_evict);
 PG_FUNCTION_INFO_V1(pg_buffercache_evict_relation);
 PG_FUNCTION_INFO_V1(pg_buffercache_evict_all);
+PG_FUNCTION_INFO_V1(pg_buffercache_mark_dirty);
+PG_FUNCTION_INFO_V1(pg_buffercache_mark_dirty_relation);
+PG_FUNCTION_INFO_V1(pg_buffercache_mark_dirty_all);
 
 
 /* Only need to touch memory once per backend process lifetime */
@@ -127,7 +134,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Create a user function context for cross-call persistence */
-		fctx = (BufferCachePagesContext *) palloc(sizeof(BufferCachePagesContext));
+		fctx = palloc_object(BufferCachePagesContext);
 
 		/*
 		 * To smoothly support upgrades from version 1.0 of this extension
@@ -194,6 +201,8 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			BufferDesc *bufHdr;
 			uint32		buf_state;
 
+			CHECK_FOR_INTERRUPTS();
+
 			bufHdr = GetBufferDescriptor(i);
 			/* Lock each buffer header before inspecting. */
 			buf_state = LockBufHdr(bufHdr);
@@ -218,7 +227,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			else
 				fctx->record[i].isvalid = false;
 
-			UnlockBufHdr(bufHdr, buf_state);
+			UnlockBufHdr(bufHdr);
 		}
 	}
 
@@ -261,7 +270,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			nulls[2] = false;
 			values[3] = ObjectIdGetDatum(fctx->record[i].reldatabase);
 			nulls[3] = false;
-			values[4] = ObjectIdGetDatum(fctx->record[i].forknum);
+			values[4] = Int16GetDatum(fctx->record[i].forknum);
 			nulls[4] = false;
 			values[5] = Int64GetDatum((int64) fctx->record[i].blocknum);
 			nulls[5] = false;
@@ -285,26 +294,32 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 }
 
 /*
- * Inquire about NUMA memory mappings for shared buffers.
+ * Inquire about OS pages mappings for shared buffers, with NUMA information,
+ * optionally.
  *
- * Returns NUMA node ID for each memory page used by the buffer. Buffers may
- * be smaller or larger than OS memory pages. For each buffer we return one
- * entry for each memory page used by the buffer (if the buffer is smaller,
- * it only uses a part of one memory page).
+ * When "include_numa" is false, this routines ignores everything related
+ * to NUMA (returned as NULL values), returning mapping information between
+ * shared buffers and OS pages.
+ *
+ * When "include_numa" is true, NUMA is initialized and numa_node values
+ * are generated.  In order to get reliable results we also need to touch
+ * memory pages, so that the inquiry about NUMA memory node does not return
+ * -2, indicating unmapped/unallocated pages.
+ *
+ * Buffers may be smaller or larger than OS memory pages. For each buffer we
+ * return one entry for each memory page used by the buffer (if the buffer is
+ * smaller, it only uses a part of one memory page).
  *
  * We expect both sizes (for buffers and memory pages) to be a power-of-2, so
  * one is always a multiple of the other.
  *
- * In order to get reliable results we also need to touch memory pages, so
- * that the inquiry about NUMA memory node doesn't return -2 (which indicates
- * unmapped/unallocated pages).
  */
-Datum
-pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
+static Datum
+pg_buffercache_os_pages_internal(FunctionCallInfo fcinfo, bool include_numa)
 {
 	FuncCallContext *funcctx;
 	MemoryContext oldcontext;
-	BufferCacheNumaContext *fctx;	/* User function context. */
+	BufferCacheOsPagesContext *fctx;	/* User function context. */
 	TupleDesc	tupledesc;
 	TupleDesc	expected_tupledesc;
 	HeapTuple	tuple;
@@ -315,16 +330,15 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		int			i,
 					idx;
 		Size		os_page_size;
-		void	  **os_page_ptrs;
-		int		   *os_page_status;
-		uint64		os_page_count;
 		int			pages_per_buffer;
+		int		   *os_page_status = NULL;
+		uint64		os_page_count = 0;
 		int			max_entries;
-		volatile uint64 touch pg_attribute_unused();
 		char	   *startptr,
 				   *endptr;
 
-		if (pg_numa_init() == -1)
+		/* If NUMA information is requested, initialize NUMA support. */
+		if (include_numa && pg_numa_init() == -1)
 			elog(ERROR, "libnuma initialization failed or NUMA is not supported on this platform");
 
 		/*
@@ -352,46 +366,56 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		 */
 		Assert((os_page_size % BLCKSZ == 0) || (BLCKSZ % os_page_size == 0));
 
-		/*
-		 * How many addresses we are going to query? Simply get the page for
-		 * the first buffer, and first page after the last buffer, and count
-		 * the pages from that.
-		 */
-		startptr = (char *) TYPEALIGN_DOWN(os_page_size,
-										   BufferGetBlock(1));
-		endptr = (char *) TYPEALIGN(os_page_size,
-									(char *) BufferGetBlock(NBuffers) + BLCKSZ);
-		os_page_count = (endptr - startptr) / os_page_size;
-
-		/* Used to determine the NUMA node for all OS pages at once */
-		os_page_ptrs = palloc0(sizeof(void *) * os_page_count);
-		os_page_status = palloc(sizeof(uint64) * os_page_count);
-
-		/* Fill pointers for all the memory pages. */
-		idx = 0;
-		for (char *ptr = startptr; ptr < endptr; ptr += os_page_size)
+		if (include_numa)
 		{
-			os_page_ptrs[idx++] = ptr;
+			void	  **os_page_ptrs = NULL;
 
-			/* Only need to touch memory once per backend process lifetime */
-			if (firstNumaTouch)
-				pg_numa_touch_mem_if_required(touch, ptr);
+			/*
+			 * How many addresses we are going to query?  Simply get the page
+			 * for the first buffer, and first page after the last buffer, and
+			 * count the pages from that.
+			 */
+			startptr = (char *) TYPEALIGN_DOWN(os_page_size,
+											   BufferGetBlock(1));
+			endptr = (char *) TYPEALIGN(os_page_size,
+										(char *) BufferGetBlock(NBuffers) + BLCKSZ);
+			os_page_count = (endptr - startptr) / os_page_size;
+
+			/* Used to determine the NUMA node for all OS pages at once */
+			os_page_ptrs = palloc0_array(void *, os_page_count);
+			os_page_status = palloc_array(int, os_page_count);
+
+			/*
+			 * Fill pointers for all the memory pages.  This loop stores and
+			 * touches (if needed) addresses into os_page_ptrs[] as input to
+			 * one big move_pages(2) inquiry system call, as done in
+			 * pg_numa_query_pages().
+			 */
+			idx = 0;
+			for (char *ptr = startptr; ptr < endptr; ptr += os_page_size)
+			{
+				os_page_ptrs[idx++] = ptr;
+
+				/* Only need to touch memory once per backend process lifetime */
+				if (firstNumaTouch)
+					pg_numa_touch_mem_if_required(ptr);
+			}
+
+			Assert(idx == os_page_count);
+
+			elog(DEBUG1, "NUMA: NBuffers=%d os_page_count=" UINT64_FORMAT " "
+				 "os_page_size=%zu", NBuffers, os_page_count, os_page_size);
+
+			/*
+			 * If we ever get 0xff back from kernel inquiry, then we probably
+			 * have bug in our buffers to OS page mapping code here.
+			 */
+			memset(os_page_status, 0xff, sizeof(int) * os_page_count);
+
+			/* Query NUMA status for all the pointers */
+			if (pg_numa_query_pages(0, os_page_count, os_page_ptrs, os_page_status) == -1)
+				elog(ERROR, "failed NUMA pages inquiry: %m");
 		}
-
-		Assert(idx == os_page_count);
-
-		elog(DEBUG1, "NUMA: NBuffers=%d os_page_count=" UINT64_FORMAT " "
-			 "os_page_size=%zu", NBuffers, os_page_count, os_page_size);
-
-		/*
-		 * If we ever get 0xff back from kernel inquiry, then we probably have
-		 * bug in our buffers to OS page mapping code here.
-		 */
-		memset(os_page_status, 0xff, sizeof(int) * os_page_count);
-
-		/* Query NUMA status for all the pointers */
-		if (pg_numa_query_pages(0, os_page_count, os_page_ptrs, os_page_status) == -1)
-			elog(ERROR, "failed NUMA pages inquiry: %m");
 
 		/* Initialize the multi-call context, load entries about buffers */
 
@@ -401,12 +425,12 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Create a user function context for cross-call persistence */
-		fctx = (BufferCacheNumaContext *) palloc(sizeof(BufferCacheNumaContext));
+		fctx = palloc_object(BufferCacheOsPagesContext);
 
 		if (get_call_result_type(fcinfo, NULL, &expected_tupledesc) != TYPEFUNC_COMPOSITE)
 			elog(ERROR, "return type must be a row type");
 
-		if (expected_tupledesc->natts != NUM_BUFFERCACHE_NUMA_ELEM)
+		if (expected_tupledesc->natts != NUM_BUFFERCACHE_OS_PAGES_ELEM)
 			elog(ERROR, "incorrect number of output arguments");
 
 		/* Construct a tuple descriptor for the result rows. */
@@ -419,6 +443,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 						   INT4OID, -1, 0);
 
 		fctx->tupdesc = BlessTupleDesc(tupledesc);
+		fctx->include_numa = include_numa;
 
 		/*
 		 * Each buffer needs at least one entry, but it might be offset in
@@ -430,15 +455,15 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		pages_per_buffer = Max(1, BLCKSZ / os_page_size) + 1;
 		max_entries = NBuffers * pages_per_buffer;
 
-		/* Allocate entries for BufferCachePagesRec records. */
-		fctx->record = (BufferCacheNumaRec *)
+		/* Allocate entries for BufferCacheOsPagesRec records. */
+		fctx->record = (BufferCacheOsPagesRec *)
 			MemoryContextAllocHuge(CurrentMemoryContext,
-								   sizeof(BufferCacheNumaRec) * max_entries);
+								   sizeof(BufferCacheOsPagesRec) * max_entries);
 
 		/* Return to original context when allocating transient memory */
 		MemoryContextSwitchTo(oldcontext);
 
-		if (firstNumaTouch)
+		if (include_numa && firstNumaTouch)
 			elog(DEBUG1, "NUMA: page-faulting the buffercache for proper NUMA readouts");
 
 		/*
@@ -448,10 +473,6 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		 * We don't hold the partition locks, so we don't get a consistent
 		 * snapshot across all buffers, but we do grab the buffer header
 		 * locks, so the information of each buffer is self-consistent.
-		 *
-		 * This loop touches and stores addresses into os_page_ptrs[] as input
-		 * to one big move_pages(2) inquiry system call. Basically we ask for
-		 * all memory pages for NBuffers.
 		 */
 		startptr = (char *) TYPEALIGN_DOWN(os_page_size, (char *) BufferGetBlock(1));
 		idx = 0;
@@ -459,7 +480,6 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		{
 			char	   *buffptr = (char *) BufferGetBlock(i + 1);
 			BufferDesc *bufHdr;
-			uint32		buf_state;
 			uint32		bufferid;
 			int32		page_num;
 			char	   *startptr_buff,
@@ -470,9 +490,9 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 			bufHdr = GetBufferDescriptor(i);
 
 			/* Lock each buffer header before inspecting. */
-			buf_state = LockBufHdr(bufHdr);
+			LockBufHdr(bufHdr);
 			bufferid = BufferDescriptorGetBuffer(bufHdr);
-			UnlockBufHdr(bufHdr, buf_state);
+			UnlockBufHdr(bufHdr);
 
 			/* start of the first page of this buffer */
 			startptr_buff = (char *) TYPEALIGN_DOWN(os_page_size, buffptr);
@@ -490,7 +510,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 			{
 				fctx->record[idx].bufferid = bufferid;
 				fctx->record[idx].page_num = page_num;
-				fctx->record[idx].numa_node = os_page_status[page_num];
+				fctx->record[idx].numa_node = include_numa ? os_page_status[page_num] : -1;
 
 				/* advance to the next entry/page */
 				++idx;
@@ -498,14 +518,18 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 			}
 		}
 
-		Assert((idx >= os_page_count) && (idx <= max_entries));
+		Assert(idx <= max_entries);
+
+		if (include_numa)
+			Assert(idx >= os_page_count);
 
 		/* Set max calls and remember the user function context. */
 		funcctx->max_calls = idx;
 		funcctx->user_fctx = fctx;
 
-		/* Remember this backend touched the pages */
-		firstNumaTouch = false;
+		/* Remember this backend touched the pages (only relevant for NUMA) */
+		if (include_numa)
+			firstNumaTouch = false;
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -516,8 +540,8 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		uint32		i = funcctx->call_cntr;
-		Datum		values[NUM_BUFFERCACHE_NUMA_ELEM];
-		bool		nulls[NUM_BUFFERCACHE_NUMA_ELEM];
+		Datum		values[NUM_BUFFERCACHE_OS_PAGES_ELEM];
+		bool		nulls[NUM_BUFFERCACHE_OS_PAGES_ELEM];
 
 		values[0] = Int32GetDatum(fctx->record[i].bufferid);
 		nulls[0] = false;
@@ -525,8 +549,16 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		values[1] = Int64GetDatum(fctx->record[i].page_num);
 		nulls[1] = false;
 
-		values[2] = Int32GetDatum(fctx->record[i].numa_node);
-		nulls[2] = false;
+		if (fctx->include_numa)
+		{
+			values[2] = Int32GetDatum(fctx->record[i].numa_node);
+			nulls[2] = false;
+		}
+		else
+		{
+			values[2] = (Datum) 0;
+			nulls[2] = true;
+		}
 
 		/* Build and return the tuple. */
 		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
@@ -536,6 +568,30 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 	}
 	else
 		SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * pg_buffercache_os_pages
+ *
+ * Retrieve information about OS pages, with or without NUMA information.
+ */
+Datum
+pg_buffercache_os_pages(PG_FUNCTION_ARGS)
+{
+	bool		include_numa;
+
+	/* Get the boolean parameter that controls the NUMA behavior. */
+	include_numa = PG_GETARG_BOOL(0);
+
+	return pg_buffercache_os_pages_internal(fcinfo, include_numa);
+}
+
+/* Backward-compatible wrapper for v1.6. */
+Datum
+pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
+{
+	/* Call internal function with include_numa=true */
+	return pg_buffercache_os_pages_internal(fcinfo, true);
 }
 
 Datum
@@ -560,6 +616,8 @@ pg_buffercache_summary(PG_FUNCTION_ARGS)
 	{
 		BufferDesc *bufHdr;
 		uint32		buf_state;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * This function summarizes the state of all headers. Locking the
@@ -620,6 +678,8 @@ pg_buffercache_usage_counts(PG_FUNCTION_ARGS)
 		BufferDesc *bufHdr = GetBufferDescriptor(i);
 		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 		int			usage_count;
+
+		CHECK_FOR_INTERRUPTS();
 
 		usage_count = BUF_STATE_GET_USAGECOUNT(buf_state);
 		usage_counts[usage_count]++;
@@ -765,6 +825,122 @@ pg_buffercache_evict_all(PG_FUNCTION_ARGS)
 
 	values[0] = Int32GetDatum(buffers_evicted);
 	values[1] = Int32GetDatum(buffers_flushed);
+	values[2] = Int32GetDatum(buffers_skipped);
+
+	tuple = heap_form_tuple(tupledesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	PG_RETURN_DATUM(result);
+}
+
+/*
+ * Try to mark a shared buffer as dirty.
+ */
+Datum
+pg_buffercache_mark_dirty(PG_FUNCTION_ARGS)
+{
+
+	Datum		result;
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	Datum		values[NUM_BUFFERCACHE_MARK_DIRTY_ELEM];
+	bool		nulls[NUM_BUFFERCACHE_MARK_DIRTY_ELEM] = {0};
+
+	Buffer		buf = PG_GETARG_INT32(0);
+	bool		buffer_already_dirty;
+
+	if (get_call_result_type(fcinfo, NULL, &tupledesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	pg_buffercache_superuser_check("pg_buffercache_mark_dirty");
+
+	if (buf < 1 || buf > NBuffers)
+		elog(ERROR, "bad buffer ID: %d", buf);
+
+	values[0] = BoolGetDatum(MarkDirtyUnpinnedBuffer(buf, &buffer_already_dirty));
+	values[1] = BoolGetDatum(buffer_already_dirty);
+
+	tuple = heap_form_tuple(tupledesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	PG_RETURN_DATUM(result);
+}
+
+/*
+ * Try to mark all the shared buffers of a relation as dirty.
+ */
+Datum
+pg_buffercache_mark_dirty_relation(PG_FUNCTION_ARGS)
+{
+	Datum		result;
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	Datum		values[NUM_BUFFERCACHE_MARK_DIRTY_RELATION_ELEM];
+	bool		nulls[NUM_BUFFERCACHE_MARK_DIRTY_RELATION_ELEM] = {0};
+
+	Oid			relOid;
+	Relation	rel;
+
+	int32		buffers_already_dirty = 0;
+	int32		buffers_dirtied = 0;
+	int32		buffers_skipped = 0;
+
+	if (get_call_result_type(fcinfo, NULL, &tupledesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	pg_buffercache_superuser_check("pg_buffercache_mark_dirty_relation");
+
+	relOid = PG_GETARG_OID(0);
+
+	rel = relation_open(relOid, AccessShareLock);
+
+	if (RelationUsesLocalBuffers(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("relation uses local buffers, %s() is intended to be used for shared buffers only",
+						"pg_buffercache_mark_dirty_relation")));
+
+	MarkDirtyRelUnpinnedBuffers(rel, &buffers_dirtied, &buffers_already_dirty,
+								&buffers_skipped);
+
+	relation_close(rel, AccessShareLock);
+
+	values[0] = Int32GetDatum(buffers_dirtied);
+	values[1] = Int32GetDatum(buffers_already_dirty);
+	values[2] = Int32GetDatum(buffers_skipped);
+
+	tuple = heap_form_tuple(tupledesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	PG_RETURN_DATUM(result);
+}
+
+/*
+ * Try to mark all the shared buffers as dirty.
+ */
+Datum
+pg_buffercache_mark_dirty_all(PG_FUNCTION_ARGS)
+{
+	Datum		result;
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	Datum		values[NUM_BUFFERCACHE_MARK_DIRTY_ALL_ELEM];
+	bool		nulls[NUM_BUFFERCACHE_MARK_DIRTY_ALL_ELEM] = {0};
+
+	int32		buffers_already_dirty = 0;
+	int32		buffers_dirtied = 0;
+	int32		buffers_skipped = 0;
+
+	if (get_call_result_type(fcinfo, NULL, &tupledesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	pg_buffercache_superuser_check("pg_buffercache_mark_dirty_all");
+
+	MarkDirtyAllUnpinnedBuffers(&buffers_dirtied, &buffers_already_dirty,
+								&buffers_skipped);
+
+	values[0] = Int32GetDatum(buffers_dirtied);
+	values[1] = Int32GetDatum(buffers_already_dirty);
 	values[2] = Int32GetDatum(buffers_skipped);
 
 	tuple = heap_form_tuple(tupledesc, values, nulls);

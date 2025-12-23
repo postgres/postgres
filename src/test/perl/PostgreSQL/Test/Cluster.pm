@@ -290,6 +290,33 @@ sub connstr
 
 =pod
 
+=item $node->is_alive()
+
+Check if the node is alive, using pg_isready.
+Returns 1 if successful, 0 on failure.
+
+=cut
+
+sub is_alive
+{
+	my ($self) = @_;
+	local %ENV = $self->_get_env();
+
+	my $ret = PostgreSQL::Test::Utils::system_log(
+		'pg_isready',
+		'--timeout' => $PostgreSQL::Test::Utils::timeout_default,
+		'--host' => $self->host,
+		'--port' => $self->port);
+
+	if ($ret != 0)
+	{
+		return 0;
+	}
+	return 1;
+}
+
+=pod
+
 =item $node->raw_connect()
 
 Open a raw TCP or Unix domain socket connection to the server. This is
@@ -684,7 +711,7 @@ sub init
 	print $conf "\n# Added by PostgreSQL::Test::Cluster.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "restart_after_crash = off\n";
-	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
+	print $conf "log_line_prefix = '%m %b[%p] %q%a '\n";
 	print $conf "log_statement = all\n";
 	print $conf "log_replication_commands = on\n";
 	print $conf "wal_retrieve_retry_interval = '500ms'\n";
@@ -1620,9 +1647,9 @@ sub new
 	  or
 	  BAIL_OUT("could not create data directory \"$node->{_basedir}\": $!");
 
-	$node->dump_info;
-
 	$node->_set_pg_version;
+
+	$node->dump_info;
 
 	my $ver = $node->{_pg_version};
 
@@ -1766,13 +1793,20 @@ sub _get_env
 	return (%inst_env);
 }
 
-# Private routine to get an installation path qualified command.
-#
-# IPC::Run maintains a cache, %cmd_cache, mapping commands to paths.  Tests
-# which use nodes spanning more than one postgres installation path need to
-# avoid confusing which installation's binaries get run.  Setting $ENV{PATH} is
-# insufficient, as IPC::Run does not check to see if the path has changed since
-# caching a command.
+=pod
+
+=item $node->installed_command(cmd)
+
+Get an installation path qualified command.
+
+IPC::Run maintains a cache, %cmd_cache, mapping commands to paths.  Tests
+which use nodes spanning more than one postgres installation path need to
+avoid confusing which installation's binaries get run.  Setting $ENV{PATH} is
+insufficient, as IPC::Run does not check to see if the path has changed since
+caching a command.
+
+=cut
+
 sub installed_command
 {
 	my ($self, $cmd) = @_;
@@ -2199,6 +2233,14 @@ sub psql
 			$ret = $?;
 		};
 		my $exc_save = $@;
+
+		# we need a dummy $stderr from hereon, if we didn't collect it
+		if (! defined $stderr)
+		{
+			my $errtxt = "<not collected>";
+			$stderr = \$errtxt;
+		}
+
 		if ($exc_save)
 		{
 

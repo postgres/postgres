@@ -69,24 +69,32 @@ typedef struct catcache
 	 * doesn't break ABI for other modules
 	 */
 #ifdef CATCACHE_STATS
-	long		cc_searches;	/* total # searches against this cache */
-	long		cc_hits;		/* # of matches against existing entry */
-	long		cc_neg_hits;	/* # of matches against negative entry */
-	long		cc_newloads;	/* # of successful loads of new entry */
+	uint64		cc_searches;	/* total # searches against this cache */
+	uint64		cc_hits;		/* # of matches against existing entry */
+	uint64		cc_neg_hits;	/* # of matches against negative entry */
+	uint64		cc_newloads;	/* # of successful loads of new entry */
 
 	/*
 	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of failed
 	 * searches, each of which will result in loading a negative entry
 	 */
-	long		cc_invals;		/* # of entries invalidated from cache */
-	long		cc_lsearches;	/* total # list-searches */
-	long		cc_lhits;		/* # of matches against existing lists */
+	uint64		cc_invals;		/* # of entries invalidated from cache */
+	uint64		cc_lsearches;	/* total # list-searches */
+	uint64		cc_lhits;		/* # of matches against existing lists */
 #endif
 } CatCache;
 
 
 typedef struct catctup
 {
+	/*
+	 * Each tuple in a cache is a member of a dlist that stores the elements
+	 * of its hash bucket.  We keep each dlist in LRU order to speed repeated
+	 * lookups.  Keep the dlist_node field first so that Valgrind understands
+	 * the struct is reachable.
+	 */
+	dlist_node	cache_elem;		/* list member of per-bucket list */
+
 	int			ct_magic;		/* for identifying CatCTup entries */
 #define CT_MAGIC   0x57261502
 
@@ -97,13 +105,6 @@ typedef struct catctup
 	 * positive cache entries, and are separately allocated for negative ones.
 	 */
 	Datum		keys[CATCACHE_MAXKEYS];
-
-	/*
-	 * Each tuple in a cache is a member of a dlist that stores the elements
-	 * of its hash bucket.  We keep each dlist in LRU order to speed repeated
-	 * lookups.
-	 */
-	dlist_node	cache_elem;		/* list member of per-bucket list */
 
 	/*
 	 * A tuple marked "dead" must not be returned by subsequent searches.
@@ -158,12 +159,16 @@ typedef struct catctup
  */
 typedef struct catclist
 {
+	/*
+	 * Keep the dlist_node field first so that Valgrind understands the struct
+	 * is reachable.
+	 */
+	dlist_node	cache_elem;		/* list member of per-catcache list */
+
 	int			cl_magic;		/* for identifying CatCList entries */
 #define CL_MAGIC   0x52765103
 
 	uint32		hash_value;		/* hash value for lookup keys */
-
-	dlist_node	cache_elem;		/* list member of per-catcache list */
 
 	/*
 	 * Lookup keys for the entry, with the first nkeys elements being valid.

@@ -67,6 +67,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/atomics.h"
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
@@ -461,7 +462,6 @@ CreateWaitEventSet(ResourceOwner resowner, int nevents)
 	 * pending signals are serviced.
 	 */
 	set->handles[0] = pgwin32_signal_event;
-	StaticAssertStmt(WSA_INVALID_EVENT == NULL, "");
 #endif
 
 	return set;
@@ -978,6 +978,8 @@ WaitEventAdjustKqueue(WaitEventSet *set, WaitEvent *event, int old_events)
 #endif
 
 #if defined(WAIT_USE_WIN32)
+StaticAssertDecl(WSA_INVALID_EVENT == NULL, "");
+
 static void
 WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event)
 {
@@ -1476,7 +1478,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 	struct pollfd *cur_pollfd;
 
 	/* Sleep */
-	rc = poll(set->pollfds, set->nevents, (int) cur_timeout);
+	rc = poll(set->pollfds, set->nevents, cur_timeout);
 
 	/* Check return code */
 	if (rc < 0)
@@ -2009,7 +2011,7 @@ ResOwnerReleaseWaitEventSet(Datum res)
  * NB: be sure to save and restore errno around it.  (That's standard practice
  * in most signal handlers, of course, but we used to omit it in handlers that
  * only set a flag.) XXX
-  *
+ *
  * NB: this function is called from critical sections and signal handlers so
  * throwing an error is not a good idea.
  *

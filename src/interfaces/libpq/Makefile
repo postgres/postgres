@@ -24,7 +24,7 @@ NAME= pq
 SO_MAJOR_VERSION= 5
 SO_MINOR_VERSION= $(MAJORVERSION)
 
-override CPPFLAGS :=  -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
+override CPPFLAGS := -I$(srcdir) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port $(CPPFLAGS)
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
@@ -87,7 +87,7 @@ endif
 # that are built correctly for use in a shlib.
 SHLIB_LINK_INTERNAL = -lpgcommon_shlib -lpgport_shlib
 ifneq ($(PORTNAME), win32)
-SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
+SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -ldl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
 else
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl -lm $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
@@ -129,25 +129,14 @@ $(shlib): $(OBJS_SHLIB)
 $(stlib): override OBJS += $(OBJS_STATIC)
 $(stlib): $(OBJS_STATIC)
 
-# Check for functions that libpq must not call, currently just exit().
-# (Ideally we'd reject abort() too, but there are various scenarios where
-# build toolchains insert abort() calls, e.g. to implement assert().)
-# If nm doesn't exist or doesn't work on shlibs, this test will do nothing,
-# which is fine.  The exclusion of __cxa_atexit is necessary on OpenBSD,
-# which seems to insert references to that even in pure C code. Excluding
-# __tsan_func_exit is necessary when using ThreadSanitizer data race detector
-# which use this function for instrumentation of function exit.
-# Skip the test when profiling, as gcc may insert exit() calls for that.
-# Also skip the test on platforms where libpq infrastructure may be provided
-# by statically-linked libraries, as we can't expect them to honor this
-# coding rule.
+# Check for functions that libpq must not call.  See libpq_check.pl for the
+# full set of platform rules.  Skip the test when profiling, as gcc may
+# insert exit() calls for that.  Also skip the test on platforms where libpq
+# infrastructure may be provided by statically-linked libraries, as we can't
+# expect them to honor this coding rule.
 libpq-refs-stamp: $(shlib)
 ifneq ($(enable_coverage), yes)
-ifeq (,$(filter solaris,$(PORTNAME)))
-	@if nm -A -u $< 2>/dev/null | grep -v -e __cxa_atexit -e __tsan_func_exit | grep exit; then \
-		echo 'libpq must not be calling any function which invokes exit'; exit 1; \
-	fi
-endif
+	$(PERL) $(srcdir)/libpq_check.pl --input_file $< --nm='$(NM)'
 endif
 	touch $@
 

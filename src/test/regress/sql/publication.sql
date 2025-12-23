@@ -26,6 +26,7 @@ CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
 CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publish_via_partition_root = '0');
 CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = stored, publish_generated_columns = none);
 CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = foo);
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns);
 
 \dRp
 
@@ -118,6 +119,52 @@ RESET client_min_messages;
 
 DROP TABLE testpub_tbl3, testpub_tbl3a;
 DROP PUBLICATION testpub3, testpub4;
+
+--- Tests for publications with SEQUENCES
+CREATE SEQUENCE regress_pub_seq0;
+CREATE SEQUENCE pub_test.regress_pub_seq1;
+
+-- FOR ALL SEQUENCES
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION regress_pub_forallsequences1 FOR ALL SEQUENCES;
+RESET client_min_messages;
+
+SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_forallsequences1';
+\d+ regress_pub_seq0
+\dRp+ regress_pub_forallsequences1
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION regress_pub_forallsequences2 FOR ALL SEQUENCES;
+RESET client_min_messages;
+
+-- check that describe sequence lists both publications the sequence belongs to
+\d+ pub_test.regress_pub_seq1
+
+--- Specifying both ALL TABLES and ALL SEQUENCES
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES;
+
+-- Specifying WITH clause in an ALL SEQUENCES publication will emit a NOTICE.
+SET client_min_messages = 'NOTICE';
+CREATE PUBLICATION regress_pub_for_allsequences_alltables_withclause FOR ALL SEQUENCES, ALL TABLES WITH (publish = 'insert');
+CREATE PUBLICATION regress_pub_for_allsequences_withclause FOR ALL SEQUENCES WITH (publish_generated_columns = 'stored');
+RESET client_min_messages;
+
+SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_for_allsequences_alltables';
+\dRp+ regress_pub_for_allsequences_alltables
+
+DROP SEQUENCE regress_pub_seq0, pub_test.regress_pub_seq1;
+DROP PUBLICATION regress_pub_forallsequences1;
+DROP PUBLICATION regress_pub_forallsequences2;
+DROP PUBLICATION regress_pub_for_allsequences_alltables;
+DROP PUBLICATION regress_pub_for_allsequences_alltables_withclause;
+DROP PUBLICATION regress_pub_for_allsequences_withclause;
+
+-- fail - Specifying ALL TABLES more than once
+CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES, ALL TABLES;
+
+-- fail - Specifying ALL SEQUENCES more than once
+CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES, ALL SEQUENCES;
 
 -- Tests for partitioned tables
 SET client_min_messages = 'ERROR';
@@ -262,6 +309,9 @@ ALTER PUBLICATION testpub6 SET TABLES IN SCHEMA testpub_rf_schema2, TABLE testpu
 RESET client_min_messages;
 \dRp+ testpub6
 -- fail - virtual generated column uses user-defined function
+-- (Actually, this already fails at CREATE TABLE rather than at CREATE
+-- PUBLICATION, but let's keep the test in case the former gets
+-- relaxed sometime.)
 CREATE TABLE testpub_rf_tbl6 (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * testpub_rf_func2()) VIRTUAL);
 CREATE PUBLICATION testpub7 FOR TABLE testpub_rf_tbl6 WHERE (y > 100);
 -- test that SET EXPRESSION is rejected, because it could affect a row filter
@@ -276,7 +326,7 @@ DROP TABLE testpub_rf_tbl2;
 DROP TABLE testpub_rf_tbl3;
 DROP TABLE testpub_rf_tbl4;
 DROP TABLE testpub_rf_tbl5;
-DROP TABLE testpub_rf_tbl6;
+--DROP TABLE testpub_rf_tbl6;
 DROP TABLE testpub_rf_schema1.testpub_rf_tbl5;
 DROP TABLE testpub_rf_schema2.testpub_rf_tbl6;
 DROP SCHEMA testpub_rf_schema1;
@@ -1180,19 +1230,15 @@ DROP SCHEMA sch2 cascade;
 -- ======================================================
 
 -- Test the 'publish_generated_columns' parameter with the following values:
--- 'stored', 'none', and the default (no value specified), which defaults to
--- 'stored'.
+-- 'stored', 'none'.
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns = stored);
 \dRp+ pub1
 CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns = none);
 \dRp+ pub2
-CREATE PUBLICATION pub3 FOR ALL TABLES WITH (publish_generated_columns);
-\dRp+ pub3
 
 DROP PUBLICATION pub1;
 DROP PUBLICATION pub2;
-DROP PUBLICATION pub3;
 
 -- Test the 'publish_generated_columns' parameter as 'none' and 'stored' for
 -- different scenarios with/without generated columns in column lists.
@@ -1223,6 +1269,86 @@ DROP PUBLICATION pub2;
 DROP TABLE gencols;
 
 RESET client_min_messages;
+
+-- Test that the INSERT ON CONFLICT command correctly checks REPLICA IDENTITY
+-- when the target table is published.
+CREATE TABLE testpub_insert_onconfl_no_ri (a int unique, b int);
+CREATE TABLE testpub_insert_onconfl_parted (a int unique, b int) PARTITION by RANGE (a);
+CREATE TABLE testpub_insert_onconfl_part_no_ri PARTITION OF testpub_insert_onconfl_parted FOR VALUES FROM (1) TO (10);
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION pub1 FOR ALL TABLES;
+RESET client_min_messages;
+
+-- fail - missing REPLICA IDENTITY
+INSERT INTO testpub_insert_onconfl_no_ri VALUES (1, 1) ON CONFLICT (a) DO UPDATE SET b = 2;
+
+-- ok - no updates
+INSERT INTO testpub_insert_onconfl_no_ri VALUES (1, 1) ON CONFLICT DO NOTHING;
+
+-- fail - missing REPLICA IDENTITY in partition testpub_insert_onconfl_no_ri
+INSERT INTO testpub_insert_onconfl_parted VALUES (1, 1) ON CONFLICT (a) DO UPDATE SET b = 2;
+
+-- ok - no updates
+INSERT INTO testpub_insert_onconfl_parted VALUES (1, 1) ON CONFLICT DO NOTHING;
+
+DROP PUBLICATION pub1;
+DROP TABLE testpub_insert_onconfl_no_ri;
+DROP TABLE testpub_insert_onconfl_parted;
+
+-- Test that the MERGE command correctly checks REPLICA IDENTITY when the
+-- target table is published.
+CREATE TABLE testpub_merge_no_ri (a int, b int);
+CREATE TABLE testpub_merge_pk (a int primary key, b int);
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION pub1 FOR ALL TABLES;
+RESET client_min_messages;
+
+-- fail - missing REPLICA IDENTITY
+MERGE INTO testpub_merge_no_ri USING testpub_merge_pk s ON s.a >= 1
+ WHEN MATCHED THEN UPDATE SET b = s.b;
+
+-- fail - missing REPLICA IDENTITY
+MERGE INTO testpub_merge_no_ri USING testpub_merge_pk s ON s.a >= 1
+ WHEN MATCHED THEN DELETE;
+
+-- ok - insert and do nothing are not restricted
+MERGE INTO testpub_merge_no_ri USING testpub_merge_pk s ON s.a >= 1
+ WHEN MATCHED THEN DO NOTHING
+ WHEN NOT MATCHED THEN INSERT (a, b) VALUES (0, 0);
+
+-- ok - REPLICA IDENTITY is DEFAULT and table has a PK
+MERGE INTO testpub_merge_pk USING testpub_merge_no_ri s ON s.a >= 1
+ WHEN MATCHED AND s.a > 0 THEN UPDATE SET b = s.b
+ WHEN MATCHED THEN DELETE;
+
+DROP PUBLICATION pub1;
+DROP TABLE testpub_merge_no_ri;
+DROP TABLE testpub_merge_pk;
+
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_publication_user, regress_publication_user2;
 DROP ROLE regress_publication_user_dummy;
+
+-- stage objects for pg_dump tests
+CREATE SCHEMA pubme CREATE TABLE t0 (c int, d int) CREATE TABLE t1 (c int);
+CREATE SCHEMA pubme2 CREATE TABLE t0 (c int, d int);
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION dump_pub_qual_1ct FOR
+  TABLE ONLY pubme.t0 (c, d) WHERE (c > 0);
+CREATE PUBLICATION dump_pub_qual_2ct FOR
+  TABLE ONLY pubme.t0 (c) WHERE (c > 0),
+  TABLE ONLY pubme.t1 (c);
+CREATE PUBLICATION dump_pub_nsp_1ct FOR
+  TABLES IN SCHEMA pubme;
+CREATE PUBLICATION dump_pub_nsp_2ct FOR
+  TABLES IN SCHEMA pubme,
+  TABLES IN SCHEMA pubme2;
+CREATE PUBLICATION dump_pub_all FOR
+  TABLE ONLY pubme.t0,
+  TABLE ONLY pubme.t1 WHERE (c < 0),
+  TABLES IN SCHEMA pubme,
+  TABLES IN SCHEMA pubme2
+  WITH (publish_via_partition_root = true);
+RESET client_min_messages;

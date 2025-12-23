@@ -691,7 +691,7 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		else
 		{
 			Conf->maffixes = 16;
-			Conf->Affix = (AFFIX *) palloc(Conf->maffixes * sizeof(AFFIX));
+			Conf->Affix = palloc_array(AFFIX, Conf->maffixes);
 		}
 	}
 
@@ -737,7 +737,7 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		 * allocated in the dictionary's memory context, and will be freed
 		 * automatically when it is destroyed.
 		 */
-		Affix->reg.pregex = palloc(sizeof(regex_t));
+		Affix->reg.pregex = palloc_object(regex_t);
 		err = pg_regcomp(Affix->reg.pregex, wmask, wmasklen,
 						 REG_ADVANCED | REG_NOSUB,
 						 DEFAULT_COLLATION_OID);
@@ -1327,7 +1327,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 				/* Also reserve place for empty flag set */
 				naffix++;
 
-				Conf->AffixData = (const char **) palloc0(naffix * sizeof(char *));
+				Conf->AffixData = palloc0_array(const char *, naffix);
 				Conf->lenAffixData = Conf->nAffixData = naffix;
 
 				/* Add empty flag set into AffixData */
@@ -1794,7 +1794,7 @@ NISortDictionary(IspellDict *Conf)
 		 * dictionary. Replace textual flag-field of Conf->Spell entries with
 		 * indexes into Conf->AffixData array.
 		 */
-		Conf->AffixData = (const char **) palloc0(naffix * sizeof(const char *));
+		Conf->AffixData = palloc0_array(const char *, naffix);
 
 		curaffix = -1;
 		for (i = 0; i < Conf->nspell; i++)
@@ -1991,7 +1991,7 @@ NISortAffixes(IspellDict *Conf)
 	/* Store compound affixes in the Conf->CompoundAffix array */
 	if (Conf->naffixes > 1)
 		qsort(Conf->Affix, Conf->naffixes, sizeof(AFFIX), cmpaffix);
-	Conf->CompoundAffix = ptr = (CMPDAffix *) palloc(sizeof(CMPDAffix) * Conf->naffixes);
+	Conf->CompoundAffix = ptr = palloc_array(CMPDAffix, Conf->naffixes);
 	ptr->affix = NULL;
 
 	for (i = 0; i < Conf->naffixes; i++)
@@ -2147,7 +2147,7 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 
 		/* Convert data string to wide characters */
 		newword_len = strlen(newword);
-		data = (pg_wchar *) palloc((newword_len + 1) * sizeof(pg_wchar));
+		data = palloc_array(pg_wchar, newword_len + 1);
 		data_len = pg_mb2wchar_with_len(newword, data, newword_len);
 
 		if (pg_regexec(Affix->reg.pregex, data, data_len,
@@ -2197,7 +2197,7 @@ NormalizeSubWord(IspellDict *Conf, const char *word, int flag)
 
 	if (wrdlen > MAXNORMLEN)
 		return NULL;
-	cur = forms = (char **) palloc(MAX_NORM * sizeof(char *));
+	cur = forms = palloc_array(char *, MAX_NORM);
 	*cur = NULL;
 
 
@@ -2320,7 +2320,7 @@ CheckCompoundAffixes(CMPDAffix **ptr, const char *word, int len, bool CheckInPla
 	}
 	else
 	{
-		char	   *affbegin;
+		const char *affbegin;
 
 		while ((*ptr)->affix)
 		{
@@ -2340,7 +2340,7 @@ CheckCompoundAffixes(CMPDAffix **ptr, const char *word, int len, bool CheckInPla
 static SplitVar *
 CopyVar(SplitVar *s, int makedup)
 {
-	SplitVar   *v = (SplitVar *) palloc(sizeof(SplitVar));
+	SplitVar   *v = palloc_object(SplitVar);
 
 	v->next = NULL;
 	if (s)
@@ -2348,7 +2348,7 @@ CopyVar(SplitVar *s, int makedup)
 		int			i;
 
 		v->lenstem = s->lenstem;
-		v->stem = (char **) palloc(sizeof(char *) * v->lenstem);
+		v->stem = palloc_array(char *, v->lenstem);
 		v->nstem = s->nstem;
 		for (i = 0; i < s->nstem; i++)
 			v->stem[i] = (makedup) ? pstrdup(s->stem[i]) : s->stem[i];
@@ -2356,7 +2356,7 @@ CopyVar(SplitVar *s, int makedup)
 	else
 	{
 		v->lenstem = 16;
-		v->stem = (char **) palloc(sizeof(char *) * v->lenstem);
+		v->stem = palloc_array(char *, v->lenstem);
 		v->nstem = 0;
 	}
 	return v;
@@ -2529,7 +2529,7 @@ static void
 addNorm(TSLexeme **lres, TSLexeme **lcur, char *word, int flags, uint16 NVariant)
 {
 	if (*lres == NULL)
-		*lcur = *lres = (TSLexeme *) palloc(MAX_NORM * sizeof(TSLexeme));
+		*lcur = *lres = palloc_array(TSLexeme, MAX_NORM);
 
 	if (*lcur - *lres < MAX_NORM - 1)
 	{

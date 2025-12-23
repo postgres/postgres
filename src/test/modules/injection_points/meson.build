@@ -6,8 +6,6 @@ endif
 
 injection_points_sources = files(
   'injection_points.c',
-  'injection_stats.c',
-  'injection_stats_fixed.c',
   'regress_injection.c',
 )
 
@@ -37,8 +35,9 @@ tests += {
       'injection_points',
       'hashagg',
       'reindex_conc',
+      'vacuum',
     ],
-    'regress_args': ['--dlpath', meson.build_root() / 'src/test/regress'],
+    'regress_args': ['--dlpath', meson.project_build_root() / 'src/test/regress'],
     # The injection points are cluster-wide, so disable installcheck
     'runningcheck': false,
   },
@@ -47,15 +46,16 @@ tests += {
       'basic',
       'inplace',
       'syscache-update-pruned',
+      'heap_lock_update',
+      # temporarily disabled because of flakiness
+      # 'index-concurrently-upsert',
+      # 'index-concurrently-upsert-predicate',
+      # 'reindex-concurrently-upsert',
+      # 'reindex-concurrently-upsert-on-constraint',
+      # 'reindex-concurrently-upsert-partitioned',
     ],
     'runningcheck': false, # see syscache-update-pruned
-  },
-  'tap': {
-    'env': {
-      'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
-    },
-    'tests': [
-      't/001_stats.pl',
-    ],
+    # Some tests wait for all snapshots, so avoid parallel execution
+    'runningcheck-parallel': false,
   },
 }

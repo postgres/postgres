@@ -111,10 +111,13 @@ my $node3_occurrences = () =
 my $total_occurrences =
   $node1_occurrences + $node2_occurrences + $node3_occurrences;
 
-ok($node1_occurrences > 1, "received at least one connection on node1");
-ok($node2_occurrences > 1, "received at least one connection on node2");
-ok($node3_occurrences > 1, "received at least one connection on node3");
-ok($total_occurrences == 50, "received 50 connections across all nodes");
+cmp_ok($node1_occurrences, '>', 1,
+	"received at least one connection on node1");
+cmp_ok($node2_occurrences, '>', 1,
+	"received at least one connection on node2");
+cmp_ok($node3_occurrences, '>', 1,
+	"received at least one connection on node3");
+is($total_occurrences, 50, "received 50 connections across all nodes");
 
 $node1->stop();
 $node2->stop();

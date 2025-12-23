@@ -111,11 +111,9 @@
 #include "utils/tuplesort.h"
 
 /*
- * Initial size of memtuples array.  We're trying to select this size so that
- * array doesn't exceed ALLOCSET_SEPARATE_THRESHOLD and so that the overhead of
- * allocation might possibly be lowered.  However, we don't consider array sizes
- * less than 1024.
- *
+ * Initial size of memtuples array.  This must be more than
+ * ALLOCSET_SEPARATE_THRESHOLD; see comments in grow_memtuples().  Clamp at
+ * 1024 elements to avoid excessive reallocs.
  */
 #define INITIAL_MEMTUPSIZE Max(1024, \
 	ALLOCSET_SEPARATE_THRESHOLD / sizeof(SortTuple) + 1)
@@ -512,7 +510,6 @@ qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	return state->base.comparetup_tiebreak(a, b, state);
 }
 
-#if SIZEOF_DATUM >= 8
 /* Used if first key's comparator is ssup_datum_signed_cmp */
 static pg_attribute_always_inline int
 qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
@@ -535,7 +532,6 @@ qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 
 	return state->base.comparetup_tiebreak(a, b, state);
 }
-#endif
 
 /* Used if first key's comparator is ssup_datum_int32_cmp */
 static pg_attribute_always_inline int
@@ -578,7 +574,6 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 #define ST_DEFINE
 #include "lib/sort_template.h"
 
-#if SIZEOF_DATUM >= 8
 #define ST_SORT qsort_tuple_signed
 #define ST_ELEMENT_TYPE SortTuple
 #define ST_COMPARE(a, b, state) qsort_tuple_signed_compare(a, b, state)
@@ -587,7 +582,6 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 #define ST_SCOPE static
 #define ST_DEFINE
 #include "lib/sort_template.h"
-#endif
 
 #define ST_SORT qsort_tuple_int32
 #define ST_ELEMENT_TYPE SortTuple
@@ -677,7 +671,7 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 	 */
 	oldcontext = MemoryContextSwitchTo(maincontext);
 
-	state = (Tuplesortstate *) palloc0(sizeof(Tuplesortstate));
+	state = palloc0_object(Tuplesortstate);
 
 	if (trace_sort)
 		pg_rusage_init(&state->ru_start);
@@ -696,10 +690,6 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 	state->base.sortcontext = sortcontext;
 	state->base.maincontext = maincontext;
 
-	/*
-	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
-	 * see comments in grow_memtuples().
-	 */
 	state->memtupsize = INITIAL_MEMTUPSIZE;
 	state->memtuples = NULL;
 
@@ -788,10 +778,6 @@ tuplesort_begin_batch(Tuplesortstate *state)
 
 	state->memtupcount = 0;
 
-	/*
-	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
-	 * see comments in grow_memtuples().
-	 */
 	state->growmemtuples = true;
 	state->slabAllocatorUsed = false;
 	if (state->memtuples != NULL && state->memtupsize != INITIAL_MEMTUPSIZE)
@@ -2692,7 +2678,6 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 									 state);
 				return;
 			}
-#if SIZEOF_DATUM >= 8
 			else if (state->base.sortKeys[0].comparator == ssup_datum_signed_cmp)
 			{
 				qsort_tuple_signed(state->memtuples,
@@ -2700,7 +2685,6 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 								   state);
 				return;
 			}
-#endif
 			else if (state->base.sortKeys[0].comparator == ssup_datum_int32_cmp)
 			{
 				qsort_tuple_int32(state->memtuples,
@@ -3146,7 +3130,6 @@ ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup)
 		return 0;
 }
 
-#if SIZEOF_DATUM >= 8
 int
 ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup)
 {
@@ -3160,7 +3143,6 @@ ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup)
 	else
 		return 0;
 }
-#endif
 
 int
 ssup_datum_int32_cmp(Datum x, Datum y, SortSupport ssup)

@@ -175,7 +175,7 @@ ghstore_compress(PG_FUNCTION_ARGS)
 			}
 		}
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset,
@@ -195,7 +195,7 @@ ghstore_compress(PG_FUNCTION_ARGS)
 
 		res = ghstore_alloc(true, siglen, NULL);
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset,
@@ -429,7 +429,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	costvector = palloc_array(SPLITCOST, maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;
@@ -576,7 +576,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 			if (key_nulls[i])
 				continue;
-			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			crc = crc32_sz(VARDATA(DatumGetPointer(key_datums[i])), VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ);
 			if (!(GETBIT(sign, HASHVAL(crc, siglen))))
 				res = false;
 		}
@@ -599,7 +599,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 			if (key_nulls[i])
 				continue;
-			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			crc = crc32_sz(VARDATA(DatumGetPointer(key_datums[i])), VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ);
 			if (GETBIT(sign, HASHVAL(crc, siglen)))
 				res = true;
 		}

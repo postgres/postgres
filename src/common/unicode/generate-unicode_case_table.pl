@@ -270,7 +270,6 @@ print $OT <<"EOS";
  */
 
 #include "common/unicode_case.h"
-#include "mb/pg_wchar.h"
 
 /*
  * The maximum number of codepoints that can result from case mapping
@@ -297,7 +296,7 @@ typedef enum
 typedef struct
 {
 	int16		conditions;
-	pg_wchar	map[NCaseKind][MAX_CASE_EXPANSION];
+	char32_t	map[NCaseKind][MAX_CASE_EXPANSION];
 } pg_special_case;
 
 /*
@@ -430,7 +429,7 @@ foreach my $kind ('lower', 'title', 'upper', 'fold')
  * The entry case_map_${kind}[case_index(codepoint)] is the mapping for the
  * given codepoint.
  */
-static const pg_wchar case_map_$kind\[$index\] =
+static const char32_t case_map_$kind\[$index\] =
 {
 EOS
 
@@ -502,7 +501,7 @@ print $OT <<"EOS";
  * the offset into the mapping tables.
  */
 static inline uint16
-case_index(pg_wchar cp)
+case_index(char32_t cp)
 {
 	/* Fast path for codepoints < $fastpath_limit */
 	if (cp < $fastpath_limit)

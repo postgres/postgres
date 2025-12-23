@@ -82,7 +82,7 @@ getQuadrant(Point *centroid, Point *tst)
 static BOX *
 getQuadrantArea(BOX *bbox, Point *centroid, int quadrant)
 {
-	BOX		   *result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = palloc_object(BOX);
 
 	switch (quadrant)
 	{
@@ -177,11 +177,11 @@ spg_quad_picksplit(PG_FUNCTION_ARGS)
 	/* Use the median values of x and y as the centroid point */
 	Point	  **sorted;
 
-	sorted = palloc(sizeof(*sorted) * in->nTuples);
+	sorted = palloc_array(Point *, in->nTuples);
 	for (i = 0; i < in->nTuples; i++)
 		sorted[i] = DatumGetPointP(in->datums[i]);
 
-	centroid = palloc(sizeof(*centroid));
+	centroid = palloc_object(Point);
 
 	qsort(sorted, in->nTuples, sizeof(*sorted), x_cmp);
 	centroid->x = sorted[in->nTuples >> 1]->x;
@@ -189,7 +189,7 @@ spg_quad_picksplit(PG_FUNCTION_ARGS)
 	centroid->y = sorted[in->nTuples >> 1]->y;
 #else
 	/* Use the average values of x and y as the centroid point */
-	centroid = palloc0(sizeof(*centroid));
+	centroid = palloc0_object(Point);
 
 	for (i = 0; i < in->nTuples; i++)
 	{
@@ -207,8 +207,8 @@ spg_quad_picksplit(PG_FUNCTION_ARGS)
 	out->nNodes = 4;
 	out->nodeLabels = NULL;		/* we don't need node labels */
 
-	out->mapTuplesToNodes = palloc(sizeof(int) * in->nTuples);
-	out->leafTupleDatums = palloc(sizeof(Datum) * in->nTuples);
+	out->mapTuplesToNodes = palloc_array(int, in->nTuples);
+	out->leafTupleDatums = palloc_array(Datum, in->nTuples);
 
 	for (i = 0; i < in->nTuples; i++)
 	{
@@ -246,8 +246,8 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 	 */
 	if (in->norderbys > 0)
 	{
-		out->distances = (double **) palloc(sizeof(double *) * in->nNodes);
-		out->traversalValues = (void **) palloc(sizeof(void *) * in->nNodes);
+		out->distances = palloc_array(double *, in->nNodes);
+		out->traversalValues = palloc_array(void *, in->nNodes);
 
 		if (in->level == 0)
 		{
@@ -270,7 +270,7 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 	{
 		/* Report that all nodes should be visited */
 		out->nNodes = in->nNodes;
-		out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
+		out->nodeNumbers = palloc_array(int, in->nNodes);
 		for (i = 0; i < in->nNodes; i++)
 		{
 			out->nodeNumbers[i] = i;
@@ -368,12 +368,12 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 			break;				/* no need to consider remaining conditions */
 	}
 
-	out->levelAdds = palloc(sizeof(int) * 4);
+	out->levelAdds = palloc_array(int, 4);
 	for (i = 0; i < 4; ++i)
 		out->levelAdds[i] = 1;
 
 	/* We must descend into the quadrant(s) identified by which */
-	out->nodeNumbers = (int *) palloc(sizeof(int) * 4);
+	out->nodeNumbers = palloc_array(int, 4);
 	out->nNodes = 0;
 
 	for (i = 1; i <= 4; i++)

@@ -33,6 +33,7 @@
 #include "storage/indexfsm.h"
 #include "storage/predicate.h"
 #include "storage/procarray.h"
+#include "utils/injection_point.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -1194,8 +1195,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 		itup = updatable[i]->itup;
 		itemsz = MAXALIGN(IndexTupleSize(itup));
-		if (!PageIndexTupleOverwrite(page, updatedoffset, (Item) itup,
-									 itemsz))
+		if (!PageIndexTupleOverwrite(page, updatedoffset, itup, itemsz))
 			elog(PANIC, "failed to update partially dead item in block %u of index \"%s\"",
 				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 	}
@@ -1314,8 +1314,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 
 		itup = updatable[i]->itup;
 		itemsz = MAXALIGN(IndexTupleSize(itup));
-		if (!PageIndexTupleOverwrite(page, updatedoffset, (Item) itup,
-									 itemsz))
+		if (!PageIndexTupleOverwrite(page, updatedoffset, itup, itemsz))
 			elog(PANIC, "failed to update partially dead item in block %u of index \"%s\"",
 				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 	}
@@ -2005,6 +2004,10 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				return;
 			}
 		}
+		else
+		{
+			INJECTION_POINT("nbtree-finish-half-dead-page-vacuum", NULL);
+		}
 
 		/*
 		 * Then unlink it from its siblings.  Each call to
@@ -2239,8 +2242,7 @@ _bt_mark_page_halfdead(Relation rel, Relation heaprel, Buffer leafbuf,
 	else
 		BTreeTupleSetTopParent(&trunctuple, InvalidBlockNumber);
 
-	if (!PageIndexTupleOverwrite(page, P_HIKEY, (Item) &trunctuple,
-								 IndexTupleSize(&trunctuple)))
+	if (!PageIndexTupleOverwrite(page, P_HIKEY, &trunctuple, IndexTupleSize(&trunctuple)))
 		elog(ERROR, "could not overwrite high key in half-dead page");
 
 	/* Must mark buffers dirty before XLogInsert */
@@ -2351,6 +2353,8 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	leafrightsib = opaque->btpo_next;
 
 	_bt_unlockbuf(rel, leafbuf);
+
+	INJECTION_POINT("nbtree-leave-page-half-dead", NULL);
 
 	/*
 	 * Check here, as calling loops will have locks held, preventing
@@ -2978,7 +2982,7 @@ _bt_pendingfsm_init(Relation rel, BTVacState *vstate, bool cleanuponly)
 	vstate->maxbufsize = (int) maxbufsize;
 
 	/* Allocate buffer, indicate that there are currently 0 pending pages */
-	vstate->pendingpages = palloc(sizeof(BTPendingFSM) * vstate->bufsize);
+	vstate->pendingpages = palloc_array(BTPendingFSM, vstate->bufsize);
 	vstate->npendingpages = 0;
 }
 

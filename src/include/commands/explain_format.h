@@ -15,44 +15,45 @@
 
 #include "nodes/pg_list.h"
 
-struct ExplainState;			/* avoid including explain.h here */
+/* avoid including explain_state.h here */
+typedef struct ExplainState ExplainState;
 
 extern void ExplainPropertyList(const char *qlabel, List *data,
-								struct ExplainState *es);
+								ExplainState *es);
 extern void ExplainPropertyListNested(const char *qlabel, List *data,
-									  struct ExplainState *es);
+									  ExplainState *es);
 extern void ExplainPropertyText(const char *qlabel, const char *value,
-								struct ExplainState *es);
+								ExplainState *es);
 extern void ExplainPropertyInteger(const char *qlabel, const char *unit,
-								   int64 value, struct ExplainState *es);
+								   int64 value, ExplainState *es);
 extern void ExplainPropertyUInteger(const char *qlabel, const char *unit,
-									uint64 value, struct ExplainState *es);
+									uint64 value, ExplainState *es);
 extern void ExplainPropertyFloat(const char *qlabel, const char *unit,
 								 double value, int ndigits,
-								 struct ExplainState *es);
+								 ExplainState *es);
 extern void ExplainPropertyBool(const char *qlabel, bool value,
-								struct ExplainState *es);
+								ExplainState *es);
 
 extern void ExplainOpenGroup(const char *objtype, const char *labelname,
-							 bool labeled, struct ExplainState *es);
+							 bool labeled, ExplainState *es);
 extern void ExplainCloseGroup(const char *objtype, const char *labelname,
-							  bool labeled, struct ExplainState *es);
+							  bool labeled, ExplainState *es);
 
 extern void ExplainOpenSetAsideGroup(const char *objtype, const char *labelname,
 									 bool labeled, int depth,
-									 struct ExplainState *es);
-extern void ExplainSaveGroup(struct ExplainState *es, int depth,
+									 ExplainState *es);
+extern void ExplainSaveGroup(ExplainState *es, int depth,
 							 int *state_save);
-extern void ExplainRestoreGroup(struct ExplainState *es, int depth,
+extern void ExplainRestoreGroup(ExplainState *es, int depth,
 								int *state_save);
 
 extern void ExplainDummyGroup(const char *objtype, const char *labelname,
-							  struct ExplainState *es);
+							  ExplainState *es);
 
-extern void ExplainBeginOutput(struct ExplainState *es);
-extern void ExplainEndOutput(struct ExplainState *es);
-extern void ExplainSeparatePlans(struct ExplainState *es);
+extern void ExplainBeginOutput(ExplainState *es);
+extern void ExplainEndOutput(ExplainState *es);
+extern void ExplainSeparatePlans(ExplainState *es);
 
-extern void ExplainIndentText(struct ExplainState *es);
+extern void ExplainIndentText(ExplainState *es);
 
 #endif

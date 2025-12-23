@@ -53,7 +53,7 @@
 
 static inline void pgaio_io_update_state(PgAioHandle *ioh, PgAioHandleState new_state);
 static void pgaio_io_reclaim(PgAioHandle *ioh);
-static void pgaio_io_resowner_register(PgAioHandle *ioh);
+static void pgaio_io_resowner_register(PgAioHandle *ioh, struct ResourceOwnerData *resowner);
 static void pgaio_io_wait_for_free(void);
 static PgAioHandle *pgaio_io_from_wref(PgAioWaitRef *iow, uint64 *ref_generation);
 static const char *pgaio_io_state_get_name(PgAioHandleState s);
@@ -88,6 +88,9 @@ static const IoMethodOps *const pgaio_method_ops_table[] = {
 	[IOMETHOD_IO_URING] = &pgaio_uring_ops,
 #endif
 };
+
+StaticAssertDecl(lengthof(io_method_options) == lengthof(pgaio_method_ops_table) + 1,
+				 "io_method_options out of sync with pgaio_method_ops_table");
 
 /* callbacks for the configured io_method, set by assign_io_method */
 const IoMethodOps *pgaio_method_ops;
@@ -214,7 +217,7 @@ pgaio_io_acquire_nb(struct ResourceOwnerData *resowner, PgAioReturn *ret)
 		pgaio_my_backend->handed_out_io = ioh;
 
 		if (resowner)
-			pgaio_io_resowner_register(ioh);
+			pgaio_io_resowner_register(ioh, resowner);
 
 		if (ret)
 		{
@@ -275,7 +278,7 @@ pgaio_io_release_resowner(dlist_node *ioh_node, bool on_error)
 	ResourceOwnerForgetAioHandle(ioh->resowner, &ioh->resowner_node);
 	ioh->resowner = NULL;
 
-	switch (ioh->state)
+	switch ((PgAioHandleState) ioh->state)
 	{
 		case PGAIO_HS_IDLE:
 			elog(ERROR, "unexpected");
@@ -403,13 +406,13 @@ pgaio_io_update_state(PgAioHandle *ioh, PgAioHandleState new_state)
 }
 
 static void
-pgaio_io_resowner_register(PgAioHandle *ioh)
+pgaio_io_resowner_register(PgAioHandle *ioh, struct ResourceOwnerData *resowner)
 {
 	Assert(!ioh->resowner);
-	Assert(CurrentResourceOwner);
+	Assert(resowner);
 
-	ResourceOwnerRememberAioHandle(CurrentResourceOwner, &ioh->resowner_node);
-	ioh->resowner = CurrentResourceOwner;
+	ResourceOwnerRememberAioHandle(resowner, &ioh->resowner_node);
+	ioh->resowner = resowner;
 }
 
 /*
@@ -556,6 +559,13 @@ bool
 pgaio_io_was_recycled(PgAioHandle *ioh, uint64 ref_generation, PgAioHandleState *state)
 {
 	*state = ioh->state;
+
+	/*
+	 * Ensure that we don't see an earlier state of the handle than ioh->state
+	 * due to compiler or CPU reordering. This protects both ->generation as
+	 * directly used here, and other fields in the handle accessed in the
+	 * caller if the handle was not reused.
+	 */
 	pg_read_barrier();
 
 	return ioh->generation != ref_generation;
@@ -752,7 +762,7 @@ pgaio_io_wait_for_free(void)
 {
 	int			reclaimed = 0;
 
-	pgaio_debug(DEBUG2, "waiting for free IO with %d pending, %d in-flight, %d idle IOs",
+	pgaio_debug(DEBUG2, "waiting for free IO with %d pending, %u in-flight, %u idle IOs",
 				pgaio_my_backend->num_staged_ios,
 				dclist_count(&pgaio_my_backend->in_flight_ios),
 				dclist_count(&pgaio_my_backend->idle_ios));
@@ -773,7 +783,12 @@ pgaio_io_wait_for_free(void)
 			 * Note that no interrupts are processed between the state check
 			 * and the call to reclaim - that's important as otherwise an
 			 * interrupt could have already reclaimed the handle.
+			 *
+			 * Need to ensure that there's no reordering, in the more common
+			 * paths, where we wait for IO, that's done by
+			 * pgaio_io_was_recycled().
 			 */
+			pg_read_barrier();
 			pgaio_io_reclaim(ioh);
 			reclaimed++;
 		}
@@ -797,7 +812,7 @@ pgaio_io_wait_for_free(void)
 	if (dclist_count(&pgaio_my_backend->in_flight_ios) == 0)
 		ereport(ERROR,
 				errmsg_internal("no free IOs despite no in-flight IOs"),
-				errdetail_internal("%d pending, %d in-flight, %d idle IOs",
+				errdetail_internal("%d pending, %u in-flight, %u idle IOs",
 								   pgaio_my_backend->num_staged_ios,
 								   dclist_count(&pgaio_my_backend->in_flight_ios),
 								   dclist_count(&pgaio_my_backend->idle_ios)));
@@ -813,7 +828,7 @@ pgaio_io_wait_for_free(void)
 											   &pgaio_my_backend->in_flight_ios);
 		uint64		generation = ioh->generation;
 
-		switch (ioh->state)
+		switch ((PgAioHandleState) ioh->state)
 		{
 				/* should not be in in-flight list */
 			case PGAIO_HS_IDLE:
@@ -828,7 +843,7 @@ pgaio_io_wait_for_free(void)
 			case PGAIO_HS_COMPLETED_IO:
 			case PGAIO_HS_SUBMITTED:
 				pgaio_debug_io(DEBUG2, ioh,
-							   "waiting for free io with %d in flight",
+							   "waiting for free io with %u in flight",
 							   dclist_count(&pgaio_my_backend->in_flight_ios));
 
 				/*
@@ -852,7 +867,12 @@ pgaio_io_wait_for_free(void)
 				 * check and the call to reclaim - that's important as
 				 * otherwise an interrupt could have already reclaimed the
 				 * handle.
+				 *
+				 * Need to ensure that there's no reordering, in the more
+				 * common paths, where we wait for IO, that's done by
+				 * pgaio_io_was_recycled().
 				 */
+				pg_read_barrier();
 				pgaio_io_reclaim(ioh);
 				break;
 		}
@@ -1252,7 +1272,7 @@ pgaio_closing_fd(int fd)
 				break;
 
 			pgaio_debug_io(DEBUG2, ioh,
-						   "waiting for IO before FD %d gets closed, %d in-flight IOs",
+						   "waiting for IO before FD %d gets closed, %u in-flight IOs",
 						   fd, dclist_count(&pgaio_my_backend->in_flight_ios));
 
 			/* see comment in pgaio_io_wait_for_free() about raciness */
@@ -1288,7 +1308,7 @@ pgaio_shutdown(int code, Datum arg)
 		uint64		generation = ioh->generation;
 
 		pgaio_debug_io(DEBUG2, ioh,
-					   "waiting for IO to complete during shutdown, %d in-flight IOs",
+					   "waiting for IO to complete during shutdown, %u in-flight IOs",
 					   dclist_count(&pgaio_my_backend->in_flight_ios));
 
 		/* see comment in pgaio_io_wait_for_free() about raciness */
@@ -1301,8 +1321,8 @@ pgaio_shutdown(int code, Datum arg)
 void
 assign_io_method(int newval, void *extra)
 {
+	Assert(newval < lengthof(pgaio_method_ops_table));
 	Assert(pgaio_method_ops_table[newval] != NULL);
-	Assert(newval < lengthof(io_method_options));
 
 	pgaio_method_ops = pgaio_method_ops_table[newval];
 }

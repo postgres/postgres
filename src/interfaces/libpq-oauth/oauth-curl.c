@@ -247,7 +247,8 @@ struct async_ctx
 	 * our entry point, errors have three parts:
 	 *
 	 * - errctx:	an optional static string, describing the global operation
-	 *				currently in progress. It'll be translated for you.
+	 *				currently in progress. Should be translated with
+	 *				libpq_gettext().
 	 *
 	 * - errbuf:	contains the actual error message. Generally speaking, use
 	 *				actx_error[_str] to manipulate this. This must be filled
@@ -278,6 +279,7 @@ struct async_ctx
 	bool		user_prompted;	/* have we already sent the authz prompt? */
 	bool		used_basic_auth;	/* did we send a client secret? */
 	bool		debugging;		/* can we give unsafe developer assistance? */
+	int			dbg_num_calls;	/* (debug mode) how many times were we called? */
 };
 
 /*
@@ -366,12 +368,15 @@ pg_fe_cleanup_oauth_flow(PGconn *conn)
 
 /*
  * Macros for manipulating actx->errbuf. actx_error() translates and formats a
- * string for you; actx_error_str() appends a string directly without
- * translation.
+ * string for you, actx_error_internal() is the untranslated equivalent, and
+ * actx_error_str() appends a string directly (also without translation).
  */
 
 #define actx_error(ACTX, FMT, ...) \
 	appendPQExpBuffer(&(ACTX)->errbuf, libpq_gettext(FMT), ##__VA_ARGS__)
+
+#define actx_error_internal(ACTX, FMT, ...) \
+	appendPQExpBuffer(&(ACTX)->errbuf, FMT, ##__VA_ARGS__)
 
 #define actx_error_str(ACTX, S) \
 	appendPQExpBufferStr(&(ACTX)->errbuf, S)
@@ -438,7 +443,7 @@ struct json_field
 	{
 		char	  **scalar;		/* for all scalar types */
 		struct curl_slist **array;	/* for type == JSON_TOKEN_ARRAY_START */
-	}			target;
+	};
 
 	bool		required;		/* REQUIRED field, or just OPTIONAL? */
 };
@@ -460,6 +465,9 @@ struct oauth_parse
 #define oauth_parse_set_error(ctx, fmt, ...) \
 	appendPQExpBuffer((ctx)->errbuf, libpq_gettext(fmt), ##__VA_ARGS__)
 
+#define oauth_parse_set_error_internal(ctx, fmt, ...) \
+	appendPQExpBuffer((ctx)->errbuf, fmt, ##__VA_ARGS__)
+
 static void
 report_type_mismatch(struct oauth_parse *ctx)
 {
@@ -474,20 +482,20 @@ report_type_mismatch(struct oauth_parse *ctx)
 	switch (ctx->active->type)
 	{
 		case JSON_TOKEN_STRING:
-			msgfmt = "field \"%s\" must be a string";
+			msgfmt = gettext_noop("field \"%s\" must be a string");
 			break;
 
 		case JSON_TOKEN_NUMBER:
-			msgfmt = "field \"%s\" must be a number";
+			msgfmt = gettext_noop("field \"%s\" must be a number");
 			break;
 
 		case JSON_TOKEN_ARRAY_START:
-			msgfmt = "field \"%s\" must be an array of strings";
+			msgfmt = gettext_noop("field \"%s\" must be an array of strings");
 			break;
 
 		default:
 			Assert(false);
-			msgfmt = "field \"%s\" has unexpected type";
+			msgfmt = gettext_noop("field \"%s\" has unexpected type");
 	}
 
 	oauth_parse_set_error(ctx, msgfmt, ctx->active->name);
@@ -535,9 +543,9 @@ oauth_json_object_field_start(void *state, char *name, bool isnull)
 		if (ctx->active)
 		{
 			Assert(false);
-			oauth_parse_set_error(ctx,
-								  "internal error: started field '%s' before field '%s' was finished",
-								  name, ctx->active->name);
+			oauth_parse_set_error_internal(ctx,
+										   "internal error: started field \"%s\" before field \"%s\" was finished",
+										   name, ctx->active->name);
 			return JSON_SEM_ACTION_FAILED;
 		}
 
@@ -560,8 +568,8 @@ oauth_json_object_field_start(void *state, char *name, bool isnull)
 		{
 			field = ctx->active;
 
-			if ((field->type == JSON_TOKEN_ARRAY_START && *field->target.array)
-				|| (field->type != JSON_TOKEN_ARRAY_START && *field->target.scalar))
+			if ((field->type == JSON_TOKEN_ARRAY_START && *field->array)
+				|| (field->type != JSON_TOKEN_ARRAY_START && *field->scalar))
 			{
 				oauth_parse_set_error(ctx, "field \"%s\" is duplicated",
 									  field->name);
@@ -587,9 +595,9 @@ oauth_json_object_end(void *state)
 	if (!ctx->nested && ctx->active)
 	{
 		Assert(false);
-		oauth_parse_set_error(ctx,
-							  "internal error: field '%s' still active at end of object",
-							  ctx->active->name);
+		oauth_parse_set_error_internal(ctx,
+									   "internal error: field \"%s\" still active at end of object",
+									   ctx->active->name);
 		return JSON_SEM_ACTION_FAILED;
 	}
 
@@ -643,9 +651,9 @@ oauth_json_array_end(void *state)
 		if (ctx->nested != 2 || ctx->active->type != JSON_TOKEN_ARRAY_START)
 		{
 			Assert(false);
-			oauth_parse_set_error(ctx,
-								  "internal error: found unexpected array end while parsing field '%s'",
-								  ctx->active->name);
+			oauth_parse_set_error_internal(ctx,
+										   "internal error: found unexpected array end while parsing field \"%s\"",
+										   ctx->active->name);
 			return JSON_SEM_ACTION_FAILED;
 		}
 
@@ -698,24 +706,24 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			if (ctx->nested != 1)
 			{
 				Assert(false);
-				oauth_parse_set_error(ctx,
-									  "internal error: scalar target found at nesting level %d",
-									  ctx->nested);
+				oauth_parse_set_error_internal(ctx,
+											   "internal error: scalar target found at nesting level %d",
+											   ctx->nested);
 				return JSON_SEM_ACTION_FAILED;
 			}
 
 			/* ...and that a result has not already been set. */
-			if (*field->target.scalar)
+			if (*field->scalar)
 			{
 				Assert(false);
-				oauth_parse_set_error(ctx,
-									  "internal error: scalar field '%s' would be assigned twice",
-									  ctx->active->name);
+				oauth_parse_set_error_internal(ctx,
+											   "internal error: scalar field \"%s\" would be assigned twice",
+											   ctx->active->name);
 				return JSON_SEM_ACTION_FAILED;
 			}
 
-			*field->target.scalar = strdup(token);
-			if (!*field->target.scalar)
+			*field->scalar = strdup(token);
+			if (!*field->scalar)
 				return JSON_OUT_OF_MEMORY;
 
 			ctx->active = NULL;
@@ -730,18 +738,18 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			if (ctx->nested != 2)
 			{
 				Assert(false);
-				oauth_parse_set_error(ctx,
-									  "internal error: array member found at nesting level %d",
-									  ctx->nested);
+				oauth_parse_set_error_internal(ctx,
+											   "internal error: array member found at nesting level %d",
+											   ctx->nested);
 				return JSON_SEM_ACTION_FAILED;
 			}
 
 			/* Note that curl_slist_append() makes a copy of the token. */
-			temp = curl_slist_append(*field->target.array, token);
+			temp = curl_slist_append(*field->array, token);
 			if (!temp)
 				return JSON_OUT_OF_MEMORY;
 
-			*field->target.array = temp;
+			*field->array = temp;
 		}
 	}
 	else
@@ -877,8 +885,8 @@ parse_oauth_json(struct async_ctx *actx, const struct json_field *fields)
 	while (fields->name)
 	{
 		if (fields->required
-			&& !*fields->target.scalar
-			&& !*fields->target.array)
+			&& !*fields->scalar
+			&& !*fields->array)
 		{
 			actx_error(actx, "field \"%s\" is missing", fields->name);
 			goto cleanup;
@@ -1086,7 +1094,7 @@ parse_token_error(struct async_ctx *actx, struct token_error *err)
 	 * override the errctx if parsing explicitly fails.
 	 */
 	if (!result)
-		actx->errctx = "failed to parse token error response";
+		actx->errctx = libpq_gettext("failed to parse token error response");
 
 	return result;
 }
@@ -1114,8 +1122,8 @@ record_token_error(struct async_ctx *actx, const struct token_error *err)
 		if (response_code == 401)
 		{
 			actx_error(actx, actx->used_basic_auth
-					   ? "provider rejected the oauth_client_secret"
-					   : "provider requires client authentication, and no oauth_client_secret is set");
+					   ? gettext_noop("provider rejected the oauth_client_secret")
+					   : gettext_noop("provider requires client authentication, and no oauth_client_secret is set"));
 			actx_error_str(actx, " ");
 		}
 	}
@@ -1178,20 +1186,20 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->mux = epoll_create1(EPOLL_CLOEXEC);
 	if (actx->mux < 0)
 	{
-		actx_error(actx, "failed to create epoll set: %m");
+		actx_error_internal(actx, "failed to create epoll set: %m");
 		return false;
 	}
 
 	actx->timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
 	if (actx->timerfd < 0)
 	{
-		actx_error(actx, "failed to create timerfd: %m");
+		actx_error_internal(actx, "failed to create timerfd: %m");
 		return false;
 	}
 
 	if (epoll_ctl(actx->mux, EPOLL_CTL_ADD, actx->timerfd, &ev) < 0)
 	{
-		actx_error(actx, "failed to add timerfd to epoll set: %m");
+		actx_error_internal(actx, "failed to add timerfd to epoll set: %m");
 		return false;
 	}
 
@@ -1200,8 +1208,7 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->mux = kqueue();
 	if (actx->mux < 0)
 	{
-		/*- translator: the term "kqueue" (kernel queue) should not be translated */
-		actx_error(actx, "failed to create kqueue: %m");
+		actx_error_internal(actx, "failed to create kqueue: %m");
 		return false;
 	}
 
@@ -1214,7 +1221,7 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->timerfd = kqueue();
 	if (actx->timerfd < 0)
 	{
-		actx_error(actx, "failed to create timer kqueue: %m");
+		actx_error_internal(actx, "failed to create timer kqueue: %m");
 		return false;
 	}
 
@@ -1258,7 +1265,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		default:
-			actx_error(actx, "unknown libcurl socket operation: %d", what);
+			actx_error_internal(actx, "unknown libcurl socket operation: %d", what);
 			return -1;
 	}
 
@@ -1275,15 +1282,15 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 		switch (op)
 		{
 			case EPOLL_CTL_ADD:
-				actx_error(actx, "could not add to epoll set: %m");
+				actx_error_internal(actx, "could not add to epoll set: %m");
 				break;
 
 			case EPOLL_CTL_DEL:
-				actx_error(actx, "could not delete from epoll set: %m");
+				actx_error_internal(actx, "could not delete from epoll set: %m");
 				break;
 
 			default:
-				actx_error(actx, "could not update epoll set: %m");
+				actx_error_internal(actx, "could not update epoll set: %m");
 		}
 
 		return -1;
@@ -1291,21 +1298,30 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 
 	return 0;
 #elif defined(HAVE_SYS_EVENT_H)
-	struct kevent ev[2] = {0};
+	struct kevent ev[2];
 	struct kevent ev_out[2];
 	struct timespec timeout = {0};
 	int			nev = 0;
 	int			res;
 
+	/*
+	 * We don't know which of the events is currently registered, perhaps
+	 * both, so we always try to remove unneeded events. This means we need to
+	 * tolerate ENOENT below.
+	 */
 	switch (what)
 	{
 		case CURL_POLL_IN:
 			EV_SET(&ev[nev], socket, EVFILT_READ, EV_ADD | EV_RECEIPT, 0, 0, 0);
 			nev++;
+			EV_SET(&ev[nev], socket, EVFILT_WRITE, EV_DELETE | EV_RECEIPT, 0, 0, 0);
+			nev++;
 			break;
 
 		case CURL_POLL_OUT:
 			EV_SET(&ev[nev], socket, EVFILT_WRITE, EV_ADD | EV_RECEIPT, 0, 0, 0);
+			nev++;
+			EV_SET(&ev[nev], socket, EVFILT_READ, EV_DELETE | EV_RECEIPT, 0, 0, 0);
 			nev++;
 			break;
 
@@ -1317,12 +1333,6 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		case CURL_POLL_REMOVE:
-
-			/*
-			 * We don't know which of these is currently registered, perhaps
-			 * both, so we try to remove both.  This means we need to tolerate
-			 * ENOENT below.
-			 */
 			EV_SET(&ev[nev], socket, EVFILT_READ, EV_DELETE | EV_RECEIPT, 0, 0, 0);
 			nev++;
 			EV_SET(&ev[nev], socket, EVFILT_WRITE, EV_DELETE | EV_RECEIPT, 0, 0, 0);
@@ -1330,14 +1340,17 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		default:
-			actx_error(actx, "unknown libcurl socket operation: %d", what);
+			actx_error_internal(actx, "unknown libcurl socket operation: %d", what);
 			return -1;
 	}
 
-	res = kevent(actx->mux, ev, nev, ev_out, lengthof(ev_out), &timeout);
+	Assert(nev <= lengthof(ev));
+	Assert(nev <= lengthof(ev_out));
+
+	res = kevent(actx->mux, ev, nev, ev_out, nev, &timeout);
 	if (res < 0)
 	{
-		actx_error(actx, "could not modify kqueue: %m");
+		actx_error_internal(actx, "could not modify kqueue: %m");
 		return -1;
 	}
 
@@ -1361,10 +1374,10 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			switch (what)
 			{
 				case CURL_POLL_REMOVE:
-					actx_error(actx, "could not delete from kqueue: %m");
+					actx_error_internal(actx, "could not delete from kqueue: %m");
 					break;
 				default:
-					actx_error(actx, "could not add to kqueue: %m");
+					actx_error_internal(actx, "could not add to kqueue: %m");
 			}
 			return -1;
 		}
@@ -1373,6 +1386,53 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 	return 0;
 #else
 #error register_socket is not implemented on this platform
+#endif
+}
+
+/*
+ * If there is no work to do on any of the descriptors in the multiplexer, then
+ * this function must ensure that the multiplexer is not readable.
+ *
+ * Unlike epoll descriptors, kqueue descriptors only transition from readable to
+ * unreadable when kevent() is called and finds nothing, after removing
+ * level-triggered conditions that have gone away. We therefore need a dummy
+ * kevent() call after operations might have been performed on the monitored
+ * sockets or timer_fd. Any event returned is ignored here, but it also remains
+ * queued (being level-triggered) and leaves the descriptor readable. This is a
+ * no-op for epoll descriptors.
+ */
+static bool
+comb_multiplexer(struct async_ctx *actx)
+{
+#if defined(HAVE_SYS_EPOLL_H)
+	/* The epoll implementation doesn't hold onto stale events. */
+	return true;
+#elif defined(HAVE_SYS_EVENT_H)
+	struct timespec timeout = {0};
+	struct kevent ev;
+
+	/*
+	 * Try to read a single pending event. We can actually ignore the result:
+	 * either we found an event to process, in which case the multiplexer is
+	 * correctly readable for that event at minimum, and it doesn't matter if
+	 * there are any stale events; or we didn't find any, in which case the
+	 * kernel will have discarded any stale events as it traveled to the end
+	 * of the queue.
+	 *
+	 * Note that this depends on our registrations being level-triggered --
+	 * even the timer, so we use a chained kqueue for that instead of an
+	 * EVFILT_TIMER on the top-level mux. If we used edge-triggered events,
+	 * this call would improperly discard them.
+	 */
+	if (kevent(actx->mux, NULL, 0, &ev, 1, &timeout) < 0)
+	{
+		actx_error_internal(actx, "could not comb kqueue: %m");
+		return false;
+	}
+
+	return true;
+#else
+#error comb_multiplexer is not implemented on this platform
 #endif
 }
 
@@ -1416,7 +1476,7 @@ set_timer(struct async_ctx *actx, long timeout)
 
 	if (timerfd_settime(actx->timerfd, 0 /* no flags */ , &spec, NULL) < 0)
 	{
-		actx_error(actx, "setting timerfd to %ld: %m", timeout);
+		actx_error_internal(actx, "setting timerfd to %ld: %m", timeout);
 		return false;
 	}
 
@@ -1446,14 +1506,14 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error(actx, "deleting kqueue timer: %m");
+		actx_error_internal(actx, "deleting kqueue timer: %m");
 		return false;
 	}
 
 	EV_SET(&ev, actx->timerfd, EVFILT_READ, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->mux, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error(actx, "removing kqueue timer from multiplexer: %m");
+		actx_error_internal(actx, "removing kqueue timer from multiplexer: %m");
 		return false;
 	}
 
@@ -1464,14 +1524,14 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, (EV_ADD | EV_ONESHOT), 0, timeout, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0)
 	{
-		actx_error(actx, "setting kqueue timer to %ld: %m", timeout);
+		actx_error_internal(actx, "setting kqueue timer to %ld: %m", timeout);
 		return false;
 	}
 
 	EV_SET(&ev, actx->timerfd, EVFILT_READ, EV_ADD, 0, 0, 0);
 	if (kevent(actx->mux, &ev, 1, NULL, 0, NULL) < 0)
 	{
-		actx_error(actx, "adding kqueue timer to multiplexer: %m");
+		actx_error_internal(actx, "adding kqueue timer to multiplexer: %m");
 		return false;
 	}
 
@@ -1483,40 +1543,20 @@ set_timer(struct async_ctx *actx, long timeout)
 
 /*
  * Returns 1 if the timeout in the multiplexer set has expired since the last
- * call to set_timer(), 0 if the timer is still running, or -1 (with an
- * actx_error() report) if the timer cannot be queried.
+ * call to set_timer(), 0 if the timer is either still running or disarmed, or
+ * -1 (with an actx_error() report) if the timer cannot be queried.
  */
 static int
 timer_expired(struct async_ctx *actx)
 {
-#if defined(HAVE_SYS_EPOLL_H)
-	struct itimerspec spec = {0};
-
-	if (timerfd_gettime(actx->timerfd, &spec) < 0)
-	{
-		actx_error(actx, "getting timerfd value: %m");
-		return -1;
-	}
-
-	/*
-	 * This implementation assumes we're using single-shot timers. If you
-	 * change to using intervals, you'll need to reimplement this function
-	 * too, possibly with the read() or select() interfaces for timerfd.
-	 */
-	Assert(spec.it_interval.tv_sec == 0
-		   && spec.it_interval.tv_nsec == 0);
-
-	/* If the remaining time to expiration is zero, we're done. */
-	return (spec.it_value.tv_sec == 0
-			&& spec.it_value.tv_nsec == 0);
-#elif defined(HAVE_SYS_EVENT_H)
+#if defined(HAVE_SYS_EPOLL_H) || defined(HAVE_SYS_EVENT_H)
 	int			res;
 
-	/* Is the timer queue ready? */
+	/* Is the timer ready? */
 	res = PQsocketPoll(actx->timerfd, 1 /* forRead */ , 0, 0);
 	if (res < 0)
 	{
-		actx_error(actx, "checking kqueue for timeout: %m");
+		actx_error(actx, "checking timer expiration: %m");
 		return -1;
 	}
 
@@ -1546,6 +1586,36 @@ register_timer(CURLM *curlm, long timeout, void *ctx)
 		return -1;				/* actx_error already called */
 
 	return 0;
+}
+
+/*
+ * Removes any expired-timer event from the multiplexer. If was_expired is not
+ * NULL, it will contain whether or not the timer was expired at time of call.
+ */
+static bool
+drain_timer_events(struct async_ctx *actx, bool *was_expired)
+{
+	int			res;
+
+	res = timer_expired(actx);
+	if (res < 0)
+		return false;
+
+	if (res > 0)
+	{
+		/*
+		 * Timer is expired. We could drain the event manually from the
+		 * timerfd, but it's easier to simply disable it; that keeps the
+		 * platform-specific code in set_timer().
+		 */
+		if (!set_timer(actx, -1))
+			return false;
+	}
+
+	if (was_expired)
+		*was_expired = (res > 0);
+
+	return true;
 }
 
 /*
@@ -1856,6 +1926,12 @@ start_request(struct async_ctx *actx)
 #endif
 
 /*
+ * Add another macro layer that inserts the needed semicolon, to avoid having
+ * to write a literal semicolon in the call below, which would break pgindent.
+ */
+#define PG_CURL_IGNORE_DEPRECATION(x) CURL_IGNORE_DEPRECATION(x;)
+
+/*
  * Drives the multi handle towards completion. The caller should have already
  * set up an asynchronous request via start_request().
  */
@@ -1884,11 +1960,10 @@ drive_request(struct async_ctx *actx)
 		 * to remove or break this API, so ignore the deprecation. See
 		 *
 		 *    https://curl.se/mail/lib-2024-11/0028.html
-		 *
 		 */
-		CURL_IGNORE_DEPRECATION(
-			err = curl_multi_socket_all(actx->curlm, &actx->running);
-		)
+		PG_CURL_IGNORE_DEPRECATION(err =
+								   curl_multi_socket_all(actx->curlm,
+														 &actx->running));
 
 		if (err)
 		{
@@ -2084,7 +2159,7 @@ finish_discovery(struct async_ctx *actx)
 	/*
 	 * Pull the fields we care about from the document.
 	 */
-	actx->errctx = "failed to parse OpenID discovery document";
+	actx->errctx = libpq_gettext("failed to parse OpenID discovery document");
 	if (!parse_provider(actx, &actx->provider))
 		return false;			/* error message already set */
 
@@ -2352,7 +2427,7 @@ finish_device_authz(struct async_ctx *actx)
 	 */
 	if (response_code == 200)
 	{
-		actx->errctx = "failed to parse device authorization";
+		actx->errctx = libpq_gettext("failed to parse device authorization");
 		if (!parse_device_authz(actx, &actx->authz))
 			return false;		/* error message already set */
 
@@ -2440,7 +2515,7 @@ finish_token_request(struct async_ctx *actx, struct token *tok)
 	 */
 	if (response_code == 200)
 	{
-		actx->errctx = "failed to parse access token response";
+		actx->errctx = libpq_gettext("failed to parse access token response");
 		if (!parse_access_token(actx, tok))
 			return false;		/* error message already set */
 
@@ -2751,38 +2826,64 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				{
 					PostgresPollingStatusType status;
 
+					/*
+					 * Clear any expired timeout before calling back into
+					 * Curl. Curl is not guaranteed to do this for us, because
+					 * its API expects us to use single-shot (i.e.
+					 * edge-triggered) timeouts, and ours are level-triggered
+					 * via the mux.
+					 *
+					 * This can't be combined with the comb_multiplexer() call
+					 * below: we might accidentally clear a short timeout that
+					 * was both set and expired during the call to
+					 * drive_request().
+					 */
+					if (!drain_timer_events(actx, NULL))
+						goto error_return;
+
+					/* Move the request forward. */
 					status = drive_request(actx);
 
 					if (status == PGRES_POLLING_FAILED)
 						goto error_return;
-					else if (status != PGRES_POLLING_OK)
+					else if (status == PGRES_POLLING_OK)
+						break;	/* done! */
+
+					/*
+					 * This request is still running.
+					 *
+					 * Make sure that stale events don't cause us to come back
+					 * early. (Currently, this can occur only with kqueue.) If
+					 * this is forgotten, the multiplexer can get stuck in a
+					 * signaled state and we'll burn CPU cycles pointlessly.
+					 */
+					if (!comb_multiplexer(actx))
+						goto error_return;
+
+					return status;
+				}
+
+			case OAUTH_STEP_WAIT_INTERVAL:
+				{
+					bool		expired;
+
+					/*
+					 * The client application is supposed to wait until our
+					 * timer expires before calling PQconnectPoll() again, but
+					 * that might not happen. To avoid sending a token request
+					 * early, check the timer before continuing.
+					 */
+					if (!drain_timer_events(actx, &expired))
+						goto error_return;
+
+					if (!expired)
 					{
-						/* not done yet */
-						return status;
+						set_conn_altsock(conn, actx->timerfd);
+						return PGRES_POLLING_READING;
 					}
 
 					break;
 				}
-
-			case OAUTH_STEP_WAIT_INTERVAL:
-
-				/*
-				 * The client application is supposed to wait until our timer
-				 * expires before calling PQconnectPoll() again, but that
-				 * might not happen. To avoid sending a token request early,
-				 * check the timer before continuing.
-				 */
-				if (!timer_expired(actx))
-				{
-					set_conn_altsock(conn, actx->timerfd);
-					return PGRES_POLLING_READING;
-				}
-
-				/* Disable the expired timer. */
-				if (!set_timer(actx, -1))
-					goto error_return;
-
-				break;
 		}
 
 		/*
@@ -2793,7 +2894,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 		switch (actx->step)
 		{
 			case OAUTH_STEP_INIT:
-				actx->errctx = "failed to fetch OpenID discovery document";
+				actx->errctx = libpq_gettext("failed to fetch OpenID discovery document");
 				if (!start_discovery(actx, conn_oauth_discovery_uri(conn)))
 					goto error_return;
 
@@ -2807,11 +2908,11 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				if (!check_issuer(actx, conn))
 					goto error_return;
 
-				actx->errctx = "cannot run OAuth device authorization";
+				actx->errctx = libpq_gettext("cannot run OAuth device authorization");
 				if (!check_for_device_flow(actx))
 					goto error_return;
 
-				actx->errctx = "failed to obtain device authorization";
+				actx->errctx = libpq_gettext("failed to obtain device authorization");
 				if (!start_device_authz(actx, conn))
 					goto error_return;
 
@@ -2822,7 +2923,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				if (!finish_device_authz(actx))
 					goto error_return;
 
-				actx->errctx = "failed to obtain access token";
+				actx->errctx = libpq_gettext("failed to obtain access token");
 				if (!start_token_request(actx, conn))
 					goto error_return;
 
@@ -2873,7 +2974,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				break;
 
 			case OAUTH_STEP_WAIT_INTERVAL:
-				actx->errctx = "failed to obtain access token";
+				actx->errctx = libpq_gettext("failed to obtain access token");
 				if (!start_token_request(actx, conn))
 					goto error_return;
 
@@ -2899,7 +3000,7 @@ error_return:
 	 * also the documentation for struct async_ctx.
 	 */
 	if (actx->errctx)
-		appendPQExpBuffer(errbuf, "%s: ", libpq_gettext(actx->errctx));
+		appendPQExpBuffer(errbuf, "%s: ", actx->errctx);
 
 	if (PQExpBufferDataBroken(actx->errbuf))
 		appendPQExpBufferStr(errbuf, libpq_gettext("out of memory"));
@@ -2932,6 +3033,8 @@ PostgresPollingStatusType
 pg_fe_run_oauth_flow(PGconn *conn)
 {
 	PostgresPollingStatusType result;
+	fe_oauth_state *state = conn_sasl_state(conn);
+	struct async_ctx *actx;
 #ifndef WIN32
 	sigset_t	osigset;
 	bool		sigpipe_pending;
@@ -2959,6 +3062,25 @@ pg_fe_run_oauth_flow(PGconn *conn)
 #endif
 
 	result = pg_fe_run_oauth_flow_impl(conn);
+
+	/*
+	 * To assist with finding bugs in comb_multiplexer() and
+	 * drain_timer_events(), when we're in debug mode, track the total number
+	 * of calls to this function and print that at the end of the flow.
+	 *
+	 * Be careful that state->async_ctx could be NULL if early initialization
+	 * fails during the first call.
+	 */
+	actx = state->async_ctx;
+	Assert(actx || result == PGRES_POLLING_FAILED);
+
+	if (actx && actx->debugging)
+	{
+		actx->dbg_num_calls++;
+		if (result == PGRES_POLLING_OK || result == PGRES_POLLING_FAILED)
+			fprintf(stderr, "[libpq] total number of polls: %d\n",
+					actx->dbg_num_calls);
+	}
 
 #ifndef WIN32
 	if (masked)

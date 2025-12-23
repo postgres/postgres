@@ -22,13 +22,13 @@ $publisher->start;
 
 # Initialize the old subscriber node
 my $old_sub = PostgreSQL::Test::Cluster->new('old_sub');
-$old_sub->init;
+$old_sub->init(allows_streaming => 'physical');
 $old_sub->start;
 my $oldbindir = $old_sub->config_data('--bindir');
 
 # Initialize the new subscriber
 my $new_sub = PostgreSQL::Test::Cluster->new('new_sub');
-$new_sub->init;
+$new_sub->init(allows_streaming => 'physical');
 my $newbindir = $new_sub->config_data('--bindir');
 
 # In a VPATH build, we'll be started in the source directory, but we want
@@ -53,7 +53,8 @@ $old_sub->safe_psql('postgres',
 
 $old_sub->stop;
 
-$new_sub->append_conf('postgresql.conf', "max_active_replication_origins = 0");
+$new_sub->append_conf('postgresql.conf',
+	"max_active_replication_origins = 0");
 
 # pg_upgrade will fail because the new cluster has insufficient
 # max_active_replication_origins.
@@ -80,7 +81,56 @@ command_checks_all(
 );
 
 # Reset max_active_replication_origins
-$new_sub->append_conf('postgresql.conf', "max_active_replication_origins = 10");
+$new_sub->append_conf('postgresql.conf',
+	"max_active_replication_origins = 10");
+
+# Cleanup
+$publisher->safe_psql('postgres', "DROP PUBLICATION regress_pub1");
+$old_sub->start;
+$old_sub->safe_psql('postgres', "DROP SUBSCRIPTION regress_sub1;");
+
+# ------------------------------------------------------
+# Check that pg_upgrade fails when max_replication_slots configured in the new
+# cluster is less than the number of logical slots in the old cluster + 1 when
+# subscription's retain_dead_tuples option is enabled.
+# ------------------------------------------------------
+# It is sufficient to use disabled subscription to test upgrade failure.
+
+$publisher->safe_psql('postgres', "CREATE PUBLICATION regress_pub1");
+$old_sub->safe_psql('postgres',
+	"CREATE SUBSCRIPTION regress_sub1 CONNECTION '$connstr' PUBLICATION regress_pub1 WITH (enabled = false, retain_dead_tuples = true)"
+);
+
+$old_sub->stop;
+
+$new_sub->append_conf('postgresql.conf', 'max_replication_slots = 0');
+
+# pg_upgrade will fail because the new cluster has insufficient
+# max_replication_slots.
+command_checks_all(
+	[
+		'pg_upgrade',
+		'--no-sync',
+		'--old-datadir' => $old_sub->data_dir,
+		'--new-datadir' => $new_sub->data_dir,
+		'--old-bindir' => $oldbindir,
+		'--new-bindir' => $newbindir,
+		'--socketdir' => $new_sub->host,
+		'--old-port' => $old_sub->port,
+		'--new-port' => $new_sub->port,
+		$mode,
+		'--check',
+	],
+	1,
+	[
+		qr/"max_replication_slots" \(0\) must be greater than or equal to the number of logical replication slots on the old cluster plus one additional slot required for retaining conflict detection information \(1\)/
+	],
+	[qr//],
+	'run of pg_upgrade where the new cluster has insufficient max_replication_slots'
+);
+
+# Reset max_replication_slots
+$new_sub->append_conf('postgresql.conf', 'max_replication_slots = 10');
 
 # Cleanup
 $publisher->safe_psql('postgres', "DROP PUBLICATION regress_pub1");
@@ -198,23 +248,27 @@ $old_sub->safe_psql(
 rmtree($new_sub->data_dir . "/pg_upgrade_output.d");
 
 # Verify that the upgrade should be successful with tables in 'ready'/'init'
-# state along with retaining the replication origin's remote lsn, subscription's
-# running status, and failover option.
+# state along with retaining the replication origin's remote lsn,
+# subscription's running status, failover option, and retain_dead_tuples
+# option. Use multiple tables to verify deterministic pg_dump ordering
+# of subscription relations during --binary-upgrade.
 $publisher->safe_psql(
 	'postgres', qq[
+		CREATE TABLE tab_upgraded(id int);
 		CREATE TABLE tab_upgraded1(id int);
-		CREATE PUBLICATION regress_pub4 FOR TABLE tab_upgraded1;
+		CREATE PUBLICATION regress_pub4 FOR TABLE tab_upgraded, tab_upgraded1;
 ]);
 
 $old_sub->safe_psql(
 	'postgres', qq[
+		CREATE TABLE tab_upgraded(id int);
 		CREATE TABLE tab_upgraded1(id int);
-		CREATE SUBSCRIPTION regress_sub4 CONNECTION '$connstr' PUBLICATION regress_pub4 WITH (failover = true);
+		CREATE SUBSCRIPTION regress_sub4 CONNECTION '$connstr' PUBLICATION regress_pub4 WITH (failover = true, retain_dead_tuples = true);
 ]);
 
-# Wait till the table tab_upgraded1 reaches 'ready' state
+# Wait till the tables tab_upgraded and tab_upgraded1 reach 'ready' state
 my $synced_query =
-  "SELECT count(1) = 1 FROM pg_subscription_rel WHERE srsubstate = 'r'";
+  "SELECT count(1) = 2 FROM pg_subscription_rel WHERE srsubstate = 'r'";
 $old_sub->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for the table to reach ready state";
 
@@ -252,6 +306,8 @@ my $remote_lsn = $old_sub->safe_psql('postgres',
 # Have the subscription in disabled state before upgrade
 $old_sub->safe_psql('postgres', "ALTER SUBSCRIPTION regress_sub5 DISABLE");
 
+my $tab_upgraded_oid = $old_sub->safe_psql('postgres',
+	"SELECT oid FROM pg_class WHERE relname = 'tab_upgraded'");
 my $tab_upgraded1_oid = $old_sub->safe_psql('postgres',
 	"SELECT oid FROM pg_class WHERE relname = 'tab_upgraded1'");
 my $tab_upgraded2_oid = $old_sub->safe_psql('postgres',
@@ -266,9 +322,10 @@ $new_sub->append_conf('postgresql.conf',
 
 # ------------------------------------------------------
 # Check that pg_upgrade is successful when all tables are in ready or in
-# init state (tab_upgraded1 table is in ready state and tab_upgraded2 table is
-# in init state) along with retaining the replication origin's remote lsn,
-# subscription's running status, and failover option.
+# init state (tab_upgraded and tab_upgraded1 tables are in ready state and
+# tab_upgraded2 table is in init state) along with retaining the replication
+# origin's remote lsn, subscription's running status, failover option, and
+# retain_dead_tuples option.
 # ------------------------------------------------------
 command_ok(
 	[
@@ -291,7 +348,8 @@ ok( !-d $new_sub->data_dir . "/pg_upgrade_output.d",
 # ------------------------------------------------------
 # Check that the data inserted to the publisher when the new subscriber is down
 # will be replicated once it is started. Also check that the old subscription
-# states and relations origins are all preserved.
+# states and relations origins are all preserved, and that the conflict
+# detection slot is created.
 # ------------------------------------------------------
 $publisher->safe_psql(
 	'postgres', qq[
@@ -301,23 +359,25 @@ $publisher->safe_psql(
 
 $new_sub->start;
 
-# The subscription's running status and failover option should be preserved
-# in the upgraded instance. So regress_sub4 should still have subenabled and
-# subfailover set to true, while regress_sub5 should have both set to false.
+# The subscription's running status, failover option, and retain_dead_tuples
+# option should be preserved in the upgraded instance. So regress_sub4 should
+# still have subenabled, subfailover, and subretaindeadtuples set to true,
+# while regress_sub5 should have both set to false.
 $result = $new_sub->safe_psql('postgres',
-	"SELECT subname, subenabled, subfailover FROM pg_subscription ORDER BY subname"
+	"SELECT subname, subenabled, subfailover, subretaindeadtuples FROM pg_subscription ORDER BY subname"
 );
-is( $result, qq(regress_sub4|t|t
-regress_sub5|f|f),
-	"check that the subscription's running status and failover are preserved"
+is( $result, qq(regress_sub4|t|t|t
+regress_sub5|f|f|f),
+	"check that the subscription's running status, failover, and retain_dead_tuples are preserved"
 );
 
 # Subscription relations should be preserved
 $result = $new_sub->safe_psql('postgres',
 	"SELECT srrelid, srsubstate FROM pg_subscription_rel ORDER BY srrelid");
-is( $result, qq($tab_upgraded1_oid|r
+is( $result, qq($tab_upgraded_oid|r
+$tab_upgraded1_oid|r
 $tab_upgraded2_oid|i),
-	"there should be 2 rows in pg_subscription_rel(representing tab_upgraded1 and tab_upgraded2)"
+	"there should be 3 rows in pg_subscription_rel(representing tab_upgraded, tab_upgraded1 and tab_upgraded2)"
 );
 
 # The replication origin's remote_lsn should be preserved
@@ -327,6 +387,11 @@ $result = $new_sub->safe_psql('postgres',
 	"SELECT remote_lsn FROM pg_replication_origin_status WHERE external_id = 'pg_' || $sub_oid"
 );
 is($result, qq($remote_lsn), "remote_lsn should have been preserved");
+
+# The conflict detection slot should be created
+$result = $new_sub->safe_psql('postgres',
+	"SELECT xmin IS NOT NULL from pg_replication_slots WHERE slot_name = 'pg_conflict_detection'");
+is($result, qq(t), "conflict detection slot exists");
 
 # Resume the initial sync and wait until all tables of subscription
 # 'regress_sub5' are synchronized

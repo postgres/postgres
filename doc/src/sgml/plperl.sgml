@@ -229,12 +229,12 @@ $$ LANGUAGE plperl;
    references to Perl arrays.  Here is an example:
 
 <programlisting>
-CREATE OR REPLACE function returns_array()
+CREATE OR REPLACE FUNCTION returns_array()
 RETURNS text[][] AS $$
     return [['a&quot;b','c,d'],['e\\f','g']];
 $$ LANGUAGE plperl;
 
-select returns_array();
+SELECT returns_array();
 </programlisting>
   </para>
 
@@ -468,8 +468,8 @@ optional maximum number of rows:
 $rv = spi_exec_query('SELECT * FROM my_table', 5);
 </programlisting>
         This returns up to 5 rows from the table
-        <literal>my_table</literal>.  If <literal>my_table</literal>
-        has a column <literal>my_column</literal>, you can get that
+        <structname>my_table</structname>.  If <structname>my_table</structname>
+        has a column <structfield>my_column</structfield>, you can get that
         value from row <literal>$i</literal> of the result like this:
 <programlisting>
 $foo = $rv-&gt;{rows}[$i]-&gt;{my_column};
@@ -512,7 +512,7 @@ INSERT INTO test (i, v) VALUES (3, 'third line');
 INSERT INTO test (i, v) VALUES (4, 'immortal');
 
 CREATE OR REPLACE FUNCTION test_munge() RETURNS SETOF test AS $$
-    my $rv = spi_exec_query('select i, v from test;');
+    my $rv = spi_exec_query('SELECT i, v FROM test;');
     my $status = $rv-&gt;{status};
     my $nrows = $rv-&gt;{processed};
     foreach my $rn (0 .. $nrows - 1) {
@@ -588,7 +588,7 @@ CREATE OR REPLACE FUNCTION lotsa_md5 (INTEGER) RETURNS SETOF foo_type AS $$
     return;
 $$ LANGUAGE plperlu;
 
-SELECT * from lotsa_md5(500);
+SELECT * FROM lotsa_md5(500);
 </programlisting>
     </para>
 
@@ -1199,7 +1199,7 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{new}{foo}</literal></term>
      <listitem>
       <para>
-       <literal>NEW</literal> value of column <literal>foo</literal>
+       <literal>NEW</literal> value of column <structfield>foo</structfield>
       </para>
      </listitem>
     </varlistentry>
@@ -1208,7 +1208,7 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{old}{foo}</literal></term>
      <listitem>
       <para>
-       <literal>OLD</literal> value of column <literal>foo</literal>
+       <literal>OLD</literal> value of column <structfield>foo</structfield>
       </para>
      </listitem>
     </varlistentry>

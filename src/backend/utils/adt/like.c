@@ -43,8 +43,8 @@ static text *MB_do_like_escape(text *pat, text *esc);
 static int	UTF8_MatchText(const char *t, int tlen, const char *p, int plen,
 						   pg_locale_t locale);
 
-static int	SB_IMatchText(const char *t, int tlen, const char *p, int plen,
-						  pg_locale_t locale);
+static int	C_IMatchText(const char *t, int tlen, const char *p, int plen,
+						 pg_locale_t locale);
 
 static int	GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation);
 static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
@@ -84,22 +84,10 @@ wchareq(const char *p1, const char *p2)
  * of getting a single character transformed to the system's wchar_t format.
  * So now, we just downcase the strings using lower() and apply regular LIKE
  * comparison.  This should be revisited when we install better locale support.
- */
-
-/*
- * We do handle case-insensitive matching for single-byte encodings using
+ *
+ * We do handle case-insensitive matching for the C locale using
  * fold-on-the-fly processing, however.
  */
-static char
-SB_lower_char(unsigned char c, pg_locale_t locale)
-{
-	if (locale->ctype_is_c)
-		return pg_ascii_tolower(c);
-	else if (locale->is_default)
-		return pg_tolower(c);
-	else
-		return tolower_l(c, locale->info.lt);
-}
 
 
 #define NextByte(p, plen)	((p)++, (plen)--)
@@ -130,10 +118,10 @@ SB_lower_char(unsigned char c, pg_locale_t locale)
 
 #include "like_match.c"
 
-/* setup to compile like_match.c for single byte case insensitive matches */
-#define MATCH_LOWER(t, locale) SB_lower_char((unsigned char) (t), locale)
+/* setup to compile like_match.c for case-insensitive matches in C locale */
+#define MATCH_LOWER
 #define NextChar(p, plen) NextByte((p), (plen))
-#define MatchText SB_IMatchText
+#define MatchText C_IMatchText
 
 #include "like_match.c"
 
@@ -202,14 +190,21 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 				 errmsg("nondeterministic collations are not supported for ILIKE")));
 
 	/*
-	 * For efficiency reasons, in the single byte case we don't call lower()
-	 * on the pattern and text, but instead call SB_lower_char on each
-	 * character.  In the multi-byte case we don't have much choice :-(. Also,
-	 * ICU does not support single-character case folding, so we go the long
-	 * way.
+	 * For efficiency reasons, in the C locale we don't call lower() on the
+	 * pattern and text, but instead lowercase each character lazily.
+	 *
+	 * XXX: use casefolding instead?
 	 */
 
-	if (pg_database_encoding_max_length() > 1 || (locale->provider == COLLPROVIDER_ICU))
+	if (locale->ctype_is_c)
+	{
+		p = VARDATA_ANY(pat);
+		plen = VARSIZE_ANY_EXHDR(pat);
+		s = VARDATA_ANY(str);
+		slen = VARSIZE_ANY_EXHDR(str);
+		return C_IMatchText(s, slen, p, plen, locale);
+	}
+	else
 	{
 		pat = DatumGetTextPP(DirectFunctionCall1Coll(lower, collation,
 													 PointerGetDatum(pat)));
@@ -219,18 +214,13 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 													 PointerGetDatum(str)));
 		s = VARDATA_ANY(str);
 		slen = VARSIZE_ANY_EXHDR(str);
+
 		if (GetDatabaseEncoding() == PG_UTF8)
 			return UTF8_MatchText(s, slen, p, plen, 0);
-		else
+		else if (pg_database_encoding_max_length() > 1)
 			return MB_MatchText(s, slen, p, plen, 0);
-	}
-	else
-	{
-		p = VARDATA_ANY(pat);
-		plen = VARSIZE_ANY_EXHDR(pat);
-		s = VARDATA_ANY(str);
-		slen = VARSIZE_ANY_EXHDR(str);
-		return SB_IMatchText(s, slen, p, plen, locale);
+		else
+			return SB_MatchText(s, slen, p, plen, 0);
 	}
 }
 

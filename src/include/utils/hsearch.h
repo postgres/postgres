@@ -65,12 +65,12 @@ typedef struct HTAB HTAB;
 typedef struct HASHCTL
 {
 	/* Used if HASH_PARTITION flag is set: */
-	long		num_partitions; /* # partitions (must be power of 2) */
+	int64		num_partitions; /* # partitions (must be power of 2) */
 	/* Used if HASH_SEGMENT flag is set: */
-	long		ssize;			/* segment size */
+	int64		ssize;			/* segment size */
 	/* Used if HASH_DIRSIZE flag is set: */
-	long		dsize;			/* (initial) directory size */
-	long		max_dsize;		/* limit to dsize if dir size is limited */
+	int64		dsize;			/* (initial) directory size */
+	int64		max_dsize;		/* limit to dsize if dir size is limited */
 	/* Used if HASH_ELEM flag is set (which is now required): */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
@@ -129,10 +129,10 @@ typedef struct
 /*
  * prototypes for functions in dynahash.c
  */
-extern HTAB *hash_create(const char *tabname, long nelem,
+extern HTAB *hash_create(const char *tabname, int64 nelem,
 						 const HASHCTL *info, int flags);
 extern void hash_destroy(HTAB *hashp);
-extern void hash_stats(const char *where, HTAB *hashp);
+extern void hash_stats(const char *caller, HTAB *hashp);
 extern void *hash_search(HTAB *hashp, const void *keyPtr, HASHACTION action,
 						 bool *foundPtr);
 extern uint32 get_hash_value(HTAB *hashp, const void *keyPtr);
@@ -141,7 +141,7 @@ extern void *hash_search_with_hash_value(HTAB *hashp, const void *keyPtr,
 										 bool *foundPtr);
 extern bool hash_update_hash_key(HTAB *hashp, void *existingEntry,
 								 const void *newKeyPtr);
-extern long hash_get_num_entries(HTAB *hashp);
+extern int64 hash_get_num_entries(HTAB *hashp);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
 extern void hash_seq_init_with_hash_value(HASH_SEQ_STATUS *status,
 										  HTAB *hashp,
@@ -149,8 +149,8 @@ extern void hash_seq_init_with_hash_value(HASH_SEQ_STATUS *status,
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);
 extern void hash_seq_term(HASH_SEQ_STATUS *status);
 extern void hash_freeze(HTAB *hashp);
-extern Size hash_estimate_size(long num_entries, Size entrysize);
-extern long hash_select_dirsize(long num_entries);
+extern Size hash_estimate_size(int64 num_entries, Size entrysize);
+extern int64 hash_select_dirsize(int64 num_entries);
 extern Size hash_get_shared_size(HASHCTL *info, int flags);
 extern void AtEOXact_HashTables(bool isCommit);
 extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);

@@ -241,6 +241,17 @@ SELECT functest_S_14();
 
 DROP TABLE functest3 CASCADE;
 
+-- Check reporting of temporary-object dependencies within SQL-standard body
+-- (tests elsewhere already cover dependencies on arg and result types)
+CREATE TEMP SEQUENCE mytempseq;
+
+CREATE FUNCTION functest_tempseq() RETURNS int
+    RETURN nextval('mytempseq');
+
+-- This discards mytempseq and therefore functest_tempseq().  If it fails to,
+-- the function will appear in the information_schema tests below.
+DISCARD TEMP;
+
 
 -- information_schema tests
 
@@ -431,6 +442,23 @@ $$ SELECT array_append($1, $2) || array_append($1, $2) $$;
 
 SELECT double_append(array_append(ARRAY[q1], q2), q3)
   FROM (VALUES(1,2,3), (4,5,6)) v(q1,q2,q3);
+
+-- Check that we can re-use a SQLFunctionCache after a run-time error.
+
+-- This function will fail with zero-divide at run time (not plan time).
+CREATE FUNCTION part_hashint4_error(value int4, seed int8) RETURNS int8
+LANGUAGE SQL STRICT IMMUTABLE PARALLEL SAFE AS
+$$ SELECT value + seed + random()::int/0 $$;
+
+-- Put it into an operator class so that FmgrInfo will be cached in relcache.
+CREATE OPERATOR CLASS part_test_int4_ops_bad FOR TYPE int4 USING hash AS
+  FUNCTION 2 part_hashint4_error(int4, int8);
+
+CREATE TABLE pt(i int) PARTITION BY hash (i part_test_int4_ops_bad);
+CREATE TABLE p1 PARTITION OF pt FOR VALUES WITH (modulus 4, remainder 0);
+
+INSERT INTO pt VALUES (1);
+INSERT INTO pt VALUES (1);
 
 -- Things that shouldn't work:
 

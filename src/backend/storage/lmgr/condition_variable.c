@@ -18,6 +18,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "miscadmin.h"
 #include "portability/instr_time.h"
 #include "storage/condition_variable.h"

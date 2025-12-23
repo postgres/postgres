@@ -46,6 +46,11 @@ if (!$node->raw_connect_works())
 	plan skip_all => "this test requires working raw_connect()";
 }
 
+# Restart the server to ensure that the backend launched for
+# raw_connect_works() is gone. Otherwise, it might free up the
+# connection slot later, when we expect all the slots to be in use.
+$node->restart;
+
 my @raw_connections = ();
 
 # Open a lot of TCP (or Unix domain socket) connections to use up all
@@ -81,7 +86,7 @@ for (my $i = 0; $i <= 20; $i++)
 # clients already" instead of "role does not exist" error. Test that
 # to ensure that we have used up all the slots.
 $node->connect_fails("dbname=postgres user=invalid_user",
-	"connect ",
+	"connection is rejected when all slots are in use",
 	expected_stderr => qr/FATAL:  sorry, too many clients already/);
 
 # Open one more connection, to really ensure that we have at least one

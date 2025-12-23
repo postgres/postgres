@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/transam.h"
+#include "access/visibilitymapdefs.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "commands/vacuum.h"
@@ -42,7 +43,7 @@ typedef struct
 	/* whether or not dead items can be set LP_UNUSED during pruning */
 	bool		mark_unused_now;
 	/* whether to attempt freezing tuples */
-	bool		freeze;
+	bool		attempt_freeze;
 	struct VacuumCutoffs *cutoffs;
 
 	/*-------------------------------------------------------
@@ -129,6 +130,13 @@ typedef struct
 	OffsetNumber *deadoffsets;	/* points directly to presult->deadoffsets */
 
 	/*
+	 * The snapshot conflict horizon used when freezing tuples. The final
+	 * snapshot conflict horizon for the record may be newer if pruning
+	 * removes newer transaction IDs.
+	 */
+	TransactionId frz_conflict_horizon;
+
+	/*
 	 * all_visible and all_frozen indicate if the all-visible and all-frozen
 	 * bits in the visibility map can be set for this page after pruning.
 	 *
@@ -137,15 +145,11 @@ typedef struct
 	 * bits.  It is only valid if we froze some tuples, and all_frozen is
 	 * true.
 	 *
-	 * NOTE: all_visible and all_frozen don't include LP_DEAD items.  That's
-	 * convenient for heap_page_prune_and_freeze(), to use them to decide
-	 * whether to freeze the page or not.  The all_visible and all_frozen
-	 * values returned to the caller are adjusted to include LP_DEAD items at
-	 * the end.
-	 *
-	 * all_frozen should only be considered valid if all_visible is also set;
-	 * we don't bother to clear the all_frozen flag every time we clear the
-	 * all_visible flag.
+	 * NOTE: all_visible and all_frozen initially don't include LP_DEAD items.
+	 * That's convenient for heap_page_prune_and_freeze() to use them to
+	 * decide whether to freeze the page or not.  The all_visible and
+	 * all_frozen values returned to the caller are adjusted to include
+	 * LP_DEAD items after we determine whether to opportunistically freeze.
 	 */
 	bool		all_visible;
 	bool		all_frozen;
@@ -153,6 +157,14 @@ typedef struct
 } PruneState;
 
 /* Local functions */
+static void prune_freeze_setup(PruneFreezeParams *params,
+							   TransactionId *new_relfrozen_xid,
+							   MultiXactId *new_relmin_mxid,
+							   PruneFreezeResult *presult,
+							   PruneState *prstate);
+static void prune_freeze_plan(Oid reloid, Buffer buffer,
+							  PruneState *prstate,
+							  OffsetNumber *off_loc);
 static HTSV_Result heap_prune_satisfies_vacuum(PruneState *prstate,
 											   HeapTuple tup,
 											   Buffer buffer);
@@ -175,6 +187,10 @@ static void heap_prune_record_unchanged_lp_dead(Page page, PruneState *prstate, 
 static void heap_prune_record_unchanged_lp_redirect(PruneState *prstate, OffsetNumber offnum);
 
 static void page_verify_redirects(Page page);
+
+static bool heap_page_will_freeze(Relation relation, Buffer buffer,
+								  bool did_tuple_hint_fpi, bool do_prune, bool do_hint_prune,
+								  PruneState *prstate);
 
 
 /*
@@ -256,12 +272,22 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			PruneFreezeResult presult;
 
 			/*
-			 * For now, pass mark_unused_now as false regardless of whether or
-			 * not the relation has indexes, since we cannot safely determine
-			 * that during on-access pruning with the current implementation.
+			 * We don't pass the HEAP_PAGE_PRUNE_MARK_UNUSED_NOW option
+			 * regardless of whether or not the relation has indexes, since we
+			 * cannot safely determine that during on-access pruning with the
+			 * current implementation.
 			 */
-			heap_page_prune_and_freeze(relation, buffer, vistest, 0,
-									   NULL, &presult, PRUNE_ON_ACCESS, &dummy_off_loc, NULL, NULL);
+			PruneFreezeParams params = {
+				.relation = relation,
+				.buffer = buffer,
+				.reason = PRUNE_ON_ACCESS,
+				.options = 0,
+				.vistest = vistest,
+				.cutoffs = NULL,
+			};
+
+			heap_page_prune_and_freeze(&params, &presult, &dummy_off_loc,
+									   NULL, NULL);
 
 			/*
 			 * Report the number of tuples reclaimed to pgstats.  This is
@@ -293,87 +319,29 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	}
 }
 
-
 /*
- * Prune and repair fragmentation and potentially freeze tuples on the
- * specified page.
+ * Helper for heap_page_prune_and_freeze() to initialize the PruneState using
+ * the provided parameters.
  *
- * Caller must have pin and buffer cleanup lock on the page.  Note that we
- * don't update the FSM information for page on caller's behalf.  Caller might
- * also need to account for a reduction in the length of the line pointer
- * array following array truncation by us.
- *
- * If the HEAP_PRUNE_FREEZE option is set, we will also freeze tuples if it's
- * required in order to advance relfrozenxid / relminmxid, or if it's
- * considered advantageous for overall system performance to do so now.  The
- * 'cutoffs', 'presult', 'new_relfrozen_xid' and 'new_relmin_mxid' arguments
- * are required when freezing.  When HEAP_PRUNE_FREEZE option is set, we also
- * set presult->all_visible and presult->all_frozen on exit, to indicate if
- * the VM bits can be set.  They are always set to false when the
- * HEAP_PRUNE_FREEZE option is not set, because at the moment only callers
- * that also freeze need that information.
- *
- * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
- * (see heap_prune_satisfies_vacuum).
- *
- * options:
- *   MARK_UNUSED_NOW indicates that dead items can be set LP_UNUSED during
- *   pruning.
- *
- *   FREEZE indicates that we will also freeze tuples, and will return
- *   'all_visible', 'all_frozen' flags to the caller.
- *
- * cutoffs contains the freeze cutoffs, established by VACUUM at the beginning
- * of vacuuming the relation.  Required if HEAP_PRUNE_FREEZE option is set.
- * cutoffs->OldestXmin is also used to determine if dead tuples are
- * HEAPTUPLE_RECENTLY_DEAD or HEAPTUPLE_DEAD.
- *
- * presult contains output parameters needed by callers, such as the number of
- * tuples removed and the offsets of dead items on the page after pruning.
- * heap_page_prune_and_freeze() is responsible for initializing it.  Required
- * by all callers.
- *
- * reason indicates why the pruning is performed.  It is included in the WAL
- * record for debugging and analysis purposes, but otherwise has no effect.
- *
- * off_loc is the offset location required by the caller to use in error
- * callback.
- *
- * new_relfrozen_xid and new_relmin_mxid must provided by the caller if the
- * HEAP_PRUNE_FREEZE option is set.  On entry, they contain the oldest XID and
- * multi-XID seen on the relation so far.  They will be updated with oldest
- * values present on the page after pruning.  After processing the whole
- * relation, VACUUM can use these values as the new relfrozenxid/relminmxid
- * for the relation.
+ * params, new_relfrozen_xid, new_relmin_mxid, and presult are input
+ * parameters and are not modified by this function. Only prstate is modified.
  */
-void
-heap_page_prune_and_freeze(Relation relation, Buffer buffer,
-						   GlobalVisState *vistest,
-						   int options,
-						   struct VacuumCutoffs *cutoffs,
-						   PruneFreezeResult *presult,
-						   PruneReason reason,
-						   OffsetNumber *off_loc,
-						   TransactionId *new_relfrozen_xid,
-						   MultiXactId *new_relmin_mxid)
+static void
+prune_freeze_setup(PruneFreezeParams *params,
+				   TransactionId *new_relfrozen_xid,
+				   MultiXactId *new_relmin_mxid,
+				   PruneFreezeResult *presult,
+				   PruneState *prstate)
 {
-	Page		page = BufferGetPage(buffer);
-	BlockNumber blockno = BufferGetBlockNumber(buffer);
-	OffsetNumber offnum,
-				maxoff;
-	PruneState	prstate;
-	HeapTupleData tup;
-	bool		do_freeze;
-	bool		do_prune;
-	bool		do_hint;
-	bool		hint_bit_fpi;
-	int64		fpi_before = pgWalUsage.wal_fpi;
-
 	/* Copy parameters to prstate */
-	prstate.vistest = vistest;
-	prstate.mark_unused_now = (options & HEAP_PAGE_PRUNE_MARK_UNUSED_NOW) != 0;
-	prstate.freeze = (options & HEAP_PAGE_PRUNE_FREEZE) != 0;
-	prstate.cutoffs = cutoffs;
+	prstate->vistest = params->vistest;
+	prstate->mark_unused_now =
+		(params->options & HEAP_PAGE_PRUNE_MARK_UNUSED_NOW) != 0;
+
+	/* cutoffs must be provided if we will attempt freezing */
+	Assert(!(params->options & HEAP_PAGE_PRUNE_FREEZE) || params->cutoffs);
+	prstate->attempt_freeze = (params->options & HEAP_PAGE_PRUNE_FREEZE) != 0;
+	prstate->cutoffs = params->cutoffs;
 
 	/*
 	 * Our strategy is to scan the page and make lists of items to change,
@@ -386,40 +354,49 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	 * prunable, we will save the lowest relevant XID in new_prune_xid. Also
 	 * initialize the rest of our working state.
 	 */
-	prstate.new_prune_xid = InvalidTransactionId;
-	prstate.latest_xid_removed = InvalidTransactionId;
-	prstate.nredirected = prstate.ndead = prstate.nunused = prstate.nfrozen = 0;
-	prstate.nroot_items = 0;
-	prstate.nheaponly_items = 0;
+	prstate->new_prune_xid = InvalidTransactionId;
+	prstate->latest_xid_removed = InvalidTransactionId;
+	prstate->nredirected = prstate->ndead = prstate->nunused = 0;
+	prstate->nfrozen = 0;
+	prstate->nroot_items = 0;
+	prstate->nheaponly_items = 0;
 
 	/* initialize page freezing working state */
-	prstate.pagefrz.freeze_required = false;
-	if (prstate.freeze)
+	prstate->pagefrz.freeze_required = false;
+	if (prstate->attempt_freeze)
 	{
 		Assert(new_relfrozen_xid && new_relmin_mxid);
-		prstate.pagefrz.FreezePageRelfrozenXid = *new_relfrozen_xid;
-		prstate.pagefrz.NoFreezePageRelfrozenXid = *new_relfrozen_xid;
-		prstate.pagefrz.FreezePageRelminMxid = *new_relmin_mxid;
-		prstate.pagefrz.NoFreezePageRelminMxid = *new_relmin_mxid;
+		prstate->pagefrz.FreezePageRelfrozenXid = *new_relfrozen_xid;
+		prstate->pagefrz.NoFreezePageRelfrozenXid = *new_relfrozen_xid;
+		prstate->pagefrz.FreezePageRelminMxid = *new_relmin_mxid;
+		prstate->pagefrz.NoFreezePageRelminMxid = *new_relmin_mxid;
 	}
 	else
 	{
-		Assert(new_relfrozen_xid == NULL && new_relmin_mxid == NULL);
-		prstate.pagefrz.FreezePageRelminMxid = InvalidMultiXactId;
-		prstate.pagefrz.NoFreezePageRelminMxid = InvalidMultiXactId;
-		prstate.pagefrz.FreezePageRelfrozenXid = InvalidTransactionId;
-		prstate.pagefrz.NoFreezePageRelfrozenXid = InvalidTransactionId;
+		Assert(!new_relfrozen_xid && !new_relmin_mxid);
+		prstate->pagefrz.FreezePageRelminMxid = InvalidMultiXactId;
+		prstate->pagefrz.NoFreezePageRelminMxid = InvalidMultiXactId;
+		prstate->pagefrz.FreezePageRelfrozenXid = InvalidTransactionId;
+		prstate->pagefrz.NoFreezePageRelfrozenXid = InvalidTransactionId;
 	}
 
-	prstate.ndeleted = 0;
-	prstate.live_tuples = 0;
-	prstate.recently_dead_tuples = 0;
-	prstate.hastup = false;
-	prstate.lpdead_items = 0;
-	prstate.deadoffsets = presult->deadoffsets;
+	prstate->ndeleted = 0;
+	prstate->live_tuples = 0;
+	prstate->recently_dead_tuples = 0;
+	prstate->hastup = false;
+	prstate->lpdead_items = 0;
 
 	/*
-	 * Caller may update the VM after we're done.  We can keep track of
+	 * deadoffsets are filled in during pruning but are only used to populate
+	 * PruneFreezeResult->deadoffsets. To avoid needing two copies of the
+	 * array, just save a pointer to the result offsets array in the
+	 * PruneState.
+	 */
+	prstate->deadoffsets = presult->deadoffsets;
+	prstate->frz_conflict_horizon = InvalidTransactionId;
+
+	/*
+	 * Vacuum may update the VM after we're done.  We can keep track of
 	 * whether the page will be all-visible and all-frozen after pruning and
 	 * freezing to help the caller to do that.
 	 *
@@ -436,15 +413,16 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	 * are tuples present that are not visible to everyone or if there are
 	 * dead tuples which are not yet removable.  However, dead tuples which
 	 * will be removed by the end of vacuuming should not preclude us from
-	 * opportunistically freezing.  Because of that, we do not clear
-	 * all_visible when we see LP_DEAD items.  We fix that at the end of the
-	 * function, when we return the value to the caller, so that the caller
-	 * doesn't set the VM bit incorrectly.
+	 * opportunistically freezing.  Because of that, we do not immediately
+	 * clear all_visible and all_frozen when we see LP_DEAD items.  We fix
+	 * that after scanning the line pointers. We must correct all_visible and
+	 * all_frozen before we return them to the caller, so that the caller
+	 * doesn't set the VM bits incorrectly.
 	 */
-	if (prstate.freeze)
+	if (prstate->attempt_freeze)
 	{
-		prstate.all_visible = true;
-		prstate.all_frozen = true;
+		prstate->all_visible = true;
+		prstate->all_frozen = true;
 	}
 	else
 	{
@@ -452,8 +430,8 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		 * Initializing to false allows skipping the work to update them in
 		 * heap_prune_record_unchanged_lp_normal().
 		 */
-		prstate.all_visible = false;
-		prstate.all_frozen = false;
+		prstate->all_visible = false;
+		prstate->all_frozen = false;
 	}
 
 	/*
@@ -464,10 +442,29 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	 * running transaction on the standby does not see tuples on the page as
 	 * all-visible, so the conflict horizon remains InvalidTransactionId.
 	 */
-	prstate.visibility_cutoff_xid = InvalidTransactionId;
+	prstate->visibility_cutoff_xid = InvalidTransactionId;
+}
 
-	maxoff = PageGetMaxOffsetNumber(page);
-	tup.t_tableOid = RelationGetRelid(relation);
+/*
+ * Helper for heap_page_prune_and_freeze(). Iterates over every tuple on the
+ * page, examines its visibility information, and determines the appropriate
+ * action for each tuple. All tuples are processed and classified during this
+ * phase, but no modifications are made to the page until the later execution
+ * stage.
+ *
+ * *off_loc is used for error callback and cleared before returning.
+ */
+static void
+prune_freeze_plan(Oid reloid, Buffer buffer, PruneState *prstate,
+				  OffsetNumber *off_loc)
+{
+	Page		page = BufferGetPage(buffer);
+	BlockNumber blockno = BufferGetBlockNumber(buffer);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+	OffsetNumber offnum;
+	HeapTupleData tup;
+
+	tup.t_tableOid = reloid;
 
 	/*
 	 * Determine HTSV for all tuples, and queue them up for processing as HOT
@@ -502,13 +499,13 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		 */
 		*off_loc = offnum;
 
-		prstate.processed[offnum] = false;
-		prstate.htsv[offnum] = -1;
+		prstate->processed[offnum] = false;
+		prstate->htsv[offnum] = -1;
 
 		/* Nothing to do if slot doesn't contain a tuple */
 		if (!ItemIdIsUsed(itemid))
 		{
-			heap_prune_record_unchanged_lp_unused(page, &prstate, offnum);
+			heap_prune_record_unchanged_lp_unused(page, prstate, offnum);
 			continue;
 		}
 
@@ -518,17 +515,17 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 			 * If the caller set mark_unused_now true, we can set dead line
 			 * pointers LP_UNUSED now.
 			 */
-			if (unlikely(prstate.mark_unused_now))
-				heap_prune_record_unused(&prstate, offnum, false);
+			if (unlikely(prstate->mark_unused_now))
+				heap_prune_record_unused(prstate, offnum, false);
 			else
-				heap_prune_record_unchanged_lp_dead(page, &prstate, offnum);
+				heap_prune_record_unchanged_lp_dead(page, prstate, offnum);
 			continue;
 		}
 
 		if (ItemIdIsRedirected(itemid))
 		{
 			/* This is the start of a HOT chain */
-			prstate.root_items[prstate.nroot_items++] = offnum;
+			prstate->root_items[prstate->nroot_items++] = offnum;
 			continue;
 		}
 
@@ -542,20 +539,14 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		tup.t_len = ItemIdGetLength(itemid);
 		ItemPointerSet(&tup.t_self, blockno, offnum);
 
-		prstate.htsv[offnum] = heap_prune_satisfies_vacuum(&prstate, &tup,
-														   buffer);
+		prstate->htsv[offnum] = heap_prune_satisfies_vacuum(prstate, &tup,
+															buffer);
 
 		if (!HeapTupleHeaderIsHeapOnly(htup))
-			prstate.root_items[prstate.nroot_items++] = offnum;
+			prstate->root_items[prstate->nroot_items++] = offnum;
 		else
-			prstate.heaponly_items[prstate.nheaponly_items++] = offnum;
+			prstate->heaponly_items[prstate->nheaponly_items++] = offnum;
 	}
-
-	/*
-	 * If checksums are enabled, heap_prune_satisfies_vacuum() may have caused
-	 * an FPI to be emitted.
-	 */
-	hint_bit_fpi = fpi_before != pgWalUsage.wal_fpi;
 
 	/*
 	 * Process HOT chains.
@@ -568,30 +559,30 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	 * the page instead of using the root_items array, also did it in
 	 * ascending offset number order.)
 	 */
-	for (int i = prstate.nroot_items - 1; i >= 0; i--)
+	for (int i = prstate->nroot_items - 1; i >= 0; i--)
 	{
-		offnum = prstate.root_items[i];
+		offnum = prstate->root_items[i];
 
 		/* Ignore items already processed as part of an earlier chain */
-		if (prstate.processed[offnum])
+		if (prstate->processed[offnum])
 			continue;
 
 		/* see preceding loop */
 		*off_loc = offnum;
 
 		/* Process this item or chain of items */
-		heap_prune_chain(page, blockno, maxoff, offnum, &prstate);
+		heap_prune_chain(page, blockno, maxoff, offnum, prstate);
 	}
 
 	/*
 	 * Process any heap-only tuples that were not already processed as part of
 	 * a HOT chain.
 	 */
-	for (int i = prstate.nheaponly_items - 1; i >= 0; i--)
+	for (int i = prstate->nheaponly_items - 1; i >= 0; i--)
 	{
-		offnum = prstate.heaponly_items[i];
+		offnum = prstate->heaponly_items[i];
 
-		if (prstate.processed[offnum])
+		if (prstate->processed[offnum])
 			continue;
 
 		/* see preceding loop */
@@ -610,7 +601,7 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		 * return true for an XMIN_INVALID tuple, so this code will work even
 		 * when there were sequential updates within the aborted transaction.)
 		 */
-		if (prstate.htsv[offnum] == HEAPTUPLE_DEAD)
+		if (prstate->htsv[offnum] == HEAPTUPLE_DEAD)
 		{
 			ItemId		itemid = PageGetItemId(page, offnum);
 			HeapTupleHeader htup = (HeapTupleHeader) PageGetItem(page, itemid);
@@ -618,8 +609,8 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 			if (likely(!HeapTupleHeaderIsHotUpdated(htup)))
 			{
 				HeapTupleHeaderAdvanceConflictHorizon(htup,
-													  &prstate.latest_xid_removed);
-				heap_prune_record_unused(&prstate, offnum, true);
+													  &prstate->latest_xid_removed);
+				heap_prune_record_unused(prstate, offnum, true);
 			}
 			else
 			{
@@ -636,7 +627,7 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 			}
 		}
 		else
-			heap_prune_record_unchanged_lp_normal(page, &prstate, offnum);
+			heap_prune_record_unchanged_lp_normal(page, prstate, offnum);
 	}
 
 	/* We should now have processed every tuple exactly once  */
@@ -647,75 +638,90 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	{
 		*off_loc = offnum;
 
-		Assert(prstate.processed[offnum]);
+		Assert(prstate->processed[offnum]);
 	}
 #endif
 
 	/* Clear the offset information once we have processed the given page. */
 	*off_loc = InvalidOffsetNumber;
+}
 
-	do_prune = prstate.nredirected > 0 ||
-		prstate.ndead > 0 ||
-		prstate.nunused > 0;
+/*
+ * Decide whether to proceed with freezing according to the freeze plans
+ * prepared for the given heap buffer. If freezing is chosen, this function
+ * performs several pre-freeze checks.
+ *
+ * The values of do_prune, do_hint_prune, and did_tuple_hint_fpi must be
+ * determined before calling this function.
+ *
+ * prstate is both an input and output parameter.
+ *
+ * Returns true if we should apply the freeze plans and freeze tuples on the
+ * page, and false otherwise.
+ */
+static bool
+heap_page_will_freeze(Relation relation, Buffer buffer,
+					  bool did_tuple_hint_fpi,
+					  bool do_prune,
+					  bool do_hint_prune,
+					  PruneState *prstate)
+{
+	bool		do_freeze = false;
 
 	/*
-	 * Even if we don't prune anything, if we found a new value for the
-	 * pd_prune_xid field or the page was marked full, we will update the hint
-	 * bit.
+	 * If the caller specified we should not attempt to freeze any tuples,
+	 * validate that everything is in the right state and return.
 	 */
-	do_hint = ((PageHeader) page)->pd_prune_xid != prstate.new_prune_xid ||
-		PageIsFull(page);
-
-	/*
-	 * Decide if we want to go ahead with freezing according to the freeze
-	 * plans we prepared, or not.
-	 */
-	do_freeze = false;
-	if (prstate.freeze)
+	if (!prstate->attempt_freeze)
 	{
-		if (prstate.pagefrz.freeze_required)
+		Assert(!prstate->all_frozen && prstate->nfrozen == 0);
+		Assert(prstate->lpdead_items == 0 || !prstate->all_visible);
+		return false;
+	}
+
+	if (prstate->pagefrz.freeze_required)
+	{
+		/*
+		 * heap_prepare_freeze_tuple indicated that at least one XID/MXID from
+		 * before FreezeLimit/MultiXactCutoff is present.  Must freeze to
+		 * advance relfrozenxid/relminmxid.
+		 */
+		do_freeze = true;
+	}
+	else
+	{
+		/*
+		 * Opportunistically freeze the page if we are generating an FPI
+		 * anyway and if doing so means that we can set the page all-frozen
+		 * afterwards (might not happen until VACUUM's final heap pass).
+		 *
+		 * XXX: Previously, we knew if pruning emitted an FPI by checking
+		 * pgWalUsage.wal_fpi before and after pruning.  Once the freeze and
+		 * prune records were combined, this heuristic couldn't be used
+		 * anymore.  The opportunistic freeze heuristic must be improved;
+		 * however, for now, try to approximate the old logic.
+		 */
+		if (prstate->all_frozen && prstate->nfrozen > 0)
 		{
+			Assert(prstate->all_visible);
+
 			/*
-			 * heap_prepare_freeze_tuple indicated that at least one XID/MXID
-			 * from before FreezeLimit/MultiXactCutoff is present.  Must
-			 * freeze to advance relfrozenxid/relminmxid.
+			 * Freezing would make the page all-frozen.  Have already emitted
+			 * an FPI or will do so anyway?
 			 */
-			do_freeze = true;
-		}
-		else
-		{
-			/*
-			 * Opportunistically freeze the page if we are generating an FPI
-			 * anyway and if doing so means that we can set the page
-			 * all-frozen afterwards (might not happen until VACUUM's final
-			 * heap pass).
-			 *
-			 * XXX: Previously, we knew if pruning emitted an FPI by checking
-			 * pgWalUsage.wal_fpi before and after pruning.  Once the freeze
-			 * and prune records were combined, this heuristic couldn't be
-			 * used anymore.  The opportunistic freeze heuristic must be
-			 * improved; however, for now, try to approximate the old logic.
-			 */
-			if (prstate.all_visible && prstate.all_frozen && prstate.nfrozen > 0)
+			if (RelationNeedsWAL(relation))
 			{
-				/*
-				 * Freezing would make the page all-frozen.  Have already
-				 * emitted an FPI or will do so anyway?
-				 */
-				if (RelationNeedsWAL(relation))
+				if (did_tuple_hint_fpi)
+					do_freeze = true;
+				else if (do_prune)
 				{
-					if (hint_bit_fpi)
+					if (XLogCheckBufferNeedsBackup(buffer))
 						do_freeze = true;
-					else if (do_prune)
-					{
-						if (XLogCheckBufferNeedsBackup(buffer))
-							do_freeze = true;
-					}
-					else if (do_hint)
-					{
-						if (XLogHintBitIsNeeded() && XLogCheckBufferNeedsBackup(buffer))
-							do_freeze = true;
-					}
+				}
+				else if (do_hint_prune)
+				{
+					if (XLogHintBitIsNeeded() && XLogCheckBufferNeedsBackup(buffer))
+						do_freeze = true;
 				}
 			}
 		}
@@ -727,18 +733,34 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		 * Validate the tuples we will be freezing before entering the
 		 * critical section.
 		 */
-		heap_pre_freeze_checks(buffer, prstate.frozen, prstate.nfrozen);
+		heap_pre_freeze_checks(buffer, prstate->frozen, prstate->nfrozen);
+
+		/*
+		 * Calculate what the snapshot conflict horizon should be for a record
+		 * freezing tuples. We can use the visibility_cutoff_xid as our cutoff
+		 * for conflicts when the whole page is eligible to become all-frozen
+		 * in the VM once we're done with it. Otherwise, we generate a
+		 * conservative cutoff by stepping back from OldestXmin.
+		 */
+		if (prstate->all_frozen)
+			prstate->frz_conflict_horizon = prstate->visibility_cutoff_xid;
+		else
+		{
+			/* Avoids false conflicts when hot_standby_feedback in use */
+			prstate->frz_conflict_horizon = prstate->cutoffs->OldestXmin;
+			TransactionIdRetreat(prstate->frz_conflict_horizon);
+		}
 	}
-	else if (prstate.nfrozen > 0)
+	else if (prstate->nfrozen > 0)
 	{
 		/*
 		 * The page contained some tuples that were not already frozen, and we
 		 * chose not to freeze them now.  The page won't be all-frozen then.
 		 */
-		Assert(!prstate.pagefrz.freeze_required);
+		Assert(!prstate->pagefrz.freeze_required);
 
-		prstate.all_frozen = false;
-		prstate.nfrozen = 0;	/* avoid miscounts in instrumentation */
+		prstate->all_frozen = false;
+		prstate->nfrozen = 0;	/* avoid miscounts in instrumentation */
 	}
 	else
 	{
@@ -750,10 +772,130 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		 */
 	}
 
+	return do_freeze;
+}
+
+
+/*
+ * Prune and repair fragmentation and potentially freeze tuples on the
+ * specified page.
+ *
+ * Caller must have pin and buffer cleanup lock on the page.  Note that we
+ * don't update the FSM information for page on caller's behalf.  Caller might
+ * also need to account for a reduction in the length of the line pointer
+ * array following array truncation by us.
+ *
+ * params contains the input parameters used to control freezing and pruning
+ * behavior. See the definition of PruneFreezeParams for more on what each
+ * parameter does.
+ *
+ * If the HEAP_PAGE_PRUNE_FREEZE option is set in params, we will freeze
+ * tuples if it's required in order to advance relfrozenxid / relminmxid, or
+ * if it's considered advantageous for overall system performance to do so
+ * now.  The 'params.cutoffs', 'presult', 'new_relfrozen_xid' and
+ * 'new_relmin_mxid' arguments are required when freezing.  When
+ * HEAP_PAGE_PRUNE_FREEZE option is passed, we also set presult->all_visible
+ * and presult->all_frozen after determining whether or not to
+ * opportunistically freeze, to indicate if the VM bits can be set.  They are
+ * always set to false when the HEAP_PAGE_PRUNE_FREEZE option is not passed,
+ * because at the moment only callers that also freeze need that information.
+ *
+ * presult contains output parameters needed by callers, such as the number of
+ * tuples removed and the offsets of dead items on the page after pruning.
+ * heap_page_prune_and_freeze() is responsible for initializing it.  Required
+ * by all callers.
+ *
+ * off_loc is the offset location required by the caller to use in error
+ * callback.
+ *
+ * new_relfrozen_xid and new_relmin_mxid must be provided by the caller if the
+ * HEAP_PAGE_PRUNE_FREEZE option is set in params.  On entry, they contain the
+ * oldest XID and multi-XID seen on the relation so far.  They will be updated
+ * with the oldest values present on the page after pruning.  After processing
+ * the whole relation, VACUUM can use these values as the new
+ * relfrozenxid/relminmxid for the relation.
+ */
+void
+heap_page_prune_and_freeze(PruneFreezeParams *params,
+						   PruneFreezeResult *presult,
+						   OffsetNumber *off_loc,
+						   TransactionId *new_relfrozen_xid,
+						   MultiXactId *new_relmin_mxid)
+{
+	Buffer		buffer = params->buffer;
+	Page		page = BufferGetPage(buffer);
+	PruneState	prstate;
+	bool		do_freeze;
+	bool		do_prune;
+	bool		do_hint_prune;
+	bool		did_tuple_hint_fpi;
+	int64		fpi_before = pgWalUsage.wal_fpi;
+
+	/* Initialize prstate */
+	prune_freeze_setup(params,
+					   new_relfrozen_xid, new_relmin_mxid,
+					   presult, &prstate);
+
+	/*
+	 * Examine all line pointers and tuple visibility information to determine
+	 * which line pointers should change state and which tuples may be frozen.
+	 * Prepare queue of state changes to later be executed in a critical
+	 * section.
+	 */
+	prune_freeze_plan(RelationGetRelid(params->relation),
+					  buffer, &prstate, off_loc);
+
+	/*
+	 * If checksums are enabled, calling heap_prune_satisfies_vacuum() while
+	 * checking tuple visibility information in prune_freeze_plan() may have
+	 * caused an FPI to be emitted.
+	 */
+	did_tuple_hint_fpi = fpi_before != pgWalUsage.wal_fpi;
+
+	do_prune = prstate.nredirected > 0 ||
+		prstate.ndead > 0 ||
+		prstate.nunused > 0;
+
+	/*
+	 * Even if we don't prune anything, if we found a new value for the
+	 * pd_prune_xid field or the page was marked full, we will update the hint
+	 * bit.
+	 */
+	do_hint_prune = ((PageHeader) page)->pd_prune_xid != prstate.new_prune_xid ||
+		PageIsFull(page);
+
+	/*
+	 * Decide if we want to go ahead with freezing according to the freeze
+	 * plans we prepared, or not.
+	 */
+	do_freeze = heap_page_will_freeze(params->relation, buffer,
+									  did_tuple_hint_fpi,
+									  do_prune,
+									  do_hint_prune,
+									  &prstate);
+
+	/*
+	 * While scanning the line pointers, we did not clear
+	 * all_visible/all_frozen when encountering LP_DEAD items because we
+	 * wanted the decision whether or not to freeze the page to be unaffected
+	 * by the short-term presence of LP_DEAD items.  These LP_DEAD items are
+	 * effectively assumed to be LP_UNUSED items in the making.  It doesn't
+	 * matter which vacuum heap pass (initial pass or final pass) ends up
+	 * setting the page all-frozen, as long as the ongoing VACUUM does it.
+	 *
+	 * Now that we finished determining whether or not to freeze the page,
+	 * update all_visible and all_frozen so that they reflect the true state
+	 * of the page for setting PD_ALL_VISIBLE and VM bits.
+	 */
+	if (prstate.lpdead_items > 0)
+		prstate.all_visible = prstate.all_frozen = false;
+
+	Assert(!prstate.all_frozen || prstate.all_visible);
+
 	/* Any error while applying the changes is critical */
 	START_CRIT_SECTION();
 
-	if (do_hint)
+	if (do_hint_prune)
 	{
 		/*
 		 * Update the page's pd_prune_xid field to either zero, or the lowest
@@ -794,9 +936,9 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		MarkBufferDirty(buffer);
 
 		/*
-		 * Emit a WAL XLOG_HEAP2_PRUNE_FREEZE record showing what we did
+		 * Emit a WAL XLOG_HEAP2_PRUNE* record showing what we did
 		 */
-		if (RelationNeedsWAL(relation))
+		if (RelationNeedsWAL(params->relation))
 		{
 			/*
 			 * The snapshotConflictHorizon for the whole record should be the
@@ -808,35 +950,19 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 			 * on the standby with xids older than the youngest tuple this
 			 * record will freeze will conflict.
 			 */
-			TransactionId frz_conflict_horizon = InvalidTransactionId;
 			TransactionId conflict_xid;
 
-			/*
-			 * We can use the visibility_cutoff_xid as our cutoff for
-			 * conflicts when the whole page is eligible to become all-frozen
-			 * in the VM once we're done with it.  Otherwise we generate a
-			 * conservative cutoff by stepping back from OldestXmin.
-			 */
-			if (do_freeze)
-			{
-				if (prstate.all_visible && prstate.all_frozen)
-					frz_conflict_horizon = prstate.visibility_cutoff_xid;
-				else
-				{
-					/* Avoids false conflicts when hot_standby_feedback in use */
-					frz_conflict_horizon = prstate.cutoffs->OldestXmin;
-					TransactionIdRetreat(frz_conflict_horizon);
-				}
-			}
-
-			if (TransactionIdFollows(frz_conflict_horizon, prstate.latest_xid_removed))
-				conflict_xid = frz_conflict_horizon;
+			if (TransactionIdFollows(prstate.frz_conflict_horizon,
+									 prstate.latest_xid_removed))
+				conflict_xid = prstate.frz_conflict_horizon;
 			else
 				conflict_xid = prstate.latest_xid_removed;
 
-			log_heap_prune_and_freeze(relation, buffer,
+			log_heap_prune_and_freeze(params->relation, buffer,
+									  InvalidBuffer,	/* vmbuffer */
+									  0,	/* vmflags */
 									  conflict_xid,
-									  true, reason,
+									  true, params->reason,
 									  prstate.frozen, prstate.nfrozen,
 									  prstate.redirected, prstate.nredirected,
 									  prstate.nowdead, prstate.ndead,
@@ -852,30 +978,8 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	presult->nfrozen = prstate.nfrozen;
 	presult->live_tuples = prstate.live_tuples;
 	presult->recently_dead_tuples = prstate.recently_dead_tuples;
-
-	/*
-	 * It was convenient to ignore LP_DEAD items in all_visible earlier on to
-	 * make the choice of whether or not to freeze the page unaffected by the
-	 * short-term presence of LP_DEAD items.  These LP_DEAD items were
-	 * effectively assumed to be LP_UNUSED items in the making.  It doesn't
-	 * matter which vacuum heap pass (initial pass or final pass) ends up
-	 * setting the page all-frozen, as long as the ongoing VACUUM does it.
-	 *
-	 * Now that freezing has been finalized, unset all_visible if there are
-	 * any LP_DEAD items on the page.  It needs to reflect the present state
-	 * of the page, as expected by our caller.
-	 */
-	if (prstate.all_visible && prstate.lpdead_items == 0)
-	{
-		presult->all_visible = prstate.all_visible;
-		presult->all_frozen = prstate.all_frozen;
-	}
-	else
-	{
-		presult->all_visible = false;
-		presult->all_frozen = false;
-	}
-
+	presult->all_visible = prstate.all_visible;
+	presult->all_frozen = prstate.all_frozen;
 	presult->hastup = prstate.hastup;
 
 	/*
@@ -894,7 +998,7 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	presult->lpdead_items = prstate.lpdead_items;
 	/* the presult->deadoffsets array was already filled in */
 
-	if (prstate.freeze)
+	if (prstate.attempt_freeze)
 	{
 		if (presult->nfrozen > 0)
 		{
@@ -1254,8 +1358,9 @@ heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum,
 	prstate->ndead++;
 
 	/*
-	 * Deliberately delay unsetting all_visible until later during pruning.
-	 * Removable dead tuples shouldn't preclude freezing the page.
+	 * Deliberately delay unsetting all_visible and all_frozen until later
+	 * during pruning. Removable dead tuples shouldn't preclude freezing the
+	 * page.
 	 */
 
 	/* Record the dead offset for vacuum */
@@ -1383,6 +1488,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 				if (!HeapTupleHeaderXminCommitted(htup))
 				{
 					prstate->all_visible = false;
+					prstate->all_frozen = false;
 					break;
 				}
 
@@ -1397,14 +1503,15 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 
 				/*
 				 * For now always use prstate->cutoffs for this test, because
-				 * we only update 'all_visible' when freezing is requested. We
-				 * could use GlobalVisTestIsRemovableXid instead, if a
-				 * non-freezing caller wanted to set the VM bit.
+				 * we only update 'all_visible' and 'all_frozen' when freezing
+				 * is requested. We could use GlobalVisTestIsRemovableXid
+				 * instead, if a non-freezing caller wanted to set the VM bit.
 				 */
 				Assert(prstate->cutoffs);
 				if (!TransactionIdPrecedes(xmin, prstate->cutoffs->OldestXmin))
 				{
 					prstate->all_visible = false;
+					prstate->all_frozen = false;
 					break;
 				}
 
@@ -1418,6 +1525,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 		case HEAPTUPLE_RECENTLY_DEAD:
 			prstate->recently_dead_tuples++;
 			prstate->all_visible = false;
+			prstate->all_frozen = false;
 
 			/*
 			 * This tuple will soon become DEAD.  Update the hint field so
@@ -1437,6 +1545,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 			 * does, so be consistent.
 			 */
 			prstate->all_visible = false;
+			prstate->all_frozen = false;
 
 			/*
 			 * If we wanted to optimize for aborts, we might consider marking
@@ -1455,6 +1564,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 			 */
 			prstate->live_tuples++;
 			prstate->all_visible = false;
+			prstate->all_frozen = false;
 
 			/*
 			 * This tuple may soon become DEAD.  Update the hint field so that
@@ -1476,7 +1586,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 	}
 
 	/* Consider freezing any normal tuples which will not be removed */
-	if (prstate->freeze)
+	if (prstate->attempt_freeze)
 	{
 		bool		totally_frozen;
 
@@ -1519,10 +1629,10 @@ heap_prune_record_unchanged_lp_dead(Page page, PruneState *prstate, OffsetNumber
 	 * hastup/nonempty_pages as provisional no matter how LP_DEAD items are
 	 * handled (handled here, or handled later on).
 	 *
-	 * Similarly, don't unset all_visible until later, at the end of
-	 * heap_page_prune_and_freeze().  This will allow us to attempt to freeze
-	 * the page after pruning.  As long as we unset it before updating the
-	 * visibility map, this will be correct.
+	 * Similarly, don't unset all_visible and all_frozen until later, at the
+	 * end of heap_page_prune_and_freeze().  This will allow us to attempt to
+	 * freeze the page after pruning.  As long as we unset it before updating
+	 * the visibility map, this will be correct.
 	 */
 
 	/* Record the dead offset for vacuum */
@@ -1563,7 +1673,7 @@ heap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused)
 {
-	Page		page = (Page) BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer);
 	OffsetNumber *offnum;
 	HeapTupleHeader htup PG_USED_FOR_ASSERTS_ONLY;
 
@@ -2026,7 +2136,7 @@ heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
 }
 
 /*
- * Write an XLOG_HEAP2_PRUNE_FREEZE WAL record
+ * Write an XLOG_HEAP2_PRUNE* WAL record
  *
  * This is used for several different page maintenance operations:
  *
@@ -2045,12 +2155,17 @@ heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
  * replaying 'unused' items depends on whether they were all previously marked
  * as dead.
  *
+ * If the VM is being updated, vmflags will contain the bits to set. In this
+ * case, vmbuffer should already have been updated and marked dirty and should
+ * still be pinned and locked.
+ *
  * Note: This function scribbles on the 'frozen' array.
  *
  * Note: This is called in a critical section, so careful what you do here.
  */
 void
 log_heap_prune_and_freeze(Relation relation, Buffer buffer,
+						  Buffer vmbuffer, uint8 vmflags,
 						  TransactionId conflict_xid,
 						  bool cleanup_lock,
 						  PruneReason reason,
@@ -2062,6 +2177,7 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	xl_heap_prune xlrec;
 	XLogRecPtr	recptr;
 	uint8		info;
+	uint8		regbuf_flags_heap;
 
 	/* The following local variables hold data registered in the WAL record: */
 	xlhp_freeze_plan plans[MaxHeapTuplesPerPage];
@@ -2070,8 +2186,26 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	xlhp_prune_items dead_items;
 	xlhp_prune_items unused_items;
 	OffsetNumber frz_offsets[MaxHeapTuplesPerPage];
+	bool		do_prune = nredirected > 0 || ndead > 0 || nunused > 0;
+	bool		do_set_vm = vmflags & VISIBILITYMAP_VALID_BITS;
+
+	Assert((vmflags & VISIBILITYMAP_VALID_BITS) == vmflags);
 
 	xlrec.flags = 0;
+	regbuf_flags_heap = REGBUF_STANDARD;
+
+	/*
+	 * We can avoid an FPI of the heap page if the only modification we are
+	 * making to it is to set PD_ALL_VISIBLE and checksums/wal_log_hints are
+	 * disabled. Note that if we explicitly skip an FPI, we must not stamp the
+	 * heap page with this record's LSN. Recovery skips records <= the stamped
+	 * LSN, so this could lead to skipping an earlier FPI needed to repair a
+	 * torn page.
+	 */
+	if (!do_prune &&
+		nfrozen == 0 &&
+		(!do_set_vm || !XLogHintBitIsNeeded()))
+		regbuf_flags_heap |= REGBUF_NO_IMAGE;
 
 	/*
 	 * Prepare data for the buffer.  The arrays are not actually in the
@@ -2079,7 +2213,11 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	 * page image, the arrays can be omitted.
 	 */
 	XLogBeginInsert();
-	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+	XLogRegisterBuffer(0, buffer, regbuf_flags_heap);
+
+	if (do_set_vm)
+		XLogRegisterBuffer(1, vmbuffer, 0);
+
 	if (nfrozen > 0)
 	{
 		int			nplans;
@@ -2136,6 +2274,12 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	 * Prepare the main xl_heap_prune record.  We already set the XLHP_HAS_*
 	 * flag above.
 	 */
+	if (vmflags & VISIBILITYMAP_ALL_VISIBLE)
+	{
+		xlrec.flags |= XLHP_VM_ALL_VISIBLE;
+		if (vmflags & VISIBILITYMAP_ALL_FROZEN)
+			xlrec.flags |= XLHP_VM_ALL_FROZEN;
+	}
 	if (RelationIsAccessibleInLogicalDecoding(relation))
 		xlrec.flags |= XLHP_IS_CATALOG_REL;
 	if (TransactionIdIsValid(conflict_xid))
@@ -2168,5 +2312,19 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	}
 	recptr = XLogInsert(RM_HEAP2_ID, info);
 
-	PageSetLSN(BufferGetPage(buffer), recptr);
+	if (do_set_vm)
+	{
+		Assert(BufferIsDirty(vmbuffer));
+		PageSetLSN(BufferGetPage(vmbuffer), recptr);
+	}
+
+	/*
+	 * See comment at the top of the function about regbuf_flags_heap for
+	 * details on when we can advance the page LSN.
+	 */
+	if (do_prune || nfrozen > 0 || (do_set_vm && XLogHintBitIsNeeded()))
+	{
+		Assert(BufferIsDirty(buffer));
+		PageSetLSN(BufferGetPage(buffer), recptr);
+	}
 }

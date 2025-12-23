@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# src/tools/codelines
-
-# This script is used to compute the total number of "C" lines in the release
-# This should be run from the top of the Git tree after a 'make distclean'
-find . -name '*.[chyl]' | xargs cat| wc -l

@@ -495,6 +495,7 @@ extern void WalRcvShmemInit(void);
 extern void ShutdownWalRcv(void);
 extern bool WalRcvStreaming(void);
 extern bool WalRcvRunning(void);
+extern WalRcvState WalRcvGetState(void);
 extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr,
 								 const char *conninfo, const char *slotname,
 								 bool create_temp_slot);

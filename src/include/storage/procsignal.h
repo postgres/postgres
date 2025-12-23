@@ -54,6 +54,8 @@ typedef enum
 typedef enum
 {
 	PROCSIGNAL_BARRIER_SMGRRELEASE, /* ask smgr to close files */
+	PROCSIGNAL_BARRIER_UPDATE_XLOG_LOGICAL_INFO,	/* ask to update
+													 * XLogLogicalInfo */
 } ProcSignalBarrierType;
 
 /*

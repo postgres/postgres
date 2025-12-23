@@ -108,7 +108,7 @@ oauth_init(Port *port, const char *selected_mech, const char *shadow_pass)
 				errcode(ERRCODE_PROTOCOL_VIOLATION),
 				errmsg("client selected an invalid SASL authentication mechanism"));
 
-	ctx = palloc0(sizeof(*ctx));
+	ctx = palloc0_object(struct oauth_ctx);
 
 	ctx->state = OAUTH_STATE_INIT;
 	ctx->port = port;
@@ -656,7 +656,7 @@ validate(Port *port, const char *auth)
 				errmsg("validation of OAuth token requested without a validator loaded"));
 
 	/* Call the validation function from the validator module */
-	ret = palloc0(sizeof(ValidatorModuleResult));
+	ret = palloc0_object(ValidatorModuleResult);
 	if (!ValidatorCallbacks->validate_cb(validator_module_state, token,
 										 port->user_name, ret))
 	{
@@ -785,14 +785,14 @@ load_validator_library(const char *libname)
 					   "OAuth validator", libname, "validate_cb"));
 
 	/* Allocate memory for validator library private state data */
-	validator_module_state = (ValidatorModuleState *) palloc0(sizeof(ValidatorModuleState));
+	validator_module_state = palloc0_object(ValidatorModuleState);
 	validator_module_state->sversion = PG_VERSION_NUM;
 
 	if (ValidatorCallbacks->startup_cb != NULL)
 		ValidatorCallbacks->startup_cb(validator_module_state);
 
 	/* Shut down the library before cleaning up its state. */
-	mcb = palloc0(sizeof(*mcb));
+	mcb = palloc0_object(MemoryContextCallback);
 	mcb->func = shutdown_validator_library;
 
 	MemoryContextRegisterResetCallback(CurrentMemoryContext, mcb);
