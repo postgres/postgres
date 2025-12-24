@@ -146,8 +146,8 @@ CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL
 
 -- Specifying WITH clause in an ALL SEQUENCES publication will emit a NOTICE.
 SET client_min_messages = 'NOTICE';
-CREATE PUBLICATION regress_pub_for_allsequences_alltables_withclause FOR ALL SEQUENCES, ALL TABLES WITH (publish = 'insert');
-CREATE PUBLICATION regress_pub_for_allsequences_withclause FOR ALL SEQUENCES WITH (publish_generated_columns = 'stored');
+ALTER PUBLICATION regress_pub_for_allsequences_alltables SET (publish = 'insert');
+ALTER PUBLICATION regress_pub_for_allsequences_alltables SET (publish_generated_columns = 'stored');
 RESET client_min_messages;
 
 SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_for_allsequences_alltables';
@@ -157,8 +157,6 @@ DROP SEQUENCE regress_pub_seq0, pub_test.regress_pub_seq1;
 DROP PUBLICATION regress_pub_forallsequences1;
 DROP PUBLICATION regress_pub_forallsequences2;
 DROP PUBLICATION regress_pub_for_allsequences_alltables;
-DROP PUBLICATION regress_pub_for_allsequences_alltables_withclause;
-DROP PUBLICATION regress_pub_for_allsequences_withclause;
 
 -- fail - Specifying ALL TABLES more than once
 CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES, ALL TABLES;

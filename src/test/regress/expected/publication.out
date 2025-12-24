@@ -286,9 +286,9 @@ SET client_min_messages = 'ERROR';
 CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES;
 -- Specifying WITH clause in an ALL SEQUENCES publication will emit a NOTICE.
 SET client_min_messages = 'NOTICE';
-CREATE PUBLICATION regress_pub_for_allsequences_alltables_withclause FOR ALL SEQUENCES, ALL TABLES WITH (publish = 'insert');
+ALTER PUBLICATION regress_pub_for_allsequences_alltables SET (publish = 'insert');
 NOTICE:  publication parameters are not applicable to sequence synchronization and will be ignored for sequences
-CREATE PUBLICATION regress_pub_for_allsequences_withclause FOR ALL SEQUENCES WITH (publish_generated_columns = 'stored');
+ALTER PUBLICATION regress_pub_for_allsequences_alltables SET (publish_generated_columns = 'stored');
 NOTICE:  publication parameters are not applicable to sequence synchronization and will be ignored for sequences
 RESET client_min_messages;
 SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_for_allsequences_alltables';
@@ -301,15 +301,13 @@ SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname 
                                        Publication regress_pub_for_allsequences_alltables
           Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | t          | t             | t       | t       | t       | t         | none              | f
+ regress_publication_user | t          | t             | t       | f       | f       | f         | stored            | f
 (1 row)
 
 DROP SEQUENCE regress_pub_seq0, pub_test.regress_pub_seq1;
 DROP PUBLICATION regress_pub_forallsequences1;
 DROP PUBLICATION regress_pub_forallsequences2;
 DROP PUBLICATION regress_pub_for_allsequences_alltables;
-DROP PUBLICATION regress_pub_for_allsequences_alltables_withclause;
-DROP PUBLICATION regress_pub_for_allsequences_withclause;
 -- fail - Specifying ALL TABLES more than once
 CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES, ALL TABLES;
 ERROR:  invalid publication object list
