@@ -1942,7 +1942,7 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 }
 
 /*
- * Reset a statistics for a single object, which may be of current
+ * Reset statistics for a single object, which may be of current
  * database or shared across all databases in the cluster.
  */
 Datum
