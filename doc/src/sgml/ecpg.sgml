@@ -6959,7 +6959,7 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
      The namespace of the declaration is the precompile unit, and multiple
      declarations to the same SQL statement identifier are not allowed.
      Note that if the precompiler runs in Informix compatibility mode and
-     some SQL statement is declared, "database" can not be used as a cursor
+     some SQL statement is declared, "database" cannot be used as a cursor
      name.
     </para>
    </refsect1>

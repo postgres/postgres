@@ -431,7 +431,7 @@
         Collects all the key/value pairs into a JSON object.  Key arguments
         are coerced to text; value arguments are converted as per
         <function>to_json</function> or <function>to_jsonb</function>.
-        The <parameter>key</parameter> can not be null. If the
+        The <parameter>key</parameter> cannot be null. If the
         <parameter>value</parameter> is null then the entry is skipped,
        </para></entry>
        <entry>No</entry>
@@ -489,7 +489,7 @@
         Collects all the key/value pairs into a JSON object.  Key arguments
         are coerced to text; value arguments are converted as per
         <function>to_json</function> or <function>to_jsonb</function>.
-        The <parameter>key</parameter> can not be null. If the
+        The <parameter>key</parameter> cannot be null. If the
         <parameter>value</parameter> is null then the entry is skipped.
         If there is a duplicate key an error is thrown.
        </para></entry>
