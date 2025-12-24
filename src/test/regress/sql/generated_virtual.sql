@@ -817,11 +817,12 @@ create table gtest32 (
   a int primary key,
   b int generated always as (a * 2),
   c int generated always as (10 + 10),
-  d int generated always as (coalesce(a, 100)),
-  e int
+  d int generated always as (coalesce(f, 100)),
+  e int,
+  f int
 );
 
-insert into gtest32 values (1), (2);
+insert into gtest32 (a, f) values (1, 1), (2, 2);
 analyze gtest32;
 
 -- Ensure that nullingrel bits are propagated into the generation expressions
@@ -859,8 +860,8 @@ select t2.* from gtest32 t1 left join gtest32 t2 on false;
 select t2.* from gtest32 t1 left join gtest32 t2 on false;
 
 explain (verbose, costs off)
-select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
-select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e, f) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e, f) having c = 20;
 
 -- Ensure that the virtual generated columns in ALTER COLUMN TYPE USING expression are expanded
 alter table gtest32 alter column e type bigint using b;

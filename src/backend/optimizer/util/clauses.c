@@ -3325,10 +3325,10 @@ eval_const_expressions_mutator(Node *node,
 													   context);
 
 					/*
-					 * We can remove null constants from the list. For a
-					 * non-null constant, if it has not been preceded by any
-					 * other non-null-constant expressions then it is the
-					 * result. Otherwise, it's the next argument, but we can
+					 * We can remove null constants from the list.  For a
+					 * nonnullable expression, if it has not been preceded by
+					 * any non-null-constant expressions then it is the
+					 * result.  Otherwise, it's the next argument, but we can
 					 * drop following arguments since they will never be
 					 * reached.
 					 */
@@ -3341,6 +3341,14 @@ eval_const_expressions_mutator(Node *node,
 						newargs = lappend(newargs, e);
 						break;
 					}
+					if (expr_is_nonnullable(context->root, (Expr *) e, false))
+					{
+						if (newargs == NIL)
+							return e;	/* first expr */
+						newargs = lappend(newargs, e);
+						break;
+					}
+
 					newargs = lappend(newargs, e);
 				}
 
@@ -4328,7 +4336,7 @@ var_is_nonnullable(PlannerInfo *root, Var *var, bool use_rel_info)
 bool
 expr_is_nonnullable(PlannerInfo *root, Expr *expr, bool use_rel_info)
 {
-	if (IsA(expr, Var))
+	if (IsA(expr, Var) && root)
 		return var_is_nonnullable(root, (Var *) expr, use_rel_info);
 	if (IsA(expr, Const))
 		return !castNode(Const, expr)->constisnull;

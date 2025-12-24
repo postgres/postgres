@@ -484,3 +484,36 @@ SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
 (2 rows)
 
 DROP TABLE pred_tab;
+--
+-- Test that COALESCE expressions in predicates are simplified using
+-- non-nullable arguments.
+--
+CREATE TABLE pred_tab (a int NOT NULL, b int);
+-- Ensure that constant NULL arguments are dropped
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE COALESCE(NULL, b, NULL, a) > 1;
+           QUERY PLAN           
+--------------------------------
+ Seq Scan on pred_tab
+   Filter: (COALESCE(b, a) > 1)
+(2 rows)
+
+-- Ensure that argument "b*a" is dropped
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE COALESCE(b, a, b*a) > 1;
+           QUERY PLAN           
+--------------------------------
+ Seq Scan on pred_tab
+   Filter: (COALESCE(b, a) > 1)
+(2 rows)
+
+-- Ensure that the entire COALESCE expression is replaced by "a"
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE COALESCE(a, b) > 1;
+      QUERY PLAN      
+----------------------
+ Seq Scan on pred_tab
+   Filter: (a > 1)
+(2 rows)
+
+DROP TABLE pred_tab;
