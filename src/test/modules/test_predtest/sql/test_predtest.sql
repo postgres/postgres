@@ -431,7 +431,7 @@ $$);
 
 -- as does nullness of the array
 select * from test_predtest($$
-select x = any(opaque_array(array[y])), array[y] is null
+select x = any(opaque_array(array[y])), opaque_array(array[y]) is null
 from integers
 $$);
 
