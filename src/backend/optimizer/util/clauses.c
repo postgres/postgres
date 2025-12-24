@@ -3529,6 +3529,20 @@ eval_const_expressions_mutator(Node *node,
 						}
 
 						/*
+						 * A proven non-nullable field refutes the whole
+						 * NullTest if the test is IS NULL; else we can
+						 * discard it.
+						 */
+						if (relem &&
+							expr_is_nonnullable(context->root, (Expr *) relem,
+												false))
+						{
+							if (ntest->nulltesttype == IS_NULL)
+								return makeBoolConst(false, false);
+							continue;
+						}
+
+						/*
 						 * Else, make a scalar (argisrow == false) NullTest
 						 * for this field.  Scalar semantics are required
 						 * because IS [NOT] NULL doesn't recurse; see comments
@@ -3572,30 +3586,27 @@ eval_const_expressions_mutator(Node *node,
 
 					return makeBoolConst(result, false);
 				}
-				if (!ntest->argisrow && arg && IsA(arg, Var) && context->root)
+				if (!ntest->argisrow && arg &&
+					expr_is_nonnullable(context->root, (Expr *) arg, false))
 				{
-					Var		   *varg = (Var *) arg;
 					bool		result;
 
-					if (var_is_nonnullable(context->root, varg, false))
+					switch (ntest->nulltesttype)
 					{
-						switch (ntest->nulltesttype)
-						{
-							case IS_NULL:
-								result = false;
-								break;
-							case IS_NOT_NULL:
-								result = true;
-								break;
-							default:
-								elog(ERROR, "unrecognized nulltesttype: %d",
-									 (int) ntest->nulltesttype);
-								result = false; /* keep compiler quiet */
-								break;
-						}
-
-						return makeBoolConst(result, false);
+						case IS_NULL:
+							result = false;
+							break;
+						case IS_NOT_NULL:
+							result = true;
+							break;
+						default:
+							elog(ERROR, "unrecognized nulltesttype: %d",
+								 (int) ntest->nulltesttype);
+							result = false; /* keep compiler quiet */
+							break;
 					}
+
+					return makeBoolConst(result, false);
 				}
 
 				newntest = makeNode(NullTest);
