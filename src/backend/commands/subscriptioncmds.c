@@ -2649,9 +2649,11 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
 	/*
 	 * Enable sequence synchronization checks only when origin is 'none' , to
 	 * ensure that sequence data from other origins is not inadvertently
-	 * copied.
+	 * copied. This check is necessary if the publisher is running PG19 or
+	 * later, where logical replication sequence synchronization is supported.
 	 */
-	if (!copydata || pg_strcasecmp(origin, LOGICALREP_ORIGIN_NONE) != 0)
+	if (!copydata || pg_strcasecmp(origin, LOGICALREP_ORIGIN_NONE) != 0 ||
+		walrcv_server_version(wrconn) < 190000)
 		return;
 
 	initStringInfo(&cmd);
