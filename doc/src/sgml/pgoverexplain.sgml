@@ -39,8 +39,8 @@ LOAD 'pg_overexplain';
    The <literal>DEBUG</literal> option displays miscellaneous information from
    the plan tree that is not normally shown because it is not expected to be
    of general interest. For each individual plan node, it will display the
-   following fields.  See <literal>Plan</literal> in
-   <literal>nodes/plannodes.h</literal> for additional documentation of these
+   following fields.  See <structname>Plan</structname> in
+   <filename>nodes/plannodes.h</filename> for additional documentation of these
    fields.
   </para>
 
@@ -82,8 +82,8 @@ LOAD 'pg_overexplain';
 
   <para>
    Once per query, the <literal>DEBUG</literal> option will display the
-   following fields. See <literal>PlannedStmt</literal> in
-   <literal>nodes/plannodes.h</literal> for additional detail.
+   following fields. See <structname>PlannedStmt</structname> in
+   <filename>nodes/plannodes.h</filename> for additional detail.
   </para>
 
   <itemizedlist>
@@ -97,7 +97,7 @@ LOAD 'pg_overexplain';
    <listitem>
     <para>
      <literal>Flags</literal>. A comma-separated list of Boolean structure
-     member names from the <literal>PlannedStmt</literal> that are set to
+     member names from the <structname>PlannedStmt</structname> that are set to
      <literal>true</literal>. It covers the following structure members:
      <literal>hasReturning</literal>, <literal>hasModifyingCTE</literal>,
      <literal>canSetTag</literal>, <literal>transientPlan</literal>,
@@ -177,7 +177,7 @@ LOAD 'pg_overexplain';
    table entry (e.g.  <literal>relation</literal>,
    <literal>subquery</literal>, or <literal>join</literal>), followed by the
    contents of various range table entry fields that are not normally part of
-   <literal>EXPLAIN</literal> output. Some of these fields are only displayed
+   <command>EXPLAIN</command> output. Some of these fields are only displayed
    for certain kinds of range table entries. For example,
    <literal>Eref</literal> is displayed for all types of range table entries,
    but <literal>CTE Name</literal> is displayed only for range table entries
@@ -186,7 +186,7 @@ LOAD 'pg_overexplain';
 
   <para>
    For more information about range table entries, see the definition of
-   <literal>RangeTblEntry</literal> in <literal>nodes/parsenodes.h</literal>.
+   <structname>RangeTblEntry</structname> in <filename>nodes/parsenodes.h</filename>.
   </para>
  </sect2>
 
