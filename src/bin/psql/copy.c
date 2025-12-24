@@ -33,7 +33,7 @@
  *	\copy ( query stmt ) to filename [options]
  *
  * where 'filename' can be one of the following:
- *	'<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
+ *	'<file path>' | PROGRAM '<command>' | stdin | stdout | pstdin | pstdout
  * and 'query' can be one of the following:
  *	SELECT | UPDATE | INSERT | DELETE
  *
