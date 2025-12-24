@@ -2753,7 +2753,7 @@ check_pub_dead_tuple_retention(WalReceiverConn *wrconn)
 	bool		isnull;
 	bool		remote_in_recovery;
 
-	if (walrcv_server_version(wrconn) < 19000)
+	if (walrcv_server_version(wrconn) < 190000)
 		ereport(ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("cannot enable retain_dead_tuples if the publisher is running a version earlier than PostgreSQL 19"));
