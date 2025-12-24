@@ -2055,9 +2055,9 @@ check_old_cluster_subscription_state(void)
 		 * other states listed below are not supported:
 		 *
 		 * a) SUBREL_STATE_DATASYNC: A relation upgraded while in this state
-		 * would retain a replication slot, which could not be dropped by the
-		 * sync worker spawned after the upgrade because the subscription ID
-		 * used for the slot name won't match anymore.
+		 * would retain a replication slot and origin. The sync worker spawned
+		 * after the upgrade cannot be drop then because the subscription ID
+		 * used for the slot and origin name no longer matches.
 		 *
 		 * b) SUBREL_STATE_SYNCDONE: A relation upgraded while in this state
 		 * would retain the replication origin when there is a failure in
