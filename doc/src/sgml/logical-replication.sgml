@@ -2550,10 +2550,14 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
-   To add tables to a publication, the user must have ownership rights on the
-   table. To add all tables in schema to a publication, the user must be a
-   superuser. To create a publication that publishes all tables, all tables in
-   schema, or all sequences automatically, the user must be a superuser.
+   To create a publication using <literal>FOR TABLE</literal>, the user must
+   have ownership rights on all the listed tables. To create a publication
+   using any of <literal>FOR ALL TABLES</literal>,
+   <literal>FOR ALL SEQUENCES</literal>,
+   or <literal>FOR TABLES IN SCHEMA</literal>, the user must be a superuser. To
+   alter a publication using <literal>ADD TABLE</literal>, the user must have
+   ownership rights on all the listed tables. To alter a publication using
+   <literal>ADD TABLES IN SCHEMA</literal>, the user must be a superuser.
   </para>
 
   <para>
