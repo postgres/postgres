@@ -3170,6 +3170,9 @@ match_previous_words(int pattern_id,
 		else if (TailMatches("VERBOSE|SKIP_LOCKED"))
 			COMPLETE_WITH("ON", "OFF");
 	}
+	else if (Matches("ANALYZE", "(*)"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_analyzables,
+										"ONLY");
 	else if (Matches("ANALYZE", MatchAnyN, "("))
 		/* "ANALYZE (" should be caught above, so assume we want columns */
 		COMPLETE_WITH_ATTR(prev2_wd);
@@ -5303,24 +5306,6 @@ match_previous_words(int pattern_id,
 										"VERBOSE",
 										"ANALYZE",
 										"ONLY");
-	else if (Matches("VACUUM", "FULL"))
-		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
-										"FREEZE",
-										"VERBOSE",
-										"ANALYZE",
-										"ONLY");
-	else if (Matches("VACUUM", MatchAnyN, "FREEZE"))
-		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
-										"VERBOSE",
-										"ANALYZE",
-										"ONLY");
-	else if (Matches("VACUUM", MatchAnyN, "VERBOSE"))
-		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
-										"ANALYZE",
-										"ONLY");
-	else if (Matches("VACUUM", MatchAnyN, "ANALYZE"))
-		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
-										"ONLY");
 	else if (HeadMatches("VACUUM", "(*") &&
 			 !HeadMatches("VACUUM", "(*)"))
 	{
@@ -5340,6 +5325,27 @@ match_previous_words(int pattern_id,
 		else if (TailMatches("INDEX_CLEANUP"))
 			COMPLETE_WITH("AUTO", "ON", "OFF");
 	}
+	else if (Matches("VACUUM", "(*)"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"ONLY");
+	else if (Matches("VACUUM", "FULL"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"FREEZE",
+										"VERBOSE",
+										"ANALYZE",
+										"ONLY");
+	else if (Matches("VACUUM", MatchAnyN, "FREEZE"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"VERBOSE",
+										"ANALYZE",
+										"ONLY");
+	else if (Matches("VACUUM", MatchAnyN, "VERBOSE"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"ANALYZE",
+										"ONLY");
+	else if (Matches("VACUUM", MatchAnyN, "ANALYZE"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"ONLY");
 	else if (Matches("VACUUM", MatchAnyN, "("))
 		/* "VACUUM (" should be caught above, so assume we want columns */
 		COMPLETE_WITH_ATTR(prev2_wd);
