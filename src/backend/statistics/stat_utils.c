@@ -626,7 +626,7 @@ statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid ty
  * have no such restriction.
  *
  * The stacoll value should be either the atttypcoll derived from
- * statatt_get_type(), or a harcoded value required by that particular
+ * statatt_get_type(), or a hardcoded value required by that particular
  * stakind.
  *
  * The value/null pairs for stanumbers and stavalues should be calculated
