@@ -93,8 +93,8 @@ struct BufFile
 	 */
 	int			curFile;		/* file index (0..n) part of current pos */
 	pgoff_t		curOffset;		/* offset part of current pos */
-	int			pos;			/* next read/write position in buffer */
-	int			nbytes;			/* total # of valid bytes in buffer */
+	int64		pos;			/* next read/write position in buffer */
+	int64		nbytes;			/* total # of valid bytes in buffer */
 
 	/*
 	 * XXX Should ideally use PGIOAlignedBlock, but might need a way to avoid
@@ -493,8 +493,8 @@ BufFileLoadBuffer(BufFile *file)
 static void
 BufFileDumpBuffer(BufFile *file)
 {
-	int			wpos = 0;
-	int			bytestowrite;
+	int64		wpos = 0;
+	int64		bytestowrite;
 	File		thisfile;
 
 	/*
@@ -503,7 +503,7 @@ BufFileDumpBuffer(BufFile *file)
 	 */
 	while (wpos < file->nbytes)
 	{
-		pgoff_t		availbytes;
+		int64		availbytes;
 		instr_time	io_start;
 		instr_time	io_time;
 
@@ -524,8 +524,8 @@ BufFileDumpBuffer(BufFile *file)
 		bytestowrite = file->nbytes - wpos;
 		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
-		if ((pgoff_t) bytestowrite > availbytes)
-			bytestowrite = (int) availbytes;
+		if (bytestowrite > availbytes)
+			bytestowrite = availbytes;
 
 		thisfile = file->files[file->curFile];
 
@@ -794,7 +794,7 @@ BufFileSeek(BufFile *file, int fileno, pgoff_t offset, int whence)
 		 * whether reading or writing, but buffer remains dirty if we were
 		 * writing.
 		 */
-		file->pos = (int) (newOffset - file->curOffset);
+		file->pos = (int64) (newOffset - file->curOffset);
 		return 0;
 	}
 	/* Otherwise, must reposition buffer, so flush any dirty data */
@@ -983,10 +983,10 @@ BufFileTruncateFileSet(BufFile *file, int fileno, pgoff_t offset)
 	{
 		/* No need to reset the current pos if the new pos is greater. */
 		if (newOffset <= file->curOffset + file->pos)
-			file->pos = (int) (newOffset - file->curOffset);
+			file->pos = (int64) newOffset - file->curOffset;
 
 		/* Adjust the nbytes for the current buffer. */
-		file->nbytes = (int) (newOffset - file->curOffset);
+		file->nbytes = (int64) newOffset - file->curOffset;
 	}
 	else if (newFile == file->curFile &&
 			 newOffset < file->curOffset)
