@@ -721,4 +721,27 @@ select a, b, row_number() over (order by a, b nulls first)
 from (values (1, 1), (2, 2)) as t (a, b) where a = b
 group by grouping sets((a, b), (a));
 
+-- test handling of SRFs with grouping sets
+explain (verbose, costs off)
+select generate_series(1, a) as g
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(g)
+order by 1;
+
+select generate_series(1, a) as g
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(g)
+order by 1;
+
+explain (verbose, costs off)
+select generate_series(1, a) as g, a+b as ab
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(a, ab)
+order by 1, 2;
+
+select generate_series(1, a) as g, a+b as ab
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(a, ab)
+order by 1, 2;
+
 -- end
