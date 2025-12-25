@@ -20,10 +20,8 @@
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "statistics/statistics.h"
 #include "statistics/stat_utils.h"
 #include "utils/array.h"
@@ -31,10 +29,6 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-#define DEFAULT_NULL_FRAC      Float4GetDatum(0.0)
-#define DEFAULT_AVG_WIDTH      Int32GetDatum(0) /* unknown */
-#define DEFAULT_N_DISTINCT     Float4GetDatum(0.0)	/* unknown */
 
 /*
  * Positional argument numbers, names, and types for
@@ -111,24 +105,9 @@ static struct StatsArgInfo cleararginfo[] =
 };
 
 static bool attribute_statistics_update(FunctionCallInfo fcinfo);
-static Node *get_attr_expr(Relation rel, int attnum);
-static void get_attr_stat_type(Oid reloid, AttrNumber attnum,
-							   Oid *atttypid, int32 *atttypmod,
-							   char *atttyptype, Oid *atttypcoll,
-							   Oid *eq_opr, Oid *lt_opr);
-static bool get_elem_stat_type(Oid atttypid, char atttyptype,
-							   Oid *elemtypid, Oid *elem_eq_opr);
-static Datum text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d,
-							   Oid typid, int32 typmod, bool *ok);
-static void set_stats_slot(Datum *values, bool *nulls, bool *replaces,
-						   int16 stakind, Oid staop, Oid stacoll,
-						   Datum stanumbers, bool stanumbers_isnull,
-						   Datum stavalues, bool stavalues_isnull);
 static void upsert_pg_statistic(Relation starel, HeapTuple oldtup,
 								const Datum *values, const bool *nulls, const bool *replaces);
 static bool delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit);
-static void init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
-								   Datum *values, bool *nulls, bool *replaces);
 
 /*
  * Insert or Update Attribute Statistics
@@ -298,16 +277,16 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	}
 
 	/* derive information from attribute */
-	get_attr_stat_type(reloid, attnum,
-					   &atttypid, &atttypmod,
-					   &atttyptype, &atttypcoll,
-					   &eq_opr, &lt_opr);
+	statatt_get_type(reloid, attnum,
+					 &atttypid, &atttypmod,
+					 &atttyptype, &atttypcoll,
+					 &eq_opr, &lt_opr);
 
 	/* if needed, derive element type */
 	if (do_mcelem || do_dechist)
 	{
-		if (!get_elem_stat_type(atttypid, atttyptype,
-								&elemtypid, &elem_eq_opr))
+		if (!statatt_get_elem_type(atttypid, atttyptype,
+								   &elemtypid, &elem_eq_opr))
 		{
 			ereport(WARNING,
 					(errmsg("could not determine element type of column \"%s\"", attname),
@@ -361,8 +340,8 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	if (HeapTupleIsValid(statup))
 		heap_deform_tuple(statup, RelationGetDescr(starel), values, nulls);
 	else
-		init_empty_stats_tuple(reloid, attnum, inherited, values, nulls,
-							   replaces);
+		statatt_init_empty_tuple(reloid, attnum, inherited, values, nulls,
+								 replaces);
 
 	/* if specified, set to argument values */
 	if (!PG_ARGISNULL(NULL_FRAC_ARG))
@@ -386,18 +365,18 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	{
 		bool		converted;
 		Datum		stanumbers = PG_GETARG_DATUM(MOST_COMMON_FREQS_ARG);
-		Datum		stavalues = text_to_stavalues("most_common_vals",
-												  &array_in_fn,
-												  PG_GETARG_DATUM(MOST_COMMON_VALS_ARG),
-												  atttypid, atttypmod,
-												  &converted);
+		Datum		stavalues = statatt_build_stavalues("most_common_vals",
+														&array_in_fn,
+														PG_GETARG_DATUM(MOST_COMMON_VALS_ARG),
+														atttypid, atttypmod,
+														&converted);
 
 		if (converted)
 		{
-			set_stats_slot(values, nulls, replaces,
-						   STATISTIC_KIND_MCV,
-						   eq_opr, atttypcoll,
-						   stanumbers, false, stavalues, false);
+			statatt_set_slot(values, nulls, replaces,
+							 STATISTIC_KIND_MCV,
+							 eq_opr, atttypcoll,
+							 stanumbers, false, stavalues, false);
 		}
 		else
 			result = false;
@@ -409,18 +388,18 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		Datum		stavalues;
 		bool		converted = false;
 
-		stavalues = text_to_stavalues("histogram_bounds",
-									  &array_in_fn,
-									  PG_GETARG_DATUM(HISTOGRAM_BOUNDS_ARG),
-									  atttypid, atttypmod,
-									  &converted);
+		stavalues = statatt_build_stavalues("histogram_bounds",
+											&array_in_fn,
+											PG_GETARG_DATUM(HISTOGRAM_BOUNDS_ARG),
+											atttypid, atttypmod,
+											&converted);
 
 		if (converted)
 		{
-			set_stats_slot(values, nulls, replaces,
-						   STATISTIC_KIND_HISTOGRAM,
-						   lt_opr, atttypcoll,
-						   0, true, stavalues, false);
+			statatt_set_slot(values, nulls, replaces,
+							 STATISTIC_KIND_HISTOGRAM,
+							 lt_opr, atttypcoll,
+							 0, true, stavalues, false);
 		}
 		else
 			result = false;
@@ -433,10 +412,10 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		ArrayType  *arry = construct_array_builtin(elems, 1, FLOAT4OID);
 		Datum		stanumbers = PointerGetDatum(arry);
 
-		set_stats_slot(values, nulls, replaces,
-					   STATISTIC_KIND_CORRELATION,
-					   lt_opr, atttypcoll,
-					   stanumbers, false, 0, true);
+		statatt_set_slot(values, nulls, replaces,
+						 STATISTIC_KIND_CORRELATION,
+						 lt_opr, atttypcoll,
+						 stanumbers, false, 0, true);
 	}
 
 	/* STATISTIC_KIND_MCELEM */
@@ -446,18 +425,18 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		bool		converted = false;
 		Datum		stavalues;
 
-		stavalues = text_to_stavalues("most_common_elems",
-									  &array_in_fn,
-									  PG_GETARG_DATUM(MOST_COMMON_ELEMS_ARG),
-									  elemtypid, atttypmod,
-									  &converted);
+		stavalues = statatt_build_stavalues("most_common_elems",
+											&array_in_fn,
+											PG_GETARG_DATUM(MOST_COMMON_ELEMS_ARG),
+											elemtypid, atttypmod,
+											&converted);
 
 		if (converted)
 		{
-			set_stats_slot(values, nulls, replaces,
-						   STATISTIC_KIND_MCELEM,
-						   elem_eq_opr, atttypcoll,
-						   stanumbers, false, stavalues, false);
+			statatt_set_slot(values, nulls, replaces,
+							 STATISTIC_KIND_MCELEM,
+							 elem_eq_opr, atttypcoll,
+							 stanumbers, false, stavalues, false);
 		}
 		else
 			result = false;
@@ -468,10 +447,10 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	{
 		Datum		stanumbers = PG_GETARG_DATUM(ELEM_COUNT_HISTOGRAM_ARG);
 
-		set_stats_slot(values, nulls, replaces,
-					   STATISTIC_KIND_DECHIST,
-					   elem_eq_opr, atttypcoll,
-					   stanumbers, false, 0, true);
+		statatt_set_slot(values, nulls, replaces,
+						 STATISTIC_KIND_DECHIST,
+						 elem_eq_opr, atttypcoll,
+						 stanumbers, false, 0, true);
 	}
 
 	/*
@@ -486,18 +465,18 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		bool		converted = false;
 		Datum		stavalues;
 
-		stavalues = text_to_stavalues("range_bounds_histogram",
-									  &array_in_fn,
-									  PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
-									  atttypid, atttypmod,
-									  &converted);
+		stavalues = statatt_build_stavalues("range_bounds_histogram",
+											&array_in_fn,
+											PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
+											atttypid, atttypmod,
+											&converted);
 
 		if (converted)
 		{
-			set_stats_slot(values, nulls, replaces,
-						   STATISTIC_KIND_BOUNDS_HISTOGRAM,
-						   InvalidOid, InvalidOid,
-						   0, true, stavalues, false);
+			statatt_set_slot(values, nulls, replaces,
+							 STATISTIC_KIND_BOUNDS_HISTOGRAM,
+							 InvalidOid, InvalidOid,
+							 0, true, stavalues, false);
 		}
 		else
 			result = false;
@@ -514,17 +493,17 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		bool		converted = false;
 		Datum		stavalues;
 
-		stavalues = text_to_stavalues("range_length_histogram",
-									  &array_in_fn,
-									  PG_GETARG_DATUM(RANGE_LENGTH_HISTOGRAM_ARG),
-									  FLOAT8OID, 0, &converted);
+		stavalues = statatt_build_stavalues("range_length_histogram",
+											&array_in_fn,
+											PG_GETARG_DATUM(RANGE_LENGTH_HISTOGRAM_ARG),
+											FLOAT8OID, 0, &converted);
 
 		if (converted)
 		{
-			set_stats_slot(values, nulls, replaces,
-						   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
-						   Float8LessOperator, InvalidOid,
-						   stanumbers, false, stavalues, false);
+			statatt_set_slot(values, nulls, replaces,
+							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
+							 Float8LessOperator, InvalidOid,
+							 stanumbers, false, stavalues, false);
 		}
 		else
 			result = false;
@@ -537,291 +516,6 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	table_close(starel, RowExclusiveLock);
 
 	return result;
-}
-
-/*
- * If this relation is an index and that index has expressions in it, and
- * the attnum specified is known to be an expression, then we must walk
- * the list attributes up to the specified attnum to get the right
- * expression.
- */
-static Node *
-get_attr_expr(Relation rel, int attnum)
-{
-	List	   *index_exprs;
-	ListCell   *indexpr_item;
-
-	/* relation is not an index */
-	if (rel->rd_rel->relkind != RELKIND_INDEX &&
-		rel->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
-		return NULL;
-
-	index_exprs = RelationGetIndexExpressions(rel);
-
-	/* index has no expressions to give */
-	if (index_exprs == NIL)
-		return NULL;
-
-	/*
-	 * The index attnum points directly to a relation attnum, then it's not an
-	 * expression attribute.
-	 */
-	if (rel->rd_index->indkey.values[attnum - 1] != 0)
-		return NULL;
-
-	indexpr_item = list_head(rel->rd_indexprs);
-
-	for (int i = 0; i < attnum - 1; i++)
-		if (rel->rd_index->indkey.values[i] == 0)
-			indexpr_item = lnext(rel->rd_indexprs, indexpr_item);
-
-	if (indexpr_item == NULL)	/* shouldn't happen */
-		elog(ERROR, "too few entries in indexprs list");
-
-	return (Node *) lfirst(indexpr_item);
-}
-
-/*
- * Derive type information from the attribute.
- */
-static void
-get_attr_stat_type(Oid reloid, AttrNumber attnum,
-				   Oid *atttypid, int32 *atttypmod,
-				   char *atttyptype, Oid *atttypcoll,
-				   Oid *eq_opr, Oid *lt_opr)
-{
-	Relation	rel = relation_open(reloid, AccessShareLock);
-	Form_pg_attribute attr;
-	HeapTuple	atup;
-	Node	   *expr;
-	TypeCacheEntry *typcache;
-
-	atup = SearchSysCache2(ATTNUM, ObjectIdGetDatum(reloid),
-						   Int16GetDatum(attnum));
-
-	/* Attribute not found */
-	if (!HeapTupleIsValid(atup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column %d of relation \"%s\" does not exist",
-						attnum, RelationGetRelationName(rel))));
-
-	attr = (Form_pg_attribute) GETSTRUCT(atup);
-
-	if (attr->attisdropped)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column %d of relation \"%s\" does not exist",
-						attnum, RelationGetRelationName(rel))));
-
-	expr = get_attr_expr(rel, attr->attnum);
-
-	/*
-	 * When analyzing an expression index, believe the expression tree's type
-	 * not the column datatype --- the latter might be the opckeytype storage
-	 * type of the opclass, which is not interesting for our purposes. This
-	 * mimics the behavior of examine_attribute().
-	 */
-	if (expr == NULL)
-	{
-		*atttypid = attr->atttypid;
-		*atttypmod = attr->atttypmod;
-		*atttypcoll = attr->attcollation;
-	}
-	else
-	{
-		*atttypid = exprType(expr);
-		*atttypmod = exprTypmod(expr);
-
-		if (OidIsValid(attr->attcollation))
-			*atttypcoll = attr->attcollation;
-		else
-			*atttypcoll = exprCollation(expr);
-	}
-	ReleaseSysCache(atup);
-
-	/*
-	 * If it's a multirange, step down to the range type, as is done by
-	 * multirange_typanalyze().
-	 */
-	if (type_is_multirange(*atttypid))
-		*atttypid = get_multirange_range(*atttypid);
-
-	/* finds the right operators even if atttypid is a domain */
-	typcache = lookup_type_cache(*atttypid, TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR);
-	*atttyptype = typcache->typtype;
-	*eq_opr = typcache->eq_opr;
-	*lt_opr = typcache->lt_opr;
-
-	/*
-	 * Special case: collation for tsvector is DEFAULT_COLLATION_OID. See
-	 * compute_tsvector_stats().
-	 */
-	if (*atttypid == TSVECTOROID)
-		*atttypcoll = DEFAULT_COLLATION_OID;
-
-	relation_close(rel, NoLock);
-}
-
-/*
- * Derive element type information from the attribute type.
- */
-static bool
-get_elem_stat_type(Oid atttypid, char atttyptype,
-				   Oid *elemtypid, Oid *elem_eq_opr)
-{
-	TypeCacheEntry *elemtypcache;
-
-	if (atttypid == TSVECTOROID)
-	{
-		/*
-		 * Special case: element type for tsvector is text. See
-		 * compute_tsvector_stats().
-		 */
-		*elemtypid = TEXTOID;
-	}
-	else
-	{
-		/* find underlying element type through any domain */
-		*elemtypid = get_base_element_type(atttypid);
-	}
-
-	if (!OidIsValid(*elemtypid))
-		return false;
-
-	/* finds the right operator even if elemtypid is a domain */
-	elemtypcache = lookup_type_cache(*elemtypid, TYPECACHE_EQ_OPR);
-	if (!OidIsValid(elemtypcache->eq_opr))
-		return false;
-
-	*elem_eq_opr = elemtypcache->eq_opr;
-
-	return true;
-}
-
-/*
- * Cast a text datum into an array with element type elemtypid.
- *
- * If an error is encountered, capture it and re-throw a WARNING, and set ok
- * to false. If the resulting array contains NULLs, raise a WARNING and set ok
- * to false. Otherwise, set ok to true.
- */
-static Datum
-text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
-				  int32 typmod, bool *ok)
-{
-	LOCAL_FCINFO(fcinfo, 8);
-	char	   *s;
-	Datum		result;
-	ErrorSaveContext escontext = {T_ErrorSaveContext};
-
-	escontext.details_wanted = true;
-
-	s = TextDatumGetCString(d);
-
-	InitFunctionCallInfoData(*fcinfo, array_in, 3, InvalidOid,
-							 (Node *) &escontext, NULL);
-
-	fcinfo->args[0].value = CStringGetDatum(s);
-	fcinfo->args[0].isnull = false;
-	fcinfo->args[1].value = ObjectIdGetDatum(typid);
-	fcinfo->args[1].isnull = false;
-	fcinfo->args[2].value = Int32GetDatum(typmod);
-	fcinfo->args[2].isnull = false;
-
-	result = FunctionCallInvoke(fcinfo);
-
-	pfree(s);
-
-	if (escontext.error_occurred)
-	{
-		escontext.error_data->elevel = WARNING;
-		ThrowErrorData(escontext.error_data);
-		*ok = false;
-		return (Datum) 0;
-	}
-
-	if (array_contains_nulls(DatumGetArrayTypeP(result)))
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" array must not contain null values", staname)));
-		*ok = false;
-		return (Datum) 0;
-	}
-
-	*ok = true;
-
-	return result;
-}
-
-/*
- * Find and update the slot with the given stakind, or use the first empty
- * slot.
- */
-static void
-set_stats_slot(Datum *values, bool *nulls, bool *replaces,
-			   int16 stakind, Oid staop, Oid stacoll,
-			   Datum stanumbers, bool stanumbers_isnull,
-			   Datum stavalues, bool stavalues_isnull)
-{
-	int			slotidx;
-	int			first_empty = -1;
-	AttrNumber	stakind_attnum;
-	AttrNumber	staop_attnum;
-	AttrNumber	stacoll_attnum;
-
-	/* find existing slot with given stakind */
-	for (slotidx = 0; slotidx < STATISTIC_NUM_SLOTS; slotidx++)
-	{
-		stakind_attnum = Anum_pg_statistic_stakind1 - 1 + slotidx;
-
-		if (first_empty < 0 &&
-			DatumGetInt16(values[stakind_attnum]) == 0)
-			first_empty = slotidx;
-		if (DatumGetInt16(values[stakind_attnum]) == stakind)
-			break;
-	}
-
-	if (slotidx >= STATISTIC_NUM_SLOTS && first_empty >= 0)
-		slotidx = first_empty;
-
-	if (slotidx >= STATISTIC_NUM_SLOTS)
-		ereport(ERROR,
-				(errmsg("maximum number of statistics slots exceeded: %d",
-						slotidx + 1)));
-
-	stakind_attnum = Anum_pg_statistic_stakind1 - 1 + slotidx;
-	staop_attnum = Anum_pg_statistic_staop1 - 1 + slotidx;
-	stacoll_attnum = Anum_pg_statistic_stacoll1 - 1 + slotidx;
-
-	if (DatumGetInt16(values[stakind_attnum]) != stakind)
-	{
-		values[stakind_attnum] = Int16GetDatum(stakind);
-		replaces[stakind_attnum] = true;
-	}
-	if (DatumGetObjectId(values[staop_attnum]) != staop)
-	{
-		values[staop_attnum] = ObjectIdGetDatum(staop);
-		replaces[staop_attnum] = true;
-	}
-	if (DatumGetObjectId(values[stacoll_attnum]) != stacoll)
-	{
-		values[stacoll_attnum] = ObjectIdGetDatum(stacoll);
-		replaces[stacoll_attnum] = true;
-	}
-	if (!stanumbers_isnull)
-	{
-		values[Anum_pg_statistic_stanumbers1 - 1 + slotidx] = stanumbers;
-		nulls[Anum_pg_statistic_stanumbers1 - 1 + slotidx] = false;
-		replaces[Anum_pg_statistic_stanumbers1 - 1 + slotidx] = true;
-	}
-	if (!stavalues_isnull)
-	{
-		values[Anum_pg_statistic_stavalues1 - 1 + slotidx] = stavalues;
-		nulls[Anum_pg_statistic_stavalues1 - 1 + slotidx] = false;
-		replaces[Anum_pg_statistic_stavalues1 - 1 + slotidx] = true;
-	}
 }
 
 /*
@@ -878,44 +572,6 @@ delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit)
 	CommandCounterIncrement();
 
 	return result;
-}
-
-/*
- * Initialize values and nulls for a new stats tuple.
- */
-static void
-init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
-					   Datum *values, bool *nulls, bool *replaces)
-{
-	memset(nulls, true, sizeof(bool) * Natts_pg_statistic);
-	memset(replaces, true, sizeof(bool) * Natts_pg_statistic);
-
-	/* must initialize non-NULL attributes */
-
-	values[Anum_pg_statistic_starelid - 1] = ObjectIdGetDatum(reloid);
-	nulls[Anum_pg_statistic_starelid - 1] = false;
-	values[Anum_pg_statistic_staattnum - 1] = Int16GetDatum(attnum);
-	nulls[Anum_pg_statistic_staattnum - 1] = false;
-	values[Anum_pg_statistic_stainherit - 1] = BoolGetDatum(inherited);
-	nulls[Anum_pg_statistic_stainherit - 1] = false;
-
-	values[Anum_pg_statistic_stanullfrac - 1] = DEFAULT_NULL_FRAC;
-	nulls[Anum_pg_statistic_stanullfrac - 1] = false;
-	values[Anum_pg_statistic_stawidth - 1] = DEFAULT_AVG_WIDTH;
-	nulls[Anum_pg_statistic_stawidth - 1] = false;
-	values[Anum_pg_statistic_stadistinct - 1] = DEFAULT_N_DISTINCT;
-	nulls[Anum_pg_statistic_stadistinct - 1] = false;
-
-	/* initialize stakind, staop, and stacoll slots */
-	for (int slotnum = 0; slotnum < STATISTIC_NUM_SLOTS; slotnum++)
-	{
-		values[Anum_pg_statistic_stakind1 + slotnum - 1] = (Datum) 0;
-		nulls[Anum_pg_statistic_stakind1 + slotnum - 1] = false;
-		values[Anum_pg_statistic_staop1 + slotnum - 1] = ObjectIdGetDatum(InvalidOid);
-		nulls[Anum_pg_statistic_staop1 + slotnum - 1] = false;
-		values[Anum_pg_statistic_stacoll1 + slotnum - 1] = ObjectIdGetDatum(InvalidOid);
-		nulls[Anum_pg_statistic_stacoll1 + slotnum - 1] = false;
-	}
 }
 
 /*
