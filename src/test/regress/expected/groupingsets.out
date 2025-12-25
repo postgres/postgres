@@ -2563,4 +2563,71 @@ group by grouping sets((a, b), (a));
  2 | 2 |          4
 (4 rows)
 
+-- test handling of SRFs with grouping sets
+explain (verbose, costs off)
+select generate_series(1, a) as g
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(g)
+order by 1;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Sort
+   Output: (generate_series(1, "*VALUES*".column1))
+   Sort Key: (generate_series(1, "*VALUES*".column1))
+   ->  MixedAggregate
+         Output: (generate_series(1, "*VALUES*".column1))
+         Hash Key: generate_series(1, "*VALUES*".column1)
+         Group Key: ()
+         ->  ProjectSet
+               Output: generate_series(1, "*VALUES*".column1)
+               ->  Values Scan on "*VALUES*"
+                     Output: "*VALUES*".column1
+(11 rows)
+
+select generate_series(1, a) as g
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(g)
+order by 1;
+ g 
+---
+ 1
+ 2
+  
+(3 rows)
+
+explain (verbose, costs off)
+select generate_series(1, a) as g, a+b as ab
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(a, ab)
+order by 1, 2;
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (generate_series(1, "*VALUES*".column1)), (("*VALUES*".column1 + "*VALUES*".column2)), "*VALUES*".column1
+   Sort Key: (generate_series(1, "*VALUES*".column1)), (("*VALUES*".column1 + "*VALUES*".column2))
+   ->  ProjectSet
+         Output: generate_series(1, "*VALUES*".column1), (("*VALUES*".column1 + "*VALUES*".column2)), "*VALUES*".column1
+         ->  MixedAggregate
+               Output: "*VALUES*".column1, (("*VALUES*".column1 + "*VALUES*".column2))
+               Hash Key: "*VALUES*".column1, ("*VALUES*".column1 + "*VALUES*".column2)
+               Hash Key: "*VALUES*".column1
+               Group Key: ()
+               ->  Values Scan on "*VALUES*"
+                     Output: ("*VALUES*".column1 + "*VALUES*".column2), "*VALUES*".column1
+(12 rows)
+
+select generate_series(1, a) as g, a+b as ab
+from (values (1, 1), (2, 2)) as t (a, b)
+group by rollup(a, ab)
+order by 1, 2;
+ g | ab 
+---+----
+ 1 |  2
+ 1 |  4
+ 1 |   
+ 1 |   
+ 2 |  4
+ 2 |   
+(6 rows)
+
 -- end
