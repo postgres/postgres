@@ -503,6 +503,9 @@ UPDATE work_item SET status = 'failed'
   WHERE work_item.ctid = emr.ctid;
 </programlisting>
    This command will need to be repeated until no rows remain to be updated.
+   (This use of <structfield>ctid</structfield> is only safe because
+   the query is repeatedly run, avoiding the problem of changed
+   <structfield>ctid</structfield>s.)
    Use of an <literal>ORDER BY</literal> clause allows the command to
    prioritize which rows will be updated; it can also prevent deadlock
    with other update operations if they use the same ordering.
