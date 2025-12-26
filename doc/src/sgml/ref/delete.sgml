@@ -323,6 +323,9 @@ DELETE FROM user_logs AS dl
   USING delete_batch AS del
   WHERE dl.ctid = del.ctid;
 </programlisting>
+   This use of <structfield>ctid</structfield> is only safe because
+   the query is repeatedly run, avoiding the problem of changed
+   <structfield>ctid</structfield>s.
   </para>
  </refsect1>
 

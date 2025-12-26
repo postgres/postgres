@@ -1558,7 +1558,7 @@ CREATE TABLE circles (
       locate the row version very quickly, a row's
       <structfield>ctid</structfield> will change if it is
       updated or moved by <command>VACUUM FULL</command>.  Therefore
-      <structfield>ctid</structfield> is useless as a long-term row
+      <structfield>ctid</structfield> should not be used as a row
       identifier.  A primary key should be used to identify logical rows.
      </para>
     </listitem>
