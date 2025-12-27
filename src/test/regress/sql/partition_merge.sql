@@ -344,7 +344,7 @@ CREATE TABLE sales_list
 PARTITION BY LIST (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki');
 CREATE TABLE sales_west PARTITION OF sales_list FOR VALUES IN ('Lisbon', 'New York', 'Madrid');
-CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok');
+CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok');
 CREATE TABLE sales_central PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 
@@ -385,12 +385,12 @@ CREATE INDEX sales_list_sales_state_idx ON sales_list USING btree (sales_state);
 
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki');
 CREATE TABLE sales_west PARTITION OF sales_list FOR VALUES IN ('Lisbon', 'New York', 'Madrid');
-CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok');
+CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok');
 CREATE TABLE sales_central PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 
 INSERT INTO sales_list (salesperson_name, sales_state, sales_amount, sales_date) VALUES
-  ('Trump',    'Bejing',         1000, '2022-03-01'),
+  ('Trump',    'Beijing',         1000, '2022-03-01'),
   ('Smirnoff', 'New York',        500, '2022-03-03'),
   ('Ford',     'St. Petersburg', 2000, '2022-03-05'),
   ('Ivanov',   'Warsaw',          750, '2022-03-04'),

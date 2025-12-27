@@ -2060,7 +2060,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2023 INTO
 <programlisting>
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
    (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-    PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
     PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 </programlisting></para>
 

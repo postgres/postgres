@@ -853,20 +853,20 @@ DROP TABLE sales_range;
 --
 CREATE TABLE sales_list (sales_state VARCHAR(20)) PARTITION BY LIST (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki');
-CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Bejing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok');
+CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Beijing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 -- ERROR:  new partition "sales_east" would overlap with another (not split) partition "sales_nord"
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok', 'Helsinki'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok', 'Helsinki'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 ERROR:  new partition "sales_east" would overlap with another (not split) partition "sales_nord"
-LINE 3: ... FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok', 'Helsinki'...
+LINE 3: ...FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok', 'Helsinki'...
                                                              ^
 -- ERROR:  new partition "sales_west" would overlap with another new partition "sales_central"
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Lisbon', 'Kyiv'));
 ERROR:  new partition "sales_west" would overlap with another new partition "sales_central"
 LINE 2:   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York',...
@@ -874,7 +874,7 @@ LINE 2:   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York',...
 -- ERROR:  new partition "sales_west" cannot have NULL value because split partition "sales_all" does not have
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', NULL),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 ERROR:  new partition "sales_west" cannot have NULL value because split partition "sales_all" does not have
 LINE 2: ...s_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', NULL),
@@ -882,7 +882,7 @@ LINE 2: ...s_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', NULL),
 -- ERROR:  new partition "sales_west" cannot have this value because split partition "sales_all" does not have
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Melbourne'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 ERROR:  new partition "sales_west" cannot have this value because split partition "sales_all" does not have
 LINE 2: ...st FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Melbourne...
@@ -890,7 +890,7 @@ LINE 2: ...st FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Melbourne...
 -- ERROR:  new partition cannot be DEFAULT because DEFAULT partition "sales_others" already exists
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Melbourne'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'),
    PARTITION sales_others2 DEFAULT);
 ERROR:  new partition cannot be DEFAULT because DEFAULT partition "sales_others" already exists
@@ -915,12 +915,12 @@ DROP TABLE t;
 --
 CREATE TABLE sales_list(sales_state VARCHAR(20)) PARTITION BY LIST (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Helsinki', 'St. Petersburg', 'Oslo');
-CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Bejing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok', NULL);
+CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Beijing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok', NULL);
 -- ERROR:  new partitions combined partition bounds do not contain value (NULL) but split partition "sales_all" does
 -- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 ERROR:  new partitions combined partition bounds do not contain value (NULL) but split partition "sales_all" does
 HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
@@ -928,14 +928,14 @@ HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions
 -- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', NULL));
 ERROR:  new partitions combined partition bounds do not contain value ('Kyiv'::character varying(20)) but split partition "sales_all" does
 HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
 -- ERROR  DEFAULT partition should be one
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'),
    PARTITION sales_others DEFAULT,
    PARTITION sales_others2 DEFAULT);
@@ -956,10 +956,10 @@ PARTITION BY LIST (sales_state);
 CREATE INDEX sales_list_salesperson_name_idx ON sales_list USING btree (salesperson_name);
 CREATE INDEX sales_list_sales_state_idx ON sales_list USING btree (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Helsinki', 'St. Petersburg', 'Oslo');
-CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Bejing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok');
+CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Beijing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 INSERT INTO sales_list (salesperson_name, sales_state, sales_amount, sales_date) VALUES
-  ('Trump',    'Bejing',         1000, '2022-03-01'),
+  ('Trump',    'Beijing',         1000, '2022-03-01'),
   ('Smirnoff', 'New York',        500, '2022-03-03'),
   ('Ford',     'St. Petersburg', 2000, '2022-03-05'),
   ('Ivanov',   'Warsaw',          750, '2022-03-04'),
@@ -975,7 +975,7 @@ INSERT INTO sales_list (salesperson_name, sales_state, sales_amount, sales_date)
   ('Plato',    'Lisbon',          950, '2022-03-05');
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
-   PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
+   PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 SELECT tableoid::regclass, * FROM sales_list ORDER BY tableoid::regclass::text COLLATE "C", salesperson_id;
    tableoid    | salesperson_id | salesperson_name |  sales_state   | sales_amount | sales_date 
@@ -984,7 +984,7 @@ SELECT tableoid::regclass, * FROM sales_list ORDER BY tableoid::regclass::text C
  sales_central |              6 | Poirot           | Berlin         |         1000 | 03-01-2022
  sales_central |             12 | Smith            | Kyiv           |          350 | 03-10-2022
  sales_central |             13 | Gandi            | Warsaw         |          150 | 03-08-2022
- sales_east    |              1 | Trump            | Bejing         |         1000 | 03-01-2022
+ sales_east    |              1 | Trump            | Beijing        |         1000 | 03-01-2022
  sales_east    |              8 | Li               | Vladivostok    |         1150 | 03-09-2022
  sales_nord    |              3 | Ford             | St. Petersburg |         2000 | 03-05-2022
  sales_nord    |              7 | May              | Oslo           |         1200 | 03-06-2022

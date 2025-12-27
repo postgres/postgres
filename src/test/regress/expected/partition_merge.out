@@ -472,7 +472,7 @@ CREATE TABLE sales_list
 PARTITION BY LIST (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki');
 CREATE TABLE sales_west PARTITION OF sales_list FOR VALUES IN ('Lisbon', 'New York', 'Madrid');
-CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok');
+CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok');
 CREATE TABLE sales_central PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 CREATE TABLE sales_list2 (LIKE sales_list) PARTITION BY LIST (sales_state);
@@ -510,11 +510,11 @@ CREATE INDEX sales_list_salesperson_name_idx ON sales_list USING btree (salesper
 CREATE INDEX sales_list_sales_state_idx ON sales_list USING btree (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki');
 CREATE TABLE sales_west PARTITION OF sales_list FOR VALUES IN ('Lisbon', 'New York', 'Madrid');
-CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok');
+CREATE TABLE sales_east PARTITION OF sales_list FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok');
 CREATE TABLE sales_central PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 INSERT INTO sales_list (salesperson_name, sales_state, sales_amount, sales_date) VALUES
-  ('Trump',    'Bejing',         1000, '2022-03-01'),
+  ('Trump',    'Beijing',         1000, '2022-03-01'),
   ('Smirnoff', 'New York',        500, '2022-03-03'),
   ('Ford',     'St. Petersburg', 2000, '2022-03-05'),
   ('Ivanov',   'Warsaw',          750, '2022-03-04'),
@@ -533,7 +533,7 @@ EXECUTE get_partition_info('{sales_list}');
       oid      | relpersistence | relkind | inhdetachpending |                     pg_get_expr                      
 ---------------+----------------+---------+------------------+------------------------------------------------------
  sales_central | p              | r       | f                | FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv')
- sales_east    | p              | r       | f                | FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok')
+ sales_east    | p              | r       | f                | FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok')
  sales_nord    | p              | r       | f                | FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki')
  sales_west    | p              | r       | f                | FOR VALUES IN ('Lisbon', 'New York', 'Madrid')
  sales_others  | p              | r       | f                | DEFAULT
@@ -542,9 +542,9 @@ EXECUTE get_partition_info('{sales_list}');
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_central) INTO sales_all;
 -- show partitions with conditions:
 EXECUTE get_partition_info('{sales_list}');
-     oid      | relpersistence | relkind | inhdetachpending |                                                 pg_get_expr                                                  
---------------+----------------+---------+------------------+--------------------------------------------------------------------------------------------------------------
- sales_all    | p              | r       | f                | FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Bejing', 'Delhi', 'Vladivostok', 'Warsaw', 'Berlin', 'Kyiv')
+     oid      | relpersistence | relkind | inhdetachpending |                                                  pg_get_expr                                                  
+--------------+----------------+---------+------------------+---------------------------------------------------------------------------------------------------------------
+ sales_all    | p              | r       | f                | FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Beijing', 'Delhi', 'Vladivostok', 'Warsaw', 'Berlin', 'Kyiv')
  sales_nord   | p              | r       | f                | FOR VALUES IN ('Oslo', 'St. Petersburg', 'Helsinki')
  sales_others | p              | r       | f                | DEFAULT
 (3 rows)
@@ -552,7 +552,7 @@ EXECUTE get_partition_info('{sales_list}');
 SELECT tableoid::regclass, * FROM sales_list ORDER BY tableoid::regclass::text COLLATE "C", salesperson_id;
   tableoid  | salesperson_id | salesperson_name |  sales_state   | sales_amount | sales_date 
 ------------+----------------+------------------+----------------+--------------+------------
- sales_all  |              1 | Trump            | Bejing         |         1000 | 03-01-2022
+ sales_all  |              1 | Trump            | Beijing        |         1000 | 03-01-2022
  sales_all  |              2 | Smirnoff         | New York       |          500 | 03-03-2022
  sales_all  |              4 | Ivanov           | Warsaw         |          750 | 03-04-2022
  sales_all  |              5 | Deev             | Lisbon         |          250 | 03-07-2022
