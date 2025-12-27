@@ -448,7 +448,7 @@ PQgetCancel(PGconn *conn)
 	}
 
 	req = (CancelRequestPacket *) &cancel->cancel_req;
-	req->cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
+	req->cancelRequestCode = pg_hton32(CANCEL_REQUEST_CODE);
 	req->backendPID = pg_hton32(conn->be_pid);
 	memcpy(req->cancelAuthCode, conn->be_cancel_key, conn->be_cancel_key_len);
 	/* include the length field itself in the length */
@@ -479,7 +479,7 @@ PQsendCancelRequest(PGconn *cancelConn)
 
 	/* Send the message body. */
 	memset(&req, 0, offsetof(CancelRequestPacket, cancelAuthCode));
-	req.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
+	req.cancelRequestCode = pg_hton32(CANCEL_REQUEST_CODE);
 	req.backendPID = pg_hton32(cancelConn->be_pid);
 	if (pqPutnchar(&req, offsetof(CancelRequestPacket, cancelAuthCode), cancelConn))
 		return STATUS_ERROR;

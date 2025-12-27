@@ -1733,7 +1733,6 @@ ModifyTablePath
 ModifyTableState
 MonotonicFunction
 MorphOpaque
-MsgType
 MultiAssignRef
 MultiSortSupport
 MultiSortSupportData

@@ -114,7 +114,6 @@ is_unixsock_path(const char *path)
 
 
 typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
-typedef ProtocolVersion MsgType;
 
 
 /*
@@ -146,7 +145,7 @@ typedef uint32 AuthRequest;		/* an AUTH_REQ_* code */
 typedef struct CancelRequestPacket
 {
 	/* Note that each field is stored in network byte order! */
-	MsgType		cancelRequestCode;	/* code to identify a cancel request */
+	ProtocolVersion cancelRequestCode;	/* code to identify a cancel request */
 	uint32		backendPID;		/* PID of client's backend */
 	uint8		cancelAuthCode[FLEXIBLE_ARRAY_MEMBER];	/* secret key to
 														 * authorize cancel */
