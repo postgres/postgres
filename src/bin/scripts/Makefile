@@ -16,7 +16,15 @@ subdir = src/bin/scripts
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-PROGRAMS = createdb createuser dropdb dropuser clusterdb vacuumdb reindexdb pg_isready
+PROGRAMS = \
+	clusterdb \
+	createdb \
+	createuser \
+	dropdb \
+	dropuser \
+	pg_isready \
+	reindexdb \
+	vacuumdb
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)

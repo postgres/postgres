@@ -14,7 +14,13 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += $(libpq_pgport)
 
 
-PROGS = testlibpq testlibpq2 testlibpq3 testlibpq4 testlo testlo64
+PROGS = \
+	testlibpq \
+	testlibpq2 \
+	testlibpq3 \
+	testlibpq4 \
+	testlo \
+	testlo64
 
 all: $(PROGS)
 

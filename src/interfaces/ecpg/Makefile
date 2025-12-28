@@ -2,7 +2,12 @@ subdir = src/interfaces/ecpg
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = include pgtypeslib ecpglib compatlib preproc
+SUBDIRS = \
+	compatlib \
+	ecpglib \
+	include \
+	pgtypeslib \
+	preproc
 
 # Suppress parallel build of subdirectories to avoid a bug in GNU make 3.82, cf
 # https://savannah.gnu.org/bugs/?30653
