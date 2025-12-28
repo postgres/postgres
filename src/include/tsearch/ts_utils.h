@@ -54,7 +54,7 @@ extern void close_tsvector_parser(TSVectorParseState state);
 struct TSQueryParserStateData;	/* private in backend/utils/adt/tsquery.c */
 typedef struct TSQueryParserStateData *TSQueryParserState;
 
-typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
+typedef void (*PushFunction) (void *opaque, TSQueryParserState state,
 							  char *token, int tokenlen,
 							  int16 tokenweights,	/* bitmap as described in
 													 * QueryOperand struct */
@@ -66,7 +66,7 @@ typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
 
 extern TSQuery parse_tsquery(char *buf,
 							 PushFunction pushval,
-							 Datum opaque,
+							 void *opaque,
 							 int flags,
 							 Node *escontext);
 

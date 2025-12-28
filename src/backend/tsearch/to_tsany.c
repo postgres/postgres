@@ -489,7 +489,7 @@ add_to_tsvector(void *_state, char *elem_value, int elem_len)
  * and different variants are ORed together.
  */
 static void
-pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, int16 weight, bool prefix)
+pushval_morph(void *opaque, TSQueryParserState state, char *strval, int lenval, int16 weight, bool prefix)
 {
 	int32		count = 0;
 	ParsedText	prs;
@@ -498,7 +498,7 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 				cntvar = 0,
 				cntpos = 0,
 				cnt = 0;
-	MorphOpaque *data = (MorphOpaque *) DatumGetPointer(opaque);
+	MorphOpaque *data = opaque;
 
 	prs.lenwords = 4;
 	prs.curwords = 0;
@@ -594,7 +594,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
-						  PointerGetDatum(&data),
+						  &data,
 						  0,
 						  NULL);
 
@@ -631,7 +631,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
-						  PointerGetDatum(&data),
+						  &data,
 						  P_TSQ_PLAIN,
 						  NULL);
 
@@ -669,7 +669,7 @@ phraseto_tsquery_byid(PG_FUNCTION_ARGS)
 
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
-						  PointerGetDatum(&data),
+						  &data,
 						  P_TSQ_PLAIN,
 						  NULL);
 
@@ -707,7 +707,7 @@ websearch_to_tsquery_byid(PG_FUNCTION_ARGS)
 
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
-						  PointerGetDatum(&data),
+						  &data,
 						  P_TSQ_WEB,
 						  NULL);
 

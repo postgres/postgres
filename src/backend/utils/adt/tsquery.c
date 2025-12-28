@@ -671,7 +671,7 @@ cleanOpStack(TSQueryParserState state,
 static void
 makepol(TSQueryParserState state,
 		PushFunction pushval,
-		Datum opaque)
+		void *opaque)
 {
 	int8		operator = 0;
 	ts_tokentype type;
@@ -816,7 +816,7 @@ findoprnd(QueryItem *ptr, int size, bool *needcleanup)
 TSQuery
 parse_tsquery(char *buf,
 			  PushFunction pushval,
-			  Datum opaque,
+			  void *opaque,
 			  int flags,
 			  Node *escontext)
 {
@@ -939,7 +939,7 @@ parse_tsquery(char *buf,
 }
 
 static void
-pushval_asis(Datum opaque, TSQueryParserState state, char *strval, int lenval,
+pushval_asis(void *opaque, TSQueryParserState state, char *strval, int lenval,
 			 int16 weight, bool prefix)
 {
 	pushValue(state, strval, lenval, weight, prefix);
@@ -956,7 +956,7 @@ tsqueryin(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TSQUERY(parse_tsquery(in,
 									pushval_asis,
-									PointerGetDatum(NULL),
+									NULL,
 									0,
 									escontext));
 }
