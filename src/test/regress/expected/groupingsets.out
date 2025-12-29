@@ -463,6 +463,101 @@ select x, y || 'y'
    | 3y
 (8 rows)
 
+-- check that operands wrapped in PlaceHolderVars are capable of index matching
+begin;
+set local enable_bitmapscan = off;
+explain (costs off)
+select x, y
+  from (select unique1 as x, unique2 as y from tenk1) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Sort
+   Sort Key: tenk1.unique1, tenk1.unique2
+   ->  GroupAggregate
+         Group Key: tenk1.unique1
+         Sort Key: tenk1.unique2
+           Group Key: tenk1.unique2
+         ->  Index Scan using tenk1_unique1 on tenk1
+               Index Cond: (unique1 = 1)
+(8 rows)
+
+select x, y
+  from (select unique1 as x, unique2 as y from tenk1) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+ x |  y   
+---+------
+ 1 |     
+   | 2838
+(2 rows)
+
+explain (costs off)
+select x, y
+  from (select unique1::oid as x, unique2 as y from tenk1) as t
+  where x::integer = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Sort
+   Sort Key: ((tenk1.unique1)::oid), tenk1.unique2
+   ->  GroupAggregate
+         Group Key: ((tenk1.unique1)::oid)
+         Sort Key: tenk1.unique2
+           Group Key: tenk1.unique2
+         ->  Sort
+               Sort Key: ((tenk1.unique1)::oid)
+               ->  Index Scan using tenk1_unique1 on tenk1
+                     Index Cond: (((unique1)::oid)::integer = 1)
+(10 rows)
+
+select x, y
+  from (select unique1::oid as x, unique2 as y from tenk1) as t
+  where x::integer = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+ x |  y   
+---+------
+ 1 |     
+   | 2838
+(2 rows)
+
+explain (costs off)
+select x, y
+  from (select t1.unique1 as x, t1.unique2 as y from tenk1 t1, tenk1 t2) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Sort
+   Sort Key: t1.unique1, t1.unique2
+   ->  GroupAggregate
+         Group Key: t1.unique1
+         Sort Key: t1.unique2
+           Group Key: t1.unique2
+         ->  Nested Loop
+               ->  Index Scan using tenk1_unique1 on tenk1 t1
+                     Index Cond: (unique1 = 1)
+               ->  Index Only Scan using tenk1_hundred on tenk1 t2
+(10 rows)
+
+select x, y
+  from (select t1.unique1 as x, t1.unique2 as y from tenk1 t1, tenk1 t2) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+ x |  y   
+---+------
+ 1 |     
+   | 2838
+(2 rows)
+
+rollback;
 -- check qual push-down rules for a subquery with grouping sets
 explain (verbose, costs off)
 select * from (

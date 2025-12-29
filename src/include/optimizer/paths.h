@@ -81,6 +81,7 @@ extern bool indexcol_is_bool_constant_for_query(PlannerInfo *root,
 												int indexcol);
 extern bool match_index_to_operand(Node *operand, int indexcol,
 								   IndexOptInfo *index);
+extern Node *strip_phvs_in_index_operand(Node *operand);
 extern void check_index_predicates(PlannerInfo *root, RelOptInfo *rel);
 
 /*
