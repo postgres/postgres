@@ -3,8 +3,13 @@
 PGFILEDESC = "test_cloexec - test O_CLOEXEC flag handling"
 PGAPPICON = win32
 
-PROGRAM += test_cloexec
-OBJS += $(WIN32RES) test_cloexec.o
+PROGRAM = test_cloexec
+OBJS = $(WIN32RES) test_cloexec.o
+
+ifeq ($(PORTNAME), win32)
+# Force Mkvcbuild.pm to link libpgport
+PG_LIBS_INTERNAL = $(libpq_pgport)
+endif
 
 NO_INSTALLCHECK = 1
 TAP_TESTS = 1
