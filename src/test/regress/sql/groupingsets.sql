@@ -183,6 +183,52 @@ select x, y || 'y'
   group by grouping sets (x, y)
   order by 1, 2;
 
+-- check that operands wrapped in PlaceHolderVars are capable of index matching
+begin;
+
+set local enable_bitmapscan = off;
+
+explain (costs off)
+select x, y
+  from (select unique1 as x, unique2 as y from tenk1) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+
+select x, y
+  from (select unique1 as x, unique2 as y from tenk1) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+
+explain (costs off)
+select x, y
+  from (select unique1::oid as x, unique2 as y from tenk1) as t
+  where x::integer = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+
+select x, y
+  from (select unique1::oid as x, unique2 as y from tenk1) as t
+  where x::integer = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+
+explain (costs off)
+select x, y
+  from (select t1.unique1 as x, t1.unique2 as y from tenk1 t1, tenk1 t2) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+
+select x, y
+  from (select t1.unique1 as x, t1.unique2 as y from tenk1 t1, tenk1 t2) as t
+  where x = 1
+  group by grouping sets (x, y)
+  order by 1, 2;
+
+rollback;
+
 -- check qual push-down rules for a subquery with grouping sets
 explain (verbose, costs off)
 select * from (

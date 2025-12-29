@@ -196,6 +196,8 @@ static Expr *match_clause_to_ordering_op(IndexOptInfo *index,
 static bool ec_member_matches_indexcol(PlannerInfo *root, RelOptInfo *rel,
 									   EquivalenceClass *ec, EquivalenceMember *em,
 									   void *arg);
+static bool contain_strippable_phv_walker(Node *node, void *context);
+static Node *strip_phvs_in_index_operand_mutator(Node *node, void *context);
 
 
 /*
@@ -4415,12 +4417,23 @@ match_index_to_operand(Node *operand,
 	int			indkey;
 
 	/*
-	 * Ignore any RelabelType node above the operand.   This is needed to be
-	 * able to apply indexscanning in binary-compatible-operator cases. Note:
-	 * we can assume there is at most one RelabelType node;
-	 * eval_const_expressions() will have simplified if more than one.
+	 * Ignore any PlaceHolderVar node contained in the operand.  This is
+	 * needed to be able to apply indexscanning in cases where the operand (or
+	 * a subtree) has been wrapped in PlaceHolderVars to enforce separate
+	 * identity or as a result of outer joins.
 	 */
-	if (operand && IsA(operand, RelabelType))
+	operand = strip_phvs_in_index_operand(operand);
+
+	/*
+	 * Ignore any RelabelType node above the operand.  This is needed to be
+	 * able to apply indexscanning in binary-compatible-operator cases.
+	 *
+	 * Note: we must handle nested RelabelType nodes here.  While
+	 * eval_const_expressions() will have simplified them to at most one
+	 * layer, our prior stripping of PlaceHolderVars may have brought separate
+	 * RelabelTypes into adjacency.
+	 */
+	while (operand && IsA(operand, RelabelType))
 		operand = (Node *) ((RelabelType *) operand)->arg;
 
 	indkey = index->indexkeys[indexcol];
@@ -4471,6 +4484,92 @@ match_index_to_operand(Node *operand,
 	}
 
 	return false;
+}
+
+/*
+ * strip_phvs_in_index_operand
+ *	  Strip PlaceHolderVar nodes from the given operand expression to
+ *	  facilitate matching against an index's key.
+ *
+ * A PlaceHolderVar appearing in a relation-scan-level expression is
+ * effectively a no-op.  Nevertheless, to play it safe, we strip only
+ * PlaceHolderVars that are not marked nullable.
+ *
+ * The removal is performed recursively because PlaceHolderVars can be nested
+ * or interleaved with other node types.  We must peel back all layers to
+ * expose the base operand.
+ *
+ * As a performance optimization, we first use a lightweight walker to check
+ * for the presence of strippable PlaceHolderVars.  The expensive mutator is
+ * invoked only if a candidate is found, avoiding unnecessary memory allocation
+ * and tree copying in the common case where no PlaceHolderVars are present.
+ */
+Node *
+strip_phvs_in_index_operand(Node *operand)
+{
+	/* Don't mutate/copy if no target PHVs exist */
+	if (!contain_strippable_phv_walker(operand, NULL))
+		return operand;
+
+	return strip_phvs_in_index_operand_mutator(operand, NULL);
+}
+
+/*
+ * contain_strippable_phv_walker
+ *	  Detect if there are any PlaceHolderVars in the tree that are candidates
+ *	  for stripping.
+ *
+ * We identify a PlaceHolderVar as strippable only if its phnullingrels is
+ * empty.
+ */
+static bool
+contain_strippable_phv_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (bms_is_empty(phv->phnullingrels))
+			return true;
+	}
+
+	return expression_tree_walker(node, contain_strippable_phv_walker,
+								  context);
+}
+
+/*
+ * strip_phvs_in_index_operand_mutator
+ *	  Recursively remove PlaceHolderVars in the tree that match the criteria.
+ *
+ * We strip a PlaceHolderVar only if its phnullingrels is empty, replacing it
+ * with its contained expression.
+ */
+static Node *
+strip_phvs_in_index_operand_mutator(Node *node, void *context)
+{
+	if (node == NULL)
+		return NULL;
+
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		/* If matches the criteria, strip it */
+		if (bms_is_empty(phv->phnullingrels))
+		{
+			/* Recurse on its contained expression */
+			return strip_phvs_in_index_operand_mutator((Node *) phv->phexpr,
+													   context);
+		}
+
+		/* Otherwise, keep this PHV but check its contained expression */
+	}
+
+	return expression_tree_mutator(node, strip_phvs_in_index_operand_mutator,
+								   context);
 }
 
 /*
