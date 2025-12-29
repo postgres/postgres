@@ -1165,20 +1165,28 @@ PREPARE st1(int, int) AS SELECT t1.c3, t2.c3 FROM ft1 t1, ft2 t2 WHERE t1.c1 = $
 EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st1(1, 2);
 EXECUTE st1(1, 1);
 EXECUTE st1(101, 101);
-SET enable_hashjoin TO off;
+
+-- These next tests require choosing between remote and local sort, which is
+-- a coin flip so long as cost_sort() gives the same results on both sides.
+-- To stabilize the expected plans, disable sorting locally.
 SET enable_sort TO off;
+
 -- subquery using stable function (can't be sent to remote)
+SET enable_hashjoin TO off;  -- this one needs even more help to be stable
 PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c4) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st2(10, 20);
 EXECUTE st2(10, 20);
 EXECUTE st2(101, 121);
 RESET enable_hashjoin;
-RESET enable_sort;
+
 -- subquery using immutable function (can be sent to remote)
 PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c5) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st3(10, 20);
 EXECUTE st3(10, 20);
 EXECUTE st3(20, 30);
+
+RESET enable_sort;
+
 -- custom plan should be chosen initially
 PREPARE st4(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 = $1;
 EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
