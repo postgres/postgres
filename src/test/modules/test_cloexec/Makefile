@@ -3,8 +3,8 @@
 PGFILEDESC = "test_cloexec - test O_CLOEXEC flag handling"
 PGAPPICON = win32
 
-PROGRAM += test_cloexec
-OBJS += $(WIN32RES) test_cloexec.o
+PROGRAM = test_cloexec
+OBJS = $(WIN32RES) test_cloexec.o
 
 NO_INSTALLCHECK = 1
 TAP_TESTS = 1
