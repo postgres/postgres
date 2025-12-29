@@ -656,6 +656,117 @@ task:
 
 
 task:
+  << : *WINDOWS_ENVIRONMENT_BASE
+  name: Windows - Server 2022, VS 2019 - Mkvcbuild.pm
+
+  env:
+    # Our legacy build system doesn't have test concurrency above the level
+    # of a single vcregress test target. Due to that, it's useful to run prove
+    # with multiple jobs. For the other tasks it isn't, because two sources
+    # (make and prove) of concurrency can overload machines.
+    #
+    # The concrete choice of 10 is based on a small bit of experimentation and
+    # likely can be improved upon further.
+    PROVE_FLAGS: -j10 --timer
+
+    # Avoid re-installing over and over
+    NO_TEMP_INSTALL: 1
+    # -m enables parallelism
+    # verbosity:minimal + Summary reduce verbosity, while keeping a summary of
+    #   errors/warnings
+    # ForceNoAlign prevents msbuild from introducing line-breaks for long lines
+    # disable file tracker, we're never going to rebuild, and it slows down the
+    #   build
+    MSBFLAGS: -m -verbosity:minimal "-consoleLoggerParameters:Summary;ForceNoAlign" /p:TrackFileAccess=false -nologo
+
+    # If tests hang forever, cirrus eventually times out. In that case log
+    # output etc is not uploaded, making the problem hard to debug. Of course
+    # tests internally should have shorter timeouts, but that's proven to not
+    # be sufficient. 15min currently is fast enough to finish individual test
+    # "suites".
+    T_C: "\"C:/Program Files/Git/usr/bin/timeout.exe\" -v -k60s 15m"
+
+    # startcreate_script starts a postgres instance that we don't want to get
+    # killed at the end of that script (it's stopped in stop_script). Can't
+    # trivially use background_scripts because a) need pg_ctl's dropping of
+    # permissions b) need to wait for startup to have finished, and we don't
+    # currently have a tool for that...
+    CIRRUS_ESCAPING_PROCESSES: 1
+
+    # Cirrus defaults to SetErrorMode(SEM_NOGPFAULTERRORBOX | ...). That
+    # prevents crash reporting from working unless binaries do SetErrorMode()
+    # themselves. Furthermore, it appears that either python or, more likely,
+    # the C runtime has a bug where SEM_NOGPFAULTERRORBOX can very
+    # occasionally *trigger* a crash on process exit - which is hard to debug,
+    # given that it explicitly prevents crash dumps from working...
+    # 0x8001 is SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX
+    CIRRUS_WINDOWS_ERROR_MODE: 0x8001
+
+  <<: *windows_task_template
+
+  depends_on: SanityCheck
+  only_if: $CI_WINDOWS_ENABLED
+
+  setup_additional_packages_script: |
+    REM choco install -y --no-progress ...
+
+  configure_script:
+    # copy errors out when using forward slashes
+    - copy src\tools\ci\windows_build_config.pl src\tools\msvc\config.pl
+    - vcvarsall x64
+    - perl src/tools/msvc/mkvcbuild.pl
+  build_script:
+    - vcvarsall x64
+    - msbuild %MSBFLAGS% pgsql.sln
+  tempinstall_script:
+    # Installation on windows currently only completely works from src/tools/msvc
+    - cd src/tools/msvc && perl install.pl %CIRRUS_WORKING_DIR%/tmp_install
+
+  test_regress_parallel_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl check parallel
+  startcreate_script: |
+    rem paths to binaries need backslashes
+    tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log --options=--no-sync
+    echo include '%TEMP_CONFIG%' >> tmp_check/db/postgresql.conf
+    tmp_install\bin\pg_ctl.exe start -D tmp_check/db -l tmp_check/postmaster.log
+
+  test_pl_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl plcheck
+  test_isolation_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl isolationcheck
+  test_modules_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl modulescheck
+  test_contrib_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl contribcheck
+  stop_script: |
+    tmp_install\bin\pg_ctl.exe stop -D tmp_check/db -l tmp_check/postmaster.log
+  test_ssl_script: |
+    set with_ssl=openssl
+    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/ssl/
+  test_subscription_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/subscription/
+  test_authentication_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/authentication/
+  test_recovery_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl recoverycheck
+  test_bin_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl bincheck
+  test_ecpg_script: |
+    rem tries to build additional stuff
+    vcvarsall x64
+    rem References ecpg_regression.proj in the current dir
+    cd src/tools/msvc
+    %T_C% perl vcregress.pl ecpgcheck
+
+  # It's not really "_ac" but that has the same patterns as REL_15_STABLE used.
+  on_failure:
+    <<: *on_failure_ac
+    crashlog_artifacts:
+      path: "crashlog-*.txt"
+      type: text/plain
+
+
+task:
   name: CompilerWarnings
 
   # To limit unnecessary work only run this once the SanityCheck
