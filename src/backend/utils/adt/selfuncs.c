@@ -4401,9 +4401,10 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 
 	examine_variable(root, hashkey, 0, &vardata);
 
-	/* Look up the frequency of the most common value, if available */
+	/* Initialize *mcv_freq to "unknown" */
 	*mcv_freq = 0.0;
 
+	/* Look up the frequency of the most common value, if available */
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
 		if (get_attstatsslot(&sslot, vardata.statsTuple,
@@ -4416,6 +4417,17 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 			if (sslot.nnumbers > 0)
 				*mcv_freq = sslot.numbers[0];
 			free_attstatsslot(&sslot);
+		}
+		else if (get_attstatsslot(&sslot, vardata.statsTuple,
+								  STATISTIC_KIND_HISTOGRAM, InvalidOid,
+								  0))
+		{
+			/*
+			 * If there are no recorded MCVs, but we do have a histogram, then
+			 * assume that ANALYZE determined that the column is unique.
+			 */
+			if (vardata.rel && vardata.rel->rows > 0)
+				*mcv_freq = 1.0 / vardata.rel->rows;
 		}
 	}
 

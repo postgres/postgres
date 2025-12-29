@@ -3303,10 +3303,13 @@ where not exists (
 );
                        QUERY PLAN                        
 ---------------------------------------------------------
- Hash Anti Join
-   Hash Cond: (t1.c1 = t2.c2)
-   ->  Seq Scan on tt4x t1
-   ->  Hash
+ Merge Anti Join
+   Merge Cond: (t1.c1 = t2.c2)
+   ->  Sort
+         Sort Key: t1.c1
+         ->  Seq Scan on tt4x t1
+   ->  Sort
+         Sort Key: t2.c2
          ->  Merge Right Join
                Merge Cond: (t5.c1 = t3.c2)
                ->  Merge Join
@@ -3327,7 +3330,7 @@ where not exists (
                            ->  Sort
                                  Sort Key: t3.c1
                                  ->  Seq Scan on tt4x t3
-(24 rows)
+(27 rows)
 
 --
 -- regression test for problems of the sort depicted in bug #3494
@@ -9313,19 +9316,19 @@ select * from fkest f1
   join fkest f2 on (f1.x = f2.x and f1.x10 = f2.x10b and f1.x100 = f2.x100)
   join fkest f3 on f1.x = f3.x
   where f1.x100 = 2;
-                     QUERY PLAN                      
------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Hash Join
-   Hash Cond: ((f2.x = f1.x) AND (f2.x10b = f1.x10))
+   Hash Cond: (f1.x = f3.x)
    ->  Hash Join
-         Hash Cond: (f3.x = f2.x)
-         ->  Seq Scan on fkest f3
+         Hash Cond: ((f2.x = f1.x) AND (f2.x10b = f1.x10))
+         ->  Seq Scan on fkest f2
+               Filter: (x100 = 2)
          ->  Hash
-               ->  Seq Scan on fkest f2
+               ->  Seq Scan on fkest f1
                      Filter: (x100 = 2)
    ->  Hash
-         ->  Seq Scan on fkest f1
-               Filter: (x100 = 2)
+         ->  Seq Scan on fkest f3
 (11 rows)
 
 rollback;

@@ -314,6 +314,7 @@ create table join_foo as select generate_series(1, 3) as id, 'xxxxx'::text as t;
 alter table join_foo set (parallel_workers = 0);
 create table join_bar as select generate_series(1, 10000) as id, 'xxxxx'::text as t;
 alter table join_bar set (parallel_workers = 2);
+analyze join_foo, join_bar;
 
 -- multi-batch with rescan, parallel-oblivious
 savepoint settings;

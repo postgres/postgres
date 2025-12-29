@@ -4360,7 +4360,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 								 path->jpath.jointype))
 	{
 		innerbucketsize = 1.0 / virtualbuckets;
-		innermcvfreq = 0.0;
+		innermcvfreq = 1.0 / inner_path_rows_total;
 	}
 	else
 	{
@@ -4428,7 +4428,8 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 
 			if (innerbucketsize > thisbucketsize)
 				innerbucketsize = thisbucketsize;
-			if (innermcvfreq > thismcvfreq)
+			/* Disregard zero for MCV freq, it means we have no data */
+			if (thismcvfreq > 0.0 && innermcvfreq > thismcvfreq)
 				innermcvfreq = thismcvfreq;
 		}
 	}
