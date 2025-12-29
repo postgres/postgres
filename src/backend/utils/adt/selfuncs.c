@@ -242,6 +242,9 @@ static char *convert_string_datum(Datum value, Oid typid, Oid collid,
 								  bool *failure);
 static double convert_timevalue_to_scalar(Datum value, Oid typid,
 										  bool *failure);
+static Node *strip_all_phvs_deep(PlannerInfo *root, Node *node);
+static bool contain_placeholder_walker(Node *node, void *context);
+static Node *strip_all_phvs_mutator(Node *node, void *context);
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 									VariableStatData *vardata);
 static void examine_indexcol_variable(PlannerInfo *root, IndexOptInfo *index,
@@ -5593,8 +5596,8 @@ ReleaseDummy(HeapTuple tuple)
  *	varRelid: see specs for restriction selectivity functions
  *
  * Outputs: *vardata is filled as follows:
- *	var: the input expression (with any binary relabeling stripped, if
- *		it is or contains a variable; but otherwise the type is preserved)
+ *	var: the input expression (with any phvs or binary relabeling stripped,
+ *		if it is or contains a variable; but otherwise unchanged)
  *	rel: RelOptInfo for relation containing variable; NULL if expression
  *		contains no Vars (NOTE this could point to a RelOptInfo of a
  *		subquery, not one in the current query).
@@ -5632,22 +5635,31 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 	/* Save the exposed type of the expression */
 	vardata->vartype = exprType(node);
 
-	/* Look inside any binary-compatible relabeling */
+	/*
+	 * PlaceHolderVars are transparent for the purpose of statistics lookup;
+	 * they do not alter the value distribution of the underlying expression.
+	 * However, they can obscure the structure, preventing us from recognizing
+	 * matches to base columns, index expressions, or extended statistics.  So
+	 * strip them out first.
+	 */
+	basenode = strip_all_phvs_deep(root, node);
 
-	if (IsA(node, RelabelType))
-		basenode = (Node *) ((RelabelType *) node)->arg;
-	else
-		basenode = node;
+	/*
+	 * Look inside any binary-compatible relabeling.  We need to handle nested
+	 * RelabelType nodes here, because the prior stripping of PlaceHolderVars
+	 * may have brought separate RelabelTypes into adjacency.
+	 */
+	while (IsA(basenode, RelabelType))
+		basenode = (Node *) ((RelabelType *) basenode)->arg;
 
 	/* Fast path for a simple Var */
-
 	if (IsA(basenode, Var) &&
 		(varRelid == 0 || varRelid == ((Var *) basenode)->varno))
 	{
 		Var		   *var = (Var *) basenode;
 
 		/* Set up result fields other than the stats tuple */
-		vardata->var = basenode;	/* return Var without relabeling */
+		vardata->var = basenode;	/* return Var without phvs or relabeling */
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
@@ -5684,7 +5696,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			{
 				onerel = find_base_rel(root, relid);
 				vardata->rel = onerel;
-				node = basenode;	/* strip any relabeling */
+				node = basenode;	/* strip any phvs or relabeling */
 			}
 			/* else treat it as a constant */
 		}
@@ -5695,13 +5707,13 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			{
 				/* treat it as a variable of a join relation */
 				vardata->rel = find_join_rel(root, varnos);
-				node = basenode;	/* strip any relabeling */
+				node = basenode;	/* strip any phvs or relabeling */
 			}
 			else if (bms_is_member(varRelid, varnos))
 			{
 				/* ignore the vars belonging to other relations */
 				vardata->rel = find_base_rel(root, varRelid);
-				node = basenode;	/* strip any relabeling */
+				node = basenode;	/* strip any phvs or relabeling */
 				/* note: no point in expressional-index search here */
 			}
 			/* else treat it as a constant */
@@ -5932,6 +5944,63 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 	}
 
 	bms_free(varnos);
+}
+
+/*
+ * strip_all_phvs_deep
+ *		Deeply strip all PlaceHolderVars in an expression.
+
+ * As a performance optimization, we first use a lightweight walker to check
+ * for the presence of any PlaceHolderVars.  The expensive mutator is invoked
+ * only if a PlaceHolderVar is found, avoiding unnecessary memory allocation
+ * and tree copying in the common case where no PlaceHolderVars are present.
+ */
+static Node *
+strip_all_phvs_deep(PlannerInfo *root, Node *node)
+{
+	/* If there are no PHVs anywhere, we needn't work hard */
+	if (root->glob->lastPHId == 0)
+		return node;
+
+	if (!contain_placeholder_walker(node, NULL))
+		return node;
+	return strip_all_phvs_mutator(node, NULL);
+}
+
+/*
+ * contain_placeholder_walker
+ *		Lightweight walker to check if an expression contains any
+ *		PlaceHolderVars
+ */
+static bool
+contain_placeholder_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, PlaceHolderVar))
+		return true;
+
+	return expression_tree_walker(node, contain_placeholder_walker, context);
+}
+
+/*
+ * strip_all_phvs_mutator
+ *		Mutator to deeply strip all PlaceHolderVars
+ */
+static Node *
+strip_all_phvs_mutator(Node *node, void *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, PlaceHolderVar))
+	{
+		/* Strip it and recurse into its contained expression */
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		return strip_all_phvs_mutator((Node *) phv->phexpr, context);
+	}
+
+	return expression_tree_mutator(node, strip_all_phvs_mutator, context);
 }
 
 /*
