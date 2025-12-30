@@ -347,6 +347,8 @@ typedef struct LVRelState
 
 	/* Instrumentation counters */
 	int			num_index_scans;
+	int			num_dead_items_resets;
+	Size		total_dead_items_bytes;
 	/* Counters that follow are only for scanned_pages */
 	int64		tuples_deleted; /* # deleted from table */
 	int64		tuples_frozen;	/* # newly frozen */
@@ -645,6 +647,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	BufferUsage startbufferusage = pgBufferUsage;
 	ErrorContextCallback errcallback;
 	char	  **indnames = NULL;
+	Size		dead_items_max_bytes = 0;
 
 	verbose = (params.options & VACOPT_VERBOSE) != 0;
 	instrument = (verbose || (AmAutoVacuumWorkerProcess() &&
@@ -767,6 +770,8 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 
 	/* Initialize remaining counters (be tidy) */
 	vacrel->num_index_scans = 0;
+	vacrel->num_dead_items_resets = 0;
+	vacrel->total_dead_items_bytes = 0;
 	vacrel->tuples_deleted = 0;
 	vacrel->tuples_frozen = 0;
 	vacrel->lpdead_items = 0;
@@ -863,6 +868,14 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	 * vacuuming, and heap vacuuming (plus related processing)
 	 */
 	lazy_scan_heap(vacrel);
+
+	/*
+	 * Save dead items max_bytes and update the memory usage statistics before
+	 * cleanup, they are freed in parallel vacuum cases during
+	 * dead_items_cleanup().
+	 */
+	dead_items_max_bytes = vacrel->dead_items_info->max_bytes;
+	vacrel->total_dead_items_bytes += TidStoreMemoryUsage(vacrel->dead_items);
 
 	/*
 	 * Free resources managed by dead_items_alloc.  This ends parallel mode in
@@ -1167,6 +1180,22 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 							 walusage.wal_bytes,
 							 walusage.wal_fpi_bytes,
 							 walusage.wal_buffers_full);
+
+			/*
+			 * Report the dead items memory usage.
+			 *
+			 * The num_dead_items_resets counter increases when we reset the
+			 * collected dead items, so the counter is non-zero if at least
+			 * one dead items are collected, even if index vacuuming is
+			 * disabled.
+			 */
+			appendStringInfo(&buf,
+							 ngettext("memory usage: dead item storage %.2f MB accumulated across %d reset (limit %.2f MB each)\n",
+									  "memory usage: dead item storage %.2f MB accumulated across %d resets (limit %.2f MB each)\n",
+									  vacrel->num_dead_items_resets),
+							 (double) vacrel->total_dead_items_bytes / (1024 * 1024),
+							 vacrel->num_dead_items_resets,
+							 (double) dead_items_max_bytes / (1024 * 1024));
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(verbose ? INFO : LOG,
@@ -3617,6 +3646,10 @@ dead_items_add(LVRelState *vacrel, BlockNumber blkno, OffsetNumber *offsets,
 static void
 dead_items_reset(LVRelState *vacrel)
 {
+	/* Update statistics for dead items */
+	vacrel->num_dead_items_resets++;
+	vacrel->total_dead_items_bytes += TidStoreMemoryUsage(vacrel->dead_items);
+
 	if (ParallelVacuumIsActive(vacrel))
 	{
 		parallel_vacuum_reset_dead_items(vacrel->pvs);
