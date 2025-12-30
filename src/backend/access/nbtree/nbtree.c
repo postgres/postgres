@@ -115,62 +115,63 @@ static BTVacuumPosting btreevacuumposting(BTVacState *vstate,
 Datum
 bthandler(PG_FUNCTION_ARGS)
 {
-	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+	static const IndexAmRoutine amroutine = {
+		.type = T_IndexAmRoutine,
+		.amstrategies = BTMaxStrategyNumber,
+		.amsupport = BTNProcs,
+		.amoptsprocnum = BTOPTIONS_PROC,
+		.amcanorder = true,
+		.amcanorderbyop = false,
+		.amcanhash = false,
+		.amconsistentequality = true,
+		.amconsistentordering = true,
+		.amcanbackward = true,
+		.amcanunique = true,
+		.amcanmulticol = true,
+		.amoptionalkey = true,
+		.amsearcharray = true,
+		.amsearchnulls = true,
+		.amstorage = false,
+		.amclusterable = true,
+		.ampredlocks = true,
+		.amcanparallel = true,
+		.amcanbuildparallel = true,
+		.amcaninclude = true,
+		.amusemaintenanceworkmem = false,
+		.amsummarizing = false,
+		.amparallelvacuumoptions =
+		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_COND_CLEANUP,
+		.amkeytype = InvalidOid,
 
-	amroutine->amstrategies = BTMaxStrategyNumber;
-	amroutine->amsupport = BTNProcs;
-	amroutine->amoptsprocnum = BTOPTIONS_PROC;
-	amroutine->amcanorder = true;
-	amroutine->amcanorderbyop = false;
-	amroutine->amcanhash = false;
-	amroutine->amconsistentequality = true;
-	amroutine->amconsistentordering = true;
-	amroutine->amcanbackward = true;
-	amroutine->amcanunique = true;
-	amroutine->amcanmulticol = true;
-	amroutine->amoptionalkey = true;
-	amroutine->amsearcharray = true;
-	amroutine->amsearchnulls = true;
-	amroutine->amstorage = false;
-	amroutine->amclusterable = true;
-	amroutine->ampredlocks = true;
-	amroutine->amcanparallel = true;
-	amroutine->amcanbuildparallel = true;
-	amroutine->amcaninclude = true;
-	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amsummarizing = false;
-	amroutine->amparallelvacuumoptions =
-		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_COND_CLEANUP;
-	amroutine->amkeytype = InvalidOid;
+		.ambuild = btbuild,
+		.ambuildempty = btbuildempty,
+		.aminsert = btinsert,
+		.aminsertcleanup = NULL,
+		.ambulkdelete = btbulkdelete,
+		.amvacuumcleanup = btvacuumcleanup,
+		.amcanreturn = btcanreturn,
+		.amcostestimate = btcostestimate,
+		.amgettreeheight = btgettreeheight,
+		.amoptions = btoptions,
+		.amproperty = btproperty,
+		.ambuildphasename = btbuildphasename,
+		.amvalidate = btvalidate,
+		.amadjustmembers = btadjustmembers,
+		.ambeginscan = btbeginscan,
+		.amrescan = btrescan,
+		.amgettuple = btgettuple,
+		.amgetbitmap = btgetbitmap,
+		.amendscan = btendscan,
+		.ammarkpos = btmarkpos,
+		.amrestrpos = btrestrpos,
+		.amestimateparallelscan = btestimateparallelscan,
+		.aminitparallelscan = btinitparallelscan,
+		.amparallelrescan = btparallelrescan,
+		.amtranslatestrategy = bttranslatestrategy,
+		.amtranslatecmptype = bttranslatecmptype,
+	};
 
-	amroutine->ambuild = btbuild;
-	amroutine->ambuildempty = btbuildempty;
-	amroutine->aminsert = btinsert;
-	amroutine->aminsertcleanup = NULL;
-	amroutine->ambulkdelete = btbulkdelete;
-	amroutine->amvacuumcleanup = btvacuumcleanup;
-	amroutine->amcanreturn = btcanreturn;
-	amroutine->amcostestimate = btcostestimate;
-	amroutine->amgettreeheight = btgettreeheight;
-	amroutine->amoptions = btoptions;
-	amroutine->amproperty = btproperty;
-	amroutine->ambuildphasename = btbuildphasename;
-	amroutine->amvalidate = btvalidate;
-	amroutine->amadjustmembers = btadjustmembers;
-	amroutine->ambeginscan = btbeginscan;
-	amroutine->amrescan = btrescan;
-	amroutine->amgettuple = btgettuple;
-	amroutine->amgetbitmap = btgetbitmap;
-	amroutine->amendscan = btendscan;
-	amroutine->ammarkpos = btmarkpos;
-	amroutine->amrestrpos = btrestrpos;
-	amroutine->amestimateparallelscan = btestimateparallelscan;
-	amroutine->aminitparallelscan = btinitparallelscan;
-	amroutine->amparallelrescan = btparallelrescan;
-	amroutine->amtranslatestrategy = bttranslatestrategy;
-	amroutine->amtranslatecmptype = bttranslatecmptype;
-
-	PG_RETURN_POINTER(amroutine);
+	PG_RETURN_POINTER(&amroutine);
 }
 
 /*

@@ -226,8 +226,8 @@ typedef void (*aminitparallelscan_function) (void *target);
 typedef void (*amparallelrescan_function) (IndexScanDesc scan);
 
 /*
- * API struct for an index AM.  Note this must be stored in a single palloc'd
- * chunk of memory.
+ * API struct for an index AM.  Note we expect index AMs to allocate these
+ * structs statically; the core code never copies nor frees them.
  */
 typedef struct IndexAmRoutine
 {
@@ -326,8 +326,8 @@ typedef struct IndexAmRoutine
 
 
 /* Functions in access/index/amapi.c */
-extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
-extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
+extern const IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
+extern const IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
 extern CompareType IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, bool missing_ok);
 extern StrategyNumber IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, bool missing_ok);
 

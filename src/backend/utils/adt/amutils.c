@@ -156,7 +156,7 @@ indexam_property(FunctionCallInfo fcinfo,
 	bool		isnull = false;
 	int			natts = 0;
 	IndexAMProperty prop;
-	IndexAmRoutine *routine;
+	const IndexAmRoutine *routine;
 
 	/* Try to convert property name to enum (no error if not known) */
 	prop = lookup_prop_name(propname);
@@ -452,7 +452,7 @@ pg_indexam_progress_phasename(PG_FUNCTION_ARGS)
 {
 	Oid			amoid = PG_GETARG_OID(0);
 	int32		phasenum = PG_GETARG_INT32(1);
-	IndexAmRoutine *routine;
+	const IndexAmRoutine *routine;
 	char	   *name;
 
 	routine = GetIndexAmRoutineByAmId(amoid, true);

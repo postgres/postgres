@@ -276,56 +276,57 @@ diendscan(IndexScanDesc scan)
 Datum
 dihandler(PG_FUNCTION_ARGS)
 {
-	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+	static const IndexAmRoutine amroutine = {
+		.type = T_IndexAmRoutine,
+		.amstrategies = 0,
+		.amsupport = 1,
+		.amcanorder = false,
+		.amcanorderbyop = false,
+		.amcanhash = false,
+		.amconsistentequality = false,
+		.amconsistentordering = false,
+		.amcanbackward = false,
+		.amcanunique = false,
+		.amcanmulticol = false,
+		.amoptionalkey = false,
+		.amsearcharray = false,
+		.amsearchnulls = false,
+		.amstorage = false,
+		.amclusterable = false,
+		.ampredlocks = false,
+		.amcanparallel = false,
+		.amcanbuildparallel = false,
+		.amcaninclude = false,
+		.amusemaintenanceworkmem = false,
+		.amsummarizing = false,
+		.amparallelvacuumoptions = VACUUM_OPTION_NO_PARALLEL,
+		.amkeytype = InvalidOid,
 
-	amroutine->amstrategies = 0;
-	amroutine->amsupport = 1;
-	amroutine->amcanorder = false;
-	amroutine->amcanorderbyop = false;
-	amroutine->amcanhash = false;
-	amroutine->amconsistentequality = false;
-	amroutine->amconsistentordering = false;
-	amroutine->amcanbackward = false;
-	amroutine->amcanunique = false;
-	amroutine->amcanmulticol = false;
-	amroutine->amoptionalkey = false;
-	amroutine->amsearcharray = false;
-	amroutine->amsearchnulls = false;
-	amroutine->amstorage = false;
-	amroutine->amclusterable = false;
-	amroutine->ampredlocks = false;
-	amroutine->amcanparallel = false;
-	amroutine->amcanbuildparallel = false;
-	amroutine->amcaninclude = false;
-	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amsummarizing = false;
-	amroutine->amparallelvacuumoptions = VACUUM_OPTION_NO_PARALLEL;
-	amroutine->amkeytype = InvalidOid;
+		.ambuild = dibuild,
+		.ambuildempty = dibuildempty,
+		.aminsert = diinsert,
+		.ambulkdelete = dibulkdelete,
+		.amvacuumcleanup = divacuumcleanup,
+		.amcanreturn = NULL,
+		.amcostestimate = dicostestimate,
+		.amgettreeheight = NULL,
+		.amoptions = dioptions,
+		.amproperty = NULL,
+		.ambuildphasename = NULL,
+		.amvalidate = divalidate,
+		.ambeginscan = dibeginscan,
+		.amrescan = direscan,
+		.amgettuple = NULL,
+		.amgetbitmap = NULL,
+		.amendscan = diendscan,
+		.ammarkpos = NULL,
+		.amrestrpos = NULL,
+		.amestimateparallelscan = NULL,
+		.aminitparallelscan = NULL,
+		.amparallelrescan = NULL,
+	};
 
-	amroutine->ambuild = dibuild;
-	amroutine->ambuildempty = dibuildempty;
-	amroutine->aminsert = diinsert;
-	amroutine->ambulkdelete = dibulkdelete;
-	amroutine->amvacuumcleanup = divacuumcleanup;
-	amroutine->amcanreturn = NULL;
-	amroutine->amcostestimate = dicostestimate;
-	amroutine->amgettreeheight = NULL;
-	amroutine->amoptions = dioptions;
-	amroutine->amproperty = NULL;
-	amroutine->ambuildphasename = NULL;
-	amroutine->amvalidate = divalidate;
-	amroutine->ambeginscan = dibeginscan;
-	amroutine->amrescan = direscan;
-	amroutine->amgettuple = NULL;
-	amroutine->amgetbitmap = NULL;
-	amroutine->amendscan = diendscan;
-	amroutine->ammarkpos = NULL;
-	amroutine->amrestrpos = NULL;
-	amroutine->amestimateparallelscan = NULL;
-	amroutine->aminitparallelscan = NULL;
-	amroutine->amparallelrescan = NULL;
-
-	PG_RETURN_POINTER(amroutine);
+	PG_RETURN_POINTER(&amroutine);
 }
 
 void

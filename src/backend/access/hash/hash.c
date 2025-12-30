@@ -57,62 +57,63 @@ static void hashbuildCallback(Relation index,
 Datum
 hashhandler(PG_FUNCTION_ARGS)
 {
-	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+	static const IndexAmRoutine amroutine = {
+		.type = T_IndexAmRoutine,
+		.amstrategies = HTMaxStrategyNumber,
+		.amsupport = HASHNProcs,
+		.amoptsprocnum = HASHOPTIONS_PROC,
+		.amcanorder = false,
+		.amcanorderbyop = false,
+		.amcanhash = true,
+		.amconsistentequality = true,
+		.amconsistentordering = false,
+		.amcanbackward = true,
+		.amcanunique = false,
+		.amcanmulticol = false,
+		.amoptionalkey = false,
+		.amsearcharray = false,
+		.amsearchnulls = false,
+		.amstorage = false,
+		.amclusterable = false,
+		.ampredlocks = true,
+		.amcanparallel = false,
+		.amcanbuildparallel = false,
+		.amcaninclude = false,
+		.amusemaintenanceworkmem = false,
+		.amsummarizing = false,
+		.amparallelvacuumoptions =
+		VACUUM_OPTION_PARALLEL_BULKDEL,
+		.amkeytype = INT4OID,
 
-	amroutine->amstrategies = HTMaxStrategyNumber;
-	amroutine->amsupport = HASHNProcs;
-	amroutine->amoptsprocnum = HASHOPTIONS_PROC;
-	amroutine->amcanorder = false;
-	amroutine->amcanorderbyop = false;
-	amroutine->amcanhash = true;
-	amroutine->amconsistentequality = true;
-	amroutine->amconsistentordering = false;
-	amroutine->amcanbackward = true;
-	amroutine->amcanunique = false;
-	amroutine->amcanmulticol = false;
-	amroutine->amoptionalkey = false;
-	amroutine->amsearcharray = false;
-	amroutine->amsearchnulls = false;
-	amroutine->amstorage = false;
-	amroutine->amclusterable = false;
-	amroutine->ampredlocks = true;
-	amroutine->amcanparallel = false;
-	amroutine->amcanbuildparallel = false;
-	amroutine->amcaninclude = false;
-	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amsummarizing = false;
-	amroutine->amparallelvacuumoptions =
-		VACUUM_OPTION_PARALLEL_BULKDEL;
-	amroutine->amkeytype = INT4OID;
+		.ambuild = hashbuild,
+		.ambuildempty = hashbuildempty,
+		.aminsert = hashinsert,
+		.aminsertcleanup = NULL,
+		.ambulkdelete = hashbulkdelete,
+		.amvacuumcleanup = hashvacuumcleanup,
+		.amcanreturn = NULL,
+		.amcostestimate = hashcostestimate,
+		.amgettreeheight = NULL,
+		.amoptions = hashoptions,
+		.amproperty = NULL,
+		.ambuildphasename = NULL,
+		.amvalidate = hashvalidate,
+		.amadjustmembers = hashadjustmembers,
+		.ambeginscan = hashbeginscan,
+		.amrescan = hashrescan,
+		.amgettuple = hashgettuple,
+		.amgetbitmap = hashgetbitmap,
+		.amendscan = hashendscan,
+		.ammarkpos = NULL,
+		.amrestrpos = NULL,
+		.amestimateparallelscan = NULL,
+		.aminitparallelscan = NULL,
+		.amparallelrescan = NULL,
+		.amtranslatestrategy = hashtranslatestrategy,
+		.amtranslatecmptype = hashtranslatecmptype,
+	};
 
-	amroutine->ambuild = hashbuild;
-	amroutine->ambuildempty = hashbuildempty;
-	amroutine->aminsert = hashinsert;
-	amroutine->aminsertcleanup = NULL;
-	amroutine->ambulkdelete = hashbulkdelete;
-	amroutine->amvacuumcleanup = hashvacuumcleanup;
-	amroutine->amcanreturn = NULL;
-	amroutine->amcostestimate = hashcostestimate;
-	amroutine->amgettreeheight = NULL;
-	amroutine->amoptions = hashoptions;
-	amroutine->amproperty = NULL;
-	amroutine->ambuildphasename = NULL;
-	amroutine->amvalidate = hashvalidate;
-	amroutine->amadjustmembers = hashadjustmembers;
-	amroutine->ambeginscan = hashbeginscan;
-	amroutine->amrescan = hashrescan;
-	amroutine->amgettuple = hashgettuple;
-	amroutine->amgetbitmap = hashgetbitmap;
-	amroutine->amendscan = hashendscan;
-	amroutine->ammarkpos = NULL;
-	amroutine->amrestrpos = NULL;
-	amroutine->amestimateparallelscan = NULL;
-	amroutine->aminitparallelscan = NULL;
-	amroutine->amparallelrescan = NULL;
-	amroutine->amtranslatestrategy = hashtranslatestrategy;
-	amroutine->amtranslatecmptype = hashtranslatecmptype;
-
-	PG_RETURN_POINTER(amroutine);
+	PG_RETURN_POINTER(&amroutine);
 }
 
 /*

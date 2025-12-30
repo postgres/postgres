@@ -21,8 +21,7 @@
 /*
  * GetTableAmRoutine
  *		Call the specified access method handler routine to get its
- *		TableAmRoutine struct, which will be palloc'd in the caller's
- *		memory context.
+ *		TableAmRoutine struct, which we expect to be statically allocated.
  */
 const TableAmRoutine *
 GetTableAmRoutine(Oid amhandler)
@@ -31,7 +30,7 @@ GetTableAmRoutine(Oid amhandler)
 	const TableAmRoutine *routine;
 
 	datum = OidFunctionCall0(amhandler);
-	routine = (TableAmRoutine *) DatumGetPointer(datum);
+	routine = (const TableAmRoutine *) DatumGetPointer(datum);
 
 	if (routine == NULL || !IsA(routine, TableAmRoutine))
 		elog(ERROR, "table access method handler %u did not return a TableAmRoutine struct",

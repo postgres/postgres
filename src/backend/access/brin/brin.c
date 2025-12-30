@@ -249,62 +249,63 @@ static void _brin_parallel_scan_and_build(BrinBuildState *state,
 Datum
 brinhandler(PG_FUNCTION_ARGS)
 {
-	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+	static const IndexAmRoutine amroutine = {
+		.type = T_IndexAmRoutine,
+		.amstrategies = 0,
+		.amsupport = BRIN_LAST_OPTIONAL_PROCNUM,
+		.amoptsprocnum = BRIN_PROCNUM_OPTIONS,
+		.amcanorder = false,
+		.amcanorderbyop = false,
+		.amcanhash = false,
+		.amconsistentequality = false,
+		.amconsistentordering = false,
+		.amcanbackward = false,
+		.amcanunique = false,
+		.amcanmulticol = true,
+		.amoptionalkey = true,
+		.amsearcharray = false,
+		.amsearchnulls = true,
+		.amstorage = true,
+		.amclusterable = false,
+		.ampredlocks = false,
+		.amcanparallel = false,
+		.amcanbuildparallel = true,
+		.amcaninclude = false,
+		.amusemaintenanceworkmem = false,
+		.amsummarizing = true,
+		.amparallelvacuumoptions =
+		VACUUM_OPTION_PARALLEL_CLEANUP,
+		.amkeytype = InvalidOid,
 
-	amroutine->amstrategies = 0;
-	amroutine->amsupport = BRIN_LAST_OPTIONAL_PROCNUM;
-	amroutine->amoptsprocnum = BRIN_PROCNUM_OPTIONS;
-	amroutine->amcanorder = false;
-	amroutine->amcanorderbyop = false;
-	amroutine->amcanhash = false;
-	amroutine->amconsistentequality = false;
-	amroutine->amconsistentordering = false;
-	amroutine->amcanbackward = false;
-	amroutine->amcanunique = false;
-	amroutine->amcanmulticol = true;
-	amroutine->amoptionalkey = true;
-	amroutine->amsearcharray = false;
-	amroutine->amsearchnulls = true;
-	amroutine->amstorage = true;
-	amroutine->amclusterable = false;
-	amroutine->ampredlocks = false;
-	amroutine->amcanparallel = false;
-	amroutine->amcanbuildparallel = true;
-	amroutine->amcaninclude = false;
-	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amsummarizing = true;
-	amroutine->amparallelvacuumoptions =
-		VACUUM_OPTION_PARALLEL_CLEANUP;
-	amroutine->amkeytype = InvalidOid;
+		.ambuild = brinbuild,
+		.ambuildempty = brinbuildempty,
+		.aminsert = brininsert,
+		.aminsertcleanup = brininsertcleanup,
+		.ambulkdelete = brinbulkdelete,
+		.amvacuumcleanup = brinvacuumcleanup,
+		.amcanreturn = NULL,
+		.amcostestimate = brincostestimate,
+		.amgettreeheight = NULL,
+		.amoptions = brinoptions,
+		.amproperty = NULL,
+		.ambuildphasename = NULL,
+		.amvalidate = brinvalidate,
+		.amadjustmembers = NULL,
+		.ambeginscan = brinbeginscan,
+		.amrescan = brinrescan,
+		.amgettuple = NULL,
+		.amgetbitmap = bringetbitmap,
+		.amendscan = brinendscan,
+		.ammarkpos = NULL,
+		.amrestrpos = NULL,
+		.amestimateparallelscan = NULL,
+		.aminitparallelscan = NULL,
+		.amparallelrescan = NULL,
+		.amtranslatestrategy = NULL,
+		.amtranslatecmptype = NULL,
+	};
 
-	amroutine->ambuild = brinbuild;
-	amroutine->ambuildempty = brinbuildempty;
-	amroutine->aminsert = brininsert;
-	amroutine->aminsertcleanup = brininsertcleanup;
-	amroutine->ambulkdelete = brinbulkdelete;
-	amroutine->amvacuumcleanup = brinvacuumcleanup;
-	amroutine->amcanreturn = NULL;
-	amroutine->amcostestimate = brincostestimate;
-	amroutine->amgettreeheight = NULL;
-	amroutine->amoptions = brinoptions;
-	amroutine->amproperty = NULL;
-	amroutine->ambuildphasename = NULL;
-	amroutine->amvalidate = brinvalidate;
-	amroutine->amadjustmembers = NULL;
-	amroutine->ambeginscan = brinbeginscan;
-	amroutine->amrescan = brinrescan;
-	amroutine->amgettuple = NULL;
-	amroutine->amgetbitmap = bringetbitmap;
-	amroutine->amendscan = brinendscan;
-	amroutine->ammarkpos = NULL;
-	amroutine->amrestrpos = NULL;
-	amroutine->amestimateparallelscan = NULL;
-	amroutine->aminitparallelscan = NULL;
-	amroutine->amparallelrescan = NULL;
-	amroutine->amtranslatestrategy = NULL;
-	amroutine->amtranslatecmptype = NULL;
-
-	PG_RETURN_POINTER(amroutine);
+	PG_RETURN_POINTER(&amroutine);
 }
 
 /*

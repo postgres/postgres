@@ -231,14 +231,7 @@ get_opmethod_canorder(Oid amoid)
 		case BRIN_AM_OID:
 			return false;
 		default:
-			{
-				bool		result;
-				IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid, false);
-
-				result = amroutine->amcanorder;
-				pfree(amroutine);
-				return result;
-			}
+			return GetIndexAmRoutineByAmId(amoid, false)->amcanorder;
 	}
 }
 
@@ -729,7 +722,7 @@ get_op_index_interpretation(Oid opno)
 			{
 				HeapTuple	op_tuple = &catlist->members[i]->tuple;
 				Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
-				IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
+				const IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
 				CompareType cmptype;
 
 				/* must be ordering index */
@@ -800,15 +793,11 @@ equality_ops_are_compatible(Oid opno1, Oid opno2)
 		 * op_in_opfamily() is cheaper than GetIndexAmRoutineByAmId(), so
 		 * check it first
 		 */
-		if (op_in_opfamily(opno2, op_form->amopfamily))
+		if (op_in_opfamily(opno2, op_form->amopfamily) &&
+			GetIndexAmRoutineByAmId(op_form->amopmethod, false)->amconsistentequality)
 		{
-			IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
-
-			if (amroutine->amconsistentequality)
-			{
-				result = true;
-				break;
-			}
+			result = true;
+			break;
 		}
 	}
 
@@ -856,15 +845,11 @@ comparison_ops_are_compatible(Oid opno1, Oid opno2)
 		 * op_in_opfamily() is cheaper than GetIndexAmRoutineByAmId(), so
 		 * check it first
 		 */
-		if (op_in_opfamily(opno2, op_form->amopfamily))
+		if (op_in_opfamily(opno2, op_form->amopfamily) &&
+			GetIndexAmRoutineByAmId(op_form->amopmethod, false)->amconsistentordering)
 		{
-			IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
-
-			if (amroutine->amconsistentordering)
-			{
-				result = true;
-				break;
-			}
+			result = true;
+			break;
 		}
 	}
 

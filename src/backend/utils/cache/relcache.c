@@ -1420,22 +1420,17 @@ RelationInitPhysicalAddr(Relation relation)
 static void
 InitIndexAmRoutine(Relation relation)
 {
-	IndexAmRoutine *cached,
-			   *tmp;
+	MemoryContext oldctx;
 
 	/*
-	 * Call the amhandler in current, short-lived memory context, just in case
-	 * it leaks anything (it probably won't, but let's be paranoid).
+	 * We formerly specified that the amhandler should return a palloc'd
+	 * struct.  That's now deprecated in favor of returning a pointer to a
+	 * static struct, but to avoid completely breaking old external AMs, run
+	 * the amhandler in the relation's rd_indexcxt.
 	 */
-	tmp = GetIndexAmRoutine(relation->rd_amhandler);
-
-	/* OK, now transfer the data into relation's rd_indexcxt. */
-	cached = (IndexAmRoutine *) MemoryContextAlloc(relation->rd_indexcxt,
-												   sizeof(IndexAmRoutine));
-	memcpy(cached, tmp, sizeof(IndexAmRoutine));
-	relation->rd_indam = cached;
-
-	pfree(tmp);
+	oldctx = MemoryContextSwitchTo(relation->rd_indexcxt);
+	relation->rd_indam = GetIndexAmRoutine(relation->rd_amhandler);
+	MemoryContextSwitchTo(oldctx);
 }
 
 /*

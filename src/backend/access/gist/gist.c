@@ -58,62 +58,63 @@ static void gistprunepage(Relation rel, Page page, Buffer buffer,
 Datum
 gisthandler(PG_FUNCTION_ARGS)
 {
-	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+	static const IndexAmRoutine amroutine = {
+		.type = T_IndexAmRoutine,
+		.amstrategies = 0,
+		.amsupport = GISTNProcs,
+		.amoptsprocnum = GIST_OPTIONS_PROC,
+		.amcanorder = false,
+		.amcanorderbyop = true,
+		.amcanhash = false,
+		.amconsistentequality = false,
+		.amconsistentordering = false,
+		.amcanbackward = false,
+		.amcanunique = false,
+		.amcanmulticol = true,
+		.amoptionalkey = true,
+		.amsearcharray = false,
+		.amsearchnulls = true,
+		.amstorage = true,
+		.amclusterable = true,
+		.ampredlocks = true,
+		.amcanparallel = false,
+		.amcanbuildparallel = false,
+		.amcaninclude = true,
+		.amusemaintenanceworkmem = false,
+		.amsummarizing = false,
+		.amparallelvacuumoptions =
+		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_COND_CLEANUP,
+		.amkeytype = InvalidOid,
 
-	amroutine->amstrategies = 0;
-	amroutine->amsupport = GISTNProcs;
-	amroutine->amoptsprocnum = GIST_OPTIONS_PROC;
-	amroutine->amcanorder = false;
-	amroutine->amcanorderbyop = true;
-	amroutine->amcanhash = false;
-	amroutine->amconsistentequality = false;
-	amroutine->amconsistentordering = false;
-	amroutine->amcanbackward = false;
-	amroutine->amcanunique = false;
-	amroutine->amcanmulticol = true;
-	amroutine->amoptionalkey = true;
-	amroutine->amsearcharray = false;
-	amroutine->amsearchnulls = true;
-	amroutine->amstorage = true;
-	amroutine->amclusterable = true;
-	amroutine->ampredlocks = true;
-	amroutine->amcanparallel = false;
-	amroutine->amcanbuildparallel = false;
-	amroutine->amcaninclude = true;
-	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amsummarizing = false;
-	amroutine->amparallelvacuumoptions =
-		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_COND_CLEANUP;
-	amroutine->amkeytype = InvalidOid;
+		.ambuild = gistbuild,
+		.ambuildempty = gistbuildempty,
+		.aminsert = gistinsert,
+		.aminsertcleanup = NULL,
+		.ambulkdelete = gistbulkdelete,
+		.amvacuumcleanup = gistvacuumcleanup,
+		.amcanreturn = gistcanreturn,
+		.amcostestimate = gistcostestimate,
+		.amgettreeheight = NULL,
+		.amoptions = gistoptions,
+		.amproperty = gistproperty,
+		.ambuildphasename = NULL,
+		.amvalidate = gistvalidate,
+		.amadjustmembers = gistadjustmembers,
+		.ambeginscan = gistbeginscan,
+		.amrescan = gistrescan,
+		.amgettuple = gistgettuple,
+		.amgetbitmap = gistgetbitmap,
+		.amendscan = gistendscan,
+		.ammarkpos = NULL,
+		.amrestrpos = NULL,
+		.amestimateparallelscan = NULL,
+		.aminitparallelscan = NULL,
+		.amparallelrescan = NULL,
+		.amtranslatestrategy = NULL,
+		.amtranslatecmptype = gisttranslatecmptype,
+	};
 
-	amroutine->ambuild = gistbuild;
-	amroutine->ambuildempty = gistbuildempty;
-	amroutine->aminsert = gistinsert;
-	amroutine->aminsertcleanup = NULL;
-	amroutine->ambulkdelete = gistbulkdelete;
-	amroutine->amvacuumcleanup = gistvacuumcleanup;
-	amroutine->amcanreturn = gistcanreturn;
-	amroutine->amcostestimate = gistcostestimate;
-	amroutine->amgettreeheight = NULL;
-	amroutine->amoptions = gistoptions;
-	amroutine->amproperty = gistproperty;
-	amroutine->ambuildphasename = NULL;
-	amroutine->amvalidate = gistvalidate;
-	amroutine->amadjustmembers = gistadjustmembers;
-	amroutine->ambeginscan = gistbeginscan;
-	amroutine->amrescan = gistrescan;
-	amroutine->amgettuple = gistgettuple;
-	amroutine->amgetbitmap = gistgetbitmap;
-	amroutine->amendscan = gistendscan;
-	amroutine->ammarkpos = NULL;
-	amroutine->amrestrpos = NULL;
-	amroutine->amestimateparallelscan = NULL;
-	amroutine->aminitparallelscan = NULL;
-	amroutine->amparallelrescan = NULL;
-	amroutine->amtranslatestrategy = NULL;
-	amroutine->amtranslatecmptype = gisttranslatecmptype;
-
-	PG_RETURN_POINTER(amroutine);
+	PG_RETURN_POINTER(&amroutine);
 }
 
 /*

@@ -102,61 +102,62 @@ makeDefaultBloomOptions(void)
 Datum
 blhandler(PG_FUNCTION_ARGS)
 {
-	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+	static const IndexAmRoutine amroutine = {
+		.type = T_IndexAmRoutine,
+		.amstrategies = BLOOM_NSTRATEGIES,
+		.amsupport = BLOOM_NPROC,
+		.amoptsprocnum = BLOOM_OPTIONS_PROC,
+		.amcanorder = false,
+		.amcanorderbyop = false,
+		.amcanhash = false,
+		.amconsistentequality = false,
+		.amconsistentordering = false,
+		.amcanbackward = false,
+		.amcanunique = false,
+		.amcanmulticol = true,
+		.amoptionalkey = true,
+		.amsearcharray = false,
+		.amsearchnulls = false,
+		.amstorage = false,
+		.amclusterable = false,
+		.ampredlocks = false,
+		.amcanparallel = false,
+		.amcanbuildparallel = false,
+		.amcaninclude = false,
+		.amusemaintenanceworkmem = false,
+		.amparallelvacuumoptions =
+		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_CLEANUP,
+		.amkeytype = InvalidOid,
 
-	amroutine->amstrategies = BLOOM_NSTRATEGIES;
-	amroutine->amsupport = BLOOM_NPROC;
-	amroutine->amoptsprocnum = BLOOM_OPTIONS_PROC;
-	amroutine->amcanorder = false;
-	amroutine->amcanorderbyop = false;
-	amroutine->amcanhash = false;
-	amroutine->amconsistentequality = false;
-	amroutine->amconsistentordering = false;
-	amroutine->amcanbackward = false;
-	amroutine->amcanunique = false;
-	amroutine->amcanmulticol = true;
-	amroutine->amoptionalkey = true;
-	amroutine->amsearcharray = false;
-	amroutine->amsearchnulls = false;
-	amroutine->amstorage = false;
-	amroutine->amclusterable = false;
-	amroutine->ampredlocks = false;
-	amroutine->amcanparallel = false;
-	amroutine->amcanbuildparallel = false;
-	amroutine->amcaninclude = false;
-	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amparallelvacuumoptions =
-		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_CLEANUP;
-	amroutine->amkeytype = InvalidOid;
+		.ambuild = blbuild,
+		.ambuildempty = blbuildempty,
+		.aminsert = blinsert,
+		.aminsertcleanup = NULL,
+		.ambulkdelete = blbulkdelete,
+		.amvacuumcleanup = blvacuumcleanup,
+		.amcanreturn = NULL,
+		.amcostestimate = blcostestimate,
+		.amgettreeheight = NULL,
+		.amoptions = bloptions,
+		.amproperty = NULL,
+		.ambuildphasename = NULL,
+		.amvalidate = blvalidate,
+		.amadjustmembers = NULL,
+		.ambeginscan = blbeginscan,
+		.amrescan = blrescan,
+		.amgettuple = NULL,
+		.amgetbitmap = blgetbitmap,
+		.amendscan = blendscan,
+		.ammarkpos = NULL,
+		.amrestrpos = NULL,
+		.amestimateparallelscan = NULL,
+		.aminitparallelscan = NULL,
+		.amparallelrescan = NULL,
+		.amtranslatestrategy = NULL,
+		.amtranslatecmptype = NULL,
+	};
 
-	amroutine->ambuild = blbuild;
-	amroutine->ambuildempty = blbuildempty;
-	amroutine->aminsert = blinsert;
-	amroutine->aminsertcleanup = NULL;
-	amroutine->ambulkdelete = blbulkdelete;
-	amroutine->amvacuumcleanup = blvacuumcleanup;
-	amroutine->amcanreturn = NULL;
-	amroutine->amcostestimate = blcostestimate;
-	amroutine->amgettreeheight = NULL;
-	amroutine->amoptions = bloptions;
-	amroutine->amproperty = NULL;
-	amroutine->ambuildphasename = NULL;
-	amroutine->amvalidate = blvalidate;
-	amroutine->amadjustmembers = NULL;
-	amroutine->ambeginscan = blbeginscan;
-	amroutine->amrescan = blrescan;
-	amroutine->amgettuple = NULL;
-	amroutine->amgetbitmap = blgetbitmap;
-	amroutine->amendscan = blendscan;
-	amroutine->ammarkpos = NULL;
-	amroutine->amrestrpos = NULL;
-	amroutine->amestimateparallelscan = NULL;
-	amroutine->aminitparallelscan = NULL;
-	amroutine->amparallelrescan = NULL;
-	amroutine->amtranslatestrategy = NULL;
-	amroutine->amtranslatecmptype = NULL;
-
-	PG_RETURN_POINTER(amroutine);
+	PG_RETURN_POINTER(&amroutine);
 }
 
 /*

@@ -70,9 +70,15 @@
    single argument of type <type>internal</type> and to return the
    pseudo-type <type>index_am_handler</type>.  The argument is a dummy value that
    simply serves to prevent handler functions from being called directly from
-   SQL commands.  The result of the function must be a palloc'd struct of
-   type <structname>IndexAmRoutine</structname>, which contains everything
-   that the core code needs to know to make use of the index access method.
+   SQL commands.
+   The result of the handler function must be a pointer to a permanently
+   allocated struct of type <structname>IndexAmRoutine</structname>, which
+   contains everything that the core code needs to know to make use of the
+   index access method.  (Typically this struct can be pre-initialized and
+   marked <literal>static const</literal>; but if that is inconvenient,
+   build it in some long-lived context.  In any case, repeat calls within
+   a process should return the same pointer.  The core code will treat the
+   struct as <literal>const</literal>, and will never free it.)
    The <structname>IndexAmRoutine</structname> struct, also called the access
    method's <firstterm>API struct</firstterm>, includes fields specifying assorted
    fixed properties of the access method, such as whether it can support
