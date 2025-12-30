@@ -459,3 +459,18 @@ SELECT test_relpath();
 
 -- pg_replication_origin.roname limit
 SELECT pg_replication_origin_create('regress_' || repeat('a', 505));
+
+-- pg_get_multixact_stats tests
+CREATE ROLE regress_multixact_funcs;
+-- Access granted for superusers.
+SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
+-- Access revoked.
+SET ROLE regress_multixact_funcs;
+SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
+RESET ROLE;
+-- Access granted for users with pg_monitor rights.
+GRANT pg_monitor TO regress_multixact_funcs;
+SET ROLE regress_multixact_funcs;
+SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
+RESET ROLE;
+DROP ROLE regress_multixact_funcs;

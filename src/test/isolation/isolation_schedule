@@ -63,6 +63,7 @@ test: delete-abort-savept-2
 test: aborted-keyrevoke
 test: multixact-no-deadlock
 test: multixact-no-forget
+test: multixact-stats
 test: lock-committed-update
 test: lock-committed-keyupdate
 test: update-locked-tuple

@@ -14,8 +14,13 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/multixact.h"
+#include "access/multixact_internal.h"
+#include "catalog/pg_authid_d.h"
 #include "funcapi.h"
+#include "miscadmin.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 
 /*
@@ -84,4 +89,52 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 	}
 
 	SRF_RETURN_DONE(funccxt);
+}
+
+/*
+ * pg_get_multixact_stats
+ *
+ * Returns statistics about current multixact usage.
+ */
+Datum
+pg_get_multixact_stats(PG_FUNCTION_ARGS)
+{
+	TupleDesc	tupdesc;
+	Datum		values[4];
+	bool		nulls[4];
+	uint64		members;
+	MultiXactId oldestMultiXactId;
+	uint32		multixacts;
+	MultiXactOffset oldestOffset;
+	MultiXactOffset nextOffset;
+	uint64		membersBytes;
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("return type must be a row type")));
+
+	GetMultiXactInfo(&multixacts, &nextOffset, &oldestMultiXactId, &oldestOffset);
+	members = nextOffset - oldestOffset;
+
+	membersBytes = MultiXactOffsetStorageSize(nextOffset, oldestOffset);
+
+	if (!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
+	{
+		/*
+		 * Only superusers and roles with privileges of pg_read_all_stats can
+		 * see details.
+		 */
+		memset(nulls, true, sizeof(bool) * tupdesc->natts);
+	}
+	else
+	{
+		values[0] = UInt32GetDatum(multixacts);
+		values[1] = Int64GetDatum(members);
+		values[2] = Int64GetDatum(membersBytes);
+		values[3] = UInt32GetDatum(oldestMultiXactId);
+		memset(nulls, false, sizeof(nulls));
+	}
+
+	return HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls));
 }

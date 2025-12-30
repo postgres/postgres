@@ -2975,6 +2975,39 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         modify key columns.
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_multixact_stats</primary>
+        </indexterm>
+        <function>pg_get_multixact_stats</function> ()
+        <returnvalue>record</returnvalue>
+        ( <parameter>num_mxids</parameter> <type>integer</type>,
+          <parameter>num_members</parameter> <type>bigint</type>,
+          <parameter>members_size</parameter> <type>bigint</type>,
+          <parameter>oldest_multixact</parameter> <type>xid</type> )
+       </para>
+       <para>
+        Returns statistics about current multixact usage:
+        <literal>num_mxids</literal> is the total number of multixact IDs
+        currently present in the system, <literal>num_members</literal> is
+        the total number of multixact member entries currently present in
+        the system, <literal>members_size</literal> is the storage occupied
+        by <literal>num_members</literal> in the
+        <literal>pg_multixact/members</literal> directory,
+        <literal>oldest_multixact</literal> is the oldest multixact ID still
+        in use.
+       </para>
+       <para>
+        The function reports statistics at the time it is invoked. Values may
+        vary between calls, even within a single transaction.
+       </para>
+       <para>
+        To use this function, you must have privileges of the
+        <literal>pg_read_all_stats</literal> role.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

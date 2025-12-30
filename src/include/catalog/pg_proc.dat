@@ -6589,6 +6589,13 @@
   proallargtypes => '{xid,xid,text}', proargmodes => '{i,o,o}',
   proargnames => '{multixid,xid,mode}', prosrc => 'pg_get_multixact_members' },
 
+{ oid => '9001', descr => 'get current multixact usage statistics',
+  proname => 'pg_get_multixact_stats', provolatile => 'v',
+  prorettype => 'record', proargtypes => '',
+  proallargtypes => '{int8,int8,int8,xid}', proargmodes => '{o,o,o,o}',
+  proargnames => '{num_mxids,num_members,members_size,oldest_multixact}',
+  prosrc => 'pg_get_multixact_stats' },
+
 { oid => '3581', descr => 'get commit timestamp of a transaction',
   proname => 'pg_xact_commit_timestamp', provolatile => 'v',
   prorettype => 'timestamptz', proargtypes => 'xid',

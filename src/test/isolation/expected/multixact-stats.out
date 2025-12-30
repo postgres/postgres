@@ -1,0 +1,89 @@
+Parsed test spec with 2 sessions
+
+starting permutation: snap0 s1_begin s1_lock snap1 s2_begin s2_lock snap2 check_while_pinned s1_commit s2_commit
+step snap0: 
+  CREATE TEMP TABLE snap0 AS
+  SELECT num_mxids, num_members, oldest_multixact
+  FROM pg_get_multixact_stats();
+
+step s1_begin: BEGIN;
+step s1_lock: SELECT 1 FROM mxq WHERE id=1 FOR KEY SHARE;
+?column?
+--------
+       1
+(1 row)
+
+step snap1: 
+  CREATE TEMP TABLE snap1 AS
+  SELECT num_mxids, num_members, oldest_multixact
+  FROM pg_get_multixact_stats();
+
+step s2_begin: BEGIN;
+step s2_lock: SELECT 1 FROM mxq WHERE id=1 FOR KEY SHARE;
+?column?
+--------
+       1
+(1 row)
+
+step snap2: 
+  CREATE TEMP TABLE snap2 AS
+  SELECT num_mxids, num_members, oldest_multixact
+  FROM pg_get_multixact_stats();
+
+step check_while_pinned: 
+  SELECT r.assertion, r.ok
+  FROM snap0 s0
+  JOIN snap1 s1 ON TRUE
+  JOIN snap2 s2 ON TRUE,
+  LATERAL unnest(
+    ARRAY[
+      'is_init_mxids',
+      'is_init_members',
+      'is_init_oldest_mxid',
+      'is_init_oldest_off',
+      'is_oldest_mxid_nondec_01',
+      'is_oldest_mxid_nondec_12',
+      'is_oldest_off_nondec_01',
+      'is_oldest_off_nondec_12',
+      'is_members_increased_ge1',
+      'is_mxids_nondec_01',
+      'is_mxids_nondec_12',
+      'is_members_nondec_01',
+      'is_members_nondec_12'
+    ],
+    ARRAY[
+      (s2.num_mxids        IS NOT NULL),
+      (s2.num_members      IS NOT NULL),
+      (s2.oldest_multixact IS NOT NULL),
+
+      (s1.oldest_multixact::text::bigint >= COALESCE(s0.oldest_multixact::text::bigint, 0)),
+      (s2.oldest_multixact::text::bigint >= COALESCE(s1.oldest_multixact::text::bigint, 0)),
+
+      (s2.num_members >= COALESCE(s1.num_members, 0) + 1),
+
+      (s1.num_mxids   >= COALESCE(s0.num_mxids,   0)),
+      (s2.num_mxids   >= COALESCE(s1.num_mxids,   0)),
+      (s1.num_members >= COALESCE(s0.num_members, 0)),
+      (s2.num_members >= COALESCE(s1.num_members, 0))
+    ]
+  ) AS r(assertion, ok);
+
+assertion               |ok
+------------------------+--
+is_init_mxids           |t 
+is_init_members         |t 
+is_init_oldest_mxid     |t 
+is_init_oldest_off      |t 
+is_oldest_mxid_nondec_01|t 
+is_oldest_mxid_nondec_12|t 
+is_oldest_off_nondec_01 |t 
+is_oldest_off_nondec_12 |t 
+is_members_increased_ge1|t 
+is_mxids_nondec_01      |t 
+is_mxids_nondec_12      |  
+is_members_nondec_01    |  
+is_members_nondec_12    |  
+(13 rows)
+
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;

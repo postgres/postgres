@@ -999,3 +999,32 @@ SELECT test_relpath();
 SELECT pg_replication_origin_create('regress_' || repeat('a', 505));
 ERROR:  replication origin name is too long
 DETAIL:  Replication origin names must be no longer than 512 bytes.
+-- pg_get_multixact_stats tests
+CREATE ROLE regress_multixact_funcs;
+-- Access granted for superusers.
+SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
+ null_result 
+-------------
+ f
+(1 row)
+
+-- Access revoked.
+SET ROLE regress_multixact_funcs;
+SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
+ null_result 
+-------------
+ t
+(1 row)
+
+RESET ROLE;
+-- Access granted for users with pg_monitor rights.
+GRANT pg_monitor TO regress_multixact_funcs;
+SET ROLE regress_multixact_funcs;
+SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
+ null_result 
+-------------
+ f
+(1 row)
+
+RESET ROLE;
+DROP ROLE regress_multixact_funcs;

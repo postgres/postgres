@@ -813,12 +813,41 @@ HINT:  Execute a database-wide VACUUM in that database.
     <para>
      As a safety device, an aggressive vacuum scan will
      occur for any table whose multixact-age is greater than <xref
-     linkend="guc-autovacuum-multixact-freeze-max-age"/>.  Also, if the
-     storage occupied by multixacts members exceeds about 10GB, aggressive vacuum
+     linkend="guc-autovacuum-multixact-freeze-max-age"/>. Also, if the number
+     of multixact member entries created exceeds approximately 2 billion
+     entries (occupying roughly 10GB in the
+     <literal>pg_multixact/members</literal> directory), aggressive vacuum
      scans will occur more often for all tables, starting with those that
-     have the oldest multixact-age.  Both of these kinds of aggressive
-     scans will occur even if autovacuum is nominally disabled. The members storage
-     area can grow up to about 20GB before reaching wraparound.
+     have the oldest multixact-age. Both of these kinds of aggressive
+     scans will occur even if autovacuum is nominally disabled. At approximately
+     4 billion entries (occupying roughly 20GB in the
+     <literal>pg_multixact/members</literal> directory), even more aggressive
+     vacuum scans are triggered to reclaim member storage space.
+    </para>
+
+    <para>
+     The <function>pg_get_multixact_stats()</function> function described in
+     <xref linkend="functions-pg-snapshot"/> provides a way to monitor
+     multixact allocation and usage patterns in real time, for example:
+     <programlisting>
+=# SELECT *, pg_size_pretty(members_size) members_size_pretty
+     FROM pg_catalog.pg_get_multixact_stats();
+ num_mxids | num_members | members_size | oldest_multixact | members_size_pretty
+-----------+-------------+--------------+------------------+---------------------
+ 311740299 |  2785241176 |  13926205880 |                2 | 13 GB
+(1 row)
+     </programlisting>
+     This output shows a system with significant multixact activity: about
+     312 million multixact IDs and about 2.8 billion member entries consuming
+     13 GB of storage space.
+     A spike in <literal>num_mxids</literal> might indicate multiple sessions
+     running <literal>UPDATE</literal> statements with foreign key checks,
+     concurrent <literal>SELECT FOR SHARE</literal> operations, or frequent
+     use of savepoints causing lock contention.
+     If <literal>oldest_multixact</literal> value remains unchanged while
+     <literal>num_members</literal> grows, it could indicate that long-running
+     transactions are preventing cleanup, or autovacuum is
+     not keeping up with the workload.
     </para>
 
     <para>
