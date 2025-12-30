@@ -2461,25 +2461,23 @@ find_multixact_start(MultiXactId multi, MultiXactOffset *result)
  *
  * Returns information about the current MultiXact state, as of:
  * multixacts: Number of MultiXacts (nextMultiXactId - oldestMultiXactId)
- * members: Number of member entries (nextOffset - oldestOffset)
+ * nextOffset: Next-to-be-assigned offset
  * oldestMultiXactId: Oldest MultiXact ID still in use
  * oldestOffset: Oldest offset still in use
  */
 void
-GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *members,
+GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *nextOffset,
 				 MultiXactId *oldestMultiXactId, MultiXactOffset *oldestOffset)
 {
-	MultiXactOffset nextOffset;
 	MultiXactId nextMultiXactId;
 
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
-	nextOffset = MultiXactState->nextOffset;
+	*nextOffset = MultiXactState->nextOffset;
 	*oldestMultiXactId = MultiXactState->oldestMultiXactId;
 	nextMultiXactId = MultiXactState->nextMXact;
 	*oldestOffset = MultiXactState->oldestOffset;
 	LWLockRelease(MultiXactGenLock);
 
-	*members = nextOffset - *oldestOffset;
 	*multixacts = nextMultiXactId - *oldestMultiXactId;
 }
 
@@ -2514,16 +2512,18 @@ GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *members,
 int
 MultiXactMemberFreezeThreshold(void)
 {
-	MultiXactOffset members;
 	uint32		multixacts;
 	uint32		victim_multixacts;
 	double		fraction;
 	int			result;
 	MultiXactId oldestMultiXactId;
 	MultiXactOffset oldestOffset;
+	MultiXactOffset nextOffset;
+	uint64		members;
 
-	/* Read the current offsets and members usage. */
-	GetMultiXactInfo(&multixacts, &members, &oldestMultiXactId, &oldestOffset);
+	/* Read the current offsets and multixact usage. */
+	GetMultiXactInfo(&multixacts, &nextOffset, &oldestMultiXactId, &oldestOffset);
+	members = nextOffset - oldestOffset;
 
 	/* If member space utilization is low, no special action is required. */
 	if (members <= MULTIXACT_MEMBER_LOW_THRESHOLD)
