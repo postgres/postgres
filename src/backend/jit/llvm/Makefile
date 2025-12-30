@@ -22,12 +22,6 @@ endif
 PGFILEDESC = "llvmjit - JIT using LLVM"
 NAME = llvmjit
 
-# LLVM 14 produces deprecation warnings.  We'll need to make some changes
-# before the relevant functions are removed, but for now silence the warnings.
-ifeq ($(GCC), yes)
-LLVM_CFLAGS += -Wno-deprecated-declarations
-endif
-
 # All files in this directory use LLVM.
 CFLAGS += $(LLVM_CFLAGS)
 CXXFLAGS += $(LLVM_CXXFLAGS)
