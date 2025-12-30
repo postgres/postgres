@@ -121,4 +121,14 @@ MXOffsetToMemberOffset(MultiXactOffset offset)
 		member_in_group * sizeof(TransactionId);
 }
 
+/* Storage space consumed by a range of offsets, in bytes */
+static inline uint64
+MultiXactOffsetStorageSize(MultiXactOffset new_offset,
+						   MultiXactOffset old_offset)
+{
+	Assert(new_offset >= old_offset);
+	return (uint64) ((new_offset - old_offset) / MULTIXACT_MEMBERS_PER_MEMBERGROUP) *
+		MULTIXACT_MEMBERGROUP_SIZE;
+}
+
 #endif							/* MULTIXACT_INTERNAL_H */
