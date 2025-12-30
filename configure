@@ -16607,38 +16607,6 @@ fi
   CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
-if test "$with_llvm" = yes; then
-
-  # Check which functionality is present
-  SAVE_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
-  ac_fn_c_check_decl "$LINENO" "LLVMCreateGDBRegistrationListener" "ac_cv_have_decl_LLVMCreateGDBRegistrationListener" "#include <llvm-c/ExecutionEngine.h>
-"
-if test "x$ac_cv_have_decl_LLVMCreateGDBRegistrationListener" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "LLVMCreatePerfJITEventListener" "ac_cv_have_decl_LLVMCreatePerfJITEventListener" "#include <llvm-c/ExecutionEngine.h>
-"
-if test "x$ac_cv_have_decl_LLVMCreatePerfJITEventListener" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER $ac_have_decl
-_ACEOF
-
-  CPPFLAGS="$SAVE_CPPFLAGS"
-
-fi
-
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"
 

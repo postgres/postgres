@@ -83,14 +83,6 @@
    don't. */
 #undef HAVE_DECL_F_FULLFSYNC
 
-/* Define to 1 if you have the declaration of
-   `LLVMCreateGDBRegistrationListener', and to 0 if you don't. */
-#undef HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
-
-/* Define to 1 if you have the declaration of
-   `LLVMCreatePerfJITEventListener', and to 0 if you don't. */
-#undef HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER
-
 /* Define to 1 if you have the declaration of `memset_s', and to 0 if you
    don't. */
 #undef HAVE_DECL_MEMSET_S

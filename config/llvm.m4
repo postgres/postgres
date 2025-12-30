@@ -101,20 +101,3 @@ dnl LLVM_CONFIG, CLANG are already output via AC_ARG_VAR
   AC_SUBST(LLVM_BINPATH)
 
 ])# PGAC_LLVM_SUPPORT
-
-
-# PGAC_CHECK_LLVM_FUNCTIONS
-# -------------------------
-#
-# Check presence of some optional LLVM functions.
-# (This shouldn't happen until we're ready to run AC_CHECK_DECLS tests;
-# because PGAC_LLVM_SUPPORT runs very early, it's not an appropriate place.)
-#
-AC_DEFUN([PGAC_CHECK_LLVM_FUNCTIONS],
-[
-  # Check which functionality is present
-  SAVE_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
-  AC_CHECK_DECLS([LLVMCreateGDBRegistrationListener, LLVMCreatePerfJITEventListener], [], [], [[#include <llvm-c/ExecutionEngine.h>]])
-  CPPFLAGS="$SAVE_CPPFLAGS"
-])# PGAC_CHECK_LLVM_FUNCTIONS

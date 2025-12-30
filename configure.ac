@@ -1941,10 +1941,6 @@ if test "$with_icu" = yes; then
   CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
-if test "$with_llvm" = yes; then
-  PGAC_CHECK_LLVM_FUNCTIONS()
-fi
-
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"
 

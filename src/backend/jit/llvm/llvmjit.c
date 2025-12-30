@@ -1180,24 +1180,19 @@ llvm_create_object_layer(void *Ctx, LLVMOrcExecutionSessionRef ES, const char *T
 		LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(ES);
 #endif
 
-
-#if defined(HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER) && HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
 	if (jit_debugging_support)
 	{
 		LLVMJITEventListenerRef l = LLVMCreateGDBRegistrationListener();
 
 		LLVMOrcRTDyldObjectLinkingLayerRegisterJITEventListener(objlayer, l);
 	}
-#endif
 
-#if defined(HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER) && HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER
 	if (jit_profiling_support)
 	{
 		LLVMJITEventListenerRef l = LLVMCreatePerfJITEventListener();
 
 		LLVMOrcRTDyldObjectLinkingLayerRegisterJITEventListener(objlayer, l);
 	}
-#endif
 
 	return objlayer;
 }
