@@ -22,8 +22,10 @@ endif
 PGFILEDESC = "llvmjit - JIT using LLVM"
 NAME = llvmjit
 
-# LLVM 14 produces deprecation warnings.  We'll need to make some changes
-# before the relevant functions are removed, but for now silence the warnings.
+# Some functions called in LLVM 14 and LLVM 15 are marked with GCC deprecation
+# attributes.  For LLVM 16 and later, we use the newer replacement functions
+# instead, but warnings are suppressed unconditionally.  (Note that this is
+# only done in branches before REL_18_STABLE.)
 ifeq ($(GCC), yes)
 LLVM_CFLAGS += -Wno-deprecated-declarations
 endif
