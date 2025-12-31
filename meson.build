@@ -1001,7 +1001,7 @@ if liburing.found()
 
   if cc.has_function('io_uring_queue_init_mem',
       dependencies: liburing, args: test_c_args)
-    cdata.set('HAVE_LIBURING_QUEUE_INIT_MEM', 1)
+    cdata.set('HAVE_IO_URING_QUEUE_INIT_MEM', 1)
   endif
 
 endif
