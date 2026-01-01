@@ -3,7 +3,7 @@
  * pg_popcount_aarch64.c
  *	  Holds the AArch64 popcount implementations.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/pg_popcount_aarch64.c

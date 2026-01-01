@@ -4,7 +4,7 @@
  * Functions to convert multixact SLRUs from the pre-v19 format to the current
  * format with 64-bit MultiXactOffsets.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  * src/bin/pg_upgrade/multixact_rewrite.c
  */
 

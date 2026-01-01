@@ -13,7 +13,7 @@
  *   can reference either only leaf pages or only internal pages.
  *
  *
- * Copyright (c) 2016-2025, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/amcheck/verify_gin.c

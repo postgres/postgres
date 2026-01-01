@@ -2,7 +2,7 @@
 #
 # src/interfaces/libpq/libpq_check.pl
 #
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 #
 # Check the state of a libpq library.  Currently, this script checks that
 # exit() is not called, because client libraries must not terminate the

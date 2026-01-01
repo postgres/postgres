@@ -6,7 +6,7 @@
  * See the following RFC for more details:
  * - RFC 7628: https://datatracker.ietf.org/doc/html/rfc7628
  *
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/libpq/auth-oauth.c

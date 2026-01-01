@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025, PostgreSQL Global Development Group
+# Copyright (c) 2024-2026, PostgreSQL Global Development Group
 
 # Test SCRAM authentication when opening a new connection with a foreign
 # server.

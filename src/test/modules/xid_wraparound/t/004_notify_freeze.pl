@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025, PostgreSQL Global Development Group
+# Copyright (c) 2024-2026, PostgreSQL Global Development Group
 #
 # Test freezing XIDs in the async notification queue. This isn't
 # really wraparound-related, but the test depends on the

@@ -7,7 +7,7 @@
  * USE_ASSERT_CHECKING is required, to make it easy for tests to wrap
  * must-succeed code as part of test setup.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  */
 
 #include "oauth-curl.c"

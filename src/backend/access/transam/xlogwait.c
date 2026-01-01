@@ -3,7 +3,7 @@
  * xlogwait.c
  *	  Implements waiting for WAL operations to reach specific LSNs.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/access/transam/xlogwait.c

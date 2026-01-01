@@ -8,7 +8,7 @@
  * It'd not generally be safe to export these functions to SQL, but for a test
  * that's fine.
  *
- * Copyright (c) 2020-2025, PostgreSQL Global Development Group
+ * Copyright (c) 2020-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/test/modules/test_aio/test_aio.c

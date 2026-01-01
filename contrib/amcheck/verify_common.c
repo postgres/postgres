@@ -3,7 +3,7 @@
  * verify_common.c
  *		Utility functions common to all access methods.
  *
- * Copyright (c) 2016-2025, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/amcheck/verify_common.c

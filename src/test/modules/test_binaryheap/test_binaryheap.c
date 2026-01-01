@@ -3,7 +3,7 @@
  * test_binaryheap.c
  *		Test correctness of binary heap implementation.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_binaryheap/test_binaryheap.c

@@ -1,4 +1,4 @@
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 
 # Check how temporary file removals and statement queries are associated
 # in the server logs for various query sequences with the simple and

@@ -1,4 +1,4 @@
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 #
 # This test aims to validate that hard links are created as expected in the
 # output directory, when running pg_combinebackup with --link mode.

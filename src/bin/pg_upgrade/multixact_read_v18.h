@@ -1,7 +1,7 @@
 /*
  * multixact_read_v18.h
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  * src/bin/pg_upgrade/multixact_read_v18.h
  */
 #ifndef MULTIXACT_READ_V18_H

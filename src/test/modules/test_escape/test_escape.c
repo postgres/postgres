@@ -1,7 +1,7 @@
 /*
  * test_escape.c Test escape functions
  *
- * Copyright (c) 2022-2025, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_escape/test_escape.c

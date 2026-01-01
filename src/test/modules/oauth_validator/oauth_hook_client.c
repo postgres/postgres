@@ -4,7 +4,7 @@
  *		Test driver for t/002_client.pl, which verifies OAuth hook
  *		functionality in libpq.
  *
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

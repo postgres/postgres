@@ -2,7 +2,7 @@
  * sequencesync.c
  *	  PostgreSQL logical replication: sequence synchronization
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/sequencesync.c

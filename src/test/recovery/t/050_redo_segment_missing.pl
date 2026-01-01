@@ -1,4 +1,4 @@
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 #
 # Evaluates PostgreSQL's recovery behavior when a WAL segment containing the
 # redo record is missing, with a checkpoint record located in a different

@@ -3,7 +3,7 @@
  * wait.h
  *	  prototypes for commands/wait.c
  *
- * Portions Copyright (c) 2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * src/include/commands/wait.h
  *

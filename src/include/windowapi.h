@@ -19,7 +19,7 @@
  * function in nodeWindowAgg.c for details.
  *
  *
- * Portions Copyright (c) 2000-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2000-2026, PostgreSQL Global Development Group
  *
  * src/include/windowapi.h
  *

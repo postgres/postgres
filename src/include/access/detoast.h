@@ -3,7 +3,7 @@
  * detoast.h
  *	  Access to compressed and external varlena values.
  *
- * Copyright (c) 2000-2025, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2026, PostgreSQL Global Development Group
  *
  * src/include/access/detoast.h
  *

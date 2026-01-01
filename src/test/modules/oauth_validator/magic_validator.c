@@ -5,7 +5,7 @@
  *	  should fail due to using the wrong PG_OAUTH_VALIDATOR_MAGIC marker
  *	  and thus the wrong ABI version
  *
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/modules/oauth_validator/magic_validator.c

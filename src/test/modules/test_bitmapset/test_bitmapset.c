@@ -6,7 +6,7 @@
  * This module tests the Bitmapset implementation in PostgreSQL, covering
  * all public API functions.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_bitmapset/test_bitmapset.c

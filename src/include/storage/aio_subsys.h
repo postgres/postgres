@@ -8,7 +8,7 @@
  * form. E.g. postmaster.c and shared memory initialization need to initialize
  * AIO but don't perform AIO.
  *
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/aio_subsys.h

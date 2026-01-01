@@ -5,7 +5,7 @@
  *	cumulative statistics system.  Can be included in backend or
  *	frontend code.
  *
- *	Copyright (c) 2001-2025, PostgreSQL Global Development Group
+ *	Copyright (c) 2001-2026, PostgreSQL Global Development Group
  *
  *	src/include/utils/pgstat_kind.h
  * ----------

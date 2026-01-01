@@ -7,7 +7,7 @@
  * 1. File handles opened with O_CLOEXEC are NOT inherited by child processes
  * 2. File handles opened without O_CLOEXEC ARE inherited by child processes
  *
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

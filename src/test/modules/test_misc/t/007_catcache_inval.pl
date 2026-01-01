@@ -1,5 +1,5 @@
 
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 
 # Test recursive catalog cache invalidation, i.e. invalidation while a
 # catalog cache entry is being built.

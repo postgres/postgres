@@ -3,7 +3,7 @@
  * test_lwlock_tranches.c
  *		Test code for LWLock tranches allocated by extensions.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_lwlock_tranches/test_lwlock_tranches.c

@@ -2,7 +2,7 @@
  *
  * Ryu floating-point output.
  *
- * Portions Copyright (c) 2018-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2018-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/include/common/shortest_dec.h

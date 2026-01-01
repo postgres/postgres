@@ -15,7 +15,7 @@
  * PgStat_EntryRef->pending, relying on PendingBackendStats instead so as it
  * is possible to report data within critical sections.
  *
- * Copyright (c) 2001-2025, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_backend.c

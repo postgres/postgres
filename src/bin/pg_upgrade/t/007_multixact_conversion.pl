@@ -1,4 +1,4 @@
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 
 # Version 19 expanded MultiXactOffset from 32 to 64 bits.  Upgrading
 # across that requires rewriting the SLRU files to the new format.

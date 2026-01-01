@@ -3,7 +3,7 @@
 #
 # Generate guc_tables.c from guc_parameters.dat.
 #
-# Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/backend/utils/misc/gen_guc_tables.pl
@@ -165,7 +165,7 @@ sub print_boilerplate
  * %s
  *    %s
  *
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES

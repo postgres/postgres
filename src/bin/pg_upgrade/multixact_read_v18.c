@@ -5,7 +5,7 @@
  * and older.  In version 19, the multixid offsets were expanded from 32 to 64
  * bits.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  * src/bin/pg_upgrade/multixact_read_v18.c
  */
 

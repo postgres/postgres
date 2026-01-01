@@ -1,4 +1,4 @@
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2025-2026, PostgreSQL Global Development Group
 
 test_lwlock_tranches_sources = files(
   'test_lwlock_tranches.c',

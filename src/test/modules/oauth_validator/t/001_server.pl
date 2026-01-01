@@ -3,7 +3,7 @@
 # Tests the libpq builtin OAuth flow, as well as server-side HBA and validator
 # setup.
 #
-# Copyright (c) 2021-2025, PostgreSQL Global Development Group
+# Copyright (c) 2021-2026, PostgreSQL Global Development Group
 #
 
 use strict;

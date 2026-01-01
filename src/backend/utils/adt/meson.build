@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, PostgreSQL Global Development Group
+# Copyright (c) 2022-2026, PostgreSQL Global Development Group
 
 # Some code in numeric.c benefits from auto-vectorization
 numeric_backend_lib = static_library('numeric_backend_lib',

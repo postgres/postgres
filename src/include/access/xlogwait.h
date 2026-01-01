@@ -3,7 +3,7 @@
  * xlogwait.h
  *	  Declarations for LSN replay waiting routines.
  *
- * Copyright (c) 2025, PostgreSQL Global Development Group
+ * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
  * src/include/access/xlogwait.h
  *

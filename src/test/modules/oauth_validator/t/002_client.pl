@@ -2,7 +2,7 @@
 # Exercises the API for custom OAuth client flows, using the oauth_hook_client
 # test driver.
 #
-# Copyright (c) 2021-2025, PostgreSQL Global Development Group
+# Copyright (c) 2021-2026, PostgreSQL Global Development Group
 #
 
 use strict;
