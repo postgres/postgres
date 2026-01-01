@@ -126,6 +126,21 @@ typedef struct
 	ParseLoc	stmt_len;		/* length in bytes; 0 means "rest of string" */
 } script_error_callback_arg;
 
+/*
+ * A location based on the extension_control_path GUC.
+ *
+ * The macro field stores the name of a macro (for example “$system”) that
+ * the extension_control_path processing supports, and which can be replaced
+ * by a system value stored in loc.
+ *
+ * For non-system paths the macro field is NULL.
+ */
+typedef struct
+{
+	char	   *macro;
+	char	   *loc;
+} ExtensionLocation;
+
 /* Local functions */
 static List *find_update_path(List *evi_list,
 							  ExtensionVersionInfo *evi_start,
@@ -140,7 +155,8 @@ static Oid	get_required_extension(char *reqExtensionName,
 								   bool is_create);
 static void get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 												 Tuplestorestate *tupstore,
-												 TupleDesc tupdesc);
+												 TupleDesc tupdesc,
+												 ExtensionLocation *location);
 static Datum convert_requires_to_datum(List *requires);
 static void ApplyExtensionUpdates(Oid extensionOid,
 								  ExtensionControlFile *pcontrol,
@@ -156,6 +172,29 @@ static char *read_whole_file(const char *filename, int *length);
 static ExtensionControlFile *new_ExtensionControlFile(const char *extname);
 
 char	   *find_in_paths(const char *basename, List *paths);
+
+/*
+ *  Return the extension location. If the current user doesn't have sufficient
+ *  privilege, don't show the location.
+ */
+static char *
+get_extension_location(ExtensionLocation *loc)
+{
+	/* We only want to show extension paths for superusers. */
+	if (superuser())
+	{
+		/* Return the macro value if present to avoid showing system paths. */
+		if (loc->macro != NULL)
+			return loc->macro;
+		else
+			return loc->loc;
+	}
+	else
+	{
+		/* Similar to pg_stat_activity for unprivileged users */
+		return "<insufficient privilege>";
+	}
+}
 
 /*
  * get_extension_oid - given an extension name, look up the OID
@@ -354,7 +393,11 @@ get_extension_control_directories(void)
 
 	if (strlen(Extension_control_path) == 0)
 	{
-		paths = lappend(paths, system_dir);
+		ExtensionLocation *location = palloc_object(ExtensionLocation);
+
+		location->macro = NULL;
+		location->loc = system_dir;
+		paths = lappend(paths, location);
 	}
 	else
 	{
@@ -366,6 +409,7 @@ get_extension_control_directories(void)
 			int			len;
 			char	   *mangled;
 			char	   *piece = first_path_var_separator(ecp);
+			ExtensionLocation *location = palloc_object(ExtensionLocation);
 
 			/* Get the length of the next path on ecp */
 			if (piece == NULL)
@@ -382,15 +426,21 @@ get_extension_control_directories(void)
 			 * suffix if it is a custom extension control path.
 			 */
 			if (strcmp(piece, "$system") == 0)
+			{
+				location->macro = pstrdup(piece);
 				mangled = substitute_path_macro(piece, "$system", system_dir);
+			}
 			else
+			{
+				location->macro = NULL;
 				mangled = psprintf("%s/extension", piece);
-
+			}
 			pfree(piece);
 
 			/* Canonicalize the path based on the OS and add to the list */
 			canonicalize_path(mangled);
-			paths = lappend(paths, mangled);
+			location->loc = mangled;
+			paths = lappend(paths, location);
 
 			/* Break if ecp is empty or move to the next path on ecp */
 			if (ecp[len] == '\0')
@@ -2215,9 +2265,9 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 
 	locations = get_extension_control_directories();
 
-	foreach_ptr(char, location, locations)
+	foreach_ptr(ExtensionLocation, location, locations)
 	{
-		dir = AllocateDir(location);
+		dir = AllocateDir(location->loc);
 
 		/*
 		 * If the control directory doesn't exist, we want to silently return
@@ -2229,13 +2279,13 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			while ((de = ReadDir(dir, location)) != NULL)
+			while ((de = ReadDir(dir, location->loc)) != NULL)
 			{
 				ExtensionControlFile *control;
 				char	   *extname;
 				String	   *extname_str;
-				Datum		values[3];
-				bool		nulls[3];
+				Datum		values[4];
+				bool		nulls[4];
 
 				if (!is_extension_control_filename(de->d_name))
 					continue;
@@ -2259,7 +2309,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 					found_ext = lappend(found_ext, extname_str);
 
 				control = new_ExtensionControlFile(extname);
-				control->control_dir = pstrdup(location);
+				control->control_dir = pstrdup(location->loc);
 				parse_extension_control_file(control, NULL);
 
 				memset(values, 0, sizeof(values));
@@ -2273,11 +2323,15 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 					nulls[1] = true;
 				else
 					values[1] = CStringGetTextDatum(control->default_version);
+
+				/* location */
+				values[2] = CStringGetTextDatum(get_extension_location(location));
+
 				/* comment */
 				if (control->comment == NULL)
-					nulls[2] = true;
+					nulls[3] = true;
 				else
-					values[2] = CStringGetTextDatum(control->comment);
+					values[3] = CStringGetTextDatum(control->comment);
 
 				tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
 									 values, nulls);
@@ -2313,9 +2367,9 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 
 	locations = get_extension_control_directories();
 
-	foreach_ptr(char, location, locations)
+	foreach_ptr(ExtensionLocation, location, locations)
 	{
-		dir = AllocateDir(location);
+		dir = AllocateDir(location->loc);
 
 		/*
 		 * If the control directory doesn't exist, we want to silently return
@@ -2327,7 +2381,7 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			while ((de = ReadDir(dir, location)) != NULL)
+			while ((de = ReadDir(dir, location->loc)) != NULL)
 			{
 				ExtensionControlFile *control;
 				char	   *extname;
@@ -2356,12 +2410,13 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 
 				/* read the control file */
 				control = new_ExtensionControlFile(extname);
-				control->control_dir = pstrdup(location);
+				control->control_dir = pstrdup(location->loc);
 				parse_extension_control_file(control, NULL);
 
 				/* scan extension's script directory for install scripts */
 				get_available_versions_for_extension(control, rsinfo->setResult,
-													 rsinfo->setDesc);
+													 rsinfo->setDesc,
+													 location);
 			}
 
 			FreeDir(dir);
@@ -2378,7 +2433,8 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 static void
 get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 									 Tuplestorestate *tupstore,
-									 TupleDesc tupdesc)
+									 TupleDesc tupdesc,
+									 ExtensionLocation *location)
 {
 	List	   *evi_list;
 	ListCell   *lc;
@@ -2391,8 +2447,8 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 	{
 		ExtensionVersionInfo *evi = (ExtensionVersionInfo *) lfirst(lc);
 		ExtensionControlFile *control;
-		Datum		values[8];
-		bool		nulls[8];
+		Datum		values[9];
+		bool		nulls[9];
 		ListCell   *lc2;
 
 		if (!evi->installable)
@@ -2428,11 +2484,15 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 			nulls[6] = true;
 		else
 			values[6] = convert_requires_to_datum(control->requires);
+
+		/* location */
+		values[7] = CStringGetTextDatum(get_extension_location(location));
+
 		/* comment */
 		if (control->comment == NULL)
-			nulls[7] = true;
+			nulls[8] = true;
 		else
-			values[7] = CStringGetTextDatum(control->comment);
+			values[8] = CStringGetTextDatum(control->comment);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 
@@ -2473,7 +2533,7 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 					values[6] = convert_requires_to_datum(control->requires);
 					nulls[6] = false;
 				}
-				/* comment stays the same */
+				/* comment and location stay the same */
 
 				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 			}
@@ -3903,7 +3963,8 @@ find_in_paths(const char *basename, List *paths)
 
 	foreach(cell, paths)
 	{
-		char	   *path = lfirst(cell);
+		ExtensionLocation *location = lfirst(cell);
+		char	   *path = location->loc;
 		char	   *full;
 
 		Assert(path != NULL);

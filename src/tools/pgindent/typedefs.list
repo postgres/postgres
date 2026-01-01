@@ -800,6 +800,7 @@ ExtensibleNodeEntry
 ExtensibleNodeMethods
 ExtensionControlFile
 ExtensionInfo
+ExtensionLocation
 ExtensionVersionInfo
 FDWCollateState
 FD_SET
@@ -1583,7 +1584,6 @@ LoadStmt
 LocalBufferLookupEnt
 LocalPgBackendStatus
 LocalTransactionId
-Location
 LocationIndex
 LocationLen
 LockAcquireResult

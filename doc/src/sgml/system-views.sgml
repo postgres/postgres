@@ -601,6 +601,20 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>location</structfield> <type>text</type>
+      </para>
+      <para>
+       The location where the extension is installed. If it is in the standard
+       system location, then the value will be <literal>$system</literal>,
+       while if it is found in the path specified by the
+       <link linkend="guc-extension-control-path"><structname>extension_control_path</structname></link>
+       GUC then the full path will be shown.
+       Only superusers can see this information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>comment</structfield> <type>text</type>
       </para>
       <para>
@@ -720,6 +734,20 @@
       <para>
        Names of prerequisite extensions,
        or <literal>NULL</literal> if none
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>location</structfield> <type>text</type>
+      </para>
+       <para>
+       The location where the extension is installed. If it is in the standard
+       system location, then the value will be <literal>$system</literal>,
+       while if it is found in the path specified by the
+       <link linkend="guc-extension-control-path"><structname>extension_control_path</structname></link>
+       GUC then the full path will be shown.
+       Only superusers can see this information.
       </para></entry>
      </row>
 
