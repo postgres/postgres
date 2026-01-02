@@ -59,7 +59,7 @@ permutation s1ser s2ser s1del s2ins s1c s2c
 
 # Also check updating the valid time (without violating RI):
 
-# ...with READ COMMITED:
+# ...with READ COMMITTED:
 permutation s1rc s2rc s2ins s1upok s2c s1c
 permutation s1rc s2rc s1upok s2ins s1c s2c
 # ...with REPEATABLE READ:
@@ -71,7 +71,7 @@ permutation s1ser s2ser s1upok s2ins s1c s2c
 
 # Also check updating the valid time (while violating RI):
 
-# ...with READ COMMITED:
+# ...with READ COMMITTED:
 permutation s1rc s2rc s2ins s1upbad s2c s1c
 permutation s1rc s2rc s1upbad s2ins s1c s2c
 # ...with REPEATABLE READ:
