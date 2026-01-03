@@ -357,7 +357,7 @@ END;
 CREATE FUNCTION func() RETURNS VOID AS
 $$ ALTER SUBSCRIPTION regress_testsub SET PUBLICATION mypub WITH (refresh = true) $$ LANGUAGE SQL;
 SELECT func();
-ERROR:  ALTER SUBSCRIPTION with refresh cannot be executed from a function
+ERROR:  ALTER SUBSCRIPTION with refresh cannot be executed from a function or procedure
 CONTEXT:  SQL function "func" statement 1
 ALTER SUBSCRIPTION regress_testsub DISABLE;
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);

@@ -102,7 +102,7 @@ $node_standby->psql(
 	"BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT 1; WAIT FOR LSN '${lsn3}';",
 	stderr => \$stderr);
 ok( $stderr =~
-	  /WAIT FOR must be only called without an active or registered snapshot/,
+	  /WAIT FOR must be called without an active or registered snapshot/,
 	"get an error when running in a transaction with an isolation level higher than REPEATABLE READ"
 );
 
@@ -122,7 +122,7 @@ $node_standby->psql(
 	"SELECT pg_wal_replay_wait_wrap('${lsn3}');",
 	stderr => \$stderr);
 ok( $stderr =~
-	  /WAIT FOR must be only called without an active or registered snapshot/,
+	  /WAIT FOR must be called without an active or registered snapshot/,
 	"get an error when running within another function");
 
 # 5. Check parameter validation error cases on standby before promotion
