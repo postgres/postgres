@@ -327,7 +327,12 @@ static int
 compare_val_int4(const void *a, const void *b)
 {
 	int32		key = *(int32 *) a;
-	const Datum *t = (const Datum *) b;
+	int32		value = DatumGetInt32(*(const Datum *) b);
 
-	return key - DatumGetInt32(*t);
+	if (key < value)
+		return -1;
+	else if (key > value)
+		return 1;
+	else
+		return 0;
 }
