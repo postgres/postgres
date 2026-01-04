@@ -2657,7 +2657,7 @@ include_dir 'conf.d'
          Higher values will have the most impact on higher latency storage
          where queries otherwise experience noticeable I/O stalls and on
          devices with high IOPs. Unnecessarily high values may increase I/O
-         latency for all queries on the system
+         latency for all queries on the system.
         </para>
 
         <para>
