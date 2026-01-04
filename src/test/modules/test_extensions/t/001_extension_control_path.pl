@@ -9,7 +9,7 @@ use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('node');
 
-$node->init;
+$node->init('auth_extra' => [ '--create-role', 'user01' ]);
 
 # Create temporary directories for the extension control files
 my $ext_dir = PostgreSQL::Test::Utils::tempdir();
