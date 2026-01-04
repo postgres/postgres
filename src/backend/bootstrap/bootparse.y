@@ -415,6 +415,7 @@ boot_index_param:
 					n->opclass = list_make1(makeString($2));
 					n->ordering = SORTBY_DEFAULT;
 					n->nulls_ordering = SORTBY_NULLS_DEFAULT;
+					n->location = -1;
 					$$ = n;
 				}
 		;

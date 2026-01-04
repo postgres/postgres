@@ -1962,6 +1962,8 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 			}
 		}
 
+		iparam->location = -1;
+
 		index->indexParams = lappend(index->indexParams, iparam);
 	}
 
@@ -1992,6 +1994,8 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 
 		/* Copy the original index column name */
 		iparam->indexcolname = pstrdup(NameStr(attr->attname));
+
+		iparam->location = -1;
 
 		index->indexIncludingParams = lappend(index->indexIncludingParams, iparam);
 	}
@@ -2813,6 +2817,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			iparam->opclassopts = NIL;
 			iparam->ordering = SORTBY_DEFAULT;
 			iparam->nulls_ordering = SORTBY_NULLS_DEFAULT;
+			iparam->location = -1;
 			index->indexParams = lappend(index->indexParams, iparam);
 		}
 
@@ -2929,6 +2934,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		iparam->collation = NIL;
 		iparam->opclass = NIL;
 		iparam->opclassopts = NIL;
+		iparam->location = -1;
 		index->indexIncludingParams = lappend(index->indexIncludingParams, iparam);
 	}
 

@@ -1726,6 +1726,9 @@ exprLocation(const Node *expr)
 		case T_ColumnDef:
 			loc = ((const ColumnDef *) expr)->location;
 			break;
+		case T_IndexElem:
+			loc = ((const IndexElem *) expr)->location;
+			break;
 		case T_Constraint:
 			loc = ((const Constraint *) expr)->location;
 			break;

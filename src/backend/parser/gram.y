@@ -8454,6 +8454,7 @@ index_elem_options:
 			$$->opclassopts = NIL;
 			$$->ordering = $3;
 			$$->nulls_ordering = $4;
+			/* location will be filled in index_elem production */
 		}
 	| opt_collate any_name reloptions opt_asc_desc opt_nulls_order
 		{
@@ -8466,6 +8467,7 @@ index_elem_options:
 			$$->opclassopts = $3;
 			$$->ordering = $4;
 			$$->nulls_ordering = $5;
+			/* location will be filled in index_elem production */
 		}
 	;
 
@@ -8478,16 +8480,19 @@ index_elem: ColId index_elem_options
 				{
 					$$ = $2;
 					$$->name = $1;
+					$$->location = @1;
 				}
 			| func_expr_windowless index_elem_options
 				{
 					$$ = $2;
 					$$->expr = $1;
+					$$->location = @1;
 				}
 			| '(' a_expr ')' index_elem_options
 				{
 					$$ = $4;
 					$$->expr = $2;
+					$$->location = @1;
 				}
 		;
 
