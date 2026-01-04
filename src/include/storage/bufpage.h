@@ -351,12 +351,12 @@ PageValidateSpecialPointer(const PageData *page)
  *		The semantics may change in the future.
  */
 static inline void *
-PageGetItem(const PageData *page, const ItemIdData *itemId)
+PageGetItem(PageData *page, const ItemIdData *itemId)
 {
 	Assert(page);
 	Assert(ItemIdHasStorage(itemId));
 
-	return (void *) (((const char *) page) + ItemIdGetOffset(itemId));
+	return (char *) page + ItemIdGetOffset(itemId);
 }
 
 /*
