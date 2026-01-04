@@ -308,7 +308,8 @@ Boot_DeclareIndexStmt:
 					relationId = RangeVarGetRelid(stmt->relation, NoLock,
 												  false);
 
-					DefineIndex(relationId,
+					DefineIndex(NULL,
+								relationId,
 								stmt,
 								$4,
 								InvalidOid,
@@ -361,7 +362,8 @@ Boot_DeclareUniqueIndexStmt:
 					relationId = RangeVarGetRelid(stmt->relation, NoLock,
 												  false);
 
-					DefineIndex(relationId,
+					DefineIndex(NULL,
+								relationId,
 								stmt,
 								$5,
 								InvalidOid,

@@ -1153,69 +1153,125 @@ CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a[0]'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.time()'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.tim...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.date()'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.dat...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.time_tz()'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.tim...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.timestamp()'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.tim...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.timestamp_tz()'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.tim...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.date() < $.time_tz())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.date() < $.time())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.time() < $.time())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.time() < $.time_tz())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp() < $.timestamp_tz())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp_tz() < $.timestamp_tz())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.time() < $.datetime("HH:MI TZH"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.date() < $.datetime("HH:MI TZH"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp() < $.datetime("HH:MI TZH"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp() < $.datetime("HH:MI"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp_tz() < $.datetime("HH:MI TZH"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp_tz() < $.datetime("HH:MI"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.date() < $x' PASSING '12:34'::timetz AS x));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.dat...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.date() < $x' PASSING '1234'::int AS x));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.dat...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.timestamp(2) < $.timestamp(3))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime()'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@ < $.datetime())'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.datetime() < $.datetime())'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.datetime() < $.datetime("HH:MI TZH"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.datetime("HH:MI TZH") < $.datetime("HH:MI TZH"))'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.datetime("HH:MI") < $.datetime("YY-MM-DD HH:MI"))'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ? (@.datetime("HH:MI TZH") < $.datetime("YY-MM-DD HH:MI"))'));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a ?...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime("HH:MI TZH") < $x' PASSING '12:34'::timetz AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime("HH:MI TZH") < $y' PASSING '12:34'::timetz AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime() < $x' PASSING '12:34'::timetz AS x));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.dat...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime() < $x' PASSING '1234'::int AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime() ? (@ == $x)' PASSING '12:34'::time AS x));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.dat...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.datetime("YY-MM-DD") ? (@ == $x)' PASSING '2020-07-14'::date AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, $.a ? (@.datetime() == $x)]' PASSING '12:34'::time AS x));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, ...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, 0 to $.a ? (@.datetime() == $x)]' PASSING '12:34'::time AS x));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, ...
+                                               ^
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, $.a ? (@.datetime("HH:MI") == $x)]' PASSING '12:34'::time AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_VALUE(js, '$' DEFAULT random()::int ON ERROR));
 ERROR:  functions in index expression must be marked IMMUTABLE
+LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_VALUE(js, '$' DE...
+                                               ^
 -- DEFAULT expression
 CREATE OR REPLACE FUNCTION ret_setint() RETURNS SETOF integer AS
 $$

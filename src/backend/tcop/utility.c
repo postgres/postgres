@@ -1541,7 +1541,8 @@ ProcessUtilitySlow(ParseState *pstate,
 					/* ... and do it */
 					EventTriggerAlterTableStart(parsetree);
 					address =
-						DefineIndex(relid,	/* OID of heap relation */
+						DefineIndex(pstate,
+									relid,	/* OID of heap relation */
 									stmt,
 									InvalidOid, /* no predefined OID */
 									InvalidOid, /* no parent index */

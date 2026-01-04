@@ -1009,6 +1009,8 @@ CREATE INDEX collate_test1_idx3 ON collate_test1 ((b COLLATE "C")); -- this is d
 CREATE INDEX collate_test1_idx4 ON collate_test1 (((b||'foo') COLLATE "POSIX"));
 CREATE INDEX collate_test1_idx5 ON collate_test1 (a COLLATE "C"); -- fail
 ERROR:  collations are not supported by type integer
+LINE 1: CREATE INDEX collate_test1_idx5 ON collate_test1 (a COLLATE ...
+                                                          ^
 CREATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C")); -- fail
 ERROR:  collations are not supported by type integer
 LINE 1: ...ATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C...

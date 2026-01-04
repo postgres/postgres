@@ -1585,8 +1585,12 @@ ERROR:  column "........pg.dropped.1........" referenced in foreign key constrai
 drop table atacc2;
 create index "testing_idx" on atacc1(a);
 ERROR:  column "a" does not exist
+LINE 1: create index "testing_idx" on atacc1(a);
+                                             ^
 create index "testing_idx" on atacc1("........pg.dropped.1........");
 ERROR:  column "........pg.dropped.1........" does not exist
+LINE 1: create index "testing_idx" on atacc1("........pg.dropped.1.....
+                                             ^
 -- test create as and select into
 insert into atacc1 values (21, 22, 23);
 create table attest1 as select * from atacc1;
