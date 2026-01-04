@@ -165,7 +165,7 @@
       A short tutorial introducing regular <acronym>SQL</acronym>
       features as well as those of
       <productname>Postgres95</productname> was distributed with the
-      source code
+      source code.
      </para>
     </listitem>
 
