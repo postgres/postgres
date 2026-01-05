@@ -1054,7 +1054,8 @@ pg_saslprep(const char *input, char **output)
 	int			count;
 	int			i;
 	bool		contains_RandALCat;
-	unsigned char *p;
+	const unsigned char *p;
+	unsigned char *outp;
 	char32_t   *wp;
 
 	/* Ensure we return *output as NULL on failure */
@@ -1087,7 +1088,7 @@ pg_saslprep(const char *input, char **output)
 	if (!input_chars)
 		goto oom;
 
-	p = (unsigned char *) input;
+	p = (const unsigned char *) input;
 	for (i = 0; i < input_size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
@@ -1217,14 +1218,14 @@ pg_saslprep(const char *input, char **output)
 	 * There are no error exits below here, so the error exit paths don't need
 	 * to worry about possibly freeing "result".
 	 */
-	p = (unsigned char *) result;
+	outp = (unsigned char *) result;
 	for (wp = output_chars; *wp; wp++)
 	{
-		unicode_to_utf8(*wp, p);
-		p += pg_utf_mblen(p);
+		unicode_to_utf8(*wp, outp);
+		outp += pg_utf_mblen(outp);
 	}
-	Assert((char *) p == result + result_size);
-	*p = '\0';
+	Assert((char *) outp == result + result_size);
+	*outp = '\0';
 
 	FREE(input_chars);
 	FREE(output_chars);
