@@ -173,7 +173,7 @@ update_slotsync_skip_stats(SlotSyncSkipReason skip_reason)
 	slot = MyReplicationSlot;
 
 	/*
-	 * Update the slot sync related stats in pg_stat_replication_slot when a
+	 * Update the slot sync related stats in pg_stat_replication_slots when a
 	 * slot sync is skipped
 	 */
 	if (skip_reason != SS_SKIP_NONE)

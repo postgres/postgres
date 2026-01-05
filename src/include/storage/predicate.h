@@ -73,7 +73,7 @@ extern void PreCommit_CheckForSerializationFailure(void);
 /* two-phase commit support */
 extern void AtPrepare_PredicateLocks(void);
 extern void PostPrepare_PredicateLocks(FullTransactionId fxid);
-extern void PredicateLockTwoPhaseFinish(FullTransactionId xid, bool isCommit);
+extern void PredicateLockTwoPhaseFinish(FullTransactionId fxid, bool isCommit);
 extern void predicatelock_twophase_recover(FullTransactionId fxid, uint16 info,
 										   void *recdata, uint32 len);
 

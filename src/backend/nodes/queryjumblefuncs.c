@@ -684,7 +684,7 @@ _jumbleParam(JumbleState *jstate, Node *node)
 	JUMBLE_FIELD(paramkind);
 	JUMBLE_FIELD(paramid);
 	JUMBLE_FIELD(paramtype);
-	/* paramtypmode and paramcollid are ignored */
+	/* paramtypmod and paramcollid are ignored */
 
 	if (expr->paramkind == PARAM_EXTERN)
 	{

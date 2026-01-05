@@ -293,7 +293,7 @@ typedef struct PruneFreezeResult
 	 * is only valid if we froze some tuples (nfrozen > 0), and all_frozen is
 	 * true.
 	 *
-	 * These are only set if the HEAP_PRUNE_FREEZE option is set.
+	 * These are only set if the HEAP_PAGE_PRUNE_FREEZE option is set.
 	 */
 	bool		all_visible;
 	bool		all_frozen;

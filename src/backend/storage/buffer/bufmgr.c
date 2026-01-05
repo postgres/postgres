@@ -4280,7 +4280,7 @@ DebugPrintBufferRefcount(Buffer buffer)
 		backend = INVALID_PROC_NUMBER;
 	}
 
-	/* theoretically we should lock the bufhdr here */
+	/* theoretically we should lock the bufHdr here */
 	buf_state = pg_atomic_read_u32(&buf->state);
 
 	result = psprintf("[%03d] (rel=%s, blockNum=%u, flags=0x%x, refcount=%u %d)",

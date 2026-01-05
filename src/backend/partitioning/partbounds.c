@@ -4989,7 +4989,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
  * second_name:		name of the second partition
  * second_bound:	bound of the second partition
  * defaultPart:		true if one of the new partitions is DEFAULT
- * is_merge:		true ndicates the operation is MERGE PARTITIONS;
+ * is_merge:		true indicates the operation is MERGE PARTITIONS;
  * 					false indicates the operation is SPLIT PARTITION.
  * pstate:			pointer to ParseState struct for determining error position
  */

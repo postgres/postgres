@@ -2285,7 +2285,7 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 				continue;
 
 			/*
-			 * Remove rrel ReloptInfo from the planner structures and the
+			 * Remove rrel RelOptInfo from the planner structures and the
 			 * corresponding row mark.
 			 */
 			remove_self_join_rel(root, kmark, rmark, krel, rrel, restrictlist);

@@ -294,7 +294,7 @@ extern void launch_sync_worker(LogicalRepWorkerType wtype, int nsyncworkers,
 							   Oid relid, TimestampTz *last_start_time);
 extern void ProcessSyncingRelations(XLogRecPtr current_lsn);
 extern void FetchRelationStates(bool *has_pending_subtables,
-								bool *has_pending_sequences, bool *started_tx);
+								bool *has_pending_subsequences, bool *started_tx);
 
 extern void stream_start_internal(TransactionId xid, bool first_segment);
 extern void stream_stop_internal(TransactionId xid);

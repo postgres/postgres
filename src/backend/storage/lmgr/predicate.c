@@ -190,7 +190,7 @@
  * two-phase commit support
  *		AtPrepare_PredicateLocks(void);
  *		PostPrepare_PredicateLocks(TransactionId xid);
- *		PredicateLockTwoPhaseFinish(TransactionId xid, bool isCommit);
+ *		PredicateLockTwoPhaseFinish(FullTransactionId fxid, bool isCommit);
  *		predicatelock_twophase_recover(FullTransactionId fxid, uint16 info,
  *									   void *recdata, uint32 len);
  */

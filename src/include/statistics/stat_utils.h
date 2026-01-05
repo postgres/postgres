@@ -35,7 +35,7 @@ extern bool stats_check_arg_pair(FunctionCallInfo fcinfo,
 								 int argnum1, int argnum2);
 
 extern void RangeVarCallbackForStats(const RangeVar *relation,
-									 Oid relId, Oid oldRelid, void *arg);
+									 Oid relId, Oid oldRelId, void *arg);
 
 extern bool stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 											 FunctionCallInfo positional_fcinfo,

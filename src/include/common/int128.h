@@ -346,7 +346,7 @@ int128_div_mod_int32(INT128 *i128, int32 v, int32 *remainder)
 		n_lo = i128->lo;
 	}
 
-	/* denomimator: absolute value of v */
+	/* denominator: absolute value of v */
 	d = abs(v);
 
 	/* quotient and remainder of high 64 bits */

@@ -562,7 +562,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </para>
          <para>
           This option is effective only when
-          <literal>retain_conflict_info</literal> is enabled and the apply
+          <literal>retain_dead_tuples</literal> is enabled and the apply
           worker associated with the subscription is active.
          </para>
          <warning>

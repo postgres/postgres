@@ -338,11 +338,6 @@ queryin(char *buf, struct Node *escontext)
 	NODE	   *tmp;
 	int32		pos = 0;
 
-#ifdef BS_DEBUG
-	char		pbuf[16384],
-			   *cur;
-#endif
-
 	/* init state */
 	state.buf = buf;
 	state.state = WAITOPERAND;

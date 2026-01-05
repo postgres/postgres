@@ -404,7 +404,7 @@ struct PlannerInfo
 	/* list of AggClauseInfos */
 	List	   *agg_clause_list;
 
-	/* list of GroupExprInfos */
+	/* list of GroupingExprInfos */
 	List	   *group_expr_list;
 
 	/* list of plain Vars contained in targetlist and havingQual */

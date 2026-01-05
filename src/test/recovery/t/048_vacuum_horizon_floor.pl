@@ -54,7 +54,7 @@ my $psql_primaryB =
 
 # Our test relies on two rounds of index vacuuming for reasons elaborated
 # later. To trigger two rounds of index vacuuming, we must fill up the
-# TIDStore with dead items partway through a vacuum of the table. The number
+# TidStore with dead items partway through a vacuum of the table. The number
 # of rows is just enough to ensure we exceed maintenance_work_mem on all
 # supported platforms, while keeping test runtime as short as we can.
 my $nrows = 2000;
@@ -225,7 +225,7 @@ $node_primary->poll_query_until(
 
 # Move the cursor forward to the next 7. We inserted the 7 much later, so
 # advancing the cursor should allow vacuum to proceed vacuuming most pages of
-# the relation. Because we set maintanence_work_mem sufficiently low, we
+# the relation. Because we set maintenance_work_mem sufficiently low, we
 # expect that a round of index vacuuming has happened and that the vacuum is
 # now waiting for the cursor to release its pin on the last page of the
 # relation.

@@ -191,7 +191,7 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 	 * unlogged and maintained heuristically, it often becomes stale on
 	 * standbys. If such a standby is later promoted and runs VACUUM, it will
 	 * skip recalculating free space for pages that were marked
-	 * all-visible/all-forzen. FreeSpaceMapVacuum() can then propagate overly
+	 * all-visible/all-frozen. FreeSpaceMapVacuum() can then propagate overly
 	 * optimistic free space values upward, causing future insertions to
 	 * select pages that turn out to be unusable. In bulk, this can lead to
 	 * long stalls.

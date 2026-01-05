@@ -114,7 +114,7 @@ extern void llvm_split_symbol_name(const char *name, char **modname, char **func
 extern LLVMTypeRef llvm_pg_var_type(const char *varname);
 extern LLVMTypeRef llvm_pg_var_func_type(const char *varname);
 extern LLVMValueRef llvm_pg_func(LLVMModuleRef mod, const char *funcname);
-extern void llvm_copy_attributes(LLVMValueRef from, LLVMValueRef to);
+extern void llvm_copy_attributes(LLVMValueRef v_from, LLVMValueRef v_to);
 extern LLVMValueRef llvm_function_reference(LLVMJitContext *context,
 						LLVMBuilderRef builder,
 						LLVMModuleRef mod,

@@ -485,7 +485,7 @@ extern char *strsep(char **stringp, const char *delim);
 #endif
 
 #if !HAVE_DECL_TIMINGSAFE_BCMP
-extern int	timingsafe_bcmp(const void *b1, const void *b2, size_t len);
+extern int	timingsafe_bcmp(const void *b1, const void *b2, size_t n);
 #endif
 
 /*

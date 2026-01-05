@@ -694,7 +694,7 @@
   short_desc => 'Set this to force all parse and plan trees to be passed through outfuncs.c/readfuncs.c, to facilitate catching errors and omissions in those modules.',
   flags => 'GUC_NOT_IN_SAMPLE',
   variable => 'Debug_write_read_parse_plan_trees',
-  boot_val => 'DEFAULT_DEBUG_READ_WRITE_PARSE_PLAN_TREES',
+  boot_val => 'DEFAULT_DEBUG_WRITE_READ_PARSE_PLAN_TREES',
   ifdef => 'DEBUG_NODE_TESTS_ENABLED',
 },
 

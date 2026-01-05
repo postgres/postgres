@@ -39,7 +39,7 @@ $node->safe_psql(
 my $count = $node->safe_psql('postgres',
 	"select count(*) from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)"
 );
-is($count, '1', "initial brin_wi_index index state is correct");
+is($count, '1', "initial brin_wi_idx index state is correct");
 $count = $node->safe_psql('postgres',
 	"select count(*) from brin_page_items(get_raw_page('brin_packdate_idx', 2), 'brin_packdate_idx'::regclass)"
 );

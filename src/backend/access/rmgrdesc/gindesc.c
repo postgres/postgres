@@ -161,7 +161,7 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 					appendStringInfo(buf, " prevTail: %u",
 									 xlrec->prevTail);
 				if (xlrec->newRightlink != InvalidBlockNumber)
-					appendStringInfo(buf, " newRightLink: %u",
+					appendStringInfo(buf, " newRightlink: %u",
 									 xlrec->newRightlink);
 			}
 			break;

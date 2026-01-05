@@ -418,7 +418,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	ctype = TextDatumGetCString(datum);
 
 	/*
-	 * Historcally, we set LC_COLLATE from datcollate, as well. That's no
+	 * Historically, we set LC_COLLATE from datcollate, as well. That's no
 	 * longer necessary because all collation behavior is handled through
 	 * pg_locale_t.
 	 */

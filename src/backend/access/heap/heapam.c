@@ -87,7 +87,7 @@ static void compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
 									  uint16 *result_infomask2);
 static TM_Result heap_lock_updated_tuple(Relation rel,
 										 uint16 prior_infomask,
-										 TransactionId prior_rawxmax,
+										 TransactionId prior_raw_xmax,
 										 const ItemPointerData *prior_ctid,
 										 TransactionId xid,
 										 LockTupleMode mode);

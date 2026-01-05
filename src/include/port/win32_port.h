@@ -505,7 +505,7 @@ extern SOCKET pgwin32_socket(int af, int type, int protocol);
 extern int	pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen);
 extern int	pgwin32_listen(SOCKET s, int backlog);
 extern SOCKET pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen);
-extern int	pgwin32_connect(SOCKET s, const struct sockaddr *name, int namelen);
+extern int	pgwin32_connect(SOCKET s, const struct sockaddr *addr, int addrlen);
 extern int	pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
 extern int	pgwin32_recv(SOCKET s, char *buf, int len, int flags);
 extern int	pgwin32_send(SOCKET s, const void *buf, int len, int flags);
@@ -581,9 +581,9 @@ typedef unsigned short mode_t;
 #endif
 
 /* in port/win32pread.c */
-extern ssize_t pg_pread(int fd, void *buf, size_t nbyte, pgoff_t offset);
+extern ssize_t pg_pread(int fd, void *buf, size_t size, pgoff_t offset);
 
 /* in port/win32pwrite.c */
-extern ssize_t pg_pwrite(int fd, const void *buf, size_t nbyte, pgoff_t offset);
+extern ssize_t pg_pwrite(int fd, const void *buf, size_t size, pgoff_t offset);
 
 #endif							/* PG_WIN32_PORT_H */

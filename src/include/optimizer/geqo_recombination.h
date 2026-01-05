@@ -79,11 +79,11 @@ extern void px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring,
 			   int num_gene, City * city_table);
 
 /* order crossover [OX1] according to Davis */
-extern void ox1(PlannerInfo *root, Gene *mom, Gene *dad, Gene *offspring,
+extern void ox1(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring,
 				int num_gene, City * city_table);
 
 /* order crossover [OX2] according to Syswerda */
-extern void ox2(PlannerInfo *root, Gene *mom, Gene *dad, Gene *offspring,
+extern void ox2(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring,
 				int num_gene, City * city_table);
 
 #endif							/* GEQO_RECOMBINATION_H */
