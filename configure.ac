@@ -1501,12 +1501,10 @@ AC_SUBST(UUID_LIBS)
 ##
 
 AC_CHECK_HEADERS(m4_normalize([
-	atomic.h
 	copyfile.h
 	execinfo.h
 	getopt.h
 	ifaddrs.h
-	mbarrier.h
 	sys/epoll.h
 	sys/event.h
 	sys/personality.h
