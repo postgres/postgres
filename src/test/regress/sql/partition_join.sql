@@ -1225,7 +1225,6 @@ ANALYZE fract_t;
 -- (avoid merge joins, because the costs of partitionwise and non-partitionwise
 -- merge joins tend to be almost equal, and we want this test to be stable)
 SET max_parallel_workers_per_gather = 0;
-SET enable_partitionwise_join = on;
 SET enable_mergejoin = off;
 
 EXPLAIN (COSTS OFF)
