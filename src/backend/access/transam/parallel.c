@@ -884,7 +884,7 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 				 * the worker writes messages and terminates after the
 				 * CHECK_FOR_INTERRUPTS() near the top of this function and
 				 * before the call to GetBackgroundWorkerPid().  In that case,
-				 * or latch should have been set as well and the right things
+				 * our latch should have been set as well and the right things
 				 * will happen on the next pass through the loop.
 				 */
 			}
