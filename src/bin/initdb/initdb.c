@@ -910,6 +910,8 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 	{"nepali", "Nepali"},
 	{"norwegian", "no"},
 	{"norwegian", "Norwegian"},
+	{"polish", "pl"},
+	{"polish", "Polish"},
 	{"portuguese", "pt"},
 	{"portuguese", "Portuguese"},
 	{"romanian", "ro"},

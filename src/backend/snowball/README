@@ -29,27 +29,28 @@ We choose to include the derived files in the PostgreSQL distribution
 because most installations will not have the Snowball compiler available.
 
 We are currently synced with the Snowball git commit
-d19326ac6c1b9a417fc872f7c2f845265a5e9ece
-of 2025-02-19.
+2d2e312df56f2ede014a4ffb3e91e6dea43c24be
+of 2025-12-15.
 
 To update the PostgreSQL sources from a new Snowball version:
 
 0. If you didn't do it already, "make -C snowball".
 
 1. Copy the *.c files in snowball/src_c/ to src/backend/snowball/libstemmer
-with replacement of "../runtime/header.h" by "header.h", for example
+with replacement of "../runtime/snowball_runtime.h" by "snowball_runtime.h",
+for example
 
 for f in .../snowball/src_c/*.c
 do
-    sed 's|\.\./runtime/header\.h|header.h|' $f >libstemmer/`basename $f`
+    sed 's|\.\./runtime/snowball_runtime\.h|snowball_runtime.h|' $f >libstemmer/`basename $f`
 done
 
 Do not copy stemmers that are listed in their libstemmer/modules.txt as
-nonstandard, such as "kraaij_pohlmann" or "lovins".
+nonstandard, such as "lovins".
 
-2. Copy the *.c files in snowball/runtime/ to
-src/backend/snowball/libstemmer, and edit them to remove direct inclusions
-of system headers such as <stdio.h> --- they should only include "header.h".
+2. Copy the *.c files in snowball/runtime/ to src/backend/snowball/libstemmer,
+and edit them to remove direct inclusions of system headers such as <stdio.h>
+--- they should only include "snowball_runtime.h".
 (This removal avoids portability problems on some platforms where <stdio.h>
 is sensitive to largefile compilation options.)
 
@@ -61,9 +62,12 @@ stemmers.
 4. Check whether any stemmer modules have been added or removed.  If so, edit
 the OBJS list in Makefile, the dict_snowball_sources list in meson.build,
 the list of #include's and the stemmer_modules[] table in dict_snowball.c,
+the list of valid language parameters in the documentation in textsearch.sgml,
 and the sample \dFd output in the documentation in textsearch.sgml.
 You might also need to change the @languages array in snowball_create.pl
-and the tsearch_config_languages[] table in initdb.c.
+and the tsearch_config_languages[] table in initdb.c.  Typically, the latter
+two should be extended when a stemmer for an entirely new language is added,
+but alternative stemmers for existing languages are not represented in them.
 
 5. The various stopword files in stopwords/ must be downloaded
 individually from pages on the snowballstem.org website.

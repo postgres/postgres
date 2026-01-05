@@ -19,6 +19,7 @@ our @languages = qw(
   danish
   dutch
   english
+  esperanto
   estonian
   finnish
   french
@@ -32,6 +33,7 @@ our @languages = qw(
   lithuanian
   nepali
   norwegian
+  polish
   portuguese
   romanian
   russian

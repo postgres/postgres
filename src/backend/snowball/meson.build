@@ -11,6 +11,7 @@ dict_snowball_sources += files(
   'libstemmer/stem_ISO_8859_1_catalan.c',
   'libstemmer/stem_ISO_8859_1_danish.c',
   'libstemmer/stem_ISO_8859_1_dutch.c',
+  'libstemmer/stem_ISO_8859_1_dutch_porter.c',
   'libstemmer/stem_ISO_8859_1_english.c',
   'libstemmer/stem_ISO_8859_1_finnish.c',
   'libstemmer/stem_ISO_8859_1_french.c',
@@ -24,6 +25,7 @@ dict_snowball_sources += files(
   'libstemmer/stem_ISO_8859_1_spanish.c',
   'libstemmer/stem_ISO_8859_1_swedish.c',
   'libstemmer/stem_ISO_8859_2_hungarian.c',
+  'libstemmer/stem_ISO_8859_2_polish.c',
   'libstemmer/stem_KOI8_R_russian.c',
   'libstemmer/stem_UTF_8_arabic.c',
   'libstemmer/stem_UTF_8_armenian.c',
@@ -31,7 +33,9 @@ dict_snowball_sources += files(
   'libstemmer/stem_UTF_8_catalan.c',
   'libstemmer/stem_UTF_8_danish.c',
   'libstemmer/stem_UTF_8_dutch.c',
+  'libstemmer/stem_UTF_8_dutch_porter.c',
   'libstemmer/stem_UTF_8_english.c',
+  'libstemmer/stem_UTF_8_esperanto.c',
   'libstemmer/stem_UTF_8_estonian.c',
   'libstemmer/stem_UTF_8_finnish.c',
   'libstemmer/stem_UTF_8_french.c',
@@ -45,6 +49,7 @@ dict_snowball_sources += files(
   'libstemmer/stem_UTF_8_lithuanian.c',
   'libstemmer/stem_UTF_8_nepali.c',
   'libstemmer/stem_UTF_8_norwegian.c',
+  'libstemmer/stem_UTF_8_polish.c',
   'libstemmer/stem_UTF_8_porter.c',
   'libstemmer/stem_UTF_8_portuguese.c',
   'libstemmer/stem_UTF_8_romanian.c',
@@ -57,7 +62,7 @@ dict_snowball_sources += files(
   'libstemmer/stem_UTF_8_yiddish.c',
 )
 
-# see comment in src/include/snowball/header.h
+# see comment in src/include/snowball/snowball_runtime.h
 stemmer_inc = include_directories('../../include/snowball')
 
 if host_system == 'windows'

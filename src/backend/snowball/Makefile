@@ -27,6 +27,7 @@ OBJS += \
 	stem_ISO_8859_1_catalan.o \
 	stem_ISO_8859_1_danish.o \
 	stem_ISO_8859_1_dutch.o \
+	stem_ISO_8859_1_dutch_porter.o \
 	stem_ISO_8859_1_english.o \
 	stem_ISO_8859_1_finnish.o \
 	stem_ISO_8859_1_french.o \
@@ -40,6 +41,7 @@ OBJS += \
 	stem_ISO_8859_1_spanish.o \
 	stem_ISO_8859_1_swedish.o \
 	stem_ISO_8859_2_hungarian.o \
+	stem_ISO_8859_2_polish.o \
 	stem_KOI8_R_russian.o \
 	stem_UTF_8_arabic.o \
 	stem_UTF_8_armenian.o \
@@ -47,7 +49,9 @@ OBJS += \
 	stem_UTF_8_catalan.o \
 	stem_UTF_8_danish.o \
 	stem_UTF_8_dutch.o \
+	stem_UTF_8_dutch_porter.o \
 	stem_UTF_8_english.o \
+	stem_UTF_8_esperanto.o \
 	stem_UTF_8_estonian.o \
 	stem_UTF_8_finnish.o \
 	stem_UTF_8_french.o \
@@ -61,6 +65,7 @@ OBJS += \
 	stem_UTF_8_lithuanian.o \
 	stem_UTF_8_nepali.o \
 	stem_UTF_8_norwegian.o \
+	stem_UTF_8_polish.o \
 	stem_UTF_8_porter.o \
 	stem_UTF_8_portuguese.o \
 	stem_UTF_8_romanian.o \

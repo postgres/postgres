@@ -3145,6 +3145,56 @@ largehearted
     <literal>stopword</literal> file name that gives a list of words to eliminate.
     (<productname>PostgreSQL</productname>'s standard stopword lists are also
     provided by the Snowball project.)
+   </para>
+
+   <para>
+    The available values of the <literal>language</literal> parameter are:
+
+    <literal>arabic</literal>,
+    <literal>armenian</literal>,
+    <literal>basque</literal>,
+    <literal>catalan</literal>,
+    <literal>danish</literal>,
+    <literal>dutch</literal>,
+    <literal>dutch_porter</literal>,
+    <literal>english</literal>,
+    <literal>esperanto</literal>,
+    <literal>estonian</literal>,
+    <literal>finnish</literal>,
+    <literal>french</literal>,
+    <literal>german</literal>,
+    <literal>greek</literal>,
+    <literal>hindi</literal>,
+    <literal>hungarian</literal>,
+    <literal>indonesian</literal>,
+    <literal>irish</literal>,
+    <literal>italian</literal>,
+    <literal>lithuanian</literal>,
+    <literal>nepali</literal>,
+    <literal>norwegian</literal>,
+    <literal>polish</literal>,
+    <literal>porter</literal>,
+    <literal>portuguese</literal>,
+    <literal>romanian</literal>,
+    <literal>russian</literal>,
+    <literal>serbian</literal>,
+    <literal>spanish</literal>,
+    <literal>swedish</literal>,
+    <literal>tamil</literal>,
+    <literal>turkish</literal>,
+    and
+    <literal>yiddish</literal>.
+
+    The <literal>porter</literal> algorithm is an old stemmer for English,
+    and the <literal>dutch_porter</literal> algorithm is an old stemmer
+    for Dutch (it was called <literal>dutch</literal>
+    in <productname>PostgreSQL</productname> releases before 19).
+    The rest are the currently-recommended stemmers for their
+    respective languages.
+
+    All these algorithms except <literal>porter</literal>
+    and <literal>dutch_porter</literal> have built-in dictionaries
+    provided, most with stopword lists attached.
     For example, there is a built-in definition equivalent to
 
 <programlisting>
@@ -3879,6 +3929,7 @@ Parser: "pg_catalog.default"
  pg_catalog | danish_stem     | snowball stemmer for danish language
  pg_catalog | dutch_stem      | snowball stemmer for dutch language
  pg_catalog | english_stem    | snowball stemmer for english language
+ pg_catalog | esperanto_stem  | snowball stemmer for esperanto language
  pg_catalog | estonian_stem   | snowball stemmer for estonian language
  pg_catalog | finnish_stem    | snowball stemmer for finnish language
  pg_catalog | french_stem     | snowball stemmer for french language
@@ -3892,6 +3943,7 @@ Parser: "pg_catalog.default"
  pg_catalog | lithuanian_stem | snowball stemmer for lithuanian language
  pg_catalog | nepali_stem     | snowball stemmer for nepali language
  pg_catalog | norwegian_stem  | snowball stemmer for norwegian language
+ pg_catalog | polish_stem     | snowball stemmer for polish language
  pg_catalog | portuguese_stem | snowball stemmer for portuguese language
  pg_catalog | romanian_stem   | snowball stemmer for romanian language
  pg_catalog | russian_stem    | snowball stemmer for russian language
