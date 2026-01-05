@@ -649,7 +649,7 @@ WakeupWalSummarizer(void)
 	LWLockRelease(WALSummarizerLock);
 
 	if (pgprocno != INVALID_PROC_NUMBER)
-		SetLatch(&ProcGlobal->allProcs[pgprocno].procLatch);
+		SetLatch(&GetPGProcByNumber(pgprocno)->procLatch);
 }
 
 /*

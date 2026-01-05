@@ -216,7 +216,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 		 * actually fine because procLatch isn't ever freed, so we just can
 		 * potentially set the wrong process' (or no process') latch.
 		 */
-		SetLatch(&ProcGlobal->allProcs[bgwprocno].procLatch);
+		SetLatch(&GetPGProcByNumber(bgwprocno)->procLatch);
 	}
 
 	/*
