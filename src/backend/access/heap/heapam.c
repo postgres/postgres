@@ -1062,7 +1062,7 @@ continue_page:
 			ItemId		lpp;
 			OffsetNumber lineoff;
 
-			Assert(lineindex <= scan->rs_ntuples);
+			Assert(lineindex < scan->rs_ntuples);
 			lineoff = scan->rs_vistuples[lineindex];
 			lpp = PageGetItemId(page, lineoff);
 			Assert(ItemIdIsNormal(lpp));
