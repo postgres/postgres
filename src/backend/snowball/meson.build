@@ -63,7 +63,8 @@ dict_snowball_sources += files(
 )
 
 # see comment in src/include/snowball/snowball_runtime.h
-stemmer_inc = include_directories('../../include/snowball')
+stemmer_inc = include_directories('../../include/snowball',
+                                  '../../include/snowball/libstemmer')
 
 if host_system == 'windows'
   dict_snowball_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
