@@ -340,9 +340,6 @@ task:
     su postgres <<-EOF
       set -e
       ulimit -c unlimited
-      # Otherwise tests will fail on OpenBSD, due to inability to start enough
-      # processes.
-      ulimit -p 256
       meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
     EOF
 
