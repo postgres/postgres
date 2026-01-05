@@ -54,9 +54,6 @@
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
-/* Define to 1 if you have the <atomic.h> header file. */
-#undef HAVE_ATOMIC_H
-
 /* Define to 1 if you have the `backtrace_symbols' function. */
 #undef HAVE_BACKTRACE_SYMBOLS
 
@@ -280,9 +277,6 @@
 
 /* Define to 1 if you have the `localeconv_l' function. */
 #undef HAVE_LOCALECONV_L
-
-/* Define to 1 if you have the <mbarrier.h> header file. */
-#undef HAVE_MBARRIER_H
 
 /* Define to 1 if you have the `mbstowcs_l' function. */
 #undef HAVE_MBSTOWCS_L
