@@ -3550,7 +3550,7 @@ checkPartition(Relation rel, Oid partRelOid, bool isMerge)
 
 	if (get_partition_parent(partRelOid, false) != RelationGetRelid(rel))
 		ereport(ERROR,
-				errcode(ERRCODE_UNDEFINED_TABLE),
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("relation \"%s\" is not a partition of relation \"%s\"",
 					   RelationGetRelationName(partRel), RelationGetRelationName(rel)),
 				isMerge
