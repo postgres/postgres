@@ -818,7 +818,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				 *
 				 * From a concurrency point of view, it sort of sucks to
 				 * retake ProcArrayLock here while we're holding the buffer
-				 * exclusively locked, but it should be safe against
+				 * locked in shared mode, but it should be safe against
 				 * deadlocks, because surely
 				 * GetStrictOldestNonRemovableTransactionId() should never
 				 * take a buffer lock. And this shouldn't happen often, so
