@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * xlogwait.h
- *	  Declarations for LSN replay waiting routines.
+ *	  Declarations for WAL flush, write, and replay waiting routines.
  *
  * Copyright (c) 2025-2026, PostgreSQL Global Development Group
  *
@@ -35,11 +35,16 @@ typedef enum
  */
 typedef enum WaitLSNType
 {
-	WAIT_LSN_TYPE_REPLAY,		/* Waiting for replay on standby */
-	WAIT_LSN_TYPE_FLUSH,		/* Waiting for flush on primary */
+	/* Standby wait types (walreceiver/startup wakes) */
+	WAIT_LSN_TYPE_STANDBY_REPLAY,
+	WAIT_LSN_TYPE_STANDBY_WRITE,
+	WAIT_LSN_TYPE_STANDBY_FLUSH,
+
+	/* Primary wait types (WAL writer/backends wake) */
+	WAIT_LSN_TYPE_PRIMARY_FLUSH,
 } WaitLSNType;
 
-#define WAIT_LSN_TYPE_COUNT (WAIT_LSN_TYPE_FLUSH + 1)
+#define WAIT_LSN_TYPE_COUNT (WAIT_LSN_TYPE_PRIMARY_FLUSH + 1)
 
 /*
  * WaitLSNProcInfo - the shared memory structure representing information
@@ -97,6 +102,7 @@ extern PGDLLIMPORT WaitLSNState *waitLSNState;
 
 extern Size WaitLSNShmemSize(void);
 extern void WaitLSNShmemInit(void);
+extern XLogRecPtr GetCurrentLSNForWaitType(WaitLSNType lsnType);
 extern void WaitLSNWakeup(WaitLSNType lsnType, XLogRecPtr currentLSN);
 extern void WaitLSNCleanup(void);
 extern WaitLSNResult WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN,
