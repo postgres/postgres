@@ -7922,8 +7922,8 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	 * However, there are several cases when this optimization is not safe. If
 	 * the rel isn't partitioned, then none of the paths will be Append or
 	 * MergeAppend paths, so we should definitely not do this. If it is
-	 * partititoned but is a joinrel, it may have Append and MergeAppend
-	 * paths, but it can also have join paths that we can't afford to discard.
+	 * partitioned but is a joinrel, it may have Append and MergeAppend paths,
+	 * but it can also have join paths that we can't afford to discard.
 	 *
 	 * Some care is needed, because we have to allow
 	 * generate_useful_gather_paths to see the old partial paths in the next
