@@ -30,7 +30,7 @@ sub launch_bgworker
 
 	# Check that the bgworker is initialized.
 	$node->wait_for_log(
-		qr/LOG:  worker_spi dynamic worker $testcase initialized with .*\..*/,
+		qr/LOG: .*worker_spi dynamic worker $testcase initialized with .*\..*/,
 		$offset);
 	my $result = $node->safe_psql($database,
 		"SELECT count(*) > 0 FROM pg_stat_activity WHERE pid = $pid;");
