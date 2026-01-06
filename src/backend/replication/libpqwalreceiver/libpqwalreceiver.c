@@ -58,6 +58,8 @@ static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
 									char **sender_host, int *sender_port);
 static char *libpqrcv_identify_system(WalReceiverConn *conn,
 									  TimeLineID *primary_tli);
+static char *libpqrcv_get_option_from_conninfo(const char *connInfo,
+											   const char *keyword);
 static int	libpqrcv_server_version(WalReceiverConn *conn);
 static void libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 											 TimeLineID tli, char **filename,
@@ -131,6 +133,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	const char *keys[6];
 	const char *vals[6];
 	int			i = 0;
+	char	   *options_val = NULL;
 
 	/*
 	 * We use the expand_dbname parameter to process the connection string (or
@@ -153,6 +156,8 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	vals[i] = appname;
 	if (logical)
 	{
+		char	   *opt = NULL;
+
 		/* Tell the publisher to translate to our encoding */
 		keys[++i] = "client_encoding";
 		vals[i] = GetDatabaseEncodingName();
@@ -165,8 +170,13 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 		 * the subscriber, such as triggers.)  This should match what pg_dump
 		 * does.
 		 */
+		opt = libpqrcv_get_option_from_conninfo(conninfo, "options");
+		options_val = psprintf("%s -c datestyle=ISO -c intervalstyle=postgres -c extra_float_digits=3",
+							   (opt == NULL) ? "" : opt);
 		keys[++i] = "options";
-		vals[i] = "-c datestyle=ISO -c intervalstyle=postgres -c extra_float_digits=3";
+		vals[i] = options_val;
+		if (opt != NULL)
+			pfree(opt);
 	}
 	keys[++i] = NULL;
 	vals[i] = NULL;
@@ -217,6 +227,9 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 		if (rc & io_flag)
 			status = PQconnectPoll(conn->streamConn);
 	} while (status != PGRES_POLLING_OK && status != PGRES_POLLING_FAILED);
+
+	if (options_val != NULL)
+		pfree(options_val);
 
 	if (PQstatus(conn->streamConn) != CONNECTION_OK)
 		goto bad_connection_errmsg;
@@ -373,6 +386,7 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 						"the primary server: %s",
 						pchomp(PQerrorMessage(conn->streamConn)))));
 	}
+
 	/*
 	 * IDENTIFY_SYSTEM returns 3 columns in 9.3 and earlier, and 4 columns in
 	 * 9.4 and onwards.
@@ -403,6 +417,51 @@ static int
 libpqrcv_server_version(WalReceiverConn *conn)
 {
 	return PQserverVersion(conn->streamConn);
+}
+
+/*
+ * Get the value of the option with the given keyword from the primary
+ * server's conninfo.
+ *
+ * If the option is not found in connInfo, return NULL value.
+ */
+static char *
+libpqrcv_get_option_from_conninfo(const char *connInfo, const char *keyword)
+{
+	PQconninfoOption *opts;
+	char	   *option = NULL;
+	char	   *err = NULL;
+
+	opts = PQconninfoParse(connInfo, &err);
+	if (opts == NULL)
+	{
+		/* The error string is malloc'd, so we must free it explicitly */
+		char	   *errcopy = err ? pstrdup(err) : "out of memory";
+
+		PQfreemem(err);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid connection string syntax: %s", errcopy)));
+	}
+
+	for (PQconninfoOption *opt = opts; opt->keyword != NULL; ++opt)
+	{
+		/*
+		 * If the same option appears multiple times, then the last one will
+		 * be returned
+		 */
+		if (strcmp(opt->keyword, keyword) == 0 && opt->val &&
+			*opt->val)
+		{
+			if (option)
+				pfree(option);
+
+			option = pstrdup(opt->val);
+		}
+	}
+
+	PQconninfoFree(opts);
+	return option;
 }
 
 /*
