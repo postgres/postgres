@@ -5863,3 +5863,91 @@ select '12345.0000000000000000000000000000000000000000000005'::jsonb::int8;
  12345
 (1 row)
 
+-- single argument jsonb functions as jsonb_function(jsonb) and jsonb.jsonb_function
+select jsonb_typeof('{"a":1}'::jsonb);
+ jsonb_typeof 
+--------------
+ object
+(1 row)
+
+select ('{"a":1}'::jsonb).jsonb_typeof;
+ jsonb_typeof 
+--------------
+ object
+(1 row)
+
+select jsonb_array_length('["a", "b", "c"]'::jsonb);
+ jsonb_array_length 
+--------------------
+                  3
+(1 row)
+
+select ('["a", "b", "c"]'::jsonb).jsonb_array_length;
+ jsonb_array_length 
+--------------------
+                  3
+(1 row)
+
+select jsonb_object_keys('{"a":1, "b":2}'::jsonb);
+ jsonb_object_keys 
+-------------------
+ a
+ b
+(2 rows)
+
+select ('{"a":1, "b":2}'::jsonb).jsonb_object_keys;
+ jsonb_object_keys 
+-------------------
+ a
+ b
+(2 rows)
+
+-- cast jsonb to other types as (jsonb)::type and (jsonb).type
+select ('123.45'::jsonb)::numeric;
+ numeric 
+---------
+  123.45
+(1 row)
+
+select ('123.45'::jsonb).numeric;
+ numeric 
+---------
+  123.45
+(1 row)
+
+select ('[{"name": "alice"}, {"name": "bob"}]'::jsonb)::name;
+                 name                 
+--------------------------------------
+ [{"name": "alice"}, {"name": "bob"}]
+(1 row)
+
+select ('[{"name": "alice"}, {"name": "bob"}]'::jsonb).name;
+                 name                 
+--------------------------------------
+ [{"name": "alice"}, {"name": "bob"}]
+(1 row)
+
+select ('true'::jsonb)::bool;
+ bool 
+------
+ t
+(1 row)
+
+select ('true'::jsonb).bool;
+ bool 
+------
+ t
+(1 row)
+
+select ('{"text": "hello"}'::jsonb)::text;
+       text        
+-------------------
+ {"text": "hello"}
+(1 row)
+
+select ('{"text": "hello"}'::jsonb).text;
+       text        
+-------------------
+ {"text": "hello"}
+(1 row)
+
