@@ -264,6 +264,8 @@ wakeupWaiters(WaitLSNType lsnType, XLogRecPtr currentLSN)
 
 	do
 	{
+		int			j;
+
 		numWakeUpProcs = 0;
 		LWLockAcquire(WaitLSNLock, LW_EXCLUSIVE);
 
@@ -303,8 +305,8 @@ wakeupWaiters(WaitLSNType lsnType, XLogRecPtr currentLSN)
 		 * at worst we may set a latch for the wrong process or for no process
 		 * at all, which is harmless.
 		 */
-		for (i = 0; i < numWakeUpProcs; i++)
-			SetLatch(&GetPGProcByNumber(wakeUpProcs[i])->procLatch);
+		for (j = 0; j < numWakeUpProcs; j++)
+			SetLatch(&GetPGProcByNumber(wakeUpProcs[j])->procLatch);
 
 	} while (numWakeUpProcs == WAKEUP_PROC_STATIC_ARRAY_SIZE);
 }
