@@ -60,6 +60,8 @@ static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
 static char *libpqrcv_identify_system(WalReceiverConn *conn,
 									  TimeLineID *primary_tli);
 static char *libpqrcv_get_dbname_from_conninfo(const char *connInfo);
+static char *libpqrcv_get_option_from_conninfo(const char *connInfo,
+											   const char *keyword);
 static int	libpqrcv_server_version(WalReceiverConn *conn);
 static void libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 											 TimeLineID tli, char **filename,
@@ -148,6 +150,7 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 	const char *keys[6];
 	const char *vals[6];
 	int			i = 0;
+	char	   *options_val = NULL;
 
 	/*
 	 * Re-validate connection string. The validation already happened at DDL
@@ -175,6 +178,8 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 
 		if (logical)
 		{
+			char	   *opt = NULL;
+
 			/* Tell the publisher to translate to our encoding */
 			keys[++i] = "client_encoding";
 			vals[i] = GetDatabaseEncodingName();
@@ -187,8 +192,13 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 			 * running in the subscriber, such as triggers.)  This should
 			 * match what pg_dump does.
 			 */
+			opt = libpqrcv_get_option_from_conninfo(conninfo, "options");
+			options_val = psprintf("%s -c datestyle=ISO -c intervalstyle=postgres -c extra_float_digits=3",
+								   (opt == NULL) ? "" : opt);
 			keys[++i] = "options";
-			vals[i] = "-c datestyle=ISO -c intervalstyle=postgres -c extra_float_digits=3";
+			vals[i] = options_val;
+			if (opt != NULL)
+				pfree(opt);
 		}
 		else
 		{
@@ -253,6 +263,9 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 		if (rc & io_flag)
 			status = PQconnectPoll(conn->streamConn);
 	} while (status != PGRES_POLLING_OK && status != PGRES_POLLING_FAILED);
+
+	if (options_val != NULL)
+		pfree(options_val);
 
 	if (PQstatus(conn->streamConn) != CONNECTION_OK)
 		goto bad_connection_errmsg;
@@ -501,8 +514,20 @@ libpqrcv_server_version(WalReceiverConn *conn)
 static char *
 libpqrcv_get_dbname_from_conninfo(const char *connInfo)
 {
+	return libpqrcv_get_option_from_conninfo(connInfo, "dbname");
+}
+
+/*
+ * Get the value of the option with the given keyword from the primary
+ * server's conninfo.
+ *
+ * If the option is not found in connInfo, return NULL value.
+ */
+static char *
+libpqrcv_get_option_from_conninfo(const char *connInfo, const char *keyword)
+{
 	PQconninfoOption *opts;
-	char	   *dbname = NULL;
+	char	   *option = NULL;
 	char	   *err = NULL;
 
 	opts = PQconninfoParse(connInfo, &err);
@@ -520,21 +545,21 @@ libpqrcv_get_dbname_from_conninfo(const char *connInfo)
 	for (PQconninfoOption *opt = opts; opt->keyword != NULL; ++opt)
 	{
 		/*
-		 * If multiple dbnames are specified, then the last one will be
-		 * returned
+		 * If the same option appears multiple times, then the last one will
+		 * be returned
 		 */
-		if (strcmp(opt->keyword, "dbname") == 0 && opt->val &&
+		if (strcmp(opt->keyword, keyword) == 0 && opt->val &&
 			*opt->val)
 		{
-			if (dbname)
-				pfree(dbname);
+			if (option)
+				pfree(option);
 
-			dbname = pstrdup(opt->val);
+			option = pstrdup(opt->val);
 		}
 	}
 
 	PQconninfoFree(opts);
-	return dbname;
+	return option;
 }
 
 /*
