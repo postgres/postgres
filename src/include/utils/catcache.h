@@ -93,7 +93,7 @@ typedef struct catctup
 	 * lookups.  Keep the dlist_node field first so that Valgrind understands
 	 * the struct is reachable.
 	 */
-	dlist_node	cache_elem;		/* list member of per-bucket list */
+	dlist_node	cache_elem;		/* member for CatCache.cc_bucket[] dlist */
 
 	int			ct_magic;		/* for identifying CatCTup entries */
 #define CT_MAGIC   0x57261502
@@ -144,9 +144,6 @@ typedef struct catctup
  * object contains links to cache entries for all the table rows satisfying
  * the partial key.  (Note: none of these will be negative cache entries.)
  *
- * A CatCList is only a member of a per-cache list; we do not currently
- * divide them into hash buckets.
- *
  * A list marked "dead" must not be returned by subsequent searches.
  * However, it won't be physically deleted from the cache until its
  * refcount goes to zero.  (A list should be marked dead if any of its
@@ -163,7 +160,7 @@ typedef struct catclist
 	 * Keep the dlist_node field first so that Valgrind understands the struct
 	 * is reachable.
 	 */
-	dlist_node	cache_elem;		/* list member of per-catcache list */
+	dlist_node	cache_elem;		/* member for CatCache.cc_lbucket[] dlist */
 
 	int			cl_magic;		/* for identifying CatCList entries */
 #define CL_MAGIC   0x52765103
