@@ -60,6 +60,13 @@
 #define BGWORKER_BACKEND_DATABASE_CONNECTION		0x0002
 
 /*
+ * Exit the bgworker if its database is involved in a CREATE, ALTER or DROP
+ * database command.  It requires BGWORKER_SHMEM_ACCESS and
+ * BGWORKER_BACKEND_DATABASE_CONNECTION.
+ */
+#define BGWORKER_INTERRUPTIBLE			0x0004
+
+/*
  * This class is used internally for parallel queries, to keep track of the
  * number of active parallel workers and make sure we never launch more than
  * max_parallel_workers parallel workers at the same time.  Third party
@@ -128,6 +135,9 @@ extern const char *GetBackgroundWorkerTypeByPid(pid_t pid);
 
 /* Terminate a bgworker */
 extern void TerminateBackgroundWorker(BackgroundWorkerHandle *handle);
+
+/* Terminate background workers connected to database */
+extern void TerminateBackgroundWorkersForDatabase(Oid databaseId);
 
 /* This is valid in a running worker */
 extern PGDLLIMPORT BackgroundWorker *MyBgworkerEntry;

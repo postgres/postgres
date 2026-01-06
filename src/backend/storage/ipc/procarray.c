@@ -56,11 +56,13 @@
 #include "catalog/pg_authid.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/bgworker.h"
 #include "port/pg_lfind.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
@@ -3687,8 +3689,10 @@ CountUserBackends(Oid roleid)
  * CountOtherDBBackends -- check for other backends running in the given DB
  *
  * If there are other backends in the DB, we will wait a maximum of 5 seconds
- * for them to exit.  Autovacuum backends are encouraged to exit early by
- * sending them SIGTERM, but normal user backends are just waited for.
+ * for them to exit (or 0.3s for testing purposes).  Autovacuum backends are
+ * encouraged to exit early by sending them SIGTERM, but normal user backends
+ * are just waited for.  If background workers connected to this database are
+ * marked as interruptible, they are terminated.
  *
  * The current backend is always ignored; it is caller's responsibility to
  * check whether the current backend uses the given DB, if it's important.
@@ -3713,10 +3717,19 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 
 #define MAXAUTOVACPIDS	10		/* max autovacs to SIGTERM per iteration */
 	int			autovac_pids[MAXAUTOVACPIDS];
-	int			tries;
 
-	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
-	for (tries = 0; tries < 50; tries++)
+	/*
+	 * Retry up to 50 times with 100ms between attempts (max 5s total). Can be
+	 * reduced to 3 attempts (max 0.3s total) to speed up tests.
+	 */
+	int			ntries = 50;
+
+#ifdef USE_INJECTION_POINTS
+	if (IS_INJECTION_POINT_ATTACHED("procarray-reduce-count"))
+		ntries = 3;
+#endif
+
+	for (int tries = 0; tries < ntries; tries++)
 	{
 		int			nautovacs = 0;
 		bool		found = false;
@@ -3765,6 +3778,12 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 		 */
 		for (index = 0; index < nautovacs; index++)
 			(void) kill(autovac_pids[index], SIGTERM);	/* ignore any error */
+
+		/*
+		 * Terminate all background workers for this database, if they have
+		 * requested it (BGWORKER_INTERRUPTIBLE).
+		 */
+		TerminateBackgroundWorkersForDatabase(databaseId);
 
 		/* sleep, then try again */
 		pg_usleep(100 * 1000L); /* 100ms */

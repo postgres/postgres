@@ -108,6 +108,29 @@ typedef struct BackgroundWorker
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><literal>BGWORKER_INTERRUPTIBLE</literal></term>
+     <listitem>
+     <para>
+      <indexterm><primary>BGWORKER_INTERRUPTIBLE</primary></indexterm>
+      Requests termination of the background worker when its connected database is
+      dropped, renamed, moved to a different tablespace, or used as a template for
+      <command>CREATE DATABASE</command>. Specifically, the postmaster sends a
+      termination signal when any of these commands affect the worker's database:
+      <itemizedlist>
+       <listitem><para><command>DROP DATABASE</command></para></listitem>
+       <listitem><para><command>ALTER DATABASE RENAME
+       TO</command></para></listitem>
+       <listitem><para><command>ALTER DATABASE SET
+       TABLESPACE</command></para></listitem>
+       <listitem><para><command>CREATE DATABASE</command></para></listitem>
+      </itemizedlist>
+      Requires both <literal>BGWORKER_SHMEM_ACCESS</literal> and
+      <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal>.
+     </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
 
   </para>

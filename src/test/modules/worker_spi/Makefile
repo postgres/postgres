@@ -6,6 +6,10 @@ EXTENSION = worker_spi
 DATA = worker_spi--1.0.sql
 PGFILEDESC = "worker_spi - background worker example"
 
+EXTRA_INSTALL = src/test/modules/injection_points
+
+export enable_injection_points
+
 TAP_TESTS = 1
 
 ifdef USE_PGXS
