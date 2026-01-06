@@ -344,13 +344,7 @@ ReplicationSlotValidateNameInternal(const char *name, int *err_code,
  * name: Name of the slot
  * db_specific: logical decoding is db specific; if the slot is going to
  *	   be used for that pass true, otherwise false.
- * two_phase: Allows decoding of prepared transactions. We allow this option
- *     to be enabled only at the slot creation time. If we allow this option
- *     to be changed during decoding then it is quite possible that we skip
- *     prepare first time because this option was not enabled. Now next time
- *     during getting changes, if the two_phase option is enabled it can skip
- *     prepare because by that time start decoding point has been moved. So the
- *     user will only get commit prepared.
+ * two_phase: If enabled, allows decoding of prepared transactions.
  * failover: If enabled, allows the slot to be synced to standbys so
  *     that logical replication can be resumed after failover.
  * synced: True if the slot is synchronized from the primary server.
@@ -868,6 +862,16 @@ ReplicationSlotDrop(const char *name, bool nowait)
 
 /*
  * Change the definition of the slot identified by the specified name.
+ *
+ * Altering the two_phase property of a slot requires caution on the
+ * client-side. Enabling it at any random point during decoding has the
+ * risk that transactions prepared before this change may be skipped by
+ * the decoder, leading to missing prepare records on the client. So, we
+ * enable it for subscription related slots only once the initial tablesync
+ * is finished. See comments atop worker.c. Disabling it is safe only when
+ * there are no pending prepared transaction, otherwise, the changes of
+ * already prepared transactions can be replicated again along with their
+ * corresponding commit leading to duplicate data or errors.
  */
 void
 ReplicationSlotAlter(const char *name, const bool *failover,
