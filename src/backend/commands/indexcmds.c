@@ -2460,8 +2460,8 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
  * Finds an operator from a CompareType.  This is used for temporal index
  * constraints (and other temporal features) to look up equality and overlaps
  * operators.  We ask an opclass support function to translate from the
- * compare type to the internal strategy numbers.  If the function isn't
- * defined or it gives no result, we set *strat to InvalidStrategy.
+ * compare type to the internal strategy numbers.  Raises ERROR on search
+ * failure.
  */
 void
 GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
