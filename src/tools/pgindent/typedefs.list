@@ -3190,6 +3190,7 @@ TypeName
 TzAbbrevCache
 U32
 U8
+UCaseMap
 UChar
 UCharIterator
 UColAttributeValue

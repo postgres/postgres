@@ -30,7 +30,7 @@
 #define BUFSZ 256
 
 #ifdef USE_ICU
-static UCaseMap * casemap = NULL;
+static UCaseMap *casemap = NULL;
 #endif
 
 typedef size_t (*TestFunc) (char *dst, size_t dstsize, const char *src,

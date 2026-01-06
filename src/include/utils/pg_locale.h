@@ -21,6 +21,7 @@
 #undef U_SHOW_CPLUSPLUS_HEADER_API
 #define U_SHOW_CPLUSPLUS_HEADER_API 0
 #include <unicode/ucol.h>
+#include <unicode/ucasemap.h>
 #endif
 
 /* use for libc locale names */
@@ -168,6 +169,7 @@ struct pg_locale_struct
 			const char *locale;
 			UCollator  *ucol;
 			locale_t	lt;
+			UCaseMap   *ucasemap;
 		}			icu;
 #endif
 	};
