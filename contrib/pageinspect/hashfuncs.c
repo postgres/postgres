@@ -415,6 +415,10 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
+	/*
+	 * This uses relation_open() and not index_open().  The latter allows
+	 * partitioned indexes, and these are forbidden here.
+	 */
 	indexRel = relation_open(indexRelid, AccessShareLock);
 
 	if (!IS_INDEX(indexRel) || !IS_HASH(indexRel))
@@ -486,7 +490,7 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 	bit = ISSET(freep, bitmapbit) != 0;
 
 	_hash_relbuf(indexRel, mapbuf);
-	index_close(indexRel, AccessShareLock);
+	relation_close(indexRel, AccessShareLock);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)

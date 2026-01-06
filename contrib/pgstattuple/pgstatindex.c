@@ -514,6 +514,10 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	bool		nulls[3] = {false, false, false};
 	Datum		result;
 
+	/*
+	 * This uses relation_open() and not index_open().  The latter allows
+	 * partitioned indexes, and these are forbidden here.
+	 */
 	rel = relation_open(relid, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_GIN(rel))
@@ -597,6 +601,10 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	float8		free_percent;
 	uint64		total_space;
 
+	/*
+	 * This uses relation_open() and not index_open().  The latter allows
+	 * partitioned indexes, and these are forbidden here.
+	 */
 	rel = relation_open(relid, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_HASH(rel))
@@ -691,7 +699,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	}
 
 	/* Done accessing the index */
-	index_close(rel, AccessShareLock);
+	relation_close(rel, AccessShareLock);
 
 	/* Count unused pages as free space. */
 	stats.free_space += (uint64) stats.unused_pages * stats.space_per_page;
