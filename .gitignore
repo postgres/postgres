@@ -56,3 +56,4 @@ pglite.js
 pglite.html
 *.map
 pglite-wasm/excluded.imports
+*.symbols

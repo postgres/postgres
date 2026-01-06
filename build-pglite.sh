@@ -8,13 +8,15 @@
 INSTALL_FOLDER=${INSTALL_FOLDER:-"/install/pglite"}
 
 # build with optimizations by default aka release
-PGLITE_CFLAGS="-O2"
+# PGLITE_CFLAGS="-sDYLINK_DEBUG=2 -g -gsource-map --no-wasm-opt -Wbad-function-cast -Wcast-function-type"
+PGLITE_CFLAGS=""
 if [ "$DEBUG" = true ]
 then
     echo "pglite: building debug version."
-    PGLITE_CFLAGS="-g -gsource-map --no-wasm-opt"
+    PGLITE_CFLAGS="$PGLITE_CFLAGS -g -gsource-map --no-wasm-opt --emit-symbol-map"
 else
     echo "pglite: building release version."
+    PGLITE_CFLAGS="$PGLITE_CFLAGS -O2"
     # we shouldn't need to do this, but there's a bug somewhere that prevents a successful build if this is set
     unset DEBUG
 fi
@@ -38,7 +40,7 @@ else
 fi
 
 # we define here "all" emscripten flags in order to allow native builds (like libpglite)
-EXPORTED_RUNTIME_METHODS="addFunction,removeFunction,FS,MEMFS"
+EXPORTED_RUNTIME_METHODS="addFunction,removeFunction,FS,MEMFS,wasmTable"
 PGLITE_EMSCRIPTEN_FLAGS="-sWASM_BIGINT \
 -sSUPPORT_LONGJMP=emscripten \
 -sFORCE_FILESYSTEM=1 \
@@ -65,10 +67,13 @@ emmake make PORTNAME=emscripten -j || { echo 'error: emmake make PORTNAME=emscri
 emmake make PORTNAME=emscripten install || { echo 'error: emmake make PORTNAME=emscripten install' ; exit 22; }
 
 # Step 3.1: make all contrib extensions - do not install
+
+# Step 3.1.2 all the rest of contrib
 emmake make PORTNAME=emscripten -C contrib/ -j || { echo 'error: emmake make PORTNAME=emscripten -C contrib/ -j' ; exit 31; }
 # Step 3.2: make dist contrib extensions - this will create an archive for each extension
 emmake make PORTNAME=emscripten -C contrib/ dist || { echo 'error: emmake make PORTNAME=emscripten -C contrib/ dist' ; exit 32; }
 # the above will also create a file with the imports that each extension needs - we pass these as input in the next step for emscripten to keep alive
+
 
 # Step 4: make and dist other extensions
 SAVE_PATH=$PATH
@@ -78,7 +83,7 @@ emmake make OPTFLAGS="" PORTNAME=emscripten -C pglite/ dist || { echo 'error: ma
 PATH=$SAVE_PATH
 
 # Step 5: make and install pglite
-EXPORTED_RUNTIME_METHODS="MEMFS,IDBFS,FS,setValue,getValue,UTF8ToString,stringToNewUTF8,stringToUTF8OnStack,addFunction,removeFunction"
+EXPORTED_RUNTIME_METHODS="MEMFS,IDBFS,FS,setValue,getValue,UTF8ToString,stringToNewUTF8,stringToUTF8OnStack,addFunction,removeFunction,wasmTable"
 PGLITE_EMSCRIPTEN_FLAGS="-sWASM_BIGINT \
 -sSUPPORT_LONGJMP=emscripten \
 -sFORCE_FILESYSTEM=1 \
@@ -89,3 +94,9 @@ PGLITE_EMSCRIPTEN_FLAGS="-sWASM_BIGINT \
 -sEXPORTED_RUNTIME_METHODS=$EXPORTED_RUNTIME_METHODS"
 # Building pglite itself needs to be the last step because of the PRELOAD_FILES parameter (a list of files and folders) need to be available.
 PGLITE_CFLAGS="$PGLITE_CFLAGS $PGLITE_EMSCRIPTEN_FLAGS" emmake make PORTNAME=emscripten -j -C src/backend/ install-pglite || { echo 'emmake make OPTFLAGS="" PORTNAME=emscripten -j -C pglite' ; exit 51; }
+
+# Step 3.1.1 pgcrypto - special case
+cd ./pglite/ && ./build-pgcrypto.sh && cd ../
+PGLITE_WITH_PGCRYPTO=1 emmake make PORTNAME=emscripten -C contrib/ dist 
+# hack for pgcrypto. since we're linking lssl and lcrypto directly to the extension, their respective symbols should not be exported
+# find / -name pgcrypto.imports -exec rm -f {} \;

@@ -62,9 +62,6 @@ endif
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
 SHLIB_LINK += $(filter -lcrypto -lz, $(LIBS))
-ifeq ($(PORTNAME), emscripten)
-SHLIB_LINK += -lcrypto
-endif
 ifeq ($(PORTNAME), win32)
 SHLIB_LINK += $(filter -leay32, $(LIBS))
 # those must be at the end

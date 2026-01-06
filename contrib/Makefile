@@ -57,6 +57,10 @@ else
 ALWAYS_SUBDIRS += pgcrypto sslinfo
 endif
 
+ifeq ($(PGLITE_WITH_PGCRYPTO), 1)
+SUBDIRS += pgcrypto
+endif
+
 ifneq ($(with_uuid),no)
 SUBDIRS += uuid-ossp
 else

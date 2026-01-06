@@ -95,7 +95,7 @@ postgres: $(OBJS)
 # excludes the one in excluded.pglite.imports and adds a leading _ to each.
 pglite-exported-functions:
 	$(MKDIR_P) '$(emscripten_imports_dir)'
-	cat $(top_builddir)/pglite-wasm/excluded.*.imports $(top_builddir)/src/interfaces/libpq/exports.list $(LIB_EXPORTS_DIR)/libossp-uuid.exports | sort -u > '$(top_builddir)/pglite-wasm/excluded.imports'
+	cat $(top_builddir)/pglite-wasm/excluded.*.imports $(top_builddir)/src/interfaces/libpq/exports.list $(LIB_EXPORTS_DIR)/libossp-uuid.exports /install/exports/libcrypto.exports /install/exports/libssl.exports | sort -u > '$(top_builddir)/pglite-wasm/excluded.imports'
 	cat $(DESTDIR)$(emscripten_extension_imports_dir)/*.imports '$(top_builddir)/pglite-wasm/included.pglite.imports' | \
 	sort -u | \
 	grep -Fvx -f '$(top_builddir)/pglite-wasm/excluded.imports' | \
