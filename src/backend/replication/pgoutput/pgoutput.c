@@ -342,7 +342,11 @@ parse_output_parameters(List *options, PGOutputData *data)
 						 errmsg("conflicting or redundant options")));
 			publication_names_given = true;
 
-			if (!SplitIdentifierString(strVal(defel->arg), ',',
+			/*
+			 * Pass a copy of the DefElem->arg since SplitIdentifierString
+			 * modifies its input.
+			 */
+			if (!SplitIdentifierString(pstrdup(strVal(defel->arg)), ',',
 									   &data->publication_names))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),

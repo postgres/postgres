@@ -122,7 +122,12 @@ parse_publication_options(ParseState *pstate,
 			pubactions->pubtruncate = false;
 
 			*publish_given = true;
-			publish = defGetString(defel);
+
+			/*
+			 * SplitIdentifierString destructively modifies its input, so make
+			 * a copy so we don't modify the memory of the executing statement
+			 */
+			publish = pstrdup(defGetString(defel));
 
 			if (!SplitIdentifierString(publish, ',', &publish_list))
 				ereport(ERROR,
