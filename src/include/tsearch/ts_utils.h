@@ -38,14 +38,12 @@ extern bool gettoken_tsvector(TSVectorParseState state,
 extern void close_tsvector_parser(TSVectorParseState state);
 
 /* phrase operator begins with '<' */
-#define ISOPERATOR(x) \
-	( pg_mblen(x) == 1 && ( *(x) == '!' ||	\
-							*(x) == '&' ||	\
-							*(x) == '|' ||	\
-							*(x) == '(' ||	\
-							*(x) == ')' ||	\
-							*(x) == '<'		\
-						  ) )
+#define ISOPERATOR(x)		(*(x) == '!' ||	\
+							 *(x) == '&' ||	\
+							 *(x) == '|' ||	\
+							 *(x) == '(' ||	\
+							 *(x) == ')' ||	\
+							 *(x) == '<')
 
 /* parse_tsquery */
 

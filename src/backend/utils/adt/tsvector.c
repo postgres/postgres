@@ -313,9 +313,9 @@ tsvectorout(PG_FUNCTION_ARGS)
 				lenbuf = 0,
 				pp;
 	WordEntry  *ptr = ARRPTR(out);
-	char	   *curbegin,
-			   *curin,
+	char	   *curin,
 			   *curout;
+	const char *curend;
 
 	lenbuf = out->size * 2 /* '' */ + out->size - 1 /* space */ + 2 /* \0 */ ;
 	for (i = 0; i < out->size; i++)
@@ -328,13 +328,14 @@ tsvectorout(PG_FUNCTION_ARGS)
 	curout = outbuf = (char *) palloc(lenbuf);
 	for (i = 0; i < out->size; i++)
 	{
-		curbegin = curin = STRPTR(out) + ptr->pos;
+		curin = STRPTR(out) + ptr->pos;
+		curend = curin + ptr->len;
 		if (i != 0)
 			*curout++ = ' ';
 		*curout++ = '\'';
-		while (curin - curbegin < ptr->len)
+		while (curin < curend)
 		{
-			int			len = pg_mblen(curin);
+			int			len = pg_mblen_range(curin, curend);
 
 			if (t_iseq(curin, '\''))
 				*curout++ = '\'';

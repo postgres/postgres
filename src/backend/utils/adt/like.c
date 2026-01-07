@@ -54,20 +54,20 @@ static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
  *--------------------
  */
 static inline int
-wchareq(const char *p1, const char *p2)
+wchareq(const char *p1, int p1len, const char *p2, int p2len)
 {
-	int			p1_len;
+	int			p1clen;
 
 	/* Optimization:  quickly compare the first byte. */
 	if (*p1 != *p2)
 		return 0;
 
-	p1_len = pg_mblen(p1);
-	if (pg_mblen(p2) != p1_len)
+	p1clen = pg_mblen_with_len(p1, p1len);
+	if (pg_mblen_with_len(p2, p2len) != p1clen)
 		return 0;
 
 	/* They are the same length */
-	while (p1_len--)
+	while (p1clen--)
 	{
 		if (*p1++ != *p2++)
 			return 0;
@@ -106,11 +106,11 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 #define NextByte(p, plen)	((p)++, (plen)--)
 
 /* Set up to compile like_match.c for multibyte characters */
-#define CHAREQ(p1, p2) wchareq((p1), (p2))
+#define CHAREQ(p1, p1len, p2, p2len) wchareq((p1), (p1len), (p2), (p2len))
 #define NextChar(p, plen) \
-	do { int __l = pg_mblen(p); (p) +=__l; (plen) -=__l; } while (0)
+	do { int __l = pg_mblen_with_len((p), (plen)); (p) +=__l; (plen) -=__l; } while (0)
 #define CopyAdvChar(dst, src, srclen) \
-	do { int __l = pg_mblen(src); \
+	do { int __l = pg_mblen_with_len((src), (srclen)); \
 		 (srclen) -= __l; \
 		 while (__l-- > 0) \
 			 *(dst)++ = *(src)++; \
@@ -122,7 +122,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 #include "like_match.c"
 
 /* Set up to compile like_match.c for single-byte characters */
-#define CHAREQ(p1, p2) (*(p1) == *(p2))
+#define CHAREQ(p1, p1len, p2, p2len) (*(p1) == *(p2))
 #define NextChar(p, plen) NextByte((p), (plen))
 #define CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
 

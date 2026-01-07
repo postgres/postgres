@@ -126,7 +126,8 @@ typedef struct
 
 #define LQUERY_HASNOT		0x01
 
-#define ISALNUM(x)	( t_isalpha(x) || t_isdigit(x)	|| ( pg_mblen(x) == 1 && t_iseq((x), '_') ) )
+/* Caller has already called mblen, so we can use _unbounded variants safely. */
+#define ISALNUM(x)	( t_isalpha_unbounded(x) || t_isdigit_unbounded(x) || ( pg_mblen_unbounded(x) == 1 && t_iseq((x), '_') ) )
 
 /* full text query */
 

@@ -2439,11 +2439,15 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 	if (ws)
 	{
 		char	   *buf;
+		const char *end;
 
 		buf = VARDATA_ANY(ws);
-		while (buf - VARDATA_ANY(ws) < VARSIZE_ANY_EXHDR(ws))
+		end = buf + VARSIZE_ANY_EXHDR(ws);
+		while (buf < end)
 		{
-			if (pg_mblen(buf) == 1)
+			int			len = pg_mblen_range(buf, end);
+
+			if (len == 1)
 			{
 				switch (*buf)
 				{
@@ -2467,7 +2471,7 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 						stat->weight |= 0;
 				}
 			}
-			buf += pg_mblen(buf);
+			buf += len;
 		}
 	}
 

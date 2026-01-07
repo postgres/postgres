@@ -152,8 +152,8 @@ lpad(PG_FUNCTION_ARGS)
 	char	   *ptr1,
 			   *ptr2,
 			   *ptr2start,
-			   *ptr2end,
 			   *ptr_ret;
+	const char *ptr2end;
 	int			m,
 				s1len,
 				s2len;
@@ -198,7 +198,7 @@ lpad(PG_FUNCTION_ARGS)
 
 	while (m--)
 	{
-		int			mlen = pg_mblen(ptr2);
+		int			mlen = pg_mblen_range(ptr2, ptr2end);
 
 		memcpy(ptr_ret, ptr2, mlen);
 		ptr_ret += mlen;
@@ -211,7 +211,7 @@ lpad(PG_FUNCTION_ARGS)
 
 	while (s1len--)
 	{
-		int			mlen = pg_mblen(ptr1);
+		int			mlen = pg_mblen_unbounded(ptr1);
 
 		memcpy(ptr_ret, ptr1, mlen);
 		ptr_ret += mlen;
@@ -250,8 +250,8 @@ rpad(PG_FUNCTION_ARGS)
 	char	   *ptr1,
 			   *ptr2,
 			   *ptr2start,
-			   *ptr2end,
 			   *ptr_ret;
+	const char *ptr2end;
 	int			m,
 				s1len,
 				s2len;
@@ -291,11 +291,12 @@ rpad(PG_FUNCTION_ARGS)
 	m = len - s1len;
 
 	ptr1 = VARDATA_ANY(string1);
+
 	ptr_ret = VARDATA(ret);
 
 	while (s1len--)
 	{
-		int			mlen = pg_mblen(ptr1);
+		int			mlen = pg_mblen_unbounded(ptr1);
 
 		memcpy(ptr_ret, ptr1, mlen);
 		ptr_ret += mlen;
@@ -307,7 +308,7 @@ rpad(PG_FUNCTION_ARGS)
 
 	while (m--)
 	{
-		int			mlen = pg_mblen(ptr2);
+		int			mlen = pg_mblen_range(ptr2, ptr2end);
 
 		memcpy(ptr_ret, ptr2, mlen);
 		ptr_ret += mlen;
@@ -392,6 +393,7 @@ dotrim(const char *string, int stringlen,
 			 */
 			const char **stringchars;
 			const char **setchars;
+			const char *setend;
 			int		   *stringmblen;
 			int		   *setmblen;
 			int			stringnchars;
@@ -399,6 +401,7 @@ dotrim(const char *string, int stringlen,
 			int			resultndx;
 			int			resultnchars;
 			const char *p;
+			const char *pend;
 			int			len;
 			int			mblen;
 			const char *str_pos;
@@ -409,10 +412,11 @@ dotrim(const char *string, int stringlen,
 			stringnchars = 0;
 			p = string;
 			len = stringlen;
+			pend = p + len;
 			while (len > 0)
 			{
 				stringchars[stringnchars] = p;
-				stringmblen[stringnchars] = mblen = pg_mblen(p);
+				stringmblen[stringnchars] = mblen = pg_mblen_range(p, pend);
 				stringnchars++;
 				p += mblen;
 				len -= mblen;
@@ -423,10 +427,11 @@ dotrim(const char *string, int stringlen,
 			setnchars = 0;
 			p = set;
 			len = setlen;
+			setend = set + setlen;
 			while (len > 0)
 			{
 				setchars[setnchars] = p;
-				setmblen[setnchars] = mblen = pg_mblen(p);
+				setmblen[setnchars] = mblen = pg_mblen_range(p, setend);
 				setnchars++;
 				p += mblen;
 				len -= mblen;
@@ -804,6 +809,8 @@ translate(PG_FUNCTION_ARGS)
 			   *to_end;
 	char	   *source,
 			   *target;
+	const char *source_end;
+	const char *from_end;
 	int			m,
 				fromlen,
 				tolen,
@@ -818,9 +825,11 @@ translate(PG_FUNCTION_ARGS)
 	if (m <= 0)
 		PG_RETURN_TEXT_P(string);
 	source = VARDATA_ANY(string);
+	source_end = source + m;
 
 	fromlen = VARSIZE_ANY_EXHDR(from);
 	from_ptr = VARDATA_ANY(from);
+	from_end = from_ptr + fromlen;
 	tolen = VARSIZE_ANY_EXHDR(to);
 	to_ptr = VARDATA_ANY(to);
 	to_end = to_ptr + tolen;
@@ -844,12 +853,12 @@ translate(PG_FUNCTION_ARGS)
 
 	while (m > 0)
 	{
-		source_len = pg_mblen(source);
+		source_len = pg_mblen_range(source, source_end);
 		from_index = 0;
 
 		for (i = 0; i < fromlen; i += len)
 		{
-			len = pg_mblen(&from_ptr[i]);
+			len = pg_mblen_range(&from_ptr[i], from_end);
 			if (len == source_len &&
 				memcmp(source, &from_ptr[i], len) == 0)
 				break;
@@ -865,11 +874,11 @@ translate(PG_FUNCTION_ARGS)
 			{
 				if (p >= to_end)
 					break;
-				p += pg_mblen(p);
+				p += pg_mblen_range(p, to_end);
 			}
 			if (p < to_end)
 			{
-				len = pg_mblen(p);
+				len = pg_mblen_range(p, to_end);
 				memcpy(target, p, len);
 				target += len;
 				retlen += len;

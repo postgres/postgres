@@ -47,8 +47,8 @@ findwrd(char *in, char **end, uint16 *flags)
 	char	   *lastchar;
 
 	/* Skip leading spaces */
-	while (*in && t_isspace(in))
-		in += pg_mblen(in);
+	while (*in && t_isspace_cstr(in))
+		in += pg_mblen_cstr(in);
 
 	/* Return NULL on empty lines */
 	if (*in == '\0')
@@ -60,10 +60,10 @@ findwrd(char *in, char **end, uint16 *flags)
 	lastchar = start = in;
 
 	/* Find end of word */
-	while (*in && !t_isspace(in))
+	while (*in && !t_isspace_cstr(in))
 	{
 		lastchar = in;
-		in += pg_mblen(in);
+		in += pg_mblen_cstr(in);
 	}
 
 	if (in - lastchar == 1 && t_iseq(lastchar, '*') && flags)

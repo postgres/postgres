@@ -173,18 +173,29 @@ static char *
 find_word(char *str, int lenstr, char **endword, int *charlen)
 {
 	char	   *beginword = str;
+	const char *endstr = str + lenstr;
 
-	while (beginword - str < lenstr && !ISWORDCHR(beginword))
-		beginword += pg_mblen(beginword);
+	while (beginword < endstr)
+	{
+		int			clen = pg_mblen_range(beginword, endstr);
 
-	if (beginword - str >= lenstr)
+		if (ISWORDCHR(beginword, clen))
+			break;
+		beginword += clen;
+	}
+
+	if (beginword >= endstr)
 		return NULL;
 
 	*endword = beginword;
 	*charlen = 0;
-	while (*endword - str < lenstr && ISWORDCHR(*endword))
+	while (*endword < endstr)
 	{
-		*endword += pg_mblen(*endword);
+		int			clen = pg_mblen_range(*endword, endstr);
+
+		if (!ISWORDCHR(*endword, clen))
+			break;
+		*endword += clen;
 		(*charlen)++;
 	}
 
@@ -232,9 +243,9 @@ make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
 	if (bytelen > charlen)
 	{
 		/* Find multibyte character boundaries and apply compact_trigram */
-		int			lenfirst = pg_mblen(str),
-					lenmiddle = pg_mblen(str + lenfirst),
-					lenlast = pg_mblen(str + lenfirst + lenmiddle);
+		int			lenfirst = pg_mblen_unbounded(str),
+					lenmiddle = pg_mblen_unbounded(str + lenfirst),
+					lenlast = pg_mblen_unbounded(str + lenfirst + lenmiddle);
 
 		while ((ptr - str) + lenfirst + lenmiddle + lenlast <= bytelen)
 		{
@@ -245,7 +256,7 @@ make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
 
 			lenfirst = lenmiddle;
 			lenmiddle = lenlast;
-			lenlast = pg_mblen(ptr + lenfirst + lenmiddle);
+			lenlast = pg_mblen_unbounded(ptr + lenfirst + lenmiddle);
 		}
 	}
 	else
@@ -725,6 +736,7 @@ get_wildcard_part(const char *str, int lenstr,
 {
 	const char *beginword = str;
 	const char *endword;
+	const char *endstr = str + lenstr;
 	char	   *s = buf;
 	bool		in_leading_wildcard_meta = false;
 	bool		in_trailing_wildcard_meta = false;
@@ -737,11 +749,13 @@ get_wildcard_part(const char *str, int lenstr,
 	 * from this loop to the next one, since we may exit at a word character
 	 * that is in_escape.
 	 */
-	while (beginword - str < lenstr)
+	while (beginword < endstr)
 	{
+		clen = pg_mblen_range(beginword, endstr);
+
 		if (in_escape)
 		{
-			if (ISWORDCHR(beginword))
+			if (ISWORDCHR(beginword, clen))
 				break;
 			in_escape = false;
 			in_leading_wildcard_meta = false;
@@ -752,12 +766,12 @@ get_wildcard_part(const char *str, int lenstr,
 				in_escape = true;
 			else if (ISWILDCARDCHAR(beginword))
 				in_leading_wildcard_meta = true;
-			else if (ISWORDCHR(beginword))
+			else if (ISWORDCHR(beginword, clen))
 				break;
 			else
 				in_leading_wildcard_meta = false;
 		}
-		beginword += pg_mblen(beginword);
+		beginword += clen;
 	}
 
 	/*
@@ -790,12 +804,12 @@ get_wildcard_part(const char *str, int lenstr,
 	 * string boundary.  Strip escapes during copy.
 	 */
 	endword = beginword;
-	while (endword - str < lenstr)
+	while (endword < endstr)
 	{
-		clen = pg_mblen(endword);
+		clen = pg_mblen_range(endword, endstr);
 		if (in_escape)
 		{
-			if (ISWORDCHR(endword))
+			if (ISWORDCHR(endword, clen))
 			{
 				memcpy(s, endword, clen);
 				(*charlen)++;
@@ -823,7 +837,7 @@ get_wildcard_part(const char *str, int lenstr,
 				in_trailing_wildcard_meta = true;
 				break;
 			}
-			else if (ISWORDCHR(endword))
+			else if (ISWORDCHR(endword, clen))
 			{
 				memcpy(s, endword, clen);
 				(*charlen)++;

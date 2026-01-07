@@ -109,7 +109,7 @@ get_modifiers(char *buf, int16 *weight, bool *prefix)
 		return buf;
 
 	buf++;
-	while (*buf && pg_mblen(buf) == 1)
+	while (*buf && pg_mblen_cstr(buf) == 1)
 	{
 		switch (*buf)
 		{
@@ -186,7 +186,7 @@ parse_phrase_operator(TSQueryParserState pstate, int16 *distance)
 					continue;
 				}
 
-				if (!t_isdigit(ptr))
+				if (!t_isdigit_cstr(ptr))
 					return false;
 
 				errno = 0;
@@ -248,12 +248,12 @@ parse_or_operator(TSQueryParserState pstate)
 		return false;
 
 	/* it shouldn't be a part of any word */
-	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha(ptr) || t_isdigit(ptr))
+	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha_cstr(ptr) || t_isdigit_cstr(ptr))
 		return false;
 
 	for (;;)
 	{
-		ptr += pg_mblen(ptr);
+		ptr += pg_mblen_cstr(ptr);
 
 		if (*ptr == '\0')		/* got end of string without operand */
 			return false;
@@ -263,7 +263,7 @@ parse_or_operator(TSQueryParserState pstate)
 		 * So we still treat OR literal as operation with possibly incorrect
 		 * operand and will not search it as lexeme
 		 */
-		if (!t_isspace(ptr))
+		if (!t_isspace_cstr(ptr))
 			break;
 	}
 
@@ -306,7 +306,7 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 							 errmsg("syntax error in tsquery: \"%s\"",
 									state->buffer)));
 				}
-				else if (!t_isspace(state->buf))
+				else if (!t_isspace_cstr(state->buf))
 				{
 					/*
 					 * We rely on the tsvector parser to parse the value for
@@ -364,14 +364,14 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 				{
 					return (state->count) ? PT_ERR : PT_END;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!t_isspace_cstr(state->buf))
 				{
 					return PT_ERR;
 				}
 				break;
 		}
 
-		state->buf += pg_mblen(state->buf);
+		state->buf += pg_mblen_cstr(state->buf);
 	}
 }
 
@@ -425,7 +425,7 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					state->state = WAITOPERAND;
 					continue;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!t_isspace_cstr(state->buf))
 				{
 					/*
 					 * We rely on the tsvector parser to parse the value for
@@ -468,7 +468,7 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					state->buf++;
 					continue;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!t_isspace_cstr(state->buf))
 				{
 					/* insert implicit AND between operands */
 					state->state = WAITOPERAND;
@@ -478,7 +478,7 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 				break;
 		}
 
-		state->buf += pg_mblen(state->buf);
+		state->buf += pg_mblen_cstr(state->buf);
 	}
 }
 
@@ -961,9 +961,8 @@ infix(INFIX *in, int parentPriority, bool rightPhraseOp)
 				*(in->cur) = '\\';
 				in->cur++;
 			}
-			COPYCHAR(in->cur, op);
 
-			clen = pg_mblen(op);
+			clen = ts_copychar_cstr(in->cur, op);
 			op += clen;
 			in->cur += clen;
 		}

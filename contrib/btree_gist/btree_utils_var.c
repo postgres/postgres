@@ -116,36 +116,47 @@ gbt_var_leaf2node(GBT_VARKEY *leaf, const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 
 /*
  * returns the common prefix length of a node key
+ *
+ * If the underlying type is character data, the prefix length may point in
+ * the middle of a multibyte character.
 */
 static int32
 gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 {
 	GBT_VARKEY_R r = gbt_var_key_readable(node);
 	int32		i = 0;
-	int32		l = 0;
+	int32		l_left_to_match = 0;
+	int32		l_total = 0;
 	int32		t1len = VARSIZE(r.lower) - VARHDRSZ;
 	int32		t2len = VARSIZE(r.upper) - VARHDRSZ;
 	int32		ml = Min(t1len, t2len);
 	char	   *p1 = VARDATA(r.lower);
 	char	   *p2 = VARDATA(r.upper);
+	const char *end1 = p1 + t1len;
+	const char *end2 = p2 + t2len;
 
 	if (ml == 0)
 		return 0;
 
 	while (i < ml)
 	{
-		if (tinfo->eml > 1 && l == 0)
+		if (tinfo->eml > 1 && l_left_to_match == 0)
 		{
-			if ((l = pg_mblen(p1)) != pg_mblen(p2))
+			l_total = pg_mblen_range(p1, end1);
+			if (l_total != pg_mblen_range(p2, end2))
 			{
 				return i;
 			}
+			l_left_to_match = l_total;
 		}
 		if (*p1 != *p2)
 		{
 			if (tinfo->eml > 1)
 			{
-				return (i - l + 1);
+				int32		l_matched_subset = l_total - l_left_to_match;
+
+				/* end common prefix at final byte of last matching char */
+				return i - l_matched_subset;
 			}
 			else
 			{
@@ -155,7 +166,7 @@ gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 
 		p1++;
 		p2++;
-		l--;
+		l_left_to_match--;
 		i++;
 	}
 	return ml;					/* lower == upper */

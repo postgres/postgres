@@ -26,14 +26,14 @@ getlexeme(char *start, char *end, int *len)
 	char	   *ptr;
 	int			charlen;
 
-	while (start < end && (charlen = pg_mblen(start)) == 1 && t_iseq(start, '_'))
+	while (start < end && (charlen = pg_mblen_range(start, end)) == 1 && t_iseq(start, '_'))
 		start += charlen;
 
 	ptr = start;
 	if (ptr >= end)
 		return NULL;
 
-	while (ptr < end && !((charlen = pg_mblen(ptr)) == 1 && t_iseq(ptr, '_')))
+	while (ptr < end && !((charlen = pg_mblen_range(ptr, end)) == 1 && t_iseq(ptr, '_')))
 		ptr += charlen;
 
 	*len = ptr - start;
