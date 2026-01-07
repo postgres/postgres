@@ -3,6 +3,8 @@
 <appendix id="sourcerepo">
  <title>The Source Code Repository</title>
 
+ <indexterm zone="sourcerepo"><primary>Git</primary></indexterm>
+
  <para>
   The <productname>PostgreSQL</productname> source code is stored and managed
   using the <productname>Git</productname> version control system. A public
