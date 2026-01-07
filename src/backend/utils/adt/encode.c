@@ -215,7 +215,7 @@ hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
 			ereturn(escontext, 0,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid hexadecimal digit: \"%.*s\"",
-							pg_mblen(s), s)));
+							pg_mblen_range(s, srcend), s)));
 		s++;
 		if (s >= srcend)
 			ereturn(escontext, 0,
@@ -225,7 +225,7 @@ hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
 			ereturn(escontext, 0,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid hexadecimal digit: \"%.*s\"",
-							pg_mblen(s), s)));
+							pg_mblen_range(s, srcend), s)));
 		s++;
 		*p++ = (v1 << 4) | v2;
 	}
@@ -354,7 +354,7 @@ pg_base64_decode(const char *src, size_t len, char *dst)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid symbol \"%.*s\" found while decoding base64 sequence",
-								pg_mblen(s - 1), s - 1)));
+								pg_mblen_range(s - 1, srcend), s - 1)));
 		}
 		/* add it to buffer */
 		buf = (buf << 6) + b;

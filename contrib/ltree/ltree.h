@@ -127,7 +127,7 @@ typedef struct
 #define LQUERY_HASNOT		0x01
 
 /* valid label chars are alphanumerics, underscores and hyphens */
-#define ISLABEL(x) ( t_isalnum(x) || t_iseq(x, '_') || t_iseq(x, '-') )
+#define ISLABEL(x) ( t_isalnum_cstr(x) || t_iseq(x, '_') || t_iseq(x, '-') )
 
 /* full text query */
 

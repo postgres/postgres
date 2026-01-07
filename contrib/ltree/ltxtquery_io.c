@@ -64,7 +64,7 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 
 	for (;;)
 	{
-		charlen = pg_mblen(state->buf);
+		charlen = pg_mblen_cstr(state->buf);
 
 		switch (state->state)
 		{
@@ -88,7 +88,7 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 					*lenval = charlen;
 					*flag = 0;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!t_isspace_cstr(state->buf))
 					ereturn(state->escontext, ERR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operand syntax error")));
