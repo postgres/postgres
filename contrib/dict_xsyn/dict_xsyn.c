@@ -48,15 +48,15 @@ find_word(char *in, char **end)
 	char	   *start;
 
 	*end = NULL;
-	while (*in && t_isspace(in))
-		in += pg_mblen(in);
+	while (*in && t_isspace_cstr(in))
+		in += pg_mblen_cstr(in);
 
 	if (!*in || *in == '#')
 		return NULL;
 	start = in;
 
-	while (*in && !t_isspace(in))
-		in += pg_mblen(in);
+	while (*in && !t_isspace_cstr(in))
+		in += pg_mblen_cstr(in);
 
 	*end = in;
 

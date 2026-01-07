@@ -682,7 +682,7 @@ report_json_context(JsonLexContext *lex)
 	{
 		/* Advance to next multibyte character */
 		if (IS_HIGHBIT_SET(*context_start))
-			context_start += pg_mblen(context_start);
+			context_start += pg_mblen_range(context_start, context_end);
 		else
 			context_start++;
 	}

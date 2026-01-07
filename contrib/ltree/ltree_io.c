@@ -55,7 +55,7 @@ parse_ltree(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 		if (t_iseq(ptr, '.'))
 			num++;
 		ptr += charlen;
@@ -70,7 +70,7 @@ parse_ltree(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 
 		switch (state)
 		{
@@ -292,7 +292,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 
 		if (t_iseq(ptr, '.'))
 			num++;
@@ -312,7 +312,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 
 		switch (state)
 		{
@@ -412,7 +412,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 			case LQPRS_WAITFNUM:
 				if (t_iseq(ptr, ','))
 					state = LQPRS_WAITSNUM;
-				else if (t_isdigit(ptr))
+				else if (t_isdigit_cstr(ptr))
 				{
 					int			low = atoi(ptr);
 
@@ -430,7 +430,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 					UNCHAR;
 				break;
 			case LQPRS_WAITSNUM:
-				if (t_isdigit(ptr))
+				if (t_isdigit_cstr(ptr))
 				{
 					int			high = atoi(ptr);
 
@@ -461,7 +461,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 			case LQPRS_WAITCLOSE:
 				if (t_iseq(ptr, '}'))
 					state = LQPRS_WAITEND;
-				else if (!t_isdigit(ptr))
+				else if (!t_isdigit_cstr(ptr))
 					UNCHAR;
 				break;
 			case LQPRS_WAITND:
@@ -472,7 +472,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 				}
 				else if (t_iseq(ptr, ','))
 					state = LQPRS_WAITSNUM;
-				else if (!t_isdigit(ptr))
+				else if (!t_isdigit_cstr(ptr))
 					UNCHAR;
 				break;
 			case LQPRS_WAITEND:

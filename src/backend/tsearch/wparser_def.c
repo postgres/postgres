@@ -1727,7 +1727,8 @@ TParserGet(TParser *prs)
 			prs->state->charlen = 0;
 		else
 			prs->state->charlen = (prs->charmaxlen == 1) ? prs->charmaxlen :
-				pg_mblen(prs->str + prs->state->posbyte);
+				pg_mblen_range(prs->str + prs->state->posbyte,
+							   prs->str + prs->lenstr);
 
 		Assert(prs->state->posbyte + prs->state->charlen <= prs->lenstr);
 		Assert(prs->state->state >= TPS_Base && prs->state->state < TPS_Null);

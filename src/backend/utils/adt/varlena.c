@@ -797,8 +797,11 @@ text_catenate(text *t1, text *t2)
  * charlen_to_bytelen()
  *	Compute the number of bytes occupied by n characters starting at *p
  *
- * It is caller's responsibility that there actually are n characters;
- * the string need not be null-terminated.
+ * The caller shall ensure there are n complete characters.  Callers achieve
+ * this by deriving "n" from regmatch_t findings from searching a wchar array.
+ * pg_mb2wchar_with_len() skips any trailing incomplete character, so regex
+ * matches will end no later than the last complete character.  (The string
+ * need not be null-terminated.)
  */
 static int
 charlen_to_bytelen(const char *p, int n)
@@ -813,7 +816,7 @@ charlen_to_bytelen(const char *p, int n)
 		const char *s;
 
 		for (s = p; n > 0; n--)
-			s += pg_mblen(s);
+			s += pg_mblen_unbounded(s); /* caller verified encoding */
 
 		return s - p;
 	}
@@ -946,6 +949,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		int32		slice_start;
 		int32		slice_size;
 		int32		slice_strlen;
+		int32		slice_len;
 		text	   *slice;
 		int32		E1;
 		int32		i;
@@ -1015,7 +1019,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			slice = (text *) DatumGetPointer(str);
 
 		/* see if we got back an empty string */
-		if (VARSIZE_ANY_EXHDR(slice) == 0)
+		slice_len = VARSIZE_ANY_EXHDR(slice);
+		if (slice_len == 0)
 		{
 			if (slice != (text *) DatumGetPointer(str))
 				pfree(slice);
@@ -1024,7 +1029,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 
 		/* Now we can get the actual length of the slice in MB characters */
 		slice_strlen = pg_mbstrlen_with_len(VARDATA_ANY(slice),
-											VARSIZE_ANY_EXHDR(slice));
+											slice_len);
 
 		/*
 		 * Check that the start position wasn't > slice_strlen. If so, SQL99
@@ -1051,7 +1056,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 */
 		p = VARDATA_ANY(slice);
 		for (i = 0; i < S1 - 1; i++)
-			p += pg_mblen(p);
+			p += pg_mblen_unbounded(p);
 
 		/* hang onto a pointer to our start position */
 		s = p;
@@ -1061,7 +1066,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 * length.
 		 */
 		for (i = S1; i < E1; i++)
-			p += pg_mblen(p);
+			p += pg_mblen_unbounded(p);
 
 		ret = (text *) palloc(VARHDRSZ + (p - s));
 		SET_VARSIZE(ret, VARHDRSZ + (p - s));
@@ -1359,6 +1364,8 @@ retry:
 	 */
 	if (state->is_multibyte_char_in_char)
 	{
+		const char *haystack_end = state->str1 + state->len1;
+
 		/* Walk one character at a time, until we reach the match. */
 
 		/* the search should never move backwards. */
@@ -1367,7 +1374,7 @@ retry:
 		while (state->refpoint < matchptr)
 		{
 			/* step to next character. */
-			state->refpoint += pg_mblen(state->refpoint);
+			state->refpoint += pg_mblen_range(state->refpoint, haystack_end);
 			state->refpos++;
 
 			/*
@@ -4682,6 +4689,8 @@ split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 	}
 	else
 	{
+		const char *end_ptr;
+
 		/*
 		 * When fldsep is NULL, each character in the input string becomes a
 		 * separate element in the result set.  The separator is effectively
@@ -4690,10 +4699,11 @@ split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 		inputstring_len = VARSIZE_ANY_EXHDR(inputstring);
 
 		start_ptr = VARDATA_ANY(inputstring);
+		end_ptr = start_ptr + inputstring_len;
 
 		while (inputstring_len > 0)
 		{
-			int			chunk_len = pg_mblen(start_ptr);
+			int			chunk_len = pg_mblen_range(start_ptr, end_ptr);
 
 			CHECK_FOR_INTERRUPTS();
 
@@ -5524,7 +5534,7 @@ text_reverse(PG_FUNCTION_ARGS)
 		{
 			int			sz;
 
-			sz = pg_mblen(p);
+			sz = pg_mblen_range(p, endp);
 			dst -= sz;
 			memcpy(dst, p, sz);
 			p += sz;
@@ -5685,7 +5695,7 @@ text_format(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("unrecognized format() type specifier \"%.*s\"",
-							pg_mblen(cp), cp),
+							pg_mblen_range(cp, end_ptr), cp),
 					 errhint("For a single \"%%\" use \"%%%%\".")));
 
 		/* If indirect width was specified, get its value */
@@ -5806,7 +5816,7 @@ text_format(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("unrecognized format() type specifier \"%.*s\"",
-								pg_mblen(cp), cp),
+								pg_mblen_range(cp, end_ptr), cp),
 						 errhint("For a single \"%%\" use \"%%%%\".")));
 				break;
 		}
