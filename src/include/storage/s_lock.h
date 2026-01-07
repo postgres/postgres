@@ -602,13 +602,24 @@ typedef LONG slock_t;
 
 #define SPIN_DELAY() spin_delay()
 
-/* If using Visual C++ on Win64, inline assembly is unavailable.
- * Use a _mm_pause intrinsic instead of rep nop.
- */
-#if defined(_WIN64)
+#ifdef _M_ARM64
 static __forceinline void
 spin_delay(void)
 {
+	/*
+	 * Research indicates ISB is better than __yield() on AArch64.  See
+	 * https://postgr.es/m/1c2a29b8-5b1e-44f7-a871-71ec5fefc120%40app.fastmail.com.
+	 */
+	__isb(_ARM64_BARRIER_SY);
+}
+#elif defined(_WIN64)
+static __forceinline void
+spin_delay(void)
+{
+	/*
+	 * If using Visual C++ on Win64, inline assembly is unavailable.
+	 * Use a _mm_pause intrinsic instead of rep nop.
+	 */
 	_mm_pause();
 }
 #else
@@ -621,11 +632,20 @@ spin_delay(void)
 #endif
 
 #include <intrin.h>
-#pragma intrinsic(_ReadWriteBarrier)
 
+#ifdef _M_ARM64
+
+/* _ReadWriteBarrier() is insufficient on non-TSO architectures. */
+#pragma intrinsic(_InterlockedExchange)
+#define S_UNLOCK(lock) _InterlockedExchange(lock, 0)
+
+#else
+
+#pragma intrinsic(_ReadWriteBarrier)
 #define S_UNLOCK(lock)	\
 	do { _ReadWriteBarrier(); (*(lock)) = 0; } while (0)
 
+#endif
 #endif
 
 

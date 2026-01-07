@@ -14,7 +14,11 @@
  */
 #include "c.h"
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
 #include <arm_acle.h>
+#endif
 
 #include "port/pg_crc32c.h"
 
