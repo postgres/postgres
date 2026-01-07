@@ -14,6 +14,10 @@
  */
 #include "postgres.h"
 
+#ifdef USE_ICU
+#include <unicode/uloc.h>
+#endif
+
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"

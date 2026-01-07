@@ -12,7 +12,9 @@
 #include "postgres.h"
 
 #ifdef USE_ICU
+#include <unicode/ucasemap.h>
 #include <unicode/ucnv.h>
+#include <unicode/ucol.h>
 #include <unicode/ustring.h>
 
 /*
