@@ -18,6 +18,8 @@
   <sect1 id="config-setting">
    <title>Setting Parameters</title>
 
+   <indexterm><primary>GUC</primary></indexterm>
+
    <sect2 id="config-setting-names-values">
     <title>Parameter Names and Values</title>
 

@@ -912,6 +912,23 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-guc">
+   <glossterm>GUC</glossterm>
+   <glossdef>
+    <para>
+     Based on a short-hand for Grand Unified Configuration, the subsystem
+     which controls server configuration, it is now a commonly used term
+     for the individual configuration parameters themselves. Typically meant
+     to refer to user settable parameters, it can also refer to internal or
+     build-time parameters.
+    </para>
+    <para>
+     For information on working with configuration parameters, see
+     <xref linkend="config-setting"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-heap">
    <glossterm>Heap</glossterm>
    <glossdef>
