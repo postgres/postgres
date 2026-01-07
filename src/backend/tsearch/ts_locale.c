@@ -31,36 +31,41 @@ static void tsearch_readline_callback(void *arg);
  */
 #define WC_BUF_LEN  3
 
-int
-t_isalpha(const char *ptr)
-{
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
-
-	if (clen == 1 || database_ctype_is_c)
-		return isalpha(TOUCHAR(ptr));
-
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswalpha((wint_t) character[0]);
+#define GENERATE_T_ISCLASS_DEF(character_class) \
+/* mblen shall be that of the first character */ \
+int \
+t_is##character_class##_with_len(const char *ptr, int mblen) \
+{ \
+	int			clen = pg_mblen_with_len(ptr, mblen); \
+	wchar_t		character[WC_BUF_LEN]; \
+	pg_locale_t mylocale = 0;	/* TODO */ \
+	if (clen == 1 || database_ctype_is_c) \
+		return is##character_class(TOUCHAR(ptr)); \
+	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale); \
+	return isw##character_class((wint_t) character[0]); \
+} \
+\
+/* ptr shall point to a NUL-terminated string */ \
+int \
+t_is##character_class##_cstr(const char *ptr) \
+{ \
+	return t_is##character_class##_with_len(ptr, pg_mblen_cstr(ptr)); \
+} \
+/* ptr shall point to a string with pre-validated encoding */ \
+int \
+t_is##character_class##_unbounded(const char *ptr) \
+{ \
+	return t_is##character_class##_with_len(ptr, pg_mblen_unbounded(ptr)); \
+} \
+/* historical name for _unbounded */ \
+int \
+t_is##character_class(const char *ptr) \
+{ \
+	return t_is##character_class##_unbounded(ptr); \
 }
 
-int
-t_isalnum(const char *ptr)
-{
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
-
-	if (clen == 1 || database_ctype_is_c)
-		return isalnum(TOUCHAR(ptr));
-
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswalnum((wint_t) character[0]);
-}
-
+GENERATE_T_ISCLASS_DEF(alnum)
+GENERATE_T_ISCLASS_DEF(alpha)
 
 /*
  * Set up to read a file using tsearch_readline().  This facility is

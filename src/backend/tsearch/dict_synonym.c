@@ -50,7 +50,7 @@ findwrd(char *in, char **end, uint16 *flags)
 
 	/* Skip leading spaces */
 	while (*in && isspace((unsigned char) *in))
-		in += pg_mblen(in);
+		in += pg_mblen_cstr(in);
 
 	/* Return NULL on empty lines */
 	if (*in == '\0')
@@ -65,7 +65,7 @@ findwrd(char *in, char **end, uint16 *flags)
 	while (*in && !isspace((unsigned char) *in))
 	{
 		lastchar = in;
-		in += pg_mblen(in);
+		in += pg_mblen_cstr(in);
 	}
 
 	if (in - lastchar == 1 && t_iseq(lastchar, '*') && flags)

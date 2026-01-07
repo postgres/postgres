@@ -24,6 +24,7 @@ ltree_crc32_sz(const char *buf, int size)
 {
 	pg_crc32	crc;
 	const char *p = buf;
+	const char *end = buf + size;
 	static pg_locale_t locale = NULL;
 
 	if (!locale)
@@ -46,7 +47,7 @@ ltree_crc32_sz(const char *buf, int size)
 		while (size > 0)
 		{
 			char		foldstr[UNICODE_CASEMAP_BUFSZ];
-			int			srclen = pg_mblen(p);
+			int			srclen = pg_mblen_range(p, end);
 			size_t		foldlen;
 
 			/* fold one codepoint at a time */

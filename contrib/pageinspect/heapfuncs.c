@@ -101,7 +101,7 @@ text_to_bits(char *str, int len)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("invalid character \"%.*s\" in t_bits string",
-							pg_mblen(str + off), str + off)));
+							pg_mblen_cstr(str + off), str + off)));
 
 		if (off % 8 == 7)
 			bits[off / 8] = byte;

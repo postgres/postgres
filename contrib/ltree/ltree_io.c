@@ -54,7 +54,7 @@ parse_ltree(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 		if (t_iseq(ptr, '.'))
 			num++;
 		ptr += charlen;
@@ -69,7 +69,7 @@ parse_ltree(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 
 		switch (state)
 		{
@@ -291,7 +291,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 
 		if (t_iseq(ptr, '.'))
 			num++;
@@ -311,7 +311,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 	ptr = buf;
 	while (*ptr)
 	{
-		charlen = pg_mblen(ptr);
+		charlen = pg_mblen_cstr(ptr);
 
 		switch (state)
 		{

@@ -37,10 +37,34 @@ typedef struct
 /* The second argument of t_iseq() must be a plain ASCII character */
 #define t_iseq(x,c)		(TOUCHAR(x) == (unsigned char) (c))
 
-#define COPYCHAR(d,s)	memcpy(d, s, pg_mblen(s))
+/* Copy multibyte character of known byte length, return byte length. */
+static inline int
+ts_copychar_with_len(void *dest, const void *src, int length)
+{
+	memcpy(dest, src, length);
+	return length;
+}
 
-extern int	t_isalpha(const char *ptr);
-extern int	t_isalnum(const char *ptr);
+/* Copy multibyte character from null-terminated string,  return byte length. */
+static inline int
+ts_copychar_cstr(void *dest, const void *src)
+{
+	return ts_copychar_with_len(dest, src, pg_mblen_cstr((const char *) src));
+}
+
+/* Historical macro for the above. */
+#define COPYCHAR ts_copychar_cstr
+
+#define GENERATE_T_ISCLASS_DECL(character_class) \
+extern int	t_is##character_class##_with_len(const char *ptr, int len); \
+extern int	t_is##character_class##_cstr(const char *ptr); \
+extern int	t_is##character_class##_unbounded(const char *ptr); \
+\
+/* deprecated */ \
+extern int	t_is##character_class(const char *ptr);
+
+GENERATE_T_ISCLASS_DECL(alnum);
+GENERATE_T_ISCLASS_DECL(alpha);
 
 extern bool tsearch_readline_begin(tsearch_readline_state *stp,
 								   const char *filename);
