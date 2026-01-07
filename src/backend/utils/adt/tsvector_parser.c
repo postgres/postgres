@@ -185,10 +185,9 @@ gettoken_tsvector(TSVectorParseState state,
 			else if ((state->oprisdelim && ISOPERATOR(state->prsbuf)) ||
 					 (state->is_web && t_iseq(state->prsbuf, '"')))
 				PRSSYNTAXERROR;
-			else if (!t_isspace(state->prsbuf))
+			else if (!t_isspace_cstr(state->prsbuf))
 			{
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 				statecode = WAITENDWORD;
 			}
 		}
@@ -202,8 +201,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 				Assert(oldstate != 0);
 				statecode = oldstate;
 			}
@@ -215,7 +213,7 @@ gettoken_tsvector(TSVectorParseState state,
 				statecode = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
-			else if (t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
+			else if (t_isspace_cstr(state->prsbuf) || *(state->prsbuf) == '\0' ||
 					 (state->oprisdelim && ISOPERATOR(state->prsbuf)) ||
 					 (state->is_web && t_iseq(state->prsbuf, '"')))
 			{
@@ -238,8 +236,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 			}
 		}
 		else if (statecode == WAITENDCMPLX)
@@ -258,8 +255,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 			}
 		}
 		else if (statecode == WAITCHARCMPLX)
@@ -267,8 +263,7 @@ gettoken_tsvector(TSVectorParseState state,
 			if (!state->is_web && t_iseq(state->prsbuf, '\''))
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 				statecode = WAITENDCMPLX;
 			}
 			else
@@ -279,7 +274,7 @@ gettoken_tsvector(TSVectorParseState state,
 					PRSSYNTAXERROR;
 				if (state->oprisdelim)
 				{
-					/* state->prsbuf+=pg_mblen(state->prsbuf); */
+					/* state->prsbuf+=pg_mblen_cstr(state->prsbuf); */
 					RETURN_TOKEN;
 				}
 				else
@@ -296,7 +291,7 @@ gettoken_tsvector(TSVectorParseState state,
 		}
 		else if (statecode == INPOSINFO)
 		{
-			if (t_isdigit(state->prsbuf))
+			if (t_isdigit_cstr(state->prsbuf))
 			{
 				if (posalen == 0)
 				{
@@ -351,10 +346,10 @@ gettoken_tsvector(TSVectorParseState state,
 					PRSSYNTAXERROR;
 				WEP_SETWEIGHT(pos[npos - 1], 0);
 			}
-			else if (t_isspace(state->prsbuf) ||
+			else if (t_isspace_cstr(state->prsbuf) ||
 					 *(state->prsbuf) == '\0')
 				RETURN_TOKEN;
-			else if (!t_isdigit(state->prsbuf))
+			else if (!t_isdigit_cstr(state->prsbuf))
 				PRSSYNTAXERROR;
 		}
 		else					/* internal error */
@@ -362,6 +357,6 @@ gettoken_tsvector(TSVectorParseState state,
 				 statecode);
 
 		/* get next char */
-		state->prsbuf += pg_mblen(state->prsbuf);
+		state->prsbuf += pg_mblen_cstr(state->prsbuf);
 	}
 }

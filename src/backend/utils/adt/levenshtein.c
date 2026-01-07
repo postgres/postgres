@@ -84,6 +84,8 @@ varstr_levenshtein(const char *source, int slen,
 	int			i,
 				j;
 	const char *y;
+	const char *send = source + slen;
+	const char *tend = target + tlen;
 
 	/*
 	 * For varstr_levenshtein_less_equal, we have real variables called
@@ -184,10 +186,10 @@ varstr_levenshtein(const char *source, int slen,
 #endif
 
 	/*
-	 * In order to avoid calling pg_mblen() repeatedly on each character in s,
-	 * we cache all the lengths before starting the main loop -- but if all
-	 * the characters in both strings are single byte, then we skip this and
-	 * use a fast-path in the main loop.  If only one string contains
+	 * In order to avoid calling pg_mblen_range() repeatedly on each character
+	 * in s, we cache all the lengths before starting the main loop -- but if
+	 * all the characters in both strings are single byte, then we skip this
+	 * and use a fast-path in the main loop.  If only one string contains
 	 * multi-byte characters, we still build the array, so that the fast-path
 	 * needn't deal with the case where the array hasn't been initialized.
 	 */
@@ -199,7 +201,7 @@ varstr_levenshtein(const char *source, int slen,
 		s_char_len = (int *) palloc((m + 1) * sizeof(int));
 		for (i = 0; i < m; ++i)
 		{
-			s_char_len[i] = pg_mblen(cp);
+			s_char_len[i] = pg_mblen_range(cp, send);
 			cp += s_char_len[i];
 		}
 		s_char_len[i] = 0;
@@ -225,7 +227,7 @@ varstr_levenshtein(const char *source, int slen,
 	{
 		int		   *temp;
 		const char *x = source;
-		int			y_char_len = n != tlen + 1 ? pg_mblen(y) : 1;
+		int			y_char_len = n != tlen + 1 ? pg_mblen_range(y, tend) : 1;
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
 

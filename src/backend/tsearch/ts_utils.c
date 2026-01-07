@@ -88,8 +88,8 @@ readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 			char	   *pbuf = line;
 
 			/* Trim trailing space */
-			while (*pbuf && !t_isspace(pbuf))
-				pbuf += pg_mblen(pbuf);
+			while (*pbuf && !t_isspace_cstr(pbuf))
+				pbuf += pg_mblen_cstr(pbuf);
 			*pbuf = '\0';
 
 			/* Skip empty lines */

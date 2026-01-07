@@ -52,10 +52,10 @@ typedef char trgm[3];
 } while(0)
 
 #ifdef KEEPONLYALNUM
-#define ISWORDCHR(c)	(t_isalpha(c) || t_isdigit(c))
+#define ISWORDCHR(c, len)	(t_isalpha_with_len(c, len) || t_isdigit_with_len(c, len))
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && (isalnum( *(unsigned char*)(a) ) || *(unsigned char*)(a)==' ') )
 #else
-#define ISWORDCHR(c)	(!t_isspace(c))
+#define ISWORDCHR(c, len)	(!t_isspace_with_len(c, len))
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && isprint( *(unsigned char*)(a) ) )
 #endif
 #define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)(t)) ) && ISPRINTABLECHAR( ((char*)(t))+1 ) && ISPRINTABLECHAR( ((char*)(t))+2 ) )
