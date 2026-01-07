@@ -191,7 +191,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 
 		/* is it a comment? */
 		while (*ptr && isspace((unsigned char) *ptr))
-			ptr += pg_mblen(ptr);
+			ptr += pg_mblen_cstr(ptr);
 
 		if (t_iseq(ptr, '#') || *ptr == '\0' ||
 			t_iseq(ptr, '\n') || t_iseq(ptr, '\r'))
@@ -237,13 +237,13 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 				{
 					useasis = true;
 					state = TR_INSUBS;
-					beginwrd = ptr + pg_mblen(ptr);
+					beginwrd = ptr + pg_mblen_cstr(ptr);
 				}
 				else if (t_iseq(ptr, '\\'))
 				{
 					useasis = false;
 					state = TR_INSUBS;
-					beginwrd = ptr + pg_mblen(ptr);
+					beginwrd = ptr + pg_mblen_cstr(ptr);
 				}
 				else if (!isspace((unsigned char) *ptr))
 				{
@@ -267,7 +267,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 			else
 				elog(ERROR, "unrecognized thesaurus state: %d", state);
 
-			ptr += pg_mblen(ptr);
+			ptr += pg_mblen_cstr(ptr);
 		}
 
 		if (state == TR_INSUBS)

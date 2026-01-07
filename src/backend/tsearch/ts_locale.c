@@ -23,32 +23,40 @@ static void tsearch_readline_callback(void *arg);
 /* space for a single character plus a trailing NUL */
 #define WC_BUF_LEN  2
 
-int
-t_isalpha(const char *ptr)
-{
-	pg_wchar	wstr[WC_BUF_LEN];
-	int			wlen pg_attribute_unused();
-
-	wlen = pg_mb2wchar_with_len(ptr, wstr, pg_mblen(ptr));
-	Assert(wlen <= 1);
-
-	/* pass single character, or NUL if empty */
-	return pg_iswalpha(wstr[0], pg_database_locale());
+#define GENERATE_T_ISCLASS_DEF(character_class) \
+/* mblen shall be that of the first character */ \
+int \
+t_is##character_class##_with_len(const char *ptr, int mblen) \
+{ \
+	pg_wchar	wstr[WC_BUF_LEN]; \
+	int			wlen pg_attribute_unused(); \
+	wlen = pg_mb2wchar_with_len(ptr, wstr, mblen); \
+	Assert(wlen <= 1); \
+	/* pass single character, or NUL if empty */ \
+	return pg_isw##character_class(wstr[0], pg_database_locale()); \
+} \
+\
+/* ptr shall point to a NUL-terminated string */ \
+int \
+t_is##character_class##_cstr(const char *ptr) \
+{ \
+	return t_is##character_class##_with_len(ptr, pg_mblen_cstr(ptr)); \
+} \
+/* ptr shall point to a string with pre-validated encoding */ \
+int \
+t_is##character_class##_unbounded(const char *ptr) \
+{ \
+	return t_is##character_class##_with_len(ptr, pg_mblen_unbounded(ptr)); \
+} \
+/* historical name for _unbounded */ \
+int \
+t_is##character_class(const char *ptr) \
+{ \
+	return t_is##character_class##_unbounded(ptr); \
 }
 
-int
-t_isalnum(const char *ptr)
-{
-	pg_wchar	wstr[WC_BUF_LEN];
-	int			wlen pg_attribute_unused();
-
-	wlen = pg_mb2wchar_with_len(ptr, wstr, pg_mblen(ptr));
-	Assert(wlen <= 1);
-
-	/* pass single character, or NUL if empty */
-	return pg_iswalnum(wstr[0], pg_database_locale());
-}
-
+GENERATE_T_ISCLASS_DEF(alnum)
+GENERATE_T_ISCLASS_DEF(alpha)
 
 /*
  * Set up to read a file using tsearch_readline().  This facility is

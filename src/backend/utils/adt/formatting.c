@@ -1438,7 +1438,7 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 							 errmsg("invalid datetime format separator: \"%s\"",
-									pnstrdup(str, pg_mblen(str)))));
+									pnstrdup(str, pg_mblen_cstr(str)))));
 
 				if (*str == ' ')
 					n->type = NODE_TYPE_SPACE;
@@ -1468,7 +1468,7 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 					/* backslash quotes the next character, if any */
 					if (*str == '\\' && *(str + 1))
 						str++;
-					chlen = pg_mblen(str);
+					chlen = pg_mblen_cstr(str);
 					n->type = NODE_TYPE_CHAR;
 					memcpy(n->character, str, chlen);
 					n->character[chlen] = '\0';
@@ -1486,7 +1486,7 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 				 */
 				if (*str == '\\' && *(str + 1) == '"')
 					str++;
-				chlen = pg_mblen(str);
+				chlen = pg_mblen_cstr(str);
 
 				if ((flags & DCH_FLAG) && is_separator_char(str))
 					n->type = NODE_TYPE_SEPARATOR;
@@ -1992,8 +1992,8 @@ asc_toupper_z(const char *buff)
 	do { \
 		if (IS_SUFFIX_THth(_suf)) \
 		{ \
-			if (*(ptr)) (ptr) += pg_mblen(ptr); \
-			if (*(ptr)) (ptr) += pg_mblen(ptr); \
+			if (*(ptr)) (ptr) += pg_mblen_cstr(ptr); \
+			if (*(ptr)) (ptr) += pg_mblen_cstr(ptr); \
 		} \
 	} while (0)
 
@@ -3183,7 +3183,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 				 * insist that the consumed character match the format's
 				 * character.
 				 */
-				s += pg_mblen(s);
+				s += pg_mblen_cstr(s);
 			}
 			continue;
 		}
@@ -3205,11 +3205,11 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 				if (extra_skip > 0)
 					extra_skip--;
 				else
-					s += pg_mblen(s);
+					s += pg_mblen_cstr(s);
 			}
 			else
 			{
-				int			chlen = pg_mblen(s);
+				int			chlen = pg_mblen_cstr(s);
 
 				/*
 				 * Standard mode requires strict match of format characters.
@@ -5724,13 +5724,15 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 static void
 NUM_eat_non_data_chars(NUMProc *Np, int n, size_t input_len)
 {
+	const char *end = Np->inout + input_len;
+
 	while (n-- > 0)
 	{
 		if (OVERLOAD_TEST)
 			break;				/* end of input */
 		if (strchr("0123456789.,+-", *Np->inout_p) != NULL)
 			break;				/* it's a data character */
-		Np->inout_p += pg_mblen(Np->inout_p);
+		Np->inout_p += pg_mblen_range(Np->inout_p, end);
 	}
 }
 
@@ -6167,7 +6169,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 			}
 			else
 			{
-				Np->inout_p += pg_mblen(Np->inout_p);
+				Np->inout_p += pg_mblen_range(Np->inout_p, Np->inout + input_len);
 			}
 			continue;
 		}

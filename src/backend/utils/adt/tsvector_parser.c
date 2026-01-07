@@ -208,8 +208,7 @@ gettoken_tsvector(TSVectorParseState state,
 				PRSSYNTAXERROR;
 			else if (!isspace((unsigned char) *state->prsbuf))
 			{
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 				statecode = WAITENDWORD;
 			}
 		}
@@ -223,8 +222,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 				Assert(oldstate != 0);
 				statecode = oldstate;
 			}
@@ -259,8 +257,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 			}
 		}
 		else if (statecode == WAITENDCMPLX)
@@ -279,8 +276,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 			}
 		}
 		else if (statecode == WAITCHARCMPLX)
@@ -288,8 +284,7 @@ gettoken_tsvector(TSVectorParseState state,
 			if (!state->is_web && t_iseq(state->prsbuf, '\''))
 			{
 				RESIZEPRSBUF;
-				COPYCHAR(curpos, state->prsbuf);
-				curpos += pg_mblen(state->prsbuf);
+				curpos += ts_copychar_cstr(curpos, state->prsbuf);
 				statecode = WAITENDCMPLX;
 			}
 			else
@@ -300,7 +295,7 @@ gettoken_tsvector(TSVectorParseState state,
 					PRSSYNTAXERROR;
 				if (state->oprisdelim)
 				{
-					/* state->prsbuf+=pg_mblen(state->prsbuf); */
+					/* state->prsbuf+=pg_mblen_cstr(state->prsbuf); */
 					RETURN_TOKEN;
 				}
 				else
@@ -383,6 +378,6 @@ gettoken_tsvector(TSVectorParseState state,
 				 statecode);
 
 		/* get next char */
-		state->prsbuf += pg_mblen(state->prsbuf);
+		state->prsbuf += pg_mblen_cstr(state->prsbuf);
 	}
 }

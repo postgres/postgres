@@ -328,7 +328,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("invalid character in salt string: \"%.*s\"",
-							   pg_mblen(ep), ep));
+							   pg_mblen_cstr(ep), ep));
 		}
 		else
 		{
