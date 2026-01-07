@@ -1013,7 +1013,14 @@ RehashCatCache(CatCache *cp)
 			int			hashIndex = HASH_INDEX(ct->hash_value, newnbuckets);
 
 			dlist_delete(iter.cur);
-			dlist_push_head(&newbucket[hashIndex], &ct->cache_elem);
+
+			/*
+			 * Note that each item is pushed at the tail of the new bucket,
+			 * not its head.  This is consistent with the SearchCatCache*()
+			 * routines, where matching entries are moved at the front of the
+			 * list to speed subsequent searches.
+			 */
+			dlist_push_tail(&newbucket[hashIndex], &ct->cache_elem);
 		}
 	}
 
@@ -1051,7 +1058,14 @@ RehashCatCacheLists(CatCache *cp)
 			int			hashIndex = HASH_INDEX(cl->hash_value, newnbuckets);
 
 			dlist_delete(iter.cur);
-			dlist_push_head(&newbucket[hashIndex], &cl->cache_elem);
+
+			/*
+			 * Note that each item is pushed at the tail of the new bucket,
+			 * not its head.  This is consistent with the SearchCatCache*()
+			 * routines, where matching entries are moved at the front of the
+			 * list to speed subsequent searches.
+			 */
+			dlist_push_tail(&newbucket[hashIndex], &cl->cache_elem);
 		}
 	}
 
