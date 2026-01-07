@@ -76,9 +76,9 @@ SELECT DISTINCT (i || '000000000000' || j)::oid8 f
   ORDER BY f;
 
 -- 3-way compare for btrees
-SELECT btoid8cmp(1::oid8, 2::oid8);
-SELECT btoid8cmp(2::oid8, 2::oid8);
-SELECT btoid8cmp(2::oid8, 1::oid8);
+SELECT btoid8cmp(1::oid8, 2::oid8) < 0 AS val_lower;
+SELECT btoid8cmp(2::oid8, 2::oid8) = 0 AS val_equal;
+SELECT btoid8cmp(2::oid8, 1::oid8) > 0 AS val_higher;
 
 -- oid8 has btree and hash opclasses
 CREATE INDEX on OID8_TBL USING btree(f1);

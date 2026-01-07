@@ -344,22 +344,22 @@ SELECT DISTINCT (i || '000000000000' || j)::oid8 f
 (100 rows)
 
 -- 3-way compare for btrees
-SELECT btoid8cmp(1::oid8, 2::oid8);
- btoid8cmp 
+SELECT btoid8cmp(1::oid8, 2::oid8) < 0 AS val_lower;
+ val_lower 
 -----------
-        -1
+ t
 (1 row)
 
-SELECT btoid8cmp(2::oid8, 2::oid8);
- btoid8cmp 
+SELECT btoid8cmp(2::oid8, 2::oid8) = 0 AS val_equal;
+ val_equal 
 -----------
-         0
+ t
 (1 row)
 
-SELECT btoid8cmp(2::oid8, 1::oid8);
- btoid8cmp 
------------
-         1
+SELECT btoid8cmp(2::oid8, 1::oid8) > 0 AS val_higher;
+ val_higher 
+------------
+ t
 (1 row)
 
 -- oid8 has btree and hash opclasses
