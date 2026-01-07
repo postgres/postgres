@@ -77,6 +77,7 @@ OBJS = \
 	numeric.o \
 	numutils.o \
 	oid.o \
+	oid8.o \
 	oracle_compat.o \
 	orderedsetaggs.o \
 	partitionfuncs.o \

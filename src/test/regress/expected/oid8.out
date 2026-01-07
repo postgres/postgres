@@ -1,0 +1,368 @@
+--
+-- OID8
+--
+CREATE TABLE OID8_TBL(f1 oid8);
+INSERT INTO OID8_TBL(f1) VALUES ('1234');
+INSERT INTO OID8_TBL(f1) VALUES ('1235');
+INSERT INTO OID8_TBL(f1) VALUES ('987');
+INSERT INTO OID8_TBL(f1) VALUES ('-1040');
+INSERT INTO OID8_TBL(f1) VALUES ('99999999');
+INSERT INTO OID8_TBL(f1) VALUES ('5     ');
+INSERT INTO OID8_TBL(f1) VALUES ('   10  ');
+INSERT INTO OID8_TBL(f1) VALUES ('123456789012345678');
+-- UINT64_MAX
+INSERT INTO OID8_TBL(f1) VALUES ('18446744073709551615');
+-- leading/trailing hard tab is also allowed
+INSERT INTO OID8_TBL(f1) VALUES ('	  15 	  ');
+-- bad inputs
+INSERT INTO OID8_TBL(f1) VALUES ('');
+ERROR:  invalid input syntax for type oid8: ""
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('    ');
+ERROR:  invalid input syntax for type oid8: "    "
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('    ');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('asdfasd');
+ERROR:  invalid input syntax for type oid8: "asdfasd"
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('asdfasd');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('99asdfasd');
+ERROR:  invalid input syntax for type oid8: "99asdfasd"
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('99asdfasd');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('5    d');
+ERROR:  invalid input syntax for type oid8: "5    d"
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('5    d');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('    5d');
+ERROR:  invalid input syntax for type oid8: "    5d"
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('    5d');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('5    5');
+ERROR:  invalid input syntax for type oid8: "5    5"
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('5    5');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES (' - 500');
+ERROR:  invalid input syntax for type oid8: " - 500"
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES (' - 500');
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('3908203590239580293850293850329485');
+ERROR:  value "3908203590239580293850293850329485" is out of range for type oid8
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('39082035902395802938502938...
+                                         ^
+INSERT INTO OID8_TBL(f1) VALUES ('-1204982019841029840928340329840934');
+ERROR:  value "-1204982019841029840928340329840934" is out of range for type oid8
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('-1204982019841029840928340...
+                                         ^
+-- UINT64_MAX + 1
+INSERT INTO OID8_TBL(f1) VALUES ('18446744073709551616');
+ERROR:  value "18446744073709551616" is out of range for type oid8
+LINE 1: INSERT INTO OID8_TBL(f1) VALUES ('18446744073709551616');
+                                         ^
+SELECT * FROM OID8_TBL;
+          f1          
+----------------------
+                 1234
+                 1235
+                  987
+ 18446744073709550576
+             99999999
+                    5
+                   10
+   123456789012345678
+ 18446744073709551615
+                   15
+(10 rows)
+
+-- Also try it with non-error-throwing API
+SELECT pg_input_is_valid('1234', 'oid8');
+ pg_input_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT pg_input_is_valid('01XYZ', 'oid8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('01XYZ', 'oid8');
+                   message                   | detail | hint | sql_error_code 
+---------------------------------------------+--------+------+----------------
+ invalid input syntax for type oid8: "01XYZ" |        |      | 22P02
+(1 row)
+
+SELECT pg_input_is_valid('3908203590239580293850293850329485', 'oid8');
+ pg_input_is_valid 
+-------------------
+ f
+(1 row)
+
+SELECT * FROM pg_input_error_info('-1204982019841029840928340329840934', 'oid8');
+                                  message                                  | detail | hint | sql_error_code 
+---------------------------------------------------------------------------+--------+------+----------------
+ value "-1204982019841029840928340329840934" is out of range for type oid8 |        |      | 22003
+(1 row)
+
+-- Operators
+SELECT o.* FROM OID8_TBL o WHERE o.f1 = 1234;
+  f1  
+------
+ 1234
+(1 row)
+
+SELECT o.* FROM OID8_TBL o WHERE o.f1 <> '1234';
+          f1          
+----------------------
+                 1235
+                  987
+ 18446744073709550576
+             99999999
+                    5
+                   10
+   123456789012345678
+ 18446744073709551615
+                   15
+(9 rows)
+
+SELECT o.* FROM OID8_TBL o WHERE o.f1 <= '1234';
+  f1  
+------
+ 1234
+  987
+    5
+   10
+   15
+(5 rows)
+
+SELECT o.* FROM OID8_TBL o WHERE o.f1 < '1234';
+ f1  
+-----
+ 987
+   5
+  10
+  15
+(4 rows)
+
+SELECT o.* FROM OID8_TBL o WHERE o.f1 >= '1234';
+          f1          
+----------------------
+                 1234
+                 1235
+ 18446744073709550576
+             99999999
+   123456789012345678
+ 18446744073709551615
+(6 rows)
+
+SELECT o.* FROM OID8_TBL o WHERE o.f1 > '1234';
+          f1          
+----------------------
+                 1235
+ 18446744073709550576
+             99999999
+   123456789012345678
+ 18446744073709551615
+(5 rows)
+
+-- Casts
+SELECT 1::int2::oid8;
+ oid8 
+------
+    1
+(1 row)
+
+SELECT 1::int4::oid8;
+ oid8 
+------
+    1
+(1 row)
+
+SELECT 1::int8::oid8;
+ oid8 
+------
+    1
+(1 row)
+
+SELECT 1::oid8::int8;
+ int8 
+------
+    1
+(1 row)
+
+SELECT 1::oid::oid8; -- ok
+ oid8 
+------
+    1
+(1 row)
+
+SELECT 1::oid8::oid; -- not ok
+ERROR:  cannot cast type oid8 to oid
+LINE 1: SELECT 1::oid8::oid;
+                      ^
+-- Aggregates
+SELECT min(f1), max(f1) FROM OID8_TBL;
+ min |         max          
+-----+----------------------
+   5 | 18446744073709551615
+(1 row)
+
+-- Check btree and hash opclasses
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT (i || '000000000000' || j)::oid8 f
+  FROM generate_series(1, 10) i,
+       generate_series(1, 10) j,
+       generate_series(1, 5) k
+  WHERE i <= 10 AND j > 0 AND j <= 10
+  ORDER BY f;
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
+ Sort
+   Sort Key: (((((i.i)::text || '000000000000'::text) || (j.j)::text))::oid8)
+   ->  HashAggregate
+         Group Key: ((((i.i)::text || '000000000000'::text) || (j.j)::text))::oid8
+         ->  Nested Loop
+               ->  Function Scan on generate_series k
+               ->  Materialize
+                     ->  Nested Loop
+                           ->  Function Scan on generate_series j
+                                 Filter: ((j > 0) AND (j <= 10))
+                           ->  Function Scan on generate_series i
+                                 Filter: (i <= 10)
+(12 rows)
+
+SELECT DISTINCT (i || '000000000000' || j)::oid8 f
+  FROM generate_series(1, 10) i,
+       generate_series(1, 10) j,
+       generate_series(1, 5) k
+  WHERE i <= 10 AND j > 0 AND j <= 10
+  ORDER BY f;
+        f         
+------------------
+   10000000000001
+   10000000000002
+   10000000000003
+   10000000000004
+   10000000000005
+   10000000000006
+   10000000000007
+   10000000000008
+   10000000000009
+   20000000000001
+   20000000000002
+   20000000000003
+   20000000000004
+   20000000000005
+   20000000000006
+   20000000000007
+   20000000000008
+   20000000000009
+   30000000000001
+   30000000000002
+   30000000000003
+   30000000000004
+   30000000000005
+   30000000000006
+   30000000000007
+   30000000000008
+   30000000000009
+   40000000000001
+   40000000000002
+   40000000000003
+   40000000000004
+   40000000000005
+   40000000000006
+   40000000000007
+   40000000000008
+   40000000000009
+   50000000000001
+   50000000000002
+   50000000000003
+   50000000000004
+   50000000000005
+   50000000000006
+   50000000000007
+   50000000000008
+   50000000000009
+   60000000000001
+   60000000000002
+   60000000000003
+   60000000000004
+   60000000000005
+   60000000000006
+   60000000000007
+   60000000000008
+   60000000000009
+   70000000000001
+   70000000000002
+   70000000000003
+   70000000000004
+   70000000000005
+   70000000000006
+   70000000000007
+   70000000000008
+   70000000000009
+   80000000000001
+   80000000000002
+   80000000000003
+   80000000000004
+   80000000000005
+   80000000000006
+   80000000000007
+   80000000000008
+   80000000000009
+   90000000000001
+   90000000000002
+   90000000000003
+   90000000000004
+   90000000000005
+   90000000000006
+   90000000000007
+   90000000000008
+   90000000000009
+  100000000000001
+  100000000000002
+  100000000000003
+  100000000000004
+  100000000000005
+  100000000000006
+  100000000000007
+  100000000000008
+  100000000000009
+  100000000000010
+  200000000000010
+  300000000000010
+  400000000000010
+  500000000000010
+  600000000000010
+  700000000000010
+  800000000000010
+  900000000000010
+ 1000000000000010
+(100 rows)
+
+-- 3-way compare for btrees
+SELECT btoid8cmp(1::oid8, 2::oid8);
+ btoid8cmp 
+-----------
+        -1
+(1 row)
+
+SELECT btoid8cmp(2::oid8, 2::oid8);
+ btoid8cmp 
+-----------
+         0
+(1 row)
+
+SELECT btoid8cmp(2::oid8, 1::oid8);
+ btoid8cmp 
+-----------
+         1
+(1 row)
+
+-- oid8 has btree and hash opclasses
+CREATE INDEX on OID8_TBL USING btree(f1);
+CREATE INDEX ON OID8_TBL USING hash(f1);
+DROP TABLE OID8_TBL;

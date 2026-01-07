@@ -700,4 +700,9 @@
   typreceive => 'brin_minmax_multi_summary_recv',
   typsend => 'brin_minmax_multi_summary_send', typalign => 'i',
   typstorage => 'x', typcollation => 'default' },
+{ oid => '8256', array_type_oid => '8261',
+  descr => 'object identifier(oid8), 8 bytes',
+  typname => 'oid8', typlen => '8', typbyval => 't', typcategory => 'N',
+  typinput => 'oid8in', typoutput => 'oid8out', typreceive => 'oid8recv',
+  typsend => 'oid8send', typalign => 'd' },
 ]

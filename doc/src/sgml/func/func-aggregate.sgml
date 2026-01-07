@@ -508,8 +508,8 @@
         Computes the maximum of the non-null input
         values.  Available for any numeric, string, date/time, or enum type,
         as well as <type>bytea</type>, <type>inet</type>, <type>interval</type>,
-        <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
-        <type>tid</type>, <type>xid8</type>,
+        <type>money</type>, <type>oid</type>, <type>oid8</type>,
+        <type>pg_lsn</type>, <type>tid</type>, <type>xid8</type>,
         and also arrays and composite types containing sortable data types.
        </para></entry>
        <entry>Yes</entry>
@@ -527,8 +527,8 @@
         Computes the minimum of the non-null input
         values.  Available for any numeric, string, date/time, or enum type,
         as well as <type>bytea</type>, <type>inet</type>, <type>interval</type>,
-        <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
-        <type>tid</type>, <type>xid8</type>,
+        <type>money</type>, <type>oid</type>, <type>oid8</type>,
+        <type>pg_lsn</type>, <type>tid</type>, <type>xid8</type>,
         and also arrays and composite types containing sortable data types.
        </para></entry>
        <entry>Yes</entry>

@@ -265,6 +265,26 @@ ObjectIdGetDatum(Oid X)
 }
 
 /*
+ * DatumGetObjectId8
+ *		Returns 8-byte object identifier value of a datum.
+ */
+static inline Oid8
+DatumGetObjectId8(Datum X)
+{
+	return (Oid8) X;
+}
+
+/*
+ * ObjectId8GetDatum
+ *		Returns datum representation for an 8-byte object identifier
+ */
+static inline Datum
+ObjectId8GetDatum(Oid8 X)
+{
+	return (Datum) X;
+}
+
+/*
  * DatumGetTransactionId
  *		Returns transaction identifier value of a datum.
  */

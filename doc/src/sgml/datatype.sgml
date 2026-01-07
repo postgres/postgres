@@ -4725,6 +4725,10 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </indexterm>
 
    <indexterm zone="datatype-oid">
+    <primary>oid8</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
     <primary>regclass</primary>
    </indexterm>
 
@@ -4807,8 +4811,16 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </para>
 
    <para>
-    The <type>oid</type> type itself has few operations beyond comparison.
-    It can be cast to integer, however, and then manipulated using the
+    In some contexts, a 64-bit variant <type>oid8</type> can be used.
+    It is implemented as an unsigned eight-byte integer. Unlike its
+    <type>oid</type> counterpart, it can ensure uniqueness in large
+    individual tables.
+   </para>
+
+   <para>
+    The <type>oid</type> and <type>oid8</type> types themselves have
+    few operations beyond comparison.
+    they can be cast to integer, however, and then manipulated using the
     standard integer operators.  (Beware of possible
     signed-versus-unsigned confusion if you do this.)
    </para>

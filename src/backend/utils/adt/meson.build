@@ -73,6 +73,7 @@ backend_sources += files(
   'network_spgist.c',
   'numutils.c',
   'oid.c',
+  'oid8.c',
   'oracle_compat.c',
   'orderedsetaggs.c',
   'partitionfuncs.c',

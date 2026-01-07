@@ -880,6 +880,13 @@ bytea(integer)
 bytea(bigint)
 bytea_larger(bytea,bytea)
 bytea_smaller(bytea,bytea)
+oid8eq(oid8,oid8)
+oid8ne(oid8,oid8)
+oid8lt(oid8,oid8)
+oid8le(oid8,oid8)
+oid8gt(oid8,oid8)
+oid8ge(oid8,oid8)
+btoid8cmp(oid8,oid8)
 -- Check that functions without argument are not marked as leakproof.
 SELECT p1.oid::regprocedure
 FROM pg_proc p1 JOIN pg_namespace pn

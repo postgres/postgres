@@ -180,6 +180,24 @@
 { amopfamily => 'btree/oid_ops', amoplefttype => 'oid', amoprighttype => 'oid',
   amopstrategy => '5', amopopr => '>(oid,oid)', amopmethod => 'btree' },
 
+# btree oid8_ops
+
+{ amopfamily => 'btree/oid8_ops', amoplefttype => 'oid8',
+  amoprighttype => 'oid8', amopstrategy => '1', amopopr => '<(oid8,oid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/oid8_ops', amoplefttype => 'oid8',
+  amoprighttype => 'oid8', amopstrategy => '2', amopopr => '<=(oid8,oid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/oid8_ops', amoplefttype => 'oid8',
+  amoprighttype => 'oid8', amopstrategy => '3', amopopr => '=(oid8,oid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/oid8_ops', amoplefttype => 'oid8',
+  amoprighttype => 'oid8', amopstrategy => '4', amopopr => '>=(oid8,oid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/oid8_ops', amoplefttype => 'oid8',
+  amoprighttype => 'oid8', amopstrategy => '5', amopopr => '>(oid8,oid8)',
+  amopmethod => 'btree' },
+
 # btree xid8_ops
 
 { amopfamily => 'btree/xid8_ops', amoplefttype => 'xid8',
@@ -973,6 +991,11 @@
 # oid_ops
 { amopfamily => 'hash/oid_ops', amoplefttype => 'oid', amoprighttype => 'oid',
   amopstrategy => '1', amopopr => '=(oid,oid)', amopmethod => 'hash' },
+
+# oid8_ops
+{ amopfamily => 'hash/oid8_ops', amoplefttype => 'oid8',
+  amoprighttype => 'oid8', amopstrategy => '1', amopopr => '=(oid8,oid8)',
+  amopmethod => 'hash' },
 
 # oidvector_ops
 { amopfamily => 'hash/oidvector_ops', amoplefttype => 'oidvector',

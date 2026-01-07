@@ -1370,6 +1370,14 @@ oidtoi8(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64((int64) arg);
 }
 
+Datum
+oidtooid8(PG_FUNCTION_ARGS)
+{
+	Oid			arg = PG_GETARG_OID(0);
+
+	PG_RETURN_OID8((Oid8) arg);
+}
+
 /*
  * non-persistent numeric series generator
  */

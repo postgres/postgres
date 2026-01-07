@@ -48,6 +48,13 @@ FROM   (VALUES (0), (1), (17), (42), (550273), (207112489)) x(v)
 WHERE  hashoid(v)::bit(32) != hashoidextended(v, 0)::bit(32)
        OR hashoid(v)::bit(32) = hashoidextended(v, 1)::bit(32);
 
+SELECT v as value, hashoid8(v)::bit(32) as standard,
+       hashoid8extended(v, 0)::bit(32) as extended0,
+       hashoid8extended(v, 1)::bit(32) as extended1
+FROM   (VALUES (0), (1), (17), (42), (550273), (207112489)) x(v)
+WHERE  hashoid8(v)::bit(32) != hashoid8extended(v, 0)::bit(32)
+       OR hashoid8(v)::bit(32) = hashoid8extended(v, 1)::bit(32);
+
 SELECT v as value, hashchar(v)::bit(32) as standard,
        hashcharextended(v, 0)::bit(32) as extended0,
        hashcharextended(v, 1)::bit(32) as extended1
