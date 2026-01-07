@@ -3320,13 +3320,6 @@ If you pass an explicit value of target_lsn, it should almost always be
 the primary's write LSN; so this parameter is seldom needed except when
 querying some intermediate replication node rather than the primary.
 
-When the standby is passed as a PostgreSQL::Test::Cluster instance and is
-in recovery, this function uses the WAIT FOR LSN command on the standby
-for modes replay, write, and flush.  This is more efficient than polling
-pg_stat_replication on the upstream, as WAIT FOR LSN uses a latch-based
-wakeup mechanism.  For 'sent' mode, or when the standby is passed as a
-string (e.g., a subscription name), it falls back to polling.
-
 If there is no active replication connection from this peer, waits until
 poll_query_until timeout.
 
@@ -3346,13 +3339,10 @@ sub wait_for_catchup
 	  . join(', ', keys(%valid_modes))
 	  unless exists($valid_modes{$mode});
 
-	# Keep a reference to the standby node if passed as an object, so we can
-	# use WAIT FOR LSN on it later.
-	my $standby_node;
+	# Allow passing of a PostgreSQL::Test::Cluster instance as shorthand
 	if (blessed($standby_name)
 		&& $standby_name->isa("PostgreSQL::Test::Cluster"))
 	{
-		$standby_node = $standby_name;
 		$standby_name = $standby_name->name;
 	}
 	if (!defined($target_lsn))
@@ -3377,53 +3367,6 @@ sub wait_for_catchup
 	  . $self->name . "\n";
 	# Before release 12 walreceiver just set the application name to
 	# "walreceiver"
-
-	# Use WAIT FOR LSN on the standby when:
-	# - The standby was passed as a Cluster object (so we can connect to it)
-	# - The mode is replay, write, or flush (not 'sent')
-	# - The standby is in recovery
-	# This is more efficient than polling pg_stat_replication on the upstream,
-	# as WAIT FOR LSN uses a latch-based wakeup mechanism.
-	if (defined($standby_node) && ($mode ne 'sent'))
-	{
-		my $standby_in_recovery =
-		  $standby_node->safe_psql('postgres', "SELECT pg_is_in_recovery()");
-		chomp($standby_in_recovery);
-
-		if ($standby_in_recovery eq 't')
-		{
-			# Map mode names to WAIT FOR LSN mode names
-			my %mode_map = (
-				'replay' => 'standby_replay',
-				'write' => 'standby_write',
-				'flush' => 'standby_flush',);
-			my $wait_mode = $mode_map{$mode};
-			my $timeout = $PostgreSQL::Test::Utils::timeout_default;
-			my $wait_query =
-			  qq[WAIT FOR LSN '${target_lsn}' WITH (MODE '${wait_mode}', timeout '${timeout}s', no_throw);];
-			my $output = $standby_node->safe_psql('postgres', $wait_query);
-			chomp($output);
-
-			if ($output ne 'success')
-			{
-				# Fetch additional detail for debugging purposes
-				my $details = $self->safe_psql('postgres',
-					"SELECT * FROM pg_catalog.pg_stat_replication");
-				diag qq(WAIT FOR LSN failed with status:
-	${output});
-				diag qq(Last pg_stat_replication contents:
-	${details});
-				croak "failed waiting for catchup";
-			}
-			print "done\n";
-			return;
-		}
-	}
-
-	# Fall back to polling pg_stat_replication on the upstream for:
-	# - 'sent' mode (no corresponding WAIT FOR LSN mode)
-	# - When standby_name is a string (e.g., subscription name)
-	# - When the standby is no longer in recovery (was promoted)
 	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn AND state = 'streaming'
          FROM pg_catalog.pg_stat_replication
          WHERE application_name IN ('$standby_name', 'walreceiver')];
