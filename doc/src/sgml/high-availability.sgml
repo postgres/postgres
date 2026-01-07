@@ -865,7 +865,7 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive "%r"'
 # as a replication standby if the user's password is correctly supplied.
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    replication     foo             192.168.1.100/32        md5
+host    replication     foo             192.168.1.100/32        scram-sha-256
 </programlisting>
     </para>
     <para>
