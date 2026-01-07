@@ -2833,12 +2833,13 @@ ExecInitSubPlanExpr(SubPlan *subplan,
 	/*
 	 * Generate steps to evaluate input arguments for the subplan.
 	 *
-	 * We evaluate the argument expressions into ExprState's resvalue/resnull,
-	 * and then use PARAM_SET to update the parameter. We do that, instead of
-	 * evaluating directly into the param, to avoid depending on the pointer
-	 * value remaining stable / being included in the generated expression. No
-	 * danger of conflicts with other uses of resvalue/resnull as storing and
-	 * using the value always is in subsequent steps.
+	 * We evaluate the argument expressions into resv/resnull, and then use
+	 * PARAM_SET to update the parameter. We do that, instead of evaluating
+	 * directly into the param, to avoid depending on the pointer value
+	 * remaining stable / being included in the generated expression. It's ok
+	 * to use resv/resnull for multiple params, as each parameter evaluation
+	 * is immediately followed by an EEOP_PARAM_SET (and thus are saved before
+	 * they could be overwritten again).
 	 *
 	 * Any calculation we have to do can be done in the parent econtext, since
 	 * the Param values don't need to have per-query lifetime.
@@ -2849,10 +2850,11 @@ ExecInitSubPlanExpr(SubPlan *subplan,
 		int			paramid = lfirst_int(l);
 		Expr	   *arg = (Expr *) lfirst(pvar);
 
-		ExecInitExprRec(arg, state,
-						&state->resvalue, &state->resnull);
+		ExecInitExprRec(arg, state, resv, resnull);
 
 		scratch.opcode = EEOP_PARAM_SET;
+		scratch.resvalue = resv;
+		scratch.resnull = resnull;
 		scratch.d.param.paramid = paramid;
 		/* paramtype's not actually used, but we might as well fill it */
 		scratch.d.param.paramtype = exprType((Node *) arg);
