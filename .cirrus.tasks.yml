@@ -216,7 +216,7 @@ task:
   env:
     CPUS: 4 # always get that much for cirrusci macOS instances
     BUILD_JOBS: $CPUS
-    # Test performance regresses noticably when using all cores. 8 seems to
+    # Test performance regresses noticeably when using all cores. 8 seems to
     # work OK. See
     # https://postgr.es/m/20220927040208.l3shfcidovpzqxfh%40awork3.anarazel.de
     TEST_JOBS: 8
