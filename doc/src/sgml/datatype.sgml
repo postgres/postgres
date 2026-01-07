@@ -4820,7 +4820,7 @@ INSERT INTO mytable VALUES(-1);  -- fails
    <para>
     The <type>oid</type> and <type>oid8</type> types themselves have
     few operations beyond comparison.
-    they can be cast to integer, however, and then manipulated using the
+    They can be cast to integer, however, and then manipulated using the
     standard integer operators.  (Beware of possible
     signed-versus-unsigned confusion if you do this.)
    </para>
