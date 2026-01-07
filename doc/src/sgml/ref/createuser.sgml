@@ -485,7 +485,7 @@ PostgreSQL documentation
 <prompt>$ </prompt><userinput>createuser -P -s -e joe</userinput>
 <computeroutput>Enter password for new role: </computeroutput><userinput>xyzzy</userinput>
 <computeroutput>Enter it again: </computeroutput><userinput>xyzzy</userinput>
-<computeroutput>CREATE ROLE joe PASSWORD 'md5b5f5ba1a423792b526f799ae4eb3d59e' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;</computeroutput>
+<computeroutput>CREATE ROLE joe PASSWORD 'SCRAM-SHA-256$4096:44560wPMLfjqiAzyPDZ/eQ==$4CA054rZlSFEq8Z3FEhToBTa2X6KnWFxFkPwIbKoDe0=:L/nbSZRCjp6RhOhKK56GoR1zibCCSePKshCJ9lnl3yw=' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;</computeroutput>
 </screen>
     In the above example, the new password isn't actually echoed when typed,
     but we show what was typed for clarity.  As you see, the password is
