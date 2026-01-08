@@ -816,9 +816,9 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	RelationCacheInitializePhase2();
 
 	/*
-	 * Set up process-exit callback to do pre-shutdown cleanup.  This is the
-	 * one of the first before_shmem_exit callbacks we register; thus, this
-	 * will be one the last things we do before low-level modules like the
+	 * Set up process-exit callback to do pre-shutdown cleanup.  This is one
+	 * of the first before_shmem_exit callbacks we register; thus, this will
+	 * be one of the last things we do before low-level modules like the
 	 * buffer manager begin to close down.  We need to have this in place
 	 * before we begin our first transaction --- if we fail during the
 	 * initialization transaction, as is entirely possible, we need the

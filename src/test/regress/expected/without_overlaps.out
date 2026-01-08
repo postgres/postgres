@@ -912,7 +912,7 @@ CREATE TABLE temporal_partitioned (
   id int4range,
   valid_at daterange,
   name text,
-  CONSTRAINT temporal_paritioned_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+  CONSTRAINT temporal_partitioned_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
 CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
 CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
@@ -947,7 +947,7 @@ CREATE TABLE temporal_partitioned (
   id int4range,
   valid_at daterange,
   name text,
-  CONSTRAINT temporal_paritioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+  CONSTRAINT temporal_partitioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
 CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
 CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
@@ -2260,7 +2260,7 @@ CREATE TABLE temporal_partitioned_rng (
   id int4range,
   valid_at daterange,
   name text,
-  CONSTRAINT temporal_paritioned_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+  CONSTRAINT temporal_partitioned_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
 CREATE TABLE tp1 partition OF temporal_partitioned_rng FOR VALUES IN ('[1,2)', '[3,4)', '[5,6)', '[7,8)', '[9,10)', '[11,12)');
 CREATE TABLE tp2 partition OF temporal_partitioned_rng FOR VALUES IN ('[2,3)', '[4,5)', '[6,7)', '[8,9)', '[10,11)', '[12,13)');
@@ -2382,7 +2382,7 @@ CREATE TABLE temporal_partitioned_mltrng (
   id int4range,
   valid_at datemultirange,
   name text,
-  CONSTRAINT temporal_paritioned_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+  CONSTRAINT temporal_partitioned_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
 CREATE TABLE tp1 PARTITION OF temporal_partitioned_mltrng FOR VALUES IN ('[1,2)', '[3,4)', '[5,6)', '[7,8)', '[9,10)', '[11,12)', '[13,14)', '[15,16)', '[17,18)', '[19,20)', '[21,22)', '[23,24)');
 CREATE TABLE tp2 PARTITION OF temporal_partitioned_mltrng FOR VALUES IN ('[0,1)', '[2,3)', '[4,5)', '[6,7)', '[8,9)', '[10,11)', '[12,13)', '[14,15)', '[16,17)', '[18,19)', '[20,21)', '[22,23)', '[24,25)');

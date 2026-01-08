@@ -63,7 +63,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b =
 (4 rows)
 
 -- inner join with partially-redundant join clauses
--- (avoid a mergejoin, because the planner thinks that an non-partitionwise
+-- (avoid a mergejoin, because the planner thinks that a non-partitionwise
 -- merge join is the cheapest plan, and we want to test a partitionwise join)
 BEGIN;
 SET LOCAL enable_mergejoin = false;

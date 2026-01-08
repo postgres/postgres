@@ -2429,7 +2429,7 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 		RelIdToTypeIdCacheEntry *relentry;
 
 		/*
-		 * Find an RelIdToTypeIdCacheHash entry, which should exist as soon as
+		 * Find a RelIdToTypeIdCacheHash entry, which should exist as soon as
 		 * corresponding typcache entry has something to clean.
 		 */
 		relentry = (RelIdToTypeIdCacheEntry *) hash_search(RelIdToTypeIdCacheHash,

@@ -4364,7 +4364,7 @@ PostgresMain(const char *dbname, const char *username)
 	/*
 	 * Create memory context and buffer used for RowDescription messages. As
 	 * SendRowDescriptionMessage(), via exec_describe_statement_message(), is
-	 * frequently executed for ever single statement, we don't want to
+	 * frequently executed for every single statement, we don't want to
 	 * allocate a separate buffer every time.
 	 */
 	row_description_context = AllocSetContextCreate(TopMemoryContext,

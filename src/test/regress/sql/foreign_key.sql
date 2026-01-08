@@ -2421,7 +2421,7 @@ INSERT INTO fkpart13_t1 (a) VALUES (1);
 INSERT INTO fkpart13_t2 (part_id) VALUES (1);
 INSERT INTO fkpart13_t3 (a) VALUES (1);
 
--- Test a cascading update works correctly with with the dropped column
+-- Test that a cascading update works correctly with the dropped column
 UPDATE fkpart13_t1 SET a = 2 WHERE a = 1;
 SELECT tableoid::regclass,* FROM fkpart13_t2;
 SELECT tableoid::regclass,* FROM fkpart13_t3;

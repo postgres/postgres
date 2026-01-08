@@ -114,7 +114,7 @@ get_canonical_class(char32_t code)
 	const pg_unicode_decomposition *entry = get_code_entry(code);
 
 	/*
-	 * If no entries are found, the character used is either an Hangul
+	 * If no entries are found, the character used is either a Hangul
 	 * character or a character with a class of 0 and no decompositions.
 	 */
 	if (!entry)

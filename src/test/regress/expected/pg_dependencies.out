@@ -295,16 +295,16 @@ SELECT '[{"attributes": [], "dependency": 2, "degree": 1}]' ::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes": [], "dependency": 2, "degree": 1}]"
 LINE 1: SELECT '[{"attributes": [], "dependency": 2, "degree": 1}]' ...
                ^
-DETAIL:  The "attributes" key must be an non-empty array.
+DETAIL:  The "attributes" key must be a non-empty array.
 SELECT '[{"attributes" : {"a": 1}, "dependency" : 4, "degree": "1.2"}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : {"a": 1}, "dependency" : 4, "degree": "1.2"}]"
 LINE 1: SELECT '[{"attributes" : {"a": 1}, "dependency" : 4, "degree...
                ^
 DETAIL:  Value of "attributes" must be an array of attribute numbers.
 SELECT * FROM pg_input_error_info('[{"attributes": [], "dependency": 2, "degree": 1}]', 'pg_dependencies');
-                                     message                                     |                      detail                      | hint | sql_error_code 
----------------------------------------------------------------------------------+--------------------------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes": [], "dependency": 2, "degree": 1}]" | The "attributes" key must be an non-empty array. |      | 22P02
+                                     message                                     |                     detail                      | hint | sql_error_code 
+---------------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes": [], "dependency": 2, "degree": 1}]" | The "attributes" key must be a non-empty array. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : {"a": 1}, "dependency" : 4, "degree": "1.2"}]', 'pg_dependencies');

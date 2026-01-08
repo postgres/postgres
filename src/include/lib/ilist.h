@@ -517,7 +517,7 @@ dlist_has_prev(const dlist_head *head, const dlist_node *node)
 
 /*
  * Check if node is detached. A node is only detached if it either has been
- * initialized with dlist_init_node(), or deleted with
+ * initialized with dlist_node_init(), or deleted with
  * dlist_delete_thoroughly() / dlist_delete_from_thoroughly() /
  * dclist_delete_from_thoroughly().
  */

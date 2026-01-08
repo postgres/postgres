@@ -85,7 +85,7 @@ select relname from pg_locks l, pg_class c
 ROLLBACK;
 BEGIN TRANSACTION;
 LOCK TABLE lock_view6 IN EXCLUSIVE MODE;
--- lock_view6 an lock_tbl1 are locked.
+-- lock_view6 and lock_tbl1 are locked.
 select relname from pg_locks l, pg_class c
  where l.relation = c.oid and relname like '%lock_%' and mode = 'ExclusiveLock'
  order by relname;

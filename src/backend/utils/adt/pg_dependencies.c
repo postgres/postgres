@@ -298,7 +298,7 @@ dependencies_array_end(void *state)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_dependencies: \"%s\"", parse->str),
-					errdetail("The \"%s\" key must be an non-empty array.",
+					errdetail("The \"%s\" key must be a non-empty array.",
 							  PG_DEPENDENCIES_KEY_ATTRIBUTES));
 			break;
 

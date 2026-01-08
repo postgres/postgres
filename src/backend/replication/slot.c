@@ -2919,7 +2919,7 @@ GetSlotInvalidationCause(const char *cause_name)
 }
 
 /*
- * Maps an ReplicationSlotInvalidationCause to the invalidation
+ * Maps a ReplicationSlotInvalidationCause to the invalidation
  * reason for a replication slot.
  */
 const char *
