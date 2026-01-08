@@ -3357,13 +3357,22 @@ match_previous_words(int pattern_id,
 	/* Complete COPY|\copy <sth> FROM|TO with filename or STDIN/STDOUT/PROGRAM */
 	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO"))
 	{
-		/* COPY requires quoted filename */
-		bool		force_quote = HeadMatches("COPY");
-
-		if (TailMatches("FROM"))
-			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDIN", "PROGRAM");
+		if (HeadMatches("COPY"))
+		{
+			/* COPY requires quoted filename */
+			if (TailMatches("FROM"))
+				COMPLETE_WITH_FILES_PLUS("", true, "STDIN", "PROGRAM");
+			else
+				COMPLETE_WITH_FILES_PLUS("", true, "STDOUT", "PROGRAM");
+		}
 		else
-			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDOUT", "PROGRAM");
+		{
+			/* \copy supports pstdin and pstdout */
+			if (TailMatches("FROM"))
+				COMPLETE_WITH_FILES_PLUS("", false, "STDIN", "PSTDIN", "PROGRAM");
+			else
+				COMPLETE_WITH_FILES_PLUS("", false, "STDOUT", "PSTDOUT", "PROGRAM");
+		}
 	}
 
 	/* Complete COPY|\copy <sth> FROM|TO PROGRAM */
