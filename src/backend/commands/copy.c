@@ -488,7 +488,7 @@ defGetCopyRejectLimitOption(DefElem *def)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("%s requires a numeric value",
 						def->defname)));
-	else if (nodeTag(def->arg) == T_String)
+	else if (IsA(def->arg, String))
 		reject_limit = pg_strtoint64(strVal(def->arg));
 	else
 		reject_limit = defGetInt64(def);
