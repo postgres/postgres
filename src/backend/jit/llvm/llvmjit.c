@@ -1058,7 +1058,7 @@ llvm_split_symbol_name(const char *name, char **modname, char **funcname)
 		 * Symbol names cannot contain a ., therefore we can split based on
 		 * first and last occurrence of one.
 		 */
-		*funcname = rindex(name, '.');
+		*funcname = strrchr(name, '.');
 		(*funcname)++;			/* jump over . */
 
 		*modname = pnstrdup(name + strlen("pgextern."),
