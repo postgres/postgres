@@ -1120,13 +1120,13 @@ _bt_savepostingitem(BTScanOpaque so, int itemIndex, OffsetNumber offnum,
 /*
  * Test whether an indextuple satisfies all the scankey conditions.
  *
- * Return true if so, false if not.  If the tuple fails to pass the qual,
+ * Returns true if so, false if not.  If not,
  * we also determine whether there's any need to continue the scan beyond
  * this tuple, and set pstate.continuescan accordingly.  See comments for
  * _bt_preprocess_keys() about how this is done.
  *
  * Forward scan callers can pass a high key tuple in the hopes of having
- * us set *continuescan to false, and avoiding an unnecessary visit to
+ * us set pstate.continuescan to false, avoiding an unnecessary visit to
  * the page to the right.
  *
  * Advances the scan's array keys when necessary for arrayKeys=true callers.
@@ -1136,7 +1136,7 @@ _bt_savepostingitem(BTScanOpaque so, int itemIndex, OffsetNumber offnum,
  * Scans with array keys are required to set up page state that helps us with
  * this.  The page's finaltup tuple (the page high key for a forward scan, or
  * the page's first non-pivot tuple for a backward scan) must be set in
- * pstate.finaltup ahead of the first call here for the page.  Set this to
+ * pstate.finaltup ahead of the first call here for the page.  Set it to
  * NULL for rightmost page (or the leftmost page for backwards scans).
  *
  * scan: index scan descriptor (containing a search-type scankey)
@@ -1178,7 +1178,7 @@ _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 					dcontinuescan;
 		int			dikey = 0;
 
-		/* Pass arrayKeys=false to avoid array side-effects */
+		/* Pass advancenonrequired=false to avoid array side-effects */
 		dres = _bt_check_compare(scan, dir, tuple, tupnatts, tupdesc, false,
 								 pstate->forcenonrequired, &dcontinuescan,
 								 &dikey);
@@ -1197,9 +1197,9 @@ _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 
 	/*
 	 * Only one _bt_check_compare call is required in the common case where
-	 * there are no equality strategy array scan keys.  Otherwise we can only
-	 * accept _bt_check_compare's answer unreservedly when it didn't set
-	 * pstate.continuescan=false.
+	 * there are no equality strategy array scan keys.  With array keys, we
+	 * can only accept _bt_check_compare's answer unreservedly when it set
+	 * pstate.continuescan=true.
 	 */
 	if (!arrayKeys || pstate->continuescan)
 		return res;
@@ -2035,18 +2035,18 @@ _bt_tuple_before_array_skeys(IndexScanDesc scan, ScanDirection dir,
 /*
  * Determine if a scan with array keys should skip over uninteresting tuples.
  *
- * This is a subroutine for _bt_checkkeys.  Called when _bt_readpage's linear
- * search process (started after it finishes reading an initial group of
- * matching tuples, used to locate the start of the next group of tuples
- * matching the next set of required array keys) has already scanned an
- * excessive number of tuples whose key space is "between arrays".
+ * This is a subroutine for _bt_checkkeys, called when _bt_readpage's linear
+ * search process has scanned an excessive number of tuples whose key space is
+ * "between arrays".  (The linear search process is started after _bt_readpage
+ * finishes reading an initial group of matching tuples.  It locates the start
+ * of the first group of tuples matching the next set of required array keys.)
  *
- * When we perform look ahead successfully, we'll sets pstate.skip, which
+ * When look ahead is successful, we set pstate.skip which
  * instructs _bt_readpage to skip ahead to that tuple next (could be past the
  * end of the scan's leaf page).  Pages where the optimization is effective
  * will generally still need to skip several times.  Each call here performs
  * only a single "look ahead" comparison of a later tuple, whose distance from
- * the current tuple's offset number is determined by applying heuristics.
+ * the current tuple is determined by heuristics.
  */
 static void
 _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
