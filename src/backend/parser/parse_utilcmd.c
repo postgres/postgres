@@ -4198,11 +4198,13 @@ transformPartitionRangeBounds(ParseState *pstate, List *blist,
 	int			i,
 				j;
 
-	i = j = 0;
+	j = 0;
 	foreach(lc, blist)
 	{
 		Node	   *expr = lfirst(lc);
 		PartitionRangeDatum *prd = NULL;
+
+		i = foreach_current_index(lc);
 
 		/*
 		 * Infinite range bounds -- "minvalue" and "maxvalue" -- get passed in
@@ -4281,7 +4283,6 @@ transformPartitionRangeBounds(ParseState *pstate, List *blist,
 			prd = makeNode(PartitionRangeDatum);
 			prd->kind = PARTITION_RANGE_DATUM_VALUE;
 			prd->value = (Node *) value;
-			++i;
 		}
 
 		prd->location = exprLocation(expr);
