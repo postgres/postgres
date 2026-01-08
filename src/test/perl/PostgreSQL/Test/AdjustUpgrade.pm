@@ -112,6 +112,29 @@ sub adjust_database_contents
 			'drop extension if exists test_ext7');
 	}
 
+	# btree_gist inet/cidr indexes cannot be upgraded to v19
+	if ($old_version < 19)
+	{
+		if ($dbnames{"contrib_regression_btree_gist"})
+		{
+			_add_st($result, 'contrib_regression_btree_gist',
+				"drop index if exists public.inettmp_a_a1_idx");
+			_add_st($result, 'contrib_regression_btree_gist',
+				"drop index if exists public.inetidx");
+			_add_st($result, 'contrib_regression_btree_gist',
+				"drop index public.cidridx");
+		}
+		if ($dbnames{"regression_btree_gist"})
+		{
+			_add_st($result, 'regression_btree_gist',
+				"drop index if exists public.inettmp_a_a1_idx");
+			_add_st($result, 'regression_btree_gist',
+				"drop index if exists public.inetidx");
+			_add_st($result, 'regression_btree_gist',
+				"drop index public.cidridx");
+		}
+	}
+
 	# we removed these test-support functions in v18
 	if ($old_version < 18)
 	{

@@ -57,7 +57,7 @@
 { opcmethod => 'hash', opcname => 'inet_ops', opcfamily => 'hash/network_ops',
   opcintype => 'inet' },
 { opcmethod => 'gist', opcname => 'inet_ops', opcfamily => 'gist/network_ops',
-  opcintype => 'inet', opcdefault => 'f' },
+  opcintype => 'inet' },
 { opcmethod => 'spgist', opcname => 'inet_ops',
   opcfamily => 'spgist/network_ops', opcintype => 'inet' },
 { oid => '1979', oid_symbol => 'INT2_BTREE_OPS_OID',

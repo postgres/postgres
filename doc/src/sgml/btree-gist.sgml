@@ -108,6 +108,53 @@ INSERT 0 1
 
  </sect2>
 
+ <sect2 id="btree-gist-inet-indexes">
+  <title><literal>btree_gist</literal> Indexes
+   on <type>inet</type>/<type>cidr</type> Columns</title>
+
+  <para>
+   The <literal>gist_inet_ops</literal> and <literal>gist_cidr_ops</literal>
+   operator classes provided by <literal>btree_gist</literal> have been
+   shown to be unreliable: index searches may fail to find relevant rows due
+   to approximations used in creating the index entries.  This is unfixable
+   without redefining the contents of indexes that use these opclasses.
+   Therefore, these opclasses are being deprecated in favor of the built-in
+   GiST <literal>inet_ops</literal> opclass, which does not share the design
+   flaw.
+  </para>
+
+  <para>
+   As a first step, <productname>PostgreSQL</productname> version 19 removes
+   the default-opclass marking from <literal>gist_inet_ops</literal>
+   and <literal>gist_cidr_ops</literal>, instead
+   marking <literal>inet_ops</literal> as default for <type>inet</type>
+   and <type>cidr</type> columns.  This will result in transparently
+   substituting <literal>inet_ops</literal> for the faulty opclasses in most
+   contexts.  It is still possible to create indexes using the faulty
+   opclasses, if really necessary, by explicitly specifying which opclass to
+   use; for example
+<programlisting>
+CREATE TABLE mytable (addr inet);
+CREATE INDEX dubious_index ON mytable USING GIST (addr gist_inet_ops);
+</programlisting>
+  </para>
+
+  <para>
+   However, <application>pg_upgrade</application> cannot handle this change
+   due to implementation limitations.  If asked to upgrade a pre-v19
+   database that contains <literal>gist_inet_ops</literal>
+   or <literal>gist_cidr_ops</literal>
+   indexes, <application>pg_upgrade</application> will fail and tell you to
+   replace those indexes before upgrading.  This would look approximately
+   like
+<programlisting>
+CREATE INDEX good_index ON mytable USING GIST (addr inet_ops);
+DROP INDEX bad_index;
+</programlisting>
+  </para>
+
+ </sect2>
+
  <sect2 id="btree-gist-authors">
   <title>Authors</title>
 
