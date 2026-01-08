@@ -16079,16 +16079,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRLCPY $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "strnlen" "ac_cv_have_decl_strnlen" "$ac_includes_default"
-if test "x$ac_cv_have_decl_strnlen" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_STRNLEN $ac_have_decl
-_ACEOF
 ac_fn_c_check_decl "$LINENO" "strsep" "ac_cv_have_decl_strsep" "$ac_includes_default"
 if test "x$ac_cv_have_decl_strsep" = xyes; then :
   ac_have_decl=1
@@ -16263,19 +16253,6 @@ else
   case " $LIBOBJS " in
   *" strlcpy.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS strlcpy.$ac_objext"
- ;;
-esac
-
-fi
-
-ac_fn_c_check_func "$LINENO" "strnlen" "ac_cv_func_strnlen"
-if test "x$ac_cv_func_strnlen" = xyes; then :
-  $as_echo "#define HAVE_STRNLEN 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" strnlen.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS strnlen.$ac_objext"
  ;;
 esac
 

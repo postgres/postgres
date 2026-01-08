@@ -108,10 +108,6 @@
    don't. */
 #undef HAVE_DECL_STRLCPY
 
-/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRNLEN
-
 /* Define to 1 if you have the declaration of `strsep', and to 0 if you don't.
    */
 #undef HAVE_DECL_STRSEP
@@ -394,9 +390,6 @@
 
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
-
-/* Define to 1 if you have the `strnlen' function. */
-#undef HAVE_STRNLEN
 
 /* Define to 1 if you have the `strsep' function. */
 #undef HAVE_STRSEP
