@@ -685,7 +685,7 @@ get_op_index_interpretation(Oid opno)
 		if (!get_opmethod_canorder(op_form->amopmethod))
 			continue;
 
-		/* Get the operator's comparision type */
+		/* Get the operator's comparison type */
 		cmptype = IndexAmTranslateStrategy(op_form->amopstrategy,
 										   op_form->amopmethod,
 										   op_form->amopfamily,
@@ -729,7 +729,7 @@ get_op_index_interpretation(Oid opno)
 				if (!amroutine->amcanorder)
 					continue;
 
-				/* Get the operator's comparision type */
+				/* Get the operator's comparison type */
 				cmptype = IndexAmTranslateStrategy(op_form->amopstrategy,
 												   op_form->amopmethod,
 												   op_form->amopfamily,

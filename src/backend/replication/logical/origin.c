@@ -15,7 +15,7 @@
  * * A facility to efficiently store and persist replication progress in an
  *	 efficient and durable manner.
  *
- * Replication origin consist out of a descriptive, user defined, external
+ * Replication origin consists of a descriptive, user defined, external
  * name and a short, thus space efficient, internal 2 byte one. This split
  * exists because replication origin have to be stored in WAL and shared
  * memory and long descriptors would be inefficient.  For now only use 2 bytes
