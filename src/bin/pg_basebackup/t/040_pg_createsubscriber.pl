@@ -160,6 +160,7 @@ primary_slot_name = '$slotname'
 primary_conninfo = '$pconnstr dbname=postgres'
 hot_standby_feedback = on
 ]);
+my $sconnstr = $node_s->connstr;
 $node_s->set_standby_mode();
 $node_s->start;
 
@@ -472,6 +473,11 @@ command_ok(
 	],
 	'run pg_createsubscriber on node S');
 
+# Check that included file is renamed after success.
+my $node_s_datadir = $node_s->data_dir;
+ok( -f "$node_s_datadir/pg_createsubscriber.conf.disabled",
+	"pg_createsubscriber.conf.disabled exists in node S");
+
 # Confirm the physical replication slot has been removed
 $result = $node_p->safe_psql($db1,
 	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$slotname'"
@@ -579,10 +585,50 @@ is($result, qq($db1|{test_pub3}
 $db2|{pub2}),
 	"subscriptions use the correct publications");
 
+# Verify that node K, set as a standby, is able to start correctly without
+# the recovery configuration written by pg_createsubscriber interfering.
+# This node is created from node S, where pg_createsubscriber has been run.
+
+# Create a physical standby from the promoted subscriber
+$node_s->safe_psql('postgres',
+	"SELECT pg_create_physical_replication_slot('$slotname');");
+
+# Create backup from promoted subscriber
+$node_s->backup('backup_3');
+
+# Initialize new physical standby
+my $node_k = PostgreSQL::Test::Cluster->new('node_k');
+$node_k->init_from_backup($node_s, 'backup_3', has_streaming => 1);
+
+my $node_k_datadir = $node_k->data_dir;
+ok( -f "$node_k_datadir/pg_createsubscriber.conf.disabled",
+	"pg_createsubscriber.conf.disabled exists in node K");
+
+# Configure the new standby
+$node_k->append_conf(
+	'postgresql.conf', qq[
+primary_slot_name = '$slotname'
+primary_conninfo = '$sconnstr dbname=postgres'
+hot_standby_feedback = on
+]);
+
+$node_k->set_standby_mode();
+my $node_k_name = $node_s->name;
+command_ok(
+	[
+		'pg_ctl', '--wait',
+		'--pgdata' => $node_k->data_dir,
+		'--log' => $node_k->logfile,
+		'--options' => "--cluster-name=$node_k_name",
+		'start'
+	],
+	"node K has started");
+
 # clean up
 $node_p->teardown_node;
 $node_s->teardown_node;
 $node_t->teardown_node;
 $node_f->teardown_node;
+$node_k->teardown_node;
 
 done_testing();

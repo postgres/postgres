@@ -518,8 +518,11 @@ PostgreSQL documentation
 
     <step>
      <para>
-      Write recovery parameters into the target data directory and restart the
-      target server.  It specifies an LSN (<xref
+      Write recovery parameters into the separate configuration file
+      <filename>pg_createsubscriber.conf</filename> that is included from
+      <filename>postgresql.auto.conf</filename> using
+      <literal>include_if_exists</literal> in the target data directory, then
+      restart the target server.  It specifies an LSN (<xref
       linkend="guc-recovery-target-lsn"/>) of the write-ahead log location up
       to which recovery will proceed.  It also specifies
       <literal>promote</literal> as the action that the server should take
@@ -532,7 +535,10 @@ PostgreSQL documentation
       server ends standby mode and is accepting read-write transactions.  If
       <option>--recovery-timeout</option> option is set,
       <application>pg_createsubscriber</application> terminates if recovery
-      does not end until the given number of seconds.
+      does not end until the given number of seconds.  Upon completion, the
+      included configuration file is renamed to
+      <filename>pg_createsubscriber.conf.disabled</filename> so as it is no
+      longer loaded on subsequent restarts.
      </para>
     </step>
 

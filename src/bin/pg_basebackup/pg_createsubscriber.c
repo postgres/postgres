@@ -20,6 +20,7 @@
 
 #include "common/connect.h"
 #include "common/controldata_utils.h"
+#include "common/file_utils.h"
 #include "common/logging.h"
 #include "common/pg_prng.h"
 #include "common/restricted_token.h"
@@ -32,6 +33,21 @@
 
 #define	DEFAULT_SUB_PORT	"50432"
 #define	OBJECTTYPE_PUBLICATIONS  0x0001
+
+/*
+ * Configuration files for recovery parameters.
+ *
+ * The recovery parameters are set in INCLUDED_CONF_FILE, itself loaded by
+ * the server through an include_if_exists in postgresql.auto.conf.
+ *
+ * INCLUDED_CONF_FILE is renamed to INCLUDED_CONF_FILE_DISABLED when exiting,
+ * so as the recovery parameters set by this tool never take effect on node
+ * restart.  The contents of INCLUDED_CONF_FILE_DISABLED can be useful for
+ * debugging.
+ */
+#define PG_AUTOCONF_FILENAME		"postgresql.auto.conf"
+#define INCLUDED_CONF_FILE			"pg_createsubscriber.conf"
+#define INCLUDED_CONF_FILE_DISABLED	INCLUDED_CONF_FILE ".disabled"
 
 /* Command-line options */
 struct CreateSubscriberOptions
@@ -156,22 +172,43 @@ static char *subscriber_dir = NULL;
 
 static bool recovery_ended = false;
 static bool standby_running = false;
+static bool recovery_params_set = false;
 
 
 /*
- * Cleanup objects that were created by pg_createsubscriber if there is an
- * error.
+ * Clean up objects created by pg_createsubscriber.
  *
- * Publications and replication slots are created on primary. Depending on the
- * step it failed, it should remove the already created objects if it is
- * possible (sometimes it won't work due to a connection issue).
- * There is no cleanup on the target server. The steps on the target server are
- * executed *after* promotion, hence, at this point, a failure means recreate
- * the physical replica and start again.
+ * Publications and replication slots are created on the primary.  Depending
+ * on the step where it failed, already-created objects should be removed if
+ * possible (sometimes this won't work due to a connection issue).
+ * There is no cleanup on the target server *after* its promotion, because any
+ * failure at this point means recreating the physical replica and starting
+ * again.
+ *
+ * The recovery configuration is always removed, by renaming the included
+ * configuration file out of the way.
  */
 static void
 cleanup_objects_atexit(void)
 {
+	/* Rename the included configuration file, if necessary. */
+	if (recovery_params_set)
+	{
+		char		conf_filename[MAXPGPATH];
+		char		conf_filename_disabled[MAXPGPATH];
+
+		snprintf(conf_filename, MAXPGPATH, "%s/%s", subscriber_dir,
+				 INCLUDED_CONF_FILE);
+		snprintf(conf_filename_disabled, MAXPGPATH, "%s/%s", subscriber_dir,
+				 INCLUDED_CONF_FILE_DISABLED);
+
+		if (durable_rename(conf_filename, conf_filename_disabled) != 0)
+		{
+			/* durable_rename() has already logged something. */
+			pg_log_warning_hint("A manual removal of the recovery parameters may be required.");
+		}
+	}
+
 	if (success)
 		return;
 
@@ -1334,11 +1371,36 @@ setup_recovery(const struct LogicalRepInfo *dbinfo, const char *datadir, const c
 	{
 		appendPQExpBuffer(recoveryconfcontents, "recovery_target_lsn = '%s'\n",
 						  lsn);
-		WriteRecoveryConfig(conn, datadir, recoveryconfcontents);
 	}
-	disconnect_database(conn, false);
 
 	pg_log_debug("recovery parameters:\n%s", recoveryconfcontents->data);
+
+	if (!dry_run)
+	{
+		char		conf_filename[MAXPGPATH];
+		FILE	   *fd;
+
+		/* Write the recovery parameters to INCLUDED_CONF_FILE */
+		snprintf(conf_filename, MAXPGPATH, "%s/%s", datadir,
+				 INCLUDED_CONF_FILE);
+		fd = fopen(conf_filename, "w");
+		if (fd == NULL)
+			pg_fatal("could not open file \"%s\": %m", conf_filename);
+
+		if (fwrite(recoveryconfcontents->data, recoveryconfcontents->len, 1, fd) != 1)
+			pg_fatal("could not write to file \"%s\": %m", conf_filename);
+
+		fclose(fd);
+		recovery_params_set = true;
+
+		/* Include conditionally the recovery parameters. */
+		resetPQExpBuffer(recoveryconfcontents);
+		appendPQExpBufferStr(recoveryconfcontents,
+							 "include_if_exists '" INCLUDED_CONF_FILE "'\n");
+		WriteRecoveryConfig(conn, datadir, recoveryconfcontents);
+	}
+
+	disconnect_database(conn, false);
 }
 
 /*
