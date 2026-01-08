@@ -44,7 +44,6 @@ install_data(
   'btree_gist.control',
   'btree_gist--1.0--1.1.sql',
   'btree_gist--1.1--1.2.sql',
-  'btree_gist--1.2.sql',
   'btree_gist--1.2--1.3.sql',
   'btree_gist--1.3--1.4.sql',
   'btree_gist--1.4--1.5.sql',
