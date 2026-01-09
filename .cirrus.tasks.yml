@@ -570,6 +570,7 @@ task:
         su postgres <<-EOF
           set -e
           export CC='ccache gcc -m32'
+          export CXX='ccache g++ -m32'
           meson setup \
             ${MESON_COMMON_PG_CONFIG_ARGS} \
             --buildtype=debug \
