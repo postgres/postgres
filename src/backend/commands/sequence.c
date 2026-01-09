@@ -1788,7 +1788,6 @@ pg_get_sequence_data(PG_FUNCTION_ARGS)
 {
 #define PG_GET_SEQUENCE_DATA_COLS	2
 	Oid			relid = PG_GETARG_OID(0);
-	SeqTable	elm;
 	Relation	seqrel;
 	Datum		values[PG_GET_SEQUENCE_DATA_COLS] = {0};
 	bool		isnull[PG_GET_SEQUENCE_DATA_COLS] = {0};
@@ -1803,13 +1802,15 @@ pg_get_sequence_data(PG_FUNCTION_ARGS)
 					   BOOLOID, -1, 0);
 	resultTupleDesc = BlessTupleDesc(resultTupleDesc);
 
-	init_sequence(relid, &elm, &seqrel);
+	seqrel = try_relation_open(relid, AccessShareLock);
 
 	/*
-	 * Return all NULLs for sequences for which we lack privileges, other
-	 * sessions' temporary sequences, and unlogged sequences on standbys.
+	 * Return all NULLs for missing sequences, sequences for which we lack
+	 * privileges, other sessions' temporary sequences, and unlogged sequences
+	 * on standbys.
 	 */
-	if (pg_class_aclcheck(relid, GetUserId(), ACL_SELECT) == ACLCHECK_OK &&
+	if (seqrel && seqrel->rd_rel->relkind == RELKIND_SEQUENCE &&
+		pg_class_aclcheck(relid, GetUserId(), ACL_SELECT) == ACLCHECK_OK &&
 		!RELATION_IS_OTHER_TEMP(seqrel) &&
 		(RelationIsPermanent(seqrel) || !RecoveryInProgress()))
 	{
@@ -1827,7 +1828,8 @@ pg_get_sequence_data(PG_FUNCTION_ARGS)
 	else
 		memset(isnull, true, sizeof(isnull));
 
-	sequence_close(seqrel, NoLock);
+	if (seqrel)
+		relation_close(seqrel, AccessShareLock);
 
 	resultHeapTuple = heap_form_tuple(resultTupleDesc, values, isnull);
 	result = HeapTupleGetDatum(resultHeapTuple);
