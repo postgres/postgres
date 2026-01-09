@@ -141,7 +141,7 @@ postgres = executable('postgres',
 backend_targets += postgres
 
 pg_mod_c_args = cflags_mod
-pg_mod_cpp_args = cxxflags_mod
+pg_mod_cxx_args = cxxflags_mod
 pg_mod_link_args = ldflags_sl + ldflags_mod
 pg_mod_link_depend = []
 
@@ -176,7 +176,7 @@ backend_mod_code = declare_dependency(
 # normal extension modules
 pg_mod_args = default_mod_args + {
   'dependencies': [backend_mod_code],
-  'cpp_args': pg_mod_cpp_args,
+  'cpp_args': pg_mod_cxx_args,
   'link_depends': pg_mod_link_depend,
 }
 

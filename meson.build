@@ -843,7 +843,7 @@ if add_languages('cpp', required: llvmopt, native: false)
 
     cdata.set('USE_LLVM', 1)
 
-    cpp = meson.get_compiler('cpp')
+    cxx = meson.get_compiler('cpp')
 
     llvm_binpath = llvm.get_variable(configtool: 'bindir')
 
@@ -1917,10 +1917,10 @@ endforeach
 # We need to repeat the test for C++ because gcc and clang prefer different
 # format archetypes.
 if llvm.found()
-  attrib_error_args = cpp.get_supported_arguments('-Werror=format', '-Werror=ignored-attributes')
+  attrib_error_args = cxx.get_supported_arguments('-Werror=format', '-Werror=ignored-attributes')
   foreach a : printf_attributes
-    if cpp.compiles(testsrc.format(a),
-        args: attrib_error_args, name: 'cppformat ' + a)
+    if cxx.compiles(testsrc.format(a),
+        args: attrib_error_args, name: 'cxxformat ' + a)
       cdata.set('PG_CXX_PRINTF_ATTRIBUTE', a)
       break
     endif
@@ -2084,7 +2084,7 @@ common_functional_flags = [
 
 cflags += cc.get_supported_arguments(common_functional_flags)
 if llvm.found()
-  cxxflags += cpp.get_supported_arguments(common_functional_flags)
+  cxxflags += cxx.get_supported_arguments(common_functional_flags)
 endif
 
 vectorize_cflags = cc.get_supported_arguments(['-ftree-vectorize'])
@@ -2108,7 +2108,7 @@ common_warning_flags = [
 
 cflags_warn += cc.get_supported_arguments(common_warning_flags)
 if llvm.found()
-  cxxflags_warn += cpp.get_supported_arguments(common_warning_flags)
+  cxxflags_warn += cxx.get_supported_arguments(common_warning_flags)
 endif
 
 # A few places with imported code get a pass on -Wdeclaration-after-statement, remember
@@ -2161,7 +2161,7 @@ foreach w : negative_warning_flags
   if cc.has_argument('-W' + w)
     cflags_warn += '-Wno-' + w
   endif
-  if llvm.found() and cpp.has_argument('-W' + w)
+  if llvm.found() and cxx.has_argument('-W' + w)
     cxxflags_warn += '-Wno-' + w
   endif
 endforeach
@@ -2230,7 +2230,7 @@ endif
 
 cflags_builtin = cc.get_supported_arguments(common_builtin_flags)
 if llvm.found()
-  cxxflags_builtin = cpp.get_supported_arguments(common_builtin_flags)
+  cxxflags_builtin = cxx.get_supported_arguments(common_builtin_flags)
 endif
 
 
@@ -3953,7 +3953,7 @@ summary(
 if llvm.found()
   summary(
     {
-      'C++ compiler': '@0@ @1@'.format(cpp.get_id(), cpp.version()),
+      'C++ compiler': '@0@ @1@'.format(cxx.get_id(), cxx.version()),
     },
     section: 'Compiler',
   )
