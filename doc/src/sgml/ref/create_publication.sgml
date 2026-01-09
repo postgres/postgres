@@ -235,13 +235,15 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
         <term><literal>publish_via_partition_root</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
-          This parameter determines whether changes in a partitioned table (or
-          on its partitions) contained in the publication will be published
-          using the identity and schema of the partitioned table rather than
-          that of the individual partitions that are actually changed; the
-          latter is the default.  Enabling this allows the changes to be
-          replicated into a non-partitioned table or a partitioned table
-          consisting of a different set of partitions.
+          This parameter controls how changes to a partitioned table (or any of
+          its partitions) are published.  When set to <literal>true</literal>,
+          changes are published using the identity and schema of the
+          root partitioned table.  When set to <literal>false</literal> (the
+          default), changes are published using the identity and schema of the
+          individual partitions where the changes actually occurred.  Enabling
+          this option allows the changes to be replicated into a
+          non-partitioned table or into a partitioned table whose partition
+          structure differs from that of the publisher.
          </para>
 
          <para>
