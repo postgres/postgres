@@ -388,44 +388,6 @@ GinInitMetabuffer(Buffer b)
 }
 
 /*
- * Compare two keys of the same index column
- */
-int
-ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
-				  Datum a, GinNullCategory categorya,
-				  Datum b, GinNullCategory categoryb)
-{
-	/* if not of same null category, sort by that first */
-	if (categorya != categoryb)
-		return (categorya < categoryb) ? -1 : 1;
-
-	/* all null items in same category are equal */
-	if (categorya != GIN_CAT_NORM_KEY)
-		return 0;
-
-	/* both not null, so safe to call the compareFn */
-	return DatumGetInt32(FunctionCall2Coll(&ginstate->compareFn[attnum - 1],
-										   ginstate->supportCollation[attnum - 1],
-										   a, b));
-}
-
-/*
- * Compare two keys of possibly different index columns
- */
-int
-ginCompareAttEntries(GinState *ginstate,
-					 OffsetNumber attnuma, Datum a, GinNullCategory categorya,
-					 OffsetNumber attnumb, Datum b, GinNullCategory categoryb)
-{
-	/* attribute number is the first sort key */
-	if (attnuma != attnumb)
-		return (attnuma < attnumb) ? -1 : 1;
-
-	return ginCompareEntries(ginstate, attnuma, a, categorya, b, categoryb);
-}
-
-
-/*
  * Support for sorting key datums in ginExtractEntries
  *
  * Note: we only have to worry about null and not-null keys here;
