@@ -78,13 +78,13 @@ typedef struct Instrumentation
 	bool		running;		/* true if we've completed first tuple */
 	instr_time	starttime;		/* start time of current iteration of node */
 	instr_time	counter;		/* accumulated runtime for this node */
-	double		firsttuple;		/* time for first tuple of this cycle */
+	instr_time	firsttuple;		/* time for first tuple of this cycle */
 	double		tuplecount;		/* # of tuples emitted so far this cycle */
 	BufferUsage bufusage_start; /* buffer usage at start */
 	WalUsage	walusage_start; /* WAL usage at start */
 	/* Accumulated statistics across all completed cycles: */
-	double		startup;		/* total startup time (in seconds) */
-	double		total;			/* total time (in seconds) */
+	instr_time	startup;		/* total startup time */
+	instr_time	total;			/* total time */
 	double		ntuples;		/* total tuples produced */
 	double		ntuples2;		/* secondary node-specific tuple counter */
 	double		nloops;			/* # of run cycles for this node */

@@ -114,7 +114,7 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	if (!instr->running)
 	{
 		instr->running = true;
-		instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
+		instr->firsttuple = instr->counter;
 	}
 	else
 	{
@@ -123,7 +123,7 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 		 * this might be the first tuple
 		 */
 		if (instr->async_mode && save_tuplecount < 1.0)
-			instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
+			instr->firsttuple = instr->counter;
 	}
 }
 
@@ -139,8 +139,6 @@ InstrUpdateTupleCount(Instrumentation *instr, double nTuples)
 void
 InstrEndLoop(Instrumentation *instr)
 {
-	double		totaltime;
-
 	/* Skip if nothing has happened, or already shut down */
 	if (!instr->running)
 		return;
@@ -149,10 +147,8 @@ InstrEndLoop(Instrumentation *instr)
 		elog(ERROR, "InstrEndLoop called on running node");
 
 	/* Accumulate per-cycle statistics into totals */
-	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
-
-	instr->startup += instr->firsttuple;
-	instr->total += totaltime;
+	INSTR_TIME_ADD(instr->startup, instr->firsttuple);
+	INSTR_TIME_ADD(instr->total, instr->counter);
 	instr->ntuples += instr->tuplecount;
 	instr->nloops += 1;
 
@@ -160,7 +156,7 @@ InstrEndLoop(Instrumentation *instr)
 	instr->running = false;
 	INSTR_TIME_SET_ZERO(instr->starttime);
 	INSTR_TIME_SET_ZERO(instr->counter);
-	instr->firsttuple = 0;
+	INSTR_TIME_SET_ZERO(instr->firsttuple);
 	instr->tuplecount = 0;
 }
 
@@ -173,14 +169,15 @@ InstrAggNode(Instrumentation *dst, Instrumentation *add)
 		dst->running = true;
 		dst->firsttuple = add->firsttuple;
 	}
-	else if (dst->running && add->running && dst->firsttuple > add->firsttuple)
+	else if (dst->running && add->running &&
+			 INSTR_TIME_LT(dst->firsttuple, add->firsttuple))
 		dst->firsttuple = add->firsttuple;
 
 	INSTR_TIME_ADD(dst->counter, add->counter);
 
 	dst->tuplecount += add->tuplecount;
-	dst->startup += add->startup;
-	dst->total += add->total;
+	INSTR_TIME_ADD(dst->startup, add->startup);
+	INSTR_TIME_ADD(dst->total, add->total);
 	dst->ntuples += add->ntuples;
 	dst->ntuples2 += add->ntuples2;
 	dst->nloops += add->nloops;

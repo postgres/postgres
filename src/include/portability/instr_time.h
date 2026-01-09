@@ -184,6 +184,8 @@ GetTimerFrequency(void)
 #define INSTR_TIME_ACCUM_DIFF(x,y,z) \
 	((x).ticks += (y).ticks - (z).ticks)
 
+#define INSTR_TIME_LT(x,y) \
+	((x).ticks > (y).ticks)
 
 #define INSTR_TIME_GET_DOUBLE(t) \
 	((double) INSTR_TIME_GET_NANOSEC(t) / NS_PER_S)
