@@ -349,7 +349,7 @@ defGetStringList(DefElem *def)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("%s requires a parameter",
 						def->defname)));
-	if (nodeTag(def->arg) != T_List)
+	if (!IsA(def->arg, List))
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
 
 	foreach(cell, (List *) def->arg)
