@@ -1093,7 +1093,10 @@ DefineIndex(ParseState *pstate,
 									key->partattrs[i] - 1);
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("unique constraint on partitioned table must include all partitioning columns"),
+				/* translator: %s is UNIQUE, PRIMARY KEY, etc */
+						 errmsg("%s constraint on partitioned table must include all partitioning columns",
+								constraint_type),
+				/* translator: first %s is UNIQUE, PRIMARY KEY, etc */
 						 errdetail("%s constraint on table \"%s\" lacks column \"%s\" which is part of the partition key.",
 								   constraint_type, RelationGetRelationName(rel),
 								   NameStr(att->attname))));
