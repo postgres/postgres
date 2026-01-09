@@ -36,9 +36,15 @@ config_paths_data.set_quoted('MANDIR', dir_prefix / dir_man)
 var_cc = ' '.join(cc.cmd_array())
 var_cpp = ' '.join(cc.cmd_array() + ['-E'])
 var_cflags = ' '.join(cflags + cflags_builtin + cflags_warn + get_option('c_args'))
-if llvm.found()
+if have_cxx
+  var_cxx = ' '.join(cxx.cmd_array())
   var_cxxflags = ' '.join(cxxflags + cxxflags_builtin + cxxflags_warn + get_option('cpp_args'))
 else
+  # Default to 'g++' so that PGXS users get a clear "g++ not found"
+  # error when building C++ extensions.  Otherwise, they'd get a
+  # confusing error because no binary is specified in the build
+  # commands and the first flag would be interpreted as the program.
+  var_cxx = 'g++'
   var_cxxflags = ''
 endif
 var_cppflags = ' '.join(cppflags)

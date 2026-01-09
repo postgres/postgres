@@ -41,6 +41,10 @@ build_system = build_machine.system()
 host_cpu = host_machine.cpu_family()
 
 cc = meson.get_compiler('c')
+have_cxx = add_languages('cpp', required: false, native: false)
+if have_cxx
+  cxx = meson.get_compiler('cpp')
+endif
 
 not_found_dep = dependency('', required: false)
 thread_dep = dependency('threads')
@@ -836,14 +840,12 @@ endif
 
 llvmopt = get_option('llvm')
 llvm = not_found_dep
-if add_languages('cpp', required: llvmopt, native: false)
+if have_cxx
   llvm = dependency('llvm', version: '>=14', method: 'config-tool', required: llvmopt)
 
   if llvm.found()
 
     cdata.set('USE_LLVM', 1)
-
-    cxx = meson.get_compiler('cpp')
 
     llvm_binpath = llvm.get_variable(configtool: 'bindir')
 
@@ -853,8 +855,13 @@ if add_languages('cpp', required: llvmopt, native: false)
     # find via PATH, too.
     clang = find_program(llvm_binpath / 'clang', 'clang', required: true)
   endif
-elif llvmopt.auto()
-  message('llvm requires a C++ compiler')
+else
+  msg = 'llvm requires a C++ compiler'
+  if llvmopt.auto()
+    message(msg)
+  elif llvmopt.enabled()
+    error(msg)
+  endif
 endif
 
 
@@ -1916,7 +1923,7 @@ endforeach
 
 # We need to repeat the test for C++ because gcc and clang prefer different
 # format archetypes.
-if llvm.found()
+if have_cxx
   attrib_error_args = cxx.get_supported_arguments('-Werror=format', '-Werror=ignored-attributes')
   foreach a : printf_attributes
     if cxx.compiles(testsrc.format(a),
@@ -2083,7 +2090,7 @@ common_functional_flags = [
 ]
 
 cflags += cc.get_supported_arguments(common_functional_flags)
-if llvm.found()
+if have_cxx
   cxxflags += cxx.get_supported_arguments(common_functional_flags)
 endif
 
@@ -2107,7 +2114,7 @@ common_warning_flags = [
 ]
 
 cflags_warn += cc.get_supported_arguments(common_warning_flags)
-if llvm.found()
+if have_cxx
   cxxflags_warn += cxx.get_supported_arguments(common_warning_flags)
 endif
 
@@ -2161,7 +2168,7 @@ foreach w : negative_warning_flags
   if cc.has_argument('-W' + w)
     cflags_warn += '-Wno-' + w
   endif
-  if llvm.found() and cxx.has_argument('-W' + w)
+  if have_cxx and cxx.has_argument('-W' + w)
     cxxflags_warn += '-Wno-' + w
   endif
 endforeach
@@ -2229,7 +2236,7 @@ elif optimization == 's'
 endif
 
 cflags_builtin = cc.get_supported_arguments(common_builtin_flags)
-if llvm.found()
+if have_cxx
   cxxflags_builtin = cxx.get_supported_arguments(common_builtin_flags)
 endif
 
@@ -3950,7 +3957,7 @@ summary(
   section: 'Compiler Flags',
 )
 
-if llvm.found()
+if have_cxx
   summary(
     {
       'C++ compiler': '@0@ @1@'.format(cxx.get_id(), cxx.version()),
