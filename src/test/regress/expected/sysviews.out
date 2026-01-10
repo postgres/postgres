@@ -29,7 +29,7 @@ select type, name, ident, level, total_bytes >= free_bytes
 (1 row)
 
 -- We can exercise some MemoryContext type stats functions.  Most of the
--- column values are too platform-dependant to display.
+-- column values are too platform-dependent to display.
 -- Ensure stats from the bump allocator look sane.  Bump isn't a commonly
 -- used context, but it is used in tuplesort.c, so open a cursor to keep
 -- the tuplesort alive long enough for us to query the context stats.
