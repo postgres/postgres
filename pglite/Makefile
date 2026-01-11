@@ -8,7 +8,8 @@ SUBDIRS = \
 		vector \
 		pgtap \
 		pg_uuidv7 \
-		pg_hashids
+		pg_hashids \
+		pg_textsearch
 
 prefix ?= /install/pglite
 EXTENSIONS_BUILD_ROOT := /tmp/extensions/build

@@ -2,7 +2,9 @@ __indirect_function_table
 invoke_di
 invoke_didi
 invoke_dii
+invoke_fii
 invoke_i
+invoke_id
 invoke_ii
 invoke_iii
 invoke_iiii
@@ -23,7 +25,6 @@ invoke_viii
 invoke_viiidi
 invoke_viiii
 invoke_viiiii
-invoke_viiiiii
 invoke_viiiiii
 invoke_viiiiiiii
 invoke_viiiiiiiii
