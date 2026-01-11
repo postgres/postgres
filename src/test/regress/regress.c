@@ -1282,6 +1282,145 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }
 
+/* Convert bytea to text without validation for corruption tests from SQL. */
+PG_FUNCTION_INFO_V1(test_bytea_to_text);
+Datum
+test_bytea_to_text(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P(PG_GETARG_BYTEA_PP(0));
+}
+
+/* And the reverse. */
+PG_FUNCTION_INFO_V1(test_text_to_bytea);
+Datum
+test_text_to_bytea(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BYTEA_P(PG_GETARG_TEXT_PP(0));
+}
+
+/* Corruption tests in C. */
+PG_FUNCTION_INFO_V1(test_mblen_func);
+Datum
+test_mblen_func(PG_FUNCTION_ARGS)
+{
+	const char *func = text_to_cstring(PG_GETARG_BYTEA_PP(0));
+	const char *encoding = text_to_cstring(PG_GETARG_BYTEA_PP(1));
+	text	   *string = PG_GETARG_BYTEA_PP(2);
+	int			offset = PG_GETARG_INT32(3);
+	const char *data = VARDATA_ANY(string);
+	size_t		size = VARSIZE_ANY_EXHDR(string);
+	int			result = 0;
+
+	if (strcmp(func, "pg_mblen_unbounded") == 0)
+		result = pg_mblen_unbounded(data + offset);
+	else if (strcmp(func, "pg_mblen_cstr") == 0)
+		result = pg_mblen_cstr(data + offset);
+	else if (strcmp(func, "pg_mblen_with_len") == 0)
+		result = pg_mblen_with_len(data + offset, size - offset);
+	else if (strcmp(func, "pg_mblen_range") == 0)
+		result = pg_mblen_range(data + offset, data + size);
+	else if (strcmp(func, "pg_encoding_mblen") == 0)
+		result = pg_encoding_mblen(pg_char_to_encoding(encoding), data + offset);
+	else
+		elog(ERROR, "unknown function");
+
+	PG_RETURN_INT32(result);
+}
+
+PG_FUNCTION_INFO_V1(test_text_to_wchars);
+Datum
+test_text_to_wchars(PG_FUNCTION_ARGS)
+{
+	const char *encoding_name = text_to_cstring(PG_GETARG_BYTEA_PP(0));
+	text	   *string = PG_GETARG_TEXT_PP(1);
+	const char *data = VARDATA_ANY(string);
+	size_t		size = VARSIZE_ANY_EXHDR(string);
+	pg_wchar   *wchars = palloc(sizeof(pg_wchar) * (size + 1));
+	Datum	   *datums;
+	int			wlen;
+	int			encoding;
+
+	encoding = pg_char_to_encoding(encoding_name);
+	if (encoding < 0)
+		elog(ERROR, "unknown encoding name: %s", encoding_name);
+
+	if (size > 0)
+	{
+		datums = palloc(sizeof(Datum) * size);
+		wlen = pg_encoding_mb2wchar_with_len(encoding,
+											 data,
+											 wchars,
+											 size);
+		Assert(wlen >= 0);
+		Assert(wlen <= size);
+		Assert(wchars[wlen] == 0);
+
+		for (int i = 0; i < wlen; ++i)
+			datums[i] = UInt32GetDatum(wchars[i]);
+	}
+	else
+	{
+		datums = NULL;
+		wlen = 0;
+	}
+
+	PG_RETURN_ARRAYTYPE_P(construct_array_builtin(datums, wlen, INT4OID));
+}
+
+PG_FUNCTION_INFO_V1(test_wchars_to_text);
+Datum
+test_wchars_to_text(PG_FUNCTION_ARGS)
+{
+	const char *encoding_name = text_to_cstring(PG_GETARG_BYTEA_PP(0));
+	ArrayType  *array = PG_GETARG_ARRAYTYPE_P(1);
+	Datum	   *datums;
+	bool	   *nulls;
+	char	   *mb;
+	text	   *result;
+	int			wlen;
+	int			bytes;
+	int			encoding;
+
+	encoding = pg_char_to_encoding(encoding_name);
+	if (encoding < 0)
+		elog(ERROR, "unknown encoding name: %s", encoding_name);
+
+	deconstruct_array_builtin(array, INT4OID, &datums, &nulls, &wlen);
+
+	if (wlen > 0)
+	{
+		pg_wchar   *wchars = palloc(sizeof(pg_wchar) * wlen);
+
+		for (int i = 0; i < wlen; ++i)
+		{
+			if (nulls[i])
+				elog(ERROR, "unexpected NULL in array");
+			wchars[i] = DatumGetInt32(datums[i]);
+		}
+
+		mb = palloc(pg_encoding_max_length(encoding) * wlen + 1);
+		bytes = pg_encoding_wchar2mb_with_len(encoding, wchars, mb, wlen);
+	}
+	else
+	{
+		mb = "";
+		bytes = 0;
+	}
+
+	result = palloc(bytes + VARHDRSZ);
+	SET_VARSIZE(result, bytes + VARHDRSZ);
+	memcpy(VARDATA(result), mb, bytes);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+PG_FUNCTION_INFO_V1(test_valid_server_encoding);
+Datum
+test_valid_server_encoding(PG_FUNCTION_ARGS)
+{
+	return pg_valid_server_encoding(text_to_cstring(PG_GETARG_TEXT_PP(0)));
+}
+
 /* Provide SQL access to IsBinaryCoercible() */
 PG_FUNCTION_INFO_V1(binary_coercible);
 Datum
