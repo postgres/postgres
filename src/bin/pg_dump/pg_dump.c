@@ -19230,11 +19230,13 @@ dumpSequenceData(Archive *fout, const TableDataInfo *tdinfo)
 	TableInfo  *tbinfo = tdinfo->tdtable;
 	int64		last;
 	bool		called;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 
 	/* needn't bother if not dumping sequence data */
 	if (!fout->dopt->dumpData && !fout->dopt->sequence_data)
 		return;
+
+	query = createPQExpBuffer();
 
 	/*
 	 * For versions >= 18, the sequence information is gathered in the sorted
