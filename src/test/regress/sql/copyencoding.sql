@@ -23,6 +23,13 @@ CREATE TABLE copy_encoding_tab (t text);
 COPY (SELECT E'\u3042') TO :'utf8_csv' WITH (FORMAT csv, ENCODING 'UTF8');
 -- Read UTF8 data as LATIN1: no error
 COPY copy_encoding_tab FROM :'utf8_csv' WITH (FORMAT csv, ENCODING 'LATIN1');
+-- Non-server encodings have distinct code paths.
+\set fname :abs_builddir '/results/copyencoding_gb18030.csv'
+COPY (SELECT E'\u3042,') TO :'fname' WITH (FORMAT csv, ENCODING 'GB18030');
+COPY copy_encoding_tab FROM :'fname' WITH (FORMAT csv, ENCODING 'GB18030');
+\set fname :abs_builddir '/results/copyencoding_gb18030.data'
+COPY (SELECT E'\u3042,') TO :'fname' WITH (FORMAT text, ENCODING 'GB18030');
+COPY copy_encoding_tab FROM :'fname' WITH (FORMAT text, ENCODING 'GB18030');
 
 -- Use client_encoding
 SET client_encoding TO UTF8;
