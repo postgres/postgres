@@ -259,14 +259,14 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-j <replaceable class="parameter">number-of-jobs</replaceable></option></term>
-      <term><option>--jobs=<replaceable class="parameter">number-of-jobs</replaceable></option></term>
+      <term><option>-j <replaceable class="parameter">njobs</replaceable></option></term>
+      <term><option>--jobs=<replaceable class="parameter">njobs</replaceable></option></term>
       <listitem>
        <para>
         Run the most time-consuming steps
         of <application>pg_restore</application> &mdash; those that load data,
         create indexes, or create constraints &mdash; concurrently, using up
-        to <replaceable class="parameter">number-of-jobs</replaceable>
+        to <replaceable class="parameter">njobs</replaceable>
         concurrent sessions.  This option can dramatically reduce the time
         to restore a large database to a server running on a
         multiprocessor machine.  This option is ignored when emitting a script
