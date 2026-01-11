@@ -39,6 +39,7 @@ tests += {
   'regress': {
     'sql': [
       'pg_trgm',
+      'pg_utf8_trgm',
       'pg_word_trgm',
       'pg_strict_word_trgm',
     ],

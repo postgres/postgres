@@ -3752,6 +3752,12 @@ deconstruct_array_builtin(ArrayType *array,
 			elmalign = TYPALIGN_SHORT;
 			break;
 
+		case INT4OID:
+			elmlen = sizeof(int32);
+			elmbyval = true;
+			elmalign = TYPALIGN_INT;
+			break;
+
 		case OIDOID:
 			elmlen = sizeof(Oid);
 			elmbyval = true;
