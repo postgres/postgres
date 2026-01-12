@@ -32,6 +32,7 @@
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

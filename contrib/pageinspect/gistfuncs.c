@@ -9,6 +9,7 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/gist.h"
 #include "access/htup.h"
 #include "access/htup_details.h"

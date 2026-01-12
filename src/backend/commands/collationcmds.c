@@ -34,6 +34,7 @@
 #include "common/string.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

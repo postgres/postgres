@@ -35,6 +35,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 /* Default values assigned to new pg_statistic tuples. */
 #define DEFAULT_STATATT_NULL_FRAC      Float4GetDatum(0.0)	/* stanullfrac */

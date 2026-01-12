@@ -51,6 +51,7 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/table.h"
 #include "catalog/pg_sequence.h"
 #include "catalog/pg_subscription_rel.h"

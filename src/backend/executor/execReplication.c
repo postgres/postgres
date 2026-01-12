@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/commit_ts.h"
 #include "access/genam.h"
 #include "access/gist.h"

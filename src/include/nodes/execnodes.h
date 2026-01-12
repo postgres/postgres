@@ -29,8 +29,10 @@
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
+#include "access/skey.h"
 #include "access/tupconvert.h"
 #include "executor/instrument.h"
+#include "executor/instrument_node.h"
 #include "fmgr.h"
 #include "lib/ilist.h"
 #include "lib/pairingheap.h"
