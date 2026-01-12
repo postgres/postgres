@@ -906,10 +906,12 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 	/*
 	 * Reset the next slot pointer. This encourages the use of low-numbered
 	 * pages, increasing the chances that a later vacuum can truncate the
-	 * relation.  We don't bother with a lock here, nor with marking the page
-	 * dirty if it wasn't already, since this is just a hint.
+	 * relation. We don't bother with marking the page dirty if it wasn't
+	 * already, since this is just a hint.
 	 */
+	LockBuffer(buf, BUFFER_LOCK_SHARE);
 	((FSMPage) PageGetContents(page))->fp_next_slot = 0;
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 	ReleaseBuffer(buf);
 
