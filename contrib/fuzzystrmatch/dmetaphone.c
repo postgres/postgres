@@ -99,6 +99,7 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 #include "postgres.h"
 
 #include "utils/builtins.h"
+#include "utils/formatting.h"
 
 /* turn off assertions for embedded function */
 #define NDEBUG
@@ -117,7 +118,7 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 #include <ctype.h>
 
 /* prototype for the main function we got from the perl module */
-static void DoubleMetaphone(char *str, char **codes);
+static void DoubleMetaphone(const char *str, Oid collid, char **codes);
 
 #ifndef DMETAPHONE_MAIN
 
@@ -142,7 +143,7 @@ dmetaphone(PG_FUNCTION_ARGS)
 	arg = PG_GETARG_TEXT_PP(0);
 	aptr = text_to_cstring(arg);
 
-	DoubleMetaphone(aptr, codes);
+	DoubleMetaphone(aptr, PG_GET_COLLATION(), codes);
 	code = codes[0];
 	if (!code)
 		code = "";
@@ -171,7 +172,7 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 	arg = PG_GETARG_TEXT_PP(0);
 	aptr = text_to_cstring(arg);
 
-	DoubleMetaphone(aptr, codes);
+	DoubleMetaphone(aptr, PG_GET_COLLATION(), codes);
 	code = codes[1];
 	if (!code)
 		code = "";
@@ -278,13 +279,17 @@ IncreaseBuffer(metastring *s, int chars_needed)
 }
 
 
-static void
-MakeUpper(metastring *s)
+static metastring *
+MakeUpper(metastring *s, Oid collid)
 {
-	char	   *i;
+	char	   *newstr;
+	metastring *newms;
 
-	for (i = s->str; *i; i++)
-		*i = toupper((unsigned char) *i);
+	newstr = str_toupper(s->str, s->length, collid);
+	newms = NewMetaString(newstr);
+	DestroyMetaString(s);
+
+	return newms;
 }
 
 
@@ -392,7 +397,7 @@ MetaphAdd(metastring *s, const char *new_str)
 
 
 static void
-DoubleMetaphone(char *str, char **codes)
+DoubleMetaphone(const char *str, Oid collid, char **codes)
 {
 	int			length;
 	metastring *original;
@@ -414,7 +419,7 @@ DoubleMetaphone(char *str, char **codes)
 	primary->free_string_on_destroy = 0;
 	secondary->free_string_on_destroy = 0;
 
-	MakeUpper(original);
+	original = MakeUpper(original, collid);
 
 	/* skip these when at start of word */
 	if (StringAt(original, 0, 2, "GN", "KN", "PN", "WR", "PS", ""))
@@ -1430,7 +1435,7 @@ main(int argc, char **argv)
 
 	if (argc > 1)
 	{
-		DoubleMetaphone(argv[1], codes);
+		DoubleMetaphone(argv[1], DEFAULT_COLLATION_OID, codes);
 		printf("%s|%s\n", codes[0], codes[1]);
 	}
 }
