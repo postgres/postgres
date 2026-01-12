@@ -382,6 +382,9 @@ rewrite_heap_tuple(RewriteState state,
 
 	/*
 	 * If the tuple has been updated, check the old-to-new mapping hash table.
+	 *
+	 * Note that this check relies on the HeapTupleSatisfiesVacuum() in
+	 * heapam_relation_copy_for_cluster() to have set hint bits.
 	 */
 	if (!((old_tuple->t_data->t_infomask & HEAP_XMAX_INVALID) ||
 		  HeapTupleHeaderIsOnlyLocked(old_tuple->t_data)) &&

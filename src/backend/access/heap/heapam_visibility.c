@@ -141,6 +141,13 @@ void
 HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
 					 uint16 infomask, TransactionId xid)
 {
+	/*
+	 * The uses from heapam.c rely on being able to perform the hint bit
+	 * updates, which can only be guaranteed if we are holding an exclusive
+	 * lock on the buffer - which all callers are doing.
+	 */
+	Assert(BufferIsLockedByMeInMode(buffer, BUFFER_LOCK_EXCLUSIVE));
+
 	SetHintBits(tuple, buffer, infomask, xid);
 }
 
