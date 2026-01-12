@@ -17,6 +17,7 @@
 #include "access/hash.h"
 #include "access/relscan.h"
 #include "miscadmin.h"
+#include "executor/instrument_node.h"
 #include "pgstat.h"
 #include "storage/predicate.h"
 #include "utils/rel.h"

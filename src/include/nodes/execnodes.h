@@ -1817,19 +1817,6 @@ typedef struct BitmapIndexScanState
 } BitmapIndexScanState;
 
 /* ----------------
- *	 BitmapHeapScanInstrumentation information
- *
- *		exact_pages		   total number of exact pages retrieved
- *		lossy_pages		   total number of lossy pages retrieved
- * ----------------
- */
-typedef struct BitmapHeapScanInstrumentation
-{
-	uint64		exact_pages;
-	uint64		lossy_pages;
-} BitmapHeapScanInstrumentation;
-
-/* ----------------
  *	 SharedBitmapState information
  *
  *		BM_INITIAL		TIDBitmap creation is not yet started, so first worker
@@ -1864,20 +1851,6 @@ typedef struct ParallelBitmapHeapState
 	SharedBitmapState state;
 	ConditionVariable cv;
 } ParallelBitmapHeapState;
-
-/* ----------------
- *	 Instrumentation data for a parallel bitmap heap scan.
- *
- * A shared memory struct that each parallel worker copies its
- * BitmapHeapScanInstrumentation information into at executor shutdown to
- * allow the leader to display the information in EXPLAIN ANALYZE.
- * ----------------
- */
-typedef struct SharedBitmapHeapInstrumentation
-{
-	int			num_workers;
-	BitmapHeapScanInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
-} SharedBitmapHeapInstrumentation;
 
 /* ----------------
  *	 BitmapHeapScanState information
@@ -2305,31 +2278,6 @@ struct MemoizeEntry;
 struct MemoizeTuple;
 struct MemoizeKey;
 
-typedef struct MemoizeInstrumentation
-{
-	uint64		cache_hits;		/* number of rescans where we've found the
-								 * scan parameter values to be cached */
-	uint64		cache_misses;	/* number of rescans where we've not found the
-								 * scan parameter values to be cached. */
-	uint64		cache_evictions;	/* number of cache entries removed due to
-									 * the need to free memory */
-	uint64		cache_overflows;	/* number of times we've had to bypass the
-									 * cache when filling it due to not being
-									 * able to free enough space to store the
-									 * current scan's tuples. */
-	uint64		mem_peak;		/* peak memory usage in bytes */
-} MemoizeInstrumentation;
-
-/* ----------------
- *	 Shared memory container for per-worker memoize information
- * ----------------
- */
-typedef struct SharedMemoizeInfo
-{
-	int			num_workers;
-	MemoizeInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
-} SharedMemoizeInfo;
-
 /* ----------------
  *	 MemoizeState information
  *
@@ -2386,16 +2334,6 @@ typedef struct PresortedKeyData
 } PresortedKeyData;
 
 /* ----------------
- *	 Shared memory container for per-worker sort information
- * ----------------
- */
-typedef struct SharedSortInfo
-{
-	int			num_workers;
-	TuplesortInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
-} SharedSortInfo;
-
-/* ----------------
  *	 SortState information
  * ----------------
  */
@@ -2414,40 +2352,6 @@ typedef struct SortState
 	SharedSortInfo *shared_info;	/* one entry per worker */
 } SortState;
 
-/* ----------------
- *	 Instrumentation information for IncrementalSort
- * ----------------
- */
-typedef struct IncrementalSortGroupInfo
-{
-	int64		groupCount;
-	int64		maxDiskSpaceUsed;
-	int64		totalDiskSpaceUsed;
-	int64		maxMemorySpaceUsed;
-	int64		totalMemorySpaceUsed;
-	bits32		sortMethods;	/* bitmask of TuplesortMethod */
-} IncrementalSortGroupInfo;
-
-typedef struct IncrementalSortInfo
-{
-	IncrementalSortGroupInfo fullsortGroupInfo;
-	IncrementalSortGroupInfo prefixsortGroupInfo;
-} IncrementalSortInfo;
-
-/* ----------------
- *	 Shared memory container for per-worker incremental sort information
- * ----------------
- */
-typedef struct SharedIncrementalSortInfo
-{
-	int			num_workers;
-	IncrementalSortInfo sinfo[FLEXIBLE_ARRAY_MEMBER];
-} SharedIncrementalSortInfo;
-
-/* ----------------
- *	 IncrementalSortState information
- * ----------------
- */
 typedef enum
 {
 	INCSORT_LOADFULLSORT,
@@ -2489,27 +2393,6 @@ typedef struct GroupState
 	ExprState  *eqfunction;		/* equality function */
 	bool		grp_done;		/* indicates completion of Group scan */
 } GroupState;
-
-/* ---------------------
- *	per-worker aggregate information
- * ---------------------
- */
-typedef struct AggregateInstrumentation
-{
-	Size		hash_mem_peak;	/* peak hash table memory usage */
-	uint64		hash_disk_used; /* kB of disk space used */
-	int			hash_batches_used;	/* batches used during entire execution */
-} AggregateInstrumentation;
-
-/* ----------------
- *	 Shared memory container for per-worker aggregate information
- * ----------------
- */
-typedef struct SharedAggInfo
-{
-	int			num_workers;
-	AggregateInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
-} SharedAggInfo;
 
 /* ---------------------
  *	AggState information
@@ -2786,29 +2669,6 @@ typedef struct GatherMergeState
 	struct GMReaderTupleBuffer *gm_tuple_buffers;	/* nreaders tuple buffers */
 	struct binaryheap *gm_heap; /* binary heap of slot indices */
 } GatherMergeState;
-
-/* ----------------
- *	 Values displayed by EXPLAIN ANALYZE
- * ----------------
- */
-typedef struct HashInstrumentation
-{
-	int			nbuckets;		/* number of buckets at end of execution */
-	int			nbuckets_original;	/* planned number of buckets */
-	int			nbatch;			/* number of batches at end of execution */
-	int			nbatch_original;	/* planned number of batches */
-	Size		space_peak;		/* peak memory usage in bytes */
-} HashInstrumentation;
-
-/* ----------------
- *	 Shared memory container for per-worker hash information
- * ----------------
- */
-typedef struct SharedHashInfo
-{
-	int			num_workers;
-	HashInstrumentation hinstrument[FLEXIBLE_ARRAY_MEMBER];
-} SharedHashInfo;
 
 /* ----------------
  *	 HashState information

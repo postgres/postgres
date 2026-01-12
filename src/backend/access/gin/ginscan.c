@@ -16,6 +16,7 @@
 
 #include "access/gin_private.h"
 #include "access/relscan.h"
+#include "executor/instrument_node.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

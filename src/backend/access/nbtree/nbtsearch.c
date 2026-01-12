@@ -18,6 +18,7 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "access/xact.h"
+#include "executor/instrument_node.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/predicate.h"

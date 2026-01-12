@@ -18,6 +18,7 @@
 #include "access/genam.h"
 #include "access/relscan.h"
 #include "access/spgist_private.h"
+#include "executor/instrument_node.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"

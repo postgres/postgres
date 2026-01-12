@@ -14,6 +14,7 @@
 
 #include "access/relscan.h"
 #include "bloom.h"
+#include "executor/instrument_node.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"

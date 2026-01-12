@@ -17,6 +17,7 @@
 #include "access/htup.h"
 #include "access/sdir.h"
 #include "access/skey.h"
+#include "executor/instrument_node.h"
 #include "nodes/tidbitmap.h"
 #include "storage/buf.h"
 #include "storage/lockdefs.h"
@@ -28,28 +29,6 @@ typedef struct TupleTableSlot TupleTableSlot;
 
 /* or relcache.h */
 typedef struct RelationData *Relation;
-
-
-/*
- * Struct for statistics maintained by amgettuple and amgetbitmap
- *
- * Note: IndexScanInstrumentation can't contain any pointers, since it is
- * copied into a SharedIndexScanInstrumentation during parallel scans
- */
-typedef struct IndexScanInstrumentation
-{
-	/* Index search count (incremented with pgstat_count_index_scan call) */
-	uint64		nsearches;
-} IndexScanInstrumentation;
-
-/*
- * Struct for every worker's IndexScanInstrumentation, stored in shared memory
- */
-typedef struct SharedIndexScanInstrumentation
-{
-	int			num_workers;
-	IndexScanInstrumentation winstrument[FLEXIBLE_ARRAY_MEMBER];
-} SharedIndexScanInstrumentation;
 
 /*
  * Struct for statistics returned by ambuild
