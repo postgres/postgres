@@ -1599,6 +1599,49 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 }
 
 /*
+ * Perform HeaptupleSatisfiesMVCC() on each passed in tuple. This is more
+ * efficient than doing HeapTupleSatisfiesMVCC() one-by-one.
+ *
+ * To be checked tuples are passed via BatchMVCCState->tuples. Each tuple's
+ * visibility is stored in batchmvcc->visible[]. In addition,
+ * ->vistuples_dense is set to contain the offsets of visible tuples.
+ *
+ * The reason this is more efficient than HeapTupleSatisfiesMVCC() is that it
+ * avoids a cross-translation-unit function call for each tuple and allows the
+ * compiler to optimize across calls to HeapTupleSatisfiesMVCC. In the future
+ * it will also allow more efficient setting of hint bits.
+ *
+ * Returns the number of visible tuples.
+ */
+int
+HeapTupleSatisfiesMVCCBatch(Snapshot snapshot, Buffer buffer,
+							int ntups,
+							BatchMVCCState *batchmvcc,
+							OffsetNumber *vistuples_dense)
+{
+	int			nvis = 0;
+
+	Assert(IsMVCCSnapshot(snapshot));
+
+	for (int i = 0; i < ntups; i++)
+	{
+		bool		valid;
+		HeapTuple	tup = &batchmvcc->tuples[i];
+
+		valid = HeapTupleSatisfiesMVCC(tup, snapshot, buffer);
+		batchmvcc->visible[i] = valid;
+
+		if (likely(valid))
+		{
+			vistuples_dense[nvis] = tup->t_self.ip_posid;
+			nvis++;
+		}
+	}
+
+	return nvis;
+}
+
+/*
  * HeapTupleSatisfiesVisibility
  *		True iff heap tuple satisfies a time qual.
  *
