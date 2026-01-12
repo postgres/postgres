@@ -1792,8 +1792,8 @@ _bt_unmark_keys(IndexScanDesc scan, int *keyDataMap)
 static int
 _bt_reorder_array_cmp(const void *a, const void *b)
 {
-	BTArrayKeyInfo *arraya = (BTArrayKeyInfo *) a;
-	BTArrayKeyInfo *arrayb = (BTArrayKeyInfo *) b;
+	const BTArrayKeyInfo *arraya = a;
+	const BTArrayKeyInfo *arrayb = b;
 
 	return pg_cmp_s32(arraya->scan_key, arrayb->scan_key);
 }

@@ -103,7 +103,7 @@ static HTAB *missing_cache = NULL;
 static uint32
 missing_hash(const void *key, Size keysize)
 {
-	const missing_cache_key *entry = (missing_cache_key *) key;
+	const missing_cache_key *entry = key;
 
 	return hash_bytes((const unsigned char *) DatumGetPointer(entry->value), entry->len);
 }
@@ -111,8 +111,8 @@ missing_hash(const void *key, Size keysize)
 static int
 missing_match(const void *key1, const void *key2, Size keysize)
 {
-	const missing_cache_key *entry1 = (missing_cache_key *) key1;
-	const missing_cache_key *entry2 = (missing_cache_key *) key2;
+	const missing_cache_key *entry1 = key1;
+	const missing_cache_key *entry2 = key2;
 
 	if (entry1->len != entry2->len)
 		return entry1->len > entry2->len ? 1 : -1;

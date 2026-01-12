@@ -235,8 +235,8 @@ shared_record_table_compare(const void *a, const void *b, size_t size,
 							void *arg)
 {
 	dsa_area   *area = (dsa_area *) arg;
-	SharedRecordTableKey *k1 = (SharedRecordTableKey *) a;
-	SharedRecordTableKey *k2 = (SharedRecordTableKey *) b;
+	const SharedRecordTableKey *k1 = a;
+	const SharedRecordTableKey *k2 = b;
 	TupleDesc	t1;
 	TupleDesc	t2;
 
@@ -259,8 +259,8 @@ shared_record_table_compare(const void *a, const void *b, size_t size,
 static uint32
 shared_record_table_hash(const void *a, size_t size, void *arg)
 {
-	dsa_area   *area = (dsa_area *) arg;
-	SharedRecordTableKey *k = (SharedRecordTableKey *) a;
+	dsa_area   *area = arg;
+	const SharedRecordTableKey *k = a;
 	TupleDesc	t;
 
 	if (k->shared)
@@ -2013,7 +2013,7 @@ lookup_rowtype_tupdesc_domain(Oid type_id, int32 typmod, bool noError)
 static uint32
 record_type_typmod_hash(const void *data, size_t size)
 {
-	RecordCacheEntry *entry = (RecordCacheEntry *) data;
+	const RecordCacheEntry *entry = data;
 
 	return hashRowType(entry->tupdesc);
 }
@@ -2024,8 +2024,8 @@ record_type_typmod_hash(const void *data, size_t size)
 static int
 record_type_typmod_compare(const void *a, const void *b, size_t size)
 {
-	RecordCacheEntry *left = (RecordCacheEntry *) a;
-	RecordCacheEntry *right = (RecordCacheEntry *) b;
+	const RecordCacheEntry *left = a;
+	const RecordCacheEntry *right = b;
 
 	return equalRowTypes(left->tupdesc, right->tupdesc) ? 0 : 1;
 }

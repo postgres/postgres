@@ -1729,9 +1729,9 @@ get_gist_range_class(RangeType *range)
 static int
 single_bound_cmp(const void *a, const void *b, void *arg)
 {
-	SingleBoundSortItem *i1 = (SingleBoundSortItem *) a;
-	SingleBoundSortItem *i2 = (SingleBoundSortItem *) b;
-	TypeCacheEntry *typcache = (TypeCacheEntry *) arg;
+	const SingleBoundSortItem *i1 = a;
+	const SingleBoundSortItem *i2 = b;
+	TypeCacheEntry *typcache = arg;
 
 	return range_cmp_bounds(typcache, &i1->bound, &i2->bound);
 }
@@ -1742,9 +1742,9 @@ single_bound_cmp(const void *a, const void *b, void *arg)
 static int
 interval_cmp_lower(const void *a, const void *b, void *arg)
 {
-	NonEmptyRange *i1 = (NonEmptyRange *) a;
-	NonEmptyRange *i2 = (NonEmptyRange *) b;
-	TypeCacheEntry *typcache = (TypeCacheEntry *) arg;
+	const NonEmptyRange *i1 = a;
+	const NonEmptyRange *i2 = b;
+	TypeCacheEntry *typcache = arg;
 
 	return range_cmp_bounds(typcache, &i1->lower, &i2->lower);
 }
@@ -1755,9 +1755,9 @@ interval_cmp_lower(const void *a, const void *b, void *arg)
 static int
 interval_cmp_upper(const void *a, const void *b, void *arg)
 {
-	NonEmptyRange *i1 = (NonEmptyRange *) a;
-	NonEmptyRange *i2 = (NonEmptyRange *) b;
-	TypeCacheEntry *typcache = (TypeCacheEntry *) arg;
+	const NonEmptyRange *i1 = a;
+	const NonEmptyRange *i2 = b;
+	TypeCacheEntry *typcache = arg;
 
 	return range_cmp_bounds(typcache, &i1->upper, &i2->upper);
 }

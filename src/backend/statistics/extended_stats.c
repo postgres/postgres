@@ -862,8 +862,8 @@ int
 multi_sort_compare(const void *a, const void *b, void *arg)
 {
 	MultiSortSupport mss = (MultiSortSupport) arg;
-	SortItem   *ia = (SortItem *) a;
-	SortItem   *ib = (SortItem *) b;
+	const SortItem *ia = a;
+	const SortItem *ib = b;
 	int			i;
 
 	for (i = 0; i < mss->ndims; i++)

@@ -189,7 +189,7 @@ injection_init_shmem(void)
  * otherwise.
  */
 static bool
-injection_point_allowed(InjectionPointCondition *condition)
+injection_point_allowed(const InjectionPointCondition *condition)
 {
 	bool		result = true;
 
@@ -232,8 +232,8 @@ injection_points_cleanup(int code, Datum arg)
 void
 injection_error(const char *name, const void *private_data, void *arg)
 {
-	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
-	char	   *argstr = (char *) arg;
+	const InjectionPointCondition *condition = private_data;
+	char	   *argstr = arg;
 
 	if (!injection_point_allowed(condition))
 		return;
@@ -248,8 +248,8 @@ injection_error(const char *name, const void *private_data, void *arg)
 void
 injection_notice(const char *name, const void *private_data, void *arg)
 {
-	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
-	char	   *argstr = (char *) arg;
+	const InjectionPointCondition *condition = private_data;
+	char	   *argstr = arg;
 
 	if (!injection_point_allowed(condition))
 		return;
@@ -268,7 +268,7 @@ injection_wait(const char *name, const void *private_data, void *arg)
 	uint32		old_wait_counts = 0;
 	int			index = -1;
 	uint32		injection_wait_event = 0;
-	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
+	const InjectionPointCondition *condition = private_data;
 
 	if (inj_state == NULL)
 		injection_init_shmem();

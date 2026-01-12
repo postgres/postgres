@@ -1462,8 +1462,8 @@ _bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
 static int
 _bt_delitems_cmp(const void *a, const void *b)
 {
-	TM_IndexDelete *indexdelete1 = (TM_IndexDelete *) a;
-	TM_IndexDelete *indexdelete2 = (TM_IndexDelete *) b;
+	const TM_IndexDelete *indexdelete1 = a;
+	const TM_IndexDelete *indexdelete2 = b;
 
 	Assert(indexdelete1->id != indexdelete2->id);
 
