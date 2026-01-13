@@ -116,6 +116,17 @@
   </varlistentry>
 
   <varlistentry>
+   <term><literal>default</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the string that represents a default value,
+     the same as <command>COPY</command>'s <literal>DEFAULT</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
    <term><literal>encoding</literal></term>
 
    <listitem>
