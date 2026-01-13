@@ -377,7 +377,7 @@ is_extension_script_filename(const char *filename)
 }
 
 /*
- * Return a list of directories declared on extension_control_path GUC.
+ * Return a list of directories declared in the extension_control_path GUC.
  */
 static List *
 get_extension_control_directories(void)
@@ -454,9 +454,9 @@ get_extension_control_directories(void)
 }
 
 /*
- * Find control file for extension with name in control->name, looking in the
- * path.  Return the full file name, or NULL if not found.  If found, the
- * directory is recorded in control->control_dir.
+ * Find control file for extension with name in control->name, looking in
+ * available paths.  Return the full file name, or NULL if not found.
+ * If found, the directory is recorded in control->control_dir.
  */
 static char *
 find_extension_control_filename(ExtensionControlFile *control)
@@ -490,7 +490,7 @@ get_extension_script_directory(ExtensionControlFile *control)
 	/*
 	 * The directory parameter can be omitted, absolute, or relative to the
 	 * installation's base directory, which can be the sharedir or a custom
-	 * path that it was set extension_control_path. It depends where the
+	 * path that was set via extension_control_path. It depends on where the
 	 * .control file was found.
 	 */
 	if (!control->directory)
@@ -549,10 +549,8 @@ get_extension_script_filename(ExtensionControlFile *control,
  * fields of *control.  We parse primary file if version == NULL,
  * else the optional auxiliary file for that version.
  *
- * The control file will be search on Extension_control_path paths if
- * control->control_dir is NULL, otherwise it will use the value of control_dir
- * to read and parse the .control file, so it assume that the control_dir is a
- * valid path for the control file being parsed.
+ * If control->control_dir is not NULL, use that to read and parse the
+ * control file, otherwise search for the file in extension_control_path.
  *
  * Control files are supposed to be very short, half a dozen lines,
  * so we don't worry about memory allocation risks here.  Also we don't
@@ -2300,7 +2298,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 
 				/*
 				 * Ignore already-found names.  They are not reachable by the
-				 * path search, so don't shown them.
+				 * path search, so don't show them.
 				 */
 				extname_str = makeString(extname);
 				if (list_member(found_ext, extname_str))
@@ -3949,12 +3947,10 @@ new_ExtensionControlFile(const char *extname)
 }
 
 /*
- * Work in a very similar way with find_in_path but it receives an already
- * parsed List of paths to search the basename and it do not support macro
- * replacement or custom error messages (for simplicity).
+ * Search for the basename in the list of paths.
  *
- * By "already parsed List of paths" this function expected that paths already
- * have all macros replaced.
+ * Similar to find_in_path but for simplicity does not support custom error
+ * messages and expects that paths already have all macros replaced.
  */
 char *
 find_in_paths(const char *basename, List *paths)
