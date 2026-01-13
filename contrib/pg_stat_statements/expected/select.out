@@ -459,6 +459,102 @@ SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%FETCH FIRST%';
      2
 (1 row)
 
+-- GROUP BY, HAVING, GROUPING
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY a;
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY b;
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY a, b;
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY b, a;
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY GROUPING SETS(a, ());
+ count 
+-------
+     1
+     1
+(2 rows)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY GROUPING SETS(b, ());
+ count 
+-------
+     1
+     1
+(2 rows)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY a HAVING a = 1;
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY a HAVING a = 2;
+ count 
+-------
+(0 rows)
+
+SELECT COUNT(*) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY b HAVING b = 1;
+ count 
+-------
+(0 rows)
+
+SELECT GROUPING(a) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY a;
+ grouping 
+----------
+        0
+(1 row)
+
+SELECT GROUPING(b) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY b;
+ grouping 
+----------
+        0
+(1 row)
+
+SELECT GROUPING(b) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY a, b;
+ grouping 
+----------
+        0
+(1 row)
+
+SELECT GROUPING(b) FROM (VALUES (1::INT, 2::INT)) AS t(a, b) GROUP BY b, a;
+ grouping 
+----------
+        0
+(1 row)
+
+SELECT calls, query FROM pg_stat_statements WHERE query LIKE '%GROUP BY%' ORDER BY query COLLATE "C";
+ calls |                                           query                                           
+-------+-------------------------------------------------------------------------------------------
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY GROUPING SETS(a, ())
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY GROUPING SETS(b, ())
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY a
+     2 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY a HAVING a = $3
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY a, b
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY b
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY b HAVING b = $3
+     1 | SELECT COUNT(*) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY b, a
+     1 | SELECT GROUPING(a) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY a
+     1 | SELECT GROUPING(b) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY a, b
+     1 | SELECT GROUPING(b) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY b
+     1 | SELECT GROUPING(b) FROM (VALUES ($1::INT, $2::INT)) AS t(a, b) GROUP BY b, a
+(12 rows)
+
 -- GROUP BY [DISTINCT]
 SELECT a, b, c
 FROM (VALUES (1, 2, 3), (4, NULL, 6), (7, 8, 9)) AS t (a, b, c)
@@ -548,7 +644,7 @@ SELECT (
 SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%SELECT GROUPING%';
  count 
 -------
-     2
+     6
 (1 row)
 
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;

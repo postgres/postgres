@@ -1265,7 +1265,7 @@ typedef struct RangeTblEntry
 	 * Fields valid for a GROUP RTE (else NIL):
 	 */
 	/* list of grouping expressions */
-	List	   *groupexprs pg_node_attr(query_jumble_ignore);
+	List	   *groupexprs;
 
 	/*
 	 * Fields valid in all RTEs:
