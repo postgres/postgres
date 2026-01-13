@@ -1825,7 +1825,7 @@ str_casefold(const char *buff, size_t nbytes, Oid collid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
 				 errmsg("could not determine which collation to use for %s function",
-						"lower()"),
+						"casefold()"),
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
