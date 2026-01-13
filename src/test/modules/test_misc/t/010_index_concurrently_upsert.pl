@@ -1,5 +1,5 @@
 
-# Copyright (c) 2025, PostgreSQL Global Development Group
+# Copyright (c) 2026, PostgreSQL Global Development Group
 
 # Test INSERT ON CONFLICT DO UPDATE behavior concurrent with
 # CREATE INDEX CONCURRENTLY and REINDEX CONCURRENTLY.
@@ -15,6 +15,7 @@ use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
+use Time::HiRes qw(usleep);
 
 plan skip_all => 'Injection points not supported by this build'
   unless $ENV{enable_injection_points} eq 'yes';
@@ -624,14 +625,16 @@ $s1->query_until(
 \echo attaching_injection_point
 SELECT injection_points_attach('invalidate-catalog-snapshot-end', 'wait');
 ]);
-# In case of CLOBBER_CACHE_ALWAYS - s1 may hit the injection point during attach.
-# Wait for s1 to become idle (attach completed) or wakeup if stuck on injection point.
+
+# In cases of cache clobbering, s1 may hit the injection point during attach.
+# Wait for that session to become idle (attach completed), or wake it up if
+# it becomes stuck on injection point.
 if (!wait_for_idle($node, $s1_pid))
 {
 	ok_injection_point(
 		$node,
 		'invalidate-catalog-snapshot-end',
-		's1 hit injection point during attach (CLOBBER_CACHE_ALWAYS)');
+		's1 hit injection point during attach (cache clobbering mode)');
 	$node->safe_psql(
 		'postgres', q[
 		SELECT injection_points_wakeup('invalidate-catalog-snapshot-end');
@@ -715,13 +718,16 @@ $s1->query_until(
 \echo attaching_injection_point
 SELECT injection_points_attach('invalidate-catalog-snapshot-end', 'wait');
 ]);
-# In case of CLOBBER_CACHE_ALWAYS - s1 may hit the injection point during attach.
-# Wait for s1 to become idle (attach completed) or wakeup if stuck on injection point.
+
+# In cases of cache clobbering, s1 may hit the injection point during attach.
+# Wait for that session to become idle (attach completed), or wake it up if
+# it becomes stuck on injection point.
 if (!wait_for_idle($node, $s1_pid))
 {
-	ok_injection_point($node, 'invalidate-catalog-snapshot-end',
-		'Test 8: s1 hit injection point during attach (CLOBBER_CACHE_ALWAYS)'
-	);
+	ok_injection_point(
+		$node,
+		'invalidate-catalog-snapshot-end',
+		's1 hit injection point during attach (cache clobbering mode)');
 	$node->safe_psql(
 		'postgres', q[
 		SELECT injection_points_wakeup('invalidate-catalog-snapshot-end');
@@ -793,7 +799,7 @@ done_testing();
 sub wait_for_injection_point
 {
 	my ($node, $point_name, $timeout) = @_;
-	$timeout //= $PostgreSQL::Test::Utils::timeout_default;
+	$timeout //= $PostgreSQL::Test::Utils::timeout_default / 2;
 
 	for (my $elapsed = 0; $elapsed < $timeout * 10; $elapsed++)
 	{
@@ -805,7 +811,7 @@ sub wait_for_injection_point
 			LIMIT 1;
 		]);
 		return 1 if $pid ne '';
-		sleep(0.1);
+		usleep(100_000);
 	}
 
 	# Timeout - report diagnostic information
@@ -833,20 +839,25 @@ sub ok_injection_point
 }
 
 # Helper: Wait for a specific backend to become idle.
-# Returns true if idle, false if timeout.
+# Returns true if idle, false if waiting for injection point or timeout.
 sub wait_for_idle
 {
 	my ($node, $pid, $timeout) = @_;
-	$timeout //= $PostgreSQL::Test::Utils::timeout_default;
+	$timeout //= $PostgreSQL::Test::Utils::timeout_default / 2;
 
 	for (my $elapsed = 0; $elapsed < $timeout * 10; $elapsed++)
 	{
-		my $state = $node->safe_psql(
+		my $result = $node->safe_psql(
 			'postgres', qq[
-			SELECT state FROM pg_stat_activity WHERE pid = $pid;
+			SELECT state, wait_event_type FROM pg_stat_activity WHERE pid = $pid;
 		]);
+		my ($state, $wait_event_type) = split(/\|/, $result, 2);
+		$state           //= '';
+		$wait_event_type //= '';
 		return 1 if $state eq 'idle';
-		sleep(0.1);
+		return 0 if $wait_event_type eq 'InjectionPoint';
+
+		usleep(100_000);
 	}
 	return 0;
 }
