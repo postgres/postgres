@@ -32,6 +32,7 @@
 /*
  * Buffer state is a single 32-bit variable where following data is combined.
  *
+ * State of the buffer itself (in order):
  * - 18 bits refcount
  * - 4 bits usage count
  * - 10 bits of flags
@@ -48,16 +49,30 @@
 StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
 				 "parts of buffer state space need to equal 32");
 
+/* refcount related definitions */
 #define BUF_REFCOUNT_ONE 1
-#define BUF_REFCOUNT_MASK ((1U << BUF_REFCOUNT_BITS) - 1)
-#define BUF_USAGECOUNT_MASK (((1U << BUF_USAGECOUNT_BITS) - 1) << (BUF_REFCOUNT_BITS))
-#define BUF_USAGECOUNT_ONE (1U << BUF_REFCOUNT_BITS)
-#define BUF_USAGECOUNT_SHIFT BUF_REFCOUNT_BITS
-#define BUF_FLAG_MASK (((1U << BUF_FLAG_BITS) - 1) << (BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS))
+#define BUF_REFCOUNT_MASK \
+	((1U << BUF_REFCOUNT_BITS) - 1)
+
+/* usage count related definitions */
+#define BUF_USAGECOUNT_SHIFT \
+	BUF_REFCOUNT_BITS
+#define BUF_USAGECOUNT_MASK \
+	(((1U << BUF_USAGECOUNT_BITS) - 1) << (BUF_USAGECOUNT_SHIFT))
+#define BUF_USAGECOUNT_ONE \
+	(1U << BUF_REFCOUNT_BITS)
+
+/* flags related definitions */
+#define BUF_FLAG_SHIFT \
+	(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS)
+#define BUF_FLAG_MASK \
+	(((1U << BUF_FLAG_BITS) - 1) << BUF_FLAG_SHIFT)
 
 /* Get refcount and usagecount from buffer state */
-#define BUF_STATE_GET_REFCOUNT(state) ((state) & BUF_REFCOUNT_MASK)
-#define BUF_STATE_GET_USAGECOUNT(state) (((state) & BUF_USAGECOUNT_MASK) >> BUF_USAGECOUNT_SHIFT)
+#define BUF_STATE_GET_REFCOUNT(state) \
+	((state) & BUF_REFCOUNT_MASK)
+#define BUF_STATE_GET_USAGECOUNT(state) \
+	(((state) & BUF_USAGECOUNT_MASK) >> BUF_USAGECOUNT_SHIFT)
 
 /*
  * Flags for buffer descriptors
@@ -65,17 +80,31 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
  * Note: BM_TAG_VALID essentially means that there is a buffer hashtable
  * entry associated with the buffer's tag.
  */
-#define BM_LOCKED				(1U << 22)	/* buffer header is locked */
-#define BM_DIRTY				(1U << 23)	/* data needs writing */
-#define BM_VALID				(1U << 24)	/* data is valid */
-#define BM_TAG_VALID			(1U << 25)	/* tag is assigned */
-#define BM_IO_IN_PROGRESS		(1U << 26)	/* read or write in progress */
-#define BM_IO_ERROR				(1U << 27)	/* previous I/O failed */
-#define BM_JUST_DIRTIED			(1U << 28)	/* dirtied since write started */
-#define BM_PIN_COUNT_WAITER		(1U << 29)	/* have waiter for sole pin */
-#define BM_CHECKPOINT_NEEDED	(1U << 30)	/* must write for checkpoint */
-#define BM_PERMANENT			(1U << 31)	/* permanent buffer (not unlogged,
-											 * or init fork) */
+
+#define BUF_DEFINE_FLAG(flagno)	\
+	(1U << (BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + (flagno)))
+
+/* buffer header is locked */
+#define BM_LOCKED					BUF_DEFINE_FLAG( 0)
+/* data needs writing */
+#define BM_DIRTY					BUF_DEFINE_FLAG( 1)
+/* data is valid */
+#define BM_VALID					BUF_DEFINE_FLAG( 2)
+/* tag is assigned */
+#define BM_TAG_VALID				BUF_DEFINE_FLAG( 3)
+/* read or write in progress */
+#define BM_IO_IN_PROGRESS			BUF_DEFINE_FLAG( 4)
+/* previous I/O failed */
+#define BM_IO_ERROR					BUF_DEFINE_FLAG( 5)
+/* dirtied since write started */
+#define BM_JUST_DIRTIED				BUF_DEFINE_FLAG( 6)
+/* have waiter for sole pin */
+#define BM_PIN_COUNT_WAITER			BUF_DEFINE_FLAG( 7)
+/* must write for checkpoint */
+#define BM_CHECKPOINT_NEEDED		BUF_DEFINE_FLAG( 8)
+/* permanent buffer (not unlogged, or init fork) */
+#define BM_PERMANENT				BUF_DEFINE_FLAG( 9)
+
 /*
  * The maximum allowed value of usage_count represents a tradeoff between
  * accuracy and speed of the clock-sweep buffer management algorithm.  A
