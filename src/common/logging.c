@@ -206,7 +206,7 @@ pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno)
 
 void
 pg_log_generic(enum pg_log_level level, enum pg_log_part part,
-			   const char *restrict fmt,...)
+			   const char *pg_restrict fmt,...)
 {
 	va_list		ap;
 
@@ -217,7 +217,7 @@ pg_log_generic(enum pg_log_level level, enum pg_log_part part,
 
 void
 pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
-				 const char *restrict fmt, va_list ap)
+				 const char *pg_restrict fmt, va_list ap)
 {
 	int			save_errno = errno;
 	const char *filename = NULL;

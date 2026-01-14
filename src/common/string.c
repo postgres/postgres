@@ -47,7 +47,7 @@ pg_str_endswith(const char *str, const char *end)
  * strtoint --- just like strtol, but returns int not long
  */
 int
-strtoint(const char *restrict str, char **restrict endptr, int base)
+strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
 {
 	long		val;
 

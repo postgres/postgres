@@ -1687,11 +1687,19 @@ PGAC_UNION_SEMUN
 AC_CHECK_TYPES(socklen_t, [], [], [#include <sys/socket.h>])
 PGAC_STRUCT_SOCKADDR_SA_LEN
 
-# Even though restrict is in C99 and should be supported by all
-# supported compilers, this test is useful because it will prefer a
-# spelling that also works in C++ (often __restrict).  (restrict is
-# not part of the C++ standard.)
+# MSVC doesn't cope well with defining restrict to __restrict, the
+# spelling it understands, because it conflicts with
+# __declspec(restrict) in C++ mode. Therefore we define pg_restrict to
+# the appropriate definition, which presumably won't conflict.
 AC_C_RESTRICT
+if test "$ac_cv_c_restrict" = "no"; then
+  pg_restrict=""
+else
+  pg_restrict="$ac_cv_c_restrict"
+fi
+AC_DEFINE_UNQUOTED([pg_restrict], [$pg_restrict],
+[Define to keyword to use for C99 restrict support, or to nothing if not
+supported])
 
 AC_CHECK_TYPES([struct option], [], [],
 [#ifdef HAVE_GETOPT_H
