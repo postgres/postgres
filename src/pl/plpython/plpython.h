@@ -25,12 +25,8 @@
 
 /*
  * Enable Python Limited API
- *
- * XXX currently not enabled on MSVC because of build failures
  */
-#if !defined(_MSC_VER)
 #define Py_LIMITED_API 0x03020000
-#endif
 
 /*
  * Pull in Python headers via a wrapper header, to control the scope of
