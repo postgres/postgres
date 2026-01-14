@@ -641,7 +641,7 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 		tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
 								ObjectIdGetDatum(attr->atttypid),
 								ObjectIdGetDatum(subtype),
-								Int16GetDatum(strategynum));
+								UInt16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",

@@ -176,7 +176,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 
 		memset(nulls, 0, sizeof(nulls));
 
-		values[0] = Int16GetDatum(offset);
+		values[0] = UInt16GetDatum(offset);
 		values[1] = ItemPointerGetDatum(&itup->t_tid);
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 
@@ -283,7 +283,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 		memset(nulls, 0, sizeof(nulls));
 
-		values[0] = Int16GetDatum(offset);
+		values[0] = UInt16GetDatum(offset);
 		values[1] = ItemPointerGetDatum(&itup->t_tid);
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
