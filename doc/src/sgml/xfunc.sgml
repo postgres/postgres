@@ -4029,7 +4029,7 @@ extern PgStat_Kind pgstat_register_kind(PgStat_Kind kind,
        <para>
          All functions accessed by the backend must present a C interface
          to the backend;  these C functions can then call C++ functions.
-         For example, <literal>extern C</literal> linkage is required for
+         For example, <literal>extern "C"</literal> linkage is required for
          backend-accessed functions.  This is also necessary for any
          functions that are passed as pointers between the backend and
          C++ code.
@@ -4046,7 +4046,7 @@ extern PgStat_Kind pgstat_register_kind(PgStat_Kind kind,
       <listitem>
        <para>
         Prevent exceptions from propagating into the C code (use a catch-all
-        block at the top level of all <literal>extern C</literal> functions).  This
+        block at the top level of all <literal>extern "C"</literal> functions).  This
         is necessary even if the C++ code does not explicitly throw any
         exceptions, because events like out-of-memory can still throw
         exceptions.  Any exceptions must be caught and appropriate errors
@@ -4070,7 +4070,7 @@ extern PgStat_Kind pgstat_register_kind(PgStat_Kind kind,
 
     <para>
      In summary, it is best to place C++ code behind a wall of
-     <literal>extern C</literal> functions that interface to the backend,
+     <literal>extern "C"</literal> functions that interface to the backend,
      and avoid exception, memory, and call stack leakage.
     </para>
    </sect2>
