@@ -199,9 +199,8 @@ struct Tuplesortstate
 								 * pass */
 	int64		maxSpace;		/* maximum amount of space occupied among sort
 								 * of groups, either in-memory or on-disk */
-	bool		isMaxSpaceDisk; /* true when maxSpace is value for on-disk
-								 * space, false when it's value for in-memory
-								 * space */
+	bool		isMaxSpaceDisk; /* true when maxSpace tracks on-disk space,
+								 * false means in-memory */
 	TupSortStatus maxSpaceStatus;	/* sort status when maxSpace was reached */
 	LogicalTapeSet *tapeset;	/* logtape.c object for tapes in a temp file */
 
