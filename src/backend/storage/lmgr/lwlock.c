@@ -929,7 +929,7 @@ LWLockWaitListUnlock(LWLock *lock)
 static void
 LWLockWakeup(LWLock *lock)
 {
-	bool		new_release_in_progress = false;
+	bool		new_wake_in_progress = false;
 	bool		wokeup_somebody = false;
 	proclist_head wakeup;
 	proclist_mutable_iter iter;
@@ -956,7 +956,7 @@ LWLockWakeup(LWLock *lock)
 			 * that are just waiting for the lock to become free don't retry
 			 * automatically.
 			 */
-			new_release_in_progress = true;
+			new_wake_in_progress = true;
 
 			/*
 			 * Don't wakeup (further) exclusive locks.
@@ -995,7 +995,7 @@ LWLockWakeup(LWLock *lock)
 
 			/* compute desired flags */
 
-			if (new_release_in_progress)
+			if (new_wake_in_progress)
 				desired_state |= LW_FLAG_WAKE_IN_PROGRESS;
 			else
 				desired_state &= ~LW_FLAG_WAKE_IN_PROGRESS;
