@@ -1,6 +1,6 @@
 Parsed test spec with 2 sessions
 
-starting permutation: s0_setup s0_is_setup s1_setup s1_is_setup s0_add_message s0_store_lsn s1_add_message s1_store_lsn s0_compare s0_reset s1_reset
+starting permutation: s0_setup s0_is_setup s1_setup s1_is_setup s0_add_message s0_store_lsn s1_add_message s1_store_lsn s0_compare s1_reset s0_reset
 step s0_setup: SELECT pg_replication_origin_session_setup('origin');
 pg_replication_origin_session_setup
 -----------------------------------
@@ -65,13 +65,57 @@ step s0_compare:
 t       
 (1 row)
 
+step s1_reset: SELECT pg_replication_origin_session_reset();
+pg_replication_origin_session_reset
+-----------------------------------
+                                   
+(1 row)
+
 step s0_reset: SELECT pg_replication_origin_session_reset();
 pg_replication_origin_session_reset
 -----------------------------------
                                    
 (1 row)
 
+
+starting permutation: s0_setup s0_is_setup s1_setup s1_is_setup s0_reset s1_reset s0_reset
+step s0_setup: SELECT pg_replication_origin_session_setup('origin');
+pg_replication_origin_session_setup
+-----------------------------------
+                                   
+(1 row)
+
+step s0_is_setup: SELECT pg_replication_origin_session_is_setup();
+pg_replication_origin_session_is_setup
+--------------------------------------
+t                                     
+(1 row)
+
+step s1_setup: 
+    SELECT pg_replication_origin_session_setup('origin', pid)
+    FROM pg_stat_activity
+    WHERE application_name = 'isolation/parallel_session_origin/s0';
+
+pg_replication_origin_session_setup
+-----------------------------------
+                                   
+(1 row)
+
+step s1_is_setup: SELECT pg_replication_origin_session_is_setup();
+pg_replication_origin_session_is_setup
+--------------------------------------
+t                                     
+(1 row)
+
+step s0_reset: SELECT pg_replication_origin_session_reset();
+ERROR:  cannot reset replication origin with ID 1 because it is still in use by other processes
 step s1_reset: SELECT pg_replication_origin_session_reset();
+pg_replication_origin_session_reset
+-----------------------------------
+                                   
+(1 row)
+
+step s0_reset: SELECT pg_replication_origin_session_reset();
 pg_replication_origin_session_reset
 -----------------------------------
                                    
