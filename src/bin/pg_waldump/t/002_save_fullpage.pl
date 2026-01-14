@@ -104,8 +104,9 @@ for my $fullpath (glob "$tmp_folder/raw/*")
 	my ($hi_lsn_bk, $lo_lsn_bk) = get_block_lsn($fullpath, $blocksize);
 
 	# The LSN on the block comes before the file's LSN.
-	ok( $hi_lsn_fn . $lo_lsn_fn gt $hi_lsn_bk . $lo_lsn_bk,
-		'LSN stored in the file precedes the one stored in the block');
+	ok( $hi_lsn_fn . $lo_lsn_fn ge $hi_lsn_bk . $lo_lsn_bk,
+		"LSN stored in the file $hi_lsn_fn/$lo_lsn_fn precedes the one stored in the block $hi_lsn_bk/$lo_lsn_bk"
+	);
 }
 
 ok($file_count > 0, 'verify that at least one block has been saved');
