@@ -1,4 +1,4 @@
-Parsed test spec with 3 sessions
+Parsed test spec with 7 sessions
 
 starting permutation: listenc notify1 notify2 notify3 notifyf
 step listenc: LISTEN c1; LISTEN c2;
@@ -46,6 +46,115 @@ notifier: NOTIFY "c1" with payload "payload" from notifier
 notifier: NOTIFY "c2" with payload "payload" from notifier
 notifier: NOTIFY "c1" with payload "payloads" from notifier
 notifier: NOTIFY "c2" with payload "payloads" from notifier
+
+starting permutation: listenc notifys_simple
+step listenc: LISTEN c1; LISTEN c2;
+step notifys_simple: 
+	BEGIN;
+	SAVEPOINT s1;
+	NOTIFY c1, 'simple1';
+	NOTIFY c2, 'simple2';
+	RELEASE SAVEPOINT s1;
+	COMMIT;
+
+notifier: NOTIFY "c1" with payload "simple1" from notifier
+notifier: NOTIFY "c2" with payload "simple2" from notifier
+
+starting permutation: lsbegin lssavepoint lslisten lsrelease lscommit lsnotify
+step lsbegin: BEGIN;
+step lssavepoint: SAVEPOINT s1;
+step lslisten: LISTEN c1; LISTEN c2;
+step lsrelease: RELEASE SAVEPOINT s1;
+step lscommit: COMMIT;
+step lsnotify: NOTIFY c1, 'subxact_test';
+listen_subxact: NOTIFY "c1" with payload "subxact_test" from listen_subxact
+
+starting permutation: lsbegin lslisten_outer lssavepoint lslisten lsrelease lscommit lsnotify
+step lsbegin: BEGIN;
+step lslisten_outer: LISTEN c3;
+step lssavepoint: SAVEPOINT s1;
+step lslisten: LISTEN c1; LISTEN c2;
+step lsrelease: RELEASE SAVEPOINT s1;
+step lscommit: COMMIT;
+step lsnotify: NOTIFY c1, 'subxact_test';
+listen_subxact: NOTIFY "c1" with payload "subxact_test" from listen_subxact
+
+starting permutation: lsbegin lssavepoint lslisten lsrollback lscommit lsnotify_check
+step lsbegin: BEGIN;
+step lssavepoint: SAVEPOINT s1;
+step lslisten: LISTEN c1; LISTEN c2;
+step lsrollback: ROLLBACK TO SAVEPOINT s1;
+step lscommit: COMMIT;
+step lsnotify_check: NOTIFY c1, 'should_not_receive';
+
+starting permutation: lunlisten_all notify1 lcheck
+step lunlisten_all: BEGIN; LISTEN c1; UNLISTEN *; COMMIT;
+step notify1: NOTIFY c1;
+step lcheck: SELECT 1 AS x;
+x
+-
+1
+(1 row)
+
+
+starting permutation: listenc notify_many_with_dup
+step listenc: LISTEN c1; LISTEN c2;
+step notify_many_with_dup: 
+	BEGIN;
+	SELECT pg_notify('c1', 'msg' || s::text) FROM generate_series(1, 17) s;
+	SELECT pg_notify('c1', 'msg1');
+	COMMIT;
+
+pg_notify
+---------
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+(17 rows)
+
+pg_notify
+---------
+         
+(1 row)
+
+notifier: NOTIFY "c1" with payload "msg1" from notifier
+notifier: NOTIFY "c1" with payload "msg2" from notifier
+notifier: NOTIFY "c1" with payload "msg3" from notifier
+notifier: NOTIFY "c1" with payload "msg4" from notifier
+notifier: NOTIFY "c1" with payload "msg5" from notifier
+notifier: NOTIFY "c1" with payload "msg6" from notifier
+notifier: NOTIFY "c1" with payload "msg7" from notifier
+notifier: NOTIFY "c1" with payload "msg8" from notifier
+notifier: NOTIFY "c1" with payload "msg9" from notifier
+notifier: NOTIFY "c1" with payload "msg10" from notifier
+notifier: NOTIFY "c1" with payload "msg11" from notifier
+notifier: NOTIFY "c1" with payload "msg12" from notifier
+notifier: NOTIFY "c1" with payload "msg13" from notifier
+notifier: NOTIFY "c1" with payload "msg14" from notifier
+notifier: NOTIFY "c1" with payload "msg15" from notifier
+notifier: NOTIFY "c1" with payload "msg16" from notifier
+notifier: NOTIFY "c1" with payload "msg17" from notifier
+
+starting permutation: listenc llisten l2listen l3listen lslisten
+step listenc: LISTEN c1; LISTEN c2;
+step llisten: LISTEN c1; LISTEN c2;
+step l2listen: LISTEN c1;
+step l3listen: LISTEN c1;
+step lslisten: LISTEN c1; LISTEN c2;
 
 starting permutation: llisten notify1 notify2 notify3 notifyf lcheck
 step llisten: LISTEN c1; LISTEN c2;
@@ -95,6 +204,8 @@ listener: NOTIFY "c2" with payload "" from notifier
 
 starting permutation: l2listen l2begin notify1 lbegins llisten lcommit l2commit l2stop
 step l2listen: LISTEN c1;
+listener2: NOTIFY "c1" with payload "" from notifier
+listener2: NOTIFY "c1" with payload "" from notifier
 step l2begin: BEGIN;
 step notify1: NOTIFY c1;
 step lbegins: BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -103,6 +214,17 @@ step lcommit: COMMIT;
 step l2commit: COMMIT;
 listener2: NOTIFY "c1" with payload "" from notifier
 step l2stop: UNLISTEN *;
+
+starting permutation: lch_listen nch_notify lch_check
+step lch_listen: LISTEN ch;
+step nch_notify: NOTIFY ch, 'aa';
+step lch_check: SELECT 1 AS x;
+x
+-
+1
+(1 row)
+
+listener_ch: NOTIFY "ch" with payload "aa" from notifier_ch
 
 starting permutation: llisten lbegin usage bignotify usage
 step llisten: LISTEN c1; LISTEN c2;
