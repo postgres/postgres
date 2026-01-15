@@ -282,9 +282,7 @@ static void ExtendMultiXactMember(MultiXactOffset offset, int nmembers);
 static void SetOldestOffset(void);
 static bool find_multixact_start(MultiXactId multi, MultiXactOffset *result);
 static void WriteMTruncateXlogRec(Oid oldestMultiDB,
-								  MultiXactId startTruncOff,
 								  MultiXactId endTruncOff,
-								  MultiXactOffset startTruncMemb,
 								  MultiXactOffset endTruncMemb);
 
 
@@ -2558,45 +2556,22 @@ MultiXactMemberFreezeThreshold(void)
 	return Min(result, autovacuum_multixact_freeze_max_age);
 }
 
-typedef struct mxtruncinfo
-{
-	int64		earliestExistingPage;
-} mxtruncinfo;
 
 /*
- * SlruScanDirectory callback
- *		This callback determines the earliest existing page number.
- */
-static bool
-SlruScanDirCbFindEarliest(SlruCtl ctl, char *filename, int64 segpage, void *data)
-{
-	mxtruncinfo *trunc = (mxtruncinfo *) data;
-
-	if (trunc->earliestExistingPage == -1 ||
-		ctl->PagePrecedes(segpage, trunc->earliestExistingPage))
-	{
-		trunc->earliestExistingPage = segpage;
-	}
-
-	return false;				/* keep going */
-}
-
-
-/*
- * Delete members segments [oldest, newOldest)
+ * Delete members segments older than newOldestOffset
  */
 static void
-PerformMembersTruncation(MultiXactOffset oldestOffset, MultiXactOffset newOldestOffset)
+PerformMembersTruncation(MultiXactOffset newOldestOffset)
 {
 	SimpleLruTruncate(MultiXactMemberCtl,
 					  MXOffsetToMemberPage(newOldestOffset));
 }
 
 /*
- * Delete offsets segments [oldest, newOldest)
+ * Delete offsets segments older than newOldestMulti
  */
 static void
-PerformOffsetsTruncation(MultiXactId oldestMulti, MultiXactId newOldestMulti)
+PerformOffsetsTruncation(MultiXactId newOldestMulti)
 {
 	/*
 	 * We step back one multixact to avoid passing a cutoff page that hasn't
@@ -2626,10 +2601,7 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	MultiXactId oldestMulti;
 	MultiXactId nextMulti;
 	MultiXactOffset newOldestOffset;
-	MultiXactOffset oldestOffset;
 	MultiXactOffset nextOffset;
-	mxtruncinfo trunc;
-	MultiXactId earliest;
 
 	Assert(!RecoveryInProgress());
 	Assert(MultiXactState->finishedStartup);
@@ -2661,61 +2633,8 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	}
 
 	/*
-	 * Note we can't just plow ahead with the truncation; it's possible that
-	 * there are no segments to truncate, which is a problem because we are
-	 * going to attempt to read the offsets page to determine where to
-	 * truncate the members SLRU.  So we first scan the directory to determine
-	 * the earliest offsets page number that we can read without error.
-	 *
-	 * When nextMXact is less than one segment away from multiWrapLimit,
-	 * SlruScanDirCbFindEarliest can find some early segment other than the
-	 * actual earliest.  (MultiXactOffsetPagePrecedes(EARLIEST, LATEST)
-	 * returns false, because not all pairs of entries have the same answer.)
-	 * That can also arise when an earlier truncation attempt failed unlink()
-	 * or returned early from this function.  The only consequence is
-	 * returning early, which wastes space that we could have liberated.
-	 *
-	 * NB: It's also possible that the page that oldestMulti is on has already
-	 * been truncated away, and we crashed before updating oldestMulti.
-	 */
-	trunc.earliestExistingPage = -1;
-	SlruScanDirectory(MultiXactOffsetCtl, SlruScanDirCbFindEarliest, &trunc);
-	earliest = trunc.earliestExistingPage * MULTIXACT_OFFSETS_PER_PAGE;
-	if (earliest < FirstMultiXactId)
-		earliest = FirstMultiXactId;
-
-	/* If there's nothing to remove, we can bail out early. */
-	if (MultiXactIdPrecedes(oldestMulti, earliest))
-	{
-		LWLockRelease(MultiXactTruncationLock);
-		return;
-	}
-
-	/*
-	 * First, compute the safe truncation point for MultiXactMember. This is
-	 * the starting offset of the oldest multixact.
-	 *
-	 * Hopefully, find_multixact_start will always work here, because we've
-	 * already checked that it doesn't precede the earliest MultiXact on disk.
-	 * But if it fails, don't truncate anything, and log a message.
-	 */
-	if (oldestMulti == nextMulti)
-	{
-		/* there are NO MultiXacts */
-		oldestOffset = nextOffset;
-	}
-	else if (!find_multixact_start(oldestMulti, &oldestOffset))
-	{
-		ereport(LOG,
-				(errmsg("oldest MultiXact %u not found, earliest MultiXact %u, skipping truncation",
-						oldestMulti, earliest)));
-		LWLockRelease(MultiXactTruncationLock);
-		return;
-	}
-
-	/*
-	 * Secondly compute up to where to truncate. Lookup the corresponding
-	 * member offset for newOldestMulti for that.
+	 * Compute up to where to truncate MultiXactMember. Lookup the
+	 * corresponding member offset for newOldestMulti for that.
 	 */
 	if (newOldestMulti == nextMulti)
 	{
@@ -2732,13 +2651,11 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	}
 
 	elog(DEBUG1, "performing multixact truncation: "
-		 "offsets [%u, %u), offsets segments [%" PRIx64 ", %" PRIx64 "), "
-		 "members [%" PRIu64 ", %" PRIu64 "), members segments [%" PRIx64 ", %" PRIx64 ")",
-		 oldestMulti, newOldestMulti,
-		 MultiXactIdToOffsetSegment(oldestMulti),
+		 "oldestMulti %u (offsets segment %" PRIx64 "), "
+		 "oldestOffset %" PRIu64 " (members segment %" PRIx64 ")",
+		 newOldestMulti,
 		 MultiXactIdToOffsetSegment(newOldestMulti),
-		 oldestOffset, newOldestOffset,
-		 MXOffsetToMemberSegment(oldestOffset),
+		 newOldestOffset,
 		 MXOffsetToMemberSegment(newOldestOffset));
 
 	/*
@@ -2759,9 +2676,7 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	MyProc->delayChkptFlags |= DELAY_CHKPT_START;
 
 	/* WAL log truncation */
-	WriteMTruncateXlogRec(newOldestMultiDB,
-						  oldestMulti, newOldestMulti,
-						  oldestOffset, newOldestOffset);
+	WriteMTruncateXlogRec(newOldestMultiDB, newOldestMulti, newOldestOffset);
 
 	/*
 	 * Update in-memory limits before performing the truncation, while inside
@@ -2778,10 +2693,10 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	LWLockRelease(MultiXactGenLock);
 
 	/* First truncate members */
-	PerformMembersTruncation(oldestOffset, newOldestOffset);
+	PerformMembersTruncation(newOldestOffset);
 
 	/* Then offsets */
-	PerformOffsetsTruncation(oldestMulti, newOldestMulti);
+	PerformOffsetsTruncation(newOldestMulti);
 
 	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 
@@ -2860,19 +2775,15 @@ MultiXactIdPrecedesOrEquals(MultiXactId multi1, MultiXactId multi2)
  */
 static void
 WriteMTruncateXlogRec(Oid oldestMultiDB,
-					  MultiXactId startTruncOff, MultiXactId endTruncOff,
-					  MultiXactOffset startTruncMemb, MultiXactOffset endTruncMemb)
+					  MultiXactId oldestMulti,
+					  MultiXactOffset oldestOffset)
 {
 	XLogRecPtr	recptr;
 	xl_multixact_truncate xlrec;
 
 	xlrec.oldestMultiDB = oldestMultiDB;
-
-	xlrec.startTruncOff = startTruncOff;
-	xlrec.endTruncOff = endTruncOff;
-
-	xlrec.startTruncMemb = startTruncMemb;
-	xlrec.endTruncMemb = endTruncMemb;
+	xlrec.oldestMulti = oldestMulti;
+	xlrec.oldestOffset = oldestOffset;
 
 	XLogBeginInsert();
 	XLogRegisterData(&xlrec, SizeOfMultiXactTruncate);
@@ -2943,14 +2854,12 @@ multixact_redo(XLogReaderState *record)
 			   SizeOfMultiXactTruncate);
 
 		elog(DEBUG1, "replaying multixact truncation: "
-			 "offsets [%u, %u), offsets segments [%" PRIx64 ", %" PRIx64 "), "
-			 "members [%" PRIu64 ", %" PRIu64 "), members segments [%" PRIx64 ", %" PRIx64 ")",
-			 xlrec.startTruncOff, xlrec.endTruncOff,
-			 MultiXactIdToOffsetSegment(xlrec.startTruncOff),
-			 MultiXactIdToOffsetSegment(xlrec.endTruncOff),
-			 xlrec.startTruncMemb, xlrec.endTruncMemb,
-			 MXOffsetToMemberSegment(xlrec.startTruncMemb),
-			 MXOffsetToMemberSegment(xlrec.endTruncMemb));
+			 "oldestMulti %u (offsets segment %" PRIx64 "), "
+			 "oldestOffset %" PRIu64 " (members segment %" PRIx64 ")",
+			 xlrec.oldestMulti,
+			 MultiXactIdToOffsetSegment(xlrec.oldestMulti),
+			 xlrec.oldestOffset,
+			 MXOffsetToMemberSegment(xlrec.oldestOffset));
 
 		/* should not be required, but more than cheap enough */
 		LWLockAcquire(MultiXactTruncationLock, LW_EXCLUSIVE);
@@ -2959,19 +2868,19 @@ multixact_redo(XLogReaderState *record)
 		 * Advance the horizon values, so they're current at the end of
 		 * recovery.
 		 */
-		SetMultiXactIdLimit(xlrec.endTruncOff, xlrec.oldestMultiDB);
+		SetMultiXactIdLimit(xlrec.oldestMulti, xlrec.oldestMultiDB);
 
-		PerformMembersTruncation(xlrec.startTruncMemb, xlrec.endTruncMemb);
+		PerformMembersTruncation(xlrec.oldestOffset);
 
 		/*
 		 * During XLOG replay, latest_page_number isn't necessarily set up
 		 * yet; insert a suitable value to bypass the sanity test in
 		 * SimpleLruTruncate.
 		 */
-		pageno = MultiXactIdToOffsetPage(xlrec.endTruncOff);
+		pageno = MultiXactIdToOffsetPage(xlrec.oldestMulti);
 		pg_atomic_write_u64(&MultiXactOffsetCtl->shared->latest_page_number,
 							pageno);
-		PerformOffsetsTruncation(xlrec.startTruncOff, xlrec.endTruncOff);
+		PerformOffsetsTruncation(xlrec.oldestMulti);
 
 		LWLockRelease(MultiXactTruncationLock);
 	}

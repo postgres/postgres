@@ -74,9 +74,8 @@ multixact_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_multixact_truncate *xlrec = (xl_multixact_truncate *) rec;
 
-		appendStringInfo(buf, "offsets [%u, %u), members [%" PRIu64 ", %" PRIu64 ")",
-						 xlrec->startTruncOff, xlrec->endTruncOff,
-						 xlrec->startTruncMemb, xlrec->endTruncMemb);
+		appendStringInfo(buf, "oldestMulti %u, oldestOffset %" PRIu64,
+						 xlrec->oldestMulti, xlrec->oldestOffset);
 	}
 }
 
