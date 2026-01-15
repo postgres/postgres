@@ -86,7 +86,7 @@ typedef struct BufferAccessStrategyData
 
 /* Prototypes for internal functions */
 static BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy,
-									 uint32 *buf_state);
+									 uint64 *buf_state);
 static void AddBufferToRing(BufferAccessStrategy strategy,
 							BufferDesc *buf);
 
@@ -171,7 +171,7 @@ ClockSweepTick(void)
  *	before returning.
  */
 BufferDesc *
-StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_ring)
+StrategyGetBuffer(BufferAccessStrategy strategy, uint64 *buf_state, bool *from_ring)
 {
 	BufferDesc *buf;
 	int			bgwprocno;
@@ -230,8 +230,8 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 	trycounter = NBuffers;
 	for (;;)
 	{
-		uint32		old_buf_state;
-		uint32		local_buf_state;
+		uint64		old_buf_state;
+		uint64		local_buf_state;
 
 		buf = GetBufferDescriptor(ClockSweepTick());
 
@@ -239,7 +239,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 		 * Check whether the buffer can be used and pin it if so. Do this
 		 * using a CAS loop, to avoid having to lock the buffer header.
 		 */
-		old_buf_state = pg_atomic_read_u32(&buf->state);
+		old_buf_state = pg_atomic_read_u64(&buf->state);
 		for (;;)
 		{
 			local_buf_state = old_buf_state;
@@ -277,7 +277,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 			{
 				local_buf_state -= BUF_USAGECOUNT_ONE;
 
-				if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+				if (pg_atomic_compare_exchange_u64(&buf->state, &old_buf_state,
 												   local_buf_state))
 				{
 					trycounter = NBuffers;
@@ -289,7 +289,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 				/* pin the buffer if the CAS succeeds */
 				local_buf_state += BUF_REFCOUNT_ONE;
 
-				if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+				if (pg_atomic_compare_exchange_u64(&buf->state, &old_buf_state,
 												   local_buf_state))
 				{
 					/* Found a usable buffer */
@@ -655,12 +655,12 @@ FreeAccessStrategy(BufferAccessStrategy strategy)
  * returning.
  */
 static BufferDesc *
-GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
+GetBufferFromRing(BufferAccessStrategy strategy, uint64 *buf_state)
 {
 	BufferDesc *buf;
 	Buffer		bufnum;
-	uint32		old_buf_state;
-	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
+	uint64		old_buf_state;
+	uint64		local_buf_state;	/* to avoid repeated (de-)referencing */
 
 
 	/* Advance to next ring slot */
@@ -682,7 +682,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * Check whether the buffer can be used and pin it if so. Do this using a
 	 * CAS loop, to avoid having to lock the buffer header.
 	 */
-	old_buf_state = pg_atomic_read_u32(&buf->state);
+	old_buf_state = pg_atomic_read_u64(&buf->state);
 	for (;;)
 	{
 		local_buf_state = old_buf_state;
@@ -710,7 +710,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 		/* pin the buffer if the CAS succeeds */
 		local_buf_state += BUF_REFCOUNT_ONE;
 
-		if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+		if (pg_atomic_compare_exchange_u64(&buf->state, &old_buf_state,
 										   local_buf_state))
 		{
 			*buf_state = local_buf_state;

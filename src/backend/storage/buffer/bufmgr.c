@@ -780,7 +780,7 @@ ReadRecentBuffer(RelFileLocator rlocator, ForkNumber forkNum, BlockNumber blockN
 {
 	BufferDesc *bufHdr;
 	BufferTag	tag;
-	uint32		buf_state;
+	uint64		buf_state;
 
 	Assert(BufferIsValid(recent_buffer));
 
@@ -793,7 +793,7 @@ ReadRecentBuffer(RelFileLocator rlocator, ForkNumber forkNum, BlockNumber blockN
 		int			b = -recent_buffer - 1;
 
 		bufHdr = GetLocalBufferDescriptor(b);
-		buf_state = pg_atomic_read_u32(&bufHdr->state);
+		buf_state = pg_atomic_read_u64(&bufHdr->state);
 
 		/* Is it still valid and holding the right tag? */
 		if ((buf_state & BM_VALID) && BufferTagsEqual(&tag, &bufHdr->tag))
@@ -1386,8 +1386,8 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
 				bufHdr = GetLocalBufferDescriptor(-buffers[i] - 1);
 			else
 				bufHdr = GetBufferDescriptor(buffers[i] - 1);
-			Assert(pg_atomic_read_u32(&bufHdr->state) & BM_TAG_VALID);
-			found = pg_atomic_read_u32(&bufHdr->state) & BM_VALID;
+			Assert(pg_atomic_read_u64(&bufHdr->state) & BM_TAG_VALID);
+			found = pg_atomic_read_u64(&bufHdr->state) & BM_VALID;
 		}
 		else
 		{
@@ -1613,10 +1613,10 @@ CheckReadBuffersOperation(ReadBuffersOperation *operation, bool is_complete)
 			GetBufferDescriptor(buffer - 1);
 
 		Assert(BufferGetBlockNumber(buffer) == operation->blocknum + i);
-		Assert(pg_atomic_read_u32(&buf_hdr->state) & BM_TAG_VALID);
+		Assert(pg_atomic_read_u64(&buf_hdr->state) & BM_TAG_VALID);
 
 		if (i < operation->nblocks_done)
-			Assert(pg_atomic_read_u32(&buf_hdr->state) & BM_VALID);
+			Assert(pg_atomic_read_u64(&buf_hdr->state) & BM_VALID);
 	}
 #endif
 }
@@ -2083,8 +2083,8 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	int			existing_buf_id;
 	Buffer		victim_buffer;
 	BufferDesc *victim_buf_hdr;
-	uint32		victim_buf_state;
-	uint32		set_bits = 0;
+	uint64		victim_buf_state;
+	uint64		set_bits = 0;
 
 	/* Make sure we will have room to remember the buffer pin */
 	ResourceOwnerEnlarge(CurrentResourceOwner);
@@ -2251,7 +2251,7 @@ InvalidateBuffer(BufferDesc *buf)
 	uint32		oldHash;		/* hash value for oldTag */
 	LWLock	   *oldPartitionLock;	/* buffer partition lock for it */
 	uint32		oldFlags;
-	uint32		buf_state;
+	uint64		buf_state;
 
 	/* Save the original buffer tag before dropping the spinlock */
 	oldTag = buf->tag;
@@ -2342,7 +2342,7 @@ retry:
 static bool
 InvalidateVictimBuffer(BufferDesc *buf_hdr)
 {
-	uint32		buf_state;
+	uint64		buf_state;
 	uint32		hash;
 	LWLock	   *partition_lock;
 	BufferTag	tag;
@@ -2402,10 +2402,10 @@ InvalidateVictimBuffer(BufferDesc *buf_hdr)
 
 	LWLockRelease(partition_lock);
 
-	buf_state = pg_atomic_read_u32(&buf_hdr->state);
+	buf_state = pg_atomic_read_u64(&buf_hdr->state);
 	Assert(!(buf_state & (BM_DIRTY | BM_VALID | BM_TAG_VALID)));
 	Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
-	Assert(BUF_STATE_GET_REFCOUNT(pg_atomic_read_u32(&buf_hdr->state)) > 0);
+	Assert(BUF_STATE_GET_REFCOUNT(pg_atomic_read_u64(&buf_hdr->state)) > 0);
 
 	return true;
 }
@@ -2415,7 +2415,7 @@ GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context)
 {
 	BufferDesc *buf_hdr;
 	Buffer		buf;
-	uint32		buf_state;
+	uint64		buf_state;
 	bool		from_ring;
 
 	/*
@@ -2548,7 +2548,7 @@ again:
 
 	/* a final set of sanity checks */
 #ifdef USE_ASSERT_CHECKING
-	buf_state = pg_atomic_read_u32(&buf_hdr->state);
+	buf_state = pg_atomic_read_u64(&buf_hdr->state);
 
 	Assert(BUF_STATE_GET_REFCOUNT(buf_state) == 1);
 	Assert(!(buf_state & (BM_TAG_VALID | BM_VALID | BM_DIRTY)));
@@ -2839,13 +2839,13 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 			 */
 			do
 			{
-				pg_atomic_fetch_and_u32(&existing_hdr->state, ~BM_VALID);
+				pg_atomic_fetch_and_u64(&existing_hdr->state, ~BM_VALID);
 			} while (!StartBufferIO(existing_hdr, true, false));
 		}
 		else
 		{
-			uint32		buf_state;
-			uint32		set_bits = 0;
+			uint64		buf_state;
+			uint64		set_bits = 0;
 
 			buf_state = LockBufHdr(victim_buf_hdr);
 
@@ -3021,7 +3021,7 @@ BufferIsDirty(Buffer buffer)
 		Assert(BufferIsLockedByMeInMode(buffer, BUFFER_LOCK_EXCLUSIVE));
 	}
 
-	return pg_atomic_read_u32(&bufHdr->state) & BM_DIRTY;
+	return pg_atomic_read_u64(&bufHdr->state) & BM_DIRTY;
 }
 
 /*
@@ -3037,8 +3037,8 @@ void
 MarkBufferDirty(Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	uint32		buf_state;
-	uint32		old_buf_state;
+	uint64		buf_state;
+	uint64		old_buf_state;
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer ID: %d", buffer);
@@ -3058,7 +3058,7 @@ MarkBufferDirty(Buffer buffer)
 	 * NB: We have to wait for the buffer header spinlock to be not held, as
 	 * TerminateBufferIO() relies on the spinlock.
 	 */
-	old_buf_state = pg_atomic_read_u32(&bufHdr->state);
+	old_buf_state = pg_atomic_read_u64(&bufHdr->state);
 	for (;;)
 	{
 		if (old_buf_state & BM_LOCKED)
@@ -3069,7 +3069,7 @@ MarkBufferDirty(Buffer buffer)
 		Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
 		buf_state |= BM_DIRTY | BM_JUST_DIRTIED;
 
-		if (pg_atomic_compare_exchange_u32(&bufHdr->state, &old_buf_state,
+		if (pg_atomic_compare_exchange_u64(&bufHdr->state, &old_buf_state,
 										   buf_state))
 			break;
 	}
@@ -3173,10 +3173,10 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 
 	if (ref == NULL)
 	{
-		uint32		buf_state;
-		uint32		old_buf_state;
+		uint64		buf_state;
+		uint64		old_buf_state;
 
-		old_buf_state = pg_atomic_read_u32(&buf->state);
+		old_buf_state = pg_atomic_read_u64(&buf->state);
 		for (;;)
 		{
 			if (unlikely(skip_if_not_valid && !(old_buf_state & BM_VALID)))
@@ -3210,7 +3210,7 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 					buf_state += BUF_USAGECOUNT_ONE;
 			}
 
-			if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
+			if (pg_atomic_compare_exchange_u64(&buf->state, &old_buf_state,
 											   buf_state))
 			{
 				result = (buf_state & BM_VALID) != 0;
@@ -3237,7 +3237,7 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 		 * that the buffer page is legitimately non-accessible here.  We
 		 * cannot meddle with that.
 		 */
-		result = (pg_atomic_read_u32(&buf->state) & BM_VALID) != 0;
+		result = (pg_atomic_read_u64(&buf->state) & BM_VALID) != 0;
 
 		Assert(ref->data.refcount > 0);
 		ref->data.refcount++;
@@ -3272,7 +3272,7 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 static void
 PinBuffer_Locked(BufferDesc *buf)
 {
-	uint32		old_buf_state;
+	uint64		old_buf_state;
 
 	/*
 	 * As explained, We don't expect any preexisting pins. That allows us to
@@ -3284,7 +3284,7 @@ PinBuffer_Locked(BufferDesc *buf)
 	 * Since we hold the buffer spinlock, we can update the buffer state and
 	 * release the lock in one operation.
 	 */
-	old_buf_state = pg_atomic_read_u32(&buf->state);
+	old_buf_state = pg_atomic_read_u64(&buf->state);
 
 	UnlockBufHdrExt(buf, old_buf_state,
 					0, 0, 1);
@@ -3314,7 +3314,7 @@ WakePinCountWaiter(BufferDesc *buf)
 	 * BM_PIN_COUNT_WAITER if it stops waiting for a reason other than this
 	 * backend waking it up.
 	 */
-	uint32		buf_state = LockBufHdr(buf);
+	uint64		buf_state = LockBufHdr(buf);
 
 	if ((buf_state & BM_PIN_COUNT_WAITER) &&
 		BUF_STATE_GET_REFCOUNT(buf_state) == 1)
@@ -3361,7 +3361,7 @@ UnpinBufferNoOwner(BufferDesc *buf)
 	ref->data.refcount--;
 	if (ref->data.refcount == 0)
 	{
-		uint32		old_buf_state;
+		uint64		old_buf_state;
 
 		/*
 		 * Mark buffer non-accessible to Valgrind.
@@ -3379,7 +3379,7 @@ UnpinBufferNoOwner(BufferDesc *buf)
 		Assert(!LWLockHeldByMe(BufferDescriptorGetContentLock(buf)));
 
 		/* decrement the shared reference count */
-		old_buf_state = pg_atomic_fetch_sub_u32(&buf->state, BUF_REFCOUNT_ONE);
+		old_buf_state = pg_atomic_fetch_sub_u64(&buf->state, BUF_REFCOUNT_ONE);
 
 		/* Support LockBufferForCleanup() */
 		if (old_buf_state & BM_PIN_COUNT_WAITER)
@@ -3436,7 +3436,7 @@ TrackNewBufferPin(Buffer buf)
 static void
 BufferSync(int flags)
 {
-	uint32		buf_state;
+	uint64		buf_state;
 	int			buf_id;
 	int			num_to_scan;
 	int			num_spaces;
@@ -3446,7 +3446,7 @@ BufferSync(int flags)
 	Oid			last_tsid;
 	binaryheap *ts_heap;
 	int			i;
-	uint32		mask = BM_DIRTY;
+	uint64		mask = BM_DIRTY;
 	WritebackContext wb_context;
 
 	/*
@@ -3478,7 +3478,7 @@ BufferSync(int flags)
 	for (buf_id = 0; buf_id < NBuffers; buf_id++)
 	{
 		BufferDesc *bufHdr = GetBufferDescriptor(buf_id);
-		uint32		set_bits = 0;
+		uint64		set_bits = 0;
 
 		/*
 		 * Header spinlock is enough to examine BM_DIRTY, see comment in
@@ -3645,7 +3645,7 @@ BufferSync(int flags)
 		 * write the buffer though we didn't need to.  It doesn't seem worth
 		 * guarding against this, though.
 		 */
-		if (pg_atomic_read_u32(&bufHdr->state) & BM_CHECKPOINT_NEEDED)
+		if (pg_atomic_read_u64(&bufHdr->state) & BM_CHECKPOINT_NEEDED)
 		{
 			if (SyncOneBuffer(buf_id, false, &wb_context) & BUF_WRITTEN)
 			{
@@ -4015,7 +4015,7 @@ SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
 {
 	BufferDesc *bufHdr = GetBufferDescriptor(buf_id);
 	int			result = 0;
-	uint32		buf_state;
+	uint64		buf_state;
 	BufferTag	tag;
 
 	/* Make sure we can handle the pin */
@@ -4264,7 +4264,7 @@ DebugPrintBufferRefcount(Buffer buffer)
 	int32		loccount;
 	char	   *result;
 	ProcNumber	backend;
-	uint32		buf_state;
+	uint64		buf_state;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
@@ -4281,9 +4281,9 @@ DebugPrintBufferRefcount(Buffer buffer)
 	}
 
 	/* theoretically we should lock the bufHdr here */
-	buf_state = pg_atomic_read_u32(&buf->state);
+	buf_state = pg_atomic_read_u64(&buf->state);
 
-	result = psprintf("[%03d] (rel=%s, blockNum=%u, flags=0x%x, refcount=%u %d)",
+	result = psprintf("[%03d] (rel=%s, blockNum=%u, flags=0x%" PRIx64 ", refcount=%u %d)",
 					  buffer,
 					  relpathbackend(BufTagGetRelFileLocator(&buf->tag), backend,
 									 BufTagGetForkNum(&buf->tag)).str,
@@ -4383,7 +4383,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	instr_time	io_start;
 	Block		bufBlock;
 	char	   *bufToWrite;
-	uint32		buf_state;
+	uint64		buf_state;
 
 	/*
 	 * Try to start an I/O operation.  If StartBufferIO returns false, then
@@ -4581,7 +4581,7 @@ BufferIsPermanent(Buffer buffer)
 	 * not random garbage.
 	 */
 	bufHdr = GetBufferDescriptor(buffer - 1);
-	return (pg_atomic_read_u32(&bufHdr->state) & BM_PERMANENT) != 0;
+	return (pg_atomic_read_u64(&bufHdr->state) & BM_PERMANENT) != 0;
 }
 
 /*
@@ -5044,11 +5044,11 @@ FlushRelationBuffers(Relation rel)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
-			uint32		buf_state;
+			uint64		buf_state;
 
 			bufHdr = GetLocalBufferDescriptor(i);
 			if (BufTagMatchesRelFileLocator(&bufHdr->tag, &rel->rd_locator) &&
-				((buf_state = pg_atomic_read_u32(&bufHdr->state)) &
+				((buf_state = pg_atomic_read_u64(&bufHdr->state)) &
 				 (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 			{
 				ErrorContextCallback errcallback;
@@ -5084,7 +5084,7 @@ FlushRelationBuffers(Relation rel)
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		uint32		buf_state;
+		uint64		buf_state;
 
 		bufHdr = GetBufferDescriptor(i);
 
@@ -5156,7 +5156,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 	{
 		SMgrSortArray *srelent = NULL;
 		BufferDesc *bufHdr = GetBufferDescriptor(i);
-		uint32		buf_state;
+		uint64		buf_state;
 
 		/*
 		 * As in DropRelationBuffers, an unlocked precheck should be safe and
@@ -5405,7 +5405,7 @@ FlushDatabaseBuffers(Oid dbid)
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		uint32		buf_state;
+		uint64		buf_state;
 
 		bufHdr = GetBufferDescriptor(i);
 
@@ -5553,13 +5553,13 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 	 * is only intended to be used in cases where failing to write out the
 	 * data would be harmless anyway, it doesn't really matter.
 	 */
-	if ((pg_atomic_read_u32(&bufHdr->state) & (BM_DIRTY | BM_JUST_DIRTIED)) !=
+	if ((pg_atomic_read_u64(&bufHdr->state) & (BM_DIRTY | BM_JUST_DIRTIED)) !=
 		(BM_DIRTY | BM_JUST_DIRTIED))
 	{
 		XLogRecPtr	lsn = InvalidXLogRecPtr;
 		bool		dirtied = false;
 		bool		delayChkptFlags = false;
-		uint32		buf_state;
+		uint64		buf_state;
 
 		/*
 		 * If we need to protect hint bit updates from torn writes, WAL-log a
@@ -5571,7 +5571,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		 * when we call XLogInsert() since the value changes dynamically.
 		 */
 		if (XLogHintBitIsNeeded() &&
-			(pg_atomic_read_u32(&bufHdr->state) & BM_PERMANENT))
+			(pg_atomic_read_u64(&bufHdr->state) & BM_PERMANENT))
 		{
 			/*
 			 * If we must not write WAL, due to a relfilelocator-specific
@@ -5671,8 +5671,8 @@ UnlockBuffers(void)
 
 	if (buf)
 	{
-		uint32		buf_state;
-		uint32		unset_bits = 0;
+		uint64		buf_state;
+		uint64		unset_bits = 0;
 
 		buf_state = LockBufHdr(buf);
 
@@ -5803,8 +5803,8 @@ LockBufferForCleanup(Buffer buffer)
 
 	for (;;)
 	{
-		uint32		buf_state;
-		uint32		unset_bits = 0;
+		uint64		buf_state;
+		uint64		unset_bits = 0;
 
 		/* Try to acquire lock */
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -5952,7 +5952,7 @@ bool
 ConditionalLockBufferForCleanup(Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	uint32		buf_state,
+	uint64		buf_state,
 				refcount;
 
 	Assert(BufferIsValid(buffer));
@@ -6010,7 +6010,7 @@ bool
 IsBufferCleanupOK(Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	uint32		buf_state;
+	uint64		buf_state;
 
 	Assert(BufferIsValid(buffer));
 
@@ -6066,7 +6066,7 @@ WaitIO(BufferDesc *buf)
 	ConditionVariablePrepareToSleep(cv);
 	for (;;)
 	{
-		uint32		buf_state;
+		uint64		buf_state;
 		PgAioWaitRef iow;
 
 		/*
@@ -6140,7 +6140,7 @@ WaitIO(BufferDesc *buf)
 bool
 StartBufferIO(BufferDesc *buf, bool forInput, bool nowait)
 {
-	uint32		buf_state;
+	uint64		buf_state;
 
 	ResourceOwnerEnlarge(CurrentResourceOwner);
 
@@ -6196,11 +6196,11 @@ StartBufferIO(BufferDesc *buf, bool forInput, bool nowait)
  * is being released)
  */
 void
-TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits,
+TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint64 set_flag_bits,
 				  bool forget_owner, bool release_aio)
 {
-	uint32		buf_state;
-	uint32		unset_flag_bits = 0;
+	uint64		buf_state;
+	uint64		unset_flag_bits = 0;
 	int			refcount_change = 0;
 
 	buf_state = LockBufHdr(buf);
@@ -6261,7 +6261,7 @@ static void
 AbortBufferIO(Buffer buffer)
 {
 	BufferDesc *buf_hdr = GetBufferDescriptor(buffer - 1);
-	uint32		buf_state;
+	uint64		buf_state;
 
 	buf_state = LockBufHdr(buf_hdr);
 	Assert(buf_state & (BM_IO_IN_PROGRESS | BM_TAG_VALID));
@@ -6355,10 +6355,10 @@ rlocator_comparator(const void *p1, const void *p2)
 /*
  * Lock buffer header - set BM_LOCKED in buffer state.
  */
-uint32
+uint64
 LockBufHdr(BufferDesc *desc)
 {
-	uint32		old_buf_state;
+	uint64		old_buf_state;
 
 	Assert(!BufferIsLocal(BufferDescriptorGetBuffer(desc)));
 
@@ -6369,7 +6369,7 @@ LockBufHdr(BufferDesc *desc)
 		 * the spin-delay infrastructure. The work necessary for that shows up
 		 * in profiles and is rarely necessary.
 		 */
-		old_buf_state = pg_atomic_fetch_or_u32(&desc->state, BM_LOCKED);
+		old_buf_state = pg_atomic_fetch_or_u64(&desc->state, BM_LOCKED);
 		if (likely(!(old_buf_state & BM_LOCKED)))
 			break;				/* got lock */
 
@@ -6382,7 +6382,7 @@ LockBufHdr(BufferDesc *desc)
 			while (old_buf_state & BM_LOCKED)
 			{
 				perform_spin_delay(&delayStatus);
-				old_buf_state = pg_atomic_read_u32(&desc->state);
+				old_buf_state = pg_atomic_read_u64(&desc->state);
 			}
 			finish_spin_delay(&delayStatus);
 		}
@@ -6403,20 +6403,20 @@ LockBufHdr(BufferDesc *desc)
  * Obviously the buffer could be locked by the time the value is returned, so
  * this is primarily useful in CAS style loops.
  */
-pg_noinline uint32
+pg_noinline uint64
 WaitBufHdrUnlocked(BufferDesc *buf)
 {
 	SpinDelayStatus delayStatus;
-	uint32		buf_state;
+	uint64		buf_state;
 
 	init_local_spin_delay(&delayStatus);
 
-	buf_state = pg_atomic_read_u32(&buf->state);
+	buf_state = pg_atomic_read_u64(&buf->state);
 
 	while (buf_state & BM_LOCKED)
 	{
 		perform_spin_delay(&delayStatus);
-		buf_state = pg_atomic_read_u32(&buf->state);
+		buf_state = pg_atomic_read_u64(&buf->state);
 	}
 
 	finish_spin_delay(&delayStatus);
@@ -6704,12 +6704,12 @@ ResOwnerPrintBufferPin(Datum res)
 static bool
 EvictUnpinnedBufferInternal(BufferDesc *desc, bool *buffer_flushed)
 {
-	uint32		buf_state;
+	uint64		buf_state;
 	bool		result;
 
 	*buffer_flushed = false;
 
-	buf_state = pg_atomic_read_u32(&(desc->state));
+	buf_state = pg_atomic_read_u64(&(desc->state));
 	Assert(buf_state & BM_LOCKED);
 
 	if ((buf_state & BM_VALID) == 0)
@@ -6803,12 +6803,12 @@ EvictAllUnpinnedBuffers(int32 *buffers_evicted, int32 *buffers_flushed,
 	for (int buf = 1; buf <= NBuffers; buf++)
 	{
 		BufferDesc *desc = GetBufferDescriptor(buf - 1);
-		uint32		buf_state;
+		uint64		buf_state;
 		bool		buffer_flushed;
 
 		CHECK_FOR_INTERRUPTS();
 
-		buf_state = pg_atomic_read_u32(&desc->state);
+		buf_state = pg_atomic_read_u64(&desc->state);
 		if (!(buf_state & BM_VALID))
 			continue;
 
@@ -6855,7 +6855,7 @@ EvictRelUnpinnedBuffers(Relation rel, int32 *buffers_evicted,
 	for (int buf = 1; buf <= NBuffers; buf++)
 	{
 		BufferDesc *desc = GetBufferDescriptor(buf - 1);
-		uint32		buf_state = pg_atomic_read_u32(&(desc->state));
+		uint64		buf_state = pg_atomic_read_u64(&(desc->state));
 		bool		buffer_flushed;
 
 		CHECK_FOR_INTERRUPTS();
@@ -6897,12 +6897,12 @@ static bool
 MarkDirtyUnpinnedBufferInternal(Buffer buf, BufferDesc *desc,
 								bool *buffer_already_dirty)
 {
-	uint32		buf_state;
+	uint64		buf_state;
 	bool		result = false;
 
 	*buffer_already_dirty = false;
 
-	buf_state = pg_atomic_read_u32(&(desc->state));
+	buf_state = pg_atomic_read_u64(&(desc->state));
 	Assert(buf_state & BM_LOCKED);
 
 	if ((buf_state & BM_VALID) == 0)
@@ -7000,7 +7000,7 @@ MarkDirtyRelUnpinnedBuffers(Relation rel,
 	for (int buf = 1; buf <= NBuffers; buf++)
 	{
 		BufferDesc *desc = GetBufferDescriptor(buf - 1);
-		uint32		buf_state = pg_atomic_read_u32(&(desc->state));
+		uint64		buf_state = pg_atomic_read_u64(&(desc->state));
 		bool		buffer_already_dirty;
 
 		CHECK_FOR_INTERRUPTS();
@@ -7054,12 +7054,12 @@ MarkDirtyAllUnpinnedBuffers(int32 *buffers_dirtied,
 	for (int buf = 1; buf <= NBuffers; buf++)
 	{
 		BufferDesc *desc = GetBufferDescriptor(buf - 1);
-		uint32		buf_state;
+		uint64		buf_state;
 		bool		buffer_already_dirty;
 
 		CHECK_FOR_INTERRUPTS();
 
-		buf_state = pg_atomic_read_u32(&desc->state);
+		buf_state = pg_atomic_read_u64(&desc->state);
 		if (!(buf_state & BM_VALID))
 			continue;
 
@@ -7110,7 +7110,7 @@ buffer_stage_common(PgAioHandle *ioh, bool is_write, bool is_temp)
 		BufferDesc *buf_hdr = is_temp ?
 			GetLocalBufferDescriptor(-buffer - 1)
 			: GetBufferDescriptor(buffer - 1);
-		uint32		buf_state;
+		uint64		buf_state;
 
 		/*
 		 * Check that all the buffers are actually ones that could conceivably
@@ -7128,7 +7128,7 @@ buffer_stage_common(PgAioHandle *ioh, bool is_write, bool is_temp)
 		}
 
 		if (is_temp)
-			buf_state = pg_atomic_read_u32(&buf_hdr->state);
+			buf_state = pg_atomic_read_u64(&buf_hdr->state);
 		else
 			buf_state = LockBufHdr(buf_hdr);
 
@@ -7166,7 +7166,7 @@ buffer_stage_common(PgAioHandle *ioh, bool is_write, bool is_temp)
 		if (is_temp)
 		{
 			buf_state += BUF_REFCOUNT_ONE;
-			pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
+			pg_atomic_unlocked_write_u64(&buf_hdr->state, buf_state);
 		}
 		else
 			UnlockBufHdrExt(buf_hdr, buf_state, 0, 0, 1);
@@ -7352,13 +7352,13 @@ buffer_readv_complete_one(PgAioTargetData *td, uint8 buf_off, Buffer buffer,
 		: GetBufferDescriptor(buffer - 1);
 	BufferTag	tag = buf_hdr->tag;
 	char	   *bufdata = BufferGetBlock(buffer);
-	uint32		set_flag_bits;
+	uint64		set_flag_bits;
 	int			piv_flags;
 
 	/* check that the buffer is in the expected state for a read */
 #ifdef USE_ASSERT_CHECKING
 	{
-		uint32		buf_state = pg_atomic_read_u32(&buf_hdr->state);
+		uint64		buf_state = pg_atomic_read_u64(&buf_hdr->state);
 
 		Assert(buf_state & BM_TAG_VALID);
 		Assert(!(buf_state & BM_VALID));

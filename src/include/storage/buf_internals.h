@@ -30,7 +30,7 @@
 #include "utils/resowner.h"
 
 /*
- * Buffer state is a single 32-bit variable where following data is combined.
+ * Buffer state is a single 64-bit variable where following data is combined.
  *
  * State of the buffer itself (in order):
  * - 18 bits refcount
@@ -39,6 +39,9 @@
  *
  * Combining these values allows to perform some operations without locking
  * the buffer header, by modifying them together with a CAS loop.
+ *
+ * NB: A future commit will use a significant portion of the remaining bits to
+ * implement buffer locking as part of the state variable.
  *
  * The definition of buffer state components is below.
  */
@@ -52,27 +55,27 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
 /* refcount related definitions */
 #define BUF_REFCOUNT_ONE 1
 #define BUF_REFCOUNT_MASK \
-	((1U << BUF_REFCOUNT_BITS) - 1)
+	((UINT64CONST(1) << BUF_REFCOUNT_BITS) - 1)
 
 /* usage count related definitions */
 #define BUF_USAGECOUNT_SHIFT \
 	BUF_REFCOUNT_BITS
 #define BUF_USAGECOUNT_MASK \
-	(((1U << BUF_USAGECOUNT_BITS) - 1) << (BUF_USAGECOUNT_SHIFT))
+	(((UINT64CONST(1) << BUF_USAGECOUNT_BITS) - 1) << (BUF_USAGECOUNT_SHIFT))
 #define BUF_USAGECOUNT_ONE \
-	(1U << BUF_REFCOUNT_BITS)
+	(UINT64CONST(1) << BUF_REFCOUNT_BITS)
 
 /* flags related definitions */
 #define BUF_FLAG_SHIFT \
 	(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS)
 #define BUF_FLAG_MASK \
-	(((1U << BUF_FLAG_BITS) - 1) << BUF_FLAG_SHIFT)
+	(((UINT64CONST(1) << BUF_FLAG_BITS) - 1) << BUF_FLAG_SHIFT)
 
 /* Get refcount and usagecount from buffer state */
 #define BUF_STATE_GET_REFCOUNT(state) \
-	((state) & BUF_REFCOUNT_MASK)
+	((uint32)((state) & BUF_REFCOUNT_MASK))
 #define BUF_STATE_GET_USAGECOUNT(state) \
-	(((state) & BUF_USAGECOUNT_MASK) >> BUF_USAGECOUNT_SHIFT)
+	((uint32)(((state) & BUF_USAGECOUNT_MASK) >> BUF_USAGECOUNT_SHIFT))
 
 /*
  * Flags for buffer descriptors
@@ -82,7 +85,7 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
  */
 
 #define BUF_DEFINE_FLAG(flagno)	\
-	(1U << (BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + (flagno)))
+	(UINT64CONST(1) << (BUF_FLAG_SHIFT + (flagno)))
 
 /* buffer header is locked */
 #define BM_LOCKED					BUF_DEFINE_FLAG( 0)
@@ -115,7 +118,7 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
  */
 #define BM_MAX_USAGE_COUNT	5
 
-StaticAssertDecl(BM_MAX_USAGE_COUNT < (1 << BUF_USAGECOUNT_BITS),
+StaticAssertDecl(BM_MAX_USAGE_COUNT < (UINT64CONST(1) << BUF_USAGECOUNT_BITS),
 				 "BM_MAX_USAGE_COUNT doesn't fit in BUF_USAGECOUNT_BITS bits");
 StaticAssertDecl(MAX_BACKENDS_BITS <= BUF_REFCOUNT_BITS,
 				 "MAX_BACKENDS_BITS needs to be <= BUF_REFCOUNT_BITS");
@@ -280,8 +283,8 @@ BufMappingPartitionLockByIndex(uint32 index)
  * We use this same struct for local buffer headers, but the locks are not
  * used and not all of the flag bits are useful either. To avoid unnecessary
  * overhead, manipulations of the state field should be done without actual
- * atomic operations (i.e. only pg_atomic_read_u32() and
- * pg_atomic_unlocked_write_u32()).
+ * atomic operations (i.e. only pg_atomic_read_u64() and
+ * pg_atomic_unlocked_write_u64()).
  *
  * Be careful to avoid increasing the size of the struct when adding or
  * reordering members.  Keeping it below 64 bytes (the most common CPU
@@ -309,7 +312,7 @@ typedef struct BufferDesc
 	 * State of the buffer, containing flags, refcount and usagecount. See
 	 * BUF_* and BM_* defines at the top of this file.
 	 */
-	pg_atomic_uint32 state;
+	pg_atomic_uint64 state;
 
 	/*
 	 * Backend of pin-count waiter. The buffer header spinlock needs to be
@@ -415,7 +418,7 @@ BufferDescriptorGetContentLock(const BufferDesc *bdesc)
  * Functions for acquiring/releasing a shared buffer header's spinlock.  Do
  * not apply these to local buffers!
  */
-extern uint32 LockBufHdr(BufferDesc *desc);
+extern uint64 LockBufHdr(BufferDesc *desc);
 
 /*
  * Unlock the buffer header.
@@ -426,9 +429,9 @@ extern uint32 LockBufHdr(BufferDesc *desc);
 static inline void
 UnlockBufHdr(BufferDesc *desc)
 {
-	Assert(pg_atomic_read_u32(&desc->state) & BM_LOCKED);
+	Assert(pg_atomic_read_u64(&desc->state) & BM_LOCKED);
 
-	pg_atomic_fetch_sub_u32(&desc->state, BM_LOCKED);
+	pg_atomic_fetch_sub_u64(&desc->state, BM_LOCKED);
 }
 
 /*
@@ -439,14 +442,14 @@ UnlockBufHdr(BufferDesc *desc)
  * Note that this approach would not work for usagecount, since we need to cap
  * the usagecount at BM_MAX_USAGE_COUNT.
  */
-static inline uint32
-UnlockBufHdrExt(BufferDesc *desc, uint32 old_buf_state,
-				uint32 set_bits, uint32 unset_bits,
+static inline uint64
+UnlockBufHdrExt(BufferDesc *desc, uint64 old_buf_state,
+				uint64 set_bits, uint64 unset_bits,
 				int refcount_change)
 {
 	for (;;)
 	{
-		uint32		buf_state = old_buf_state;
+		uint64		buf_state = old_buf_state;
 
 		Assert(buf_state & BM_LOCKED);
 
@@ -457,7 +460,7 @@ UnlockBufHdrExt(BufferDesc *desc, uint32 old_buf_state,
 		if (refcount_change != 0)
 			buf_state += BUF_REFCOUNT_ONE * refcount_change;
 
-		if (pg_atomic_compare_exchange_u32(&desc->state, &old_buf_state,
+		if (pg_atomic_compare_exchange_u64(&desc->state, &old_buf_state,
 										   buf_state))
 		{
 			return old_buf_state;
@@ -465,7 +468,7 @@ UnlockBufHdrExt(BufferDesc *desc, uint32 old_buf_state,
 	}
 }
 
-extern uint32 WaitBufHdrUnlocked(BufferDesc *buf);
+extern uint64 WaitBufHdrUnlocked(BufferDesc *buf);
 
 /* in bufmgr.c */
 
@@ -525,14 +528,14 @@ extern void TrackNewBufferPin(Buffer buf);
 
 /* solely to make it easier to write tests */
 extern bool StartBufferIO(BufferDesc *buf, bool forInput, bool nowait);
-extern void TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits,
+extern void TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint64 set_flag_bits,
 							  bool forget_owner, bool release_aio);
 
 
 /* freelist.c */
 extern IOContext IOContextForStrategy(BufferAccessStrategy strategy);
 extern BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy,
-									 uint32 *buf_state, bool *from_ring);
+									 uint64 *buf_state, bool *from_ring);
 extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
 								 BufferDesc *buf, bool from_ring);
 
@@ -568,7 +571,7 @@ extern BlockNumber ExtendBufferedRelLocal(BufferManagerRelation bmr,
 										  uint32 *extended_by);
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty,
-								   uint32 set_flag_bits, bool release_aio);
+								   uint64 set_flag_bits, bool release_aio);
 extern bool StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool nowait);
 extern void FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln);
 extern void InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced);
