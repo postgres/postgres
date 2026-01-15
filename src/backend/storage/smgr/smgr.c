@@ -652,11 +652,20 @@ smgrtruncate2(SMgrRelation reln, ForkNumber *forknum, int nforks,
 		/*
 		 * We might as well update the local smgr_cached_nblocks values. The
 		 * smgr cache inval message that this function sent will cause other
-		 * backends to invalidate their copies of smgr_fsm_nblocks and
-		 * smgr_vm_nblocks, and these ones too at the next command boundary.
-		 * But these ensure they aren't outright wrong until then.
+		 * backends to invalidate their copies of smgr_cached_nblocks, and
+		 * these ones too at the next command boundary. But ensure they aren't
+		 * outright wrong until then.
+		 *
+		 * We can have nblocks > old_nblocks when a relation was truncated
+		 * multiple times, a replica applied all the truncations, and later
+		 * restarts from a restartpoint located before the truncations. The
+		 * relation on disk will be the size of the last truncate. When
+		 * replaying the first truncate, we will have nblocks > current size.
+		 * In such cases, smgr_truncate does nothing, so set the cached size
+		 * to the old size rather than the requested size.
 		 */
-		reln->smgr_cached_nblocks[forknum[i]] = nblocks[i];
+		reln->smgr_cached_nblocks[forknum[i]] =
+			nblocks[i] > old_nblocks[i] ? old_nblocks[i] : nblocks[i];
 	}
 }
 

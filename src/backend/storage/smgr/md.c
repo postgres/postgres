@@ -825,6 +825,9 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
  * functions for this relation or handled interrupts in between.  This makes
  * sure we have opened all active segments, so that truncate loop will get
  * them all!
+ *
+ * If nblocks > curnblk, the request is ignored when we are in InRecovery,
+ * otherwise, an error is raised.
  */
 void
 mdtruncate(SMgrRelation reln, ForkNumber forknum,
