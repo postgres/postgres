@@ -2650,6 +2650,23 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 		return;
 	}
 
+	/*
+	 * On crash, MultiXactIdCreateFromMembers() can leave behind multixids
+	 * that were not yet written out and hence have zero offset on disk. If
+	 * such a multixid becomes oldestMulti, we won't be able to look up its
+	 * offset. That should be rare, so we don't try to do anything smart about
+	 * it. Just skip the truncation, and hope that by the next truncation
+	 * attempt, oldestMulti has advanced to a valid multixid.
+	 */
+	if (newOldestOffset == 0)
+	{
+		ereport(LOG,
+				(errmsg("cannot truncate up to MultiXact %u because it has invalid offset, skipping truncation",
+						newOldestMulti)));
+		LWLockRelease(MultiXactTruncationLock);
+		return;
+	}
+
 	elog(DEBUG1, "performing multixact truncation: "
 		 "oldestMulti %u (offsets segment %" PRIx64 "), "
 		 "oldestOffset %" PRIu64 " (members segment %" PRIx64 ")",
