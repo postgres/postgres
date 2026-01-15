@@ -559,13 +559,14 @@ pgaio_uring_drain_locked(PgAioUringContext *context)
 		for (int i = 0; i < ncqes; i++)
 		{
 			struct io_uring_cqe *cqe = cqes[i];
-			PgAioHandle *ioh;
+			PgAioHandle *ioh = io_uring_cqe_get_data(cqe);
+			int result = cqe->res;
 
-			ioh = io_uring_cqe_get_data(cqe);
 			errcallback.arg = ioh;
+
 			io_uring_cqe_seen(&context->io_uring_ring, cqe);
 
-			pgaio_io_process_completion(ioh, cqe->res);
+			pgaio_io_process_completion(ioh, result);
 			errcallback.arg = NULL;
 		}
 
