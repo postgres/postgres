@@ -151,8 +151,6 @@ PLy_init_plpy(void)
 	PLy_subtransaction_init_type();
 	PLy_cursor_init_type();
 
-	PyModule_Create(&PLy_module);
-
 	/*
 	 * initialize main module, and add plpy
 	 */
