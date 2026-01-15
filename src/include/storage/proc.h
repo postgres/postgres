@@ -242,7 +242,13 @@ struct PGPROC
 	 */
 	bool		recoveryConflictPending;
 
-	/* Info about LWLock the process is currently waiting for, if any. */
+	/*
+	 * Info about LWLock the process is currently waiting for, if any.
+	 *
+	 * This is currently used both for lwlocks and buffer content locks, which
+	 * is acceptable, although not pretty, because a backend can't wait for
+	 * both types of locks at the same time.
+	 */
 	uint8		lwWaiting;		/* see LWLockWaitState */
 	uint8		lwWaitMode;		/* lwlock mode being waited for */
 	proclist_node lwWaitLink;	/* position in LW lock wait list */

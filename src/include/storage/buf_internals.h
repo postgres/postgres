@@ -23,6 +23,7 @@
 #include "storage/condition_variable.h"
 #include "storage/lwlock.h"
 #include "storage/procnumber.h"
+#include "storage/proclist_types.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
@@ -35,22 +36,23 @@
  * State of the buffer itself (in order):
  * - 18 bits refcount
  * - 4 bits usage count
- * - 10 bits of flags
+ * - 12 bits of flags
+ * - 18 bits share-lock count
+ * - 1 bit share-exclusive locked
+ * - 1 bit exclusive locked
  *
  * Combining these values allows to perform some operations without locking
  * the buffer header, by modifying them together with a CAS loop.
- *
- * NB: A future commit will use a significant portion of the remaining bits to
- * implement buffer locking as part of the state variable.
  *
  * The definition of buffer state components is below.
  */
 #define BUF_REFCOUNT_BITS 18
 #define BUF_USAGECOUNT_BITS 4
-#define BUF_FLAG_BITS 10
+#define BUF_FLAG_BITS 12
+#define BUF_LOCK_BITS (18+2)
 
-StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
-				 "parts of buffer state space need to equal 32");
+StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS + BUF_LOCK_BITS <= 64,
+				 "parts of buffer state space need to be <= 64");
 
 /* refcount related definitions */
 #define BUF_REFCOUNT_ONE 1
@@ -70,6 +72,19 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
 	(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS)
 #define BUF_FLAG_MASK \
 	(((UINT64CONST(1) << BUF_FLAG_BITS) - 1) << BUF_FLAG_SHIFT)
+
+/* lock state related definitions */
+#define BM_LOCK_SHIFT \
+	(BUF_FLAG_SHIFT + BUF_FLAG_BITS)
+#define BM_LOCK_VAL_SHARED \
+	(UINT64CONST(1) << (BM_LOCK_SHIFT))
+#define BM_LOCK_VAL_SHARE_EXCLUSIVE \
+	(UINT64CONST(1) << (BM_LOCK_SHIFT + MAX_BACKENDS_BITS))
+#define BM_LOCK_VAL_EXCLUSIVE \
+	(UINT64CONST(1) << (BM_LOCK_SHIFT + MAX_BACKENDS_BITS + 1))
+#define BM_LOCK_MASK \
+	((((uint64) MAX_BACKENDS) << BM_LOCK_SHIFT) | BM_LOCK_VAL_SHARE_EXCLUSIVE | BM_LOCK_VAL_EXCLUSIVE)
+
 
 /* Get refcount and usagecount from buffer state */
 #define BUF_STATE_GET_REFCOUNT(state) \
@@ -107,6 +122,17 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
 #define BM_CHECKPOINT_NEEDED		BUF_DEFINE_FLAG( 8)
 /* permanent buffer (not unlogged, or init fork) */
 #define BM_PERMANENT				BUF_DEFINE_FLAG( 9)
+/* content lock has waiters */
+#define BM_LOCK_HAS_WAITERS			BUF_DEFINE_FLAG(10)
+/* waiter for content lock has been signalled but not yet run */
+#define BM_LOCK_WAKE_IN_PROGRESS	BUF_DEFINE_FLAG(11)
+
+
+StaticAssertDecl(MAX_BACKENDS_BITS <= BUF_REFCOUNT_BITS,
+				 "MAX_BACKENDS_BITS needs to be <= BUF_REFCOUNT_BITS");
+StaticAssertDecl(MAX_BACKENDS_BITS <= (BUF_LOCK_BITS - 2),
+				 "MAX_BACKENDS_BITS needs to be <= BUF_LOCK_BITS - 2");
+
 
 /*
  * The maximum allowed value of usage_count represents a tradeoff between
@@ -120,8 +146,6 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
 
 StaticAssertDecl(BM_MAX_USAGE_COUNT < (UINT64CONST(1) << BUF_USAGECOUNT_BITS),
 				 "BM_MAX_USAGE_COUNT doesn't fit in BUF_USAGECOUNT_BITS bits");
-StaticAssertDecl(MAX_BACKENDS_BITS <= BUF_REFCOUNT_BITS,
-				 "MAX_BACKENDS_BITS needs to be <= BUF_REFCOUNT_BITS");
 
 /*
  * Buffer tag identifies which disk block the buffer contains.
@@ -265,9 +289,6 @@ BufMappingPartitionLockByIndex(uint32 index)
  * it is held.  However, existing buffer pins may be released while the buffer
  * header spinlock is held, using an atomic subtraction.
  *
- * The LWLock can take care of itself.  The buffer header lock is *not* used
- * to control access to the data in the buffer!
- *
  * If we have the buffer pinned, its tag can't change underneath us, so we can
  * examine the tag without locking the buffer header.  Also, in places we do
  * one-time reads of the flags without bothering to lock the buffer header;
@@ -279,6 +300,15 @@ BufMappingPartitionLockByIndex(uint32 index)
  * to go away.  This is signaled by storing its own pgprocno into
  * wait_backend_pgprocno and setting flag bit BM_PIN_COUNT_WAITER.  At present,
  * there can be only one such waiter per buffer.
+ *
+ * The content of buffers is protected via the buffer content lock,
+ * implemented as part of the buffer state. Note that the buffer header lock
+ * is *not* used to control access to the data in the buffer! We used to use
+ * an LWLock to implement the content lock, but having a dedicated
+ * implementation of content locks allows us to implement some otherwise hard
+ * things (e.g. race-freely checking if AIO is in progress before locking a
+ * buffer exclusively) and enables otherwise impossible optimizations
+ * (e.g. unlocking and unpinning a buffer in one atomic operation).
  *
  * We use this same struct for local buffer headers, but the locks are not
  * used and not all of the flag bits are useful either. To avoid unnecessary
@@ -321,7 +351,12 @@ typedef struct BufferDesc
 	int			wait_backend_pgprocno;
 
 	PgAioWaitRef io_wref;		/* set iff AIO is in progress */
-	LWLock		content_lock;	/* to lock access to buffer contents */
+
+	/*
+	 * List of PGPROCs waiting for the buffer content lock. Protected by the
+	 * buffer header spinlock.
+	 */
+	proclist_head lock_waiters;
 } BufferDesc;
 
 /*
@@ -408,12 +443,6 @@ BufferDescriptorGetIOCV(const BufferDesc *bdesc)
 	return &(BufferIOCVArray[bdesc->buf_id]).cv;
 }
 
-static inline LWLock *
-BufferDescriptorGetContentLock(const BufferDesc *bdesc)
-{
-	return (LWLock *) (&bdesc->content_lock);
-}
-
 /*
  * Functions for acquiring/releasing a shared buffer header's spinlock.  Do
  * not apply these to local buffers!
@@ -491,18 +520,18 @@ extern PGDLLIMPORT CkptSortItem *CkptBufferIds;
 
 /* ResourceOwner callbacks to hold buffer I/Os and pins */
 extern PGDLLIMPORT const ResourceOwnerDesc buffer_io_resowner_desc;
-extern PGDLLIMPORT const ResourceOwnerDesc buffer_pin_resowner_desc;
+extern PGDLLIMPORT const ResourceOwnerDesc buffer_resowner_desc;
 
 /* Convenience wrappers over ResourceOwnerRemember/Forget */
 static inline void
 ResourceOwnerRememberBuffer(ResourceOwner owner, Buffer buffer)
 {
-	ResourceOwnerRemember(owner, Int32GetDatum(buffer), &buffer_pin_resowner_desc);
+	ResourceOwnerRemember(owner, Int32GetDatum(buffer), &buffer_resowner_desc);
 }
 static inline void
 ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
 {
-	ResourceOwnerForget(owner, Int32GetDatum(buffer), &buffer_pin_resowner_desc);
+	ResourceOwnerForget(owner, Int32GetDatum(buffer), &buffer_resowner_desc);
 }
 static inline void
 ResourceOwnerRememberBufferIO(ResourceOwner owner, Buffer buffer)

@@ -17,6 +17,7 @@
 #include "storage/aio.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
+#include "storage/proclist.h"
 
 BufferDescPadded *BufferDescriptors;
 char	   *BufferBlocks;
@@ -128,9 +129,7 @@ BufferManagerShmemInit(void)
 
 			pgaio_wref_clear(&buf->io_wref);
 
-			LWLockInitialize(BufferDescriptorGetContentLock(buf),
-							 LWTRANCHE_BUFFER_CONTENT);
-
+			proclist_init(&buf->lock_waiters);
 			ConditionVariableInit(BufferDescriptorGetIOCV(buf));
 		}
 	}

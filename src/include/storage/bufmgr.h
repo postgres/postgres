@@ -203,7 +203,20 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 typedef enum BufferLockMode
 {
 	BUFFER_LOCK_UNLOCK,
+
+	/*
+	 * A share lock conflicts with exclusive locks.
+	 */
 	BUFFER_LOCK_SHARE,
+
+	/*
+	 * A share-exclusive lock conflicts with itself and exclusive locks.
+	 */
+	BUFFER_LOCK_SHARE_EXCLUSIVE,
+
+	/*
+	 * An exclusive lock conflicts with every other lock type.
+	 */
 	BUFFER_LOCK_EXCLUSIVE,
 } BufferLockMode;
 
@@ -302,7 +315,24 @@ extern void BufferGetTag(Buffer buffer, RelFileLocator *rlocator,
 extern void MarkBufferDirtyHint(Buffer buffer, bool buffer_std);
 
 extern void UnlockBuffers(void);
-extern void LockBuffer(Buffer buffer, BufferLockMode mode);
+extern void UnlockBuffer(Buffer buffer);
+extern void LockBufferInternal(Buffer buffer, BufferLockMode mode);
+
+/*
+ * Handling BUFFER_LOCK_UNLOCK in bufmgr.c leads to sufficiently worse branch
+ * prediction to impact performance. Therefore handle that switch here, where
+ * most of the time `mode` will be a constant and thus can be optimized out by
+ * the compiler.
+ */
+static inline void
+LockBuffer(Buffer buffer, BufferLockMode mode)
+{
+	if (mode == BUFFER_LOCK_UNLOCK)
+		UnlockBuffer(buffer);
+	else
+		LockBufferInternal(buffer, mode);
+}
+
 extern bool ConditionalLockBuffer(Buffer buffer);
 extern void LockBufferForCleanup(Buffer buffer);
 extern bool ConditionalLockBufferForCleanup(Buffer buffer);
