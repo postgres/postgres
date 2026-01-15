@@ -2665,6 +2665,14 @@ CleanupBackend(PMChild *bp,
 		BackgroundWorkerStopNotifications(bp_pid);
 
 	/*
+	 * If it was an autovacuum worker, wake up the launcher so that it can
+	 * immediately launch a new worker or rebalance to cost limit setting of
+	 * the remaining workers.
+	 */
+	if (bp_bkend_type == B_AUTOVAC_WORKER && AutoVacLauncherPMChild != NULL)
+		signal_child(AutoVacLauncherPMChild, SIGUSR2);
+
+	/*
 	 * If it was a background worker, also update its RegisteredBgWorker
 	 * entry.
 	 */
