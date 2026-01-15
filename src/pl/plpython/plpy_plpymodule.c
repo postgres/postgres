@@ -153,8 +153,6 @@ PLy_init_plpy(void)
 
 	PyModule_Create(&PLy_module);
 
-	/* PyDict_SetItemString(plpy, "PlanType", (PyObject *) &PLy_PlanType); */
-
 	/*
 	 * initialize main module, and add plpy
 	 */
