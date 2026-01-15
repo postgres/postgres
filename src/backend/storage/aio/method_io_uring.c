@@ -560,7 +560,7 @@ pgaio_uring_drain_locked(PgAioUringContext *context)
 		{
 			struct io_uring_cqe *cqe = cqes[i];
 			PgAioHandle *ioh = io_uring_cqe_get_data(cqe);
-			int result = cqe->res;
+			int			result = cqe->res;
 
 			errcallback.arg = ioh;
 
