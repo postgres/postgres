@@ -133,35 +133,12 @@ PyInit_plpy(void)
 
 	PLy_add_exceptions(m);
 
-	return m;
-}
-
-void
-PLy_init_plpy(void)
-{
-	PyObject   *main_mod,
-			   *main_dict,
-			   *plpy_mod;
-
-	/*
-	 * initialize plpy module
-	 */
 	PLy_plan_init_type();
 	PLy_result_init_type();
 	PLy_subtransaction_init_type();
 	PLy_cursor_init_type();
 
-	/*
-	 * initialize main module, and add plpy
-	 */
-	main_mod = PyImport_AddModule("__main__");
-	main_dict = PyModule_GetDict(main_mod);
-	plpy_mod = PyImport_AddModule("plpy");
-	if (plpy_mod == NULL)
-		PLy_elog(ERROR, "could not import \"plpy\" module");
-	PyDict_SetItemString(main_dict, "plpy", plpy_mod);
-	if (PyErr_Occurred())
-		PLy_elog(ERROR, "could not import \"plpy\" module");
+	return m;
 }
 
 static void

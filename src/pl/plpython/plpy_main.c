@@ -39,11 +39,9 @@ PG_FUNCTION_INFO_V1(plpython3_call_handler);
 PG_FUNCTION_INFO_V1(plpython3_inline_handler);
 
 
-static void PLy_initialize(void);
 static PLyTrigType PLy_procedure_is_trigger(Form_pg_proc procStruct);
 static void plpython_error_callback(void *arg);
 static void plpython_inline_error_callback(void *arg);
-static void PLy_init_interp(void);
 
 static PLyExecutionContext *PLy_push_execution_context(bool atomic_context);
 static void PLy_pop_execution_context(void);
@@ -58,54 +56,58 @@ static PLyExecutionContext *PLy_execution_contexts = NULL;
 void
 _PG_init(void)
 {
+	PyObject   *main_mod;
+	PyObject   *main_dict;
+	PyObject   *GD;
+	PyObject   *plpy_mod;
+
 	pg_bindtextdomain(TEXTDOMAIN);
 
-	PLy_initialize();
-}
-
-/*
- * Perform one-time setup of PL/Python.
- */
-static void
-PLy_initialize(void)
-{
+	/* Add plpy to table of built-in modules. */
 	PyImport_AppendInittab("plpy", PyInit_plpy);
+
+	/* Initialize Python interpreter. */
 	Py_Initialize();
-	PyImport_ImportModule("plpy");
-	PLy_init_interp();
-	PLy_init_plpy();
+
+	main_mod = PyImport_AddModule("__main__");
+	if (main_mod == NULL || PyErr_Occurred())
+		PLy_elog(ERROR, "could not import \"%s\" module", "__main__");
+	Py_INCREF(main_mod);
+
+	main_dict = PyModule_GetDict(main_mod);
+	if (main_dict == NULL)
+		PLy_elog(ERROR, NULL);
+
+	/*
+	 * Set up GD.
+	 */
+	GD = PyDict_New();
+	if (GD == NULL)
+		PLy_elog(ERROR, NULL);
+	PyDict_SetItemString(main_dict, "GD", GD);
+
+	/*
+	 * Import plpy.
+	 */
+	plpy_mod = PyImport_ImportModule("plpy");
+	if (plpy_mod == NULL)
+		PLy_elog(ERROR, "could not import \"%s\" module", "plpy");
+	if (PyDict_SetItemString(main_dict, "plpy", plpy_mod) == -1)
+		PLy_elog(ERROR, NULL);
+
 	if (PyErr_Occurred())
 		PLy_elog(FATAL, "untrapped error in initialization");
+
+	Py_INCREF(main_dict);
+	PLy_interp_globals = main_dict;
+
+	Py_DECREF(main_mod);
 
 	init_procedure_caches();
 
 	explicit_subtransactions = NIL;
 
 	PLy_execution_contexts = NULL;
-}
-
-/*
- * This should be called only once, from PLy_initialize. Initialize the Python
- * interpreter and global data.
- */
-static void
-PLy_init_interp(void)
-{
-	static PyObject *PLy_interp_safe_globals = NULL;
-	PyObject   *mainmod;
-
-	mainmod = PyImport_AddModule("__main__");
-	if (mainmod == NULL || PyErr_Occurred())
-		PLy_elog(ERROR, "could not import \"__main__\" module");
-	Py_INCREF(mainmod);
-	PLy_interp_globals = PyModule_GetDict(mainmod);
-	PLy_interp_safe_globals = PyDict_New();
-	if (PLy_interp_safe_globals == NULL)
-		PLy_elog(ERROR, NULL);
-	PyDict_SetItemString(PLy_interp_globals, "GD", PLy_interp_safe_globals);
-	Py_DECREF(mainmod);
-	if (PLy_interp_globals == NULL || PyErr_Occurred())
-		PLy_elog(ERROR, "could not initialize globals");
 }
 
 Datum
