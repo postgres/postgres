@@ -2165,6 +2165,35 @@ SELECT pg_restore_attribute_stats(
         </para>
        </entry>
       </row>
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_clear_extended_stats</primary>
+         </indexterm>
+         <function>pg_clear_extended_stats</function> (
+         <parameter>schemaname</parameter> <type>name</type>,
+         <parameter>relname</parameter> <type>name</type>,
+         <parameter>statistics_schemaname</parameter> <type>name</type>,
+         <parameter>statistics_name</parameter> <type>name</type>,
+         <parameter>inherited</parameter> <type>boolean</type> )
+         <returnvalue>void</returnvalue>
+        </para>
+        <para>
+         Clears data of an extended statistics object, as though the object
+         was newly-created. The required arguments are
+         <literal>schemaname</literal> and <literal>relname</literal> to
+         specify the schema and table name of the relation whose statistics
+         are cleared, as well as <literal>statistics_schemaname</literal>
+         and <literal>statistics_name</literal> to specify the schema and
+         extended statistics name of the extended statistics object to clear.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on
+         the table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

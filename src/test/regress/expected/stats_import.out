@@ -132,8 +132,36 @@ CREATE TABLE stats_import.part_child_1
   PARTITION OF stats_import.part_parent
   FOR VALUES FROM (0) TO (10)
   WITH (autovacuum_enabled = false);
+-- This ensures the presence of extended statistics marked with
+-- inherited = true.
+CREATE STATISTICS stats_import.part_parent_stat
+  ON i, (i % 2)
+  FROM stats_import.part_parent;
 CREATE INDEX part_parent_i ON stats_import.part_parent(i);
+INSERT INTO stats_import.part_parent
+SELECT g.g
+FROM generate_series(0,9) AS g(g);
+SELECT COUNT(*) FROM stats_import.part_parent;
+ count 
+-------
+    10
+(1 row)
+
+SELECT COUNT(*) FROM stats_import.part_child_1;
+ count 
+-------
+    10
+(1 row)
+
 ANALYZE stats_import.part_parent;
+SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'part_parent_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+     1 | t
+(1 row)
+
 SELECT relpages
 FROM pg_class
 WHERE oid = 'stats_import.part_parent'::regclass;
@@ -1084,11 +1112,17 @@ SELECT 3, 'tre', (3, 3.3, 'TRE', '2003-03-03', NULL)::stats_import.complex_type,
 UNION ALL
 SELECT 4, 'four', NULL, int4range(0,100), NULL;
 CREATE INDEX is_odd ON stats_import.test(((comp).a % 2 = 1));
+CREATE STATISTICS stats_import.test_stat
+  ON name, comp, lower(arange), array_length(tags,1)
+  FROM stats_import.test;
 -- Generate statistics on table with data
 ANALYZE stats_import.test;
 CREATE TABLE stats_import.test_clone ( LIKE stats_import.test )
     WITH (autovacuum_enabled = false);
 CREATE INDEX is_odd_clone ON stats_import.test_clone(((comp).a % 2 = 1));
+CREATE STATISTICS stats_import.test_stat_clone
+  ON name, comp, lower(arange), array_length(tags,1)
+  FROM stats_import.test_clone;
 --
 -- Copy stats from test to test_clone, and is_odd to is_odd_clone
 --
@@ -1342,6 +1376,182 @@ AND attname = 'i';
 (1 row)
 
 DROP TABLE stats_temp;
+-- Tests for pg_clear_extended_stats().
+--  Invalid argument values.
+SELECT pg_clear_extended_stats(schemaname => NULL,
+  relname => 'rel_foo',
+  statistics_schemaname => 'schema_foo',
+  statistics_name => 'stat_bar',
+  inherited => false);
+ERROR:  argument "schemaname" must not be null
+SELECT pg_clear_extended_stats(schemaname => 'schema_foo',
+  relname => NULL,
+  statistics_schemaname => 'schema_foo',
+  statistics_name => 'stat_bar',
+  inherited => false);
+ERROR:  argument "relname" must not be null
+SELECT pg_clear_extended_stats(schemaname => 'schema_foo',
+  relname => 'rel_foo',
+  statistics_schemaname => NULL,
+  statistics_name => 'stat_bar',
+  inherited => false);
+ERROR:  argument "statistics_schemaname" must not be null
+SELECT pg_clear_extended_stats(schemaname => 'schema_foo',
+  relname => 'rel_foo',
+  statistics_schemaname => 'schema_foo',
+  statistics_name => NULL,
+  inherited => false);
+ERROR:  argument "statistics_name" must not be null
+SELECT pg_clear_extended_stats(schemaname => 'schema_foo',
+  relname => 'rel_foo',
+  statistics_schemaname => 'schema_foo',
+  statistics_name => 'stat_bar',
+  inherited => NULL);
+ERROR:  argument "inherited" must not be null
+-- Missing objects
+SELECT pg_clear_extended_stats(schemaname => 'schema_not_exist',
+  relname => 'test',
+  statistics_schemaname => 'schema_not_exist',
+  statistics_name => 'test_stat',
+  inherited => false);
+ERROR:  schema "schema_not_exist" does not exist
+SELECT pg_clear_extended_stats(schemaname => 'stats_import',
+  relname => 'table_not_exist',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'test_stat',
+  inherited => false);
+ERROR:  relation "stats_import.table_not_exist" does not exist
+SELECT pg_clear_extended_stats(schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'schema_not_exist',
+  statistics_name => 'test_stat',
+  inherited => false);
+WARNING:  could not find schema "schema_not_exist"
+ pg_clear_extended_stats 
+-------------------------
+ 
+(1 row)
+
+SELECT pg_clear_extended_stats(schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'ext_stats_not_exist',
+  inherited => false);
+WARNING:  could not find extended statistics object "stats_import"."ext_stats_not_exist"
+ pg_clear_extended_stats 
+-------------------------
+ 
+(1 row)
+
+-- Check that records are removed after a valid clear call.
+SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'test_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+     1 | f
+(1 row)
+
+SELECT COUNT(*), e.inherited FROM pg_stats_ext_exprs AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'test_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+     2 | f
+(1 row)
+
+BEGIN;
+SELECT pg_catalog.pg_clear_extended_stats(
+  schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'test_stat',
+  inherited => false);
+ pg_clear_extended_stats 
+-------------------------
+ 
+(1 row)
+
+SELECT mode FROM pg_locks WHERE locktype = 'relation' AND
+  relation = 'stats_import.test'::regclass AND
+  pid = pg_backend_pid();
+           mode           
+--------------------------
+ ShareUpdateExclusiveLock
+(1 row)
+
+COMMIT;
+SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'test_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+(0 rows)
+
+SELECT COUNT(*), e.inherited FROM pg_stats_ext_exprs AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'test_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+     2 | 
+(1 row)
+
+-- And before/after on inherited stats
+SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'part_parent_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+     1 | t
+(1 row)
+
+SELECT pg_catalog.pg_clear_extended_stats(
+  schemaname => 'stats_import',
+  relname => 'part_parent',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'part_parent_stat',
+  inherited => true);
+ pg_clear_extended_stats 
+-------------------------
+ 
+(1 row)
+
+SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e
+  WHERE e.statistics_schemaname = 'stats_import' AND
+  e.statistics_name = 'part_parent_stat' GROUP BY e.inherited;
+ count | inherited 
+-------+-----------
+(0 rows)
+
+-- Check that MAINTAIN is required when clearing statistics.
+CREATE ROLE regress_test_extstat_clear;
+GRANT ALL ON SCHEMA stats_import TO regress_test_extstat_clear;
+SET ROLE regress_test_extstat_clear;
+SELECT pg_catalog.pg_clear_extended_stats(
+  schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'test_stat',
+  inherited => false);
+ERROR:  permission denied for table test
+RESET ROLE;
+GRANT MAINTAIN ON stats_import.test TO regress_test_extstat_clear;
+SET ROLE regress_test_extstat_clear;
+SELECT pg_catalog.pg_clear_extended_stats(
+  schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'test_stat',
+  inherited => false);
+ pg_clear_extended_stats 
+-------------------------
+ 
+(1 row)
+
+RESET ROLE;
+REVOKE MAINTAIN ON stats_import.test FROM regress_test_extstat_clear;
+REVOKE ALL ON SCHEMA stats_import FROM regress_test_extstat_clear;
+DROP ROLE regress_test_extstat_clear;
 DROP SCHEMA stats_import CASCADE;
 NOTICE:  drop cascades to 6 other objects
 DETAIL:  drop cascades to type stats_import.complex_type
