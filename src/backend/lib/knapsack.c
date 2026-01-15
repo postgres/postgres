@@ -24,7 +24,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
 #include <limits.h>
 
 #include "lib/knapsack.h"

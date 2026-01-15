@@ -23,7 +23,6 @@
 
 #include <float.h>
 #include <limits.h>
-#include <math.h>
 
 #include "optimizer/geqo.h"
 #include "optimizer/joininfo.h"

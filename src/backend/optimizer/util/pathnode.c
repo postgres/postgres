@@ -14,8 +14,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/htup_details.h"
 #include "executor/nodeSetOp.h"
 #include "foreign/fdwapi.h"

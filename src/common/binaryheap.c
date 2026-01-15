@@ -17,8 +17,6 @@
 #include "postgres.h"
 #endif
 
-#include <math.h>
-
 #ifdef FRONTEND
 #include "common/logging.h"
 #endif

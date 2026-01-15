@@ -47,7 +47,6 @@
 #include "postgres.h"
 
 #include <float.h>
-#include <math.h>
 
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"

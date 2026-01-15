@@ -17,7 +17,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
 #include <limits.h>
 
 #include "access/sysattr.h"

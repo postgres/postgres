@@ -3,8 +3,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "_int.h"
 #include "access/gist.h"
 #include "access/reloptions.h"

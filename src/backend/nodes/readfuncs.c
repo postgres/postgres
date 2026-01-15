@@ -26,8 +26,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
 #include "nodes/readfuncs.h"

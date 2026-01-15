@@ -7,8 +7,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/gist.h"
 #include "access/reloptions.h"
 #include "access/stratnum.h"

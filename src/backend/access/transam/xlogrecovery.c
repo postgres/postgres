@@ -25,7 +25,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <math.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/time.h>

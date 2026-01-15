@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
 #include <limits.h>
 #include <ctype.h>
 

@@ -35,8 +35,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/visibilitymap.h"

@@ -20,7 +20,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <math.h>
 
 #include "catalog/namespace.h"
 #include "commands/defrem.h"

@@ -16,8 +16,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "foreign/fdwapi.h"

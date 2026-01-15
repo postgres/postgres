@@ -14,8 +14,6 @@
 #ifndef DATE_H
 #define DATE_H
 
-#include <math.h>
-
 #include "datatype/timestamp.h"
 #include "fmgr.h"
 #include "pgtime.h"

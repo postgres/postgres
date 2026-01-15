@@ -25,7 +25,6 @@
 
 #include <float.h>
 #include <limits.h>
-#include <math.h>
 
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_pool.h"

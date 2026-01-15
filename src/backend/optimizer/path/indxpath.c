@@ -15,8 +15,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/stratnum.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
