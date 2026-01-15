@@ -580,6 +580,82 @@ statext_dependencies_deserialize(bytea *data)
 }
 
 /*
+ * Free allocations of a MVDependencies.
+ */
+void
+statext_dependencies_free(MVDependencies *dependencies)
+{
+	for (int i = 0; i < dependencies->ndeps; i++)
+		pfree(dependencies->deps[i]);
+	pfree(dependencies);
+}
+
+/*
+ * Validate a set of MVDependencies against the extended statistics object
+ * definition.
+ *
+ * Every MVDependencies must be checked to ensure that the attnums in the
+ * attributes list correspond to attnums/expressions defined by the
+ * extended statistics object.
+ *
+ * Positive attnums are attributes which must be found in the stxkeys, while
+ * negative attnums correspond to an expression number, no attribute number
+ * can be below (0 - numexprs).
+ */
+bool
+statext_dependencies_validate(const MVDependencies *dependencies,
+							  const int2vector *stxkeys,
+							  int numexprs, int elevel)
+{
+	int			attnum_expr_lowbound = 0 - numexprs;
+
+	/* Scan through each dependency entry */
+	for (int i = 0; i < dependencies->ndeps; i++)
+	{
+		const MVDependency *dep = dependencies->deps[i];
+
+		/*
+		 * Cross-check each attribute in a dependency entry with the extended
+		 * stats object definition.
+		 */
+		for (int j = 0; j < dep->nattributes; j++)
+		{
+			AttrNumber	attnum = dep->attributes[j];
+			bool		ok = false;
+
+			if (attnum > 0)
+			{
+				/* attribute number in stxkeys */
+				for (int k = 0; k < stxkeys->dim1; k++)
+				{
+					if (attnum == stxkeys->values[k])
+					{
+						ok = true;
+						break;
+					}
+				}
+			}
+			else if ((attnum < 0) && (attnum >= attnum_expr_lowbound))
+			{
+				/* attribute number for an expression */
+				ok = true;
+			}
+
+			if (!ok)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("could not validate \"%s\" object: invalid attribute number %d found",
+								"pg_dependencies", attnum)));
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+/*
  * dependency_is_fully_matched
  *		checks that a functional dependency is fully matched given clauses on
  *		attributes (assuming the clauses are suitable equality clauses)
