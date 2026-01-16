@@ -191,6 +191,13 @@ OutputFsync(TimestampTz now)
 
 	output_fsync_lsn = output_written_lsn;
 
+	/*
+	 * Save the last flushed position as the replication start point. On
+	 * reconnect, replication resumes from there to avoid re-sending flushed
+	 * data.
+	 */
+	startpos = output_fsync_lsn;
+
 	if (fsync_interval <= 0)
 		return true;
 
@@ -222,8 +229,6 @@ StreamLogicalLog(void)
 	PQExpBuffer query;
 	XLogRecPtr	cur_record_lsn;
 
-	output_written_lsn = InvalidXLogRecPtr;
-	output_fsync_lsn = InvalidXLogRecPtr;
 	cur_record_lsn = InvalidXLogRecPtr;
 
 	/*
@@ -1025,8 +1030,18 @@ main(int argc, char **argv)
 			 */
 			exit(0);
 		}
-		else if (noloop)
+
+		/*
+		 * Ensure all written data is flushed to disk before exiting or
+		 * starting a new replication.
+		 */
+		if (outfd != -1)
+			OutputFsync(feGetCurrentTimestamp());
+
+		if (noloop)
+		{
 			pg_fatal("disconnected");
+		}
 		else
 		{
 			/* translator: check source for value for %d */
