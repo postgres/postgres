@@ -1946,6 +1946,10 @@ LWLockReleaseClearVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 val)
  * unchanged by this operation.  This is necessary since InterruptHoldoffCount
  * has been set to an appropriate level earlier in error recovery. We could
  * decrement it below zero if we allow it to drop for each released lock!
+ *
+ * Note that this function must be safe to call even before the LWLock
+ * subsystem has been initialized (e.g., during early startup failures).
+ * In that case, num_held_lwlocks will be 0 and we do nothing.
  */
 void
 LWLockReleaseAll(void)
@@ -1956,6 +1960,8 @@ LWLockReleaseAll(void)
 
 		LWLockRelease(held_lwlocks[num_held_lwlocks - 1].lock);
 	}
+
+	Assert(num_held_lwlocks == 0);
 }
 
 
