@@ -13,6 +13,28 @@ set client_min_messages TO 'warning';
 create extension if not exists injection_points;
 create extension if not exists amcheck;
 reset client_min_messages;
+-- Wait until all recently-dead tuples on a table become fully dead
+-- and removable by vacuum. (We don't run any concurrent transactions
+-- in the test itself, but auto-analyze can kick in at any time and
+-- hold a transaction open, holding back the vacuum horizon.)
+CREATE PROCEDURE wait_prunable() LANGUAGE plpgsql AS $$
+	DECLARE
+		barrier xid8;
+		cutoff xid8;
+	BEGIN
+		barrier := pg_current_xact_id();
+		-- Pass a shared catalog rather than the table we'll
+		-- prune, to prevent the cutoff from moving
+		-- backwards. See comments at removable_cutoff()
+		LOOP
+			ROLLBACK;  -- release MyProc->xmin, which could be the oldest
+			cutoff := removable_cutoff('pg_database');
+			EXIT WHEN cutoff >= barrier;
+			RAISE LOG 'removable cutoff %; waiting for %', cutoff, barrier;
+			PERFORM pg_sleep(.1);
+		END LOOP;
+	END
+$$;
 -- Make all injection points local to this process, for concurrency.
 SELECT injection_points_set_local();
  injection_points_set_local 
@@ -34,6 +56,7 @@ insert into nbtree_half_dead_pages SELECT g from generate_series(1, 150000) g;
 create index nbtree_half_dead_pages_id_idx on nbtree_half_dead_pages using btree (id);
 delete from nbtree_half_dead_pages where id > 100000 and id < 120000;
 -- Run VACUUM and interrupt it so that it leaves behind a half-dead page
+call wait_prunable();
 SELECT injection_points_attach('nbtree-leave-page-half-dead', 'error');
  injection_points_attach 
 -------------------------
