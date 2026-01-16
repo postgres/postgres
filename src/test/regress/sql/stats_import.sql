@@ -1044,6 +1044,12 @@ SELECT pg_clear_extended_stats(schemaname => 'stats_import',
   statistics_schemaname => 'stats_import',
   statistics_name => 'ext_stats_not_exist',
   inherited => false);
+-- Incorrect relation/extended stats combination
+SELECT pg_clear_extended_stats(schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'test_stat_clone',
+  inherited => false);
 
 -- Check that records are removed after a valid clear call.
 SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e

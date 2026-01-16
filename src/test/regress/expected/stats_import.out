@@ -1443,6 +1443,18 @@ WARNING:  could not find extended statistics object "stats_import"."ext_stats_no
  
 (1 row)
 
+-- Incorrect relation/extended stats combination
+SELECT pg_clear_extended_stats(schemaname => 'stats_import',
+  relname => 'test',
+  statistics_schemaname => 'stats_import',
+  statistics_name => 'test_stat_clone',
+  inherited => false);
+WARNING:  could not clear extended statistics object "stats_import"."test_stat_clone": incorrect relation "stats_import"."test" specified
+ pg_clear_extended_stats 
+-------------------------
+ 
+(1 row)
+
 -- Check that records are removed after a valid clear call.
 SELECT COUNT(*), e.inherited FROM pg_stats_ext AS e
   WHERE e.statistics_schemaname = 'stats_import' AND

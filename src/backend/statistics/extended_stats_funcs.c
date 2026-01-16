@@ -220,8 +220,15 @@ pg_clear_extended_stats(PG_FUNCTION_ARGS)
 	 * started.
 	 */
 	if (stxform->stxrelid != relid)
-		elog(ERROR, "cache lookup failed for extended stats %u: found relation %u but expected %u",
-			 stxform->oid, stxform->stxrelid, relid);
+	{
+		table_close(pg_stext, RowExclusiveLock);
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not clear extended statistics object \"%s\".\"%s\": incorrect relation \"%s\".\"%s\" specified",
+					   get_namespace_name(nspoid), stxname,
+					   relnspname, relname));
+		PG_RETURN_VOID();
+	}
 
 	delete_pg_statistic_ext_data(stxform->oid, inherited);
 	heap_freetuple(tup);
