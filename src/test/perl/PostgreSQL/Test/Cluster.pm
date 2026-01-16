@@ -3535,25 +3535,9 @@ If successful, returns the length of the entire log file, in bytes.
 sub wait_for_log
 {
 	my ($self, $regexp, $offset) = @_;
-	$offset = 0 unless defined $offset;
 
-	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
-	my $attempts = 0;
-
-	while ($attempts < $max_attempts)
-	{
-		my $log =
-		  PostgreSQL::Test::Utils::slurp_file($self->logfile, $offset);
-
-		return $offset + length($log) if ($log =~ m/$regexp/);
-
-		# Wait 0.1 second before retrying.
-		usleep(100_000);
-
-		$attempts++;
-	}
-
-	croak "timed out waiting for match: $regexp";
+	return PostgreSQL::Test::Utils::wait_for_file($self->logfile, $regexp,
+		$offset);
 }
 
 =pod

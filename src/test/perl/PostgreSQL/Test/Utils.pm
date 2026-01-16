@@ -58,6 +58,7 @@ use File::Temp ();
 use IPC::Run;
 use POSIX qw(locale_h);
 use PostgreSQL::Test::SimpleTee;
+use Time::HiRes qw(usleep);
 
 # We need a version of Test::More recent enough to support subtests
 use Test::More 0.98;
@@ -73,6 +74,7 @@ our @EXPORT = qw(
   chmod_recursive
   check_pg_config
   compare_files
+  wait_for_file
   dir_symlink
   scan_server_header
   system_or_bail
@@ -864,6 +866,43 @@ sub compare_files
 	}
 
 	return;
+}
+
+=pod
+
+=item wait_for_file(filename, regexp[, offset])
+
+Waits for the contents of the specified file, starting at the given offset, to
+match the supplied regular expression.  Checks the entire file if no offset is
+given.  Times out after $timeout_default seconds.
+
+If successful, returns the length of the entire file, in bytes.
+
+=cut
+
+sub wait_for_file
+{
+	my ($filename, $regexp, $offset) = @_;
+	$offset = 0 unless defined $offset;
+
+	my $max_attempts = 10 * $timeout_default;
+	my $attempts = 0;
+
+	while ($attempts < $max_attempts)
+	{
+		if (-e $filename)
+		{
+			my $contents = slurp_file($filename, $offset);
+			return $offset + length($contents) if ($contents =~ m/$regexp/);
+		}
+
+		# Wait 0.1 second before retrying.
+		usleep(100_000);
+
+		$attempts++;
+	}
+
+	croak "timed out waiting for file $filename contents to match: $regexp";
 }
 
 =pod
