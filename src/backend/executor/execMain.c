@@ -880,21 +880,25 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		foreach(l, plannedstmt->rowMarks)
 		{
 			PlanRowMark *rc = (PlanRowMark *) lfirst(l);
+			RangeTblEntry *rte = exec_rt_fetch(rc->rti, estate);
 			Oid			relid;
 			Relation	relation;
 			ExecRowMark *erm;
 
+			/* ignore "parent" rowmarks; they are irrelevant at runtime */
+			if (rc->isParent)
+				continue;
+
 			/*
-			 * Ignore "parent" rowmarks, because they are irrelevant at
-			 * runtime.  Also ignore the rowmarks belonging to child tables
-			 * that have been pruned in ExecDoInitialPruning().
+			 * Also ignore rowmarks belonging to child tables that have been
+			 * pruned in ExecDoInitialPruning().
 			 */
-			if (rc->isParent ||
+			if (rte->rtekind == RTE_RELATION &&
 				!bms_is_member(rc->rti, estate->es_unpruned_relids))
 				continue;
 
 			/* get relation's OID (will produce InvalidOid if subquery) */
-			relid = exec_rt_fetch(rc->rti, estate)->relid;
+			relid = rte->relid;
 
 			/* open relation, if we need to access it for this mark type */
 			switch (rc->markType)
