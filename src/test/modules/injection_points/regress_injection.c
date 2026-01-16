@@ -50,7 +50,7 @@ removable_cutoff(PG_FUNCTION_ARGS)
 	if (!PG_ARGISNULL(0))
 		rel = table_open(PG_GETARG_OID(0), AccessShareLock);
 
-	if (!rel->rd_rel->relisshared && autovacuum_start_daemon)
+	if (rel != NULL && !rel->rd_rel->relisshared && autovacuum_start_daemon)
 		elog(WARNING,
 			 "removable_cutoff(non-shared-rel) can move backward under autovacuum=on");
 
