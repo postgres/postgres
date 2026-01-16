@@ -1473,3 +1473,23 @@ step s2pp4: DELETE FROM another_parttbl WHERE a = (SELECT 1); <waiting ...>
 step c1: COMMIT;
 step s2pp4: <... completed>
 step c2: COMMIT;
+
+starting permutation: updateformergevalues mergevalues c1 c2 read
+step updateformergevalues: UPDATE accounts SET balance = balance + 100;
+step mergevalues: 
+	MERGE INTO accounts
+	USING (VALUES ('checking', 610), ('savings', 620)) v(accountid, balance)
+	ON v.accountid = accounts.accountid
+	WHEN MATCHED THEN UPDATE SET balance = v.balance
+	WHEN NOT MATCHED THEN INSERT VALUES ('unmatched', -1);
+ <waiting ...>
+step c1: COMMIT;
+step mergevalues: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    610|    1220
+savings  |    620|    1240
+(2 rows)
+
