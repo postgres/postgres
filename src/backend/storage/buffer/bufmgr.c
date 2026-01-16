@@ -5777,8 +5777,8 @@ BufferLockAcquire(Buffer buffer, BufferDesc *buf_hdr, BufferLockMode mode)
 
 	for (;;)
 	{
+		uint32		wait_event = 0; /* initialized to avoid compiler warning */
 		bool		mustwait;
-		uint32		wait_event;
 
 		/*
 		 * Try to grab the lock the first time, we're not in the waitqueue
