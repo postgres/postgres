@@ -184,7 +184,7 @@ disconnect_atexit(void)
 		PQfinish(conn);
 }
 
-static bool
+static void
 OutputFsync(TimestampTz now)
 {
 	output_last_fsync = now;
@@ -199,21 +199,19 @@ OutputFsync(TimestampTz now)
 	startpos = output_fsync_lsn;
 
 	if (fsync_interval <= 0)
-		return true;
+		return;
 
 	if (!output_needs_fsync)
-		return true;
+		return;
 
 	output_needs_fsync = false;
 
 	/* can only fsync if it's a regular file */
 	if (!output_isfile)
-		return true;
+		return;
 
 	if (fsync(outfd) != 0)
 		pg_fatal("could not fsync file \"%s\": %m", outfile);
-
-	return true;
 }
 
 /*
@@ -312,10 +310,7 @@ StreamLogicalLog(void)
 		if (outfd != -1 &&
 			feTimestampDifferenceExceeds(output_last_fsync, now,
 										 fsync_interval))
-		{
-			if (!OutputFsync(now))
-				goto error;
-		}
+			OutputFsync(now);
 
 		if (standby_message_timeout > 0 &&
 			feTimestampDifferenceExceeds(last_status, now,
@@ -332,8 +327,7 @@ StreamLogicalLog(void)
 		if (outfd != -1 && output_reopen && strcmp(outfile, "-") != 0)
 		{
 			now = feGetCurrentTimestamp();
-			if (!OutputFsync(now))
-				goto error;
+			OutputFsync(now);
 			close(outfd);
 			outfd = -1;
 		}
@@ -652,9 +646,7 @@ StreamLogicalLog(void)
 	{
 		TimestampTz t = feGetCurrentTimestamp();
 
-		/* no need to jump to error on failure here, we're finishing anyway */
 		OutputFsync(t);
-
 		if (close(outfd) != 0)
 			pg_log_error("could not close file \"%s\": %m", outfile);
 	}
@@ -1063,8 +1055,7 @@ static bool
 flushAndSendFeedback(PGconn *conn, TimestampTz *now)
 {
 	/* flush data to disk, so that we send a recent flush pointer */
-	if (!OutputFsync(*now))
-		return false;
+	OutputFsync(*now);
 	*now = feGetCurrentTimestamp();
 	if (!sendFeedback(conn, *now, true, false))
 		return false;
