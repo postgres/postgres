@@ -624,11 +624,15 @@ command_ok(
 	],
 	"node K has started");
 
+# Note that this uses a direct pg_ctl command rather than a teardown(),
+# because $node->stop() would not work due to the node's postmaster PID
+# not being tracked, something that is set within $node->start().
+system_log('pg_ctl', 'stop', '--pgdata', $node_k->data_dir);
+
 # clean up
 $node_p->teardown_node;
 $node_s->teardown_node;
 $node_t->teardown_node;
 $node_f->teardown_node;
-$node_k->teardown_node;
 
 done_testing();
