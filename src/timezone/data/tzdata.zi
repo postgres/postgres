@@ -1,4 +1,4 @@
-# version 2025b
+# version 2025c
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -2951,9 +2951,7 @@ Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 7u
 -8 1 PDT 1951 S 30 2
 -8 - PST 1952 Ap 27 2
 -8 1 PDT 1952 S 28 2
--8 - PST 1954
--8 CA P%sT 1961
--8 - PST 1976
+-8 CA P%sT 1967
 -8 u P%sT 1996
 -8 m P%sT 2001
 -8 u P%sT 2002 F 20
