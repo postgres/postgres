@@ -251,7 +251,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 		if (first_wal_range && endtli != entry->tli)
 			ereport(ERROR,
 					errmsg("expected end timeline %u but found timeline %u",
-						   starttli, entry->tli));
+						   endtli, entry->tli));
 
 		/*
 		 * If this timeline entry matches with the timeline on which the
