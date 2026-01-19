@@ -313,6 +313,12 @@ SELECT (ROW(ARRAY[1, 2], ARRAY[1, 2, 3])).*;
 SELECT 1, 2, (ROW(ARRAY[1, 2], ARRAY[1, 2, 3])).*, 3, 4;
 SELECT (ROW(ARRAY[1, 2], ARRAY[1, $1, 3])).*, 1 \bind 1
 ;
+
+-- IN and ANY clauses with Vars are not squashed.
+SELECT * FROM test_squash a, test_squash b WHERE a.id IN (1, 2, 3, b.id, b.id + 1);
+SELECT * FROM test_squash a, test_squash b WHERE a.id = ANY (array[1, ((b.id + b.id * 2)), 5]);
+SELECT * FROM test_squash a, test_squash b WHERE a.id IN ($1, $2, $3, b.id, b.id + $4) \bind 1 2 3 1
+;
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
