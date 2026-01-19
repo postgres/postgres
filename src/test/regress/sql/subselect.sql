@@ -883,6 +883,46 @@ select * from
   (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
   where tattle(x, u);
 
+--
+-- check that an upper-level qual is not pushed down if it references a grouped
+-- Var whose underlying expression contains SRFs
+--
+explain (verbose, costs off)
+select * from
+  (select generate_series(1, ten) as g, count(*) from tenk1 group by 1) ss
+  where ss.g = 1;
+
+select * from
+  (select generate_series(1, ten) as g, count(*) from tenk1 group by 1) ss
+  where ss.g = 1;
+
+--
+-- check that an upper-level qual is not pushed down if it references a grouped
+-- Var whose underlying expression contains volatile functions
+--
+alter function tattle(x int, y int) volatile;
+
+explain (verbose, costs off)
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+
+-- if we pretend it's stable, we get different results:
+alter function tattle(x int, y int) stable;
+
+explain (verbose, costs off)
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+
 drop function tattle(x int, y int);
 
 --

@@ -3752,9 +3752,33 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
 static void
 check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 {
+	List	   *flattened_targetList = subquery->targetList;
 	ListCell   *lc;
 
-	foreach(lc, subquery->targetList)
+	/*
+	 * We must be careful with grouping Vars and join alias Vars in the
+	 * subquery's outputs, as they hide the underlying expressions.
+	 *
+	 * We need to expand grouping Vars to their underlying expressions (the
+	 * grouping clauses) because the grouping expressions themselves might be
+	 * volatile or set-returning.  However, we do not need to expand join
+	 * alias Vars, as their underlying structure does not introduce volatile
+	 * or set-returning functions at the current level.
+	 *
+	 * In neither case do we need to recursively examine the Vars contained in
+	 * these underlying expressions.  Even if they reference outputs from
+	 * lower-level subqueries (at any depth), those references are guaranteed
+	 * not to expand to volatile or set-returning functions, because
+	 * subqueries containing such functions in their targetlists are never
+	 * pulled up.
+	 */
+	if (subquery->hasGroupRTE)
+	{
+		flattened_targetList = (List *)
+			flatten_group_exprs(NULL, subquery, (Node *) subquery->targetList);
+	}
+
+	foreach(lc, flattened_targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 

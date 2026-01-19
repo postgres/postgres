@@ -959,10 +959,14 @@ flatten_join_alias_vars_mutator(Node *node,
  * wrapper.
  *
  * NOTE: this is also used by ruleutils.c, to deparse one query parsetree back
- * to source text.  For that use-case, root will be NULL, which is why we have
- * to pass the Query separately.  We need the root itself only for preserving
+ * to source text, and by check_output_expressions() to check for unsafe
+ * pushdowns.  For these use-cases, root will be NULL, which is why we have to
+ * pass the Query separately.  We need the root itself only for preserving
  * varnullingrels.  We can avoid preserving varnullingrels in the ruleutils.c's
  * usage because it does not make any difference to the deparsed source text.
+ * We can also avoid it in check_output_expressions() because that function
+ * uses the expanded expressions solely to check for volatile or set-returning
+ * functions, which is independent of the Vars' nullingrels.
  */
 Node *
 flatten_group_exprs(PlannerInfo *root, Query *query, Node *node)
