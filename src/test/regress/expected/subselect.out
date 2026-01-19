@@ -1925,6 +1925,110 @@ NOTICE:  x = 9, y = 13
  9 | 3
 (3 rows)
 
+--
+-- check that an upper-level qual is not pushed down if it references a grouped
+-- Var whose underlying expression contains SRFs
+--
+explain (verbose, costs off)
+select * from
+  (select generate_series(1, ten) as g, count(*) from tenk1 group by 1) ss
+  where ss.g = 1;
+                                                                                                                            QUERY PLAN                                                                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on ss
+   Output: ss.g, ss.count
+   Filter: (ss.g = 1)
+   ->  HashAggregate
+         Output: (generate_series(1, tenk1.ten)), count(*)
+         Group Key: generate_series(1, tenk1.ten)
+         ->  ProjectSet
+               Output: generate_series(1, tenk1.ten)
+               ->  Seq Scan on public.tenk1
+                     Output: tenk1.unique1, tenk1.unique2, tenk1.two, tenk1.four, tenk1.ten, tenk1.twenty, tenk1.hundred, tenk1.thousand, tenk1.twothousand, tenk1.fivethous, tenk1.tenthous, tenk1.odd, tenk1.even, tenk1.stringu1, tenk1.stringu2, tenk1.string4
+(10 rows)
+
+select * from
+  (select generate_series(1, ten) as g, count(*) from tenk1 group by 1) ss
+  where ss.g = 1;
+ g | count 
+---+-------
+ 1 |  9000
+(1 row)
+
+--
+-- check that an upper-level qual is not pushed down if it references a grouped
+-- Var whose underlying expression contains volatile functions
+--
+alter function tattle(x int, y int) volatile;
+explain (verbose, costs off)
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Subquery Scan on ss
+   Output: ss.v, ss.count
+   Filter: ss.v
+   ->  GroupAggregate
+         Output: (tattle(3, tenk1.ten)), count(*)
+         Group Key: (tattle(3, tenk1.ten))
+         ->  Sort
+               Output: (tattle(3, tenk1.ten))
+               Sort Key: (tattle(3, tenk1.ten))
+               ->  Bitmap Heap Scan on public.tenk1
+                     Output: tattle(3, tenk1.ten)
+                     Recheck Cond: (tenk1.unique1 < 3)
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (tenk1.unique1 < 3)
+(14 rows)
+
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+NOTICE:  x = 3, y = 2
+NOTICE:  x = 3, y = 1
+NOTICE:  x = 3, y = 0
+ v | count 
+---+-------
+ t |     3
+(1 row)
+
+-- if we pretend it's stable, we get different results:
+alter function tattle(x int, y int) stable;
+explain (verbose, costs off)
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+                      QUERY PLAN                      
+------------------------------------------------------
+ GroupAggregate
+   Output: (tattle(3, tenk1.ten)), count(*)
+   Group Key: (tattle(3, tenk1.ten))
+   ->  Sort
+         Output: (tattle(3, tenk1.ten))
+         Sort Key: (tattle(3, tenk1.ten))
+         ->  Bitmap Heap Scan on public.tenk1
+               Output: tattle(3, tenk1.ten)
+               Recheck Cond: (tenk1.unique1 < 3)
+               Filter: tattle(3, tenk1.ten)
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: (tenk1.unique1 < 3)
+(12 rows)
+
+select * from
+  (select tattle(3, ten) as v, count(*) from tenk1 where unique1 < 3 group by 1) ss
+  where ss.v;
+NOTICE:  x = 3, y = 2
+NOTICE:  x = 3, y = 2
+NOTICE:  x = 3, y = 1
+NOTICE:  x = 3, y = 1
+NOTICE:  x = 3, y = 0
+NOTICE:  x = 3, y = 0
+ v | count 
+---+-------
+ t |     3
+(1 row)
+
 drop function tattle(x int, y int);
 --
 -- Test that LIMIT can be pushed to SORT through a subquery that just projects
