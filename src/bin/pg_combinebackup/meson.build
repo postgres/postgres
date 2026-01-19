@@ -37,6 +37,7 @@ tests += {
       't/007_wal_level_minimal.pl',
       't/008_promote.pl',
       't/009_no_full_file.pl',
+      't/011_incremental_backup_truncation_block.pl',
     ],
   }
 }
