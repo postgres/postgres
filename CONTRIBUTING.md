@@ -61,37 +61,11 @@ Follow this pattern for your commits:
 
 To build `Percona Distribution for PostgreSQL` from source code, you require the following:
 
-* git
-* make
-* gcc
-* pg_config
-
-Refer to the [Building from source code](https://github.com/percona/pg_stat_monitor#installing-from-source-code) section for guidelines.
-
 ### Running tests
 
 When you work, you should periodically run tests to check that your changes don’t break existing code.
 
-You can find the tests in the `regression` directory.
-
 #### Run manually
-
-1. Change directory to pg_stat_monitor
-
-**NOTE**: Make sure `postgres` user is the owner of the `pg_stat_monitor` directory
-
-2. Start the tests
-    1. If you built PostgreSQL from PGDG, use the following command:
-
-        ```sh
-        make installcheck
-        ```
-
-    2. If you installed PostgreSQL server  from Percona Distribution for PostgreSQL, use the following command:
-
-        ```sh
-        sudo su postgres bash -c 'make installcheck USE_PGXS=1'
-        ```
 
 #### Run automatically
 
