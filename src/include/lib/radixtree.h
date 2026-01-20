@@ -1799,7 +1799,14 @@ have_slot:
 
 	/* Update the statistics */
 	if (!found)
+	{
 		tree->ctl->num_keys++;
+		elog(LOG, "Radix tree: inserted new key %" PRIu64, key);
+	}
+	else
+	{
+		elog(LOG, "Radix tree: updated existing key %" PRIu64, key);
+	}
 
 	return found;
 }
