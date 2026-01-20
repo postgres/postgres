@@ -1,0 +1,4 @@
+comment = 'Test module for C++ extension compatibility'
+default_version = '1.0'
+module_pathname = '$libdir/test_cplusplusext'
+relocatable = true

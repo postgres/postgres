@@ -387,6 +387,13 @@ fi
 
 AC_PROG_CXX([$pgac_cxx_list])
 
+if test -n "$ac_ct_CXX"; then
+  have_cxx=yes
+else
+  have_cxx=no
+fi
+AC_SUBST(have_cxx)
+
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
 # but has idiosyncrasies of its own.  We assume icc will define
 # __INTEL_COMPILER regardless of CFLAGS.

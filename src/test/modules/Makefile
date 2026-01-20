@@ -75,5 +75,11 @@ else
 ALWAYS_SUBDIRS += ldap_password_func
 endif
 
+ifeq ($(have_cxx),yes)
+SUBDIRS += test_cplusplusext
+else
+ALWAYS_SUBDIRS += test_cplusplusext
+endif
+
 $(recurse)
 $(recurse_always)

@@ -1,0 +1,10 @@
+test_cplusplusext - Test C++ Extension Compatibility
+====================================================
+
+This test module verifies that PostgreSQL headers and macros work
+correctly when compiled with a C++ compiler.
+
+While PostgreSQL already tests that headers are syntactically valid
+C++ using headerscheck, the macros defined in those headers might
+still expand to invalid C++ code.  This module catches such issues by
+actually compiling and running an extension that's written in C++.

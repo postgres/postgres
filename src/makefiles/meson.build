@@ -118,6 +118,8 @@ pgxs_kv = {
   'FLEXFLAGS': ' '.join(flex_flags),
 
   'LIBS': var_libs,
+
+  'have_cxx': have_cxx ? 'yes' : 'no',
 }
 
 if llvm.found()

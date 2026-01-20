@@ -760,6 +760,7 @@ CLANG
 LLVM_CONFIG
 AWK
 with_llvm
+have_cxx
 ac_ct_CXX
 CXXFLAGS
 CXX
@@ -4767,6 +4768,13 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+if test -n "$ac_ct_CXX"; then
+  have_cxx=yes
+else
+  have_cxx=no
+fi
 
 
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
