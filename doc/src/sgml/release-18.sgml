@@ -3873,7 +3873,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
    </sect3>
 
    <sect3 id="release-18-libpq">
-    <title><xref linkend="libpq"/></title>
+    <title><link linkend="libpq">Libpq</link></title>
 
     <itemizedlist>
 
@@ -4860,8 +4860,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
      <listitem>
      <para>
-     Add support for Python "Limited <acronym>API</acronym>" in <xref
-     linkend="plpython"/> (Peter Eisentraut)
+     Add support for Python "Limited <acronym>API</acronym>" in <link
+     linkend="plpython">PL/Python</link> (Peter Eisentraut)
      <ulink url="&commit_baseurl;72a3d0462">&sect;</ulink>
      <ulink url="&commit_baseurl;0793ab810">&sect;</ulink>
      </para>
