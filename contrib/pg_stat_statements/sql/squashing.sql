@@ -1,7 +1,6 @@
 --
 -- Const squashing functionality
 --
-CREATE EXTENSION pg_stat_statements;
 
 --
 -- Simple Lists
