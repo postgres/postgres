@@ -162,7 +162,7 @@ static bool save_backend_variables(BackendParameters *param, int child_slot,
 #endif
 								   const void *startup_data, size_t startup_data_len);
 
-static pid_t internal_forkexec(const char *child_kind, int child_slot,
+static pid_t internal_forkexec(BackendType child_kind, int child_slot,
 							   const void *startup_data, size_t startup_data_len,
 							   ClientSocket *client_sock);
 
@@ -217,7 +217,7 @@ postmaster_child_launch(BackendType child_type, int child_slot,
 		((BackendStartupData *) startup_data)->fork_started = GetCurrentTimestamp();
 
 #ifdef EXEC_BACKEND
-	pid = internal_forkexec(child_process_kinds[child_type].name, child_slot,
+	pid = internal_forkexec(child_type, child_slot,
 							startup_data, startup_data_len, client_sock);
 	/* the child process will arrive in SubPostmasterMain */
 #else							/* !EXEC_BACKEND */
@@ -282,7 +282,7 @@ postmaster_child_launch(BackendType child_type, int child_slot,
  * - fork():s, and then exec():s the child process
  */
 static pid_t
-internal_forkexec(const char *child_kind, int child_slot,
+internal_forkexec(BackendType child_kind, int child_slot,
 				  const void *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	static unsigned long tmpBackendFileNum = 0;
@@ -358,7 +358,7 @@ internal_forkexec(const char *child_kind, int child_slot,
 
 	/* set up argv properly */
 	argv[0] = "postgres";
-	snprintf(forkav, MAXPGPATH, "--forkchild=%s", child_kind);
+	snprintf(forkav, MAXPGPATH, "--forkchild=%d", (int) child_kind);
 	argv[1] = forkav;
 	/* Insert temp file name after --forkchild argument */
 	argv[2] = tmpfilename;
@@ -392,7 +392,7 @@ internal_forkexec(const char *child_kind, int child_slot,
  *	 file is complete.
  */
 static pid_t
-internal_forkexec(const char *child_kind, int child_slot,
+internal_forkexec(BackendType child_kind, int child_slot,
 				  const void *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	int			retry_count = 0;
@@ -444,8 +444,8 @@ retry:
 #else
 	sprintf(paramHandleStr, "%lu", (DWORD) paramHandle);
 #endif
-	l = snprintf(cmdLine, sizeof(cmdLine) - 1, "\"%s\" --forkchild=\"%s\" %s",
-				 postgres_exec_path, child_kind, paramHandleStr);
+	l = snprintf(cmdLine, sizeof(cmdLine) - 1, "\"%s\" --forkchild=%d %s",
+				 postgres_exec_path, (int) child_kind, paramHandleStr);
 	if (l >= sizeof(cmdLine))
 	{
 		ereport(LOG,
@@ -567,8 +567,8 @@ retry:
  *			to what it would be if we'd simply forked on Unix, and then
  *			dispatch to the appropriate place.
  *
- * The first two command line arguments are expected to be "--forkchild=<name>",
- * where <name> indicates which postmaster child we are to become, and
+ * The first two command line arguments are expected to be "--forkchild=<kind>",
+ * where <kind> indicates which process type we are to become, and
  * the name of a variables file that we can read to load data that would
  * have been inherited by fork() on Unix.
  */
@@ -579,7 +579,6 @@ SubPostmasterMain(int argc, char *argv[])
 	size_t		startup_data_len;
 	char	   *child_kind;
 	BackendType child_type;
-	bool		found = false;
 	TimestampTz fork_end;
 
 	/* In EXEC_BACKEND case we will not have inherited these settings */
@@ -599,21 +598,15 @@ SubPostmasterMain(int argc, char *argv[])
 	if (argc != 3)
 		elog(FATAL, "invalid subpostmaster invocation");
 
-	/* Find the entry in child_process_kinds */
+	/*
+	 * Parse the --forkchild argument to find our process type.  We rely with
+	 * malice aforethought on atoi returning 0 (B_INVALID) on error.
+	 */
 	if (strncmp(argv[1], "--forkchild=", 12) != 0)
 		elog(FATAL, "invalid subpostmaster invocation (--forkchild argument missing)");
 	child_kind = argv[1] + 12;
-	found = false;
-	for (int idx = 0; idx < lengthof(child_process_kinds); idx++)
-	{
-		if (strcmp(child_process_kinds[idx].name, child_kind) == 0)
-		{
-			child_type = (BackendType) idx;
-			found = true;
-			break;
-		}
-	}
-	if (!found)
+	child_type = (BackendType) atoi(child_kind);
+	if (child_type <= B_INVALID || child_type > BACKEND_NUM_TYPES - 1)
 		elog(ERROR, "unknown child kind %s", child_kind);
 
 	/* Read in the variables file */
