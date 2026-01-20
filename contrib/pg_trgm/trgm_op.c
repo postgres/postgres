@@ -220,7 +220,7 @@ comp_trgm(const void *a, const void *b)
  * endword points to the character after word
  */
 static char *
-find_word(char *str, int lenstr, char **endword, int *charlen)
+find_word(char *str, int lenstr, char **endword)
 {
 	char	   *beginword = str;
 
@@ -231,12 +231,8 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
 		return NULL;
 
 	*endword = beginword;
-	*charlen = 0;
 	while (*endword - str < lenstr && ISWORDCHR(*endword))
-	{
 		*endword += pg_mblen(*endword);
-		(*charlen)++;
-	}
 
 	return beginword;
 }
@@ -269,45 +265,82 @@ compact_trigram(trgm *tptr, char *str, int bytelen)
 }
 
 /*
- * Adds trigrams from words (already padded).
+ * Adds trigrams from the word in 'str' (already padded if necessary).
  */
 static trgm *
-make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
+make_trigrams(trgm *tptr, char *str, int bytelen)
 {
 	char	   *ptr = str;
 
-	if (charlen < 3)
+	if (bytelen < 3)
 		return tptr;
 
-	if (bytelen > charlen)
+	if (pg_encoding_max_length(GetDatabaseEncoding()) == 1)
 	{
-		/* Find multibyte character boundaries and apply compact_trigram */
-		int			lenfirst = pg_mblen(str),
-					lenmiddle = pg_mblen(str + lenfirst),
-					lenlast = pg_mblen(str + lenfirst + lenmiddle);
-
-		while ((ptr - str) + lenfirst + lenmiddle + lenlast <= bytelen)
-		{
-			compact_trigram(tptr, ptr, lenfirst + lenmiddle + lenlast);
-
-			ptr += lenfirst;
-			tptr++;
-
-			lenfirst = lenmiddle;
-			lenmiddle = lenlast;
-			lenlast = pg_mblen(ptr + lenfirst + lenmiddle);
-		}
-	}
-	else
-	{
-		/* Fast path when there are no multibyte characters */
-		Assert(bytelen == charlen);
-
-		while (ptr - str < bytelen - 2 /* number of trigrams = strlen - 2 */ )
+		while (ptr < str + bytelen - 2)
 		{
 			CPTRGM(tptr, ptr);
 			ptr++;
 			tptr++;
+		}
+	}
+	else
+	{
+		int			lenfirst,
+					lenmiddle,
+					lenlast;
+		char	   *endptr;
+
+		/*
+		 * Fast path as long as there are no multibyte characters
+		 */
+		if (!IS_HIGHBIT_SET(ptr[0]) && !IS_HIGHBIT_SET(ptr[1]))
+		{
+			while (!IS_HIGHBIT_SET(ptr[2]))
+			{
+				CPTRGM(tptr, ptr);
+				ptr++;
+				tptr++;
+
+				if (ptr == str + bytelen - 2)
+					return tptr;
+			}
+
+			lenfirst = 1;
+			lenmiddle = 1;
+			lenlast = pg_mblen(ptr + 2);
+		}
+		else
+		{
+			lenfirst = pg_mblen(ptr);
+			if (ptr + lenfirst >= str + bytelen)
+				return tptr;
+			lenmiddle = pg_mblen(ptr + lenfirst);
+			if (ptr + lenfirst + lenmiddle >= str + bytelen)
+				return tptr;
+			lenlast = pg_mblen(ptr + lenfirst + lenmiddle);
+		}
+
+		/*
+		 * Slow path to handle any remaining multibyte characters
+		 *
+		 * As we go, 'ptr' points to the beginning of the current
+		 * three-character string and 'endptr' points to just past it.
+		 */
+		endptr = ptr + lenfirst + lenmiddle + lenlast;
+		while (endptr <= str + bytelen)
+		{
+			compact_trigram(tptr, ptr, endptr - ptr);
+			tptr++;
+
+			/* Advance to the next character */
+			if (endptr == str + bytelen)
+				break;
+			ptr += lenfirst;
+			lenfirst = lenmiddle;
+			lenmiddle = lenlast;
+			lenlast = pg_mblen(endptr);
+			endptr += lenlast;
 		}
 	}
 
@@ -328,8 +361,7 @@ generate_trgm_only(trgm *trg, char *str, int slen, TrgmBound *bounds)
 {
 	trgm	   *tptr;
 	char	   *buf;
-	int			charlen,
-				bytelen;
+	int			bytelen;
 	char	   *bword,
 			   *eword;
 
@@ -349,7 +381,7 @@ generate_trgm_only(trgm *trg, char *str, int slen, TrgmBound *bounds)
 	}
 
 	eword = str;
-	while ((bword = find_word(eword, slen - (eword - str), &eword, &charlen)) != NULL)
+	while ((bword = find_word(eword, slen - (eword - str), &eword)) != NULL)
 	{
 #ifdef IGNORECASE
 		bword = str_tolower(bword, eword - bword, DEFAULT_COLLATION_OID);
@@ -370,8 +402,7 @@ generate_trgm_only(trgm *trg, char *str, int slen, TrgmBound *bounds)
 		/* Calculate trigrams marking their bounds if needed */
 		if (bounds)
 			bounds[tptr - trg] |= TRGM_BOUND_LEFT;
-		tptr = make_trigrams(tptr, buf, bytelen + LPADDING + RPADDING,
-							 charlen + LPADDING + RPADDING);
+		tptr = make_trigrams(tptr, buf, bytelen + LPADDING + RPADDING);
 		if (bounds)
 			bounds[tptr - trg - 1] |= TRGM_BOUND_RIGHT;
 	}
@@ -761,17 +792,16 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
  * str: source string, of length lenstr bytes (need not be null-terminated)
  * buf: where to return the substring (must be long enough)
  * *bytelen: receives byte length of the found substring
- * *charlen: receives character length of the found substring
  *
  * Returns pointer to end+1 of the found substring in the source string.
- * Returns NULL if no word found (in which case buf, bytelen, charlen not set)
+ * Returns NULL if no word found (in which case buf, bytelen is not set)
  *
  * If the found word is bounded by non-word characters or string boundaries
  * then this function will include corresponding padding spaces into buf.
  */
 static const char *
 get_wildcard_part(const char *str, int lenstr,
-				  char *buf, int *bytelen, int *charlen)
+				  char *buf, int *bytelen)
 {
 	const char *beginword = str;
 	const char *endword;
@@ -820,18 +850,13 @@ get_wildcard_part(const char *str, int lenstr,
 	 * Add left padding spaces if preceding character wasn't wildcard
 	 * meta-character.
 	 */
-	*charlen = 0;
 	if (!in_leading_wildcard_meta)
 	{
 		if (LPADDING > 0)
 		{
 			*s++ = ' ';
-			(*charlen)++;
 			if (LPADDING > 1)
-			{
 				*s++ = ' ';
-				(*charlen)++;
-			}
 		}
 	}
 
@@ -848,7 +873,6 @@ get_wildcard_part(const char *str, int lenstr,
 			if (ISWORDCHR(endword))
 			{
 				memcpy(s, endword, clen);
-				(*charlen)++;
 				s += clen;
 			}
 			else
@@ -876,7 +900,6 @@ get_wildcard_part(const char *str, int lenstr,
 			else if (ISWORDCHR(endword))
 			{
 				memcpy(s, endword, clen);
-				(*charlen)++;
 				s += clen;
 			}
 			else
@@ -894,12 +917,8 @@ get_wildcard_part(const char *str, int lenstr,
 		if (RPADDING > 0)
 		{
 			*s++ = ' ';
-			(*charlen)++;
 			if (RPADDING > 1)
-			{
 				*s++ = ' ';
-				(*charlen)++;
-			}
 		}
 	}
 
@@ -922,7 +941,6 @@ generate_wildcard_trgm(const char *str, int slen)
 			   *buf2;
 	trgm	   *tptr;
 	int			len,
-				charlen,
 				bytelen;
 	const char *eword;
 
@@ -945,7 +963,7 @@ generate_wildcard_trgm(const char *str, int slen)
 	 */
 	eword = str;
 	while ((eword = get_wildcard_part(eword, slen - (eword - str),
-									  buf, &bytelen, &charlen)) != NULL)
+									  buf, &bytelen)) != NULL)
 	{
 #ifdef IGNORECASE
 		buf2 = str_tolower(buf, bytelen, DEFAULT_COLLATION_OID);
@@ -957,7 +975,7 @@ generate_wildcard_trgm(const char *str, int slen)
 		/*
 		 * count trigrams
 		 */
-		tptr = make_trigrams(tptr, buf2, bytelen, charlen);
+		tptr = make_trigrams(tptr, buf2, bytelen);
 
 #ifdef IGNORECASE
 		pfree(buf2);
