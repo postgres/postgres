@@ -89,6 +89,7 @@ extern MCVList *statext_mcv_build(StatsBuildData *data,
 								  double totalrows, int stattarget);
 extern bytea *statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats);
 extern MCVList *statext_mcv_deserialize(bytea *data);
+extern void statext_mcv_free(MCVList *mcvlist);
 
 extern MultiSortSupport multi_sort_init(int ndims);
 extern void multi_sort_add_dimension(MultiSortSupport mss, int sortdim,

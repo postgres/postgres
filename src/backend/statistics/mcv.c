@@ -2171,3 +2171,19 @@ mcv_clause_selectivity_or(PlannerInfo *root, StatisticExtInfo *stat,
 
 	return s;
 }
+
+/*
+ * Free allocations of a MCVList.
+ */
+void
+statext_mcv_free(MCVList *mcvlist)
+{
+	for (int i = 0; i < mcvlist->nitems; i++)
+	{
+		MCVItem    *item = &mcvlist->items[i];
+
+		pfree(item->values);
+		pfree(item->isnull);
+	}
+	pfree(mcvlist);
+}
