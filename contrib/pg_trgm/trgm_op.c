@@ -67,6 +67,78 @@ typedef uint8 TrgmBound;
 											 * word bounds */
 
 /*
+ * A growable array of trigrams
+ *
+ * The actual array of trigrams is in 'datum'.  Note that the other fields in
+ * 'datum', i.e. datum->flags and the varlena length, are not kept up to date
+ * when items are added to the growable array.  We merely reserve the space
+ * for them here.  You must fill those other fields before using 'datum' as a
+ * proper TRGM datum.
+ */
+typedef struct
+{
+	TRGM	   *datum;			/* trigram array */
+	int			length;			/* number of trigrams in the array */
+	int			allocated;		/* allocated size of 'datum' (# of trigrams) */
+} growable_trgm_array;
+
+/*
+ * Allocate a new growable array.
+ *
+ * 'slen' is the size of the source string that we're extracting the trigrams
+ * from.  It is used to choose the initial size of the array.
+ */
+static void
+init_trgm_array(growable_trgm_array *arr, int slen)
+{
+	size_t		init_size;
+
+	/*
+	 * In the extreme case, the input string consists entirely of one
+	 * character words, like "a b c", where each word is expanded to two
+	 * trigrams.  This is not a strict upper bound though, because when
+	 * IGNORECASE is defined, we convert the input string to lowercase before
+	 * extracting the trigrams, which in rare cases can expand one input
+	 * character into multiple characters.
+	 */
+	init_size = (size_t) slen + 1;
+
+	/*
+	 * Guard against possible overflow in the palloc request.  (We don't worry
+	 * about the additive constants, since palloc can detect requests that are
+	 * a little above MaxAllocSize --- we just need to prevent integer
+	 * overflow in the multiplications.)
+	 */
+	if (init_size > MaxAllocSize / sizeof(trgm))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of memory")));
+
+	arr->datum = palloc(CALCGTSIZE(ARRKEY, init_size));
+	arr->allocated = init_size;
+	arr->length = 0;
+}
+
+/* Make sure the array can hold at least 'needed' more trigrams */
+static void
+enlarge_trgm_array(growable_trgm_array *arr, int needed)
+{
+	size_t		new_needed = (size_t) arr->length + needed;
+
+	if (new_needed > arr->allocated)
+	{
+		/* Guard against possible overflow, like in init_trgm_array */
+		if (new_needed > MaxAllocSize / sizeof(trgm))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("out of memory")));
+
+		arr->datum = repalloc(arr->datum, CALCGTSIZE(ARRKEY, new_needed));
+		arr->allocated = new_needed;
+	}
+}
+
+/*
  * Module load callback
  */
 void
@@ -267,13 +339,18 @@ compact_trigram(trgm *tptr, char *str, int bytelen)
 /*
  * Adds trigrams from the word in 'str' (already padded if necessary).
  */
-static trgm *
-make_trigrams(trgm *tptr, char *str, int bytelen)
+static void
+make_trigrams(growable_trgm_array *dst, char *str, int bytelen)
 {
+	trgm	   *tptr;
 	char	   *ptr = str;
 
 	if (bytelen < 3)
-		return tptr;
+		return;
+
+	/* max number of trigrams = strlen - 2 */
+	enlarge_trgm_array(dst, bytelen - 2);
+	tptr = GETARR(dst->datum) + dst->length;
 
 	if (pg_encoding_max_length(GetDatabaseEncoding()) == 1)
 	{
@@ -303,7 +380,7 @@ make_trigrams(trgm *tptr, char *str, int bytelen)
 				tptr++;
 
 				if (ptr == str + bytelen - 2)
-					return tptr;
+					goto done;
 			}
 
 			lenfirst = 1;
@@ -314,10 +391,10 @@ make_trigrams(trgm *tptr, char *str, int bytelen)
 		{
 			lenfirst = pg_mblen(ptr);
 			if (ptr + lenfirst >= str + bytelen)
-				return tptr;
+				goto done;
 			lenmiddle = pg_mblen(ptr + lenfirst);
 			if (ptr + lenfirst + lenmiddle >= str + bytelen)
-				return tptr;
+				goto done;
 			lenlast = pg_mblen(ptr + lenfirst + lenmiddle);
 		}
 
@@ -344,35 +421,54 @@ make_trigrams(trgm *tptr, char *str, int bytelen)
 		}
 	}
 
-	return tptr;
+done:
+	dst->length = tptr - GETARR(dst->datum);
+	Assert(dst->length <= dst->allocated);
 }
 
 /*
  * Make array of trigrams without sorting and removing duplicate items.
  *
- * trg: where to return the array of trigrams.
+ * dst: where to return the array of trigrams.
  * str: source string, of length slen bytes.
- * bounds: where to return bounds of trigrams (if needed).
- *
- * Returns length of the generated array.
+ * bounds_p: where to return bounds of trigrams (if needed).
  */
-static int
-generate_trgm_only(trgm *trg, char *str, int slen, TrgmBound *bounds)
+static void
+generate_trgm_only(growable_trgm_array *dst, char *str, int slen, TrgmBound **bounds_p)
 {
-	trgm	   *tptr;
+	size_t		buflen;
 	char	   *buf;
 	int			bytelen;
 	char	   *bword,
 			   *eword;
+	TrgmBound  *bounds = NULL;
+	int			bounds_allocated = 0;
+
+	init_trgm_array(dst, slen);
+
+	/*
+	 * If requested, allocate an array for the bounds, with the same size as
+	 * the trigram array.
+	 */
+	if (bounds_p)
+	{
+		bounds_allocated = dst->allocated;
+		bounds = *bounds_p = palloc0_array(TrgmBound, bounds_allocated);
+	}
 
 	if (slen + LPADDING + RPADDING < 3 || slen == 0)
-		return 0;
+		return;
 
-	tptr = trg;
-
-	/* Allocate a buffer for case-folded, blank-padded words */
-	buf = (char *) palloc(slen * pg_database_encoding_max_length() + 4);
-
+	/*
+	 * Allocate a buffer for case-folded, blank-padded words.
+	 *
+	 * As an initial guess, allocate a buffer large enough to hold the
+	 * original string with padding, which is always enough when compiled with
+	 * !IGNORECASE.  If the case-folding produces a string longer than the
+	 * original, we'll grow the buffer.
+	 */
+	buflen = (size_t) slen + 4;
+	buf = (char *) palloc(buflen);
 	if (LPADDING > 0)
 	{
 		*buf = ' ';
@@ -383,49 +479,57 @@ generate_trgm_only(trgm *trg, char *str, int slen, TrgmBound *bounds)
 	eword = str;
 	while ((bword = find_word(eword, slen - (eword - str), &eword)) != NULL)
 	{
+		int			oldlen;
+
+		/* Convert word to lower case before extracting trigrams from it */
 #ifdef IGNORECASE
-		bword = str_tolower(bword, eword - bword, DEFAULT_COLLATION_OID);
-		bytelen = strlen(bword);
+		{
+			char	   *lowered;
+
+			lowered = str_tolower(bword, eword - bword, DEFAULT_COLLATION_OID);
+			bytelen = strlen(lowered);
+
+			/* grow the buffer if necessary */
+			if (bytelen > buflen - 4)
+			{
+				pfree(buf);
+				buflen = (size_t) bytelen + 4;
+				buf = (char *) palloc(buflen);
+				if (LPADDING > 0)
+				{
+					*buf = ' ';
+					if (LPADDING > 1)
+						*(buf + 1) = ' ';
+				}
+			}
+			memcpy(buf + LPADDING, lowered, bytelen);
+			pfree(lowered);
+		}
 #else
 		bytelen = eword - bword;
-#endif
-
 		memcpy(buf + LPADDING, bword, bytelen);
-
-#ifdef IGNORECASE
-		pfree(bword);
 #endif
 
 		buf[LPADDING + bytelen] = ' ';
 		buf[LPADDING + bytelen + 1] = ' ';
 
 		/* Calculate trigrams marking their bounds if needed */
+		oldlen = dst->length;
+		make_trigrams(dst, buf, bytelen + LPADDING + RPADDING);
 		if (bounds)
-			bounds[tptr - trg] |= TRGM_BOUND_LEFT;
-		tptr = make_trigrams(tptr, buf, bytelen + LPADDING + RPADDING);
-		if (bounds)
-			bounds[tptr - trg - 1] |= TRGM_BOUND_RIGHT;
+		{
+			if (bounds_allocated < dst->length)
+			{
+				bounds = repalloc0_array(bounds, TrgmBound, bounds_allocated, dst->allocated);
+				bounds_allocated = dst->allocated;
+			}
+
+			bounds[oldlen] |= TRGM_BOUND_LEFT;
+			bounds[dst->length - 1] |= TRGM_BOUND_RIGHT;
+		}
 	}
 
 	pfree(buf);
-
-	return tptr - trg;
-}
-
-/*
- * Guard against possible overflow in the palloc requests below.  (We
- * don't worry about the additive constants, since palloc can detect
- * requests that are a little above MaxAllocSize --- we just need to
- * prevent integer overflow in the multiplications.)
- */
-static void
-protect_out_of_mem(int slen)
-{
-	if ((Size) (slen / 2) >= (MaxAllocSize / (sizeof(trgm) * 3)) ||
-		(Size) slen >= (MaxAllocSize / pg_database_encoding_max_length()))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("out of memory")));
 }
 
 /*
@@ -439,18 +543,13 @@ TRGM *
 generate_trgm(char *str, int slen)
 {
 	TRGM	   *trg;
+	growable_trgm_array arr;
 	int			len;
 
-	protect_out_of_mem(slen);
-
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
+	generate_trgm_only(&arr, str, slen, NULL);
+	len = arr.length;
+	trg = arr.datum;
 	trg->flag = ARRKEY;
-
-	len = generate_trgm_only(GETARR(trg), str, slen, NULL);
-	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));
-
-	if (len == 0)
-		return trg;
 
 	/*
 	 * Make trigrams unique.
@@ -706,8 +805,8 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 {
 	bool	   *found;
 	pos_trgm   *ptrg;
-	trgm	   *trg1;
-	trgm	   *trg2;
+	growable_trgm_array trg1;
+	growable_trgm_array trg2;
 	int			len1,
 				len2,
 				len,
@@ -716,27 +815,21 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 				ulen1;
 	int		   *trg2indexes;
 	float4		result;
-	TrgmBound  *bounds;
-
-	protect_out_of_mem(slen1 + slen2);
+	TrgmBound  *bounds = NULL;
 
 	/* Make positional trigrams */
-	trg1 = (trgm *) palloc(sizeof(trgm) * (slen1 / 2 + 1) * 3);
-	trg2 = (trgm *) palloc(sizeof(trgm) * (slen2 / 2 + 1) * 3);
-	if (flags & WORD_SIMILARITY_STRICT)
-		bounds = (TrgmBound *) palloc0(sizeof(TrgmBound) * (slen2 / 2 + 1) * 3);
-	else
-		bounds = NULL;
 
-	len1 = generate_trgm_only(trg1, str1, slen1, NULL);
-	len2 = generate_trgm_only(trg2, str2, slen2, bounds);
+	generate_trgm_only(&trg1, str1, slen1, NULL);
+	len1 = trg1.length;
+	generate_trgm_only(&trg2, str2, slen2, (flags & WORD_SIMILARITY_STRICT) ? &bounds : NULL);
+	len2 = trg2.length;
 
-	ptrg = make_positional_trgm(trg1, len1, trg2, len2);
+	ptrg = make_positional_trgm(GETARR(trg1.datum), len1, GETARR(trg2.datum), len2);
 	len = len1 + len2;
 	qsort(ptrg, len, sizeof(pos_trgm), comp_ptrgm);
 
-	pfree(trg1);
-	pfree(trg2);
+	pfree(trg1.datum);
+	pfree(trg2.datum);
 
 	/*
 	 * Merge positional trigrams array: enumerate each trigram and find its
@@ -937,23 +1030,21 @@ TRGM *
 generate_wildcard_trgm(const char *str, int slen)
 {
 	TRGM	   *trg;
-	char	   *buf,
-			   *buf2;
-	trgm	   *tptr;
+	growable_trgm_array arr;
+	char	   *buf;
 	int			len,
 				bytelen;
 	const char *eword;
 
-	protect_out_of_mem(slen);
-
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
-	trg->flag = ARRKEY;
-	SET_VARSIZE(trg, TRGMHDRSIZE);
-
 	if (slen + LPADDING + RPADDING < 3 || slen == 0)
+	{
+		trg = (TRGM *) palloc(TRGMHDRSIZE);
+		trg->flag = ARRKEY;
+		SET_VARSIZE(trg, TRGMHDRSIZE);
 		return trg;
+	}
 
-	tptr = GETARR(trg);
+	init_trgm_array(&arr, slen);
 
 	/* Allocate a buffer for blank-padded, but not yet case-folded, words */
 	buf = palloc_array(char, slen + 4);
@@ -965,37 +1056,39 @@ generate_wildcard_trgm(const char *str, int slen)
 	while ((eword = get_wildcard_part(eword, slen - (eword - str),
 									  buf, &bytelen)) != NULL)
 	{
+		char	   *word;
+
 #ifdef IGNORECASE
-		buf2 = str_tolower(buf, bytelen, DEFAULT_COLLATION_OID);
-		bytelen = strlen(buf2);
+		word = str_tolower(buf, bytelen, DEFAULT_COLLATION_OID);
+		bytelen = strlen(word);
 #else
-		buf2 = buf;
+		word = buf;
 #endif
 
 		/*
 		 * count trigrams
 		 */
-		tptr = make_trigrams(tptr, buf2, bytelen);
+		make_trigrams(&arr, word, bytelen);
 
 #ifdef IGNORECASE
-		pfree(buf2);
+		pfree(word);
 #endif
 	}
 
 	pfree(buf);
 
-	if ((len = tptr - GETARR(trg)) == 0)
-		return trg;
-
 	/*
 	 * Make trigrams unique.
 	 */
+	trg = arr.datum;
+	len = arr.length;
 	if (len > 1)
 	{
 		qsort(GETARR(trg), len, sizeof(trgm), comp_trgm);
 		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
 	}
 
+	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));
 
 	return trg;
