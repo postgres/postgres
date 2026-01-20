@@ -236,7 +236,6 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, DestReceiver *dest)
 
 					default:
 						elog(ERROR, "unexpected wait LSN type %d", lsnType);
-						pg_unreachable();
 				}
 			}
 			else
@@ -281,7 +280,6 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, DestReceiver *dest)
 
 						default:
 							elog(ERROR, "unexpected wait LSN type %d", lsnType);
-							pg_unreachable();
 					}
 				}
 				else
@@ -311,7 +309,6 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, DestReceiver *dest)
 
 						default:
 							elog(ERROR, "unexpected wait LSN type %d", lsnType);
-							pg_unreachable();
 					}
 				}
 			}
