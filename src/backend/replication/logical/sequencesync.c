@@ -233,6 +233,7 @@ get_and_validate_seq_info(TupleTableSlot *slot, Relation *sequence_rel,
 {
 	bool		isnull;
 	int			col = 0;
+	Datum		datum;
 	Oid			remote_typid;
 	int64		remote_start;
 	int64		remote_increment;
@@ -251,8 +252,14 @@ get_and_validate_seq_info(TupleTableSlot *slot, Relation *sequence_rel,
 	*seqinfo = seqinfo_local =
 		(LogicalRepSequenceInfo *) list_nth(seqinfos, *seqidx);
 
-	seqinfo_local->last_value = DatumGetInt64(slot_getattr(slot, ++col, &isnull));
-	Assert(!isnull);
+	/*
+	 * last_value can be NULL if the sequence was dropped concurrently (see
+	 * pg_get_sequence_data()).
+	 */
+	datum = slot_getattr(slot, ++col, &isnull);
+	if (isnull)
+		return COPYSEQ_SKIPPED;
+	seqinfo_local->last_value = DatumGetInt64(datum);
 
 	seqinfo_local->is_called = DatumGetBool(slot_getattr(slot, ++col, &isnull));
 	Assert(!isnull);
@@ -400,7 +407,7 @@ copy_sequences(WalReceiverConn *conn)
 		int			batch_skipped_count = 0;
 		int			batch_insuffperm_count = 0;
 		int			batch_missing_count;
-		Relation	sequence_rel;
+		Relation	sequence_rel = NULL;
 
 		WalRcvExecResult *res;
 		TupleTableSlot *slot;
@@ -535,11 +542,21 @@ copy_sequences(WalReceiverConn *conn)
 					batch_insuffperm_count++;
 					break;
 				case COPYSEQ_SKIPPED:
-					ereport(LOG,
-							errmsg("skip synchronization of sequence \"%s.%s\" because it has been dropped concurrently",
-								   seqinfo->nspname,
-								   seqinfo->seqname));
-					batch_skipped_count++;
+
+					/*
+					 * Concurrent removal of a sequence on the subscriber is
+					 * treated as success, since the only viable action is to
+					 * skip the corresponding sequence data. Missing sequences
+					 * on the publisher are treated as ERROR.
+					 */
+					if (seqinfo->found_on_pub)
+					{
+						ereport(LOG,
+								errmsg("skip synchronization of sequence \"%s.%s\" because it has been dropped concurrently",
+									   seqinfo->nspname,
+									   seqinfo->seqname));
+						batch_skipped_count++;
+					}
 					break;
 			}
 
