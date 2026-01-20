@@ -3665,6 +3665,7 @@ gistxlogPageReuse
 gistxlogPageSplit
 gistxlogPageUpdate
 grouping_sets_data
+growable_trgm_array
 gseg_picksplit_item
 gss_OID_set
 gss_buffer_desc
