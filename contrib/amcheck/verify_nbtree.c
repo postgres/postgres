@@ -462,11 +462,11 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 					 bool readonly, bool heapallindexed, bool rootdescend)
 {
 	BtreeCheckState *state;
+	Snapshot	snapshot = InvalidSnapshot;
 	Page		metapage;
 	BTMetaPageData *metad;
 	uint32		previouslevel;
 	BtreeLevel	current;
-	Snapshot	snapshot = SnapshotAny;
 
 	if (!readonly)
 		elog(DEBUG1, "verifying consistency of tree structure for index \"%s\"",
@@ -515,37 +515,33 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		state->heaptuplespresent = 0;
 
 		/*
-		 * Register our own snapshot in !readonly case, rather than asking
+		 * Register our own snapshot for heapallindexed, rather than asking
 		 * table_index_build_scan() to do this for us later.  This needs to
 		 * happen before index fingerprinting begins, so we can later be
 		 * certain that index fingerprinting should have reached all tuples
 		 * returned by table_index_build_scan().
 		 */
-		if (!state->readonly)
-		{
-			snapshot = RegisterSnapshot(GetTransactionSnapshot());
+		snapshot = RegisterSnapshot(GetTransactionSnapshot());
 
-			/*
-			 * GetTransactionSnapshot() always acquires a new MVCC snapshot in
-			 * READ COMMITTED mode.  A new snapshot is guaranteed to have all
-			 * the entries it requires in the index.
-			 *
-			 * We must defend against the possibility that an old xact
-			 * snapshot was returned at higher isolation levels when that
-			 * snapshot is not safe for index scans of the target index.  This
-			 * is possible when the snapshot sees tuples that are before the
-			 * index's indcheckxmin horizon.  Throwing an error here should be
-			 * very rare.  It doesn't seem worth using a secondary snapshot to
-			 * avoid this.
-			 */
-			if (IsolationUsesXactSnapshot() && rel->rd_index->indcheckxmin &&
-				!TransactionIdPrecedes(HeapTupleHeaderGetXmin(rel->rd_indextuple->t_data),
-									   snapshot->xmin))
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("index \"%s\" cannot be verified using transaction snapshot",
-								RelationGetRelationName(rel))));
-		}
+		/*
+		 * GetTransactionSnapshot() always acquires a new MVCC snapshot in
+		 * READ COMMITTED mode.  A new snapshot is guaranteed to have all the
+		 * entries it requires in the index.
+		 *
+		 * We must defend against the possibility that an old xact snapshot
+		 * was returned at higher isolation levels when that snapshot is not
+		 * safe for index scans of the target index.  This is possible when
+		 * the snapshot sees tuples that are before the index's indcheckxmin
+		 * horizon.  Throwing an error here should be very rare.  It doesn't
+		 * seem worth using a secondary snapshot to avoid this.
+		 */
+		if (IsolationUsesXactSnapshot() && rel->rd_index->indcheckxmin &&
+			!TransactionIdPrecedes(HeapTupleHeaderGetXmin(rel->rd_indextuple->t_data),
+								   snapshot->xmin))
+			ereport(ERROR,
+					errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+					errmsg("index \"%s\" cannot be verified using transaction snapshot",
+						   RelationGetRelationName(rel)));
 	}
 
 	Assert(!state->rootdescend || state->readonly);
@@ -620,8 +616,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		/*
 		 * Create our own scan for table_index_build_scan(), rather than
 		 * getting it to do so for us.  This is required so that we can
-		 * actually use the MVCC snapshot registered earlier in !readonly
-		 * case.
+		 * actually use the MVCC snapshot registered earlier.
 		 *
 		 * Note that table_index_build_scan() calls heap_endscan() for us.
 		 */
@@ -634,16 +629,15 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 
 		/*
 		 * Scan will behave as the first scan of a CREATE INDEX CONCURRENTLY
-		 * behaves in !readonly case.
+		 * behaves.
 		 *
 		 * It's okay that we don't actually use the same lock strength for the
-		 * heap relation as any other ii_Concurrent caller would in !readonly
-		 * case.  We have no reason to care about a concurrent VACUUM
-		 * operation, since there isn't going to be a second scan of the heap
-		 * that needs to be sure that there was no concurrent recycling of
-		 * TIDs.
+		 * heap relation as any other ii_Concurrent caller would.  We have no
+		 * reason to care about a concurrent VACUUM operation, since there
+		 * isn't going to be a second scan of the heap that needs to be sure
+		 * that there was no concurrent recycling of TIDs.
 		 */
-		indexinfo->ii_Concurrent = !state->readonly;
+		indexinfo->ii_Concurrent = true;
 
 		/*
 		 * Don't wait for uncommitted tuple xact commit/abort when index is a
@@ -667,13 +661,12 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 								 state->heaptuplespresent, RelationGetRelationName(heaprel),
 								 100.0 * bloom_prop_bits_set(state->filter))));
 
-		if (snapshot != SnapshotAny)
-			UnregisterSnapshot(snapshot);
-
 		bloom_free(state->filter);
 	}
 
 	/* Be tidy: */
+	if (snapshot != InvalidSnapshot)
+		UnregisterSnapshot(snapshot);
 	MemoryContextDelete(state->targetcontext);
 }
 
