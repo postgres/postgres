@@ -7,7 +7,6 @@ WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
 --------+---------
 (0 rows)
 
-set escape_string_warning=off;
 --hstore;
 select ''::hstore;
  hstore 

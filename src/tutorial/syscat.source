@@ -17,10 +17,6 @@
 --
 SET search_path TO pg_catalog;
 
--- The LIKE pattern language requires underscores to be escaped, so make
--- sure the backslashes are not misinterpreted.
-SET standard_conforming_strings TO on;
-
 --
 -- lists the names of all database owners and the name of their database(s)
 --
@@ -169,7 +165,6 @@ SELECT am.amname, n.nspname, opf.opfname, opr.oprname
   ORDER BY nspname, amname, opfname, oprname;
 
 --
--- Reset the search path and standard_conforming_strings to their defaults
+-- Reset the search path to default
 --
 RESET search_path;
-RESET standard_conforming_strings;

@@ -2991,9 +2991,6 @@ fill_in_constant_lengths(JumbleState *jstate, const char *query,
 							 &ScanKeywords,
 							 ScanKeywordTokens);
 
-	/* we don't want to re-emit any escape string warnings */
-	yyextra.escape_string_warning = false;
-
 	/* Search for each constant, in sequence */
 	for (int i = 0; i < jstate->clocations_count; i++)
 	{

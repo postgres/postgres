@@ -1429,7 +1429,6 @@ setup_connection(Archive *AH, const char *dumpencoding,
 {
 	DumpOptions *dopt = AH->dopt;
 	PGconn	   *conn = GetConnection(AH);
-	const char *std_strings;
 
 	PQclear(ExecuteSqlQueryForSingleRow(AH, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
@@ -1444,14 +1443,26 @@ setup_connection(Archive *AH, const char *dumpencoding,
 	}
 
 	/*
-	 * Get the active encoding and the standard_conforming_strings setting, so
-	 * we know how to escape strings.
+	 * Force standard_conforming_strings on, just in case we are dumping from
+	 * an old server that has it disabled.  Without this, literals in views,
+	 * expressions, etc, would be incorrect for modern servers.
+	 */
+	ExecuteSqlStatement(AH, "SET standard_conforming_strings = on");
+
+	/*
+	 * And reflect that to AH->std_strings.  You might think that we should
+	 * just delete that variable and the code that checks it, but that would
+	 * be problematic for pg_restore, which at least for now should still cope
+	 * with archives containing the other setting (cf. processStdStringsEntry
+	 * in pg_backup_archiver.c).
+	 */
+	AH->std_strings = true;
+
+	/*
+	 * Get the active encoding, so we know how to escape strings.
 	 */
 	AH->encoding = PQclientEncoding(conn);
 	setFmtEncoding(AH->encoding);
-
-	std_strings = PQparameterStatus(conn, "standard_conforming_strings");
-	AH->std_strings = (std_strings && strcmp(std_strings, "on") == 0);
 
 	/*
 	 * Set the role if requested.  In a parallel dump worker, we'll be passed

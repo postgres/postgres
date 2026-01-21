@@ -37,11 +37,9 @@ quote_ident(PG_FUNCTION_ARGS)
  * quote_literal_internal -
  *	  helper function for quote_literal and quote_literal_cstr
  *
- * NOTE: think not to make this function's behavior change with
- * standard_conforming_strings.  We don't know where the result
- * literal will be used, and so we must generate a result that
- * will work with either setting.  Take a look at what dblink
- * uses this for before thinking you know better.
+ * NOTE: This must produce output that will work in old servers with
+ * standard_conforming_strings = off.  It's used for example by
+ * dblink, which may send the result to another server.
  */
 static size_t
 quote_literal_internal(char *dst, const char *src, size_t len)

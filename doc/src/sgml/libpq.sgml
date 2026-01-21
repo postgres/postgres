@@ -2889,18 +2889,13 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
        before 16; <varname>search_path</varname> was not reported by releases
        before 18.)
        Note that
-       <varname>server_version</varname>,
-       <varname>server_encoding</varname> and
-       <varname>integer_datetimes</varname>
+       <varname>server_version</varname> and
+       <varname>server_encoding</varname>
        cannot change after startup.
-      </para>
-
-      <para>
-       If no value for <varname>standard_conforming_strings</varname> is reported,
-       applications can assume it is <literal>off</literal>, that is, backslashes
-       are treated as escapes in string literals.  Also, the presence of
-       this parameter can be taken as an indication that the escape string
-       syntax (<literal>E'...'</literal>) is accepted.
+       Also, <varname>integer_datetimes</varname> is
+       always <literal>on</literal> in releases 9.5 and later,
+       and <varname>standard_conforming_strings</varname> is
+       always <literal>on</literal> in releases 19 and later.
       </para>
 
       <para>
@@ -11108,7 +11103,6 @@ main(int argc, char **argv)
  *
  * CREATE SCHEMA testlibpq3;
  * SET search_path = testlibpq3;
- * SET standard_conforming_strings = ON;
  * CREATE TABLE test1 (i int4, t text, b bytea);
  * INSERT INTO test1 values (1, 'joe''s place', '\000\001\002\003\004');
  * INSERT INTO test1 values (2, 'ho there', '\004\003\002\001\000');

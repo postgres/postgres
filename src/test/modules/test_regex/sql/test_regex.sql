@@ -7,8 +7,6 @@
 
 create extension test_regex;
 
-set standard_conforming_strings = on;
-
 -- # support functions and preliminary misc.
 -- # This is sensitive to changes in message wording, but we really have to
 -- # test the code->message expansion at least once.

@@ -1,6 +1,3 @@
-Standard conforming strings: off
 Standard conforming strings: on
-value: 1 a\\b
-value: 1 a\\b
 value: 2 a\\\\b
 value: 2 a\\b

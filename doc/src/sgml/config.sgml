@@ -11390,8 +11390,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
       </term>
       <listitem>
        <para>
-        This controls whether a quote mark can be represented by
-        <literal>\'</literal> in a string literal.  The preferred, SQL-standard way
+        This parameter controls whether a quote mark can be represented by
+        <literal>\'</literal> in the escape string syntax
+        (<literal>E'...'</literal>).  The preferred, SQL-standard way
         to represent a quote mark is by doubling it (<literal>''</literal>) but
         <productname>PostgreSQL</productname> has historically also accepted
         <literal>\'</literal>. However, use of <literal>\'</literal> creates security risks
@@ -11410,34 +11411,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
        </para>
 
        <para>
-        Note that in a standard-conforming string literal, <literal>\</literal> just
-        means <literal>\</literal> anyway.  This parameter only affects the handling of
-        non-standard-conforming literals, including
-        escape string syntax (<literal>E'...'</literal>).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-escape-string-warning" xreflabel="escape_string_warning">
-      <term><varname>escape_string_warning</varname> (<type>boolean</type>)
-      <indexterm><primary>strings</primary><secondary>escape warning</secondary></indexterm>
-      <indexterm>
-       <primary><varname>escape_string_warning</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        When on, a warning is issued if a backslash (<literal>\</literal>)
-        appears in an ordinary string literal (<literal>'...'</literal>
-        syntax) and <varname>standard_conforming_strings</varname> is off.
-        The default is <literal>on</literal>.
-       </para>
-       <para>
-        Applications that wish to use backslash as escape should be
-        modified to use escape string syntax (<literal>E'...'</literal>),
-        because the default behavior of ordinary strings is now to treat
-        backslash as an ordinary character, per SQL standard.  This variable
-        can be enabled to help locate code that needs to be changed.
+        Note that in an ordinary string literal, <literal>\</literal> just
+        means <literal>\</literal> anyway.  This parameter only affects
+        the handling of escape string syntax.
        </para>
       </listitem>
      </varlistentry>
@@ -11493,15 +11469,12 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
       </term>
       <listitem>
        <para>
-        This controls whether ordinary string literals
-        (<literal>'...'</literal>) treat backslashes literally, as specified in
-        the SQL standard.
-        Beginning in <productname>PostgreSQL</productname> 9.1, the default is
-        <literal>on</literal> (prior releases defaulted to <literal>off</literal>).
-        Applications can check this
-        parameter to determine how string literals will be processed.
-        The presence of this parameter can also be taken as an indication
-        that the escape string syntax (<literal>E'...'</literal>) is supported.
+        Beginning in <productname>PostgreSQL</productname> 19, this
+        parameter is always <literal>on</literal>.  String literals are
+        always parsed as specified in the SQL standard (that is,
+        backslashes are ordinary characters within a string literal).
+        This parameter continues to exist because applications may consult
+        it; but it cannot be set to <literal>off</literal>.
         Escape string syntax (<xref linkend="sql-syntax-strings-escape"/>)
         should be used if an application desires
         backslashes to be treated as escape characters.

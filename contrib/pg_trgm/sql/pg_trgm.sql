@@ -5,10 +5,6 @@ SELECT amname, opcname
 FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
 WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
 
---backslash is used in tests below, installcheck will fail if
---standard_conforming_string is off
-set standard_conforming_strings=on;
-
 -- reduce noise
 set extra_float_digits = 0;
 

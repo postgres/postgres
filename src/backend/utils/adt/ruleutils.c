@@ -11828,16 +11828,14 @@ simple_quote_literal(StringInfo buf, const char *val)
 	const char *valptr;
 
 	/*
-	 * We form the string literal according to the prevailing setting of
-	 * standard_conforming_strings; we never use E''. User is responsible for
-	 * making sure result is used correctly.
+	 * We always form the string literal according to standard SQL rules.
 	 */
 	appendStringInfoChar(buf, '\'');
 	for (valptr = val; *valptr; valptr++)
 	{
 		char		ch = *valptr;
 
-		if (SQL_STR_DOUBLE(ch, !standard_conforming_strings))
+		if (SQL_STR_DOUBLE(ch, false))
 			appendStringInfoChar(buf, ch);
 		appendStringInfoChar(buf, ch);
 	}

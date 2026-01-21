@@ -75,9 +75,7 @@ EXEC SQL ...;
    Embedded <acronym>SQL</acronym> statements likewise use SQL rules, not
    C rules, for parsing quoted strings and identifiers.
    (See <xref linkend="sql-syntax-strings"/> and
-   <xref linkend="sql-syntax-identifiers"/> respectively.  Note that
-   ECPG assumes that <varname>standard_conforming_strings</varname>
-   is <literal>on</literal>.)
+   <xref linkend="sql-syntax-identifiers"/> respectively.)
    Of course, the C part of the program follows C quoting rules.
   </para>
 

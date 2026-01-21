@@ -60,14 +60,13 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 }
 
 /*
- * GUC variables.  This is a DIRECT violation of the warning given at the
+ * GUC variable.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;
- * as such, changing their values can induce very unintuitive behavior.
- * But we shall have to live with it until we can remove these variables.
+ * as such, changing its value can induce very unintuitive behavior.
+ * In practice, backslash_quote is not too awful since it only controls
+ * whether to throw an error: it cannot change non-error results.
  */
 int			backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
-bool		escape_string_warning = true;
-bool		standard_conforming_strings = true;
 
 /*
  * Constant data exported from this file.  This array maps from the
@@ -126,9 +125,6 @@ static void addunicode(char32_t c, yyscan_t yyscanner);
 #define yyerror(msg)  scanner_yyerror(msg, yyscanner)
 
 #define lexer_errposition()  scanner_errposition(*(yylloc), yyscanner)
-
-static void check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner);
-static void check_escape_warning(core_yyscan_t yyscanner);
 
 %}
 
@@ -543,17 +539,12 @@ other			.
 				}
 
 {xqstart}		{
-					yyextra->warn_on_first_escape = true;
 					yyextra->saw_non_ascii = false;
 					SET_YYLLOC();
-					if (yyextra->standard_conforming_strings)
-						BEGIN(xq);
-					else
-						BEGIN(xe);
+					BEGIN(xq);
 					startlit();
 				}
 {xestart}		{
-					yyextra->warn_on_first_escape = false;
 					yyextra->saw_non_ascii = false;
 					SET_YYLLOC();
 					BEGIN(xe);
@@ -561,12 +552,6 @@ other			.
 				}
 {xusstart}		{
 					SET_YYLLOC();
-					if (!yyextra->standard_conforming_strings)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("unsafe use of string constant with Unicode escapes"),
-								 errdetail("String constants with Unicode escapes cannot be used when \"standard_conforming_strings\" is off."),
-								 lexer_errposition()));
 					BEGIN(xus);
 					startlit();
 				}
@@ -642,13 +627,6 @@ other			.
 <xe>{xeunicode} {
 					char32_t	c = strtoul(yytext + 2, NULL, 16);
 
-					/*
-					 * For consistency with other productions, issue any
-					 * escape warning with cursor pointing to start of string.
-					 * We might want to change that, someday.
-					 */
-					check_escape_warning(yyscanner);
-
 					/* Remember start of overall string token ... */
 					PUSH_YYLLOC();
 					/* ... and set the error cursor to point at this esc seq */
@@ -715,14 +693,12 @@ other			.
 									 errhint("Use '' to write quotes in strings. \\' is insecure in client-only encodings."),
 									 lexer_errposition()));
 					}
-					check_string_escape_warning(yytext[1], yyscanner);
 					addlitchar(unescape_single_char(yytext[1], yyscanner),
 							   yyscanner);
 				}
 <xe>{xeoctesc}  {
 					unsigned char c = strtoul(yytext + 1, NULL, 8);
 
-					check_escape_warning(yyscanner);
 					addlitchar(c, yyscanner);
 					if (c == '\0' || IS_HIGHBIT_SET(c))
 						yyextra->saw_non_ascii = true;
@@ -730,7 +706,6 @@ other			.
 <xe>{xehexesc}  {
 					unsigned char c = strtoul(yytext + 2, NULL, 16);
 
-					check_escape_warning(yyscanner);
 					addlitchar(c, yyscanner);
 					if (c == '\0' || IS_HIGHBIT_SET(c))
 						yyextra->saw_non_ascii = true;
@@ -1263,8 +1238,6 @@ scanner_init(const char *str,
 	yyext->keyword_tokens = keyword_tokens;
 
 	yyext->backslash_quote = backslash_quote;
-	yyext->escape_string_warning = escape_string_warning;
-	yyext->standard_conforming_strings = standard_conforming_strings;
 
 	/*
 	 * Make a scan buffer with special termination needed by flex.
@@ -1418,45 +1391,6 @@ unescape_single_char(unsigned char c, core_yyscan_t yyscanner)
 
 			return c;
 	}
-}
-
-static void
-check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
-{
-	if (ychar == '\'')
-	{
-		if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
-			ereport(WARNING,
-					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
-					 errmsg("nonstandard use of \\' in a string literal"),
-					 errhint("Use '' to write quotes in strings, or use the escape string syntax (E'...')."),
-					 lexer_errposition()));
-		yyextra->warn_on_first_escape = false;	/* warn only once per string */
-	}
-	else if (ychar == '\\')
-	{
-		if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
-			ereport(WARNING,
-					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
-					 errmsg("nonstandard use of \\\\ in a string literal"),
-					 errhint("Use the escape string syntax for backslashes, e.g., E'\\\\'."),
-					 lexer_errposition()));
-		yyextra->warn_on_first_escape = false;	/* warn only once per string */
-	}
-	else
-		check_escape_warning(yyscanner);
-}
-
-static void
-check_escape_warning(core_yyscan_t yyscanner)
-{
-	if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
-		ereport(WARNING,
-				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
-				 errmsg("nonstandard use of escape in a string literal"),
-				 errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
-				 lexer_errposition()));
-	yyextra->warn_on_first_escape = false;	/* warn only once per string */
 }
 
 /*

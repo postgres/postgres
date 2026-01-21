@@ -73,9 +73,7 @@ key =&gt; NULL
    applies <emphasis>before</emphasis> any required quoting or escaping. If you are
    passing an <type>hstore</type> literal via a parameter, then no additional
    processing is needed. But if you're passing it as a quoted literal
-   constant, then any single-quote characters and (depending on the setting of
-   the <varname>standard_conforming_strings</varname> configuration parameter)
-   backslash characters need to be escaped correctly. See
+   constant, then any single-quote characters need to be escaped correctly. See
    <xref linkend="sql-syntax-strings"/> for more on the handling of string
    constants.
   </para>

@@ -991,12 +991,6 @@
   boot_val => 'true',
 },
 
-{ name => 'escape_string_warning', type => 'bool', context => 'PGC_USERSET', group => 'COMPAT_OPTIONS_PREVIOUS',
-  short_desc => 'Warn about backslash escapes in ordinary string literals.',
-  variable => 'escape_string_warning',
-  boot_val => 'true',
-},
-
 { name => 'event_source', type => 'string', context => 'PGC_POSTMASTER', group => 'LOGGING_WHERE',
   short_desc => 'Sets the application name used to identify PostgreSQL messages in the event log.',
   variable => 'event_source',
@@ -2759,11 +2753,15 @@
   boot_val => '""',
 },
 
+# We removed support for non-conforming string literals in PostgreSQL 19,
+# but this parameter must be kept indefinitely, since client code might
+# consult it or attempt to set it.  We allow it to be explicitly set to true.
 { name => 'standard_conforming_strings', type => 'bool', context => 'PGC_USERSET', group => 'COMPAT_OPTIONS_PREVIOUS',
-  short_desc => 'Causes \'...\' strings to treat backslashes literally.',
-  flags => 'GUC_REPORT',
+  short_desc => 'Nonstandard strings are no longer supported; this can only be true.',
+  flags => 'GUC_REPORT | GUC_NOT_IN_SAMPLE',
   variable => 'standard_conforming_strings',
   boot_val => 'true',
+  check_hook => 'check_standard_conforming_strings',
 },
 
 { name => 'statement_timeout', type => 'int', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',

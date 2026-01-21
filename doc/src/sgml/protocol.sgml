@@ -3040,8 +3040,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <para>
            Sets the label of the backup. If none is specified, a backup label
            of <literal>base backup</literal> will be used. The quoting rules
-           for the label are the same as a standard SQL string with
-           <xref linkend="guc-standard-conforming-strings"/> turned on.
+           for the label are the same as for a standard SQL string.
           </para>
          </listitem>
         </varlistentry>

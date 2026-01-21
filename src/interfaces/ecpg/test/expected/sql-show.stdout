@@ -1,5 +1,5 @@
 Var: Search path: public
 Var: Search path: public
-Var: Standard conforming strings: off
+Var: Standard conforming strings: on
 Time Zone: PST8PDT
 Transaction isolation level: read committed

@@ -8,7 +8,6 @@ SELECT getdatabaseencoding() <> 'UTF8'
 \quit
 \endif
 set client_encoding = utf8;
-set standard_conforming_strings = on;
 -- Run the Tcl test cases that require Unicode
 -- expectMatch	9.44 EMP*	{a[\u00fe-\u0507][\u00ff-\u0300]b} \
 -- 	"a\u0102\u02ffb"	"a\u0102\u02ffb"

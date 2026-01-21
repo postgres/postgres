@@ -90,7 +90,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   printf("Var: Search path: %s\n", var);
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set standard_conforming_strings to off", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set standard_conforming_strings to on", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "show.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

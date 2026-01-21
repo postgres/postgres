@@ -23,7 +23,7 @@ int main() {
   EXEC SQL SHOW search_path INTO :var;
   printf("Var: Search path: %s\n", var);
 
-  EXEC SQL SET standard_conforming_strings TO off;
+  EXEC SQL SET standard_conforming_strings TO on;
   EXEC SQL SHOW standard_conforming_strings INTO :var;
   printf("Var: Standard conforming strings: %s\n", var);
 

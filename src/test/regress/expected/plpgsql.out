@@ -4576,51 +4576,6 @@ CONTEXT:  PL/pgSQL expression "1/0"
 PL/pgSQL function fail() line 3 at RETURN
 drop function fail();
 -- Test handling of string literals.
-set standard_conforming_strings = off;
-create or replace function strtest() returns text as $$
-begin
-  raise notice 'foo\\bar\041baz';
-  return 'foo\\bar\041baz';
-end
-$$ language plpgsql;
-WARNING:  nonstandard use of \\ in a string literal
-LINE 3:   raise notice 'foo\\bar\041baz';
-                       ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 4:   return 'foo\\bar\041baz';
-                 ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 4:   return 'foo\\bar\041baz';
-                 ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-select strtest();
-NOTICE:  foo\bar!baz
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: 'foo\\bar\041baz'
-        ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-QUERY:  'foo\\bar\041baz'
-   strtest   
--------------
- foo\bar!baz
-(1 row)
-
-create or replace function strtest() returns text as $$
-begin
-  raise notice E'foo\\bar\041baz';
-  return E'foo\\bar\041baz';
-end
-$$ language plpgsql;
-select strtest();
-NOTICE:  foo\bar!baz
-   strtest   
--------------
- foo\bar!baz
-(1 row)
-
-set standard_conforming_strings = on;
 create or replace function strtest() returns text as $$
 begin
   raise notice 'foo\\bar\041baz\';

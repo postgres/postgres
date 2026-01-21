@@ -1257,3 +1257,18 @@ check_ssl(bool *newval, void **extra, GucSource source)
 #endif
 	return true;
 }
+
+bool
+check_standard_conforming_strings(bool *newval, void **extra, GucSource source)
+{
+	if (!*newval)
+	{
+		/* check the GUC's definition for an explanation */
+		GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
+		GUC_check_errmsg("non-standard string literals are not supported");
+
+		return false;
+	}
+
+	return true;
+}

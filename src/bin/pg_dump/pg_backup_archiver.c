@@ -3426,8 +3426,6 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 
 	/* Avoid annoying notices etc */
 	ahprintf(AH, "SET client_min_messages = warning;\n");
-	if (!AH->public.std_strings)
-		ahprintf(AH, "SET escape_string_warning = off;\n");
 
 	/* Adjust row-security state */
 	if (ropt && ropt->enable_row_security)

@@ -152,14 +152,6 @@
     character itself, write two escape characters.
    </para>
 
-   <note>
-    <para>
-     If you have <xref linkend="guc-standard-conforming-strings"/> turned off,
-     any backslashes you write in literal string constants will need to be
-     doubled.  See <xref linkend="sql-syntax-strings"/> for more information.
-    </para>
-   </note>
-
    <para>
     It's also possible to select no escape character by writing
     <literal>ESCAPE ''</literal>.  This effectively disables the
@@ -1155,14 +1147,6 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
    <para>
     An RE cannot end with a backslash (<literal>\</literal>).
    </para>
-
-   <note>
-    <para>
-     If you have <xref linkend="guc-standard-conforming-strings"/> turned off,
-     any backslashes you write in literal string constants will need to be
-     doubled.  See <xref linkend="sql-syntax-strings"/> for more information.
-    </para>
-   </note>
 
    <table id="posix-quantifiers-table">
     <title>Regular Expression Quantifiers</title>

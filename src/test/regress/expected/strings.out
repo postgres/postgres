@@ -22,7 +22,6 @@ ERROR:  syntax error at or near "' - third line'"
 LINE 3: ' - third line'
         ^
 -- Unicode escapes
-SET standard_conforming_strings TO on;
 SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
  data 
 ------
@@ -142,43 +141,12 @@ SELECT E'wrong: \U002FFFFF';
 ERROR:  invalid Unicode escape value at or near "\U002FFFFF"
 LINE 1: SELECT E'wrong: \U002FFFFF';
                         ^
+-- this is no longer allowed:
 SET standard_conforming_strings TO off;
-SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
-ERROR:  unsafe use of string constant with Unicode escapes
-LINE 1: SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
-               ^
-DETAIL:  String constants with Unicode escapes cannot be used when "standard_conforming_strings" is off.
-SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
-ERROR:  unsafe use of string constant with Unicode escapes
-LINE 1: SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061...
-               ^
-DETAIL:  String constants with Unicode escapes cannot be used when "standard_conforming_strings" is off.
-SELECT U&' \' UESCAPE '!' AS "tricky";
-ERROR:  unsafe use of string constant with Unicode escapes
-LINE 1: SELECT U&' \' UESCAPE '!' AS "tricky";
-               ^
-DETAIL:  String constants with Unicode escapes cannot be used when "standard_conforming_strings" is off.
-SELECT 'tricky' AS U&"\" UESCAPE '!';
-   \    
---------
- tricky
-(1 row)
-
-SELECT U&'wrong: \061';
-ERROR:  unsafe use of string constant with Unicode escapes
-LINE 1: SELECT U&'wrong: \061';
-               ^
-DETAIL:  String constants with Unicode escapes cannot be used when "standard_conforming_strings" is off.
-SELECT U&'wrong: \+0061';
-ERROR:  unsafe use of string constant with Unicode escapes
-LINE 1: SELECT U&'wrong: \+0061';
-               ^
-DETAIL:  String constants with Unicode escapes cannot be used when "standard_conforming_strings" is off.
-SELECT U&'wrong: +0061' UESCAPE '+';
-ERROR:  unsafe use of string constant with Unicode escapes
-LINE 1: SELECT U&'wrong: +0061' UESCAPE '+';
-               ^
-DETAIL:  String constants with Unicode escapes cannot be used when "standard_conforming_strings" is off.
+ERROR:  non-standard string literals are not supported
+-- but this should be acceptable:
+SET standard_conforming_strings TO on;
+-- or this:
 RESET standard_conforming_strings;
 -- bytea
 SET bytea_output TO hex;
@@ -2869,90 +2837,6 @@ SELECT '\x8000000000000000'::bytea::int8 AS "-9223372036854775808",
  -9223372036854775808 | 9223372036854775807
 (1 row)
 
---
--- test behavior of escape_string_warning and standard_conforming_strings options
---
-set escape_string_warning = off;
-set standard_conforming_strings = off;
-show escape_string_warning;
- escape_string_warning 
------------------------
- off
-(1 row)
-
-show standard_conforming_strings;
- standard_conforming_strings 
------------------------------
- off
-(1 row)
-
-set escape_string_warning = on;
-set standard_conforming_strings = on;
-show escape_string_warning;
- escape_string_warning 
------------------------
- on
-(1 row)
-
-show standard_conforming_strings;
- standard_conforming_strings 
------------------------------
- on
-(1 row)
-
-select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
-  f1   |   f2   |   f3    |  f4   |   f5   | f6 
--------+--------+---------+-------+--------+----
- a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
-(1 row)
-
-set standard_conforming_strings = off;
-select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3,...
-               ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3,...
-                               ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3,...
-                                                 ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: ...bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'  ...
-                                                             ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: ...'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd'...
-                                                             ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal
-LINE 1: ...'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as ...
-                                                             ^
-HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-  f1   |   f2   |   f3    |  f4   |   f5   | f6 
--------+--------+---------+-------+--------+----
- a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
-(1 row)
-
-set escape_string_warning = off;
-set standard_conforming_strings = on;
-select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
-  f1   |   f2   |   f3    |  f4   |   f5   | f6 
--------+--------+---------+-------+--------+----
- a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
-(1 row)
-
-set standard_conforming_strings = off;
-select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
-  f1   |   f2   |   f3    |  f4   |   f5   | f6 
--------+--------+---------+-------+--------+----
- a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
-(1 row)
-
-reset standard_conforming_strings;
 --
 -- Additional string functions
 --
