@@ -307,22 +307,20 @@ pg_ceil_log2_64(uint64 num)
 #define POPCNT_AARCH64 1
 #endif
 
+extern int	pg_popcount32_slow(uint32 word);
+extern int	pg_popcount64_slow(uint64 word);
+extern uint64 pg_popcount_slow(const char *buf, int bytes);
+extern uint64 pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask);
+
 #ifdef TRY_POPCNT_X86_64
-/* Attempt to use the POPCNT instruction, but perform a runtime check first */
+/*
+ * Attempt to use SSE4.2 or AVX-512 instructions, but perform a runtime check
+ * first.
+ */
 extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
 extern PGDLLIMPORT int (*pg_popcount64) (uint64 word);
 extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
 extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask);
-
-/*
- * We can also try to use the AVX-512 popcount instruction on some systems.
- * The implementation of that is located in its own file.
- */
-#ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
-extern bool pg_popcount_avx512_available(void);
-extern uint64 pg_popcount_avx512(const char *buf, int bytes);
-extern uint64 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask);
-#endif
 
 #elif POPCNT_AARCH64
 /* Use the Neon version of pg_popcount{32,64} without function pointer. */
