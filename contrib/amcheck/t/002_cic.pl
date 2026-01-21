@@ -60,5 +60,29 @@ $node->pgbench(
 		  )
 	});
 
+# Test bt_index_parent_check() with indexes created with
+# CREATE INDEX CONCURRENTLY.
+$node->safe_psql('postgres', q(CREATE TABLE quebec(i int primary key)));
+# Insert two rows into index
+$node->safe_psql('postgres',
+	q(INSERT INTO quebec SELECT i FROM generate_series(1, 2) s(i);));
+
+# start background transaction
+my $in_progress_h = $node->background_psql('postgres');
+$in_progress_h->query_safe(q(BEGIN; SELECT pg_current_xact_id();));
+
+# delete one row from table, while background transaction is in progress
+$node->safe_psql('postgres', q(DELETE FROM quebec WHERE i = 1;));
+# create index concurrently, which will skip the deleted row
+$node->safe_psql('postgres',
+	q(CREATE INDEX CONCURRENTLY oscar ON quebec(i);));
+
+# check index using bt_index_parent_check
+$result = $node->psql('postgres',
+	q(SELECT bt_index_parent_check('oscar', heapallindexed => true)));
+is($result, '0', 'bt_index_parent_check for CIC after removed row');
+
+$in_progress_h->quit;
+
 $node->stop;
 done_testing();
