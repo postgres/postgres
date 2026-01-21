@@ -64,7 +64,7 @@ typedef enum
 #define CONFLICT_NUM_TYPES (CT_MULTIPLE_UNIQUE_CONFLICTS + 1)
 
 /*
- * Information for the existing local row that caused the conflict.
+ * Information for the local row that caused the conflict.
  */
 typedef struct ConflictTupleInfo
 {

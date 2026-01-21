@@ -366,15 +366,15 @@ $node_publisher->wait_for_catchup('tap_sub');
 my $logfile = slurp_file($node_subscriber->logfile, $log_location);
 like(
 	$logfile,
-	qr/conflict detected on relation "public.tab_full_pk": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(1, quux\); replica identity \(a\)=\(1\)/m,
+	qr/conflict detected on relation "public.tab_full_pk": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated: remote row \(1, quux\), replica identity \(a\)=\(1\)/m,
 	'update target row is missing');
 like(
 	$logfile,
-	qr/conflict detected on relation "public.tab_full": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(26\); replica identity full \(25\)/m,
+	qr/conflict detected on relation "public.tab_full": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated: remote row \(26\), replica identity full \(25\)/m,
 	'update target row is missing');
 like(
 	$logfile,
-	qr/conflict detected on relation "public.tab_full_pk": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(2\)/m,
+	qr/conflict detected on relation "public.tab_full_pk": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted: replica identity \(a\)=\(2\)/m,
 	'delete target row is missing');
 
 $node_subscriber->append_conf('postgresql.conf',

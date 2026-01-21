@@ -78,12 +78,10 @@ $node_publisher->safe_psql('postgres',
 # Confirm that this causes an error on the subscriber
 $node_subscriber->wait_for_log(
 	qr/conflict detected on relation \"public.conf_tab\": conflict=multiple_unique_conflicts.*
-.*Key already exists in unique index \"conf_tab_pkey\".*
-.*Key \(a\)=\(2\); existing local row \(2, 2, 2\); remote row \(2, 3, 4\).*
-.*Key already exists in unique index \"conf_tab_b_key\".*
-.*Key \(b\)=\(3\); existing local row \(3, 3, 3\); remote row \(2, 3, 4\).*
-.*Key already exists in unique index \"conf_tab_c_key\".*
-.*Key \(c\)=\(4\); existing local row \(4, 4, 4\); remote row \(2, 3, 4\)./,
+.*Could not apply remote change: remote row \(2, 3, 4\).*
+.*Key already exists in unique index \"conf_tab_pkey\", modified in transaction .*: key \(a\)=\(2\), local row \(2, 2, 2\).*
+.*Key already exists in unique index \"conf_tab_b_key\", modified in transaction .*: key \(b\)=\(3\), local row \(3, 3, 3\).*
+.*Key already exists in unique index \"conf_tab_c_key\", modified in transaction .*: key \(c\)=\(4\), local row \(4, 4, 4\)./,
 	$log_offset);
 
 pass('multiple_unique_conflicts detected during insert');
@@ -110,12 +108,10 @@ $node_publisher->safe_psql('postgres',
 # Confirm that this causes an error on the subscriber
 $node_subscriber->wait_for_log(
 	qr/conflict detected on relation \"public.conf_tab\": conflict=multiple_unique_conflicts.*
-.*Key already exists in unique index \"conf_tab_pkey\".*
-.*Key \(a\)=\(6\); existing local row \(6, 6, 6\); remote row \(6, 7, 8\).*
-.*Key already exists in unique index \"conf_tab_b_key\".*
-.*Key \(b\)=\(7\); existing local row \(7, 7, 7\); remote row \(6, 7, 8\).*
-.*Key already exists in unique index \"conf_tab_c_key\".*
-.*Key \(c\)=\(8\); existing local row \(8, 8, 8\); remote row \(6, 7, 8\)./,
+.*Could not apply remote change: remote row \(6, 7, 8\), replica identity \(a\)=\(5\).*
+.*Key already exists in unique index \"conf_tab_pkey\", modified in transaction .*: key \(a\)=\(6\), local row \(6, 6, 6\).*
+.*Key already exists in unique index \"conf_tab_b_key\", modified in transaction .*: key \(b\)=\(7\), local row \(7, 7, 7\).*
+.*Key already exists in unique index \"conf_tab_c_key\", modified in transaction .*: key \(c\)=\(8\), local row \(8, 8, 8\)./,
 	$log_offset);
 
 pass('multiple_unique_conflicts detected during update');
@@ -138,10 +134,9 @@ $node_publisher->safe_psql('postgres',
 
 $node_subscriber->wait_for_log(
 	qr/conflict detected on relation \"public.conf_tab_2_p1\": conflict=multiple_unique_conflicts.*
-.*Key already exists in unique index \"conf_tab_2_p1_pkey\".*
-.*Key \(a\)=\(55\); existing local row \(55, 2, 3\); remote row \(55, 2, 3\).*
-.*Key already exists in unique index \"conf_tab_2_p1_a_b_key\".*
-.*Key \(a, b\)=\(55, 2\); existing local row \(55, 2, 3\); remote row \(55, 2, 3\)./,
+.*Could not apply remote change: remote row \(55, 2, 3\).*
+.*Key already exists in unique index \"conf_tab_2_p1_pkey\", modified in transaction .*: key \(a\)=\(55\), local row \(55, 2, 3\).*
+.*Key already exists in unique index \"conf_tab_2_p1_a_b_key\", modified in transaction .*: key \(a, b\)=\(55, 2\), local row \(55, 2, 3\)./,
 	$log_offset);
 
 pass('multiple_unique_conflicts detected on a leaf partition during insert');
@@ -319,8 +314,7 @@ my $logfile = slurp_file($node_B->logfile(), $log_location);
 like(
 	$logfile,
 	qr/conflict detected on relation "public.tab": conflict=delete_origin_differs.*
-.*DETAIL:.* Deleting the row that was modified locally in transaction [0-9]+ at .*
-.*Existing local row \(1, 3\); replica identity \(a\)=\(1\)/,
+.*DETAIL:.* Deleting the row that was modified locally in transaction [0-9]+ at .*: local row \(1, 3\), replica identity \(a\)=\(1\)./,
 	'delete target row was modified in tab');
 
 $log_location = -s $node_A->logfile;
@@ -333,8 +327,8 @@ $logfile = slurp_file($node_A->logfile(), $log_location);
 like(
 	$logfile,
 	qr/conflict detected on relation "public.tab": conflict=update_deleted.*
-.*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
-.*Remote row \(1, 3\); replica identity \(a\)=\(1\)/,
+.*DETAIL:.* Could not find the row to be updated: remote row \(1, 3\), replica identity \(a\)=\(1\).
+.*The row to be updated was deleted locally in transaction [0-9]+ at .*/,
 	'update target row was deleted in tab');
 
 # Remember the next transaction ID to be assigned
@@ -381,8 +375,8 @@ $logfile = slurp_file($node_A->logfile(), $log_location);
 like(
 	$logfile,
 	qr/conflict detected on relation "public.tab": conflict=update_deleted.*
-.*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
-.*Remote row \(2, 4\); replica identity full \(2, 2\)/,
+.*DETAIL:.* Could not find the row to be updated: remote row \(2, 4\), replica identity full \(2, 2\).*
+.*The row to be updated was deleted locally in transaction [0-9]+ at .*/,
 	'update target row was deleted in tab');
 
 ###############################################################################
@@ -540,8 +534,8 @@ if ($injection_points_supported != 0)
 	like(
 		$logfile,
 		qr/conflict detected on relation "public.tab": conflict=update_deleted.*
-.*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
-.*Remote row \(1, 2\); replica identity full \(1, 1\)/,
+.*DETAIL:.* Could not find the row to be updated: remote row \(1, 2\), replica identity full \(1, 1\).*
+.*The row to be updated was deleted locally in transaction [0-9]+ at .*/,
 		'update target row was deleted in tab');
 
 	# Remember the next transaction ID to be assigned

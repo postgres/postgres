@@ -2121,13 +2121,12 @@ Publications:
    The log format for logical replication conflicts is as follows:
 <synopsis>
 LOG:  conflict detected on relation "<replaceable>schemaname</replaceable>.<replaceable>tablename</replaceable>": conflict=<replaceable>conflict_type</replaceable>
-DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
-{<replaceable class="parameter">detail_values</replaceable> [; ... ]}.
+DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>[: <replaceable class="parameter">detail_values</replaceable> [, ... ]].
 
 <phrase>where <replaceable class="parameter">detail_values</replaceable> is one of:</phrase>
 
-    <literal>Key</literal> (<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>)
-    <literal>existing local row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
+    <literal>key</literal> (<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>)
+    <literal>local row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
     <literal>remote row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
     <literal>replica identity</literal> {(<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>) | full <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)}
 </synopsis>
@@ -2162,12 +2161,12 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          <replaceable class="parameter">detailed_explanation</replaceable> includes
          the origin, transaction ID, and commit timestamp of the transaction that
-         modified the existing local row, if available.
+         modified the local row, if available.
         </para>
        </listitem>
        <listitem>
         <para>
-         The <literal>Key</literal> section includes the key values of the local
+         The <literal>key</literal> section includes the key values of the local
          row that violated a unique constraint for
          <literal>insert_exists</literal>, <literal>update_exists</literal> or
          <literal>multiple_unique_conflicts</literal> conflicts.
@@ -2175,8 +2174,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
        </listitem>
        <listitem>
         <para>
-         The <literal>existing local row</literal> section includes the local
-         row if its origin differs from the remote row for
+         The <literal>local row</literal> section includes the local row if its
+         origin differs from the remote row for
          <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
          conflicts, or if the key value conflicts with the remote row for
          <literal>insert_exists</literal>, <literal>update_exists</literal> or
@@ -2203,8 +2202,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
        <listitem>
         <para>
          <replaceable class="parameter">column_name</replaceable> is the column name.
-         For <literal>existing local row</literal>, <literal>remote row</literal>,
-         and <literal>replica identity full</literal> cases, column names are
+         For <literal>local row</literal>, <literal>remote row</literal>, and
+         <literal>replica identity full</literal> cases, column names are
          logged only if the user lacks the privilege to access all columns of
          the table. If column names are present, they appear in the same order
          as the corresponding column values.
@@ -2259,8 +2258,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
    emit the following kind of message to the subscriber's server log:
 <screen>
 ERROR:  conflict detected on relation "public.test": conflict=insert_exists
-DETAIL:  Key already exists in unique index "t_pkey", which was modified locally in transaction 740 at 2024-06-26 10:47:04.727375+08.
-Key (c)=(1); existing local row (1, 'local'); remote row (1, 'remote').
+DETAIL:  Could not apply remote change: remote row (1, 'remote').
+Key already exists in unique index "test_pkey", modified locally in transaction 800 at 2026-01-16 18:15:25.652759+09: key (c)=(1), local row (1, 'local').
 CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/014C0378
 </screen>
    The LSN of the transaction that contains the change violating the constraint and
