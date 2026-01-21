@@ -40,15 +40,19 @@
  *
  * To add an option:
  *
- * (i) decide on a type (bool, integer, real, enum, string), name, default
- * value, upper and lower bounds (if applicable); for strings, consider a
- * validation routine.
+ * (i) decide on a type (bool, ternary, integer, real, enum, string), name,
+ * default value, upper and lower bounds (if applicable); for strings,
+ * consider a validation routine.
  * (ii) add a record below (or use add_<type>_reloption).
  * (iii) add it to the appropriate options struct (perhaps StdRdOptions)
  * (iv) add it to the appropriate handling routine (perhaps
  * default_reloptions)
  * (v) make sure the lock level is set correctly for that operation
  * (vi) don't forget to document the option
+ *
+ * From the user's point of view, a 'ternary' is exactly like a Boolean,
+ * so we don't document it separately.  On the implementation side, the
+ * handling code can detect the case where the option has not been set.
  *
  * The default choice for any new option should be AccessExclusiveLock.
  * In some cases the lock level can be reduced from there, but the lock
@@ -149,15 +153,6 @@ static relopt_bool boolRelOpts[] =
 	},
 	{
 		{
-			"vacuum_truncate",
-			"Enables vacuum to truncate empty pages at the end of this table",
-			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
-			ShareUpdateExclusiveLock
-		},
-		true
-	},
-	{
-		{
 			"deduplicate_items",
 			"Enables \"deduplicate items\" feature for this btree index",
 			RELOPT_KIND_BTREE,
@@ -168,6 +163,24 @@ static relopt_bool boolRelOpts[] =
 	},
 	/* list terminator */
 	{{NULL}}
+};
+
+static relopt_ternary ternaryRelOpts[] =
+{
+	{
+		{
+			"vacuum_truncate",
+			"Enables vacuum to truncate empty pages at the end of this table",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		}
+	},
+	/* list terminator */
+	{
+		{
+			NULL
+		}
+	}
 };
 
 static relopt_int intRelOpts[] =
@@ -609,6 +622,13 @@ initialize_reloptions(void)
 								   boolRelOpts[i].gen.lockmode));
 		j++;
 	}
+	for (i = 0; ternaryRelOpts[i].gen.name; i++)
+	{
+		Assert(DoLockModesConflict(ternaryRelOpts[i].gen.lockmode,
+								   ternaryRelOpts[i].gen.lockmode));
+		j++;
+	}
+
 	for (i = 0; intRelOpts[i].gen.name; i++)
 	{
 		Assert(DoLockModesConflict(intRelOpts[i].gen.lockmode,
@@ -645,6 +665,14 @@ initialize_reloptions(void)
 	{
 		relOpts[j] = &boolRelOpts[i].gen;
 		relOpts[j]->type = RELOPT_TYPE_BOOL;
+		relOpts[j]->namelen = strlen(relOpts[j]->name);
+		j++;
+	}
+
+	for (i = 0; ternaryRelOpts[i].gen.name; i++)
+	{
+		relOpts[j] = &ternaryRelOpts[i].gen;
+		relOpts[j]->type = RELOPT_TYPE_TERNARY;
 		relOpts[j]->namelen = strlen(relOpts[j]->name);
 		j++;
 	}
@@ -809,6 +837,9 @@ allocate_reloption(bits32 kinds, int type, const char *name, const char *desc,
 		case RELOPT_TYPE_BOOL:
 			size = sizeof(relopt_bool);
 			break;
+		case RELOPT_TYPE_TERNARY:
+			size = sizeof(relopt_ternary);
+			break;
 		case RELOPT_TYPE_INT:
 			size = sizeof(relopt_int);
 			break;
@@ -892,6 +923,55 @@ add_local_bool_reloption(local_relopts *relopts, const char *name,
 	add_local_reloption(relopts, (relopt_gen *) newoption, offset);
 }
 
+/*
+ * init_ternary_reloption
+ *		Allocate and initialize a new ternary reloption
+ */
+static relopt_ternary *
+init_ternary_reloption(bits32 kinds, const char *name, const char *desc,
+					   LOCKMODE lockmode)
+{
+	relopt_ternary *newoption;
+
+	newoption = (relopt_ternary *)
+		allocate_reloption(kinds, RELOPT_TYPE_TERNARY, name, desc, lockmode);
+
+	return newoption;
+}
+
+/*
+ * add_ternary_reloption
+ *		Add a new ternary reloption
+ */
+void
+add_ternary_reloption(bits32 kinds, const char *name, const char *desc,
+					  LOCKMODE lockmode)
+{
+	relopt_ternary *newoption;
+
+	newoption =
+		init_ternary_reloption(kinds, name, desc, lockmode);
+
+	add_reloption((relopt_gen *) newoption);
+}
+
+/*
+ * add_local_ternary_reloption
+ *		Add a new ternary local reloption
+ *
+ * 'offset' is offset of ternary-typed field.
+ */
+void
+add_local_ternary_reloption(local_relopts *relopts, const char *name,
+							const char *desc, int offset)
+{
+	relopt_ternary *newoption;
+
+	newoption =
+		init_ternary_reloption(RELOPT_KIND_LOCAL, name, desc, 0);
+
+	add_local_reloption(relopts, (relopt_gen *) newoption, offset);
+}
 
 /*
  * init_real_reloption
@@ -1626,6 +1706,20 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 									option->gen->name, value)));
 			}
 			break;
+		case RELOPT_TYPE_TERNARY:
+			{
+				bool		b;
+
+				parsed = parse_bool(value, &b);
+				option->values.ternary_val = b ? PG_TERNARY_TRUE :
+					PG_TERNARY_FALSE;
+				if (validate && !parsed)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("invalid value for boolean option \"%s\": %s",
+								   option->gen->name, value));
+			}
+			break;
 		case RELOPT_TYPE_INT:
 			{
 				relopt_int *optint = (relopt_int *) option->gen;
@@ -1789,23 +1883,16 @@ fillRelOptions(void *rdopts, Size basesize,
 				char	   *itempos = ((char *) rdopts) + elems[j].offset;
 				char	   *string_val;
 
-				/*
-				 * If isset_offset is provided, store whether the reloption is
-				 * set there.
-				 */
-				if (elems[j].isset_offset > 0)
-				{
-					char	   *setpos = ((char *) rdopts) + elems[j].isset_offset;
-
-					*(bool *) setpos = options[i].isset;
-				}
-
 				switch (options[i].gen->type)
 				{
 					case RELOPT_TYPE_BOOL:
 						*(bool *) itempos = options[i].isset ?
 							options[i].values.bool_val :
 							((relopt_bool *) options[i].gen)->default_val;
+						break;
+					case RELOPT_TYPE_TERNARY:
+						*(pg_ternary *) itempos = options[i].isset ?
+							options[i].values.ternary_val : PG_TERNARY_UNSET;
 						break;
 					case RELOPT_TYPE_INT:
 						*(int *) itempos = options[i].isset ?
@@ -1923,8 +2010,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, parallel_workers)},
 		{"vacuum_index_cleanup", RELOPT_TYPE_ENUM,
 		offsetof(StdRdOptions, vacuum_index_cleanup)},
-		{"vacuum_truncate", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, vacuum_truncate), offsetof(StdRdOptions, vacuum_truncate_set)},
+		{"vacuum_truncate", RELOPT_TYPE_TERNARY,
+		offsetof(StdRdOptions, vacuum_truncate)},
 		{"vacuum_max_eager_freeze_failure_rate", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, vacuum_max_eager_freeze_failure_rate)}
 	};
@@ -2004,7 +2091,6 @@ build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 		elems[i].optname = opt->option->name;
 		elems[i].opttype = opt->option->type;
 		elems[i].offset = opt->offset;
-		elems[i].isset_offset = 0;	/* not supported for local relopts yet */
 
 		i++;
 	}

@@ -29,6 +29,7 @@
 typedef enum relopt_type
 {
 	RELOPT_TYPE_BOOL,
+	RELOPT_TYPE_TERNARY,		/* on, off, unset */
 	RELOPT_TYPE_INT,
 	RELOPT_TYPE_REAL,
 	RELOPT_TYPE_ENUM,
@@ -80,6 +81,7 @@ typedef struct relopt_value
 	union
 	{
 		bool		bool_val;
+		pg_ternary	ternary_val;
 		int			int_val;
 		double		real_val;
 		int			enum_val;
@@ -93,6 +95,12 @@ typedef struct relopt_bool
 	relopt_gen	gen;
 	bool		default_val;
 } relopt_bool;
+
+typedef struct relopt_ternary
+{
+	relopt_gen	gen;
+	/* ternaries have no default_val: otherwise they'd just be bools */
+} relopt_ternary;
 
 typedef struct relopt_int
 {
@@ -152,19 +160,6 @@ typedef struct
 	const char *optname;		/* option's name */
 	relopt_type opttype;		/* option's datatype */
 	int			offset;			/* offset of field in result struct */
-
-	/*
-	 * isset_offset is an optional offset of a field in the result struct that
-	 * stores whether the option is explicitly set for the relation or if it
-	 * just picked up the default value.  In most cases, this can be
-	 * accomplished by giving the reloption a special out-of-range default
-	 * value (e.g., some integer reloptions use -2), but this isn't always
-	 * possible.  For example, a Boolean reloption cannot be given an
-	 * out-of-range default, so we need another way to discover the source of
-	 * its value.  This offset is only used if given a value greater than
-	 * zero.
-	 */
-	int			isset_offset;
 } relopt_parse_elt;
 
 /* Local reloption definition */
@@ -195,6 +190,8 @@ typedef struct local_relopts
 extern relopt_kind add_reloption_kind(void);
 extern void add_bool_reloption(bits32 kinds, const char *name, const char *desc,
 							   bool default_val, LOCKMODE lockmode);
+extern void add_ternary_reloption(bits32 kinds, const char *name,
+								  const char *desc, LOCKMODE lockmode);
 extern void add_int_reloption(bits32 kinds, const char *name, const char *desc,
 							  int default_val, int min_val, int max_val,
 							  LOCKMODE lockmode);
@@ -214,6 +211,9 @@ extern void register_reloptions_validator(local_relopts *relopts,
 extern void add_local_bool_reloption(local_relopts *relopts, const char *name,
 									 const char *desc, bool default_val,
 									 int offset);
+extern void add_local_ternary_reloption(local_relopts *relopts,
+										const char *name, const char *desc,
+										int offset);
 extern void add_local_int_reloption(local_relopts *relopts, const char *name,
 									const char *desc, int default_val,
 									int min_val, int max_val, int offset);

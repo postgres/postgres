@@ -18,6 +18,7 @@ SET client_min_messages TO 'notice';
 CREATE INDEX dummy_test_idx ON dummy_test_tab
   USING dummy_index_am (i) WITH (
   option_bool = false,
+  option_ternary_1,
   option_int = 5,
   option_real = 3.1,
   option_enum = 'two',
@@ -30,6 +31,7 @@ SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 -- ALTER INDEX .. SET
 ALTER INDEX dummy_test_idx SET (option_int = 10);
 ALTER INDEX dummy_test_idx SET (option_bool = true);
+ALTER INDEX dummy_test_idx SET (option_ternary_1 = false);
 ALTER INDEX dummy_test_idx SET (option_real = 3.2);
 ALTER INDEX dummy_test_idx SET (option_string_val = 'val2');
 ALTER INDEX dummy_test_idx SET (option_string_null = NULL);
@@ -40,6 +42,7 @@ SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 -- ALTER INDEX .. RESET
 ALTER INDEX dummy_test_idx RESET (option_int);
 ALTER INDEX dummy_test_idx RESET (option_bool);
+ALTER INDEX dummy_test_idx RESET (option_ternary_1);
 ALTER INDEX dummy_test_idx RESET (option_real);
 ALTER INDEX dummy_test_idx RESET (option_enum);
 ALTER INDEX dummy_test_idx RESET (option_string_val);
@@ -60,6 +63,13 @@ ALTER INDEX dummy_test_idx SET (option_bool = 3.4); -- error
 ALTER INDEX dummy_test_idx SET (option_bool = 'val4'); -- error
 SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 ALTER INDEX dummy_test_idx RESET (option_bool);
+-- Ternary
+ALTER INDEX dummy_test_idx SET (option_ternary_1 = 4); -- error
+ALTER INDEX dummy_test_idx SET (option_ternary_1 = 1); -- ok, as true
+ALTER INDEX dummy_test_idx SET (option_ternary_1 = 3.4); -- error
+ALTER INDEX dummy_test_idx SET (option_ternary_1 = 'val4'); -- error
+SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
+ALTER INDEX dummy_test_idx RESET (option_ternary_1);
 -- Float
 ALTER INDEX dummy_test_idx SET (option_real = 4); -- ok
 ALTER INDEX dummy_test_idx SET (option_real = true); -- error

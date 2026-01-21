@@ -22,7 +22,7 @@
 PG_MODULE_MAGIC;
 
 /* parse table for fillRelOptions */
-static relopt_parse_elt di_relopt_tab[6];
+static relopt_parse_elt di_relopt_tab[8];
 
 /* Kind of relation options for dummy index */
 static relopt_kind di_relopt_kind;
@@ -40,6 +40,7 @@ typedef struct DummyIndexOptions
 	int			option_int;
 	double		option_real;
 	bool		option_bool;
+	pg_ternary	option_ternary_1;
 	DummyAmEnum option_enum;
 	int			option_string_val_offset;
 	int			option_string_null_offset;
@@ -73,28 +74,41 @@ validate_string_option(const char *value)
 static void
 create_reloptions_table(void)
 {
+	int			i = 0;
+
 	di_relopt_kind = add_reloption_kind();
 
 	add_int_reloption(di_relopt_kind, "option_int",
 					  "Integer option for dummy_index_am",
 					  10, -10, 100, AccessExclusiveLock);
-	di_relopt_tab[0].optname = "option_int";
-	di_relopt_tab[0].opttype = RELOPT_TYPE_INT;
-	di_relopt_tab[0].offset = offsetof(DummyIndexOptions, option_int);
+	di_relopt_tab[i].optname = "option_int";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_INT;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions, option_int);
+	i++;
 
 	add_real_reloption(di_relopt_kind, "option_real",
 					   "Real option for dummy_index_am",
 					   3.1415, -10, 100, AccessExclusiveLock);
-	di_relopt_tab[1].optname = "option_real";
-	di_relopt_tab[1].opttype = RELOPT_TYPE_REAL;
-	di_relopt_tab[1].offset = offsetof(DummyIndexOptions, option_real);
+	di_relopt_tab[i].optname = "option_real";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_REAL;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions, option_real);
+	i++;
 
 	add_bool_reloption(di_relopt_kind, "option_bool",
 					   "Boolean option for dummy_index_am",
 					   true, AccessExclusiveLock);
-	di_relopt_tab[2].optname = "option_bool";
-	di_relopt_tab[2].opttype = RELOPT_TYPE_BOOL;
-	di_relopt_tab[2].offset = offsetof(DummyIndexOptions, option_bool);
+	di_relopt_tab[i].optname = "option_bool";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_BOOL;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions, option_bool);
+	i++;
+
+	add_ternary_reloption(di_relopt_kind, "option_ternary_1",
+						  "One ternary option for dummy_index_am",
+						  AccessExclusiveLock);
+	di_relopt_tab[i].optname = "option_ternary_1";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_TERNARY;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions, option_ternary_1);
+	i++;
 
 	add_enum_reloption(di_relopt_kind, "option_enum",
 					   "Enum option for dummy_index_am",
@@ -102,18 +116,20 @@ create_reloptions_table(void)
 					   DUMMY_AM_ENUM_ONE,
 					   "Valid values are \"one\" and \"two\".",
 					   AccessExclusiveLock);
-	di_relopt_tab[3].optname = "option_enum";
-	di_relopt_tab[3].opttype = RELOPT_TYPE_ENUM;
-	di_relopt_tab[3].offset = offsetof(DummyIndexOptions, option_enum);
+	di_relopt_tab[i].optname = "option_enum";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_ENUM;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions, option_enum);
+	i++;
 
 	add_string_reloption(di_relopt_kind, "option_string_val",
 						 "String option for dummy_index_am with non-NULL default",
 						 "DefaultValue", &validate_string_option,
 						 AccessExclusiveLock);
-	di_relopt_tab[4].optname = "option_string_val";
-	di_relopt_tab[4].opttype = RELOPT_TYPE_STRING;
-	di_relopt_tab[4].offset = offsetof(DummyIndexOptions,
+	di_relopt_tab[i].optname = "option_string_val";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_STRING;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions,
 									   option_string_val_offset);
+	i++;
 
 	/*
 	 * String option for dummy_index_am with NULL default, and without
@@ -123,10 +139,11 @@ create_reloptions_table(void)
 						 NULL,	/* description */
 						 NULL, &validate_string_option,
 						 AccessExclusiveLock);
-	di_relopt_tab[5].optname = "option_string_null";
-	di_relopt_tab[5].opttype = RELOPT_TYPE_STRING;
-	di_relopt_tab[5].offset = offsetof(DummyIndexOptions,
+	di_relopt_tab[i].optname = "option_string_null";
+	di_relopt_tab[i].opttype = RELOPT_TYPE_STRING;
+	di_relopt_tab[i].offset = offsetof(DummyIndexOptions,
 									   option_string_null_offset);
+	i++;
 }
 
 

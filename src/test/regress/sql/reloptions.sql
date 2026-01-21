@@ -59,6 +59,17 @@ UPDATE pg_class
 ALTER TABLE reloptions_test RESET (illegal_option);
 SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
 
+-- Tests for ternary options
+
+-- behave as boolean option: accept unassigned name and truncated value
+DROP TABLE reloptions_test;
+CREATE TABLE reloptions_test(i INT) WITH (vacuum_truncate);
+SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
+
+DROP TABLE reloptions_test;
+CREATE TABLE reloptions_test(i INT) WITH (vacuum_truncate=FaLS);
+SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
+
 -- Test vacuum_truncate option
 DROP TABLE reloptions_test;
 
