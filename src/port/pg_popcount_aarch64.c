@@ -12,9 +12,7 @@
  */
 #include "c.h"
 
-#include "port/pg_bitutils.h"
-
-#ifdef POPCNT_AARCH64
+#ifdef USE_NEON
 
 #include <arm_neon.h>
 
@@ -29,6 +27,8 @@
 #endif
 #endif
 #endif
+
+#include "port/pg_bitutils.h"
 
 /*
  * The Neon versions are built regardless of whether we are building the SVE
@@ -478,4 +478,4 @@ pg_popcount_masked_neon(const char *buf, int bytes, bits8 mask)
 	return popcnt;
 }
 
-#endif							/* POPCNT_AARCH64 */
+#endif							/* USE_NEON */

@@ -12,9 +12,7 @@
  */
 #include "c.h"
 
-#include "port/pg_bitutils.h"
-
-#ifdef TRY_POPCNT_X86_64
+#ifdef HAVE_X86_64_POPCNTQ
 
 #if defined(HAVE__GET_CPUID) || defined(HAVE__GET_CPUID_COUNT)
 #include <cpuid.h>
@@ -27,6 +25,8 @@
 #if defined(HAVE__CPUID) || defined(HAVE__CPUIDEX)
 #include <intrin.h>
 #endif
+
+#include "port/pg_bitutils.h"
 
 /*
  * The SSE4.2 versions are built regardless of whether we are building the
@@ -468,4 +468,4 @@ pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask)
 	return popcnt;
 }
 
-#endif							/* TRY_POPCNT_X86_64 */
+#endif							/* HAVE_X86_64_POPCNTQ */
