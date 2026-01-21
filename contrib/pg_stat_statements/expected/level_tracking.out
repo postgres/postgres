@@ -1535,6 +1535,72 @@ SELECT toplevel, calls, rows, query FROM pg_stat_statements ORDER BY query COLLA
  t        |     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (8 rows)
 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+-- planner - all-level tracking.
+SET pg_stat_statements.track_planning = TRUE;
+SELECT PLUS_THREE(8);
+ plus_three 
+------------
+         11
+(1 row)
+
+SELECT PLUS_THREE(10);
+ plus_three 
+------------
+         13
+(1 row)
+
+SELECT toplevel, calls, rows, plans, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+ toplevel | calls | rows | plans |                               query                                
+----------+-------+------+-------+--------------------------------------------------------------------
+ t        |     2 |    2 |     2 | SELECT PLUS_THREE($1)
+ f        |     2 |    2 |     2 | SELECT i + 3 LIMIT 1
+ t        |     1 |    1 |     0 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+ t        |     0 |    0 |     1 | SELECT toplevel, calls, rows, plans, query FROM pg_stat_statements+
+          |       |      |       |   ORDER BY query COLLATE "C"
+(4 rows)
+
+RESET pg_stat_statements.track_planning;
+-- AFTER trigger SQL (ExecutorFinish) - all-level tracking.
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+CREATE TABLE test_trigger (id int, name text);
+CREATE TABLE audit_table (table_name text, action text, row_id int);
+CREATE OR REPLACE FUNCTION audit_trigger_func()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_table VALUES ('test_trigger', TG_OP, NEW.id);
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER audit_after_trigger
+  AFTER INSERT ON test_trigger
+  FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+INSERT INTO test_trigger VALUES (1, 'test1');
+INSERT INTO test_trigger VALUES (2, 'test2');
+SELECT toplevel, calls, rows, plans, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+ toplevel | calls | rows | plans |                        query                        
+----------+-------+------+-------+-----------------------------------------------------
+ f        |     2 |    2 |     0 | INSERT INTO audit_table VALUES ($15, TG_OP, NEW.id)
+ t        |     2 |    2 |     0 | INSERT INTO test_trigger VALUES ($1, $2)
+ t        |     1 |    1 |     0 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+(3 rows)
+
+DROP TRIGGER audit_after_trigger ON test_trigger;
+DROP FUNCTION audit_trigger_func();
+DROP TABLE audit_table, test_trigger;
 --
 -- pg_stat_statements.track = none
 --

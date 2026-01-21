@@ -431,6 +431,44 @@ SELECT PLUS_THREE(8);
 SELECT PLUS_THREE(10);
 
 SELECT toplevel, calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+
+-- planner - all-level tracking.
+SET pg_stat_statements.track_planning = TRUE;
+
+SELECT PLUS_THREE(8);
+SELECT PLUS_THREE(10);
+
+SELECT toplevel, calls, rows, plans, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+RESET pg_stat_statements.track_planning;
+
+-- AFTER trigger SQL (ExecutorFinish) - all-level tracking.
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+
+CREATE TABLE test_trigger (id int, name text);
+CREATE TABLE audit_table (table_name text, action text, row_id int);
+CREATE OR REPLACE FUNCTION audit_trigger_func()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_table VALUES ('test_trigger', TG_OP, NEW.id);
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER audit_after_trigger
+  AFTER INSERT ON test_trigger
+  FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+
+INSERT INTO test_trigger VALUES (1, 'test1');
+INSERT INTO test_trigger VALUES (2, 'test2');
+
+SELECT toplevel, calls, rows, plans, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+
+DROP TRIGGER audit_after_trigger ON test_trigger;
+DROP FUNCTION audit_trigger_func();
+DROP TABLE audit_table, test_trigger;
 
 --
 -- pg_stat_statements.track = none
