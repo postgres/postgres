@@ -50,9 +50,7 @@
 /*
  * fasthash as implemented here has two interfaces:
  *
- * 1) Standalone functions, e.g. fasthash32() for a single value with a
- * known length. These return the same hash code as the original, at
- * least on little-endian machines.
+ * 1) Standalone functions that take a single input.
  *
  * 2) Incremental interface. This can used for incorporating multiple
  * inputs. First, initialize the hash state (here with a zero seed):
@@ -60,6 +58,7 @@
  * fasthash_state hs;
  * fasthash_init(&hs, 0);
  *
+ * Next, accumulate input into the hash state.
  * If the inputs are of types that can be trivially cast to uint64, it's
  * sufficient to do:
  *
@@ -73,9 +72,19 @@
  * flexible, but more verbose method. The standalone functions use this
  * internally, so see fasthash64() for an example of this.
  *
- * After all inputs have been mixed in, finalize the hash:
+ * After all inputs have been mixed in, finalize the hash and optionally
+ * reduce to 32 bits. If all inputs are fixed-length, it's sufficient
+ * to pass zero for the tweak:
  *
  * hashcode = fasthash_final32(&hs, 0);
+ *
+ * For variable length input, experimentation has found that SMHasher
+ * fails unless we pass the length for the tweak. When accumulating
+ * multiple varlen values, it's probably safest to calculate a tweak
+ * such that the bits of all individual lengths are present, for example:
+ *
+ * lengths = len1 + (len2 << 10) + (len3 << 20);
+ * hashcode = fasthash_final32(&hs, lengths);
  *
  * The incremental interface allows an optimization for NUL-terminated
  * C strings:
@@ -83,10 +92,8 @@
  * len = fasthash_accum_cstring(&hs, str);
  * hashcode = fasthash_final32(&hs, len);
  *
- * By handling the terminator on-the-fly, we can avoid needing a strlen()
- * call to tell us how many bytes to hash. Experimentation has found that
- * SMHasher fails unless we incorporate the length, so it is passed to
- * the finalizer as a tweak.
+ * By computing the length on-the-fly, we can avoid needing a strlen()
+ * call to tell us how many bytes to hash.
  */
 
 
@@ -350,9 +357,13 @@ fasthash_final32(fasthash_state *hs, uint64 tweak)
 	return fasthash_reduce32(fasthash_final64(hs, tweak));
 }
 
+
+/* Standalone functions */
+
 /*
  * The original fasthash64 function, re-implemented using the incremental
- * interface. Returns a 64-bit hashcode. 'len' controls not only how
+ * interface. Returns the same 64-bit hashcode as the original,
+ * at least on little-endian machines. 'len' controls not only how
  * many bytes to hash, but also modifies the internal seed.
  * 'seed' can be zero.
  */
@@ -374,6 +385,11 @@ fasthash64(const char *k, size_t len, uint64 seed)
 	}
 
 	fasthash_accum(&hs, k, len);
+
+	/*
+	 * Since we already mixed the input length into the seed, we can just pass
+	 * zero here. This matches upstream behavior as well.
+	 */
 	return fasthash_final64(&hs, 0);
 }
 
@@ -386,6 +402,9 @@ fasthash32(const char *k, size_t len, uint64 seed)
 
 /*
  * Convenience function for hashing NUL-terminated strings
+ *
+ * Note: This is faster than, and computes a different result from,
+ * "fasthash32(s, strlen(s))"
  */
 static inline uint32
 hash_string(const char *s)
