@@ -1007,8 +1007,7 @@ find_computable_ec_member(PlannerInfo *root,
 	exprvars = pull_var_clause((Node *) exprs,
 							   PVC_INCLUDE_AGGREGATES |
 							   PVC_INCLUDE_WINDOWFUNCS |
-							   PVC_INCLUDE_PLACEHOLDERS |
-							   PVC_INCLUDE_CONVERTROWTYPES);
+							   PVC_INCLUDE_PLACEHOLDERS);
 
 	setup_eclass_member_iterator(&it, ec, relids);
 	while ((em = eclass_member_iterator_next(&it)) != NULL)
