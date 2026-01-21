@@ -31,11 +31,15 @@
 /*
  * The SSE4.2 versions are built regardless of whether we are building the
  * AVX-512 versions.
+ *
+ * Technically, POPCNT is not part of SSE4.2, and isn't even a vector
+ * operation, but in practice this is close enough, and "sse42" seems easier to
+ * follow than "popcnt" for these names.
  */
-static inline int pg_popcount32_fast(uint32 word);
-static inline int pg_popcount64_fast(uint64 word);
-static uint64 pg_popcount_fast(const char *buf, int bytes);
-static uint64 pg_popcount_masked_fast(const char *buf, int bytes, bits8 mask);
+static inline int pg_popcount32_sse42(uint32 word);
+static inline int pg_popcount64_sse42(uint64 word);
+static uint64 pg_popcount_sse42(const char *buf, int bytes);
+static uint64 pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask);
 
 /*
  * These are the AVX-512 implementations of the popcount functions.
@@ -64,7 +68,7 @@ uint64		(*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask)
  * Return true if CPUID indicates that the POPCNT instruction is available.
  */
 static bool
-pg_popcount_available(void)
+pg_popcount_sse42_available(void)
 {
 	unsigned int exx[4] = {0, 0, 0, 0};
 
@@ -161,19 +165,19 @@ pg_popcount_avx512_available(void)
 static inline void
 choose_popcount_functions(void)
 {
-	if (pg_popcount_available())
+	if (pg_popcount_sse42_available())
 	{
-		pg_popcount32 = pg_popcount32_fast;
-		pg_popcount64 = pg_popcount64_fast;
-		pg_popcount_optimized = pg_popcount_fast;
-		pg_popcount_masked_optimized = pg_popcount_masked_fast;
+		pg_popcount32 = pg_popcount32_sse42;
+		pg_popcount64 = pg_popcount64_sse42;
+		pg_popcount_optimized = pg_popcount_sse42;
+		pg_popcount_masked_optimized = pg_popcount_masked_sse42;
 	}
 	else
 	{
-		pg_popcount32 = pg_popcount32_slow;
-		pg_popcount64 = pg_popcount64_slow;
-		pg_popcount_optimized = pg_popcount_slow;
-		pg_popcount_masked_optimized = pg_popcount_masked_slow;
+		pg_popcount32 = pg_popcount32_portable;
+		pg_popcount64 = pg_popcount64_portable;
+		pg_popcount_optimized = pg_popcount_portable;
+		pg_popcount_masked_optimized = pg_popcount_masked_portable;
 	}
 
 #ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
@@ -335,11 +339,11 @@ pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
 #endif							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
 
 /*
- * pg_popcount32_fast
+ * pg_popcount32_sse42
  *		Return the number of 1 bits set in word
  */
 static inline int
-pg_popcount32_fast(uint32 word)
+pg_popcount32_sse42(uint32 word)
 {
 #ifdef _MSC_VER
 	return __popcnt(word);
@@ -352,11 +356,11 @@ __asm__ __volatile__(" popcntl %1,%0\n":"=q"(res):"rm"(word):"cc");
 }
 
 /*
- * pg_popcount64_fast
+ * pg_popcount64_sse42
  *		Return the number of 1 bits set in word
  */
 static inline int
-pg_popcount64_fast(uint64 word)
+pg_popcount64_sse42(uint64 word)
 {
 #ifdef _MSC_VER
 	return __popcnt64(word);
@@ -369,11 +373,11 @@ __asm__ __volatile__(" popcntq %1,%0\n":"=q"(res):"rm"(word):"cc");
 }
 
 /*
- * pg_popcount_fast
+ * pg_popcount_sse42
  *		Returns the number of 1-bits in buf
  */
 static uint64
-pg_popcount_fast(const char *buf, int bytes)
+pg_popcount_sse42(const char *buf, int bytes)
 {
 	uint64		popcnt = 0;
 
@@ -385,7 +389,7 @@ pg_popcount_fast(const char *buf, int bytes)
 
 		while (bytes >= 8)
 		{
-			popcnt += pg_popcount64_fast(*words++);
+			popcnt += pg_popcount64_sse42(*words++);
 			bytes -= 8;
 		}
 
@@ -399,7 +403,7 @@ pg_popcount_fast(const char *buf, int bytes)
 
 		while (bytes >= 4)
 		{
-			popcnt += pg_popcount32_fast(*words++);
+			popcnt += pg_popcount32_sse42(*words++);
 			bytes -= 4;
 		}
 
@@ -415,11 +419,11 @@ pg_popcount_fast(const char *buf, int bytes)
 }
 
 /*
- * pg_popcount_masked_fast
+ * pg_popcount_masked_sse42
  *		Returns the number of 1-bits in buf after applying the mask to each byte
  */
 static uint64
-pg_popcount_masked_fast(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask)
 {
 	uint64		popcnt = 0;
 
@@ -433,7 +437,7 @@ pg_popcount_masked_fast(const char *buf, int bytes, bits8 mask)
 
 		while (bytes >= 8)
 		{
-			popcnt += pg_popcount64_fast(*words++ & maskv);
+			popcnt += pg_popcount64_sse42(*words++ & maskv);
 			bytes -= 8;
 		}
 
@@ -449,7 +453,7 @@ pg_popcount_masked_fast(const char *buf, int bytes, bits8 mask)
 
 		while (bytes >= 4)
 		{
-			popcnt += pg_popcount32_fast(*words++ & maskv);
+			popcnt += pg_popcount32_sse42(*words++ & maskv);
 			bytes -= 4;
 		}
 

@@ -97,11 +97,11 @@ const uint8 pg_number_of_ones[256] = {
 };
 
 /*
- * pg_popcount32_slow
+ * pg_popcount32_portable
  *		Return the number of 1 bits set in word
  */
 int
-pg_popcount32_slow(uint32 word)
+pg_popcount32_portable(uint32 word)
 {
 #ifdef HAVE__BUILTIN_POPCOUNT
 	return __builtin_popcount(word);
@@ -119,11 +119,11 @@ pg_popcount32_slow(uint32 word)
 }
 
 /*
- * pg_popcount64_slow
+ * pg_popcount64_portable
  *		Return the number of 1 bits set in word
  */
 int
-pg_popcount64_slow(uint64 word)
+pg_popcount64_portable(uint64 word)
 {
 #ifdef HAVE__BUILTIN_POPCOUNT
 #if SIZEOF_LONG == 8
@@ -147,11 +147,11 @@ pg_popcount64_slow(uint64 word)
 }
 
 /*
- * pg_popcount_slow
+ * pg_popcount_portable
  *		Returns the number of 1-bits in buf
  */
 uint64
-pg_popcount_slow(const char *buf, int bytes)
+pg_popcount_portable(const char *buf, int bytes)
 {
 	uint64		popcnt = 0;
 
@@ -163,7 +163,7 @@ pg_popcount_slow(const char *buf, int bytes)
 
 		while (bytes >= 8)
 		{
-			popcnt += pg_popcount64_slow(*words++);
+			popcnt += pg_popcount64_portable(*words++);
 			bytes -= 8;
 		}
 
@@ -177,7 +177,7 @@ pg_popcount_slow(const char *buf, int bytes)
 
 		while (bytes >= 4)
 		{
-			popcnt += pg_popcount32_slow(*words++);
+			popcnt += pg_popcount32_portable(*words++);
 			bytes -= 4;
 		}
 
@@ -193,11 +193,11 @@ pg_popcount_slow(const char *buf, int bytes)
 }
 
 /*
- * pg_popcount_masked_slow
+ * pg_popcount_masked_portable
  *		Returns the number of 1-bits in buf after applying the mask to each byte
  */
 uint64
-pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask)
 {
 	uint64		popcnt = 0;
 
@@ -211,7 +211,7 @@ pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask)
 
 		while (bytes >= 8)
 		{
-			popcnt += pg_popcount64_slow(*words++ & maskv);
+			popcnt += pg_popcount64_portable(*words++ & maskv);
 			bytes -= 8;
 		}
 
@@ -227,7 +227,7 @@ pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask)
 
 		while (bytes >= 4)
 		{
-			popcnt += pg_popcount32_slow(*words++ & maskv);
+			popcnt += pg_popcount32_portable(*words++ & maskv);
 			bytes -= 4;
 		}
 
@@ -246,20 +246,20 @@ pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask)
 
 /*
  * When special CPU instructions are not available, there's no point in using
- * function pointers to vary the implementation between the fast and slow
- * method.  We instead just make these actual external functions.  The compiler
- * should be able to inline the slow versions here.
+ * function pointers to vary the implementation.  We instead just make these
+ * actual external functions.  The compiler should be able to inline the
+ * portable versions here.
  */
 int
 pg_popcount32(uint32 word)
 {
-	return pg_popcount32_slow(word);
+	return pg_popcount32_portable(word);
 }
 
 int
 pg_popcount64(uint64 word)
 {
-	return pg_popcount64_slow(word);
+	return pg_popcount64_portable(word);
 }
 
 /*
@@ -269,7 +269,7 @@ pg_popcount64(uint64 word)
 uint64
 pg_popcount_optimized(const char *buf, int bytes)
 {
-	return pg_popcount_slow(buf, bytes);
+	return pg_popcount_portable(buf, bytes);
 }
 
 /*
@@ -279,7 +279,7 @@ pg_popcount_optimized(const char *buf, int bytes)
 uint64
 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask)
 {
-	return pg_popcount_masked_slow(buf, bytes, mask);
+	return pg_popcount_masked_portable(buf, bytes, mask);
 }
 
 #endif							/* ! TRY_POPCNT_X86_64 && ! POPCNT_AARCH64 */

@@ -307,10 +307,10 @@ pg_ceil_log2_64(uint64 num)
 #define POPCNT_AARCH64 1
 #endif
 
-extern int	pg_popcount32_slow(uint32 word);
-extern int	pg_popcount64_slow(uint64 word);
-extern uint64 pg_popcount_slow(const char *buf, int bytes);
-extern uint64 pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask);
+extern int	pg_popcount32_portable(uint32 word);
+extern int	pg_popcount64_portable(uint64 word);
+extern uint64 pg_popcount_portable(const char *buf, int bytes);
+extern uint64 pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask);
 
 #ifdef TRY_POPCNT_X86_64
 /*
