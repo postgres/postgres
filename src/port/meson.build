@@ -10,7 +10,7 @@ pgport_sources = [
   'pg_localeconv_r.c',
   'pg_numa.c',
   'pg_popcount_aarch64.c',
-  'pg_popcount_avx512.c',
+  'pg_popcount_x86.c',
   'pg_strong_random.c',
   'pgcheckdir.c',
   'pgmkdirp.c',

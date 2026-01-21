@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pg_popcount_avx512.c
- *	  Holds the AVX-512 pg_popcount() implementation.
+ * pg_popcount_x86.c
+ *	  Holds the x86-64 pg_popcount() implementations.
  *
  * Copyright (c) 2024-2026, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/port/pg_popcount_avx512.c
+ *	  src/port/pg_popcount_x86.c
  *
  *-------------------------------------------------------------------------
  */
