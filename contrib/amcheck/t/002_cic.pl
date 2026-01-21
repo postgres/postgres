@@ -74,7 +74,8 @@ $in_progress_h->query_safe(q(BEGIN; SELECT pg_current_xact_id();));
 # delete one row from table, while background transaction is in progress
 $node->safe_psql('postgres', q(DELETE FROM quebec WHERE i = 1;));
 # create index concurrently, which will skip the deleted row
-$node->safe_psql('postgres', q(CREATE INDEX CONCURRENTLY oscar ON quebec(i);));
+$node->safe_psql('postgres',
+	q(CREATE INDEX CONCURRENTLY oscar ON quebec(i);));
 
 # check index using bt_index_parent_check
 $result = $node->psql('postgres',

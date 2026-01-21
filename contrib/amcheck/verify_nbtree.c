@@ -90,9 +90,11 @@ typedef struct BtreeCheckState
 	BufferAccessStrategy checkstrategy;
 
 	/*
-	 * Info for uniqueness checking. Fill these fields once per index check.
+	 * Info for uniqueness checking. Fill this field and the one below once
+	 * per index check.
 	 */
 	IndexInfo  *indexinfo;
+	/* Table scan snapshot for heapallindexed and checkunique */
 	Snapshot	snapshot;
 
 	/*
