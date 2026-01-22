@@ -387,12 +387,45 @@ fi
 
 AC_PROG_CXX([$pgac_cxx_list])
 
-if test -n "$ac_ct_CXX"; then
-  have_cxx=yes
-else
-  have_cxx=no
-fi
+# Check if it actually found a C++ compiler.
+AC_LANG_PUSH([C++])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
+  [have_cxx=yes],
+  [have_cxx=no])
+AC_LANG_POP([C++])
 AC_SUBST(have_cxx)
+
+if test "$have_cxx" = yes; then
+
+# Detect option needed for C++11
+AC_MSG_CHECKING([for $CXX option to accept ISO C++11])
+AC_CACHE_VAL([pgac_cv_prog_cxx_cxx11],
+[pgac_cv_prog_cxx_cxx11=no
+pgac_save_CXX=$CXX
+AC_LANG_PUSH([C++])
+for pgac_arg in '' '-std=gnu++11' '-std=c++11'; do
+  CXX="$pgac_save_CXX $pgac_arg"
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#if !defined __cplusplus || __cplusplus < 201103L
+# error "Compiler does not advertise C++11 conformance"
+#endif]])], [[pgac_cv_prog_cxx_cxx11=$pgac_arg]])
+  test x"$pgac_cv_prog_cxx_cxx11" != x"no" && break
+done
+AC_LANG_POP([C++])
+CXX=$pgac_save_CXX])
+
+if test x"$pgac_cv_prog_cxx_cxx11" = x"no"; then
+  AC_MSG_RESULT([unsupported])
+  AC_MSG_WARN([C++ compiler "$CXX" does not support C++11])
+  have_cxx=no
+elif test x"$pgac_cv_prog_cxx_cxx11" = x""; then
+  AC_MSG_RESULT([none needed])
+else
+  AC_MSG_RESULT([$pgac_cv_prog_cxx_cxx11])
+  CXX="$CXX $pgac_cv_prog_cxx_cxx11"
+fi
+
+fi  # have_cxx
+
 
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
 # but has idiosyncrasies of its own.  We assume icc will define
