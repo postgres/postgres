@@ -152,8 +152,6 @@ process_extension_updates(DbInfo *dbinfo, PGresult *res, void *arg)
 	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
 	PQExpBufferData connectbuf;
 
-	AssertVariableIsOfType(&process_extension_updates, UpgradeTaskProcessCB);
-
 	if (ntups == 0)
 		return;
 

@@ -61,8 +61,6 @@ process_loadable_libraries(DbInfo *dbinfo, PGresult *res, void *arg)
 {
 	struct loadable_libraries_state *state = (struct loadable_libraries_state *) arg;
 
-	AssertVariableIsOfType(&process_loadable_libraries, UpgradeTaskProcessCB);
-
 	state->ress[dbinfo - old_cluster.dbarr.dbs] = res;
 	state->totaltups += PQntuples(res);
 }

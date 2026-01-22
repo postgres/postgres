@@ -400,8 +400,6 @@ process_data_type_check(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			i_attname = PQfnumber(res, "attname");
 	FILE	   *script = NULL;
 
-	AssertVariableIsOfType(&process_data_type_check, UpgradeTaskProcessCB);
-
 	if (ntups == 0)
 		return;
 
@@ -1279,9 +1277,6 @@ process_isn_and_int8_passing_mismatch(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			i_proname = PQfnumber(res, "proname");
 	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
 
-	AssertVariableIsOfType(&process_isn_and_int8_passing_mismatch,
-						   UpgradeTaskProcessCB);
-
 	if (ntups == 0)
 		return;
 
@@ -1367,9 +1362,6 @@ process_user_defined_postfix_ops(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			i_oprname = PQfnumber(res, "oprname");
 	int			i_typnsp = PQfnumber(res, "typnsp");
 	int			i_typname = PQfnumber(res, "typname");
-
-	AssertVariableIsOfType(&process_user_defined_postfix_ops,
-						   UpgradeTaskProcessCB);
 
 	if (ntups == 0)
 		return;
@@ -1458,9 +1450,6 @@ process_incompat_polymorphics(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			ntups = PQntuples(res);
 	int			i_objkind = PQfnumber(res, "objkind");
 	int			i_objname = PQfnumber(res, "objname");
-
-	AssertVariableIsOfType(&process_incompat_polymorphics,
-						   UpgradeTaskProcessCB);
 
 	if (ntups == 0)
 		return;
@@ -1592,8 +1581,6 @@ process_with_oids_check(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			i_nspname = PQfnumber(res, "nspname");
 	int			i_relname = PQfnumber(res, "relname");
 
-	AssertVariableIsOfType(&process_with_oids_check, UpgradeTaskProcessCB);
-
 	if (ntups == 0)
 		return;
 
@@ -1662,9 +1649,6 @@ process_inconsistent_notnull(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			i_nspname = PQfnumber(res, "nspname");
 	int			i_relname = PQfnumber(res, "relname");
 	int			i_attname = PQfnumber(res, "attname");
-
-	AssertVariableIsOfType(&process_inconsistent_notnull,
-						   UpgradeTaskProcessCB);
 
 	if (ntups == 0)
 		return;
@@ -1750,8 +1734,6 @@ process_gist_inet_ops_check(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			ntups = PQntuples(res);
 	int			i_nspname = PQfnumber(res, "nspname");
 	int			i_relname = PQfnumber(res, "relname");
-
-	AssertVariableIsOfType(&process_gist_inet_ops_check, UpgradeTaskProcessCB);
 
 	if (ntups == 0)
 		return;
@@ -1885,9 +1867,6 @@ process_user_defined_encoding_conversions(DbInfo *dbinfo, PGresult *res, void *a
 	int			i_conoid = PQfnumber(res, "conoid");
 	int			i_conname = PQfnumber(res, "conname");
 	int			i_nspname = PQfnumber(res, "nspname");
-
-	AssertVariableIsOfType(&process_user_defined_encoding_conversions,
-						   UpgradeTaskProcessCB);
 
 	if (ntups == 0)
 		return;
@@ -2397,8 +2376,6 @@ process_old_sub_state_check(DbInfo *dbinfo, PGresult *res, void *arg)
 	int			i_subname = PQfnumber(res, "subname");
 	int			i_nspname = PQfnumber(res, "nspname");
 	int			i_relname = PQfnumber(res, "relname");
-
-	AssertVariableIsOfType(&process_old_sub_state_check, UpgradeTaskProcessCB);
 
 	if (ntups == 0)
 		return;
