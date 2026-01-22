@@ -600,7 +600,7 @@ static void parse_one_reloption(relopt_value *option, char *text_str,
  * relation options.
  */
 #define GET_STRING_RELOPTION_LEN(option) \
-	((option).isset ? strlen((option).values.string_val) : \
+	((option).isset ? strlen((option).string_val) : \
 	 ((relopt_string *) (option).gen)->default_len)
 
 /*
@@ -1698,7 +1698,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 	{
 		case RELOPT_TYPE_BOOL:
 			{
-				parsed = parse_bool(value, &option->values.bool_val);
+				parsed = parse_bool(value, &option->bool_val);
 				if (validate && !parsed)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1711,7 +1711,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				bool		b;
 
 				parsed = parse_bool(value, &b);
-				option->values.ternary_val = b ? PG_TERNARY_TRUE :
+				option->ternary_val = b ? PG_TERNARY_TRUE :
 					PG_TERNARY_FALSE;
 				if (validate && !parsed)
 					ereport(ERROR,
@@ -1724,14 +1724,14 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 			{
 				relopt_int *optint = (relopt_int *) option->gen;
 
-				parsed = parse_int(value, &option->values.int_val, 0, NULL);
+				parsed = parse_int(value, &option->int_val, 0, NULL);
 				if (validate && !parsed)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for integer option \"%s\": %s",
 									option->gen->name, value)));
-				if (validate && (option->values.int_val < optint->min ||
-								 option->values.int_val > optint->max))
+				if (validate && (option->int_val < optint->min ||
+								 option->int_val > optint->max))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("value %s out of bounds for option \"%s\"",
@@ -1744,14 +1744,14 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 			{
 				relopt_real *optreal = (relopt_real *) option->gen;
 
-				parsed = parse_real(value, &option->values.real_val, 0, NULL);
+				parsed = parse_real(value, &option->real_val, 0, NULL);
 				if (validate && !parsed)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for floating point option \"%s\": %s",
 									option->gen->name, value)));
-				if (validate && (option->values.real_val < optreal->min ||
-								 option->values.real_val > optreal->max))
+				if (validate && (option->real_val < optreal->min ||
+								 option->real_val > optreal->max))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("value %s out of bounds for option \"%s\"",
@@ -1770,7 +1770,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				{
 					if (pg_strcasecmp(value, elt->string_val) == 0)
 					{
-						option->values.enum_val = elt->symbol_val;
+						option->enum_val = elt->symbol_val;
 						parsed = true;
 						break;
 					}
@@ -1788,14 +1788,14 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				 * not asked to validate, just use the default numeric value.
 				 */
 				if (!parsed)
-					option->values.enum_val = optenum->default_val;
+					option->enum_val = optenum->default_val;
 			}
 			break;
 		case RELOPT_TYPE_STRING:
 			{
 				relopt_string *optstring = (relopt_string *) option->gen;
 
-				option->values.string_val = value;
+				option->string_val = value;
 				nofree = true;
 				if (validate && optstring->validate_cb)
 					(optstring->validate_cb) (value);
@@ -1837,7 +1837,7 @@ allocateReloptStruct(Size base, relopt_value *options, int numoptions)
 
 			if (optstr->fill_cb)
 			{
-				const char *val = optval->isset ? optval->values.string_val :
+				const char *val = optval->isset ? optval->string_val :
 					optstr->default_isnull ? NULL : optstr->default_val;
 
 				size += optstr->fill_cb(val, NULL);
@@ -1887,32 +1887,32 @@ fillRelOptions(void *rdopts, Size basesize,
 				{
 					case RELOPT_TYPE_BOOL:
 						*(bool *) itempos = options[i].isset ?
-							options[i].values.bool_val :
+							options[i].bool_val :
 							((relopt_bool *) options[i].gen)->default_val;
 						break;
 					case RELOPT_TYPE_TERNARY:
 						*(pg_ternary *) itempos = options[i].isset ?
-							options[i].values.ternary_val : PG_TERNARY_UNSET;
+							options[i].ternary_val : PG_TERNARY_UNSET;
 						break;
 					case RELOPT_TYPE_INT:
 						*(int *) itempos = options[i].isset ?
-							options[i].values.int_val :
+							options[i].int_val :
 							((relopt_int *) options[i].gen)->default_val;
 						break;
 					case RELOPT_TYPE_REAL:
 						*(double *) itempos = options[i].isset ?
-							options[i].values.real_val :
+							options[i].real_val :
 							((relopt_real *) options[i].gen)->default_val;
 						break;
 					case RELOPT_TYPE_ENUM:
 						*(int *) itempos = options[i].isset ?
-							options[i].values.enum_val :
+							options[i].enum_val :
 							((relopt_enum *) options[i].gen)->default_val;
 						break;
 					case RELOPT_TYPE_STRING:
 						optstring = (relopt_string *) options[i].gen;
 						if (options[i].isset)
-							string_val = options[i].values.string_val;
+							string_val = options[i].string_val;
 						else if (!optstring->default_isnull)
 							string_val = optstring->default_val;
 						else

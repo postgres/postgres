@@ -86,7 +86,7 @@ typedef struct relopt_value
 		double		real_val;
 		int			enum_val;
 		char	   *string_val; /* allocated separately */
-	}			values;
+	};
 } relopt_value;
 
 /* reloptions records for specific variable types */
