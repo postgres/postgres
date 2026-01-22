@@ -65,7 +65,7 @@
 
    <listitem>
     <para>
-     Specifies whether the data has a header line,
+     Specifies whether to skip a header line, or how many header lines to skip,
      the same as <command>COPY</command>'s <literal>HEADER</literal> option.
     </para>
    </listitem>
@@ -179,7 +179,7 @@
   to be specified without a corresponding value, the foreign table option
   syntax requires a value to be present in all cases.  To activate
   <command>COPY</command> options typically written without a value, you can pass
-  the value TRUE, since all such options are Booleans.
+  the value TRUE, since all such options accept Booleans.
  </para>
 
  <para>

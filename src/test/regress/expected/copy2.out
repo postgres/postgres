@@ -138,6 +138,12 @@ COPY x from stdin with (header 2.5);
 ERROR:  header requires a Boolean value, an integer value greater than or equal to zero, or the string "match"
 COPY x to stdout with (header 2);
 ERROR:  cannot use multi-line header in COPY TO
+COPY x to stdout with (header '-1');
+ERROR:  a negative integer value cannot be specified for header
+COPY x from stdin with (header '2.5');
+ERROR:  header requires a Boolean value, an integer value greater than or equal to zero, or the string "match"
+COPY x to stdout with (header '2');
+ERROR:  cannot use multi-line header in COPY TO
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once

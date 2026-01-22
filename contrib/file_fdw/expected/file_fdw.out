@@ -104,6 +104,12 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (reject_limit '1');      
 ERROR:  COPY REJECT_LIMIT requires ON_ERROR to be set to IGNORE
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (on_error 'ignore', reject_limit '0');       -- ERROR
 ERROR:  REJECT_LIMIT (0) must be greater than zero
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (header '-1');           -- ERROR
+ERROR:  a negative integer value cannot be specified for header
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (header '2.5');          -- ERROR
+ERROR:  header requires a Boolean value, an integer value greater than or equal to zero, or the string "match"
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (header 'unsupported');  -- ERROR
+ERROR:  header requires a Boolean value, an integer value greater than or equal to zero, or the string "match"
 CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
 ERROR:  either filename or program is required for file_fdw foreign tables
 \set filename :abs_srcdir '/data/agg.data'
@@ -142,6 +148,25 @@ OPTIONS (format 'csv', filename :'filename', delimiter ',', header 'match');
 SELECT * FROM header_doesnt_match; -- ERROR
 ERROR:  column name mismatch in header line field 1: got "1", expected "a"
 CONTEXT:  COPY header_doesnt_match, line 1: "1,foo"
+-- test multi-line header
+\set filename :abs_srcdir '/data/multiline_header.csv'
+CREATE FOREIGN TABLE multi_header (a int, b text) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', header '2');
+SELECT * FROM multi_header ORDER BY a;
+ a |   b   
+---+-------
+ 1 | alpha
+ 2 | beta
+(2 rows)
+
+CREATE FOREIGN TABLE multi_header_skip (a int, b text) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', header '5');
+SELECT count(*) FROM multi_header_skip;
+ count 
+-------
+     0
+(1 row)
+
 -- per-column options tests
 \set filename :abs_srcdir '/data/text.csv'
 CREATE FOREIGN TABLE text_csv (
@@ -543,7 +568,7 @@ SET ROLE regress_file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
-NOTICE:  drop cascades to 9 other objects
+NOTICE:  drop cascades to 11 other objects
 DETAIL:  drop cascades to server file_server
 drop cascades to user mapping for regress_file_fdw_superuser on server file_server
 drop cascades to user mapping for regress_no_priv_user on server file_server
@@ -552,5 +577,7 @@ drop cascades to foreign table agg_csv
 drop cascades to foreign table agg_bad
 drop cascades to foreign table header_match
 drop cascades to foreign table header_doesnt_match
+drop cascades to foreign table multi_header
+drop cascades to foreign table multi_header_skip
 drop cascades to foreign table text_csv
 DROP ROLE regress_file_fdw_superuser, regress_file_fdw_user, regress_no_priv_user;

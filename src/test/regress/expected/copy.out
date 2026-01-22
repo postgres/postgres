@@ -104,6 +104,24 @@ select count(*) from copytest5;
      0
 (1 row)
 
+-- test header line feature (given as strings)
+truncate copytest5;
+copy copytest5 from stdin (format csv, header '0');
+select * from copytest5 order by c1;
+ c1 
+----
+  1
+  2
+(2 rows)
+
+truncate copytest5;
+copy copytest5 from stdin (format csv, header '1');
+select * from copytest5 order by c1;
+ c1 
+----
+  2
+(1 row)
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,

@@ -93,6 +93,9 @@ COPY x from stdin with (on_error ignore, reject_limit 0);
 COPY x from stdin with (header -1);
 COPY x from stdin with (header 2.5);
 COPY x to stdout with (header 2);
+COPY x to stdout with (header '-1');
+COPY x from stdin with (header '2.5');
+COPY x to stdout with (header '2');
 
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;

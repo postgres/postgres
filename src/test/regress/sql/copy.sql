@@ -124,6 +124,21 @@ this is a second header line.
 \.
 select count(*) from copytest5;
 
+-- test header line feature (given as strings)
+truncate copytest5;
+copy copytest5 from stdin (format csv, header '0');
+1
+2
+\.
+select * from copytest5 order by c1;
+
+truncate copytest5;
+copy copytest5 from stdin (format csv, header '1');
+1
+2
+\.
+select * from copytest5 order by c1;
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,
