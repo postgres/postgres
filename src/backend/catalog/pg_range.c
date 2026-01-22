@@ -35,7 +35,9 @@
 void
 RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 			Oid rangeSubOpclass, RegProcedure rangeCanonical,
-			RegProcedure rangeSubDiff, Oid multirangeTypeOid)
+			RegProcedure rangeSubDiff, Oid multirangeTypeOid,
+			RegProcedure rangeConstruct2, RegProcedure rangeConstruct3,
+			RegProcedure mltrngConstruct0, RegProcedure mltrngConstruct1, RegProcedure mltrngConstruct2)
 {
 	Relation	pg_range;
 	Datum		values[Natts_pg_range];
@@ -57,6 +59,11 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 	values[Anum_pg_range_rngcanonical - 1] = ObjectIdGetDatum(rangeCanonical);
 	values[Anum_pg_range_rngsubdiff - 1] = ObjectIdGetDatum(rangeSubDiff);
 	values[Anum_pg_range_rngmultitypid - 1] = ObjectIdGetDatum(multirangeTypeOid);
+	values[Anum_pg_range_rngconstruct2 - 1] = ObjectIdGetDatum(rangeConstruct2);
+	values[Anum_pg_range_rngconstruct3 - 1] = ObjectIdGetDatum(rangeConstruct3);
+	values[Anum_pg_range_rngmltconstruct0 - 1] = ObjectIdGetDatum(mltrngConstruct0);
+	values[Anum_pg_range_rngmltconstruct1 - 1] = ObjectIdGetDatum(mltrngConstruct1);
+	values[Anum_pg_range_rngmltconstruct2 - 1] = ObjectIdGetDatum(mltrngConstruct2);
 
 	tup = heap_form_tuple(RelationGetDescr(pg_range), values, nulls);
 

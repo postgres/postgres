@@ -451,7 +451,9 @@ WHERE (is_catalog_text_unique_index_oid(indexrelid) <>
 
 SELECT r.rngtypid, r.rngsubtype
 FROM pg_range as r
-WHERE r.rngtypid = 0 OR r.rngsubtype = 0 OR r.rngsubopc = 0;
+WHERE r.rngtypid = 0 OR r.rngsubtype = 0 OR r.rngsubopc = 0
+    OR r.rngconstruct2 = 0 OR r.rngconstruct3 = 0
+    OR r.rngmltconstruct0 = 0 OR r.rngmltconstruct1 = 0 OR r.rngmltconstruct2 = 0;
 
 -- rngcollation should be specified iff subtype is collatable
 
@@ -490,6 +492,49 @@ WHERE pronargs != 2
 SELECT r.rngtypid, r.rngsubtype, r.rngmultitypid
 FROM pg_range r
 WHERE r.rngmultitypid IS NULL OR r.rngmultitypid = 0;
+
+-- check constructor function arguments and return types
+--
+-- proname and prosrc are not required to have these particular
+-- values, but this matches what DefineRange() produces and serves to
+-- sanity-check the catalog entries for built-in types.
+
+SELECT r.rngtypid, r.rngsubtype, p.proname
+FROM pg_range r JOIN pg_proc p ON p.oid = r.rngconstruct2 JOIN pg_type t ON r.rngtypid = t.oid
+WHERE p.pronargs != 2
+    OR p.proargtypes[0] != r.rngsubtype OR p.proargtypes[1] != r.rngsubtype
+    OR p.prorettype != r.rngtypid
+    OR p.proname != t.typname OR p.prosrc != 'range_constructor2';
+
+SELECT r.rngtypid, r.rngsubtype, p.proname
+FROM pg_range r JOIN pg_proc p ON p.oid = r.rngconstruct3 JOIN pg_type t ON r.rngtypid = t.oid
+WHERE p.pronargs != 3
+    OR p.proargtypes[0] != r.rngsubtype OR p.proargtypes[1] != r.rngsubtype OR p.proargtypes[2] != 'pg_catalog.text'::regtype
+    OR p.prorettype != r.rngtypid
+    OR p.proname != t.typname OR p.prosrc != 'range_constructor3';
+
+SELECT r.rngtypid, r.rngsubtype, p.proname
+FROM pg_range r JOIN pg_proc p ON p.oid = r.rngmltconstruct0 JOIN pg_type t ON r.rngmultitypid = t.oid
+WHERE p.pronargs != 0
+    OR p.prorettype != r.rngmultitypid
+    OR p.proname != t.typname OR p.prosrc != 'multirange_constructor0';
+
+SELECT r.rngtypid, r.rngsubtype, p.proname
+FROM pg_range r JOIN pg_proc p ON p.oid = r.rngmltconstruct1 JOIN pg_type t ON r.rngmultitypid = t.oid
+WHERE p.pronargs != 1
+    OR p.proargtypes[0] != r.rngtypid
+    OR p.prorettype != r.rngmultitypid
+    OR p.proname != t.typname OR p.prosrc != 'multirange_constructor1';
+
+SELECT r.rngtypid, r.rngsubtype, p.proname
+FROM pg_range r JOIN pg_proc p ON p.oid = r.rngmltconstruct2 JOIN pg_type t ON r.rngmultitypid = t.oid JOIN pg_type t2 ON r.rngtypid = t2.oid
+WHERE p.pronargs != 1
+    OR p.proargtypes[0] != t2.typarray
+    OR p.prorettype != r.rngmultitypid
+    OR p.proname != t.typname OR p.prosrc != 'multirange_constructor2';
+
+
+-- ******************************************
 
 -- Create a table that holds all the known in-core data types and leave it
 -- around so as pg_upgrade is able to test their binary compatibility.
