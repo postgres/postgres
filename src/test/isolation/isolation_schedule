@@ -47,6 +47,7 @@ test: insert-conflict-do-nothing-2
 test: insert-conflict-do-update
 test: insert-conflict-do-update-2
 test: insert-conflict-do-update-3
+test: insert-conflict-do-update-4
 test: insert-conflict-specconflict
 test: delete-abort-savept
 test: delete-abort-savept-2
