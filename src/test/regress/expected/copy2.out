@@ -135,7 +135,7 @@ ERROR:  REJECT_LIMIT (0) must be greater than zero
 COPY x from stdin with (header -1);
 ERROR:  a negative integer value cannot be specified for header
 COPY x from stdin with (header 2.5);
-ERROR:  header requires a Boolean value, a non-negative integer, or the string "match"
+ERROR:  header requires a Boolean value, an integer value greater than or equal to zero, or the string "match"
 COPY x to stdout with (header 2);
 ERROR:  cannot use multi-line header in COPY TO
 -- too many columns in column list: should fail

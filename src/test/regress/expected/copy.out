@@ -247,7 +247,7 @@ alter table header_copytest add column c text;
 copy header_copytest to stdout with (header match);
 ERROR:  cannot use "match" with HEADER in COPY TO
 copy header_copytest from stdin with (header wrong_choice);
-ERROR:  header requires a Boolean value, a non-negative integer, or the string "match"
+ERROR:  header requires a Boolean value, an integer value greater than or equal to zero, or the string "match"
 -- works
 copy header_copytest from stdin with (header match);
 copy header_copytest (c, a, b) from stdin with (header match);

@@ -367,8 +367,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 /*
  * Extract the CopyFormatOptions.header_line value from a DefElem.
  *
- * Parses the HEADER option for COPY, which can be a boolean, a non-negative
- * integer (number of lines to skip), or the special value "match".
+ * Parses the HEADER option for COPY, which can be a boolean, an integer greater
+ * than or equal to zero (number of lines to skip), or the special value
+ * "match".
  */
 static int
 defGetCopyHeaderOption(DefElem *def, bool is_from)
@@ -380,8 +381,8 @@ defGetCopyHeaderOption(DefElem *def, bool is_from)
 		return COPY_HEADER_TRUE;
 
 	/*
-	 * Allow 0, 1, "true", "false", "on", "off", a non-negative integer, or
-	 * "match".
+	 * Allow an integer value greater than or equal to zero, "true", "false",
+	 * "on", "off", or "match".
 	 */
 	switch (nodeTag(def->arg))
 	{
@@ -433,9 +434,11 @@ defGetCopyHeaderOption(DefElem *def, bool is_from)
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s requires a Boolean value, a non-negative integer, "
-					"or the string \"match\"",
-					def->defname)));
+	/*- translator: first %s is the name of a COPY option, e.g. ON_ERROR,
+		 second %s is the special value "match" for that option */
+			 errmsg("%s requires a Boolean value, an integer value greater "
+					"than or equal to zero, or the string \"%s\"",
+					def->defname, "match")));
 	return COPY_HEADER_FALSE;	/* keep compiler quiet */
 }
 
