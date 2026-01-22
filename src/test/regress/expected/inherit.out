@@ -2901,7 +2901,7 @@ alter table inh_nn1 alter constraint inh_nn1_pkey inherit;
 ERROR:  constraint "inh_nn1_pkey" of relation "inh_nn1" is not a not-null constraint
 alter table inh_nn1 alter constraint inh_nn1_f1_fkey inherit;
 ERROR:  constraint "inh_nn1_f1_fkey" of relation "inh_nn1" is not a not-null constraint
--- try to drop a nonexistant constraint
+-- try to drop a nonexistent constraint
 alter table inh_nn1 alter constraint foo inherit;
 ERROR:  constraint "foo" of relation "inh_nn1" does not exist
 -- Can't modify inheritability of inherited constraints

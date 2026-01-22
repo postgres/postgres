@@ -1167,7 +1167,7 @@ create table inh_nn1 (f1 int check(f1 > 5) primary key references inh_nn1, f2 in
 alter table inh_nn1 alter constraint inh_nn1_f1_check inherit;
 alter table inh_nn1 alter constraint inh_nn1_pkey inherit;
 alter table inh_nn1 alter constraint inh_nn1_f1_fkey inherit;
--- try to drop a nonexistant constraint
+-- try to drop a nonexistent constraint
 alter table inh_nn1 alter constraint foo inherit;
 -- Can't modify inheritability of inherited constraints
 create table inh_nn2 () inherits (inh_nn1);
