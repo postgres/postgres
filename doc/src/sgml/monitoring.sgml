@@ -1737,7 +1737,38 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>status</structfield> <type>text</type>
       </para>
       <para>
-       Activity status of the WAL receiver process
+       Activity status of the WAL receiver process. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>restarting</literal>: WAL receiver has been asked to
+          restart streaming.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>starting</literal>: WAL receiver process has been launched
+          but is not yet initialized.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>stopping</literal>: WAL receiver has been requested to
+          stop.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>streaming</literal>: WAL receiver is streaming WAL data.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>waiting</literal>: WAL receiver has stopped streaming and
+          is waiting for new instructions from the startup process.
+         </para>
+        </listitem>
+       </itemizedlist>
       </para></entry>
      </row>
 
