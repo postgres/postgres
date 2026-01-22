@@ -1,0 +1,63 @@
+Parsed test spec with 2 sessions
+
+starting permutation: lock2 insert1 update2a c2 select1 c1
+step lock2: SELECT * FROM upsert WHERE i = 1 FOR UPDATE;
+i| j|  k
+-+--+---
+1|10|100
+(1 row)
+
+step insert1: INSERT INTO upsert VALUES (1, 11, 111)
+                  ON CONFLICT (i) DO UPDATE SET k = EXCLUDED.k; <waiting ...>
+step update2a: UPDATE upsert SET i = i + 10 WHERE i = 1;
+step c2: COMMIT;
+step insert1: <... completed>
+step select1: SELECT * FROM upsert;
+ i| j|  k
+--+--+---
+11|10|100
+ 1|11|111
+(2 rows)
+
+step c1: COMMIT;
+
+starting permutation: lock2 insert1 update2b c2 select1 c1
+step lock2: SELECT * FROM upsert WHERE i = 1 FOR UPDATE;
+i| j|  k
+-+--+---
+1|10|100
+(1 row)
+
+step insert1: INSERT INTO upsert VALUES (1, 11, 111)
+                  ON CONFLICT (i) DO UPDATE SET k = EXCLUDED.k; <waiting ...>
+step update2b: UPDATE upsert SET i = i + 150 WHERE i = 1;
+step c2: COMMIT;
+step insert1: <... completed>
+step select1: SELECT * FROM upsert;
+  i| j|  k
+---+--+---
+  1|11|111
+151|10|100
+(2 rows)
+
+step c1: COMMIT;
+
+starting permutation: lock2 insert1 delete2 c2 select1 c1
+step lock2: SELECT * FROM upsert WHERE i = 1 FOR UPDATE;
+i| j|  k
+-+--+---
+1|10|100
+(1 row)
+
+step insert1: INSERT INTO upsert VALUES (1, 11, 111)
+                  ON CONFLICT (i) DO UPDATE SET k = EXCLUDED.k; <waiting ...>
+step delete2: DELETE FROM upsert WHERE i = 1;
+step c2: COMMIT;
+step insert1: <... completed>
+step select1: SELECT * FROM upsert;
+i| j|  k
+-+--+---
+1|11|111
+(1 row)
+
+step c1: COMMIT;
