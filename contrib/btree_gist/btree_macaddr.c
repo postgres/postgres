@@ -126,8 +126,9 @@ gbt_macad_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	macaddr    *query = (macaddr *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
-	/* Oid		subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+	Oid			subtype = PG_GETARG_OID(3);
+#endif
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	macKEY	   *kkk = (macKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;

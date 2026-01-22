@@ -117,8 +117,9 @@ inet_gist_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *ent = (GISTENTRY *) PG_GETARG_POINTER(0);
 	inet	   *query = PG_GETARG_INET_PP(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
-	/* Oid		subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+	Oid			subtype = PG_GETARG_OID(3);
+#endif
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	GistInetKey *key = DatumGetInetKeyP(ent->key);
 	int			minbits,

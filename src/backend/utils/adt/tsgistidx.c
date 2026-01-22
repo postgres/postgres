@@ -326,9 +326,10 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
-
-	/* StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2); */
-	/* Oid		subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	Oid			subtype = PG_GETARG_OID(3);
+#endif
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	SignTSVector *key = (SignTSVector *) DatumGetPointer(entry->key);
 

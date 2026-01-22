@@ -396,7 +396,9 @@ datum_image_hash(Datum value, bool typByVal, int typLen)
 Datum
 btequalimage(PG_FUNCTION_ARGS)
 {
-	/* Oid		opcintype = PG_GETARG_OID(0); */
+#ifdef NOT_USED
+	Oid			opcintype = PG_GETARG_OID(0);
+#endif
 
 	PG_RETURN_BOOL(true);
 }

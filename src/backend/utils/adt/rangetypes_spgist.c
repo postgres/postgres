@@ -59,7 +59,9 @@ static int	adjacent_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *arg,
 Datum
 spg_range_quad_config(PG_FUNCTION_ARGS)
 {
-	/* spgConfigIn *cfgin = (spgConfigIn *) PG_GETARG_POINTER(0); */
+#ifdef NOT_USED
+	spgConfigIn *cfgin = (spgConfigIn *) PG_GETARG_POINTER(0);
+#endif
 	spgConfigOut *cfg = (spgConfigOut *) PG_GETARG_POINTER(1);
 
 	cfg->prefixType = ANYRANGEOID;

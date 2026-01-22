@@ -931,8 +931,9 @@ gin_consistent_jsonb(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-
-	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
+#ifdef NOT_USED
+	Jsonb	   *query = PG_GETARG_JSONB_P(2);
+#endif
 	int32		nkeys = PG_GETARG_INT32(3);
 
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
@@ -1014,8 +1015,9 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 {
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-
-	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
+#ifdef NOT_USED
+	Jsonb	   *query = PG_GETARG_JSONB_P(2);
+#endif
 	int32		nkeys = PG_GETARG_INT32(3);
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	GinTernaryValue res = GIN_MAYBE;
@@ -1220,8 +1222,9 @@ gin_consistent_jsonb_path(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-
-	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
+#ifdef NOT_USED
+	Jsonb	   *query = PG_GETARG_JSONB_P(2);
+#endif
 	int32		nkeys = PG_GETARG_INT32(3);
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
@@ -1271,8 +1274,9 @@ gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS)
 {
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-
-	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
+#ifdef NOT_USED
+	Jsonb	   *query = PG_GETARG_JSONB_P(2);
+#endif
 	int32		nkeys = PG_GETARG_INT32(3);
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	GinTernaryValue res = GIN_MAYBE;

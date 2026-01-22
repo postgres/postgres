@@ -2267,7 +2267,9 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 Datum
 btvarstrequalimage(PG_FUNCTION_ARGS)
 {
-	/* Oid		opcintype = PG_GETARG_OID(0); */
+#ifdef NOT_USED
+	Oid			opcintype = PG_GETARG_OID(0);
+#endif
 	Oid			collid = PG_GET_COLLATION();
 	pg_locale_t locale;
 

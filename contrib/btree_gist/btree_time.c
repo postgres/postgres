@@ -194,8 +194,9 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeADT		query = PG_GETARG_TIMEADT(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
-	/* Oid		subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+	Oid			subtype = PG_GETARG_OID(3);
+#endif
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
@@ -215,8 +216,9 @@ gbt_time_distance(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeADT		query = PG_GETARG_TIMEADT(1);
-
-	/* Oid		subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+	Oid			subtype = PG_GETARG_OID(3);
+#endif
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
 
@@ -233,8 +235,9 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeTzADT  *query = PG_GETARG_TIMETZADT_P(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
-	/* Oid		subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+	Oid			subtype = PG_GETARG_OID(3);
+#endif
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
 	TimeADT		qqq;

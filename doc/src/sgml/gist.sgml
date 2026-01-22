@@ -343,7 +343,9 @@ my_consistent(PG_FUNCTION_ARGS)
     GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     data_type  *query = PG_GETARG_DATA_TYPE_P(1);
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-    /* Oid subtype = PG_GETARG_OID(3); */
+#ifdef NOT_USED
+    Oid         subtype = PG_GETARG_OID(3);
+#endif
     bool       *recheck = (bool *) PG_GETARG_POINTER(4);
     data_type  *key = DatumGetDataType(entry-&gt;key);
     bool        retval;
@@ -830,8 +832,10 @@ my_distance(PG_FUNCTION_ARGS)
     GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     data_type  *query = PG_GETARG_DATA_TYPE_P(1);
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-    /* Oid subtype = PG_GETARG_OID(3); */
-    /* bool *recheck = (bool *) PG_GETARG_POINTER(4); */
+#ifdef NOT_USED
+    Oid         subtype = PG_GETARG_OID(3);
+    bool       *recheck = (bool *) PG_GETARG_POINTER(4);
+#endif
     data_type  *key = DatumGetDataType(entry-&gt;key);
     double      retval;
 

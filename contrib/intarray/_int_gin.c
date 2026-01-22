@@ -112,8 +112,9 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	int32		nkeys = PG_GETARG_INT32(3);
-
-	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+#ifdef NOT_USED
+	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
+#endif
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = false;
 	int32		i;
