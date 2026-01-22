@@ -4898,10 +4898,6 @@ jsonb_set(PG_FUNCTION_ARGS)
 Datum
 jsonb_set_lax(PG_FUNCTION_ARGS)
 {
-	/* Jsonb	   *in = PG_GETARG_JSONB_P(0); */
-	/* ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1); */
-	/* Jsonb	  *newval = PG_GETARG_JSONB_P(2); */
-	/* bool		create = PG_GETARG_BOOL(3); */
 	text	   *handle_null;
 	char	   *handle_val;
 
