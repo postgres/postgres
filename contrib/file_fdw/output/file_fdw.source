@@ -379,6 +379,17 @@ SELECT tableoid::regclass, * FROM p2;
  p2       | 2 | xyzzy
 (3 rows)
 
+-- Test DELETE/UPDATE on a partitioned table when all partitions
+-- are excluded and only the dummy root result relation remains. The
+-- operation is a no-op but should not fail regardless of whether the
+-- foreign child was processed (pruning off) or not (pruning on).
+DROP TABLE p2;
+SET enable_partition_pruning TO off;
+DELETE FROM pt WHERE false;
+UPDATE pt SET b = 'x' WHERE false;
+SET enable_partition_pruning TO on;
+DELETE FROM pt WHERE false;
+UPDATE pt SET b = 'x' WHERE false;
 DROP TABLE pt;
 -- generated column tests
 CREATE FOREIGN TABLE gft1 (a int, b text, c text GENERATED ALWAYS AS ('foo') STORED) SERVER file_server
