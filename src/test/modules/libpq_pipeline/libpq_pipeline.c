@@ -1328,17 +1328,13 @@ test_protocol_version(PGconn *conn)
 	int			nopts;
 	PQconninfoOption *opts = PQconninfo(conn);
 	int			protocol_version;
-	int			max_protocol_version_index;
+	int			max_protocol_version_index = -1;
 	int			i;
 
-	/*
-	 * Prepare keywords/vals arrays, copied from the existing connection, with
-	 * an extra slot for 'max_protocol_version'.
-	 */
+	/* Prepare keywords/vals arrays, copied from the existing connection. */
 	nopts = 0;
 	for (PQconninfoOption *opt = opts; opt->keyword != NULL; ++opt)
 		nopts++;
-	nopts++;					/* max_protocol_version */
 	nopts++;					/* NULL terminator */
 
 	keywords = pg_malloc0(sizeof(char *) * nopts);
@@ -1347,18 +1343,40 @@ test_protocol_version(PGconn *conn)
 	i = 0;
 	for (PQconninfoOption *opt = opts; opt->keyword != NULL; ++opt)
 	{
-		if (opt->val)
-		{
-			keywords[i] = opt->keyword;
-			vals[i] = opt->val;
-			i++;
-		}
+		/*
+		 * If the test already specified max_protocol_version, we want to
+		 * replace it rather than attempting to override it. This matters when
+		 * testing defaults, because empty option values at the end of the
+		 * connection string won't replace earlier settings.
+		 */
+		if (strcmp(opt->keyword, "max_protocol_version") == 0)
+			max_protocol_version_index = i;
+		else if (!opt->val)
+			continue;
+
+		keywords[i] = opt->keyword;
+		vals[i] = opt->val;
+
+		i++;
 	}
 
-	max_protocol_version_index = i;
-	keywords[i] = "max_protocol_version";	/* value is filled in below */
-	i++;
-	keywords[i] = vals[i] = NULL;
+	Assert(max_protocol_version_index >= 0);
+
+	/*
+	 * Test default protocol_version
+	 */
+	vals[max_protocol_version_index] = "";
+	conn = PQconnectdbParams(keywords, vals, false);
+
+	if (PQstatus(conn) != CONNECTION_OK)
+		pg_fatal("Connection to database failed: %s",
+				 PQerrorMessage(conn));
+
+	protocol_version = PQfullProtocolVersion(conn);
+	if (protocol_version != 30000)
+		pg_fatal("expected 30000, got %d", protocol_version);
+
+	PQfinish(conn);
 
 	/*
 	 * Test max_protocol_version=3.0
