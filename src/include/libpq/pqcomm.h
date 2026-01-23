@@ -99,6 +99,12 @@ is_unixsock_path(const char *path)
  */
 
 /*
+ * 3.1 would have collided with old pgbouncer deployments, and was skipped. We
+ * neither emit it nor accept it on the wire.
+ */
+#define PG_PROTOCOL_RESERVED_31		PG_PROTOCOL(3,1)
+
+/*
  * A client can send a cancel-current-operation request to the postmaster.
  * This is uglier than sending it directly to the client's backend, but it
  * avoids depending on out-of-band communication facilities.

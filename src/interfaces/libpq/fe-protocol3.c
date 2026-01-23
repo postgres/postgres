@@ -1465,7 +1465,7 @@ pqGetNegotiateProtocolVersion3(PGconn *conn)
 	}
 
 	/* 3.1 never existed, we went straight from 3.0 to 3.2 */
-	if (their_version == PG_PROTOCOL(3, 1))
+	if (their_version == PG_PROTOCOL_RESERVED_31)
 	{
 		libpq_append_conn_error(conn, "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version");
 		goto failure;
