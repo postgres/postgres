@@ -617,7 +617,7 @@ CreateAnonymousSegment(Size *size)
 		GetHugePageSize(&hugepagesize, &mmap_flags);
 
 		if (allocsize % hugepagesize != 0)
-			allocsize += hugepagesize - (allocsize % hugepagesize);
+			allocsize = add_size(allocsize, hugepagesize - (allocsize % hugepagesize));
 
 		ptr = mmap(NULL, allocsize, PROT_READ | PROT_WRITE,
 				   PG_MMAP_FLAGS | mmap_flags, -1, 0);

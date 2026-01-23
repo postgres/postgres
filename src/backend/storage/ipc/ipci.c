@@ -363,7 +363,9 @@ InitializeShmemGUCs(void)
 	{
 		Size		hp_required;
 
-		hp_required = add_size(size_b / hp_size, 1);
+		hp_required = size_b / hp_size;
+		if (size_b % hp_size != 0)
+			hp_required = add_size(hp_required, 1);
 		sprintf(buf, "%zu", hp_required);
 		SetConfigOption("shared_memory_size_in_huge_pages", buf,
 						PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
