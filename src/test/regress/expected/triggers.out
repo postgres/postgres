@@ -3280,13 +3280,19 @@ NOTICE:  trigger = table1_trig, new table = (42)
 with wcte as (insert into table1 values (43))
   insert into table1 values (44);
 NOTICE:  trigger = table1_trig, new table = (43), (44)
+with wcte as (insert into table1 values (45))
+  merge into table1 using (values (46)) as v(a) on table1.a = v.a
+    when not matched then insert values (v.a);
+NOTICE:  trigger = table1_trig, new table = (45), (46)
 select * from table1;
  a  
 ----
  42
  44
  43
-(3 rows)
+ 46
+ 45
+(5 rows)
 
 select * from table2;
       a      

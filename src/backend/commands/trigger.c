@@ -3986,21 +3986,10 @@ struct AfterTriggersTableData
 	bool		after_trig_done;	/* did we already queue AS triggers? */
 	AfterTriggerEventList after_trig_events;	/* if so, saved list pointer */
 
-	/*
-	 * We maintain separate transition tables for UPDATE/INSERT/DELETE since
-	 * MERGE can run all three actions in a single statement. Note that UPDATE
-	 * needs both old and new transition tables whereas INSERT needs only new,
-	 * and DELETE needs only old.
-	 */
-
-	/* "old" transition table for UPDATE, if any */
-	Tuplestorestate *old_upd_tuplestore;
-	/* "new" transition table for UPDATE, if any */
-	Tuplestorestate *new_upd_tuplestore;
-	/* "old" transition table for DELETE, if any */
-	Tuplestorestate *old_del_tuplestore;
-	/* "new" transition table for INSERT, if any */
-	Tuplestorestate *new_ins_tuplestore;
+	/* "old" transition table for UPDATE/DELETE, if any */
+	Tuplestorestate *old_tuplestore;
+	/* "new" transition table for INSERT/UPDATE, if any */
+	Tuplestorestate *new_tuplestore;
 
 	TupleTableSlot *storeslot;	/* for converting to tuplestore's format */
 };
@@ -4027,6 +4016,7 @@ static Tuplestorestate *GetAfterTriggersTransitionTable(int event,
 														TupleTableSlot *newslot,
 														TransitionCaptureState *transition_capture);
 static void TransitionTableAddTuple(EState *estate,
+									int event,
 									TransitionCaptureState *transition_capture,
 									ResultRelInfo *relinfo,
 									TupleTableSlot *slot,
@@ -4586,19 +4576,13 @@ AfterTriggerExecute(EState *estate,
 	{
 		if (LocTriggerData.tg_trigger->tgoldtable)
 		{
-			if (TRIGGER_FIRED_BY_UPDATE(evtshared->ats_event))
-				LocTriggerData.tg_oldtable = evtshared->ats_table->old_upd_tuplestore;
-			else
-				LocTriggerData.tg_oldtable = evtshared->ats_table->old_del_tuplestore;
+			LocTriggerData.tg_oldtable = evtshared->ats_table->old_tuplestore;
 			evtshared->ats_table->closed = true;
 		}
 
 		if (LocTriggerData.tg_trigger->tgnewtable)
 		{
-			if (TRIGGER_FIRED_BY_INSERT(evtshared->ats_event))
-				LocTriggerData.tg_newtable = evtshared->ats_table->new_ins_tuplestore;
-			else
-				LocTriggerData.tg_newtable = evtshared->ats_table->new_upd_tuplestore;
+			LocTriggerData.tg_newtable = evtshared->ats_table->new_tuplestore;
 			evtshared->ats_table->closed = true;
 		}
 	}
@@ -4930,6 +4914,11 @@ GetAfterTriggersTableData(Oid relid, CmdType cmdType)
 	MemoryContext oldcxt;
 	ListCell   *lc;
 
+	/* At this level, cmdType should not be, eg, CMD_MERGE */
+	Assert(cmdType == CMD_INSERT ||
+		   cmdType == CMD_UPDATE ||
+		   cmdType == CMD_DELETE);
+
 	/* Caller should have ensured query_depth is OK. */
 	Assert(afterTriggers.query_depth >= 0 &&
 		   afterTriggers.query_depth < afterTriggers.maxquerydepth);
@@ -5016,7 +5005,9 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 				need_new_upd,
 				need_old_del,
 				need_new_ins;
-	AfterTriggersTableData *table;
+	AfterTriggersTableData *ins_table;
+	AfterTriggersTableData *upd_table;
+	AfterTriggersTableData *del_table;
 	MemoryContext oldcxt;
 	ResourceOwner saveResourceOwner;
 
@@ -5063,9 +5054,14 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 		AfterTriggerEnlargeQueryState();
 
 	/*
-	 * Find or create an AfterTriggersTableData struct to hold the
+	 * Find or create AfterTriggersTableData struct(s) to hold the
 	 * tuplestore(s).  If there's a matching struct but it's marked closed,
 	 * ignore it; we need a newer one.
+	 *
+	 * Note: MERGE must use the same AfterTriggersTableData structs as INSERT,
+	 * UPDATE, and DELETE, so that any MERGE'd tuples are added to the same
+	 * tuplestores as tuples from any INSERT, UPDATE, or DELETE commands
+	 * running in the same top-level command (e.g., in a writable CTE).
 	 *
 	 * Note: the AfterTriggersTableData list, as well as the tuplestores, are
 	 * allocated in the current (sub)transaction's CurTransactionContext, and
@@ -5074,21 +5070,34 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	 * transition tables to be deferrable; they will be fired during
 	 * AfterTriggerEndQuery, after which it's okay to delete the data.
 	 */
-	table = GetAfterTriggersTableData(relid, cmdType);
+	if (need_new_ins)
+		ins_table = GetAfterTriggersTableData(relid, CMD_INSERT);
+	else
+		ins_table = NULL;
+
+	if (need_old_upd || need_new_upd)
+		upd_table = GetAfterTriggersTableData(relid, CMD_UPDATE);
+	else
+		upd_table = NULL;
+
+	if (need_old_del)
+		del_table = GetAfterTriggersTableData(relid, CMD_DELETE);
+	else
+		del_table = NULL;
 
 	/* Now create required tuplestore(s), if we don't have them already. */
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 	saveResourceOwner = CurrentResourceOwner;
 	CurrentResourceOwner = CurTransactionResourceOwner;
 
-	if (need_old_upd && table->old_upd_tuplestore == NULL)
-		table->old_upd_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-	if (need_new_upd && table->new_upd_tuplestore == NULL)
-		table->new_upd_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-	if (need_old_del && table->old_del_tuplestore == NULL)
-		table->old_del_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-	if (need_new_ins && table->new_ins_tuplestore == NULL)
-		table->new_ins_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+	if (need_old_upd && upd_table->old_tuplestore == NULL)
+		upd_table->old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+	if (need_new_upd && upd_table->new_tuplestore == NULL)
+		upd_table->new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+	if (need_old_del && del_table->old_tuplestore == NULL)
+		del_table->old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+	if (need_new_ins && ins_table->new_tuplestore == NULL)
+		ins_table->new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
 
 	CurrentResourceOwner = saveResourceOwner;
 	MemoryContextSwitchTo(oldcxt);
@@ -5099,7 +5108,9 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	state->tcs_update_old_table = need_old_upd;
 	state->tcs_update_new_table = need_new_upd;
 	state->tcs_insert_new_table = need_new_ins;
-	state->tcs_private = table;
+	state->tcs_insert_private = ins_table;
+	state->tcs_update_private = upd_table;
+	state->tcs_delete_private = del_table;
 
 	return state;
 }
@@ -5277,20 +5288,12 @@ AfterTriggerFreeQuery(AfterTriggersQueryData *qs)
 	{
 		AfterTriggersTableData *table = (AfterTriggersTableData *) lfirst(lc);
 
-		ts = table->old_upd_tuplestore;
-		table->old_upd_tuplestore = NULL;
+		ts = table->old_tuplestore;
+		table->old_tuplestore = NULL;
 		if (ts)
 			tuplestore_end(ts);
-		ts = table->new_upd_tuplestore;
-		table->new_upd_tuplestore = NULL;
-		if (ts)
-			tuplestore_end(ts);
-		ts = table->old_del_tuplestore;
-		table->old_del_tuplestore = NULL;
-		if (ts)
-			tuplestore_end(ts);
-		ts = table->new_ins_tuplestore;
-		table->new_ins_tuplestore = NULL;
+		ts = table->new_tuplestore;
+		table->new_tuplestore = NULL;
 		if (ts)
 			tuplestore_end(ts);
 		if (table->storeslot)
@@ -5601,17 +5604,17 @@ GetAfterTriggersTransitionTable(int event,
 	{
 		Assert(TupIsNull(newslot));
 		if (event == TRIGGER_EVENT_DELETE && delete_old_table)
-			tuplestore = transition_capture->tcs_private->old_del_tuplestore;
+			tuplestore = transition_capture->tcs_delete_private->old_tuplestore;
 		else if (event == TRIGGER_EVENT_UPDATE && update_old_table)
-			tuplestore = transition_capture->tcs_private->old_upd_tuplestore;
+			tuplestore = transition_capture->tcs_update_private->old_tuplestore;
 	}
 	else if (!TupIsNull(newslot))
 	{
 		Assert(TupIsNull(oldslot));
 		if (event == TRIGGER_EVENT_INSERT && insert_new_table)
-			tuplestore = transition_capture->tcs_private->new_ins_tuplestore;
+			tuplestore = transition_capture->tcs_insert_private->new_tuplestore;
 		else if (event == TRIGGER_EVENT_UPDATE && update_new_table)
-			tuplestore = transition_capture->tcs_private->new_upd_tuplestore;
+			tuplestore = transition_capture->tcs_update_private->new_tuplestore;
 	}
 
 	return tuplestore;
@@ -5625,6 +5628,7 @@ GetAfterTriggersTransitionTable(int event,
  */
 static void
 TransitionTableAddTuple(EState *estate,
+						int event,
 						TransitionCaptureState *transition_capture,
 						ResultRelInfo *relinfo,
 						TupleTableSlot *slot,
@@ -5643,8 +5647,25 @@ TransitionTableAddTuple(EState *estate,
 		tuplestore_puttupleslot(tuplestore, original_insert_tuple);
 	else if ((map = ExecGetChildToRootMap(relinfo)) != NULL)
 	{
-		AfterTriggersTableData *table = transition_capture->tcs_private;
+		AfterTriggersTableData *table;
 		TupleTableSlot *storeslot;
+
+		switch (event)
+		{
+			case TRIGGER_EVENT_INSERT:
+				table = transition_capture->tcs_insert_private;
+				break;
+			case TRIGGER_EVENT_UPDATE:
+				table = transition_capture->tcs_update_private;
+				break;
+			case TRIGGER_EVENT_DELETE:
+				table = transition_capture->tcs_delete_private;
+				break;
+			default:
+				elog(ERROR, "invalid after-trigger event code: %d", event);
+				table = NULL;	/* keep compiler quiet */
+				break;
+		}
 
 		storeslot = GetAfterTriggersStoreSlot(table, map->outdesc);
 		execute_attr_map_slot(map->attrMap, slot, storeslot);
@@ -6239,7 +6260,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 															 oldslot,
 															 NULL,
 															 transition_capture);
-			TransitionTableAddTuple(estate, transition_capture, relinfo,
+			TransitionTableAddTuple(estate, event, transition_capture, relinfo,
 									oldslot, NULL, old_tuplestore);
 		}
 
@@ -6255,7 +6276,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 															 NULL,
 															 newslot,
 															 transition_capture);
-			TransitionTableAddTuple(estate, transition_capture, relinfo,
+			TransitionTableAddTuple(estate, event, transition_capture, relinfo,
 									newslot, original_insert_tuple, new_tuplestore);
 		}
 
@@ -6557,7 +6578,24 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		new_shared.ats_firing_id = 0;
 		if ((trigger->tgoldtable || trigger->tgnewtable) &&
 			transition_capture != NULL)
-			new_shared.ats_table = transition_capture->tcs_private;
+		{
+			switch (event)
+			{
+				case TRIGGER_EVENT_INSERT:
+					new_shared.ats_table = transition_capture->tcs_insert_private;
+					break;
+				case TRIGGER_EVENT_UPDATE:
+					new_shared.ats_table = transition_capture->tcs_update_private;
+					break;
+				case TRIGGER_EVENT_DELETE:
+					new_shared.ats_table = transition_capture->tcs_delete_private;
+					break;
+				default:
+					/* Must be TRUNCATE, see switch above */
+					new_shared.ats_table = NULL;
+					break;
+			}
+		}
 		else
 			new_shared.ats_table = NULL;
 		new_shared.ats_modifiedcols = modifiedCols;
