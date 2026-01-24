@@ -2403,6 +2403,10 @@ with wcte as (insert into table1 values (42))
 with wcte as (insert into table1 values (43))
   insert into table1 values (44);
 
+with wcte as (insert into table1 values (45))
+  merge into table1 using (values (46)) as v(a) on table1.a = v.a
+    when not matched then insert values (v.a);
+
 select * from table1;
 select * from table2;
 

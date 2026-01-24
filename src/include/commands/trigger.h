@@ -78,7 +78,9 @@ typedef struct TransitionCaptureState
 	/*
 	 * Private data including the tuplestore(s) into which to insert tuples.
 	 */
-	struct AfterTriggersTableData *tcs_private;
+	struct AfterTriggersTableData *tcs_insert_private;
+	struct AfterTriggersTableData *tcs_update_private;
+	struct AfterTriggersTableData *tcs_delete_private;
 } TransitionCaptureState;
 
 /*
