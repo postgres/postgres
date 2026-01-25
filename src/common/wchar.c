@@ -63,6 +63,9 @@
  * subset to the ASCII routines to ensure consistency.
  */
 
+/* No error-reporting facility.  Ignore incomplete trailing byte sequence. */
+#define MB2CHAR_NEED_AT_LEAST(len, need) if ((len) < (need)) break
+
 /*
  * SQL/ASCII
  */
@@ -108,22 +111,24 @@ pg_euc2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 2)	/* JIS X 0201 (so called "1 byte
-										 * KANA") */
+		if (*from == SS2)		/* JIS X 0201 (so called "1 byte KANA") */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			from++;
 			*to = (SS2 << 8) | *from++;
 			len -= 2;
 		}
-		else if (*from == SS3 && len >= 3)	/* JIS X 0212 KANJI */
+		else if (*from == SS3)	/* JIS X 0212 KANJI */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_HIGHBIT_SET(*from) && len >= 2) /* JIS X 0208 KANJI */
+		else if (IS_HIGHBIT_SET(*from)) /* JIS X 0208 KANJI */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
@@ -235,22 +240,25 @@ pg_euccn2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 3)	/* code set 2 (unused?) */
+		if (*from == SS2)		/* code set 2 (unused?) */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS2 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (*from == SS3 && len >= 3)	/* code set 3 (unused ?) */
+		else if (*from == SS3)	/* code set 3 (unused ?) */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_HIGHBIT_SET(*from) && len >= 2) /* code set 1 */
+		else if (IS_HIGHBIT_SET(*from)) /* code set 1 */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
@@ -312,23 +320,26 @@ pg_euctw2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 4)	/* code set 2 */
+		if (*from == SS2)		/* code set 2 */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 4);
 			from++;
 			*to = (((uint32) SS2) << 24) | (*from++ << 16);
 			*to |= *from++ << 8;
 			*to |= *from++;
 			len -= 4;
 		}
-		else if (*from == SS3 && len >= 3)	/* code set 3 (unused?) */
+		else if (*from == SS3)	/* code set 3 (unused?) */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_HIGHBIT_SET(*from) && len >= 2) /* code set 2 */
+		else if (IS_HIGHBIT_SET(*from)) /* code set 2 */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
@@ -465,8 +476,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		}
 		else if ((*from & 0xe0) == 0xc0)
 		{
-			if (len < 2)
-				break;			/* drop trailing incomplete char */
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			c1 = *from++ & 0x1f;
 			c2 = *from++ & 0x3f;
 			*to = (c1 << 6) | c2;
@@ -474,8 +484,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		}
 		else if ((*from & 0xf0) == 0xe0)
 		{
-			if (len < 3)
-				break;			/* drop trailing incomplete char */
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			c1 = *from++ & 0x0f;
 			c2 = *from++ & 0x3f;
 			c3 = *from++ & 0x3f;
@@ -484,8 +493,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		}
 		else if ((*from & 0xf8) == 0xf0)
 		{
-			if (len < 4)
-				break;			/* drop trailing incomplete char */
+			MB2CHAR_NEED_AT_LEAST(len, 4);
 			c1 = *from++ & 0x07;
 			c2 = *from++ & 0x3f;
 			c3 = *from++ & 0x3f;
@@ -687,28 +695,32 @@ pg_mule2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (IS_LC1(*from) && len >= 2)
+		if (IS_LC1(*from))
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 16;
 			*to |= *from++;
 			len -= 2;
 		}
-		else if (IS_LCPRV1(*from) && len >= 3)
+		else if (IS_LCPRV1(*from))
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = *from++ << 16;
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_LC2(*from) && len >= 3)
+		else if (IS_LC2(*from))
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			*to = *from++ << 16;
 			*to |= *from++ << 8;
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_LCPRV2(*from) && len >= 4)
+		else if (IS_LCPRV2(*from))
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 4);
 			from++;
 			*to = *from++ << 16;
 			*to |= *from++ << 8;
