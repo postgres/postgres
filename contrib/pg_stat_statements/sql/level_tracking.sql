@@ -435,7 +435,13 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 
 -- planner - all-level tracking.
 SET pg_stat_statements.track_planning = TRUE;
-
+-- Release all cached plans before the first function call.  This matters
+-- when debug_discard_caches is enabled, which would store a normalized
+-- version of the inner query of the function.  Forcing a plan rebuild
+-- ensures that a normalized version is always stored with the stats entry,
+-- while checking that the nesting level is computed correctly in the
+-- planner hook.
+DISCARD PLANS;
 SELECT PLUS_THREE(8);
 SELECT PLUS_THREE(10);
 
