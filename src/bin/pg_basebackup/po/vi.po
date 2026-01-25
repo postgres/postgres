@@ -656,7 +656,7 @@ msgstr "%s: điểm kết thúc WAL: %s\n"
 
 #: pg_basebackup.c:1985
 #, c-format
-msgid "%s: checksum error occured\n"
+msgid "%s: checksum error occurred\n"
 msgstr "%s: xảy ra lỗi checksum\n"
 
 #: pg_basebackup.c:1991
