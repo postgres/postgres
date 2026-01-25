@@ -263,6 +263,16 @@
 #endif
 
 /*
+ * alignas is buggy in g++ < 9, but the more or less equivalent attribute
+ * works.
+ *
+ * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89357>
+ */
+#if defined(__cplusplus) && defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 9
+#define alignas(a) __attribute__((aligned(a)))
+#endif
+
+/*
  * Use "pg_attribute_always_inline" in place of "inline" for functions that
  * we wish to force inlining of, even when the compiler's heuristics would
  * choose not to.  But, if possible, don't force inlining in unoptimized
