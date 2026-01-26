@@ -1299,9 +1299,9 @@ SELECT $1 \parse stmt1
         <replaceable class="parameter">pattern</replaceable>, show all
         columns, their types, the tablespace (if not the default) and any
         special attributes such as <literal>NOT NULL</literal> or defaults.
-        Associated indexes, constraints, rules, and triggers are
-        also shown.  For foreign tables, the associated foreign
-        server is shown as well.
+        Associated objects, such as indexes, constraints, rules, triggers,
+        and publications, are also shown. For foreign tables,
+        the associated foreign server is shown as well.
         (<quote>Matching the pattern</quote> is defined in
         <xref linkend="app-psql-patterns"/> below.)
         </para>
@@ -1314,8 +1314,8 @@ SELECT $1 \parse stmt1
 
         <para>
         The command form <literal>\d+</literal> is identical, except that
-        more information is displayed: any comments associated with the
-        columns of the table are shown, as is the presence of OIDs in the
+        more information is displayed: for example, any comments associated
+        with the columns of the table, the presence of OIDs in the
         table, the view definition if the relation is a view, a non-default
         <link linkend="sql-altertable-replica-identity">replica
          identity</link> setting and the
