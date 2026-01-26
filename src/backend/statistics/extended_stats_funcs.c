@@ -45,6 +45,7 @@ enum extended_stats_argnum
 	STATNAME_ARG,
 	INHERITED_ARG,
 	NDISTINCT_ARG,
+	DEPENDENCIES_ARG,
 	NUM_EXTENDED_STATS_ARGS,
 };
 
@@ -60,6 +61,7 @@ static struct StatsArgInfo extarginfo[] =
 	[STATNAME_ARG] = {"statistics_name", TEXTOID},
 	[INHERITED_ARG] = {"inherited", BOOLOID},
 	[NDISTINCT_ARG] = {"n_distinct", PG_NDISTINCTOID},
+	[DEPENDENCIES_ARG] = {"dependencies", PG_DEPENDENCIESOID},
 	[NUM_EXTENDED_STATS_ARGS] = {0},
 };
 
@@ -257,6 +259,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	 * were provided to the function.
 	 */
 	has.ndistinct = !PG_ARGISNULL(NDISTINCT_ARG);
+	has.dependencies = !PG_ARGISNULL(DEPENDENCIES_ARG);
 
 	if (RecoveryInProgress())
 	{
@@ -356,6 +359,23 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	}
 
 	/*
+	 * If the object cannot support dependencies, we should not have data for
+	 * it.
+	 */
+	if (has.dependencies && !enabled.dependencies)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("cannot specify parameter \"%s\".",
+					   extarginfo[DEPENDENCIES_ARG].argname),
+				errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
+						quote_identifier(nspname),
+						quote_identifier(stxname)));
+		has.dependencies = false;
+		success = false;
+	}
+
+	/*
 	 * Populate the pg_statistic_ext_data result tuple.
 	 */
 
@@ -394,6 +414,24 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 			success = false;
 
 		statext_ndistinct_free(ndistinct);
+	}
+
+	if (has.dependencies)
+	{
+		Datum		dependencies_datum = PG_GETARG_DATUM(DEPENDENCIES_ARG);
+		bytea	   *data = DatumGetByteaPP(dependencies_datum);
+		MVDependencies *dependencies = statext_dependencies_deserialize(data);
+
+		if (statext_dependencies_validate(dependencies, &stxform->stxkeys, numexprs, WARNING))
+		{
+			values[Anum_pg_statistic_ext_data_stxddependencies - 1] = dependencies_datum;
+			nulls[Anum_pg_statistic_ext_data_stxddependencies - 1] = false;
+			replaces[Anum_pg_statistic_ext_data_stxddependencies - 1] = true;
+		}
+		else
+			success = false;
+
+		statext_dependencies_free(dependencies);
 	}
 
 	upsert_pg_statistic_ext_data(values, nulls, replaces);

@@ -2194,9 +2194,8 @@ SELECT pg_restore_attribute_stats(
 </programlisting>
         </para>
         <para>
-         For example, to set the <structfield>n_distinct</structfield>,
-         <structfield>dependencies</structfield>, and <structfield>exprs</structfield>
-         values for the statistics object <structname>myschema.mystatsobj</structname>:
+         For example, to set some values for the statistics object
+         <structname>myschema.mystatsobj</structname>:
 <programlisting>
  SELECT pg_restore_extended_stats(
     'schemaname',            'tab_schema'::name,
@@ -2223,7 +2222,8 @@ SELECT pg_restore_attribute_stats(
          Other arguments are the names and values of statistics corresponding
          to columns in <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname>
          </link>.
-         This function currently supports <literal>n_distinct</literal>.
+         This function currently supports <literal>n_distinct</literal> and
+         <literal>dependencies</literal>.
         </para>
         <para>
          Additionally, this function accepts argument name

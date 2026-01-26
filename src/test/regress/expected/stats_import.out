@@ -1756,6 +1756,22 @@ HINT:  Extended statistics object "stats_import"."test_stat_dependencies" does n
  f
 (1 row)
 
+-- Incorrect extended stats kind, dependencies not supported
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_ndistinct',
+  'inherited', false,
+  'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
+WARNING:  cannot specify parameter "dependencies".
+HINT:  Extended statistics object "stats_import"."test_stat_ndistinct" does not support statistics of this type.
+ pg_restore_extended_stats 
+---------------------------
+ f
+(1 row)
+
 -- ok: ndistinct
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
@@ -1764,6 +1780,35 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_name', 'test_stat_ndistinct',
   'inherited', false,
   'n_distinct', '[{"attributes" : [2,3], "ndistinct" : 4}]'::pg_ndistinct);
+ pg_restore_extended_stats 
+---------------------------
+ t
+(1 row)
+
+-- dependencies value doesn't match definition
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_dependencies',
+  'inherited', false,
+  'dependencies', '[{"attributes": [1], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3], "dependency": 1, "degree": 1.000000}]'::pg_dependencies);
+WARNING:  could not validate "pg_dependencies" object: invalid attribute number 1 found
+ pg_restore_extended_stats 
+---------------------------
+ f
+(1 row)
+
+-- ok: dependencies
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_dependencies',
+  'inherited', false,
+  'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
  pg_restore_extended_stats 
 ---------------------------
  t

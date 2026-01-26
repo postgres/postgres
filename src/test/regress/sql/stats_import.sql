@@ -1258,6 +1258,15 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_name', 'test_stat_dependencies',
   'inherited', false,
   'n_distinct', '[{"attributes" : [1,3], "ndistinct" : 4}]'::pg_ndistinct);
+-- Incorrect extended stats kind, dependencies not supported
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_ndistinct',
+  'inherited', false,
+  'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
 
 -- ok: ndistinct
 SELECT pg_catalog.pg_restore_extended_stats(
@@ -1267,6 +1276,26 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_name', 'test_stat_ndistinct',
   'inherited', false,
   'n_distinct', '[{"attributes" : [2,3], "ndistinct" : 4}]'::pg_ndistinct);
+
+-- dependencies value doesn't match definition
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_dependencies',
+  'inherited', false,
+  'dependencies', '[{"attributes": [1], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3], "dependency": 1, "degree": 1.000000}]'::pg_dependencies);
+
+-- ok: dependencies
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_dependencies',
+  'inherited', false,
+  'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
 
 SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct
 FROM pg_stats_ext AS e
