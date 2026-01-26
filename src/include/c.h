@@ -263,16 +263,6 @@
 #endif
 
 /*
- * alignas is buggy in g++ < 9, but the more or less equivalent attribute
- * works.
- *
- * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89357>
- */
-#if defined(__cplusplus) && defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 9
-#define alignas(a) __attribute__((aligned(a)))
-#endif
-
-/*
  * Use "pg_attribute_always_inline" in place of "inline" for functions that
  * we wish to force inlining of, even when the compiler's heuristics would
  * choose not to.  But, if possible, don't force inlining in unoptimized
@@ -1124,6 +1114,14 @@ typedef struct PGAlignedBlock
 } PGAlignedBlock;
 
 /*
+ * alignas with extended alignments is buggy in g++ < 9.  As a simple
+ * workaround, we disable these definitions in that case.
+ *
+ * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89357>
+ */
+#if !(defined(__cplusplus) && defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 9)
+
+/*
  * Use this to declare a field or local variable holding a page buffer, if that
  * page might be accessed as a page or passed to an SMgr I/O function.  If
  * allocating using the MemoryContext API, the aligned allocation functions
@@ -1141,6 +1139,8 @@ typedef struct PGAlignedXLogBlock
 {
 	alignas(PG_IO_ALIGN_SIZE) char data[XLOG_BLCKSZ];
 } PGAlignedXLogBlock;
+
+#endif							/* !(g++ < 9) */
 
 /* msb for char */
 #define HIGHBIT					(0x80)
