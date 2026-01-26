@@ -1768,8 +1768,8 @@ interval_cmp_upper(const void *a, const void *b, void *arg)
 static int
 common_entry_cmp(const void *i1, const void *i2)
 {
-	double		delta1 = ((CommonEntry *) i1)->delta;
-	double		delta2 = ((CommonEntry *) i2)->delta;
+	double		delta1 = ((const CommonEntry *) i1)->delta;
+	double		delta2 = ((const CommonEntry *) i2)->delta;
 
 	if (delta1 < delta2)
 		return -1;

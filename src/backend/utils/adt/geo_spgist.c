@@ -92,8 +92,8 @@
 static int
 compareDoubles(const void *a, const void *b)
 {
-	float8		x = *(float8 *) a;
-	float8		y = *(float8 *) b;
+	float8		x = *(const float8 *) a;
+	float8		y = *(const float8 *) b;
 
 	if (x == y)
 		return 0;

@@ -736,17 +736,17 @@ outNode(StringInfo str, const void *obj)
 		_outList(str, obj);
 	/* nodeRead does not want to see { } around these! */
 	else if (IsA(obj, Integer))
-		_outInteger(str, (Integer *) obj);
+		_outInteger(str, (const Integer *) obj);
 	else if (IsA(obj, Float))
-		_outFloat(str, (Float *) obj);
+		_outFloat(str, (const Float *) obj);
 	else if (IsA(obj, Boolean))
-		_outBoolean(str, (Boolean *) obj);
+		_outBoolean(str, (const Boolean *) obj);
 	else if (IsA(obj, String))
-		_outString(str, (String *) obj);
+		_outString(str, (const String *) obj);
 	else if (IsA(obj, BitString))
-		_outBitString(str, (BitString *) obj);
+		_outBitString(str, (const BitString *) obj);
 	else if (IsA(obj, Bitmapset))
-		outBitmapset(str, (Bitmapset *) obj);
+		outBitmapset(str, (const Bitmapset *) obj);
 	else
 	{
 		appendStringInfoChar(str, '{');

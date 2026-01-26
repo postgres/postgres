@@ -2463,9 +2463,9 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, const char *wor
 		while (StopLow < StopHigh)
 		{
 			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
-			if (StopMiddle->val == ((uint8 *) (word))[level])
+			if (StopMiddle->val == ((const uint8 *) (word))[level])
 				break;
-			else if (StopMiddle->val < ((uint8 *) (word))[level])
+			else if (StopMiddle->val < ((const uint8 *) (word))[level])
 				StopLow = StopMiddle + 1;
 			else
 				StopHigh = StopMiddle;

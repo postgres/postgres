@@ -1369,7 +1369,7 @@ PQencryptPassword(const char *passwd, const char *user)
 	if (!crypt_pwd)
 		return NULL;
 
-	if (!pg_md5_encrypt(passwd, (uint8 *) user, strlen(user), crypt_pwd, &errstr))
+	if (!pg_md5_encrypt(passwd, (const uint8 *) user, strlen(user), crypt_pwd, &errstr))
 	{
 		free(crypt_pwd);
 		return NULL;
@@ -1482,7 +1482,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 		{
 			const char *errstr = NULL;
 
-			if (!pg_md5_encrypt(passwd, (uint8 *) user, strlen(user), crypt_pwd, &errstr))
+			if (!pg_md5_encrypt(passwd, (const uint8 *) user, strlen(user), crypt_pwd, &errstr))
 			{
 				libpq_append_conn_error(conn, "could not encrypt password: %s", errstr);
 				free(crypt_pwd);

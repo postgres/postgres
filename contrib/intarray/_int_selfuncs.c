@@ -328,7 +328,7 @@ int_query_opr_selec(ITEM *item, Datum *mcelems, float4 *mcefreqs,
 static int
 compare_val_int4(const void *a, const void *b)
 {
-	int32		key = *(int32 *) a;
+	int32		key = *(const int32 *) a;
 	int32		value = DatumGetInt32(*(const Datum *) b);
 
 	if (key < value)

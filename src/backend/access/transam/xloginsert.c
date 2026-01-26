@@ -677,8 +677,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			if (regbuf->flags & REGBUF_STANDARD)
 			{
 				/* Assume we can omit data between pd_lower and pd_upper */
-				uint16		lower = ((PageHeader) page)->pd_lower;
-				uint16		upper = ((PageHeader) page)->pd_upper;
+				uint16		lower = ((const PageHeaderData *) page)->pd_lower;
+				uint16		upper = ((const PageHeaderData *) page)->pd_upper;
 
 				if (lower >= SizeOfPageHeaderData &&
 					upper > lower &&

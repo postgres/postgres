@@ -498,8 +498,8 @@ run_named_permutations(TestSpec *testspec)
 static int
 step_qsort_cmp(const void *a, const void *b)
 {
-	Step	   *stepa = *((Step **) a);
-	Step	   *stepb = *((Step **) b);
+	Step	   *stepa = *((Step *const *) a);
+	Step	   *stepb = *((Step *const *) b);
 
 	return strcmp(stepa->name, stepb->name);
 }
@@ -507,8 +507,8 @@ step_qsort_cmp(const void *a, const void *b)
 static int
 step_bsearch_cmp(const void *a, const void *b)
 {
-	char	   *stepname = (char *) a;
-	Step	   *step = *((Step **) b);
+	const char *stepname = (const char *) a;
+	Step	   *step = *((Step *const *) b);
 
 	return strcmp(stepname, step->name);
 }

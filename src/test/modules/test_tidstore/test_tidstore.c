@@ -56,16 +56,16 @@ itemptr_cmp(const void *left, const void *right)
 	OffsetNumber loff,
 				roff;
 
-	lblk = ItemPointerGetBlockNumber((ItemPointer) left);
-	rblk = ItemPointerGetBlockNumber((ItemPointer) right);
+	lblk = ItemPointerGetBlockNumber((const ItemPointerData *) left);
+	rblk = ItemPointerGetBlockNumber((const ItemPointerData *) right);
 
 	if (lblk < rblk)
 		return -1;
 	if (lblk > rblk)
 		return 1;
 
-	loff = ItemPointerGetOffsetNumber((ItemPointer) left);
-	roff = ItemPointerGetOffsetNumber((ItemPointer) right);
+	loff = ItemPointerGetOffsetNumber((const ItemPointerData *) left);
+	roff = ItemPointerGetOffsetNumber((const ItemPointerData *) right);
 
 	if (loff < roff)
 		return -1;

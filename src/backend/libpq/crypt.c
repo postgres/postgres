@@ -136,7 +136,7 @@ encrypt_password(PasswordType target_type, const char *role,
 			case PASSWORD_TYPE_MD5:
 				encrypted_password = palloc(MD5_PASSWD_LEN + 1);
 
-				if (!pg_md5_encrypt(password, (uint8 *) role, strlen(role),
+				if (!pg_md5_encrypt(password, (const uint8 *) role, strlen(role),
 									encrypted_password, &errstr))
 					elog(ERROR, "password encryption failed: %s", errstr);
 				break;
@@ -284,7 +284,7 @@ plain_crypt_verify(const char *role, const char *shadow_pass,
 
 		case PASSWORD_TYPE_MD5:
 			if (!pg_md5_encrypt(client_pass,
-								(uint8 *) role,
+								(const uint8 *) role,
 								strlen(role),
 								crypt_client_pass,
 								&errstr))

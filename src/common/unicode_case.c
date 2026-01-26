@@ -231,7 +231,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 
 	while ((srclen < 0 || srcoff < srclen) && src[srcoff] != '\0')
 	{
-		char32_t	u1 = utf8_to_unicode((unsigned char *) src + srcoff);
+		char32_t	u1 = utf8_to_unicode((const unsigned char *) src + srcoff);
 		int			u1len = unicode_utf8len(u1);
 		char32_t	simple = 0;
 		const char32_t *special = NULL;
@@ -373,7 +373,7 @@ check_special_conditions(int conditions, const char *str, size_t len,
 	if (conditions == 0)
 		return true;
 	else if (conditions == PG_U_FINAL_SIGMA)
-		return check_final_sigma((unsigned char *) str, len, offset);
+		return check_final_sigma((const unsigned char *) str, len, offset);
 
 	/* no other conditions supported */
 	Assert(false);

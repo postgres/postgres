@@ -61,7 +61,7 @@ scram_SaltedPassword(const char *password,
 	 */
 
 	/* First iteration */
-	if (pg_hmac_init(hmac_ctx, (uint8 *) password, password_len) < 0 ||
+	if (pg_hmac_init(hmac_ctx, (const uint8 *) password, password_len) < 0 ||
 		pg_hmac_update(hmac_ctx, salt, saltlen) < 0 ||
 		pg_hmac_update(hmac_ctx, (uint8 *) &one, sizeof(uint32)) < 0 ||
 		pg_hmac_final(hmac_ctx, Ui_prev, key_length) < 0)
@@ -84,7 +84,7 @@ scram_SaltedPassword(const char *password,
 		CHECK_FOR_INTERRUPTS();
 #endif
 
-		if (pg_hmac_init(hmac_ctx, (uint8 *) password, password_len) < 0 ||
+		if (pg_hmac_init(hmac_ctx, (const uint8 *) password, password_len) < 0 ||
 			pg_hmac_update(hmac_ctx, (uint8 *) Ui_prev, key_length) < 0 ||
 			pg_hmac_final(hmac_ctx, Ui, key_length) < 0)
 		{

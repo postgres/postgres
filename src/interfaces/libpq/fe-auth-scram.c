@@ -819,7 +819,7 @@ calculate_client_proof(fe_scram_state *state,
 					   strlen(state->server_first_message)) < 0 ||
 		pg_hmac_update(ctx, (uint8 *) ",", 1) < 0 ||
 		pg_hmac_update(ctx,
-					   (uint8 *) client_final_message_without_proof,
+					   (const uint8 *) client_final_message_without_proof,
 					   strlen(client_final_message_without_proof)) < 0 ||
 		pg_hmac_final(ctx, ClientSignature, state->key_length) < 0)
 	{

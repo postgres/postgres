@@ -901,7 +901,7 @@ json_agg_finalfn(PG_FUNCTION_ARGS)
 static uint32
 json_unique_hash(const void *key, Size keysize)
 {
-	const JsonUniqueHashEntry *entry = (JsonUniqueHashEntry *) key;
+	const JsonUniqueHashEntry *entry = (const JsonUniqueHashEntry *) key;
 	uint32		hash = hash_bytes_uint32(entry->object_id);
 
 	hash ^= hash_bytes((const unsigned char *) entry->key, entry->key_len);

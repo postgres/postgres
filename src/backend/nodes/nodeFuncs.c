@@ -1009,14 +1009,14 @@ exprCollation(const Node *expr)
 			break;
 		case T_JsonExpr:
 			{
-				const JsonExpr *jsexpr = (JsonExpr *) expr;
+				const JsonExpr *jsexpr = (const JsonExpr *) expr;
 
 				coll = jsexpr->collation;
 			}
 			break;
 		case T_JsonBehavior:
 			{
-				const JsonBehavior *behavior = (JsonBehavior *) expr;
+				const JsonBehavior *behavior = (const JsonBehavior *) expr;
 
 				if (behavior->expr)
 					coll = exprCollation(behavior->expr);
@@ -1593,7 +1593,7 @@ exprLocation(const Node *expr)
 			}
 			break;
 		case T_JsonBehavior:
-			loc = exprLocation(((JsonBehavior *) expr)->expr);
+			loc = exprLocation(((const JsonBehavior *) expr)->expr);
 			break;
 		case T_NullTest:
 			{

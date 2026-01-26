@@ -190,7 +190,7 @@ fetch_att(const void *T, bool attbyval, int attlen)
 	: \
 	( \
 		AssertMacro((attlen) == -2), \
-		(cur_offset) + (strlen((char *) (attptr)) + 1) \
+		(cur_offset) + (strlen((const char *) (attptr)) + 1) \
 	)) \
 )
 

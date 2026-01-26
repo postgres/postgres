@@ -359,7 +359,7 @@ dir_write(Walfile *f, const void *buf, size_t count)
 				return -1;
 			}
 
-			inbuf = ((char *) inbuf) + chunk;
+			inbuf = ((const char *) inbuf) + chunk;
 		}
 
 		/* Our caller keeps track of the uncompressed size. */

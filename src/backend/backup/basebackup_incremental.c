@@ -930,7 +930,7 @@ GetIncrementalFileSize(unsigned num_blocks_required)
 static uint32
 hash_string_pointer(const char *s)
 {
-	unsigned char *ss = (unsigned char *) s;
+	const unsigned char *ss = (const unsigned char *) s;
 
 	return hash_bytes(ss, strlen(s));
 }
@@ -1049,8 +1049,8 @@ manifest_report_error(JsonManifestParseContext *context, const char *fmt,...)
 static int
 compare_block_numbers(const void *a, const void *b)
 {
-	BlockNumber aa = *(BlockNumber *) a;
-	BlockNumber bb = *(BlockNumber *) b;
+	BlockNumber aa = *(const BlockNumber *) a;
+	BlockNumber bb = *(const BlockNumber *) b;
 
 	return pg_cmp_u32(aa, bb);
 }

@@ -443,8 +443,8 @@ static int
 reorderqueue_cmp(const pairingheap_node *a, const pairingheap_node *b,
 				 void *arg)
 {
-	ReorderTuple *rta = (ReorderTuple *) a;
-	ReorderTuple *rtb = (ReorderTuple *) b;
+	const ReorderTuple *rta = (const ReorderTuple *) a;
+	const ReorderTuple *rtb = (const ReorderTuple *) b;
 	IndexScanState *node = (IndexScanState *) arg;
 
 	/* exchange argument order to invert the sort order */

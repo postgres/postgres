@@ -337,7 +337,7 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 						elog(ERROR, "could not initialize %s context: %s", "MD5",
 							 pg_cryptohash_error(ctx));
 					if (pg_cryptohash_update(ctx, ns, sizeof(uu)) < 0 ||
-						pg_cryptohash_update(ctx, (unsigned char *) ptr, len) < 0)
+						pg_cryptohash_update(ctx, (const unsigned char *) ptr, len) < 0)
 						elog(ERROR, "could not update %s context: %s", "MD5",
 							 pg_cryptohash_error(ctx));
 					/* we assume sizeof MD5 result is 16, same as UUID size */
@@ -356,7 +356,7 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 						elog(ERROR, "could not initialize %s context: %s", "SHA1",
 							 pg_cryptohash_error(ctx));
 					if (pg_cryptohash_update(ctx, ns, sizeof(uu)) < 0 ||
-						pg_cryptohash_update(ctx, (unsigned char *) ptr, len) < 0)
+						pg_cryptohash_update(ctx, (const unsigned char *) ptr, len) < 0)
 						elog(ERROR, "could not update %s context: %s", "SHA1",
 							 pg_cryptohash_error(ctx));
 					if (pg_cryptohash_final(ctx, sha1result, sizeof(sha1result)) < 0)

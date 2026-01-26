@@ -1439,8 +1439,8 @@ static int
 tbm_shared_comparator(const void *left, const void *right, void *arg)
 {
 	PagetableEntry *base = (PagetableEntry *) arg;
-	PagetableEntry *lpage = &base[*(int *) left];
-	PagetableEntry *rpage = &base[*(int *) right];
+	PagetableEntry *lpage = &base[*(const int *) left];
+	PagetableEntry *rpage = &base[*(const int *) right];
 
 	if (lpage->blockno < rpage->blockno)
 		return -1;

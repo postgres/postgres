@@ -1594,7 +1594,7 @@ test_singlerowmode(PGconn *conn)
 							  "SELECT generate_series(42, $1)",
 							  1,
 							  NULL,
-							  (const char **) param,
+							  (const char *const *) param,
 							  NULL,
 							  NULL,
 							  0) != 1)

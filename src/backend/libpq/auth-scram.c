@@ -1490,8 +1490,8 @@ scram_mock_salt(const char *username, pg_cryptohash_type hash_type,
 
 	ctx = pg_cryptohash_create(hash_type);
 	if (pg_cryptohash_init(ctx) < 0 ||
-		pg_cryptohash_update(ctx, (uint8 *) username, strlen(username)) < 0 ||
-		pg_cryptohash_update(ctx, (uint8 *) mock_auth_nonce, MOCK_AUTH_NONCE_LEN) < 0 ||
+		pg_cryptohash_update(ctx, (const uint8 *) username, strlen(username)) < 0 ||
+		pg_cryptohash_update(ctx, (const uint8 *) mock_auth_nonce, MOCK_AUTH_NONCE_LEN) < 0 ||
 		pg_cryptohash_final(ctx, sha_digest, key_length) < 0)
 	{
 		pg_cryptohash_free(ctx);

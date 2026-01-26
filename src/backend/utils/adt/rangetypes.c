@@ -2108,7 +2108,7 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 	typalign = typcache->rngelemtype->typalign;
 
 	/* initialize data pointer just after the range OID */
-	ptr = (char *) (range + 1);
+	ptr = (const char *) (range + 1);
 
 	/* fetch lower bound, if any */
 	if (RANGE_HAS_LBOUND(flags))
@@ -2155,7 +2155,7 @@ char
 range_get_flags(const RangeType *range)
 {
 	/* fetch the flag byte from datum's last byte */
-	return *((char *) range + VARSIZE(range) - 1);
+	return *((const char *) range + VARSIZE(range) - 1);
 }
 
 /*
@@ -2360,8 +2360,8 @@ range_cmp_bound_values(TypeCacheEntry *typcache, const RangeBound *b1,
 int
 range_compare(const void *key1, const void *key2, void *arg)
 {
-	RangeType  *r1 = *(RangeType **) key1;
-	RangeType  *r2 = *(RangeType **) key2;
+	RangeType  *r1 = *(RangeType *const *) key1;
+	RangeType  *r2 = *(RangeType *const *) key2;
 	TypeCacheEntry *typcache = (TypeCacheEntry *) arg;
 	RangeBound	lower1;
 	RangeBound	upper1;

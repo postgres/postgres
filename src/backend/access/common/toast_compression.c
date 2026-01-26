@@ -88,7 +88,7 @@ pglz_decompress_datum(const struct varlena *value)
 	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
+	rawsize = pglz_decompress((const char *) value + VARHDRSZ_COMPRESSED,
 							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 							  VARDATA(result),
 							  VARDATA_COMPRESSED_GET_EXTSIZE(value), true);
@@ -116,7 +116,7 @@ pglz_decompress_datum_slice(const struct varlena *value,
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
+	rawsize = pglz_decompress((const char *) value + VARHDRSZ_COMPRESSED,
 							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 							  VARDATA(result),
 							  slicelength, false);
@@ -192,7 +192,7 @@ lz4_decompress_datum(const struct varlena *value)
 	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = LZ4_decompress_safe((char *) value + VARHDRSZ_COMPRESSED,
+	rawsize = LZ4_decompress_safe((const char *) value + VARHDRSZ_COMPRESSED,
 								  VARDATA(result),
 								  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 								  VARDATA_COMPRESSED_GET_EXTSIZE(value));
@@ -229,7 +229,7 @@ lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = LZ4_decompress_safe_partial((char *) value + VARHDRSZ_COMPRESSED,
+	rawsize = LZ4_decompress_safe_partial((const char *) value + VARHDRSZ_COMPRESSED,
 										  VARDATA(result),
 										  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 										  slicelength,

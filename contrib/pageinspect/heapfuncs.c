@@ -46,7 +46,7 @@ static inline Oid
 HeapTupleHeaderGetOidOld(const HeapTupleHeaderData *tup)
 {
 	if (tup->t_infomask & HEAP_HASOID_OLD)
-		return *((Oid *) ((char *) (tup) + (tup)->t_hoff - sizeof(Oid)));
+		return *((const Oid *) ((const char *) (tup) + (tup)->t_hoff - sizeof(Oid)));
 	else
 		return InvalidOid;
 }

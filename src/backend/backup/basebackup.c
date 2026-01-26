@@ -1104,7 +1104,7 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
 
 	_tarWriteHeader(sink, filename, NULL, &statbuf, false);
 
-	if (pg_checksum_update(&checksum_ctx, (uint8 *) content, len) < 0)
+	if (pg_checksum_update(&checksum_ctx, (const uint8 *) content, len) < 0)
 		elog(ERROR, "could not update checksum of file \"%s\"",
 			 filename);
 

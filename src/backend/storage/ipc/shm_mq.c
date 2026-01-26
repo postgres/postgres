@@ -1041,7 +1041,7 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 			 */
 			pg_memory_barrier();
 			memcpy(&mq->mq_ring[mq->mq_ring_offset + offset],
-				   (char *) data + sent, sendnow);
+				   (const char *) data + sent, sendnow);
 			sent += sendnow;
 
 			/*

@@ -63,7 +63,7 @@ initcap_wbnext(void *state)
 	while (wbstate->offset < wbstate->len &&
 		   wbstate->str[wbstate->offset] != '\0')
 	{
-		char32_t	u = utf8_to_unicode((unsigned char *) wbstate->str +
+		char32_t	u = utf8_to_unicode((const unsigned char *) wbstate->str +
 										wbstate->offset);
 		bool		curr_alnum = pg_u_isalnum(u, wbstate->posix);
 

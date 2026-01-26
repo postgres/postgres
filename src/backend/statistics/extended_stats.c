@@ -915,8 +915,8 @@ multi_sort_compare_dims(int start, int end,
 int
 compare_scalars_simple(const void *a, const void *b, void *arg)
 {
-	return compare_datums_simple(*(Datum *) a,
-								 *(Datum *) b,
+	return compare_datums_simple(*(const Datum *) a,
+								 *(const Datum *) b,
 								 (SortSupport) arg);
 }
 

@@ -3023,8 +3023,8 @@ _bt_deadblocks(Page page, OffsetNumber *deletable, int ndeletable,
 static inline int
 _bt_blk_cmp(const void *arg1, const void *arg2)
 {
-	BlockNumber b1 = *((BlockNumber *) arg1);
-	BlockNumber b2 = *((BlockNumber *) arg2);
+	BlockNumber b1 = *((const BlockNumber *) arg1);
+	BlockNumber b2 = *((const BlockNumber *) arg2);
 
 	return pg_cmp_u32(b1, b2);
 }

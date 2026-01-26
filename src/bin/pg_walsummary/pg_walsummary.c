@@ -217,8 +217,8 @@ dump_one_relation(ws_options *opt, RelFileLocator *rlocator,
 static int
 compare_block_numbers(const void *a, const void *b)
 {
-	BlockNumber aa = *(BlockNumber *) a;
-	BlockNumber bb = *(BlockNumber *) b;
+	BlockNumber aa = *(const BlockNumber *) a;
+	BlockNumber bb = *(const BlockNumber *) b;
 
 	return pg_cmp_u32(aa, bb);
 }

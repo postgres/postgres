@@ -268,7 +268,7 @@ member_compute_checksum(astreamer *streamer, astreamer_member *member,
 	mystreamer->checksum_bytes += len;
 
 	/* Feed these bytes to the checksum calculation. */
-	if (pg_checksum_update(checksum_ctx, (uint8 *) data, len) < 0)
+	if (pg_checksum_update(checksum_ctx, (const uint8 *) data, len) < 0)
 	{
 		report_backup_error(mystreamer->context,
 							"could not update checksum of file \"%s\"",

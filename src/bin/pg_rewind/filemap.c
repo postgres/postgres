@@ -694,8 +694,8 @@ datasegpath(RelFileLocator rlocator, ForkNumber forknum, BlockNumber segno)
 static int
 final_filemap_cmp(const void *a, const void *b)
 {
-	file_entry_t *fa = *((file_entry_t **) a);
-	file_entry_t *fb = *((file_entry_t **) b);
+	file_entry_t *fa = *((file_entry_t *const *) a);
+	file_entry_t *fb = *((file_entry_t *const *) b);
 
 	if (fa->action > fb->action)
 		return 1;

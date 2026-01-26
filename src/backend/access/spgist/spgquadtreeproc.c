@@ -147,8 +147,8 @@ spg_quad_choose(PG_FUNCTION_ARGS)
 static int
 x_cmp(const void *a, const void *b, void *arg)
 {
-	Point	   *pa = *(Point **) a;
-	Point	   *pb = *(Point **) b;
+	Point	   *pa = *(Point *const *) a;
+	Point	   *pb = *(Point *const *) b;
 
 	if (pa->x == pb->x)
 		return 0;
@@ -158,8 +158,8 @@ x_cmp(const void *a, const void *b, void *arg)
 static int
 y_cmp(const void *a, const void *b, void *arg)
 {
-	Point	   *pa = *(Point **) a;
-	Point	   *pb = *(Point **) b;
+	Point	   *pa = *(Point *const *) a;
+	Point	   *pb = *(Point *const *) b;
 
 	if (pa->y == pb->y)
 		return 0;

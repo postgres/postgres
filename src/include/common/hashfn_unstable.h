@@ -271,7 +271,7 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 	 */
 	for (;;)
 	{
-		uint64		chunk = *(uint64 *) str;
+		uint64		chunk = *(const uint64 *) str;
 
 		zero_byte_low = haszero64(chunk);
 		if (zero_byte_low)

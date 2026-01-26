@@ -383,7 +383,7 @@ pg_popcount_neon(const char *buf, int bytes)
 	 */
 	for (; bytes >= sizeof(uint64); bytes -= sizeof(uint64))
 	{
-		popcnt += pg_popcount64(*((uint64 *) buf));
+		popcnt += pg_popcount64(*((const uint64 *) buf));
 		buf += sizeof(uint64);
 	}
 
@@ -465,7 +465,7 @@ pg_popcount_masked_neon(const char *buf, int bytes, bits8 mask)
 	 */
 	for (; bytes >= sizeof(uint64); bytes -= sizeof(uint64))
 	{
-		popcnt += pg_popcount64(*((uint64 *) buf) & mask64);
+		popcnt += pg_popcount64(*((const uint64 *) buf) & mask64);
 		buf += sizeof(uint64);
 	}
 

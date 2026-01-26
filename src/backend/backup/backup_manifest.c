@@ -388,7 +388,7 @@ AppendStringToManifest(backup_manifest_info *manifest, const char *s)
 	Assert(manifest != NULL);
 	if (manifest->still_checksumming)
 	{
-		if (pg_cryptohash_update(manifest->manifest_ctx, (uint8 *) s, len) < 0)
+		if (pg_cryptohash_update(manifest->manifest_ctx, (const uint8 *) s, len) < 0)
 			elog(ERROR, "failed to update checksum of backup manifest: %s",
 				 pg_cryptohash_error(manifest->manifest_ctx));
 	}
