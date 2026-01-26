@@ -243,7 +243,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	Form_pg_statistic_ext stxform;
 
 	Datum		values[Natts_pg_statistic_ext_data] = {0};
-	bool		nulls[Natts_pg_statistic_ext_data];
+	bool		nulls[Natts_pg_statistic_ext_data] = {0};
 	bool		replaces[Natts_pg_statistic_ext_data] = {0};
 	bool		success = true;
 	int			numexprs = 0;
@@ -361,7 +361,9 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 
 	/* Primary Key: cannot be NULL or replaced. */
 	values[Anum_pg_statistic_ext_data_stxoid - 1] = ObjectIdGetDatum(stxform->oid);
+	nulls[Anum_pg_statistic_ext_data_stxoid - 1] = false;
 	values[Anum_pg_statistic_ext_data_stxdinherit - 1] = BoolGetDatum(inherited);
+	nulls[Anum_pg_statistic_ext_data_stxdinherit - 1] = false;
 
 	/* All unspecified parameters will be left unmodified */
 	nulls[Anum_pg_statistic_ext_data_stxdndistinct - 1] = true;
