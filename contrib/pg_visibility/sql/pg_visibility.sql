@@ -1,4 +1,5 @@
 CREATE EXTENSION pg_visibility;
+CREATE EXTENSION pageinspect;
 
 --
 -- recently-dropped table
@@ -93,6 +94,25 @@ select count(*) > 0 from pg_visibility_map('test_partition');
 select count(*) > 0 from pg_visibility_map_summary('test_partition');
 select * from pg_check_frozen('test_partition'); -- hopefully none
 select pg_truncate_visibility_map('test_partition');
+
+-- test the case where vacuum phase I does not need to modify the heap buffer
+-- and only needs to set the VM
+create table test_vac_unmodified_heap(a int);
+insert into test_vac_unmodified_heap values (1);
+vacuum (freeze) test_vac_unmodified_heap;
+select pg_visibility_map_summary('test_vac_unmodified_heap');
+-- the checkpoint cleans the buffer dirtied by freezing the sole tuple
+checkpoint;
+-- truncating the VM ensures that the next vacuum will need to set it
+select pg_truncate_visibility_map('test_vac_unmodified_heap');
+select pg_visibility_map_summary('test_vac_unmodified_heap');
+-- though the VM is truncated, the heap page-level visibility hint,
+-- PD_ALL_VISIBLE should still be set
+SELECT (flags & x'0004'::int) <> 0
+        FROM page_header(get_raw_page('test_vac_unmodified_heap', 0));
+-- vacuum sets the VM
+vacuum test_vac_unmodified_heap;
+select pg_visibility_map_summary('test_vac_unmodified_heap');
 
 -- test copy freeze
 create table copyfreeze (a int, b char(1500));

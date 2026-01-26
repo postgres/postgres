@@ -2120,16 +2120,14 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * of last heap_vac_scan_next_block() call), and from all_visible and
 	 * all_frozen variables
 	 */
-	if (!all_visible_according_to_vm && presult.all_visible)
+	if ((presult.all_visible && !all_visible_according_to_vm) ||
+		(presult.all_frozen && !VM_ALL_FROZEN(rel, blkno, &vmbuffer)))
 	{
 		uint8		old_vmbits;
 		uint8		flags = VISIBILITYMAP_ALL_VISIBLE;
 
 		if (presult.all_frozen)
-		{
-			Assert(!TransactionIdIsValid(presult.vm_conflict_horizon));
 			flags |= VISIBILITYMAP_ALL_FROZEN;
-		}
 
 		/*
 		 * It should never be the case that the visibility map page is set
@@ -2137,15 +2135,25 @@ lazy_scan_prune(LVRelState *vacrel,
 		 * checksums are not enabled).  Regardless, set both bits so that we
 		 * get back in sync.
 		 *
-		 * NB: If the heap page is all-visible but the VM bit is not set, we
-		 * don't need to dirty the heap page.  However, if checksums are
-		 * enabled, we do need to make sure that the heap page is dirtied
-		 * before passing it to visibilitymap_set(), because it may be logged.
-		 * Given that this situation should only happen in rare cases after a
-		 * crash, it is not worth optimizing.
+		 * Even if PD_ALL_VISIBLE is already set, we don't need to worry about
+		 * unnecessarily dirtying the heap buffer. Nearly the only scenario
+		 * where PD_ALL_VISIBLE is set but the VM is not is if the VM was
+		 * removed -- and that isn't worth optimizing for. And if we add the
+		 * heap buffer to the WAL chain (without passing REGBUF_NO_CHANGES),
+		 * it must be marked dirty.
 		 */
 		PageSetAllVisible(page);
 		MarkBufferDirty(buf);
+
+		/*
+		 * If the page is being set all-frozen, we pass InvalidTransactionId
+		 * as the cutoff_xid, since a snapshot conflict horizon sufficient to
+		 * make everything safe for REDO was logged when the page's tuples
+		 * were frozen.
+		 */
+		Assert(!presult.all_frozen ||
+			   !TransactionIdIsValid(presult.vm_conflict_horizon));
+
 		old_vmbits = visibilitymap_set(vacrel->rel, blkno, buf,
 									   InvalidXLogRecPtr,
 									   vmbuffer, presult.vm_conflict_horizon,
@@ -2215,65 +2223,6 @@ lazy_scan_prune(LVRelState *vacrel,
 		MarkBufferDirty(buf);
 		visibilitymap_clear(vacrel->rel, blkno, vmbuffer,
 							VISIBILITYMAP_VALID_BITS);
-	}
-
-	/*
-	 * If the all-visible page is all-frozen but not marked as such yet, mark
-	 * it as all-frozen.
-	 */
-	else if (all_visible_according_to_vm && presult.all_frozen &&
-			 !VM_ALL_FROZEN(vacrel->rel, blkno, &vmbuffer))
-	{
-		uint8		old_vmbits;
-
-		/*
-		 * Avoid relying on all_visible_according_to_vm as a proxy for the
-		 * page-level PD_ALL_VISIBLE bit being set, since it might have become
-		 * stale -- even when all_visible is set
-		 */
-		if (!PageIsAllVisible(page))
-		{
-			PageSetAllVisible(page);
-			MarkBufferDirty(buf);
-		}
-
-		/*
-		 * Set the page all-frozen (and all-visible) in the VM.
-		 *
-		 * We can pass InvalidTransactionId as our cutoff_xid, since a
-		 * snapshotConflictHorizon sufficient to make everything safe for REDO
-		 * was logged when the page's tuples were frozen.
-		 */
-		Assert(!TransactionIdIsValid(presult.vm_conflict_horizon));
-		old_vmbits = visibilitymap_set(vacrel->rel, blkno, buf,
-									   InvalidXLogRecPtr,
-									   vmbuffer, InvalidTransactionId,
-									   VISIBILITYMAP_ALL_VISIBLE |
-									   VISIBILITYMAP_ALL_FROZEN);
-
-		/*
-		 * The page was likely already set all-visible in the VM. However,
-		 * there is a small chance that it was modified sometime between
-		 * setting all_visible_according_to_vm and checking the visibility
-		 * during pruning. Check the return value of old_vmbits anyway to
-		 * ensure the visibility map counters used for logging are accurate.
-		 */
-		if ((old_vmbits & VISIBILITYMAP_ALL_VISIBLE) == 0)
-		{
-			vacrel->vm_new_visible_pages++;
-			vacrel->vm_new_visible_frozen_pages++;
-			*vm_page_frozen = true;
-		}
-
-		/*
-		 * We already checked that the page was not set all-frozen in the VM
-		 * above, so we don't need to test the value of old_vmbits.
-		 */
-		else
-		{
-			vacrel->vm_new_frozen_pages++;
-			*vm_page_frozen = true;
-		}
 	}
 
 	return presult.ndeleted;
