@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/brin_tuple.h"
+#include "access/gin.h"
 #include "access/gin_tuple.h"
 #include "access/hash.h"
 #include "access/htup_details.h"
@@ -28,6 +29,7 @@
 #include "catalog/pg_collation.h"
 #include "executor/executor.h"
 #include "pg_trace.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -615,7 +617,7 @@ tuplesort_begin_index_gin(Relation heapRel,
 	{
 		SortSupport sortKey = base->sortKeys + i;
 		Form_pg_attribute att = TupleDescAttr(desc, i);
-		TypeCacheEntry *typentry;
+		Oid			cmpFunc;
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
 		sortKey->ssup_collation = indexRel->rd_indcollation[i];
@@ -629,11 +631,26 @@ tuplesort_begin_index_gin(Relation heapRel,
 			sortKey->ssup_collation = DEFAULT_COLLATION_OID;
 
 		/*
-		 * Look for a ordering for the index key data type, and then the sort
-		 * support function.
+		 * If the compare proc isn't specified in the opclass definition, look
+		 * up the index key type's default btree comparator.
 		 */
-		typentry = lookup_type_cache(att->atttypid, TYPECACHE_LT_OPR);
-		PrepareSortSupportFromOrderingOp(typentry->lt_opr, sortKey);
+		cmpFunc = index_getprocid(indexRel, i + 1, GIN_COMPARE_PROC);
+		if (cmpFunc == InvalidOid)
+		{
+			TypeCacheEntry *typentry;
+
+			typentry = lookup_type_cache(att->atttypid,
+										 TYPECACHE_CMP_PROC_FINFO);
+			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify a comparison function for type %s",
+								format_type_be(att->atttypid))));
+
+			cmpFunc = typentry->cmp_proc_finfo.fn_oid;
+		}
+
+		PrepareSortSupportComparisonShim(cmpFunc, sortKey);
 	}
 
 	base->removeabbrev = removeabbrev_index_gin;
