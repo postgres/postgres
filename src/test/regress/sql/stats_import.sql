@@ -15,6 +15,12 @@ CREATE TABLE stats_import.test(
     tags text[]
 ) WITH (autovacuum_enabled = false);
 
+CREATE TABLE stats_import.test_mr(
+    id INTEGER PRIMARY KEY,
+    name text,
+    mrange int4multirange
+) WITH (autovacuum_enabled = false);
+
 SELECT
     pg_catalog.pg_restore_relation_stats(
         'schemaname', 'stats_import',
@@ -763,6 +769,24 @@ WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
+
+-- test for multiranges
+INSERT INTO stats_import.test_mr
+VALUES
+  (1, 'red', '{[1,3),[5,9),[20,30)}'::int4multirange),
+  (2, 'red', '{[11,13),[15,19),[20,30)}'::int4multirange),
+  (3, 'red', '{[21,23),[25,29),[120,130)}'::int4multirange);
+
+-- ensure that we set attribute stats for a multirange
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'attname', 'mrange',
+  'inherited', false,
+  'range_length_histogram', '{19,29,109}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,30)","[11,30)","[21,130)"}'::text
+);
 
 --
 -- Test the ability to exactly copy data from one table to an identical table,
