@@ -556,7 +556,9 @@ pg_buffercache_os_pages_internal(FunctionCallInfo fcinfo, bool include_numa)
 			{
 				values[2] = Int32GetDatum(fctx->record[i].numa_node);
 				nulls[2] = false;
-			} else {
+			}
+			else
+			{
 				/* some kind of error (e.g. pages moved to swap) */
 				values[2] = (Datum) 0;
 				nulls[2] = true;
