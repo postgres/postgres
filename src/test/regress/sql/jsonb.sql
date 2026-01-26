@@ -857,6 +857,7 @@ SELECT count(*) FROM testjsonb WHERE j @? '$';
 SELECT count(*) FROM testjsonb WHERE j @? '$.public';
 SELECT count(*) FROM testjsonb WHERE j @? '$.bar';
 
+ALTER TABLE testjsonb SET (parallel_workers = 2);
 CREATE INDEX jidx ON testjsonb USING gin (j);
 SET enable_seqscan = off;
 
@@ -945,7 +946,7 @@ SELECT count(*) FROM testjsonb WHERE j = '{"pos":98, "line":371, "node":"CBA", "
 
 --gin path opclass
 DROP INDEX jidx;
-CREATE INDEX jidx ON testjsonb USING gin (j jsonb_path_ops);
+CREATE INDEX CONCURRENTLY jidx ON testjsonb USING gin (j jsonb_path_ops);
 SET enable_seqscan = off;
 
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":null}';
