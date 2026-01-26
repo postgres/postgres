@@ -12619,6 +12619,11 @@
   proargtypes => 'int4', prosrc => 'gist_translate_cmptype_common' },
 
 # Extended Statistics functions
+{ oid => '9947', descr => 'restore statistics on extended statistics object',
+  proname => 'pg_restore_extended_stats', provariadic => 'any',
+  proisstrict => 'f', provolatile => 'v', proparallel => 'u',
+  prorettype => 'bool', proargtypes => 'any', proargmodes => '{v}',
+  proargnames => '{kwargs}', prosrc => 'pg_restore_extended_stats' },
 { oid => '9948', descr => 'clear statistics on extended statistics object',
   proname => 'pg_clear_extended_stats', proisstrict => 'f', provolatile => 'v',
   proparallel => 'u', prorettype => 'void', proargtypes => 'text text text text bool',

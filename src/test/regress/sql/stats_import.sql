@@ -811,6 +811,14 @@ CREATE STATISTICS stats_import.test_stat
   ON name, comp, lower(arange), array_length(tags,1)
   FROM stats_import.test;
 
+CREATE STATISTICS stats_import.test_stat_ndistinct (ndistinct)
+  ON name, comp
+  FROM stats_import.test;
+
+CREATE STATISTICS stats_import.test_stat_dependencies (dependencies)
+  ON name, comp
+  FROM stats_import.test;
+
 -- Generate statistics on table with data
 ANALYZE stats_import.test;
 
@@ -1136,5 +1144,102 @@ RESET ROLE;
 REVOKE MAINTAIN ON stats_import.test FROM regress_test_extstat_clear;
 REVOKE ALL ON SCHEMA stats_import FROM regress_test_extstat_clear;
 DROP ROLE regress_test_extstat_clear;
+
+-- Tests for pg_restore_extended_stats().
+--  Invalid argument values.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', NULL,
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', NULL,
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', NULL,
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', NULL,
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', NULL);
+-- Missing objects
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'schema_not_exist',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'table_not_exist',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'schema_not_exist',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'ext_stats_not_exist',
+  'inherited', false);
+-- Incorrect relation/extended stats combination
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false);
+
+-- ndistinct value doesn't match object definition
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_ndistinct',
+  'inherited', false,
+  'n_distinct', '[{"attributes" : [1,3], "ndistinct" : 4}]'::pg_ndistinct);
+-- Incorrect extended stats kind, ndistinct not supported
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_dependencies',
+  'inherited', false,
+  'n_distinct', '[{"attributes" : [1,3], "ndistinct" : 4}]'::pg_ndistinct);
+
+-- ok: ndistinct
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_ndistinct',
+  'inherited', false,
+  'n_distinct', '[{"attributes" : [2,3], "ndistinct" : 4}]'::pg_ndistinct);
+
+SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct
+FROM pg_stats_ext AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_ndistinct' AND
+    e.inherited = false;
 
 DROP SCHEMA stats_import CASCADE;
