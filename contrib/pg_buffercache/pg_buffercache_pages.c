@@ -551,8 +551,16 @@ pg_buffercache_os_pages_internal(FunctionCallInfo fcinfo, bool include_numa)
 
 		if (fctx->include_numa)
 		{
-			values[2] = Int32GetDatum(fctx->record[i].numa_node);
-			nulls[2] = false;
+			/* status is valid node number */
+			if (fctx->record[i].numa_node >= 0)
+			{
+				values[2] = Int32GetDatum(fctx->record[i].numa_node);
+				nulls[2] = false;
+			} else {
+				/* some kind of error (e.g. pages moved to swap) */
+				values[2] = (Datum) 0;
+				nulls[2] = true;
+			}
 		}
 		else
 		{
