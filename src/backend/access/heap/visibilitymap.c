@@ -240,10 +240,8 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf)
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
  * any I/O.
- *
- * Returns the state of the page's VM bits before setting flags.
  */
-uint8
+void
 visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				  XLogRecPtr recptr, Buffer vmBuf, TransactionId cutoff_xid,
 				  uint8 flags)
@@ -320,7 +318,6 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	}
 
 	LockBuffer(vmBuf, BUFFER_LOCK_UNLOCK);
-	return status;
 }
 
 /*
@@ -343,7 +340,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
  *
  * rlocator is used only for debugging messages.
  */
-uint8
+void
 visibilitymap_set_vmbits(BlockNumber heapBlk,
 						 Buffer vmBuf, uint8 flags,
 						 const RelFileLocator rlocator)
@@ -386,8 +383,6 @@ visibilitymap_set_vmbits(BlockNumber heapBlk,
 		map[mapByte] |= (flags << mapOffset);
 		MarkBufferDirty(vmBuf);
 	}
-
-	return status;
 }
 
 /*
