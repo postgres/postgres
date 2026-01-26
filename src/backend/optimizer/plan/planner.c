@@ -5796,6 +5796,41 @@ optimize_window_clauses(PlannerInfo *root, WindowFuncLists *wflists)
 			}
 		}
 	}
+
+	/*
+	 * XXX remove any duplicate WindowFuncs from each WindowClause.  This has
+	 * been done only in the back branches.  Previously, the deduplication was
+	 * done in find_window_functions(), but that caused issues with the code
+	 * above when moving a WindowFunc to another WindowClause as any duplicate
+	 * WindowFuncs won't receive the adjusted winref when merging
+	 * WindowClauses.  The deduplication below has been done only so that we
+	 * maintain the same cost calculations.  As it turns out, the previous
+	 * deduplication code thought it was saving effort during execution by
+	 * getting rid of duplicates, but that was not true as the expression
+	 * evaluation code will evaluate each WindowFunc mentioned in the
+	 * targetlist.
+	 */
+	foreach(lc, windowClause)
+	{
+		WindowClause *wc = lfirst_node(WindowClause, lc);
+		ListCell   *lc2;
+		List	   *list = wflists->windowFuncs[wc->winref];
+		List	   *newlist = NIL;
+
+		if (list == NIL)
+			continue;
+
+		foreach(lc2, list)
+		{
+			if (!list_member(newlist, lfirst(lc2)))
+				newlist = lappend(newlist, lfirst(lc2));
+			else
+				wflists->numWindowFuncs--;
+		}
+		list_free(list);
+
+		wflists->windowFuncs[wc->winref] = newlist;
+	}
 }
 
 /*
