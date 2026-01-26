@@ -38,8 +38,6 @@
 #define MAP_NOSYNC			0
 #endif
 
-#define PG_MMAP_FLAGS			(MAP_SHARED|MAP_ANONYMOUS|MAP_HASSEMAPHORE)
-
 /* Some really old systems don't define MAP_FAILED. */
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *) -1)
