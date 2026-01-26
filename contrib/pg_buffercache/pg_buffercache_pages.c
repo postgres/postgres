@@ -531,7 +531,9 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		{
 			values[2] = Int32GetDatum(fctx->record[i].numa_node);
 			nulls[2] = false;
-		} else {
+		}
+		else
+		{
 			/* some kind of error (e.g. pages moved to swap) */
 			values[2] = (Datum) 0;
 			nulls[2] = true;
