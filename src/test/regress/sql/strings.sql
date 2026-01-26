@@ -678,6 +678,30 @@ SELECT substr(f1, 5, 10) AS f1_data, substr(f2, 5, 10) AS f2_data
   FROM toasttest;
 SELECT pg_column_compression(f1) AS f1_comp, pg_column_compression(f2) AS f2_comp
   FROM toasttest;
+TRUNCATE toasttest;
+-- test with inline compressible varlenas.
+SET default_toast_compression = 'pglz';
+ALTER TABLE toasttest ALTER COLUMN f1 SET STORAGE MAIN;
+ALTER TABLE toasttest ALTER COLUMN f2 SET STORAGE MAIN;
+INSERT INTO toasttest values(repeat('1234', 1024), repeat('5678', 1024));
+-- There should be no values in the toast relation.
+SELECT substr(f1, 5, 10) AS f1_data, substr(f2, 5, 10) AS f2_data
+  FROM toasttest;
+SELECT pg_column_compression(f1) AS f1_comp, pg_column_compression(f2) AS f2_comp
+  FROM toasttest;
+SELECT count(*) FROM :reltoastname;
+TRUNCATE toasttest;
+-- test with external compressed data (default).
+ALTER TABLE toasttest ALTER COLUMN f1 SET STORAGE EXTENDED;
+ALTER TABLE toasttest ALTER COLUMN f2 SET STORAGE EXTENDED;
+INSERT INTO toasttest values(repeat('1234', 10240), NULL);
+-- There should be one value in the toast relation.
+SELECT substr(f1, 5, 10) AS f1_data, substr(f2, 5, 10) AS f2_data
+  FROM toasttest;
+SELECT pg_column_compression(f1) AS f1_comp, pg_column_compression(f2) AS f2_comp
+  FROM toasttest;
+SELECT count(*) FROM :reltoastname WHERE chunk_seq = 0;
+RESET default_toast_compression;
 DROP TABLE toasttest;
 
 --
