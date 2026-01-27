@@ -1297,10 +1297,17 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
                     {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
 
+-- Check the presence of the restored stats, for each object.
 SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct
 FROM pg_stats_ext AS e
 WHERE e.statistics_schemaname = 'stats_import' AND
     e.statistics_name = 'test_stat_ndistinct' AND
+    e.inherited = false;
+
+SELECT replace(e.dependencies, '}, ', E'},\n') AS dependencies
+FROM pg_stats_ext AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_dependencies' AND
     e.inherited = false;
 
 DROP SCHEMA stats_import CASCADE;
