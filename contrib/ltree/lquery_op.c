@@ -96,14 +96,31 @@ ltree_prefix_eq_ci(const char *a, size_t a_sz, const char *b, size_t b_sz)
 	static pg_locale_t locale = NULL;
 	size_t		al_sz = a_sz + 1;
 	size_t		al_len;
-	char	   *al = palloc(al_sz);
+	char	   *al;
 	size_t		bl_sz = b_sz + 1;
 	size_t		bl_len;
-	char	   *bl = palloc(bl_sz);
+	char	   *bl;
 	bool		res;
 
 	if (!locale)
 		locale = pg_newlocale_from_collation(DEFAULT_COLLATION_OID);
+
+	if (locale->ctype_is_c)
+	{
+		if (a_sz > b_sz)
+			return false;
+
+		for (int i = 0; i < a_sz; i++)
+		{
+			if (pg_ascii_tolower(a[i]) != pg_ascii_tolower(b[i]))
+				return false;
+		}
+
+		return true;
+	}
+
+	al = palloc(al_sz);
+	bl = palloc(bl_sz);
 
 	/* casefold both a and b */
 

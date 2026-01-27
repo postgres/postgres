@@ -30,20 +30,34 @@ ltree_crc32_sz(const char *buf, int size)
 		locale = pg_newlocale_from_collation(DEFAULT_COLLATION_OID);
 
 	INIT_TRADITIONAL_CRC32(crc);
-	while (size > 0)
+	if (locale->ctype_is_c)
 	{
-		char		foldstr[UNICODE_CASEMAP_BUFSZ];
-		int			srclen = pg_mblen(p);
-		size_t		foldlen;
+		while (size > 0)
+		{
+			char		c = pg_ascii_tolower(*p);
 
-		/* fold one codepoint at a time */
-		foldlen = pg_strfold(foldstr, UNICODE_CASEMAP_BUFSZ, p, srclen,
-							 locale);
+			COMP_TRADITIONAL_CRC32(crc, &c, 1);
+			size--;
+			p++;
+		}
+	}
+	else
+	{
+		while (size > 0)
+		{
+			char		foldstr[UNICODE_CASEMAP_BUFSZ];
+			int			srclen = pg_mblen(p);
+			size_t		foldlen;
 
-		COMP_TRADITIONAL_CRC32(crc, foldstr, foldlen);
+			/* fold one codepoint at a time */
+			foldlen = pg_strfold(foldstr, UNICODE_CASEMAP_BUFSZ, p, srclen,
+								 locale);
 
-		size -= srclen;
-		p += srclen;
+			COMP_TRADITIONAL_CRC32(crc, foldstr, foldlen);
+
+			size -= srclen;
+			p += srclen;
+		}
 	}
 	FIN_TRADITIONAL_CRC32(crc);
 	return (unsigned int) crc;
