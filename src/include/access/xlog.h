@@ -215,6 +215,7 @@ extern XLogSegNo XLogGetLastRemovedSegno(void);
 extern XLogSegNo XLogGetOldestSegno(TimeLineID tli);
 extern void XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN);
 extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
+extern XLogRecPtr XLogGetReplicationSlotMinimumLSN(void);
 
 extern void xlog_redo(struct XLogReaderState *record);
 extern void xlog_desc(StringInfo buf, struct XLogReaderState *record);
