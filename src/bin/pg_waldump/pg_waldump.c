@@ -39,7 +39,6 @@
 
 static const char *progname;
 
-static int	WalSegSz;
 static volatile sig_atomic_t time_to_stop = false;
 
 static const RelFileLocator emptyRelFileLocator = {0, 0, 0};
@@ -203,11 +202,11 @@ open_file_in_directory(const char *directory, const char *fname)
 /*
  * Try to find fname in the given directory. Returns true if it is found,
  * false otherwise. If fname is NULL, search the complete directory for any
- * file with a valid WAL file name. If file is successfully opened, set the
- * wal segment size.
+ * file with a valid WAL file name. If file is successfully opened, set
+ * *WaSegSz to the WAL segment size.
  */
 static bool
-search_directory(const char *directory, const char *fname)
+search_directory(const char *directory, const char *fname, int *WalSegSz)
 {
 	int			fd = -1;
 	DIR		   *xldir;
@@ -249,17 +248,17 @@ search_directory(const char *directory, const char *fname)
 		{
 			XLogLongPageHeader longhdr = (XLogLongPageHeader) buf.data;
 
-			WalSegSz = longhdr->xlp_seg_size;
-
-			if (!IsValidWalSegSize(WalSegSz))
+			if (!IsValidWalSegSize(longhdr->xlp_seg_size))
 			{
 				pg_log_error(ngettext("invalid WAL segment size in WAL file \"%s\" (%d byte)",
 									  "invalid WAL segment size in WAL file \"%s\" (%d bytes)",
-									  WalSegSz),
-							 fname, WalSegSz);
+									  longhdr->xlp_seg_size),
+							 fname, longhdr->xlp_seg_size);
 				pg_log_error_detail("The WAL segment size must be a power of two between 1 MB and 1 GB.");
 				exit(1);
 			}
+
+			*WalSegSz = longhdr->xlp_seg_size;
 		}
 		else if (r < 0)
 			pg_fatal("could not read file \"%s\": %m",
@@ -286,21 +285,22 @@ search_directory(const char *directory, const char *fname)
  *	 XLOGDIR /
  *	 $PGDATA / XLOGDIR /
  *
- * The valid target directory is returned.
+ * The valid target directory is returned, and *WalSegSz is set to the
+ * size of the WAL segment found in that directory.
  */
 static char *
-identify_target_directory(char *directory, char *fname)
+identify_target_directory(char *directory, char *fname, int *WalSegSz)
 {
 	char		fpath[MAXPGPATH];
 
 	if (directory != NULL)
 	{
-		if (search_directory(directory, fname))
+		if (search_directory(directory, fname, WalSegSz))
 			return pg_strdup(directory);
 
 		/* directory / XLOGDIR */
 		snprintf(fpath, MAXPGPATH, "%s/%s", directory, XLOGDIR);
-		if (search_directory(fpath, fname))
+		if (search_directory(fpath, fname, WalSegSz))
 			return pg_strdup(fpath);
 	}
 	else
@@ -308,10 +308,10 @@ identify_target_directory(char *directory, char *fname)
 		const char *datadir;
 
 		/* current directory */
-		if (search_directory(".", fname))
+		if (search_directory(".", fname, WalSegSz))
 			return pg_strdup(".");
 		/* XLOGDIR */
-		if (search_directory(XLOGDIR, fname))
+		if (search_directory(XLOGDIR, fname, WalSegSz))
 			return pg_strdup(XLOGDIR);
 
 		datadir = getenv("PGDATA");
@@ -319,7 +319,7 @@ identify_target_directory(char *directory, char *fname)
 		if (datadir != NULL)
 		{
 			snprintf(fpath, MAXPGPATH, "%s/%s", datadir, XLOGDIR);
-			if (search_directory(fpath, fname))
+			if (search_directory(fpath, fname, WalSegSz))
 				return pg_strdup(fpath);
 		}
 	}
@@ -801,6 +801,7 @@ main(int argc, char **argv)
 	XLogRecPtr	first_record;
 	char	   *waldir = NULL;
 	char	   *errormsg;
+	int			WalSegSz;
 
 	static struct option long_options[] = {
 		{"bkp-details", no_argument, NULL, 'b'},
@@ -1127,7 +1128,7 @@ main(int argc, char **argv)
 				pg_fatal("could not open directory \"%s\": %m", waldir);
 		}
 
-		waldir = identify_target_directory(waldir, fname);
+		waldir = identify_target_directory(waldir, fname, &WalSegSz);
 		fd = open_file_in_directory(waldir, fname);
 		if (fd < 0)
 			pg_fatal("could not open file \"%s\"", fname);
@@ -1189,7 +1190,7 @@ main(int argc, char **argv)
 		}
 	}
 	else
-		waldir = identify_target_directory(waldir, NULL);
+		waldir = identify_target_directory(waldir, NULL, &WalSegSz);
 
 	/* we don't know what to print */
 	if (!XLogRecPtrIsValid(private.startptr))
