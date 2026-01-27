@@ -467,70 +467,71 @@ drop_local_obsolete_slots(List *remote_slot_list)
  * Reserve WAL for the currently active local slot using the specified WAL
  * location (restart_lsn).
  *
- * If the given WAL location has been removed, reserve WAL using the oldest
- * existing WAL segment.
+ * If the given WAL location has been removed or is at risk of removal,
+ * reserve WAL using the oldest segment that is non-removable.
  */
 static void
 reserve_wal_for_local_slot(XLogRecPtr restart_lsn)
 {
-	XLogSegNo	oldest_segno;
+	XLogRecPtr	slot_min_lsn;
+	XLogRecPtr	min_safe_lsn;
 	XLogSegNo	segno;
 	ReplicationSlot *slot = MyReplicationSlot;
 
 	Assert(slot != NULL);
 	Assert(XLogRecPtrIsInvalid(slot->data.restart_lsn));
 
-	while (true)
-	{
-		SpinLockAcquire(&slot->mutex);
-		slot->data.restart_lsn = restart_lsn;
-		SpinLockRelease(&slot->mutex);
+	/*
+	 * Acquire an exclusive lock to prevent the checkpoint process from
+	 * concurrently calculating the minimum slot LSN (see
+	 * CheckPointReplicationSlots), ensuring that if WAL reservation occurs
+	 * first, the checkpoint must wait for the restart_lsn update before
+	 * calculating the minimum LSN.
+	 *
+	 * Note: Unlike ReplicationSlotReserveWal(), this lock does not protect a
+	 * newly synced slot from being invalidated if a concurrent checkpoint has
+	 * invoked CheckPointReplicationSlots() before the WAL reservation here.
+	 * This can happen because the initial restart_lsn received from the
+	 * remote server can precede the redo pointer. Therefore, when selecting
+	 * the initial restart_lsn, we consider using the redo pointer or the
+	 * minimum slot LSN (if those values are greater than the remote
+	 * restart_lsn) instead of relying solely on the remote value.
+	 */
+	LWLockAcquire(ReplicationSlotAllocationLock, LW_EXCLUSIVE);
 
-		/* Prevent WAL removal as fast as possible */
-		ReplicationSlotsComputeRequiredLSN();
+	/*
+	 * Determine the minimum non-removable LSN by comparing the redo pointer
+	 * with the minimum slot LSN.
+	 *
+	 * The minimum slot LSN is considered because the redo pointer advances at
+	 * every checkpoint, even when replication slots are present on the
+	 * standby. In such scenarios, the redo pointer can exceed the remote
+	 * restart_lsn, while WALs preceding the remote restart_lsn remain
+	 * protected by a local replication slot.
+	 */
+	min_safe_lsn = GetRedoRecPtr();
+	slot_min_lsn = XLogGetReplicationSlotMinimumLSN();
 
-		XLByteToSeg(slot->data.restart_lsn, segno, wal_segment_size);
+	if (XLogRecPtrIsValid(slot_min_lsn) && min_safe_lsn > slot_min_lsn)
+		min_safe_lsn = slot_min_lsn;
 
-		/*
-		 * Find the oldest existing WAL segment file.
-		 *
-		 * Normally, we can determine it by using the last removed segment
-		 * number. However, if no WAL segment files have been removed by a
-		 * checkpoint since startup, we need to search for the oldest segment
-		 * file from the current timeline existing in XLOGDIR.
-		 *
-		 * XXX: Currently, we are searching for the oldest segment in the
-		 * current timeline as there is less chance of the slot's restart_lsn
-		 * from being some prior timeline, and even if it happens, in the
-		 * worst case, we will wait to sync till the slot's restart_lsn moved
-		 * to the current timeline.
-		 */
-		oldest_segno = XLogGetLastRemovedSegno() + 1;
+	/*
+	 * If the minimum safe LSN is greater than the given restart_lsn, use it
+	 * as the initial restart_lsn for the newly synced slot. Otherwise, use
+	 * the given remote restart_lsn.
+	 */
+	SpinLockAcquire(&slot->mutex);
+	slot->data.restart_lsn = Max(restart_lsn, min_safe_lsn);
+	SpinLockRelease(&slot->mutex);
 
-		if (oldest_segno == 1)
-		{
-			TimeLineID	cur_timeline;
+	ReplicationSlotsComputeRequiredLSN();
 
-			GetWalRcvFlushRecPtr(NULL, &cur_timeline);
-			oldest_segno = XLogGetOldestSegno(cur_timeline);
-		}
+	XLByteToSeg(slot->data.restart_lsn, segno, wal_segment_size);
+	if (XLogGetLastRemovedSegno() >= segno)
+		elog(ERROR, "WAL required by replication slot %s has been removed concurrently",
+			 NameStr(slot->data.name));
 
-		elog(DEBUG1, "segno: " UINT64_FORMAT " of purposed restart_lsn for the synced slot, oldest_segno: " UINT64_FORMAT " available",
-			 segno, oldest_segno);
-
-		/*
-		 * If all required WAL is still there, great, otherwise retry. The
-		 * slot should prevent further removal of WAL, unless there's a
-		 * concurrent ReplicationSlotsComputeRequiredLSN() after we've written
-		 * the new restart_lsn above, so normally we should never need to loop
-		 * more than twice.
-		 */
-		if (segno >= oldest_segno)
-			break;
-
-		/* Retry using the location of the oldest wal segment */
-		XLogSegNoOffsetToRecPtr(oldest_segno, 0, wal_segment_size, restart_lsn);
-	}
+	LWLockRelease(ReplicationSlotAllocationLock);
 }
 
 /*
