@@ -81,5 +81,6 @@ tests += {
       'with_libcurl': oauth_flow_supported ? 'yes' : 'no',
       'with_python': 'yes',
     },
+    'deps': [oauth_hook_client],
   },
 }
