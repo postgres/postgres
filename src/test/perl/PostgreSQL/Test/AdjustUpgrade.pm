@@ -353,8 +353,8 @@ sub adjust_old_dumpfile
 	# Version comments will certainly not match.
 	$dump =~ s/^-- Dumped from database version.*\n//mg;
 
-	# Same with version argument to pg_restore_relation_stats() or
-	# pg_restore_attribute_stats().
+	# Same with version argument to pg_restore_relation_stats(),
+	# pg_restore_attribute_stats() or pg_restore_extended_stats().
 	$dump =~ s {\n(\s+'version',) '\d+'::integer,$}
 		{$1 '000000'::integer,}mg;
 
@@ -703,8 +703,8 @@ sub adjust_new_dumpfile
 	# Version comments will certainly not match.
 	$dump =~ s/^-- Dumped from database version.*\n//mg;
 
-	# Same with version argument to pg_restore_relation_stats() or
-	# pg_restore_attribute_stats().
+	# Same with version argument to pg_restore_relation_stats(),
+	# pg_restore_attribute_stats() or pg_restore_extended_stats().
 	$dump =~ s {\n(\s+'version',) '\d+'::integer,$}
 		{$1 '000000'::integer,}mg;
 

@@ -71,6 +71,7 @@
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
+#include "statistics/statistics_format.h"
 #include "storage/block.h"
 
 typedef struct
@@ -325,6 +326,7 @@ static void dumpSequenceData(Archive *fout, const TableDataInfo *tdinfo);
 static void dumpIndex(Archive *fout, const IndxInfo *indxinfo);
 static void dumpIndexAttach(Archive *fout, const IndexAttachInfo *attachinfo);
 static void dumpStatisticsExt(Archive *fout, const StatsExtInfo *statsextinfo);
+static void dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo);
 static void dumpConstraint(Archive *fout, const ConstraintInfo *coninfo);
 static void dumpTableConstraintComment(Archive *fout, const ConstraintInfo *coninfo);
 static void dumpTSParser(Archive *fout, const TSParserInfo *prsinfo);
@@ -8284,6 +8286,9 @@ getExtendedStatistics(Archive *fout)
 
 		/* Decide whether we want to dump it */
 		selectDumpableStatisticsObject(&(statsextinfo[i]), fout);
+
+		if (fout->dopt->dumpStatistics)
+			statsextinfo[i].dobj.components |= DUMP_COMPONENT_STATISTICS;
 	}
 
 	PQclear(res);
@@ -11738,6 +11743,7 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			break;
 		case DO_STATSEXT:
 			dumpStatisticsExt(fout, (const StatsExtInfo *) dobj);
+			dumpStatisticsExtStats(fout, (const StatsExtInfo *) dobj);
 			break;
 		case DO_REFRESH_MATVIEW:
 			refreshMatViewData(fout, (const TableDataInfo *) dobj);
@@ -18538,6 +18544,209 @@ dumpStatisticsExt(Archive *fout, const StatsExtInfo *statsextinfo)
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(query);
 	free(qstatsextname);
+}
+
+/*
+ * dumpStatisticsExtStats
+ *	  write out to fout the stats for an extended statistics object
+ */
+static void
+dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
+{
+	DumpOptions *dopt = fout->dopt;
+	PQExpBuffer query;
+	PGresult   *res;
+	int			nstats;
+
+	/* Do nothing if not dumping statistics */
+	if (!dopt->dumpStatistics)
+		return;
+
+	if (!fout->is_prepared[PREPQUERY_DUMPEXTSTATSOBJSTATS])
+	{
+		PQExpBuffer pq = createPQExpBuffer();
+
+		/*---------
+		 * Set up query for details about extended statistics objects.
+		 *
+		 * The query depends on the backend version:
+		 * - In v19 and newer versions, query directly the pg_stats_ext*
+		 *   catalogs.
+		 * - In v18 and older versions, ndistinct and dependencies have a
+		 *   different format that needs translation.
+		 * - In v14 and older versions, inherited does not exist.
+		 * - In v11 and older versions, there is no pg_stats_ext, hence
+		 *   the logic joins pg_statistic_ext and pg_namespace.
+		 *---------
+		 */
+
+		appendPQExpBufferStr(pq,
+							 "PREPARE getExtStatsStats(pg_catalog.name, pg_catalog.name) AS\n"
+							 "SELECT ");
+
+		/*
+		 * Versions 15 and newer have inherited stats.
+		 *
+		 * Create this column in all versions because we need to order by it
+		 * later.
+		 */
+		if (fout->remoteVersion >= 150000)
+			appendPQExpBufferStr(pq, "e.inherited, ");
+		else
+			appendPQExpBufferStr(pq, "false AS inherited, ");
+
+		/*--------
+		 * The ndistinct and dependencies formats changed in v19, so
+		 * everything before that needs to be translated.
+		 *
+		 * The ndistinct translation converts this kind of data:
+		 * {"3, 4": 11, "3, 6": 11, "4, 6": 11, "3, 4, 6": 11}
+		 *
+		 * to this:
+		 * [ {"attributes": [3,4], "ndistinct": 11},
+		 *   {"attributes": [3,6], "ndistinct": 11},
+		 *   {"attributes": [4,6], "ndistinct": 11},
+		 *   {"attributes": [3,4,6], "ndistinct": 11} ]
+		 *
+		 * The dependencies translation converts this kind of data:
+		 * {"3 => 4": 1.000000, "3 => 6": 1.000000,
+		 *  "4 => 6": 1.000000, "3, 4 => 6": 1.000000,
+		 *  "3, 6 => 4": 1.000000}
+		 *
+		 * to this:
+		 * [ {"attributes": [3], "dependency": 4, "degree": 1.000000},
+		 *   {"attributes": [3], "dependency": 6, "degree": 1.000000},
+		 *   {"attributes": [4], "dependency": 6, "degree": 1.000000},
+		 *   {"attributes": [3,4], "dependency": 6, "degree": 1.000000},
+		 *   {"attributes": [3,6], "dependency": 4, "degree": 1.000000} ]
+		 *--------
+		 */
+		if (fout->remoteVersion >= 190000)
+			appendPQExpBufferStr(pq, "e.n_distinct, e.dependencies ");
+		else
+			appendPQExpBufferStr(pq,
+								 "( "
+								 "SELECT json_agg( "
+								 "  json_build_object( "
+								 "    '" PG_NDISTINCT_KEY_ATTRIBUTES "', "
+								 "    string_to_array(kv.key, ', ')::integer[], "
+								 "    '" PG_NDISTINCT_KEY_NDISTINCT "', "
+								 "    kv.value::bigint )) "
+								 "FROM json_each_text(e.n_distinct::text::json) AS kv"
+								 ") AS n_distinct, "
+								 "( "
+								 "SELECT json_agg( "
+								 "  json_build_object( "
+								 "    '" PG_DEPENDENCIES_KEY_ATTRIBUTES "', "
+								 "    string_to_array( "
+								 "      split_part(kv.key, ' => ', 1), "
+								 "      ', ')::integer[], "
+								 "    '" PG_DEPENDENCIES_KEY_DEPENDENCY "', "
+								 "    split_part(kv.key, ' => ', 2)::integer, "
+								 "    '" PG_DEPENDENCIES_KEY_DEGREE "', "
+								 "    kv.value::double precision )) "
+								 "FROM json_each_text(e.dependencies::text::json) AS kv "
+								 ") AS dependencies ");
+
+		/* pg_stats_ext introduced in v12 */
+		if (fout->remoteVersion >= 120000)
+			appendPQExpBufferStr(pq,
+								 "FROM pg_catalog.pg_stats_ext AS e "
+								 "WHERE e.statistics_schemaname = $1 "
+								 "AND e.statistics_name = $2 ");
+		else
+			appendPQExpBufferStr(pq,
+								 "FROM ( "
+								 "SELECT s.stxndistinct AS n_distinct, "
+								 "    s.stxdependencies AS dependencies "
+								 "FROM pg_catalog.pg_statistic_ext AS s "
+								 "JOIN pg_catalog.pg_namespace AS n "
+								 "ON n.oid = s.stxnamespace "
+								 "WHERE n.nspname = $1 "
+								 "AND s.stxname = $2 "
+								 ") AS e ");
+
+		/* we always have an inherited column, but it may be a constant */
+		appendPQExpBufferStr(pq, "ORDER BY inherited");
+
+		ExecuteSqlStatement(fout, pq->data);
+
+		fout->is_prepared[PREPQUERY_DUMPEXTSTATSOBJSTATS] = true;
+
+		destroyPQExpBuffer(pq);
+	}
+
+	query = createPQExpBuffer();
+
+	appendPQExpBufferStr(query, "EXECUTE getExtStatsStats(");
+	appendStringLiteralAH(query, statsextinfo->dobj.namespace->dobj.name, fout);
+	appendPQExpBufferStr(query, "::pg_catalog.name, ");
+	appendStringLiteralAH(query, statsextinfo->dobj.name, fout);
+	appendPQExpBufferStr(query, "::pg_catalog.name)");
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	destroyPQExpBuffer(query);
+
+	nstats = PQntuples(res);
+
+	if (nstats > 0)
+	{
+		PQExpBuffer out = createPQExpBuffer();
+
+		int			i_inherited = PQfnumber(res, "inherited");
+		int			i_ndistinct = PQfnumber(res, "n_distinct");
+		int			i_dependencies = PQfnumber(res, "dependencies");
+
+		for (int i = 0; i < nstats; i++)
+		{
+			TableInfo  *tbinfo = statsextinfo->stattable;
+
+			if (PQgetisnull(res, i, i_inherited))
+				pg_fatal("inherited cannot be NULL");
+
+			appendPQExpBufferStr(out,
+								 "SELECT * FROM pg_catalog.pg_restore_extended_stats(\n");
+			appendPQExpBuffer(out, "\t'version', '%d'::integer,\n",
+							  fout->remoteVersion);
+
+			/* Relation information */
+			appendPQExpBufferStr(out, "\t'schemaname', ");
+			appendStringLiteralAH(out, tbinfo->dobj.namespace->dobj.name, fout);
+			appendPQExpBufferStr(out, ",\n\t'relname', ");
+			appendStringLiteralAH(out, tbinfo->dobj.name, fout);
+
+			/* Extended statistics information */
+			appendPQExpBufferStr(out, ",\n\t'statistics_schemaname', ");
+			appendStringLiteralAH(out, statsextinfo->dobj.namespace->dobj.name, fout);
+			appendPQExpBufferStr(out, ",\n\t'statistics_name', ");
+			appendStringLiteralAH(out, statsextinfo->dobj.name, fout);
+			appendNamedArgument(out, fout, "inherited", "boolean",
+								PQgetvalue(res, i, i_inherited));
+
+			if (!PQgetisnull(res, i, i_ndistinct))
+				appendNamedArgument(out, fout, "n_distinct", "pg_ndistinct",
+									PQgetvalue(res, i, i_ndistinct));
+
+			if (!PQgetisnull(res, i, i_dependencies))
+				appendNamedArgument(out, fout, "dependencies", "pg_dependencies",
+									PQgetvalue(res, i, i_dependencies));
+
+			appendPQExpBufferStr(out, "\n);\n");
+		}
+
+		ArchiveEntry(fout, nilCatalogId, createDumpId(),
+					 ARCHIVE_OPTS(.tag = statsextinfo->dobj.name,
+								  .namespace = statsextinfo->dobj.namespace->dobj.name,
+								  .owner = statsextinfo->rolname,
+								  .description = "EXTENDED STATISTICS DATA",
+								  .section = SECTION_POST_DATA,
+								  .createStmt = out->data,
+								  .deps = &statsextinfo->dobj.dumpId,
+								  .nDeps = 1));
+		destroyPQExpBuffer(out);
+	}
+	PQclear(res);
 }
 
 /*

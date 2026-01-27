@@ -4773,6 +4773,34 @@ my %tests = (
 	},
 
 	#
+	# EXTENDED stats will end up in SECTION_POST_DATA.
+	#
+	'extended_statistics_import' => {
+		create_sql => '
+			CREATE TABLE dump_test.has_ext_stats
+			AS SELECT g.g AS x, g.g / 2 AS y FROM generate_series(1,100) AS g(g);
+			CREATE STATISTICS dump_test.es1 ON x, (y % 2) FROM dump_test.has_ext_stats;
+			ANALYZE dump_test.has_ext_stats;',
+		regexp => qr/^
+			\QSELECT * FROM pg_catalog.pg_restore_extended_stats(\E\s+/xm,
+		like => {
+			%full_runs,
+			%dump_test_schema_runs,
+			no_data_no_schema => 1,
+			no_schema => 1,
+			section_post_data => 1,
+			statistics_only => 1,
+			schema_only_with_statistics => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			no_statistics => 1,
+			only_dump_measurement => 1,
+			schema_only => 1,
+		},
+	},
+
+	#
 	# While attribute stats (aka pg_statistic stats) only appear for tables
 	# that have been analyzed, all tables will have relation stats because
 	# those come from pg_class.
