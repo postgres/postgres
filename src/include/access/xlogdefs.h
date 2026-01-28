@@ -66,7 +66,7 @@ typedef uint32 TimeLineID;
  * Replication origin id - this is located in this file to avoid having to
  * include origin.h in a bunch of xlog related places.
  */
-typedef uint16 RepOriginId;
+typedef uint16 ReplOriginId;
 
 /*
  * This chunk of hackery attempts to determine which file sync methods

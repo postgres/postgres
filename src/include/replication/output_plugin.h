@@ -94,7 +94,7 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
  * Filter changes by origin.
  */
 typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ctx,
-											   RepOriginId origin_id);
+											   ReplOriginId origin_id);
 
 /*
  * Called to shutdown an output plugin.

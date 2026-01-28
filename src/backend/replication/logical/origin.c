@@ -111,7 +111,7 @@ typedef struct ReplicationState
 	/*
 	 * Local identifier for the remote node.
 	 */
-	RepOriginId roident;
+	ReplOriginId roident;
 
 	/*
 	 * Location of the latest commit from the remote side.
@@ -149,7 +149,7 @@ typedef struct ReplicationState
  */
 typedef struct ReplicationStateOnDisk
 {
-	RepOriginId roident;
+	ReplOriginId roident;
 	XLogRecPtr	remote_lsn;
 } ReplicationStateOnDisk;
 
@@ -163,7 +163,7 @@ typedef struct ReplicationStateCtl
 } ReplicationStateCtl;
 
 /* external variables */
-RepOriginId replorigin_session_origin = InvalidRepOriginId; /* assumed identity */
+ReplOriginId replorigin_session_origin = InvalidReplOriginId;	/* assumed identity */
 XLogRecPtr	replorigin_session_origin_lsn = InvalidXLogRecPtr;
 TimestampTz replorigin_session_origin_timestamp = 0;
 
@@ -225,7 +225,7 @@ IsReservedOriginName(const char *name)
  *
  * Returns InvalidOid if the node isn't known yet and missing_ok is true.
  */
-RepOriginId
+ReplOriginId
 replorigin_by_name(const char *roname, bool missing_ok)
 {
 	Form_pg_replication_origin ident;
@@ -256,7 +256,7 @@ replorigin_by_name(const char *roname, bool missing_ok)
  *
  * Needs to be called in a transaction.
  */
-RepOriginId
+ReplOriginId
 replorigin_create(const char *roname)
 {
 	Oid			roident;
@@ -369,7 +369,7 @@ replorigin_create(const char *roname)
  * Helper function to drop a replication origin.
  */
 static void
-replorigin_state_clear(RepOriginId roident, bool nowait)
+replorigin_state_clear(ReplOriginId roident, bool nowait)
 {
 	int			i;
 
@@ -426,7 +426,7 @@ restart:
 			}
 
 			/* then clear the in-memory slot */
-			state->roident = InvalidRepOriginId;
+			state->roident = InvalidReplOriginId;
 			state->remote_lsn = InvalidXLogRecPtr;
 			state->local_lsn = InvalidXLogRecPtr;
 			break;
@@ -444,7 +444,7 @@ restart:
 void
 replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
 {
-	RepOriginId roident;
+	ReplOriginId roident;
 	Relation	rel;
 	HeapTuple	tuple;
 
@@ -496,13 +496,13 @@ replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
  * Returns true if the origin is known, false otherwise.
  */
 bool
-replorigin_by_oid(RepOriginId roident, bool missing_ok, char **roname)
+replorigin_by_oid(ReplOriginId roident, bool missing_ok, char **roname)
 {
 	HeapTuple	tuple;
 	Form_pg_replication_origin ric;
 
 	Assert(OidIsValid((Oid) roident));
-	Assert(roident != InvalidRepOriginId);
+	Assert(roident != InvalidReplOriginId);
 	Assert(roident != DoNotReplicateId);
 
 	tuple = SearchSysCache1(REPLORIGIDENT,
@@ -656,7 +656,7 @@ CheckPointReplicationOrigin(void)
 		ReplicationState *curstate = &replication_states[i];
 		XLogRecPtr	local_lsn;
 
-		if (curstate->roident == InvalidRepOriginId)
+		if (curstate->roident == InvalidReplOriginId)
 			continue;
 
 		/* zero, to avoid uninitialized padding bytes */
@@ -884,7 +884,7 @@ replorigin_redo(XLogReaderState *record)
 					if (state->roident == xlrec->node_id)
 					{
 						/* reset entry */
-						state->roident = InvalidRepOriginId;
+						state->roident = InvalidReplOriginId;
 						state->remote_lsn = InvalidXLogRecPtr;
 						state->local_lsn = InvalidXLogRecPtr;
 						break;
@@ -913,7 +913,7 @@ replorigin_redo(XLogReaderState *record)
  * unless running in recovery.
  */
 void
-replorigin_advance(RepOriginId node,
+replorigin_advance(ReplOriginId node,
 				   XLogRecPtr remote_commit, XLogRecPtr local_commit,
 				   bool go_backward, bool wal_log)
 {
@@ -921,7 +921,7 @@ replorigin_advance(RepOriginId node,
 	ReplicationState *replication_state = NULL;
 	ReplicationState *free_state = NULL;
 
-	Assert(node != InvalidRepOriginId);
+	Assert(node != InvalidReplOriginId);
 
 	/* we don't track DoNotReplicateId */
 	if (node == DoNotReplicateId)
@@ -946,7 +946,7 @@ replorigin_advance(RepOriginId node,
 		ReplicationState *curstate = &replication_states[i];
 
 		/* remember where to insert if necessary */
-		if (curstate->roident == InvalidRepOriginId &&
+		if (curstate->roident == InvalidReplOriginId &&
 			free_state == NULL)
 		{
 			free_state = curstate;
@@ -997,7 +997,7 @@ replorigin_advance(RepOriginId node,
 		replication_state->roident = node;
 	}
 
-	Assert(replication_state->roident != InvalidRepOriginId);
+	Assert(replication_state->roident != InvalidReplOriginId);
 
 	/*
 	 * If somebody "forcefully" sets this slot, WAL log it, so it's durable
@@ -1042,7 +1042,7 @@ replorigin_advance(RepOriginId node,
 
 
 XLogRecPtr
-replorigin_get_progress(RepOriginId node, bool flush)
+replorigin_get_progress(ReplOriginId node, bool flush)
 {
 	int			i;
 	XLogRecPtr	local_lsn = InvalidXLogRecPtr;
@@ -1141,7 +1141,7 @@ ReplicationOriginExitCleanup(int code, Datum arg)
  * acquired_by = PID of the first process.
  */
 void
-replorigin_session_setup(RepOriginId node, int acquired_by)
+replorigin_session_setup(ReplOriginId node, int acquired_by)
 {
 	static bool registered_cleanup;
 	int			i;
@@ -1172,7 +1172,7 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 		ReplicationState *curstate = &replication_states[i];
 
 		/* remember where to insert if necessary */
-		if (curstate->roident == InvalidRepOriginId &&
+		if (curstate->roident == InvalidReplOriginId &&
 			free_slot == -1)
 		{
 			free_slot = i;
@@ -1239,7 +1239,7 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 	}
 
 
-	Assert(session_replication_state->roident != InvalidRepOriginId);
+	Assert(session_replication_state->roident != InvalidReplOriginId);
 
 	if (acquired_by == 0)
 	{
@@ -1308,7 +1308,7 @@ void
 replorigin_session_advance(XLogRecPtr remote_commit, XLogRecPtr local_commit)
 {
 	Assert(session_replication_state != NULL);
-	Assert(session_replication_state->roident != InvalidRepOriginId);
+	Assert(session_replication_state->roident != InvalidReplOriginId);
 
 	LWLockAcquire(&session_replication_state->lock, LW_EXCLUSIVE);
 	if (session_replication_state->local_lsn < local_commit)
@@ -1358,7 +1358,7 @@ Datum
 pg_replication_origin_create(PG_FUNCTION_ARGS)
 {
 	char	   *name;
-	RepOriginId roident;
+	ReplOriginId roident;
 
 	replorigin_check_prerequisites(false, false);
 
@@ -1418,7 +1418,7 @@ Datum
 pg_replication_origin_oid(PG_FUNCTION_ARGS)
 {
 	char	   *name;
-	RepOriginId roident;
+	ReplOriginId roident;
 
 	replorigin_check_prerequisites(false, false);
 
@@ -1439,7 +1439,7 @@ Datum
 pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 {
 	char	   *name;
-	RepOriginId origin;
+	ReplOriginId origin;
 	int			pid;
 
 	replorigin_check_prerequisites(true, false);
@@ -1466,7 +1466,7 @@ pg_replication_origin_session_reset(PG_FUNCTION_ARGS)
 
 	replorigin_session_reset();
 
-	replorigin_session_origin = InvalidRepOriginId;
+	replorigin_session_origin = InvalidReplOriginId;
 	replorigin_session_origin_lsn = InvalidXLogRecPtr;
 	replorigin_session_origin_timestamp = 0;
 
@@ -1481,7 +1481,7 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
 {
 	replorigin_check_prerequisites(false, false);
 
-	PG_RETURN_BOOL(replorigin_session_origin != InvalidRepOriginId);
+	PG_RETURN_BOOL(replorigin_session_origin != InvalidReplOriginId);
 }
 
 
@@ -1548,7 +1548,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_PP(0);
 	XLogRecPtr	remote_commit = PG_GETARG_LSN(1);
-	RepOriginId node;
+	ReplOriginId node;
 
 	replorigin_check_prerequisites(true, false);
 
@@ -1583,7 +1583,7 @@ pg_replication_origin_progress(PG_FUNCTION_ARGS)
 {
 	char	   *name;
 	bool		flush;
-	RepOriginId roident;
+	ReplOriginId roident;
 	XLogRecPtr	remote_lsn = InvalidXLogRecPtr;
 
 	replorigin_check_prerequisites(true, true);
@@ -1633,7 +1633,7 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 		state = &replication_states[i];
 
 		/* unused slot, nothing to display */
-		if (state->roident == InvalidRepOriginId)
+		if (state->roident == InvalidReplOriginId)
 			continue;
 
 		memset(values, 0, sizeof(values));

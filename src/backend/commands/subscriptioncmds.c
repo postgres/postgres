@@ -1897,7 +1897,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				 */
 				if (XLogRecPtrIsValid(opts.lsn))
 				{
-					RepOriginId originid;
+					ReplOriginId originid;
 					char		originname[NAMEDATALEN];
 					XLogRecPtr	remote_lsn;
 

@@ -21,11 +21,11 @@ extern PGDLLIMPORT bool track_commit_timestamp;
 
 extern void TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 										   TransactionId *subxids, TimestampTz timestamp,
-										   RepOriginId nodeid);
+										   ReplOriginId nodeid);
 extern bool TransactionIdGetCommitTsData(TransactionId xid,
-										 TimestampTz *ts, RepOriginId *nodeid);
+										 TimestampTz *ts, ReplOriginId *nodeid);
 extern TransactionId GetLatestCommitTsData(TimestampTz *ts,
-										   RepOriginId *nodeid);
+										   ReplOriginId *nodeid);
 
 extern Size CommitTsShmemSize(void);
 extern void CommitTsShmemInit(void);

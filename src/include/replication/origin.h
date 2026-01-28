@@ -18,19 +18,19 @@
 typedef struct xl_replorigin_set
 {
 	XLogRecPtr	remote_lsn;
-	RepOriginId node_id;
+	ReplOriginId node_id;
 	bool		force;
 } xl_replorigin_set;
 
 typedef struct xl_replorigin_drop
 {
-	RepOriginId node_id;
+	ReplOriginId node_id;
 } xl_replorigin_drop;
 
 #define XLOG_REPLORIGIN_SET		0x00
 #define XLOG_REPLORIGIN_DROP		0x10
 
-#define InvalidRepOriginId 0
+#define InvalidReplOriginId 0
 #define DoNotReplicateId PG_UINT16_MAX
 
 /*
@@ -40,7 +40,7 @@ typedef struct xl_replorigin_drop
  */
 #define MAX_RONAME_LEN	512
 
-extern PGDLLIMPORT RepOriginId replorigin_session_origin;
+extern PGDLLIMPORT ReplOriginId replorigin_session_origin;
 extern PGDLLIMPORT XLogRecPtr replorigin_session_origin_lsn;
 extern PGDLLIMPORT TimestampTz replorigin_session_origin_timestamp;
 
@@ -48,22 +48,22 @@ extern PGDLLIMPORT TimestampTz replorigin_session_origin_timestamp;
 extern PGDLLIMPORT int max_active_replication_origins;
 
 /* API for querying & manipulating replication origins */
-extern RepOriginId replorigin_by_name(const char *roname, bool missing_ok);
-extern RepOriginId replorigin_create(const char *roname);
+extern ReplOriginId replorigin_by_name(const char *roname, bool missing_ok);
+extern ReplOriginId replorigin_create(const char *roname);
 extern void replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait);
-extern bool replorigin_by_oid(RepOriginId roident, bool missing_ok,
+extern bool replorigin_by_oid(ReplOriginId roident, bool missing_ok,
 							  char **roname);
 
 /* API for querying & manipulating replication progress tracking */
-extern void replorigin_advance(RepOriginId node,
+extern void replorigin_advance(ReplOriginId node,
 							   XLogRecPtr remote_commit,
 							   XLogRecPtr local_commit,
 							   bool go_backward, bool wal_log);
-extern XLogRecPtr replorigin_get_progress(RepOriginId node, bool flush);
+extern XLogRecPtr replorigin_get_progress(ReplOriginId node, bool flush);
 
 extern void replorigin_session_advance(XLogRecPtr remote_commit,
 									   XLogRecPtr local_commit);
-extern void replorigin_session_setup(RepOriginId node, int acquired_by);
+extern void replorigin_session_setup(ReplOriginId node, int acquired_by);
 extern void replorigin_session_reset(void);
 extern XLogRecPtr replorigin_session_get_progress(bool flush);
 

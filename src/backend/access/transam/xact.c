@@ -1413,7 +1413,7 @@ RecordTransactionCommit(void)
 		 * Are we using the replication origins feature?  Or, in other words,
 		 * are we replaying remote actions?
 		 */
-		replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+		replorigin = (replorigin_session_origin != InvalidReplOriginId &&
 					  replorigin_session_origin != DoNotReplicateId);
 
 		/*
@@ -1810,7 +1810,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	/* Fetch the data we need for the abort record */
@@ -5928,7 +5928,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 	}
 
 	/* dump transaction origin information */
-	if (replorigin_session_origin != InvalidRepOriginId)
+	if (replorigin_session_origin != InvalidReplOriginId)
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_ORIGIN;
 
@@ -6081,7 +6081,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 	 * Dump transaction origin information. We need this during recovery to
 	 * update the replication origin progress.
 	 */
-	if (replorigin_session_origin != InvalidRepOriginId)
+	if (replorigin_session_origin != InvalidReplOriginId)
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_ORIGIN;
 
@@ -6152,7 +6152,7 @@ static void
 xact_redo_commit(xl_xact_parsed_commit *parsed,
 				 TransactionId xid,
 				 XLogRecPtr lsn,
-				 RepOriginId origin_id)
+				 ReplOriginId origin_id)
 {
 	TransactionId max_xid;
 	TimestampTz commit_time;
@@ -6165,7 +6165,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 	AdvanceNextFullTransactionIdPastXid(max_xid);
 
 	Assert(((parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == 0) ==
-		   (origin_id == InvalidRepOriginId));
+		   (origin_id == InvalidReplOriginId));
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
 		commit_time = parsed->origin_timestamp;
@@ -6304,7 +6304,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
  */
 static void
 xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
-				XLogRecPtr lsn, RepOriginId origin_id)
+				XLogRecPtr lsn, ReplOriginId origin_id)
 {
 	TransactionId max_xid;
 

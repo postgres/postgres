@@ -175,9 +175,9 @@ $old_sub->safe_psql('postgres',
 );
 my $sub_oid = $old_sub->safe_psql('postgres',
 	"SELECT oid FROM pg_subscription WHERE subname = 'regress_sub3'");
-my $reporigin = 'pg_' . qq($sub_oid);
+my $replorigin = 'pg_' . qq($sub_oid);
 $old_sub->safe_psql('postgres',
-	"SELECT pg_replication_origin_drop('$reporigin')");
+	"SELECT pg_replication_origin_drop('$replorigin')");
 
 $old_sub->stop;
 

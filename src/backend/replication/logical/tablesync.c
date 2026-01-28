@@ -323,7 +323,7 @@ ProcessSyncingTablesForSync(XLogRecPtr current_lsn)
 		 * This is needed to allow the origin to be dropped.
 		 */
 		replorigin_session_reset();
-		replorigin_session_origin = InvalidRepOriginId;
+		replorigin_session_origin = InvalidReplOriginId;
 		replorigin_session_origin_lsn = InvalidXLogRecPtr;
 		replorigin_session_origin_timestamp = 0;
 
@@ -1226,7 +1226,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	AclResult	aclresult;
 	WalRcvExecResult *res;
 	char		originname[NAMEDATALEN];
-	RepOriginId originid;
+	ReplOriginId originid;
 	UserContext ucxt;
 	bool		must_use_password;
 	bool		run_as_owner;

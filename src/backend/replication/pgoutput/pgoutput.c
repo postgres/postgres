@@ -59,7 +59,7 @@ static void pgoutput_message(LogicalDecodingContext *ctx,
 							 bool transactional, const char *prefix,
 							 Size sz, const char *message);
 static bool pgoutput_origin_filter(LogicalDecodingContext *ctx,
-								   RepOriginId origin_id);
+								   ReplOriginId origin_id);
 static void pgoutput_begin_prepare_txn(LogicalDecodingContext *ctx,
 									   ReorderBufferTXN *txn);
 static void pgoutput_prepare_txn(LogicalDecodingContext *ctx,
@@ -89,7 +89,7 @@ static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
 										uint32 hashvalue);
 static void send_repl_origin(LogicalDecodingContext *ctx,
-							 RepOriginId origin_id, XLogRecPtr origin_lsn,
+							 ReplOriginId origin_id, XLogRecPtr origin_lsn,
 							 bool send_origin);
 
 /*
@@ -609,7 +609,7 @@ pgoutput_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 static void
 pgoutput_send_begin(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 {
-	bool		send_replication_origin = txn->origin_id != InvalidRepOriginId;
+	bool		send_replication_origin = txn->origin_id != InvalidReplOriginId;
 	PGOutputTxnData *txndata = (PGOutputTxnData *) txn->output_plugin_private;
 
 	Assert(txndata);
@@ -663,7 +663,7 @@ pgoutput_commit_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 static void
 pgoutput_begin_prepare_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 {
-	bool		send_replication_origin = txn->origin_id != InvalidRepOriginId;
+	bool		send_replication_origin = txn->origin_id != InvalidReplOriginId;
 
 	OutputPluginPrepareWrite(ctx, !send_replication_origin);
 	logicalrep_write_begin_prepare(ctx->out, txn);
@@ -1767,11 +1767,11 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
  */
 static bool
 pgoutput_origin_filter(LogicalDecodingContext *ctx,
-					   RepOriginId origin_id)
+					   ReplOriginId origin_id)
 {
 	PGOutputData *data = (PGOutputData *) ctx->output_plugin_private;
 
-	if (data->publish_no_origin && origin_id != InvalidRepOriginId)
+	if (data->publish_no_origin && origin_id != InvalidReplOriginId)
 		return true;
 
 	return false;
@@ -1841,7 +1841,7 @@ pgoutput_stream_start(struct LogicalDecodingContext *ctx,
 					  ReorderBufferTXN *txn)
 {
 	PGOutputData *data = (PGOutputData *) ctx->output_plugin_private;
-	bool		send_replication_origin = txn->origin_id != InvalidRepOriginId;
+	bool		send_replication_origin = txn->origin_id != InvalidReplOriginId;
 
 	/* we can't nest streaming of transactions */
 	Assert(!data->in_streaming);
@@ -2457,7 +2457,7 @@ rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)
 
 /* Send Replication origin */
 static void
-send_repl_origin(LogicalDecodingContext *ctx, RepOriginId origin_id,
+send_repl_origin(LogicalDecodingContext *ctx, ReplOriginId origin_id,
 				 XLogRecPtr origin_lsn, bool send_origin)
 {
 	if (send_origin)

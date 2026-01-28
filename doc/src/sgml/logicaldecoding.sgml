@@ -1100,7 +1100,7 @@ typedef void (*LogicalDecodeTruncateCB) (struct LogicalDecodingContext *ctx,
        output plugin.
 <programlisting>
 typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ctx,
-                                               RepOriginId origin_id);
+                                               ReplOriginId origin_id);
 </programlisting>
       The <parameter>ctx</parameter> parameter has the same contents
       as for the other callbacks. No information but the origin is

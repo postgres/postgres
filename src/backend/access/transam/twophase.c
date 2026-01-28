@@ -1157,7 +1157,7 @@ EndPrepare(GlobalTransaction gxact)
 	Assert(hdr->magic == TWOPHASE_MAGIC);
 	hdr->total_len = records.total_len + sizeof(pg_crc32c);
 
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	if (replorigin)
@@ -1924,7 +1924,7 @@ restoreTwoPhaseData(void)
 				continue;
 
 			PrepareRedoAdd(fxid, buf, InvalidXLogRecPtr,
-						   InvalidXLogRecPtr, InvalidRepOriginId);
+						   InvalidXLogRecPtr, InvalidReplOriginId);
 		}
 	}
 	LWLockRelease(TwoPhaseStateLock);
@@ -2330,7 +2330,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	/* Load the injection point before entering the critical section */
@@ -2445,7 +2445,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	/*
@@ -2506,7 +2506,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 void
 PrepareRedoAdd(FullTransactionId fxid, char *buf,
 			   XLogRecPtr start_lsn, XLogRecPtr end_lsn,
-			   RepOriginId origin_id)
+			   ReplOriginId origin_id)
 {
 	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
 	char	   *bufptr;
@@ -2595,7 +2595,7 @@ PrepareRedoAdd(FullTransactionId fxid, char *buf,
 	Assert(TwoPhaseState->numPrepXacts < max_prepared_xacts);
 	TwoPhaseState->prepXacts[TwoPhaseState->numPrepXacts++] = gxact;
 
-	if (origin_id != InvalidRepOriginId)
+	if (origin_id != InvalidReplOriginId)
 	{
 		/* recover apply progress */
 		replorigin_advance(origin_id, hdr->origin_lsn, end_lsn,

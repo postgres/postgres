@@ -70,7 +70,7 @@ static void pg_decode_truncate(LogicalDecodingContext *ctx,
 							   int nrelations, Relation relations[],
 							   ReorderBufferChange *change);
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
-							 RepOriginId origin_id);
+							 ReplOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,
 							  ReorderBufferTXN *txn, XLogRecPtr lsn,
 							  bool transactional, const char *prefix,
@@ -461,11 +461,11 @@ pg_decode_filter_prepare(LogicalDecodingContext *ctx, TransactionId xid,
 
 static bool
 pg_decode_filter(LogicalDecodingContext *ctx,
-				 RepOriginId origin_id)
+				 ReplOriginId origin_id)
 {
 	TestDecodingData *data = ctx->output_plugin_private;
 
-	if (data->only_local && origin_id != InvalidRepOriginId)
+	if (data->only_local && origin_id != InvalidReplOriginId)
 		return true;
 	return false;
 }

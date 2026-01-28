@@ -608,7 +608,7 @@ static bool FindDeletedTupleInLocalRel(Relation localrel,
 									   Oid localidxoid,
 									   TupleTableSlot *remoteslot,
 									   TransactionId *delete_xid,
-									   RepOriginId *delete_origin,
+									   ReplOriginId *delete_origin,
 									   TimestampTz *delete_time);
 static void apply_handle_tuple_routing(ApplyExecutionData *edata,
 									   TupleTableSlot *remoteslot,
@@ -3268,7 +3268,7 @@ IsIndexUsableForFindingDeletedTuple(Oid localindexoid,
 static bool
 FindDeletedTupleInLocalRel(Relation localrel, Oid localidxoid,
 						   TupleTableSlot *remoteslot,
-						   TransactionId *delete_xid, RepOriginId *delete_origin,
+						   TransactionId *delete_xid, ReplOriginId *delete_origin,
 						   TimestampTz *delete_time)
 {
 	TransactionId oldestxmin;
@@ -5627,7 +5627,7 @@ run_apply_worker(void)
 	XLogRecPtr	origin_startpos = InvalidXLogRecPtr;
 	char	   *slotname = NULL;
 	WalRcvStreamOptions options;
-	RepOriginId originid;
+	ReplOriginId originid;
 	TimeLineID	startpointTLI;
 	char	   *err;
 	bool		must_use_password;
@@ -5874,7 +5874,7 @@ InitializeLogRepWorker(void)
 static void
 replorigin_reset(int code, Datum arg)
 {
-	replorigin_session_origin = InvalidRepOriginId;
+	replorigin_session_origin = InvalidReplOriginId;
 	replorigin_session_origin_lsn = InvalidXLogRecPtr;
 	replorigin_session_origin_timestamp = 0;
 }

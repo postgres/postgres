@@ -372,7 +372,7 @@ binary_upgrade_replorigin_advance(PG_FUNCTION_ARGS)
 	Oid			subid;
 	char	   *subname;
 	char		originname[NAMEDATALEN];
-	RepOriginId node;
+	ReplOriginId node;
 	XLogRecPtr	remote_commit;
 
 	CHECK_IS_BINARY_UPGRADE;

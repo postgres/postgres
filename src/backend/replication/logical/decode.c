@@ -66,7 +66,7 @@ static inline bool FilterPrepare(LogicalDecodingContext *ctx,
 								 TransactionId xid, const char *gid);
 static bool DecodeTXNNeedSkip(LogicalDecodingContext *ctx,
 							  XLogRecordBuffer *buf, Oid txn_dbid,
-							  RepOriginId origin_id);
+							  ReplOriginId origin_id);
 
 /*
  * Take every XLogReadRecord()ed record and perform the actions required to
@@ -566,7 +566,7 @@ FilterPrepare(LogicalDecodingContext *ctx, TransactionId xid,
 }
 
 static inline bool
-FilterByOrigin(LogicalDecodingContext *ctx, RepOriginId origin_id)
+FilterByOrigin(LogicalDecodingContext *ctx, ReplOriginId origin_id)
 {
 	if (ctx->callbacks.filter_by_origin_cb == NULL)
 		return false;
@@ -584,7 +584,7 @@ logicalmsg_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	XLogReaderState *r = buf->record;
 	TransactionId xid = XLogRecGetXid(r);
 	uint8		info = XLogRecGetInfo(r) & ~XLR_INFO_MASK;
-	RepOriginId origin_id = XLogRecGetOrigin(r);
+	ReplOriginId origin_id = XLogRecGetOrigin(r);
 	Snapshot	snapshot = NULL;
 	xl_logical_message *message;
 
@@ -665,7 +665,7 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 {
 	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
 	TimestampTz commit_time = parsed->xact_time;
-	RepOriginId origin_id = XLogRecGetOrigin(buf->record);
+	ReplOriginId origin_id = XLogRecGetOrigin(buf->record);
 	int			i;
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
@@ -761,7 +761,7 @@ DecodePrepare(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	SnapBuild  *builder = ctx->snapshot_builder;
 	XLogRecPtr	origin_lsn = parsed->origin_lsn;
 	TimestampTz prepare_time = parsed->xact_time;
-	RepOriginId origin_id = XLogRecGetOrigin(buf->record);
+	ReplOriginId origin_id = XLogRecGetOrigin(buf->record);
 	int			i;
 	TransactionId xid = parsed->twophase_xid;
 
@@ -837,7 +837,7 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	int			i;
 	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
 	TimestampTz abort_time = parsed->xact_time;
-	RepOriginId origin_id = XLogRecGetOrigin(buf->record);
+	ReplOriginId origin_id = XLogRecGetOrigin(buf->record);
 	bool		skip_xact;
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
@@ -1289,7 +1289,7 @@ DecodeXLogTuple(char *data, Size len, HeapTuple tuple)
  */
 static bool
 DecodeTXNNeedSkip(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
-				  Oid txn_dbid, RepOriginId origin_id)
+				  Oid txn_dbid, ReplOriginId origin_id)
 {
 	if (SnapBuildXactNeedsSkip(ctx->snapshot_builder, buf->origptr) ||
 		(txn_dbid != InvalidOid && txn_dbid != ctx->slot->data.database) ||

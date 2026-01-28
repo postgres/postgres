@@ -331,7 +331,7 @@ xact_desc_stats(StringInfo buf, const char *label,
 }
 
 static void
-xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId origin_id)
+xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, ReplOriginId origin_id)
 {
 	xl_xact_parsed_commit parsed;
 
@@ -367,7 +367,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 }
 
 static void
-xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec, RepOriginId origin_id)
+xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec, ReplOriginId origin_id)
 {
 	xl_xact_parsed_abort parsed;
 
@@ -394,7 +394,7 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec, RepOriginId or
 }
 
 static void
-xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec, RepOriginId origin_id)
+xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec, ReplOriginId origin_id)
 {
 	xl_xact_parsed_prepare parsed;
 
@@ -417,7 +417,7 @@ xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec, RepOriginI
 	 * Check if the replication origin has been set in this record in the same
 	 * way as PrepareRedoAdd().
 	 */
-	if (origin_id != InvalidRepOriginId)
+	if (origin_id != InvalidReplOriginId)
 		appendStringInfo(buf, "; origin: node %u, lsn %X/%08X, at %s",
 						 origin_id,
 						 LSN_FORMAT_ARGS(parsed.origin_lsn),

@@ -42,7 +42,7 @@ static void errdetail_apply_conflict(EState *estate,
 									 TupleTableSlot *localslot,
 									 TupleTableSlot *remoteslot,
 									 Oid indexoid, TransactionId localxmin,
-									 RepOriginId localorigin,
+									 ReplOriginId localorigin,
 									 TimestampTz localts, StringInfo err_msg);
 static void get_tuple_desc(EState *estate, ResultRelInfo *relinfo,
 						   ConflictType type, char **key_desc,
@@ -61,7 +61,7 @@ static char *build_index_value_desc(EState *estate, Relation localrel,
  */
 bool
 GetTupleTransactionInfo(TupleTableSlot *localslot, TransactionId *xmin,
-						RepOriginId *localorigin, TimestampTz *localts)
+						ReplOriginId *localorigin, TimestampTz *localts)
 {
 	Datum		xminDatum;
 	bool		isnull;
@@ -77,7 +77,7 @@ GetTupleTransactionInfo(TupleTableSlot *localslot, TransactionId *xmin,
 	 */
 	if (!track_commit_timestamp)
 	{
-		*localorigin = InvalidRepOriginId;
+		*localorigin = InvalidReplOriginId;
 		*localts = 0;
 		return false;
 	}
@@ -253,7 +253,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 						 ConflictType type, TupleTableSlot *searchslot,
 						 TupleTableSlot *localslot, TupleTableSlot *remoteslot,
 						 Oid indexoid, TransactionId localxmin,
-						 RepOriginId localorigin, TimestampTz localts,
+						 ReplOriginId localorigin, TimestampTz localts,
 						 StringInfo err_msg)
 {
 	StringInfoData err_detail;
@@ -292,7 +292,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 
 			if (localts)
 			{
-				if (localorigin == InvalidRepOriginId)
+				if (localorigin == InvalidReplOriginId)
 					appendStringInfo(&err_detail, _("Key already exists in unique index \"%s\", modified locally in transaction %u at %s"),
 									 get_rel_name(indexoid),
 									 localxmin, timestamptz_to_str(localts));
@@ -323,7 +323,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 			break;
 
 		case CT_UPDATE_ORIGIN_DIFFERS:
-			if (localorigin == InvalidRepOriginId)
+			if (localorigin == InvalidReplOriginId)
 				appendStringInfo(&err_detail, _("Updating the row that was modified locally in transaction %u at %s"),
 								 localxmin, timestamptz_to_str(localts));
 			else if (replorigin_by_oid(localorigin, true, &origin_name))
@@ -350,7 +350,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 
 			if (localts)
 			{
-				if (localorigin == InvalidRepOriginId)
+				if (localorigin == InvalidReplOriginId)
 					appendStringInfo(&err_detail, _("The row to be updated was deleted locally in transaction %u at %s"),
 									 localxmin, timestamptz_to_str(localts));
 				else if (replorigin_by_oid(localorigin, true, &origin_name))
@@ -377,7 +377,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 			break;
 
 		case CT_DELETE_ORIGIN_DIFFERS:
-			if (localorigin == InvalidRepOriginId)
+			if (localorigin == InvalidReplOriginId)
 				appendStringInfo(&err_detail, _("Deleting the row that was modified locally in transaction %u at %s"),
 								 localxmin, timestamptz_to_str(localts));
 			else if (replorigin_by_oid(localorigin, true, &origin_name))

@@ -1707,7 +1707,7 @@ DecodeXLogRecord(XLogReaderState *state,
 	decoded->header = *record;
 	decoded->lsn = lsn;
 	decoded->next = NULL;
-	decoded->record_origin = InvalidRepOriginId;
+	decoded->record_origin = InvalidReplOriginId;
 	decoded->toplevel_xid = InvalidTransactionId;
 	decoded->main_data = NULL;
 	decoded->main_data_len = 0;
@@ -1747,7 +1747,7 @@ DecodeXLogRecord(XLogReaderState *state,
 		}
 		else if (block_id == XLR_BLOCK_ID_ORIGIN)
 		{
-			COPY_HEADER_FIELD(&decoded->record_origin, sizeof(RepOriginId));
+			COPY_HEADER_FIELD(&decoded->record_origin, sizeof(ReplOriginId));
 		}
 		else if (block_id == XLR_BLOCK_ID_TOPLEVEL_XID)
 		{

@@ -83,7 +83,7 @@ typedef struct ReorderBufferChange
 	/* Transaction this change belongs to. */
 	struct ReorderBufferTXN *txn;
 
-	RepOriginId origin_id;
+	ReplOriginId origin_id;
 
 	/*
 	 * Context data for the change. Which part of the union is valid depends
@@ -347,7 +347,7 @@ typedef struct ReorderBufferTXN
 	XLogRecPtr	restart_decoding_lsn;
 
 	/* origin of the change that caused this transaction */
-	RepOriginId origin_id;
+	ReplOriginId origin_id;
 	XLogRecPtr	origin_lsn;
 
 	/*
@@ -724,12 +724,12 @@ extern void ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
 									  Size message_size, const char *message);
 extern void ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 								XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
-								TimestampTz commit_time, RepOriginId origin_id, XLogRecPtr origin_lsn);
+								TimestampTz commit_time, ReplOriginId origin_id, XLogRecPtr origin_lsn);
 extern void ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 										XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
 										XLogRecPtr two_phase_at,
 										TimestampTz commit_time,
-										RepOriginId origin_id, XLogRecPtr origin_lsn,
+										ReplOriginId origin_id, XLogRecPtr origin_lsn,
 										char *gid, bool is_commit);
 extern void ReorderBufferAssignChild(ReorderBuffer *rb, TransactionId xid,
 									 TransactionId subxid, XLogRecPtr lsn);
@@ -768,7 +768,7 @@ extern bool ReorderBufferXidHasBaseSnapshot(ReorderBuffer *rb, TransactionId xid
 extern bool ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xid,
 											 XLogRecPtr prepare_lsn, XLogRecPtr end_lsn,
 											 TimestampTz prepare_time,
-											 RepOriginId origin_id, XLogRecPtr origin_lsn);
+											 ReplOriginId origin_id, XLogRecPtr origin_lsn);
 extern void ReorderBufferSkipPrepare(ReorderBuffer *rb, TransactionId xid);
 extern void ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid, char *gid);
 extern ReorderBufferTXN *ReorderBufferGetOldestTXN(ReorderBuffer *rb);

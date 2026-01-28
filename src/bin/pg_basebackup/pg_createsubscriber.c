@@ -1103,7 +1103,7 @@ check_subscriber(const struct LogicalRepInfo *dbinfo)
 	bool		failed = false;
 
 	int			max_lrworkers;
-	int			max_reporigins;
+	int			max_replorigins;
 	int			max_wprocs;
 
 	pg_log_info("checking settings on subscriber");
@@ -1142,7 +1142,7 @@ check_subscriber(const struct LogicalRepInfo *dbinfo)
 		disconnect_database(conn, true);
 	}
 
-	max_reporigins = atoi(PQgetvalue(res, 0, 0));
+	max_replorigins = atoi(PQgetvalue(res, 0, 0));
 	max_lrworkers = atoi(PQgetvalue(res, 1, 0));
 	max_wprocs = atoi(PQgetvalue(res, 2, 0));
 	if (strcmp(PQgetvalue(res, 3, 0), "") != 0)
@@ -1150,7 +1150,7 @@ check_subscriber(const struct LogicalRepInfo *dbinfo)
 
 	pg_log_debug("subscriber: max_logical_replication_workers: %d",
 				 max_lrworkers);
-	pg_log_debug("subscriber: max_active_replication_origins: %d", max_reporigins);
+	pg_log_debug("subscriber: max_active_replication_origins: %d", max_replorigins);
 	pg_log_debug("subscriber: max_worker_processes: %d", max_wprocs);
 	if (primary_slot_name)
 		pg_log_debug("subscriber: primary_slot_name: %s", primary_slot_name);
@@ -1159,10 +1159,10 @@ check_subscriber(const struct LogicalRepInfo *dbinfo)
 
 	disconnect_database(conn, false);
 
-	if (max_reporigins < num_dbs)
+	if (max_replorigins < num_dbs)
 	{
 		pg_log_error("subscriber requires %d active replication origins, but only %d remain",
-					 num_dbs, max_reporigins);
+					 num_dbs, max_replorigins);
 		pg_log_error_hint("Increase the configuration parameter \"%s\" to at least %d.",
 						  "max_active_replication_origins", num_dbs);
 		failed = true;
