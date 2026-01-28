@@ -1413,8 +1413,8 @@ RecordTransactionCommit(void)
 		 * Are we using the replication origins feature?  Or, in other words,
 		 * are we replaying remote actions?
 		 */
-		replorigin = (replorigin_session_origin != InvalidReplOriginId &&
-					  replorigin_session_origin != DoNotReplicateId);
+		replorigin = (replorigin_xact_state.origin != InvalidReplOriginId &&
+					  replorigin_xact_state.origin != DoNotReplicateId);
 
 		/*
 		 * Mark ourselves as within our "commit critical section".  This
@@ -1462,25 +1462,25 @@ RecordTransactionCommit(void)
 
 		if (replorigin)
 			/* Move LSNs forward for this replication origin */
-			replorigin_session_advance(replorigin_session_origin_lsn,
+			replorigin_session_advance(replorigin_xact_state.origin_lsn,
 									   XactLastRecEnd);
 
 		/*
 		 * Record commit timestamp.  The value comes from plain commit
 		 * timestamp if there's no replication origin; otherwise, the
-		 * timestamp was already set in replorigin_session_origin_timestamp by
-		 * replication.
+		 * timestamp was already set in replorigin_xact_state.origin_timestamp
+		 * by replication.
 		 *
 		 * We don't need to WAL-log anything here, as the commit record
 		 * written above already contains the data.
 		 */
 
-		if (!replorigin || replorigin_session_origin_timestamp == 0)
-			replorigin_session_origin_timestamp = GetCurrentTransactionStopTimestamp();
+		if (!replorigin || replorigin_xact_state.origin_timestamp == 0)
+			replorigin_xact_state.origin_timestamp = GetCurrentTransactionStopTimestamp();
 
 		TransactionTreeSetCommitTsData(xid, nchildren, children,
-									   replorigin_session_origin_timestamp,
-									   replorigin_session_origin);
+									   replorigin_xact_state.origin_timestamp,
+									   replorigin_xact_state.origin);
 	}
 
 	/*
@@ -1810,8 +1810,8 @@ RecordTransactionAbort(bool isSubXact)
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
-				  replorigin_session_origin != DoNotReplicateId);
+	replorigin = (replorigin_xact_state.origin != InvalidReplOriginId &&
+				  replorigin_xact_state.origin != DoNotReplicateId);
 
 	/* Fetch the data we need for the abort record */
 	nrels = smgrGetPendingDeletes(false, &rels);
@@ -1838,7 +1838,7 @@ RecordTransactionAbort(bool isSubXact)
 
 	if (replorigin)
 		/* Move LSNs forward for this replication origin */
-		replorigin_session_advance(replorigin_session_origin_lsn,
+		replorigin_session_advance(replorigin_xact_state.origin_lsn,
 								   XactLastRecEnd);
 
 	/*
@@ -5928,12 +5928,12 @@ XactLogCommitRecord(TimestampTz commit_time,
 	}
 
 	/* dump transaction origin information */
-	if (replorigin_session_origin != InvalidReplOriginId)
+	if (replorigin_xact_state.origin != InvalidReplOriginId)
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_ORIGIN;
 
-		xl_origin.origin_lsn = replorigin_session_origin_lsn;
-		xl_origin.origin_timestamp = replorigin_session_origin_timestamp;
+		xl_origin.origin_lsn = replorigin_xact_state.origin_lsn;
+		xl_origin.origin_timestamp = replorigin_xact_state.origin_timestamp;
 	}
 
 	if (xl_xinfo.xinfo != 0)
@@ -6081,12 +6081,12 @@ XactLogAbortRecord(TimestampTz abort_time,
 	 * Dump transaction origin information. We need this during recovery to
 	 * update the replication origin progress.
 	 */
-	if (replorigin_session_origin != InvalidReplOriginId)
+	if (replorigin_xact_state.origin != InvalidReplOriginId)
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_ORIGIN;
 
-		xl_origin.origin_lsn = replorigin_session_origin_lsn;
-		xl_origin.origin_timestamp = replorigin_session_origin_timestamp;
+		xl_origin.origin_lsn = replorigin_xact_state.origin_lsn;
+		xl_origin.origin_timestamp = replorigin_xact_state.origin_timestamp;
 	}
 
 	if (xl_xinfo.xinfo != 0)

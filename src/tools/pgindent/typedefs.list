@@ -2577,6 +2577,7 @@ ReorderBufferUpdateProgressTxnCB
 ReorderTuple
 ReparameterizeForeignPathByChild_function
 ReplOriginId
+ReplOriginXactState
 ReplaceVarsFromTargetList_context
 ReplaceVarsNoMatchOption
 ReplaceWrapOption

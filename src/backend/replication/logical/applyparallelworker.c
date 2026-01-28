@@ -962,7 +962,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 	 * origin which was already acquired by its leader process.
 	 */
 	replorigin_session_setup(originid, MyLogicalRepWorker->leader_pid);
-	replorigin_session_origin = originid;
+	replorigin_xact_state.origin = originid;
 	CommitTransactionCommand();
 
 	/*
@@ -1430,8 +1430,8 @@ pa_stream_abort(LogicalRepStreamAbortData *abort_data)
 	 * Update origin state so we can restart streaming from correct position
 	 * in case of crash.
 	 */
-	replorigin_session_origin_lsn = abort_data->abort_lsn;
-	replorigin_session_origin_timestamp = abort_data->abort_time;
+	replorigin_xact_state.origin_lsn = abort_data->abort_lsn;
+	replorigin_xact_state.origin_timestamp = abort_data->abort_time;
 
 	/*
 	 * If the two XIDs are the same, it's in fact abort of toplevel xact, so

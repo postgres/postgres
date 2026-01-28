@@ -162,10 +162,12 @@ typedef struct ReplicationStateCtl
 	ReplicationState states[FLEXIBLE_ARRAY_MEMBER];
 } ReplicationStateCtl;
 
-/* external variables */
-ReplOriginId replorigin_session_origin = InvalidReplOriginId;	/* assumed identity */
-XLogRecPtr	replorigin_session_origin_lsn = InvalidXLogRecPtr;
-TimestampTz replorigin_session_origin_timestamp = 0;
+/* Global variable for per-transaction replication origin state */
+ReplOriginXactState replorigin_xact_state = {
+	.origin = InvalidReplOriginId,	/* assumed identity */
+	.origin_lsn = InvalidXLogRecPtr,
+	.origin_timestamp = 0
+};
 
 /*
  * Base address into a shared memory array of replication states of size
@@ -902,7 +904,7 @@ replorigin_redo(XLogReaderState *record)
  * Tell the replication origin progress machinery that a commit from 'node'
  * that originated at the LSN remote_commit on the remote node was replayed
  * successfully and that we don't need to do so again. In combination with
- * setting up replorigin_session_origin_lsn and replorigin_session_origin
+ * setting up replorigin_xact_state {.origin_lsn, .origin_timestamp}
  * that ensures we won't lose knowledge about that after a crash if the
  * transaction had a persistent effect (think of asynchronous commits).
  *
@@ -1349,10 +1351,10 @@ replorigin_session_get_progress(bool flush)
 void
 replorigin_xact_clear(bool clear_origin)
 {
-	replorigin_session_origin_lsn = InvalidXLogRecPtr;
-	replorigin_session_origin_timestamp = 0;
+	replorigin_xact_state.origin_lsn = InvalidXLogRecPtr;
+	replorigin_xact_state.origin_timestamp = 0;
 	if (clear_origin)
-		replorigin_session_origin = InvalidReplOriginId;
+		replorigin_xact_state.origin = InvalidReplOriginId;
 }
 
 
@@ -1462,7 +1464,7 @@ pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 	pid = PG_GETARG_INT32(1);
 	replorigin_session_setup(origin, pid);
 
-	replorigin_session_origin = origin;
+	replorigin_xact_state.origin = origin;
 
 	pfree(name);
 
@@ -1492,7 +1494,7 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
 {
 	replorigin_check_prerequisites(false, false);
 
-	PG_RETURN_BOOL(replorigin_session_origin != InvalidReplOriginId);
+	PG_RETURN_BOOL(replorigin_xact_state.origin != InvalidReplOriginId);
 }
 
 
@@ -1536,8 +1538,8 @@ pg_replication_origin_xact_setup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("no replication origin is configured")));
 
-	replorigin_session_origin_lsn = location;
-	replorigin_session_origin_timestamp = PG_GETARG_TIMESTAMPTZ(1);
+	replorigin_xact_state.origin_lsn = location;
+	replorigin_xact_state.origin_timestamp = PG_GETARG_TIMESTAMPTZ(1);
 
 	PG_RETURN_VOID();
 }

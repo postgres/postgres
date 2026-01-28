@@ -1157,13 +1157,13 @@ EndPrepare(GlobalTransaction gxact)
 	Assert(hdr->magic == TWOPHASE_MAGIC);
 	hdr->total_len = records.total_len + sizeof(pg_crc32c);
 
-	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
-				  replorigin_session_origin != DoNotReplicateId);
+	replorigin = (replorigin_xact_state.origin != InvalidReplOriginId &&
+				  replorigin_xact_state.origin != DoNotReplicateId);
 
 	if (replorigin)
 	{
-		hdr->origin_lsn = replorigin_session_origin_lsn;
-		hdr->origin_timestamp = replorigin_session_origin_timestamp;
+		hdr->origin_lsn = replorigin_xact_state.origin_lsn;
+		hdr->origin_timestamp = replorigin_xact_state.origin_timestamp;
 	}
 
 	/*
@@ -1211,7 +1211,7 @@ EndPrepare(GlobalTransaction gxact)
 	if (replorigin)
 	{
 		/* Move LSNs forward for this replication origin */
-		replorigin_session_advance(replorigin_session_origin_lsn,
+		replorigin_session_advance(replorigin_xact_state.origin_lsn,
 								   gxact->prepare_end_lsn);
 	}
 
@@ -2330,8 +2330,8 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
-				  replorigin_session_origin != DoNotReplicateId);
+	replorigin = (replorigin_xact_state.origin != InvalidReplOriginId &&
+				  replorigin_xact_state.origin != DoNotReplicateId);
 
 	/* Load the injection point before entering the critical section */
 	INJECTION_POINT_LOAD("commit-after-delay-checkpoint");
@@ -2376,23 +2376,23 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	if (replorigin)
 		/* Move LSNs forward for this replication origin */
-		replorigin_session_advance(replorigin_session_origin_lsn,
+		replorigin_session_advance(replorigin_xact_state.origin_lsn,
 								   XactLastRecEnd);
 
 	/*
 	 * Record commit timestamp.  The value comes from plain commit timestamp
 	 * if replorigin is not enabled, or replorigin already set a value for us
-	 * in replorigin_session_origin_timestamp otherwise.
+	 * in replorigin_xact_state.origin_timestamp otherwise.
 	 *
 	 * We don't need to WAL-log anything here, as the commit record written
 	 * above already contains the data.
 	 */
-	if (!replorigin || replorigin_session_origin_timestamp == 0)
-		replorigin_session_origin_timestamp = committs;
+	if (!replorigin || replorigin_xact_state.origin_timestamp == 0)
+		replorigin_xact_state.origin_timestamp = committs;
 
 	TransactionTreeSetCommitTsData(xid, nchildren, children,
-								   replorigin_session_origin_timestamp,
-								   replorigin_session_origin);
+								   replorigin_xact_state.origin_timestamp,
+								   replorigin_xact_state.origin);
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there any
@@ -2445,8 +2445,8 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidReplOriginId &&
-				  replorigin_session_origin != DoNotReplicateId);
+	replorigin = (replorigin_xact_state.origin != InvalidReplOriginId &&
+				  replorigin_xact_state.origin != DoNotReplicateId);
 
 	/*
 	 * Catch the scenario where we aborted partway through
@@ -2472,7 +2472,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	if (replorigin)
 		/* Move LSNs forward for this replication origin */
-		replorigin_session_advance(replorigin_session_origin_lsn,
+		replorigin_session_advance(replorigin_xact_state.origin_lsn,
 								   XactLastRecEnd);
 
 	/* Always flush, since we're about to remove the 2PC state file */
