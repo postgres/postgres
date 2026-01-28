@@ -627,7 +627,7 @@ static inline void reset_apply_error_context_info(void);
 static TransApplyAction get_transaction_apply_action(TransactionId xid,
 													 ParallelApplyWorkerInfo **winfo);
 
-static void replorigin_reset(int code, Datum arg);
+static void on_exit_clear_xact_state(int code, Datum arg);
 
 /*
  * Form the origin name for the subscription.
@@ -5594,7 +5594,7 @@ start_apply(XLogRecPtr origin_startpos)
 		 * transaction loss as that transaction won't be sent again by the
 		 * server.
 		 */
-		replorigin_reset(0, (Datum) 0);
+		replorigin_xact_clear(true);
 
 		if (MySubscription->disableonerr)
 			DisableSubscriptionAndExit();
@@ -5865,18 +5865,16 @@ InitializeLogRepWorker(void)
 	 * replication workers that set up origins and apply remote transactions
 	 * are protected.
 	 */
-	before_shmem_exit(replorigin_reset, (Datum) 0);
+	before_shmem_exit(on_exit_clear_xact_state, (Datum) 0);
 }
 
 /*
- * Reset the origin state.
+ * Callback on exit to clear transaction-level replication origin state.
  */
 static void
-replorigin_reset(int code, Datum arg)
+on_exit_clear_xact_state(int code, Datum arg)
 {
-	replorigin_session_origin = InvalidReplOriginId;
-	replorigin_session_origin_lsn = InvalidXLogRecPtr;
-	replorigin_session_origin_timestamp = 0;
+	replorigin_xact_clear(true);
 }
 
 /*

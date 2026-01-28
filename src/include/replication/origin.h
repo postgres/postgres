@@ -67,6 +67,9 @@ extern void replorigin_session_setup(ReplOriginId node, int acquired_by);
 extern void replorigin_session_reset(void);
 extern XLogRecPtr replorigin_session_get_progress(bool flush);
 
+/* Per-transaction replication origin state manipulation */
+extern void replorigin_xact_clear(bool clear_origin);
+
 /* Checkpoint/Startup integration */
 extern void CheckPointReplicationOrigin(void);
 extern void StartupReplicationOrigin(void);

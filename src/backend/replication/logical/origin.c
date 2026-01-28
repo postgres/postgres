@@ -1341,6 +1341,19 @@ replorigin_session_get_progress(bool flush)
 	return remote_lsn;
 }
 
+/*
+ * Clear the per-transaction replication origin state.
+ *
+ * replorigin_session_origin is also cleared if clear_origin is set.
+ */
+void
+replorigin_xact_clear(bool clear_origin)
+{
+	replorigin_session_origin_lsn = InvalidXLogRecPtr;
+	replorigin_session_origin_timestamp = 0;
+	if (clear_origin)
+		replorigin_session_origin = InvalidReplOriginId;
+}
 
 
 /* ---------------------------------------------------------------------------
@@ -1466,9 +1479,7 @@ pg_replication_origin_session_reset(PG_FUNCTION_ARGS)
 
 	replorigin_session_reset();
 
-	replorigin_session_origin = InvalidReplOriginId;
-	replorigin_session_origin_lsn = InvalidXLogRecPtr;
-	replorigin_session_origin_timestamp = 0;
+	replorigin_xact_clear(true);
 
 	PG_RETURN_VOID();
 }
@@ -1536,8 +1547,8 @@ pg_replication_origin_xact_reset(PG_FUNCTION_ARGS)
 {
 	replorigin_check_prerequisites(true, false);
 
-	replorigin_session_origin_lsn = InvalidXLogRecPtr;
-	replorigin_session_origin_timestamp = 0;
+	/* Do not clear the session origin */
+	replorigin_xact_clear(false);
 
 	PG_RETURN_VOID();
 }
