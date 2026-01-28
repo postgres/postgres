@@ -1653,7 +1653,7 @@ create_group_result_path(PlannerInfo *root, RelOptInfo *rel,
  *	  pathnode.
  */
 MaterialPath *
-create_material_path(RelOptInfo *rel, Path *subpath)
+create_material_path(RelOptInfo *rel, Path *subpath, bool enabled)
 {
 	MaterialPath *pathnode = makeNode(MaterialPath);
 
@@ -1672,6 +1672,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	cost_material(&pathnode->path,
+				  enabled,
 				  subpath->disabled_nodes,
 				  subpath->startup_cost,
 				  subpath->total_cost,
@@ -1724,8 +1725,15 @@ create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->est_unique_keys = 0.0;
 	pathnode->est_hit_ratio = 0.0;
 
-	/* we should not generate this path type when enable_memoize=false */
-	Assert(enable_memoize);
+	/*
+	 * We should not be asked to generate this path type when memoization is
+	 * disabled, so set our count of disabled nodes equal to the subpath's
+	 * count.
+	 *
+	 * It would be nice to also Assert that memoization is enabled, but the
+	 * value of enable_memoize is not controlling: what we would need to check
+	 * is that the JoinPathExtraData's pgs_mask included PGS_NESTLOOP_MEMOIZE.
+	 */
 	pathnode->path.disabled_nodes = subpath->disabled_nodes;
 
 	/*
@@ -3958,13 +3966,16 @@ reparameterize_path(PlannerInfo *root, Path *path,
 			{
 				MaterialPath *mpath = (MaterialPath *) path;
 				Path	   *spath = mpath->subpath;
+				bool		enabled;
 
 				spath = reparameterize_path(root, spath,
 											required_outer,
 											loop_count);
+				enabled =
+					(mpath->path.disabled_nodes <= spath->disabled_nodes);
 				if (spath == NULL)
 					return NULL;
-				return (Path *) create_material_path(rel, spath);
+				return (Path *) create_material_path(rel, spath, enabled);
 			}
 		case T_Memoize:
 			{

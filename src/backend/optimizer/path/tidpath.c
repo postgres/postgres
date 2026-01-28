@@ -499,18 +499,19 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 	List	   *tidquals;
 	List	   *tidrangequals;
 	bool		isCurrentOf;
+	bool		enabled = (rel->pgs_mask & PGS_TIDSCAN) != 0;
 
 	/*
 	 * If any suitable quals exist in the rel's baserestrict list, generate a
 	 * plain (unparameterized) TidPath with them.
 	 *
-	 * We skip this when enable_tidscan = false, except when the qual is
+	 * We skip this when TID scans are disabled, except when the qual is
 	 * CurrentOfExpr. In that case, a TID scan is the only correct path.
 	 */
 	tidquals = TidQualFromRestrictInfoList(root, rel->baserestrictinfo, rel,
 										   &isCurrentOf);
 
-	if (tidquals != NIL && (enable_tidscan || isCurrentOf))
+	if (tidquals != NIL && (enabled || isCurrentOf))
 	{
 		/*
 		 * This path uses no join clauses, but it could still have required
@@ -532,7 +533,7 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	/* Skip the rest if TID scans are disabled. */
-	if (!enable_tidscan)
+	if (!enabled)
 		return false;
 
 	/*

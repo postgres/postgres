@@ -18,6 +18,15 @@
 #include "nodes/pathnodes.h"
 
 
+/* Hook for plugins to get control during joinrel setup */
+typedef void (*joinrel_setup_hook_type) (PlannerInfo *root,
+										 RelOptInfo *joinrel,
+										 RelOptInfo *outer_rel,
+										 RelOptInfo *inner_rel,
+										 SpecialJoinInfo *sjinfo,
+										 List *restrictlist);
+extern PGDLLIMPORT joinrel_setup_hook_type joinrel_setup_hook;
+
 /*
  * prototypes for pathnode.c
  */
@@ -83,7 +92,8 @@ extern GroupResultPath *create_group_result_path(PlannerInfo *root,
 												 RelOptInfo *rel,
 												 PathTarget *target,
 												 List *havingqual);
-extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
+extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath,
+										  bool enabled);
 extern MemoizePath *create_memoize_path(PlannerInfo *root,
 										RelOptInfo *rel,
 										Path *subpath,

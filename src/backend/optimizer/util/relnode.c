@@ -47,6 +47,9 @@ typedef struct JoinHashEntry
 	RelOptInfo *join_rel;
 } JoinHashEntry;
 
+/* Hook for plugins to get control during joinrel setup */
+joinrel_setup_hook_type joinrel_setup_hook = NULL;
+
 static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 								RelOptInfo *input_rel,
 								SpecialJoinInfo *sjinfo,
@@ -225,6 +228,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->consider_startup = (root->tuple_fraction > 0);
 	rel->consider_param_startup = false;	/* might get changed later */
 	rel->consider_parallel = false; /* might get changed later */
+	rel->pgs_mask = root->glob->default_pgs_mask;
 	rel->reltarget = create_empty_pathtarget();
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
@@ -822,6 +826,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->consider_startup = (root->tuple_fraction > 0);
 	joinrel->consider_param_startup = false;
 	joinrel->consider_parallel = false;
+	joinrel->pgs_mask = root->glob->default_pgs_mask;
 	joinrel->reltarget = create_empty_pathtarget();
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
@@ -934,10 +939,6 @@ build_join_rel(PlannerInfo *root,
 	 */
 	joinrel->has_eclass_joins = has_relevant_eclass_joinclause(root, joinrel);
 
-	/* Store the partition information. */
-	build_joinrel_partition_info(root, joinrel, outer_rel, inner_rel, sjinfo,
-								 restrictlist);
-
 	/*
 	 * Set estimates of the joinrel's size.
 	 */
@@ -962,6 +963,19 @@ build_join_rel(PlannerInfo *root,
 		is_parallel_safe(root, (Node *) restrictlist) &&
 		is_parallel_safe(root, (Node *) joinrel->reltarget->exprs))
 		joinrel->consider_parallel = true;
+
+	/*
+	 * Allow a plugin to editorialize on the new joinrel's properties. Actions
+	 * might include altering the size estimate, clearing consider_parallel,
+	 * or adjusting pgs_mask.
+	 */
+	if (joinrel_setup_hook)
+		(*joinrel_setup_hook) (root, joinrel, outer_rel, inner_rel, sjinfo,
+							   restrictlist);
+
+	/* Store the partition information. */
+	build_joinrel_partition_info(root, joinrel, outer_rel, inner_rel, sjinfo,
+								 restrictlist);
 
 	/* Add the joinrel to the PlannerInfo. */
 	add_join_rel(root, joinrel);
@@ -1019,6 +1033,7 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	joinrel->consider_startup = (root->tuple_fraction > 0);
 	joinrel->consider_param_startup = false;
 	joinrel->consider_parallel = false;
+	joinrel->pgs_mask = root->glob->default_pgs_mask;
 	joinrel->reltarget = create_empty_pathtarget();
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
@@ -1102,16 +1117,26 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	 */
 	joinrel->has_eclass_joins = parent_joinrel->has_eclass_joins;
 
-	/* Is the join between partitions itself partitioned? */
-	build_joinrel_partition_info(root, joinrel, outer_rel, inner_rel, sjinfo,
-								 restrictlist);
-
 	/* Child joinrel is parallel safe if parent is parallel safe. */
 	joinrel->consider_parallel = parent_joinrel->consider_parallel;
 
 	/* Set estimates of the child-joinrel's size. */
 	set_joinrel_size_estimates(root, joinrel, outer_rel, inner_rel,
 							   sjinfo, restrictlist);
+
+	/*
+	 * Allow a plugin to editorialize on the new joinrel's properties. Actions
+	 * might include altering the size estimate, clearing consider_parallel,
+	 * or adjusting pgs_mask. (However, note that clearing consider_parallel
+	 * would be better done in the parent joinrel rather than here.)
+	 */
+	if (joinrel_setup_hook)
+		(*joinrel_setup_hook) (root, joinrel, outer_rel, inner_rel, sjinfo,
+							   restrictlist);
+
+	/* Is the join between partitions itself partitioned? */
+	build_joinrel_partition_info(root, joinrel, outer_rel, inner_rel, sjinfo,
+								 restrictlist);
 
 	/* We build the join only once. */
 	Assert(!find_join_rel(root, joinrel->relids));
@@ -1602,6 +1627,7 @@ fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind, Relids relids)
 	upperrel = makeNode(RelOptInfo);
 	upperrel->reloptkind = RELOPT_UPPER_REL;
 	upperrel->relids = bms_copy(relids);
+	upperrel->pgs_mask = root->glob->default_pgs_mask;
 
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	upperrel->consider_startup = (root->tuple_fraction > 0);
@@ -2118,7 +2144,7 @@ build_joinrel_partition_info(PlannerInfo *root,
 	PartitionScheme part_scheme;
 
 	/* Nothing to do if partitionwise join technique is disabled. */
-	if (!enable_partitionwise_join)
+	if ((joinrel->pgs_mask & PGS_CONSIDER_PARTITIONWISE) == 0)
 	{
 		Assert(!IS_PARTITIONED_REL(joinrel));
 		return;

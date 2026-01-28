@@ -125,7 +125,7 @@ extern void cost_merge_append(Path *path, PlannerInfo *root,
 							  Cost input_startup_cost, Cost input_total_cost,
 							  double tuples);
 extern void cost_material(Path *path,
-						  int input_disabled_nodes,
+						  bool enabled, int input_disabled_nodes,
 						  Cost input_startup_cost, Cost input_total_cost,
 						  double tuples, int width);
 extern void cost_agg(Path *path, PlannerInfo *root,
@@ -148,7 +148,7 @@ extern void cost_group(Path *path, PlannerInfo *root,
 					   double input_tuples);
 extern void initial_cost_nestloop(PlannerInfo *root,
 								  JoinCostWorkspace *workspace,
-								  JoinType jointype,
+								  JoinType jointype, uint64 enable_mask,
 								  Path *outer_path, Path *inner_path,
 								  JoinPathExtraData *extra);
 extern void final_cost_nestloop(PlannerInfo *root, NestPath *path,

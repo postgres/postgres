@@ -22,6 +22,79 @@
 #include "nodes/parsenodes.h"
 #include "storage/block.h"
 
+/*
+ * Path generation strategies.
+ *
+ * These constants are used to specify the set of strategies that the planner
+ * should use, either for the query as a whole or for a specific baserel or
+ * joinrel. The various planner-related enable_* GUCs are used to set the
+ * PlannerGlobal's default_pgs_mask, and that in turn is used to set each
+ * RelOptInfo's pgs_mask. In both cases, extensions can use hooks to modify the
+ * default value.  Not every strategy listed here has a corresponding enable_*
+ * GUC; those that don't are always allowed unless disabled by an extension.
+ * Not all strategies are relevant for every RelOptInfo; e.g. PGS_SEQSCAN
+ * doesn't affect joinrels one way or the other.
+ *
+ * In most cases, disabling a path generation strategy merely means that any
+ * paths generated using that strategy are marked as disabled, but in some
+ * cases, path generation is skipped altogether. The latter strategy is only
+ * permissible when it can't result in planner failure -- for instance, we
+ * couldn't do this for sequential scans on a plain rel, because there might
+ * not be any other possible path. Nevertheless, the behaviors in each
+ * individual case are to some extent the result of historical accident,
+ * chosen to match the preexisting behaviors of the enable_* GUCs.
+ *
+ * In a few cases, we have more than one bit for the same strategy, controlling
+ * different aspects of the planner behavior. When PGS_CONSIDER_INDEXONLY is
+ * unset, we don't even consider index-only scans, and any such scans that
+ * would have been generated become index scans instead. On the other hand,
+ * unsetting PGS_INDEXSCAN or PGS_INDEXONLYSCAN causes generated paths of the
+ * corresponding types to be marked as disabled. Similarly, unsetting
+ * PGS_CONSIDER_PARTITIONWISE prevents any sort of thinking about partitionwise
+ * joins for the current rel, which incidentally will preclude higher-level
+ * joinrels from building partitionwise paths using paths taken from the
+ * current rel's children. On the other hand, unsetting PGS_APPEND or
+ * PGS_MERGE_APPEND will only arrange to disable paths of the corresponding
+ * types if they are generated at the level of the current rel.
+ *
+ * Finally, unsetting PGS_CONSIDER_NONPARTIAL disables all non-partial paths
+ * except those that use Gather or Gather Merge. In most other cases, a
+ * plugin can nudge the planner toward a particular strategy by disabling
+ * all of the others, but that doesn't work here: unsetting PGS_SEQSCAN,
+ * for instance, would disable both partial and non-partial sequential scans.
+ */
+#define PGS_SEQSCAN					0x00000001
+#define PGS_INDEXSCAN				0x00000002
+#define PGS_INDEXONLYSCAN			0x00000004
+#define PGS_BITMAPSCAN				0x00000008
+#define PGS_TIDSCAN					0x00000010
+#define PGS_FOREIGNJOIN				0x00000020
+#define PGS_MERGEJOIN_PLAIN			0x00000040
+#define PGS_MERGEJOIN_MATERIALIZE	0x00000080
+#define PGS_NESTLOOP_PLAIN			0x00000100
+#define PGS_NESTLOOP_MATERIALIZE	0x00000200
+#define PGS_NESTLOOP_MEMOIZE		0x00000400
+#define PGS_HASHJOIN				0x00000800
+#define PGS_APPEND					0x00001000
+#define PGS_MERGE_APPEND			0x00002000
+#define PGS_GATHER					0x00004000
+#define PGS_GATHER_MERGE			0x00008000
+#define PGS_CONSIDER_INDEXONLY		0x00010000
+#define PGS_CONSIDER_PARTITIONWISE	0x00020000
+#define PGS_CONSIDER_NONPARTIAL		0x00040000
+
+/*
+ * Convenience macros for useful combination of the bits defined above.
+ */
+#define PGS_SCAN_ANY		\
+	(PGS_SEQSCAN | PGS_INDEXSCAN | PGS_INDEXONLYSCAN | PGS_BITMAPSCAN | \
+	 PGS_TIDSCAN)
+#define PGS_MERGEJOIN_ANY	\
+	(PGS_MERGEJOIN_PLAIN | PGS_MERGEJOIN_MATERIALIZE)
+#define PGS_NESTLOOP_ANY	\
+	(PGS_NESTLOOP_PLAIN | PGS_NESTLOOP_MATERIALIZE | PGS_NESTLOOP_MEMOIZE)
+#define PGS_JOIN_ANY		\
+	(PGS_FOREIGNJOIN | PGS_MERGEJOIN_ANY | PGS_NESTLOOP_ANY | PGS_HASHJOIN)
 
 /*
  * Relids
@@ -179,6 +252,9 @@ typedef struct PlannerGlobal
 
 	/* worst PROPARALLEL hazard level */
 	char		maxParallelHazard;
+
+	/* mask of allowed path generation strategies */
+	uint64		default_pgs_mask;
 
 	/* partition descriptors */
 	PartitionDirectory partition_directory pg_node_attr(read_write_ignore);
@@ -933,7 +1009,7 @@ typedef struct RelOptInfo
 	Cardinality rows;
 
 	/*
-	 * per-relation planner control flags
+	 * per-relation planner control
 	 */
 	/* keep cheap-startup-cost paths? */
 	bool		consider_startup;
@@ -941,6 +1017,8 @@ typedef struct RelOptInfo
 	bool		consider_param_startup;
 	/* consider parallel paths? */
 	bool		consider_parallel;
+	/* path generation strategy mask */
+	uint64		pgs_mask;
 
 	/*
 	 * default result targetlist for Paths scanning this relation; list of
@@ -3490,6 +3568,7 @@ typedef struct SemiAntiJoinFactors
  * sjinfo is extra info about special joins for selectivity estimation
  * semifactors is as shown above (only valid for SEMI/ANTI/inner_unique joins)
  * param_source_rels are OK targets for parameterization of result paths
+ * pgs_mask is a bitmask of PGS_* constants to limit the join strategy
  */
 typedef struct JoinPathExtraData
 {
@@ -3499,6 +3578,7 @@ typedef struct JoinPathExtraData
 	SpecialJoinInfo *sjinfo;
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
+	uint64		pgs_mask;
 } JoinPathExtraData;
 
 /*

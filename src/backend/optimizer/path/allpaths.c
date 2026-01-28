@@ -952,7 +952,7 @@ set_tablesample_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *
 		 bms_membership(root->all_query_rels) != BMS_SINGLETON) &&
 		!(GetTsmRoutine(rte->tablesample->tsmhandler)->repeatable_across_scans))
 	{
-		path = (Path *) create_material_path(rel, path);
+		path = (Path *) create_material_path(rel, path, true);
 	}
 
 	add_path(rel, path);

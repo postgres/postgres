@@ -576,6 +576,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 * Allow a plugin to editorialize on the info we obtained from the
 	 * catalogs.  Actions might include altering the assumed relation size,
 	 * removing an index, or adding a hypothetical index to the indexlist.
+	 *
+	 * An extension can also modify rel->pgs_mask here to control path
+	 * generation.
 	 */
 	if (get_relation_info_hook)
 		(*get_relation_info_hook) (root, relationObjectId, inhparent, rel);
