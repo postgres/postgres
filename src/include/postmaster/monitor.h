@@ -16,29 +16,45 @@
  *-------------------------------------------------------------------------
  */
 
-/*
- * тут будуь лежать HTAB, SUbject и тд
- * либо объявление + extern, либо реализация
- * в .с - реализация
- */
-
 #ifndef _MONITOR_H
 #define _MONITOR_H
+
+#include "postmaster/auxprocess.h"
 #include "port/atomics.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "monitorsubsystem/monitor_channel.h"
 
-#define MSS_MAX_PROCESSES \
-    (MaxBackends + max_worker_processes + \
-     autovacuum_max_workers + max_parallel_workers + 1)
+/*
+ * NOTE: MSS_MAX_PROCESSES cannot use actual GUC variables
+ * (MaxBackends, max_worker_processes, etc.) because they are
+ * runtime parameters, not compile-time constants.
+ *
+ * Current workaround: Static conservative limits.
+ *
+ * FIXME / QUESTION / TODO:
+ * Consider dynamic data structures instead of bitmasks
+ * to avoid hard limits.
+ */
 
+/* #define MSS_MAX_PROCESSES                 \
+ 	(MaxBackends + max_worker_processes + \
+	 autovacuum_max_workers + max_parallel_workers + 1)
+*/
+
+#define MAX_BACKENDS_LIMIT 256
+#define MAX_WORKER_PROCESSES_LIMIT 64
+#define AUTOVACUUM_MAX_WORKERS_LIMIT 16
+#define MAX_PARALLEL_WORKERS_LIMIT 64
+
+#define MSS_MAX_PROCESSES (MAX_BACKENDS_LIMIT + MAX_WORKER_PROCESSES_LIMIT + \
+						   AUTOVACUUM_MAX_WORKERS_LIMIT + MAX_PARALLEL_WORKERS_LIMIT + 1)
 
 #define MAX_SUBS_NUM MSS_MAX_PROCESSES
 #define MAX_PUBS_NUM 32
 #define MAX_SUBJECT_NUM 64
 
-#define MAX_SUBS_BIT_NUM (MAX_SUBS_NUM + 64 - 1) / 64
+#define MAX_SUBS_BIT_NUM ((MAX_SUBS_NUM + 64 - 1) / 64)
 
 #define MAX_SUBJECT_LEN 25
 #define MAX_SUBJECT_BIT_NUM (MAX_SUBS_NUM + 64 - 1) / 64
@@ -69,14 +85,13 @@ typedef struct _subjectKey
 /*
  * key -> SubjectEntity hash entry
  */
-typedef struct mssEntry {
-	SubjectKey key;	/* hash key */
+typedef struct mssEntry
+{
+	SubjectKey key;		 /* hash key */
 	int subjectEntityId; /* id в массиве с SubectEntity */
-	/* возможно нужна лочка */
+						 /* возможно нужна лочка */
 
 } mssEntry;
-
-
 
 /*
  * Для быстрой отписки (чтобы не итерировать по всем записям в хеше)
@@ -115,7 +130,6 @@ typedef struct PublisherInfo
 	monitor_channel *sub_channel;
 } PublisherInfo;
 
-
 typedef struct MssState_SubscriberInfo
 {
 	LWLock lock;
@@ -138,8 +152,6 @@ typedef struct MssState_PublisherInfo
 
 } MssState_PublisherInfo;
 
-
-
 /*
  * еще раз - в разделяемой памяти лежит
  * структура (пока массив) со списком подписчиков
@@ -161,7 +173,7 @@ typedef struct MssState_PublisherInfo
  * SubsribersInfo, Publishers, subject-subscribers (SubjectEntities) hashtable
  * are reached from here.
  *
-*/
+ */
 typedef struct mssSharedState
 {
 	MssState_SubscriberInfo sub;
@@ -169,14 +181,15 @@ typedef struct mssSharedState
 
 	SubjectEntity *subjectEntities;
 
-	LWLock *lock; /* protects hashtable search/modification */
-	HTAB *mss_hash = NULL;	/* hashtable for SubjectKey - SubjectEntity */
+	LWLock lock;	/* protects hashtable search/modification */
+	HTAB *mss_hash; /* hashtable for SubjectKey - SubjectEntity */
 
 } mssSharedState;
 
+extern mssSharedState *MonSubSystem_SharedState;
 
 // I take an example from walwriter (src/backend/postmaster/walwriter.c) and other backgrounds
-pg_noreturn extern void MonitoringProcessMain(char *startup_data, size_t startup_data_len);
+pg_noreturn extern void MonitoringProcessMain(const void *startup_data, size_t startup_data_len);
 
 /*
  * this needed to be included to CalculateShmemSize in src\backend\storage\ipc\ipci.c

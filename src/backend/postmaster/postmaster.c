@@ -266,7 +266,8 @@ static PMChild *StartupPMChild = NULL,
 		   *AutoVacLauncherPMChild = NULL,
 		   *PgArchPMChild = NULL,
 		   *SysLoggerPMChild = NULL,
-		   *SlotSyncWorkerPMChild = NULL;
+		   *SlotSyncWorkerPMChild = NULL,
+		   *MonitorSubSystemPMChild = NULL;
 
 /* Startup process's status */
 typedef enum
@@ -1386,6 +1387,8 @@ PostmasterMain(int argc, char *argv[])
 		CheckpointerPMChild = StartChildProcess(B_CHECKPOINTER);
 	if (BgWriterPMChild == NULL)
 		BgWriterPMChild = StartChildProcess(B_BG_WRITER);
+	if (MonitorSubSystemPMChild == NULL)
+		MonitorSubSystemPMChild = StartChildProcess(B_MONITOR_SUBSYSTEM_PROCESS);
 
 	/*
 	 * We're ready to rock and roll...

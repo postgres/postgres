@@ -16,12 +16,35 @@
  *-------------------------------------------------------------------------
  */
 
+/*
+ * TODO: add description of Monitor Subsystem LWLocks
+ * to src/backend/utils/activity/wait_event_names.txt
+ *
+ * TODO: add restart of the monitoring subsystem process
+ * in src/backend/postmaster/postmaster.c
+ */
+
+/*
+ * QUESTION:     postgres/src/include/meson.build
+ * Do I need to add smth?
+ *
+ */
+
 #include "postgres.h"
 #include "libpq/pqsignal.h"
 #include "postmaster/interrupt.h"
+#include "postmaster/monitor.h"
+#include "storage/buf_internals.h"
 #include "monitorsubsystem/monitor_event.h"
+#include "utils/memutils.h"
 
-Size mss_subscriberInfo_size()
+mssSharedState *MonSubSystem_SharedState = NULL;
+
+Size mss_subscriberInfo_size(void);
+Size mss_publisherInfo_size(void);
+Size mss_subjectEntity_size(void);
+
+Size mss_subscriberInfo_size(void)
 {
 	Size sz;
 
@@ -29,7 +52,7 @@ Size mss_subscriberInfo_size()
 	return MAXALIGN(sz);
 }
 
-Size mss_publisherInfo_size()
+Size mss_publisherInfo_size(void)
 {
 	Size sz;
 
@@ -37,7 +60,7 @@ Size mss_publisherInfo_size()
 	return MAXALIGN(sz);
 }
 
-Size mss_subjectEntity_size()
+Size mss_subjectEntity_size(void)
 {
 	Size sz;
 
@@ -49,15 +72,15 @@ Size MonitorShmemSize(void)
 {
 	Size sz;
 
-	sz = MAXALIGN(sizeof(MssState_SubscriberInfo));
+	sz = MAXALIGN(sizeof(mssSharedState));
 	sz = add_size(sz, mss_subscriberInfo_size());
 	sz = add_size(sz, mss_publisherInfo_size());
 	sz = add_size(sz, mss_subjectEntity_size());
 
 	/* for hash table */
 	sz = add_size(sz,
-              hash_estimate_size(MAX_SUBJECT_NUM,
-                                 sizeof(mssEntry)));
+				  hash_estimate_size(MAX_SUBJECT_NUM,
+									 sizeof(mssEntry)));
 
 	return sz;
 }
@@ -68,23 +91,123 @@ Size MonitorShmemSize(void)
  */
 void MonitorShmemInit(void)
 {
+	bool found;
+	char *ptr;
+	HASHCTL hash_ctl;
 
-	/*
-	 * TODO: Initialize monitoring structures
-	 *
-	 * what happens here
-	 * - monitor subsystem memory allocation
-	 * - initialyzation of all monitor subsystem entries
-	 *
-	 */
+	MonSubSystem_SharedState = (mssSharedState *)
+		ShmemInitStruct("Monitoring Subsystem Data",
+						MonitorShmemSize(),
+						&found);
+
+	if (!found)
+	{
+
+		/* LWLocks Initialization */
+		LWLockInitialize(&MonSubSystem_SharedState->lock, LWTRANCHE_MONITOR);
+		LWLockInitialize(&MonSubSystem_SharedState->sub.lock, LWTRANCHE_MONITOR_SUBSCRIBERS);
+		LWLockInitialize(&MonSubSystem_SharedState->pub.lock, LWTRANCHE_MONITOR_PUBLISHERS);
+
+		/* Subs initialization */
+		MonSubSystem_SharedState->sub.max_subs_num = MAX_SUBS_NUM;
+		MonSubSystem_SharedState->sub.current_subs_num = 0;
+
+		ptr = (char *)MonSubSystem_SharedState;
+		ptr += MAXALIGN(sizeof(mssSharedState));
+		MonSubSystem_SharedState->sub.subscribers = (SubscriberInfo *)ptr;
+
+		for (int i = 0; i < MAX_SUBS_NUM; i++)
+		{
+			SubscriberInfo *sub = &MonSubSystem_SharedState->sub.subscribers[i];
+
+			sub->proc_pid = 0; /* not used yet */
+			sub->channel = NULL;
+
+			LWLockInitialize(&sub->lock, LWTRANCHE_MONITOR_SUBSCRIBER);
+
+			for (int j = 0; j < MAX_SUBJECT_BIT_NUM; j++)
+			{
+				sub->bitmap[j] = 0;
+			}
+		}
+
+		/* Pubs initialization */
+		ptr += mss_subscriberInfo_size();
+		MonSubSystem_SharedState->pub.publishers = (PublisherInfo *)ptr;
+
+		MonSubSystem_SharedState->pub.max_pubs_num = MAX_PUBS_NUM;
+		MonSubSystem_SharedState->pub.current_pubs_num = 0;
+
+		for (int i = 0; i < MAX_PUBS_NUM; i++)
+		{
+			PublisherInfo *pub = &MonSubSystem_SharedState->pub.publishers[i];
+			pub->proc_pid = 0;
+			pub->sub_channel = NULL;
+		}
+
+		/* SubjectEntity array initialization */
+		ptr += mss_publisherInfo_size();
+		MonSubSystem_SharedState->subjectEntities = (SubjectEntity *)ptr;
+
+		for (int i = 0; i < MAX_SUBJECT_NUM; i++)
+		{
+			SubjectEntity *subj = &MonSubSystem_SharedState->subjectEntities[i];
+
+			subj->_routingType = ANYCAST;
+
+			for (int j = 0; j < MAX_SUBS_BIT_NUM; j++)
+			{
+				pg_atomic_init_u64(&subj->bitmap_subs[j], 0);
+			}
+		}
+
+		/* Hash table initialization */
+		ptr += mss_subjectEntity_size();
+
+		memset(&hash_ctl, 0, sizeof(hash_ctl));
+		hash_ctl.keysize = sizeof(SubjectKey);
+		hash_ctl.entrysize = sizeof(mssEntry);
+		/* TODO: This is under question... */
+		hash_ctl.hcxt = TopMemoryContext;
+		/* TODO:
+		 * think about using match (function) in hash_ctl
+		 */
+
+		MonSubSystem_SharedState->mss_hash = ShmemInitHash("Monitor Subject Hash",
+														   MAX_SUBJECT_NUM, /* approximate number of entries */
+														   MAX_SUBJECT_NUM, /* maximum number of entries */
+														   &hash_ctl,
+														   HASH_ELEM | HASH_BLOBS);
+
+		if (MonSubSystem_SharedState->mss_hash == NULL)
+		{
+			elog(FATAL, "could not initialize monitor subject hash table");
+		}
+
+		elog(DEBUG1, "Monitor subsystem shared memory initialized");
+	}
+	else
+	{
+		/*
+		 * TODO:
+		 * checks (after restart of the process or smth like that)
+		 */
+		elog(DEBUG1, "Attached to existing monitor subsystem shared memory");
+	}
 }
 
-void MonitoringProcessMain(char *startup_data, size_t startup_data_len)
+/*
+ * FIXME:
+ * fix signal handling, bc it doesn't stop with "pg_ctl stop"
+ */
+void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 {
+
+	elog(LOG, "WORKING");
 	/* for a start, there should be nothing*/
 	Assert(startup_data_len == 0);
 
-	MyBackendType = B_MONITORING;
+	MyBackendType = B_MONITOR_SUBSYSTEM_PROCESS;
 	// here might be questions about pgstat_initialize(), ReplicationSlotInitialize, etc
 	// but might not!
 	AuxiliaryProcessMainCommon();

@@ -30,6 +30,7 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/monitor.h"
 #include "postmaster/walsummarizer.h"
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
@@ -53,7 +54,7 @@
 #include "utils/injection_point.h"
 
 /* GUCs */
-int			shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
+int shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
 
 shmem_startup_hook_type shmem_startup_hook = NULL;
 
@@ -70,8 +71,7 @@ static void CreateOrAttachShmemStructs(void);
  * loaded into the postmaster via shared_preload_libraries.  Calls from
  * elsewhere will fail.
  */
-void
-RequestAddinShmemSpace(Size size)
+void RequestAddinShmemSpace(Size size)
 {
 	if (!process_shmem_requests_in_progress)
 		elog(FATAL, "cannot request additional shared memory outside shmem_request_hook");
@@ -85,11 +85,10 @@ RequestAddinShmemSpace(Size size)
  * If num_semaphores is not NULL, it will be set to the number of semaphores
  * required.
  */
-Size
-CalculateShmemSize(int *num_semaphores)
+Size CalculateShmemSize(int *num_semaphores)
 {
-	Size		size;
-	int			numSemas;
+	Size size;
+	int numSemas;
 
 	/* Compute number of semaphores we'll need */
 	numSemas = ProcGlobalSemas();
@@ -169,8 +168,7 @@ CalculateShmemSize(int *num_semaphores)
  * In !EXEC_BACKEND mode, we inherit everything through the fork, and this
  * isn't needed.
  */
-void
-AttachSharedMemoryStructs(void)
+void AttachSharedMemoryStructs(void)
 {
 	/* InitProcess must've been called already */
 	Assert(MyProc != NULL);
@@ -196,13 +194,12 @@ AttachSharedMemoryStructs(void)
  * CreateSharedMemoryAndSemaphores
  *		Creates and initializes shared memory and semaphores.
  */
-void
-CreateSharedMemoryAndSemaphores(void)
+void CreateSharedMemoryAndSemaphores(void)
 {
 	PGShmemHeader *shim;
 	PGShmemHeader *seghdr;
-	Size		size;
-	int			numSemas;
+	Size size;
+	int numSemas;
 
 	Assert(!IsUnderPostmaster);
 
@@ -334,6 +331,7 @@ CreateOrAttachShmemStructs(void)
 	PgArchShmemInit();
 	ApplyLauncherShmemInit();
 	SlotSyncShmemInit();
+	MonitorShmemInit();
 
 	/*
 	 * Set up other modules that need some shared memory space
@@ -353,14 +351,13 @@ CreateOrAttachShmemStructs(void)
  * This function initializes runtime-computed GUCs related to the amount of
  * shared memory required for the current configuration.
  */
-void
-InitializeShmemGUCs(void)
+void InitializeShmemGUCs(void)
 {
-	char		buf[64];
-	Size		size_b;
-	Size		size_mb;
-	Size		hp_size;
-	int			num_semas;
+	char buf[64];
+	Size size_b;
+	Size size_mb;
+	Size hp_size;
+	int num_semas;
 
 	/*
 	 * Calculate the shared memory size and round up to the nearest megabyte.
@@ -377,7 +374,7 @@ InitializeShmemGUCs(void)
 	GetHugePageSize(&hp_size, NULL);
 	if (hp_size != 0)
 	{
-		Size		hp_required;
+		Size hp_required;
 
 		hp_required = add_size(size_b / hp_size, 1);
 		sprintf(buf, "%zu", hp_required);

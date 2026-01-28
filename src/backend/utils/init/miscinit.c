@@ -320,6 +320,9 @@ GetBackendTypeDesc(BackendType backendType)
 		case B_WAL_WRITER:
 			backendDesc = gettext_noop("walwriter");
 			break;
+		case B_MONITOR_SUBSYSTEM_PROCESS:
+			backendDesc = gettext_noop("monitoring subsystem process");
+			break;
 	}
 
 	return backendDesc;

@@ -41,7 +41,7 @@ struct monitor_channel
 
 static inline bool
 channel_init(monitor_channel *ch, const ChannelOps *ops,
-			 Size *size, void *arg)
+			 Size size, void *arg)
 {
 	ch->ops = ops;
 	return ops->init(ch, size, arg);

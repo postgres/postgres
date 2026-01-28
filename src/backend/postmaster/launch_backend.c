@@ -39,6 +39,7 @@
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/fork_process.h"
+#include "postmaster/monitor.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/startup.h"
@@ -203,6 +204,7 @@ static child_process_kind child_process_kinds[] = {
 	[B_WAL_RECEIVER] = {"wal_receiver", WalReceiverMain, true},
 	[B_WAL_SUMMARIZER] = {"wal_summarizer", WalSummarizerMain, true},
 	[B_WAL_WRITER] = {"wal_writer", WalWriterMain, true},
+	[B_MONITOR_SUBSYSTEM_PROCESS] = {"monitoring_subsystem_process", MonitoringProcessMain, true},
 
 	[B_LOGGER] = {"syslogger", SysLoggerMain, false},
 };

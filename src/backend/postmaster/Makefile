@@ -21,6 +21,7 @@ OBJS = \
 	fork_process.o \
 	interrupt.o \
 	launch_backend.o \
+	monitor.o \
 	pgarch.o \
 	pmchild.o \
 	postmaster.o \

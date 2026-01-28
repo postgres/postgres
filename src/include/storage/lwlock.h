@@ -27,11 +27,11 @@ struct PGPROC;
 /* what state of the wait process is a backend in */
 typedef enum LWLockWaitState
 {
-	LW_WS_NOT_WAITING,			/* not currently waiting / woken up */
-	LW_WS_WAITING,				/* currently waiting */
-	LW_WS_PENDING_WAKEUP,		/* removed from waitlist, but not yet
-								 * signalled */
-}			LWLockWaitState;
+	LW_WS_NOT_WAITING,	  /* not currently waiting / woken up */
+	LW_WS_WAITING,		  /* currently waiting */
+	LW_WS_PENDING_WAKEUP, /* removed from waitlist, but not yet
+						   * signalled */
+} LWLockWaitState;
 
 /*
  * Code outside of lwlock.c should not manipulate the contents of this
@@ -40,12 +40,12 @@ typedef enum LWLockWaitState
  */
 typedef struct LWLock
 {
-	uint16		tranche;		/* tranche ID */
-	pg_atomic_uint32 state;		/* state of exclusive/nonexclusive lockers */
-	proclist_head waiters;		/* list of waiting PGPROCs */
+	uint16 tranche;			/* tranche ID */
+	pg_atomic_uint32 state; /* state of exclusive/nonexclusive lockers */
+	proclist_head waiters;	/* list of waiting PGPROCs */
 #ifdef LOCK_DEBUG
-	pg_atomic_uint32 nwaiters;	/* number of waiters */
-	struct PGPROC *owner;		/* last exclusive owner of the lock */
+	pg_atomic_uint32 nwaiters; /* number of waiters */
+	struct PGPROC *owner;	   /* last exclusive owner of the lock */
 #endif
 } LWLock;
 
@@ -59,7 +59,7 @@ typedef struct LWLock
  * useful, for example, in the main LWLock array, where the overall number of
  * locks is small but some are heavily contended.
  */
-#define LWLOCK_PADDED_SIZE	PG_CACHE_LINE_SIZE
+#define LWLOCK_PADDED_SIZE PG_CACHE_LINE_SIZE
 
 StaticAssertDecl(sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
 				 "Miscalculated LWLock padding");
@@ -67,8 +67,8 @@ StaticAssertDecl(sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
 /* LWLock, padded to a full cache line size */
 typedef union LWLockPadded
 {
-	LWLock		lock;
-	char		pad[LWLOCK_PADDED_SIZE];
+	LWLock lock;
+	char pad[LWLOCK_PADDED_SIZE];
 } LWLockPadded;
 
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
@@ -76,8 +76,8 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 /* struct for storing named tranche information */
 typedef struct NamedLWLockTranche
 {
-	int			trancheId;
-	char	   *trancheName;
+	int trancheId;
+	char *trancheName;
 } NamedLWLockTranche;
 
 extern PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
@@ -90,19 +90,19 @@ extern PGDLLIMPORT int NamedLWLockTrancheRequests;
  */
 
 /* Number of partitions of the shared buffer mapping hashtable */
-#define NUM_BUFFER_PARTITIONS  128
+#define NUM_BUFFER_PARTITIONS 128
 
 /* Number of partitions the shared lock tables are divided into */
-#define LOG2_NUM_LOCK_PARTITIONS  4
-#define NUM_LOCK_PARTITIONS  (1 << LOG2_NUM_LOCK_PARTITIONS)
+#define LOG2_NUM_LOCK_PARTITIONS 4
+#define NUM_LOCK_PARTITIONS (1 << LOG2_NUM_LOCK_PARTITIONS)
 
 /* Number of partitions the shared predicate lock tables are divided into */
-#define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
-#define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
+#define LOG2_NUM_PREDICATELOCK_PARTITIONS 4
+#define NUM_PREDICATELOCK_PARTITIONS (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
 
 /* Offsets for various chunks of preallocated lwlocks. */
-#define BUFFER_MAPPING_LWLOCK_OFFSET	NUM_INDIVIDUAL_LWLOCKS
-#define LOCK_MANAGER_LWLOCK_OFFSET		\
+#define BUFFER_MAPPING_LWLOCK_OFFSET NUM_INDIVIDUAL_LWLOCKS
+#define LOCK_MANAGER_LWLOCK_OFFSET \
 	(BUFFER_MAPPING_LWLOCK_OFFSET + NUM_BUFFER_PARTITIONS)
 #define PREDICATELOCK_MANAGER_LWLOCK_OFFSET \
 	(LOCK_MANAGER_LWLOCK_OFFSET + NUM_LOCK_PARTITIONS)
@@ -113,11 +113,10 @@ typedef enum LWLockMode
 {
 	LW_EXCLUSIVE,
 	LW_SHARED,
-	LW_WAIT_UNTIL_FREE,			/* A special mode used in PGPROC->lwWaitMode,
-								 * when waiting for lock to become free. Not
-								 * to be used as LWLockAcquire argument */
+	LW_WAIT_UNTIL_FREE, /* A special mode used in PGPROC->lwWaitMode,
+						 * when waiting for lock to become free. Not
+						 * to be used as LWLockAcquire argument */
 } LWLockMode;
-
 
 #ifdef LOCK_DEBUG
 extern PGDLLIMPORT bool Trace_lwlocks;
@@ -131,7 +130,7 @@ extern void LWLockReleaseClearVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64
 extern void LWLockReleaseAll(void);
 extern void LWLockDisown(LWLock *lock);
 extern void LWLockReleaseDisowned(LWLock *lock, LWLockMode mode);
-extern void ForEachLWLockHeldByMe(void (*callback) (LWLock *, LWLockMode, void *),
+extern void ForEachLWLockHeldByMe(void (*callback)(LWLock *, LWLockMode, void *),
 								  void *context);
 extern bool LWLockHeldByMe(LWLock *lock);
 extern bool LWLockAnyHeldByMe(LWLock *lock, int nlocks, size_t stride);
@@ -168,7 +167,7 @@ extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
  * mapped at the same address in all coordinating backends, so storing the
  * registration in the main shared memory segment wouldn't work for that case.
  */
-extern int	LWLockNewTrancheId(void);
+extern int LWLockNewTrancheId(void);
 extern void LWLockRegisterTranche(int tranche_id, const char *tranche_name);
 extern void LWLockInitialize(LWLock *lock, int tranche_id);
 
@@ -221,8 +220,15 @@ typedef enum BuiltinTrancheIds
 	LWTRANCHE_XACT_SLRU,
 	LWTRANCHE_PARALLEL_VACUUM_DSA,
 	LWTRANCHE_AIO_URING_COMPLETION,
+
+	/* monitor subsystem */
+	LWTRANCHE_MONITOR,
+	LWTRANCHE_MONITOR_SUBSCRIBERS,
+	LWTRANCHE_MONITOR_SUBSCRIBER,
+	LWTRANCHE_MONITOR_PUBLISHERS,
+
 	LWTRANCHE_FIRST_USER_DEFINED,
-}			BuiltinTrancheIds;
+} BuiltinTrancheIds;
 
 /*
  * Prior to PostgreSQL 9.4, we used an enum type called LWLockId to refer
@@ -231,4 +237,4 @@ typedef enum BuiltinTrancheIds
  */
 typedef LWLock *LWLockId;
 
-#endif							/* LWLOCK_H */
+#endif /* LWLOCK_H */

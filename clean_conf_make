@@ -1,0 +1,31 @@
+#!/bin/bash
+
+
+echo "НАЧИНАЕТСЯ ПРОЦЕСС СБОРКИ"
+
+# Очистка предыдущей сборки
+echo "1. ОЧИСТКА ПРЕДЫДУЩЕЙ СБОРКИ"
+make distclean
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА ПРИ ОЧИСТКЕ СБОРКИ"
+    exit 1
+fi
+
+# Конфигурация с параметрами отладки
+echo "2. КОНФИГУРАЦИЯ"
+./configure --enable-debug --enable-cassert --prefix "$PWD/install"
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА ПРИ КОНФИГУРАЦИИ"
+    exit 1
+fi
+
+# Сборка и установка
+echo "3. СБОРКА (ИСПОЛЬЗУЕТСЯ 16 ПОТОКОВ)"
+CFLAGS="-Werror" make -j 16 install-world-bin
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА ПРИ СБОРКЕ"
+    exit 1
+fi
+
+echo "СБОРКА ЗАВЕРШЕНА"
+echo "ПРОЕКТ УСТАНОВЛЕН В: $PWD/install"
