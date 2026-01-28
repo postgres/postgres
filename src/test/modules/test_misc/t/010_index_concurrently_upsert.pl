@@ -603,6 +603,51 @@ clean_safe_quit_ok($s1, $s2, $s3);
 $node->safe_psql('postgres', 'TRUNCATE TABLE test.tblparted');
 
 ############################################################################
+note('Test: REINDEX on partitioned table, cache inval between two get_partition_ancestors');
+
+$s1 = $node->background_psql('postgres', on_error_stop => 0);
+$s2 = $node->background_psql('postgres', on_error_stop => 0);
+$s3 = $node->background_psql('postgres', on_error_stop => 0);
+
+$s1->query_safe(
+	q[
+SELECT injection_points_set_local();
+SELECT injection_points_attach('exec-init-partition-after-get-partition-ancestors', 'wait');
+]);
+
+$s2->query_safe(
+	q[
+SELECT injection_points_set_local();
+SELECT injection_points_attach('reindex-relation-concurrently-before-swap', 'wait');
+]);
+
+$s2->query_until(
+	qr/starting_reindex/, q[
+\echo starting_reindex
+REINDEX INDEX CONCURRENTLY test.tbl_partition_pkey;
+]);
+
+ok_injection_point($node, 'reindex-relation-concurrently-before-swap');
+
+$s1->query_until(
+	qr/starting_upsert_s1/, q[
+\echo starting_upsert_s1
+INSERT INTO test.tblparted VALUES (13, now()) ON CONFLICT (i) DO UPDATE SET updated_at = now();
+]);
+
+ok_injection_point($node,
+	'exec-init-partition-after-get-partition-ancestors');
+
+wakeup_injection_point($node, 'reindex-relation-concurrently-before-swap');
+
+wakeup_injection_point($node,
+	'exec-init-partition-after-get-partition-ancestors');
+
+clean_safe_quit_ok($s1, $s2, $s3);
+
+$node->safe_psql('postgres', 'TRUNCATE TABLE test.tblparted');
+
+############################################################################
 note('Test: CREATE INDEX CONCURRENTLY + UPSERT');
 # Uses invalidate-catalog-snapshot-end to test catalog invalidation
 # during UPSERT

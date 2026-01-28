@@ -28,6 +28,7 @@
 #include "partitioning/partprune.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/partcache.h"
 #include "utils/rls.h"
@@ -761,7 +762,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (rootResultRelInfo->ri_onConflictArbiterIndexes != NIL)
 		{
 			List	   *unparented_idxs = NIL,
-					   *arbiters_listidxs = NIL;
+					   *arbiters_listidxs = NIL,
+					   *ancestors_seen = NIL;
 
 			for (int listidx = 0; listidx < leaf_part_rri->ri_NumIndices; listidx++)
 			{
@@ -775,17 +777,32 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				 * in case REINDEX CONCURRENTLY is working on one of the
 				 * arbiters.
 				 *
-				 * XXX get_partition_ancestors is slow: it scans pg_inherits
-				 * each time.  Consider a syscache or some other way to cache?
+				 * However, if two indexes appear to have the same parent,
+				 * treat the second of these as if it had no parent.  This
+				 * sounds counterintuitive, but it can happen if a transaction
+				 * running REINDEX CONCURRENTLY commits right between those
+				 * two indexes are checked by another process in this loop.
+				 * This will have the effect of also treating that second
+				 * index as arbiter.
+				 *
+				 * XXX get_partition_ancestors scans pg_inherits, which is not
+				 * only slow, but also means the catalog snapshot can get
+				 * invalidated each time through the loop (cf.
+				 * GetNonHistoricCatalogSnapshot).  Consider a syscache or
+				 * some other way to cache?
 				 */
 				indexoid = RelationGetRelid(leaf_part_rri->ri_IndexRelationDescs[listidx]);
 				ancestors = get_partition_ancestors(indexoid);
-				if (ancestors != NIL)
+				INJECTION_POINT("exec-init-partition-after-get-partition-ancestors", NULL);
+
+				if (ancestors != NIL &&
+					!list_member_oid(ancestors_seen, linitial_oid(ancestors)))
 				{
 					foreach_oid(parent_idx, rootResultRelInfo->ri_onConflictArbiterIndexes)
 					{
 						if (list_member_oid(ancestors, parent_idx))
 						{
+							ancestors_seen = lappend_oid(ancestors_seen, linitial_oid(ancestors));
 							arbiterIndexes = lappend_oid(arbiterIndexes, indexoid);
 							arbiters_listidxs = lappend_int(arbiters_listidxs, listidx);
 							break;
@@ -794,6 +811,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				}
 				else
 					unparented_idxs = lappend_int(unparented_idxs, listidx);
+
 				list_free(ancestors);
 			}
 
@@ -812,16 +830,16 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				foreach_int(unparented_i, unparented_idxs)
 				{
 					Relation	unparented_rel;
-					IndexInfo  *unparenred_ii;
+					IndexInfo  *unparented_ii;
 
 					unparented_rel = leaf_part_rri->ri_IndexRelationDescs[unparented_i];
-					unparenred_ii = leaf_part_rri->ri_IndexRelationInfo[unparented_i];
+					unparented_ii = leaf_part_rri->ri_IndexRelationInfo[unparented_i];
 
 					Assert(!list_member_oid(arbiterIndexes,
 											unparented_rel->rd_index->indexrelid));
 
 					/* Ignore indexes not ready */
-					if (!unparenred_ii->ii_ReadyForInserts)
+					if (!unparented_ii->ii_ReadyForInserts)
 						continue;
 
 					foreach_int(arbiter_i, arbiters_listidxs)
@@ -839,7 +857,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 						if (IsIndexCompatibleAsArbiter(arbiter_rel,
 													   arbiter_ii,
 													   unparented_rel,
-													   unparenred_ii))
+													   unparented_ii))
 						{
 							arbiterIndexes = lappend_oid(arbiterIndexes,
 														 unparented_rel->rd_index->indexrelid);
@@ -851,6 +869,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			}
 			list_free(unparented_idxs);
 			list_free(arbiters_listidxs);
+			list_free(ancestors_seen);
 		}
 
 		/*
