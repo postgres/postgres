@@ -24,6 +24,8 @@
 #include "catalog/pg_statistic_ext_data.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/stat_utils.h"
 #include "utils/acl.h"
@@ -248,6 +250,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	bool		nulls[Natts_pg_statistic_ext_data] = {0};
 	bool		replaces[Natts_pg_statistic_ext_data] = {0};
 	bool		success = true;
+	Datum		exprdatum;
+	bool		isnull;
 	int			numexprs = 0;
 
 	/* arrays of type info, if we need them */
@@ -341,6 +345,38 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	/* Find out what extended statistics kinds we should expect. */
 	expand_stxkind(tup, &enabled);
 
+	/* decode expression (if any) */
+	exprdatum = SysCacheGetAttr(STATEXTOID,
+								tup,
+								Anum_pg_statistic_ext_stxexprs,
+								&isnull);
+	if (!isnull)
+	{
+		char	   *s;
+		List	   *exprs;
+
+		s = TextDatumGetCString(exprdatum);
+		exprs = (List *) stringToNode(s);
+		pfree(s);
+
+		/*
+		 * Run the expressions through eval_const_expressions().  This is not
+		 * just an optimization, but is necessary, because the planner will be
+		 * comparing them to similarly-processed qual clauses, and may fail to
+		 * detect valid matches without this.
+		 *
+		 * We must not use canonicalize_qual(), however, since these are not
+		 * qual expressions.
+		 */
+		exprs = (List *) eval_const_expressions(NULL, (Node *) exprs);
+
+		/* May as well fix opfuncids too */
+		fix_opfuncids((Node *) exprs);
+
+		/* Compute the number of expression, for input validation. */
+		numexprs = list_length(exprs);
+	}
+
 	/*
 	 * If the object cannot support ndistinct, we should not have data for it.
 	 */
@@ -422,7 +458,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		bytea	   *data = DatumGetByteaPP(dependencies_datum);
 		MVDependencies *dependencies = statext_dependencies_deserialize(data);
 
-		if (statext_dependencies_validate(dependencies, &stxform->stxkeys, numexprs, WARNING))
+		if (statext_dependencies_validate(dependencies, &stxform->stxkeys,
+										  numexprs, WARNING))
 		{
 			values[Anum_pg_statistic_ext_data_stxddependencies - 1] = dependencies_datum;
 			nulls[Anum_pg_statistic_ext_data_stxddependencies - 1] = false;
