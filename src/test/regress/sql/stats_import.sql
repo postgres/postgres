@@ -28,7 +28,7 @@ SELECT
         'relpages', 18::integer,
         'reltuples', 21::real,
         'relallvisible', 24::integer,
-	'relallfrozen', 27::integer);
+        'relallfrozen', 27::integer);
 
 -- CREATE INDEX on a table with autovac disabled should not overwrite
 -- stats
