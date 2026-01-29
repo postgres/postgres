@@ -1841,13 +1841,6 @@ PerformWalRecovery(void)
 			 */
 			ApplyWalRecord(xlogreader, record, &replayTLI);
 
-			/* Exit loop if we reached inclusive recovery target */
-			if (recoveryStopsAfter(xlogreader))
-			{
-				reachedRecoveryTarget = true;
-				break;
-			}
-
 			/*
 			 * If we replayed an LSN that someone was waiting for then walk
 			 * over the shared memory array and set latches to notify the
@@ -1857,6 +1850,13 @@ PerformWalRecovery(void)
 				(XLogRecoveryCtl->lastReplayedEndRecPtr >=
 				 pg_atomic_read_u64(&waitLSNState->minWaitedLSN[WAIT_LSN_TYPE_STANDBY_REPLAY])))
 				WaitLSNWakeup(WAIT_LSN_TYPE_STANDBY_REPLAY, XLogRecoveryCtl->lastReplayedEndRecPtr);
+
+			/* Exit loop if we reached inclusive recovery target */
+			if (recoveryStopsAfter(xlogreader))
+			{
+				reachedRecoveryTarget = true;
+				break;
+			}
 
 			/* Else, try to fetch the next WAL record */
 			record = ReadRecord(xlogprefetcher, LOG, false, replayTLI);
