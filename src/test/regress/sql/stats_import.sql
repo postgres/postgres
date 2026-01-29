@@ -1557,4 +1557,59 @@ WHERE e.statistics_schemaname = 'stats_import' AND
     e.inherited = false
 \gx
 
+-- Test the ability of pg_restore_extended_stats() to import all of the
+-- statistic values from an extended statistic object that has been
+-- populated via a regular ANALYZE.  This checks after the statistics
+-- kinds supported by pg_restore_extended_stats().
+--
+-- Note: Keep this test at the bottom of the file, so as the amount of
+-- statistics data handled is maximized.
+ANALYZE stats_import.test;
+
+-- Copy stats from test_stat to test_stat_clone
+SELECT e.statistics_name,
+  pg_catalog.pg_restore_extended_stats(
+    'schemaname', e.statistics_schemaname::text,
+    'relname', 'test_clone',
+    'statistics_schemaname', e.statistics_schemaname::text,
+    'statistics_name', 'test_stat_clone',
+    'inherited', e.inherited,
+    'n_distinct', e.n_distinct,
+    'dependencies', e.dependencies,
+    'most_common_vals', e.most_common_vals,
+    'most_common_freqs', e.most_common_freqs,
+    'most_common_base_freqs', e.most_common_base_freqs)
+FROM pg_stats_ext AS e
+WHERE e.statistics_schemaname = 'stats_import'
+AND e.statistics_name = 'test_stat';
+
+-- Set difference old MINUS new.
+SELECT o.inherited,
+       o.n_distinct, o.dependencies, o.most_common_vals,
+       o.most_common_freqs, o.most_common_base_freqs
+  FROM pg_stats_ext AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_stat'
+EXCEPT
+SELECT n.inherited,
+       n.n_distinct, n.dependencies, n.most_common_vals,
+       n.most_common_freqs, n.most_common_base_freqs
+  FROM pg_stats_ext AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_stat_clone';
+-- Set difference new MINUS old.
+SELECT n.inherited,
+       n.n_distinct, n.dependencies, n.most_common_vals,
+       n.most_common_freqs, n.most_common_base_freqs
+  FROM pg_stats_ext AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_stat_clone'
+EXCEPT
+SELECT o.inherited,
+       o.n_distinct, o.dependencies, o.most_common_vals,
+       o.most_common_freqs, o.most_common_base_freqs
+  FROM pg_stats_ext AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_stat';
+
 DROP SCHEMA stats_import CASCADE;
