@@ -1461,7 +1461,6 @@ cost_tidrangescan(Path *path, PlannerInfo *root,
 		enable_mask |= PGS_CONSIDER_NONPARTIAL;
 	path->disabled_nodes =
 		(baserel->pgs_mask & enable_mask) != enable_mask ? 1 : 0;
-	path->disabled_nodes = 0;
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + cpu_run_cost + disk_run_cost;
 }

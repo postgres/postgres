@@ -6526,8 +6526,11 @@ materialize_finished_plan(Plan *subplan)
 	subplan->startup_cost -= initplan_cost;
 	subplan->total_cost -= initplan_cost;
 
-	/* Set cost data */
+	/* Clear fields that cost_material() will consult */
+	matpath.parallel_workers = 0;
 	matpath.parent = NULL;
+
+	/* Set cost data */
 	cost_material(&matpath,
 				  enable_material,
 				  subplan->disabled_nodes,

@@ -3971,10 +3971,10 @@ reparameterize_path(PlannerInfo *root, Path *path,
 				spath = reparameterize_path(root, spath,
 											required_outer,
 											loop_count);
-				enabled =
-					(mpath->path.disabled_nodes <= spath->disabled_nodes);
 				if (spath == NULL)
 					return NULL;
+				enabled =
+					(mpath->path.disabled_nodes <= spath->disabled_nodes);
 				return (Path *) create_material_path(rel, spath, enabled);
 			}
 		case T_Memoize:
