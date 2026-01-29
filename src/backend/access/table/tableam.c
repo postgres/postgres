@@ -117,8 +117,8 @@ table_beginscan_catalog(Relation relation, int nkeys, ScanKeyData *key)
 	Oid			relid = RelationGetRelid(relation);
 	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
 
-	return relation->rd_tableam->scan_begin(relation, snapshot, nkeys, key,
-											NULL, flags);
+	return table_beginscan_common(relation, snapshot, nkeys, key,
+								  NULL, flags);
 }
 
 
@@ -184,8 +184,8 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc pscan)
 		snapshot = SnapshotAny;
 	}
 
-	return relation->rd_tableam->scan_begin(relation, snapshot, 0, NULL,
-											pscan, flags);
+	return table_beginscan_common(relation, snapshot, 0, NULL,
+								  pscan, flags);
 }
 
 TableScanDesc
@@ -214,8 +214,8 @@ table_beginscan_parallel_tidrange(Relation relation,
 		snapshot = SnapshotAny;
 	}
 
-	sscan = relation->rd_tableam->scan_begin(relation, snapshot, 0, NULL,
-											 pscan, flags);
+	sscan = table_beginscan_common(relation, snapshot, 0, NULL,
+								   pscan, flags);
 	return sscan;
 }
 
@@ -268,14 +268,6 @@ table_tuple_get_latest_tid(TableScanDesc scan, ItemPointer tid)
 {
 	Relation	rel = scan->rs_rd;
 	const TableAmRoutine *tableam = rel->rd_tableam;
-
-	/*
-	 * We don't expect direct calls to table_tuple_get_latest_tid with valid
-	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
-	 * xact.c where these variables are declared.
-	 */
-	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
-		elog(ERROR, "unexpected table_tuple_get_latest_tid call during logical decoding");
 
 	/*
 	 * Since this can be called with user-supplied TID, don't trust the input
