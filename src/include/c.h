@@ -1140,6 +1140,12 @@ typedef struct PGAlignedXLogBlock
 	alignas(PG_IO_ALIGN_SIZE) char data[XLOG_BLCKSZ];
 } PGAlignedXLogBlock;
 
+#else							/* (g++ < 9) */
+
+/* Allow these types to be used as abstract types when using old g++ */
+typedef struct PGIOAlignedBlock PGIOAlignedBlock;
+typedef struct PGAlignedXLogBlock PGAlignedXLogBlock;
+
 #endif							/* !(g++ < 9) */
 
 /* msb for char */
