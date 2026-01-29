@@ -2129,6 +2129,68 @@ most_common_val_nulls  | {{f,t},{f,f},{f,f},{f,f}}
 most_common_freqs      | {0.25,0.25,0.25,0.25}
 most_common_base_freqs | {0.0625,0.0625,0.0625,0.0625}
 
+-- Check import of all kinds for multirange.
+CREATE STATISTICS stats_import.test_mr_stat
+  ON name, mrange, ( mrange + '{[10000,10200)}'::int4multirange)
+  FROM stats_import.test_mr;
+-- ok: multirange stats
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_mr_stat',
+  'inherited', false,
+  'n_distinct', '[{"attributes": [2, 3], "ndistinct": 3},
+                  {"attributes": [2, -1], "ndistinct": 3},
+                  {"attributes": [3, -1], "ndistinct": 3},
+                  {"attributes": [2, 3, -1], "ndistinct": 3}]'::pg_catalog.pg_ndistinct,
+  'dependencies', '[{"attributes": [3], "dependency": 2, "degree": 1.000000},
+                    {"attributes": [3], "dependency": -1, "degree": 1.000000},
+                    {"attributes": [-1], "dependency": 2, "degree": 1.000000},
+                    {"attributes": [-1], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [2, 3], "dependency": -1, "degree": 1.000000},
+                    {"attributes": [2, -1], "dependency": 3, "degree": 1.000000},
+                    {"attributes": [3, -1], "dependency": 2, "degree": 1.000000}]'::pg_catalog.pg_dependencies,
+  'most_common_vals', '{{red,"{[1,3),[5,9),[20,30)}","{[1,3),[5,9),[20,30),[10000,10200)}"},
+                        {red,"{[11,13),[15,19),[20,30)}","{[11,13),[15,19),[20,30),[10000,10200)}"},
+                        {red,"{[21,23),[25,29),[120,130)}","{[21,23),[25,29),[120,130),[10000,10200)}"}}'::text[],
+  'most_common_freqs', '{0.3333333333333333,0.3333333333333333,0.3333333333333333}'::double precision[],
+  'most_common_base_freqs', '{0.1111111111111111,0.1111111111111111,0.1111111111111111}'::double precision[]
+);
+ pg_restore_extended_stats 
+---------------------------
+ t
+(1 row)
+
+SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct,
+       replace(e.dependencies, '}, ', E'},\n') AS dependencies,
+       replace(e.most_common_vals::text, '},', E'},\n ') AS mcvs,
+       e.most_common_val_nulls,
+       e.most_common_freqs, e.most_common_base_freqs
+FROM pg_stats_ext AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_mr_stat' AND
+    e.inherited = false
+\gx
+-[ RECORD 1 ]----------+----------------------------------------------------------------------------------
+n_distinct             | [{"attributes": [2, 3], "ndistinct": 3},                                         +
+                       | {"attributes": [2, -1], "ndistinct": 3},                                         +
+                       | {"attributes": [3, -1], "ndistinct": 3},                                         +
+                       | {"attributes": [2, 3, -1], "ndistinct": 3}]
+dependencies           | [{"attributes": [3], "dependency": 2, "degree": 1.000000},                       +
+                       | {"attributes": [3], "dependency": -1, "degree": 1.000000},                       +
+                       | {"attributes": [-1], "dependency": 2, "degree": 1.000000},                       +
+                       | {"attributes": [-1], "dependency": 3, "degree": 1.000000},                       +
+                       | {"attributes": [2, 3], "dependency": -1, "degree": 1.000000},                    +
+                       | {"attributes": [2, -1], "dependency": 3, "degree": 1.000000},                    +
+                       | {"attributes": [3, -1], "dependency": 2, "degree": 1.000000}]
+mcvs                   | {{red,"{[1,3),[5,9),[20,30)}","{[1,3),[5,9),[20,30),[10000,10200)}"},            +
+                       |  {red,"{[11,13),[15,19),[20,30)}","{[11,13),[15,19),[20,30),[10000,10200)}"},    +
+                       |  {red,"{[21,23),[25,29),[120,130)}","{[21,23),[25,29),[120,130),[10000,10200)}"}}
+most_common_val_nulls  | {{f,f,f},{f,f,f},{f,f,f}}
+most_common_freqs      | {0.3333333333333333,0.3333333333333333,0.3333333333333333}
+most_common_base_freqs | {0.1111111111111111,0.1111111111111111,0.1111111111111111}
+
 DROP SCHEMA stats_import CASCADE;
 NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to type stats_import.complex_type
