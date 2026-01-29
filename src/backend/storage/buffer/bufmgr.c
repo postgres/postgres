@@ -5895,6 +5895,13 @@ BufferLockUnlock(Buffer buffer, BufferDesc *buf_hdr)
 
 /*
  * Acquire the content lock for the buffer, but only if we don't have to wait.
+ *
+ * It is allowed to try to conditionally acquire a lock on a buffer that this
+ * backend has already locked, but the lock acquisition will always fail, even
+ * if the new lock acquisition does not conflict with an already held lock
+ * (e.g. two share locks). This is because we currently do not have space to
+ * track multiple lock ownerships of the same buffer within one backend.  That
+ * is ok for the current uses of BufferLockConditional().
  */
 static bool
 BufferLockConditional(Buffer buffer, BufferDesc *buf_hdr, BufferLockMode mode)
@@ -5903,9 +5910,12 @@ BufferLockConditional(Buffer buffer, BufferDesc *buf_hdr, BufferLockMode mode)
 	bool		mustwait;
 
 	/*
-	 * We better not already hold a lock on the buffer.
+	 * As described above, if we're trying to lock a buffer this backend
+	 * already has locked, return false, independent of the existing and
+	 * desired lock level.
 	 */
-	Assert(entry->data.lockmode == BUFFER_LOCK_UNLOCK);
+	if (entry->data.lockmode != BUFFER_LOCK_UNLOCK)
+		return false;
 
 	/*
 	 * Lock out cancel/die interrupts until we exit the code section protected
