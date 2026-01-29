@@ -48,6 +48,9 @@ enum extended_stats_argnum
 	INHERITED_ARG,
 	NDISTINCT_ARG,
 	DEPENDENCIES_ARG,
+	MOST_COMMON_VALS_ARG,
+	MOST_COMMON_FREQS_ARG,
+	MOST_COMMON_BASE_FREQS_ARG,
 	NUM_EXTENDED_STATS_ARGS,
 };
 
@@ -64,6 +67,9 @@ static struct StatsArgInfo extarginfo[] =
 	[INHERITED_ARG] = {"inherited", BOOLOID},
 	[NDISTINCT_ARG] = {"n_distinct", PG_NDISTINCTOID},
 	[DEPENDENCIES_ARG] = {"dependencies", PG_DEPENDENCIESOID},
+	[MOST_COMMON_VALS_ARG] = {"most_common_vals", TEXTARRAYOID},
+	[MOST_COMMON_FREQS_ARG] = {"most_common_freqs", FLOAT8ARRAYOID},
+	[MOST_COMMON_BASE_FREQS_ARG] = {"most_common_base_freqs", FLOAT8ARRAYOID},
 	[NUM_EXTENDED_STATS_ARGS] = {0},
 };
 
@@ -89,6 +95,16 @@ static void expand_stxkind(HeapTuple tup, StakindFlags *enabled);
 static void upsert_pg_statistic_ext_data(const Datum *values,
 										 const bool *nulls,
 										 const bool *replaces);
+
+static bool check_mcvlist_array(const ArrayType *arr, int argindex,
+								int required_ndims, int mcv_length);
+static Datum import_mcv(const ArrayType *mcv_arr,
+						const ArrayType *freqs_arr,
+						const ArrayType *base_freqs_arr,
+						Oid *atttypids, int32 *atttypmods,
+						Oid *atttypcolls, int numattrs,
+						bool *ok);
+
 
 /*
  * Fetch a pg_statistic_ext row by name and namespace OID.
@@ -252,16 +268,32 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	bool		success = true;
 	Datum		exprdatum;
 	bool		isnull;
+	List	   *exprs = NIL;
+	int			numattnums = 0;
 	int			numexprs = 0;
+	int			numattrs = 0;
 
 	/* arrays of type info, if we need them */
+	Oid		   *atttypids = NULL;
+	int32	   *atttypmods = NULL;
+	Oid		   *atttypcolls = NULL;
 	Oid			relid;
 	Oid			locked_table = InvalidOid;
 
 	/*
 	 * Fill out the StakindFlags "has" structure based on which parameters
 	 * were provided to the function.
+	 *
+	 * The MCV stats composite value is an array of record type, but this is
+	 * externally represented as three arrays that must be interleaved into
+	 * the array of records (pg_stats_ext stores four arrays,
+	 * most_common_val_nulls is built from the contents of most_common_vals).
+	 * Therefore, none of the three array values is meaningful unless the
+	 * other two are also present and in sync in terms of array length.
 	 */
+	has.mcv = (!PG_ARGISNULL(MOST_COMMON_VALS_ARG) &&
+			   !PG_ARGISNULL(MOST_COMMON_FREQS_ARG) &&
+			   !PG_ARGISNULL(MOST_COMMON_BASE_FREQS_ARG));
 	has.ndistinct = !PG_ARGISNULL(NDISTINCT_ARG);
 	has.dependencies = !PG_ARGISNULL(DEPENDENCIES_ARG);
 
@@ -344,6 +376,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 
 	/* Find out what extended statistics kinds we should expect. */
 	expand_stxkind(tup, &enabled);
+	numattnums = stxform->stxkeys.dim1;
 
 	/* decode expression (if any) */
 	exprdatum = SysCacheGetAttr(STATEXTOID,
@@ -353,7 +386,6 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	if (!isnull)
 	{
 		char	   *s;
-		List	   *exprs;
 
 		s = TextDatumGetCString(exprdatum);
 		exprs = (List *) stringToNode(s);
@@ -376,6 +408,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		/* Compute the number of expression, for input validation. */
 		numexprs = list_length(exprs);
 	}
+
+	numattrs = numattnums + numexprs;
 
 	/*
 	 * If the object cannot support ndistinct, we should not have data for it.
@@ -409,6 +443,115 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 						quote_identifier(stxname)));
 		has.dependencies = false;
 		success = false;
+	}
+
+	/*
+	 * If the object cannot hold an MCV value, but any of the MCV parameters
+	 * are set, then issue a WARNING and ensure that we do not try to load MCV
+	 * stats later.  In pg_stats_ext, most_common_val_nulls, most_common_freqs
+	 * and most_common_base_freqs are NULL if most_common_vals is NULL.
+	 */
+	if (!enabled.mcv)
+	{
+		if (!PG_ARGISNULL(MOST_COMMON_VALS_ARG) ||
+			!PG_ARGISNULL(MOST_COMMON_FREQS_ARG) ||
+			!PG_ARGISNULL(MOST_COMMON_BASE_FREQS_ARG))
+		{
+			ereport(WARNING,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("cannot specify parameters \"%s\", \"%s\" or \"%s\"",
+						   extarginfo[MOST_COMMON_VALS_ARG].argname,
+						   extarginfo[MOST_COMMON_FREQS_ARG].argname,
+						   extarginfo[MOST_COMMON_BASE_FREQS_ARG].argname),
+					errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
+							quote_identifier(nspname),
+							quote_identifier(stxname)));
+
+			has.mcv = false;
+			success = false;
+		}
+	}
+	else if (!has.mcv)
+	{
+		/*
+		 * If we do not have all of the MCV arrays set while the extended
+		 * statistics object expects something, something is wrong.  This
+		 * issues a WARNING if a partial input has been provided.
+		 */
+		if (!PG_ARGISNULL(MOST_COMMON_VALS_ARG) ||
+			!PG_ARGISNULL(MOST_COMMON_FREQS_ARG) ||
+			!PG_ARGISNULL(MOST_COMMON_BASE_FREQS_ARG))
+		{
+			ereport(WARNING,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("could not use \"%s\", \"%s\" and \"%s\": missing one or more parameters",
+						   extarginfo[MOST_COMMON_VALS_ARG].argname,
+						   extarginfo[MOST_COMMON_FREQS_ARG].argname,
+						   extarginfo[MOST_COMMON_BASE_FREQS_ARG].argname));
+			success = false;
+		}
+	}
+
+	/*
+	 * Either of these statistic types requires that we supply a semi-filled
+	 * VacAttrStatP array.
+	 *
+	 * It is not possible to use the existing lookup_var_attr_stats() and
+	 * examine_attribute() because these functions will skip attributes where
+	 * attstattarget is 0, and we may have statistics data to import for those
+	 * attributes.
+	 */
+	if (has.mcv)
+	{
+		atttypids = palloc0_array(Oid, numattrs);
+		atttypmods = palloc0_array(int32, numattrs);
+		atttypcolls = palloc0_array(Oid, numattrs);
+
+		/*
+		 * The leading stxkeys are attribute numbers up through numattnums.
+		 * These keys must be in ascending AttNumber order, but we do not rely
+		 * on that.
+		 */
+		for (int i = 0; i < numattnums; i++)
+		{
+			AttrNumber	attnum = stxform->stxkeys.values[i];
+			HeapTuple	atup = SearchSysCache2(ATTNUM,
+											   ObjectIdGetDatum(relid),
+											   Int16GetDatum(attnum));
+
+			Form_pg_attribute attr;
+
+			/* Attribute not found */
+			if (!HeapTupleIsValid(atup))
+				elog(ERROR, "stxkeys references nonexistent attnum %d", attnum);
+
+			attr = (Form_pg_attribute) GETSTRUCT(atup);
+
+			if (attr->attisdropped)
+				elog(ERROR, "stxkeys references dropped attnum %d", attnum);
+
+			atttypids[i] = attr->atttypid;
+			atttypmods[i] = attr->atttypmod;
+			atttypcolls[i] = attr->attcollation;
+			ReleaseSysCache(atup);
+		}
+
+		/*
+		 * After all the positive number attnums in stxkeys come the negative
+		 * numbers (if any) which represent expressions in the order that they
+		 * appear in stxdexprs.  Because the expressions are always
+		 * monotonically decreasing from -1, there is no point in looking at
+		 * the values in stxkeys, it's enough to know how many of them there
+		 * are.
+		 */
+		for (int i = numattnums; i < numattrs; i++)
+		{
+			Node	   *expr = list_nth(exprs, i - numattnums);
+
+			atttypids[i] = exprType(expr);
+			atttypmods[i] = exprTypmod(expr);
+			atttypcolls[i] = exprCollation(expr);
+		}
 	}
 
 	/*
@@ -471,6 +614,28 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		statext_dependencies_free(dependencies);
 	}
 
+	if (has.mcv)
+	{
+		Datum		datum;
+		bool		val_ok = false;
+
+		datum = import_mcv(PG_GETARG_ARRAYTYPE_P(MOST_COMMON_VALS_ARG),
+						   PG_GETARG_ARRAYTYPE_P(MOST_COMMON_FREQS_ARG),
+						   PG_GETARG_ARRAYTYPE_P(MOST_COMMON_BASE_FREQS_ARG),
+						   atttypids, atttypmods, atttypcolls, numattrs,
+						   &val_ok);
+
+		if (val_ok)
+		{
+			Assert(datum != (Datum) 0);
+			values[Anum_pg_statistic_ext_data_stxdmcv - 1] = datum;
+			nulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = false;
+			replaces[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
+		}
+		else
+			success = false;
+	}
+
 	upsert_pg_statistic_ext_data(values, nulls, replaces);
 
 cleanup:
@@ -478,7 +643,125 @@ cleanup:
 		heap_freetuple(tup);
 	if (pg_stext != NULL)
 		table_close(pg_stext, RowExclusiveLock);
+	if (atttypids != NULL)
+		pfree(atttypids);
+	if (atttypmods != NULL)
+		pfree(atttypmods);
+	if (atttypcolls != NULL)
+		pfree(atttypcolls);
 	return success;
+}
+
+/*
+ * Consistency checks to ensure that other mcvlist arrays are in alignment
+ * with the mcv array.
+ */
+static bool
+check_mcvlist_array(const ArrayType *arr, int argindex, int required_ndims,
+					int mcv_length)
+{
+	if (ARR_NDIM(arr) != required_ndims)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not parse array \"%s\": incorrect number of dimensions (%d required)",
+					   extarginfo[argindex].argname, required_ndims));
+		return false;
+	}
+
+	if (array_contains_nulls(arr))
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not parse array \"%s\": NULL value found",
+					   extarginfo[argindex].argname));
+		return false;
+	}
+
+	if (ARR_DIMS(arr)[0] != mcv_length)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not parse array \"%s\": incorrect number of elements (same as \"%s\" required)",
+					   extarginfo[argindex].argname,
+					   extarginfo[MOST_COMMON_VALS_ARG].argname));
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * Create the stxdmcv datum from the equal-sized arrays of most common values,
+ * their null flags, and the frequency and base frequency associated with
+ * each value.
+ */
+static Datum
+import_mcv(const ArrayType *mcv_arr, const ArrayType *freqs_arr,
+		   const ArrayType *base_freqs_arr, Oid *atttypids, int32 *atttypmods,
+		   Oid *atttypcolls, int numattrs, bool *ok)
+{
+	int			nitems;
+	Datum	   *mcv_elems;
+	bool	   *mcv_nulls;
+	int			check_nummcv;
+	Datum		mcv = (Datum) 0;
+
+	*ok = false;
+
+	/*
+	 * mcv_arr is an array of arrays.  Each inner array must have the same
+	 * number of elements "numattrs".
+	 */
+	if (ARR_NDIM(mcv_arr) != 2)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not parse array \"%s\": incorrect number of dimensions (%d required)",
+					   extarginfo[MOST_COMMON_VALS_ARG].argname, 2));
+		goto mcv_error;
+	}
+
+	if (ARR_DIMS(mcv_arr)[1] != numattrs)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not parse array \"%s\": found %d attributes but expected %d",
+					   extarginfo[MOST_COMMON_VALS_ARG].argname,
+					   ARR_DIMS(mcv_arr)[1], numattrs));
+		goto mcv_error;
+	}
+
+	/*
+	 * "most_common_freqs" and "most_common_base_freqs" arrays must be of the
+	 * same length, one-dimension and cannot contain NULLs.  We use mcv_arr as
+	 * the reference array for determining their length.
+	 */
+	nitems = ARR_DIMS(mcv_arr)[0];
+	if (!check_mcvlist_array(freqs_arr, MOST_COMMON_FREQS_ARG, 1, nitems) ||
+		!check_mcvlist_array(base_freqs_arr, MOST_COMMON_BASE_FREQS_ARG, 1, nitems))
+	{
+		/* inconsistent input arrays found */
+		goto mcv_error;
+	}
+
+	/*
+	 * This part builds the contents for "most_common_val_nulls", based on the
+	 * values from "most_common_vals".
+	 */
+	deconstruct_array_builtin(mcv_arr, TEXTOID, &mcv_elems,
+							  &mcv_nulls, &check_nummcv);
+
+	mcv = statext_mcv_import(WARNING, numattrs,
+							 atttypids, atttypmods, atttypcolls,
+							 nitems, mcv_elems, mcv_nulls,
+							 (float8 *) ARR_DATA_PTR(freqs_arr),
+							 (float8 *) ARR_DATA_PTR(base_freqs_arr));
+
+	*ok = (mcv != (Datum) 0);
+
+mcv_error:
+	return mcv;
 }
 
 /*

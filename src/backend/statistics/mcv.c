@@ -2187,3 +2187,148 @@ statext_mcv_free(MCVList *mcvlist)
 	}
 	pfree(mcvlist);
 }
+
+/*
+ * Create the MCV composite datum, which is a serialization of an array of
+ * MCVItems.
+ *
+ * The inputs consist of four separate arrays of equal length "numitems"
+ * (mcv_elems, mcv_nulls, freqs and base_freqs) that form the basics of
+ * what is stored in the catalogs.  These form an array of composite
+ * records defined by the three atttypX arrays of equal length "numattrs".
+ *
+ * If any data element fails to convert to the input type specified for that
+ * attribute, then function will return a NULL Datum if elevel < ERROR.
+ */
+Datum
+statext_mcv_import(int elevel, int numattrs,
+				   Oid *atttypids, int32 *atttypmods, Oid *atttypcolls,
+				   int nitems, Datum *mcv_elems, bool *mcv_nulls,
+				   float8 *freqs, float8 *base_freqs)
+{
+	MCVList    *mcvlist;
+	bytea	   *bytes;
+	VacAttrStats **vastats;
+
+	/*
+	 * Allocate the MCV list structure, set the global parameters.
+	 */
+	mcvlist = (MCVList *) palloc0(offsetof(MCVList, items) +
+								  (sizeof(MCVItem) * nitems));
+
+	mcvlist->magic = STATS_MCV_MAGIC;
+	mcvlist->type = STATS_MCV_TYPE_BASIC;
+	mcvlist->ndimensions = numattrs;
+	mcvlist->nitems = nitems;
+
+	/* Set the values for the 1-D arrays and allocate space for the 2-D arrays */
+	for (int i = 0; i < nitems; i++)
+	{
+		MCVItem    *item = &mcvlist->items[i];
+
+		item->frequency = freqs[i];
+		item->base_frequency = base_freqs[i];
+		item->values = (Datum *) palloc0_array(Datum, numattrs);
+		item->isnull = (bool *) palloc0_array(bool, numattrs);
+	}
+
+	/*
+	 * Walk through each dimension, determine the input function for that
+	 * type, and then attempt to convert all values in that column via that
+	 * function.  We approach this column-wise because it is simpler to deal
+	 * with one input function at time, and possibly more cache-friendly.
+	 */
+	for (int j = 0; j < numattrs; j++)
+	{
+		FmgrInfo	finfo;
+		Oid			ioparam;
+		Oid			infunc;
+		int			index = j;
+
+		getTypeInputInfo(atttypids[j], &infunc, &ioparam);
+		fmgr_info(infunc, &finfo);
+
+		/* store info about data type OIDs */
+		mcvlist->types[j] = atttypids[j];
+
+		for (int i = 0; i < nitems; i++)
+		{
+			MCVItem    *item = &mcvlist->items[i];
+
+			if (mcv_nulls[index])
+			{
+				/* NULL value detected, hence no input to process */
+				item->values[j] = (Datum) 0;
+				item->isnull[j] = true;
+			}
+			else
+			{
+				char	   *s = TextDatumGetCString(mcv_elems[index]);
+				ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+				if (!InputFunctionCallSafe(&finfo, s, ioparam, atttypmods[j],
+										   (Node *) &escontext, &item->values[j]))
+				{
+					ereport(elevel,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("could not parse MCV element \"%s\": incorrect value", s)));
+					pfree(s);
+					goto error;
+				}
+
+				pfree(s);
+			}
+
+			index += numattrs;
+		}
+	}
+
+	/*
+	 * The function statext_mcv_serialize() requires an array of pointers to
+	 * VacAttrStats records, but only a few fields within those records have
+	 * to be filled out.
+	 */
+	vastats = (VacAttrStats **) palloc0_array(VacAttrStats *, numattrs);
+
+	for (int i = 0; i < numattrs; i++)
+	{
+		Oid			typid = atttypids[i];
+		HeapTuple	typtuple;
+
+		typtuple = SearchSysCacheCopy1(TYPEOID, ObjectIdGetDatum(typid));
+
+		if (!HeapTupleIsValid(typtuple))
+			elog(ERROR, "cache lookup failed for type %u", typid);
+
+		vastats[i] = palloc0_object(VacAttrStats);
+
+		vastats[i]->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
+		vastats[i]->attrtypid = typid;
+		vastats[i]->attrcollid = atttypcolls[i];
+	}
+
+	bytes = statext_mcv_serialize(mcvlist, vastats);
+
+	for (int i = 0; i < numattrs; i++)
+	{
+		pfree(vastats[i]);
+	}
+	pfree((void *) vastats);
+
+	pfree(mcv_elems);
+	pfree(mcv_nulls);
+
+	if (bytes == NULL)
+	{
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not import MCV list")));
+		goto error;
+	}
+
+	return PointerGetDatum(bytes);
+
+error:
+	statext_mcv_free(mcvlist);
+	return (Datum) 0;
+}

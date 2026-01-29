@@ -2222,8 +2222,10 @@ SELECT pg_restore_attribute_stats(
          Other arguments are the names and values of statistics corresponding
          to columns in <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname>
          </link>.
-         This function currently supports <literal>n_distinct</literal> and
-         <literal>dependencies</literal>.
+         This function currently supports <literal>n_distinct</literal>,
+         <literal>dependencies</literal>, <literal>most_common_vals</literal>,
+         <literal>most_common_freqs</literal>,
+         and <literal>most_common_base_freqs</literal>.
         </para>
         <para>
          Additionally, this function accepts argument name

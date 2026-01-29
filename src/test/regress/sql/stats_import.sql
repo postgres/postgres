@@ -819,11 +819,19 @@ CREATE STATISTICS stats_import.test_stat_dependencies (dependencies)
   ON name, comp
   FROM stats_import.test;
 
+CREATE STATISTICS stats_import.test_stat_mcv (mcv)
+  ON name, comp
+  FROM stats_import.test;
+
 CREATE STATISTICS stats_import.test_stat_ndistinct_exprs (ndistinct)
   ON lower(name), upper(name)
   FROM stats_import.test;
 
 CREATE STATISTICS stats_import.test_stat_dependencies_exprs (dependencies)
+  ON lower(name), upper(name)
+  FROM stats_import.test;
+
+CREATE STATISTICS stats_import.test_stat_mcv_exprs (mcv)
   ON lower(name), upper(name)
   FROM stats_import.test;
 
@@ -1343,6 +1351,17 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'dependencies', '[{"attributes": [-1], "dependency": -2, "degree": 1.000000},
                     {"attributes": [-2], "dependency": -1, "degree": 1.000000}]'::pg_dependencies);
 
+-- ok: MCV with expressions
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv_exprs',
+  'inherited', false,
+  'most_common_vals', '{{four,FOUR},{one,NULL},{NULL,TRE},{two,TWO}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.99}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.023,0.087}'::double precision[]);
+
 -- Check the presence of the restored stats, for each object.
 SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct
 FROM pg_stats_ext AS e
@@ -1367,5 +1386,134 @@ FROM pg_stats_ext AS e
 WHERE e.statistics_schemaname = 'stats_import' AND
     e.statistics_name = 'test_stat_dependencies_exprs' AND
     e.inherited = false;
+
+SELECT e.most_common_vals, e.most_common_val_nulls,
+       e.most_common_freqs, e.most_common_base_freqs
+FROM pg_stats_ext AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_mcv_exprs' AND
+    e.inherited = false \gx
+
+-- Incorrect extended stats kind, mcv not supported
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_dependencies',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")"},
+                        {tre,"(3,3.3,TRE,03-03-2003,)"},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
+
+-- MCV requires all three parameters
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")"},
+                        {tre,"(3,3.3,TRE,03-03-2003,)"},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")"},
+                        {tre,"(3,3.3,TRE,03-03-2003,)"},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[]);
+
+-- most_common_vals that is not 2-D
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{four,NULL}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
+
+-- most_common_freqs with length not matching with most_common_vals.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")"},
+                        {tre,"(3,3.3,TRE,03-03-2003,)"},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
+
+-- most_common_base_freqs with length not matching most_common_vals.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")"},
+                        {tre,"(3,3.3,TRE,03-03-2003,)"},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625}'::double precision[]);
+
+-- mcv attributes not matching object definition
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL,0,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")",1,2},
+                        {tre,"(3,3.3,TRE,03-03-2003,)",-1,3},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")",1,2}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.00390625,0.015625,0.00390625,0.015625}'::double precision[]);
+
+-- ok: mcv
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', '{{four,NULL},
+                        {one,"(1,1.1,ONE,01-01-2001,\"{\"\"xkey\"\": \"\"xval\"\"}\")"},
+                        {tre,"(3,3.3,TRE,03-03-2003,)"},
+                        {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
+  'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
+  'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
+
+SELECT replace(e.most_common_vals::text, '},', E'},\n ') AS mcvs,
+       e.most_common_val_nulls,
+       e.most_common_freqs, e.most_common_base_freqs
+FROM pg_stats_ext AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_mcv' AND
+    e.inherited = false
+\gx
 
 DROP SCHEMA stats_import CASCADE;

@@ -18622,7 +18622,7 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 		 *--------
 		 */
 		if (fout->remoteVersion >= 190000)
-			appendPQExpBufferStr(pq, "e.n_distinct, e.dependencies ");
+			appendPQExpBufferStr(pq, "e.n_distinct, e.dependencies, ");
 		else
 			appendPQExpBufferStr(pq,
 								 "( "
@@ -18646,7 +18646,17 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 								 "    '" PG_DEPENDENCIES_KEY_DEGREE "', "
 								 "    kv.value::double precision )) "
 								 "FROM json_each_text(e.dependencies::text::json) AS kv "
-								 ") AS dependencies ");
+								 ") AS dependencies, ");
+
+		/* MCV was introduced v13 */
+		if (fout->remoteVersion >= 130000)
+			appendPQExpBufferStr(pq,
+								 "e.most_common_vals, e.most_common_freqs, "
+								 "e.most_common_base_freqs ");
+		else
+			appendPQExpBufferStr(pq,
+								 "NULL AS most_common_vals, NULL AS most_common_freqs, "
+								 "NULL AS most_common_base_freqs ");
 
 		/* pg_stats_ext introduced in v12 */
 		if (fout->remoteVersion >= 120000)
@@ -18697,6 +18707,9 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 		int			i_inherited = PQfnumber(res, "inherited");
 		int			i_ndistinct = PQfnumber(res, "n_distinct");
 		int			i_dependencies = PQfnumber(res, "dependencies");
+		int			i_mcv = PQfnumber(res, "most_common_vals");
+		int			i_mcf = PQfnumber(res, "most_common_freqs");
+		int			i_mcbf = PQfnumber(res, "most_common_base_freqs");
 
 		for (int i = 0; i < nstats; i++)
 		{
@@ -18731,6 +18744,18 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 			if (!PQgetisnull(res, i, i_dependencies))
 				appendNamedArgument(out, fout, "dependencies", "pg_dependencies",
 									PQgetvalue(res, i, i_dependencies));
+
+			if (!PQgetisnull(res, i, i_mcv))
+				appendNamedArgument(out, fout, "most_common_vals", "text[]",
+									PQgetvalue(res, i, i_mcv));
+
+			if (!PQgetisnull(res, i, i_mcf))
+				appendNamedArgument(out, fout, "most_common_freqs", "double precision[]",
+									PQgetvalue(res, i, i_mcf));
+
+			if (!PQgetisnull(res, i, i_mcbf))
+				appendNamedArgument(out, fout, "most_common_base_freqs", "double precision[]",
+									PQgetvalue(res, i, i_mcbf));
 
 			appendPQExpBufferStr(out, "\n);\n");
 		}

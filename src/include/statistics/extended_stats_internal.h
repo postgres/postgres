@@ -90,6 +90,11 @@ extern MCVList *statext_mcv_build(StatsBuildData *data,
 extern bytea *statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats);
 extern MCVList *statext_mcv_deserialize(bytea *data);
 extern void statext_mcv_free(MCVList *mcvlist);
+extern Datum statext_mcv_import(int elevel, int numattrs, Oid *atttypids,
+								int32 *atttypmods, Oid *atttypcolls,
+								int nitems, Datum *mcv_elems,
+								bool *mcv_nulls, float8 *freqs,
+								float8 *base_freqs);
 
 extern MultiSortSupport multi_sort_init(int ndims);
 extern void multi_sort_add_dimension(MultiSortSupport mss, int sortdim,
