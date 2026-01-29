@@ -418,7 +418,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("cannot not specify parameter \"%s\"",
+				errmsg("cannot specify parameter \"%s\"",
 					   extarginfo[NDISTINCT_ARG].argname),
 				errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
 						quote_identifier(nspname),
@@ -436,7 +436,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("cannot specify parameter \"%s\".",
+				errmsg("cannot specify parameter \"%s\"",
 					   extarginfo[DEPENDENCIES_ARG].argname),
 				errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
 						quote_identifier(nspname),

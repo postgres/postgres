@@ -1761,7 +1761,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_name', 'test_stat_dependencies',
   'inherited', false,
   'n_distinct', '[{"attributes" : [1,3], "ndistinct" : 4}]'::pg_ndistinct);
-WARNING:  cannot not specify parameter "n_distinct"
+WARNING:  cannot specify parameter "n_distinct"
 HINT:  Extended statistics object "stats_import"."test_stat_dependencies" does not support statistics of this type.
  pg_restore_extended_stats 
 ---------------------------
@@ -1777,7 +1777,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'inherited', false,
   'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
                     {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
-WARNING:  cannot specify parameter "dependencies".
+WARNING:  cannot specify parameter "dependencies"
 HINT:  Extended statistics object "stats_import"."test_stat_ndistinct" does not support statistics of this type.
  pg_restore_extended_stats 
 ---------------------------
