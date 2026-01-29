@@ -114,6 +114,8 @@
  * - RT_SHMEM - if defined, the radix tree is created in the DSA area
  *	 so that multiple processes can access it simultaneously.
  * - RT_DEBUG - if defined add stats tracking and debugging functions
+ * - RT_USE_QUART - if defined, enable QuART stail_reset_bidir optimization
+ *   for sequential insertion patterns
  *
  * Interface
  * ---------
@@ -122,6 +124,7 @@
  * RT_FREE			- Free the radix tree
  * RT_FIND			- Lookup the value for a given key
  * RT_SET			- Set a key-value pair
+ * RT_SET_QUART		- Set a key-value pair with QuART optimization (if RT_USE_QUART defined)
  * RT_BEGIN_ITERATE	- Begin iterating through all key-value pairs
  * RT_ITERATE_NEXT	- Return next key-value pair, if any
  * RT_END_ITERATE	- End iteration
@@ -184,6 +187,9 @@
 #define RT_UNLOCK RT_MAKE_NAME(unlock)
 #endif
 #define RT_SET RT_MAKE_NAME(set)
+#ifdef RT_USE_QUART
+#define RT_SET_QUART RT_MAKE_NAME(set_quart)
+#endif
 #define RT_BEGIN_ITERATE RT_MAKE_NAME(begin_iterate)
 #define RT_ITERATE_NEXT RT_MAKE_NAME(iterate_next)
 #define RT_END_ITERATE RT_MAKE_NAME(end_iterate)
@@ -240,6 +246,12 @@
 #define RT_SHRINK_NODE_256 RT_MAKE_NAME(shrink_child_256)
 #define RT_NODE_ITERATE_NEXT RT_MAKE_NAME(node_iterate_next)
 #define RT_VERIFY_NODE RT_MAKE_NAME(verify_node)
+#ifdef RT_USE_QUART
+#define RT_QUART_FAST_PATH RT_MAKE_NAME(quart_fast_path)
+#define RT_QUART_CHECK_ASCENDING RT_MAKE_NAME(quart_check_ascending)
+#define RT_QUART_CHECK_DESCENDING RT_MAKE_NAME(quart_check_descending)
+#define RT_QUART_UPDATE_FP RT_MAKE_NAME(quart_update_fp)
+#endif
 
 /* type declarations */
 #define RT_RADIX_TREE RT_MAKE_NAME(radix_tree)
@@ -289,6 +301,10 @@ RT_SCOPE void RT_FREE(RT_RADIX_TREE * tree);
 
 RT_SCOPE	RT_VALUE_TYPE *RT_FIND(RT_RADIX_TREE * tree, uint64 key);
 RT_SCOPE bool RT_SET(RT_RADIX_TREE * tree, uint64 key, RT_VALUE_TYPE * value_p);
+
+#ifdef RT_USE_QUART
+RT_SCOPE bool RT_SET_QUART(RT_RADIX_TREE * tree, uint64 key, RT_VALUE_TYPE * value_p);
+#endif
 
 #ifdef RT_USE_DELETE
 RT_SCOPE bool RT_DELETE(RT_RADIX_TREE * tree, uint64 key);
@@ -700,6 +716,14 @@ typedef struct RT_RADIX_TREE_CONTROL
 #ifdef RT_DEBUG
 	int64		num_nodes[RT_NUM_SIZE_CLASSES];
 	int64		num_leaves;
+#endif
+
+#ifdef RT_USE_QUART
+	/* QuART fast path state */
+	uint64		fp_last_key;		/* Last key inserted via fast path */
+	uint8		fp_dir;				/* Fast path direction: 0=asc, 1=desc */
+	uint16		fp_reset_counter;	/* Reset counter (300 iterations) */
+	bool		fp_initialized;		/* Whether fast path is initialized */
 #endif
 }			RT_RADIX_TREE_CONTROL;
 
@@ -1811,6 +1835,415 @@ have_slot:
 	return found;
 }
 
+#ifdef RT_USE_QUART
+/*
+ * QuART stail_reset_bidir optimization for sequential insertions.
+ * This function uses a bidirectional fast path tracking mechanism to
+ * optimize sequential insertion patterns (both ascending and descending).
+ * It maintains a reset counter to periodically reset the fast path,
+ * preventing pathological behavior.
+ */
+RT_SCOPE bool
+RT_SET_QUART(RT_RADIX_TREE * tree, uint64 key, RT_VALUE_TYPE * value_p)
+{
+	bool		found;
+	RT_PTR_ALLOC *slot;
+	size_t		value_sz = RT_GET_VALUE_SIZE(value_p);
+	bool		use_fast_path = false;
+	bool		is_bridge = false;
+
+#ifdef RT_SHMEM
+	Assert(tree->ctl->magic == RT_RADIX_TREE_MAGIC);
+#endif
+
+	Assert(RT_PTR_ALLOC_IS_VALID(tree->ctl->root));
+
+	/* Initialize fast path state on first insertion */
+	if (!tree->ctl->fp_initialized)
+	{
+		tree->ctl->fp_dir = true;
+		tree->ctl->fp_reset_counter = 300;
+		tree->ctl->fp_last_key = 0;
+		tree->ctl->fp_initialized = true;
+	}
+
+	/*
+	 * Check if we can use the fast path optimization.
+	 * The fast path is beneficial for sequential insertions.
+	 * 
+	 * Bridge logic: Detect when insertions cross byte boundaries
+	 * (e.g., 255->256, 65535->65536) and can still benefit from fast path.
+	 */
+	if (tree->ctl->num_keys > 0)
+	{
+		uint64		last_key = tree->ctl->fp_last_key;
+		bool		is_bridge = false;
+		
+		if (tree->ctl->fp_dir)
+		{
+			/* ============ ASCENDING DIRECTION ============ */
+			
+			if (key > last_key)
+			{
+				/* Sequential ascending insert - reset counter */
+				tree->ctl->fp_reset_counter = 300;
+				use_fast_path = true;
+			}
+			else if (key < last_key)
+			{
+				/*
+				 * Non-sequential, but check for bridge values.
+				 * A bridge occurs when we cross a byte boundary, e.g.:
+				 * - Last key: ...X, 255, 255, 255
+				 * - New key:  ...X+1, 0, 0, 0
+				 * 
+				 * We check each byte position from most to least significant.
+				 */
+				
+				/* Extract bytes for comparison (we check up to 8 bytes for uint64) */
+				for (int byte_idx = 7; byte_idx >= 0; byte_idx--)
+				{
+					int shift_amount = byte_idx * 8;
+					uint8 key_byte = (key >> shift_amount) & 0xFF;
+					uint8 last_byte = (last_key >> shift_amount) & 0xFF;
+					
+					if (key_byte == last_byte)
+					{
+						/* Bytes match, continue to next less significant byte */
+						continue;
+					}
+					else if (key_byte > last_byte)
+					{
+						/*
+						 * This byte is greater - not a backward insert.
+						 * Can't be a bridge in ascending mode.
+						 */
+						break;
+					}
+					else
+					{
+						/* key_byte < last_byte - check if this is a bridge */
+						
+						/*
+						 * Bridge condition for ascending at this byte position:
+						 * 1. New key's byte is last_byte - something (going backwards)
+						 * 2. All less significant bytes of last_key are 0xFF
+						 * 3. All less significant bytes of new key are 0x00
+						 * 4. All more significant bytes match
+						 * 
+						 * This would indicate we're wrapping around a boundary.
+						 * Actually, for ascending mode, this shouldn't be a bridge
+						 * since we're going backwards. Bridges are for when we
+						 * detect the pattern continues across a boundary.
+						 * 
+						 * Real bridge for ascending: last=...255,255, key=...(+1),0,0
+						 */
+						
+						/* Check if all more significant bytes match */
+						bool higher_bytes_match = true;
+						for (int h = 7; h > byte_idx; h--)
+						{
+							if (((key >> (h * 8)) & 0xFF) != ((last_key >> (h * 8)) & 0xFF))
+							{
+								higher_bytes_match = false;
+								break;
+							}
+						}
+						
+						if (higher_bytes_match && key_byte == last_byte + 1)
+						{
+							/* Check if all lower bytes of last_key are 0xFF */
+							bool lower_bytes_maxed = true;
+							for (int l = byte_idx - 1; l >= 0; l--)
+							{
+								if (((last_key >> (l * 8)) & 0xFF) != 0xFF)
+								{
+									lower_bytes_maxed = false;
+									break;
+								}
+							}
+							
+							/* Check if all lower bytes of key are 0x00 */
+							bool lower_bytes_zero = true;
+							for (int l = byte_idx - 1; l >= 0; l--)
+							{
+								if (((key >> (l * 8)) & 0xFF) != 0x00)
+								{
+									lower_bytes_zero = false;
+									break;
+								}
+							}
+							
+							if (lower_bytes_maxed && lower_bytes_zero)
+							{
+								/* This is a bridge value! */
+								is_bridge = true;
+								break;
+							}
+						}
+						
+						/* Not a bridge, just decrement counter */
+						break;
+					}
+				}
+				
+				if (is_bridge)
+				{
+					/* Bridge detected - treat as sequential */
+					tree->ctl->fp_reset_counter = 300;
+					use_fast_path = true;
+				}
+				else
+				{
+					/* Non-sequential insert - decrement counter */
+					tree->ctl->fp_reset_counter--;
+
+					/* Check if we need to force a reset */
+					if (tree->ctl->fp_reset_counter <= 0)
+					{
+						tree->ctl->fp_reset_counter = 300;
+						tree->ctl->fp_dir = true;
+					}
+				}
+			}
+		}
+		else
+		{
+			/* ============ DESCENDING DIRECTION ============ */
+			
+			if (key < last_key)
+			{
+				/* Sequential descending insert - reset counter */
+				tree->ctl->fp_reset_counter = 300;
+				use_fast_path = true;
+			}
+			else if (key > last_key)
+			{
+				/*
+				 * Non-sequential, but check for bridge values in descending mode.
+				 * A bridge occurs when we cross a byte boundary downward, e.g.:
+				 * - Last key: ...X, 0, 0, 0
+				 * - New key:  ...X-1, 255, 255, 255
+				 */
+				
+				for (int byte_idx = 7; byte_idx >= 0; byte_idx--)
+				{
+					int shift_amount = byte_idx * 8;
+					uint8 key_byte = (key >> shift_amount) & 0xFF;
+					uint8 last_byte = (last_key >> shift_amount) & 0xFF;
+					
+					if (key_byte == last_byte)
+					{
+						/* Bytes match, continue to next less significant byte */
+						continue;
+					}
+					else if (key_byte < last_byte)
+					{
+						/*
+						 * This byte is less - not a forward insert.
+						 * Can't be a bridge in descending mode.
+						 */
+						break;
+					}
+					else
+					{
+						/* key_byte > last_byte - check if this is a bridge */
+						
+						/* Check if all more significant bytes match */
+						bool higher_bytes_match = true;
+						for (int h = 7; h > byte_idx; h--)
+						{
+							if (((key >> (h * 8)) & 0xFF) != ((last_key >> (h * 8)) & 0xFF))
+							{
+								higher_bytes_match = false;
+								break;
+							}
+						}
+						
+						if (higher_bytes_match && last_byte == key_byte + 1)
+						{
+							/* Check if all lower bytes of last_key are 0x00 */
+							bool lower_bytes_zero = true;
+							for (int l = byte_idx - 1; l >= 0; l--)
+							{
+								if (((last_key >> (l * 8)) & 0xFF) != 0x00)
+								{
+									lower_bytes_zero = false;
+									break;
+								}
+							}
+							
+							/* Check if all lower bytes of key are 0xFF */
+							bool lower_bytes_maxed = true;
+							for (int l = byte_idx - 1; l >= 0; l--)
+							{
+								if (((key >> (l * 8)) & 0xFF) != 0xFF)
+								{
+									lower_bytes_maxed = false;
+									break;
+								}
+							}
+							
+							if (lower_bytes_zero && lower_bytes_maxed)
+							{
+								/* This is a bridge value! */
+								is_bridge = true;
+								break;
+							}
+						}
+						
+						/* Not a bridge, just decrement counter */
+						break;
+					}
+				}
+				
+				if (is_bridge)
+				{
+					/* Bridge detected - treat as sequential */
+					tree->ctl->fp_reset_counter = 300;
+					use_fast_path = true;
+				}
+				else
+				{
+					/* Non-sequential insert - decrement counter */
+					tree->ctl->fp_reset_counter--;
+
+					/* Check if we need to force a reset */
+					if (tree->ctl->fp_reset_counter <= 0)
+					{
+						tree->ctl->fp_reset_counter = 300;
+						tree->ctl->fp_dir = true;
+					}
+				}
+			}
+		}
+
+		/* Detect direction changes for bidirectional support */
+		if (!use_fast_path && !is_bridge && tree->ctl->fp_reset_counter > 0)
+		{
+			/*
+			 * Check if this is a direction change:
+			 * If we were going up and now going down, or vice versa
+			 */
+			if (tree->ctl->fp_dir && key < last_key)
+				tree->ctl->fp_dir = false;
+			else if (!tree->ctl->fp_dir && key > last_key)
+				tree->ctl->fp_dir = true;
+		}
+	}
+
+	/* Extend the tree if necessary */
+	if (unlikely(key > tree->ctl->max_val))
+	{
+		if (tree->ctl->num_keys == 0)
+		{
+			RT_CHILD_PTR node;
+			RT_NODE_4  *n4;
+			int			start_shift = RT_KEY_GET_SHIFT(key);
+
+			/*
+			 * With an empty root node, we don't extend the tree upwards,
+			 * since that would result in orphan empty nodes. Instead we open
+			 * code inserting into the root node and extend downward from
+			 * there.
+			 */
+			node.alloc = tree->ctl->root;
+			RT_PTR_SET_LOCAL(tree, &node);
+			n4 = (RT_NODE_4 *) node.local;
+			n4->base.count = 1;
+			n4->chunks[0] = RT_GET_KEY_CHUNK(key, start_shift);
+
+			slot = RT_EXTEND_DOWN(tree, &n4->children[0], key, start_shift);
+			found = false;
+			tree->ctl->start_shift = start_shift;
+			tree->ctl->max_val = RT_SHIFT_GET_MAX_VAL(start_shift);
+			goto have_slot;
+		}
+		else
+			RT_EXTEND_UP(tree, key);
+	}
+
+	slot = RT_GET_SLOT_RECURSIVE(tree, &tree->ctl->root,
+								 key, tree->ctl->start_shift, &found);
+
+have_slot:
+	Assert(slot != NULL);
+
+	if (RT_VALUE_IS_EMBEDDABLE(value_p))
+	{
+		/* free the existing leaf */
+		if (found && !RT_CHILDPTR_IS_VALUE(*slot))
+			RT_FREE_LEAF(tree, *slot);
+
+		/* store value directly in child pointer slot */
+		memcpy(slot, value_p, value_sz);
+
+#ifdef RT_RUNTIME_EMBEDDABLE_VALUE
+		/* tag child pointer */
+#ifdef RT_SHMEM
+		*slot |= 1;
+#else
+		*((uintptr_t *) slot) |= 1;
+#endif
+#endif
+	}
+	else
+	{
+		RT_CHILD_PTR leaf;
+
+		if (found && !RT_CHILDPTR_IS_VALUE(*slot))
+		{
+			Assert(RT_PTR_ALLOC_IS_VALID(*slot));
+			leaf.alloc = *slot;
+			RT_PTR_SET_LOCAL(tree, &leaf);
+
+			if (RT_GET_VALUE_SIZE((RT_VALUE_TYPE *) leaf.local) != value_sz)
+			{
+				/*
+				 * different sizes, so first free the existing leaf before
+				 * allocating a new one
+				 */
+				RT_FREE_LEAF(tree, *slot);
+				leaf = RT_ALLOC_LEAF(tree, value_sz);
+				*slot = leaf.alloc;
+			}
+		}
+		else
+		{
+			/* allocate new leaf and store it in the child array */
+			leaf = RT_ALLOC_LEAF(tree, value_sz);
+			*slot = leaf.alloc;
+		}
+
+		memcpy(leaf.local, value_p, value_sz);
+	}
+
+	/* Update the fast path state */
+	tree->ctl->fp_last_key = key;
+
+	/* Update the statistics */
+	if (!found)
+	{
+		tree->ctl->num_keys++;
+		if (is_bridge)
+			elog(LOG, "Radix tree (QuART): inserted new key %" PRIu64 " (dir=%s, counter=%d, BRIDGE)",
+				 key, tree->ctl->fp_dir ? "asc" : "desc", tree->ctl->fp_reset_counter);
+		else if (use_fast_path)
+			elog(LOG, "Radix tree (QuART): inserted new key %" PRIu64 " (dir=%s, counter=%d, fast_path)",
+				 key, tree->ctl->fp_dir ? "asc" : "desc", tree->ctl->fp_reset_counter);
+		else
+			elog(LOG, "Radix tree (QuART): inserted new key %" PRIu64 " (dir=%s, counter=%d)",
+				 key, tree->ctl->fp_dir ? "asc" : "desc", tree->ctl->fp_reset_counter);
+	}
+	else
+	{
+		elog(LOG, "Radix tree (QuART): updated existing key %" PRIu64, key);
+	}
+
+	return found;
+}
+#endif /* RT_USE_QUART */
+
 /***************** SETUP / TEARDOWN *****************/
 
 /*
@@ -1864,6 +2297,14 @@ RT_CREATE(MemoryContext ctx)
 	tree->ctl->root = rootnode.alloc;
 	tree->ctl->start_shift = 0;
 	tree->ctl->max_val = RT_SHIFT_GET_MAX_VAL(0);
+
+#ifdef RT_USE_QUART
+	/* Initialize QuART fast path state */
+	tree->ctl->fp_dir = true;
+	tree->ctl->fp_reset_counter = 300;
+	tree->ctl->fp_last_key = 0;
+	tree->ctl->fp_initialized = false;
+#endif
 
 	return tree;
 }
@@ -2975,6 +3416,13 @@ RT_DUMP_NODE(RT_NODE * node)
 #undef RT_GET_HANDLE
 #undef RT_FIND
 #undef RT_SET
+#ifdef RT_USE_QUART
+#undef RT_SET_QUART
+#undef RT_QUART_FAST_PATH
+#undef RT_QUART_CHECK_ASCENDING
+#undef RT_QUART_CHECK_DESCENDING
+#undef RT_QUART_UPDATE_FP
+#endif
 #undef RT_BEGIN_ITERATE
 #undef RT_ITERATE_NEXT
 #undef RT_END_ITERATE

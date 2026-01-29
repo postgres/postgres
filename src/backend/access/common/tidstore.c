@@ -87,6 +87,17 @@ typedef struct BlocktableEntry
 	offsetof(BlocktableEntry, words) + \
 		(sizeof(bitmapword) * WORDS_PER_PAGE(MAX_OFFSET_IN_BITMAP))
 
+/*
+ * USE_QUART_TIDSTORE: Set to 1 to use QuART-optimized radix tree,
+ * set to 0 to use standard radix tree implementation.
+ * This provides a compile-time switch between the two modes.
+ * Default is 0 (QuART disabled).
+ */
+#ifndef USE_QUART_TIDSTORE
+#define USE_QUART_TIDSTORE 0
+#endif
+
+/* Standard radix tree (always available) */
 #define RT_PREFIX local_ts
 #define RT_SCOPE static
 #define RT_DECLARE
@@ -110,6 +121,36 @@ typedef struct BlocktableEntry
 #define RT_RUNTIME_EMBEDDABLE_VALUE
 #include "lib/radixtree.h"
 
+/* QuART-optimized radix tree (when enabled) */
+#if USE_QUART_TIDSTORE
+
+#define RT_PREFIX local_ts_quart
+#define RT_SCOPE static
+#define RT_DECLARE
+#define RT_DEFINE
+#define RT_VALUE_TYPE BlocktableEntry
+#define RT_VARLEN_VALUE_SIZE(page) \
+	(offsetof(BlocktableEntry, words) + \
+	sizeof(bitmapword) * (page)->header.nwords)
+#define RT_RUNTIME_EMBEDDABLE_VALUE
+#define RT_USE_QUART
+#include "lib/radixtree.h"
+
+#define RT_PREFIX shared_ts_quart
+#define RT_SHMEM
+#define RT_SCOPE static
+#define RT_DECLARE
+#define RT_DEFINE
+#define RT_VALUE_TYPE BlocktableEntry
+#define RT_VARLEN_VALUE_SIZE(page) \
+	(offsetof(BlocktableEntry, words) + \
+	sizeof(bitmapword) * (page)->header.nwords)
+#define RT_RUNTIME_EMBEDDABLE_VALUE
+#define RT_USE_QUART
+#include "lib/radixtree.h"
+
+#endif /* USE_QUART_TIDSTORE */
+
 /* Per-backend state for a TidStore */
 struct TidStore
 {
@@ -122,8 +163,13 @@ struct TidStore
 	/* Storage for TIDs. Use either one depending on TidStoreIsShared() */
 	union
 	{
+#if USE_QUART_TIDSTORE
+		local_ts_quart_radix_tree *local;
+		shared_ts_quart_radix_tree *shared;
+#else
 		local_ts_radix_tree *local;
 		shared_ts_radix_tree *shared;
+#endif
 	}			tree;
 
 	/* DSA area for TidStore if using shared memory */
@@ -139,8 +185,13 @@ struct TidStoreIter
 	/* iterator of radix tree. Use either one depending on TidStoreIsShared() */
 	union
 	{
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_iter *shared;
+		local_ts_quart_iter *local;
+#else
 		shared_ts_iter *shared;
 		local_ts_iter *local;
+#endif
 	}			tree_iter;
 
 	/* output for the caller */
@@ -193,7 +244,11 @@ TidStoreCreateLocal(size_t max_bytes, bool insert_only)
 											   maxBlockSize);
 	}
 
+#if USE_QUART_TIDSTORE
+	ts->tree.local = local_ts_quart_create(ts->rt_context);
+#else
 	ts->tree.local = local_ts_create(ts->rt_context);
+#endif
 
 	return ts;
 }
@@ -228,7 +283,11 @@ TidStoreCreateShared(size_t max_bytes, int tranche_id)
 		dsa_init_size = dsa_max_size;
 
 	area = dsa_create_ext(tranche_id, dsa_init_size, dsa_max_size);
+#if USE_QUART_TIDSTORE
+	ts->tree.shared = shared_ts_quart_create(area, tranche_id);
+#else
 	ts->tree.shared = shared_ts_create(area, tranche_id);
+#endif
 	ts->area = area;
 
 	return ts;
@@ -255,7 +314,11 @@ TidStoreAttach(dsa_handle area_handle, dsa_pointer handle)
 	area = dsa_attach(area_handle);
 
 	/* Find the shared the shared radix tree */
+#if USE_QUART_TIDSTORE
+	ts->tree.shared = shared_ts_quart_attach(area, handle);
+#else
 	ts->tree.shared = shared_ts_attach(area, handle);
+#endif
 	ts->area = area;
 
 	return ts;
@@ -287,21 +350,33 @@ void
 TidStoreLockExclusive(TidStore *ts)
 {
 	if (TidStoreIsShared(ts))
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_lock_exclusive(ts->tree.shared);
+#else
 		shared_ts_lock_exclusive(ts->tree.shared);
+#endif
 }
 
 void
 TidStoreLockShare(TidStore *ts)
 {
 	if (TidStoreIsShared(ts))
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_lock_share(ts->tree.shared);
+#else
 		shared_ts_lock_share(ts->tree.shared);
+#endif
 }
 
 void
 TidStoreUnlock(TidStore *ts)
 {
 	if (TidStoreIsShared(ts))
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_unlock(ts->tree.shared);
+#else
 		shared_ts_unlock(ts->tree.shared);
+#endif
 }
 
 /*
@@ -319,12 +394,20 @@ TidStoreDestroy(TidStore *ts)
 	/* Destroy underlying radix tree */
 	if (TidStoreIsShared(ts))
 	{
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_free(ts->tree.shared);
+#else
 		shared_ts_free(ts->tree.shared);
+#endif
 		dsa_detach(ts->area);
 	}
 	else
 	{
+#if USE_QUART_TIDSTORE
+		local_ts_quart_free(ts->tree.local);
+#else
 		local_ts_free(ts->tree.local);
+#endif
 		MemoryContextDelete(ts->rt_context);
 	}
 
@@ -411,9 +494,21 @@ TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 	}
 
 	if (TidStoreIsShared(ts))
+	{
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_set_quart(ts->tree.shared, blkno, page);
+#else
 		shared_ts_set(ts->tree.shared, blkno, page);
+#endif
+	}
 	else
+	{
+#if USE_QUART_TIDSTORE
+		local_ts_quart_set_quart(ts->tree.local, blkno, page);
+#else
 		local_ts_set(ts->tree.local, blkno, page);
+#endif
+	}
 }
 
 /* Return true if the given TID is present in the TidStore */
@@ -427,9 +522,17 @@ TidStoreIsMember(TidStore *ts, const ItemPointerData *tid)
 	OffsetNumber off = ItemPointerGetOffsetNumber(tid);
 
 	if (TidStoreIsShared(ts))
+#if USE_QUART_TIDSTORE
+		page = shared_ts_quart_find(ts->tree.shared, blk);
+#else
 		page = shared_ts_find(ts->tree.shared, blk);
+#endif
 	else
+#if USE_QUART_TIDSTORE
+		page = local_ts_quart_find(ts->tree.local, blk);
+#else
 		page = local_ts_find(ts->tree.local, blk);
+#endif
 
 	/* no entry for the blk */
 	if (page == NULL)
@@ -476,9 +579,17 @@ TidStoreBeginIterate(TidStore *ts)
 	iter->ts = ts;
 
 	if (TidStoreIsShared(ts))
+#if USE_QUART_TIDSTORE
+		iter->tree_iter.shared = shared_ts_quart_begin_iterate(ts->tree.shared);
+#else
 		iter->tree_iter.shared = shared_ts_begin_iterate(ts->tree.shared);
+#endif
 	else
+#if USE_QUART_TIDSTORE
+		iter->tree_iter.local = local_ts_quart_begin_iterate(ts->tree.local);
+#else
 		iter->tree_iter.local = local_ts_begin_iterate(ts->tree.local);
+#endif
 
 	return iter;
 }
@@ -496,9 +607,17 @@ TidStoreIterateNext(TidStoreIter *iter)
 	BlocktableEntry *page;
 
 	if (TidStoreIsShared(iter->ts))
+#if USE_QUART_TIDSTORE
+		page = shared_ts_quart_iterate_next(iter->tree_iter.shared, &key);
+#else
 		page = shared_ts_iterate_next(iter->tree_iter.shared, &key);
+#endif
 	else
+#if USE_QUART_TIDSTORE
+		page = local_ts_quart_iterate_next(iter->tree_iter.local, &key);
+#else
 		page = local_ts_iterate_next(iter->tree_iter.local, &key);
+#endif
 
 	if (page == NULL)
 		return NULL;
@@ -518,9 +637,17 @@ void
 TidStoreEndIterate(TidStoreIter *iter)
 {
 	if (TidStoreIsShared(iter->ts))
+#if USE_QUART_TIDSTORE
+		shared_ts_quart_end_iterate(iter->tree_iter.shared);
+#else
 		shared_ts_end_iterate(iter->tree_iter.shared);
+#endif
 	else
+#if USE_QUART_TIDSTORE
+		local_ts_quart_end_iterate(iter->tree_iter.local);
+#else
 		local_ts_end_iterate(iter->tree_iter.local);
+#endif
 
 	pfree(iter);
 }
@@ -532,9 +659,17 @@ size_t
 TidStoreMemoryUsage(TidStore *ts)
 {
 	if (TidStoreIsShared(ts))
+#if USE_QUART_TIDSTORE
+		return shared_ts_quart_memory_usage(ts->tree.shared);
+#else
 		return shared_ts_memory_usage(ts->tree.shared);
+#endif
 	else
+#if USE_QUART_TIDSTORE
+		return local_ts_quart_memory_usage(ts->tree.local);
+#else
 		return local_ts_memory_usage(ts->tree.local);
+#endif
 }
 
 /*
@@ -553,7 +688,11 @@ TidStoreGetHandle(TidStore *ts)
 {
 	Assert(TidStoreIsShared(ts));
 
+#if USE_QUART_TIDSTORE
+	return (dsa_pointer) shared_ts_quart_get_handle(ts->tree.shared);
+#else
 	return (dsa_pointer) shared_ts_get_handle(ts->tree.shared);
+#endif
 }
 
 /*
