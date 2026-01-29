@@ -199,6 +199,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					break;
 					/* pipeline status */
 				case 'P':
+					if (pset.db)
 					{
 						PGpipelineStatus status = PQpipelineStatus(pset.db);
 
@@ -208,9 +209,8 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 							strlcpy(buf, "abort", sizeof(buf));
 						else
 							strlcpy(buf, "off", sizeof(buf));
-						break;
 					}
-
+					break;
 				case '0':
 				case '1':
 				case '2':
