@@ -222,11 +222,11 @@ strlower_libc_mb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 
 	result_size = wchar2char(result, workspace, max_size + 1, locale);
 
-	if (result_size + 1 > destsize)
-		return result_size;
-
-	memcpy(dest, result, result_size);
-	dest[result_size] = '\0';
+	if (destsize >= result_size + 1)
+	{
+		memcpy(dest, result, result_size);
+		dest[result_size] = '\0';
+	}
 
 	pfree(workspace);
 	pfree(result);
@@ -323,11 +323,11 @@ strtitle_libc_mb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 
 	result_size = wchar2char(result, workspace, max_size + 1, locale);
 
-	if (result_size + 1 > destsize)
-		return result_size;
-
-	memcpy(dest, result, result_size);
-	dest[result_size] = '\0';
+	if (destsize >= result_size + 1)
+	{
+		memcpy(dest, result, result_size);
+		dest[result_size] = '\0';
+	}
 
 	pfree(workspace);
 	pfree(result);
@@ -405,11 +405,11 @@ strupper_libc_mb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 
 	result_size = wchar2char(result, workspace, max_size + 1, locale);
 
-	if (result_size + 1 > destsize)
-		return result_size;
-
-	memcpy(dest, result, result_size);
-	dest[result_size] = '\0';
+	if (destsize >= result_size + 1)
+	{
+		memcpy(dest, result, result_size);
+		dest[result_size] = '\0';
+	}
 
 	pfree(workspace);
 	pfree(result);
