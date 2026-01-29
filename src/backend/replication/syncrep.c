@@ -355,7 +355,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	pg_read_barrier();
 	Assert(dlist_node_is_detached(&MyProc->syncRepLinks));
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
-	MyProc->waitLSN = 0;
+	MyProc->waitLSN = InvalidXLogRecPtr;
 
 	/* reset ps display to remove the suffix */
 	if (update_process_title)
@@ -1027,7 +1027,7 @@ SyncRepQueueIsOrderedByLSN(int mode)
 
 	Assert(mode >= 0 && mode < NUM_SYNC_REP_WAIT_MODE);
 
-	lastLSN = 0;
+	lastLSN = InvalidXLogRecPtr;
 
 	dlist_foreach(iter, &WalSndCtl->SyncRepQueue[mode])
 	{

@@ -377,7 +377,7 @@ main(int argc, char **argv)
 	{
 		pg_log_info("source and target cluster are on the same timeline");
 		rewind_needed = false;
-		target_wal_endrec = 0;
+		target_wal_endrec = InvalidXLogRecPtr;
 	}
 	else
 	{

@@ -261,7 +261,7 @@ static TimestampTz XLogReceiptTime = 0;
 static XLogSource XLogReceiptSource = XLOG_FROM_ANY;
 
 /* Local copy of WalRcv->flushedUpto */
-static XLogRecPtr flushedUpto = 0;
+static XLogRecPtr flushedUpto = InvalidXLogRecPtr;
 static TimeLineID receiveTLI = 0;
 
 /*
@@ -3918,7 +3918,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						RequestXLogStreaming(tli, ptr, PrimaryConnInfo,
 											 PrimarySlotName,
 											 wal_receiver_create_temp_slot);
-						flushedUpto = 0;
+						flushedUpto = InvalidXLogRecPtr;
 					}
 
 					/*
@@ -4096,7 +4096,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 static int
 emode_for_corrupt_record(int emode, XLogRecPtr RecPtr)
 {
-	static XLogRecPtr lastComplaint = 0;
+	static XLogRecPtr lastComplaint = InvalidXLogRecPtr;
 
 	if (readSource == XLOG_FROM_PG_WAL && emode == LOG)
 	{

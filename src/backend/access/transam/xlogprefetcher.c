@@ -967,7 +967,7 @@ XLogPrefetcherBeginRead(XLogPrefetcher *prefetcher, XLogRecPtr recPtr)
 	/* Book-keeping to avoid readahead on first read. */
 	prefetcher->begin_ptr = recPtr;
 
-	prefetcher->no_readahead_until = 0;
+	prefetcher->no_readahead_until = InvalidXLogRecPtr;
 
 	/* This will forget about any queued up records in the decoder. */
 	XLogBeginRead(prefetcher->reader, recPtr);

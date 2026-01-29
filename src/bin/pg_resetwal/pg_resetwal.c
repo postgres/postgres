@@ -913,10 +913,10 @@ RewriteControlFile(void)
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-	ControlFile.minRecoveryPoint = 0;
+	ControlFile.minRecoveryPoint = InvalidXLogRecPtr;
 	ControlFile.minRecoveryPointTLI = 0;
-	ControlFile.backupStartPoint = 0;
-	ControlFile.backupEndPoint = 0;
+	ControlFile.backupStartPoint = InvalidXLogRecPtr;
+	ControlFile.backupEndPoint = InvalidXLogRecPtr;
 	ControlFile.backupEndRequired = false;
 
 	/*
@@ -1147,7 +1147,7 @@ WriteEmptyXLOG(void)
 	/* Insert the initial checkpoint record */
 	recptr = (char *) page + SizeOfXLogLongPHD;
 	record = (XLogRecord *) recptr;
-	record->xl_prev = 0;
+	record->xl_prev = InvalidXLogRecPtr;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_tot_len = SizeOfXLogRecord + SizeOfXLogRecordDataHeaderShort + sizeof(CheckPoint);
 	record->xl_info = XLOG_CHECKPOINT_SHUTDOWN;

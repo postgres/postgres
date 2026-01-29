@@ -1122,8 +1122,8 @@ XLogWalRcvClose(XLogRecPtr recptr, TimeLineID tli)
 static void
 XLogWalRcvSendReply(bool force, bool requestReply)
 {
-	static XLogRecPtr writePtr = 0;
-	static XLogRecPtr flushPtr = 0;
+	static XLogRecPtr writePtr = InvalidXLogRecPtr;
+	static XLogRecPtr flushPtr = InvalidXLogRecPtr;
 	XLogRecPtr	applyPtr;
 	TimestampTz now;
 

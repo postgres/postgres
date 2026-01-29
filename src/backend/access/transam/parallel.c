@@ -357,7 +357,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	fps->stmt_ts = GetCurrentStatementStartTimestamp();
 	fps->serializable_xact_handle = ShareSerializableXact();
 	SpinLockInit(&fps->mutex);
-	fps->last_xlog_end = 0;
+	fps->last_xlog_end = InvalidXLogRecPtr;
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_FIXED, fps);
 
 	/* We can skip the rest of this if we're not budgeting for any workers. */
@@ -530,7 +530,7 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 
 	/* Reset a few bits of fixed parallel state to a clean state. */
 	fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
-	fps->last_xlog_end = 0;
+	fps->last_xlog_end = InvalidXLogRecPtr;
 
 	/* Recreate error queues (if they exist). */
 	if (pcxt->nworkers > 0)
