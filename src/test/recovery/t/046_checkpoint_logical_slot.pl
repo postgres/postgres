@@ -138,6 +138,13 @@ eval {
 };
 is($@, '', "Logical slot still valid");
 
+# If we send \q with $<psql_session>->quit the command can be sent to the
+# session already closed. So \q is in initial script, here we only finish
+# IPC::Run
+$xacts->{run}->finish;
+$checkpoint->{run}->finish;
+$logical->{run}->finish;
+
 # Verify that the synchronized slots won't be invalidated immediately after
 # synchronization in the presence of a concurrent checkpoint.
 my $primary = $node;
@@ -153,8 +160,7 @@ $primary->backup($backup_name);
 my $standby = PostgreSQL::Test::Cluster->new('standby');
 $standby->init_from_backup(
 	$primary, $backup_name,
-	has_streaming => 1,
-	has_restoring => 1);
+	has_streaming => 1);
 
 my $connstr_1 = $primary->connstr;
 $standby->append_conf(
