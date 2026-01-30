@@ -40,6 +40,36 @@ my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->start;
 
+# create a view we'll use below
+$node->safe_psql(
+	'postgres', 'create view public.view_030_pager as select
+1 as a,
+2 as b,
+3 as c,
+4 as d,
+5 as e,
+6 as f,
+7 as g,
+8 as h,
+9 as i,
+10 as j,
+11 as k,
+12 as l,
+13 as m,
+14 as n,
+15 as o,
+16 as p,
+17 as q,
+18 as r,
+19 as s,
+20 as t,
+21 as u,
+22 as v,
+23 as w,
+24 as x,
+25 as y,
+26 as z');
+
 # fire up an interactive psql session
 my $h = $node->interactive_psql('postgres');
 
@@ -77,25 +107,28 @@ sub do_command
 #
 # Note that interactive_psql starts psql with --no-align --tuples-only,
 # and that the output string will include psql's prompts and command echo.
+# So we have to test for patterns that can't match the command itself,
+# and we can't assume the match will extend across a whole line (there
+# might be a prompt ahead of it in the output).
 
 do_command(
 	"SELECT 'test' AS t FROM generate_series(1,23);\n",
-	qr/^test\r?$/m,
+	qr/test\r?$/m,
 	"execute SELECT query that needs no pagination");
 
 do_command(
 	"SELECT 'test' AS t FROM generate_series(1,24);\n",
-	qr/^ *24\r?$/m,
+	qr/24\r?$/m,
 	"execute SELECT query that needs pagination");
 
 do_command(
 	"\\pset expanded\nSELECT generate_series(1,20) as g;\n",
-	qr/^ *39\r?$/m,
+	qr/39\r?$/m,
 	"execute SELECT query that needs pagination in expanded mode");
 
 do_command(
-	"\\pset tuples_only off\n\\d+ information_schema.referential_constraints\n",
-	qr/^ *\d+\r?$/m,
+	"\\pset tuples_only off\n\\d+ public.view_030_pager\n",
+	qr/55\r?$/m,
 	"execute command with footer that needs pagination");
 
 # send psql an explicit \q to shut it down, else pty won't close properly
