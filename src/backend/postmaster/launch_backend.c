@@ -96,7 +96,6 @@ typedef struct
 	HANDLE		UsedShmemSegID;
 #endif
 	void	   *UsedShmemSegAddr;
-	slock_t    *ShmemLock;
 #ifdef USE_INJECTION_POINTS
 	struct InjectionPointsCtl *ActiveInjectionPoints;
 #endif
@@ -676,7 +675,7 @@ SubPostmasterMain(int argc, char *argv[])
 
 	/* Restore basic shared memory pointers */
 	if (UsedShmemSegAddr != NULL)
-		InitShmemAccess(UsedShmemSegAddr);
+		InitShmemAllocator(UsedShmemSegAddr);
 
 	/*
 	 * Run the appropriate Main function
@@ -723,8 +722,6 @@ save_backend_variables(BackendParameters *param,
 #endif
 	param->UsedShmemSegID = UsedShmemSegID;
 	param->UsedShmemSegAddr = UsedShmemSegAddr;
-
-	param->ShmemLock = ShmemLock;
 
 #ifdef USE_INJECTION_POINTS
 	param->ActiveInjectionPoints = ActiveInjectionPoints;
@@ -985,8 +982,6 @@ restore_backend_variables(BackendParameters *param)
 #endif
 	UsedShmemSegID = param->UsedShmemSegID;
 	UsedShmemSegAddr = param->UsedShmemSegAddr;
-
-	ShmemLock = param->ShmemLock;
 
 #ifdef USE_INJECTION_POINTS
 	ActiveInjectionPoints = param->ActiveInjectionPoints;

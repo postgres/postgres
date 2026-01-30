@@ -389,7 +389,7 @@ retry:
 	 * Initialize space allocation status for segment.
 	 */
 	hdr->totalsize = size;
-	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	hdr->content_offset = MAXALIGN(sizeof(PGShmemHeader));
 	hdr->dsm_control = 0;
 
 	/* Save info for possible future use */

@@ -855,7 +855,7 @@ PGSharedMemoryCreate(Size size,
 	 * Initialize space allocation status for segment.
 	 */
 	hdr->totalsize = size;
-	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	hdr->content_offset = MAXALIGN(sizeof(PGShmemHeader));
 	*shim = hdr;
 
 	/* Save info for possible future use */

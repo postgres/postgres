@@ -29,8 +29,7 @@
 extern PGDLLIMPORT slock_t *ShmemLock;
 typedef struct PGShmemHeader PGShmemHeader; /* avoid including
 											 * storage/pg_shmem.h here */
-extern void InitShmemAccess(PGShmemHeader *seghdr);
-extern void InitShmemAllocation(void);
+extern void InitShmemAllocator(PGShmemHeader *seghdr);
 extern void *ShmemAlloc(Size size);
 extern void *ShmemAllocNoError(Size size);
 extern bool ShmemAddrIsValid(const void *addr);

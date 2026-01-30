@@ -76,20 +76,33 @@
 #include "storage/spin.h"
 #include "utils/builtins.h"
 
+/*
+ * This is the first data structure stored in the shared memory segment, at
+ * the offset that PGShmemHeader->content_offset points to.  Allocations by
+ * ShmemAlloc() are carved out of the space after this.
+ *
+ * For the base pointer and the total size of the shmem segment, we rely on
+ * the PGShmemHeader.
+ */
+typedef struct ShmemAllocatorData
+{
+	Size		free_offset;	/* offset to first free space from ShmemBase */
+	HTAB	   *index;			/* copy of ShmemIndex */
+
+	/* protects shared memory and LWLock allocation */
+	slock_t		shmem_lock;
+} ShmemAllocatorData;
+
 static void *ShmemAllocRaw(Size size, Size *allocated_size);
-static void *ShmemAllocUnlocked(Size size);
 
 /* shared memory global variables */
 
 static PGShmemHeader *ShmemSegHdr;	/* shared mem segment header */
-
 static void *ShmemBase;			/* start address of shared memory */
-
 static void *ShmemEnd;			/* end+1 address of shared memory */
 
-slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
-								 * allocation */
-
+static ShmemAllocatorData *ShmemAllocator;
+slock_t    *ShmemLock;			/* points to ShmemAllocator->shmem_lock */
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 /* To get reliable results for NUMA inquiry we need to "touch pages" once */
@@ -98,49 +111,64 @@ static bool firstNumaTouch = true;
 Datum		pg_numa_available(PG_FUNCTION_ARGS);
 
 /*
- *	InitShmemAccess() --- set up basic pointers to shared memory.
+ *	InitShmemAllocator() --- set up basic pointers to shared memory.
+ *
+ * Called at postmaster or stand-alone backend startup, to initialize the
+ * allocator's data structure in the shared memory segment.  In EXEC_BACKEND,
+ * this is also called at backend startup, to set up pointers to the shared
+ * memory areas.
  */
 void
-InitShmemAccess(PGShmemHeader *seghdr)
+InitShmemAllocator(PGShmemHeader *seghdr)
 {
+	Assert(seghdr != NULL);
+
+	/*
+	 * We assume the pointer and offset are MAXALIGN.  Not a hard requirement,
+	 * but it's true today and keeps the math below simpler.
+	 */
+	Assert(seghdr == (void *) MAXALIGN(seghdr));
+	Assert(seghdr->content_offset == MAXALIGN(seghdr->content_offset));
+
 	ShmemSegHdr = seghdr;
 	ShmemBase = seghdr;
 	ShmemEnd = (char *) ShmemBase + seghdr->totalsize;
-}
 
-/*
- *	InitShmemAllocation() --- set up shared-memory space allocation.
- *
- * This should be called only in the postmaster or a standalone backend.
- */
-void
-InitShmemAllocation(void)
-{
-	PGShmemHeader *shmhdr = ShmemSegHdr;
-	char	   *aligned;
+#ifndef EXEC_BACKEND
+	Assert(!IsUnderPostmaster);
+#endif
+	if (IsUnderPostmaster)
+	{
+		PGShmemHeader *shmhdr = ShmemSegHdr;
 
-	Assert(shmhdr != NULL);
+		ShmemAllocator = (ShmemAllocatorData *) ((char *) shmhdr + shmhdr->content_offset);
+		ShmemLock = &ShmemAllocator->shmem_lock;
+	}
+	else
+	{
+		Size		offset;
 
-	/*
-	 * Initialize the spinlock used by ShmemAlloc.  We must use
-	 * ShmemAllocUnlocked, since obviously ShmemAlloc can't be called yet.
-	 */
-	ShmemLock = (slock_t *) ShmemAllocUnlocked(sizeof(slock_t));
+		/*
+		 * Allocations after this point should go through ShmemAlloc, which
+		 * expects to allocate everything on cache line boundaries.  Make sure
+		 * the first allocation begins on a cache line boundary.
+		 */
+		offset = CACHELINEALIGN(seghdr->content_offset + sizeof(ShmemAllocatorData));
+		if (offset > seghdr->totalsize)
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of shared memory (%zu bytes requested)",
+							offset)));
 
-	SpinLockInit(ShmemLock);
+		ShmemAllocator = (ShmemAllocatorData *) ((char *) seghdr + seghdr->content_offset);
 
-	/*
-	 * Allocations after this point should go through ShmemAlloc, which
-	 * expects to allocate everything on cache line boundaries.  Make sure the
-	 * first allocation begins on a cache line boundary.
-	 */
-	aligned = (char *)
-		(CACHELINEALIGN((((char *) shmhdr) + shmhdr->freeoffset)));
-	shmhdr->freeoffset = aligned - (char *) shmhdr;
-
-	/* ShmemIndex can't be set up yet (need LWLocks first) */
-	shmhdr->index = NULL;
-	ShmemIndex = (HTAB *) NULL;
+		SpinLockInit(&ShmemAllocator->shmem_lock);
+		ShmemLock = &ShmemAllocator->shmem_lock;
+		ShmemAllocator->free_offset = offset;
+		/* ShmemIndex can't be set up yet (need LWLocks first) */
+		ShmemAllocator->index = NULL;
+		ShmemIndex = (HTAB *) NULL;
+	}
 }
 
 /*
@@ -209,13 +237,13 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 
 	SpinLockAcquire(ShmemLock);
 
-	newStart = ShmemSegHdr->freeoffset;
+	newStart = ShmemAllocator->free_offset;
 
 	newFree = newStart + size;
 	if (newFree <= ShmemSegHdr->totalsize)
 	{
 		newSpace = (char *) ShmemBase + newStart;
-		ShmemSegHdr->freeoffset = newFree;
+		ShmemAllocator->free_offset = newFree;
 	}
 	else
 		newSpace = NULL;
@@ -224,45 +252,6 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 
 	/* note this assert is okay with newSpace == NULL */
 	Assert(newSpace == (void *) CACHELINEALIGN(newSpace));
-
-	return newSpace;
-}
-
-/*
- * ShmemAllocUnlocked -- allocate max-aligned chunk from shared memory
- *
- * Allocate space without locking ShmemLock.  This should be used for,
- * and only for, allocations that must happen before ShmemLock is ready.
- *
- * We consider maxalign, rather than cachealign, sufficient here.
- */
-static void *
-ShmemAllocUnlocked(Size size)
-{
-	Size		newStart;
-	Size		newFree;
-	void	   *newSpace;
-
-	/*
-	 * Ensure allocated space is adequately aligned.
-	 */
-	size = MAXALIGN(size);
-
-	Assert(ShmemSegHdr != NULL);
-
-	newStart = ShmemSegHdr->freeoffset;
-
-	newFree = newStart + size;
-	if (newFree > ShmemSegHdr->totalsize)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory (%zu bytes requested)",
-						size)));
-	ShmemSegHdr->freeoffset = newFree;
-
-	newSpace = (char *) ShmemBase + newStart;
-
-	Assert(newSpace == (void *) MAXALIGN(newSpace));
 
 	return newSpace;
 }
@@ -395,16 +384,14 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	if (!ShmemIndex)
 	{
-		PGShmemHeader *shmemseghdr = ShmemSegHdr;
-
 		/* Must be trying to create/attach to ShmemIndex itself */
 		Assert(strcmp(name, "ShmemIndex") == 0);
 
 		if (IsUnderPostmaster)
 		{
 			/* Must be initializing a (non-standalone) backend */
-			Assert(shmemseghdr->index != NULL);
-			structPtr = shmemseghdr->index;
+			Assert(ShmemAllocator->index != NULL);
+			structPtr = ShmemAllocator->index;
 			*foundPtr = true;
 		}
 		else
@@ -417,9 +404,9 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * index has been initialized.  This should be OK because no other
 			 * process can be accessing shared memory yet.
 			 */
-			Assert(shmemseghdr->index == NULL);
+			Assert(ShmemAllocator->index == NULL);
 			structPtr = ShmemAlloc(size);
-			shmemseghdr->index = structPtr;
+			ShmemAllocator->index = structPtr;
 			*foundPtr = false;
 		}
 		LWLockRelease(ShmemIndexLock);
@@ -553,15 +540,15 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 	/* output shared memory allocated but not counted via the shmem index */
 	values[0] = CStringGetTextDatum("<anonymous>");
 	nulls[1] = true;
-	values[2] = Int64GetDatum(ShmemSegHdr->freeoffset - named_allocated);
+	values[2] = Int64GetDatum(ShmemAllocator->free_offset - named_allocated);
 	values[3] = values[2];
 	tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 
 	/* output as-of-yet unused shared memory */
 	nulls[0] = true;
-	values[1] = Int64GetDatum(ShmemSegHdr->freeoffset);
+	values[1] = Int64GetDatum(ShmemAllocator->free_offset);
 	nulls[1] = false;
-	values[2] = Int64GetDatum(ShmemSegHdr->totalsize - ShmemSegHdr->freeoffset);
+	values[2] = Int64GetDatum(ShmemSegHdr->totalsize - ShmemAllocator->free_offset);
 	values[3] = values[2];
 	tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 
