@@ -294,9 +294,8 @@ PortalDefineQuery(Portal portal,
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
-	portal->qc.commandTag = commandTag;
-	portal->qc.nprocessed = 0;
 	portal->commandTag = commandTag;
+	SetQueryCompletion(&portal->qc, commandTag, 0);
 	portal->stmts = stmts;
 	portal->cplan = cplan;
 	portal->status = PORTAL_DEFINED;
