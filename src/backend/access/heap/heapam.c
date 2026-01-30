@@ -111,11 +111,11 @@ static HeapTuple ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool ke
 
 
 /*
- * Each tuple lock mode has a corresponding heavyweight lock, and one or two
- * corresponding MultiXactStatuses (one to merely lock tuples, another one to
- * update them).  This table (and the macros below) helps us determine the
- * heavyweight lock mode and MultiXactStatus values to use for any particular
- * tuple lock strength.
+ * This table lists the heavyweight lock mode that corresponds to each tuple
+ * lock mode, as well as one or two corresponding MultiXactStatus values:
+ * .lockstatus to merely lock tuples, and .updstatus to update them.  The
+ * latter is set to -1 if the corresponding tuple lock mode does not allow
+ * updating tuples -- see get_mxact_status_for_lock().
  *
  * These interact with InplaceUpdateTupleLock, an alias for ExclusiveLock.
  *
@@ -127,29 +127,30 @@ static const struct
 	LOCKMODE	hwlock;
 	int			lockstatus;
 	int			updstatus;
-}
+}			tupleLockExtraInfo[] =
 
-			tupleLockExtraInfo[MaxLockTupleMode + 1] =
 {
-	{							/* LockTupleKeyShare */
-		AccessShareLock,
-		MultiXactStatusForKeyShare,
-		-1						/* KeyShare does not allow updating tuples */
+	[LockTupleKeyShare] = {
+		.hwlock = AccessShareLock,
+		.lockstatus = MultiXactStatusForKeyShare,
+		/* KeyShare does not allow updating tuples */
+		.updstatus = -1
 	},
-	{							/* LockTupleShare */
-		RowShareLock,
-		MultiXactStatusForShare,
-		-1						/* Share does not allow updating tuples */
+	[LockTupleShare] = {
+		.hwlock = RowShareLock,
+		.lockstatus = MultiXactStatusForShare,
+		/* Share does not allow updating tuples */
+		.updstatus = -1
 	},
-	{							/* LockTupleNoKeyExclusive */
-		ExclusiveLock,
-		MultiXactStatusForNoKeyUpdate,
-		MultiXactStatusNoKeyUpdate
+	[LockTupleNoKeyExclusive] = {
+		.hwlock = ExclusiveLock,
+		.lockstatus = MultiXactStatusForNoKeyUpdate,
+		.updstatus = MultiXactStatusNoKeyUpdate
 	},
-	{							/* LockTupleExclusive */
-		AccessExclusiveLock,
-		MultiXactStatusForUpdate,
-		MultiXactStatusUpdate
+	[LockTupleExclusive] = {
+		.hwlock = AccessExclusiveLock,
+		.lockstatus = MultiXactStatusForUpdate,
+		.updstatus = MultiXactStatusUpdate
 	}
 };
 

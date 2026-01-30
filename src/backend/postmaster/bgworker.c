@@ -120,22 +120,28 @@ static const struct
 
 {
 	{
-		"ParallelWorkerMain", ParallelWorkerMain
+		.fn_name = "ParallelWorkerMain",
+		.fn_addr = ParallelWorkerMain
 	},
 	{
-		"ApplyLauncherMain", ApplyLauncherMain
+		.fn_name = "ApplyLauncherMain",
+		.fn_addr = ApplyLauncherMain
 	},
 	{
-		"ApplyWorkerMain", ApplyWorkerMain
+		.fn_name = "ApplyWorkerMain",
+		.fn_addr = ApplyWorkerMain
 	},
 	{
-		"ParallelApplyWorkerMain", ParallelApplyWorkerMain
+		.fn_name = "ParallelApplyWorkerMain",
+		.fn_addr = ParallelApplyWorkerMain
 	},
 	{
-		"TableSyncWorkerMain", TableSyncWorkerMain
+		.fn_name = "TableSyncWorkerMain",
+		.fn_addr = TableSyncWorkerMain
 	},
 	{
-		"SequenceSyncWorkerMain", SequenceSyncWorkerMain
+		.fn_name = "SequenceSyncWorkerMain",
+		.fn_addr = SequenceSyncWorkerMain
 	}
 };
 
