@@ -18,6 +18,17 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+c5fc17ddaccff14bc22217df2b06ed43a5af16ba
+#
+# Fix trigger transition table capture for MERGE in CTE queries.
+# 2026-01-24 11:30:49 +0000
+#
+# This commit changed the TransitionCaptureState structure, replacing
+# the "tcs_private" field with 3 separate fields. This structure can
+# only be built using MakeTransitionCaptureState(), and PGXN contained
+# no calls to MakeTransitionCaptureState() or uses of the
+# TransitionCaptureState structure.
+
 0f69beddea113dd1d6c5b6f6d82df577ef3c21f2
 #
 # For inplace update, send nontransactional invalidations.
