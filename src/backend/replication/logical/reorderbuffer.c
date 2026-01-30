@@ -5361,7 +5361,7 @@ DisplayMapping(HTAB *tuplecid_data)
  * transaction c) applied in LSN order.
  */
 static void
-ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
+ApplyLogicalMappingFile(HTAB *tuplecid_data, const char *fname)
 {
 	char		path[MAXPGPATH];
 	int			fd;
@@ -5544,7 +5544,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 
 		elog(DEBUG1, "applying mapping: \"%s\" in %u", f->fname,
 			 snapshot->subxip[0]);
-		ApplyLogicalMappingFile(tuplecid_data, relid, f->fname);
+		ApplyLogicalMappingFile(tuplecid_data, f->fname);
 		pfree(f);
 	}
 }
