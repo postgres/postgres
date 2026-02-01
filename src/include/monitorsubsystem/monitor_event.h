@@ -16,11 +16,12 @@
 
 #ifndef MONITOR_EVENT_H
 #define MONITOR_EVENT_H
+#include "postmaster/monitor.h"
 
 
 
-// con = Consumer
-void pg_monitor_con_connect(Size shm_mq_size);
+// con = Consumer / Subscriber
+int pg_monitor_con_connect(Size shm_mq_size);
 void pg_monitor_con_disconnect();
 
 int pg_monitor_subscribe_to_event(const char *event_string, routing_type _routing_type);

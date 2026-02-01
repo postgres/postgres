@@ -42,6 +42,7 @@
 	 autovacuum_max_workers + max_parallel_workers + 1)
 */
 
+// guc pgc postmaster
 #define MAX_BACKENDS_LIMIT 256
 #define MAX_WORKER_PROCESSES_LIMIT 64
 #define AUTOVACUUM_MAX_WORKERS_LIMIT 16
@@ -90,6 +91,7 @@ typedef struct mssEntry
 	SubjectKey key;		 /* hash key */
 	int subjectEntityId; /* id в массиве с SubectEntity */
 						 /* возможно нужна лочка */
+	/* Maybe LWLock needed */
 
 } mssEntry;
 
@@ -113,9 +115,10 @@ typedef struct mssEntry
  * ВАРИАНТ 1 WINS
  *
  */
+
 typedef struct SubscriberInfo
 {
-	pid_t proc_pid;
+	pid_t proc_pid; 
 	/* тут микро вопрос, как это норм задавать - возможно, лучше не через указатели, а через offset и тд... */
 	monitor_channel *channel;
 
@@ -186,7 +189,26 @@ typedef struct mssSharedState
 
 } mssSharedState;
 
-extern mssSharedState *MonSubSystem_SharedState;
+// extern mssSharedState *MonSubSystem_SharedState;
+
+typedef struct MonSubSystem_LocalState
+{
+	mssSharedState *MonSubSystem_SharedState;
+	
+	SubscriberInfo *mySubInfo;
+	PublisherInfo *myPubInfo;
+
+	/*
+	 * maybe it would be better to make smth like
+	 * but Idk
+	 */
+	// monitor_channel *monitor_sub_channel;
+	// monitor_channel *monitor_pub_channel;
+} MonSubSystem_LocalState;
+
+/* Backend-local access point to Monitor SubSystem */
+/* Is PGDLLIMPORT needed? */
+extern PGDLLIMPORT MonSubSystem_LocalState monSubSysLocal;
 
 // I take an example from walwriter (src/backend/postmaster/walwriter.c) and other backgrounds
 pg_noreturn extern void MonitoringProcessMain(const void *startup_data, size_t startup_data_len);

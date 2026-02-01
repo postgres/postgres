@@ -35,7 +35,8 @@ typedef struct ChannelOps
 struct monitor_channel
 {
 	const ChannelOps *ops;
-	void *impl;
+	/* private implementation data (mb needed) */
+    void *private_data;    
 
 };
 

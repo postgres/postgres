@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * monitor_channel_shm_mq.c
- *	  Implementation of monitor channel api, based on shm_mq
+ *	  Implementation of monitor channel api based on shm_mq
  *
  * IDENTIFICATION
  *	  src/backend/monitorsubsystem/monitor_channel_shm_mq.c
@@ -12,46 +12,64 @@
 #include "monitorsubsystem/monitor_channel.h"
 #include "storage/shm_mq.h"
 
-
-typedef struct monitor_channel monitor_channel;
-
-typedef struct
+/* Private data for shm_mq monitor channel */
+typedef struct ShmMqChannelData
 {
-	/* data */
-} ShmMqChannel;
+	shm_mq_handle *mq_handle;
+	shm_mq *mq;
+	Size size;
+	/* mb bool is_sender */
+} ShmMqChannelData;
 
-
-typedef struct ChannelOps
-{
-	bool (*init)(monitor_channel *ch, Size size, void *arg);
-	bool (*send)(monitor_channel *ch, const void *data, Size len);
-	bool (*receive)(monitor_channel *ch, void *buf, Size buf_size, Size *out_len);
-	void (*cleanup)(monitor_channel *ch);
-} ChannelOps;
-
-
-/* не уверенна, что тут нужен этот static, но пусть пока будет */
-static  bool
+/* static needed ? */
+static bool
 shm_mq_channel_init(monitor_channel *ch, const ChannelOps *ops,
-			 Size *size, void *arg)
+					Size *size, void *arg)
 {
+	char *memory = (char *)arg;
 
+	ShmMqChannelData *priv = (ShmMqChannelData *)palloc(sizeof(ShmMqChannelData));
+	if (!priv)
+		return false;
+
+	priv->mq = shm_mq_create(memory, size);
+	priv->size = size;
+	priv->mq_handle = shm_mq_attach(priv->mq, NULL, NULL);
+
+	ch->private_data = priv;
+	return true;
 }
 
 static bool
 shm_mq_channel_send(monitor_channel *ch, const void *data, Size len)
 {
+	ShmMqChannelData *priv = (ShmMqChannelData *)ch->private_data;
 
+	return shm_mq_send(priv->mq_handle, len, data, false, false);
 }
 
 static bool
 shm_mq_channel_receive(monitor_channel *ch, void *buf, Size buf_size, Size *out_len)
 {
-	return ch->ops->receive(ch, buf, buf_size, out_len);
+	ShmMqChannelData *priv = (ShmMqChannelData *)ch->private_data;
+
+
+	Size len;
+	bool result = shm_mq_receive(priv->mq_handle, &len, buf, buf_size);
+	if (result && out_len)
+		*out_len = len;
+
+	return result;
 }
 
 static void
 shm_mq_channel_cleanup(monitor_channel *ch)
 {
-	return ch->ops->cleanup(ch);
+	ShmMqChannelData *priv = (ShmMqChannelData *)ch->private_data;
+
+	if (priv->mq_handle)
+		shm_mq_detach(priv->mq_handle);
+
+	pfree(priv);
+	ch->private_data = NULL;
 }

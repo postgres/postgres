@@ -24,11 +24,6 @@
  * in src/backend/postmaster/postmaster.c
  */
 
-/*
- * QUESTION:     postgres/src/include/meson.build
- * Do I need to add smth?
- *
- */
 
 #include "postgres.h"
 #include "libpq/pqsignal.h"
@@ -38,7 +33,9 @@
 #include "monitorsubsystem/monitor_event.h"
 #include "utils/memutils.h"
 
-mssSharedState *MonSubSystem_SharedState = NULL;
+// mssSharedState *MonSubSystem_SharedState = NULL;
+
+MonSubSystem_LocalState  monSubSysLocal;
 
 Size mss_subscriberInfo_size(void);
 Size mss_publisherInfo_size(void);
@@ -95,8 +92,9 @@ void MonitorShmemInit(void)
 	char *ptr;
 	HASHCTL hash_ctl;
 
-	MonSubSystem_SharedState = (mssSharedState *)
-		ShmemInitStruct("Monitoring Subsystem Data",
+	monSubSysLocal.MonSubSystem_SharedState = 
+	// MonSubSystem_SharedState = 
+	(mssSharedState *) ShmemInitStruct("Monitoring Subsystem Data",
 						MonitorShmemSize(),
 						&found);
 
@@ -104,21 +102,21 @@ void MonitorShmemInit(void)
 	{
 
 		/* LWLocks Initialization */
-		LWLockInitialize(&MonSubSystem_SharedState->lock, LWTRANCHE_MONITOR);
-		LWLockInitialize(&MonSubSystem_SharedState->sub.lock, LWTRANCHE_MONITOR_SUBSCRIBERS);
-		LWLockInitialize(&MonSubSystem_SharedState->pub.lock, LWTRANCHE_MONITOR_PUBLISHERS);
+		LWLockInitialize(&monSubSysLocal.MonSubSystem_SharedState->lock, LWTRANCHE_MONITOR);
+		LWLockInitialize(&monSubSysLocal.MonSubSystem_SharedState->sub.lock, LWTRANCHE_MONITOR_SUBSCRIBERS);
+		LWLockInitialize(&monSubSysLocal.MonSubSystem_SharedState->pub.lock, LWTRANCHE_MONITOR_PUBLISHERS);
 
 		/* Subs initialization */
-		MonSubSystem_SharedState->sub.max_subs_num = MAX_SUBS_NUM;
-		MonSubSystem_SharedState->sub.current_subs_num = 0;
+		monSubSysLocal.MonSubSystem_SharedState->sub.max_subs_num = MAX_SUBS_NUM;
+		monSubSysLocal.MonSubSystem_SharedState->sub.current_subs_num = 0;
 
-		ptr = (char *)MonSubSystem_SharedState;
+		ptr = (char *)monSubSysLocal.MonSubSystem_SharedState;
 		ptr += MAXALIGN(sizeof(mssSharedState));
-		MonSubSystem_SharedState->sub.subscribers = (SubscriberInfo *)ptr;
+		monSubSysLocal.MonSubSystem_SharedState->sub.subscribers = (SubscriberInfo *)ptr;
 
 		for (int i = 0; i < MAX_SUBS_NUM; i++)
 		{
-			SubscriberInfo *sub = &MonSubSystem_SharedState->sub.subscribers[i];
+			SubscriberInfo *sub = &monSubSysLocal.MonSubSystem_SharedState->sub.subscribers[i];
 
 			sub->proc_pid = 0; /* not used yet */
 			sub->channel = NULL;
@@ -133,25 +131,25 @@ void MonitorShmemInit(void)
 
 		/* Pubs initialization */
 		ptr += mss_subscriberInfo_size();
-		MonSubSystem_SharedState->pub.publishers = (PublisherInfo *)ptr;
+		monSubSysLocal.MonSubSystem_SharedState->pub.publishers = (PublisherInfo *)ptr;
 
-		MonSubSystem_SharedState->pub.max_pubs_num = MAX_PUBS_NUM;
-		MonSubSystem_SharedState->pub.current_pubs_num = 0;
+		monSubSysLocal.MonSubSystem_SharedState->pub.max_pubs_num = MAX_PUBS_NUM;
+		monSubSysLocal.MonSubSystem_SharedState->pub.current_pubs_num = 0;
 
 		for (int i = 0; i < MAX_PUBS_NUM; i++)
 		{
-			PublisherInfo *pub = &MonSubSystem_SharedState->pub.publishers[i];
+			PublisherInfo *pub = &monSubSysLocal.MonSubSystem_SharedState->pub.publishers[i];
 			pub->proc_pid = 0;
 			pub->sub_channel = NULL;
 		}
 
 		/* SubjectEntity array initialization */
 		ptr += mss_publisherInfo_size();
-		MonSubSystem_SharedState->subjectEntities = (SubjectEntity *)ptr;
+		monSubSysLocal.MonSubSystem_SharedState->subjectEntities = (SubjectEntity *)ptr;
 
 		for (int i = 0; i < MAX_SUBJECT_NUM; i++)
 		{
-			SubjectEntity *subj = &MonSubSystem_SharedState->subjectEntities[i];
+			SubjectEntity *subj = &monSubSysLocal.MonSubSystem_SharedState->subjectEntities[i];
 
 			subj->_routingType = ANYCAST;
 
@@ -173,13 +171,13 @@ void MonitorShmemInit(void)
 		 * think about using match (function) in hash_ctl
 		 */
 
-		MonSubSystem_SharedState->mss_hash = ShmemInitHash("Monitor Subject Hash",
+		monSubSysLocal.MonSubSystem_SharedState->mss_hash = ShmemInitHash("Monitor Subject Hash",
 														   MAX_SUBJECT_NUM, /* approximate number of entries */
 														   MAX_SUBJECT_NUM, /* maximum number of entries */
 														   &hash_ctl,
 														   HASH_ELEM | HASH_BLOBS);
 
-		if (MonSubSystem_SharedState->mss_hash == NULL)
+		if (monSubSysLocal.MonSubSystem_SharedState->mss_hash == NULL)
 		{
 			elog(FATAL, "could not initialize monitor subject hash table");
 		}
