@@ -72,8 +72,6 @@ generated_backend_headers += fmgrtab_target[1]
 
 # autoconf generates the file there, ensure we get a conflict
 generated_sources_ac += {
-  'src/backend/utils': fmgrtab_output + ['errcodes.h', 'probes.h', 'fmgr-stamp'],
+  'src/backend/utils': fmgrtab_output + ['errcodes.h', 'wait_event_types.h', 'probes.h', 'fmgr-stamp'],
   'src/include/utils': ['header-stamp'],
 }
-
-generated_sources_ac += {'src/backend/utils/activity': ['wait_event_types.h']}
