@@ -14,13 +14,13 @@
 #
 # The files generated from this one are:
 #
-#   src/backend/utils/activity/wait_event_types.h
+#   wait_event_types.h
 #      typedef enum definitions for wait events.
 #
-#   src/backend/utils/activity/pgstat_wait_event.c
+#   pgstat_wait_event.c
 #      C functions to get the wait event name based on the enum.
 #
-#   src/backend/utils/activity/wait_event_types.sgml
+#   wait_event_types.sgml
 #      SGML tables of wait events for inclusion in the documentation.
 #
 # When adding a new wait event, make sure it is placed in the appropriate

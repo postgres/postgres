@@ -31,7 +31,7 @@ static const struct
 
 			waitEventData[] =
 {
-#include "wait_event_funcs_data.c"
+#include "utils/wait_event_funcs_data.c"
 	/* end of list */
 	{NULL, NULL, NULL}
 };
