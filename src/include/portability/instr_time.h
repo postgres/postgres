@@ -129,6 +129,7 @@ pg_clock_gettime_ns(void)
 #else							/* WIN32 */
 
 
+
 /* Use QueryPerformanceCounter() */
 
 /* helper for INSTR_TIME_SET_CURRENT */
