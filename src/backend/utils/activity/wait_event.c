@@ -503,4 +503,4 @@ pgstat_get_wait_event(uint32 wait_event_info)
 	return event_name;
 }
 
-#include "pgstat_wait_event.c"
+#include "utils/pgstat_wait_event.c"

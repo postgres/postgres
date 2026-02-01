@@ -43,7 +43,7 @@ generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp submak
 submake-adt-headers:
 	$(MAKE) -C adt jsonpath_gram.h
 
-$(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h guc_tables.inc.c
+$(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h guc_tables.inc.c pgstat_wait_event.c wait_event_funcs_data.c wait_event_types.h
 
 # fmgr-stamp records the last time we ran Gen_fmgrtab.pl.  We don't rely on
 # the timestamps of the individual output files, because the Perl script
@@ -57,6 +57,12 @@ errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 
 guc_tables.inc.c: $(top_srcdir)/src/backend/utils/misc/guc_parameters.dat $(top_srcdir)/src/backend/utils/misc/gen_guc_tables.pl
 	$(PERL) $(top_srcdir)/src/backend/utils/misc/gen_guc_tables.pl $< $@
+
+pgstat_wait_event.c: wait_event_types.h
+wait_event_funcs_data.c: wait_event_types.h
+
+wait_event_types.h: $(top_srcdir)/src/backend/utils/activity/wait_event_names.txt $(top_srcdir)/src/backend/utils/activity/generate-wait_event_types.pl
+	$(PERL) $(top_srcdir)/src/backend/utils/activity/generate-wait_event_types.pl --code $<
 
 ifeq ($(enable_dtrace), yes)
 probes.h: postprocess_dtrace.sed probes.h.tmp
@@ -73,8 +79,8 @@ endif
 # These generated headers must be symlinked into src/include/.
 # We use header-stamp to record that we've done this because the symlinks
 # themselves may appear older than fmgr-stamp.
-$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h probes.h guc_tables.inc.c
-	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h probes.h guc_tables.inc.c; do \
+$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h probes.h guc_tables.inc.c pgstat_wait_event.c wait_event_funcs_data.c wait_event_types.h
+	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h probes.h guc_tables.inc.c pgstat_wait_event.c wait_event_funcs_data.c wait_event_types.h; do \
 	  rm -f $$file && $(LN_S) "../../../$(subdir)/$$file" . ; \
 	done
 	touch $@
@@ -93,3 +99,4 @@ uninstall-data:
 clean:
 	rm -f probes.h probes.h.tmp
 	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h guc_tables.inc.c
+	rm -f wait_event_types.h pgstat_wait_event.c wait_event_funcs_data.c

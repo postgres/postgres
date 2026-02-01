@@ -4,4 +4,6 @@
 /probes.h
 /errcodes.h
 /header-stamp
+/pgstat_wait_event.c
+/wait_event_funcs_data.c
 /wait_event_types.h
