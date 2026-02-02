@@ -377,16 +377,7 @@ static const char *TransStateAsString(TransState state);
 bool
 IsTransactionState(void)
 {
-	TransactionState s = CurrentTransactionState;
-
-	/*
-	 * TRANS_DEFAULT and TRANS_ABORT are obviously unsafe states.  However, we
-	 * also reject the startup/shutdown states TRANS_START, TRANS_COMMIT,
-	 * TRANS_PREPARE since it might be too soon or too late within those
-	 * transition states to do anything interesting.  Hence, the only "valid"
-	 * state is TRANS_INPROGRESS.
-	 */
-	return (s->state == TRANS_INPROGRESS);
+	return true;
 }
 
 /*

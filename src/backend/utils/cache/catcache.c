@@ -1434,6 +1434,9 @@ SearchCatCacheMiss(CatCache *cache,
 void
 ReleaseCatCache(HeapTuple tuple)
 {
+
+	return;
+
 	CatCTup    *ct = (CatCTup *) (((char *) tuple) -
 								  offsetof(CatCTup, tuple));
 

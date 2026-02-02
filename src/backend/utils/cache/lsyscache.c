@@ -1726,13 +1726,14 @@ get_func_retset(Oid funcid)
 	HeapTuple	tp;
 	bool		result;
 
-	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	result = ((Form_pg_proc) GETSTRUCT(tp))->proretset;
-	ReleaseSysCache(tp);
-	return result;
+	// tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	// if (!HeapTupleIsValid(tp))
+	// 	elog(ERROR, "cache lookup failed for function %u", funcid);
+	//
+	// result = ((Form_pg_proc) GETSTRUCT(tp))->proretset;
+	// ReleaseSysCache(tp);
+	// We don't need cost estimates
+	return false;
 }
 
 /*
@@ -2156,18 +2157,19 @@ get_typlen(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		int16		result;
-
-		result = typtup->typlen;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return 0;
+	// Epsio: todo make this really return something
+	// tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	// if (HeapTupleIsValid(tp))
+	// {
+	// 	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+	// 	int16		result;
+	//
+	// 	result = typtup->typlen;
+	// 	ReleaseSysCache(tp);
+	// 	return result;
+	// }
+	// else
+		return 4;
 }
 
 /*
@@ -2498,28 +2500,30 @@ getBaseTypeAndTypmod(Oid typid, int32 *typmod)
 	/*
 	 * We loop to find the bottom base type in a stack of domains.
 	 */
-	for (;;)
-	{
-		HeapTuple	tup;
-		Form_pg_type typTup;
-
-		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "cache lookup failed for type %u", typid);
-		typTup = (Form_pg_type) GETSTRUCT(tup);
-		if (typTup->typtype != TYPTYPE_DOMAIN)
-		{
-			/* Not a domain, so done */
-			ReleaseSysCache(tup);
-			break;
-		}
-
-		Assert(*typmod == -1);
-		typid = typTup->typbasetype;
-		*typmod = typTup->typtypmod;
-
-		ReleaseSysCache(tup);
-	}
+	//command out cause we don't care about postgres domains
+	// for (;;)
+	// {
+	// 	HeapTuple	tup;
+	// 	Form_pg_type typTup;
+	//
+	// 	// commented out cause we don't use domains
+	// 	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	// 	if (!HeapTupleIsValid(tup))
+	// 		elog(ERROR, "cache lookup failed for type %u", typid);
+	// 	typTup = (Form_pg_type) GETSTRUCT(tup);
+	// 	if (typTup->typtype != TYPTYPE_DOMAIN)
+	// 	{
+	// 		/* Not a domain, so done */
+	// 		ReleaseSysCache(tup);
+	// 		break;
+	// 	}
+	//
+	// 	Assert(*typmod == -1);
+	// 	typid = typTup->typbasetype;
+	// 	*typmod = typTup->typtypmod;
+	//
+	// 	ReleaseSysCache(tup);
+	// }
 
 	return typid;
 }

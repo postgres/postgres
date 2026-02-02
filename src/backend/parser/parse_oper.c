@@ -65,7 +65,7 @@ typedef struct OprCacheEntry
 } OprCacheEntry;
 
 
-static Oid	binary_oper_exact(List *opname, Oid arg1, Oid arg2);
+static Operator	binary_oper_exact(List *opname, Oid arg1, Oid arg2);
 static FuncDetailCode oper_select_candidate(int nargs,
 											Oid *input_typeids,
 											FuncCandidateList candidates,
@@ -270,42 +270,53 @@ oprfuncid(Operator op)
  * the possibility that the other operand is a domain type that needs to
  * be reduced to its base type to find an "exact" match.
  */
-static Oid
+static Operator
 binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 {
 	Oid			result;
 	bool		was_unknown = false;
+	HeapTuple	dummyTuple;
+	HeapTupleHeader td;
+	Size		len;
 
-	/* Unspecified type for one of the arguments? then use the other */
-	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
-	{
-		arg1 = arg2;
-		was_unknown = true;
+	Form_pg_operator operator = NULL;
+
+	char	   *schemaname;
+	char	   *opername;
+
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(opname, &schemaname, &opername);
+
+	if (schemaname) {
+		elog(ERROR, "Not implemented: binary_oper_exact with schema name");
 	}
-	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
-	{
-		arg2 = arg1;
-		was_unknown = true;
-	}
-
-	result = OpernameGetOprid(opname, arg1, arg2);
-	if (OidIsValid(result))
-		return result;
-
-	if (was_unknown)
-	{
-		/* arg1 and arg2 are the same here, need only look at arg1 */
-		Oid			basetype = getBaseType(arg1);
-
-		if (basetype != arg1)
-		{
-			result = OpernameGetOprid(opname, basetype, basetype);
-			if (OidIsValid(result))
-				return result;
-		}
+	if (arg1 != 23 || arg2 != 23) {
+		elog(ERROR, "Not implemented: binary_oper_exact with non-literal operand types");
 	}
 
-	return InvalidOid;
+	/* Create a dummy operator tuple without using syscache */
+	/* We just need a valid HeapTuple structure +  */
+	len = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) + sizeof(FormData_pg_operator));
+
+	dummyTuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
+	dummyTuple->t_len = len;
+	dummyTuple->t_data = td = (HeapTupleHeader) ((char *) dummyTuple + HEAPTUPLESIZE);
+
+	td->t_hoff = offsetof(HeapTupleHeaderData, t_bits);
+
+	operator = (Form_pg_operator) ((char *) dummyTuple->t_data + dummyTuple->t_data->t_hoff);
+
+	operator->oid = 1337;
+	operator->oprcode = 1337;
+
+	// support int
+	operator->oprleft = 23;
+	operator->oprright = 23;
+
+	operator->oprresult = BOOLOID;
+
+	return (Operator) dummyTuple;
 }
 
 
@@ -363,7 +374,6 @@ oper_select_candidate(int nargs,
 	return FUNCDETAIL_MULTIPLE; /* failed to select a best candidate */
 }
 
-
 /* oper() -- search for a binary operator
  * Given operator name, types of arg1 and arg2, return oper struct.
  *
@@ -386,30 +396,31 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 	OprCacheKey key;
 	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
-	HeapTuple	tup = NULL;
+	Operator	tup = NULL;
 
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
+	// key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
 
-	if (key_ok)
-	{
-		operOid = find_oper_cache_entry(&key);
-		if (OidIsValid(operOid))
-		{
-			tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
-			if (HeapTupleIsValid(tup))
-				return (Operator) tup;
-		}
-	}
+	// if (key_ok)
+	// {
+	// 	operOid = find_oper_cache_entry(&key);
+	// 	if (OidIsValid(operOid))
+	// 	{
+	// 		tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
+	// 		if (HeapTupleIsValid(tup))
+	// 			return (Operator) tup;
+	// 	}
+	// }
 
 	/*
 	 * First try for an "exact" match.
 	 */
-	operOid = binary_oper_exact(opname, ltypeId, rtypeId);
-	if (!OidIsValid(operOid))
+	tup = binary_oper_exact(opname, ltypeId, rtypeId);
+	if (!tup)
 	{
+		elog(ERROR, "Not implemented: oper() without exact match");
 		/*
 		 * Otherwise, search for the most suitable candidate.
 		 */
@@ -437,18 +448,7 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 		}
 	}
 
-	if (OidIsValid(operOid))
-		tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
-
-	if (HeapTupleIsValid(tup))
-	{
-		if (key_ok)
-			make_oper_cache_entry(&key, operOid);
-	}
-	else if (!noError)
-		op_error(pstate, opname, 'b', ltypeId, rtypeId, fdresult, location);
-
-	return (Operator) tup;
+	return tup;
 }
 
 /* compatible_oper()

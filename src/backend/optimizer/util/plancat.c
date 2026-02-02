@@ -136,16 +136,17 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 * table_open() already rejected indexes and composite types; spell the
 	 * error the same way it does.
 	 */
-	if (!relation->rd_tableam)
-	{
-		if (!(relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE ||
-			  relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot open relation \"%s\"",
-							RelationGetRelationName(relation)),
-					 errdetail_relkind_not_supported(relation->rd_rel->relkind)));
-	}
+	// EPSIO: we don't want to implement access methods (IE to create a struct re how to access the table, so we comment this out
+	// if (!relation->rd_tableam)
+	// {
+	// 	if (!(relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE ||
+	// 		  relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
+	// 		ereport(ERROR,
+	// 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+	// 				 errmsg("cannot open relation \"%s\"",
+	// 						RelationGetRelationName(relation)),
+	// 				 errdetail_relkind_not_supported(relation->rd_rel->relkind)));
+	// }
 
 	/* Temporary and unlogged relations are inaccessible during recovery. */
 	if (!RelationIsPermanent(relation) && RecoveryInProgress())

@@ -1411,7 +1411,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 							   (LockingClause *) lfirst(l), false);
 	}
 
-	assign_query_collations(pstate, qry);
+	// We don't care about collation so commented out
+	//assign_query_collations(pstate, qry);
 
 	/* this must be done after collations, for reliable comparison of exprs */
 	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)

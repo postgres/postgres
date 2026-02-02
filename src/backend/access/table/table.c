@@ -41,7 +41,7 @@ table_open(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
 
-	r = relation_open(relationId, lockmode);
+	r = return_dummy_relation();
 
 	validate_relation_kind(r);
 

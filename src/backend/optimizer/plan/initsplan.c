@@ -209,8 +209,9 @@ add_other_rels_to_query(PlannerInfo *root)
 			continue;
 
 		/* If it's marked as inheritable, look for children. */
-		if (rte->inh)
-			expand_inherited_rtentry(root, rel, rte, rti);
+		// Epsio -- comment this out cause we don't support inheritence.
+		// if (rte->inh)
+		// 	expand_inherited_rtentry(root, rel, rte, rti);
 	}
 }
 

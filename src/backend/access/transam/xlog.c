@@ -5907,31 +5907,7 @@ PerformRecoveryXLogAction(void)
 bool
 RecoveryInProgress(void)
 {
-	/*
-	 * We check shared state each time only until we leave recovery mode. We
-	 * can't re-enter recovery, so there's no need to keep checking after the
-	 * shared variable has once been seen false.
-	 */
-	if (!LocalRecoveryInProgress)
-		return false;
-	else
-	{
-		/*
-		 * use volatile pointer to make sure we make a fresh read of the
-		 * shared variable.
-		 */
-		volatile XLogCtlData *xlogctl = XLogCtl;
-
-		LocalRecoveryInProgress = (xlogctl->SharedRecoveryState != RECOVERY_STATE_DONE);
-
-		/*
-		 * Note: We don't need a memory barrier when we're still in recovery.
-		 * We might exit recovery immediately after return, so the caller
-		 * can't rely on 'true' meaning that we're still in recovery anyway.
-		 */
-
-		return LocalRecoveryInProgress;
-	}
+	return false;
 }
 
 /*

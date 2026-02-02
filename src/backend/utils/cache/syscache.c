@@ -817,44 +817,38 @@ HeapTuple
 SearchSysCache1(int cacheId,
 				Datum key1)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
-	Assert(SysCache[cacheId]->cc_nkeys == 1);
-
-	return SearchCatCache1(SysCache[cacheId], key1);
+	elog(ERROR, "Unsupported cache lookup1");
+	Assert(false);
+	return NULL;
 }
 
 HeapTuple
 SearchSysCache2(int cacheId,
 				Datum key1, Datum key2)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
-	Assert(SysCache[cacheId]->cc_nkeys == 2);
 
-	return SearchCatCache2(SysCache[cacheId], key1, key2);
+	// print error and panic
+	elog(ERROR, "Unsupported cache lookup2");
+	Assert(false);
+	return NULL;
 }
 
 HeapTuple
 SearchSysCache3(int cacheId,
 				Datum key1, Datum key2, Datum key3)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
-	Assert(SysCache[cacheId]->cc_nkeys == 3);
-
-	return SearchCatCache3(SysCache[cacheId], key1, key2, key3);
+	elog(ERROR, "Unsupported cache lookup3");
+	Assert(false);
+	return NULL;
 }
 
 HeapTuple
 SearchSysCache4(int cacheId,
 				Datum key1, Datum key2, Datum key3, Datum key4)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
-	Assert(SysCache[cacheId]->cc_nkeys == 4);
-
-	return SearchCatCache4(SysCache[cacheId], key1, key2, key3, key4);
+	elog(ERROR, "Unsupported cache lookup4");
+	Assert(false);
+	return NULL;
 }
 
 /*
@@ -1130,6 +1124,8 @@ struct catclist *
 SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3)
 {
+	int * asdf = NULL;
+	*asdf = 10;
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "invalid cache ID: %d", cacheId);

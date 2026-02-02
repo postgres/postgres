@@ -28,7 +28,7 @@
 #include "storage/lmgr.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
-
+#include "catalog/pg_type_d.h"
 
 /* ----------------
  *		relation_open - open any relation by relation OID
@@ -160,6 +160,23 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	return relation_open(relOid, NoLock);
 }
 
+Relation return_dummy_relation() {
+	Relation	r = palloc0(sizeof(RelationData));
+	FormData_pg_class *form = palloc0(sizeof(FormData_pg_class));
+
+	r->rd_rel = form;
+	r->rd_rel->relkind = RELKIND_RELATION;
+	r->rd_id = 1337;
+	strcpy(&r->rd_rel->relname, "dummy");
+
+	r->rd_att = CreateTemplateTupleDesc(1);
+	r->rd_rel->relnatts = 1;
+
+	TupleDescInitBuiltinEntry(r->rd_att, (AttrNumber) 1, "a",
+					   INT4OID, -1, 0);
+	return r;
+}
+
 /* ----------------
  *		relation_openrv_extended - open any relation specified by a RangeVar
  *
@@ -173,24 +190,8 @@ Relation
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok)
 {
-	Oid			relOid;
-
-	/*
-	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  See comments in relation_openrv().
-	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
-
-	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
-
-	/* Return NULL on not-found */
-	if (!OidIsValid(relOid))
-		return NULL;
-
-	/* Let relation_open do the rest */
-	return relation_open(relOid, NoLock);
+	// return dummy relation:
+	return return_dummy_relation();
 }
 
 /* ----------------

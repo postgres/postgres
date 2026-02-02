@@ -746,7 +746,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 					 * that, but no more; we have to handle such cases as
 					 * full-fledged inheritance.
 					 */
-					rte->inh = has_subclass(rte->relid);
+					// Epsio -- we don't want to support inheritence
+					//rte->inh = has_subclass(rte->relid);
 				}
 				break;
 			case RTE_JOIN:

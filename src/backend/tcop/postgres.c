@@ -859,7 +859,7 @@ pg_plan_query(Query *querytree, const char *query_string, int cursorOptions,
 		return NULL;
 
 	/* Planner must have a snapshot in case it calls user-defined functions. */
-	Assert(ActiveSnapshotSet());
+	// Assert(ActiveSnapshotSet());
 
 	TRACE_POSTGRESQL_QUERY_PLAN_START();
 

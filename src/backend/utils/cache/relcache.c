@@ -2159,31 +2159,7 @@ RelationDecrementReferenceCount(Relation rel)
 void
 RelationClose(Relation relation)
 {
-	/* Note: no locking manipulations needed */
-	RelationDecrementReferenceCount(relation);
-
-	/*
-	 * If the relation is no longer open in this session, we can clean up any
-	 * stale partition descriptors it has.  This is unlikely, so check to see
-	 * if there are child contexts before expending a call to mcxt.c.
-	 */
-	if (RelationHasReferenceCountZero(relation))
-	{
-		if (relation->rd_pdcxt != NULL &&
-			relation->rd_pdcxt->firstchild != NULL)
-			MemoryContextDeleteChildren(relation->rd_pdcxt);
-
-		if (relation->rd_pddcxt != NULL &&
-			relation->rd_pddcxt->firstchild != NULL)
-			MemoryContextDeleteChildren(relation->rd_pddcxt);
-	}
-
-#ifdef RELCACHE_FORCE_RELEASE
-	if (RelationHasReferenceCountZero(relation) &&
-		relation->rd_createSubid == InvalidSubTransactionId &&
-		relation->rd_firstRelfilelocatorSubid == InvalidSubTransactionId)
-		RelationClearRelation(relation, false);
-#endif
+	
 }
 
 /*
@@ -4874,7 +4850,8 @@ RelationGetStatExtList(Relation relation)
 	 * list into the relcache entry.  This avoids cache-context memory leakage
 	 * if we get some sort of error partway through.
 	 */
-	result = NIL;
+	// Epsio -- we don't want to rely on system stats
+	return NIL;
 
 	/*
 	 * Prepare to scan pg_statistic_ext for entries having stxrelid = this
