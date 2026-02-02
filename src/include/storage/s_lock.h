@@ -119,6 +119,10 @@
  * gcc from thinking it can cache the values of shared-memory fields
  * across the asm code.  Add "cc" if your asm code changes the condition
  * code register, and also list any temp registers the code uses.
+ *
+ * If you need branch target labels within the asm block, include "%="
+ * in the label names to make them distinct across multiple asm blocks
+ * within a source file.
  *----------
  */
 
@@ -147,11 +151,11 @@ tas(volatile slock_t *lock)
 	 * leave it alone.
 	 */
 	__asm__ __volatile__(
-		"	cmpb	$0,%1	\n"
-		"	jne		1f		\n"
-		"	lock			\n"
-		"	xchgb	%0,%1	\n"
-		"1: \n"
+		"	cmpb	$0,%1		\n"
+		"	jne		TAS%=_out	\n"
+		"	lock				\n"
+		"	xchgb	%0,%1		\n"
+		"TAS%=_out: \n"
 :		"+q"(_res), "+m"(*lock)
 :		/* no inputs */
 :		"memory", "cc");
@@ -421,17 +425,17 @@ tas(volatile slock_t *lock)
 	__asm__ __volatile__(
 "	lwarx   %0,0,%3,1	\n"
 "	cmpwi   %0,0		\n"
-"	bne     1f			\n"
+"	bne     TAS%=_fail	\n"
 "	addi    %0,%0,1		\n"
 "	stwcx.  %0,0,%3		\n"
-"	beq     2f			\n"
-"1: \n"
+"	beq     TAS%=_ok	\n"
+"TAS%=_fail: \n"
 "	li      %1,1		\n"
-"	b       3f			\n"
-"2: \n"
+"	b       TAS%=_out	\n"
+"TAS%=_ok: \n"
 "	lwsync				\n"
 "	li      %1,0		\n"
-"3: \n"
+"TAS%=_out: \n"
 :	"=&b"(_t), "=r"(_res), "+m"(*lock)
 :	"r"(lock)
 :	"memory", "cc");
