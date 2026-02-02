@@ -207,7 +207,7 @@ select pg_truncate_visibility_map('test_partition');
 
 -- test the case where vacuum phase I does not need to modify the heap buffer
 -- and only needs to set the VM
-create table test_vac_unmodified_heap(a int);
+create temp table test_vac_unmodified_heap(a int);
 insert into test_vac_unmodified_heap values (1);
 vacuum (freeze) test_vac_unmodified_heap;
 select pg_visibility_map_summary('test_vac_unmodified_heap');
