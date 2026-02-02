@@ -251,7 +251,7 @@ RemoveWalSummaryIfOlderThan(WalSummaryFile *ws, time_t cutoff_time)
 	if (unlink(path) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not stat file \"%s\": %m", path)));
+				 errmsg("could not remove file \"%s\": %m", path)));
 	ereport(DEBUG2,
 			(errmsg_internal("removing file \"%s\"", path)));
 }
