@@ -86,25 +86,8 @@ populate_compact_attribute_internal(Form_pg_attribute src,
 		IsCatalogRelationOid(src->attrelid) ? ATTNULLABLE_VALID :
 		ATTNULLABLE_UNKNOWN;
 
-	switch (src->attalign)
-	{
-		case TYPALIGN_INT:
-			dst->attalignby = ALIGNOF_INT;
-			break;
-		case TYPALIGN_CHAR:
-			dst->attalignby = sizeof(char);
-			break;
-		case TYPALIGN_DOUBLE:
-			dst->attalignby = ALIGNOF_DOUBLE;
-			break;
-		case TYPALIGN_SHORT:
-			dst->attalignby = ALIGNOF_SHORT;
-			break;
-		default:
-			dst->attalignby = 0;
-			elog(ERROR, "invalid attalign value: %c", src->attalign);
-			break;
-	}
+	/* Compute numeric alignment requirement, too */
+	dst->attalignby = typalign_to_alignby(src->attalign);
 }
 
 /*

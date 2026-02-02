@@ -735,6 +735,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 		char	   *dataptr = *dataptr_p;
 		bits8	   *bitmap = *bitmap_p;
 		int			bitmask = *bitmask_p;
+		uint8		typalignby = typalign_to_alignby(elm->typalign);
 
 		for (i = 0; i < dims[dim]; i++)
 		{
@@ -751,7 +752,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 				itemvalue = fetch_att(dataptr, elm->typbyval, elm->typlen);
 				PyList_SetItem(list, i, elm->func(elm, itemvalue));
 				dataptr = att_addlength_pointer(dataptr, elm->typlen, dataptr);
-				dataptr = (char *) att_align_nominal(dataptr, elm->typalign);
+				dataptr = (char *) att_nominal_alignby(dataptr, typalignby);
 			}
 
 			/* advance bitmap pointer if any */

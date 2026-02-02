@@ -572,21 +572,22 @@ multirange_size_estimate(TypeCacheEntry *rangetyp, int32 range_count,
 						 RangeType **ranges)
 {
 	char		elemalign = rangetyp->rngelemtype->typalign;
+	uint8		elemalignby = typalign_to_alignby(elemalign);
 	Size		size;
 	int32		i;
 
 	/*
 	 * Count space for MultirangeType struct, items and flags.
 	 */
-	size = att_align_nominal(sizeof(MultirangeType) +
-							 Max(range_count - 1, 0) * sizeof(uint32) +
-							 range_count * sizeof(uint8), elemalign);
+	size = att_nominal_alignby(sizeof(MultirangeType) +
+							   Max(range_count - 1, 0) * sizeof(uint32) +
+							   range_count * sizeof(uint8), elemalignby);
 
 	/* Count space for range bounds */
 	for (i = 0; i < range_count; i++)
-		size += att_align_nominal(VARSIZE(ranges[i]) -
-								  sizeof(RangeType) -
-								  sizeof(char), elemalign);
+		size += att_nominal_alignby(VARSIZE(ranges[i]) -
+									sizeof(RangeType) -
+									sizeof(char), elemalignby);
 
 	return size;
 }
@@ -605,6 +606,7 @@ write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 	const char *begin;
 	char	   *ptr;
 	char		elemalign = rangetyp->rngelemtype->typalign;
+	uint8		elemalignby = typalign_to_alignby(elemalign);
 
 	items = MultirangeGetItemsPtr(multirange);
 	flags = MultirangeGetFlagsPtr(multirange);
@@ -630,7 +632,7 @@ write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 		flags[i] = *((char *) ranges[i] + VARSIZE(ranges[i]) - sizeof(char));
 		len = VARSIZE(ranges[i]) - sizeof(RangeType) - sizeof(char);
 		memcpy(ptr, ranges[i] + 1, len);
-		ptr += att_align_nominal(len, elemalign);
+		ptr += att_nominal_alignby(len, elemalignby);
 	}
 }
 

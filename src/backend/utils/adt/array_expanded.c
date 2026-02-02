@@ -238,6 +238,7 @@ EA_get_flat_size(ExpandedObjectHeader *eohptr)
 	Datum	   *dvalues;
 	bool	   *dnulls;
 	Size		nbytes;
+	uint8		typalignby;
 	int			i;
 
 	Assert(eah->ea_magic == EA_MAGIC);
@@ -261,12 +262,13 @@ EA_get_flat_size(ExpandedObjectHeader *eohptr)
 	dvalues = eah->dvalues;
 	dnulls = eah->dnulls;
 	nbytes = 0;
+	typalignby = typalign_to_alignby(eah->typalign);
 	for (i = 0; i < nelems; i++)
 	{
 		if (dnulls && dnulls[i])
 			continue;
 		nbytes = att_addlength_datum(nbytes, eah->typlen, dvalues[i]);
-		nbytes = att_align_nominal(nbytes, eah->typalign);
+		nbytes = att_nominal_alignby(nbytes, typalignby);
 		/* check for overflow of total request */
 		if (!AllocSizeIsValid(nbytes))
 			ereport(ERROR,

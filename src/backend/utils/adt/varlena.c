@@ -3898,6 +3898,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
+	uint8		typalignby;
 	StringInfoData buf;
 	bool		printed = false;
 	char	   *p;
@@ -3947,6 +3948,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	typlen = my_extra->typlen;
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
+	typalignby = typalign_to_alignby(typalign);
 
 	p = ARR_DATA_PTR(v);
 	bitmap = ARR_NULLBITMAP(v);
@@ -3983,7 +3985,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 			printed = true;
 
 			p = att_addlength_pointer(p, typlen, p);
-			p = (char *) att_align_nominal(p, typalign);
+			p = (char *) att_nominal_alignby(p, typalignby);
 		}
 
 		/* advance bitmap pointer if any */

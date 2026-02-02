@@ -2069,6 +2069,7 @@ get_text_array_contents(ArrayType *array, int *numitems)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	uint8		typalignby;
 	char	  **values;
 	char	   *ptr;
 	bits8	   *bitmap;
@@ -2081,6 +2082,7 @@ get_text_array_contents(ArrayType *array, int *numitems)
 
 	get_typlenbyvalalign(ARR_ELEMTYPE(array),
 						 &typlen, &typbyval, &typalign);
+	typalignby = typalign_to_alignby(typalign);
 
 	values = palloc_array(char *, nitems);
 
@@ -2098,7 +2100,7 @@ get_text_array_contents(ArrayType *array, int *numitems)
 		{
 			values[i] = TextDatumGetCString(PointerGetDatum(ptr));
 			ptr = att_addlength_pointer(ptr, typlen, ptr);
-			ptr = (char *) att_align_nominal(ptr, typalign);
+			ptr = (char *) att_nominal_alignby(ptr, typalignby);
 		}
 
 		/* advance bitmap pointer if any */
