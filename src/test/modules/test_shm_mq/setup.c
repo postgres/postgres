@@ -228,6 +228,7 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 	/* Register the workers. */
 	for (i = 0; i < nworkers; ++i)
 	{
+		snprintf(worker.bgw_name, BGW_MAXLEN, "test_shm_mq worker %d", i + 1);
 		if (!RegisterDynamicBackgroundWorker(&worker, &wstate->handle[i]))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
