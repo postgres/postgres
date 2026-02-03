@@ -1612,6 +1612,32 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 }
 
 /*
+ * Handle configuration reload.
+ *
+ * Process the pending configuration file reload and reinitializes synchronous
+ * replication settings. Also releases any waiters that may now be satisfied due
+ * to changes in synchronous replication requirements.
+ */
+static void
+WalSndHandleConfigReload(void)
+{
+	if (!ConfigReloadPending)
+		return;
+
+	ConfigReloadPending = false;
+	ProcessConfigFile(PGC_SIGHUP);
+	SyncRepInitConfig();
+
+	/*
+	 * Recheck and release any now-satisfied waiters after config reload
+	 * changes synchronous replication requirements (e.g., reducing the number
+	 * of sync standbys or changing the standby names).
+	 */
+	if (!am_cascading_walsender)
+		SyncRepReleaseWaiters();
+}
+
+/*
  * Wait until there is no pending write. Also process replies from the other
  * side and check timeouts during that.
  */
@@ -1646,12 +1672,7 @@ ProcessPendingWrites(void)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Process any requests or signals received recently */
-		if (ConfigReloadPending)
-		{
-			ConfigReloadPending = false;
-			ProcessConfigFile(PGC_SIGHUP);
-			SyncRepInitConfig();
-		}
+		WalSndHandleConfigReload();
 
 		/* Try to flush pending output to the client */
 		if (pq_flush_if_writable() != 0)
@@ -1854,12 +1875,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Process any requests or signals received recently */
-		if (ConfigReloadPending)
-		{
-			ConfigReloadPending = false;
-			ProcessConfigFile(PGC_SIGHUP);
-			SyncRepInitConfig();
-		}
+		WalSndHandleConfigReload();
 
 		/* Check for input from the client */
 		ProcessRepliesIfAny();
@@ -2899,12 +2915,7 @@ WalSndLoop(WalSndSendDataCallback send_data)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Process any requests or signals received recently */
-		if (ConfigReloadPending)
-		{
-			ConfigReloadPending = false;
-			ProcessConfigFile(PGC_SIGHUP);
-			SyncRepInitConfig();
-		}
+		WalSndHandleConfigReload();
 
 		/* Check for input from the client */
 		ProcessRepliesIfAny();
