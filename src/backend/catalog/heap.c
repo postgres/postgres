@@ -2635,6 +2635,7 @@ AddRelationNewConstraints(Relation rel,
 			 * requested validity.
 			 */
 			if (AdjustNotNullInheritance(RelationGetRelid(rel), colnum,
+										 cdef->conname,
 										 is_local, cdef->is_no_inherit,
 										 cdef->skip_validation))
 				continue;

@@ -731,14 +731,15 @@ extractNotNullColumn(HeapTuple constrTup)
  * If a constraint exists but the connoinherit flag is not what the caller
  * wants, throw an error about the incompatibility.  If the desired
  * constraint is valid but the existing constraint is not valid, also
- * throw an error about that (the opposite case is acceptable).
+ * throw an error about that (the opposite case is acceptable).  If
+ * the proposed constraint has a different name, also throw an error.
  *
  * If everything checks out, we adjust conislocal/coninhcount and return
  * true.  If is_local is true we flip conislocal true, or do nothing if
  * it's already true; otherwise we increment coninhcount by 1.
  */
 bool
-AdjustNotNullInheritance(Oid relid, AttrNumber attnum,
+AdjustNotNullInheritance(Oid relid, AttrNumber attnum, const char *new_conname,
 						 bool is_local, bool is_no_inherit, bool is_notvalid)
 {
 	HeapTuple	tup;
@@ -776,6 +777,22 @@ AdjustNotNullInheritance(Oid relid, AttrNumber attnum,
 						   NameStr(conform->conname), get_rel_name(relid)),
 					errhint("You might need to validate it using %s.",
 							"ALTER TABLE ... VALIDATE CONSTRAINT"));
+
+		/*
+		 * If, for a new constraint that is being defined locally (i.e., not
+		 * being passed down via inheritance), a name was specified, then
+		 * verify that the existing constraint has the same name.  Otherwise
+		 * throw an error.  Names of inherited constraints are ignored because
+		 * they are not directly user-specified, so matching is not important.
+		 */
+		if (is_local && new_conname &&
+			strcmp(new_conname, NameStr(conform->conname)) != 0)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot create not-null constraint \"%s\" on column \"%s\" of table \"%s\"",
+						   new_conname, get_attname(relid, attnum, false), get_rel_name(relid)),
+					errdetail("A not-null constraint named \"%s\" already exists for this column.",
+							  NameStr(conform->conname)));
 
 		if (!is_local)
 		{
