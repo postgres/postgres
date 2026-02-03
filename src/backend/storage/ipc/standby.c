@@ -390,7 +390,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				 * Now find out who to throw out of the balloon.
 				 */
 				Assert(VirtualTransactionIdIsValid(*waitlist));
-				pid = CancelVirtualTransaction(*waitlist, reason);
+				pid = SignalVirtualTransaction(*waitlist, reason);
 
 				/*
 				 * Wait a little bit for it to die so that we avoid flooding
@@ -581,7 +581,7 @@ ResolveRecoveryConflictWithDatabase(Oid dbid)
 	 */
 	while (CountDBBackends(dbid) > 0)
 	{
-		CancelDBBackends(dbid, PROCSIG_RECOVERY_CONFLICT_DATABASE, true);
+		CancelDBBackends(dbid, PROCSIG_RECOVERY_CONFLICT_DATABASE);
 
 		/*
 		 * Wait awhile for them to die so that we avoid flooding an
@@ -724,8 +724,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag, bool logging_conflict)
 		while (VirtualTransactionIdIsValid(*backends))
 		{
 			SignalVirtualTransaction(*backends,
-									 PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
-									 false);
+									 PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
 			backends++;
 		}
 
@@ -881,11 +880,11 @@ SendRecoveryConflictWithBufferPin(ProcSignalReason reason)
 
 	/*
 	 * We send signal to all backends to ask them if they are holding the
-	 * buffer pin which is delaying the Startup process. We must not set the
-	 * conflict flag yet, since most backends will be innocent. Let the
-	 * SIGUSR1 handling in each backend decide their own fate.
+	 * buffer pin which is delaying the Startup process. Most of them will be
+	 * innocent, but we let the SIGUSR1 handling in each backend decide their
+	 * own fate.
 	 */
-	CancelDBBackends(InvalidOid, reason, false);
+	CancelDBBackends(InvalidOid, reason);
 }
 
 /*

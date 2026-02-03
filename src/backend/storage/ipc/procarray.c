@@ -708,8 +708,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		/* be sure this is cleared in abort */
 		proc->delayChkptFlags = 0;
 
-		proc->recoveryConflictPending = false;
-
 		/* must be cleared with xid/xmin: */
 		/* avoid unnecessarily dirtying shared cachelines */
 		if (proc->statusFlags & PROC_VACUUM_STATE_MASK)
@@ -749,8 +747,6 @@ ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid)
 
 	/* be sure this is cleared in abort */
 	proc->delayChkptFlags = 0;
-
-	proc->recoveryConflictPending = false;
 
 	/* must be cleared with xid/xmin: */
 	/* avoid unnecessarily dirtying shared cachelines */
@@ -933,7 +929,6 @@ ProcArrayClearTransaction(PGPROC *proc)
 
 	proc->vxid.lxid = InvalidLocalTransactionId;
 	proc->xmin = InvalidTransactionId;
-	proc->recoveryConflictPending = false;
 
 	Assert(!(proc->statusFlags & PROC_VACUUM_STATE_MASK));
 	Assert(!proc->delayChkptFlags);
@@ -3445,19 +3440,12 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 }
 
 /*
- * CancelVirtualTransaction - used in recovery conflict processing
+ * SignalVirtualTransaction - used in recovery conflict processing
  *
  * Returns pid of the process signaled, or 0 if not found.
  */
 pid_t
-CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode)
-{
-	return SignalVirtualTransaction(vxid, sigmode, true);
-}
-
-pid_t
-SignalVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode,
-						 bool conflictPending)
+SignalVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
@@ -3476,7 +3464,6 @@ SignalVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode,
 		if (procvxid.procNumber == vxid.procNumber &&
 			procvxid.localTransactionId == vxid.localTransactionId)
 		{
-			proc->recoveryConflictPending = conflictPending;
 			pid = proc->pid;
 			if (pid != 0)
 			{
@@ -3618,7 +3605,7 @@ CountDBConnections(Oid databaseid)
  * CancelDBBackends --- cancel backends that are using specified database
  */
 void
-CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
+CancelDBBackends(Oid databaseid, ProcSignalReason sigmode)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
@@ -3638,7 +3625,6 @@ CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
 
 			GET_VXID_FROM_PGPROC(procvxid, *proc);
 
-			proc->recoveryConflictPending = conflictPending;
 			pid = proc->pid;
 			if (pid != 0)
 			{

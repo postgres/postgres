@@ -175,7 +175,6 @@ static void forbidden_in_wal_sender(char firstchar);
 static bool check_log_statement(List *stmt_list);
 static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
-static int	errdetail_abort(void);
 static void bind_param_error_callback(void *arg);
 static void start_xact_command(void);
 static void finish_xact_command(void);
@@ -1141,8 +1140,7 @@ exec_simple_query(const char *query_string)
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
-							"commands ignored until end of transaction block"),
-					 errdetail_abort()));
+							"commands ignored until end of transaction block")));
 
 		/* Make sure we are in a transaction command */
 		start_xact_command();
@@ -1498,8 +1496,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
-							"commands ignored until end of transaction block"),
-					 errdetail_abort()));
+							"commands ignored until end of transaction block")));
 
 		/*
 		 * Create the CachedPlanSource before we do parse analysis, since it
@@ -1750,8 +1747,7 @@ exec_bind_message(StringInfo input_message)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-						"commands ignored until end of transaction block"),
-				 errdetail_abort()));
+						"commands ignored until end of transaction block")));
 
 	/*
 	 * Create the portal.  Allow silent replacement of an existing portal only
@@ -2255,8 +2251,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-						"commands ignored until end of transaction block"),
-				 errdetail_abort()));
+						"commands ignored until end of transaction block")));
 
 	/* Check for cancel signal before we start execution */
 	CHECK_FOR_INTERRUPTS();
@@ -2537,20 +2532,6 @@ errdetail_params(ParamListInfo params)
 }
 
 /*
- * errdetail_abort
- *
- * Add an errdetail() line showing abort reason, if any.
- */
-static int
-errdetail_abort(void)
-{
-	if (MyProc->recoveryConflictPending)
-		errdetail("Abort reason: recovery conflict");
-
-	return 0;
-}
-
-/*
  * errdetail_recovery_conflict
  *
  * Add an errdetail() line showing conflict source.
@@ -2692,8 +2673,7 @@ exec_describe_statement_message(const char *stmt_name)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-						"commands ignored until end of transaction block"),
-				 errdetail_abort()));
+						"commands ignored until end of transaction block")));
 
 	if (whereToSendOutput != DestRemote)
 		return;					/* can't actually do anything... */
@@ -2769,8 +2749,7 @@ exec_describe_portal_message(const char *portal_name)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-						"commands ignored until end of transaction block"),
-				 errdetail_abort()));
+						"commands ignored until end of transaction block")));
 
 	if (whereToSendOutput != DestRemote)
 		return;					/* can't actually do anything... */
@@ -3138,8 +3117,6 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 					CheckDeadLockAlert();
 				return;
 			}
-
-			MyProc->recoveryConflictPending = true;
 
 			/* Intentional fall through to error handling */
 			/* FALLTHROUGH */
