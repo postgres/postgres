@@ -213,6 +213,8 @@ CONTROL_FILE_WRITE_UPDATE	"Waiting for a write to update the <filename>pg_contro
 COPY_FILE_COPY	"Waiting for a file copy operation."
 COPY_FILE_READ	"Waiting for a read during a file copy operation."
 COPY_FILE_WRITE	"Waiting for a write during a file copy operation."
+COPY_FROM_READ	"Waiting to read data from a pipe, a file or a program during COPY FROM."
+COPY_TO_WRITE	"Waiting to write data to a pipe, a file or a program during COPY TO."
 DATA_FILE_EXTEND	"Waiting for a relation data file to be extended."
 DATA_FILE_FLUSH	"Waiting for a relation data file to reach durable storage."
 DATA_FILE_IMMEDIATE_SYNC	"Waiting for an immediate synchronization of a relation data file to durable storage."
