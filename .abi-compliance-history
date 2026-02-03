@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+492a69e1407029f8c673484f44aa719a63323d77
+#
+# Reject ADD CONSTRAINT NOT NULL if name mismatches existing constraint
+# 2026-02-03 12:33:29 +0100
+#
+# This commit added the constraint name as a parameter to
+# AdjustNotNullInheritance(), which it needed to verify that the new name
+# matches the existing one.  PGXN contained no calls to that function.
+
 c6ce4dcf9d3b7a8a89aca386124c473f98fc329e
 #
 # Fix trigger transition table capture for MERGE in CTE queries.
