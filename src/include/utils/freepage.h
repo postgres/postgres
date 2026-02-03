@@ -65,7 +65,7 @@ struct FreePageManager
 
 /* Macros to convert between page numbers (expressed as Size) and pointers. */
 #define fpm_page_to_pointer(base, page) \
-	(AssertVariableIsOfTypeMacro(page, Size), \
+	(StaticAssertVariableIsOfTypeMacro(page, Size), \
 	 (base) + FPM_PAGE_SIZE * (page))
 #define fpm_pointer_to_page(base, ptr)		\
 	(((Size) (((char *) (ptr)) - (base))) / FPM_PAGE_SIZE)

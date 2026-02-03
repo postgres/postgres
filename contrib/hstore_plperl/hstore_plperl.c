@@ -28,24 +28,24 @@ static hstoreCheckValLen_t hstoreCheckValLen_p;
 void
 _PG_init(void)
 {
-	/* Asserts verify that typedefs above match original declarations */
-	AssertVariableIsOfType(&hstoreUpgrade, hstoreUpgrade_t);
+	/* Static asserts verify that typedefs above match original declarations */
+	StaticAssertVariableIsOfType(&hstoreUpgrade, hstoreUpgrade_t);
 	hstoreUpgrade_p = (hstoreUpgrade_t)
 		load_external_function("$libdir/hstore", "hstoreUpgrade",
 							   true, NULL);
-	AssertVariableIsOfType(&hstoreUniquePairs, hstoreUniquePairs_t);
+	StaticAssertVariableIsOfType(&hstoreUniquePairs, hstoreUniquePairs_t);
 	hstoreUniquePairs_p = (hstoreUniquePairs_t)
 		load_external_function("$libdir/hstore", "hstoreUniquePairs",
 							   true, NULL);
-	AssertVariableIsOfType(&hstorePairs, hstorePairs_t);
+	StaticAssertVariableIsOfType(&hstorePairs, hstorePairs_t);
 	hstorePairs_p = (hstorePairs_t)
 		load_external_function("$libdir/hstore", "hstorePairs",
 							   true, NULL);
-	AssertVariableIsOfType(&hstoreCheckKeyLen, hstoreCheckKeyLen_t);
+	StaticAssertVariableIsOfType(&hstoreCheckKeyLen, hstoreCheckKeyLen_t);
 	hstoreCheckKeyLen_p = (hstoreCheckKeyLen_t)
 		load_external_function("$libdir/hstore", "hstoreCheckKeyLen",
 							   true, NULL);
-	AssertVariableIsOfType(&hstoreCheckValLen, hstoreCheckValLen_t);
+	StaticAssertVariableIsOfType(&hstoreCheckValLen, hstoreCheckValLen_t);
 	hstoreCheckValLen_p = (hstoreCheckValLen_t)
 		load_external_function("$libdir/hstore", "hstoreCheckValLen",
 							   true, NULL);

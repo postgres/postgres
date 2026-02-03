@@ -591,8 +591,8 @@ dlist_tail_node(dlist_head *head)
  * This is used to convert a dlist_node * back to its containing struct.
  */
 #define dlist_container(type, membername, ptr)								\
-	(AssertVariableIsOfTypeMacro(ptr, dlist_node *),						\
-	 AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(ptr, dlist_node *),						\
+	 StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
 	 ((type *) ((char *) (ptr) - offsetof(type, membername))))
 
 /*
@@ -601,7 +601,7 @@ dlist_tail_node(dlist_head *head)
  * The list must not be empty.
  */
 #define dlist_head_element(type, membername, lhead)							\
-	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
 	 (type *) dlist_head_element_off(lhead, offsetof(type, membername)))
 
 /*
@@ -610,7 +610,7 @@ dlist_tail_node(dlist_head *head)
  * The list must not be empty.
  */
 #define dlist_tail_element(type, membername, lhead)							\
-	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
 	 ((type *) dlist_tail_element_off(lhead, offsetof(type, membername))))
 
 /*
@@ -621,8 +621,8 @@ dlist_tail_node(dlist_head *head)
  * It is *not* allowed to manipulate the list during iteration.
  */
 #define dlist_foreach(iter, lhead)											\
-	for (AssertVariableIsOfTypeMacro(iter, dlist_iter),						\
-		 AssertVariableIsOfTypeMacro(lhead, dlist_head *),					\
+	for (StaticAssertVariableIsOfTypeMacro(iter, dlist_iter),						\
+		 StaticAssertVariableIsOfTypeMacro(lhead, dlist_head *),					\
 		 (iter).end = &(lhead)->head,										\
 		 (iter).cur = (iter).end->next ? (iter).end->next : (iter).end;		\
 		 (iter).cur != (iter).end;											\
@@ -638,8 +638,8 @@ dlist_tail_node(dlist_head *head)
  * fine to insert or delete adjacent nodes.
  */
 #define dlist_foreach_modify(iter, lhead)									\
-	for (AssertVariableIsOfTypeMacro(iter, dlist_mutable_iter),				\
-		 AssertVariableIsOfTypeMacro(lhead, dlist_head *),					\
+	for (StaticAssertVariableIsOfTypeMacro(iter, dlist_mutable_iter),				\
+		 StaticAssertVariableIsOfTypeMacro(lhead, dlist_head *),					\
 		 (iter).end = &(lhead)->head,										\
 		 (iter).cur = (iter).end->next ? (iter).end->next : (iter).end,		\
 		 (iter).next = (iter).cur->next;									\
@@ -652,8 +652,8 @@ dlist_tail_node(dlist_head *head)
  * It is *not* allowed to manipulate the list during iteration.
  */
 #define dlist_reverse_foreach(iter, lhead)									\
-	for (AssertVariableIsOfTypeMacro(iter, dlist_iter),						\
-		 AssertVariableIsOfTypeMacro(lhead, dlist_head *),					\
+	for (StaticAssertVariableIsOfTypeMacro(iter, dlist_iter),						\
+		 StaticAssertVariableIsOfTypeMacro(lhead, dlist_head *),					\
 		 (iter).end = &(lhead)->head,										\
 		 (iter).cur = (iter).end->prev ? (iter).end->prev : (iter).end;		\
 		 (iter).cur != (iter).end;											\
@@ -953,7 +953,7 @@ dclist_count(const dclist_head *head)
   * The list must not be empty.
   */
 #define dclist_head_element(type, membername, lhead)							\
-	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
 	 (type *) dclist_head_element_off(lhead, offsetof(type, membername)))
 
  /*
@@ -962,7 +962,7 @@ dclist_count(const dclist_head *head)
   * The list must not be empty.
   */
 #define dclist_tail_element(type, membername, lhead)							\
-	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
 	 ((type *) dclist_tail_element_off(lhead, offsetof(type, membername))))
 
 
@@ -1104,8 +1104,8 @@ slist_delete_current(slist_mutable_iter *iter)
  * This is used to convert a slist_node * back to its containing struct.
  */
 #define slist_container(type, membername, ptr)								\
-	(AssertVariableIsOfTypeMacro(ptr, slist_node *),						\
-	 AssertVariableIsOfTypeMacro(((type *) NULL)->membername, slist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(ptr, slist_node *),						\
+	 StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, slist_node),	\
 	 ((type *) ((char *) (ptr) - offsetof(type, membername))))
 
 /*
@@ -1114,7 +1114,7 @@ slist_delete_current(slist_mutable_iter *iter)
  * The list must not be empty.
  */
 #define slist_head_element(type, membername, lhead)							\
-	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, slist_node),	\
+	(StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, slist_node),	\
 	 (type *) slist_head_element_off(lhead, offsetof(type, membername)))
 
 /*
@@ -1130,8 +1130,8 @@ slist_delete_current(slist_mutable_iter *iter)
  * not safe.)
  */
 #define slist_foreach(iter, lhead)											\
-	for (AssertVariableIsOfTypeMacro(iter, slist_iter),						\
-		 AssertVariableIsOfTypeMacro(lhead, slist_head *),					\
+	for (StaticAssertVariableIsOfTypeMacro(iter, slist_iter),						\
+		 StaticAssertVariableIsOfTypeMacro(lhead, slist_head *),					\
 		 (iter).cur = (lhead)->head.next;									\
 		 (iter).cur != NULL;												\
 		 (iter).cur = (iter).cur->next)
@@ -1146,8 +1146,8 @@ slist_delete_current(slist_mutable_iter *iter)
  * deletion of nodes adjacent to the current node would misbehave.
  */
 #define slist_foreach_modify(iter, lhead)									\
-	for (AssertVariableIsOfTypeMacro(iter, slist_mutable_iter),				\
-		 AssertVariableIsOfTypeMacro(lhead, slist_head *),					\
+	for (StaticAssertVariableIsOfTypeMacro(iter, slist_mutable_iter),				\
+		 StaticAssertVariableIsOfTypeMacro(lhead, slist_head *),					\
 		 (iter).prev = &(lhead)->head,										\
 		 (iter).cur = (iter).prev->next,									\
 		 (iter).next = (iter).cur ? (iter).cur->next : NULL;				\

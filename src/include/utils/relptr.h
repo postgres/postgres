@@ -40,12 +40,12 @@
 
 #ifdef HAVE_TYPEOF
 #define relptr_access(base, rp) \
-	(AssertVariableIsOfTypeMacro(base, char *), \
+	(StaticAssertVariableIsOfTypeMacro(base, char *), \
 	 (typeof((rp).relptr_type)) ((rp).relptr_off == 0 ? NULL : \
 		(base) + (rp).relptr_off - 1))
 #else
 #define relptr_access(base, rp) \
-	(AssertVariableIsOfTypeMacro(base, char *), \
+	(StaticAssertVariableIsOfTypeMacro(base, char *), \
 	 (void *) ((rp).relptr_off == 0 ? NULL : (base) + (rp).relptr_off - 1))
 #endif
 
@@ -70,12 +70,12 @@ relptr_store_eval(char *base, char *val)
 
 #ifdef HAVE_TYPEOF
 #define relptr_store(base, rp, val) \
-	(AssertVariableIsOfTypeMacro(base, char *), \
-	 AssertVariableIsOfTypeMacro(val, typeof((rp).relptr_type)), \
+	(StaticAssertVariableIsOfTypeMacro(base, char *), \
+	 StaticAssertVariableIsOfTypeMacro(val, typeof((rp).relptr_type)), \
 	 (rp).relptr_off = relptr_store_eval((base), (char *) (val)))
 #else
 #define relptr_store(base, rp, val) \
-	(AssertVariableIsOfTypeMacro(base, char *), \
+	(StaticAssertVariableIsOfTypeMacro(base, char *), \
 	 (rp).relptr_off = relptr_store_eval((base), (char *) (val)))
 #endif
 

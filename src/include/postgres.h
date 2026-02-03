@@ -533,9 +533,9 @@ Float8GetDatum(float8 X)
  */
 
 #define Int64GetDatumFast(X) \
-	(AssertVariableIsOfTypeMacro(X, int64), Int64GetDatum(X))
+	(StaticAssertVariableIsOfTypeMacro(X, int64), Int64GetDatum(X))
 #define Float8GetDatumFast(X) \
-	(AssertVariableIsOfTypeMacro(X, double), Float8GetDatum(X))
+	(StaticAssertVariableIsOfTypeMacro(X, double), Float8GetDatum(X))
 
 
 /* ----------------------------------------------------------------

@@ -41,16 +41,16 @@ typedef struct pairingheap_node
  * This is used to convert a pairingheap_node * back to its containing struct.
  */
 #define pairingheap_container(type, membername, ptr) \
-	(AssertVariableIsOfTypeMacro(ptr, pairingheap_node *), \
-	 AssertVariableIsOfTypeMacro(((type *) NULL)->membername, pairingheap_node),  \
+	(StaticAssertVariableIsOfTypeMacro(ptr, pairingheap_node *), \
+	 StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, pairingheap_node),  \
 	 ((type *) ((char *) (ptr) - offsetof(type, membername))))
 
 /*
  * Like pairingheap_container, but used when the pointer is 'const ptr'
  */
 #define pairingheap_const_container(type, membername, ptr) \
-	(AssertVariableIsOfTypeMacro(ptr, const pairingheap_node *), \
-	 AssertVariableIsOfTypeMacro(((type *) NULL)->membername, pairingheap_node),  \
+	(StaticAssertVariableIsOfTypeMacro(ptr, const pairingheap_node *), \
+	 StaticAssertVariableIsOfTypeMacro(((type *) NULL)->membername, pairingheap_node),  \
 	 ((const type *) ((const char *) (ptr) - offsetof(type, membername))))
 
 /*
