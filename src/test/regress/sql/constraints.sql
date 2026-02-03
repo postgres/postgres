@@ -623,7 +623,9 @@ DROP TABLE deferred_excl;
 -- verify constraints created for NOT NULL clauses
 CREATE TABLE notnull_tbl1 (a INTEGER NOT NULL NOT NULL);
 \d+ notnull_tbl1
--- no-op
+-- specifying an existing constraint is a no-op
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT notnull_tbl1_a_not_null NOT NULL a;
+-- but using a different constraint name is not allowed
 ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a;
 \d+ notnull_tbl1
 -- duplicate name

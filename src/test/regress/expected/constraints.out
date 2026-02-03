@@ -846,8 +846,12 @@ CREATE TABLE notnull_tbl1 (a INTEGER NOT NULL NOT NULL);
 Not-null constraints:
     "notnull_tbl1_a_not_null" NOT NULL "a"
 
--- no-op
+-- specifying an existing constraint is a no-op
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT notnull_tbl1_a_not_null NOT NULL a;
+-- but using a different constraint name is not allowed
 ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a;
+ERROR:  cannot create not-null constraint "nn" on column "a" of table "notnull_tbl1"
+DETAIL:  A not-null constraint named "notnull_tbl1_a_not_null" already exists for this column.
 \d+ notnull_tbl1
                                Table "public.notnull_tbl1"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
