@@ -263,12 +263,10 @@ PostgreSQL documentation
 
        <note>
         <para>
-         When <option>-e</option> is specified,
-         <application>pg_dump</application> makes no attempt to dump any other
-         database objects that the selected extension(s) might depend upon.
-         Therefore, there is no guarantee that the results of a
-         specific-extension dump can be successfully restored by themselves
-         into a clean database.
+         <application>pg_dump</application> does not dump the extension's
+         underlying installation files (such as shared libraries or control
+         files). These must be available on the destination system for the
+         restore to succeed.
         </para>
        </note>
       </listitem>
@@ -447,16 +445,6 @@ PostgreSQL documentation
 
        <note>
         <para>
-         When <option>-n</option> is specified, <application>pg_dump</application>
-         makes no attempt to dump any other database objects that the selected
-         schema(s) might depend upon. Therefore, there is no guarantee
-         that the results of a specific-schema dump can be successfully
-         restored by themselves into a clean database.
-        </para>
-       </note>
-
-       <note>
-        <para>
          Non-schema objects such as large objects are not dumped when <option>-n</option> is
          specified.  You can add large objects back to the dump with the
          <option>--large-objects</option> switch.
@@ -595,16 +583,6 @@ PostgreSQL documentation
         be dumped regardless of those switches, and non-table objects will not
         be dumped.
        </para>
-
-       <note>
-        <para>
-         When <option>-t</option> is specified, <application>pg_dump</application>
-         makes no attempt to dump any other database objects that the selected
-         table(s) might depend upon. Therefore, there is no guarantee
-         that the results of a specific-table dump can be successfully
-         restored by themselves into a clean database.
-        </para>
-       </note>
 
       </listitem>
      </varlistentry>
@@ -1687,6 +1665,17 @@ PostgreSQL documentation
 <programlisting>
 CREATE DATABASE foo WITH TEMPLATE template0;
 </programlisting>
+  </para>
+
+  <para>
+   When options <option>-e</option>, <option>-n</option> or <option>-t</option>
+   are specified, <application>pg_dump</application> makes no attempt to dump
+   any other database objects that the selected object(s) might depend upon.
+   Therefore, there is no guarantee that the results of a dump so generated
+   can be successfully restored by themselves into a clean database.
+   For example, if a table whose definition includes a foreign key is
+   specified to be restored, the table referenced by the foreign key is
+   not automatically restored.
   </para>
 
   <para>

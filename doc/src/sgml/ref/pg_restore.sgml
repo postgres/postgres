@@ -454,16 +454,6 @@ PostgreSQL documentation
 
        <note>
         <para>
-         When <option>-t</option> is specified, <application>pg_restore</application>
-         makes no attempt to restore any other database objects that the
-         selected table(s) might depend upon.  Therefore, there is no
-         guarantee that a specific-table restore into a clean database will
-         succeed.
-        </para>
-       </note>
-
-       <note>
-        <para>
          This flag does not behave identically to the <option>-t</option>
          flag of <application>pg_dump</application>.  There is not currently
          any provision for wild-card matching in <application>pg_restore</application>,
@@ -1088,6 +1078,16 @@ PostgreSQL documentation
 
  <refsect1 id="app-pgrestore-notes">
   <title>Notes</title>
+
+  <para>
+   When options <option>-n</option> or <option>-t</option> are specified,
+   <application>pg_restore</application> makes no attempt to restore
+   any other database objects that the selected table(s) or schema(s)
+   might depend upon.  Therefore, there is no guarantee that a specific-table
+   restore into a clean database will succeed.  For example, if a table
+   whose definition includes a foreign key is specified to be restored, the
+   table referenced by the foreign key is not automatically restored.
+  </para>
 
   <para>
    If your installation has any local additions to the
