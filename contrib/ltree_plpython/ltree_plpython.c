@@ -13,6 +13,9 @@ PG_MODULE_MAGIC_EXT(
 typedef PyObject *(*PLyUnicode_FromStringAndSize_t) (const char *s, Py_ssize_t size);
 static PLyUnicode_FromStringAndSize_t PLyUnicode_FromStringAndSize_p;
 
+/* Static asserts verify that typedefs above match original declarations */
+StaticAssertVariableIsOfType(&PLyUnicode_FromStringAndSize, PLyUnicode_FromStringAndSize_t);
+
 
 /*
  * Module initialize function: fetch function pointers for cross-module calls.
@@ -20,8 +23,6 @@ static PLyUnicode_FromStringAndSize_t PLyUnicode_FromStringAndSize_p;
 void
 _PG_init(void)
 {
-	/* Static asserts verify that typedefs above match original declarations */
-	StaticAssertVariableIsOfType(&PLyUnicode_FromStringAndSize, PLyUnicode_FromStringAndSize_t);
 	PLyUnicode_FromStringAndSize_p = (PLyUnicode_FromStringAndSize_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLyUnicode_FromStringAndSize",
 							   true, NULL);

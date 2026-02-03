@@ -33,22 +33,24 @@ typedef PyObject *(*PLyUnicode_FromStringAndSize_t)
 			(const char *s, Py_ssize_t size);
 static PLyUnicode_FromStringAndSize_t PLyUnicode_FromStringAndSize_p;
 
+/* Static asserts verify that typedefs above match original declarations */
+StaticAssertVariableIsOfType(&PLyObject_AsString, PLyObject_AsString_t);
+StaticAssertVariableIsOfType(&PLyUnicode_FromStringAndSize, PLyUnicode_FromStringAndSize_t);
+StaticAssertVariableIsOfType(&PLy_elog_impl, PLy_elog_impl_t);
+
+
 /*
  * Module initialize function: fetch function pointers for cross-module calls.
  */
 void
 _PG_init(void)
 {
-	/* Static asserts verify that typedefs above match original declarations */
-	StaticAssertVariableIsOfType(&PLyObject_AsString, PLyObject_AsString_t);
 	PLyObject_AsString_p = (PLyObject_AsString_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLyObject_AsString",
 							   true, NULL);
-	StaticAssertVariableIsOfType(&PLyUnicode_FromStringAndSize, PLyUnicode_FromStringAndSize_t);
 	PLyUnicode_FromStringAndSize_p = (PLyUnicode_FromStringAndSize_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLyUnicode_FromStringAndSize",
 							   true, NULL);
-	StaticAssertVariableIsOfType(&PLy_elog_impl, PLy_elog_impl_t);
 	PLy_elog_impl_p = (PLy_elog_impl_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLy_elog_impl",
 							   true, NULL);

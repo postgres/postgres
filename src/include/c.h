@@ -955,7 +955,7 @@ pg_noreturn extern void ExceptionalCondition(const char *conditionName,
 /*
  * Compile-time checks that a variable (or expression) has the specified type.
  *
- * StaticAssertVariableIsOfType() can be used as a statement.
+ * StaticAssertVariableIsOfType() can be used as a declaration.
  * StaticAssertVariableIsOfTypeMacro() is intended for use in macros, eg
  *		#define foo(x) (StaticAssertVariableIsOfTypeMacro(x, int), bar(x))
  *
@@ -965,14 +965,14 @@ pg_noreturn extern void ExceptionalCondition(const char *conditionName,
  */
 #ifdef HAVE__BUILTIN_TYPES_COMPATIBLE_P
 #define StaticAssertVariableIsOfType(varname, typename) \
-	StaticAssertStmt(__builtin_types_compatible_p(__typeof__(varname), typename), \
+	StaticAssertDecl(__builtin_types_compatible_p(__typeof__(varname), typename), \
 	CppAsString(varname) " does not have type " CppAsString(typename))
 #define StaticAssertVariableIsOfTypeMacro(varname, typename) \
 	(StaticAssertExpr(__builtin_types_compatible_p(__typeof__(varname), typename), \
 	 CppAsString(varname) " does not have type " CppAsString(typename)))
 #else							/* !HAVE__BUILTIN_TYPES_COMPATIBLE_P */
 #define StaticAssertVariableIsOfType(varname, typename) \
-	StaticAssertStmt(sizeof(varname) == sizeof(typename), \
+	StaticAssertDecl(sizeof(varname) == sizeof(typename), \
 	CppAsString(varname) " does not have type " CppAsString(typename))
 #define StaticAssertVariableIsOfTypeMacro(varname, typename) \
 	(StaticAssertExpr(sizeof(varname) == sizeof(typename), \
