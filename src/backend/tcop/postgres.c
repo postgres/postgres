@@ -3209,25 +3209,27 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 				}
 			}
 
-			/* Intentional fall through to session cancel */
-			/* FALLTHROUGH */
-
-		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
-
 			/*
-			 * Retrying is not possible because the database is dropped, or we
-			 * decided above that we couldn't resolve the conflict with an
-			 * ERROR and fell through.  Terminate the session.
+			 * We couldn't resolve the conflict with ERROR, so terminate the
+			 * whole session.
 			 */
 			pgstat_report_recovery_conflict(reason);
 			ereport(FATAL,
-					(errcode(reason == PROCSIG_RECOVERY_CONFLICT_DATABASE ?
-							 ERRCODE_DATABASE_DROPPED :
-							 ERRCODE_T_R_SERIALIZATION_FAILURE),
+					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 					 errmsg("terminating connection due to conflict with recovery"),
 					 errdetail_recovery_conflict(reason),
 					 errhint("In a moment you should be able to reconnect to the"
 							 " database and repeat your command.")));
+			break;
+
+		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
+
+			/* The database is being dropped; terminate the session */
+			pgstat_report_recovery_conflict(reason);
+			ereport(FATAL,
+					(errcode(ERRCODE_DATABASE_DROPPED),
+					 errmsg("terminating connection due to conflict with recovery"),
+					 errdetail_recovery_conflict(reason)));
 			break;
 
 		default:
