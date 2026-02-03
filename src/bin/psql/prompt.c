@@ -44,6 +44,8 @@
  *			or a ! if session is not connected to a database;
  *		in prompt2 -, *, ', or ";
  *		in prompt3 nothing
+ * %i - "standby" or "primary" depending on the server's in_hot_standby
+ *      status, or "?" if unavailable (empty if unknown)
  * %x - transaction status: empty, *, !, ? (unknown or no connection)
  * %l - The line number inside the current statement, starting from 1.
  * %? - the error code of the last query (not yet implemented)
@@ -258,7 +260,23 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 							break;
 					}
 					break;
+				case 'i':
+					if (pset.db)
+					{
+						const char *hs = PQparameterStatus(pset.db, "in_hot_standby");
 
+						if (hs)
+						{
+							if (strcmp(hs, "on") == 0)
+								strlcpy(buf, "standby", sizeof(buf));
+							else
+								strlcpy(buf, "primary", sizeof(buf));
+						}
+						/* Use ? for versions that don't report in_hot_standby */
+						else
+							buf[0] = '?';
+					}
+					break;
 				case 'x':
 					if (!pset.db)
 						buf[0] = '?';

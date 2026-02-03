@@ -5075,6 +5075,23 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
         </listitem>
       </varlistentry>
 
+      <varlistentry id="app-psql-prompting-i">
+        <term><literal>%i</literal></term>
+        <listitem>
+        <para>
+        Indicates whether the connected server is running in hot standby mode.
+        The value is shown as <literal>standby</literal>, if the server is
+        currently in hot standby and reports
+        <xref linkend="guc-in-hot-standby"/> as <literal>on</literal>,
+        and <literal>primary</literal> otherwise. This is useful when
+        connecting to multiple servers to quickly determine the role of
+        each connection. A value of <literal>?</literal> is shown
+        when connected to a server running
+        <productname>PostgreSQL</productname> 13 or older.
+        </para>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="app-psql-prompting-x">
         <term><literal>%x</literal></term>
         <listitem>
