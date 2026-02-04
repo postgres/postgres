@@ -3589,7 +3589,7 @@ CountDBConnections(Oid databaseid)
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
-		if (!proc->isRegularBackend)
+		if (proc->backendType != B_BACKEND)
 			continue;			/* count only regular backend processes */
 		if (!OidIsValid(databaseid) ||
 			proc->databaseId == databaseid)
@@ -3660,7 +3660,7 @@ CountUserBackends(Oid roleid)
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
-		if (!proc->isRegularBackend)
+		if (proc->backendType != B_BACKEND)
 			continue;			/* count only regular backend processes */
 		if (proc->roleId == roleid)
 			count++;
