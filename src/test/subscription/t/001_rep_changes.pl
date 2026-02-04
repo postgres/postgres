@@ -353,7 +353,8 @@ $node_subscriber->safe_psql('postgres', "DELETE FROM tab_full WHERE a = 25");
 # Note that the current location of the log file is not grabbed immediately
 # after reloading the configuration, but after sending one SQL command to
 # the node so as we are sure that the reloading has taken effect.
-my $log_location = -s $node_subscriber->logfile;
+my $log_location_pub = -s $node_publisher->logfile;
+my $log_location_sub = -s $node_subscriber->logfile;
 
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab_full_pk SET b = 'quux' WHERE a = 1");
@@ -363,7 +364,7 @@ $node_publisher->safe_psql('postgres', "DELETE FROM tab_full_pk WHERE a = 2");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
-my $logfile = slurp_file($node_subscriber->logfile, $log_location);
+my $logfile = slurp_file($node_subscriber->logfile, $log_location_sub);
 ok( $logfile =~
 	  qr/conflict detected on relation "public.tab_full_pk": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(1, quux\); replica identity \(a\)=\(1\)/m,
 	'update target row is missing');
@@ -442,11 +443,12 @@ is( $result, qq(11.11|baz|1
 #
 # First, confirm that no such QUERY STATISTICS message appears before enabling
 # log_statement_stats.
-$logfile = slurp_file($node_publisher->logfile, $log_location);
+$logfile = slurp_file($node_publisher->logfile, $log_location_pub);
 unlike(
 	$logfile,
 	qr/QUERY STATISTICS/,
 	'log_statement_stats has not been enabled yet');
+$log_location_pub = -s $node_publisher->logfile;
 
 # check that change of connection string and/or publication list causes
 # restart of subscription workers. We check the state along with
@@ -473,7 +475,7 @@ $node_publisher->poll_query_until('postgres',
 # Check that the expected QUERY STATISTICS message appears,
 # which shows that log_statement_stats=on from the CONNECTION string
 # was correctly passed through to and honored by the walsender.
-$logfile = slurp_file($node_publisher->logfile, $log_location);
+$logfile = slurp_file($node_publisher->logfile, $log_location_pub);
 like(
 	$logfile,
 	qr/QUERY STATISTICS/,
@@ -535,13 +537,13 @@ $node_publisher->reload;
 # Note that the current location of the log file is not grabbed immediately
 # after reloading the configuration, but after sending one SQL command to
 # the node so that we are sure that the reloading has taken effect.
-$log_location = -s $node_publisher->logfile;
+$log_location_pub = -s $node_publisher->logfile;
 
 $node_publisher->safe_psql('postgres', "INSERT INTO tab_notrep VALUES (11)");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
-$logfile = slurp_file($node_publisher->logfile, $log_location);
+$logfile = slurp_file($node_publisher->logfile, $log_location_pub);
 ok($logfile =~ qr/skipped replication of an empty transaction with XID/,
 	'empty transaction is skipped');
 
