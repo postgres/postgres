@@ -454,6 +454,10 @@
 /* Define to 1 if your compiler understands `typeof' or something similar. */
 #undef HAVE_TYPEOF
 
+/* Define to 1 if your compiler understands `typeof_unqual' or something
+   similar. */
+#undef HAVE_TYPEOF_UNQUAL
+
 /* Define to 1 if you have the <uchar.h> header file. */
 #undef HAVE_UCHAR_H
 
@@ -806,3 +810,6 @@
 
 /* Define to how the compiler spells `typeof'. */
 #undef typeof
+
+/* Define to how the compiler spells `typeof_unqual'. */
+#undef typeof_unqual
