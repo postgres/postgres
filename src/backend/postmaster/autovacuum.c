@@ -385,7 +385,6 @@ AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
 		PostmasterContext = NULL;
 	}
 
-	MyBackendType = B_AUTOVAC_LAUNCHER;
 	init_ps_display(NULL);
 
 	ereport(DEBUG1,
@@ -1398,7 +1397,6 @@ AutoVacWorkerMain(const void *startup_data, size_t startup_data_len)
 		PostmasterContext = NULL;
 	}
 
-	MyBackendType = B_AUTOVAC_WORKER;
 	init_ps_display(NULL);
 
 	Assert(GetProcessingMode() == InitProcessing);

@@ -759,7 +759,6 @@ BackgroundWorkerMain(const void *startup_data, size_t startup_data_len)
 	}
 
 	MyBgworkerEntry = worker;
-	MyBackendType = B_BG_WORKER;
 	init_ps_display(worker->bgw_name);
 
 	Assert(GetProcessingMode() == InitProcessing);

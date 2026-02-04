@@ -234,7 +234,6 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 
 	Assert(startup_data_len == 0);
 
-	MyBackendType = B_WAL_SUMMARIZER;
 	AuxiliaryProcessMainCommon();
 
 	ereport(DEBUG1,

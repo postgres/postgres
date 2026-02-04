@@ -206,7 +206,6 @@ SysLoggerMain(const void *startup_data, size_t startup_data_len)
 
 	now = MyStartTime;
 
-	MyBackendType = B_LOGGER;
 	init_ps_display(NULL);
 
 	/*

@@ -2779,7 +2779,12 @@ get_backend_type_for_log(void)
 	if (MyProcPid == PostmasterPid)
 		backend_type_str = "postmaster";
 	else if (MyBackendType == B_BG_WORKER)
-		backend_type_str = MyBgworkerEntry->bgw_type;
+	{
+		if (MyBgworkerEntry)
+			backend_type_str = MyBgworkerEntry->bgw_type;
+		else
+			backend_type_str = "early bgworker";
+	}
 	else
 		backend_type_str = GetBackendTypeDesc(MyBackendType);
 

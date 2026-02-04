@@ -390,7 +390,6 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 	volatile int error_errno = 0;
 	char		cmd[128];
 
-	MyBackendType = B_IO_WORKER;
 	AuxiliaryProcessMainCommon();
 
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);

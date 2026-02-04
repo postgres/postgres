@@ -223,6 +223,8 @@ postmaster_child_launch(BackendType child_type, int child_slot,
 	pid = fork_process();
 	if (pid == 0)				/* child */
 	{
+		MyBackendType = child_type;
+
 		/* Capture and transfer timings that may be needed for logging */
 		if (IsExternalConnectionBackend(child_type))
 		{
@@ -607,6 +609,7 @@ SubPostmasterMain(int argc, char *argv[])
 	child_type = (BackendType) atoi(child_kind);
 	if (child_type <= B_INVALID || child_type > BACKEND_NUM_TYPES - 1)
 		elog(ERROR, "unknown child kind %s", child_kind);
+	MyBackendType = child_type;
 
 	/* Read in the variables file */
 	read_backend_variables(argv[2], &startup_data, &startup_data_len);
