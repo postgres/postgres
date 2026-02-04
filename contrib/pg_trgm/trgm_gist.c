@@ -692,9 +692,12 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 	if (ISARRKEY(newval))
 	{
 		char	   *cache = (char *) fcinfo->flinfo->fn_extra;
-		TRGM	   *cachedVal = (TRGM *) (cache + MAXALIGN(siglen));
+		TRGM	   *cachedVal = NULL;
 		Size		newvalsize = VARSIZE(newval);
 		BITVECP		sign;
+
+		if (cache != NULL)
+			cachedVal = (TRGM *) (cache + MAXALIGN(siglen));
 
 		/*
 		 * Cache the sign data across multiple calls with the same newval.

@@ -478,8 +478,9 @@ multirange_canonicalize(TypeCacheEntry *rangetyp, int32 input_range_count,
 	int32		output_range_count = 0;
 
 	/* Sort the ranges so we can find the ones that overlap/meet. */
-	qsort_arg(ranges, input_range_count, sizeof(RangeType *), range_compare,
-			  rangetyp);
+	if (ranges != NULL)
+		qsort_arg(ranges, input_range_count, sizeof(RangeType *),
+				  range_compare, rangetyp);
 
 	/* Now merge where possible: */
 	for (i = 0; i < input_range_count; i++)

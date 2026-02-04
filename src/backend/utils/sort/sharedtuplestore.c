@@ -321,7 +321,8 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 
 	/* Do we have space? */
 	size = accessor->sts->meta_data_size + tuple->t_len;
-	if (accessor->write_pointer + size > accessor->write_end)
+	if (accessor->write_pointer == NULL ||
+		accessor->write_pointer + size > accessor->write_end)
 	{
 		if (accessor->write_chunk == NULL)
 		{
