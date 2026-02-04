@@ -1077,6 +1077,8 @@ KillExistingArchiveStatus(void)
 
 	if (closedir(xldir))
 		pg_fatal("could not close directory \"%s\": %m", ARCHSTATDIR);
+
+#undef ARCHSTATDIR
 }
 
 /*
@@ -1111,7 +1113,10 @@ KillExistingWALSummaries(void)
 		pg_fatal("could not read directory \"%s\": %m", WALSUMMARYDIR);
 
 	if (closedir(xldir))
-		pg_fatal("could not close directory \"%s\": %m", ARCHSTATDIR);
+		pg_fatal("could not close directory \"%s\": %m", WALSUMMARYDIR);
+
+#undef WALSUMMARY_NHEXCHARS
+#undef WALSUMMARYDIR
 }
 
 /*
