@@ -148,7 +148,8 @@ extern bool filter_by_origin_cb_wrapper(LogicalDecodingContext *ctx, ReplOriginI
 extern void ResetLogicalStreamingState(void);
 extern void UpdateDecodingStats(LogicalDecodingContext *ctx);
 
-extern bool LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal);
+extern XLogRecPtr LogicalReplicationSlotCheckPendingWal(XLogRecPtr end_of_wal,
+														XLogRecPtr scan_cutoff_lsn);
 extern XLogRecPtr LogicalSlotAdvanceAndCheckSnapState(XLogRecPtr moveto,
 													  bool *found_consistent_snapshot);
 

@@ -282,11 +282,12 @@ binary_upgrade_set_missing_value(PG_FUNCTION_ARGS)
  * upgraded without data loss.
  */
 Datum
-binary_upgrade_logical_slot_has_caught_up(PG_FUNCTION_ARGS)
+binary_upgrade_check_logical_slot_pending_wal(PG_FUNCTION_ARGS)
 {
 	Name		slot_name;
 	XLogRecPtr	end_of_wal;
-	bool		found_pending_wal;
+	XLogRecPtr	scan_cutoff_lsn;
+	XLogRecPtr	last_pending_wal;
 
 	CHECK_IS_BINARY_UPGRADE;
 
@@ -297,6 +298,7 @@ binary_upgrade_logical_slot_has_caught_up(PG_FUNCTION_ARGS)
 	Assert(has_rolreplication(GetUserId()));
 
 	slot_name = PG_GETARG_NAME(0);
+	scan_cutoff_lsn = PG_GETARG_LSN(1);
 
 	/* Acquire the given slot */
 	ReplicationSlotAcquire(NameStr(*slot_name), true, true);
@@ -307,12 +309,16 @@ binary_upgrade_logical_slot_has_caught_up(PG_FUNCTION_ARGS)
 	Assert(MyReplicationSlot->data.invalidated == RS_INVAL_NONE);
 
 	end_of_wal = GetFlushRecPtr(NULL);
-	found_pending_wal = LogicalReplicationSlotHasPendingWal(end_of_wal);
+	last_pending_wal = LogicalReplicationSlotCheckPendingWal(end_of_wal,
+															 scan_cutoff_lsn);
 
 	/* Clean up */
 	ReplicationSlotRelease();
 
-	PG_RETURN_BOOL(!found_pending_wal);
+	if (XLogRecPtrIsValid(last_pending_wal))
+		PG_RETURN_LSN(last_pending_wal);
+	else
+		PG_RETURN_NULL();
 }
 
 /*

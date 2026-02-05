@@ -1986,16 +1986,22 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 }
 
 /*
- * Read up to the end of WAL starting from the decoding slot's restart_lsn.
- * Return true if any meaningful/decodable WAL records are encountered,
- * otherwise false.
+ * Read up to the end of WAL starting from the decoding slot's restart_lsn
+ * to end_of_wal in order to check if any meaningful/decodable WAL records
+ * are encountered. scan_cutoff_lsn is the LSN, where we can terminate the
+ * WAL scan early if we find a decodable WAL record after this LSN.
+ *
+ * Returns the last LSN decodable WAL record's LSN if found, otherwise
+ * returns InvalidXLogRecPtr.
  */
-bool
-LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal)
+XLogRecPtr
+LogicalReplicationSlotCheckPendingWal(XLogRecPtr end_of_wal,
+									  XLogRecPtr scan_cutoff_lsn)
 {
-	bool		has_pending_wal = false;
+	XLogRecPtr	last_pending_wal = InvalidXLogRecPtr;
 
 	Assert(MyReplicationSlot);
+	Assert(end_of_wal >= scan_cutoff_lsn);
 
 	PG_TRY();
 	{
@@ -2023,8 +2029,7 @@ LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal)
 		/* Invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 
-		/* Loop until the end of WAL or some changes are processed */
-		while (!has_pending_wal && ctx->reader->EndRecPtr < end_of_wal)
+		while (ctx->reader->EndRecPtr < end_of_wal)
 		{
 			XLogRecord *record;
 			char	   *errm = NULL;
@@ -2037,7 +2042,20 @@ LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal)
 			if (record != NULL)
 				LogicalDecodingProcessRecord(ctx, ctx->reader);
 
-			has_pending_wal = ctx->processing_required;
+			if (ctx->processing_required)
+			{
+				last_pending_wal = ctx->reader->ReadRecPtr;
+
+				/*
+				 * If we find a decodable WAL after the scan_cutoff_lsn point,
+				 * we can terminate the scan early.
+				 */
+				if (last_pending_wal >= scan_cutoff_lsn)
+					break;
+
+				/* Reset the flag and continue checking */
+				ctx->processing_required = false;
+			}
 
 			CHECK_FOR_INTERRUPTS();
 		}
@@ -2055,7 +2073,7 @@ LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal)
 	}
 	PG_END_TRY();
 
-	return has_pending_wal;
+	return last_pending_wal;
 }
 
 /*

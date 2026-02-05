@@ -622,7 +622,7 @@ check_and_dump_old_cluster(void)
 	{
 		/*
 		 * Logical replication slots can be migrated since PG17. See comments
-		 * atop get_old_cluster_logical_slot_infos().
+		 * in get_db_rel_and_slot_infos().
 		 */
 		check_old_cluster_for_valid_slots();
 

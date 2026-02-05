@@ -29,7 +29,7 @@ static void free_rel_infos(RelInfoArr *rel_arr);
 static void print_db_infos(DbInfoArr *db_arr);
 static void print_rel_infos(RelInfoArr *rel_arr);
 static void print_slot_infos(LogicalSlotInfoArr *slot_arr);
-static char *get_old_cluster_logical_slot_infos_query(void);
+static const char *get_old_cluster_logical_slot_infos_query(ClusterInfo *cluster);
 static void process_old_cluster_logical_slot_infos(DbInfo *dbinfo, PGresult *res, void *arg);
 
 
@@ -281,7 +281,6 @@ get_db_rel_and_slot_infos(ClusterInfo *cluster)
 {
 	UpgradeTask *task = upgrade_task_create();
 	char	   *rel_infos_query = NULL;
-	char	   *logical_slot_infos_query = NULL;
 
 	if (cluster->dbarr.dbs != NULL)
 		free_db_and_rel_infos(&cluster->dbarr);
@@ -306,20 +305,15 @@ get_db_rel_and_slot_infos(ClusterInfo *cluster)
 	 */
 	if (cluster == &old_cluster &&
 		GET_MAJOR_VERSION(cluster->major_version) > 1600)
-	{
-		logical_slot_infos_query = get_old_cluster_logical_slot_infos_query();
 		upgrade_task_add_step(task,
-							  logical_slot_infos_query,
+							  get_old_cluster_logical_slot_infos_query(cluster),
 							  process_old_cluster_logical_slot_infos,
 							  true, NULL);
-	}
 
 	upgrade_task_run(task, cluster);
 	upgrade_task_free(task);
 
 	pg_free(rel_infos_query);
-	if (logical_slot_infos_query)
-		pg_free(logical_slot_infos_query);
 
 	if (cluster == &old_cluster)
 		pg_log(PG_VERBOSE, "\nsource databases:");
@@ -681,17 +675,15 @@ process_rel_infos(DbInfo *dbinfo, PGresult *res, void *arg)
  * get_db_rel_and_slot_infos()'s UpgradeTask.  The status of each logical slot
  * is checked in check_old_cluster_for_valid_slots().
  */
-static char *
-get_old_cluster_logical_slot_infos_query(void)
+static const char *
+get_old_cluster_logical_slot_infos_query(ClusterInfo *cluster)
 {
 	/*
 	 * Fetch the logical replication slot information. The check whether the
 	 * slot is considered caught up is done by an upgrade function. This
 	 * regards the slot as caught up if we don't find any decodable changes.
-	 * See binary_upgrade_logical_slot_has_caught_up().
-	 *
-	 * Note that we can't ensure whether the slot is caught up during
-	 * live_check as the new WAL records could be generated.
+	 * The implementation of this check varies depending on the server
+	 * version.
 	 *
 	 * We intentionally skip checking the WALs for invalidated slots as the
 	 * corresponding WALs could have been removed for such slots.
@@ -701,21 +693,80 @@ get_old_cluster_logical_slot_infos_query(void)
 	 * started and stopped several times causing any temporary slots to be
 	 * removed.
 	 */
-	return psprintf("SELECT slot_name, plugin, two_phase, failover, "
-					"%s as caught_up, invalidation_reason IS NOT NULL as invalid "
-					"FROM pg_catalog.pg_replication_slots "
-					"WHERE slot_type = 'logical' AND "
-					"database = current_database() AND "
-					"temporary IS FALSE;",
-					user_opts.live_check ? "FALSE" :
-					"(CASE WHEN invalidation_reason IS NOT NULL THEN FALSE "
-					"ELSE (SELECT pg_catalog.binary_upgrade_logical_slot_has_caught_up(slot_name)) "
-					"END)");
+
+	if (user_opts.live_check)
+	{
+		/*
+		 * We skip the caught-up check during live_check. We cannot verify
+		 * whether the slot is caught up in this mode, as new WAL records
+		 * could be generated concurrently.
+		 */
+		return "SELECT slot_name, plugin, two_phase, failover, "
+			"FALSE as caught_up, "
+			"invalidation_reason IS NOT NULL as invalid "
+			"FROM pg_catalog.pg_replication_slots "
+			"WHERE slot_type = 'logical' AND "
+			"database = current_database() AND "
+			"temporary IS FALSE";
+	}
+	else if (GET_MAJOR_VERSION(cluster->major_version) >= 1900)
+	{
+		/*
+		 * For PG19 and later, we optimize the slot caught-up check to avoid
+		 * reading the same WAL stream multiple times: execute the caught-up
+		 * check only for the slot with the minimum confirmed_flush_lsn, and
+		 * apply the same result to all other slots in the same database. This
+		 * limits the check to at most one logical slot per database. We also
+		 * use the maximum confirmed_flush_lsn among all logical slots on the
+		 * database as an early scan cutoff; finding a decodable WAL record
+		 * beyond this point implies that no slot has caught up.
+		 *
+		 * Note that we don't distinguish slots based on their output plugin.
+		 * If a plugin applies replication origin filters, we might get a
+		 * false positive (i.e., erroneously considering a slot caught up).
+		 * However, such cases are very rare, and the impact of a false
+		 * positive is minimal.
+		 */
+		return "WITH check_caught_up AS ( "
+			"  SELECT pg_catalog.binary_upgrade_check_logical_slot_pending_wal(slot_name, "
+			"    MAX(confirmed_flush_lsn) OVER ()) as last_pending_wal "
+			"  FROM pg_replication_slots "
+			"  WHERE slot_type = 'logical' AND "
+			"    database = current_database() AND "
+			"    temporary IS FALSE AND "
+			"    invalidation_reason IS NULL "
+			"  ORDER BY confirmed_flush_lsn ASC "
+			"  LIMIT 1 "
+			") "
+			"SELECT slot_name, plugin, two_phase, failover, "
+			"CASE WHEN invalidation_reason IS NOT NULL THEN FALSE "
+			"ELSE  last_pending_wal IS NULL OR "
+			"  confirmed_flush_lsn > last_pending_wal "
+			"END as caught_up, "
+			"invalidation_reason IS NOT NULL as invalid "
+			"FROM pg_catalog.pg_replication_slots, check_caught_up "
+			"WHERE slot_type = 'logical' AND "
+			"database = current_database() AND "
+			"temporary IS FALSE ";
+	}
+
+	/*
+	 * For PG18 and earlier, we call
+	 * binary_upgrade_logical_slot_has_caught_up() for each logical slot.
+	 */
+	return "SELECT slot_name, plugin, two_phase, failover, "
+		"CASE WHEN invalidation_reason IS NOT NULL THEN FALSE "
+		"ELSE (SELECT pg_catalog.binary_upgrade_logical_slot_has_caught_up(slot_name)) "
+		"END as caught_up, "
+		"invalidation_reason IS NOT NULL as invalid "
+		"FROM pg_catalog.pg_replication_slots "
+		"WHERE slot_type = 'logical' AND "
+		"database = current_database() AND "
+		"temporary IS FALSE ";
 }
 
 /*
- * Callback function for processing results of the query returned by
- * get_old_cluster_logical_slot_infos_query(), which is used for
+ * Callback function for processing results of the query, which is used for
  * get_db_rel_and_slot_infos()'s UpgradeTask.  This function stores the logical
  * slot information for later use.
  */
@@ -768,7 +819,7 @@ process_old_cluster_logical_slot_infos(DbInfo *dbinfo, PGresult *res, void *arg)
  *
  * Note: this function always returns 0 if the old_cluster is PG16 and prior
  * because we gather slot information only for cluster versions greater than or
- * equal to PG17. See get_old_cluster_logical_slot_infos().
+ * equal to PG17. See get_db_rel_and_slot_infos().
  */
 int
 count_old_cluster_logical_slots(void)
