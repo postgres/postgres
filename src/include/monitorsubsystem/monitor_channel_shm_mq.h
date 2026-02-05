@@ -14,6 +14,8 @@
 #include "monitorsubsystem/monitor_channel.h"
 #include "storage/shm_mq.h"
 
+typedef struct MonitorChannelConfig MonitorChannelConfig;
+
 /* Private data for shm_mq monitor channel */
 typedef struct ShmMqChannelData
 {
@@ -23,8 +25,7 @@ typedef struct ShmMqChannelData
 	/* mb bool is_sender */
 } ShmMqChannelData;
 
-static bool shm_mq_channel_init(monitor_channel *ch, const ChannelOps *ops,
-					Size *size, void *arg);
+static bool shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *arg);
 
 static bool shm_mq_channel_send(monitor_channel *ch, const void *data, Size len);
 

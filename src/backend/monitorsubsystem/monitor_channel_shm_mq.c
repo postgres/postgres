@@ -10,33 +10,36 @@
  */
 #include "postgres.h"
 #include "monitorsubsystem/monitor_channel.h"
+#include "monitorsubsystem/monitor_channel_type.h"
+#include "monitorsubsystem/monitor_channel_shm_mq.h"
 #include "storage/shm_mq.h"
 
-/* Private data for shm_mq monitor channel */
-typedef struct ShmMqChannelData
-{
-	shm_mq_handle *mq_handle;
-	shm_mq *mq;
-	Size size;
-	/* mb bool is_sender */
-} ShmMqChannelData;
 
 /* static needed ? */
+/*
+ * тут в arg надо будет передать всю херню, которая будет нужна для данного типа канала
+ *
+ */
 static bool
-shm_mq_channel_init(monitor_channel *ch, const ChannelOps *ops,
-					Size *size, void *arg)
+shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *arg)
 {
-	char *memory = (char *)arg;
+	/*
+	 * TODO:
+	 * realize
+	 * 
+	 */
+	// char *memory = (char *)arg;
 
-	ShmMqChannelData *priv = (ShmMqChannelData *)palloc(sizeof(ShmMqChannelData));
-	if (!priv)
-		return false;
+	// ShmMqChannelData *priv = (ShmMqChannelData *)palloc(sizeof(ShmMqChannelData));
+	// if (!priv)
+	// 	return false;
 
-	priv->mq = shm_mq_create(memory, size);
-	priv->size = size;
-	priv->mq_handle = shm_mq_attach(priv->mq, NULL, NULL);
+	// priv->mq = shm_mq_create(memory, size);
+	// priv->size = size;
+	// priv->mq_handle = shm_mq_attach(priv->mq, NULL, NULL);
 
-	ch->private_data = priv;
+	// ch->private_data = priv;
+	// return true;
 	return true;
 }
 

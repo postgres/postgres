@@ -10,6 +10,9 @@
  * Contains:
  *  - internal data structures
  *  - monitoring auxiliary process entry point
+ * 
+ * Current limits:
+ * Each process can have only 1 channel for subscriptions and 1 channel for publishing
  *
  * src/include/postmaster/monitor.h
  *
@@ -53,6 +56,7 @@
 
 #define MAX_SUBS_NUM MSS_MAX_PROCESSES
 #define MAX_PUBS_NUM 32
+#define MAX_MONITOR_CHANNELS_NUM (MAX_PUBS_NUM + MAX_SUBS_NUM)
 #define MAX_SUBJECT_NUM 64
 
 #define MAX_SUBS_BIT_NUM ((MAX_SUBS_NUM + 64 - 1) / 64)
@@ -118,6 +122,7 @@ typedef struct mssEntry
 
 typedef struct SubscriberInfo
 {
+	int id;
 	pid_t proc_pid; 
 	/* тут микро вопрос, как это норм задавать - возможно, лучше не через указатели, а через offset и тд... */
 	monitor_channel *channel;
@@ -128,6 +133,7 @@ typedef struct SubscriberInfo
 
 typedef struct PublisherInfo
 {
+	int id;
 	/* мб еще лочку надо добавить */
 	pid_t proc_pid;
 	monitor_channel *sub_channel;
@@ -155,6 +161,15 @@ typedef struct MssState_PublisherInfo
 
 } MssState_PublisherInfo;
 
+typedef struct MssState_SubjectEntitiesInfo
+{
+	SubjectEntity *subjectEntities;
+	int next_subject_hint;
+	/* pg_atomic_uint64??? */
+    uint64 subject_used[(MAX_SUBJECT_NUM + 63) / 64];
+};
+
+
 /*
  * еще раз - в разделяемой памяти лежит
  * структура (пока массив) со списком подписчиков
@@ -176,13 +191,20 @@ typedef struct MssState_PublisherInfo
  * SubsribersInfo, Publishers, subject-subscribers (SubjectEntities) hashtable
  * are reached from here.
  *
+ * 
+ * max_num of all monitor channels = (MAX_PUBS_NUM + MAX_SUBS_NUM)
+ * so pub_num is number of publisher in PublisherInfo *publishers
+ * sub_number is number of pusblisher in SubscriberInfo *subscribers;
+ * so monitor_channel[i]  = { i if it's publisher's channel and i is pub_number of the puslisher,
+ * i + MAX_PUBS_NUM if it's subscriber's channel and i is sub_number of the subscriber}
  */
 typedef struct mssSharedState
 {
 	MssState_SubscriberInfo sub;
 	MssState_PublisherInfo pub;
+	monitor_channel *channels;
+	MssState_SubjectEntitiesInfo subjectEntities;
 
-	SubjectEntity *subjectEntities;
 
 	LWLock lock;	/* protects hashtable search/modification */
 	HTAB *mss_hash; /* hashtable for SubjectKey - SubjectEntity */

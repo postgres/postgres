@@ -65,12 +65,21 @@ Size mss_subjectEntity_size(void)
 	return MAXALIGN(sz);
 }
 
+Size mss_monitorChannels_size(void)
+{
+	Size sz;
+
+	sz = MAX_MONITOR_CHANNELS_NUM * sizeof(SubjectEntity);
+	return MAXALIGN(sz);
+}
+
 Size MonitorShmemSize(void)
 {
 	Size sz;
 
 	sz = MAXALIGN(sizeof(mssSharedState));
 	sz = add_size(sz, mss_subscriberInfo_size());
+	sz = add_size(sz, mss_publisherInfo_size());
 	sz = add_size(sz, mss_publisherInfo_size());
 	sz = add_size(sz, mss_subjectEntity_size());
 
@@ -139,6 +148,7 @@ void MonitorShmemInit(void)
 		for (int i = 0; i < MAX_PUBS_NUM; i++)
 		{
 			PublisherInfo *pub = &monSubSysLocal.MonSubSystem_SharedState->pub.publishers[i];
+			pub->id = -1;
 			pub->proc_pid = 0;
 			pub->sub_channel = NULL;
 		}
@@ -151,6 +161,7 @@ void MonitorShmemInit(void)
 		{
 			SubjectEntity *subj = &monSubSysLocal.MonSubSystem_SharedState->subjectEntities[i];
 
+			subj->id = -1;
 			subj->_routingType = ANYCAST;
 
 			for (int j = 0; j < MAX_SUBS_BIT_NUM; j++)
@@ -158,6 +169,9 @@ void MonitorShmemInit(void)
 				pg_atomic_init_u64(&subj->bitmap_subs[j], 0);
 			}
 		}
+
+		ptr += mss_monitorChannels_size();
+		monSubSysLocal.MonSubSystem_SharedState->channels = (monitor_channel *)ptr;
 
 		/* Hash table initialization */
 		ptr += mss_subjectEntity_size();

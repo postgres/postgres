@@ -21,14 +21,14 @@
 
 
 // con = Consumer / Subscriber
-int pg_monitor_con_connect(Size shm_mq_size);
+int pg_monitor_con_connect(MonitorChannelConfig *conConfig);
 void pg_monitor_con_disconnect();
 
 int pg_monitor_subscribe_to_event(const char *event_string, routing_type _routing_type);
 void pg_monitor_unsubscribe_from_event(const char *event_string);
 
 // pub = Publisher
-void pg_monitor_pub_connect(Size shm_mq_size);
+void pg_monitor_pub_connect(MonitorChannelConfig *conConfig);
 void pg_monitor_pub_disconnect();
 
 // в случае, если не удалось уведомить о событии, быстро возврщает управление
