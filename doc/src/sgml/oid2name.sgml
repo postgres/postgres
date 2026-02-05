@@ -118,7 +118,7 @@
      <term><option>-x</option></term>
      <term><option>--extended</option></term>
      <listitem><para>display more information about each object shown: tablespace name,
-      schema name, and OID.
+      schema name, OID and path.
      </para></listitem>
     </varlistentry>
 
@@ -299,10 +299,10 @@ From database "alvherre":
 $ # you can mix the options, and get more details with -x
 $ oid2name -d alvherre -t accounts -f 1155291 -x
 From database "alvherre":
-  Filenode     Table Name      Oid  Schema  Tablespace
-------------------------------------------------------
-    155173       accounts   155173  public  pg_default
-   1155291  accounts_pkey  1155291  public  pg_default
+  Filenode     Table Name      Oid  Schema  Tablespace                Path
+--------------------------------------------------------------------------
+    155173       accounts   155173  public  pg_default   base/17228/155173
+   1155291  accounts_pkey  1155291  public  pg_default  base/17228/1155291
 
 $ # show disk space for every db object
 $ du [0-9]* |

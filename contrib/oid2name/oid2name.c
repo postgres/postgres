@@ -469,7 +469,7 @@ void
 sql_exec_dumpalltables(PGconn *conn, struct options *opts)
 {
 	char		todo[1024];
-	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
+	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\", pg_relation_filepath(c.oid) as \"Path\" ";
 
 	snprintf(todo, sizeof(todo),
 			 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s "
@@ -507,7 +507,7 @@ sql_exec_searchtables(PGconn *conn, struct options *opts)
 			   *comma_filenumbers,
 			   *comma_tables;
 	bool		written = false;
-	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
+	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\", pg_relation_filepath(c.oid) as \"Path\" ";
 
 	/* get tables qualifiers, whether names, filenumbers, or OIDs */
 	comma_oids = get_comma_elts(opts->oids);
