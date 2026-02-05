@@ -539,7 +539,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		/*
 		 * After all the positive number attnums in stxkeys come the negative
 		 * numbers (if any) which represent expressions in the order that they
-		 * appear in stxdexprs.  Because the expressions are always
+		 * appear in stxdexpr.  Because the expressions are always
 		 * monotonically decreasing from -1, there is no point in looking at
 		 * the values in stxkeys, it's enough to know how many of them there
 		 * are.
