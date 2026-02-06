@@ -271,6 +271,18 @@
 
      <tbody>
       <row>
+      <entry>3.9999</entry>
+      <entry>-</entry>
+      <entry>Reserved for protocol greasing. libpq may use this version, which
+        is higher than any minor version the project ever expects to use, to
+        test that servers and middleware properly implement protocol version
+        negotiation. Servers <emphasis>must not</emphasis> add special-case
+        logic for this version; they should simply compare it to their latest
+        supported version (which will always be smaller) and downgrade via a
+        NegotiateProtocolVersion message.
+      </entry>
+      </row>
+      <row>
       <entry>3.1</entry>
       <entry>-</entry>
       <entry>Reserved. Version 3.1 has not been used by any PostgreSQL
@@ -351,6 +363,17 @@
         client, by sending a NegotiateProtocolVersion message during the
         <link linkend="protocol-flow-start-up">startup flow</link>, and should
         otherwise continue the connection.
+      </entry>
+      </row>
+
+      <row>
+      <entry><literal>_pq_.test_protocol_negotiation</literal></entry>
+      <entry>Reserved for protocol greasing. libpq may send this extension to
+        test that servers and middleware properly implement protocol extension
+        negotiation. Servers <emphasis>must not</emphasis> add special-case
+        logic for this parameter; they should simply send the list of all
+        unsupported options (including this one) via a NegotiateProtocolVersion
+        message.
       </entry>
       </row>
      </tbody>
