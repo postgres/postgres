@@ -223,10 +223,12 @@
    <para>
     <xref linkend="protocol-versions-table"/> shows the currently supported
     protocol versions.
+    <xref linkend="other-protocol-versions-table"/>
+    documents protocol versions that are unsupported or otherwise reserved.
    </para>
 
    <table id="protocol-versions-table">
-    <title>Protocol Versions</title>
+    <title>Supported Protocol Versions</title>
 
     <tgroup cols="3">
      <thead>
@@ -248,6 +250,27 @@
       </entry>
       </row>
       <row>
+      <entry>3.0</entry>
+      <entry>PostgreSQL 7.4 and later</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <table id="other-protocol-versions-table">
+    <title>Other Protocol Versions</title>
+
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Version</entry>
+       <entry>Supported by</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
       <entry>3.1</entry>
       <entry>-</entry>
       <entry>Reserved. Version 3.1 has not been used by any PostgreSQL
@@ -257,15 +280,78 @@
       </entry>
       </row>
       <row>
-      <entry>3.0</entry>
-      <entry>PostgreSQL 7.4 and later</entry>
-      </row>
-      <row>
       <entry>2.0</entry>
       <entry>up to PostgreSQL 13</entry>
-      <entry>See previous releases of
+      <entry>Obsolete. See previous releases of
       the <productname>PostgreSQL</productname> documentation for
-      details</entry>
+      details.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </sect2>
+
+  <sect2 id="protocol-extensions">
+   <title>Protocol Extensions</title>
+
+   <para>
+    Servers and clients may additionally negotiate individual extensions to the
+    protocol version in use. These are offered by the client in the startup
+    message, as specially-named parameters with a <literal>_pq_.</literal>
+    prefix. Servers reject any unknown or unsupported extensions by sending a
+    NegotiateProtocolVersion message containing the list of rejected parameter
+    names, at which point the client may choose whether to continue with the
+    connection. <xref linkend="protocol-extensions-table"/> and
+    <xref linkend="reserved-protocol-extensions-table"/> document the supported
+    and reserved protocol extension parameters, respectively.
+   </para>
+
+   <table id="protocol-extensions-table">
+    <title>Supported Protocol Extensions</title>
+
+    <tgroup cols="4">
+     <colspec colname="last" colnum="4"/>
+
+     <thead>
+      <row>
+       <entry>Parameter&nbsp;Name</entry>
+       <entry>Values</entry>
+       <entry>Supported&nbsp;by</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry namest="last" align="center" valign="middle">
+        <emphasis>(No supported protocol extensions are currently defined.)</emphasis>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <table id="reserved-protocol-extensions-table">
+    <title>Reserved Protocol Extensions</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Parameter&nbsp;Name</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+      <entry><literal>_pq_.<replaceable>[name]</replaceable></literal></entry>
+      <entry>Any other parameter names beginning with <literal>_pq_.</literal>,
+        that are not defined above, are reserved for future protocol expansion.
+        Servers <emphasis>must</emphasis> reject any that are received from a
+        client, by sending a NegotiateProtocolVersion message during the
+        <link linkend="protocol-flow-start-up">startup flow</link>, and should
+        otherwise continue the connection.
+      </entry>
       </row>
      </tbody>
     </tgroup>
@@ -295,8 +381,8 @@
     To begin a session, a frontend opens a connection to the server and sends
     a startup message.  This message includes the names of the user and of the
     database the user wants to connect to; it also identifies the particular
-    protocol version to be used.  (Optionally, the startup message can include
-    additional settings for run-time parameters.)
+    protocol version to be used.  (Optionally, the startup message can request
+    protocol extensions and include additional settings for run-time parameters.)
     The server then uses this information and
     the contents of its configuration files (such as
     <filename>pg_hba.conf</filename>) to determine
@@ -6151,7 +6237,9 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
 
          In addition to the above, other parameters may be listed.
          Parameter names beginning with <literal>_pq_.</literal> are
-         reserved for use as protocol extensions, while others are
+         reserved for use as
+         <link linkend="protocol-extensions">protocol extensions</link>,
+         while others are
          treated as run-time parameters to be set at backend start
          time.  Such settings will be applied during backend start
          (after parsing the command-line arguments if any) and will
