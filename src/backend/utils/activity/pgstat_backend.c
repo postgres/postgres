@@ -326,7 +326,7 @@ pgstat_create_backend(ProcNumber procnum)
 	PgStatShared_Backend *shstatent;
 
 	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_BACKEND, InvalidOid,
-											MyProcNumber, false);
+											procnum, false);
 	shstatent = (PgStatShared_Backend *) entry_ref->shared_stats;
 
 	/*
