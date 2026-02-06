@@ -196,7 +196,7 @@ copy_file_blocks(const char *src, const char *dst,
 	}
 
 	if (rb < 0)
-		pg_fatal("could not read from file \"%s\": %m", dst);
+		pg_fatal("could not read from file \"%s\": %m", src);
 
 	pg_free(buffer);
 	close(src_fd);
