@@ -18,6 +18,16 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+4dac22aa10d2882c2e6fb465d7c314cc2d8fb754
+#
+# Add file_extend_method=posix_fallocate,write_zeros.
+# 2026-02-06 17:41:42 +1300
+#
+# Modifying GUC tables isn't really an ABI break: the relevant object has
+# incomplete type so its layout is inaccessible from other C translation units.
+#
+# Discussion: https://www.postgresql.org/message-id/flat/e1f0cd3b-0164-45f5-9705-e922e59df90f%40dunslane.net#8a350b54012c0042f9869d288e978cfe
+
 c5fc17ddaccff14bc22217df2b06ed43a5af16ba
 #
 # Fix trigger transition table capture for MERGE in CTE queries.
