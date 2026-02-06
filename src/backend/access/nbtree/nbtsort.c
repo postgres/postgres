@@ -69,8 +69,8 @@
 /*
  * DISABLE_LEADER_PARTICIPATION disables the leader's participation in
  * parallel index builds.  This may be useful as a debugging aid.
-#undef DISABLE_LEADER_PARTICIPATION
  */
+/* #define DISABLE_LEADER_PARTICIPATION */
 
 /*
  * Status record for spooling/sorting phase.  (Note we may have two of

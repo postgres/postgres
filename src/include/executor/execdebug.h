@@ -34,22 +34,22 @@
  *		EXEC_NESTLOOPDEBUG is a flag which turns on debugging of the
  *		nest loop node by NL_printf() and ENL_printf() in nodeNestloop.c
  * ----------------
-#undef EXEC_NESTLOOPDEBUG
  */
+/* #define EXEC_NESTLOOPDEBUG */
 
 /* ----------------
  *		EXEC_SORTDEBUG is a flag which turns on debugging of
  *		the ExecSort() stuff by SO_printf() in nodeSort.c
  * ----------------
-#undef EXEC_SORTDEBUG
  */
+/* #define EXEC_SORTDEBUG */
 
 /* ----------------
  *		EXEC_MERGEJOINDEBUG is a flag which turns on debugging of
  *		the ExecMergeJoin() stuff by MJ_printf() in nodeMergejoin.c
  * ----------------
-#undef EXEC_MERGEJOINDEBUG
  */
+/* #define EXEC_MERGEJOINDEBUG */
 
 /* ----------------------------------------------------------------
  *		#defines controlled by above definitions
