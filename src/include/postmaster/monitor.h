@@ -120,6 +120,10 @@ typedef struct mssEntry
  *
  */
 
+/* 
+ * ALWAYS first local->MonSubSystem_SharedState->lock
+ * then SubjectInfo->lock
+ */
 typedef struct SubscriberInfo
 {
 	int id;
@@ -136,7 +140,7 @@ typedef struct PublisherInfo
 	int id;
 	/* мб еще лочку надо добавить */
 	pid_t proc_pid;
-	monitor_channel *sub_channel;
+	monitor_channel *channel;
 } PublisherInfo;
 
 typedef struct MssState_SubscriberInfo
@@ -165,9 +169,9 @@ typedef struct MssState_SubjectEntitiesInfo
 {
 	SubjectEntity *subjectEntities;
 	int next_subject_hint;
-	/* pg_atomic_uint64??? */
-    uint64 subject_used[(MAX_SUBJECT_NUM + 63) / 64];
-};
+	
+    pg_atomic_uint64 subject_used[(MAX_SUBJECT_NUM + 63) / 64];
+} MssState_SubjectEntitiesInfo;
 
 
 /*
@@ -203,7 +207,7 @@ typedef struct mssSharedState
 	MssState_SubscriberInfo sub;
 	MssState_PublisherInfo pub;
 	monitor_channel *channels;
-	MssState_SubjectEntitiesInfo subjectEntities;
+	MssState_SubjectEntitiesInfo entitiesInfo;
 
 
 	LWLock lock;	/* protects hashtable search/modification */

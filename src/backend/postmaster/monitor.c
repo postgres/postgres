@@ -69,7 +69,7 @@ Size mss_monitorChannels_size(void)
 {
 	Size sz;
 
-	sz = MAX_MONITOR_CHANNELS_NUM * sizeof(SubjectEntity);
+	sz = MAX_MONITOR_CHANNELS_NUM * sizeof(monitor_channel);
 	return MAXALIGN(sz);
 }
 
@@ -80,8 +80,8 @@ Size MonitorShmemSize(void)
 	sz = MAXALIGN(sizeof(mssSharedState));
 	sz = add_size(sz, mss_subscriberInfo_size());
 	sz = add_size(sz, mss_publisherInfo_size());
-	sz = add_size(sz, mss_publisherInfo_size());
 	sz = add_size(sz, mss_subjectEntity_size());
+	sz = add_size(sz, mss_monitorChannels_size());
 
 	/* for hash table */
 	sz = add_size(sz,
@@ -150,18 +150,26 @@ void MonitorShmemInit(void)
 			PublisherInfo *pub = &monSubSysLocal.MonSubSystem_SharedState->pub.publishers[i];
 			pub->id = -1;
 			pub->proc_pid = 0;
-			pub->sub_channel = NULL;
+			pub->channel = NULL;
 		}
 
-		/* SubjectEntity array initialization */
+		/* SubjectEntity */
+		
 		ptr += mss_publisherInfo_size();
-		monSubSysLocal.MonSubSystem_SharedState->subjectEntities = (SubjectEntity *)ptr;
+		monSubSysLocal.MonSubSystem_SharedState->entitiesInfo.subjectEntities = (SubjectEntity *)ptr;
+
+		monSubSysLocal.MonSubSystem_SharedState->entitiesInfo.next_subject_hint = 0;
+
+		for (int i = 0; i < (MAX_SUBJECT_NUM + 63) / 64; i++)
+		{
+			pg_atomic_init_u64(&monSubSysLocal.MonSubSystem_SharedState->entitiesInfo.subject_used[i], 0);
+		}	
+		
 
 		for (int i = 0; i < MAX_SUBJECT_NUM; i++)
 		{
-			SubjectEntity *subj = &monSubSysLocal.MonSubSystem_SharedState->subjectEntities[i];
+			SubjectEntity *subj = &monSubSysLocal.MonSubSystem_SharedState->entitiesInfo.subjectEntities[i];
 
-			subj->id = -1;
 			subj->_routingType = ANYCAST;
 
 			for (int j = 0; j < MAX_SUBS_BIT_NUM; j++)

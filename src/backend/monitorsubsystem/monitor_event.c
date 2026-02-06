@@ -9,9 +9,10 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postmaster/monitor.h"
+#include "monitorsubsystem/monitor_channel_type.h"
 #include "postgres.h"
 #include "monitorsubsystem/monitor_channel.h"
-#include "monitorsubsystem/monitor_channel_type.h"
 #include "monitorsubsystem/monitor_event.h"
 #include "miscadmin.h"
 
@@ -126,7 +127,7 @@ int pg_monitor_con_connect(MonitorChannelConfig *conConfig)
      * 
      * 
      */
-    myChannel = monSubSysLocal.MonSubSystem_SharedState->channels[sub_id + MAX_PUBS_NUM];
+    myChannel = &monSubSysLocal.MonSubSystem_SharedState->channels[sub_id + MAX_PUBS_NUM];
     
 
     
@@ -184,11 +185,11 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
     for (int i = 0; i < sharedPubInfo->max_pubs_num; i++)
     {
         PublisherInfo *pub = &sharedPubInfo->publishers[i];
-        bool res = LWLockConditionalAcquire(&pub->lock, LW_EXCLUSIVE);
-        if (!res) {
-            /* it's supposed that smbd working on it, so let's continue*/
-            continue;
-        }
+        // bool res = LWLockConditionalAcquire(&pub->lock, LW_EXCLUSIVE);
+        // if (!res) {
+        //     /* it's supposed that smbd working on it, so let's continue*/
+        //     continue;
+        // }
         /*
          * TODO: select more appropriate criteria that this 
          * PublisherInfo is free and add additional checks
@@ -199,10 +200,10 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
             myPubInfo->proc_pid = MyProcPid;
             myPubInfo->id = pub_id;
             
-            LWLockRelease(&pub->lock);
+            // LWLockRelease(&pub->lock);
             break;
         }
-        LWLockRelease(&pub->lock);
+        // LWLockRelease(&pub->lock);
     }
     
     if (pub_id == -1)
@@ -216,7 +217,7 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
      * TODO:
      * allocate memory for the monitor channel
      */
-    myChannel = monSubSysLocal.MonSubSystem_SharedState->channels[pub_id];
+    myChannel = &monSubSysLocal.MonSubSystem_SharedState->channels[pub_id];
 
     
     bool is_channel_created = monitor_channel_options[conConfig->type].init(myChannel, conConfig);
@@ -231,7 +232,7 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
      * maybe it'd be easier just not to release lock 
      * immideatly after finding myPubInfo
      */
-    LWLockAcquire(&myPubInfo->lock, LW_EXCLUSIVE);
+    // LWLockAcquire(&myPubInfo->lock, LW_EXCLUSIVE);
 
     myPubInfo->channel = myChannel;
     
@@ -239,41 +240,17 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
     monSubSysLocal.myPubInfo = myPubInfo;
 
 
-    LWLockRelease(&myPubInfo->lock);
+    // LWLockRelease(&myPubInfo->lock);
     LWLockRelease(&sharedPubInfo->lock);
     
     return 0;
 }
 
 
-int pg_monitor_subscribe_to_event(const char *event_string, routing_type _routing_type)
+MSS_SUBSCRIBE_RESULT pg_monitor_subscribe_to_event(const char *event_string, routing_type _routing_type)
 {
-    /*
-     * Что надо сделать чтобы подписаться на событие
-     * найти событие в хэш-таблице
-     * если нету - создать и создать новую записть в subjectEntities
-     * поставить в SubjectEntity битик о номере SubscriberInfo
-     * потом поставить в битовом массиве SubscriberInfo инфу бит с номером SubjectEntities
-     * 
-     * 
-     * что для этого надо в параметрах:
-     * - SubscriberInfo* - но оно будет в MonSubSystem_LocalState
-     * (сейчас есть ограничение, что 1 канал для записи и один для публикации сообщений)
-     * - routingType (если события еще нет, надо задать ключ)
-     * 
-     * проверки
-     * - что event_string проходит по лимиту (MAX_SUBJECT_LEN)
-     * - что подписчик зарегестрирован
-     * - если запись уже существует - то надо проверить, что routing_type совпадает
-     * 
-     * ошибки
-     * - подписчик не зарегестрирован
-     * - event_string слишком большое
-     * - routing_type не совпадает
-     * 
-     */
-
     MonSubSystem_LocalState *local = &monSubSysLocal;
+    MssState_SubjectEntitiesInfo *entitiesInfo;
     mssSharedState *shared;
     SubscriberInfo *sub;
     SubjectEntity *subject;
@@ -283,16 +260,27 @@ int pg_monitor_subscribe_to_event(const char *event_string, routing_type _routin
     int subjectId;
 
     if (local->mySubInfo == NULL)
-        return -1; /* subscriber not registered */
+    {
+        elog(DEBUG1, "Subscriber not registered");        
+        return MSS_ERR_NOT_REGISTERED;
+    }
 
     if (event_string == NULL)
-        return -1;
+    {
+        elog(DEBUG1, "Invalid arg: string is NULL");  
+        return MSS_ERR_INVALID_ARG;
+    }
+        
 
     if (strlen(event_string) >= MAX_SUBJECT_LEN)
-        return -1;
+    {
+        elog(DEBUG1, "Invalid arg: string is too long: %d", strlen(event_string));  
+        return MSS_ERR_INVALID_ARG;
+    }
 
     sub = local->mySubInfo;
     shared = local->MonSubSystem_SharedState;
+    entitiesInfo = &shared->entitiesInfo;
 
 
     memset(&key, 0, sizeof(key));
@@ -300,64 +288,46 @@ int pg_monitor_subscribe_to_event(const char *event_string, routing_type _routin
 
     LWLockAcquire(&shared->lock, LW_EXCLUSIVE);
 
-    /* specify HASHCATION */
+
     entry = hash_search(shared->mss_hash,
-                        (void *) &key,
-                        HASH_ENTER,
-                        &found);
+                    (void *) &key,
+                    HASH_FIND,
+                    &found);
 
     if (!found)
     {
-        /*
-         * TODO:
-         * update with MssState_SubjectEntitiesInfo.subject_used
-         */
-        subjectId = -1;
-
-        for (int i = 0; i < MAX_SUBJECT_NUM; i++)
-        {
-            SubjectEntity *cand = &shared->subjectEntities[i];
-
-            bool empty = true;
-            for (int w = 0; w < MAX_SUBS_BIT_NUM; w++)
-            {
-                if (pg_atomic_read_u64(&cand->bitmap_subs[w]) != 0)
-                {
-                    empty = false;
-                    break;
-                }
-            }
-
-            if (empty)
-            {
-                subjectId = i;
-                break;
-            }
-        }
-
+        subjectId = mss_alloc_subject_id();
         if (subjectId == -1)
         {
             LWLockRelease(&shared->lock);
-            return -1; /* no free subject slots */
+            elog(DEBUG1, "No free subject slots"); 
+            return MSS_ERR_NO_SUBJECTS_SLOTS_AVAILABLE;
         }
 
-        subject = &shared->subjectEntities[subjectId];
+        subject = &entitiesInfo->subjectEntities[subjectId];
+        subject->_routingType = _routing_type;
 
-        subject->_routingType = routing;
         for (int w = 0; w < MAX_SUBS_BIT_NUM; w++)
             pg_atomic_write_u64(&subject->bitmap_subs[w], 0);
+
+        entry = hash_search(shared->mss_hash,
+                            (void *) &key,
+                            HASH_ENTER,
+                            &found);
+        Assert(!found);
 
         entry->subjectEntityId = subjectId;
     }
     else
     {
         subjectId = entry->subjectEntityId;
-        subject = &shared->subjectEntities[subjectId];
+        subject = &entitiesInfo->subjectEntities[subjectId];
 
-        if (subject->_routingType != routing)
+        if (subject->_routingType != _routing_type)
         {
             LWLockRelease(&shared->lock);
-            return -1; /* routing type mismatch */
+            elog(DEBUG1, "Routing type mismatch"); 
+            return MSS_ERR_ROUTING_MISMATCH;
         }
     }
 
@@ -381,8 +351,41 @@ int pg_monitor_subscribe_to_event(const char *event_string, routing_type _routin
     LWLockRelease(&sub->lock);
     LWLockRelease(&shared->lock);
 
-    return 0;
-
-
+    return MSS_OK;
 }
+
+
+
+
+/* 
+ * Helper func for pg_monitor_subscribe_to_event()
+ * 
+ * MUST be called under local->MonSubSystem_SharedState->lock
+ */
+static int
+mss_alloc_subject_id(void)
+{
+    MssState_SubjectEntitiesInfo *entitiesInfo = &monSubSysLocal.MonSubSystem_SharedState->entitiesInfo;
+
+    for (int i = entitiesInfo->next_subject_hint; i < MAX_SUBJECT_NUM; i++)
+    {
+        int word = BIT_WORD(i);
+        uint64 mask = BIT_MASK(i);
+
+        uint64 old =
+        pg_atomic_fetch_or_u64(&entitiesInfo->subject_used[word], mask);
+
+        if ((old & mask) == 0)
+        {
+            entitiesInfo->next_subject_hint++;
+            return i;
+        }
+
+    }
+    return -1;
+}
+
+
+
+
 
