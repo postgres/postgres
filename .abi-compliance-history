@@ -18,6 +18,16 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+33e3de6d77e87d6c3c6f8f878dd8de42d37c3b8f
+#
+# Add file_extend_method=posix_fallocate,write_zeros.
+# 2026-02-06 17:38:39 +1300
+#
+# Modifying GUC tables isn't really an ABI break: the relevant object has
+# incomplete type so its layout is unknown to other C translation units.
+#
+# Discussion: https://www.postgresql.org/message-id/flat/e1f0cd3b-0164-45f5-9705-e922e59df90f%40dunslane.net#8a350b54012c0042f9869d288e978cfe
+
 492a69e1407029f8c673484f44aa719a63323d77
 #
 # Reject ADD CONSTRAINT NOT NULL if name mismatches existing constraint
