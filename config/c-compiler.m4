@@ -192,31 +192,6 @@ if test "$pgac_cv_c_typeof" != no; then
 fi])# PGAC_C_TYPEOF
 
 
-# PGAC_C_TYPEOF_UNQUAL
-# --------------------
-# Check if the C compiler understands typeof_unqual or a variant.  Define
-# HAVE_TYPEOF_UNQUAL if so, and define 'typeof_unqual' to the actual key word.
-#
-AC_DEFUN([PGAC_C_TYPEOF_UNQUAL],
-[AC_CACHE_CHECK(for typeof_unqual, pgac_cv_c_typeof_unqual,
-[pgac_cv_c_typeof_unqual=no
-for pgac_kw in typeof_unqual __typeof_unqual__; do
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
-[int x = 0;
-$pgac_kw(x) y;
-y = x;
-return y;])],
-[pgac_cv_c_typeof_unqual=$pgac_kw])
-  test "$pgac_cv_c_typeof_unqual" != no && break
-done])
-if test "$pgac_cv_c_typeof_unqual" != no; then
-  AC_DEFINE(HAVE_TYPEOF_UNQUAL, 1,
-            [Define to 1 if your compiler understands `typeof_unqual' or something similar.])
-  if test "$pgac_cv_c_typeof_unqual" != typeof_unqual; then
-    AC_DEFINE_UNQUOTED(typeof_unqual, $pgac_cv_c_typeof_unqual, [Define to how the compiler spells `typeof_unqual'.])
-  fi
-fi])# PGAC_C_TYPEOF_UNQUAL
-
 
 # PGAC_C_TYPES_COMPATIBLE
 # -----------------------

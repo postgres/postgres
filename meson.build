@@ -2880,30 +2880,6 @@ int main(void)
   endif
 endforeach
 
-# Check if the C compiler understands typeof_unqual or a variant.  Define
-# HAVE_TYPEOF_UNQUAL if so, and define 'typeof_unqual' to the actual key word.
-foreach kw : ['typeof_unqual', '__typeof_unqual__']
-  if cc.compiles('''
-int main(void)
-{
-    int x = 0;
-    @0@(x) y;
-    y = x;
-    return y;
-}
-'''.format(kw),
-    name: kw,
-    args: test_c_args, include_directories: postgres_inc)
-
-    cdata.set('HAVE_TYPEOF_UNQUAL', 1)
-    if kw != 'typeof_unqual'
-      cdata.set('typeof_unqual', kw)
-    endif
-
-    break
-  endif
-endforeach
-
 
 # MSVC doesn't cope well with defining restrict to __restrict, the
 # spelling it understands, because it conflicts with

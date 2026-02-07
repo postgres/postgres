@@ -15010,48 +15010,6 @@ _ACEOF
 
   fi
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for typeof_unqual" >&5
-$as_echo_n "checking for typeof_unqual... " >&6; }
-if ${pgac_cv_c_typeof_unqual+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  pgac_cv_c_typeof_unqual=no
-for pgac_kw in typeof_unqual __typeof_unqual__; do
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-int x = 0;
-$pgac_kw(x) y;
-y = x;
-return y;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  pgac_cv_c_typeof_unqual=$pgac_kw
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  test "$pgac_cv_c_typeof_unqual" != no && break
-done
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_c_typeof_unqual" >&5
-$as_echo "$pgac_cv_c_typeof_unqual" >&6; }
-if test "$pgac_cv_c_typeof_unqual" != no; then
-
-$as_echo "#define HAVE_TYPEOF_UNQUAL 1" >>confdefs.h
-
-  if test "$pgac_cv_c_typeof_unqual" != typeof_unqual; then
-
-cat >>confdefs.h <<_ACEOF
-#define typeof_unqual $pgac_cv_c_typeof_unqual
-_ACEOF
-
-  fi
-fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_types_compatible_p" >&5
 $as_echo_n "checking for __builtin_types_compatible_p... " >&6; }
 if ${pgac_cv__types_compatible+:} false; then :
