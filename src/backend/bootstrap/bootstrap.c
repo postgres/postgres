@@ -137,7 +137,7 @@ static const struct typinfo TypInfo[] = {
 	F_ARRAY_IN, F_ARRAY_OUT},
 	{"_char", 1002, CHAROID, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, InvalidOid,
 	F_ARRAY_IN, F_ARRAY_OUT},
-	{"_aclitem", 1034, ACLITEMOID, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, InvalidOid,
+	{"_aclitem", 1034, ACLITEMOID, -1, false, TYPALIGN_DOUBLE, TYPSTORAGE_EXTENDED, InvalidOid,
 	F_ARRAY_IN, F_ARRAY_OUT}
 };
 

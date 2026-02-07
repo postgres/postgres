@@ -444,7 +444,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 			stats->statypid[0] = TEXTOID;
 			stats->statyplen[0] = -1;	/* typlen, -1 for varlena */
 			stats->statypbyval[0] = false;
-			stats->statypalign[0] = 'i';
+			stats->statypalign[0] = TYPALIGN_INT;
 		}
 	}
 	else
