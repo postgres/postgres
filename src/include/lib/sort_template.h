@@ -311,6 +311,14 @@ loop:
 	DO_CHECK_FOR_INTERRUPTS();
 	if (n < 7)
 	{
+		/*
+		 * Not strictly necessary, but a caller may pass a NULL pointer input
+		 * and zero length, and this silences warnings about applying offsets
+		 * to NULL pointers.
+		 */
+		if (n < 2)
+			return;
+
 		for (pm = a + ST_POINTER_STEP; pm < a + n * ST_POINTER_STEP;
 			 pm += ST_POINTER_STEP)
 			for (pl = pm; pl > a && DO_COMPARE(pl - ST_POINTER_STEP, pl) > 0;
@@ -387,29 +395,23 @@ loop:
 	if (d1 <= d2)
 	{
 		/* Recurse on left partition, then iterate on right partition */
-		if (d1 > ST_POINTER_STEP)
-			DO_SORT(a, d1 / ST_POINTER_STEP);
-		if (d2 > ST_POINTER_STEP)
-		{
-			/* Iterate rather than recurse to save stack space */
-			/* DO_SORT(pn - d2, d2 / ST_POINTER_STEP) */
-			a = pn - d2;
-			n = d2 / ST_POINTER_STEP;
-			goto loop;
-		}
+		DO_SORT(a, d1 / ST_POINTER_STEP);
+
+		/* Iterate rather than recurse to save stack space */
+		/* DO_SORT(pn - d2, d2 / ST_POINTER_STEP) */
+		a = pn - d2;
+		n = d2 / ST_POINTER_STEP;
+		goto loop;
 	}
 	else
 	{
 		/* Recurse on right partition, then iterate on left partition */
-		if (d2 > ST_POINTER_STEP)
-			DO_SORT(pn - d2, d2 / ST_POINTER_STEP);
-		if (d1 > ST_POINTER_STEP)
-		{
-			/* Iterate rather than recurse to save stack space */
-			/* DO_SORT(a, d1 / ST_POINTER_STEP) */
-			n = d1 / ST_POINTER_STEP;
-			goto loop;
-		}
+		DO_SORT(pn - d2, d2 / ST_POINTER_STEP);
+
+		/* Iterate rather than recurse to save stack space */
+		/* DO_SORT(a, d1 / ST_POINTER_STEP) */
+		n = d1 / ST_POINTER_STEP;
+		goto loop;
 	}
 }
 #endif
