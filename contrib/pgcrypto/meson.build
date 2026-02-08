@@ -52,6 +52,7 @@ pgcrypto_regress = [
   'pgp-encrypt-md5',
   'pgp-pubkey-decrypt',
   'pgp-pubkey-encrypt',
+  'pgp-pubkey-session',
   'pgp-info',
   'crypt-shacrypt'
 ]

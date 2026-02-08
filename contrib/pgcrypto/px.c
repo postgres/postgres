@@ -65,6 +65,7 @@ static const struct error_desc px_err_list[] = {
 	{PXE_PGP_UNEXPECTED_PKT, "Unexpected packet in key data"},
 	{PXE_PGP_MATH_FAILED, "Math operation failed"},
 	{PXE_PGP_SHORT_ELGAMAL_KEY, "Elgamal keys must be at least 1024 bits long"},
+	{PXE_PGP_KEY_TOO_BIG, "Public key too big"},
 	{PXE_PGP_UNKNOWN_PUBALGO, "Unknown public-key encryption algorithm"},
 	{PXE_PGP_WRONG_KEY, "Wrong key"},
 	{PXE_PGP_MULTIPLE_KEYS,

@@ -75,7 +75,7 @@
 /* -108 is unused */
 #define PXE_PGP_MATH_FAILED			-109
 #define PXE_PGP_SHORT_ELGAMAL_KEY	-110
-/* -111 is unused */
+#define PXE_PGP_KEY_TOO_BIG			-111
 #define PXE_PGP_UNKNOWN_PUBALGO		-112
 #define PXE_PGP_WRONG_KEY			-113
 #define PXE_PGP_MULTIPLE_KEYS		-114
