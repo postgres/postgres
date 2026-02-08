@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-03-29 10:38+0000\n"
-"PO-Revision-Date: 2025-04-01 15:40\n"
+"POT-Creation-Date: 2025-12-31 02:38+0000\n"
+"PO-Revision-Date: 2026-01-02 12:56\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -57,11 +57,11 @@ msgstr "аргумент командної оболонки містить си
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "назва бази даних містить символ нового рядка або повернення каретки: \"%s\"\n"
 
-#: check.c:111
+#: check.c:112
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Перевірка складених типів визначених системою у таблицях користувача"
 
-#: check.c:118
+#: check.c:119
 msgid "Your installation contains system-defined composite types in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
 "so this cluster cannot currently be upgraded.  You can drop the\n"
@@ -70,11 +70,11 @@ msgstr "Ваша інсталяція містить системно визна
 "OID цих типів не стабільні між версіями PostgreSQL, тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:132
+#: check.c:133
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Перевірка несумісного типу даних \"line\""
 
-#: check.c:137
+#: check.c:138
 msgid "Your installation contains the \"line\" data type in user tables.\n"
 "This data type changed its internal and input/output format\n"
 "between your old and new versions so this\n"
@@ -85,11 +85,11 @@ msgstr "Ваша інсталяція містить тип даних \"line\" 
 "тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:154
+#: check.c:155
 msgid "Checking for reg* data types in user tables"
 msgstr "Перевірка типів даних reg* в користувацьких таблицях"
 
-#: check.c:181
+#: check.c:182
 msgid "Your installation contains one of the reg* data types in user tables.\n"
 "These data types reference system OIDs that are not preserved by\n"
 "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
@@ -98,11 +98,11 @@ msgstr "Ваша інсталяція містить один з типів да
 "Ці типи даних посилаються на OID системи, які не зберігаються за допомогою pg_upgrade, тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:193
+#: check.c:194
 msgid "Checking for incompatible \"aclitem\" data type"
 msgstr "Перевірка несумісного типу даних \"aclitem\""
 
-#: check.c:198
+#: check.c:199
 msgid "Your installation contains the \"aclitem\" data type in user tables.\n"
 "The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
 "so this cluster cannot currently be upgraded.  You can drop the\n"
@@ -111,11 +111,11 @@ msgstr "Ваша інсталяція містить тип даних \"aclitem
 "тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:217
+#: check.c:218
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Перевірка неприпустимих користувацьких стовпців \"unknown\""
 
-#: check.c:222
+#: check.c:223
 msgid "Your installation contains the \"unknown\" data type in user tables.\n"
 "This data type is no longer allowed in tables, so this cluster\n"
 "cannot currently be upgraded.  You can drop the problem columns\n"
@@ -125,11 +125,11 @@ msgstr "Ваша інсталяція містить \"unknown\" тип дани
 "тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:239
+#: check.c:240
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "Перевірка неприпустимих користувацьких стовпців \"sql_identifier\""
 
-#: check.c:244
+#: check.c:245
 msgid "Your installation contains the \"sql_identifier\" data type in user tables.\n"
 "The on-disk format for this data type has changed, so this\n"
 "cluster cannot currently be upgraded.  You can drop the problem\n"
@@ -139,11 +139,11 @@ msgstr "Ваша інсталяція містить \"sql_identifier\" тип �
 "тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:255
+#: check.c:256
 msgid "Checking for incompatible \"jsonb\" data type in user tables"
 msgstr "Перевірка несумісного типу даних \"jsonb\" в користувацьких таблицях"
 
-#: check.c:260
+#: check.c:261
 msgid "Your installation contains the \"jsonb\" data type in user tables.\n"
 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
 "cluster cannot currently be upgraded.  You can drop the problem \n"
@@ -153,11 +153,11 @@ msgstr "Ваша інсталяція містить тип даних \"jsonb\"
 "тому цей кластер наразі не може бути оновлений.\n"
 "Ви можете видалити проблемні стовпці та перезапустити оновлення.\n"
 
-#: check.c:272
+#: check.c:273
 msgid "Checking for removed \"abstime\" data type in user tables"
 msgstr "Перевірка видаленого типу даних \"abstime\" в користувацьких таблицях"
 
-#: check.c:277
+#: check.c:278
 msgid "Your installation contains the \"abstime\" data type in user tables.\n"
 "The \"abstime\" type has been removed in PostgreSQL version 12,\n"
 "so this cluster cannot currently be upgraded.  You can drop the\n"
@@ -169,11 +169,11 @@ msgstr "Користувацькі таблиці у вашій інсталяц
 "стовпці або змінити їх на інший тип даних, і перезапустити\n"
 "оновлення.\n"
 
-#: check.c:285
+#: check.c:286
 msgid "Checking for removed \"reltime\" data type in user tables"
 msgstr "Перевірка видаленого типу даних \"reltime\" в користувацьких таблицях"
 
-#: check.c:290
+#: check.c:291
 msgid "Your installation contains the \"reltime\" data type in user tables.\n"
 "The \"reltime\" type has been removed in PostgreSQL version 12,\n"
 "so this cluster cannot currently be upgraded.  You can drop the\n"
@@ -185,11 +185,11 @@ msgstr "Користувацькі таблиці у вашій інсталяц
 "стовпці або змінити їх на інший тип даних, і перезапустити\n"
 "оновлення.\n"
 
-#: check.c:298
+#: check.c:299
 msgid "Checking for removed \"tinterval\" data type in user tables"
 msgstr "Перевірка видаленого типу даних \"tinterval\" в користувацьких таблицях"
 
-#: check.c:303
+#: check.c:304
 msgid "Your installation contains the \"tinterval\" data type in user tables.\n"
 "The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
 "so this cluster cannot currently be upgraded.  You can drop the\n"
@@ -201,55 +201,55 @@ msgstr "Користувацькі таблиці у вашій інсталяц
 "стовпці або змінити їх на інший тип даних, і перезапустити\n"
 "оновлення.\n"
 
-#: check.c:345
+#: check.c:346
 #, c-format
 msgid "Checking data type usage"
 msgstr "Перевірка використання типів даних"
 
-#: check.c:480
+#: check.c:481
 #, c-format
 msgid "failed check: %s"
 msgstr "помилка перевірки: %s"
 
-#: check.c:483
+#: check.c:484
 msgid "A list of the problem columns is in the file:"
 msgstr "Список проблемних стовпців знаходиться у файлі:"
 
-#: check.c:495 check.c:963 check.c:1136 check.c:1251 check.c:1345 check.c:1473
-#: check.c:1549 check.c:1613 check.c:1686 check.c:1865 check.c:1884
-#: check.c:1953 check.c:2005 file.c:378 file.c:415 function.c:189 option.c:493
-#: version.c:79 version.c:177
+#: check.c:496 check.c:971 check.c:1144 check.c:1259 check.c:1353 check.c:1481
+#: check.c:1557 check.c:1634 check.c:1700 check.c:1773 check.c:1952
+#: check.c:1971 check.c:2040 check.c:2092 file.c:378 file.c:415 function.c:189
+#: option.c:493 version.c:79 version.c:177
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: check.c:522
+#: check.c:523
 #, c-format
 msgid "Data type checks failed: %s"
 msgstr "Помилка перевірки типів даних: %s"
 
-#: check.c:563
+#: check.c:564
 #, c-format
 msgid "Performing Consistency Checks on Old Live Server\n"
 "------------------------------------------------"
 msgstr "Перевірка цілістності на старому працюючому сервері\n"
 "------------------------------------------------"
 
-#: check.c:569
+#: check.c:570
 #, c-format
 msgid "Performing Consistency Checks\n"
 "-----------------------------"
 msgstr "Проведення перевірок цілістності\n"
 "-----------------------------"
 
-#: check.c:718
+#: check.c:726
 #, c-format
 msgid "\n"
 "*Clusters are compatible*"
 msgstr "\n"
 "*Кластери сумісні*"
 
-#: check.c:726
+#: check.c:734
 #, c-format
 msgid "\n"
 "If pg_upgrade fails after this point, you must re-initdb the\n"
@@ -258,7 +258,7 @@ msgstr "\n"
 "Якщо робота pg_upgrade після цієї точки перерветься, вам потрібно буде заново виконати initdb \n"
 "для нового кластера, перед продовженням."
 
-#: check.c:767
+#: check.c:775
 #, c-format
 msgid "Optimizer statistics are not transferred by pg_upgrade.\n"
 "Once you start the new server, consider running:\n"
@@ -267,14 +267,14 @@ msgstr "Статистика оптимізатора не передаєтьс�
 "Після запуску нового серверу розгляньте можливість запуску:\n"
 "    %s/vacuumdb %s--all --analyze-in-stages"
 
-#: check.c:773
+#: check.c:781
 #, c-format
 msgid "Running this script will delete the old cluster's data files:\n"
 "    %s"
 msgstr "При запуску цього скрипту файли даних старого кластера будуть видалені:\n"
 "    %s"
 
-#: check.c:778
+#: check.c:786
 #, c-format
 msgid "Could not create a script to delete the old cluster's data files\n"
 "because user-defined tablespaces or the new cluster's data directory\n"
@@ -285,117 +285,118 @@ msgstr "Не вдалося створити скрипт для видален�
 "простори або каталог даних нового кластера. Вміст старого кластера\n"
 "треба буде видалити вручну."
 
-#: check.c:790
+#: check.c:798
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Перевірка версій кластерів"
 
-#: check.c:802
+#: check.c:810
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgstr "Ця утиліта може виконувати оновлення тільки з версії PostgreSQL %s і новіше."
 
-#: check.c:807
+#: check.c:815
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s."
 msgstr "Ця утиліта може тільки підвищувати версію PostgreSQL до версії %s."
 
-#: check.c:816
+#: check.c:824
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions."
 msgstr "Ця утиліта не може використовуватись для пониження версії до більш старих основних версій PostgreSQL."
 
-#: check.c:821
+#: check.c:829
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions."
 msgstr "Каталог даних і двійковий каталог старого кластера з різних основних версій."
 
-#: check.c:824
+#: check.c:832
 #, c-format
 msgid "New cluster data and binary directories are from different major versions."
 msgstr "Каталог даних нового кластера і двійковий каталог з різних основних версій."
 
-#: check.c:839
+#: check.c:847
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different."
 msgstr "Для перевірки працюючого сервера, старий і новий номер порта повинні бути різними."
 
-#: check.c:859
+#: check.c:867
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr "Новий кластер бази даних \"%s\" не порожній: знайдено відношення \"%s.%s\""
 
-#: check.c:882
+#: check.c:890
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Перевірка каталогів табличних просторів кластера"
 
-#: check.c:893
+#: check.c:901
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\""
 msgstr "каталог нового кластерного табличного простору вже існує: \"%s\""
 
-#: check.c:926
+#: check.c:934
 #, c-format
 msgid "\n"
 "WARNING:  new data directory should not be inside the old data directory, i.e. %s"
 msgstr "\n"
 "ПОПЕРЕДЖЕННЯ: новий каталог даних не повинен бути всередині старого каталогу даних, наприклад %s"
 
-#: check.c:950
+#: check.c:958
 #, c-format
 msgid "\n"
 "WARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s"
 msgstr "\n"
 "ПОПЕРЕДЖЕННЯ: користувацькі розташування табличних просторів не повинні бути всередині каталогу даних, наприклад %s"
 
-#: check.c:960
+#: check.c:968
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Створення скрипту для видалення старого кластеру"
 
-#: check.c:1014
+#: check.c:1022
 #, c-format
 msgid "could not add execute permission to file \"%s\": %m"
 msgstr "не вдалося додати право виконання для файлу \"%s\": %m"
 
-#: check.c:1034
+#: check.c:1042
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Перевірка, чи є користувач бази даних стартовим користувачем"
 
-#: check.c:1050
+#: check.c:1058
 #, c-format
 msgid "database user \"%s\" is not the install user"
 msgstr "користувач бази даних \"%s\" не є стартовим користувачем"
 
-#: check.c:1061
+#: check.c:1069
 #, c-format
 msgid "could not determine the number of users"
 msgstr "не вдалося визначити кількість користувачів"
 
-#: check.c:1069
+#: check.c:1077
 #, c-format
 msgid "Only the install user can be defined in the new cluster."
 msgstr "В новому кластері може бути визначеним тільки стартовий користувач."
 
-#: check.c:1098
+#: check.c:1106
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Перевірка параметрів підключення до бази даних"
 
-#: check.c:1124
+#: check.c:1132
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false"
 msgstr "template0 не повинна дозволяти підключення, тобто pg_database.datallowconn повинно бути false"
 
-#: check.c:1150 check.c:1270 check.c:1367 check.c:1492 check.c:1568
-#: check.c:1626 check.c:1706 check.c:1897 check.c:2022 function.c:210
+#: check.c:1158 check.c:1278 check.c:1375 check.c:1500 check.c:1576
+#: check.c:1654 check.c:1713 check.c:1793 check.c:1984 check.c:2109
+#: function.c:210
 #, c-format
 msgid "fatal"
 msgstr "збій"
 
-#: check.c:1151
+#: check.c:1159
 #, c-format
 msgid "All non-template0 databases must allow connections, i.e. their\n"
 "pg_database.datallowconn must be true.  Your installation contains\n"
@@ -412,27 +413,27 @@ msgstr "Всі бази даних, окрім template0, повинні доз�
 "Список баз даних з проблемою знаходиться у файлі:\n"
 "    %s"
 
-#: check.c:1176
+#: check.c:1184
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Перевірка підготовлених транзакцій"
 
-#: check.c:1185
+#: check.c:1193
 #, c-format
 msgid "The source cluster contains prepared transactions"
 msgstr "Початковий кластер містить підготовлені транзакції"
 
-#: check.c:1187
+#: check.c:1195
 #, c-format
 msgid "The target cluster contains prepared transactions"
 msgstr "Цільовий кластер містить підготовлені транзакції"
 
-#: check.c:1212
+#: check.c:1220
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Перевірка невідповідності при передаванні bigint в contrib/isn"
 
-#: check.c:1271
+#: check.c:1279
 #, c-format
 msgid "Your installation contains \"contrib/isn\" functions which rely on the\n"
 "bigint data type.  Your old and new clusters pass bigint values\n"
@@ -444,12 +445,12 @@ msgid "Your installation contains \"contrib/isn\" functions which rely on the\n"
 msgstr "Ваша інсталяція містить функції \"contrib/isn\", що використовують тип даних bigint. Старі та нові кластери передають значення bigint по-різному, тому цей кластер наразі неможливо оновити. Ви можете вручну вивантажити бази даних зі старого кластеру, що використовує засоби \"contrib/isn\", видалити їх, виконати оновлення, а потім відновити їх. Список проблемних функцій подано у файлі:\n"
 "    %s"
 
-#: check.c:1293
+#: check.c:1301
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "Перевірка постфіксних операторів визначених користувачем"
 
-#: check.c:1368
+#: check.c:1376
 #, c-format
 msgid "Your installation contains user-defined postfix operators, which are not\n"
 "supported anymore.  Consider dropping the postfix operators and replacing\n"
@@ -461,12 +462,12 @@ msgstr "Ваша інсталяція містить користувацькі 
 "Список користувацьких постфіксних операторів знаходиться у файлі:\n"
 "    %s"
 
-#: check.c:1392
+#: check.c:1400
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "Перевірка несумісних поліморфних функцій"
 
-#: check.c:1493
+#: check.c:1501
 #, c-format
 msgid "Your installation contains user-defined objects that refer to internal\n"
 "polymorphic functions with arguments of type \"anyarray\" or \"anyelement\".\n"
@@ -483,12 +484,12 @@ msgstr "У вашій інсталяції містяться користува
 "Список проблемних об'єктів знаходиться у файлі:\n"
 "    %s"
 
-#: check.c:1517
+#: check.c:1525
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Перевірка таблиць WITH OIDS"
 
-#: check.c:1569
+#: check.c:1577
 #, c-format
 msgid "Your installation contains tables declared WITH OIDS, which is not\n"
 "supported anymore.  Consider removing the oid column using\n"
@@ -500,12 +501,33 @@ msgstr "Ваша інсталяція містить таблиці, створ�
 "Список проблемних таблиць подано у файлі:\n"
 "    %s"
 
-#: check.c:1596
+#: check.c:1602
+#, c-format
+msgid "Checking for not-null constraint inconsistencies"
+msgstr "Перевірка невідповідності обмеженням-null"
+
+#: check.c:1655
+#, c-format
+msgid "Your installation contains inconsistent NOT NULL constraints.\n"
+"If the parent column(s) are NOT NULL, then the child column must\n"
+"also be marked NOT NULL, or the upgrade will fail.\n"
+"You can fix this by running\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"on each column listed in the file:\n"
+"    %s"
+msgstr "Ваша інсталяція містить суперечливі обмеження NOT NULL.\n"
+"Якщо батьківські стовпці мають значення NOT NULL, то дочірні стовпці також повинні бути позначені як NOT NULL, інакше оновлення не відбудеться.\n"
+"Ви можете виправити це, виконавши команду\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"для кожного стовпця, зазначеного у файлі:\n"
+"    %s"
+
+#: check.c:1683
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Перевірка ролей, які починаються з \"pg_\""
 
-#: check.c:1627
+#: check.c:1714
 #, c-format
 msgid "Your installation contains roles starting with \"pg_\".\n"
 "\"pg_\" is a reserved prefix for system roles.  The cluster\n"
@@ -518,12 +540,12 @@ msgstr "Ваша інсталяція містить ролі, які почин
 "Список ролей, які починаються з \"pg_\" у файлі:\n"
 "    %s"
 
-#: check.c:1647
+#: check.c:1734
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "Перевірка користувацьких перетворення кодувань"
 
-#: check.c:1707
+#: check.c:1794
 #, c-format
 msgid "Your installation contains user-defined encoding conversions.\n"
 "The conversion function parameters changed in PostgreSQL version 14\n"
@@ -538,52 +560,52 @@ msgstr "Ваша інсталяція містить користувацькі 
 "Список перетворень кодувань знаходиться у файлі:\n"
 "    %s"
 
-#: check.c:1746
+#: check.c:1833
 #, c-format
 msgid "Checking for new cluster logical replication slots"
 msgstr "Перевірка наявності нових слотів логічної реплікації кластера"
 
-#: check.c:1754
+#: check.c:1841
 #, c-format
 msgid "could not count the number of logical replication slots"
 msgstr "не вдалося порахувати кількість слотів логічної реплікації"
 
-#: check.c:1759
+#: check.c:1846
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "очікувалося 0 слотів логічної реплікації, але знайдено %d"
 
-#: check.c:1769 check.c:1820
+#: check.c:1856 check.c:1907
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "не вдалося визначити налаштування параметрів на новому кластері"
 
-#: check.c:1774
+#: check.c:1861
 #, c-format
 msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\" має бути \"logical\", але встановлено значення \"%s\""
 
-#: check.c:1780
+#: check.c:1867
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
 msgstr "\"max_replication_slots\" (%d) має бути більше або дорівнювати кількості слотів логічної реплікації (%d) на старому кластері"
 
-#: check.c:1812
+#: check.c:1899
 #, c-format
 msgid "Checking for new cluster configuration for subscriptions"
 msgstr "Перевірка нової конфігурації кластера для підписок"
 
-#: check.c:1824
+#: check.c:1911
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgstr "\"max_replication_slots\" (%d) має бути більше або дорівнювати кількості підписок (%d) на старому кластері"
 
-#: check.c:1846
+#: check.c:1933
 #, c-format
 msgid "Checking for valid logical replication slots"
 msgstr "Перевірка дійсних слотів логічної реплікації"
 
-#: check.c:1898
+#: check.c:1985
 #, c-format
 msgid "Your installation contains logical replication slots that cannot be upgraded.\n"
 "You can remove invalid slots and/or consume the pending WAL for other slots,\n"
@@ -596,12 +618,12 @@ msgstr "Ваша інсталяція містить слоти логічної
 "Список проблемних слотів знаходиться у файлі:\n"
 "    %s"
 
-#: check.c:1922
+#: check.c:2009
 #, c-format
 msgid "Checking for subscription state"
 msgstr "Перевірка стану підписки"
 
-#: check.c:2023
+#: check.c:2110
 #, c-format
 msgid "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
 "You can allow the initial sync to finish for all relations and then restart the upgrade.\n"
@@ -657,8 +679,8 @@ msgstr "В початковому кластері відсутня інформ
 msgid "The target cluster lacks cluster state information:"
 msgstr "В цільовому кластері відсутня інформація про стан кластера:"
 
-#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:555 pg_upgrade.c:595
-#: pg_upgrade.c:944 relfilenumber.c:233 server.c:34 util.c:337
+#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:558 pg_upgrade.c:598
+#: pg_upgrade.c:947 relfilenumber.c:233 server.c:34 util.c:337
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1573,82 +1595,82 @@ msgid "There seems to be a postmaster servicing the new cluster.\n"
 msgstr "Мабуть, запущений процес postmaster, який обслуговує новий кластер.\n"
 "Будь ласка, завершіть роботу процесу і спробуйте знову."
 
-#: pg_upgrade.c:414
+#: pg_upgrade.c:413
 #, c-format
 msgid "Setting locale and encoding for new cluster"
 msgstr "Установка локалі та кодування для нового кластеру"
 
-#: pg_upgrade.c:488
+#: pg_upgrade.c:491
 #, c-format
 msgid "Analyzing all rows in the new cluster"
 msgstr "Аналіз всіх рядків у новому кластері"
 
-#: pg_upgrade.c:501
+#: pg_upgrade.c:504
 #, c-format
 msgid "Freezing all rows in the new cluster"
 msgstr "Закріплення всіх рядків у новому кластері"
 
-#: pg_upgrade.c:521
+#: pg_upgrade.c:524
 #, c-format
 msgid "Restoring global objects in the new cluster"
 msgstr "Відновлення глобальних об'єктів у новому кластері"
 
-#: pg_upgrade.c:537
+#: pg_upgrade.c:540
 #, c-format
 msgid "Restoring database schemas in the new cluster"
 msgstr "Відновлення схем баз даних у новому кластері"
 
-#: pg_upgrade.c:661
+#: pg_upgrade.c:664
 #, c-format
 msgid "Deleting files from new %s"
 msgstr "Видалення файлів з нового %s"
 
-#: pg_upgrade.c:665
+#: pg_upgrade.c:668
 #, c-format
 msgid "could not delete directory \"%s\""
 msgstr "не вдалося видалити каталог \"%s\""
 
-#: pg_upgrade.c:684
+#: pg_upgrade.c:687
 #, c-format
 msgid "Copying old %s to new server"
 msgstr "Копіювання старого %s до нового серверу"
 
-#: pg_upgrade.c:710
+#: pg_upgrade.c:713
 #, c-format
 msgid "Setting oldest XID for new cluster"
 msgstr "Встановлення найстарішого XID для нового кластеру"
 
-#: pg_upgrade.c:718
+#: pg_upgrade.c:721
 #, c-format
 msgid "Setting next transaction ID and epoch for new cluster"
 msgstr "Установка наступного ID транзакції й епохи для нового кластера"
 
-#: pg_upgrade.c:748
+#: pg_upgrade.c:751
 #, c-format
 msgid "Setting next multixact ID and offset for new cluster"
 msgstr "Установка наступного ID і зсуву мультитранзакції для нового кластера"
 
-#: pg_upgrade.c:772
+#: pg_upgrade.c:775
 #, c-format
 msgid "Setting oldest multixact ID in new cluster"
 msgstr "Установка найстаршого ID мультитранзакції в новому кластері"
 
-#: pg_upgrade.c:792
+#: pg_upgrade.c:795
 #, c-format
 msgid "Resetting WAL archives"
 msgstr "Скидання архівів WAL"
 
-#: pg_upgrade.c:835
+#: pg_upgrade.c:838
 #, c-format
 msgid "Setting frozenxid and minmxid counters in new cluster"
 msgstr "Установка лічильників frozenxid і minmxid у новому кластері"
 
-#: pg_upgrade.c:837
+#: pg_upgrade.c:840
 #, c-format
 msgid "Setting minmxid counter in new cluster"
 msgstr "Установка лічильника minmxid у новому кластері"
 
-#: pg_upgrade.c:928
+#: pg_upgrade.c:931
 #, c-format
 msgid "Restoring logical replication slots in the new cluster"
 msgstr "Відновлення слотів логічної реплікації в новому кластері"
@@ -1737,43 +1759,43 @@ msgstr "не вдалося відкрити файл версії \"%s\": %m"
 msgid "could not parse version file \"%s\""
 msgstr "не вдалося проаналізувати файл версії \"%s\""
 
-#: server.c:310
+#: server.c:299
 #, c-format
 msgid "\n"
 "%s"
 msgstr "\n"
 "%s"
 
-#: server.c:314
+#: server.c:303
 #, c-format
 msgid "could not connect to source postmaster started with the command:\n"
 "%s"
 msgstr "не вдалося підключитися до початкового процесу postmaster, запущеного командою:\n"
 "%s"
 
-#: server.c:318
+#: server.c:307
 #, c-format
 msgid "could not connect to target postmaster started with the command:\n"
 "%s"
 msgstr "не вдалося підключитися до цільового процесу postmaster, запущеного командою:\n"
 "%s"
 
-#: server.c:332
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl не зміг запустити початковий сервер або сталася помилка підключення"
 
-#: server.c:334
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl не зміг запустити цільовий сервер або сталася помилка підключення"
 
-#: server.c:379
+#: server.c:368
 #, c-format
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
 
-#: server.c:392
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "у змінній середовища для libpq %s задано не локальне значення: %s"

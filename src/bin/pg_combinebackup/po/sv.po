@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_combinebackup
 # Copyright (C) 2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025.
+# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-12 13:52+0000\n"
-"PO-Revision-Date: 2025-02-12 20:37+0100\n"
+"POT-Creation-Date: 2026-02-06 23:36+0000\n"
+"PO-Revision-Date: 2026-02-07 09:26+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
@@ -55,7 +55,7 @@ msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:742
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -83,13 +83,13 @@ msgstr ""
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
+#: pg_combinebackup.c:1167 reconstruct.c:525 reconstruct.c:640
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -139,7 +139,7 @@ msgstr "kan inte synkronisera filsystemet för fil \"%s\": %m"
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
 #: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
-#: reconstruct.c:421
+#: reconstruct.c:422
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
@@ -166,99 +166,99 @@ msgstr "kunde inte läsa katalog \"%s\": %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "kunde inte döpa om fil \"%s\" till \"%s\": %m"
 
-#: ../../common/jsonapi.c:2121
+#: ../../common/jsonapi.c:2124
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Recursive-descent-parser kan inte använda inkrementell lexer."
 
-#: ../../common/jsonapi.c:2123
+#: ../../common/jsonapi.c:2126
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementell parser kräver en inkrementell lexer."
 
-#: ../../common/jsonapi.c:2125
+#: ../../common/jsonapi.c:2128
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON nästlad för djupt, maximal tillåtet djup är 6400."
 
-#: ../../common/jsonapi.c:2127
+#: ../../common/jsonapi.c:2130
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-sekvens \"\\%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2131
+#: ../../common/jsonapi.c:2134
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Tecken med värde 0x%02x måste escape:as."
 
-#: ../../common/jsonapi.c:2135
+#: ../../common/jsonapi.c:2138
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Förväntade slut på indata, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2141
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Färväntade array-element eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2144
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Förväntade \",\" eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2147
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Förväntade sig \":\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2150
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Förväntade JSON-värde, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2153
 msgid "The input string ended unexpectedly."
 msgstr "Indatasträngen avslutades oväntat."
 
-#: ../../common/jsonapi.c:2152
+#: ../../common/jsonapi.c:2155
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Färväntade sträng eller \"}\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2158
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Förväntade sig \",\" eller \"}\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2161
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Förväntade sträng, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2164
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token \"%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2167
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kan inte konverteras till text."
 
-#: ../../common/jsonapi.c:2166
+#: ../../common/jsonapi.c:2169
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" måste följas av fyra hexdecimala siffror."
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2172
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Escape-värden för unicode kan inte användas för kodpunkter med värde över 007F när kodningen inte är UTF8."
 
-#: ../../common/jsonapi.c:2178
+#: ../../common/jsonapi.c:2181
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Escape-värde för unicode kan inte översättas till serverns kodning %s."
 
-#: ../../common/jsonapi.c:2185
+#: ../../common/jsonapi.c:2188
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalva."
 
-#: ../../common/jsonapi.c:2187
+#: ../../common/jsonapi.c:2190
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
 
@@ -464,13 +464,13 @@ msgstr "%s: kunde inte hitta %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s kräver %s"
 
-#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "kunde inte skriva fil \"%s\": skrev %d av %d"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
-#: reconstruct.c:767 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:723
+#: reconstruct.c:769 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
@@ -485,7 +485,7 @@ msgstr "kunde inte skriva till fil \"%s\": %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "kunde inte skriva till fil \"%s\", offset %u: skrev %d av %d"
 
-#: copy_file.c:199 reconstruct.c:784
+#: copy_file.c:199 reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "kunde inte läsa från fil \"%s\": %m"
@@ -510,12 +510,12 @@ msgstr "fel vid kloning av fil \"%s\" till \"%s\": %s"
 msgid "file cloning not supported on this platform"
 msgstr "filkloning stöds inte på denna plattform"
 
-#: copy_file.c:278 reconstruct.c:704
+#: copy_file.c:278 reconstruct.c:706
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "fel vid kopiering av filintervall från \"%s\" till \"%s\": %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:726
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range stöds inte på denna plattform"
@@ -600,10 +600,15 @@ msgstr "multipla \"=\"-tecken i tablespace-mappning"
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "ogiltigt tablespace-mappningsformat \"%s\", måste vara \"OLDDIR=NEWDIR\""
 
-#: pg_combinebackup.c:480 pg_combinebackup.c:484
+#: pg_combinebackup.c:480
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "gammal katalog är inte en absolut sökväg i tablespace-mappning: %s"
+
+#: pg_combinebackup.c:484
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "ny katalog är inte en absolut sökväg i tablespace-mappning: %s"
 
 #: pg_combinebackup.c:553
 #, c-format
@@ -865,32 +870,32 @@ msgstr "kunde inte läsa fil \"%s\": läste %zd av %lld"
 msgid "full backup contains unexpected incremental file \"%s\""
 msgstr "full backup innehåller in oväntad inkrementell fil \"%s\""
 
-#: reconstruct.c:423
+#: reconstruct.c:424
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "filen \"%s\" är för kort: förväntade %llu, hittade %llu"
 
-#: reconstruct.c:465
+#: reconstruct.c:466
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "filen \"%s\" har ett felaktigt inkrementellt magiskt nummer (0x%x, förväntade 0x%x)"
 
-#: reconstruct.c:471
+#: reconstruct.c:472
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "filen \"%s\" har ett blockantal %u som är större än segmentstorleken %u"
 
-#: reconstruct.c:478
+#: reconstruct.c:479
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "filen \"%s\" trunkeringsblocklängd %u som är större än segmentstorleken %u"
 
-#: reconstruct.c:542
+#: reconstruct.c:544
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "kunde inte läsa filen \"%s\": läste %d av %u"
 
-#: reconstruct.c:786
+#: reconstruct.c:788
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "kunde inte läsa från filen \"%s\", offset %llu: läste %d av %d"

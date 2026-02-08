@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:20+0000\n"
-"PO-Revision-Date: 2024-09-23 19:38\n"
+"POT-Creation-Date: 2025-12-31 02:38+0000\n"
+"PO-Revision-Date: 2026-01-02 12:56\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -235,7 +235,7 @@ msgstr "нерозпізнаний метод синхронізації: %s"
 
 #: ../../fe_utils/recovery_gen.c:39 ../../fe_utils/recovery_gen.c:50
 #: ../../fe_utils/recovery_gen.c:89 ../../fe_utils/recovery_gen.c:109
-#: ../../fe_utils/recovery_gen.c:168 pg_basebackup.c:1636 streamutil.c:331
+#: ../../fe_utils/recovery_gen.c:168 pg_basebackup.c:1636 streamutil.c:334
 #, c-format
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
@@ -252,12 +252,12 @@ msgstr "неможливо записати до файлу \"%s\": %m"
 msgid "could not create file \"%s\": %m"
 msgstr "неможливо створити файл \"%s\": %m"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "аргумент командної оболонки містить символ нового рядка або повернення каретки: \"%s\"\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "назва бази даних містить символ нового рядка або повернення каретки: \"%s\"\n"
@@ -746,7 +746,7 @@ msgid "could not read from ready pipe: %m"
 msgstr "не можливо прочитати з готових каналів: %m"
 
 #: pg_basebackup.c:491 pg_basebackup.c:633 pg_basebackup.c:2258
-#: streamutil.c:518
+#: streamutil.c:521
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "не вдалося проаналізувати наперед журнал локації \"%s\""
@@ -940,8 +940,8 @@ msgid "server does not support incremental backup"
 msgstr "сервер не підтримує інкрементне резервне копіювання"
 
 #: pg_basebackup.c:1850 pg_basebackup.c:2008 pg_recvlogical.c:272
-#: receivelog.c:543 receivelog.c:582 streamutil.c:364 streamutil.c:438
-#: streamutil.c:490 streamutil.c:578 streamutil.c:730 streamutil.c:775
+#: receivelog.c:543 receivelog.c:582 streamutil.c:367 streamutil.c:441
+#: streamutil.c:493 streamutil.c:581 streamutil.c:733 streamutil.c:778
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "не вдалося відправити реплікаційну команду \"%s\": %s"
@@ -1081,7 +1081,7 @@ msgstr "збій при очікуванні дочірнього процесу
 msgid "child %d died, expected %d"
 msgstr "завершився дочірній процес %d, очікувалося %d"
 
-#: pg_basebackup.c:2248 streamutil.c:89 streamutil.c:204 streamutil.c:316
+#: pg_basebackup.c:2248 streamutil.c:92 streamutil.c:207 streamutil.c:319
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1137,9 +1137,9 @@ msgstr "неприпустимий параметр wal-method \"%s\", пови�
 #: pg_basebackup.c:2712 pg_basebackup.c:2724 pg_basebackup.c:2736
 #: pg_basebackup.c:2744 pg_basebackup.c:2757 pg_basebackup.c:2763
 #: pg_basebackup.c:2772 pg_basebackup.c:2784 pg_basebackup.c:2795
-#: pg_basebackup.c:2803 pg_createsubscriber.c:2037 pg_createsubscriber.c:2047
-#: pg_createsubscriber.c:2055 pg_createsubscriber.c:2083
-#: pg_createsubscriber.c:2115 pg_receivewal.c:748 pg_receivewal.c:760
+#: pg_basebackup.c:2803 pg_createsubscriber.c:2047 pg_createsubscriber.c:2057
+#: pg_createsubscriber.c:2065 pg_createsubscriber.c:2093
+#: pg_createsubscriber.c:2125 pg_receivewal.c:748 pg_receivewal.c:760
 #: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
 #: pg_receivewal.c:793 pg_recvlogical.c:853 pg_recvlogical.c:865
 #: pg_recvlogical.c:875 pg_recvlogical.c:882 pg_recvlogical.c:889
@@ -1149,7 +1149,7 @@ msgstr "неприпустимий параметр wal-method \"%s\", пови�
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: pg_basebackup.c:2584 pg_createsubscriber.c:2045 pg_receivewal.c:758
+#: pg_basebackup.c:2584 pg_createsubscriber.c:2055 pg_receivewal.c:758
 #: pg_recvlogical.c:863
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1267,7 +1267,7 @@ msgstr "Видаліть цю публікацію перед тим, як сп�
 msgid "replication slot \"%s\" created in database \"%s\" on primary was left behind"
 msgstr "слот реплікації \"%s\" створений в базі даних \"%s\" на основному кластері залишився позаду"
 
-#: pg_createsubscriber.c:206 pg_createsubscriber.c:1260
+#: pg_createsubscriber.c:206 pg_createsubscriber.c:1270
 #, c-format
 msgid "Drop this replication slot soon to avoid retention of WAL files."
 msgstr "Видаліть цей слот реплікації найближчим часом, щоб уникнути збереження файлів WAL."
@@ -1448,13 +1448,13 @@ msgstr "запускаю pg_resetwal на підписнику"
 
 #: pg_createsubscriber.c:671
 #, c-format
-msgid "subscriber successfully changed the system identifier"
-msgstr "підписник успішно змінив системний ідентифікатор"
+msgid "successfully reset WAL on the subscriber"
+msgstr "успішно скинуто WAL на підписнику"
 
 #: pg_createsubscriber.c:673
 #, c-format
-msgid "could not change system identifier of subscriber: %s"
-msgstr "не вдалося змінити системний ідентифікатор підписника: %s"
+msgid "could not reset WAL on subscriber: %s"
+msgstr "не вдалося скинути WAL на підписнику: %s"
 
 #: pg_createsubscriber.c:697
 #, c-format
@@ -1573,317 +1573,317 @@ msgstr "не вдалося видалити підписку \"%s\": %s"
 msgid "could not obtain pre-existing subscriptions: %s"
 msgstr "не вдалося отримати раніше наявні підписки: %s"
 
-#: pg_createsubscriber.c:1258
+#: pg_createsubscriber.c:1268
 #, c-format
 msgid "could not drop replication slot \"%s\" on primary"
 msgstr "не вдалося видалити слот реплікації \"%s\" на головному сервері"
 
-#: pg_createsubscriber.c:1292
+#: pg_createsubscriber.c:1302
 #, c-format
 msgid "could not obtain failover replication slot information: %s"
 msgstr "не вдалося отримати інформацію про запасний слот реплікації: %s"
 
-#: pg_createsubscriber.c:1294 pg_createsubscriber.c:1303
+#: pg_createsubscriber.c:1304 pg_createsubscriber.c:1313
 #, c-format
 msgid "Drop the failover replication slots on subscriber soon to avoid retention of WAL files."
 msgstr "Видаліть запасний слот реплікації найближчим часом, щоб уникнути збереження файлів WAL."
 
-#: pg_createsubscriber.c:1302
+#: pg_createsubscriber.c:1312
 #, c-format
 msgid "could not drop failover replication slot"
 msgstr "не вдалося видалити запасний слот реплікації"
 
-#: pg_createsubscriber.c:1324
+#: pg_createsubscriber.c:1334
 #, c-format
 msgid "creating the replication slot \"%s\" in database \"%s\""
 msgstr "створюю слот реплікації \"%s\" в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1342
+#: pg_createsubscriber.c:1352
 #, c-format
 msgid "could not create replication slot \"%s\" in database \"%s\": %s"
 msgstr "не вдалося створити слот реплікації \"%s\" в базі даних \"%s\": %s"
 
-#: pg_createsubscriber.c:1372
+#: pg_createsubscriber.c:1382
 #, c-format
 msgid "dropping the replication slot \"%s\" in database \"%s\""
 msgstr "видалення слоту реплікації \"%s\" в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1388
+#: pg_createsubscriber.c:1398
 #, c-format
 msgid "could not drop replication slot \"%s\" in database \"%s\": %s"
 msgstr "не вдалося видалити слот реплікації \"%s\" в базі даних \"%s\": %s"
 
-#: pg_createsubscriber.c:1409
+#: pg_createsubscriber.c:1419
 #, c-format
 msgid "pg_ctl failed with exit code %d"
 msgstr "помилка pg_ctl з кодом %d"
 
-#: pg_createsubscriber.c:1414
+#: pg_createsubscriber.c:1424
 #, c-format
 msgid "pg_ctl was terminated by exception 0x%X"
 msgstr "pg_ctl був перерваний винятком 0x%X"
 
-#: pg_createsubscriber.c:1416
+#: pg_createsubscriber.c:1426
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Опис цього Шістнадцяткового значення дивіться у включаємому C-файлі \"ntstatus.h\"."
 
-#: pg_createsubscriber.c:1418
+#: pg_createsubscriber.c:1428
 #, c-format
 msgid "pg_ctl was terminated by signal %d: %s"
 msgstr "pg_ctl було припинено сигналом %d: %s"
 
-#: pg_createsubscriber.c:1424
+#: pg_createsubscriber.c:1434
 #, c-format
 msgid "pg_ctl exited with unrecognized status %d"
 msgstr "pg_ctl завершився з невідомим статусом %d"
 
-#: pg_createsubscriber.c:1427
+#: pg_createsubscriber.c:1437
 #, c-format
 msgid "The failed command was: %s"
 msgstr "Команда з помилкою: %s"
 
-#: pg_createsubscriber.c:1473
+#: pg_createsubscriber.c:1483
 #, c-format
 msgid "server was started"
 msgstr "сервер був запущений"
 
-#: pg_createsubscriber.c:1488
+#: pg_createsubscriber.c:1498
 #, c-format
 msgid "server was stopped"
 msgstr "сервер було зупинено"
 
-#: pg_createsubscriber.c:1507
+#: pg_createsubscriber.c:1517
 #, c-format
 msgid "waiting for the target server to reach the consistent state"
 msgstr "чекаю на досягнення узгодженого стану цільовим сервером"
 
-#: pg_createsubscriber.c:1530
+#: pg_createsubscriber.c:1540
 #, c-format
 msgid "recovery timed out"
 msgstr "час відновлення вичерпався"
 
-#: pg_createsubscriber.c:1543
+#: pg_createsubscriber.c:1553
 #, c-format
 msgid "server did not end recovery"
 msgstr "сервер не завершив відновлення"
 
-#: pg_createsubscriber.c:1545
+#: pg_createsubscriber.c:1555
 #, c-format
 msgid "target server reached the consistent state"
 msgstr "цільовий сервер досяг узгодженого стану"
 
-#: pg_createsubscriber.c:1546
+#: pg_createsubscriber.c:1556
 #, c-format
 msgid "If pg_createsubscriber fails after this point, you must recreate the physical replica before continuing."
 msgstr "Якщо pg_createsubscriber поверне помилку після цієї точки, вам потрібно буде перестворити фізичну репліку перед продовженням."
 
-#: pg_createsubscriber.c:1573
+#: pg_createsubscriber.c:1583
 #, c-format
 msgid "could not obtain publication information: %s"
 msgstr "не вдалося отримати інформацію про публікацію: %s"
 
-#: pg_createsubscriber.c:1587
+#: pg_createsubscriber.c:1597
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "публікація \"%s\" вже існує"
 
-#: pg_createsubscriber.c:1588
+#: pg_createsubscriber.c:1598
 #, c-format
 msgid "Consider renaming this publication before continuing."
 msgstr "Подумайте про перейменування цієї публікації, перш ніж продовжити."
 
-#: pg_createsubscriber.c:1595
+#: pg_createsubscriber.c:1605
 #, c-format
 msgid "creating publication \"%s\" in database \"%s\""
 msgstr "створення публікації \"%s\" в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1608
+#: pg_createsubscriber.c:1618
 #, c-format
 msgid "could not create publication \"%s\" in database \"%s\": %s"
 msgstr "не вдалося створити публікацію \"%s\" в базі даних \"%s\": %s"
 
-#: pg_createsubscriber.c:1637
+#: pg_createsubscriber.c:1647
 #, c-format
 msgid "dropping publication \"%s\" in database \"%s\""
 msgstr "видалення публікації \"%s\" в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1651
+#: pg_createsubscriber.c:1661
 #, c-format
 msgid "could not drop publication \"%s\" in database \"%s\": %s"
 msgstr "не вдалося видалити публікацію \"%s\" в базі даних \"%s\": %s"
 
-#: pg_createsubscriber.c:1697
+#: pg_createsubscriber.c:1707
 #, c-format
 msgid "creating subscription \"%s\" in database \"%s\""
 msgstr "створення підписки \"%s\" в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1718
+#: pg_createsubscriber.c:1728
 #, c-format
 msgid "could not create subscription \"%s\" in database \"%s\": %s"
 msgstr "не вдалося створити підписку \"%s\" в базі даних \"%s\": %s"
 
-#: pg_createsubscriber.c:1763
+#: pg_createsubscriber.c:1773
 #, c-format
 msgid "could not obtain subscription OID: %s"
 msgstr "не вдалося отримати OID підписки: %s"
 
-#: pg_createsubscriber.c:1770
+#: pg_createsubscriber.c:1780
 #, c-format
 msgid "could not obtain subscription OID: got %d rows, expected %d row"
 msgstr "не вдалося отримати OID підписки: отримано %d рядків, очікувалось %d рядок"
 
-#: pg_createsubscriber.c:1794
+#: pg_createsubscriber.c:1804
 #, c-format
 msgid "setting the replication progress (node name \"%s\", LSN %s) in database \"%s\""
 msgstr "налаштування прогресу реплікації (назва вузла \"%s, LSN %s) в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1809
+#: pg_createsubscriber.c:1819
 #, c-format
 msgid "could not set replication progress for subscription \"%s\": %s"
 msgstr "не вдалося виставити прогрес реплікації для підписки \"%s\": %s"
 
-#: pg_createsubscriber.c:1840
+#: pg_createsubscriber.c:1850
 #, c-format
 msgid "enabling subscription \"%s\" in database \"%s\""
 msgstr "активація підписки \"%s\" в базі даних \"%s\""
 
-#: pg_createsubscriber.c:1852
+#: pg_createsubscriber.c:1862
 #, c-format
 msgid "could not enable subscription \"%s\": %s"
 msgstr "не вдалося активувати підписку \"%s\": %s"
 
-#: pg_createsubscriber.c:1944
+#: pg_createsubscriber.c:1954
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "\"root\" не може це виконувати"
 
-#: pg_createsubscriber.c:1945
+#: pg_createsubscriber.c:1955
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Запускати %s треба від суперкористувача PostgreSQL."
 
-#: pg_createsubscriber.c:1966
+#: pg_createsubscriber.c:1976
 #, c-format
 msgid "database \"%s\" specified more than once"
 msgstr "база даних \"%s\" вказана неодноразово"
 
-#: pg_createsubscriber.c:2007
+#: pg_createsubscriber.c:2017
 #, c-format
 msgid "publication \"%s\" specified more than once"
 msgstr "публікація \"%s\" вказана неодноразово"
 
-#: pg_createsubscriber.c:2019
+#: pg_createsubscriber.c:2029
 #, c-format
 msgid "replication slot \"%s\" specified more than once"
 msgstr "слот реплікації \"%s\" вказаний неодноразово"
 
-#: pg_createsubscriber.c:2031
+#: pg_createsubscriber.c:2041
 #, c-format
 msgid "subscription \"%s\" specified more than once"
 msgstr "підписка \"%s\" вказана неодноразово"
 
-#: pg_createsubscriber.c:2054
+#: pg_createsubscriber.c:2064
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "не вказано каталог з даними підписника"
 
-#: pg_createsubscriber.c:2065
+#: pg_createsubscriber.c:2075
 #, c-format
 msgid "could not determine current directory"
 msgstr "не вдалося визначити поточний каталог"
 
-#: pg_createsubscriber.c:2082
+#: pg_createsubscriber.c:2092
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "немає рядка підключення до видавця"
 
-#: pg_createsubscriber.c:2086
+#: pg_createsubscriber.c:2096
 #, c-format
 msgid "validating publisher connection string"
 msgstr "перевірка рядка підключення видавця"
 
-#: pg_createsubscriber.c:2092
+#: pg_createsubscriber.c:2102
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "перевірка рядка з'єднання з підписником"
 
-#: pg_createsubscriber.c:2097
+#: pg_createsubscriber.c:2107
 #, c-format
 msgid "no database was specified"
 msgstr "база даних не вказана"
 
-#: pg_createsubscriber.c:2109
+#: pg_createsubscriber.c:2119
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "ім'я бази даних \"%s\" було отримано з рядка підключення видавця"
 
-#: pg_createsubscriber.c:2114
+#: pg_createsubscriber.c:2124
 #, c-format
 msgid "no database name specified"
 msgstr "не вказано ім'я бази даних"
 
-#: pg_createsubscriber.c:2124
+#: pg_createsubscriber.c:2134
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "вказана невірна кількість імен публікації"
 
-#: pg_createsubscriber.c:2125
+#: pg_createsubscriber.c:2135
 #, c-format
 msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
 msgstr "Кількість вказаних назв публікації (%d) мусить співпадати з кількістю вказаних баз даних (%d)."
 
-#: pg_createsubscriber.c:2131
+#: pg_createsubscriber.c:2141
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "вказано неправильну кількість імен підписки"
 
-#: pg_createsubscriber.c:2132
+#: pg_createsubscriber.c:2142
 #, c-format
 msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
 msgstr "Кількість зазначених назв підписки (%d) повинна співпадати з кількістю зазначених назв бази даних (%d)."
 
-#: pg_createsubscriber.c:2138
+#: pg_createsubscriber.c:2148
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "вказано неправильну кількість назв слотів реплікації"
 
-#: pg_createsubscriber.c:2139
+#: pg_createsubscriber.c:2149
 #, c-format
 msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
 msgstr "Кількість вказаних назв слотів реплікації (%d) повинна збігатися з кількістю вказаних назв бази даних (%d)."
 
-#: pg_createsubscriber.c:2168
+#: pg_createsubscriber.c:2178
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "каталог даних підписника не є копією кластера вихідної бази даних"
 
-#: pg_createsubscriber.c:2181
+#: pg_createsubscriber.c:2191
 #, c-format
 msgid "standby server is running"
 msgstr "резервний сервер працює"
 
-#: pg_createsubscriber.c:2182
+#: pg_createsubscriber.c:2192
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "Зупиніть резервний сервер та повторіть спробу."
 
-#: pg_createsubscriber.c:2191
+#: pg_createsubscriber.c:2201
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "запуск резервного серверу з параметрами командного рядка"
 
-#: pg_createsubscriber.c:2207 pg_createsubscriber.c:2242
+#: pg_createsubscriber.c:2217 pg_createsubscriber.c:2252
 #, c-format
 msgid "stopping the subscriber"
 msgstr "зупинка підписника"
 
-#: pg_createsubscriber.c:2221
+#: pg_createsubscriber.c:2231
 #, c-format
 msgid "starting the subscriber"
 msgstr "запуск підписника"
 
-#: pg_createsubscriber.c:2250
+#: pg_createsubscriber.c:2260
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
@@ -2413,41 +2413,41 @@ msgstr "не вдалося записати %d байт до файлу WAL \"%
 msgid "could not send copy-end packet: %s"
 msgstr "не вдалося відправити пакет кінця копіювання \"copy-end\": %s"
 
-#: streamutil.c:162
+#: streamutil.c:165
 msgid "Password: "
 msgstr "Пароль: "
 
-#: streamutil.c:189
+#: streamutil.c:192
 #, c-format
 msgid "could not connect to server"
 msgstr "не вдалося підключитись до серверу"
 
-#: streamutil.c:230
+#: streamutil.c:233
 #, c-format
 msgid "could not clear \"search_path\": %s"
 msgstr "не вдалося очистити \"search_path\": %s"
 
-#: streamutil.c:246
+#: streamutil.c:249
 #, c-format
 msgid "could not determine server setting for \"integer_datetimes\""
 msgstr "не вдалося визначити налаштування сервера для \"integer_datetimes\""
 
-#: streamutil.c:253
+#: streamutil.c:256
 #, c-format
 msgid "\"integer_datetimes\" compile flag does not match server"
 msgstr "флаг компіляції \"integer_datetimes\" не відповідає серверу"
 
-#: streamutil.c:372
+#: streamutil.c:375
 #, c-format
 msgid "could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "не вдалося отримати розмір сегменту WAL: отримано %d рядків і %d полів, очікувалось %d рядків і %d або більше полів"
 
-#: streamutil.c:382
+#: streamutil.c:385
 #, c-format
 msgid "WAL segment size could not be parsed"
 msgstr "не вдалося аналізувати розмір сегмента WAL"
 
-#: streamutil.c:400
+#: streamutil.c:403
 #, c-format
 msgid "remote server reported invalid WAL segment size (%d byte)"
 msgid_plural "remote server reported invalid WAL segment size (%d bytes)"
@@ -2456,52 +2456,52 @@ msgstr[1] "віддалений сервер повідомив про непр�
 msgstr[2] "віддалений сервер повідомив про неправильний розмір сегмента WAL (%d байтів)"
 msgstr[3] "віддалений сервер повідомив про неправильний розмір сегмента WAL (%d байтів)"
 
-#: streamutil.c:404
+#: streamutil.c:407
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "Розмір сегмента WAL повинен бути степенем двійки від 1 МБ до 1 ГБ."
 
-#: streamutil.c:446
+#: streamutil.c:449
 #, c-format
 msgid "could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "не вдалося вилучити позначку доступа групи: отримано %d рядків і %d полів, очікувалось %d рядків і %d або більше полів"
 
-#: streamutil.c:455
+#: streamutil.c:458
 #, c-format
 msgid "group access flag could not be parsed: %s"
 msgstr "не вдалося аналізувати позначку доступа групи: %s"
 
-#: streamutil.c:498 streamutil.c:535
+#: streamutil.c:501 streamutil.c:538
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "не вдалося ідентифікувати систему: отримано %d рядків і %d полів, очікувалось %d рядків і %d або більше полів"
 
-#: streamutil.c:587
+#: streamutil.c:590
 #, c-format
 msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "не вдалося прочитати слот реплікації \"%s\": отримано %d рядків і %d полів, очікувалось %d рядків і %d полів"
 
-#: streamutil.c:599
+#: streamutil.c:602
 #, c-format
 msgid "replication slot \"%s\" does not exist"
 msgstr "слот реплікації \"%s\" не існує"
 
-#: streamutil.c:610
+#: streamutil.c:613
 #, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
 msgstr "очікувався слот фізичної реплікації, а натомість знайдено \"%s\""
 
-#: streamutil.c:624
+#: streamutil.c:627
 #, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
 msgstr "не вдалося аналізувати restart_lsn \"%s\" для слоту реплікації \"%s\""
 
-#: streamutil.c:741
+#: streamutil.c:744
 #, c-format
 msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "не вдалося створити слот реплікації \"%s\": отримано %d рядків і %d полів, очікувалось %d рядків і %d полів"
 
-#: streamutil.c:785
+#: streamutil.c:788
 #, c-format
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "не вдалося видалити слот реплікації \"%s\": отримано %d рядків і %d полів, очікувалось %d рядків і %d полів"

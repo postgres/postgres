@@ -5,12 +5,12 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-09 06:28+0200\n"
+"POT-Creation-Date: 2026-02-07 11:39+0200\n"
 "PO-Revision-Date: 2025-09-04 22:18+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -1321,8 +1321,8 @@ msgstr "не удалось переподключиться к базе"
 msgid "reconnection failed: %s"
 msgstr "переподключиться не удалось: %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:808 pg_dump_sort.c:1440
-#: pg_dump_sort.c:1460 pg_dumpall.c:1798 pg_dumpall.c:1882
+#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:808 pg_dump_sort.c:1451
+#: pg_dump_sort.c:1471 pg_dumpall.c:1798 pg_dumpall.c:1882
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2702,22 +2702,22 @@ msgstr "нет вышестоящего объекта %u %u"
 msgid "%s filter for \"%s\" is not allowed"
 msgstr "фильтр %s для \"%s\" не допускается"
 
-#: pg_dump_sort.c:648
+#: pg_dump_sort.c:659
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "неверный dumpId %d"
 
-#: pg_dump_sort.c:654
+#: pg_dump_sort.c:665
 #, c-format
 msgid "invalid dependency %d"
 msgstr "неверная зависимость %d"
 
-#: pg_dump_sort.c:818
+#: pg_dump_sort.c:829
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "не удалось определить цикл зависимостей"
 
-#: pg_dump_sort.c:1436
+#: pg_dump_sort.c:1447
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
@@ -2725,7 +2725,7 @@ msgstr[0] "в следующей таблице зациклены ограни�
 msgstr[1] "в следующих таблицах зациклены ограничения внешних ключей:"
 msgstr[2] "в следующих таблицах зациклены ограничения внешних ключей:"
 
-#: pg_dump_sort.c:1441
+#: pg_dump_sort.c:1452
 #, c-format
 msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
@@ -2734,7 +2734,7 @@ msgstr ""
 "Возможно, для восстановления базы потребуется использовать --disable-"
 "triggers или временно удалить ограничения."
 
-#: pg_dump_sort.c:1442
+#: pg_dump_sort.c:1453
 #, c-format
 msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
@@ -2743,7 +2743,7 @@ msgstr ""
 "Во избежание этой проблемы, вероятно, стоит выгружать всю базу данных, а не "
 "только данные (--data-only)."
 
-#: pg_dump_sort.c:1454
+#: pg_dump_sort.c:1465
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "не удалось разрешить цикл зависимостей для следующих объектов:"

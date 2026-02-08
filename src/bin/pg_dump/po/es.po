@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-08 00:38+0000\n"
+"POT-Creation-Date: 2026-02-06 23:36+0000\n"
 "PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -1279,8 +1279,8 @@ msgstr "no se pudo hacer la conexión a la base de datos"
 msgid "reconnection failed: %s"
 msgstr "falló la reconexión: %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:808 pg_dump_sort.c:1440
-#: pg_dump_sort.c:1460 pg_dumpall.c:1798 pg_dumpall.c:1882
+#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:808 pg_dump_sort.c:1451
+#: pg_dump_sort.c:1471 pg_dumpall.c:1798 pg_dumpall.c:1882
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2512,39 +2512,39 @@ msgstr "no existe el objeto referenciado %u %u"
 msgid "%s filter for \"%s\" is not allowed"
 msgstr "el filtro %s para «%s» no está permitido"
 
-#: pg_dump_sort.c:648
+#: pg_dump_sort.c:659
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "dumpId %d no válido"
 
-#: pg_dump_sort.c:654
+#: pg_dump_sort.c:665
 #, c-format
 msgid "invalid dependency %d"
 msgstr "dependencia %d no válida"
 
-#: pg_dump_sort.c:818
+#: pg_dump_sort.c:829
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "no se pudo identificar bucle de dependencia"
 
-#: pg_dump_sort.c:1436
+#: pg_dump_sort.c:1447
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
 msgstr[0] "hay restricciones de llave foránea circulares en la siguiente tabla:"
 msgstr[1] "hay restricciones de llave foránea circulares entre las siguientes tablas:"
 
-#: pg_dump_sort.c:1441
+#: pg_dump_sort.c:1452
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
 msgstr "Puede no ser capaz de restaurar el respaldo sin usar --disable-triggers o temporalmente eliminar las restricciones."
 
-#: pg_dump_sort.c:1442
+#: pg_dump_sort.c:1453
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
 msgstr "Considere usar un volcado completo en lugar de --data-only para evitar este problema."
 
-#: pg_dump_sort.c:1454
+#: pg_dump_sort.c:1465
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "no se pudo resolver el bucle de dependencias entre los siguientes elementos:"

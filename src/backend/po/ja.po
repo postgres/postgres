@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-05 10:29+0900\n"
-"PO-Revision-Date: 2025-11-05 11:21+0900\n"
+"POT-Creation-Date: 2025-12-10 10:28+0900\n"
+"PO-Revision-Date: 2025-12-10 10:50+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -695,25 +695,25 @@ msgstr "\"%s\"のジャンクションを取得できませんでした: %s"
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "\"%s\"のジャンクションを取得できませんでした: %s\n"
 
-#: ../port/open.c:115
+#: ../port/open.c:125
 #, c-format
 msgid "could not open file \"%s\": %s"
 msgstr "ファイル\"%s\"をオープンできませんでした: %s"
 
-#: ../port/open.c:116
+#: ../port/open.c:126
 msgid "lock violation"
 msgstr "ロック違反"
 
-#: ../port/open.c:116
+#: ../port/open.c:126
 msgid "sharing violation"
 msgstr "共有違反"
 
-#: ../port/open.c:117
+#: ../port/open.c:127
 #, c-format
 msgid "Continuing to retry for 30 seconds."
 msgstr "再試行を30秒間続けます。"
 
-#: ../port/open.c:118
+#: ../port/open.c:128
 #, c-format
 msgid "You might have antivirus, backup, or similar software interfering with the database system."
 msgstr "データベースシステムに干渉するアンチウィルス、バックアップといったソフトウェアが存在する可能性があります。"
@@ -1610,12 +1610,12 @@ msgstr "プライマリサーバーで設定パラメータ\"%s\"がonに設定�
 msgid "Make sure the configuration parameter \"%s\" is set."
 msgstr "設定パラメータ\"%s\"が設定されていることを確認してください。"
 
-#: access/transam/multixact.c:1091
+#: access/transam/multixact.c:1173
 #, c-format
 msgid "database is not accepting commands that assign new MultiXactIds to avoid wraparound data loss in database \"%s\""
 msgstr "データベース\"%s\"はMultiXactIds周回によるデータ損失を防ぐために、新規のMultiXactIdsを割り当てるコマンドを受け付けていません"
 
-#: access/transam/multixact.c:1093 access/transam/multixact.c:1100 access/transam/multixact.c:1124 access/transam/multixact.c:1133 access/transam/varsup.c:158 access/transam/varsup.c:165
+#: access/transam/multixact.c:1175 access/transam/multixact.c:1182 access/transam/multixact.c:1206 access/transam/multixact.c:1215 access/transam/varsup.c:158 access/transam/varsup.c:165
 #, c-format
 msgid ""
 "Execute a database-wide VACUUM in that database.\n"
@@ -1624,61 +1624,66 @@ msgstr ""
 "そのデータベース全体の VACUUM を実行してください。\n"
 "古い準備済みトランザクションのコミットまたはロールバック、もしくは古いレプリケーションスロットの削除も必要かもしれません。"
 
-#: access/transam/multixact.c:1098
+#: access/transam/multixact.c:1180
 #, c-format
 msgid "database is not accepting commands that assign new MultiXactIds to avoid wraparound data loss in database with OID %u"
 msgstr "OID %u のデータベースは周回によるデータ損失を防ぐために、新規のMultiXactIdsを割り当てるコマンドを受け付けていません"
 
-#: access/transam/multixact.c:1119 access/transam/multixact.c:2474
+#: access/transam/multixact.c:1201 access/transam/multixact.c:2543
 #, c-format
 msgid "database \"%s\" must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database \"%s\" must be vacuumed before %u more MultiXactIds are used"
 msgstr[0] "データベース\"%s\"はあと%u個のMultiXactIdが使われる前にVACUUMする必要があります"
 
-#: access/transam/multixact.c:1128 access/transam/multixact.c:2483
+#: access/transam/multixact.c:1210 access/transam/multixact.c:2552
 #, c-format
 msgid "database with OID %u must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database with OID %u must be vacuumed before %u more MultiXactIds are used"
 msgstr[0] "OID %u のデータベースはあと%u個のMultiXactIdが使われる前にVACUUMする必要があります"
 
-#: access/transam/multixact.c:1189
+#: access/transam/multixact.c:1274
 #, c-format
 msgid "multixact \"members\" limit exceeded"
 msgstr "マルチトランザクションの\"メンバ\"が制限を超えました"
 
-#: access/transam/multixact.c:1190
+#: access/transam/multixact.c:1275
 #, c-format
 msgid "This command would create a multixact with %u members, but the remaining space is only enough for %u member."
 msgid_plural "This command would create a multixact with %u members, but the remaining space is only enough for %u members."
 msgstr[0] "このコマンドで%u個のメンバを持つマルチトランザクションが生成されますが、残りのスペースは %u 個のメンバ分しかありません。"
 
-#: access/transam/multixact.c:1195
+#: access/transam/multixact.c:1280
 #, c-format
 msgid "Execute a database-wide VACUUM in database with OID %u with reduced \"vacuum_multixact_freeze_min_age\" and \"vacuum_multixact_freeze_table_age\" settings."
 msgstr "\"vacuum_multixact_freeze_min_age\"と\"vacuum_multixact_freeze_table_age\"をより小さな値に設定してOID %u のデータベースでデータベース全体にVACUUMを実行してください。"
 
-#: access/transam/multixact.c:1226
+#: access/transam/multixact.c:1311
 #, c-format
 msgid "database with OID %u must be vacuumed before %d more multixact member is used"
 msgid_plural "database with OID %u must be vacuumed before %d more multixact members are used"
 msgstr[0] "OID %u のデータベースは更に%d個のマルチトランザクションメンバが使用される前にVACUUMを実行する必要があります"
 
-#: access/transam/multixact.c:1231
+#: access/transam/multixact.c:1316
 #, c-format
 msgid "Execute a database-wide VACUUM in that database with reduced \"vacuum_multixact_freeze_min_age\" and \"vacuum_multixact_freeze_table_age\" settings."
 msgstr "\"vacuum_multixact_freeze_min_age\"'と\"vacuum_multixact_freeze_table_age\"をより小さな値に設定した上で、そのデータベースでVACUUMを実行してください。"
 
-#: access/transam/multixact.c:1371
+#: access/transam/multixact.c:1455
 #, c-format
 msgid "MultiXactId %u does no longer exist -- apparent wraparound"
 msgstr "MultiXactId %uはもう存在しません: 周回しているようです"
 
-#: access/transam/multixact.c:1377
+#: access/transam/multixact.c:1461
 #, c-format
 msgid "MultiXactId %u has not been created yet -- apparent wraparound"
 msgstr "MultiXactId %uを作成できませんでした: 周回している様子"
 
-#: access/transam/multixact.c:2479 access/transam/multixact.c:2488
+#: access/transam/multixact.c:1554
+#, c-format
+msgid "MultiXact %u has invalid next offset"
+msgstr "MultiXact %u の次のオフセットが不正です"
+
+#: access/transam/multixact.c:2548 access/transam/multixact.c:2557
 #, c-format
 msgid ""
 "To avoid MultiXactId assignment failures, execute a database-wide VACUUM in that database.\n"
@@ -1687,27 +1692,27 @@ msgstr ""
 "MultiXactIdの割り当て失敗を防ぐために、このデータベースでデータベース全体に対するVACUUMを実行してください。\n"
 "古い準備済みトランザクションのコミットまたはロールバック、もしくは古いレプリケーションスロットの削除も必要かもしれません。"
 
-#: access/transam/multixact.c:2767
+#: access/transam/multixact.c:2836
 #, c-format
 msgid "MultiXact member wraparound protections are disabled because oldest checkpointed MultiXact %u does not exist on disk"
 msgstr "最古のチェックポイント済みのマルチトランザクション%uがディスク上に存在しないため、マルチトランザクションメンバーの周回防止機能を無効にしました"
 
-#: access/transam/multixact.c:2789
+#: access/transam/multixact.c:2858
 #, c-format
 msgid "MultiXact member wraparound protections are now enabled"
 msgstr "マルチトランザクションメンバーの周回防止機能が有効になりました"
 
-#: access/transam/multixact.c:3180
+#: access/transam/multixact.c:3249
 #, c-format
 msgid "oldest MultiXact %u not found, earliest MultiXact %u, skipping truncation"
 msgstr "最古のマルチトランザクション%uが見つかりません、アクセス可能な最古のものは%u、切り詰めをスキップします"
 
-#: access/transam/multixact.c:3198
+#: access/transam/multixact.c:3267
 #, c-format
 msgid "cannot truncate up to MultiXact %u because it does not exist on disk, skipping truncation"
 msgstr "マルチトランザクション%uがディスク上に存在しないため、そこまでの切り詰めができません、切り詰めをスキップします"
 
-#: access/transam/multixact.c:3517
+#: access/transam/multixact.c:3612
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "不正なMultiXactId: %u"
@@ -3406,7 +3411,7 @@ msgstr "不十分なパラメータ設定値のためリカバリが停止しま
 msgid "You can restart the server after making the necessary configuration changes."
 msgstr "必要な設定変更を行うことでサーバーを再起動できます。"
 
-#: access/transam/xlogrecovery.c:4763 access/transam/xlogrecovery.c:4765 catalog/dependency.c:1153 catalog/dependency.c:1160 catalog/dependency.c:1171 commands/tablecmds.c:1459 commands/tablecmds.c:15152 commands/tablespace.c:460 commands/user.c:1302 commands/vacuum.c:212 commands/view.c:441 executor/execExprInterp.c:4655 executor/execExprInterp.c:4663 libpq/auth.c:332 replication/logical/applyparallelworker.c:1048 replication/slot.c:261 replication/slot.c:2470
+#: access/transam/xlogrecovery.c:4763 access/transam/xlogrecovery.c:4765 catalog/dependency.c:1153 catalog/dependency.c:1160 catalog/dependency.c:1171 commands/tablecmds.c:1459 commands/tablecmds.c:15152 commands/tablespace.c:460 commands/user.c:1302 commands/vacuum.c:213 commands/view.c:441 executor/execExprInterp.c:4655 executor/execExprInterp.c:4663 libpq/auth.c:332 replication/logical/applyparallelworker.c:1048 replication/slot.c:261 replication/slot.c:2470
 #: replication/slot.c:2472 replication/syncrep.c:1078 storage/lmgr/deadlock.c:1134 storage/lmgr/proc.c:1432 utils/misc/guc.c:3169 utils/misc/guc.c:3210 utils/misc/guc.c:3285 utils/misc/guc.c:6836 utils/misc/guc.c:6870 utils/misc/guc.c:6904 utils/misc/guc.c:6947 utils/misc/guc.c:6989
 #, c-format
 msgid "%s"
@@ -3949,7 +3954,7 @@ msgstr "デフォルト権限を変更する権限がありません"
 msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "GRANT/REVOKE ON SCHEMAS を使っている時には IN SCHEMA 句は指定できません"
 
-#: catalog/aclchk.c:1617 catalog/catalog.c:659 catalog/objectaddress.c:1523 catalog/pg_publication.c:528 commands/analyze.c:380 commands/copy.c:951 commands/sequence.c:1655 commands/tablecmds.c:7574 commands/tablecmds.c:7728 commands/tablecmds.c:7778 commands/tablecmds.c:7852 commands/tablecmds.c:7922 commands/tablecmds.c:8052 commands/tablecmds.c:8181 commands/tablecmds.c:8275 commands/tablecmds.c:8376 commands/tablecmds.c:8503 commands/tablecmds.c:8533
+#: catalog/aclchk.c:1617 catalog/catalog.c:659 catalog/objectaddress.c:1523 catalog/pg_publication.c:528 commands/analyze.c:380 commands/copy.c:988 commands/sequence.c:1655 commands/tablecmds.c:7574 commands/tablecmds.c:7728 commands/tablecmds.c:7778 commands/tablecmds.c:7852 commands/tablecmds.c:7922 commands/tablecmds.c:8052 commands/tablecmds.c:8181 commands/tablecmds.c:8275 commands/tablecmds.c:8376 commands/tablecmds.c:8503 commands/tablecmds.c:8533
 #: commands/tablecmds.c:8675 commands/tablecmds.c:8768 commands/tablecmds.c:8902 commands/tablecmds.c:9014 commands/tablecmds.c:12838 commands/tablecmds.c:13030 commands/tablecmds.c:13191 commands/tablecmds.c:14403 commands/tablecmds.c:17030 commands/trigger.c:943 parser/analyze.c:2530 parser/parse_relation.c:737 parser/parse_target.c:1067 parser/parse_type.c:144 parser/parse_utilcmd.c:3409 parser/parse_utilcmd.c:3449 parser/parse_utilcmd.c:3491 utils/adt/acl.c:2940
 #: utils/adt/ruleutils.c:2812
 #, c-format
@@ -4653,12 +4658,12 @@ msgstr "これは生成列を自身の値に依存させることにつながり
 msgid "generation expression is not immutable"
 msgstr "生成式は不変ではありません"
 
-#: catalog/heap.c:2859 rewrite/rewriteHandler.c:1276
+#: catalog/heap.c:2859 rewrite/rewriteHandler.c:1279
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "列\"%s\"の型は%sですが、デフォルト式の型は%sです"
 
-#: catalog/heap.c:2864 commands/prepare.c:331 parser/analyze.c:2758 parser/parse_target.c:592 parser/parse_target.c:882 parser/parse_target.c:892 rewrite/rewriteHandler.c:1281
+#: catalog/heap.c:2864 commands/prepare.c:331 parser/analyze.c:2758 parser/parse_target.c:592 parser/parse_target.c:882 parser/parse_target.c:892 rewrite/rewriteHandler.c:1284
 #, c-format
 msgid "You will need to rewrite or cast the expression."
 msgstr "式を書き換えるかキャストする必要があります。"
@@ -6322,27 +6327,27 @@ msgstr "継承ツリー\"%s.%s\"のANALYZEをスキップします --- このツ
 msgid "skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no analyzable child tables"
 msgstr "継承ツリー\"%s.%s\"のANALYZEをスキップします --- このツリーにはアナライズ可能な子テーブルがありません"
 
-#: commands/async.c:612
+#: commands/async.c:611
 #, c-format
 msgid "channel name cannot be empty"
 msgstr "チャネル名が空であることはできません"
 
-#: commands/async.c:618
+#: commands/async.c:617
 #, c-format
 msgid "channel name too long"
 msgstr "チャネル名が長すぎます"
 
-#: commands/async.c:623
+#: commands/async.c:622
 #, c-format
 msgid "payload string too long"
 msgstr "ペイロード文字列が長すぎます"
 
-#: commands/async.c:842
+#: commands/async.c:841
 #, c-format
 msgid "cannot PREPARE a transaction that has executed LISTEN, UNLISTEN, or NOTIFY"
 msgstr "LISTEN / UNLISTEN / NOTIFY を実行しているトランザクションは PREPARE できません"
 
-#: commands/async.c:946
+#: commands/async.c:945
 #, c-format
 msgid "too many notifications in the NOTIFY queue"
 msgstr "NOTIFY キューで発生した通知イベントが多すぎます"
@@ -6646,149 +6651,159 @@ msgstr "COPYでファイルへの出力を行う権限がありません"
 msgid "Only roles with privileges of the \"%s\" role may COPY to a file."
 msgstr "\"%s\"ロールの権限を持つロールのみがCOPYによるファイルへの出力を行うことができます。"
 
-#: commands/copy.c:193
+#: commands/copy.c:180
+#, c-format
+msgid "generated columns are not supported in COPY FROM WHERE conditions"
+msgstr "生成列は COPY FROM の WHERE 条件ではサポートされていません"
+
+#: commands/copy.c:181 commands/tablecmds.c:12858 commands/tablecmds.c:18092 commands/tablecmds.c:18171 commands/trigger.c:657 rewrite/rewriteHandler.c:944 rewrite/rewriteHandler.c:979
+#, c-format
+msgid "Column \"%s\" is a generated column."
+msgstr "列\"%s\"は生成カラムです。"
+
+#: commands/copy.c:230
 #, c-format
 msgid "COPY FROM not supported with row-level security"
 msgstr "COPY FROM で行レベルセキュリティはサポートされていません"
 
-#: commands/copy.c:194
+#: commands/copy.c:231
 #, c-format
 msgid "Use INSERT statements instead."
 msgstr "代わりにINSERTを文使用してください。"
 
-#: commands/copy.c:375
+#: commands/copy.c:412
 #, c-format
 msgid "cannot use \"%s\" with HEADER in COPY TO"
 msgstr "COPY TO の HEADERで\"%s\"は使用できません"
 
-#: commands/copy.c:384
+#: commands/copy.c:421
 #, c-format
 msgid "%s requires a Boolean value or \"match\""
 msgstr "パラメータ\"%s\"はBoolean値または\"match\"のみを取ります"
 
 #. translator: first %s is the name of a COPY option, e.g. ON_ERROR,
 #. second %s is a COPY with direction, e.g. COPY TO
-#: commands/copy.c:402 commands/copy.c:782 commands/copy.c:798 commands/copy.c:815 commands/copy.c:841 commands/copy.c:851
+#: commands/copy.c:439 commands/copy.c:819 commands/copy.c:835 commands/copy.c:852 commands/copy.c:878 commands/copy.c:888
 #, c-format
 msgid "COPY %s cannot be used with %s"
 msgstr "COPY %s は %s と同時には使えません"
 
 #. translator: first %s is the name of a COPY option, e.g. ON_ERROR
-#: commands/copy.c:416 commands/copy.c:441
+#: commands/copy.c:453 commands/copy.c:478
 #, c-format
 msgid "COPY %s \"%s\" not recognized"
 msgstr "COPY %s \"%s\"を認識できません"
 
-#: commands/copy.c:502
+#: commands/copy.c:539
 #, c-format
 msgid "COPY format \"%s\" not recognized"
 msgstr "COPY フォーマット\"%s\"を認識できません"
 
-#: commands/copy.c:560 commands/copy.c:575 commands/copy.c:590 commands/copy.c:609
+#: commands/copy.c:597 commands/copy.c:612 commands/copy.c:627 commands/copy.c:646
 #, c-format
 msgid "argument to option \"%s\" must be a list of column names"
 msgstr "オプション\"%s\"の引数は列名のリストでなければなりません"
 
-#: commands/copy.c:621
+#: commands/copy.c:658
 #, c-format
 msgid "argument to option \"%s\" must be a valid encoding name"
 msgstr "オプション\"%s\"の引数は有効なエンコーディング名でなければなりません"
 
-#: commands/copy.c:642 commands/dbcommands.c:866 commands/dbcommands.c:2381
+#: commands/copy.c:679 commands/dbcommands.c:866 commands/dbcommands.c:2381
 #, c-format
 msgid "option \"%s\" not recognized"
 msgstr "タイムゾーン\"%s\"を認識できません"
 
 #. translator: %s is the name of a COPY option, e.g. ON_ERROR
-#: commands/copy.c:655 commands/copy.c:660 commands/copy.c:665 commands/copy.c:740
+#: commands/copy.c:692 commands/copy.c:697 commands/copy.c:702 commands/copy.c:777
 #, c-format
 msgid "cannot specify %s in BINARY mode"
 msgstr "BINARYモードでは%sを指定できません"
 
-#: commands/copy.c:670
+#: commands/copy.c:707
 #, c-format
 msgid "only ON_ERROR STOP is allowed in BINARY mode"
 msgstr "BINARYモードではN_ERROR STOPのみ使用可能です"
 
-#: commands/copy.c:692
+#: commands/copy.c:729
 #, c-format
 msgid "COPY delimiter must be a single one-byte character"
 msgstr "COPYの区切り文字は単一の1バイト文字でなければなりません"
 
-#: commands/copy.c:699
+#: commands/copy.c:736
 #, c-format
 msgid "COPY delimiter cannot be newline or carriage return"
 msgstr "COPYの区切り文字は改行や復帰記号とすることができません"
 
-#: commands/copy.c:705
+#: commands/copy.c:742
 #, c-format
 msgid "COPY null representation cannot use newline or carriage return"
 msgstr "COPYのNULL表現には改行や復帰記号を使用することはできません"
 
-#: commands/copy.c:715
+#: commands/copy.c:752
 #, c-format
 msgid "COPY default representation cannot use newline or carriage return"
 msgstr "COPYのデフォルト表現には改行や復帰記号を使用することはできません"
 
-#: commands/copy.c:733
+#: commands/copy.c:770
 #, c-format
 msgid "COPY delimiter cannot be \"%s\""
 msgstr "COPYの区切り文字を\"%s\"とすることはできません"
 
 #. translator: %s is the name of a COPY option, e.g. ON_ERROR
-#: commands/copy.c:747 commands/copy.c:764 commands/copy.c:776 commands/copy.c:791 commands/copy.c:807
+#: commands/copy.c:784 commands/copy.c:801 commands/copy.c:813 commands/copy.c:828 commands/copy.c:844
 #, c-format
 msgid "COPY %s requires CSV mode"
 msgstr "COPY %s はCSVモードを要求します"
 
-#: commands/copy.c:752
+#: commands/copy.c:789
 #, c-format
 msgid "COPY quote must be a single one-byte character"
 msgstr "COPYの引用符は単一の1バイト文字でなければなりません"
 
-#: commands/copy.c:757
+#: commands/copy.c:794
 #, c-format
 msgid "COPY delimiter and quote must be different"
 msgstr "COPYの区切り文字と引用符は異なる文字でなければなりません"
 
-#: commands/copy.c:769
+#: commands/copy.c:806
 #, c-format
 msgid "COPY escape must be a single one-byte character"
 msgstr "COPYのエスケープは単一の1バイト文字でなければなりません"
 
 #. translator: %s is the name of a COPY option, e.g. NULL
-#: commands/copy.c:823 commands/copy.c:859
+#: commands/copy.c:860 commands/copy.c:896
 #, c-format
 msgid "COPY delimiter character must not appear in the %s specification"
 msgstr "COPYの区切り文字は%s指定では使用できません"
 
 #. translator: %s is the name of a COPY option, e.g. NULL
-#: commands/copy.c:832 commands/copy.c:868
+#: commands/copy.c:869 commands/copy.c:905
 #, c-format
 msgid "CSV quote character must not appear in the %s specification"
 msgstr "COPYの引用符は%s指定では使用できません"
 
-#: commands/copy.c:877
+#: commands/copy.c:914
 #, c-format
 msgid "NULL specification and DEFAULT specification cannot be the same"
 msgstr "NULL指定とDEFAULT指定は同じにはできません"
 
-#: commands/copy.c:939
+#: commands/copy.c:976
 #, c-format
 msgid "column \"%s\" is a generated column"
 msgstr "列\"%s\"は生成カラムです"
 
-#: commands/copy.c:941
+#: commands/copy.c:978
 #, c-format
 msgid "Generated columns cannot be used in COPY."
 msgstr "生成カラムはCOPYでは使えません。"
 
-#: commands/copy.c:956 commands/indexcmds.c:1890 commands/statscmds.c:239 commands/tablecmds.c:2526 commands/tablecmds.c:2997 commands/tablecmds.c:3808 parser/parse_relation.c:3692 parser/parse_relation.c:3702 parser/parse_relation.c:3720 parser/parse_relation.c:3727 parser/parse_relation.c:3741 utils/adt/tsvector_op.c:2853
+#: commands/copy.c:993 commands/indexcmds.c:1890 commands/statscmds.c:260 commands/tablecmds.c:2526 commands/tablecmds.c:2997 commands/tablecmds.c:3808 parser/parse_relation.c:3692 parser/parse_relation.c:3702 parser/parse_relation.c:3720 parser/parse_relation.c:3727 parser/parse_relation.c:3741 utils/adt/tsvector_op.c:2853
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "列\"%s\"は存在しません"
 
-#: commands/copy.c:963 commands/tablecmds.c:2552 commands/trigger.c:952 parser/parse_target.c:1083 parser/parse_target.c:1094
+#: commands/copy.c:1000 commands/tablecmds.c:2552 commands/trigger.c:952 parser/parse_target.c:1083 parser/parse_target.c:1094
 #, c-format
 msgid "column \"%s\" specified more than once"
 msgstr "列\"%s\"が複数指定されました"
@@ -7630,7 +7645,7 @@ msgstr "照合順序\"%s\"は存在しません、スキップします"
 msgid "conversion \"%s\" does not exist, skipping"
 msgstr "変換\"%sは存在しません、スキップします"
 
-#: commands/dropcmds.c:288 commands/statscmds.c:664
+#: commands/dropcmds.c:288 commands/statscmds.c:685
 #, c-format
 msgid "statistics object \"%s\" does not exist, skipping"
 msgstr "統計情報オブジェクト\"%s\"は存在しません、スキップします"
@@ -9222,7 +9237,7 @@ msgstr "演算子の属性\"%s\"は変更できません"
 msgid "operator attribute \"%s\" cannot be changed if it has already been set"
 msgstr "演算子の属性\"%s\"は、すでに設定されている場合には変更できません"
 
-#: commands/policy.c:86 commands/policy.c:379 commands/statscmds.c:146 commands/tablecmds.c:1740 commands/tablecmds.c:2340 commands/tablecmds.c:3702 commands/tablecmds.c:6605 commands/tablecmds.c:9670 commands/tablecmds.c:17836 commands/tablecmds.c:17871 commands/trigger.c:317 commands/trigger.c:1333 commands/trigger.c:1443 rewrite/rewriteDefine.c:268 rewrite/rewriteDefine.c:779 rewrite/rewriteRemove.c:74
+#: commands/policy.c:86 commands/policy.c:379 commands/statscmds.c:152 commands/tablecmds.c:1740 commands/tablecmds.c:2340 commands/tablecmds.c:3702 commands/tablecmds.c:6605 commands/tablecmds.c:9670 commands/tablecmds.c:17836 commands/tablecmds.c:17871 commands/trigger.c:317 commands/trigger.c:1333 commands/trigger.c:1443 rewrite/rewriteDefine.c:268 rewrite/rewriteDefine.c:779 rewrite/rewriteRemove.c:74
 #, c-format
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "権限がありません: \"%s\"はシステムカタログです"
@@ -9682,72 +9697,72 @@ msgstr "CREATE STATISTICSで指定可能なリレーションは一つのみで�
 msgid "cannot define statistics for relation \"%s\""
 msgstr "リレーション\"%s\"に対して統計情報を定義できません"
 
-#: commands/statscmds.c:187
+#: commands/statscmds.c:208
 #, c-format
 msgid "statistics object \"%s\" already exists, skipping"
 msgstr "統計情報オブジェクト\"%s\"はすでに存在します、スキップします"
 
-#: commands/statscmds.c:195
+#: commands/statscmds.c:216
 #, c-format
 msgid "statistics object \"%s\" already exists"
 msgstr "統計情報オブジェクト\"%s\"はすでに存在します"
 
-#: commands/statscmds.c:206
+#: commands/statscmds.c:227
 #, c-format
 msgid "cannot have more than %d columns in statistics"
 msgstr "統計情報は%dを超える列を使用できません"
 
-#: commands/statscmds.c:247 commands/statscmds.c:270 commands/statscmds.c:304
+#: commands/statscmds.c:268 commands/statscmds.c:291 commands/statscmds.c:325
 #, c-format
 msgid "statistics creation on system columns is not supported"
 msgstr "システム列に対する統計情報の作成はサポートされていません"
 
-#: commands/statscmds.c:254 commands/statscmds.c:277
+#: commands/statscmds.c:275 commands/statscmds.c:298
 #, c-format
 msgid "column \"%s\" cannot be used in statistics because its type %s has no default btree operator class"
 msgstr "列\"%s\"の型%sはデフォルトのbtreeオペレータクラスを持たないため統計情報では利用できません"
 
-#: commands/statscmds.c:321
+#: commands/statscmds.c:342
 #, c-format
 msgid "expression cannot be used in multivariate statistics because its type %s has no default btree operator class"
 msgstr "式の型%sがデフォルトbtree演算子クラスを持たないためこの式は多値統計情報では使用できません"
 
-#: commands/statscmds.c:342
+#: commands/statscmds.c:363
 #, c-format
 msgid "when building statistics on a single expression, statistics kinds may not be specified"
 msgstr "単一式上の統計情報の構築時には、統計種別は指定できません"
 
-#: commands/statscmds.c:371
+#: commands/statscmds.c:392
 #, c-format
 msgid "unrecognized statistics kind \"%s\""
 msgstr "認識できない統計情報種別\"%s\""
 
-#: commands/statscmds.c:400
+#: commands/statscmds.c:421
 #, c-format
 msgid "extended statistics require at least 2 columns"
 msgstr "拡張統計情報には最低でも2つの列が必要です"
 
-#: commands/statscmds.c:418
+#: commands/statscmds.c:439
 #, c-format
 msgid "duplicate column name in statistics definition"
 msgstr "定形情報定義中の列名が重複しています"
 
-#: commands/statscmds.c:453
+#: commands/statscmds.c:474
 #, c-format
 msgid "duplicate expression in statistics definition"
 msgstr "統計情報定義内に重複した式"
 
-#: commands/statscmds.c:628 commands/tablecmds.c:8653
+#: commands/statscmds.c:649 commands/tablecmds.c:8653
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "統計情報目標%dは小さすぎます"
 
-#: commands/statscmds.c:636 commands/tablecmds.c:8661
+#: commands/statscmds.c:657 commands/tablecmds.c:8661
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "統計情報目標を%dに減らします"
 
-#: commands/statscmds.c:660
+#: commands/statscmds.c:681
 #, c-format
 msgid "statistics object \"%s.%s\" does not exist, skipping"
 msgstr "統計情報オブジェクト\"%s.%s\"は存在しません、スキップします"
@@ -10266,7 +10281,7 @@ msgstr "%s対%s"
 msgid "column \"%s\" has a collation conflict"
 msgstr "列\"%s\"の照合順序が競合しています"
 
-#: commands/tablecmds.c:3164 commands/tablecmds.c:3326 commands/tablecmds.c:7080 parser/parse_expr.c:4764
+#: commands/tablecmds.c:3164 commands/tablecmds.c:3326 commands/tablecmds.c:7080 parser/parse_expr.c:4771
 #, c-format
 msgid "\"%s\" versus \"%s\""
 msgstr "\"%s\"対\"%s\""
@@ -10858,11 +10873,6 @@ msgstr "型付けされたテーブルの列の型を変更できません"
 #, c-format
 msgid "cannot specify USING when altering type of generated column"
 msgstr "生成列の型変更の際にはUSINGを指定することはできません"
-
-#: commands/tablecmds.c:12858 commands/tablecmds.c:18092 commands/tablecmds.c:18171 commands/trigger.c:657 rewrite/rewriteHandler.c:941 rewrite/rewriteHandler.c:976
-#, c-format
-msgid "Column \"%s\" is a generated column."
-msgstr "列\"%s\"は生成カラムです。"
 
 #: commands/tablecmds.c:12868
 #, c-format
@@ -11805,7 +11815,7 @@ msgstr "トリガ\"%s\"の実行前には、この行はパーティション\"%
 msgid "cannot collect transition tuples from child foreign tables"
 msgstr "外部子テーブルからは遷移タプルを収集できません"
 
-#: commands/trigger.c:3428 executor/nodeModifyTable.c:1563 executor/nodeModifyTable.c:1637 executor/nodeModifyTable.c:2400 executor/nodeModifyTable.c:2491 executor/nodeModifyTable.c:3155 executor/nodeModifyTable.c:3326
+#: commands/trigger.c:3428 executor/nodeModifyTable.c:1563 executor/nodeModifyTable.c:1637 executor/nodeModifyTable.c:2400 executor/nodeModifyTable.c:2491 executor/nodeModifyTable.c:3155 executor/nodeModifyTable.c:3347
 #, c-format
 msgid "Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows."
 msgstr "他の行への変更を伝搬させるためにBEFOREトリガではなくAFTERトリガの使用を検討してください"
@@ -12584,112 +12594,112 @@ msgstr "依存する権限が存在します"
 msgid "Use CASCADE to revoke them too."
 msgstr "これらも剥奪するにはCASCADEを使用してください"
 
-#: commands/vacuum.c:135
+#: commands/vacuum.c:136
 #, c-format
 msgid "\"vacuum_buffer_usage_limit\" must be 0 or between %d kB and %d kB"
 msgstr "\"vacuum_buffer_usage_limit\"は0または%d kBと%d kBの間でなければなりません"
 
-#: commands/vacuum.c:210
+#: commands/vacuum.c:211
 #, c-format
 msgid "BUFFER_USAGE_LIMIT option must be 0 or between %d kB and %d kB"
 msgstr "BUFFER_USAGE_LIMITオプションは0または%d kBと%d kBの間でなければなりません"
 
-#: commands/vacuum.c:220
+#: commands/vacuum.c:221
 #, c-format
 msgid "unrecognized ANALYZE option \"%s\""
 msgstr "ANALYZEオプション\"%s\"が認識できません"
 
-#: commands/vacuum.c:260
+#: commands/vacuum.c:261
 #, c-format
 msgid "parallel option requires a value between 0 and %d"
 msgstr "パラレルオプションには0から%dまでの値である必要があります"
 
-#: commands/vacuum.c:272
+#: commands/vacuum.c:273
 #, c-format
 msgid "parallel workers for vacuum must be between 0 and %d"
 msgstr "VACUUMの並列ワーカーの数はは0から%dまでの値でなければなりません"
 
-#: commands/vacuum.c:293
+#: commands/vacuum.c:294
 #, c-format
 msgid "unrecognized VACUUM option \"%s\""
 msgstr "認識できないVACUUMオプション \"%s\""
 
-#: commands/vacuum.c:319
+#: commands/vacuum.c:320
 #, c-format
 msgid "VACUUM FULL cannot be performed in parallel"
 msgstr "VACUUM FULLは並列実行できません"
 
-#: commands/vacuum.c:330
+#: commands/vacuum.c:331
 #, c-format
 msgid "BUFFER_USAGE_LIMIT cannot be specified for VACUUM FULL"
 msgstr "BUFFER_USAGE_LIMITはVACUUM FULLに対しては指定できません"
 
-#: commands/vacuum.c:344
+#: commands/vacuum.c:345
 #, c-format
 msgid "ANALYZE option must be specified when a column list is provided"
 msgstr "ANALYZE オプションは列リストが与えられているときのみ指定できます"
 
-#: commands/vacuum.c:356
+#: commands/vacuum.c:357
 #, c-format
 msgid "VACUUM option DISABLE_PAGE_SKIPPING cannot be used with FULL"
 msgstr "VACUUM のオプションDISABLE_PAGE_SKIPPINGはFULLと同時には指定できません"
 
-#: commands/vacuum.c:363
+#: commands/vacuum.c:364
 #, c-format
 msgid "PROCESS_TOAST required with VACUUM FULL"
 msgstr "VACUUM FULLではPROCESS_TOASTの指定が必須です"
 
-#: commands/vacuum.c:372
+#: commands/vacuum.c:373
 #, c-format
 msgid "ONLY_DATABASE_STATS cannot be specified with a list of tables"
 msgstr "ONLY_DATABASE_STATSはテーブルのリストと一緒に指定することはできません"
 
-#: commands/vacuum.c:381
+#: commands/vacuum.c:382
 #, c-format
 msgid "ONLY_DATABASE_STATS cannot be specified with other VACUUM options"
 msgstr "ONLY_DATABASE_STATSは他のVACUUMオプションと一緒に指定することはできません"
 
-#: commands/vacuum.c:516
+#: commands/vacuum.c:517
 #, c-format
 msgid "%s cannot be executed from VACUUM or ANALYZE"
 msgstr "%sはVACUUMやANALYZEからは実行できません"
 
-#: commands/vacuum.c:741
+#: commands/vacuum.c:742
 #, c-format
 msgid "permission denied to vacuum \"%s\", skipping it"
 msgstr "列%sのVACUUMを行う権限がありません、スキップします"
 
-#: commands/vacuum.c:754
+#: commands/vacuum.c:755
 #, c-format
 msgid "permission denied to analyze \"%s\", skipping it"
 msgstr "列%sのANALYZEを行う権限がありません、スキップします"
 
-#: commands/vacuum.c:832 commands/vacuum.c:929
+#: commands/vacuum.c:833 commands/vacuum.c:930
 #, c-format
 msgid "skipping vacuum of \"%s\" --- lock not available"
 msgstr "\"%s\"のVACUUM処理をスキップしています -- ロックを獲得できませんでした"
 
-#: commands/vacuum.c:837
+#: commands/vacuum.c:838
 #, c-format
 msgid "skipping vacuum of \"%s\" --- relation no longer exists"
 msgstr "\"%s\"のVACUUM処理をスキップしています -- リレーションはすでに存在しません"
 
-#: commands/vacuum.c:853 commands/vacuum.c:934
+#: commands/vacuum.c:854 commands/vacuum.c:935
 #, c-format
 msgid "skipping analyze of \"%s\" --- lock not available"
 msgstr "\"%s\"のANALYZEをスキップしています --- ロック獲得できませんでした"
 
-#: commands/vacuum.c:858
+#: commands/vacuum.c:859
 #, c-format
 msgid "skipping analyze of \"%s\" --- relation no longer exists"
 msgstr "\"%s\"のANALYZEをスキップします --- リレーションはすでに存在しません"
 
-#: commands/vacuum.c:1150
+#: commands/vacuum.c:1151
 #, c-format
 msgid "cutoff for removing and freezing tuples is far in the past"
 msgstr "タプルの削除およびフリーズのカットオフ値が古すぎます"
 
-#: commands/vacuum.c:1151 commands/vacuum.c:1156
+#: commands/vacuum.c:1152 commands/vacuum.c:1157
 #, c-format
 msgid ""
 "Close open transactions soon to avoid wraparound problems.\n"
@@ -12698,37 +12708,37 @@ msgstr ""
 "周回問題を回避するためにすぐに実行中のトランザクションを終了してください。\n"
 "古い準備済みトランザクションのコミットまたはロールバック、もしくは古いレプリケーションスロットの削除が必要な場合もあります。"
 
-#: commands/vacuum.c:1155
+#: commands/vacuum.c:1156
 #, c-format
 msgid "cutoff for freezing multixacts is far in the past"
 msgstr "マルチトランザクションのフリーズのカットオフ値が古すぎます"
 
-#: commands/vacuum.c:1911
+#: commands/vacuum.c:1912
 #, c-format
 msgid "some databases have not been vacuumed in over 2 billion transactions"
 msgstr "データベースの一部は20億トランザクション以上の間にVACUUMを実行されていませんでした"
 
-#: commands/vacuum.c:1912
+#: commands/vacuum.c:1913
 #, c-format
 msgid "You might have already suffered transaction-wraparound data loss."
 msgstr "トランザクションの周回によるデータ損失が発生している可能性があります"
 
-#: commands/vacuum.c:2098
+#: commands/vacuum.c:2105
 #, c-format
 msgid "skipping \"%s\" --- cannot vacuum non-tables or special system tables"
 msgstr "\"%s\"をスキップしています --- テーブルではないものや、特別なシステムテーブルに対してはVACUUMを実行できません"
 
-#: commands/vacuum.c:2545
+#: commands/vacuum.c:2552
 #, c-format
 msgid "scanned index \"%s\" to remove %lld row versions"
 msgstr "インデックス\"%s\"をスキャンして%lldの行バージョンを削除しました"
 
-#: commands/vacuum.c:2564
+#: commands/vacuum.c:2571
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "現在インデックス\"%s\"は%.0f行バージョンを%uページで含んでいます"
 
-#: commands/vacuum.c:2568
+#: commands/vacuum.c:2575
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -12996,7 +13006,7 @@ msgstr "問い合わせで %d 番目に削除される列の値を指定して�
 msgid "Table has type %s at ordinal position %d, but query expects %s."
 msgstr "テーブルでは %2$d 番目の型は %1$s ですが、問い合わせでは %3$s を想定しています。"
 
-#: executor/execExpr.c:1104 parser/parse_agg.c:864
+#: executor/execExpr.c:1104 parser/parse_agg.c:891
 #, c-format
 msgid "window function calls cannot be nested"
 msgstr "ウィンドウ関数の呼び出しを入れ子にすることはできません"
@@ -13518,7 +13528,7 @@ msgstr "戻り値型%sはSQL関数でサポートされていません"
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr "集約%uは入力データ型と遷移用の型間で互換性が必要です"
 
-#: executor/nodeAgg.c:3966 parser/parse_agg.c:680 parser/parse_agg.c:708
+#: executor/nodeAgg.c:3966 parser/parse_agg.c:687 parser/parse_agg.c:730
 #, c-format
 msgid "aggregate function calls cannot be nested"
 msgstr "集約関数の呼び出しを入れ子にすることはできません"
@@ -13599,7 +13609,7 @@ msgid "Consider defining the foreign key on table \"%s\"."
 msgstr "テーブル\"%s\"上に外部キー制約を定義することを検討してください。"
 
 #. translator: %s is a SQL command name
-#: executor/nodeModifyTable.c:2619 executor/nodeModifyTable.c:3161 executor/nodeModifyTable.c:3332
+#: executor/nodeModifyTable.c:2619 executor/nodeModifyTable.c:3161 executor/nodeModifyTable.c:3353
 #, c-format
 msgid "%s command cannot affect row a second time"
 msgstr "%sコマンドは単一の行に2度は適用できません"
@@ -13609,12 +13619,12 @@ msgstr "%sコマンドは単一の行に2度は適用できません"
 msgid "Ensure that no rows proposed for insertion within the same command have duplicate constrained values."
 msgstr "同じコマンドでの挿入候補の行が同じ制約値を持つことがないようにしてください"
 
-#: executor/nodeModifyTable.c:3154 executor/nodeModifyTable.c:3325
+#: executor/nodeModifyTable.c:3154 executor/nodeModifyTable.c:3346
 #, c-format
 msgid "tuple to be updated or deleted was already modified by an operation triggered by the current command"
 msgstr "更新または削除対象のタプルは、現在のコマンドによって発火した操作トリガーによってすでに更新されています"
 
-#: executor/nodeModifyTable.c:3163 executor/nodeModifyTable.c:3334
+#: executor/nodeModifyTable.c:3163 executor/nodeModifyTable.c:3355
 #, c-format
 msgid "Ensure that not more than one source row matches any one target row."
 msgstr "ソース行が2行以上ターゲット行に合致しないようにしてください。"
@@ -16244,7 +16254,7 @@ msgstr "パラメータを持つ無名ポータル: %s"
 msgid "FULL JOIN is only supported with merge-joinable or hash-joinable join conditions"
 msgstr "FULL JOIN はマージ結合可能もしくはハッシュ結合可能な場合のみサポートされています"
 
-#: optimizer/plan/createplan.c:7177 parser/parse_merge.c:203 rewrite/rewriteHandler.c:1680
+#: optimizer/plan/createplan.c:7177 parser/parse_merge.c:203 rewrite/rewriteHandler.c:1683
 #, c-format
 msgid "cannot execute MERGE on relation \"%s\""
 msgstr "リレーション\"%s\"に対してMERGEは実行できません"
@@ -16561,330 +16571,340 @@ msgstr "%sは名前付きタプルストアには適用できません"
 msgid "relation \"%s\" in %s clause not found in FROM clause"
 msgstr "%2$s句のリレーション\"%1$s\"はFROM句にありません"
 
-#: parser/parse_agg.c:210 parser/parse_oper.c:215
+#: parser/parse_agg.c:213 parser/parse_oper.c:215
 #, c-format
 msgid "could not identify an ordering operator for type %s"
 msgstr "型%sの順序演算子を特定できませんでした"
 
-#: parser/parse_agg.c:212
+#: parser/parse_agg.c:215
 #, c-format
 msgid "Aggregates with DISTINCT must be able to sort their inputs."
 msgstr "DISTINCT 付きの集約関数は、入力がソート可能である必要があります。"
 
-#: parser/parse_agg.c:270
+#: parser/parse_agg.c:273
 #, c-format
 msgid "GROUPING must have fewer than 32 arguments"
 msgstr "GROUPINGの引数は32より少くなければなりません"
 
-#: parser/parse_agg.c:373
+#: parser/parse_agg.c:377
 msgid "aggregate functions are not allowed in JOIN conditions"
 msgstr "JOIN条件で集約関数を使用できません"
 
-#: parser/parse_agg.c:375
+#: parser/parse_agg.c:379
 msgid "grouping operations are not allowed in JOIN conditions"
 msgstr "グルーピング演算はJOIN条件の中では使用できません"
 
-#: parser/parse_agg.c:385
+#: parser/parse_agg.c:389
 msgid "aggregate functions are not allowed in FROM clause of their own query level"
 msgstr "集約関数は自身の問い合わせレベルのFROM句の中では使用できません"
 
-#: parser/parse_agg.c:387
+#: parser/parse_agg.c:391
 msgid "grouping operations are not allowed in FROM clause of their own query level"
 msgstr "グルーピング演算は自身のクエリレベルのFROM句の中では使用できません"
 
-#: parser/parse_agg.c:392
+#: parser/parse_agg.c:396
 msgid "aggregate functions are not allowed in functions in FROM"
 msgstr "集約関数はFROM句内の関数では使用できません"
 
-#: parser/parse_agg.c:394
+#: parser/parse_agg.c:398
 msgid "grouping operations are not allowed in functions in FROM"
 msgstr "グルーピング演算はFROM句内の関数では使用できません"
 
-#: parser/parse_agg.c:402
+#: parser/parse_agg.c:406
 msgid "aggregate functions are not allowed in policy expressions"
 msgstr "集約関数はポリシ式では使用できません"
 
-#: parser/parse_agg.c:404
+#: parser/parse_agg.c:408
 msgid "grouping operations are not allowed in policy expressions"
 msgstr "グルーピング演算はポリシ式では使用できません"
 
-#: parser/parse_agg.c:421
+#: parser/parse_agg.c:425
 msgid "aggregate functions are not allowed in window RANGE"
 msgstr "集約関数はウィンドウRANGEの中では集約関数を使用できません"
 
-#: parser/parse_agg.c:423
+#: parser/parse_agg.c:427
 msgid "grouping operations are not allowed in window RANGE"
 msgstr "ウィンドウ定義のRANGE句の中ではグルーピング演算は使用できません"
 
-#: parser/parse_agg.c:428
+#: parser/parse_agg.c:432
 msgid "aggregate functions are not allowed in window ROWS"
 msgstr "ウィンドウ定義のROWS句では集約関数は使用できません"
 
-#: parser/parse_agg.c:430
+#: parser/parse_agg.c:434
 msgid "grouping operations are not allowed in window ROWS"
 msgstr "ウィンドウ定義のROWS句ではグルーピング演算は使用できません"
 
-#: parser/parse_agg.c:435
+#: parser/parse_agg.c:439
 msgid "aggregate functions are not allowed in window GROUPS"
 msgstr "ウィンドウ定義のGROUPS句では集約関数は使用できません"
 
-#: parser/parse_agg.c:437
+#: parser/parse_agg.c:441
 msgid "grouping operations are not allowed in window GROUPS"
 msgstr "ウィンドウ定義のGROUPS句ではグルーピング演算は使用できません"
 
-#: parser/parse_agg.c:450
+#: parser/parse_agg.c:454
 msgid "aggregate functions are not allowed in MERGE WHEN conditions"
 msgstr "MERGE WHEN条件では集約関数を使用できません"
 
-#: parser/parse_agg.c:452
+#: parser/parse_agg.c:456
 msgid "grouping operations are not allowed in MERGE WHEN conditions"
 msgstr "MERGE WHEN条件ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:479
+#: parser/parse_agg.c:483
 msgid "aggregate functions are not allowed in check constraints"
 msgstr "検査制約では集約関数を使用できません"
 
-#: parser/parse_agg.c:481
+#: parser/parse_agg.c:485
 msgid "grouping operations are not allowed in check constraints"
 msgstr "検査制約ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:488
+#: parser/parse_agg.c:492
 msgid "aggregate functions are not allowed in DEFAULT expressions"
 msgstr "DEFAULT式では集約関数を使用できません"
 
-#: parser/parse_agg.c:490
+#: parser/parse_agg.c:494
 msgid "grouping operations are not allowed in DEFAULT expressions"
 msgstr "DEFAULT式ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:495
+#: parser/parse_agg.c:499
 msgid "aggregate functions are not allowed in index expressions"
 msgstr "インデックス式では集約関数を使用できません"
 
-#: parser/parse_agg.c:497
+#: parser/parse_agg.c:501
 msgid "grouping operations are not allowed in index expressions"
 msgstr "インデックス式ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:502
+#: parser/parse_agg.c:506
 msgid "aggregate functions are not allowed in index predicates"
 msgstr "インデックス述語では集約関数を使用できません"
 
-#: parser/parse_agg.c:504
+#: parser/parse_agg.c:508
 msgid "grouping operations are not allowed in index predicates"
 msgstr "インデックス述語ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:509
+#: parser/parse_agg.c:513
 msgid "aggregate functions are not allowed in statistics expressions"
 msgstr "統計情報式では集約関数を使用できません"
 
-#: parser/parse_agg.c:511
+#: parser/parse_agg.c:515
 msgid "grouping operations are not allowed in statistics expressions"
 msgstr "統計情報式ではグルーピング演算使用できません"
 
-#: parser/parse_agg.c:516
+#: parser/parse_agg.c:520
 msgid "aggregate functions are not allowed in transform expressions"
 msgstr "変換式では集約関数を使用できません"
 
-#: parser/parse_agg.c:518
+#: parser/parse_agg.c:522
 msgid "grouping operations are not allowed in transform expressions"
 msgstr "変換式ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:523
+#: parser/parse_agg.c:527
 msgid "aggregate functions are not allowed in EXECUTE parameters"
 msgstr "EXECUTEのパラメータでは集約関数を使用できません"
 
-#: parser/parse_agg.c:525
+#: parser/parse_agg.c:529
 msgid "grouping operations are not allowed in EXECUTE parameters"
 msgstr "EXECUTEのパラメータではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:530
+#: parser/parse_agg.c:534
 msgid "aggregate functions are not allowed in trigger WHEN conditions"
 msgstr "トリガのWHEN条件では集約関数を使用できません"
 
-#: parser/parse_agg.c:532
+#: parser/parse_agg.c:536
 msgid "grouping operations are not allowed in trigger WHEN conditions"
 msgstr "トリガのWHEN条件ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:537
+#: parser/parse_agg.c:541
 msgid "aggregate functions are not allowed in partition bound"
 msgstr "集約関数はパーティション境界では使用できません"
 
-#: parser/parse_agg.c:539
+#: parser/parse_agg.c:543
 msgid "grouping operations are not allowed in partition bound"
 msgstr "グルーピング演算はパーティション境界では使用できません"
 
-#: parser/parse_agg.c:544
+#: parser/parse_agg.c:548
 msgid "aggregate functions are not allowed in partition key expressions"
 msgstr "パーティションキー式では集約関数は使用できません"
 
-#: parser/parse_agg.c:546
+#: parser/parse_agg.c:550
 msgid "grouping operations are not allowed in partition key expressions"
 msgstr "パーティションキー式ではグルーピング演算は使用できません"
 
-#: parser/parse_agg.c:552
+#: parser/parse_agg.c:556
 msgid "aggregate functions are not allowed in column generation expressions"
 msgstr "集約関数はカラム生成式では使用できません"
 
-#: parser/parse_agg.c:554
+#: parser/parse_agg.c:558
 msgid "grouping operations are not allowed in column generation expressions"
 msgstr "グルーピング演算はカラム生成式では使用できません"
 
-#: parser/parse_agg.c:560
+#: parser/parse_agg.c:564
 msgid "aggregate functions are not allowed in CALL arguments"
 msgstr "CALLの引数では集約関数を使用できません"
 
-#: parser/parse_agg.c:562
+#: parser/parse_agg.c:566
 msgid "grouping operations are not allowed in CALL arguments"
 msgstr "CALLの引数ではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:568
+#: parser/parse_agg.c:572
 msgid "aggregate functions are not allowed in COPY FROM WHERE conditions"
 msgstr "集約関数は COPY FROM の WHERE 条件では使用できません"
 
-#: parser/parse_agg.c:570
+#: parser/parse_agg.c:574
 msgid "grouping operations are not allowed in COPY FROM WHERE conditions"
 msgstr "グルーピング演算は COPY FROM の WHERE 条件の中では使用できません"
 
 #. translator: %s is name of a SQL construct, eg GROUP BY
-#: parser/parse_agg.c:597 parser/parse_clause.c:1962
+#: parser/parse_agg.c:601 parser/parse_clause.c:1962
 #, c-format
 msgid "aggregate functions are not allowed in %s"
 msgstr "%sでは集約関数を使用できません"
 
 #. translator: %s is name of a SQL construct, eg GROUP BY
-#: parser/parse_agg.c:600
+#: parser/parse_agg.c:604
 #, c-format
 msgid "grouping operations are not allowed in %s"
 msgstr "%sではグルーピング演算を使用できません"
 
-#: parser/parse_agg.c:701
+#: parser/parse_agg.c:700 parser/parse_agg.c:737
+#, c-format
+msgid "outer-level aggregate cannot use a nested CTE"
+msgstr "上位レベルの集約では、下位レベルのCTEを使用することはできません"
+
+#: parser/parse_agg.c:701 parser/parse_agg.c:738
+#, c-format
+msgid "CTE \"%s\" is below the aggregate's semantic level."
+msgstr "CTE \"%s\" は、この集約のクエリレベルよりも下位にあります。"
+
+#: parser/parse_agg.c:723
 #, c-format
 msgid "outer-level aggregate cannot contain a lower-level variable in its direct arguments"
 msgstr "アウタレベルの集約は直接引数に低位の変数を含むことができません"
 
-#: parser/parse_agg.c:779
+#: parser/parse_agg.c:808
 #, c-format
 msgid "aggregate function calls cannot contain set-returning function calls"
 msgstr "集合返却関数の呼び出しに集約関数の呼び出しを含むことはできません"
 
-#: parser/parse_agg.c:780 parser/parse_expr.c:1763 parser/parse_expr.c:2254 parser/parse_func.c:885
+#: parser/parse_agg.c:809 parser/parse_expr.c:1763 parser/parse_expr.c:2254 parser/parse_func.c:885
 #, c-format
 msgid "You might be able to move the set-returning function into a LATERAL FROM item."
 msgstr "この集合返却関数をLATERAL FROM項目に移動できるかもしれません。"
 
-#: parser/parse_agg.c:785
+#: parser/parse_agg.c:814
 #, c-format
 msgid "aggregate function calls cannot contain window function calls"
 msgstr "集約関数の呼び出しにウィンドウ関数の呼び出しを含むことはできません"
 
-#: parser/parse_agg.c:890
+#: parser/parse_agg.c:917
 msgid "window functions are not allowed in JOIN conditions"
 msgstr "JOIN条件ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:897
+#: parser/parse_agg.c:924
 msgid "window functions are not allowed in functions in FROM"
 msgstr "FROM句内の関数ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:903
+#: parser/parse_agg.c:930
 msgid "window functions are not allowed in policy expressions"
 msgstr "ポリシ式ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:916
+#: parser/parse_agg.c:943
 msgid "window functions are not allowed in window definitions"
 msgstr "ウィンドウ定義ではウィンドウ関数は使用できません"
 
-#: parser/parse_agg.c:927
+#: parser/parse_agg.c:954
 msgid "window functions are not allowed in MERGE WHEN conditions"
 msgstr "MERGE WHEN条件ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:952
+#: parser/parse_agg.c:979
 msgid "window functions are not allowed in check constraints"
 msgstr "検査制約の中ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:956
+#: parser/parse_agg.c:983
 msgid "window functions are not allowed in DEFAULT expressions"
 msgstr "DEFAULT式の中ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:959
+#: parser/parse_agg.c:986
 msgid "window functions are not allowed in index expressions"
 msgstr "インデックス式ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:962
+#: parser/parse_agg.c:989
 msgid "window functions are not allowed in statistics expressions"
 msgstr "統計情報式ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:965
+#: parser/parse_agg.c:992
 msgid "window functions are not allowed in index predicates"
 msgstr "インデックス述語ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:968
+#: parser/parse_agg.c:995
 msgid "window functions are not allowed in transform expressions"
 msgstr "変換式ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:971
+#: parser/parse_agg.c:998
 msgid "window functions are not allowed in EXECUTE parameters"
 msgstr "EXECUTEパラメータではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:974
+#: parser/parse_agg.c:1001
 msgid "window functions are not allowed in trigger WHEN conditions"
 msgstr "トリガのWHEN条件ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:977
+#: parser/parse_agg.c:1004
 msgid "window functions are not allowed in partition bound"
 msgstr "ウィンドウ関数はパーティション境界では使用できません"
 
-#: parser/parse_agg.c:980
+#: parser/parse_agg.c:1007
 msgid "window functions are not allowed in partition key expressions"
 msgstr "パーティションキー式ではウィンドウ関数は使用できません"
 
-#: parser/parse_agg.c:983
+#: parser/parse_agg.c:1010
 msgid "window functions are not allowed in CALL arguments"
 msgstr "CALLの引数ではウィンドウ関数は使用できません"
 
-#: parser/parse_agg.c:986
+#: parser/parse_agg.c:1013
 msgid "window functions are not allowed in COPY FROM WHERE conditions"
 msgstr "ウィンドウ関数は COPY FROM の WHERE 条件では使用できません"
 
-#: parser/parse_agg.c:989
+#: parser/parse_agg.c:1016
 msgid "window functions are not allowed in column generation expressions"
 msgstr "ウィンドウ関数はカラム生成式では使用できません"
 
 #. translator: %s is name of a SQL construct, eg GROUP BY
-#: parser/parse_agg.c:1012 parser/parse_clause.c:1971
+#: parser/parse_agg.c:1039 parser/parse_clause.c:1971
 #, c-format
 msgid "window functions are not allowed in %s"
 msgstr "%sの中ではウィンドウ関数を使用できません"
 
-#: parser/parse_agg.c:1046 parser/parse_clause.c:2804
+#: parser/parse_agg.c:1073 parser/parse_clause.c:2804
 #, c-format
 msgid "window \"%s\" does not exist"
 msgstr "ウィンドウ\"%s\"は存在しません"
 
-#: parser/parse_agg.c:1134
+#: parser/parse_agg.c:1161
 #, c-format
 msgid "too many grouping sets present (maximum 4096)"
 msgstr "グルーピングセットの数が多すぎます (最大4096)"
 
-#: parser/parse_agg.c:1274
+#: parser/parse_agg.c:1301
 #, c-format
 msgid "aggregate functions are not allowed in a recursive query's recursive term"
 msgstr "再帰問い合わせの再帰項では集約関数を使用できません"
 
-#: parser/parse_agg.c:1467
+#: parser/parse_agg.c:1494
 #, c-format
 msgid "column \"%s.%s\" must appear in the GROUP BY clause or be used in an aggregate function"
 msgstr "列\"%s.%s\"はGROUP BY句で指定するか、集約関数内で使用しなければなりません"
 
-#: parser/parse_agg.c:1470
+#: parser/parse_agg.c:1497
 #, c-format
 msgid "Direct arguments of an ordered-set aggregate must use only grouped columns."
 msgstr "順序集合集約の直接引数はグルーピングされた列のみを使用しなければなりません。"
 
-#: parser/parse_agg.c:1475
+#: parser/parse_agg.c:1502
 #, c-format
 msgid "subquery uses ungrouped column \"%s.%s\" from outer query"
 msgstr "外部問い合わせから副問い合わせがグループ化されていない列\"%s.%s\"を使用しています"
 
-#: parser/parse_agg.c:1639
+#: parser/parse_agg.c:1666
 #, c-format
 msgid "arguments to GROUPING must be grouping expressions of the associated query level"
 msgstr "GROUPINGの引数は関連するクエリレベルのグルーピング式でなければなりません"
@@ -17792,25 +17812,25 @@ msgstr "非文字列型はWITH UNIQUE KEYS句とともには使用できませ�
 msgid "Try returning a string type or bytea."
 msgstr "文字列型またはBYTEA型での返却を試してください。"
 
-#: parser/parse_expr.c:4316
+#: parser/parse_expr.c:4319
 #, c-format
 msgid "cannot specify FORMAT JSON in RETURNING clause of %s()"
 msgstr "%s()のRETURNING節ではFORMAT JSONは指定できません"
 
-#: parser/parse_expr.c:4329
+#: parser/parse_expr.c:4332
 #, c-format
 msgid "SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used"
 msgstr "WITH WRAPPERが使われてるときにはSQL/JSONのQUOTESの挙動は指定できまえん"
 
 #. translator: %s is name of a SQL/JSON clause (eg. ON EMPTY)
-#: parser/parse_expr.c:4343 parser/parse_expr.c:4372 parser/parse_expr.c:4403 parser/parse_expr.c:4429 parser/parse_expr.c:4455 parser/parse_jsontable.c:94
+#: parser/parse_expr.c:4346 parser/parse_expr.c:4375 parser/parse_expr.c:4406 parser/parse_expr.c:4432 parser/parse_expr.c:4458 parser/parse_jsontable.c:94
 #, c-format
 msgid "invalid %s behavior"
 msgstr "不正な%s挙動指定"
 
 #. translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY),
 #. second %s is a SQL/JSON function name (e.g. JSON_QUERY)
-#: parser/parse_expr.c:4346 parser/parse_expr.c:4375
+#: parser/parse_expr.c:4349 parser/parse_expr.c:4378
 #, c-format
 msgid "Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in %s for %s."
 msgstr "%2$sに対する%1$s句ではERROR, NULL, EMPTY ARRAY, EMPTY OBJECTまたはDEFAULT式のみが使用可能です。"
@@ -17818,72 +17838,72 @@ msgstr "%2$sに対する%1$s句ではERROR, NULL, EMPTY ARRAY, EMPTY OBJECTま�
 #. translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY)
 #. translator: first %s is name a SQL/JSON clause (eg. ON EMPTY)
 #. translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY)
-#: parser/parse_expr.c:4353 parser/parse_expr.c:4382 parser/parse_expr.c:4411 parser/parse_expr.c:4439 parser/parse_expr.c:4465
+#: parser/parse_expr.c:4356 parser/parse_expr.c:4385 parser/parse_expr.c:4414 parser/parse_expr.c:4442 parser/parse_expr.c:4468
 #, c-format
 msgid "invalid %s behavior for column \"%s\""
 msgstr "列\"%s\"に対する不正な%s挙動指定"
 
 #. translator: %s is name of a SQL/JSON clause (eg. ON EMPTY)
-#: parser/parse_expr.c:4356 parser/parse_expr.c:4385
+#: parser/parse_expr.c:4359 parser/parse_expr.c:4388
 #, c-format
 msgid "Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in %s for formatted columns."
 msgstr "フォーマット化対象列に対する%s句ではERROR, NULL, EMPTY ARRAY, EMPTY OBJECTまたはDEFAULT式のみが使用可能です。"
 
-#: parser/parse_expr.c:4404
+#: parser/parse_expr.c:4407
 #, c-format
 msgid "Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in %s for %s."
 msgstr "%2$sに対する%1$s句ではERROR, TRUE, FALSEまたはUNKNOWNのみが使用可能です。"
 
 #. translator: %s is name of a SQL/JSON clause (eg. ON EMPTY)
-#: parser/parse_expr.c:4414
+#: parser/parse_expr.c:4417
 #, c-format
 msgid "Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in %s for EXISTS columns."
 msgstr "EXIST列に対する%s句ではERROR, TRUE, FALSEまたはUNKNOWNのみが使用可能です。"
 
 #. translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY),
 #. second %s is a SQL/JSON function name (e.g. JSON_QUERY)
-#: parser/parse_expr.c:4432 parser/parse_expr.c:4458
+#: parser/parse_expr.c:4435 parser/parse_expr.c:4461
 #, c-format
 msgid "Only ERROR, NULL, or DEFAULT expression is allowed in %s for %s."
 msgstr "%2$sに対する%1$s句ではERROR, NULLまたはDEFAULT式のみが使用可能です。"
 
 #. translator: %s is name of a SQL/JSON clause (eg. ON EMPTY)
-#: parser/parse_expr.c:4442 parser/parse_expr.c:4468
+#: parser/parse_expr.c:4445 parser/parse_expr.c:4471
 #, c-format
 msgid "Only ERROR, NULL, or DEFAULT expression is allowed in %s for scalar columns."
 msgstr "スカラー列に対する%s句ではERROR, NULLまたはDEFAULT式のみが使用可能です。"
 
-#: parser/parse_expr.c:4498
+#: parser/parse_expr.c:4505
 #, c-format
 msgid "JSON path expression must be of type %s, not of type %s"
 msgstr "JSONパス式は型%2$sではなく%1$s型でなければなりません"
 
-#: parser/parse_expr.c:4738
+#: parser/parse_expr.c:4745
 #, c-format
 msgid "can only specify a constant, non-aggregate function, or operator expression for DEFAULT"
 msgstr "DEFAULTには定数、非集約関数、および演算子式のみ指定可能です"
 
-#: parser/parse_expr.c:4743
+#: parser/parse_expr.c:4750
 #, c-format
 msgid "DEFAULT expression must not contain column references"
 msgstr "DEFAULT式は列参照を含むことができません"
 
-#: parser/parse_expr.c:4748
+#: parser/parse_expr.c:4755
 #, c-format
 msgid "DEFAULT expression must not return a set"
 msgstr "DEFAULT式は集合を返してはなりません"
 
-#: parser/parse_expr.c:4763
+#: parser/parse_expr.c:4770
 #, c-format
 msgid "collation of DEFAULT expression conflicts with RETURNING clause"
 msgstr "DEFAULT式の照合順序がRETURNING句と競合しています"
 
-#: parser/parse_expr.c:4842 parser/parse_expr.c:4851
+#: parser/parse_expr.c:4849 parser/parse_expr.c:4858
 #, c-format
 msgid "cannot cast behavior expression of type %s to %s"
 msgstr "型%sの挙動式の%sへの型変換はできません"
 
-#: parser/parse_expr.c:4845
+#: parser/parse_expr.c:4852
 #, c-format
 msgid "You will need to explicitly cast the expression to type %s."
 msgstr "式を%s型に明示的にキャストする必要があります。"
@@ -20486,8 +20506,8 @@ msgstr "パラメータの変更があったため、レプリケーションス
 
 #: replication/logical/slotsync.c:1162
 #, c-format
-msgid "replication slot synchronization worker is shutting down on receiving SIGINT"
-msgstr "SIGINTを受信したためレプリケーションスロット同期ワーカーがシャットダウンします"
+msgid "replication slot synchronization worker is shutting down because promotion is triggered"
+msgstr "昇格がトリガーされたため、レプリケーションスロット同期ワーカーがシャットダウンします"
 
 #: replication/logical/slotsync.c:1287
 #, c-format
@@ -21571,265 +21591,265 @@ msgstr "ON SELECTルールの名前を変更することはできません"
 msgid "WITH query name \"%s\" appears in both a rule action and the query being rewritten"
 msgstr "WITH の問い合わせ名\"%s\"が、ルールのアクションと書き換えられようとしている問い合わせの両方に現れています"
 
-#: rewrite/rewriteHandler.c:615
+#: rewrite/rewriteHandler.c:618
 #, c-format
 msgid "INSERT ... SELECT rule actions are not supported for queries having data-modifying statements in WITH"
 msgstr "INSERT ... SELECTルールのアクションはWITHにデータ更新文を持つ問い合わせに対してはサポートされません"
 
-#: rewrite/rewriteHandler.c:668
+#: rewrite/rewriteHandler.c:671
 #, c-format
 msgid "cannot have RETURNING lists in multiple rules"
 msgstr "複数ルールではRETURNINGリストを持つことはできません"
 
-#: rewrite/rewriteHandler.c:900 rewrite/rewriteHandler.c:939
+#: rewrite/rewriteHandler.c:903 rewrite/rewriteHandler.c:942
 #, c-format
 msgid "cannot insert a non-DEFAULT value into column \"%s\""
 msgstr "列\"%s\"への非デフォルト値の挿入はできません"
 
-#: rewrite/rewriteHandler.c:902 rewrite/rewriteHandler.c:968
+#: rewrite/rewriteHandler.c:905 rewrite/rewriteHandler.c:971
 #, c-format
 msgid "Column \"%s\" is an identity column defined as GENERATED ALWAYS."
 msgstr "列\"%s\"は GENERATED ALWAYS として定義されています。"
 
-#: rewrite/rewriteHandler.c:904
+#: rewrite/rewriteHandler.c:907
 #, c-format
 msgid "Use OVERRIDING SYSTEM VALUE to override."
 msgstr "OVERRIDING SYSTEM VALUE を指定することで挿入を強制できます。"
 
-#: rewrite/rewriteHandler.c:966 rewrite/rewriteHandler.c:974
+#: rewrite/rewriteHandler.c:969 rewrite/rewriteHandler.c:977
 #, c-format
 msgid "column \"%s\" can only be updated to DEFAULT"
 msgstr "列\"%s\"はDEFAULTにのみ更新可能です"
 
-#: rewrite/rewriteHandler.c:1109 rewrite/rewriteHandler.c:1127
+#: rewrite/rewriteHandler.c:1112 rewrite/rewriteHandler.c:1130
 #, c-format
 msgid "multiple assignments to same column \"%s\""
 msgstr "同じ列\"%s\"に複数の代入があります"
 
-#: rewrite/rewriteHandler.c:1682
+#: rewrite/rewriteHandler.c:1685
 #, c-format
 msgid "MERGE is not supported for relations with rules."
 msgstr "MERGEはルールを持つリレーションに対してはサポートされません。"
 
-#: rewrite/rewriteHandler.c:1722 rewrite/rewriteHandler.c:3262
+#: rewrite/rewriteHandler.c:1725 rewrite/rewriteHandler.c:3265
 #, c-format
 msgid "access to non-system view \"%s\" is restricted"
 msgstr "非システムのビュー\"%s\"へのアクセスは制限されています"
 
-#: rewrite/rewriteHandler.c:2122 rewrite/rewriteHandler.c:4254
+#: rewrite/rewriteHandler.c:2125 rewrite/rewriteHandler.c:4274
 #, c-format
 msgid "infinite recursion detected in rules for relation \"%s\""
 msgstr "リレーション\"%s\"のルールで無限再帰を検出しました"
 
-#: rewrite/rewriteHandler.c:2227
+#: rewrite/rewriteHandler.c:2230
 #, c-format
 msgid "infinite recursion detected in policy for relation \"%s\""
 msgstr "リレーション\"%s\"のポリシで無限再帰を検出しました"
 
-#: rewrite/rewriteHandler.c:2589
+#: rewrite/rewriteHandler.c:2592
 msgid "Junk view columns are not updatable."
 msgstr "ジャンクビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2594
+#: rewrite/rewriteHandler.c:2597
 msgid "View columns that are not columns of their base relation are not updatable."
 msgstr "基底リレーションの列ではないビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2597
+#: rewrite/rewriteHandler.c:2600
 msgid "View columns that refer to system columns are not updatable."
 msgstr "システム列を参照するビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2600
+#: rewrite/rewriteHandler.c:2603
 msgid "View columns that return whole-row references are not updatable."
 msgstr "行全体参照を返すビュー列は更新不可です。"
 
-#: rewrite/rewriteHandler.c:2661
+#: rewrite/rewriteHandler.c:2664
 msgid "Views containing DISTINCT are not automatically updatable."
 msgstr "DISTINCTを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2664
+#: rewrite/rewriteHandler.c:2667
 msgid "Views containing GROUP BY are not automatically updatable."
 msgstr "GROUP BYを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2667
+#: rewrite/rewriteHandler.c:2670
 msgid "Views containing HAVING are not automatically updatable."
 msgstr "HAVINGを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2670
+#: rewrite/rewriteHandler.c:2673
 msgid "Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable."
 msgstr "UNION、INTERSECT、EXCEPTを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2673
+#: rewrite/rewriteHandler.c:2676
 msgid "Views containing WITH are not automatically updatable."
 msgstr "WITHを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2676
+#: rewrite/rewriteHandler.c:2679
 msgid "Views containing LIMIT or OFFSET are not automatically updatable."
 msgstr "LIMIT、OFFSETを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2688
+#: rewrite/rewriteHandler.c:2691
 msgid "Views that return aggregate functions are not automatically updatable."
 msgstr "集約関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2691
+#: rewrite/rewriteHandler.c:2694
 msgid "Views that return window functions are not automatically updatable."
 msgstr "ウィンドウ関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2694
+#: rewrite/rewriteHandler.c:2697
 msgid "Views that return set-returning functions are not automatically updatable."
 msgstr "集合返却関数を返すビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2701 rewrite/rewriteHandler.c:2705 rewrite/rewriteHandler.c:2713
+#: rewrite/rewriteHandler.c:2704 rewrite/rewriteHandler.c:2708 rewrite/rewriteHandler.c:2716
 msgid "Views that do not select from a single table or view are not automatically updatable."
 msgstr "単一のテーブルまたはビューからselectしていないビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2716
+#: rewrite/rewriteHandler.c:2719
 msgid "Views containing TABLESAMPLE are not automatically updatable."
 msgstr "TABLESAMPLEを含むビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:2740
+#: rewrite/rewriteHandler.c:2743
 msgid "Views that have no updatable columns are not automatically updatable."
 msgstr "更新可能な列を持たないビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:3121 rewrite/rewriteHandler.c:3156
+#: rewrite/rewriteHandler.c:3124 rewrite/rewriteHandler.c:3159
 #, c-format
 msgid "cannot insert into view \"%s\""
 msgstr "ビュー\"%s\"へは挿入(INSERT)できません"
 
-#: rewrite/rewriteHandler.c:3124
+#: rewrite/rewriteHandler.c:3127
 #, c-format
 msgid "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule."
 msgstr "ビューへの挿入を可能にするために、INSTEAD OF INSERTトリガまたは無条件のON INSERT DO INSTEADルールを作成してください。"
 
-#: rewrite/rewriteHandler.c:3129 rewrite/rewriteHandler.c:3165
+#: rewrite/rewriteHandler.c:3132 rewrite/rewriteHandler.c:3168
 #, c-format
 msgid "cannot update view \"%s\""
 msgstr "ビュー\"%s\"は更新できません"
 
-#: rewrite/rewriteHandler.c:3132
+#: rewrite/rewriteHandler.c:3135
 #, c-format
 msgid "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule."
 msgstr "ビューへの更新を可能にするために、INSTEAD OF UPDATEトリガまたは無条件のON UPDATE DO INSTEADルールを作成してください。"
 
-#: rewrite/rewriteHandler.c:3137 rewrite/rewriteHandler.c:3174
+#: rewrite/rewriteHandler.c:3140 rewrite/rewriteHandler.c:3177
 #, c-format
 msgid "cannot delete from view \"%s\""
 msgstr "ビュー\"%s\"からは削除できません"
 
-#: rewrite/rewriteHandler.c:3140
+#: rewrite/rewriteHandler.c:3143
 #, c-format
 msgid "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule."
 msgstr "ビューからの削除を可能にするために、INSTEAD OF DELETEトリガまたは無条件のON DELETE DO INSTEADルールを作成してください。"
 
-#: rewrite/rewriteHandler.c:3159
+#: rewrite/rewriteHandler.c:3162
 #, c-format
 msgid "To enable inserting into the view using MERGE, provide an INSTEAD OF INSERT trigger."
 msgstr "MERGEを用いたビューへの挿入を可能にするには、INSTEAD OF INSERTトリガーを作成してください。"
 
-#: rewrite/rewriteHandler.c:3168
+#: rewrite/rewriteHandler.c:3171
 #, c-format
 msgid "To enable updating the view using MERGE, provide an INSTEAD OF UPDATE trigger."
 msgstr "MERGEを用いたビューの更新を可能にするには、INSTEAD OF UPDATEトリガーを作成してください。"
 
-#: rewrite/rewriteHandler.c:3177
+#: rewrite/rewriteHandler.c:3180
 #, c-format
 msgid "To enable deleting from the view using MERGE, provide an INSTEAD OF DELETE trigger."
 msgstr "MERGEを用いたビューからの削除を可能にするためには、INSTEAD OF DELETEトリガーを作成してください。"
 
-#: rewrite/rewriteHandler.c:3352
+#: rewrite/rewriteHandler.c:3355
 #, c-format
 msgid "cannot insert into column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"への挿入はできません"
 
-#: rewrite/rewriteHandler.c:3360
+#: rewrite/rewriteHandler.c:3363
 #, c-format
 msgid "cannot update column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"は更新できません"
 
-#: rewrite/rewriteHandler.c:3368
+#: rewrite/rewriteHandler.c:3371
 #, c-format
 msgid "cannot merge into column \"%s\" of view \"%s\""
 msgstr "ビュー\"%2$s\"の列\"%1$s\"への統合はできません"
 
-#: rewrite/rewriteHandler.c:3396
+#: rewrite/rewriteHandler.c:3399
 #, c-format
 msgid "cannot merge into view \"%s\""
 msgstr "ビュー\"%s\"への統合はできません"
 
-#: rewrite/rewriteHandler.c:3398
+#: rewrite/rewriteHandler.c:3401
 #, c-format
 msgid "MERGE is not supported for views with INSTEAD OF triggers for some actions but not all."
 msgstr "MERGEはINSTEAD OFトリガーが全てではなく一部のアクションに対してのみ設定されてるビューではサポートされません。"
 
-#: rewrite/rewriteHandler.c:3399
+#: rewrite/rewriteHandler.c:3402
 #, c-format
 msgid "To enable merging into the view, either provide a full set of INSTEAD OF triggers or drop the existing INSTEAD OF triggers."
 msgstr "ビューへの統合を可能にするためには、完全なINSTEAD OF INSERTトリガーを作成するか、または既存のINSTEAD OFトリガーを削除してください。"
 
-#: rewrite/rewriteHandler.c:3912
+#: rewrite/rewriteHandler.c:3931
 #, c-format
 msgid "DO INSTEAD NOTIFY rules are not supported for data-modifying statements in WITH"
 msgstr "DO INSTEAD NOTIFYルールはWITH内のデータ更新文に対してはサポートされません"
 
-#: rewrite/rewriteHandler.c:3923
+#: rewrite/rewriteHandler.c:3942
 #, c-format
 msgid "DO INSTEAD NOTHING rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は DO INSTEAD NOTHING ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3937
+#: rewrite/rewriteHandler.c:3956
 #, c-format
 msgid "conditional DO INSTEAD rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は、条件付き DO INSTEAD ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3941
+#: rewrite/rewriteHandler.c:3960
 #, c-format
 msgid "DO ALSO rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合は DO ALSO ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:3946
+#: rewrite/rewriteHandler.c:3965
 #, c-format
 msgid "multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH"
 msgstr "WITH にデータを変更するステートメントがある場合はマルチステートメントの DO INSTEAD ルールはサポートされません"
 
-#: rewrite/rewriteHandler.c:4206
+#: rewrite/rewriteHandler.c:4226
 msgid "Views with conditional DO INSTEAD rules are not automatically updatable."
 msgstr "条件付きDO INSTEADルールを持つビューは自動更新できません。"
 
-#: rewrite/rewriteHandler.c:4303
+#: rewrite/rewriteHandler.c:4324
 #, c-format
 msgid "cannot perform INSERT RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのINSERT RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:4305
+#: rewrite/rewriteHandler.c:4326
 #, c-format
 msgid "You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON INSERT DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:4310
+#: rewrite/rewriteHandler.c:4331
 #, c-format
 msgid "cannot perform UPDATE RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのUPDATE RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:4312
+#: rewrite/rewriteHandler.c:4333
 #, c-format
 msgid "You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON UPDATE DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:4317
+#: rewrite/rewriteHandler.c:4338
 #, c-format
 msgid "cannot perform DELETE RETURNING on relation \"%s\""
 msgstr "リレーション\"%s\"へのDELETE RETURNINGを行うことはできません"
 
-#: rewrite/rewriteHandler.c:4319
+#: rewrite/rewriteHandler.c:4340
 #, c-format
 msgid "You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause."
 msgstr "RETURNING句を持つ無条件のON DELETE DO INSTEADルールが必要です。"
 
-#: rewrite/rewriteHandler.c:4337
+#: rewrite/rewriteHandler.c:4358
 #, c-format
 msgid "INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules"
 msgstr "ON CONFLICT句を伴うINSERTは、INSERTまたはUPDATEルールを持つテーブルでは使えません"
 
-#: rewrite/rewriteHandler.c:4394
+#: rewrite/rewriteHandler.c:4415
 #, c-format
 msgid "WITH cannot be used in a query that is rewritten by rules into multiple queries"
 msgstr "複数問い合わせに対するルールにより書き換えられた問い合わせでは WITH を使用できません"
@@ -22304,25 +22324,25 @@ msgstr "共有メモリセグメント\"%s\"をクローズできませんでし
 msgid "could not duplicate handle for \"%s\": %m"
 msgstr "\"%s\"のハンドルの複製ができませんでした: %m"
 
-#: storage/ipc/dsm_registry.c:142
+#: storage/ipc/dsm_registry.c:144
 #, c-format
 msgid "DSM segment name cannot be empty"
 msgstr "DSMセグメント名は空文字列にはできません"
 
-#: storage/ipc/dsm_registry.c:146
+#: storage/ipc/dsm_registry.c:148
 #, c-format
 msgid "DSM segment name too long"
 msgstr "DSMセグメント名が長すぎます"
 
-#: storage/ipc/dsm_registry.c:150
+#: storage/ipc/dsm_registry.c:152
 #, c-format
 msgid "DSM segment size must be nonzero"
 msgstr "DSMセグメントサイズは0以外の値である必要があります"
 
-#: storage/ipc/dsm_registry.c:176
+#: storage/ipc/dsm_registry.c:168
 #, c-format
 msgid "requested DSM segment size does not match size of existing segment"
-msgstr "要求されたDSMセグメントサイズが既存のセグメントのサイズと異なっています"
+msgstr "要求されたDSMセグメントのサイズが既存のセグメントのサイズと一致しません"
 
 #: storage/ipc/procarray.c:488 storage/lmgr/proc.c:357 tcop/backend_startup.c:304
 #, c-format
@@ -30204,3 +30224,9 @@ msgstr "異なるデータベースからのスナップショットを読み込
 
 #~ msgid "cannot create statistics on the specified relation"
 #~ msgstr "指定されたリレーションでは統計情報を生成できません"
+
+#~ msgid "replication slot synchronization worker is shutting down on receiving SIGINT"
+#~ msgstr "SIGINTを受信したためレプリケーションスロット同期ワーカーがシャットダウンします"
+
+#~ msgid "requested DSM segment \"%s\" failed initialization"
+#~ msgstr "要求されたDSMセグメント\"%s\"の初期化に失敗しました"
