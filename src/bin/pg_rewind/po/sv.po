@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_rewind
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-02 03:21+0000\n"
-"PO-Revision-Date: 2023-09-05 09:02+0200\n"
+"POT-Creation-Date: 2026-02-06 23:51+0000\n"
+"PO-Revision-Date: 2026-02-07 09:31+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -125,7 +125,7 @@ msgstr "kunde inte återställa fil \"%s\" från arkiv"
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:312
+#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:333
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
@@ -205,17 +205,22 @@ msgstr "kunde inte skapa en symnbolisk länk vid \"%s\": %m"
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "kan inte ta bort symbolisk länk \"%s\": %m"
 
-#: file_ops.c:326 file_ops.c:330
+#: file_ops.c:326
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:350
+#: file_ops.c:330
+#, c-format
+msgid "could not stat file \"%s\" for reading: %m"
+msgstr "kunde inte göra stat() på filen \"%s\" för läsning: %m"
+
+#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:371
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: file_ops.c:344 parsexlog.c:352
+#: file_ops.c:344 parsexlog.c:373
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
@@ -245,32 +250,32 @@ msgstr "kunde inte läsa katalog \"%s\": %m"
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: filemap.c:236
+#: filemap.c:298
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "datafil \"%s\" i källan är inte en vanlig fil"
 
-#: filemap.c:241 filemap.c:274
+#: filemap.c:303 filemap.c:336
 #, c-format
 msgid "duplicate source file \"%s\""
 msgstr "duplicerad källflagga \"%s\""
 
-#: filemap.c:329
+#: filemap.c:391
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "oväntad sidmodifiering för icke-regulär fil \"%s\""
 
-#: filemap.c:679 filemap.c:773
+#: filemap.c:745 filemap.c:847
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "okänd filtyp på \"%s\""
 
-#: filemap.c:706
+#: filemap.c:780
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "filen \"%s\" har olika typ i källa och mål"
 
-#: filemap.c:778
+#: filemap.c:852
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "kunde inte bestämma vad som skulle göras med filen \"%s\""
@@ -420,7 +425,7 @@ msgstr "kunde inte söka i källfil: %m"
 msgid "unexpected EOF while reading file \"%s\""
 msgstr "oväntad EOF under läsning av fil \"%s\""
 
-#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:199
+#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:201
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "slut på minne vid allokering av en WAL-läs-processor"
@@ -440,22 +445,22 @@ msgstr "kunde inte läsa WAL-post vid %X/%X"
 msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
 msgstr "slutpekare %X/%X är inte en giltig slutposition; förväntade %X/%X"
 
-#: parsexlog.c:212
+#: parsexlog.c:214
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "kunde inte hitta föregående WAL-post vid %X/%X: %s"
 
-#: parsexlog.c:216
+#: parsexlog.c:218
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "kunde inte hitta förgående WAL-post vid %X/%X"
 
-#: parsexlog.c:341
+#: parsexlog.c:362
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "kunde inte söka (seek) i fil \"%s\": %m"
 
-#: parsexlog.c:440
+#: parsexlog.c:461
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
 msgstr "WAL-post modifierar en relation, men posttypen känns inte igen: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
@@ -651,144 +656,144 @@ msgstr "servrarna divergerade vid WAL-position %X/%X på tidslinje %u"
 msgid "no rewind required"
 msgstr "ingen rewind krävs"
 
-#: pg_rewind.c:451
+#: pg_rewind.c:454
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
 msgstr "rewind från senaste gemensamma checkpoint vid %X/%X på tidslinje %u"
 
-#: pg_rewind.c:461
+#: pg_rewind.c:464
 #, c-format
 msgid "reading source file list"
 msgstr "läser källfillista"
 
-#: pg_rewind.c:465
+#: pg_rewind.c:468
 #, c-format
 msgid "reading target file list"
 msgstr "läser målfillista"
 
-#: pg_rewind.c:474
+#: pg_rewind.c:477
 #, c-format
 msgid "reading WAL in target"
 msgstr "läser WAL i målet"
 
-#: pg_rewind.c:495
+#: pg_rewind.c:498
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "behöver kopiera %lu MB (total källkatalogstorlek är %lu MB)"
 
-#: pg_rewind.c:513
+#: pg_rewind.c:516
 #, c-format
 msgid "syncing target data directory"
 msgstr "synkar måldatakatalog"
 
-#: pg_rewind.c:529
+#: pg_rewind.c:532
 #, c-format
 msgid "Done!"
 msgstr "Klar!"
 
-#: pg_rewind.c:609
+#: pg_rewind.c:612
 #, c-format
 msgid "no action decided for file \"%s\""
 msgstr "ingen åtgärd beslutades för filen \"%s\""
 
-#: pg_rewind.c:641
+#: pg_rewind.c:644
 #, c-format
 msgid "source system was modified while pg_rewind was running"
 msgstr "källsystemet ändrades samtidigt som pg_rewind kördes"
 
-#: pg_rewind.c:645
+#: pg_rewind.c:648
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "skapar backupetikett och uppdaterar kontrollfil"
 
-#: pg_rewind.c:695
+#: pg_rewind.c:698
 #, c-format
 msgid "source system was in unexpected state at end of rewind"
 msgstr "källsystemet var i ett oväntat tillstånd vid slutet av återspolningen"
 
-#: pg_rewind.c:727
+#: pg_rewind.c:730
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "källa och målkluster är från olika system"
 
-#: pg_rewind.c:735
+#: pg_rewind.c:738
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "klustren är inte kompatibla med denna version av pg_rewind"
 
-#: pg_rewind.c:745
+#: pg_rewind.c:748
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "målservern behöver använda antingen datachecksums eller \"wal_log_hints = on\""
 
-#: pg_rewind.c:756
+#: pg_rewind.c:759
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "målserver måste stängas ner utan fel"
 
-#: pg_rewind.c:766
+#: pg_rewind.c:769
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "måldatakatalog måste stängas ner utan fel"
 
-#: pg_rewind.c:813
+#: pg_rewind.c:816
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) kopierad"
 
-#: pg_rewind.c:941
+#: pg_rewind.c:942
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "kunde inte finna en gemensam anfader av källa och målklusterets tidslinjer"
 
-#: pg_rewind.c:982
+#: pg_rewind.c:983
 #, c-format
 msgid "backup label buffer too small"
 msgstr "backupetikett-buffer för liten"
 
-#: pg_rewind.c:1005
+#: pg_rewind.c:1006
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "oväntad kontrollfil-CRC"
 
-#: pg_rewind.c:1017
+#: pg_rewind.c:1018
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "oväntad kontrollfilstorlek %d, förväntade %d"
 
-#: pg_rewind.c:1026
+#: pg_rewind.c:1027
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
 msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte"
 msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte"
 
-#: pg_rewind.c:1065 pg_rewind.c:1135
+#: pg_rewind.c:1066 pg_rewind.c:1136
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "programmet \"%s\" behövs av %s men hittades inte i samma katalog som \"%s\""
 
-#: pg_rewind.c:1068 pg_rewind.c:1138
+#: pg_rewind.c:1069 pg_rewind.c:1139
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "programmet \"%s\" hittades av \"%s\" men är inte av samma version som %s"
 
-#: pg_rewind.c:1101
+#: pg_rewind.c:1102
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "restore_command är inte satt i målklustret"
 
-#: pg_rewind.c:1142
+#: pg_rewind.c:1143
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "kör \"%s\" för målservern för att slutföra krashåterställning"
 
-#: pg_rewind.c:1180
+#: pg_rewind.c:1181
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "postgres enanvändarläge misslyckades i målklustret"
 
-#: pg_rewind.c:1181
+#: pg_rewind.c:1182
 #, c-format
 msgid "Command was: %s"
 msgstr "Kommandot var: %s"
@@ -828,195 +833,157 @@ msgstr "ogiltig data i historikfil"
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "Tidslinje-ID:er måste vara mindre än barnens tidslinje-ID:er."
 
-#: xlogreader.c:626
+#: xlogreader.c:621
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr "ogiltig postlängd vid %X/%X: förväntade minst %u, fick %u"
 
-#: xlogreader.c:635
+#: xlogreader.c:630
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord är begärd vid %X/%X"
 
-#: xlogreader.c:676 xlogreader.c:1119
+#: xlogreader.c:671 xlogreader.c:1146
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "ogiltig postlängd vid %X/%X: förväntade minst %u, fick %u"
 
-#: xlogreader.c:705
-#, c-format
-msgid "out of memory while trying to decode a record of length %u"
-msgstr "slut på minne vid avkodning av post med längden %u"
-
-#: xlogreader.c:727
-#, c-format
-msgid "record length %u at %X/%X too long"
-msgstr "postlängd %u vid %X/%X är för lång"
-
-#: xlogreader.c:776
+#: xlogreader.c:761
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "det finns ingen contrecord-flagga vid %X/%X"
 
-#: xlogreader.c:789
+#: xlogreader.c:774
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "ogiltig contrecord-längd %u (förväntade %lld) vid %X/%X"
 
-#: xlogreader.c:1127
+#: xlogreader.c:1154
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ogiltigt resurshanterar-ID %u vid %X/%X"
 
-#: xlogreader.c:1140 xlogreader.c:1156
+#: xlogreader.c:1167 xlogreader.c:1183
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "post med inkorrekt prev-link %X/%X vid %X/%X"
 
-#: xlogreader.c:1192
+#: xlogreader.c:1221
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "felaktig resurshanterardatakontrollsumma i post vid %X/%X"
 
-#: xlogreader.c:1226
+#: xlogreader.c:1255
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "felaktigt magiskt nummer %04X i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: xlogreader.c:1241 xlogreader.c:1283
+#: xlogreader.c:1270 xlogreader.c:1312
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ogiltiga infobitar %04X i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: xlogreader.c:1257
+#: xlogreader.c:1286
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL-fil är från ett annat databassystem: WAL-filens databassystemidentifierare är %llu, pg_control databassystemidentifierare är %llu"
 
-#: xlogreader.c:1265
+#: xlogreader.c:1294
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
 
-#: xlogreader.c:1271
+#: xlogreader.c:1300
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvud"
 
-#: xlogreader.c:1303
+#: xlogreader.c:1332
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "oväntad sidadress %X/%X i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: xlogreader.c:1329
+#: xlogreader.c:1358
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ej-i-sekvens för tidslinje-ID %u (efter %u) i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: xlogreader.c:1735
+#: xlogreader.c:1764
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "ej-i-sekvens block_id %u vid %X/%X"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1788
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA är satt men ingen data inkluderad vid %X/%X"
 
-#: xlogreader.c:1766
+#: xlogreader.c:1795
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA är ej satt men datalängden är %u vid %X/%X"
 
-#: xlogreader.c:1802
+#: xlogreader.c:1831
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u blockavbildlängd %u vid %X/%X"
 
-#: xlogreader.c:1818
+#: xlogreader.c:1847
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE är inte satt men håloffset %u längd %u vid %X/%X"
 
-#: xlogreader.c:1832
+#: xlogreader.c:1861
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED är satt men blockavbildlängd %u vid %X/%X"
 
-#: xlogreader.c:1847
+#: xlogreader.c:1876
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men blockavbildlängd är %u vid %X/%X"
 
-#: xlogreader.c:1863
+#: xlogreader.c:1892
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL är satt men ingen tidigare rel vid %X/%X"
 
-#: xlogreader.c:1875
+#: xlogreader.c:1904
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "ogiltig block_id %u vid %X/%X"
 
-#: xlogreader.c:1942
+#: xlogreader.c:1971
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "post med ogiltig längd vid %X/%X"
 
-#: xlogreader.c:1968
+#: xlogreader.c:1997
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "kunde inte hitta backup-block med ID %d i WAL-post"
 
-#: xlogreader.c:2052
+#: xlogreader.c:2081
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt block %d angivet"
 
-#: xlogreader.c:2059
+#: xlogreader.c:2088
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt state, block %d"
 
-#: xlogreader.c:2086 xlogreader.c:2103
+#: xlogreader.c:2115 xlogreader.c:2132
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
 
-#: xlogreader.c:2112
+#: xlogreader.c:2141
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med okänd metod, block %d"
 
-#: xlogreader.c:2120
+#: xlogreader.c:2149
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "kunde inte packa upp avbild vid %X/%X, block %d"
-
-#, c-format
-#~ msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
-#~ msgstr "\"%s\" är en symbolisk länk men symboliska länkar stöds inte på denna plattform"
-
-#, c-format
-#~ msgid "cannot create restricted tokens on this platform: error code %lu"
-#~ msgstr "kan inte skapa token för begränsad åtkomst på denna plattorm: felkod %lu"
-
-#, c-format
-#~ msgid "cannot use restore_command with %%r placeholder"
-#~ msgstr "kan inte använda restore_command med %%r-platshållare"
-
-#, c-format
-#~ msgid "could not load library \"%s\": error code %lu"
-#~ msgstr "kunde inte ladda länkbibliotek \"%s\": felkod %lu"
-
-#, c-format
-#~ msgid "invalid control file"
-#~ msgstr "ogiltig kontrollfil"
-
-#, c-format
-#~ msgid "invalid record offset at %X/%X"
-#~ msgstr "ogiltig postoffset vid %X/%X"
-
-#, c-format
-#~ msgid "missing contrecord at %X/%X"
-#~ msgstr "det finns ingen contrecord vid %X/%X"
