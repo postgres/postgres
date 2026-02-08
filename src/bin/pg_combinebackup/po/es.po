@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-08 00:22+0000\n"
+"POT-Creation-Date: 2026-02-06 23:21+0000\n"
 "PO-Revision-Date: 2025-11-08 19:01+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@lvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -619,10 +619,15 @@ msgstr "múltiples signos «=» en mapeo de tablespace"
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "formato de mapeo de tablespace «%s» no válido, debe ser «ANTIGUO=NUEVO»"
 
-#: pg_combinebackup.c:490 pg_combinebackup.c:494
+#: pg_combinebackup.c:490
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "directorio antiguo no es una ruta absoluta en mapeo de tablespace: %s"
+
+#: pg_combinebackup.c:494
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "directorio nuevo no es una ruta absoluta en mapeo de tablespace: %s"
 
 #: pg_combinebackup.c:563
 #, c-format

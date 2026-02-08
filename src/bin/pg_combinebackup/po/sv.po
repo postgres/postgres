@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_combinebackup
 # Copyright (C) 2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025.
+# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-16 16:22+0000\n"
-"PO-Revision-Date: 2025-05-16 20:05+0200\n"
+"POT-Creation-Date: 2026-02-07 08:22+0000\n"
+"PO-Revision-Date: 2026-02-07 09:26+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:164 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:540
+#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
@@ -55,7 +55,7 @@ msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:548
-#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:740
+#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:742
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -83,13 +83,13 @@ msgstr ""
 #: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
 #: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:533
-#: pg_combinebackup.c:1177 reconstruct.c:523 reconstruct.c:638
+#: pg_combinebackup.c:1177 reconstruct.c:525 reconstruct.c:640
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -140,7 +140,7 @@ msgstr "kan inte synkronisera filsystemet för fil \"%s\": %m"
 #: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:685
 #: pg_combinebackup.c:1141 pg_combinebackup.c:1393 reconstruct.c:204
-#: reconstruct.c:421
+#: reconstruct.c:422
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
@@ -469,13 +469,13 @@ msgstr "%s: kunde inte hitta %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s kräver %s"
 
-#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "kunde inte skriva fil \"%s\": skrev %d av %d"
 
-#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:721
-#: reconstruct.c:767 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:723
+#: reconstruct.c:769 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
@@ -490,7 +490,7 @@ msgstr "kunde inte skriva till fil \"%s\": %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "kunde inte skriva till fil \"%s\", offset %u: skrev %d av %d"
 
-#: copy_file.c:213 reconstruct.c:784
+#: copy_file.c:213 reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "kunde inte läsa från fil \"%s\": %m"
@@ -515,12 +515,12 @@ msgstr "fel vid kloning av fil \"%s\" till \"%s\": %s"
 msgid "file cloning not supported on this platform"
 msgstr "filkloning stöds inte på denna plattform"
 
-#: copy_file.c:292 reconstruct.c:704
+#: copy_file.c:292 reconstruct.c:706
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "fel vid kopiering av filintervall från \"%s\" till \"%s\": %m"
 
-#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:724
+#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:726
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range stöds inte på denna plattform"
@@ -615,10 +615,15 @@ msgstr "multipla \"=\"-tecken i tablespace-mappning"
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "ogiltigt tablespace-mappningsformat \"%s\", måste vara \"OLDDIR=NEWDIR\""
 
-#: pg_combinebackup.c:490 pg_combinebackup.c:494
+#: pg_combinebackup.c:490
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "gammal katalog är inte en absolut sökväg i tablespace-mappning: %s"
+
+#: pg_combinebackup.c:494
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "ny katalog är inte en absolut sökväg i tablespace-mappning: %s"
 
 #: pg_combinebackup.c:563
 #, c-format
@@ -885,32 +890,32 @@ msgstr "kunde inte läsa fil \"%s\": läste %zd av %lld"
 msgid "full backup contains unexpected incremental file \"%s\""
 msgstr "full backup innehåller in oväntad inkrementell fil \"%s\""
 
-#: reconstruct.c:423
+#: reconstruct.c:424
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "filen \"%s\" är för kort: förväntade %llu, hittade %llu"
 
-#: reconstruct.c:465
+#: reconstruct.c:466
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "filen \"%s\" har ett felaktigt inkrementellt magiskt nummer (0x%x, förväntade 0x%x)"
 
-#: reconstruct.c:471
+#: reconstruct.c:472
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "filen \"%s\" har ett blockantal %u som är större än segmentstorleken %u"
 
-#: reconstruct.c:478
+#: reconstruct.c:479
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "filen \"%s\" trunkeringsblocklängd %u som är större än segmentstorleken %u"
 
-#: reconstruct.c:542
+#: reconstruct.c:544
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "kunde inte läsa filen \"%s\": läste %d av %u"
 
-#: reconstruct.c:786
+#: reconstruct.c:788
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "kunde inte läsa från filen \"%s\", offset %llu: läste %d av %d"

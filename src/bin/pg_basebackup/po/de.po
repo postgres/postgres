@@ -1,5 +1,5 @@
 # German message translation file for pg_basebackup
-# Copyright (C) 2011 - 2025 PostgreSQL Global Development Group
+# Copyright (C) 2011 - 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Use these quotes: »%s«
@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-06 10:19+0000\n"
-"PO-Revision-Date: 2025-11-06 13:27+0100\n"
+"POT-Creation-Date: 2026-02-04 18:50+0000\n"
+"PO-Revision-Date: 2026-02-05 14:24+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1185,9 +1185,9 @@ msgstr "ungültige Option »%s« für --wal-method, muss »fetch«, »stream« o
 #: pg_basebackup.c:2713 pg_basebackup.c:2725 pg_basebackup.c:2737
 #: pg_basebackup.c:2745 pg_basebackup.c:2758 pg_basebackup.c:2764
 #: pg_basebackup.c:2773 pg_basebackup.c:2785 pg_basebackup.c:2796
-#: pg_basebackup.c:2804 pg_createsubscriber.c:2238 pg_createsubscriber.c:2260
-#: pg_createsubscriber.c:2270 pg_createsubscriber.c:2278
-#: pg_createsubscriber.c:2306 pg_createsubscriber.c:2349 pg_receivewal.c:748
+#: pg_basebackup.c:2804 pg_createsubscriber.c:2238 pg_createsubscriber.c:2261
+#: pg_createsubscriber.c:2271 pg_createsubscriber.c:2279
+#: pg_createsubscriber.c:2307 pg_createsubscriber.c:2350 pg_receivewal.c:748
 #: pg_receivewal.c:760 pg_receivewal.c:767 pg_receivewal.c:776
 #: pg_receivewal.c:783 pg_receivewal.c:793 pg_recvlogical.c:861
 #: pg_recvlogical.c:873 pg_recvlogical.c:883 pg_recvlogical.c:890
@@ -1198,7 +1198,7 @@ msgstr "ungültige Option »%s« für --wal-method, muss »fetch«, »stream« o
 msgid "Try \"%s --help\" for more information."
 msgstr "Versuchen Sie »%s --help« für weitere Informationen."
 
-#: pg_basebackup.c:2585 pg_createsubscriber.c:2268 pg_receivewal.c:758
+#: pg_basebackup.c:2585 pg_createsubscriber.c:2269 pg_receivewal.c:758
 #: pg_recvlogical.c:871
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1947,120 +1947,120 @@ msgstr "Objekttyp »%s« mehrmals für --clean angegeben"
 
 #: pg_createsubscriber.c:2259
 #, c-format
-msgid "options %s and -a/--all cannot be used together"
-msgstr "Optionen %s und -a/--all können nicht zusammen verwendet werden"
+msgid "options %s and %s cannot be used together"
+msgstr "Optionen %s und %s können nicht zusammen verwendet werden"
 
-#: pg_createsubscriber.c:2277
+#: pg_createsubscriber.c:2278
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "kein Datenverzeichnis für Subskriptionsserver angegeben"
 
-#: pg_createsubscriber.c:2288
+#: pg_createsubscriber.c:2289
 #, c-format
 msgid "could not determine current directory"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln"
 
-#: pg_createsubscriber.c:2305
+#: pg_createsubscriber.c:2306
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "keine Verbindungsparameter für Publikationsserver angegeben"
 
-#: pg_createsubscriber.c:2309
+#: pg_createsubscriber.c:2310
 #, c-format
 msgid "validating publisher connection string"
 msgstr "validiere Verbindungsparameter für Publikationsserver"
 
-#: pg_createsubscriber.c:2315
+#: pg_createsubscriber.c:2316
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "validiere Verbindungsparameter für Subskriptionsserver"
 
-#: pg_createsubscriber.c:2332
+#: pg_createsubscriber.c:2333
 #, c-format
 msgid "no database was specified"
 msgstr "keine Datenbank wurde angegeben"
 
-#: pg_createsubscriber.c:2343
+#: pg_createsubscriber.c:2344
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "Datenbankname »%s« wurde aus der Verbindungszeichenkette des Publikationsservers extrahiert"
 
-#: pg_createsubscriber.c:2348
+#: pg_createsubscriber.c:2349
 #, c-format
 msgid "no database name specified"
 msgstr "kein Datenbankname angegeben"
 
-#: pg_createsubscriber.c:2358
+#: pg_createsubscriber.c:2359
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "falsche Anzahl Publikationsnamen angegeben"
 
-#: pg_createsubscriber.c:2359
+#: pg_createsubscriber.c:2360
 #, c-format
 msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
 msgstr "Die Anzahl der angegebenen Publikationsnamen (%d) muss mit der Anzahl der angegebenen Datenbanknamen (%d) übereinstimmen."
 
-#: pg_createsubscriber.c:2365
+#: pg_createsubscriber.c:2366
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "falsche Anzahl Subskriptionsnamen angegeben"
 
-#: pg_createsubscriber.c:2366
+#: pg_createsubscriber.c:2367
 #, c-format
 msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
 msgstr "Die Anzahl der angegebenen Subskriptionsnamen (%d) muss mit der Anzahl der angegebenen Datenbanknamen (%d) übereinstimmen."
 
-#: pg_createsubscriber.c:2372
+#: pg_createsubscriber.c:2373
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "falsche Anzahl Replikations-Slot-Namen angegeben"
 
-#: pg_createsubscriber.c:2373
+#: pg_createsubscriber.c:2374
 #, c-format
 msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
 msgstr "Die Anzahl der angegebenen Replikations-Slot-Namen (%d) muss mit der Anzahl der angegebenen Datenbanknamen (%d) übereinstimmen."
 
-#: pg_createsubscriber.c:2385
-#, c-format
-msgid "invalid object type \"%s\" specified for --clean"
-msgstr "ungültiger Objekttyp »%s« für --clean angegeben"
-
 #: pg_createsubscriber.c:2386
+#, c-format
+msgid "invalid object type \"%s\" specified for %s"
+msgstr "ungültiger Objekttyp »%s« für %s angegeben"
+
+#: pg_createsubscriber.c:2388
 #, c-format
 msgid "The valid value is: \"%s\""
 msgstr "Der gültige Wert ist: »%s«"
 
-#: pg_createsubscriber.c:2417
+#: pg_createsubscriber.c:2419
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "Datenverzeichnis des Subskriptionsservers ist keine Kopie des Quelldatenbankclusters"
 
-#: pg_createsubscriber.c:2430
+#: pg_createsubscriber.c:2432
 #, c-format
 msgid "standby server is running"
 msgstr "Standby-Server läuft"
 
-#: pg_createsubscriber.c:2431
+#: pg_createsubscriber.c:2433
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "Halten Sie den Standby-Server an und versuchen Sie erneut."
 
-#: pg_createsubscriber.c:2440
+#: pg_createsubscriber.c:2442
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "starte den Standby-Server mit Kommandozeilenoptionen"
 
-#: pg_createsubscriber.c:2456 pg_createsubscriber.c:2491
+#: pg_createsubscriber.c:2458 pg_createsubscriber.c:2493
 #, c-format
 msgid "stopping the subscriber"
 msgstr "stoppe den Subskriptionsserver"
 
-#: pg_createsubscriber.c:2470
+#: pg_createsubscriber.c:2472
 #, c-format
 msgid "starting the subscriber"
 msgstr "starte den Subskriptionsserver"
 
-#: pg_createsubscriber.c:2499
+#: pg_createsubscriber.c:2501
 #, c-format
 msgid "Done!"
 msgstr "Fertig!"

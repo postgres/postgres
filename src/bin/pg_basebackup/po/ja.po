@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-04 11:47+0900\n"
-"PO-Revision-Date: 2025-11-05 11:49+0900\n"
+"POT-Creation-Date: 2025-12-09 09:38+0900\n"
+"PO-Revision-Date: 2025-12-09 10:16+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -1182,9 +1182,9 @@ msgstr "不正な wal-method オプション\"%s\"、\"fetch\"、\"stream\" ま�
 #: pg_basebackup.c:2713 pg_basebackup.c:2725 pg_basebackup.c:2737
 #: pg_basebackup.c:2745 pg_basebackup.c:2758 pg_basebackup.c:2764
 #: pg_basebackup.c:2773 pg_basebackup.c:2785 pg_basebackup.c:2796
-#: pg_basebackup.c:2804 pg_createsubscriber.c:2238 pg_createsubscriber.c:2260
-#: pg_createsubscriber.c:2270 pg_createsubscriber.c:2278
-#: pg_createsubscriber.c:2306 pg_createsubscriber.c:2349 pg_receivewal.c:748
+#: pg_basebackup.c:2804 pg_createsubscriber.c:2238 pg_createsubscriber.c:2261
+#: pg_createsubscriber.c:2271 pg_createsubscriber.c:2279
+#: pg_createsubscriber.c:2307 pg_createsubscriber.c:2350 pg_receivewal.c:748
 #: pg_receivewal.c:760 pg_receivewal.c:767 pg_receivewal.c:776
 #: pg_receivewal.c:783 pg_receivewal.c:793 pg_recvlogical.c:861
 #: pg_recvlogical.c:873 pg_recvlogical.c:883 pg_recvlogical.c:890
@@ -1195,7 +1195,7 @@ msgstr "不正な wal-method オプション\"%s\"、\"fetch\"、\"stream\" ま�
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_basebackup.c:2585 pg_createsubscriber.c:2268 pg_receivewal.c:758
+#: pg_basebackup.c:2585 pg_createsubscriber.c:2269 pg_receivewal.c:758
 #: pg_recvlogical.c:871
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1541,8 +1541,8 @@ msgstr "サブスクライバ上でpg_resetwalを実行します"
 
 #: pg_createsubscriber.c:707
 #, c-format
-msgid "subscriber successfully reset WAL on the subscriber"
-msgstr "サブスクライバはサブスクライバのWALのリセットに成功しました"
+msgid "successfully reset WAL on the subscriber"
+msgstr "サブスクライバのWALのリセットに成功しました"
 
 #: pg_createsubscriber.c:709
 #, c-format
@@ -1948,120 +1948,120 @@ msgstr "--clean に対してオブジェクト種別\"%s\"が複数回指定さ�
 
 #: pg_createsubscriber.c:2259
 #, c-format
-msgid "options %s and -a/--all cannot be used together"
-msgstr "%s と -a/--all は同時には使用できません"
+msgid "options %s and %s cannot be used together"
+msgstr "オプション %s と %s は同時には使用できません"
 
-#: pg_createsubscriber.c:2277
+#: pg_createsubscriber.c:2278
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "サブスクライバのデータディレクトリが指定されていません"
 
-#: pg_createsubscriber.c:2288
+#: pg_createsubscriber.c:2289
 #, c-format
 msgid "could not determine current directory"
 msgstr "カレントディレクトリを特定できませんでした"
 
-#: pg_createsubscriber.c:2305
+#: pg_createsubscriber.c:2306
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "パブリッシャの接続文字列が指定されていません"
 
-#: pg_createsubscriber.c:2309
+#: pg_createsubscriber.c:2310
 #, c-format
 msgid "validating publisher connection string"
 msgstr "パブリッシャの接続文字列の検証中"
 
-#: pg_createsubscriber.c:2315
+#: pg_createsubscriber.c:2316
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "サブスクライバの接続文字列の検証中"
 
-#: pg_createsubscriber.c:2332
+#: pg_createsubscriber.c:2333
 #, c-format
 msgid "no database was specified"
 msgstr "データベースが指定されていません"
 
-#: pg_createsubscriber.c:2343
+#: pg_createsubscriber.c:2344
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "データベース名\"%s\"がパブリッシャの接続文字列から抽出されました"
 
-#: pg_createsubscriber.c:2348
+#: pg_createsubscriber.c:2349
 #, c-format
 msgid "no database name specified"
 msgstr "データベース名が指定されていません"
 
-#: pg_createsubscriber.c:2358
+#: pg_createsubscriber.c:2359
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "指定されたパブリケーション名の数が間違っています"
 
-#: pg_createsubscriber.c:2359
+#: pg_createsubscriber.c:2360
 #, c-format
 msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
 msgstr "パブリケーション名の数(%d)はデータベース名の数(%d)と一致している必要があります。"
 
-#: pg_createsubscriber.c:2365
+#: pg_createsubscriber.c:2366
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "指定されたサブスクリプション名の数が間違っています"
 
-#: pg_createsubscriber.c:2366
+#: pg_createsubscriber.c:2367
 #, c-format
 msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
 msgstr "サブスクリプション名の数(%d)はデータベース名の数(%d)と一致している必要があります。"
 
-#: pg_createsubscriber.c:2372
+#: pg_createsubscriber.c:2373
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "指定されたレプリケーションスロット名の数が間違っています"
 
-#: pg_createsubscriber.c:2373
+#: pg_createsubscriber.c:2374
 #, c-format
 msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
 msgstr "レプリケーションスロット名の数(%d)はデータベース名の数(%d)と一致している必要があります。"
 
-#: pg_createsubscriber.c:2385
-#, c-format
-msgid "invalid object type \"%s\" specified for --clean"
-msgstr "--clean に対して指定された不正なオブジェクト種別\"%s\""
-
 #: pg_createsubscriber.c:2386
+#, c-format
+msgid "invalid object type \"%s\" specified for %s"
+msgstr "%2$s に対して指定された不正なオブジェクト種別\"%1$s\""
+
+#: pg_createsubscriber.c:2388
 #, c-format
 msgid "The valid value is: \"%s\""
 msgstr "指定可能な値は: \"%s\""
 
-#: pg_createsubscriber.c:2417
+#: pg_createsubscriber.c:2419
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "サブスクライバのデータディレクトリは元データベースクラスタのコピーではありません"
 
-#: pg_createsubscriber.c:2430
+#: pg_createsubscriber.c:2432
 #, c-format
 msgid "standby server is running"
 msgstr "スタンバイサーバーが稼働中です"
 
-#: pg_createsubscriber.c:2431
+#: pg_createsubscriber.c:2433
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "このスタンバイサーバーを停止してから再試行してください。"
 
-#: pg_createsubscriber.c:2440
+#: pg_createsubscriber.c:2442
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "コマンドラインオプションを指定してスタンバイサーバーを起動しています"
 
-#: pg_createsubscriber.c:2456 pg_createsubscriber.c:2491
+#: pg_createsubscriber.c:2458 pg_createsubscriber.c:2493
 #, c-format
 msgid "stopping the subscriber"
 msgstr "サブスクライバを起動しています"
 
-#: pg_createsubscriber.c:2470
+#: pg_createsubscriber.c:2472
 #, c-format
 msgid "starting the subscriber"
 msgstr "サブスクライバを起動しています"
 
-#: pg_createsubscriber.c:2499
+#: pg_createsubscriber.c:2501
 #, c-format
 msgid "Done!"
 msgstr "完了!"
@@ -2746,3 +2746,6 @@ msgstr "圧縮ストリームをクローズできませんでした"
 
 #~ msgid "could not change system identifier of subscriber: %s"
 #~ msgstr "サブスクライバーのシステム識別子を変更できませんでした: %s"
+
+#~ msgid "options %s and -a/--all cannot be used together"
+#~ msgstr "%s と -a/--all は同時には使用できません"

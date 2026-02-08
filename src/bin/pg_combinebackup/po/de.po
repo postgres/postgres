@@ -1,13 +1,13 @@
 # German message translation file for pg_combinebackup
-# Copyright (C) 2025 PostgreSQL Global Development Group
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-29 04:22+0000\n"
-"PO-Revision-Date: 2025-04-29 08:34+0200\n"
+"POT-Creation-Date: 2026-02-07 08:22+0000\n"
+"PO-Revision-Date: 2026-02-07 09:48+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -41,7 +41,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:164 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:540
+#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht lesen: %m"
@@ -53,7 +53,7 @@ msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:548
-#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:740
+#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:742
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -82,13 +82,13 @@ msgstr ""
 #: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
 #: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:533
-#: pg_combinebackup.c:1177 reconstruct.c:523 reconstruct.c:638
+#: pg_combinebackup.c:1177 reconstruct.c:525 reconstruct.c:640
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -101,7 +101,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht fsyncen: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/jsonapi.c:2407 ../../common/parse_manifest.c:157
+#: ../../common/jsonapi.c:2410 ../../common/parse_manifest.c:157
 #: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
@@ -139,7 +139,7 @@ msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
 #: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:685
 #: pg_combinebackup.c:1141 pg_combinebackup.c:1393 reconstruct.c:204
-#: reconstruct.c:421
+#: reconstruct.c:422
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
@@ -166,103 +166,103 @@ msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
 
-#: ../../common/jsonapi.c:2432
+#: ../../common/jsonapi.c:2435
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen."
 
-#: ../../common/jsonapi.c:2434
+#: ../../common/jsonapi.c:2437
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementeller Parser benötigt inkrementellen Lexer."
 
-#: ../../common/jsonapi.c:2436
+#: ../../common/jsonapi.c:2439
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400."
 
-#: ../../common/jsonapi.c:2438
+#: ../../common/jsonapi.c:2441
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-Sequenz »\\%.*s« ist nicht gültig."
 
-#: ../../common/jsonapi.c:2442
+#: ../../common/jsonapi.c:2445
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Zeichen mit Wert 0x%02x muss escapt werden."
 
-#: ../../common/jsonapi.c:2446
+#: ../../common/jsonapi.c:2449
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Ende der Eingabe erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2449
+#: ../../common/jsonapi.c:2452
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Array-Element oder »]« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2452
+#: ../../common/jsonapi.c:2455
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "»,« oder »]« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2455
+#: ../../common/jsonapi.c:2458
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "»:« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2458
+#: ../../common/jsonapi.c:2461
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "JSON-Wert erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2461
+#: ../../common/jsonapi.c:2464
 msgid "The input string ended unexpectedly."
 msgstr "Die Eingabezeichenkette endete unerwartet."
 
-#: ../../common/jsonapi.c:2463
+#: ../../common/jsonapi.c:2466
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Zeichenkette oder »}« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2466
+#: ../../common/jsonapi.c:2469
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "»,« oder »}« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2469
+#: ../../common/jsonapi.c:2472
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Zeichenkette erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2472
+#: ../../common/jsonapi.c:2475
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token »%.*s« ist ungültig."
 
-#: ../../common/jsonapi.c:2478
+#: ../../common/jsonapi.c:2481
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kann nicht in »text« umgewandelt werden."
 
-#: ../../common/jsonapi.c:2480
+#: ../../common/jsonapi.c:2483
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "Nach »\\u« müssen vier Hexadezimalziffern folgen."
 
-#: ../../common/jsonapi.c:2483
+#: ../../common/jsonapi.c:2486
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Unicode-Escape-Werte können nicht für Code-Punkt-Werte über 007F verwendet werden, wenn die Kodierung nicht UTF8 ist."
 
-#: ../../common/jsonapi.c:2492
+#: ../../common/jsonapi.c:2495
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Unicode-Escape-Wert konnte nicht in die Serverkodierung %s umgewandelt werden."
 
-#: ../../common/jsonapi.c:2499
+#: ../../common/jsonapi.c:2502
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 
-#: ../../common/jsonapi.c:2501
+#: ../../common/jsonapi.c:2504
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
 
-#: ../../common/jsonapi.c:2523
+#: ../../common/jsonapi.c:2526
 msgid "out of memory while constructing error description"
 msgstr "Speicher aufgebraucht beim Konstruieren der Fehlerbeschreibung"
 
@@ -468,13 +468,13 @@ msgstr "%s: konnte %s nicht finden"
 msgid "%s: %s requires %s"
 msgstr "%s: %s benötigt %s"
 
-#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "konnte Datei »%s« nicht schreiben: %d von %d geschrieben"
 
-#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:721
-#: reconstruct.c:767 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:723
+#: reconstruct.c:769 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
@@ -489,7 +489,7 @@ msgstr "konnte nicht in Datei »%s« schreiben: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "konnte nicht in Datei »%s«, Position %u schreiben: %d von %d geschrieben"
 
-#: copy_file.c:213 reconstruct.c:784
+#: copy_file.c:213 reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "konnte nicht aus Datei »%s« lesen: %m"
@@ -514,12 +514,12 @@ msgstr "Fehler beim Klonen von Datei »%s« nach »%s«: %s"
 msgid "file cloning not supported on this platform"
 msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
 
-#: copy_file.c:292 reconstruct.c:704
+#: copy_file.c:292 reconstruct.c:706
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "Fehler beim Kopieren von Dateibereich von »%s« nach »%s«: %m"
 
-#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:724
+#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:726
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range wird auf dieser Plattform nicht unterstützt"
@@ -614,10 +614,15 @@ msgstr "mehrere »=«-Zeichen im Tablespace-Mapping"
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "ungültiges Tablespace-Mapping-Format »%s«, muss »ALTES_VERZ=NEUES_VERZ« sein"
 
-#: pg_combinebackup.c:490 pg_combinebackup.c:494
+#: pg_combinebackup.c:490
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "altes Verzeichnis im Tablespace-Mapping ist kein absoluter Pfad: %s"
+
+#: pg_combinebackup.c:494
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "neues Verzeichnis im Tablespace-Mapping ist kein absoluter Pfad: %s"
 
 #: pg_combinebackup.c:563
 #, c-format
@@ -888,32 +893,32 @@ msgstr "konnte Datei »%s« nicht lesen: %zd von %lld gelesen"
 msgid "full backup contains unexpected incremental file \"%s\""
 msgstr "volles Backup enthält unerwartete inkrementelle Datei »%s«"
 
-#: reconstruct.c:423
+#: reconstruct.c:424
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "Datei »%s« ist zu kurz: %llu erwartet, %llu gefunden"
 
-#: reconstruct.c:465
+#: reconstruct.c:466
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "Datei »%s« hat falsche inkrementelle magische Zahl (0x%x, erwartet 0x%x)"
 
-#: reconstruct.c:471
+#: reconstruct.c:472
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "Datei »%s« hat Blockzahl %u, was die Segmentgröße %u überschreitet"
 
-#: reconstruct.c:478
+#: reconstruct.c:479
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "Datei »%s« hat Truncation-Blocklänge %u, was die Segmentgröße %u überschreitet"
 
-#: reconstruct.c:542
+#: reconstruct.c:544
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "konnte Datei »%s« nicht lesen: %d von %u gelesen"
 
-#: reconstruct.c:786
+#: reconstruct.c:788
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "konnte nicht aus Datei »%s«, Position %llu lesen: %d von %d gelesen"

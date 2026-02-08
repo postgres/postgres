@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-08 00:21+0000\n"
+"POT-Creation-Date: 2026-02-06 23:20+0000\n"
 "PO-Revision-Date: 2025-11-08 19:08+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -715,8 +715,7 @@ msgstr "  -S, --no-superuser        el rol no será un superusuario (predetermin
 msgid ""
 "  -v, --valid-until=TIMESTAMP\n"
 "                            password expiration date and time for role\n"
-msgstr ""
-"  -v, --valid-until=TIEMPO  fecha/hora de expiración de contraseña para el rol\n"
+msgstr "  -v, --valid-until=TIEMPO  fecha/hora de expiración de contraseña para el rol\n"
 
 #: createuser.c:442
 #, c-format

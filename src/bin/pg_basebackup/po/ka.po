@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-08 17:19+0000\n"
-"PO-Revision-Date: 2025-07-09 05:54+0200\n"
+"POT-Creation-Date: 2025-12-11 05:50+0000\n"
+"PO-Revision-Date: 2025-12-13 13:16+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.8\n"
 
 #: ../../../src/common/logging.c:279
 #, c-format
@@ -1179,9 +1179,9 @@ msgstr "wal-method-ის არასწორი მნიშვნელო�
 #: pg_basebackup.c:2713 pg_basebackup.c:2725 pg_basebackup.c:2737
 #: pg_basebackup.c:2745 pg_basebackup.c:2758 pg_basebackup.c:2764
 #: pg_basebackup.c:2773 pg_basebackup.c:2785 pg_basebackup.c:2796
-#: pg_basebackup.c:2804 pg_createsubscriber.c:2196 pg_createsubscriber.c:2218
-#: pg_createsubscriber.c:2228 pg_createsubscriber.c:2236
-#: pg_createsubscriber.c:2264 pg_createsubscriber.c:2307 pg_receivewal.c:748
+#: pg_basebackup.c:2804 pg_createsubscriber.c:2238 pg_createsubscriber.c:2261
+#: pg_createsubscriber.c:2271 pg_createsubscriber.c:2279
+#: pg_createsubscriber.c:2307 pg_createsubscriber.c:2350 pg_receivewal.c:748
 #: pg_receivewal.c:760 pg_receivewal.c:767 pg_receivewal.c:776
 #: pg_receivewal.c:783 pg_receivewal.c:793 pg_recvlogical.c:861
 #: pg_recvlogical.c:873 pg_recvlogical.c:883 pg_recvlogical.c:890
@@ -1192,7 +1192,7 @@ msgstr "wal-method-ის არასწორი მნიშვნელო�
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: pg_basebackup.c:2585 pg_createsubscriber.c:2226 pg_receivewal.c:758
+#: pg_basebackup.c:2585 pg_createsubscriber.c:2269 pg_receivewal.c:758
 #: pg_recvlogical.c:871
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1310,7 +1310,7 @@ msgstr "მოაცილეთ ეს გამოცემა, სანა�
 msgid "replication slot \"%s\" created in database \"%s\" on primary was left behind"
 msgstr "რეპლიკაციის სლოტი \"%s\" შეიქმნა მონაცემთა ბაზაში \"%s\" ძირითადზე, შეიძლება, გამოტოვებულია"
 
-#: pg_createsubscriber.c:231 pg_createsubscriber.c:1305
+#: pg_createsubscriber.c:231 pg_createsubscriber.c:1324
 #, c-format
 msgid "Drop this replication slot soon to avoid retention of WAL files."
 msgstr "ამ რეპლიკაციის სლოტის მალე წაშლა WAL ფაილების მორჩენის თავიდან ასაცილებლად."
@@ -1505,7 +1505,7 @@ msgstr "სისტემური იდენტიფიკატორი�
 msgid "control file appears to be corrupt"
 msgstr "როგორც ჩანს, საკონტროლო ფაილი დაზიანებულია"
 
-#: pg_createsubscriber.c:645 pg_createsubscriber.c:685
+#: pg_createsubscriber.c:645 pg_createsubscriber.c:688
 #, c-format
 msgid "system identifier is %<PRIu64> on subscriber"
 msgstr "სისტემური იდენტიფიკატორი %<PRIu64> გამომწერზეა"
@@ -1515,494 +1515,544 @@ msgstr "სისტემური იდენტიფიკატორი %
 msgid "modifying system identifier of subscriber"
 msgstr "გამომწერის სისტემური იდენტიფიკატორის შეცვლა"
 
-#: pg_createsubscriber.c:688
+#: pg_createsubscriber.c:683
+#, c-format
+msgid "dry-run: would set system identifier to %<PRIu64> on subscriber"
+msgstr "მშრალი გაშვება: დააყენებს სისტემური იდენტიფიკატორს %<PRIu64> გამომწერზე"
+
+#: pg_createsubscriber.c:693
+#, c-format
+msgid "dry-run: would run pg_resetwal on the subscriber"
+msgstr "მშრალი გაშვება: pg_resetwal-ის გაშვება გამომწერზე"
+
+#: pg_createsubscriber.c:695
 #, c-format
 msgid "running pg_resetwal on the subscriber"
 msgstr "pg_resetwal-ის გაშვება გამომწერზე"
 
-#: pg_createsubscriber.c:700
+#: pg_createsubscriber.c:707
 #, c-format
-msgid "subscriber successfully changed the system identifier"
-msgstr "გამომწერმა სისტემური იდენტიფიკატორი წარმატებით შეცვალა"
+msgid "successfully reset WAL on the subscriber"
+msgstr "WAL-ის ჩამოყრა წარმატებულია გამომწერზე"
 
-#: pg_createsubscriber.c:702
+#: pg_createsubscriber.c:709
 #, c-format
-msgid "could not change system identifier of subscriber: %s"
-msgstr "ვერ შევცვალე სისტემურ იდენტიფიკატორი გამომწერისთვის: %s"
+msgid "could not reset WAL on subscriber: %s"
+msgstr "WAL-ის ჩამოყრა შეუძლებელია გამომწერზე: %s"
 
-#: pg_createsubscriber.c:726
+#: pg_createsubscriber.c:733
 #, c-format
 msgid "could not obtain database OID: %s"
 msgstr "ვერ მივიღე მონაცემთა ბაზის OID: %s"
 
-#: pg_createsubscriber.c:733
+#: pg_createsubscriber.c:740
 #, c-format
 msgid "could not obtain database OID: got %d rows, expected %d row"
 msgstr "ვერ მივიღე მონაცემთა ბაზის OID: მივიღე %d მწკრივი, მოველოდი %d მწკრივს"
 
-#: pg_createsubscriber.c:805
+#: pg_createsubscriber.c:812
 #, c-format
 msgid "create replication slot \"%s\" on publisher"
 msgstr "რეპლიკაციის სლოტის \"%s\" შექმნა გამომცემელზე"
 
-#: pg_createsubscriber.c:825
+#: pg_createsubscriber.c:832
 #, c-format
 msgid "could not write an additional WAL record: %s"
 msgstr "ვერ ჩავწერე დამატებითი WAL ჩანაწერი: %s"
 
-#: pg_createsubscriber.c:851
+#: pg_createsubscriber.c:858
 #, c-format
 msgid "could not obtain recovery progress: %s"
 msgstr "აღდგენის მიმდინარეობის მდგომარეობის მიღება შეუძლებელია: %s"
 
-#: pg_createsubscriber.c:884
+#: pg_createsubscriber.c:891
 #, c-format
 msgid "checking settings on publisher"
 msgstr "პარამეტრების შექმნა გამომცემელზე"
 
-#: pg_createsubscriber.c:894
+#: pg_createsubscriber.c:901
 #, c-format
 msgid "primary server cannot be in recovery"
 msgstr "ძირითადი სერვერი აღდგენის რეჟიმში ვერ იქნება"
 
-#: pg_createsubscriber.c:920
+#: pg_createsubscriber.c:927
 #, c-format
 msgid "could not obtain publisher settings: %s"
 msgstr "გამომცემლის პარამეტრების მიღება შეუძლებელია: %s"
 
-#: pg_createsubscriber.c:949
+#: pg_createsubscriber.c:956
 #, c-format
 msgid "publisher requires \"wal_level\" >= \"logical\""
 msgstr "გამომცემელს \"wal_level\" >= \"logical\" ესაჭიროება"
 
-#: pg_createsubscriber.c:955
+#: pg_createsubscriber.c:962
 #, c-format
 msgid "publisher requires %d replication slots, but only %d remain"
 msgstr "გამომცემელს %d რეპლიკაციის სლოტი სჭირდება, მაგრამ დარჩენილია, მხოლოდ, %d"
 
-#: pg_createsubscriber.c:957 pg_createsubscriber.c:966
-#: pg_createsubscriber.c:1076 pg_createsubscriber.c:1085
-#: pg_createsubscriber.c:1094
+#: pg_createsubscriber.c:964 pg_createsubscriber.c:973
+#: pg_createsubscriber.c:1083 pg_createsubscriber.c:1092
+#: pg_createsubscriber.c:1101
 #, c-format
 msgid "Increase the configuration parameter \"%s\" to at least %d."
 msgstr "გაზარდეთ კონფიგურაციის პარამეტრი \"%s\" %d-მდე მაინც."
 
-#: pg_createsubscriber.c:964
+#: pg_createsubscriber.c:971
 #, c-format
 msgid "publisher requires %d WAL sender processes, but only %d remain"
 msgstr "გამომცემელს %d WAL-ის გამგზავნი პროცესი სჭირდება, მაგრამ დარჩენილია, მხოლოდ, %d"
 
-#: pg_createsubscriber.c:973
+#: pg_createsubscriber.c:980
 #, c-format
 msgid "two_phase option will not be enabled for replication slots"
 msgstr "პარამეტრი two_phase რეპლიკაციის სლოტებისთვის არ ჩაირთვება"
 
-#: pg_createsubscriber.c:974
+#: pg_createsubscriber.c:981
 #, c-format
 msgid "Subscriptions will be created with the two_phase option disabled.  Prepared transactions will be replicated at COMMIT PREPARED."
 msgstr "გამოწერები two_phase პარამეტრით გათიშული შეიქმნება.  მომზადებული ტრანზაქციების რეპლიკაცია მოხდება COMMIT PREPARED-თან."
 
-#: pg_createsubscriber.c:976
+#: pg_createsubscriber.c:983
 #, c-format
 msgid "You can use the command-line option --enable-two-phase to enable two_phase."
 msgstr "'two_phase'-ის ჩასართავად, შეგიძლიათ, გამოიყენოთ ბრძანების სტრიქონის პარამეტრი --enable-two-phase."
 
-#: pg_createsubscriber.c:986
+#: pg_createsubscriber.c:993
 #, c-format
 msgid "required WAL could be removed from the publisher"
 msgstr "აუცილებელი WAL-ის წაშლა შესაძლებელია გამომცემლიდან"
 
-#: pg_createsubscriber.c:987
+#: pg_createsubscriber.c:994
 #, c-format
 msgid "Set the configuration parameter \"%s\" to -1 to ensure that required WAL files are not prematurely removed."
 msgstr "დააყენეთ კონფიგურაციის პარამეტრი \"%s\" მნიშვნელობაზე -1, რომ დარწმუნდეთ, რომ WAL ფაილები საჭიროზე ადრე არ წაიშლება."
 
-#: pg_createsubscriber.c:1019
+#: pg_createsubscriber.c:1026
 #, c-format
 msgid "checking settings on subscriber"
 msgstr "პარამეტრების შემოწმება გამომწერზე"
 
-#: pg_createsubscriber.c:1026
+#: pg_createsubscriber.c:1033
 #, c-format
 msgid "target server must be a standby"
 msgstr "სამიზნე სერვერი უქმე უნდა იყოს"
 
-#: pg_createsubscriber.c:1050
+#: pg_createsubscriber.c:1057
 #, c-format
 msgid "could not obtain subscriber settings: %s"
 msgstr "გამომწერის პარამეტრების მიღება შეუძლებელია: %s"
 
-#: pg_createsubscriber.c:1074
+#: pg_createsubscriber.c:1081
 #, c-format
 msgid "subscriber requires %d active replication origins, but only %d remain"
 msgstr "გამომწერს %d აქტიური რეპლიკაციის წყარო სჭირდება, მაგრამ დარჩენილია, მხოლოდ, %d"
 
-#: pg_createsubscriber.c:1083
+#: pg_createsubscriber.c:1090
 #, c-format
 msgid "subscriber requires %d logical replication workers, but only %d remain"
 msgstr "გამომწერს %d ლოგიკური რეპლიკაციის დამხმარე პროცესი სჭირდება, მაგრამ დარჩენილია, მხოლოდ, %d"
 
-#: pg_createsubscriber.c:1092
+#: pg_createsubscriber.c:1099
 #, c-format
 msgid "subscriber requires %d worker processes, but only %d remain"
 msgstr "გამომწერს %d დამხმარე პროცესი სჭირდება, მაგრამ დარჩენილია, მხოლოდ, %d"
 
-#: pg_createsubscriber.c:1127
+#: pg_createsubscriber.c:1135
+#, c-format
+msgid "dry-run: would drop subscription \"%s\" in database \"%s\""
+msgstr "მშრალი გაშვება: მოხდება მოცილება გამოწერისა \"%s\" მონაცემთა ბაზაში \"%s\""
+
+#: pg_createsubscriber.c:1139
 #, c-format
 msgid "dropping subscription \"%s\" in database \"%s\""
 msgstr "მოხდება მოცილება გამოწერისა \"%s\" მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1136
+#: pg_createsubscriber.c:1146
 #, c-format
 msgid "could not drop subscription \"%s\": %s"
 msgstr "ვერ მოვაცილე გამოწერა \"%s\": %s"
 
-#: pg_createsubscriber.c:1171
+#: pg_createsubscriber.c:1181
 #, c-format
 msgid "could not obtain pre-existing subscriptions: %s"
 msgstr "ვერ მივიღე უკვე არსებული გამოწერები: %s"
 
-#: pg_createsubscriber.c:1303
+#: pg_createsubscriber.c:1322
 #, c-format
 msgid "could not drop replication slot \"%s\" on primary"
 msgstr "ვერ წავშალე რეპლიკაციის სლოტი \"%s\" ძირითადზე"
 
-#: pg_createsubscriber.c:1337
+#: pg_createsubscriber.c:1356
 #, c-format
 msgid "could not obtain failover replication slot information: %s"
 msgstr "გადასართველი რეპლიკაციის სლოტის ინფორმაციის მიღება შეუძლებელია: %s"
 
-#: pg_createsubscriber.c:1339 pg_createsubscriber.c:1348
+#: pg_createsubscriber.c:1358 pg_createsubscriber.c:1367
 #, c-format
 msgid "Drop the failover replication slots on subscriber soon to avoid retention of WAL files."
 msgstr "გამომწერზე გადასართველი რეპლიკაციის სლოტების მალე წაშლა WAL ფაილების მორჩენის თავიდან ასაცილებლად."
 
-#: pg_createsubscriber.c:1347
+#: pg_createsubscriber.c:1366
 #, c-format
 msgid "could not drop failover replication slot"
 msgstr "გადასართველი რეპლიკაციის სლოტი წაშლა შეუძლებელია"
 
-#: pg_createsubscriber.c:1369
+#: pg_createsubscriber.c:1389
 #, c-format
-msgid "creating the replication slot \"%s\" in database \"%s\""
-msgstr "იქმნება რეპლიკაციის სლოტი \"%s\" მონაცემთა ბაზაში \"%s\""
+msgid "dry-run: would create the replication slot \"%s\" in database \"%s\" on publisher"
+msgstr "მშრალი გაშვება: შექმნის რეპლიკაციის სლოტს \"%s\" მონაცემთა ბაზაში \"%s\" გამომცემელზე"
 
-#: pg_createsubscriber.c:1388
+#: pg_createsubscriber.c:1392
+#, c-format
+msgid "creating the replication slot \"%s\" in database \"%s\" on publisher"
+msgstr "იქმნება რეპლიკაციის სლოტი \"%s\" მონაცემთა ბაზაში \"%s\" გამომცემელზე"
+
+#: pg_createsubscriber.c:1411
 #, c-format
 msgid "could not create replication slot \"%s\" in database \"%s\": %s"
 msgstr "ვერ შევქმენი რეპლიკაციის სლოტი \"%s\" მონაცემთა ბაზაში \"%s\": %s"
 
-#: pg_createsubscriber.c:1418
+#: pg_createsubscriber.c:1442
+#, c-format
+msgid "dry-run: would drop the replication slot \"%s\" in database \"%s\""
+msgstr "მშრალი გაშვება: წაიშლება რეპლიკაციის სლოტი \"%s\" მონაცემთა ბაზაში \"%s\""
+
+#: pg_createsubscriber.c:1445
 #, c-format
 msgid "dropping the replication slot \"%s\" in database \"%s\""
 msgstr "იშლება რეპლიკაციის სლოტი \"%s\" მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1434
+#: pg_createsubscriber.c:1461
 #, c-format
 msgid "could not drop replication slot \"%s\" in database \"%s\": %s"
 msgstr "ვერ წავშალე რეპლიკაციის სლოტი \"%s\" მონაცემთა ბაზაში \"%s\": %s"
 
-#: pg_createsubscriber.c:1455
+#: pg_createsubscriber.c:1482
 #, c-format
 msgid "pg_ctl failed with exit code %d"
 msgstr "pg_ctl ჩავარდა გამოსვლის კოდით %d"
 
-#: pg_createsubscriber.c:1460
+#: pg_createsubscriber.c:1487
 #, c-format
 msgid "pg_ctl was terminated by exception 0x%X"
 msgstr "pg_ctl შეწყდა გამონაკლისით 0x%X"
 
-#: pg_createsubscriber.c:1462
+#: pg_createsubscriber.c:1489
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "თექვსმეტობითი მნიშვნელობის აღწერისთვის იხილეთ C-ის ჩასასმელი ფაილი \"ntstatus.h\"."
 
-#: pg_createsubscriber.c:1464
+#: pg_createsubscriber.c:1491
 #, c-format
 msgid "pg_ctl was terminated by signal %d: %s"
 msgstr "pg_ctl შეწყვეტილია სიგნალით %d: %s"
 
-#: pg_createsubscriber.c:1470
+#: pg_createsubscriber.c:1497
 #, c-format
 msgid "pg_ctl exited with unrecognized status %d"
 msgstr "pg_ctl დასრულდა უცნობი სტატუსით %d"
 
-#: pg_createsubscriber.c:1473
+#: pg_createsubscriber.c:1500
 #, c-format
 msgid "The failed command was: %s"
 msgstr "ჩავარდნილი ბრძანება იყო: %s"
 
-#: pg_createsubscriber.c:1523
+#: pg_createsubscriber.c:1550
 #, c-format
 msgid "server was started"
 msgstr "სერვერი გაეშვა"
 
-#: pg_createsubscriber.c:1538
+#: pg_createsubscriber.c:1565
 #, c-format
 msgid "server was stopped"
 msgstr "სერვერი გამოირთო"
 
-#: pg_createsubscriber.c:1557
+#: pg_createsubscriber.c:1584
 #, c-format
 msgid "waiting for the target server to reach the consistent state"
 msgstr "სამიზნე სერვერის მდგრად მდგომარეობაში გადასვლის მოლოდინი"
 
-#: pg_createsubscriber.c:1580
+#: pg_createsubscriber.c:1602
 #, c-format
 msgid "recovery timed out"
 msgstr "აღდგენის მოლოდინის ვადა ამოიწურა"
 
-#: pg_createsubscriber.c:1593
+#: pg_createsubscriber.c:1615
 #, c-format
 msgid "server did not end recovery"
 msgstr "სერვერმა აღდგენა არ დაამთავრა"
 
-#: pg_createsubscriber.c:1595
+#: pg_createsubscriber.c:1617
 #, c-format
 msgid "target server reached the consistent state"
 msgstr "სამიზნე სერვერმა მიაღწია მდგრად მდგომარეობას"
 
-#: pg_createsubscriber.c:1596
+#: pg_createsubscriber.c:1618
 #, c-format
 msgid "If pg_createsubscriber fails after this point, you must recreate the physical replica before continuing."
 msgstr "თუ ამ წერტილის შემდეგ pg_createsubscriber ჩავარდება, გაგრძელებამდე ფიზიკური რეპლიკა თავიდან უნდა შექმნათ."
 
-#: pg_createsubscriber.c:1623 pg_createsubscriber.c:1746
+#: pg_createsubscriber.c:1645 pg_createsubscriber.c:1776
 #, c-format
 msgid "could not obtain publication information: %s"
 msgstr "გამოცემის ინფორმაციის მიღება შეუძლებელია: %s"
 
-#: pg_createsubscriber.c:1637
+#: pg_createsubscriber.c:1659
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "პუბლიკაცია \"%s\" უკვე არსებობს"
 
-#: pg_createsubscriber.c:1638
+#: pg_createsubscriber.c:1660
 #, c-format
 msgid "Consider renaming this publication before continuing."
 msgstr "განიხილეთ ამ პუბლიკაციის სახელის გადარქმევა ხელახლა ცდამდე."
 
-#: pg_createsubscriber.c:1645
+#: pg_createsubscriber.c:1668
+#, c-format
+msgid "dry-run: would create publication \"%s\" in database \"%s\""
+msgstr "მშრალი გაშვება: შექმნის გამოცემას \"%s\" მონაცემთა ბაზაში \"%s\""
+
+#: pg_createsubscriber.c:1671
 #, c-format
 msgid "creating publication \"%s\" in database \"%s\""
 msgstr "იქმნება გამოცემა \"%s\" მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1658
+#: pg_createsubscriber.c:1684
 #, c-format
 msgid "could not create publication \"%s\" in database \"%s\": %s"
 msgstr "ვერ შევქმენი გამოცემა \"%s\" მონაცემთა ბაზაში \"%s\": %s"
 
-#: pg_createsubscriber.c:1688
+#: pg_createsubscriber.c:1715
+#, c-format
+msgid "dry-run: would drop publication \"%s\" in database \"%s\""
+msgstr "მშრალი გაშვება: წაშლის გამოცემას \"%s\" მონაცემთა ბაზაში \"%s\""
+
+#: pg_createsubscriber.c:1718
 #, c-format
 msgid "dropping publication \"%s\" in database \"%s\""
 msgstr "ვშლი გამოცემას \"%s\" მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1702
+#: pg_createsubscriber.c:1732
 #, c-format
 msgid "could not drop publication \"%s\" in database \"%s\": %s"
 msgstr "ვერ წავშალე გამოცემა \"%s\" მონაცემთა ბაზაში \"%s\": %s"
 
-#: pg_createsubscriber.c:1739
+#: pg_createsubscriber.c:1769
 #, c-format
 msgid "dropping all existing publications in database \"%s\""
 msgstr "ვშლი ყველა არსებულ გამოცემას მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1797
+#: pg_createsubscriber.c:1828
+#, c-format
+msgid "dry-run: would create subscription \"%s\" in database \"%s\""
+msgstr "მშრალი გაშვება: შექმნის გამოწერას \"%s\" მონაცემთა ბაზაში \"%s\""
+
+#: pg_createsubscriber.c:1831
 #, c-format
 msgid "creating subscription \"%s\" in database \"%s\""
 msgstr "იქმნება გამოწერა \"%s\" მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1819
+#: pg_createsubscriber.c:1853
 #, c-format
 msgid "could not create subscription \"%s\" in database \"%s\": %s"
 msgstr "ვერ შევქმენი გამოწერა \"%s\" მონაცემთა ბაზაში \"%s\": %s"
 
-#: pg_createsubscriber.c:1864
+#: pg_createsubscriber.c:1898
 #, c-format
 msgid "could not obtain subscription OID: %s"
 msgstr "ვერ მივიღე გამოწერის OID: %s"
 
-#: pg_createsubscriber.c:1871
+#: pg_createsubscriber.c:1905
 #, c-format
 msgid "could not obtain subscription OID: got %d rows, expected %d row"
 msgstr "ვერ მივიღე გამოწერის OID: მივიღე %d მწკრივი, მოველოდი %d მწკრივს"
 
-#: pg_createsubscriber.c:1895
+#: pg_createsubscriber.c:1930
+#, c-format
+msgid "dry-run: would set the replication progress (node name \"%s\", LSN %s) in database \"%s\""
+msgstr "მშრალი გაშვება: დააყენებს რეპლიკაციის მიმდინარეობას (კვანძის სახელი \"%s\", LSN %s) მონაცემთა ბაზაზე \"%s\""
+
+#: pg_createsubscriber.c:1933
 #, c-format
 msgid "setting the replication progress (node name \"%s\", LSN %s) in database \"%s\""
 msgstr "რეპლიკაციის მიმდინარეობის (კვანძის სახელი \"%s\", LSN %s) დაყენება მონაცემთა ბაზაზე \"%s\""
 
-#: pg_createsubscriber.c:1910
+#: pg_createsubscriber.c:1948
 #, c-format
 msgid "could not set replication progress for subscription \"%s\": %s"
 msgstr "შეუძლებელია რეპლიკაციის მიმდინარეობის დაყენება გამოწერისთვის \"%s\": %s"
 
-#: pg_createsubscriber.c:1941
+#: pg_createsubscriber.c:1980
+#, c-format
+msgid "dry-run: would enable subscription \"%s\" in database \"%s\""
+msgstr "მშრალი გაშვება: ჩაირთვება გამოწერა \"%s\" მონაცემთა ბაზაში \"%s\""
+
+#: pg_createsubscriber.c:1983
 #, c-format
 msgid "enabling subscription \"%s\" in database \"%s\""
 msgstr "ჩაირთვება გამოწერა \"%s\" მონაცემთა ბაზაში \"%s\""
 
-#: pg_createsubscriber.c:1953
+#: pg_createsubscriber.c:1995
 #, c-format
 msgid "could not enable subscription \"%s\": %s"
 msgstr "ვერ ჩავრთე გამოწერა \"%s\": %s"
 
-#: pg_createsubscriber.c:1999
+#: pg_createsubscriber.c:2041
 #, c-format
 msgid "could not obtain a list of databases: %s"
 msgstr "ვერ მივიღე მონაცემთა ბაზების სია: %s"
 
-#: pg_createsubscriber.c:2103
+#: pg_createsubscriber.c:2145
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "root-ით ვერ გაეშვება"
 
-#: pg_createsubscriber.c:2104
+#: pg_createsubscriber.c:2146
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "%s PostgreSQL-ის ზემომხმარებლით უნდა გაუშვათ."
 
-#: pg_createsubscriber.c:2127
+#: pg_createsubscriber.c:2169
 #, c-format
 msgid "database \"%s\" specified more than once for -d/--database"
 msgstr "მონაცემთა ბაზა \"%s\" ერთზე მეტჯერაა მითითებული პარამეტრისთვის -d/--database"
 
-#: pg_createsubscriber.c:2168
+#: pg_createsubscriber.c:2210
 #, c-format
 msgid "publication \"%s\" specified more than once for --publication"
 msgstr "პუბლიკაცია \"%s\" მითითებულია ერთზე მეტჯერ პარამეტრისთვის --publication"
 
-#: pg_createsubscriber.c:2177
+#: pg_createsubscriber.c:2219
 #, c-format
 msgid "replication slot \"%s\" specified more than once for --replication-slot"
 msgstr "რეპლიკაციის სლოტი \"%s\" მითითებულია ერთზე მეტჯერ პარამეტრისთვის --repilication-slot"
 
-#: pg_createsubscriber.c:2186
+#: pg_createsubscriber.c:2228
 #, c-format
 msgid "subscription \"%s\" specified more than once for --subscription"
 msgstr "გამოწერა \"%s\" მითითებულია ერთზე მეტჯერ პარამეტრისთვის --subscription"
 
-#: pg_createsubscriber.c:2192
+#: pg_createsubscriber.c:2234
 #, c-format
 msgid "object type \"%s\" specified more than once for --clean"
 msgstr "პარამეტრისთვის --clean ობიექტის ტიპი \"%s\" ერთზე მეტჯერაა მითითებული"
 
-#: pg_createsubscriber.c:2217
+#: pg_createsubscriber.c:2259
 #, c-format
-msgid "options %s and -a/--all cannot be used together"
-msgstr "პარამეტრებს %s და -a/--all ერთად ვერ გამოიყენებთ"
+msgid "options %s and %s cannot be used together"
+msgstr "პარამეტრებს %s და -%s ერთად ვერ გამოიყენებთ"
 
-#: pg_createsubscriber.c:2235
+#: pg_createsubscriber.c:2278
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "გამომწერის მონაცემების საქაღალდე მითითებული არაა"
 
-#: pg_createsubscriber.c:2246
+#: pg_createsubscriber.c:2289
 #, c-format
 msgid "could not determine current directory"
 msgstr "მიმდინარე საქაღალდის იდენტიფიკაციის პრობლემა"
 
-#: pg_createsubscriber.c:2263
+#: pg_createsubscriber.c:2306
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "გამომცემლის მიერთების სტრიქონი მითითებული არაა"
 
-#: pg_createsubscriber.c:2267
+#: pg_createsubscriber.c:2310
 #, c-format
 msgid "validating publisher connection string"
 msgstr "გამომცემლის მიერთების სტრიქონის გადამოწმება"
 
-#: pg_createsubscriber.c:2273
+#: pg_createsubscriber.c:2316
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "მიმდინარეობს გამომწერის დაკავშირების სტრიქონის გადამოწმება"
 
-#: pg_createsubscriber.c:2290
+#: pg_createsubscriber.c:2333
 #, c-format
 msgid "no database was specified"
 msgstr "ბაზა მითითებული არაა"
 
-#: pg_createsubscriber.c:2301
+#: pg_createsubscriber.c:2344
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "ბაზა \"%s\" გამოღებულია გამომცემლის მიერთების სტრიქონიდან"
 
-#: pg_createsubscriber.c:2306
+#: pg_createsubscriber.c:2349
 #, c-format
 msgid "no database name specified"
 msgstr "ბაზის სახელი მითითებული არაა"
 
-#: pg_createsubscriber.c:2316
+#: pg_createsubscriber.c:2359
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "მითითებულია გამოცემის სახელების არასწორი რაოდენობა"
 
-#: pg_createsubscriber.c:2317
+#: pg_createsubscriber.c:2360
 #, c-format
 msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
 msgstr "გამოცემის სახელების რაოდენობა (%d) ბაზის სახელების მითითებულ რაოდენობას (%d) უნდა ემთხვეოდეს."
 
-#: pg_createsubscriber.c:2323
+#: pg_createsubscriber.c:2366
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "მითითებულია გამოწერის სახელების არასწორი რაოდენობა"
 
-#: pg_createsubscriber.c:2324
+#: pg_createsubscriber.c:2367
 #, c-format
 msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
 msgstr "მითითებული გამოწერის სახელების რაოდენობა (%d) მითითებული ბაზის სახელების რაოდენობას (%d) უნდა ემთხვეოდეს."
 
-#: pg_createsubscriber.c:2330
+#: pg_createsubscriber.c:2373
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "მითითებულია რეპლიკაციის სლოტის სახელების არასწორი რაოდენობა"
 
-#: pg_createsubscriber.c:2331
+#: pg_createsubscriber.c:2374
 #, c-format
 msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
 msgstr "რეპლიკაციის სლოტების მითითებული სახელების რაოდენობა (%d) ბაზის სახელების მითითებულ რაოდენობას (%d) უნდა ემთხვეოდეს."
 
-#: pg_createsubscriber.c:2343
+#: pg_createsubscriber.c:2386
 #, c-format
-msgid "invalid object type \"%s\" specified for --clean"
-msgstr "პარამეტრისთვის --clean მითითებული ობიექტის ტიპი '%s' არასწორია"
+msgid "invalid object type \"%s\" specified for %s"
+msgstr "%2$s-ისთვის მითითებულია არასწორი ობიექტის ტიპი \"%1$s\""
 
-#: pg_createsubscriber.c:2344
+#: pg_createsubscriber.c:2388
 #, c-format
 msgid "The valid value is: \"%s\""
 msgstr "სწორი მნიშვნელობაა: \"%s\""
 
-#: pg_createsubscriber.c:2375
+#: pg_createsubscriber.c:2419
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "გამომწერის მონაცემების საქაღალდე წყარო ბაზის კლასტერის ასლი არაა"
 
-#: pg_createsubscriber.c:2388
+#: pg_createsubscriber.c:2432
 #, c-format
 msgid "standby server is running"
 msgstr "უქმე სერვერი გაშვებულია"
 
-#: pg_createsubscriber.c:2389
+#: pg_createsubscriber.c:2433
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "გააჩერეთ უქმე სერვერი და თავიდან სცადეთ."
 
-#: pg_createsubscriber.c:2398
+#: pg_createsubscriber.c:2442
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "მიმდინარეობს უქმე სერვერის გაშვება ბრძანების სტრიქონის პარამეტრებით"
 
-#: pg_createsubscriber.c:2414 pg_createsubscriber.c:2449
+#: pg_createsubscriber.c:2458 pg_createsubscriber.c:2493
 #, c-format
 msgid "stopping the subscriber"
 msgstr "გამომწერის გაჩერება"
 
-#: pg_createsubscriber.c:2428
+#: pg_createsubscriber.c:2472
 #, c-format
 msgid "starting the subscriber"
 msgstr "გამომწერის გაშვება"
 
-#: pg_createsubscriber.c:2457
+#: pg_createsubscriber.c:2501
 #, c-format
 msgid "Done!"
 msgstr "შესრულებულია!"
@@ -2294,13 +2344,11 @@ msgstr "  -S, --slot=SLOTNAME    ლოგიკური რეპლიკა�
 
 #: pg_recvlogical.c:108
 #, c-format
-#| msgid "  -t, --two-phase        enable decoding of prepared transactions when creating a slot\n"
 msgid "  -t, --enable-two-phase enable decoding of prepared transactions when creating a slot\n"
 msgstr "  -t, --enable-two-phase მომზადებული ტრანზაქციების დეკოდირების ჩართვა სლოტის შექმნისას\n"
 
 #: pg_recvlogical.c:109
 #, c-format
-#| msgid "  --role=ROLE               (same as --member-of, deprecated)\n"
 msgid "      --two-phase        (same as --enable-two-phase, deprecated)\n"
 msgstr "      --two-phase        (იგივე, რაც --enable-two-phase, მოძველებულია)\n"
 
@@ -2740,6 +2788,10 @@ msgstr "შეკუმშვის ნაკადის დახურვი�
 #~ msgstr[1] "WAL-ის სეგმენტის ზომა ორის ხარისხი უნდა იყოს 1 მბ-სა და 1გბ-ს შორის, მაგრამ დაშორებულმა სერვერმა %d ბაიტიანი მნიშვნელობა დააბრუნა"
 
 #, c-format
+#~ msgid "could not change system identifier of subscriber: %s"
+#~ msgstr "ვერ შევცვალე სისტემურ იდენტიფიკატორი გამომწერისთვის: %s"
+
+#, c-format
 #~ msgid "could not check file \"%s\""
 #~ msgstr "ფაილის შემოწმება შეუძლებელია: %s"
 
@@ -2784,6 +2836,10 @@ msgstr "შეკუმშვის ნაკადის დახურვი�
 #~ msgstr "--compress -ის მნიშვნელობა მითითებული არაა. გამოიყენება ნაგულისხმები"
 
 #, c-format
+#~ msgid "options %s and -a/--all cannot be used together"
+#~ msgstr "პარამეტრებს %s და -a/--all ერთად ვერ გამოიყენებთ"
+
+#, c-format
 #~ msgid "primary has replication slot \"%s\""
 #~ msgstr "ძირითადს აქვს რეპლიკაციის სლოტი \"%s\""
 
@@ -2798,6 +2854,10 @@ msgstr "შეკუმშვის ნაკადის დახურვი�
 #, c-format
 #~ msgid "subscriber failed to change system identifier: exit code: %d"
 #~ msgstr "გამომწერის სისტემური იდენტიფიკატორის შეცვლა ჩავარდა: გამოსვლის კოდი: %d"
+
+#, c-format
+#~ msgid "subscriber successfully changed the system identifier"
+#~ msgstr "გამომწერმა სისტემური იდენტიფიკატორი წარმატებით შეცვალა"
 
 #, c-format
 #~ msgid "symlinks are not supported on this platform"

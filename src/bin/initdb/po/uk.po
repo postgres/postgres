@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:21+0000\n"
-"PO-Revision-Date: 2024-09-23 19:38\n"
+"POT-Creation-Date: 2025-12-31 02:21+0000\n"
+"PO-Revision-Date: 2026-01-02 15:22\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,25 +14,25 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_17_STABLE/initdb.pot\n"
-"X-Crowdin-File-ID: 1034\n"
+"X-Crowdin-File: /REL_18_STABLE/initdb.pot\n"
+"X-Crowdin-File-ID: 1069\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "деталі: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "підказка: "
@@ -57,28 +57,28 @@ msgstr "неможливо знайти \"%s\" для виконання"
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "не вдалося знайти абсолютний шлях \"%s\": %m"
 
-#: ../../common/exec.c:382 initdb.c:695
+#: ../../common/exec.c:363 initdb.c:753
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "не вдалося виконати команду \"%s\": %m"
 
-#: ../../common/exec.c:394
+#: ../../common/exec.c:375
 #, c-format
 msgid "could not read from command \"%s\": %m"
 msgstr "не вдалося прочитати висновок команди \"%s\": %m"
 
-#: ../../common/exec.c:397
+#: ../../common/exec.c:378
 #, c-format
 msgid "no data was returned by command \"%s\""
 msgstr "команда \"%s\" не повернула жодних даних"
 
-#: ../../common/exec.c:424
+#: ../../common/exec.c:405
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() помилка: %m"
 
-#: ../../common/exec.c:562 ../../common/exec.c:607 ../../common/exec.c:699
-#: initdb.c:353
+#: ../../common/exec.c:543 ../../common/exec.c:588 ../../common/exec.c:680
+#: initdb.c:375 initdb.c:411
 #, c-format
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
@@ -94,46 +94,46 @@ msgstr "недостатньо пам'яті\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
 
-#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
-#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:75
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "не вдалося синхронізувати файлову систему для файлу \"%s\": %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "ця збірка не підтримує метод синхронізації \"%s\""
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
 #: ../../common/pgfnames.c:48 ../../common/rmtree.c:63
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
 #: ../../common/pgfnames.c:69 ../../common/rmtree.c:106
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не вдалося прочитати каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "не вдалося fsync файл \"%s\": %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:520
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "не вдалося перейменувати файл \"%s\" на \"%s\": %m"
@@ -242,12 +242,12 @@ msgstr "%s має бути в діапазоні %d..%d"
 msgid "unrecognized sync method: %s"
 msgstr "нерозпізнаний метод синхронізації: %s"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "аргумент командної оболонки містить символ нового рядка або повернення каретки: \"%s\"\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "назва бази даних містить символ нового рядка або повернення каретки: \"%s\"\n"
@@ -262,347 +262,362 @@ msgstr "не вдалося встановити сполучення для \"%
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "не вдалося встановити сполучення для \"%s\": %s\n"
 
-#: initdb.c:627 initdb.c:1619
+#: initdb.c:372
+#, c-format
+msgid "_wsetlocale() failed"
+msgstr "_wsetlocale() завершився невдало"
+
+#: initdb.c:379
+#, c-format
+msgid "setlocale() failed"
+msgstr "setlocale() завершився невдало"
+
+#: initdb.c:393
+#, c-format
+msgid "failed to restore old locale"
+msgstr "не вдалося відновити старі локалі"
+
+#: initdb.c:396
+#, c-format
+msgid "failed to restore old locale \"%s\""
+msgstr "не вдалося відновити стару локаль \"%s\""
+
+#: initdb.c:685 initdb.c:1692
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
 
-#: initdb.c:671 initdb.c:975 initdb.c:995
+#: initdb.c:729 initdb.c:1035 initdb.c:1055
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "не вдалося відкрити файл \"%s\" для запису: %m"
 
-#: initdb.c:675 initdb.c:978 initdb.c:997
+#: initdb.c:733 initdb.c:1038 initdb.c:1057
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "не вдалося записати файл \"%s\": %m"
 
-#: initdb.c:679
+#: initdb.c:737
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "неможливо закрити файл \"%s\": %m"
 
-#: initdb.c:713
+#: initdb.c:771
 #, c-format
 msgid "removing data directory \"%s\""
 msgstr "видалення даних з директорії \"%s\""
 
-#: initdb.c:715
+#: initdb.c:773
 #, c-format
 msgid "failed to remove data directory"
 msgstr "не вдалося видалити дані директорії"
 
-#: initdb.c:719
+#: initdb.c:777
 #, c-format
 msgid "removing contents of data directory \"%s\""
 msgstr "видалення даних з директорії \"%s\""
 
-#: initdb.c:722
+#: initdb.c:780
 #, c-format
 msgid "failed to remove contents of data directory"
 msgstr "не вдалося видалити дані директорії"
 
-#: initdb.c:727
+#: initdb.c:785
 #, c-format
 msgid "removing WAL directory \"%s\""
 msgstr "видалення WAL директорії \"%s\""
 
-#: initdb.c:729
+#: initdb.c:787
 #, c-format
 msgid "failed to remove WAL directory"
 msgstr "не вдалося видалити директорію WAL"
 
-#: initdb.c:733
+#: initdb.c:791
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
 msgstr "видалення даних з директорії WAL \"%s\""
 
-#: initdb.c:735
+#: initdb.c:793
 #, c-format
 msgid "failed to remove contents of WAL directory"
 msgstr "не вдалося видалити дані директорії WAL"
 
-#: initdb.c:742
+#: initdb.c:800
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
 msgstr "директорія даних \"%s\" не видалена за запитом користувача"
 
-#: initdb.c:746
+#: initdb.c:804
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
 msgstr "директорія WAL \"%s\" не видалена за запитом користувача"
 
-#: initdb.c:764
+#: initdb.c:822
 #, c-format
 msgid "cannot be run as root"
 msgstr "не може виконуватись як root"
 
-#: initdb.c:765
+#: initdb.c:823
 #, c-format
 msgid "Please log in (using, e.g., \"su\") as the (unprivileged) user that will own the server process."
 msgstr "Будь ласка, увійдіть (за допомогою, наприклад, \"su\") як (непривілейований) користувач, від імені якого буде запущено серверний процес."
 
-#: initdb.c:797
+#: initdb.c:855
 #, c-format
 msgid "\"%s\" is not a valid server encoding name"
 msgstr "\"%s\" невірне ім'я серверного кодування"
 
-#: initdb.c:941
+#: initdb.c:1001
 #, c-format
 msgid "file \"%s\" does not exist"
 msgstr "файл \"%s\" не існує"
 
-#: initdb.c:942 initdb.c:947 initdb.c:954
+#: initdb.c:1002 initdb.c:1007 initdb.c:1014
 #, c-format
 msgid "This might mean you have a corrupted installation or identified the wrong directory with the invocation option -L."
 msgstr "Це означає, що ваша інсталяція пошкоджена або в параметрі -L задана неправильна директорія."
 
-#: initdb.c:946
+#: initdb.c:1006
 #, c-format
 msgid "could not access file \"%s\": %m"
 msgstr "немає доступу до файлу \"%s\": %m"
 
-#: initdb.c:953
+#: initdb.c:1013
 #, c-format
 msgid "file \"%s\" is not a regular file"
 msgstr "файл \"%s\" не є звичайним файлом"
 
-#: initdb.c:1086
+#: initdb.c:1157
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
 msgstr "обирається реалізація динамічної спільної пам'яті ... "
 
-#: initdb.c:1095
+#: initdb.c:1167
 #, c-format
 msgid "selecting default \"max_connections\" ... "
 msgstr "обирається значення \"max_connections\" за замовчуванням... \n"
 " "
 
-#: initdb.c:1115
+#: initdb.c:1188
 #, c-format
 msgid "selecting default \"shared_buffers\" ... "
 msgstr "обирається значення \"shared_buffers\" за замовчуванням... "
 
-#: initdb.c:1138
+#: initdb.c:1211
 #, c-format
 msgid "selecting default time zone ... "
 msgstr "обирається часовий пояс за замовчуванням ... "
 
-#: initdb.c:1217
+#: initdb.c:1291
 msgid "creating configuration files ... "
 msgstr "створення конфігураційних файлів... "
 
-#: initdb.c:1370 initdb.c:1384 initdb.c:1451 initdb.c:1462
+#: initdb.c:1443 initdb.c:1457 initdb.c:1524 initdb.c:1535
 #, c-format
 msgid "could not change permissions of \"%s\": %m"
 msgstr "неможливо змінити дозволи \"%s\": %m"
 
-#: initdb.c:1481
+#: initdb.c:1554
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "виконуємо сценарій ініціалізації ... "
 
-#: initdb.c:1493
+#: initdb.c:1566
 #, c-format
 msgid "input file \"%s\" does not belong to PostgreSQL %s"
 msgstr "вхідний файл \"%s\" не належить PostgreSQL %s"
 
-#: initdb.c:1495
+#: initdb.c:1568
 #, c-format
 msgid "Specify the correct path using the option -L."
 msgstr "Вкажіть правильний шлях за допомогою параметру -L."
 
-#: initdb.c:1597
+#: initdb.c:1670
 msgid "Enter new superuser password: "
 msgstr "Введіть новий пароль для superuser: "
 
-#: initdb.c:1598
+#: initdb.c:1671
 msgid "Enter it again: "
 msgstr "Введіть знову: "
 
-#: initdb.c:1601
+#: initdb.c:1674
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Паролі не співпадають.\n"
 
-#: initdb.c:1625
+#: initdb.c:1698
 #, c-format
 msgid "could not read password from file \"%s\": %m"
 msgstr "не вдалося прочитати пароль з файлу \"%s\": %m"
 
-#: initdb.c:1628
+#: initdb.c:1701
 #, c-format
 msgid "password file \"%s\" is empty"
 msgstr "файл з паролями \"%s\" є порожнім"
 
-#: initdb.c:2040
+#: initdb.c:2113
 #, c-format
 msgid "caught signal\n"
 msgstr "отримано сигнал\n"
 
-#: initdb.c:2046
+#: initdb.c:2119
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "не вдалося написати у дочірній процес: %s\n"
 
-#: initdb.c:2054
+#: initdb.c:2127
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2143
+#: initdb.c:2209 initdb.c:2255
 #, c-format
-msgid "setlocale() failed"
-msgstr "setlocale() завершився невдало"
+msgid "locale name \"%s\" contains non-ASCII characters"
+msgstr "назва локалі \"%s\" містить не-ASCII символи"
 
-#: initdb.c:2161
-#, c-format
-msgid "failed to restore old locale \"%s\""
-msgstr "не вдалося відновити стару локаль \"%s\""
-
-#: initdb.c:2169
+#: initdb.c:2235
 #, c-format
 msgid "invalid locale name \"%s\""
 msgstr "не допустиме ім'я локалі \"%s\""
 
-#: initdb.c:2170
+#: initdb.c:2236
 #, c-format
 msgid "If the locale name is specific to ICU, use --icu-locale."
 msgstr "Якщо ім'я локалі характерне для ICU, використовуйте --icu-locale."
 
-#: initdb.c:2183
+#: initdb.c:2249
 #, c-format
 msgid "invalid locale settings; check LANG and LC_* environment variables"
 msgstr "неприпустимі параметри локалі; перевірте LANG та LC_* змінні середовища"
 
-#: initdb.c:2209 initdb.c:2233
+#: initdb.c:2280 initdb.c:2304
 #, c-format
 msgid "encoding mismatch"
 msgstr "невідповідність кодування"
 
-#: initdb.c:2210
+#: initdb.c:2281
 #, c-format
 msgid "The encoding you selected (%s) and the encoding that the selected locale uses (%s) do not match. This would lead to misbehavior in various character string processing functions."
 msgstr "Вибране вами кодування (%s) і кодування, яке використовує обрана локаль (%s) не збігаються. Це призведе до неправильної поведінки у різних функціях обробки символьних рядків."
 
-#: initdb.c:2215 initdb.c:2236
+#: initdb.c:2286 initdb.c:2307
 #, c-format
 msgid "Rerun %s and either do not specify an encoding explicitly, or choose a matching combination."
 msgstr "Перезапустіть %s і або не вказуйте кодування прямо або виберіть відповідну комбінацію."
 
-#: initdb.c:2234
+#: initdb.c:2305
 #, c-format
 msgid "The encoding you selected (%s) is not supported with the ICU provider."
 msgstr "Обране вами кодування (%s) не підтримується провайдером ICU."
 
-#: initdb.c:2285
+#: initdb.c:2356
 #, c-format
 msgid "could not convert locale name \"%s\" to language tag: %s"
 msgstr "не вдалося перетворити локальну назву \"%s\" на мітку мови: %s"
 
-#: initdb.c:2291 initdb.c:2343 initdb.c:2435
+#: initdb.c:2362 initdb.c:2414 initdb.c:2508
 #, c-format
 msgid "ICU is not supported in this build"
 msgstr "ICU не підтримується в цій збірці"
 
-#: initdb.c:2314
+#: initdb.c:2385
 #, c-format
 msgid "could not get language from locale \"%s\": %s"
 msgstr "не вдалося отримати мову з локалі \"%s\": %s"
 
-#: initdb.c:2340
+#: initdb.c:2411
 #, c-format
 msgid "locale \"%s\" has unknown language \"%s\""
 msgstr "locale \"%s\" має невідому мову \"%s\""
 
-#: initdb.c:2401
+#: initdb.c:2472
 #, c-format
 msgid "locale must be specified if provider is %s"
 msgstr "потрібно вказати локаль для провайдера %s"
 
-#: initdb.c:2412
+#: initdb.c:2485
 #, c-format
 msgid "invalid locale name \"%s\" for builtin provider"
 msgstr "неприпустиме ім'я локалі \"%s\" для вбудованого провайдера"
 
-#: initdb.c:2423
+#: initdb.c:2496
 #, c-format
 msgid "Using language tag \"%s\" for ICU locale \"%s\".\n"
 msgstr "Використання мітки мови \"%s\" для локалі ICU \"%s\".\n"
 
-#: initdb.c:2446
+#: initdb.c:2519
 #, c-format
 msgid "%s initializes a PostgreSQL database cluster.\n\n"
 msgstr "%s ініціалізує кластер баз даних PostgreSQL.\n\n"
 
-#: initdb.c:2447
+#: initdb.c:2520
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: initdb.c:2448
+#: initdb.c:2521
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPTION]... [DATADIR]\n"
 
-#: initdb.c:2449
+#: initdb.c:2522
 #, c-format
 msgid "\n"
 "Options:\n"
 msgstr "\n"
 "Параметри:\n"
 
-#: initdb.c:2450
+#: initdb.c:2523
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, -- auth=METHOD метод аутентифікації за замовчуванням для локальних підключень\n"
 
-#: initdb.c:2451
+#: initdb.c:2524
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr "      --auth-host=METHOD     метод аутентифікації за замовчуванням для локального TCP/IP підключення\n"
 
-#: initdb.c:2452
+#: initdb.c:2525
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr "      --auth-local=METHOD   метод аутентифікації за замовчуванням для локального під'єднання через сокет\n"
 
-#: initdb.c:2453
+#: initdb.c:2526
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D - pgdata =] DATADIR розташування кластеру цієї бази даних\n"
 
-#: initdb.c:2454
+#: initdb.c:2527
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=ENCODING встановлення кодування за замовчуванням для нової бази даних\n"
 
-#: initdb.c:2455
+#: initdb.c:2528
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr "  -g, --allow-group-access дозволити читати/виконувати у каталозі даних для групи\n"
 
-#: initdb.c:2456
+#: initdb.c:2529
 #, c-format
 msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
 msgstr "      --icu-locale=LOCALE встановлює ідентифікатор мови ICU для нових баз даних\n"
 
-#: initdb.c:2457
+#: initdb.c:2530
 #, c-format
 msgid "      --icu-rules=RULES     set additional ICU collation rules for new databases\n"
 msgstr "      --icu-rules=RULES встановити додаткові правила сортування в ICU для нових баз даних\n"
 
-#: initdb.c:2458
+#: initdb.c:2531
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      використовувати контрольні суми сторінок\n"
 
-#: initdb.c:2459
+#: initdb.c:2532
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOCALE       встановлює локаль за замовчуванням для нових баз даних\n"
 
-#: initdb.c:2460
+#: initdb.c:2533
 #, c-format
 msgid "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
@@ -613,132 +628,142 @@ msgstr "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "                            встановлення локалі за замовчуванням для відповідної категорії в\n"
 "                            нових базах даних (замість значення з середовища)\n"
 
-#: initdb.c:2464
+#: initdb.c:2537
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           еквівалентно --locale=C\n"
 
-#: initdb.c:2465
+#: initdb.c:2538
 #, c-format
 msgid "      --builtin-locale=LOCALE\n"
 "                            set builtin locale name for new databases\n"
 msgstr "      --builtin-locale=LOCALE\n"
 "                            встановити ім'я вбудованої локалі для нових баз даних\n"
 
-#: initdb.c:2467
+#: initdb.c:2540
 #, c-format
 msgid "      --locale-provider={builtin|libc|icu}\n"
 "                            set default locale provider for new databases\n"
 msgstr "      --locale-provider={builtin|libc|icu}\n"
 "                            встановлює провайдер локалі за замовченням для нових баз даних\n"
 
-#: initdb.c:2469
+#: initdb.c:2542
+#, c-format
+msgid "      --no-data-checksums   do not use data page checksums\n"
+msgstr "      --no-data-checksums   не використовувати контрольні суми сторінок\n"
+
+#: initdb.c:2543
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FILE         прочитати пароль для нового суперкористувача з файлу\n"
 
-#: initdb.c:2470
+#: initdb.c:2544
 #, c-format
 msgid "  -T, --text-search-config=CFG\n"
 "                            default text search configuration\n"
 msgstr "  -T, --text-search-config=CFG                             конфігурація текстового пошуку за замовчуванням\n"
 
-#: initdb.c:2472
+#: initdb.c:2546
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME         ім'я суперкористувача бази даних\n"
 
-#: initdb.c:2473
+#: initdb.c:2547
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt           запитувати пароль нового суперкористувача\n"
 
-#: initdb.c:2474
+#: initdb.c:2548
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALDIR       розташування журналу попереднього запису\n"
 
-#: initdb.c:2475
+#: initdb.c:2549
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE     розмір сегментів WAL у мегабайтах\n"
 
-#: initdb.c:2476
+#: initdb.c:2550
 #, c-format
 msgid "\n"
 "Less commonly used options:\n"
 msgstr "\n"
 "Рідковживані параметри:\n"
 
-#: initdb.c:2477
+#: initdb.c:2551
 #, c-format
 msgid "  -c, --set NAME=VALUE      override default setting for server parameter\n"
 msgstr "  -c, --set NAME=VALUE перевизначити параметр за замовчуванням для параметра сервера\n"
 
-#: initdb.c:2478
+#: initdb.c:2552
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug             генерувати багато налагоджувальних повідомлень\n"
 
-#: initdb.c:2479
+#: initdb.c:2553
 #, c-format
 msgid "      --discard-caches      set debug_discard_caches=1\n"
 msgstr "      --discard-caches встановити debug_discard_caches=1\n"
 
-#: initdb.c:2480
+#: initdb.c:2554
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              розташування вхідних файлів\n"
 
-#: initdb.c:2481
+#: initdb.c:2555
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean             не очищувати після помилок\n"
 " \n"
 
-#: initdb.c:2482
+#: initdb.c:2556
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync          не чекати на безпечний запис змін на диск\n"
 
-#: initdb.c:2483
+#: initdb.c:2557
+#, c-format
+msgid "      --no-sync-data-files  do not sync files within database directories\n"
+msgstr "      --no-sync-data-files  не синхронизувати файли в папках бази даних\n"
+
+#: initdb.c:2558
 #, c-format
 msgid "      --no-instructions     do not print instructions for next steps\n"
 msgstr "      --no-instructions не друкувати інструкції для наступних кроків\n"
 
-#: initdb.c:2484
+#: initdb.c:2559
 #, c-format
 msgid "  -s, --show                show internal settings, then exit\n"
 msgstr "  -s, --show                показати внутрішні налаштування і вийти\n"
 
-#: initdb.c:2485
+#: initdb.c:2560
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr "      --sync-method=METHOD  встановити метод синхронізації файлів на диск\n"
 
-#: initdb.c:2486
+#: initdb.c:2561
 #, c-format
 msgid "  -S, --sync-only           only sync database files to disk, then exit\n"
 msgstr "  -S, --sync-only           лише синхронізувати файли бази даних на диск, потім вийти\n"
 
-#: initdb.c:2487
+#: initdb.c:2562
 #, c-format
 msgid "\n"
 "Other options:\n"
 msgstr "\n"
 "Інші параметри:\n"
 
-#: initdb.c:2488
+#: initdb.c:2563
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
 
-#: initdb.c:2489
+#: initdb.c:2564
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help               показати цю довідку, потім вийти\n"
 
-#: initdb.c:2490
+#: initdb.c:2565
 #, c-format
 msgid "\n"
 "If the data directory is not specified, the environment variable PGDATA\n"
@@ -746,79 +771,79 @@ msgid "\n"
 msgstr "\n"
 "Якщо каталог даних не вказано, використовується змінна середовища PGDATA.\n"
 
-#: initdb.c:2492
+#: initdb.c:2567
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: initdb.c:2493
+#: initdb.c:2568
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
 
-#: initdb.c:2517
+#: initdb.c:2592
 #, c-format
 msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr "неприпустимий спосіб автентифікації \"%s\" для \"%s\" підключення"
 
-#: initdb.c:2531
+#: initdb.c:2606
 #, c-format
 msgid "must specify a password for the superuser to enable password authentication"
 msgstr "необхідно вказати пароль суперкористувача для активації автентифікації за допомогою пароля"
 
-#: initdb.c:2550
+#: initdb.c:2625
 #, c-format
 msgid "no data directory specified"
 msgstr "каталог даних не вказано"
 
-#: initdb.c:2551
+#: initdb.c:2626
 #, c-format
 msgid "You must identify the directory where the data for this database system will reside.  Do this with either the invocation option -D or the environment variable PGDATA."
 msgstr "Ви повинні зазначити каталог, де будуть зберігатися дані цієї системи баз даних. Зробіть це або параметром -D, або змінною середовища PGDATA."
 
-#: initdb.c:2568
+#: initdb.c:2643
 #, c-format
 msgid "could not set environment"
 msgstr "не вдалося встановити середовище"
 
-#: initdb.c:2586
+#: initdb.c:2661
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\""
 
-#: initdb.c:2589
+#: initdb.c:2664
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "програма \"%s\" знайдена для \"%s\", але має відмінну версію від %s"
 
-#: initdb.c:2604
+#: initdb.c:2679
 #, c-format
 msgid "input file location must be an absolute path"
 msgstr "розташування вхідного файлу має бути абсолютним шляхом"
 
-#: initdb.c:2621
+#: initdb.c:2696
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "Кластер бази даних буде ініціалізовано з локалізацією \"%s\".\n"
 
-#: initdb.c:2624
+#: initdb.c:2699
 #, c-format
 msgid "The database cluster will be initialized with this locale configuration:\n"
 msgstr "Кластер бази даних буде ініціалізовано з локалізацією:\n"
 
-#: initdb.c:2625
+#: initdb.c:2700
 #, c-format
 msgid "  locale provider:   %s\n"
 msgstr "  провайдер локалі:   %s\n"
 
-#: initdb.c:2627
+#: initdb.c:2702
 #, c-format
 msgid "  default collation: %s\n"
 msgstr "  стандартне сортування: %s\n"
 
-#: initdb.c:2628
+#: initdb.c:2703
 #, c-format
 msgid "  LC_COLLATE:  %s\n"
 "  LC_CTYPE:    %s\n"
@@ -833,216 +858,216 @@ msgstr "  LC_COLLATE:  %s\n"
 "  LC_NUMERIC:  %s\n"
 "  LC_TIME:     %s\n"
 
-#: initdb.c:2658
+#: initdb.c:2733
 #, c-format
 msgid "could not find suitable encoding for locale \"%s\""
 msgstr "не вдалося знайти відповідне кодування для локалі \"%s\""
 
-#: initdb.c:2660
+#: initdb.c:2735
 #, c-format
 msgid "Rerun %s with the -E option."
 msgstr "Перезапустіть %s з параметром -E."
 
-#: initdb.c:2661 initdb.c:3204 initdb.c:3324 initdb.c:3344
+#: initdb.c:2736 initdb.c:3274 initdb.c:3400 initdb.c:3420
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: initdb.c:2673
+#: initdb.c:2748
 #, c-format
 msgid "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
 "The default database encoding will be set to \"%s\" instead.\n"
 msgstr "Кодування \"%s\", що очікується локалізацією, не дозволено у якості кодування сервера.\n"
 "Замість нього буде встановлене кодування \"%s\" за замовчуванням.\n"
 
-#: initdb.c:2678
+#: initdb.c:2753
 #, c-format
 msgid "locale \"%s\" requires unsupported encoding \"%s\""
 msgstr "локалізація \"%s\" потребує кодування \"%s\", що не підтримується"
 
-#: initdb.c:2680
+#: initdb.c:2755
 #, c-format
 msgid "Encoding \"%s\" is not allowed as a server-side encoding."
 msgstr "Кодування \"%s\" не допускається як кодування сервера."
 
-#: initdb.c:2682
+#: initdb.c:2757
 #, c-format
 msgid "Rerun %s with a different locale selection."
 msgstr "Перезапустіть %s з іншим вибором локалі."
 
-#: initdb.c:2690
+#: initdb.c:2765
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "Кодування бази даних за замовчуванням встановлено: \"%s\".\n"
 
-#: initdb.c:2704
+#: initdb.c:2781
 #, c-format
 msgid "builtin provider locale \"%s\" requires encoding \"%s\""
 msgstr "локаль вбудованого провайдера \"%s\" вимагає кодування \"%s\""
 
-#: initdb.c:2766
+#: initdb.c:2843
 #, c-format
 msgid "could not find suitable text search configuration for locale \"%s\""
 msgstr "не вдалося знайти відповідну конфігурацію текстового пошуку для локалі\"%s\""
 
-#: initdb.c:2777
+#: initdb.c:2854
 #, c-format
 msgid "suitable text search configuration for locale \"%s\" is unknown"
 msgstr "відповідна конфігурація текстового пошуку для локалі \"%s\" невідома"
 
-#: initdb.c:2782
+#: initdb.c:2859
 #, c-format
 msgid "specified text search configuration \"%s\" might not match locale \"%s\""
 msgstr "вказана конфігурація текстового пошуку \"%s\" може не підходити локалі \"%s\""
 
-#: initdb.c:2787
+#: initdb.c:2864
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Конфігурація текстового пошуку за замовчуванням буде встановлена в \"%s\".\n"
 
-#: initdb.c:2830 initdb.c:2901
+#: initdb.c:2898 initdb.c:2969
 #, c-format
 msgid "creating directory %s ... "
 msgstr "створення каталогу %s... "
 
-#: initdb.c:2835 initdb.c:2906 initdb.c:2954 initdb.c:3011
+#: initdb.c:2903 initdb.c:2974 initdb.c:3022 initdb.c:3079
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "не вдалося створити каталог \"%s\": %m"
 
-#: initdb.c:2844 initdb.c:2916
+#: initdb.c:2912 initdb.c:2984
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "виправляю дозволи для створеного каталогу %s... "
 
-#: initdb.c:2849 initdb.c:2921
+#: initdb.c:2917 initdb.c:2989
 #, c-format
 msgid "could not change permissions of directory \"%s\": %m"
 msgstr "не вдалося змінити дозволи каталогу \"%s\": %m"
 
-#: initdb.c:2861 initdb.c:2933
+#: initdb.c:2929 initdb.c:3001
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "каталог \"%s\" існує, але він не порожній"
 
-#: initdb.c:2865
+#: initdb.c:2933
 #, c-format
 msgid "If you want to create a new database system, either remove or empty the directory \"%s\" or run %s with an argument other than \"%s\"."
 msgstr "Якщо ви хочете створити нову систему бази даних, видаліть або очистіть каталог \"%s\", або запустіть %s з аргументом, відмінним від \"%s\"."
 
-#: initdb.c:2873 initdb.c:2943 initdb.c:3369
+#: initdb.c:2941 initdb.c:3011 initdb.c:3445
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "немає доступу до каталогу \"%s\": %m"
 
-#: initdb.c:2894
+#: initdb.c:2962
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "розташування WAL каталогу має бути абсолютним шляхом"
 
-#: initdb.c:2937
+#: initdb.c:3005
 #, c-format
 msgid "If you want to store the WAL there, either remove or empty the directory \"%s\"."
 msgstr "Якщо ви хочете зберігати дані з WAL там, потрібно видалити або очистити директорію \"%s\"."
 
-#: initdb.c:2947
+#: initdb.c:3015
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "не вдалося створити символічне послання \"%s\": %m"
 
-#: initdb.c:2966
+#: initdb.c:3034
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point."
 msgstr "Він містить файл з крапкою або невидимий файл, можливо це точка під'єднання."
 
-#: initdb.c:2968
+#: initdb.c:3036
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point."
 msgstr "Він містить каталог lost+found, можливо це точка під'єднання."
 
-#: initdb.c:2970
+#: initdb.c:3038
 #, c-format
 msgid "Using a mount point directly as the data directory is not recommended.\n"
 "Create a subdirectory under the mount point."
 msgstr "Не рекомендується використовувати точку під'єднання у якості каталогу даних.\n"
 "Створіть підкаталог і використайте його."
 
-#: initdb.c:2997
+#: initdb.c:3065
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "створення підкаталогів... "
 
-#: initdb.c:3040
+#: initdb.c:3108
 msgid "performing post-bootstrap initialization ... "
 msgstr "виконується кінцева фаза ініціалізації ... "
 
-#: initdb.c:3203
+#: initdb.c:3273
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s необхідне значення"
 
-#: initdb.c:3228
+#: initdb.c:3298
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Виконується у режимі налагодження.\n"
 
-#: initdb.c:3232
+#: initdb.c:3302
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Виконується у режимі 'no-clean'. Помилки не будуть виправлені.\n"
 
-#: initdb.c:3305
+#: initdb.c:3375
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "нерозпізнаний постачальник локалів: %s"
 
-#: initdb.c:3342
+#: initdb.c:3418
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: initdb.c:3349 initdb.c:3353 initdb.c:3357
+#: initdb.c:3425 initdb.c:3429 initdb.c:3433
 #, c-format
 msgid "%s cannot be specified unless locale provider \"%s\" is chosen"
 msgstr "%s не може бути вказано, поки не буде обрано постачальник локалі \"%s\""
 
-#: initdb.c:3371 initdb.c:3434
+#: initdb.c:3447 initdb.c:3510
 msgid "syncing data to disk ... "
 msgstr "синхронізація даних з диском ... "
 
-#: initdb.c:3379
+#: initdb.c:3455
 #, c-format
 msgid "password prompt and password file cannot be specified together"
 msgstr "неможливо вказати одночасно пароль і файл паролю"
 
-#: initdb.c:3390
+#: initdb.c:3466
 #, c-format
 msgid "argument of %s must be a power of two between 1 and 1024"
 msgstr "аргумент %s має бути ступенем двійки в діапазоні від 1 до 1024"
 
-#: initdb.c:3403
+#: initdb.c:3479
 #, c-format
 msgid "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
 msgstr "неприпустиме ім'я суперкористувача \"%s\"; імена ролей не можуть починатися на \"pg_\""
 
-#: initdb.c:3405
+#: initdb.c:3481
 #, c-format
 msgid "The files belonging to this database system will be owned by user \"%s\".\n"
 "This user must also own the server process.\n\n"
 msgstr "Файли цієї бази даних будуть належати користувачеві \"%s\".\n"
 "Від імені цього користувача повинен запускатися процес сервера.\n\n"
 
-#: initdb.c:3421
+#: initdb.c:3497
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "Контроль цілісності сторінок даних увімкнено.\n"
 
-#: initdb.c:3423
+#: initdb.c:3499
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "Контроль цілісності сторінок даних вимкнено.\n"
 
-#: initdb.c:3440
+#: initdb.c:3516
 #, c-format
 msgid "\n"
 "Sync to disk skipped.\n"
@@ -1051,22 +1076,22 @@ msgstr "\n"
 "Синхронізація з диском пропущена.\n"
 "Каталог з даними може бути пошкоджено під час аварійного завершення роботи операційної системи.\n"
 
-#: initdb.c:3445
+#: initdb.c:3521
 #, c-format
 msgid "enabling \"trust\" authentication for local connections"
 msgstr "увімкнення автентифікації \"довіри\" для локальних підключень"
 
-#: initdb.c:3446
+#: initdb.c:3522
 #, c-format
 msgid "You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb."
 msgstr "Ви можете змінити це, змінивши pg_hba.conf або скориставшись опцією -A, або --auth-local і --auth-host, наступного разу, коли ви запускаєте initdb."
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3476
+#: initdb.c:3552
 msgid "logfile"
 msgstr "logfile"
 
-#: initdb.c:3478
+#: initdb.c:3554
 #, c-format
 msgid "\n"
 "Success. You can now start the database server using:\n\n"
