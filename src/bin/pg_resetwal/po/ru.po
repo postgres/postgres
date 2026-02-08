@@ -5,12 +5,12 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 06:29+0300\n"
+"POT-Creation-Date: 2026-02-07 08:59+0200\n"
 "PO-Revision-Date: 2024-09-05 12:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -419,7 +419,7 @@ msgstr "Блоков в макс. сегменте отношений:    %u\n"
 msgid "WAL block size:                       %u\n"
 msgstr "Размер блока WAL:                     %u\n"
 
-#: pg_resetwal.c:799 pg_resetwal.c:885
+#: pg_resetwal.c:799 pg_resetwal.c:889
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Байт в сегменте WAL:                  %u\n"
@@ -519,67 +519,67 @@ msgstr "NextOID:                              %u\n"
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                              %u\n"
 
-#: pg_resetwal.c:860
+#: pg_resetwal.c:864
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                            %u\n"
 
-#: pg_resetwal.c:862
+#: pg_resetwal.c:866
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "БД с oldestXID:                       %u\n"
 
-#: pg_resetwal.c:868
+#: pg_resetwal.c:872
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "Эпоха NextXID:                        %u\n"
 
-#: pg_resetwal.c:874
+#: pg_resetwal.c:878
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:879
+#: pg_resetwal.c:883
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:965 pg_resetwal.c:1033 pg_resetwal.c:1080
+#: pg_resetwal.c:969 pg_resetwal.c:1037 pg_resetwal.c:1084
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: pg_resetwal.c:1000 pg_resetwal.c:1053 pg_resetwal.c:1103
+#: pg_resetwal.c:1004 pg_resetwal.c:1057 pg_resetwal.c:1107
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не удалось прочитать каталог \"%s\": %m"
 
-#: pg_resetwal.c:1006 pg_resetwal.c:1059 pg_resetwal.c:1109
+#: pg_resetwal.c:1010 pg_resetwal.c:1063 pg_resetwal.c:1113
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не удалось закрыть каталог \"%s\": %m"
 
-#: pg_resetwal.c:1045 pg_resetwal.c:1095
+#: pg_resetwal.c:1049 pg_resetwal.c:1099
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "ошибка удаления файла \"%s\": %m"
 
-#: pg_resetwal.c:1176
+#: pg_resetwal.c:1180
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
 
-#: pg_resetwal.c:1186 pg_resetwal.c:1199
+#: pg_resetwal.c:1190 pg_resetwal.c:1203
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "не удалось записать файл \"%s\": %m"
 
-#: pg_resetwal.c:1206
+#: pg_resetwal.c:1210
 #, c-format
 msgid "fsync error: %m"
 msgstr "ошибка синхронизации с ФС: %m"
 
-#: pg_resetwal.c:1217
+#: pg_resetwal.c:1221
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -588,7 +588,7 @@ msgstr ""
 "%s сбрасывает журнал предзаписи PostgreSQL.\n"
 "\n"
 
-#: pg_resetwal.c:1218
+#: pg_resetwal.c:1222
 #, c-format
 msgid ""
 "Usage:\n"
@@ -599,12 +599,12 @@ msgstr ""
 "  %s [ПАРАМЕТР]... КАТАЛОГ-ДАННЫХ\n"
 "\n"
 
-#: pg_resetwal.c:1219
+#: pg_resetwal.c:1223
 #, c-format
 msgid "Options:\n"
 msgstr "Параметры:\n"
 
-#: pg_resetwal.c:1220
+#: pg_resetwal.c:1224
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -616,24 +616,24 @@ msgstr ""
 "                                   задать старейшую и новейшую транзакции,\n"
 "                                   несущие метки времени (0 — не менять)\n"
 
-#: pg_resetwal.c:1223
+#: pg_resetwal.c:1227
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
 msgstr " [-D, --pgdata=]КАТ_ДАННЫХ         каталог данных\n"
 
-#: pg_resetwal.c:1224
+#: pg_resetwal.c:1228
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr ""
 "  -e, --epoch=XIDEPOCH             задать эпоху для ID следующей транзакции\n"
 
-#: pg_resetwal.c:1225
+#: pg_resetwal.c:1229
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
 msgstr ""
 "  -f, --force                      принудительное выполнение операции\n"
 
-#: pg_resetwal.c:1226
+#: pg_resetwal.c:1230
 #, c-format
 msgid ""
 "  -l, --next-wal-file=WALFILE      set minimum starting location for new "
@@ -642,7 +642,7 @@ msgstr ""
 "  -l, --next-wal-file=ФАЙЛ_WAL     задать минимальное начальное положение\n"
 "                                   для нового WAL\n"
 
-#: pg_resetwal.c:1227
+#: pg_resetwal.c:1231
 #, c-format
 msgid ""
 "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
@@ -650,7 +650,7 @@ msgstr ""
 "  -m, --multixact-ids=MXID,MXID    задать ID следующей и старейшей\n"
 "                                   мультитранзакции\n"
 
-#: pg_resetwal.c:1228
+#: pg_resetwal.c:1232
 #, c-format
 msgid ""
 "  -n, --dry-run                    no update, just show what would be done\n"
@@ -659,46 +659,46 @@ msgstr ""
 "выполнены,\n"
 "                                   но не выполнять их\n"
 
-#: pg_resetwal.c:1229
+#: pg_resetwal.c:1233
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID               задать следующий OID\n"
 
-#: pg_resetwal.c:1230
+#: pg_resetwal.c:1234
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr ""
 "  -O, --multixact-offset=СМЕЩЕНИЕ  задать смещение следующей "
 "мультитранзакции\n"
 
-#: pg_resetwal.c:1231
+#: pg_resetwal.c:1235
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
 msgstr "  -u, --oldest-transaction-id=XID  задать ID старейшей ID\n"
 
-#: pg_resetwal.c:1232
+#: pg_resetwal.c:1236
 #, c-format
 msgid ""
 "  -V, --version                    output version information, then exit\n"
 msgstr "  -V, --version                    показать версию и выйти\n"
 
-#: pg_resetwal.c:1233
+#: pg_resetwal.c:1237
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID    задать ID следующей транзакции\n"
 
-#: pg_resetwal.c:1234
+#: pg_resetwal.c:1238
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr ""
 "      --wal-segsize=РАЗМЕР         размер сегментов WAL (в мегабайтах)\n"
 
-#: pg_resetwal.c:1235
+#: pg_resetwal.c:1239
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
 msgstr "  -?, --help                       показать эту справку и выйти\n"
 
-#: pg_resetwal.c:1236
+#: pg_resetwal.c:1240
 #, c-format
 msgid ""
 "\n"
@@ -707,7 +707,7 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <%s>.\n"
 
-#: pg_resetwal.c:1237
+#: pg_resetwal.c:1241
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"

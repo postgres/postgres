@@ -1,189 +1,162 @@
-# LANGUAGE message translation file for pg_test_fsync
-# Copyright (C) 2017 PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
-# grzegorz <begina.felicysym@wp.eu>, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-03-14 17:46+0000\n"
-"PO-Revision-Date: 2017-03-14 19:29+0200\n"
-"Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
-"Language-Team: begina.felicysym@wp.eu\n"
-"Language: pl\n"
+"Project-Id-Version: postgresql\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2025-03-27 18:56+0000\n"
+"PO-Revision-Date: 2026-01-03 13:40\n"
+"Last-Translator: \n"
+"Language-Team: Polish\n"
+"Language: pl_PL\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Virtaal 0.7.1\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+"X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
+"X-Crowdin-Language: pl\n"
+"X-Crowdin-File: /REL_14_STABLE/pg_test_fsync.pot\n"
+"X-Crowdin-File-ID: 750\n"
 
-#: pg_test_fsync.c:47
+#. translator: maintain alignment with NA_FORMAT
+#: pg_test_fsync.c:31
 #, c-format
-msgid "Cannot create thread for alarm\n"
-msgstr "Nie da się utworzyć wątku dla alarmu\n"
+msgid "%13.3f ops/sec  %6.0f usecs/op\n"
+msgstr ""
 
-#: pg_test_fsync.c:152
+#: pg_test_fsync.c:159
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 msgstr "Składnia: %s [-f NAZWAPLIKU] [-s SEK-NA-TEST]\n"
 
-#: pg_test_fsync.c:176 pg_test_fsync.c:188
+#: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Użyj \"%s --help\" aby uzyskać więcej informacji.\n"
 
-#: pg_test_fsync.c:186
+#: pg_test_fsync.c:216
 #, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: za duża ilość parametrów (pierwszy to \"%s\")\n"
+msgid "%u second per test\n"
+msgid_plural "%u seconds per test\n"
+msgstr[0] "%u s na test\n"
+msgstr[1] "%u s na test\n"
+msgstr[2] "%u s na test\n"
+msgstr[3] "%u s na test\n"
 
-#: pg_test_fsync.c:193
-#, c-format
-msgid "%d seconds per test\n"
-msgstr "%d sekund na test\n"
-
-#: pg_test_fsync.c:195
+#: pg_test_fsync.c:221
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr "O_DIRECT wspierane na tej platformie dla open_datasync i open_sync.\n"
 
-#: pg_test_fsync.c:197
+#: pg_test_fsync.c:223
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
 msgstr "Bezpośrednie We/Wy nie jest wspierane na tej platformie.\n"
 
-#: pg_test_fsync.c:222 pg_test_fsync.c:286 pg_test_fsync.c:310
-#: pg_test_fsync.c:333 pg_test_fsync.c:474 pg_test_fsync.c:486
-#: pg_test_fsync.c:502 pg_test_fsync.c:508 pg_test_fsync.c:533
+#: pg_test_fsync.c:248 pg_test_fsync.c:314 pg_test_fsync.c:339
+#: pg_test_fsync.c:363 pg_test_fsync.c:507 pg_test_fsync.c:519
+#: pg_test_fsync.c:535 pg_test_fsync.c:541 pg_test_fsync.c:563
 msgid "could not open output file"
 msgstr "nie można otworzyć pliku wyjścia"
 
-#: pg_test_fsync.c:225 pg_test_fsync.c:267 pg_test_fsync.c:292
-#: pg_test_fsync.c:316 pg_test_fsync.c:339 pg_test_fsync.c:377
-#: pg_test_fsync.c:435 pg_test_fsync.c:476 pg_test_fsync.c:504
-#: pg_test_fsync.c:535
+#: pg_test_fsync.c:252 pg_test_fsync.c:297 pg_test_fsync.c:323
+#: pg_test_fsync.c:348 pg_test_fsync.c:372 pg_test_fsync.c:411
+#: pg_test_fsync.c:470 pg_test_fsync.c:509 pg_test_fsync.c:537
+#: pg_test_fsync.c:568
 msgid "write failed"
 msgstr "niepowodzenie zapisu"
 
-#: pg_test_fsync.c:229 pg_test_fsync.c:318 pg_test_fsync.c:341
-#: pg_test_fsync.c:478 pg_test_fsync.c:510
+#: pg_test_fsync.c:256 pg_test_fsync.c:350 pg_test_fsync.c:374
+#: pg_test_fsync.c:511 pg_test_fsync.c:543
 msgid "fsync failed"
 msgstr "niepowodzenie fsync"
 
-#: pg_test_fsync.c:243
+#: pg_test_fsync.c:270
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Compare file sync methods using one %dkB write:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Porównanie metod sync plików używając jednego zapisu %dkB:\n"
 
-#: pg_test_fsync.c:245
+#: pg_test_fsync.c:272
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Compare file sync methods using two %dkB writes:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Porównanie metod sync plików używając dwóch zapisów %dkB:\n"
 
-#: pg_test_fsync.c:246
+#: pg_test_fsync.c:273
 #, c-format
 msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
-msgstr "(w porząsku preferencji wal_sync_method, poza fdatasync domyślną na "
-"Linuksie)\n"
+msgstr "(w porząsku preferencji wal_sync_method, poza fdatasync domyślną na Linuksie)\n"
 
-#: pg_test_fsync.c:257 pg_test_fsync.c:360 pg_test_fsync.c:426
-msgid "n/a*\n"
-msgstr "nd.*\n"
-
-#: pg_test_fsync.c:269 pg_test_fsync.c:295 pg_test_fsync.c:320
-#: pg_test_fsync.c:343 pg_test_fsync.c:379 pg_test_fsync.c:437
-msgid "seek failed"
-msgstr "niepowodzenie pozycjonowania"
-
-#: pg_test_fsync.c:275 pg_test_fsync.c:300 pg_test_fsync.c:348
-#: pg_test_fsync.c:385 pg_test_fsync.c:443
-msgid "n/a\n"
-msgstr "nd.\n"
-
-#: pg_test_fsync.c:390
-#, c-format
-msgid ""
-"* This file system and its mount options do not support direct\n"
-"  I/O, e.g. ext4 in journaled mode.\n"
+#: pg_test_fsync.c:284 pg_test_fsync.c:391 pg_test_fsync.c:458
+msgid "n/a*"
 msgstr ""
-"* Ten system plików i jego opcje systemowe mount nie obsługują\n"
+
+#: pg_test_fsync.c:303 pg_test_fsync.c:329 pg_test_fsync.c:379
+#: pg_test_fsync.c:417 pg_test_fsync.c:476
+msgid "n/a"
+msgstr ""
+
+#: pg_test_fsync.c:422
+#, c-format
+msgid "* This file system and its mount options do not support direct\n"
+"  I/O, e.g. ext4 in journaled mode.\n"
+msgstr "* Ten system plików i jego opcje systemowe mount nie obsługują\n"
 "  bezpośredniego We/Wy, np. ext4 trybie dziennikowym.\n"
 
-#: pg_test_fsync.c:398
+#: pg_test_fsync.c:430
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Compare open_sync with different write sizes:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Porównanie open_sync z różnymi długościami zapisu:\n"
 
-#: pg_test_fsync.c:399
+#: pg_test_fsync.c:431
 #, c-format
-msgid ""
-"(This is designed to compare the cost of writing 16kB in different write\n"
+msgid "(This is designed to compare the cost of writing 16kB in different write\n"
 "open_sync sizes.)\n"
-msgstr ""
-"(Zaprojektowano to dla porównanie kosztów zapisu 16kB w różnych \n"
+msgstr "(Zaprojektowano to dla porównanie kosztów zapisu 16kB w różnych \n"
 "długościach zapisu open_sync.)\n"
 
-#: pg_test_fsync.c:402
+#: pg_test_fsync.c:434
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB zapis open_sync"
 
-#: pg_test_fsync.c:403
+#: pg_test_fsync.c:435
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 *  8kB zapis open_sync"
 
-#: pg_test_fsync.c:404
+#: pg_test_fsync.c:436
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 *  4kB zapis open_sync"
 
-#: pg_test_fsync.c:405
+#: pg_test_fsync.c:437
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 *  2kB zapis open_sync"
 
-#: pg_test_fsync.c:406
+#: pg_test_fsync.c:438
 msgid "16 *  1kB open_sync writes"
 msgstr "16 *  1kB zapis open_sync"
 
-#: pg_test_fsync.c:459
+#: pg_test_fsync.c:492
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Test if fsync on non-write file descriptor is honored:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Test czy jest honorowany fsync na niezapisywalnym deskryptorze pliku:\n"
 
-#: pg_test_fsync.c:460
+#: pg_test_fsync.c:493
 #, c-format
-msgid ""
-"(If the times are similar, fsync() can sync data written on a different\n"
+msgid "(If the times are similar, fsync() can sync data written on a different\n"
 "descriptor.)\n"
-msgstr ""
-"(Jeśli czasy są podobne, fsync() może sync dane zapisane na innym\n"
+msgstr "(Jeśli czasy są podobne, fsync() może sync dane zapisane na innym\n"
 "deskryptorze.)\n"
 
-#: pg_test_fsync.c:525
+#: pg_test_fsync.c:558
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Non-sync'ed %dkB writes:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Nie-syncowane zapisy %dkB:\n"
 
-#: pg_test_fsync.c:602
-#, c-format
-msgid "%s: %s\n"
-msgstr "%s: %s\n"

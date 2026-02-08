@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-17 12:21+0000\n"
-"PO-Revision-Date: 2025-08-17 09:01+0200\n"
+"POT-Creation-Date: 2026-01-30 21:53+0000\n"
+"PO-Revision-Date: 2026-02-02 23:07+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -2442,7 +2442,7 @@ msgstr ""
 "psql är den interaktiva PostgreSQL-terminalen.\n"
 "\n"
 
-#: help.c:74 help.c:359 help.c:437 help.c:480
+#: help.c:74 help.c:359 help.c:437 help.c:483
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
@@ -3737,13 +3737,22 @@ msgstr ""
 #: help.c:444
 #, c-format
 msgid ""
+"  csv_fieldsep\n"
+"    field separator for CSV output format (default \"%c\")\n"
+msgstr ""
+"  csv_fieldsep\n"
+"    fältseparator för utdataformatet CSV (standard \"%c\")\n"
+
+#: help.c:447
+#, c-format
+msgid ""
 "  expanded (or x)\n"
 "    expanded output [on, off, auto]\n"
 msgstr ""
 "  expanded (eller x)\n"
 "    expanderat utmatningsläge [on, off, auto]\n"
 
-#: help.c:446
+#: help.c:449
 #, c-format
 msgid ""
 "  fieldsep\n"
@@ -3752,7 +3761,7 @@ msgstr ""
 "  fieldsep\n"
 "    fältseparator för ej justerad utdata (standard \"%s\")\n"
 
-#: help.c:449
+#: help.c:452
 #, c-format
 msgid ""
 "  fieldsep_zero\n"
@@ -3761,7 +3770,7 @@ msgstr ""
 "  fieldsep_zero\n"
 "    sätt fältseparator för ej justerad utdata till noll-byte\n"
 
-#: help.c:451
+#: help.c:454
 #, c-format
 msgid ""
 "  footer\n"
@@ -3770,7 +3779,7 @@ msgstr ""
 "  footer\n"
 "    slå på/av visning av tabellfot [on, off]\n"
 
-#: help.c:453
+#: help.c:456
 #, c-format
 msgid ""
 "  format\n"
@@ -3779,7 +3788,7 @@ msgstr ""
 "  format\n"
 "    sätt utdataformat [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
 
-#: help.c:455
+#: help.c:458
 #, c-format
 msgid ""
 "  linestyle\n"
@@ -3788,7 +3797,7 @@ msgstr ""
 "  linestyle\n"
 "    sätt ramlinjestil [ascii, old-ascii, unicode]\n"
 
-#: help.c:457
+#: help.c:460
 #, c-format
 msgid ""
 "  null\n"
@@ -3797,7 +3806,7 @@ msgstr ""
 "  null\n"
 "    sätt sträng som visas istället för null-värden\n"
 
-#: help.c:459
+#: help.c:462
 #, c-format
 msgid ""
 "  numericlocale\n"
@@ -3806,7 +3815,7 @@ msgstr ""
 "  numericlocale\n"
 "    slå på visning av lokalspecifika tecken för gruppering av siffror\n"
 
-#: help.c:461
+#: help.c:464
 #, c-format
 msgid ""
 "  pager\n"
@@ -3815,7 +3824,7 @@ msgstr ""
 "  pager\n"
 "    styr när en extern pagenerare används [yes, no, always]\n"
 
-#: help.c:463
+#: help.c:466
 #, c-format
 msgid ""
 "  recordsep\n"
@@ -3824,7 +3833,7 @@ msgstr ""
 "  recordsep\n"
 "    post (rad) separator för ej justerad utdata\n"
 
-#: help.c:465
+#: help.c:468
 #, c-format
 msgid ""
 "  recordsep_zero\n"
@@ -3833,7 +3842,7 @@ msgstr ""
 "  recordsep_zero\n"
 "    sätt postseparator för ej justerad utdata till noll-byte\n"
 
-#: help.c:467
+#: help.c:470
 #, c-format
 msgid ""
 "  tableattr (or T)\n"
@@ -3844,7 +3853,7 @@ msgstr ""
 "    ange attribut för tabelltaggen i html-format eller proportionella\n"
 "    kolumnvidder för vänsterjusterade datatypet i latex-longtable-format\n"
 
-#: help.c:470
+#: help.c:473
 #, c-format
 msgid ""
 "  title\n"
@@ -3853,7 +3862,7 @@ msgstr ""
 "  title\n"
 "    sätt tabelltitel för efterkommande tabellutskrifter\n"
 
-#: help.c:472
+#: help.c:475
 #, c-format
 msgid ""
 "  tuples_only\n"
@@ -3862,7 +3871,7 @@ msgstr ""
 "  tuples_only\n"
 "    om satt, bara tabelldatan visas\n"
 
-#: help.c:474
+#: help.c:477
 #, c-format
 msgid ""
 "  unicode_border_linestyle\n"
@@ -3875,7 +3884,7 @@ msgstr ""
 "  unicode_header_linestyle\n"
 "    sätter stilen på Unicode-linjer [single, double]\n"
 
-#: help.c:479
+#: help.c:482
 #, c-format
 msgid ""
 "\n"
@@ -3884,7 +3893,7 @@ msgstr ""
 "\n"
 "Omgivningsvariabler:\n"
 
-#: help.c:483
+#: help.c:486
 #, c-format
 msgid ""
 "  NAME=VALUE [NAME=VALUE] psql ...\n"
@@ -3895,7 +3904,7 @@ msgstr ""
 "  eller \\setenv NAMN [VÄRDE] inne psql\n"
 "\n"
 
-#: help.c:485
+#: help.c:488
 #, c-format
 msgid ""
 "  set NAME=VALUE\n"
@@ -3908,7 +3917,7 @@ msgstr ""
 "  eller \\setenv NAMN [VÄRDE] inne i psql\n"
 "\n"
 
-#: help.c:488
+#: help.c:491
 #, c-format
 msgid ""
 "  COLUMNS\n"
@@ -3917,7 +3926,7 @@ msgstr ""
 "  COLUMNS\n"
 "    antal kolumner i wrappade format\n"
 
-#: help.c:490
+#: help.c:493
 #, c-format
 msgid ""
 "  PGAPPNAME\n"
@@ -3926,7 +3935,7 @@ msgstr ""
 "  PGAPPNAME\n"
 "    samma som anslutningsparametern \"application_name\"\n"
 
-#: help.c:492
+#: help.c:495
 #, c-format
 msgid ""
 "  PGDATABASE\n"
@@ -3935,7 +3944,7 @@ msgstr ""
 "  PGDATABASE\n"
 "    samma som anslutningsparametern \"dbname\"\n"
 
-#: help.c:494
+#: help.c:497
 #, c-format
 msgid ""
 "  PGHOST\n"
@@ -3944,7 +3953,7 @@ msgstr ""
 "  PGHOST\n"
 "    samma som anslutningsparametern \"host\"\n"
 
-#: help.c:496
+#: help.c:499
 #, c-format
 msgid ""
 "  PGPASSFILE\n"
@@ -3953,7 +3962,7 @@ msgstr ""
 "  PGPASSFILE\n"
 "    lösenordsfilnamn\n"
 
-#: help.c:498
+#: help.c:501
 #, c-format
 msgid ""
 "  PGPASSWORD\n"
@@ -3962,7 +3971,7 @@ msgstr ""
 "  PGPASSWORD\n"
 "    uppkoppingens lösenord (rekommenderas inte)\n"
 
-#: help.c:500
+#: help.c:503
 #, c-format
 msgid ""
 "  PGPORT\n"
@@ -3971,7 +3980,7 @@ msgstr ""
 "  PGPORT\n"
 "    samma som anslutingsparametern \"port\"\n"
 
-#: help.c:502
+#: help.c:505
 #, c-format
 msgid ""
 "  PGUSER\n"
@@ -3980,7 +3989,7 @@ msgstr ""
 "  PGUSER\n"
 "    samma som anslutningsparametern \"user\"\n"
 
-#: help.c:504
+#: help.c:507
 #, c-format
 msgid ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
@@ -3989,7 +3998,7 @@ msgstr ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    redigerare som används av kommanona \\e, \\ef och \\ev\n"
 
-#: help.c:506
+#: help.c:509
 #, c-format
 msgid ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
@@ -3998,7 +4007,7 @@ msgstr ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    hur radnummer anges när redigerare startas\n"
 
-#: help.c:508
+#: help.c:511
 #, c-format
 msgid ""
 "  PSQL_HISTORY\n"
@@ -4007,7 +4016,7 @@ msgstr ""
 "  PSQL_HISTORY\n"
 "    alternativ plats för kommandohistorikfilen\n"
 
-#: help.c:510
+#: help.c:513
 #, c-format
 msgid ""
 "  PSQL_PAGER, PAGER\n"
@@ -4016,7 +4025,7 @@ msgstr ""
 "  PAGER\n"
 "    namnet på den externa pageneraren\n"
 
-#: help.c:512
+#: help.c:515
 #, c-format
 msgid ""
 "  PSQLRC\n"
@@ -4025,7 +4034,7 @@ msgstr ""
 "  PSQLRC\n"
 "    alternativ plats för användarens \".psqlrc\"-fil\n"
 
-#: help.c:514
+#: help.c:517
 #, c-format
 msgid ""
 "  SHELL\n"
@@ -4034,7 +4043,7 @@ msgstr ""
 "  SHELL\n"
 "    skalet som används av kommandot \\!\n"
 
-#: help.c:516
+#: help.c:519
 #, c-format
 msgid ""
 "  TMPDIR\n"
@@ -4043,11 +4052,11 @@ msgstr ""
 "  TMPDIR\n"
 "    katalog för temporärfiler\n"
 
-#: help.c:561
+#: help.c:564
 msgid "Available help:\n"
 msgstr "Tillgänglig hjälp:\n"
 
-#: help.c:656
+#: help.c:659
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -4066,7 +4075,7 @@ msgstr ""
 "URL: %s\n"
 "\n"
 
-#: help.c:679
+#: help.c:682
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"

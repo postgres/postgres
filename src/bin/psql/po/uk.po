@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-03-27 18:52+0000\n"
-"PO-Revision-Date: 2025-04-01 15:40\n"
+"POT-Creation-Date: 2025-12-31 03:23+0000\n"
+"PO-Revision-Date: 2025-12-31 15:41\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -68,7 +68,7 @@ msgid "%s() failed: %m"
 msgstr "%s() помилка: %m"
 
 #: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
-#: command.c:1317 command.c:3249 command.c:3298 command.c:3415 input.c:227
+#: command.c:1338 command.c:3339 command.c:3388 command.c:3505 input.c:227
 #: mainloop.c:81 mainloop.c:402
 #, c-format
 msgid "out of memory"
@@ -90,7 +90,7 @@ msgstr "неможливо дублювати нульовий покажчик 
 msgid "could not look up effective user ID %ld: %s"
 msgstr "не можу знайти користувача з ефективним ID %ld: %s"
 
-#: ../../common/username.c:45 command.c:564
+#: ../../common/username.c:45 command.c:585
 msgid "user does not exist"
 msgstr "користувача не існує"
 
@@ -171,91 +171,96 @@ msgstr "невірний формат виводу (внутрішня поми�
 msgid "skipping recursive expansion of variable \"%s\""
 msgstr "пропуск рекурсивного розгортання змінної \"%s\""
 
-#: command.c:229
+#: command.c:238
+#, c-format
+msgid "backslash commands are restricted; only \\unrestrict is allowed"
+msgstr "команди зворотнього слешу обмежені; дозволяється лише \\unstrict"
+
+#: command.c:246
 #, c-format
 msgid "invalid command \\%s"
 msgstr "Невірна команда \\%s"
 
-#: command.c:231
+#: command.c:248
 #, c-format
 msgid "Try \\? for help."
 msgstr "Спробуйте \\? для отримання довідки."
 
-#: command.c:249
+#: command.c:266
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored"
 msgstr "\\%s: зайвий аргумент \"%s\" проігноровано"
 
-#: command.c:301
+#: command.c:318
 #, c-format
 msgid "\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block"
 msgstr "\\%s команду проігноровано; скористайтесь \\endif або Ctrl-C, щоб вийти з поточного блоку \\if"
 
-#: command.c:562
+#: command.c:583
 #, c-format
 msgid "could not get home directory for user ID %ld: %s"
 msgstr "неможливо отримати домашню директорію для користувача ID %ld: %s"
 
-#: command.c:580
+#: command.c:601
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %m"
 msgstr "\\%s: неможливо змінити директорію на \"%s\": %m"
 
-#: command.c:605
+#: command.c:626
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "На даний момент ви від'єднанні від бази даних.\n"
 
-#: command.c:615
+#: command.c:636
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
 msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" за аресою \"%s\" на порту \"%s\".\n"
 
-#: command.c:618
+#: command.c:639
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" через сокет в \"%s\" на порту \"%s\".\n"
 
-#: command.c:624
+#: command.c:645
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
 msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" (за аресою \"%s\") на порту \"%s\".\n"
 
-#: command.c:627
+#: command.c:648
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" на порту \"%s\".\n"
 
-#: command.c:1011 command.c:1120 command.c:2605
+#: command.c:1032 command.c:1141 command.c:2695
 #, c-format
 msgid "no query buffer"
 msgstr "немає буферу запитів"
 
-#: command.c:1044 command.c:5317
+#: command.c:1065 command.c:5407
 #, c-format
 msgid "invalid line number: %s"
 msgstr "невірний номер рядка: %s"
 
-#: command.c:1111
+#: command.c:1132
 #, c-format
 msgid "The server (version %s) does not support editing function source."
 msgstr "Сервер (версія %s) не пітдримує редагування вихідного коду функцій."
 
-#: command.c:1114
+#: command.c:1135
 #, c-format
 msgid "The server (version %s) does not support editing view definitions."
 msgstr "Сервер (версія %s) не підтримує редагування визначення подання."
 
-#: command.c:1198
+#: command.c:1219
 msgid "No changes"
 msgstr "Без змін"
 
-#: command.c:1277
+#: command.c:1298
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found"
 msgstr "%s: невірне ім'я кодування або не знайдено процедуру конверсії"
 
-#: command.c:1313 command.c:2065 command.c:3245 command.c:3437 command.c:5423
+#: command.c:1334 command.c:2086 command.c:3335 command.c:3527 command.c:5513
 #: common.c:174 common.c:223 common.c:392 common.c:1248 common.c:1276
 #: common.c:1385 common.c:1492 common.c:1530 copy.c:488 copy.c:710 help.c:62
 #: large_obj.c:157 large_obj.c:192 large_obj.c:254 startup.c:298
@@ -263,208 +268,218 @@ msgstr "%s: невірне ім'я кодування або не знайден
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1320
+#: command.c:1341
 msgid "There is no previous error."
 msgstr "Попередня помилка відсутня."
 
-#: command.c:1433
+#: command.c:1454
 #, c-format
 msgid "\\%s: missing right parenthesis"
 msgstr "\\%s: відсутня права дужка"
 
-#: command.c:1610 command.c:1915 command.c:1929 command.c:1946 command.c:2116
-#: command.c:2352 command.c:2572 command.c:2612
+#: command.c:1631 command.c:1936 command.c:1950 command.c:1967 command.c:2137
+#: command.c:2291 command.c:2402 command.c:2620 command.c:2662 command.c:2702
 #, c-format
 msgid "\\%s: missing required argument"
 msgstr "\\%s: не вистачає обов'язкового аргументу"
 
-#: command.c:1741
+#: command.c:1762
 #, c-format
 msgid "\\elif: cannot occur after \\else"
 msgstr "\\elif: не може йти після \\else"
 
-#: command.c:1746
+#: command.c:1767
 #, c-format
 msgid "\\elif: no matching \\if"
 msgstr "\\elif: немає відповідного \\if"
 
-#: command.c:1810
+#: command.c:1831
 #, c-format
 msgid "\\else: cannot occur after \\else"
 msgstr "\\else: не може йти після \\else"
 
-#: command.c:1815
+#: command.c:1836
 #, c-format
 msgid "\\else: no matching \\if"
 msgstr "\\else: немає відповідного \\if"
 
-#: command.c:1855
+#: command.c:1876
 #, c-format
 msgid "\\endif: no matching \\if"
 msgstr "\\endif: немає відповідного \\if"
 
-#: command.c:2010
+#: command.c:2031
 msgid "Query buffer is empty."
 msgstr "Буфер запиту порожній."
 
-#: command.c:2047
+#: command.c:2068
 #, c-format
 msgid "Enter new password for user \"%s\": "
 msgstr "Введіть новий пароль користувача \"%s\": "
 
-#: command.c:2050
+#: command.c:2071
 msgid "Enter it again: "
 msgstr "Введіть знову: "
 
-#: command.c:2054
+#: command.c:2075
 #, c-format
 msgid "Passwords didn't match."
 msgstr "Паролі не співпадають."
 
-#: command.c:2145
+#: command.c:2166
 #, c-format
 msgid "\\%s: could not read value for variable"
 msgstr "\\%s: не вдалося прочитати значення змінної"
 
-#: command.c:2248
+#: command.c:2269
 msgid "Query buffer reset (cleared)."
 msgstr "Буфер запитів скинуто (очищено)."
 
-#: command.c:2270
+#: command.c:2320
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Історію записано до файлу \"%s\".\n"
 
-#: command.c:2357
+#: command.c:2407
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\""
 msgstr "\\%s: змінна середовища не повинна містити \"=\""
 
-#: command.c:2409
+#: command.c:2459
 #, c-format
 msgid "The server (version %s) does not support showing function source."
 msgstr "Сервер (версія %s) не пітдримує відображнення вихідного коду функцій."
 
-#: command.c:2412
+#: command.c:2462
 #, c-format
 msgid "The server (version %s) does not support showing view definitions."
 msgstr "Сервер (версія %s) не підтримує відображення визначення подання."
 
-#: command.c:2419
+#: command.c:2469
 #, c-format
 msgid "function name is required"
 msgstr "необхідне ім'я функції"
 
-#: command.c:2421
+#: command.c:2471
 #, c-format
 msgid "view name is required"
 msgstr "необхідне ім'я подання"
 
-#: command.c:2544
+#: command.c:2594
 msgid "Timing is on."
 msgstr "Таймер увімкнено."
 
-#: command.c:2546
+#: command.c:2596
 msgid "Timing is off."
 msgstr "Таймер вимкнено."
 
-#: command.c:2631 command.c:2659 command.c:3878 command.c:3881 command.c:3884
-#: command.c:3890 command.c:3892 command.c:3918 command.c:3928 command.c:3940
-#: command.c:3954 command.c:3981 command.c:4039 common.c:70 copy.c:331
+#: command.c:2626
+#, c-format
+msgid "\\%s: not currently in restricted mode"
+msgstr "\\%s: наразі не обмежено"
+
+#: command.c:2636
+#, c-format
+msgid "\\%s: wrong key"
+msgstr "\\%s: неправильний ключ"
+
+#: command.c:2721 command.c:2749 command.c:3968 command.c:3971 command.c:3974
+#: command.c:3980 command.c:3982 command.c:4008 command.c:4018 command.c:4030
+#: command.c:4044 command.c:4071 command.c:4129 common.c:70 copy.c:331
 #: copy.c:403 psqlscanslash.l:784 psqlscanslash.l:795 psqlscanslash.l:805
 #, c-format
 msgid "%s: %m"
 msgstr "%s: %m"
 
-#: command.c:3050 startup.c:237 startup.c:287
+#: command.c:3140 startup.c:237 startup.c:287
 msgid "Password: "
 msgstr "Пароль: "
 
-#: command.c:3055 startup.c:284
+#: command.c:3145 startup.c:284
 #, c-format
 msgid "Password for user %s: "
 msgstr "Пароль користувача %s:"
 
-#: command.c:3107
+#: command.c:3197
 #, c-format
 msgid "Do not give user, host, or port separately when using a connection string"
 msgstr "Не надайте користувачеві, хосту або порту окремо під час використання рядка підключення"
 
-#: command.c:3142
+#: command.c:3232
 #, c-format
 msgid "No database connection exists to re-use parameters from"
 msgstr "Не існує підключення до бази даних для повторного використання параметрів"
 
-#: command.c:3443
+#: command.c:3533
 #, c-format
 msgid "Previous connection kept"
 msgstr "Попереднє підключення триває"
 
-#: command.c:3449
+#: command.c:3539
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:3505
+#: command.c:3595
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
 msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" за адресою \"%s\" на порту \"%s\".\n"
 
-#: command.c:3508
+#: command.c:3598
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Ви тепер під'єднані до бази даних \"%s\" як користувач \"%s\" через сокет в \"%s\" на порту \"%s\".\n"
 
-#: command.c:3514
+#: command.c:3604
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
 msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" (за адресою \"%s\") на порту \"%s\".\n"
 
-#: command.c:3517
+#: command.c:3607
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Ви тепер під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" на порту \"%s\".\n"
 
-#: command.c:3522
+#: command.c:3612
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Ви тепер під'єднані до бази даних \"%s\" як користувач \"%s\".\n"
 
-#: command.c:3562
+#: command.c:3652
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, сервер %s)\n"
 
-#: command.c:3570
+#: command.c:3660
 #, c-format
 msgid "WARNING: %s major version %s, server major version %s.\n"
 "         Some psql features might not work.\n"
 msgstr "УВАГА: мажорна версія %s %s, мажорна версія сервера %s.\n"
 "         Деякі функції psql можуть не працювати.\n"
 
-#: command.c:3609
+#: command.c:3699
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
 msgstr "З'єднання SSL (протокол: %s, шифр: %s, біти: %s, компресія: %s)\n"
 
-#: command.c:3610 command.c:3611 command.c:3612
+#: command.c:3700 command.c:3701 command.c:3702
 msgid "unknown"
 msgstr "невідомо"
 
-#: command.c:3613 help.c:45
+#: command.c:3703 help.c:45
 msgid "off"
 msgstr "вимк"
 
-#: command.c:3613 help.c:45
+#: command.c:3703 help.c:45
 msgid "on"
 msgstr "увімк"
 
-#: command.c:3627
+#: command.c:3717
 #, c-format
 msgid "GSSAPI-encrypted connection\n"
 msgstr "З'єднання зашифровано GSSAPI\n"
 
-#: command.c:3647
+#: command.c:3737
 #, c-format
 msgid "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
 "         8-bit characters might not work correctly. See psql reference\n"
@@ -473,172 +488,172 @@ msgstr "УВАГА: Кодова сторінка консолі (%u) відрі
 "         8-бітові символи можуть працювати неправильно. Детальніше у розділі \n"
 "         \"Нотатки для користувачів Windows\" у документації psql.\n"
 
-#: command.c:3754
+#: command.c:3844
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number"
 msgstr "змінна середовища PSQL_EDITOR_LINENUMBER_ARG має бути встановлена, щоб вказувати номер рядка"
 
-#: command.c:3783
+#: command.c:3873
 #, c-format
 msgid "could not start editor \"%s\""
 msgstr "неможливо запустити редактор \"%s\""
 
-#: command.c:3785
+#: command.c:3875
 #, c-format
 msgid "could not start /bin/sh"
 msgstr "неможливо запустити /bin/sh"
 
-#: command.c:3835
+#: command.c:3925
 #, c-format
 msgid "could not locate temporary directory: %s"
 msgstr "неможливо знайти тимчасову директорію: %s"
 
-#: command.c:3862
+#: command.c:3952
 #, c-format
 msgid "could not open temporary file \"%s\": %m"
 msgstr "неможливо відкрити тимчасовий файл \"%s\": %m"
 
-#: command.c:4198
+#: command.c:4288
 #, c-format
 msgid "\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\""
 msgstr "\\pset: неоднозначна абревіатура \"%s\" відповідає обом \"%s\" і \"%s"
 
-#: command.c:4218
+#: command.c:4308
 #, c-format
 msgid "\\pset: allowed formats are aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
 msgstr "\\pset: дозволені формати: aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
 
-#: command.c:4237
+#: command.c:4327
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode"
 msgstr "\\pset: дозволені стилі ліній: ascii, old-ascii, unicode"
 
-#: command.c:4252
+#: command.c:4342
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double"
 msgstr "\\pset: дозволені стилі ліній рамок Unicode: single, double"
 
-#: command.c:4267
+#: command.c:4357
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double"
 msgstr "\\pset: дозволені стилі ліній стовпців для Unicode: single, double"
 
-#: command.c:4282
+#: command.c:4372
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double"
 msgstr "\\pset: дозволені стилі ліній заголовків для Unicode: single, double"
 
-#: command.c:4325
+#: command.c:4415
 #, c-format
 msgid "\\pset: csv_fieldsep must be a single one-byte character"
 msgstr "\\pset: csv_fieldsep повинен бути однобайтовим символом"
 
-#: command.c:4330
+#: command.c:4420
 #, c-format
 msgid "\\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return"
 msgstr "\\pset: csv_fieldsep не може бути подвійною лапкою, новим рядком або поверненням каретки"
 
-#: command.c:4467 command.c:4655
+#: command.c:4557 command.c:4745
 #, c-format
 msgid "\\pset: unknown option: %s"
 msgstr "\\pset: невідомий параметр: %s"
 
-#: command.c:4487
+#: command.c:4577
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Стиль рамки %d.\n"
 
-#: command.c:4493
+#: command.c:4583
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "Цільова ширина не встановлена.\n"
 
-#: command.c:4495
+#: command.c:4585
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "Цільова ширина %d.\n"
 
-#: command.c:4502
+#: command.c:4592
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Розширене відображення увімкнуто.\n"
 
-#: command.c:4504
+#: command.c:4594
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "Розширене відображення використовується автоматично.\n"
 
-#: command.c:4506
+#: command.c:4596
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Розширене відображення вимкнуто.\n"
 
-#: command.c:4512
+#: command.c:4602
 #, c-format
 msgid "Field separator for CSV is \"%s\".\n"
 msgstr "Розділювач полів CSV: \"%s\".\n"
 
-#: command.c:4520 command.c:4528
+#: command.c:4610 command.c:4618
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Розділювач полів - нульовий байт.\n"
 
-#: command.c:4522
+#: command.c:4612
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Розділювач полів \"%s\".\n"
 
-#: command.c:4535
+#: command.c:4625
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "Нинжній колонтитул увімкнуто за замовчуванням.\n"
 
-#: command.c:4537
+#: command.c:4627
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "Нинжній колонтитул вимкнуто за замовчуванням.\n"
 
-#: command.c:4543
+#: command.c:4633
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Формат виводу %s.\n"
 
-#: command.c:4549
+#: command.c:4639
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Стиль лінії %s.\n"
 
-#: command.c:4556
+#: command.c:4646
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null відображається як \"%s\".\n"
 
-#: command.c:4564
+#: command.c:4654
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "Локалізоване виведення чисел ввімкнено.\n"
 
-#: command.c:4566
+#: command.c:4656
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "Локалізоване виведення чисел вимкнено.\n"
 
-#: command.c:4573
+#: command.c:4663
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "Пейджер використовується для виведення довгого тексту.\n"
 
-#: command.c:4575
+#: command.c:4665
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "Завжди використовується пейджер.\n"
 
-#: command.c:4577
+#: command.c:4667
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "Пейджер не використовується.\n"
 
-#: command.c:4583
+#: command.c:4673
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
@@ -647,87 +662,87 @@ msgstr[1] "Пейджер не буде використовуватися дл�
 msgstr[2] "Пейджер не буде використовуватися для менш ніж %d рядків.\n"
 msgstr[3] "Пейджер не буде використовуватися для менш ніж %d рядка.\n"
 
-#: command.c:4593 command.c:4603
+#: command.c:4683 command.c:4693
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Розділювач записів - нульовий байт.\n"
 
-#: command.c:4595
+#: command.c:4685
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "Розділювач записів: <newline>.\n"
 
-#: command.c:4597
+#: command.c:4687
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Розділювач записів: \"%s\".\n"
 
-#: command.c:4610
+#: command.c:4700
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Табличні атрибути \"%s\".\n"
 
-#: command.c:4613
+#: command.c:4703
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Атрибути таблиць не задані.\n"
 
-#: command.c:4620
+#: command.c:4710
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Заголовок: \"%s\".\n"
 
-#: command.c:4622
+#: command.c:4712
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Заголовок не встановлено.\n"
 
-#: command.c:4629
+#: command.c:4719
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "Увімкнуто тільки кортежі.\n"
 
-#: command.c:4631
+#: command.c:4721
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "Вимкнуто тільки кортежі.\n"
 
-#: command.c:4637
+#: command.c:4727
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "Стиль ліній рамки для Unicode: \"%s\".\n"
 
-#: command.c:4643
+#: command.c:4733
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "Стиль ліній стовпців для Unicode: \"%s\".\n"
 
-#: command.c:4649
+#: command.c:4739
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "Стиль ліній заголовків для Unicode: \"%s\".\n"
 
-#: command.c:4882
+#: command.c:4972
 #, c-format
 msgid "\\!: failed"
 msgstr "\\!: помилка"
 
-#: command.c:4907 common.c:652
+#: command.c:4997 common.c:652
 #, c-format
 msgid "\\watch cannot be used with an empty query"
 msgstr "\\watch не може бути використано із пустим запитом"
 
-#: command.c:4948
+#: command.c:5038
 #, c-format
 msgid "%s\t%s (every %gs)\n"
 msgstr "%s\t%s (кожні %g сек)\n"
 
-#: command.c:4951
+#: command.c:5041
 #, c-format
 msgid "%s (every %gs)\n"
 msgstr "%s (кожні %g сек)\n"
 
-#: command.c:5013 command.c:5020 common.c:552 common.c:559 common.c:1231
+#: command.c:5103 command.c:5110 common.c:552 common.c:559 common.c:1231
 #, c-format
 msgid "********* QUERY **********\n"
 "%s\n"
@@ -736,12 +751,12 @@ msgstr "********* ЗАПИТ **********\n"
 "%s\n"
 "**************************\n\n"
 
-#: command.c:5212
+#: command.c:5302
 #, c-format
 msgid "\"%s.%s\" is not a view"
 msgstr "\"%s.%s\" не є поданням"
 
-#: command.c:5228
+#: command.c:5318
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "неможливо розібрати масив reloptions"
@@ -2407,7 +2422,7 @@ msgstr "Список функцій підтримки сімейств опер
 msgid "psql is the PostgreSQL interactive terminal.\n\n"
 msgstr "psql - це інтерактивний термінал PostgreSQL.\n\n"
 
-#: help.c:74 help.c:355 help.c:433 help.c:476
+#: help.c:74 help.c:359 help.c:437 help.c:483
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
@@ -2721,424 +2736,438 @@ msgstr "  \\q                     вийти з psql\n"
 
 #: help.c:182
 #, c-format
+msgid "  \\restrict RESTRICT_KEY\n"
+"                         enter restricted mode with provided key\n"
+msgstr "  \\restrict RESTRICT_KEY\n"
+"                         увійти в обмежений режим з наданим ключем\n"
+
+#: help.c:184
+#, c-format
+msgid "  \\unrestrict RESTRICT_KEY\n"
+"                         exit restricted mode if key matches\n"
+msgstr "  \\unrestrict RESTRICT_KEY\n"
+"                         вийти з обмеженого режиму, якщо ключ збігається\n"
+
+#: help.c:186
+#, c-format
 msgid "  \\watch [SEC]           execute query every SEC seconds\n"
 msgstr "  \\watch [SEC]           виконувати запит кожні SEC секунд\n"
 
-#: help.c:185
+#: help.c:189
 #, c-format
 msgid "Help\n"
 msgstr "Довідка\n"
 
-#: help.c:187
+#: help.c:191
 #, c-format
 msgid "  \\? [commands]          show help on backslash commands\n"
 msgstr "  \\? [commands]          показати довідку по командах з \\\n"
 
-#: help.c:188
+#: help.c:192
 #, c-format
 msgid "  \\? options             show help on psql command-line options\n"
 msgstr "  \\? options             показати довідку по параметрах командного рядку psql\n"
 
-#: help.c:189
+#: help.c:193
 #, c-format
 msgid "  \\? variables           show help on special variables\n"
 msgstr "  \\? variables           показати довідку по спеціальних змінних\n"
 
-#: help.c:190
+#: help.c:194
 #, c-format
 msgid "  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"
 msgstr "  \\h [NAME]              довідка з синтаксису команд SQL, * для всіх команд\n"
 
-#: help.c:193
+#: help.c:197
 #, c-format
 msgid "Query Buffer\n"
 msgstr "Буфер запитів\n"
 
-#: help.c:194
+#: help.c:198
 #, c-format
 msgid "  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"
 msgstr "  \\e [FILE] [LINE]        редагувати буфер запитів (або файл) зовнішнім редактором\n"
 
-#: help.c:195
+#: help.c:199
 #, c-format
 msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
 msgstr "  \\ef [FUNCNAME [LINE]]   редагувати визначення функції  зовнішнім редактором\n"
 
-#: help.c:196
+#: help.c:200
 #, c-format
 msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
 msgstr "  \\ev [VIEWNAME [LINE]]  редагувати визначення подання зовнішнім редактором\n"
 
-#: help.c:197
+#: help.c:201
 #, c-format
 msgid "  \\p                     show the contents of the query buffer\n"
 msgstr "  \\p                     показати вміст буфера запитів\n"
 
-#: help.c:198
+#: help.c:202
 #, c-format
 msgid "  \\r                     reset (clear) the query buffer\n"
 msgstr "  \\r                    скинути (очистити) буфер запитів\n"
 
-#: help.c:200
+#: help.c:204
 #, c-format
 msgid "  \\s [FILE]              display history or save it to file\n"
 msgstr "  \\s [FILE]              відобразити історію або зберегти її до файлу\n"
 
-#: help.c:202
+#: help.c:206
 #, c-format
 msgid "  \\w FILE                write query buffer to file\n"
 msgstr "  \\w FILE                писати буфер запитів до файлу\n"
 
-#: help.c:205
+#: help.c:209
 #, c-format
 msgid "Input/Output\n"
 msgstr "Ввід/Вивід\n"
 
-#: help.c:206
+#: help.c:210
 #, c-format
 msgid "  \\copy ...              perform SQL COPY with data stream to the client host\n"
 msgstr "  \\copy ...              виконати команду SQL COPY з потоком даних на клієнтський хост\n"
 
-#: help.c:207
+#: help.c:211
 #, c-format
 msgid "  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"
 msgstr "  \\echo [-n] [STRING]    записати рядок до стандартного виводу (-n для пропуску нового рядка)\n"
 
-#: help.c:208
+#: help.c:212
 #, c-format
 msgid "  \\i FILE                execute commands from file\n"
 msgstr "  \\i FILE              виконати команди з файлу\n"
 
-#: help.c:209
+#: help.c:213
 #, c-format
 msgid "  \\ir FILE               as \\i, but relative to location of current script\n"
 msgstr "  \\ir ФАЙЛ              те саме, що \\i, але відносно розташування поточного сценарію\n"
 
-#: help.c:210
+#: help.c:214
 #, c-format
 msgid "  \\o [FILE]              send all query results to file or |pipe\n"
 msgstr "  \\o [FILE]            надсилати всі результати запитів до файлу або до каналу |\n"
 
-#: help.c:211
+#: help.c:215
 #, c-format
 msgid "  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no newline)\n"
 msgstr "  \\qecho [-n] [STRING]   записати рядок до вихідного потоку \\o (-n для пропуску нового рядка)\n"
 
-#: help.c:212
+#: help.c:216
 #, c-format
 msgid "  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n"
 msgstr "  \\warn [-n] [STRING]    записати рядок до стандартної помилки (-n для пропуску нового рядка)\n"
 
-#: help.c:215
+#: help.c:219
 #, c-format
 msgid "Conditional\n"
 msgstr "Умовний\n"
 
-#: help.c:216
+#: help.c:220
 #, c-format
 msgid "  \\if EXPR               begin conditional block\n"
 msgstr "  \\if EXPR              початок умовного блоку\n"
 
-#: help.c:217
+#: help.c:221
 #, c-format
 msgid "  \\elif EXPR             alternative within current conditional block\n"
 msgstr "  \\elif EXPR            альтернатива в рамках поточного блоку\n"
 
-#: help.c:218
+#: help.c:222
 #, c-format
 msgid "  \\else                  final alternative within current conditional block\n"
 msgstr "  \\else                  остаточна альтернатива в рамках поточного умовного блоку\n"
 
-#: help.c:219
+#: help.c:223
 #, c-format
 msgid "  \\endif                 end conditional block\n"
 msgstr "  \\endif                  кінець умовного блоку\n"
 
-#: help.c:222
+#: help.c:226
 #, c-format
 msgid "Informational\n"
 msgstr "Інформаційний\n"
 
-#: help.c:223
+#: help.c:227
 #, c-format
 msgid "  (options: S = show system objects, + = additional detail)\n"
 msgstr "  (параметри: S = показати системні об'єкти, + = додаткові деталі)\n"
 
-#: help.c:224
+#: help.c:228
 #, c-format
 msgid "  \\d[S+]                 list tables, views, and sequences\n"
 msgstr "  \\d[S+]                 вивести таблиці, подання і послідовності\n"
 
-#: help.c:225
+#: help.c:229
 #, c-format
 msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
 msgstr "  \\d[S+]  NAME           описати таблицю, подання, послідовність або індекс\n"
 
-#: help.c:226
+#: help.c:230
 #, c-format
 msgid "  \\da[S]  [PATTERN]      list aggregates\n"
 msgstr "  \\da[S]  [PATTERN]      вивести агрегати\n"
 
-#: help.c:227
+#: help.c:231
 #, c-format
 msgid "  \\dA[+]  [PATTERN]      list access methods\n"
 msgstr "  \\dA[+]  [PATTERN]      вивести методи доступу\n"
 
-#: help.c:228
+#: help.c:232
 #, c-format
 msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
 msgstr "  \\dAc[+] [AMPTRN [TYPEPTRN]]  список класів операторів\n"
 
-#: help.c:229
+#: help.c:233
 #, c-format
 msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
 msgstr "  \\dAf[+] [AMPTRN [TYPEPTRN]]  список сімейств операторів\n"
 
-#: help.c:230
+#: help.c:234
 #, c-format
 msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
 msgstr "  \\dAo[+] [AMPTRN [OPFPTRN]]   список операторів сімейств операторів\n"
 
-#: help.c:231
+#: help.c:235
 #, c-format
 msgid "  \\dAp[+] [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
 msgstr "  \\dAp[+] [AMPTRN [OPFPTRN]]   список функцій підтримки сімейств операторів\n"
 
-#: help.c:232
+#: help.c:236
 #, c-format
 msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
 msgstr "  \\db[+]  [PATTERN]      вивести табличні простори\n"
 
-#: help.c:233
+#: help.c:237
 #, c-format
 msgid "  \\dc[S+] [PATTERN]      list conversions\n"
 msgstr "  \\dc[S+] [PATTERN]      вивести перетворення\n"
 
-#: help.c:234
+#: help.c:238
 #, c-format
 msgid "  \\dC[+]  [PATTERN]      list casts\n"
 msgstr "  \\dC[+]  [PATTERN]      вивести приведення типів\n"
 
-#: help.c:235
+#: help.c:239
 #, c-format
 msgid "  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
 msgstr "  \\dd[S]  [PATTERN]      показати опис об'єкта, що не відображається в іншому місці\n"
 
-#: help.c:236
+#: help.c:240
 #, c-format
 msgid "  \\dD[S+] [PATTERN]      list domains\n"
 msgstr "  \\dD[S+] [PATTERN]      вивести домени\n"
 
-#: help.c:237
+#: help.c:241
 #, c-format
 msgid "  \\ddp    [PATTERN]      list default privileges\n"
 msgstr "  \\ddp    [PATTERN]      вивести привілеї за замовчуванням\n"
 
-#: help.c:238
+#: help.c:242
 #, c-format
 msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
 msgstr "  \\dE[S+] [PATTERN]      вивести зовнішні таблиці\n"
 
-#: help.c:239
+#: help.c:243
 #, c-format
 msgid "  \\des[+] [PATTERN]      list foreign servers\n"
 msgstr "  \\des[+] [PATTERN]      вивести зовнішні сервери\n"
 
-#: help.c:240
+#: help.c:244
 #, c-format
 msgid "  \\det[+] [PATTERN]      list foreign tables\n"
 msgstr "  \\dE[S+] [PATTERN]      вивести зовнішні таблиці\n"
 
-#: help.c:241
+#: help.c:245
 #, c-format
 msgid "  \\deu[+] [PATTERN]      list user mappings\n"
 msgstr "  \\deu[+] [PATTERN]      вивести користувацькі зіставлення\n"
 
-#: help.c:242
+#: help.c:246
 #, c-format
 msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
 msgstr "  \\dew[+] [PATTERN]      список джерел сторонніх даних\n"
 
-#: help.c:243
+#: help.c:247
 #, c-format
 msgid "  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
 "                         list [only agg/normal/procedure/trigger/window] functions\n"
 msgstr "  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
 "                         список [лише агрегатних/нормальних/процедурних/тригерних/віконних] функцій\n"
 
-#: help.c:245
+#: help.c:249
 #, c-format
 msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
 msgstr "  \\dF[+]  [PATTERN]      вивести конфігурації текстового пошуку\n"
 
-#: help.c:246
+#: help.c:250
 #, c-format
 msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
 msgstr "  \\dFd[+] [PATTERN]      вивести словники текстового пошуку\n"
 
-#: help.c:247
+#: help.c:251
 #, c-format
 msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
 msgstr "  \\dFp[+] [PATTERN]      вивести парсери текстового пошуку\n"
 
-#: help.c:248
+#: help.c:252
 #, c-format
 msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
 msgstr "  \\dFt[+] [PATTERN]      вивести шаблони текстового пошуку\n"
 
-#: help.c:249
+#: help.c:253
 #, c-format
 msgid "  \\dg[S+] [PATTERN]      list roles\n"
 msgstr "  \\dg[S+] [PATTERN]      вивести ролі\n"
 
-#: help.c:250
+#: help.c:254
 #, c-format
 msgid "  \\di[S+] [PATTERN]      list indexes\n"
 msgstr "  \\di[S+] [PATTERN]      вивести індекси\n"
 
-#: help.c:251
+#: help.c:255
 #, c-format
 msgid "  \\dl                    list large objects, same as \\lo_list\n"
 msgstr "  \\dl                    вивести великі об'єкти, те саме, що \\lo_list\n"
 
-#: help.c:252
+#: help.c:256
 #, c-format
 msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
 msgstr "  \\dL[S+] [PATTERN]      вивести процедурні мови\n"
 
-#: help.c:253
+#: help.c:257
 #, c-format
 msgid "  \\dm[S+] [PATTERN]      list materialized views\n"
 msgstr "  \\dm[S+] [PATTERN]      вивести матеріалізовані подання\n"
 
-#: help.c:254
+#: help.c:258
 #, c-format
 msgid "  \\dn[S+] [PATTERN]      list schemas\n"
 msgstr "  \\dn[S+] [PATTERN]      вивести схеми\n"
 
-#: help.c:255
+#: help.c:259
 #, c-format
 msgid "  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
 "                         list operators\n"
 msgstr "  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
 "                         список операторів\n"
 
-#: help.c:257
+#: help.c:261
 #, c-format
 msgid "  \\dO[S+] [PATTERN]      list collations\n"
 msgstr "  \\dO[S+] [PATTERN]      вивести правила сортування\n"
 
-#: help.c:258
+#: help.c:262
 #, c-format
 msgid "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
 msgstr "  \\dp     [PATTERN]      вивести привілеї доступу до таблиць, подань або послідновностей \n"
 
-#: help.c:259
+#: help.c:263
 #, c-format
 msgid "  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n"
 msgstr "  \\dP[itn+] [PATTERN]    вивести [тільки індекс/таблицю] секційні відношення [n=вкладені]\n"
 
-#: help.c:260
+#: help.c:264
 #, c-format
 msgid "  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n"
 msgstr "  \\drds [ROLEPTRN [DBPTRN]] вивести налаштування ролей побазово\n"
 
-#: help.c:261
+#: help.c:265
 #, c-format
 msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
 msgstr "  \\dRp[+] [PATTERN]      вивести реплікаційні публікації\n"
 
-#: help.c:262
+#: help.c:266
 #, c-format
 msgid "  \\dRs[+] [PATTERN]      list replication subscriptions\n"
 msgstr "  \\dRs[+] [PATTERN]      вивести реплікаційні підписки\n"
 
-#: help.c:263
+#: help.c:267
 #, c-format
 msgid "  \\ds[S+] [PATTERN]      list sequences\n"
 msgstr "  \\ds[S+] [PATTERN]      вивести послідовності\n"
 
-#: help.c:264
+#: help.c:268
 #, c-format
 msgid "  \\dt[S+] [PATTERN]      list tables\n"
 msgstr "  \\dt[S+] [PATTERN]      вивести таблиці\n"
 
-#: help.c:265
+#: help.c:269
 #, c-format
 msgid "  \\dT[S+] [PATTERN]      list data types\n"
 msgstr "  \\dT[S+] [PATTERN]      вивести типи даних\n"
 
-#: help.c:266
+#: help.c:270
 #, c-format
 msgid "  \\du[S+] [PATTERN]      list roles\n"
 msgstr "  \\du[S+] [PATTERN]      вивести ролі\n"
 
-#: help.c:267
+#: help.c:271
 #, c-format
 msgid "  \\dv[S+] [PATTERN]      list views\n"
 msgstr "  \\dv[S+] [PATTERN]      вивести подання\n"
 
-#: help.c:268
+#: help.c:272
 #, c-format
 msgid "  \\dx[+]  [PATTERN]      list extensions\n"
 msgstr "  \\dx[+]  [PATTERN]      вивести розширення\n"
 
-#: help.c:269
+#: help.c:273
 #, c-format
 msgid "  \\dX     [PATTERN]      list extended statistics\n"
 msgstr "  \\dX     [PATTERN]      список розширеної статистики\n"
 
-#: help.c:270
+#: help.c:274
 #, c-format
 msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
 msgstr "  \\dy[+]     [PATTERN]      вивести тригери подій\n"
 
-#: help.c:271
+#: help.c:275
 #, c-format
 msgid "  \\l[+]   [PATTERN]      list databases\n"
 msgstr "  \\l[+]   [PATTERN]      вивести бази даних\n"
 
-#: help.c:272
+#: help.c:276
 #, c-format
 msgid "  \\sf[+]  FUNCNAME       show a function's definition\n"
 msgstr "  \\sf[+]  FUNCNAME       відобразити визначення функції\n"
 
-#: help.c:273
+#: help.c:277
 #, c-format
 msgid "  \\sv[+]  VIEWNAME       show a view's definition\n"
 msgstr "  \\sv[+]  VIEWNAME       відобразити визначення подання\n"
 
-#: help.c:274
+#: help.c:278
 #, c-format
 msgid "  \\z      [PATTERN]      same as \\dp\n"
 msgstr "  \\z      [PATTERN]      те саме, що \\dp\n"
 
-#: help.c:277
+#: help.c:281
 #, c-format
 msgid "Formatting\n"
 msgstr "Форматування\n"
 
-#: help.c:278
+#: help.c:282
 #, c-format
 msgid "  \\a                     toggle between unaligned and aligned output mode\n"
 msgstr "  \\a                     перемикання між режимами виводу: unaligned, aligned\n"
 
-#: help.c:279
+#: help.c:283
 #, c-format
 msgid "  \\C [STRING]            set table title, or unset if none\n"
 msgstr "  \\C [STRING]           встановити заголовок таблиці або прибрати, якщо не задано\n"
 
-#: help.c:280
+#: help.c:284
 #, c-format
 msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
 msgstr "  \\f [STRING]            показати або встановити розділювач полів для не вирівняного виводу запиту\n"
 
-#: help.c:281
+#: help.c:285
 #, c-format
 msgid "  \\H                     toggle HTML output mode (currently %s)\n"
 msgstr "  \\H                     переключити режим виводу HTML (поточний: %s)\n"
 
-#: help.c:283
+#: help.c:287
 #, c-format
 msgid "  \\pset [NAME [VALUE]]   set table output option\n"
 "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
@@ -3155,104 +3184,104 @@ msgstr "  \\pset [NAME [VALUE]]   встановити параметр виво
 "                         unicode_border_linestyle|unicode_column_linestyle|\n"
 "                         unicode_header_linestyle)\n"
 
-#: help.c:290
+#: help.c:294
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
 msgstr "  \\t [on|off]          показувати лише рядки (поточно %s)\n"
 
-#: help.c:292
+#: help.c:296
 #, c-format
 msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
 msgstr "  \\T [STRING]            встановити атрибути для HTML <table> або  прибрати, якщо не задані\n"
 
-#: help.c:293
+#: help.c:297
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr "  \\x [on|off|auto]       переключити розширений вивід (поточний: %s)\n"
 
-#: help.c:297
+#: help.c:301
 #, c-format
 msgid "Connection\n"
 msgstr "Підключення\n"
 
-#: help.c:299
+#: help.c:303
 #, c-format
 msgid "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 "                         connect to new database (currently \"%s\")\n"
 msgstr "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}                          під'єднатися до нової бази даних (поточно \"%s\")\n"
 
-#: help.c:303
+#: help.c:307
 #, c-format
 msgid "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 "                         connect to new database (currently no connection)\n"
 msgstr "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}                          під'єднатися до нової бази даних (зараз з'єднання відсутнє)\n"
 
-#: help.c:305
+#: help.c:309
 #, c-format
 msgid "  \\conninfo              display information about current connection\n"
 msgstr "  \\conninfo             показати інформацію про поточне з'єднання\n"
 
-#: help.c:306
+#: help.c:310
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
 msgstr "  \\encoding [ENCODING]   показати або встановити кодування клієнта\n"
 
-#: help.c:307
+#: help.c:311
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
 msgstr "  \\password [USERNAME]  безпечно змінити пароль користувача \n"
 
-#: help.c:310
+#: help.c:314
 #, c-format
 msgid "Operating System\n"
 msgstr "Операційна система\n"
 
-#: help.c:311
+#: help.c:315
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [DIR]             змінити поточний робочий каталог\n"
 
-#: help.c:312
+#: help.c:316
 #, c-format
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
 msgstr "  \\setenv NAME [VALUE]   встановити або скинути змінну середовища\n"
 
-#: help.c:313
+#: help.c:317
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
 msgstr "  \\timing [on|off]       переключити таймер команд (поточний: %s)\n"
 
-#: help.c:315
+#: help.c:319
 #, c-format
 msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
 msgstr "  \\! [COMMAND]           виконати команду в оболонці або запустити інтерактивну оболонку\n"
 
-#: help.c:318
+#: help.c:322
 #, c-format
 msgid "Variables\n"
 msgstr "Змінні\n"
 
-#: help.c:319
+#: help.c:323
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
 msgstr "  \\prompt [TEXT] NAME    запитати користувача значення внутрішньої змінної\n"
 
-#: help.c:320
+#: help.c:324
 #, c-format
 msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
 msgstr "  \\set [NAME [VALUE]]    встановити внутрішню змінну або вивести всі, якщо не задані параметри\n"
 
-#: help.c:321
+#: help.c:325
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
 msgstr "  \\unset NAME            скинути (видалити) значення внутрішньої змінної\n"
 
-#: help.c:324
+#: help.c:328
 #, c-format
 msgid "Large Objects\n"
 msgstr "Великі об'єкти\n"
 
-#: help.c:325
+#: help.c:329
 #, c-format
 msgid "  \\lo_export LOBOID FILE\n"
 "  \\lo_import FILE [COMMENT]\n"
@@ -3263,31 +3292,31 @@ msgstr "  \\lo_export LOBOID FILE\n"
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID      операції з великими об'єктами\n"
 
-#: help.c:352
+#: help.c:356
 #, c-format
 msgid "List of specially treated variables\n\n"
 msgstr "Список спеціальних змінних\n\n"
 
-#: help.c:354
+#: help.c:358
 #, c-format
 msgid "psql variables:\n"
 msgstr "змінні psql:\n"
 
-#: help.c:356
+#: help.c:360
 #, c-format
 msgid "  psql --set=NAME=VALUE\n"
 "  or \\set NAME VALUE inside psql\n\n"
 msgstr "  psql --set=ІМ'Я=ЗНАЧЕННЯ\n"
 "  або \\set ІМ'Я ЗНАЧЕННЯ усередині psql\n\n"
 
-#: help.c:358
+#: help.c:362
 #, c-format
 msgid "  AUTOCOMMIT\n"
 "    if set, successful SQL commands are automatically committed\n"
 msgstr "  AUTOCOMMIT\n"
 "    якщо встановлений, успішні SQL-команди підтверджуються автоматично\n"
 
-#: help.c:360
+#: help.c:364
 #, c-format
 msgid "  COMP_KEYWORD_CASE\n"
 "    determines the case used to complete SQL key words\n"
@@ -3296,20 +3325,20 @@ msgstr "  COMP_KEYWORD_CASE\n"
 "    визначає регістр для автодоповнення ключових слів SQL\n"
 "    [lower, upper, preserve-lower, preserve-upper]\n"
 
-#: help.c:363
+#: help.c:367
 #, c-format
 msgid "  DBNAME\n"
 "    the currently connected database name\n"
 msgstr "  DBNAME     назва під'єднаної бази даних\n"
 
-#: help.c:365
+#: help.c:369
 #, c-format
 msgid "  ECHO\n"
 "    controls what input is written to standard output\n"
 "    [all, errors, none, queries]\n"
 msgstr "  ECHO     контролює ввід, що виводиться на стандартний вивід    [all, errors, none, queries]\n"
 
-#: help.c:368
+#: help.c:372
 #, c-format
 msgid "  ECHO_HIDDEN\n"
 "    if set, display internal queries executed by backslash commands;\n"
@@ -3318,78 +3347,78 @@ msgstr "  ECHO_HIDDEN\n"
 "    якщо ввімкнено, виводить внутрішні запити, виконані за допомогою  \"\\\";\n"
 "    якщо встановлено значення \"noexec\", тільки виводяться, але не виконуються\n"
 
-#: help.c:371
+#: help.c:375
 #, c-format
 msgid "  ENCODING\n"
 "    current client character set encoding\n"
 msgstr "  ENCODING\n"
 "    поточне кодування набору символів клієнта\n"
 
-#: help.c:373
+#: help.c:377
 #, c-format
 msgid "  ERROR\n"
 "    true if last query failed, else false\n"
 msgstr "  ERROR\n"
 "    істина, якщо в останньому запиті є помилка, в іншому разі - хибність\n"
 
-#: help.c:375
+#: help.c:379
 #, c-format
 msgid "  FETCH_COUNT\n"
 "    the number of result rows to fetch and display at a time (0 = unlimited)\n"
 msgstr "  FETCH_COUNT\n"
 "    число рядків з результатами для передачі та відображення за один раз (0 = необмежено)\n"
 
-#: help.c:377
+#: help.c:381
 #, c-format
 msgid "  HIDE_TABLEAM\n"
 "    if set, table access methods are not displayed\n"
 msgstr "  HIDE_TABLEAM\n"
 "    якщо вказано, методи доступу до таблиць не відображаються\n"
 
-#: help.c:379
+#: help.c:383
 #, c-format
 msgid "  HIDE_TOAST_COMPRESSION\n"
 "    if set, compression methods are not displayed\n"
 msgstr "  HIDE_TOAST_COMPRESSION\n"
 "    якщо встановлено, методи стискання не відображаються\n"
 
-#: help.c:381
+#: help.c:385
 #, c-format
 msgid "  HISTCONTROL\n"
 "    controls command history [ignorespace, ignoredups, ignoreboth]\n"
 msgstr "  HISTCONTROL     контролює історію команд [ignorespace, ignoredups, ignoreboth]\n"
 
-#: help.c:383
+#: help.c:387
 #, c-format
 msgid "  HISTFILE\n"
 "    file name used to store the command history\n"
 msgstr "  HISTFILE     ім'я файлу для зберігання історії команд\n"
 
-#: help.c:385
+#: help.c:389
 #, c-format
 msgid "  HISTSIZE\n"
 "    maximum number of commands to store in the command history\n"
 msgstr "  HISTSIZE     максимальна кількість команд для зберігання в історії команд\n"
 
-#: help.c:387
+#: help.c:391
 #, c-format
 msgid "  HOST\n"
 "    the currently connected database server host\n"
 msgstr "  HOST     поточний підключений хост сервера бази даних\n"
 
-#: help.c:389
+#: help.c:393
 #, c-format
 msgid "  IGNOREEOF\n"
 "    number of EOFs needed to terminate an interactive session\n"
 msgstr "  IGNOREEOF     кількість EOF для завершення інтерактивної сесії\n"
 
-#: help.c:391
+#: help.c:395
 #, c-format
 msgid "  LASTOID\n"
 "    value of the last affected OID\n"
 msgstr "  LASTOID     значення останнього залученого OID\n"
 
-#: help.c:393
+#: help.c:397
 #, c-format
 msgid "  LAST_ERROR_MESSAGE\n"
 "  LAST_ERROR_SQLSTATE\n"
@@ -3398,63 +3427,63 @@ msgstr "  LAST_ERROR_MESSAGE\n"
 "  LAST_ERROR_SQLSTATE\n"
 "    повідомлення та код SQLSTATE останньої помилки, або пустий рядок та \"00000\", якщо помилки не було\n"
 
-#: help.c:396
+#: help.c:400
 #, c-format
 msgid "  ON_ERROR_ROLLBACK\n"
 "    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"
 msgstr "  ON_ERROR_ROLLBACK\n"
 "    якщо встановлено, транзакція не припиняється у разі помилки (використовуються неявні точки збереження)\n"
 
-#: help.c:398
+#: help.c:402
 #, c-format
 msgid "  ON_ERROR_STOP\n"
 "    stop batch execution after error\n"
 msgstr "  ON_ERROR_STOP\n"
 "    зупиняти виконання пакету команд після помилки\n"
 
-#: help.c:400
+#: help.c:404
 #, c-format
 msgid "  PORT\n"
 "    server port of the current connection\n"
 msgstr "  PORT\n"
 "    порт сервера для поточного з'єднання\n"
 
-#: help.c:402
+#: help.c:406
 #, c-format
 msgid "  PROMPT1\n"
 "    specifies the standard psql prompt\n"
 msgstr "  PROMPT1\n"
 "    визначає стандратне запрошення psql \n"
 
-#: help.c:404
+#: help.c:408
 #, c-format
 msgid "  PROMPT2\n"
 "    specifies the prompt used when a statement continues from a previous line\n"
 msgstr "  PROMPT2\n"
 "    визначає запрошення, яке використовується при продовженні команди з попереднього рядка\n"
 
-#: help.c:406
+#: help.c:410
 #, c-format
 msgid "  PROMPT3\n"
 "    specifies the prompt used during COPY ... FROM STDIN\n"
 msgstr "  PROMPT3\n"
 "    визначає запрошення, яке виконується під час COPY ... FROM STDIN\n"
 
-#: help.c:408
+#: help.c:412
 #, c-format
 msgid "  QUIET\n"
 "    run quietly (same as -q option)\n"
 msgstr "  QUIET\n"
 "    тихий запуск ( як із параметром -q)\n"
 
-#: help.c:410
+#: help.c:414
 #, c-format
 msgid "  ROW_COUNT\n"
 "    number of rows returned or affected by last query, or 0\n"
 msgstr "  ROW_COUNT\n"
 "    число повернених або оброблених рядків останнім запитом, або 0\n"
 
-#: help.c:412
+#: help.c:416
 #, c-format
 msgid "  SERVER_VERSION_NAME\n"
 "  SERVER_VERSION_NUM\n"
@@ -3463,49 +3492,49 @@ msgstr "  SERVER_VERSION_NAME\n"
 "  SERVER_VERSION_NUM\n"
 "    версія серевера (у короткому текстовому або числовому форматі)\n"
 
-#: help.c:415
+#: help.c:419
 #, c-format
 msgid "  SHOW_CONTEXT\n"
 "    controls display of message context fields [never, errors, always]\n"
 msgstr "  SHOW_CONTEXT\n"
 "    керує відображенням полів контексту повідомлень [never, errors, always]\n"
 
-#: help.c:417
+#: help.c:421
 #, c-format
 msgid "  SINGLELINE\n"
 "    if set, end of line terminates SQL commands (same as -S option)\n"
 msgstr "  SINGLELINE\n"
 "    якщо встановлено, кінець рядка завершує режим вводу SQL-команди (як з параметром -S)\n"
 
-#: help.c:419
+#: help.c:423
 #, c-format
 msgid "  SINGLESTEP\n"
 "    single-step mode (same as -s option)\n"
 msgstr "  SINGLESTEP\n"
 "    покроковий режим (як з параметром -s)\n"
 
-#: help.c:421
+#: help.c:425
 #, c-format
 msgid "  SQLSTATE\n"
 "    SQLSTATE of last query, or \"00000\" if no error\n"
 msgstr "  SQLSTATE\n"
 "    SQLSTATE останнього запиту, або \"00000\" якщо немає помилок\n"
 
-#: help.c:423
+#: help.c:427
 #, c-format
 msgid "  USER\n"
 "    the currently connected database user\n"
 msgstr "  USER\n"
 "    поточний користувач, підключений до бази даних\n"
 
-#: help.c:425
+#: help.c:429
 #, c-format
 msgid "  VERBOSITY\n"
 "    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
 msgstr "  VERBOSITY\n"
 "    контролює докладність звітів про помилку [default, verbose, terse, sqlstate]\n"
 
-#: help.c:427
+#: help.c:431
 #, c-format
 msgid "  VERSION\n"
 "  VERSION_NAME\n"
@@ -3516,112 +3545,119 @@ msgstr "  VERSION\n"
 "  VERSION_NUM\n"
 "    psql версія (в розгорнутому, в короткому текстовому або числовому форматі)\n"
 
-#: help.c:432
+#: help.c:436
 #, c-format
 msgid "\n"
 "Display settings:\n"
 msgstr "\n"
 "Налаштування відобреження:\n"
 
-#: help.c:434
+#: help.c:438
 #, c-format
 msgid "  psql --pset=NAME[=VALUE]\n"
 "  or \\pset NAME [VALUE] inside psql\n\n"
 msgstr "  psql --pset=NAME[=VALUE]\n"
 "  або \\pset ІМ'Я [VALUE] всередині psql\n\n"
 
-#: help.c:436
+#: help.c:440
 #, c-format
 msgid "  border\n"
 "    border style (number)\n"
 msgstr "  border\n"
 "    стиль рамки (число)\n"
 
-#: help.c:438
+#: help.c:442
 #, c-format
 msgid "  columns\n"
 "    target width for the wrapped format\n"
 msgstr "  columns\n"
 "    цільова ширина для формату з переносом\n"
 
-#: help.c:440
+#: help.c:444
+#, c-format
+msgid "  csv_fieldsep\n"
+"    field separator for CSV output format (default \"%c\")\n"
+msgstr "  csv_fieldsep\n"
+"    розділювач полів для виводу CSV (за замовчуванням \"%c\")\n"
+
+#: help.c:447
 #, c-format
 msgid "  expanded (or x)\n"
 "    expanded output [on, off, auto]\n"
 msgstr "  expanded (or x)\n"
 "    розширений вивід [on, off, auto]\n"
 
-#: help.c:442
+#: help.c:449
 #, c-format
 msgid "  fieldsep\n"
 "    field separator for unaligned output (default \"%s\")\n"
 msgstr "  fieldsep\n"
 "    розділювач полів для не вирівняного виводу (за замовчуванням \"%s\")\n"
 
-#: help.c:445
+#: help.c:452
 #, c-format
 msgid "  fieldsep_zero\n"
 "    set field separator for unaligned output to a zero byte\n"
 msgstr "  fieldsep_zero\n"
 "    встановити розділювач полів для невирівняного виводу на нульовий байт\n"
 
-#: help.c:447
+#: help.c:454
 #, c-format
 msgid "  footer\n"
 "    enable or disable display of the table footer [on, off]\n"
 msgstr "  footer\n"
 "    вмикає або вимикає вивід підписів таблиці [on, off]\n"
 
-#: help.c:449
+#: help.c:456
 #, c-format
 msgid "  format\n"
 "    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
 msgstr "  format\n"
 "    встановити формат виводу [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
 
-#: help.c:451
+#: help.c:458
 #, c-format
 msgid "  linestyle\n"
 "    set the border line drawing style [ascii, old-ascii, unicode]\n"
 msgstr "  linestyle\n"
 "    встановлює стиль малювання ліній рамки [ascii, old-ascii, unicode]\n"
 
-#: help.c:453
+#: help.c:460
 #, c-format
 msgid "  null\n"
 "    set the string to be printed in place of a null value\n"
 msgstr "  null\n"
 "    встановлює рядок, який буде виведено замість значення (null)\n"
 
-#: help.c:455
+#: help.c:462
 #, c-format
 msgid "  numericlocale\n"
 "    enable display of a locale-specific character to separate groups of digits\n"
 msgstr "  numericlocale\n"
 "    вмикає виведення заданого локалью роздільника групи цифр\n"
 
-#: help.c:457
+#: help.c:464
 #, c-format
 msgid "  pager\n"
 "    control when an external pager is used [yes, no, always]\n"
 msgstr "  pager\n"
 "    контролює використання зовнішнього пейджера  [yes, no, always]\n"
 
-#: help.c:459
+#: help.c:466
 #, c-format
 msgid "  recordsep\n"
 "    record (line) separator for unaligned output\n"
 msgstr "  recordsep\n"
 "    розділювач записів (рядків) для не вирівняного виводу\n"
 
-#: help.c:461
+#: help.c:468
 #, c-format
 msgid "  recordsep_zero\n"
 "    set record separator for unaligned output to a zero byte\n"
 msgstr "  recordsep_zero\n"
 "    встановлює розділювач записів для невирівняного виводу  на нульовий байт\n"
 
-#: help.c:463
+#: help.c:470
 #, c-format
 msgid "  tableattr (or T)\n"
 "    specify attributes for table tag in html format, or proportional\n"
@@ -3630,21 +3666,21 @@ msgstr "  tableattr (або T)\n"
 "    вказує атрибути для тегу table у html форматі або пропорційні \n"
 "    ширини стовпців для вирівняних вліво даних, у latex-longtable форматі\n"
 
-#: help.c:466
+#: help.c:473
 #, c-format
 msgid "  title\n"
 "    set the table title for subsequently printed tables\n"
 msgstr "  title\n"
 "    задає заголовок таблиці для послідовно друкованих таблиць\n"
 
-#: help.c:468
+#: help.c:475
 #, c-format
 msgid "  tuples_only\n"
 "    if set, only actual table data is shown\n"
 msgstr "  tuples_only\n"
 "    якщо встановлено, виводяться лише фактичні табличні дані\n"
 
-#: help.c:470
+#: help.c:477
 #, c-format
 msgid "  unicode_border_linestyle\n"
 "  unicode_column_linestyle\n"
@@ -3655,21 +3691,21 @@ msgstr "  unicode_border_linestyle\n"
 "  unicode_header_linestyle\n"
 "    задає стиль мальювання ліній (Unicode) [single, double]\n"
 
-#: help.c:475
+#: help.c:482
 #, c-format
 msgid "\n"
 "Environment variables:\n"
 msgstr "\n"
 "Змінні оточення:\n"
 
-#: help.c:479
+#: help.c:486
 #, c-format
 msgid "  NAME=VALUE [NAME=VALUE] psql ...\n"
 "  or \\setenv NAME [VALUE] inside psql\n\n"
 msgstr "  ІМ'Я=ЗНАЧЕННЯ [ІМ'Я=ЗНАЧЕННЯ] psql ...\n"
 "  або \\setenv ІМ'Я [VALUE] всередині psql\n\n"
 
-#: help.c:481
+#: help.c:488
 #, c-format
 msgid "  set NAME=VALUE\n"
 "  psql ...\n"
@@ -3678,116 +3714,116 @@ msgstr "  встановлює ІМ'Я=ЗНАЧЕННЯ\n"
 "  psql ...\n"
 "  або \\setenv ІМ'Я [VALUE]  всередині psql\n\n"
 
-#: help.c:484
+#: help.c:491
 #, c-format
 msgid "  COLUMNS\n"
 "    number of columns for wrapped format\n"
 msgstr "  COLUMNS\n"
 "    число стовпців для форматування з переносом\n"
 
-#: help.c:486
+#: help.c:493
 #, c-format
 msgid "  PGAPPNAME\n"
 "    same as the application_name connection parameter\n"
 msgstr "  PGAPPNAME\n"
 "     те саме, що параметр підключення application_name\n"
 
-#: help.c:488
+#: help.c:495
 #, c-format
 msgid "  PGDATABASE\n"
 "    same as the dbname connection parameter\n"
 msgstr "  PGDATABASE\n"
 "    те саме, що параметр підключення dbname\n"
 
-#: help.c:490
+#: help.c:497
 #, c-format
 msgid "  PGHOST\n"
 "    same as the host connection parameter\n"
 msgstr "  PGHOST\n"
 "    те саме, що параметр підключення host\n"
 
-#: help.c:492
+#: help.c:499
 #, c-format
 msgid "  PGPASSFILE\n"
 "    password file name\n"
 msgstr "  PGPASSFILE\n"
 "    назва файлу з паролем\n"
 
-#: help.c:494
+#: help.c:501
 #, c-format
 msgid "  PGPASSWORD\n"
 "    connection password (not recommended)\n"
 msgstr "  PGPASSWORD\n"
 "    пароль для підключення (не рекомендується)\n"
 
-#: help.c:496
+#: help.c:503
 #, c-format
 msgid "  PGPORT\n"
 "    same as the port connection parameter\n"
 msgstr "  PGPORT\n"
 "    те саме, що параметр підключення port\n"
 
-#: help.c:498
+#: help.c:505
 #, c-format
 msgid "  PGUSER\n"
 "    same as the user connection parameter\n"
 msgstr "  PGUSER\n"
 "    те саме, що параметр підключення user\n"
 
-#: help.c:500
+#: help.c:507
 #, c-format
 msgid "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    editor used by the \\e, \\ef, and \\ev commands\n"
 msgstr "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    редактор для команд \\e, \\ef і \\ev\n"
 
-#: help.c:502
+#: help.c:509
 #, c-format
 msgid "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    how to specify a line number when invoking the editor\n"
 msgstr "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    як вказати номер рядка при виклику редактора\n"
 
-#: help.c:504
+#: help.c:511
 #, c-format
 msgid "  PSQL_HISTORY\n"
 "    alternative location for the command history file\n"
 msgstr "  PSQL_HISTORY\n"
 "    альтернативне розміщення файлу з історією команд\n"
 
-#: help.c:506
+#: help.c:513
 #, c-format
 msgid "  PSQL_PAGER, PAGER\n"
 "    name of external pager program\n"
 msgstr "  PSQL_PAGER, PAGER\n"
 "    ім'я програми зовнішнього пейджеру\n"
 
-#: help.c:508
+#: help.c:515
 #, c-format
 msgid "  PSQLRC\n"
 "    alternative location for the user's .psqlrc file\n"
 msgstr "  PSQLRC\n"
 "    альтернативне розміщення користувацького файла .psqlrc\n"
 
-#: help.c:510
+#: help.c:517
 #, c-format
 msgid "  SHELL\n"
 "    shell used by the \\! command\n"
 msgstr "  SHELL\n"
 "    оболонка, що використовується командою \\!\n"
 
-#: help.c:512
+#: help.c:519
 #, c-format
 msgid "  TMPDIR\n"
 "    directory for temporary files\n"
 msgstr "  TMPDIR\n"
 "    каталог для тимчасових файлів\n"
 
-#: help.c:557
+#: help.c:564
 msgid "Available help:\n"
 msgstr "Доступна довідка:\n"
 
-#: help.c:652
+#: help.c:659
 #, c-format
 msgid "Command:     %s\n"
 "Description: %s\n"
@@ -3800,7 +3836,7 @@ msgstr "Команда:     %s\n"
 "%s\n\n"
 "URL: %s\n\n"
 
-#: help.c:675
+#: help.c:682
 #, c-format
 msgid "No help available for \"%s\".\n"
 "Try \\h with no arguments to see available help.\n"
@@ -6258,7 +6294,7 @@ msgstr "зайвий аргумент \"%s\" проігнорований"
 msgid "could not find own program executable"
 msgstr "не вдалося знайти ехе файл власної програми"
 
-#: tab-complete.c:4940
+#: tab-complete.c:4954
 #, c-format
 msgid "tab completion query failed: %s\n"
 "Query was:\n"
