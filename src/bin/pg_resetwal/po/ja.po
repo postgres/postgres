@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-09 12:01+0900\n"
-"PO-Revision-Date: 2022-05-10 14:36+0900\n"
+"POT-Creation-Date: 2025-11-17 11:37+0900\n"
+"PO-Revision-Date: 2025-11-17 13:23+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -83,117 +83,112 @@ msgid "could not get exit code from subprocess: error code %lu"
 msgstr "サブプロセスの終了コードを入手できませんでした。: エラーコード %lu"
 
 #. translator: the second %s is a command line argument (-e, etc)
-#: pg_resetwal.c:163 pg_resetwal.c:176 pg_resetwal.c:189 pg_resetwal.c:202
-#: pg_resetwal.c:209 pg_resetwal.c:228 pg_resetwal.c:241 pg_resetwal.c:249
-#: pg_resetwal.c:269 pg_resetwal.c:280
+#: pg_resetwal.c:166 pg_resetwal.c:179 pg_resetwal.c:192 pg_resetwal.c:205
+#: pg_resetwal.c:212 pg_resetwal.c:231 pg_resetwal.c:244 pg_resetwal.c:252
+#: pg_resetwal.c:271 pg_resetwal.c:285
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "オプション%sの引数が不正です"
 
-#: pg_resetwal.c:164 pg_resetwal.c:177 pg_resetwal.c:190 pg_resetwal.c:203
-#: pg_resetwal.c:210 pg_resetwal.c:229 pg_resetwal.c:242 pg_resetwal.c:250
-#: pg_resetwal.c:270 pg_resetwal.c:281 pg_resetwal.c:303 pg_resetwal.c:316
-#: pg_resetwal.c:323
+#: pg_resetwal.c:167 pg_resetwal.c:180 pg_resetwal.c:193 pg_resetwal.c:206
+#: pg_resetwal.c:213 pg_resetwal.c:232 pg_resetwal.c:245 pg_resetwal.c:253
+#: pg_resetwal.c:272 pg_resetwal.c:286 pg_resetwal.c:308 pg_resetwal.c:321
+#: pg_resetwal.c:328
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_resetwal.c:168
+#: pg_resetwal.c:171
 #, c-format
 msgid "transaction ID epoch (-e) must not be -1"
 msgstr "トランザクションIDの基点(-e)は-1にはできません"
 
-#: pg_resetwal.c:181
+#: pg_resetwal.c:184
 #, c-format
 msgid "oldest transaction ID (-u) must be greater than or equal to %u"
 msgstr "最古のトランザクションID(-u)は%uもしくはそれ以上でなければなりません"
 
-#: pg_resetwal.c:194
+#: pg_resetwal.c:197
 #, c-format
 msgid "transaction ID (-x) must be greater than or equal to %u"
 msgstr "トランザクションID(-x)は%uもしくはそれ以上でなければなりません"
 
-#: pg_resetwal.c:216 pg_resetwal.c:220
+#: pg_resetwal.c:219 pg_resetwal.c:223
 #, c-format
 msgid "transaction ID (-c) must be either 0 or greater than or equal to 2"
 msgstr "トランザクションID(-c)は0もしくは2以上でなければなりません"
 
-#: pg_resetwal.c:233
+#: pg_resetwal.c:236
 #, c-format
 msgid "OID (-o) must not be 0"
 msgstr "OID(-o)は0にはできません"
 
-#: pg_resetwal.c:254
-#, c-format
-msgid "multitransaction ID (-m) must not be 0"
-msgstr "マルチトランザクションID(-m)は0にはできません"
-
-#: pg_resetwal.c:261
+#: pg_resetwal.c:262
 #, c-format
 msgid "oldest multitransaction ID (-m) must not be 0"
 msgstr "最古のマルチトランザクションID(-m)は0にはできません"
 
-#: pg_resetwal.c:274
+#: pg_resetwal.c:276
 #, c-format
-msgid "multitransaction offset (-O) must not be -1"
-msgstr "マルチトランザクションオフセット(-O)は-1にはできません"
+msgid "multitransaction offset (-O) must be between 0 and %u"
+msgstr "マルチトランザクションオフセット(-O)は0と%uとの間である必要があります"
 
-#: pg_resetwal.c:296
+#: pg_resetwal.c:301
 #, c-format
 msgid "argument of --wal-segsize must be a number"
 msgstr "--wal-segsizの引数は数値でなければなりません"
 
-#: pg_resetwal.c:298
+#: pg_resetwal.c:303
 #, c-format
 msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
 msgstr "--wal-segsizeの引数は1から1024の間の2のべき乗でなければなりません"
 
-#: pg_resetwal.c:314
+#: pg_resetwal.c:319
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます。(先頭は\"%s\")"
 
-#: pg_resetwal.c:322
+#: pg_resetwal.c:327
 #, c-format
 msgid "no data directory specified"
 msgstr "データディレクトリが指定されていません"
 
-#: pg_resetwal.c:336
+#: pg_resetwal.c:341
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "\"root\"では実行できません"
 
-#: pg_resetwal.c:337
+#: pg_resetwal.c:342
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "PostgreSQLのスーパーユーザーで%sを実行しなければなりません"
 
-#: pg_resetwal.c:347
+#: pg_resetwal.c:352
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"の権限を読み取れませんでした: %m"
 
-#: pg_resetwal.c:353
+#: pg_resetwal.c:358
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "ディレクトリ\"%s\"に移動できませんでした: %m"
 
-#: pg_resetwal.c:366 pg_resetwal.c:518 pg_resetwal.c:566
+#: pg_resetwal.c:371 pg_resetwal.c:523 pg_resetwal.c:571
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み取り用にオープンできませんでした: %m"
 
-#: pg_resetwal.c:371
+#: pg_resetwal.c:376
 #, c-format
 msgid "lock file \"%s\" exists"
 msgstr "ロックファイル\"%s\"が存在します"
 
-#: pg_resetwal.c:372
+#: pg_resetwal.c:377
 #, c-format
 msgid "Is a server running?  If not, delete the lock file and try again."
 msgstr "サーバーが稼動していませんか? そうでなければロックファイルを削除し再実行してください。"
 
-#: pg_resetwal.c:467
+#: pg_resetwal.c:472
 #, c-format
 msgid ""
 "\n"
@@ -202,7 +197,7 @@ msgstr ""
 "\n"
 "この値が適切だと思われるのであれば、-fを使用して強制リセットしてください。\n"
 
-#: pg_resetwal.c:479
+#: pg_resetwal.c:484
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -213,32 +208,32 @@ msgstr ""
 "先行書き込みログのリセットにはデータ損失の恐れがあります。\n"
 "とにかく処理したいのであれば、-fでリセットを強制してください。\n"
 
-#: pg_resetwal.c:493
+#: pg_resetwal.c:498
 #, c-format
 msgid "Write-ahead log reset\n"
 msgstr "先行書き込みログがリセットされました\n"
 
-#: pg_resetwal.c:525
+#: pg_resetwal.c:530
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "想定外の空のファイル\"%s\""
 
-#: pg_resetwal.c:527 pg_resetwal.c:581
+#: pg_resetwal.c:532 pg_resetwal.c:586
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: pg_resetwal.c:535
+#: pg_resetwal.c:540
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "データディレクトリのバージョンが違います"
 
-#: pg_resetwal.c:536
+#: pg_resetwal.c:541
 #, c-format
 msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
 msgstr "ファイル\"%s\"では\"%s\"となっています、これはこのプログラムのバージョン\"%s\"と互換性がありません"
 
-#: pg_resetwal.c:569
+#: pg_resetwal.c:574
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -249,23 +244,23 @@ msgstr ""
 "  touch %s\n"
 "の後に再実行してください。"
 
-#: pg_resetwal.c:597
+#: pg_resetwal.c:602
 #, c-format
 msgid "pg_control exists but has invalid CRC; proceed with caution"
 msgstr "pg_controlがありましたが、CRCが不正でした; 注意して進めてください"
 
-#: pg_resetwal.c:606
+#: pg_resetwal.c:611
 #, c-format
 msgid "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
 msgid_plural "pg_control specifies invalid WAL segment size (%d bytes); proceed with caution"
 msgstr[0] "pg_controlにあるWALセグメントサイズ(%dバイト)は不正です; 注意して進めてください"
 
-#: pg_resetwal.c:617
+#: pg_resetwal.c:622
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
 msgstr "pg_controlがありましたが、破損あるいは間違ったバージョンです; 無視します"
 
-#: pg_resetwal.c:712
+#: pg_resetwal.c:717
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -274,7 +269,7 @@ msgstr ""
 "pg_controlの推測値:\n"
 "\n"
 
-#: pg_resetwal.c:714
+#: pg_resetwal.c:719
 #, c-format
 msgid ""
 "Current pg_control values:\n"
@@ -283,167 +278,167 @@ msgstr ""
 "現在のpg_controlの値:\n"
 "\n"
 
-#: pg_resetwal.c:716
+#: pg_resetwal.c:721
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_controlバージョン番号:                    %u\n"
 
-#: pg_resetwal.c:718
+#: pg_resetwal.c:723
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "カタログバージョン番号:                      %u\n"
 
-#: pg_resetwal.c:720
+#: pg_resetwal.c:725
 #, c-format
 msgid "Database system identifier:           %llu\n"
 msgstr "データベースシステム識別子:                  %llu\n"
 
-#: pg_resetwal.c:722
+#: pg_resetwal.c:727
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "最終チェックポイントの時系列ID:              %u\n"
 
-#: pg_resetwal.c:724
+#: pg_resetwal.c:729
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "最終チェックポイントのfull_page_writes:      %s\n"
 
-#: pg_resetwal.c:725
+#: pg_resetwal.c:730
 msgid "off"
 msgstr "オフ"
 
-#: pg_resetwal.c:725
+#: pg_resetwal.c:730
 msgid "on"
 msgstr "オン"
 
-#: pg_resetwal.c:726
+#: pg_resetwal.c:731
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "最終チェックポイントのNextXID:               %u:%u\n"
 
-#: pg_resetwal.c:729
+#: pg_resetwal.c:734
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "最終チェックポイントのNextOID:               %u\n"
 
-#: pg_resetwal.c:731
+#: pg_resetwal.c:736
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "最終チェックポイントのNextMultiXactId:       %u\n"
 
-#: pg_resetwal.c:733
+#: pg_resetwal.c:738
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "最終チェックポイントのNextMultiOffset:       %u\n"
 
-#: pg_resetwal.c:735
+#: pg_resetwal.c:740
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "最終チェックポイントのoldestXID:             %u\n"
 
-#: pg_resetwal.c:737
+#: pg_resetwal.c:742
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "最終チェックポイントのoldestXIDのDB:         %u\n"
 
-#: pg_resetwal.c:739
+#: pg_resetwal.c:744
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "最終チェックポイントのoldestActiveXID:       %u\n"
 
-#: pg_resetwal.c:741
+#: pg_resetwal.c:746
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "最終チェックポイントのoldestMultiXid:        %u\n"
 
-#: pg_resetwal.c:743
+#: pg_resetwal.c:748
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "最終チェックポイントのoldestMultiのDB:       %u\n"
 
-#: pg_resetwal.c:745
+#: pg_resetwal.c:750
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "最終チェックポイントのoldestCommitTsXid:     %u\n"
 
-#: pg_resetwal.c:747
+#: pg_resetwal.c:752
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "最終チェックポイントのnewestCommitTsXid:     %u\n"
 
-#: pg_resetwal.c:749
+#: pg_resetwal.c:754
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "最大データアラインメント:                    %u\n"
 
-#: pg_resetwal.c:752
+#: pg_resetwal.c:757
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "データベースのブロックサイズ:                %u\n"
 
-#: pg_resetwal.c:754
+#: pg_resetwal.c:759
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "大きなリレーションのセグメント毎のブロック数:%u\n"
 
-#: pg_resetwal.c:756
+#: pg_resetwal.c:761
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WALのブロックサイズ:                         %u\n"
 
-#: pg_resetwal.c:758 pg_resetwal.c:844
+#: pg_resetwal.c:763 pg_resetwal.c:849
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "WALセグメント当たりのバイト数:               %u\n"
 
-#: pg_resetwal.c:760
+#: pg_resetwal.c:765
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "識別子の最大長:                              %u\n"
 
-#: pg_resetwal.c:762
+#: pg_resetwal.c:767
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "インデックス内の最大列数:                    %u\n"
 
-#: pg_resetwal.c:764
+#: pg_resetwal.c:769
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOASTチャンクの最大サイズ:                   %u\n"
 
-#: pg_resetwal.c:766
+#: pg_resetwal.c:771
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "ラージオブジェクトチャンクのサイズ:          %u\n"
 
-#: pg_resetwal.c:769
+#: pg_resetwal.c:774
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "日付/時刻型の格納方式:                       %s\n"
 
-#: pg_resetwal.c:770
+#: pg_resetwal.c:775
 msgid "64-bit integers"
 msgstr "64ビット整数"
 
-#: pg_resetwal.c:771
+#: pg_resetwal.c:776
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8引数の渡し方:                          %s\n"
 
-#: pg_resetwal.c:772
+#: pg_resetwal.c:777
 msgid "by reference"
 msgstr "参照渡し"
 
-#: pg_resetwal.c:772
+#: pg_resetwal.c:777
 msgid "by value"
 msgstr "値渡し"
 
-#: pg_resetwal.c:773
+#: pg_resetwal.c:778
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "データベージチェックサムのバージョン:        %u\n"
 
-#: pg_resetwal.c:787
+#: pg_resetwal.c:792
 #, c-format
 msgid ""
 "\n"
@@ -456,102 +451,102 @@ msgstr ""
 "変更される値:\n"
 "\n"
 
-#: pg_resetwal.c:791
+#: pg_resetwal.c:796
 #, c-format
 msgid "First log segment after reset:        %s\n"
 msgstr "リセット後最初のログセグメント:              %s\n"
 
-#: pg_resetwal.c:795
+#: pg_resetwal.c:800
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
 msgstr "NextMultiXactId:                             %u\n"
 
-#: pg_resetwal.c:797
+#: pg_resetwal.c:802
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
 msgstr "OldestMultiXid:                              %u\n"
 
-#: pg_resetwal.c:799
+#: pg_resetwal.c:804
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
 msgstr "OldestMultiのDB:                             %u\n"
 
-#: pg_resetwal.c:805
+#: pg_resetwal.c:810
 #, c-format
 msgid "NextMultiOffset:                      %u\n"
 msgstr "NextMultiOffset:                             %u\n"
 
-#: pg_resetwal.c:811
+#: pg_resetwal.c:816
 #, c-format
 msgid "NextOID:                              %u\n"
 msgstr "NextOID:                                     %u\n"
 
-#: pg_resetwal.c:817
+#: pg_resetwal.c:822
 #, c-format
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                                     %u\n"
 
-#: pg_resetwal.c:819
+#: pg_resetwal.c:824
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                                   %u\n"
 
-#: pg_resetwal.c:821
+#: pg_resetwal.c:826
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "OldestXIDのDB:                               %u\n"
 
-#: pg_resetwal.c:827
+#: pg_resetwal.c:832
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "NextXID基点:                                 %u\n"
 
-#: pg_resetwal.c:833
+#: pg_resetwal.c:838
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                           %u\n"
 
-#: pg_resetwal.c:838
+#: pg_resetwal.c:843
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                           %u\n"
 
-#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
+#: pg_resetwal.c:927 pg_resetwal.c:986 pg_resetwal.c:1021
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
+#: pg_resetwal.c:959 pg_resetwal.c:1000 pg_resetwal.c:1038
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
+#: pg_resetwal.c:962 pg_resetwal.c:1003 pg_resetwal.c:1041
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をクローズできませんでした: %m"
 
-#: pg_resetwal.c:990 pg_resetwal.c:1028
+#: pg_resetwal.c:995 pg_resetwal.c:1033
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "ファイル\"%s\"を削除できませんでした: %m"
 
-#: pg_resetwal.c:1100
+#: pg_resetwal.c:1105
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_resetwal.c:1108 pg_resetwal.c:1120
+#: pg_resetwal.c:1113 pg_resetwal.c:1125
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: pg_resetwal.c:1125
+#: pg_resetwal.c:1130
 #, c-format
 msgid "fsync error: %m"
 msgstr "fsyncエラー: %m"
 
-#: pg_resetwal.c:1134
+#: pg_resetwal.c:1139
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -560,7 +555,7 @@ msgstr ""
 "%sはPostgreSQLの先行書き込みログをリセットします。\n"
 "\n"
 
-#: pg_resetwal.c:1135
+#: pg_resetwal.c:1140
 #, c-format
 msgid ""
 "Usage:\n"
@@ -571,12 +566,12 @@ msgstr ""
 "  %s [OPTION]... DATADIR\n"
 "\n"
 
-#: pg_resetwal.c:1136
+#: pg_resetwal.c:1141
 #, c-format
 msgid "Options:\n"
 msgstr "オプション:\n"
 
-#: pg_resetwal.c:1137
+#: pg_resetwal.c:1142
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -587,72 +582,72 @@ msgstr ""
 "                                  コミットタイムスタンプを持つ最古と最新の\n"
 "                                  トランザクション(0は変更しないことを意味する)\n"
 
-#: pg_resetwal.c:1140
+#: pg_resetwal.c:1145
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
 msgstr " [-D, --pgdata=]DATADIR           データディレクトリ\n"
 
-#: pg_resetwal.c:1141
+#: pg_resetwal.c:1146
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr "  -e, --epoch=XIDEPOCH            次のトランザクションIDの基点を設定\n"
 
-#: pg_resetwal.c:1142
+#: pg_resetwal.c:1147
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
 msgstr "  -f, --force                     強制的に更新を実施\n"
 
-#: pg_resetwal.c:1143
+#: pg_resetwal.c:1148
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
 msgstr "  -l, --next-wal-file=WALFILE     新しいWALの最小開始ポイントを設定\n"
 
-#: pg_resetwal.c:1144
+#: pg_resetwal.c:1149
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
 msgstr "  -m, --multixact-ids=MXID,MXID   次および最古のマルチトランザクションIDを設定\n"
 
-#: pg_resetwal.c:1145
+#: pg_resetwal.c:1150
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
 msgstr "  -n, --dry-run                   更新をせず、単に何が行なわれるかを表示\n"
 
-#: pg_resetwal.c:1146
+#: pg_resetwal.c:1151
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID              次のOIDを設定\n"
 
-#: pg_resetwal.c:1147
+#: pg_resetwal.c:1152
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr "  -O, --multixact-offset=OFFSET   次のマルチトランザクションオフセットを設定\n"
 
-#: pg_resetwal.c:1148
+#: pg_resetwal.c:1153
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
 msgstr "  -u, --oldest-transaction-id=XID 最古のトランザクションIDを設定\n"
 
-#: pg_resetwal.c:1149
+#: pg_resetwal.c:1154
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
 msgstr "  -V, --version                   バージョン情報を表示して終了\n"
 
-#: pg_resetwal.c:1150
+#: pg_resetwal.c:1155
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID   次のトランザクションIDを設定\n"
 
-#: pg_resetwal.c:1151
+#: pg_resetwal.c:1156
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE          WALセグメントのサイズ、単位はメガバイト\n"
 
-#: pg_resetwal.c:1152
+#: pg_resetwal.c:1157
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
 msgstr "  -?, --help                      このヘルプを表示して終了\n"
 
-#: pg_resetwal.c:1153
+#: pg_resetwal.c:1158
 #, c-format
 msgid ""
 "\n"
@@ -661,91 +656,13 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_resetwal.c:1154
+#: pg_resetwal.c:1159
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "
-
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
-
-#~ msgid "transaction ID (-x) must not be 0"
-#~ msgstr "トランザクションID(-x)は0にはできません"
-
-#~ msgid "  -V, --version                  output version information, then exit\n"
-#~ msgstr "  -V, --version                  バージョン情報を表示して終了\n"
-
-#~ msgid "  -?, --help                     show this help, then exit\n"
-#~ msgstr "  -?, --help                     このヘルプを表示して終了\n"
-
-#~ msgid "%s: cannot be executed by \"root\"\n"
-#~ msgstr "%s: \"root\"では実行できません\n"
-
-#~ msgid "%s: could not change directory to \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"に移動できませんでした: %s\n"
-
-#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
-#~ msgstr "%s: 読み取り用のファイル\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "Transaction log reset\n"
-#~ msgstr "トランザクションログをリセットします。\n"
-
-#~ msgid "%s: could not read file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"を読み込めませんでした: %s\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "浮動小数点数"
-
-#~ msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
-#~ msgstr "%s: 内部エラー -- sizeof(ControlFileData)が大きすぎます ... PG_CONTROL_SIZEを修正してください\n"
-
-#~ msgid "%s: could not create pg_control file: %s\n"
-#~ msgstr "%s: pg_controlファイルを作成できませんでした: %s\n"
-
-#~ msgid "%s: could not write pg_control file: %s\n"
-#~ msgstr "%s: pg_controlファイルを書き込めませんでした: %s\n"
-
-#~ msgid "%s: could not open directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "%s: could not read directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"を読み取ることができませんでした。: %s\n"
-
-#~ msgid "%s: could not close directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ \"%s\" をクローズできませんでした: %s\n"
-
-#~ msgid "%s: could not delete file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"を削除できませんでした: %s\n"
-
-#~ msgid "%s: could not open file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "%s: could not write file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"を書き込めませんでした: %s\n"
-
-#~ msgid "  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"
-#~ msgstr "  -c XID,XID       コミットタイムスタンプを作成する最も古いトランザクションと最も新しいトランザクションを設定します\n"
-
 #~ msgid "                   (zero in either value means no change)\n"
 #~ msgstr "                   (いずれかの値での0は変更がないことを意味します)\n"
-
-#~ msgid " [-D] DATADIR      data directory\n"
-#~ msgstr " [-D] DATADIR      データベースディレクトリ\n"
-
-#~ msgid "  -V, --version    output version information, then exit\n"
-#~ msgstr "  -V, --version    バージョン情報を出力、終了します\n"
-
-#~ msgid "  -x XID           set next transaction ID\n"
-#~ msgstr "  -x XID          次のトランザクションIDを設定します\n"
-
-#~ msgid "  -?, --help       show this help, then exit\n"
-#~ msgstr "  -?, --help                このヘルプを表示し、終了します\n"
-
-#~ msgid "First log file ID after reset:        %u\n"
-#~ msgstr "リセット後、現在のログファイルID:     %u\n"
 
 #~ msgid "  --help          show this help, then exit\n"
 #~ msgstr "  --help          ヘルプを表示し、終了します\n"
@@ -753,14 +670,74 @@ msgstr "%s ホームページ: <%s>\n"
 #~ msgid "  --version       output version information, then exit\n"
 #~ msgstr "  --version       バージョン情報を表示し、終了します\n"
 
+#~ msgid "  -?, --help                     show this help, then exit\n"
+#~ msgstr "  -?, --help                     このヘルプを表示して終了\n"
+
+#~ msgid "  -?, --help       show this help, then exit\n"
+#~ msgstr "  -?, --help                このヘルプを表示し、終了します\n"
+
+#~ msgid "  -V, --version                  output version information, then exit\n"
+#~ msgstr "  -V, --version                  バージョン情報を表示して終了\n"
+
+#~ msgid "  -V, --version    output version information, then exit\n"
+#~ msgstr "  -V, --version    バージョン情報を出力、終了します\n"
+
+#~ msgid "  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"
+#~ msgstr "  -c XID,XID       コミットタイムスタンプを作成する最も古いトランザクションと最も新しいトランザクションを設定します\n"
+
+#~ msgid "  -x XID           set next transaction ID\n"
+#~ msgstr "  -x XID          次のトランザクションIDを設定します\n"
+
+#~ msgid " [-D] DATADIR      data directory\n"
+#~ msgstr " [-D] DATADIR      データベースディレクトリ\n"
+
+#~ msgid "%s: cannot be executed by \"root\"\n"
+#~ msgstr "%s: \"root\"では実行できません\n"
+
+#~ msgid "%s: could not change directory to \"%s\": %s\n"
+#~ msgstr "%s: ディレクトリ\"%s\"に移動できませんでした: %s\n"
+
+#~ msgid "%s: could not close directory \"%s\": %s\n"
+#~ msgstr "%s: ディレクトリ \"%s\" をクローズできませんでした: %s\n"
+
+#~ msgid "%s: could not create pg_control file: %s\n"
+#~ msgstr "%s: pg_controlファイルを作成できませんでした: %s\n"
+
+#~ msgid "%s: could not delete file \"%s\": %s\n"
+#~ msgstr "%s: ファイル\"%s\"を削除できませんでした: %s\n"
+
+#~ msgid "%s: could not open directory \"%s\": %s\n"
+#~ msgstr "%s: ディレクトリ\"%s\"をオープンできませんでした: %s\n"
+
+#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
+#~ msgstr "%s: 読み取り用のファイル\"%s\"をオープンできませんでした: %s\n"
+
+#~ msgid "%s: could not open file \"%s\": %s\n"
+#~ msgstr "%s: ファイル\"%s\"をオープンできませんでした: %s\n"
+
+#~ msgid "%s: could not read directory \"%s\": %s\n"
+#~ msgstr "%s: ディレクトリ\"%s\"を読み取ることができませんでした。: %s\n"
+
+#~ msgid "%s: could not read file \"%s\": %s\n"
+#~ msgstr "%s: ファイル\"%s\"を読み込めませんでした: %s\n"
+
 #~ msgid "%s: could not read from directory \"%s\": %s\n"
 #~ msgstr "%s: ディレクトリ\"%s\"から読み込めませんでした: %s\n"
 
-#~ msgid "%s: invalid argument for option -l\n"
-#~ msgstr "%s: オプション-lの引数が無効です\n"
+#~ msgid "%s: could not write file \"%s\": %s\n"
+#~ msgstr "%s: ファイル\"%s\"を書き込めませんでした: %s\n"
+
+#~ msgid "%s: could not write pg_control file: %s\n"
+#~ msgstr "%s: pg_controlファイルを書き込めませんでした: %s\n"
+
+#~ msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
+#~ msgstr "%s: 内部エラー -- sizeof(ControlFileData)が大きすぎます ... PG_CONTROL_SIZEを修正してください\n"
 
 #~ msgid "%s: invalid argument for option -O\n"
 #~ msgstr "%s: オプション-Oの引数が無効です\n"
+
+#~ msgid "%s: invalid argument for option -l\n"
+#~ msgstr "%s: オプション-lの引数が無効です\n"
 
 #~ msgid "%s: invalid argument for option -m\n"
 #~ msgstr "%s: オプション-mの引数が無効です\n"
@@ -771,5 +748,26 @@ msgstr "%s ホームページ: <%s>\n"
 #~ msgid "%s: invalid argument for option -x\n"
 #~ msgstr "%s: オプション-xの引数が無効です\n"
 
+#~ msgid "First log file ID after reset:        %u\n"
+#~ msgstr "リセット後、現在のログファイルID:     %u\n"
+
 #~ msgid "Float4 argument passing:              %s\n"
 #~ msgstr "Float4引数の渡し方:                          %s\n"
+
+#~ msgid "Transaction log reset\n"
+#~ msgstr "トランザクションログをリセットします。\n"
+
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
+
+#~ msgid "fatal: "
+#~ msgstr "致命的エラー: "
+
+#~ msgid "floating-point numbers"
+#~ msgstr "浮動小数点数"
+
+#~ msgid "multitransaction ID (-m) must not be 0"
+#~ msgstr "マルチトランザクションID(-m)は0にはできません"
+
+#~ msgid "transaction ID (-x) must not be 0"
+#~ msgstr "トランザクションID(-x)は0にはできません"

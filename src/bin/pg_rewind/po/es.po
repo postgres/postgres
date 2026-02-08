@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-08 01:10+0000\n"
+"POT-Creation-Date: 2026-02-06 21:21+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -209,10 +209,15 @@ msgstr "no se pudo crear el link simbólico en «%s»: %m"
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "no se pudo eliminar el enlace simbólico «%s»: %m"
 
-#: file_ops.c:326 file_ops.c:330
+#: file_ops.c:326
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
+
+#: file_ops.c:330
+#, c-format
+msgid "could not stat file \"%s\" for reading: %m"
+msgstr "no se pudo efectuar «stat» al archivo «%s» para lectura: %m"
 
 #: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:371
 #, c-format

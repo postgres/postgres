@@ -1112,7 +1112,7 @@ msgstr "erreur SSL : %s\n"
 
 #: fe-secure-openssl.c:251 fe-secure-openssl.c:364
 msgid "SSL connection has been closed unexpectedly\n"
-msgstr "la connexion SSL a été fermée de façon inattendu\n"
+msgstr "la connexion SSL a été fermée de façon inattendue\n"
 
 #: fe-secure-openssl.c:257 fe-secure-openssl.c:370 fe-secure-openssl.c:1555
 #, c-format

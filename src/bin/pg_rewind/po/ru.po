@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# SPDX-FileCopyrightText: 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
+# SPDX-FileCopyrightText: 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-02 11:37+0300\n"
-"PO-Revision-Date: 2025-09-13 18:56+0300\n"
+"POT-Creation-Date: 2026-02-07 08:58+0200\n"
+"PO-Revision-Date: 2026-02-07 09:14+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -205,10 +205,15 @@ msgstr "не удалось создать символическую ссылк
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "ошибка при удалении символической ссылки \"%s\": %m"
 
-#: file_ops.c:326 file_ops.c:330
+#: file_ops.c:326
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
+
+#: file_ops.c:330
+#, c-format
+msgid "could not stat file \"%s\" for reading: %m"
+msgstr "не удалось получить информацию о файле \"%s\" для чтения: %m"
 
 #: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:371
 #, c-format
