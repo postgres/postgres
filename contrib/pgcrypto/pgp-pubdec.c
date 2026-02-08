@@ -157,6 +157,7 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 	uint8	   *msg;
 	int			msglen;
 	PGP_MPI    *m;
+	unsigned	sess_key_len;
 
 	pk = ctx->pub_key;
 	if (pk == NULL)
@@ -220,11 +221,19 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 	if (res < 0)
 		goto out;
 
+	sess_key_len = msglen - 3;
+	if (sess_key_len > PGP_MAX_KEY)
+	{
+		px_debug("incorrect session key length=%u", sess_key_len);
+		res = PXE_PGP_KEY_TOO_BIG;
+		goto out;
+	}
+
 	/*
 	 * got sesskey
 	 */
 	ctx->cipher_algo = *msg;
-	ctx->sess_key_len = msglen - 3;
+	ctx->sess_key_len = sess_key_len;
 	memcpy(ctx->sess_key, msg + 1, ctx->sess_key_len);
 
 out:

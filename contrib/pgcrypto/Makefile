@@ -44,7 +44,8 @@ REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
 	sha2 des 3des cast5 \
 	crypt-des crypt-md5 crypt-blowfish crypt-xdes \
 	pgp-armor pgp-decrypt pgp-encrypt pgp-encrypt-md5 $(CF_PGP_TESTS) \
-	pgp-pubkey-decrypt pgp-pubkey-encrypt pgp-info crypt-shacrypt
+	pgp-pubkey-decrypt pgp-pubkey-encrypt pgp-pubkey-session \
+	pgp-info crypt-shacrypt
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
