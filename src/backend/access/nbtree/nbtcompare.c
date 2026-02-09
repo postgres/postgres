@@ -299,6 +299,9 @@ btoidvectorcmp(PG_FUNCTION_ARGS)
 	oidvector  *b = (oidvector *) PG_GETARG_POINTER(1);
 	int			i;
 
+	check_valid_oidvector(a);
+	check_valid_oidvector(b);
+
 	/* We arbitrarily choose to sort first by vector length */
 	if (a->dim1 != b->dim1)
 		PG_RETURN_INT32(a->dim1 - b->dim1);
