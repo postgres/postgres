@@ -2686,9 +2686,9 @@ extension_file_exists(const char *extensionName)
 
 	locations = get_extension_control_directories();
 
-	foreach_ptr(char, location, locations)
+	foreach_ptr(ExtensionLocation, location, locations)
 	{
-		dir = AllocateDir(location);
+		dir = AllocateDir(location->loc);
 
 		/*
 		 * If the control directory doesn't exist, we want to silently return
@@ -2700,7 +2700,7 @@ extension_file_exists(const char *extensionName)
 		}
 		else
 		{
-			while ((de = ReadDir(dir, location)) != NULL)
+			while ((de = ReadDir(dir, location->loc)) != NULL)
 			{
 				char	   *extname;
 
