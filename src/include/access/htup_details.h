@@ -358,20 +358,6 @@ HeapTupleHeaderXminFrozen(const HeapTupleHeaderData *tup)
 }
 
 static inline void
-HeapTupleHeaderSetXminCommitted(HeapTupleHeaderData *tup)
-{
-	Assert(!HeapTupleHeaderXminInvalid(tup));
-	tup->t_infomask |= HEAP_XMIN_COMMITTED;
-}
-
-static inline void
-HeapTupleHeaderSetXminInvalid(HeapTupleHeaderData *tup)
-{
-	Assert(!HeapTupleHeaderXminCommitted(tup));
-	tup->t_infomask |= HEAP_XMIN_INVALID;
-}
-
-static inline void
 HeapTupleHeaderSetXminFrozen(HeapTupleHeaderData *tup)
 {
 	Assert(!HeapTupleHeaderXminInvalid(tup));
