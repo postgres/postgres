@@ -230,7 +230,7 @@ SaV9L04ky1qECNDx3XjnoKLC+H7IOQ==
 '), '0123456789abcdefghij'), 'sha1'), 'hex');
 -- expected: da39a3ee5e6b4b0d3255bfef95601890afd80709
 
-select encode(digest(pgp_sym_decrypt(dearmor('
+select encode(digest(pgp_sym_decrypt_bytea(dearmor('
 -----BEGIN PGP MESSAGE-----
 Comment: dat3.aes.sha1.mdc.s2k3.z0
 
@@ -287,6 +287,26 @@ VsxxqLSPzNLAeIspJk5G
 
 -- Routine text/binary mismatch.
 select pgp_sym_decrypt(pgp_sym_encrypt_bytea('P', 'key'), 'key', 'debug=1');
+
+-- NUL byte in text decrypt.  Ciphertext source:
+-- printf 'a\x00\xc' | gpg --homedir /nonexistent --textmode \
+--      --personal-cipher-preferences aes --no-emit-version --batch \
+--      --symmetric --passphrase key --armor
+do $$
+begin
+  perform pgp_sym_decrypt(dearmor('
+-----BEGIN PGP MESSAGE-----
+
+jA0EBwMCLd9OvySmZNZg0jgBe7vGTmnje5HGXI+zsIQ99WPZu4Zs/P6pQcZ+HZ4n
+SZQHOfE8tagjB6Rqow82QpSBiOfWn4qjhQ==
+=c2cz
+-----END PGP MESSAGE-----
+'), 'key', 'debug=1');
+exception when others then
+  raise '%',
+    regexp_replace(sqlerrm, 'encoding "[^"]*"', 'encoding [REDACTED]');
+end
+$$;
 
 -- Decryption with a certain incorrect key yields an apparent BZip2-compressed
 -- plaintext.  Ciphertext source: iterative pgp_sym_encrypt('secret', 'key')
