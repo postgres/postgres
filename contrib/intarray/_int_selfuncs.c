@@ -19,6 +19,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "commands/extension.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -171,7 +172,18 @@ _int_matchsel(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(0.0);
 	}
 
-	/* The caller made sure the const is a query, so get it now */
+	/*
+	 * Verify that the Const is a query_int, else return a default estimate.
+	 * (This could only fail if someone attached this estimator to the wrong
+	 * operator.)
+	 */
+	if (((Const *) other)->consttype !=
+		get_function_sibling_type(fcinfo->flinfo->fn_oid, "query_int"))
+	{
+		ReleaseVariableStats(vardata);
+		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
+	}
+
 	query = DatumGetQueryTypeP(((Const *) other)->constvalue);
 
 	/* Empty query matches nothing */

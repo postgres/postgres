@@ -45,6 +45,7 @@
 #include "catalog/pg_depend.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/comment.h"
@@ -60,10 +61,12 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 #include "utils/varlena.h"
 
 
@@ -104,7 +107,26 @@ typedef struct ExtensionVersionInfo
 	struct ExtensionVersionInfo *previous;	/* current best predecessor */
 } ExtensionVersionInfo;
 
+/*
+ * Cache structure for get_function_sibling_type (and maybe later,
+ * allied lookup functions).
+ */
+typedef struct ExtensionSiblingCache
+{
+	struct ExtensionSiblingCache *next; /* list link */
+	/* lookup key: requesting function's OID and type name */
+	Oid			reqfuncoid;
+	const char *typname;
+	bool		valid;			/* is entry currently valid? */
+	uint32		exthash;		/* cache hash of owning extension's OID */
+	Oid			typeoid;		/* OID associated with typname */
+} ExtensionSiblingCache;
+
+/* Head of linked list of ExtensionSiblingCache structs */
+static ExtensionSiblingCache *ext_sibling_list = NULL;
+
 /* Local functions */
+static void ext_sibling_callback(Datum arg, int cacheid, uint32 hashvalue);
 static List *find_update_path(List *evi_list,
 							  ExtensionVersionInfo *evi_start,
 							  ExtensionVersionInfo *evi_target,
@@ -252,6 +274,114 @@ get_extension_schema(Oid ext_oid)
 	table_close(rel, AccessShareLock);
 
 	return result;
+}
+
+/*
+ * get_function_sibling_type - find a type belonging to same extension as func
+ *
+ * Returns the type's OID, or InvalidOid if not found.
+ *
+ * This is useful in extensions, which won't have fixed object OIDs.
+ * We work from the calling function's own OID, which it can get from its
+ * FunctionCallInfo parameter, and look up the owning extension and thence
+ * a type belonging to the same extension.
+ *
+ * Notice that the type is specified by name only, without a schema.
+ * That's because this will typically be used by relocatable extensions
+ * which can't make a-priori assumptions about which schema their objects
+ * are in.  As long as the extension only defines one type of this name,
+ * the answer is unique anyway.
+ *
+ * We might later add the ability to look up functions, operators, etc.
+ *
+ * This code is simply a frontend for some pg_depend lookups.  Those lookups
+ * are fairly expensive, so we provide a simple cache facility.  We assume
+ * that the passed typname is actually a C constant, or at least permanently
+ * allocated, so that we need not copy that string.
+ */
+Oid
+get_function_sibling_type(Oid funcoid, const char *typname)
+{
+	ExtensionSiblingCache *cache_entry;
+	Oid			extoid;
+	Oid			typeoid;
+
+	/*
+	 * See if we have the answer cached.  Someday there may be enough callers
+	 * to justify a hash table, but for now, a simple linked list is fine.
+	 */
+	for (cache_entry = ext_sibling_list; cache_entry != NULL;
+		 cache_entry = cache_entry->next)
+	{
+		if (funcoid == cache_entry->reqfuncoid &&
+			strcmp(typname, cache_entry->typname) == 0)
+			break;
+	}
+	if (cache_entry && cache_entry->valid)
+		return cache_entry->typeoid;
+
+	/*
+	 * Nope, so do the expensive lookups.  We do not expect failures, so we do
+	 * not cache negative results.
+	 */
+	extoid = getExtensionOfObject(ProcedureRelationId, funcoid);
+	if (!OidIsValid(extoid))
+		return InvalidOid;
+	typeoid = getExtensionType(extoid, typname);
+	if (!OidIsValid(typeoid))
+		return InvalidOid;
+
+	/*
+	 * Build, or revalidate, cache entry.
+	 */
+	if (cache_entry == NULL)
+	{
+		/* Register invalidation hook if this is first entry */
+		if (ext_sibling_list == NULL)
+			CacheRegisterSyscacheCallback(EXTENSIONOID,
+										  ext_sibling_callback,
+										  (Datum) 0);
+
+		/* Momentarily zero the space to ensure valid flag is false */
+		cache_entry = (ExtensionSiblingCache *)
+			MemoryContextAllocZero(CacheMemoryContext,
+								   sizeof(ExtensionSiblingCache));
+		cache_entry->next = ext_sibling_list;
+		ext_sibling_list = cache_entry;
+	}
+
+	cache_entry->reqfuncoid = funcoid;
+	cache_entry->typname = typname;
+	cache_entry->exthash = GetSysCacheHashValue1(EXTENSIONOID,
+												 ObjectIdGetDatum(extoid));
+	cache_entry->typeoid = typeoid;
+	/* Mark it valid only once it's fully populated */
+	cache_entry->valid = true;
+
+	return typeoid;
+}
+
+/*
+ * ext_sibling_callback
+ *		Syscache inval callback function for EXTENSIONOID cache
+ *
+ * It seems sufficient to invalidate ExtensionSiblingCache entries when
+ * the owning extension's pg_extension entry is modified or deleted.
+ * Neither a requesting function's OID, nor the OID of the object it's
+ * looking for, could change without an extension update or drop/recreate.
+ */
+static void
+ext_sibling_callback(Datum arg, int cacheid, uint32 hashvalue)
+{
+	ExtensionSiblingCache *cache_entry;
+
+	for (cache_entry = ext_sibling_list; cache_entry != NULL;
+		 cache_entry = cache_entry->next)
+	{
+		if (hashvalue == 0 ||
+			cache_entry->exthash == hashvalue)
+			cache_entry->valid = false;
+	}
 }
 
 /*
