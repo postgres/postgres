@@ -528,6 +528,10 @@ select '[2147483646:2147483646]={1}'::int[];
 select '[-2147483648:-2147483647]={1,2}'::int[];
 -- all of the above should be accepted
 
+-- some day we might allow these cases, but for now they're errors:
+select array[]::oidvector;
+select array[]::int2vector;
+
 -- tests for array aggregates
 CREATE TEMP TABLE arraggtest ( f1 INT[], f2 TEXT[][], f3 FLOAT[]);
 
