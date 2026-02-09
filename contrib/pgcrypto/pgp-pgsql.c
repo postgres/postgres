@@ -631,6 +631,7 @@ pgp_sym_decrypt_text(PG_FUNCTION_ARGS)
 		arg = PG_GETARG_BYTEA_PP(2);
 
 	res = decrypt_internal(0, 1, data, key, NULL, arg);
+	pg_verifymbstr(VARDATA_ANY(res), VARSIZE_ANY_EXHDR(res), false);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_FREE_IF_COPY(key, 1);
@@ -732,6 +733,7 @@ pgp_pub_decrypt_text(PG_FUNCTION_ARGS)
 		arg = PG_GETARG_BYTEA_PP(3);
 
 	res = decrypt_internal(1, 1, data, key, psw, arg);
+	pg_verifymbstr(VARDATA_ANY(res), VARSIZE_ANY_EXHDR(res), false);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_FREE_IF_COPY(key, 1);
