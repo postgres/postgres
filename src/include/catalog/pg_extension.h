@@ -56,4 +56,13 @@ DECLARE_TOAST(pg_extension, 4147, 4148);
 DECLARE_UNIQUE_INDEX_PKEY(pg_extension_oid_index, 3080, ExtensionOidIndexId, pg_extension, btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_extension_name_index, 3081, ExtensionNameIndexId, pg_extension, btree(extname name_ops));
 
+/*
+ * genbki.pl always emits syscache IDs in alphabetical order.  To add this
+ * cache post-release without changing existing syscache IDs, add a Z prefix.
+ */
+MAKE_SYSCACHE(ZEXTENSIONOID, pg_extension_oid_index, 2);
+
+/* Then use this macro so that hand-written code can match other branches. */
+#define EXTENSIONOID ZEXTENSIONOID
+
 #endif							/* PG_EXTENSION_H */
