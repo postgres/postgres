@@ -80,15 +80,13 @@ PROC_HDR   *ProcGlobal = NULL;
 NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 PGPROC	   *PreparedXactProcs = NULL;
 
-static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
-
 /* Is a deadlock check pending? */
 static volatile sig_atomic_t got_deadlock_timeout;
 
 static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
-static void CheckDeadLock(void);
+static DeadLockState CheckDeadLock(void);
 
 
 /*
@@ -1321,6 +1319,7 @@ ProcSleep(LOCALLOCK *locallock)
 	bool		allow_autovacuum_cancel = true;
 	bool		logged_recovery_conflict = false;
 	ProcWaitStatus myWaitStatus;
+	DeadLockState deadlock_state;
 
 	/* The caller must've armed the on-error cleanup mechanism */
 	Assert(GetAwaitedLock() == locallock);
@@ -1461,7 +1460,7 @@ ProcSleep(LOCALLOCK *locallock)
 			/* check for deadlocks first, as that's probably log-worthy */
 			if (got_deadlock_timeout)
 			{
-				CheckDeadLock();
+				deadlock_state = CheckDeadLock();
 				got_deadlock_timeout = false;
 			}
 			CHECK_FOR_INTERRUPTS();
@@ -1784,14 +1783,14 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
  *
  * We only get to this routine, if DEADLOCK_TIMEOUT fired while waiting for a
  * lock to be released by some other process.  Check if there's a deadlock; if
- * not, just return.  (But signal ProcSleep to log a message, if
- * log_lock_waits is true.)  If we have a real deadlock, remove ourselves from
- * the lock's wait queue and signal an error to ProcSleep.
+ * not, just return.  If we have a real deadlock, remove ourselves from the
+ * lock's wait queue.
  */
-static void
+static DeadLockState
 CheckDeadLock(void)
 {
 	int			i;
+	DeadLockState result;
 
 	/*
 	 * Acquire exclusive lock on the entire shared lock data structures. Must
@@ -1818,17 +1817,20 @@ CheckDeadLock(void)
 	 */
 	if (MyProc->links.prev == NULL ||
 		MyProc->links.next == NULL)
+	{
+		result = DS_NO_DEADLOCK;
 		goto check_done;
+	}
 
 #ifdef LOCK_DEBUG
 	if (Debug_deadlocks)
 		DumpAllLocks();
 #endif
 
-	/* Run the deadlock check, and set deadlock_state for use by ProcSleep */
-	deadlock_state = DeadLockCheck(MyProc);
+	/* Run the deadlock check */
+	result = DeadLockCheck(MyProc);
 
-	if (deadlock_state == DS_HARD_DEADLOCK)
+	if (result == DS_HARD_DEADLOCK)
 	{
 		/*
 		 * Oops.  We have a deadlock.
@@ -1840,7 +1842,7 @@ CheckDeadLock(void)
 		 *
 		 * RemoveFromWaitQueue sets MyProc->waitStatus to
 		 * PROC_WAIT_STATUS_ERROR, so ProcSleep will report an error after we
-		 * return from the signal handler.
+		 * return.
 		 */
 		Assert(MyProc->waitLock != NULL);
 		RemoveFromWaitQueue(MyProc, LockTagHashCode(&(MyProc->waitLock->tag)));
@@ -1867,6 +1869,8 @@ CheckDeadLock(void)
 check_done:
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
 		LWLockRelease(LockHashPartitionLockByIndex(i));
+
+	return result;
 }
 
 /*
