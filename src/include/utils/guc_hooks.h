@@ -177,5 +177,7 @@ extern void assign_wal_sync_method(int new_wal_sync_method, void *extra);
 extern bool check_synchronized_standby_slots(char **newval, void **extra,
 											 GucSource source);
 extern void assign_synchronized_standby_slots(const char *newval, void *extra);
+extern bool check_log_min_messages(char **newval, void **extra, GucSource source);
+extern void assign_log_min_messages(const char *newval, void *extra);
 
 #endif							/* GUC_HOOKS_H */

@@ -7120,26 +7120,56 @@ local0.*    /var/log/postgresql
      <variablelist>
 
      <varlistentry id="guc-log-min-messages" xreflabel="log_min_messages">
-      <term><varname>log_min_messages</varname> (<type>enum</type>)
+      <term><varname>log_min_messages</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_min_messages</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Controls which <link linkend="runtime-config-severity-levels">message
-        levels</link> are written to the server log.
-        Valid values are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
-        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
-        <literal>INFO</literal>, <literal>NOTICE</literal>, <literal>WARNING</literal>,
-        <literal>ERROR</literal>, <literal>LOG</literal>, <literal>FATAL</literal>, and
-        <literal>PANIC</literal>.  Each level includes all the levels that
-        follow it.  The later the level, the fewer messages are sent
-        to the log.  The default is <literal>WARNING</literal>.  Note that
-        <literal>LOG</literal> has a different rank here than in
+        Controls which
+        <link linkend="runtime-config-severity-levels">message levels</link>
+        are written to the server log.  The value is a comma-separated
+        list of zero or more
+        <literal><replaceable>process type</replaceable>:<replaceable>level</replaceable></literal>
+        entries and exactly one mandatory
+        <literal><replaceable>level</replaceable></literal> entry,
+        which becomes the default for process types not listed.
+        Valid process types are listed in the table below.
+        <simplelist type="vert" columns="4">
+         <member><literal>archiver</literal></member>
+         <member><literal>autovacuum</literal></member>
+         <member><literal>backend</literal></member>
+         <member><literal>bgworker</literal></member>
+         <member><literal>bgwriter</literal></member>
+         <member><literal>checkpointer</literal></member>
+         <member><literal>ioworker</literal></member>
+         <member><literal>postmaster</literal></member>
+         <member><literal>syslogger</literal></member>
+         <member><literal>slotsyncworker</literal></member>
+         <member><literal>startup</literal></member>
+         <member><literal>walreceiver</literal></member>
+         <member><literal>walsender</literal></member>
+         <member><literal>walsummarizer</literal></member>
+         <member><literal>walwriter</literal></member>
+        </simplelist>
+        Valid <literal>level</literal> values are <literal>DEBUG5</literal>,
+        <literal>DEBUG4</literal>, <literal>DEBUG3</literal>, <literal>DEBUG2</literal>,
+        <literal>DEBUG1</literal>, <literal>INFO</literal>, <literal>NOTICE</literal>,
+        <literal>WARNING</literal>, <literal>ERROR</literal>, <literal>LOG</literal>,
+        <literal>FATAL</literal>, and <literal>PANIC</literal>.  Each level includes
+        all the levels that follow it.  The later the level, the fewer messages are sent
+        to the log.  The default is <literal>WARNING</literal>, which
+        applies that level to all process types.
+        Note that <literal>LOG</literal> has a different rank here than in
         <xref linkend="guc-client-min-messages"/>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
+       </para>
+       <para>
+        Example: To log <literal>walsender</literal> and <literal>autovacuum</literal>
+        at level <literal>DEBUG1</literal> and everything else at <literal>ERROR</literal>,
+        set <varname>log_min_messages</varname> to <literal>error, walsender:debug1, autovacuum:debug1</literal>.
        </para>
       </listitem>
      </varlistentry>

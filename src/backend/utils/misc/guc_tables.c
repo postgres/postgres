@@ -147,7 +147,7 @@ static const struct config_enum_entry client_message_level_options[] = {
 	{NULL, 0, false}
 };
 
-static const struct config_enum_entry server_message_level_options[] = {
+const struct config_enum_entry server_message_level_options[] = {
 	{"debug5", DEBUG5, false},
 	{"debug4", DEBUG4, false},
 	{"debug3", DEBUG3, false},
@@ -546,7 +546,6 @@ static bool standard_conforming_strings = true;
 bool		current_role_is_superuser;
 
 int			log_min_error_statement = ERROR;
-int			log_min_messages = WARNING;
 int			client_min_messages = NOTICE;
 int			log_min_duration_sample = -1;
 int			log_min_duration_statement = -1;
@@ -604,6 +603,7 @@ static char *server_version_string;
 static int	server_version_num;
 static char *debug_io_direct_string;
 static char *restrict_nonsystem_relation_kind_string;
+static char *log_min_messages_string;
 
 #ifdef HAVE_SYSLOG
 #define	DEFAULT_SYSLOG_FACILITY LOG_LOCAL0
@@ -656,6 +656,15 @@ char	   *role_string;
 /* should be static, but guc.c needs to get at this */
 bool		in_hot_standby_guc;
 
+/*
+ * set default log_min_messages to WARNING for all process types
+ */
+int			log_min_messages[] = {
+#define PG_PROCTYPE(bktype, bkcategory, description, main_func, shmem_attach) \
+	[bktype] = WARNING,
+#include "postmaster/proctypelist.h"
+#undef PG_PROCTYPE
+};
 
 /*
  * Displayable names for context types (enum GucContext)
