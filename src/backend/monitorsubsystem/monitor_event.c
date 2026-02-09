@@ -22,6 +22,7 @@
 
 /*
  * -1 means mistake
+ * It set conConfig.channel_id
  * 
  * TODO: 
  * Think about creating enum or errors and description to them
@@ -129,6 +130,7 @@ int pg_monitor_con_connect(MonitorChannelConfig *conConfig)
      */
     myChannel = &monSubSysLocal.MonSubSystem_SharedState->channels[sub_id + MAX_PUBS_NUM];
     
+    conConfig->channel_id = sub_id + MAX_PUBS_NUM;
 
     
     bool is_channel_created = monitor_channel_options[conConfig->type].init(myChannel, conConfig);
@@ -162,6 +164,7 @@ int pg_monitor_con_connect(MonitorChannelConfig *conConfig)
 
 /*
  * -1 means mistake
+ * It set conConfig.channel_id
  * 
  * TODO: 
  * Think about creating enum or errors and description to them
@@ -219,6 +222,7 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
      */
     myChannel = &monSubSysLocal.MonSubSystem_SharedState->channels[pub_id];
 
+    conConfig->channel_id = pub_id;
     
     bool is_channel_created = monitor_channel_options[conConfig->type].init(myChannel, conConfig);
 

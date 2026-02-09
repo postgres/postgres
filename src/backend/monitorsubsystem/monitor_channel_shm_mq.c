@@ -9,39 +9,93 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "postmaster/monitor.h"
 #include "monitorsubsystem/monitor_channel.h"
 #include "monitorsubsystem/monitor_channel_type.h"
 #include "monitorsubsystem/monitor_channel_shm_mq.h"
 #include "storage/shm_mq.h"
+#include "storage/shm_toc.h"
 
 
 /* static needed ? */
-/*
- * тут в arg надо будет передать всю херню, которая будет нужна для данного типа канала
- *
- */
 static bool
-shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *arg)
+/*
+ * Есть shm_mq_handle - это backend-local структура для уже 
+ * существующей shm_mq, через который конкретный процесс
+ * будет с ней работать
+ * 
+ * Контекст памяти, активный в момент создания shm_mq_attach,
+ * должен прожить как минимум столько же, сколько и сама shm_mq
+ * 
+ * есть штучка: для shm_mq нет функций типа reconnect / reset_queue / replace_sender
+ * 
+ * там могут (не факт, что возникнут, но могут) возникнуть проблемы с ожиданием
+ * Latch'ей и состояниями очереди (в shm_mq кольцевой буфер и тд - если что-то случится)
+ * с записью посреди записи, то все может быть нехорошо...
+ * (надо рассмотреть эту ситуацию, я ее пока не рассматривала)
+ * то есть внутреннее состояние shm_mq может быть не reset-safe
+ * 
+ * 
+ * то есть варианты:
+ * 1 создать shm_mq'шки в обычной разделяемой памяти
+ * + в теории можно просто доподключиться к очереди при рестарте процесса
+ * - мб невозможно доподключиться к очереди при рестарте процесса, тк
+ *   внутр состояние shm_mq может быть не reset-safe
+ * 
+ * возможно, можно после рестарта процесса (любого) пытаться переподключиться
+ * к очереди, а если с ней проблемы - то ее пересоздать
+ * 
+ * 2 создать shm_mq'шки в dsm
+ * 
+ *  
+ * src/test/modules/test_shm_mq/setup.c
+ * строка 147 - пример как создавать shm_mq с помощью
+ * toc и shm_toc_insert в DSM
+ */
+shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *cfg)
 {
-	/*
-	 * TODO:
-	 * realize
-	 * 
-	 */
-	// char *memory = (char *)arg;
+	shm_toc *toc = monSubSysLocal.MonSubSystem_SharedState->channels_toc;
+	Size sz = cfg->u.shm_mq.mq_size + sizeof(ShmMqChannelData) + sizeof(ShmMqChannelLocal);
+	ShmMqChannelData *data;
+	void *mq_space;
 
-	// ShmMqChannelData *priv = (ShmMqChannelData *)palloc(sizeof(ShmMqChannelData));
-	// if (!priv)
-	// 	return false;
+	data = shm_toc_allocate(toc, sz);
+	mq_space = (void *)data + sizeof(ShmMqChannelData) + sizeof(ShmMqChannelLocal);
 
-	// priv->mq = shm_mq_create(memory, size);
-	// priv->size = size;
-	// priv->mq_handle = shm_mq_attach(priv->mq, NULL, NULL);
+	data->mq = shm_mq_create(mq_space, cfg->u.shm_mq.mq_size);
 
-	// ch->private_data = priv;
-	// return true;
+	ch->private_data = data;
+	ch->ops = &ShmMqChannelOps;
+
+	shm_toc_insert(toc, cfg->channel_id, data);
 	return true;
 }
+
+/*
+ * TODO:
+ * think about MemoryContext for operations with channels
+ */
+void
+shm_mq_channel_attach(monitor_channel *ch, ChannelRole role)
+{
+    ShmMqChannelData *data = ch->private_data;
+    ShmMqChannelLocal *local;
+
+	Assert(role == Publisher || role == Subscriber);
+
+	/* Here shold be smth with MemoryContext */
+    local = palloc0(sizeof(ShmMqChannelLocal));
+    local->handle = shm_mq_attach(data->mq, NULL, NULL);
+
+    if (role == Subscriber) {
+        monSubSysLocal.subLocalData = local;
+	}
+    else {
+        monSubSysLocal.pubLocalData = local;
+	}
+	return;
+}
+
 
 static bool
 shm_mq_channel_send(monitor_channel *ch, const void *data, Size len)

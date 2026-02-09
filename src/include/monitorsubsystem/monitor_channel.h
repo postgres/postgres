@@ -24,12 +24,20 @@ typedef struct MonitorChannelConfig MonitorChannelConfig;
  *
  */
 
+typedef enum
+{
+	Publisher,
+	Subscriber
+} ChannelRole;
+
 typedef struct ChannelOps
 {
 	bool (*init)(monitor_channel *ch, MonitorChannelConfig *arg);
 	bool (*send)(monitor_channel *ch, const void *data, Size len);
 	bool (*receive)(monitor_channel *ch, void *buf, Size buf_size, Size *out_len);
 	void (*cleanup)(monitor_channel *ch);
+	void *(*attach)(monitor_channel *ch, ChannelRole role);
+    void (*detach)(monitor_channel *ch, void *local);
 
 } ChannelOps;
 

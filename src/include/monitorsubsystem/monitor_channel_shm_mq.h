@@ -16,14 +16,24 @@
 
 typedef struct MonitorChannelConfig MonitorChannelConfig;
 
-/* Private data for shm_mq monitor channel */
+/* 
+ * Private data for shm_mq monitor channel 
+ * 
+ * It's not needed at the moment, but it's apparently 
+ * much easier to remove it later than to add it, 
+ * so we're temporarily keeping it
+ */
 typedef struct ShmMqChannelData
 {
-	shm_mq_handle *mq_handle;
 	shm_mq *mq;
-	Size size;
 	/* mb bool is_sender */
 } ShmMqChannelData;
+
+typedef struct ShmMqChannelLocal
+{
+    shm_mq_handle *handle;
+} ShmMqChannelLocal;
+
 
 static bool shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *arg);
 
@@ -32,6 +42,10 @@ static bool shm_mq_channel_send(monitor_channel *ch, const void *data, Size len)
 static bool shm_mq_channel_receive(monitor_channel *ch, void *buf, Size buf_size, Size *out_len);
 
 static void shm_mq_channel_cleanup(monitor_channel *ch);
+
+static void shm_mq_channel_attach(monitor_channel *ch, ChannelRole role);
+
+static void (*detach)(monitor_channel *ch, void *local);
 
 const ChannelOps ShmMqChannelOps = {
 	.init = shm_mq_channel_init,

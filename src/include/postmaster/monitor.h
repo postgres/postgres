@@ -26,6 +26,7 @@
 #include "port/atomics.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "storage/shm_toc.h"
 #include "monitorsubsystem/monitor_channel.h"
 
 /*
@@ -60,6 +61,9 @@
 #define MAX_SUBJECT_NUM 64
 
 #define MAX_SUBS_BIT_NUM ((MAX_SUBS_NUM + 64 - 1) / 64)
+
+#define MAX_MONITOR_CHANNEL_DATA_SIZE 1024
+#define PG_MONITOR_SHM_MAGIC 0x8d7c6a5b
 
 #define MAX_SUBJECT_LEN 25
 #define MAX_SUBJECT_BIT_NUM (MAX_SUBS_NUM + 64 - 1) / 64
@@ -208,6 +212,7 @@ typedef struct mssSharedState
 	MssState_PublisherInfo pub;
 	monitor_channel *channels;
 	MssState_SubjectEntitiesInfo entitiesInfo;
+	shm_toc *channels_toc;
 
 
 	LWLock lock;	/* protects hashtable search/modification */
@@ -224,6 +229,12 @@ typedef struct MonSubSystem_LocalState
 	SubscriberInfo *mySubInfo;
 	PublisherInfo *myPubInfo;
 
+	/* 
+	 * That's needed for some local data 
+	 * like shm_mq_handle
+	 */
+	void *subLocalData;
+	void *pubLocalData;
 	/*
 	 * maybe it would be better to make smth like
 	 * but Idk

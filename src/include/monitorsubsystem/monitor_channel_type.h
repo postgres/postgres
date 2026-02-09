@@ -27,6 +27,7 @@ typedef enum
 typedef struct MonitorChannelConfig
 {
     MonitorChannelType type;
+    int channel_id;
 
     union {
         struct {

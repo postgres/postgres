@@ -30,6 +30,7 @@
 #include "postmaster/interrupt.h"
 #include "postmaster/monitor.h"
 #include "storage/buf_internals.h"
+#include "storage/shm_toc.h"
 #include "monitorsubsystem/monitor_event.h"
 #include "utils/memutils.h"
 
@@ -73,6 +74,32 @@ Size mss_monitorChannels_size(void)
 	return MAXALIGN(sz);
 }
 
+/*
+ * the estimate of what the size should be 
+ * for ChannelData is temporary
+ */
+Size mss_monitorChannelData_size(void)
+{
+	shm_toc_estimator e;
+	Size sz;
+
+	/*
+	 * Estimate how much shared memory for Channel Data we need
+	 *
+	 * Examle from src/backend/replication/logical/applyparallelworker.c
+	 * lines 338-360
+	 */
+	shm_toc_initialize_estimator(&e);
+	shm_toc_estimate_chunk(&e, MAX_MONITOR_CHANNEL_DATA_SIZE);
+
+	/* It's too much, but let it be for some time */
+	shm_toc_estimate_keys(&e, MAX_MONITOR_CHANNELS_NUM);
+
+	sz = shm_toc_estimate(&e);
+	// sz = MAX_MONITOR_CHANNELS_NUM * MAX_MONITOR_CHANNEL_DATA_SIZE;
+	return MAXALIGN(sz);
+}
+
 Size MonitorShmemSize(void)
 {
 	Size sz;
@@ -82,6 +109,7 @@ Size MonitorShmemSize(void)
 	sz = add_size(sz, mss_publisherInfo_size());
 	sz = add_size(sz, mss_subjectEntity_size());
 	sz = add_size(sz, mss_monitorChannels_size());
+	sz = add_size(sz, mss_monitorChannelData_size());
 
 	/* for hash table */
 	sz = add_size(sz,
@@ -178,11 +206,20 @@ void MonitorShmemInit(void)
 			}
 		}
 
-		ptr += mss_monitorChannels_size();
+		/* Channels initialization */
+		ptr += mss_subjectEntity_size();
+
 		monSubSysLocal.MonSubSystem_SharedState->channels = (monitor_channel *)ptr;
 
+		/* Channel Data initialization */
+		ptr += mss_monitorChannels_size();
+
+		monSubSysLocal.MonSubSystem_SharedState->channels_toc = 
+			shm_toc_create(PG_MONITOR_SHM_MAGIC, ptr,
+				mss_monitorChannelData_size());
+
 		/* Hash table initialization */
-		ptr += mss_subjectEntity_size();
+		ptr += mss_monitorChannelData_size();
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(SubjectKey);
