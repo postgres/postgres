@@ -42,6 +42,183 @@
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [60e7ae41a] 2026-02-09 09:57:43 -0500
+Branch: REL_18_STABLE [3b6588cd9] 2026-02-09 09:57:44 -0500
+Branch: REL_17_STABLE [3d160401b] 2026-02-09 09:57:44 -0500
+Branch: REL_16_STABLE [595956fc7] 2026-02-09 09:57:44 -0500
+Branch: REL_15_STABLE [429aeaebd] 2026-02-09 09:57:44 -0500
+Branch: REL_14_STABLE [b39d38139] 2026-02-09 09:57:44 -0500
+-->
+     <para>
+      Guard against unexpected dimensions
+      of <type>oidvector</type>/<type>int2vector</type> (Tom Lane)
+      <ulink url="&commit_baseurl;b39d38139">&sect;</ulink>
+     </para>
+
+     <para>
+      These data types are expected to be 1-dimensional arrays containing
+      no nulls, but there are cast pathways that permit violating those
+      expectations.  Add checks to some functions that were depending on
+      those expectations without verifying them, and could misbehave in
+      consequence.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Altan Birler for reporting this problem.
+      (CVE-2026-2003)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [841d42cc4] 2026-02-09 10:07:31 -0500
+Branch: REL_18_STABLE [66ddac698] 2026-02-09 10:07:31 -0500
+Branch: REL_17_STABLE [bbf5bcf58] 2026-02-09 10:07:31 -0500
+Branch: REL_16_STABLE [91d7c0bfd] 2026-02-09 10:07:31 -0500
+Branch: REL_15_STABLE [b764b26f2] 2026-02-09 10:07:31 -0500
+Branch: REL_14_STABLE [ea3bf3498] 2026-02-09 10:07:31 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8ebdf41c2] 2026-02-09 10:14:22 -0500
+Branch: REL_18_STABLE [b69af3dda] 2026-02-09 10:14:22 -0500
+Branch: REL_17_STABLE [dd3ad2a4d] 2026-02-09 10:14:22 -0500
+Branch: REL_16_STABLE [c0887b39d] 2026-02-09 10:14:22 -0500
+Branch: REL_15_STABLE [deb464a40] 2026-02-09 10:14:22 -0500
+Branch: REL_14_STABLE [7e82d9a04] 2026-02-09 10:14:22 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_17_STABLE [dbb09fd8e] 2026-02-09 10:02:23 -0500
+Branch: REL_16_STABLE [d484bc260] 2026-02-09 10:02:23 -0500
+Branch: REL_15_STABLE [3ecc84cce] 2026-02-09 10:02:23 -0500
+Branch: REL_14_STABLE [9fa38c572] 2026-02-09 10:02:23 -0500
+-->
+     <para>
+      Harden selectivity estimators against being attached to operators
+      that accept unexpected data types (Tom Lane)
+      <ulink url="&commit_baseurl;ea3bf3498">&sect;</ulink>
+      <ulink url="&commit_baseurl;7e82d9a04">&sect;</ulink>
+      <ulink url="&commit_baseurl;9fa38c572">&sect;</ulink>
+     </para>
+
+     <para>
+      <filename>contrib/intarray</filename> contained a selectivity
+      estimation function that could be abused for arbitrary code
+      execution, because it did not check that its input was of the
+      expected data type.  Third-party extensions should check for similar
+      hazards and add defenses using the technique intarray now uses.
+      Since such extension fixes will take time, we now require superuser
+      privilege to attach a non-built-in selectivity estimator to an
+      operator.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Daniel Firer, as part of zeroday.cloud, for reporting this problem.
+      (CVE-2026-2004)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [379695d3c] 2026-02-09 08:00:59 +0900
+Branch: REL_18_STABLE [209f387b8] 2026-02-09 08:01:05 +0900
+Branch: REL_17_STABLE [7a7d9693c] 2026-02-09 08:01:07 +0900
+Branch: REL_16_STABLE [527b730f4] 2026-02-09 08:01:09 +0900
+Branch: REL_15_STABLE [9a9982ec6] 2026-02-09 08:01:10 +0900
+Branch: REL_14_STABLE [01de2e32d] 2026-02-09 08:01:12 +0900
+-->
+     <para>
+      Fix buffer overrun in <filename>contrib/pgcrypto</filename>'s
+      PGP decryption functions (Michael Paquier)
+      <ulink url="&commit_baseurl;01de2e32d">&sect;</ulink>
+     </para>
+
+     <para>
+      Decrypting a crafted message with an overlength session key caused a
+      buffer overrun, with consequences as bad as arbitrary code
+      execution.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Team Xint Code, as part of zeroday.cloud, for reporting this problem.
+      (CVE-2026-2005)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [af79c30dc] 2026-02-09 12:08:58 +1300
+Branch: REL_18_STABLE [df0852fe0] 2026-02-09 12:12:29 +1300
+Branch: REL_17_STABLE [838248b1b] 2026-02-09 12:23:45 +1300
+Branch: REL_16_STABLE [70ff9ede5] 2026-02-09 12:28:01 +1300
+Branch: REL_15_STABLE [b2c81ac86] 2026-02-09 12:34:12 +1300
+Branch: REL_14_STABLE [2a53db21e] 2026-02-09 12:38:07 +1300
+Branch: master [74ee636cc] 2026-02-09 12:08:58 +1300
+Branch: REL_18_STABLE [efef05ba9] 2026-02-09 12:12:33 +1300
+Branch: REL_17_STABLE [7a522039f] 2026-02-09 12:23:51 +1300
+Branch: REL_16_STABLE [b0e3f5cf9] 2026-02-09 12:28:07 +1300
+Branch: REL_15_STABLE [50863be0b] 2026-02-09 12:34:17 +1300
+Branch: REL_14_STABLE [6ed116046] 2026-02-09 12:38:12 +1300
+Branch: master [1e7fe06c1] 2026-02-09 12:44:04 +1300
+Branch: REL_18_STABLE [7b5fc85be] 2026-02-09 12:43:42 +1300
+Branch: REL_17_STABLE [319e8a644] 2026-02-09 12:42:47 +1300
+Branch: REL_16_STABLE [d837fb029] 2026-02-09 12:29:15 +1300
+Branch: REL_15_STABLE [fd82ddb67] 2026-02-09 12:34:24 +1300
+Branch: REL_14_STABLE [cecedb912] 2026-02-09 12:39:01 +1300
+Branch: master [c67bef3f3] 2026-02-09 12:44:12 +1300
+Branch: REL_18_STABLE [b0f5d25bc] 2026-02-09 12:43:50 +1300
+Branch: REL_17_STABLE [10ebc4bd6] 2026-02-09 12:42:59 +1300
+Branch: REL_16_STABLE [4c08960d9] 2026-02-09 12:29:41 +1300
+Branch: REL_15_STABLE [757bf8145] 2026-02-09 12:35:19 +1300
+Branch: REL_14_STABLE [e7591254c] 2026-02-09 12:39:16 +1300
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [d536aee55] 2026-02-09 06:14:47 -0800
+Branch: REL_18_STABLE [b42709194] 2026-02-09 06:14:50 -0800
+Branch: REL_17_STABLE [dc072a09a] 2026-02-09 06:14:51 -0800
+Branch: REL_16_STABLE [0c33d5608] 2026-02-09 06:14:51 -0800
+Branch: REL_15_STABLE [8f8b1ffac] 2026-02-09 06:14:52 -0800
+Branch: REL_14_STABLE [8373ed094] 2026-02-09 06:14:52 -0800
+Branch: master [c5dc75479] 2026-02-09 09:08:10 -0800
+Branch: REL_18_STABLE [4543b02af] 2026-02-09 09:08:13 -0800
+Branch: REL_17_STABLE [955433ebd] 2026-02-09 09:08:13 -0800
+Branch: REL_16_STABLE [763671b74] 2026-02-09 09:08:13 -0800
+Branch: REL_15_STABLE [6f741bcb6] 2026-02-09 09:08:14 -0800
+Branch: REL_14_STABLE [5301b2b7d] 2026-02-09 09:08:14 -0800
+-->
+     <para>
+      Fix inadequate validation of multibyte character lengths
+      (Thomas Munro, Noah Misch)
+      <ulink url="&commit_baseurl;2a53db21e">&sect;</ulink>
+      <ulink url="&commit_baseurl;6ed116046">&sect;</ulink>
+      <ulink url="&commit_baseurl;cecedb912">&sect;</ulink>
+      <ulink url="&commit_baseurl;e7591254c">&sect;</ulink>
+      <ulink url="&commit_baseurl;8373ed094">&sect;</ulink>
+      <ulink url="&commit_baseurl;5301b2b7d">&sect;</ulink>
+     </para>
+
+     <para>
+      Assorted bugs allowed an attacker able to issue crafted SQL to
+      overrun string buffers, with consequences as bad as arbitrary code
+      execution.  After these fixes, applications may
+      observe <quote>invalid byte sequence for encoding</quote> errors
+      when string functions process invalid text that has been stored in
+      the database.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Paul Gerste
+      and Moritz Sanft, as part of zeroday.cloud, for reporting this
+      problem.
+      (CVE-2026-2006)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [35b5c62c3] 2025-11-18 12:56:55 -0500
 Branch: REL_18_STABLE [12bc32917] 2025-11-18 12:56:55 -0500
 Branch: REL_17_STABLE [075a763e2] 2025-11-18 12:56:55 -0500
