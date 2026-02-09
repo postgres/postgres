@@ -113,9 +113,11 @@ enum SysCacheIdentifier
 	TYPENAMENSP,
 	TYPEOID,
 	USERMAPPINGOID,
-	USERMAPPINGUSERSERVER
+	USERMAPPINGUSERSERVER,
+	/* intentionally out of alphabetical order, to avoid an ABI break: */
+	EXTENSIONOID
 
-#define SysCacheSize (USERMAPPINGUSERSERVER + 1)
+#define SysCacheSize (EXTENSIONOID + 1)
 };
 
 extern void InitCatalogCache(void);
