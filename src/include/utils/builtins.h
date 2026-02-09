@@ -56,6 +56,7 @@ extern char *pg_ultostr(char *str, uint32 value);
 
 /* oid.c */
 extern oidvector *buildoidvector(const Oid *oids, int n);
+extern void check_valid_oidvector(const oidvector *oidArray);
 extern Oid	oidparse(Node *node);
 extern int	oid_cmp(const void *p1, const void *p2);
 

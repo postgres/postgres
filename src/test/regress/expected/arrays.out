@@ -1556,6 +1556,11 @@ select '[0:1]={1.1,2.2}'::float8[];
 (1 row)
 
 -- all of the above should be accepted
+-- some day we might allow these cases, but for now they're errors:
+select array[]::oidvector;
+ERROR:  array is not a valid oidvector
+select array[]::int2vector;
+ERROR:  array is not a valid int2vector
 -- tests for array aggregates
 CREATE TEMP TABLE arraggtest ( f1 INT[], f2 TEXT[][], f3 FLOAT[]);
 INSERT INTO arraggtest (f1, f2, f3) VALUES

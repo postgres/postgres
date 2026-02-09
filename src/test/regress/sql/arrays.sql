@@ -491,6 +491,10 @@ select array[]::text[];
 select '[0:1]={1.1,2.2}'::float8[];
 -- all of the above should be accepted
 
+-- some day we might allow these cases, but for now they're errors:
+select array[]::oidvector;
+select array[]::int2vector;
+
 -- tests for array aggregates
 CREATE TEMP TABLE arraggtest ( f1 INT[], f2 TEXT[][], f3 FLOAT[]);
 
