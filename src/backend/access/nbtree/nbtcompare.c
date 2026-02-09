@@ -57,6 +57,7 @@
 
 #include <limits.h>
 
+#include "utils/builtins.h"
 #include "utils/fmgrprotos.h"
 #include "utils/skipsupport.h"
 #include "utils/sortsupport.h"
@@ -524,6 +525,9 @@ btoidvectorcmp(PG_FUNCTION_ARGS)
 	oidvector  *a = (oidvector *) PG_GETARG_POINTER(0);
 	oidvector  *b = (oidvector *) PG_GETARG_POINTER(1);
 	int			i;
+
+	check_valid_oidvector(a);
+	check_valid_oidvector(b);
 
 	/* We arbitrarily choose to sort first by vector length */
 	if (a->dim1 != b->dim1)
