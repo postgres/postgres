@@ -118,6 +118,7 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	ObjectAddress address;
 	Relation	relation;
 	ListCell   *lc;
+	bool		missing_ok;
 
 	/*
 	 * Find the named label provider, or if none specified, check whether
@@ -160,13 +161,22 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 				 errmsg("security labels are not supported for this type of object")));
 
 	/*
+	 * During binary upgrade, allow nonexistent large objects so that we don't
+	 * have to create them during schema restoration.  pg_upgrade will
+	 * transfer the contents of pg_largeobject_metadata via COPY or by
+	 * copying/linking its files from the old cluster later on.
+	 */
+	missing_ok = IsBinaryUpgrade && stmt->objtype == OBJECT_LARGEOBJECT;
+
+	/*
 	 * Translate the parser representation which identifies this object into
 	 * an ObjectAddress. get_object_address() will throw an error if the
 	 * object does not exist, and will also acquire a lock on the target to
 	 * guard against concurrent modifications.
 	 */
 	address = get_object_address(stmt->objtype, stmt->object,
-								 &relation, ShareUpdateExclusiveLock, false);
+								 &relation, ShareUpdateExclusiveLock,
+								 missing_ok);
 
 	/* Require ownership of the target object. */
 	check_object_ownership(GetUserId(), stmt->objtype, address,

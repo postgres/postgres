@@ -41,6 +41,7 @@ CommentObject(CommentStmt *stmt)
 {
 	Relation	relation;
 	ObjectAddress address = InvalidObjectAddress;
+	bool		missing_ok;
 
 	/*
 	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
@@ -64,13 +65,22 @@ CommentObject(CommentStmt *stmt)
 	}
 
 	/*
+	 * During binary upgrade, allow nonexistent large objects so that we don't
+	 * have to create them during schema restoration.  pg_upgrade will
+	 * transfer the contents of pg_largeobject_metadata via COPY or by
+	 * copying/linking its files from the old cluster later on.
+	 */
+	missing_ok = IsBinaryUpgrade && stmt->objtype == OBJECT_LARGEOBJECT;
+
+	/*
 	 * Translate the parser representation that identifies this object into an
 	 * ObjectAddress.  get_object_address() will throw an error if the object
 	 * does not exist, and will also acquire a lock on the target to guard
 	 * against concurrent DROP operations.
 	 */
 	address = get_object_address(stmt->objtype, stmt->object,
-								 &relation, ShareUpdateExclusiveLock, false);
+								 &relation, ShareUpdateExclusiveLock,
+								 missing_ok);
 
 	/* Require ownership of the target object. */
 	check_object_ownership(GetUserId(), stmt->objtype, address,

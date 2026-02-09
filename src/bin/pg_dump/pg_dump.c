@@ -214,12 +214,6 @@ static int	nbinaryUpgradeClassOids = 0;
 static SequenceItem *sequences = NULL;
 static int	nsequences = 0;
 
-/*
- * For binary upgrade, the dump ID of pg_largeobject_metadata is saved for use
- * as a dependency for pg_shdepend and any large object comments/seclabels.
- */
-static DumpId lo_metadata_dumpId;
-
 /* Maximum number of relations to fetch in a fetchAttributeStats() call. */
 #define MAX_ATTR_STATS_RELS 64
 
@@ -1121,26 +1115,19 @@ main(int argc, char **argv)
 		getTableData(&dopt, tblinfo, numTables, RELKIND_SEQUENCE);
 
 	/*
-	 * For binary upgrade mode, dump pg_largeobject_metadata and the
-	 * associated pg_shdepend rows. This is faster to restore than the
-	 * equivalent set of large object commands.  We can only do this for
-	 * upgrades from v12 and newer; in older versions, pg_largeobject_metadata
-	 * was created WITH OIDS, so the OID column is hidden and won't be dumped.
+	 * For binary upgrade mode, dump the pg_shdepend rows for large objects
+	 * and maybe even pg_largeobject_metadata (see comment below for details).
+	 * This is faster to restore than the equivalent set of large object
+	 * commands.  We can only do this for upgrades from v12 and newer; in
+	 * older versions, pg_largeobject_metadata was created WITH OIDS, so the
+	 * OID column is hidden and won't be dumped.
 	 */
 	if (dopt.binary_upgrade && fout->remoteVersion >= 120000)
 	{
-		TableInfo  *lo_metadata = findTableByOid(LargeObjectMetadataRelationId);
-		TableInfo  *shdepend = findTableByOid(SharedDependRelationId);
+		TableInfo  *shdepend;
 
-		makeTableDataInfo(&dopt, lo_metadata);
+		shdepend = findTableByOid(SharedDependRelationId);
 		makeTableDataInfo(&dopt, shdepend);
-
-		/*
-		 * Save pg_largeobject_metadata's dump ID for use as a dependency for
-		 * pg_shdepend and any large object comments/seclabels.
-		 */
-		lo_metadata_dumpId = lo_metadata->dataObj->dobj.dumpId;
-		addObjectDependency(&shdepend->dataObj->dobj, lo_metadata_dumpId);
 
 		/*
 		 * Only dump large object shdepend rows for this database.
@@ -1150,21 +1137,19 @@ main(int argc, char **argv)
 			"            WHERE datname = current_database())";
 
 		/*
-		 * If upgrading from v16 or newer, only dump large objects with
-		 * comments/seclabels.  For these upgrades, pg_upgrade can copy/link
-		 * pg_largeobject_metadata's files (which is usually faster) but we
-		 * still need to dump LOs with comments/seclabels here so that the
-		 * subsequent COMMENT and SECURITY LABEL commands work.  pg_upgrade
-		 * can't copy/link the files from older versions because aclitem
-		 * (needed by pg_largeobject_metadata.lomacl) changed its storage
-		 * format in v16.
+		 * For binary upgrades from v16 and newer versions, we can copy
+		 * pg_largeobject_metadata's files from the old cluster, so we don't
+		 * need to dump its contents.  pg_upgrade can't copy/link the files
+		 * from older versions because aclitem (needed by
+		 * pg_largeobject_metadata.lomacl) changed its storage format in v16.
 		 */
-		if (fout->remoteVersion >= 160000)
-			lo_metadata->dataObj->filtercond = "WHERE oid IN "
-				"(SELECT objoid FROM pg_description "
-				"WHERE classoid = " CppAsString2(LargeObjectRelationId) " "
-				"UNION SELECT objoid FROM pg_seclabel "
-				"WHERE classoid = " CppAsString2(LargeObjectRelationId) ")";
+		if (fout->remoteVersion < 160000)
+		{
+			TableInfo  *lo_metadata;
+
+			lo_metadata = findTableByOid(LargeObjectMetadataRelationId);
+			makeTableDataInfo(&dopt, lo_metadata);
+		}
 	}
 
 	/*
@@ -3979,7 +3964,25 @@ getLOs(Archive *fout)
 	appendPQExpBufferStr(loQry,
 						 "SELECT oid, lomowner, lomacl, "
 						 "acldefault('L', lomowner) AS acldefault "
-						 "FROM pg_largeobject_metadata "
+						 "FROM pg_largeobject_metadata ");
+
+	/*
+	 * For binary upgrades from v12 or newer, we transfer
+	 * pg_largeobject_metadata via COPY or by copying/linking its files from
+	 * the old cluster.  On such upgrades, we only need to consider large
+	 * objects that have comments or security labels, since we still restore
+	 * those objects via COMMENT/SECURITY LABEL commands.
+	 */
+	if (dopt->binary_upgrade &&
+		fout->remoteVersion >= 120000)
+		appendPQExpBufferStr(loQry,
+							 "WHERE oid IN "
+							 "(SELECT objoid FROM pg_description "
+							 "WHERE classoid = " CppAsString2(LargeObjectRelationId) " "
+							 "UNION SELECT objoid FROM pg_seclabel "
+							 "WHERE classoid = " CppAsString2(LargeObjectRelationId) ") ");
+
+	appendPQExpBufferStr(loQry,
 						 "ORDER BY lomowner, lomacl::pg_catalog.text, oid");
 
 	res = ExecuteSqlQuery(fout, loQry->data, PGRES_TUPLES_OK);
@@ -4062,36 +4065,20 @@ getLOs(Archive *fout)
 		/*
 		 * In binary-upgrade mode for LOs, we do *not* dump out the LO data,
 		 * as it will be copied by pg_upgrade, which simply copies the
-		 * pg_largeobject table. We *do* however dump out anything but the
-		 * data, as pg_upgrade copies just pg_largeobject, but not
-		 * pg_largeobject_metadata, after the dump is restored.  In versions
-		 * before v12, this is done via proper large object commands.  In
-		 * newer versions, we dump the content of pg_largeobject_metadata and
-		 * any associated pg_shdepend rows, which is faster to restore.  (On
-		 * <v12, pg_largeobject_metadata was created WITH OIDS, so the OID
-		 * column is hidden and won't be dumped.)
+		 * pg_largeobject table.
+		 *
+		 * The story for LO metadata is more complicated.  For upgrades from
+		 * versions older than v12, we use ordinary SQL commands to restore
+		 * both the content of pg_largeobject_metadata and any associated
+		 * pg_shdepend rows.  For upgrades from newer versions, we transfer
+		 * this information via COPY or by copying/linking the files from the
+		 * old cluster.  For such upgrades, we do not need to dump the data,
+		 * ACLs, or definitions of large objects.
 		 */
 		if (dopt->binary_upgrade)
 		{
 			if (fout->remoteVersion >= 120000)
-			{
-				/*
-				 * We should've saved pg_largeobject_metadata's dump ID before
-				 * this point.
-				 */
-				Assert(lo_metadata_dumpId);
-
 				loinfo->dobj.dump &= ~(DUMP_COMPONENT_DATA | DUMP_COMPONENT_ACL | DUMP_COMPONENT_DEFINITION);
-
-				/*
-				 * Mark the large object as dependent on
-				 * pg_largeobject_metadata so that any large object
-				 * comments/seclables are dumped after it.
-				 */
-				loinfo->dobj.dependencies = (DumpId *) pg_malloc(sizeof(DumpId));
-				loinfo->dobj.dependencies[0] = lo_metadata_dumpId;
-				loinfo->dobj.nDeps = loinfo->dobj.allocDeps = 1;
-			}
 			else
 				loinfo->dobj.dump &= ~DUMP_COMPONENT_DATA;
 		}
