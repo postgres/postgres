@@ -283,7 +283,8 @@ VsxxqLSPzNLAeIspJk5G
 select pgp_sym_decrypt(pgp_sym_encrypt_bytea('P', 'key'), 'key', 'debug=1');
 
 -- NUL byte in text decrypt.  Ciphertext source:
--- printf 'a\x00\xc' | gpg --homedir /nonexistent --textmode \
+-- printf 'a\x00\xc' | gpg --homedir /nonexistent \
+--      --personal-compress-preferences uncompressed --textmode \
 --      --personal-cipher-preferences aes --no-emit-version --batch \
 --      --symmetric --passphrase key --armor
 do $$
@@ -291,9 +292,9 @@ begin
   perform pgp_sym_decrypt(dearmor('
 -----BEGIN PGP MESSAGE-----
 
-jA0EBwMCLd9OvySmZNZg0jgBe7vGTmnje5HGXI+zsIQ99WPZu4Zs/P6pQcZ+HZ4n
-SZQHOfE8tagjB6Rqow82QpSBiOfWn4qjhQ==
-=c2cz
+jA0EBwMCXLc8pozB10Fg0jQBVUID59TLvWutJp0j6eh9ZgjqIRzdYaIymFB8y4XH
+vu0YlJP5D5BX7yqZ+Pry7TlDmiFO
+=rV7z
 -----END PGP MESSAGE-----
 '), 'key', 'debug=1');
 exception when others then
