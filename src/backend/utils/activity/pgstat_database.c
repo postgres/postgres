@@ -115,6 +115,16 @@ pgstat_report_recovery_conflict(int reason)
 		case RECOVERY_CONFLICT_STARTUP_DEADLOCK:
 			dbentry->conflict_startup_deadlock++;
 			break;
+		case RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK:
+
+			/*
+			 * The difference between RECOVERY_CONFLICT_STARTUP_DEADLOCK and
+			 * RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK is merely whether a buffer
+			 * pin was part of the deadlock. We use the same counter for both
+			 * reasons.
+			 */
+			dbentry->conflict_startup_deadlock++;
+			break;
 	}
 }
 

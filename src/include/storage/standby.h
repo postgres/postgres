@@ -51,9 +51,17 @@ typedef enum
 	 * other backends instead of the startup process.
 	 */
 	RECOVERY_CONFLICT_STARTUP_DEADLOCK,
+
+	/*
+	 * Like RECOVERY_CONFLICT_STARTUP_DEADLOCK is, but the suspected deadlock
+	 * involves a buffer pin that some other backend is holding. That needs
+	 * special checking because the normal deadlock detector doesn't track the
+	 * buffer pins.
+	 */
+	RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK,
 } RecoveryConflictReason;
 
-#define NUM_RECOVERY_CONFLICT_REASONS (RECOVERY_CONFLICT_STARTUP_DEADLOCK + 1)
+#define NUM_RECOVERY_CONFLICT_REASONS (RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK + 1)
 
 extern void InitRecoveryTransactionEnvironment(void);
 extern void ShutdownRecoveryTransactionEnvironment(void);

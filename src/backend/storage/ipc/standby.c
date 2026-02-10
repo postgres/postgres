@@ -859,7 +859,7 @@ ResolveRecoveryConflictWithBufferPin(void)
 		 * not be so harmful because the period that the buffer is kept pinned
 		 * is basically no so long. But we should fix this?
 		 */
-		SendRecoveryConflictWithBufferPin(RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+		SendRecoveryConflictWithBufferPin(RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK);
 	}
 
 	/*
@@ -877,7 +877,7 @@ static void
 SendRecoveryConflictWithBufferPin(RecoveryConflictReason reason)
 {
 	Assert(reason == RECOVERY_CONFLICT_BUFFERPIN ||
-		   reason == RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+		   reason == RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK);
 
 	/*
 	 * We send signal to all backends to ask them if they are holding the
@@ -1512,6 +1512,9 @@ get_recovery_conflict_desc(RecoveryConflictReason reason)
 			reasonDesc = _("recovery conflict on replication slot");
 			break;
 		case RECOVERY_CONFLICT_STARTUP_DEADLOCK:
+			reasonDesc = _("recovery conflict on deadlock");
+			break;
+		case RECOVERY_CONFLICT_BUFFERPIN_DEADLOCK:
 			reasonDesc = _("recovery conflict on buffer deadlock");
 			break;
 		case RECOVERY_CONFLICT_DATABASE:
