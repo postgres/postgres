@@ -35,6 +35,7 @@ extern PGDLLIMPORT planner_hook_type planner_hook;
 /* Hook for plugins to get control after PlannerGlobal is initialized */
 typedef void (*planner_setup_hook_type) (PlannerGlobal *glob, Query *parse,
 										 const char *query_string,
+										 int cursorOptions,
 										 double *tuple_fraction,
 										 ExplainState *es);
 extern PGDLLIMPORT planner_setup_hook_type planner_setup_hook;
