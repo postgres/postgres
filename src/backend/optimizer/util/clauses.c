@@ -3686,6 +3686,9 @@ eval_const_expressions_mutator(Node *node,
 													 context);
 				if (arg && IsA(arg, Const))
 				{
+					/*
+					 * If arg is Const, simplify to constant.
+					 */
 					Const	   *carg = (Const *) arg;
 					bool		result;
 
@@ -3721,6 +3724,34 @@ eval_const_expressions_mutator(Node *node,
 					}
 
 					return makeBoolConst(result, false);
+				}
+				if (arg && expr_is_nonnullable(context->root, (Expr *) arg, false))
+				{
+					/*
+					 * If arg is proven non-nullable, simplify to boolean
+					 * expression or constant.
+					 */
+					switch (btest->booltesttype)
+					{
+						case IS_TRUE:
+						case IS_NOT_FALSE:
+							return arg;
+
+						case IS_FALSE:
+						case IS_NOT_TRUE:
+							return (Node *) make_notclause((Expr *) arg);
+
+						case IS_UNKNOWN:
+							return makeBoolConst(false, false);
+
+						case IS_NOT_UNKNOWN:
+							return makeBoolConst(true, false);
+
+						default:
+							elog(ERROR, "unrecognized booltesttype: %d",
+								 (int) btest->booltesttype);
+							break;
+					}
 				}
 
 				newbtest = makeNode(BooleanTest);

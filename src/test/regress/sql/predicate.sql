@@ -369,3 +369,57 @@ RESET enable_nestloop;
 
 DROP TABLE dist_tab;
 DROP TYPE dist_row_t;
+
+--
+-- Test optimization of BooleanTest (IS [NOT] TRUE/FALSE/UNKNOWN) on
+-- non-nullable input
+--
+CREATE TABLE bool_tab (id int, flag_nn boolean NOT NULL, flag_null boolean);
+
+INSERT INTO bool_tab VALUES (1, true,  true);
+INSERT INTO bool_tab VALUES (2, false, NULL);
+
+CREATE INDEX bool_tab_nn_idx ON bool_tab (flag_nn);
+
+ANALYZE bool_tab;
+
+-- Ensure that the predicate folds to constant FALSE
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS UNKNOWN;
+SELECT id FROM bool_tab WHERE flag_nn IS UNKNOWN;
+
+-- Ensure that the predicate folds to constant TRUE
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS NOT UNKNOWN;
+SELECT id FROM bool_tab WHERE flag_nn IS NOT UNKNOWN;
+
+-- Ensure that the predicate folds to flag_nn
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS TRUE;
+SELECT id FROM bool_tab WHERE flag_nn IS TRUE;
+
+-- Ensure that the predicate folds to flag_nn, and thus can use index scan
+SET enable_seqscan TO off;
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS NOT FALSE;
+SELECT id FROM bool_tab WHERE flag_nn IS NOT FALSE;
+RESET enable_seqscan;
+
+-- Ensure that the predicate folds to not flag_nn
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS FALSE;
+SELECT id FROM bool_tab WHERE flag_nn IS FALSE;
+
+-- Ensure that the predicate folds to not flag_nn, and thus can use index scan
+SET enable_seqscan TO off;
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS NOT TRUE;
+SELECT id FROM bool_tab WHERE flag_nn IS NOT TRUE;
+RESET enable_seqscan;
+
+-- Ensure that the predicate is preserved as a BooleanTest
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_null IS UNKNOWN;
+SELECT id FROM bool_tab WHERE flag_null IS UNKNOWN;
+
+DROP TABLE bool_tab;

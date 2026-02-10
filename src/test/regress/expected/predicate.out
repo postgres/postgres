@@ -768,3 +768,122 @@ SELECT * FROM dist_tab t1 JOIN dist_tab t2 ON t1.val_nn IS NOT DISTINCT FROM t2.
 RESET enable_nestloop;
 DROP TABLE dist_tab;
 DROP TYPE dist_row_t;
+--
+-- Test optimization of BooleanTest (IS [NOT] TRUE/FALSE/UNKNOWN) on
+-- non-nullable input
+--
+CREATE TABLE bool_tab (id int, flag_nn boolean NOT NULL, flag_null boolean);
+INSERT INTO bool_tab VALUES (1, true,  true);
+INSERT INTO bool_tab VALUES (2, false, NULL);
+CREATE INDEX bool_tab_nn_idx ON bool_tab (flag_nn);
+ANALYZE bool_tab;
+-- Ensure that the predicate folds to constant FALSE
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS UNKNOWN;
+          QUERY PLAN          
+------------------------------
+ Result
+   Replaces: Scan on bool_tab
+   One-Time Filter: false
+(3 rows)
+
+SELECT id FROM bool_tab WHERE flag_nn IS UNKNOWN;
+ id 
+----
+(0 rows)
+
+-- Ensure that the predicate folds to constant TRUE
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS NOT UNKNOWN;
+      QUERY PLAN      
+----------------------
+ Seq Scan on bool_tab
+(1 row)
+
+SELECT id FROM bool_tab WHERE flag_nn IS NOT UNKNOWN;
+ id 
+----
+  1
+  2
+(2 rows)
+
+-- Ensure that the predicate folds to flag_nn
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS TRUE;
+      QUERY PLAN      
+----------------------
+ Seq Scan on bool_tab
+   Filter: flag_nn
+(2 rows)
+
+SELECT id FROM bool_tab WHERE flag_nn IS TRUE;
+ id 
+----
+  1
+(1 row)
+
+-- Ensure that the predicate folds to flag_nn, and thus can use index scan
+SET enable_seqscan TO off;
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS NOT FALSE;
+                  QUERY PLAN                  
+----------------------------------------------
+ Index Scan using bool_tab_nn_idx on bool_tab
+   Index Cond: (flag_nn = true)
+(2 rows)
+
+SELECT id FROM bool_tab WHERE flag_nn IS NOT FALSE;
+ id 
+----
+  1
+(1 row)
+
+RESET enable_seqscan;
+-- Ensure that the predicate folds to not flag_nn
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS FALSE;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on bool_tab
+   Filter: (NOT flag_nn)
+(2 rows)
+
+SELECT id FROM bool_tab WHERE flag_nn IS FALSE;
+ id 
+----
+  2
+(1 row)
+
+-- Ensure that the predicate folds to not flag_nn, and thus can use index scan
+SET enable_seqscan TO off;
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_nn IS NOT TRUE;
+                  QUERY PLAN                  
+----------------------------------------------
+ Index Scan using bool_tab_nn_idx on bool_tab
+   Index Cond: (flag_nn = false)
+(2 rows)
+
+SELECT id FROM bool_tab WHERE flag_nn IS NOT TRUE;
+ id 
+----
+  2
+(1 row)
+
+RESET enable_seqscan;
+-- Ensure that the predicate is preserved as a BooleanTest
+EXPLAIN (COSTS OFF)
+SELECT id FROM bool_tab WHERE flag_null IS UNKNOWN;
+            QUERY PLAN            
+----------------------------------
+ Seq Scan on bool_tab
+   Filter: (flag_null IS UNKNOWN)
+(2 rows)
+
+SELECT id FROM bool_tab WHERE flag_null IS UNKNOWN;
+ id 
+----
+  2
+(1 row)
+
+DROP TABLE bool_tab;
