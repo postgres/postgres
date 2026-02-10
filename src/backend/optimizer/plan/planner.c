@@ -666,6 +666,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	result->paramExecTypes = glob->paramExecTypes;
 	/* utilityStmt should be null, but we might as well copy it */
 	result->utilityStmt = parse->utilityStmt;
+	result->elidedNodes = glob->elidedNodes;
 	result->stmt_location = parse->stmt_location;
 	result->stmt_len = parse->stmt_len;
 

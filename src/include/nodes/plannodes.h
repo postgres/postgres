@@ -152,6 +152,9 @@ typedef struct PlannedStmt
 	/* non-null if this is utility stmt */
 	Node	   *utilityStmt;
 
+	/* info about nodes elided from the plan during setrefs processing */
+	List	   *elidedNodes;
+
 	/*
 	 * DefElem objects added by extensions, e.g. using planner_shutdown_hook
 	 *
@@ -1837,5 +1840,22 @@ typedef struct SubPlanRTInfo
 	Index		rtoffset;
 	bool		dummy;
 } SubPlanRTInfo;
+
+/*
+ * ElidedNode
+ *
+ * Information about nodes elided from the final plan tree: trivial subquery
+ * scans, and single-child Append and MergeAppend nodes.
+ *
+ * plan_node_id is that of the surviving plan node, the sole child of the
+ * one which was elided.
+ */
+typedef struct ElidedNode
+{
+	NodeTag		type;
+	int			plan_node_id;
+	NodeTag		elided_type;
+	Bitmapset  *relids;
+} ElidedNode;
 
 #endif							/* PLANNODES_H */

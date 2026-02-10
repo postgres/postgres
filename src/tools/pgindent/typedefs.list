@@ -710,6 +710,7 @@ EachState
 Edge
 EditableObjectType
 ElementsState
+ElidedNode
 EnableTimeoutParams
 EndDataPtrType
 EndDirectModify_function

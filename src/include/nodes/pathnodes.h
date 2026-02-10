@@ -232,6 +232,9 @@ typedef struct PlannerGlobal
 	/* type OIDs for PARAM_EXEC Params */
 	List	   *paramExecTypes;
 
+	/* info about nodes elided from the plan during setrefs processing */
+	List	   *elidedNodes;
+
 	/* highest PlaceHolderVar ID assigned */
 	Index		lastPHId;
 

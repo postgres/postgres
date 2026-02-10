@@ -191,6 +191,8 @@ overexplain_per_node_hook(PlanState *planstate, List *ancestors,
 	 */
 	if (options->range_table)
 	{
+		bool		opened_elided_nodes = false;
+
 		switch (nodeTag(plan))
 		{
 			case T_SeqScan:
@@ -251,6 +253,43 @@ overexplain_per_node_hook(PlanState *planstate, List *ancestors,
 			default:
 				break;
 		}
+
+		foreach_node(ElidedNode, n, es->pstmt->elidedNodes)
+		{
+			char	   *elidednodetag;
+
+			if (n->plan_node_id != plan->plan_node_id)
+				continue;
+
+			if (!opened_elided_nodes)
+			{
+				ExplainOpenGroup("Elided Nodes", "Elided Nodes", false, es);
+				opened_elided_nodes = true;
+			}
+
+			switch (n->elided_type)
+			{
+				case T_Append:
+					elidednodetag = "Append";
+					break;
+				case T_MergeAppend:
+					elidednodetag = "MergeAppend";
+					break;
+				case T_SubqueryScan:
+					elidednodetag = "SubqueryScan";
+					break;
+				default:
+					elidednodetag = psprintf("%d", n->elided_type);
+					break;
+			}
+
+			ExplainOpenGroup("Elided Node", NULL, true, es);
+			ExplainPropertyText("Elided Node Type", elidednodetag, es);
+			overexplain_bitmapset("Elided Node RTIs", n->relids, es);
+			ExplainCloseGroup("Elided Node", NULL, true, es);
+		}
+		if (opened_elided_nodes)
+			ExplainCloseGroup("Elided Nodes", "Elided Nodes", false, es);
 	}
 }
 

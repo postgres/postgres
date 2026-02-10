@@ -452,6 +452,8 @@ SELECT * FROM vegetables WHERE genus = 'daucus';
  Seq Scan on daucus vegetables
    Filter: (genus = 'daucus'::text)
    Scan RTI: 2
+   Elided Node Type: Append
+   Elided Node RTIs: 1
  RTI 1 (relation, inherited, in-from-clause):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
@@ -465,7 +467,7 @@ SELECT * FROM vegetables WHERE genus = 'daucus';
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 2
-(16 rows)
+(18 rows)
 
 -- Also test a case that involves a write.
 EXPLAIN (RANGE_TABLE, COSTS OFF)
@@ -499,6 +501,10 @@ SELECT * FROM vegetables v,
    ->  Seq Scan on daucus vegetables
          Filter: (genus = 'daucus'::text)
          Scan RTI: 6
+         Elided Node Type: Append
+         Elided Node RTIs: 5
+         Elided Node Type: SubqueryScan
+         Elided Node RTIs: 2
    ->  Append
          Append RTIs: 1
          ->  Seq Scan on brassica v_1
@@ -542,7 +548,7 @@ SELECT * FROM vegetables v,
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
-(47 rows)
+(51 rows)
 
 -- should show "Subplan: unnamed_subquery"
 EXPLAIN (RANGE_TABLE, COSTS OFF)
@@ -554,6 +560,10 @@ SELECT * FROM vegetables v,
    ->  Seq Scan on daucus vegetables
          Filter: (genus = 'daucus'::text)
          Scan RTI: 6
+         Elided Node Type: Append
+         Elided Node RTIs: 5
+         Elided Node Type: SubqueryScan
+         Elided Node RTIs: 2
    ->  Append
          Append RTIs: 1
          ->  Seq Scan on brassica v_1
@@ -596,5 +606,5 @@ SELECT * FROM vegetables v,
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
-(46 rows)
+(50 rows)
 

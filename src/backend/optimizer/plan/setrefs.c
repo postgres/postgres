@@ -211,6 +211,9 @@ static List *set_windowagg_runcondition_references(PlannerInfo *root,
 												   List *runcondition,
 												   Plan *plan);
 
+static void record_elided_node(PlannerGlobal *glob, int plan_node_id,
+							   NodeTag elided_type, Bitmapset *relids);
+
 
 /*****************************************************************************
  *
@@ -1460,10 +1463,17 @@ set_subqueryscan_references(PlannerInfo *root,
 
 	if (trivial_subqueryscan(plan))
 	{
+		Index		scanrelid;
+
 		/*
 		 * We can omit the SubqueryScan node and just pull up the subplan.
 		 */
 		result = clean_up_removed_plan_level((Plan *) plan, plan->subplan);
+
+		/* Remember that we removed a SubqueryScan */
+		scanrelid = plan->scan.scanrelid + rtoffset;
+		record_elided_node(root->glob, plan->subplan->plan_node_id,
+						   T_SubqueryScan, bms_make_singleton(scanrelid));
 	}
 	else
 	{
@@ -1891,7 +1901,17 @@ set_append_references(PlannerInfo *root,
 		Plan	   *p = (Plan *) linitial(aplan->appendplans);
 
 		if (p->parallel_aware == aplan->plan.parallel_aware)
-			return clean_up_removed_plan_level((Plan *) aplan, p);
+		{
+			Plan	   *result;
+
+			result = clean_up_removed_plan_level((Plan *) aplan, p);
+
+			/* Remember that we removed an Append */
+			record_elided_node(root->glob, p->plan_node_id, T_Append,
+							   offset_relid_set(aplan->apprelids, rtoffset));
+
+			return result;
+		}
 	}
 
 	/*
@@ -1959,7 +1979,17 @@ set_mergeappend_references(PlannerInfo *root,
 		Plan	   *p = (Plan *) linitial(mplan->mergeplans);
 
 		if (p->parallel_aware == mplan->plan.parallel_aware)
-			return clean_up_removed_plan_level((Plan *) mplan, p);
+		{
+			Plan	   *result;
+
+			result = clean_up_removed_plan_level((Plan *) mplan, p);
+
+			/* Remember that we removed a MergeAppend */
+			record_elided_node(root->glob, p->plan_node_id, T_MergeAppend,
+							   offset_relid_set(mplan->apprelids, rtoffset));
+
+			return result;
+		}
 	}
 
 	/*
@@ -3773,4 +3803,22 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 	fix_expr_common(context, node);
 	return expression_tree_walker(node, extract_query_dependencies_walker,
 								  context);
+}
+
+/*
+ * Record some details about a node removed from the plan during setrefs
+ * processing, for the benefit of code trying to reconstruct planner decisions
+ * from examination of the final plan tree.
+ */
+static void
+record_elided_node(PlannerGlobal *glob, int plan_node_id,
+				   NodeTag elided_type, Bitmapset *relids)
+{
+	ElidedNode *n = makeNode(ElidedNode);
+
+	n->plan_node_id = plan_node_id;
+	n->elided_type = elided_type;
+	n->relids = relids;
+
+	glob->elidedNodes = lappend(glob->elidedNodes, n);
 }
