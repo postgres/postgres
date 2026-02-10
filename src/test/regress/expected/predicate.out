@@ -633,7 +633,7 @@ SELECT * FROM pred_tab WHERE (a::oid) IS NULL;
 
 DROP TABLE pred_tab;
 --
--- Test optimization of IS [NOT] DISTINCT FROM on non-nullable inputs
+-- Test optimization of IS [NOT] DISTINCT FROM
 --
 CREATE TYPE dist_row_t AS (a int, b int);
 CREATE TABLE dist_tab (id int, val_nn int NOT NULL, val_null int, row_nn dist_row_t NOT NULL);
@@ -766,6 +766,73 @@ SELECT * FROM dist_tab t1 JOIN dist_tab t2 ON t1.val_nn IS NOT DISTINCT FROM t2.
 (3 rows)
 
 RESET enable_nestloop;
+-- Ensure that the predicate is converted to IS NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_null IS DISTINCT FROM NULL::INT;
+            QUERY PLAN            
+----------------------------------
+ Seq Scan on dist_tab
+   Filter: (val_null IS NOT NULL)
+(2 rows)
+
+SELECT id FROM dist_tab WHERE val_null IS DISTINCT FROM NULL::INT;
+ id 
+----
+  1
+  3
+(2 rows)
+
+-- Ensure that the predicate is converted to IS NULL
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_null IS NOT DISTINCT FROM NULL::INT;
+          QUERY PLAN          
+------------------------------
+ Seq Scan on dist_tab
+   Filter: (val_null IS NULL)
+(2 rows)
+
+SELECT id FROM dist_tab WHERE val_null IS NOT DISTINCT FROM NULL::INT;
+ id 
+----
+  2
+(1 row)
+
+-- Safety check for rowtypes
+-- The predicate is converted to IS NOT NULL, and get_rule_expr prints it as IS
+-- DISTINCT FROM because argisrow is false, indicating that we're applying a
+-- scalar test
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS DISTINCT FROM NULL::RECORD;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Seq Scan on dist_tab
+   Filter: (ROW(val_null, val_null) IS DISTINCT FROM NULL)
+(2 rows)
+
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS DISTINCT FROM NULL::RECORD;
+ id 
+----
+  1
+  2
+  3
+(3 rows)
+
+-- The predicate is converted to IS NULL, and get_rule_expr prints it as IS NOT
+-- DISTINCT FROM because argisrow is false, indicating that we're applying a
+-- scalar test
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS NOT DISTINCT FROM NULL::RECORD;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Seq Scan on dist_tab
+   Filter: (ROW(val_null, val_null) IS NOT DISTINCT FROM NULL)
+(2 rows)
+
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS NOT DISTINCT FROM NULL::RECORD;
+ id 
+----
+(0 rows)
+
 DROP TABLE dist_tab;
 DROP TYPE dist_row_t;
 --

@@ -2837,6 +2837,30 @@ eval_const_expressions_mutator(Node *node,
 					return eval_const_expressions_mutator(negate_clause((Node *) eqexpr),
 														  context);
 				}
+				else if (has_null_input)
+				{
+					/*
+					 * One input is a nullable non-constant expression, and
+					 * the other is an explicit NULL constant.  We can
+					 * transform this to a NullTest with !argisrow, which is
+					 * much more amenable to optimization.
+					 */
+
+					NullTest   *nt = makeNode(NullTest);
+
+					nt->arg = (Expr *) (IsA(linitial(args), Const) ?
+										lsecond(args) : linitial(args));
+					nt->nulltesttype = IS_NOT_NULL;
+
+					/*
+					 * argisrow = false is correct whether or not arg is
+					 * composite
+					 */
+					nt->argisrow = false;
+					nt->location = expr->location;
+
+					return eval_const_expressions_mutator((Node *) nt, context);
+				}
 
 				/*
 				 * The expression cannot be simplified any further, so build

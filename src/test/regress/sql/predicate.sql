@@ -310,7 +310,7 @@ SELECT * FROM pred_tab WHERE (a::oid) IS NULL;
 DROP TABLE pred_tab;
 
 --
--- Test optimization of IS [NOT] DISTINCT FROM on non-nullable inputs
+-- Test optimization of IS [NOT] DISTINCT FROM
 --
 
 CREATE TYPE dist_row_t AS (a int, b int);
@@ -366,6 +366,31 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM dist_tab t1 JOIN dist_tab t2 ON t1.val_nn IS NOT DISTINCT FROM t2.val_nn;
 SELECT * FROM dist_tab t1 JOIN dist_tab t2 ON t1.val_nn IS NOT DISTINCT FROM t2.val_nn;
 RESET enable_nestloop;
+
+-- Ensure that the predicate is converted to IS NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_null IS DISTINCT FROM NULL::INT;
+SELECT id FROM dist_tab WHERE val_null IS DISTINCT FROM NULL::INT;
+
+-- Ensure that the predicate is converted to IS NULL
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_null IS NOT DISTINCT FROM NULL::INT;
+SELECT id FROM dist_tab WHERE val_null IS NOT DISTINCT FROM NULL::INT;
+
+-- Safety check for rowtypes
+-- The predicate is converted to IS NOT NULL, and get_rule_expr prints it as IS
+-- DISTINCT FROM because argisrow is false, indicating that we're applying a
+-- scalar test
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS DISTINCT FROM NULL::RECORD;
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS DISTINCT FROM NULL::RECORD;
+
+-- The predicate is converted to IS NULL, and get_rule_expr prints it as IS NOT
+-- DISTINCT FROM because argisrow is false, indicating that we're applying a
+-- scalar test
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS NOT DISTINCT FROM NULL::RECORD;
+SELECT id FROM dist_tab WHERE (val_null, val_null) IS NOT DISTINCT FROM NULL::RECORD;
 
 DROP TABLE dist_tab;
 DROP TYPE dist_row_t;
