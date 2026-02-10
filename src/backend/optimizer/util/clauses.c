@@ -2705,6 +2705,7 @@ eval_const_expressions_mutator(Node *node,
 				bool		has_null_input = false;
 				bool		all_null_input = true;
 				bool		has_nonconst_input = false;
+				bool		has_nullable_nonconst = false;
 				Expr	   *simple;
 				DistinctExpr *newexpr;
 
@@ -2721,7 +2722,8 @@ eval_const_expressions_mutator(Node *node,
 				/*
 				 * We must do our own check for NULLs because DistinctExpr has
 				 * different results for NULL input than the underlying
-				 * operator does.
+				 * operator does.  We also check if any non-constant input is
+				 * potentially nullable.
 				 */
 				foreach(arg, args)
 				{
@@ -2731,12 +2733,24 @@ eval_const_expressions_mutator(Node *node,
 						all_null_input &= ((Const *) lfirst(arg))->constisnull;
 					}
 					else
+					{
 						has_nonconst_input = true;
+						all_null_input = false;
+
+						if (!has_nullable_nonconst &&
+							!expr_is_nonnullable(context->root,
+												 (Expr *) lfirst(arg), false))
+							has_nullable_nonconst = true;
+					}
 				}
 
-				/* all constants? then can optimize this out */
 				if (!has_nonconst_input)
 				{
+					/*
+					 * All inputs are constants.  We can optimize this out
+					 * completely.
+					 */
+
 					/* all nulls? then not distinct */
 					if (all_null_input)
 						return makeBoolConst(false, false);
@@ -2780,6 +2794,48 @@ eval_const_expressions_mutator(Node *node,
 							BoolGetDatum(!DatumGetBool(csimple->constvalue));
 						return (Node *) csimple;
 					}
+				}
+				else if (!has_nullable_nonconst)
+				{
+					/*
+					 * There are non-constant inputs, but since all of them
+					 * are proven non-nullable, "IS DISTINCT FROM" semantics
+					 * are much simpler.
+					 */
+
+					OpExpr	   *eqexpr;
+
+					/*
+					 * If one input is an explicit NULL constant, and the
+					 * other is a non-nullable expression, the result is
+					 * always TRUE.
+					 */
+					if (has_null_input)
+						return makeBoolConst(true, false);
+
+					/*
+					 * Otherwise, both inputs are known non-nullable.  In this
+					 * case, "IS DISTINCT FROM" is equivalent to the standard
+					 * inequality operator (usually "<>").  We convert this to
+					 * an OpExpr, which is a more efficient representation for
+					 * the planner.  It can enable the use of partial indexes
+					 * and constraint exclusion.  Furthermore, if the clause
+					 * is negated (ie, "IS NOT DISTINCT FROM"), the resulting
+					 * "=" operator can allow the planner to use index scans,
+					 * merge joins, hash joins, and EC-based qual deductions.
+					 */
+					eqexpr = makeNode(OpExpr);
+					eqexpr->opno = expr->opno;
+					eqexpr->opfuncid = expr->opfuncid;
+					eqexpr->opresulttype = BOOLOID;
+					eqexpr->opretset = expr->opretset;
+					eqexpr->opcollid = expr->opcollid;
+					eqexpr->inputcollid = expr->inputcollid;
+					eqexpr->args = args;
+					eqexpr->location = expr->location;
+
+					return eval_const_expressions_mutator(negate_clause((Node *) eqexpr),
+														  context);
 				}
 
 				/*

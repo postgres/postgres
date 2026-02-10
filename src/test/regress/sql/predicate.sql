@@ -308,3 +308,64 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab WHERE (a::oid) IS NULL;
 
 DROP TABLE pred_tab;
+
+--
+-- Test optimization of IS [NOT] DISTINCT FROM on non-nullable inputs
+--
+
+CREATE TYPE dist_row_t AS (a int, b int);
+CREATE TABLE dist_tab (id int, val_nn int NOT NULL, val_null int, row_nn dist_row_t NOT NULL);
+
+INSERT INTO dist_tab VALUES (1, 10, 10, ROW(1, 1));
+INSERT INTO dist_tab VALUES (2, 20, NULL, ROW(2, 2));
+INSERT INTO dist_tab VALUES (3, 30, 30, ROW(1, NULL));
+
+CREATE INDEX dist_tab_nn_idx ON dist_tab (val_nn);
+
+ANALYZE dist_tab;
+
+-- Ensure that the predicate folds to constant TRUE
+EXPLAIN(COSTS OFF)
+SELECT id FROM dist_tab WHERE val_nn IS DISTINCT FROM NULL::INT;
+SELECT id FROM dist_tab WHERE val_nn IS DISTINCT FROM NULL::INT;
+
+-- Ensure that the predicate folds to constant FALSE
+EXPLAIN(COSTS OFF)
+SELECT id FROM dist_tab WHERE val_nn IS NOT DISTINCT FROM NULL::INT;
+SELECT id FROM dist_tab WHERE val_nn IS NOT DISTINCT FROM NULL::INT;
+
+-- Ensure that the predicate is converted to an inequality operator
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_nn IS DISTINCT FROM 10;
+SELECT id FROM dist_tab WHERE val_nn IS DISTINCT FROM 10;
+
+-- Ensure that the predicate is converted to an equality operator, and thus can
+-- use index scan
+SET enable_seqscan TO off;
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_nn IS NOT DISTINCT FROM 10;
+SELECT id FROM dist_tab WHERE val_nn IS NOT DISTINCT FROM 10;
+RESET enable_seqscan;
+
+-- Ensure that the predicate is preserved as "IS DISTINCT FROM"
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE val_null IS DISTINCT FROM 20;
+SELECT id FROM dist_tab WHERE val_null IS DISTINCT FROM 20;
+
+-- Safety check for rowtypes
+-- Ensure that the predicate is converted to an inequality operator
+EXPLAIN (COSTS OFF)
+SELECT id FROM dist_tab WHERE row_nn IS DISTINCT FROM ROW(1, 5)::dist_row_t;
+-- ... and that all 3 rows are returned
+SELECT id FROM dist_tab WHERE row_nn IS DISTINCT FROM ROW(1, 5)::dist_row_t;
+
+-- Ensure that the predicate is converted to an equality operator, and thus
+-- mergejoinable or hashjoinable
+SET enable_nestloop TO off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM dist_tab t1 JOIN dist_tab t2 ON t1.val_nn IS NOT DISTINCT FROM t2.val_nn;
+SELECT * FROM dist_tab t1 JOIN dist_tab t2 ON t1.val_nn IS NOT DISTINCT FROM t2.val_nn;
+RESET enable_nestloop;
+
+DROP TABLE dist_tab;
+DROP TYPE dist_row_t;
