@@ -388,7 +388,7 @@ hashtextextended(PG_FUNCTION_ARGS)
 Datum
 hashvarlena(PG_FUNCTION_ARGS)
 {
-	struct varlena *key = PG_GETARG_VARLENA_PP(0);
+	varlena    *key = PG_GETARG_VARLENA_PP(0);
 	Datum		result;
 
 	result = hash_any((unsigned char *) VARDATA_ANY(key),
@@ -403,7 +403,7 @@ hashvarlena(PG_FUNCTION_ARGS)
 Datum
 hashvarlenaextended(PG_FUNCTION_ARGS)
 {
-	struct varlena *key = PG_GETARG_VARLENA_PP(0);
+	varlena    *key = PG_GETARG_VARLENA_PP(0);
 	Datum		result;
 
 	result = hash_any_extended((unsigned char *) VARDATA_ANY(key),

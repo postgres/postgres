@@ -20,7 +20,7 @@
 #include "fmgr.h"
 
 /*
- * Modeled on struct varlena from c.h, but data type is bits8.
+ * Modeled on varlena from c.h, but data type is bits8.
  *
  * Caution: if bit_len is not a multiple of BITS_PER_BYTE, the low-order
  * bits of the last byte of bit_dat[] are unused and MUST be zeroes.

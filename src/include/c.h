@@ -689,7 +689,7 @@ typedef uint64 Oid8;
 #define OID8_MAX	UINT64_MAX
 
 /* ----------------
- *		Variable-length datatypes all share the 'struct varlena' header.
+ *		Variable-length datatypes all share the 'varlena' header.
  *
  * NOTE: for TOASTable types, this is an oversimplification, since the value
  * may be compressed or moved out-of-line.  However datatype-specific routines
@@ -702,11 +702,11 @@ typedef uint64 Oid8;
  * See varatt.h for details of the TOASTed form.
  * ----------------
  */
-struct varlena
+typedef struct varlena
 {
 	char		vl_len_[4];		/* Do not touch this field directly! */
 	char		vl_dat[FLEXIBLE_ARRAY_MEMBER];	/* Data content is here */
-};
+} varlena;
 
 #define VARHDRSZ		((int32) sizeof(int32))
 
@@ -715,10 +715,10 @@ struct varlena
  * There is no terminating null or anything like that --- the data length is
  * always VARSIZE_ANY_EXHDR(ptr).
  */
-typedef struct varlena bytea;
-typedef struct varlena text;
-typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
-typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
+typedef varlena bytea;
+typedef varlena text;
+typedef varlena BpChar;			/* blank-padded char, ie SQL char(n) */
+typedef varlena VarChar;		/* var-length char, ie SQL varchar(n) */
 
 /*
  * Specialized array types.  These are physically laid out just the same

@@ -16,7 +16,7 @@
 #define VARATT_H
 
 /*
- * struct varatt_external is a traditional "TOAST pointer", that is, the
+ * varatt_external is a traditional "TOAST pointer", that is, the
  * information needed to fetch a Datum stored out-of-line in a TOAST table.
  * The data is compressed if and only if the external size stored in
  * va_extinfo is less than va_rawsize - VARHDRSZ.
@@ -36,7 +36,7 @@ typedef struct varatt_external
 								 * compression method */
 	Oid			va_valueid;		/* Unique ID of value within TOAST table */
 	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
-}			varatt_external;
+} varatt_external;
 
 /*
  * These macros define the "saved size" portion of va_extinfo.  Its remaining
@@ -46,27 +46,27 @@ typedef struct varatt_external
 #define VARLENA_EXTSIZE_MASK	((1U << VARLENA_EXTSIZE_BITS) - 1)
 
 /*
- * struct varatt_indirect is a "TOAST pointer" representing an out-of-line
+ * varatt_indirect is a "TOAST pointer" representing an out-of-line
  * Datum that's stored in memory, not in an external toast relation.
  * The creator of such a Datum is entirely responsible that the referenced
  * storage survives for as long as referencing pointer Datums can exist.
  *
- * Note that just as for struct varatt_external, this struct is stored
+ * Note that just as for varatt_external, this struct is stored
  * unaligned within any containing tuple.
  */
 typedef struct varatt_indirect
 {
-	struct varlena *pointer;	/* Pointer to in-memory varlena */
-}			varatt_indirect;
+	varlena    *pointer;		/* Pointer to in-memory varlena */
+} varatt_indirect;
 
 /*
- * struct varatt_expanded is a "TOAST pointer" representing an out-of-line
+ * varatt_expanded is a "TOAST pointer" representing an out-of-line
  * Datum that is stored in memory, in some type-specific, not necessarily
  * physically contiguous format that is convenient for computation not
  * storage.  APIs for this, in particular the definition of struct
  * ExpandedObjectHeader, are in src/include/utils/expandeddatum.h.
  *
- * Note that just as for struct varatt_external, this struct is stored
+ * Note that just as for varatt_external, this struct is stored
  * unaligned within any containing tuple.
  */
 typedef struct ExpandedObjectHeader ExpandedObjectHeader;
@@ -502,15 +502,15 @@ VARDATA_COMPRESSED_GET_COMPRESS_METHOD(const void *PTR)
 	return ((const varattrib_4b *) PTR)->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS;
 }
 
-/* Same for external Datums; but note argument is a struct varatt_external */
+/* Same for external Datums; but note argument is a varatt_external */
 static inline Size
-VARATT_EXTERNAL_GET_EXTSIZE(struct varatt_external toast_pointer)
+VARATT_EXTERNAL_GET_EXTSIZE(varatt_external toast_pointer)
 {
 	return toast_pointer.va_extinfo & VARLENA_EXTSIZE_MASK;
 }
 
 static inline uint32
-VARATT_EXTERNAL_GET_COMPRESS_METHOD(struct varatt_external toast_pointer)
+VARATT_EXTERNAL_GET_COMPRESS_METHOD(varatt_external toast_pointer)
 {
 	return toast_pointer.va_extinfo >> VARLENA_EXTSIZE_BITS;
 }
@@ -533,7 +533,7 @@ VARATT_EXTERNAL_GET_COMPRESS_METHOD(struct varatt_external toast_pointer)
  * actually saves space, so we expect either equality or less-than.
  */
 static inline bool
-VARATT_EXTERNAL_IS_COMPRESSED(struct varatt_external toast_pointer)
+VARATT_EXTERNAL_IS_COMPRESSED(varatt_external toast_pointer)
 {
 	return VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) <
 		(Size) (toast_pointer.va_rawsize - VARHDRSZ);

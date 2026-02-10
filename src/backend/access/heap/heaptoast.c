@@ -371,9 +371,9 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 		 */
 		if (!toast_isnull[i] && TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
-			struct varlena *new_value;
+			varlena    *new_value;
 
-			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
+			new_value = (varlena *) DatumGetPointer(toast_values[i]);
 			if (VARATT_IS_EXTERNAL(new_value))
 			{
 				new_value = detoast_external_attr(new_value);
@@ -485,9 +485,9 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 			has_nulls = true;
 		else if (TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
-			struct varlena *new_value;
+			varlena    *new_value;
 
-			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
+			new_value = (varlena *) DatumGetPointer(toast_values[i]);
 			if (VARATT_IS_EXTERNAL(new_value) ||
 				VARATT_IS_COMPRESSED(new_value))
 			{
@@ -586,9 +586,9 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 		 */
 		if (!isnull[i] && TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
-			struct varlena *new_value;
+			varlena    *new_value;
 
-			new_value = (struct varlena *) DatumGetPointer(new_values[i]);
+			new_value = (varlena *) DatumGetPointer(new_values[i]);
 			if (VARATT_IS_EXTERNAL(new_value))
 			{
 				new_value = detoast_external_attr(new_value);
@@ -625,7 +625,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 void
 heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 					   int32 sliceoffset, int32 slicelength,
-					   struct varlena *result)
+					   varlena *result)
 {
 	Relation   *toastidxs;
 	ScanKeyData toastkey[3];

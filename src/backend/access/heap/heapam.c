@@ -4535,7 +4535,7 @@ HeapDetermineColumnsInfo(Relation relation,
 		 * Check if the old tuple's attribute is stored externally and is a
 		 * member of external_cols.
 		 */
-		if (VARATT_IS_EXTERNAL((struct varlena *) DatumGetPointer(value1)) &&
+		if (VARATT_IS_EXTERNAL((varlena *) DatumGetPointer(value1)) &&
 			bms_is_member(attidx, external_cols))
 			*has_external = true;
 	}

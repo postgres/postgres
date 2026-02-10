@@ -1068,7 +1068,7 @@ data. Empty in ordinary tables.</entry>
   fixed width field, then all the bytes are simply placed. If it's a
   variable length field (attlen = -1) then it's a bit more complicated.
   All variable-length data types share the common header structure
-  <type>struct varlena</type>, which includes the total length of the stored
+  <type>varlena</type>, which includes the total length of the stored
   value and some flag bits.  Depending on the flags, the data can be either
   inline or in a <acronym>TOAST</acronym> table;
   it might be compressed, too (see <xref linkend="storage-toast"/>).

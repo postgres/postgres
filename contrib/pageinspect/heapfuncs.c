@@ -396,7 +396,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 						 errmsg("unexpected end of tuple data")));
 
 			if (attr->attlen == -1 && do_detoast)
-				attr_data = pg_detoast_datum_copy((struct varlena *) (tupdata + off));
+				attr_data = pg_detoast_datum_copy((varlena *) (tupdata + off));
 			else
 			{
 				attr_data = (bytea *) palloc(len + VARHDRSZ);

@@ -73,7 +73,7 @@ typedef enum SkipPages
  */
 typedef struct ToastedAttribute
 {
-	struct varatt_external toast_pointer;
+	varatt_external toast_pointer;
 	BlockNumber blkno;			/* block in main table */
 	OffsetNumber offnum;		/* offset in main table */
 	AttrNumber	attnum;			/* attribute in main table */
@@ -1660,11 +1660,11 @@ static bool
 check_tuple_attribute(HeapCheckContext *ctx)
 {
 	Datum		attdatum;
-	struct varlena *attr;
+	varlena    *attr;
 	char	   *tp;				/* pointer to the tuple data */
 	uint16		infomask;
 	CompactAttribute *thisatt;
-	struct varatt_external toast_pointer;
+	varatt_external toast_pointer;
 
 	infomask = ctx->tuphdr->t_infomask;
 	thisatt = TupleDescCompactAttr(RelationGetDescr(ctx->rel), ctx->attnum);
@@ -1754,7 +1754,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	 * We go further, because we need to check if the toast datum is corrupt.
 	 */
 
-	attr = (struct varlena *) DatumGetPointer(attdatum);
+	attr = (varlena *) DatumGetPointer(attdatum);
 
 	/*
 	 * Now we follow the logic of detoast_external_attr(), with the same

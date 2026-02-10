@@ -42,7 +42,7 @@
 #include "utils/sortsupport.h"
 #include "utils/varlena.h"
 
-typedef struct varlena VarString;
+typedef varlena VarString;
 
 /*
  * State for text_position_* functions.
@@ -4179,7 +4179,7 @@ pg_column_compression(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/* get the compression method id stored in the compressed varlena */
-	cmid = toast_get_compression_id((struct varlena *)
+	cmid = toast_get_compression_id((varlena *)
 									DatumGetPointer(PG_GETARG_DATUM(0)));
 	if (cmid == TOAST_INVALID_COMPRESSION_ID)
 		PG_RETURN_NULL();
@@ -4208,8 +4208,8 @@ Datum
 pg_column_toast_chunk_id(PG_FUNCTION_ARGS)
 {
 	int			typlen;
-	struct varlena *attr;
-	struct varatt_external toast_pointer;
+	varlena    *attr;
+	varatt_external toast_pointer;
 
 	/* On first call, get the input type's typlen, and save at *fn_extra */
 	if (fcinfo->flinfo->fn_extra == NULL)
@@ -4231,7 +4231,7 @@ pg_column_toast_chunk_id(PG_FUNCTION_ARGS)
 	if (typlen != -1)
 		PG_RETURN_NULL();
 
-	attr = (struct varlena *) DatumGetPointer(PG_GETARG_DATUM(0));
+	attr = (varlena *) DatumGetPointer(PG_GETARG_DATUM(0));
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		PG_RETURN_NULL();

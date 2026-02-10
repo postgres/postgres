@@ -1515,8 +1515,8 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			{
 				Size		len1,
 							len2;
-				struct varlena *arg1val;
-				struct varlena *arg2val;
+				varlena    *arg1val;
+				varlena    *arg2val;
 
 				len1 = toast_raw_datum_size(values1[i1]);
 				len2 = toast_raw_datum_size(values2[i2]);

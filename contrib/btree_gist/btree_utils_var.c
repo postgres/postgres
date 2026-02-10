@@ -70,7 +70,7 @@ gbt_var_key_readable(const GBT_VARKEY *k)
  * Create a leaf-entry to store in the index, from a single Datum.
  */
 static GBT_VARKEY *
-gbt_var_key_from_datum(const struct varlena *u)
+gbt_var_key_from_datum(const varlena *u)
 {
 	int32		lowersize = VARSIZE(u);
 	GBT_VARKEY *r;
@@ -294,7 +294,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 
 	if (entry->leafkey)
 	{
-		struct varlena *leaf = PG_DETOAST_DATUM(entry->key);
+		varlena    *leaf = PG_DETOAST_DATUM(entry->key);
 		GBT_VARKEY *r;
 
 		r = gbt_var_key_from_datum(leaf);

@@ -108,7 +108,7 @@ index_form_tuple_context(TupleDesc tupleDescriptor,
 		if (VARATT_IS_EXTERNAL(DatumGetPointer(values[i])))
 		{
 			untoasted_values[i] =
-				PointerGetDatum(detoast_external_attr((struct varlena *)
+				PointerGetDatum(detoast_external_attr((varlena *)
 													  DatumGetPointer(values[i])));
 			untoasted_free[i] = true;
 		}

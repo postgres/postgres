@@ -376,9 +376,9 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < ncolumns; i++)
 	{
-		struct varlena *attr;
-		struct varlena *new_attr;
-		struct varatt_indirect redirect_pointer;
+		varlena    *attr;
+		varlena    *new_attr;
+		varatt_indirect redirect_pointer;
 
 		/* only work on existing, not-null varlenas */
 		if (TupleDescAttr(tupdesc, i)->attisdropped ||
@@ -387,7 +387,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 			TupleDescAttr(tupdesc, i)->attstorage == TYPSTORAGE_PLAIN)
 			continue;
 
-		attr = (struct varlena *) DatumGetPointer(values[i]);
+		attr = (varlena *) DatumGetPointer(values[i]);
 
 		/* don't recursively indirect */
 		if (VARATT_IS_EXTERNAL_INDIRECT(attr))
@@ -398,14 +398,14 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 			attr = detoast_external_attr(attr);
 		else
 		{
-			struct varlena *oldattr = attr;
+			varlena    *oldattr = attr;
 
 			attr = palloc0(VARSIZE_ANY(oldattr));
 			memcpy(attr, oldattr, VARSIZE_ANY(oldattr));
 		}
 
 		/* build indirection Datum */
-		new_attr = (struct varlena *) palloc0(INDIRECT_POINTER_SIZE);
+		new_attr = (varlena *) palloc0(INDIRECT_POINTER_SIZE);
 		redirect_pointer.pointer = attr;
 		SET_VARTAG_EXTERNAL(new_attr, VARTAG_INDIRECT);
 		memcpy(VARDATA_EXTERNAL(new_attr), &redirect_pointer,

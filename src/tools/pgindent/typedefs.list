@@ -4270,9 +4270,12 @@ va_list
 vacuumingOptions
 validate_string_relopt
 varatt_expanded
+varatt_external
+varatt_indirect
 varattrib_1b
 varattrib_1b_e
 varattrib_4b
+varlena
 vartag_external
 vbits
 verifier_context

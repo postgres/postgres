@@ -26,7 +26,7 @@
  * The number of significant bytes are always equal to the typlen.
  *
  * C) if a type is not "byVal" and has typlen == -1,
- * then the "Datum" always points to a "struct varlena".
+ * then the "Datum" always points to a "varlena".
  * This varlena structure has information about the actual length of this
  * particular instance of the type and about its value.
  *
@@ -82,7 +82,7 @@ datumGetSize(Datum value, bool typByVal, int typLen)
 		else if (typLen == -1)
 		{
 			/* It is a varlena datatype */
-			struct varlena *s = (struct varlena *) DatumGetPointer(value);
+			varlena    *s = (varlena *) DatumGetPointer(value);
 
 			if (!s)
 				ereport(ERROR,
@@ -138,7 +138,7 @@ datumCopy(Datum value, bool typByVal, int typLen)
 	else if (typLen == -1)
 	{
 		/* It is a varlena datatype */
-		struct varlena *vl = (struct varlena *) DatumGetPointer(value);
+		varlena    *vl = (varlena *) DatumGetPointer(value);
 
 		if (VARATT_IS_EXTERNAL_EXPANDED(vl))
 		{
@@ -288,8 +288,8 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 			result = false;
 		else
 		{
-			struct varlena *arg1val;
-			struct varlena *arg2val;
+			varlena    *arg1val;
+			varlena    *arg2val;
 
 			arg1val = PG_DETOAST_DATUM_PACKED(value1);
 			arg2val = PG_DETOAST_DATUM_PACKED(value2);
@@ -346,7 +346,7 @@ datum_image_hash(Datum value, bool typByVal, int typLen)
 		result = hash_bytes((unsigned char *) DatumGetPointer(value), typLen);
 	else if (typLen == -1)
 	{
-		struct varlena *val;
+		varlena    *val;
 
 		len = toast_raw_datum_size(value);
 

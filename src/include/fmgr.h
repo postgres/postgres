@@ -231,22 +231,22 @@ extern void fmgr_symbol(Oid functionId, char **mod, char **fn);
  * Note: it'd be nice if these could be macros, but I see no way to do that
  * without evaluating the arguments multiple times, which is NOT acceptable.
  */
-extern struct varlena *pg_detoast_datum(struct varlena *datum);
-extern struct varlena *pg_detoast_datum_copy(struct varlena *datum);
-extern struct varlena *pg_detoast_datum_slice(struct varlena *datum,
-											  int32 first, int32 count);
-extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
+extern varlena *pg_detoast_datum(varlena *datum);
+extern varlena *pg_detoast_datum_copy(varlena *datum);
+extern varlena *pg_detoast_datum_slice(varlena *datum,
+									   int32 first, int32 count);
+extern varlena *pg_detoast_datum_packed(varlena *datum);
 
 #define PG_DETOAST_DATUM(datum) \
-	pg_detoast_datum((struct varlena *) DatumGetPointer(datum))
+	pg_detoast_datum((varlena *) DatumGetPointer(datum))
 #define PG_DETOAST_DATUM_COPY(datum) \
-	pg_detoast_datum_copy((struct varlena *) DatumGetPointer(datum))
+	pg_detoast_datum_copy((varlena *) DatumGetPointer(datum))
 #define PG_DETOAST_DATUM_SLICE(datum,f,c) \
-		pg_detoast_datum_slice((struct varlena *) DatumGetPointer(datum), \
+		pg_detoast_datum_slice((varlena *) DatumGetPointer(datum), \
 		(int32) (f), (int32) (c))
 /* WARNING -- unaligned pointer */
 #define PG_DETOAST_DATUM_PACKED(datum) \
-	pg_detoast_datum_packed((struct varlena *) DatumGetPointer(datum))
+	pg_detoast_datum_packed((varlena *) DatumGetPointer(datum))
 
 /*
  * Support for cleaning up detoasted copies of inputs.  This must only
@@ -283,7 +283,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
 #define PG_GETARG_FLOAT8(n)  DatumGetFloat8(PG_GETARG_DATUM(n))
 #define PG_GETARG_INT64(n)	 DatumGetInt64(PG_GETARG_DATUM(n))
 /* use this if you want the raw, possibly-toasted input datum: */
-#define PG_GETARG_RAW_VARLENA_P(n)	((struct varlena *) PG_GETARG_POINTER(n))
+#define PG_GETARG_RAW_VARLENA_P(n)	((varlena *) PG_GETARG_POINTER(n))
 /* use this if you want the input datum de-toasted: */
 #define PG_GETARG_VARLENA_P(n) PG_DETOAST_DATUM(PG_GETARG_DATUM(n))
 /* and this if you can handle 1-byte-header datums: */

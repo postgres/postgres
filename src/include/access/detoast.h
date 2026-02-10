@@ -14,7 +14,7 @@
 
 /*
  * Macro to fetch the possibly-unaligned contents of an EXTERNAL datum
- * into a local "struct varatt_external" toast pointer.  This should be
+ * into a local "varatt_external" toast pointer.  This should be
  * just a memcpy, but some versions of gcc seem to produce broken code
  * that assumes the datum contents are aligned.  Introducing an explicit
  * intermediate "varattrib_1b_e *" variable seems to fix it.
@@ -41,7 +41,7 @@ do { \
  *		in compressed format.
  * ----------
  */
-extern struct varlena *detoast_external_attr(struct varlena *attr);
+extern varlena *detoast_external_attr(varlena *attr);
 
 /* ----------
  * detoast_attr() -
@@ -50,7 +50,7 @@ extern struct varlena *detoast_external_attr(struct varlena *attr);
  *		it as needed.
  * ----------
  */
-extern struct varlena *detoast_attr(struct varlena *attr);
+extern varlena *detoast_attr(varlena *attr);
 
 /* ----------
  * detoast_attr_slice() -
@@ -59,9 +59,9 @@ extern struct varlena *detoast_attr(struct varlena *attr);
  *		(Handles all cases for attribute storage)
  * ----------
  */
-extern struct varlena *detoast_attr_slice(struct varlena *attr,
-										  int32 sliceoffset,
-										  int32 slicelength);
+extern varlena *detoast_attr_slice(varlena *attr,
+								   int32 sliceoffset,
+								   int32 slicelength);
 
 /* ----------
  * toast_raw_datum_size -

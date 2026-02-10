@@ -20,7 +20,7 @@
 #include "nodes/execnodes.h"
 #include "nodes/primnodes.h"
 
-typedef struct varlena xmltype;
+typedef varlena xmltype;
 
 typedef enum
 {

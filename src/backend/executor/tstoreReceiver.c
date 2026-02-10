@@ -161,7 +161,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 		{
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(val)))
 			{
-				val = PointerGetDatum(detoast_external_attr((struct varlena *)
+				val = PointerGetDatum(detoast_external_attr((varlena *)
 															DatumGetPointer(val)));
 				myState->tofree[nfree++] = val;
 			}
