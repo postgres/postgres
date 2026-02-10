@@ -1757,7 +1757,7 @@ update_synced_slots_inactive_since(void)
 			Assert(SlotIsLogical(s));
 
 			/* The slot must not be acquired by any process */
-			Assert(s->active_pid == 0);
+			Assert(s->active_proc == INVALID_PROC_NUMBER);
 
 			/* Use the same inactive_since time for all the slots. */
 			if (now == 0)

@@ -185,8 +185,11 @@ typedef struct ReplicationSlot
 	/* is this slot defined */
 	bool		in_use;
 
-	/* Who is streaming out changes for this slot? 0 in unused slots. */
-	pid_t		active_pid;
+	/*
+	 * Who is streaming out changes for this slot? INVALID_PROC_NUMBER in
+	 * unused slots.
+	 */
+	ProcNumber	active_proc;
 
 	/* any outstanding modifications? */
 	bool		just_dirtied;

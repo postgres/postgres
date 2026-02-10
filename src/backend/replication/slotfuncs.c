@@ -20,6 +20,7 @@
 #include "replication/logical.h"
 #include "replication/slot.h"
 #include "replication/slotsync.h"
+#include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/pg_lsn.h"
@@ -309,10 +310,10 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			values[i++] = ObjectIdGetDatum(slot_contents.data.database);
 
 		values[i++] = BoolGetDatum(slot_contents.data.persistency == RS_TEMPORARY);
-		values[i++] = BoolGetDatum(slot_contents.active_pid != 0);
+		values[i++] = BoolGetDatum(slot_contents.active_proc != INVALID_PROC_NUMBER);
 
-		if (slot_contents.active_pid != 0)
-			values[i++] = Int32GetDatum(slot_contents.active_pid);
+		if (slot_contents.active_proc != INVALID_PROC_NUMBER)
+			values[i++] = Int32GetDatum(GetPGProcByNumber(slot_contents.active_proc)->pid);
 		else
 			nulls[i++] = true;
 
@@ -377,13 +378,13 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 				 */
 				if (XLogRecPtrIsValid(slot_contents.data.restart_lsn))
 				{
-					int			pid;
+					ProcNumber	procno;
 
 					SpinLockAcquire(&slot->mutex);
-					pid = slot->active_pid;
+					procno = slot->active_proc;
 					slot_contents.data.restart_lsn = slot->data.restart_lsn;
 					SpinLockRelease(&slot->mutex);
-					if (pid != 0)
+					if (procno != INVALID_PROC_NUMBER)
 					{
 						values[i++] = CStringGetTextDatum("unreserved");
 						walstate = WALAVAIL_UNRESERVED;
