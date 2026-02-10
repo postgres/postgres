@@ -1481,7 +1481,7 @@ SELECT pg_clear_extended_stats(schemaname => 'stats_import',
   statistics_schemaname => 'stats_import',
   statistics_name => 'ext_stats_not_exist',
   inherited => false);
-WARNING:  could not find extended statistics object "stats_import"."ext_stats_not_exist"
+WARNING:  could not find extended statistics object "stats_import.ext_stats_not_exist"
  pg_clear_extended_stats 
 -------------------------
  
@@ -1493,7 +1493,7 @@ SELECT pg_clear_extended_stats(schemaname => 'stats_import',
   statistics_schemaname => 'stats_import',
   statistics_name => 'test_stat_clone',
   inherited => false);
-WARNING:  could not clear extended statistics object "stats_import"."test_stat_clone": incorrect relation "stats_import"."test" specified
+WARNING:  could not clear extended statistics object "stats_import.test_stat_clone": incorrect relation "stats_import.test" specified
  pg_clear_extended_stats 
 -------------------------
  
@@ -1678,7 +1678,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_schemaname', 'stats_import',
   'statistics_name', 'ext_stats_not_exist',
   'inherited', false);
-WARNING:  could not find extended statistics object "stats_import"."ext_stats_not_exist"
+WARNING:  could not find extended statistics object "stats_import.ext_stats_not_exist"
  pg_restore_extended_stats 
 ---------------------------
  f
@@ -1691,7 +1691,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_schemaname', 'stats_import',
   'statistics_name', 'test_stat_clone',
   'inherited', false);
-WARNING:  could not restore extended statistics object "stats_import"."test_stat_clone": incorrect relation "stats_import"."test" specified
+WARNING:  could not restore extended statistics object "stats_import.test_stat_clone": incorrect relation "stats_import.test" specified
  pg_restore_extended_stats 
 ---------------------------
  f
@@ -1762,7 +1762,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'inherited', false,
   'n_distinct', '[{"attributes" : [1,3], "ndistinct" : 4}]'::pg_ndistinct);
 WARNING:  cannot specify parameter "n_distinct"
-HINT:  Extended statistics object "stats_import"."test_stat_dependencies" does not support statistics of this type.
+HINT:  Extended statistics object "stats_import.test_stat_dependencies" does not support statistics of this type.
  pg_restore_extended_stats 
 ---------------------------
  f
@@ -1778,7 +1778,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'dependencies', '[{"attributes": [2], "dependency": 3, "degree": 1.000000},
                     {"attributes": [3], "dependency": 2, "degree": 1.000000}]'::pg_dependencies);
 WARNING:  cannot specify parameter "dependencies"
-HINT:  Extended statistics object "stats_import"."test_stat_ndistinct" does not support statistics of this type.
+HINT:  Extended statistics object "stats_import.test_stat_ndistinct" does not support statistics of this type.
  pg_restore_extended_stats 
 ---------------------------
  f
@@ -1966,7 +1966,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
   'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
 WARNING:  cannot specify parameters "most_common_vals", "most_common_freqs" or "most_common_base_freqs"
-HINT:  Extended statistics object "stats_import"."test_stat_dependencies" does not support statistics of this type.
+HINT:  Extended statistics object "stats_import.test_stat_dependencies" does not support statistics of this type.
  pg_restore_extended_stats 
 ---------------------------
  f

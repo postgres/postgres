@@ -347,9 +347,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("could not find extended statistics object \"%s\".\"%s\"",
-					   quote_identifier(nspname),
-					   quote_identifier(stxname)));
+				errmsg("could not find extended statistics object \"%s.%s\"",
+					   nspname, stxname));
 		success = false;
 		goto cleanup;
 	}
@@ -364,11 +363,9 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("could not restore extended statistics object \"%s\".\"%s\": incorrect relation \"%s\".\"%s\" specified",
-					   quote_identifier(nspname),
-					   quote_identifier(stxname),
-					   quote_identifier(relnspname),
-					   quote_identifier(relname)));
+				errmsg("could not restore extended statistics object \"%s.%s\": incorrect relation \"%s.%s\" specified",
+					   nspname, stxname,
+					   relnspname, relname));
 
 		success = false;
 		goto cleanup;
@@ -420,9 +417,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("cannot specify parameter \"%s\"",
 					   extarginfo[NDISTINCT_ARG].argname),
-				errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
-						quote_identifier(nspname),
-						quote_identifier(stxname)));
+				errhint("Extended statistics object \"%s.%s\" does not support statistics of this type.",
+						nspname, stxname));
 
 		has.ndistinct = false;
 		success = false;
@@ -438,9 +434,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("cannot specify parameter \"%s\"",
 					   extarginfo[DEPENDENCIES_ARG].argname),
-				errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
-						quote_identifier(nspname),
-						quote_identifier(stxname)));
+				errhint("Extended statistics object \"%s.%s\" does not support statistics of this type.",
+						nspname, stxname));
 		has.dependencies = false;
 		success = false;
 	}
@@ -463,9 +458,8 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 						   extarginfo[MOST_COMMON_VALS_ARG].argname,
 						   extarginfo[MOST_COMMON_FREQS_ARG].argname,
 						   extarginfo[MOST_COMMON_BASE_FREQS_ARG].argname),
-					errhint("Extended statistics object \"%s\".\"%s\" does not support statistics of this type.",
-							quote_identifier(nspname),
-							quote_identifier(stxname)));
+					errhint("Extended statistics object \"%s.%s\" does not support statistics of this type.",
+							nspname, stxname));
 
 			has.mcv = false;
 			success = false;
@@ -888,7 +882,7 @@ pg_clear_extended_stats(PG_FUNCTION_ARGS)
 		table_close(pg_stext, RowExclusiveLock);
 		ereport(WARNING,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("could not find extended statistics object \"%s\".\"%s\"",
+				errmsg("could not find extended statistics object \"%s.%s\"",
 					   nspname, stxname));
 		PG_RETURN_VOID();
 	}
@@ -904,7 +898,7 @@ pg_clear_extended_stats(PG_FUNCTION_ARGS)
 		table_close(pg_stext, RowExclusiveLock);
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("could not clear extended statistics object \"%s\".\"%s\": incorrect relation \"%s\".\"%s\" specified",
+				errmsg("could not clear extended statistics object \"%s.%s\": incorrect relation \"%s.%s\" specified",
 					   get_namespace_name(nspoid), stxname,
 					   relnspname, relname));
 		PG_RETURN_VOID();
