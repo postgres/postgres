@@ -131,6 +131,9 @@ typedef struct PlannedStmt
 	 */
 	List	   *subplans;
 
+	/* a list of SubPlanRTInfo objects */
+	List	   *subrtinfos;
+
 	/* indices of subplans that require REWIND */
 	Bitmapset  *rewindPlanIDs;
 
@@ -1820,5 +1823,19 @@ typedef enum MonotonicFunction
 	MONOTONICFUNC_DECREASING = (1 << 1),
 	MONOTONICFUNC_BOTH = MONOTONICFUNC_INCREASING | MONOTONICFUNC_DECREASING,
 } MonotonicFunction;
+
+/*
+ * SubPlanRTInfo
+ *
+ * Information about which range table entries came from which subquery
+ * planning cycles.
+ */
+typedef struct SubPlanRTInfo
+{
+	NodeTag		type;
+	char	   *plan_name;
+	Index		rtoffset;
+	bool		dummy;
+} SubPlanRTInfo;
 
 #endif							/* PLANNODES_H */

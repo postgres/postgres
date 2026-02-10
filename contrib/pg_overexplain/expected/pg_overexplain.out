@@ -489,3 +489,112 @@ INSERT INTO vegetables (name, genus) VALUES ('broccoflower', 'brassica');
  Result RTIs: 1
 (15 rows)
 
+-- should show "Subplan: sub"
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM vegetables v,
+       (SELECT * FROM vegetables WHERE genus = 'daucus' OFFSET 0) sub;
+                  QUERY PLAN                  
+----------------------------------------------
+ Nested Loop
+   ->  Seq Scan on daucus vegetables
+         Filter: (genus = 'daucus'::text)
+         Scan RTI: 6
+   ->  Append
+         Append RTIs: 1
+         ->  Seq Scan on brassica v_1
+               Scan RTI: 3
+         ->  Seq Scan on daucus v_2
+               Scan RTI: 4
+ RTI 1 (relation, inherited, in-from-clause):
+   Alias: v ()
+   Eref: v (id, name, genus)
+   Relation: vegetables
+   Relation Kind: partitioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 1
+ RTI 2 (subquery, in-from-clause):
+   Alias: sub ()
+   Eref: sub (id, name, genus)
+ RTI 3 (relation, in-from-clause):
+   Alias: v (id, name, genus)
+   Eref: v (id, name, genus)
+   Relation: brassica
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 4 (relation, in-from-clause):
+   Alias: v (id, name, genus)
+   Eref: v (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 5 (relation, inherited, in-from-clause):
+   Subplan: sub
+   Eref: vegetables (id, name, genus)
+   Relation: vegetables
+   Relation Kind: partitioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 2
+ RTI 6 (relation, in-from-clause):
+   Subplan: sub
+   Alias: vegetables (id, name, genus)
+   Eref: vegetables (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ Unprunable RTIs: 1 3 4 5 6
+(47 rows)
+
+-- should show "Subplan: unnamed_subquery"
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM vegetables v,
+       (SELECT * FROM vegetables WHERE genus = 'daucus' OFFSET 0);
+                  QUERY PLAN                  
+----------------------------------------------
+ Nested Loop
+   ->  Seq Scan on daucus vegetables
+         Filter: (genus = 'daucus'::text)
+         Scan RTI: 6
+   ->  Append
+         Append RTIs: 1
+         ->  Seq Scan on brassica v_1
+               Scan RTI: 3
+         ->  Seq Scan on daucus v_2
+               Scan RTI: 4
+ RTI 1 (relation, inherited, in-from-clause):
+   Alias: v ()
+   Eref: v (id, name, genus)
+   Relation: vegetables
+   Relation Kind: partitioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 1
+ RTI 2 (subquery, in-from-clause):
+   Eref: unnamed_subquery (id, name, genus)
+ RTI 3 (relation, in-from-clause):
+   Alias: v (id, name, genus)
+   Eref: v (id, name, genus)
+   Relation: brassica
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 4 (relation, in-from-clause):
+   Alias: v (id, name, genus)
+   Eref: v (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 5 (relation, inherited, in-from-clause):
+   Subplan: unnamed_subquery
+   Eref: vegetables (id, name, genus)
+   Relation: vegetables
+   Relation Kind: partitioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 2
+ RTI 6 (relation, in-from-clause):
+   Subplan: unnamed_subquery
+   Alias: vegetables (id, name, genus)
+   Eref: vegetables (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ Unprunable RTIs: 1 3 4 5 6
+(46 rows)
+

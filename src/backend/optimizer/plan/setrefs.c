@@ -400,6 +400,26 @@ add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
 	ListCell   *lc;
 
 	/*
+	 * Record enough information to make it possible for code that looks at
+	 * the final range table to understand how it was constructed. (If
+	 * finalrtable is still NIL, then this is the very topmost PlannerInfo,
+	 * which will always have plan_name == NULL and rtoffset == 0; we omit the
+	 * degenerate list entry.)
+	 */
+	if (root->glob->finalrtable != NIL)
+	{
+		SubPlanRTInfo *rtinfo = makeNode(SubPlanRTInfo);
+
+		rtinfo->plan_name = root->plan_name;
+		rtinfo->rtoffset = list_length(root->glob->finalrtable);
+
+		/* When recursing = true, it's an unplanned or dummy subquery. */
+		rtinfo->dummy = recursing;
+
+		root->glob->subrtinfos = lappend(root->glob->subrtinfos, rtinfo);
+	}
+
+	/*
 	 * Add the query's own RTEs to the flattened rangetable.
 	 *
 	 * At top level, we must add all RTEs so that their indexes in the
