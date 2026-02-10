@@ -1866,3 +1866,21 @@ SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE numeric_lt(y, 1.0)'
 
 -- Tidy up
 DROP TABLE sb_1, sb_2 CASCADE;
+
+-- Check statistics generated for range type and expressions.
+CREATE TABLE stats_ext_tbl_range(name text, irange int4range);
+INSERT INTO stats_ext_tbl_range VALUES
+   ('red', '[1,7)'::int4range),
+   ('blue', '[2,8]'::int4range),
+   ('green', '[3,9)'::int4range);
+CREATE STATISTICS stats_ext_range (mcv)
+   ON irange, (irange + '[4,10)'::int4range)
+   FROM stats_ext_tbl_range;
+ANALYZE stats_ext_tbl_range;
+SELECT attnames, most_common_vals
+   FROM pg_stats_ext
+   WHERE statistics_name = 'stats_ext_range';
+SELECT range_length_histogram, range_empty_frac, range_bounds_histogram
+   FROM pg_stats_ext_exprs
+   WHERE statistics_name = 'stats_ext_range';
+DROP TABLE stats_ext_tbl_range;

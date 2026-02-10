@@ -363,7 +363,28 @@ CREATE VIEW pg_stats_ext_exprs WITH (security_barrier) AS
                WHEN (stat.a).stakind3 = 5 THEN (stat.a).stanumbers3
                WHEN (stat.a).stakind4 = 5 THEN (stat.a).stanumbers4
                WHEN (stat.a).stakind5 = 5 THEN (stat.a).stanumbers5
-           END) AS elem_count_histogram
+           END) AS elem_count_histogram,
+           (CASE
+               WHEN (stat.a).stakind1 = 6 THEN (stat.a).stavalues1
+               WHEN (stat.a).stakind2 = 6 THEN (stat.a).stavalues2
+               WHEN (stat.a).stakind3 = 6 THEN (stat.a).stavalues3
+               WHEN (stat.a).stakind4 = 6 THEN (stat.a).stavalues4
+               WHEN (stat.a).stakind5 = 6 THEN (stat.a).stavalues5
+           END) AS range_length_histogram,
+           (CASE
+               WHEN (stat.a).stakind1 = 6 THEN (stat.a).stanumbers1[1]
+               WHEN (stat.a).stakind2 = 6 THEN (stat.a).stanumbers2[1]
+               WHEN (stat.a).stakind3 = 6 THEN (stat.a).stanumbers3[1]
+               WHEN (stat.a).stakind4 = 6 THEN (stat.a).stanumbers4[1]
+               WHEN (stat.a).stakind5 = 6 THEN (stat.a).stanumbers5[1]
+           END) AS range_empty_frac,
+           (CASE
+               WHEN (stat.a).stakind1 = 7 THEN (stat.a).stavalues1
+               WHEN (stat.a).stakind2 = 7 THEN (stat.a).stavalues2
+               WHEN (stat.a).stakind3 = 7 THEN (stat.a).stavalues3
+               WHEN (stat.a).stakind4 = 7 THEN (stat.a).stavalues4
+               WHEN (stat.a).stakind5 = 7 THEN (stat.a).stavalues5
+               END) AS range_bounds_histogram
     FROM pg_statistic_ext s JOIN pg_class c ON (c.oid = s.stxrelid)
          LEFT JOIN pg_statistic_ext_data sd ON (s.oid = sd.stxoid)
          LEFT JOIN pg_namespace cn ON (cn.oid = c.relnamespace)
