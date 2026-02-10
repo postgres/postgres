@@ -59,6 +59,7 @@
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/proclist.h"
+#include "storage/procsignal.h"
 #include "storage/read_stream.h"
 #include "storage/smgr.h"
 #include "storage/standby.h"
@@ -6570,7 +6571,7 @@ LockBufferForCleanup(Buffer buffer)
 			 * deadlock_timeout for it.
 			 */
 			if (logged_recovery_conflict)
-				LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
+				LogRecoveryConflict(RECOVERY_CONFLICT_BUFFERPIN,
 									waitStart, GetCurrentTimestamp(),
 									NULL, false);
 
@@ -6621,7 +6622,7 @@ LockBufferForCleanup(Buffer buffer)
 				if (TimestampDifferenceExceeds(waitStart, now,
 											   DeadlockTimeout))
 				{
-					LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
+					LogRecoveryConflict(RECOVERY_CONFLICT_BUFFERPIN,
 										waitStart, now, NULL, true);
 					logged_recovery_conflict = true;
 				}

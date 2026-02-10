@@ -70,6 +70,7 @@
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
+#include "storage/procsignal.h"
 #include "storage/standby.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

@@ -19,6 +19,7 @@
 #include "mb/pg_wchar.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/procsignal.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"

@@ -504,6 +504,7 @@ InitProcess(void)
 			Assert(dlist_is_empty(&(MyProc->myProcLocks[i])));
 	}
 #endif
+	pg_atomic_write_u32(&MyProc->pendingRecoveryConflicts, 0);
 
 	/* Initialize fields for sync rep */
 	MyProc->waitLSN = InvalidXLogRecPtr;
@@ -1445,7 +1446,7 @@ ProcSleep(LOCALLOCK *locallock)
 					 * because the startup process here has already waited
 					 * longer than deadlock_timeout.
 					 */
-					LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_LOCK,
+					LogRecoveryConflict(RECOVERY_CONFLICT_LOCK,
 										standbyWaitStart, now,
 										cnt > 0 ? vxids : NULL, true);
 					logged_recovery_conflict = true;
@@ -1686,7 +1687,7 @@ ProcSleep(LOCALLOCK *locallock)
 	 * startup process waited longer than deadlock_timeout for it.
 	 */
 	if (InHotStandby && logged_recovery_conflict)
-		LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_LOCK,
+		LogRecoveryConflict(RECOVERY_CONFLICT_LOCK,
 							standbyWaitStart, GetCurrentTimestamp(),
 							NULL, false);
 

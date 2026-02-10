@@ -67,6 +67,7 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
+#include "storage/standby.h"
 #include "tcop/backend_startup.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
@@ -154,10 +155,6 @@ static CachedPlanSource *unnamed_stmt_psrc = NULL;
 static const char *userDoption = NULL;	/* -D switch */
 static bool EchoQuery = false;	/* -E switch */
 static bool UseSemiNewlineNewline = false;	/* -j switch */
-
-/* whether or not, and why, we were canceled by conflict with recovery */
-static volatile sig_atomic_t RecoveryConflictPending = false;
-static volatile sig_atomic_t RecoveryConflictPendingReasons[NUM_PROCSIGNALS];
 
 /* reused buffer to pass to SendRowDescriptionMessage() */
 static MemoryContext row_description_context = NULL;
@@ -2537,34 +2534,31 @@ errdetail_params(ParamListInfo params)
  * Add an errdetail() line showing conflict source.
  */
 static int
-errdetail_recovery_conflict(ProcSignalReason reason)
+errdetail_recovery_conflict(RecoveryConflictReason reason)
 {
 	switch (reason)
 	{
-		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
+		case RECOVERY_CONFLICT_BUFFERPIN:
 			errdetail("User was holding shared buffer pin for too long.");
 			break;
-		case PROCSIG_RECOVERY_CONFLICT_LOCK:
+		case RECOVERY_CONFLICT_LOCK:
 			errdetail("User was holding a relation lock for too long.");
 			break;
-		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
+		case RECOVERY_CONFLICT_TABLESPACE:
 			errdetail("User was or might have been using tablespace that must be dropped.");
 			break;
-		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
+		case RECOVERY_CONFLICT_SNAPSHOT:
 			errdetail("User query might have needed to see row versions that must be removed.");
 			break;
-		case PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT:
+		case RECOVERY_CONFLICT_LOGICALSLOT:
 			errdetail("User was using a logical replication slot that must be invalidated.");
 			break;
-		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
+		case RECOVERY_CONFLICT_STARTUP_DEADLOCK:
 			errdetail("User transaction caused buffer deadlock with recovery.");
 			break;
-		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
+		case RECOVERY_CONFLICT_DATABASE:
 			errdetail("User was connected to a database that must be dropped.");
 			break;
-		default:
-			break;
-			/* no errdetail */
 	}
 
 	return 0;
@@ -3067,15 +3061,14 @@ FloatExceptionHandler(SIGNAL_ARGS)
 }
 
 /*
- * Tell the next CHECK_FOR_INTERRUPTS() to check for a particular type of
- * recovery conflict.  Runs in a SIGUSR1 handler.
+ * Tell the next CHECK_FOR_INTERRUPTS() to process recovery conflicts.  Runs
+ * in a SIGUSR1 handler.
  */
 void
-HandleRecoveryConflictInterrupt(ProcSignalReason reason)
+HandleRecoveryConflictInterrupt(void)
 {
-	RecoveryConflictPendingReasons[reason] = true;
-	RecoveryConflictPending = true;
-	InterruptPending = true;
+	if (pg_atomic_read_u32(&MyProc->pendingRecoveryConflicts) != 0)
+		InterruptPending = true;
 	/* latch will be set by procsignal_sigusr1_handler */
 }
 
@@ -3083,11 +3076,11 @@ HandleRecoveryConflictInterrupt(ProcSignalReason reason)
  * Check one individual conflict reason.
  */
 static void
-ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
+ProcessRecoveryConflictInterrupt(RecoveryConflictReason reason)
 {
 	switch (reason)
 	{
-		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
+		case RECOVERY_CONFLICT_STARTUP_DEADLOCK:
 
 			/*
 			 * If we aren't waiting for a lock we can never deadlock.
@@ -3098,21 +3091,20 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 			/* Intentional fall through to check wait for pin */
 			/* FALLTHROUGH */
 
-		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
+		case RECOVERY_CONFLICT_BUFFERPIN:
 
 			/*
-			 * If PROCSIG_RECOVERY_CONFLICT_BUFFERPIN is requested but we
-			 * aren't blocking the Startup process there is nothing more to
-			 * do.
+			 * If RECOVERY_CONFLICT_BUFFERPIN is requested but we aren't
+			 * blocking the Startup process there is nothing more to do.
 			 *
-			 * When PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK is requested,
-			 * if we're waiting for locks and the startup process is not
-			 * waiting for buffer pin (i.e., also waiting for locks), we set
-			 * the flag so that ProcSleep() will check for deadlocks.
+			 * When RECOVERY_CONFLICT_STARTUP_DEADLOCK is requested, if we're
+			 * waiting for locks and the startup process is not waiting for
+			 * buffer pin (i.e., also waiting for locks), we set the flag so
+			 * that ProcSleep() will check for deadlocks.
 			 */
 			if (!HoldingBufferPinThatDelaysRecovery())
 			{
-				if (reason == PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK &&
+				if (reason == RECOVERY_CONFLICT_STARTUP_DEADLOCK &&
 					GetStartupBufferPinWaitBufId() < 0)
 					CheckDeadLockAlert();
 				return;
@@ -3121,9 +3113,9 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 			/* Intentional fall through to error handling */
 			/* FALLTHROUGH */
 
-		case PROCSIG_RECOVERY_CONFLICT_LOCK:
-		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
-		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
+		case RECOVERY_CONFLICT_LOCK:
+		case RECOVERY_CONFLICT_TABLESPACE:
+		case RECOVERY_CONFLICT_SNAPSHOT:
 
 			/*
 			 * If we aren't in a transaction any longer then ignore.
@@ -3133,34 +3125,34 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 
 			/* FALLTHROUGH */
 
-		case PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT:
+		case RECOVERY_CONFLICT_LOGICALSLOT:
 
 			/*
 			 * If we're not in a subtransaction then we are OK to throw an
 			 * ERROR to resolve the conflict.  Otherwise drop through to the
 			 * FATAL case.
 			 *
-			 * PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT is a special case that
-			 * always throws an ERROR (ie never promotes to FATAL), though it
-			 * still has to respect QueryCancelHoldoffCount, so it shares this
-			 * code path.  Logical decoding slots are only acquired while
+			 * RECOVERY_CONFLICT_LOGICALSLOT is a special case that always
+			 * throws an ERROR (ie never promotes to FATAL), though it still
+			 * has to respect QueryCancelHoldoffCount, so it shares this code
+			 * path.  Logical decoding slots are only acquired while
 			 * performing logical decoding.  During logical decoding no user
 			 * controlled code is run.  During [sub]transaction abort, the
 			 * slot is released.  Therefore user controlled code cannot
 			 * intercept an error before the replication slot is released.
 			 *
 			 * XXX other times that we can throw just an ERROR *may* be
-			 * PROCSIG_RECOVERY_CONFLICT_LOCK if no locks are held in parent
+			 * RECOVERY_CONFLICT_LOCK if no locks are held in parent
 			 * transactions
 			 *
-			 * PROCSIG_RECOVERY_CONFLICT_SNAPSHOT if no snapshots are held by
-			 * parent transactions and the transaction is not
-			 * transaction-snapshot mode
+			 * RECOVERY_CONFLICT_SNAPSHOT if no snapshots are held by parent
+			 * transactions and the transaction is not transaction-snapshot
+			 * mode
 			 *
-			 * PROCSIG_RECOVERY_CONFLICT_TABLESPACE if no temp files or
-			 * cursors open in parent transactions
+			 * RECOVERY_CONFLICT_TABLESPACE if no temp files or cursors open
+			 * in parent transactions
 			 */
-			if (reason == PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT ||
+			if (reason == RECOVERY_CONFLICT_LOGICALSLOT ||
 				!IsSubTransaction())
 			{
 				/*
@@ -3187,8 +3179,7 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 						 * Re-arm and defer this interrupt until later.  See
 						 * similar code in ProcessInterrupts().
 						 */
-						RecoveryConflictPendingReasons[reason] = true;
-						RecoveryConflictPending = true;
+						(void) pg_atomic_fetch_or_u32(&MyProc->pendingRecoveryConflicts, (1 << reason));
 						InterruptPending = true;
 						return;
 					}
@@ -3222,7 +3213,7 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 							 " database and repeat your command.")));
 			break;
 
-		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
+		case RECOVERY_CONFLICT_DATABASE:
 
 			/* The database is being dropped; terminate the session */
 			pgstat_report_recovery_conflict(reason);
@@ -3243,6 +3234,8 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 static void
 ProcessRecoveryConflictInterrupts(void)
 {
+	uint32		pending;
+
 	/*
 	 * We don't need to worry about joggling the elbow of proc_exit, because
 	 * proc_exit_prepare() holds interrupts, so ProcessInterrupts() won't call
@@ -3250,17 +3243,27 @@ ProcessRecoveryConflictInterrupts(void)
 	 */
 	Assert(!proc_exit_inprogress);
 	Assert(InterruptHoldoffCount == 0);
-	Assert(RecoveryConflictPending);
 
-	RecoveryConflictPending = false;
+	/* Are any recovery conflict pending? */
+	pending = pg_atomic_read_membarrier_u32(&MyProc->pendingRecoveryConflicts);
+	if (pending == 0)
+		return;
 
-	for (ProcSignalReason reason = PROCSIG_RECOVERY_CONFLICT_FIRST;
-		 reason <= PROCSIG_RECOVERY_CONFLICT_LAST;
+	/*
+	 * Check the conflicts one by one, clearing each flag only before
+	 * processing the particular conflict.  This ensures that if multiple
+	 * conflicts are pending, we come back here to process the remaining
+	 * conflicts, if an error is thrown during processing one of them.
+	 */
+	for (RecoveryConflictReason reason = 0;
+		 reason < NUM_RECOVERY_CONFLICT_REASONS;
 		 reason++)
 	{
-		if (RecoveryConflictPendingReasons[reason])
+		if ((pending & (1 << reason)) != 0)
 		{
-			RecoveryConflictPendingReasons[reason] = false;
+			/* clear the flag */
+			(void) pg_atomic_fetch_and_u32(&MyProc->pendingRecoveryConflicts, ~(1 << reason));
+
 			ProcessRecoveryConflictInterrupt(reason);
 		}
 	}
@@ -3451,7 +3454,7 @@ ProcessInterrupts(void)
 		}
 	}
 
-	if (RecoveryConflictPending)
+	if (pg_atomic_read_u32(&MyProc->pendingRecoveryConflicts) != 0)
 		ProcessRecoveryConflictInterrupts();
 
 	if (IdleInTransactionSessionTimeoutPending)

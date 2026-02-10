@@ -71,6 +71,7 @@
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/procsignal.h"
 #include "utils/injection_point.h"
 
 /*

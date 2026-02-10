@@ -60,6 +60,7 @@
 #include "storage/lmgr.h"
 #include "storage/md.h"
 #include "storage/procarray.h"
+#include "storage/procsignal.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

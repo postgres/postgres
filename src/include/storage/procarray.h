@@ -77,12 +77,15 @@ extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
 												   bool excludeXmin0, bool allDbs, int excludeVacuum,
 												   int *nvxids);
 extern VirtualTransactionId *GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid);
-extern pid_t SignalVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode);
+
+extern bool SignalRecoveryConflict(PGPROC *proc, pid_t pid, RecoveryConflictReason reason);
+extern bool SignalRecoveryConflictWithVirtualXID(VirtualTransactionId vxid, RecoveryConflictReason reason);
+extern void SignalRecoveryConflictWithDatabase(Oid databaseid, RecoveryConflictReason reason);
+
 
 extern bool MinimumActiveBackends(int min);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountDBConnections(Oid databaseid);
-extern void CancelDBBackends(Oid databaseid, ProcSignalReason sigmode);
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
 								 int *nbackends, int *nprepared);
