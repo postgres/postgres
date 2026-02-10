@@ -2589,11 +2589,6 @@ cost_material(Path *path,
 	double		nbytes = relation_byte_size(tuples, width);
 	double		work_mem_bytes = work_mem * (Size) 1024;
 
-	if (path->parallel_workers == 0 &&
-		path->parent != NULL &&
-		(path->parent->pgs_mask & PGS_CONSIDER_NONPARTIAL) == 0)
-		enabled = false;
-
 	path->rows = tuples;
 
 	/*

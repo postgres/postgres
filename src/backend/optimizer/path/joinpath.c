@@ -1895,8 +1895,17 @@ match_unsorted_outer(PlannerInfo *root,
 		/*
 		 * Consider materializing the cheapest inner path, unless that is
 		 * disabled or the path in question materializes its output anyway.
+		 *
+		 * At present, we only consider materialization for non-partial outer
+		 * paths, so it's correct to test PGS_CONSIDER_NONPARTIAL here. If we
+		 * ever want to consider materialization for partial paths, we'll need
+		 * to create matpath whenever PGS_NESTLOOP_MATERIALIZE is set, use it
+		 * for partial paths either way, and use it for non-partial paths only
+		 * when PGS_CONSIDER_NONPARTIAL is also set.
 		 */
-		if ((extra->pgs_mask & PGS_NESTLOOP_MATERIALIZE) != 0 &&
+		if ((extra->pgs_mask &
+			 (PGS_NESTLOOP_MATERIALIZE | PGS_CONSIDER_NONPARTIAL)) ==
+			(PGS_NESTLOOP_MATERIALIZE | PGS_CONSIDER_NONPARTIAL) &&
 			inner_cheapest_total != NULL &&
 			!ExecMaterializesOutput(inner_cheapest_total->pathtype))
 			matpath = (Path *)
