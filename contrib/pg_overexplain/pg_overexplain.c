@@ -54,6 +54,8 @@ static void overexplain_alias(const char *qlabel, Alias *alias,
 							  ExplainState *es);
 static void overexplain_bitmapset(const char *qlabel, Bitmapset *bms,
 								  ExplainState *es);
+static void overexplain_bitmapset_list(const char *qlabel, List *bms_list,
+									   ExplainState *es);
 static void overexplain_intlist(const char *qlabel, List *list,
 								ExplainState *es);
 
@@ -232,11 +234,17 @@ overexplain_per_node_hook(PlanState *planstate, List *ancestors,
 				overexplain_bitmapset("Append RTIs",
 									  ((Append *) plan)->apprelids,
 									  es);
+				overexplain_bitmapset_list("Child Append RTIs",
+										   ((Append *) plan)->child_append_relid_sets,
+										   es);
 				break;
 			case T_MergeAppend:
 				overexplain_bitmapset("Append RTIs",
 									  ((MergeAppend *) plan)->apprelids,
 									  es);
+				overexplain_bitmapset_list("Child Append RTIs",
+										   ((MergeAppend *) plan)->child_append_relid_sets,
+										   es);
 				break;
 			case T_Result:
 
@@ -810,6 +818,54 @@ overexplain_bitmapset(const char *qlabel, Bitmapset *bms, ExplainState *es)
 	initStringInfo(&buf);
 	while ((x = bms_next_member(bms, x)) >= 0)
 		appendStringInfo(&buf, " %d", x);
+	Assert(buf.data[0] == ' ');
+	ExplainPropertyText(qlabel, buf.data + 1, es);
+	pfree(buf.data);
+}
+
+/*
+ * Emit a text property describing the contents of a list of bitmapsets.
+ * If a bitmapset contains exactly 1 member, we just print an integer;
+ * otherwise, we surround the list of members by parentheses.
+ *
+ * If there are no bitmapsets in the list, we print the word "none".
+ */
+static void
+overexplain_bitmapset_list(const char *qlabel, List *bms_list,
+						   ExplainState *es)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	foreach_node(Bitmapset, bms, bms_list)
+	{
+		if (bms_membership(bms) == BMS_SINGLETON)
+			appendStringInfo(&buf, " %d", bms_singleton_member(bms));
+		else
+		{
+			int			x = -1;
+			bool		first = true;
+
+			appendStringInfoString(&buf, " (");
+			while ((x = bms_next_member(bms, x)) >= 0)
+			{
+				if (first)
+					first = false;
+				else
+					appendStringInfoChar(&buf, ' ');
+				appendStringInfo(&buf, "%d", x);
+			}
+			appendStringInfoChar(&buf, ')');
+		}
+	}
+
+	if (buf.len == 0)
+	{
+		ExplainPropertyText(qlabel, "none", es);
+		return;
+	}
+
 	Assert(buf.data[0] == ' ');
 	ExplainPropertyText(qlabel, buf.data + 1, es);
 	pfree(buf.data);

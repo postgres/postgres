@@ -394,9 +394,16 @@ struct PartitionPruneInfo;		/* forward reference to struct below */
 typedef struct Append
 {
 	Plan		plan;
+
 	/* RTIs of appendrel(s) formed by this node */
 	Bitmapset  *apprelids;
+
+	/* sets of RTIs of appendrels consolidated into this node */
+	List	   *child_append_relid_sets;
+
+	/* plans to run */
 	List	   *appendplans;
+
 	/* # of asynchronous plans */
 	int			nasyncplans;
 
@@ -426,6 +433,10 @@ typedef struct MergeAppend
 	/* RTIs of appendrel(s) formed by this node */
 	Bitmapset  *apprelids;
 
+	/* sets of RTIs of appendrels consolidated into this node */
+	List	   *child_append_relid_sets;
+
+	/* plans to run */
 	List	   *mergeplans;
 
 	/* these fields are just like the sort-key info in struct Sort: */

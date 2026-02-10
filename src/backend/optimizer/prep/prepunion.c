@@ -696,9 +696,9 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	ListCell   *lc;
 	ListCell   *lc2;
 	ListCell   *lc3;
-	List	   *cheapest_pathlist = NIL;
-	List	   *ordered_pathlist = NIL;
-	List	   *partial_pathlist = NIL;
+	AppendPathInput cheapest = {0};
+	AppendPathInput ordered = {0};
+	AppendPathInput partial = {0};
 	bool		partial_paths_valid = true;
 	bool		consider_parallel = true;
 	List	   *rellist;
@@ -783,7 +783,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		if (is_dummy_rel(rel))
 			continue;
 
-		cheapest_pathlist = lappend(cheapest_pathlist,
+		cheapest.subpaths = lappend(cheapest.subpaths,
 									rel->cheapest_total_path);
 
 		if (try_sorted)
@@ -795,7 +795,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 														  false);
 
 			if (ordered_path != NULL)
-				ordered_pathlist = lappend(ordered_pathlist, ordered_path);
+				ordered.subpaths = lappend(ordered.subpaths, ordered_path);
 			else
 			{
 				/*
@@ -818,20 +818,20 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 			else if (rel->partial_pathlist == NIL)
 				partial_paths_valid = false;
 			else
-				partial_pathlist = lappend(partial_pathlist,
-										   linitial(rel->partial_pathlist));
+				partial.partial_subpaths = lappend(partial.partial_subpaths,
+												   linitial(rel->partial_pathlist));
 		}
 	}
 
 	/* Build result relation. */
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP, relids);
 	result_rel->reltarget = create_setop_pathtarget(root, tlist,
-													cheapest_pathlist);
+													cheapest.subpaths);
 	result_rel->consider_parallel = consider_parallel;
 	result_rel->consider_startup = (root->tuple_fraction > 0);
 
 	/* If all UNION children were dummy rels, make the resulting rel dummy */
-	if (cheapest_pathlist == NIL)
+	if (cheapest.subpaths == NIL)
 	{
 		mark_dummy_rel(result_rel);
 
@@ -842,8 +842,8 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * Append the child results together using the cheapest paths from each
 	 * union child.
 	 */
-	apath = (Path *) create_append_path(root, result_rel, cheapest_pathlist,
-										NIL, NIL, NULL, 0, false, -1);
+	apath = (Path *) create_append_path(root, result_rel, cheapest,
+										NIL, NULL, 0, false, -1);
 
 	/*
 	 * Estimate number of groups.  For now we just assume the output is unique
@@ -862,7 +862,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		int			parallel_workers = 0;
 
 		/* Find the highest number of workers requested for any subpath. */
-		foreach(lc, partial_pathlist)
+		foreach(lc, partial.partial_subpaths)
 		{
 			Path	   *subpath = lfirst(lc);
 
@@ -881,14 +881,14 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		if (enable_parallel_append)
 		{
 			parallel_workers = Max(parallel_workers,
-								   pg_leftmost_one_pos32(list_length(partial_pathlist)) + 1);
+								   pg_leftmost_one_pos32(list_length(partial.partial_subpaths)) + 1);
 			parallel_workers = Min(parallel_workers,
 								   max_parallel_workers_per_gather);
 		}
 		Assert(parallel_workers > 0);
 
 		papath = (Path *)
-			create_append_path(root, result_rel, NIL, partial_pathlist,
+			create_append_path(root, result_rel, partial,
 							   NIL, NULL, parallel_workers,
 							   enable_parallel_append, -1);
 		gpath = (Path *)
@@ -901,7 +901,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		double		dNumGroups;
 		bool		can_sort = grouping_is_sortable(groupList);
 		bool		can_hash = grouping_is_hashable(groupList);
-		Path	   *first_path = linitial(cheapest_pathlist);
+		Path	   *first_path = linitial(cheapest.subpaths);
 
 		/*
 		 * Estimate the number of UNION output rows.  In the case when only a
@@ -911,7 +911,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		 * contain Vars with varno==0, which estimate_num_groups() wouldn't
 		 * like.
 		 */
-		if (list_length(cheapest_pathlist) == 1 &&
+		if (list_length(cheapest.subpaths) == 1 &&
 			first_path->parent->reloptkind != RELOPT_UPPER_REL)
 		{
 			dNumGroups = estimate_num_groups(root,
@@ -1017,7 +1017,8 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 
 			path = (Path *) create_merge_append_path(root,
 													 result_rel,
-													 ordered_pathlist,
+													 ordered.subpaths,
+													 NIL,
 													 union_pathkeys,
 													 NULL);
 
@@ -1216,6 +1217,9 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 			if (op->all)
 			{
 				Path	   *apath;
+				AppendPathInput append = {0};
+
+				append.subpaths = list_make1(lpath);
 
 				/*
 				 * EXCEPT ALL: If the right-hand input is dummy then we can
@@ -1224,8 +1228,9 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 				 * between the set op targetlist and the targetlist of the
 				 * left input.  The Append will be removed in setrefs.c.
 				 */
-				apath = (Path *) create_append_path(root, result_rel, list_make1(lpath),
-													NIL, NIL, NULL, 0, false, -1);
+				apath = (Path *) create_append_path(root, result_rel,
+													append, NIL, NULL, 0,
+													false, -1);
 
 				add_path(result_rel, apath);
 

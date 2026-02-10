@@ -17,6 +17,20 @@
 #include "nodes/bitmapset.h"
 #include "nodes/pathnodes.h"
 
+/*
+ * Everything in subpaths or partial_subpaths will become part of the
+ * Append node's subpaths list. Partial and non-partial subpaths can be
+ * mixed in the same Append node only if it is parallel-aware.
+ *
+ * See the comments for AppendPath for the meaning and purpose of the
+ * child_append_relid_sets field.
+ */
+typedef struct AppendPathInput
+{
+	List	   *subpaths;
+	List	   *partial_subpaths;
+	List	   *child_append_relid_sets;
+} AppendPathInput;
 
 /* Hook for plugins to get control during joinrel setup */
 typedef void (*joinrel_setup_hook_type) (PlannerInfo *root,
@@ -78,14 +92,16 @@ extern TidRangePath *create_tidrangescan_path(PlannerInfo *root,
 											  List *tidrangequals,
 											  Relids required_outer,
 											  int parallel_workers);
+
 extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
-									  List *subpaths, List *partial_subpaths,
+									  AppendPathInput input,
 									  List *pathkeys, Relids required_outer,
 									  int parallel_workers, bool parallel_aware,
 									  double rows);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 												 RelOptInfo *rel,
 												 List *subpaths,
+												 List *child_append_relid_sets,
 												 List *pathkeys,
 												 Relids required_outer);
 extern GroupResultPath *create_group_result_path(PlannerInfo *root,

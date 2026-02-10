@@ -1298,7 +1298,7 @@ create_tidrangescan_path(PlannerInfo *root, RelOptInfo *rel,
 AppendPath *
 create_append_path(PlannerInfo *root,
 				   RelOptInfo *rel,
-				   List *subpaths, List *partial_subpaths,
+				   AppendPathInput input,
 				   List *pathkeys, Relids required_outer,
 				   int parallel_workers, bool parallel_aware,
 				   double rows)
@@ -1308,6 +1308,7 @@ create_append_path(PlannerInfo *root,
 
 	Assert(!parallel_aware || parallel_workers > 0);
 
+	pathnode->child_append_relid_sets = input.child_append_relid_sets;
 	pathnode->path.pathtype = T_Append;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
@@ -1323,7 +1324,7 @@ create_append_path(PlannerInfo *root,
 	 * on the simpler get_appendrel_parampathinfo.  There's no point in doing
 	 * the more expensive thing for a dummy path, either.
 	 */
-	if (rel->reloptkind == RELOPT_BASEREL && root && subpaths != NIL)
+	if (rel->reloptkind == RELOPT_BASEREL && root && input.subpaths != NIL)
 		pathnode->path.param_info = get_baserel_parampathinfo(root,
 															  rel,
 															  required_outer);
@@ -1354,11 +1355,11 @@ create_append_path(PlannerInfo *root,
 		 */
 		Assert(pathkeys == NIL);
 
-		list_sort(subpaths, append_total_cost_compare);
-		list_sort(partial_subpaths, append_startup_cost_compare);
+		list_sort(input.subpaths, append_total_cost_compare);
+		list_sort(input.partial_subpaths, append_startup_cost_compare);
 	}
-	pathnode->first_partial_path = list_length(subpaths);
-	pathnode->subpaths = list_concat(subpaths, partial_subpaths);
+	pathnode->first_partial_path = list_length(input.subpaths);
+	pathnode->subpaths = list_concat(input.subpaths, input.partial_subpaths);
 
 	/*
 	 * Apply query-wide LIMIT if known and path is for sole base relation.
@@ -1470,6 +1471,7 @@ MergeAppendPath *
 create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
+						 List *child_append_relid_sets,
 						 List *pathkeys,
 						 Relids required_outer)
 {
@@ -1485,6 +1487,7 @@ create_merge_append_path(PlannerInfo *root,
 	 */
 	Assert(bms_is_empty(rel->lateral_relids) && bms_is_empty(required_outer));
 
+	pathnode->child_append_relid_sets = child_append_relid_sets;
 	pathnode->path.pathtype = T_MergeAppend;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
@@ -3932,10 +3935,11 @@ reparameterize_path(PlannerInfo *root, Path *path,
 		case T_Append:
 			{
 				AppendPath *apath = (AppendPath *) path;
-				List	   *childpaths = NIL;
-				List	   *partialpaths = NIL;
+				AppendPathInput new_append = {0};
 				int			i;
 				ListCell   *lc;
+
+				new_append.child_append_relid_sets = apath->child_append_relid_sets;
 
 				/* Reparameterize the children */
 				i = 0;
@@ -3950,13 +3954,13 @@ reparameterize_path(PlannerInfo *root, Path *path,
 						return NULL;
 					/* We have to re-split the regular and partial paths */
 					if (i < apath->first_partial_path)
-						childpaths = lappend(childpaths, spath);
+						new_append.subpaths = lappend(new_append.subpaths, spath);
 					else
-						partialpaths = lappend(partialpaths, spath);
+						new_append.partial_subpaths = lappend(new_append.partial_subpaths, spath);
 					i++;
 				}
 				return (Path *)
-					create_append_path(root, rel, childpaths, partialpaths,
+					create_append_path(root, rel, new_append,
 									   apath->path.pathkeys, required_outer,
 									   apath->path.parallel_workers,
 									   apath->path.parallel_aware,

@@ -104,6 +104,7 @@ $$);
                Parallel Safe: true
                Plan Node ID: 2
                Append RTIs: 1
+               Child Append RTIs: none
                ->  Seq Scan on brassica vegetables_1
                      Disabled Nodes: 0
                      Parallel Safe: true
@@ -142,7 +143,7 @@ $$);
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4
-(53 rows)
+(54 rows)
 
 -- Test a different output format.
 SELECT explain_filter($$
@@ -197,6 +198,7 @@ $$);
                <extParam>none</extParam>                            +
                <allParam>none</allParam>                            +
                <Append-RTIs>1</Append-RTIs>                         +
+               <Child-Append-RTIs>none</Child-Append-RTIs>          +
                <Subplans-Removed>0</Subplans-Removed>               +
                <Plans>                                              +
                  <Plan>                                             +
@@ -507,6 +509,7 @@ SELECT * FROM vegetables v,
          Elided Node RTIs: 2
    ->  Append
          Append RTIs: 1
+         Child Append RTIs: none
          ->  Seq Scan on brassica v_1
                Scan RTI: 3
          ->  Seq Scan on daucus v_2
@@ -548,7 +551,7 @@ SELECT * FROM vegetables v,
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
-(51 rows)
+(52 rows)
 
 -- should show "Subplan: unnamed_subquery"
 EXPLAIN (RANGE_TABLE, COSTS OFF)
@@ -566,6 +569,7 @@ SELECT * FROM vegetables v,
          Elided Node RTIs: 2
    ->  Append
          Append RTIs: 1
+         Child Append RTIs: none
          ->  Seq Scan on brassica v_1
                Scan RTI: 3
          ->  Seq Scan on daucus v_2
@@ -606,5 +610,5 @@ SELECT * FROM vegetables v,
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
-(50 rows)
+(51 rows)
 

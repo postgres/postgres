@@ -1513,6 +1513,7 @@ void
 mark_dummy_rel(RelOptInfo *rel)
 {
 	MemoryContext oldcontext;
+	AppendPathInput in = {0};
 
 	/* Already marked? */
 	if (is_dummy_rel(rel))
@@ -1529,7 +1530,7 @@ mark_dummy_rel(RelOptInfo *rel)
 	rel->partial_pathlist = NIL;
 
 	/* Set up the dummy path */
-	add_path(rel, (Path *) create_append_path(NULL, rel, NIL, NIL,
+	add_path(rel, (Path *) create_append_path(NULL, rel, in,
 											  NIL, rel->lateral_relids,
 											  0, false, -1));
 
