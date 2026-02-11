@@ -1157,6 +1157,28 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-password-expiration-warning-threshold" xreflabel="password_expiration_warning_threshold">
+      <term><varname>password_expiration_warning_threshold</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>password_expiration_warning_threshold</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When this parameter is greater than zero, the server will emit a
+        <literal>WARNING</literal> upon successful password authentication if
+        less than this amount of time remains until the authenticated role's
+        password expires.  Note that a role's password only expires if a date
+        was specified in a <literal>VALID UNTIL</literal> clause for
+        <command>CREATE ROLE</command> or <command>ALTER ROLE</command>.  If
+        this value is specified without units, it is taken as seconds.  The
+        default is 7 days.  This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-md5-password-warnings" xreflabel="md5_password_warnings">
       <term><varname>md5_password_warnings</varname> (<type>boolean</type>)
       <indexterm>

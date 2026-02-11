@@ -2251,6 +2251,16 @@
   options => 'password_encryption_options',
 },
 
+{ name => 'password_expiration_warning_threshold', type => 'int', context => 'PGC_SIGHUP', group => 'CONN_AUTH_AUTH',
+  short_desc => 'Threshold for password expiration warnings.',
+  long_desc => '0 means not to emit these warnings.',
+  flags => 'GUC_UNIT_S',
+  variable => 'password_expiration_warning_threshold',
+  boot_val => '604800',
+  min => '0',
+  max => 'INT_MAX',
+},
+
 { name => 'plan_cache_mode', type => 'enum', context => 'PGC_USERSET', group => 'QUERY_TUNING_OTHER',
   short_desc => 'Controls the planner\'s selection of custom or generic plan.',
   long_desc => 'Prepared statements can have custom and generic plans, and the planner will attempt to choose which is better.  This can be set to override the default behavior.',

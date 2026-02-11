@@ -507,6 +507,7 @@ extern void InitPostgres(const char *in_dbname, Oid dboid,
 						 bits32 flags,
 						 char *out_dbname);
 extern void BaseInit(void);
+extern void StoreConnectionWarning(char *msg, char *detail);
 
 /* in utils/init/miscinit.c */
 extern PGDLLIMPORT bool IgnoreSystemIndexes;

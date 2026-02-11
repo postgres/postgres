@@ -68,7 +68,23 @@ $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 # Needed to allow connect_fails to inspect postmaster log:
 $node->append_conf('postgresql.conf', "log_min_messages = debug2");
+$node->append_conf('postgresql.conf', "password_expiration_warning_threshold = '1100d'");
 $node->start;
+
+# Set up roles for password_expiration_warning_threshold test
+my $current_year = 1900 + ${ [ localtime(time) ] }[5];
+my $expire_year = $current_year - 1;
+$node->safe_psql(
+	'postgres',
+	"CREATE ROLE expired LOGIN VALID UNTIL '$expire_year-01-01' PASSWORD 'pass'");
+$expire_year = $current_year + 2;
+$node->safe_psql(
+	'postgres',
+	"CREATE ROLE expiration_warnings LOGIN VALID UNTIL '$expire_year-01-01' PASSWORD 'pass'");
+$expire_year = $current_year + 5;
+$node->safe_psql(
+	'postgres',
+	"CREATE ROLE no_warnings LOGIN VALID UNTIL '$expire_year-01-01' PASSWORD 'pass'");
 
 # Test behavior of log_connections GUC
 #
@@ -529,6 +545,24 @@ $node->connect_fails(
 	"multiple authentication types forbidden, fails with SCRAM auth",
 	expected_stderr =>
 	  qr/authentication method requirement "!password,!md5,!scram-sha-256" failed: server requested SCRAM-SHA-256 authentication/
+);
+
+# Test password_expiration_warning_threshold
+$node->connect_fails(
+	"user=expired dbname=postgres",
+	"connection fails due to expired password",
+	expected_stderr =>
+	  qr/password authentication failed for user "expired"/
+);
+$node->connect_ok(
+	"user=expiration_warnings dbname=postgres",
+	"connection succeeds with password expiration warning",
+	expected_stderr =>
+	  qr/role password will expire soon/
+);
+$node->connect_ok(
+	"user=no_warnings dbname=postgres",
+	"connection succeeds with no password expiration warning"
 );
 
 # Test SYSTEM_USER <> NULL with parallel workers.

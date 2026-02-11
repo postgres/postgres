@@ -20,9 +20,14 @@
 #include "common/scram-common.h"
 #include "libpq/crypt.h"
 #include "libpq/scram.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+
+/* Threshold for password expiration warnings. */
+int			password_expiration_warning_threshold = 604800;
 
 /* Enables deprecation warnings for MD5 passwords. */
 bool		md5_password_warnings = true;
@@ -71,13 +76,71 @@ get_role_password(const char *role, const char **logdetail)
 	ReleaseSysCache(roleTup);
 
 	/*
-	 * Password OK, but check to be sure we are not past rolvaliduntil
+	 * Password OK, but check to be sure we are not past rolvaliduntil or
+	 * password_expiration_warning_threshold.
 	 */
-	if (!isnull && vuntil < GetCurrentTimestamp())
+	if (!isnull)
 	{
-		*logdetail = psprintf(_("User \"%s\" has an expired password."),
-							  role);
-		return NULL;
+		TimestampTz now = GetCurrentTimestamp();
+		uint64		expire_time = TimestampDifferenceMicroseconds(now, vuntil);
+
+		/*
+		 * If we're past rolvaliduntil, the connection attempt should fail, so
+		 * update logdetail and return NULL.
+		 */
+		if (vuntil < now)
+		{
+			*logdetail = psprintf(_("User \"%s\" has an expired password."),
+								  role);
+			return NULL;
+		}
+
+		/*
+		 * If we're past the warning threshold, the connection attempt should
+		 * succeed, but we still want to emit a warning.  To do so, we queue
+		 * the warning message using StoreConnectionWarning() so that it will
+		 * be emitted at the end of InitPostgres(), and we return normally.
+		 */
+		if (expire_time / USECS_PER_SEC < password_expiration_warning_threshold)
+		{
+			MemoryContext oldcontext;
+			int			days;
+			int			hours;
+			int			minutes;
+			char	   *warning;
+			char	   *detail;
+
+			oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+			days = expire_time / USECS_PER_DAY;
+			hours = (expire_time % USECS_PER_DAY) / USECS_PER_HOUR;
+			minutes = (expire_time % USECS_PER_HOUR) / USECS_PER_MINUTE;
+
+			warning = pstrdup(_("role password will expire soon"));
+
+			if (days > 0)
+				detail = psprintf(ngettext("The password for role \"%s\" will expire in %d day.",
+										   "The password for role \"%s\" will expire in %d days.",
+										   days),
+								  role, days);
+			else if (hours > 0)
+				detail = psprintf(ngettext("The password for role \"%s\" will expire in %d hour.",
+										   "The password for role \"%s\" will expire in %d hours.",
+										   hours),
+								  role, hours);
+			else if (minutes > 0)
+				detail = psprintf(ngettext("The password for role \"%s\" will expire in %d minute.",
+										   "The password for role \"%s\" will expire in %d minutes.",
+										   minutes),
+								  role, minutes);
+			else
+				detail = psprintf(_("The password for role \"%s\" will expire in less than 1 minute."),
+								  role);
+
+			StoreConnectionWarning(warning, detail);
+
+			MemoryContextSwitchTo(oldcontext);
+		}
 	}
 
 	return shadow_pass;

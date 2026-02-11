@@ -25,6 +25,9 @@
  */
 #define MAX_ENCRYPTED_PASSWORD_LEN (512)
 
+/* Threshold for password expiration warnings. */
+extern PGDLLIMPORT int password_expiration_warning_threshold;
+
 /* Enables deprecation warnings for MD5 passwords. */
 extern PGDLLIMPORT bool md5_password_warnings;
 
