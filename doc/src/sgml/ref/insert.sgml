@@ -113,10 +113,13 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
    <literal>INSERT</literal> privilege on the listed columns.
    Similarly, when <literal>ON CONFLICT DO UPDATE</literal> is specified, you
    only need <literal>UPDATE</literal> privilege on the column(s) that are
-   listed to be updated.  However, <literal>ON CONFLICT DO UPDATE</literal>
-   also requires <literal>SELECT</literal> privilege on any column whose
-   values are read in the <literal>ON CONFLICT DO UPDATE</literal>
-   expressions or <replaceable>condition</replaceable>.
+   listed to be updated.  However, all forms of <literal>ON CONFLICT</literal>
+   also require <literal>SELECT</literal> privilege on any column whose values
+   are read.  This includes any column mentioned in
+   <replaceable>conflict_target</replaceable> (including columns referred to
+   by the arbiter constraint), and any column mentioned in an
+   <literal>ON CONFLICT DO UPDATE</literal> <replaceable>expression</replaceable>,
+   or a <literal>WHERE</literal> clause <replaceable>condition</replaceable>.
   </para>
 
   <para>
