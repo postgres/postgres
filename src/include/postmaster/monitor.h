@@ -68,6 +68,9 @@
 #define MAX_SUBJECT_LEN 25
 #define MAX_SUBJECT_BIT_NUM (MAX_SUBS_NUM + 64 - 1) / 64
 
+#define MAX_MONITOR_MESSAGE_LEN 64
+#define MONITOR_TIMEOUT 300
+
 typedef enum
 {
 	ANYCAST,
@@ -90,6 +93,14 @@ typedef struct _subjectKey
 {
 	char name[MAX_SUBJECT_LEN];
 } SubjectKey;
+
+typedef struct MonitorMsg
+{
+	SubjectKey key;
+    TimestampTz ts;
+    Size        len;
+    char        data[MAX_MONITOR_MESSAGE_LEN];
+} MonitorMsg;
 
 /*
  * key -> SubjectEntity hash entry

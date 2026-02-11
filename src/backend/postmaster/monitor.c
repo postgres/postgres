@@ -27,10 +27,15 @@
 
 #include "postgres.h"
 #include "libpq/pqsignal.h"
+#include "nodes/pg_list.h"
 #include "postmaster/interrupt.h"
 #include "postmaster/monitor.h"
 #include "storage/buf_internals.h"
+#include "storage/latch.h"
+#include "storage/procsignal.h"
 #include "storage/shm_toc.h"
+#include "storage/waiteventset.h"
+#include "miscadmin.h"
 #include "monitorsubsystem/monitor_event.h"
 #include "utils/memutils.h"
 
@@ -38,9 +43,21 @@
 
 MonSubSystem_LocalState  monSubSysLocal;
 
+typedef struct OqtdItem
+{
+    MonitorMsg msg;
+    int        pn;
+    int        rqn;
+} OqtdItem;
+
 Size mss_subscriberInfo_size(void);
 Size mss_publisherInfo_size(void);
 Size mss_subjectEntity_size(void);
+static bool can_deliver(OqtdItem *item, int current_pn, int last_processed_queue);
+static void oqtd_insert_sorted(List **oqtd, OqtdItem *new_item);
+static void read_msgs_from_channel(int qid, List **oqtd, int current_pn);
+static void deliver_from_oqtd(List **oqtd, int current_pn, int last_processed_queue);
+static void deliver_message_to_subscribers(MonitorMsg *msg);
 
 Size mss_subscriberInfo_size(void)
 {
@@ -254,11 +271,52 @@ void MonitorShmemInit(void)
 }
 
 /*
+ * Что делать дальше:
+ * инициализация oqtd 
+ * функция для  вставки в oqtd 
+ * (че то у меня начали возникать вопросы, все ли ок...)
+ * waitEventsOnQueues
+ * 
+ * 
+ * окей, еще раз
+ * oqtd - ordered queue to deliver 
+ * 		- список, в который попадают “свежие” 
+ * 		СООБЩЕНИЯ для сортировки.
+ * О смысле сортировки:
+ * - нам пришел массив с каналами, в которых что-то есть
+ * - в этих каналах есть какие-то сообщения (в канале 
+ * 		может быть больше одного сообщения)
+ * 		в sqm_mq вроде где-то был комментарий,
+ * 		что получателю приходит сигнал о получении, когда очередь 
+ * 		заполнилась на какой-то процент (надо проверить))
+ * - эти сообщения надо вставлять в oqtd
+ * 
+ * 
+ * WHAT CAN BE IMPROVED:
+ * if messages are read and extracted from the channel and moved 
+ * in OQTD, there is a possibility if the monitoring process
+ * receives messages (extracts them from the channel), adds them to oqtd, 
+ * and then dies, then these messages will simply disappear...
+ * Ways to fix it (currently on mind)
+ * => just read the messages from the channel, and then extract
+ * (is there such a possibility?)
+ * => either place oqtd in shared memory so that when the process dies, 
+ * it doesn't lose these messages
+ * 
+ * contrib/postgres_fdw/connection.c - an example immediately with CHECK_FOR_INTERRUPTS
+ * and WaitLatchOrSocket
+ * 
+ * src/backend/postmaster/autovacuum.c 597 - example with WaitLatch and ProcessAutoVacLauncherInterrupts
+ *
  * FIXME:
  * fix signal handling, bc it doesn't stop with "pg_ctl stop"
  */
 void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 {
+	int current_pn = 0;
+	int last_processed_queue = 0;
+	List *oqtd = NIL;
+    monitor_channel *channels = monSubSysLocal.MonSubSystem_SharedState->channels;	
 
 	elog(LOG, "WORKING");
 	/* for a start, there should be nothing*/
@@ -296,10 +354,13 @@ void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 	 *
 	 */
 	/*
-	 * TODO: доделать sigusr1 handler
-	 * (shm_mq использует latch, а latch использует SIGUSR1)
+	 * Question:
+	 * тут вообще вопрос, что делать с обработчиком событий 
+	 * на каналах - стоит ли это помещать в  procsignal_sigusr1_handler
+	 * (и делать отдельный ProcSignalReason)
+	 * или нет или потом или вообще нет?
 	 */
-	pqsignal(SIGUSR1, SIG_IGN);
+	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, SIG_IGN);
 
 	/*
@@ -320,8 +381,200 @@ void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 	 */
 	for (;;)
 	{
-		elog(LOG, "the most beatiful cycle ever!!!");
-		/* 3 sec */
-		pg_usleep(1000L * 1000L * 3L);
+		int ch_count = 0;
+		bool setqueues[MAX_MONITOR_CHANNELS_NUM];
+		// elog(LOG, "the most beatiful cycle ever!!!");
+		// /* 3 sec */
+		// pg_usleep(1000L * 1000L * 3L);
+
+		memset(setqueues, 0, sizeof(setqueues));
+
+		/*
+		 * WaitLatch si enough for current uses, but
+		 * in the future, if any other types of channels appear,
+		 * it may be necessary to use WaitEventSetWait or WaitLatchOrSocket
+		 * (if there is any type of channel that will work
+		 * on sockets)
+		 * 
+		 * TODO:
+		 * разобраться, что за wait_event_info...
+		 */
+		WaitLatch(MyLatch, WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH, MONITOR_TIMEOUT, 0);
+		/* lil question is when to reset it - mb after checking all channels? */
+		ResetLatch(MyLatch);
+		
+		// About here should be CHECK_FOR_INTERRUPTS();
+
+		/* 
+		 * тут надо будет посмотреть, по timeout это 
+		 * произошло или нет,
+		 * и если да, то идти к другому шагу... аааааа
+		 */
+
+		LWLockAcquire(&monSubSysLocal.MonSubSystem_SharedState->lock, LW_EXCLUSIVE);
+		for (int q = 0; q < MAX_MONITOR_CHANNELS_NUM; q++)
+		{
+			if (channels[q].is_there_msgs) {
+				setqueues[q] = true;
+				ch_count++;
+			}
+		}
+		
+		current_pn++;
+
+		if (ch_count > 0)
+		{
+			for (int q = 0; q < MAX_MONITOR_CHANNELS_NUM; q++)
+			{
+				last_processed_queue = q;
+
+				if (setqueues[q]) 
+				{
+					read_msgs_from_channel(q, &oqtd, current_pn);
+				}
+
+				deliver_from_oqtd(&oqtd, current_pn, last_processed_queue);
+			}
+		}
+		else
+		{
+			last_processed_queue = MAX_MONITOR_CHANNELS_NUM;
+
+			deliver_from_oqtd(&oqtd, current_pn, last_processed_queue);
+		}
 	}
+
 }
+
+
+
+static bool
+can_deliver(OqtdItem *item, int current_pn, int last_processed_queue)
+{
+    return (item->pn < current_pn &&
+            last_processed_queue >= item->rqn);
+}
+
+static void
+read_msgs_from_channel(int qid, List **oqtd, int current_pn)
+{
+    monitor_channel *ch =
+        &monSubSysLocal.MonSubSystem_SharedState->channels[qid];
+
+    MonitorMsg buf;
+    Size out_len;
+
+    while (ch->ops->receive_one_msg(ch, &buf, sizeof(MonitorMsg), &out_len))
+    {
+        OqtdItem *item = palloc(sizeof(OqtdItem));
+
+        memcpy(&item->msg, &buf, sizeof(MonitorMsg));
+        item->pn  = current_pn;
+        item->rqn = qid;
+
+        oqtd_insert_sorted(oqtd, item);
+    }
+}
+
+static void
+deliver_from_oqtd(List **oqtd,
+                  int current_pn,
+                  int last_processed_queue)
+{
+    while (*oqtd != NIL)
+    {
+        OqtdItem *item =
+            (OqtdItem *) linitial(*oqtd);
+
+        if (!can_deliver(item, current_pn, last_processed_queue))
+            break;
+
+        deliver_message_to_subscribers(&item->msg);
+
+        *oqtd = list_delete_first(*oqtd);
+
+        pfree(item);
+    }
+}
+
+static void
+deliver_message_to_subscribers(MonitorMsg *msg)
+{
+    mssSharedState *state =
+        monSubSysLocal.MonSubSystem_SharedState;
+
+    bool found;
+    mssEntry *entry;
+
+    entry = hash_search(state->mss_hash,
+                        &msg->key,
+                        HASH_FIND,
+                        &found);
+
+    if (!found)
+        return;
+
+    SubjectEntity *entity =
+        &state->entitiesInfo.subjectEntities[entry->subjectEntityId];
+
+    for (int i = 0; i < MAX_SUBS_NUM; i++)
+    {
+        int word = i / 64;
+        int bit  = i % 64;
+
+        uint64 mask = UINT64CONST(1) << bit;
+
+        if (pg_atomic_read_u64(&entity->bitmap_subs[word]) & mask)
+        {
+            SubscriberInfo *sub =
+                &state->sub.subscribers[i];
+
+            if (sub->channel != NULL)
+            {
+                sub->channel->ops->send_msg(sub->channel,
+                                        msg,
+                                        sizeof(MonitorMsg));
+            }
+        }
+    }
+}
+
+
+
+/*
+ * Insert OqtdItem into ordered list by ascending timestamp.
+ *
+ * The list head may change, so we take List **.
+ */
+static void
+oqtd_insert_sorted(List **oqtd, OqtdItem *new_item)
+{
+    ListCell *lc;
+    int pos = 0;
+
+    /* If the list is empty, then just add the item */
+    if (*oqtd == NIL)
+    {
+        *oqtd = lappend(*oqtd, new_item);
+        return;
+    }
+
+    foreach(lc, *oqtd)
+    {
+        OqtdItem *existing = lfirst(lc);
+
+        if (new_item->msg.ts < existing->msg.ts)
+        {
+			*oqtd = list_insert_nth(*oqtd, pos, new_item);
+            return;
+        }
+
+		pos++;
+    }
+
+    /* If ts is the largest, add it to the end */
+    *oqtd = lappend(*oqtd, new_item);
+}
+
+
+

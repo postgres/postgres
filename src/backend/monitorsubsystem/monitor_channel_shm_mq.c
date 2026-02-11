@@ -35,22 +35,14 @@ static bool
  * (надо рассмотреть эту ситуацию, я ее пока не рассматривала)
  * то есть внутреннее состояние shm_mq может быть не reset-safe
  * 
- * 
- * то есть варианты:
- * 1 создать shm_mq'шки в обычной разделяемой памяти
- * + в теории можно просто доподключиться к очереди при рестарте процесса
- * - мб невозможно доподключиться к очереди при рестарте процесса, тк
- *   внутр состояние shm_mq может быть не reset-safe
- * 
- * возможно, можно после рестарта процесса (любого) пытаться переподключиться
- * к очереди, а если с ней проблемы - то ее пересоздать
- * 
- * 2 создать shm_mq'шки в dsm
- * 
  *  
  * src/test/modules/test_shm_mq/setup.c
  * строка 147 - пример как создавать shm_mq с помощью
  * toc и shm_toc_insert в DSM
+ * 
+ * TODO:
+ * add about here or in shm_mq_channel_attach
+ * initializing shm_mq_set_receiver and shm_mq_set_sender
  */
 shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *cfg)
 {
@@ -96,27 +88,88 @@ shm_mq_channel_attach(monitor_channel *ch, ChannelRole role)
 	return;
 }
 
-
+/*
+ * TODO:
+ * mind all checks
+ */
 static bool
-shm_mq_channel_send(monitor_channel *ch, const void *data, Size len)
+shm_mq_channel_send_msg(monitor_channel *ch, const void *data, Size len)
 {
-	ShmMqChannelData *priv = (ShmMqChannelData *)ch->private_data;
+    ShmMqChannelLocal *local;
+	shm_mq_result result;
 
-	return shm_mq_send(priv->mq_handle, len, data, false, false);
+    local = (ShmMqChannelLocal *)
+        monSubSysLocal.pubLocalData;
+
+    Assert(local && local->handle);
+
+    
+
+    result = shm_mq_send(local->handle,
+                         len,
+                         data,
+                         false,  /* nowait = false (block) */
+                         false); /* force_flush */
+
+	switch (result)
+	{
+	case SHM_MQ_SUCCESS:
+		return true;
+		break;
+	case SHM_MQ_DETACHED:
+	case SHM_MQ_WOULD_BLOCK:
+		return false;
+		break;
+	
+	default:
+		elog(ERROR, "unexpected shm_mq_send result");
+    	return false;
+		break;
+	}
 }
 
-static bool
-shm_mq_channel_receive(monitor_channel *ch, void *buf, Size buf_size, Size *out_len)
+
+/*
+ * TODO:
+ * mind all checks
+ */
+static ChannelRecvResult
+shm_mq_channel_receive_msg(monitor_channel *ch, void *buf, Size buf_size, Size *out_len)
 {
-	ShmMqChannelData *priv = (ShmMqChannelData *)ch->private_data;
+    ShmMqChannelLocal *local;
+    shm_mq_result result;
+    Size len;
+    void *data;
 
+    /* Берём локальный handle */
+    local = (ShmMqChannelLocal *)
+        monSubSysLocal.subLocalData;
 
-	Size len;
-	bool result = shm_mq_receive(priv->mq_handle, &len, buf, buf_size);
-	if (result && out_len)
-		*out_len = len;
+    Assert(local && local->handle);
 
-	return result;
+    result = shm_mq_receive(local->handle,
+                            &len,
+                            &data,
+                            true);   /* nowait */
+
+    if (result == SHM_MQ_WOULD_BLOCK)
+        return CHANNEL_RECV_EMPTY;
+
+    if (result == SHM_MQ_DETACHED)
+        return CHANNEL_RECV_CLOSED;
+
+    if (result != SHM_MQ_SUCCESS)
+        elog(ERROR, "unexpected shm_mq_receive result");
+
+    if (len > buf_size)
+        elog(ERROR, "message too large for buffer");
+
+    memcpy(buf, data, len);
+
+    if (out_len)
+        *out_len = len;
+
+    return CHANNEL_RECV_OK;
 }
 
 static void
