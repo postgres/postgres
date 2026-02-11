@@ -294,7 +294,9 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        </para>
        <para>
          If an <literal>INSERT</literal> has an <literal>ON CONFLICT DO
-         NOTHING/UPDATE</literal> clause, <literal>SELECT</literal>
+         UPDATE</literal> clause, or an <literal>ON CONFLICT DO
+         NOTHING</literal> clause with an arbiter index or constraint
+         specification, then <literal>SELECT</literal>
          permissions are required on the relation, and the rows proposed for
          insertion are checked using the relation's <literal>SELECT</literal>
          policies.  If a row proposed for insertion does not satisfy the
@@ -540,7 +542,11 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <row>
        <entry><command>INSERT ... ON CONFLICT</command></entry>
        <entry>
-        Check new row&nbsp;<footnote id="rls-on-conflict-priv">
+        Check new row&nbsp;<footnote>
+         <para>
+          If an arbiter index or constraint is specified.
+         </para>
+        </footnote><footnote id="rls-on-conflict-priv">
          <para>
           Row proposed for insertion is checked regardless of whether or not a
           conflict occurs.
