@@ -4148,7 +4148,6 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 		if (queued_proc == blocked_proc)
 			break;
 		data->waiter_pids[data->npids++] = queued_proc->pid;
-		queued_proc = (PGPROC *) queued_proc->links.next;
 	}
 
 	bproc->num_locks = data->nlocks - bproc->first_lock;
