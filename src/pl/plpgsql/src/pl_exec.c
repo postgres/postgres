@@ -3255,28 +3255,14 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 				}
 				break;
 
+			case PLPGSQL_DTYPE_ROW:
 			case PLPGSQL_DTYPE_REC:
 				{
-					PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
-
-					/* If record is empty, we return NULL not a row of nulls */
-					if (rec->erh && !ExpandedRecordIsEmpty(rec->erh))
-					{
-						estate->retval = ExpandedRecordGetDatum(rec->erh);
-						estate->retisnull = false;
-						estate->rettype = rec->rectypeid;
-					}
-				}
-				break;
-
-			case PLPGSQL_DTYPE_ROW:
-				{
-					PLpgSQL_row *row = (PLpgSQL_row *) retvar;
+					/* exec_eval_datum can handle these cases */
 					int32		rettypmod;
 
-					/* We get here if there are multiple OUT parameters */
 					exec_eval_datum(estate,
-									(PLpgSQL_datum *) row,
+									retvar,
 									&estate->rettype,
 									&rettypmod,
 									&estate->retval,
