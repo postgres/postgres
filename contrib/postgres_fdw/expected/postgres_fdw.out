@@ -6503,20 +6503,31 @@ UPDATE ft2 d SET c2 = CASE WHEN random() >= 0 THEN d.c2 ELSE 0 END
 ALTER SERVER loopback OPTIONS (DROP extensions);
 INSERT INTO ft2 (c1,c2,c3)
   SELECT id, id % 10, to_char(id, 'FM00000') FROM generate_series(2001, 2010) id;
+-- this will do a remote seqscan, causing unstable result order, so sort
 EXPLAIN (verbose, costs off)
-UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *;            -- can't be pushed down
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
- Update on public.ft2
-   Output: c1, c2, c3, c4, c5, c6, c7, c8
-   Remote SQL: UPDATE "S 1"."T 1" SET c3 = $2 WHERE ctid = $1 RETURNING "C 1", c2, c3, c4, c5, c6, c7, c8
-   ->  Foreign Scan on public.ft2
-         Output: 'bar'::text, ctid, ft2.*
-         Filter: (postgres_fdw_abs(ft2.c1) > 2000)
-         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" FOR UPDATE
-(7 rows)
+WITH cte AS (
+  UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *
+) SELECT * FROM cte ORDER BY c1;          -- can't be pushed down
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: cte.c1, cte.c2, cte.c3, cte.c4, cte.c5, cte.c6, cte.c7, cte.c8
+   Sort Key: cte.c1
+   CTE cte
+     ->  Update on public.ft2
+           Output: ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8
+           Remote SQL: UPDATE "S 1"."T 1" SET c3 = $2 WHERE ctid = $1 RETURNING "C 1", c2, c3, c4, c5, c6, c7, c8
+           ->  Foreign Scan on public.ft2
+                 Output: 'bar'::text, ft2.ctid, ft2.*
+                 Filter: (postgres_fdw_abs(ft2.c1) > 2000)
+                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" FOR UPDATE
+   ->  CTE Scan on cte
+         Output: cte.c1, cte.c2, cte.c3, cte.c4, cte.c5, cte.c6, cte.c7, cte.c8
+(13 rows)
 
-UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *;
+WITH cte AS (
+  UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *
+) SELECT * FROM cte ORDER BY c1;
   c1  | c2 | c3  | c4 | c5 | c6 |     c7     | c8 
 ------+----+-----+----+----+----+------------+----
  2001 |  1 | bar |    |    |    | ft2        | 
