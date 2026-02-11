@@ -532,7 +532,7 @@
 
 # - When to Log -
 
-#log_min_messages = warning             # comma-separated list of
+#log_min_messages = 'warning'           # comma-separated list of
                                         # process_type:level entries, plus
                                         # one freestanding level as default.
                                         # Valid process types are:

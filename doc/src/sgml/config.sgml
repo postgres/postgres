@@ -7145,9 +7145,9 @@ local0.*    /var/log/postgresql
          <member><literal>checkpointer</literal></member>
          <member><literal>ioworker</literal></member>
          <member><literal>postmaster</literal></member>
-         <member><literal>syslogger</literal></member>
          <member><literal>slotsyncworker</literal></member>
          <member><literal>startup</literal></member>
+         <member><literal>syslogger</literal></member>
          <member><literal>walreceiver</literal></member>
          <member><literal>walsender</literal></member>
          <member><literal>walsummarizer</literal></member>

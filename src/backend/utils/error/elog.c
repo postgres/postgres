@@ -2190,7 +2190,7 @@ check_log_min_messages(char **newval, void **extra, GucSource source)
 	char	   *result;
 	int			newlevel[BACKEND_NUM_TYPES];
 	bool		assigned[BACKEND_NUM_TYPES] = {0};
-	int			genericlevel = -1;	/* -1 means not assigned */
+	int			defaultlevel = -1;	/* -1 means not assigned */
 
 	const char *const process_types[] = {
 #define PG_PROCTYPE(bktype, bkcategory, description, main_func, shmem_attach) \
@@ -2228,8 +2228,8 @@ check_log_min_messages(char **newval, void **extra, GucSource source)
 			const struct config_enum_entry *entry;
 			bool		found;
 
-			/* Reject duplicates for generic log level. */
-			if (genericlevel != -1)
+			/* Reject duplicates for default log level. */
+			if (defaultlevel != -1)
 			{
 				GUC_check_errdetail("Redundant specification of default log level.");
 				goto lmm_fail;
@@ -2241,7 +2241,7 @@ check_log_min_messages(char **newval, void **extra, GucSource source)
 			{
 				if (pg_strcasecmp(entry->name, elem) == 0)
 				{
-					genericlevel = entry->val;
+					defaultlevel = entry->val;
 					found = true;
 					break;
 				}
@@ -2331,9 +2331,9 @@ lmm_fail:
 	}
 
 	/*
-	 * The generic log level must be specified. It is the fallback value.
+	 * The default log level must be specified. It is the fallback value.
 	 */
-	if (genericlevel == -1)
+	if (defaultlevel == -1)
 	{
 		GUC_check_errdetail("Default log level was not defined.");
 		guc_free(rawstring);
@@ -2345,7 +2345,7 @@ lmm_fail:
 	for (int i = 0; i < BACKEND_NUM_TYPES; i++)
 	{
 		if (!assigned[i])
-			newlevel[i] = genericlevel;
+			newlevel[i] = defaultlevel;
 	}
 
 	/*

@@ -1698,7 +1698,7 @@
   long_desc => 'Each level includes all the levels that follow it. The later the level, the fewer messages are sent.',
   flags => 'GUC_LIST_INPUT',
   variable => 'log_min_messages_string',
-  boot_val => '"WARNING"',
+  boot_val => '"warning"',
   check_hook => 'check_log_min_messages',
   assign_hook => 'assign_log_min_messages',
 },

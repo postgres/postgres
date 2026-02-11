@@ -26,7 +26,7 @@
 
 /*
  * List of process types (symbol, category, description, Main function,
- * shmem_attach, message level) entries.
+ * shmem_attach) entries.
  */
 
 
