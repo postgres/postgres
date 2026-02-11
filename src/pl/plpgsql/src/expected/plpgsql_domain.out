@@ -395,3 +395,16 @@ SELECT * FROM test_assign_ordered_named_pairs(1,2,0);  -- should fail someday
  {"(1,2)"}
 (1 row)
 
+CREATE FUNCTION test_null_ordered_named_pair()
+  RETURNS ordered_named_pair AS $$
+declare v ordered_named_pair;
+begin
+return v;
+end
+$$ LANGUAGE plpgsql;
+SELECT * FROM test_null_ordered_named_pair();
+ i | j 
+---+---
+   |  
+(1 row)
+
