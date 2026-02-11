@@ -121,8 +121,9 @@ BEGIN; DELETE FROM rls_test_tgt; ROLLBACK;
 BEGIN; DELETE FROM rls_test_tgt WHERE a = 1; ROLLBACK;
 DELETE FROM rls_test_tgt RETURNING *;
 
--- INSERT ... ON CONFLICT DO NOTHING should apply INSERT CHECK and SELECT USING
--- policy clauses (to new value, whether it conflicts or not)
+-- INSERT ... ON CONFLICT DO NOTHING with an arbiter clause should apply
+-- INSERT CHECK and SELECT USING policy clauses (to new value, whether it
+-- conflicts or not)
 INSERT INTO rls_test_tgt VALUES (1, 'tgt a') ON CONFLICT (a) DO NOTHING;
 INSERT INTO rls_test_tgt VALUES (1, 'tgt b') ON CONFLICT (a) DO NOTHING;
 
