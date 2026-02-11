@@ -277,3 +277,13 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM test_assign_ordered_named_pairs(1,2,3);
 SELECT * FROM test_assign_ordered_named_pairs(2,1,3);
 SELECT * FROM test_assign_ordered_named_pairs(1,2,0);  -- should fail someday
+
+CREATE FUNCTION test_null_ordered_named_pair()
+  RETURNS ordered_named_pair AS $$
+declare v ordered_named_pair;
+begin
+return v;
+end
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM test_null_ordered_named_pair();
