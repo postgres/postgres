@@ -646,12 +646,14 @@ static const SchemaQuery Query_for_list_of_functions[] = {
 		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
 		.namespace = "p.pronamespace",
 		.result = "p.proname",
+		.use_distinct = true,
 	},
 	{
 		.catname = "pg_catalog.pg_proc p",
 		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
 		.namespace = "p.pronamespace",
 		.result = "p.proname",
+		.use_distinct = true,
 	}
 };
 
@@ -663,6 +665,7 @@ static const SchemaQuery Query_for_list_of_procedures[] = {
 		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
 		.namespace = "p.pronamespace",
 		.result = "p.proname",
+		.use_distinct = true,
 	},
 	{
 		/* not supported in older versions */
@@ -675,6 +678,7 @@ static const SchemaQuery Query_for_list_of_routines = {
 	.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
 	.namespace = "p.pronamespace",
 	.result = "p.proname",
+	.use_distinct = true,
 };
 
 static const SchemaQuery Query_for_list_of_sequences = {
@@ -5401,6 +5405,13 @@ match_previous_words(int pattern_id,
 			COMPLETE_WITH("'standby_replay'", "'standby_write'", "'standby_flush'", "'primary_flush'");
 	}
 
+/* SELECT -- offer functions and SELECT-list keywords */
+	else if (TailMatches("SELECT") &&
+			 !HeadMatches("CREATE") && !HeadMatches("ALTER") &&
+			 !HeadMatches("GRANT") && !HeadMatches("REVOKE"))
+		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY_PLUS(Query_for_list_of_functions,
+												  "ALL", "DISTINCT", "*");
+
 /* WITH [RECURSIVE] */
 
 	/*
@@ -5974,6 +5985,20 @@ _complete_from_query(const char *simple_query,
 				{
 					appendPQExpBufferStr(&query_buffer,
 										 " AND c.relnamespace <> (SELECT oid FROM"
+										 " pg_catalog.pg_namespace WHERE nspname = 'pg_catalog')");
+				}
+
+				/*
+				 * Similarly, when fetching function names, suppress
+				 * pg_catalog entries unless the input-so-far begins with
+				 * "pg_".
+				 */
+				if (strcmp(schema_query->catname,
+						   "pg_catalog.pg_proc p") == 0 &&
+					strncmp(objectname, "pg_", 3) != 0)
+				{
+					appendPQExpBufferStr(&query_buffer,
+										 " AND p.pronamespace <> (SELECT oid FROM"
 										 " pg_catalog.pg_namespace WHERE nspname = 'pg_catalog')");
 				}
 

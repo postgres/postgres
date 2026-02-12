@@ -44,7 +44,8 @@ $node->safe_psql('postgres',
 	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
 	  . "CREATE TABLE \"mixedName\" (f1 int, f2 text);\n"
 	  . "CREATE TYPE enum1 AS ENUM ('foo', 'bar', 'baz', 'BLACK');\n"
-	  . "CREATE PUBLICATION some_publication;\n");
+	  . "CREATE PUBLICATION some_publication;\n"
+	  . "CREATE FUNCTION tcfunc_test(int) RETURNS int LANGUAGE sql AS 'SELECT 1';\n");
 
 # In a VPATH build, we'll be started in the source directory, but we want
 # to run in the build directory so that we can use relative paths to
@@ -422,6 +423,22 @@ check_completion(
 	"COPY FROM with DEFAULT completion");
 
 clear_line();
+
+# check completion of function names after SELECT
+check_completion(
+	"SELECT tcfunc_te\t",
+	qr/tcfunc_test\b/,
+	"complete function name after SELECT");
+
+clear_query();
+
+# check that pg_ prefix enables system function completion
+check_completion(
+	"SELECT pg_cancel_b\t",
+	qr/pg_cancel_backend\b/,
+	"complete pg_catalog function with pg_ prefix in SELECT");
+
+clear_query();
 
 # send psql an explicit \q to shut it down, else pty won't close properly
 $h->quit or die "psql returned $?";

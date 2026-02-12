@@ -5227,6 +5227,13 @@ testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '
     will fill in the unfinished name, or offer a menu of possible completions
     when there's more than one.  (Depending on the library in use, you may need to
     press <literal>TAB</literal> more than once to get a menu.)
+    Tab completion is also aware of SQL context: for instance, after
+    <command>SELECT</command> it will suggest function names (as well as
+    keywords such as <literal>ALL</literal> and <literal>DISTINCT</literal>),
+    while after <command>FROM</command> it will suggest table names.
+    To avoid overwhelming the list with built-in functions, names from
+    <literal>pg_catalog</literal> are suppressed unless the text typed so
+    far begins with <literal>pg_</literal>.
     </para>
 
     <para>
