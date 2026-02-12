@@ -88,6 +88,8 @@ typedef struct reduce_outer_joins_pass1_state
 {
 	Relids		relids;			/* base relids within this subtree */
 	bool		contains_outer; /* does subtree contain outer join(s)? */
+	Relids		nullable_rels;	/* base relids that are nullable within this
+								 * subtree */
 	List	   *sub_states;		/* List of states for subtree components */
 } reduce_outer_joins_pass1_state;
 
@@ -161,6 +163,8 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 									 List *forced_null_vars);
 static void report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 									 int rtindex, Relids relids);
+static bool has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
+								   reduce_outer_joins_pass1_state *right_state);
 static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 											Node **parent_quals,
 											Relids *dropped_outer_joins);
@@ -3144,13 +3148,16 @@ flatten_simple_union_all(PlannerInfo *root)
  * to each side separately.)
  *
  * Another transformation we apply here is to recognize cases like
- *		SELECT ... FROM a LEFT JOIN b ON (a.x = b.y) WHERE b.y IS NULL;
- * If the join clause is strict for b.y, then only null-extended rows could
- * pass the upper WHERE, and we can conclude that what the query is really
- * specifying is an anti-semijoin.  We change the join type from JOIN_LEFT
- * to JOIN_ANTI.  The IS NULL clause then becomes redundant, and must be
- * removed to prevent bogus selectivity calculations, but we leave it to
- * distribute_qual_to_rels to get rid of such clauses.
+ *		SELECT ... FROM a LEFT JOIN b ON (a.x = b.y) WHERE b.z IS NULL;
+ * If we can prove that b.z must be non-null for any matching row, either
+ * because the join clause is strict for b.z and b.z happens to be the join
+ * key b.y, or because b.z is defined NOT NULL by table constraints and is
+ * not nullable due to lower-level outer joins, then only null-extended rows
+ * could pass the upper WHERE, and we can conclude that what the query is
+ * really specifying is an anti-semijoin.  We change the join type from
+ * JOIN_LEFT to JOIN_ANTI.  The IS NULL clause then becomes redundant, and
+ * must be removed to prevent bogus selectivity calculations, but we leave
+ * it to distribute_qual_to_rels to get rid of such clauses.
  *
  * Also, we get rid of JOIN_RIGHT cases by flipping them around to become
  * JOIN_LEFT.  This saves some code here and in some later planner routines;
@@ -3174,8 +3181,9 @@ reduce_outer_joins(PlannerInfo *root)
 	 * to stop descending the jointree as soon as there are no outer joins
 	 * below our current point.  This consideration forces a two-pass process.
 	 * The first pass gathers information about which base rels appear below
-	 * each side of each join clause, and about whether there are outer
-	 * join(s) below each side of each join clause. The second pass examines
+	 * each side of each join clause, about whether there are outer join(s)
+	 * below each side of each join clause, and about which base rels are from
+	 * the nullable side of those outer join(s).  The second pass examines
 	 * qual clauses and changes join types as it descends the tree.
 	 */
 	state1 = reduce_outer_joins_pass1((Node *) root->parse->jointree);
@@ -3243,6 +3251,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 	result = palloc_object(reduce_outer_joins_pass1_state);
 	result->relids = NULL;
 	result->contains_outer = false;
+	result->nullable_rels = NULL;
 	result->sub_states = NIL;
 
 	if (jtnode == NULL)
@@ -3266,29 +3275,62 @@ reduce_outer_joins_pass1(Node *jtnode)
 			result->relids = bms_add_members(result->relids,
 											 sub_state->relids);
 			result->contains_outer |= sub_state->contains_outer;
+			result->nullable_rels = bms_add_members(result->nullable_rels,
+													sub_state->nullable_rels);
 			result->sub_states = lappend(result->sub_states, sub_state);
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
-		reduce_outer_joins_pass1_state *sub_state;
+		reduce_outer_joins_pass1_state *left_state;
+		reduce_outer_joins_pass1_state *right_state;
+
+		/* Recurse to children */
+		left_state = reduce_outer_joins_pass1(j->larg);
+		right_state = reduce_outer_joins_pass1(j->rarg);
 
 		/* join's own RT index is not wanted in result->relids */
-		if (IS_OUTER_JOIN(j->jointype))
-			result->contains_outer = true;
+		result->relids = bms_union(left_state->relids, right_state->relids);
 
-		sub_state = reduce_outer_joins_pass1(j->larg);
-		result->relids = bms_add_members(result->relids,
-										 sub_state->relids);
-		result->contains_outer |= sub_state->contains_outer;
-		result->sub_states = lappend(result->sub_states, sub_state);
+		/* Store children's states for pass 2 */
+		result->sub_states = list_make2(left_state, right_state);
 
-		sub_state = reduce_outer_joins_pass1(j->rarg);
-		result->relids = bms_add_members(result->relids,
-										 sub_state->relids);
-		result->contains_outer |= sub_state->contains_outer;
-		result->sub_states = lappend(result->sub_states, sub_state);
+		/* Collect outer join information */
+		switch (j->jointype)
+		{
+			case JOIN_INNER:
+			case JOIN_SEMI:
+				/* No new nullability; propagate state from children */
+				result->contains_outer = left_state->contains_outer ||
+					right_state->contains_outer;
+				result->nullable_rels = bms_union(left_state->nullable_rels,
+												  right_state->nullable_rels);
+				break;
+			case JOIN_LEFT:
+			case JOIN_ANTI:
+				/* RHS is nullable; LHS keeps existing status */
+				result->contains_outer = true;
+				result->nullable_rels = bms_union(left_state->nullable_rels,
+												  right_state->relids);
+				break;
+			case JOIN_RIGHT:
+				/* LHS is nullable; RHS keeps existing status */
+				result->contains_outer = true;
+				result->nullable_rels = bms_union(left_state->relids,
+												  right_state->nullable_rels);
+				break;
+			case JOIN_FULL:
+				/* Both sides are nullable */
+				result->contains_outer = true;
+				result->nullable_rels = bms_union(left_state->relids,
+												  right_state->relids);
+				break;
+			default:
+				elog(ERROR, "unrecognized join type: %d",
+					 (int) j->jointype);
+				break;
+		}
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
@@ -3440,15 +3482,16 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 		/*
 		 * See if we can reduce JOIN_LEFT to JOIN_ANTI.  This is the case if
-		 * the join's own quals are strict for any var that was forced null by
-		 * higher qual levels.  NOTE: there are other ways that we could
-		 * detect an anti-join, in particular if we were to check whether Vars
-		 * coming from the RHS must be non-null because of table constraints.
-		 * That seems complicated and expensive though (in particular, one
-		 * would have to be wary of lower outer joins). For the moment this
-		 * seems sufficient.
+		 * any var from the RHS was forced null by higher qual levels, but is
+		 * known to be non-nullable.  We detect this either by seeing if the
+		 * join's own quals are strict for the var, or by checking if the var
+		 * is defined NOT NULL by table constraints (being careful to exclude
+		 * vars that are nullable due to lower-level outer joins).  In either
+		 * case, the only way the higher qual clause's requirement for NULL
+		 * can be met is if the join fails to match, producing a null-extended
+		 * row.  Thus, we can treat this as an anti-join.
 		 */
-		if (jointype == JOIN_LEFT)
+		if (jointype == JOIN_LEFT && forced_null_vars != NIL)
 		{
 			List	   *nonnullable_vars;
 			Bitmapset  *overlap;
@@ -3460,9 +3503,13 @@ reduce_outer_joins_pass2(Node *jtnode,
 			 * It's not sufficient to check whether nonnullable_vars and
 			 * forced_null_vars overlap: we need to know if the overlap
 			 * includes any RHS variables.
+			 *
+			 * Also check if any forced-null var is defined NOT NULL by table
+			 * constraints.
 			 */
 			overlap = mbms_overlap_sets(nonnullable_vars, forced_null_vars);
-			if (bms_overlap(overlap, right_state->relids))
+			if (bms_overlap(overlap, right_state->relids) ||
+				has_notnull_forced_var(root, forced_null_vars, right_state))
 				jointype = JOIN_ANTI;
 		}
 
@@ -3596,6 +3643,97 @@ report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 	statep->full_join_rti = rtindex;
 	statep->unreduced_side = relids;
 	state2->partial_reduced = lappend(state2->partial_reduced, statep);
+}
+
+/*
+ * has_notnull_forced_var
+ *		Check if "forced_null_vars" contains any Vars belonging to the subtree
+ *		indicated by "right_state" that are known to be non-nullable due to
+ *		table constraints.
+ *
+ * Note that we must also consider the situation where a NOT NULL Var can be
+ * nulled by lower-level outer joins.
+ *
+ * Helper for reduce_outer_joins_pass2.
+ */
+static bool
+has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
+					   reduce_outer_joins_pass1_state *right_state)
+{
+	int			varno = -1;
+
+	foreach_node(Bitmapset, attrs, forced_null_vars)
+	{
+		RangeTblEntry *rte;
+		Bitmapset  *notnullattnums;
+		Bitmapset  *forcednullattnums = NULL;
+		int			attno;
+
+		varno++;
+
+		/* Skip empty bitmaps */
+		if (bms_is_empty(attrs))
+			continue;
+
+		/* Skip Vars that do not belong to the target relations */
+		if (!bms_is_member(varno, right_state->relids))
+			continue;
+
+		/*
+		 * Skip Vars that can be nulled by lower-level outer joins within the
+		 * given subtree.  These Vars might be NULL even if the schema defines
+		 * them as NOT NULL.
+		 */
+		if (bms_is_member(varno, right_state->nullable_rels))
+			continue;
+
+		/*
+		 * Iterate over attributes and adjust the bitmap indexes by
+		 * FirstLowInvalidHeapAttributeNumber to get the actual attribute
+		 * numbers.
+		 */
+		attno = -1;
+		while ((attno = bms_next_member(attrs, attno)) >= 0)
+		{
+			AttrNumber	real_attno = attno + FirstLowInvalidHeapAttributeNumber;
+
+			/* system columns cannot be NULL */
+			if (real_attno < 0)
+				return true;
+
+			forcednullattnums = bms_add_member(forcednullattnums, real_attno);
+		}
+
+		rte = rt_fetch(varno, root->parse->rtable);
+
+		/*
+		 * We must skip inheritance parent tables, as some child tables may
+		 * have a NOT NULL constraint for a column while others may not.  This
+		 * cannot happen with partitioned tables, though.
+		 */
+		if (rte->inh && rte->relkind != RELKIND_PARTITIONED_TABLE)
+		{
+			bms_free(forcednullattnums);
+			continue;
+		}
+
+		/* Get the column not-null constraint information for this relation */
+		notnullattnums = find_relation_notnullatts(root, rte->relid);
+
+		/*
+		 * Check if any forced-null attributes are defined as NOT NULL by
+		 * table constraints.
+		 */
+		if (bms_overlap(notnullattnums, forcednullattnums))
+		{
+			bms_free(forcednullattnums);
+			return true;
+		}
+
+		bms_free(forcednullattnums);
+	}
+
+	return false;
 }
 
 
