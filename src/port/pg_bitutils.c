@@ -169,20 +169,6 @@ pg_popcount_portable(const char *buf, int bytes)
 
 		buf = (const char *) words;
 	}
-#else
-	/* Process in 32-bit chunks if the buffer is aligned. */
-	if (buf == (const char *) TYPEALIGN(4, buf))
-	{
-		const uint32 *words = (const uint32 *) buf;
-
-		while (bytes >= 4)
-		{
-			popcnt += pg_popcount32_portable(*words++);
-			bytes -= 4;
-		}
-
-		buf = (const char *) words;
-	}
 #endif
 
 	/* Process any remaining bytes */
@@ -213,22 +199,6 @@ pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask)
 		{
 			popcnt += pg_popcount64_portable(*words++ & maskv);
 			bytes -= 8;
-		}
-
-		buf = (const char *) words;
-	}
-#else
-	/* Process in 32-bit chunks if the buffer is aligned. */
-	uint32		maskv = ~((uint32) 0) / 0xFF * mask;
-
-	if (buf == (const char *) TYPEALIGN(4, buf))
-	{
-		const uint32 *words = (const uint32 *) buf;
-
-		while (bytes >= 4)
-		{
-			popcnt += pg_popcount32_portable(*words++ & maskv);
-			bytes -= 4;
 		}
 
 		buf = (const char *) words;

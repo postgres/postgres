@@ -376,40 +376,20 @@ __asm__ __volatile__(" popcntq %1,%0\n":"=q"(res):"rm"(word):"cc");
  * pg_popcount_sse42
  *		Returns the number of 1-bits in buf
  */
+pg_attribute_no_sanitize_alignment()
 static uint64
 pg_popcount_sse42(const char *buf, int bytes)
 {
 	uint64		popcnt = 0;
+	const uint64 *words = (const uint64 *) buf;
 
-#if SIZEOF_VOID_P >= 8
-	/* Process in 64-bit chunks if the buffer is aligned. */
-	if (buf == (const char *) TYPEALIGN(8, buf))
+	while (bytes >= 8)
 	{
-		const uint64 *words = (const uint64 *) buf;
-
-		while (bytes >= 8)
-		{
-			popcnt += pg_popcount64_sse42(*words++);
-			bytes -= 8;
-		}
-
-		buf = (const char *) words;
+		popcnt += pg_popcount64_sse42(*words++);
+		bytes -= 8;
 	}
-#else
-	/* Process in 32-bit chunks if the buffer is aligned. */
-	if (buf == (const char *) TYPEALIGN(4, buf))
-	{
-		const uint32 *words = (const uint32 *) buf;
 
-		while (bytes >= 4)
-		{
-			popcnt += pg_popcount32_sse42(*words++);
-			bytes -= 4;
-		}
-
-		buf = (const char *) words;
-	}
-#endif
+	buf = (const char *) words;
 
 	/* Process any remaining bytes */
 	while (bytes--)
@@ -422,44 +402,21 @@ pg_popcount_sse42(const char *buf, int bytes)
  * pg_popcount_masked_sse42
  *		Returns the number of 1-bits in buf after applying the mask to each byte
  */
+pg_attribute_no_sanitize_alignment()
 static uint64
 pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask)
 {
 	uint64		popcnt = 0;
-
-#if SIZEOF_VOID_P >= 8
-	/* Process in 64-bit chunks if the buffer is aligned */
 	uint64		maskv = ~UINT64CONST(0) / 0xFF * mask;
+	const uint64 *words = (const uint64 *) buf;
 
-	if (buf == (const char *) TYPEALIGN(8, buf))
+	while (bytes >= 8)
 	{
-		const uint64 *words = (const uint64 *) buf;
-
-		while (bytes >= 8)
-		{
-			popcnt += pg_popcount64_sse42(*words++ & maskv);
-			bytes -= 8;
-		}
-
-		buf = (const char *) words;
+		popcnt += pg_popcount64_sse42(*words++ & maskv);
+		bytes -= 8;
 	}
-#else
-	/* Process in 32-bit chunks if the buffer is aligned. */
-	uint32		maskv = ~((uint32) 0) / 0xFF * mask;
 
-	if (buf == (const char *) TYPEALIGN(4, buf))
-	{
-		const uint32 *words = (const uint32 *) buf;
-
-		while (bytes >= 4)
-		{
-			popcnt += pg_popcount32_sse42(*words++ & maskv);
-			bytes -= 4;
-		}
-
-		buf = (const char *) words;
-	}
-#endif
+	buf = (const char *) words;
 
 	/* Process any remaining bytes */
 	while (bytes--)

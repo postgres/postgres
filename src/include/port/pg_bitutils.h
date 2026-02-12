@@ -333,13 +333,7 @@ pg_popcount(const char *buf, int bytes)
 	 * We set the threshold to the point at which we'll first use special
 	 * instructions in the optimized version.
 	 */
-#if SIZEOF_VOID_P >= 8
-	int			threshold = 8;
-#else
-	int			threshold = 4;
-#endif
-
-	if (bytes < threshold)
+	if (bytes < 8)
 	{
 		uint64		popcnt = 0;
 
@@ -364,13 +358,7 @@ pg_popcount_masked(const char *buf, int bytes, bits8 mask)
 	 * We set the threshold to the point at which we'll first use special
 	 * instructions in the optimized version.
 	 */
-#if SIZEOF_VOID_P >= 8
-	int			threshold = 8;
-#else
-	int			threshold = 4;
-#endif
-
-	if (bytes < threshold)
+	if (bytes < 8)
 	{
 		uint64		popcnt = 0;
 
