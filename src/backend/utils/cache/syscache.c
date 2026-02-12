@@ -3,18 +3,15 @@
  * syscache.c
  *	  System cache management routines
  *
+ *	  In pgplanner mode, all catalog lookups are intercepted here and
+ *	  routed to user-provided callbacks. No real catcache is initialized.
+ *
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
  *	  src/backend/utils/cache/syscache.c
- *
- * NOTES
- *	  These routines allow the parser/planner/executor to perform
- *	  rapid lookups on the contents of the system catalogs.
- *
- *	  see utils/syscache.h for a list of the cache IDs
  *
  *-------------------------------------------------------------------------
  */
@@ -79,54 +76,26 @@
 #include "lib/qunique.h"
 #include "pgplanner/pgplanner.h"
 #include "utils/builtins.h"
-#include "catalog/pg_proc.h"
 #include "utils/catcache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
 /*---------------------------------------------------------------------------
-
-	Adding system caches:
-
-	Add your new cache to the list in include/utils/syscache.h.
-	Keep the list sorted alphabetically.
-
-	Add your entry to the cacheinfo[] array below. All cache lists are
-	alphabetical, so add it in the proper place.  Specify the relation OID,
-	index OID, number of keys, key attribute numbers, and initial number of
-	hash buckets.
-
-	The number of hash buckets must be a power of 2.  It's reasonable to
-	set this to the number of entries that might be in the particular cache
-	in a medium-size database.
-
-	There must be a unique index underlying each syscache (ie, an index
-	whose key is the same as that of the cache).  If there is not one
-	already, add the definition for it to include/catalog/pg_*.h using
-	DECLARE_UNIQUE_INDEX.
-	(Adding an index requires a catversion.h update, while simply
-	adding/deleting caches only requires a recompile.)
-
-	Finally, any place your relation gets heap_insert() or
-	heap_update() calls, use CatalogTupleInsert() or CatalogTupleUpdate()
-	instead, which also update indexes.  The heap_* calls do not do that.
-
-*---------------------------------------------------------------------------
-*/
-
-/*
  *		struct cachedesc: information defining a single syscache
+ *
+ *		We keep this table only for nkeys lookup in the SearchSysCache
+ *		dispatcher.  In pgplanner mode, InitCatalogCache is never called.
+ *---------------------------------------------------------------------------
  */
 struct cachedesc
 {
-	Oid			reloid;			/* OID of the relation being cached */
-	Oid			indoid;			/* OID of index relation for this cache */
-	int			nkeys;			/* # of keys needed for cache lookup */
-	int			key[4];			/* attribute numbers of key attrs */
-	int			nbuckets;		/* number of hash buckets for this cache */
+	Oid			reloid;
+	Oid			indoid;
+	int			nkeys;
+	int			key[4];
+	int			nbuckets;
 };
 
-/* Macro to provide nkeys and key array with convenient syntax. */
 #define KEY(...) VA_ARGS_NARGS(__VA_ARGS__), { __VA_ARGS__ }
 
 static const struct cachedesc cacheinfo[] = {
@@ -689,11 +658,9 @@ static CatCache *SysCache[SysCacheSize];
 
 static bool CacheInitialized = false;
 
-/* Sorted array of OIDs of tables that have caches on them */
 static Oid	SysCacheRelationOid[SysCacheSize];
 static int	SysCacheRelationOidSize;
 
-/* Sorted array of OIDs of tables and indexes used by caches */
 static Oid	SysCacheSupportingRelOid[SysCacheSize * 2];
 static int	SysCacheSupportingRelOidSize;
 
@@ -703,10 +670,8 @@ static int	oid_compare(const void *a, const void *b);
 /*
  * InitCatalogCache - initialize the caches
  *
- * Note that no database access is done here; we only allocate memory
- * and initialize the cache structure.  Interrogation of the database
- * to complete initialization of a cache happens upon first use
- * of that cache.
+ * In pgplanner mode this is never called, but we keep it for link
+ * compatibility with code that references it.
  */
 void
 InitCatalogCache(void)
@@ -719,10 +684,6 @@ InitCatalogCache(void)
 
 	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
 	{
-		/*
-		 * Assert that every enumeration value defined in syscache.h has been
-		 * populated in the cacheinfo array.
-		 */
 		Assert(cacheinfo[cacheId].reloid != 0);
 
 		SysCache[cacheId] = InitCatCache(cacheId,
@@ -734,21 +695,18 @@ InitCatalogCache(void)
 		if (!PointerIsValid(SysCache[cacheId]))
 			elog(ERROR, "could not initialize cache %u (%d)",
 				 cacheinfo[cacheId].reloid, cacheId);
-		/* Accumulate data for OID lists, too */
 		SysCacheRelationOid[SysCacheRelationOidSize++] =
 			cacheinfo[cacheId].reloid;
 		SysCacheSupportingRelOid[SysCacheSupportingRelOidSize++] =
 			cacheinfo[cacheId].reloid;
 		SysCacheSupportingRelOid[SysCacheSupportingRelOidSize++] =
 			cacheinfo[cacheId].indoid;
-		/* see comments for RelationInvalidatesSnapshotsOnly */
 		Assert(!RelationInvalidatesSnapshotsOnly(cacheinfo[cacheId].reloid));
 	}
 
 	Assert(SysCacheRelationOidSize <= lengthof(SysCacheRelationOid));
 	Assert(SysCacheSupportingRelOidSize <= lengthof(SysCacheSupportingRelOid));
 
-	/* Sort and de-dup OID arrays, so we can use binary search. */
 	pg_qsort(SysCacheRelationOid, SysCacheRelationOidSize,
 			 sizeof(Oid), oid_compare);
 	SysCacheRelationOidSize =
@@ -764,18 +722,6 @@ InitCatalogCache(void)
 	CacheInitialized = true;
 }
 
-/*
- * InitCatalogCachePhase2 - finish initializing the caches
- *
- * Finish initializing all the caches, including necessary database
- * access.
- *
- * This is *not* essential; normally we allow syscaches to be initialized
- * on first use.  However, it is useful as a mechanism to preload the
- * relcache with entries for the most-commonly-used system catalogs.
- * Therefore, we invoke this routine when we need to write a new relcache
- * init file.
- */
 void
 InitCatalogCachePhase2(void)
 {
@@ -788,40 +734,14 @@ InitCatalogCachePhase2(void)
 }
 
 
-/*
- * SearchSysCache
- *
- *	A layer on top of SearchCatCache that does the initialization and
- *	key-setting for you.
- *
- *	Returns the cache copy of the tuple if one is found, NULL if not.
- *	The tuple is the 'cache' copy and must NOT be modified!
- *
- *	When the caller is done using the tuple, call ReleaseSysCache()
- *	to release the reference count grabbed by SearchSysCache().  If this
- *	is not done, the tuple will remain locked in cache until end of
- *	transaction, which is tolerable but not desirable.
- *
- *	CAUTION: The tuple that is returned must NOT be freed by the caller!
+/* ----------------------------------------------------------------
+ *		pgplanner fake tuple builders
+ * ----------------------------------------------------------------
  */
-HeapTuple
-SearchSysCache(int cacheId,
-			   Datum key1,
-			   Datum key2,
-			   Datum key3,
-			   Datum key4)
-{
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
-
-	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
-}
 
 /*
  * pgplanner_build_type_tuple
  *		Build a fake HeapTuple containing FormData_pg_type from callback data.
- *		The tuple is palloc'd and can be freed normally. ReleaseSysCache is
- *		a no-op in this fork, so there is no leak concern.
  */
 static HeapTuple
 pgplanner_build_type_tuple(Oid typid, const PgPlannerTypeInfo *tinfo)
@@ -837,7 +757,6 @@ pgplanner_build_type_tuple(Oid typid, const PgPlannerTypeInfo *tinfo)
 	result->t_len = total_len;
 	ItemPointerSetInvalid(&result->t_data->t_ctid);
 	result->t_data->t_hoff = hdr_len;
-	/* No nulls in the fixed-length portion */
 	result->t_data->t_infomask = 0;
 	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_type);
 
@@ -902,7 +821,7 @@ pgplanner_build_proc_tuple(Oid funcid, const PgPlannerFunctionInfo *finfo)
 	procForm = (FormData_pg_proc *) GETSTRUCT(result);
 	procForm->oid = funcid;
 	namestrcpy(&procForm->proname, finfo->proname ? finfo->proname : "unknown");
-	procForm->pronamespace = finfo->pronamespace ? finfo->pronamespace : 11; /* PG_CATALOG_NAMESPACE */
+	procForm->pronamespace = finfo->pronamespace ? finfo->pronamespace : 11;
 	procForm->proowner = 10;		/* BOOTSTRAP_SUPERUSERID */
 	procForm->prolang = 12;			/* INTERNALlanguageId */
 	procForm->procost = finfo->procost > 0 ? finfo->procost : 1;
@@ -980,6 +899,85 @@ pgplanner_build_agg_tuple(Oid aggfnoid, const PgPlannerAggregateInfo *ainfo)
 	return result;
 }
 
+/*
+ * pgplanner_build_operator_tuple
+ *		Build a fake HeapTuple containing FormData_pg_operator from callback data.
+ */
+static HeapTuple
+pgplanner_build_operator_tuple(Oid oproid, const PgPlannerOperatorInfo *oinfo)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	Size		data_len = sizeof(FormData_pg_operator);
+	Size		total_len = hdr_len + data_len;
+	FormData_pg_operator *oprForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_operator);
+
+	oprForm = (FormData_pg_operator *) GETSTRUCT(result);
+	oprForm->oid = oproid;
+	namestrcpy(&oprForm->oprname, oinfo->oprname ? oinfo->oprname : "?");
+	oprForm->oprnamespace = oinfo->oprnamespace ? oinfo->oprnamespace : 11;
+	oprForm->oprowner = oinfo->oprowner ? oinfo->oprowner : 10;
+	oprForm->oprkind = oinfo->oprkind ? oinfo->oprkind : 'b';
+	oprForm->oprcanmerge = oinfo->oprcanmerge;
+	oprForm->oprcanhash = oinfo->oprcanhash;
+	oprForm->oprleft = oinfo->oprleft;
+	oprForm->oprright = oinfo->oprright;
+	oprForm->oprresult = oinfo->oprresult;
+	oprForm->oprcom = oinfo->oprcom;
+	oprForm->oprnegate = oinfo->oprnegate;
+	oprForm->oprcode = oinfo->oprcode;
+	oprForm->oprrest = oinfo->oprrest;
+	oprForm->oprjoin = oinfo->oprjoin;
+
+	return result;
+}
+
+
+/* ----------------------------------------------------------------
+ *		SearchSysCache and variants
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * SearchSysCache
+ *		Dispatch to SearchSysCache1/2/3/4 based on the number of keys
+ *		defined for this cache in cacheinfo[].
+ */
+HeapTuple
+SearchSysCache(int cacheId,
+			   Datum key1,
+			   Datum key2,
+			   Datum key3,
+			   Datum key4)
+{
+	Assert(cacheId >= 0 && cacheId < SysCacheSize);
+
+	switch (cacheinfo[cacheId].nkeys)
+	{
+		case 1:
+			return SearchSysCache1(cacheId, key1);
+		case 2:
+			return SearchSysCache2(cacheId, key1, key2);
+		case 3:
+			return SearchSysCache3(cacheId, key1, key2, key3);
+		case 4:
+			return SearchSysCache4(cacheId, key1, key2, key3, key4);
+		default:
+			elog(ERROR, "SearchSysCache: unexpected nkeys %d for cacheId %d",
+				 cacheinfo[cacheId].nkeys, cacheId);
+			return NULL;
+	}
+}
+
+
 HeapTuple
 SearchSysCache1(int cacheId,
 				Datum key1)
@@ -1024,6 +1022,18 @@ SearchSysCache1(int cacheId,
 			}
 			break;
 		}
+		case OPEROID:
+		{
+			if (cb && cb->get_operator_by_oid)
+			{
+				PgPlannerOperatorInfo *oinfo = cb->get_operator_by_oid((Oid) key1);
+
+				if (oinfo == NULL)
+					return NULL;
+				return pgplanner_build_operator_tuple((Oid) key1, oinfo);
+			}
+			break;
+		}
 		default:
 			break;
 	}
@@ -1036,10 +1046,7 @@ HeapTuple
 SearchSysCache2(int cacheId,
 				Datum key1, Datum key2)
 {
-
-	// print error and panic
-	elog(ERROR, "Unsupported cache lookup2");
-	Assert(false);
+	elog(ERROR, "Unsupported cache lookup2: cacheId=%d", cacheId);
 	return NULL;
 }
 
@@ -1047,19 +1054,46 @@ HeapTuple
 SearchSysCache3(int cacheId,
 				Datum key1, Datum key2, Datum key3)
 {
-	elog(ERROR, "Unsupported cache lookup3");
-	Assert(false);
+	elog(ERROR, "Unsupported cache lookup3: cacheId=%d", cacheId);
 	return NULL;
 }
 
+/*
+ * SearchSysCache4
+ *		Handles OPERNAMENSP: operator lookup by (name, left, right, namespace).
+ */
 HeapTuple
 SearchSysCache4(int cacheId,
 				Datum key1, Datum key2, Datum key3, Datum key4)
 {
-	elog(ERROR, "Unsupported cache lookup4");
-	Assert(false);
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+
+	switch (cacheId)
+	{
+		case OPERNAMENSP:
+		{
+			if (cb && cb->get_operator)
+			{
+				const char *opname = NameStr(*DatumGetName(key1));
+				Oid			left_type = DatumGetObjectId(key2);
+				Oid			right_type = DatumGetObjectId(key3);
+				/* key4 is namespace — we ignore it, our callback doesn't filter by namespace */
+				PgPlannerOperatorInfo *oinfo = cb->get_operator(opname, left_type, right_type);
+
+				if (oinfo == NULL)
+					return NULL;
+				return pgplanner_build_operator_tuple(oinfo->oprid, oinfo);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
+	elog(ERROR, "Unsupported cache lookup4: cacheId=%d", cacheId);
 	return NULL;
 }
+
 
 /*
  * ReleaseSysCache
@@ -1073,11 +1107,6 @@ ReleaseSysCache(HeapTuple tuple)
 
 /*
  * SearchSysCacheCopy
- *
- * A convenience routine that does SearchSysCache and (if successful)
- * returns a modifiable copy of the syscache entry.  The original
- * syscache entry is released before returning.  The caller should
- * heap_freetuple() the result when done with it.
  */
 HeapTuple
 SearchSysCacheCopy(int cacheId,
@@ -1099,9 +1128,6 @@ SearchSysCacheCopy(int cacheId,
 
 /*
  * SearchSysCacheExists
- *
- * A convenience routine that just probes to see if a tuple can be found.
- * No lock is retained on the syscache entry.
  */
 bool
 SearchSysCacheExists(int cacheId,
@@ -1122,9 +1148,9 @@ SearchSysCacheExists(int cacheId,
 /*
  * GetSysCacheOid
  *
- * A convenience routine that does SearchSysCache and returns the OID in the
- * oidcol column of the found tuple, or InvalidOid if no tuple could be found.
- * No lock is retained on the syscache entry.
+ * In pgplanner mode, all our fake tuples have the OID as the first field
+ * at offset 0 in GETSTRUCT.  We extract it directly instead of using
+ * heap_getattr which would require a TupleDesc.
  */
 Oid
 GetSysCacheOid(int cacheId,
@@ -1135,16 +1161,14 @@ GetSysCacheOid(int cacheId,
 			   Datum key4)
 {
 	HeapTuple	tuple;
-	bool		isNull;
 	Oid			result;
 
 	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
-	result = heap_getattr(tuple, oidcol,
-						  SysCache[cacheId]->cc_tupdesc,
-						  &isNull);
-	Assert(!isNull);			/* columns used as oids should never be NULL */
+
+	/* For our fake tuples, OID is always the first field at GETSTRUCT offset */
+	result = *(Oid *) GETSTRUCT(tuple);
 	ReleaseSysCache(tuple);
 	return result;
 }
@@ -1152,11 +1176,6 @@ GetSysCacheOid(int cacheId,
 
 /*
  * SearchSysCacheAttName
- *
- * This routine is equivalent to SearchSysCache on the ATTNAME cache,
- * except that it will return NULL if the found attribute is marked
- * attisdropped.  This is convenient for callers that want to act as
- * though dropped attributes don't exist.
  */
 HeapTuple
 SearchSysCacheAttName(Oid relid, const char *attname)
@@ -1176,11 +1195,6 @@ SearchSysCacheAttName(Oid relid, const char *attname)
 	return tuple;
 }
 
-/*
- * SearchSysCacheCopyAttName
- *
- * As above, an attisdropped-aware version of SearchSysCacheCopy.
- */
 HeapTuple
 SearchSysCacheCopyAttName(Oid relid, const char *attname)
 {
@@ -1195,11 +1209,6 @@ SearchSysCacheCopyAttName(Oid relid, const char *attname)
 	return newtuple;
 }
 
-/*
- * SearchSysCacheExistsAttName
- *
- * As above, an attisdropped-aware version of SearchSysCacheExists.
- */
 bool
 SearchSysCacheExistsAttName(Oid relid, const char *attname)
 {
@@ -1213,14 +1222,6 @@ SearchSysCacheExistsAttName(Oid relid, const char *attname)
 }
 
 
-/*
- * SearchSysCacheAttNum
- *
- * This routine is equivalent to SearchSysCache on the ATTNUM cache,
- * except that it will return NULL if the found attribute is marked
- * attisdropped.  This is convenient for callers that want to act as
- * though dropped attributes don't exist.
- */
 HeapTuple
 SearchSysCacheAttNum(Oid relid, int16 attnum)
 {
@@ -1239,11 +1240,6 @@ SearchSysCacheAttNum(Oid relid, int16 attnum)
 	return tuple;
 }
 
-/*
- * SearchSysCacheCopyAttNum
- *
- * As above, an attisdropped-aware version of SearchSysCacheCopy.
- */
 HeapTuple
 SearchSysCacheCopyAttNum(Oid relid, int16 attnum)
 {
@@ -1262,21 +1258,9 @@ SearchSysCacheCopyAttNum(Oid relid, int16 attnum)
 /*
  * SysCacheGetAttr
  *
- *		Given a tuple previously fetched by SearchSysCache(),
- *		extract a specific attribute.
- *
- * This is equivalent to using heap_getattr() on a tuple fetched
- * from a non-cached relation.  Usually, this is only used for attributes
- * that could be NULL or variable length; the fixed-size attributes in
- * a system table are accessed just by mapping the tuple onto the C struct
- * declarations from include/catalog/.
- *
- * As with heap_getattr(), if the attribute is of a pass-by-reference type
- * then a pointer into the tuple data area is returned --- the caller must
- * not modify or pfree the datum!
- *
- * Note: it is legal to use SysCacheGetAttr() with a cacheId referencing
- * a different cache for the same catalog the tuple was fetched from.
+ * In pgplanner mode, we don't have TupleDescs for the fake tuples, so we
+ * handle known attribute requests directly.  Variable-length/nullable
+ * attributes that the planner queries are handled as special cases.
  */
 Datum
 SysCacheGetAttr(int cacheId, HeapTuple tup,
@@ -1284,34 +1268,67 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 				bool *isNull)
 {
 	/*
-	 * We just need to get the TupleDesc out of the cache entry, and then we
-	 * can apply heap_getattr().  Normally the cache control data is already
-	 * valid (because the caller recently fetched the tuple via this same
-	 * cache), but there are cases where we have to initialize the cache here.
+	 * Handle known variable-length / nullable attribute lookups that the
+	 * planner code actually performs on our fake tuples.
 	 */
-	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache ID: %d", cacheId);
-	if (!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
+	switch (cacheId)
 	{
-		InitCatCachePhase2(SysCache[cacheId], false);
-		Assert(PointerIsValid(SysCache[cacheId]->cc_tupdesc));
+		case AGGFNOID:
+		{
+			/* Anum_pg_aggregate_agginitval = 21 */
+			if (attributeNumber == Anum_pg_aggregate_agginitval)
+			{
+				FormData_pg_aggregate *aggForm = (FormData_pg_aggregate *) GETSTRUCT(tup);
+				const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+
+				if (cb && cb->get_aggregate)
+				{
+					PgPlannerAggregateInfo *ainfo = cb->get_aggregate(aggForm->aggfnoid);
+
+					if (ainfo && ainfo->agginitval)
+					{
+						*isNull = false;
+						return CStringGetTextDatum(ainfo->agginitval);
+					}
+				}
+				*isNull = true;
+				return (Datum) 0;
+			}
+			break;
+		}
+
+		case PROCOID:
+		case PROCNAMEARGSNSP:
+		{
+			/*
+			 * The planner may request these nullable pg_proc attributes:
+			 *   Anum_pg_proc_proallargtypes (21)
+			 *   Anum_pg_proc_proargmodes    (22)
+			 *   Anum_pg_proc_proargnames    (23)
+			 *   Anum_pg_proc_proargdefaults (24)
+			 * All are NULL for our simple function entries.
+			 */
+			if (attributeNumber >= Anum_pg_proc_proallargtypes &&
+				attributeNumber <= Anum_pg_proc_proargdefaults)
+			{
+				*isNull = true;
+				return (Datum) 0;
+			}
+			break;
+		}
+
+		default:
+			break;
 	}
 
-	return heap_getattr(tup, attributeNumber,
-						SysCache[cacheId]->cc_tupdesc,
-						isNull);
+	elog(ERROR, "SysCacheGetAttr: unsupported cacheId=%d, attr=%d", cacheId, attributeNumber);
+	*isNull = true;
+	return (Datum) 0;
 }
 
 /*
  * GetSysCacheHashValue
- *
- * Get the hash value that would be used for a tuple in the specified cache
- * with the given search keys.
- *
- * The reason for exposing this as part of the API is that the hash value is
- * exposed in cache invalidation operations, so there are places outside the
- * catcache code that need to be able to compute the hash values.
+ *		Not supported in pgplanner mode.
  */
 uint32
 GetSysCacheHashValue(int cacheId,
@@ -1320,6 +1337,9 @@ GetSysCacheHashValue(int cacheId,
 					 Datum key3,
 					 Datum key4)
 {
+	if (!CacheInitialized)
+		return 0;
+
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "invalid cache ID: %d", cacheId);
@@ -1328,53 +1348,151 @@ GetSysCacheHashValue(int cacheId,
 }
 
 /*
- * List-search interface
+ * SearchSysCacheList
+ *
+ * Handles PROCNAMEARGSNSP: lookup all pg_proc entries matching a function name.
+ * Builds a fake CatCList with fake CatCTup members wrapping fake pg_proc HeapTuples.
  */
 struct catclist *
 SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3)
 {
-	elog(ERROR, "SearchSysCacheList not supported (cacheId=%d)", cacheId);
-	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache ID: %d", cacheId);
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
 
-	return SearchCatCacheList(SysCache[cacheId], nkeys,
-							  key1, key2, key3);
+	switch (cacheId)
+	{
+		case PROCNAMEARGSNSP:
+		{
+			if (cb && cb->get_func_candidates && cb->get_function)
+			{
+				const char *funcname = NameStr(*DatumGetName(key1));
+				PgPlannerFuncCandidate *candidates = NULL;
+				int			ncandidates;
+				CatCList   *clist;
+				Size		clist_size;
+				int			i;
+
+				ncandidates = cb->get_func_candidates(funcname, &candidates);
+
+				/*
+				 * Allocate a CatCList with room for ncandidates member pointers.
+				 * Use offsetof + array size for the flexible array member.
+				 */
+				clist_size = offsetof(CatCList, members) + ncandidates * sizeof(CatCTup *);
+				clist = (CatCList *) palloc0(clist_size);
+				clist->cl_magic = CL_MAGIC;
+				clist->refcount = 2;	/* prevent ReleaseCatCacheList from freeing */
+				clist->dead = false;
+				clist->ordered = false;
+				clist->nkeys = nkeys;
+				clist->n_members = ncandidates;
+				clist->my_cache = NULL;	/* marks as our fake list */
+
+				for (i = 0; i < ncandidates; i++)
+				{
+					PgPlannerFuncCandidate *cand = &candidates[i];
+					PgPlannerFunctionInfo *finfo = cb->get_function(cand->oid);
+					HeapTuple	fakeTuple;
+					CatCTup	   *ct;
+					Size		ct_size;
+
+					/*
+					 * If the callback can't provide full function info, build a
+					 * minimal one from the candidate.
+					 */
+					PgPlannerFunctionInfo tmpinfo;
+					if (finfo == NULL)
+					{
+						memset(&tmpinfo, 0, sizeof(tmpinfo));
+						tmpinfo.pronargs = cand->nargs;
+						tmpinfo.proargtypes = cand->argtypes;
+						tmpinfo.provariadic = cand->variadic_type;
+						tmpinfo.pronargdefaults = cand->ndargs;
+						tmpinfo.proname = funcname;
+						tmpinfo.prokind = 'f';
+						finfo = &tmpinfo;
+					}
+
+					fakeTuple = pgplanner_build_proc_tuple(cand->oid, finfo);
+
+					/*
+					 * Build a CatCTup that wraps this tuple.  We allocate it
+					 * with enough trailing space for the tuple data, then copy
+					 * the tuple data right after the struct.
+					 */
+					ct_size = sizeof(CatCTup) + MAXALIGN(fakeTuple->t_len);
+					ct = (CatCTup *) palloc0(ct_size);
+					ct->ct_magic = CT_MAGIC;
+					ct->refcount = 2;
+					ct->dead = false;
+					ct->negative = false;
+					ct->c_list = clist;
+					ct->my_cache = NULL;
+
+					/* Set up the inline HeapTupleData to point to the data right after the struct */
+					ct->tuple.t_len = fakeTuple->t_len;
+					ct->tuple.t_self = fakeTuple->t_data->t_ctid;
+					ct->tuple.t_tableOid = InvalidOid;
+					ct->tuple.t_data = (HeapTupleHeader) ((char *) ct + sizeof(CatCTup));
+					memcpy(ct->tuple.t_data, fakeTuple->t_data, fakeTuple->t_len);
+
+					/* Free the intermediate fake tuple */
+					pfree(fakeTuple->t_data);
+					pfree(fakeTuple);
+
+					clist->members[i] = ct;
+				}
+
+				return clist;
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
+	elog(ERROR, "SearchSysCacheList: unsupported cacheId=%d", cacheId);
+	return NULL;
+}
+
+/*
+ * ReleaseSysCacheList
+ *
+ * For our fake CatCLists (my_cache == NULL), just decrement refcount.
+ * For real catcache lists, delegate to ReleaseCatCacheList.
+ */
+void
+ReleaseSysCacheList(struct catclist *list)
+{
+	if (list->my_cache == NULL)
+	{
+		/* Our fake list — just decrement refcount */
+		Assert(list->cl_magic == CL_MAGIC);
+		list->refcount--;
+		return;
+	}
+
+	ReleaseCatCacheList(list);
 }
 
 /*
  * SysCacheInvalidate
- *
- *	Invalidate entries in the specified cache, given a hash value.
- *	See CatCacheInvalidate() for more info.
- *
- *	This routine is only quasi-public: it should only be used by inval.c.
  */
 void
 SysCacheInvalidate(int cacheId, uint32 hashValue)
 {
+	if (!CacheInitialized)
+		return;
+
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 		elog(ERROR, "invalid cache ID: %d", cacheId);
 
-	/* if this cache isn't initialized yet, no need to do anything */
 	if (!PointerIsValid(SysCache[cacheId]))
 		return;
 
 	CatCacheInvalidate(SysCache[cacheId], hashValue);
 }
 
-/*
- * Certain relations that do not have system caches send snapshot invalidation
- * messages in lieu of catcache messages.  This is for the benefit of
- * GetCatalogSnapshot(), which can then reuse its existing MVCC snapshot
- * for scanning one of those catalogs, rather than taking a new one, if no
- * invalidation has been received.
- *
- * Relations that have syscaches need not (and must not) be listed here.  The
- * catcache invalidation messages will also flush the snapshot.  If you add a
- * syscache for one of these relations, remove it from this list.
- */
 bool
 RelationInvalidatesSnapshotsOnly(Oid relid)
 {
@@ -1395,59 +1513,59 @@ RelationInvalidatesSnapshotsOnly(Oid relid)
 	return false;
 }
 
-/*
- * Test whether a relation has a system cache.
- */
 bool
 RelationHasSysCache(Oid relid)
 {
-	int			low = 0,
-				high = SysCacheRelationOidSize - 1;
+	if (!CacheInitialized)
+		return false;
 
-	while (low <= high)
 	{
-		int			middle = low + (high - low) / 2;
+		int			low = 0,
+					high = SysCacheRelationOidSize - 1;
 
-		if (SysCacheRelationOid[middle] == relid)
-			return true;
-		if (SysCacheRelationOid[middle] < relid)
-			low = middle + 1;
-		else
-			high = middle - 1;
+		while (low <= high)
+		{
+			int			middle = low + (high - low) / 2;
+
+			if (SysCacheRelationOid[middle] == relid)
+				return true;
+			if (SysCacheRelationOid[middle] < relid)
+				low = middle + 1;
+			else
+				high = middle - 1;
+		}
 	}
 
 	return false;
 }
 
-/*
- * Test whether a relation supports a system cache, ie it is either a
- * cached table or the index used for a cache.
- */
 bool
 RelationSupportsSysCache(Oid relid)
 {
-	int			low = 0,
-				high = SysCacheSupportingRelOidSize - 1;
+	if (!CacheInitialized)
+		return false;
 
-	while (low <= high)
 	{
-		int			middle = low + (high - low) / 2;
+		int			low = 0,
+					high = SysCacheSupportingRelOidSize - 1;
 
-		if (SysCacheSupportingRelOid[middle] == relid)
-			return true;
-		if (SysCacheSupportingRelOid[middle] < relid)
-			low = middle + 1;
-		else
-			high = middle - 1;
+		while (low <= high)
+		{
+			int			middle = low + (high - low) / 2;
+
+			if (SysCacheSupportingRelOid[middle] == relid)
+				return true;
+			if (SysCacheSupportingRelOid[middle] < relid)
+				low = middle + 1;
+			else
+				high = middle - 1;
+		}
 	}
 
 	return false;
 }
 
 
-/*
- * OID comparator for pg_qsort
- */
 static int
 oid_compare(const void *a, const void *b)
 {

@@ -93,16 +93,34 @@ sample_get_relation_by_oid(Oid relid)
 
 static PgPlannerOperatorInfo eq_op_info = {
 	.oprid = 96,		/* int4eq OID in standard PG */
+	.oprname = "=",
+	.oprnamespace = 11,	/* PG_CATALOG_NAMESPACE */
+	.oprowner = 10,		/* BOOTSTRAP_SUPERUSERID */
+	.oprkind = 'b',		/* binary */
+	.oprcanmerge = true,
+	.oprcanhash = true,
 	.oprcode = 65,		/* int4eq function OID */
 	.oprleft = 23,		/* INT4OID */
 	.oprright = 23,
-	.oprresult = 16		/* BOOLOID */
+	.oprresult = 16,	/* BOOLOID */
+	.oprcom = 96,		/* commutator is itself */
+	.oprnegate = 518,	/* int4ne */
+	.oprrest = 101,		/* eqsel */
+	.oprjoin = 105		/* eqjoinsel */
 };
 
 static PgPlannerOperatorInfo *
 sample_get_operator(const char *opname, Oid left_type, Oid right_type)
 {
 	if (left_type == INT4OID && right_type == INT4OID)
+		return &eq_op_info;
+	return NULL;
+}
+
+static PgPlannerOperatorInfo *
+sample_get_operator_by_oid(Oid oproid)
+{
+	if (oproid == 96)
 		return &eq_op_info;
 	return NULL;
 }
@@ -287,6 +305,7 @@ main(int argc, char *argv[])
 		.get_relation = sample_get_relation,
 		.get_relation_by_oid = sample_get_relation_by_oid,
 		.get_operator = sample_get_operator,
+		.get_operator_by_oid = sample_get_operator_by_oid,
 		.get_type = sample_get_type,
 		.get_function = sample_get_function,
 		.get_func_candidates = sample_get_func_candidates,

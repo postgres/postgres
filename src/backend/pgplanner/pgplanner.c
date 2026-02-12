@@ -15,6 +15,7 @@
 #include "pgplanner/pgplanner.h"
 #include "access/htup_details.h"
 #include "access/tupdesc.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type_d.h"
 #include "parser/analyze.h"
@@ -39,6 +40,7 @@ void
 pgplanner_init(void)
 {
 	MemoryContextInit();
+	pgplanner_init_search_path();
 }
 
 /* ----------------------------------------------------------------

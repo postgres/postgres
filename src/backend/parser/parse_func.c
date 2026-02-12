@@ -33,7 +33,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "pgplanner/pgplanner.h"
 
 
 /* Possible error codes from LookupFuncNameInternal */
@@ -359,19 +358,19 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	else if (fdresult == FUNCDETAIL_AGGREGATE)
 	{
 		/*
-		 * It's an aggregate; fetch needed info via callback.
+		 * It's an aggregate; fetch needed info from the pg_aggregate entry.
 		 */
-		const PgPlannerCallbacks *cb_agg = pgplanner_get_callbacks();
-		PgPlannerAggregateInfo *agginfo;
+		HeapTuple	tup;
+		Form_pg_aggregate classForm;
 		int			catDirectArgs;
 
-		if (!cb_agg->get_aggregate)
-			elog(ERROR, "pgplanner: get_aggregate callback not set");
-		agginfo = cb_agg->get_aggregate(funcid);
-		if (agginfo == NULL)
+		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcid));
+		if (!HeapTupleIsValid(tup)) /* should not happen */
 			elog(ERROR, "cache lookup failed for aggregate %u", funcid);
-		aggkind = agginfo->aggkind;
-		catDirectArgs = agginfo->aggnumdirectargs;
+		classForm = (Form_pg_aggregate) GETSTRUCT(tup);
+		aggkind = classForm->aggkind;
+		catDirectArgs = classForm->aggnumdirectargs;
+		ReleaseSysCache(tup);
 
 		/* Now check various disallowed cases. */
 		if (AGGKIND_IS_ORDERED_SET(aggkind))
@@ -1575,8 +1574,9 @@ func_get_detail(List *funcname,
 
 	if (best_candidate)
 	{
+		HeapTuple	ftup;
+		Form_pg_proc pform;
 		FuncDetailCode result;
-		char		func_prokind;
 
 		/*
 		 * If processing named args or expanding variadics or defaults, the
@@ -1619,30 +1619,85 @@ func_get_detail(List *funcname,
 			}
 		}
 
-		{
-			const PgPlannerCallbacks *cb_func = pgplanner_get_callbacks();
-			PgPlannerFunctionInfo *finfo;
-
-			if (!cb_func->get_function)
-				elog(ERROR, "pgplanner: get_function callback not set");
-			finfo = cb_func->get_function(best_candidate->oid);
-			if (finfo == NULL)
-				elog(ERROR, "cache lookup failed for function %u",
-					 best_candidate->oid);
-
-			*rettype = finfo->rettype;
-			*retset = finfo->retset;
-			*vatype = finfo->provariadic;
-			func_prokind = finfo->prokind;
-		}
-
+		ftup = SearchSysCache1(PROCOID,
+							   ObjectIdGetDatum(best_candidate->oid));
+		if (!HeapTupleIsValid(ftup))	/* should not happen */
+			elog(ERROR, "cache lookup failed for function %u",
+				 best_candidate->oid);
+		pform = (Form_pg_proc) GETSTRUCT(ftup);
+		*rettype = pform->prorettype;
+		*retset = pform->proretset;
+		*vatype = pform->provariadic;
 		/* fetch default args if caller wants 'em */
 		if (argdefaults && best_candidate->ndargs > 0)
 		{
-			elog(ERROR, "pgplanner: default arguments not supported");
+			Datum		proargdefaults;
+			bool		isnull;
+			char	   *str;
+			List	   *defaults;
+
+			/* shouldn't happen, FuncnameGetCandidates messed up */
+			if (best_candidate->ndargs > pform->pronargdefaults)
+				elog(ERROR, "not enough default arguments");
+
+			proargdefaults = SysCacheGetAttr(PROCOID, ftup,
+											 Anum_pg_proc_proargdefaults,
+											 &isnull);
+			Assert(!isnull);
+			str = TextDatumGetCString(proargdefaults);
+			defaults = castNode(List, stringToNode(str));
+			pfree(str);
+
+			/* Delete any unused defaults from the returned list */
+			if (best_candidate->argnumbers != NULL)
+			{
+				/*
+				 * This is a bit tricky in named notation, since the supplied
+				 * arguments could replace any subset of the defaults.  We
+				 * work by making a bitmapset of the argnumbers of defaulted
+				 * arguments, then scanning the defaults list and selecting
+				 * the needed items.  (This assumes that defaulted arguments
+				 * should be supplied in their positional order.)
+				 */
+				Bitmapset  *defargnumbers;
+				int		   *firstdefarg;
+				List	   *newdefaults;
+				ListCell   *lc;
+				int			i;
+
+				defargnumbers = NULL;
+				firstdefarg = &best_candidate->argnumbers[best_candidate->nargs - best_candidate->ndargs];
+				for (i = 0; i < best_candidate->ndargs; i++)
+					defargnumbers = bms_add_member(defargnumbers,
+												   firstdefarg[i]);
+				newdefaults = NIL;
+				i = best_candidate->nominalnargs - pform->pronargdefaults;
+				foreach(lc, defaults)
+				{
+					if (bms_is_member(i, defargnumbers))
+						newdefaults = lappend(newdefaults, lfirst(lc));
+					i++;
+				}
+				Assert(list_length(newdefaults) == best_candidate->ndargs);
+				bms_free(defargnumbers);
+				*argdefaults = newdefaults;
+			}
+			else
+			{
+				/*
+				 * Defaults for positional notation are lots easier; just
+				 * remove any unwanted ones from the front.
+				 */
+				int			ndelete;
+
+				ndelete = list_length(defaults) - best_candidate->ndargs;
+				if (ndelete > 0)
+					defaults = list_delete_first_n(defaults, ndelete);
+				*argdefaults = defaults;
+			}
 		}
 
-		switch (func_prokind)
+		switch (pform->prokind)
 		{
 			case PROKIND_AGGREGATE:
 				result = FUNCDETAIL_AGGREGATE;
@@ -1657,11 +1712,12 @@ func_get_detail(List *funcname,
 				result = FUNCDETAIL_WINDOWFUNC;
 				break;
 			default:
-				elog(ERROR, "unrecognized prokind: %c", func_prokind);
+				elog(ERROR, "unrecognized prokind: %c", pform->prokind);
 				result = FUNCDETAIL_NORMAL; /* keep compiler quiet */
 				break;
 		}
 
+		ReleaseSysCache(ftup);
 		return result;
 	}
 

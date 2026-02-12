@@ -176,6 +176,7 @@ extern Oid	FindDefaultConversionProc(int32 for_encoding, int32 to_encoding);
 
 
 /* initialization & transaction cleanup code */
+extern void pgplanner_init_search_path(void);
 extern void InitializeSearchPath(void);
 extern void AtEOXact_Namespace(bool isCommit, bool parallel);
 extern void AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,

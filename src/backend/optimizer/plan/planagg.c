@@ -46,7 +46,6 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "pgplanner/pgplanner.h"
 
 static bool can_minmax_aggs(PlannerInfo *root, List **context);
 static bool build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
@@ -498,14 +497,17 @@ minmax_qp_callback(PlannerInfo *root, void *extra)
 static Oid
 fetch_agg_sort_op(Oid aggfnoid)
 {
-	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
-	PgPlannerAggregateInfo *agginfo;
+	HeapTuple	aggTuple;
+	Form_pg_aggregate aggform;
+	Oid			aggsortop;
 
-	if (!cb->get_aggregate)
+	/* fetch aggregate entry from pg_aggregate */
+	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(aggfnoid));
+	if (!HeapTupleIsValid(aggTuple))
 		return InvalidOid;
-	agginfo = cb->get_aggregate(aggfnoid);
-	if (agginfo == NULL)
-		return InvalidOid;
+	aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+	aggsortop = aggform->aggsortop;
+	ReleaseSysCache(aggTuple);
 
-	return agginfo->aggsortop;
+	return aggsortop;
 }

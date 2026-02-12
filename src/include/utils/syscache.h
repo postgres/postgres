@@ -219,6 +219,6 @@ extern bool RelationSupportsSysCache(Oid relid);
 #define SearchSysCacheList3(cacheId, key1, key2, key3) \
 	SearchSysCacheList(cacheId, 3, key1, key2, key3)
 
-#define ReleaseSysCacheList(x)	ReleaseCatCacheList(x)
+extern void ReleaseSysCacheList(struct catclist *list);
 
 #endif							/* SYSCACHE_H */

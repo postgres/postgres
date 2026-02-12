@@ -29,7 +29,6 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
-#include "pgplanner/pgplanner.h"
 
 
 /*
@@ -66,7 +65,7 @@ typedef struct OprCacheEntry
 } OprCacheEntry;
 
 
-static Operator	binary_oper_exact(List *opname, Oid arg1, Oid arg2);
+static Oid	binary_oper_exact(List *opname, Oid arg1, Oid arg2);
 static FuncDetailCode oper_select_candidate(int nargs,
 											Oid *input_typeids,
 											FuncCandidateList candidates,
@@ -271,44 +270,42 @@ oprfuncid(Operator op)
  * the possibility that the other operand is a domain type that needs to
  * be reduced to its base type to find an "exact" match.
  */
-static Operator
+static Oid
 binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 {
-	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
-	PgPlannerOperatorInfo *info;
-	HeapTuple	dummyTuple;
-	HeapTupleHeader td;
-	Size		len;
-	Form_pg_operator oprForm;
-	char	   *schemaname;
-	char	   *opername;
+	Oid			result;
+	bool		was_unknown = false;
 
-	/* deconstruct the name list */
-	DeconstructQualifiedName(opname, &schemaname, &opername);
+	/* Unspecified type for one of the arguments? then use the other */
+	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
+	{
+		arg1 = arg2;
+		was_unknown = true;
+	}
+	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
+	{
+		arg2 = arg1;
+		was_unknown = true;
+	}
 
-	if (!cb->get_operator)
-		elog(ERROR, "pgplanner: get_operator callback not set");
+	result = OpernameGetOprid(opname, arg1, arg2);
+	if (OidIsValid(result))
+		return result;
 
-	info = cb->get_operator(opername, arg1, arg2);
-	if (info == NULL)
-		return NULL;
+	if (was_unknown)
+	{
+		/* arg1 and arg2 are the same here, need only look at arg1 */
+		Oid			basetype = getBaseType(arg1);
 
-	/* Build a HeapTuple matching Form_pg_operator layout */
-	len = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) + sizeof(FormData_pg_operator));
+		if (basetype != arg1)
+		{
+			result = OpernameGetOprid(opname, basetype, basetype);
+			if (OidIsValid(result))
+				return result;
+		}
+	}
 
-	dummyTuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
-	dummyTuple->t_len = len;
-	dummyTuple->t_data = td = (HeapTupleHeader) ((char *) dummyTuple + HEAPTUPLESIZE);
-	td->t_hoff = offsetof(HeapTupleHeaderData, t_bits);
-
-	oprForm = (Form_pg_operator) ((char *) dummyTuple->t_data + dummyTuple->t_data->t_hoff);
-	oprForm->oid = info->oprid;
-	oprForm->oprcode = info->oprcode;
-	oprForm->oprleft = info->oprleft;
-	oprForm->oprright = info->oprright;
-	oprForm->oprresult = info->oprresult;
-
-	return (Operator) dummyTuple;
+	return InvalidOid;
 }
 
 
@@ -366,6 +363,7 @@ oper_select_candidate(int nargs,
 	return FUNCDETAIL_MULTIPLE; /* failed to select a best candidate */
 }
 
+
 /* oper() -- search for a binary operator
  * Given operator name, types of arg1 and arg2, return oper struct.
  *
@@ -388,31 +386,30 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 	OprCacheKey key;
 	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
-	Operator	tup = NULL;
+	HeapTuple	tup = NULL;
 
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	// key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
+	key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
 
-	// if (key_ok)
-	// {
-	// 	operOid = find_oper_cache_entry(&key);
-	// 	if (OidIsValid(operOid))
-	// 	{
-	// 		tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
-	// 		if (HeapTupleIsValid(tup))
-	// 			return (Operator) tup;
-	// 	}
-	// }
+	if (key_ok)
+	{
+		operOid = find_oper_cache_entry(&key);
+		if (OidIsValid(operOid))
+		{
+			tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
+			if (HeapTupleIsValid(tup))
+				return (Operator) tup;
+		}
+	}
 
 	/*
 	 * First try for an "exact" match.
 	 */
-	tup = binary_oper_exact(opname, ltypeId, rtypeId);
-	if (!tup)
+	operOid = binary_oper_exact(opname, ltypeId, rtypeId);
+	if (!OidIsValid(operOid))
 	{
-		elog(ERROR, "Not implemented: oper() without exact match");
 		/*
 		 * Otherwise, search for the most suitable candidate.
 		 */
@@ -440,7 +437,18 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 		}
 	}
 
-	return tup;
+	if (OidIsValid(operOid))
+		tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
+
+	if (HeapTupleIsValid(tup))
+	{
+		if (key_ok)
+			make_oper_cache_entry(&key, operOid);
+	}
+	else if (!noError)
+		op_error(pstate, opname, 'b', ltypeId, rtypeId, fdresult, location);
+
+	return (Operator) tup;
 }
 
 /* compatible_oper()

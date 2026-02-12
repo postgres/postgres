@@ -43,10 +43,20 @@ typedef struct PgPlannerRelationInfo
 typedef struct PgPlannerOperatorInfo
 {
 	Oid			oprid;
-	Oid			oprcode;	/* implementing function OID */
+	const char *oprname;		/* operator name (e.g. "=") */
+	Oid			oprnamespace;	/* 0 => PG_CATALOG_NAMESPACE */
+	Oid			oprowner;		/* 0 => BOOTSTRAP_SUPERUSERID */
+	char		oprkind;		/* 'b' binary, 'l' prefix; 0 => 'b' */
+	bool		oprcanmerge;
+	bool		oprcanhash;
+	Oid			oprcode;		/* implementing function OID */
 	Oid			oprleft;
 	Oid			oprright;
 	Oid			oprresult;
+	Oid			oprcom;			/* commutator OID, 0 if none */
+	Oid			oprnegate;		/* negator OID, 0 if none */
+	Oid			oprrest;		/* restriction estimator, 0 if none */
+	Oid			oprjoin;		/* join estimator, 0 if none */
 } PgPlannerOperatorInfo;
 
 /* Type info returned by the type callback */
@@ -136,33 +146,25 @@ typedef struct PgPlannerAggregateInfo
  * ----------------------------------------------------------------
  */
 
-/* Look up a relation by schema + name. Return NULL if not found. */
 typedef PgPlannerRelationInfo *(*pgplanner_relation_hook_type)(
 	const char *schemaname, const char *relname);
 
-/* Look up a relation by OID. Return NULL if not found. */
 typedef PgPlannerRelationInfo *(*pgplanner_relation_by_oid_hook_type)(
 	Oid relid);
 
-/* Look up an operator by name and argument types. Return NULL if not found. */
 typedef PgPlannerOperatorInfo *(*pgplanner_operator_hook_type)(
 	const char *opname, Oid left_type, Oid right_type);
 
-/* Look up type info by OID. Return NULL if not found. */
+typedef PgPlannerOperatorInfo *(*pgplanner_operator_by_oid_hook_type)(
+	Oid oproid);
+
 typedef PgPlannerTypeInfo *(*pgplanner_type_hook_type)(Oid typid);
 
-/* Look up function info by OID. Return NULL if not found. */
 typedef PgPlannerFunctionInfo *(*pgplanner_function_hook_type)(Oid funcid);
 
-/*
- * Look up function candidates by name. Returns the number of candidates
- * found. *candidates_out is set to point to an array of PgPlannerFuncCandidate.
- * Return 0 if no functions match.
- */
 typedef int (*pgplanner_func_candidates_hook_type)(
 	const char *funcname, PgPlannerFuncCandidate **candidates_out);
 
-/* Look up aggregate info by function OID. Return NULL if not found. */
 typedef PgPlannerAggregateInfo *(*pgplanner_aggregate_hook_type)(Oid aggfnoid);
 
 /* ----------------------------------------------------------------
@@ -175,6 +177,7 @@ typedef struct PgPlannerCallbacks
 	pgplanner_relation_hook_type		get_relation;
 	pgplanner_relation_by_oid_hook_type	get_relation_by_oid;
 	pgplanner_operator_hook_type		get_operator;
+	pgplanner_operator_by_oid_hook_type	get_operator_by_oid;
 	pgplanner_type_hook_type			get_type;
 	pgplanner_function_hook_type		get_function;
 	pgplanner_func_candidates_hook_type	get_func_candidates;
@@ -186,14 +189,8 @@ typedef struct PgPlannerCallbacks
  * ----------------------------------------------------------------
  */
 
-/* Initialize the planner library (call once at startup). */
 extern void pgplanner_init(void);
 
-/*
- * Plan a SQL query. Callbacks are set for the duration of planning and
- * protected by a mutex, so this is safe to call from multiple threads
- * (calls will serialize).
- */
 extern PlannedStmt *pgplanner_plan_query(const char *sql,
 										 const PgPlannerCallbacks *callbacks);
 
@@ -202,10 +199,8 @@ extern PlannedStmt *pgplanner_plan_query(const char *sql,
  * ----------------------------------------------------------------
  */
 
-/* Get the currently active callbacks (valid only during planning). */
 extern const PgPlannerCallbacks *pgplanner_get_callbacks(void);
 
-/* Build a Relation from callback-provided info. */
 extern Relation pgplanner_build_relation(const PgPlannerRelationInfo *info);
 
 #endif							/* PGPLANNER_H */
