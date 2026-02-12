@@ -18,7 +18,6 @@
 #include "storage/lockdefs.h"
 #include "utils/relcache.h"
 
-extern Relation return_dummy_relation();
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);

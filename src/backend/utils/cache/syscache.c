@@ -74,8 +74,12 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_type_d.h"
 #include "catalog/pg_user_mapping.h"
 #include "lib/qunique.h"
+#include "pgplanner/pgplanner.h"
+#include "utils/builtins.h"
+#include "catalog/pg_proc.h"
 #include "utils/catcache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -813,12 +817,218 @@ SearchSysCache(int cacheId,
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }
 
+/*
+ * pgplanner_build_type_tuple
+ *		Build a fake HeapTuple containing FormData_pg_type from callback data.
+ *		The tuple is palloc'd and can be freed normally. ReleaseSysCache is
+ *		a no-op in this fork, so there is no leak concern.
+ */
+static HeapTuple
+pgplanner_build_type_tuple(Oid typid, const PgPlannerTypeInfo *tinfo)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	Size		data_len = sizeof(FormData_pg_type);
+	Size		total_len = hdr_len + data_len;
+	FormData_pg_type *typeForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	/* No nulls in the fixed-length portion */
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_type);
+
+	typeForm = (FormData_pg_type *) GETSTRUCT(result);
+	typeForm->oid = typid;
+	namestrcpy(&typeForm->typname, tinfo->typname ? tinfo->typname : "unknown");
+	typeForm->typnamespace = tinfo->typnamespace;
+	typeForm->typowner = tinfo->typowner;
+	typeForm->typlen = tinfo->typlen;
+	typeForm->typbyval = tinfo->typbyval;
+	typeForm->typtype = tinfo->typtype;
+	typeForm->typcategory = tinfo->typcategory;
+	typeForm->typispreferred = tinfo->typispreferred;
+	typeForm->typisdefined = tinfo->typisdefined;
+	typeForm->typdelim = tinfo->typdelim;
+	typeForm->typrelid = tinfo->typrelid;
+	typeForm->typsubscript = tinfo->typsubscript;
+	typeForm->typelem = tinfo->typelem;
+	typeForm->typarray = tinfo->typarray;
+	typeForm->typinput = tinfo->typinput;
+	typeForm->typoutput = tinfo->typoutput;
+	typeForm->typreceive = tinfo->typreceive;
+	typeForm->typsend = tinfo->typsend;
+	typeForm->typmodin = tinfo->typmodin;
+	typeForm->typmodout = tinfo->typmodout;
+	typeForm->typanalyze = tinfo->typanalyze;
+	typeForm->typalign = tinfo->typalign;
+	typeForm->typstorage = tinfo->typstorage;
+	typeForm->typnotnull = tinfo->typnotnull;
+	typeForm->typbasetype = tinfo->typbasetype;
+	typeForm->typtypmod = tinfo->typtypmod;
+	typeForm->typndims = tinfo->typndims;
+	typeForm->typcollation = tinfo->typcollation;
+
+	return result;
+}
+
+/*
+ * pgplanner_build_proc_tuple
+ *		Build a fake HeapTuple containing FormData_pg_proc from callback data.
+ */
+static HeapTuple
+pgplanner_build_proc_tuple(Oid funcid, const PgPlannerFunctionInfo *finfo)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	int			nargs = finfo->pronargs;
+	Size		data_len = offsetof(FormData_pg_proc, proargtypes) +
+						   offsetof(oidvector, values) +
+						   nargs * sizeof(Oid);
+	Size		total_len = hdr_len + MAXALIGN(data_len);
+	FormData_pg_proc *procForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_proc);
+
+	procForm = (FormData_pg_proc *) GETSTRUCT(result);
+	procForm->oid = funcid;
+	namestrcpy(&procForm->proname, finfo->proname ? finfo->proname : "unknown");
+	procForm->pronamespace = finfo->pronamespace ? finfo->pronamespace : 11; /* PG_CATALOG_NAMESPACE */
+	procForm->proowner = 10;		/* BOOTSTRAP_SUPERUSERID */
+	procForm->prolang = 12;			/* INTERNALlanguageId */
+	procForm->procost = finfo->procost > 0 ? finfo->procost : 1;
+	procForm->prorows = finfo->prorows;
+	procForm->provariadic = finfo->provariadic;
+	procForm->prosupport = finfo->prosupport;
+	procForm->prokind = finfo->prokind;
+	procForm->prosecdef = false;
+	procForm->proleakproof = finfo->proleakproof;
+	procForm->proisstrict = finfo->proisstrict;
+	procForm->proretset = finfo->retset;
+	procForm->provolatile = finfo->provolatile ? finfo->provolatile : PROVOLATILE_IMMUTABLE;
+	procForm->proparallel = finfo->proparallel ? finfo->proparallel : PROPARALLEL_SAFE;
+	procForm->pronargs = finfo->pronargs;
+	procForm->pronargdefaults = finfo->pronargdefaults;
+	procForm->prorettype = finfo->rettype;
+
+	/* Fill in proargtypes oidvector */
+	procForm->proargtypes.ndim = 1;
+	procForm->proargtypes.dataoffset = 0;
+	procForm->proargtypes.elemtype = OIDOID;
+	procForm->proargtypes.dim1 = nargs;
+	procForm->proargtypes.lbound1 = 0;
+	SET_VARSIZE(&procForm->proargtypes,
+				offsetof(oidvector, values) + nargs * sizeof(Oid));
+	if (nargs > 0 && finfo->proargtypes)
+		memcpy(procForm->proargtypes.values, finfo->proargtypes, nargs * sizeof(Oid));
+
+	return result;
+}
+
+/*
+ * pgplanner_build_agg_tuple
+ *		Build a fake HeapTuple containing FormData_pg_aggregate from callback data.
+ */
+static HeapTuple
+pgplanner_build_agg_tuple(Oid aggfnoid, const PgPlannerAggregateInfo *ainfo)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	Size		data_len = sizeof(FormData_pg_aggregate);
+	Size		total_len = hdr_len + data_len;
+	FormData_pg_aggregate *aggForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_aggregate);
+
+	aggForm = (FormData_pg_aggregate *) GETSTRUCT(result);
+	aggForm->aggfnoid = aggfnoid;
+	aggForm->aggkind = ainfo->aggkind;
+	aggForm->aggnumdirectargs = ainfo->aggnumdirectargs;
+	aggForm->aggtransfn = ainfo->aggtransfn;
+	aggForm->aggfinalfn = ainfo->aggfinalfn;
+	aggForm->aggcombinefn = ainfo->aggcombinefn;
+	aggForm->aggserialfn = ainfo->aggserialfn;
+	aggForm->aggdeserialfn = ainfo->aggdeserialfn;
+	aggForm->aggmtransfn = 0;
+	aggForm->aggminvtransfn = 0;
+	aggForm->aggmfinalfn = 0;
+	aggForm->aggfinalextra = false;
+	aggForm->aggmfinalextra = false;
+	aggForm->aggfinalmodify = ainfo->aggfinalmodify;
+	aggForm->aggmfinalmodify = 'r';
+	aggForm->aggsortop = ainfo->aggsortop;
+	aggForm->aggtranstype = ainfo->aggtranstype;
+	aggForm->aggtransspace = ainfo->aggtransspace;
+	aggForm->aggmtranstype = 0;
+	aggForm->aggmtransspace = 0;
+
+	return result;
+}
+
 HeapTuple
 SearchSysCache1(int cacheId,
 				Datum key1)
 {
-	elog(ERROR, "Unsupported cache lookup1");
-	Assert(false);
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+
+	switch (cacheId)
+	{
+		case TYPEOID:
+		{
+			if (cb && cb->get_type)
+			{
+				PgPlannerTypeInfo *tinfo = cb->get_type((Oid) key1);
+
+				if (tinfo == NULL)
+					return NULL;
+				return pgplanner_build_type_tuple((Oid) key1, tinfo);
+			}
+			break;
+		}
+		case PROCOID:
+		{
+			if (cb && cb->get_function)
+			{
+				PgPlannerFunctionInfo *finfo = cb->get_function((Oid) key1);
+
+				if (finfo == NULL)
+					return NULL;
+				return pgplanner_build_proc_tuple((Oid) key1, finfo);
+			}
+			break;
+		}
+		case AGGFNOID:
+		{
+			if (cb && cb->get_aggregate)
+			{
+				PgPlannerAggregateInfo *ainfo = cb->get_aggregate((Oid) key1);
+
+				if (ainfo == NULL)
+					return NULL;
+				return pgplanner_build_agg_tuple((Oid) key1, ainfo);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
+	elog(ERROR, "Unsupported cache lookup1: cacheId=%d, key=%u", cacheId, (unsigned int) key1);
 	return NULL;
 }
 
@@ -853,12 +1063,12 @@ SearchSysCache4(int cacheId,
 
 /*
  * ReleaseSysCache
- *		Release previously grabbed reference count on a tuple
+ *		In pgplanner mode, tuples are palloc'd fakes, so this is a no-op.
  */
 void
 ReleaseSysCache(HeapTuple tuple)
 {
-	ReleaseCatCache(tuple);
+	/* no-op: our fake tuples are palloc'd, not catcache entries */
 }
 
 /*
@@ -1124,8 +1334,7 @@ struct catclist *
 SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3)
 {
-	int * asdf = NULL;
-	*asdf = 10;
+	elog(ERROR, "SearchSysCacheList not supported (cacheId=%d)", cacheId);
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "invalid cache ID: %d", cacheId);

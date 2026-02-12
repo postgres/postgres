@@ -47,6 +47,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+#include "pgplanner/pgplanner.h"
 
 /* Hook for plugins to get control in get_attavgwidth() */
 get_attavgwidth_hook_type get_attavgwidth_hook = NULL;
@@ -1723,17 +1724,17 @@ get_func_variadictype(Oid funcid)
 bool
 get_func_retset(Oid funcid)
 {
-	HeapTuple	tp;
-	bool		result;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerFunctionInfo *info;
 
-	// tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-	// if (!HeapTupleIsValid(tp))
-	// 	elog(ERROR, "cache lookup failed for function %u", funcid);
-	//
-	// result = ((Form_pg_proc) GETSTRUCT(tp))->proretset;
-	// ReleaseSysCache(tp);
-	// We don't need cost estimates
-	return false;
+	if (!cb->get_function)
+		elog(ERROR, "pgplanner: get_function callback not set");
+
+	info = cb->get_function(funcid);
+	if (info == NULL)
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	return info->retset;
 }
 
 /*
@@ -2155,21 +2156,17 @@ get_typisdefined(Oid typid)
 int16
 get_typlen(Oid typid)
 {
-	HeapTuple	tp;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerTypeInfo *info;
 
-	// Epsio: todo make this really return something
-	// tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	// if (HeapTupleIsValid(tp))
-	// {
-	// 	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-	// 	int16		result;
-	//
-	// 	result = typtup->typlen;
-	// 	ReleaseSysCache(tp);
-	// 	return result;
-	// }
-	// else
-		return 4;
+	if (!cb->get_type)
+		elog(ERROR, "pgplanner: get_type callback not set");
+
+	info = cb->get_type(typid);
+	if (info == NULL)
+		return 0;
+
+	return info->typlen;
 }
 
 /*
@@ -2181,20 +2178,17 @@ get_typlen(Oid typid)
 bool
 get_typbyval(Oid typid)
 {
-	HeapTuple	tp;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerTypeInfo *info;
 
-	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		bool		result;
+	if (!cb->get_type)
+		elog(ERROR, "pgplanner: get_type callback not set");
 
-		result = typtup->typbyval;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
+	info = cb->get_type(typid);
+	if (info == NULL)
 		return false;
+
+	return info->typbyval;
 }
 
 /*
@@ -2210,16 +2204,18 @@ get_typbyval(Oid typid)
 void
 get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval)
 {
-	HeapTuple	tp;
-	Form_pg_type typtup;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerTypeInfo *info;
 
-	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	if (!HeapTupleIsValid(tp))
+	if (!cb->get_type)
+		elog(ERROR, "pgplanner: get_type callback not set");
+
+	info = cb->get_type(typid);
+	if (info == NULL)
 		elog(ERROR, "cache lookup failed for type %u", typid);
-	typtup = (Form_pg_type) GETSTRUCT(tp);
-	*typlen = typtup->typlen;
-	*typbyval = typtup->typbyval;
-	ReleaseSysCache(tp);
+
+	*typlen = info->typlen;
+	*typbyval = info->typbyval;
 }
 
 /*
@@ -2231,17 +2227,19 @@ void
 get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 					 char *typalign)
 {
-	HeapTuple	tp;
-	Form_pg_type typtup;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerTypeInfo *info;
 
-	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	if (!HeapTupleIsValid(tp))
+	if (!cb->get_type)
+		elog(ERROR, "pgplanner: get_type callback not set");
+
+	info = cb->get_type(typid);
+	if (info == NULL)
 		elog(ERROR, "cache lookup failed for type %u", typid);
-	typtup = (Form_pg_type) GETSTRUCT(tp);
-	*typlen = typtup->typlen;
-	*typbyval = typtup->typbyval;
-	*typalign = typtup->typalign;
-	ReleaseSysCache(tp);
+
+	*typlen = info->typlen;
+	*typbyval = info->typbyval;
+	*typalign = info->typalign;
 }
 
 /*
@@ -2497,33 +2495,28 @@ getBaseType(Oid typid)
 Oid
 getBaseTypeAndTypmod(Oid typid, int32 *typmod)
 {
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerTypeInfo *info;
+
+	if (!cb->get_type)
+		elog(ERROR, "pgplanner: get_type callback not set");
+
 	/*
-	 * We loop to find the bottom base type in a stack of domains.
+	 * Resolve domains by following the chain via the type callback.
 	 */
-	//command out cause we don't care about postgres domains
-	// for (;;)
-	// {
-	// 	HeapTuple	tup;
-	// 	Form_pg_type typTup;
-	//
-	// 	// commented out cause we don't use domains
-	// 	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	// 	if (!HeapTupleIsValid(tup))
-	// 		elog(ERROR, "cache lookup failed for type %u", typid);
-	// 	typTup = (Form_pg_type) GETSTRUCT(tup);
-	// 	if (typTup->typtype != TYPTYPE_DOMAIN)
-	// 	{
-	// 		/* Not a domain, so done */
-	// 		ReleaseSysCache(tup);
-	// 		break;
-	// 	}
-	//
-	// 	Assert(*typmod == -1);
-	// 	typid = typTup->typbasetype;
-	// 	*typmod = typTup->typtypmod;
-	//
-	// 	ReleaseSysCache(tup);
-	// }
+	for (;;)
+	{
+		info = cb->get_type(typid);
+		if (info == NULL)
+			elog(ERROR, "cache lookup failed for type %u", typid);
+
+		if (info->typtype != TYPTYPE_DOMAIN)
+			break;
+
+		Assert(*typmod == -1);
+		typid = info->typbasetype;
+		*typmod = info->typtypmod;
+	}
 
 	return typid;
 }

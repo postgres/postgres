@@ -45,6 +45,8 @@
 #include "utils/ps_status.h"
 #include "access/xact.h"
 #include "parser/analyze.h"
+#include "catalog/pg_type_d.h"
+#include "pgplanner/pgplanner.h"
 
 const char *progname;
 static bool reached_main = false;
@@ -56,52 +58,252 @@ static void help(const char *progname);
 static void check_root(const char *progname);
 
 
+/* ----------------------------------------------------------------
+ *	Sample callbacks for demonstration
+ * ----------------------------------------------------------------
+ */
+
+static PgPlannerColumn my_table_columns[] = {
+	{ "a", INT4OID, -1 }
+};
+
+static PgPlannerRelationInfo my_table_info = {
+	.relid = 1337,
+	.relname = "my_table",
+	.relkind = 'r',		/* RELKIND_RELATION */
+	.natts = 1,
+	.columns = my_table_columns
+};
+
+static PgPlannerRelationInfo *
+sample_get_relation(const char *schemaname, const char *relname)
+{
+	if (strcmp(relname, "my_table") == 0)
+		return &my_table_info;
+	return NULL;
+}
+
+static PgPlannerRelationInfo *
+sample_get_relation_by_oid(Oid relid)
+{
+	if (relid == 1337)
+		return &my_table_info;
+	return NULL;
+}
+
+static PgPlannerOperatorInfo eq_op_info = {
+	.oprid = 96,		/* int4eq OID in standard PG */
+	.oprcode = 65,		/* int4eq function OID */
+	.oprleft = 23,		/* INT4OID */
+	.oprright = 23,
+	.oprresult = 16		/* BOOLOID */
+};
+
+static PgPlannerOperatorInfo *
+sample_get_operator(const char *opname, Oid left_type, Oid right_type)
+{
+	if (left_type == INT4OID && right_type == INT4OID)
+		return &eq_op_info;
+	return NULL;
+}
+
+static PgPlannerTypeInfo int4_type_info = {
+	.typlen = 4, .typbyval = true, .typalign = 'i', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "int4", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'N', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1007,
+	.typinput = 42, .typoutput = 43, .typreceive = 2406, .typsend = 2407,
+	.typmodin = 0, .typmodout = 0, .typanalyze = 0,
+	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
+};
+
+static PgPlannerTypeInfo bool_type_info = {
+	.typlen = 1, .typbyval = true, .typalign = 'c', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "bool", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'B', .typispreferred = true, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1000,
+	.typinput = 1242, .typoutput = 1243, .typreceive = 2436, .typsend = 2437,
+	.typmodin = 0, .typmodout = 0, .typanalyze = 0,
+	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
+};
+
+static PgPlannerTypeInfo int8_type_info = {
+	.typlen = 8, .typbyval = true, .typalign = 'd', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "int8", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'N', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1016,
+	.typinput = 461, .typoutput = 462, .typreceive = 2408, .typsend = 2409,
+	.typmodin = 0, .typmodout = 0, .typanalyze = 0,
+	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
+};
+
+static PgPlannerTypeInfo *
+sample_get_type(Oid typid)
+{
+	if (typid == INT4OID)
+		return &int4_type_info;
+	if (typid == BOOLOID)
+		return &bool_type_info;
+	if (typid == INT8OID)
+		return &int8_type_info;
+	return NULL;
+}
+
+/* count(*) function info (OID 2803) */
+static PgPlannerFunctionInfo count_func_info = {
+	.retset = false,
+	.rettype = 20,		/* INT8OID */
+	.prokind = 'a',		/* aggregate */
+	.proisstrict = false,
+	.pronargs = 0,
+	.proargtypes = NULL,
+	.provariadic = 0,	/* InvalidOid */
+	.proname = "count",
+	.pronamespace = 11,	/* PG_CATALOG_NAMESPACE */
+	.provolatile = 'i',
+	.proparallel = 's'
+};
+
+/* int8inc transition function (OID 2804) */
+static PgPlannerFunctionInfo int8inc_func_info = {
+	.retset = false,
+	.rettype = 20,		/* INT8OID */
+	.prokind = 'f',
+	.proisstrict = true,
+	.pronargs = 1,
+	.proargtypes = (Oid[]){20},	/* INT8OID */
+	.provariadic = 0,
+	.proname = "int8inc",
+	.pronamespace = 11,
+	.provolatile = 'i',
+	.proparallel = 's'
+};
+
+/* int8pl combine function (OID 1279) */
+static PgPlannerFunctionInfo int8pl_func_info = {
+	.retset = false,
+	.rettype = 20,		/* INT8OID */
+	.prokind = 'f',
+	.proisstrict = true,
+	.pronargs = 2,
+	.proargtypes = (Oid[]){20, 20},
+	.provariadic = 0,
+	.proname = "int8pl",
+	.pronamespace = 11,
+	.provolatile = 'i',
+	.proparallel = 's'
+};
+
+static PgPlannerFunctionInfo int4eq_func_info = {
+	.retset = false,
+	.rettype = 16,		/* BOOLOID */
+	.prokind = 'f',
+	.proisstrict = true,
+	.pronargs = 2,
+	.proargtypes = (Oid[]){23, 23},
+	.provariadic = 0,
+	.proname = "int4eq",
+	.pronamespace = 11,
+	.provolatile = 'i',
+	.proparallel = 's'
+};
+
+static PgPlannerFunctionInfo *
+sample_get_function(Oid funcid)
+{
+	if (funcid == 2803)
+		return &count_func_info;
+	if (funcid == 2804)
+		return &int8inc_func_info;
+	if (funcid == 1279)
+		return &int8pl_func_info;
+	if (funcid == 65)
+		return &int4eq_func_info;
+	return NULL;
+}
+
+/* count(*) function candidate */
+static PgPlannerFuncCandidate count_candidate = {
+	.oid = 2803,
+	.nargs = 0,
+	.argtypes = NULL,
+	.variadic_type = 0,		/* InvalidOid */
+	.ndargs = 0
+};
+
+static int
+sample_get_func_candidates(const char *funcname,
+						   PgPlannerFuncCandidate **candidates_out)
+{
+	if (strcmp(funcname, "count") == 0)
+	{
+		*candidates_out = &count_candidate;
+		return 1;
+	}
+	*candidates_out = NULL;
+	return 0;
+}
+
+/* count aggregate info */
+static PgPlannerAggregateInfo count_agg_info = {
+	.aggkind = 'n',
+	.aggnumdirectargs = 0,
+	.aggtransfn = 2804,		/* int8inc */
+	.aggfinalfn = 0,		/* InvalidOid */
+	.aggcombinefn = 1279,	/* int8pl */
+	.aggserialfn = 0,
+	.aggdeserialfn = 0,
+	.aggtranstype = 20,		/* INT8OID */
+	.aggtransspace = 0,
+	.aggfinalmodify = 'r',	/* read-only */
+	.aggsortop = 0,			/* InvalidOid */
+	.agginitval = "0"
+};
+
+static PgPlannerAggregateInfo *
+sample_get_aggregate(Oid aggfnoid)
+{
+	if (aggfnoid == 2803)
+		return &count_agg_info;
+	return NULL;
+}
+
 /*
- * Any Postgres server process begins execution here.
+ * Demo main: plan a simple query using the callback-based API.
  */
 int
 main(int argc, char *argv[])
 {
-	ListCell   *query;
-	PlannedStmt	   *stmt;
+	PlannedStmt *stmt;
+	char	   *str;
 
-	/*
-	 * Fire up essential subsystems: error and memory management
-	 *
-	 * Code after this point is allowed to use elog/ereport, though
-	 * localization of messages may not work right away, and messages won't go
-	 * anywhere but stderr until GUC settings get loaded.
-	 */
-	MemoryContextInit();
+	PgPlannerCallbacks callbacks = {
+		.get_relation = sample_get_relation,
+		.get_relation_by_oid = sample_get_relation_by_oid,
+		.get_operator = sample_get_operator,
+		.get_type = sample_get_type,
+		.get_function = sample_get_function,
+		.get_func_candidates = sample_get_func_candidates,
+		.get_aggregate = sample_get_aggregate
+	};
 
-	// Start transaction
-	//StartTransactionCommand();
+	pgplanner_init();
 
-	printf("PostgreSQL %s starting up\n", PG_VERSION);
+	printf("pgplanner demo\n");
 
-	char * my_query = "SELECT a FROM my_table;";
+	stmt = pgplanner_plan_query("SELECT COUNT(*) FROM my_table;", &callbacks);
 
-	printf("Executing query: %s\n", my_query);
+	str = nodeToString(stmt);
+	printf("PlannedStmt: %s\n", str);
+	pfree(str);
 
-	// List of RawStmt nodes
-	List * queries =  pg_parse_query(my_query);
-
-	printf("Parsed str has %d elements.\n", queries->length);
-
-	foreach(query, queries)
-	{
-		RawStmt    *parsetree = lfirst_node(RawStmt, query);
-		Query	   * query;
-
-		query = parse_analyze_fixedparams(parsetree, my_query,
-															NULL, 0, NULL);
-		stmt = pg_plan_query(query, my_query, CURSOR_OPT_PARALLEL_OK,
-								 NULL);
-
-		char *str = nodeToString(stmt);
-		printf("PlannedStmt: %s\n", str);
-		pfree(str);
-	}
+	return 0;
 }
 
 

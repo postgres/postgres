@@ -29,6 +29,7 @@
 #include "utils/inval.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type_d.h"
+#include "pgplanner/pgplanner.h"
 
 /* ----------------
  *		relation_open - open any relation by relation OID
@@ -160,23 +161,6 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	return relation_open(relOid, NoLock);
 }
 
-Relation return_dummy_relation() {
-	Relation	r = palloc0(sizeof(RelationData));
-	FormData_pg_class *form = palloc0(sizeof(FormData_pg_class));
-
-	r->rd_rel = form;
-	r->rd_rel->relkind = RELKIND_RELATION;
-	r->rd_id = 1337;
-	strcpy(&r->rd_rel->relname, "dummy");
-
-	r->rd_att = CreateTemplateTupleDesc(1);
-	r->rd_rel->relnatts = 1;
-
-	TupleDescInitBuiltinEntry(r->rd_att, (AttrNumber) 1, "a",
-					   INT4OID, -1, 0);
-	return r;
-}
-
 /* ----------------
  *		relation_openrv_extended - open any relation specified by a RangeVar
  *
@@ -190,8 +174,22 @@ Relation
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok)
 {
-	// return dummy relation:
-	return return_dummy_relation();
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerRelationInfo *info;
+
+	if (!cb->get_relation)
+		elog(ERROR, "pgplanner: get_relation callback not set");
+
+	info = cb->get_relation(relation->schemaname, relation->relname);
+
+	if (info == NULL)
+	{
+		if (missing_ok)
+			return NULL;
+		elog(ERROR, "relation \"%s\" does not exist", relation->relname);
+	}
+
+	return pgplanner_build_relation(info);
 }
 
 /* ----------------

@@ -51,6 +51,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "pgplanner/pgplanner.h"
 
 static bool preprocess_aggrefs_walker(Node *node, PlannerInfo *root);
 static int	find_compatible_agg(PlannerInfo *root, Aggref *newagg,
@@ -116,8 +117,8 @@ preprocess_aggrefs(PlannerInfo *root, Node *clause)
 static void
 preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 {
-	HeapTuple	aggTuple;
-	Form_pg_aggregate aggform;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerAggregateInfo *agginfo_cb;
 	Oid			aggtransfn;
 	Oid			aggfinalfn;
 	Oid			aggcombinefn;
@@ -132,7 +133,6 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	List	   *same_input_transnos;
 	int16		resulttypeLen;
 	bool		resulttypeByVal;
-	Datum		textInitVal;
 	Datum		initValue;
 	bool		initValueIsNull;
 	bool		transtypeByVal;
@@ -143,23 +143,22 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	Assert(aggref->agglevelsup == 0);
 
 	/*
-	 * Fetch info about the aggregate from pg_aggregate.  Note it's correct to
-	 * ignore the moving-aggregate variant, since what we're concerned with
-	 * here is aggregates not window functions.
+	 * Fetch info about the aggregate via callback.
 	 */
-	aggTuple = SearchSysCache1(AGGFNOID,
-							   ObjectIdGetDatum(aggref->aggfnoid));
-	if (!HeapTupleIsValid(aggTuple))
+	if (!cb->get_aggregate)
+		elog(ERROR, "pgplanner: get_aggregate callback not set");
+	agginfo_cb = cb->get_aggregate(aggref->aggfnoid);
+	if (agginfo_cb == NULL)
 		elog(ERROR, "cache lookup failed for aggregate %u",
 			 aggref->aggfnoid);
-	aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
-	aggtransfn = aggform->aggtransfn;
-	aggfinalfn = aggform->aggfinalfn;
-	aggcombinefn = aggform->aggcombinefn;
-	aggserialfn = aggform->aggserialfn;
-	aggdeserialfn = aggform->aggdeserialfn;
-	aggtranstype = aggform->aggtranstype;
-	aggtransspace = aggform->aggtransspace;
+
+	aggtransfn = agginfo_cb->aggtransfn;
+	aggfinalfn = agginfo_cb->aggfinalfn;
+	aggcombinefn = agginfo_cb->aggcombinefn;
+	aggserialfn = agginfo_cb->aggserialfn;
+	aggdeserialfn = agginfo_cb->aggdeserialfn;
+	aggtranstype = agginfo_cb->aggtranstype;
+	aggtransspace = agginfo_cb->aggtransspace;
 
 	/*
 	 * Resolve the possibly-polymorphic aggregate transition type.
@@ -192,13 +191,8 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	/*
 	 * If finalfn is marked read-write, we can't share transition states; but
 	 * it is okay to share states for AGGMODIFY_SHAREABLE aggs.
-	 *
-	 * In principle, in a partial aggregate, we could share the transition
-	 * state even if the final function is marked as read-write, because the
-	 * partial aggregate doesn't execute the final function.  But it's too
-	 * early to know whether we're going perform a partial aggregate.
 	 */
-	shareable = (aggform->aggfinalmodify != AGGMODIFY_READ_WRITE);
+	shareable = (agginfo_cb->aggfinalmodify != AGGMODIFY_READ_WRITE);
 
 	/* get info about the output value's datatype */
 	get_typlenbyval(aggref->aggtype,
@@ -206,15 +200,17 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 					&resulttypeByVal);
 
 	/* get initial value */
-	textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple,
-								  Anum_pg_aggregate_agginitval,
-								  &initValueIsNull);
-	if (initValueIsNull)
+	if (agginfo_cb->agginitval == NULL)
+	{
 		initValue = (Datum) 0;
+		initValueIsNull = true;
+	}
 	else
-		initValue = GetAggInitVal(textInitVal, aggtranstype);
-
-	ReleaseSysCache(aggTuple);
+	{
+		initValue = GetAggInitVal(CStringGetTextDatum(agginfo_cb->agginitval),
+								  aggtranstype);
+		initValueIsNull = false;
+	}
 
 	/*
 	 * 1. See if this is identical to another aggregate function call that

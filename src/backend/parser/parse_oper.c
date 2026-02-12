@@ -29,6 +29,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+#include "pgplanner/pgplanner.h"
 
 
 /*
@@ -273,48 +274,39 @@ oprfuncid(Operator op)
 static Operator
 binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 {
-	Oid			result;
-	bool		was_unknown = false;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerOperatorInfo *info;
 	HeapTuple	dummyTuple;
 	HeapTupleHeader td;
 	Size		len;
-
-	Form_pg_operator operator = NULL;
-
+	Form_pg_operator oprForm;
 	char	   *schemaname;
 	char	   *opername;
-
 
 	/* deconstruct the name list */
 	DeconstructQualifiedName(opname, &schemaname, &opername);
 
-	if (schemaname) {
-		elog(ERROR, "Not implemented: binary_oper_exact with schema name");
-	}
-	if (arg1 != 23 || arg2 != 23) {
-		elog(ERROR, "Not implemented: binary_oper_exact with non-literal operand types");
-	}
+	if (!cb->get_operator)
+		elog(ERROR, "pgplanner: get_operator callback not set");
 
-	/* Create a dummy operator tuple without using syscache */
-	/* We just need a valid HeapTuple structure +  */
+	info = cb->get_operator(opername, arg1, arg2);
+	if (info == NULL)
+		return NULL;
+
+	/* Build a HeapTuple matching Form_pg_operator layout */
 	len = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) + sizeof(FormData_pg_operator));
 
 	dummyTuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
 	dummyTuple->t_len = len;
 	dummyTuple->t_data = td = (HeapTupleHeader) ((char *) dummyTuple + HEAPTUPLESIZE);
-
 	td->t_hoff = offsetof(HeapTupleHeaderData, t_bits);
 
-	operator = (Form_pg_operator) ((char *) dummyTuple->t_data + dummyTuple->t_data->t_hoff);
-
-	operator->oid = 1337;
-	operator->oprcode = 1337;
-
-	// support int
-	operator->oprleft = 23;
-	operator->oprright = 23;
-
-	operator->oprresult = BOOLOID;
+	oprForm = (Form_pg_operator) ((char *) dummyTuple->t_data + dummyTuple->t_data->t_hoff);
+	oprForm->oid = info->oprid;
+	oprForm->oprcode = info->oprcode;
+	oprForm->oprleft = info->oprleft;
+	oprForm->oprright = info->oprright;
+	oprForm->oprresult = info->oprresult;
 
 	return (Operator) dummyTuple;
 }

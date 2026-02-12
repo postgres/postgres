@@ -59,6 +59,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+#include "pgplanner/pgplanner.h"
 
 
 /*
@@ -954,11 +955,11 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 					  bool include_out_arguments, bool missing_ok)
 {
 	FuncCandidateList resultList = NULL;
-	bool		any_special = false;
 	char	   *schemaname;
 	char	   *funcname;
-	Oid			namespaceId;
-	CatCList   *catlist;
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+	PgPlannerFuncCandidate *candidates;
+	int			ncandidates;
 	int			i;
 
 	/* check for caller error */
@@ -967,355 +968,69 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 	/* deconstruct the name list */
 	DeconstructQualifiedName(names, &schemaname, &funcname);
 
-	if (schemaname)
-	{
-		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
-		if (!OidIsValid(namespaceId))
-			return NULL;
-	}
-	else
-	{
-		/* flag to indicate we need namespace search */
-		namespaceId = InvalidOid;
-		recomputeNamespacePath();
-	}
+	if (!cb->get_func_candidates)
+		elog(ERROR, "pgplanner: get_func_candidates callback not set");
 
-	/* Search syscache by name only */
-	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(funcname));
+	ncandidates = cb->get_func_candidates(funcname, &candidates);
 
-	for (i = 0; i < catlist->n_members; i++)
+	for (i = 0; i < ncandidates; i++)
 	{
-		HeapTuple	proctup = &catlist->members[i]->tuple;
-		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
-		Oid		   *proargtypes = procform->proargtypes.values;
-		int			pronargs = procform->pronargs;
+		PgPlannerFuncCandidate *cand = &candidates[i];
+		int			pronargs = cand->nargs;
 		int			effective_nargs;
-		int			pathpos = 0;
-		bool		variadic;
-		bool		use_defaults;
-		Oid			va_elem_type;
-		int		   *argnumbers = NULL;
+		bool		variadic = false;
+		bool		use_defaults = false;
+		Oid			va_elem_type = InvalidOid;
 		FuncCandidateList newResult;
 
-		if (OidIsValid(namespaceId))
+		/* Check variadic */
+		if (pronargs <= nargs && expand_variadic)
 		{
-			/* Consider only procs in specified namespace */
-			if (procform->pronamespace != namespaceId)
+			va_elem_type = cand->variadic_type;
+			variadic = OidIsValid(va_elem_type);
+		}
+
+		/* Check defaults */
+		if (pronargs > nargs && expand_defaults)
+		{
+			if (nargs + cand->ndargs < pronargs)
 				continue;
+			use_defaults = true;
 		}
 		else
-		{
-			/*
-			 * Consider only procs that are in the search path and are not in
-			 * the temp namespace.
-			 */
-			ListCell   *nsp;
+			use_defaults = false;
 
-			foreach(nsp, activeSearchPath)
-			{
-				if (procform->pronamespace == lfirst_oid(nsp) &&
-					procform->pronamespace != myTempNamespace)
-					break;
-				pathpos++;
-			}
-			if (nsp == NULL)
-				continue;		/* proc is not in search path */
-		}
+		/* Check argument count match */
+		if (nargs >= 0 && pronargs != nargs && !variadic && !use_defaults)
+			continue;
 
-		/*
-		 * If we are asked to match to OUT arguments, then use the
-		 * proallargtypes array (which includes those); otherwise use
-		 * proargtypes (which doesn't).  Of course, if proallargtypes is null,
-		 * we always use proargtypes.
-		 */
-		if (include_out_arguments)
-		{
-			Datum		proallargtypes;
-			bool		isNull;
-
-			proallargtypes = SysCacheGetAttr(PROCNAMEARGSNSP, proctup,
-											 Anum_pg_proc_proallargtypes,
-											 &isNull);
-			if (!isNull)
-			{
-				ArrayType  *arr = DatumGetArrayTypeP(proallargtypes);
-
-				pronargs = ARR_DIMS(arr)[0];
-				if (ARR_NDIM(arr) != 1 ||
-					pronargs < 0 ||
-					ARR_HASNULL(arr) ||
-					ARR_ELEMTYPE(arr) != OIDOID)
-					elog(ERROR, "proallargtypes is not a 1-D Oid array or it contains nulls");
-				Assert(pronargs >= procform->pronargs);
-				proargtypes = (Oid *) ARR_DATA_PTR(arr);
-			}
-		}
-
-		if (argnames != NIL)
-		{
-			/*
-			 * Call uses named or mixed notation
-			 *
-			 * Named or mixed notation can match a variadic function only if
-			 * expand_variadic is off; otherwise there is no way to match the
-			 * presumed-nameless parameters expanded from the variadic array.
-			 */
-			if (OidIsValid(procform->provariadic) && expand_variadic)
-				continue;
-			va_elem_type = InvalidOid;
-			variadic = false;
-
-			/*
-			 * Check argument count.
-			 */
-			Assert(nargs >= 0); /* -1 not supported with argnames */
-
-			if (pronargs > nargs && expand_defaults)
-			{
-				/* Ignore if not enough default expressions */
-				if (nargs + procform->pronargdefaults < pronargs)
-					continue;
-				use_defaults = true;
-			}
-			else
-				use_defaults = false;
-
-			/* Ignore if it doesn't match requested argument count */
-			if (pronargs != nargs && !use_defaults)
-				continue;
-
-			/* Check for argument name match, generate positional mapping */
-			if (!MatchNamedCall(proctup, nargs, argnames,
-								include_out_arguments, pronargs,
-								&argnumbers))
-				continue;
-
-			/* Named argument matching is always "special" */
-			any_special = true;
-		}
-		else
-		{
-			/*
-			 * Call uses positional notation
-			 *
-			 * Check if function is variadic, and get variadic element type if
-			 * so.  If expand_variadic is false, we should just ignore
-			 * variadic-ness.
-			 */
-			if (pronargs <= nargs && expand_variadic)
-			{
-				va_elem_type = procform->provariadic;
-				variadic = OidIsValid(va_elem_type);
-				any_special |= variadic;
-			}
-			else
-			{
-				va_elem_type = InvalidOid;
-				variadic = false;
-			}
-
-			/*
-			 * Check if function can match by using parameter defaults.
-			 */
-			if (pronargs > nargs && expand_defaults)
-			{
-				/* Ignore if not enough default expressions */
-				if (nargs + procform->pronargdefaults < pronargs)
-					continue;
-				use_defaults = true;
-				any_special = true;
-			}
-			else
-				use_defaults = false;
-
-			/* Ignore if it doesn't match requested argument count */
-			if (nargs >= 0 && pronargs != nargs && !variadic && !use_defaults)
-				continue;
-		}
-
-		/*
-		 * We must compute the effective argument list so that we can easily
-		 * compare it to earlier results.  We waste a palloc cycle if it gets
-		 * masked by an earlier result, but really that's a pretty infrequent
-		 * case so it's not worth worrying about.
-		 */
 		effective_nargs = Max(pronargs, nargs);
 		newResult = (FuncCandidateList)
-			palloc(offsetof(struct _FuncCandidateList, args) +
-				   effective_nargs * sizeof(Oid));
-		newResult->pathpos = pathpos;
-		newResult->oid = procform->oid;
+			palloc0(offsetof(struct _FuncCandidateList, args) +
+					effective_nargs * sizeof(Oid));
+		newResult->pathpos = 0;
+		newResult->oid = cand->oid;
 		newResult->nominalnargs = pronargs;
 		newResult->nargs = effective_nargs;
-		newResult->argnumbers = argnumbers;
-		if (argnumbers)
-		{
-			/* Re-order the argument types into call's logical order */
-			for (int j = 0; j < pronargs; j++)
-				newResult->args[j] = proargtypes[argnumbers[j]];
-		}
-		else
-		{
-			/* Simple positional case, just copy proargtypes as-is */
-			memcpy(newResult->args, proargtypes, pronargs * sizeof(Oid));
-		}
+		newResult->argnumbers = NULL;
+
+		if (cand->argtypes)
+			memcpy(newResult->args, cand->argtypes, pronargs * sizeof(Oid));
+
 		if (variadic)
 		{
 			newResult->nvargs = effective_nargs - pronargs + 1;
-			/* Expand variadic argument into N copies of element type */
 			for (int j = pronargs - 1; j < effective_nargs; j++)
 				newResult->args[j] = va_elem_type;
 		}
 		else
 			newResult->nvargs = 0;
+
 		newResult->ndargs = use_defaults ? pronargs - nargs : 0;
 
-		/*
-		 * Does it have the same arguments as something we already accepted?
-		 * If so, decide what to do to avoid returning duplicate argument
-		 * lists.  We can skip this check for the single-namespace case if no
-		 * special (named, variadic or defaults) match has been made, since
-		 * then the unique index on pg_proc guarantees all the matches have
-		 * different argument lists.
-		 */
-		if (resultList != NULL &&
-			(any_special || !OidIsValid(namespaceId)))
-		{
-			/*
-			 * If we have an ordered list from SearchSysCacheList (the normal
-			 * case), then any conflicting proc must immediately adjoin this
-			 * one in the list, so we only need to look at the newest result
-			 * item.  If we have an unordered list, we have to scan the whole
-			 * result list.  Also, if either the current candidate or any
-			 * previous candidate is a special match, we can't assume that
-			 * conflicts are adjacent.
-			 *
-			 * We ignore defaulted arguments in deciding what is a match.
-			 */
-			FuncCandidateList prevResult;
-
-			if (catlist->ordered && !any_special)
-			{
-				/* ndargs must be 0 if !any_special */
-				if (effective_nargs == resultList->nargs &&
-					memcmp(newResult->args,
-						   resultList->args,
-						   effective_nargs * sizeof(Oid)) == 0)
-					prevResult = resultList;
-				else
-					prevResult = NULL;
-			}
-			else
-			{
-				int			cmp_nargs = newResult->nargs - newResult->ndargs;
-
-				for (prevResult = resultList;
-					 prevResult;
-					 prevResult = prevResult->next)
-				{
-					if (cmp_nargs == prevResult->nargs - prevResult->ndargs &&
-						memcmp(newResult->args,
-							   prevResult->args,
-							   cmp_nargs * sizeof(Oid)) == 0)
-						break;
-				}
-			}
-
-			if (prevResult)
-			{
-				/*
-				 * We have a match with a previous result.  Decide which one
-				 * to keep, or mark it ambiguous if we can't decide.  The
-				 * logic here is preference > 0 means prefer the old result,
-				 * preference < 0 means prefer the new, preference = 0 means
-				 * ambiguous.
-				 */
-				int			preference;
-
-				if (pathpos != prevResult->pathpos)
-				{
-					/*
-					 * Prefer the one that's earlier in the search path.
-					 */
-					preference = pathpos - prevResult->pathpos;
-				}
-				else if (variadic && prevResult->nvargs == 0)
-				{
-					/*
-					 * With variadic functions we could have, for example,
-					 * both foo(numeric) and foo(variadic numeric[]) in the
-					 * same namespace; if so we prefer the non-variadic match
-					 * on efficiency grounds.
-					 */
-					preference = 1;
-				}
-				else if (!variadic && prevResult->nvargs > 0)
-				{
-					preference = -1;
-				}
-				else
-				{
-					/*----------
-					 * We can't decide.  This can happen with, for example,
-					 * both foo(numeric, variadic numeric[]) and
-					 * foo(variadic numeric[]) in the same namespace, or
-					 * both foo(int) and foo (int, int default something)
-					 * in the same namespace, or both foo(a int, b text)
-					 * and foo(b text, a int) in the same namespace.
-					 *----------
-					 */
-					preference = 0;
-				}
-
-				if (preference > 0)
-				{
-					/* keep previous result */
-					pfree(newResult);
-					continue;
-				}
-				else if (preference < 0)
-				{
-					/* remove previous result from the list */
-					if (prevResult == resultList)
-						resultList = prevResult->next;
-					else
-					{
-						FuncCandidateList prevPrevResult;
-
-						for (prevPrevResult = resultList;
-							 prevPrevResult;
-							 prevPrevResult = prevPrevResult->next)
-						{
-							if (prevResult == prevPrevResult->next)
-							{
-								prevPrevResult->next = prevResult->next;
-								break;
-							}
-						}
-						Assert(prevPrevResult); /* assert we found it */
-					}
-					pfree(prevResult);
-					/* fall through to add newResult to list */
-				}
-				else
-				{
-					/* mark old result as ambiguous, discard new */
-					prevResult->oid = InvalidOid;
-					pfree(newResult);
-					continue;
-				}
-			}
-		}
-
-		/*
-		 * Okay to add it to result list
-		 */
 		newResult->next = resultList;
 		resultList = newResult;
 	}
-
-	ReleaseSysCacheList(catlist);
 
 	return resultList;
 }
