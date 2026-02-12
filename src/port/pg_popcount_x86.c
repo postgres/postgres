@@ -36,8 +36,6 @@
  * operation, but in practice this is close enough, and "sse42" seems easier to
  * follow than "popcnt" for these names.
  */
-static inline int pg_popcount32_sse42(uint32 word);
-static inline int pg_popcount64_sse42(uint64 word);
 static uint64 pg_popcount_sse42(const char *buf, int bytes);
 static uint64 pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask);
 
@@ -55,12 +53,8 @@ static uint64 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask);
  * what the current CPU supports) and then will call the pointer to fulfill the
  * caller's request.
  */
-static int	pg_popcount32_choose(uint32 word);
-static int	pg_popcount64_choose(uint64 word);
 static uint64 pg_popcount_choose(const char *buf, int bytes);
 static uint64 pg_popcount_masked_choose(const char *buf, int bytes, bits8 mask);
-int			(*pg_popcount32) (uint32 word) = pg_popcount32_choose;
-int			(*pg_popcount64) (uint64 word) = pg_popcount64_choose;
 uint64		(*pg_popcount_optimized) (const char *buf, int bytes) = pg_popcount_choose;
 uint64		(*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask) = pg_popcount_masked_choose;
 
@@ -157,7 +151,7 @@ pg_popcount_avx512_available(void)
 #endif							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
 
 /*
- * These functions get called on the first call to pg_popcount32 etc.
+ * These functions get called on the first call to pg_popcount(), etc.
  * They detect whether we can use the asm implementations, and replace
  * the function pointers so that subsequent calls are routed directly to
  * the chosen implementation.
@@ -167,15 +161,11 @@ choose_popcount_functions(void)
 {
 	if (pg_popcount_sse42_available())
 	{
-		pg_popcount32 = pg_popcount32_sse42;
-		pg_popcount64 = pg_popcount64_sse42;
 		pg_popcount_optimized = pg_popcount_sse42;
 		pg_popcount_masked_optimized = pg_popcount_masked_sse42;
 	}
 	else
 	{
-		pg_popcount32 = pg_popcount32_portable;
-		pg_popcount64 = pg_popcount64_portable;
 		pg_popcount_optimized = pg_popcount_portable;
 		pg_popcount_masked_optimized = pg_popcount_masked_portable;
 	}
@@ -187,20 +177,6 @@ choose_popcount_functions(void)
 		pg_popcount_masked_optimized = pg_popcount_masked_avx512;
 	}
 #endif
-}
-
-static int
-pg_popcount32_choose(uint32 word)
-{
-	choose_popcount_functions();
-	return pg_popcount32(word);
-}
-
-static int
-pg_popcount64_choose(uint64 word)
-{
-	choose_popcount_functions();
-	return pg_popcount64(word);
 }
 
 static uint64
@@ -337,23 +313,6 @@ pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
 }
 
 #endif							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
-
-/*
- * pg_popcount32_sse42
- *		Return the number of 1 bits set in word
- */
-static inline int
-pg_popcount32_sse42(uint32 word)
-{
-#ifdef _MSC_VER
-	return __popcnt(word);
-#else
-	uint32		res;
-
-__asm__ __volatile__(" popcntl %1,%0\n":"=q"(res):"rm"(word):"cc");
-	return (int) res;
-#endif
-}
 
 /*
  * pg_popcount64_sse42

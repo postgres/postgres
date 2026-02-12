@@ -97,56 +97,6 @@ const uint8 pg_number_of_ones[256] = {
 };
 
 /*
- * pg_popcount32_portable
- *		Return the number of 1 bits set in word
- */
-int
-pg_popcount32_portable(uint32 word)
-{
-#ifdef HAVE__BUILTIN_POPCOUNT
-	return __builtin_popcount(word);
-#else							/* !HAVE__BUILTIN_POPCOUNT */
-	int			result = 0;
-
-	while (word != 0)
-	{
-		result += pg_number_of_ones[word & 255];
-		word >>= 8;
-	}
-
-	return result;
-#endif							/* HAVE__BUILTIN_POPCOUNT */
-}
-
-/*
- * pg_popcount64_portable
- *		Return the number of 1 bits set in word
- */
-int
-pg_popcount64_portable(uint64 word)
-{
-#ifdef HAVE__BUILTIN_POPCOUNT
-#if SIZEOF_LONG == 8
-	return __builtin_popcountl(word);
-#elif SIZEOF_LONG_LONG == 8
-	return __builtin_popcountll(word);
-#else
-#error "cannot find integer of the same size as uint64_t"
-#endif
-#else							/* !HAVE__BUILTIN_POPCOUNT */
-	int			result = 0;
-
-	while (word != 0)
-	{
-		result += pg_number_of_ones[word & 255];
-		word >>= 8;
-	}
-
-	return result;
-#endif							/* HAVE__BUILTIN_POPCOUNT */
-}
-
-/*
  * pg_popcount_portable
  *		Returns the number of 1-bits in buf
  */
@@ -163,7 +113,7 @@ pg_popcount_portable(const char *buf, int bytes)
 
 		while (bytes >= 8)
 		{
-			popcnt += pg_popcount64_portable(*words++);
+			popcnt += pg_popcount64(*words++);
 			bytes -= 8;
 		}
 
@@ -197,7 +147,7 @@ pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask)
 
 		while (bytes >= 8)
 		{
-			popcnt += pg_popcount64_portable(*words++ & maskv);
+			popcnt += pg_popcount64(*words++ & maskv);
 			bytes -= 8;
 		}
 
@@ -220,17 +170,6 @@ pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask)
  * actual external functions.  The compiler should be able to inline the
  * portable versions here.
  */
-int
-pg_popcount32(uint32 word)
-{
-	return pg_popcount32_portable(word);
-}
-
-int
-pg_popcount64(uint64 word)
-{
-	return pg_popcount64_portable(word);
-}
 
 /*
  * pg_popcount_optimized

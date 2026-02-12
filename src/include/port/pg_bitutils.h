@@ -276,46 +276,73 @@ pg_ceil_log2_64(uint64 num)
 		return pg_leftmost_one_pos64(num - 1) + 1;
 }
 
-extern int	pg_popcount32_portable(uint32 word);
-extern int	pg_popcount64_portable(uint64 word);
 extern uint64 pg_popcount_portable(const char *buf, int bytes);
 extern uint64 pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask);
 
-#ifdef HAVE_X86_64_POPCNTQ
+#if defined(HAVE_X86_64_POPCNTQ) || defined(USE_SVE_POPCNT_WITH_RUNTIME_CHECK)
 /*
- * Attempt to use SSE4.2 or AVX-512 instructions, but perform a runtime check
+ * Attempt to use specialized CPU instructions, but perform a runtime check
  * first.
  */
-extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
-extern PGDLLIMPORT int (*pg_popcount64) (uint64 word);
 extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
 extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask);
-
-#elif defined(USE_NEON)
-/* Use the Neon version of pg_popcount{32,64} without function pointer. */
-extern int	pg_popcount32(uint32 word);
-extern int	pg_popcount64(uint64 word);
-
-/*
- * We can try to use an SVE-optimized pg_popcount() on some systems  For that,
- * we do use a function pointer.
- */
-#ifdef USE_SVE_POPCNT_WITH_RUNTIME_CHECK
-extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
-extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask);
-#else
-extern uint64 pg_popcount_optimized(const char *buf, int bytes);
-extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask);
-#endif
 
 #else
 /* Use a portable implementation -- no need for a function pointer. */
-extern int	pg_popcount32(uint32 word);
-extern int	pg_popcount64(uint64 word);
 extern uint64 pg_popcount_optimized(const char *buf, int bytes);
 extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask);
 
 #endif
+
+/*
+ * pg_popcount32
+ *		Return the number of 1 bits set in word
+ */
+static inline int
+pg_popcount32(uint32 word)
+{
+#ifdef HAVE__BUILTIN_POPCOUNT
+	return __builtin_popcount(word);
+#else							/* !HAVE__BUILTIN_POPCOUNT */
+	int			result = 0;
+
+	while (word != 0)
+	{
+		result += pg_number_of_ones[word & 255];
+		word >>= 8;
+	}
+
+	return result;
+#endif							/* HAVE__BUILTIN_POPCOUNT */
+}
+
+/*
+ * pg_popcount64
+ *		Return the number of 1 bits set in word
+ */
+static inline int
+pg_popcount64(uint64 word)
+{
+#ifdef HAVE__BUILTIN_POPCOUNT
+#if SIZEOF_LONG == 8
+	return __builtin_popcountl(word);
+#elif SIZEOF_LONG_LONG == 8
+	return __builtin_popcountll(word);
+#else
+#error "cannot find integer of the same size as uint64_t"
+#endif
+#else							/* !HAVE__BUILTIN_POPCOUNT */
+	int			result = 0;
+
+	while (word != 0)
+	{
+		result += pg_number_of_ones[word & 255];
+		word >>= 8;
+	}
+
+	return result;
+#endif							/* HAVE__BUILTIN_POPCOUNT */
+}
 
 /*
  * Returns the number of 1-bits in buf.
