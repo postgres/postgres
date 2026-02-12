@@ -657,7 +657,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	Assert(pstate->p_ctenamespace == NIL);
 
 	qry->commandType = CMD_INSERT;
-	pstate->p_is_insert = true;
 
 	/* process the WITH clause independently of all else */
 	if (stmt->withClause)
@@ -1222,13 +1221,6 @@ transformOnConflictClause(ParseState *pstate,
 	/* Process DO UPDATE */
 	if (onConflictClause->action == ONCONFLICT_UPDATE)
 	{
-		/*
-		 * Expressions in the UPDATE targetlist need to be handled like UPDATE
-		 * not INSERT.  We don't need to save/restore this because all INSERT
-		 * expressions have been parsed already.
-		 */
-		pstate->p_is_insert = false;
-
 		/*
 		 * Add the EXCLUDED pseudo relation to the query namespace, making it
 		 * available in the UPDATE subexpressions.
@@ -2495,7 +2487,6 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	Node	   *qual;
 
 	qry->commandType = CMD_UPDATE;
-	pstate->p_is_insert = false;
 
 	/* process the WITH clause independently of all else */
 	if (stmt->withClause)

@@ -438,6 +438,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  * pstate		parse state
  * expr			expression to be modified
  * exprKind		indicates which type of statement we're dealing with
+ *				(EXPR_KIND_INSERT_TARGET or EXPR_KIND_UPDATE_TARGET)
  * colname		target column name (ie, name of attribute to be assigned to)
  * attrno		target attribute number
  * indirection	subscripts/field names for target column, if any
@@ -471,7 +472,8 @@ transformAssignedExpr(ParseState *pstate,
 	 * set p_expr_kind here because we can parse subscripts without going
 	 * through transformExpr().
 	 */
-	Assert(exprKind != EXPR_KIND_NONE);
+	Assert(exprKind == EXPR_KIND_INSERT_TARGET ||
+		   exprKind == EXPR_KIND_UPDATE_TARGET);
 	sv_expr_kind = pstate->p_expr_kind;
 	pstate->p_expr_kind = exprKind;
 
@@ -530,7 +532,7 @@ transformAssignedExpr(ParseState *pstate,
 	{
 		Node	   *colVar;
 
-		if (pstate->p_is_insert)
+		if (exprKind == EXPR_KIND_INSERT_TARGET)
 		{
 			/*
 			 * The command is INSERT INTO table (col.something) ... so there
