@@ -27,28 +27,21 @@
 #include "pgstat.h"
 #include "storage/lmgr.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "catalog/pg_type_d.h"
 #include "pgplanner/pgplanner.h"
+
 
 /* ----------------
  *		relation_open - open any relation by relation OID
- *
- *		If lockmode is not "NoLock", the specified kind of lock is
- *		obtained on the relation.  (Generally, NoLock should only be
- *		used if the caller knows it has some appropriate lock on the
- *		relation already.)
- *
- *		An error is raised if the relation does not exist.
- *
- *		NB: a "relation" is anything with a pg_class entry.  The caller is
- *		expected to check whether the relkind is something it can handle.
  * ----------------
  */
 Relation
 relation_open(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
+	const PgPlannerCallbacks *cb;
+	PgPlannerRelationInfo *rinfo;
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
@@ -56,29 +49,15 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	if (lockmode != NoLock)
 		LockRelationOid(relationId, lockmode);
 
-	/* The relcache does all the real work... */
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
+	/* Epsio -- use pgplanner callbacks instead of relcache */
+	cb = pgplanner_get_callbacks();
+	rinfo = cb->get_relation_by_oid(relationId);
+	if (rinfo == NULL)
 		elog(ERROR, "could not open relation with OID %u", relationId);
-
-	/*
-	 * If we didn't get the lock ourselves, assert that caller holds one,
-	 * except in bootstrap mode where no locks are used.
-	 */
-	Assert(lockmode != NoLock ||
-		   IsBootstrapProcessingMode() ||
-		   CheckRelationLockedByMe(r, AccessShareLock, true));
-
-	/* Make note that we've accessed a temporary relation */
-	if (RelationUsesLocalBuffers(r))
-		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
-
-	pgstat_init_relation(r);
+	r = pgplanner_build_relation(rinfo);
 
 	return r;
 }
-
 /* ----------------
  *		try_relation_open - open any relation by relation OID
  *
@@ -89,44 +68,9 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 Relation
 try_relation_open(Oid relationId, LOCKMODE lockmode)
 {
-	Relation	r;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* Get the lock first */
-	if (lockmode != NoLock)
-		LockRelationOid(relationId, lockmode);
-
-	/*
-	 * Now that we have the lock, probe to see if the relation really exists
-	 * or not.
-	 */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relationId)))
-	{
-		/* Release useless lock */
-		if (lockmode != NoLock)
-			UnlockRelationOid(relationId, lockmode);
-
 		return NULL;
-	}
-
-	/* Should be safe to do a relcache load */
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
-		elog(ERROR, "could not open relation with OID %u", relationId);
-
-	/* If we didn't get the lock ourselves, assert that caller holds one */
-	Assert(lockmode != NoLock ||
-		   CheckRelationLockedByMe(r, AccessShareLock, true));
-
-	/* Make note that we've accessed a temporary relation */
-	if (RelationUsesLocalBuffers(r))
-		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
-
-	pgstat_init_relation(r);
-
-	return r;
+	return relation_open(relationId, NoLock);
 }
 
 /* ----------------
@@ -151,8 +95,9 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	 * be redesigned, but for the moment we'll keep doing this like it's been
 	 * done historically.)
 	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
+	// Epsio -- no need for this ;)
+	// if (lockmode != NoLock)
+	// 	AcceptInvalidationMessages();
 
 	/* Look up and lock the appropriate relation using namespace search */
 	relOid = RangeVarGetRelid(relation, lockmode, false);
@@ -166,51 +111,41 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
  *
  *		Same as relation_openrv, but with an additional missing_ok argument
  *		allowing a NULL return rather than an error if the relation is not
- *		found.  (Note that some other causes, such as permissions problems,
- *		will still result in an ereport.)
+ *		found.
  * ----------------
  */
 Relation
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok)
 {
-	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
-	PgPlannerRelationInfo *info;
+	Oid			relOid;
 
-	if (!cb->get_relation)
-		elog(ERROR, "pgplanner: get_relation callback not set");
+	/*
+	 * Check for shared-cache-inval messages before trying to open the
+	 * relation.  See comments in relation_openrv().
+	 */
+	// if (lockmode != NoLock)
+	// 	AcceptInvalidationMessages();
 
-	info = cb->get_relation(relation->schemaname, relation->relname);
+	/* Look up and lock the appropriate relation using namespace search */
+	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
 
-	if (info == NULL)
-	{
-		if (missing_ok)
-			return NULL;
-		elog(ERROR, "relation \"%s\" does not exist", relation->relname);
-	}
+	/* Return NULL on not-found */
+	if (!OidIsValid(relOid))
+		return NULL;
 
-	return pgplanner_build_relation(info);
+	/* Let relation_open do the rest */
+	return relation_open(relOid, NoLock);
 }
 
 /* ----------------
  *		relation_close - close any relation
  *
- *		If lockmode is not "NoLock", we then release the specified lock.
- *
- *		Note that it is often sensible to hold a lock beyond relation_close;
- *		in that case, the lock is released automatically at xact end.
+ *		In pgplanner mode, relations are palloc'd fakes — no-op.
  * ----------------
  */
 void
 relation_close(Relation relation, LOCKMODE lockmode)
 {
-	LockRelId	relid = relation->rd_lockInfo.lockRelId;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* The relcache does the real work... */
-	RelationClose(relation);
-
-	if (lockmode != NoLock)
-		UnlockRelationId(&relid, lockmode);
+	/* no-op: fake relations from pgplanner, no relcache or locks */
 }

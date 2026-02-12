@@ -24,7 +24,6 @@
 #include "access/relation.h"
 #include "access/table.h"
 #include "storage/lmgr.h"
-#include "pgplanner/pgplanner.h"
 
 static inline void validate_relation_kind(Relation r);
 
@@ -42,19 +41,7 @@ table_open(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
 
-	{
-		const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
-		PgPlannerRelationInfo *info;
-
-		if (!cb->get_relation_by_oid)
-			elog(ERROR, "pgplanner: get_relation_by_oid callback not set");
-
-		info = cb->get_relation_by_oid(relationId);
-		if (info == NULL)
-			elog(ERROR, "could not open relation with OID %u", relationId);
-
-		r = pgplanner_build_relation(info);
-	}
+	r = relation_open(relationId, lockmode);
 
 	validate_relation_kind(r);
 

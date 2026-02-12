@@ -108,6 +108,8 @@ SetLocktagRelationOid(LOCKTAG *tag, Oid relid)
 void
 LockRelationOid(Oid relid, LOCKMODE lockmode)
 {
+	//Epsio -- return :) no need to lock
+	return;
 	LOCKTAG		tag;
 	LOCALLOCK  *locallock;
 	LockAcquireResult res;

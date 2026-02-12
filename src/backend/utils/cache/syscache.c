@@ -26,6 +26,7 @@
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
@@ -941,6 +942,68 @@ pgplanner_build_operator_tuple(Oid oproid, const PgPlannerOperatorInfo *oinfo)
 }
 
 
+/*
+ * pgplanner_build_class_tuple
+ *		Build a fake HeapTuple containing FormData_pg_class from callback data.
+ */
+static HeapTuple
+pgplanner_build_class_tuple(const PgPlannerRelationInfo *rinfo)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	Size		data_len = CLASS_TUPLE_SIZE;
+	Size		total_len = hdr_len + data_len;
+	FormData_pg_class *classForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_class);
+
+	classForm = (FormData_pg_class *) GETSTRUCT(result);
+	classForm->oid = rinfo->relid;
+	namestrcpy(&classForm->relname, rinfo->relname);
+	classForm->relnamespace = 11;	/* PG_CATALOG_NAMESPACE */
+	classForm->relkind = rinfo->relkind;
+	classForm->relnatts = rinfo->natts;
+	classForm->relpersistence = RELPERSISTENCE_PERMANENT;
+
+	return result;
+}
+
+/*
+ * pgplanner_build_namespace_tuple
+ *		Build a fake HeapTuple containing FormData_pg_namespace.
+ */
+static HeapTuple
+pgplanner_build_namespace_tuple(Oid nspoid, const char *nspname)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	Size		data_len = offsetof(FormData_pg_namespace, nspowner) + sizeof(Oid);
+	Size		total_len = hdr_len + data_len;
+	FormData_pg_namespace *nsForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_namespace);
+
+	nsForm = (FormData_pg_namespace *) GETSTRUCT(result);
+	nsForm->oid = nspoid;
+	namestrcpy(&nsForm->nspname, nspname);
+	nsForm->nspowner = 10;		/* BOOTSTRAP_SUPERUSERID */
+
+	return result;
+}
+
+
 /* ----------------------------------------------------------------
  *		SearchSysCache and variants
  * ----------------------------------------------------------------
@@ -1034,6 +1097,28 @@ SearchSysCache1(int cacheId,
 			}
 			break;
 		}
+		case RELOID:
+		{
+			if (cb && cb->get_relation_by_oid)
+			{
+				PgPlannerRelationInfo *rinfo = cb->get_relation_by_oid((Oid) key1);
+
+				if (rinfo == NULL)
+					return NULL;
+				return pgplanner_build_class_tuple(rinfo);
+			}
+			break;
+		}
+		case NAMESPACENAME:
+		{
+			const char *nspname = NameStr(*DatumGetName(key1));
+
+			if (strcmp(nspname, "pg_catalog") == 0)
+				return pgplanner_build_namespace_tuple(11, nspname);
+			if (strcmp(nspname, "public") == 0)
+				return pgplanner_build_namespace_tuple(2200, nspname);
+			return NULL;		/* unknown namespace */
+		}
 		default:
 			break;
 	}
@@ -1046,6 +1131,28 @@ HeapTuple
 SearchSysCache2(int cacheId,
 				Datum key1, Datum key2)
 {
+	const PgPlannerCallbacks *cb = pgplanner_get_callbacks();
+
+	switch (cacheId)
+	{
+		case RELNAMENSP:
+		{
+			if (cb && cb->get_relation)
+			{
+				const char *relname = NameStr(*DatumGetName(key1));
+				/* key2 is namespace OID — our callback ignores it */
+				PgPlannerRelationInfo *rinfo = cb->get_relation(NULL, relname);
+
+				if (rinfo == NULL)
+					return NULL;
+				return pgplanner_build_class_tuple(rinfo);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
 	elog(ERROR, "Unsupported cache lookup2: cacheId=%d", cacheId);
 	return NULL;
 }
@@ -1361,6 +1468,79 @@ SearchSysCacheList(int cacheId, int nkeys,
 
 	switch (cacheId)
 	{
+		case AMOPOPID:
+		{
+			/*
+			 * pg_amop lookups for operator opfamily membership.
+			 * Return empty list — pgplanner doesn't track opfamilies.
+			 */
+			Size		clist_size = offsetof(CatCList, members);
+			CatCList   *clist = (CatCList *) palloc0(clist_size);
+			clist->cl_magic = CL_MAGIC;
+			clist->refcount = 2;
+			clist->dead = false;
+			clist->ordered = false;
+			clist->nkeys = nkeys;
+			clist->n_members = 0;
+			clist->my_cache = NULL;
+			return clist;
+		}
+		case OPERNAMENSP:
+		{
+			if (cb && cb->get_operator)
+			{
+				const char *opname = NameStr(*DatumGetName(key1));
+				Oid			left_type = (nkeys >= 2) ? DatumGetObjectId(key2) : InvalidOid;
+				Oid			right_type = (nkeys >= 3) ? DatumGetObjectId(key3) : InvalidOid;
+				PgPlannerOperatorInfo *oinfo = cb->get_operator(opname, left_type, right_type);
+				CatCList   *clist;
+				Size		clist_size;
+				int			nmembers;
+
+				nmembers = (oinfo != NULL) ? 1 : 0;
+				clist_size = offsetof(CatCList, members) + nmembers * sizeof(CatCTup *);
+				clist = (CatCList *) palloc0(clist_size);
+				clist->cl_magic = CL_MAGIC;
+				clist->refcount = 2;
+				clist->dead = false;
+				clist->ordered = false;
+				clist->nkeys = nkeys;
+				clist->n_members = nmembers;
+				clist->my_cache = NULL;
+
+				if (oinfo != NULL)
+				{
+					HeapTuple	fakeTuple;
+					CatCTup	   *ct;
+					Size		ct_size;
+
+					fakeTuple = pgplanner_build_operator_tuple(oinfo->oprid, oinfo);
+
+					ct_size = sizeof(CatCTup) + MAXALIGN(fakeTuple->t_len);
+					ct = (CatCTup *) palloc0(ct_size);
+					ct->ct_magic = CT_MAGIC;
+					ct->refcount = 2;
+					ct->dead = false;
+					ct->negative = false;
+					ct->c_list = clist;
+					ct->my_cache = NULL;
+
+					ct->tuple.t_len = fakeTuple->t_len;
+					ct->tuple.t_self = fakeTuple->t_data->t_ctid;
+					ct->tuple.t_tableOid = InvalidOid;
+					ct->tuple.t_data = (HeapTupleHeader) ((char *) ct + sizeof(CatCTup));
+					memcpy(ct->tuple.t_data, fakeTuple->t_data, fakeTuple->t_len);
+
+					pfree(fakeTuple->t_data);
+					pfree(fakeTuple);
+
+					clist->members[0] = ct;
+				}
+
+				return clist;
+			}
+			break;
+		}
 		case PROCNAMEARGSNSP:
 		{
 			if (cb && cb->get_func_candidates && cb->get_function)

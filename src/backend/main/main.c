@@ -316,7 +316,13 @@ main(int argc, char *argv[])
 
 	printf("pgplanner demo\n");
 
-	stmt = pgplanner_plan_query("SELECT COUNT(*) FROM my_table;", &callbacks);
+	stmt = pgplanner_plan_query("SELECT a FROM my_table WHERE a=533;", &callbacks);
+
+	str = nodeToString(stmt);
+	printf("PlannedStmt: %s\n", str);
+	pfree(str);
+
+	stmt = pgplanner_plan_query("SELECT b.a, my_table.a FROM my_table JOIN my_table b ON b.a=my_table.a WHERE my_table.a=533;", &callbacks);
 
 	str = nodeToString(stmt);
 	printf("PlannedStmt: %s\n", str);
