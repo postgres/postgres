@@ -301,40 +301,48 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		}
 
 		/*
-		 * For INSERT ... ON CONFLICT DO UPDATE we need additional policy
-		 * checks for the UPDATE which may be applied to the same RTE.
+		 * For INSERT ... ON CONFLICT DO SELECT/UPDATE we need additional
+		 * policy checks for the SELECT/UPDATE which may be applied to the
+		 * same RTE.
 		 */
-		if (commandType == CMD_INSERT &&
-			root->onConflict && root->onConflict->action == ONCONFLICT_UPDATE)
+		if (commandType == CMD_INSERT && root->onConflict &&
+			(root->onConflict->action == ONCONFLICT_UPDATE ||
+			 root->onConflict->action == ONCONFLICT_SELECT))
 		{
-			List	   *conflict_permissive_policies;
-			List	   *conflict_restrictive_policies;
+			List	   *conflict_permissive_policies = NIL;
+			List	   *conflict_restrictive_policies = NIL;
 			List	   *conflict_select_permissive_policies = NIL;
 			List	   *conflict_select_restrictive_policies = NIL;
 
-			/* Get the policies that apply to the auxiliary UPDATE */
-			get_policies_for_relation(rel, CMD_UPDATE, user_id,
-									  &conflict_permissive_policies,
-									  &conflict_restrictive_policies);
+			if (perminfo->requiredPerms & ACL_UPDATE)
+			{
+				/*
+				 * Get the policies that apply to the auxiliary UPDATE or
+				 * SELECT FOR UPDATE/SHARE.
+				 */
+				get_policies_for_relation(rel, CMD_UPDATE, user_id,
+										  &conflict_permissive_policies,
+										  &conflict_restrictive_policies);
 
-			/*
-			 * Enforce the USING clauses of the UPDATE policies using WCOs
-			 * rather than security quals.  This ensures that an error is
-			 * raised if the conflicting row cannot be updated due to RLS,
-			 * rather than the change being silently dropped.
-			 */
-			add_with_check_options(rel, rt_index,
-								   WCO_RLS_CONFLICT_CHECK,
-								   conflict_permissive_policies,
-								   conflict_restrictive_policies,
-								   withCheckOptions,
-								   hasSubLinks,
-								   true);
+				/*
+				 * Enforce the USING clauses of the UPDATE policies using WCOs
+				 * rather than security quals.  This ensures that an error is
+				 * raised if the conflicting row cannot be updated/locked due
+				 * to RLS, rather than the change being silently dropped.
+				 */
+				add_with_check_options(rel, rt_index,
+									   WCO_RLS_CONFLICT_CHECK,
+									   conflict_permissive_policies,
+									   conflict_restrictive_policies,
+									   withCheckOptions,
+									   hasSubLinks,
+									   true);
+			}
 
 			/*
 			 * Get and add ALL/SELECT policies, as WCO_RLS_CONFLICT_CHECK WCOs
-			 * to ensure they are considered when taking the UPDATE path of an
-			 * INSERT .. ON CONFLICT DO UPDATE, if SELECT rights are required
+			 * to ensure they are considered when taking the SELECT/UPDATE
+			 * path of an INSERT .. ON CONFLICT, if SELECT rights are required
 			 * for this relation, also as WCO policies, again, to avoid
 			 * silently dropping data.  See above.
 			 */
@@ -352,29 +360,36 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 									   true);
 			}
 
-			/* Enforce the WITH CHECK clauses of the UPDATE policies */
-			add_with_check_options(rel, rt_index,
-								   WCO_RLS_UPDATE_CHECK,
-								   conflict_permissive_policies,
-								   conflict_restrictive_policies,
-								   withCheckOptions,
-								   hasSubLinks,
-								   false);
-
 			/*
-			 * Add ALL/SELECT policies as WCO_RLS_UPDATE_CHECK WCOs, to ensure
-			 * that the final updated row is visible when taking the UPDATE
-			 * path of an INSERT .. ON CONFLICT DO UPDATE, if SELECT rights
-			 * are required for this relation.
+			 * For INSERT .. ON CONFLICT DO UPDATE, add additional policies to
+			 * be checked when the auxiliary UPDATE is executed.
 			 */
-			if (perminfo->requiredPerms & ACL_SELECT)
+			if (root->onConflict->action == ONCONFLICT_UPDATE)
+			{
+				/* Enforce the WITH CHECK clauses of the UPDATE policies */
 				add_with_check_options(rel, rt_index,
 									   WCO_RLS_UPDATE_CHECK,
-									   conflict_select_permissive_policies,
-									   conflict_select_restrictive_policies,
+									   conflict_permissive_policies,
+									   conflict_restrictive_policies,
 									   withCheckOptions,
 									   hasSubLinks,
-									   true);
+									   false);
+
+				/*
+				 * Add ALL/SELECT policies as WCO_RLS_UPDATE_CHECK WCOs, to
+				 * ensure that the final updated row is visible when taking
+				 * the UPDATE path of an INSERT .. ON CONFLICT, if SELECT
+				 * rights are required for this relation.
+				 */
+				if (perminfo->requiredPerms & ACL_SELECT)
+					add_with_check_options(rel, rt_index,
+										   WCO_RLS_UPDATE_CHECK,
+										   conflict_select_permissive_policies,
+										   conflict_select_restrictive_policies,
+										   withCheckOptions,
+										   hasSubLinks,
+										   true);
+			}
 		}
 	}
 
@@ -398,8 +413,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * XXX We are setting up USING quals as WITH CHECK. If RLS prohibits
 	 * UPDATE/DELETE on the target row, we shall throw an error instead of
 	 * silently ignoring the row. This is different than how normal
-	 * UPDATE/DELETE works and more in line with INSERT ON CONFLICT DO UPDATE
-	 * handling.
+	 * UPDATE/DELETE works and more in line with INSERT ON CONFLICT DO
+	 * SELECT/UPDATE handling.
 	 */
 	if (commandType == CMD_MERGE)
 	{
@@ -784,9 +799,9 @@ add_security_quals(int rt_index,
  * added by an INSERT or UPDATE are consistent with the specified RLS
  * policies.  Normally new data must satisfy the WITH CHECK clauses from the
  * policies.  If a policy has no explicit WITH CHECK clause, its USING clause
- * is used instead.  In the special case of an UPDATE arising from an
- * INSERT ... ON CONFLICT DO UPDATE, existing records are first checked using
- * a WCO_RLS_CONFLICT_CHECK WithCheckOption, which always uses the USING
+ * is used instead.  In the special case of a SELECT or UPDATE arising from an
+ * INSERT ... ON CONFLICT DO SELECT/UPDATE, existing records are first checked
+ * using a WCO_RLS_CONFLICT_CHECK WithCheckOption, which always uses the USING
  * clauses from RLS policies.
  *
  * New WCOs are added to withCheckOptions, and hasSubLinks is set to true if

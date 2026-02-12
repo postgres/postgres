@@ -385,7 +385,7 @@ UPDATE products SET price = price * 1.10
    for a <command>DELETE</command>.  However, there are situations where it
    can still be useful for those commands.  For example, in an
    <command>INSERT</command> with an
-   <link linkend="sql-on-conflict"><literal>ON CONFLICT DO UPDATE</literal></link>
+   <link linkend="sql-on-conflict"><literal>ON CONFLICT DO SELECT/UPDATE</literal></link>
    clause, the old values will be non-<literal>NULL</literal> for conflicting
    rows.  Similarly, if a <command>DELETE</command> is turned into an
    <command>UPDATE</command> by a <link linkend="sql-createrule">rewrite rule</link>,

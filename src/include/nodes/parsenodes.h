@@ -200,7 +200,7 @@ typedef struct Query
 	/* OVERRIDING clause */
 	OverridingKind override pg_node_attr(query_jumble_ignore);
 
-	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
+	OnConflictExpr *onConflict; /* ON CONFLICT DO NOTHING/SELECT/UPDATE */
 
 	/*
 	 * The following three fields describe the contents of the RETURNING list
@@ -1417,7 +1417,8 @@ typedef enum WCOKind
 	WCO_VIEW_CHECK,				/* WCO on an auto-updatable view */
 	WCO_RLS_INSERT_CHECK,		/* RLS INSERT WITH CHECK policy */
 	WCO_RLS_UPDATE_CHECK,		/* RLS UPDATE WITH CHECK policy */
-	WCO_RLS_CONFLICT_CHECK,		/* RLS ON CONFLICT DO UPDATE USING policy */
+	WCO_RLS_CONFLICT_CHECK,		/* RLS ON CONFLICT DO SELECT/UPDATE USING
+								 * policy */
 	WCO_RLS_MERGE_UPDATE_CHECK, /* RLS MERGE UPDATE USING policy */
 	WCO_RLS_MERGE_DELETE_CHECK, /* RLS MERGE DELETE USING policy */
 } WCOKind;
@@ -1679,9 +1680,10 @@ typedef struct InferClause
 typedef struct OnConflictClause
 {
 	NodeTag		type;
-	OnConflictAction action;	/* DO NOTHING or UPDATE? */
+	OnConflictAction action;	/* DO NOTHING, SELECT, or UPDATE */
 	InferClause *infer;			/* Optional index inference clause */
-	List	   *targetList;		/* the target list (of ResTarget) */
+	LockClauseStrength lockStrength;	/* lock strength for DO SELECT */
+	List	   *targetList;		/* target list (of ResTarget) for DO UPDATE */
 	Node	   *whereClause;	/* qualifications */
 	ParseLoc	location;		/* token location, or -1 if unknown */
 } OnConflictClause;

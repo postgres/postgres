@@ -37,6 +37,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
 <phrase>and <replaceable class="parameter">conflict_action</replaceable> is one of:</phrase>
 
     DO NOTHING
+    DO SELECT [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } ] [ WHERE <replaceable class="parameter">condition</replaceable> ]
     DO UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
                     ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
                     ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
@@ -89,24 +90,27 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   <para>
    The optional <literal>RETURNING</literal> clause causes <command>INSERT</command>
    to compute and return value(s) based on each row actually inserted
-   (or updated, if an <literal>ON CONFLICT DO UPDATE</literal> clause was
-   used).  This is primarily useful for obtaining values that were
+   (or selected or updated, if an <literal>ON CONFLICT DO SELECT/UPDATE</literal>
+   clause was used).  This is primarily useful for obtaining values that were
    supplied by defaults, such as a serial sequence number.  However,
    any expression using the table's columns is allowed.  The syntax of
    the <literal>RETURNING</literal> list is identical to that of the output
    list of <command>SELECT</command>.  Only rows that were successfully
-   inserted or updated will be returned.  For example, if a row was
-   locked but not updated because an <literal>ON CONFLICT DO UPDATE
-   ... WHERE</literal> clause <replaceable
-   class="parameter">condition</replaceable> was not satisfied, the
-   row will not be returned.
+   inserted, updated, or selected will be returned.  For example, if a row was
+   locked but not updated or selected because an <literal>ON CONFLICT ...
+   WHERE</literal> clause <replaceable class="parameter">condition</replaceable>
+   was not satisfied, the row will not be returned.
   </para>
 
   <para>
    You must have <literal>INSERT</literal> privilege on a table in
    order to insert into it.  If <literal>ON CONFLICT DO UPDATE</literal> is
    present, <literal>UPDATE</literal> privilege on the table is also
-   required.
+   required.  If <literal>ON CONFLICT DO SELECT</literal> is present,
+   <literal>SELECT</literal> privilege on the table is required.
+   If <literal>ON CONFLICT DO SELECT FOR UPDATE/SHARE</literal> is used,
+   <literal>UPDATE</literal> privilege is required on at least one
+   column, in addition to <literal>SELECT</literal> privilege.
   </para>
 
   <para>
@@ -343,8 +347,11 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
        <para>
         For a simple <command>INSERT</command>, all old values will be
         <literal>NULL</literal>.  However, for an <command>INSERT</command>
-        with an <literal>ON CONFLICT DO UPDATE</literal> clause, the old
-        values may be non-<literal>NULL</literal>.
+        with an <literal>ON CONFLICT DO SELECT/UPDATE</literal> clause, the
+        old values may be non-<literal>NULL</literal> (when the row proposed
+        for insertion conflicts with an existing row).  If the
+        <literal>SELECT</literal> path is taken, the new values will be
+        identical to the old values, since no modification takes place.
        </para>
       </listitem>
      </varlistentry>
@@ -380,6 +387,9 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     a row as its alternative action.  <literal>ON CONFLICT DO
     UPDATE</literal> updates the existing row that conflicts with the
     row proposed for insertion as its alternative action.
+    <literal>ON CONFLICT DO SELECT</literal> returns the existing row
+    that conflicts with the row proposed for insertion, optionally
+    with row-level locking.
    </para>
 
    <para>
@@ -411,6 +421,15 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     INSERT</quote>.
    </para>
 
+   <para>
+    <literal>ON CONFLICT DO SELECT</literal> similarly allows an atomic
+    <command>INSERT</command> or <command>SELECT</command> outcome. This
+    is also known as <firstterm>idempotent insert</firstterm> or
+    <firstterm>get or create</firstterm>.  For <literal>ON CONFLICT DO
+    SELECT</literal>, a <literal>RETURNING</literal> clause
+    <emphasis>must</emphasis> be provided.
+   </para>
+
     <variablelist>
      <varlistentry>
       <term><replaceable class="parameter">conflict_target</replaceable></term>
@@ -424,7 +443,8 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         specify a <parameter>conflict_target</parameter>; when
         omitted, conflicts with all usable constraints (and unique
         indexes) are handled.  For <literal>ON CONFLICT DO
-        UPDATE</literal>, a <parameter>conflict_target</parameter>
+        UPDATE</literal> and <literal>ON CONFLICT DO SELECT</literal>,
+        a <parameter>conflict_target</parameter>
         <emphasis>must</emphasis> be provided.
        </para>
       </listitem>
@@ -434,19 +454,23 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
       <term><replaceable class="parameter">conflict_action</replaceable></term>
       <listitem>
        <para>
-        <parameter>conflict_action</parameter> specifies an
-        alternative <literal>ON CONFLICT</literal> action.  It can be
-        either <literal>DO NOTHING</literal>, or a <literal>DO
-        UPDATE</literal> clause specifying the exact details of the
-        <literal>UPDATE</literal> action to be performed in case of a
-        conflict.  The <literal>SET</literal> and
-        <literal>WHERE</literal> clauses in <literal>ON CONFLICT DO
-        UPDATE</literal> have access to the existing row using the
-        table's name (or an alias), and to the row proposed for insertion
-        using the special <varname>excluded</varname> table.
-        <literal>SELECT</literal> privilege is required on any column in the
-        target table where corresponding <varname>excluded</varname>
-        columns are read.
+        <parameter>conflict_action</parameter> specifies an alternative
+        <literal>ON CONFLICT</literal> action.  It can be
+        <literal>DO NOTHING</literal>, a <literal>DO SELECT</literal>
+        clause that allows conflicting rows to be returned, or a
+        <literal>DO UPDATE</literal> clause specifying the exact details
+        of the <literal>UPDATE</literal> action to be performed in case
+        of a conflict.
+       </para>
+       <para>
+        The <literal>SET</literal> clause in <literal>DO UPDATE</literal>
+        and the <literal>WHERE</literal> clause in both
+        <literal>DO SELECT</literal> and <literal>DO UPDATE</literal> have
+        access to the existing row using the table's name (or an alias),
+        and to the row proposed for insertion using the special
+        <varname>excluded</varname> table.  <literal>SELECT</literal>
+        privilege is required on any column in the target table where
+        corresponding <varname>excluded</varname> columns are read.
        </para>
        <para>
         Note that the effects of all per-row <literal>BEFORE
@@ -546,23 +570,40 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
+      <term><literal>FOR UPDATE</literal></term>
+      <term><literal>FOR NO KEY UPDATE</literal></term>
+      <term><literal>FOR SHARE</literal></term>
+      <term><literal>FOR KEY SHARE</literal></term>
+      <listitem>
+       <para>
+        When specified in an <literal>ON CONFLICT DO SELECT</literal> clause,
+        conflicting table rows are locked against concurrent updates.
+        See <xref linkend="sql-for-update-share"/> in the
+        <xref linkend="sql-select"/> documentation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">condition</replaceable></term>
       <listitem>
        <para>
         An expression that returns a value of type
         <type>boolean</type>.  Only rows for which this expression
-        returns <literal>true</literal> will be updated, although all
-        rows will be locked when the <literal>ON CONFLICT DO UPDATE</literal>
-        action is taken.  Note that
-        <replaceable>condition</replaceable> is evaluated last, after
-        a conflict has been identified as a candidate to update.
+        returns <literal>true</literal> will be updated or selected for
+        return, although all conflicting rows will be locked when
+        <literal>ON CONFLICT DO UPDATE</literal> or
+        <literal>ON CONFLICT DO SELECT FOR UPDATE/SHARE</literal> is
+        specified.  Note that <replaceable>condition</replaceable> is
+        evaluated last, after a conflict has been identified as a candidate
+        to update or select.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
    <para>
     Note that exclusion constraints are not supported as arbiters with
-    <literal>ON CONFLICT DO UPDATE</literal>. In all cases, only
+    <literal>ON CONFLICT DO SELECT/UPDATE</literal>. In all cases, only
     <literal>NOT DEFERRABLE</literal> constraints and unique indexes
     are supported as arbiters.
    </para>
@@ -610,7 +651,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
 INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
 </screen>
    The <replaceable class="parameter">count</replaceable> is the number of
-   rows inserted or updated.  <replaceable>oid</replaceable> is always 0 (it
+   rows inserted, updated, or selected for return.  <replaceable>oid</replaceable> is always 0 (it
    used to be the <acronym>OID</acronym> assigned to the inserted row if
    <replaceable>count</replaceable> was exactly one and the target table was
    declared <literal>WITH OIDS</literal> and 0 otherwise, but creating a table
@@ -621,8 +662,7 @@ INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</repl
    If the <command>INSERT</command> command contains a <literal>RETURNING</literal>
    clause, the result will be similar to that of a <command>SELECT</command>
    statement containing the columns and values defined in the
-   <literal>RETURNING</literal> list, computed over the row(s) inserted or
-   updated by the command.
+   <literal>RETURNING</literal> list, computed over the row(s) affected by the command.
   </para>
  </refsect1>
 
@@ -796,6 +836,35 @@ INSERT INTO distributors AS d (did, dname) VALUES (8, 'Anvil Distribution')
 -- index to arbitrate taking the DO NOTHING action)
 INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
     ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING;
+</programlisting>
+  </para>
+  <para>
+   Insert new distributor if possible, otherwise return the existing
+   distributor row.  Example assumes a unique index has been defined
+   that constrains values appearing in the <literal>did</literal> column.
+   This is useful for get-or-create patterns:
+<programlisting>
+INSERT INTO distributors (did, dname) VALUES (11, 'Global Electronics')
+    ON CONFLICT (did) DO SELECT
+    RETURNING *;
+</programlisting>
+  </para>
+  <para>
+   Insert a new distributor if the ID doesn't match, otherwise return
+   the existing row, if its name doesn't match:
+<programlisting>
+INSERT INTO distributors AS d (did, dname) VALUES (12, 'Micro Devices Inc')
+    ON CONFLICT (did) DO SELECT WHERE d.dname != EXCLUDED.dname
+    RETURNING *;
+</programlisting>
+  </para>
+  <para>
+   Insert a new distributor or return and lock the existing row for update.
+   This is useful when you need to ensure exclusive access to the row:
+<programlisting>
+INSERT INTO distributors (did, dname) VALUES (13, 'Advanced Systems')
+    ON CONFLICT (did) DO SELECT FOR UPDATE
+    RETURNING *;
 </programlisting>
   </para>
   <para>

@@ -568,6 +568,9 @@ INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
 -- fail, because DO UPDATE variant requires unique index
 INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
   ON CONFLICT ON CONSTRAINT circles_c1_c2_excl DO UPDATE SET c2 = EXCLUDED.c2;
+-- fail, because DO SELECT variant requires unique index
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
+  ON CONFLICT ON CONSTRAINT circles_c1_c2_excl DO SELECT RETURNING *;
 -- succeed because c1 doesn't overlap
 INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
 -- succeed because c2 doesn't overlap

@@ -3373,13 +3373,15 @@ transformOnConflictArbiter(ParseState *pstate,
 	*arbiterWhere = NULL;
 	*constraint = InvalidOid;
 
-	if (onConflictClause->action == ONCONFLICT_UPDATE && !infer)
+	if ((onConflictClause->action == ONCONFLICT_UPDATE ||
+		 onConflictClause->action == ONCONFLICT_SELECT) && !infer)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("ON CONFLICT DO UPDATE requires inference specification or constraint name"),
-				 errhint("For example, ON CONFLICT (column_name)."),
-				 parser_errposition(pstate,
-									exprLocation((Node *) onConflictClause))));
+				errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("ON CONFLICT DO %s requires inference specification or constraint name",
+					   onConflictClause->action == ONCONFLICT_UPDATE ? "UPDATE" : "SELECT"),
+				errhint("For example, ON CONFLICT (column_name)."),
+				parser_errposition(pstate,
+								   exprLocation((Node *) onConflictClause)));
 
 	/*
 	 * To simplify certain aspects of its design, speculative insertion into

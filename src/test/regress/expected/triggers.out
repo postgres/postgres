@@ -1670,7 +1670,7 @@ drop table trigger_ddl_table;
 drop function trigger_ddl_func();
 --
 -- Verify behavior of before and after triggers with INSERT...ON CONFLICT
--- DO UPDATE
+-- DO UPDATE and DO SELECT
 --
 create table upsert (key int4 primary key, color text);
 create function upsert_before_func()
@@ -1745,6 +1745,14 @@ insert into upsert values(8, 'yellow') on conflict (key) do update set color = '
 WARNING:  before insert (new): (8,yellow)
 WARNING:  before insert (new, modified): (9,"yellow trig modified")
 WARNING:  after insert (new): (9,"yellow trig modified")
+insert into upsert values(8, 'blue') on conflict (key) do select for update where upsert.color = 'yellow trig modified' returning old.*, new.*, upsert.*;
+WARNING:  before insert (new): (8,blue)
+WARNING:  before insert (new, modified): (9,"blue trig modified")
+ key |        color         | key |        color         | key |        color         
+-----+----------------------+-----+----------------------+-----+----------------------
+   9 | yellow trig modified |   9 | yellow trig modified |   9 | yellow trig modified
+(1 row)
+
 select * from upsert;
  key |            color            
 -----+-----------------------------

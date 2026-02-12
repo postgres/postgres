@@ -565,6 +565,24 @@ INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLU
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLUDED.three;
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set one = 8; -- fails (due to UPDATE)
 INSERT INTO atest5(three) VALUES (4) ON CONFLICT (two) DO UPDATE set three = 10; -- fails (due to INSERT)
+-- Check that column level privileges are enforced for ON CONFLICT ... WHERE
+-- Ok. we may select one
+INSERT INTO atest5(two) VALUES (2) ON CONFLICT (two) DO SELECT WHERE atest5.one = 1 RETURNING atest5.two;
+-- Error. No select rights on three
+INSERT INTO atest5(two) VALUES (2) ON CONFLICT (two) DO SELECT WHERE atest5.three = 1 RETURNING atest5.two;
+
+-- Check that ON CONFLICT ... SELECT FOR UPDATE/SHARE requires an updatable column
+SET SESSION AUTHORIZATION regress_priv_user1;
+REVOKE UPDATE (three) ON atest5 FROM regress_priv_user4;
+SET SESSION AUTHORIZATION regress_priv_user4;
+
+INSERT INTO atest5(two) VALUES (2) ON CONFLICT (two) DO SELECT FOR UPDATE RETURNING atest5.two; -- fails
+
+SET SESSION AUTHORIZATION regress_priv_user1;
+GRANT UPDATE (three) ON atest5 TO regress_priv_user4;
+SET SESSION AUTHORIZATION regress_priv_user4;
+
+INSERT INTO atest5(two) VALUES (2) ON CONFLICT (two) DO SELECT FOR UPDATE RETURNING atest5.two; -- ok
 
 -- Check that the columns in the inference require select privileges
 INSERT INTO atest5(four) VALUES (4); -- fail

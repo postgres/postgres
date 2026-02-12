@@ -659,6 +659,19 @@ rewriteRuleAction(Query *parsetree,
 	}
 
 	/*
+	 * If rule_action is INSERT .. ON CONFLICT DO SELECT, the parser should
+	 * have verified that it has a RETURNING clause, but we must also check
+	 * that the triggering query has a RETURNING clause.
+	 */
+	if (rule_action->onConflict &&
+		rule_action->onConflict->action == ONCONFLICT_SELECT &&
+		(!rule_action->returningList || !parsetree->returningList))
+		ereport(ERROR,
+				errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("ON CONFLICT DO SELECT requires a RETURNING clause"),
+				errdetail("A rule action is INSERT ... ON CONFLICT DO SELECT, which requires a RETURNING clause."));
+
+	/*
 	 * If rule_action has a RETURNING clause, then either throw it away if the
 	 * triggering query has no RETURNING clause, or rewrite it to emit what
 	 * the triggering query's RETURNING clause asks for.  Throw an error if
@@ -3643,11 +3656,12 @@ rewriteTargetView(Query *parsetree, Relation view)
 	}
 
 	/*
-	 * For INSERT .. ON CONFLICT .. DO UPDATE, we must also update assorted
-	 * stuff in the onConflict data structure.
+	 * For INSERT .. ON CONFLICT .. DO SELECT/UPDATE, we must also update
+	 * assorted stuff in the onConflict data structure.
 	 */
 	if (parsetree->onConflict &&
-		parsetree->onConflict->action == ONCONFLICT_UPDATE)
+		(parsetree->onConflict->action == ONCONFLICT_UPDATE ||
+		 parsetree->onConflict->action == ONCONFLICT_SELECT))
 	{
 		Index		old_exclRelIndex,
 					new_exclRelIndex;
@@ -3656,9 +3670,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 		List	   *tmp_tlist;
 
 		/*
-		 * Like the INSERT/UPDATE code above, update the resnos in the
-		 * auxiliary UPDATE targetlist to refer to columns of the base
-		 * relation.
+		 * For ON CONFLICT DO UPDATE, update the resnos in the auxiliary
+		 * UPDATE targetlist to refer to columns of the base relation.
 		 */
 		foreach(lc, parsetree->onConflict->onConflictSet)
 		{
@@ -3677,7 +3690,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 		}
 
 		/*
-		 * Also, create a new RTE for the EXCLUDED pseudo-relation, using the
+		 * Create a new RTE for the EXCLUDED pseudo-relation, using the
 		 * query's new base rel (which may well have a different column list
 		 * from the view, hence we need a new column alias list).  This should
 		 * match transformOnConflictClause.  In particular, note that the

@@ -1856,7 +1856,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 		returningList = (List *) list_nth(plan->returningLists, subplan_index);
 
 	/*
-	 * ON CONFLICT DO UPDATE and DO NOTHING case with inference specification
+	 * ON CONFLICT DO NOTHING/SELECT/UPDATE with inference specification
 	 * should have already been rejected in the optimizer, as presently there
 	 * is no way to recognize an arbiter index on a foreign table.  Only DO
 	 * NOTHING is supported without an inference specification.

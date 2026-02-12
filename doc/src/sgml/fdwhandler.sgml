@@ -2045,7 +2045,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      <command>INSERT</command> with an <literal>ON CONFLICT</literal> clause does not
      support specifying the conflict target, as unique constraints or
      exclusion constraints on remote tables are not locally known. This
-     in turn implies that <literal>ON CONFLICT DO UPDATE</literal> is not supported,
+     in turn implies that <literal>ON CONFLICT DO SELECT/UPDATE</literal> is not supported,
      since the specification is mandatory there.
     </para>
 

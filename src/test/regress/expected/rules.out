@@ -3608,6 +3608,61 @@ SELECT * FROM hat_data WHERE hat_name IN ('h8', 'h9', 'h7') ORDER BY hat_name;
 (3 rows)
 
 DROP RULE hat_upsert ON hats;
+-- DO SELECT with a WHERE clause
+CREATE RULE hat_confsel AS ON INSERT TO hats
+    DO INSTEAD
+    INSERT INTO hat_data VALUES (
+           NEW.hat_name,
+           NEW.hat_color)
+        ON CONFLICT (hat_name)
+        DO SELECT FOR UPDATE
+           WHERE excluded.hat_color <>  'forbidden' AND hat_data.* != excluded.*
+        RETURNING *;
+SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
+                                      definition                                      
+--------------------------------------------------------------------------------------
+ CREATE RULE hat_confsel AS                                                          +
+     ON INSERT TO public.hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color) +
+   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO SELECT FOR UPDATE   +
+   WHERE ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))+
+   RETURNING hat_data.hat_name,                                                      +
+     hat_data.hat_color;
+(1 row)
+
+-- fails without RETURNING
+INSERT INTO hats VALUES ('h7', 'blue');
+ERROR:  ON CONFLICT DO SELECT requires a RETURNING clause
+DETAIL:  A rule action is INSERT ... ON CONFLICT DO SELECT, which requires a RETURNING clause.
+-- works (returns conflicts)
+EXPLAIN (costs off)
+INSERT INTO hats VALUES ('h7', 'blue') RETURNING *;
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Insert on hat_data
+   Conflict Resolution: SELECT FOR UPDATE
+   Conflict Arbiter Indexes: hat_data_unique_idx
+   Conflict Filter: ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))
+   ->  Result
+(5 rows)
+
+INSERT INTO hats VALUES ('h7', 'blue') RETURNING *;
+  hat_name  | hat_color  
+------------+------------
+ h7         | black     
+(1 row)
+
+-- conflicts excluded by WHERE clause
+INSERT INTO hats VALUES ('h7', 'forbidden') RETURNING *;
+ hat_name | hat_color 
+----------+-----------
+(0 rows)
+
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+ hat_name | hat_color 
+----------+-----------
+(0 rows)
+
+DROP RULE hat_confsel ON hats;
 drop table hats;
 drop table hat_data;
 -- test for pg_get_functiondef properly regurgitating SET parameters

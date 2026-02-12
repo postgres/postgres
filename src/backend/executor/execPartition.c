@@ -883,19 +883,26 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		leaf_part_rri->ri_onConflictArbiterIndexes = arbiterIndexes;
 
 		/*
-		 * In the DO UPDATE case, we have some more state to initialize.
+		 * In the DO UPDATE and DO SELECT cases, we have some more state to
+		 * initialize.
 		 */
-		if (node->onConflictAction == ONCONFLICT_UPDATE)
+		if (node->onConflictAction == ONCONFLICT_UPDATE ||
+			node->onConflictAction == ONCONFLICT_SELECT)
 		{
-			OnConflictSetState *onconfl = makeNode(OnConflictSetState);
+			OnConflictActionState *onconfl = makeNode(OnConflictActionState);
 			TupleConversionMap *map;
 
 			map = ExecGetRootToChildMap(leaf_part_rri, estate);
 
-			Assert(node->onConflictSet != NIL);
+			Assert(node->onConflictSet != NIL ||
+				   node->onConflictAction == ONCONFLICT_SELECT);
 			Assert(rootResultRelInfo->ri_onConflict != NULL);
 
 			leaf_part_rri->ri_onConflict = onconfl;
+
+			/* Lock strength for DO SELECT [FOR UPDATE/SHARE] */
+			onconfl->oc_LockStrength =
+				rootResultRelInfo->ri_onConflict->oc_LockStrength;
 
 			/*
 			 * Need a separate existing slot for each partition, as the
@@ -909,7 +916,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			/*
 			 * If the partition's tuple descriptor matches exactly the root
 			 * parent (the common case), we can re-use most of the parent's ON
-			 * CONFLICT SET state, skipping a bunch of work.  Otherwise, we
+			 * CONFLICT action state, skipping a bunch of work.  Otherwise, we
 			 * need to create state specific to this partition.
 			 */
 			if (map == NULL)
@@ -917,7 +924,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				/*
 				 * It's safe to reuse these from the partition root, as we
 				 * only process one tuple at a time (therefore we won't
-				 * overwrite needed data in slots), and the results of
+				 * overwrite needed data in slots), and the results of any
 				 * projections are independent of the underlying storage.
 				 * Projections and where clauses themselves don't store state
 				 * / are independent of the underlying storage.
@@ -931,65 +938,80 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			}
 			else
 			{
-				List	   *onconflset;
-				List	   *onconflcols;
-
 				/*
-				 * Translate expressions in onConflictSet to account for
-				 * different attribute numbers.  For that, map partition
-				 * varattnos twice: first to catch the EXCLUDED
-				 * pseudo-relation (INNER_VAR), and second to handle the main
-				 * target relation (firstVarno).
+				 * For ON CONFLICT DO UPDATE, translate expressions in
+				 * onConflictSet to account for different attribute numbers.
+				 * For that, map partition varattnos twice: first to catch the
+				 * EXCLUDED pseudo-relation (INNER_VAR), and second to handle
+				 * the main target relation (firstVarno).
 				 */
-				onconflset = copyObject(node->onConflictSet);
-				if (part_attmap == NULL)
-					part_attmap =
-						build_attrmap_by_name(RelationGetDescr(partrel),
-											  RelationGetDescr(firstResultRel),
-											  false);
-				onconflset = (List *)
-					map_variable_attnos((Node *) onconflset,
-										INNER_VAR, 0,
-										part_attmap,
-										RelationGetForm(partrel)->reltype,
-										&found_whole_row);
-				/* We ignore the value of found_whole_row. */
-				onconflset = (List *)
-					map_variable_attnos((Node *) onconflset,
-										firstVarno, 0,
-										part_attmap,
-										RelationGetForm(partrel)->reltype,
-										&found_whole_row);
-				/* We ignore the value of found_whole_row. */
+				if (node->onConflictAction == ONCONFLICT_UPDATE)
+				{
+					List	   *onconflset;
+					List	   *onconflcols;
 
-				/* Finally, adjust the target colnos to match the partition. */
-				onconflcols = adjust_partition_colnos(node->onConflictCols,
-													  leaf_part_rri);
+					onconflset = copyObject(node->onConflictSet);
+					if (part_attmap == NULL)
+						part_attmap =
+							build_attrmap_by_name(RelationGetDescr(partrel),
+												  RelationGetDescr(firstResultRel),
+												  false);
+					onconflset = (List *)
+						map_variable_attnos((Node *) onconflset,
+											INNER_VAR, 0,
+											part_attmap,
+											RelationGetForm(partrel)->reltype,
+											&found_whole_row);
+					/* We ignore the value of found_whole_row. */
+					onconflset = (List *)
+						map_variable_attnos((Node *) onconflset,
+											firstVarno, 0,
+											part_attmap,
+											RelationGetForm(partrel)->reltype,
+											&found_whole_row);
+					/* We ignore the value of found_whole_row. */
 
-				/* create the tuple slot for the UPDATE SET projection */
-				onconfl->oc_ProjSlot =
-					table_slot_create(partrel,
-									  &mtstate->ps.state->es_tupleTable);
+					/*
+					 * Finally, adjust the target colnos to match the
+					 * partition.
+					 */
+					onconflcols = adjust_partition_colnos(node->onConflictCols,
+														  leaf_part_rri);
 
-				/* build UPDATE SET projection state */
-				onconfl->oc_ProjInfo =
-					ExecBuildUpdateProjection(onconflset,
-											  true,
-											  onconflcols,
-											  partrelDesc,
-											  econtext,
-											  onconfl->oc_ProjSlot,
-											  &mtstate->ps);
+					/* create the tuple slot for the UPDATE SET projection */
+					onconfl->oc_ProjSlot =
+						table_slot_create(partrel,
+										  &mtstate->ps.state->es_tupleTable);
+
+					/* build UPDATE SET projection state */
+					onconfl->oc_ProjInfo =
+						ExecBuildUpdateProjection(onconflset,
+												  true,
+												  onconflcols,
+												  partrelDesc,
+												  econtext,
+												  onconfl->oc_ProjSlot,
+												  &mtstate->ps);
+				}
 
 				/*
-				 * If there is a WHERE clause, initialize state where it will
-				 * be evaluated, mapping the attribute numbers appropriately.
-				 * As with onConflictSet, we need to map partition varattnos
-				 * to the partition's tupdesc.
+				 * For both ON CONFLICT DO UPDATE and ON CONFLICT DO SELECT,
+				 * there may be a WHERE clause.  If so, initialize state where
+				 * it will be evaluated, mapping the attribute numbers
+				 * appropriately.  As with onConflictSet, we need to map
+				 * partition varattnos twice, to catch both the EXCLUDED
+				 * pseudo-relation (INNER_VAR), and the main target relation
+				 * (firstVarno).
 				 */
 				if (node->onConflictWhere)
 				{
 					List	   *clause;
+
+					if (part_attmap == NULL)
+						part_attmap =
+							build_attrmap_by_name(RelationGetDescr(partrel),
+												  RelationGetDescr(firstResultRel),
+												  false);
 
 					clause = copyObject((List *) node->onConflictWhere);
 					clause = (List *)

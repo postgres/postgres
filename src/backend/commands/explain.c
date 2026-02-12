@@ -4672,10 +4672,36 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 
 	if (node->onConflictAction != ONCONFLICT_NONE)
 	{
-		ExplainPropertyText("Conflict Resolution",
-							node->onConflictAction == ONCONFLICT_NOTHING ?
-							"NOTHING" : "UPDATE",
-							es);
+		const char *resolution = NULL;
+
+		if (node->onConflictAction == ONCONFLICT_NOTHING)
+			resolution = "NOTHING";
+		else if (node->onConflictAction == ONCONFLICT_UPDATE)
+			resolution = "UPDATE";
+		else
+		{
+			Assert(node->onConflictAction == ONCONFLICT_SELECT);
+			switch (node->onConflictLockStrength)
+			{
+				case LCS_NONE:
+					resolution = "SELECT";
+					break;
+				case LCS_FORKEYSHARE:
+					resolution = "SELECT FOR KEY SHARE";
+					break;
+				case LCS_FORSHARE:
+					resolution = "SELECT FOR SHARE";
+					break;
+				case LCS_FORNOKEYUPDATE:
+					resolution = "SELECT FOR NO KEY UPDATE";
+					break;
+				case LCS_FORUPDATE:
+					resolution = "SELECT FOR UPDATE";
+					break;
+			}
+		}
+
+		ExplainPropertyText("Conflict Resolution", resolution, es);
 
 		/*
 		 * Don't display arbiter indexes at all when DO NOTHING variant
@@ -4684,7 +4710,7 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 		if (idxNames)
 			ExplainPropertyList("Conflict Arbiter Indexes", idxNames, es);
 
-		/* ON CONFLICT DO UPDATE WHERE qual is specially displayed */
+		/* ON CONFLICT DO SELECT/UPDATE WHERE qual is specially displayed */
 		if (node->onConflictWhere)
 		{
 			show_upper_qual((List *) node->onConflictWhere, "Conflict Filter",

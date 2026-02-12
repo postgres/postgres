@@ -294,7 +294,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        </para>
        <para>
          If an <literal>INSERT</literal> has an <literal>ON CONFLICT DO
-         UPDATE</literal> clause, or an <literal>ON CONFLICT DO
+         SELECT/UPDATE</literal> clause, or an <literal>ON CONFLICT DO
          NOTHING</literal> clause with an arbiter index or constraint
          specification, then <literal>SELECT</literal>
          permissions are required on the relation, and the rows proposed for
@@ -338,8 +338,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          where records are being added to the relation.
        </para>
        <para>
-         Note that an <literal>INSERT</literal> with an <literal>ON CONFLICT
-         DO NOTHING/UPDATE</literal> clause will check the
+         Note that an <literal>INSERT</literal> with an
+         <literal>ON CONFLICT</literal> clause will check the
          <literal>INSERT</literal> policies' <literal>WITH CHECK</literal>
          expressions for all rows proposed for insertion, regardless of
          whether or not they end up being inserted.
@@ -352,9 +352,10 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>UPDATE</literal> for a policy means that it will apply
-         to <literal>UPDATE</literal>, <literal>SELECT FOR UPDATE</literal>,
-         and <literal>SELECT FOR SHARE</literal> commands, as well as
-         auxiliary <literal>ON CONFLICT DO UPDATE</literal> clauses of
+         to <literal>UPDATE</literal> and
+         <literal>SELECT FOR UPDATE/SHARE</literal> commands, as well as
+         auxiliary <literal>ON CONFLICT DO UPDATE</literal> and
+         <literal>ON CONFLICT DO SELECT FOR UPDATE/SHARE</literal> clauses of
          <literal>INSERT</literal> commands, and <literal>MERGE</literal>
          commands containing <literal>UPDATE</literal> actions.
          Since an <literal>UPDATE</literal> command
@@ -576,6 +577,22 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <entry>
         Check new row&nbsp;<footnoteref linkend="rls-on-conflict-update-priv"/>
        </entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>ON CONFLICT DO SELECT</command></entry>
+       <entry>Check existing row</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>ON CONFLICT DO SELECT FOR UPDATE/SHARE</command></entry>
+       <entry>Check existing row</entry>
+       <entry>&mdash;</entry>
+       <entry>Check existing row</entry>
+       <entry>&mdash;</entry>
        <entry>&mdash;</entry>
       </row>
       <row>

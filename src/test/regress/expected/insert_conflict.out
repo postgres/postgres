@@ -249,6 +249,25 @@ explain (costs off, format json) insert into insertconflicttest values (0, 'Bilb
  ]
 (1 row)
 
+-- Should display lock strength, if specified
+explain (costs off) insert into insertconflicttest values (1, 'Apple') on conflict (key) do select returning *;
+              QUERY PLAN               
+---------------------------------------
+ Insert on insertconflicttest
+   Conflict Resolution: SELECT
+   Conflict Arbiter Indexes: key_index
+   ->  Result
+(4 rows)
+
+explain (costs off) insert into insertconflicttest values (1, 'Apple') on conflict (key) do select for key share returning *;
+                 QUERY PLAN                  
+---------------------------------------------
+ Insert on insertconflicttest
+   Conflict Resolution: SELECT FOR KEY SHARE
+   Conflict Arbiter Indexes: key_index
+   ->  Result
+(4 rows)
+
 -- Fails (no unique index inference specification, required for do update variant):
 insert into insertconflicttest values (1, 'Apple') on conflict do update set fruit = excluded.fruit;
 ERROR:  ON CONFLICT DO UPDATE requires inference specification or constraint name
@@ -304,6 +323,48 @@ ERROR:  column "insertconflicttest" of relation "insertconflicttest" does not ex
 LINE 1: ...3, 'Kiwi') on conflict (key, fruit) do update set insertconf...
                                                              ^
 HINT:  SET target columns cannot be qualified with the relation name.
+--
+-- DO SELECT tests
+--
+delete from insertconflicttest where fruit = 'Apple';
+insert into insertconflicttest values (1, 'Apple') on conflict (key) do select; -- fails
+ERROR:  ON CONFLICT DO SELECT requires a RETURNING clause
+LINE 1: ...nsert into insertconflicttest values (1, 'Apple') on conflic...
+                                                             ^
+insert into insertconflicttest as i values (1, 'Apple') on conflict (key) do select returning old, new, i;
+ old |    new    |     i     
+-----+-----------+-----------
+     | (1,Apple) | (1,Apple)
+(1 row)
+
+insert into insertconflicttest as i values (1, 'Orange') on conflict (key) do select returning old, new, i;
+    old    |    new    |     i     
+-----------+-----------+-----------
+ (1,Apple) | (1,Apple) | (1,Apple)
+(1 row)
+
+insert into insertconflicttest as i values (1, 'Apple') on conflict (key) do select where i.fruit = 'Apple' returning *;
+ key | fruit 
+-----+-------
+   1 | Apple
+(1 row)
+
+insert into insertconflicttest as i values (1, 'Apple') on conflict (key) do select where i.fruit = 'Orange' returning *;
+ key | fruit 
+-----+-------
+(0 rows)
+
+insert into insertconflicttest as i values (1, 'Orange') on conflict (key) do select where excluded.fruit = 'Apple' returning *;
+ key | fruit 
+-----+-------
+(0 rows)
+
+insert into insertconflicttest as i values (1, 'Orange') on conflict (key) do select where excluded.fruit = 'Orange' returning *;
+ key | fruit 
+-----+-------
+   1 | Apple
+(1 row)
+
 drop index key_index;
 --
 -- Composite key tests
@@ -748,13 +809,58 @@ insert into selfconflict values (6,1), (6,2) on conflict(f1) do update set f2 = 
 ERROR:  ON CONFLICT DO UPDATE command cannot affect row a second time
 HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
 commit;
+begin transaction isolation level read committed;
+insert into selfconflict values (7,1), (7,2) on conflict(f1) do select returning *;
+ f1 | f2 
+----+----
+  7 |  1
+  7 |  1
+(2 rows)
+
+commit;
+begin transaction isolation level repeatable read;
+insert into selfconflict values (8,1), (8,2) on conflict(f1) do select returning *;
+ f1 | f2 
+----+----
+  8 |  1
+  8 |  1
+(2 rows)
+
+commit;
+begin transaction isolation level serializable;
+insert into selfconflict values (9,1), (9,2) on conflict(f1) do select returning *;
+ f1 | f2 
+----+----
+  9 |  1
+  9 |  1
+(2 rows)
+
+commit;
+begin transaction isolation level read committed;
+insert into selfconflict values (10,1), (10,2) on conflict(f1) do select for update returning *;
+ERROR:  ON CONFLICT DO SELECT command cannot affect row a second time
+HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
+commit;
+begin transaction isolation level repeatable read;
+insert into selfconflict values (11,1), (11,2) on conflict(f1) do select for update returning *;
+ERROR:  ON CONFLICT DO SELECT command cannot affect row a second time
+HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
+commit;
+begin transaction isolation level serializable;
+insert into selfconflict values (12,1), (12,2) on conflict(f1) do select for update returning *;
+ERROR:  ON CONFLICT DO SELECT command cannot affect row a second time
+HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
+commit;
 select * from selfconflict;
  f1 | f2 
 ----+----
   1 |  1
   2 |  1
   3 |  1
-(3 rows)
+  7 |  1
+  8 |  1
+  9 |  1
+(6 rows)
 
 drop table selfconflict;
 -- check ON CONFLICT handling with partitioned tables
@@ -765,11 +871,31 @@ insert into parted_conflict_test values (1, 'a') on conflict do nothing;
 -- index on a required, which does exist in parent
 insert into parted_conflict_test values (1, 'a') on conflict (a) do nothing;
 insert into parted_conflict_test values (1, 'a') on conflict (a) do update set b = excluded.b;
+insert into parted_conflict_test values (1, 'a') on conflict (a) do select returning *;
+ a | b 
+---+---
+ 1 | a
+(1 row)
+
+insert into parted_conflict_test values (1, 'a') on conflict (a) do select for update returning *;
+ a | b 
+---+---
+ 1 | a
+(1 row)
+
 -- targeting partition directly will work
 insert into parted_conflict_test_1 values (1, 'a') on conflict (a) do nothing;
 insert into parted_conflict_test_1 values (1, 'b') on conflict (a) do update set b = excluded.b;
+insert into parted_conflict_test_1 values (1, 'b') on conflict (a) do select returning b;
+ b 
+---
+ b
+(1 row)
+
 -- index on b required, which doesn't exist in parent
-insert into parted_conflict_test values (2, 'b') on conflict (b) do update set a = excluded.a;
+insert into parted_conflict_test values (2, 'b') on conflict (b) do update set a = excluded.a; -- fail
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+insert into parted_conflict_test values (2, 'b') on conflict (b) do select returning b; -- fail
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 -- targeting partition directly will work
 insert into parted_conflict_test_1 values (2, 'b') on conflict (b) do update set a = excluded.a;
@@ -780,13 +906,31 @@ select * from parted_conflict_test order by a;
  2 | b
 (1 row)
 
--- now check that DO UPDATE works correctly for target partition with
--- different attribute numbers
+-- now check that DO UPDATE and DO SELECT work correctly for target partition
+-- with different attribute numbers
 create table parted_conflict_test_2 (b char, a int unique);
 alter table parted_conflict_test attach partition parted_conflict_test_2 for values in (3);
 truncate parted_conflict_test;
 insert into parted_conflict_test values (3, 'a') on conflict (a) do update set b = excluded.b;
 insert into parted_conflict_test values (3, 'b') on conflict (a) do update set b = excluded.b;
+insert into parted_conflict_test values (3, 'a') on conflict (a) do select returning b;
+ b 
+---
+ b
+(1 row)
+
+insert into parted_conflict_test values (3, 'a') on conflict (a) do select where excluded.b = 'a' returning parted_conflict_test;
+ parted_conflict_test 
+----------------------
+ (3,b)
+(1 row)
+
+insert into parted_conflict_test values (3, 'a') on conflict (a) do select where parted_conflict_test.b = 'b' returning b;
+ b 
+---
+ b
+(1 row)
+
 -- should see (3, 'b')
 select * from parted_conflict_test order by a;
  a | b 
@@ -800,6 +944,12 @@ create table parted_conflict_test_3 partition of parted_conflict_test for values
 truncate parted_conflict_test;
 insert into parted_conflict_test (a, b) values (4, 'a') on conflict (a) do update set b = excluded.b;
 insert into parted_conflict_test (a, b) values (4, 'b') on conflict (a) do update set b = excluded.b where parted_conflict_test.b = 'a';
+insert into parted_conflict_test (a, b) values (4, 'b') on conflict (a) do select returning b;
+ b 
+---
+ b
+(1 row)
+
 -- should see (4, 'b')
 select * from parted_conflict_test order by a;
  a | b 
@@ -813,6 +963,11 @@ create table parted_conflict_test_4_1 partition of parted_conflict_test_4 for va
 truncate parted_conflict_test;
 insert into parted_conflict_test (a, b) values (5, 'a') on conflict (a) do update set b = excluded.b;
 insert into parted_conflict_test (a, b) values (5, 'b') on conflict (a) do update set b = excluded.b where parted_conflict_test.b = 'a';
+insert into parted_conflict_test (a, b) values (5, 'b') on conflict (a) do select where parted_conflict_test.b = 'a' returning b;
+ b 
+---
+(0 rows)
+
 -- should see (5, 'b')
 select * from parted_conflict_test order by a;
  a | b 
@@ -832,6 +987,59 @@ select * from parted_conflict_test order by a;
  2 | a
  4 | b
 (3 rows)
+
+-- test DO SELECT with multiple rows hitting different partitions
+truncate parted_conflict_test;
+insert into parted_conflict_test (a, b) values (1, 'a'), (2, 'b'), (4, 'c');
+insert into parted_conflict_test (a, b) values (1, 'x'), (2, 'y'), (4, 'z')
+  on conflict (a) do select returning *, tableoid::regclass;
+ a | b |        tableoid        
+---+---+------------------------
+ 1 | a | parted_conflict_test_1
+ 2 | b | parted_conflict_test_1
+ 4 | c | parted_conflict_test_3
+(3 rows)
+
+-- should see original values (1, 'a'), (2, 'b'), (4, 'c')
+select * from parted_conflict_test order by a;
+ a | b 
+---+---
+ 1 | a
+ 2 | b
+ 4 | c
+(3 rows)
+
+-- test DO SELECT with WHERE filtering across partitions
+insert into parted_conflict_test (a, b) values (1, 'n') on conflict (a) do select where parted_conflict_test.b = 'a' returning *;
+ a | b 
+---+---
+ 1 | a
+(1 row)
+
+insert into parted_conflict_test (a, b) values (2, 'n') on conflict (a) do select where parted_conflict_test.b = 'x' returning *;
+ a | b 
+---+---
+(0 rows)
+
+-- test DO SELECT with EXCLUDED in WHERE across partitions with different layouts
+insert into parted_conflict_test (a, b) values (3, 't') on conflict (a) do select where excluded.b = 't' returning *;
+ a | b 
+---+---
+ 3 | t
+(1 row)
+
+-- test DO SELECT FOR UPDATE across different partition layouts
+insert into parted_conflict_test (a, b) values (1, 'l') on conflict (a) do select for update returning *;
+ a | b 
+---+---
+ 1 | a
+(1 row)
+
+insert into parted_conflict_test (a, b) values (3, 'l') on conflict (a) do select for update returning *;
+ a | b 
+---+---
+ 3 | t
+(1 row)
 
 drop table parted_conflict_test;
 -- test behavior of inserting a conflicting tuple into an intermediate

@@ -82,7 +82,7 @@
  <para>
   Note that <filename>postgres_fdw</filename> currently lacks support for
   <command>INSERT</command> statements with an <literal>ON CONFLICT DO
-  UPDATE</literal> clause.  However, the <literal>ON CONFLICT DO NOTHING</literal>
+  SELECT/UPDATE</literal> clause.  However, the <literal>ON CONFLICT DO NOTHING</literal>
   clause is supported, provided a unique index inference specification
   is omitted.
   Note also that <filename>postgres_fdw</filename> supports row movement

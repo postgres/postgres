@@ -714,7 +714,8 @@ MERGE <replaceable class="parameter">total_count</replaceable>
    on the behavior at each isolation level.
    You may also wish to consider using <command>INSERT ... ON CONFLICT</command>
    as an alternative statement which offers the ability to run an
-   <command>UPDATE</command> if a concurrent <command>INSERT</command>
+   <command>UPDATE</command> or return the existing row (with
+   <literal>DO SELECT</literal>) if a concurrent <command>INSERT</command>
    occurs.  There are a variety of differences and restrictions between
    the two statement types and they are not interchangeable.
   </para>

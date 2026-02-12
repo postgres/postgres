@@ -428,6 +428,7 @@ typedef enum OnConflictAction
 	ONCONFLICT_NONE,			/* No "ON CONFLICT" clause */
 	ONCONFLICT_NOTHING,			/* ON CONFLICT ... DO NOTHING */
 	ONCONFLICT_UPDATE,			/* ON CONFLICT ... DO UPDATE */
+	ONCONFLICT_SELECT,			/* ON CONFLICT ... DO SELECT */
 } OnConflictAction;
 
 /*

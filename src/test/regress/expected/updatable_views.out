@@ -316,6 +316,21 @@ SELECT * FROM rw_view15;
   3 | UNSPECIFIED
 (6 rows)
 
+INSERT INTO rw_view15 (a) VALUES (3)
+  ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE excluded.upper = 'UNSPECIFIED'
+  RETURNING old, new;
+       old       |       new       
+-----------------+-----------------
+ (3,UNSPECIFIED) | (3,UNSPECIFIED)
+(1 row)
+
+INSERT INTO rw_view15 (a) VALUES (3)
+  ON CONFLICT (a) DO SELECT WHERE excluded.upper = 'UNSPECIFIED' RETURNING old, new;
+       old       |       new       
+-----------------+-----------------
+ (3,UNSPECIFIED) | (3,UNSPECIFIED)
+(1 row)
+
 SELECT * FROM rw_view15;
  a  |    upper    
 ----+-------------
@@ -3646,7 +3661,7 @@ ERROR:  new row violates check option for view "wcowrtest_v2"
 DETAIL:  Failing row contains (2, no such row in sometable).
 drop view wcowrtest_v, wcowrtest_v2;
 drop table wcowrtest, sometable;
--- Check INSERT .. ON CONFLICT DO UPDATE works correctly when the view's
+-- Check INSERT .. ON CONFLICT DO SELECT/UPDATE works correctly when the view's
 -- columns are named and ordered differently than the underlying table's.
 create table uv_iocu_tab (a text unique, b float);
 insert into uv_iocu_tab values ('xyxyxy', 0);
@@ -3666,6 +3681,13 @@ select * from uv_iocu_tab;
    a    | b 
 --------+---
  xyxyxy | 1
+(1 row)
+
+insert into uv_iocu_view (a, b) values ('xyxyxy', 1)
+   on conflict (a) do select where uv_iocu_view.c = 2 and excluded.c = 2 returning *;
+ b | c |   a    | two 
+---+---+--------+-----
+ 1 | 2 | xyxyxy | 2.0
 (1 row)
 
 -- OK to access view columns that are not present in underlying base
@@ -3731,6 +3753,25 @@ select * from uv_iocu_view;
  Rejected: (y,1,"(1,y)") |  1 | (1,"Rejected: (y,1,""(1,y)"")")
 (1 row)
 
+explain (costs off)
+insert into uv_iocu_view (aa,bb) values (1,'Rejected: (y,1,"(1,y)")')
+   on conflict (aa) do select where uv_iocu_view.* = excluded.* returning *;
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Insert on uv_iocu_tab
+   Conflict Resolution: SELECT
+   Conflict Arbiter Indexes: uv_iocu_tab_a_key
+   Conflict Filter: (ROW(uv_iocu_tab.b, uv_iocu_tab.a, (uv_iocu_tab.*)::text) = ROW(excluded.b, excluded.a, (excluded.*)::text))
+   ->  Result
+(5 rows)
+
+insert into uv_iocu_view (aa,bb) values (1,'Rejected: (y,1,"(1,y)")')
+   on conflict (aa) do select where uv_iocu_view.* = excluded.* returning *;
+           bb            | aa |               cc                
+-------------------------+----+---------------------------------
+ Rejected: (y,1,"(1,y)") |  1 | (1,"Rejected: (y,1,""(1,y)"")")
+(1 row)
+
 -- Test omitting a column of the base relation
 delete from uv_iocu_view;
 insert into uv_iocu_view (aa,bb) values (1,'x');
@@ -3751,10 +3792,24 @@ select * from uv_iocu_view;
  Rejected: ("table default",1,"(1,""table default"")") |  1 | (1,"Rejected: (""table default"",1,""(1,""""table default"""")"")")
 (1 row)
 
+insert into uv_iocu_view (aa) values (1)
+   on conflict (aa) do select returning *;
+                          bb                           | aa |                                 cc                                  
+-------------------------------------------------------+----+---------------------------------------------------------------------
+ Rejected: ("table default",1,"(1,""table default"")") |  1 | (1,"Rejected: (""table default"",1,""(1,""""table default"""")"")")
+(1 row)
+
 alter view uv_iocu_view alter column bb set default 'view default';
 insert into uv_iocu_view (aa) values (1)
    on conflict (aa) do update set bb = 'Rejected: '||excluded.*;
 select * from uv_iocu_view;
+                         bb                          | aa |                                cc                                 
+-----------------------------------------------------+----+-------------------------------------------------------------------
+ Rejected: ("view default",1,"(1,""view default"")") |  1 | (1,"Rejected: (""view default"",1,""(1,""""view default"""")"")")
+(1 row)
+
+insert into uv_iocu_view (aa) values (1)
+   on conflict (aa) do select returning *;
                          bb                          | aa |                                cc                                 
 -----------------------------------------------------+----+-------------------------------------------------------------------
  Rejected: ("view default",1,"(1,""view default"")") |  1 | (1,"Rejected: (""view default"",1,""(1,""""view default"""")"")")
@@ -3767,7 +3822,7 @@ ERROR:  cannot insert into column "cc" of view "uv_iocu_view"
 DETAIL:  View columns that are not columns of their base relation are not updatable.
 drop view uv_iocu_view;
 drop table uv_iocu_tab;
--- ON CONFLICT DO UPDATE permissions checks
+-- ON CONFLICT DO SELECT/UPDATE permissions checks
 create user regress_view_user1;
 create user regress_view_user2;
 set session authorization regress_view_user1;
@@ -3791,6 +3846,16 @@ insert into rw_view1 values ('zzz',2.0,1)
 insert into rw_view1 values ('zzz',2.0,1)
   on conflict (aa) do update set cc = 3.0; -- Not allowed
 ERROR:  permission denied for view rw_view1
+insert into rw_view1 values ('yyy',2.0,1)
+  on conflict (aa) do select for update returning cc; -- Not allowed
+ERROR:  permission denied for view rw_view1
+insert into rw_view1 values ('yyy',2.0,1)
+  on conflict (aa) do select for update returning aa, bb;
+ aa |   bb   
+----+--------
+  1 | yyyxxx
+(1 row)
+
 reset session authorization;
 select * from base_tbl;
  a |   b    | c 
@@ -3807,9 +3872,19 @@ create view rw_view2 as select b as bb, c as cc, a as aa from base_tbl;
 insert into rw_view2 (aa,bb) values (1,'xxx')
   on conflict (aa) do update set bb = excluded.bb; -- Not allowed
 ERROR:  permission denied for table base_tbl
+insert into rw_view2 (aa,bb) values (1,'xxx')
+  on conflict (aa) do select returning 1;          -- Not allowed
+ERROR:  permission denied for table base_tbl
 create view rw_view3 as select b as bb, a as aa from base_tbl;
 insert into rw_view3 (aa,bb) values (1,'xxx')
   on conflict (aa) do update set bb = excluded.bb; -- OK
+insert into rw_view3 (aa,bb) values (1,'xxx')
+  on conflict (aa) do select returning aa, bb;     -- OK
+ aa | bb  
+----+-----
+  1 | xxx
+(1 row)
+
 reset session authorization;
 select * from base_tbl;
  a |  b  | c 
@@ -3821,6 +3896,9 @@ set session authorization regress_view_user2;
 create view rw_view4 as select aa, bb, cc FROM rw_view1;
 insert into rw_view4 (aa,bb) values (1,'yyy')
   on conflict (aa) do update set bb = excluded.bb; -- Not allowed
+ERROR:  permission denied for view rw_view1
+insert into rw_view4 (aa,bb) values (1,'yyy')
+  on conflict (aa) do select returning 1; -- Not allowed
 ERROR:  permission denied for view rw_view1
 create view rw_view5 as select aa, bb FROM rw_view1;
 insert into rw_view5 (aa,bb) values (1,'yyy')

@@ -219,6 +219,50 @@ NOTICE:  SELECT USING on rls_test_tgt.(3,"tgt d","TGT D")
 (1 row)
 
 ROLLBACK;
+-- INSERT ... ON CONFLICT DO SELECT should apply INSERT CHECK and SELECT USING
+-- policy clauses to values proposed for insert. In the event of a conflict it
+-- should also apply SELECT USING policy clauses to the existing values.
+BEGIN;
+INSERT INTO rls_test_tgt VALUES (4, 'tgt a') ON CONFLICT (a) DO SELECT RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(4,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(4,"tgt a","TGT A")
+ a |   b   |   c   
+---+-------+-------
+ 4 | tgt a | TGT A
+(1 row)
+
+INSERT INTO rls_test_tgt VALUES (4, 'tgt b') ON CONFLICT (a) DO SELECT RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(4,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_tgt.(4,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_tgt.(4,"tgt a","TGT A")
+ a |   b   |   c   
+---+-------+-------
+ 4 | tgt a | TGT A
+(1 row)
+
+ROLLBACK;
+-- INSERT ... ON CONFLICT DO SELECT FOR UPDATE should also apply UPDATE USING
+-- policy clauses to the existing values, in the event of a conflict.
+BEGIN;
+INSERT INTO rls_test_tgt VALUES (5, 'tgt a') ON CONFLICT (a) DO SELECT FOR UPDATE RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(5,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(5,"tgt a","TGT A")
+ a |   b   |   c   
+---+-------+-------
+ 5 | tgt a | TGT A
+(1 row)
+
+INSERT INTO rls_test_tgt VALUES (5, 'tgt b') ON CONFLICT (a) DO SELECT FOR UPDATE RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(5,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_tgt.(5,"tgt b","TGT B")
+NOTICE:  UPDATE USING on rls_test_tgt.(5,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(5,"tgt a","TGT A")
+ a |   b   |   c   
+---+-------+-------
+ 5 | tgt a | TGT A
+(1 row)
+
+ROLLBACK;
 -- MERGE should always apply SELECT USING policy clauses to both source and
 -- target rows
 MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
@@ -2395,10 +2439,58 @@ INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel')
     ON CONFLICT (did) DO UPDATE SET dauthor = 'regress_rls_carol';
 ERROR:  new row violates row-level security policy for table "document"
 --
+-- INSERT ... ON CONFLICT DO SELECT and Row-level security
+--
+SET SESSION AUTHORIZATION regress_rls_alice;
+DROP POLICY p3_with_all ON document;
+CREATE POLICY p1_select_novels ON document FOR SELECT
+  USING (cid = (SELECT cid from category WHERE cname = 'novel'));
+CREATE POLICY p2_insert_own ON document FOR INSERT
+  WITH CHECK (dauthor = current_user);
+CREATE POLICY p3_update_novels ON document FOR UPDATE
+  USING (cid = (SELECT cid from category WHERE cname = 'novel') AND dlevel = 1)
+  WITH CHECK (dauthor = current_user);
+SET SESSION AUTHORIZATION regress_rls_bob;
+-- DO SELECT requires SELECT rights, should succeed for novel
+INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT RETURNING did, dauthor, dtitle;
+ did |     dauthor     |     dtitle     
+-----+-----------------+----------------
+   1 | regress_rls_bob | my first novel
+(1 row)
+
+-- DO SELECT requires SELECT rights, should fail for non-novel
+INSERT INTO document VALUES (33, (SELECT cid from category WHERE cname = 'science fiction'), 1, 'regress_rls_bob', 'another sci-fi')
+    ON CONFLICT (did) DO SELECT RETURNING did, dauthor, dtitle;
+ERROR:  new row violates row-level security policy for table "document"
+-- DO SELECT with WHERE and EXCLUDED reference
+INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT WHERE excluded.dlevel = 1 RETURNING did, dauthor, dtitle;
+ did |     dauthor     |     dtitle     
+-----+-----------------+----------------
+   1 | regress_rls_bob | my first novel
+(1 row)
+
+-- DO SELECT FOR UPDATE requires both SELECT and UPDATE rights, should succeed for novel and dlevel = 1
+INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT FOR UPDATE RETURNING did, dauthor, dtitle;
+ did |     dauthor     |     dtitle     
+-----+-----------------+----------------
+   1 | regress_rls_bob | my first novel
+(1 row)
+
+-- should fail UPDATE USING policy for novel with dlevel = 2
+INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT FOR UPDATE RETURNING did, dauthor, dtitle;
+ERROR:  new row violates row-level security policy (USING expression) for table "document"
+SET SESSION AUTHORIZATION regress_rls_alice;
+DROP POLICY p1_select_novels ON document;
+DROP POLICY p2_insert_own ON document;
+DROP POLICY p3_update_novels ON document;
+--
 -- MERGE
 --
 RESET SESSION AUTHORIZATION;
-DROP POLICY p3_with_all ON document;
 ALTER TABLE document ADD COLUMN dnotes text DEFAULT '';
 -- all documents are readable
 CREATE POLICY p1 ON document FOR SELECT USING (true);

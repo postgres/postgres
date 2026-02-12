@@ -54,9 +54,9 @@
  * ---------------------
  *
  * Speculative insertion is a two-phase mechanism used to implement
- * INSERT ... ON CONFLICT DO UPDATE/NOTHING.  The tuple is first inserted
- * to the heap and update the indexes as usual, but if a constraint is
- * violated, we can still back out the insertion without aborting the whole
+ * INSERT ... ON CONFLICT.  The tuple is first inserted into the heap
+ * and the indexes are updated as usual, but if a constraint is violated,
+ * we can still back out of the insertion without aborting the whole
  * transaction.  In an INSERT ... ON CONFLICT statement, if a conflict is
  * detected, the inserted tuple is backed out and the ON CONFLICT action is
  * executed instead.

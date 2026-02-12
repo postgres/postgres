@@ -1,0 +1,138 @@
+Parsed test spec with 2 sessions
+
+starting permutation: insert1 insert2 c1 select2 c2
+step insert1: INSERT INTO doselect(key, val) VALUES(1, 'insert1') ON CONFLICT (key) DO SELECT RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step insert2: INSERT INTO doselect(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO SELECT RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c1: COMMIT;
+step select2: SELECT * FROM doselect;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: insert1_update insert2_update c1 select2 c2
+step insert1_update: INSERT INTO doselect(key, val) VALUES(1, 'insert1') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step insert2_update: INSERT INTO doselect(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *; <waiting ...>
+step c1: COMMIT;
+step insert2_update: <... completed>
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step select2: SELECT * FROM doselect;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: insert1_update insert2_update a1 select2 c2
+step insert1_update: INSERT INTO doselect(key, val) VALUES(1, 'insert1') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step insert2_update: INSERT INTO doselect(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *; <waiting ...>
+step a1: ABORT;
+step insert2_update: <... completed>
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step select2: SELECT * FROM doselect;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: insert1_keyshare insert2_update c1 select2 c2
+step insert1_keyshare: INSERT INTO doselect(key, val) VALUES(1, 'insert1') ON CONFLICT (key) DO SELECT FOR KEY SHARE RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step insert2_update: INSERT INTO doselect(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *; <waiting ...>
+step c1: COMMIT;
+step insert2_update: <... completed>
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step select2: SELECT * FROM doselect;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: insert1_share insert2_update c1 select2 c2
+step insert1_share: INSERT INTO doselect(key, val) VALUES(1, 'insert1') ON CONFLICT (key) DO SELECT FOR SHARE RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step insert2_update: INSERT INTO doselect(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *; <waiting ...>
+step c1: COMMIT;
+step insert2_update: <... completed>
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step select2: SELECT * FROM doselect;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: insert1_nokeyupd insert2_update c1 select2 c2
+step insert1_nokeyupd: INSERT INTO doselect(key, val) VALUES(1, 'insert1') ON CONFLICT (key) DO SELECT FOR NO KEY UPDATE RETURNING *;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step insert2_update: INSERT INTO doselect(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO SELECT FOR UPDATE RETURNING *; <waiting ...>
+step c1: COMMIT;
+step insert2_update: <... completed>
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step select2: SELECT * FROM doselect;
+key|val     
+---+--------
+  1|original
+(1 row)
+
+step c2: COMMIT;
