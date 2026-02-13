@@ -13,14 +13,14 @@ involve diffable source files.
 These tools are acceptable:
 
 - Graphviz (https://graphviz.org/)
-- Ditaa (http://ditaa.sourceforge.net/)
+- Ditaa v0.11.0 or later (https://github.com/stathissideris/ditaa)
 
 We use SVG as the format for integrating the image into the ultimate
 output formats of the documentation, that is, HTML, PDF, and others.
 Therefore, any tool used needs to be able to produce SVG.
 
-This directory contains makefile rules to build SVG from common input
-formats, using some common styling.
+This directory contains makefile and meson rules to build SVG from common
+input formats, using some common styling.
 
 fixup-svg.xsl applies some postprocessing to the SVG files produced by
 those external tools to address assorted issues.  See comments in
