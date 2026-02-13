@@ -200,7 +200,7 @@ pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount)
 	Assert(entry_ref);
 	if (!entry_ref)
 	{
-		elog(WARNING, "could not report %d conflicts for DB %u",
+		elog(WARNING, "could not report %d checksum failures for database %u",
 			 failurecount, dboid);
 		return;
 	}
