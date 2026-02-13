@@ -1140,7 +1140,7 @@ dumpRoleMembership(PGconn *conn)
 		}
 
 		remaining = end - start;
-		done = pg_malloc0(remaining * sizeof(bool));
+		done = pg_malloc0_array(bool, remaining);
 		ht = rolename_create(remaining, NULL);
 
 		/*

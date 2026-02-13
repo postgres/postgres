@@ -124,7 +124,7 @@ InitCompressorNone(CompressorState *cs,
 	{
 		NoneCompressorState *nonecs;
 
-		nonecs = (NoneCompressorState *) pg_malloc(sizeof(NoneCompressorState));
+		nonecs = pg_malloc_object(NoneCompressorState);
 		nonecs->buflen = DEFAULT_IO_BUFFER_SIZE;
 		nonecs->buffer = pg_malloc(nonecs->buflen);
 		nonecs->bufdata = 0;

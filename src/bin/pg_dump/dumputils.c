@@ -160,7 +160,7 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 	 * Besides, a false mismatch will just cause the output to be a little
 	 * more verbose than it really needed to be.
 	 */
-	grantitems = (char **) pg_malloc(naclitems * sizeof(char *));
+	grantitems = pg_malloc_array(char *, naclitems);
 	for (i = 0; i < naclitems; i++)
 	{
 		bool		found = false;
@@ -176,7 +176,7 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 		if (!found)
 			grantitems[ngrantitems++] = aclitems[i];
 	}
-	revokeitems = (char **) pg_malloc(nbaseitems * sizeof(char *));
+	revokeitems = pg_malloc_array(char *, nbaseitems);
 	for (i = 0; i < nbaseitems; i++)
 	{
 		bool		found = false;
@@ -774,8 +774,8 @@ SplitGUCList(char *rawstring, char separator,
 	 * overestimate of the number of pointers we could need.  Allow one for
 	 * list terminator.
 	 */
-	*namelist = nextptr = (char **)
-		pg_malloc((strlen(rawstring) / 2 + 2) * sizeof(char *));
+	*namelist = nextptr =
+		pg_malloc_array(char *, (strlen(rawstring) / 2 + 2));
 	*nextptr = NULL;
 
 	while (isspace((unsigned char) *nextp))

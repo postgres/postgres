@@ -89,8 +89,8 @@ ConnectDatabase(const char *dbname, const char *connection_string,
 					argcount++;
 			}
 
-			keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
-			values = pg_malloc0((argcount + 1) * sizeof(*values));
+			keywords = pg_malloc0_array(const char *, (argcount + 1));
+			values = pg_malloc0_array(const char *, (argcount + 1));
 
 			for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 			{
@@ -105,8 +105,8 @@ ConnectDatabase(const char *dbname, const char *connection_string,
 		}
 		else
 		{
-			keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
-			values = pg_malloc0((argcount + 1) * sizeof(*values));
+			keywords = pg_malloc0_array(const char *, (argcount + 1));
+			values = pg_malloc0_array(const char *, (argcount + 1));
 		}
 
 		if (pghost)
