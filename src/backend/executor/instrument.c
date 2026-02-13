@@ -4,7 +4,7 @@
  *	 functions for instrumentation of plan execution
  *
  *
- * Copyright (c) 2001-2026, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/executor/instrument.c
@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include <sys/resource.h>
 #include <unistd.h>
 
 #include "executor/instrument.h"
@@ -25,6 +26,23 @@ static WalUsage save_pgWalUsage;
 static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
 static void WalUsageAdd(WalUsage *dst, WalUsage *add);
 
+/*
+ * Compute the CPU time delta (user + system) between two rusage snapshots,
+ * in seconds.
+ */
+static inline double
+rusage_cpu_time_diff(const struct rusage *ru_end, const struct rusage *ru_start)
+{
+	double		user_sec,
+				sys_sec;
+
+	user_sec = (double) (ru_end->ru_utime.tv_sec - ru_start->ru_utime.tv_sec)
+		+ (double) (ru_end->ru_utime.tv_usec - ru_start->ru_utime.tv_usec) / 1000000.0;
+	sys_sec = (double) (ru_end->ru_stime.tv_sec - ru_start->ru_stime.tv_sec)
+		+ (double) (ru_end->ru_stime.tv_usec - ru_start->ru_stime.tv_usec) / 1000000.0;
+	return user_sec + sys_sec;
+}
+
 
 /* Allocate new instrumentation structure(s) */
 Instrumentation *
@@ -34,11 +52,12 @@ InstrAlloc(int n, int instrument_options, bool async_mode)
 
 	/* initialize all fields to zeroes, then modify as needed */
 	instr = palloc0(n * sizeof(Instrumentation));
-	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_WAL))
+	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_WAL | INSTRUMENT_CPUUSAGE))
 	{
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
 		bool		need_wal = (instrument_options & INSTRUMENT_WAL) != 0;
 		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
+		bool		need_cpuusage = (instrument_options & INSTRUMENT_CPUUSAGE) != 0;
 		int			i;
 
 		for (i = 0; i < n; i++)
@@ -46,6 +65,7 @@ InstrAlloc(int n, int instrument_options, bool async_mode)
 			instr[i].need_bufusage = need_buffers;
 			instr[i].need_walusage = need_wal;
 			instr[i].need_timer = need_timer;
+			instr[i].need_cpuusage = need_cpuusage;
 			instr[i].async_mode = async_mode;
 		}
 	}
@@ -61,6 +81,7 @@ InstrInit(Instrumentation *instr, int instrument_options)
 	instr->need_bufusage = (instrument_options & INSTRUMENT_BUFFERS) != 0;
 	instr->need_walusage = (instrument_options & INSTRUMENT_WAL) != 0;
 	instr->need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
+	instr->need_cpuusage = (instrument_options & INSTRUMENT_CPUUSAGE) != 0;
 }
 
 /* Entry to a plan node */
@@ -77,6 +98,10 @@ InstrStartNode(Instrumentation *instr)
 
 	if (instr->need_walusage)
 		instr->walusage_start = pgWalUsage;
+
+	/* save CPU usage at node entry, if needed */
+	if (instr->need_cpuusage)
+		getrusage(RUSAGE_SELF, &instr->rusage_start);
 }
 
 /* Exit from a plan node */
@@ -88,6 +113,22 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 
 	/* count the returned tuples */
 	instr->tuplecount += nTuples;
+
+	/*
+	 * Capture CPU usage before wall clock so the CPU measurement window is
+	 * strictly contained within the wall clock window.  InstrStartNode
+	 * captures rusage after the wall clock start, so:
+	 *   [wall_start ... cpu_start ... cpu_end ... wall_end]
+	 * This guarantees cpu_time <= total (wall) time.
+	 */
+	if (instr->need_cpuusage)
+	{
+		struct rusage rusage_end;
+
+		getrusage(RUSAGE_SELF, &rusage_end);
+		instr->counter_cpu += rusage_cpu_time_diff(&rusage_end,
+												   &instr->rusage_start);
+	}
 
 	/* let's update the time only if the timer was requested */
 	if (instr->need_timer)
@@ -114,7 +155,7 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	if (!instr->running)
 	{
 		instr->running = true;
-		instr->firsttuple = instr->counter;
+		instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
 	}
 	else
 	{
@@ -123,7 +164,7 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 		 * this might be the first tuple
 		 */
 		if (instr->async_mode && save_tuplecount < 1.0)
-			instr->firsttuple = instr->counter;
+			instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
 	}
 }
 
@@ -139,6 +180,8 @@ InstrUpdateTupleCount(Instrumentation *instr, double nTuples)
 void
 InstrEndLoop(Instrumentation *instr)
 {
+	double		totaltime;
+
 	/* Skip if nothing has happened, or already shut down */
 	if (!instr->running)
 		return;
@@ -147,8 +190,11 @@ InstrEndLoop(Instrumentation *instr)
 		elog(ERROR, "InstrEndLoop called on running node");
 
 	/* Accumulate per-cycle statistics into totals */
-	INSTR_TIME_ADD(instr->startup, instr->firsttuple);
-	INSTR_TIME_ADD(instr->total, instr->counter);
+	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
+
+	instr->startup += instr->firsttuple;
+	instr->total += totaltime;
+	instr->cpu_time += instr->counter_cpu;
 	instr->ntuples += instr->tuplecount;
 	instr->nloops += 1;
 
@@ -156,7 +202,8 @@ InstrEndLoop(Instrumentation *instr)
 	instr->running = false;
 	INSTR_TIME_SET_ZERO(instr->starttime);
 	INSTR_TIME_SET_ZERO(instr->counter);
-	INSTR_TIME_SET_ZERO(instr->firsttuple);
+	instr->counter_cpu = 0;
+	instr->firsttuple = 0;
 	instr->tuplecount = 0;
 }
 
@@ -169,15 +216,16 @@ InstrAggNode(Instrumentation *dst, Instrumentation *add)
 		dst->running = true;
 		dst->firsttuple = add->firsttuple;
 	}
-	else if (dst->running && add->running &&
-			 INSTR_TIME_LT(dst->firsttuple, add->firsttuple))
+	else if (dst->running && add->running && dst->firsttuple > add->firsttuple)
 		dst->firsttuple = add->firsttuple;
 
 	INSTR_TIME_ADD(dst->counter, add->counter);
 
 	dst->tuplecount += add->tuplecount;
-	INSTR_TIME_ADD(dst->startup, add->startup);
-	INSTR_TIME_ADD(dst->total, add->total);
+	dst->counter_cpu += add->counter_cpu;
+	dst->startup += add->startup;
+	dst->total += add->total;
+	dst->cpu_time += add->cpu_time;
 	dst->ntuples += add->ntuples;
 	dst->ntuples2 += add->ntuples2;
 	dst->nloops += add->nloops;
@@ -277,8 +325,6 @@ WalUsageAdd(WalUsage *dst, WalUsage *add)
 	dst->wal_bytes += add->wal_bytes;
 	dst->wal_records += add->wal_records;
 	dst->wal_fpi += add->wal_fpi;
-	dst->wal_fpi_bytes += add->wal_fpi_bytes;
-	dst->wal_buffers_full += add->wal_buffers_full;
 }
 
 void
@@ -287,6 +333,4 @@ WalUsageAccumDiff(WalUsage *dst, const WalUsage *add, const WalUsage *sub)
 	dst->wal_bytes += add->wal_bytes - sub->wal_bytes;
 	dst->wal_records += add->wal_records - sub->wal_records;
 	dst->wal_fpi += add->wal_fpi - sub->wal_fpi;
-	dst->wal_fpi_bytes += add->wal_fpi_bytes - sub->wal_fpi_bytes;
-	dst->wal_buffers_full += add->wal_buffers_full - sub->wal_buffers_full;
 }

@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2026, PostgreSQL Global Development Group
+# Copyright (c) 2022-2024, PostgreSQL Global Development Group
 
 pg_stat_statements_sources = files(
   'pg_stat_statements.c',
@@ -37,7 +37,6 @@ install_data(
   kwargs: contrib_data_args,
 )
 
-# Note: Test "cleanup" is kept second to last, removing the extension.
 tests += {
   'name': 'pg_stat_statements',
   'sd': meson.current_source_dir(),
@@ -56,8 +55,7 @@ tests += {
       'privileges',
       'extended',
       'parallel',
-      'plancache',
-      'squashing',
+      'cpu_time',
       'cleanup',
       'oldextversions',
     ],

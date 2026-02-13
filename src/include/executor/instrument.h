@@ -4,7 +4,7 @@
  *	  definitions for run-time statistics collection
  *
  *
- * Copyright (c) 2001-2026, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2024, PostgreSQL Global Development Group
  *
  * src/include/executor/instrument.h
  *
@@ -12,6 +12,8 @@
  */
 #ifndef INSTRUMENT_H
 #define INSTRUMENT_H
+
+#include <sys/resource.h>
 
 #include "portability/instr_time.h"
 
@@ -53,8 +55,6 @@ typedef struct WalUsage
 	int64		wal_records;	/* # of WAL records produced */
 	int64		wal_fpi;		/* # of WAL full page images produced */
 	uint64		wal_bytes;		/* size of WAL records produced */
-	uint64		wal_fpi_bytes;	/* size of WAL full page images produced */
-	int64		wal_buffers_full;	/* # of times the WAL buffers became full */
 } WalUsage;
 
 /* Flag bits included in InstrAlloc's instrument_options bitmask */
@@ -64,6 +64,7 @@ typedef enum InstrumentOption
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage */
 	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
 	INSTRUMENT_WAL = 1 << 3,	/* needs WAL usage */
+	INSTRUMENT_CPUUSAGE = 1 << 4,	/* needs CPU usage via getrusage() */
 	INSTRUMENT_ALL = PG_INT32_MAX
 } InstrumentOption;
 
@@ -73,18 +74,22 @@ typedef struct Instrumentation
 	bool		need_timer;		/* true if we need timer data */
 	bool		need_bufusage;	/* true if we need buffer usage data */
 	bool		need_walusage;	/* true if we need WAL usage data */
+	bool		need_cpuusage;	/* true if we need CPU usage data */
 	bool		async_mode;		/* true if node is in async mode */
 	/* Info about current plan cycle: */
 	bool		running;		/* true if we've completed first tuple */
 	instr_time	starttime;		/* start time of current iteration of node */
 	instr_time	counter;		/* accumulated runtime for this node */
-	instr_time	firsttuple;		/* time for first tuple of this cycle */
+	double		firsttuple;		/* time for first tuple of this cycle */
 	double		tuplecount;		/* # of tuples emitted so far this cycle */
 	BufferUsage bufusage_start; /* buffer usage at start */
 	WalUsage	walusage_start; /* WAL usage at start */
+	struct rusage rusage_start; /* CPU usage at start */
+	double		counter_cpu;	/* per-cycle CPU time accumulator (seconds) */
 	/* Accumulated statistics across all completed cycles: */
-	instr_time	startup;		/* total startup time */
-	instr_time	total;			/* total time */
+	double		startup;		/* total startup time (in seconds) */
+	double		total;			/* total time (in seconds) */
+	double		cpu_time;		/* total CPU time: user + system (seconds) */
 	double		ntuples;		/* total tuples produced */
 	double		ntuples2;		/* secondary node-specific tuple counter */
 	double		nloops;			/* # of run cycles for this node */
