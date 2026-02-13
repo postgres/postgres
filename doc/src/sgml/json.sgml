@@ -882,9 +882,10 @@ UPDATE table_name SET jsonb_field[1]['a'] = '1';
       <entry><literal>$varname</literal></entry>
       <entry>
         A named variable. Its value can be set by the parameter
-        <parameter>vars</parameter> of several JSON processing functions;
-        see <xref linkend="functions-json-processing-table"/> for details.
-        <!-- TODO: describe PASSING clause once implemented !-->
+        <parameter>vars</parameter> of several JSON processing functions
+        (see <xref linkend="functions-json-processing-table"/>), or by
+        using the SQL/JSON <literal>PASSING</literal> clause as described
+        in <xref linkend="sqljson-query-functions"/>.
       </entry>
      </row>
      <row>
