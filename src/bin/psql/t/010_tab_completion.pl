@@ -77,8 +77,10 @@ close $FH;
 # for possible debugging purposes.
 my $historyfile = "${PostgreSQL::Test::Utils::log_path}/010_psql_history.txt";
 
-# fire up an interactive psql session
+# fire up an interactive psql session and configure it such that each query
+# restarts the timer
 my $h = $node->interactive_psql('postgres', history_file => $historyfile);
+$h->set_query_timer_restart();
 
 # Simple test case: type something and see if psql responds as expected
 sub check_completion
@@ -87,9 +89,6 @@ sub check_completion
 
 	# report test failures from caller location
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	# restart per-command timer
-	$h->{timeout}->start($PostgreSQL::Test::Utils::timeout_default);
 
 	# send the data to be sent and wait for its result
 	my $out = $h->query_until($pattern, $send);
