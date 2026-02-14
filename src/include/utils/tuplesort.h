@@ -116,6 +116,7 @@ typedef struct
 	void	   *tuple;			/* the tuple itself */
 	Datum		datum1;			/* value of first key column */
 	bool		isnull1;		/* is first key column NULL? */
+	uint8		curbyte;		/* chunk of datum1 for current radix sort pass */
 	int			srctape;		/* source tape number */
 } SortTuple;
 
