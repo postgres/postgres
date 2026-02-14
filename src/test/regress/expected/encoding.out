@@ -63,7 +63,13 @@ SELECT reverse(good) FROM regress_encoding;
 -- invalid short mb character = error
 SELECT length(truncated) FROM regress_encoding;
 ERROR:  invalid byte sequence for encoding "UTF8": 0xc3
-SELECT substring(truncated, 1, 1) FROM regress_encoding;
+SELECT substring(truncated, 1, 3) FROM regress_encoding;
+ substring 
+-----------
+ caf
+(1 row)
+
+SELECT substring(truncated, 1, 4) FROM regress_encoding;
 ERROR:  invalid byte sequence for encoding "UTF8": 0xc3
 SELECT reverse(truncated) FROM regress_encoding;
 ERROR:  invalid byte sequence for encoding "UTF8": 0xc3
@@ -375,7 +381,43 @@ NOTICE:  MULE_INTERNAL LC2:           \x908283 -> {9470595} -> \x908283 = OK
  t
 (1 row)
 
+-- substring fetches a slice of a toasted value; unused tail of that slice is
+-- an incomplete char (bug #19406)
+CREATE TABLE toast_3b_utf8 (c text);
+INSERT INTO toast_3b_utf8 VALUES (repeat(U&'\2026', 4000));
+SELECT SUBSTRING(c FROM 1 FOR 1) FROM toast_3b_utf8;
+ substring 
+-----------
+ …
+(1 row)
+
+SELECT SUBSTRING(c FROM 4001 FOR 1) FROM toast_3b_utf8;
+ substring 
+-----------
+ 
+(1 row)
+
+-- diagnose incomplete char iff within the substring
+UPDATE toast_3b_utf8 SET c = c || test_bytea_to_text('\xe280');
+SELECT SUBSTRING(c FROM 4000 FOR 1) FROM toast_3b_utf8;
+ substring 
+-----------
+ …
+(1 row)
+
+SELECT SUBSTRING(c FROM 4001 FOR 1) FROM toast_3b_utf8;
+ERROR:  invalid byte sequence for encoding "UTF8": 0xe2 0x80
+-- substring needing last byte of its slice_size
+ALTER TABLE toast_3b_utf8 RENAME TO toast_4b_utf8;
+UPDATE toast_4b_utf8 SET c = repeat(U&'\+01F680', 3000);
+SELECT SUBSTRING(c FROM 3000 FOR 1) FROM toast_4b_utf8;
+ substring 
+-----------
+ 🚀
+(1 row)
+
 DROP TABLE encoding_tests;
+DROP TABLE toast_4b_utf8;
 DROP FUNCTION test_encoding;
 DROP FUNCTION test_text_to_wchars;
 DROP FUNCTION test_mblen_func;
