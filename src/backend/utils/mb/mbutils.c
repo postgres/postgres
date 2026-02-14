@@ -1084,14 +1084,15 @@ pg_mblen_range(const char *mbstr, const char *end)
 	int			length = pg_wchar_table[DatabaseEncoding->encoding].mblen((const unsigned char *) mbstr);
 
 	Assert(end > mbstr);
+
+	if (unlikely(mbstr + length > end))
+		report_invalid_encoding_db(mbstr, length, end - mbstr);
+
 #ifdef VALGRIND_EXPENSIVE
 	VALGRIND_CHECK_MEM_IS_DEFINED(mbstr, end - mbstr);
 #else
 	VALGRIND_CHECK_MEM_IS_DEFINED(mbstr, length);
 #endif
-
-	if (unlikely(mbstr + length > end))
-		report_invalid_encoding_db(mbstr, length, end - mbstr);
 
 	return length;
 }
@@ -1107,14 +1108,15 @@ pg_mblen_with_len(const char *mbstr, int limit)
 	int			length = pg_wchar_table[DatabaseEncoding->encoding].mblen((const unsigned char *) mbstr);
 
 	Assert(limit >= 1);
+
+	if (unlikely(length > limit))
+		report_invalid_encoding_db(mbstr, length, limit);
+
 #ifdef VALGRIND_EXPENSIVE
 	VALGRIND_CHECK_MEM_IS_DEFINED(mbstr, limit);
 #else
 	VALGRIND_CHECK_MEM_IS_DEFINED(mbstr, length);
 #endif
-
-	if (unlikely(length > limit))
-		report_invalid_encoding_db(mbstr, length, limit);
 
 	return length;
 }
