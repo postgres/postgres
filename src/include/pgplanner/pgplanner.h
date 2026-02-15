@@ -141,6 +141,14 @@ typedef struct PgPlannerAggregateInfo
 	const char *agginitval;		/* NULL if none */
 } PgPlannerAggregateInfo;
 
+/* Cast info (pg_cast fields) */
+typedef struct PgPlannerCastInfo
+{
+	Oid			castfunc;		/* cast function OID, 0 if binary-coercible */
+	char		castcontext;	/* 'i' implicit, 'a' assignment, 'e' explicit */
+	char		castmethod;		/* 'f' function, 'b' binary, 'i' inout */
+} PgPlannerCastInfo;
+
 /* ----------------------------------------------------------------
  *	Callback function pointer types
  * ----------------------------------------------------------------
@@ -167,6 +175,8 @@ typedef int (*pgplanner_func_candidates_hook_type)(
 
 typedef PgPlannerAggregateInfo *(*pgplanner_aggregate_hook_type)(Oid aggfnoid);
 
+typedef PgPlannerCastInfo *(*pgplanner_cast_hook_type)(Oid source, Oid target);
+
 /* ----------------------------------------------------------------
  *	Callback registration struct
  * ----------------------------------------------------------------
@@ -182,6 +192,7 @@ typedef struct PgPlannerCallbacks
 	pgplanner_function_hook_type		get_function;
 	pgplanner_func_candidates_hook_type	get_func_candidates;
 	pgplanner_aggregate_hook_type		get_aggregate;
+	pgplanner_cast_hook_type			get_cast;
 } PgPlannerCallbacks;
 
 /* ----------------------------------------------------------------

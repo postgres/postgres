@@ -14,12 +14,14 @@
 
 #include "pgplanner/pgplanner.h"
 #include "access/htup_details.h"
+#include "access/toast_compression.h"
 #include "access/tupdesc.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type_d.h"
 #include "parser/analyze.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -84,12 +86,37 @@ pgplanner_build_relation(const PgPlannerRelationInfo *info)
 
 	for (i = 0; i < info->natts; i++)
 	{
-		TupleDescInitBuiltinEntry(r->rd_att,
-								  (AttrNumber) (i + 1),
-								  info->columns[i].colname,
-								  info->columns[i].typid,
-								  info->columns[i].typmod,
-								  0);
+		Form_pg_attribute att = TupleDescAttr(r->rd_att, i);
+		const PgPlannerTypeInfo *typinfo;
+
+		typinfo = current_callbacks->get_type(info->columns[i].typid);
+		if (typinfo == NULL)
+			elog(ERROR, "pgplanner: unknown type %u for column \"%s\"",
+				 info->columns[i].typid, info->columns[i].colname);
+
+		att->attrelid = 0;
+		namestrcpy(&(att->attname), info->columns[i].colname);
+		att->attstattarget = -1;
+		att->attcacheoff = -1;
+		att->atttypmod = info->columns[i].typmod;
+		att->attnum = (AttrNumber) (i + 1);
+		att->attndims = 0;
+		att->attnotnull = false;
+		att->atthasdef = false;
+		att->atthasmissing = false;
+		att->attidentity = '\0';
+		att->attgenerated = '\0';
+		att->attisdropped = false;
+		att->attislocal = true;
+		att->attinhcount = 0;
+
+		att->atttypid = info->columns[i].typid;
+		att->attlen = typinfo->typlen;
+		att->attbyval = typinfo->typbyval;
+		att->attalign = typinfo->typalign;
+		att->attstorage = typinfo->typstorage;
+		att->attcompression = InvalidCompressionMethod;
+		att->attcollation = typinfo->typcollation;
 	}
 
 	return r;

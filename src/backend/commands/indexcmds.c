@@ -2222,6 +2222,9 @@ ResolveOpClass(List *opclass, Oid attrType,
 Oid
 GetDefaultOpClass(Oid type_id, Oid am_id)
 {
+	// Epsio -- No need for access methods.
+	return InvalidOid;
+
 	Oid			result = InvalidOid;
 	int			nexact = 0;
 	int			ncompatible = 0;

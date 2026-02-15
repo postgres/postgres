@@ -65,6 +65,8 @@
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_cast.h"
+#include "catalog/pg_cast_d.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_config_map.h"
@@ -1004,6 +1006,39 @@ pgplanner_build_namespace_tuple(Oid nspoid, const char *nspname)
 }
 
 
+/*
+ * pgplanner_build_cast_tuple
+ *		Build a fake HeapTuple containing FormData_pg_cast from callback data.
+ */
+static HeapTuple
+pgplanner_build_cast_tuple(Oid source, Oid target, const PgPlannerCastInfo *cinfo)
+{
+	HeapTuple	result;
+	Size		hdr_len = MAXALIGN(SizeofHeapTupleHeader);
+	Size		data_len = sizeof(FormData_pg_cast);
+	Size		total_len = hdr_len + data_len;
+	FormData_pg_cast *castForm;
+
+	result = (HeapTuple) palloc0(sizeof(HeapTupleData));
+	result->t_data = (HeapTupleHeader) palloc0(total_len);
+	result->t_len = total_len;
+	ItemPointerSetInvalid(&result->t_data->t_ctid);
+	result->t_data->t_hoff = hdr_len;
+	result->t_data->t_infomask = 0;
+	HeapTupleHeaderSetNatts(result->t_data, Natts_pg_cast);
+
+	castForm = (FormData_pg_cast *) GETSTRUCT(result);
+	castForm->oid = 9999;		/* fake OID */
+	castForm->castsource = source;
+	castForm->casttarget = target;
+	castForm->castfunc = cinfo->castfunc;
+	castForm->castcontext = cinfo->castcontext;
+	castForm->castmethod = cinfo->castmethod;
+
+	return result;
+}
+
+
 /* ----------------------------------------------------------------
  *		SearchSysCache and variants
  * ----------------------------------------------------------------
@@ -1149,6 +1184,20 @@ SearchSysCache2(int cacheId,
 			}
 			break;
 		}
+		case CASTSOURCETARGET:
+		{
+			if (cb && cb->get_cast)
+			{
+				Oid source = DatumGetObjectId(key1);
+				Oid target = DatumGetObjectId(key2);
+				PgPlannerCastInfo *cinfo = cb->get_cast(source, target);
+
+				if (cinfo == NULL)
+					return NULL;
+				return pgplanner_build_cast_tuple(source, target, cinfo);
+			}
+			return NULL;
+		}
 		default:
 			break;
 	}
@@ -1161,6 +1210,14 @@ HeapTuple
 SearchSysCache3(int cacheId,
 				Datum key1, Datum key2, Datum key3)
 {
+	switch (cacheId) {
+		// No need for stats
+		case STATRELATTINH: {
+			return NULL;
+		}
+		default:
+			break;
+	}
 	elog(ERROR, "Unsupported cache lookup3: cacheId=%d", cacheId);
 	return NULL;
 }

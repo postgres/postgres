@@ -75,11 +75,129 @@ static PgPlannerRelationInfo my_table_info = {
 	.columns = my_table_columns
 };
 
+static PgPlannerColumn hits_table_columns[] = {
+	{ "watchid", INT8OID, -1 },
+	{ "javaenable", INT2OID, -1 },
+	{ "title", TEXTOID, -1 },
+	{ "goodevent", INT2OID, -1 },
+	{ "eventtime", TIMESTAMPOID, -1 },
+	{ "eventdate", DATEOID, -1 },
+	{ "counterid", INT4OID, -1 },
+	{ "clientip", INT4OID, -1 },
+	{ "regionid", INT4OID, -1 },
+	{ "userid", INT8OID, -1 },
+	{ "counterclass", INT2OID, -1 },
+	{ "os", INT2OID, -1 },
+	{ "useragent", INT2OID, -1 },
+	{ "url", TEXTOID, -1 },
+	{ "referer", TEXTOID, -1 },
+	{ "isrefresh", INT2OID, -1 },
+	{ "referercategoryid", INT2OID, -1 },
+	{ "refererregionid", INT4OID, -1 },
+	{ "urlcategoryid", INT2OID, -1 },
+	{ "urlregionid", INT4OID, -1 },
+	{ "resolutionwidth", INT2OID, -1 },
+	{ "resolutionheight", INT2OID, -1 },
+	{ "resolutiondepth", INT2OID, -1 },
+	{ "flashmajor", INT2OID, -1 },
+	{ "flashminor", INT2OID, -1 },
+	{ "flashminor2", TEXTOID, -1 },
+	{ "netmajor", INT2OID, -1 },
+	{ "netminor", INT2OID, -1 },
+	{ "useragentmajor", INT2OID, -1 },
+	{ "useragentminor", VARCHAROID, 259 },
+	{ "cookieenable", INT2OID, -1 },
+	{ "javascriptenable", INT2OID, -1 },
+	{ "ismobile", INT2OID, -1 },
+	{ "mobilephone", INT2OID, -1 },
+	{ "mobilephonemodel", TEXTOID, -1 },
+	{ "params", TEXTOID, -1 },
+	{ "ipnetworkid", INT4OID, -1 },
+	{ "traficsourceid", INT2OID, -1 },
+	{ "searchengineid", INT2OID, -1 },
+	{ "searchphrase", TEXTOID, -1 },
+	{ "advengineid", INT2OID, -1 },
+	{ "isartifical", INT2OID, -1 },
+	{ "windowclientwidth", INT2OID, -1 },
+	{ "windowclientheight", INT2OID, -1 },
+	{ "clienttimezone", INT2OID, -1 },
+	{ "clienteventtime", TIMESTAMPOID, -1 },
+	{ "silverlightversion1", INT2OID, -1 },
+	{ "silverlightversion2", INT2OID, -1 },
+	{ "silverlightversion3", INT4OID, -1 },
+	{ "silverlightversion4", INT2OID, -1 },
+	{ "pagecharset", TEXTOID, -1 },
+	{ "codeversion", INT4OID, -1 },
+	{ "islink", INT2OID, -1 },
+	{ "isdownload", INT2OID, -1 },
+	{ "isnotbounce", INT2OID, -1 },
+	{ "funiqid", INT8OID, -1 },
+	{ "originalurl", TEXTOID, -1 },
+	{ "hid", INT4OID, -1 },
+	{ "isoldcounter", INT2OID, -1 },
+	{ "isevent", INT2OID, -1 },
+	{ "isparameter", INT2OID, -1 },
+	{ "dontcounthits", INT2OID, -1 },
+	{ "withhash", INT2OID, -1 },
+	{ "hitcolor", BPCHAROID, 5 },
+	{ "localeventtime", TIMESTAMPOID, -1 },
+	{ "age", INT2OID, -1 },
+	{ "sex", INT2OID, -1 },
+	{ "income", INT2OID, -1 },
+	{ "interests", INT2OID, -1 },
+	{ "robotness", INT2OID, -1 },
+	{ "remoteip", INT4OID, -1 },
+	{ "windowname", INT4OID, -1 },
+	{ "openername", INT4OID, -1 },
+	{ "historylength", INT2OID, -1 },
+	{ "browserlanguage", TEXTOID, -1 },
+	{ "browsercountry", TEXTOID, -1 },
+	{ "socialnetwork", TEXTOID, -1 },
+	{ "socialaction", TEXTOID, -1 },
+	{ "httperror", INT2OID, -1 },
+	{ "sendtiming", INT4OID, -1 },
+	{ "dnstiming", INT4OID, -1 },
+	{ "connecttiming", INT4OID, -1 },
+	{ "responsestarttiming", INT4OID, -1 },
+	{ "responseendtiming", INT4OID, -1 },
+	{ "fetchtiming", INT4OID, -1 },
+	{ "socialsourcenetworkid", INT2OID, -1 },
+	{ "socialsourcepage", TEXTOID, -1 },
+	{ "paramprice", INT8OID, -1 },
+	{ "paramorderid", TEXTOID, -1 },
+	{ "paramcurrency", TEXTOID, -1 },
+	{ "paramcurrencyid", INT2OID, -1 },
+	{ "openstatservicename", TEXTOID, -1 },
+	{ "openstatcampaignid", TEXTOID, -1 },
+	{ "openstatadid", TEXTOID, -1 },
+	{ "openstatsourceid", TEXTOID, -1 },
+	{ "utmsource", TEXTOID, -1 },
+	{ "utmmedium", TEXTOID, -1 },
+	{ "utmcampaign", TEXTOID, -1 },
+	{ "utmcontent", TEXTOID, -1 },
+	{ "utmterm", TEXTOID, -1 },
+	{ "fromtag", TEXTOID, -1 },
+	{ "hasgclid", INT2OID, -1 },
+	{ "refererhash", INT8OID, -1 },
+	{ "urlhash", INT8OID, -1 },
+	{ "clid", INT4OID, -1 }
+};
+
+static PgPlannerRelationInfo hits_table_info = {
+	.relid = 1338,
+	.relname = "hits",
+	.relkind = 'r',		/* RELKIND_RELATION */
+	.natts = 105,
+	.columns = hits_table_columns
+};
+
 static PgPlannerRelationInfo *
 sample_get_relation(const char *schemaname, const char *relname)
 {
 	if (strcmp(relname, "my_table") == 0)
 		return &my_table_info;
+	if (strcmp(relname, "hits") == 0)
+		return &hits_table_info;
 	return NULL;
 }
 
@@ -88,6 +206,8 @@ sample_get_relation_by_oid(Oid relid)
 {
 	if (relid == 1337)
 		return &my_table_info;
+	if (relid == 1338)
+		return &hits_table_info;
 	return NULL;
 }
 
@@ -161,6 +281,78 @@ static PgPlannerTypeInfo int8_type_info = {
 	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
 };
 
+static PgPlannerTypeInfo int2_type_info = {
+	.typlen = 2, .typbyval = true, .typalign = 's', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "int2", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'N', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1005,
+	.typinput = 38, .typoutput = 39, .typreceive = 2404, .typsend = 2405,
+	.typmodin = 0, .typmodout = 0, .typanalyze = 0,
+	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
+};
+
+static PgPlannerTypeInfo text_type_info = {
+	.typlen = -1, .typbyval = false, .typalign = 'i', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "text", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'S', .typispreferred = true, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1009,
+	.typinput = 46, .typoutput = 47, .typreceive = 2414, .typsend = 2415,
+	.typmodin = 0, .typmodout = 0, .typanalyze = 0,
+	.typstorage = 'x', .typnotnull = false, .typndims = 0, .typcollation = 100
+};
+
+static PgPlannerTypeInfo timestamp_type_info = {
+	.typlen = 8, .typbyval = true, .typalign = 'd', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "timestamp", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'D', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1115,
+	.typinput = 1312, .typoutput = 1313, .typreceive = 2474, .typsend = 2475,
+	.typmodin = 2905, .typmodout = 2906, .typanalyze = 0,
+	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
+};
+
+static PgPlannerTypeInfo date_type_info = {
+	.typlen = 4, .typbyval = true, .typalign = 'i', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "date", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'D', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1182,
+	.typinput = 1084, .typoutput = 1085, .typreceive = 2468, .typsend = 2469,
+	.typmodin = 0, .typmodout = 0, .typanalyze = 0,
+	.typstorage = 'p', .typnotnull = false, .typndims = 0, .typcollation = 0
+};
+
+static PgPlannerTypeInfo varchar_type_info = {
+	.typlen = -1, .typbyval = false, .typalign = 'i', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "varchar", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'S', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1015,
+	.typinput = 1046, .typoutput = 1047, .typreceive = 2432, .typsend = 2433,
+	.typmodin = 2915, .typmodout = 2916, .typanalyze = 0,
+	.typstorage = 'x', .typnotnull = false, .typndims = 0, .typcollation = 100
+};
+
+static PgPlannerTypeInfo bpchar_type_info = {
+	.typlen = -1, .typbyval = false, .typalign = 'i', .typtype = 'b',
+	.typbasetype = 0, .typtypmod = -1,
+	.typname = "bpchar", .typnamespace = 11, .typowner = 10,
+	.typcategory = 'S', .typispreferred = false, .typisdefined = true,
+	.typdelim = ',', .typrelid = 0, .typsubscript = 0,
+	.typelem = 0, .typarray = 1014,
+	.typinput = 1044, .typoutput = 1045, .typreceive = 2430, .typsend = 2431,
+	.typmodin = 2913, .typmodout = 2914, .typanalyze = 0,
+	.typstorage = 'x', .typnotnull = false, .typndims = 0, .typcollation = 100
+};
+
 static PgPlannerTypeInfo *
 sample_get_type(Oid typid)
 {
@@ -170,6 +362,18 @@ sample_get_type(Oid typid)
 		return &bool_type_info;
 	if (typid == INT8OID)
 		return &int8_type_info;
+	if (typid == INT2OID)
+		return &int2_type_info;
+	if (typid == TEXTOID)
+		return &text_type_info;
+	if (typid == TIMESTAMPOID)
+		return &timestamp_type_info;
+	if (typid == DATEOID)
+		return &date_type_info;
+	if (typid == VARCHAROID)
+		return &varchar_type_info;
+	if (typid == BPCHAROID)
+		return &bpchar_type_info;
 	return NULL;
 }
 
@@ -232,6 +436,41 @@ static PgPlannerFunctionInfo int4eq_func_info = {
 	.proparallel = 's'
 };
 
+/* int24: int2 -> int4 cast (OID 313) */
+static PgPlannerFunctionInfo int24_func_info = {
+	.retset = false, .rettype = 23, .prokind = 'f', .proisstrict = true,
+	.pronargs = 1, .proargtypes = (Oid[]){21}, .provariadic = 0,
+	.proname = "int4", .pronamespace = 11, .provolatile = 'i', .proparallel = 's'
+};
+
+/* int28: int2 -> int8 cast (OID 754) */
+static PgPlannerFunctionInfo int28_func_info = {
+	.retset = false, .rettype = 20, .prokind = 'f', .proisstrict = true,
+	.pronargs = 1, .proargtypes = (Oid[]){21}, .provariadic = 0,
+	.proname = "int8", .pronamespace = 11, .provolatile = 'i', .proparallel = 's'
+};
+
+/* int48: int4 -> int8 cast (OID 481) */
+static PgPlannerFunctionInfo int48_func_info = {
+	.retset = false, .rettype = 20, .prokind = 'f', .proisstrict = true,
+	.pronargs = 1, .proargtypes = (Oid[]){23}, .provariadic = 0,
+	.proname = "int8", .pronamespace = 11, .provolatile = 'i', .proparallel = 's'
+};
+
+/* date_timestamp: date -> timestamp cast (OID 2024) */
+static PgPlannerFunctionInfo date_timestamp_func_info = {
+	.retset = false, .rettype = 1114, .prokind = 'f', .proisstrict = true,
+	.pronargs = 1, .proargtypes = (Oid[]){1082}, .provariadic = 0,
+	.proname = "timestamp", .pronamespace = 11, .provolatile = 'i', .proparallel = 's'
+};
+
+/* bpchartext: bpchar -> text cast (OID 401) */
+static PgPlannerFunctionInfo bpchartext_func_info = {
+	.retset = false, .rettype = 25, .prokind = 'f', .proisstrict = true,
+	.pronargs = 1, .proargtypes = (Oid[]){1042}, .provariadic = 0,
+	.proname = "text", .pronamespace = 11, .provolatile = 'i', .proparallel = 's'
+};
+
 static PgPlannerFunctionInfo *
 sample_get_function(Oid funcid)
 {
@@ -243,6 +482,16 @@ sample_get_function(Oid funcid)
 		return &int8pl_func_info;
 	if (funcid == 65)
 		return &int4eq_func_info;
+	if (funcid == 313)
+		return &int24_func_info;
+	if (funcid == 754)
+		return &int28_func_info;
+	if (funcid == 481)
+		return &int48_func_info;
+	if (funcid == 2024)
+		return &date_timestamp_func_info;
+	if (funcid == 401)
+		return &bpchartext_func_info;
 	return NULL;
 }
 
@@ -314,15 +563,7 @@ main(int argc, char *argv[])
 
 	pgplanner_init();
 
-	printf("pgplanner demo\n");
-
-	stmt = pgplanner_plan_query("SELECT a FROM my_table WHERE a=533;", &callbacks);
-
-	str = nodeToString(stmt);
-	printf("PlannedStmt: %s\n", str);
-	pfree(str);
-
-	stmt = pgplanner_plan_query("SELECT b.a, my_table.a FROM my_table JOIN my_table b ON b.a=my_table.a WHERE my_table.a=533;", &callbacks);
+	stmt = pgplanner_plan_query("SELECT AdvEngineID, COUNT(*) FROM hits WHERE AdvEngineID <> 0 GROUP BY AdvEngineID ORDER BY COUNT(*) DESC;", &callbacks);
 
 	str = nodeToString(stmt);
 	printf("PlannedStmt: %s\n", str);
