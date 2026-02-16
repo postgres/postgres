@@ -173,6 +173,7 @@ install_subdir('catalog',
   exclude_files: [
     '.gitignore',
     'Makefile',
+    'README',
     'duplicate_oids',
     'meson.build',
     'reformat_dat_file.pl',

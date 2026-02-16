@@ -149,6 +149,7 @@ install: all installdirs
 ifeq ($(vpath_build),yes)
 	$(INSTALL_DATA) schemapg.h '$(DESTDIR)$(includedir_server)'/catalog/schemapg.h
 	$(INSTALL_DATA) syscache_ids.h '$(DESTDIR)$(includedir_server)'/catalog/syscache_ids.h
+	$(INSTALL_DATA) syscache_info.h '$(DESTDIR)$(includedir_server)'/catalog/syscache_info.h
 	$(INSTALL_DATA) system_fk_info.h '$(DESTDIR)$(includedir_server)'/catalog/system_fk_info.h
 	for file in $(GENERATED_HEADERS); do \
 	  $(INSTALL_DATA) $$file '$(DESTDIR)$(includedir_server)'/catalog/$$file || exit; \
@@ -160,7 +161,7 @@ installdirs:
 
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, postgres.bki system_constraints.sql)
-	rm -f $(addprefix '$(DESTDIR)$(includedir_server)'/catalog/, schemapg.h syscache_ids.h system_fk_info.h $(GENERATED_HEADERS))
+	rm -f $(addprefix '$(DESTDIR)$(includedir_server)'/catalog/, schemapg.h syscache_ids.h syscache_info.h system_fk_info.h $(GENERATED_HEADERS))
 
 clean:
 	rm -f bki-stamp $(GENBKI_OUTPUT_FILES)
