@@ -78,6 +78,11 @@ typedef struct
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
 
+#define TAR_NUM_TERMINATION_BLOCKS 2
+
+StaticAssertDecl(TAR_NUM_TERMINATION_BLOCKS * TAR_BLOCK_SIZE <= BLCKSZ,
+				 "BLCKSZ too small for " CppAsString2(TAR_NUM_TERMINATION_BLOCKS) " tar termination blocks");
+
 static int64 sendTablespace(bbsink *sink, char *path, Oid spcoid, bool sizeonly,
 							struct backup_manifest_info *manifest,
 							IncrementalBackupInfo *ib);
@@ -382,10 +387,8 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 			else
 			{
 				/* Properly terminate the tarfile. */
-				StaticAssertDecl(2 * TAR_BLOCK_SIZE <= BLCKSZ,
-								 "BLCKSZ too small for 2 tar blocks");
-				memset(sink->bbs_buffer, 0, 2 * TAR_BLOCK_SIZE);
-				bbsink_archive_contents(sink, 2 * TAR_BLOCK_SIZE);
+				memset(sink->bbs_buffer, 0, TAR_NUM_TERMINATION_BLOCKS * TAR_BLOCK_SIZE);
+				bbsink_archive_contents(sink, TAR_NUM_TERMINATION_BLOCKS * TAR_BLOCK_SIZE);
 
 				/* OK, that's the end of the archive. */
 				bbsink_end_archive(sink);
@@ -635,10 +638,8 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 		}
 
 		/* Properly terminate the tar file. */
-		StaticAssertStmt(2 * TAR_BLOCK_SIZE <= BLCKSZ,
-						 "BLCKSZ too small for 2 tar blocks");
-		memset(sink->bbs_buffer, 0, 2 * TAR_BLOCK_SIZE);
-		bbsink_archive_contents(sink, 2 * TAR_BLOCK_SIZE);
+		memset(sink->bbs_buffer, 0, TAR_NUM_TERMINATION_BLOCKS * TAR_BLOCK_SIZE);
+		bbsink_archive_contents(sink, TAR_NUM_TERMINATION_BLOCKS * TAR_BLOCK_SIZE);
 
 		/* OK, that's the end of the archive. */
 		bbsink_end_archive(sink);

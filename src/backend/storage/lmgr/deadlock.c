@@ -191,11 +191,13 @@ InitDeadLockChecking(void)
 	 * last MaxBackends entries in possibleConstraints[] are reserved as
 	 * output workspace for FindLockCycle.
 	 */
-	StaticAssertStmt(MAX_BACKENDS_BITS <= (32 - 3),
-					 "MAX_BACKENDS_BITS too big for * 4");
-	maxPossibleConstraints = MaxBackends * 4;
-	possibleConstraints =
-		(EDGE *) palloc(maxPossibleConstraints * sizeof(EDGE));
+	{
+		StaticAssertDecl(MAX_BACKENDS_BITS <= (32 - 3),
+						 "MAX_BACKENDS_BITS too big for * 4");
+		maxPossibleConstraints = MaxBackends * 4;
+		possibleConstraints =
+			(EDGE *) palloc(maxPossibleConstraints * sizeof(EDGE));
+	}
 
 	MemoryContextSwitchTo(oldcxt);
 }

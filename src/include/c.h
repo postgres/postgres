@@ -924,25 +924,35 @@ pg_noreturn extern void ExceptionalCondition(const char *conditionName,
  *
  * If the "condition" (a compile-time-constant expression) evaluates to false,
  * throw a compile error using the "errmessage" (a string literal).
- *
+ */
+
+/*
  * We require C11 and C++11, so static_assert() is expected to be there.
  * StaticAssertDecl() was previously used for portability, but it's now just a
  * plain wrapper and doesn't need to be used in new code.  static_assert() is
  * a "declaration", and so it must be placed where for example a variable
  * declaration would be valid.  As long as we compile with
  * -Wno-declaration-after-statement, that also means it cannot be placed after
- * statements in a function.  Macros StaticAssertStmt() and StaticAssertExpr()
- * make it safe to use as a statement or in an expression, respectively.
+ * statements in a function.
+ */
+#define StaticAssertDecl(condition, errmessage) \
+	static_assert(condition, errmessage)
+
+/*
+ * StaticAssertStmt() was previously used to make static assertions work as a
+ * statement, but its use is now deprecated.
+ */
+#define StaticAssertStmt(condition, errmessage) \
+	do { static_assert(condition, errmessage); } while(0)
+
+/*
+ * StaticAssertExpr() is for use in an expression.
  *
  * For compilers without GCC statement expressions, we fall back on a kluge
  * that assumes the compiler will complain about a negative width for a struct
  * bit-field.  This will not include a helpful error message, but it beats not
  * getting an error at all.
  */
-#define StaticAssertDecl(condition, errmessage) \
-	static_assert(condition, errmessage)
-#define StaticAssertStmt(condition, errmessage) \
-	do { static_assert(condition, errmessage); } while(0)
 #ifdef HAVE_STATEMENT_EXPRESSIONS
 #define StaticAssertExpr(condition, errmessage) \
 	((void) ({ static_assert(condition, errmessage); true; }))
