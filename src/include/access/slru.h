@@ -110,7 +110,9 @@ typedef struct SlruSharedData
 	/*
 	 * latest_page_number is the page number of the current end of the log;
 	 * this is not critical data, since we use it only to avoid swapping out
-	 * the latest page.
+	 * the latest page.  (An exception: an accurate latest_page_number is
+	 * needed on pg_multixact/offsets to replay WAL generated with older minor
+	 * versions correctly.  See RecordNewMultiXact().)
 	 */
 	pg_atomic_uint64 latest_page_number;
 
