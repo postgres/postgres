@@ -115,6 +115,17 @@ $node_standby2->append_conf(
 recovery_end_command = 'echo recovery_end_failed > missing_dir/xyz.file'
 ));
 
+# Create recovery.signal and confirm that both signal files exist.
+# This is necessary to test how recovery behaves when both files are present,
+# i.e., standby.signal should take precedence and both files should be
+# removed at the end of recovery.
+$node_standby2->set_recovery_mode();
+my $node_standby2_data = $node_standby2->data_dir;
+ok(-f "$node_standby2_data/recovery.signal",
+	"recovery.signal is present at the beginning of recovery");
+ok(-f "$node_standby2_data/standby.signal",
+	"standby.signal is present at the beginning of recovery");
+
 $node_standby2->start;
 
 # Save the log location, to see the failure of recovery_end_command.
@@ -126,7 +137,6 @@ $node_standby2->promote;
 
 # Check the logs of the standby to see that the commands have failed.
 my $log_contents = slurp_file($node_standby2->logfile, $log_location);
-my $node_standby2_data = $node_standby2->data_dir;
 
 like(
 	$log_contents,
@@ -140,5 +150,11 @@ like(
 	$log_contents,
 	qr/WARNING:.*recovery_end_command/s,
 	"recovery_end_command failure detected in logs after promotion");
+
+# Check that no signal files are present after promotion.
+ok( !-f "$node_standby2_data/recovery.signal",
+	"recovery.signal was left behind after promotion");
+ok( !-f "$node_standby2_data/standby.signal",
+	"standby.signal was left behind after promotion");
 
 done_testing();
