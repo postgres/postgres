@@ -1563,6 +1563,15 @@ include_dir 'conf.d'
         The default is <literal>X25519:prime256v1</literal>.
        </para>
 
+       <note>
+        <para>
+         <literal>X25519</literal> is not allowed when
+         <productname>OpenSSL</productname> is configured for FIPS mode and
+         must be removed from the server configuration when FIPS mode is
+         enabled.
+        </para>
+       </note>
+
        <para>
         <productname>OpenSSL</productname> names for the most common curves
         are:
