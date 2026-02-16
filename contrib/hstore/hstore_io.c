@@ -346,7 +346,8 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 			if (ptr->needfree)
 			{
 				pfree(ptr->key);
-				pfree(ptr->val);
+				if (ptr->val != NULL)
+					pfree(ptr->val);
 			}
 		}
 		else
