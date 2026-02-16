@@ -2991,12 +2991,9 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	/*
 	 * For binary upgrade mode, dump pg_largeobject_metadata and the
 	 * associated pg_shdepend rows. This is faster to restore than the
-	 * equivalent set of large object commands.  We can only do this for
-	 * upgrades from v12 and newer; in older versions, pg_largeobject_metadata
-	 * was created WITH OIDS, so the OID column is hidden and won't be dumped.
+	 * equivalent set of large object commands.
 	 */
-	if (ropt->binary_upgrade && AH->public.remoteVersion >= 120000 &&
-		strcmp(te->desc, "TABLE DATA") == 0 &&
+	if (ropt->binary_upgrade && strcmp(te->desc, "TABLE DATA") == 0 &&
 		(te->catalogId.oid == LargeObjectMetadataRelationId ||
 		 te->catalogId.oid == SharedDependRelationId))
 		return REQ_DATA;

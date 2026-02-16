@@ -1118,11 +1118,9 @@ main(int argc, char **argv)
 	 * For binary upgrade mode, dump the pg_shdepend rows for large objects
 	 * and maybe even pg_largeobject_metadata (see comment below for details).
 	 * This is faster to restore than the equivalent set of large object
-	 * commands.  We can only do this for upgrades from v12 and newer; in
-	 * older versions, pg_largeobject_metadata was created WITH OIDS, so the
-	 * OID column is hidden and won't be dumped.
+	 * commands.
 	 */
-	if (dopt.binary_upgrade && fout->remoteVersion >= 120000)
+	if (dopt.binary_upgrade)
 	{
 		TableInfo  *shdepend;
 
@@ -2406,11 +2404,14 @@ dumpTableData_copy(Archive *fout, const void *dcontext)
 	column_list = fmtCopyColumnList(tbinfo, clistBuf);
 
 	/*
-	 * Use COPY (SELECT ...) TO when dumping a foreign table's data, and when
-	 * a filter condition was specified.  For other cases a simple COPY
-	 * suffices.
+	 * Use COPY (SELECT ...) TO when dumping a foreign table's data, when a
+	 * filter condition was specified, and when in binary upgrade mode and
+	 * dumping an old pg_largeobject_metadata defined WITH OIDS.  For other
+	 * cases a simple COPY suffices.
 	 */
-	if (tdinfo->filtercond || tbinfo->relkind == RELKIND_FOREIGN_TABLE)
+	if (tdinfo->filtercond || tbinfo->relkind == RELKIND_FOREIGN_TABLE ||
+		(fout->dopt->binary_upgrade && fout->remoteVersion < 120000 &&
+		 tbinfo->dobj.catId.oid == LargeObjectMetadataRelationId))
 	{
 		/* Temporary allows to access to foreign tables to dump data */
 		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
@@ -3967,14 +3968,13 @@ getLOs(Archive *fout)
 						 "FROM pg_largeobject_metadata ");
 
 	/*
-	 * For binary upgrades from v12 or newer, we transfer
-	 * pg_largeobject_metadata via COPY or by copying/linking its files from
-	 * the old cluster.  On such upgrades, we only need to consider large
-	 * objects that have comments or security labels, since we still restore
-	 * those objects via COMMENT/SECURITY LABEL commands.
+	 * For binary upgrades, we transfer pg_largeobject_metadata via COPY or by
+	 * copying/linking its files from the old cluster.  On such upgrades, we
+	 * only need to consider large objects that have comments or security
+	 * labels, since we still restore those objects via COMMENT/SECURITY LABEL
+	 * commands.
 	 */
-	if (dopt->binary_upgrade &&
-		fout->remoteVersion >= 120000)
+	if (dopt->binary_upgrade)
 		appendPQExpBufferStr(loQry,
 							 "WHERE oid IN "
 							 "(SELECT objoid FROM pg_description "
@@ -4063,25 +4063,13 @@ getLOs(Archive *fout)
 			loinfo->dobj.components |= DUMP_COMPONENT_ACL;
 
 		/*
-		 * In binary-upgrade mode for LOs, we do *not* dump out the LO data,
-		 * as it will be copied by pg_upgrade, which simply copies the
-		 * pg_largeobject table.
-		 *
-		 * The story for LO metadata is more complicated.  For upgrades from
-		 * versions older than v12, we use ordinary SQL commands to restore
-		 * both the content of pg_largeobject_metadata and any associated
-		 * pg_shdepend rows.  For upgrades from newer versions, we transfer
-		 * this information via COPY or by copying/linking the files from the
-		 * old cluster.  For such upgrades, we do not need to dump the data,
-		 * ACLs, or definitions of large objects.
+		 * In binary upgrade mode, pg_largeobject and pg_largeobject_metadata
+		 * are transferred via COPY or by copying/linking the files from the
+		 * old cluster.  Thus, we do not need to dump LO data, definitions, or
+		 * ACLs.
 		 */
 		if (dopt->binary_upgrade)
-		{
-			if (fout->remoteVersion >= 120000)
-				loinfo->dobj.dump &= ~(DUMP_COMPONENT_DATA | DUMP_COMPONENT_ACL | DUMP_COMPONENT_DEFINITION);
-			else
-				loinfo->dobj.dump &= ~DUMP_COMPONENT_DATA;
-		}
+			loinfo->dobj.dump &= ~(DUMP_COMPONENT_DATA | DUMP_COMPONENT_ACL | DUMP_COMPONENT_DEFINITION);
 
 		/*
 		 * Create a "BLOBS" data item for the group, too. This is just a
@@ -9296,12 +9284,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		 * pg_shdepend so that the columns names are collected for the
 		 * corresponding COPY commands.  Restoring the data for those catalogs
 		 * is faster than restoring the equivalent set of large object
-		 * commands.  We can only do this for upgrades from v12 and newer; in
-		 * older versions, pg_largeobject_metadata was created WITH OIDS, so
-		 * the OID column is hidden and won't be dumped.
+		 * commands.
 		 */
 		if (!tbinfo->interesting &&
-			!(fout->dopt->binary_upgrade && fout->remoteVersion >= 120000 &&
+			!(fout->dopt->binary_upgrade &&
 			  (tbinfo->dobj.catId.oid == LargeObjectMetadataRelationId ||
 			   tbinfo->dobj.catId.oid == SharedDependRelationId)))
 			continue;
@@ -9442,7 +9428,18 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							 "(pt.classoid = co.tableoid AND pt.objoid = co.oid)\n");
 
 	appendPQExpBufferStr(q,
-						 "WHERE a.attnum > 0::pg_catalog.int2\n"
+						 "WHERE a.attnum > 0::pg_catalog.int2\n");
+
+	/*
+	 * For binary upgrades from <v12, be sure to pick up
+	 * pg_largeobject_metadata's oid column.
+	 */
+	if (fout->dopt->binary_upgrade && fout->remoteVersion < 120000)
+		appendPQExpBufferStr(q,
+							 "OR (a.attnum = -2::pg_catalog.int2 AND src.tbloid = "
+							 CppAsString2(LargeObjectMetadataRelationId) ")\n");
+
+	appendPQExpBufferStr(q,
 						 "ORDER BY a.attrelid, a.attnum");
 
 	res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
@@ -9510,7 +9507,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		/* cross-check that we only got requested tables */
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
 			(!tbinfo->interesting &&
-			 !(fout->dopt->binary_upgrade && fout->remoteVersion >= 120000 &&
+			 !(fout->dopt->binary_upgrade &&
 			   (tbinfo->dobj.catId.oid == LargeObjectMetadataRelationId ||
 				tbinfo->dobj.catId.oid == SharedDependRelationId))))
 			pg_fatal("unexpected column data for table \"%s\"",
@@ -9544,7 +9541,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 
 		for (int j = 0; j < numatts; j++, r++)
 		{
-			if (j + 1 != atoi(PQgetvalue(res, r, i_attnum)))
+			if (j + 1 != atoi(PQgetvalue(res, r, i_attnum)) &&
+				!(fout->dopt->binary_upgrade && fout->remoteVersion < 120000 &&
+				  tbinfo->dobj.catId.oid == LargeObjectMetadataRelationId))
 				pg_fatal("invalid column numbering in table \"%s\"",
 						 tbinfo->dobj.name);
 			tbinfo->attnames[j] = pg_strdup(PQgetvalue(res, r, i_attname));
