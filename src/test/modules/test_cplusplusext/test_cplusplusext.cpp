@@ -25,6 +25,8 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(test_cplusplus_add);
 }
 
+StaticAssertDecl(sizeof(int32) == 4, "int32 should be 4 bytes");
+
 /*
  * Simple function that returns the sum of two integers.  This verifies that
  * C++ extension modules can be loaded and called correctly at runtime.
@@ -46,6 +48,9 @@ test_cplusplus_add(PG_FUNCTION_ARGS)
 	{
 		(void) rtr;
 	}
+
+	StaticAssertStmt(sizeof(int32) == 4, "int32 should be 4 bytes");
+	(void) StaticAssertExpr(sizeof(int64) == 8, "int64 should be 8 bytes");
 
 	list_free(list);
 	pfree(node);
