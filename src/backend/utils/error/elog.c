@@ -2363,11 +2363,12 @@ lmm_fail:
 			appendStringInfo(&buf, ", %s", elem);
 	}
 
-	result = (char *) guc_malloc(LOG, buf.len + 1);
+	result = guc_strdup(LOG, buf.data);
 	if (!result)
+	{
+		pfree(buf.data);
 		return false;
-	memcpy(result, buf.data, buf.len);
-	result[buf.len] = '\0';
+	}
 
 	guc_free(*newval);
 	*newval = result;
