@@ -17,6 +17,8 @@
 extern "C" {
 #include "postgres.h"
 #include "fmgr.h"
+#include "nodes/pg_list.h"
+#include "nodes/primnodes.h"
 
 PG_MODULE_MAGIC;
 
@@ -32,6 +34,21 @@ test_cplusplus_add(PG_FUNCTION_ARGS)
 {
 	int32		a = PG_GETARG_INT32(0);
 	int32		b = PG_GETARG_INT32(1);
+	RangeTblRef *node = makeNode(RangeTblRef);
+	List	   *list = list_make1(node);
+
+	foreach_ptr(RangeTblRef, rtr, list)
+	{
+		(void) rtr;
+	}
+
+	foreach_node(RangeTblRef, rtr, list)
+	{
+		(void) rtr;
+	}
+
+	list_free(list);
+	pfree(node);
 
 	PG_RETURN_INT32(a + b);
 }
