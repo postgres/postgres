@@ -1408,7 +1408,7 @@ PG_FUNCTION_INFO_V1(test_valid_server_encoding);
 Datum
 test_valid_server_encoding(PG_FUNCTION_ARGS)
 {
-	return pg_valid_server_encoding(text_to_cstring(PG_GETARG_TEXT_PP(0)));
+	PG_RETURN_BOOL(pg_valid_server_encoding(text_to_cstring(PG_GETARG_TEXT_PP(0))) >= 0);
 }
 
 /* Provide SQL access to IsBinaryCoercible() */
