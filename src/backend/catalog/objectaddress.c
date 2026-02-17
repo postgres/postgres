@@ -2808,7 +2808,7 @@ get_catalog_object_by_oid_extended(Relation catalog,
 	Oid			classId = RelationGetRelid(catalog);
 	int			oidCacheId = get_object_catcache_oid(classId);
 
-	if (oidCacheId > 0)
+	if (oidCacheId >= 0)
 	{
 		if (locktup)
 			tuple = SearchSysCacheLockedCopy1(oidCacheId,
