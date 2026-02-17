@@ -978,14 +978,14 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 
 		if (length_not_specified)	/* special case - get length to end of
 									 * string */
-			slice_size = L1 = -1;
+			E = slice_size = L1 = -1;
 		else if (length < 0)
 		{
 			/* SQL99 says to throw an error for E < S, i.e., negative length */
 			ereport(ERROR,
 					(errcode(ERRCODE_SUBSTRING_ERROR),
 					 errmsg("negative substring length not allowed")));
-			slice_size = L1 = -1;	/* silence stupider compilers */
+			E = slice_size = L1 = -1;	/* silence stupider compilers */
 		}
 		else if (pg_add_s32_overflow(S, length, &E))
 		{
