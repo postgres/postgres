@@ -739,12 +739,15 @@ extern Bitmapset *ExecGetAllUpdatedCols(ResultRelInfo *relinfo, EState *estate);
  */
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
-extern List *ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
-								   TupleTableSlot *slot, EState *estate,
-								   bool update,
-								   bool noDupErr,
-								   bool *specConflict, List *arbiterIndexes,
-								   bool onlySummarizing);
+
+/* flags for ExecInsertIndexTuples */
+#define		EIIT_IS_UPDATE			(1<<0)
+#define		EIIT_NO_DUPE_ERROR		(1<<1)
+#define		EIIT_ONLY_SUMMARIZING	(1<<2)
+extern List *ExecInsertIndexTuples(ResultRelInfo *resultRelInfo, EState *estate,
+								   bits32 options, TupleTableSlot *slot,
+								   List *arbiterIndexes,
+								   bool *specConflict);
 extern bool ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo,
 									  TupleTableSlot *slot,
 									  EState *estate, ItemPointer conflictTid,

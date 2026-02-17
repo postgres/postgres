@@ -276,18 +276,18 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		into all the relations indexing the result relation
  *		when a heap tuple is inserted into the result relation.
  *
- *		When 'update' is true and 'onlySummarizing' is false,
+ *		When EIIT_IS_UPDATE is set and EIIT_ONLY_SUMMARIZING isn't,
  *		executor is performing an UPDATE that could not use an
  *		optimization like heapam's HOT (in more general terms a
  *		call to table_tuple_update() took place and set
  *		'update_indexes' to TU_All).  Receiving this hint makes
  *		us consider if we should pass down the 'indexUnchanged'
  *		hint in turn.  That's something that we figure out for
- *		each index_insert() call iff 'update' is true.
- *		(When 'update' is false we already know not to pass the
+ *		each index_insert() call iff EIIT_IS_UPDATE is set.
+ *		(When that flag is not set we already know not to pass the
  *		hint to any index.)
  *
- *		If onlySummarizing is set, an equivalent optimization to
+ *		If EIIT_ONLY_SUMMARIZING is set, an equivalent optimization to
  *		HOT has been applied and any updated columns are indexed
  *		only by summarizing indexes (or in more general terms a
  *		call to table_tuple_update() took place and set
@@ -298,23 +298,21 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		Unique and exclusion constraints are enforced at the same
  *		time.  This returns a list of index OIDs for any unique or
  *		exclusion constraints that are deferred and that had
- *		potential (unconfirmed) conflicts.  (if noDupErr == true,
+ *		potential (unconfirmed) conflicts.  (if EIIT_NO_DUPE_ERROR,
  *		the same is done for non-deferred constraints, but report
  *		if conflict was speculative or deferred conflict to caller)
  *
- *		If 'arbiterIndexes' is nonempty, noDupErr applies only to
- *		those indexes.  NIL means noDupErr applies to all indexes.
+ *		If 'arbiterIndexes' is nonempty, EIIT_NO_DUPE_ERROR applies only to
+ *		those indexes.  NIL means EIIT_NO_DUPE_ERROR applies to all indexes.
  * ----------------------------------------------------------------
  */
 List *
 ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
-					  TupleTableSlot *slot,
 					  EState *estate,
-					  bool update,
-					  bool noDupErr,
-					  bool *specConflict,
+					  bits32 flags,
+					  TupleTableSlot *slot,
 					  List *arbiterIndexes,
-					  bool onlySummarizing)
+					  bool *specConflict)
 {
 	ItemPointer tupleid = &slot->tts_tid;
 	List	   *result = NIL;
@@ -374,7 +372,7 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 		 * Skip processing of non-summarizing indexes if we only update
 		 * summarizing indexes
 		 */
-		if (onlySummarizing && !indexInfo->ii_Summarizing)
+		if ((flags & EIIT_ONLY_SUMMARIZING) && !indexInfo->ii_Summarizing)
 			continue;
 
 		/* Check for partial index */
@@ -409,7 +407,7 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 					   isnull);
 
 		/* Check whether to apply noDupErr to this index */
-		applyNoDupErr = noDupErr &&
+		applyNoDupErr = (flags & EIIT_NO_DUPE_ERROR) &&
 			(arbiterIndexes == NIL ||
 			 list_member_oid(arbiterIndexes,
 							 indexRelation->rd_index->indexrelid));
@@ -441,10 +439,11 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 		 * index.  If we're being called as part of an UPDATE statement,
 		 * consider if the 'indexUnchanged' = true hint should be passed.
 		 */
-		indexUnchanged = update && index_unchanged_by_update(resultRelInfo,
-															 estate,
-															 indexInfo,
-															 indexRelation);
+		indexUnchanged = ((flags & EIIT_IS_UPDATE) &&
+						  index_unchanged_by_update(resultRelInfo,
+													estate,
+													indexInfo,
+													indexRelation));
 
 		satisfiesConstraint =
 			index_insert(indexRelation, /* index relation */

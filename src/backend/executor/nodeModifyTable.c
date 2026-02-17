@@ -1226,10 +1226,9 @@ ExecInsert(ModifyTableContext *context,
 
 			/* insert index entries for tuple */
 			recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
-												   slot, estate, false, true,
-												   &specConflict,
-												   arbiterIndexes,
-												   false);
+												   estate, EIIT_NO_DUPE_ERROR,
+												   slot, arbiterIndexes,
+												   &specConflict);
 
 			/* adjust the tuple's state accordingly */
 			table_tuple_complete_speculative(resultRelationDesc, slot,
@@ -1266,10 +1265,9 @@ ExecInsert(ModifyTableContext *context,
 
 			/* insert index entries for tuple */
 			if (resultRelInfo->ri_NumIndices > 0)
-				recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
-													   slot, estate, false,
-													   false, NULL, NIL,
-													   false);
+				recheckIndexes = ExecInsertIndexTuples(resultRelInfo, estate,
+													   0, slot, NIL,
+													   NULL);
 		}
 	}
 
@@ -2356,11 +2354,15 @@ ExecUpdateEpilogue(ModifyTableContext *context, UpdateContext *updateCxt,
 
 	/* insert index entries for tuple if necessary */
 	if (resultRelInfo->ri_NumIndices > 0 && (updateCxt->updateIndexes != TU_None))
-		recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
-											   slot, context->estate,
-											   true, false,
-											   NULL, NIL,
-											   (updateCxt->updateIndexes == TU_Summarizing));
+	{
+		bits32		flags = EIIT_IS_UPDATE;
+
+		if (updateCxt->updateIndexes == TU_Summarizing)
+			flags |= EIIT_ONLY_SUMMARIZING;
+		recheckIndexes = ExecInsertIndexTuples(resultRelInfo, context->estate,
+											   flags, slot, NIL,
+											   NULL);
+	}
 
 	/* AFTER ROW UPDATE Triggers */
 	ExecARUpdateTriggers(context->estate, resultRelInfo,
