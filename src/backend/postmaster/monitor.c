@@ -31,6 +31,7 @@
 #include "postmaster/interrupt.h"
 #include "postmaster/monitor.h"
 #include "storage/buf_internals.h"
+#include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/procsignal.h"
 #include "storage/shm_toc.h"
@@ -54,6 +55,8 @@ typedef struct OqtdItem
 Size mss_subscriberInfo_size(void);
 Size mss_publisherInfo_size(void);
 Size mss_subjectEntity_size(void);
+Size mss_monitorChannels_size(void);
+Size mss_monitorChannelData_size(void);
 static bool can_deliver(OqtdItem *item, int current_pn, int last_processed_queue);
 static void oqtd_insert_sorted(List **oqtd, OqtdItem *new_item);
 static void read_msgs_from_channel(int qid, List **oqtd, int current_pn);
@@ -566,6 +569,7 @@ deliver_message_to_subscribers(MonitorMsg *msg)
 
     bool found;
     mssEntry *entry;
+	SubjectEntity *entity;
 
     entry = hash_search(state->mss_hash,
                         &msg->key,
@@ -575,8 +579,7 @@ deliver_message_to_subscribers(MonitorMsg *msg)
     if (!found)
         return;
 
-    SubjectEntity *entity =
-        &state->entitiesInfo.subjectEntities[entry->subjectEntityId];
+    entity = &state->entitiesInfo.subjectEntities[entry->subjectEntityId];
 
     for (int i = 0; i < MAX_SUBS_NUM; i++)
     {
