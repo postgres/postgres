@@ -1515,8 +1515,8 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  * Output parameters:
  *	tmfd - filled in failure cases (see below)
  *	lockmode - filled with lock mode acquired on tuple
- *  update_indexes - in success cases this is set to true if new index entries
- *		are required for this tuple
+ *	update_indexes - in success cases this is set if new index entries
+ *		are required for this tuple; see TU_UpdateIndexes
  *
  * Normal, successful return value is TM_Ok, which means we did actually
  * update it.  Failure return codes are TM_SelfModified, TM_Updated, and
