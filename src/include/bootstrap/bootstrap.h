@@ -53,7 +53,8 @@ extern void boot_get_type_io_data(Oid typid,
 								  char *typdelim,
 								  Oid *typioparam,
 								  Oid *typinput,
-								  Oid *typoutput);
+								  Oid *typoutput,
+								  Oid *typcollation);
 
 union YYSTYPE;
 typedef void *yyscan_t;

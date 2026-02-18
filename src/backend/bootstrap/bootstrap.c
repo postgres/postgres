@@ -26,6 +26,7 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "common/link-canary.h"
 #include "miscadmin.h"
@@ -46,6 +47,7 @@
 static void CheckerModeMain(void);
 static void bootstrap_signals(void);
 static Form_pg_attribute AllocateAttribute(void);
+static void InsertOneProargdefaultsValue(char *value);
 static void populate_typ_list(void);
 static Oid	gettype(char *type);
 static void cleanup(void);
@@ -91,38 +93,28 @@ static const struct typinfo TypInfo[] = {
 	F_BYTEAIN, F_BYTEAOUT},
 	{"char", CHAROID, 0, 1, true, TYPALIGN_CHAR, TYPSTORAGE_PLAIN, InvalidOid,
 	F_CHARIN, F_CHAROUT},
+	{"cstring", CSTRINGOID, 0, -2, false, TYPALIGN_CHAR, TYPSTORAGE_PLAIN, InvalidOid,
+	F_CSTRING_IN, F_CSTRING_OUT},
 	{"int2", INT2OID, 0, 2, true, TYPALIGN_SHORT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_INT2IN, F_INT2OUT},
 	{"int4", INT4OID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_INT4IN, F_INT4OUT},
+	{"int8", INT8OID, 0, 8, true, TYPALIGN_DOUBLE, TYPSTORAGE_PLAIN, InvalidOid,
+	F_INT8IN, F_INT8OUT},
 	{"float4", FLOAT4OID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_FLOAT4IN, F_FLOAT4OUT},
+	{"float8", FLOAT8OID, 0, 8, true, TYPALIGN_DOUBLE, TYPSTORAGE_PLAIN, InvalidOid,
+	F_FLOAT8IN, F_FLOAT8OUT},
 	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, TYPALIGN_CHAR, TYPSTORAGE_PLAIN, C_COLLATION_OID,
 	F_NAMEIN, F_NAMEOUT},
-	{"regclass", REGCLASSOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_REGCLASSIN, F_REGCLASSOUT},
 	{"regproc", REGPROCOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_REGPROCIN, F_REGPROCOUT},
-	{"regtype", REGTYPEOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_REGTYPEIN, F_REGTYPEOUT},
-	{"regrole", REGROLEOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_REGROLEIN, F_REGROLEOUT},
-	{"regnamespace", REGNAMESPACEOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_REGNAMESPACEIN, F_REGNAMESPACEOUT},
-	{"regdatabase", REGDATABASEOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_REGDATABASEIN, F_REGDATABASEOUT},
 	{"text", TEXTOID, 0, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, DEFAULT_COLLATION_OID,
 	F_TEXTIN, F_TEXTOUT},
+	{"jsonb", JSONBOID, 0, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, InvalidOid,
+	F_JSONB_IN, F_JSONB_OUT},
 	{"oid", OIDOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_OIDIN, F_OIDOUT},
-	{"oid8", OID8OID, 0, 8, true, TYPALIGN_DOUBLE, TYPSTORAGE_PLAIN, InvalidOid,
-	F_OID8IN, F_OID8OUT},
-	{"tid", TIDOID, 0, 6, false, TYPALIGN_SHORT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_TIDIN, F_TIDOUT},
-	{"xid", XIDOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_XIDIN, F_XIDOUT},
-	{"cid", CIDOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
-	F_CIDIN, F_CIDOUT},
 	{"pg_node_tree", PG_NODE_TREEOID, 0, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, DEFAULT_COLLATION_OID,
 	F_PG_NODE_TREE_IN, F_PG_NODE_TREE_OUT},
 	{"int2vector", INT2VECTOROID, INT2OID, -1, false, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
@@ -660,6 +652,7 @@ InsertOneTuple(void)
 void
 InsertOneValue(char *value, int i)
 {
+	Form_pg_attribute attr;
 	Oid			typoid;
 	int16		typlen;
 	bool		typbyval;
@@ -668,19 +661,42 @@ InsertOneValue(char *value, int i)
 	Oid			typioparam;
 	Oid			typinput;
 	Oid			typoutput;
+	Oid			typcollation;
 
 	Assert(i >= 0 && i < MAXATTR);
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	typoid = TupleDescAttr(boot_reldesc->rd_att, i)->atttypid;
+	attr = TupleDescAttr(RelationGetDescr(boot_reldesc), i);
+	typoid = attr->atttypid;
 
 	boot_get_type_io_data(typoid,
 						  &typlen, &typbyval, &typalign,
 						  &typdelim, &typioparam,
-						  &typinput, &typoutput);
+						  &typinput, &typoutput,
+						  &typcollation);
 
-	values[i] = OidInputFunctionCall(typinput, value, typioparam, -1);
+	/*
+	 * pg_node_tree values can't be inserted normally (pg_node_tree_in would
+	 * just error out), so provide special cases for such columns that we
+	 * would like to fill during bootstrap.
+	 */
+	if (typoid == PG_NODE_TREEOID)
+	{
+		/* pg_proc.proargdefaults */
+		if (RelationGetRelid(boot_reldesc) == ProcedureRelationId &&
+			i == Anum_pg_proc_proargdefaults - 1)
+			InsertOneProargdefaultsValue(value);
+		else					/* maybe other cases later */
+			elog(ERROR, "can't handle pg_node_tree input for %s.%s",
+				 RelationGetRelationName(boot_reldesc),
+				 NameStr(attr->attname));
+	}
+	else
+	{
+		/* Normal case */
+		values[i] = OidInputFunctionCall(typinput, value, typioparam, -1);
+	}
 
 	/*
 	 * We use ereport not elog here so that parameters aren't evaluated unless
@@ -689,6 +705,111 @@ InsertOneValue(char *value, int i)
 	ereport(DEBUG4,
 			(errmsg_internal("inserted -> %s",
 							 OidOutputFunctionCall(typoutput, values[i]))));
+}
+
+/* ----------------
+ *		InsertOneProargdefaultsValue
+ *
+ * In general, proargdefaults can be a list of any expressions, but
+ * for bootstrap we only support a list of Const nodes.  The input
+ * has the form of a text array, and we feed non-null elements to the
+ * typinput functions for the appropriate parameters.
+ * ----------------
+ */
+static void
+InsertOneProargdefaultsValue(char *value)
+{
+	int			pronargs;
+	oidvector  *proargtypes;
+	Datum		arrayval;
+	Datum	   *array_datums;
+	bool	   *array_nulls;
+	int			array_count;
+	List	   *proargdefaults;
+	char	   *nodestring;
+
+	/* The pg_proc columns we need to use must have been filled already */
+	StaticAssertDecl(Anum_pg_proc_pronargs < Anum_pg_proc_proargdefaults,
+					 "pronargs must come before proargdefaults");
+	StaticAssertDecl(Anum_pg_proc_pronargdefaults < Anum_pg_proc_proargdefaults,
+					 "pronargdefaults must come before proargdefaults");
+	StaticAssertDecl(Anum_pg_proc_proargtypes < Anum_pg_proc_proargdefaults,
+					 "proargtypes must come before proargdefaults");
+	if (Nulls[Anum_pg_proc_pronargs - 1])
+		elog(ERROR, "pronargs must not be null");
+	if (Nulls[Anum_pg_proc_proargtypes - 1])
+		elog(ERROR, "proargtypes must not be null");
+	pronargs = DatumGetInt16(values[Anum_pg_proc_pronargs - 1]);
+	proargtypes = DatumGetPointer(values[Anum_pg_proc_proargtypes - 1]);
+	Assert(pronargs == proargtypes->dim1);
+
+	/* Parse the input string as an array value, then deconstruct to Datums */
+	arrayval = OidFunctionCall3(F_ARRAY_IN,
+								CStringGetDatum(value),
+								ObjectIdGetDatum(CSTRINGOID),
+								Int32GetDatum(-1));
+	deconstruct_array_builtin(DatumGetArrayTypeP(arrayval), CSTRINGOID,
+							  &array_datums, &array_nulls, &array_count);
+
+	/* The values should correspond to the last N argtypes */
+	if (array_count > pronargs)
+		elog(ERROR, "too many proargdefaults entries");
+
+	/* Build the List of Const nodes */
+	proargdefaults = NIL;
+	for (int i = 0; i < array_count; i++)
+	{
+		Oid			argtype = proargtypes->values[pronargs - array_count + i];
+		int16		typlen;
+		bool		typbyval;
+		char		typalign;
+		char		typdelim;
+		Oid			typioparam;
+		Oid			typinput;
+		Oid			typoutput;
+		Oid			typcollation;
+		Datum		defval;
+		bool		defnull;
+		Const	   *defConst;
+
+		boot_get_type_io_data(argtype,
+							  &typlen, &typbyval, &typalign,
+							  &typdelim, &typioparam,
+							  &typinput, &typoutput,
+							  &typcollation);
+
+		defnull = array_nulls[i];
+		if (defnull)
+			defval = (Datum) 0;
+		else
+			defval = OidInputFunctionCall(typinput,
+										  DatumGetCString(array_datums[i]),
+										  typioparam, -1);
+
+		defConst = makeConst(argtype,
+							 -1,	/* never any typmod */
+							 typcollation,
+							 typlen,
+							 defval,
+							 defnull,
+							 typbyval);
+		proargdefaults = lappend(proargdefaults, defConst);
+	}
+
+	/*
+	 * Flatten the List to a node-tree string, then convert to a text datum,
+	 * which is the storage representation of pg_node_tree.
+	 */
+	nodestring = nodeToString(proargdefaults);
+	values[Anum_pg_proc_proargdefaults - 1] = CStringGetTextDatum(nodestring);
+	Nulls[Anum_pg_proc_proargdefaults - 1] = false;
+
+	/*
+	 * Hack: fill in pronargdefaults with the right value.  This is surely
+	 * ugly, but it beats making the programmer do it.
+	 */
+	values[Anum_pg_proc_pronargdefaults - 1] = Int16GetDatum(array_count);
+	Nulls[Anum_pg_proc_pronargdefaults - 1] = false;
 }
 
 /* ----------------
@@ -831,10 +952,11 @@ gettype(char *type)
  *		boot_get_type_io_data
  *
  * Obtain type I/O information at bootstrap time.  This intentionally has
- * almost the same API as lsyscache.c's get_type_io_data, except that
+ * an API very close to that of lsyscache.c's get_type_io_data, except that
  * we only support obtaining the typinput and typoutput routines, not
- * the binary I/O routines.  It is exported so that array_in and array_out
- * can be made to work during early bootstrap.
+ * the binary I/O routines, and we also return the type's collation.
+ * This is exported so that array_in and array_out can be made to work
+ * during early bootstrap.
  * ----------------
  */
 void
@@ -845,7 +967,8 @@ boot_get_type_io_data(Oid typid,
 					  char *typdelim,
 					  Oid *typioparam,
 					  Oid *typinput,
-					  Oid *typoutput)
+					  Oid *typoutput,
+					  Oid *typcollation)
 {
 	if (Typ != NIL)
 	{
@@ -876,6 +999,8 @@ boot_get_type_io_data(Oid typid,
 
 		*typinput = ap->am_typ.typinput;
 		*typoutput = ap->am_typ.typoutput;
+
+		*typcollation = ap->am_typ.typcollation;
 	}
 	else
 	{
@@ -904,6 +1029,8 @@ boot_get_type_io_data(Oid typid,
 
 		*typinput = TypInfo[typeindex].inproc;
 		*typoutput = TypInfo[typeindex].outproc;
+
+		*typcollation = TypInfo[typeindex].collation;
 	}
 }
 

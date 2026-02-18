@@ -2492,6 +2492,7 @@ get_type_io_data(Oid typid,
 	{
 		Oid			typinput;
 		Oid			typoutput;
+		Oid			typcollation;
 
 		boot_get_type_io_data(typid,
 							  typlen,
@@ -2500,7 +2501,8 @@ get_type_io_data(Oid typid,
 							  typdelim,
 							  typioparam,
 							  &typinput,
-							  &typoutput);
+							  &typoutput,
+							  &typcollation);
 		switch (which_func)
 		{
 			case IOFunc_input:
