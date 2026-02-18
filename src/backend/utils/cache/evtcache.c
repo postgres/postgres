@@ -49,7 +49,8 @@ static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 
 static void BuildEventTriggerCache(void);
 static void InvalidateEventCacheCallback(Datum arg,
-										 int cacheid, uint32 hashvalue);
+										 SysCacheIdentifier cacheid,
+										 uint32 hashvalue);
 static Bitmapset *DecodeTextArrayToBitmapset(Datum array);
 
 /*
@@ -254,7 +255,8 @@ DecodeTextArrayToBitmapset(Datum array)
  * memory leaks.
  */
 static void
-InvalidateEventCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateEventCacheCallback(Datum arg, SysCacheIdentifier cacheid,
+							 uint32 hashvalue)
 {
 	/*
 	 * If the cache isn't valid, then there might be a rebuild in progress, so

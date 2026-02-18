@@ -99,10 +99,11 @@ typedef struct
 								 * error messages */
 	Oid			class_oid;		/* oid of catalog */
 	Oid			oid_index_oid;	/* oid of index on system oid column */
-	int			oid_catcache_id;	/* id of catcache on system oid column	*/
-	int			name_catcache_id;	/* id of catcache on (name,namespace), or
-									 * (name) if the object does not live in a
-									 * namespace */
+	SysCacheIdentifier oid_catcache_id; /* id of catcache on system oid column	*/
+	SysCacheIdentifier name_catcache_id;	/* id of catcache on
+											 * (name,namespace), or (name) if
+											 * the object does not live in a
+											 * namespace */
 	AttrNumber	attnum_oid;		/* attribute number of oid column */
 	AttrNumber	attnum_name;	/* attnum of name field */
 	AttrNumber	attnum_namespace;	/* attnum of namespace field */
@@ -2571,7 +2572,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 Oid
 get_object_namespace(const ObjectAddress *address)
 {
-	int			cache;
+	SysCacheIdentifier cache;
 	HeapTuple	tuple;
 	Oid			oid;
 	const ObjectPropertyType *property;
@@ -2640,7 +2641,7 @@ get_object_oid_index(Oid class_id)
 	return prop->oid_index_oid;
 }
 
-int
+SysCacheIdentifier
 get_object_catcache_oid(Oid class_id)
 {
 	const ObjectPropertyType *prop = get_object_property_data(class_id);
@@ -2648,7 +2649,7 @@ get_object_catcache_oid(Oid class_id)
 	return prop->oid_catcache_id;
 }
 
-int
+SysCacheIdentifier
 get_object_catcache_name(Oid class_id)
 {
 	const ObjectPropertyType *prop = get_object_property_data(class_id);
@@ -2806,7 +2807,7 @@ get_catalog_object_by_oid_extended(Relation catalog,
 {
 	HeapTuple	tuple;
 	Oid			classId = RelationGetRelid(catalog);
-	int			oidCacheId = get_object_catcache_oid(classId);
+	SysCacheIdentifier oidCacheId = get_object_catcache_oid(classId);
 
 	if (oidCacheId >= 0)
 	{

@@ -25,35 +25,35 @@
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);
 
-extern HeapTuple SearchSysCache(int cacheId,
+extern HeapTuple SearchSysCache(SysCacheIdentifier cacheId,
 								Datum key1, Datum key2, Datum key3, Datum key4);
 
 /*
  * The use of argument specific numbers is encouraged. They're faster, and
  * insulates the caller from changes in the maximum number of keys.
  */
-extern HeapTuple SearchSysCache1(int cacheId,
+extern HeapTuple SearchSysCache1(SysCacheIdentifier cacheId,
 								 Datum key1);
-extern HeapTuple SearchSysCache2(int cacheId,
+extern HeapTuple SearchSysCache2(SysCacheIdentifier cacheId,
 								 Datum key1, Datum key2);
-extern HeapTuple SearchSysCache3(int cacheId,
+extern HeapTuple SearchSysCache3(SysCacheIdentifier cacheId,
 								 Datum key1, Datum key2, Datum key3);
-extern HeapTuple SearchSysCache4(int cacheId,
+extern HeapTuple SearchSysCache4(SysCacheIdentifier cacheId,
 								 Datum key1, Datum key2, Datum key3, Datum key4);
 
 extern void ReleaseSysCache(HeapTuple tuple);
 
-extern HeapTuple SearchSysCacheLocked1(int cacheId,
+extern HeapTuple SearchSysCacheLocked1(SysCacheIdentifier cacheId,
 									   Datum key1);
 
 /* convenience routines */
-extern HeapTuple SearchSysCacheCopy(int cacheId,
+extern HeapTuple SearchSysCacheCopy(SysCacheIdentifier cacheId,
 									Datum key1, Datum key2, Datum key3, Datum key4);
-extern HeapTuple SearchSysCacheLockedCopy1(int cacheId,
+extern HeapTuple SearchSysCacheLockedCopy1(SysCacheIdentifier cacheId,
 										   Datum key1);
-extern bool SearchSysCacheExists(int cacheId,
+extern bool SearchSysCacheExists(SysCacheIdentifier cacheId,
 								 Datum key1, Datum key2, Datum key3, Datum key4);
-extern Oid	GetSysCacheOid(int cacheId, AttrNumber oidcol,
+extern Oid	GetSysCacheOid(SysCacheIdentifier cacheId, AttrNumber oidcol,
 						   Datum key1, Datum key2, Datum key3, Datum key4);
 
 extern HeapTuple SearchSysCacheAttName(Oid relid, const char *attname);
@@ -63,21 +63,21 @@ extern bool SearchSysCacheExistsAttName(Oid relid, const char *attname);
 extern HeapTuple SearchSysCacheAttNum(Oid relid, int16 attnum);
 extern HeapTuple SearchSysCacheCopyAttNum(Oid relid, int16 attnum);
 
-extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
+extern Datum SysCacheGetAttr(SysCacheIdentifier cacheId, HeapTuple tup,
 							 AttrNumber attributeNumber, bool *isNull);
 
-extern Datum SysCacheGetAttrNotNull(int cacheId, HeapTuple tup,
+extern Datum SysCacheGetAttrNotNull(SysCacheIdentifier cacheId, HeapTuple tup,
 									AttrNumber attributeNumber);
 
-extern uint32 GetSysCacheHashValue(int cacheId,
+extern uint32 GetSysCacheHashValue(SysCacheIdentifier cacheId,
 								   Datum key1, Datum key2, Datum key3, Datum key4);
 
 /* list-search interface.  Users of this must import catcache.h too */
 struct catclist;
-extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
+extern struct catclist *SearchSysCacheList(SysCacheIdentifier cacheId, int nkeys,
 										   Datum key1, Datum key2, Datum key3);
 
-extern void SysCacheInvalidate(int cacheId, uint32 hashValue);
+extern void SysCacheInvalidate(SysCacheIdentifier cacheId, uint32 hashValue);
 
 extern bool RelationInvalidatesSnapshotsOnly(Oid relid);
 extern bool RelationHasSysCache(Oid relid);

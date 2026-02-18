@@ -1813,7 +1813,7 @@ CacheInvalidateRelmap(Oid databaseId)
  * flush all cached state anyway.
  */
 void
-CacheRegisterSyscacheCallback(int cacheid,
+CacheRegisterSyscacheCallback(SysCacheIdentifier cacheid,
 							  SyscacheCallbackFunction func,
 							  Datum arg)
 {
@@ -1895,7 +1895,7 @@ CacheRegisterRelSyncCallback(RelSyncCallbackFunction func,
  * this module from knowing which catcache IDs correspond to which catalogs.
  */
 void
-CallSyscacheCallbacks(int cacheid, uint32 hashvalue)
+CallSyscacheCallbacks(SysCacheIdentifier cacheid, uint32 hashvalue)
 {
 	int			i;
 

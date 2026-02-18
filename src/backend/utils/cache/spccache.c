@@ -52,7 +52,8 @@ typedef struct
  * tablespaces, nor do we expect them to be frequently modified.
  */
 static void
-InvalidateTableSpaceCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateTableSpaceCacheCallback(Datum arg, SysCacheIdentifier cacheid,
+								  uint32 hashvalue)
 {
 	HASH_SEQ_STATUS status;
 	TableSpaceCacheEntry *spc;

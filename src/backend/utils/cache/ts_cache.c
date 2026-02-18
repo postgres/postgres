@@ -91,7 +91,7 @@ static Oid	TSCurrentConfigCache = InvalidOid;
  * table address as the "arg".
  */
 static void
-InvalidateTSCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateTSCacheCallBack(Datum arg, SysCacheIdentifier cacheid, uint32 hashvalue)
 {
 	HTAB	   *hash = (HTAB *) DatumGetPointer(arg);
 	HASH_SEQ_STATUS status;

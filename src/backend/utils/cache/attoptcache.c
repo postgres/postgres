@@ -50,7 +50,8 @@ typedef struct
  * for that attribute.
  */
 static void
-InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateAttoptCacheCallback(Datum arg, SysCacheIdentifier cacheid,
+							  uint32 hashvalue)
 {
 	HASH_SEQ_STATUS status;
 	AttoptCacheEntry *attopt;

@@ -62,7 +62,8 @@ typedef struct
  * made for them, however.
  */
 static void
-InvalidateShippableCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateShippableCacheCallback(Datum arg, SysCacheIdentifier cacheid,
+								 uint32 hashvalue)
 {
 	HASH_SEQ_STATUS status;
 	ShippableCacheEntry *entry;

@@ -5164,7 +5164,7 @@ maybe_reread_subscription(void)
  * Callback from subscription syscache invalidation.
  */
 static void
-subscription_change_cb(Datum arg, int cacheid, uint32 hashvalue)
+subscription_change_cb(Datum arg, SysCacheIdentifier cacheid, uint32 hashvalue)
 {
 	MySubscriptionValid = false;
 }

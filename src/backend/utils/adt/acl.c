@@ -130,7 +130,8 @@ static AclMode convert_largeobject_priv_string(text *priv_type_text);
 static AclMode convert_role_priv_string(text *priv_type_text);
 static AclResult pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode);
 
-static void RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue);
+static void RoleMembershipCacheCallback(Datum arg, SysCacheIdentifier cacheid,
+										uint32 hashvalue);
 
 
 /*
@@ -5067,7 +5068,8 @@ initialize_acl(void)
  *		Syscache inval callback function
  */
 static void
-RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
+RoleMembershipCacheCallback(Datum arg, SysCacheIdentifier cacheid,
+							uint32 hashvalue)
 {
 	if (cacheid == DATABASEOID &&
 		hashvalue != cached_db_hash &&

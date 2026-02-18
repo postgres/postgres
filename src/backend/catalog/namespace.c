@@ -229,7 +229,8 @@ static void AccessTempTableNamespace(bool force);
 static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
-static void InvalidationCallback(Datum arg, int cacheid, uint32 hashvalue);
+static void InvalidationCallback(Datum arg, SysCacheIdentifier cacheid,
+								 uint32 hashvalue);
 static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 						   bool include_out_arguments, int pronargs,
 						   int **argnumbers, int *fgc_flags);
@@ -4863,7 +4864,7 @@ InitializeSearchPath(void)
  *		Syscache inval callback function
  */
 static void
-InvalidationCallback(Datum arg, int cacheid, uint32 hashvalue)
+InvalidationCallback(Datum arg, SysCacheIdentifier cacheid, uint32 hashvalue)
 {
 	/*
 	 * Force search path to be recomputed on next use, also invalidating the

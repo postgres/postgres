@@ -162,7 +162,8 @@ typedef struct ExtensionSiblingCache
 static ExtensionSiblingCache *ext_sibling_list = NULL;
 
 /* Local functions */
-static void ext_sibling_callback(Datum arg, int cacheid, uint32 hashvalue);
+static void ext_sibling_callback(Datum arg, SysCacheIdentifier cacheid,
+								 uint32 hashvalue);
 static List *find_update_path(List *evi_list,
 							  ExtensionVersionInfo *evi_start,
 							  ExtensionVersionInfo *evi_target,
@@ -379,7 +380,7 @@ get_function_sibling_type(Oid funcoid, const char *typname)
  * looking for, could change without an extension update or drop/recreate.
  */
 static void
-ext_sibling_callback(Datum arg, int cacheid, uint32 hashvalue)
+ext_sibling_callback(Datum arg, SysCacheIdentifier cacheid, uint32 hashvalue)
 {
 	ExtensionSiblingCache *cache_entry;
 

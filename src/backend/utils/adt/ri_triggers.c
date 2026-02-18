@@ -213,7 +213,8 @@ static bool ri_CompareWithCast(Oid eq_opr, Oid typeid, Oid collid,
 							   Datum lhs, Datum rhs);
 
 static void ri_InitHashTables(void);
-static void InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);
+static void InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cacheid,
+											  uint32 hashvalue);
 static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan);
 static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
@@ -2397,7 +2398,8 @@ get_ri_constraint_root(Oid constrOid)
  * data from changing under it --- but we may get cache flushes anyway.)
  */
 static void
-InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cacheid,
+								  uint32 hashvalue)
 {
 	dlist_mutable_iter iter;
 

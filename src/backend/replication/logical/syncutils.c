@@ -98,7 +98,8 @@ FinishSyncWorker(void)
  * Callback from syscache invalidation.
  */
 void
-InvalidateSyncingRelStates(Datum arg, int cacheid, uint32 hashvalue)
+InvalidateSyncingRelStates(Datum arg, SysCacheIdentifier cacheid,
+						   uint32 hashvalue)
 {
 	relation_states_validity = SYNC_RELATIONS_STATE_NEEDS_REBUILD;
 }

@@ -86,7 +86,7 @@ static void pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
 static bool publications_valid;
 
 static List *LoadPublications(List *pubnames);
-static void publication_invalidation_cb(Datum arg, int cacheid,
+static void publication_invalidation_cb(Datum arg, SysCacheIdentifier cacheid,
 										uint32 hashvalue);
 static void send_repl_origin(LogicalDecodingContext *ctx,
 							 ReplOriginId origin_id, XLogRecPtr origin_lsn,
@@ -227,7 +227,7 @@ static void send_relation_and_attrs(Relation relation, TransactionId xid,
 									LogicalDecodingContext *ctx,
 									RelationSyncEntry *relentry);
 static void rel_sync_cache_relation_cb(Datum arg, Oid relid);
-static void rel_sync_cache_publication_cb(Datum arg, int cacheid,
+static void rel_sync_cache_publication_cb(Datum arg, SysCacheIdentifier cacheid,
 										  uint32 hashvalue);
 static void set_schema_sent_in_streamed_txn(RelationSyncEntry *entry,
 											TransactionId xid);
@@ -1828,7 +1828,8 @@ LoadPublications(List *pubnames)
  * Called for invalidations on pg_publication.
  */
 static void
-publication_invalidation_cb(Datum arg, int cacheid, uint32 hashvalue)
+publication_invalidation_cb(Datum arg, SysCacheIdentifier cacheid,
+							uint32 hashvalue)
 {
 	publications_valid = false;
 }
@@ -2431,7 +2432,8 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
  * Called for invalidations on pg_namespace.
  */
 static void
-rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)
+rel_sync_cache_publication_cb(Datum arg, SysCacheIdentifier cacheid,
+							  uint32 hashvalue)
 {
 	HASH_SEQ_STATUS status;
 	RelationSyncEntry *entry;

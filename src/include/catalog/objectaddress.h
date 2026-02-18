@@ -17,6 +17,7 @@
 #include "nodes/parsenodes.h"
 #include "storage/lockdefs.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 
 /*
  * An ObjectAddress represents a database object of any type.
@@ -57,8 +58,8 @@ extern Oid	get_object_namespace(const ObjectAddress *address);
 extern bool is_objectclass_supported(Oid class_id);
 extern const char *get_object_class_descr(Oid class_id);
 extern Oid	get_object_oid_index(Oid class_id);
-extern int	get_object_catcache_oid(Oid class_id);
-extern int	get_object_catcache_name(Oid class_id);
+extern SysCacheIdentifier get_object_catcache_oid(Oid class_id);
+extern SysCacheIdentifier get_object_catcache_name(Oid class_id);
 extern AttrNumber get_object_attnum_oid(Oid class_id);
 extern AttrNumber get_object_attnum_name(Oid class_id);
 extern AttrNumber get_object_attnum_namespace(Oid class_id);

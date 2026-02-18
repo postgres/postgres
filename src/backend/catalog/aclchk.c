@@ -2115,7 +2115,7 @@ static void
 ExecGrant_common(InternalGrant *istmt, Oid classid, AclMode default_privs,
 				 void (*object_check) (InternalGrant *istmt, HeapTuple tuple))
 {
-	int			cacheid;
+	SysCacheIdentifier cacheid;
 	Relation	relation;
 	ListCell   *cell;
 
@@ -3058,7 +3058,7 @@ object_aclmask_ext(Oid classid, Oid objectid, Oid roleid,
 				   AclMode mask, AclMaskHow how,
 				   bool *is_missing)
 {
-	int			cacheid;
+	SysCacheIdentifier cacheid;
 	AclMode		result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
@@ -4089,7 +4089,7 @@ pg_largeobject_aclcheck_snapshot(Oid lobj_oid, Oid roleid, AclMode mode,
 bool
 object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 {
-	int			cacheid;
+	SysCacheIdentifier cacheid;
 	Oid			ownerId;
 
 	/* Superusers bypass all permission checking. */
@@ -4486,7 +4486,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 	/* This will error on unsupported classoid. */
 	else if (get_object_attnum_acl(classoid) != InvalidAttrNumber)
 	{
-		int			cacheid;
+		SysCacheIdentifier cacheid;
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	tuple;
@@ -4870,7 +4870,7 @@ RemoveRoleFromInitPriv(Oid roleid, Oid classid, Oid objid, int32 objsubid)
 	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	oldtuple;
-	int			cacheid;
+	SysCacheIdentifier cacheid;
 	HeapTuple	objtuple;
 	Oid			ownerId;
 	Datum		oldAclDatum;
