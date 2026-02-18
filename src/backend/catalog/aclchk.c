@@ -4101,7 +4101,7 @@ object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 		classid = LargeObjectMetadataRelationId;
 
 	cacheid = get_object_catcache_oid(classid);
-	if (cacheid != -1)
+	if (cacheid != SYSCACHEID_INVALID)
 	{
 		/* we can get the object's tuple from the syscache */
 		HeapTuple	tuple;

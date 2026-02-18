@@ -797,7 +797,7 @@ print $fk_info "};\n\n#endif\t\t\t\t\t\t\t/* SYSTEM_FK_INFO_H */\n";
 print_boilerplate($syscache_ids_fh, "syscache_ids.h", "SysCache identifiers");
 print $syscache_ids_fh "enum SysCacheIdentifier
 {
-";
+\tSYSCACHEID_INVALID = -1,\n";
 
 print_boilerplate($syscache_info_fh, "syscache_info.h",
 	"SysCache definitions");
@@ -812,7 +812,14 @@ print $syscache_info_fh "static const struct cachedesc cacheinfo[] = {\n";
 my $last_syscache;
 foreach my $syscache (sort keys %syscaches)
 {
-	print $syscache_ids_fh "\t$syscache,\n";
+	if (not defined $last_syscache)
+	{
+		print $syscache_ids_fh "\t$syscache = 0,\n";
+	}
+	else
+	{
+		print $syscache_ids_fh "\t$syscache,\n";
+	}
 	$last_syscache = $syscache;
 
 	print $syscache_info_fh "\t[$syscache] = {\n";
