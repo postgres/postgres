@@ -54,13 +54,7 @@ test_shm_mq_main(Datum main_arg)
 	int			myworkernumber;
 	PGPROC	   *registrant;
 
-	/*
-	 * Establish signal handlers.
-	 *
-	 * We want CHECK_FOR_INTERRUPTS() to kill off this worker process just as
-	 * it would a normal user backend.  To make that happen, we use die().
-	 */
-	pqsignal(SIGTERM, die);
+	/* Unblock signals.  The standard signal handlers are OK for us. */
 	BackgroundWorkerUnblockSignals();
 
 	/*

@@ -1327,7 +1327,6 @@ ParallelWorkerMain(Datum main_arg)
 	InitializingParallelWorker = true;
 
 	/* Establish signal handlers. */
-	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
 	/* Determine and set our parallel worker number. */
