@@ -31,12 +31,9 @@ die "$0: --nm must be specified\n" unless defined $nm_path and -x $nm_path;
 
 sub create_stamp_file
 {
-	if (!(-f $stamp_file))
-	{
-		open my $fh, '>', $stamp_file
-		  or die "can't open $stamp_file: $!";
-		close $fh;
-	}
+	open my $fh, '>', $stamp_file
+	  or die "can't open $stamp_file: $!";
+	close $fh;
 }
 
 # Skip on Windows and Solaris
