@@ -9,15 +9,33 @@
  *-------------------------------------------------------------------------
  */
 
+#include <string.h>
+ 
 #include "postmaster/monitor.h"
 #include "monitorsubsystem/monitor_channel_type.h"
 #include "postgres.h"
 #include "monitorsubsystem/monitor_channel.h"
 #include "monitorsubsystem/monitor_event.h"
 #include "miscadmin.h"
+#include "storage/proc.h"
+#include "utils/memutils.h"
 
 #define BIT_WORD(idx) ((idx) / 64)
 #define BIT_MASK(idx) (1ULL << ((idx) % 64))
+
+static int mss_alloc_subject_id(void);
+
+static void
+MonitorEnsureContext(void)
+{
+    if (monSubSysLocal.ctx == NULL)
+    {
+        monSubSysLocal.ctx =
+            AllocSetContextCreate(TopMemoryContext,
+                                  "MonitorSubsystemContext",
+                                  ALLOCSET_DEFAULT_SIZES);
+    }
+}
 
 
 /*
@@ -49,10 +67,23 @@ int pg_monitor_con_connect(MonitorChannelConfig *conConfig)
      */ 
     /* find a place for subscriber */
     int sub_id = -1;
+    int monitor_proc_no;
 	SubscriberInfo *mySubInfo;
     monitor_channel *myChannel;
     MssState_SubscriberInfo *sharedSubInfo = &monSubSysLocal.MonSubSystem_SharedState->sub;
+
+    MonitorEnsureContext();
+    MemoryContextSwitchTo(monSubSysLocal.ctx);
+
+    LWLockAcquire(&monSubSysLocal.MonSubSystem_SharedState->lock, LW_EXCLUSIVE);
+	monitor_proc_no = monSubSysLocal.MonSubSystem_SharedState->pgprocno;
+	/*
+	 * TODO:
+	 * Check if monitor_proc_no is valid
+	 */
     
+    LWLockRelease(&monSubSysLocal.MonSubSystem_SharedState->lock);
+
     LWLockAcquire(&sharedSubInfo->lock, LW_EXCLUSIVE);
     
     if (sharedSubInfo->current_subs_num  == sharedSubInfo->max_subs_num)
@@ -141,6 +172,9 @@ int pg_monitor_con_connect(MonitorChannelConfig *conConfig)
         return -1 ;
     }
 
+    myChannel->subscriber_procno = MyProcNumber;
+    myChannel->publisher_procno = monitor_proc_no;
+
     /*
      * maybe it'd be easier just not to release lock 
      * immideatly after finding mySubInfo
@@ -166,6 +200,8 @@ int pg_monitor_con_connect(MonitorChannelConfig *conConfig)
  * -1 means mistake
  * It set conConfig.channel_id
  * 
+ * This function should be called by any process(except by MonitorProcess)
+ * 
  * TODO: 
  * Think about creating enum or errors and description to them
  */
@@ -173,9 +209,21 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
 {
     /* find a place for publisher */
     int pub_id = -1;
+    int monitor_proc_no;
 	PublisherInfo *myPubInfo;
     monitor_channel *myChannel;
     MssState_PublisherInfo *sharedPubInfo = &monSubSysLocal.MonSubSystem_SharedState->pub;
+    
+    MonitorEnsureContext();
+    
+    LWLockAcquire(&monSubSysLocal.MonSubSystem_SharedState->lock, LW_EXCLUSIVE);
+	monitor_proc_no = monSubSysLocal.MonSubSystem_SharedState->pgprocno;
+	/*
+	 * TODO:
+	 * Check if monitor_proc_no is valid
+	 */
+    
+    LWLockRelease(&monSubSysLocal.MonSubSystem_SharedState->lock);
     
     LWLockAcquire(&sharedPubInfo->lock, LW_EXCLUSIVE);
     
@@ -223,6 +271,8 @@ int pg_monitor_pub_connect(MonitorChannelConfig *conConfig)
     myChannel = &monSubSysLocal.MonSubSystem_SharedState->channels[pub_id];
 
     conConfig->channel_id = pub_id;
+    conConfig->publisher_procno = MyProcNumber;
+    conConfig->subscriber_procno = monitor_proc_no;
     
     bool is_channel_created = monitor_channel_options[conConfig->type].init(myChannel, conConfig);
 

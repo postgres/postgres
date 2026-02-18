@@ -22,6 +22,7 @@
 #ifndef _MONITOR_H
 #define _MONITOR_H
 
+#include "datatype/timestamp.h"
 #include "postmaster/auxprocess.h"
 #include "port/atomics.h"
 #include "storage/lwlock.h"
@@ -229,9 +230,20 @@ typedef struct mssSharedState
 	LWLock lock;	/* protects hashtable search/modification */
 	HTAB *mss_hash; /* hashtable for SubjectKey - SubjectEntity */
 
+	/*
+	 * TODO:
+	 * Think about changing NUM_AUXILIARY_PROCS to 7
+	 * (src/include/storage/proc.h)
+	 */
+	int			pgprocno; /* proc number of monitor process */
 } mssSharedState;
 
-// extern mssSharedState *MonSubSystem_SharedState;
+
+typedef struct MonitorLocalState
+{
+    void **channelsLocalData; /* array of void* local data for channels*/
+} MonitorLocalState;
+
 
 typedef struct MonSubSystem_LocalState
 {
@@ -246,12 +258,11 @@ typedef struct MonSubSystem_LocalState
 	 */
 	void *subLocalData;
 	void *pubLocalData;
-	/*
-	 * maybe it would be better to make smth like
-	 * but Idk
-	 */
-	// monitor_channel *monitor_sub_channel;
-	// monitor_channel *monitor_pub_channel;
+
+	
+	MemoryContext ctx;		/* Context for different MonSubSystem structures */
+
+	MonitorLocalState monitorLocal;
 } MonSubSystem_LocalState;
 
 /* Backend-local access point to Monitor SubSystem */

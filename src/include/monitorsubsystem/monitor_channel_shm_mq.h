@@ -43,7 +43,7 @@ static ChannelRecvResult shm_mq_channel_receive_msg(monitor_channel *ch, void *b
 
 static void shm_mq_channel_cleanup(monitor_channel *ch);
 
-static void shm_mq_channel_attach(monitor_channel *ch, ChannelRole role);
+static void shm_mq_channel_attach(monitor_channel *ch);
 
 static void (*detach)(monitor_channel *ch, void *local);
 

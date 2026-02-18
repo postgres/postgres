@@ -9,12 +9,14 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "miscadmin.h"
 #include "postmaster/monitor.h"
 #include "monitorsubsystem/monitor_channel.h"
 #include "monitorsubsystem/monitor_channel_type.h"
 #include "monitorsubsystem/monitor_channel_shm_mq.h"
 #include "storage/shm_mq.h"
 #include "storage/shm_toc.h"
+#include "utils/memutils.h"
 
 
 /* static needed ? */
@@ -56,10 +58,17 @@ shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *cfg)
 
 	data->mq = shm_mq_create(mq_space, cfg->u.shm_mq.mq_size);
 
+    SpinLockAcquire(&ch->mutex);
 	ch->private_data = data;
 	ch->ops = &ShmMqChannelOps;
 
 	shm_toc_insert(toc, cfg->channel_id, data);
+    ch->state = CH_CREATED;
+
+    ch->publisher_procno = cfg->publisher_procno;
+    ch->subscriber_procno = cfg->subscriber_procno;
+
+    SpinLockRelease(&ch->mutex);
 	return true;
 }
 
@@ -68,24 +77,62 @@ shm_mq_channel_init(monitor_channel *ch, MonitorChannelConfig *cfg)
  * think about MemoryContext for operations with channels
  */
 void
-shm_mq_channel_attach(monitor_channel *ch, ChannelRole role)
+shm_mq_channel_attach(monitor_channel *ch)
 {
+    MemoryContext oldcontext;   
+    PGPROC *monitor, *anotherProc;
+    monitor_channel *shared_channels = monSubSysLocal.MonSubSystem_SharedState->channels;
     ShmMqChannelData *data = ch->private_data;
     ShmMqChannelLocal *local;
 
-	Assert(role == Publisher || role == Subscriber);
+    if (monSubSysLocal.ctx == NULL)
+    {
+        monSubSysLocal.ctx =
+            AllocSetContextCreate(TopMemoryContext,
+                                  "MonitorSubsystemContext",
+                                  ALLOCSET_DEFAULT_SIZES);
+    }
+    oldcontext = MemoryContextSwitchTo(monSubSysLocal.ctx);
+
 
 	/* Here shold be smth with MemoryContext */
     local = palloc0(sizeof(ShmMqChannelLocal));
     local->handle = shm_mq_attach(data->mq, NULL, NULL);
 
-    if (role == Subscriber) {
-        monSubSysLocal.subLocalData = local;
-	}
-    else {
-        monSubSysLocal.pubLocalData = local;
-	}
-	return;
+    SpinLockAcquire(&ch->mutex);
+    if (AmMonitorSubsystemProcess()) {
+        Assert(ch >= &shared_channels[0] && ch <  &shared_channels[MAX_MONITOR_CHANNELS_NUM - 1]);
+        int channel_id = ch- shared_channels; 
+        monSubSysLocal.monitorLocal.channelsLocalData[channel_id] = local;
+        ch->attach_flags |= CH_ATTACH_MONITOR;
+    } else {
+        if (MyProcNumber == ch->subscriber_procno) {
+            monSubSysLocal.subLocalData = local;
+        }
+        else {
+            monSubSysLocal.pubLocalData = local;
+        }
+        ch->attach_flags |= CH_ATTACH_CLIENT;
+    }
+
+    if (!shm_mq_get_sender(data->mq))
+    {
+        shm_mq_set_sender(data->mq, &ProcGlobal->allProcs[ch->publisher_procno]);
+    }
+
+    if (!shm_mq_get_receiver(data->mq))
+    {
+        shm_mq_set_receiver(data->mq, &ProcGlobal->allProcs[ch->subscriber_procno]);
+    }
+    if (channel_is_ready(ch->attach_flags))
+    if (ch->attach_flags == CH_ATTACH_READY)
+    {
+        ch->state = CH_ACTIVE;
+    }
+    SpinLockRelease(&ch->mutex);
+
+    MemoryContextSwitchTo(oldcontext);
+	return;   
 }
 
 /*
@@ -114,6 +161,9 @@ shm_mq_channel_send_msg(monitor_channel *ch, const void *data, Size len)
 	switch (result)
 	{
 	case SHM_MQ_SUCCESS:
+        SpinLockAcquire(&ch->mutex);
+        ch->is_there_msgs = true;
+        SpinLockRelease(&ch->mutex);
 		return true;
 		break;
 	case SHM_MQ_DETACHED:

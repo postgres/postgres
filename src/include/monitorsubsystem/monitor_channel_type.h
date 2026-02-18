@@ -28,6 +28,8 @@ typedef struct MonitorChannelConfig
 {
     MonitorChannelType type;
     int channel_id;
+    int publisher_procno;
+    int subscriber_procno;
 
     union {
         struct {

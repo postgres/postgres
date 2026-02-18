@@ -36,6 +36,7 @@
 #include "storage/shm_toc.h"
 #include "storage/waiteventset.h"
 #include "miscadmin.h"
+#include "monitorsubsystem/monitor_channel.h"
 #include "monitorsubsystem/monitor_event.h"
 #include "utils/memutils.h"
 
@@ -174,6 +175,7 @@ void MonitorShmemInit(void)
 
 			sub->proc_pid = 0; /* not used yet */
 			sub->channel = NULL;
+			sub->id = -1;
 
 			LWLockInitialize(&sub->lock, LWTRANCHE_MONITOR_SUBSCRIBER);
 
@@ -227,7 +229,15 @@ void MonitorShmemInit(void)
 		ptr += mss_subjectEntity_size();
 
 		monSubSysLocal.MonSubSystem_SharedState->channels = (monitor_channel *)ptr;
-
+		for (int i = 0; i < MAX_MONITOR_CHANNELS_NUM; i++)
+		{
+			monitor_channel *ch = &monSubSysLocal.MonSubSystem_SharedState->channels[i];
+			SpinLockInit(&ch->mutex);
+			ch->state = CH_UNUSED;
+			ch->attach_flags = CH_ATTACH_NONE;
+			ch->ops = NULL;
+			ch->is_there_msgs = false;
+		}
 		/* Channel Data initialization */
 		ptr += mss_monitorChannels_size();
 
@@ -368,6 +378,10 @@ void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
 
+	monSubSysLocal.ctx = AllocSetContextCreate(TopMemoryContext,
+									"MonitorSubsystemContext",
+									ALLOCSET_DEFAULT_SIZES);
+	MemoryContextSwitchTo(monSubSysLocal.ctx);
 	/*
 	 * тут обычно создают контекст памяти для работы
 	 * так если (когда) он понадобиться, создавать здесь
@@ -376,12 +390,20 @@ void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 	/* Unblock signals (they were blocked when the postmaster forked us) */
 	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
+	LWLockAcquire(&monSubSysLocal.MonSubSystem_SharedState->lock, LW_EXCLUSIVE);
+	monSubSysLocal.MonSubSystem_SharedState->pgprocno = MyProcNumber;
+	LWLockRelease(&monSubSysLocal.MonSubSystem_SharedState->lock);
+
+	/* TODO: mind memory context*/
+	monSubSysLocal.monitorLocal.channelsLocalData = palloc0(sizeof(void*) * MAX_MONITOR_CHANNELS_NUM);
+
 	/*
 	 * тут должна быть основная логика (бесконечный цикл с логикой обработки сообщений)
 	 */
 	for (;;)
 	{
 		int ch_count = 0;
+		int rc;
 		bool setqueues[MAX_MONITOR_CHANNELS_NUM];
 		// elog(LOG, "the most beatiful cycle ever!!!");
 		// /* 3 sec */
@@ -399,32 +421,67 @@ void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 		 * TODO:
 		 * разобраться, что за wait_event_info...
 		 */
-		WaitLatch(MyLatch, WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH, MONITOR_TIMEOUT, 0);
+		rc = WaitLatch(MyLatch, WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH, MONITOR_TIMEOUT, 0);
 		/* lil question is when to reset it - mb after checking all channels? */
 		ResetLatch(MyLatch);
 		
-		// About here should be CHECK_FOR_INTERRUPTS();
+		if (rc & WL_EXIT_ON_PM_DEATH) {
+			proc_exit(1);
+		}
+
+		if (rc & WL_TIMEOUT)
+		{
+			last_processed_queue = MAX_MONITOR_CHANNELS_NUM;
+			deliver_from_oqtd(&oqtd, current_pn, last_processed_queue);
+			current_pn++;
+			continue;
+		}
+
+		/* If we're here it means that WL_LATCH_SET */
+		CHECK_FOR_INTERRUPTS();
 
 		/* 
-		 * тут надо будет посмотреть, по timeout это 
-		 * произошло или нет,
-		 * и если да, то идти к другому шагу... аааааа
+		 * CHECK FOR NEW ATTACHED CHANNELS
+		 *
+		 * HINT:
+		 * here also might be check for others states of channels
 		 */
-
-		LWLockAcquire(&monSubSysLocal.MonSubSystem_SharedState->lock, LW_EXCLUSIVE);
 		for (int q = 0; q < MAX_MONITOR_CHANNELS_NUM; q++)
 		{
-			if (channels[q].is_there_msgs) {
+			bool need_attach = false;
+			monitor_channel *ch = &channels[q];
+
+			SpinLockAcquire(&ch->mutex);
+			/* if channel wasn't attached yet */
+
+			need_attach = (ch->state == CH_CREATED) &&
+					!(ch->attach_flags & CH_ATTACH_MONITOR);
+			SpinLockRelease(&ch->mutex);
+
+			if (need_attach) 
+			{
+				ch->ops->attach(ch);
+
+			}
+		}
+
+		/* CHECK FOR NEW MSGS */
+		for (int q = 0; q < MAX_PUBS_NUM; q++)
+		{
+			monitor_channel *ch = &channels[q];
+			SpinLockAcquire(&ch->mutex);
+			if (ch->is_there_msgs) {
 				setqueues[q] = true;
 				ch_count++;
 			}
+			SpinLockRelease(&ch->mutex);
 		}
 		
 		current_pn++;
 
 		if (ch_count > 0)
 		{
-			for (int q = 0; q < MAX_MONITOR_CHANNELS_NUM; q++)
+			for (int q = 0; q < MAX_PUBS_NUM; q++)
 			{
 				last_processed_queue = q;
 
@@ -442,6 +499,7 @@ void MonitoringProcessMain(const void *startup_data, size_t startup_data_len)
 
 			deliver_from_oqtd(&oqtd, current_pn, last_processed_queue);
 		}
+		
 	}
 
 }
@@ -474,6 +532,9 @@ read_msgs_from_channel(int qid, List **oqtd, int current_pn)
 
         oqtd_insert_sorted(oqtd, item);
     }
+	SpinLockAcquire(&ch->mutex);
+	ch->is_there_msgs = false;
+	SpinLockRelease(&ch->mutex);
 }
 
 static void

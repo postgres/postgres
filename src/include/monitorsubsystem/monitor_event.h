@@ -3,7 +3,7 @@
  * monitor_event.h
  *	  Routines for interprocess monitoring events
  *
- * src/include/monitor_event.h
+ * src/include/monitorsubsystem/monitor_event.h
  *
  *-------------------------------------------------------------------------
  */
