@@ -5112,6 +5112,7 @@ getSubscriptions(Archive *fout)
 	int			i_subconninfo;
 	int			i_subslotname;
 	int			i_subsynccommit;
+	int			i_subwalrcvtimeout;
 	int			i_subpublications;
 	int			i_suborigin;
 	int			i_suboriginremotelsn;
@@ -5205,10 +5206,17 @@ getSubscriptions(Archive *fout)
 
 	if (fout->remoteVersion >= 190000)
 		appendPQExpBufferStr(query,
-							 " s.submaxretention\n");
+							 " s.submaxretention,\n");
 	else
 		appendPQExpBuffer(query,
-						  " 0 AS submaxretention\n");
+						  " 0 AS submaxretention,\n");
+
+	if (fout->remoteVersion >= 190000)
+		appendPQExpBufferStr(query,
+							 " s.subwalrcvtimeout\n");
+	else
+		appendPQExpBufferStr(query,
+							 " '-1' AS subwalrcvtimeout\n");
 
 	appendPQExpBufferStr(query,
 						 "FROM pg_subscription s\n");
@@ -5247,6 +5255,7 @@ getSubscriptions(Archive *fout)
 	i_subconninfo = PQfnumber(res, "subconninfo");
 	i_subslotname = PQfnumber(res, "subslotname");
 	i_subsynccommit = PQfnumber(res, "subsynccommit");
+	i_subwalrcvtimeout = PQfnumber(res, "subwalrcvtimeout");
 	i_subpublications = PQfnumber(res, "subpublications");
 	i_suborigin = PQfnumber(res, "suborigin");
 	i_suboriginremotelsn = PQfnumber(res, "suboriginremotelsn");
@@ -5290,6 +5299,8 @@ getSubscriptions(Archive *fout)
 				pg_strdup(PQgetvalue(res, i, i_subslotname));
 		subinfo[i].subsynccommit =
 			pg_strdup(PQgetvalue(res, i, i_subsynccommit));
+		subinfo[i].subwalrcvtimeout =
+			pg_strdup(PQgetvalue(res, i, i_subwalrcvtimeout));
 		subinfo[i].subpublications =
 			pg_strdup(PQgetvalue(res, i, i_subpublications));
 		subinfo[i].suborigin = pg_strdup(PQgetvalue(res, i, i_suborigin));
@@ -5547,6 +5558,9 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
+
+	if (strcmp(subinfo->subwalrcvtimeout, "-1") != 0)
+		appendPQExpBuffer(query, ", wal_receiver_timeout = %s", fmtId(subinfo->subwalrcvtimeout));
 
 	if (pg_strcasecmp(subinfo->suborigin, LOGICALREP_ORIGIN_ANY) != 0)
 		appendPQExpBuffer(query, ", origin = %s", subinfo->suborigin);

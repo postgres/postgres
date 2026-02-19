@@ -574,8 +574,21 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </warning>
         </listitem>
        </varlistentry>
-      </variablelist></para>
 
+      <varlistentry id="sql-createsubscription-params-with-wal-receiver-timeout">
+        <term><literal>wal_receiver_timeout</literal> (<type>text</type>)</term>
+        <listitem>
+         <para>
+          The value of this parameter overrides the
+          <xref linkend="guc-wal-receiver-timeout"/> setting within this
+          subscription's apply worker processes.  The default value is
+          <literal>-1</literal>, which means it does not override the global setting,
+          i.e., the value from the server configuration, command line, role or
+          database settings will be used instead.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist></para>
     </listitem>
    </varlistentry>
   </variablelist>

@@ -73,8 +73,9 @@
 #define SUBOPT_FAILOVER				0x00002000
 #define SUBOPT_RETAIN_DEAD_TUPLES	0x00004000
 #define SUBOPT_MAX_RETENTION_DURATION	0x00008000
-#define SUBOPT_LSN					0x00010000
-#define SUBOPT_ORIGIN				0x00020000
+#define SUBOPT_WAL_RECEIVER_TIMEOUT			0x00010000
+#define SUBOPT_LSN					0x00020000
+#define SUBOPT_ORIGIN				0x00040000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -104,6 +105,7 @@ typedef struct SubOpts
 	int32		maxretention;
 	char	   *origin;
 	XLogRecPtr	lsn;
+	char	   *wal_receiver_timeout;
 } SubOpts;
 
 /*
@@ -402,6 +404,30 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 			opts->specified_opts |= SUBOPT_LSN;
 			opts->lsn = lsn;
 		}
+		else if (IsSet(supported_opts, SUBOPT_WAL_RECEIVER_TIMEOUT) &&
+				 strcmp(defel->defname, "wal_receiver_timeout") == 0)
+		{
+			bool		parsed;
+			int			val;
+
+			if (IsSet(opts->specified_opts, SUBOPT_WAL_RECEIVER_TIMEOUT))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_WAL_RECEIVER_TIMEOUT;
+			opts->wal_receiver_timeout = defGetString(defel);
+
+			/*
+			 * Test if the given value is valid for wal_receiver_timeout GUC.
+			 * Skip this test if the value is -1, since -1 is allowed for the
+			 * wal_receiver_timeout subscription option, but not for the GUC
+			 * itself.
+			 */
+			parsed = parse_int(opts->wal_receiver_timeout, &val, 0, NULL);
+			if (!parsed || val != -1)
+				(void) set_config_option("wal_receiver_timeout", opts->wal_receiver_timeout,
+										 PGC_BACKEND, PGC_S_TEST, GUC_ACTION_SET,
+										 false, 0, false);
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -612,7 +638,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_DISABLE_ON_ERR | SUBOPT_PASSWORD_REQUIRED |
 					  SUBOPT_RUN_AS_OWNER | SUBOPT_FAILOVER |
 					  SUBOPT_RETAIN_DEAD_TUPLES |
-					  SUBOPT_MAX_RETENTION_DURATION | SUBOPT_ORIGIN);
+					  SUBOPT_MAX_RETENTION_DURATION |
+					  SUBOPT_WAL_RECEIVER_TIMEOUT | SUBOPT_ORIGIN);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -695,6 +722,14 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	if (opts.synchronous_commit == NULL)
 		opts.synchronous_commit = "off";
 
+	/*
+	 * The default for wal_receiver_timeout of subscriptions is -1, which
+	 * means the value is inherited from the server configuration, command
+	 * line, or role/database settings.
+	 */
+	if (opts.wal_receiver_timeout == NULL)
+		opts.wal_receiver_timeout = "-1";
+
 	conninfo = stmt->conninfo;
 	publications = stmt->publication;
 
@@ -742,6 +777,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		nulls[Anum_pg_subscription_subslotname - 1] = true;
 	values[Anum_pg_subscription_subsynccommit - 1] =
 		CStringGetTextDatum(opts.synchronous_commit);
+	values[Anum_pg_subscription_subwalrcvtimeout - 1] =
+		CStringGetTextDatum(opts.wal_receiver_timeout);
 	values[Anum_pg_subscription_subpublications - 1] =
 		publicationListToArray(publications);
 	values[Anum_pg_subscription_suborigin - 1] =
@@ -1410,6 +1447,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 								  SUBOPT_RUN_AS_OWNER | SUBOPT_FAILOVER |
 								  SUBOPT_RETAIN_DEAD_TUPLES |
 								  SUBOPT_MAX_RETENTION_DURATION |
+								  SUBOPT_WAL_RECEIVER_TIMEOUT |
 								  SUBOPT_ORIGIN);
 
 				parse_subscription_options(pstate, stmt->options,
@@ -1663,6 +1701,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						pg_strcasecmp(opts.origin, LOGICALREP_ORIGIN_ANY) == 0;
 
 					origin = opts.origin;
+				}
+
+				if (IsSet(opts.specified_opts, SUBOPT_WAL_RECEIVER_TIMEOUT))
+				{
+					values[Anum_pg_subscription_subwalrcvtimeout - 1] =
+						CStringGetTextDatum(opts.wal_receiver_timeout);
+					replaces[Anum_pg_subscription_subwalrcvtimeout - 1] = true;
 				}
 
 				update_tuple = true;

@@ -627,6 +627,8 @@ static inline void reset_apply_error_context_info(void);
 static TransApplyAction get_transaction_apply_action(TransactionId xid,
 													 ParallelApplyWorkerInfo **winfo);
 
+static void set_wal_receiver_timeout(void);
+
 static void on_exit_clear_xact_state(int code, Datum arg);
 
 /*
@@ -5154,10 +5156,46 @@ maybe_reread_subscription(void)
 	SetConfigOption("synchronous_commit", MySubscription->synccommit,
 					PGC_BACKEND, PGC_S_OVERRIDE);
 
+	/* Change wal_receiver_timeout according to the user's wishes */
+	set_wal_receiver_timeout();
+
 	if (started_tx)
 		CommitTransactionCommand();
 
 	MySubscriptionValid = true;
+}
+
+/*
+ * Change wal_receiver_timeout to MySubscription->walrcvtimeout.
+ */
+static void
+set_wal_receiver_timeout(void)
+{
+	bool		parsed;
+	int			val;
+	int			prev_timeout = wal_receiver_timeout;
+
+	/*
+	 * Set the wal_receiver_timeout GUC to MySubscription->walrcvtimeout,
+	 * which comes from the subscription's wal_receiver_timeout option. If the
+	 * value is -1, reset the GUC to its default, meaning it will inherit from
+	 * the server config, command line, or role/database settings.
+	 */
+	parsed = parse_int(MySubscription->walrcvtimeout, &val, 0, NULL);
+	if (parsed && val == -1)
+		SetConfigOption("wal_receiver_timeout", NULL,
+						PGC_BACKEND, PGC_S_SESSION);
+	else
+		SetConfigOption("wal_receiver_timeout", MySubscription->walrcvtimeout,
+						PGC_BACKEND, PGC_S_SESSION);
+
+	/*
+	 * Log the wal_receiver_timeout setting (in milliseconds) as a debug
+	 * message when it changes, to verify it was set correctly.
+	 */
+	if (prev_timeout != wal_receiver_timeout)
+		elog(DEBUG1, "logical replication worker for subscription \"%s\" wal_receiver_timeout: %d ms",
+			 MySubscription->name, wal_receiver_timeout);
 }
 
 /*
@@ -5821,6 +5859,9 @@ InitializeLogRepWorker(void)
 	/* Setup synchronous commit according to the user's wishes */
 	SetConfigOption("synchronous_commit", MySubscription->synccommit,
 					PGC_BACKEND, PGC_S_OVERRIDE);
+
+	/* Change wal_receiver_timeout according to the user's wishes */
+	set_wal_receiver_timeout();
 
 	/*
 	 * Keep us informed about subscription or role changes. Note that the

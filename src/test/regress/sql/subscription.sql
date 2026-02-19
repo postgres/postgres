@@ -139,6 +139,9 @@ RESET ROLE;
 ALTER SUBSCRIPTION regress_testsub RENAME TO regress_testsub_foo;
 ALTER SUBSCRIPTION regress_testsub_foo SET (synchronous_commit = local);
 ALTER SUBSCRIPTION regress_testsub_foo SET (synchronous_commit = foobar);
+ALTER SUBSCRIPTION regress_testsub_foo SET (wal_receiver_timeout = '-1');
+ALTER SUBSCRIPTION regress_testsub_foo SET (wal_receiver_timeout = '80s');
+ALTER SUBSCRIPTION regress_testsub_foo SET (wal_receiver_timeout = 'foobar');
 
 \dRs+
 

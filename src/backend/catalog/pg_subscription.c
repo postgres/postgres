@@ -129,6 +129,12 @@ GetSubscription(Oid subid, bool missing_ok)
 								   Anum_pg_subscription_subsynccommit);
 	sub->synccommit = TextDatumGetCString(datum);
 
+	/* Get walrcvtimeout */
+	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID,
+								   tup,
+								   Anum_pg_subscription_subwalrcvtimeout);
+	sub->walrcvtimeout = TextDatumGetCString(datum);
+
 	/* Get publications */
 	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID,
 								   tup,
