@@ -758,9 +758,10 @@ add_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
  *	  parallel such that each worker will generate a subset of the path's
  *	  overall result.
  *
- *	  As in add_path, the partial_pathlist is kept sorted with the cheapest
- *	  total path in front.  This is depended on by multiple places, which
- *	  just take the front entry as the cheapest path without searching.
+ *	  As in add_path, the partial_pathlist is kept sorted first by smallest
+ *    number of disabled nodes and then by lowest total cost. This is depended
+ *    on by multiple places, which just take the front entry as the cheapest
+ *    path without searching.
  *
  *	  We don't generate parameterized partial paths for several reasons.  Most
  *	  importantly, they're not safe to execute, because there's nothing to
@@ -878,8 +879,13 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 		}
 		else
 		{
-			/* new belongs after this old path if it has cost >= old's */
-			if (new_path->total_cost >= old_path->total_cost)
+			/*
+			 * new belongs after this old path if it has more disabled nodes
+			 * or if it has the same number of nodes but a greater total cost
+			 */
+			if (new_path->disabled_nodes > old_path->disabled_nodes ||
+				(new_path->disabled_nodes == old_path->disabled_nodes &&
+				 new_path->total_cost >= old_path->total_cost))
 				insert_at = foreach_current_index(p1) + 1;
 		}
 
