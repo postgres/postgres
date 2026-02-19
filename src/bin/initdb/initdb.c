@@ -1463,9 +1463,6 @@ setup_config(void)
 
 	conflines = readfile(hba_file);
 
-	conflines = replace_token(conflines, "@remove-line-for-nolocal@", "");
-
-
 	/*
 	 * Probe to see if there is really any platform support for IPv6, and
 	 * comment out the relevant pg_hba line if not.  This avoids runtime
