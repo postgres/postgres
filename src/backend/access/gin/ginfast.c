@@ -134,9 +134,9 @@ writeListPage(Relation index, Buffer buffer,
 	/* get free space before releasing buffer */
 	freesize = PageGetExactFreeSpace(page);
 
-	UnlockReleaseBuffer(buffer);
-
 	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(buffer);
 
 	return freesize;
 }
@@ -459,9 +459,9 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > cleanupSize * (Size) 1024)
 		needCleanup = true;
 
-	UnlockReleaseBuffer(metabuffer);
-
 	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(metabuffer);
 
 	/*
 	 * Since it could contend with concurrent cleanup process we cleanup
@@ -659,10 +659,10 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 			}
 		}
 
+		END_CRIT_SECTION();
+
 		for (i = 0; i < data.ndeleted; i++)
 			UnlockReleaseBuffer(buffers[i]);
-
-		END_CRIT_SECTION();
 
 		for (i = 0; fill_fsm && i < data.ndeleted; i++)
 			RecordFreeIndexPage(index, freespace[i]);

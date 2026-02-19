@@ -1355,11 +1355,12 @@ log_newpage_range(Relation rel, ForkNumber forknum,
 		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI);
 
 		for (i = 0; i < nbufs; i++)
-		{
 			PageSetLSN(BufferGetPage(bufpack[i]), recptr);
-			UnlockReleaseBuffer(bufpack[i]);
-		}
+
 		END_CRIT_SECTION();
+
+		for (i = 0; i < nbufs; i++)
+			UnlockReleaseBuffer(bufpack[i]);
 	}
 }
 

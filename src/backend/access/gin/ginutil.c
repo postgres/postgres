@@ -663,9 +663,9 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 		PageSetLSN(metapage, recptr);
 	}
 
-	UnlockReleaseBuffer(metabuffer);
-
 	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(metabuffer);
 }
 
 /*

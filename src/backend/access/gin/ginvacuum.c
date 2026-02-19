@@ -224,11 +224,11 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		PageSetLSN(BufferGetPage(lBuffer), recptr);
 	}
 
+	END_CRIT_SECTION();
+
 	ReleaseBuffer(pBuffer);
 	ReleaseBuffer(lBuffer);
 	ReleaseBuffer(dBuffer);
-
-	END_CRIT_SECTION();
 
 	gvs->result->pages_newly_deleted++;
 	gvs->result->pages_deleted++;
@@ -654,8 +654,8 @@ ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			PageRestoreTempPage(resPage, page);
 			MarkBufferDirty(buffer);
 			xlogVacuumPage(gvs.index, buffer);
-			UnlockReleaseBuffer(buffer);
 			END_CRIT_SECTION();
+			UnlockReleaseBuffer(buffer);
 		}
 		else
 		{

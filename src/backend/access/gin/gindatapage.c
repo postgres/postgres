@@ -1854,9 +1854,9 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 		PageSetLSN(page, recptr);
 	}
 
-	UnlockReleaseBuffer(buffer);
-
 	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(buffer);
 
 	/* During index build, count the newly-added data page */
 	if (buildStats)
