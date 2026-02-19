@@ -4229,7 +4229,6 @@ bgworker_should_start_now(BgWorkerStartTime start_time)
 		case PM_INIT:
 			if (start_time == BgWorkerStart_PostmasterStart)
 				return true;
-			/* fall through */
 	}
 
 	return false;
