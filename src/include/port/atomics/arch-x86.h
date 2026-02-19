@@ -104,7 +104,7 @@ typedef struct pg_atomic_uint64
  */
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #define PG_HAVE_SPIN_DELAY
-static __inline__ void
+static inline void
 pg_spin_delay_impl(void)
 {
 	__asm__ __volatile__(" rep; nop			\n");

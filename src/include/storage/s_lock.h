@@ -134,7 +134,7 @@ typedef unsigned char slock_t;
 
 #define TAS(lock) tas(lock)
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	slock_t		_res = 1;
@@ -164,7 +164,7 @@ tas(volatile slock_t *lock)
 
 #define SPIN_DELAY() spin_delay()
 
-static __inline__ void
+static inline void
 spin_delay(void)
 {
 	/*
@@ -215,7 +215,7 @@ typedef unsigned char slock_t;
  */
 #define TAS_SPIN(lock)    (*(lock) ? 1 : TAS(lock))
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	slock_t		_res = 1;
@@ -231,7 +231,7 @@ tas(volatile slock_t *lock)
 
 #define SPIN_DELAY() spin_delay()
 
-static __inline__ void
+static inline void
 spin_delay(void)
 {
 	/*
@@ -259,7 +259,7 @@ spin_delay(void)
 
 typedef int slock_t;
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	return __sync_lock_test_and_set(lock, 1);
@@ -277,7 +277,7 @@ tas(volatile slock_t *lock)
 
 #define SPIN_DELAY() spin_delay()
 
-static __inline__ void
+static inline void
 spin_delay(void)
 {
 	/*
@@ -302,7 +302,7 @@ typedef unsigned int slock_t;
 
 #define TAS(lock)	   tas(lock)
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	int			_res = 0;
@@ -331,7 +331,7 @@ typedef unsigned char slock_t;
 
 #define TAS(lock) tas(lock)
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	slock_t		_res;
@@ -416,7 +416,7 @@ typedef unsigned int slock_t;
  * But if the spinlock is in ordinary memory, we can use lwsync instead for
  * better performance.
  */
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	slock_t _t;
@@ -482,7 +482,7 @@ typedef unsigned int slock_t;
 #define MIPS_SET_MIPS2
 #endif
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	volatile slock_t *_l = lock;
@@ -544,7 +544,7 @@ do \
 
 typedef int slock_t;
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	return __sync_lock_test_and_set(lock, 1);
@@ -559,7 +559,7 @@ tas(volatile slock_t *lock)
 
 typedef char slock_t;
 
-static __inline__ int
+static inline int
 tas(volatile slock_t *lock)
 {
 	return __sync_lock_test_and_set(lock, 1);
