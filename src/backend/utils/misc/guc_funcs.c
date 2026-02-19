@@ -139,7 +139,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 		case VAR_SET_DEFAULT:
 			if (stmt->is_local)
 				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
-			/* fall through */
+			pg_fallthrough;
 		case VAR_RESET:
 			(void) set_config_option(stmt->name,
 									 NULL,

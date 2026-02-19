@@ -1458,7 +1458,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 												sdepForm->objid);
 						break;
 					}
-					/* FALLTHROUGH */
+					pg_fallthrough;
 
 				case SHARED_DEPENDENCY_OWNER:
 

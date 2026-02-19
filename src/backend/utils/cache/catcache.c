@@ -357,15 +357,15 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys,
 		case 4:
 			oneHash = (cc_hashfunc[3]) (v4);
 			hashValue ^= pg_rotate_left32(oneHash, 24);
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 3:
 			oneHash = (cc_hashfunc[2]) (v3);
 			hashValue ^= pg_rotate_left32(oneHash, 16);
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 2:
 			oneHash = (cc_hashfunc[1]) (v2);
 			hashValue ^= pg_rotate_left32(oneHash, 8);
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 1:
 			oneHash = (cc_hashfunc[0]) (v1);
 			hashValue ^= oneHash;
@@ -403,21 +403,21 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, int nkeys, HeapTuple tuple)
 							 cc_tupdesc,
 							 &isNull);
 			Assert(!isNull);
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 3:
 			v3 = fastgetattr(tuple,
 							 cc_keyno[2],
 							 cc_tupdesc,
 							 &isNull);
 			Assert(!isNull);
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 2:
 			v2 = fastgetattr(tuple,
 							 cc_keyno[1],
 							 cc_tupdesc,
 							 &isNull);
 			Assert(!isNull);
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 1:
 			v1 = fastgetattr(tuple,
 							 cc_keyno[0],

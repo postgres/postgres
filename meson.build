@@ -2154,7 +2154,7 @@ common_warning_flags = [
   '-Werror=unguarded-availability-new',
   '-Wendif-labels',
   '-Wmissing-format-attribute',
-  '-Wimplicit-fallthrough=3',
+  '-Wimplicit-fallthrough=5',
   '-Wcast-function-type',
   '-Wshadow=compatible-local',
   # This was included in -Wall/-Wformat in older GCC versions

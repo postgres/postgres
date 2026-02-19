@@ -622,7 +622,7 @@ pgaio_io_wait(PgAioHandle *ioh, uint64 ref_generation)
 					pgaio_method_ops->wait_one(ioh, ref_generation);
 					continue;
 				}
-				/* fallthrough */
+				pg_fallthrough;
 
 				/* waiting for owner to submit */
 			case PGAIO_HS_DEFINED:

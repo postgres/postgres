@@ -1198,7 +1198,7 @@ _bt_saoparray_shrink(IndexScanDesc scan, ScanKey arraysk, ScanKey skey,
 	{
 		case BTLessStrategyNumber:
 			cmpexact = 1;		/* exclude exact match, if any */
-			/* FALL THRU */
+			pg_fallthrough;
 		case BTLessEqualStrategyNumber:
 			if (cmpresult >= cmpexact)
 				matchelem++;
@@ -1220,7 +1220,7 @@ _bt_saoparray_shrink(IndexScanDesc scan, ScanKey arraysk, ScanKey skey,
 			break;
 		case BTGreaterEqualStrategyNumber:
 			cmpexact = 1;		/* include exact match, if any */
-			/* FALL THRU */
+			pg_fallthrough;
 		case BTGreaterStrategyNumber:
 			if (cmpresult >= cmpexact)
 				matchelem++;

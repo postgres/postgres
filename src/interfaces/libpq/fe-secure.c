@@ -379,7 +379,7 @@ retry_masked:
 				/* Set flag for EPIPE */
 				REMEMBER_EPIPE(spinfo, true);
 
-				/* FALL THRU */
+				pg_fallthrough;
 
 			case ECONNRESET:
 				conn->write_failed = true;

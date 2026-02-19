@@ -839,7 +839,7 @@ handle_streamed_transaction(LogicalRepMsgType action, StringInfo s)
 			 */
 			pa_switch_to_partial_serialize(winfo, false);
 
-			/* fall through */
+			pg_fallthrough;
 		case TRANS_LEADER_PARTIAL_SERIALIZE:
 			stream_write_change(action, &original_msg);
 
@@ -1586,7 +1586,7 @@ apply_handle_stream_prepare(StringInfo s)
 			 */
 			pa_switch_to_partial_serialize(winfo, true);
 
-			/* fall through */
+			pg_fallthrough;
 		case TRANS_LEADER_PARTIAL_SERIALIZE:
 			Assert(winfo);
 
@@ -1808,7 +1808,7 @@ apply_handle_stream_start(StringInfo s)
 			 */
 			pa_switch_to_partial_serialize(winfo, !first_segment);
 
-			/* fall through */
+			pg_fallthrough;
 		case TRANS_LEADER_PARTIAL_SERIALIZE:
 			Assert(winfo);
 
@@ -1923,7 +1923,7 @@ apply_handle_stream_stop(StringInfo s)
 			 */
 			pa_switch_to_partial_serialize(winfo, true);
 
-			/* fall through */
+			pg_fallthrough;
 		case TRANS_LEADER_PARTIAL_SERIALIZE:
 			stream_write_change(LOGICAL_REP_MSG_STREAM_STOP, s);
 			stream_stop_internal(stream_xid);
@@ -2169,7 +2169,7 @@ apply_handle_stream_abort(StringInfo s)
 			 */
 			pa_switch_to_partial_serialize(winfo, true);
 
-			/* fall through */
+			pg_fallthrough;
 		case TRANS_LEADER_PARTIAL_SERIALIZE:
 			Assert(winfo);
 
@@ -2442,7 +2442,7 @@ apply_handle_stream_commit(StringInfo s)
 			 */
 			pa_switch_to_partial_serialize(winfo, true);
 
-			/* fall through */
+			pg_fallthrough;
 		case TRANS_LEADER_PARTIAL_SERIALIZE:
 			Assert(winfo);
 

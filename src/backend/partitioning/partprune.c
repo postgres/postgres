@@ -2880,7 +2880,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 
 		case BTGreaterEqualStrategyNumber:
 			inclusive = true;
-			/* fall through */
+			pg_fallthrough;
 		case BTGreaterStrategyNumber:
 			off = partition_list_bsearch(partsupfunc,
 										 partcollation,
@@ -2915,7 +2915,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 
 		case BTLessEqualStrategyNumber:
 			inclusive = true;
-			/* fall through */
+			pg_fallthrough;
 		case BTLessStrategyNumber:
 			off = partition_list_bsearch(partsupfunc,
 										 partcollation,
@@ -3162,7 +3162,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 
 		case BTGreaterEqualStrategyNumber:
 			inclusive = true;
-			/* fall through */
+			pg_fallthrough;
 		case BTGreaterStrategyNumber:
 
 			/*
@@ -3243,7 +3243,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 
 		case BTLessEqualStrategyNumber:
 			inclusive = true;
-			/* fall through */
+			pg_fallthrough;
 		case BTLessStrategyNumber:
 
 			/*
@@ -3726,19 +3726,19 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 			{
 				case IS_NOT_TRUE:
 					*notclause = true;
-					/* fall through */
+					pg_fallthrough;
 				case IS_TRUE:
 					*outconst = (Expr *) makeBoolConst(true, false);
 					return PARTCLAUSE_MATCH_CLAUSE;
 				case IS_NOT_FALSE:
 					*notclause = true;
-					/* fall through */
+					pg_fallthrough;
 				case IS_FALSE:
 					*outconst = (Expr *) makeBoolConst(false, false);
 					return PARTCLAUSE_MATCH_CLAUSE;
 				case IS_NOT_UNKNOWN:
 					*notclause = true;
-					/* fall through */
+					pg_fallthrough;
 				case IS_UNKNOWN:
 					return PARTCLAUSE_MATCH_NULLNESS;
 				default:

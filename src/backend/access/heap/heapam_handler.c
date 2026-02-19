@@ -861,7 +861,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 				break;
 			case HEAPTUPLE_RECENTLY_DEAD:
 				*tups_recently_dead += 1;
-				/* fall through */
+				pg_fallthrough;
 			case HEAPTUPLE_LIVE:
 				/* Live or recently dead, must copy it */
 				isdead = false;

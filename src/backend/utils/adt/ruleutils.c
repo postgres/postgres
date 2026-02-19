@@ -9001,7 +9001,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				}
 				/* else do the same stuff as for T_SubLink et al. */
 			}
-			/* FALLTHROUGH */
+			pg_fallthrough;
 
 		case T_SubLink:
 		case T_NullTest:

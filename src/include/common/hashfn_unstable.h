@@ -158,23 +158,23 @@ fasthash_accum(fasthash_state *hs, const char *k, size_t len)
 			break;
 		case 7:
 			hs->accum |= (uint64) k[6] << 8;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 6:
 			hs->accum |= (uint64) k[5] << 16;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 5:
 			hs->accum |= (uint64) k[4] << 24;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 4:
 			memcpy(&lower_four, k, sizeof(lower_four));
 			hs->accum |= (uint64) lower_four << 32;
 			break;
 		case 3:
 			hs->accum |= (uint64) k[2] << 40;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 2:
 			hs->accum |= (uint64) k[1] << 48;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 1:
 			hs->accum |= (uint64) k[0] << 56;
 			break;
@@ -189,23 +189,23 @@ fasthash_accum(fasthash_state *hs, const char *k, size_t len)
 			break;
 		case 7:
 			hs->accum |= (uint64) k[6] << 48;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 6:
 			hs->accum |= (uint64) k[5] << 40;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 5:
 			hs->accum |= (uint64) k[4] << 32;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 4:
 			memcpy(&lower_four, k, sizeof(lower_four));
 			hs->accum |= lower_four;
 			break;
 		case 3:
 			hs->accum |= (uint64) k[2] << 16;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 2:
 			hs->accum |= (uint64) k[1] << 8;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case 1:
 			hs->accum |= (uint64) k[0];
 			break;

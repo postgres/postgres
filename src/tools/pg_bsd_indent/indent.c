@@ -352,7 +352,7 @@ main(int argc, char **argv)
 		    }
 		    goto sw_buffer;
 		}
-		/* FALLTHROUGH */
+		pg_fallthrough;
 	    default:		/* it is the start of a normal statement */
 		{
 		    int remove_newlines;
@@ -922,7 +922,7 @@ check_type:
 	case structure:
 	    if (ps.p_l_follow > 0)
 		goto copy_id;
-		/* FALLTHROUGH */
+	    pg_fallthrough;
 	case decl:		/* we have a declaration type (int, etc.) */
 	    parse(decl);	/* let parser worry about indentation */
 	    if (ps.last_token == rparen && ps.tos <= 1) {

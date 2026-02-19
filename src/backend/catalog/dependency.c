@@ -641,7 +641,7 @@ findDependentObjects(const ObjectAddress *object,
 					break;
 
 				/* Otherwise, treat this like an internal dependency */
-				/* FALL THRU */
+				pg_fallthrough;
 
 			case DEPENDENCY_INTERNAL:
 

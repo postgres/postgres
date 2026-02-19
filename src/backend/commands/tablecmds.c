@@ -16192,7 +16192,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		case RELKIND_TOASTVALUE:
 			if (recursing)
 				break;
-			/* FALL THRU */
+			pg_fallthrough;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

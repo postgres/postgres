@@ -3415,7 +3415,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 				}
 			}
 			/* fall through to process the same as PGC_BACKEND */
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case PGC_BACKEND:
 			if (context == PGC_SIGHUP)
 			{

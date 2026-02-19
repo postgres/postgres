@@ -625,7 +625,7 @@ PostmasterMain(int argc, char *argv[])
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("--%s must be first argument", optarg)));
 
-				/* FALLTHROUGH */
+				pg_fallthrough;
 			case 'c':
 				{
 					char	   *name,
@@ -4217,12 +4217,12 @@ bgworker_should_start_now(BgWorkerStartTime start_time)
 		case PM_RUN:
 			if (start_time == BgWorkerStart_RecoveryFinished)
 				return true;
-			/* fall through */
+			pg_fallthrough;
 
 		case PM_HOT_STANDBY:
 			if (start_time == BgWorkerStart_ConsistentState)
 				return true;
-			/* fall through */
+			pg_fallthrough;
 
 		case PM_RECOVERY:
 		case PM_STARTUP:

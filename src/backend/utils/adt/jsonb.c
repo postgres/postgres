@@ -772,7 +772,7 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 			case JSONTYPE_CAST:
 				/* cast to JSON, and then process as JSON */
 				val = OidFunctionCall1(outfuncoid, val);
-				/* FALL THROUGH */
+				pg_fallthrough;
 			case JSONTYPE_JSON:
 				{
 					/* parse the json right into the existing result object */

@@ -3464,11 +3464,11 @@ adjust_group_pathkeys_for_groupagg(PlannerInfo *root)
 					case PATHKEYS_BETTER2:
 						/* 'pathkeys' are stronger, use these ones instead */
 						currpathkeys = pathkeys;
-						/* FALLTHROUGH */
+						pg_fallthrough;
 
 					case PATHKEYS_BETTER1:
 						/* 'pathkeys' are less strict */
-						/* FALLTHROUGH */
+						pg_fallthrough;
 
 					case PATHKEYS_EQUAL:
 						/* mark this aggregate as covered by 'currpathkeys' */

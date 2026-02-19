@@ -721,7 +721,7 @@ pushJsonbValueScalar(JsonbInState *pstate, JsonbIteratorToken seq,
 			uniqueifyJsonbObject(&ppstate->contVal,
 								 ppstate->unique_keys,
 								 ppstate->skip_nulls);
-			/* fall through! */
+			pg_fallthrough;
 		case WJB_END_ARRAY:
 			/* Steps here common to WJB_END_OBJECT case */
 			Assert(!scalarVal);

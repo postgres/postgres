@@ -133,6 +133,18 @@
 #endif
 
 /*
+ * pg_fallthrough indicates that the fall through from the previous case is
+ * intentional.
+ */
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || (defined(__cplusplus) && __cplusplus >= 201703L)
+#define pg_fallthrough [[fallthrough]]
+#elif __has_attribute(fallthrough)
+#define pg_fallthrough __attribute__((fallthrough))
+#else
+#define pg_fallthrough
+#endif
+
+/*
  * pg_nodiscard means the compiler should warn if the result of a function
  * call is ignored.  The name "nodiscard" is chosen in alignment with the C23
  * standard attribute with the same name.  For maximum forward compatibility,

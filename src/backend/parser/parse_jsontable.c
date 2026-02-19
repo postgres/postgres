@@ -312,7 +312,7 @@ transformJsonTableColumns(JsonTableParseContext *cxt, List *columns,
 					rawc->wrapper != JSW_UNSPEC)
 					rawc->coltype = JTC_FORMATTED;
 
-				/* FALLTHROUGH */
+				pg_fallthrough;
 			case JTC_FORMATTED:
 			case JTC_EXISTS:
 				{

@@ -216,7 +216,7 @@ ShutdownWalRcv(void)
 		case WALRCV_WAITING:
 		case WALRCV_RESTARTING:
 			walrcv->walRcvState = WALRCV_STOPPING;
-			/* fall through */
+			pg_fallthrough;
 		case WALRCV_STOPPING:
 			walrcvpid = walrcv->pid;
 			break;

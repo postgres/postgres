@@ -277,7 +277,7 @@ makepol(QPRS_STATE *state)
 			case ERR:
 				if (SOFT_ERROR_OCCURRED(state->escontext))
 					return ERR;
-				/* fall through */
+				pg_fallthrough;
 			default:
 				ereturn(state->escontext, ERR,
 						(errcode(ERRCODE_SYNTAX_ERROR),

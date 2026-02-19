@@ -113,7 +113,7 @@ main(int argc, char **argv)
 		{
 			case 'r':			/* chunk range */
 				run_chunk_ranges = true;
-				/* fall through */
+				pg_fallthrough;
 			case 'c':			/* chunk size */
 				chunk_size = strtou64(optarg, NULL, 10);
 				if (chunk_size > BUFSIZE)

@@ -3394,7 +3394,7 @@ readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 						commandError(st, PQresultErrorMessage(res));
 					goto error;
 				}
-				/* fall through */
+				pg_fallthrough;
 
 			default:
 				/* anything else is unexpected */
@@ -3607,7 +3607,7 @@ getTransactionStatus(PGconn *con)
 			/* PQTRANS_UNKNOWN is expected given a broken connection */
 			if (PQstatus(con) == CONNECTION_BAD)
 				return TSTATUS_CONN_ERROR;
-			/* fall through */
+			pg_fallthrough;
 		case PQTRANS_ACTIVE:
 		default:
 
@@ -5720,7 +5720,7 @@ postprocess_sql_command(Command *my_command)
 			break;
 		case QUERY_PREPARED:
 			my_command->prepname = psprintf("P_%d", prepnum++);
-			/* fall through */
+			pg_fallthrough;
 		case QUERY_EXTENDED:
 			if (!parseQuery(my_command))
 				exit(1);

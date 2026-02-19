@@ -120,7 +120,7 @@ gin_btree_extract_query(FunctionCallInfo fcinfo,
 		case BTGreaterEqualStrategyNumber:
 		case BTGreaterStrategyNumber:
 			*ptr_partialmatch = true;
-			/* FALLTHROUGH */
+			pg_fallthrough;
 		case BTEqualStrategyNumber:
 			/* If we have a conversion function, apply it */
 			if (cvt_fns && cvt_fns[rhs_code])
