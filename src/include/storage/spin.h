@@ -18,10 +18,6 @@
  *	void SpinLockRelease(volatile slock_t *lock)
  *		Unlock a previously acquired lock.
  *
- *	bool SpinLockFree(slock_t *lock)
- *		Tests if the lock is free. Returns true if free, false if locked.
- *		This does *not* change the state of the lock.
- *
  *	Callers must beware that the macro argument may be evaluated multiple
  *	times!
  *
@@ -59,7 +55,5 @@
 #define SpinLockAcquire(lock) S_LOCK(lock)
 
 #define SpinLockRelease(lock) S_UNLOCK(lock)
-
-#define SpinLockFree(lock)	S_LOCK_FREE(lock)
 
 #endif							/* SPIN_H */

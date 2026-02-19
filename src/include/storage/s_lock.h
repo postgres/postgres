@@ -21,10 +21,6 @@
  *	void S_UNLOCK(slock_t *lock)
  *		Unlock a previously acquired lock.
  *
- *	bool S_LOCK_FREE(slock_t *lock)
- *		Tests if the lock is free. Returns true if free, false if locked.
- *		This does *not* change the state of the lock.
- *
  *	void SPIN_DELAY(void)
  *		Delay operation to occur inside spinlock wait loop.
  *
@@ -670,10 +666,6 @@ spin_delay(void)
 #define S_LOCK(lock) \
 	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__, __func__) : 0)
 #endif	 /* S_LOCK */
-
-#if !defined(S_LOCK_FREE)
-#define S_LOCK_FREE(lock)	(*(lock) == 0)
-#endif	 /* S_LOCK_FREE */
 
 #if !defined(S_UNLOCK)
 /*

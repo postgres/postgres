@@ -262,23 +262,11 @@ main()
 		return 1;
 	}
 
-	if (!S_LOCK_FREE(&test_lock.lock))
-	{
-		printf("S_LOCK_TEST: failed, lock not initialized\n");
-		return 1;
-	}
-
 	S_LOCK(&test_lock.lock);
 
 	if (test_lock.pad1 != 0x44 || test_lock.pad2 != 0x44)
 	{
 		printf("S_LOCK_TEST: failed, declared datatype is wrong size\n");
-		return 1;
-	}
-
-	if (S_LOCK_FREE(&test_lock.lock))
-	{
-		printf("S_LOCK_TEST: failed, lock not locked\n");
 		return 1;
 	}
 
@@ -290,23 +278,11 @@ main()
 		return 1;
 	}
 
-	if (!S_LOCK_FREE(&test_lock.lock))
-	{
-		printf("S_LOCK_TEST: failed, lock not unlocked\n");
-		return 1;
-	}
-
 	S_LOCK(&test_lock.lock);
 
 	if (test_lock.pad1 != 0x44 || test_lock.pad2 != 0x44)
 	{
 		printf("S_LOCK_TEST: failed, declared datatype is wrong size\n");
-		return 1;
-	}
-
-	if (S_LOCK_FREE(&test_lock.lock))
-	{
-		printf("S_LOCK_TEST: failed, lock not re-locked\n");
 		return 1;
 	}
 
