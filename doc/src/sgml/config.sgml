@@ -5249,9 +5249,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         If this value is specified without units, it is taken as milliseconds.
         The default value is 60 seconds.
         A value of zero disables the timeout mechanism.
-        This parameter can only be set in
-        the <filename>postgresql.conf</filename> file or on the server
-        command line.
        </para>
       </listitem>
      </varlistentry>

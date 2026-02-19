@@ -3413,7 +3413,7 @@
   max => 'INT_MAX / 1000',
 },
 
-{ name => 'wal_receiver_timeout', type => 'int', context => 'PGC_SIGHUP', group => 'REPLICATION_STANDBY',
+{ name => 'wal_receiver_timeout', type => 'int', context => 'PGC_USERSET', group => 'REPLICATION_STANDBY',
   short_desc => 'Sets the maximum wait time to receive data from the sending server.',
   long_desc => '0 disables the timeout.',
   flags => 'GUC_UNIT_MS',
