@@ -233,8 +233,9 @@ adjust_appendrel_attrs_mutator(Node *node,
 		 * You might think we need to adjust var->varnullingrels, but that
 		 * shouldn't need any changes.  It will contain outer-join relids,
 		 * while the transformation we are making affects only baserels.
-		 * Below, we just propagate var->varnullingrels into the translated
-		 * Var.
+		 * Below, we just merge var->varnullingrels into the translated Var.
+		 * (We must merge not just copy: the child Var could have some
+		 * nullingrel bits set already, and we mustn't drop those.)
 		 *
 		 * If var->varnullingrels isn't empty, and the translation wouldn't be
 		 * a Var, we have to fail.  One could imagine wrapping the translated
@@ -279,7 +280,12 @@ adjust_appendrel_attrs_mutator(Node *node,
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
 				if (IsA(newnode, Var))
-					((Var *) newnode)->varnullingrels = var->varnullingrels;
+				{
+					Var		   *newvar = (Var *) newnode;
+
+					newvar->varnullingrels = bms_add_members(newvar->varnullingrels,
+															 var->varnullingrels);
+				}
 				else if (var->varnullingrels != NULL)
 					elog(ERROR, "failed to apply nullingrels to a non-Var");
 				return newnode;
