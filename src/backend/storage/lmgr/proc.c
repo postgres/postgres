@@ -323,25 +323,25 @@ InitProcGlobal(void)
 		if (i < MaxConnections)
 		{
 			/* PGPROC for normal backend, add to freeProcs list */
-			dlist_push_tail(&ProcGlobal->freeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->freeProcs, &proc->freeProcsLink);
 			proc->procgloballist = &ProcGlobal->freeProcs;
 		}
 		else if (i < MaxConnections + autovacuum_worker_slots + NUM_SPECIAL_WORKER_PROCS)
 		{
 			/* PGPROC for AV or special worker, add to autovacFreeProcs list */
-			dlist_push_tail(&ProcGlobal->autovacFreeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->autovacFreeProcs, &proc->freeProcsLink);
 			proc->procgloballist = &ProcGlobal->autovacFreeProcs;
 		}
 		else if (i < MaxConnections + autovacuum_worker_slots + NUM_SPECIAL_WORKER_PROCS + max_worker_processes)
 		{
 			/* PGPROC for bgworker, add to bgworkerFreeProcs list */
-			dlist_push_tail(&ProcGlobal->bgworkerFreeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->bgworkerFreeProcs, &proc->freeProcsLink);
 			proc->procgloballist = &ProcGlobal->bgworkerFreeProcs;
 		}
 		else if (i < MaxBackends)
 		{
 			/* PGPROC for walsender, add to walsenderFreeProcs list */
-			dlist_push_tail(&ProcGlobal->walsenderFreeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->walsenderFreeProcs, &proc->freeProcsLink);
 			proc->procgloballist = &ProcGlobal->walsenderFreeProcs;
 		}
 
@@ -424,7 +424,7 @@ InitProcess(void)
 
 	if (!dlist_is_empty(procgloballist))
 	{
-		MyProc = dlist_container(PGPROC, links, dlist_pop_head_node(procgloballist));
+		MyProc = dlist_container(PGPROC, freeProcsLink, dlist_pop_head_node(procgloballist));
 		SpinLockRelease(&ProcGlobal->freeProcsLock);
 	}
 	else
@@ -457,7 +457,7 @@ InitProcess(void)
 	 * Initialize all fields of MyProc, except for those previously
 	 * initialized by InitProcGlobal.
 	 */
-	dlist_node_init(&MyProc->links);
+	dlist_node_init(&MyProc->freeProcsLink);
 	MyProc->waitStatus = PROC_WAIT_STATUS_OK;
 	MyProc->fpVXIDLock = false;
 	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
@@ -479,6 +479,7 @@ InitProcess(void)
 	MyProc->lwWaiting = LW_WS_NOT_WAITING;
 	MyProc->lwWaitMode = 0;
 	MyProc->waitLock = NULL;
+	dlist_node_init(&MyProc->waitLink);
 	MyProc->waitProcLock = NULL;
 	pg_atomic_write_u64(&MyProc->waitStart, 0);
 #ifdef USE_ASSERT_CHECKING
@@ -658,7 +659,7 @@ InitAuxiliaryProcess(void)
 	 * Initialize all fields of MyProc, except for those previously
 	 * initialized by InitProcGlobal.
 	 */
-	dlist_node_init(&MyProc->links);
+	dlist_node_init(&MyProc->freeProcsLink);
 	MyProc->waitStatus = PROC_WAIT_STATUS_OK;
 	MyProc->fpVXIDLock = false;
 	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
@@ -675,6 +676,7 @@ InitAuxiliaryProcess(void)
 	MyProc->lwWaiting = LW_WS_NOT_WAITING;
 	MyProc->lwWaitMode = 0;
 	MyProc->waitLock = NULL;
+	dlist_node_init(&MyProc->waitLink);
 	MyProc->waitProcLock = NULL;
 	pg_atomic_write_u64(&MyProc->waitStart, 0);
 #ifdef USE_ASSERT_CHECKING
@@ -835,7 +837,7 @@ LockErrorCleanup(void)
 	partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
-	if (!dlist_node_is_detached(&MyProc->links))
+	if (!dlist_node_is_detached(&MyProc->waitLink))
 	{
 		/* We could not have been granted the lock yet */
 		RemoveFromWaitQueue(MyProc, lockAwaited->hashcode);
@@ -967,7 +969,7 @@ ProcKill(int code, Datum arg)
 
 				/* Leader exited first; return its PGPROC. */
 				SpinLockAcquire(&ProcGlobal->freeProcsLock);
-				dlist_push_head(procgloballist, &leader->links);
+				dlist_push_head(procgloballist, &leader->freeProcsLink);
 				SpinLockRelease(&ProcGlobal->freeProcsLock);
 			}
 		}
@@ -1012,7 +1014,7 @@ ProcKill(int code, Datum arg)
 		Assert(dlist_is_empty(&proc->lockGroupMembers));
 
 		/* Return PGPROC structure (and semaphore) to appropriate freelist */
-		dlist_push_tail(procgloballist, &proc->links);
+		dlist_push_tail(procgloballist, &proc->freeProcsLink);
 	}
 
 	/* Update shared estimate of spins_per_delay */
@@ -1201,7 +1203,7 @@ JoinWaitQueue(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 
 		dclist_foreach(iter, waitQueue)
 		{
-			PGPROC	   *proc = dlist_container(PGPROC, links, iter.cur);
+			PGPROC	   *proc = dlist_container(PGPROC, waitLink, iter.cur);
 
 			/*
 			 * If we're part of the same locking group as this waiter, its
@@ -1265,9 +1267,9 @@ JoinWaitQueue(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 	 * Insert self into queue, at the position determined above.
 	 */
 	if (insert_before)
-		dclist_insert_before(waitQueue, &insert_before->links, &MyProc->links);
+		dclist_insert_before(waitQueue, &insert_before->waitLink, &MyProc->waitLink);
 	else
-		dclist_push_tail(waitQueue, &MyProc->links);
+		dclist_push_tail(waitQueue, &MyProc->waitLink);
 
 	lock->waitMask |= LOCKBIT_ON(lockmode);
 
@@ -1689,7 +1691,7 @@ ProcSleep(LOCALLOCK *locallock)
 /*
  * ProcWakeup -- wake up a process by setting its latch.
  *
- *	 Also remove the process from the wait queue and set its links invalid.
+ *	 Also remove the process from the wait queue and set its waitLink invalid.
  *
  * The appropriate lock partition lock must be held by caller.
  *
@@ -1701,13 +1703,13 @@ ProcSleep(LOCALLOCK *locallock)
 void
 ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus)
 {
-	if (dlist_node_is_detached(&proc->links))
+	if (dlist_node_is_detached(&proc->waitLink))
 		return;
 
 	Assert(proc->waitStatus == PROC_WAIT_STATUS_WAITING);
 
 	/* Remove process from wait queue */
-	dclist_delete_from_thoroughly(&proc->waitLock->waitProcs, &proc->links);
+	dclist_delete_from_thoroughly(&proc->waitLock->waitProcs, &proc->waitLink);
 
 	/* Clean up process' state and pass it the ok/fail signal */
 	proc->waitLock = NULL;
@@ -1738,7 +1740,7 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 
 	dclist_foreach_modify(miter, waitQueue)
 	{
-		PGPROC	   *proc = dlist_container(PGPROC, links, miter.cur);
+		PGPROC	   *proc = dlist_container(PGPROC, waitLink, miter.cur);
 		LOCKMODE	lockmode = proc->waitLockMode;
 
 		/*
@@ -1802,8 +1804,7 @@ CheckDeadLock(void)
 	 * We check by looking to see if we've been unlinked from the wait queue.
 	 * This is safe because we hold the lock partition lock.
 	 */
-	if (MyProc->links.prev == NULL ||
-		MyProc->links.next == NULL)
+	if (dlist_node_is_detached(&MyProc->waitLink))
 	{
 		result = DS_NO_DEADLOCK;
 		goto check_done;

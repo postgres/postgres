@@ -154,10 +154,6 @@ typedef enum
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
  * currently-unused PGPROC structs that will be reallocated to new backends.
  *
- * links: list link for any list the PGPROC is in.  When waiting for a lock,
- * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC
- * is linked into ProcGlobal's freeProcs list.
- *
  * Note: twophase.c also sets up a dummy PGPROC struct for each currently
  * prepared transaction.  These PGPROCs appear in the ProcArray data structure
  * so that the prepared transactions appear to be still running and are
@@ -184,8 +180,9 @@ typedef enum
  */
 struct PGPROC
 {
-	dlist_node	links;			/* list link if process is in a list */
 	dlist_head *procgloballist; /* procglobal list that owns this PGPROC */
+	dlist_node	freeProcsLink;	/* link in procgloballist, when in recycled
+								 * state */
 
 	PGSemaphore sem;			/* ONE semaphore to sleep on */
 	ProcWaitStatus waitStatus;
@@ -263,6 +260,7 @@ struct PGPROC
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitProcLock are NULL if not currently waiting. */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
+	dlist_node	waitLink;		/* position in waitLock->waitProcs queue */
 	PROCLOCK   *waitProcLock;	/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on this

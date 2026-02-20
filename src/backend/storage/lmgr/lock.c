@@ -2052,13 +2052,13 @@ RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 
 	/* Make sure proc is waiting */
 	Assert(proc->waitStatus == PROC_WAIT_STATUS_WAITING);
-	Assert(proc->links.next != NULL);
+	Assert(!dlist_node_is_detached(&proc->waitLink));
 	Assert(waitLock);
 	Assert(!dclist_is_empty(&waitLock->waitProcs));
 	Assert(0 < lockmethodid && lockmethodid < lengthof(LockMethods));
 
 	/* Remove proc from lock's wait queue */
-	dclist_delete_from_thoroughly(&waitLock->waitProcs, &proc->links);
+	dclist_delete_from_thoroughly(&waitLock->waitProcs, &proc->waitLink);
 
 	/* Undo increments of request counts by waiting process */
 	Assert(waitLock->nRequested > 0);
@@ -4143,7 +4143,7 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 	/* Collect PIDs from the lock's wait queue, stopping at blocked_proc */
 	dclist_foreach(proc_iter, waitQueue)
 	{
-		PGPROC	   *queued_proc = dlist_container(PGPROC, links, proc_iter.cur);
+		PGPROC	   *queued_proc = dlist_container(PGPROC, waitLink, proc_iter.cur);
 
 		if (queued_proc == blocked_proc)
 			break;

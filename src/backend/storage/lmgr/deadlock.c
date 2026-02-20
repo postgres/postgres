@@ -262,7 +262,7 @@ DeadLockCheck(PGPROC *proc)
 		/* Reset the queue and re-add procs in the desired order */
 		dclist_init(waitQueue);
 		for (int j = 0; j < nProcs; j++)
-			dclist_push_tail(waitQueue, &procs[j]->links);
+			dclist_push_tail(waitQueue, &procs[j]->waitLink);
 
 #ifdef DEBUG_DEADLOCK
 		PrintLockQueue(lock, "rearranged to:");
@@ -504,7 +504,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	 * If the process is waiting, there is an outgoing waits-for edge to each
 	 * process that blocks it.
 	 */
-	if (checkProc->links.next != NULL && checkProc->waitLock != NULL &&
+	if (!dlist_node_is_detached(&checkProc->waitLink) &&
 		FindLockCycleRecurseMember(checkProc, checkProc, depth, softEdges,
 								   nSoftEdges))
 		return true;
@@ -522,7 +522,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 
 		memberProc = dlist_container(PGPROC, lockGroupLink, iter.cur);
 
-		if (memberProc->links.next != NULL && memberProc->waitLock != NULL &&
+		if (!dlist_node_is_detached(&memberProc->waitLink) && memberProc->waitLock != NULL &&
 			memberProc != checkProc &&
 			FindLockCycleRecurseMember(memberProc, checkProc, depth, softEdges,
 									   nSoftEdges))
@@ -715,7 +715,7 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 		{
 			dclist_foreach(proc_iter, waitQueue)
 			{
-				proc = dlist_container(PGPROC, links, proc_iter.cur);
+				proc = dlist_container(PGPROC, waitLink, proc_iter.cur);
 
 				if (proc->lockGroupLeader == checkProcLeader)
 					lastGroupMember = proc;
@@ -730,7 +730,7 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 		{
 			PGPROC	   *leader;
 
-			proc = dlist_container(PGPROC, links, proc_iter.cur);
+			proc = dlist_container(PGPROC, waitLink, proc_iter.cur);
 
 			leader = proc->lockGroupLeader == NULL ? proc :
 				proc->lockGroupLeader;
@@ -879,7 +879,7 @@ TopoSort(LOCK *lock,
 	i = 0;
 	dclist_foreach(proc_iter, waitQueue)
 	{
-		proc = dlist_container(PGPROC, links, proc_iter.cur);
+		proc = dlist_container(PGPROC, waitLink, proc_iter.cur);
 		topoProcs[i++] = proc;
 	}
 	Assert(i == queue_size);
@@ -1059,7 +1059,7 @@ PrintLockQueue(LOCK *lock, const char *info)
 
 	dclist_foreach(proc_iter, waitQueue)
 	{
-		PGPROC	   *proc = dlist_container(PGPROC, links, proc_iter.cur);
+		PGPROC	   *proc = dlist_container(PGPROC, waitLink, proc_iter.cur);
 
 		printf(" %d", proc->pid);
 	}
