@@ -5070,7 +5070,7 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 		if (timeline < 1 || timeline > PG_UINT32_MAX)
 		{
 			GUC_check_errdetail("\"%s\" must be between %u and %u.",
-								"recovery_target_timeline", 1, UINT_MAX);
+								"recovery_target_timeline", 1, PG_UINT32_MAX);
 			return false;
 		}
 	}
