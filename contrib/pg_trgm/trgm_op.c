@@ -533,7 +533,7 @@ generate_trgm_only(growable_trgm_array *dst, char *str, int slen, TrgmBound **bo
 		{
 			if (bounds_allocated < dst->length)
 			{
-				bounds = repalloc0_array(bounds, TrgmBound, bounds_allocated, dst->allocated);
+				bounds = *bounds_p = repalloc0_array(bounds, TrgmBound, bounds_allocated, dst->allocated);
 				bounds_allocated = dst->allocated;
 			}
 
