@@ -393,4 +393,11 @@ am_parallel_apply_worker(void)
 	return isParallelApplyWorker(MyLogicalRepWorker);
 }
 
+static inline LogicalRepWorkerType
+get_logical_worker_type(void)
+{
+	Assert(MyLogicalRepWorker->in_use);
+	return MyLogicalRepWorker->type;
+}
+
 #endif							/* WORKER_INTERNAL_H */

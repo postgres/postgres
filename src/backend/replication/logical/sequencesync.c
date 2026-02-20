@@ -750,8 +750,7 @@ start_sequence_sync(void)
 			 * idle state.
 			 */
 			AbortOutOfAnyTransaction();
-			pgstat_report_subscription_error(MySubscription->oid,
-											 WORKERTYPE_SEQUENCESYNC);
+			pgstat_report_subscription_error(MySubscription->oid);
 
 			PG_RE_THROW();
 		}

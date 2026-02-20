@@ -1527,8 +1527,7 @@ start_table_sync(XLogRecPtr *origin_startpos, char **slotname)
 			 * idle state.
 			 */
 			AbortOutOfAnyTransaction();
-			pgstat_report_subscription_error(MySubscription->oid,
-											 WORKERTYPE_TABLESYNC);
+			pgstat_report_subscription_error(MySubscription->oid);
 
 			PG_RE_THROW();
 		}
