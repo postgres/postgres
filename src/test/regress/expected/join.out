@@ -4020,6 +4020,57 @@ where ss.x is null;
                      Output: 'bar'::text
 (12 rows)
 
+-- Test computation of varnullingrels when translating appendrel Var
+begin;
+create temp table t_append (a int not null, b int);
+insert into t_append values (1, 1);
+insert into t_append values (2, 3);
+explain (verbose, costs off)
+select t1.a, s.a from t_append t1
+  left join t_append t2 on t1.a = t2.b
+  join lateral (
+    select t1.a as a union all select t2.a as a
+  ) s on true
+where s.a is not null;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Nested Loop
+   Output: t1.a, (t1.a)
+   ->  Merge Left Join
+         Output: t1.a, t2.a
+         Merge Cond: (t1.a = t2.b)
+         ->  Sort
+               Output: t1.a
+               Sort Key: t1.a
+               ->  Seq Scan on pg_temp.t_append t1
+                     Output: t1.a
+         ->  Sort
+               Output: t2.a, t2.b
+               Sort Key: t2.b
+               ->  Seq Scan on pg_temp.t_append t2
+                     Output: t2.a, t2.b
+   ->  Append
+         ->  Result
+               Output: t1.a
+         ->  Result
+               Output: t2.a
+               One-Time Filter: (t2.a IS NOT NULL)
+(21 rows)
+
+select t1.a, s.a from t_append t1
+  left join t_append t2 on t1.a = t2.b
+  join lateral (
+    select t1.a as a union all select t2.a as a
+  ) s on true
+where s.a is not null;
+ a | a 
+---+---
+ 1 | 1
+ 1 | 1
+ 2 | 2
+(3 rows)
+
+rollback;
 --
 -- test inlining of immutable functions
 --
