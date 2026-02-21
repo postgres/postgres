@@ -776,6 +776,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	List	   *rawDefaults;
 	List	   *cookedDefaults;
 	List	   *nncols;
+	List	   *connames = NIL;
 	Datum		reloptions;
 	ListCell   *listptr;
 	AttrNumber	attnum;
@@ -1329,11 +1330,20 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	/*
 	 * Now add any newly specified CHECK constraints to the new relation. Same
 	 * as for defaults above, but these need to come after partitioning is set
-	 * up.
+	 * up.  We save the constraint names that were used, to avoid dupes below.
 	 */
 	if (stmt->constraints)
-		AddRelationNewConstraints(rel, NIL, stmt->constraints,
-								  true, true, false, queryString);
+	{
+		List	   *conlist;
+
+		conlist = AddRelationNewConstraints(rel, NIL, stmt->constraints,
+											true, true, false, queryString);
+		foreach_ptr(CookedConstraint, cons, conlist)
+		{
+			if (cons->name != NULL)
+				connames = lappend(connames, cons->name);
+		}
+	}
 
 	/*
 	 * Finally, merge the not-null constraints that are declared directly with
@@ -1342,7 +1352,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * columns that don't yet have it.
 	 */
 	nncols = AddRelationNotNullConstraints(rel, stmt->nnconstraints,
-										   old_notnulls);
+										   old_notnulls, connames);
 	foreach_int(attrnum, nncols)
 		set_attnotnull(NULL, rel, attrnum, true, false);
 
