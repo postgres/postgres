@@ -111,31 +111,51 @@ xlogVacuumPage(Relation index, Buffer buffer)
 }
 
 
+/*
+ * Stack entry used during posting tree empty-page deletion scan.
+ *
+ * One DataPageDeleteStack entry is allocated per tree level.  As
+ * ginScanPostingTreeToDelete() recurses down the tree, each entry tracks
+ * the buffer of the page currently being visited at that level ('buffer'),
+ * and the buffer of its left sibling ('leftBuffer').  The left page is kept
+ * pinned and exclusively locked because ginDeletePostingPage() needs it to
+ * update the sibling chain; acquiring it later could deadlock with
+ * ginStepRight(), which locks pages left-to-right.
+ */
 typedef struct DataPageDeleteStack
 {
 	struct DataPageDeleteStack *child;
 	struct DataPageDeleteStack *parent;
 
-	BlockNumber blkno;			/* current block number */
-	Buffer		leftBuffer;		/* pinned and locked rightest non-deleted page
-								 * on left */
+	Buffer		buffer;			/* buffer for the page being visited at this
+								 * tree level */
+	Buffer		leftBuffer;		/* pinned and locked rightmost non-deleted
+								 * sibling to the left of the current page */
+	OffsetNumber myoff;			/* offset of this page's downlink in the
+								 * parent */
 	bool		isRoot;
 } DataPageDeleteStack;
 
 
 /*
  * Delete a posting tree page.
+ *
+ * Removes the page identified by dBuffer from the posting tree by updating
+ * the left sibling's rightlink (in lBuffer) to skip over the deleted page,
+ * and removing the downlink from the parent page (in pBuffer).  All three
+ * buffers must already have been pinned and exclusively locked by the caller.
+ *
+ * The buffers are NOT released nor unlocked here; the caller is responsible
+ * for this.
  */
 static void
-ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkno,
-			  BlockNumber parentBlkno, OffsetNumber myoff, bool isParentRoot)
+ginDeletePostingPage(GinVacuumState *gvs, Buffer dBuffer, Buffer lBuffer,
+					 Buffer pBuffer, OffsetNumber myoff, bool isParentRoot)
 {
-	Buffer		dBuffer;
-	Buffer		lBuffer;
-	Buffer		pBuffer;
 	Page		page,
 				parentPage;
 	BlockNumber rightlink;
+	BlockNumber deleteBlkno = BufferGetBlockNumber(dBuffer);
 
 	/*
 	 * This function MUST be called only if someone of parent pages hold
@@ -143,12 +163,6 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	 * happen in this subtree. Caller also acquires Exclusive locks on
 	 * deletable, parent and left pages.
 	 */
-	lBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, leftBlkno,
-								 RBM_NORMAL, gvs->strategy);
-	dBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, deleteBlkno,
-								 RBM_NORMAL, gvs->strategy);
-	pBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, parentBlkno,
-								 RBM_NORMAL, gvs->strategy);
 
 	page = BufferGetPage(dBuffer);
 	rightlink = GinPageGetOpaque(page)->rightlink;
@@ -227,54 +241,37 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 
 	END_CRIT_SECTION();
 
-	ReleaseBuffer(pBuffer);
-	ReleaseBuffer(lBuffer);
-	ReleaseBuffer(dBuffer);
-
 	gvs->result->pages_newly_deleted++;
 	gvs->result->pages_deleted++;
 }
 
 
 /*
- * Scans posting tree and deletes empty pages.  Caller must lock root page for
- * cleanup.  During scan path from root to current page is kept exclusively
- * locked.  Also keep left page exclusively locked, because ginDeletePage()
- * needs it.  If we try to relock left page later, it could deadlock with
- * ginStepRight().
+ * Scans a posting tree and deletes empty pages.
+ *
+ * The caller must hold a cleanup lock on the root page to prevent concurrent
+ * inserts.  The entire path from the root down to the current page is kept
+ * exclusively locked throughout the scan.  The left sibling at each level is
+ * also kept locked, because ginDeletePostingPage() needs it to update the
+ * rightlink of the left sibling; re-acquiring the left sibling lock later
+ * could deadlock with ginStepRight(), which acquires page locks
+ * left-to-right.
+ *
+ * All per-level state is carried in 'myStackItem': the buffer to process
+ * (must already be pinned and exclusively locked), the left sibling buffer,
+ * and this page's offset in the parent's downlink array.  The root entry is
+ * set up by ginVacuumPostingTree(); child entries are populated here before
+ * recursing.
+ *
+ * Returns true if the page was deleted, false otherwise.
  */
 static bool
-ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot,
-				DataPageDeleteStack *parent, OffsetNumber myoff)
+ginScanPostingTreeToDelete(GinVacuumState *gvs, DataPageDeleteStack *myStackItem)
 {
-	DataPageDeleteStack *me;
-	Buffer		buffer;
+	Buffer		buffer = myStackItem->buffer;
 	Page		page;
-	bool		meDelete = false;
+	bool		pageWasDeleted = false;
 	bool		isempty;
-
-	if (isRoot)
-	{
-		me = parent;
-	}
-	else
-	{
-		if (!parent->child)
-		{
-			me = palloc0_object(DataPageDeleteStack);
-			me->parent = parent;
-			parent->child = me;
-			me->leftBuffer = InvalidBuffer;
-		}
-		else
-			me = parent->child;
-	}
-
-	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
-								RBM_NORMAL, gvs->strategy);
-
-	if (!isRoot)
-		LockBuffer(buffer, GIN_EXCLUSIVE);
 
 	page = BufferGetPage(buffer);
 
@@ -284,19 +281,48 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot,
 	{
 		OffsetNumber i;
 
-		me->blkno = blkno;
-		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff; i++)
+		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff;)
 		{
 			PostingItem *pitem = GinDataPageGetPostingItem(page, i);
+			Buffer		childBuffer;
 
-			if (ginScanToDelete(gvs, PostingItemGetBlockNumber(pitem), false, me, i))
-				i--;
+			childBuffer = ReadBufferExtended(gvs->index,
+											 MAIN_FORKNUM,
+											 PostingItemGetBlockNumber(pitem),
+											 RBM_NORMAL, gvs->strategy);
+			LockBuffer(childBuffer, GIN_EXCLUSIVE);
+
+			/* Allocate a child stack entry on first use; reuse thereafter */
+			if (!myStackItem->child)
+			{
+				myStackItem->child = palloc0_object(DataPageDeleteStack);
+				myStackItem->child->parent = myStackItem;
+				myStackItem->child->leftBuffer = InvalidBuffer;
+			}
+
+			myStackItem->child->buffer = childBuffer;
+			myStackItem->child->isRoot = false;
+			myStackItem->child->myoff = i;
+
+			/*
+			 * Recurse into child.  If the child page was deleted, its
+			 * downlink was removed from our page, so re-examine the same
+			 * offset; otherwise advance to the next downlink.
+			 */
+			if (!ginScanPostingTreeToDelete(gvs, myStackItem->child))
+				i++;
 		}
+		myStackItem->buffer = InvalidBuffer;
 
-		if (GinPageRightMost(page) && BufferIsValid(me->child->leftBuffer))
+		/*
+		 * After processing all children at this level, release the child
+		 * level's leftBuffer if we're at the rightmost page.  There is no
+		 * right sibling that could need it for deletion.
+		 */
+		if (GinPageRightMost(page) && BufferIsValid(myStackItem->child->leftBuffer))
 		{
-			UnlockReleaseBuffer(me->child->leftBuffer);
-			me->child->leftBuffer = InvalidBuffer;
+			UnlockReleaseBuffer(myStackItem->child->leftBuffer);
+			myStackItem->child->leftBuffer = InvalidBuffer;
 		}
 	}
 
@@ -307,34 +333,41 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot,
 
 	if (isempty)
 	{
-		/* we never delete the left- or rightmost branch */
-		if (BufferIsValid(me->leftBuffer) && !GinPageRightMost(page))
+		/*
+		 * Proceed to the ginDeletePostingPage() if that's not the leftmost or
+		 * the rightmost page.
+		 */
+		if (BufferIsValid(myStackItem->leftBuffer) && !GinPageRightMost(page))
 		{
-			Assert(!isRoot);
-			ginDeletePage(gvs, blkno, BufferGetBlockNumber(me->leftBuffer),
-						  me->parent->blkno, myoff, me->parent->isRoot);
-			meDelete = true;
+			Assert(!myStackItem->isRoot);
+			ginDeletePostingPage(gvs, buffer, myStackItem->leftBuffer,
+								 myStackItem->parent->buffer,
+								 myStackItem->myoff,
+								 myStackItem->parent->isRoot);
+			pageWasDeleted = true;
 		}
 	}
 
-	if (!meDelete)
+	if (!pageWasDeleted)
 	{
-		if (BufferIsValid(me->leftBuffer))
-			UnlockReleaseBuffer(me->leftBuffer);
-		me->leftBuffer = buffer;
+		/*
+		 * Keep this page as the new leftBuffer for this level: the next
+		 * sibling to the right might need it for deletion.  Release any
+		 * previously held left page first.
+		 */
+		if (BufferIsValid(myStackItem->leftBuffer))
+			UnlockReleaseBuffer(myStackItem->leftBuffer);
+		myStackItem->leftBuffer = buffer;
 	}
 	else
 	{
-		if (!isRoot)
-			LockBuffer(buffer, GIN_UNLOCK);
-
-		ReleaseBuffer(buffer);
+		/*
+		 * Page was deleted; release the buffer.  leftBuffer remains the same.
+		 */
+		UnlockReleaseBuffer(buffer);
 	}
 
-	if (isRoot)
-		ReleaseBuffer(buffer);
-
-	return meDelete;
+	return pageWasDeleted;
 }
 
 
@@ -418,6 +451,7 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 		DataPageDeleteStack root,
 				   *ptr,
 				   *tmp;
+		bool		deleted PG_USED_FOR_ASSERTS_ONLY;
 
 		buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, rootBlkno,
 									RBM_NORMAL, gvs->strategy);
@@ -429,10 +463,13 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 		LockBufferForCleanup(buffer);
 
 		memset(&root, 0, sizeof(DataPageDeleteStack));
+		root.buffer = buffer;
 		root.leftBuffer = InvalidBuffer;
+		root.myoff = InvalidOffsetNumber;
 		root.isRoot = true;
 
-		ginScanToDelete(gvs, rootBlkno, true, &root, InvalidOffsetNumber);
+		deleted = ginScanPostingTreeToDelete(gvs, &root);
+		Assert(!deleted);
 
 		ptr = root.child;
 
@@ -839,7 +876,7 @@ GinPageIsRecyclable(Page page)
 
 	/*
 	 * If no backend still could view delete_xid as in running, all scans
-	 * concurrent with ginDeletePage() must have finished.
+	 * concurrent with ginDeletePostingPage() must have finished.
 	 */
 	return GlobalVisCheckRemovableXid(NULL, delete_xid);
 }
