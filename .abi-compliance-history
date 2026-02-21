@@ -18,6 +18,18 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+8d9a97e0bb6d820dac553848f0d5d8cc3f3e219d
+#
+# Avoid name collision with NOT NULL constraints
+# 2026-02-21 12:22:08 +0100
+#
+# AddRelationNotNullConstraints() needs to receive the names of constraints
+# already created, so that it can avoid those names when assigning names to
+# not-null constraints.  The purpose of this function is rather obscure, and
+# furthermore it's new in 18, so I don't expect any third-party code to break.
+#
+# Discussion: https://postgr.es/m/19393-6a82427485a744cf@postgresql.org
+
 33e3de6d77e87d6c3c6f8f878dd8de42d37c3b8f
 #
 # Add file_extend_method=posix_fallocate,write_zeros.
