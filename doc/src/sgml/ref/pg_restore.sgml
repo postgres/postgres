@@ -294,7 +294,23 @@ PostgreSQL documentation
         <option>--exit-on-error</option>,
         <option>--single-transaction</option>,
         <option>--clean</option>, or
-        <option>--transaction-size</option>.
+        <option>--transaction-size</option>,
+        <option>--no-globals</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-globals</option></term>
+      <listitem>
+       <para>
+        Do not restore global objects (roles and tablespaces).  When
+        <option>-C</option>/<option>--create</option> is not specified,
+        databases that do not already exist on the target server are skipped.
+       </para>
+       <para>
+        This option is only relevant when restoring from a non-plain-text
+        archive made using <application>pg_dumpall</application>.
        </para>
       </listitem>
      </varlistentry>

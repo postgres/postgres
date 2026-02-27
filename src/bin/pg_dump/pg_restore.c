@@ -107,6 +107,7 @@ main(int argc, char **argv)
 	static int	no_schema = 0;
 	static int	no_security_labels = 0;
 	static int	no_statistics = 0;
+	static int	no_globals = 0;
 	static int	no_subscriptions = 0;
 	static int	strict_names = 0;
 	static int	statistics_only = 0;
@@ -164,6 +165,7 @@ main(int argc, char **argv)
 		{"no-publications", no_argument, &no_publications, 1},
 		{"no-schema", no_argument, &no_schema, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
+		{"no-globals", no_argument, &no_globals, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 		{"no-statistics", no_argument, &no_statistics, 1},
 		{"statistics", no_argument, &with_statistics, 1},
@@ -489,6 +491,10 @@ main(int argc, char **argv)
 		pg_fatal("options %s and %s cannot be used together",
 				 "--statistics", "-g/--globals-only");
 
+	if (no_globals && globals_only)
+		pg_fatal("options %s and %s cannot be used together",
+				 "--no-globals", "-g/--globals-only");
+
 	/*
 	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
@@ -614,9 +620,10 @@ main(int argc, char **argv)
 
 		/*
 		 * To restore from a pg_dumpall archive, -C (create database) option
-		 * must be specified unless we are only restoring globals.
+		 * must be specified unless we are only restoring globals or we are
+		 * skipping globals.
 		 */
-		if (!globals_only && opts->createDB != 1)
+		if (!no_globals && !globals_only && opts->createDB != 1)
 		{
 			pg_log_error("option %s must be specified when restoring an archive created by pg_dumpall",
 						 "-C/--create");
@@ -626,13 +633,16 @@ main(int argc, char **argv)
 		}
 
 		/*
-		 * Always restore global objects, even if --exclude-database results
-		 * in zero databases to process. If 'globals-only' is set, exit
-		 * immediately.
+		 * Restore global objects, even if --exclude-database results in zero
+		 * databases to process. If 'globals-only' is set, exit immediately.
 		 */
 		snprintf(global_path, MAXPGPATH, "%s/toc.glo", inputFileSpec);
 
-		n_errors = restore_global_objects(global_path, tmpopts);
+		if (!no_globals)
+			n_errors = restore_global_objects(global_path, tmpopts);
+		else
+			pg_log_info("skipping restore of global objects because %s was specified",
+						"--no-globals");
 
 		if (globals_only)
 			pg_log_info("database restoring skipped because option %s was specified",
@@ -829,6 +839,7 @@ usage(const char *progname)
 	printf(_("  --no-security-labels         do not restore security labels\n"));
 	printf(_("  --no-statistics              do not restore statistics\n"));
 	printf(_("  --no-subscriptions           do not restore subscriptions\n"));
+	printf(_("  --no-globals                 do not restore global objects (roles and tablespaces)\n"));
 	printf(_("  --no-table-access-method     do not restore table access methods\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --restrict-key=RESTRICT_KEY  use provided string as psql \\restrict key\n"));
@@ -1349,6 +1360,13 @@ restore_all_databases(const char *inputFileSpec,
 			}
 			else
 			{
+				if (!tmpopts->createDB)
+				{
+					pg_log_info("skipping restore of database \"%s\": database does not exist and %s was not specified",
+								dbidname->str, "-C/--create");
+					continue;
+				}
+
 				/* We'll have to create it */
 				tmpopts->createDB = 1;
 				tmpopts->cparams.dbname = connected_db;

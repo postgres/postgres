@@ -299,6 +299,24 @@ my %pgdumpall_runs = (
 		like => qr/
             ^\s*\QCREATE ROLE dumpall;\E\s*\n
 			/xm
+	},
+
+	restore_no_globals => {
+		setup_sql => "CREATE TABLE no_globals_test(a int, b text);
+		INSERT INTO no_globals_test VALUES (1, 'hello'), (2, 'world');",
+		dump_cmd => [
+			'pg_dumpall',
+			'--format' => 'directory',
+			'--file' => "$tempdir/restore_no_globals",
+		],
+		restore_cmd => [
+			'pg_restore', '-C', '--no-globals',
+			'--format' => 'directory',
+			'--file' => "$tempdir/restore_no_globals.sql",
+			"$tempdir/restore_no_globals",
+		],
+		like => qr/^\n\QCOPY public.no_globals_test (a, b) FROM stdin;\E/xm,
+		unlike => qr/^\QCREATE ROLE dumpall;\E/xm,
 	},);
 
 # First execute the setup_sql
@@ -578,7 +596,8 @@ like(
 	'map.dat contains expected preamble');
 
 # verify commenting out a line in map.dat skips that database
-$node->safe_psql($run_db, 'CREATE DATABASE comment_test_db;
+$node->safe_psql(
+	$run_db, 'CREATE DATABASE comment_test_db;
 \c comment_test_db
 CREATE TABLE comment_test_table (id int);');
 

@@ -255,9 +255,13 @@ command_fails_like(
 	'pg_dumpall: --restrict-key can only be used with plain dump format');
 
 command_fails_like(
-	[ 'pg_dumpall', '--format', 'd', '--globals-only', '--clean', '-f', 'dumpfile' ],
+	[
+		'pg_dumpall', '--format', 'd', '--globals-only',
+		'--clean', '-f', 'dumpfile'
+	],
 	qr/\Qpg_dumpall: error: options --clean and -g\/--globals-only cannot be used together in non-text dump\E/,
-	'pg_dumpall: --clean and -g/--globals-only cannot be used together in non-text dump');
+	'pg_dumpall: --clean and -g/--globals-only cannot be used together in non-text dump'
+);
 
 command_fails_like(
 	[ 'pg_dumpall', '--format', 'd' ],
@@ -299,4 +303,12 @@ command_fails_like(
 	qr/\Qpg_restore: error: option -g\/--globals-only can be used only when restoring an archive created by pg_dumpall\E/,
 	'When option --globals-only is used in pg_restore with the dump of pg_dump'
 );
+
+command_fails_like(
+	[
+		'pg_restore', '--globals-only', '--no-globals', '-d', 'xxx',
+		'dumpdir'
+	],
+	qr/\Qpg_restore: error: options --no-globals and -g\/--globals-only cannot be used together\E/,
+	'options --no-globals and --globals-only cannot be used together');
 done_testing();
