@@ -900,9 +900,10 @@ TwoPhaseGetXidByVirtualXID(VirtualTransactionId vxid,
  *		Get the dummy proc number for prepared transaction
  *
  * Dummy proc numbers are similar to proc numbers of real backends.  They
- * start at MaxBackends, and are unique across all currently active real
- * backends and prepared transactions.  If lock_held is set to true,
- * TwoPhaseStateLock will not be taken, so the caller had better hold it.
+ * start at FIRST_PREPARED_XACT_PROC_NUMBER, and are unique across all
+ * currently active real backends and prepared transactions.  If lock_held is
+ * set to true, TwoPhaseStateLock will not be taken, so the caller had better
+ * hold it.
  */
 ProcNumber
 TwoPhaseGetDummyProcNumber(FullTransactionId fxid, bool lock_held)
