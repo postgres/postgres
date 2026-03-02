@@ -5260,7 +5260,11 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 					vardata->statsTuple =
 						statext_expressions_load(info->statOid, rte->inh, pos);
 
-					vardata->freefunc = ReleaseDummy;
+					/* Nothing to release if no data found */
+					if (vardata->statsTuple != NULL)
+					{
+						vardata->freefunc = ReleaseDummy;
+					}
 
 					/*
 					 * Test if user has permission to access all rows from the
