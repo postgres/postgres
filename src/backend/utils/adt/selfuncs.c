@@ -5234,11 +5234,15 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 					vardata->statsTuple = t;
 
-					/*
-					 * XXX Not sure if we should cache the tuple somewhere.
-					 * Now we just create a new copy every time.
-					 */
-					vardata->freefunc = ReleaseDummy;
+					/* Nothing to release if no data found */
+					if (vardata->statsTuple != NULL)
+					{
+						/*
+						 * XXX Not sure if we should cache the tuple somewhere.
+						 * Now we just create a new copy every time.
+						 */
+						vardata->freefunc = ReleaseDummy;
+					}
 
 					/*
 					 * Test if user has permission to access all rows from the
