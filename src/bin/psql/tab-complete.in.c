@@ -2536,12 +2536,24 @@ match_previous_words(int pattern_id,
 	else if (Matches("ALTER", "USER|ROLE", MatchAny) &&
 			 !TailMatches("USER", "MAPPING"))
 		COMPLETE_WITH("BYPASSRLS", "CONNECTION LIMIT", "CREATEDB", "CREATEROLE",
-					  "ENCRYPTED PASSWORD", "INHERIT", "LOGIN", "NOBYPASSRLS",
+					  "ENCRYPTED PASSWORD", "IN", "INHERIT", "LOGIN", "NOBYPASSRLS",
 					  "NOCREATEDB", "NOCREATEROLE", "NOINHERIT",
 					  "NOLOGIN", "NOREPLICATION", "NOSUPERUSER", "PASSWORD",
 					  "RENAME TO", "REPLICATION", "RESET", "SET", "SUPERUSER",
 					  "VALID UNTIL", "WITH");
-
+	/* ALTER USER,ROLE <name> IN */
+	else if (Matches("ALTER", "USER|ROLE", MatchAny, "IN"))
+		COMPLETE_WITH("DATABASE");
+	/* ALTER USER,ROLE <name> IN DATABASE */
+	else if (Matches("ALTER", "USER|ROLE", MatchAny, "IN", "DATABASE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+	/* ALTER USER,ROLE <name> IN DATABASE <dbname> */
+	else if (Matches("ALTER", "USER|ROLE", MatchAny, "IN", "DATABASE", MatchAny))
+		COMPLETE_WITH("SET", "RESET");
+	/* ALTER USER,ROLE <name> IN DATABASE <dbname> SET */
+	else if (Matches("ALTER", "USER|ROLE", MatchAny, "IN", "DATABASE", MatchAny, "SET"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_set_vars);
+	/* XXX missing support for ALTER ROLE <name> IN DATABASE <dbname> RESET */
 	/* ALTER USER,ROLE <name> RESET */
 	else if (Matches("ALTER", "USER|ROLE", MatchAny, "RESET"))
 	{
