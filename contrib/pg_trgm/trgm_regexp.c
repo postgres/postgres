@@ -2129,18 +2129,15 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 {
 	StringInfoData buf;
 	int			nstates = pg_reg_getnumstates(regex);
-	int			state;
-	int			i;
 
 	initStringInfo(&buf);
 
 	appendStringInfoString(&buf, "\ndigraph sourceNFA {\n");
 
-	for (state = 0; state < nstates; state++)
+	for (int state = 0; state < nstates; state++)
 	{
 		regex_arc_t *arcs;
-		int			i,
-					arcsCount;
+		int			arcsCount;
 
 		appendStringInfo(&buf, "s%d", state);
 		if (pg_reg_getfinalstate(regex) == state)
@@ -2151,7 +2148,7 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 		arcs = palloc_array(regex_arc_t, arcsCount);
 		pg_reg_getoutarcs(regex, state, arcs, arcsCount);
 
-		for (i = 0; i < arcsCount; i++)
+		for (int i = 0; i < arcsCount; i++)
 		{
 			appendStringInfo(&buf, "  s%d -> s%d [label = \"%d\"];\n",
 							 state, arcs[i].to, arcs[i].co);
@@ -2168,15 +2165,14 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 	appendStringInfoString(&buf, " { rank = sink;\n");
 	appendStringInfoString(&buf, "  Colors [shape = none, margin=0, label=<\n");
 
-	for (i = 0; i < ncolors; i++)
+	for (int i = 0; i < ncolors; i++)
 	{
 		TrgmColorInfo *color = &colors[i];
-		int			j;
 
 		appendStringInfo(&buf, "<br/>Color %d: ", i);
 		if (color->expandable)
 		{
-			for (j = 0; j < color->wordCharsCount; j++)
+			for (int j = 0; j < color->wordCharsCount; j++)
 			{
 				char		s[MAX_MULTIBYTE_CHAR_LEN + 1];
 
