@@ -335,7 +335,7 @@ RegisterExtensionExplainOption(const char *option_name,
 		ExplainExtensionOptionArray = (ExplainExtensionOption *)
 			MemoryContextAlloc(TopMemoryContext,
 							   ExplainExtensionOptionsAllocated
-							   * sizeof(char *));
+							   * sizeof(ExplainExtensionOption));
 	}
 
 	/* If there's an array but it's currently full, expand it. */
@@ -344,7 +344,7 @@ RegisterExtensionExplainOption(const char *option_name,
 		int			i = pg_nextpower2_32(ExplainExtensionOptionsAssigned + 1);
 
 		ExplainExtensionOptionArray = (ExplainExtensionOption *)
-			repalloc(ExplainExtensionOptionArray, i * sizeof(char *));
+			repalloc(ExplainExtensionOptionArray, i * sizeof(ExplainExtensionOption));
 		ExplainExtensionOptionsAllocated = i;
 	}
 
