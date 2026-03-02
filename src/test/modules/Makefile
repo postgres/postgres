@@ -18,6 +18,7 @@ SUBDIRS = \
 		  test_cloexec \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
+		  test_custom_types \
 		  test_ddl_deparse \
 		  test_escape \
 		  test_extensions \
