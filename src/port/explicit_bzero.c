@@ -16,7 +16,23 @@
 
 #include "c.h"
 
-#if HAVE_DECL_MEMSET_S
+#if defined(HAVE_MEMSET_EXPLICIT)
+
+void
+explicit_bzero(void *buf, size_t len)
+{
+	(void) memset_explicit(buf, 0, len);
+}
+
+#elif defined(HAVE_EXPLICIT_MEMSET)
+
+void
+explicit_bzero(void *buf, size_t len)
+{
+	(void) explicit_memset(buf, 0, len);
+}
+
+#elif HAVE_DECL_MEMSET_S
 
 void
 explicit_bzero(void *buf, size_t len)

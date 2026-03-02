@@ -1841,6 +1841,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	copyfile
 	copy_file_range
 	elf_aux_info
+	explicit_memset
 	getauxval
 	getifaddrs
 	getpeerucred
@@ -1848,6 +1849,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	kqueue
 	localeconv_l
 	mbstowcs_l
+	memset_explicit
 	posix_fallocate
 	ppoll
 	pthread_is_threaded_np
