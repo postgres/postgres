@@ -2578,6 +2578,7 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		else if (all_frozen_set)
 		{
 			PageSetAllVisible(page);
+			PageClearPrunable(page);
 			visibilitymap_set_vmbits(BufferGetBlockNumber(buffer),
 									 vmbuffer,
 									 VISIBILITYMAP_ALL_VISIBLE |

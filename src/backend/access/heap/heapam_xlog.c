@@ -164,7 +164,10 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 		 * modification would fail to clear the visibility map bit.
 		 */
 		if (vmflags & VISIBILITYMAP_VALID_BITS)
+		{
 			PageSetAllVisible(page);
+			PageClearPrunable(page);
+		}
 
 		MarkBufferDirty(buffer);
 
@@ -305,6 +308,7 @@ heap_xlog_visible(XLogReaderState *record)
 		page = BufferGetPage(buffer);
 
 		PageSetAllVisible(page);
+		PageClearPrunable(page);
 
 		if (XLogHintBitIsNeeded())
 			PageSetLSN(page, lsn);
@@ -734,7 +738,10 @@ heap_xlog_multi_insert(XLogReaderState *record)
 
 		/* XLH_INSERT_ALL_FROZEN_SET implies that all tuples are visible */
 		if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)
+		{
 			PageSetAllVisible(page);
+			PageClearPrunable(page);
+		}
 
 		MarkBufferDirty(buffer);
 	}

@@ -1933,6 +1933,7 @@ lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf, BlockNumber blkno,
 				log_newpage_buffer(buf, true);
 
 			PageSetAllVisible(page);
+			PageClearPrunable(page);
 			visibilitymap_set(vacrel->rel, blkno, buf,
 							  InvalidXLogRecPtr,
 							  vmbuffer, InvalidTransactionId,
@@ -2209,6 +2210,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * the VM bits clear, so there is no point in optimizing it.
 	 */
 	PageSetAllVisible(page);
+	PageClearPrunable(page);
 	MarkBufferDirty(buf);
 
 	/*
@@ -2944,6 +2946,7 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 		 * set PD_ALL_VISIBLE.
 		 */
 		PageSetAllVisible(page);
+		PageClearPrunable(page);
 		visibilitymap_set_vmbits(blkno,
 								 vmbuffer, vmflags,
 								 vacrel->rel->rd_locator);
