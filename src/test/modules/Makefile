@@ -23,6 +23,7 @@ SUBDIRS = \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
 		  test_custom_stats \
+		  test_custom_types \
 		  test_ddl_deparse \
 		  test_dsa \
 		  test_dsm_registry \
