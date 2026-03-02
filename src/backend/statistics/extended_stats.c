@@ -765,6 +765,16 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs, List *exprs,
 		stats[i] = examine_attribute(expr);
 
 		/*
+		 * If the expression has been found as non-analyzable, give up.  We
+		 * will not be able to build extended stats with it.
+		 */
+		if (stats[i] == NULL)
+		{
+			pfree(stats);
+			return NULL;
+		}
+
+		/*
 		 * XXX We need tuple descriptor later, and we just grab it from
 		 * stats[0]->tupDesc (see e.g. statext_mcv_build). But as coded
 		 * examine_attribute does not set that, so just grab it from the first
@@ -2429,6 +2439,9 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 /*
  * Loads pg_statistic record from expression statistics for expression
  * identified by the supplied index.
+ *
+ * Returns the pg_statistic record found, or NULL if there is no statistics
+ * data to use.
  */
 HeapTuple
 statext_expressions_load(Oid stxoid, bool inh, int idx)
@@ -2456,6 +2469,13 @@ statext_expressions_load(Oid stxoid, bool inh, int idx)
 	eah = DatumGetExpandedArray(value);
 
 	deconstruct_expanded_array(eah);
+
+	if (eah->dnulls && eah->dnulls[idx])
+	{
+		/* No data found for this expression, give up. */
+		ReleaseSysCache(htup);
+		return NULL;
+	}
 
 	td = DatumGetHeapTupleHeader(eah->dvalues[idx]);
 
