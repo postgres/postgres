@@ -1292,7 +1292,7 @@ dumpRoleMembership(PGconn *conn)
 	 * that no longer exist.  If we find such cases, print a warning and skip
 	 * the entry.
 	 */
-	dump_grantors = (PQserverVersion(conn) >= 160000);
+	dump_grantors = (server_version >= 160000);
 
 	/*
 	 * Previous versions of PostgreSQL also did not have grant-level options.
@@ -1357,7 +1357,7 @@ dumpRoleMembership(PGconn *conn)
 		if (PQgetisnull(res, start, i_role))
 		{
 			/* translator: %s represents a numeric role OID */
-			pg_log_warning("found orphaned pg_auth_members entry for role %s",
+			pg_log_warning("ignoring role grant for missing role with OID %s",
 						   PQgetvalue(res, start, i_roleid));
 			break;
 		}
@@ -1374,6 +1374,11 @@ dumpRoleMembership(PGconn *conn)
 
 		remaining = end - start;
 		done = pg_malloc0_array(bool, remaining);
+
+		/*
+		 * We use a hashtable to track the member names that have been granted
+		 * admin option.  Usually a hashtable is overkill, but sometimes not.
+		 */
 		ht = rolename_create(remaining, NULL);
 
 		/*
@@ -1401,50 +1406,56 @@ dumpRoleMembership(PGconn *conn)
 			for (i = start; i < end; ++i)
 			{
 				char	   *member;
-				char	   *admin_option;
 				char	   *grantorid;
-				char	   *grantor;
+				char	   *grantor = NULL;
+				bool		dump_this_grantor = dump_grantors;
 				char	   *set_option = "true";
+				char	   *admin_option;
 				bool		found;
 
 				/* If we already did this grant, don't do it again. */
 				if (done[i - start])
 					continue;
 
-				/* Complain about, then ignore, entries with orphaned OIDs. */
+				/* Complain about, then ignore, entries for unknown members. */
 				if (PQgetisnull(res, i, i_member))
 				{
 					/* translator: %s represents a numeric role OID */
-					pg_log_warning("found orphaned pg_auth_members entry for role %s",
+					pg_log_warning("ignoring role grant to missing role with OID %s",
 								   PQgetvalue(res, i, i_memberid));
 					done[i - start] = true;
 					--remaining;
 					continue;
 				}
-				if (PQgetisnull(res, i, i_grantor))
+				member = PQgetvalue(res, i, i_member);
+
+				/* If the grantor is unknown, complain and dump without it. */
+				grantorid = PQgetvalue(res, i, i_grantorid);
+				if (dump_this_grantor)
 				{
-					/* translator: %s represents a numeric role OID */
-					pg_log_warning("found orphaned pg_auth_members entry for role %s",
-								   PQgetvalue(res, i, i_grantorid));
-					done[i - start] = true;
-					--remaining;
-					continue;
+					if (PQgetisnull(res, i, i_grantor))
+					{
+						/* translator: %s represents a numeric role OID */
+						pg_log_warning("grant of role \"%s\" to \"%s\" has invalid grantor OID %s",
+									   role, member, grantorid);
+						pg_log_warning_detail("This grant will be dumped without GRANTED BY.");
+						dump_this_grantor = false;
+					}
+					else
+						grantor = PQgetvalue(res, i, i_grantor);
 				}
 
-				member = PQgetvalue(res, i, i_member);
-				grantor = PQgetvalue(res, i, i_grantor);
-				grantorid = PQgetvalue(res, i, i_grantorid);
 				admin_option = PQgetvalue(res, i, i_admin_option);
 				if (dump_grant_options)
 					set_option = PQgetvalue(res, i, i_set_option);
 
 				/*
-				 * If we're not dumping grantors or if the grantor is the
+				 * If we're not dumping the grantor or if the grantor is the
 				 * bootstrap superuser, it's fine to dump this now. Otherwise,
 				 * it's got to be someone who has already been granted ADMIN
 				 * OPTION.
 				 */
-				if (dump_grantors &&
+				if (dump_this_grantor &&
 					atooid(grantorid) != BOOTSTRAP_SUPERUSERID &&
 					rolename_lookup(ht, grantor) == NULL)
 					continue;
@@ -1486,7 +1497,7 @@ dumpRoleMembership(PGconn *conn)
 				}
 				if (optbuf->data[0] != '\0')
 					appendPQExpBuffer(querybuf, " WITH %s", optbuf->data);
-				if (dump_grantors)
+				if (dump_this_grantor)
 					appendPQExpBuffer(querybuf, " GRANTED BY %s", fmtId(grantor));
 				appendPQExpBuffer(querybuf, ";\n");
 
