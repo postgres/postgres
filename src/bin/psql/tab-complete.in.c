@@ -4266,7 +4266,9 @@ match_previous_words(int pattern_id,
 	/* Complete DELETE FROM <table> */
 	else if (TailMatches("DELETE", "FROM", MatchAny))
 		COMPLETE_WITH("USING", "WHERE");
-	/* XXX: implement tab completion for DELETE ... USING */
+	/* Complete DELETE FROM <table> USING with relations supporting SELECT */
+	else if (TailMatches("DELETE", "FROM", MatchAny, "USING"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables);
 
 /* DISCARD */
 	else if (Matches("DISCARD"))
