@@ -1,0 +1,9 @@
+test_custom_types
+=================
+
+This module contains a set of custom data types, with some of the following
+patterns:
+
+- typanalyze function registered to a custom type, returning false.
+- typanalyze function registered to a custom type, registering invalid stats
+  data.
