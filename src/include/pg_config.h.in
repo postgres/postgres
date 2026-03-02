@@ -69,6 +69,10 @@
 /* Define to 1 if you have the <crtdefs.h> header file. */
 #undef HAVE_CRTDEFS_H
 
+/* Define to 1 if your C++ compiler understands `typeof' or something similar.
+   */
+#undef HAVE_CXX_TYPEOF
+
 /* Define to 1 if you have the declaration of `fdatasync', and to 0 if you
    don't. */
 #undef HAVE_DECL_FDATASYNC
@@ -779,6 +783,9 @@
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
+
+/* Define to how the C++ compiler spells `typeof'. */
+#undef pg_cxx_typeof
 
 /* Define to keyword to use for C99 restrict support, or to nothing if not
    supported */

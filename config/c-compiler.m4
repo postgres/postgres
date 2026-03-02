@@ -193,6 +193,35 @@ fi])# PGAC_C_TYPEOF
 
 
 
+# PGAC_CXX_TYPEOF
+# ----------------
+# Check if the C++ compiler understands typeof or a variant.  Define
+# HAVE_CXX_TYPEOF if so, and define 'pg_cxx_typeof' to the actual key word.
+#
+AC_DEFUN([PGAC_CXX_TYPEOF],
+[AC_CACHE_CHECK(for C++ typeof, pgac_cv_cxx_typeof,
+[pgac_cv_cxx_typeof=no
+AC_LANG_PUSH(C++)
+for pgac_kw in typeof __typeof__; do
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+[int x = 0;
+$pgac_kw(x) y;
+y = x;
+return y;])],
+[pgac_cv_cxx_typeof=$pgac_kw])
+  test "$pgac_cv_cxx_typeof" != no && break
+done
+AC_LANG_POP([])])
+if test "$pgac_cv_cxx_typeof" != no; then
+  AC_DEFINE(HAVE_CXX_TYPEOF, 1,
+            [Define to 1 if your C++ compiler understands `typeof' or something similar.])
+  if test "$pgac_cv_cxx_typeof" != typeof; then
+    AC_DEFINE_UNQUOTED(pg_cxx_typeof, $pgac_cv_cxx_typeof, [Define to how the C++ compiler spells `typeof'.])
+  fi
+fi])# PGAC_CXX_TYPEOF
+
+
+
 # PGAC_C_TYPES_COMPATIBLE
 # -----------------------
 # Check if the C compiler understands __builtin_types_compatible_p,

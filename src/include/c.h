@@ -425,6 +425,27 @@
 #endif
 
 /*
+ * Provide typeof in C++ for C++ compilers that don't support typeof natively.
+ * It might be spelled __typeof__ instead of typeof, in which case
+ * pg_cxx_typeof provides that mapping. If neither is supported, we can use
+ * decltype, but to make it equivalent to C's typeof, we need to remove
+ * references from the result [1]. Also ensure HAVE_TYPEOF is set so that
+ * typeof-dependent code is always enabled in C++ mode.
+ *
+ * [1]: https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2927.htm#existing-decltype
+ */
+#if defined(__cplusplus)
+#ifdef pg_cxx_typeof
+#define typeof(x) pg_cxx_typeof(x)
+#elif !defined(HAVE_CXX_TYPEOF)
+#define typeof(x) std::remove_reference_t<decltype(x)>
+#endif
+#ifndef HAVE_TYPEOF
+#define HAVE_TYPEOF 1
+#endif
+#endif
+
+/*
  * CppAsString
  *		Convert the argument to a string, using the C preprocessor.
  * CppAsString2
