@@ -15,6 +15,7 @@ SUBDIRS = \
 		  snapshot_too_old \
 		  spgist_name_ops \
 		  test_bloomfilter \
+		  test_custom_types \
 		  test_ddl_deparse \
 		  test_escape \
 		  test_extensions \
