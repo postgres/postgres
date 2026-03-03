@@ -100,6 +100,7 @@ struct ReadStream
 	int16		pinned_buffers;
 	int16		distance;
 	int16		initialized_buffers;
+	int16		resume_distance;
 	int			read_buffers_flags;
 	bool		sync_mode;		/* using io_method=sync */
 	bool		batch_mode;		/* READ_STREAM_USE_BATCHING */
@@ -711,6 +712,7 @@ read_stream_begin_impl(int flags,
 		stream->distance = Min(max_pinned_buffers, stream->io_combine_limit);
 	else
 		stream->distance = 1;
+	stream->resume_distance = stream->distance;
 
 	/*
 	 * Since we always access the same relation, we can initialize parts of
@@ -1035,6 +1037,30 @@ read_stream_next_block(ReadStream *stream, BufferAccessStrategy *strategy)
 }
 
 /*
+ * Temporarily stop consuming block numbers from the block number callback.
+ * If called inside the block number callback, its return value should be
+ * returned by the callback.
+ */
+BlockNumber
+read_stream_pause(ReadStream *stream)
+{
+	stream->resume_distance = stream->distance;
+	stream->distance = 0;
+	return InvalidBlockNumber;
+}
+
+/*
+ * Resume looking ahead after the block number callback reported
+ * end-of-stream. This is useful for streams of self-referential blocks, after
+ * a buffer needed to be consumed and examined to find more block numbers.
+ */
+void
+read_stream_resume(ReadStream *stream)
+{
+	stream->distance = stream->resume_distance;
+}
+
+/*
  * Reset a read stream by releasing any queued up buffers, allowing the stream
  * to be used again for different blocks.  This can be used to clear an
  * end-of-stream condition and start again, or to throw away blocks that were
@@ -1080,6 +1106,7 @@ read_stream_reset(ReadStream *stream)
 
 	/* Start off assuming data is cached. */
 	stream->distance = 1;
+	stream->resume_distance = stream->distance;
 }
 
 /*
