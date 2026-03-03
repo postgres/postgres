@@ -31,7 +31,7 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <application>pg_walsummary</application> is used to print the contents of
-   WAL summary files. These binary files are found with the
+   WAL summary files. These binary files are found in the
    <literal>pg_wal/summaries</literal> subdirectory of the data directory,
    and can be converted to text using this tool. This is not ordinarily
    necessary, since WAL summary files primarily exist to support
