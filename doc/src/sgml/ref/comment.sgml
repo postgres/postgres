@@ -80,14 +80,16 @@ COMMENT ON
   <title>Description</title>
 
   <para>
-   <command>COMMENT</command> stores a comment about a database object.
+   <command>COMMENT</command> stores, replaces, or removes the comment on a
+   database object.
   </para>
 
   <para>
-   Only one comment string is stored for each object, so to modify a comment,
-   issue a new <command>COMMENT</command> command for the same object.  To remove a
-   comment, write <literal>NULL</literal> in place of the text string.
-   Comments are automatically dropped when their object is dropped.
+   Only one comment string is stored for each object.  Issuing a new
+   <command>COMMENT</command> command for the same object replaces the
+   existing comment.  Specifying <literal>NULL</literal> or an empty
+   string (<literal>''</literal>) removes the comment.  Comments are
+   automatically dropped when their object is dropped.
   </para>
 
   <para>
@@ -266,7 +268,8 @@ COMMENT ON
     <term><replaceable class="parameter">string_literal</replaceable></term>
     <listitem>
      <para>
-      The new comment contents, written as a string literal.
+      The new comment contents, written as a string literal.  An empty string
+      (<literal>''</literal>) removes the comment.
      </para>
     </listitem>
    </varlistentry>
@@ -275,7 +278,7 @@ COMMENT ON
     <term><literal>NULL</literal></term>
     <listitem>
      <para>
-      Write <literal>NULL</literal> to drop the comment.
+      Write <literal>NULL</literal> to remove the comment.
      </para>
     </listitem>
    </varlistentry>
@@ -362,6 +365,7 @@ COMMENT ON TRANSFORM FOR hstore LANGUAGE plpython3u IS 'Transform between hstore
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
 COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';
+COMMENT ON VIEW my_view IS NULL;
 </programlisting></para>
  </refsect1>
 
