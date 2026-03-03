@@ -490,6 +490,7 @@ ExecStart=/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGINT
+Restart=on-failure
 TimeoutSec=infinity
 
 [Install]
