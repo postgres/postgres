@@ -50,6 +50,7 @@
 #include "utils/portal.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/typcache.h"
 
 /*
  * No more than this many tuples per CopyMultiInsertBuffer
@@ -1463,14 +1464,22 @@ CopyFrom(CopyFromState cstate)
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;
 
-	if (cstate->opts.on_error != COPY_ON_ERROR_STOP &&
-		cstate->num_errors > 0 &&
+	if (cstate->num_errors > 0 &&
 		cstate->opts.log_verbosity >= COPY_LOG_VERBOSITY_DEFAULT)
-		ereport(NOTICE,
-				errmsg_plural("%" PRIu64 " row was skipped due to data type incompatibility",
-							  "%" PRIu64 " rows were skipped due to data type incompatibility",
-							  cstate->num_errors,
-							  cstate->num_errors));
+	{
+		if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE)
+			ereport(NOTICE,
+					errmsg_plural("%" PRIu64 " row was skipped due to data type incompatibility",
+								  "%" PRIu64 " rows were skipped due to data type incompatibility",
+								  cstate->num_errors,
+								  cstate->num_errors));
+		else if (cstate->opts.on_error == COPY_ON_ERROR_SET_NULL)
+			ereport(NOTICE,
+					errmsg_plural("in %" PRIu64 " row, columns were set to null due to data type incompatibility",
+								  "in %" PRIu64 " rows, columns were set to null due to data type incompatibility",
+								  cstate->num_errors,
+								  cstate->num_errors));
+	}
 
 	if (bistate != NULL)
 		FreeBulkInsertState(bistate);
@@ -1617,15 +1626,36 @@ BeginCopyFrom(ParseState *pstate,
 		cstate->escontext->type = T_ErrorSaveContext;
 		cstate->escontext->error_occurred = false;
 
-		/*
-		 * Currently we only support COPY_ON_ERROR_IGNORE. We'll add other
-		 * options later
-		 */
-		if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE)
+		if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE ||
+			cstate->opts.on_error == COPY_ON_ERROR_SET_NULL)
 			cstate->escontext->details_wanted = false;
 	}
 	else
 		cstate->escontext = NULL;
+
+	if (cstate->opts.on_error == COPY_ON_ERROR_SET_NULL)
+	{
+		int			attr_count = list_length(cstate->attnumlist);
+
+		/*
+		 * When data type conversion fails and ON_ERROR is SET_NULL, we need
+		 * ensure that the input column allow null values.  ExecConstraints()
+		 * will cover most of the cases, but it does not verify domain
+		 * constraints.  Therefore, for constrained domains, the null value
+		 * check must be performed during the initial string-to-datum
+		 * conversion (see CopyFromTextLikeOneRow()).
+		 */
+		cstate->domain_with_constraint = palloc0_array(bool, attr_count);
+
+		foreach_int(attno, cstate->attnumlist)
+		{
+			int			i = foreach_current_index(attno);
+
+			Form_pg_attribute att = TupleDescAttr(tupDesc, attno - 1);
+
+			cstate->domain_with_constraint[i] = DomainHasConstraints(att->atttypid);
+		}
+	}
 
 	/* Convert FORCE_NULL name list to per-column flags, check validity */
 	cstate->opts.force_null_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));

@@ -3437,7 +3437,7 @@ match_previous_words(int pattern_id,
 
 			/* Complete COPY <sth> FROM filename WITH (ON_ERROR */
 			else if (TailMatches("ON_ERROR"))
-				COMPLETE_WITH("stop", "ignore");
+				COMPLETE_WITH("stop", "ignore", "set_null");
 
 			/* Complete COPY <sth> FROM filename WITH (LOG_VERBOSITY */
 			else if (TailMatches("LOG_VERBOSITY"))

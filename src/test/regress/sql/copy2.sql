@@ -67,12 +67,15 @@ COPY x from stdin (force_null (a), force_null (b));
 COPY x from stdin (convert_selectively (a), convert_selectively (b));
 COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii');
 COPY x from stdin (on_error ignore, on_error ignore);
+COPY x from stdin (on_error set_null, on_error set_null);
 COPY x from stdin (log_verbosity default, log_verbosity verbose);
 
 -- incorrect options
 COPY x from stdin (format BINARY, delimiter ',');
 COPY x from stdin (format BINARY, null 'x');
 COPY x from stdin (format BINARY, on_error ignore);
+COPY x from stdin (format BINARY, on_error set_null);
+COPY x from stdin (on_error set_null, reject_limit 2);
 COPY x from stdin (on_error unsupported);
 COPY x from stdin (format TEXT, force_quote(a));
 COPY x from stdin (format TEXT, force_quote *);
@@ -87,6 +90,7 @@ COPY x from stdin (format TEXT, force_null *);
 COPY x to stdout (format CSV, force_null(a));
 COPY x to stdout (format CSV, force_null *);
 COPY x to stdout (format BINARY, on_error unsupported);
+COPY x to stdout (on_error set_null);
 COPY x from stdin (log_verbosity unsupported);
 COPY x from stdin with (reject_limit 1);
 COPY x from stdin with (on_error ignore, reject_limit 0);
@@ -540,6 +544,42 @@ a	{2}	2
 8	{8}	8
 \.
 
+CREATE DOMAIN d_int_not_null AS integer NOT NULL CHECK (value > 0);
+CREATE DOMAIN d_int_positive_maybe_null AS integer CHECK (value > 0);
+CREATE TABLE t_on_error_null (a d_int_not_null, b d_int_positive_maybe_null, c integer);
+
+\pset null NULL
+COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
+\N	11	13
+\.
+
+COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
+ss	11	14
+\.
+
+COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
+-1	11	13
+\.
+
+-- fail, less data.
+COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
+1,1
+\.
+-- fail, extra data.
+COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
+1,2,3,4
+\.
+
+COPY t_on_error_null FROM STDIN WITH (on_error set_null, log_verbosity verbose); -- ok
+10	x1	yx
+11	zx	12
+13	14	ea
+\.
+
+SELECT * FROM t_on_error_null ORDER BY a;
+
+\pset null ''
+
 -- tests for on_error option with log_verbosity and null constraint via domain
 CREATE DOMAIN dcheck_ign_err2 varchar(15) NOT NULL;
 CREATE TABLE check_ign_err2 (n int, m int[], k int, l dcheck_ign_err2);
@@ -609,6 +649,9 @@ DROP VIEW instead_of_insert_tbl_view;
 DROP VIEW instead_of_insert_tbl_view_2;
 DROP FUNCTION fun_instead_of_insert_tbl();
 DROP TABLE check_ign_err;
+DROP TABLE t_on_error_null;
+DROP DOMAIN d_int_not_null;
+DROP DOMAIN d_int_positive_maybe_null;
 DROP TABLE check_ign_err2;
 DROP DOMAIN dcheck_ign_err2;
 DROP TABLE hard_err;

@@ -468,13 +468,12 @@ defGetCopyOnErrorChoice(DefElem *def, ParseState *pstate, bool is_from)
 				 errmsg("COPY %s cannot be used with %s", "ON_ERROR", "COPY TO"),
 				 parser_errposition(pstate, def->location)));
 
-	/*
-	 * Allow "stop", or "ignore" values.
-	 */
 	if (pg_strcasecmp(sval, "stop") == 0)
 		return COPY_ON_ERROR_STOP;
 	if (pg_strcasecmp(sval, "ignore") == 0)
 		return COPY_ON_ERROR_IGNORE;
+	if (pg_strcasecmp(sval, "set_null") == 0)
+		return COPY_ON_ERROR_SET_NULL;
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -984,7 +983,7 @@ ProcessCopyOptions(ParseState *pstate,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("only ON_ERROR STOP is allowed in BINARY mode")));
 
-	if (opts_out->reject_limit && !opts_out->on_error)
+	if (opts_out->reject_limit && opts_out->on_error != COPY_ON_ERROR_IGNORE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		/*- translator: first and second %s are the names of COPY option, e.g.

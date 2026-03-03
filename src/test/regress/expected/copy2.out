@@ -81,6 +81,10 @@ COPY x from stdin (on_error ignore, on_error ignore);
 ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (on_error ignore, on_error ignore);
                                             ^
+COPY x from stdin (on_error set_null, on_error set_null);
+ERROR:  conflicting or redundant options
+LINE 1: COPY x from stdin (on_error set_null, on_error set_null);
+                                              ^
 COPY x from stdin (log_verbosity default, log_verbosity verbose);
 ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (log_verbosity default, log_verbosity verb...
@@ -92,6 +96,10 @@ COPY x from stdin (format BINARY, null 'x');
 ERROR:  cannot specify NULL in BINARY mode
 COPY x from stdin (format BINARY, on_error ignore);
 ERROR:  only ON_ERROR STOP is allowed in BINARY mode
+COPY x from stdin (format BINARY, on_error set_null);
+ERROR:  only ON_ERROR STOP is allowed in BINARY mode
+COPY x from stdin (on_error set_null, reject_limit 2);
+ERROR:  COPY REJECT_LIMIT requires ON_ERROR to be set to IGNORE
 COPY x from stdin (on_error unsupported);
 ERROR:  COPY ON_ERROR "unsupported" not recognized
 LINE 1: COPY x from stdin (on_error unsupported);
@@ -124,6 +132,10 @@ COPY x to stdout (format BINARY, on_error unsupported);
 ERROR:  COPY ON_ERROR cannot be used with COPY TO
 LINE 1: COPY x to stdout (format BINARY, on_error unsupported);
                                          ^
+COPY x to stdout (on_error set_null);
+ERROR:  COPY ON_ERROR cannot be used with COPY TO
+LINE 1: COPY x to stdout (on_error set_null);
+                          ^
 COPY x from stdin (log_verbosity unsupported);
 ERROR:  COPY LOG_VERBOSITY "unsupported" not recognized
 LINE 1: COPY x from stdin (log_verbosity unsupported);
@@ -782,6 +794,49 @@ CONTEXT:  COPY check_ign_err
 NOTICE:  skipping row due to data type incompatibility at line 8 for column "k": "a"
 CONTEXT:  COPY check_ign_err
 NOTICE:  6 rows were skipped due to data type incompatibility
+CREATE DOMAIN d_int_not_null AS integer NOT NULL CHECK (value > 0);
+CREATE DOMAIN d_int_positive_maybe_null AS integer CHECK (value > 0);
+CREATE TABLE t_on_error_null (a d_int_not_null, b d_int_positive_maybe_null, c integer);
+\pset null NULL
+COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
+ERROR:  domain d_int_not_null does not allow null values
+DETAIL:  ON_ERROR SET_NULL cannot be applied because column "a" (domain d_int_not_null) does not accept null values.
+CONTEXT:  COPY t_on_error_null, line 1, column a: null input
+COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
+ERROR:  domain d_int_not_null does not allow null values
+DETAIL:  ON_ERROR SET_NULL cannot be applied because column "a" (domain d_int_not_null) does not accept null values.
+CONTEXT:  COPY t_on_error_null, line 1, column a: "ss"
+COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
+ERROR:  domain d_int_not_null does not allow null values
+DETAIL:  ON_ERROR SET_NULL cannot be applied because column "a" (domain d_int_not_null) does not accept null values.
+CONTEXT:  COPY t_on_error_null, line 1, column a: "-1"
+-- fail, less data.
+COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
+ERROR:  missing data for column "c"
+CONTEXT:  COPY t_on_error_null, line 1: "1,1"
+-- fail, extra data.
+COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
+ERROR:  extra data after last expected column
+CONTEXT:  COPY t_on_error_null, line 1: "1,2,3,4"
+COPY t_on_error_null FROM STDIN WITH (on_error set_null, log_verbosity verbose); -- ok
+NOTICE:  setting to null due to data type incompatibility at line 1 for column "b": "x1"
+CONTEXT:  COPY t_on_error_null
+NOTICE:  setting to null due to data type incompatibility at line 1 for column "c": "yx"
+CONTEXT:  COPY t_on_error_null
+NOTICE:  setting to null due to data type incompatibility at line 2 for column "b": "zx"
+CONTEXT:  COPY t_on_error_null
+NOTICE:  setting to null due to data type incompatibility at line 3 for column "c": "ea"
+CONTEXT:  COPY t_on_error_null
+NOTICE:  in 3 rows, columns were set to null due to data type incompatibility
+SELECT * FROM t_on_error_null ORDER BY a;
+ a  |  b   |  c   
+----+------+------
+ 10 | NULL | NULL
+ 11 | NULL |   12
+ 13 |   14 | NULL
+(3 rows)
+
+\pset null ''
 -- tests for on_error option with log_verbosity and null constraint via domain
 CREATE DOMAIN dcheck_ign_err2 varchar(15) NOT NULL;
 CREATE TABLE check_ign_err2 (n int, m int[], k int, l dcheck_ign_err2);
@@ -841,6 +896,9 @@ DROP VIEW instead_of_insert_tbl_view;
 DROP VIEW instead_of_insert_tbl_view_2;
 DROP FUNCTION fun_instead_of_insert_tbl();
 DROP TABLE check_ign_err;
+DROP TABLE t_on_error_null;
+DROP DOMAIN d_int_not_null;
+DROP DOMAIN d_int_positive_maybe_null;
 DROP TABLE check_ign_err2;
 DROP DOMAIN dcheck_ign_err2;
 DROP TABLE hard_err;

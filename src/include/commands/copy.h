@@ -35,6 +35,7 @@ typedef enum CopyOnErrorChoice
 {
 	COPY_ON_ERROR_STOP = 0,		/* immediately throw errors, default */
 	COPY_ON_ERROR_IGNORE,		/* ignore errors */
+	COPY_ON_ERROR_SET_NULL,		/* set error field to null */
 } CopyOnErrorChoice;
 
 /*

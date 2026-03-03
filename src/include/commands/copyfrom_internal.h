@@ -108,6 +108,13 @@ typedef struct CopyFromStateData
 								 * att */
 	bool	   *defaults;		/* if DEFAULT marker was found for
 								 * corresponding att */
+
+	/*
+	 * True if the corresponding attribute's is a constrained domain. This
+	 * will be populated only when ON_ERROR is SET_NULL, otherwise NULL.
+	 */
+	bool	   *domain_with_constraint;
+
 	bool		volatile_defexprs;	/* is any of defexprs volatile? */
 	List	   *range_table;	/* single element list of RangeTblEntry */
 	List	   *rteperminfos;	/* single element list of RTEPermissionInfo */

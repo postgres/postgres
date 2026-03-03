@@ -413,22 +413,33 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       input value into its data type.
       An <replaceable class="parameter">error_action</replaceable> value of
       <literal>stop</literal> means fail the command, while
-      <literal>ignore</literal> means discard the input row and continue with the next one.
+      <literal>ignore</literal> means discard the input row and continue with the next one,
+      and <literal>set_null</literal> means replace the field containing the invalid
+      input value with a null value and continue to the next field.
       The default is <literal>stop</literal>.
      </para>
      <para>
-      The <literal>ignore</literal> option is applicable only for <command>COPY FROM</command>
+      The <literal>ignore</literal> and <literal>set_null</literal>
+      options are applicable only for <command>COPY FROM</command>
       when the <literal>FORMAT</literal> is <literal>text</literal> or <literal>csv</literal>.
      </para>
      <para>
-      A <literal>NOTICE</literal> message containing the ignored row count is
-      emitted at the end of the <command>COPY FROM</command> if at least one
-      row was discarded. When <literal>LOG_VERBOSITY</literal> option is set to
-      <literal>verbose</literal>, a <literal>NOTICE</literal> message
+      If <literal>ON_ERROR</literal> is set to <literal>ignore</literal> or
+      <literal>set_null</literal>, a <literal>NOTICE</literal> message is emitted at the end of the
+      <command>COPY FROM</command> command containing the count of rows that were ignored or
+      changed, if at least one row was affected.
+     </para>
+     <para>
+      When <literal>LOG_VERBOSITY</literal> option is set to <literal>verbose</literal>,
+      for <literal>ignore</literal> option, a <literal>NOTICE</literal> message
       containing the line of the input file and the column name whose input
-      conversion has failed is emitted for each discarded row.
+      conversion has failed is emitted for each discarded row;
+      for <literal>set_null</literal> option, a <literal>NOTICE</literal>
+      message containing the line of the input file and the column name where
+      value was replaced with <literal>NULL</literal> for each input conversion
+      failure.
       When it is set to <literal>silent</literal>, no message is emitted
-      regarding ignored rows.
+      regarding input conversion failed rows.
      </para>
     </listitem>
    </varlistentry>
@@ -476,7 +487,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      </para>
      <para>
       This is currently used in <command>COPY FROM</command> command when
-      <literal>ON_ERROR</literal> option is set to <literal>ignore</literal>.
+      <literal>ON_ERROR</literal> option is set to <literal>ignore</literal>
+      or <literal>set_null</literal>.
       </para>
     </listitem>
    </varlistentry>
