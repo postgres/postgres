@@ -1521,6 +1521,49 @@ CREATE STATISTICS stats_import.test_mr_stat
   ON name, mrange, ( mrange + '{[10000,10200)}'::int4multirange)
   FROM stats_import.test_mr;
 
+CREATE TABLE stats_import.test_mr_clone ( LIKE stats_import.test_mr )
+    WITH (autovacuum_enabled = false);
+CREATE STATISTICS stats_import.test_mr_stat_clone
+  ON name, mrange, ( mrange + '{[10000,10200)}'::int4multirange)
+  FROM stats_import.test_mr_clone;
+
+-- Check for invalid value combinations for range types.
+-- Only range_bounds_histogram (other two missing)
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_mr_stat',
+  'inherited', false,
+  'exprs', '[{"range_bounds_histogram": "{\"[1,10200)\",\"[11,10200)\"}"}]'::jsonb);
+-- Only range_length_histogram and range_empty_frac
+-- (range_bounds_histogram missing)
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_mr_stat',
+  'inherited', false,
+  'exprs', '[{"range_length_histogram": "{10179,10189}", "range_empty_frac": "0"}]'::jsonb);
+-- Only range_bounds_histogram and range_empty_frac
+-- (range_length_histogram missing)
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_mr_stat',
+  'inherited', false,
+  'exprs', '[{"range_bounds_histogram": "{\"[1,10200)\"}", "range_empty_frac": "0"}]'::jsonb);
+-- Only range_bounds_histogram and range_length_histogram
+-- (range_empty_frac missing)
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_mr_stat',
+  'inherited', false,
+  'exprs', '[{"range_bounds_histogram": "{\"[1,10200)\"}", "range_length_histogram": "{10179}"}]'::jsonb);
+
 -- ok: multirange stats
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
@@ -1543,8 +1586,12 @@ SELECT pg_catalog.pg_restore_extended_stats(
                         {red,"{[11,13),[15,19),[20,30)}","{[11,13),[15,19),[20,30),[10000,10200)}"},
                         {red,"{[21,23),[25,29),[120,130)}","{[21,23),[25,29),[120,130),[10000,10200)}"}}'::text[],
   'most_common_freqs', '{0.3333333333333333,0.3333333333333333,0.3333333333333333}'::double precision[],
-  'most_common_base_freqs', '{0.1111111111111111,0.1111111111111111,0.1111111111111111}'::double precision[]
-);
+  'most_common_base_freqs', '{0.1111111111111111,0.1111111111111111,0.1111111111111111}'::double precision[],
+  'exprs', '[{ "avg_width": "60", "null_frac": "0", "n_distinct": "-1",
+               "range_length_histogram": "{10179,10189,10199}",
+               "range_empty_frac": "0",
+               "range_bounds_histogram": "{\"[1,10200)\",\"[11,10200)\",\"[21,10200)\"}"
+            }]'::jsonb);
 
 SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct,
        replace(e.dependencies, '}, ', E'},\n') AS dependencies,
@@ -1554,6 +1601,526 @@ SELECT replace(e.n_distinct,   '}, ', E'},\n') AS n_distinct,
 FROM pg_stats_ext AS e
 WHERE e.statistics_schemaname = 'stats_import' AND
     e.statistics_name = 'test_mr_stat' AND
+    e.inherited = false
+\gx
+
+SELECT e.expr, e.null_frac, e.avg_width, e.n_distinct, e.most_common_vals,
+       e.most_common_freqs, e.histogram_bounds, e.correlation,
+       e.most_common_elems, e.most_common_elem_freqs, e.elem_count_histogram,
+       e.range_length_histogram, e.range_empty_frac, e.range_bounds_histogram
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_mr_stat' AND
+    e.inherited = false
+\gx
+
+-- Incorrect extended stats kind, exprs not supported
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_ndistinct',
+  'inherited', false,
+  'exprs', '[ { "avg_width": "4" } ]'::jsonb);
+
+-- Invalid exprs, not an array
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '{ "avg_width": "4", "null_frac": "0" }'::jsonb);
+-- wrong number of exprs
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[ { "avg_width": "4" } ]'::jsonb);
+-- incorrect type of value: should be a string or a NULL.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[ { "null_frac": 1 },
+              { "null_frac": "0.25" } ]'::jsonb);
+-- exprs null_frac not a float
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[ { "null_frac": "BADNULLFRAC" },
+              { "null_frac": "0.25" } ]'::jsonb);
+-- exprs avg_width not an integer
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[ { "avg_width": "BADAVGWIDTH" },
+              { "avg_width": "4" } ]'::jsonb);
+-- exprs n_dinstinct not a float
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[ { "n_distinct": "BADNDISTINCT" },
+              { "n_distinct": "-0.5" } ]'::jsonb);
+-- MCV not null, MCF null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_vals": "{1}", "most_common_elems": null },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
+-- MCV not null, MCF missing
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_vals": "{1}" },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
+-- MCV null, MCF not null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_vals": null, "most_common_freqs": "{0.5}" },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
+-- MCV missing, MCF not null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_freqs": "{0.5}" },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
+-- exprs most_common_vals element wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "avg_width": "4",
+                  "null_frac": "0",
+                  "n_distinct": "-0.75",
+                  "correlation": "-0.6",
+                  "histogram_bounds": "{-1,0}",
+                  "most_common_vals": "{BADMCV}",
+                  "most_common_elems": null,
+                  "most_common_freqs": "{0.5}",
+                  "elem_count_histogram": null,
+                  "most_common_elem_freqs": null
+              },
+              {
+                  "avg_width": "4",
+                  "null_frac": "0.25",
+                  "n_distinct": "-0.5",
+                  "correlation": "1",
+                  "histogram_bounds": null,
+                  "most_common_vals": "{2}",
+                  "most_common_elems": null,
+                  "most_common_freqs": "{0.5}",
+                  "elem_count_histogram": null,
+                  "most_common_elem_freqs": null
+              }
+          ]'::jsonb);
+-- exprs most_common_freqs element wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_vals": "{1}", "most_common_freqs": "{BADMCF}" },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
+-- exprs histogram wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "histogram_bounds": "{BADHIST,0}" },
+              { "histogram_bounds": null }
+          ]'::jsonb);
+-- exprs correlation wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[ { "correlation": "BADCORR" },
+              { "correlation": "1" }
+          ]'::jsonb);
+-- invalid element type in array
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[1, null]'::jsonb);
+-- invalid element in array, as valid jbvBinary.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[null, [{"avg_width" : [1]}]]'::jsonb);
+-- only range types can have range_length_histogram, range_empty_frac
+-- or range_bounds_histogram.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              null,
+              {
+                  "range_length_histogram": "{10179,10189,10199}",
+                  "range_empty_frac": "0",
+                  "range_bounds_histogram": "{10200,10200,10200}"
+              }
+          ]'::jsonb);
+-- only array types can have most_common_elems or elem_count_histogram.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              null,
+              {
+                  "most_common_elems": "{1,2,3}",
+                  "most_common_elem_freqs": "{0.3,0.3,0.4}"
+              }
+          ]'::jsonb);
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              null,
+              {
+                  "elem_count_histogram": "{1,2,3,4,5}"
+              }
+          ]'::jsonb);
+-- ok: exprs first null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              null,
+              {
+                  "avg_width": "4",
+                  "null_frac": "0.25",
+                  "n_distinct": "-0.5",
+                  "correlation": "1",
+                  "histogram_bounds": null,
+                  "most_common_vals": "{2}",
+                  "most_common_elems": null,
+                  "most_common_freqs": "{0.5}",
+                  "elem_count_histogram": null,
+                  "most_common_elem_freqs": null
+              }
+          ]'::jsonb);
+
+SELECT e.expr, e.null_frac, e.avg_width, e.n_distinct, e.most_common_vals,
+       e.most_common_freqs, e.histogram_bounds, e.correlation,
+       e.most_common_elems, e.most_common_elem_freqs, e.elem_count_histogram,
+       e.range_length_histogram, e.range_empty_frac, e.range_bounds_histogram
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_clone' AND
+    e.inherited = false
+\gx
+-- ok: exprs last null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "avg_width": "4",
+                  "null_frac": "0",
+                  "n_distinct": "-0.75",
+                  "correlation": "-0.6",
+                  "histogram_bounds": "{-1,0}",
+                  "most_common_vals": "{1}",
+                  "most_common_elems": null,
+                  "most_common_freqs": "{0.5}",
+                  "elem_count_histogram": null,
+                  "most_common_elem_freqs": null
+              },
+              null
+          ]'::jsonb);
+
+SELECT e.expr, e.null_frac, e.avg_width, e.n_distinct, e.most_common_vals,
+       e.most_common_freqs, e.histogram_bounds, e.correlation,
+       e.most_common_elems, e.most_common_elem_freqs, e.elem_count_histogram
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_clone' AND
+    e.inherited = false
+\gx
+-- ok: both exprs
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "avg_width": "4",
+                  "null_frac": "0",
+                  "n_distinct": "-0.75",
+                  "correlation": "-0.6",
+                  "histogram_bounds": "{-1,0}",
+                  "most_common_vals": "{1}",
+                  "most_common_elems": null,
+                  "most_common_freqs": "{0.5}",
+                  "elem_count_histogram": null,
+                  "most_common_elem_freqs": null
+              },
+              {
+                  "avg_width": "4",
+                  "null_frac": "0.25",
+                  "n_distinct": "-0.5",
+                  "correlation": "1",
+                  "histogram_bounds": null,
+                  "most_common_vals": "{2}",
+                  "most_common_elems": null,
+                  "most_common_freqs": "{0.5}",
+                  "elem_count_histogram": null,
+                  "most_common_elem_freqs": null
+              }
+          ]'::jsonb);
+SELECT e.expr, e.null_frac, e.avg_width, e.n_distinct, e.most_common_vals,
+       e.most_common_freqs, e.histogram_bounds, e.correlation,
+       e.most_common_elems, e.most_common_elem_freqs, e.elem_count_histogram
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_clone' AND
+    e.inherited = false
+\gx
+
+-- A statistics object for testing MCELEM values in expressions
+CREATE STATISTICS stats_import.test_stat_mcelem
+  ON name, (ARRAY[(comp).a, lower(arange)])
+  FROM stats_import.test;
+
+-- MCEV not null, MCEF null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "most_common_elems": "{-1,0,1,2,3}",
+                  "most_common_elem_freqs": null
+              }
+            ]'::jsonb);
+-- MCEV not null, MCEF missing
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "most_common_elems": "{-1,0,1,2,3}"
+              }
+            ]'::jsonb);
+-- MCEV null, MCEF not null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "most_common_elems": null,
+                  "most_common_elem_freqs": "{0.25,0.25,0.5,0.25,0.25,0.25,0.5,0.25}"
+              }
+            ]'::jsonb);
+-- MCEV missing, MCEF not null
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "most_common_elem_freqs": "{0.25,0.25,0.5,0.25,0.25,0.25,0.5,0.25}"
+              }
+            ]'::jsonb);
+-- exprs most_common_elems element wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "most_common_elems": "{-1,BADELEM,1,2,3}",
+                  "most_common_elem_freqs": "{0.25,0.25,0.5,0.25,0.25,0.25,0.5,0.25}"
+              }
+            ]'::jsonb);
+-- exprs most_common_elem_freqs element wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "most_common_elems": "{-1,0,1,2,3}",
+                  "most_common_elem_freqs": "{BADELEMFREQ,0.25,0.5,0.25,0.25,0.25,0.5,0.25}"
+              }
+            ]'::jsonb);
+-- exprs histogram bounds element wrong type
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "elem_count_histogram": "{BADELEMHIST,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1.5}"
+              }
+            ]'::jsonb);
+-- ok: exprs mcelem
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "avg_width": "33",
+                  "null_frac": "0",
+                  "n_distinct": "-1",
+                  "correlation": "1",
+                  "histogram_bounds": "{\"{1,1}\",\"{2,1}\",\"{3,-1}\",\"{NULL,0}\"}",
+                  "most_common_vals": null,
+                  "most_common_elems": "{-1,0,1,2,3}",
+                  "most_common_freqs": null,
+                  "elem_count_histogram": "{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1.5}",
+                  "most_common_elem_freqs": "{0.25,0.25,0.5,0.25,0.25,0.25,0.5,0.25}"
+              }
+            ]'::jsonb);
+
+SELECT e.expr, e.null_frac, e.avg_width, e.n_distinct, e.most_common_vals,
+       e.most_common_freqs, e.histogram_bounds, e.correlation,
+       e.most_common_elems, e.most_common_elem_freqs, e.elem_count_histogram
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_mcelem' AND
+    e.inherited = false
+\gx
+
+-- ok, with warning: extra exprs param
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "avg_width": "33",
+                  "null_frac": "0",
+                  "n_distinct": "-1",
+                  "correlation": "1",
+                  "histogram_bounds": "{\"{1,1}\",\"{2,1}\",\"{3,-1}\",\"{NULL,0}\"}",
+                  "most_common_vals": null,
+                  "most_common_elems": "{-1,0,1,2,3}",
+                  "most_common_freqs": null,
+                  "elem_count_histogram": "{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1.5}",
+                  "most_common_elem_freqs": "{0.25,0.25,0.5,0.25,0.25,0.25,0.5,0.25}",
+                  "bad_param": "text no one will ever parse"
+              }
+            ]'::jsonb);
+
+SELECT e.expr, e.null_frac, e.avg_width, e.n_distinct, e.most_common_vals,
+       e.most_common_freqs, e.histogram_bounds, e.correlation,
+       e.most_common_elems, e.most_common_elem_freqs, e.elem_count_histogram
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_mcelem' AND
+    e.inherited = false
+\gx
+
+-- ok: tsvector exceptions, test just the collation exceptions
+CREATE STATISTICS stats_import.test_stat_tsvec ON (length(name)), (to_tsvector(name)) FROM stats_import.test;
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_tsvec',
+  'inherited', false,
+  'exprs', '[null,
+             {
+                "most_common_elems": "{one,tre,two,four}",
+                "most_common_elem_freqs": "{0.25,0.25,0.25,0.25,0.25,0.25}"
+             }
+          ]'::jsonb);
+SELECT e.expr, e.most_common_elems, e.most_common_elem_freqs
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import' AND
+    e.statistics_name = 'test_stat_tsvec' AND
     e.inherited = false
 \gx
 
@@ -1578,8 +2145,29 @@ SELECT e.statistics_name,
     'dependencies', e.dependencies,
     'most_common_vals', e.most_common_vals,
     'most_common_freqs', e.most_common_freqs,
-    'most_common_base_freqs', e.most_common_base_freqs)
+    'most_common_base_freqs', e.most_common_base_freqs,
+    'exprs', x.exprs)
 FROM pg_stats_ext AS e
+CROSS JOIN LATERAL (
+  SELECT jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+            'null_frac', ee.null_frac::text,
+            'avg_width', ee.avg_width::text,
+            'n_distinct', ee.n_distinct::text,
+            'most_common_vals', ee.most_common_vals::text,
+            'most_common_freqs', ee.most_common_freqs::text,
+            'histogram_bounds', ee.histogram_bounds::text,
+            'correlation', ee.correlation::text,
+            'most_common_elems', ee.most_common_elems::text,
+            'most_common_elem_freqs', ee.most_common_elem_freqs::text,
+            'elem_count_histogram', ee.elem_count_histogram::text,
+            'range_length_histogram', ee.range_length_histogram::text,
+            'range_empty_frac', ee.range_empty_frac::text,
+            'range_bounds_histogram', ee.range_bounds_histogram::text)))
+    FROM pg_stats_ext_exprs AS ee
+    WHERE ee.statistics_schemaname = e.statistics_schemaname AND
+      ee.statistics_name = e.statistics_name AND
+      ee.inherited = e.inherited
+    ) AS x(exprs)
 WHERE e.statistics_schemaname = 'stats_import'
 AND e.statistics_name = 'test_stat';
 
@@ -1611,5 +2199,258 @@ SELECT o.inherited,
   FROM pg_stats_ext AS o
   WHERE o.statistics_schemaname = 'stats_import' AND
     o.statistics_name = 'test_stat';
+
+-- Set difference for exprs: old MINUS new.
+SELECT o.inherited,
+       o.null_frac, o.avg_width, o.n_distinct,
+       o.most_common_vals::text AS most_common_vals,
+       o.most_common_freqs,
+       o.histogram_bounds::text AS histogram_bounds,
+       o.correlation,
+       o.most_common_elems::text AS most_common_elems,
+       o.most_common_elem_freqs, o.elem_count_histogram,
+       o.range_length_histogram::text AS range_length_histogram,
+       o.range_empty_frac,
+       o.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_stat'
+EXCEPT
+SELECT n.inherited,
+       n.null_frac, n.avg_width, n.n_distinct,
+       n.most_common_vals::text AS most_common_vals,
+       n.most_common_freqs,
+       n.histogram_bounds::text AS histogram_bounds,
+       n.correlation,
+       n.most_common_elems::text AS most_common_elems,
+       n.most_common_elem_freqs, n.elem_count_histogram,
+       n.range_length_histogram::text AS range_length_histogram,
+       n.range_empty_frac,
+       n.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_stat_clone';
+
+-- Set difference for exprs: new MINUS old.
+SELECT n.inherited,
+       n.null_frac, n.avg_width, n.n_distinct,
+       n.most_common_vals::text AS most_common_vals,
+       n.most_common_freqs,
+       n.histogram_bounds::text AS histogram_bounds,
+       n.correlation,
+       n.most_common_elems::text AS most_common_elems,
+       n.most_common_elem_freqs, n.elem_count_histogram,
+       n.range_length_histogram::text AS range_length_histogram,
+       n.range_empty_frac,
+       n.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_stat_clone'
+EXCEPT
+SELECT o.inherited,
+       o.null_frac, o.avg_width, o.n_distinct,
+       o.most_common_vals::text AS most_common_vals,
+       o.most_common_freqs,
+       o.histogram_bounds::text AS histogram_bounds,
+       o.correlation,
+       o.most_common_elems::text AS most_common_elems,
+       o.most_common_elem_freqs, o.elem_count_histogram,
+       o.range_length_histogram::text AS range_length_histogram,
+       o.range_empty_frac,
+       o.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_stat';
+
+ANALYZE stats_import.test_mr;
+
+-- Copy stats from test_mr_stat to test_mr_stat_clone
+SELECT e.statistics_name,
+  pg_catalog.pg_restore_extended_stats(
+    'schemaname', e.statistics_schemaname::text,
+    'relname', 'test_mr_clone',
+    'statistics_schemaname', e.statistics_schemaname::text,
+    'statistics_name', 'test_mr_stat_clone',
+    'inherited', e.inherited,
+    'n_distinct', e.n_distinct,
+    'dependencies', e.dependencies,
+    'most_common_vals', e.most_common_vals,
+    'most_common_freqs', e.most_common_freqs,
+    'most_common_base_freqs', e.most_common_base_freqs,
+    'exprs', x.exprs)
+FROM pg_stats_ext AS e
+CROSS JOIN LATERAL (
+  SELECT jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+            'null_frac', ee.null_frac::text,
+            'avg_width', ee.avg_width::text,
+            'n_distinct', ee.n_distinct::text,
+            'most_common_vals', ee.most_common_vals::text,
+            'most_common_freqs', ee.most_common_freqs::text,
+            'histogram_bounds', ee.histogram_bounds::text,
+            'correlation', ee.correlation::text,
+            'most_common_elems', ee.most_common_elems::text,
+            'most_common_elem_freqs', ee.most_common_elem_freqs::text,
+            'elem_count_histogram', ee.elem_count_histogram::text,
+            'range_length_histogram', ee.range_length_histogram::text,
+            'range_empty_frac', ee.range_empty_frac::text,
+            'range_bounds_histogram', ee.range_bounds_histogram::text)))
+    FROM pg_stats_ext_exprs AS ee
+    WHERE ee.statistics_schemaname = e.statistics_schemaname AND
+      ee.statistics_name = e.statistics_name AND
+      ee.inherited = e.inherited
+    ) AS x(exprs)
+WHERE e.statistics_schemaname = 'stats_import'
+AND e.statistics_name = 'test_mr_stat';
+
+-- Set difference old MINUS new.
+SELECT o.inherited,
+       o.n_distinct, o.dependencies, o.most_common_vals,
+       o.most_common_freqs, o.most_common_base_freqs
+  FROM pg_stats_ext AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_mr_stat'
+EXCEPT
+SELECT n.inherited,
+       n.n_distinct, n.dependencies, n.most_common_vals,
+       n.most_common_freqs, n.most_common_base_freqs
+  FROM pg_stats_ext AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_mr_stat_clone';
+-- Set difference new MINUS old.
+SELECT n.inherited,
+       n.n_distinct, n.dependencies, n.most_common_vals,
+       n.most_common_freqs, n.most_common_base_freqs
+  FROM pg_stats_ext AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_mr_stat_clone'
+EXCEPT
+SELECT o.inherited,
+       o.n_distinct, o.dependencies, o.most_common_vals,
+       o.most_common_freqs, o.most_common_base_freqs
+  FROM pg_stats_ext AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_mr_stat';
+
+-- Set difference for exprs: old MINUS new.
+SELECT o.inherited,
+       o.null_frac, o.avg_width, o.n_distinct,
+       o.most_common_vals::text AS most_common_vals,
+       o.most_common_freqs,
+       o.histogram_bounds::text AS histogram_bounds,
+       o.correlation,
+       o.most_common_elems::text AS most_common_elems,
+       o.most_common_elem_freqs, o.elem_count_histogram,
+       o.range_length_histogram::text AS range_length_histogram,
+       o.range_empty_frac,
+       o.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_mr_stat'
+EXCEPT
+SELECT n.inherited,
+       n.null_frac, n.avg_width, n.n_distinct,
+       n.most_common_vals::text AS most_common_vals,
+       n.most_common_freqs,
+       n.histogram_bounds::text AS histogram_bounds,
+       n.correlation,
+       n.most_common_elems::text AS most_common_elems,
+       n.most_common_elem_freqs, n.elem_count_histogram,
+       n.range_length_histogram::text AS range_length_histogram,
+       n.range_empty_frac,
+       n.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_mr_stat_clone';
+
+-- Set difference for exprs: new MINUS old.
+SELECT n.inherited,
+       n.null_frac, n.avg_width, n.n_distinct,
+       n.most_common_vals::text AS most_common_vals,
+       n.most_common_freqs,
+       n.histogram_bounds::text AS histogram_bounds,
+       n.correlation,
+       n.most_common_elems::text AS most_common_elems,
+       n.most_common_elem_freqs, n.elem_count_histogram,
+       n.range_length_histogram::text AS range_length_histogram,
+       n.range_empty_frac,
+       n.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = 'test_mr_stat_clone'
+EXCEPT
+SELECT o.inherited,
+       o.null_frac, o.avg_width, o.n_distinct,
+       o.most_common_vals::text AS most_common_vals,
+       o.most_common_freqs,
+       o.histogram_bounds::text AS histogram_bounds,
+       o.correlation,
+       o.most_common_elems::text AS most_common_elems,
+       o.most_common_elem_freqs, o.elem_count_histogram,
+       o.range_length_histogram::text AS range_length_histogram,
+       o.range_empty_frac,
+       o.range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS o
+  WHERE o.statistics_schemaname = 'stats_import' AND
+    o.statistics_name = 'test_mr_stat';
+
+-- range_length_histogram, range_empty_frac, and range_bounds_histogram
+-- have been added to pg_stat_ext_exprs in PostgreSQL 19.  When dumping
+-- expression statistics in a cluster with an older version, these fields
+-- are dumped as NULL, pg_restore_extended_stats() authorizing the partial
+-- restore state of the extended statistics data.  This test emulates such
+-- a case by calling pg_restore_extended_stats() with NULL values for all
+-- the three range fields, then checks the statistics loaded with some
+-- queries.
+CREATE TABLE stats_import.test_range_expr_null(
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    rng int4range NOT NULL
+);
+INSERT INTO stats_import.test_range_expr_null
+  SELECT i, 'name_' || (i % 10), int4range(i, i + 10)
+  FROM generate_series(1, 100) i;
+-- Create statistics with a range expression
+CREATE STATISTICS stats_import.stat_range_expr_null
+  ON name, (rng * int4range(50, 150))
+  FROM stats_import.test_range_expr_null;
+ANALYZE stats_import.test_range_expr_null;
+-- Verify range statistics were created
+SELECT e.expr,
+       e.range_length_histogram IS NOT NULL AS has_range_len,
+       e.range_empty_frac IS NOT NULL AS has_range_empty,
+       e.range_bounds_histogram IS NOT NULL AS has_range_bounds
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import'
+  AND e.statistics_name = 'stat_range_expr_null';
+-- Import statistics with NULL range fields, simulating dump from
+-- older version.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_range_expr_null',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'stat_range_expr_null',
+  'inherited', false,
+  'exprs', '[
+              {
+                  "avg_width": "14",
+                  "null_frac": "0",
+                  "n_distinct": "-1"
+              }
+            ]'::jsonb);
+-- Verify that range fields are now NULL.
+SELECT e.expr,
+       e.null_frac,
+       e.range_length_histogram IS NOT NULL AS has_range_len,
+       e.range_empty_frac IS NOT NULL AS has_range_empty,
+       e.range_bounds_histogram IS NOT NULL AS has_range_bounds
+FROM pg_stats_ext_exprs AS e
+WHERE e.statistics_schemaname = 'stats_import'
+  AND e.statistics_name = 'stat_range_expr_null';
+-- Trigger statistics loading through some queries.
+EXPLAIN (COSTS OFF)
+SELECT * FROM stats_import.test_range_expr_null
+  WHERE (rng * int4range(50, 150)) && '[60,70)'::int4range;
+SELECT COUNT(*) FROM stats_import.test_range_expr_null
+  WHERE (rng * int4range(50, 150)) && '[60,70)'::int4range;
 
 DROP SCHEMA stats_import CASCADE;

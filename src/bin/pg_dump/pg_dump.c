@@ -18655,11 +18655,58 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 		if (fout->remoteVersion >= 130000)
 			appendPQExpBufferStr(pq,
 								 "e.most_common_vals, e.most_common_freqs, "
-								 "e.most_common_base_freqs ");
+								 "e.most_common_base_freqs, ");
 		else
 			appendPQExpBufferStr(pq,
 								 "NULL AS most_common_vals, NULL AS most_common_freqs, "
-								 "NULL AS most_common_base_freqs ");
+								 "NULL AS most_common_base_freqs, ");
+
+		/* Expressions were introduced in v14 */
+		if (fout->remoteVersion >= 140000)
+		{
+			/*
+			 * There is no ordering column in pg_stats_ext_exprs.  However, we
+			 * can rely on the unnesting of pg_statistic.ext_data.stxdexpr to
+			 * maintain the desired order of expression elements.
+			 */
+			appendPQExpBufferStr(pq,
+								 "( "
+								 "SELECT jsonb_pretty(jsonb_agg("
+								 "nullif(j.obj, '{}'::jsonb))) "
+								 "FROM pg_stats_ext_exprs AS ee "
+								 "CROSS JOIN LATERAL jsonb_strip_nulls("
+								 "    jsonb_build_object( "
+								 "       'null_frac', ee.null_frac::text, "
+								 "       'avg_width', ee.avg_width::text, "
+								 "       'n_distinct', ee.n_distinct::text, "
+								 "       'most_common_vals', ee.most_common_vals::text, "
+								 "       'most_common_freqs', ee.most_common_freqs::text, "
+								 "       'histogram_bounds', ee.histogram_bounds::text, "
+								 "       'correlation', ee.correlation::text, "
+								 "       'most_common_elems', ee.most_common_elems::text, "
+								 "       'most_common_elem_freqs', ee.most_common_elem_freqs::text, "
+								 "       'elem_count_histogram', ee.elem_count_histogram::text");
+
+			/* These three have been added to pg_stats_ext_exprs in v19. */
+			if (fout->remoteVersion >= 190000)
+				appendPQExpBufferStr(pq,
+									 ", "
+									 "       'range_length_histogram', ee.range_length_histogram::text, "
+									 "       'range_empty_frac', ee.range_empty_frac::text, "
+									 "       'range_bounds_histogram', ee.range_bounds_histogram::text");
+
+			appendPQExpBufferStr(pq,
+								 "    )) AS j(obj)"
+								 "WHERE ee.statistics_schemaname = $1 "
+								 "AND ee.statistics_name = $2 ");
+			/* Inherited expressions introduced in v15 */
+			if (fout->remoteVersion >= 150000)
+				appendPQExpBufferStr(pq, "AND ee.inherited = e.inherited");
+
+			appendPQExpBufferStr(pq, ") AS exprs ");
+		}
+		else
+			appendPQExpBufferStr(pq, "NULL AS exprs ");
 
 		/* pg_stats_ext introduced in v12 */
 		if (fout->remoteVersion >= 120000)
@@ -18713,6 +18760,7 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 		int			i_mcv = PQfnumber(res, "most_common_vals");
 		int			i_mcf = PQfnumber(res, "most_common_freqs");
 		int			i_mcbf = PQfnumber(res, "most_common_base_freqs");
+		int			i_exprs = PQfnumber(res, "exprs");
 
 		for (int i = 0; i < nstats; i++)
 		{
@@ -18759,6 +18807,10 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 			if (!PQgetisnull(res, i, i_mcbf))
 				appendNamedArgument(out, fout, "most_common_base_freqs", "double precision[]",
 									PQgetvalue(res, i, i_mcbf));
+
+			if (!PQgetisnull(res, i, i_exprs))
+				appendNamedArgument(out, fout, "exprs", "jsonb",
+									PQgetvalue(res, i, i_exprs));
 
 			appendPQExpBufferStr(out, "\n);\n");
 		}
