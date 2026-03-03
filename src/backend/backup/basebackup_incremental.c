@@ -270,7 +270,6 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 	ListCell   *lc;
 	TimeLineHistoryEntry **tlep;
 	int			num_wal_ranges;
-	int			i;
 	bool		found_backup_start_tli = false;
 	TimeLineID	earliest_wal_range_tli = 0;
 	XLogRecPtr	earliest_wal_range_start_lsn = InvalidXLogRecPtr;
@@ -312,7 +311,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 	 */
 	expectedTLEs = readTimeLineHistory(backup_state->starttli);
 	tlep = palloc0(num_wal_ranges * sizeof(TimeLineHistoryEntry *));
-	for (i = 0; i < num_wal_ranges; ++i)
+	for (int i = 0; i < num_wal_ranges; ++i)
 	{
 		backup_wal_range *range = list_nth(ib->manifest_wal_ranges, i);
 		bool		saw_earliest_wal_range_tli = false;
@@ -400,7 +399,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 	 * anything here. However, if there's a problem staring us right in the
 	 * face, it's best to report it, so we do.
 	 */
-	for (i = 0; i < num_wal_ranges; ++i)
+	for (int i = 0; i < num_wal_ranges; ++i)
 	{
 		backup_wal_range *range = list_nth(ib->manifest_wal_ranges, i);
 
@@ -595,15 +594,14 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 
 			while (1)
 			{
-				unsigned	nblocks;
-				unsigned	i;
+				unsigned int nblocks;
 
 				nblocks = BlockRefTableReaderGetBlocks(reader, blocks,
 													   BLOCKS_PER_READ);
 				if (nblocks == 0)
 					break;
 
-				for (i = 0; i < nblocks; ++i)
+				for (unsigned int i = 0; i < nblocks; ++i)
 					BlockRefTableMarkBlockModified(ib->brtab, &rlocator,
 												   forknum, blocks[i]);
 			}

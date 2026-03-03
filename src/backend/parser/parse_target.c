@@ -1611,10 +1611,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 					 * subselect must have that outer level as parent.
 					 */
 					ParseState	mypstate = {0};
-					Index		levelsup;
 
 					/* this loop must work, since GetRTEByRangeTablePosn did */
-					for (levelsup = 0; levelsup < netlevelsup; levelsup++)
+					for (Index level = 0; level < netlevelsup; level++)
 						pstate = pstate->parentParseState;
 					mypstate.parentParseState = pstate;
 					mypstate.p_rtable = rte->subquery->rtable;
@@ -1669,12 +1668,11 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 					 * could be an outer CTE (compare SUBQUERY case above).
 					 */
 					ParseState	mypstate = {0};
-					Index		levelsup;
 
 					/* this loop must work, since GetCTEForRTE did */
-					for (levelsup = 0;
-						 levelsup < rte->ctelevelsup + netlevelsup;
-						 levelsup++)
+					for (Index level = 0;
+						 level < rte->ctelevelsup + netlevelsup;
+						 level++)
 						pstate = pstate->parentParseState;
 					mypstate.parentParseState = pstate;
 					mypstate.p_rtable = ((Query *) cte->ctequery)->rtable;
