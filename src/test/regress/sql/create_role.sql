@@ -55,6 +55,14 @@ CREATE ROLE regress_rolecreator CREATEROLE;
 
 -- ok, roles with CREATEROLE can create new roles with privilege they lack
 CREATE ROLE regress_tenant CREATEDB CREATEROLE LOGIN INHERIT CONNECTION LIMIT 5;
+COMMENT ON ROLE regress_tenant IS 'some comment';
+SELECT shobj_description('regress_tenant'::regrole, 'pg_authid') IS NOT NULL AS has_comment;
+COMMENT ON ROLE regress_tenant IS NULL;
+SELECT shobj_description('regress_tenant'::regrole, 'pg_authid') IS NULL AS no_comment;
+COMMENT ON ROLE regress_tenant IS 'add the comment back';
+SELECT shobj_description('regress_tenant'::regrole, 'pg_authid') IS NOT NULL AS has_comment;
+COMMENT ON ROLE regress_tenant IS ''; -- empty string removes the comment, same as NULL
+SELECT shobj_description('regress_tenant'::regrole, 'pg_authid') IS NULL AS no_comment;
 
 -- ok, regress_tenant can create objects within the database
 SET SESSION AUTHORIZATION regress_tenant;
