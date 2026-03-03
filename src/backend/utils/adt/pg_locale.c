@@ -1650,7 +1650,7 @@ pg_towlower(pg_wchar wc, pg_locale_t locale)
 
 /* version of Unicode used by ICU */
 const char *
-pg_icu_unicode_version()
+pg_icu_unicode_version(void)
 {
 #ifdef USE_ICU
 	return U_UNICODE_VERSION;
