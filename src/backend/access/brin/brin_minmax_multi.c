@@ -131,8 +131,6 @@ typedef struct MinMaxMultiOptions
 		 ((MinMaxMultiOptions *) (opts))->valuesPerRange : \
 		 MINMAX_MULTI_DEFAULT_VALUES_PER_PAGE)
 
-#define SAMESIGN(a,b) (((a) < 0) == ((b) < 0))
-
 /*
  * The summary of minmax-multi indexes has two representations - Ranges for
  * convenient processing, and SerializedRanges for storage in bytea value.
