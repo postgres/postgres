@@ -47,6 +47,7 @@ tests += {
       'alter_type_enum',
       'opfamily',
       'defprivs',
+      'textsearch',
       'matviews',
     ],
   },
