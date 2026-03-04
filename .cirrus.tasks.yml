@@ -984,7 +984,6 @@ task:
         --host=x86_64-w64-mingw32ucrt \
         --enable-cassert \
         --without-icu \
-        --without-lz4 \
         CC="ccache x86_64-w64-mingw32ucrt-gcc" \
         CXX="ccache x86_64-w64-mingw32ucrt-g++"
       make -s -j${BUILD_JOBS} clean

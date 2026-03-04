@@ -1603,7 +1603,7 @@ Optional Packages:
   --with-system-tzdata=DIR
                           use system time zone data in DIR
   --without-zlib          do not use Zlib
-  --without-lz4           build without LZ4 support
+  --with-lz4              build with LZ4 support
   --with-zstd             build with ZSTD support
   --with-ssl=LIB          use LIB for SSL/TLS support (openssl)
   --with-openssl          obsolete spelling of --with-ssl=openssl
@@ -9570,9 +9570,7 @@ $as_echo "#define USE_LZ4 1" >>confdefs.h
   esac
 
 else
-  with_lz4=yes
-
-$as_echo "#define USE_LZ4 1" >>confdefs.h
+  with_lz4=no
 
 fi
 
