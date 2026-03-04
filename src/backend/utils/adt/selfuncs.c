@@ -4373,8 +4373,8 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
  * exactly those that will be probed most often.  Therefore, the "average"
  * bucket size for costing purposes should really be taken as something close
  * to the "worst case" bucket size.  We try to estimate this by adjusting the
- * fraction if there are too few distinct data values, and then scaling up
- * by the ratio of the most common value's frequency to the average frequency.
+ * fraction if there are too few distinct data values, and then clamping to
+ * at least the bucket size implied by the most common value's frequency.
  *
  * If no statistics are available, use a default estimate of 0.1.  This will
  * discourage use of a hash rather strongly if the inner relation is large,
@@ -4394,9 +4394,7 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 {
 	VariableStatData vardata;
 	double		estfract,
-				ndistinct,
-				stanullfrac,
-				avgfreq;
+				ndistinct;
 	bool		isdefault;
 	AttStatsSlot sslot;
 
@@ -4446,20 +4444,6 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 		return;
 	}
 
-	/* Get fraction that are null */
-	if (HeapTupleIsValid(vardata.statsTuple))
-	{
-		Form_pg_statistic stats;
-
-		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
-		stanullfrac = stats->stanullfrac;
-	}
-	else
-		stanullfrac = 0.0;
-
-	/* Compute avg freq of all distinct data values in raw relation */
-	avgfreq = (1.0 - stanullfrac) / ndistinct;
-
 	/*
 	 * Adjust ndistinct to account for restriction clauses.  Observe we are
 	 * assuming that the data distribution is affected uniformly by the
@@ -4485,20 +4469,11 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 		estfract = 1.0 / ndistinct;
 
 	/*
-	 * Adjust estimated bucketsize upward to account for skewed distribution.
+	 * Clamp the bucketsize fraction to be not less than the MCV frequency,
+	 * since whichever bucket the MCV values end up in will have at least that
+	 * size.  This has no effect if *mcv_freq is still zero.
 	 */
-	if (avgfreq > 0.0 && *mcv_freq > avgfreq)
-		estfract *= *mcv_freq / avgfreq;
-
-	/*
-	 * Clamp bucketsize to sane range (the above adjustment could easily
-	 * produce an out-of-range result).  We set the lower bound a little above
-	 * zero, since zero isn't a very sane result.
-	 */
-	if (estfract < 1.0e-6)
-		estfract = 1.0e-6;
-	else if (estfract > 1.0)
-		estfract = 1.0;
+	estfract = Max(estfract, *mcv_freq);
 
 	*bucketsize_frac = (Selectivity) estfract;
 

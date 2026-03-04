@@ -835,6 +835,25 @@ ORDER BY 1;
 reset enable_nestloop;
 
 --
+-- test that estimate_hash_bucket_stats estimates correctly with skewed data
+-- (we should choose to hash the filtered table)
+--
+
+create temp table skewedtable (val int not null, filt int not null);
+insert into skewedtable
+select
+    case when g <= 100 then 0 else (g % 100) + 1 end,
+    g % 10
+from generate_series(1, 1000) g;
+analyze skewedtable;
+
+explain (costs off)
+select * from skewedtable t1 join skewedtable t2 on t1.val = t2.val
+where t1.filt = 5;
+
+drop table skewedtable;
+
+--
 -- basic semijoin and antijoin recognition tests
 --
 
