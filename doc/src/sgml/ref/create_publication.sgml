@@ -32,12 +32,16 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
 <phrase>and <replaceable class="parameter">publication_all_object</replaceable> is one of:</phrase>
 
-    ALL TABLES
+    ALL TABLES [ EXCEPT TABLE ( <replaceable class="parameter">except_table_object</replaceable> [, ... ] ) ]
     ALL SEQUENCES
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
     [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ]
+
+<phrase>and <replaceable class="parameter">except_table_object</replaceable> is:</phrase>
+
+    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -164,7 +168,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       Marks the publication as one that replicates changes for all tables in
-      the database, including tables created in the future.
+      the database, including tables created in the future. Tables listed in
+      EXCEPT TABLE are excluded from the publication.
      </para>
     </listitem>
    </varlistentry>
@@ -180,6 +185,37 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      <para>
       Only persistent sequences are included in the publication. Temporary
       sequences and unlogged sequences are excluded from the publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-createpublication-params-for-except-table">
+    <term><literal>EXCEPT TABLE</literal></term>
+    <listitem>
+     <para>
+      This clause specifies a list of tables to be excluded from the
+      publication.
+     </para>
+     <para>
+      For inherited tables, if <literal>ONLY</literal> is specified before the
+      table name, only that table is excluded from the publication. If
+      <literal>ONLY</literal> is not specified, the table and all its descendant
+      tables (if any) are excluded. Optionally, <literal>*</literal> can be
+      specified after the table name to explicitly indicate that descendant
+      tables are excluded.
+     </para>
+     <para>
+      For partitioned tables, only the root partitioned table may be specified
+      in <literal>EXCEPT TABLE</literal>. Doing so excludes the root table and
+      all of its partitions from replication. The optional
+      <literal>ONLY</literal> and <literal>*</literal> has no effect for
+      partitioned tables.
+     </para>
+     <para>
+      There can be a case where a subscription includes multiple publications.
+      In such a case, a table or partition that is included in one publication
+      and listed in the <literal>EXCEPT TABLE</literal> clause of another is
+      considered included for replication.
      </para>
     </listitem>
    </varlistentry>
@@ -489,6 +525,23 @@ CREATE PUBLICATION all_sequences FOR ALL SEQUENCES;
    all sequences for synchronization:
 <programlisting>
 CREATE PUBLICATION all_tables_sequences FOR ALL TABLES, ALL SEQUENCES;
+</programlisting>
+  </para>
+
+  <para>
+   Create a publication that publishes all changes in all tables except
+   <structname>users</structname> and <structname>departments</structname>:
+<programlisting>
+CREATE PUBLICATION all_tables_except FOR ALL TABLES EXCEPT TABLE (users, departments);
+</programlisting>
+  </para>
+
+  <para>
+   Create a publication that publishes all sequences for synchronization, and
+   all changes in all tables except <structname>users</structname> and
+   <structname>departments</structname>:
+<programlisting>
+CREATE PUBLICATION all_sequences_tables_except FOR ALL SEQUENCES, ALL TABLES EXCEPT TABLE (users, departments);
 </programlisting>
   </para>
  </refsect1>

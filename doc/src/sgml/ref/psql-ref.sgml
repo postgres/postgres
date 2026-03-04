@@ -2103,8 +2103,9 @@ SELECT $1 \parse stmt1
         listed.
         If <literal>x</literal> is appended to the command name, the results
         are displayed in expanded mode.
-        If <literal>+</literal> is appended to the command name, the tables and
-        schemas associated with each publication are shown as well.
+        If <literal>+</literal> is appended to the command name, the tables,
+        excluded tables, and schemas associated with each publication are shown
+        as well.
         </para>
         </listitem>
       </varlistentry>

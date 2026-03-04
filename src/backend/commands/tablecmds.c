@@ -8686,7 +8686,7 @@ ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
 	 * expressions.
 	 */
 	if (attgenerated == ATTRIBUTE_GENERATED_VIRTUAL &&
-		GetRelationPublications(RelationGetRelid(rel)) != NIL)
+		GetRelationIncludedPublications(RelationGetRelid(rel)) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables that are part of a publication"),
@@ -18881,7 +18881,7 @@ ATPrepChangePersistence(AlteredTableInfo *tab, Relation rel, bool toLogged)
 	 * UNLOGGED, as UNLOGGED tables can't be published.
 	 */
 	if (!toLogged &&
-		GetRelationPublications(RelationGetRelid(rel)) != NIL)
+		GetRelationIncludedPublications(RelationGetRelid(rel)) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot change table \"%s\" to unlogged because it is part of a publication",
@@ -20322,6 +20322,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 	const char *trigger_name;
 	Oid			defaultPartOid;
 	List	   *partBoundConstraint;
+	List	   *exceptpuboids = NIL;
 	ParseState *pstate = make_parsestate(NULL);
 
 	pstate->p_sourcetext = context->queryString;
@@ -20360,6 +20361,49 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach a typed table as partition")));
+
+	/*
+	 * Disallow attaching a partition if the table is referenced in a
+	 * publication EXCEPT clause. Changing the partition hierarchy could alter
+	 * the effective publication membership.
+	 */
+	exceptpuboids = GetRelationExcludedPublications(RelationGetRelid(attachrel));
+	if (exceptpuboids != NIL)
+	{
+		bool		first = true;
+		StringInfoData pubnames;
+
+		initStringInfo(&pubnames);
+
+		foreach_oid(pubid, exceptpuboids)
+		{
+			char	   *pubname = get_publication_name(pubid, false);
+
+			if (!first)
+			{
+				/*
+				 * translator: This is a separator in a list of publication
+				 * names.
+				 */
+				appendStringInfoString(&pubnames, _(", "));
+			}
+
+			first = false;
+
+			appendStringInfo(&pubnames, _("\"%s\""), pubname);
+		}
+
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg_plural("cannot attach table \"%s\" as partition because it is referenced in publication %s EXCEPT clause",
+							  "cannot attach table \"%s\" as partition because it is referenced in publications %s EXCEPT clause",
+							  list_length(exceptpuboids),
+							  RelationGetRelationName(attachrel),
+							  pubnames.data),
+				errdetail("The publication EXCEPT clause cannot contain tables that are partitions."));
+	}
+
+	list_free(exceptpuboids);
 
 	/*
 	 * Table being attached should not already be part of inheritance; either

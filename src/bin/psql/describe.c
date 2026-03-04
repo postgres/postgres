@@ -3075,15 +3075,43 @@ describeOneTableDetails(const char *schemaname,
 								  "FROM pg_catalog.pg_publication p\n"
 								  "     JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
 								  "     JOIN pg_catalog.pg_class c ON c.oid = pr.prrelid\n"
-								  "WHERE pr.prrelid = '%s'\n"
-								  "UNION\n"
-								  "SELECT pubname\n"
-								  "     , NULL\n"
-								  "     , NULL\n"
-								  "FROM pg_catalog.pg_publication p\n"
-								  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
-								  "ORDER BY 1;",
-								  oid, oid, oid, oid);
+								  "WHERE pr.prrelid = '%s'\n",
+								  oid, oid, oid);
+
+				if (pset.sversion >= 190000)
+				{
+					/*
+					 * Skip entries where this relation appears in the
+					 * publication's EXCEPT TABLE list.
+					 */
+					appendPQExpBuffer(&buf,
+									  " AND NOT pr.prexcept\n"
+									  "UNION\n"
+									  "SELECT pubname\n"
+									  "     , NULL\n"
+									  "     , NULL\n"
+									  "FROM pg_catalog.pg_publication p\n"
+									  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
+									  "     AND NOT EXISTS (\n"
+									  "     SELECT 1\n"
+									  "     FROM pg_catalog.pg_publication_rel pr\n"
+									  "     WHERE pr.prpubid = p.oid AND\n"
+									  "     (pr.prrelid = '%s' OR pr.prrelid = pg_catalog.pg_partition_root('%s')))\n"
+									  "ORDER BY 1;",
+									  oid, oid, oid);
+				}
+				else
+				{
+					appendPQExpBuffer(&buf,
+									  "UNION\n"
+									  "SELECT pubname\n"
+									  "		, NULL\n"
+									  "		, NULL\n"
+									  "FROM pg_catalog.pg_publication p\n"
+									  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
+									  "ORDER BY 1;",
+									  oid);
+				}
 			}
 			else
 			{
@@ -3128,6 +3156,36 @@ describeOneTableDetails(const char *schemaname,
 				if (!PQgetisnull(result, i, 1))
 					appendPQExpBuffer(&buf, " WHERE %s",
 									  PQgetvalue(result, i, 1));
+
+				printTableAddFooter(&cont, buf.data);
+			}
+			PQclear(result);
+		}
+
+		/* Print publications where the table is in the EXCEPT clause */
+		if (pset.sversion >= 190000)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT pubname\n"
+							  "FROM pg_catalog.pg_publication p\n"
+							  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
+							  "WHERE (pr.prrelid = '%s' OR pr.prrelid = pg_catalog.pg_partition_root('%s'))\n"
+							  "AND pr.prexcept\n"
+							  "ORDER BY 1;", oid, oid);
+
+			result = PSQLexec(buf.data);
+			if (!result)
+				goto error_return;
+			else
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+				printTableAddFooter(&cont, _("Except Publications:"));
+
+			/* Might be an empty set - that's ok */
+			for (i = 0; i < tuples; i++)
+			{
+				printfPQExpBuffer(&buf, "    \"%s\"", PQgetvalue(result, i, 0));
 
 				printTableAddFooter(&cont, buf.data);
 			}
@@ -6763,8 +6821,12 @@ describePublications(const char *pattern)
 							  "     pg_catalog.pg_publication_rel pr\n"
 							  "WHERE c.relnamespace = n.oid\n"
 							  "  AND c.oid = pr.prrelid\n"
-							  "  AND pr.prpubid = '%s'\n"
-							  "ORDER BY 1,2", pubid);
+							  "  AND pr.prpubid = '%s'\n", pubid);
+
+			if (pset.sversion >= 190000)
+				appendPQExpBuffer(&buf, "  AND NOT pr.prexcept\n");
+
+			appendPQExpBuffer(&buf, "ORDER BY 1,2");
 			if (!addFooterToPublicationDesc(&buf, _("Tables:"), false, &cont))
 				goto error_return;
 
@@ -6778,6 +6840,23 @@ describePublications(const char *pattern)
 								  "WHERE pn.pnpubid = '%s'\n"
 								  "ORDER BY 1", pubid);
 				if (!addFooterToPublicationDesc(&buf, _("Tables from schemas:"),
+												true, &cont))
+					goto error_return;
+			}
+		}
+		else
+		{
+			if (pset.sversion >= 190000)
+			{
+				/* Get tables in the EXCEPT clause for this publication */
+				printfPQExpBuffer(&buf,
+								  "SELECT n.nspname || '.' || c.relname\n"
+								  "FROM pg_catalog.pg_class c\n"
+								  "     JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
+								  "     JOIN pg_catalog.pg_publication_rel pr ON c.oid = pr.prrelid\n"
+								  "WHERE pr.prpubid = '%s' AND pr.prexcept\n"
+								  "ORDER BY 1", pubid);
+				if (!addFooterToPublicationDesc(&buf, _("Except tables:"),
 												true, &cont))
 					goto error_return;
 			}

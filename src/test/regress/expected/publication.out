@@ -213,33 +213,157 @@ Not-null constraints:
  regress_publication_user | t          | f             | t       | t       | f       | f         | none              | f        | 
 (1 row)
 
-DROP TABLE testpub_tbl2;
-DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema;
-CREATE TABLE testpub_tbl3 (a int);
-CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
+---------------------------------------------
+-- EXCEPT TABLE tests for normal tables
+---------------------------------------------
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl3;
-CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
+-- Specify table list in the EXCEPT TABLE clause of a FOR ALL TABLES publication
+CREATE PUBLICATION testpub_foralltables_excepttable FOR ALL TABLES EXCEPT TABLE (testpub_tbl1, testpub_tbl2);
+\dRp+ testpub_foralltables_excepttable
+                                                 Publication testpub_foralltables_excepttable
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
+ regress_publication_user | t          | f             | t       | t       | t       | t         | none              | f        | 
+Except tables:
+    "public.testpub_tbl1"
+    "public.testpub_tbl2"
+
+-- Specify table in the EXCEPT TABLE clause of a FOR ALL TABLES publication
+CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT TABLE (testpub_tbl1);
+\dRp+ testpub_foralltables_excepttable1
+                                                Publication testpub_foralltables_excepttable1
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
+ regress_publication_user | t          | f             | t       | t       | t       | t         | none              | f        | 
+Except tables:
+    "public.testpub_tbl1"
+
+-- Check that the table description shows the publications where it is listed
+-- in the EXCEPT TABLE clause
+\d testpub_tbl1
+                            Table "public.testpub_tbl1"
+ Column |  Type   | Collation | Nullable |                 Default                  
+--------+---------+-----------+----------+------------------------------------------
+ id     | integer |           | not null | nextval('testpub_tbl1_id_seq'::regclass)
+ data   | text    |           |          | 
+Indexes:
+    "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpub_foralltables"
+Except Publications:
+    "testpub_foralltables_excepttable"
+    "testpub_foralltables_excepttable1"
+
 RESET client_min_messages;
+DROP TABLE testpub_tbl2;
+DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema, testpub_foralltables_excepttable, testpub_foralltables_excepttable1;
+---------------------------------------------
+-- Tests for inherited tables, and
+-- EXCEPT TABLE tests for inherited tables
+---------------------------------------------
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_tbl_parent (a int);
+CREATE TABLE testpub_tbl_child (b text) INHERITS (testpub_tbl_parent);
+CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl_parent;
 \dRp+ testpub3
                                                              Publication testpub3
           Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
 --------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
  regress_publication_user | f          | f             | t       | t       | t       | t         | none              | f        | 
 Tables:
-    "public.testpub_tbl3"
-    "public.testpub_tbl3a"
+    "public.testpub_tbl_child"
+    "public.testpub_tbl_parent"
 
+CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl_parent;
 \dRp+ testpub4
                                                              Publication testpub4
           Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
 --------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
  regress_publication_user | f          | f             | t       | t       | t       | t         | none              | f        | 
 Tables:
-    "public.testpub_tbl3"
+    "public.testpub_tbl_parent"
 
-DROP TABLE testpub_tbl3, testpub_tbl3a;
-DROP PUBLICATION testpub3, testpub4;
+-- List the parent table in the EXCEPT TABLE clause (without ONLY or '*')
+CREATE PUBLICATION testpub5 FOR ALL TABLES EXCEPT TABLE (testpub_tbl_parent);
+\dRp+ testpub5
+                                                             Publication testpub5
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
+ regress_publication_user | t          | f             | t       | t       | t       | t         | none              | f        | 
+Except tables:
+    "public.testpub_tbl_child"
+    "public.testpub_tbl_parent"
+
+-- EXCEPT with '*': list the table and all its descendants in the EXCEPT TABLE clause
+CREATE PUBLICATION testpub6 FOR ALL TABLES EXCEPT TABLE (testpub_tbl_parent *);
+\dRp+ testpub6
+                                                             Publication testpub6
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
+ regress_publication_user | t          | f             | t       | t       | t       | t         | none              | f        | 
+Except tables:
+    "public.testpub_tbl_child"
+    "public.testpub_tbl_parent"
+
+-- EXCEPT with ONLY: list the table in the EXCEPT TABLE clause, but not its descendants
+CREATE PUBLICATION testpub7 FOR ALL TABLES EXCEPT TABLE (ONLY testpub_tbl_parent);
+\dRp+ testpub7
+                                                             Publication testpub7
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
+ regress_publication_user | t          | f             | t       | t       | t       | t         | none              | f        | 
+Except tables:
+    "public.testpub_tbl_parent"
+
+RESET client_min_messages;
+DROP TABLE testpub_tbl_parent, testpub_tbl_child;
+DROP PUBLICATION testpub3, testpub4, testpub5, testpub6, testpub7;
+---------------------------------------------
+-- EXCEPT TABLE tests for partitioned tables
+---------------------------------------------
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_root(a int) PARTITION BY RANGE(a);
+CREATE TABLE testpub_part1 PARTITION OF testpub_root FOR VALUES FROM (0) TO (100);
+CREATE PUBLICATION testpub8 FOR ALL TABLES EXCEPT TABLE (testpub_root);
+\dRp+ testpub8;
+                                                             Publication testpub8
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-------------------+----------+-------------
+ regress_publication_user | t          | f             | t       | t       | t       | t         | none              | f        | 
+Except tables:
+    "public.testpub_root"
+
+\d testpub_part1
+           Table "public.testpub_part1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition of: testpub_root FOR VALUES FROM (0) TO (100)
+Except Publications:
+    "testpub8"
+
+\d testpub_root
+      Partitioned table "public.testpub_root"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition key: RANGE (a)
+Except Publications:
+    "testpub8"
+Number of partitions: 1 (Use \d+ to list them.)
+
+CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT TABLE (testpub_part1);
+ERROR:  cannot use publication EXCEPT clause for relation "testpub_part1"
+DETAIL:  This operation is not supported for individual partitions.
+CREATE TABLE tab_main (a int) PARTITION BY RANGE(a);
+-- Attaching a partition is not allowed if the partitioned table appears in a
+-- publication's EXCEPT TABLE clause.
+ALTER TABLE tab_main ATTACH PARTITION testpub_root FOR VALUES FROM (0) TO (200);
+ERROR:  cannot attach table "testpub_root" as partition because it is referenced in publication "testpub8" EXCEPT clause
+DETAIL:  The publication EXCEPT clause cannot contain tables that are partitions.
+RESET client_min_messages;
+DROP TABLE testpub_root, testpub_part1, tab_main;
+DROP PUBLICATION testpub8;
 --- Tests for publications with SEQUENCES
 CREATE SEQUENCE regress_pub_seq0;
 CREATE SEQUENCE pub_test.regress_pub_seq1;

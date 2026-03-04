@@ -5788,7 +5788,9 @@ RelationGetExclusionInfo(Relation indexRelation,
 void
 RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 {
-	List	   *puboids;
+	List	   *puboids = NIL;
+	List	   *exceptpuboids = NIL;
+	List	   *alltablespuboids;
 	ListCell   *lc;
 	MemoryContext oldcxt;
 	Oid			schemaid;
@@ -5826,28 +5828,49 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	pubdesc->gencols_valid_for_delete = true;
 
 	/* Fetch the publication membership info. */
-	puboids = GetRelationPublications(relid);
+	puboids = GetRelationIncludedPublications(relid);
 	schemaid = RelationGetNamespace(relation);
 	puboids = list_concat_unique_oid(puboids, GetSchemaPublications(schemaid));
 
 	if (relation->rd_rel->relispartition)
 	{
+		Oid			last_ancestor_relid;
+
 		/* Add publications that the ancestors are in too. */
 		ancestors = get_partition_ancestors(relid);
+		last_ancestor_relid = llast_oid(ancestors);
 
 		foreach(lc, ancestors)
 		{
 			Oid			ancestor = lfirst_oid(lc);
 
 			puboids = list_concat_unique_oid(puboids,
-											 GetRelationPublications(ancestor));
+											 GetRelationIncludedPublications(ancestor));
 			schemaid = get_rel_namespace(ancestor);
 			puboids = list_concat_unique_oid(puboids,
 											 GetSchemaPublications(schemaid));
 		}
-	}
-	puboids = list_concat_unique_oid(puboids, GetAllTablesPublications());
 
+		/*
+		 * Only the top-most ancestor can appear in the EXCEPT clause.
+		 * Therefore, for a partition, exclusion must be evaluated at the
+		 * top-most ancestor.
+		 */
+		exceptpuboids = GetRelationExcludedPublications(last_ancestor_relid);
+	}
+	else
+	{
+		/*
+		 * For a regular table or a root partitioned table, check exclusion on
+		 * table itself.
+		 */
+		exceptpuboids = GetRelationExcludedPublications(relid);
+	}
+
+	alltablespuboids = GetAllTablesPublications();
+	puboids = list_concat_unique_oid(puboids,
+									 list_difference_oid(alltablespuboids,
+														 exceptpuboids));
 	foreach(lc, puboids)
 	{
 		Oid			pubid = lfirst_oid(lc);

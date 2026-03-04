@@ -2089,7 +2089,7 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 	if (!entry->replicate_valid)
 	{
 		Oid			schemaId = get_rel_namespace(relid);
-		List	   *pubids = GetRelationPublications(relid);
+		List	   *pubids = GetRelationIncludedPublications(relid);
 
 		/*
 		 * We don't acquire a lock on the namespace system table as we build
@@ -2206,14 +2206,47 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 			 */
 			if (pub->alltables)
 			{
-				publish = true;
-				if (pub->pubviaroot && am_partition)
+				List	   *exceptpubids = NIL;
+
+				if (am_partition)
 				{
 					List	   *ancestors = get_partition_ancestors(relid);
+					Oid			last_ancestor_relid = llast_oid(ancestors);
 
-					pub_relid = llast_oid(ancestors);
-					ancestor_level = list_length(ancestors);
+					/*
+					 * For a partition, changes are published via top-most
+					 * ancestor when pubviaroot is true, so populate pub_relid
+					 * accordingly.
+					 */
+					if (pub->pubviaroot)
+					{
+						pub_relid = last_ancestor_relid;
+						ancestor_level = list_length(ancestors);
+					}
+
+					/*
+					 * Only the top-most ancestor can appear in the EXCEPT
+					 * clause. Therefore, for a partition, exclusion must be
+					 * evaluated at the top-most ancestor.
+					 */
+					exceptpubids = GetRelationExcludedPublications(last_ancestor_relid);
 				}
+				else
+				{
+					/*
+					 * For a regular table or a root partitioned table, check
+					 * exclusion on table itself.
+					 */
+					exceptpubids = GetRelationExcludedPublications(pub_relid);
+				}
+
+				if (!list_member_oid(exceptpubids, pub->oid))
+					publish = true;
+
+				list_free(exceptpubids);
+
+				if (!publish)
+					continue;
 			}
 
 			if (!publish)

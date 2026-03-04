@@ -116,7 +116,11 @@
    <literal>FOR TABLES IN SCHEMA</literal>, <literal>FOR ALL TABLES</literal>,
    or <literal>FOR ALL SEQUENCES</literal>. Unlike tables, sequences can be
    synchronized at any time. For more information, see
-   <xref linkend="logical-replication-sequences"/>.
+   <xref linkend="logical-replication-sequences"/>. When a publication is
+   created with <literal>FOR ALL TABLES</literal>, a table or set of tables can
+   be explicitly excluded from publication using the
+   <link linkend="sql-createpublication-params-for-except-table"><literal>EXCEPT TABLE</literal></link>
+   clause.
   </para>
 
   <para>

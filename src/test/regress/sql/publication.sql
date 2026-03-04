@@ -105,20 +105,69 @@ SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_forall
 \d+ testpub_tbl2
 \dRp+ testpub_foralltables
 
-DROP TABLE testpub_tbl2;
-DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema;
-
-CREATE TABLE testpub_tbl3 (a int);
-CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
+---------------------------------------------
+-- EXCEPT TABLE tests for normal tables
+---------------------------------------------
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl3;
-CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
-RESET client_min_messages;
-\dRp+ testpub3
-\dRp+ testpub4
+-- Specify table list in the EXCEPT TABLE clause of a FOR ALL TABLES publication
+CREATE PUBLICATION testpub_foralltables_excepttable FOR ALL TABLES EXCEPT TABLE (testpub_tbl1, testpub_tbl2);
+\dRp+ testpub_foralltables_excepttable
+-- Specify table in the EXCEPT TABLE clause of a FOR ALL TABLES publication
+CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT TABLE (testpub_tbl1);
+\dRp+ testpub_foralltables_excepttable1
+-- Check that the table description shows the publications where it is listed
+-- in the EXCEPT TABLE clause
+\d testpub_tbl1
 
-DROP TABLE testpub_tbl3, testpub_tbl3a;
-DROP PUBLICATION testpub3, testpub4;
+RESET client_min_messages;
+DROP TABLE testpub_tbl2;
+DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema, testpub_foralltables_excepttable, testpub_foralltables_excepttable1;
+
+---------------------------------------------
+-- Tests for inherited tables, and
+-- EXCEPT TABLE tests for inherited tables
+---------------------------------------------
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_tbl_parent (a int);
+CREATE TABLE testpub_tbl_child (b text) INHERITS (testpub_tbl_parent);
+CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl_parent;
+\dRp+ testpub3
+CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl_parent;
+\dRp+ testpub4
+-- List the parent table in the EXCEPT TABLE clause (without ONLY or '*')
+CREATE PUBLICATION testpub5 FOR ALL TABLES EXCEPT TABLE (testpub_tbl_parent);
+\dRp+ testpub5
+-- EXCEPT with '*': list the table and all its descendants in the EXCEPT TABLE clause
+CREATE PUBLICATION testpub6 FOR ALL TABLES EXCEPT TABLE (testpub_tbl_parent *);
+\dRp+ testpub6
+-- EXCEPT with ONLY: list the table in the EXCEPT TABLE clause, but not its descendants
+CREATE PUBLICATION testpub7 FOR ALL TABLES EXCEPT TABLE (ONLY testpub_tbl_parent);
+\dRp+ testpub7
+
+RESET client_min_messages;
+DROP TABLE testpub_tbl_parent, testpub_tbl_child;
+DROP PUBLICATION testpub3, testpub4, testpub5, testpub6, testpub7;
+
+---------------------------------------------
+-- EXCEPT TABLE tests for partitioned tables
+---------------------------------------------
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_root(a int) PARTITION BY RANGE(a);
+CREATE TABLE testpub_part1 PARTITION OF testpub_root FOR VALUES FROM (0) TO (100);
+CREATE PUBLICATION testpub8 FOR ALL TABLES EXCEPT TABLE (testpub_root);
+\dRp+ testpub8;
+\d testpub_part1
+\d testpub_root
+CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT TABLE (testpub_part1);
+
+CREATE TABLE tab_main (a int) PARTITION BY RANGE(a);
+-- Attaching a partition is not allowed if the partitioned table appears in a
+-- publication's EXCEPT TABLE clause.
+ALTER TABLE tab_main ATTACH PARTITION testpub_root FOR VALUES FROM (0) TO (200);
+
+RESET client_min_messages;
+DROP TABLE testpub_root, testpub_part1, tab_main;
+DROP PUBLICATION testpub8;
 
 --- Tests for publications with SEQUENCES
 CREATE SEQUENCE regress_pub_seq0;

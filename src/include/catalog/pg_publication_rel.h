@@ -33,6 +33,7 @@ CATALOG(pg_publication_rel,6106,PublicationRelRelationId)
 	Oid			oid;			/* oid */
 	Oid			prpubid BKI_LOOKUP(pg_publication); /* Oid of the publication */
 	Oid			prrelid BKI_LOOKUP(pg_class);	/* Oid of the relation */
+	bool		prexcept BKI_DEFAULT(f);	/* relation is not published */
 
 #ifdef	CATALOG_VARLEN			/* variable-length fields start here */
 	pg_node_tree prqual;		/* qualifications */
