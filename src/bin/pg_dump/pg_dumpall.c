@@ -2019,19 +2019,6 @@ dumpDatabases(PGconn *conn)
 	if (archDumpFormat != archNull)
 	{
 		char		map_file_path[MAXPGPATH];
-		char	   *map_preamble[] = {
-			"#################################################################",
-			"# map.dat",
-			"#",
-			"# This file maps oids to database names",
-			"#",
-			"# pg_restore will restore all the databases listed here, unless",
-			"# otherwise excluded. You can also inhibit restoration of a",
-			"# database by removing the line or commenting out the line with"
-			"# a # mark.",
-			"#################################################################",
-			NULL
-		};
 
 		snprintf(db_subdir, MAXPGPATH, "%s/databases", filename);
 
@@ -2046,8 +2033,17 @@ dumpDatabases(PGconn *conn)
 		if (!map_file)
 			pg_fatal("could not open file \"%s\": %m", map_file_path);
 
-		for (char **line = map_preamble; *line; line++)
-			fprintf(map_file, "%s\n", *line);
+		fprintf(map_file,
+				"#################################################################\n"
+				"# map.dat\n"
+				"#\n"
+				"# This file maps oids to database names\n"
+				"#\n"
+				"# pg_restore will restore all the databases listed here, unless\n"
+				"# otherwise excluded. You can also inhibit restoration of a\n"
+				"# database by removing the line or commenting out the line with\n"
+				"# a # mark.\n"
+				"#################################################################\n");
 	}
 
 	for (i = 0; i < PQntuples(res); i++)
