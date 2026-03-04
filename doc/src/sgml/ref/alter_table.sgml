@@ -462,9 +462,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       its existing compression method, rather than being recompressed with the
       compression method of the target column.
       The supported compression
-      methods are <literal>pglz</literal> and <literal>lz4</literal>.
-      (<literal>lz4</literal> is available only if <option>--with-lz4</option>
-      was used when building <productname>PostgreSQL</productname>.)  In
+      methods are <literal>pglz</literal> and <literal>lz4</literal>.  In
       addition, <replaceable class="parameter">compression_method</replaceable>
       can be <literal>default</literal>, which selects the default behavior of
       consulting the <xref linkend="guc-default-toast-compression"/> setting

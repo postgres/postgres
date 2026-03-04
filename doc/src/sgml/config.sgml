@@ -3498,10 +3498,9 @@ include_dir 'conf.d'
         etc.).
         A compressed page image will be decompressed during WAL replay.
         The supported methods are <literal>pglz</literal>,
-        <literal>lz4</literal> (if <productname>PostgreSQL</productname>
-        was compiled with <option>--with-lz4</option>) and
-        <literal>zstd</literal> (if <productname>PostgreSQL</productname>
-        was compiled with <option>--with-zstd</option>).
+        <literal>lz4</literal> and <literal>zstd</literal> (if
+        <productname>PostgreSQL</productname> was compiled with
+        <option>--with-zstd</option>).
         The default value is <literal>off</literal>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
@@ -10018,9 +10017,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <command>CREATE TABLE</command> or
         <command>ALTER TABLE</command>.)
         The supported compression methods are <literal>pglz</literal> and
-        (if <productname>PostgreSQL</productname> was compiled with
-        <option>--with-lz4</option>) <literal>lz4</literal>.
-        The default is <literal>pglz</literal>.
+        <literal>lz4</literal>.
+        The default is <literal>lz4</literal> (if available); otherwise,
+        <literal>pglz</literal>.
        </para>
       </listitem>
      </varlistentry>

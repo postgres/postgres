@@ -1188,7 +1188,7 @@ AC_SUBST(with_zlib)
 # LZ4
 #
 AC_MSG_CHECKING([whether to build with LZ4 support])
-PGAC_ARG_BOOL(with, lz4, no, [build with LZ4 support],
+PGAC_ARG_BOOL(with, lz4, yes, [build without LZ4 support],
               [AC_DEFINE([USE_LZ4], 1, [Define to 1 to build with LZ4 support. (--with-lz4)])])
 AC_MSG_RESULT([$with_lz4])
 AC_SUBST(with_lz4)

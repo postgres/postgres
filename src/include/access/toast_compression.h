@@ -52,6 +52,15 @@ typedef enum ToastCompressionId
 
 #define CompressionMethodIsValid(cm)  ((cm) != InvalidCompressionMethod)
 
+/*
+ * Choose an appropriate default toast compression method.  If lz4 is
+ * compiled-in, use it, otherwise use pglz.
+ */
+#ifdef USE_LZ4
+#define DEFAULT_TOAST_COMPRESSION	TOAST_LZ4_COMPRESSION
+#else
+#define DEFAULT_TOAST_COMPRESSION	TOAST_PGLZ_COMPRESSION
+#endif
 
 /* pglz compression/decompression routines */
 extern varlena *pglz_compress_datum(const varlena *value);

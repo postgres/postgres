@@ -735,7 +735,7 @@
 { name => 'default_toast_compression', type => 'enum', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',
   short_desc => 'Sets the default compression method for compressible values.',
   variable => 'default_toast_compression',
-  boot_val => 'TOAST_PGLZ_COMPRESSION',
+  boot_val => 'DEFAULT_TOAST_COMPRESSION',
   options => 'default_toast_compression_options',
 },
 

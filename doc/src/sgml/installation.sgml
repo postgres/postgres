@@ -975,15 +975,6 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
-      <varlistentry id="configure-option-with-lz4">
-       <term><option>--with-lz4</option></term>
-       <listitem>
-        <para>
-         Build with <productname>LZ4</productname> compression support.
-        </para>
-       </listitem>
-      </varlistentry>
-
       <varlistentry id="configure-option-with-zstd">
        <term><option>--with-zstd</option></term>
        <listitem>
@@ -1311,6 +1302,18 @@ build-postgresql:
          This disables
          support for compressed archives in <application>pg_dump</application>
          and <application>pg_restore</application>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="configure-option-without-lz4">
+       <term><option>--without-lz4</option></term>
+       <listitem>
+        <para>
+         <indexterm>
+          <primary>lz4</primary>
+         </indexterm>
+         Prevents use of the <application>LZ4</application> library.
         </para>
        </listitem>
       </varlistentry>
