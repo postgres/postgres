@@ -68,7 +68,7 @@ static int	restore_all_databases(const char *inputFileSpec,
 static int	get_dbnames_list_to_restore(PGconn *conn,
 										SimplePtrList *dbname_oid_list,
 										SimpleStringList db_exclude_patterns);
-static int	get_dbname_oid_list_from_mfile(char *dumpdirpath,
+static int	get_dbname_oid_list_from_mfile(const char *dumpdirpatharg,
 										   SimplePtrList *dbname_oid_list);
 
 /*
@@ -1082,18 +1082,18 @@ get_dbnames_list_to_restore(PGconn *conn,
  * Returns, total number of database names in map.dat file.
  */
 static int
-get_dbname_oid_list_from_mfile(char *dumpdirpath, SimplePtrList *dbname_oid_list)
+get_dbname_oid_list_from_mfile(const char *dumpdirpatharg, SimplePtrList *dbname_oid_list)
 {
 	StringInfoData linebuf;
 	FILE	   *pfile;
 	char		map_file_path[MAXPGPATH];
 	int			count = 0;
 	int			len;
-
+	char	   *dumpdirpath = pstrdup(dumpdirpatharg);
 
 	/*
-	 * If there is no map.dat file in dump, then return from here as there is
-	 * no database to restore.
+	 * If there is no map.dat file in the dump, then return from here as there
+	 * is no database to restore.
 	 */
 	if (!file_exists_in_directory(dumpdirpath, "map.dat"))
 	{
@@ -1206,7 +1206,7 @@ restore_all_databases(const char *inputFileSpec,
 	if (opts->cparams.dbname)
 		connected_db = opts->cparams.dbname;
 
-	num_total_db = get_dbname_oid_list_from_mfile((char *) inputFileSpec, &dbname_oid_list);
+	num_total_db = get_dbname_oid_list_from_mfile(inputFileSpec, &dbname_oid_list);
 
 	pg_log_info(ngettext("found %d database name in \"%s\"",
 						 "found %d database names in \"%s\"",
