@@ -1,3 +1,8 @@
+SELECT current_setting('max_prepared_transactions')::integer < 2 AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+
 --
 -- PREPARED TRANSACTIONS (two-phase commit)
 --
@@ -160,5 +165,5 @@ SELECT gid FROM pg_prepared_xacts;
 
 -- Clean up
 DROP TABLE pxtest2;
-DROP TABLE pxtest3;  -- will still be there if prepared xacts are disabled
+-- pxtest3 was already dropped
 DROP TABLE pxtest4;
