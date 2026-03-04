@@ -826,8 +826,7 @@ expand_appendrel_subquery(PlannerInfo *root, RelOptInfo *rel,
 /*
  * apply_child_basequals
  *		Populate childrel's base restriction quals from parent rel's quals,
- *		translating Vars using appinfo and re-checking for quals which are
- *		constant-TRUE or constant-FALSE when applied to this child relation.
+ *		translating them using appinfo.
  *
  * If any of the resulting clauses evaluate to constant false or NULL, we
  * return false and don't apply any quals.  Caller should mark the relation as
@@ -902,16 +901,9 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 										   rinfo->security_level,
 										   NULL, NULL, NULL);
 
-			/* Restriction is proven always false */
-			if (restriction_is_always_false(root, childrinfo))
-				return false;
-			/* Restriction is proven always true, so drop it */
-			if (restriction_is_always_true(root, childrinfo))
-				continue;
-
 			childquals = lappend(childquals, childrinfo);
 			/* track minimum security level among child quals */
-			cq_min_security = Min(cq_min_security, rinfo->security_level);
+			cq_min_security = Min(cq_min_security, childrinfo->security_level);
 		}
 	}
 
