@@ -2004,8 +2004,11 @@ EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.atscfg.address,
 					 TSConfigRelationId, cfgId);
-	command->d.atscfg.dictIds = palloc_array(Oid, ndicts);
-	memcpy(command->d.atscfg.dictIds, dictIds, sizeof(Oid) * ndicts);
+	if (ndicts > 0)
+	{
+		command->d.atscfg.dictIds = palloc_array(Oid, ndicts);
+		memcpy(command->d.atscfg.dictIds, dictIds, sizeof(Oid) * ndicts);
+	}
 	command->d.atscfg.ndicts = ndicts;
 	command->parsetree = (Node *) copyObject(stmt);
 

@@ -27,6 +27,7 @@ REGRESS = test_ddl_deparse \
 	alter_type_enum \
 	opfamily \
 	defprivs \
+	textsearch \
 	matviews
 
 EXTRA_INSTALL = contrib/pg_stat_statements

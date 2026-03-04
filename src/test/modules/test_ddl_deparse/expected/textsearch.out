@@ -1,0 +1,5 @@
+CREATE TEXT SEARCH CONFIGURATION evttrig_tscfg (COPY = pg_catalog.simple);
+NOTICE:  DDL test: type simple, tag CREATE TEXT SEARCH CONFIGURATION
+ALTER TEXT SEARCH CONFIGURATION evttrig_tscfg
+    DROP MAPPING FOR word;
+NOTICE:  DDL test: type alter text search configuration, tag ALTER TEXT SEARCH CONFIGURATION
