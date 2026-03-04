@@ -222,7 +222,7 @@ $cur_primary->psql(
 	SAVEPOINT s1;
 	INSERT INTO t_009_tbl VALUES (22, 'issued to ${cur_primary_name}');
 	PREPARE TRANSACTION 'xact_009_10';");
-$cur_primary->teardown_node;
+$cur_primary->stop;
 $cur_standby->promote;
 
 # change roles
