@@ -358,11 +358,14 @@ bbstreamer_lz4_decompressor_content(bbstreamer *streamer,
 		avail_in -= read_size;
 		next_in += read_size;
 
+		/* Update output buffer based on number of bytes produced */
+		avail_out -= out_size;
+		next_out += out_size;
 		mystreamer->bytes_written += out_size;
 
 		/*
 		 * If output buffer is full then forward the content to next streamer
-		 * and update the output buffer.
+		 * and reset the output buffer.
 		 */
 		if (mystreamer->bytes_written >= mystreamer->base.bbs_buffer.maxlen)
 		{
@@ -372,13 +375,8 @@ bbstreamer_lz4_decompressor_content(bbstreamer *streamer,
 							   context);
 
 			avail_out = mystreamer->base.bbs_buffer.maxlen;
-			mystreamer->bytes_written = 0;
 			next_out = (uint8 *) mystreamer->base.bbs_buffer.data;
-		}
-		else
-		{
-			avail_out = mystreamer->base.bbs_buffer.maxlen - mystreamer->bytes_written;
-			next_out += mystreamer->bytes_written;
+			mystreamer->bytes_written = 0;
 		}
 	}
 }
