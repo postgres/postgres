@@ -416,7 +416,8 @@ CREATE SCHEMA evttrig
 	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two', col_c SERIAL)
 	CREATE INDEX one_idx ON one (col_b)
 	CREATE TABLE two (col_c INTEGER CHECK (col_c > 0) REFERENCES one DEFAULT 42)
-	CREATE TABLE id (col_d int NOT NULL GENERATED ALWAYS AS IDENTITY);
+	CREATE TABLE id (col_d int NOT NULL GENERATED ALWAYS AS IDENTITY)
+	CREATE VIEW one_view AS SELECT * FROM two;
 NOTICE:  END: command_tag=CREATE SCHEMA type=schema identity=evttrig
 NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.one_col_a_seq
 NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.one_col_c_seq
@@ -429,7 +430,14 @@ NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.two
 NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.id_col_d_seq
 NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.id
 NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.id_col_d_seq
+NOTICE:  END: command_tag=CREATE VIEW type=view identity=evttrig.one_view
 NOTICE:  END: command_tag=CREATE INDEX type=index identity=evttrig.one_idx
+-- View with column additions
+CREATE OR REPLACE VIEW evttrig.one_view AS SELECT * FROM evttrig.two, evttrig.id;
+NOTICE:  END: command_tag=CREATE VIEW type=view identity=evttrig.one_view
+NOTICE:  END: command_tag=CREATE VIEW type=view identity=evttrig.one_view
+DROP VIEW evttrig.one_view;
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=view identity=evttrig.one_view schema=evttrig name=one_view addr={evttrig,one_view} args={}
 -- Partitioned tables with a partitioned index
 CREATE TABLE evttrig.parted (
     id int PRIMARY KEY)

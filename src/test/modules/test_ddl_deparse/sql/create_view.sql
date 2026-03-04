@@ -11,6 +11,9 @@ CREATE OR REPLACE VIEW static_view AS
 CREATE VIEW datatype_view AS
   SELECT * FROM datatype_table;
 
+CREATE OR REPLACE VIEW datatype_view AS
+  SELECT * FROM datatype_table, static_view;
+
 CREATE RECURSIVE VIEW nums_1_100 (n) AS
     VALUES (1)
 UNION ALL

@@ -12,6 +12,12 @@ NOTICE:    subcommand: type REPLACE RELOPTIONS desc <NULL>
 CREATE VIEW datatype_view AS
   SELECT * FROM datatype_table;
 NOTICE:  DDL test: type simple, tag CREATE VIEW
+CREATE OR REPLACE VIEW datatype_view AS
+  SELECT * FROM datatype_table, static_view;
+NOTICE:  DDL test: type simple, tag CREATE VIEW
+NOTICE:  DDL test: type alter table, tag CREATE VIEW
+NOTICE:    subcommand: type ADD COLUMN TO VIEW desc column col of view datatype_view
+NOTICE:    subcommand: type REPLACE RELOPTIONS desc <NULL>
 CREATE RECURSIVE VIEW nums_1_100 (n) AS
     VALUES (1)
 UNION ALL
