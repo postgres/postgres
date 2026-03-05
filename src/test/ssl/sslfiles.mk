@@ -31,6 +31,7 @@ SERVERS := server-cn-and-alt-names \
 	server-ip-in-dnsname \
 	server-single-alt-name \
 	server-multiple-alt-names \
+	server-localhost-alt-names \
 	server-no-names \
 	server-revoked
 CLIENTS := client client-dn client-revoked client_ext client-long \

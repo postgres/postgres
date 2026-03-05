@@ -36,5 +36,6 @@ include $(top_srcdir)/contrib/contrib-global.mk
 export PYTHON
 export with_libcurl
 export with_python
+export cert_dir=$(top_srcdir)/src/test/ssl/ssl
 
 endif

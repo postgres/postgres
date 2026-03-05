@@ -15,7 +15,7 @@ OAuth::Server - runs a mock OAuth authorization server for testing
   $server->run;
 
   my $port = $server->port;
-  my $issuer = "http://127.0.0.1:$port";
+  my $issuer = "https://127.0.0.1:$port";
 
   # test against $issuer...
 
@@ -27,9 +27,8 @@ This is glue API between the Perl tests and the Python authorization server
 daemon implemented in t/oauth_server.py. (Python has a fairly usable HTTP server
 in its standard library, so the implementation was ported from Perl.)
 
-This authorization server does not use TLS (it implements a nonstandard, unsafe
-issuer at "http://127.0.0.1:<port>"), so libpq in particular will need to set
-PGOAUTHDEBUG=UNSAFE to be able to talk to it.
+This authorization server serves HTTPS on 127.0.0.1 (IPv4 only). libpq will need
+to set PGOAUTHDEBUG=UNSAFE and PGOAUTHCAFILE with the right CA.
 
 =cut
 

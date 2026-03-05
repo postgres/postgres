@@ -71,8 +71,30 @@ END
 	$? = $exit_code;
 }
 
+# To test against HTTPS with our custom CA, we need to enable PGOAUTHDEBUG and
+# PGOAUTHCAFILE. But first, check to make sure the client refuses HTTP and
+# untrusted HTTPS connections by default.
 my $port = $webserver->port();
 my $issuer = "http://127.0.0.1:$port";
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf(
+	'pg_hba.conf', qq{
+local all test oauth issuer="$issuer" scope="openid postgres"
+});
+$node->reload;
+
+my $log_start = $node->wait_for_log(qr/reloading configuration files/);
+
+$node->connect_fails(
+	"user=test dbname=postgres oauth_issuer=$issuer oauth_client_id=f02c6361-0635",
+	"HTTPS is required without debug mode",
+	expected_stderr =>
+	  qr@OAuth discovery URI "\Q$issuer\E/.well-known/openid-configuration" must use HTTPS@
+);
+
+# Switch to HTTPS.
+$issuer = "https://127.0.0.1:$port";
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf(
@@ -83,7 +105,8 @@ local all testparam oauth issuer="$issuer/param" scope="openid postgres"
 });
 $node->reload;
 
-my $log_start = $node->wait_for_log(qr/reloading configuration files/);
+$log_start =
+  $node->wait_for_log(qr/reloading configuration files/, $log_start);
 
 # Check pg_hba_file_rules() support.
 my $contents = $bgconn->query_safe(
@@ -96,16 +119,26 @@ is( $contents,
 3|oauth|\{issuer=$issuer/param,"scope=openid postgres",validator=validator\}},
 	"pg_hba_file_rules recreates OAuth HBA settings");
 
-# To test against HTTP rather than HTTPS, we need to enable PGOAUTHDEBUG. But
-# first, check to make sure the client refuses such connections by default.
+# Make sure PGOAUTHDEBUG=UNSAFE doesn't disable certificate verification.
+$ENV{PGOAUTHDEBUG} = "UNSAFE";
+
 $node->connect_fails(
 	"user=test dbname=postgres oauth_issuer=$issuer oauth_client_id=f02c6361-0635",
-	"HTTPS is required without debug mode",
+	"HTTPS trusts only system CA roots by default",
+	# Note that the latter half of this error message comes from Curl, which has
+	# had a few variants since 7.61:
+	#
+	# - SSL peer certificate or SSH remote key was not OK
+	# - Peer certificate cannot be authenticated with given CA certificates
+	# - Issuer check against peer certificate failed
+	#
+	# Key off of the "peer certificate" portion, since that seems to have
+	# remained constant over a long period of time.
 	expected_stderr =>
-	  qr@OAuth discovery URI "\Q$issuer\E/.well-known/openid-configuration" must use HTTPS@
-);
+	  qr/failed to fetch OpenID discovery document:.*peer certificate/i);
 
-$ENV{PGOAUTHDEBUG} = "UNSAFE";
+# Now we can use our alternative CA.
+$ENV{PGOAUTHCAFILE} = "$ENV{cert_dir}/root+server_ca.crt";
 
 my $user = "test";
 $node->connect_ok(

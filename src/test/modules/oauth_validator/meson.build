@@ -80,6 +80,7 @@ tests += {
       'PYTHON': python.full_path(),
       'with_libcurl': oauth_flow_supported ? 'yes' : 'no',
       'with_python': 'yes',
+      'cert_dir': meson.project_source_root() / 'src/test/ssl/ssl',
     },
     'deps': [oauth_hook_client],
   },
