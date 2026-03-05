@@ -93,6 +93,7 @@ step "pa_merge3"
 }
 step "c1" { COMMIT; }
 step "a1" { ABORT; }
+step "s1beginrr" { BEGIN ISOLATION LEVEL REPEATABLE READ; }
 
 session "s2"
 setup
@@ -223,3 +224,4 @@ permutation "pa_merge2" "c1" "pa_merge2a" "pa_select2" "c2" # succeeds
 permutation "pa_merge3" "pa_merge2b_when" "c1" "pa_select2" "c2" # WHEN not satisfied by updated tuple
 permutation "pa_merge1" "pa_merge2b_when" "c1" "pa_select2" "c2" # WHEN satisfied by updated tuple
 permutation "pa_merge1" "pa_merge2c_dup" "c1" "a2"
+permutation "merge2a" "c1" "s1beginrr" "merge1" "c2"
