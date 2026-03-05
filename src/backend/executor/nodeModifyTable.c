@@ -3058,6 +3058,11 @@ lmerge_matched:;
 							   *inputslot;
 					LockTupleMode lockmode;
 
+					if (IsolationUsesXactSnapshot())
+						ereport(ERROR,
+								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+								 errmsg("could not serialize access due to concurrent update")));
+
 					/*
 					 * The target tuple was concurrently updated by some other
 					 * transaction. Run EvalPlanQual() with the new version of
