@@ -4334,6 +4334,21 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The precise stopping point is also influenced by
         <xref linkend="guc-recovery-target-inclusive"/>.
        </para>
+
+       <para>
+        The value can be specified as either a 32-bit transaction ID or a 64-bit
+        transaction ID (consisting of an epoch and a 32-bit ID), such as the
+        value returned by <function>pg_current_xact_id()</function>. When a
+        64-bit transaction ID is provided, only its 32-bit transaction ID
+        portion is used as the recovery target. For example, the values
+        4294968296 (epoch 1) and 8589935592 (epoch 2) both refer to the same
+        32-bit transaction ID, 1000.
+       </para>
+
+       <para>
+        The effective transaction ID (the 32-bit portion) must be greater than
+        or equal to 3.
+       </para>
       </listitem>
      </varlistentry>
 

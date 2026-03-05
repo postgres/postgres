@@ -240,4 +240,26 @@ ok(!$res, 'invalid timeline target (upper bound check)');
 $log_start =
   $node_standby->wait_for_log("must be between 1 and 4294967295", $log_start);
 
+# Invalid recovery_target_xid tests
+my ($result, $stdout, $stderr) = $node_primary->psql('postgres',
+	"ALTER SYSTEM SET recovery_target_xid TO 'bogus'");
+like(
+	$stderr,
+	qr/is not a valid number/,
+	"invalid recovery_target_xid (bogus value)");
+
+($result, $stdout, $stderr) = $node_primary->psql('postgres',
+	"ALTER SYSTEM SET recovery_target_xid TO '-1'");
+like(
+	$stderr,
+	qr/is not a valid number/,
+	"invalid recovery_target_xid (negative)");
+
+($result, $stdout, $stderr) = $node_primary->psql('postgres',
+	"ALTER SYSTEM SET recovery_target_xid TO '0'");
+like(
+	$stderr,
+	qr/without epoch must be greater than or equal to 3/,
+	"invalid recovery_target_xid (lower bound check)");
+
 done_testing();

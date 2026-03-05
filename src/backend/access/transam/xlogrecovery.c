@@ -5044,11 +5044,38 @@ check_recovery_target_xid(char **newval, void **extra, GucSource source)
 	{
 		TransactionId xid;
 		TransactionId *myextra;
+		char	   *endp;
+		char	   *val;
 
 		errno = 0;
-		xid = (TransactionId) strtou64(*newval, NULL, 0);
-		if (errno == EINVAL || errno == ERANGE)
+
+		/*
+		 * Consume leading whitespace to determine if number is negative
+		 */
+		val = *newval;
+
+		while (isspace((unsigned char) *val))
+			val++;
+
+		/*
+		 * This cast will remove the epoch, if any
+		 */
+		xid = (TransactionId) strtou64(val, &endp, 0);
+
+		if (*endp != '\0' || errno == EINVAL || errno == ERANGE || *val == '-')
+		{
+			GUC_check_errdetail("\"%s\" is not a valid number.",
+								"recovery_target_xid");
 			return false;
+		}
+
+		if (xid < FirstNormalTransactionId)
+		{
+			GUC_check_errdetail("\"%s\" without epoch must be greater than or equal to %u.",
+								"recovery_target_xid",
+								FirstNormalTransactionId);
+			return false;
+		}
 
 		myextra = (TransactionId *) guc_malloc(LOG, sizeof(TransactionId));
 		if (!myextra)
