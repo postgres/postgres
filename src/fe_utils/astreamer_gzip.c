@@ -317,7 +317,7 @@ astreamer_gzip_decompressor_content(astreamer *streamer,
 		res = inflate(zs, Z_NO_FLUSH);
 
 		if (res == Z_STREAM_ERROR)
-			pg_log_error("could not decompress data: %s", zs->msg);
+			pg_fatal("could not decompress data: %s", zs->msg);
 
 		mystreamer->bytes_written =
 			mystreamer->base.bbs_buffer.maxlen - zs->avail_out;
