@@ -2124,7 +2124,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * agreement with heap_page_is_all_visible() using an assertion.
 	 */
 #ifdef USE_ASSERT_CHECKING
-	if (presult.all_visible)
+	if (presult.set_all_visible)
 	{
 		TransactionId debug_cutoff;
 		bool		debug_all_frozen;
@@ -2135,7 +2135,7 @@ lazy_scan_prune(LVRelState *vacrel,
 										vacrel->cutoffs.OldestXmin, &debug_all_frozen,
 										&debug_cutoff, &vacrel->offnum));
 
-		Assert(presult.all_frozen == debug_all_frozen);
+		Assert(presult.set_all_frozen == debug_all_frozen);
 
 		Assert(!TransactionIdIsValid(debug_cutoff) ||
 			   debug_cutoff == presult.vm_conflict_horizon);
@@ -2175,8 +2175,8 @@ lazy_scan_prune(LVRelState *vacrel,
 	/* Did we find LP_DEAD items? */
 	*has_lpdead_items = (presult.lpdead_items > 0);
 
-	Assert(!presult.all_visible || !(*has_lpdead_items));
-	Assert(!presult.all_frozen || presult.all_visible);
+	Assert(!presult.set_all_visible || !(*has_lpdead_items));
+	Assert(!presult.set_all_frozen || presult.set_all_visible);
 
 	old_vmbits = visibilitymap_get_status(vacrel->rel, blkno, &vmbuffer);
 
@@ -2184,13 +2184,13 @@ lazy_scan_prune(LVRelState *vacrel,
 								   presult.lpdead_items, vmbuffer,
 								   &old_vmbits);
 
-	if (!presult.all_visible)
+	if (!presult.set_all_visible)
 		return presult.ndeleted;
 
 	/* Set the visibility map and page visibility hint */
 	new_vmbits = VISIBILITYMAP_ALL_VISIBLE;
 
-	if (presult.all_frozen)
+	if (presult.set_all_frozen)
 		new_vmbits |= VISIBILITYMAP_ALL_FROZEN;
 
 	/* Nothing to do */
@@ -2218,7 +2218,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * the cutoff_xid, since a snapshot conflict horizon sufficient to make
 	 * everything safe for REDO was logged when the page's tuples were frozen.
 	 */
-	Assert(!presult.all_frozen ||
+	Assert(!presult.set_all_frozen ||
 		   !TransactionIdIsValid(presult.vm_conflict_horizon));
 
 	visibilitymap_set(vacrel->rel, blkno, buf,
@@ -2233,14 +2233,14 @@ lazy_scan_prune(LVRelState *vacrel,
 	if ((old_vmbits & VISIBILITYMAP_ALL_VISIBLE) == 0)
 	{
 		vacrel->new_all_visible_pages++;
-		if (presult.all_frozen)
+		if (presult.set_all_frozen)
 		{
 			vacrel->new_all_visible_all_frozen_pages++;
 			*vm_page_frozen = true;
 		}
 	}
 	else if ((old_vmbits & VISIBILITYMAP_ALL_FROZEN) == 0 &&
-			 presult.all_frozen)
+			 presult.set_all_frozen)
 	{
 		vacrel->new_all_frozen_pages++;
 		*vm_page_frozen = true;

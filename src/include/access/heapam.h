@@ -285,18 +285,19 @@ typedef struct PruneFreezeResult
 	int			recently_dead_tuples;
 
 	/*
-	 * all_visible and all_frozen indicate if the all-visible and all-frozen
-	 * bits in the visibility map can be set for this page, after pruning.
+	 * set_all_visible and set_all_frozen indicate if the all-visible and
+	 * all-frozen bits in the visibility map should be set for this page after
+	 * pruning.
 	 *
 	 * vm_conflict_horizon is the newest xmin of live tuples on the page.  The
 	 * caller can use it as the conflict horizon when setting the VM bits.  It
-	 * is only valid if we froze some tuples (nfrozen > 0), and all_frozen is
-	 * true.
+	 * is only valid if we froze some tuples (nfrozen > 0), and set_all_frozen
+	 * is true.
 	 *
 	 * These are only set if the HEAP_PAGE_PRUNE_FREEZE option is set.
 	 */
-	bool		all_visible;
-	bool		all_frozen;
+	bool		set_all_visible;
+	bool		set_all_frozen;
 	TransactionId vm_conflict_horizon;
 
 	/*
