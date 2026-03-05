@@ -461,7 +461,8 @@ add_stringlist_item(_stringlist **listhead, const char *str)
 
 /*
  * Modify the array of lines, replacing "token" by "replacement"
- * the first time it occurs on each line.
+ * the first time it occurs on each line.  To prevent false matches, the
+ * occurrence of "token" must be surrounded by whitespace or line start/end.
  *
  * The array must be a malloc'd array of individually malloc'd strings.
  * We free any discarded strings.
@@ -483,11 +484,23 @@ replace_token(char **lines, const char *token, const char *replacement)
 	for (int i = 0; lines[i]; i++)
 	{
 		char	   *where;
+		char	   *endwhere;
 		char	   *newline;
 		int			pre;
 
 		/* nothing to do if no change needed */
 		if ((where = strstr(lines[i], token)) == NULL)
+			continue;
+
+		/*
+		 * Reject false match.  Note a blind spot: we don't check for a valid
+		 * match following a false match.  That case can't occur at present,
+		 * so not worth complicating this code for it.
+		 */
+		if (!(where == lines[i] || isspace((unsigned char) where[-1])))
+			continue;
+		endwhere = where + strlen(token);
+		if (!(*endwhere == '\0' || isspace((unsigned char) *endwhere)))
 			continue;
 
 		/* if we get here a change is needed - set up new line */
@@ -1501,11 +1514,11 @@ setup_config(void)
 			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 		{
 			conflines = replace_token(conflines,
-									  "host    all             all             ::1",
-									  "#host    all             all             ::1");
+									  "host    all             all             ::1/128",
+									  "#host    all             all             ::1/128");
 			conflines = replace_token(conflines,
-									  "host    replication     all             ::1",
-									  "#host    replication     all             ::1");
+									  "host    replication     all             ::1/128",
+									  "#host    replication     all             ::1/128");
 		}
 	}
 
