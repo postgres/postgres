@@ -629,6 +629,7 @@ LZ4Stream_close(CompressFileHandle *CFH)
 	size_t		required;
 	size_t		status;
 	int			ret;
+	bool		success = true;
 
 	fp = state->fp;
 	if (state->inited)
@@ -644,6 +645,7 @@ LZ4Stream_close(CompressFileHandle *CFH)
 				{
 					errno = (errno) ? errno : ENOSPC;
 					pg_log_error("could not write to output file: %m");
+					success = false;
 				}
 				state->bufdata = 0;
 			}
@@ -656,6 +658,7 @@ LZ4Stream_close(CompressFileHandle *CFH)
 			{
 				pg_log_error("could not end compression: %s",
 							 LZ4F_getErrorName(status));
+				success = false;
 			}
 			else
 				state->bufdata += status;
@@ -665,19 +668,26 @@ LZ4Stream_close(CompressFileHandle *CFH)
 			{
 				errno = (errno) ? errno : ENOSPC;
 				pg_log_error("could not write to output file: %m");
+				success = false;
 			}
 
 			status = LZ4F_freeCompressionContext(state->ctx);
 			if (LZ4F_isError(status))
+			{
 				pg_log_error("could not end compression: %s",
 							 LZ4F_getErrorName(status));
+				success = false;
+			}
 		}
 		else
 		{
 			status = LZ4F_freeDecompressionContext(state->dtx);
 			if (LZ4F_isError(status))
+			{
 				pg_log_error("could not end decompression: %s",
 							 LZ4F_getErrorName(status));
+				success = false;
+			}
 			pg_free(state->outbuf);
 		}
 
@@ -692,10 +702,10 @@ LZ4Stream_close(CompressFileHandle *CFH)
 	if (ret != 0)
 	{
 		pg_log_error("could not close file: %m");
-		return false;
+		success = false;
 	}
 
-	return true;
+	return success;
 }
 
 static bool
