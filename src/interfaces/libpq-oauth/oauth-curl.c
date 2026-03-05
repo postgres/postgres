@@ -286,17 +286,15 @@ struct async_ctx
  * Tears down the Curl handles and frees the async_ctx.
  */
 static void
-free_async_ctx(PGconn *conn, struct async_ctx *actx)
+free_async_ctx(struct async_ctx *actx)
 {
 	/*
 	 * In general, none of the error cases below should ever happen if we have
 	 * no bugs above. But if we do hit them, surfacing those errors somehow
 	 * might be the only way to have a chance to debug them.
 	 *
-	 * TODO: At some point it'd be nice to have a standard way to warn about
-	 * teardown failures. Appending to the connection's error message only
-	 * helps if the bug caused a connection failure; otherwise it'll be
-	 * buried...
+	 * Print them as warnings to stderr, following the example of similar
+	 * situations in fe-secure-openssl.c and fe-connect.c.
 	 */
 
 	if (actx->curlm && actx->curl)
@@ -304,9 +302,9 @@ free_async_ctx(PGconn *conn, struct async_ctx *actx)
 		CURLMcode	err = curl_multi_remove_handle(actx->curlm, actx->curl);
 
 		if (err)
-			libpq_append_conn_error(conn,
-									"libcurl easy handle removal failed: %s",
-									curl_multi_strerror(err));
+			fprintf(stderr,
+					libpq_gettext("WARNING: libcurl easy handle removal failed: %s\n"),
+					curl_multi_strerror(err));
 	}
 
 	if (actx->curl)
@@ -324,9 +322,9 @@ free_async_ctx(PGconn *conn, struct async_ctx *actx)
 		CURLMcode	err = curl_multi_cleanup(actx->curlm);
 
 		if (err)
-			libpq_append_conn_error(conn,
-									"libcurl multi handle cleanup failed: %s",
-									curl_multi_strerror(err));
+			fprintf(stderr,
+					libpq_gettext("WARNING: libcurl multi handle cleanup failed: %s\n"),
+					curl_multi_strerror(err));
 	}
 
 	free_provider(&actx->provider);
@@ -359,7 +357,7 @@ pg_fe_cleanup_oauth_flow(PGconn *conn)
 
 	if (state->async_ctx)
 	{
-		free_async_ctx(conn, state->async_ctx);
+		free_async_ctx(state->async_ctx);
 		state->async_ctx = NULL;
 	}
 
