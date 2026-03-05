@@ -10635,7 +10635,11 @@ int PQisthreadsafe();
    Kerberos calls because Kerberos functions are not thread-safe.  See
    function <function>PQregisterThreadLock</function> in the
    <application>libpq</application> source code for a way to do cooperative
-   locking between <application>libpq</application> and your application.
+   locking between <application>libpq</application> and your application. (Note
+   that it is only safe to call <function>PQregisterThreadLock</function> when
+   there are no open connections.) Clients may retrieve the current locking
+   callback with <function>PQgetThreadLock</function>; if no custom callback
+   has been registered, a default is used.
   </para>
 
   <para>

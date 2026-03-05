@@ -210,3 +210,4 @@ PQgetAuthDataHook         207
 PQdefaultAuthDataHook     208
 PQfullProtocolVersion     209
 appendPQExpBufferVA       210
+PQgetThreadLock           211

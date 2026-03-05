@@ -63,6 +63,10 @@ extern "C"
 /* Indicates presence of the PQAUTHDATA_PROMPT_OAUTH_DEVICE authdata hook */
 #define LIBPQ_HAS_PROMPT_OAUTH_DEVICE 1
 
+/* Features added in PostgreSQL v19: */
+/* Indicates presence of PQgetThreadLock */
+#define LIBPQ_HAS_GET_THREAD_LOCK 1
+
 /*
  * Option flags for PQcopyResult
  */
@@ -462,12 +466,14 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
  *	   Used to set callback that prevents concurrent access to
  *	   non-thread safe functions that libpq needs.
  *	   The default implementation uses a libpq internal mutex.
- *	   Only required for multithreaded apps that use kerberos
- *	   both within their app and for postgresql connections.
+ *	   Only required for multithreaded apps that use Kerberos or
+ *	   older (non-threadsafe) versions of Curl both within their
+ *	   app and for postgresql connections.
  */
 typedef void (*pgthreadlock_t) (int acquire);
 
 extern pgthreadlock_t PQregisterThreadLock(pgthreadlock_t newhandler);
+extern pgthreadlock_t PQgetThreadLock(void);
 
 /* === in fe-trace.c === */
 extern void PQtrace(PGconn *conn, FILE *debug_port);
