@@ -779,7 +779,7 @@
 #row_security = on
 #default_table_access_method = 'heap'
 #default_tablespace = ''                # a tablespace name, '' uses the default
-#default_toast_compression = 'pglz'     # 'pglz' or 'lz4'
+#default_toast_compression = pglz       # pglz or lz4
 #temp_tablespaces = ''                  # a list of tablespace names, '' uses
                                         # only default tablespace
 #check_function_bodies = on
