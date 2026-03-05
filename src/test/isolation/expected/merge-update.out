@@ -549,3 +549,36 @@ step c1: COMMIT;
 step pa_merge2c_dup: <... completed>
 ERROR:  MERGE command cannot affect row a second time
 step a2: ABORT;
+
+starting permutation: merge2a c1 s1beginrr merge1 c2
+step merge2a: 
+  MERGE INTO target t
+  USING (SELECT 1 as key, 'merge2a' as val) s
+  ON s.key = t.key
+  WHEN NOT MATCHED THEN
+	INSERT VALUES (s.key, s.val)
+  WHEN MATCHED THEN
+	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
+  WHEN NOT MATCHED BY SOURCE THEN
+	UPDATE set key = t.key + 1, val = t.val || ' source not matched by merge2a'
+  RETURNING merge_action(), old, new, t.*;
+
+merge_action|old       |new                            |key|val                      
+------------+----------+-------------------------------+---+-------------------------
+UPDATE      |(1,setup1)|(2,"setup1 updated by merge2a")|  2|setup1 updated by merge2a
+(1 row)
+
+step c1: COMMIT;
+step s1beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step merge1: 
+  MERGE INTO target t
+  USING (SELECT 1 as key, 'merge1' as val) s
+  ON s.key = t.key
+  WHEN NOT MATCHED THEN
+	INSERT VALUES (s.key, s.val)
+  WHEN MATCHED THEN
+    UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val;
+ <waiting ...>
+step c2: COMMIT;
+step merge1: <... completed>
+ERROR:  could not serialize access due to concurrent update
