@@ -34,11 +34,10 @@ $node_standby_2->start;
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 
-# Wait until standby has replayed enough data on standby 1
-$node_primary->wait_for_catchup($node_standby_1);
-
-# Stop and remove primary
-$node_primary->teardown_node;
+# Cleanly stop and remove primary.  A clean stop is required so as all
+# the records generated on the primary are received and flushed by the two
+# standbys.
+$node_primary->stop;
 
 # promote standby 1 using "pg_promote", switching it to a new timeline
 my $psql_out = '';
