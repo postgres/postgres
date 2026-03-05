@@ -5,6 +5,11 @@
  *
  * src/backend/catalog/system_views.sql
  *
+ * Some of these views are not meant to be publicly readable.  The
+ * underlying function(s) for such a view should not be publicly
+ * executable either --- but by default they will be.  So don't forget to
+ * adjust function permissions (in pg_proc.dat) when adding a new view.
+ *
  * Note: this file is read in single-user -j mode, which means that the
  * command terminator is semicolon-newline-newline; whenever the backend
  * sees that, it stops and executes what it's got.  If you write a lot of
@@ -650,19 +655,16 @@ CREATE VIEW pg_file_settings AS
    SELECT * FROM pg_show_all_file_settings() AS A;
 
 REVOKE ALL ON pg_file_settings FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION pg_show_all_file_settings() FROM PUBLIC;
 
 CREATE VIEW pg_hba_file_rules AS
    SELECT * FROM pg_hba_file_rules() AS A;
 
 REVOKE ALL ON pg_hba_file_rules FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION pg_hba_file_rules() FROM PUBLIC;
 
 CREATE VIEW pg_ident_file_mappings AS
    SELECT * FROM pg_ident_file_mappings() AS A;
 
 REVOKE ALL ON pg_ident_file_mappings FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION pg_ident_file_mappings() FROM PUBLIC;
 
 CREATE VIEW pg_timezone_abbrevs AS
     SELECT * FROM pg_timezone_abbrevs_zone() z
@@ -679,39 +681,30 @@ CREATE VIEW pg_config AS
     SELECT * FROM pg_config();
 
 REVOKE ALL ON pg_config FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION pg_config() FROM PUBLIC;
 
 CREATE VIEW pg_shmem_allocations AS
     SELECT * FROM pg_get_shmem_allocations();
 
 REVOKE ALL ON pg_shmem_allocations FROM PUBLIC;
 GRANT SELECT ON pg_shmem_allocations TO pg_read_all_stats;
-REVOKE EXECUTE ON FUNCTION pg_get_shmem_allocations() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pg_get_shmem_allocations() TO pg_read_all_stats;
 
 CREATE VIEW pg_shmem_allocations_numa AS
     SELECT * FROM pg_get_shmem_allocations_numa();
 
 REVOKE ALL ON pg_shmem_allocations_numa FROM PUBLIC;
 GRANT SELECT ON pg_shmem_allocations_numa TO pg_read_all_stats;
-REVOKE EXECUTE ON FUNCTION pg_get_shmem_allocations_numa() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pg_get_shmem_allocations_numa() TO pg_read_all_stats;
 
 CREATE VIEW pg_dsm_registry_allocations AS
     SELECT * FROM pg_get_dsm_registry_allocations();
 
 REVOKE ALL ON pg_dsm_registry_allocations FROM PUBLIC;
 GRANT SELECT ON pg_dsm_registry_allocations TO pg_read_all_stats;
-REVOKE EXECUTE ON FUNCTION pg_get_dsm_registry_allocations() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pg_get_dsm_registry_allocations() TO pg_read_all_stats;
 
 CREATE VIEW pg_backend_memory_contexts AS
     SELECT * FROM pg_get_backend_memory_contexts();
 
 REVOKE ALL ON pg_backend_memory_contexts FROM PUBLIC;
 GRANT SELECT ON pg_backend_memory_contexts TO pg_read_all_stats;
-REVOKE EXECUTE ON FUNCTION pg_get_backend_memory_contexts() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pg_get_backend_memory_contexts() TO pg_read_all_stats;
 
 -- Statistics views
 
@@ -1471,5 +1464,3 @@ CREATE VIEW pg_aios AS
     SELECT * FROM pg_get_aios();
 REVOKE ALL ON pg_aios FROM PUBLIC;
 GRANT SELECT ON pg_aios TO pg_read_all_stats;
-REVOKE EXECUTE ON FUNCTION pg_get_aios() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pg_get_aios() TO pg_read_all_stats;

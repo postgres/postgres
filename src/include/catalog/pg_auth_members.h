@@ -31,13 +31,26 @@ BEGIN_CATALOG_STRUCT
 
 CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2843,AuthMemRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-	Oid			oid;			/* oid */
-	Oid			roleid BKI_LOOKUP(pg_authid);	/* ID of a role */
-	Oid			member BKI_LOOKUP(pg_authid);	/* ID of a member of that role */
-	Oid			grantor BKI_LOOKUP(pg_authid);	/* who granted the membership */
-	bool		admin_option;	/* granted with admin option? */
-	bool		inherit_option; /* exercise privileges without SET ROLE? */
-	bool		set_option;		/* use SET ROLE to the target role? */
+	/* OID for this record (needed for dependencies) */
+	Oid			oid;
+
+	/* ID of a role */
+	Oid			roleid BKI_LOOKUP(pg_authid);
+
+	/* ID of a member of that role */
+	Oid			member BKI_LOOKUP(pg_authid);
+
+	/* who granted the membership */
+	Oid			grantor BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
+
+	/* granted with admin option? */
+	bool		admin_option BKI_DEFAULT(f);
+
+	/* exercise privileges without SET ROLE? */
+	bool		inherit_option BKI_DEFAULT(t);
+
+	/* use SET ROLE to the target role? */
+	bool		set_option BKI_DEFAULT(t);
 } FormData_pg_auth_members;
 
 END_CATALOG_STRUCT

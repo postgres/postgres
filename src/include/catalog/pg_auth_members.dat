@@ -1,0 +1,20 @@
+#----------------------------------------------------------------------
+#
+# pg_auth_members.dat
+#    Initial contents of the pg_auth_members system catalog.
+#
+# Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_auth_members.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+# We grant these roles to pg_monitor.
+{ roleid => 'pg_read_all_settings', member => 'pg_monitor' },
+{ roleid => 'pg_read_all_stats', member => 'pg_monitor' },
+{ roleid => 'pg_stat_scan_tables', member => 'pg_monitor' },
+
+]

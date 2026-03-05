@@ -25,6 +25,7 @@
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -115,6 +116,8 @@ static const struct typinfo TypInfo[] = {
 	F_JSONB_IN, F_JSONB_OUT},
 	{"oid", OIDOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_OIDIN, F_OIDOUT},
+	{"aclitem", ACLITEMOID, 0, 16, false, TYPALIGN_DOUBLE, TYPSTORAGE_PLAIN, InvalidOid,
+	F_ACLITEMIN, F_ACLITEMOUT},
 	{"pg_node_tree", PG_NODE_TREEOID, 0, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, DEFAULT_COLLATION_OID,
 	F_PG_NODE_TREE_IN, F_PG_NODE_TREE_OUT},
 	{"int2vector", INT2VECTOROID, INT2OID, -1, false, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
@@ -143,6 +146,43 @@ struct typmap
 
 static List *Typ = NIL;			/* List of struct typmap* */
 static struct typmap *Ap = NULL;
+
+/*
+ * Basic information about built-in roles.
+ *
+ * Presently, this need only list roles that are mentioned in aclitem arrays
+ * in the catalog .dat files.  We might as well list everything that is in
+ * pg_authid.dat, since there aren't that many.  Like pg_authid.dat, we
+ * represent the bootstrap superuser's name as "POSTGRES", even though it
+ * (probably) won't be that in the finished installation; this means aclitem
+ * entries in .dat files must spell it like that.
+ */
+struct rolinfo
+{
+	const char *rolname;
+	Oid			oid;
+};
+
+static const struct rolinfo RolInfo[] = {
+	{"POSTGRES", BOOTSTRAP_SUPERUSERID},
+	{"pg_database_owner", ROLE_PG_DATABASE_OWNER},
+	{"pg_read_all_data", ROLE_PG_READ_ALL_DATA},
+	{"pg_write_all_data", ROLE_PG_WRITE_ALL_DATA},
+	{"pg_monitor", ROLE_PG_MONITOR},
+	{"pg_read_all_settings", ROLE_PG_READ_ALL_SETTINGS},
+	{"pg_read_all_stats", ROLE_PG_READ_ALL_STATS},
+	{"pg_stat_scan_tables", ROLE_PG_STAT_SCAN_TABLES},
+	{"pg_read_server_files", ROLE_PG_READ_SERVER_FILES},
+	{"pg_write_server_files", ROLE_PG_WRITE_SERVER_FILES},
+	{"pg_execute_server_program", ROLE_PG_EXECUTE_SERVER_PROGRAM},
+	{"pg_signal_backend", ROLE_PG_SIGNAL_BACKEND},
+	{"pg_checkpoint", ROLE_PG_CHECKPOINT},
+	{"pg_maintain", ROLE_PG_MAINTAIN},
+	{"pg_use_reserved_connections", ROLE_PG_USE_RESERVED_CONNECTIONS},
+	{"pg_create_subscription", ROLE_PG_CREATE_SUBSCRIPTION},
+	{"pg_signal_autovacuum_worker", ROLE_PG_SIGNAL_AUTOVACUUM_WORKER}
+};
+
 
 static Datum values[MAXATTR];	/* current row's attribute values */
 static bool Nulls[MAXATTR];
@@ -1032,6 +1072,25 @@ boot_get_type_io_data(Oid typid,
 
 		*typcollation = TypInfo[typeindex].collation;
 	}
+}
+
+/* ----------------
+ *		boot_get_role_oid
+ *
+ * Look up a role name at bootstrap time.  This is equivalent to
+ * get_role_oid(rolname, true): return the role OID or InvalidOid if
+ * not found.  We only need to cope with built-in role names.
+ * ----------------
+ */
+Oid
+boot_get_role_oid(const char *rolname)
+{
+	for (int i = 0; i < lengthof(RolInfo); i++)
+	{
+		if (strcmp(RolInfo[i].rolname, rolname) == 0)
+			return RolInfo[i].oid;
+	}
+	return InvalidOid;
 }
 
 /* ----------------

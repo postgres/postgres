@@ -78,6 +78,7 @@ bki_data = [
   'pg_amop.dat',
   'pg_amproc.dat',
   'pg_authid.dat',
+  'pg_auth_members.dat',
   'pg_cast.dat',
   'pg_class.dat',
   'pg_collation.dat',
