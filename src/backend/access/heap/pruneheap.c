@@ -234,7 +234,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 * determining the appropriate horizon is a waste if there's no prune_xid
 	 * (i.e. no updates/deletes left potentially dead tuples around).
 	 */
-	prune_xid = ((PageHeader) page)->pd_prune_xid;
+	prune_xid = PageGetPruneXid(page);
 	if (!TransactionIdIsValid(prune_xid))
 		return;
 
@@ -868,7 +868,7 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	 * pd_prune_xid field or the page was marked full, we will update the hint
 	 * bit.
 	 */
-	do_hint_prune = ((PageHeader) prstate.page)->pd_prune_xid != prstate.new_prune_xid ||
+	do_hint_prune = PageGetPruneXid(prstate.page) != prstate.new_prune_xid ||
 		PageIsFull(prstate.page);
 
 	/*

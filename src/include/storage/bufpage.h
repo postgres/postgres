@@ -441,6 +441,12 @@ PageClearAllVisible(Page page)
 	((PageHeader) page)->pd_flags &= ~PD_ALL_VISIBLE;
 }
 
+static inline TransactionId
+PageGetPruneXid(const PageData *page)
+{
+	return ((const PageHeaderData *) page)->pd_prune_xid;
+}
+
 /*
  * These two require "access/transam.h", so left as macros.
  */
