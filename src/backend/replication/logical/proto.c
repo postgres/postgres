@@ -870,7 +870,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 	natts = pq_getmsgint(in, 2);
 
 	/* Allocate space for per-column values; zero out unused StringInfoDatas */
-	tuple->colvalues = (StringInfoData *) palloc0(natts * sizeof(StringInfoData));
+	tuple->colvalues = palloc0_array(StringInfoData, natts);
 	tuple->colstatus = palloc_array(char, natts);
 	tuple->ncols = natts;
 

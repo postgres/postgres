@@ -901,8 +901,8 @@ fetch_remote_table_info(char *nspname, char *relname, LogicalRepRelation *lrel,
 						nspname, relname, res->err)));
 
 	/* We don't know the number of rows coming, so allocate enough space. */
-	lrel->attnames = palloc0(MaxTupleAttributeNumber * sizeof(char *));
-	lrel->atttyps = palloc0(MaxTupleAttributeNumber * sizeof(Oid));
+	lrel->attnames = palloc0_array(char *, MaxTupleAttributeNumber);
+	lrel->atttyps = palloc0_array(Oid, MaxTupleAttributeNumber);
 	lrel->attkeys = NULL;
 
 	/*

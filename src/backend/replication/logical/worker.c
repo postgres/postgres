@@ -978,8 +978,8 @@ slot_fill_defaults(LogicalRepRelMapEntry *rel, EState *estate,
 	if (num_phys_attrs == rel->remoterel.natts)
 		return;
 
-	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
-	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
+	defmap = palloc_array(int, num_phys_attrs);
+	defexprs = palloc_array(ExprState *, num_phys_attrs);
 
 	Assert(rel->attrmap->maplen == num_phys_attrs);
 	for (attnum = 0; attnum < num_phys_attrs; attnum++)
@@ -5306,8 +5306,8 @@ subxact_info_read(Oid subid, TransactionId xid)
 	 * to the subxact file and reset the logical streaming context.
 	 */
 	oldctx = MemoryContextSwitchTo(LogicalStreamingContext);
-	subxact_data.subxacts = palloc(subxact_data.nsubxacts_max *
-								   sizeof(SubXactInfo));
+	subxact_data.subxacts = palloc_array(SubXactInfo,
+										 subxact_data.nsubxacts_max);
 	MemoryContextSwitchTo(oldctx);
 
 	if (len > 0)
@@ -5373,14 +5373,14 @@ subxact_info_add(TransactionId xid)
 		 * subxact_info_read.
 		 */
 		oldctx = MemoryContextSwitchTo(LogicalStreamingContext);
-		subxacts = palloc(subxact_data.nsubxacts_max * sizeof(SubXactInfo));
+		subxacts = palloc_array(SubXactInfo, subxact_data.nsubxacts_max);
 		MemoryContextSwitchTo(oldctx);
 	}
 	else if (subxact_data.nsubxacts == subxact_data.nsubxacts_max)
 	{
 		subxact_data.nsubxacts_max *= 2;
-		subxacts = repalloc(subxacts,
-							subxact_data.nsubxacts_max * sizeof(SubXactInfo));
+		subxacts = repalloc_array(subxacts, SubXactInfo,
+								  subxact_data.nsubxacts_max);
 	}
 
 	subxacts[subxact_data.nsubxacts].xid = xid;
