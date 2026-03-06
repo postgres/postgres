@@ -1509,7 +1509,7 @@ import_pg_statistic(Relation pgsd, JsonbContainer *cont,
 	pgstup = heap_form_tuple(RelationGetDescr(pgsd), values, nulls);
 	pgstdat = heap_copy_tuple_as_datum(pgstup, RelationGetDescr(pgsd));
 
-	pfree(pgstup);
+	heap_freetuple(pgstup);
 
 	*pg_statistic_ok = true;
 
