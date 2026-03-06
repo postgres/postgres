@@ -34,6 +34,10 @@
  * RS_TEMPORARY. Once the decoding from corresponding LSNs can reach a
  * consistent point, they will be marked as RS_PERSISTENT.
  *
+ * If the WAL prior to the remote slot's confirmed_flush_lsn has not been
+ * flushed on the standby, the slot is marked as RS_TEMPORARY. Once the standby
+ * catches up and flushes that WAL, the slot will be marked as RS_PERSISTENT.
+ *
  * The slot sync worker waits for some time before the next synchronization,
  * with the duration varying based on whether any slots were updated during
  * the last cycle. Refer to the comments above wait_for_slot_activity() for
@@ -218,7 +222,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		 * Can get here only if GUC 'synchronized_standby_slots' on the
 		 * primary server was not configured correctly.
 		 */
-		ereport(AmLogicalSlotSyncWorkerProcess() ? LOG : ERROR,
+		ereport(LOG,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("skipping slot synchronization because the received slot sync"
 					   " LSN %X/%08X for slot \"%s\" is ahead of the standby position %X/%08X",

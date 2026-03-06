@@ -1495,7 +1495,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         Synchronize the logical failover replication slots from the primary
         server to the standby server. This function can only be executed on the
         standby server. Temporary synced slots, if any, cannot be used for
-        logical decoding and must be dropped after promotion. See
+        logical decoding and must be dropped after promotion. This function
+        retries cyclically until all the failover slots that existed on
+        primary at the start of the function call are synchronized. See
         <xref linkend="logicaldecoding-replication-slots-synchronization"/> for details.
         Note that this function cannot be executed if
         <link linkend="guc-sync-replication-slots"><varname>
