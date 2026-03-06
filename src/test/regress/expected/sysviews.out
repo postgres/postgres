@@ -143,6 +143,13 @@ select count(*) = 0 as ok from pg_stat_wal_receiver;
  t
 (1 row)
 
+-- We expect no recovery state in this test (running on primary)
+select count(*) = 0 as ok from pg_stat_recovery;
+ ok 
+----
+ t
+(1 row)
+
 -- This is to record the prevailing planner enable_foo settings during
 -- a regression test run.
 select name, setting from pg_settings where name like 'enable%';

@@ -2127,6 +2127,17 @@ pg_stat_progress_vacuum| SELECT s.pid,
         END AS started_by
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
+pg_stat_recovery| SELECT promote_triggered,
+    last_replayed_read_lsn,
+    last_replayed_end_lsn,
+    last_replayed_tli,
+    replay_end_lsn,
+    replay_end_tli,
+    recovery_last_xact_time,
+    current_chunk_start_time,
+    pause_state
+   FROM pg_stat_get_recovery() s(promote_triggered, last_replayed_read_lsn, last_replayed_end_lsn, last_replayed_tli, replay_end_lsn, replay_end_tli, recovery_last_xact_time, current_chunk_start_time, pause_state)
+  WHERE (promote_triggered IS NOT NULL);
 pg_stat_recovery_prefetch| SELECT stats_reset,
     prefetch,
     hit,

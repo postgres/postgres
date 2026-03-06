@@ -82,6 +82,11 @@ $result =
 print "standby 2: $result\n";
 is($result, qq(1002), 'check streamed content on standby 2');
 
+$result = $node_standby_1->safe_psql('postgres',
+	"SELECT count(*) FROM pg_stat_recovery WHERE promote_triggered IS NOT NULL"
+);
+is($result, qq(1), 'check recovery state on standby 1');
+
 # Likewise, but for a sequence
 $node_primary->safe_psql('postgres',
 	"CREATE SEQUENCE seq1; SELECT nextval('seq1')");
