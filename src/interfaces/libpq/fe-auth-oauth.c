@@ -676,6 +676,25 @@ cleanup:
 }
 
 /*
+ * Helper for handling flow failures. If anything was put into request->error,
+ * it's added to conn->errorMessage here.
+ */
+static void
+report_user_flow_error(PGconn *conn, const PGoauthBearerRequestV2 *request)
+{
+	appendPQExpBufferStr(&conn->errorMessage,
+						 libpq_gettext("user-defined OAuth flow failed"));
+
+	if (request->error)
+	{
+		appendPQExpBufferStr(&conn->errorMessage, ": ");
+		appendPQExpBufferStr(&conn->errorMessage, request->error);
+	}
+
+	appendPQExpBufferChar(&conn->errorMessage, '\n');
+}
+
+/*
  * Callback implementation of conn->async_auth() for a user-defined OAuth flow.
  * Delegates the retrieval of the token to the application's async callback.
  *
@@ -687,20 +706,23 @@ static PostgresPollingStatusType
 run_user_oauth_flow(PGconn *conn)
 {
 	fe_oauth_state *state = conn->sasl_state;
-	PGoauthBearerRequest *request = state->async_ctx;
+	PGoauthBearerRequestV2 *request = state->async_ctx;
 	PostgresPollingStatusType status;
 
-	if (!request->async)
+	if (!request->v1.async)
 	{
 		libpq_append_conn_error(conn,
 								"user-defined OAuth flow provided neither a token nor an async callback");
 		return PGRES_POLLING_FAILED;
 	}
 
-	status = request->async(conn, request, &conn->altsock);
+	status = request->v1.async(conn,
+							   (PGoauthBearerRequest *) request,
+							   &conn->altsock);
+
 	if (status == PGRES_POLLING_FAILED)
 	{
-		libpq_append_conn_error(conn, "user-defined OAuth flow failed");
+		report_user_flow_error(conn, request);
 		return status;
 	}
 	else if (status == PGRES_POLLING_OK)
@@ -710,14 +732,14 @@ run_user_oauth_flow(PGconn *conn)
 		 * onto the original string, since it may not be safe for us to free()
 		 * it.)
 		 */
-		if (!request->token)
+		if (!request->v1.token)
 		{
 			libpq_append_conn_error(conn,
 									"user-defined OAuth flow did not provide a token");
 			return PGRES_POLLING_FAILED;
 		}
 
-		conn->oauth_token = strdup(request->token);
+		conn->oauth_token = strdup(request->v1.token);
 		if (!conn->oauth_token)
 		{
 			libpq_append_conn_error(conn, "out of memory");
@@ -739,19 +761,20 @@ run_user_oauth_flow(PGconn *conn)
 }
 
 /*
- * Cleanup callback for the async user flow. Delegates most of its job to the
- * user-provided cleanup implementation, then disconnects the altsock.
+ * Cleanup callback for the async user flow. Delegates most of its job to
+ * PGoauthBearerRequest.cleanup(), then disconnects the altsock and frees the
+ * request itself.
  */
 static void
 cleanup_user_oauth_flow(PGconn *conn)
 {
 	fe_oauth_state *state = conn->sasl_state;
-	PGoauthBearerRequest *request = state->async_ctx;
+	PGoauthBearerRequestV2 *request = state->async_ctx;
 
 	Assert(request);
 
-	if (request->cleanup)
-		request->cleanup(conn, request);
+	if (request->v1.cleanup)
+		request->v1.cleanup(conn, (PGoauthBearerRequest *) request);
 	conn->altsock = PGINVALID_SOCKET;
 
 	free(request);
@@ -975,8 +998,8 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state)
  * token for presentation to the server.
  *
  * If the application has registered a custom flow handler using
- * PQAUTHDATA_OAUTH_BEARER_TOKEN, it may either return a token immediately (e.g.
- * if it has one cached for immediate use), or set up for a series of
+ * PQAUTHDATA_OAUTH_BEARER_TOKEN[_V2], it may either return a token immediately
+ * (e.g. if it has one cached for immediate use), or set up for a series of
  * asynchronous callbacks which will be managed by run_user_oauth_flow().
  *
  * If the default handler is used instead, a Device Authorization flow is used
@@ -990,27 +1013,37 @@ static bool
 setup_token_request(PGconn *conn, fe_oauth_state *state)
 {
 	int			res;
-	PGoauthBearerRequest request = {
-		.openid_configuration = conn->oauth_discovery_uri,
-		.scope = conn->oauth_scope,
+	PGoauthBearerRequestV2 request = {
+		.v1 = {
+			.openid_configuration = conn->oauth_discovery_uri,
+			.scope = conn->oauth_scope,
+		},
+		.issuer = conn->oauth_issuer_id,
 	};
 
-	Assert(request.openid_configuration);
+	Assert(request.v1.openid_configuration);
+	Assert(request.issuer);
 
-	/* The client may have overridden the OAuth flow. */
-	res = PQauthDataHook(PQAUTHDATA_OAUTH_BEARER_TOKEN, conn, &request);
+	/*
+	 * The client may have overridden the OAuth flow. Try the v2 hook first,
+	 * then fall back to the v1 implementation.
+	 */
+	res = PQauthDataHook(PQAUTHDATA_OAUTH_BEARER_TOKEN_V2, conn, &request);
+	if (res == 0)
+		res = PQauthDataHook(PQAUTHDATA_OAUTH_BEARER_TOKEN, conn, &request);
+
 	if (res > 0)
 	{
-		PGoauthBearerRequest *request_copy;
+		PGoauthBearerRequestV2 *request_copy;
 
-		if (request.token)
+		if (request.v1.token)
 		{
 			/*
 			 * We already have a token, so copy it into the conn. (We can't
 			 * hold onto the original string, since it may not be safe for us
 			 * to free() it.)
 			 */
-			conn->oauth_token = strdup(request.token);
+			conn->oauth_token = strdup(request.v1.token);
 			if (!conn->oauth_token)
 			{
 				libpq_append_conn_error(conn, "out of memory");
@@ -1018,8 +1051,8 @@ setup_token_request(PGconn *conn, fe_oauth_state *state)
 			}
 
 			/* short-circuit */
-			if (request.cleanup)
-				request.cleanup(conn, &request);
+			if (request.v1.cleanup)
+				request.v1.cleanup(conn, (PGoauthBearerRequest *) &request);
 			return true;
 		}
 
@@ -1038,7 +1071,7 @@ setup_token_request(PGconn *conn, fe_oauth_state *state)
 	}
 	else if (res < 0)
 	{
-		libpq_append_conn_error(conn, "user-defined OAuth flow failed");
+		report_user_flow_error(conn, &request);
 		goto fail;
 	}
 	else if (!use_builtin_flow(conn, state))
@@ -1050,8 +1083,8 @@ setup_token_request(PGconn *conn, fe_oauth_state *state)
 	return true;
 
 fail:
-	if (request.cleanup)
-		request.cleanup(conn, &request);
+	if (request.v1.cleanup)
+		request.v1.cleanup(conn, (PGoauthBearerRequest *) &request);
 	return false;
 }
 

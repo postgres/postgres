@@ -10362,6 +10362,7 @@ PQauthDataHook_type PQgetAuthDataHook(void);
         <indexterm><primary>PQAUTHDATA_PROMPT_OAUTH_DEVICE</primary></indexterm>
        </term>
        <listitem>
+        <para><emphasis>Available in PostgreSQL 18 and later.</emphasis></para>
         <para>
          Replaces the default user prompt during the builtin device
          authorization client flow. <replaceable>data</replaceable> points to
@@ -10414,6 +10415,7 @@ typedef struct _PGpromptOAuthDevice
         <indexterm><primary>PQAUTHDATA_OAUTH_BEARER_TOKEN</primary></indexterm>
        </term>
        <listitem>
+        <para><emphasis>Available in PostgreSQL 18 and later.</emphasis></para>
         <para>
          Adds a custom implementation of a flow, replacing the builtin flow if
          it is <link linkend="configure-option-with-libcurl">installed</link>.
@@ -10421,6 +10423,13 @@ typedef struct _PGpromptOAuthDevice
          user/issuer/scope combination, if one is available without blocking, or
          else set up an asynchronous callback to retrieve one.
         </para>
+        <note>
+         <para>
+          For <productname>PostgreSQL</productname> releases 19 and later,
+          applications should prefer
+          <link linkend="libpq-oauth-authdata-oauth-bearer-token-v2"><literal>PQAUTHDATA_OAUTH_BEARER_TOKEN_V2</literal></link>.
+         </para>
+        </note>
         <para>
          <replaceable>data</replaceable> points to an instance
          of <symbol>PGoauthBearerRequest</symbol>, which should be filled in
@@ -10516,6 +10525,81 @@ typedef struct PGoauthBearerRequest
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry id="libpq-oauth-authdata-oauth-bearer-token-v2">
+       <term>
+        <symbol>PQAUTHDATA_OAUTH_BEARER_TOKEN_V2</symbol>
+        <indexterm>
+         <primary>PQAUTHDATA_OAUTH_BEARER_TOKEN_V2</primary>
+         <secondary>PQAUTHDATA_OAUTH_BEARER_TOKEN</secondary>
+        </indexterm>
+       </term>
+       <listitem>
+        <para><emphasis>Available in PostgreSQL 19 and later.</emphasis></para>
+        <para>
+         Provides all the functionality of
+         <link linkend="libpq-oauth-authdata-oauth-bearer-token"><literal>PQAUTHDATA_OAUTH_BEARER_TOKEN</literal></link>,
+         as well as the ability to set custom error messages and retrieve the
+         OAuth issuer ID that the client has trusted.
+        </para>
+        <para>
+         <replaceable>data</replaceable> points to an instance
+         of <symbol>PGoauthBearerRequestV2</symbol>:
+<synopsis>
+typedef struct
+{
+    PGoauthBearerRequest v1;    /* see the PGoauthBearerRequest struct, above */
+
+    /* Hook inputs (constant across all calls) */
+    const char *issuer;            /* the issuer identifier (RFC 9207) in use */
+
+    /* Hook outputs */
+    const char *error;             /* hook-defined error message */
+} PGoauthBearerRequestV2;
+</synopsis>
+        </para>
+        <para>
+         Applications must first use the <replaceable>v1</replaceable> struct
+         member to implement the base API, as described
+         <link linkend="libpq-oauth-authdata-oauth-bearer-token">above</link>.
+         <application>libpq</application> additionally guarantees that the
+         <literal>request</literal> pointer passed to the
+         <replaceable>v1.async</replaceable> and <replaceable>v1.cleanup</replaceable>
+         callbacks may be safely cast to <literal>(PGoauthBearerRequestV2&nbsp;*)</literal>,
+         to make use of the additional members described below.
+        </para>
+        <warning>
+         <para>
+          Casting to <literal>(PGoauthBearerRequestV2&nbsp;*)</literal> is
+          <emphasis>only</emphasis> safe when the hook type is
+          <literal>PQAUTHDATA_OAUTH_BEARER_TOKEN_V2</literal>. Applications may
+          crash or misbehave if a hook implementation attempts to access v2
+          members when handling a v1 (<literal>PQAUTHDATA_OAUTH_BEARER_TOKEN</literal>)
+          hook request.
+         </para>
+        </warning>
+        <para>
+         In addition to the functionality of the version 1 API, the v2 struct
+         provides an additional input and output for the hook:
+        </para>
+        <para>
+         <replaceable>issuer</replaceable> contains the issuer identifier, as
+         defined in <ulink url="https://datatracker.ietf.org/doc/html/rfc9207">RFC 9207</ulink>,
+         that is in use for the current connection. This identifier is
+         derived from <xref linkend="libpq-connect-oauth-issuer"/>.
+         To avoid mix-up attacks, custom flows should ensure that any discovery
+         metadata provided by the authorization server matches this issuer ID.
+        </para>
+        <para>
+         <replaceable>error</replaceable> may be set to point to a custom
+         error message when a flow fails. The message will be included as part
+         of <xref linkend="libpq-PQerrorMessage"/>. Hooks must free any error
+         message allocations during the <replaceable>v1.cleanup</replaceable>
+         callback.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
     </para>
    </sect3>

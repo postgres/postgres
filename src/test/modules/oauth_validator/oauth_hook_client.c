@@ -36,13 +36,16 @@ usage(char *argv[])
 
 	printf("recognized flags:\n");
 	printf("  -h, --help              show this message\n");
+	printf("  -v VERSION              select the hook API version (default 2)\n");
 	printf("  --expected-scope SCOPE  fail if received scopes do not match SCOPE\n");
 	printf("  --expected-uri URI      fail if received configuration link does not match URI\n");
+	printf("  --expected-issuer ISS   fail if received issuer does not match ISS (v2 only)\n");
 	printf("  --misbehave=MODE        have the hook fail required postconditions\n"
 		   "                          (MODEs: no-hook, fail-async, no-token, no-socket)\n");
 	printf("  --no-hook               don't install OAuth hooks\n");
 	printf("  --hang-forever          don't ever return a token (combine with connect_timeout)\n");
 	printf("  --token TOKEN           use the provided TOKEN value\n");
+	printf("  --error ERRMSG          fail instead, with the given ERRMSG (v2 only)\n");
 	printf("  --stress-async          busy-loop on PQconnectPoll rather than polling\n");
 }
 
@@ -51,9 +54,12 @@ static bool no_hook = false;
 static bool hang_forever = false;
 static bool stress_async = false;
 static const char *expected_uri = NULL;
+static const char *expected_issuer = NULL;
 static const char *expected_scope = NULL;
 static const char *misbehave_mode = NULL;
 static char *token = NULL;
+static char *errmsg = NULL;
+static int	hook_version = PQAUTHDATA_OAUTH_BEARER_TOKEN_V2;
 
 int
 main(int argc, char *argv[])
@@ -68,6 +74,8 @@ main(int argc, char *argv[])
 		{"hang-forever", no_argument, NULL, 1004},
 		{"misbehave", required_argument, NULL, 1005},
 		{"stress-async", no_argument, NULL, 1006},
+		{"expected-issuer", required_argument, NULL, 1007},
+		{"error", required_argument, NULL, 1008},
 		{0}
 	};
 
@@ -75,13 +83,25 @@ main(int argc, char *argv[])
 	PGconn	   *conn;
 	int			c;
 
-	while ((c = getopt_long(argc, argv, "h", long_options, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "hv:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
 			case 'h':
 				usage(argv);
 				return 0;
+
+			case 'v':
+				if (strcmp(optarg, "1") == 0)
+					hook_version = PQAUTHDATA_OAUTH_BEARER_TOKEN;
+				else if (strcmp(optarg, "2") == 0)
+					hook_version = PQAUTHDATA_OAUTH_BEARER_TOKEN_V2;
+				else
+				{
+					usage(argv);
+					return 1;
+				}
+				break;
 
 			case 1000:			/* --expected-scope */
 				expected_scope = optarg;
@@ -109,6 +129,14 @@ main(int argc, char *argv[])
 
 			case 1006:			/* --stress-async */
 				stress_async = true;
+				break;
+
+			case 1007:			/* --expected-issuer */
+				expected_issuer = optarg;
+				break;
+
+			case 1008:			/* --error */
+				errmsg = optarg;
 				break;
 
 			default:
@@ -167,15 +195,23 @@ main(int argc, char *argv[])
 
 /*
  * PQauthDataHook implementation. Replaces the default client flow by handling
- * PQAUTHDATA_OAUTH_BEARER_TOKEN.
+ * PQAUTHDATA_OAUTH_BEARER_TOKEN[_V2].
  */
 static int
 handle_auth_data(PGauthData type, PGconn *conn, void *data)
 {
-	PGoauthBearerRequest *req = data;
+	PGoauthBearerRequest *req;
+	PGoauthBearerRequestV2 *req2 = NULL;
 
-	if (no_hook || (type != PQAUTHDATA_OAUTH_BEARER_TOKEN))
+	Assert(hook_version == PQAUTHDATA_OAUTH_BEARER_TOKEN ||
+		   hook_version == PQAUTHDATA_OAUTH_BEARER_TOKEN_V2);
+
+	if (no_hook || type != hook_version)
 		return 0;
+
+	req = data;
+	if (type == PQAUTHDATA_OAUTH_BEARER_TOKEN_V2)
+		req2 = data;
 
 	if (hang_forever)
 	{
@@ -219,6 +255,44 @@ handle_auth_data(PGauthData type, PGconn *conn, void *data)
 			fprintf(stderr, "expected scope \"%s\", got \"%s\"\n", expected_scope, req->scope);
 			return -1;
 		}
+	}
+
+	if (expected_issuer)
+	{
+		if (!req2)
+		{
+			fprintf(stderr, "--expected-issuer cannot be combined with -v1\n");
+			return -1;
+		}
+
+		if (!req2->issuer)
+		{
+			fprintf(stderr, "expected issuer \"%s\", got NULL\n", expected_issuer);
+			return -1;
+		}
+
+		if (strcmp(expected_issuer, req2->issuer) != 0)
+		{
+			fprintf(stderr, "expected issuer \"%s\", got \"%s\"\n", expected_issuer, req2->issuer);
+			return -1;
+		}
+	}
+
+	if (errmsg)
+	{
+		if (token)
+		{
+			fprintf(stderr, "--error cannot be combined with --token\n");
+			return -1;
+		}
+		else if (!req2)
+		{
+			fprintf(stderr, "--error cannot be combined with -v1\n");
+			return -1;
+		}
+
+		req2->error = errmsg;
+		return -1;
 	}
 
 	req->token = token;
@@ -273,6 +347,20 @@ misbehave_cb(PGconn *conn, PGoauthBearerRequest *req, pgsocket *altsock)
 	if (strcmp(misbehave_mode, "fail-async") == 0)
 	{
 		/* Just fail "normally". */
+		if (errmsg)
+		{
+			PGoauthBearerRequestV2 *req2;
+
+			if (hook_version == PQAUTHDATA_OAUTH_BEARER_TOKEN)
+			{
+				fprintf(stderr, "--error cannot be combined with -v1\n");
+				exit(1);
+			}
+
+			req2 = (PGoauthBearerRequestV2 *) req;
+			req2->error = errmsg;
+		}
+
 		return PGRES_POLLING_FAILED;
 	}
 	else if (strcmp(misbehave_mode, "no-token") == 0)

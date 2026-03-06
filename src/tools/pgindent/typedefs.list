@@ -1926,6 +1926,7 @@ PGdataValue
 PGlobjfuncs
 PGnotify
 PGoauthBearerRequest
+PGoauthBearerRequestV2
 PGpipelineStatus
 PGpromptOAuthDevice
 PGresAttDesc

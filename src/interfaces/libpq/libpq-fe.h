@@ -66,6 +66,8 @@ extern "C"
 /* Features added in PostgreSQL v19: */
 /* Indicates presence of PQgetThreadLock */
 #define LIBPQ_HAS_GET_THREAD_LOCK 1
+/* Indicates presence of the PQAUTHDATA_OAUTH_BEARER_TOKEN_V2 authdata hook */
+#define LIBPQ_HAS_OAUTH_BEARER_TOKEN_V2 1
 
 /*
  * Option flags for PQcopyResult
@@ -197,7 +199,9 @@ typedef enum
 {
 	PQAUTHDATA_PROMPT_OAUTH_DEVICE, /* user must visit a device-authorization
 									 * URL */
-	PQAUTHDATA_OAUTH_BEARER_TOKEN,	/* server requests an OAuth Bearer token */
+	PQAUTHDATA_OAUTH_BEARER_TOKEN,	/* server requests an OAuth Bearer token
+									 * (v2 is preferred; see below) */
+	PQAUTHDATA_OAUTH_BEARER_TOKEN_V2,	/* newest API for OAuth Bearer tokens */
 } PGauthData;
 
 /* PGconn encapsulates a connection to the backend.
@@ -735,6 +739,7 @@ extern int	PQenv2encoding(void);
 
 /* === in fe-auth.c === */
 
+/* Authdata for PQAUTHDATA_PROMPT_OAUTH_DEVICE */
 typedef struct _PGpromptOAuthDevice
 {
 	const char *verification_uri;	/* verification URI to visit */
@@ -755,6 +760,7 @@ typedef struct _PGpromptOAuthDevice
 #define PQ_SOCKTYPE int
 #endif
 
+/* Authdata for PQAUTHDATA_OAUTH_BEARER_TOKEN */
 typedef struct PGoauthBearerRequest
 {
 	/* Hook inputs (constant across all calls) */
@@ -788,7 +794,8 @@ typedef struct PGoauthBearerRequest
 
 	/*
 	 * Callback to clean up custom allocations. A hook implementation may use
-	 * this to free request->token and any resources in request->user.
+	 * this to free request->token and any resources in request->user. V2
+	 * implementations should additionally free request->error, if set.
 	 *
 	 * This is technically optional, but highly recommended, because there is
 	 * no other indication as to when it is safe to free the token.
@@ -812,6 +819,26 @@ typedef struct PGoauthBearerRequest
 } PGoauthBearerRequest;
 
 #undef PQ_SOCKTYPE
+
+/* Authdata for PQAUTHDATA_OAUTH_BEARER_TOKEN_V2 */
+typedef struct
+{
+	PGoauthBearerRequest v1;	/* see the PGoauthBearerRequest struct, above */
+
+	/* Hook inputs (constant across all calls) */
+	const char *issuer;			/* the issuer identifier (RFC 9207) in use, as
+								 * derived from the connection's oauth_issuer */
+
+	/* Hook outputs */
+
+	/*
+	 * Hook-defined error message which will be included in the connection's
+	 * PQerrorMessage() output when the flow fails. libpq does not take
+	 * ownership of this pointer; any allocations should be freed during the
+	 * cleanup callback.
+	 */
+	const char *error;
+} PGoauthBearerRequestV2;
 
 extern char *PQencryptPassword(const char *passwd, const char *user);
 extern char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, const char *algorithm);
