@@ -240,8 +240,38 @@ command_fails_like(
 # also fails for -r and -t, but it seems pointless to add more tests for those.
 command_fails_like(
 	[ 'pg_dumpall', '--exclude-database=foo', '--globals-only' ],
-	qr/\Qpg_dumpall: error: option --exclude-database cannot be used together with -g\/--globals-only\E/,
-	'pg_dumpall: option --exclude-database cannot be used together with -g/--globals-only'
+	qr/\Qpg_dumpall: error: options --exclude-database and -g\/--globals-only cannot be used together\E/,
+	'pg_dumpall: options --exclude-database and -g/--globals-only cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dumpall', '-a', '--no-data' ],
+	qr/\Qpg_dumpall: error: options -a\/--data-only and --no-data cannot be used together\E/,
+	'pg_dumpall: options -a\/--data-only and --no-data cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dumpall', '-s', '--no-schema' ],
+	qr/\Qpg_dumpall: error: options -s\/--schema-only and --no-schema cannot be used together\E/,
+	'pg_dumpall: options -s\/--schema-only and --no-schema cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dumpall', '--statistics-only', '--no-statistics' ],
+	qr/\Qpg_dumpall: error: options --statistics-only and --no-statistics cannot be used together\E/,
+	'pg_dumpall: options --statistics-only and --no-statistics cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dumpall', '--statistics', '--no-statistics' ],
+	qr/\Qpg_dumpall: error: options --statistics and --no-statistics cannot be used together\E/,
+	'pg_dumpall: options --statistics-only and --no-statistics cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dumpall', '--statistics', '--tablespaces-only' ],
+	qr/\Qpg_dumpall: error: options --statistics and -t\/--tablespaces-only cannot be used together\E/,
+	'pg_dumpall: options --statistics and -t\/--tablespaces-only cannot be used together'
 );
 
 command_fails_like(

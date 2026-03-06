@@ -109,3 +109,38 @@ parse_sync_method(const char *optarg, DataDirSyncMethod *sync_method)
 
 	return true;
 }
+
+/*
+ * Fail with appropriate error if 2 or more of the specified options are set.
+ * The first parameter is the number of arguments.  Following that is an
+ * arbitrary number of bool/string pairs.  The bool indicates whether the
+ * option is set, and the string is used for the error message.  Note that only
+ * the first pair of enabled options we find are reported.
+ *
+ * Don't call this directly.  Use the check_mut_excl_opts() macro in
+ * option_utils.h, which is the exact same except it doesn't take the first
+ * parameter (it discovers the number of arguments automagically).
+ */
+void
+check_mut_excl_opts_internal(int n,...)
+{
+	char	   *first = NULL;
+	va_list		args;
+
+	Assert(n % 2 == 0);
+
+	va_start(args, n);
+	for (int i = 0; i < n; i += 2)
+	{
+		bool		set = va_arg(args, int);
+		char	   *opt = va_arg(args, char *);
+
+		if (set && first)
+			pg_fatal("options %s and %s cannot be used together",
+					 first, opt);
+
+		if (set)
+			first = opt;
+	}
+	va_end(args);
+}
