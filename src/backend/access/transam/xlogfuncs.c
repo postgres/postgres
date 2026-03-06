@@ -842,14 +842,13 @@ pg_stat_get_recovery(PG_FUNCTION_ARGS)
 	else
 		nulls[5] = true;
 
-	if (current_chunk_start_time != 0)
-		values[6] = TimestampTzGetDatum(current_chunk_start_time);
+	if (recovery_last_xact_time != 0)
+		values[6] = TimestampTzGetDatum(recovery_last_xact_time);
 	else
 		nulls[6] = true;
 
-	/* recovery_last_xact_time */
-	if (recovery_last_xact_time != 0)
-		values[7] = TimestampTzGetDatum(recovery_last_xact_time);
+	if (current_chunk_start_time != 0)
+		values[7] = TimestampTzGetDatum(current_chunk_start_time);
 	else
 		nulls[7] = true;
 
