@@ -236,7 +236,7 @@ def main(args):
     charactersSet = set()
 
     # read file UnicodeData.txt
-    with codecs.open(
+    with open(
       args.unicodeDataFilePath, mode='r', encoding='UTF-8',
       ) as unicodeDataFile:
         # read everything we need into memory
