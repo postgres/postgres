@@ -1451,8 +1451,8 @@ WalSndWaitForWal(XLogRecPtr loc)
 		 * otherwise we'd possibly end up waiting for WAL that never gets
 		 * written, because walwriter has shut down already.
 		 */
-		if (got_STOPPING)
-			XLogBackgroundFlush();
+		if (got_STOPPING && !RecoveryInProgress())
+			XLogFlush(GetXLogInsertRecPtr());
 
 		/* Update our idea of the currently flushed position. */
 		if (!RecoveryInProgress())
