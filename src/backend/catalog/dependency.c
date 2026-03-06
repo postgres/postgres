@@ -896,6 +896,17 @@ findDependentObjects(const ObjectAddress *object,
 			continue;
 
 		/*
+		 * Check that the dependent object is not in a shared catalog, which
+		 * is not supported by doDeletion().
+		 */
+		if (IsSharedRelation(otherObject.classId))
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("cannot drop %s because %s depends on it",
+							getObjectDescription(object, false),
+							getObjectDescription(&otherObject, false))));
+
+		/*
 		 * Must lock the dependent object before recursing to it.
 		 */
 		AcquireDeletionLock(&otherObject, 0);

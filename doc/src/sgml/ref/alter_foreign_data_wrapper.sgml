@@ -24,6 +24,7 @@ PostgreSQL documentation
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
     [ HANDLER <replaceable class="parameter">handler_function</replaceable> | NO HANDLER ]
     [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
+    [ CONNECTION <replaceable class="parameter">connection_function</replaceable> | NO CONNECTION ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ]) ]
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
@@ -108,6 +109,25 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> REN
      <para>
       This is used to specify that the foreign-data wrapper should no
       longer have a validator function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONNECTION <replaceable class="parameter">connection_function</replaceable></literal></term>
+    <listitem>
+     <para>
+      Specifies a new connection function for the foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NO CONNECTION</literal></term>
+    <listitem>
+     <para>
+      This is used to specify that the foreign-data wrapper should no
+      longer have a connection function.
      </para>
     </listitem>
    </varlistentry>

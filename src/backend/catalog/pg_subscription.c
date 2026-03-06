@@ -19,11 +19,14 @@
 #include "access/htup_details.h"
 #include "access/tableam.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_type.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -69,7 +72,7 @@ GetPublicationsStr(List *publications, StringInfo dest, bool quote_literal)
  * Fetch the subscription from the syscache.
  */
 Subscription *
-GetSubscription(Oid subid, bool missing_ok)
+GetSubscription(Oid subid, bool missing_ok, bool aclcheck)
 {
 	HeapTuple	tup;
 	Subscription *sub;
@@ -108,10 +111,35 @@ GetSubscription(Oid subid, bool missing_ok)
 	sub->retentionactive = subform->subretentionactive;
 
 	/* Get conninfo */
-	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID,
-								   tup,
-								   Anum_pg_subscription_subconninfo);
-	sub->conninfo = TextDatumGetCString(datum);
+	if (OidIsValid(subform->subserver))
+	{
+		AclResult	aclresult;
+
+		/* recheck ACL if requested */
+		if (aclcheck)
+		{
+			aclresult = object_aclcheck(ForeignServerRelationId,
+										subform->subserver,
+										subform->subowner, ACL_USAGE);
+
+			if (aclresult != ACLCHECK_OK)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
+								GetUserNameFromId(subform->subowner, false),
+								ForeignServerName(subform->subserver))));
+		}
+
+		sub->conninfo = ForeignServerConnectionString(subform->subowner,
+													  subform->subserver);
+	}
+	else
+	{
+		datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID,
+									   tup,
+									   Anum_pg_subscription_subconninfo);
+		sub->conninfo = TextDatumGetCString(datum);
+	}
 
 	/* Get slotname */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID,

@@ -2,6 +2,17 @@
 -- SUBSCRIPTION
 --
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION test_fdw_connection(oid, oid, internal)
+    RETURNS text
+    AS :'regresslib', 'test_fdw_connection'
+    LANGUAGE C;
+
 CREATE ROLE regress_subscription_user LOGIN SUPERUSER;
 CREATE ROLE regress_subscription_user2;
 CREATE ROLE regress_subscription_user3 IN ROLE pg_create_subscription;
@@ -84,6 +95,50 @@ CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'i_dont_exist=param' PUBLICATION
 -- fail, connection string parses, but doesn't work (and does so without
 -- connecting, so this is reliable and safe)
 CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'port=-1' PUBLICATION testpub;
+
+CREATE FOREIGN DATA WRAPPER test_fdw;
+CREATE SERVER test_server FOREIGN DATA WRAPPER test_fdw;
+
+GRANT CREATE ON DATABASE REGRESSION TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
+-- fail, need USAGE privileges on server
+CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = NONE, connect = false);
+
+RESET SESSION AUTHORIZATION;
+GRANT USAGE ON FOREIGN SERVER test_server TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
+-- fail, need user mapping
+CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = NONE, connect = false);
+
+CREATE USER MAPPING FOR regress_subscription_user3 SERVER test_server OPTIONS(user 'foo', password 'secret');
+
+-- fail, need CONNECTION clause
+CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = NONE, connect = false);
+
+RESET SESSION AUTHORIZATION;
+ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
+CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = 'dummy', connect = false);
+
+DROP USER MAPPING FOR regress_subscription_user3 SERVER test_server;
+RESET SESSION AUTHORIZATION;
+REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
+-- fail, must connect but lacks USAGE on server, as well as user mapping
+DROP SUBSCRIPTION regress_testsub6;
+
+ALTER SUBSCRIPTION regress_testsub6 SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_testsub6;
+
+SET SESSION AUTHORIZATION regress_subscription_user;
+REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
+
+DROP SERVER test_server;
+DROP FOREIGN DATA WRAPPER test_fdw;
 
 -- fail - invalid connection string during ALTER
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';

@@ -2332,7 +2332,7 @@ match_previous_words(int pattern_id,
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny))
 		COMPLETE_WITH("CONNECTION", "ENABLE", "DISABLE", "OWNER TO",
 					  "RENAME TO", "REFRESH PUBLICATION", "REFRESH SEQUENCES",
-					  "SET", "SKIP (", "ADD PUBLICATION", "DROP PUBLICATION");
+					  "SERVER", "SET", "SKIP (", "ADD PUBLICATION", "DROP PUBLICATION");
 	/* ALTER SUBSCRIPTION <name> REFRESH */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "REFRESH"))
 		COMPLETE_WITH("PUBLICATION", "SEQUENCES");
@@ -3870,9 +3870,16 @@ match_previous_words(int pattern_id,
 
 /* CREATE SUBSCRIPTION */
 	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny))
-		COMPLETE_WITH("CONNECTION");
+		COMPLETE_WITH("SERVER", "CONNECTION");
+	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "SERVER", MatchAny))
+		COMPLETE_WITH("PUBLICATION");
 	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "CONNECTION", MatchAny))
 		COMPLETE_WITH("PUBLICATION");
+	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "SERVER",
+					 MatchAny, "PUBLICATION"))
+	{
+		/* complete with nothing here as this refers to remote publications */
+	}
 	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "CONNECTION",
 					 MatchAny, "PUBLICATION"))
 	{

@@ -43,6 +43,13 @@ CREATE SERVER [ IF NOT EXISTS ] <replaceable class="parameter">server_name</repl
   </para>
 
   <para>
+   If the foreign data wrapper <replaceable>fdw_name</replaceable> is
+   specified with a <literal>CONNECTION</literal> clause, then <xref
+   linkend="sql-createsubscription"/> may use this foreign server for
+   connection information.
+  </para>
+
+  <para>
    The server name must be unique within the database.
   </para>
 

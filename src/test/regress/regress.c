@@ -729,6 +729,13 @@ test_fdw_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+PG_FUNCTION_INFO_V1(test_fdw_connection);
+Datum
+test_fdw_connection(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P(cstring_to_text("dbname=regress_doesnotexist user=doesnotexist password=secret"));
+}
+
 PG_FUNCTION_INFO_V1(is_catalog_text_unique_index_oid);
 Datum
 is_catalog_text_unique_index_oid(PG_FUNCTION_ARGS)

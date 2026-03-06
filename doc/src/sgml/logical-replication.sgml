@@ -2577,7 +2577,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <para>
    To create a subscription, the user must have the privileges of
    the <literal>pg_create_subscription</literal> role, as well as
-   <literal>CREATE</literal> privileges on the database.
+   <literal>CREATE</literal> privileges on the database.  If
+   <literal>SERVER</literal> is specified, the user also must have
+   <literal>USAGE</literal> privileges on the server.
   </para>
 
   <para>

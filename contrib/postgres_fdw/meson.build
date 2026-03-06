@@ -27,6 +27,7 @@ install_data(
   'postgres_fdw--1.0.sql',
   'postgres_fdw--1.0--1.1.sql',
   'postgres_fdw--1.1--1.2.sql',
+  'postgres_fdw--1.2--1.3.sql',
   kwargs: contrib_data_args,
 )
 
@@ -50,6 +51,7 @@ tests += {
   'tap': {
     'tests': [
       't/001_auth_scram.pl',
+      't/010_subscription.pl',
     ],
   },
 }

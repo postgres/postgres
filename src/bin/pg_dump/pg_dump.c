@@ -5182,6 +5182,7 @@ getSubscriptions(Archive *fout)
 	int			i_subdisableonerr;
 	int			i_subpasswordrequired;
 	int			i_subrunasowner;
+	int			i_subservername;
 	int			i_subconninfo;
 	int			i_subslotname;
 	int			i_subsynccommit;
@@ -5286,13 +5287,23 @@ getSubscriptions(Archive *fout)
 
 	if (fout->remoteVersion >= 190000)
 		appendPQExpBufferStr(query,
-							 " s.subwalrcvtimeout\n");
+							 " s.subwalrcvtimeout,\n");
 	else
 		appendPQExpBufferStr(query,
-							 " '-1' AS subwalrcvtimeout\n");
+							 " '-1' AS subwalrcvtimeout,\n");
+
+	if (fout->remoteVersion >= 190000)
+		appendPQExpBufferStr(query, " fs.srvname AS subservername\n");
+	else
+		appendPQExpBufferStr(query, " NULL AS subservername\n");
 
 	appendPQExpBufferStr(query,
 						 "FROM pg_subscription s\n");
+
+	if (fout->remoteVersion >= 190000)
+		appendPQExpBufferStr(query,
+							 "LEFT JOIN pg_catalog.pg_foreign_server fs \n"
+							 "    ON fs.oid = s.subserver \n");
 
 	if (dopt->binary_upgrade && fout->remoteVersion >= 170000)
 		appendPQExpBufferStr(query,
@@ -5325,6 +5336,7 @@ getSubscriptions(Archive *fout)
 	i_subfailover = PQfnumber(res, "subfailover");
 	i_subretaindeadtuples = PQfnumber(res, "subretaindeadtuples");
 	i_submaxretention = PQfnumber(res, "submaxretention");
+	i_subservername = PQfnumber(res, "subservername");
 	i_subconninfo = PQfnumber(res, "subconninfo");
 	i_subslotname = PQfnumber(res, "subslotname");
 	i_subsynccommit = PQfnumber(res, "subsynccommit");
@@ -5347,6 +5359,10 @@ getSubscriptions(Archive *fout)
 
 		subinfo[i].subenabled =
 			(strcmp(PQgetvalue(res, i, i_subenabled), "t") == 0);
+		if (PQgetisnull(res, i, i_subservername))
+			subinfo[i].subservername = NULL;
+		else
+			subinfo[i].subservername = pg_strdup(PQgetvalue(res, i, i_subservername));
 		subinfo[i].subbinary =
 			(strcmp(PQgetvalue(res, i, i_subbinary), "t") == 0);
 		subinfo[i].substream = *(PQgetvalue(res, i, i_substream));
@@ -5363,8 +5379,11 @@ getSubscriptions(Archive *fout)
 			(strcmp(PQgetvalue(res, i, i_subretaindeadtuples), "t") == 0);
 		subinfo[i].submaxretention =
 			atoi(PQgetvalue(res, i, i_submaxretention));
-		subinfo[i].subconninfo =
-			pg_strdup(PQgetvalue(res, i, i_subconninfo));
+		if (PQgetisnull(res, i, i_subconninfo))
+			subinfo[i].subconninfo = NULL;
+		else
+			subinfo[i].subconninfo =
+				pg_strdup(PQgetvalue(res, i, i_subconninfo));
 		if (PQgetisnull(res, i, i_subslotname))
 			subinfo[i].subslotname = NULL;
 		else
@@ -5575,9 +5594,17 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 	appendPQExpBuffer(delq, "DROP SUBSCRIPTION %s;\n",
 					  qsubname);
 
-	appendPQExpBuffer(query, "CREATE SUBSCRIPTION %s CONNECTION ",
+	appendPQExpBuffer(query, "CREATE SUBSCRIPTION %s ",
 					  qsubname);
-	appendStringLiteralAH(query, subinfo->subconninfo, fout);
+	if (subinfo->subservername)
+	{
+		appendPQExpBuffer(query, "SERVER %s", fmtId(subinfo->subservername));
+	}
+	else
+	{
+		appendPQExpBuffer(query, "CONNECTION ");
+		appendStringLiteralAH(query, subinfo->subconninfo, fout);
+	}
 
 	/* Build list of quoted publications and append them to query. */
 	if (!parsePGArray(subinfo->subpublications, &pubnames, &npubnames))

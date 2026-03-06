@@ -24,6 +24,7 @@ PostgreSQL documentation
 CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
     [ HANDLER <replaceable class="parameter">handler_function</replaceable> | NO HANDLER ]
     [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
+    [ CONNECTION <replaceable class="parameter">connection_function</replaceable> | NO CONNECTION ]
     [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -95,6 +96,25 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
       system catalog containing the options. The return type is ignored;
       the function should report invalid options using the
       <function>ereport(ERROR)</function> function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONNECTION <replaceable class="parameter">connection_function</replaceable></literal></term>
+    <listitem>
+     <para>
+      <replaceable class="parameter">connection_function</replaceable> is the
+      name of a previously registered function that will be called to generate
+      the postgres connection string when a foreign server is used as part of
+      <xref linkend="sql-createsubscription"/>.  If no connection function or
+      <literal>NO CONNECTION</literal> is specified, then servers using this
+      foreign data wrapper cannot be used for <literal>CREATE
+      SUBSCRIPTION</literal>.  The connection function must take three
+      arguments: one of type <type>oid</type> for the user, one of type
+      <type>oid</type> for the server, and an unused third argument of type
+      <type>internal</type> (which prevents calling the function in other
+      contexts).
      </para>
     </listitem>
    </varlistentry>

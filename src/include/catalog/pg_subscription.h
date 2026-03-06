@@ -92,9 +92,12 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 									 * exceeded max_retention_duration, when
 									 * defined */
 
+	Oid			subserver BKI_LOOKUP_OPT(pg_foreign_server);	/* If connection uses
+																 * server */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
-	text		subconninfo BKI_FORCE_NOT_NULL;
+	text		subconninfo;	/* Set if connecting with connection string */
 
 	/* Slot name on publisher */
 	NameData	subslotname BKI_FORCE_NULL;
@@ -207,7 +210,8 @@ typedef struct Subscription
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
-extern Subscription *GetSubscription(Oid subid, bool missing_ok);
+extern Subscription *GetSubscription(Oid subid, bool missing_ok,
+									 bool aclcheck);
 extern void FreeSubscription(Subscription *sub);
 extern void DisableSubscription(Oid subid);
 

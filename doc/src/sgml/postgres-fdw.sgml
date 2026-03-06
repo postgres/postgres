@@ -1049,6 +1049,32 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
  </sect2>
 
+ <sect2 id="postgres-fdw-server-subscription">
+  <title>Subscription Management</title>
+
+  <para>
+   <filename>postgres_fdw</filename> supports subscription connections using
+   the same options described in <xref
+   linkend="postgres-fdw-options-connection"/>.
+  </para>
+
+  <para>
+   For example, assuming the remote server <literal>foreign-host</literal> has
+   a publication <literal>testpub</literal>:
+<programlisting>
+CREATE SERVER subscription_server FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'foreign-host', dbname 'foreign_db');
+CREATE USER MAPPING FOR local_user SERVER subscription_server OPTIONS (user 'foreign_user', password 'password');
+CREATE SUBSCRIPTION my_subscription SERVER subscription_server PUBLICATION testpub;
+</programlisting>
+  </para>
+
+  <para>
+   To create a subscription, the user must be a member of the <xref
+   linkend="predefined-role-pg-create-subscription"/> role and have
+   <literal>USAGE</literal> privileges on the server.
+  </para>
+ </sect2>
+
  <sect2 id="postgres-fdw-transaction-management">
   <title>Transaction Management</title>
 

@@ -38,6 +38,9 @@ CATALOG(pg_foreign_data_wrapper,2328,ForeignDataWrapperRelationId)
 	Oid			fdwvalidator BKI_LOOKUP_OPT(pg_proc);	/* option validation
 														 * function, or 0 if
 														 * none */
+	Oid			fdwconnection BKI_LOOKUP_OPT(pg_proc);	/* connection string
+														 * function, or 0 if
+														 * none */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		fdwacl[1];		/* access permissions */

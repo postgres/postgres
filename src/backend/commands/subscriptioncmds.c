@@ -27,13 +27,16 @@
 #include "catalog/objectaddress.h"
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_database_d.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/subscriptioncmds.h"
 #include "executor/executor.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pgstat.h"
@@ -619,6 +622,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	Datum		values[Natts_pg_subscription];
 	Oid			owner = GetUserId();
 	HeapTuple	tup;
+	Oid			serverid;
 	char	   *conninfo;
 	char		originname[NAMEDATALEN];
 	List	   *publications;
@@ -730,14 +734,39 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	if (opts.wal_receiver_timeout == NULL)
 		opts.wal_receiver_timeout = "-1";
 
-	conninfo = stmt->conninfo;
-	publications = stmt->publication;
-
 	/* Load the library providing us libpq calls. */
 	load_file("libpqwalreceiver", false);
 
+	if (stmt->servername)
+	{
+		ForeignServer *server;
+
+		Assert(!stmt->conninfo);
+		conninfo = NULL;
+
+		server = GetForeignServerByName(stmt->servername, false);
+		aclresult = object_aclcheck(ForeignServerRelationId, server->serverid, owner, ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
+
+		/* make sure a user mapping exists */
+		GetUserMapping(owner, server->serverid);
+
+		serverid = server->serverid;
+		conninfo = ForeignServerConnectionString(owner, serverid);
+	}
+	else
+	{
+		Assert(stmt->conninfo);
+
+		serverid = InvalidOid;
+		conninfo = stmt->conninfo;
+	}
+
 	/* Check the connection info string. */
 	walrcv_check_conninfo(conninfo, opts.passwordrequired && !superuser());
+
+	publications = stmt->publication;
 
 	/* Everything ok, form a new tuple. */
 	memset(values, 0, sizeof(values));
@@ -768,8 +797,12 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		Int32GetDatum(opts.maxretention);
 	values[Anum_pg_subscription_subretentionactive - 1] =
 		Int32GetDatum(opts.retaindeadtuples);
-	values[Anum_pg_subscription_subconninfo - 1] =
-		CStringGetTextDatum(conninfo);
+	values[Anum_pg_subscription_subserver - 1] = serverid;
+	if (!OidIsValid(serverid))
+		values[Anum_pg_subscription_subconninfo - 1] =
+			CStringGetTextDatum(conninfo);
+	else
+		nulls[Anum_pg_subscription_subconninfo - 1] = true;
 	if (opts.slot_name)
 		values[Anum_pg_subscription_subslotname - 1] =
 			DirectFunctionCall1(namein, CStringGetDatum(opts.slot_name));
@@ -791,6 +824,18 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	heap_freetuple(tup);
 
 	recordDependencyOnOwner(SubscriptionRelationId, subid, owner);
+
+	ObjectAddressSet(myself, SubscriptionRelationId, subid);
+
+	if (stmt->servername)
+	{
+		ObjectAddress referenced;
+
+		Assert(OidIsValid(serverid));
+
+		ObjectAddressSet(referenced, ForeignServerRelationId, serverid);
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/*
 	 * A replication origin is currently created for all subscriptions,
@@ -944,8 +989,6 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	 */
 	if (opts.enabled || opts.retaindeadtuples)
 		ApplyLauncherWakeupAtCommit();
-
-	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 
 	InvokeObjectPostCreateHook(SubscriptionRelationId, subid, 0);
 
@@ -1410,7 +1453,14 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   stmt->subname);
 
-	sub = GetSubscription(subid, false);
+	/*
+	 * Skip ACL checks on the subscription's foreign server, if any. If
+	 * changing the server (or replacing it with a raw connection), then the
+	 * old one will be removed anyway. If changing something unrelated,
+	 * there's no need to do an additional ACL check here; that will be done
+	 * by the subscription worker anyway.
+	 */
+	sub = GetSubscription(subid, false, false);
 
 	retain_dead_tuples = sub->retaindeadtuples;
 	origin = sub->origin;
@@ -1434,6 +1484,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 	memset(replaces, false, sizeof(replaces));
+
+	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 
 	switch (stmt->kind)
 	{
@@ -1753,7 +1805,78 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				break;
 			}
 
+		case ALTER_SUBSCRIPTION_SERVER:
+			{
+				ForeignServer *new_server;
+				ObjectAddress referenced;
+				AclResult	aclresult;
+				char	   *conninfo;
+
+				/*
+				 * Remove what was there before, either another foreign server
+				 * or a connection string.
+				 */
+				if (form->subserver)
+				{
+					deleteDependencyRecordsForSpecific(SubscriptionRelationId, form->oid,
+													   DEPENDENCY_NORMAL,
+													   ForeignServerRelationId, form->subserver);
+				}
+				else
+				{
+					nulls[Anum_pg_subscription_subconninfo - 1] = true;
+					replaces[Anum_pg_subscription_subconninfo - 1] = true;
+				}
+
+				/*
+				 * Check that the subscription owner has USAGE privileges on
+				 * the server.
+				 */
+				new_server = GetForeignServerByName(stmt->servername, false);
+				aclresult = object_aclcheck(ForeignServerRelationId,
+											new_server->serverid,
+											form->subowner, ACL_USAGE);
+				if (aclresult != ACLCHECK_OK)
+					ereport(ERROR,
+							errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
+								   GetUserNameFromId(form->subowner, false),
+								   ForeignServerName(new_server->serverid)));
+
+				/* make sure a user mapping exists */
+				GetUserMapping(form->subowner, new_server->serverid);
+
+				conninfo = ForeignServerConnectionString(form->subowner,
+														 new_server->serverid);
+
+				/* Load the library providing us libpq calls. */
+				load_file("libpqwalreceiver", false);
+				/* Check the connection info string. */
+				walrcv_check_conninfo(conninfo,
+									  sub->passwordrequired && !sub->ownersuperuser);
+
+				values[Anum_pg_subscription_subserver - 1] = new_server->serverid;
+				replaces[Anum_pg_subscription_subserver - 1] = true;
+
+				ObjectAddressSet(referenced, ForeignServerRelationId, new_server->serverid);
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+				update_tuple = true;
+			}
+			break;
+
 		case ALTER_SUBSCRIPTION_CONNECTION:
+			/* remove reference to foreign server and dependencies, if present */
+			if (form->subserver)
+			{
+				deleteDependencyRecordsForSpecific(SubscriptionRelationId, form->oid,
+												   DEPENDENCY_NORMAL,
+												   ForeignServerRelationId, form->subserver);
+
+				values[Anum_pg_subscription_subserver - 1] = InvalidOid;
+				replaces[Anum_pg_subscription_subserver - 1] = true;
+			}
+
 			/* Load the library providing us libpq calls. */
 			load_file("libpqwalreceiver", false);
 			/* Check the connection info string. */
@@ -2038,8 +2161,6 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 	table_close(rel, RowExclusiveLock);
 
-	ObjectAddressSet(myself, SubscriptionRelationId, subid);
-
 	InvokeObjectPostAlterHook(SubscriptionRelationId, subid, 0);
 
 	/* Wake up related replication workers to handle this change quickly. */
@@ -2068,7 +2189,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	ListCell   *lc;
 	char		originname[NAMEDATALEN];
 	char	   *err = NULL;
-	WalReceiverConn *wrconn;
+	WalReceiverConn *wrconn = NULL;
 	Form_pg_subscription form;
 	List	   *rstates;
 	bool		must_use_password;
@@ -2126,9 +2247,35 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	subname = pstrdup(NameStr(*DatumGetName(datum)));
 
 	/* Get conninfo */
-	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
-								   Anum_pg_subscription_subconninfo);
-	conninfo = TextDatumGetCString(datum);
+	if (OidIsValid(form->subserver))
+	{
+		AclResult	aclresult;
+
+		aclresult = object_aclcheck(ForeignServerRelationId, form->subserver,
+									form->subowner, ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+		{
+			/*
+			 * Unable to generate connection string because permissions on the
+			 * foreign server have been removed. Follow the same logic as an
+			 * unusable subconninfo (which will result in an ERROR later
+			 * unless slot_name = NONE).
+			 */
+			err = psprintf(_("subscription owner \"%s\" does not have permission on foreign server \"%s\""),
+						   GetUserNameFromId(form->subowner, false),
+						   ForeignServerName(form->subserver));
+			conninfo = NULL;
+		}
+		else
+			conninfo = ForeignServerConnectionString(form->subowner,
+													 form->subserver);
+	}
+	else
+	{
+		datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
+									   Anum_pg_subscription_subconninfo);
+		conninfo = TextDatumGetCString(datum);
+	}
 
 	/* Get slotname */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
@@ -2227,6 +2374,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	}
 
 	/* Clean up dependencies */
+	deleteDependencyRecordsFor(SubscriptionRelationId, subid, false);
 	deleteSharedDependencyRecordsFor(SubscriptionRelationId, subid, 0);
 
 	/* Remove any associated relation synchronization states. */
@@ -2265,8 +2413,10 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 */
 	load_file("libpqwalreceiver", false);
 
-	wrconn = walrcv_connect(conninfo, true, true, must_use_password,
-							subname, &err);
+	if (conninfo)
+		wrconn = walrcv_connect(conninfo, true, true, must_use_password,
+								subname, &err);
+
 	if (wrconn == NULL)
 	{
 		if (!slotname)
@@ -2435,6 +2585,27 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
+
+	/*
+	 * If the subscription uses a server, check that the new owner has USAGE
+	 * privileges on the server and that a user mapping exists. Note: does not
+	 * re-check the resulting connection string.
+	 */
+	if (OidIsValid(form->subserver))
+	{
+		Oid			serverid = form->subserver;
+
+		aclresult = object_aclcheck(ForeignServerRelationId, serverid, newOwnerId, ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			ereport(ERROR,
+					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("new subscription owner \"%s\" does not have permission on foreign server \"%s\"",
+						   GetUserNameFromId(newOwnerId, false),
+						   ForeignServerName(serverid)));
+
+		/* make sure a user mapping exists */
+		GetUserMapping(newOwnerId, serverid);
+	}
 
 	form->subowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);

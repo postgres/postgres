@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceable>
-    CONNECTION '<replaceable class="parameter">conninfo</replaceable>'
+    { SERVER <replaceable class="parameter">servername</replaceable> | CONNECTION '<replaceable class="parameter">conninfo</replaceable>' }
     PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...]
     [ WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 </synopsis>
@@ -73,6 +73,20 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     <listitem>
      <para>
       The name of the new subscription.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-createsubscription-params-server">
+    <term><literal>SERVER <replaceable class="parameter">servername</replaceable></literal></term>
+    <listitem>
+     <para>
+      A foreign server to use for the connection.  The server's foreign data
+      wrapper must have a <replaceable>connection_function</replaceable>
+      registered, and a user mapping for the subscription owner on the server
+      must exist.  Additionally, the subscription owner must have
+      <literal>USAGE</literal> privileges on
+      <replaceable>servername</replaceable>.
      </para>
     </listitem>
    </varlistentry>

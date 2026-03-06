@@ -523,20 +523,52 @@ lookup_fdw_validator_func(DefElem *validator)
 }
 
 /*
+ * Convert a connection string function name passed from the parser to an Oid.
+ */
+static Oid
+lookup_fdw_connection_func(DefElem *connection)
+{
+	Oid			connectionOid;
+	Oid			funcargtypes[3];
+
+	if (connection == NULL || connection->arg == NULL)
+		return InvalidOid;
+
+	/* connection string functions take user oid, server oid */
+	funcargtypes[0] = OIDOID;
+	funcargtypes[1] = OIDOID;
+	funcargtypes[2] = INTERNALOID;
+
+	connectionOid = LookupFuncName((List *) connection->arg, 3, funcargtypes, false);
+
+	/* check that connection string function has correct return type */
+	if (get_func_rettype(connectionOid) != TEXTOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("function %s must return type %s",
+						NameListToString((List *) connection->arg), "text")));
+
+	return connectionOid;
+}
+
+/*
  * Process function options of CREATE/ALTER FDW
  */
 static void
 parse_func_options(ParseState *pstate, List *func_options,
 				   bool *handler_given, Oid *fdwhandler,
-				   bool *validator_given, Oid *fdwvalidator)
+				   bool *validator_given, Oid *fdwvalidator,
+				   bool *connection_given, Oid *fdwconnection)
 {
 	ListCell   *cell;
 
 	*handler_given = false;
 	*validator_given = false;
+	*connection_given = false;
 	/* return InvalidOid if not given */
 	*fdwhandler = InvalidOid;
 	*fdwvalidator = InvalidOid;
+	*fdwconnection = InvalidOid;
 
 	foreach(cell, func_options)
 	{
@@ -555,6 +587,13 @@ parse_func_options(ParseState *pstate, List *func_options,
 				errorConflictingDefElem(def, pstate);
 			*validator_given = true;
 			*fdwvalidator = lookup_fdw_validator_func(def);
+		}
+		else if (strcmp(def->defname, "connection") == 0)
+		{
+			if (*connection_given)
+				errorConflictingDefElem(def, pstate);
+			*connection_given = true;
+			*fdwconnection = lookup_fdw_connection_func(def);
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -575,8 +614,10 @@ CreateForeignDataWrapper(ParseState *pstate, CreateFdwStmt *stmt)
 	Oid			fdwId;
 	bool		handler_given;
 	bool		validator_given;
+	bool		connection_given;
 	Oid			fdwhandler;
 	Oid			fdwvalidator;
+	Oid			fdwconnection;
 	Datum		fdwoptions;
 	Oid			ownerId;
 	ObjectAddress myself;
@@ -620,10 +661,12 @@ CreateForeignDataWrapper(ParseState *pstate, CreateFdwStmt *stmt)
 	/* Lookup handler and validator functions, if given */
 	parse_func_options(pstate, stmt->func_options,
 					   &handler_given, &fdwhandler,
-					   &validator_given, &fdwvalidator);
+					   &validator_given, &fdwvalidator,
+					   &connection_given, &fdwconnection);
 
 	values[Anum_pg_foreign_data_wrapper_fdwhandler - 1] = ObjectIdGetDatum(fdwhandler);
 	values[Anum_pg_foreign_data_wrapper_fdwvalidator - 1] = ObjectIdGetDatum(fdwvalidator);
+	values[Anum_pg_foreign_data_wrapper_fdwconnection - 1] = ObjectIdGetDatum(fdwconnection);
 
 	nulls[Anum_pg_foreign_data_wrapper_fdwacl - 1] = true;
 
@@ -695,8 +738,10 @@ AlterForeignDataWrapper(ParseState *pstate, AlterFdwStmt *stmt)
 	Datum		datum;
 	bool		handler_given;
 	bool		validator_given;
+	bool		connection_given;
 	Oid			fdwhandler;
 	Oid			fdwvalidator;
+	Oid			fdwconnection;
 	ObjectAddress myself;
 
 	rel = table_open(ForeignDataWrapperRelationId, RowExclusiveLock);
@@ -726,7 +771,8 @@ AlterForeignDataWrapper(ParseState *pstate, AlterFdwStmt *stmt)
 
 	parse_func_options(pstate, stmt->func_options,
 					   &handler_given, &fdwhandler,
-					   &validator_given, &fdwvalidator);
+					   &validator_given, &fdwvalidator,
+					   &connection_given, &fdwconnection);
 
 	if (handler_given)
 	{
@@ -762,6 +808,12 @@ AlterForeignDataWrapper(ParseState *pstate, AlterFdwStmt *stmt)
 		 * Validator is not changed, but we need it for validating options.
 		 */
 		fdwvalidator = fdwForm->fdwvalidator;
+	}
+
+	if (connection_given)
+	{
+		repl_val[Anum_pg_foreign_data_wrapper_fdwconnection - 1] = ObjectIdGetDatum(fdwconnection);
+		repl_repl[Anum_pg_foreign_data_wrapper_fdwconnection - 1] = true;
 	}
 
 	/*
