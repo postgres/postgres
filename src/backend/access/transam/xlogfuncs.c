@@ -44,6 +44,33 @@ static StringInfo tablespace_map = NULL;
 /* Session-level context for the SQL-callable backup functions */
 static MemoryContext backupcontext = NULL;
 
+
+/*
+ * Return a string constant representing the recovery pause state. This is
+ * used in system functions and views, and should *not* be translated.
+ */
+static const char *
+GetRecoveryPauseStateString(RecoveryPauseState pause_state)
+{
+	const char *statestr = NULL;
+
+	switch (pause_state)
+	{
+		case RECOVERY_NOT_PAUSED:
+			statestr = "not paused";
+			break;
+		case RECOVERY_PAUSE_REQUESTED:
+			statestr = "pause requested";
+			break;
+		case RECOVERY_PAUSED:
+			statestr = "paused";
+			break;
+	}
+
+	Assert(statestr != NULL);
+	return statestr;
+}
+
 /*
  * pg_backup_start: set up for taking an on-line backup dump
  *
@@ -592,7 +619,7 @@ pg_is_wal_replay_paused(PG_FUNCTION_ARGS)
 Datum
 pg_get_wal_replay_pause_state(PG_FUNCTION_ARGS)
 {
-	char	   *statestr = NULL;
+	RecoveryPauseState state;
 
 	if (!RecoveryInProgress())
 		ereport(ERROR,
@@ -600,22 +627,10 @@ pg_get_wal_replay_pause_state(PG_FUNCTION_ARGS)
 				 errmsg("recovery is not in progress"),
 				 errhint("Recovery control functions can only be executed during recovery.")));
 
-	/* get the recovery pause state */
-	switch (GetRecoveryPauseState())
-	{
-		case RECOVERY_NOT_PAUSED:
-			statestr = "not paused";
-			break;
-		case RECOVERY_PAUSE_REQUESTED:
-			statestr = "pause requested";
-			break;
-		case RECOVERY_PAUSED:
-			statestr = "paused";
-			break;
-	}
+	state = GetRecoveryPauseState();
 
-	Assert(statestr != NULL);
-	PG_RETURN_TEXT_P(cstring_to_text(statestr));
+	/* get the recovery pause state */
+	PG_RETURN_TEXT_P(cstring_to_text(GetRecoveryPauseStateString(state)));
 }
 
 /*
