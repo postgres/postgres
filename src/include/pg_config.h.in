@@ -374,9 +374,6 @@
 /* Define to 1 if you have the `SSL_CTX_set_num_tickets' function. */
 #undef HAVE_SSL_CTX_SET_NUM_TICKETS
 
-/* Define to 1 if your compiler supports statement expressions. */
-#undef HAVE_STATEMENT_EXPRESSIONS
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 

@@ -1990,19 +1990,6 @@ if cc.compiles('''
 endif
 
 
-# Check if the C compiler supports GCC-style statement expressions.
-if cc.compiles('''
-    int main(int arg, char **argv)
-    {
-        ({ _Static_assert(1, "foo"); });
-    }
-    ''',
-    name: 'statement expressions',
-    args: test_c_args)
-  cdata.set('HAVE_STATEMENT_EXPRESSIONS', 1)
-endif
-
-
 # Select the format archetype to be used to check printf-type functions.
 #
 # Need to check a call with %m because netbsd supports gnu_printf but emits a

@@ -150,22 +150,6 @@ fi])# PGAC_TYPE_128BIT_INT
 
 
 
-# PGAC_C_STATEMENT_EXPRESSIONS
-# ----------------------------
-# Check if the C compiler understands GCC statement expressions.
-AC_DEFUN([PGAC_C_STATEMENT_EXPRESSIONS],
-[AC_CACHE_CHECK(for statement expressions, pgac_cv_statement_expressions,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([],
-[({ _Static_assert(1, "foo"); })])],
-[pgac_cv_statement_expressions=yes],
-[pgac_cv_statement_expressions=no])])
-if test x"$pgac_cv_statement_expressions" = xyes ; then
-AC_DEFINE(HAVE_STATEMENT_EXPRESSIONS, 1,
-          [Define to 1 if your compiler supports statement expressions.])
-fi])# PGAC_C_STATEMENT_EXPRESSIONS
-
-
-
 # PGAC_C_TYPEOF
 # -------------
 # Check if the C compiler understands typeof or a variant.  Define
