@@ -53,6 +53,7 @@
 #include "storage/standby.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 /* GUC variables */
 int			DeadlockTimeout = 1000;

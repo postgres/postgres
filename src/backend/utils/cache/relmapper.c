@@ -54,6 +54,7 @@
 #include "storage/lwlock.h"
 #include "utils/inval.h"
 #include "utils/relmapper.h"
+#include "utils/wait_event.h"
 
 
 /*

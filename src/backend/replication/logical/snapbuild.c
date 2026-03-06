@@ -144,6 +144,9 @@
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/snapshot.h"
+#include "utils/wait_event.h"
+
+
 /*
  * Starting a transaction -- which we need to do while exporting a snapshot --
  * removes knowledge about the previously used resowner, so we save it here.

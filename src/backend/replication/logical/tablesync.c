@@ -122,6 +122,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/usercontext.h"
+#include "utils/wait_event.h"
 
 List	   *table_states_not_ready = NIL;
 

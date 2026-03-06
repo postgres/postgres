@@ -31,6 +31,7 @@
 #include "storage/md.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 /*
  * In some contexts (currently, standalone backends and the checkpointer)

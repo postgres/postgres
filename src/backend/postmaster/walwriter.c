@@ -62,6 +62,7 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
+#include "utils/wait_event.h"
 
 
 /*

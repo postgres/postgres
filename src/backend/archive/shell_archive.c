@@ -22,6 +22,7 @@
 #include "archive/shell_archive.h"
 #include "common/percentrepl.h"
 #include "pgstat.h"
+#include "utils/wait_event.h"
 
 static bool shell_archive_configured(ArchiveModuleState *state);
 static bool shell_archive_file(ArchiveModuleState *state,

@@ -35,6 +35,7 @@
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 /* User-settable GUC parameters */
 int			max_standby_archive_delay = 30 * 1000;

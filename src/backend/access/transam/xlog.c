@@ -105,6 +105,7 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 #include "utils/varlena.h"
+#include "utils/wait_event.h"
 
 #ifdef WAL_DEBUG
 #include "utils/memutils.h"

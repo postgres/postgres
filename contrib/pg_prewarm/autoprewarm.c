@@ -48,6 +48,7 @@
 #include "utils/rel.h"
 #include "utils/relfilenumbermap.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 #define AUTOPREWARM_FILE "autoprewarm.blocks"
 

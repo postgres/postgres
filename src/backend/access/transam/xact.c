@@ -72,6 +72,7 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
+#include "utils/wait_event.h"
 
 /*
  *	User-tweakable parameters

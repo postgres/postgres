@@ -45,6 +45,7 @@
 #include "storage/proc.h"
 #include "storage/sync.h"
 #include "utils/guc_hooks.h"
+#include "utils/wait_event.h"
 
 /*
  * Defines for CLOG page sizes.  A page is the same BLCKSZ as is used

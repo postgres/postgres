@@ -37,6 +37,7 @@
 #ifndef FRONTEND
 #include "pgstat.h"
 #include "storage/fd.h"
+#include "utils/wait_event.h"
 #endif
 
 /*

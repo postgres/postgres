@@ -106,6 +106,7 @@
 #include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 /*
  * Directory where Two-phase commit files reside within PGDATA

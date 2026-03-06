@@ -85,6 +85,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/guc_hooks.h"
 #include "utils/ps_status.h"
+#include "utils/wait_event.h"
 
 /* User-settable parameters for sync rep */
 char	   *SyncRepStandbyNames;

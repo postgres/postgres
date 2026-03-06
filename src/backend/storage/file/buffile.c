@@ -53,6 +53,7 @@
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "utils/resowner.h"
+#include "utils/wait_event.h"
 
 /*
  * We break BufFiles into gigabyte-sized segments, regardless of RELSEG_SIZE.

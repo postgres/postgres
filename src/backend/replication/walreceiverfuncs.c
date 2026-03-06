@@ -30,6 +30,7 @@
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 WalRcvData *WalRcv = NULL;
 

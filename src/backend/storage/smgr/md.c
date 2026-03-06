@@ -40,6 +40,7 @@
 #include "storage/smgr.h"
 #include "storage/sync.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 /*
  * The magnetic disk storage manager keeps track of open file

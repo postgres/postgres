@@ -36,6 +36,7 @@
 #ifndef FRONTEND
 #include "pgstat.h"
 #include "storage/bufmgr.h"
+#include "utils/wait_event.h"
 #else
 #include "common/logging.h"
 #endif

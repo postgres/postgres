@@ -74,6 +74,7 @@
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/wait_event.h"
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')

@@ -37,6 +37,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/wait_event.h"
 
 /*
  * Represents the different dest cases we need to worry about at

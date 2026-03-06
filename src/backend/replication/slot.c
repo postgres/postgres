@@ -59,6 +59,7 @@
 #include "utils/guc_hooks.h"
 #include "utils/injection_point.h"
 #include "utils/varlena.h"
+#include "utils/wait_event.h"
 
 /*
  * Replication slot on-disk data structure.

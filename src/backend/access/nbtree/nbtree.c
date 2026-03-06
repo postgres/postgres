@@ -35,6 +35,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 
 /*

@@ -104,6 +104,8 @@
 #include <signal.h>
 
 #include "storage/waiteventset.h"	/* for WL_* arguments to WaitLatch */
+#include "utils/wait_classes.h"  /* for backward compatibility */	/* IWYU pragma: keep */
+
 
 /*
  * Latch structure should be treated as opaque and only accessed through

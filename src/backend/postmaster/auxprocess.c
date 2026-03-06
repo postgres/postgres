@@ -24,6 +24,7 @@
 #include "storage/procsignal.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/wait_event.h"
 
 
 static void ShutdownAuxiliaryProcess(int code, Datum arg);

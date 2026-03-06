@@ -113,6 +113,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relfilenumbermap.h"
+#include "utils/wait_event.h"
 
 /*
  * Each transaction has an 8MB limit for invalidation messages distributed from

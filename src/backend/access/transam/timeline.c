@@ -41,6 +41,7 @@
 #include "access/xlogdefs.h"
 #include "pgstat.h"
 #include "storage/fd.h"
+#include "utils/wait_event.h"
 
 /*
  * Copies all timeline history files with id's between 'begin' and 'end'

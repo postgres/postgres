@@ -77,6 +77,7 @@
 #include "storage/waiteventset.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
+#include "utils/wait_event.h"
 
 /*
  * Select the fd readiness primitive to use. Normally the "most modern"

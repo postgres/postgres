@@ -19,6 +19,7 @@
 #include "pgstat.h"
 #include "storage/latch.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 typedef struct bbsink_throttle
 {

@@ -155,6 +155,7 @@
 #include "utils/lsyscache.h"
 #include "utils/pg_rusage.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 
 /*

@@ -79,6 +79,7 @@
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 
 /*

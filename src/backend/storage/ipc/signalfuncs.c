@@ -25,6 +25,7 @@
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/fmgrprotos.h"
+#include "utils/wait_event.h"
 
 
 /*

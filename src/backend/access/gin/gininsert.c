@@ -35,6 +35,7 @@
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
+#include "utils/wait_event.h"
 
 
 /* Magic numbers for parallel state sharing */

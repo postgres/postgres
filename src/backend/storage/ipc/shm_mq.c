@@ -26,6 +26,7 @@
 #include "storage/shm_mq.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 /*
  * This structure represents the actual queue, stored in shared memory.

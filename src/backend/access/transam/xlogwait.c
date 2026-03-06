@@ -60,6 +60,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/pg_lsn.h"
 #include "utils/snapmgr.h"
+#include "utils/wait_event.h"
 
 
 static int	waitlsn_cmp(const pairingheap_node *a, const pairingheap_node *b,

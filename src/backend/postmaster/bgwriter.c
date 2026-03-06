@@ -51,6 +51,7 @@
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 /*
  * GUC parameters

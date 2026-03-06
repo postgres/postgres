@@ -45,6 +45,7 @@
 #include "utils/memutils.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
+#include "utils/wait_event.h"
 
 /*
  * We don't want to waste a lot of memory on an error queue which, most of

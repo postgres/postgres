@@ -85,6 +85,7 @@
 #include "storage/procnumber.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 #ifdef LWLOCK_STATS
 #include "utils/hsearch.h"

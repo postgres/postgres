@@ -34,6 +34,7 @@
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 /*
  * The SIGUSR1 signal is multiplexed to support signaling multiple event

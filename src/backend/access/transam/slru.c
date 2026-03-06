@@ -71,6 +71,7 @@
 #include "storage/fd.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"
+#include "utils/wait_event.h"
 
 /*
  * Converts segment number to the filename of the segment.

@@ -67,6 +67,7 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
+#include "utils/wait_event.h"
 
 
 /*----------

@@ -122,6 +122,7 @@
 #include "storage/procarray.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/wait_event.h"
 
 /*
  * State associated with a rewrite operation. This is opaque to the user

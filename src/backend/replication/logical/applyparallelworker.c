@@ -173,6 +173,7 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/wait_event.h"
 
 #define PG_LOGICAL_APPLY_SHM_MAGIC 0x787ca067
 

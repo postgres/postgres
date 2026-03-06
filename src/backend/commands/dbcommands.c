@@ -70,6 +70,7 @@
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/wait_event.h"
 
 /*
  * Create database strategy.

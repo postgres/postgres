@@ -55,6 +55,7 @@
 #include "utils/pidfile.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+#include "utils/wait_event.h"
 
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"

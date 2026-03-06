@@ -43,6 +43,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/tuplesort.h"
+#include "utils/wait_event.h"
 
 /* Magic numbers for parallel state sharing */
 #define PARALLEL_KEY_BRIN_SHARED		UINT64CONST(0xB000000000000001)

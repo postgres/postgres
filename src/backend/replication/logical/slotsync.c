@@ -79,6 +79,7 @@
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
+#include "utils/wait_event.h"
 
 /*
  * Struct for sharing information to control slot synchronization.

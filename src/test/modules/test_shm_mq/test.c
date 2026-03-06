@@ -17,6 +17,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/proc.h"
+#include "utils/wait_event.h"
 #include "varatt.h"
 
 #include "test_shm_mq.h"

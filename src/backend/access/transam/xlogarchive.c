@@ -31,6 +31,7 @@
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "utils/wait_event.h"
 
 /*
  * Attempt to retrieve the specified file from off-line archival storage.

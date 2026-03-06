@@ -46,6 +46,7 @@
 #include "utils/ruleutils.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 
 /*

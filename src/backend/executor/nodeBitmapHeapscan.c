@@ -45,6 +45,7 @@
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
 #include "utils/spccache.h"
+#include "utils/wait_event.h"
 
 static void BitmapTableScanSetup(BitmapHeapScanState *node);
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);

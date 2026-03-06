@@ -61,6 +61,7 @@
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/wait_event.h"
 
 /*
  * Minimum interval for cost-based vacuum delay reports from a parallel worker.

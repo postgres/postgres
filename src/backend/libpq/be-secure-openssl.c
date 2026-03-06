@@ -35,6 +35,7 @@
 #include "storage/latch.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 /*
  * These SSL-related #includes must come after all system-provided headers.

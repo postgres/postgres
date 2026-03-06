@@ -68,6 +68,7 @@
 #include "storage/fd.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 #ifdef USE_DSM_POSIX
 static bool dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
