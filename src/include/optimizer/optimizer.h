@@ -204,6 +204,8 @@ extern bool contain_vars_returning_old_or_new(Node *node);
 extern int	locate_var_of_level(Node *node, int levelsup);
 extern List *pull_var_clause(Node *node, int flags);
 extern Node *flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node);
+extern Node *flatten_join_alias_for_parser(Query *query, Node *node,
+										   int sublevels_up);
 extern Node *flatten_group_exprs(PlannerInfo *root, Query *query, Node *node);
 
 #endif							/* OPTIMIZER_H */

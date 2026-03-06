@@ -862,6 +862,26 @@ select array(select sum(x+y) s
  {4,5,6}
 (3 rows)
 
+-- Test handling of grouping-expression references within sublinks
+select two + four as g, (select f1 from int4_tbl where f1 = (two + four))
+from tenk1 t1
+group by two + four order by 1;
+ g | f1 
+---+----
+ 0 |  0
+ 2 |   
+ 4 |   
+(3 rows)
+
+select q1, (select q1) as ss  -- q1 is actually a COALESCE expression here
+from int8_tbl i81 full outer join int8_tbl i82 using (q1)
+group by q1 order by q1;
+        q1        |        ss        
+------------------+------------------
+              123 |              123
+ 4567890123456789 | 4567890123456789
+(2 rows)
+
 --
 -- test for bitwise integer aggregates
 --
