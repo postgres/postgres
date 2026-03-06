@@ -16,7 +16,7 @@ Code Targets:
 Developer Targets:
   reformat-dat-files            Rewrite catalog data files into standard format
   expand-dat-files              Expand all data files to include defaults
-  update-unicode                Update unicode data to new version
+  update-unicode                Update Unicode data to new version
 
 Documentation Targets:
   html                          Build documentation in multi-page HTML format
