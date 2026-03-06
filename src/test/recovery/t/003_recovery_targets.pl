@@ -190,58 +190,30 @@ like(
 	qr/FATAL: .* recovery ended before configured recovery target was reached/,
 	'recovery end before target reached is a fatal error');
 
-# Invalid timeline target
-$node_standby = PostgreSQL::Test::Cluster->new('standby_9');
-$node_standby->init_from_backup($node_primary, 'my_backup',
-	has_restoring => 1);
-$node_standby->append_conf('postgresql.conf',
-	"recovery_target_timeline = 'bogus'");
+# Invalid recovery_target_timeline tests
+my ($result, $stdout, $stderr) = $node_primary->psql('postgres',
+	"ALTER SYSTEM SET recovery_target_timeline TO 'bogus'");
+like(
+	$stderr,
+	qr/is not a valid number/,
+	"invalid recovery_target_timeline (bogus value)");
 
-$res = run_log(
-	[
-		'pg_ctl',
-		'--pgdata' => $node_standby->data_dir,
-		'--log' => $node_standby->logfile,
-		'start',
-	]);
-ok(!$res, 'invalid timeline target (bogus value)');
+($result, $stdout, $stderr) = $node_primary->psql('postgres',
+	"ALTER SYSTEM SET recovery_target_timeline TO '0'");
+like(
+	$stderr,
+	qr/must be between 1 and 4294967295/,
+	"invalid recovery_target_timeline (lower bound check)");
 
-my $log_start = $node_standby->wait_for_log("is not a valid number");
-
-# Timeline target out of min range
-$node_standby->append_conf('postgresql.conf',
-	"recovery_target_timeline = '0'");
-
-$res = run_log(
-	[
-		'pg_ctl',
-		'--pgdata' => $node_standby->data_dir,
-		'--log' => $node_standby->logfile,
-		'start',
-	]);
-ok(!$res, 'invalid timeline target (lower bound check)');
-
-$log_start =
-  $node_standby->wait_for_log("must be between 1 and 4294967295", $log_start);
-
-# Timeline target out of max range
-$node_standby->append_conf('postgresql.conf',
-	"recovery_target_timeline = '4294967296'");
-
-$res = run_log(
-	[
-		'pg_ctl',
-		'--pgdata' => $node_standby->data_dir,
-		'--log' => $node_standby->logfile,
-		'start',
-	]);
-ok(!$res, 'invalid timeline target (upper bound check)');
-
-$log_start =
-  $node_standby->wait_for_log("must be between 1 and 4294967295", $log_start);
+($result, $stdout, $stderr) = $node_primary->psql('postgres',
+	"ALTER SYSTEM SET recovery_target_timeline TO '4294967296'");
+like(
+	$stderr,
+	qr/must be between 1 and 4294967295/,
+	"invalid recovery_target_timeline (upper bound check)");
 
 # Invalid recovery_target_xid tests
-my ($result, $stdout, $stderr) = $node_primary->psql('postgres',
+($result, $stdout, $stderr) = $node_primary->psql('postgres',
 	"ALTER SYSTEM SET recovery_target_xid TO 'bogus'");
 like(
 	$stderr,
