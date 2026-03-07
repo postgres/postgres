@@ -10207,7 +10207,7 @@ determineNotNullFlags(Archive *fout, PGresult *res, int r,
 			 */
 			if ((dopt->binary_upgrade &&
 				 !tbinfo->ispartition &&
-				 !tbinfo->notnull_islocal) ||
+				 !tbinfo->notnull_islocal[j]) ||
 				!PQgetisnull(res, r, i_notnull_comment))
 			{
 				tbinfo->notnull_constrs[j] =
