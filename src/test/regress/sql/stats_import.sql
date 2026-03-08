@@ -1,5 +1,157 @@
 CREATE SCHEMA stats_import;
 
+--
+-- Setup functions for set-difference convenience functions
+--
+
+-- Test to detect any new columns added to pg_statistic.  If any columns
+-- are added, we may need to update pg_statistic_flat() and the facilities
+-- we are testing.
+SELECT COUNT(*) FROM pg_attribute
+  WHERE attrelid = 'pg_catalog.pg_statistic'::regclass AND
+    attnum > 0;
+
+-- Create a view that is used purely for the type based on pg_statistic.
+CREATE VIEW stats_import.pg_statistic_flat_t AS
+  SELECT
+      a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
+      s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
+      s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
+      s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
+      s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
+      s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
+      s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
+      s.stavalues5::text AS sv5
+  FROM pg_statistic s
+  JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
+  WHERE FALSE;
+
+-- Function to retrieve data used for diff comparisons between two
+-- relations based on the contents of pg_statistic.
+CREATE FUNCTION stats_import.pg_statistic_flat(p_relname text)
+RETURNS SETOF stats_import.pg_statistic_flat_t
+BEGIN ATOMIC
+  SELECT a.attname, s.stainherit, s.stanullfrac, s.stawidth,
+      s.stadistinct, s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
+      s.staop1, s.staop2, s.staop3, s.staop4, s.staop5, s.stacoll1, s.stacoll2,
+      s.stacoll3, s.stacoll4, s.stacoll5, s.stanumbers1, s.stanumbers2,
+      s.stanumbers3, s.stanumbers4, s.stanumbers5, s.stavalues1::text,
+      s.stavalues2::text, s.stavalues3::text,
+      s.stavalues4::text, s.stavalues5::text
+  FROM pg_statistic s
+  JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
+  JOIN pg_class c ON c.oid = a.attrelid
+  WHERE c.relnamespace = 'stats_import'::regnamespace
+    AND c.relname = p_relname;
+END;
+
+-- Comparison function for pg_statistic.  The two relations defined by
+-- the function caller are compared.
+CREATE FUNCTION stats_import.pg_statistic_get_difference(a text, b text)
+RETURNS TABLE (relname text, stats stats_import.pg_statistic_flat_t)
+BEGIN ATOMIC
+  WITH aset AS (SELECT * FROM stats_import.pg_statistic_flat(a)),
+       bset AS (SELECT * FROM stats_import.pg_statistic_flat(b))
+  SELECT a AS relname, a_minus_b::stats_import.pg_statistic_flat_t
+  FROM (TABLE aset EXCEPT TABLE bset) AS a_minus_b
+  UNION ALL
+  SELECT b AS relname, b_minus_a::stats_import.pg_statistic_flat_t
+  FROM (TABLE bset EXCEPT TABLE aset) AS b_minus_a;
+END;
+
+-- Test to detect any new columns added to pg_stats_ext.  If any columns
+-- are added, we may need to update pg_stats_ext_flat() and the facilities
+-- we are testing.
+SELECT COUNT(*) FROM pg_attribute
+  WHERE attrelid = 'pg_catalog.pg_stats_ext'::regclass AND
+    attnum > 0;
+
+-- Create a view that is used purely for the type based on pg_stats_ext.
+CREATE VIEW stats_import.pg_stats_ext_flat_t AS
+  SELECT inherited, n_distinct, dependencies, most_common_vals,
+         most_common_freqs, most_common_base_freqs
+  FROM pg_stats_ext
+  WHERE FALSE;
+
+-- Function to retrieve data used for diff comparisons between two
+-- relations based on the contents of pg_stats_ext.
+CREATE FUNCTION stats_import.pg_stats_ext_flat(p_statname text)
+RETURNS SETOF stats_import.pg_stats_ext_flat_t
+BEGIN ATOMIC
+  SELECT inherited, n_distinct, dependencies, most_common_vals,
+         most_common_freqs, most_common_base_freqs
+  FROM pg_stats_ext
+  WHERE statistics_schemaname = 'stats_import'
+  AND statistics_name = p_statname;
+END;
+
+-- Comparison function for pg_stats_ext.  The two relations defined by
+-- the function caller are compared.
+CREATE FUNCTION stats_import.pg_stats_ext_get_difference(a text, b text)
+RETURNS TABLE (statname text, stats stats_import.pg_stats_ext_flat_t)
+BEGIN ATOMIC
+  WITH aset AS (SELECT * FROM stats_import.pg_stats_ext_flat(a)),
+       bset AS (SELECT * FROM stats_import.pg_stats_ext_flat(b))
+  SELECT a AS relname, a_minus_b::stats_import.pg_stats_ext_flat_t
+  FROM (TABLE aset EXCEPT TABLE bset) AS a_minus_b
+  UNION ALL
+  SELECT b AS relname, b_minus_a::stats_import.pg_stats_ext_flat_t
+  FROM (TABLE bset EXCEPT TABLE aset) AS b_minus_a;
+END;
+
+-- Test to detect any new columns added to pg_stats_ext_exprs.  If any columns
+-- are added, we may need to update pg_stats_ext_exprs_flat() and the facilities
+-- we are testing.
+SELECT COUNT(*) FROM pg_attribute
+  WHERE attrelid = 'pg_catalog.pg_stats_ext_exprs'::regclass AND
+    attnum > 0;
+
+-- Create a view that is used purely for the type based on pg_stats_ext_exprs.
+CREATE VIEW stats_import.pg_stats_ext_exprs_flat_t AS
+  SELECT inherited, null_frac, avg_width, n_distinct,
+       most_common_vals::text AS most_common_vals,
+       most_common_freqs, histogram_bounds::text AS histogram_bounds,
+       correlation, most_common_elems::text AS most_common_elems,
+       most_common_elem_freqs, elem_count_histogram,
+       range_length_histogram::text AS range_length_histogram,
+       range_empty_frac, range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS n
+  WHERE FALSE;
+
+-- Function to retrieve data used for diff comparisons between two
+-- relations based on the contents of pg_stats_ext_exprs.
+CREATE FUNCTION stats_import.pg_stats_ext_exprs_flat(p_statname text)
+RETURNS SETOF stats_import.pg_stats_ext_exprs_flat_t
+BEGIN ATOMIC
+  SELECT inherited, null_frac, avg_width, n_distinct,
+       most_common_vals::text AS most_common_vals,
+       most_common_freqs, histogram_bounds::text AS histogram_bounds,
+       correlation, most_common_elems::text AS most_common_elems,
+       most_common_elem_freqs, elem_count_histogram,
+       range_length_histogram::text AS range_length_histogram,
+       range_empty_frac, range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats_ext_exprs AS n
+  WHERE n.statistics_schemaname = 'stats_import' AND
+    n.statistics_name = p_statname;
+END;
+
+-- Comparison function for pg_stats_ext_exprs.  The two relations defined by
+-- the function caller are compared.
+CREATE FUNCTION stats_import.pg_stats_ext_exprs_get_difference(a text, b text)
+RETURNS TABLE (statname text, stats stats_import.pg_stats_ext_exprs_flat_t)
+BEGIN ATOMIC
+  WITH aset AS (SELECT * FROM stats_import.pg_stats_ext_exprs_flat(a)),
+       bset AS (SELECT * FROM stats_import.pg_stats_ext_exprs_flat(b))
+  SELECT a AS relname, a_minus_b::stats_import.pg_stats_ext_exprs_flat_t
+  FROM (TABLE aset EXCEPT TABLE bset) AS a_minus_b
+  UNION ALL
+  SELECT b AS relname, b_minus_a::stats_import.pg_stats_ext_exprs_flat_t
+  FROM (TABLE bset EXCEPT TABLE aset) AS b_minus_a;
+END;
+
+--
+-- Schema setup.
+--
 CREATE TYPE stats_import.complex_type AS (
     a integer,
     b real,
@@ -884,113 +1036,13 @@ AND c.relname IN ('test', 'test_clone', 'is_odd', 'is_odd_clone')
 GROUP BY c.relname
 ORDER BY c.relname;
 
--- check test minus test_clone
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test_clone'::regclass;
+SELECT relname, (stats).*
+FROM stats_import.pg_statistic_get_difference('test', 'test_clone')
+\gx
 
--- check test_clone minus test
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test_clone'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test'::regclass;
-
--- check is_odd minus is_odd_clone
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd_clone'::regclass;
-
--- check is_odd_clone minus is_odd
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd_clone'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd'::regclass;
+SELECT relname, (stats).*
+FROM stats_import.pg_statistic_get_difference('is_odd', 'is_odd_clone')
+\gx
 
 -- attribute stats exist before a clear, but not after
 SELECT COUNT(*)
@@ -2171,96 +2223,14 @@ CROSS JOIN LATERAL (
 WHERE e.statistics_schemaname = 'stats_import'
 AND e.statistics_name = 'test_stat';
 
--- Set difference old MINUS new.
-SELECT o.inherited,
-       o.n_distinct, o.dependencies, o.most_common_vals,
-       o.most_common_freqs, o.most_common_base_freqs
-  FROM pg_stats_ext AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_stat'
-EXCEPT
-SELECT n.inherited,
-       n.n_distinct, n.dependencies, n.most_common_vals,
-       n.most_common_freqs, n.most_common_base_freqs
-  FROM pg_stats_ext AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_stat_clone';
--- Set difference new MINUS old.
-SELECT n.inherited,
-       n.n_distinct, n.dependencies, n.most_common_vals,
-       n.most_common_freqs, n.most_common_base_freqs
-  FROM pg_stats_ext AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_stat_clone'
-EXCEPT
-SELECT o.inherited,
-       o.n_distinct, o.dependencies, o.most_common_vals,
-       o.most_common_freqs, o.most_common_base_freqs
-  FROM pg_stats_ext AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_stat';
+SELECT statname, (stats).*
+FROM stats_import.pg_stats_ext_get_difference('test_stat', 'test_stat_clone')
+\gx
 
--- Set difference for exprs: old MINUS new.
-SELECT o.inherited,
-       o.null_frac, o.avg_width, o.n_distinct,
-       o.most_common_vals::text AS most_common_vals,
-       o.most_common_freqs,
-       o.histogram_bounds::text AS histogram_bounds,
-       o.correlation,
-       o.most_common_elems::text AS most_common_elems,
-       o.most_common_elem_freqs, o.elem_count_histogram,
-       o.range_length_histogram::text AS range_length_histogram,
-       o.range_empty_frac,
-       o.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_stat'
-EXCEPT
-SELECT n.inherited,
-       n.null_frac, n.avg_width, n.n_distinct,
-       n.most_common_vals::text AS most_common_vals,
-       n.most_common_freqs,
-       n.histogram_bounds::text AS histogram_bounds,
-       n.correlation,
-       n.most_common_elems::text AS most_common_elems,
-       n.most_common_elem_freqs, n.elem_count_histogram,
-       n.range_length_histogram::text AS range_length_histogram,
-       n.range_empty_frac,
-       n.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_stat_clone';
+SELECT statname, (stats).*
+FROM stats_import.pg_stats_ext_exprs_get_difference('test_stat', 'test_stat_clone')
+\gx
 
--- Set difference for exprs: new MINUS old.
-SELECT n.inherited,
-       n.null_frac, n.avg_width, n.n_distinct,
-       n.most_common_vals::text AS most_common_vals,
-       n.most_common_freqs,
-       n.histogram_bounds::text AS histogram_bounds,
-       n.correlation,
-       n.most_common_elems::text AS most_common_elems,
-       n.most_common_elem_freqs, n.elem_count_histogram,
-       n.range_length_histogram::text AS range_length_histogram,
-       n.range_empty_frac,
-       n.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_stat_clone'
-EXCEPT
-SELECT o.inherited,
-       o.null_frac, o.avg_width, o.n_distinct,
-       o.most_common_vals::text AS most_common_vals,
-       o.most_common_freqs,
-       o.histogram_bounds::text AS histogram_bounds,
-       o.correlation,
-       o.most_common_elems::text AS most_common_elems,
-       o.most_common_elem_freqs, o.elem_count_histogram,
-       o.range_length_histogram::text AS range_length_histogram,
-       o.range_empty_frac,
-       o.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_stat';
 
 ANALYZE stats_import.test_mr;
 
@@ -2302,96 +2272,13 @@ CROSS JOIN LATERAL (
 WHERE e.statistics_schemaname = 'stats_import'
 AND e.statistics_name = 'test_mr_stat';
 
--- Set difference old MINUS new.
-SELECT o.inherited,
-       o.n_distinct, o.dependencies, o.most_common_vals,
-       o.most_common_freqs, o.most_common_base_freqs
-  FROM pg_stats_ext AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_mr_stat'
-EXCEPT
-SELECT n.inherited,
-       n.n_distinct, n.dependencies, n.most_common_vals,
-       n.most_common_freqs, n.most_common_base_freqs
-  FROM pg_stats_ext AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_mr_stat_clone';
--- Set difference new MINUS old.
-SELECT n.inherited,
-       n.n_distinct, n.dependencies, n.most_common_vals,
-       n.most_common_freqs, n.most_common_base_freqs
-  FROM pg_stats_ext AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_mr_stat_clone'
-EXCEPT
-SELECT o.inherited,
-       o.n_distinct, o.dependencies, o.most_common_vals,
-       o.most_common_freqs, o.most_common_base_freqs
-  FROM pg_stats_ext AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_mr_stat';
+SELECT statname, (stats).*
+FROM stats_import.pg_stats_ext_get_difference('test_mr_stat', 'test_mr_stat_clone')
+\gx
 
--- Set difference for exprs: old MINUS new.
-SELECT o.inherited,
-       o.null_frac, o.avg_width, o.n_distinct,
-       o.most_common_vals::text AS most_common_vals,
-       o.most_common_freqs,
-       o.histogram_bounds::text AS histogram_bounds,
-       o.correlation,
-       o.most_common_elems::text AS most_common_elems,
-       o.most_common_elem_freqs, o.elem_count_histogram,
-       o.range_length_histogram::text AS range_length_histogram,
-       o.range_empty_frac,
-       o.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_mr_stat'
-EXCEPT
-SELECT n.inherited,
-       n.null_frac, n.avg_width, n.n_distinct,
-       n.most_common_vals::text AS most_common_vals,
-       n.most_common_freqs,
-       n.histogram_bounds::text AS histogram_bounds,
-       n.correlation,
-       n.most_common_elems::text AS most_common_elems,
-       n.most_common_elem_freqs, n.elem_count_histogram,
-       n.range_length_histogram::text AS range_length_histogram,
-       n.range_empty_frac,
-       n.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_mr_stat_clone';
-
--- Set difference for exprs: new MINUS old.
-SELECT n.inherited,
-       n.null_frac, n.avg_width, n.n_distinct,
-       n.most_common_vals::text AS most_common_vals,
-       n.most_common_freqs,
-       n.histogram_bounds::text AS histogram_bounds,
-       n.correlation,
-       n.most_common_elems::text AS most_common_elems,
-       n.most_common_elem_freqs, n.elem_count_histogram,
-       n.range_length_histogram::text AS range_length_histogram,
-       n.range_empty_frac,
-       n.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS n
-  WHERE n.statistics_schemaname = 'stats_import' AND
-    n.statistics_name = 'test_mr_stat_clone'
-EXCEPT
-SELECT o.inherited,
-       o.null_frac, o.avg_width, o.n_distinct,
-       o.most_common_vals::text AS most_common_vals,
-       o.most_common_freqs,
-       o.histogram_bounds::text AS histogram_bounds,
-       o.correlation,
-       o.most_common_elems::text AS most_common_elems,
-       o.most_common_elem_freqs, o.elem_count_histogram,
-       o.range_length_histogram::text AS range_length_histogram,
-       o.range_empty_frac,
-       o.range_bounds_histogram::text AS range_bounds_histogram
-  FROM pg_stats_ext_exprs AS o
-  WHERE o.statistics_schemaname = 'stats_import' AND
-    o.statistics_name = 'test_mr_stat';
+SELECT statname, (stats).*
+FROM stats_import.pg_stats_ext_exprs_get_difference('test_mr_stat', 'test_mr_stat_clone')
+\gx
 
 -- range_length_histogram, range_empty_frac, and range_bounds_histogram
 -- have been added to pg_stats_ext_exprs in PostgreSQL 19.  When dumping
