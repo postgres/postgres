@@ -2394,7 +2394,7 @@ SELECT o.inherited,
     o.statistics_name = 'test_mr_stat';
 
 -- range_length_histogram, range_empty_frac, and range_bounds_histogram
--- have been added to pg_stat_ext_exprs in PostgreSQL 19.  When dumping
+-- have been added to pg_stats_ext_exprs in PostgreSQL 19.  When dumping
 -- expression statistics in a cluster with an older version, these fields
 -- are dumped as NULL, pg_restore_extended_stats() authorizing the partial
 -- restore state of the extended statistics data.  This test emulates such
