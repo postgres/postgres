@@ -5341,6 +5341,7 @@ if test x"$pgac_cv_prog_CC_cflags__Werror_vla" = x"yes"; then
 fi
 
 
+  # -Wvla is not applicable for C++
   # On macOS, complain about usage of symbols newer than the deployment target
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Werror=unguarded-availability-new, for CFLAGS" >&5
@@ -5433,7 +5434,6 @@ if test x"$pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new" = x"yes
 fi
 
 
-  # -Wvla is not applicable for C++
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Wendif-labels, for CFLAGS" >&5
 $as_echo_n "checking whether ${CC} supports -Wendif-labels, for CFLAGS... " >&6; }
