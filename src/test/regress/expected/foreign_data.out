@@ -828,10 +828,13 @@ COMMENT ON COLUMN ft1.c1 IS NULL;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c4 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c5 integer DEFAULT 0;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c6 integer;
+ALTER FOREIGN TABLE ft1 ADD COLUMN IF NOT EXISTS c6 integer;
+NOTICE:  column "c6" of relation "ft1" already exists, skipping
 ALTER FOREIGN TABLE ft1 ADD COLUMN c7 integer NOT NULL;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c8 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c9 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c10 integer OPTIONS (p1 'v1');
+ALTER FOREIGN TABLE ft1 ADD c11 integer;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c4 SET DEFAULT 0;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c5 DROP DEFAULT;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c6 SET NOT NULL;
@@ -863,6 +866,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STORAGE PLAIN;
  c8     | text    |           |          |         | (p2 'V2')                      | plain    |              | 
  c9     | integer |           |          |         |                                | plain    |              | 
  c10    | integer |           |          |         | (p1 'v1')                      | plain    |              | 
+ c11    | integer |           |          |         |                                | plain    |              | 
 Check constraints:
     "ft1_c2_check" CHECK (c2 <> ''::text)
     "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
@@ -897,6 +901,7 @@ ERROR:  column "no_column" of relation "ft1" does not exist
 ALTER FOREIGN TABLE ft1 DROP COLUMN IF EXISTS no_column;
 NOTICE:  column "no_column" of relation "ft1" does not exist, skipping
 ALTER FOREIGN TABLE ft1 DROP COLUMN c9;
+ALTER FOREIGN TABLE ft1 DROP c11;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c11 serial;
 ALTER FOREIGN TABLE ft1 SET SCHEMA foreign_schema;
 ALTER FOREIGN TABLE ft1 SET TABLESPACE ts;                      -- ERROR
@@ -931,6 +936,8 @@ ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c4 integer;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c6 integer;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
+ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN IF NOT EXISTS c6 integer;
+NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c7 integer NOT NULL;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c8 integer;
@@ -938,6 +945,8 @@ NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c9 integer;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD COLUMN c10 integer OPTIONS (p1 'v1');
+NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
+ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ADD c11 integer;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 ALTER COLUMN c6 SET NOT NULL;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
@@ -960,9 +969,13 @@ ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 OWNER TO regress_test_role;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
+ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 DROP COLUMN no_column;
+NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 DROP COLUMN IF EXISTS no_column;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 DROP COLUMN c9;
+NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
+ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 DROP c11;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping
 ALTER FOREIGN TABLE IF EXISTS doesnt_exist_ft1 SET SCHEMA foreign_schema;
 NOTICE:  relation "doesnt_exist_ft1" does not exist, skipping

@@ -32,7 +32,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
+    ADD [ COLUMN ] [ IF NOT EXISTS ] <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="parameter">column_name</replaceable> [ RESTRICT | CASCADE ]
     ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ]
     ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET DEFAULT <replaceable class="parameter">expression</replaceable>
@@ -67,11 +67,13 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
 
   <variablelist>
    <varlistentry id="sql-alterforeigntable-desc-add-column">
-    <term><literal>ADD COLUMN</literal></term>
+    <term><literal>ADD [ COLUMN ] [ IF NOT EXISTS ]</literal></term>
     <listitem>
      <para>
       This form adds a new column to the foreign table, using the same syntax as
       <link linkend="sql-createforeigntable"><command>CREATE FOREIGN TABLE</command></link>.
+      If <literal>IF NOT EXISTS</literal> is specified and a column already
+      exists with this name, no error is thrown.
       Unlike the case when adding a column to a regular table, nothing happens
       to the underlying storage: this action simply declares that
       some new column is now accessible through the foreign table.
@@ -80,7 +82,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    </varlistentry>
 
    <varlistentry id="sql-alterforeigntable-desc-drop-column">
-    <term><literal>DROP COLUMN [ IF EXISTS ]</literal></term>
+    <term><literal>DROP [ COLUMN ] [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
       This form drops a column from a foreign table.
