@@ -2993,7 +2993,7 @@ check_pub_dead_tuple_retention(WalReceiverConn *wrconn)
 	if (remote_in_recovery)
 		ereport(ERROR,
 				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot enable retain_dead_tuples if the publisher is in recovery."));
+				errmsg("cannot enable retain_dead_tuples if the publisher is in recovery"));
 
 	ExecDropSingleTupleTableSlot(slot);
 
