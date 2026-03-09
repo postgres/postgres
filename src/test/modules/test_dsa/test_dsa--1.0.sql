@@ -10,3 +10,7 @@ CREATE FUNCTION test_dsa_basic()
 CREATE FUNCTION test_dsa_resowners()
 	RETURNS pg_catalog.void
 	AS 'MODULE_PATHNAME' LANGUAGE C;
+
+CREATE FUNCTION test_dsa_allocate(int, int, int)
+	RETURNS pg_catalog.void
+	AS 'MODULE_PATHNAME' LANGUAGE C;
