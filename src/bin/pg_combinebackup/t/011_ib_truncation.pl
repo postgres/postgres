@@ -1,7 +1,8 @@
 # Copyright (c) 2025-2026, PostgreSQL Global Development Group
 #
-# This test aims to validate that the calculated truncation block never exceeds
-# the segment size.
+# This test aims to validate two things: (1) that the calculated truncation
+# block never exceeds the segment size and (2) that the correct limit block
+# length is calculated for the VM fork.
 
 use strict;
 use warnings FATAL => 'all';
@@ -39,7 +40,7 @@ $primary->safe_psql(
     CREATE TABLE t (
         id int,
         data text STORAGE PLAIN
-    );
+    ) WITH (autovacuum_enabled = false);
 });
 
 # The tuple size should be enough to prevent two tuples from being on the same
@@ -82,6 +83,23 @@ cmp_ok($t_blocks, '>', $target_blocks,
 # Take an incremental backup based on the full backup manifest
 $primary->backup('incr',
 	backup_options => [ '--incremental', "$full_backup/backup_manifest" ]);
+
+# We used to have a bug where the wrong limit block was calculated for the
+# VM fork, so verify that the WAL summary records the correct VM fork
+# truncation limit. We can't just check whether the restored VM fork is
+# the right size on disk, because it's so small that the incremental backup
+# code will send the entire file.
+my $relfilenode = $primary->safe_psql('postgres',
+	"SELECT pg_relation_filenode('t');");
+my $vm_limits = $primary->safe_psql('postgres',
+	"SELECT string_agg(relblocknumber::text, ',')
+	   FROM pg_available_wal_summaries() s,
+	        pg_wal_summary_contents(s.tli, s.start_lsn, s.end_lsn) c
+	  WHERE c.relfilenode = $relfilenode
+	    AND c.relforknumber = 2
+	    AND c.is_limit_block;");
+is($vm_limits, '1',
+	'WAL summary has correct VM fork truncation limit');
 
 # Combine full and incremental backups.  Before the fix, this failed because
 # the INCREMENTAL file header contained an incorrect truncation_block value.
