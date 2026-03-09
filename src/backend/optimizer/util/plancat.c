@@ -57,9 +57,6 @@
 /* GUC parameter */
 int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 
-/* Hook for plugins to get control in get_relation_info() */
-get_relation_info_hook_type get_relation_info_hook = NULL;
-
 typedef struct NotnullHashEntry
 {
 	Oid			relid;			/* OID of the relation */
@@ -571,17 +568,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 		set_relation_partition_info(root, rel, relation);
 
 	table_close(relation, NoLock);
-
-	/*
-	 * Allow a plugin to editorialize on the info we obtained from the
-	 * catalogs.  Actions might include altering the assumed relation size,
-	 * removing an index, or adding a hypothetical index to the indexlist.
-	 *
-	 * An extension can also modify rel->pgs_mask here to control path
-	 * generation.
-	 */
-	if (get_relation_info_hook)
-		(*get_relation_info_hook) (root, relationObjectId, inhparent, rel);
 }
 
 /*

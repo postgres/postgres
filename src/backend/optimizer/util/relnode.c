@@ -47,6 +47,9 @@ typedef struct JoinHashEntry
 	RelOptInfo *join_rel;
 } JoinHashEntry;
 
+/* Hook for plugins to get control in build_simple_rel() */
+build_simple_rel_hook_type build_simple_rel_hook = NULL;
+
 /* Hook for plugins to get control during joinrel setup */
 joinrel_setup_hook_type joinrel_setup_hook = NULL;
 
@@ -393,6 +396,18 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 				 (int) rte->rtekind);
 			break;
 	}
+
+	/*
+	 * Allow a plugin to editorialize on the new RelOptInfo. This could
+	 * involve editorializing on the information which get_relation_info
+	 * obtained from the catalogs, such as altering the assumed relation size,
+	 * removing an index, or adding a hypothetical index to the indexlist.
+	 *
+	 * An extension can also modify rel->pgs_mask here to control path
+	 * generation.
+	 */
+	if (build_simple_rel_hook)
+		(*build_simple_rel_hook) (root, rel, rte);
 
 	/*
 	 * Apply the parent's quals to the child, with appropriate substitution of
