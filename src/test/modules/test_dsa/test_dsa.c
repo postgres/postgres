@@ -16,6 +16,7 @@
 #include "storage/dsm_registry.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
+#include "utils/freepage.h"
 #include "utils/resowner.h"
 
 PG_MODULE_MAGIC;
@@ -117,6 +118,45 @@ test_dsa_resowners(PG_FUNCTION_ARGS)
 	ResourceOwnerDelete(childowner);
 
 	dsa_detach(a);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * test_dsa_allocate
+ *
+ * Test DSA allocation across a range of sizes to exercise the pagemap
+ * sizing logic in make_new_segment().  A fresh DSA is created for each
+ * iteration so that each allocation triggers a new segment creation,
+ * including the odd-sized segment path.
+ */
+PG_FUNCTION_INFO_V1(test_dsa_allocate);
+Datum
+test_dsa_allocate(PG_FUNCTION_ARGS)
+{
+	int			start_num_pages = PG_GETARG_INT32(0);
+	int			end_num_pages = PG_GETARG_INT32(1);
+	int			step = PG_GETARG_INT32(2);
+	size_t		usable_pages;
+	int		   *tranche_id;
+	bool		found;
+	dsa_area   *a;
+	dsa_pointer dp;
+
+	if (start_num_pages > end_num_pages)
+		elog(ERROR, "incorrect start and end parameters");
+
+	tranche_id = GetNamedDSMSegment("test_dsa", sizeof(int),
+									init_tranche, &found, NULL);
+
+	for (usable_pages = start_num_pages; usable_pages < end_num_pages; usable_pages += step)
+	{
+		a = dsa_create(*tranche_id);
+		dp = dsa_allocate(a, usable_pages * FPM_PAGE_SIZE);
+
+		dsa_free(a, dp);
+		dsa_detach(a);
+	}
 
 	PG_RETURN_VOID();
 }

@@ -2196,6 +2196,8 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 	/* See if that is enough... */
 	if (requested_pages > usable_pages)
 	{
+		size_t		total_requested_pages PG_USED_FOR_ASSERTS_ONLY;
+
 		/*
 		 * We'll make an odd-sized segment, working forward from the requested
 		 * number of pages.
@@ -2206,10 +2208,37 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 			MAXALIGN(sizeof(FreePageManager)) +
 			usable_pages * sizeof(dsa_pointer);
 
+		/*
+		 * We must also account for pagemap entries needed to cover the
+		 * metadata pages themselves.  The pagemap must track all pages in the
+		 * segment, including the pages occupied by metadata.
+		 *
+		 * This formula uses integer ceiling division to compute the exact
+		 * number of additional entries needed.  The divisor (FPM_PAGE_SIZE -
+		 * sizeof(dsa_pointer)) accounts for the fact that each metadata page
+		 * consumes one pagemap entry of sizeof(dsa_pointer) bytes, leaving
+		 * only (FPM_PAGE_SIZE - sizeof(dsa_pointer)) net bytes per metadata
+		 * page.
+		 */
+		metadata_bytes +=
+			((metadata_bytes + (FPM_PAGE_SIZE - sizeof(dsa_pointer)) - 1) /
+			 (FPM_PAGE_SIZE - sizeof(dsa_pointer))) *
+			sizeof(dsa_pointer);
+
 		/* Add padding up to next page boundary. */
 		if (metadata_bytes % FPM_PAGE_SIZE != 0)
 			metadata_bytes += FPM_PAGE_SIZE - (metadata_bytes % FPM_PAGE_SIZE);
 		total_size = metadata_bytes + usable_pages * FPM_PAGE_SIZE;
+		total_requested_pages = total_size / FPM_PAGE_SIZE;
+
+		/*
+		 * Verify that we allocated enough pagemap entries for metadata and
+		 * usable pages.  This reverse-engineers the new calculation of
+		 * "metadata_bytes" done based on the new "requested_pages" for an
+		 * odd-sized segment.
+		 */
+		Assert((metadata_bytes - MAXALIGN(sizeof(dsa_segment_header)) -
+				MAXALIGN(sizeof(FreePageManager))) / sizeof(dsa_pointer) >= total_requested_pages);
 
 		/* Is that too large for dsa_pointer's addressing scheme? */
 		if (total_size > DSA_MAX_SEGMENT_SIZE)
