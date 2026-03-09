@@ -778,10 +778,9 @@ add_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
  *
  *	  Because we don't consider parameterized paths here, we also don't
  *	  need to consider the row counts as a measure of quality: every path will
- *	  produce the same number of rows.  Neither do we need to consider startup
- *	  costs: parallelism is only used for plans that will be run to completion.
- *	  Therefore, this routine is much simpler than add_path: it needs to
- *	  consider only disabled nodes, pathkeys and total cost.
+ *	  produce the same number of rows.  However, we do need to consider the
+ *	  startup costs: this partial path could be used beneath a Limit node,
+ *	  so a fast-start plan could be correct.
  *
  *	  As with add_path, we pfree paths that are found to be dominated by
  *	  another partial path; this requires that there be no other references to
@@ -819,52 +818,41 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 		/* Compare pathkeys. */
 		keyscmp = compare_pathkeys(new_path->pathkeys, old_path->pathkeys);
 
-		/* Unless pathkeys are incompatible, keep just one of the two paths. */
+		/*
+		 * Unless pathkeys are incompatible, see if one of the paths dominates
+		 * the other (both in startup and total cost). It may happen that one
+		 * path has lower startup cost, the other has lower total cost.
+		 */
 		if (keyscmp != PATHKEYS_DIFFERENT)
 		{
-			if (unlikely(new_path->disabled_nodes != old_path->disabled_nodes))
+			PathCostComparison costcmp;
+
+			/*
+			 * Do a fuzzy cost comparison with standard fuzziness limit.
+			 */
+			costcmp = compare_path_costs_fuzzily(new_path, old_path,
+												 STD_FUZZ_FACTOR);
+			if (costcmp == COSTS_BETTER1)
 			{
-				if (new_path->disabled_nodes > old_path->disabled_nodes)
-					accept_new = false;
-				else
-					remove_old = true;
-			}
-			else if (new_path->total_cost > old_path->total_cost
-					 * STD_FUZZ_FACTOR)
-			{
-				/* New path costs more; keep it only if pathkeys are better. */
-				if (keyscmp != PATHKEYS_BETTER1)
-					accept_new = false;
-			}
-			else if (old_path->total_cost > new_path->total_cost
-					 * STD_FUZZ_FACTOR)
-			{
-				/* Old path costs more; keep it only if pathkeys are better. */
 				if (keyscmp != PATHKEYS_BETTER2)
 					remove_old = true;
 			}
-			else if (keyscmp == PATHKEYS_BETTER1)
+			else if (costcmp == COSTS_BETTER2)
 			{
-				/* Costs are about the same, new path has better pathkeys. */
-				remove_old = true;
+				if (keyscmp != PATHKEYS_BETTER1)
+					accept_new = false;
 			}
-			else if (keyscmp == PATHKEYS_BETTER2)
+			else if (costcmp == COSTS_EQUAL)
 			{
-				/* Costs are about the same, old path has better pathkeys. */
-				accept_new = false;
-			}
-			else if (old_path->total_cost > new_path->total_cost * 1.0000000001)
-			{
-				/* Pathkeys are the same, and the old path costs more. */
-				remove_old = true;
-			}
-			else
-			{
-				/*
-				 * Pathkeys are the same, and new path isn't materially
-				 * cheaper.
-				 */
-				accept_new = false;
+				if (keyscmp == PATHKEYS_BETTER1)
+					remove_old = true;
+				else if (keyscmp == PATHKEYS_BETTER2)
+					accept_new = false;
+				else if (compare_path_costs_fuzzily(new_path, old_path,
+													1.0000000001) == COSTS_BETTER1)
+					remove_old = true;
+				else
+					accept_new = false;
 			}
 		}
 
@@ -915,16 +903,16 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
  * add_partial_path_precheck
  *	  Check whether a proposed new partial path could possibly get accepted.
  *
- * Unlike add_path_precheck, we can ignore startup cost and parameterization,
- * since they don't matter for partial paths (see add_partial_path).  But
- * we do want to make sure we don't add a partial path if there's already
- * a complete path that dominates it, since in that case the proposed path
- * is surely a loser.
+ * Unlike add_path_precheck, we can ignore parameterization, since it doesn't
+ * matter for partial paths (see add_partial_path).  But we do want to make
+ * sure we don't add a partial path if there's already a complete path that
+ * dominates it, since in that case the proposed path is surely a loser.
  */
 bool
 add_partial_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
-						  Cost total_cost, List *pathkeys)
+						  Cost startup_cost, Cost total_cost, List *pathkeys)
 {
+	bool		consider_startup = parent_rel->consider_startup;
 	ListCell   *p1;
 
 	/*
@@ -934,25 +922,81 @@ add_partial_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
 	 * is clearly superior to some existing partial path -- at least, modulo
 	 * final cost computations.  If so, we definitely want to consider it.
 	 *
-	 * Unlike add_path(), we always compare pathkeys here.  This is because we
-	 * expect partial_pathlist to be very short, and getting a definitive
-	 * answer at this stage avoids the need to call add_path_precheck.
+	 * Unlike add_path(), we never try to exit this loop early. This is
+	 * because we expect partial_pathlist to be very short, and getting a
+	 * definitive answer at this stage avoids the need to call
+	 * add_path_precheck.
 	 */
 	foreach(p1, parent_rel->partial_pathlist)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
+		PathCostComparison costcmp;
 		PathKeysComparison keyscmp;
 
-		keyscmp = compare_pathkeys(pathkeys, old_path->pathkeys);
-		if (keyscmp != PATHKEYS_DIFFERENT)
+		/*
+		 * First, compare costs and disabled nodes. This logic should be
+		 * identical to compare_path_costs_fuzzily, except that one of the
+		 * paths hasn't been created yet, and the fuzz factor is always
+		 * STD_FUZZ_FACTOR.
+		 */
+		if (unlikely(old_path->disabled_nodes != disabled_nodes))
 		{
-			if (total_cost > old_path->total_cost * STD_FUZZ_FACTOR &&
-				keyscmp != PATHKEYS_BETTER1)
-				return false;
-			if (old_path->total_cost > total_cost * STD_FUZZ_FACTOR &&
-				keyscmp != PATHKEYS_BETTER2)
-				return true;
+			if (disabled_nodes < old_path->disabled_nodes)
+				costcmp = COSTS_BETTER1;
+			else
+				costcmp = COSTS_BETTER2;
 		}
+		else if (total_cost > old_path->total_cost * STD_FUZZ_FACTOR)
+		{
+			if (consider_startup &&
+				old_path->startup_cost > startup_cost * STD_FUZZ_FACTOR)
+				costcmp = COSTS_DIFFERENT;
+			else
+				costcmp = COSTS_BETTER2;
+		}
+		else if (old_path->total_cost > total_cost * STD_FUZZ_FACTOR)
+		{
+			if (consider_startup &&
+				startup_cost > old_path->startup_cost * STD_FUZZ_FACTOR)
+				costcmp = COSTS_DIFFERENT;
+			else
+				costcmp = COSTS_BETTER1;
+		}
+		else if (startup_cost > old_path->startup_cost * STD_FUZZ_FACTOR)
+			costcmp = COSTS_BETTER2;
+		else if (old_path->startup_cost > startup_cost * STD_FUZZ_FACTOR)
+			costcmp = COSTS_BETTER1;
+		else
+			costcmp = COSTS_EQUAL;
+
+		/*
+		 * If one path wins on startup cost and the other on total cost, we
+		 * can't say for sure which is better.
+		 */
+		if (costcmp == COSTS_DIFFERENT)
+			continue;
+
+		/*
+		 * If the two paths have different pathkeys, we can't say for sure
+		 * which is better.
+		 */
+		keyscmp = compare_pathkeys(pathkeys, old_path->pathkeys);
+		if (keyscmp == PATHKEYS_DIFFERENT)
+			continue;
+
+		/*
+		 * If the existing path is cheaper and the pathkeys are equal or
+		 * worse, the new path is not interesting.
+		 */
+		if (costcmp == COSTS_BETTER2 && keyscmp != PATHKEYS_BETTER1)
+			return false;
+
+		/*
+		 * If the new path is cheaper and the pathkeys are equal or better, it
+		 * is definitely interesting.
+		 */
+		if (costcmp == COSTS_BETTER1 && keyscmp != PATHKEYS_BETTER2)
+			return true;
 	}
 
 	/*
@@ -960,14 +1004,9 @@ add_partial_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
 	 * clearly good enough that it might replace one.  Compare it to
 	 * non-parallel plans.  If it loses even before accounting for the cost of
 	 * the Gather node, we should definitely reject it.
-	 *
-	 * Note that we pass the total_cost to add_path_precheck twice.  This is
-	 * because it's never advantageous to consider the startup cost of a
-	 * partial path; the resulting plans, if run in parallel, will be run to
-	 * completion.
 	 */
-	if (!add_path_precheck(parent_rel, disabled_nodes, total_cost, total_cost,
-						   pathkeys, NULL))
+	if (!add_path_precheck(parent_rel, disabled_nodes, startup_cost,
+						   total_cost, pathkeys, NULL))
 		return false;
 
 	return true;

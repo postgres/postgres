@@ -55,7 +55,7 @@ extern bool add_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
 							  List *pathkeys, Relids required_outer);
 extern void add_partial_path(RelOptInfo *parent_rel, Path *new_path);
 extern bool add_partial_path_precheck(RelOptInfo *parent_rel,
-									  int disabled_nodes,
+									  int disabled_nodes, Cost startup_cost,
 									  Cost total_cost, List *pathkeys);
 
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
