@@ -826,52 +826,39 @@ main(int argc, char **argv)
 	if (dopt.column_inserts && dopt.dump_inserts == 0)
 		dopt.dump_inserts = DUMP_DEFAULT_ROWS_PER_INSERT;
 
-	/* reject conflicting "-only" options */
-	if (data_only && schema_only)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", "-a/--data-only");
-	if (schema_only && statistics_only)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", "--statistics-only");
-	if (data_only && statistics_only)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-a/--data-only", "--statistics-only");
+	/* *-only options are incompatible with each other */
+	check_mut_excl_opts(data_only, "-a/--data-only",
+						schema_only, "-s/--schema-only",
+						statistics_only, "--statistics-only");
 
-	/* reject conflicting "-only" and "no-" options */
-	if (data_only && no_data)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-a/--data-only", "--no-data");
-	if (schema_only && no_schema)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", "--no-schema");
-	if (statistics_only && no_statistics)
-		pg_fatal("options %s and %s cannot be used together",
-				 "--statistics-only", "--no-statistics");
+	/* --no-* and *-only for same thing are incompatible */
+	check_mut_excl_opts(data_only, "-a/--data-only",
+						no_data, "--no-data");
+	check_mut_excl_opts(schema_only, "-s/--schema-only",
+						no_schema, "--no-schema");
+	check_mut_excl_opts(statistics_only, "--statistics-only",
+						no_statistics, "--no-statistics");
 
-	/* reject conflicting "no-" options */
-	if (with_statistics && no_statistics)
-		pg_fatal("options %s and %s cannot be used together",
-				 "--statistics", "--no-statistics");
+	/* --statistics and --no-statistics are incompatible */
+	check_mut_excl_opts(with_statistics, "--statistics",
+						no_statistics, "--no-statistics");
 
-	/* reject conflicting "-only" options */
-	if (data_only && with_statistics)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-a/--data-only", "--statistics");
-	if (schema_only && with_statistics)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", "--statistics");
+	/* --statistics is incompatible with *-only (except --statistics-only) */
+	check_mut_excl_opts(with_statistics, "--statistics",
+						data_only, "-a/--data-only",
+						schema_only, "-s/--schema-only");
 
-	if (schema_only && foreign_servers_include_patterns.head != NULL)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", "--include-foreign-data");
+	/* --include-foreign-data is incompatible with --schema-only */
+	check_mut_excl_opts(foreign_servers_include_patterns.head, "--include-foreign-data",
+						schema_only, "-s/--schema-only");
 
 	if (numWorkers > 1 && foreign_servers_include_patterns.head != NULL)
 		pg_fatal("option %s is not supported with parallel backup",
 				 "--include-foreign-data");
 
-	if (data_only && dopt.outputClean)
-		pg_fatal("options %s and %s cannot be used together",
-				 "-c/--clean", "-a/--data-only");
+	/* --clean is incompatible with --data-only */
+	check_mut_excl_opts(dopt.outputClean, "-c/--clean",
+						data_only, "-a/--data-only");
 
 	if (dopt.if_exists && !dopt.outputClean)
 		pg_fatal("option %s requires option %s",

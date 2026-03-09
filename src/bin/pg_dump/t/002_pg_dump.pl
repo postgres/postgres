@@ -5077,8 +5077,8 @@ command_fails_like(
 		'--schema-only',
 		'--statistics',
 	],
-	qr/\Qpg_dump: error: options -s\/--schema-only and --statistics cannot be used together\E/,
-	'cannot use --schema-only and --statistics together');
+	qr/\Qpg_dump: error: options --statistics and -s\/--schema-only cannot be used together\E/,
+	'cannot use --statistics and --schema-only together');
 
 command_fails_like(
 	[

@@ -421,7 +421,7 @@ main(int argc, char *argv[])
 		exit_nicely(1);
 	}
 
-	/* --exclude_database is incompatible with global *-only options */
+	/* --exclude-database is incompatible with global *-only options */
 	check_mut_excl_opts(database_exclude_patterns.head, "--exclude-database",
 						globals_only, "-g/--globals-only",
 						roles_only, "-r/--roles-only",

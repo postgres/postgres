@@ -46,8 +46,8 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_dump', '-s', '-a' ],
-	qr/\Qpg_dump: error: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
-	'pg_dump: options -s/--schema-only and -a/--data-only cannot be used together'
+	qr/\Qpg_dump: error: options -a\/--data-only and -s\/--schema-only cannot be used together\E/,
+	'pg_dump: options -a/--data-only and -s/--schema-only cannot be used together'
 );
 
 command_fails_like(
@@ -64,8 +64,8 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_dump', '-s', '--include-foreign-data=xxx' ],
-	qr/\Qpg_dump: error: options -s\/--schema-only and --include-foreign-data cannot be used together\E/,
-	'pg_dump: options -s/--schema-only and --include-foreign-data cannot be used together'
+	qr/\Qpg_dump: error: options --include-foreign-data and -s\/--schema-only cannot be used together\E/,
+	'pg_dump: options --include-foreign-data and -s/--schema-only cannot be used together'
 );
 
 command_fails_like(
@@ -87,8 +87,8 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_restore', '-s', '-a', '-f -' ],
-	qr/\Qpg_restore: error: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
-	'pg_restore: options -s/--schema-only and -a/--data-only cannot be used together'
+	qr/\Qpg_restore: error: options -a\/--data-only and -s\/--schema-only cannot be used together\E/,
+	'pg_restore: options -a/--data-only and -s/--schema-only cannot be used together'
 );
 
 command_fails_like(
@@ -300,8 +300,8 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_restore', '--exclude-database=foo', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: option --exclude-database cannot be used together with -g\/--globals-only\E/,
-	'pg_restore: option --exclude-database cannot be used together with -g/--globals-only'
+	qr/\Qpg_restore: error: options --exclude-database and -g\/--globals-only cannot be used together\E/,
+	'pg_restore: options --exclude-database and -g/--globals-only cannot be used together'
 );
 
 command_fails_like(
@@ -312,14 +312,14 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_restore', '--schema-only', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: options -s\/--schema-only and -g\/--globals-only cannot be used together\E/,
-	'pg_restore: error: options -s/--schema-only and -g/--globals-only cannot be used together'
+	qr/\Qpg_restore: error: options -g\/--globals-only and -s\/--schema-only cannot be used together\E/,
+	'pg_restore: error: options -g/--globals-only and -s/--schema-only cannot be used together'
 );
 
 command_fails_like(
 	[ 'pg_restore', '--statistics-only', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: options --statistics-only and -g\/--globals-only cannot be used together\E/,
-	'pg_restore: error: options --statistics-only and -g/--globals-only cannot be used together'
+	qr/\Qpg_restore: error: options -g\/--globals-only and --statistics-only cannot be used together\E/,
+	'pg_restore: error: options -g/--globals-only and --statistics-only cannot be used together'
 );
 
 command_fails_like(
@@ -339,6 +339,6 @@ command_fails_like(
 		'pg_restore', '--globals-only', '--no-globals', '-d', 'xxx',
 		'dumpdir'
 	],
-	qr/\Qpg_restore: error: options --no-globals and -g\/--globals-only cannot be used together\E/,
+	qr/\Qpg_restore: error: options -g\/--globals-only and --no-globals cannot be used together\E/,
 	'options --no-globals and --globals-only cannot be used together');
 done_testing();

@@ -520,7 +520,7 @@ $node->command_fails_like(
 		'--schema-only',
 		'--file' => "$tempdir/error_test.sql",
 	],
-	qr/\Qpg_restore: error: options -s\/--schema-only and -g\/--globals-only cannot be used together\E/,
+	qr/\Qpg_restore: error: options -g\/--globals-only and -s\/--schema-only cannot be used together\E/,
 	'When --globals-only and --schema-only are used together');
 
 # report an error when --globals-only and --statistics-only are used together
@@ -533,7 +533,7 @@ $node->command_fails_like(
 		'--statistics-only',
 		'--file' => "$tempdir/error_test.sql",
 	],
-	qr/\Qpg_restore: error: options --statistics-only and -g\/--globals-only cannot be used together\E/,
+	qr/\Qpg_restore: error: options -g\/--globals-only and --statistics-only cannot be used together\E/,
 	'When --globals-only and --statistics-only are used together');
 
 # report an error when --globals-only and --statistics are used together
@@ -572,7 +572,7 @@ $node->command_fails_like(
 		'--single-transaction',
 		'--file' => "$tempdir/error_test.sql",
 	],
-	qr/\Qpg_restore: error: options --single-transaction and -g\/--globals-only cannot be used together\E/,
+	qr/\Qpg_restore: error: options -g\/--globals-only and -1\/--single-transaction cannot be used together\E/,
 	'When --globals-only and --single-transaction are used together');
 
 # report an error when --globals-only and --transaction-size are used together
@@ -585,7 +585,7 @@ $node->command_fails_like(
 		'--transaction-size' => '100',
 		'--file' => "$tempdir/error_test.sql",
 	],
-	qr/\Qpg_restore: error: options --transaction-size and -g\/--globals-only cannot be used together\E/,
+	qr/\Qpg_restore: error: options -g\/--globals-only and --transaction-size cannot be used together\E/,
 	'When --globals-only and --transaction-size are used together');
 
 # verify map.dat preamble exists
