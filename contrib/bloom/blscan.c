@@ -18,6 +18,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
+#include "storage/read_stream.h"
 
 /*
  * Begin scan of bloom index.
@@ -76,11 +77,13 @@ int64
 blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 {
 	int64		ntids = 0;
-	BlockNumber blkno = BLOOM_HEAD_BLKNO,
+	BlockNumber blkno,
 				npages;
 	int			i;
 	BufferAccessStrategy bas;
 	BloomScanOpaque so = (BloomScanOpaque) scan->opaque;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream;
 
 	if (so->sign == NULL)
 	{
@@ -120,14 +123,29 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	if (scan->instrument)
 		scan->instrument->nsearches++;
 
+	/* Scan all blocks except the metapage using streaming reads */
+	p.current_blocknum = BLOOM_HEAD_BLKNO;
+	p.last_exclusive = npages;
+
+	/*
+	 * It is safe to use batchmode as block_range_read_stream_cb takes no
+	 * locks.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_FULL |
+										READ_STREAM_USE_BATCHING,
+										bas,
+										scan->indexRelation,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
+
 	for (blkno = BLOOM_HEAD_BLKNO; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
 		Page		page;
 
-		buffer = ReadBufferExtended(scan->indexRelation, MAIN_FORKNUM,
-									blkno, RBM_NORMAL, bas);
-
+		buffer = read_stream_next_buffer(stream, NULL);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buffer);
 
@@ -163,6 +181,9 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		UnlockReleaseBuffer(buffer);
 		CHECK_FOR_INTERRUPTS();
 	}
+
+	Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+	read_stream_end(stream);
 	FreeAccessStrategy(bas);
 
 	return ntids;
