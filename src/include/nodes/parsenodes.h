@@ -3983,18 +3983,6 @@ typedef struct AlterSystemStmt
 } AlterSystemStmt;
 
 /* ----------------------
- *		Cluster Statement (support pbrown's cluster index implementation)
- * ----------------------
- */
-typedef struct ClusterStmt
-{
-	NodeTag		type;
-	RangeVar   *relation;		/* relation being indexed, or NULL if all */
-	char	   *indexname;		/* original index defined */
-	List	   *params;			/* list of DefElem nodes */
-} ClusterStmt;
-
-/* ----------------------
  *		Vacuum and Analyze Statements
  *
  * Even though these are nominally two statements, it's convenient to use
@@ -4006,7 +3994,7 @@ typedef struct VacuumStmt
 	NodeTag		type;
 	List	   *options;		/* list of DefElem nodes */
 	List	   *rels;			/* list of VacuumRelation, or NIL for all */
-	bool		is_vacuumcmd;	/* true for VACUUM, false for ANALYZE */
+	bool		is_vacuumcmd;	/* true for VACUUM, false otherwise */
 } VacuumStmt;
 
 /*
@@ -4023,6 +4011,27 @@ typedef struct VacuumRelation
 	Oid			oid;			/* table's OID; InvalidOid if not looked up */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumRelation;
+
+/* ----------------------
+ *		Repack Statement
+ * ----------------------
+ */
+typedef enum RepackCommand
+{
+	REPACK_COMMAND_CLUSTER = 1,
+	REPACK_COMMAND_REPACK,
+	REPACK_COMMAND_VACUUMFULL,
+} RepackCommand;
+
+typedef struct RepackStmt
+{
+	NodeTag		type;
+	RepackCommand command;		/* type of command being run */
+	VacuumRelation *relation;	/* relation being repacked */
+	char	   *indexname;		/* order tuples by this index */
+	bool		usingindex;		/* whether USING INDEX is specified */
+	List	   *params;			/* list of DefElem nodes */
+} RepackStmt;
 
 /* ----------------------
  *		Explain Statement

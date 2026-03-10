@@ -1,0 +1,330 @@
+<!--
+doc/src/sgml/ref/repack.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-repack">
+ <indexterm zone="sql-repack">
+  <primary>REPACK</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>REPACK</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>REPACK</refname>
+  <refpurpose>rewrite a table to reclaim disk space</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <replaceable class="parameter">table_and_columns</replaceable> [ USING INDEX [ <replaceable class="parameter">index_name</replaceable> ] ] ]
+REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING INDEX
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
+
+    VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
+    ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
+
+<phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
+
+    <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>REPACK</command> reclaims storage occupied by dead
+   tuples. Unlike <command>VACUUM</command>, it does so by rewriting the
+   entire contents of the table specified
+   by <replaceable class="parameter">table_name</replaceable> into a new disk
+   file with no extra space (except for the space guaranteed by
+   the <literal>fillfactor</literal> storage parameter), allowing unused space
+   to be returned to the operating system.
+  </para>
+
+  <para>
+   Without
+   a <replaceable class="parameter">table_name</replaceable>, <command>REPACK</command>
+   processes every table and materialized view in the current database that
+   the current user has the <literal>MAINTAIN</literal> privilege on. This
+   form of <command>REPACK</command> cannot be executed inside a transaction
+   block.
+  </para>
+
+  <para>
+   If a <literal>USING INDEX</literal> clause is specified, the rows are
+   physically reordered based on information from an index.  Please see the
+   notes on clustering below.
+  </para>
+
+  <para>
+   When a table is being repacked, an <literal>ACCESS EXCLUSIVE</literal> lock
+   is acquired on it. This prevents any other database operations (both reads
+   and writes) from operating on the table until the <command>REPACK</command>
+   is finished.
+  </para>
+
+  <refsect2 id="sql-repack-notes-on-clustering" xreflabel="Notes on Clustering">
+   <title>Notes on Clustering</title>
+
+   <para>
+    If the <literal>USING INDEX</literal> clause is specified, the rows in
+    the table are stored in the order that the index specifies;
+    <firstterm>clustering</firstterm>, because rows are physically clustered
+    afterwards.
+    If an index name is specified in the command, the order implied by that
+    index is used, and that index is configured as the index to cluster on.
+    (This also applies to an index given to the <command>CLUSTER</command>
+    command.)
+    If no index name is specified, then the index that has
+    been configured as the index to cluster on is used; an
+    error is thrown if none has.
+    An index can be set manually using <command>ALTER TABLE ... CLUSTER ON</command>,
+    and reset with <command>ALTER TABLE ... SET WITHOUT CLUSTER</command>.
+   </para>
+
+   <para>
+    If no table name is specified in <command>REPACK USING INDEX</command>,
+    all tables which have a clustering index defined and which the calling
+    user has privileges for are processed.
+   </para>
+
+   <para>
+    Clustering is a one-time operation: when the table is
+    subsequently updated, the changes are not clustered.  That is, no attempt
+    is made to store new or updated rows according to their index order.  (If
+    one wishes, one can periodically recluster by issuing the command again.
+    Also, setting the table's <literal>fillfactor</literal> storage parameter
+    to less than 100% can aid in preserving cluster ordering during updates,
+    since updated rows are kept on the same page if enough space is available
+    there.)
+   </para>
+
+   <para>
+    In cases where you are accessing single rows randomly within a table, the
+    actual order of the data in the table is unimportant. However, if you tend
+    to access some data more than others, and there is an index that groups
+    them together, you will benefit from using clustering.  If
+    you are requesting a range of indexed values from a table, or a single
+    indexed value that has multiple rows that match,
+    clustering will help because once the index identifies the
+    table page for the first row that matches, all other rows that match are
+    probably already on the same table page, and so you save disk accesses and
+    speed up the query.
+   </para>
+
+   <para>
+    <command>REPACK</command> can re-sort the table using either an index scan
+    on the specified index (if the index is a b-tree), or a sequential scan
+    followed by sorting.  It will attempt to choose the method that will be
+    faster, based on planner cost parameters and available statistical
+    information.
+   </para>
+
+   <para>
+    Because the planner records statistics about the ordering of tables, it is
+    advisable to
+    run <link linkend="sql-analyze"><command>ANALYZE</command></link> on the
+    newly repacked table.  Otherwise, the planner might make poor choices of
+    query plans.
+   </para>
+  </refsect2>
+
+  <refsect2 id="sql-repack-notes-on-resources" xreflabel="Notes on Resources">
+   <title>Notes on Resources</title>
+
+   <para>
+    When an index scan or a sequential scan without sort is used, a temporary
+    copy of the table is created that contains the table data in the index
+    order.  Temporary copies of each index on the table are created as well.
+    Therefore, you need free space on disk at least equal to the sum of the
+    table size and the index sizes.
+   </para>
+
+   <para>
+    When a sequential scan and sort is used, a temporary sort file is also
+    created, so that the peak temporary space requirement is as much as double
+    the table size, plus the index sizes.  This method is often faster than
+    the index scan method, but if the disk space requirement is intolerable,
+    you can disable this choice by temporarily setting
+    <xref linkend="guc-enable-sort"/> to <literal>off</literal>.
+   </para>
+
+   <para>
+    It is advisable to set <xref linkend="guc-maintenance-work-mem"/> to a
+    reasonably large value (but not more than the amount of RAM you can
+    dedicate to the <command>REPACK</command> operation) before repacking.
+   </para>
+  </refsect2>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (possibly schema-qualified) of a table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a specific column to analyze. Defaults to all columns.
+      If a column list is specific, <literal>ANALYZE</literal> must also
+      be specified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">index_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an index.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VERBOSE</literal></term>
+    <listitem>
+     <para>
+      Prints a progress report as each table is repacked
+      at <literal>INFO</literal> level.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ANALYZE</literal></term>
+    <term><literal>ANALYSE</literal></term>
+    <listitem>
+     <para>
+      Applies <xref linkend="sql-analyze"/> on the table after repacking.  This is
+      currently only supported when a single (non-partitioned) table is specified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">boolean</replaceable></term>
+    <listitem>
+     <para>
+      Specifies whether the selected option should be turned on or off.
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
+      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
+      <replaceable class="parameter">boolean</replaceable> value can also
+      be omitted, in which case <literal>TRUE</literal> is assumed.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+   <para>
+    To repack a table, one must have the <literal>MAINTAIN</literal> privilege
+    on the table.
+   </para>
+
+   <para>
+    While <command>REPACK</command> is running, the <xref
+    linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+    pg_temp</literal>.
+   </para>
+
+  <para>
+    Each backend running <command>REPACK</command> will report its progress
+    in the <structname>pg_stat_progress_repack</structname> view. See
+    <xref linkend="repack-progress-reporting"/> for details.
+  </para>
+
+   <para>
+    Repacking a partitioned table repacks each of its partitions. If an index
+    is specified, each partition is repacked using the partition of that
+    index. <command>REPACK</command> on a partitioned table cannot be executed
+    inside a transaction block.
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Repack the table <literal>employees</literal>:
+<programlisting>
+REPACK employees;
+</programlisting>
+  </para>
+
+  <para>
+   Repack the table <literal>employees</literal> on the basis of its
+   index <literal>employees_ind</literal> (Since index is used here, this is
+   effectively clustering):
+<programlisting>
+REPACK employees USING INDEX employees_ind;
+</programlisting>
+  </para>
+
+  <para>
+   Repack the table <literal>cases</literal> on physical ordering,
+   running an <command>ANALYZE</command> on the given columns once
+   repacking is done, showing informational messages:
+<programlisting>
+REPACK (ANALYZE, VERBOSE) cases (district, case_nr);
+</programlisting>
+  </para>
+
+  <para>
+   Repack all tables in the database on which you have
+   the <literal>MAINTAIN</literal> privilege:
+<programlisting>
+REPACK;
+</programlisting>
+  </para>
+
+  <para>
+   Repack all tables for which a clustering index has previously been
+   configured on which you have the <literal>MAINTAIN</literal> privilege,
+   showing informational messages:
+<programlisting>
+REPACK (VERBOSE) USING INDEX;
+</programlisting>
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>REPACK</command> statement in the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="repack-progress-reporting"/></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

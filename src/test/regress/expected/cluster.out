@@ -495,6 +495,46 @@ ALTER TABLE clstrpart SET WITHOUT CLUSTER;
 ERROR:  cannot mark index clustered in partitioned table
 ALTER TABLE clstrpart CLUSTER ON clstrpart_idx;
 ERROR:  cannot mark index clustered in partitioned table
+-- and they cannot get an index-ordered REPACK without an explicit index name
+REPACK clstrpart USING INDEX;
+ERROR:  cannot execute REPACK on partitioned table "clstrpart" USING INDEX with no index name
+-- Check that REPACK sets new relfilenodes: it should process exactly the same
+-- tables as CLUSTER did.
+DROP TABLE old_cluster_info;
+DROP TABLE new_cluster_info;
+CREATE TEMP TABLE old_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+REPACK clstrpart USING INDEX clstrpart_idx;
+CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
+   relname   | level | relkind | ?column? 
+-------------+-------+---------+----------
+ clstrpart   |     0 | p       | t
+ clstrpart1  |     1 | p       | t
+ clstrpart11 |     2 | r       | f
+ clstrpart12 |     2 | p       | t
+ clstrpart2  |     1 | r       | f
+ clstrpart3  |     1 | p       | t
+ clstrpart33 |     2 | r       | f
+(7 rows)
+
+-- And finally the same for REPACK w/o index.
+DROP TABLE old_cluster_info;
+DROP TABLE new_cluster_info;
+CREATE TEMP TABLE old_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+REPACK clstrpart;
+CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
+   relname   | level | relkind | ?column? 
+-------------+-------+---------+----------
+ clstrpart   |     0 | p       | t
+ clstrpart1  |     1 | p       | t
+ clstrpart11 |     2 | r       | f
+ clstrpart12 |     2 | p       | t
+ clstrpart2  |     1 | r       | f
+ clstrpart3  |     1 | p       | t
+ clstrpart33 |     2 | r       | f
+(7 rows)
+
 DROP TABLE clstrpart;
 -- Ownership of partitions is checked
 CREATE TABLE ptnowner(i int unique) PARTITION BY LIST (i);
@@ -513,7 +553,7 @@ CREATE TEMP TABLE ptnowner_oldnodes AS
   JOIN pg_class AS c ON c.oid=tree.relid;
 SET SESSION AUTHORIZATION regress_ptnowner;
 CLUSTER ptnowner USING ptnowner_i_idx;
-WARNING:  permission denied to cluster "ptnowner2", skipping it
+WARNING:  permission denied to execute CLUSTER on "ptnowner2", skipping it
 RESET SESSION AUTHORIZATION;
 SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
   JOIN ptnowner_oldnodes b USING (oid) ORDER BY a.relname COLLATE "C";
@@ -665,6 +705,101 @@ SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
 (4 rows)
 
 COMMIT;
+----------------------------------------------------------------------
+--
+-- REPACK
+--
+----------------------------------------------------------------------
+-- REPACK handles individual tables identically to CLUSTER, but it's worth
+-- checking if it handles table hierarchies identically as well.
+REPACK clstr_tst USING INDEX clstr_tst_c;
+-- Verify that inheritance link still works
+INSERT INTO clstr_tst_inh VALUES (0, 100, 'in child table 2');
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
+ a  |  b  |        c         |           substring            | length 
+----+-----+------------------+--------------------------------+--------
+ 10 |  14 | catorce          |                                |       
+ 18 |   5 | cinco            |                                |       
+  9 |   4 | cuatro           |                                |       
+ 26 |  19 | diecinueve       |                                |       
+ 12 |  18 | dieciocho        |                                |       
+ 30 |  16 | dieciseis        |                                |       
+ 24 |  17 | diecisiete       |                                |       
+  2 |  10 | diez             |                                |       
+ 23 |  12 | doce             |                                |       
+ 11 |   2 | dos              |                                |       
+ 25 |   9 | nueve            |                                |       
+ 31 |   8 | ocho             |                                |       
+  1 |  11 | once             |                                |       
+ 28 |  15 | quince           |                                |       
+ 32 |   6 | seis             | xyzzyxyzzyxyzzyxyzzyxyzzyxyzzy | 500000
+ 29 |   7 | siete            |                                |       
+ 15 |  13 | trece            |                                |       
+ 22 |  30 | treinta          |                                |       
+ 17 |  32 | treinta y dos    |                                |       
+  3 |  31 | treinta y uno    |                                |       
+  5 |   3 | tres             |                                |       
+ 20 |   1 | uno              |                                |       
+  6 |  20 | veinte           |                                |       
+ 14 |  25 | veinticinco      |                                |       
+ 21 |  24 | veinticuatro     |                                |       
+  4 |  22 | veintidos        |                                |       
+ 19 |  29 | veintinueve      |                                |       
+ 16 |  28 | veintiocho       |                                |       
+ 27 |  26 | veintiseis       |                                |       
+ 13 |  27 | veintisiete      |                                |       
+  7 |  23 | veintitres       |                                |       
+  8 |  21 | veintiuno        |                                |       
+  0 | 100 | in child table   |                                |       
+  0 | 100 | in child table 2 |                                |       
+(34 rows)
+
+-- Verify that foreign key link still works
+INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
+ERROR:  insert or update on table "clstr_tst" violates foreign key constraint "clstr_tst_con"
+DETAIL:  Key (b)=(1111) is not present in table "clstr_tst_s".
+SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass
+ORDER BY 1;
+       conname        
+----------------------
+ clstr_tst_a_not_null
+ clstr_tst_con
+ clstr_tst_pkey
+(3 rows)
+
+-- Verify partial analyze works
+REPACK (ANALYZE) clstr_tst (a);
+REPACK (ANALYZE) clstr_tst;
+REPACK (VERBOSE) clstr_tst (a);
+ERROR:  ANALYZE option must be specified when a column list is provided
+-- REPACK w/o argument performs no ordering, so we can only check which tables
+-- have the relfilenode changed.
+RESET SESSION AUTHORIZATION;
+CREATE TEMP TABLE relnodes_old AS
+(SELECT relname, relfilenode
+FROM pg_class
+WHERE relname IN ('clstr_1', 'clstr_2', 'clstr_3'));
+SET SESSION AUTHORIZATION regress_clstr_user;
+SET client_min_messages = ERROR;  -- order of "skipping" warnings may vary
+REPACK;
+RESET client_min_messages;
+RESET SESSION AUTHORIZATION;
+CREATE TEMP TABLE relnodes_new AS
+(SELECT relname, relfilenode
+FROM pg_class
+WHERE relname IN ('clstr_1', 'clstr_2', 'clstr_3'));
+-- Do the actual comparison. Unlike CLUSTER, clstr_3 should have been
+-- processed because there is nothing like clustering index here.
+SELECT o.relname FROM relnodes_old o
+JOIN relnodes_new n ON o.relname = n.relname
+WHERE o.relfilenode <> n.relfilenode
+ORDER BY o.relname;
+ relname 
+---------
+ clstr_1
+ clstr_3
+(2 rows)
+
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;

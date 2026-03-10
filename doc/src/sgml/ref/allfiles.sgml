@@ -167,6 +167,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY refreshMaterializedView SYSTEM "refresh_materialized_view.sgml">
 <!ENTITY reindex            SYSTEM "reindex.sgml">
 <!ENTITY releaseSavepoint   SYSTEM "release_savepoint.sgml">
+<!ENTITY repack             SYSTEM "repack.sgml">
 <!ENTITY reset              SYSTEM "reset.sgml">
 <!ENTITY revoke             SYSTEM "revoke.sgml">
 <!ENTITY rollback           SYSTEM "rollback.sgml">

@@ -414,6 +414,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_progress_repack</structname><indexterm><primary>pg_stat_progress_repack</primary></indexterm></entry>
+      <entry>One row for each backend running
+       <command>REPACK</command>, showing current progress.  See
+       <xref linkend="repack-progress-reporting"/>.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_progress_basebackup</structname><indexterm><primary>pg_stat_progress_basebackup</primary></indexterm></entry>
       <entry>One row for each WAL sender process streaming a base backup,
        showing current progress.
@@ -5796,9 +5804,9 @@ FROM pg_stat_get_backend_idset() AS backendid;
    <productname>PostgreSQL</productname> has the ability to report the progress of
    certain commands during command execution.  Currently, the only commands
    which support progress reporting are <command>ANALYZE</command>,
-   <command>CLUSTER</command>,
-   <command>CREATE INDEX</command>, <command>VACUUM</command>,
-   <command>COPY</command>,
+   <command>COPY</command>, <command>CREATE INDEX</command>,
+   <command>REPACK</command> (and its obsolete spelling <command>CLUSTER</command>),
+   <command>VACUUM</command>,
    and <xref linkend="protocol-replication-base-backup"/> (i.e., replication
    command that <xref linkend="app-pgbasebackup"/> issues to take
    a base backup).
@@ -6729,6 +6737,218 @@ FROM pg_stat_get_backend_idset() AS backendid;
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="repack-progress-reporting">
+  <title>REPACK Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_repack</primary>
+  </indexterm>
+
+  <para>
+   Whenever <command>REPACK</command> is running,
+   the <structname>pg_stat_progress_repack</structname> view will contain a
+   row for each backend that is currently running the command.  The tables
+   below describe the information that will be reported and provide
+   information about how to interpret it.
+  </para>
+
+  <table id="pg-stat-progress-repack-view" xreflabel="pg_stat_progress_repack">
+   <title><structname>pg_stat_progress_repack</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table being repacked.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase. See <xref linkend="repack-phases"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>repack_index_relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       If the table is being scanned using an index, this is the OID of the
+       index being used; otherwise, it is zero.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap tuples scanned.
+       This counter only advances when the phase is
+       <literal>seq scanning heap</literal>,
+       <literal>index scanning heap</literal>
+       or <literal>writing new heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap tuples written.
+       This counter only advances when the phase is
+       <literal>seq scanning heap</literal>,
+       <literal>index scanning heap</literal>
+       or <literal>writing new heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of heap blocks in the table.  This number is reported
+       as of the beginning of <literal>seq scanning heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap blocks scanned.  This counter only advances when the
+       phase is <literal>seq scanning heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>index_rebuild_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of indexes rebuilt.  This counter only advances when the phase
+       is <literal>rebuilding index</literal>.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="repack-phases">
+   <title>REPACK Phases</title>
+   <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
+    <thead>
+    <row>
+      <entry>Phase</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><literal>initializing</literal></entry>
+     <entry>
+       The command is preparing to begin scanning the heap.  This phase is
+       expected to be very brief.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>seq scanning heap</literal></entry>
+     <entry>
+       The command is currently scanning the table using a sequential scan.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>index scanning heap</literal></entry>
+     <entry>
+       <command>REPACK</command> is currently scanning the table using an index scan.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>sorting tuples</literal></entry>
+     <entry>
+       <command>REPACK</command> is currently sorting tuples.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>writing new heap</literal></entry>
+     <entry>
+       <command>REPACK</command> is currently writing the new heap.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>swapping relation files</literal></entry>
+     <entry>
+       The command is currently swapping newly-built files into place.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>rebuilding index</literal></entry>
+     <entry>
+       The command is currently rebuilding an index.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>performing final cleanup</literal></entry>
+     <entry>
+       The command is performing final cleanup.  When this phase is
+       completed, <command>REPACK</command> will end.
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
  </sect2>
 
  <sect2 id="vacuum-progress-reporting">

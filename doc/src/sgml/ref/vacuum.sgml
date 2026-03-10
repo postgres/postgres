@@ -25,7 +25,6 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
-    FULL [ <replaceable class="parameter">boolean</replaceable> ]
     FREEZE [ <replaceable class="parameter">boolean</replaceable> ]
     VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
     ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
@@ -39,6 +38,7 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
     SKIP_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
     ONLY_DATABASE_STATS [ <replaceable class="parameter">boolean</replaceable> ]
     BUFFER_USAGE_LIMIT <replaceable class="parameter">size</replaceable>
+    FULL [ <replaceable class="parameter">boolean</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -95,20 +95,6 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry>
-    <term><literal>FULL</literal></term>
-    <listitem>
-     <para>
-      Selects <quote>full</quote> vacuum, which can reclaim more
-      space, but takes much longer and exclusively locks the table.
-      This method also requires extra disk space, since it writes a
-      new copy of the table and doesn't release the old copy until
-      the operation is complete.  Usually this should only be used when a
-      significant amount of space needs to be reclaimed from within the table.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term><literal>FREEZE</literal></term>
     <listitem>
@@ -358,6 +344,23 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
       large a setting may cause too many other useful pages to be evicted from
       shared buffers.  The minimum value is <literal>128 kB</literal> and the
       maximum value is <literal>16 GB</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FULL</literal></term>
+    <listitem>
+     <para>
+      This option, which is deprecated, makes <command>VACUUM</command>
+      behave like <command>REPACK</command> without a
+      <literal>USING INDEX</literal> clause.
+      This method of compacting the table takes much longer than
+      <command>VACUUM</command> and exclusively locks the table.
+      This method also requires extra disk space, since it writes a
+      new copy of the table and doesn't release the old copy until
+      the operation is complete.  Usually this should only be used when a
+      significant amount of space needs to be reclaimed from within the table.
      </para>
     </listitem>
    </varlistentry>

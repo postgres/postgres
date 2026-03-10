@@ -24,6 +24,7 @@
 #define CLUOPT_RECHECK 0x02		/* recheck relation state */
 #define CLUOPT_RECHECK_ISCLUSTERED 0x04 /* recheck relation state for
 										 * indisclustered */
+#define CLUOPT_ANALYZE 0x08		/* do an ANALYZE */
 
 /* options for CLUSTER */
 typedef struct ClusterParams
@@ -31,8 +32,11 @@ typedef struct ClusterParams
 	bits32		options;		/* bitmask of CLUOPT_* */
 } ClusterParams;
 
-extern void cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel);
-extern void cluster_rel(Relation OldHeap, Oid indexOid, ClusterParams *params);
+
+extern void ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel);
+
+extern void cluster_rel(RepackCommand command, Relation OldHeap, Oid indexOid,
+						ClusterParams *params);
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
 									   LOCKMODE lockmode);
 extern void mark_index_clustered(Relation rel, Oid indexOid, bool is_internal);

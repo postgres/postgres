@@ -33,50 +33,9 @@ CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
   <title>Description</title>
 
   <para>
-   <command>CLUSTER</command> instructs <productname>PostgreSQL</productname>
-   to cluster the table specified
-   by <replaceable class="parameter">table_name</replaceable>
-   based on the index specified by
-   <replaceable class="parameter">index_name</replaceable>. The index must
-   already have been defined on
-   <replaceable class="parameter">table_name</replaceable>.
-  </para>
-
-  <para>
-   When a table is clustered, it is physically reordered
-   based on the index information. Clustering is a one-time operation:
-   when the table is subsequently updated, the changes are
-   not clustered.  That is, no attempt is made to store new or
-   updated rows according to their index order.  (If one wishes, one can
-   periodically recluster by issuing the command again.  Also, setting
-   the table's <literal>fillfactor</literal> storage parameter to less than
-   100% can aid in preserving cluster ordering during updates, since updated
-   rows are kept on the same page if enough space is available there.)
-  </para>
-
-  <para>
-   When a table is clustered, <productname>PostgreSQL</productname>
-   remembers which index it was clustered by.  The form
-   <command>CLUSTER <replaceable class="parameter">table_name</replaceable></command>
-   reclusters the table using the same index as before.  You can also
-   use the <literal>CLUSTER</literal> or <literal>SET WITHOUT CLUSTER</literal>
-   forms of <link linkend="sql-altertable"><command>ALTER TABLE</command></link> to set the index to be used for
-   future cluster operations, or to clear any previous setting.
-  </para>
-
-  <para>
-   <command>CLUSTER</command> without a
-   <replaceable class="parameter">table_name</replaceable> reclusters all the
-   previously-clustered tables in the current database that the calling user
-   has privileges for.  This form of <command>CLUSTER</command> cannot be
-   executed inside a transaction block.
-  </para>
-
-  <para>
-   When a table is being clustered, an <literal>ACCESS
-   EXCLUSIVE</literal> lock is acquired on it. This prevents any other
-   database operations (both reads and writes) from operating on the
-   table until the <command>CLUSTER</command> is finished.
+   The <command>CLUSTER</command> command is equivalent to
+   <xref linkend="sql-repack"/> with an <literal>USING INDEX</literal>
+   clause.  See there for more details.
   </para>
  </refsect1>
 
@@ -137,60 +96,9 @@ CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
    </para>
 
    <para>
-    In cases where you are accessing single rows randomly
-    within a table, the actual order of the data in the
-    table is unimportant. However, if you tend to access some
-    data more than others, and there is an index that groups
-    them together, you will benefit from using <command>CLUSTER</command>.
-    If you are requesting a range of indexed values from a table, or a
-    single indexed value that has multiple rows that match,
-    <command>CLUSTER</command> will help because once the index identifies the
-    table page for the first row that matches, all other rows
-    that match are probably already on the same table page,
-    and so you save disk accesses and speed up the query.
-   </para>
-
-   <para>
-    <command>CLUSTER</command> can re-sort the table using either an index scan
-    on the specified index, or (if the index is a b-tree) a sequential
-    scan followed by sorting.  It will attempt to choose the method that
-    will be faster, based on planner cost parameters and available statistical
-    information.
-   </para>
-
-   <para>
     While <command>CLUSTER</command> is running, the <xref
     linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
     pg_temp</literal>.
-   </para>
-
-   <para>
-    When an index scan is used, a temporary copy of the table is created that
-    contains the table data in the index order.  Temporary copies of each
-    index on the table are created as well.  Therefore, you need free space on
-    disk at least equal to the sum of the table size and the index sizes.
-   </para>
-
-   <para>
-    When a sequential scan and sort is used, a temporary sort file is
-    also created, so that the peak temporary space requirement is as much
-    as double the table size, plus the index sizes.  This method is often
-    faster than the index scan method, but if the disk space requirement is
-    intolerable, you can disable this choice by temporarily setting <xref
-    linkend="guc-enable-sort"/> to <literal>off</literal>.
-   </para>
-
-   <para>
-    It is advisable to set <xref linkend="guc-maintenance-work-mem"/> to
-    a reasonably large value (but not more than the amount of RAM you can
-    dedicate to the <command>CLUSTER</command> operation) before clustering.
-   </para>
-
-   <para>
-    Because the planner records statistics about the ordering of
-    tables, it is advisable to run <link linkend="sql-analyze"><command>ANALYZE</command></link>
-    on the newly clustered table.
-    Otherwise, the planner might make poor choices of query plans.
    </para>
 
    <para>
@@ -270,6 +178,7 @@ CLUSTER <replaceable class="parameter">index_name</replaceable> ON <replaceable 
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-repack"/></member>
    <member><xref linkend="app-clusterdb"/></member>
    <member><xref linkend="cluster-progress-reporting"/></member>
   </simplelist>

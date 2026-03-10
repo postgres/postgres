@@ -741,13 +741,13 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	if (OldIndex != NULL && !use_sort)
 	{
 		const int	ci_index[] = {
-			PROGRESS_CLUSTER_PHASE,
-			PROGRESS_CLUSTER_INDEX_RELID
+			PROGRESS_REPACK_PHASE,
+			PROGRESS_REPACK_INDEX_RELID
 		};
 		int64		ci_val[2];
 
 		/* Set phase and OIDOldIndex to columns */
-		ci_val[0] = PROGRESS_CLUSTER_PHASE_INDEX_SCAN_HEAP;
+		ci_val[0] = PROGRESS_REPACK_PHASE_INDEX_SCAN_HEAP;
 		ci_val[1] = RelationGetRelid(OldIndex);
 		pgstat_progress_update_multi_param(2, ci_index, ci_val);
 
@@ -759,15 +759,15 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	else
 	{
 		/* In scan-and-sort mode and also VACUUM FULL, set phase */
-		pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
-									 PROGRESS_CLUSTER_PHASE_SEQ_SCAN_HEAP);
+		pgstat_progress_update_param(PROGRESS_REPACK_PHASE,
+									 PROGRESS_REPACK_PHASE_SEQ_SCAN_HEAP);
 
 		tableScan = table_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
 		heapScan = (HeapScanDesc) tableScan;
 		indexScan = NULL;
 
 		/* Set total heap blocks */
-		pgstat_progress_update_param(PROGRESS_CLUSTER_TOTAL_HEAP_BLKS,
+		pgstat_progress_update_param(PROGRESS_REPACK_TOTAL_HEAP_BLKS,
 									 heapScan->rs_nblocks);
 	}
 
@@ -809,7 +809,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 				 * is manually updated to the correct value when the table
 				 * scan finishes.
 				 */
-				pgstat_progress_update_param(PROGRESS_CLUSTER_HEAP_BLKS_SCANNED,
+				pgstat_progress_update_param(PROGRESS_REPACK_HEAP_BLKS_SCANNED,
 											 heapScan->rs_nblocks);
 				break;
 			}
@@ -825,7 +825,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 			 */
 			if (prev_cblock != heapScan->rs_cblock)
 			{
-				pgstat_progress_update_param(PROGRESS_CLUSTER_HEAP_BLKS_SCANNED,
+				pgstat_progress_update_param(PROGRESS_REPACK_HEAP_BLKS_SCANNED,
 											 (heapScan->rs_cblock +
 											  heapScan->rs_nblocks -
 											  heapScan->rs_startblock
@@ -926,14 +926,14 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 			 * In scan-and-sort mode, report increase in number of tuples
 			 * scanned
 			 */
-			pgstat_progress_update_param(PROGRESS_CLUSTER_HEAP_TUPLES_SCANNED,
+			pgstat_progress_update_param(PROGRESS_REPACK_HEAP_TUPLES_SCANNED,
 										 *num_tuples);
 		}
 		else
 		{
 			const int	ct_index[] = {
-				PROGRESS_CLUSTER_HEAP_TUPLES_SCANNED,
-				PROGRESS_CLUSTER_HEAP_TUPLES_WRITTEN
+				PROGRESS_REPACK_HEAP_TUPLES_SCANNED,
+				PROGRESS_REPACK_HEAP_TUPLES_WRITTEN
 			};
 			int64		ct_val[2];
 
@@ -966,14 +966,14 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 		double		n_tuples = 0;
 
 		/* Report that we are now sorting tuples */
-		pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
-									 PROGRESS_CLUSTER_PHASE_SORT_TUPLES);
+		pgstat_progress_update_param(PROGRESS_REPACK_PHASE,
+									 PROGRESS_REPACK_PHASE_SORT_TUPLES);
 
 		tuplesort_performsort(tuplesort);
 
 		/* Report that we are now writing new heap */
-		pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
-									 PROGRESS_CLUSTER_PHASE_WRITE_NEW_HEAP);
+		pgstat_progress_update_param(PROGRESS_REPACK_PHASE,
+									 PROGRESS_REPACK_PHASE_WRITE_NEW_HEAP);
 
 		for (;;)
 		{
@@ -991,7 +991,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 									 values, isnull,
 									 rwstate);
 			/* Report n_tuples */
-			pgstat_progress_update_param(PROGRESS_CLUSTER_HEAP_TUPLES_WRITTEN,
+			pgstat_progress_update_param(PROGRESS_REPACK_HEAP_TUPLES_WRITTEN,
 										 n_tuples);
 		}
 

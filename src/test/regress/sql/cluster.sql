@@ -76,7 +76,6 @@ INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
 SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass
 ORDER BY 1;
 
-
 SELECT relname, relkind,
     EXISTS(SELECT 1 FROM pg_class WHERE oid = c.reltoastrelid) AS hastoast
 FROM pg_class c WHERE relname LIKE 'clstr_tst%' ORDER BY relname;
@@ -229,6 +228,26 @@ SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM o
 CLUSTER clstrpart;
 ALTER TABLE clstrpart SET WITHOUT CLUSTER;
 ALTER TABLE clstrpart CLUSTER ON clstrpart_idx;
+-- and they cannot get an index-ordered REPACK without an explicit index name
+REPACK clstrpart USING INDEX;
+
+-- Check that REPACK sets new relfilenodes: it should process exactly the same
+-- tables as CLUSTER did.
+DROP TABLE old_cluster_info;
+DROP TABLE new_cluster_info;
+CREATE TEMP TABLE old_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+REPACK clstrpart USING INDEX clstrpart_idx;
+CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
+
+-- And finally the same for REPACK w/o index.
+DROP TABLE old_cluster_info;
+DROP TABLE new_cluster_info;
+CREATE TEMP TABLE old_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+REPACK clstrpart;
+CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
+
 DROP TABLE clstrpart;
 
 -- Ownership of partitions is checked
@@ -312,6 +331,57 @@ SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
 EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
 SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
 COMMIT;
+
+----------------------------------------------------------------------
+--
+-- REPACK
+--
+----------------------------------------------------------------------
+
+-- REPACK handles individual tables identically to CLUSTER, but it's worth
+-- checking if it handles table hierarchies identically as well.
+REPACK clstr_tst USING INDEX clstr_tst_c;
+
+-- Verify that inheritance link still works
+INSERT INTO clstr_tst_inh VALUES (0, 100, 'in child table 2');
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
+
+-- Verify that foreign key link still works
+INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
+
+SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass
+ORDER BY 1;
+
+-- Verify partial analyze works
+REPACK (ANALYZE) clstr_tst (a);
+REPACK (ANALYZE) clstr_tst;
+REPACK (VERBOSE) clstr_tst (a);
+
+-- REPACK w/o argument performs no ordering, so we can only check which tables
+-- have the relfilenode changed.
+RESET SESSION AUTHORIZATION;
+CREATE TEMP TABLE relnodes_old AS
+(SELECT relname, relfilenode
+FROM pg_class
+WHERE relname IN ('clstr_1', 'clstr_2', 'clstr_3'));
+
+SET SESSION AUTHORIZATION regress_clstr_user;
+SET client_min_messages = ERROR;  -- order of "skipping" warnings may vary
+REPACK;
+RESET client_min_messages;
+
+RESET SESSION AUTHORIZATION;
+CREATE TEMP TABLE relnodes_new AS
+(SELECT relname, relfilenode
+FROM pg_class
+WHERE relname IN ('clstr_1', 'clstr_2', 'clstr_3'));
+
+-- Do the actual comparison. Unlike CLUSTER, clstr_3 should have been
+-- processed because there is nothing like clustering index here.
+SELECT o.relname FROM relnodes_old o
+JOIN relnodes_new n ON o.relname = n.relname
+WHERE o.relfilenode <> n.relfilenode
+ORDER BY o.relname;
 
 -- clean up
 DROP TABLE clustertest;

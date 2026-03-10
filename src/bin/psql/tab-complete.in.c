@@ -1267,7 +1267,7 @@ static const char *const sql_commands[] = {
 	"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
 	"FETCH", "GRANT", "IMPORT FOREIGN SCHEMA", "INSERT INTO", "LISTEN", "LOAD", "LOCK",
 	"MERGE INTO", "MOVE", "NOTIFY", "PREPARE",
-	"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE",
+	"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE", "REPACK",
 	"RESET", "REVOKE", "ROLLBACK",
 	"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
 	"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES",
@@ -5115,6 +5115,47 @@ match_previous_words(int pattern_id,
 			COMPLETE_WITH("CONCURRENTLY", "TABLESPACE", "VERBOSE");
 		else if (TailMatches("TABLESPACE"))
 			COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
+	}
+
+/* REPACK */
+	else if (Matches("REPACK"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_clusterables,
+										"(", "USING INDEX");
+	else if (Matches("REPACK", "(*)"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_clusterables,
+										"USING INDEX");
+	else if (Matches("REPACK", MatchAnyExcept("(")))
+		COMPLETE_WITH("USING INDEX");
+	else if (Matches("REPACK", "(*)", MatchAnyExcept("(")))
+		COMPLETE_WITH("USING INDEX");
+	else if (Matches("REPACK", MatchAny, "USING", "INDEX") ||
+			 Matches("REPACK", "(*)", MatchAny, "USING", "INDEX"))
+	{
+		set_completion_reference(prev3_wd);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_index_of_table);
+	}
+
+	/*
+	 * Complete ... [ (*) ] <sth> USING INDEX, with a list of indexes for
+	 * <sth>.
+	 */
+	else if (TailMatches(MatchAny, "USING", "INDEX"))
+	{
+		set_completion_reference(prev3_wd);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_index_of_table);
+	}
+	else if (HeadMatches("REPACK", "(*") &&
+			 !HeadMatches("REPACK", "(*)"))
+	{
+		/*
+		 * This fires if we're in an unfinished parenthesized option list.
+		 * get_previous_words treats a completed parenthesized option list as
+		 * one word, so the above test is correct.
+		 */
+		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			COMPLETE_WITH("ANALYZE", "VERBOSE");
+		else if (TailMatches("ANALYZE", "VERBOSE"))
+			COMPLETE_WITH("ON", "OFF");
 	}
 
 /* SECURITY LABEL */

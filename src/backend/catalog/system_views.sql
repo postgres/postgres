@@ -1311,14 +1311,15 @@ CREATE VIEW pg_stat_progress_vacuum AS
     FROM pg_stat_get_progress_info('VACUUM') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
-CREATE VIEW pg_stat_progress_cluster AS
+CREATE VIEW pg_stat_progress_repack AS
     SELECT
         S.pid AS pid,
         S.datid AS datid,
         D.datname AS datname,
         S.relid AS relid,
         CASE S.param1 WHEN 1 THEN 'CLUSTER'
-                      WHEN 2 THEN 'VACUUM FULL'
+                      WHEN 2 THEN 'REPACK'
+                      WHEN 3 THEN 'VACUUM FULL'
                       END AS command,
         CASE S.param2 WHEN 0 THEN 'initializing'
                       WHEN 1 THEN 'seq scanning heap'
@@ -1329,14 +1330,34 @@ CREATE VIEW pg_stat_progress_cluster AS
                       WHEN 6 THEN 'rebuilding index'
                       WHEN 7 THEN 'performing final cleanup'
                       END AS phase,
-        CAST(S.param3 AS oid) AS cluster_index_relid,
+        CAST(S.param3 AS oid) AS repack_index_relid,
         S.param4 AS heap_tuples_scanned,
         S.param5 AS heap_tuples_written,
         S.param6 AS heap_blks_total,
         S.param7 AS heap_blks_scanned,
         S.param8 AS index_rebuild_count
-    FROM pg_stat_get_progress_info('CLUSTER') AS S
+    FROM pg_stat_get_progress_info('REPACK') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
+
+-- This view is as the one above, except for renaming a column and avoiding
+-- 'REPACK' as a command name to report.
+CREATE VIEW pg_stat_progress_cluster AS
+    SELECT
+        pid,
+        datid,
+        datname,
+        relid,
+        CASE WHEN command IN ('CLUSTER', 'VACUUM FULL') THEN command
+             WHEN repack_index_relid = 0 THEN 'VACUUM FULL'
+             ELSE 'CLUSTER' END AS command,
+        phase,
+        repack_index_relid AS cluster_index_relid,
+        heap_tuples_scanned,
+        heap_tuples_written,
+        heap_blks_total,
+        heap_blks_scanned,
+        index_rebuild_count
+    FROM pg_stat_progress_repack;
 
 CREATE VIEW pg_stat_progress_create_index AS
     SELECT

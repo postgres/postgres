@@ -195,6 +195,7 @@
    &refreshMaterializedView;
    &reindex;
    &releaseSavepoint;
+   &repack;
    &reset;
    &revoke;
    &rollback;

@@ -4077,7 +4077,7 @@ reindex_relation(const ReindexStmt *stmt, Oid relid, int flags,
 		Assert(!ReindexIsProcessingIndex(indexOid));
 
 		/* Set index rebuild count */
-		pgstat_progress_update_param(PROGRESS_CLUSTER_INDEX_REBUILD_COUNT,
+		pgstat_progress_update_param(PROGRESS_REPACK_INDEX_REBUILD_COUNT,
 									 i);
 		i++;
 	}

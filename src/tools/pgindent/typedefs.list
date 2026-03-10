@@ -2581,6 +2581,8 @@ ReorderBufferTupleCidEnt
 ReorderBufferTupleCidKey
 ReorderBufferUpdateProgressTxnCB
 ReorderTuple
+RepackCommand
+RepackStmt
 ReparameterizeForeignPathByChild_function
 ReplOriginId
 ReplOriginXactState
