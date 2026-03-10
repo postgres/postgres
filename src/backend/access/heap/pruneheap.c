@@ -377,6 +377,7 @@ prune_freeze_setup(PruneFreezeParams *params,
 
 	/* initialize page freezing working state */
 	prstate->pagefrz.freeze_required = false;
+	prstate->pagefrz.FreezePageConflictXid = InvalidTransactionId;
 	if (prstate->attempt_freeze)
 	{
 		Assert(new_relfrozen_xid && new_relmin_mxid);
@@ -407,7 +408,6 @@ prune_freeze_setup(PruneFreezeParams *params,
 	 * PruneState.
 	 */
 	prstate->deadoffsets = presult->deadoffsets;
-	prstate->frz_conflict_horizon = InvalidTransactionId;
 
 	/*
 	 * Vacuum may update the VM after we're done.  We can keep track of
@@ -746,22 +746,8 @@ heap_page_will_freeze(bool did_tuple_hint_fpi,
 		 * critical section.
 		 */
 		heap_pre_freeze_checks(prstate->buffer, prstate->frozen, prstate->nfrozen);
-
-		/*
-		 * Calculate what the snapshot conflict horizon should be for a record
-		 * freezing tuples. We can use the visibility_cutoff_xid as our cutoff
-		 * for conflicts when the whole page is eligible to become all-frozen
-		 * in the VM once we're done with it. Otherwise, we generate a
-		 * conservative cutoff by stepping back from OldestXmin.
-		 */
-		if (prstate->set_all_frozen)
-			prstate->frz_conflict_horizon = prstate->visibility_cutoff_xid;
-		else
-		{
-			/* Avoids false conflicts when hot_standby_feedback in use */
-			prstate->frz_conflict_horizon = prstate->cutoffs->OldestXmin;
-			TransactionIdRetreat(prstate->frz_conflict_horizon);
-		}
+		Assert(TransactionIdPrecedes(prstate->pagefrz.FreezePageConflictXid,
+									 prstate->cutoffs->OldestXmin));
 	}
 	else if (prstate->nfrozen > 0)
 	{
@@ -952,18 +938,18 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 			/*
 			 * The snapshotConflictHorizon for the whole record should be the
 			 * most conservative of all the horizons calculated for any of the
-			 * possible modifications.  If this record will prune tuples, any
-			 * transactions on the standby older than the youngest xmax of the
-			 * most recently removed tuple this record will prune will
-			 * conflict.  If this record will freeze tuples, any transactions
-			 * on the standby with xids older than the youngest tuple this
-			 * record will freeze will conflict.
+			 * possible modifications. If this record will prune tuples, any
+			 * queries on the standby older than the newest xid of the most
+			 * recently removed tuple this record will prune will conflict. If
+			 * this record will freeze tuples, any queries on the standby with
+			 * xids older than the newest tuple this record will freeze will
+			 * conflict.
 			 */
 			TransactionId conflict_xid;
 
-			if (TransactionIdFollows(prstate.frz_conflict_horizon,
+			if (TransactionIdFollows(prstate.pagefrz.FreezePageConflictXid,
 									 prstate.latest_xid_removed))
-				conflict_xid = prstate.frz_conflict_horizon;
+				conflict_xid = prstate.pagefrz.FreezePageConflictXid;
 			else
 				conflict_xid = prstate.latest_xid_removed;
 

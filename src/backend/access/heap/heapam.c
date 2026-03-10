@@ -7089,6 +7089,12 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * process this tuple as part of freezing its page, and return true.  Return
  * false if nothing can be changed about the tuple right now.
  *
+ * FreezePageConflictXid is advanced only for xmin/xvac freezing, not for xmax
+ * changes. We only remove xmax state here when it is lock-only, or when the
+ * updater XID (including an updater member of a MultiXact) must be aborted;
+ * otherwise, the tuple would already be removable. Neither case affects
+ * visibility on a standby.
+ *
  * Also sets *totally_frozen to true if the tuple will be totally frozen once
  * caller executes returned freeze plan (or if the tuple was already totally
  * frozen by an earlier VACUUM).  This indicates that there are no remaining
@@ -7164,7 +7170,11 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 
 		/* Verify that xmin committed if and when freeze plan is executed */
 		if (freeze_xmin)
+		{
 			frz->checkflags |= HEAP_FREEZE_CHECK_XMIN_COMMITTED;
+			if (TransactionIdFollows(xid, pagefrz->FreezePageConflictXid))
+				pagefrz->FreezePageConflictXid = xid;
+		}
 	}
 
 	/*
@@ -7182,6 +7192,9 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 		 * tracking to ignore xvac.
 		 */
 		replace_xvac = pagefrz->freeze_required = true;
+
+		if (TransactionIdFollows(xid, pagefrz->FreezePageConflictXid))
+			pagefrz->FreezePageConflictXid = xid;
 
 		/* Will set replace_xvac flags in freeze plan below */
 	}
@@ -7492,6 +7505,7 @@ heap_freeze_tuple(HeapTupleHeader tuple,
 	pagefrz.freeze_required = true;
 	pagefrz.FreezePageRelfrozenXid = FreezeLimit;
 	pagefrz.FreezePageRelminMxid = MultiXactCutoff;
+	pagefrz.FreezePageConflictXid = InvalidTransactionId;
 	pagefrz.NoFreezePageRelfrozenXid = FreezeLimit;
 	pagefrz.NoFreezePageRelminMxid = MultiXactCutoff;
 
