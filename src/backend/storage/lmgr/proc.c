@@ -689,6 +689,7 @@ InitAuxiliaryProcess(void)
 			Assert(dlist_is_empty(&(MyProc->myProcLocks[i])));
 	}
 #endif
+	pg_atomic_write_u32(&MyProc->pendingRecoveryConflicts, 0);
 
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch
