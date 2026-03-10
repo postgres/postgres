@@ -620,8 +620,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <str>		opt_provider security_label
 
-%type <target>	xml_attribute_el
-%type <list>	xml_attribute_list xml_attributes
+%type <target>	labeled_expr
+%type <list>	labeled_expr_list xml_attributes
 %type <node>	xml_root_version opt_xml_root_standalone
 %type <node>	xmlexists_argument
 %type <ival>	document_or_content
@@ -16317,7 +16317,7 @@ func_expr_common_subexpr:
 											   COERCE_SQL_SYNTAX,
 											   @1);
 				}
-			| XMLFOREST '(' xml_attribute_list ')'
+			| XMLFOREST '(' labeled_expr_list ')'
 				{
 					$$ = makeXmlExpr(IS_XMLFOREST, NULL, $3, NIL, @1);
 				}
@@ -16542,14 +16542,14 @@ opt_xml_root_standalone: ',' STANDALONE_P YES_P
 				{ $$ = makeIntConst(XML_STANDALONE_OMITTED, -1); }
 		;
 
-xml_attributes: XMLATTRIBUTES '(' xml_attribute_list ')'	{ $$ = $3; }
+xml_attributes: XMLATTRIBUTES '(' labeled_expr_list ')'	{ $$ = $3; }
 		;
 
-xml_attribute_list:	xml_attribute_el					{ $$ = list_make1($1); }
-			| xml_attribute_list ',' xml_attribute_el	{ $$ = lappend($1, $3); }
+labeled_expr_list:	labeled_expr					{ $$ = list_make1($1); }
+			| labeled_expr_list ',' labeled_expr	{ $$ = lappend($1, $3); }
 		;
 
-xml_attribute_el: a_expr AS ColLabel
+labeled_expr: a_expr AS ColLabel
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $3;
