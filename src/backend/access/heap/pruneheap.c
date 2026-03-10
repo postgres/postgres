@@ -114,13 +114,6 @@ typedef struct
 	 */
 	HeapPageFreeze pagefrz;
 
-	/*
-	 * The snapshot conflict horizon used when freezing tuples. The final
-	 * snapshot conflict horizon for the record may be newer if pruning
-	 * removes newer transaction IDs.
-	 */
-	TransactionId frz_conflict_horizon;
-
 	/*-------------------------------------------------------
 	 * Information about what was done
 	 *
