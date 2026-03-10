@@ -1412,6 +1412,8 @@ typedef struct IndexOptInfo
 	bool		nullsnotdistinct;
 	/* is uniqueness enforced immediately? */
 	bool		immediate;
+	/* true if paths using this index should be marked disabled */
+	bool		disabled;
 	/* true if index doesn't really exist */
 	bool		hypothetical;
 

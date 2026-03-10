@@ -1122,6 +1122,14 @@ create_index_path(PlannerInfo *root,
 
 	cost_index(pathnode, root, loop_count, partial_path);
 
+	/*
+	 * cost_index will set disabled_nodes to 1 if this rel is not allowed to
+	 * use index scans in general, but it doesn't have the IndexOptInfo to
+	 * know whether this specific index has been disabled.
+	 */
+	if (index->disabled)
+		pathnode->path.disabled_nodes = 1;
+
 	return pathnode;
 }
 
