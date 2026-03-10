@@ -25,21 +25,26 @@ that might need to do such a wait is instead handled by waiting to obtain
 the relation-level lock, which is why you'd better hold one first.)  Pins
 may not be held across transaction boundaries, however.
 
-Buffer content locks: there are two kinds of buffer lock, shared and exclusive,
-which act just as you'd expect: multiple backends can hold shared locks on
-the same buffer, but an exclusive lock prevents anyone else from holding
-either shared or exclusive lock.  (These can alternatively be called READ
-and WRITE locks.)  These locks are intended to be short-term: they should not
-be held for long.  Buffer locks are acquired and released by LockBuffer().
-It will *not* work for a single backend to try to acquire multiple locks on
-the same buffer.  One must pin a buffer before trying to lock it.
+Buffer content locks: there are three kinds of buffer lock, shared,
+share-exclusive and exclusive:
+a) multiple backends can hold shared locks on the same buffer
+   (alternatively called a READ lock)
+b) one backend can hold a share-exclusive lock on a buffer while multiple
+   backends can hold a share lock
+c) an exclusive lock prevents anyone else from holding a shared,
+   share-exclusive or exclusive lock.
+   (alternatively called a WRITE lock)
+
+These locks are intended to be short-term: they should not be held for long.
+Buffer locks are acquired and released by LockBuffer().  It will *not* work
+for a single backend to try to acquire multiple locks on the same buffer.  One
+must pin a buffer before trying to lock it.
 
 Buffer access rules:
 
-1. To scan a page for tuples, one must hold a pin and either shared or
-exclusive content lock.  To examine the commit status (XIDs and status bits)
-of a tuple in a shared buffer, one must likewise hold a pin and either shared
-or exclusive lock.
+1. To scan a page for tuples, one must hold a pin and at least a share lock.
+To examine the commit status (XIDs and status bits) of a tuple in a shared
+buffer, one must likewise hold a pin and at least a share lock.
 
 2. Once one has determined that a tuple is interesting (visible to the
 current transaction) one may drop the content lock, yet continue to access
@@ -55,19 +60,25 @@ one must hold a pin and an exclusive content lock on the containing buffer.
 This ensures that no one else might see a partially-updated state of the
 tuple while they are doing visibility checks.
 
-4. It is considered OK to update tuple commit status bits (ie, OR the
-values HEAP_XMIN_COMMITTED, HEAP_XMIN_INVALID, HEAP_XMAX_COMMITTED, or
-HEAP_XMAX_INVALID into t_infomask) while holding only a shared lock and
-pin on a buffer.  This is OK because another backend looking at the tuple
-at about the same time would OR the same bits into the field, so there
-is little or no risk of conflicting update; what's more, if there did
-manage to be a conflict it would merely mean that one bit-update would
-be lost and need to be done again later.  These four bits are only hints
-(they cache the results of transaction status lookups in pg_xact), so no
-great harm is done if they get reset to zero by conflicting updates.
-Note, however, that a tuple is frozen by setting both HEAP_XMIN_INVALID
-and HEAP_XMIN_COMMITTED; this is a critical update and accordingly requires
-an exclusive buffer lock (and it must also be WAL-logged).
+4. Non-critical information on a page ("hint bits") may be modified while
+holding only a share-exclusive lock and pin on the page. To do so in cases
+where only a share lock is already held, use BufferBeginSetHintBits() &
+BufferFinishSetHintBits() (if multiple hint bits are to be set) or
+BufferSetHintBits16() (if a single hint bit is set).
+
+E.g. for heapam, a share-exclusive lock allows to update tuple commit status
+bits (ie, OR the values HEAP_XMIN_COMMITTED, HEAP_XMIN_INVALID,
+HEAP_XMAX_COMMITTED, or HEAP_XMAX_INVALID into t_infomask) while holding only
+a share-exclusive lock and pin on a buffer.  This is OK because another
+backend looking at the tuple at about the same time would OR the same bits
+into the field, so there is little or no risk of conflicting update; what's
+more, if there did manage to be a conflict it would merely mean that one
+bit-update would be lost and need to be done again later.  These four bits are
+only hints (they cache the results of transaction status lookups in pg_xact),
+so no great harm is done if they get reset to zero by conflicting updates.
+Note, however, that a tuple is frozen by setting both HEAP_XMIN_INVALID and
+HEAP_XMIN_COMMITTED; this is a critical update and accordingly requires an
+exclusive buffer lock (and it must also be WAL-logged).
 
 5. To physically remove a tuple or compact free space on a page, one
 must hold a pin and an exclusive lock, *and* observe while holding the
@@ -79,7 +90,6 @@ might expect to examine again.  Note that another backend might pin the
 buffer (increment the refcount) while one is performing the cleanup, but
 it won't be able to actually examine the page until it acquires shared
 or exclusive content lock.
-
 
 Obtaining the lock needed under rule #5 is done by the bufmgr routines
 LockBufferForCleanup() or ConditionalLockBufferForCleanup().  They first get
@@ -95,6 +105,10 @@ waiter for pin-count-1 on any particular shared buffer.  This is enough for
 VACUUM's use, since we don't allow multiple VACUUMs concurrently on a single
 relation anyway.  Anyone wishing to obtain a cleanup lock outside of recovery
 or a VACUUM must use the conditional variant of the function.
+
+6. To write out a buffer, a share-exclusive lock needs to be held. This
+prevents the buffer from being modified while written out, which could corrupt
+checksums and cause issues on the OS or device level when direct-IO is used.
 
 
 Buffer Manager's Internal Locking

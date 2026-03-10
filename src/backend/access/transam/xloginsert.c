@@ -1077,11 +1077,6 @@ XLogCheckBufferNeedsBackup(Buffer buffer)
  * We only need to do something if page has not yet been full page written in
  * this checkpoint round. The LSN of the inserted wal record is returned if we
  * had to write, InvalidXLogRecPtr otherwise.
- *
- * It is possible that multiple concurrent backends could attempt to write WAL
- * records. In that case, multiple copies of the same block would be recorded
- * in separate WAL records by different backends, though that is still OK from
- * a correctness perspective.
  */
 XLogRecPtr
 XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
@@ -1102,11 +1097,9 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 
 	/*
 	 * We assume page LSN is first data on *every* page that can be passed to
-	 * XLogInsert, whether it has the standard page layout or not. Since we're
-	 * only holding a share-lock on the page, we must take the buffer header
-	 * lock when we look at the LSN.
+	 * XLogInsert, whether it has the standard page layout or not.
 	 */
-	lsn = BufferGetLSNAtomic(buffer);
+	lsn = PageGetLSN(BufferGetPage(buffer));
 
 	if (lsn <= RedoRecPtr)
 	{

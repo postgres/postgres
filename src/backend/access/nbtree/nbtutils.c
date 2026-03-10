@@ -361,6 +361,17 @@ _bt_killitems(IndexScanDesc scan)
 			 */
 			if (killtuple && !ItemIdIsDead(iid))
 			{
+				if (!killedsomething)
+				{
+					/*
+					 * Use the hint bit infrastructure to check if we can
+					 * update the page while just holding a share lock. If we
+					 * are not allowed, there's no point continuing.
+					 */
+					if (!BufferBeginSetHintBits(buf))
+						goto unlock_page;
+				}
+
 				/* found the item/all posting list items */
 				ItemIdMarkDead(iid);
 				killedsomething = true;
@@ -380,9 +391,10 @@ _bt_killitems(IndexScanDesc scan)
 	if (killedsomething)
 	{
 		opaque->btpo_flags |= BTP_HAS_GARBAGE;
-		MarkBufferDirtyHint(buf, true);
+		BufferFinishSetHintBits(buf, true, true);
 	}
 
+unlock_page:
 	if (!so->dropPin)
 		_bt_unlockbuf(rel, buf);
 	else
