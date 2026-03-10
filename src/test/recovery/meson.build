@@ -60,6 +60,7 @@ tests += {
       't/049_wait_for_lsn.pl',
       't/050_redo_segment_missing.pl',
       't/051_effective_wal_level.pl',
+      't/052_checkpoint_segment_missing.pl',
     ],
   },
 }

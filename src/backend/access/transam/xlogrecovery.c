@@ -735,7 +735,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 			 * can't read the last checkpoint because this allows us to
 			 * simplify processing around checkpoints.
 			 */
-			ereport(PANIC,
+			ereport(FATAL,
 					errmsg("could not locate a valid checkpoint record at %X/%08X",
 						   LSN_FORMAT_ARGS(CheckPointLoc)));
 		}
