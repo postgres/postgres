@@ -1689,9 +1689,6 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 	state->bs_leader = NULL;
 	state->bs_worker_id = 0;
 	state->bs_sortstate = NULL;
-	state->bs_context = CurrentMemoryContext;
-	state->bs_emptyTuple = NULL;
-	state->bs_emptyTupleLen = 0;
 
 	/* Remember the memory context to use for an empty tuple, if needed. */
 	state->bs_context = CurrentMemoryContext;
