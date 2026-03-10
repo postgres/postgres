@@ -806,7 +806,7 @@
 },
 
 { name => 'effective_wal_level', type => 'enum', context => 'PGC_INTERNAL', group => 'PRESET_OPTIONS',
-  short_desc => 'Show effective WAL level.',
+  short_desc => 'Shows effective WAL level.',
   flags => 'GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE',
   variable => 'effective_wal_level',
   boot_val => 'WAL_LEVEL_REPLICA',
