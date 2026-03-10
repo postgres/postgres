@@ -14,7 +14,6 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "funcapi.h"
@@ -693,45 +692,14 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 
 /*
  * Is the given type immutable when coming out of a JSON context?
- *
- * At present, datetimes are all considered mutable, because they
- * depend on timezone.  XXX we should also drill down into objects
- * and arrays, but do not.
  */
 bool
 to_json_is_immutable(Oid typoid)
 {
-	JsonTypeCategory tcategory;
-	Oid			outfuncoid;
+	bool		has_mutable = false;
 
-	json_categorize_type(typoid, false, &tcategory, &outfuncoid);
-
-	switch (tcategory)
-	{
-		case JSONTYPE_BOOL:
-		case JSONTYPE_JSON:
-		case JSONTYPE_JSONB:
-		case JSONTYPE_NULL:
-			return true;
-
-		case JSONTYPE_DATE:
-		case JSONTYPE_TIMESTAMP:
-		case JSONTYPE_TIMESTAMPTZ:
-			return false;
-
-		case JSONTYPE_ARRAY:
-			return false;		/* TODO recurse into elements */
-
-		case JSONTYPE_COMPOSITE:
-			return false;		/* TODO recurse into fields */
-
-		case JSONTYPE_NUMERIC:
-		case JSONTYPE_CAST:
-		case JSONTYPE_OTHER:
-			return func_volatile(outfuncoid) == PROVOLATILE_IMMUTABLE;
-	}
-
-	return false;				/* not reached */
+	json_check_mutability(typoid, false, &has_mutable);
+	return !has_mutable;
 }
 
 /*

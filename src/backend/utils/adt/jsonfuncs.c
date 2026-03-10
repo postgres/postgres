@@ -17,6 +17,8 @@
 #include <limits.h>
 
 #include "access/htup_details.h"
+#include "access/tupdesc.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
 #include "common/jsonapi.h"
@@ -6060,6 +6062,109 @@ json_categorize_type(Oid typoid, bool is_jsonb,
 					getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
 				}
 			}
+			break;
+	}
+}
+
+/*
+ * Check whether a type conversion to JSON or JSONB involves any mutable
+ * functions.  This recurses into container types (arrays, composites,
+ * ranges, multiranges, domains) to check their element/sub types.
+ *
+ * The caller must initialize *has_mutable to false before calling.
+ * If any mutable function is found, *has_mutable is set to true.
+ */
+void
+json_check_mutability(Oid typoid, bool is_jsonb, bool *has_mutable)
+{
+	char		att_typtype = get_typtype(typoid);
+	JsonTypeCategory tcategory;
+	Oid			outfuncoid;
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
+	Assert(has_mutable != NULL);
+
+	if (*has_mutable)
+		return;
+
+	if (att_typtype == TYPTYPE_DOMAIN)
+	{
+		json_check_mutability(getBaseType(typoid), is_jsonb, has_mutable);
+		return;
+	}
+	else if (att_typtype == TYPTYPE_COMPOSITE)
+	{
+		/*
+		 * For a composite type, recurse into its attributes.  Use the
+		 * typcache to avoid opening the relation directly.
+		 */
+		TupleDesc	tupdesc = lookup_rowtype_tupdesc(typoid, -1);
+
+		for (int i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+			if (attr->attisdropped)
+				continue;
+
+			json_check_mutability(attr->atttypid, is_jsonb, has_mutable);
+			if (*has_mutable)
+				break;
+		}
+		ReleaseTupleDesc(tupdesc);
+		return;
+	}
+	else if (att_typtype == TYPTYPE_RANGE)
+	{
+		json_check_mutability(get_range_subtype(typoid), is_jsonb,
+							  has_mutable);
+		return;
+	}
+	else if (att_typtype == TYPTYPE_MULTIRANGE)
+	{
+		json_check_mutability(get_multirange_range(typoid), is_jsonb,
+							  has_mutable);
+		return;
+	}
+	else
+	{
+		Oid			att_typelem = get_element_type(typoid);
+
+		if (OidIsValid(att_typelem))
+		{
+			/* recurse into array element type */
+			json_check_mutability(att_typelem, is_jsonb, has_mutable);
+			return;
+		}
+	}
+
+	json_categorize_type(typoid, is_jsonb, &tcategory, &outfuncoid);
+
+	switch (tcategory)
+	{
+		case JSONTYPE_NULL:
+		case JSONTYPE_BOOL:
+		case JSONTYPE_NUMERIC:
+			break;
+
+		case JSONTYPE_DATE:
+		case JSONTYPE_TIMESTAMP:
+		case JSONTYPE_TIMESTAMPTZ:
+			*has_mutable = true;
+			break;
+
+		case JSONTYPE_JSON:
+		case JSONTYPE_JSONB:
+		case JSONTYPE_ARRAY:
+		case JSONTYPE_COMPOSITE:
+			break;
+
+		case JSONTYPE_CAST:
+		case JSONTYPE_OTHER:
+			if (func_volatile(outfuncoid) != PROVOLATILE_IMMUTABLE)
+				*has_mutable = true;
 			break;
 	}
 }
