@@ -225,7 +225,7 @@ ForeignServerConnectionString(Oid userid, Oid serverid)
 {
 	MemoryContext tempContext;
 	MemoryContext oldcxt;
-	volatile text *connection_text = NULL;
+	text	   *volatile connection_text = NULL;
 	char	   *result = NULL;
 
 	/*
