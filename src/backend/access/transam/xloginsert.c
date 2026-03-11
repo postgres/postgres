@@ -1066,7 +1066,10 @@ XLogCheckBufferNeedsBackup(Buffer buffer)
  * Write a backup block if needed when we are setting a hint. Note that
  * this may be called for a variety of page types, not just heaps.
  *
- * Callable while holding just share lock on the buffer content.
+ * Callable while holding just a share-exclusive lock on the buffer
+ * content. That suffices to prevent concurrent modifications of the
+ * buffer. The buffer already needs to have been marked dirty by
+ * MarkBufferDirtyHint().
  *
  * We can't use the plain backup block mechanism since that relies on the
  * Buffer being exclusively locked. Since some modifications (setting LSN, hint
@@ -1085,13 +1088,18 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 	XLogRecPtr	lsn;
 	XLogRecPtr	RedoRecPtr;
 
-	/*
-	 * Ensure no checkpoint can change our view of RedoRecPtr.
-	 */
-	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) != 0);
+	/* this also verifies that we hold an appropriate lock */
+	Assert(BufferIsDirty(buffer));
 
 	/*
-	 * Update RedoRecPtr so that we can make the right decision
+	 * Update RedoRecPtr so that we can make the right decision. It's possible
+	 * that a new checkpoint will start just after GetRedoRecPtr(), but that
+	 * is ok, as the buffer is already dirty, ensuring that any BufferSync()
+	 * started after the buffer was marked dirty cannot complete without
+	 * flushing this buffer.  If a checkpoint started between marking the
+	 * buffer dirty and this check, we will emit an unnecessary WAL record (as
+	 * the buffer will be written out as part of the checkpoint), but the
+	 * window for that is not big.
 	 */
 	RedoRecPtr = GetRedoRecPtr();
 

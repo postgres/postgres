@@ -5581,7 +5581,7 @@ MarkSharedBufferDirtyHint(Buffer buffer, BufferDesc *bufHdr, uint64 lockstate,
 	if (unlikely(!(lockstate & BM_DIRTY)))
 	{
 		XLogRecPtr	lsn = InvalidXLogRecPtr;
-		bool		delayChkptFlags = false;
+		bool		wal_log = false;
 		uint64		buf_state;
 
 		/*
@@ -5607,35 +5607,18 @@ MarkSharedBufferDirtyHint(Buffer buffer, BufferDesc *bufHdr, uint64 lockstate,
 				RelFileLocatorSkippingWAL(BufTagGetRelFileLocator(&bufHdr->tag)))
 				return;
 
-			/*
-			 * If the block is already dirty because we either made a change
-			 * or set a hint already, then we don't need to write a full page
-			 * image.  Note that aggressive cleaning of blocks dirtied by hint
-			 * bit setting would increase the call rate. Bulk setting of hint
-			 * bits would reduce the call rate...
-			 *
-			 * We must issue the WAL record before we mark the buffer dirty.
-			 * Otherwise we might write the page before we write the WAL. That
-			 * causes a race condition, since a checkpoint might occur between
-			 * writing the WAL record and marking the buffer dirty. We solve
-			 * that with a kluge, but one that is already in use during
-			 * transaction commit to prevent race conditions. Basically, we
-			 * simply prevent the checkpoint WAL record from being written
-			 * until we have marked the buffer dirty. We don't start the
-			 * checkpoint flush until we have marked dirty, so our checkpoint
-			 * must flush the change to disk successfully or the checkpoint
-			 * never gets written, so crash recovery will fix.
-			 *
-			 * It's possible we may enter here without an xid, so it is
-			 * essential that CreateCheckPoint waits for virtual transactions
-			 * rather than full transactionids.
-			 */
-			Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
-			MyProc->delayChkptFlags |= DELAY_CHKPT_START;
-			delayChkptFlags = true;
-			lsn = XLogSaveBufferForHint(buffer, buffer_std);
+			wal_log = true;
 		}
 
+		/*
+		 * We must mark the page dirty before we emit the WAL record, as per
+		 * the usual rules, to ensure that BufferSync()/SyncOneBuffer() try to
+		 * flush the buffer, even if we haven't inserted the WAL record yet.
+		 * As we hold at least a share-exclusive lock, checkpoints will wait
+		 * for this backend to be done with the buffer before continuing. If
+		 * we did it the other way round, a checkpoint could start between
+		 * writing the WAL record and marking the buffer dirty.
+		 */
 		buf_state = LockBufHdr(bufHdr);
 
 		/*
@@ -5644,6 +5627,19 @@ MarkSharedBufferDirtyHint(Buffer buffer, BufferDesc *bufHdr, uint64 lockstate,
 		 */
 		Assert(!(buf_state & BM_DIRTY));
 		Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
+		UnlockBufHdrExt(bufHdr, buf_state,
+						BM_DIRTY,
+						0, 0);
+
+		/*
+		 * If the block is already dirty because we either made a change or
+		 * set a hint already, then we don't need to write a full page image.
+		 * Note that aggressive cleaning of blocks dirtied by hint bit setting
+		 * would increase the call rate. Bulk setting of hint bits would
+		 * reduce the call rate...
+		 */
+		if (wal_log)
+			lsn = XLogSaveBufferForHint(buffer, buffer_std);
 
 		if (XLogRecPtrIsValid(lsn))
 		{
@@ -5660,15 +5656,10 @@ MarkSharedBufferDirtyHint(Buffer buffer, BufferDesc *bufHdr, uint64 lockstate,
 			 * checksum here. That will happen when the page is written
 			 * sometime later in this checkpoint cycle.
 			 */
+			buf_state = LockBufHdr(bufHdr);
 			PageSetLSN(page, lsn);
+			UnlockBufHdr(bufHdr);
 		}
-
-		UnlockBufHdrExt(bufHdr, buf_state,
-						BM_DIRTY,
-						0, 0);
-
-		if (delayChkptFlags)
-			MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 
 		pgBufferUsage.shared_blks_dirtied++;
 		if (VacuumCostActive)
