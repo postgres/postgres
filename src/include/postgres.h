@@ -135,16 +135,6 @@ CharGetDatum(char X)
 }
 
 /*
- * Int8GetDatum
- *		Returns datum representation for an 8-bit integer.
- */
-static inline Datum
-Int8GetDatum(int8 X)
-{
-	return (Datum) X;
-}
-
-/*
  * DatumGetUInt8
  *		Returns 8-bit unsigned integer value of a datum.
  */
