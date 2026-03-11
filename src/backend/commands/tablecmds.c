@@ -396,14 +396,14 @@ static ObjectAddress ATExecAlterConstraint(List **wqueue, Relation rel,
 static bool ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon, Relation conrel,
 										  Relation tgrel, Relation rel, HeapTuple contuple,
 										  bool recurse, LOCKMODE lockmode);
-static bool ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
-											Relation conrel, Relation tgrel,
-											Oid fkrelid, Oid pkrelid,
-											HeapTuple contuple, LOCKMODE lockmode,
-											Oid ReferencedParentDelTrigger,
-											Oid ReferencedParentUpdTrigger,
-											Oid ReferencingParentInsTrigger,
-											Oid ReferencingParentUpdTrigger);
+static bool ATExecAlterFKConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
+											  Relation conrel, Relation tgrel,
+											  Oid fkrelid, Oid pkrelid,
+											  HeapTuple contuple, LOCKMODE lockmode,
+											  Oid ReferencedParentDelTrigger,
+											  Oid ReferencedParentUpdTrigger,
+											  Oid ReferencingParentInsTrigger,
+											  Oid ReferencingParentUpdTrigger);
 static bool ATExecAlterConstrDeferrability(List **wqueue, ATAlterConstraint *cmdcon,
 										   Relation conrel, Relation tgrel, Relation rel,
 										   HeapTuple contuple, bool recurse,
@@ -414,14 +414,14 @@ static bool ATExecAlterConstrInheritability(List **wqueue, ATAlterConstraint *cm
 static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 											bool deferrable, bool initdeferred,
 											List **otherrelids);
-static void AlterConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
-											 Relation conrel, Relation tgrel,
-											 Oid fkrelid, Oid pkrelid,
-											 HeapTuple contuple, LOCKMODE lockmode,
-											 Oid ReferencedParentDelTrigger,
-											 Oid ReferencedParentUpdTrigger,
-											 Oid ReferencingParentInsTrigger,
-											 Oid ReferencingParentUpdTrigger);
+static void AlterFKConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
+											   Relation conrel, Relation tgrel,
+											   Oid fkrelid, Oid pkrelid,
+											   HeapTuple contuple, LOCKMODE lockmode,
+											   Oid ReferencedParentDelTrigger,
+											   Oid ReferencedParentUpdTrigger,
+											   Oid ReferencingParentInsTrigger,
+											   Oid ReferencingParentUpdTrigger);
 static void AlterConstrDeferrabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
 											Relation conrel, Relation tgrel, Relation rel,
 											HeapTuple contuple, bool recurse,
@@ -12384,15 +12384,15 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 	 * enforceability, we don't need to explicitly update multiple entries in
 	 * pg_trigger related to deferrability.
 	 *
-	 * Modifying enforceability involves either creating or dropping the
-	 * trigger, during which the deferrability setting will be adjusted
-	 * automatically.
+	 * Modifying foreign key enforceability involves either creating or
+	 * dropping the trigger, during which the deferrability setting will be
+	 * adjusted automatically.
 	 */
 	if (cmdcon->alterEnforceability &&
-		ATExecAlterConstrEnforceability(wqueue, cmdcon, conrel, tgrel,
-										currcon->conrelid, currcon->confrelid,
-										contuple, lockmode, InvalidOid,
-										InvalidOid, InvalidOid, InvalidOid))
+		ATExecAlterFKConstrEnforceability(wqueue, cmdcon, conrel, tgrel,
+										  currcon->conrelid, currcon->confrelid,
+										  contuple, lockmode, InvalidOid,
+										  InvalidOid, InvalidOid, InvalidOid))
 		changed = true;
 
 	else if (cmdcon->alterDeferrability &&
@@ -12424,7 +12424,7 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 }
 
 /*
- * Returns true if the constraint's enforceability is altered.
+ * Returns true if the foreign key constraint's enforceability is altered.
  *
  * Depending on whether the constraint is being set to ENFORCED or NOT
  * ENFORCED, it creates or drops the trigger accordingly.
@@ -12436,14 +12436,14 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
  * enforced, as descendant constraints cannot be different in that case.
  */
 static bool
-ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
-								Relation conrel, Relation tgrel,
-								Oid fkrelid, Oid pkrelid,
-								HeapTuple contuple, LOCKMODE lockmode,
-								Oid ReferencedParentDelTrigger,
-								Oid ReferencedParentUpdTrigger,
-								Oid ReferencingParentInsTrigger,
-								Oid ReferencingParentUpdTrigger)
+ATExecAlterFKConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
+								  Relation conrel, Relation tgrel,
+								  Oid fkrelid, Oid pkrelid,
+								  HeapTuple contuple, LOCKMODE lockmode,
+								  Oid ReferencedParentDelTrigger,
+								  Oid ReferencedParentUpdTrigger,
+								  Oid ReferencingParentInsTrigger,
+								  Oid ReferencingParentUpdTrigger)
 {
 	Form_pg_constraint currcon;
 	Oid			conoid;
@@ -12479,10 +12479,10 @@ ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 		 */
 		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
 			get_rel_relkind(currcon->confrelid) == RELKIND_PARTITIONED_TABLE)
-			AlterConstrEnforceabilityRecurse(wqueue, cmdcon, conrel, tgrel,
-											 fkrelid, pkrelid, contuple,
-											 lockmode, InvalidOid, InvalidOid,
-											 InvalidOid, InvalidOid);
+			AlterFKConstrEnforceabilityRecurse(wqueue, cmdcon, conrel, tgrel,
+											   fkrelid, pkrelid, contuple,
+											   lockmode, InvalidOid, InvalidOid,
+											   InvalidOid, InvalidOid);
 
 		/* Drop all the triggers */
 		DropForeignKeyConstraintTriggers(tgrel, conoid, InvalidOid, InvalidOid);
@@ -12558,12 +12558,13 @@ ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 		 */
 		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
 			get_rel_relkind(currcon->confrelid) == RELKIND_PARTITIONED_TABLE)
-			AlterConstrEnforceabilityRecurse(wqueue, cmdcon, conrel, tgrel,
-											 fkrelid, pkrelid, contuple,
-											 lockmode, ReferencedDelTriggerOid,
-											 ReferencedUpdTriggerOid,
-											 ReferencingInsTriggerOid,
-											 ReferencingUpdTriggerOid);
+			AlterFKConstrEnforceabilityRecurse(wqueue, cmdcon, conrel, tgrel,
+											   fkrelid, pkrelid, contuple,
+											   lockmode,
+											   ReferencedDelTriggerOid,
+											   ReferencedUpdTriggerOid,
+											   ReferencingInsTriggerOid,
+											   ReferencingUpdTriggerOid);
 	}
 
 	table_close(rel, NoLock);
@@ -12776,25 +12777,25 @@ AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 }
 
 /*
- * Invokes ATExecAlterConstrEnforceability for each constraint that is a child of
- * the specified constraint.
+ * Invokes ATExecAlterFKConstrEnforceability for each foreign key constraint
+ * that is a child of the specified constraint.
  *
  * Note that this doesn't handle recursion the normal way, viz. by scanning the
  * list of child relations and recursing; instead it uses the conparentid
  * relationships.  This may need to be reconsidered.
  *
  * The arguments to this function have the same meaning as the arguments to
- * ATExecAlterConstrEnforceability.
+ * ATExecAlterFKConstrEnforceability.
  */
 static void
-AlterConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
-								 Relation conrel, Relation tgrel,
-								 Oid fkrelid, Oid pkrelid,
-								 HeapTuple contuple, LOCKMODE lockmode,
-								 Oid ReferencedParentDelTrigger,
-								 Oid ReferencedParentUpdTrigger,
-								 Oid ReferencingParentInsTrigger,
-								 Oid ReferencingParentUpdTrigger)
+AlterFKConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
+								   Relation conrel, Relation tgrel,
+								   Oid fkrelid, Oid pkrelid,
+								   HeapTuple contuple, LOCKMODE lockmode,
+								   Oid ReferencedParentDelTrigger,
+								   Oid ReferencedParentUpdTrigger,
+								   Oid ReferencingParentInsTrigger,
+								   Oid ReferencingParentUpdTrigger)
 {
 	Form_pg_constraint currcon;
 	Oid			conoid;
@@ -12814,12 +12815,12 @@ AlterConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
 							   true, NULL, 1, &pkey);
 
 	while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
-		ATExecAlterConstrEnforceability(wqueue, cmdcon, conrel, tgrel, fkrelid,
-										pkrelid, childtup, lockmode,
-										ReferencedParentDelTrigger,
-										ReferencedParentUpdTrigger,
-										ReferencingParentInsTrigger,
-										ReferencingParentUpdTrigger);
+		ATExecAlterFKConstrEnforceability(wqueue, cmdcon, conrel, tgrel, fkrelid,
+										  pkrelid, childtup, lockmode,
+										  ReferencedParentDelTrigger,
+										  ReferencedParentUpdTrigger,
+										  ReferencingParentInsTrigger,
+										  ReferencingParentUpdTrigger);
 
 	systable_endscan(pscan);
 }
