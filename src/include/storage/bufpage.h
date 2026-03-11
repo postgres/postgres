@@ -91,23 +91,49 @@ typedef uint16 LocationIndex;
 
 
 /*
- * For historical reasons, the 64-bit LSN value is stored as two 32-bit
- * values.
+ * Store the LSN as a single 64-bit value, to allow atomic loads/stores.
+ *
+ * For historical reasons, the storage of 64-bit LSN values depends on CPU
+ * endianness; PageXLogRecPtr used to be a struct consisting of two 32-bit
+ * values.  When reading (and writing) the pd_lsn field from page headers, the
+ * caller must convert from (and convert to) the platform's native endianness.
  */
 typedef struct
 {
-	uint32		xlogid;			/* high bits */
-	uint32		xrecoff;		/* low bits */
+	uint64		lsn;
 } PageXLogRecPtr;
 
+#ifdef WORDS_BIGENDIAN
+
 static inline XLogRecPtr
-PageXLogRecPtrGet(PageXLogRecPtr val)
+PageXLogRecPtrGet(const volatile PageXLogRecPtr *val)
 {
-	return (uint64) val.xlogid << 32 | val.xrecoff;
+	return val->lsn;
 }
 
-#define PageXLogRecPtrSet(ptr, lsn) \
-	((ptr).xlogid = (uint32) ((lsn) >> 32), (ptr).xrecoff = (uint32) (lsn))
+static inline void
+PageXLogRecPtrSet(volatile PageXLogRecPtr *ptr, XLogRecPtr lsn)
+{
+	ptr->lsn = lsn;
+}
+
+#else
+
+static inline XLogRecPtr
+PageXLogRecPtrGet(const volatile PageXLogRecPtr *val)
+{
+	PageXLogRecPtr tmp = {val->lsn};
+
+	return (tmp.lsn << 32) | (tmp.lsn >> 32);
+}
+
+static inline void
+PageXLogRecPtrSet(volatile PageXLogRecPtr *ptr, XLogRecPtr lsn)
+{
+	ptr->lsn = (lsn << 32) | (lsn >> 32);
+}
+
+#endif
 
 /*
  * disk page organization
@@ -385,12 +411,13 @@ PageGetMaxOffsetNumber(const PageData *page)
 static inline XLogRecPtr
 PageGetLSN(const PageData *page)
 {
-	return PageXLogRecPtrGet(((const PageHeaderData *) page)->pd_lsn);
+	return PageXLogRecPtrGet(&((const PageHeaderData *) page)->pd_lsn);
 }
+
 static inline void
 PageSetLSN(Page page, XLogRecPtr lsn)
 {
-	PageXLogRecPtrSet(((PageHeader) page)->pd_lsn, lsn);
+	PageXLogRecPtrSet(&((PageHeader) page)->pd_lsn, lsn);
 }
 
 static inline bool

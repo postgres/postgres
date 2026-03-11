@@ -4625,34 +4625,45 @@ BufferIsPermanent(Buffer buffer)
 
 /*
  * BufferGetLSNAtomic
- *		Retrieves the LSN of the buffer atomically using a buffer header lock.
- *		This is necessary for some callers who may only hold a share lock on
- *		the buffer. A share lock allows a concurrent backend to set hint bits
- *		on the page, which in turn may require a WAL record to be emitted.
+ *		Retrieves the LSN of the buffer atomically.
+ *
+ * This is necessary for some callers who may only hold a share lock on
+ * the buffer. A share lock allows a concurrent backend to set hint bits
+ * on the page, which in turn may require a WAL record to be emitted.
+ *
+ * On platforms with 8 byte atomic reads/writes, we don't need to do any
+ * additional locking. On platforms not supporting such 8 byte atomic
+ * reads/writes, we need to actually take the header lock.
  */
 XLogRecPtr
 BufferGetLSNAtomic(Buffer buffer)
 {
-	char	   *page = BufferGetPage(buffer);
-	BufferDesc *bufHdr;
-	XLogRecPtr	lsn;
-
-	/*
-	 * If we don't need locking for correctness, fastpath out.
-	 */
-	if (!XLogHintBitIsNeeded() || BufferIsLocal(buffer))
-		return PageGetLSN(page);
-
 	/* Make sure we've got a real buffer, and that we hold a pin on it. */
 	Assert(BufferIsValid(buffer));
 	Assert(BufferIsPinned(buffer));
 
-	bufHdr = GetBufferDescriptor(buffer - 1);
-	LockBufHdr(bufHdr);
-	lsn = PageGetLSN(page);
-	UnlockBufHdr(bufHdr);
+#ifdef PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY
+	return PageGetLSN(BufferGetPage(buffer));
+#else
+	{
+		char	   *page = BufferGetPage(buffer);
+		BufferDesc *bufHdr;
+		XLogRecPtr	lsn;
 
-	return lsn;
+		/*
+		 * If we don't need locking for correctness, fastpath out.
+		 */
+		if (!XLogHintBitIsNeeded() || BufferIsLocal(buffer))
+			return PageGetLSN(page);
+
+		bufHdr = GetBufferDescriptor(buffer - 1);
+		LockBufHdr(bufHdr);
+		lsn = PageGetLSN(page);
+		UnlockBufHdr(bufHdr);
+
+		return lsn;
+	}
+#endif
 }
 
 /* ---------------------------------------------------------------------

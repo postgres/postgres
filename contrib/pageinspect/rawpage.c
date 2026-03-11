@@ -208,11 +208,9 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
  * Get a palloc'd, maxalign'ed page image from the result of get_raw_page()
  *
  * On machines with MAXALIGN = 8, the payload of a bytea is not maxaligned,
- * since it will start 4 bytes into a palloc'd value.  On alignment-picky
- * machines, this will cause failures in accesses to 8-byte-wide values
- * within the page.  We don't need to worry if accessing only 4-byte or
- * smaller fields, but when examining a struct that contains 8-byte fields,
- * use this function for safety.
+ * since it will start 4 bytes into a palloc'd value.  PageHeaderData requires
+ * 8 byte alignment, so always use this function when accessing page header
+ * fields from a raw page bytea.
  */
 Page
 get_page_from_raw(bytea *raw_page)
