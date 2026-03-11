@@ -84,6 +84,14 @@
 #include <libintl.h>
 #endif
 
+#ifdef __cplusplus
+extern "C++"
+{
+/* This header is used in the definition of various C++ things below. */
+#include <type_traits>
+}
+#endif
+
  /* Pull in fundamental symbols that we also expose to applications */
 #include "postgres_ext.h"
 
@@ -435,6 +443,7 @@
  * [1]: https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2927.htm#existing-decltype
  */
 #if defined(__cplusplus)
+#undef typeof
 #ifdef pg_cxx_typeof
 #define typeof(x) pg_cxx_typeof(x)
 #elif !defined(HAVE_CXX_TYPEOF)
