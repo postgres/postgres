@@ -441,7 +441,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		{
 			uint64		buf_state = pg_atomic_read_u64(&victim_buf_hdr->state);
 
-			Assert(!(buf_state & (BM_VALID | BM_TAG_VALID | BM_DIRTY | BM_JUST_DIRTIED)));
+			Assert(!(buf_state & (BM_VALID | BM_TAG_VALID | BM_DIRTY)));
 
 			victim_buf_hdr->tag = tag;
 

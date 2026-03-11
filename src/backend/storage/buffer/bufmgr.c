@@ -2882,7 +2882,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 			buf_state = LockBufHdr(victim_buf_hdr);
 
 			/* some sanity checks while we hold the buffer header lock */
-			Assert(!(buf_state & (BM_VALID | BM_TAG_VALID | BM_DIRTY | BM_JUST_DIRTIED)));
+			Assert(!(buf_state & (BM_VALID | BM_TAG_VALID | BM_DIRTY)));
 			Assert(BUF_STATE_GET_REFCOUNT(buf_state) == 1);
 
 			victim_buf_hdr->tag = tag;
@@ -3085,7 +3085,7 @@ MarkBufferDirty(Buffer buffer)
 		buf_state = old_buf_state;
 
 		Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
-		buf_state |= BM_DIRTY | BM_JUST_DIRTIED;
+		buf_state |= BM_DIRTY;
 
 		if (pg_atomic_compare_exchange_u64(&bufHdr->state, &old_buf_state,
 										   buf_state))
@@ -4417,7 +4417,6 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	instr_time	io_start;
 	Block		bufBlock;
 	char	   *bufToWrite;
-	uint64		buf_state;
 
 	Assert(BufferLockHeldByMeInMode(buf, BUFFER_LOCK_EXCLUSIVE) ||
 		   BufferLockHeldByMeInMode(buf, BUFFER_LOCK_SHARE_EXCLUSIVE));
@@ -4446,18 +4445,11 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 										reln->smgr_rlocator.locator.dbOid,
 										reln->smgr_rlocator.locator.relNumber);
 
-	buf_state = LockBufHdr(buf);
-
 	/*
 	 * As we hold at least a share-exclusive lock on the buffer, the LSN
 	 * cannot change during the flush (and thus can't be torn).
 	 */
 	recptr = BufferGetLSN(buf);
-
-	/* To check if block content changes while flushing. - vadim 01/17/97 */
-	UnlockBufHdrExt(buf, buf_state,
-					0, BM_JUST_DIRTIED,
-					0);
 
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL
@@ -4476,7 +4468,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	 * disastrous system-wide consequences.  To make sure that can't happen,
 	 * skip the flush if the buffer isn't permanent.
 	 */
-	if (buf_state & BM_PERMANENT)
+	if (pg_atomic_read_u64(&buf->state) & BM_PERMANENT)
 		XLogFlush(recptr);
 
 	/*
@@ -4529,8 +4521,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	pgBufferUsage.shared_blks_written++;
 
 	/*
-	 * Mark the buffer as clean (unless BM_JUST_DIRTIED has become set) and
-	 * end the BM_IO_IN_PROGRESS state.
+	 * Mark the buffer as clean and end the BM_IO_IN_PROGRESS state.
 	 */
 	TerminateBufferIO(buf, true, 0, true, false);
 
@@ -5587,8 +5578,7 @@ MarkSharedBufferDirtyHint(Buffer buffer, BufferDesc *bufHdr, uint64 lockstate,
 	 * cleaned or dirtied the page concurrently, so we can just rely on the
 	 * previously fetched value here without any danger of races.
 	 */
-	if (unlikely((lockstate & (BM_DIRTY | BM_JUST_DIRTIED)) !=
-				 (BM_DIRTY | BM_JUST_DIRTIED)))
+	if (unlikely(!(lockstate & BM_DIRTY)))
 	{
 		XLogRecPtr	lsn = InvalidXLogRecPtr;
 		bool		delayChkptFlags = false;
@@ -5674,7 +5664,7 @@ MarkSharedBufferDirtyHint(Buffer buffer, BufferDesc *bufHdr, uint64 lockstate,
 		}
 
 		UnlockBufHdrExt(bufHdr, buf_state,
-						BM_DIRTY | BM_JUST_DIRTIED,
+						BM_DIRTY,
 						0, 0);
 
 		if (delayChkptFlags)
@@ -7143,10 +7133,8 @@ StartBufferIO(BufferDesc *buf, bool forInput, bool nowait)
  *	BM_IO_IN_PROGRESS bit is set for the buffer
  *	The buffer is Pinned
  *
- * If clear_dirty is true and BM_JUST_DIRTIED is not set, we clear the
- * buffer's BM_DIRTY flag.  This is appropriate when terminating a
- * successful write.  The check on BM_JUST_DIRTIED is necessary to avoid
- * marking the buffer clean if it was re-dirtied while we were writing.
+ * If clear_dirty is true, we clear the buffer's BM_DIRTY flag.  This is
+ * appropriate when terminating a successful write.
  *
  * set_flag_bits gets ORed into the buffer's flags.  It must include
  * BM_IO_ERROR in a failure case.  For successful completion it could
@@ -7172,7 +7160,7 @@ TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint64 set_flag_bits,
 	/* Clear earlier errors, if this IO failed, it'll be marked again */
 	unset_flag_bits |= BM_IO_ERROR;
 
-	if (clear_dirty && !(buf_state & BM_JUST_DIRTIED))
+	if (clear_dirty)
 		unset_flag_bits |= BM_DIRTY | BM_CHECKPOINT_NEEDED;
 
 	if (release_aio)
