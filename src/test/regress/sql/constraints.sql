@@ -267,6 +267,58 @@ COPY COPY_TBL FROM :'filename';
 SELECT * FROM COPY_TBL;
 
 --
+-- CHECK constraints
+-- ALTER TABLE ALTER CONSTRAINT [NOT] ENFORCED
+create table parted_ch(
+  a int, b int,
+  constraint cc check (a > 10) not enforced,
+  constraint cc_1 check (b < 17) not enforced
+) partition by range(a);
+create table parted_ch_1 partition of parted_ch for values from (0) to (10) partition by list(b);
+create table parted_ch_11 partition of parted_ch_1 for values in (0, 1, 22,4);
+create table parted_ch_12 partition of parted_ch_1 for values in (2);
+create table parted_ch_2(b int, a int,
+  constraint cc check (a > 10) not enforced,
+  constraint cc_1 check (b < 17) enforced,
+  constraint cc_2 check( a < 15) not enforced
+);
+alter table parted_ch attach partition parted_ch_2 for values from (10) to (20);
+
+insert into parted_ch values (1, 22), (9, 1), (16, 16);
+
+alter table parted_ch alter constraint cc_1 enforced; --error
+update parted_ch set b = 4 where b = 22;
+alter table parted_ch alter constraint cc_1 enforced; --ok
+
+create or replace view check_constraint_status as
+select  conname, conrelid::regclass, conenforced, convalidated
+from    pg_constraint
+where   conrelid::regclass::text ~* '^parted_ch' and contype = 'c'
+order by conname, conrelid::regclass::text collate "C";
+
+alter table parted_ch alter constraint cc not enforced; --no-op
+alter table parted_ch alter constraint cc enforced; --error
+delete from parted_ch where a = 1;
+alter table parted_ch alter constraint cc enforced; --error
+delete from parted_ch where a = 9;
+alter table parted_ch alter constraint cc enforced;
+
+--check these CHECK constraint status
+select * from check_constraint_status;
+
+alter table parted_ch_2 alter constraint cc_2 enforced; --error
+delete from parted_ch where a = 16;
+alter table parted_ch_2 alter constraint cc_2 enforced;
+alter table parted_ch_2 alter constraint cc not enforced;
+alter table parted_ch_2 alter constraint cc_1 not enforced;
+alter table parted_ch_2 alter constraint cc_2 not enforced;
+
+--check these CHECK constraint status again
+select * from check_constraint_status;
+drop table parted_ch;
+drop view check_constraint_status;
+
+--
 -- Primary keys
 --
 

@@ -1421,11 +1421,54 @@ order by 1, 2;
  p1_c3   | inh_check_constraint9  | f          |           2 | t           | t
 (38 rows)
 
+--
+-- CHECK constraints
+-- ALTER TABLE ALTER CONSTRAINT [NOT] ENFORCED
+alter table p1 drop constraint inh_check_constraint1;
+alter table p1_c1 drop constraint inh_check_constraint1;
+alter table only p1 alter constraint inh_check_constraint3 enforced; --error
+ERROR:  constraint must be altered on child tables too
+HINT:  Do not specify the ONLY keyword.
+alter table only p1 alter constraint inh_check_constraint3 not enforced; --error
+ERROR:  constraint must be altered on child tables too
+HINT:  Do not specify the ONLY keyword.
+insert into p1_c1 values(-2);
+insert into p1_c3 values(-3);
+alter table p1 alter constraint inh_check_constraint3 enforced; --error
+ERROR:  check constraint "inh_check_constraint3" of relation "p1_c1" is violated by some row
+delete from only p1_c1 where f1 = -2;
+alter table p1_c1 alter constraint inh_check_constraint3 enforced; --error
+ERROR:  check constraint "inh_check_constraint3" of relation "p1_c3" is violated by some row
+delete from only p1_c3 where f1 = -3;
+alter table p1 alter constraint inh_check_constraint3 enforced; --ok
+alter table p1 alter constraint inh_check_constraint3 not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'inh_check_constraint3' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+        conname        | conenforced | convalidated | conrelid 
+-----------------------+-------------+--------------+----------
+ inh_check_constraint3 | f           | f            | p1
+ inh_check_constraint3 | f           | f            | p1_c1
+ inh_check_constraint3 | f           | f            | p1_c2
+ inh_check_constraint3 | f           | f            | p1_c3
+(4 rows)
+
 drop table p1 cascade;
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table p1_c1
 drop cascades to table p1_c2
 drop cascades to table p1_c3
+--for "no inherit" check constraint, it will not recurse to child table
+create table p1(f1 int constraint p1_a_check check (f1 > 0) no inherit not enforced);
+create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) not enforced);
+alter table p1_c1 inherit p1;
+insert into p1_c1 values(-11);
+alter table p1 alter constraint p1_a_check enforced; --ok
+alter table p1_c1 alter constraint p1_a_check enforced; --error
+ERROR:  check constraint "p1_a_check" of relation "p1_c1" is violated by some row
+drop table p1 cascade;
+NOTICE:  drop cascades to table p1_c1
 --
 -- Similarly, check the merging of existing constraints; a parent constraint
 -- marked as NOT ENFORCED can merge with an ENFORCED child constraint, but the
@@ -1434,6 +1477,25 @@ drop cascades to table p1_c3
 create table p1(f1 int constraint p1_a_check check (f1 > 0) not enforced);
 create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) enforced);
 alter table p1_c1 inherit p1;
+insert into p1 values(-1); --ok
+insert into p1_c1 values(-1); --error
+ERROR:  new row for relation "p1_c1" violates check constraint "p1_a_check"
+DETAIL:  Failing row contains (-1).
+alter table p1 alter constraint p1_a_check enforced; --error
+ERROR:  check constraint "p1_a_check" of relation "p1" is violated by some row
+truncate p1;
+alter table p1 alter constraint p1_a_check enforced; --ok
+alter table p1 alter constraint p1_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'p1_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+  conname   | conenforced | convalidated | conrelid 
+------------+-------------+--------------+----------
+ p1_a_check | f           | f            | p1
+ p1_a_check | f           | f            | p1_c1
+(2 rows)
+
 drop table p1 cascade;
 NOTICE:  drop cascades to table p1_c1
 create table p1(f1 int constraint p1_a_check check (f1 > 0) enforced);

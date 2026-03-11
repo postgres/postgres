@@ -578,8 +578,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       This form alters the attributes of a constraint that was previously
-      created. Currently only foreign key constraints may be altered in
-      this fashion, but see below.
+      created. Currently <literal>FOREIGN KEY</literal> and <literal>CHECK</literal>
+      constraints may be altered in this fashion, but see below.
      </para>
     </listitem>
    </varlistentry>

@@ -510,6 +510,38 @@ select conrelid::regclass::text as relname, conname, conislocal, coninhcount, co
 from pg_constraint where conname like 'inh\_check\_constraint%'
 order by 1, 2;
 
+--
+-- CHECK constraints
+-- ALTER TABLE ALTER CONSTRAINT [NOT] ENFORCED
+alter table p1 drop constraint inh_check_constraint1;
+alter table p1_c1 drop constraint inh_check_constraint1;
+
+alter table only p1 alter constraint inh_check_constraint3 enforced; --error
+alter table only p1 alter constraint inh_check_constraint3 not enforced; --error
+
+insert into p1_c1 values(-2);
+insert into p1_c3 values(-3);
+
+alter table p1 alter constraint inh_check_constraint3 enforced; --error
+delete from only p1_c1 where f1 = -2;
+alter table p1_c1 alter constraint inh_check_constraint3 enforced; --error
+
+delete from only p1_c3 where f1 = -3;
+alter table p1 alter constraint inh_check_constraint3 enforced; --ok
+alter table p1 alter constraint inh_check_constraint3 not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'inh_check_constraint3' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+drop table p1 cascade;
+
+--for "no inherit" check constraint, it will not recurse to child table
+create table p1(f1 int constraint p1_a_check check (f1 > 0) no inherit not enforced);
+create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) not enforced);
+alter table p1_c1 inherit p1;
+insert into p1_c1 values(-11);
+alter table p1 alter constraint p1_a_check enforced; --ok
+alter table p1_c1 alter constraint p1_a_check enforced; --error
 drop table p1 cascade;
 
 --
@@ -520,6 +552,17 @@ drop table p1 cascade;
 create table p1(f1 int constraint p1_a_check check (f1 > 0) not enforced);
 create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) enforced);
 alter table p1_c1 inherit p1;
+insert into p1 values(-1); --ok
+insert into p1_c1 values(-1); --error
+alter table p1 alter constraint p1_a_check enforced; --error
+truncate p1;
+alter table p1 alter constraint p1_a_check enforced; --ok
+alter table p1 alter constraint p1_a_check not enforced; --ok
+
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'p1_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
 drop table p1 cascade;
 
 create table p1(f1 int constraint p1_a_check check (f1 > 0) enforced);

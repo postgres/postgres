@@ -404,6 +404,10 @@ static bool ATExecAlterFKConstrEnforceability(List **wqueue, ATAlterConstraint *
 											  Oid ReferencedParentUpdTrigger,
 											  Oid ReferencingParentInsTrigger,
 											  Oid ReferencingParentUpdTrigger);
+static bool ATExecAlterCheckConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
+												 Relation conrel, HeapTuple contuple,
+												 bool recurse, bool recursing,
+												 LOCKMODE lockmode);
 static bool ATExecAlterConstrDeferrability(List **wqueue, ATAlterConstraint *cmdcon,
 										   Relation conrel, Relation tgrel, Relation rel,
 										   HeapTuple contuple, bool recurse,
@@ -422,6 +426,10 @@ static void AlterFKConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint 
 											   Oid ReferencedParentUpdTrigger,
 											   Oid ReferencingParentInsTrigger,
 											   Oid ReferencingParentUpdTrigger);
+static void AlterCheckConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
+												  Relation conrel, Oid conrelid,
+												  bool recurse, bool recursing,
+												  LOCKMODE lockmode);
 static void AlterConstrDeferrabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
 											Relation conrel, Relation tgrel, Relation rel,
 											HeapTuple contuple, bool recurse,
@@ -12216,7 +12224,7 @@ GetForeignKeyCheckTriggers(Relation trigrel,
  *
  * Update the attributes of a constraint.
  *
- * Currently only works for Foreign Key and not null constraints.
+ * Currently works for Foreign Key, Check, and not null constraints.
  *
  * If the constraint is modified, returns its address; otherwise, return
  * InvalidObjectAddress.
@@ -12278,11 +12286,13 @@ ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("constraint \"%s\" of relation \"%s\" is not a foreign key constraint",
 						cmdcon->conname, RelationGetRelationName(rel))));
-	if (cmdcon->alterEnforceability && currcon->contype != CONSTRAINT_FOREIGN)
+	if (cmdcon->alterEnforceability &&
+		(currcon->contype != CONSTRAINT_FOREIGN && currcon->contype != CONSTRAINT_CHECK))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot alter enforceability of constraint \"%s\" of relation \"%s\"",
-						cmdcon->conname, RelationGetRelationName(rel))));
+						cmdcon->conname, RelationGetRelationName(rel)),
+				 errhint("Only foreign key and check constraints can change enforceability.")));
 	if (cmdcon->alterInheritability &&
 		currcon->contype != CONSTRAINT_NOTNULL)
 		ereport(ERROR,
@@ -12388,13 +12398,20 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 	 * dropping the trigger, during which the deferrability setting will be
 	 * adjusted automatically.
 	 */
-	if (cmdcon->alterEnforceability &&
-		ATExecAlterFKConstrEnforceability(wqueue, cmdcon, conrel, tgrel,
-										  currcon->conrelid, currcon->confrelid,
-										  contuple, lockmode, InvalidOid,
-										  InvalidOid, InvalidOid, InvalidOid))
-		changed = true;
-
+	if (cmdcon->alterEnforceability)
+	{
+		if (currcon->contype == CONSTRAINT_FOREIGN)
+			changed = ATExecAlterFKConstrEnforceability(wqueue, cmdcon, conrel, tgrel,
+														currcon->conrelid,
+														currcon->confrelid,
+														contuple, lockmode,
+														InvalidOid, InvalidOid,
+														InvalidOid, InvalidOid);
+		else if (currcon->contype == CONSTRAINT_CHECK)
+			changed = ATExecAlterCheckConstrEnforceability(wqueue, cmdcon, conrel,
+														   contuple, recurse, false,
+														   lockmode);
+	}
 	else if (cmdcon->alterDeferrability &&
 			 ATExecAlterConstrDeferrability(wqueue, cmdcon, conrel, tgrel, rel,
 											contuple, recurse, &otherrelids,
@@ -12570,6 +12587,163 @@ ATExecAlterFKConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 	table_close(rel, NoLock);
 
 	return changed;
+}
+
+/*
+ * Returns true if the CHECK constraint's enforceability is altered.
+ */
+static bool
+ATExecAlterCheckConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
+									 Relation conrel, HeapTuple contuple,
+									 bool recurse, bool recursing, LOCKMODE lockmode)
+{
+	Form_pg_constraint currcon;
+	Relation	rel;
+	bool		changed = false;
+	List	   *children = NIL;
+
+	/* Since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
+	Assert(cmdcon->alterEnforceability);
+
+	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
+
+	Assert(currcon->contype == CONSTRAINT_CHECK);
+
+	/*
+	 * Parent relation already locked by caller, children will be locked by
+	 * find_all_inheritors. So NoLock is fine here.
+	 */
+	rel = table_open(currcon->conrelid, NoLock);
+
+	if (currcon->conenforced != cmdcon->is_enforced)
+	{
+		AlterConstrUpdateConstraintEntry(cmdcon, conrel, contuple);
+		changed = true;
+	}
+
+	/*
+	 * Note that we must recurse even when trying to change a check constraint
+	 * to not enforced if it is already not enforced, in case descendant
+	 * constraints might be enforced and need to be changed to not enforced.
+	 * Conversely, we should do nothing if a constraint is being set to
+	 * enforced and is already enforced, as descendant constraints cannot be
+	 * different in that case.
+	 */
+	if (!cmdcon->is_enforced || changed)
+	{
+		/*
+		 * If we're recursing, the parent has already done this, so skip it.
+		 * Also, if the constraint is a NO INHERIT constraint, we shouldn't
+		 * try to look for it in the children.
+		 */
+		if (!recursing && !currcon->connoinherit)
+			children = find_all_inheritors(RelationGetRelid(rel),
+										   lockmode, NULL);
+
+		foreach_oid(childoid, children)
+		{
+			if (childoid == RelationGetRelid(rel))
+				continue;
+
+			/*
+			 * If we are told not to recurse, there had better not be any
+			 * child tables, because we can't change constraint enforceability
+			 * on the parent unless we have changed enforceability for all
+			 * child.
+			 */
+			if (!recurse)
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						errmsg("constraint must be altered on child tables too"),
+						errhint("Do not specify the ONLY keyword."));
+
+			AlterCheckConstrEnforceabilityRecurse(wqueue, cmdcon, conrel,
+												  childoid, false, true,
+												  lockmode);
+		}
+	}
+
+	/*
+	 * Tell Phase 3 to check that the constraint is satisfied by existing
+	 * rows. We only need do this when altering the constraint from NOT
+	 * ENFORCED to ENFORCED.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_RELATION &&
+		!currcon->conenforced &&
+		cmdcon->is_enforced)
+	{
+		AlteredTableInfo *tab;
+		NewConstraint *newcon;
+		Datum		val;
+		char	   *conbin;
+
+		newcon = palloc0_object(NewConstraint);
+		newcon->name = pstrdup(NameStr(currcon->conname));
+		newcon->contype = CONSTR_CHECK;
+
+		val = SysCacheGetAttrNotNull(CONSTROID, contuple,
+									 Anum_pg_constraint_conbin);
+		conbin = TextDatumGetCString(val);
+		newcon->qual = expand_generated_columns_in_expr(stringToNode(conbin), rel, 1);
+
+		/* Find or create work queue entry for this table */
+		tab = ATGetQueueEntry(wqueue, rel);
+		tab->constraints = lappend(tab->constraints, newcon);
+	}
+
+	table_close(rel, NoLock);
+
+	return changed;
+}
+
+/*
+ * Invokes ATExecAlterCheckConstrEnforceability for each CHECK constraint that
+ * is a child of the specified constraint.
+ *
+ * We rely on the parent and child tables having identical CHECK constraint
+ * names to retrieve the child's pg_constraint tuple.
+ *
+ * The arguments to this function have the same meaning as the arguments to
+ * ATExecAlterCheckConstrEnforceability.
+ */
+static void
+AlterCheckConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
+									  Relation conrel, Oid conrelid,
+									  bool recurse, bool recursing,
+									  LOCKMODE lockmode)
+{
+	SysScanDesc pscan;
+	HeapTuple	childtup;
+	ScanKeyData skey[3];
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(conrelid));
+	ScanKeyInit(&skey[1],
+				Anum_pg_constraint_contypid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+	ScanKeyInit(&skey[2],
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(cmdcon->conname));
+
+	pscan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId, true,
+							   NULL, 3, skey);
+
+	if (!HeapTupleIsValid(childtup = systable_getnext(pscan)))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("constraint \"%s\" of relation \"%s\" does not exist",
+					   cmdcon->conname, get_rel_name(conrelid)));
+
+	ATExecAlterCheckConstrEnforceability(wqueue, cmdcon, conrel, childtup,
+										 recurse, recursing, lockmode);
+
+	systable_endscan(pscan);
 }
 
 /*
