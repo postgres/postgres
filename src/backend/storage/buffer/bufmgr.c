@@ -2516,24 +2516,24 @@ again:
 		}
 
 		/*
-		 * If using a nondefault strategy, and writing the buffer would
-		 * require a WAL flush, let the strategy decide whether to go ahead
-		 * and write/reuse the buffer or to choose another victim.  We need to
-		 * hold the content lock in at least share-exclusive mode to safely
-		 * inspect the page LSN, so this couldn't have been done inside
-		 * StrategyGetBuffer.
+		 * If using a nondefault strategy, and this victim came from the
+		 * strategy ring, let the strategy decide whether to reject it when
+		 * reusing it would require a WAL flush.  This only applies to
+		 * permanent buffers; unlogged buffers can have fake LSNs, so
+		 * XLogNeedsFlush() is not meaningful for them.
+		 *
+		 * We need to hold the content lock in at least share-exclusive mode
+		 * to safely inspect the page LSN, so this couldn't have been done
+		 * inside StrategyGetBuffer().
 		 */
-		if (strategy != NULL)
+		if (strategy && from_ring &&
+			buf_state & BM_PERMANENT &&
+			XLogNeedsFlush(BufferGetLSN(buf_hdr)) &&
+			StrategyRejectBuffer(strategy, buf_hdr, from_ring))
 		{
-			XLogRecPtr	lsn = BufferGetLSN(buf_hdr);
-
-			if (XLogNeedsFlush(lsn)
-				&& StrategyRejectBuffer(strategy, buf_hdr, from_ring))
-			{
-				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-				UnpinBuffer(buf_hdr);
-				goto again;
-			}
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			UnpinBuffer(buf_hdr);
+			goto again;
 		}
 
 		/* OK, do the I/O */
