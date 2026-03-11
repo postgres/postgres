@@ -257,9 +257,9 @@ pgaio_worker_submit_internal(int num_staged_ios, PgAioHandle **staged_ios)
 			if (!pgaio_worker_submission_queue_insert(staged_ios[i]))
 			{
 				/*
-				 * Do the rest synchronously. If the queue is full, give up and
-				 * do the rest synchronously. We're holding an exclusive lock
-				 * on the queue so nothing can consume entries.
+				 * Do the rest synchronously. If the queue is full, give up
+				 * and do the rest synchronously. We're holding an exclusive
+				 * lock on the queue so nothing can consume entries.
 				 */
 				synchronous_ios = &staged_ios[i];
 				nsync = (num_staged_ios - i);
