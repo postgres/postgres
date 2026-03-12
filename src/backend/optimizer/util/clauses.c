@@ -4039,7 +4039,7 @@ eval_const_expressions_mutator(Node *node,
 				arg = eval_const_expressions_mutator((Node *) cdomain->arg,
 													 context);
 				if (context->estimate ||
-					!DomainHasConstraints(cdomain->resulttype))
+					!DomainHasConstraints(cdomain->resulttype, NULL))
 				{
 					/* Record dependency, if this isn't estimation mode */
 					if (context->root && !context->estimate)

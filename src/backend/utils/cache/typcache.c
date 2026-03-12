@@ -1485,10 +1485,14 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 /*
  * DomainHasConstraints --- utility routine to check if a domain has constraints
  *
+ * Returns true if the domain has any constraints at all.  If has_volatile
+ * is not NULL, also checks whether any CHECK constraint contains a volatile
+ * expression and sets *has_volatile accordingly.
+ *
  * This is defined to return false, not fail, if type is not a domain.
  */
 bool
-DomainHasConstraints(Oid type_id)
+DomainHasConstraints(Oid type_id, bool *has_volatile)
 {
 	TypeCacheEntry *typentry;
 
@@ -1498,7 +1502,26 @@ DomainHasConstraints(Oid type_id)
 	 */
 	typentry = lookup_type_cache(type_id, TYPECACHE_DOMAIN_CONSTR_INFO);
 
-	return (typentry->domainData != NULL);
+	if (typentry->domainData == NULL)
+		return false;
+
+	if (has_volatile)
+	{
+		*has_volatile = false;
+
+		foreach_node(DomainConstraintState, constrstate,
+					 typentry->domainData->constraints)
+		{
+			if (constrstate->constrainttype == DOM_CONSTRAINT_CHECK &&
+				contain_volatile_functions((Node *) constrstate->check_expr))
+			{
+				*has_volatile = true;
+				break;
+			}
+		}
+	}
+
+	return true;
 }
 
 

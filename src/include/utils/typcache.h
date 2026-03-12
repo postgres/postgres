@@ -183,7 +183,7 @@ extern void InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 
 extern void UpdateDomainConstraintRef(DomainConstraintRef *ref);
 
-extern bool DomainHasConstraints(Oid type_id);
+extern bool DomainHasConstraints(Oid type_id, bool *has_volatile);
 
 extern TupleDesc lookup_rowtype_tupdesc(Oid type_id, int32 typmod);
 

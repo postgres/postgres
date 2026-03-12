@@ -5061,6 +5061,6 @@ ExecInitJsonCoercion(ExprState *state, JsonReturning *returning,
 	scratch.d.jsonexpr_coercion.exists_cast_to_int = exists_coerce &&
 		getBaseType(returning->typid) == INT4OID;
 	scratch.d.jsonexpr_coercion.exists_check_domain = exists_coerce &&
-		DomainHasConstraints(returning->typid);
+		DomainHasConstraints(returning->typid, NULL);
 	ExprEvalPushStep(state, &scratch);
 }

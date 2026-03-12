@@ -7531,7 +7531,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			defval = (Expr *) build_column_default(rel, attribute->attnum);
 
 		/* Build CoerceToDomain(NULL) expression if needed */
-		has_domain_constraints = DomainHasConstraints(attribute->atttypid);
+		has_domain_constraints = DomainHasConstraints(attribute->atttypid, NULL);
 		if (!defval && has_domain_constraints)
 		{
 			Oid			baseTypeId;
@@ -14893,7 +14893,7 @@ ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
 		{
 			CoerceToDomain *d = (CoerceToDomain *) expr;
 
-			if (DomainHasConstraints(d->resulttype))
+			if (DomainHasConstraints(d->resulttype, NULL))
 				return true;
 			expr = (Node *) d->arg;
 		}

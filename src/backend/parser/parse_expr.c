@@ -4628,7 +4628,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (jsexpr->returning->typid != TEXTOID)
 			{
 				if (get_typtype(jsexpr->returning->typid) == TYPTYPE_DOMAIN &&
-					DomainHasConstraints(jsexpr->returning->typid))
+					DomainHasConstraints(jsexpr->returning->typid, NULL))
 					jsexpr->use_json_coercion = true;
 				else
 					jsexpr->use_io_coercion = true;
