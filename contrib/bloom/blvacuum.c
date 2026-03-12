@@ -17,6 +17,7 @@
 #include "commands/vacuum.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
+#include "storage/read_stream.h"
 
 
 /*
@@ -40,6 +41,8 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	Page		page;
 	BloomMetaPageData *metaData;
 	GenericXLogState *gxlogState;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream;
 
 	if (stats == NULL)
 		stats = palloc0_object(IndexBulkDeleteResult);
@@ -51,6 +54,25 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * they can't contain tuples to delete.
 	 */
 	npages = RelationGetNumberOfBlocks(index);
+
+	/* Scan all blocks except the metapage using streaming reads */
+	p.current_blocknum = BLOOM_HEAD_BLKNO;
+	p.last_exclusive = npages;
+
+	/*
+	 * It is safe to use batchmode as block_range_read_stream_cb takes no
+	 * locks.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+										READ_STREAM_FULL |
+										READ_STREAM_USE_BATCHING,
+										info->strategy,
+										index,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
+
 	for (blkno = BLOOM_HEAD_BLKNO; blkno < npages; blkno++)
 	{
 		BloomTuple *itup,
@@ -59,8 +81,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 		vacuum_delay_point(false);
 
-		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
-									RBM_NORMAL, info->strategy);
+		buffer = read_stream_next_buffer(stream, NULL);
 
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		gxlogState = GenericXLogStart(index);
@@ -133,6 +154,9 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		UnlockReleaseBuffer(buffer);
 	}
 
+	Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+	read_stream_end(stream);
+
 	/*
 	 * Update the metapage's notFullPage list with whatever we found.  Our
 	 * info could already be out of date at this point, but blinsert() will
@@ -166,6 +190,8 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	Relation	index = info->index;
 	BlockNumber npages,
 				blkno;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream;
 
 	if (info->analyze_only)
 		return stats;
@@ -181,6 +207,25 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	stats->num_pages = npages;
 	stats->pages_free = 0;
 	stats->num_index_tuples = 0;
+
+	/* Scan all blocks except the metapage using streaming reads */
+	p.current_blocknum = BLOOM_HEAD_BLKNO;
+	p.last_exclusive = npages;
+
+	/*
+	 * It is safe to use batchmode as block_range_read_stream_cb takes no
+	 * locks.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+										READ_STREAM_FULL |
+										READ_STREAM_USE_BATCHING,
+										info->strategy,
+										index,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
+
 	for (blkno = BLOOM_HEAD_BLKNO; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
@@ -188,8 +233,7 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 
 		vacuum_delay_point(false);
 
-		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
-									RBM_NORMAL, info->strategy);
+		buffer = read_stream_next_buffer(stream, NULL);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buffer);
 
@@ -205,6 +249,9 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 
 		UnlockReleaseBuffer(buffer);
 	}
+
+	Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+	read_stream_end(stream);
 
 	IndexFreeSpaceMapVacuum(info->index);
 
