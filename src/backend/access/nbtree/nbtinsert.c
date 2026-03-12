@@ -61,6 +61,7 @@ static Buffer _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key,
 						IndexTuple nposting, uint16 postingoff);
 static void _bt_insert_parent(Relation rel, Relation heaprel, Buffer buf,
 							  Buffer rbuf, BTStack stack, bool isroot, bool isonly);
+static void _bt_freestack(BTStack stack);
 static Buffer _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf);
 static inline bool _bt_pgaddtup(Page page, Size itemsize, const IndexTupleData *itup,
 								OffsetNumber itup_off, bool newfirstdataitem);
@@ -380,7 +381,7 @@ _bt_search_insert(Relation rel, Relation heaprel, BTInsertState insertstate)
 
 	/* Cannot use optimization -- descend tree, return proper descent stack */
 	return _bt_search(rel, heaprel, insertstate->itup_key, &insertstate->buf,
-					  BT_WRITE);
+					  BT_WRITE, true);
 }
 
 /*
@@ -2446,6 +2447,22 @@ _bt_getstackbuf(Relation rel, Relation heaprel, BTStack stack, BlockNumber child
 		blkno = opaque->btpo_next;
 		start = InvalidOffsetNumber;
 		_bt_relbuf(rel, buf);
+	}
+}
+
+/*
+ * _bt_freestack() -- free a retracement stack made by _bt_search_insert.
+ */
+static void
+_bt_freestack(BTStack stack)
+{
+	BTStack		ostack;
+
+	while (stack != NULL)
+	{
+		ostack = stack;
+		stack = stack->bts_parent;
+		pfree(ostack);
 	}
 }
 

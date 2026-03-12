@@ -145,22 +145,6 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 }
 
 /*
- * free a retracement stack made by _bt_search.
- */
-void
-_bt_freestack(BTStack stack)
-{
-	BTStack		ostack;
-
-	while (stack != NULL)
-	{
-		ostack = stack;
-		stack = stack->bts_parent;
-		pfree(ostack);
-	}
-}
-
-/*
  * qsort comparison function for int arrays
  */
 static int

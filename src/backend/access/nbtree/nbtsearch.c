@@ -80,10 +80,13 @@ _bt_drop_lock_and_maybe_pin(Relation rel, BTScanOpaque so)
  * The passed scankey is an insertion-type scankey (see nbtree/README),
  * but it can omit the rightmost column(s) of the index.
  *
- * Return value is a stack of parent-page pointers (i.e. there is no entry for
- * the leaf level/page).  *bufP is set to the address of the leaf-page buffer,
- * which is locked and pinned.  No locks are held on the parent pages,
- * however!
+ * If returnstack is true, return value is a stack of parent-page pointers
+ * (i.e. there is no entry for the leaf level/page).  If returnstack is false,
+ * we just return NULL.  This scheme allows callers that don't need a descent
+ * stack to avoid palloc churn.
+ *
+ * When we return, *bufP is set to the address of the leaf-page buffer, which
+ * is locked and pinned.  No locks are held on the parent pages, however!
  *
  * The returned buffer is locked according to access parameter.  Additionally,
  * access = BT_WRITE will allow an empty root page to be created and returned.
@@ -96,7 +99,7 @@ _bt_drop_lock_and_maybe_pin(Relation rel, BTScanOpaque so)
  */
 BTStack
 _bt_search(Relation rel, Relation heaprel, BTScanInsert key, Buffer *bufP,
-		   int access)
+		   int access, bool returnstack)
 {
 	BTStack		stack_in = NULL;
 	int			page_access = BT_READ;
@@ -160,10 +163,14 @@ _bt_search(Relation rel, Relation heaprel, BTScanInsert key, Buffer *bufP,
 		 * page one level down, it usually ends up inserting a new pivot
 		 * tuple/downlink immediately after the location recorded here.
 		 */
-		new_stack = (BTStack) palloc_object(BTStackData);
-		new_stack->bts_blkno = BufferGetBlockNumber(*bufP);
-		new_stack->bts_offset = offnum;
-		new_stack->bts_parent = stack_in;
+		if (returnstack)
+		{
+			new_stack = (BTStack) palloc_object(BTStackData);
+			new_stack->bts_blkno = BufferGetBlockNumber(*bufP);
+			new_stack->bts_offset = offnum;
+			new_stack->bts_parent = stack_in;
+			stack_in = new_stack;
+		}
 
 		/*
 		 * Page level 1 is lowest non-leaf page level prior to leaves.  So, if
@@ -177,7 +184,6 @@ _bt_search(Relation rel, Relation heaprel, BTScanInsert key, Buffer *bufP,
 		*bufP = _bt_relandgetbuf(rel, *bufP, child, page_access);
 
 		/* okay, all set to move down a level */
-		stack_in = new_stack;
 	}
 
 	/*
@@ -879,7 +885,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	BTStack		stack;
 	OffsetNumber offnum;
 	BTScanInsertData inskey;
 	ScanKey		startKeys[INDEX_MAX_KEYS];
@@ -1506,10 +1511,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * position ourselves on the target leaf page.
 	 */
 	Assert(ScanDirectionIsBackward(dir) == inskey.backward);
-	stack = _bt_search(rel, NULL, &inskey, &so->currPos.buf, BT_READ);
-
-	/* don't need to keep the stack around... */
-	_bt_freestack(stack);
+	_bt_search(rel, NULL, &inskey, &so->currPos.buf, BT_READ, false);
 
 	if (!BufferIsValid(so->currPos.buf))
 	{
@@ -1527,8 +1529,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		if (IsolationIsSerializable())
 		{
 			PredicateLockRelation(rel, scan->xs_snapshot);
-			stack = _bt_search(rel, NULL, &inskey, &so->currPos.buf, BT_READ);
-			_bt_freestack(stack);
+			_bt_search(rel, NULL, &inskey, &so->currPos.buf, BT_READ, false);
 		}
 
 		if (!BufferIsValid(so->currPos.buf))

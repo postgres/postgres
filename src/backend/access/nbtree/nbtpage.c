@@ -1966,7 +1966,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				/* Set up a BTLessStrategyNumber-like insertion scan key */
 				itup_key->nextkey = false;
 				itup_key->backward = true;
-				stack = _bt_search(rel, NULL, itup_key, &sleafbuf, BT_READ);
+				stack = _bt_search(rel, NULL, itup_key, &sleafbuf, BT_READ, true);
 				/* won't need a second lock or pin on leafbuf */
 				_bt_relbuf(rel, sleafbuf);
 

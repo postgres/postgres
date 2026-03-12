@@ -1284,7 +1284,7 @@ extern int	_bt_binsrch_array_skey(FmgrInfo *orderproc,
  * prototypes for functions in nbtsearch.c
  */
 extern BTStack _bt_search(Relation rel, Relation heaprel, BTScanInsert key,
-						  Buffer *bufP, int access);
+						  Buffer *bufP, int access, bool returnstack);
 extern OffsetNumber _bt_binsrch_insert(Relation rel, BTInsertState insertstate);
 extern int32 _bt_compare(Relation rel, BTScanInsert key, Page page, OffsetNumber offnum);
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
@@ -1295,7 +1295,6 @@ extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost);
  * prototypes for functions in nbtutils.c
  */
 extern BTScanInsert _bt_mkscankey(Relation rel, IndexTuple itup);
-extern void _bt_freestack(BTStack stack);
 extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);
