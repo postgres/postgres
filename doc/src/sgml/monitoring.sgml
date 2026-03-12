@@ -407,7 +407,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
      <row>
       <entry><structname>pg_stat_progress_cluster</structname><indexterm><primary>pg_stat_progress_cluster</primary></indexterm></entry>
-      <entry>One row for each backend running
+      <entry>One row for each backend running <command>REPACK</command>,
        <command>CLUSTER</command> or <command>VACUUM FULL</command>, showing current progress.
        See <xref linkend="cluster-progress-reporting"/>.
       </entry>
@@ -415,8 +415,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
      <row>
       <entry><structname>pg_stat_progress_repack</structname><indexterm><primary>pg_stat_progress_repack</primary></indexterm></entry>
-      <entry>One row for each backend running
-       <command>REPACK</command>, showing current progress.  See
+      <entry>One row for each backend running <command>REPACK</command>,
+       <command>CLUSTER</command> or <command>VACUUM FULL</command>, showing current progress.
        <xref linkend="repack-progress-reporting"/>.
       </entry>
      </row>
@@ -6075,8 +6075,10 @@ FROM pg_stat_get_backend_idset() AS backendid;
   </indexterm>
 
   <para>
-   Whenever <command>CLUSTER</command> or <command>VACUUM FULL</command> is
-   running, the <structname>pg_stat_progress_cluster</structname> view will
+   Whenever <command>REPACK</command>, <command>CLUSTER</command> or
+   <command>VACUUM FULL</command> is running,
+   the backwards-compatibility <structname>pg_stat_progress_cluster</structname>
+   view will
    contain a row for each backend that is currently running either command.
    The tables below describe the information that will be reported and
    provide information about how to interpret it.
@@ -6138,7 +6140,11 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <structfield>command</structfield> <type>text</type>
       </para>
       <para>
-       The command that is running. Either <literal>CLUSTER</literal> or <literal>VACUUM FULL</literal>.
+       The command that is running. Either <command>CLUSTER</command> or
+       <command>VACUUM FULL</command>.
+       Because this view exists for backwards-compatibility purposes only,
+       it will translate any <command>REPACK</command> command into one of
+       these other two.
       </para></entry>
      </row>
 
@@ -6802,6 +6808,16 @@ FROM pg_stat_get_backend_idset() AS backendid;
       </para>
       <para>
        OID of the table being repacked.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>command</structfield> <type>text</type>
+      </para>
+      <para>
+       The command that is running. Either <command>REPACK</command> or
+       <command>VACUUM FULL</command>, or <command>CLUSTER</command>.
       </para></entry>
      </row>
 
