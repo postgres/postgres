@@ -149,6 +149,7 @@
 <!ENTITY pgfreespacemap  SYSTEM "pgfreespacemap.sgml">
 <!ENTITY pglogicalinspect  SYSTEM "pglogicalinspect.sgml">
 <!ENTITY pgoverexplain   SYSTEM "pgoverexplain.sgml">
+<!ENTITY pgplanadvice    SYSTEM "pgplanadvice.sgml">
 <!ENTITY pgprewarm       SYSTEM "pgprewarm.sgml">
 <!ENTITY pgrowlocks      SYSTEM "pgrowlocks.sgml">
 <!ENTITY pgstatstatements SYSTEM "pgstatstatements.sgml">

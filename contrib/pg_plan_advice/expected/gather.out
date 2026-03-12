@@ -1,0 +1,371 @@
+LOAD 'pg_plan_advice';
+SET max_parallel_workers_per_gather = 1;
+SET parallel_setup_cost = 0;
+SET parallel_tuple_cost = 0;
+SET min_parallel_table_scan_size = 0;
+SET debug_parallel_query = off;
+CREATE TABLE gt_dim (id serial primary key, dim text)
+	WITH (autovacuum_enabled = false);
+INSERT INTO gt_dim (dim) SELECT random()::text FROM generate_series(1,100) g;
+VACUUM ANALYZE gt_dim;
+CREATE TABLE gt_fact (
+	id int not null,
+	dim_id integer not null references gt_dim (id)
+) WITH (autovacuum_enabled = false);
+INSERT INTO gt_fact
+	SELECT g, (g%3)+1 FROM generate_series(1,100000) g;
+VACUUM ANALYZE gt_fact;
+-- By default, we expect Gather Merge with a parallel hash join.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Gather Merge
+   Workers Planned: 1
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Parallel Hash Join
+               Hash Cond: (f.dim_id = d.id)
+               ->  Parallel Seq Scan on gt_fact f
+               ->  Parallel Hash
+                     ->  Parallel Seq Scan on gt_dim d
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   HASH_JOIN(d)
+   SEQ_SCAN(f d)
+   GATHER_MERGE((f d))
+(14 rows)
+
+-- Force Gather or Gather Merge of both relations together.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'gather_merge((f d))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Gather Merge
+   Workers Planned: 1
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Parallel Hash Join
+               Hash Cond: (f.dim_id = d.id)
+               ->  Parallel Seq Scan on gt_fact f
+               ->  Parallel Hash
+                     ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER_MERGE((f d)) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   HASH_JOIN(d)
+   SEQ_SCAN(f d)
+   GATHER_MERGE((f d))
+(16 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather((f d))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Sort
+   Sort Key: f.dim_id
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Hash Join
+               Hash Cond: (f.dim_id = d.id)
+               ->  Parallel Seq Scan on gt_fact f
+               ->  Parallel Hash
+                     ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER((f d)) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   HASH_JOIN(d)
+   SEQ_SCAN(f d)
+   GATHER((f d))
+(16 rows)
+
+COMMIT;
+-- Force a separate Gather or Gather Merge operation for each relation.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'gather_merge(f d)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Merge Join
+   Merge Cond: (f.dim_id = d.id)
+   ->  Gather Merge
+         Workers Planned: 1
+         ->  Sort
+               Sort Key: f.dim_id
+               ->  Parallel Seq Scan on gt_fact f
+   ->  Gather Merge
+         Workers Planned: 1
+         ->  Sort
+               Sort Key: d.id
+               ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER_MERGE(f) /* matched */
+   GATHER_MERGE(d) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   MERGE_JOIN_PLAIN(d)
+   SEQ_SCAN(f d)
+   GATHER_MERGE(f d)
+(20 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather(f d)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Merge Join
+   Merge Cond: (f.dim_id = d.id)
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Gather
+               Workers Planned: 1
+               ->  Parallel Seq Scan on gt_fact f
+   ->  Sort
+         Sort Key: d.id
+         ->  Gather
+               Workers Planned: 1
+               ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER(f) /* matched */
+   GATHER(d) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   MERGE_JOIN_PLAIN(d)
+   SEQ_SCAN(f d)
+   GATHER(f d)
+(20 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather((d d/d.d))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Merge Join
+   Merge Cond: (f.dim_id = d.id)
+   ->  Gather Merge
+         Workers Planned: 1
+         ->  Sort
+               Sort Key: f.dim_id
+               ->  Parallel Seq Scan on gt_fact f
+   ->  Index Scan using gt_dim_pkey on gt_dim d
+ Supplied Plan Advice:
+   GATHER((d d/d.d)) /* partially matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   MERGE_JOIN_PLAIN(d)
+   SEQ_SCAN(f)
+   INDEX_SCAN(d public.gt_dim_pkey)
+   GATHER_MERGE(f)
+   NO_GATHER(d)
+(17 rows)
+
+COMMIT;
+-- Force a Gather or Gather Merge on one relation but no parallelism on other.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'gather_merge(f) no_gather(d)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Merge Join
+   Merge Cond: (f.dim_id = d.id)
+   ->  Gather Merge
+         Workers Planned: 1
+         ->  Sort
+               Sort Key: f.dim_id
+               ->  Parallel Seq Scan on gt_fact f
+   ->  Index Scan using gt_dim_pkey on gt_dim d
+ Supplied Plan Advice:
+   GATHER_MERGE(f) /* matched */
+   NO_GATHER(d) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   MERGE_JOIN_PLAIN(d)
+   SEQ_SCAN(f)
+   INDEX_SCAN(d public.gt_dim_pkey)
+   GATHER_MERGE(f)
+   NO_GATHER(d)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather_merge(d) no_gather(f)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Merge Join
+   Merge Cond: (f.dim_id = d.id)
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Seq Scan on gt_fact f
+   ->  Gather Merge
+         Workers Planned: 1
+         ->  Sort
+               Sort Key: d.id
+               ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER_MERGE(d) /* matched */
+   NO_GATHER(f) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   MERGE_JOIN_PLAIN(d)
+   SEQ_SCAN(f d)
+   GATHER_MERGE(d)
+   NO_GATHER(f)
+(19 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather(f) no_gather(d)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Merge Join
+   Merge Cond: (d.id = f.dim_id)
+   ->  Index Scan using gt_dim_pkey on gt_dim d
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Gather
+               Workers Planned: 1
+               ->  Parallel Seq Scan on gt_fact f
+ Supplied Plan Advice:
+   GATHER(f) /* matched */
+   NO_GATHER(d) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(d f)
+   MERGE_JOIN_PLAIN(f)
+   SEQ_SCAN(f)
+   INDEX_SCAN(d public.gt_dim_pkey)
+   GATHER(f)
+   NO_GATHER(d)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather(d) no_gather(f)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Merge Join
+   Merge Cond: (f.dim_id = d.id)
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Seq Scan on gt_fact f
+   ->  Sort
+         Sort Key: d.id
+         ->  Gather
+               Workers Planned: 1
+               ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER(d) /* matched */
+   NO_GATHER(f) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   MERGE_JOIN_PLAIN(d)
+   SEQ_SCAN(f d)
+   GATHER(d)
+   NO_GATHER(f)
+(19 rows)
+
+COMMIT;
+-- Force no Gather or Gather Merge use at all.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'no_gather(f d)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                   QUERY PLAN                   
+------------------------------------------------
+ Merge Join
+   Merge Cond: (d.id = f.dim_id)
+   ->  Index Scan using gt_dim_pkey on gt_dim d
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Seq Scan on gt_fact f
+ Supplied Plan Advice:
+   NO_GATHER(f) /* matched */
+   NO_GATHER(d) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(d f)
+   MERGE_JOIN_PLAIN(f)
+   SEQ_SCAN(f)
+   INDEX_SCAN(d public.gt_dim_pkey)
+   NO_GATHER(f d)
+(15 rows)
+
+COMMIT;
+-- Can't force Gather Merge without the ORDER BY clause, but just Gather is OK.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'gather_merge((f d))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Gather
+   Disabled: true
+   Workers Planned: 1
+   ->  Parallel Hash Join
+         Hash Cond: (f.dim_id = d.id)
+         ->  Parallel Seq Scan on gt_fact f
+         ->  Parallel Hash
+               ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER_MERGE((f d)) /* matched, failed */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   HASH_JOIN(d)
+   SEQ_SCAN(f d)
+   GATHER((f d))
+(15 rows)
+
+SET LOCAL pg_plan_advice.advice = 'gather((f d))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Gather
+   Workers Planned: 1
+   ->  Parallel Hash Join
+         Hash Cond: (f.dim_id = d.id)
+         ->  Parallel Seq Scan on gt_fact f
+         ->  Parallel Hash
+               ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER((f d)) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   HASH_JOIN(d)
+   SEQ_SCAN(f d)
+   GATHER((f d))
+(14 rows)
+
+COMMIT;
+-- Test conflicting advice.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'gather((f d)) no_gather(f)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Gather Merge
+   Workers Planned: 1
+   ->  Sort
+         Sort Key: f.dim_id
+         ->  Parallel Hash Join
+               Hash Cond: (f.dim_id = d.id)
+               ->  Parallel Seq Scan on gt_fact f
+               ->  Parallel Hash
+                     ->  Parallel Seq Scan on gt_dim d
+ Supplied Plan Advice:
+   GATHER((f d)) /* matched, conflicting, failed */
+   NO_GATHER(f) /* matched, conflicting, failed */
+ Generated Plan Advice:
+   JOIN_ORDER(f d)
+   HASH_JOIN(d)
+   SEQ_SCAN(f d)
+   GATHER_MERGE((f d))
+(17 rows)
+
+COMMIT;

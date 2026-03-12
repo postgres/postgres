@@ -1,0 +1,426 @@
+LOAD 'pg_plan_advice';
+SET max_parallel_workers_per_gather = 0;
+SET enable_partitionwise_join = true;
+CREATE TABLE pt1 (id integer primary key, dim1 text, val1 int)
+	PARTITION BY RANGE (id);
+CREATE TABLE pt1a PARTITION OF pt1 FOR VALUES FROM (1) to (1001)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE pt1b PARTITION OF pt1 FOR VALUES FROM (1001) to (2001)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE pt1c PARTITION OF pt1 FOR VALUES FROM (2001) to (3001)
+	WITH (autovacuum_enabled = false);
+INSERT INTO pt1 (id, dim1, val1)
+	SELECT g, 'some filler text ' || g, (g % 3) + 1
+	  FROM generate_series(1,3000) g;
+VACUUM ANALYZE pt1;
+CREATE TABLE pt2 (id integer primary key, dim2 text, val2 int)
+	PARTITION BY RANGE (id);
+CREATE TABLE pt2a PARTITION OF pt2 FOR VALUES FROM (1) to (1001)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE pt2b PARTITION OF pt2 FOR VALUES FROM (1001) to (2001)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE pt2c PARTITION OF pt2 FOR VALUES FROM (2001) to (3001)
+	WITH (autovacuum_enabled = false);
+INSERT INTO pt2 (id, dim2, val2)
+	SELECT g, 'some other text ' || g, (g % 5) + 1
+	  FROM generate_series(1,3000,2) g;
+VACUUM ANALYZE pt2;
+CREATE TABLE pt3 (id integer primary key, dim3 text, val3 int)
+	PARTITION BY RANGE (id);
+CREATE TABLE pt3a PARTITION OF pt3 FOR VALUES FROM (1) to (1001)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE pt3b PARTITION OF pt3 FOR VALUES FROM (1001) to (2001)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE pt3c PARTITION OF pt3 FOR VALUES FROM (2001) to (3001)
+	WITH (autovacuum_enabled = false);
+INSERT INTO pt3 (id, dim3, val3)
+	SELECT g, 'a third random text ' || g, (g % 7) + 1
+	  FROM generate_series(1,3000,3) g;
+VACUUM ANALYZE pt3;
+CREATE TABLE ptmismatch (id integer primary key, dimm text, valm int)
+	PARTITION BY RANGE (id);
+CREATE TABLE ptmismatcha PARTITION OF ptmismatch
+    FOR VALUES FROM (1) to (1501)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE ptmismatchb PARTITION OF ptmismatch
+    FOR VALUES FROM (1501) to (3001)
+	WITH (autovacuum_enabled = false);
+INSERT INTO ptmismatch (id, dimm, valm)
+	SELECT g, 'yet another text ' || g, (g % 2) + 1
+	  FROM generate_series(1,3000) g;
+VACUUM ANALYZE ptmismatch;
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Append
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_1.id = pt3_1.id)
+               ->  Seq Scan on pt2a pt2_1
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3a pt3_1
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1a_pkey on pt1a pt1_1
+               Index Cond: (id = pt2_1.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_2.id = pt3_2.id)
+               ->  Seq Scan on pt2b pt2_2
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3b pt3_2
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1b_pkey on pt1b pt1_2
+               Index Cond: (id = pt2_2.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_3.id = pt3_3.id)
+               ->  Seq Scan on pt2c pt2_3
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3c pt3_3
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1c_pkey on pt1c pt1_3
+               Index Cond: (id = pt2_3.id)
+               Filter: (val1 = 1)
+ Generated Plan Advice:
+   JOIN_ORDER(pt2/public.pt2a pt3/public.pt3a pt1/public.pt1a)
+   JOIN_ORDER(pt2/public.pt2b pt3/public.pt3b pt1/public.pt1b)
+   JOIN_ORDER(pt2/public.pt2c pt3/public.pt3c pt1/public.pt1c)
+   NESTED_LOOP_PLAIN(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c)
+   HASH_JOIN(pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+   SEQ_SCAN(pt2/public.pt2a pt3/public.pt3a pt2/public.pt2b pt3/public.pt3b
+    pt2/public.pt2c pt3/public.pt3c)
+   INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
+    pt1/public.pt1c public.pt1c_pkey)
+   PARTITIONWISE((pt1 pt2 pt3))
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(47 rows)
+
+-- Suppress partitionwise join, or do it just partially.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE(pt1 pt2 pt3)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Nested Loop
+   ->  Hash Join
+         Hash Cond: (pt2.id = pt3.id)
+         ->  Append
+               ->  Seq Scan on pt2a pt2_1
+                     Filter: (val2 = 1)
+               ->  Seq Scan on pt2b pt2_2
+                     Filter: (val2 = 1)
+               ->  Seq Scan on pt2c pt2_3
+                     Filter: (val2 = 1)
+         ->  Hash
+               ->  Append
+                     ->  Seq Scan on pt3a pt3_1
+                           Filter: (val3 = 1)
+                     ->  Seq Scan on pt3b pt3_2
+                           Filter: (val3 = 1)
+                     ->  Seq Scan on pt3c pt3_3
+                           Filter: (val3 = 1)
+   ->  Append
+         ->  Index Scan using pt1a_pkey on pt1a pt1_1
+               Index Cond: (id = pt2.id)
+               Filter: (val1 = 1)
+         ->  Index Scan using pt1b_pkey on pt1b pt1_2
+               Index Cond: (id = pt2.id)
+               Filter: (val1 = 1)
+         ->  Index Scan using pt1c_pkey on pt1c pt1_3
+               Index Cond: (id = pt2.id)
+               Filter: (val1 = 1)
+ Supplied Plan Advice:
+   PARTITIONWISE(pt1) /* matched */
+   PARTITIONWISE(pt2) /* matched */
+   PARTITIONWISE(pt3) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(pt2 pt3 pt1)
+   NESTED_LOOP_PLAIN(pt1)
+   HASH_JOIN(pt3)
+   SEQ_SCAN(pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+   INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
+    pt1/public.pt1c public.pt1c_pkey)
+   PARTITIONWISE(pt2 pt3 pt1)
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(43 rows)
+
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2) pt3)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (pt1.id = pt3.id)
+   ->  Append
+         ->  Hash Join
+               Hash Cond: (pt1_1.id = pt2_1.id)
+               ->  Seq Scan on pt1a pt1_1
+                     Filter: (val1 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2a pt2_1
+                           Filter: (val2 = 1)
+         ->  Hash Join
+               Hash Cond: (pt1_2.id = pt2_2.id)
+               ->  Seq Scan on pt1b pt1_2
+                     Filter: (val1 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2b pt2_2
+                           Filter: (val2 = 1)
+         ->  Hash Join
+               Hash Cond: (pt1_3.id = pt2_3.id)
+               ->  Seq Scan on pt1c pt1_3
+                     Filter: (val1 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2c pt2_3
+                           Filter: (val2 = 1)
+   ->  Hash
+         ->  Append
+               ->  Seq Scan on pt3a pt3_1
+                     Filter: (val3 = 1)
+               ->  Seq Scan on pt3b pt3_2
+                     Filter: (val3 = 1)
+               ->  Seq Scan on pt3c pt3_3
+                     Filter: (val3 = 1)
+ Supplied Plan Advice:
+   PARTITIONWISE((pt1 pt2)) /* matched */
+   PARTITIONWISE(pt3) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(pt1/public.pt1a pt2/public.pt2a)
+   JOIN_ORDER(pt1/public.pt1b pt2/public.pt2b)
+   JOIN_ORDER(pt1/public.pt1c pt2/public.pt2c)
+   JOIN_ORDER({pt1 pt2} pt3)
+   HASH_JOIN(pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3)
+   SEQ_SCAN(pt1/public.pt1a pt2/public.pt2a pt1/public.pt1b pt2/public.pt2b
+    pt1/public.pt1c pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b
+    pt3/public.pt3c)
+   PARTITIONWISE((pt1 pt2) pt3)
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(47 rows)
+
+COMMIT;
+-- Test conflicting advice.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2) (pt1 pt3))';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Append
+   Disabled: true
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_1.id = pt3_1.id)
+               ->  Seq Scan on pt2a pt2_1
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3a pt3_1
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1a_pkey on pt1a pt1_1
+               Index Cond: (id = pt2_1.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_2.id = pt3_2.id)
+               ->  Seq Scan on pt2b pt2_2
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3b pt3_2
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1b_pkey on pt1b pt1_2
+               Index Cond: (id = pt2_2.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_3.id = pt3_3.id)
+               ->  Seq Scan on pt2c pt2_3
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3c pt3_3
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1c_pkey on pt1c pt1_3
+               Index Cond: (id = pt2_3.id)
+               Filter: (val1 = 1)
+ Supplied Plan Advice:
+   PARTITIONWISE((pt1 pt2)) /* matched, conflicting, failed */
+   PARTITIONWISE((pt1 pt3)) /* matched, conflicting, failed */
+ Generated Plan Advice:
+   JOIN_ORDER(pt2/public.pt2a pt3/public.pt3a pt1/public.pt1a)
+   JOIN_ORDER(pt2/public.pt2b pt3/public.pt3b pt1/public.pt1b)
+   JOIN_ORDER(pt2/public.pt2c pt3/public.pt3c pt1/public.pt1c)
+   NESTED_LOOP_PLAIN(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c)
+   HASH_JOIN(pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+   SEQ_SCAN(pt2/public.pt2a pt3/public.pt3a pt2/public.pt2b pt3/public.pt3b
+    pt2/public.pt2c pt3/public.pt3c)
+   INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
+    pt1/public.pt1c public.pt1c_pkey)
+   PARTITIONWISE((pt1 pt2 pt3))
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(51 rows)
+
+COMMIT;
+-- Can't force a partitionwise join with a mismatched table.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 ptmismatch))';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, ptmismatch WHERE pt1.id = ptmismatch.id;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop
+   Disabled: true
+   ->  Append
+         ->  Seq Scan on pt1a pt1_1
+         ->  Seq Scan on pt1b pt1_2
+         ->  Seq Scan on pt1c pt1_3
+   ->  Append
+         ->  Index Scan using ptmismatcha_pkey on ptmismatcha ptmismatch_1
+               Index Cond: (id = pt1.id)
+         ->  Index Scan using ptmismatchb_pkey on ptmismatchb ptmismatch_2
+               Index Cond: (id = pt1.id)
+ Supplied Plan Advice:
+   PARTITIONWISE((pt1 ptmismatch)) /* matched, failed */
+ Generated Plan Advice:
+   JOIN_ORDER(pt1 ptmismatch)
+   NESTED_LOOP_PLAIN(ptmismatch)
+   SEQ_SCAN(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c)
+   INDEX_SCAN(ptmismatch/public.ptmismatcha public.ptmismatcha_pkey
+    ptmismatch/public.ptmismatchb public.ptmismatchb_pkey)
+   PARTITIONWISE(pt1 ptmismatch)
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    ptmismatch/public.ptmismatcha ptmismatch/public.ptmismatchb)
+(22 rows)
+
+COMMIT;
+-- Force join order for a particular branch of the partitionwise join with
+-- and without mentioning the schema name.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt1/public.pt1a)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Append
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt3_1.id = pt2_1.id)
+               ->  Seq Scan on pt3a pt3_1
+                     Filter: (val3 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2a pt2_1
+                           Filter: (val2 = 1)
+         ->  Index Scan using pt1a_pkey on pt1a pt1_1
+               Index Cond: (id = pt2_1.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_2.id = pt3_2.id)
+               ->  Seq Scan on pt2b pt2_2
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3b pt3_2
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1b_pkey on pt1b pt1_2
+               Index Cond: (id = pt2_2.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_3.id = pt3_3.id)
+               ->  Seq Scan on pt2c pt2_3
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3c pt3_3
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1c_pkey on pt1c pt1_3
+               Index Cond: (id = pt2_3.id)
+               Filter: (val1 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt1/public.pt1a) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt1/public.pt1a)
+   JOIN_ORDER(pt2/public.pt2b pt3/public.pt3b pt1/public.pt1b)
+   JOIN_ORDER(pt2/public.pt2c pt3/public.pt3c pt1/public.pt1c)
+   NESTED_LOOP_PLAIN(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c)
+   HASH_JOIN(pt2/public.pt2a pt3/public.pt3b pt3/public.pt3c)
+   SEQ_SCAN(pt3/public.pt3a pt2/public.pt2a pt2/public.pt2b pt3/public.pt3b
+    pt2/public.pt2c pt3/public.pt3c)
+   INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
+    pt1/public.pt1c public.pt1c_pkey)
+   PARTITIONWISE((pt1 pt2 pt3))
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(49 rows)
+
+SET LOCAL pg_plan_advice.advice = 'JOIN_ORDER(pt3/pt3a pt2/pt2a pt1/pt1a)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Append
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt3_1.id = pt2_1.id)
+               ->  Seq Scan on pt3a pt3_1
+                     Filter: (val3 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2a pt2_1
+                           Filter: (val2 = 1)
+         ->  Index Scan using pt1a_pkey on pt1a pt1_1
+               Index Cond: (id = pt2_1.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_2.id = pt3_2.id)
+               ->  Seq Scan on pt2b pt2_2
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3b pt3_2
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1b_pkey on pt1b pt1_2
+               Index Cond: (id = pt2_2.id)
+               Filter: (val1 = 1)
+   ->  Nested Loop
+         ->  Hash Join
+               Hash Cond: (pt2_3.id = pt3_3.id)
+               ->  Seq Scan on pt2c pt2_3
+                     Filter: (val2 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt3c pt3_3
+                           Filter: (val3 = 1)
+         ->  Index Scan using pt1c_pkey on pt1c pt1_3
+               Index Cond: (id = pt2_3.id)
+               Filter: (val1 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER(pt3/pt3a pt2/pt2a pt1/pt1a) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt1/public.pt1a)
+   JOIN_ORDER(pt2/public.pt2b pt3/public.pt3b pt1/public.pt1b)
+   JOIN_ORDER(pt2/public.pt2c pt3/public.pt3c pt1/public.pt1c)
+   NESTED_LOOP_PLAIN(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c)
+   HASH_JOIN(pt2/public.pt2a pt3/public.pt3b pt3/public.pt3c)
+   SEQ_SCAN(pt3/public.pt3a pt2/public.pt2a pt2/public.pt2b pt3/public.pt3b
+    pt2/public.pt2c pt3/public.pt3c)
+   INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
+    pt1/public.pt1c public.pt1c_pkey)
+   PARTITIONWISE((pt1 pt2 pt3))
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(49 rows)
+
+COMMIT;

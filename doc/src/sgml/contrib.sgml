@@ -156,6 +156,7 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
  &pgfreespacemap;
  &pglogicalinspect;
  &pgoverexplain;
+ &pgplanadvice;
  &pgprewarm;
  &pgrowlocks;
  &pgstatstatements;

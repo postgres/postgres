@@ -1,0 +1,7 @@
+/pgpa_parser.h
+/pgpa_parser.c
+/pgpa_scanner.c
+# Generated subdirectories
+/log/
+/results/
+/tmp_check/

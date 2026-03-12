@@ -1,0 +1,260 @@
+contrib/pg_plan_advice/README
+
+Plan Advice
+===========
+
+This module implements a mini-language for "plan advice" that allows for
+control of certain key planner decisions. Goals include (1) enforcing plan
+stability (my previous plan was good and I would like to keep getting a
+similar one) and (2) allowing users to experiment with plans other than
+the one preferred by the optimizer. Non-goals include (1) controlling
+every possible planner decision and (2) forcing consideration of plans
+that the optimizer rejects for reasons other than cost. (There is some
+room for bikeshedding about what exactly this non-goal means: what if
+we skip path generation entirely for a certain case on the theory that
+we know it cannot win on cost? Does that count as a cost-based rejection
+even though no cost was ever computed?)
+
+Generally, plan advice is a series of whitespace-separated advice items,
+each of which applies an advice tag to a list of advice targets. For
+example, "SEQ_SCAN(foo) HASH_JOIN(bar@ss)" contains two items of advice,
+the first of which applies the SEQ_SCAN tag to "foo" and the second of
+which applies the HASH_JOIN tag to "bar@ss". In this simple example, each
+target identifies a single relation; see "Relation Identifiers", below.
+Advice tags can also be applied to groups of relations; for example,
+"HASH_JOIN(baz (bletch quux))" applies the HASH_JOIN tag to the single
+relation identifier "baz" as well as to the 2-item list containing
+"bletch" and "quux".
+
+Critically, this module knows both how to generate plan advice from an
+already-existing plan, and also how to enforce it during future planning
+cycles. Everything it does is intended to be "round-trip safe": if you
+generate advice from a plan and then feed that back into a future planning
+cycle, each piece of advice should be guaranteed to apply to exactly the
+same part of the query from which it was generated without ambiguity or
+guesswork, and it should successfully enforce the same planning decision that
+led to it being generated in the first place. Note that there is no
+intention that these guarantees hold in the presence of intervening DDL;
+e.g. if you change the properties of a function so that a subquery is no
+longer inlined, or if you drop an index named in the plan advice, the advice
+isn't going to work any more. That's expected.
+
+This module aims to force the planner to follow any provided advice without
+regard to whether it appears to be good advice or bad advice. If the
+user provides bad advice, whether derived from a previously-generated plan
+or manually written, they may get a bad plan. We regard this as user error,
+not a defect in this module. It seems likely that applying advice
+judiciously and only when truly required to avoid problems will be a more
+successful strategy than applying it with a broad brush, but users are free
+to experiment with whatever strategies they think best.
+
+Relation Identifiers
+====================
+
+Uniquely identifying the part of a query to which a certain piece of
+advice applies is harder than it sounds. Our basic approach is to use
+relation aliases as a starting point, and then disambiguate. There are
+three ways that the same relation alias can occur multiple times:
+
+1. It can appear in more than one subquery.
+
+2. It can appear more than once in the same subquery,
+   e.g. (foo JOIN bar) x JOIN foo.
+
+3. The table can be partitioned.
+
+Any combination of these things can occur simultaneously. Therefore, our
+general syntax for a relation identifier is:
+
+alias_name#occurrence_number/partition_schema.partition_name@plan_name
+
+All components except for the alias_name are optional and included only
+when required. When a component is omitted, the associated punctuation
+must also be omitted. Occurrence numbers are counted ignoring children of
+partitioned tables. When the generated occurrence number is 1, we omit
+the occurrence number. The partition schema and partition name are included
+only for children of partitioned tables. In generated advice, the
+partition_schema is always included whenever there is a partition_name,
+but user-written advice may mention the name and omit the schema. The
+plan_name is omitted for the top-level PlannerInfo.
+
+Scan Advice
+===========
+
+For many types of scan, no advice is generated or possible; for instance,
+a subquery is always scanned using a subquery scan. While that scan may be
+elided via setrefs processing, this doesn't change the fact that only one
+basic approach exists. Hence, scan advice applies mostly to relations, which
+can be scanned in multiple ways.
+
+We tend to think of a scan as targeting a single relation, and that's
+normally the case, but it doesn't have to be. For instance, if a join is
+proven empty, the whole thing may be replaced with a single Result node
+which, in effect, is a degenerate scan of every relation in the collapsed
+portion of the join tree. Similarly, it's possible to inject a custom scan
+in such a way that it replaces an entire join. If we ever emit advice
+for these cases, it would target sets of relation identifiers surrounded
+by parentheses, e.g., SOME_SORT_OF_SCAN(foo (bar baz)) would mean that
+the given scan type would be used for foo as a single relation and also the
+combination of bar and baz as a join product. We have no such cases at
+present.
+
+For index and index-only scans, both the relation being scanned and the
+index or indexes being used must be specified. For example, INDEX_SCAN(foo
+foo_a_idx bar bar_b_idx) indicates that an index scan (not an index-only
+scan) should be used on foo_a_idx when scanning foo, and that an index scan
+should be used on bar_b_idx when scanning bar.
+
+Bitmap heap scans currently do not allow for an index specification:
+BITMAP_HEAP_SCAN(foo bar) simply means that each of foo and bar should use
+some sort of bitmap heap scan.
+
+Join Order Advice
+=================
+
+The JOIN_ORDER tag specifies the order in which several tables that are
+part of the same join problem should be joined. Each subquery (except for
+those that are inlined) is a separate join problem. Within a subquery,
+partitionwise joins can create additional, separate join problems. Hence,
+queries involving partitionwise joins may use JOIN_ORDER() many times.
+
+We take the canonical join structure to be an outer-deep tree, so
+JOIN_ORDER(t1 t2 t3) says that t1 is the driving table and should be joined
+first to t2 and then to t3. If the join problem involves additional tables,
+they can be joined in any order after the join between t1, t2, and t3 has
+been constructed. Generated join advice always mentions all tables
+in the join problem, but manually written join advice need not do so.
+
+For trees which are not outer-deep, parentheses can be used. For example,
+JOIN_ORDER(t1 (t2 t3)) says that the top-level join should have t1 on the
+outer side and a join between t2 and t3 on the inner side. That join should
+be constructed so that t2 is on the outer side and t3 is on the inner side.
+
+In some cases, it's not possible to fully specify the join order in this way.
+For example, if t2 and t3 are being scanned by a single custom scan or foreign
+scan, or if a partitionwise join is being performed between those tables, then
+it's impossible to say that t2 is the outer table and t3 is the inner table,
+or the other way around; it's just undefined. In such cases, we generate
+join advice that uses curly braces, intending to indicate a lack of ordering:
+JOIN_ORDER(t1 {t2 t3}) says that the uppermost join should have t1 on the outer
+side and some kind of join between t2 and t3 on the inner side, but without
+saying how that join must be performed or anything about which relation should
+appear on which side of the join, or even whether this kind of join has sides.
+
+Join Method Advice
+==================
+
+Tags such as NESTED_LOOP_PLAIN specify the method that should be used to
+perform a certain join. More specifically, NESTED_LOOP_PLAIN(x (y z)) says
+that the plan should put the relation whose identifier is "x" on the inner
+side of a plain nested loop (one without materialization or memoization)
+and that it should also put a join between the relation whose identifier is
+"y" and the relation whose identifier is "z" on the inner side of a nested
+loop. Hence, for an N-table join problem, there will be N-1 pieces of join
+method advice; no join method advice is required for the outermost
+table in the join problem.
+
+Considering that we have both join order advice and join method advice,
+it might seem natural to say that NESTED_LOOP_PLAIN(x) should be redefined
+to mean that x should appear by itself on one side or the other of a nested
+loop, rather than specifically on the inner side, but this definition appears
+useless in practice. It gives the planner too much freedom to do things that
+bear little resemblance to what the user probably had in mind. This makes
+only a limited amount of practical difference in the case of a merge join or
+unparameterized nested loop, but for a parameterized nested loop or a hash
+join, the two sides are treated very differently, and saying that a certain
+relation should be involved in one of those operations without saying which
+role it should take isn't saying much.
+
+This choice of definition implies that join method advice also imposes some
+join order constraints. For example, given a join between foo and bar,
+HASH_JOIN(bar) implies that foo is the driving table. Otherwise, it would
+be impossible to put bar beneath the inner side of a Hash Join.
+
+Note that, given this definition, it's reasonable to consider deleting the
+join order advice but applying the join method advice. For example,
+consider a star schema with tables fact, dim1, dim2, dim3, dim4, and dim5.
+The automatically generated advice might specify JOIN_ORDER(fact dim1 dim3
+dim4 dim2 dim5) HASH_JOIN(dim2 dim4) NESTED_LOOP_PLAIN(dim1 dim3 dim5).
+Deleting the JOIN_ORDER advice allows the planner to reorder the joins
+however it likes while still forcing the same choice of join method. This
+seems potentially useful, and is one reason why a unified syntax that controls
+both join order and join method in a single locution was not chosen.
+
+Advice Completeness
+===================
+
+An essential guiding principle is that no inference may be made on the basis
+of the absence of advice. The user is entitled to remove any portion of the
+generated advice which they deem unsuitable or counterproductive and the
+result should only be to increase the flexibility afforded to the planner.
+This means that if advice can say that a certain optimization or technique
+should be used, it should also be able to say that the optimization or
+technique should not be used. We should never assume that the absence of an
+instruction to do a certain thing means that it should not be done; all
+instructions must be explicit.
+
+Semijoin Uniqueness
+===================
+
+Faced with a semijoin, the planner considers both a direct implementation
+and a plan where the one side is made unique and then an inner join is
+performed. We emit SEMIJOIN_UNIQUE() advice when this transformation occurs
+and SEMIJOIN_NON_UNIQUE() advice when it doesn't. These items work like
+join method advice: the inner side of the relevant join is named, and the
+chosen join order must be compatible with the advice having some effect.
+
+Partitionwise
+=============
+
+PARTITIONWISE() advice can be used to specify both those partitionwise joins
+which should be performed and those which should not be performed; the idea
+is that each argument to PARTITIONWISE specifies a set of relations that
+should be scanned partitionwise after being joined to each other and nothing
+else. Hence, for example, PARTITIONWISE((t1 t2) t3) specifies that the
+query should contain a partitionwise join between t1 and t2 and that t3
+should not be part of any partitionwise join. If there are no other rels
+in the query, specifying just PARTITIONWISE((t1 t2)) would have the same
+effect, since there would be no other rels to which t3 could be joined in
+a partitionwise fashion.
+
+Parallel Query (Gather, etc.)
+=============================
+
+Each argument to GATHER() or GATHER_MERGE() is a single relation or an
+exact set of relations on top of which a Gather or Gather Merge node,
+respectively, should be placed. Each argument to NO_GATHER() is a single
+relation that should not appear beneath any Gather or Gather Merge node;
+that is, parallelism should not be used.
+
+Implicit Join Order Constraints
+===============================
+
+When JOIN_ORDER() advice is not provided for a particular join problem,
+other pieces of advice may still incidentally constrain the join order.
+For example, a user who specifies HASH_JOIN((foo bar)) is explicitly saying
+that there should be a hash join with exactly foo and bar on the inner
+side of it, but that also implies that foo and bar must be joined to
+each other before either of them is joined to anything else. Otherwise,
+the join the user is attempting to constrain won't actually occur in the
+query, which ends up looking like the system has just decided to ignore
+the advice altogether.
+
+Future Work
+===========
+
+We don't handle choice of aggregation: it would be nice to be able to force
+sorted or grouped aggregation. I'm guessing this can be left to future work.
+
+More seriously, we don't know anything about eager aggregation, which could
+have a large impact on the shape of the plan tree. XXX: This needs some study
+to determine how large a problem it is, and might need to be fixed sooner
+rather than later.
+
+We don't offer any control over estimates, only outcomes. It seems like a
+good idea to incorporate that ability at some future point, as pg_hint_plan
+does. However, since the primary goal of the initial development work is to be
+able to induce the planner to recreate a desired plan that worked well in
+the past, this has not been included in the initial development effort.
+
+XXX Need to investigate whether and how well supplying advice works with GEQO
