@@ -444,6 +444,70 @@ make check LANG=C ENCODING=EUC_JP
    </para>
   </sect2>
 
+  <sect2 id="regress-run-path-substitution">
+   <title>Path Substitution</title>
+
+   <para>
+    The test suites driven by <command>pg_regress</command> can use the
+    following environment variables for path substitutions:
+
+    <variablelist>
+     <varlistentry>
+      <term><literal>PG_ABS_SRCDIR</literal></term>
+      <listitem>
+       <para>
+        Absolute path to the source directory.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+     <term><literal>PG_ABS_BUILDDIR</literal></term>
+     <listitem>
+      <para>
+       Absolute path to the build directory.
+      </para>
+     </listitem>
+     </varlistentry>
+
+     <varlistentry>
+     <term><literal>PG_DLSUFFIX</literal></term>
+     <listitem>
+      <para>
+       Name of extension for dynamically-loadable modules (e.g.
+       <literal>.so</literal> on Linux).
+      </para>
+     </listitem>
+     </varlistentry>
+
+     <varlistentry>
+     <term><literal>PG_LIBDIR</literal></term>
+     <listitem>
+      <para>
+       Absolute path to dynamic libraries.
+      </para>
+     </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    These variables should be set in the tests with the meta-command
+    <command>\getenv</command>, like:
+<programlisting>
+\getenv abs_builddir PG_ABS_BUILDDIR
+\getenv abs_srcdir PG_ABS_SRCDIR
+</programlisting>
+   </para>
+
+   <para>
+    These are useful when dealing with function and object loading
+    that require specific paths to work, like paths defined in a
+    <command>CREATE FUNCTION</command> or <command>LOAD</command>
+    command.
+   </para>
+  </sect2>
+
   <sect2 id="regress-run-custom-settings">
    <title>Custom Server Settings</title>
 
