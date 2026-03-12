@@ -45,6 +45,7 @@
 #endif
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
+#include "common/hashfn.h"
 #include "executor/instrument.h"
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
@@ -124,8 +125,21 @@ typedef struct PrivateRefCountEntry
 	 */
 	Buffer		buffer;
 
+	char		status;
+
 	PrivateRefCountData data;
 } PrivateRefCountEntry;
+
+#define SH_PREFIX refcount
+#define SH_ELEMENT_TYPE PrivateRefCountEntry
+#define SH_KEY_TYPE Buffer
+#define SH_KEY buffer
+#define SH_HASH_KEY(tb, key) murmurhash32((uint32) (key))
+#define SH_EQUAL(tb, a, b) ((a) == (b))
+#define SH_SCOPE static inline
+#define SH_DECLARE
+#define SH_DEFINE
+#include "lib/simplehash.h"
 
 /* 64 bytes, about the size of a cache line on common systems */
 #define REFCOUNT_ARRAY_ENTRIES 8
@@ -248,7 +262,7 @@ static BufferDesc *PinCountWaitBuf = NULL;
  */
 static Buffer PrivateRefCountArrayKeys[REFCOUNT_ARRAY_ENTRIES];
 static struct PrivateRefCountEntry PrivateRefCountArray[REFCOUNT_ARRAY_ENTRIES];
-static HTAB *PrivateRefCountHash = NULL;
+static refcount_hash *PrivateRefCountHash = NULL;
 static int32 PrivateRefCountOverflowed = 0;
 static uint32 PrivateRefCountClock = 0;
 static int	ReservedRefCountSlot = -1;
@@ -347,10 +361,9 @@ ReservePrivateRefCountEntry(void)
 		Assert(PrivateRefCountArrayKeys[victim_slot] == PrivateRefCountArray[victim_slot].buffer);
 
 		/* enter victim array entry into hashtable */
-		hashent = hash_search(PrivateRefCountHash,
-							  &PrivateRefCountArrayKeys[victim_slot],
-							  HASH_ENTER,
-							  &found);
+		hashent = refcount_insert(PrivateRefCountHash,
+								  PrivateRefCountArrayKeys[victim_slot],
+								  &found);
 		Assert(!found);
 		/* move data from the entry in the array to the hash entry */
 		hashent->data = victim_entry->data;
@@ -440,7 +453,7 @@ GetPrivateRefCountEntrySlow(Buffer buffer, bool do_move)
 	if (PrivateRefCountOverflowed == 0)
 		return NULL;
 
-	res = hash_search(PrivateRefCountHash, &buffer, HASH_FIND, NULL);
+	res = refcount_lookup(PrivateRefCountHash, buffer);
 
 	if (res == NULL)
 		return NULL;
@@ -452,8 +465,14 @@ GetPrivateRefCountEntrySlow(Buffer buffer, bool do_move)
 	else
 	{
 		/* move buffer from hashtable into the free array slot */
-		bool		found;
 		PrivateRefCountEntry *free;
+		PrivateRefCountData data;
+
+		/* Save data and delete from hashtable while res is still valid */
+		data = res->data;
+		refcount_delete_item(PrivateRefCountHash, res);
+		Assert(PrivateRefCountOverflowed > 0);
+		PrivateRefCountOverflowed--;
 
 		/* Ensure there's a free array slot */
 		ReservePrivateRefCountEntry();
@@ -466,19 +485,12 @@ GetPrivateRefCountEntrySlow(Buffer buffer, bool do_move)
 
 		/* and fill it */
 		free->buffer = buffer;
-		free->data = res->data;
+		free->data = data;
 		PrivateRefCountArrayKeys[ReservedRefCountSlot] = buffer;
 		/* update cache for the next lookup */
 		PrivateRefCountEntryLast = ReservedRefCountSlot;
 
 		ReservedRefCountSlot = -1;
-
-
-		/* delete from hashtable */
-		hash_search(PrivateRefCountHash, &buffer, HASH_REMOVE, &found);
-		Assert(found);
-		Assert(PrivateRefCountOverflowed > 0);
-		PrivateRefCountOverflowed--;
 
 		return free;
 	}
@@ -571,11 +583,7 @@ ForgetPrivateRefCountEntry(PrivateRefCountEntry *ref)
 	}
 	else
 	{
-		bool		found;
-		Buffer		buffer = ref->buffer;
-
-		hash_search(PrivateRefCountHash, &buffer, HASH_REMOVE, &found);
-		Assert(found);
+		refcount_delete_item(PrivateRefCountHash, ref);
 		Assert(PrivateRefCountOverflowed > 0);
 		PrivateRefCountOverflowed--;
 	}
@@ -4118,8 +4126,6 @@ AtEOXact_Buffers(bool isCommit)
 void
 InitBufferManagerAccess(void)
 {
-	HASHCTL		hash_ctl;
-
 	/*
 	 * An advisory limit on the number of pins each backend should hold, based
 	 * on shared_buffers and the maximum number of connections possible.
@@ -4132,11 +4138,7 @@ InitBufferManagerAccess(void)
 	memset(&PrivateRefCountArray, 0, sizeof(PrivateRefCountArray));
 	memset(&PrivateRefCountArrayKeys, 0, sizeof(PrivateRefCountArrayKeys));
 
-	hash_ctl.keysize = sizeof(Buffer);
-	hash_ctl.entrysize = sizeof(PrivateRefCountEntry);
-
-	PrivateRefCountHash = hash_create("PrivateRefCount", 100, &hash_ctl,
-									  HASH_ELEM | HASH_BLOBS);
+	PrivateRefCountHash = refcount_create(CurrentMemoryContext, 100, NULL);
 
 	/*
 	 * AtProcExit_Buffers needs LWLock access, and thereby has to be called at
@@ -4195,10 +4197,10 @@ CheckForBufferLeaks(void)
 	/* if necessary search the hash */
 	if (PrivateRefCountOverflowed)
 	{
-		HASH_SEQ_STATUS hstat;
+		refcount_iterator iter;
 
-		hash_seq_init(&hstat, PrivateRefCountHash);
-		while ((res = (PrivateRefCountEntry *) hash_seq_search(&hstat)) != NULL)
+		refcount_start_iterate(PrivateRefCountHash, &iter);
+		while ((res = refcount_iterate(PrivateRefCountHash, &iter)) != NULL)
 		{
 			s = DebugPrintBufferRefcount(res->buffer);
 			elog(WARNING, "buffer refcount leak: %s", s);
@@ -4251,10 +4253,10 @@ AssertBufferLocksPermitCatalogRead(void)
 	/* if necessary search the hash */
 	if (PrivateRefCountOverflowed)
 	{
-		HASH_SEQ_STATUS hstat;
+		refcount_iterator iter;
 
-		hash_seq_init(&hstat, PrivateRefCountHash);
-		while ((res = (PrivateRefCountEntry *) hash_seq_search(&hstat)) != NULL)
+		refcount_start_iterate(PrivateRefCountHash, &iter);
+		while ((res = refcount_iterate(PrivateRefCountHash, &iter)) != NULL)
 		{
 			AssertNotCatalogBufferLock(res->buffer, res->data.lockmode);
 		}

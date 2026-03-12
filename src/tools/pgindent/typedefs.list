@@ -4114,6 +4114,8 @@ rbt_freefunc
 reduce_outer_joins_partial_state
 reduce_outer_joins_pass1_state
 reduce_outer_joins_pass2_state
+refcount_hash
+refcount_iterator
 reference
 regc_wc_probefunc
 regex_arc_t
