@@ -4279,6 +4279,11 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 	 */
 	if (subquery->hasGroupRTE)
 	{
+		/*
+		 * We can safely pass NULL for the root here.  This function uses the
+		 * expanded expressions solely to check for volatile or set-returning
+		 * functions, which is independent of the Vars' nullingrels.
+		 */
 		flattened_targetList = (List *)
 			flatten_group_exprs(NULL, subquery, (Node *) subquery->targetList);
 	}

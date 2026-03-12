@@ -858,6 +858,47 @@ comparison_ops_are_compatible(Oid opno1, Oid opno2)
 	return result;
 }
 
+/*
+ * op_is_safe_index_member
+ *		Check if the operator is a member of a B-tree or Hash operator family.
+ *
+ * We use this check as a proxy for "null-safety": if an operator is trusted by
+ * the btree or hash opfamily, it implies that the operator adheres to standard
+ * boolean behavior, and would not return NULL when given valid non-null
+ * inputs, as doing so would break index integrity.
+ */
+bool
+op_is_safe_index_member(Oid opno)
+{
+	bool		result = false;
+	CatCList   *catlist;
+	int			i;
+
+	/*
+	 * Search pg_amop to see if the target operator is registered for any
+	 * btree or hash opfamily.
+	 */
+	catlist = SearchSysCacheList1(AMOPOPID, ObjectIdGetDatum(opno));
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	tuple = &catlist->members[i]->tuple;
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		/* Check if the AM is B-tree or Hash */
+		if (aform->amopmethod == BTREE_AM_OID ||
+			aform->amopmethod == HASH_AM_OID)
+		{
+			result = true;
+			break;
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return result;
+}
+
 
 /*				---------- AMPROC CACHES ----------						 */
 
@@ -1067,6 +1108,33 @@ get_attoptions(Oid relid, int16 attnum)
 		result = datumCopy(attopts, false, -1); /* text[] */
 
 	ReleaseSysCache(tuple);
+
+	return result;
+}
+
+/*
+ * get_attnotnull
+ *
+ *		Given the relation id and the attribute number,
+ *		return the "attnotnull" field from the attribute relation.
+ */
+bool
+get_attnotnull(Oid relid, AttrNumber attnum)
+{
+	HeapTuple	tp;
+	bool		result = false;
+
+	tp = SearchSysCache2(ATTNUM,
+						 ObjectIdGetDatum(relid),
+						 Int16GetDatum(attnum));
+
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
+		result = att_tup->attnotnull;
+		ReleaseSysCache(tp);
+	}
 
 	return result;
 }

@@ -1448,3 +1448,188 @@ SELECT * FROM onek t1, lateral (SELECT * FROM onek t2 WHERE t2.ten IN (values (t
 -- VtA causes the whole expression to be evaluated as a constant
 EXPLAIN (COSTS OFF)
 SELECT ten FROM onek t WHERE 1.0::integer IN ((VALUES (1), (3)));
+
+--
+-- Check NOT IN performs an ANTI JOIN when both the outer query's expressions
+-- and the sub-select's output columns are provably non-nullable, and the
+-- operator itself cannot return NULL for non-null inputs.
+--
+
+BEGIN;
+
+CREATE TEMP TABLE not_null_tab (id int NOT NULL, val int NOT NULL);
+CREATE TEMP TABLE null_tab (id int, val int);
+
+-- ANTI JOIN: both sides are defined NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM not_null_tab);
+
+-- No ANTI JOIN: outer side is nullable
+EXPLAIN (COSTS OFF)
+SELECT * FROM null_tab
+WHERE id NOT IN (SELECT id FROM not_null_tab);
+
+-- No ANTI JOIN: inner side is nullable
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM null_tab);
+
+-- ANTI JOIN: outer side is defined NOT NULL, inner side is forced nonnullable
+-- by qual clause
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM null_tab WHERE id IS NOT NULL);
+
+-- No ANTI JOIN: outer side is nullable (we don't check outer query quals for now)
+EXPLAIN (COSTS OFF)
+SELECT * FROM null_tab
+WHERE id IS NOT NULL
+  AND id NOT IN (SELECT id FROM not_null_tab);
+
+-- ANTI JOIN: outer side is defined NOT NULL, inner side is defined NOT NULL
+-- and is not nulled by outer join
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (
+    SELECT t1.id
+    FROM not_null_tab t1
+    LEFT JOIN not_null_tab t2 ON t1.id = t2.id
+);
+
+-- No ANTI JOIN: inner side is defined NOT NULL but is nulled by outer join
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (
+    SELECT t2.id
+    FROM not_null_tab t1
+    LEFT JOIN not_null_tab t2 ON t1.id = t2.id
+);
+
+-- ANTI JOIN: outer side is defined NOT NULL, inner side is forced nonnullable
+-- by qual clause
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (
+    SELECT t2.id
+    FROM not_null_tab t1
+    LEFT JOIN not_null_tab t2 ON t1.id = t2.id
+    WHERE t2.id IS NOT NULL
+);
+
+-- ANTI JOIN: outer side is defined NOT NULL, inner side is forced nonnullable
+-- by qual clause
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (
+    SELECT t1.id
+    FROM null_tab t1
+    LEFT JOIN null_tab t2 ON t1.id = t2.id
+    WHERE t1.id IS NOT NULL
+);
+
+-- ANTI JOIN: outer side is defined NOT NULL, inner side is forced nonnullable
+-- by qual clause
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (
+    SELECT t1.id
+    FROM null_tab t1
+    INNER JOIN null_tab t2 ON t1.id = t2.id
+    LEFT JOIN null_tab t3 ON TRUE
+);
+
+-- ANTI JOIN: outer side is defined NOT NULL and is not nulled by outer join,
+-- inner side is defined NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab t1
+LEFT JOIN not_null_tab t2 ON t1.id = t2.id
+WHERE t1.id NOT IN (SELECT id FROM not_null_tab);
+
+-- No ANTI JOIN: outer side is nulled by outer join
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab t1
+LEFT JOIN not_null_tab t2 ON t1.id = t2.id
+WHERE t2.id NOT IN (SELECT id FROM not_null_tab);
+
+-- No ANTI JOIN: sublink is in an outer join's ON qual and references the
+-- non-nullable side
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab t1
+LEFT JOIN not_null_tab t2
+ON t1.id NOT IN (SELECT id FROM not_null_tab);
+
+-- ANTI JOIN: outer side is defined NOT NULL and is not nulled by outer join,
+-- inner side is defined NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab t1
+LEFT JOIN not_null_tab t2
+ON t2.id NOT IN (SELECT id FROM not_null_tab);
+
+-- ANTI JOIN: both sides are defined NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE (id, val) NOT IN (SELECT id, val FROM not_null_tab);
+
+-- ANTI JOIN: both sides are defined NOT NULL
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE NOT (id, val) > ANY (SELECT id, val FROM not_null_tab);
+
+-- No ANTI JOIN: one column of the outer side is nullable
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab t1, null_tab t2
+WHERE (t1.id, t2.id) NOT IN (SELECT id, val FROM not_null_tab);
+
+-- No ANTI JOIN: one column of the inner side is nullable
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE (id, val) NOT IN (SELECT t1.id, t2.id FROM not_null_tab t1, null_tab t2);
+
+-- ANTI JOIN: COALESCE(nullable, constant) is non-nullable
+EXPLAIN (COSTS OFF)
+SELECT * FROM null_tab
+WHERE COALESCE(id, -1) NOT IN (SELECT id FROM not_null_tab);
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT COALESCE(id, -1) FROM null_tab);
+
+-- ANTI JOIN: GROUP BY (without Grouping Sets) preserves the non-nullability of
+-- the column
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM not_null_tab GROUP BY id);
+
+-- No ANTI JOIN: GROUP BY on a nullable column
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM null_tab GROUP BY id);
+
+-- No ANTI JOIN: Grouping Sets can introduce NULLs
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (
+    SELECT id
+    FROM not_null_tab
+    GROUP BY GROUPING SETS ((id), (val))
+);
+
+-- create a custom "unsafe" equality operator
+CREATE FUNCTION int4eq_unsafe(int4, int4)
+    RETURNS bool
+    AS 'int4eq'
+    LANGUAGE internal IMMUTABLE;
+
+CREATE OPERATOR ?= (
+    PROCEDURE = int4eq_unsafe,
+    LEFTARG = int4,
+    RIGHTARG = int4
+);
+
+-- No ANTI JOIN: the operator is not safe
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE NOT id ?= ANY (SELECT id FROM not_null_tab);
+
+ROLLBACK;

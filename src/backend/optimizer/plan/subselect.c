@@ -91,6 +91,7 @@ static bool contain_outer_selfref(Node *node);
 static bool contain_outer_selfref_walker(Node *node, Index *depth);
 static void inline_cte(PlannerInfo *root, CommonTableExpr *cte);
 static bool inline_cte_walker(Node *node, inline_cte_walker_context *context);
+static bool sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink);
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
 static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 									Node **testexpr, List **paramIds);
@@ -1306,11 +1307,14 @@ convert_VALUES_to_ANY(PlannerInfo *root, Node *testexpr, Query *values)
  * If so, form a JoinExpr and return it.  Return NULL if the SubLink cannot
  * be converted to a join.
  *
- * The only non-obvious input parameter is available_rels: this is the set
- * of query rels that can safely be referenced in the sublink expression.
- * (We must restrict this to avoid changing the semantics when a sublink
- * is present in an outer join's ON qual.)  The conversion must fail if
- * the converted qual would reference any but these parent-query relids.
+ * If under_not is true, the caller actually found NOT (ANY SubLink), so
+ * that what we must try to build is an ANTI not SEMI join.
+ *
+ * available_rels is the set of query rels that can safely be referenced
+ * in the sublink expression.  (We must restrict this to avoid changing
+ * the semantics when a sublink is present in an outer join's ON qual.)
+ * The conversion must fail if the converted qual would reference any but
+ * these parent-query relids.
  *
  * On success, the returned JoinExpr has larg = NULL and rarg = the jointree
  * item representing the pulled-up subquery.  The caller must set larg to
@@ -1333,7 +1337,7 @@ convert_VALUES_to_ANY(PlannerInfo *root, Node *testexpr, Query *values)
  */
 JoinExpr *
 convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
-							Relids available_rels)
+							bool under_not, Relids available_rels)
 {
 	JoinExpr   *result;
 	Query	   *parse = root->parse;
@@ -1350,6 +1354,19 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	bool		use_lateral;
 
 	Assert(sublink->subLinkType == ANY_SUBLINK);
+
+	/*
+	 * Per SQL spec, NOT IN is not ordinarily equivalent to an anti-join, so
+	 * that by default we have to fail when under_not.  However, if we can
+	 * prove that neither the outer query's expressions nor the sub-select's
+	 * output columns can be NULL, and further that the operator itself cannot
+	 * return NULL for non-null inputs, then the logic is identical and it's
+	 * safe to convert NOT IN to an anti-join.
+	 */
+	if (under_not &&
+		(!sublink_testexpr_is_not_nullable(root, sublink) ||
+		 !query_outputs_are_not_nullable(subselect)))
+		return NULL;
 
 	/*
 	 * If the sub-select contains any Vars of the parent query, we treat it as
@@ -1428,7 +1445,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * And finally, build the JoinExpr node.
 	 */
 	result = makeNode(JoinExpr);
-	result->jointype = JOIN_SEMI;
+	result->jointype = under_not ? JOIN_ANTI : JOIN_SEMI;
 	result->isNatural = false;
 	result->larg = NULL;		/* caller must fill this in */
 	result->rarg = (Node *) rtr;
@@ -1442,11 +1459,133 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 }
 
 /*
+ * sublink_testexpr_is_not_nullable: verify that testexpr of an ANY_SUBLINK
+ * guarantees a non-null result, assuming the inner side is also non-null.
+ *
+ * To ensure the expression never returns NULL, we require both that the outer
+ * expressions are provably non-nullable and that the operator itself is safe.
+ * We validate operator safety by checking for membership in a standard index
+ * operator family (B-tree or Hash); this acts as a proxy for standard boolean
+ * behavior, ensuring the operator does not produce NULL results from non-null
+ * inputs.
+ *
+ * We handle the three standard parser representations for ANY sublinks: a
+ * single OpExpr for single-column comparisons, a BoolExpr containing a list of
+ * OpExprs for multi-column equality or inequality checks (where equality
+ * becomes an AND and inequality becomes an OR), and a RowCompareExpr for
+ * multi-column ordering checks.  In all cases, we validate the operators and
+ * the outer expressions.
+ *
+ * It is acceptable for this check not to be exhaustive.  We can err on the
+ * side of conservatism: if we're not sure, it's okay to return FALSE.
+ */
+static bool
+sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink)
+{
+	Node	   *testexpr = sublink->testexpr;
+	List	   *outer_exprs = NIL;
+
+	/* Punt if sublink is not in the expected format */
+	if (sublink->subLinkType != ANY_SUBLINK || testexpr == NULL)
+		return false;
+
+	if (IsA(testexpr, OpExpr))
+	{
+		/* single-column comparison */
+		OpExpr	   *opexpr = (OpExpr *) testexpr;
+
+		/* standard ANY structure should be op(outer_var, param) */
+		if (list_length(opexpr->args) != 2)
+			return false;
+
+		/*
+		 * We rely on membership in a B-tree or Hash operator family as a
+		 * guarantee that the operator acts as a proper boolean comparison and
+		 * does not yield NULL for valid non-null inputs.
+		 */
+		if (!op_is_safe_index_member(opexpr->opno))
+			return false;
+
+		outer_exprs = lappend(outer_exprs, linitial(opexpr->args));
+	}
+	else if (is_andclause(testexpr) || is_orclause(testexpr))
+	{
+		/* multi-column equality or inequality checks */
+		BoolExpr   *bexpr = (BoolExpr *) testexpr;
+
+		foreach_ptr(OpExpr, opexpr, bexpr->args)
+		{
+			if (!IsA(opexpr, OpExpr))
+				return false;
+
+			/* standard ANY structure should be op(outer_var, param) */
+			if (list_length(opexpr->args) != 2)
+				return false;
+
+			/* verify operator safety; see comment above */
+			if (!op_is_safe_index_member(opexpr->opno))
+				return false;
+
+			outer_exprs = lappend(outer_exprs, linitial(opexpr->args));
+		}
+	}
+	else if (IsA(testexpr, RowCompareExpr))
+	{
+		/* multi-column ordering checks */
+		RowCompareExpr *rcexpr = (RowCompareExpr *) testexpr;
+
+		foreach_oid(opno, rcexpr->opnos)
+		{
+			/* verify operator safety; see comment above */
+			if (!op_is_safe_index_member(opno))
+				return false;
+		}
+
+		outer_exprs = list_concat(outer_exprs, rcexpr->largs);
+	}
+	else
+	{
+		/* Punt if other node types */
+		return false;
+	}
+
+	/*
+	 * Since the query hasn't yet been through expression preprocessing, we
+	 * must apply flatten_join_alias_vars to the outer expressions to avoid
+	 * being fooled by join aliases.
+	 *
+	 * We do not need to apply flatten_group_exprs though, since grouping Vars
+	 * cannot appear in jointree quals.
+	 */
+	outer_exprs = (List *)
+		flatten_join_alias_vars(root, root->parse, (Node *) outer_exprs);
+
+	/* Check that every outer expression is non-nullable */
+	foreach_ptr(Expr, expr, outer_exprs)
+	{
+		/*
+		 * We have already collected relation-level not-null constraints for
+		 * the outer query, so we can consult the global hash table for
+		 * nullability information.
+		 */
+		if (!expr_is_nonnullable(root, expr, NOTNULL_SOURCE_HASHTABLE))
+			return false;
+
+		/*
+		 * Note: It is possible to further prove non-nullability by examining
+		 * the qual clauses available at or below the jointree node where this
+		 * NOT IN clause is evaluated, but for the moment it doesn't seem
+		 * worth the extra complication.
+		 */
+	}
+
+	return true;
+}
+
+/*
  * convert_EXISTS_sublink_to_join: try to convert an EXISTS SubLink to a join
  *
- * The API of this function is identical to convert_ANY_sublink_to_join's,
- * except that we also support the case where the caller has found NOT EXISTS,
- * so we need an additional input parameter "under_not".
+ * The API of this function is identical to convert_ANY_sublink_to_join's.
  */
 JoinExpr *
 convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,

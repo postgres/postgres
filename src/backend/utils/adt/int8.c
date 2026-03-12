@@ -834,7 +834,7 @@ int8inc_support(PG_FUNCTION_ARGS)
 				PG_RETURN_POINTER(NULL);
 
 			/* If the arg isn't NULLable, do the conversion */
-			if (expr_is_nonnullable(req->root, arg, false))
+			if (expr_is_nonnullable(req->root, arg, NOTNULL_SOURCE_HASHTABLE))
 			{
 				Aggref	   *newagg;
 

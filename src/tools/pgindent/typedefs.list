@@ -1788,6 +1788,7 @@ Node
 NodeTag
 NonEmptyRange
 NoneCompressorState
+NotNullSource
 Notification
 NotificationList
 NotifyStmt

@@ -5644,6 +5644,9 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	/*
 	 * Replace any Vars in the query's targetlist and havingQual that
 	 * reference GROUP outputs with the underlying grouping expressions.
+	 *
+	 * We can safely pass NULL for the root here.  Preserving varnullingrels
+	 * makes no difference to the deparsed source text.
 	 */
 	if (query->hasGroupRTE)
 	{

@@ -130,6 +130,14 @@ extern Expr *canonicalize_qual(Expr *qual, bool is_check);
 
 /* in util/clauses.c: */
 
+/* Enum to specify where var_is_nonnullable should look for NOT NULL proofs */
+typedef enum
+{
+	NOTNULL_SOURCE_RELOPT,		/* Use RelOptInfo */
+	NOTNULL_SOURCE_HASHTABLE,	/* Use Global Hash Table */
+	NOTNULL_SOURCE_SYSCACHE,	/* Use System Catalog */
+} NotNullSource;
+
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_mutable_functions_after_planning(Expr *expr);
 extern bool contain_volatile_functions(Node *clause);
@@ -145,10 +153,11 @@ extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
 						   Oid result_collation);
 
-extern bool var_is_nonnullable(PlannerInfo *root, Var *var, bool use_rel_info);
+extern bool var_is_nonnullable(PlannerInfo *root, Var *var,
+							   NotNullSource source);
 
 extern bool expr_is_nonnullable(PlannerInfo *root, Expr *expr,
-								bool use_rel_info);
+								NotNullSource source);
 
 extern List *expand_function_arguments(List *args, bool include_out_arguments,
 									   Oid result_type,
