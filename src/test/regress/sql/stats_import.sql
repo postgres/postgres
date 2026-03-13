@@ -1,6 +1,19 @@
 CREATE SCHEMA stats_import;
 
 --
+-- Convenience view for columns of pg_stats that are stable across test runs.
+--
+CREATE VIEW stats_import.pg_stats_stable AS
+  SELECT schemaname, tablename, attname, inherited, null_frac, avg_width,
+      n_distinct, most_common_vals::text as most_common_vals,
+      most_common_freqs, histogram_bounds::text AS histogram_bounds,
+      correlation, most_common_elems::text AS most_common_elems,
+      most_common_elem_freqs, elem_count_histogram,
+      range_length_histogram::text AS range_length_histogram, range_empty_frac,
+      range_bounds_histogram::text AS range_bounds_histogram
+  FROM pg_stats;
+
+--
 -- Setup functions for set-difference convenience functions
 --
 
@@ -521,7 +534,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'n_distinct', 0.6::real);
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -540,7 +553,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'null_frac', 0.4::real);
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -556,7 +569,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'nope', 0.5::real);
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -573,7 +586,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -590,7 +603,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -608,7 +621,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -626,7 +639,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -643,7 +656,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -660,7 +673,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -676,7 +689,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -693,7 +706,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -710,7 +723,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -728,7 +741,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -745,7 +758,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -762,7 +775,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -779,7 +792,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -796,7 +809,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -812,7 +825,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -830,7 +843,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -848,7 +861,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -865,7 +878,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -882,7 +895,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -899,7 +912,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
@@ -916,7 +929,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     );
 
 SELECT *
-FROM pg_stats
+FROM stats_import.pg_stats_stable
 WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
