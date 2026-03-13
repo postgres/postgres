@@ -850,8 +850,12 @@ ginHeapTupleInsert(GinState *ginstate, OffsetNumber attnum,
 								&nentries, &categories);
 
 	for (i = 0; i < nentries; i++)
+	{
+		/* there could be many entries, so be willing to abort here */
+		CHECK_FOR_INTERRUPTS();
 		ginEntryInsert(ginstate, attnum, entries[i], categories[i],
 					   item, 1, NULL);
+	}
 }
 
 bool
