@@ -261,3 +261,13 @@ $$<xsl:stylesheet version="1.0"
   </xsl:template>
 </xsl:stylesheet>$$);
 ERROR:  failed to apply stylesheet
+-- empty output
+select xslt_process('<aaa/>',
+$$<xsl:stylesheet version="1.0"
+      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+</xsl:stylesheet>$$);
+ xslt_process 
+--------------
+ 
+(1 row)
+
