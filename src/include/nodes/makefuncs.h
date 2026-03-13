@@ -117,7 +117,7 @@ extern JsonValueExpr *makeJsonValueExpr(Expr *raw_expr, Expr *formatted_expr,
 extern Node *makeJsonKeyValue(Node *key, Node *value);
 extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
 								 JsonValueType item_type, bool unique_keys,
-								 int location);
+								 Oid exprBaseType, int location);
 extern JsonBehavior *makeJsonBehavior(JsonBehaviorType btype, Node *expr,
 									  int location);
 extern JsonTablePath *makeJsonTablePath(Const *pathvalue, char *pathname);

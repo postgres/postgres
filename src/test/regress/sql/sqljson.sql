@@ -484,6 +484,37 @@ SELECT NULL::text IS JSON;
 SELECT NULL::bytea IS JSON;
 SELECT NULL::int IS JSON;
 
+-- IS JSON with domain types
+CREATE DOMAIN jd1 AS json CHECK ((VALUE ->'a')::text <> '3');
+CREATE DOMAIN jd2 AS jsonb CHECK ((VALUE ->'a') = '1'::jsonb);
+CREATE DOMAIN jd3 AS text CHECK (VALUE <> 'a');
+CREATE DOMAIN jd4 AS bytea CHECK (VALUE <> '\x61');
+CREATE DOMAIN jd5 AS date CHECK (VALUE <> NULL);
+
+-- NULLs through domains should return NULL (not error)
+SELECT NULL::jd1 IS JSON, NULL::jd2 IS JSON, NULL::jd3 IS JSON, NULL::jd4 IS JSON;
+SELECT NULL::jd1 IS NOT JSON;
+
+-- domain over unsupported base type should error
+SELECT NULL::jd5 IS JSON; -- error
+SELECT NULL::jd5 IS JSON WITH UNIQUE KEYS; -- error
+
+-- domain constraint violation during cast
+SELECT a::jd2 IS JSON WITH UNIQUE KEYS as col1 FROM (VALUES('{"a": 1, "a": 2}')) s(a); -- error
+
+-- view creation and deparsing with domain IS JSON
+CREATE VIEW domain_isjson AS
+WITH cte(a) AS (VALUES('{"a": 1, "a": 2}'))
+SELECT	a::jd1 IS JSON WITH UNIQUE KEYS as jd1,
+		a::jd3 IS JSON WITH UNIQUE KEYS as jd3,
+		a::jd4 IS JSON WITH UNIQUE KEYS as jd4
+FROM cte;
+\sv domain_isjson
+SELECT * FROM domain_isjson;
+
+DROP VIEW domain_isjson;
+DROP DOMAIN jd5, jd4, jd3, jd2, jd1;
+
 SELECT '' IS JSON;
 
 SELECT bytea '\x00' IS JSON;

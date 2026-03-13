@@ -4077,7 +4077,7 @@ transformJsonParseArg(ParseState *pstate, Node *jsexpr, JsonFormat *format,
 	Node	   *raw_expr = transformExprRecurse(pstate, jsexpr);
 	Node	   *expr = raw_expr;
 
-	*exprtype = exprType(expr);
+	*exprtype = getBaseType(exprType(expr));
 
 	/* prepare input document */
 	if (*exprtype == BYTEAOID)
@@ -4130,13 +4130,14 @@ transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *pred)
 	/* make resulting expression */
 	if (exprtype != TEXTOID && exprtype != JSONOID && exprtype != JSONBOID)
 		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot use type %s in IS JSON predicate",
-						format_type_be(exprtype))));
+				errcode(ERRCODE_DATATYPE_MISMATCH),
+				errmsg("cannot use type %s in IS JSON predicate",
+					   format_type_be(exprType(expr))),
+				parser_errposition(pstate, exprLocation(expr)));
 
 	/* This intentionally(?) drops the format clause. */
 	return makeJsonIsPredicate(expr, NULL, pred->item_type,
-							   pred->unique_keys, pred->location);
+							   pred->unique_keys, exprtype, pred->location);
 }
 
 /*
