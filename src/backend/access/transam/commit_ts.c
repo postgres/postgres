@@ -115,6 +115,7 @@ static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
 									 ReplOriginId nodeid, int slotno);
 static void error_commit_ts_disabled(void);
 static bool CommitTsPagePrecedes(int64 page1, int64 page2);
+static int	commit_ts_errdetail_for_io_error(const void *opaque_data);
 static void ActivateCommitTs(void);
 static void DeactivateCommitTs(void);
 static void WriteTruncateXlogRec(int64 pageno, TransactionId oldestXid);
@@ -227,7 +228,7 @@ SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 
 	LWLockAcquire(lock, LW_EXCLUSIVE);
 
-	slotno = SimpleLruReadPage(CommitTsCtl, pageno, true, xid);
+	slotno = SimpleLruReadPage(CommitTsCtl, pageno, true, &xid);
 
 	TransactionIdSetCommitTs(xid, ts, nodeid, slotno);
 	for (i = 0; i < nsubxids; i++)
@@ -332,7 +333,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 	}
 
 	/* lock is acquired by SimpleLruReadPage_ReadOnly */
-	slotno = SimpleLruReadPage_ReadOnly(CommitTsCtl, pageno, xid);
+	slotno = SimpleLruReadPage_ReadOnly(CommitTsCtl, pageno, &xid);
 	memcpy(&entry,
 		   CommitTsCtl->shared->page_buffer[slotno] +
 		   SizeOfCommitTimestampEntry * entryno,
@@ -551,6 +552,7 @@ CommitTsShmemInit(void)
 	Assert(commit_timestamp_buffers != 0);
 
 	CommitTsCtl->PagePrecedes = CommitTsPagePrecedes;
+	CommitTsCtl->errdetail_for_io_error = commit_ts_errdetail_for_io_error;
 	SimpleLruInit(CommitTsCtl, "commit_timestamp", CommitTsShmemBuffers(), 0,
 				  "pg_commit_ts", LWTRANCHE_COMMITTS_BUFFER,
 				  LWTRANCHE_COMMITTS_SLRU,
@@ -959,6 +961,13 @@ CommitTsPagePrecedes(int64 page1, int64 page2)
 			TransactionIdPrecedes(xid1, xid2 + COMMIT_TS_XACTS_PER_PAGE - 1));
 }
 
+static int
+commit_ts_errdetail_for_io_error(const void *opaque_data)
+{
+	TransactionId xid = *(const TransactionId *) opaque_data;
+
+	return errdetail("Could not access commit timestamp of transaction %u.", xid);
+}
 
 /*
  * Write a TRUNCATE xlog record

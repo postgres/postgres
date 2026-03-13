@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION test_slru_page_writeall() RETURNS VOID
   AS 'MODULE_PATHNAME', 'test_slru_page_writeall' LANGUAGE C;
 CREATE OR REPLACE FUNCTION test_slru_page_sync(bigint) RETURNS VOID
   AS 'MODULE_PATHNAME', 'test_slru_page_sync' LANGUAGE C;
-CREATE OR REPLACE FUNCTION test_slru_page_read(bigint, bool DEFAULT true) RETURNS text
+CREATE OR REPLACE FUNCTION test_slru_page_read(bigint, bool DEFAULT true, xid DEFAULT '0') RETURNS text
   AS 'MODULE_PATHNAME', 'test_slru_page_read' LANGUAGE C;
 CREATE OR REPLACE FUNCTION test_slru_page_readonly(bigint) RETURNS text
   AS 'MODULE_PATHNAME', 'test_slru_page_readonly' LANGUAGE C;

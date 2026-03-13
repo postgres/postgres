@@ -13,6 +13,7 @@
 #ifndef SLRU_H
 #define SLRU_H
 
+#include "access/transam.h"
 #include "access/xlogdefs.h"
 #include "storage/lwlock.h"
 #include "storage/sync.h"
@@ -142,6 +143,16 @@ typedef struct SlruCtlData
 	bool		(*PagePrecedes) (int64, int64);
 
 	/*
+	 * Callback to provide more details on an I/O error.  This is called as
+	 * part of ereport(), and the callback function is expected to call
+	 * errdetail() to provide more context on the SLRU access.
+	 *
+	 * The opaque_data argument here is the argument that was passed to the
+	 * SimpleLruReadPage() function.
+	 */
+	int			(*errdetail_for_io_error) (const void *opaque_data);
+
+	/*
 	 * Dir is set during SimpleLruInit and does not change thereafter. Since
 	 * it's always the same, it doesn't need to be in shared memory.
 	 */
@@ -174,9 +185,9 @@ extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 extern int	SimpleLruZeroPage(SlruCtl ctl, int64 pageno);
 extern void SimpleLruZeroAndWritePage(SlruCtl ctl, int64 pageno);
 extern int	SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
-							  TransactionId xid);
+							  const void *opaque_data);
 extern int	SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno,
-									   TransactionId xid);
+									   const void *opaque_data);
 extern void SimpleLruWritePage(SlruCtl ctl, int slotno);
 extern void SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied);
 #ifdef USE_ASSERT_CHECKING

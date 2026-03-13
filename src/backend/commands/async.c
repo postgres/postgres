@@ -570,6 +570,7 @@ bool		Trace_notify = false;
 int			max_notify_queue_pages = 1048576;
 
 /* local function prototypes */
+static int	asyncQueueErrdetailForIoError(const void *opaque_data);
 static inline int64 asyncQueuePageDiff(int64 p, int64 q);
 static inline bool asyncQueuePagePrecedes(int64 p, int64 q);
 static inline void GlobalChannelKeyInit(GlobalChannelKey *key, Oid dboid,
@@ -609,6 +610,15 @@ static void AddEventToPendingNotifies(Notification *n);
 static uint32 notification_hash(const void *key, Size keysize);
 static int	notification_match(const void *key1, const void *key2, Size keysize);
 static void ClearPendingActionsAndNotifies(void);
+
+static int
+asyncQueueErrdetailForIoError(const void *opaque_data)
+{
+	const QueuePosition *position = opaque_data;
+
+	return errdetail("Could not access async queue at page %" PRId64 ", offset %d.",
+					 position->page, position->offset);
+}
 
 /*
  * Compute the difference between two queue page numbers.
@@ -830,6 +840,7 @@ AsyncShmemInit(void)
 	 * names are used in order to avoid wraparound.
 	 */
 	NotifyCtl->PagePrecedes = asyncQueuePagePrecedes;
+	NotifyCtl->errdetail_for_io_error = asyncQueueErrdetailForIoError;
 	SimpleLruInit(NotifyCtl, "notify", notify_buffers, 0,
 				  "pg_notify", LWTRANCHE_NOTIFY_BUFFER, LWTRANCHE_NOTIFY_SLRU,
 				  SYNC_HANDLER_NONE, true);
@@ -2068,8 +2079,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 	if (QUEUE_POS_IS_ZERO(queue_head))
 		slotno = SimpleLruZeroPage(NotifyCtl, pageno);
 	else
-		slotno = SimpleLruReadPage(NotifyCtl, pageno, true,
-								   InvalidTransactionId);
+		slotno = SimpleLruReadPage(NotifyCtl, pageno, true, &queue_head);
 
 	/* Note we mark the page dirty before writing in it */
 	NotifyCtl->shared->page_dirty[slotno] = true;
@@ -2739,8 +2749,7 @@ asyncQueueProcessPageEntries(QueuePosition *current,
 	alignas(AsyncQueueEntry) char local_buf[QUEUE_PAGESIZE];
 	char	   *local_buf_end = local_buf;
 
-	slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage,
-										InvalidTransactionId);
+	slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage, current);
 	page_buffer = NotifyCtl->shared->page_buffer[slotno];
 
 	do
@@ -2998,8 +3007,7 @@ AsyncNotifyFreezeXids(TransactionId newFrozenXid)
 
 			lock = SimpleLruGetBankLock(NotifyCtl, pageno);
 			LWLockAcquire(lock, LW_EXCLUSIVE);
-			slotno = SimpleLruReadPage(NotifyCtl, pageno, true,
-									   InvalidTransactionId);
+			slotno = SimpleLruReadPage(NotifyCtl, pageno, true, &pos);
 			page_buffer = NotifyCtl->shared->page_buffer[slotno];
 			curpage = pageno;
 		}

@@ -23,6 +23,10 @@ SELECT test_slru_page_exists(12345);
  t
 (1 row)
 
+-- Test read failure
+SELECT test_slru_page_read(54321, false, '123'::xid);
+ERROR:  could not open file "pg_test_slru/0000000000006A1": No such file or directory
+DETAIL:  Could not access test_slru entry 123.
 -- 48 extra pages
 SELECT count(test_slru_page_write(a, 'Test SLRU'))
   FROM generate_series(12346, 12393, 1) as a;

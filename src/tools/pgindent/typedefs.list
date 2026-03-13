@@ -1747,6 +1747,7 @@ MultiSortSupport
 MultiSortSupportData
 MultiXactId
 MultiXactMember
+MultiXactMemberSlruReadContext
 MultiXactOffset
 MultiXactOffset32
 MultiXactStateData

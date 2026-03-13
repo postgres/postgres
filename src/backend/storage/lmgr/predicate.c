@@ -443,6 +443,7 @@ static void ReleaseRWConflict(RWConflict conflict);
 static void FlagSxactUnsafe(SERIALIZABLEXACT *sxact);
 
 static bool SerialPagePrecedesLogically(int64 page1, int64 page2);
+static int	serial_errdetail_for_io_error(const void *opaque_data);
 static void SerialInit(void);
 static void SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo);
 static SerCommitSeqNo SerialGetMinConflictCommitSeqNo(TransactionId xid);
@@ -743,6 +744,14 @@ SerialPagePrecedesLogically(int64 page1, int64 page2)
 			TransactionIdPrecedes(xid1, xid2 + SERIAL_ENTRIESPERPAGE - 1));
 }
 
+static int
+serial_errdetail_for_io_error(const void *opaque_data)
+{
+	TransactionId xid = *(const TransactionId *) opaque_data;
+
+	return errdetail("Could not access serializable CSN of transaction %u.", xid);
+}
+
 #ifdef USE_ASSERT_CHECKING
 static void
 SerialPagePrecedesLogicallyUnitTests(void)
@@ -812,6 +821,7 @@ SerialInit(void)
 	 * Set up SLRU management of the pg_serial data.
 	 */
 	SerialSlruCtl->PagePrecedes = SerialPagePrecedesLogically;
+	SerialSlruCtl->errdetail_for_io_error = serial_errdetail_for_io_error;
 	SimpleLruInit(SerialSlruCtl, "serializable",
 				  serializable_buffers, 0, "pg_serial",
 				  LWTRANCHE_SERIAL_BUFFER, LWTRANCHE_SERIAL_SLRU,
@@ -931,7 +941,7 @@ SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	else
 	{
 		LWLockAcquire(lock, LW_EXCLUSIVE);
-		slotno = SimpleLruReadPage(SerialSlruCtl, targetPage, true, xid);
+		slotno = SimpleLruReadPage(SerialSlruCtl, targetPage, true, &xid);
 	}
 
 	SerialValue(slotno, xid) = minConflictCommitSeqNo;
@@ -975,7 +985,7 @@ SerialGetMinConflictCommitSeqNo(TransactionId xid)
 	 * but will return with that lock held, which must then be released.
 	 */
 	slotno = SimpleLruReadPage_ReadOnly(SerialSlruCtl,
-										SerialPage(xid), xid);
+										SerialPage(xid), &xid);
 	val = SerialValue(slotno, xid);
 	LWLockRelease(SimpleLruGetBankLock(SerialSlruCtl, SerialPage(xid)));
 	return val;
