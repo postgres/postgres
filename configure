@@ -15101,6 +15101,114 @@ _ACEOF
 
   fi
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for typeof_unqual" >&5
+$as_echo_n "checking for typeof_unqual... " >&6; }
+if ${pgac_cv_c_typeof_unqual+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_cv_c_typeof_unqual=no
+# Test the underscore variant first so that there is a higher chance
+# that clang used for bitcode also supports it, since we don't test
+# that separately.
+#
+# Test with a void pointer, because MSVC doesn't handle that, and we
+# need that for copyObject().
+for pgac_kw in __typeof_unqual__ typeof_unqual; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int x = 0;
+$pgac_kw(x) y;
+const void *a;
+void *b;
+y = x;
+b = ($pgac_kw(*a) *) a;
+return y;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_c_typeof_unqual=$pgac_kw
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  test "$pgac_cv_c_typeof_unqual" != no && break
+done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_c_typeof_unqual" >&5
+$as_echo "$pgac_cv_c_typeof_unqual" >&6; }
+if test "$pgac_cv_c_typeof_unqual" != no; then
+
+$as_echo "#define HAVE_TYPEOF_UNQUAL 1" >>confdefs.h
+
+  if test "$pgac_cv_c_typeof_unqual" != typeof_unqual; then
+
+cat >>confdefs.h <<_ACEOF
+#define typeof_unqual $pgac_cv_c_typeof_unqual
+_ACEOF
+
+  fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ typeof_unqual" >&5
+$as_echo_n "checking for C++ typeof_unqual... " >&6; }
+if ${pgac_cv_cxx_typeof_unqual+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_cv_cxx_typeof_unqual=no
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+for pgac_kw in __typeof_unqual__ typeof_unqual; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int x = 0;
+$pgac_kw(x) y;
+const void *a;
+void *b;
+y = x;
+b = ($pgac_kw(*a) *) a;
+return y;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  pgac_cv_cxx_typeof_unqual=$pgac_kw
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  test "$pgac_cv_cxx_typeof_unqual" != no && break
+done
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_cxx_typeof_unqual" >&5
+$as_echo "$pgac_cv_cxx_typeof_unqual" >&6; }
+if test "$pgac_cv_cxx_typeof_unqual" != no; then
+
+$as_echo "#define HAVE_CXX_TYPEOF_UNQUAL 1" >>confdefs.h
+
+  if test "$pgac_cv_cxx_typeof_unqual" != typeof_unqual; then
+
+cat >>confdefs.h <<_ACEOF
+#define pg_cxx_typeof_unqual $pgac_cv_cxx_typeof_unqual
+_ACEOF
+
+  fi
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_types_compatible_p" >&5
 $as_echo_n "checking for __builtin_types_compatible_p... " >&6; }
 if ${pgac_cv__types_compatible+:} false; then :

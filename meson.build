@@ -2965,6 +2965,68 @@ int main(void)
   endforeach
 endif
 
+# Check if the C compiler understands typeof_unqual or a variant.  Define
+# HAVE_TYPEOF_UNQUAL if so, and define 'typeof_unqual' to the actual key word.
+#
+# Test the underscore variant first so that there is a higher chance
+# that clang used for bitcode also supports it, since we don't test
+# that separately.
+#
+# Test with a void pointer, because MSVC doesn't handle that, and we
+# need that for copyObject().
+foreach kw : ['__typeof_unqual__', 'typeof_unqual']
+  if cc.compiles('''
+int main(void)
+{
+    int x = 0;
+    @0@(x) y;
+    const void *a;
+    void *b;
+    y = x;
+    b = (@0@(*a) *) a;
+    return y;
+}
+'''.format(kw),
+    name: kw,
+    args: test_c_args, include_directories: postgres_inc)
+
+    cdata.set('HAVE_TYPEOF_UNQUAL', 1)
+    if kw != 'typeof_unqual'
+      cdata.set('typeof_unqual', kw)
+    endif
+
+    break
+  endif
+endforeach
+
+# Check if the C++ compiler understands typeof_unqual or a variant.
+if have_cxx
+  foreach kw : ['__typeof_unqual__', 'typeof_unqual']
+    if cxx.compiles('''
+int main(void)
+{
+    int x = 0;
+    @0@(x) y;
+    const void *a;
+    void *b;
+    y = x;
+    b = (@0@(*a) *) a;
+    return y;
+}
+'''.format(kw),
+      name: 'C++ ' + kw,
+      args: test_c_args, include_directories: postgres_inc)
+
+      cdata.set('HAVE_CXX_TYPEOF_UNQUAL', 1)
+      if kw != 'typeof_unqual'
+        cdata.set('pg_cxx_typeof_unqual', kw)
+      endif
+
+      break
+    endif
+  endforeach
+endif
+
 
 # MSVC doesn't cope well with defining restrict to __restrict, the
 # spelling it understands, because it conflicts with

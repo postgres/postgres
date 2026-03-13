@@ -176,6 +176,40 @@ if test "$pgac_cv_c_typeof" != no; then
 fi])# PGAC_C_TYPEOF
 
 
+# PGAC_C_TYPEOF_UNQUAL
+# --------------------
+# Check if the C compiler understands typeof_unqual or a variant.  Define
+# HAVE_TYPEOF_UNQUAL if so, and define 'typeof_unqual' to the actual key word.
+#
+AC_DEFUN([PGAC_C_TYPEOF_UNQUAL],
+[AC_CACHE_CHECK(for typeof_unqual, pgac_cv_c_typeof_unqual,
+[pgac_cv_c_typeof_unqual=no
+# Test the underscore variant first so that there is a higher chance
+# that clang used for bitcode also supports it, since we don't test
+# that separately.
+#
+# Test with a void pointer, because MSVC doesn't handle that, and we
+# need that for copyObject().
+for pgac_kw in __typeof_unqual__ typeof_unqual; do
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+[int x = 0;
+$pgac_kw(x) y;
+const void *a;
+void *b;
+y = x;
+b = ($pgac_kw(*a) *) a;
+return y;])],
+[pgac_cv_c_typeof_unqual=$pgac_kw])
+  test "$pgac_cv_c_typeof_unqual" != no && break
+done])
+if test "$pgac_cv_c_typeof_unqual" != no; then
+  AC_DEFINE(HAVE_TYPEOF_UNQUAL, 1,
+            [Define to 1 if your compiler understands `typeof_unqual' or something similar.])
+  if test "$pgac_cv_c_typeof_unqual" != typeof_unqual; then
+    AC_DEFINE_UNQUOTED(typeof_unqual, $pgac_cv_c_typeof_unqual, [Define to how the compiler spells `typeof_unqual'.])
+  fi
+fi])# PGAC_C_TYPEOF_UNQUAL
+
 
 # PGAC_CXX_TYPEOF
 # ----------------
@@ -203,6 +237,37 @@ if test "$pgac_cv_cxx_typeof" != no; then
     AC_DEFINE_UNQUOTED(pg_cxx_typeof, $pgac_cv_cxx_typeof, [Define to how the C++ compiler spells `typeof'.])
   fi
 fi])# PGAC_CXX_TYPEOF
+
+
+# PGAC_CXX_TYPEOF_UNQUAL
+# ----------------------
+# Check if the C++ compiler understands typeof_unqual or a variant.  Define
+# HAVE_CXX_TYPEOF_UNQUAL if so, and define 'pg_cxx_typeof_unqual' to the actual key word.
+#
+AC_DEFUN([PGAC_CXX_TYPEOF_UNQUAL],
+[AC_CACHE_CHECK(for C++ typeof_unqual, pgac_cv_cxx_typeof_unqual,
+[pgac_cv_cxx_typeof_unqual=no
+AC_LANG_PUSH(C++)
+for pgac_kw in __typeof_unqual__ typeof_unqual; do
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+[int x = 0;
+$pgac_kw(x) y;
+const void *a;
+void *b;
+y = x;
+b = ($pgac_kw(*a) *) a;
+return y;])],
+[pgac_cv_cxx_typeof_unqual=$pgac_kw])
+  test "$pgac_cv_cxx_typeof_unqual" != no && break
+done
+AC_LANG_POP([])])
+if test "$pgac_cv_cxx_typeof_unqual" != no; then
+  AC_DEFINE(HAVE_CXX_TYPEOF_UNQUAL, 1,
+            [Define to 1 if your C++ compiler understands `typeof_unqual' or something similar.])
+  if test "$pgac_cv_cxx_typeof_unqual" != typeof_unqual; then
+    AC_DEFINE_UNQUOTED(pg_cxx_typeof_unqual, $pgac_cv_cxx_typeof_unqual, [Define to how the C++ compiler spells `typeof_unqual'.])
+  fi
+fi])# PGAC_CXX_TYPEOF_UNQUAL
 
 
 

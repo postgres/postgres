@@ -452,7 +452,19 @@ extern "C++"
 #ifndef HAVE_TYPEOF
 #define HAVE_TYPEOF 1
 #endif
+/*
+ * and analogously for typeof_unqual
+ */
+#undef typeof_unqual
+#ifdef pg_cxx_typeof_unqual
+#define typeof_unqual(x) pg_cxx_typeof_unqual(x)
+#elif !defined(HAVE_CXX_TYPEOF_UNQUAL)
+#define typeof_unqual(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
 #endif
+#ifndef HAVE_TYPEOF_UNQUAL
+#define HAVE_TYPEOF_UNQUAL 1
+#endif
+#endif							/* __cplusplus */
 
 /*
  * CppAsString
