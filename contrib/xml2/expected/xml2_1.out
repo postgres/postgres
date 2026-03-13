@@ -205,3 +205,9 @@ $$<xsl:stylesheet version="1.0"
   </xsl:template>
 </xsl:stylesheet>$$);
 ERROR:  xslt_process() is not available without libxslt
+-- empty output
+select xslt_process('<aaa/>',
+$$<xsl:stylesheet version="1.0"
+      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+</xsl:stylesheet>$$);
+ERROR:  xslt_process() is not available without libxslt

@@ -146,7 +146,16 @@ xslt_process(PG_FUNCTION_ARGS)
 										 restree, stylesheet);
 
 		if (resstat >= 0)
-			result = cstring_to_text_with_len((char *) resstr, reslen);
+		{
+			/*
+			 * If an empty string has been returned, resstr would be NULL. In
+			 * this case, assume that the result is an empty string.
+			 */
+			if (reslen == 0)
+				result = cstring_to_text("");
+			else
+				result = cstring_to_text_with_len((char *) resstr, reslen);
+		}
 	}
 	PG_CATCH();
 	{

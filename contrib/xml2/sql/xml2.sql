@@ -153,3 +153,9 @@ $$<xsl:stylesheet version="1.0"
     </sax:output>
   </xsl:template>
 </xsl:stylesheet>$$);
+
+-- empty output
+select xslt_process('<aaa/>',
+$$<xsl:stylesheet version="1.0"
+      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+</xsl:stylesheet>$$);
