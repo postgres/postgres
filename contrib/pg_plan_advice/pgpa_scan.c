@@ -243,7 +243,7 @@ unique_nonjoin_rtekind(Bitmapset *relids, List *rtable)
 {
 	int			rti = -1;
 	bool		first = true;
-	RTEKind		rtekind;
+	RTEKind		rtekind = RTE_RELATION; /* silence compiler warning */
 
 	Assert(relids != NULL);
 
