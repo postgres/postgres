@@ -1043,7 +1043,7 @@ gistGetFakeLSN(Relation rel)
 		 * last call.
 		 */
 		static XLogRecPtr lastlsn = InvalidXLogRecPtr;
-		XLogRecPtr	currlsn = GetXLogInsertRecPtr();
+		XLogRecPtr	currlsn = GetXLogInsertEndRecPtr();
 
 		/* Shouldn't be called for WAL-logging relations */
 		Assert(!RelationNeedsWAL(rel));
