@@ -24,6 +24,14 @@ override shlib := lib$(NAME)$(DLSUFFIX)
 override CPPFLAGS := -I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS) $(LIBCURL_CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
+override CPPFLAGS_SHLIB := -DUSE_DYNAMIC_OAUTH
+
+# A bit of forward-looking paranoia: don't allow libpq-oauth.so to accidentally
+# depend on the encoding IDs coming from libpq. They're not guaranteed to match
+# the IDs in use by our version of pgcommon, now that we allow the major version
+# of libpq to differ from the major version of libpq-oauth.
+override CPPFLAGS_SHLIB += -DUSE_PRIVATE_ENCODING_FUNCS
+
 OBJS = \
 	$(WIN32RES)
 
@@ -34,8 +42,7 @@ OBJS_SHLIB = \
 	oauth-curl_shlib.o \
 	oauth-utils.o \
 
-oauth-utils.o: override CPPFLAGS += -DUSE_DYNAMIC_OAUTH
-oauth-curl_shlib.o: override CPPFLAGS_SHLIB += -DUSE_DYNAMIC_OAUTH
+oauth-utils.o: override CPPFLAGS += $(CPPFLAGS_SHLIB)
 
 # Add shlib-/stlib-specific objects.
 $(shlib): override OBJS += $(OBJS_SHLIB)

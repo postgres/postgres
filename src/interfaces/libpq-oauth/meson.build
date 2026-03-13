@@ -12,7 +12,15 @@ libpq_oauth_sources = files(
 libpq_oauth_so_sources = files(
   'oauth-utils.c',
 )
-libpq_oauth_so_c_args = ['-DUSE_DYNAMIC_OAUTH']
+libpq_oauth_so_c_args = [
+  '-DUSE_DYNAMIC_OAUTH',
+
+  # A bit of forward-looking paranoia: don't allow anyone to accidentally depend
+  # on the encoding IDs coming from libpq. They're not guaranteed to match the
+  # IDs in use by our version of pgcommon, now that we allow the major version
+  # of libpq to differ from the major version of libpq-oauth.
+  '-DUSE_PRIVATE_ENCODING_FUNCS',
+]
 
 export_file = custom_target('libpq-oauth.exports',
   kwargs: gen_export_kwargs,
