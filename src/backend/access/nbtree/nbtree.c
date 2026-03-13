@@ -423,7 +423,7 @@ btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	 * Note: so->dropPin should never change across rescans.
 	 */
 	so->dropPin = (!scan->xs_want_itup &&
-				   IsMVCCSnapshot(scan->xs_snapshot) &&
+				   IsMVCCLikeSnapshot(scan->xs_snapshot) &&
 				   RelationNeedsWAL(scan->indexRelation) &&
 				   scan->heapRelation != NULL);
 

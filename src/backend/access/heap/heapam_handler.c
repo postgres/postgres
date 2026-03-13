@@ -159,7 +159,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		 * Only in a non-MVCC snapshot can more than one member of the HOT
 		 * chain be visible.
 		 */
-		*call_again = !IsMVCCSnapshot(snapshot);
+		*call_again = !IsMVCCLikeSnapshot(snapshot);
 
 		slot->tts_tableOid = RelationGetRelid(scan->rel);
 		ExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);

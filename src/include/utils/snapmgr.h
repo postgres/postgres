@@ -51,13 +51,28 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
 	((snapshotdata).snapshot_type = SNAPSHOT_NON_VACUUMABLE, \
 	 (snapshotdata).vistest = (vistestp))
 
-/* This macro encodes the knowledge of which snapshots are MVCC-safe */
+/*
+ * Is the snapshot implemented as an MVCC snapshot (i.e. it uses
+ * SNAPSHOT_MVCC)? If so, there will be at most one visible tuple in a chain
+ * of updated tuples, and each visible tuple will be seen exactly once.
+ */
 #define IsMVCCSnapshot(snapshot)  \
-	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
-	 (snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
+	((snapshot)->snapshot_type == SNAPSHOT_MVCC)
 
+/*
+ * Special kind of MVCC snapshot, used during logical decoding. The visibility
+ * is checked from the perspective of an already committed transaction that is
+ * being decoded.
+ */
 #define IsHistoricMVCCSnapshot(snapshot)  \
 	((snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
+
+/*
+ * Is the snapshot either an MVCC snapshot or has equivalent visibility
+ * semantics (see IsMVCCSnapshot())?
+ */
+#define IsMVCCLikeSnapshot(snapshot)  \
+	(IsMVCCSnapshot(snapshot) || IsHistoricMVCCSnapshot(snapshot))
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);

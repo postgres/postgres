@@ -445,7 +445,7 @@ index_markpos(IndexScanDesc scan)
 void
 index_restrpos(IndexScanDesc scan)
 {
-	Assert(IsMVCCSnapshot(scan->xs_snapshot));
+	Assert(IsMVCCLikeSnapshot(scan->xs_snapshot));
 
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amrestrpos);
