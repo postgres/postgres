@@ -250,7 +250,8 @@ ForeignServerConnectionString(Oid userid, Oid serverid)
 
 		if (!OidIsValid(fdw->fdwconnection))
 			ereport(ERROR,
-					(errmsg("foreign data wrapper \"%s\" does not support subscription connections",
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("foreign data wrapper \"%s\" does not support subscription connections",
 							fdw->fdwname),
 					 errdetail("Foreign data wrapper must be defined with CONNECTION specified.")));
 
