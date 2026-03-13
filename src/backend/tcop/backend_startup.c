@@ -825,6 +825,8 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 		if (PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST) ||
 			unrecognized_protocol_options != NIL)
 			SendNegotiateProtocolVersion(unrecognized_protocol_options);
+
+		list_free_deep(unrecognized_protocol_options);
 	}
 
 	/* Check a user name was given. */
