@@ -78,7 +78,7 @@ typedef struct CheckPoint
 #define XLOG_END_OF_RECOVERY			0x90
 #define XLOG_FPI_FOR_HINT				0xA0
 #define XLOG_FPI						0xB0
-/* 0xC0 is used in Postgres 9.5-11 */
+#define XLOG_ASSIGN_LSN					0xC0
 #define XLOG_OVERWRITE_CONTRECORD		0xD0
 #define XLOG_CHECKPOINT_REDO			0xE0
 #define XLOG_LOGICAL_DECODING_STATUS_CHANGE	0xF0

@@ -1008,56 +1008,6 @@ gistproperty(Oid index_oid, int attno,
 }
 
 /*
- * Some indexes are not WAL-logged, but we need LSNs to detect concurrent page
- * splits anyway. This function provides a fake sequence of LSNs for that
- * purpose.
- */
-XLogRecPtr
-gistGetFakeLSN(Relation rel)
-{
-	if (rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
-	{
-		/*
-		 * Temporary relations are only accessible in our session, so a simple
-		 * backend-local counter will do.
-		 */
-		static XLogRecPtr counter = FirstNormalUnloggedLSN;
-
-		return counter++;
-	}
-	else if (RelationIsPermanent(rel))
-	{
-		/*
-		 * WAL-logging on this relation will start after commit, so its LSNs
-		 * must be distinct numbers smaller than the LSN at the next commit.
-		 * Emit a dummy WAL record if insert-LSN hasn't advanced after the
-		 * last call.
-		 */
-		static XLogRecPtr lastlsn = InvalidXLogRecPtr;
-		XLogRecPtr	currlsn = GetXLogInsertEndRecPtr();
-
-		/* Shouldn't be called for WAL-logging relations */
-		Assert(!RelationNeedsWAL(rel));
-
-		/* No need for an actual record if we already have a distinct LSN */
-		if (XLogRecPtrIsValid(lastlsn) && lastlsn == currlsn)
-			currlsn = gistXLogAssignLSN();
-
-		lastlsn = currlsn;
-		return currlsn;
-	}
-	else
-	{
-		/*
-		 * Unlogged relations are accessible from other backends, and survive
-		 * (clean) restarts. GetFakeLSNForUnloggedRel() handles that for us.
-		 */
-		Assert(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED);
-		return GetFakeLSNForUnloggedRel();
-	}
-}
-
-/*
  * This is a stratnum translation support function for GiST opclasses that use
  * the RT*StrategyNumber constants.
  */

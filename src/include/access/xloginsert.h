@@ -64,6 +64,8 @@ extern void log_newpage_range(Relation rel, ForkNumber forknum,
 							  BlockNumber startblk, BlockNumber endblk, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 
+extern XLogRecPtr XLogGetFakeLSN(Relation rel);
+
 extern void InitXLogInsert(void);
 
 #endif							/* XLOGINSERT_H */

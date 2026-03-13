@@ -8225,6 +8225,30 @@ XLogRestorePoint(const char *rpName)
 }
 
 /*
+ * Write an empty XLOG record to assign a distinct LSN.
+ *
+ * This is used by some index AMs when building indexes on permanent relations
+ * with wal_level=minimal.  In that scenario, WAL-logging will start after
+ * commit, but the index AM needs distinct LSNs to detect concurrent page
+ * modifications.  When the current WAL insert position hasn't advanced since
+ * the last call, we emit a dummy record to ensure we get a new, distinct LSN.
+ */
+XLogRecPtr
+XLogAssignLSN(void)
+{
+	int			dummy = 0;
+
+	/*
+	 * Records other than XLOG_SWITCH must have content.  We use an integer 0
+	 * to satisfy this restriction.
+	 */
+	XLogBeginInsert();
+	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
+	XLogRegisterData(&dummy, sizeof(dummy));
+	return XLogInsert(RM_XLOG_ID, XLOG_ASSIGN_LSN);
+}
+
+/*
  * Check if any of the GUC parameters that are critical for hot standby
  * have changed, and update the value in pg_control file if necessary.
  */
@@ -8590,6 +8614,10 @@ xlog_redo(XLogReaderState *record)
 	else if (info == XLOG_RESTORE_POINT)
 	{
 		/* nothing to do here, handled in xlogrecovery.c */
+	}
+	else if (info == XLOG_ASSIGN_LSN)
+	{
+		/* nothing to do here, see XLogGetFakeLSN() */
 	}
 	else if (info == XLOG_FPI || info == XLOG_FPI_FOR_HINT)
 	{

@@ -175,6 +175,10 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		memcpy(&enabled, rec, sizeof(bool));
 		appendStringInfoString(buf, enabled ? "true" : "false");
 	}
+	else if (info == XLOG_ASSIGN_LSN)
+	{
+		/* no further information to print */
+	}
 }
 
 const char *
@@ -228,6 +232,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_LOGICAL_DECODING_STATUS_CHANGE:
 			id = "LOGICAL_DECODING_STATUS_CHANGE";
+			break;
+		case XLOG_ASSIGN_LSN:
+			id = "ASSIGN_LSN";
 			break;
 	}
 

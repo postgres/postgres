@@ -16,7 +16,7 @@
 
 #include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/transam.h"
+#include "access/xloginsert.h"
 #include "commands/vacuum.h"
 #include "lib/integerset.h"
 #include "miscadmin.h"
@@ -182,7 +182,7 @@ gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	if (RelationNeedsWAL(rel))
 		vstate.startNSN = GetInsertRecPtr();
 	else
-		vstate.startNSN = gistGetFakeLSN(rel);
+		vstate.startNSN = XLogGetFakeLSN(rel);
 
 	/*
 	 * The outer loop iterates over all index pages, in physical order (we
@@ -413,7 +413,7 @@ restart:
 				PageSetLSN(page, recptr);
 			}
 			else
-				PageSetLSN(page, gistGetFakeLSN(rel));
+				PageSetLSN(page, XLogGetFakeLSN(rel));
 
 			END_CRIT_SECTION();
 
@@ -707,7 +707,7 @@ gistdeletepage(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	if (RelationNeedsWAL(info->index))
 		recptr = gistXLogPageDelete(leafBuffer, txid, parentBuffer, downlink);
 	else
-		recptr = gistGetFakeLSN(info->index);
+		recptr = XLogGetFakeLSN(info->index);
 	PageSetLSN(parentPage, recptr);
 	PageSetLSN(leafPage, recptr);
 
