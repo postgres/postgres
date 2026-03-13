@@ -20,6 +20,7 @@ PGFILEDESC = "libpq-oauth - device authorization OAuth support"
 # name.
 NAME = pq-oauth
 override shlib := lib$(NAME)$(DLSUFFIX)
+override stlib := libpq-oauth.a
 
 override CPPFLAGS := -I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS) $(LIBCURL_CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
