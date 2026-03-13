@@ -1131,8 +1131,10 @@ SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
 SELECT pg_stat_reset_shared('unknown');
 ERROR:  unrecognized reset target: "unknown"
 HINT:  Target must be "archiver", "bgwriter", "checkpointer", "io", "recovery_prefetch", "slru", or "wal".
--- Test that reset works for pg_stat_database
--- Since pg_stat_database stats_reset starts out as NULL, reset it once first so we have something to compare it to
+-- Test that reset works for pg_stat_database and pg_stat_database_conflicts
+-- Since pg_stat_database stats_reset starts out as NULL, reset it once first so that we
+-- have a baseline for comparison. The same for pg_stat_database_conflicts as it shares
+-- the same stats_reset as pg_stat_database.
 SELECT pg_stat_reset();
  pg_stat_reset 
 ---------------
@@ -1140,6 +1142,13 @@ SELECT pg_stat_reset();
 (1 row)
 
 SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
+SELECT stats_reset AS dbc_reset_ts FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database()) \gset
+SELECT :'db_reset_ts'::timestamptz = :'dbc_reset_ts'::timestamptz;
+ ?column? 
+----------
+ t
+(1 row)
+
 SELECT pg_stat_reset();
  pg_stat_reset 
 ---------------
@@ -1147,6 +1156,12 @@ SELECT pg_stat_reset();
 (1 row)
 
 SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = (SELECT current_database());
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database());
  ?column? 
 ----------
  t

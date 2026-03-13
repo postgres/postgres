@@ -523,13 +523,18 @@ SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
 -- Test error case for reset_shared with unknown stats type
 SELECT pg_stat_reset_shared('unknown');
 
--- Test that reset works for pg_stat_database
+-- Test that reset works for pg_stat_database and pg_stat_database_conflicts
 
--- Since pg_stat_database stats_reset starts out as NULL, reset it once first so we have something to compare it to
+-- Since pg_stat_database stats_reset starts out as NULL, reset it once first so that we
+-- have a baseline for comparison. The same for pg_stat_database_conflicts as it shares
+-- the same stats_reset as pg_stat_database.
 SELECT pg_stat_reset();
 SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
+SELECT stats_reset AS dbc_reset_ts FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database()) \gset
+SELECT :'db_reset_ts'::timestamptz = :'dbc_reset_ts'::timestamptz;
 SELECT pg_stat_reset();
 SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = (SELECT current_database());
+SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database());
 
 
 ----
