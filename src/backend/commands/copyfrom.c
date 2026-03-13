@@ -1746,6 +1746,7 @@ BeginCopyFrom(ParseState *pstate,
 	cstate->cur_attname = NULL;
 	cstate->cur_attval = NULL;
 	cstate->relname_only = false;
+	cstate->simd_enabled = true;
 
 	/*
 	 * Allocate buffers for the input pipeline.

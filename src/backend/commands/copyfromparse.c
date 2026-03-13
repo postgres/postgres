@@ -72,6 +72,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/pg_bswap.h"
+#include "port/simd.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/wait_event.h"
@@ -1311,6 +1312,152 @@ CopyReadLine(CopyFromState cstate, bool is_csv)
 	return result;
 }
 
+#ifndef USE_NO_SIMD
+/*
+ * Helper function for CopyReadLineText() that uses SIMD instructions to scan
+ * the input buffer for special characters.  This can be much faster.
+ *
+ * Note that we disable SIMD for the remainder of the COPY FROM command upon
+ * encountering a special character (except for end-of-line characters) or a
+ * short line.  This is perhaps too conservative, but it should help avoid
+ * regressions.  It could probably be made more lenient in the future via
+ * fine-tuned heuristics.
+ */
+static bool
+CopyReadLineTextSIMDHelper(CopyFromState cstate, bool is_csv,
+						   bool *hit_eof_p, int *input_buf_ptr_p)
+{
+	char	   *copy_input_buf;
+	int			input_buf_ptr;
+	int			copy_buf_len;
+	bool		unique_esc_char;	/* for csv, do quote/esc chars differ? */
+	bool		first = true;
+	bool		result = false;
+	const Vector8 nl_vec = vector8_broadcast('\n');
+	const Vector8 cr_vec = vector8_broadcast('\r');
+	Vector8		bs_or_quote_vec;	/* '\' for text, quote for csv */
+	Vector8		esc_vec;		/* only for csv */
+
+	if (is_csv)
+	{
+		char		quote = cstate->opts.quote[0];
+		char		esc = cstate->opts.escape[0];
+
+		bs_or_quote_vec = vector8_broadcast(quote);
+		esc_vec = vector8_broadcast(esc);
+		unique_esc_char = (quote != esc);
+	}
+	else
+	{
+		bs_or_quote_vec = vector8_broadcast('\\');
+		unique_esc_char = false;
+	}
+
+	/*
+	 * For a little extra speed within the loop, we copy some state members
+	 * into local variables. Note that we need to use a separate local
+	 * variable for input_buf_ptr so that the REFILL_LINEBUF macro works.  We
+	 * copy its value into the input_buf_ptr_p argument before returning.
+	 */
+	copy_input_buf = cstate->input_buf;
+	input_buf_ptr = cstate->input_buf_index;
+	copy_buf_len = cstate->input_buf_len;
+
+	/*
+	 * See the corresponding loop in CopyReadLineText() for more information
+	 * about the purpose of this loop.  This one does the same thing using
+	 * SIMD instructions, although we are quick to bail out to the scalar path
+	 * if we encounter a special character.
+	 */
+	for (;;)
+	{
+		Vector8		chunk;
+		Vector8		match;
+
+		/* Load more data if needed. */
+		if (copy_buf_len - input_buf_ptr < sizeof(Vector8))
+		{
+			REFILL_LINEBUF;
+
+			CopyLoadInputBuf(cstate);
+			/* update our local variables */
+			*hit_eof_p = cstate->input_reached_eof;
+			input_buf_ptr = cstate->input_buf_index;
+			copy_buf_len = cstate->input_buf_len;
+
+			/*
+			 * If we are completely out of data, break out of the loop,
+			 * reporting EOF.
+			 */
+			if (INPUT_BUF_BYTES(cstate) <= 0)
+			{
+				result = true;
+				break;
+			}
+		}
+
+		/*
+		 * If we still don't have enough data for the SIMD path, fall back to
+		 * the scalar code.  Note that this doesn't necessarily mean we
+		 * encountered a short line, so we leave cstate->simd_enabled set to
+		 * true.
+		 */
+		if (copy_buf_len - input_buf_ptr < sizeof(Vector8))
+			break;
+
+		/*
+		 * If we made it here, we have at least enough data to fit in a
+		 * Vector8, so we can use SIMD instructions to scan for special
+		 * characters.
+		 */
+		vector8_load(&chunk, (const uint8 *) &copy_input_buf[input_buf_ptr]);
+
+		/*
+		 * Check for \n, \r, \\ (for text), quotes (for csv), and escapes (for
+		 * csv, if different from quotes).
+		 */
+		match = vector8_eq(chunk, nl_vec);
+		match = vector8_or(match, vector8_eq(chunk, cr_vec));
+		match = vector8_or(match, vector8_eq(chunk, bs_or_quote_vec));
+		if (unique_esc_char)
+			match = vector8_or(match, vector8_eq(chunk, esc_vec));
+
+		/*
+		 * If we found a special character, advance to it and hand off to the
+		 * scalar path.  Except for end-of-line characters, we also disable
+		 * SIMD processing for the remainder of the COPY FROM command.
+		 */
+		if (vector8_is_highbit_set(match))
+		{
+			uint32		mask;
+			char		c;
+
+			mask = vector8_highbit_mask(match);
+			input_buf_ptr += pg_rightmost_one_pos32(mask);
+
+			/*
+			 * Don't disable SIMD if we found \n or \r, else we'd stop using
+			 * SIMD instructions after the first line.  As an exception, we do
+			 * disable it if this is the first vector we processed, as that
+			 * means the line is too short for SIMD.
+			 */
+			c = copy_input_buf[input_buf_ptr];
+			if (first || (c != '\n' && c != '\r'))
+				cstate->simd_enabled = false;
+
+			break;
+		}
+
+		/* That chunk was clear of special characters, so we can skip it. */
+		input_buf_ptr += sizeof(Vector8);
+		first = false;
+	}
+
+	*input_buf_ptr_p = input_buf_ptr;
+	return result;
+}
+#endif							/* ! USE_NO_SIMD */
+
 /*
  * CopyReadLineText - inner loop of CopyReadLine for text mode
  */
@@ -1361,11 +1508,43 @@ CopyReadLineText(CopyFromState cstate, bool is_csv)
 	 * input_buf_ptr have been determined to be part of the line, but not yet
 	 * transferred to line_buf.
 	 *
-	 * For a little extra speed within the loop, we copy input_buf and
-	 * input_buf_len into local variables.
+	 * For a little extra speed within the loop, we copy some state
+	 * information into local variables.  input_buf_ptr could be changed in
+	 * the SIMD path, so we must set that one before it.  The others are set
+	 * afterwards.
 	 */
-	copy_input_buf = cstate->input_buf;
 	input_buf_ptr = cstate->input_buf_index;
+
+	/*
+	 * We first try to use SIMD for the task described above, falling back to
+	 * the scalar path (i.e., the loop below) if needed.
+	 */
+#ifndef USE_NO_SIMD
+	if (cstate->simd_enabled)
+	{
+		/*
+		 * Using temporary variables seems to encourage the compiler to keep
+		 * them in a register, which is beneficial for performance.
+		 */
+		bool		tmp_hit_eof = false;
+		int			tmp_input_buf_ptr = 0;	/* silence compiler warning */
+
+		result = CopyReadLineTextSIMDHelper(cstate, is_csv, &tmp_hit_eof,
+											&tmp_input_buf_ptr);
+		hit_eof = tmp_hit_eof;
+		input_buf_ptr = tmp_input_buf_ptr;
+
+		if (result)
+		{
+			/* Transfer any still-uncopied data to line_buf. */
+			REFILL_LINEBUF;
+
+			return result;
+		}
+	}
+#endif							/* ! USE_NO_SIMD */
+
+	copy_input_buf = cstate->input_buf;
 	copy_buf_len = cstate->input_buf_len;
 
 	for (;;)

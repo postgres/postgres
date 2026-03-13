@@ -108,6 +108,7 @@ typedef struct CopyFromStateData
 								 * att */
 	bool	   *defaults;		/* if DEFAULT marker was found for
 								 * corresponding att */
+	bool		simd_enabled;	/* use SIMD to scan for special chars? */
 
 	/*
 	 * True if the corresponding attribute's is a constrained domain. This
