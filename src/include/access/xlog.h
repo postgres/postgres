@@ -238,6 +238,7 @@ extern bool RecoveryInProgress(void);
 extern RecoveryState GetRecoveryState(void);
 extern bool XLogInsertAllowed(void);
 extern XLogRecPtr GetXLogInsertRecPtr(void);
+extern XLogRecPtr GetXLogInsertEndRecPtr(void);
 extern XLogRecPtr GetXLogWriteRecPtr(void);
 
 extern uint64 GetSystemIdentifier(void);
