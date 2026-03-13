@@ -87,7 +87,7 @@
 typedef struct ShmemAllocatorData
 {
 	Size		free_offset;	/* offset to first free space from ShmemBase */
-	HTAB	   *index;			/* copy of ShmemIndex */
+	HASHHDR    *index;			/* location of ShmemIndex */
 
 	/* protects shared memory and LWLock allocation */
 	slock_t		shmem_lock;
