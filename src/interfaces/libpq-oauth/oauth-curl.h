@@ -17,8 +17,8 @@
 
 #include "libpq-fe.h"
 
-/* Exported async-auth callbacks. */
-extern PGDLLEXPORT PostgresPollingStatusType pg_fe_run_oauth_flow(PGconn *conn);
-extern PGDLLEXPORT void pg_fe_cleanup_oauth_flow(PGconn *conn);
+/* Exported flow callback. */
+extern PGDLLEXPORT int pg_start_oauthbearer(PGconn *conn,
+											PGoauthBearerRequestV2 *request);
 
 #endif							/* OAUTH_CURL_H */

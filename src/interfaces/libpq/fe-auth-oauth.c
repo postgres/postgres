@@ -78,7 +78,7 @@ oauth_init(PGconn *conn, const char *password,
  * This handles only mechanism state tied to the connection lifetime; state
  * stored in state->async_ctx is freed up either immediately after the
  * authentication handshake succeeds, or before the mechanism is cleaned up on
- * failure. See pg_fe_cleanup_oauth_flow() and cleanup_user_oauth_flow().
+ * failure. See pg_fe_cleanup_oauth_flow() and cleanup_oauth_flow().
  */
 static void
 oauth_free(void *opaq)
@@ -680,30 +680,54 @@ cleanup:
  * it's added to conn->errorMessage here.
  */
 static void
-report_user_flow_error(PGconn *conn, const PGoauthBearerRequestV2 *request)
+report_flow_error(PGconn *conn, const PGoauthBearerRequestV2 *request)
 {
-	appendPQExpBufferStr(&conn->errorMessage,
-						 libpq_gettext("user-defined OAuth flow failed"));
+	fe_oauth_state *state = conn->sasl_state;
+	const char *errmsg = request->error;
 
-	if (request->error)
+	/*
+	 * User-defined flows are called out explicitly so that the user knows who
+	 * to blame. Builtin flows don't need that extra message length; we expect
+	 * them to always fill in request->error on failure anyway.
+	 */
+	if (state->builtin)
 	{
-		appendPQExpBufferStr(&conn->errorMessage, ": ");
-		appendPQExpBufferStr(&conn->errorMessage, request->error);
+		if (!errmsg)
+		{
+			/*
+			 * Don't turn a bug here into a crash in production, but don't
+			 * bother translating either.
+			 */
+			Assert(false);
+			errmsg = "builtin flow failed but did not provide an error message";
+		}
+
+		appendPQExpBufferStr(&conn->errorMessage, errmsg);
+	}
+	else
+	{
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("user-defined OAuth flow failed"));
+		if (errmsg)
+		{
+			appendPQExpBufferStr(&conn->errorMessage, ": ");
+			appendPQExpBufferStr(&conn->errorMessage, errmsg);
+		}
 	}
 
 	appendPQExpBufferChar(&conn->errorMessage, '\n');
 }
 
 /*
- * Callback implementation of conn->async_auth() for a user-defined OAuth flow.
- * Delegates the retrieval of the token to the application's async callback.
+ * Callback implementation of conn->async_auth() for OAuth flows. Delegates the
+ * retrieval of the token to the PGoauthBearerRequestV2.async() callback.
  *
- * This will be called multiple times as needed; the application is responsible
- * for setting an altsock to signal and returning the correct PGRES_POLLING_*
+ * This will be called multiple times as needed; the callback is responsible for
+ * setting an altsock to signal and returning the correct PGRES_POLLING_*
  * statuses for use by PQconnectPoll().
  */
 static PostgresPollingStatusType
-run_user_oauth_flow(PGconn *conn)
+run_oauth_flow(PGconn *conn)
 {
 	fe_oauth_state *state = conn->sasl_state;
 	PGoauthBearerRequestV2 *request = state->async_ctx;
@@ -711,6 +735,7 @@ run_user_oauth_flow(PGconn *conn)
 
 	if (!request->v1.async)
 	{
+		Assert(!state->builtin);	/* be very noisy if our code does this */
 		libpq_append_conn_error(conn,
 								"user-defined OAuth flow provided neither a token nor an async callback");
 		return PGRES_POLLING_FAILED;
@@ -722,7 +747,7 @@ run_user_oauth_flow(PGconn *conn)
 
 	if (status == PGRES_POLLING_FAILED)
 	{
-		report_user_flow_error(conn, request);
+		report_flow_error(conn, request);
 		return status;
 	}
 	else if (status == PGRES_POLLING_OK)
@@ -734,6 +759,7 @@ run_user_oauth_flow(PGconn *conn)
 		 */
 		if (!request->v1.token)
 		{
+			Assert(!state->builtin);
 			libpq_append_conn_error(conn,
 									"user-defined OAuth flow did not provide a token");
 			return PGRES_POLLING_FAILED;
@@ -752,6 +778,7 @@ run_user_oauth_flow(PGconn *conn)
 	/* The hook wants the client to poll the altsock. Make sure it set one. */
 	if (conn->altsock == PGINVALID_SOCKET)
 	{
+		Assert(!state->builtin);
 		libpq_append_conn_error(conn,
 								"user-defined OAuth flow did not provide a socket for polling");
 		return PGRES_POLLING_FAILED;
@@ -761,12 +788,16 @@ run_user_oauth_flow(PGconn *conn)
 }
 
 /*
- * Cleanup callback for the async user flow. Delegates most of its job to
+ * Cleanup callback for the async flow. Delegates most of its job to
  * PGoauthBearerRequest.cleanup(), then disconnects the altsock and frees the
  * request itself.
+ *
+ * This is called either at the end of a successful authentication, or during
+ * pqDropConnection(), so we won't leak resources even if PQconnectPoll() never
+ * calls us back.
  */
 static void
-cleanup_user_oauth_flow(PGconn *conn)
+cleanup_oauth_flow(PGconn *conn)
 {
 	fe_oauth_state *state = conn->sasl_state;
 	PGoauthBearerRequestV2 *request = state->async_ctx;
@@ -786,12 +817,16 @@ cleanup_user_oauth_flow(PGconn *conn)
  *
  * There are three potential implementations of use_builtin_flow:
  *
- * 1) If the OAuth client is disabled at configuration time, return false.
+ * 1) If the OAuth client is disabled at configuration time, return zero.
  *    Dependent clients must provide their own flow.
  * 2) If the OAuth client is enabled and USE_DYNAMIC_OAUTH is defined, dlopen()
  *    the libpq-oauth plugin and use its implementation.
  * 3) Otherwise, use flow callbacks that are statically linked into the
  *    executable.
+ *
+ * For caller convenience, the return value follows the convention of
+ * PQauthDataHook: zero means no implementation is provided, negative indicates
+ * failure, and positive indicates success.
  */
 
 #if !defined(USE_LIBCURL)
@@ -800,10 +835,10 @@ cleanup_user_oauth_flow(PGconn *conn)
  * This configuration doesn't support the builtin flow.
  */
 
-bool
-use_builtin_flow(PGconn *conn, fe_oauth_state *state)
+static int
+use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *request)
 {
-	return false;
+	return 0;
 }
 
 #elif defined(USE_DYNAMIC_OAUTH)
@@ -815,36 +850,6 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state)
 typedef char *(*libpq_gettext_func) (const char *msgid);
 
 /*
- * Define accessor/mutator shims to inject into libpq-oauth, so that it doesn't
- * depend on the offsets within PGconn. (These have changed during minor version
- * updates in the past.)
- */
-
-#define DEFINE_GETTER(TYPE, MEMBER) \
-	typedef TYPE (*conn_ ## MEMBER ## _func) (PGconn *conn); \
-	static TYPE conn_ ## MEMBER(PGconn *conn) { return conn->MEMBER; }
-
-/* Like DEFINE_GETTER, but returns a pointer to the member. */
-#define DEFINE_GETTER_P(TYPE, MEMBER) \
-	typedef TYPE (*conn_ ## MEMBER ## _func) (PGconn *conn); \
-	static TYPE conn_ ## MEMBER(PGconn *conn) { return &conn->MEMBER; }
-
-#define DEFINE_SETTER(TYPE, MEMBER) \
-	typedef void (*set_conn_ ## MEMBER ## _func) (PGconn *conn, TYPE val); \
-	static void set_conn_ ## MEMBER(PGconn *conn, TYPE val) { conn->MEMBER = val; }
-
-DEFINE_GETTER_P(PQExpBuffer, errorMessage);
-DEFINE_GETTER(char *, oauth_client_id);
-DEFINE_GETTER(char *, oauth_client_secret);
-DEFINE_GETTER(char *, oauth_discovery_uri);
-DEFINE_GETTER(char *, oauth_issuer_id);
-DEFINE_GETTER(char *, oauth_scope);
-DEFINE_GETTER(fe_oauth_state *, sasl_state);
-
-DEFINE_SETTER(pgsocket, altsock);
-DEFINE_SETTER(char *, oauth_token);
-
-/*
  * Loads the libpq-oauth plugin via dlopen(), initializes it, and plugs its
  * callbacks into the connection's async auth handlers.
  *
@@ -852,27 +857,19 @@ DEFINE_SETTER(char *, oauth_token);
  * handle the use case where the build supports loading a flow but a user does
  * not want to install it. Troubleshooting of linker/loader failures can be done
  * via PGOAUTHDEBUG.
+ *
+ * The lifetime of *request ends shortly after this call, so it must be copied
+ * to longer-lived storage.
  */
-bool
-use_builtin_flow(PGconn *conn, fe_oauth_state *state)
+static int
+use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *request)
 {
 	static bool initialized = false;
 	static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 	int			lockerr;
 
-	void		(*init) (pgthreadlock_t threadlock,
-						 libpq_gettext_func gettext_impl,
-						 conn_errorMessage_func errmsg_impl,
-						 conn_oauth_client_id_func clientid_impl,
-						 conn_oauth_client_secret_func clientsecret_impl,
-						 conn_oauth_discovery_uri_func discoveryuri_impl,
-						 conn_oauth_issuer_id_func issuerid_impl,
-						 conn_oauth_scope_func scope_impl,
-						 conn_sasl_state_func saslstate_impl,
-						 set_conn_altsock_func setaltsock_impl,
-						 set_conn_oauth_token_func settoken_impl);
-	PostgresPollingStatusType (*flow) (PGconn *conn);
-	void		(*cleanup) (PGconn *conn);
+	void		(*init) (libpq_gettext_func gettext_impl);
+	int			(*start_flow) (PGconn *conn, PGoauthBearerRequestV2 *request);
 
 	/*
 	 * On macOS only, load the module using its absolute install path; the
@@ -885,9 +882,9 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state)
 	 */
 	const char *const module_name =
 #if defined(__darwin__)
-		LIBDIR "/libpq-oauth-" PG_MAJORVERSION DLSUFFIX;
+		LIBDIR "/libpq-oauth" DLSUFFIX;
 #else
-		"libpq-oauth-" PG_MAJORVERSION DLSUFFIX;
+		"libpq-oauth" DLSUFFIX;
 #endif
 
 	state->builtin_flow = dlopen(module_name, RTLD_NOW | RTLD_LOCAL);
@@ -903,22 +900,25 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state)
 		if (oauth_unsafe_debugging_enabled())
 			fprintf(stderr, "failed dlopen for libpq-oauth: %s\n", dlerror());
 
-		return false;
+		return 0;
 	}
 
 	if ((init = dlsym(state->builtin_flow, "libpq_oauth_init")) == NULL
-		|| (flow = dlsym(state->builtin_flow, "pg_fe_run_oauth_flow")) == NULL
-		|| (cleanup = dlsym(state->builtin_flow, "pg_fe_cleanup_oauth_flow")) == NULL)
+		|| (start_flow = dlsym(state->builtin_flow, "pg_start_oauthbearer")) == NULL)
 	{
 		/*
-		 * This is more of an error condition than the one above, but due to
-		 * the dlerror() threadsafety issue, lock it behind PGOAUTHDEBUG too.
+		 * This is more of an error condition than the one above, but the
+		 * cause is still locked behind PGOAUTHDEBUG due to the dlerror()
+		 * threadsafety issue.
 		 */
 		if (oauth_unsafe_debugging_enabled())
 			fprintf(stderr, "failed dlsym for libpq-oauth: %s\n", dlerror());
 
 		dlclose(state->builtin_flow);
-		return false;
+		state->builtin_flow = NULL;
+
+		request->error = libpq_gettext("could not find entry point for libpq-oauth");
+		return -1;
 	}
 
 	/*
@@ -937,57 +937,45 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state)
 		/* Should not happen... but don't continue if it does. */
 		Assert(false);
 
-		libpq_append_conn_error(conn, "failed to lock mutex (%d)", lockerr);
-		return false;
+		appendPQExpBuffer(&conn->errorMessage,
+						  "use_builtin_flow: failed to lock mutex (%d)\n",
+						  lockerr);
+
+		request->error = "";	/* satisfy report_flow_error() */
+		return -1;
 	}
 
 	if (!initialized)
 	{
-		init(pg_g_threadlock,
+		init(
 #ifdef ENABLE_NLS
-			 libpq_gettext,
+			 libpq_gettext
 #else
-			 NULL,
+			 NULL
 #endif
-			 conn_errorMessage,
-			 conn_oauth_client_id,
-			 conn_oauth_client_secret,
-			 conn_oauth_discovery_uri,
-			 conn_oauth_issuer_id,
-			 conn_oauth_scope,
-			 conn_sasl_state,
-			 set_conn_altsock,
-			 set_conn_oauth_token);
+			);
 
 		initialized = true;
 	}
 
 	pthread_mutex_unlock(&init_mutex);
 
-	/* Set our asynchronous callbacks. */
-	conn->async_auth = flow;
-	conn->cleanup_async_auth = cleanup;
-
-	return true;
+	return (start_flow(conn, request) == 0) ? 1 : -1;
 }
 
 #else
 
 /*
- * Use the builtin flow in libpq-oauth.a (see libpq-oauth/oauth-curl.h).
+ * For static builds, we can just call pg_start_oauthbearer() directly. It's
+ * provided by libpq-oauth.a.
  */
 
-extern PostgresPollingStatusType pg_fe_run_oauth_flow(PGconn *conn);
-extern void pg_fe_cleanup_oauth_flow(PGconn *conn);
+extern int	pg_start_oauthbearer(PGconn *conn, PGoauthBearerRequestV2 *request);
 
-bool
-use_builtin_flow(PGconn *conn, fe_oauth_state *state)
+static int
+use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *request)
 {
-	/* Set our asynchronous callbacks. */
-	conn->async_auth = pg_fe_run_oauth_flow;
-	conn->cleanup_async_auth = pg_fe_cleanup_oauth_flow;
-
-	return true;
+	return (pg_start_oauthbearer(conn, request) == 0) ? 1 : -1;
 }
 
 #endif							/* USE_LIBCURL */
@@ -1000,11 +988,11 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state)
  * If the application has registered a custom flow handler using
  * PQAUTHDATA_OAUTH_BEARER_TOKEN[_V2], it may either return a token immediately
  * (e.g. if it has one cached for immediate use), or set up for a series of
- * asynchronous callbacks which will be managed by run_user_oauth_flow().
+ * asynchronous callbacks which will be managed by run_oauth_flow().
  *
  * If the default handler is used instead, a Device Authorization flow is used
- * for the connection if support has been compiled in. (See
- * fe-auth-oauth-curl.c for implementation details.)
+ * for the connection if support has been compiled in. (See oauth-curl.c for
+ * implementation details.)
  *
  * If neither a custom handler nor the builtin flow is available, the connection
  * fails here.
@@ -1026,11 +1014,17 @@ setup_token_request(PGconn *conn, fe_oauth_state *state)
 
 	/*
 	 * The client may have overridden the OAuth flow. Try the v2 hook first,
-	 * then fall back to the v1 implementation.
+	 * then fall back to the v1 implementation. If neither is available, try
+	 * the builtin flow.
 	 */
 	res = PQauthDataHook(PQAUTHDATA_OAUTH_BEARER_TOKEN_V2, conn, &request);
 	if (res == 0)
 		res = PQauthDataHook(PQAUTHDATA_OAUTH_BEARER_TOKEN, conn, &request);
+	if (res == 0)
+	{
+		state->builtin = true;
+		res = use_builtin_flow(conn, state, &request);
+	}
 
 	if (res > 0)
 	{
@@ -1065,22 +1059,21 @@ setup_token_request(PGconn *conn, fe_oauth_state *state)
 
 		*request_copy = request;
 
-		conn->async_auth = run_user_oauth_flow;
-		conn->cleanup_async_auth = cleanup_user_oauth_flow;
+		conn->async_auth = run_oauth_flow;
+		conn->cleanup_async_auth = cleanup_oauth_flow;
 		state->async_ctx = request_copy;
-	}
-	else if (res < 0)
-	{
-		report_user_flow_error(conn, &request);
-		goto fail;
-	}
-	else if (!use_builtin_flow(conn, state))
-	{
-		libpq_append_conn_error(conn, "no OAuth flows are available (try installing the libpq-oauth package)");
-		goto fail;
+
+		return true;
 	}
 
-	return true;
+	/*
+	 * Failure cases: either we tried to set up a flow and failed, or there
+	 * was no flow to try.
+	 */
+	if (res < 0)
+		report_flow_error(conn, &request);
+	else
+		libpq_append_conn_error(conn, "no OAuth flows are available (try installing the libpq-oauth package)");
 
 fail:
 	if (request.v1.cleanup)

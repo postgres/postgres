@@ -38,10 +38,8 @@ endif
 
 # This is an internal module; we don't want an SONAME and therefore do not set
 # SO_MAJOR_VERSION.
-libpq_oauth_name = 'libpq-oauth-@0@'.format(pg_version_major)
-
 if build_shared_lib
-libpq_oauth_so = shared_module(libpq_oauth_name,
+libpq_oauth_so = shared_module('libpq-oauth',
   libpq_oauth_sources + libpq_oauth_so_sources,
   include_directories: [libpq_oauth_inc, postgres_inc],
   c_args: libpq_oauth_so_c_args,

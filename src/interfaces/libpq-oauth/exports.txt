@@ -1,4 +1,3 @@
 # src/interfaces/libpq-oauth/exports.txt
 libpq_oauth_init          1
-pg_fe_run_oauth_flow      2
-pg_fe_cleanup_oauth_flow  3
+pg_start_oauthbearer      2

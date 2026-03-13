@@ -3589,13 +3589,6 @@ colormaprange
 compare_context
 config_handle
 config_var_value
-conn_errorMessage_func
-conn_oauth_client_id_func
-conn_oauth_client_secret_func
-conn_oauth_discovery_uri_func
-conn_oauth_issuer_id_func
-conn_oauth_scope_func
-conn_sasl_state_func
 contain_aggs_of_level_context
 contain_placeholder_references_context
 convert_testexpr_context
@@ -4169,8 +4162,6 @@ security_class_t
 sem_t
 sepgsql_context_info_t
 sequence_magic
-set_conn_altsock_func
-set_conn_oauth_token_func
 set_join_pathlist_hook_type
 set_rel_pathlist_hook_type
 shared_ts_iter

@@ -16,13 +16,10 @@ include $(top_builddir)/src/Makefile.global
 PGFILEDESC = "libpq-oauth - device authorization OAuth support"
 
 # This is an internal module; we don't want an SONAME and therefore do not set
-# SO_MAJOR_VERSION.
-NAME = pq-oauth-$(MAJORVERSION)
-
-# Force the name "libpq-oauth" for both the static and shared libraries. The
-# staticlib doesn't need version information in its name.
+# SO_MAJOR_VERSION. This requires an explicit override for the shared library
+# name.
+NAME = pq-oauth
 override shlib := lib$(NAME)$(DLSUFFIX)
-override stlib := libpq-oauth.a
 
 override CPPFLAGS := -I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS) $(LIBCURL_CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)

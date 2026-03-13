@@ -35,85 +35,18 @@
 pgthreadlock_t pg_g_threadlock;
 static libpq_gettext_func libpq_gettext_impl;
 
-conn_errorMessage_func conn_errorMessage;
-conn_oauth_client_id_func conn_oauth_client_id;
-conn_oauth_client_secret_func conn_oauth_client_secret;
-conn_oauth_discovery_uri_func conn_oauth_discovery_uri;
-conn_oauth_issuer_id_func conn_oauth_issuer_id;
-conn_oauth_scope_func conn_oauth_scope;
-conn_sasl_state_func conn_sasl_state;
-
-set_conn_altsock_func set_conn_altsock;
-set_conn_oauth_token_func set_conn_oauth_token;
-
 /*-
  * Initializes libpq-oauth by setting necessary callbacks.
  *
- * The current implementation relies on the following private implementation
- * details of libpq:
- *
- * - pg_g_threadlock: protects libcurl initialization if the underlying Curl
- *   installation is not threadsafe
- *
- * - libpq_gettext: translates error messages using libpq's message domain
- *
- * The implementation also needs access to several members of the PGconn struct,
- * which are not guaranteed to stay in place across minor versions. Accessors
- * (named conn_*) and mutators (named set_conn_*) are injected here.
+ * The current implementation relies on libpq_gettext to translate error
+ * messages using libpq's message domain, so libpq injects it here. We also use
+ * this chance to initialize our threadlock.
  */
 void
-libpq_oauth_init(pgthreadlock_t threadlock_impl,
-				 libpq_gettext_func gettext_impl,
-				 conn_errorMessage_func errmsg_impl,
-				 conn_oauth_client_id_func clientid_impl,
-				 conn_oauth_client_secret_func clientsecret_impl,
-				 conn_oauth_discovery_uri_func discoveryuri_impl,
-				 conn_oauth_issuer_id_func issuerid_impl,
-				 conn_oauth_scope_func scope_impl,
-				 conn_sasl_state_func saslstate_impl,
-				 set_conn_altsock_func setaltsock_impl,
-				 set_conn_oauth_token_func settoken_impl)
+libpq_oauth_init(libpq_gettext_func gettext_impl)
 {
-	pg_g_threadlock = threadlock_impl;
+	pg_g_threadlock = PQgetThreadLock();
 	libpq_gettext_impl = gettext_impl;
-	conn_errorMessage = errmsg_impl;
-	conn_oauth_client_id = clientid_impl;
-	conn_oauth_client_secret = clientsecret_impl;
-	conn_oauth_discovery_uri = discoveryuri_impl;
-	conn_oauth_issuer_id = issuerid_impl;
-	conn_oauth_scope = scope_impl;
-	conn_sasl_state = saslstate_impl;
-	set_conn_altsock = setaltsock_impl;
-	set_conn_oauth_token = settoken_impl;
-}
-
-/*
- * Append a formatted string to the error message buffer of the given
- * connection, after translating it.  This is a copy of libpq's internal API.
- */
-void
-libpq_append_conn_error(PGconn *conn, const char *fmt,...)
-{
-	int			save_errno = errno;
-	bool		done;
-	va_list		args;
-	PQExpBuffer errorMessage = conn_errorMessage(conn);
-
-	Assert(fmt[strlen(fmt) - 1] != '\n');
-
-	if (PQExpBufferBroken(errorMessage))
-		return;					/* already failed */
-
-	/* Loop in case we have to retry after enlarging the buffer. */
-	do
-	{
-		errno = save_errno;
-		va_start(args, fmt);
-		done = appendPQExpBufferVA(errorMessage, libpq_gettext(fmt), args);
-		va_end(args);
-	} while (!done);
-
-	appendPQExpBufferChar(errorMessage, '\n');
 }
 
 #ifdef ENABLE_NLS

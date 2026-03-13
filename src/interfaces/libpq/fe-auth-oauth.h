@@ -27,11 +27,6 @@ enum fe_oauth_step
 	FE_OAUTH_SERVER_ERROR,
 };
 
-/*
- * This struct is exported to the libpq-oauth module. If changes are needed
- * during backports to stable branches, please keep ABI compatibility (no
- * changes to existing members, add new members at the end, etc.).
- */
 typedef struct
 {
 	enum fe_oauth_step step;
@@ -39,12 +34,12 @@ typedef struct
 	PGconn	   *conn;
 	void	   *async_ctx;
 
+	bool		builtin;
 	void	   *builtin_flow;
 } fe_oauth_state;
 
 extern void pqClearOAuthToken(PGconn *conn);
 extern bool oauth_unsafe_debugging_enabled(void);
-extern bool use_builtin_flow(PGconn *conn, fe_oauth_state *state);
 
 /* Mechanisms in fe-auth-oauth.c */
 extern const pg_fe_sasl_mech pg_oauth_mech;

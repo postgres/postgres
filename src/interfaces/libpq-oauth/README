@@ -10,48 +10,33 @@ results in a failed connection.
 
 = Load-Time ABI =
 
-This module ABI is an internal implementation detail, so it's subject to change
-across major releases; the name of the module (libpq-oauth-MAJOR) reflects this.
-The module exports the following symbols:
+As of v19, this module ABI is public and cannot change incompatibly without also
+changing the entry points. Both libpq and libpq-oauth must gracefully handle
+situations where the other library is of a different release version, past or
+future, since upgrades to the libraries may happen in either order.
 
-- PostgresPollingStatusType pg_fe_run_oauth_flow(PGconn *conn);
-- void pg_fe_cleanup_oauth_flow(PGconn *conn);
+(Don't assume that package version dependencies from libpq-oauth to libpq will
+simplify the situation! Since libpq delay-loads libpq-oauth, we still have to
+handle cases where a long-running client application has a libpq that's older
+than a newly upgraded plugin.)
 
-pg_fe_run_oauth_flow and pg_fe_cleanup_oauth_flow are implementations of
-conn->async_auth and conn->cleanup_async_auth, respectively.
+The module exports the following symbol:
 
-At the moment, pg_fe_run_oauth_flow() relies on libpq's pg_g_threadlock and
-libpq_gettext(), which must be injected by libpq using this initialization
-function before the flow is run:
+- int pg_start_oauthbearer(PGconn *conn, PGoauthBearerRequestV2 *request);
 
-- void libpq_oauth_init(pgthreadlock_t threadlock,
-						libpq_gettext_func gettext_impl,
-						conn_errorMessage_func errmsg_impl,
-						conn_oauth_client_id_func clientid_impl,
-						conn_oauth_client_secret_func clientsecret_impl,
-						conn_oauth_discovery_uri_func discoveryuri_impl,
-						conn_oauth_issuer_id_func issuerid_impl,
-						conn_oauth_scope_func scope_impl,
-						conn_sasl_state_func saslstate_impl,
-						set_conn_altsock_func setaltsock_impl,
-						set_conn_oauth_token_func settoken_impl);
+The module then behaves as if it had received a PQAUTHDATA_OAUTH_BEARER_TOKEN_V2
+request via the PQauthDataHook API, and it either fills in an existing token or
+populates the necessary callbacks for a token to be obtained asynchronously.
+(See the documentation for PGoauthBearerRequest.) The function returns zero on
+success and nonzero on failure.
 
-It also relies on access to several members of the PGconn struct. Not only can
-these change positions across minor versions, but the offsets aren't necessarily
-stable within a single minor release (conn->errorMessage, for instance, can
-change offsets depending on configure-time options). Therefore the necessary
-accessors (named conn_*) and mutators (set_conn_*) are injected here. With this
-approach, we can safely search the standard dlopen() paths (e.g. RPATH,
-LD_LIBRARY_PATH, the SO cache) for an implementation module to use, even if that
-module wasn't compiled at the same time as libpq -- which becomes especially
-important during "live upgrade" situations where a running libpq application has
-the libpq-oauth module updated out from under it before it's first loaded from
-disk.
+Additionally, libpq-oauth relies on libpq's libpq_gettext(), which must be
+injected by libpq using this initialization function before the flow is run:
+
+- void libpq_oauth_init(libpq_gettext_func gettext_impl);
 
 = Static Build =
 
 The static library libpq.a does not perform any dynamic loading. If the builtin
-flow is enabled, the application is expected to link against libpq-oauth.a
-directly to provide the necessary symbols. (libpq.a and libpq-oauth.a must be
-part of the same build. Unlike the dynamic module, there are no translation
-shims provided.)
+flow is enabled, the application is expected to link against libpq-oauth.a to
+provide the necessary symbol, or else implement pg_start_oauthbearer() itself.
