@@ -73,7 +73,7 @@
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
 										bool skipjunk);
 static pg_attribute_always_inline void slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
-															  int natts);
+															  int reqnatts);
 static inline void tts_buffer_heap_store_tuple(TupleTableSlot *slot,
 											   HeapTuple tuple,
 											   Buffer buffer,
@@ -1108,7 +1108,10 @@ slot_deform_heap_tuple_internal(TupleTableSlot *slot, HeapTuple tuple,
  * slot_deform_heap_tuple
  *		Given a TupleTableSlot, extract data from the slot's physical tuple
  *		into its Datum/isnull arrays.  Data is extracted up through the
- *		natts'th column (caller must ensure this is a legal column number).
+ *		reqnatts'th column.  If there are insufficient attributes in the given
+ *		tuple, then slot_getmissingattrs() is called to populate the
+ *		remainder.  If reqnatts is above the number of attributes in the
+ *		slot's TupleDesc, an error is raised.
  *
  *		This is essentially an incremental version of heap_deform_tuple:
  *		on each call we extract attributes up to the one needed, without
@@ -1120,21 +1123,23 @@ slot_deform_heap_tuple_internal(TupleTableSlot *slot, HeapTuple tuple,
  */
 static pg_attribute_always_inline void
 slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
-					   int natts)
+					   int reqnatts)
 {
 	bool		hasnulls = HeapTupleHasNulls(tuple);
 	int			attnum;
+	int			natts;
 	uint32		off;			/* offset in tuple data */
 	bool		slow;			/* can we use/set attcacheoff? */
 
 	/* We can only fetch as many attributes as the tuple has. */
-	natts = Min(HeapTupleHeaderGetNatts(tuple->t_data), natts);
+	natts = Min(HeapTupleHeaderGetNatts(tuple->t_data), reqnatts);
 
 	/*
 	 * Check whether the first call for this tuple, and initialize or restore
 	 * loop state.
 	 */
 	attnum = slot->tts_nvalid;
+	slot->tts_nvalid = reqnatts;
 	if (attnum == 0)
 	{
 		/* Start from the first attribute */
@@ -1199,12 +1204,15 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 	/*
 	 * Save state for next execution
 	 */
-	slot->tts_nvalid = attnum;
 	*offp = off;
 	if (slow)
 		slot->tts_flags |= TTS_FLAG_SLOW;
 	else
 		slot->tts_flags &= ~TTS_FLAG_SLOW;
+
+	/* Fetch any missing attrs and raise an error if reqnatts is invalid. */
+	if (unlikely(attnum < reqnatts))
+		slot_getmissingattrs(slot, attnum, reqnatts);
 }
 
 const TupleTableSlotOps TTSOpsVirtual = {
@@ -2058,34 +2066,36 @@ slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum)
 {
 	AttrMissing *attrmiss = NULL;
 
+	/* Check for invalid attnums */
+	if (unlikely(lastAttNum > slot->tts_tupleDescriptor->natts))
+		elog(ERROR, "invalid attribute number %d", lastAttNum);
+
 	if (slot->tts_tupleDescriptor->constr)
 		attrmiss = slot->tts_tupleDescriptor->constr->missing;
 
 	if (!attrmiss)
 	{
 		/* no missing values array at all, so just fill everything in as NULL */
-		memset(slot->tts_values + startAttNum, 0,
-			   (lastAttNum - startAttNum) * sizeof(Datum));
-		memset(slot->tts_isnull + startAttNum, 1,
-			   (lastAttNum - startAttNum) * sizeof(bool));
+		for (int attnum = startAttNum; attnum < lastAttNum; attnum++)
+		{
+			slot->tts_values[attnum] = (Datum) 0;
+			slot->tts_isnull[attnum] = true;
+		}
 	}
 	else
 	{
-		int			missattnum;
-
-		/* if there is a missing values array we must process them one by one */
-		for (missattnum = startAttNum;
-			 missattnum < lastAttNum;
-			 missattnum++)
+		/* use attrmiss to set the missing values */
+		for (int attnum = startAttNum; attnum < lastAttNum; attnum++)
 		{
-			slot->tts_values[missattnum] = attrmiss[missattnum].am_value;
-			slot->tts_isnull[missattnum] = !attrmiss[missattnum].am_present;
+			slot->tts_values[attnum] = attrmiss[attnum].am_value;
+			slot->tts_isnull[attnum] = !attrmiss[attnum].am_present;
 		}
 	}
 }
 
 /*
- * slot_getsomeattrs_int - workhorse for slot_getsomeattrs()
+ * slot_getsomeattrs_int
+ *		external function to call getsomeattrs() for use in JIT
  */
 void
 slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
@@ -2094,21 +2104,13 @@ slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
 	Assert(slot->tts_nvalid < attnum);	/* checked in slot_getsomeattrs */
 	Assert(attnum > 0);
 
-	if (unlikely(attnum > slot->tts_tupleDescriptor->natts))
-		elog(ERROR, "invalid attribute number %d", attnum);
-
 	/* Fetch as many attributes as possible from the underlying tuple. */
 	slot->tts_ops->getsomeattrs(slot, attnum);
 
 	/*
-	 * If the underlying tuple doesn't have enough attributes, tuple
-	 * descriptor must have the missing attributes.
+	 * Avoid putting new code here as that would prevent the compiler from
+	 * using the sibling call optimization for the above function.
 	 */
-	if (unlikely(slot->tts_nvalid < attnum))
-	{
-		slot_getmissingattrs(slot, slot->tts_nvalid, attnum);
-		slot->tts_nvalid = attnum;
-	}
 }
 
 /* ----------------------------------------------------------------
