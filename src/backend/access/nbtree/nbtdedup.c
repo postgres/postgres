@@ -69,6 +69,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, IndexTuple newitem, Size newitemsz,
 	Size		pagesaving PG_USED_FOR_ASSERTS_ONLY = 0;
 	bool		singlevalstrat = false;
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
+	XLogRecPtr	recptr;
 
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
@@ -245,7 +246,6 @@ _bt_dedup_pass(Relation rel, Buffer buf, IndexTuple newitem, Size newitemsz,
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
 	{
-		XLogRecPtr	recptr;
 		xl_btree_dedup xlrec_dedup;
 
 		xlrec_dedup.nintervals = state->nintervals;
@@ -263,9 +263,11 @@ _bt_dedup_pass(Relation rel, Buffer buf, IndexTuple newitem, Size newitemsz,
 							state->nintervals * sizeof(BTDedupInterval));
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DEDUP);
-
-		PageSetLSN(page, recptr);
 	}
+	else
+		recptr = XLogGetFakeLSN(rel);
+
+	PageSetLSN(page, recptr);
 
 	END_CRIT_SECTION();
 

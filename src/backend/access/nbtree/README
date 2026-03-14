@@ -485,9 +485,8 @@ We handle this kill_prior_tuple race condition by having affected index
 scans conservatively assume that any change to the leaf page at all
 implies that it was reached by btbulkdelete in the interim period when no
 buffer pin was held.  This is implemented by not setting any LP_DEAD bits
-on the leaf page at all when the page's LSN has changed.  (That won't work
-with an unlogged index, so for now we don't ever apply the "don't hold
-onto pin" optimization there.)
+on the leaf page at all when the page's LSN has changed.  (This is why we
+implement "fake" LSNs for unlogged index relations.)
 
 Fastpath For Index Insertion
 ----------------------------

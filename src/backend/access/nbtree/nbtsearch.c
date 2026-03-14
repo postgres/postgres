@@ -67,7 +67,6 @@ _bt_drop_lock_and_maybe_pin(Relation rel, BTScanOpaque so)
 	 * Have to set so->currPos.lsn so that _bt_killitems has a way to detect
 	 * when concurrent heap TID recycling by VACUUM might have taken place.
 	 */
-	Assert(RelationNeedsWAL(rel));
 	so->currPos.lsn = BufferGetLSNAtomic(so->currPos.buf);
 	_bt_relbuf(rel, so->currPos.buf);
 	so->currPos.buf = InvalidBuffer;

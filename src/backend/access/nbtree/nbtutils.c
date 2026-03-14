@@ -236,7 +236,6 @@ _bt_killitems(IndexScanDesc scan)
 		XLogRecPtr	latestlsn;
 
 		Assert(!BTScanPosIsPinned(so->currPos));
-		Assert(RelationNeedsWAL(rel));
 		buf = _bt_getbuf(rel, so->currPos.currPage, BT_READ);
 
 		latestlsn = BufferGetLSNAtomic(buf);

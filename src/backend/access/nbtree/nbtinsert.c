@@ -1137,6 +1137,7 @@ _bt_insertonpg(Relation rel,
 	IndexTuple	oposting = NULL;
 	IndexTuple	origitup = NULL;
 	IndexTuple	nposting = NULL;
+	XLogRecPtr	recptr;
 
 	page = BufferGetPage(buf);
 	opaque = BTPageGetOpaque(page);
@@ -1334,7 +1335,6 @@ _bt_insertonpg(Relation rel,
 			xl_btree_insert xlrec;
 			xl_btree_metadata xlmeta;
 			uint8		xlinfo;
-			XLogRecPtr	recptr;
 			uint16		upostingoff;
 
 			xlrec.offnum = newitemoff;
@@ -1407,14 +1407,16 @@ _bt_insertonpg(Relation rel,
 			}
 
 			recptr = XLogInsert(RM_BTREE_ID, xlinfo);
-
-			if (BufferIsValid(metabuf))
-				PageSetLSN(metapg, recptr);
-			if (!isleaf)
-				PageSetLSN(BufferGetPage(cbuf), recptr);
-
-			PageSetLSN(page, recptr);
 		}
+		else
+			recptr = XLogGetFakeLSN(rel);
+
+		if (BufferIsValid(metabuf))
+			PageSetLSN(metapg, recptr);
+		if (!isleaf)
+			PageSetLSN(BufferGetPage(cbuf), recptr);
+
+		PageSetLSN(page, recptr);
 
 		END_CRIT_SECTION();
 
@@ -1516,6 +1518,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	bool		newitemonleft,
 				isleaf,
 				isrightmost;
+	XLogRecPtr	recptr;
 
 	/*
 	 * origpage is the original page to be split.  leftpage is a temporary
@@ -1995,7 +1998,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	{
 		xl_btree_split xlrec;
 		uint8		xlinfo;
-		XLogRecPtr	recptr;
 
 		xlrec.level = ropaque->btpo_level;
 		/* See comments below on newitem, orignewitem, and posting lists */
@@ -2079,14 +2081,16 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 
 		xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L : XLOG_BTREE_SPLIT_R;
 		recptr = XLogInsert(RM_BTREE_ID, xlinfo);
-
-		PageSetLSN(origpage, recptr);
-		PageSetLSN(rightpage, recptr);
-		if (!isrightmost)
-			PageSetLSN(spage, recptr);
-		if (!isleaf)
-			PageSetLSN(BufferGetPage(cbuf), recptr);
 	}
+	else
+		recptr = XLogGetFakeLSN(rel);
+
+	PageSetLSN(origpage, recptr);
+	PageSetLSN(rightpage, recptr);
+	if (!isrightmost)
+		PageSetLSN(spage, recptr);
+	if (!isleaf)
+		PageSetLSN(BufferGetPage(cbuf), recptr);
 
 	END_CRIT_SECTION();
 
@@ -2504,6 +2508,7 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 	Buffer		metabuf;
 	Page		metapg;
 	BTMetaPageData *metad;
+	XLogRecPtr	recptr;
 
 	lbkno = BufferGetBlockNumber(lbuf);
 	rbkno = BufferGetBlockNumber(rbuf);
@@ -2599,7 +2604,6 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 	if (RelationNeedsWAL(rel))
 	{
 		xl_btree_newroot xlrec;
-		XLogRecPtr	recptr;
 		xl_btree_metadata md;
 
 		xlrec.rootblk = rootblknum;
@@ -2633,11 +2637,13 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 							((PageHeader) rootpage)->pd_upper);
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT);
-
-		PageSetLSN(lpage, recptr);
-		PageSetLSN(rootpage, recptr);
-		PageSetLSN(metapg, recptr);
 	}
+	else
+		recptr = XLogGetFakeLSN(rel);
+
+	PageSetLSN(lpage, recptr);
+	PageSetLSN(rootpage, recptr);
+	PageSetLSN(metapg, recptr);
 
 	END_CRIT_SECTION();
 
