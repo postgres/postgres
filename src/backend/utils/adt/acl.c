@@ -652,6 +652,10 @@ aclitemin(PG_FUNCTION_ARGS)
  *		Allocates storage for, and fills in, a new null-delimited string
  *		containing a formatted ACL specification.  See aclparse for details.
  *
+ *		In bootstrap mode, this is called for debug printouts (initdb -d).
+ *		We could ask bootstrap.c to provide an inverse of boot_get_role_oid(),
+ *		but it seems at least as useful to just print numeric role OIDs.
+ *
  * RETURNS:
  *		the new string
  */
@@ -674,7 +678,10 @@ aclitemout(PG_FUNCTION_ARGS)
 
 	if (aip->ai_grantee != ACL_ID_PUBLIC)
 	{
-		htup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(aip->ai_grantee));
+		if (!IsBootstrapProcessingMode())
+			htup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(aip->ai_grantee));
+		else
+			htup = NULL;
 		if (HeapTupleIsValid(htup))
 		{
 			putid(p, NameStr(((Form_pg_authid) GETSTRUCT(htup))->rolname));
@@ -682,7 +689,7 @@ aclitemout(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* Generate numeric OID if we don't find an entry */
+			/* No such entry, or bootstrap mode: print numeric OID */
 			sprintf(p, "%u", aip->ai_grantee);
 		}
 	}
@@ -702,7 +709,10 @@ aclitemout(PG_FUNCTION_ARGS)
 	*p++ = '/';
 	*p = '\0';
 
-	htup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(aip->ai_grantor));
+	if (!IsBootstrapProcessingMode())
+		htup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(aip->ai_grantor));
+	else
+		htup = NULL;
 	if (HeapTupleIsValid(htup))
 	{
 		putid(p, NameStr(((Form_pg_authid) GETSTRUCT(htup))->rolname));
@@ -710,7 +720,7 @@ aclitemout(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* Generate numeric OID if we don't find an entry */
+		/* No such entry, or bootstrap mode: print numeric OID */
 		sprintf(p, "%u", aip->ai_grantor);
 	}
 
