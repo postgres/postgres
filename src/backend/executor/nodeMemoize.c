@@ -1122,7 +1122,7 @@ ExecEndMemoize(MemoizeState *node)
 		if (node->stats.mem_peak == 0)
 			node->stats.mem_peak = node->mem_used;
 
-		Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
+		Assert(ParallelWorkerNumber < node->shared_info->num_workers);
 		si = &node->shared_info->sinstrument[ParallelWorkerNumber];
 		memcpy(si, &node->stats, sizeof(MemoizeInstrumentation));
 	}
