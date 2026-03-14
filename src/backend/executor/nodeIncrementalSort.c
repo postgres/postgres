@@ -102,7 +102,7 @@
 			if ((node)->shared_info && (node)->am_worker) \
 			{ \
 				Assert(IsParallelWorker()); \
-				Assert(ParallelWorkerNumber <= (node)->shared_info->num_workers); \
+				Assert(ParallelWorkerNumber < (node)->shared_info->num_workers); \
 				instrumentSortedGroup(&(node)->shared_info->sinfo[ParallelWorkerNumber].groupName##GroupInfo, \
 									  (node)->groupName##_state); \
 			} \

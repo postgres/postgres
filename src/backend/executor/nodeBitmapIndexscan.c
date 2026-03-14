@@ -192,7 +192,7 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	{
 		IndexScanInstrumentation *winstrument;
 
-		Assert(ParallelWorkerNumber <= node->biss_SharedInfo->num_workers);
+		Assert(ParallelWorkerNumber < node->biss_SharedInfo->num_workers);
 		winstrument = &node->biss_SharedInfo->winstrument[ParallelWorkerNumber];
 
 		/*
