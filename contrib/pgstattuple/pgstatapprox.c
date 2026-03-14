@@ -23,6 +23,7 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/procarray.h"
+#include "storage/read_stream.h"
 
 PG_FUNCTION_INFO_V1(pgstattuple_approx);
 PG_FUNCTION_INFO_V1(pgstattuple_approx_v1_5);
@@ -46,6 +47,62 @@ typedef struct output_type
 #define NUM_OUTPUT_COLUMNS 10
 
 /*
+ * Struct for statapprox_heap read stream callback.
+ */
+typedef struct StatApproxReadStreamPrivate
+{
+	Relation	rel;
+	output_type *stat;
+	BlockNumber current_blocknum;
+	BlockNumber nblocks;
+	BlockNumber scanned;		/* count of pages actually read */
+	Buffer		vmbuffer;		/* for VM lookups */
+} StatApproxReadStreamPrivate;
+
+/*
+ * Read stream callback for statapprox_heap.
+ *
+ * This callback checks the visibility map for each block.  If the block is
+ * all-visible, we can get the free space from the FSM without reading the
+ * actual page, and skip to the next block.  Only the blocks that are not
+ * all-visible are returned for actual reading after being locked.
+ */
+static BlockNumber
+statapprox_heap_read_stream_next(ReadStream *stream,
+								 void *callback_private_data,
+								 void *per_buffer_data)
+{
+	StatApproxReadStreamPrivate *p =
+		(StatApproxReadStreamPrivate *) callback_private_data;
+
+	while (p->current_blocknum < p->nblocks)
+	{
+		BlockNumber blkno = p->current_blocknum++;
+		Size		freespace;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * If the page has only visible tuples, then we can find out the free
+		 * space from the FSM and move on without reading the page.
+		 */
+		if (VM_ALL_VISIBLE(p->rel, blkno, &p->vmbuffer))
+		{
+			freespace = GetRecordedFreeSpace(p->rel, blkno);
+			p->stat->tuple_len += BLCKSZ - freespace;
+			p->stat->free_space += freespace;
+			continue;
+		}
+
+		/* This block needs to be read */
+		p->scanned++;
+		return blkno;
+	}
+
+	return InvalidBlockNumber;
+}
+
+/*
  * This function takes an already open relation and scans its pages,
  * skipping those that have the corresponding visibility map bit set.
  * For pages we skip, we find the free space from the free space map
@@ -58,52 +115,57 @@ typedef struct output_type
 static void
 statapprox_heap(Relation rel, output_type *stat)
 {
-	BlockNumber scanned,
-				nblocks,
-				blkno;
-	Buffer		vmbuffer = InvalidBuffer;
+	BlockNumber nblocks;
 	BufferAccessStrategy bstrategy;
 	TransactionId OldestXmin;
+	StatApproxReadStreamPrivate p;
+	ReadStream *stream;
 
 	OldestXmin = GetOldestNonRemovableTransactionId(rel);
 	bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
-	scanned = 0;
 
-	for (blkno = 0; blkno < nblocks; blkno++)
+	/* Initialize read stream private data */
+	p.rel = rel;
+	p.stat = stat;
+	p.current_blocknum = 0;
+	p.nblocks = nblocks;
+	p.scanned = 0;
+	p.vmbuffer = InvalidBuffer;
+
+	/*
+	 * Create the read stream. We don't use READ_STREAM_USE_BATCHING because
+	 * the callback accesses the visibility map which may need to read VM
+	 * pages. While this shouldn't cause deadlocks, we err on the side of
+	 * caution.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_FULL,
+										bstrategy,
+										rel,
+										MAIN_FORKNUM,
+										statapprox_heap_read_stream_next,
+										&p,
+										0);
+
+	for (;;)
 	{
 		Buffer		buf;
 		Page		page;
 		OffsetNumber offnum,
 					maxoff;
-		Size		freespace;
+		BlockNumber blkno;
 
-		CHECK_FOR_INTERRUPTS();
-
-		/*
-		 * If the page has only visible tuples, then we can find out the free
-		 * space from the FSM and move on.
-		 */
-		if (VM_ALL_VISIBLE(rel, blkno, &vmbuffer))
-		{
-			freespace = GetRecordedFreeSpace(rel, blkno);
-			stat->tuple_len += BLCKSZ - freespace;
-			stat->free_space += freespace;
-			continue;
-		}
-
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno,
-								 RBM_NORMAL, bstrategy);
+		buf = read_stream_next_buffer(stream, NULL);
+		if (buf == InvalidBuffer)
+			break;
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 
 		page = BufferGetPage(buf);
+		blkno = BufferGetBlockNumber(buf);
 
 		stat->free_space += PageGetExactFreeSpace(page);
-
-		/* We may count the page as scanned even if it's new/empty */
-		scanned++;
 
 		if (PageIsNew(page) || PageIsEmpty(page))
 		{
@@ -169,6 +231,9 @@ statapprox_heap(Relation rel, output_type *stat)
 		UnlockReleaseBuffer(buf);
 	}
 
+	Assert(p.current_blocknum == nblocks);
+	read_stream_end(stream);
+
 	stat->table_len = (uint64) nblocks * BLCKSZ;
 
 	/*
@@ -179,7 +244,7 @@ statapprox_heap(Relation rel, output_type *stat)
 	 * tuples in all-visible pages, so no correction is needed for that, and
 	 * we already accounted for the space in those pages, too.
 	 */
-	stat->tuple_count = vac_estimate_reltuples(rel, nblocks, scanned,
+	stat->tuple_count = vac_estimate_reltuples(rel, nblocks, p.scanned,
 											   stat->tuple_count);
 
 	/* It's not clear if we could get -1 here, but be safe. */
@@ -190,16 +255,16 @@ statapprox_heap(Relation rel, output_type *stat)
 	 */
 	if (nblocks != 0)
 	{
-		stat->scanned_percent = 100.0 * scanned / nblocks;
+		stat->scanned_percent = 100.0 * p.scanned / nblocks;
 		stat->tuple_percent = 100.0 * stat->tuple_len / stat->table_len;
 		stat->dead_tuple_percent = 100.0 * stat->dead_tuple_len / stat->table_len;
 		stat->free_percent = 100.0 * stat->free_space / stat->table_len;
 	}
 
-	if (BufferIsValid(vmbuffer))
+	if (BufferIsValid(p.vmbuffer))
 	{
-		ReleaseBuffer(vmbuffer);
-		vmbuffer = InvalidBuffer;
+		ReleaseBuffer(p.vmbuffer);
+		p.vmbuffer = InvalidBuffer;
 	}
 }
 
