@@ -423,7 +423,7 @@ ExecEndIndexOnlyScan(IndexOnlyScanState *node)
 	{
 		IndexScanInstrumentation *winstrument;
 
-		Assert(ParallelWorkerNumber <= node->ioss_SharedInfo->num_workers);
+		Assert(ParallelWorkerNumber < node->ioss_SharedInfo->num_workers);
 		winstrument = &node->ioss_SharedInfo->winstrument[ParallelWorkerNumber];
 
 		/*

@@ -802,7 +802,7 @@ ExecEndIndexScan(IndexScanState *node)
 	{
 		IndexScanInstrumentation *winstrument;
 
-		Assert(ParallelWorkerNumber <= node->iss_SharedInfo->num_workers);
+		Assert(ParallelWorkerNumber < node->iss_SharedInfo->num_workers);
 		winstrument = &node->iss_SharedInfo->winstrument[ParallelWorkerNumber];
 
 		/*
