@@ -175,7 +175,7 @@ ExecSort(PlanState *pstate)
 			TuplesortInstrumentation *si;
 
 			Assert(IsParallelWorker());
-			Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
+			Assert(ParallelWorkerNumber < node->shared_info->num_workers);
 			si = &node->shared_info->sinstrument[ParallelWorkerNumber];
 			tuplesort_get_stats(tuplesortstate, si);
 		}
