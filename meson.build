@@ -324,6 +324,7 @@ elif host_system == 'openbsd'
 
 elif host_system == 'sunos'
   portname = 'solaris'
+  sema_kind = 'unnamed_posix'
   export_fmt = '-Wl,-M@0@'
   # We need these #defines to get POSIX-conforming versions
   # of many interfaces (sigwait, getpwuid_r, shmdt, ...).

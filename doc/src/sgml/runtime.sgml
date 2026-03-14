@@ -1128,13 +1128,8 @@ projadd -c "PostgreSQL DB User" -K "project.max-shm-memory=(privileged,8GB,deny)
        </para>
 
        <para>
-        Other recommended kernel setting changes for database servers which will
-        have a large number of connections are:
-<programlisting>
-project.max-shm-ids=(priv,32768,deny)
-project.max-sem-ids=(priv,4096,deny)
-project.max-msg-ids=(priv,4096,deny)
-</programlisting>
+        To run a very large server, or multiple servers concurrently, you
+        might also need to raise <literal>project.max-shm-ids</literal>.
        </para>
 
        <para>

@@ -1,4 +1,9 @@
 # src/template/solaris
 
+# Prefer unnamed POSIX semaphores if available, unless user overrides choice
+if test x"$PREFERRED_SEMAPHORES" = x"" ; then
+  PREFERRED_SEMAPHORES=UNNAMED_POSIX
+fi
+
 # Extra CFLAGS for code that will go into a shared library
 CFLAGS_SL="-fPIC"
