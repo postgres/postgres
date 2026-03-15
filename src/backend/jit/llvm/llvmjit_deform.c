@@ -62,7 +62,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	LLVMValueRef v_tts_values;
 	LLVMValueRef v_tts_nulls;
 	LLVMValueRef v_slotoffp;
-	LLVMValueRef v_flagsp;
 	LLVMValueRef v_nvalidp;
 	LLVMValueRef v_nvalid;
 	LLVMValueRef v_maxatt;
@@ -178,7 +177,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	v_tts_nulls =
 		l_load_struct_gep(b, StructTupleTableSlot, v_slot, FIELDNO_TUPLETABLESLOT_ISNULL,
 						  "tts_ISNULL");
-	v_flagsp = l_struct_gep(b, StructTupleTableSlot, v_slot, FIELDNO_TUPLETABLESLOT_FLAGS, "");
 	v_nvalidp = l_struct_gep(b, StructTupleTableSlot, v_slot, FIELDNO_TUPLETABLESLOT_NVALID, "");
 
 	if (ops == &TTSOpsHeapTuple || ops == &TTSOpsBufferHeapTuple)
@@ -747,14 +745,10 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 	{
 		LLVMValueRef v_off = l_load(b, TypeSizeT, v_offp, "");
-		LLVMValueRef v_flags;
 
 		LLVMBuildStore(b, l_int16_const(lc, natts), v_nvalidp);
 		v_off = LLVMBuildTrunc(b, v_off, LLVMInt32TypeInContext(lc), "");
 		LLVMBuildStore(b, v_off, v_slotoffp);
-		v_flags = l_load(b, LLVMInt16TypeInContext(lc), v_flagsp, "tts_flags");
-		v_flags = LLVMBuildOr(b, v_flags, l_int16_const(lc, TTS_FLAG_SLOW), "");
-		LLVMBuildStore(b, v_flags, v_flagsp);
 		LLVMBuildRetVoid(b);
 	}
 

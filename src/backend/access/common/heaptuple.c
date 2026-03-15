@@ -498,19 +498,7 @@ heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc)
  *		nocachegetattr
  *
  *		This only gets called from fastgetattr(), in cases where we
- *		can't use a cacheoffset and the value is not null.
- *
- *		This caches attribute offsets in the attribute descriptor.
- *
- *		An alternative way to speed things up would be to cache offsets
- *		with the tuple, but that seems more difficult unless you take
- *		the storage hit of actually putting those offsets into the
- *		tuple you send to disk.  Yuck.
- *
- *		This scheme will be slightly slower than that, but should
- *		perform well for queries which hit large #'s of tuples.  After
- *		you cache the offsets once, examining all the other tuples using
- *		the same attribute descriptor will go much quicker. -cim 5/4/91
+ *		can't use the attcacheoff and the value is not null.
  *
  *		NOTE: if you need to change this code, see also heap_deform_tuple.
  *		Also see nocache_index_getattr, which is the same code for index
@@ -522,194 +510,125 @@ nocachegetattr(HeapTuple tup,
 			   int attnum,
 			   TupleDesc tupleDesc)
 {
+	CompactAttribute *cattr;
 	HeapTupleHeader td = tup->t_data;
 	char	   *tp;				/* ptr to data part of tuple */
 	bits8	   *bp = td->t_bits;	/* ptr to null bitmap in tuple */
-	bool		slow = false;	/* do we have to walk attrs? */
 	int			off;			/* current offset within data */
+	int			startAttr;
+	int			firstNullAttr;
+	int			i;
+	bool		hasnulls = HeapTupleHasNulls(tup);
 
-	/* ----------------
-	 *	 Three cases:
-	 *
-	 *	 1: No nulls and no variable-width attributes.
-	 *	 2: Has a null or a var-width AFTER att.
-	 *	 3: Has nulls or var-widths BEFORE att.
-	 * ----------------
-	 */
+	/* Did someone forget to call TupleDescFinalize()? */
+	Assert(tupleDesc->firstNonCachedOffsetAttr >= 0);
 
 	attnum--;
 
-	if (!HeapTupleNoNulls(tup))
+	/*
+	 * To minimize the number of attributes we need to look at, start walking
+	 * the tuple at the attribute with the highest attcacheoff prior to attnum
+	 * or the first NULL attribute prior to attnum, whichever comes first.
+	 */
+	if (hasnulls)
+		firstNullAttr = first_null_attr(bp, attnum);
+	else
+		firstNullAttr = attnum;
+
+	if (tupleDesc->firstNonCachedOffsetAttr > 0)
 	{
 		/*
-		 * there's a null somewhere in the tuple
-		 *
-		 * check to see if any preceding bits are null...
+		 * Start at the highest attcacheoff attribute with no NULLs in prior
+		 * attributes.
 		 */
-		int			byte = attnum >> 3;
-		int			finalbit = attnum & 0x07;
-
-		/* check for nulls "before" final bit of last byte */
-		if ((~bp[byte]) & ((1 << finalbit) - 1))
-			slow = true;
-		else
-		{
-			/* check for nulls in any "earlier" bytes */
-			int			i;
-
-			for (i = 0; i < byte; i++)
-			{
-				if (bp[i] != 0xFF)
-				{
-					slow = true;
-					break;
-				}
-			}
-		}
+		startAttr = Min(tupleDesc->firstNonCachedOffsetAttr - 1, firstNullAttr);
+		off = TupleDescCompactAttr(tupleDesc, startAttr)->attcacheoff;
+	}
+	else
+	{
+		/* Otherwise, start at the beginning... */
+		startAttr = 0;
+		off = 0;
 	}
 
 	tp = (char *) td + td->t_hoff;
 
-	if (!slow)
+	/*
+	 * Calculate 'off' up to the first NULL attr.  We use two cheaper loops
+	 * when the tuple has no variable-width columns.  When variable-width
+	 * columns exists, we use att_addlength_pointer() to move the offset
+	 * beyond the current attribute.
+	 */
+	if (!HeapTupleHasVarWidth(tup))
 	{
-		CompactAttribute *att;
-
-		/*
-		 * If we get here, there are no nulls up to and including the target
-		 * attribute.  If we have a cached offset, we can use it.
-		 */
-		att = TupleDescCompactAttr(tupleDesc, attnum);
-		if (att->attcacheoff >= 0)
-			return fetchatt(att, tp + att->attcacheoff);
-
-		/*
-		 * Otherwise, check for non-fixed-length attrs up to and including
-		 * target.  If there aren't any, it's safe to cheaply initialize the
-		 * cached offsets for these attrs.
-		 */
-		if (HeapTupleHasVarWidth(tup))
+		for (i = startAttr; i < firstNullAttr; i++)
 		{
-			int			j;
+			cattr = TupleDescCompactAttr(tupleDesc, i);
 
-			for (j = 0; j <= attnum; j++)
-			{
-				if (TupleDescCompactAttr(tupleDesc, j)->attlen <= 0)
-				{
-					slow = true;
-					break;
-				}
-			}
-		}
-	}
-
-	if (!slow)
-	{
-		int			natts = tupleDesc->natts;
-		int			j = 1;
-
-		/*
-		 * If we get here, we have a tuple with no nulls or var-widths up to
-		 * and including the target attribute, so we can use the cached offset
-		 * ... only we don't have it yet, or we'd not have got here.  Since
-		 * it's cheap to compute offsets for fixed-width columns, we take the
-		 * opportunity to initialize the cached offsets for *all* the leading
-		 * fixed-width columns, in hope of avoiding future visits to this
-		 * routine.
-		 */
-		TupleDescCompactAttr(tupleDesc, 0)->attcacheoff = 0;
-
-		/* we might have set some offsets in the slow path previously */
-		while (j < natts && TupleDescCompactAttr(tupleDesc, j)->attcacheoff > 0)
-			j++;
-
-		off = TupleDescCompactAttr(tupleDesc, j - 1)->attcacheoff +
-			TupleDescCompactAttr(tupleDesc, j - 1)->attlen;
-
-		for (; j < natts; j++)
-		{
-			CompactAttribute *att = TupleDescCompactAttr(tupleDesc, j);
-
-			if (att->attlen <= 0)
-				break;
-
-			off = att_nominal_alignby(off, att->attalignby);
-
-			att->attcacheoff = off;
-
-			off += att->attlen;
+			off = att_nominal_alignby(off, cattr->attalignby);
+			off += cattr->attlen;
 		}
 
-		Assert(j > attnum);
+		for (; i < attnum; i++)
+		{
+			if (att_isnull(i, bp))
+				continue;
 
-		off = TupleDescCompactAttr(tupleDesc, attnum)->attcacheoff;
+			cattr = TupleDescCompactAttr(tupleDesc, i);
+
+			off = att_nominal_alignby(off, cattr->attalignby);
+			off += cattr->attlen;
+		}
 	}
 	else
 	{
-		bool		usecache = true;
-		int			i;
-
-		/*
-		 * Now we know that we have to walk the tuple CAREFULLY.  But we still
-		 * might be able to cache some offsets for next time.
-		 *
-		 * Note - This loop is a little tricky.  For each non-null attribute,
-		 * we have to first account for alignment padding before the attr,
-		 * then advance over the attr based on its length.  Nulls have no
-		 * storage and no alignment padding either.  We can use/set
-		 * attcacheoff until we reach either a null or a var-width attribute.
-		 */
-		off = 0;
-		for (i = 0;; i++)		/* loop exit is at "break" */
+		for (i = startAttr; i < firstNullAttr; i++)
 		{
-			CompactAttribute *att = TupleDescCompactAttr(tupleDesc, i);
+			int			attlen;
 
-			if (HeapTupleHasNulls(tup) && att_isnull(i, bp))
-			{
-				usecache = false;
-				continue;		/* this cannot be the target att */
-			}
+			cattr = TupleDescCompactAttr(tupleDesc, i);
+			attlen = cattr->attlen;
 
-			/* If we know the next offset, we can skip the rest */
-			if (usecache && att->attcacheoff >= 0)
-				off = att->attcacheoff;
-			else if (att->attlen == -1)
-			{
-				/*
-				 * We can only cache the offset for a varlena attribute if the
-				 * offset is already suitably aligned, so that there would be
-				 * no pad bytes in any case: then the offset will be valid for
-				 * either an aligned or unaligned value.
-				 */
-				if (usecache &&
-					off == att_nominal_alignby(off, att->attalignby))
-					att->attcacheoff = off;
-				else
-				{
-					off = att_pointer_alignby(off, att->attalignby, -1,
-											  tp + off);
-					usecache = false;
-				}
-			}
-			else
-			{
-				/* not varlena, so safe to use att_nominal_alignby */
-				off = att_nominal_alignby(off, att->attalignby);
+			/*
+			 * cstrings don't exist in heap tuples.  Use pg_assume to instruct
+			 * the compiler not to emit the cstring-related code in
+			 * att_addlength_pointer().
+			 */
+			pg_assume(attlen > 0 || attlen == -1);
 
-				if (usecache)
-					att->attcacheoff = off;
-			}
+			off = att_pointer_alignby(off,
+									  cattr->attalignby,
+									  attlen,
+									  tp + off);
+			off = att_addlength_pointer(off, attlen, tp + off);
+		}
 
-			if (i == attnum)
-				break;
+		for (; i < attnum; i++)
+		{
+			int			attlen;
 
-			off = att_addlength_pointer(off, att->attlen, tp + off);
+			if (att_isnull(i, bp))
+				continue;
 
-			if (usecache && att->attlen <= 0)
-				usecache = false;
+			cattr = TupleDescCompactAttr(tupleDesc, i);
+			attlen = cattr->attlen;
+
+			/* As above, heaptuples have no cstrings */
+			pg_assume(attlen > 0 || attlen == -1);
+
+			off = att_pointer_alignby(off, cattr->attalignby, attlen,
+									  tp + off);
+			off = att_addlength_pointer(off, attlen, tp + off);
 		}
 	}
 
-	return fetchatt(TupleDescCompactAttr(tupleDesc, attnum), tp + off);
+	cattr = TupleDescCompactAttr(tupleDesc, attnum);
+	off = att_pointer_alignby(off,
+							  cattr->attalignby,
+							  cattr->attlen,
+							  tp + off);
+
+	return fetchatt(cattr, tp + off);
 }
 
 /* ----------------
@@ -1347,6 +1266,7 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 				  Datum *values, bool *isnull)
 {
 	HeapTupleHeader tup = tuple->t_data;
+	CompactAttribute *cattr;
 	bool		hasnulls = HeapTupleHasNulls(tuple);
 	int			tdesc_natts = tupleDesc->natts;
 	int			natts;			/* number of atts to extract */
@@ -1354,9 +1274,13 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	char	   *tp;				/* ptr to tuple data */
 	uint32		off;			/* offset in tuple data */
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
-	bool		slow = false;	/* can we use/set attcacheoff? */
+	int			firstNonCacheOffsetAttr;
+	int			firstNullAttr;
 
 	natts = HeapTupleHeaderGetNatts(tup);
+
+	/* Did someone forget to call TupleDescFinalize()? */
+	Assert(tupleDesc->firstNonCachedOffsetAttr >= 0);
 
 	/*
 	 * In inheritance situations, it is possible that the given tuple actually
@@ -1364,60 +1288,84 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	 * the caller's arrays.
 	 */
 	natts = Min(natts, tdesc_natts);
+	firstNonCacheOffsetAttr = Min(tupleDesc->firstNonCachedOffsetAttr, natts);
+
+	if (hasnulls)
+	{
+		firstNullAttr = first_null_attr(bp, natts);
+
+		/*
+		 * XXX: it'd be nice to use populate_isnull_array() here, but that
+		 * requires that the isnull array's size is rounded up to the next
+		 * multiple of 8.  Doing that would require adjusting many locations
+		 * that allocate the array.
+		 */
+		firstNonCacheOffsetAttr = Min(firstNonCacheOffsetAttr, firstNullAttr);
+	}
+	else
+		firstNullAttr = natts;
 
 	tp = (char *) tup + tup->t_hoff;
+	attnum = 0;
 
-	off = 0;
-
-	for (attnum = 0; attnum < natts; attnum++)
+	if (firstNonCacheOffsetAttr > 0)
 	{
-		CompactAttribute *thisatt = TupleDescCompactAttr(tupleDesc, attnum);
+#ifdef USE_ASSERT_CHECKING
+		/* In Assert enabled builds, verify attcacheoff is correct */
+		int			offcheck = 0;
+#endif
+		do
+		{
+			isnull[attnum] = false;
+			cattr = TupleDescCompactAttr(tupleDesc, attnum);
+			off = cattr->attcacheoff;
 
-		if (hasnulls && att_isnull(attnum, bp))
+#ifdef USE_ASSERT_CHECKING
+			offcheck = att_nominal_alignby(offcheck, cattr->attalignby);
+			Assert(offcheck == cattr->attcacheoff);
+			offcheck += cattr->attlen;
+#endif
+
+			values[attnum] = fetch_att_noerr(tp + off,
+											 cattr->attbyval,
+											 cattr->attlen);
+		} while (++attnum < firstNonCacheOffsetAttr);
+		off += cattr->attlen;
+	}
+	else
+		off = 0;
+
+	for (; attnum < firstNullAttr; attnum++)
+	{
+		isnull[attnum] = false;
+		cattr = TupleDescCompactAttr(tupleDesc, attnum);
+		values[attnum] = align_fetch_then_add(tp,
+											  &off,
+											  cattr->attbyval,
+											  cattr->attlen,
+											  cattr->attalignby);
+	}
+
+	for (; attnum < natts; attnum++)
+	{
+		Assert(hasnulls);
+
+		if (att_isnull(attnum, bp))
 		{
 			values[attnum] = (Datum) 0;
 			isnull[attnum] = true;
-			slow = true;		/* can't use attcacheoff anymore */
 			continue;
 		}
 
 		isnull[attnum] = false;
+		cattr = TupleDescCompactAttr(tupleDesc, attnum);
 
-		if (!slow && thisatt->attcacheoff >= 0)
-			off = thisatt->attcacheoff;
-		else if (thisatt->attlen == -1)
-		{
-			/*
-			 * We can only cache the offset for a varlena attribute if the
-			 * offset is already suitably aligned, so that there would be no
-			 * pad bytes in any case: then the offset will be valid for either
-			 * an aligned or unaligned value.
-			 */
-			if (!slow &&
-				off == att_nominal_alignby(off, thisatt->attalignby))
-				thisatt->attcacheoff = off;
-			else
-			{
-				off = att_pointer_alignby(off, thisatt->attalignby, -1,
-										  tp + off);
-				slow = true;
-			}
-		}
-		else
-		{
-			/* not varlena, so safe to use att_nominal_alignby */
-			off = att_nominal_alignby(off, thisatt->attalignby);
-
-			if (!slow)
-				thisatt->attcacheoff = off;
-		}
-
-		values[attnum] = fetchatt(thisatt, tp + off);
-
-		off = att_addlength_pointer(off, thisatt->attlen, tp + off);
-
-		if (thisatt->attlen <= 0)
-			slow = true;		/* can't use attcacheoff anymore */
+		/* align 'off', fetch the attr's value, and increment off beyond it */
+		values[attnum] = align_fetch_then_add(tp,
+											  &off,
+											  cattr->attbyval,
+											  cattr->attlen,
+											  cattr->attalignby);
 	}
 
 	/*

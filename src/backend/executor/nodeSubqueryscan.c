@@ -130,7 +130,8 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 */
 	ExecInitScanTupleSlot(estate, &subquerystate->ss,
 						  ExecGetResultType(subquerystate->subplan),
-						  ExecGetResultSlotOps(subquerystate->subplan, NULL));
+						  ExecGetResultSlotOps(subquerystate->subplan, NULL),
+						  0);
 
 	/*
 	 * The slot used as the scantuple isn't the slot above (outside of EPQ),

@@ -131,6 +131,19 @@ typedef struct CompactAttribute
  * Any code making changes manually to and fields in the FormData_pg_attribute
  * array must subsequently call populate_compact_attribute() to flush the
  * changes out to the corresponding 'compact_attrs' element.
+ *
+ * firstNonCachedOffsetAttr stores the index into the compact_attrs array for
+ * the first attribute that we don't have a known attcacheoff for.
+ *
+ * firstNonGuaranteedAttr stores the index to into the compact_attrs array for
+ * the first attribute that is either NULLable, missing, or !attbyval.  This
+ * can be used in locations as a guarantee that attributes before this will
+ * always exist in tuples.  The !attbyval part isn't required for this, but
+ * including this allows various tuple deforming routines to forego any checks
+ * for !attbyval.
+ *
+ * Once a TupleDesc has been populated, before it is used for any purpose,
+ * TupleDescFinalize() must be called on it.
  */
 typedef struct TupleDescData
 {
@@ -138,6 +151,11 @@ typedef struct TupleDescData
 	Oid			tdtypeid;		/* composite type ID for tuple type */
 	int32		tdtypmod;		/* typmod for tuple type */
 	int			tdrefcount;		/* reference count, or -1 if not counting */
+	int			firstNonCachedOffsetAttr;	/* index of first compact_attrs
+											 * element without an attcacheoff */
+	int			firstNonGuaranteedAttr; /* index of the first nullable,
+										 * missing, dropped, or !attbyval
+										 * compact_attrs element. */
 	TupleConstr *constr;		/* constraints, or NULL if none */
 	/* compact_attrs[N] is the compact metadata of Attribute Number N+1 */
 	CompactAttribute compact_attrs[FLEXIBLE_ARRAY_MEMBER];
@@ -195,7 +213,6 @@ extern TupleDesc CreateTupleDescTruncatedCopy(TupleDesc tupdesc, int natts);
 
 extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
-#define TupleDescFinalize(d) ((void) 0)
 #define TupleDescSize(src) \
 	(offsetof(struct TupleDescData, compact_attrs) + \
 	 (src)->natts * sizeof(CompactAttribute) + \
@@ -206,6 +223,7 @@ extern void TupleDescCopy(TupleDesc dst, TupleDesc src);
 extern void TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 							   TupleDesc src, AttrNumber srcAttno);
 
+extern void TupleDescFinalize(TupleDesc tupdesc);
 extern void FreeTupleDesc(TupleDesc tupdesc);
 
 extern void IncrTupleDescRefCount(TupleDesc tupdesc);

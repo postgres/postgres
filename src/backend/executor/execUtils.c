@@ -714,7 +714,7 @@ ExecCreateScanSlotFromOuterPlan(EState *estate,
 	outerPlan = outerPlanState(scanstate);
 	tupDesc = ExecGetResultType(outerPlan);
 
-	ExecInitScanTupleSlot(estate, scanstate, tupDesc, tts_ops);
+	ExecInitScanTupleSlot(estate, scanstate, tupDesc, tts_ops, 0);
 }
 
 /* ----------------------------------------------------------------

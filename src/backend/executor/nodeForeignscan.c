@@ -191,7 +191,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 
 		scan_tupdesc = ExecTypeFromTL(node->fdw_scan_tlist);
 		ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
-							  &TTSOpsHeapTuple);
+							  &TTSOpsHeapTuple, 0);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
 		tlistvarno = INDEX_VAR;
 	}
@@ -202,7 +202,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 		/* don't trust FDWs to return tuples fulfilling NOT NULL constraints */
 		scan_tupdesc = CreateTupleDescCopy(RelationGetDescr(currentRelation));
 		ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
-							  &TTSOpsHeapTuple);
+							  &TTSOpsHeapTuple, 0);
 		/* Node's targetlist will contain Vars with varno = scanrelid */
 		tlistvarno = scanrelid;
 	}

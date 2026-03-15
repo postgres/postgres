@@ -494,7 +494,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 * Initialize scan slot and type.
 	 */
 	ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
-						  &TTSOpsMinimalTuple);
+						  &TTSOpsMinimalTuple, 0);
 
 	/*
 	 * Initialize result slot, type and projection.

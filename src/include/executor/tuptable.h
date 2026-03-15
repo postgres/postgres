@@ -84,9 +84,6 @@
  * tts_values/tts_isnull are allocated either when the slot is created (when
  * the descriptor is provided), or when a descriptor is assigned to the slot;
  * they are of length equal to the descriptor's natts.
- *
- * The TTS_FLAG_SLOW flag is saved state for
- * slot_deform_heap_tuple, and should not be touched by any other code.
  *----------
  */
 
@@ -98,13 +95,23 @@
 #define			TTS_FLAG_SHOULDFREE		(1 << 2)
 #define TTS_SHOULDFREE(slot) (((slot)->tts_flags & TTS_FLAG_SHOULDFREE) != 0)
 
-/* saved state for slot_deform_heap_tuple */
-#define			TTS_FLAG_SLOW		(1 << 3)
-#define TTS_SLOW(slot) (((slot)->tts_flags & TTS_FLAG_SLOW) != 0)
+/*
+ * true = slot's formed tuple guaranteed to not have NULLs in NOT NULLable
+ * columns.
+ */
+#define			TTS_FLAG_OBEYS_NOT_NULL_CONSTRAINTS		(1 << 3)
+#define TTS_OBEYS_NOT_NULL_CONSTRAINTS(slot) \
+	(((slot)->tts_flags & TTS_FLAG_OBEYS_NOT_NULL_CONSTRAINTS) != 0)
 
 /* fixed tuple descriptor */
 #define			TTS_FLAG_FIXED		(1 << 4)
 #define TTS_FIXED(slot) (((slot)->tts_flags & TTS_FLAG_FIXED) != 0)
+
+/*
+ * Defines which of the above flags should never be set in tts_flags when the
+ * TupleTableSlot is created.
+ */
+#define			TTS_FLAGS_TRANSIENT (TTS_FLAG_EMPTY|TTS_FLAG_SHOULDFREE)
 
 struct TupleTableSlotOps;
 typedef struct TupleTableSlotOps TupleTableSlotOps;
@@ -123,7 +130,14 @@ typedef struct TupleTableSlot
 #define FIELDNO_TUPLETABLESLOT_VALUES 5
 	Datum	   *tts_values;		/* current per-attribute values */
 #define FIELDNO_TUPLETABLESLOT_ISNULL 6
-	bool	   *tts_isnull;		/* current per-attribute isnull flags */
+	bool	   *tts_isnull;		/* current per-attribute isnull flags.  Array
+								 * size must always be rounded up to the next
+								 * multiple of 8 elements. */
+	int			tts_first_nonguaranteed;	/* The value from the TupleDesc's
+											 * firstNonGuaranteedAttr, or 0
+											 * when tts_flags does not contain
+											 * TTS_FLAG_OBEYS_NOT_NULL_CONSTRAINTS */
+
 	MemoryContext tts_mcxt;		/* slot itself is in this context */
 	ItemPointerData tts_tid;	/* stored tuple's tid */
 	Oid			tts_tableOid;	/* table oid of tuple */
@@ -313,9 +327,11 @@ typedef struct MinimalTupleTableSlot
 
 /* in executor/execTuples.c */
 extern TupleTableSlot *MakeTupleTableSlot(TupleDesc tupleDesc,
-										  const TupleTableSlotOps *tts_ops);
+										  const TupleTableSlotOps *tts_ops,
+										  uint16 flags);
 extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable, TupleDesc desc,
-										  const TupleTableSlotOps *tts_ops);
+										  const TupleTableSlotOps *tts_ops,
+										  uint16 flags);
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc,
 												const TupleTableSlotOps *tts_ops);

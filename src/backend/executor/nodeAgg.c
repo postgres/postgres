@@ -1682,7 +1682,7 @@ find_hash_columns(AggState *aggstate)
 							  &perhash->hashfunctions);
 		perhash->hashslot =
 			ExecAllocTableSlot(&estate->es_tupleTable, hashDesc,
-							   &TTSOpsMinimalTuple);
+							   &TTSOpsMinimalTuple, 0);
 
 		list_free(hashTlist);
 		bms_free(colnos);

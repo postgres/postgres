@@ -1559,7 +1559,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		if (relentry->attrmap)
 		{
 			TupleTableSlot *slot = MakeTupleTableSlot(RelationGetDescr(targetrel),
-													  &TTSOpsVirtual);
+													  &TTSOpsVirtual, 0);
 
 			old_slot = execute_attr_map_slot(relentry->attrmap, old_slot, slot);
 		}
@@ -1574,7 +1574,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		if (relentry->attrmap)
 		{
 			TupleTableSlot *slot = MakeTupleTableSlot(RelationGetDescr(targetrel),
-													  &TTSOpsVirtual);
+													  &TTSOpsVirtual, 0);
 
 			new_slot = execute_attr_map_slot(relentry->attrmap, new_slot, slot);
 		}
