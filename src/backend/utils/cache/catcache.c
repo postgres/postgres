@@ -2221,20 +2221,18 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp, Datum *arguments,
 			dtp = ntp;
 
 		/* Allocate memory for CatCTup and the cached tuple in one go */
-		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-		ct = (CatCTup *) palloc(sizeof(CatCTup) +
-								MAXIMUM_ALIGNOF + dtp->t_len);
+		ct = (CatCTup *)
+			MemoryContextAlloc(CacheMemoryContext,
+							   MAXALIGN(sizeof(CatCTup)) + dtp->t_len);
 		ct->tuple.t_len = dtp->t_len;
 		ct->tuple.t_self = dtp->t_self;
 		ct->tuple.t_tableOid = dtp->t_tableOid;
 		ct->tuple.t_data = (HeapTupleHeader)
-			MAXALIGN(((char *) ct) + sizeof(CatCTup));
+			(((char *) ct) + MAXALIGN(sizeof(CatCTup)));
 		/* copy tuple contents */
 		memcpy((char *) ct->tuple.t_data,
 			   (const char *) dtp->t_data,
 			   dtp->t_len);
-		MemoryContextSwitchTo(oldcxt);
 
 		if (dtp != ntp)
 			heap_freetuple(dtp);
