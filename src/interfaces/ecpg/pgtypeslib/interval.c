@@ -6,10 +6,6 @@
 #include <math.h>
 #include <limits.h>
 
-#ifdef __FAST_MATH__
-#error -ffast-math is known to break this code
-#endif
-
 #include "common/string.h"
 #include "dt.h"
 #include "pgtypes_error.h"

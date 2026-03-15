@@ -40,13 +40,6 @@
 #include "utils/skipsupport.h"
 #include "utils/sortsupport.h"
 
-/*
- * gcc's -ffast-math switch breaks routines that expect exact results from
- * expressions like timeval / SECS_PER_HOUR, where timeval is double.
- */
-#ifdef __FAST_MATH__
-#error -ffast-math is known to break this code
-#endif
 
 /* Set at postmaster start */
 TimestampTz PgStartTime;

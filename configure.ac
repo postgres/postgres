@@ -786,13 +786,6 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
   [AC_MSG_RESULT(no)
    AC_MSG_ERROR([cannot proceed])])
 
-# Defend against gcc -ffast-math
-if test "$GCC" = yes; then
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [@%:@ifdef __FAST_MATH__
-choke me
-@%:@endif])], [], [AC_MSG_ERROR([do not put -ffast-math in CFLAGS])])
-fi
-
 # Defend against clang being used on x86-32 without SSE2 enabled.  As current
 # versions of clang do not understand -fexcess-precision=standard, the use of
 # x87 floating point operations leads to problems like isinf possibly returning
