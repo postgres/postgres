@@ -207,9 +207,13 @@ static bool heap_page_will_freeze(bool did_tuple_hint_fpi, bool do_prune, bool d
  * if there's not any use in pruning.
  *
  * Caller must have pin on the buffer, and must *not* have a lock on it.
+ *
+ * This function may pin *vmbuffer. It's passed by reference so the caller can
+ * reuse the pin across calls, avoiding repeated pin/unpin cycles. Caller is
+ * responsible for unpinning it.
  */
 void
-heap_page_prune_opt(Relation relation, Buffer buffer)
+heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
 {
 	Page		page = BufferGetPage(buffer);
 	TransactionId prune_xid;

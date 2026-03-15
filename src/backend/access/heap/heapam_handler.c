@@ -85,6 +85,7 @@ heapam_index_fetch_begin(Relation rel)
 
 	hscan->xs_base.rel = rel;
 	hscan->xs_cbuf = InvalidBuffer;
+	hscan->xs_vmbuffer = InvalidBuffer;
 
 	return &hscan->xs_base;
 }
@@ -98,6 +99,12 @@ heapam_index_fetch_reset(IndexFetchTableData *scan)
 	{
 		ReleaseBuffer(hscan->xs_cbuf);
 		hscan->xs_cbuf = InvalidBuffer;
+	}
+
+	if (BufferIsValid(hscan->xs_vmbuffer))
+	{
+		ReleaseBuffer(hscan->xs_vmbuffer);
+		hscan->xs_vmbuffer = InvalidBuffer;
 	}
 }
 
@@ -138,7 +145,8 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		 * Prune page, but only if we weren't already on this page
 		 */
 		if (prev_buf != hscan->xs_cbuf)
-			heap_page_prune_opt(hscan->xs_base.rel, hscan->xs_cbuf);
+			heap_page_prune_opt(hscan->xs_base.rel, hscan->xs_cbuf,
+								&hscan->xs_vmbuffer);
 	}
 
 	/* Obtain share-lock on the buffer so we can examine visibility */
@@ -2533,7 +2541,7 @@ BitmapHeapScanNextBlock(TableScanDesc scan,
 	/*
 	 * Prune and repair fragmentation for the whole page, if possible.
 	 */
-	heap_page_prune_opt(scan->rs_rd, buffer);
+	heap_page_prune_opt(scan->rs_rd, buffer, &hscan->rs_vmbuffer);
 
 	/*
 	 * We must hold share lock on the buffer content while examining tuple
