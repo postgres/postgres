@@ -1268,16 +1268,6 @@ restore_all_databases(const char *inputFileSpec,
 		 */
 		memcpy(tmpopts, original_opts, sizeof(RestoreOptions));
 
-		/*
-		 * We need to reset override_dbname so that objects can be restored
-		 * into an already created database. (used with -d/--dbname option)
-		 */
-		if (tmpopts->cparams.override_dbname)
-		{
-			pfree(tmpopts->cparams.override_dbname);
-			tmpopts->cparams.override_dbname = NULL;
-		}
-
 		snprintf(subdirdbpath, MAXPGPATH, "%s/databases", inputFileSpec);
 
 		/*
