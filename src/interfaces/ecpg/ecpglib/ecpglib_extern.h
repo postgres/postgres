@@ -52,7 +52,7 @@ struct ECPGgeneric_bytea
 struct ECPGtype_information_cache
 {
 	struct ECPGtype_information_cache *next;
-	int			oid;
+	Oid			oid;
 	enum ARRAY_TYPE isarray;
 };
 

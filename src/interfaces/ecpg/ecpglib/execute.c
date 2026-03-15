@@ -145,7 +145,7 @@ next_insert(char *text, int pos, bool questionmarks, bool std_strings)
 }
 
 static bool
-ecpg_type_infocache_push(struct ECPGtype_information_cache **cache, int oid, enum ARRAY_TYPE isarray, int lineno)
+ecpg_type_infocache_push(struct ECPGtype_information_cache **cache, Oid oid, enum ARRAY_TYPE isarray, int lineno)
 {
 	struct ECPGtype_information_cache *new_entry
 	= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
@@ -161,7 +161,7 @@ ecpg_type_infocache_push(struct ECPGtype_information_cache **cache, int oid, enu
 }
 
 static enum ARRAY_TYPE
-ecpg_is_type_an_array(int type, const struct statement *stmt, const struct variable *var)
+ecpg_is_type_an_array(Oid type, const struct statement *stmt, const struct variable *var)
 {
 	char	   *array_query;
 	enum ARRAY_TYPE isarray = ECPG_ARRAY_NOT_SET;
@@ -267,7 +267,7 @@ ecpg_is_type_an_array(int type, const struct statement *stmt, const struct varia
 	if (array_query == NULL)
 		return ECPG_ARRAY_ERROR;
 
-	sprintf(array_query, "select typlen from pg_type where oid=%d and typelem<>0", type);
+	sprintf(array_query, "select typlen from pg_type where oid=%u and typelem<>0", type);
 	query = PQexec(stmt->connection->connection, array_query);
 	ecpg_free(array_query);
 	if (!ecpg_check_PQresult(query, stmt->lineno, stmt->connection->connection, stmt->compat))
@@ -294,7 +294,8 @@ ecpg_is_type_an_array(int type, const struct statement *stmt, const struct varia
 		return ECPG_ARRAY_ERROR;
 
 	ecpg_type_infocache_push(&(stmt->connection->cache_head), type, isarray, stmt->lineno);
-	ecpg_log("ecpg_is_type_an_array on line %d: type (%d); C (%d); array (%s)\n", stmt->lineno, type, var->type, ECPG_IS_ARRAY(isarray) ? "yes" : "no");
+	ecpg_log("ecpg_is_type_an_array on line %d: type (%u); C (%d); array (%s)\n",
+			 stmt->lineno, type, var->type, ECPG_IS_ARRAY(isarray) ? "yes" : "no");
 	return isarray;
 }
 
