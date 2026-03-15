@@ -3328,7 +3328,8 @@ heap_update(Relation relation, const ItemPointerData *otid, HeapTuple newtup,
 	HeapTuple	heaptup;
 	HeapTuple	old_key_tuple = NULL;
 	bool		old_key_copied = false;
-	Page		page;
+	Page		page,
+				newpage;
 	BlockNumber block;
 	MultiXactStatus mxact_status;
 	Buffer		buffer,
@@ -4054,6 +4055,8 @@ l2:
 		heaptup = newtup;
 	}
 
+	newpage = BufferGetPage(newbuf);
+
 	/*
 	 * We're about to do the actual update -- check for conflict first, to
 	 * avoid possibly having to roll back work we've just done.
@@ -4168,17 +4171,17 @@ l2:
 	oldtup.t_data->t_ctid = heaptup->t_self;
 
 	/* clear PD_ALL_VISIBLE flags, reset all visibilitymap bits */
-	if (PageIsAllVisible(BufferGetPage(buffer)))
+	if (PageIsAllVisible(page))
 	{
 		all_visible_cleared = true;
-		PageClearAllVisible(BufferGetPage(buffer));
+		PageClearAllVisible(page);
 		visibilitymap_clear(relation, BufferGetBlockNumber(buffer),
 							vmbuffer, VISIBILITYMAP_VALID_BITS);
 	}
-	if (newbuf != buffer && PageIsAllVisible(BufferGetPage(newbuf)))
+	if (newbuf != buffer && PageIsAllVisible(newpage))
 	{
 		all_visible_cleared_new = true;
-		PageClearAllVisible(BufferGetPage(newbuf));
+		PageClearAllVisible(newpage);
 		visibilitymap_clear(relation, BufferGetBlockNumber(newbuf),
 							vmbuffer_new, VISIBILITYMAP_VALID_BITS);
 	}
@@ -4209,9 +4212,9 @@ l2:
 								 all_visible_cleared_new);
 		if (newbuf != buffer)
 		{
-			PageSetLSN(BufferGetPage(newbuf), recptr);
+			PageSetLSN(newpage, recptr);
 		}
-		PageSetLSN(BufferGetPage(buffer), recptr);
+		PageSetLSN(page, recptr);
 	}
 
 	END_CRIT_SECTION();
