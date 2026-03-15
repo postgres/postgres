@@ -447,7 +447,7 @@ extern "C++"
 #ifdef pg_cxx_typeof
 #define typeof(x) pg_cxx_typeof(x)
 #elif !defined(HAVE_CXX_TYPEOF)
-#define typeof(x) std::remove_reference_t<decltype(x)>
+#define typeof(x) std::remove_reference<decltype(x)>::type
 #endif
 #ifndef HAVE_TYPEOF
 #define HAVE_TYPEOF 1
@@ -459,7 +459,7 @@ extern "C++"
 #ifdef pg_cxx_typeof_unqual
 #define typeof_unqual(x) pg_cxx_typeof_unqual(x)
 #elif !defined(HAVE_CXX_TYPEOF_UNQUAL)
-#define typeof_unqual(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
+#define typeof_unqual(x) std::remove_cv<std::remove_reference<decltype(x)>::type>::type
 #endif
 #ifndef HAVE_TYPEOF_UNQUAL
 #define HAVE_TYPEOF_UNQUAL 1
