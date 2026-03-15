@@ -68,7 +68,7 @@ static int	restore_all_databases(const char *inputFileSpec,
 static int	get_dbnames_list_to_restore(PGconn *conn,
 										SimplePtrList *dbname_oid_list,
 										SimpleStringList db_exclude_patterns);
-static int	get_dbname_oid_list_from_mfile(const char *dumpdirpatharg,
+static int	get_dbname_oid_list_from_mfile(const char *dumpdirpath,
 										   SimplePtrList *dbname_oid_list);
 
 /*
@@ -1051,14 +1051,13 @@ get_dbnames_list_to_restore(PGconn *conn,
  * Returns, total number of database names in map.dat file.
  */
 static int
-get_dbname_oid_list_from_mfile(const char *dumpdirpatharg, SimplePtrList *dbname_oid_list)
+get_dbname_oid_list_from_mfile(const char *dumpdirpath,
+							   SimplePtrList *dbname_oid_list)
 {
 	StringInfoData linebuf;
 	FILE	   *pfile;
 	char		map_file_path[MAXPGPATH];
 	int			count = 0;
-	int			len;
-	char	   *dumpdirpath = pstrdup(dumpdirpatharg);
 
 	/*
 	 * If there is no map.dat file in the dump, then return from here as there
@@ -1068,15 +1067,6 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpatharg, SimplePtrList *dbname
 	{
 		pg_log_info("database restoring is skipped because file \"%s\" does not exist in directory \"%s\"", "map.dat", dumpdirpath);
 		return 0;
-	}
-
-	len = strlen(dumpdirpath);
-
-	/* Trim slash from directory name. */
-	while (len > 1 && dumpdirpath[len - 1] == '/')
-	{
-		dumpdirpath[len - 1] = '\0';
-		len--;
 	}
 
 	snprintf(map_file_path, MAXPGPATH, "%s/map.dat", dumpdirpath);
