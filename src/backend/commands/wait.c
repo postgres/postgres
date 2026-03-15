@@ -338,5 +338,6 @@ WaitStmtResultDesc(WaitStmt *stmt)
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
 					   TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	return tupdesc;
 }

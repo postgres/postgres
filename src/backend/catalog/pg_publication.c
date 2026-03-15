@@ -1322,6 +1322,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "qual",
 						   PG_NODE_TREEOID, -1, 0);
 
+		TupleDescFinalize(tupdesc);
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 		funcctx->user_fctx = table_infos;
 

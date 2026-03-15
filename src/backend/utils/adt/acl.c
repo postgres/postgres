@@ -1841,6 +1841,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "is_grantable",
 						   BOOLOID, -1, 0);
 
+		TupleDescFinalize(tupdesc);
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/* allocate memory for user context */

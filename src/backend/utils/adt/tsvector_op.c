@@ -651,6 +651,7 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 						   TEXTARRAYOID, -1, 0);
 		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 			elog(ERROR, "return type must be a row type");
+		TupleDescFinalize(tupdesc);
 		funcctx->tuple_desc = tupdesc;
 
 		funcctx->user_fctx = PG_GETARG_TSVECTOR_COPY(0);

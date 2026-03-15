@@ -340,6 +340,8 @@ get_expr_result_type(Node *expr,
 										exprCollation(col));
 			i++;
 		}
+		TupleDescFinalize(tupdesc);
+
 		if (resultTypeId)
 			*resultTypeId = rexpr->row_typeid;
 		if (resultTupleDesc)
@@ -1044,6 +1046,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		}
 	}
 
+	TupleDescFinalize(tupdesc);
 	return true;
 }
 
@@ -1853,6 +1856,8 @@ build_function_result_tupdesc_d(char prokind,
 						   0);
 	}
 
+	TupleDescFinalize(desc);
+
 	return desc;
 }
 
@@ -1970,6 +1975,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 						   typeoid,
 						   -1,
 						   0);
+		TupleDescFinalize(tupdesc);
 	}
 	else if (functypclass == TYPEFUNC_RECORD)
 	{

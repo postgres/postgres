@@ -84,6 +84,7 @@ brtuple_disk_tupdesc(BrinDesc *brdesc)
 
 		MemoryContextSwitchTo(oldcxt);
 
+		TupleDescFinalize(tupdesc);
 		brdesc->bd_disktdesc = tupdesc;
 	}
 

@@ -272,6 +272,7 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 									   funcrettype,
 									   -1,
 									   0);
+					TupleDescFinalize(tupdesc);
 					rsinfo.setDesc = tupdesc;
 				}
 				MemoryContextSwitchTo(oldcontext);
@@ -776,6 +777,7 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 							   funcrettype,
 							   -1,
 							   0);
+			TupleDescFinalize(tupdesc);
 			sexpr->funcResultDesc = tupdesc;
 			sexpr->funcReturnsTuple = false;
 		}

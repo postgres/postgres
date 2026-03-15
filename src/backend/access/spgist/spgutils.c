@@ -340,6 +340,7 @@ getSpGistTupleDesc(Relation index, SpGistTypeDesc *keyType)
 			TupleDescCompactAttr(outTupDesc, i)->attcacheoff = -1;
 
 		populate_compact_attribute(outTupDesc, spgKeyColumn);
+		TupleDescFinalize(outTupDesc);
 	}
 	return outTupDesc;
 }

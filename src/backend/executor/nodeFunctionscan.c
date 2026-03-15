@@ -414,6 +414,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 				TupleDescInitEntryCollation(tupdesc,
 											(AttrNumber) 1,
 											exprCollation(funcexpr));
+				TupleDescFinalize(tupdesc);
 			}
 			else
 			{
@@ -485,6 +486,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 							   0);
 		}
 
+		TupleDescFinalize(scan_tupdesc);
 		Assert(attno == natts);
 	}
 

@@ -146,6 +146,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "waitstart",
 						   TIMESTAMPTZOID, -1, 0);
 
+		TupleDescFinalize(tupdesc);
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/*

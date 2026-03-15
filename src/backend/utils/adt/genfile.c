@@ -454,6 +454,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 					   "creation", TIMESTAMPTZOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 6,
 					   "isdir", BOOLOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	BlessTupleDesc(tupdesc);
 
 	memset(isnull, false, sizeof(isnull));

@@ -469,6 +469,8 @@ pg_visibility_tupdesc(bool include_blkno, bool include_pd)
 		TupleDescInitEntry(tupdesc, ++a, "pd_all_visible", BOOLOID, -1, 0);
 	Assert(a == maxattr);
 
+	TupleDescFinalize(tupdesc);
+
 	return BlessTupleDesc(tupdesc);
 }
 

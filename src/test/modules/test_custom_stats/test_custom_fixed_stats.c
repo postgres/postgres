@@ -206,6 +206,7 @@ test_custom_stats_fixed_report(PG_FUNCTION_ARGS)
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "stats_reset",
 					   TIMESTAMPTZOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	BlessTupleDesc(tupdesc);
 
 	values[0] = Int64GetDatum(stats->numcalls);

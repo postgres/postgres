@@ -195,6 +195,7 @@ extern TupleDesc CreateTupleDescTruncatedCopy(TupleDesc tupdesc, int natts);
 
 extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
+#define TupleDescFinalize(d) ((void) 0)
 #define TupleDescSize(src) \
 	(offsetof(struct TupleDescData, compact_attrs) + \
 	 (src)->natts * sizeof(CompactAttribute) + \

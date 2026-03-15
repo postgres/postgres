@@ -430,6 +430,7 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 2, "file_offset",
 					   INT4OID, -1, 0);
 
+	TupleDescFinalize(resultTupleDesc);
 	resultTupleDesc = BlessTupleDesc(resultTupleDesc);
 
 	/*

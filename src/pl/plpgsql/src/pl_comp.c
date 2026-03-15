@@ -1912,6 +1912,8 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 		TupleDescInitEntryCollation(row->rowtupdesc, i + 1, typcoll);
 	}
 
+	TupleDescFinalize(row->rowtupdesc);
+
 	return row;
 }
 

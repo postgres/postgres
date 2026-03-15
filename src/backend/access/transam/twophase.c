@@ -745,6 +745,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "dbid",
 						   OIDOID, -1, 0);
 
+		TupleDescFinalize(tupdesc);
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/*

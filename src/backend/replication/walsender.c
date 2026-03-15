@@ -452,6 +452,7 @@ IdentifySystem(void)
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 4, "dbname",
 							  TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc, &TTSOpsVirtual);
@@ -497,6 +498,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 	/* TimeLineID is unsigned, so int4 is not wide enough. */
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 3, "restart_tli",
 							  INT8OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	memset(nulls, true, READ_REPLICATION_SLOT_COLS * sizeof(bool));
 
@@ -599,6 +601,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	tupdesc = CreateTemplateTupleDesc(2);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "filename", TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "content", TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	TLHistoryFileName(histfname, cmd->timeline);
 	TLHistoryFilePath(path, cmd->timeline);
@@ -1016,6 +1019,7 @@ StartReplication(StartReplicationCmd *cmd)
 								  INT8OID, -1, 0);
 		TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "next_tli_startpos",
 								  TEXTOID, -1, 0);
+		TupleDescFinalize(tupdesc);
 
 		/* prepare for projection of tuple */
 		tstate = begin_tup_output_tupdesc(dest, tupdesc, &TTSOpsVirtual);
@@ -1370,6 +1374,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 4, "output_plugin",
 							  TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc, &TTSOpsVirtual);

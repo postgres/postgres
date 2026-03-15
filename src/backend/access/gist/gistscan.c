@@ -201,6 +201,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 											 attno - 1)->atttypid,
 							   -1, 0);
 		}
+		TupleDescFinalize(so->giststate->fetchTupdesc);
 		scan->xs_hitupdesc = so->giststate->fetchTupdesc;
 
 		/* Also create a memory context that will hold the returned tuples */

@@ -230,6 +230,7 @@ test_predtest(PG_FUNCTION_ARGS)
 					   "s_r_holds", BOOLOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 8,
 					   "w_r_holds", BOOLOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	values[0] = BoolGetDatum(strong_implied_by);

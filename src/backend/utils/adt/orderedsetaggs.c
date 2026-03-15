@@ -233,6 +233,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 								   -1,
 								   0);
 
+				TupleDescFinalize(newdesc);
 				FreeTupleDesc(qstate->tupdesc);
 				qstate->tupdesc = newdesc;
 			}
