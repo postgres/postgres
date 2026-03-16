@@ -40,6 +40,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     HEADER [ <replaceable class="parameter">boolean</replaceable> | <replaceable class="parameter">integer</replaceable> | MATCH ]
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
+    FORCE_ARRAY [ <replaceable class="parameter">boolean</replaceable> ]
     FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     FORCE_NOT_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     FORCE_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
@@ -378,6 +379,19 @@ COPY (SELECT j FROM (VALUES ('null'::json), (NULL::json)) v(j))
       the quoting character is doubled if it appears in the data).
       This must be a single one-byte character.
       This option is allowed only when using <literal>CSV</literal> format.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-copy-params-force-array">
+    <term><literal>FORCE_ARRAY</literal></term>
+    <listitem>
+     <para>
+      Force output of square brackets as array decorations at the beginning
+      and end of output, and commas between the rows. It is allowed only in
+      <command>COPY TO</command>, and only when using
+      <literal>json</literal> format. The default is
+      <literal>false</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -1118,6 +1132,22 @@ versions of <productname>PostgreSQL</productname>.
 COPY country TO STDOUT (DELIMITER '|');
 </programlisting>
   </para>
+
+<para>
+   When the <literal>FORCE_ARRAY</literal> option is enabled,
+   the entire output is wrapped in a single JSON array with rows separated by commas:
+<programlisting>
+COPY (SELECT * FROM (VALUES(1),(2)) val(id)) TO STDOUT  (FORMAT JSON, FORCE_ARRAY);
+</programlisting>
+The output is as follows:
+<screen>
+[
+ {"id":1}
+,{"id":2}
+]
+</screen>
+</para>
+
 
   <para>
    To copy data from a file into the <literal>country</literal> table:

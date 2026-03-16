@@ -1240,7 +1240,7 @@ Copy_common_options, "DEFAULT", "FORCE_NOT_NULL", "FORCE_NULL", "FREEZE", \
 
 /* COPY TO options */
 #define Copy_to_options \
-Copy_common_options, "FORCE_QUOTE"
+Copy_common_options, "FORCE_QUOTE", "FORCE_ARRAY"
 
 /*
  * These object types were introduced later than our support cutoff of

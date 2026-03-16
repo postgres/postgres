@@ -88,6 +88,7 @@ typedef struct CopyToStateData
 	List	   *attnumlist;		/* integer list of attnums to copy */
 	char	   *filename;		/* filename, or NULL for STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
+	bool		json_row_delim_needed;	/* need delimiter before next row */
 	StringInfo	json_buf;		/* reusable buffer for JSON output,
 								 * initialized in BeginCopyTo */
 	TupleDesc	tupDesc;		/* Descriptor for JSON output; for a column
@@ -142,6 +143,7 @@ static void CopyToTextLikeOneRow(CopyToState cstate, TupleTableSlot *slot,
 								 bool is_csv);
 static void CopyToTextLikeEnd(CopyToState cstate);
 static void CopyToJsonOneRow(CopyToState cstate, TupleTableSlot *slot);
+static void CopyToJsonEnd(CopyToState cstate);
 static void CopyToBinaryStart(CopyToState cstate, TupleDesc tupDesc);
 static void CopyToBinaryOutFunc(CopyToState cstate, Oid atttypid, FmgrInfo *finfo);
 static void CopyToBinaryOneRow(CopyToState cstate, TupleTableSlot *slot);
@@ -183,7 +185,7 @@ static const CopyToRoutine CopyToRoutineJson = {
 	.CopyToStart = CopyToTextLikeStart,
 	.CopyToOutFunc = CopyToTextLikeOutFunc,
 	.CopyToOneRow = CopyToJsonOneRow,
-	.CopyToEnd = CopyToTextLikeEnd,
+	.CopyToEnd = CopyToJsonEnd,
 };
 
 /* binary format */
@@ -247,6 +249,15 @@ CopyToTextLikeStart(CopyToState cstate, TupleDesc tupDesc)
 				CopyAttributeOutText(cstate, colname);
 		}
 
+		CopySendTextLikeEndOfRow(cstate);
+	}
+
+	/*
+	 * If FORCE_ARRAY has been specified, send the opening bracket.
+	 */
+	if (cstate->opts.format == COPY_FORMAT_JSON && cstate->opts.force_array)
+	{
+		CopySendChar(cstate, '[');
 		CopySendTextLikeEndOfRow(cstate);
 	}
 }
@@ -325,11 +336,22 @@ CopyToTextLikeOneRow(CopyToState cstate,
 	CopySendTextLikeEndOfRow(cstate);
 }
 
-/* Implementation of the end callback for text, CSV, and json formats */
+/* Implementation of the end callback for text and CSV formats */
 static void
 CopyToTextLikeEnd(CopyToState cstate)
 {
 	/* Nothing to do here */
+}
+
+/* Implementation of the end callback for json format */
+static void
+CopyToJsonEnd(CopyToState cstate)
+{
+	if (cstate->opts.force_array)
+	{
+		CopySendChar(cstate, ']');
+		CopySendTextLikeEndOfRow(cstate);
+	}
 }
 
 /* Implementation of per-row callback for json format */
@@ -392,6 +414,18 @@ CopyToJsonOneRow(CopyToState cstate, TupleTableSlot *slot)
 	}
 
 	composite_to_json(rowdata, cstate->json_buf, false);
+
+	if (cstate->opts.force_array)
+	{
+		if (cstate->json_row_delim_needed)
+			CopySendChar(cstate, ',');
+		else
+		{
+			/* first row needs no delimiter */
+			CopySendChar(cstate, ' ');
+			cstate->json_row_delim_needed = true;
+		}
+	}
 
 	CopySendData(cstate, cstate->json_buf->data, cstate->json_buf->len);
 

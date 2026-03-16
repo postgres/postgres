@@ -86,6 +86,8 @@ copy copytest3 to stdout csv header;
 copy (select 1 union all select 2) to stdout with (format json);
 copy (select 1 as foo union all select 2) to stdout with (format json);
 copy (values (1), (2)) TO stdout with (format json);
+copy (select 1 union all select 2) to stdout with (format json, force_array true);
+copy (values (1), (2)) TO stdout with (format json, force_array true);
 copy copytest to stdout json;
 copy copytest to stdout (format json);
 copy (select * from copytest) to stdout (format json);
@@ -108,6 +110,17 @@ copy copytest from stdin(format json);
 
 -- column list with json format
 copy copytest (style, test, filler) to stdout (format json);
+
+-- should fail: force_array requires json format
+copy copytest to stdout (format csv, force_array true);
+
+-- force_array variants
+copy copytest to stdout (format json, force_array);
+copy copytest(style, test) to stdout (format json, force_array true);
+copy copytest to stdout (format json, force_array false);
+
+-- force_array with empty result set
+copy (select 1 where false) to stdout (format json, force_array);
 
 -- column list with diverse data types
 create temp table copyjsontest_types (

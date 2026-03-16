@@ -88,6 +88,7 @@ typedef struct CopyFormatOptions
 	List	   *force_notnull;	/* list of column names */
 	bool		force_notnull_all;	/* FORCE_NOT_NULL *? */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
+	bool		force_array;	/* add JSON array decorations */
 	List	   *force_null;		/* list of column names */
 	bool		force_null_all; /* FORCE_NULL *? */
 	bool	   *force_null_flags;	/* per-column CSV FN flags */

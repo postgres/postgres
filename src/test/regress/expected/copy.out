@@ -83,6 +83,16 @@ copy (select 1 as foo union all select 2) to stdout with (format json);
 copy (values (1), (2)) TO stdout with (format json);
 {"column1":1}
 {"column1":2}
+copy (select 1 union all select 2) to stdout with (format json, force_array true);
+[
+ {"?column?":1}
+,{"?column?":2}
+]
+copy (values (1), (2)) TO stdout with (format json, force_array true);
+[
+ {"column1":1}
+,{"column1":2}
+]
 copy copytest to stdout json;
 {"style":"DOS","test":"abc\r\ndef","filler":1}
 {"style":"Unix","test":"abc\ndef","filler":2}
@@ -134,6 +144,33 @@ copy copytest (style, test, filler) to stdout (format json);
 {"style":"Unix","test":"abc\ndef","filler":2}
 {"style":"Mac","test":"abc\rdef","filler":3}
 {"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+-- should fail: force_array requires json format
+copy copytest to stdout (format csv, force_array true);
+ERROR:  COPY FORCE_ARRAY can only be used with JSON mode
+-- force_array variants
+copy copytest to stdout (format json, force_array);
+[
+ {"style":"DOS","test":"abc\r\ndef","filler":1}
+,{"style":"Unix","test":"abc\ndef","filler":2}
+,{"style":"Mac","test":"abc\rdef","filler":3}
+,{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+]
+copy copytest(style, test) to stdout (format json, force_array true);
+[
+ {"style":"DOS","test":"abc\r\ndef"}
+,{"style":"Unix","test":"abc\ndef"}
+,{"style":"Mac","test":"abc\rdef"}
+,{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb"}
+]
+copy copytest to stdout (format json, force_array false);
+{"style":"DOS","test":"abc\r\ndef","filler":1}
+{"style":"Unix","test":"abc\ndef","filler":2}
+{"style":"Mac","test":"abc\rdef","filler":3}
+{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+-- force_array with empty result set
+copy (select 1 where false) to stdout (format json, force_array);
+[
+]
 -- column list with diverse data types
 create temp table copyjsontest_types (
     id int,
