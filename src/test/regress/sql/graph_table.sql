@@ -298,7 +298,7 @@ SELECT * FROM GRAPH_TABLE (g1 MATCH (src IS vl1 | vl2 | vl3)-[conn]->(dest) COLU
 -- graph'ical query: find a vertex which is not connected to any other vertex as a source or a destination.
 WITH all_connected_vertices AS (SELECT svn, dvn FROM GRAPH_TABLE (g1 MATCH (src)-[conn]->(dest) COLUMNS (src.vname AS svn, dest.vname AS dvn))),
     all_vertices AS (SELECT vn FROM GRAPH_TABLE (g1 MATCH (vertex) COLUMNS (vertex.vname AS vn)))
-SELECT vn FROM all_vertices EXCEPT (SELECT svn FROM all_connected_vertices UNION SELECT dvn FROM all_connected_vertices);
+SELECT vn FROM all_vertices EXCEPT (SELECT svn FROM all_connected_vertices UNION SELECT dvn FROM all_connected_vertices) ORDER BY vn;
 -- query all connections using a label shared by vertices and edges
 SELECT sn, cn, dn FROM GRAPH_TABLE (g1 MATCH (src IS l1)-[conn IS l1]->(dest IS l1) COLUMNS (src.elname AS sn, conn.elname AS cn, dest.elname AS dn));
 

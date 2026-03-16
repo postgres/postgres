@@ -278,7 +278,7 @@ SELECT * FROM information_schema.pg_element_table_properties ORDER BY property_g
 SELECT * FROM information_schema.pg_label_properties ORDER BY property_graph_name, label_name, property_name;
 SELECT * FROM information_schema.pg_labels ORDER BY property_graph_name, label_name;
 SELECT * FROM information_schema.pg_property_data_types ORDER BY property_graph_name, property_name;
-SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE 'regress%' ORDER BY property_graph_name;
+SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE 'regress%' ORDER BY property_graph_name, grantor, grantee, privilege_type;
 
 -- test object address functions
 SELECT pg_describe_object(classid, objid, objsubid) as obj,

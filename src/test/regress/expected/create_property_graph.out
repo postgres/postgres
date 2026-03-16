@@ -653,7 +653,7 @@ SELECT * FROM information_schema.pg_property_data_types ORDER BY property_graph_
  regression             | create_property_graph_tests | gt                  | n             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | n
 (39 rows)
 
-SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE 'regress%' ORDER BY property_graph_name;
+SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE 'regress%' ORDER BY property_graph_name, grantor, grantee, privilege_type;
        grantor       |       grantee       | property_graph_catalog |    property_graph_schema    | property_graph_name | privilege_type | is_grantable 
 ---------------------+---------------------+------------------------+-----------------------------+---------------------+----------------+--------------
  regress_graph_user1 | regress_graph_user1 | regression             | create_property_graph_tests | g1                  | SELECT         | YES
