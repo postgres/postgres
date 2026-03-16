@@ -2447,12 +2447,8 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					 * CheckTableNotInUse() and locking.
 					 */
 
-					/* clear out a pending (and thus failed) speculation */
-					if (specinsert != NULL)
-					{
-						ReorderBufferFreeChange(rb, specinsert, true);
-						specinsert = NULL;
-					}
+					/* Previous speculative insertion must be aborted */
+					Assert(specinsert == NULL);
 
 					/* and memorize the pending insertion */
 					dlist_delete(&change->node);
