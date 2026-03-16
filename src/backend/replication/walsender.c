@@ -1450,9 +1450,15 @@ WalSndWaitForWal(XLogRecPtr loc)
 		 * If we're shutting down, trigger pending WAL to be written out,
 		 * otherwise we'd possibly end up waiting for WAL that never gets
 		 * written, because walwriter has shut down already.
+		 *
+		 * Note that GetXLogInsertEndRecPtr() is used to obtain the WAL flush
+		 * request location instead of GetXLogInsertRecPtr(). Because if the
+		 * last WAL record ends at a page boundary, GetXLogInsertRecPtr() can
+		 * return an LSN pointing past the page header, which may cause
+		 * XLogFlush() to report an error.
 		 */
 		if (got_STOPPING && !RecoveryInProgress())
-			XLogFlush(GetXLogInsertRecPtr());
+			XLogFlush(GetXLogInsertEndRecPtr());
 
 		/* Update our idea of the currently flushed position. */
 		if (!RecoveryInProgress())
