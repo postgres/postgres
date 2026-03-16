@@ -261,13 +261,14 @@ nocache_index_getattr(IndexTuple tup,
 	else
 		firstNullAttr = attnum;
 
-	if (tupleDesc->firstNonCachedOffsetAttr > 0)
+	if (tupleDesc->firstNonCachedOffsetAttr > 0 && firstNullAttr > 0)
 	{
 		/*
-		 * Start at the highest attcacheoff attribute with no NULLs in prior
-		 * attributes.
+		 * Try to start with the highest attribute with an attcacheoff that's
+		 * prior to the one we're looking for, or with the attribute prior to
+		 * the first NULL attribute, if there is one.
 		 */
-		startAttr = Min(tupleDesc->firstNonCachedOffsetAttr - 1, firstNullAttr);
+		startAttr = Min(tupleDesc->firstNonCachedOffsetAttr - 1, firstNullAttr - 1);
 		off = TupleDescCompactAttr(tupleDesc, startAttr)->attcacheoff;
 	}
 	else
