@@ -180,6 +180,11 @@ typedef enum
  */
 typedef struct PGPROC
 {
+	/*
+	 * Align the struct at cache line boundaries.  This is just for
+	 * performance, to avoid false sharing.
+	 */
+	alignas(PG_CACHE_LINE_SIZE)
 	dlist_head *procgloballist; /* procglobal list that owns this PGPROC */
 	dlist_node	freeProcsLink;	/* link in procgloballist, when in recycled
 								 * state */
@@ -375,14 +380,6 @@ typedef struct PGPROC
 
 	uint32		wait_event_info;	/* proc's wait information */
 }
-
-/*
- * If compiler understands aligned pragma, use it to align the struct at cache
- * line boundaries.  This is just for performance, to avoid false sharing.
- */
-#if defined(pg_attribute_aligned)
-			pg_attribute_aligned(PG_CACHE_LINE_SIZE)
-#endif
 PGPROC;
 
 extern PGDLLIMPORT PGPROC *MyProc;
