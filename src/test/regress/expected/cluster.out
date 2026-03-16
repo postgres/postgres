@@ -492,9 +492,11 @@ Number of partitions: 3 (Use \d+ to list them.)
 CLUSTER clstrpart;
 ERROR:  there is no previously clustered index for table "clstrpart"
 ALTER TABLE clstrpart SET WITHOUT CLUSTER;
-ERROR:  cannot mark index clustered in partitioned table
+ERROR:  ALTER action SET WITHOUT CLUSTER cannot be performed on relation "clstrpart"
+DETAIL:  This operation is not supported for partitioned tables.
 ALTER TABLE clstrpart CLUSTER ON clstrpart_idx;
-ERROR:  cannot mark index clustered in partitioned table
+ERROR:  ALTER action CLUSTER ON cannot be performed on relation "clstrpart"
+DETAIL:  This operation is not supported for partitioned tables.
 -- and they cannot get an index-ordered REPACK without an explicit index name
 REPACK clstrpart USING INDEX;
 ERROR:  cannot execute REPACK on partitioned table "clstrpart" USING INDEX with no index name

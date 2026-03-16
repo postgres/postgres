@@ -572,11 +572,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	Relation	pg_index;
 	ListCell   *index;
 
-	/* Disallow applying to a partitioned table */
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot mark index clustered in partitioned table")));
+	Assert(rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE);
 
 	/*
 	 * If the index is already marked clustered, no need to do anything.

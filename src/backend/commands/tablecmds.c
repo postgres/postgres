@@ -5164,7 +5164,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_ClusterOn:		/* CLUSTER ON */
 		case AT_DropCluster:	/* SET WITHOUT CLUSTER */
 			ATSimplePermissions(cmd->subtype, rel,
-								ATT_TABLE | ATT_PARTITIONED_TABLE | ATT_MATVIEW);
+								ATT_TABLE | ATT_MATVIEW);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
