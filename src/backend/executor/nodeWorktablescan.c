@@ -17,6 +17,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeWorktablescan.h"
+#include "utils/tuplestore.h"
 
 static TupleTableSlot *WorkTableScanNext(WorkTableScanState *node);
 

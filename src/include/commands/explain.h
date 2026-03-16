@@ -14,6 +14,7 @@
 #define EXPLAIN_H
 
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "parser/parse_node.h"
 
 typedef struct ExplainState ExplainState;	/* defined in explain_state.h */

@@ -22,6 +22,7 @@
 #include "commands/explain_format.h"
 #include "commands/explain_state.h"
 #include "executor/execAsync.h"
+#include "executor/instrument.h"
 #include "foreign/fdwapi.h"
 #include "funcapi.h"
 #include "miscadmin.h"

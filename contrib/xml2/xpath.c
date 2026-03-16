@@ -12,6 +12,7 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
+#include "utils/tuplestore.h"
 #include "utils/xml.h"
 
 /* libxml includes */

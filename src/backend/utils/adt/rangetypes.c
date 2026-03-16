@@ -30,6 +30,7 @@
  */
 #include "postgres.h"
 
+#include "access/tupmacs.h"
 #include "common/hashfn.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
@@ -40,6 +41,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
+#include "port/pg_bitutils.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/lsyscache.h"

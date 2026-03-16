@@ -19,6 +19,8 @@
 #include "storage/barrier.h"
 #include "storage/buffile.h"
 #include "storage/lwlock.h"
+#include "utils/dsa.h"
+#include "utils/sharedtuplestore.h"
 
 /* ----------------------------------------------------------------
  *				hash-join hash table structures

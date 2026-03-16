@@ -35,6 +35,7 @@
 #include "pg_getopt.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufpage.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"

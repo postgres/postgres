@@ -22,6 +22,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/tuplestore.h"
 
 
 static ArrayType *get_hba_options(HbaLine *hba);

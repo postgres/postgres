@@ -16,6 +16,7 @@
 #include "common/hashfn.h"
 #include "funcapi.h"
 #include "storage/dsm_registry.h"
+#include "storage/fd.h"
 #include "utils/builtins.h"
 #include "utils/pgstat_internal.h"
 

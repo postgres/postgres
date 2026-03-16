@@ -90,6 +90,7 @@
 #include "storage/aio_subsys.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/fd.h"
 #include "storage/latch.h"
 #include "storage/lmgr.h"
 #include "storage/pmsignal.h"

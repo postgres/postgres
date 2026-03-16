@@ -26,6 +26,7 @@
 
 #include "access/heapam.h"
 #include "access/tableam.h"
+#include "access/tupconvert.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "commands/copyapi.h"

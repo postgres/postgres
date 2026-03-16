@@ -22,6 +22,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/tuplestore.h"
 
 PG_FUNCTION_INFO_V1(brin_page_type);
 PG_FUNCTION_INFO_V1(brin_page_items);

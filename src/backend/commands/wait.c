@@ -18,6 +18,7 @@
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogwait.h"
+#include "catalog/pg_type_d.h"
 #include "commands/defrem.h"
 #include "commands/wait.h"
 #include "executor/executor.h"

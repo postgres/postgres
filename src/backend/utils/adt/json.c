@@ -26,6 +26,7 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
 #include "utils/json.h"
 #include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"

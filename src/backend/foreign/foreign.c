@@ -28,6 +28,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 #include "utils/varlena.h"
 
 

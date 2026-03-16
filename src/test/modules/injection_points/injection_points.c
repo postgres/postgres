@@ -31,6 +31,7 @@
 #include "utils/guc.h"
 #include "utils/injection_point.h"
 #include "utils/memutils.h"
+#include "utils/tuplestore.h"
 #include "utils/wait_event.h"
 
 PG_MODULE_MAGIC;

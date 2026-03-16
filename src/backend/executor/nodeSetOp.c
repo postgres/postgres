@@ -50,6 +50,7 @@
 #include "executor/nodeSetOp.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
+#include "utils/sortsupport.h"
 
 
 /*

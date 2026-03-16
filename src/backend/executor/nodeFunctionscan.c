@@ -27,6 +27,7 @@
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/memutils.h"
+#include "utils/tuplestore.h"
 
 
 /*

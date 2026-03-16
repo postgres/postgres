@@ -65,6 +65,8 @@
 
 #include "postgres.h"
 
+#include <unistd.h>
+
 #include "common/int.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -75,6 +77,7 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
+#include "utils/tuplestore.h"
 
 /*
  * This is the first data structure stored in the shared memory segment, at

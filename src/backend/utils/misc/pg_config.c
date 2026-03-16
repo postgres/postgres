@@ -18,6 +18,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/tuplestore.h"
 
 Datum
 pg_config(PG_FUNCTION_ARGS)

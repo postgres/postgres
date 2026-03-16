@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/sysattr.h"
 #include "access/table.h"
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"

@@ -22,6 +22,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_parameter_acl.h"
+#include "catalog/pg_type_d.h"
 #include "funcapi.h"
 #include "guc_internal.h"
 #include "miscadmin.h"
@@ -30,6 +31,7 @@
 #include "utils/builtins.h"
 #include "utils/guc_tables.h"
 #include "utils/snapmgr.h"
+#include "utils/tuplestore.h"
 
 static char *flatten_set_variable_args(const char *name, List *args);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);

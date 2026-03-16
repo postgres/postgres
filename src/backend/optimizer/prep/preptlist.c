@@ -36,7 +36,9 @@
 
 #include "postgres.h"
 
+#include "access/sysattr.h"
 #include "access/table.h"
+#include "catalog/pg_type_d.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/appendinfo.h"
 #include "optimizer/optimizer.h"

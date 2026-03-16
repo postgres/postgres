@@ -32,6 +32,7 @@
 #include "commands/tablespace.h"
 #include "executor/executor.h"
 #include "executor/hashjoin.h"
+#include "executor/instrument.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"

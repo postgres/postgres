@@ -37,6 +37,7 @@
 #include "access/visibilitymap.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
 #include "miscadmin.h"

@@ -15,6 +15,7 @@
 #include "tcop/deparse_utility.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/tuplestore.h"
 
 PG_MODULE_MAGIC;
 

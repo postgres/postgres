@@ -22,6 +22,7 @@
 #include "executor/nodeRecursiveunion.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
+#include "utils/tuplestore.h"
 
 
 

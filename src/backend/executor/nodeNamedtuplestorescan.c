@@ -18,6 +18,7 @@
 #include "executor/executor.h"
 #include "executor/nodeNamedtuplestorescan.h"
 #include "utils/queryenvironment.h"
+#include "utils/tuplestore.h"
 
 static TupleTableSlot *NamedTuplestoreScanNext(NamedTuplestoreScanState *node);
 

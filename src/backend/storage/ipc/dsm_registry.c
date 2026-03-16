@@ -47,6 +47,7 @@
 #include "storage/shmem.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/tuplestore.h"
 
 typedef struct DSMRegistryCtxStruct
 {

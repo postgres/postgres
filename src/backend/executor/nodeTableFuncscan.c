@@ -31,6 +31,7 @@
 #include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/tuplestore.h"
 #include "utils/xml.h"
 
 static TupleTableSlot *TableFuncNext(TableFuncScanState *node);

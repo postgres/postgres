@@ -29,6 +29,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
+#include "utils/tuplestore.h"
 
 PG_FUNCTION_INFO_V1(verify_heapam);
 

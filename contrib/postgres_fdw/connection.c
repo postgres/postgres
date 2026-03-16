@@ -33,6 +33,7 @@
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 
 /*
  * Connection cache hash table entry

@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/amapi.h"
+#include "access/attmap.h"
 #include "access/gist.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"

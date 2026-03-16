@@ -16,6 +16,7 @@
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
+#include "utils/tuplestore.h"
 
 
 #define NUM_BUFFERCACHE_PAGES_MIN_ELEM	8

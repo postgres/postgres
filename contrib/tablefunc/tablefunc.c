@@ -43,6 +43,7 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/tuplestore.h"
 
 PG_MODULE_MAGIC_EXT(
 					.name = "tablefunc",

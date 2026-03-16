@@ -39,10 +39,13 @@
 #include "access/tableam.h"
 #include "access/visibilitymap.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeBitmapHeapscan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
+#include "storage/condition_variable.h"
+#include "utils/dsa.h"
 #include "utils/rel.h"
 #include "utils/spccache.h"
 #include "utils/wait_event.h"
@@ -51,6 +54,43 @@ static void BitmapTableScanSetup(BitmapHeapScanState *node);
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
 static inline void BitmapDoneInitializingSharedState(ParallelBitmapHeapState *pstate);
 static bool BitmapShouldInitializeSharedState(ParallelBitmapHeapState *pstate);
+
+
+/* ----------------
+ *	 SharedBitmapState information
+ *
+ *		BM_INITIAL		TIDBitmap creation is not yet started, so first worker
+ *						to see this state will set the state to BM_INPROGRESS
+ *						and that process will be responsible for creating
+ *						TIDBitmap.
+ *		BM_INPROGRESS	TIDBitmap creation is in progress; workers need to
+ *						sleep until it's finished.
+ *		BM_FINISHED		TIDBitmap creation is done, so now all workers can
+ *						proceed to iterate over TIDBitmap.
+ * ----------------
+ */
+typedef enum
+{
+	BM_INITIAL,
+	BM_INPROGRESS,
+	BM_FINISHED,
+} SharedBitmapState;
+
+/* ----------------
+ *	 ParallelBitmapHeapState information
+ *		tbmiterator				iterator for scanning current pages
+ *		mutex					mutual exclusion for state
+ *		state					current state of the TIDBitmap
+ *		cv						conditional wait variable
+ * ----------------
+ */
+typedef struct ParallelBitmapHeapState
+{
+	dsa_pointer tbmiterator;
+	slock_t		mutex;
+	SharedBitmapState state;
+	ConditionVariable cv;
+} ParallelBitmapHeapState;
 
 
 /*

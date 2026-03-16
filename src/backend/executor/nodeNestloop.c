@@ -22,6 +22,7 @@
 #include "postgres.h"
 
 #include "executor/execdebug.h"
+#include "executor/instrument.h"
 #include "executor/nodeNestloop.h"
 #include "miscadmin.h"
 

@@ -30,6 +30,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/tuplestore.h"
 #include "utils/typcache.h"
 
 

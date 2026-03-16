@@ -22,6 +22,7 @@
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
 #include "optimizer/optimizer.h"
+#include "utils/sortsupport.h"
 
 /*
  * When we read tuples from workers, it's a good idea to read several at once

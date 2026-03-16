@@ -16,6 +16,7 @@
 
 #include "funcapi.h"
 #include "utils/builtins.h"
+#include "utils/tuplestore.h"
 #include "utils/wait_event.h"
 
 /*

@@ -16,6 +16,7 @@
 
 #include "executor/execAsync.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeForeignscan.h"
 

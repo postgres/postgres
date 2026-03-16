@@ -16,6 +16,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_class.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeBitmapAnd.h"

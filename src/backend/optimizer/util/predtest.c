@@ -25,6 +25,7 @@
 #include "nodes/pathnodes.h"
 #include "optimizer/optimizer.h"
 #include "utils/array.h"
+#include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"

@@ -40,6 +40,7 @@
 #include "lib/bloomfilter.h"
 #include "lib/qunique.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "storage/large_object.h"
 #include "utils/acl.h"
 #include "utils/array.h"

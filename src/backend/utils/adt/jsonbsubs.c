@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_type_d.h"
 #include "executor/execExpr.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/subscripting.h"

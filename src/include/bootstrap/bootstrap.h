@@ -14,6 +14,7 @@
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H
 
+#include "catalog/pg_attribute.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 

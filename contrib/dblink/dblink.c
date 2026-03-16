@@ -62,6 +62,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/tuplestore.h"
 #include "utils/varlena.h"
 #include "utils/wait_event.h"
 

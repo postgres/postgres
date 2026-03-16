@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/sysattr.h"
 #include "access/table.h"
 #include "foreign/fdwapi.h"
 #include "nodes/makefuncs.h"

@@ -15,6 +15,7 @@
 
 #include "miscadmin.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "nodes/execnodes.h"
 
 /*

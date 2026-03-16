@@ -29,7 +29,9 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeBitmapAnd.h"
+#include "nodes/tidbitmap.h"
 
 
 /* ----------------------------------------------------------------

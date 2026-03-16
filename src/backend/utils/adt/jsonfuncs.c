@@ -38,6 +38,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 #include "utils/typcache.h"
 
 /* Operations available for setPath */

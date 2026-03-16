@@ -38,6 +38,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeWindowAgg.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -53,6 +54,7 @@
 #include "utils/memutils.h"
 #include "utils/regproc.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 #include "windowapi.h"
 
 /*

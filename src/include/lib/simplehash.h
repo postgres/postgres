@@ -93,7 +93,6 @@
  * src/include/lib/simplehash.h
  */
 
-#include "port/pg_bitutils.h"
 
 /* helpers */
 #define SH_MAKE_PREFIX(a) CppConcat(a,_)
@@ -254,6 +253,8 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 
 /* generate implementation of the hash table */
 #ifdef SH_DEFINE
+
+#include "port/pg_bitutils.h"
 
 #ifndef SH_RAW_ALLOCATOR
 #include "utils/memutils.h"

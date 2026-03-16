@@ -23,9 +23,11 @@
 
 #include "access/genam.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeIndexscan.h"
 #include "miscadmin.h"
+#include "nodes/tidbitmap.h"
 
 
 /* ----------------------------------------------------------------

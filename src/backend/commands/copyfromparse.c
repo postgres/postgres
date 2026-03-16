@@ -71,6 +71,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/pg_bitutils.h"
 #include "port/pg_bswap.h"
 #include "port/simd.h"
 #include "utils/builtins.h"

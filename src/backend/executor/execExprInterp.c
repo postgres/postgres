@@ -57,6 +57,7 @@
 #include "postgres.h"
 
 #include "access/heaptoast.h"
+#include "access/tupconvert.h"
 #include "catalog/pg_type.h"
 #include "commands/sequence.h"
 #include "executor/execExpr.h"
@@ -77,6 +78,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
+#include "utils/tuplesort.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
 

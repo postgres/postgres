@@ -16,6 +16,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "parser/parse_node.h"
+#include "port/pg_bitutils.h"
 
 typedef enum ExplainSerializeOption
 {

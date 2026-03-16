@@ -34,6 +34,7 @@
 #include "commands/vacuum.h"
 #include "common/pg_prng.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"

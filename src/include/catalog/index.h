@@ -18,6 +18,12 @@
 #include "nodes/execnodes.h"
 
 
+/*
+ * forward references in this file
+ */
+typedef struct AttrMap AttrMap;
+
+
 #define DEFAULT_INDEX_TYPE	"btree"
 
 /* Action code for index_set_state_flags */

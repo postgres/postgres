@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_type_d.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
 #include "storage/proc.h"
@@ -23,6 +24,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
+#include "utils/tuplestore.h"
 
 /* ----------
  * The max bytes for showing identifiers of MemoryContext.

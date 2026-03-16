@@ -21,9 +21,11 @@
 #include "access/xlogutils.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/pg_lsn.h"
+#include "utils/tuplestore.h"
 
 /*
  * NOTE: For any code change or issue fix here, it is highly recommended to

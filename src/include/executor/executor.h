@@ -14,6 +14,7 @@
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
+#include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
 #include "executor/execdesc.h"
 #include "fmgr.h"

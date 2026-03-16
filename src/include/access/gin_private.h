@@ -19,6 +19,7 @@
 #include "catalog/pg_am_d.h"
 #include "fmgr.h"
 #include "lib/rbtree.h"
+#include "nodes/tidbitmap.h"
 #include "storage/bufmgr.h"
 
 /*

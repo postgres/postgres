@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "access/sysattr.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"

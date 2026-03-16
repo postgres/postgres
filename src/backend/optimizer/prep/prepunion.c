@@ -37,6 +37,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_coerce.h"
+#include "port/pg_bitutils.h"
 #include "utils/selfuncs.h"
 
 

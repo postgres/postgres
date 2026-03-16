@@ -34,8 +34,10 @@
 #include "tcop/pquery.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/hsearch.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
+#include "utils/tuplestore.h"
 
 
 /*

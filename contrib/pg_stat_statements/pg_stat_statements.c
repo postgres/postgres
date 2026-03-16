@@ -71,6 +71,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
+#include "utils/tuplestore.h"
 
 PG_MODULE_MAGIC_EXT(
 					.name = "pg_stat_statements",

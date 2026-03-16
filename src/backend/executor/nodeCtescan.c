@@ -18,6 +18,7 @@
 #include "executor/executor.h"
 #include "executor/nodeCtescan.h"
 #include "miscadmin.h"
+#include "utils/tuplestore.h"
 
 static TupleTableSlot *CteScanNext(CteScanState *node);
 

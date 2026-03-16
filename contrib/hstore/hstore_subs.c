@@ -23,6 +23,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_type_d.h"
 #include "executor/execExpr.h"
 #include "hstore.h"
 #include "nodes/nodeFuncs.h"

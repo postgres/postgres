@@ -23,6 +23,7 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeGroup.h"
 #include "miscadmin.h"
 

@@ -34,6 +34,7 @@
 #include "access/tableam.h"
 #include "catalog/pg_am.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeIndexscan.h"
 #include "lib/pairingheap.h"
 #include "miscadmin.h"
@@ -42,6 +43,7 @@
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/sortsupport.h"
 
 /*
  * When an ordering operator is used, tuples fetched from the index that

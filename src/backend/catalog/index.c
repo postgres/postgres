@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "access/amapi.h"
+#include "access/attmap.h"
 #include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/relscan.h"

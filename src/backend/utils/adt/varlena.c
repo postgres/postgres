@@ -19,6 +19,7 @@
 
 #include "access/detoast.h"
 #include "access/toast_compression.h"
+#include "access/tupmacs.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -40,6 +41,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
+#include "utils/tuplestore.h"
 #include "utils/varlena.h"
 
 typedef varlena VarString;

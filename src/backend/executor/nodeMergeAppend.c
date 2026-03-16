@@ -43,6 +43,7 @@
 #include "executor/nodeMergeAppend.h"
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
+#include "utils/sortsupport.h"
 
 /*
  * We have one slot for each item in the heap array.  We use SlotNumber

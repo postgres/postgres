@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/attmap.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"

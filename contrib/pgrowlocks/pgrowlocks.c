@@ -40,6 +40,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/tuplestore.h"
 #include "utils/varlena.h"
 
 PG_MODULE_MAGIC_EXT(

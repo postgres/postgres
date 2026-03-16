@@ -20,6 +20,7 @@
 #include "postmaster/walsummarizer.h"
 #include "utils/fmgrprotos.h"
 #include "utils/pg_lsn.h"
+#include "utils/tuplestore.h"
 
 #define NUM_WS_ATTS			3
 #define NUM_SUMMARY_ATTS	6

@@ -24,9 +24,11 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "utils/builtins.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
+#include "utils/tuplestore.h"
 
 /*
  * Estimate of the maximum number of open portals a user would have,

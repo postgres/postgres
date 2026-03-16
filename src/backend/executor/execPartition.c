@@ -15,6 +15,7 @@
 
 #include "access/table.h"
 #include "access/tableam.h"
+#include "access/tupconvert.h"
 #include "catalog/index.h"
 #include "catalog/partition.h"
 #include "executor/execPartition.h"

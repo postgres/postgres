@@ -25,6 +25,7 @@
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "access/toast_compression.h"
+#include "access/tupconvert.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
