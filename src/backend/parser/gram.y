@@ -3650,6 +3650,10 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("format", (Node *) makeString("csv"), @1);
 				}
+			| JSON
+				{
+					$$ = makeDefElem("format", (Node *) makeString("json"), @1);
+				}
 			| HEADER_P
 				{
 					$$ = makeDefElem("header", (Node *) makeBoolean(true), @1);
@@ -3731,6 +3735,10 @@ copy_generic_opt_elem:
 			ColLabel copy_generic_opt_arg
 				{
 					$$ = makeDefElem($1, $2, @1);
+				}
+			| FORMAT_LA copy_generic_opt_arg
+				{
+					$$ = makeDefElem("format", $2, @1);
 				}
 		;
 

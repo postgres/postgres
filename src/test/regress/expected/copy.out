@@ -73,6 +73,152 @@ copy copytest3 to stdout csv header;
 c1,"col with , comma","col with "" quote"
 1,a,1
 2,b,2
+--- test copying in JSON mode with various styles
+copy (select 1 union all select 2) to stdout with (format json);
+{"?column?":1}
+{"?column?":2}
+copy (select 1 as foo union all select 2) to stdout with (format json);
+{"foo":1}
+{"foo":2}
+copy (values (1), (2)) TO stdout with (format json);
+{"column1":1}
+{"column1":2}
+copy copytest to stdout json;
+{"style":"DOS","test":"abc\r\ndef","filler":1}
+{"style":"Unix","test":"abc\ndef","filler":2}
+{"style":"Mac","test":"abc\rdef","filler":3}
+{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+copy copytest to stdout (format json);
+{"style":"DOS","test":"abc\r\ndef","filler":1}
+{"style":"Unix","test":"abc\ndef","filler":2}
+{"style":"Mac","test":"abc\rdef","filler":3}
+{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+copy (select * from copytest) to stdout (format json);
+{"style":"DOS","test":"abc\r\ndef","filler":1}
+{"style":"Unix","test":"abc\ndef","filler":2}
+{"style":"Mac","test":"abc\rdef","filler":3}
+{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+-- all of the following should yield error
+copy copytest to stdout (format json, delimiter '|');
+ERROR:  cannot specify DELIMITER in JSON mode
+copy copytest to stdout (format json, null '\N');
+ERROR:  cannot specify NULL in JSON mode
+copy copytest to stdout (format json, default '|');
+ERROR:  cannot specify DEFAULT in JSON mode
+copy copytest to stdout (format json, header);
+ERROR:  cannot specify HEADER in JSON mode
+copy copytest to stdout (format json, header 1);
+ERROR:  cannot specify HEADER in JSON mode
+copy copytest to stdout (format json, quote '"');
+ERROR:  COPY QUOTE requires CSV mode
+copy copytest to stdout (format json, escape '"');
+ERROR:  COPY ESCAPE requires CSV mode
+copy copytest to stdout (format json, force_quote *);
+ERROR:  COPY FORCE_QUOTE requires CSV mode
+copy copytest to stdout (format json, force_not_null *);
+ERROR:  COPY FORCE_NOT_NULL requires CSV mode
+copy copytest to stdout (format json, force_null *);
+ERROR:  COPY FORCE_NULL requires CSV mode
+copy copytest to stdout (format json, on_error ignore);
+ERROR:  COPY ON_ERROR cannot be used with COPY TO
+LINE 1: copy copytest to stdout (format json, on_error ignore);
+                                              ^
+copy copytest to stdout (format json, reject_limit 1);
+ERROR:  COPY REJECT_LIMIT requires ON_ERROR to be set to IGNORE
+copy copytest from stdin(format json);
+ERROR:  COPY FORMAT JSON is not supported for COPY FROM
+-- all of the above should yield error
+-- column list with json format
+copy copytest (style, test, filler) to stdout (format json);
+{"style":"DOS","test":"abc\r\ndef","filler":1}
+{"style":"Unix","test":"abc\ndef","filler":2}
+{"style":"Mac","test":"abc\rdef","filler":3}
+{"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+-- column list with diverse data types
+create temp table copyjsontest_types (
+    id int,
+    js json,
+    jsb jsonb,
+    arr int[],
+    n numeric(10,2),
+    b boolean,
+    ts timestamp,
+    t text);
+insert into copyjsontest_types values
+(1, '{"a":1}', '{"b":2}', '{1,2,3}', 3.14, true,
+ '2024-01-15 10:30:00', 'hello'),
+(2, '[1,null,"x"]', '{"nested":{"k":"v"}}', '{4,5}', -99.99, false,
+ '2024-06-30 23:59:59', 'world'),
+(3, 'null', 'null', '{}', null, null, null, null);
+-- full table
+copy copyjsontest_types to stdout (format json);
+{"id":1,"js":{"a":1},"jsb":{"b": 2},"arr":[1,2,3],"n":3.14,"b":true,"ts":"2024-01-15T10:30:00","t":"hello"}
+{"id":2,"js":[1,null,"x"],"jsb":{"nested": {"k": "v"}},"arr":[4,5],"n":-99.99,"b":false,"ts":"2024-06-30T23:59:59","t":"world"}
+{"id":3,"js":null,"jsb":null,"arr":[],"n":null,"b":null,"ts":null,"t":null}
+-- column subsets exercising each type
+copy copyjsontest_types (id, js, jsb) to stdout (format json);
+{"id":1,"js":{"a":1},"jsb":{"b": 2}}
+{"id":2,"js":[1,null,"x"],"jsb":{"nested": {"k": "v"}}}
+{"id":3,"js":null,"jsb":null}
+copy copyjsontest_types (id, arr, n, b) to stdout (format json);
+{"id":1,"arr":[1,2,3],"n":3.14,"b":true}
+{"id":2,"arr":[4,5],"n":-99.99,"b":false}
+{"id":3,"arr":[],"n":null,"b":null}
+copy copyjsontest_types (jsb, t) to stdout (format json);
+{"jsb":{"b": 2},"t":"hello"}
+{"jsb":{"nested": {"k": "v"}},"t":"world"}
+{"jsb":null,"t":null}
+copy copyjsontest_types (id, ts) to stdout (format json);
+{"id":1,"ts":"2024-01-15T10:30:00"}
+{"id":2,"ts":"2024-06-30T23:59:59"}
+{"id":3,"ts":null}
+-- single column: json and jsonb
+copy copyjsontest_types (js) to stdout (format json);
+{"js":{"a":1}}
+{"js":[1,null,"x"]}
+{"js":null}
+copy copyjsontest_types (jsb) to stdout (format json);
+{"jsb":{"b": 2}}
+{"jsb":{"nested": {"k": "v"}}}
+{"jsb":null}
+drop table copyjsontest_types;
+-- embedded escaped characters
+create temp table copyjsontest (
+    id bigserial,
+    f1 text,
+    f2 timestamptz);
+insert into copyjsontest
+  select g.i,
+         CASE WHEN g.i % 2 = 0 THEN
+           'line with '' in it: ' || g.i::text
+         ELSE
+           'line with " in it: ' || g.i::text
+         END,
+         'Mon Feb 10 17:32:01 1997 PST'
+  from generate_series(1,5) as g(i);
+insert into copyjsontest (f1) values
+(E'aaa\"bbb'::text),
+(E'aaa\\bbb'::text),
+(E'aaa\/bbb'::text),
+(E'aaa\bbbb'::text),
+(E'aaa\fbbb'::text),
+(E'aaa\nbbb'::text),
+(E'aaa\rbbb'::text),
+(E'aaa\tbbb'::text);
+copy copyjsontest to stdout json;
+{"id":1,"f1":"line with \" in it: 1","f2":"1997-02-10T17:32:01-08:00"}
+{"id":2,"f1":"line with ' in it: 2","f2":"1997-02-10T17:32:01-08:00"}
+{"id":3,"f1":"line with \" in it: 3","f2":"1997-02-10T17:32:01-08:00"}
+{"id":4,"f1":"line with ' in it: 4","f2":"1997-02-10T17:32:01-08:00"}
+{"id":5,"f1":"line with \" in it: 5","f2":"1997-02-10T17:32:01-08:00"}
+{"id":1,"f1":"aaa\"bbb","f2":null}
+{"id":2,"f1":"aaa\\bbb","f2":null}
+{"id":3,"f1":"aaa/bbb","f2":null}
+{"id":4,"f1":"aaa\bbbb","f2":null}
+{"id":5,"f1":"aaa\fbbb","f2":null}
+{"id":6,"f1":"aaa\nbbb","f2":null}
+{"id":7,"f1":"aaa\rbbb","f2":null}
+{"id":8,"f1":"aaa\tbbb","f2":null}
 create temp table copytest4 (
 	c1 int,
 	"colname with tab: 	" text);

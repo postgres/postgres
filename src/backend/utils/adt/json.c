@@ -86,8 +86,6 @@ typedef struct JsonAggState
 	JsonUniqueBuilderState unique_check;
 } JsonAggState;
 
-static void composite_to_json(Datum composite, StringInfo result,
-							  bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 							  const Datum *vals, const bool *nulls, int *valcount,
 							  JsonTypeCategory tcategory, Oid outfuncoid,
@@ -517,8 +515,9 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 
 /*
  * Turn a composite / record into JSON.
+ * Exported so COPY TO can use it.
  */
-static void
+void
 composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 {
 	HeapTupleHeader td;

@@ -597,6 +597,8 @@ ProcessCopyOptions(ParseState *pstate,
 				opts_out->format = COPY_FORMAT_CSV;
 			else if (strcmp(fmt, "binary") == 0)
 				opts_out->format = COPY_FORMAT_BINARY;
+			else if (strcmp(fmt, "json") == 0)
+				opts_out->format = COPY_FORMAT_JSON;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -756,21 +758,32 @@ ProcessCopyOptions(ParseState *pstate,
 	 * Check for incompatible options (must do these three before inserting
 	 * defaults)
 	 */
-	if (opts_out->format == COPY_FORMAT_BINARY && opts_out->delim)
+	if (opts_out->delim &&
+		(opts_out->format == COPY_FORMAT_BINARY ||
+		 opts_out->format == COPY_FORMAT_JSON))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-		/*- translator: %s is the name of a COPY option, e.g. ON_ERROR */
-				 errmsg("cannot specify %s in BINARY mode", "DELIMITER")));
+				errcode(ERRCODE_SYNTAX_ERROR),
+				opts_out->format == COPY_FORMAT_BINARY
+				? errmsg("cannot specify %s in BINARY mode", "DELIMITER")
+				: errmsg("cannot specify %s in JSON mode", "DELIMITER"));
 
-	if (opts_out->format == COPY_FORMAT_BINARY && opts_out->null_print)
+	if (opts_out->null_print &&
+		(opts_out->format == COPY_FORMAT_BINARY ||
+		 opts_out->format == COPY_FORMAT_JSON))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("cannot specify %s in BINARY mode", "NULL")));
+				errcode(ERRCODE_SYNTAX_ERROR),
+				opts_out->format == COPY_FORMAT_BINARY
+				? errmsg("cannot specify %s in BINARY mode", "NULL")
+				: errmsg("cannot specify %s in JSON mode", "NULL"));
 
-	if (opts_out->format == COPY_FORMAT_BINARY && opts_out->default_print)
+	if (opts_out->default_print &&
+		(opts_out->format == COPY_FORMAT_BINARY ||
+		 opts_out->format == COPY_FORMAT_JSON))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("cannot specify %s in BINARY mode", "DEFAULT")));
+				errcode(ERRCODE_SYNTAX_ERROR),
+				opts_out->format == COPY_FORMAT_BINARY
+				? errmsg("cannot specify %s in BINARY mode", "DEFAULT")
+				: errmsg("cannot specify %s in JSON mode", "DEFAULT"));
 
 	/* Set defaults for omitted options */
 	if (!opts_out->delim)
@@ -836,11 +849,15 @@ ProcessCopyOptions(ParseState *pstate,
 				 errmsg("COPY delimiter cannot be \"%s\"", opts_out->delim)));
 
 	/* Check header */
-	if (opts_out->format == COPY_FORMAT_BINARY && opts_out->header_line != COPY_HEADER_FALSE)
+	if (opts_out->header_line != COPY_HEADER_FALSE &&
+		(opts_out->format == COPY_FORMAT_BINARY ||
+		 opts_out->format == COPY_FORMAT_JSON))
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*- translator: %s is the name of a COPY option, e.g. ON_ERROR */
-				 errmsg("cannot specify %s in BINARY mode", "HEADER")));
+				opts_out->format == COPY_FORMAT_BINARY
+				? errmsg("cannot specify %s in BINARY mode", "HEADER")
+				: errmsg("cannot specify %s in JSON mode", "HEADER"));
 
 	/* Check quote */
 	if (opts_out->format != COPY_FORMAT_CSV && opts_out->quote != NULL)
@@ -943,6 +960,12 @@ ProcessCopyOptions(ParseState *pstate,
 		 second %s is a COPY with direction, e.g. COPY TO */
 				 errmsg("COPY %s cannot be used with %s", "FREEZE",
 						"COPY TO")));
+
+	/* Check json format */
+	if (opts_out->format == COPY_FORMAT_JSON && is_from)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("COPY %s is not supported for %s", "FORMAT JSON", "COPY FROM"));
 
 	if (opts_out->default_print)
 	{

@@ -82,6 +82,94 @@ this is just a line full of junk that would error out if parsed
 
 copy copytest3 to stdout csv header;
 
+--- test copying in JSON mode with various styles
+copy (select 1 union all select 2) to stdout with (format json);
+copy (select 1 as foo union all select 2) to stdout with (format json);
+copy (values (1), (2)) TO stdout with (format json);
+copy copytest to stdout json;
+copy copytest to stdout (format json);
+copy (select * from copytest) to stdout (format json);
+
+-- all of the following should yield error
+copy copytest to stdout (format json, delimiter '|');
+copy copytest to stdout (format json, null '\N');
+copy copytest to stdout (format json, default '|');
+copy copytest to stdout (format json, header);
+copy copytest to stdout (format json, header 1);
+copy copytest to stdout (format json, quote '"');
+copy copytest to stdout (format json, escape '"');
+copy copytest to stdout (format json, force_quote *);
+copy copytest to stdout (format json, force_not_null *);
+copy copytest to stdout (format json, force_null *);
+copy copytest to stdout (format json, on_error ignore);
+copy copytest to stdout (format json, reject_limit 1);
+copy copytest from stdin(format json);
+-- all of the above should yield error
+
+-- column list with json format
+copy copytest (style, test, filler) to stdout (format json);
+
+-- column list with diverse data types
+create temp table copyjsontest_types (
+    id int,
+    js json,
+    jsb jsonb,
+    arr int[],
+    n numeric(10,2),
+    b boolean,
+    ts timestamp,
+    t text);
+
+insert into copyjsontest_types values
+(1, '{"a":1}', '{"b":2}', '{1,2,3}', 3.14, true,
+ '2024-01-15 10:30:00', 'hello'),
+(2, '[1,null,"x"]', '{"nested":{"k":"v"}}', '{4,5}', -99.99, false,
+ '2024-06-30 23:59:59', 'world'),
+(3, 'null', 'null', '{}', null, null, null, null);
+
+-- full table
+copy copyjsontest_types to stdout (format json);
+
+-- column subsets exercising each type
+copy copyjsontest_types (id, js, jsb) to stdout (format json);
+copy copyjsontest_types (id, arr, n, b) to stdout (format json);
+copy copyjsontest_types (jsb, t) to stdout (format json);
+copy copyjsontest_types (id, ts) to stdout (format json);
+
+-- single column: json and jsonb
+copy copyjsontest_types (js) to stdout (format json);
+copy copyjsontest_types (jsb) to stdout (format json);
+
+drop table copyjsontest_types;
+
+-- embedded escaped characters
+create temp table copyjsontest (
+    id bigserial,
+    f1 text,
+    f2 timestamptz);
+
+insert into copyjsontest
+  select g.i,
+         CASE WHEN g.i % 2 = 0 THEN
+           'line with '' in it: ' || g.i::text
+         ELSE
+           'line with " in it: ' || g.i::text
+         END,
+         'Mon Feb 10 17:32:01 1997 PST'
+  from generate_series(1,5) as g(i);
+
+insert into copyjsontest (f1) values
+(E'aaa\"bbb'::text),
+(E'aaa\\bbb'::text),
+(E'aaa\/bbb'::text),
+(E'aaa\bbbb'::text),
+(E'aaa\fbbb'::text),
+(E'aaa\nbbb'::text),
+(E'aaa\rbbb'::text),
+(E'aaa\tbbb'::text);
+
+copy copyjsontest to stdout json;
+
 create temp table copytest4 (
 	c1 int,
 	"colname with tab: 	" text);
