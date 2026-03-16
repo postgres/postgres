@@ -2969,13 +2969,9 @@ endif
 # Check if the C compiler understands typeof_unqual or a variant.  Define
 # HAVE_TYPEOF_UNQUAL if so, and define 'typeof_unqual' to the actual key word.
 #
-# Test the underscore variant first so that there is a higher chance
-# that clang used for bitcode also supports it, since we don't test
-# that separately.
-#
 # Test with a void pointer, because MSVC doesn't handle that, and we
 # need that for copyObject().
-foreach kw : ['__typeof_unqual__', 'typeof_unqual']
+foreach kw : ['typeof_unqual', '__typeof_unqual__']
   if cc.compiles('''
 int main(void)
 {
@@ -3002,7 +2998,7 @@ endforeach
 
 # Check if the C++ compiler understands typeof_unqual or a variant.
 if have_cxx
-  foreach kw : ['__typeof_unqual__', 'typeof_unqual']
+  foreach kw : ['typeof_unqual', '__typeof_unqual__']
     if cxx.compiles('''
 int main(void)
 {

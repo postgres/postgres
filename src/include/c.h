@@ -433,6 +433,21 @@ extern "C++"
 #endif
 
 /*
+ * When we call clang to generate bitcode, we might be using configure results
+ * from a different compiler, which might not be fully compatible with the
+ * clang we are using.  The fully correct solution would be to run a separate
+ * set of configure tests for that clang-for-bitcode, but that could be very
+ * difficult to implement, and in practice clang supports most things other
+ * compilers support.  So this section just contains some hardcoded ugliness
+ * to override some configure results where it is necessary.
+ */
+#if defined(__clang__)
+#if __clang_major__ < 19
+#undef HAVE_TYPEOF_UNQUAL
+#endif
+#endif							/* __clang__ */
+
+/*
  * Provide typeof in C++ for C++ compilers that don't support typeof natively.
  * It might be spelled __typeof__ instead of typeof, in which case
  * pg_cxx_typeof provides that mapping. If neither is supported, we can use

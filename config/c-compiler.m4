@@ -184,13 +184,9 @@ fi])# PGAC_C_TYPEOF
 AC_DEFUN([PGAC_C_TYPEOF_UNQUAL],
 [AC_CACHE_CHECK(for typeof_unqual, pgac_cv_c_typeof_unqual,
 [pgac_cv_c_typeof_unqual=no
-# Test the underscore variant first so that there is a higher chance
-# that clang used for bitcode also supports it, since we don't test
-# that separately.
-#
 # Test with a void pointer, because MSVC doesn't handle that, and we
 # need that for copyObject().
-for pgac_kw in __typeof_unqual__ typeof_unqual; do
+for pgac_kw in typeof_unqual __typeof_unqual__; do
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
 [int x = 0;
 $pgac_kw(x) y;
@@ -248,7 +244,7 @@ AC_DEFUN([PGAC_CXX_TYPEOF_UNQUAL],
 [AC_CACHE_CHECK(for C++ typeof_unqual, pgac_cv_cxx_typeof_unqual,
 [pgac_cv_cxx_typeof_unqual=no
 AC_LANG_PUSH(C++)
-for pgac_kw in __typeof_unqual__ typeof_unqual; do
+for pgac_kw in typeof_unqual __typeof_unqual__; do
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
 [int x = 0;
 $pgac_kw(x) y;

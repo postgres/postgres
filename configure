@@ -15084,13 +15084,9 @@ if ${pgac_cv_c_typeof_unqual+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   pgac_cv_c_typeof_unqual=no
-# Test the underscore variant first so that there is a higher chance
-# that clang used for bitcode also supports it, since we don't test
-# that separately.
-#
 # Test with a void pointer, because MSVC doesn't handle that, and we
 # need that for copyObject().
-for pgac_kw in __typeof_unqual__ typeof_unqual; do
+for pgac_kw in typeof_unqual __typeof_unqual__; do
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -15141,7 +15137,7 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-for pgac_kw in __typeof_unqual__ typeof_unqual; do
+for pgac_kw in typeof_unqual __typeof_unqual__; do
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
