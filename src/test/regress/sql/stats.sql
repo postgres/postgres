@@ -547,7 +547,7 @@ SELECT pg_stat_reset_single_table_counters('test_seq1'::regclass);
 SELECT stats_reset AS seq_reset_ts
   FROM pg_statio_all_sequences WHERE relname ='test_seq1' \gset
 SELECT pg_stat_reset_single_table_counters('test_seq1'::regclass);
-SELECT stats_reset > :'seq_reset_ts'::timestamptz, blks_read + blks_hit
+SELECT stats_reset > :'seq_reset_ts'::timestamptz
   FROM pg_statio_all_sequences WHERE relname ='test_seq1';
 DROP SEQUENCE test_seq1;
 

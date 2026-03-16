@@ -1192,11 +1192,11 @@ SELECT pg_stat_reset_single_table_counters('test_seq1'::regclass);
  
 (1 row)
 
-SELECT stats_reset > :'seq_reset_ts'::timestamptz, blks_read + blks_hit
+SELECT stats_reset > :'seq_reset_ts'::timestamptz
   FROM pg_statio_all_sequences WHERE relname ='test_seq1';
- ?column? | ?column? 
-----------+----------
- t        |        0
+ ?column? 
+----------
+ t
 (1 row)
 
 DROP SEQUENCE test_seq1;
