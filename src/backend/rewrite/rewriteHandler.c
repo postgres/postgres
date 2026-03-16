@@ -36,6 +36,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteDefine.h"
+#include "rewrite/rewriteGraphTable.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSearchCycle.h"
@@ -173,6 +174,7 @@ AcquireRewriteLocks(Query *parsetree,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
+			case RTE_GRAPH_TABLE:
 
 				/*
 				 * Grab the appropriate lock type for the relation, and do not
@@ -2044,6 +2046,16 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		++rt_index;
 
 		rte = rt_fetch(rt_index, parsetree->rtable);
+
+		/*
+		 * Convert GRAPH_TABLE clause into a subquery using relational
+		 * operators.  (This will change the rtekind to subquery, so it must
+		 * be done before the subquery handling below.)
+		 */
+		if (rte->rtekind == RTE_GRAPH_TABLE)
+		{
+			parsetree = rewriteGraphTable(parsetree, rt_index);
+		}
 
 		/*
 		 * A subquery RTE can't have associated rules, so there's nothing to

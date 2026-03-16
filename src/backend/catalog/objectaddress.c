@@ -47,6 +47,11 @@
 #include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_propgraph_element.h"
+#include "catalog/pg_propgraph_element_label.h"
+#include "catalog/pg_propgraph_label.h"
+#include "catalog/pg_propgraph_label_property.h"
+#include "catalog/pg_propgraph_property.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_publication_rel.h"
@@ -371,6 +376,76 @@ static const ObjectPropertyType ObjectProperty[] =
 		true
 	},
 	{
+		"property graph element",
+		PropgraphElementRelationId,
+		PropgraphElementObjectIndexId,
+		PROPGRAPHELOID,
+		PROPGRAPHELALIAS,
+		Anum_pg_propgraph_element_oid,
+		Anum_pg_propgraph_element_pgealias,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
+		false
+	},
+	{
+		"property graph element label",
+		PropgraphElementLabelRelationId,
+		PropgraphElementLabelObjectIndexId,
+		-1,
+		-1,
+		Anum_pg_propgraph_element_label_oid,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
+		false
+	},
+	{
+		"property graph label",
+		PropgraphLabelRelationId,
+		PropgraphLabelObjectIndexId,
+		PROPGRAPHLABELOID,
+		PROPGRAPHLABELNAME,
+		Anum_pg_propgraph_label_oid,
+		Anum_pg_propgraph_label_pgllabel,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
+		false
+	},
+	{
+		"property graph label property",
+		PropgraphLabelPropertyRelationId,
+		PropgraphLabelPropertyObjectIndexId,
+		-1,
+		-1,
+		Anum_pg_propgraph_label_property_oid,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
+		false
+	},
+	{
+		"property graph property",
+		PropgraphPropertyRelationId,
+		PropgraphPropertyObjectIndexId,
+		-1,
+		PROPGRAPHPROPNAME,
+		Anum_pg_propgraph_property_oid,
+		Anum_pg_propgraph_property_pgpname,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
+		false
+	},
+	{
 		"role",
 		AuthIdRelationId,
 		AuthIdOidIndexId,
@@ -680,6 +755,9 @@ static const struct object_type_map
 		"foreign table", OBJECT_FOREIGN_TABLE
 	},
 	{
+		"property graph", OBJECT_PROPGRAPH
+	},
+	{
 		"table column", OBJECT_COLUMN
 	},
 	{
@@ -813,6 +891,15 @@ static const struct object_type_map
 	},
 	{
 		"policy", OBJECT_POLICY
+	},
+	{
+		"property graph element", -1
+	},
+	{
+		"property graph label", -1
+	},
+	{
+		"property graph property", -1
 	},
 	{
 		"publication", OBJECT_PUBLICATION
@@ -949,6 +1036,7 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_VIEW:
 			case OBJECT_MATVIEW:
 			case OBJECT_FOREIGN_TABLE:
+			case OBJECT_PROPGRAPH:
 				address =
 					get_relation_by_qualified_name(objtype, castNode(List, object),
 												   &relation, lockmode,
@@ -1359,6 +1447,13 @@ get_relation_by_qualified_name(ObjectType objtype, List *object,
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not an index",
+								RelationGetRelationName(relation))));
+			break;
+		case OBJECT_PROPGRAPH:
+			if (relation->rd_rel->relkind != RELKIND_PROPGRAPH)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a property graph",
 								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_SEQUENCE:
@@ -2280,6 +2375,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_MATVIEW:
 		case OBJECT_INDEX:
 		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_PROPGRAPH:
 		case OBJECT_COLUMN:
 		case OBJECT_ATTRIBUTE:
 		case OBJECT_COLLATION:
@@ -2399,6 +2495,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_VIEW:
 		case OBJECT_MATVIEW:
 		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_PROPGRAPH:
 		case OBJECT_COLUMN:
 		case OBJECT_RULE:
 		case OBJECT_TRIGGER:
@@ -3976,6 +4073,156 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				break;
 			}
 
+		case PropgraphElementRelationId:
+			{
+				HeapTuple	tup;
+				Form_pg_propgraph_element pgeform;
+
+				tup = SearchSysCache1(PROPGRAPHELOID, ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for property graph element %u",
+							 object->objectId);
+					break;
+				}
+
+				pgeform = (Form_pg_propgraph_element) GETSTRUCT(tup);
+
+				if (pgeform->pgekind == PGEKIND_VERTEX)
+					/* translator: followed by, e.g., "property graph %s" */
+					appendStringInfo(&buffer, _("vertex %s of "), NameStr(pgeform->pgealias));
+				else if (pgeform->pgekind == PGEKIND_EDGE)
+					/* translator: followed by, e.g., "property graph %s" */
+					appendStringInfo(&buffer, _("edge %s of "), NameStr(pgeform->pgealias));
+				else
+					appendStringInfo(&buffer, "??? element %s of ", NameStr(pgeform->pgealias));
+				getRelationDescription(&buffer, pgeform->pgepgid, false);
+
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case PropgraphElementLabelRelationId:
+			{
+				Relation	rel;
+				SysScanDesc scan;
+				ScanKeyData key[1];
+				HeapTuple	tuple;
+				Form_pg_propgraph_element_label pgelform;
+				ObjectAddress oa;
+
+				rel = table_open(PropgraphElementLabelRelationId, AccessShareLock);
+				ScanKeyInit(&key[0],
+							Anum_pg_propgraph_element_label_oid,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
+
+				scan = systable_beginscan(rel, PropgraphElementLabelObjectIndexId, true, NULL, 1, key);
+				tuple = systable_getnext(scan);
+				if (!HeapTupleIsValid(tuple))
+				{
+					if (!missing_ok)
+						elog(ERROR, "could not find tuple for element label %u", object->objectId);
+
+					systable_endscan(scan);
+					table_close(rel, AccessShareLock);
+					break;
+				}
+
+				pgelform = (Form_pg_propgraph_element_label) GETSTRUCT(tuple);
+
+				appendStringInfo(&buffer, _("label %s of "), get_propgraph_label_name(pgelform->pgellabelid));
+				ObjectAddressSet(oa, PropgraphElementRelationId, pgelform->pgelelid);
+				appendStringInfoString(&buffer, getObjectDescription(&oa, false));
+
+				systable_endscan(scan);
+				table_close(rel, AccessShareLock);
+				break;
+			}
+
+		case PropgraphLabelRelationId:
+			{
+				HeapTuple	tuple;
+				Form_pg_propgraph_label pglform;
+
+				tuple = SearchSysCache1(PROPGRAPHLABELOID, object->objectId);
+				if (!HeapTupleIsValid(tuple))
+				{
+					if (!missing_ok)
+						elog(ERROR, "could not find tuple for label %u", object->objectId);
+					break;
+				}
+
+				pglform = (Form_pg_propgraph_label) GETSTRUCT(tuple);
+
+				/* translator: followed by, e.g., "property graph %s" */
+				appendStringInfo(&buffer, _("label %s of "), NameStr(pglform->pgllabel));
+				getRelationDescription(&buffer, pglform->pglpgid, false);
+				ReleaseSysCache(tuple);
+				break;
+			}
+
+		case PropgraphLabelPropertyRelationId:
+			{
+				Relation	rel;
+				SysScanDesc scan;
+				ScanKeyData key[1];
+				HeapTuple	tuple;
+				Form_pg_propgraph_label_property plpform;
+				ObjectAddress oa;
+
+				rel = table_open(PropgraphLabelPropertyRelationId, AccessShareLock);
+				ScanKeyInit(&key[0],
+							Anum_pg_propgraph_label_property_oid,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
+
+				scan = systable_beginscan(rel, PropgraphLabelPropertyObjectIndexId, true, NULL, 1, key);
+				tuple = systable_getnext(scan);
+				if (!HeapTupleIsValid(tuple))
+				{
+					if (!missing_ok)
+						elog(ERROR, "could not find tuple for label property %u", object->objectId);
+
+					systable_endscan(scan);
+					table_close(rel, AccessShareLock);
+					break;
+				}
+
+				plpform = (Form_pg_propgraph_label_property) GETSTRUCT(tuple);
+
+				appendStringInfo(&buffer, _("property %s of "), get_propgraph_property_name(plpform->plppropid));
+				ObjectAddressSet(oa, PropgraphElementLabelRelationId, plpform->plpellabelid);
+				appendStringInfoString(&buffer, getObjectDescription(&oa, false));
+
+				systable_endscan(scan);
+				table_close(rel, AccessShareLock);
+				break;
+			}
+
+		case PropgraphPropertyRelationId:
+			{
+				HeapTuple	tuple;
+				Form_pg_propgraph_property pgpform;
+
+				tuple = SearchSysCache1(PROPGRAPHPROPOID, object->objectId);
+				if (!HeapTupleIsValid(tuple))
+				{
+					if (!missing_ok)
+						elog(ERROR, "could not find tuple for property %u", object->objectId);
+					break;
+				}
+
+				pgpform = (Form_pg_propgraph_property) GETSTRUCT(tuple);
+
+				/* translator: followed by, e.g., "property graph %s" */
+				appendStringInfo(&buffer, _("property %s of "), NameStr(pgpform->pgpname));
+				getRelationDescription(&buffer, pgpform->pgppgid, false);
+				ReleaseSysCache(tuple);
+				break;
+			}
+
 		case PublicationRelationId:
 			{
 				char	   *pubname = get_publication_name(object->objectId,
@@ -4159,6 +4406,10 @@ getRelationDescription(StringInfo buffer, Oid relid, bool missing_ok)
 			break;
 		case RELKIND_FOREIGN_TABLE:
 			appendStringInfo(buffer, _("foreign table %s"),
+							 relname);
+			break;
+		case RELKIND_PROPGRAPH:
+			appendStringInfo(buffer, _("property graph %s"),
 							 relname);
 			break;
 		default:
@@ -4650,6 +4901,18 @@ getObjectTypeDescription(const ObjectAddress *object, bool missing_ok)
 			appendStringInfoString(&buffer, "policy");
 			break;
 
+		case PropgraphElementRelationId:
+			appendStringInfoString(&buffer, "property graph element");
+			break;
+
+		case PropgraphLabelRelationId:
+			appendStringInfoString(&buffer, "property graph label");
+			break;
+
+		case PropgraphPropertyRelationId:
+			appendStringInfoString(&buffer, "property graph property");
+			break;
+
 		case PublicationRelationId:
 			appendStringInfoString(&buffer, "publication");
 			break;
@@ -4730,6 +4993,9 @@ getRelationTypeDescription(StringInfo buffer, Oid relid, int32 objectSubId,
 			break;
 		case RELKIND_FOREIGN_TABLE:
 			appendStringInfoString(buffer, "foreign table");
+			break;
+		case RELKIND_PROPGRAPH:
+			appendStringInfoString(buffer, "property graph");
 			break;
 		default:
 			/* shouldn't get here */
@@ -5895,6 +6161,73 @@ getObjectIdentityParts(const ObjectAddress *object,
 				break;
 			}
 
+		case PropgraphElementRelationId:
+			{
+				HeapTuple	tup;
+				Form_pg_propgraph_element pge;
+
+				tup = SearchSysCache1(PROPGRAPHELOID, object->objectId);
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for property graph element %u", object->objectId);
+					break;
+				}
+				pge = (Form_pg_propgraph_element) GETSTRUCT(tup);
+				appendStringInfo(&buffer, "%s of ", quote_identifier(NameStr(pge->pgealias)));
+
+				getRelationIdentity(&buffer, pge->pgepgid, objname, false);
+				if (objname)
+					*objname = lappend(*objname, pstrdup(NameStr(pge->pgealias)));
+
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case PropgraphLabelRelationId:
+			{
+				HeapTuple	tup;
+				Form_pg_propgraph_label pgl;
+
+				tup = SearchSysCache1(PROPGRAPHLABELOID, object->objectId);
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for property graph label %u", object->objectId);
+					break;
+				}
+
+				pgl = (Form_pg_propgraph_label) GETSTRUCT(tup);
+				appendStringInfo(&buffer, "%s of ", quote_identifier(NameStr(pgl->pgllabel)));
+				getRelationIdentity(&buffer, pgl->pglpgid, objname, false);
+				if (objname)
+					*objname = lappend(*objname, pstrdup(NameStr(pgl->pgllabel)));
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case PropgraphPropertyRelationId:
+			{
+				HeapTuple	tup;
+				Form_pg_propgraph_property pgp;
+
+				tup = SearchSysCache1(PROPGRAPHPROPOID, object->objectId);
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for property graph property %u", object->objectId);
+					break;
+				}
+
+				pgp = (Form_pg_propgraph_property) GETSTRUCT(tup);
+				appendStringInfo(&buffer, "%s of ", quote_identifier(NameStr(pgp->pgpname)));
+				getRelationIdentity(&buffer, pgp->pgppgid, objname, false);
+				if (objname)
+					*objname = lappend(*objname, pstrdup(NameStr(pgp->pgpname)));
+				ReleaseSysCache(tup);
+				break;
+			}
+
 		case PublicationRelationId:
 			{
 				char	   *pubname;
@@ -6201,6 +6534,8 @@ get_relkind_objtype(char relkind)
 			return OBJECT_MATVIEW;
 		case RELKIND_FOREIGN_TABLE:
 			return OBJECT_FOREIGN_TABLE;
+		case RELKIND_PROPGRAPH:
+			return OBJECT_PROPGRAPH;
 		case RELKIND_TOASTVALUE:
 			return OBJECT_TABLE;
 		default:

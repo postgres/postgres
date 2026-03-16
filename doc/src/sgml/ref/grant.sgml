@@ -82,6 +82,11 @@ GRANT { { SET | ALTER SYSTEM } [, ... ] | ALL [ PRIVILEGES ] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
+GRANT { SELECT | ALL [ PRIVILEGES ] }
+    ON PROPERTY GRAPH <replaceable>graph_name</replaceable> [, ...]
+    TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
+
 GRANT { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schema_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
@@ -119,7 +124,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    that grants privileges on a database object (table, column, view,
    foreign table, sequence, database, foreign-data wrapper, foreign server,
    function, procedure, procedural language, large object, configuration
-   parameter, schema, tablespace, or type), and one that grants
+   parameter, property graph, schema, tablespace, or type), and one that grants
    membership in a role.  These variants are similar in many ways, but
    they are different enough to be described separately.
   </para>

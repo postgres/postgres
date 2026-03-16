@@ -70,10 +70,10 @@
 
  <para>
   The <productname>PostgreSQL</productname> core covers parts 1, 2, 9,
-  11, and 14.  Part 3 is covered by the ODBC driver, and part 13 is
+  11, 14, and 16.  Part 3 is covered by the ODBC driver, and part 13 is
   covered by the PL/Java plug-in, but exact conformance is currently
   not being verified for these components.  There are currently no
-  implementations of parts 4, 10, 15, and 16
+  implementations of parts 4, 10, and 15
   for <productname>PostgreSQL</productname>.
  </para>
 

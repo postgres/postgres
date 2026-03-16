@@ -219,8 +219,8 @@ slashUsage(unsigned short int pager)
 
 	HELP0("Informational\n");
 	HELP0("  (options: S = show system objects, x = expanded mode, + = additional detail)\n");
-	HELP0("  \\d[Sx+]                list tables, views, and sequences\n");
-	HELP0("  \\d[S+]   NAME          describe table, view, sequence, or index\n");
+	HELP0("  \\d[Sx+]                list tables, views, sequences, and property graphs\n");
+	HELP0("  \\d[S+]   NAME          describe table, view, sequence, index, or property graph\n");
 	HELP0("  \\da[Sx]  [PATTERN]     list aggregates\n");
 	HELP0("  \\dA[x+]  [PATTERN]     list access methods\n");
 	HELP0("  \\dAc[x+] [AMPTRN [TYPEPTRN]]  list operator classes\n");
@@ -246,6 +246,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\dFp[x+] [PATTERN]     list text search parsers\n");
 	HELP0("  \\dFt[x+] [PATTERN]     list text search templates\n");
 	HELP0("  \\dg[Sx+] [PATTERN]     list roles\n");
+	HELP0("  \\dG[Sx+] [PATTERN]     list property graphs\n");
 	HELP0("  \\di[Sx+] [PATTERN]     list indexes\n");
 	HELP0("  \\dl[x+]                list large objects, same as \\lo_list\n");
 	HELP0("  \\dL[Sx+] [PATTERN]     list procedural languages\n");

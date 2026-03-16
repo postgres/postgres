@@ -505,6 +505,17 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 			case RTE_GROUP:
 				kind = "group";
 				break;
+			case RTE_GRAPH_TABLE:
+
+				/*
+				 * We should not see RTE of this kind here since property
+				 * graph RTE gets converted to subquery RTE in
+				 * RewriteGraphTable(). In case we decide not to do the
+				 * conversion and leave RTEkind unchanged in future, print
+				 * correct name of RTE kind.
+				 */
+				kind = "graph_table";
+				break;
 		}
 
 		/* Begin group for this specific RTE */
@@ -617,6 +628,9 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 				break;
 			case RELKIND_PARTITIONED_INDEX:
 				relkind = "partitioned_index";
+				break;
+			case RELKIND_PROPGRAPH:
+				relkind = "property_graph";
 				break;
 			case '\0':
 				relkind = NULL;
@@ -739,6 +753,12 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 			ExplainPropertyText("ENR Name", rte->enrname, es);
 			ExplainPropertyFloat("ENR Tuples", NULL, rte->enrtuples, 0, es);
 		}
+
+		/*
+		 * rewriteGraphTable() clears graph_pattern and graph_table_columns
+		 * fields, so skip them. No graph table specific fields are required
+		 * to be printed.
+		 */
 
 		/*
 		 * add_rte_to_flat_rtable will clear groupexprs and securityQuals, so

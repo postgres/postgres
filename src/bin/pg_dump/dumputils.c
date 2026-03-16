@@ -510,6 +510,9 @@ do { \
 		/* UPDATE */
 		CONVERT_PRIV('w', "UPDATE");
 	}
+	else if (strcmp(type, "PROPERTY GRAPH") == 0 ||
+			 strcmp(type, "PROPERTY GRAPHS") == 0)
+		CONVERT_PRIV('r', "SELECT");
 	else if (strcmp(type, "FUNCTION") == 0 ||
 			 strcmp(type, "FUNCTIONS") == 0)
 		CONVERT_PRIV('X', "EXECUTE");

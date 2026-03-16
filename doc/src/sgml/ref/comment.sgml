@@ -47,6 +47,7 @@ COMMENT ON
   POLICY <replaceable class="parameter">policy_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
   PROCEDURE <replaceable class="parameter">procedure_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  PROPERTY GRAPH <replaceable class="parameter">object_name</replaceable>
   PUBLICATION <replaceable class="parameter">object_name</replaceable> |
   ROLE <replaceable class="parameter">object_name</replaceable> |
   ROUTINE <replaceable class="parameter">routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |

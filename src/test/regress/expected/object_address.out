@@ -34,6 +34,7 @@ CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
 CREATE PROCEDURE addr_nsp.proc(int4) LANGUAGE SQL AS $$ $$;
+CREATE PROPERTY GRAPH addr_nsp.gengraph;
 CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
 CREATE USER MAPPING FOR regress_addr_user SERVER "integer";
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regress_addr_user;
@@ -65,7 +66,8 @@ DECLARE
     objtype text;
 BEGIN
     FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
-        ('toast table column'), ('view column'), ('materialized view column')
+        ('toast table column'), ('view column'), ('materialized view column'),
+        ('property graph element'), ('property graph label'), ('property graph property')
     LOOP
         BEGIN
             PERFORM pg_get_object_address(objtype, '{one}', '{}');
@@ -81,6 +83,9 @@ WARNING:  error for sequence column: unsupported object type "sequence column"
 WARNING:  error for toast table column: unsupported object type "toast table column"
 WARNING:  error for view column: unsupported object type "view column"
 WARNING:  error for materialized view column: unsupported object type "materialized view column"
+WARNING:  error for property graph element: unsupported object type "property graph element"
+WARNING:  error for property graph label: unsupported object type "property graph label"
+WARNING:  error for property graph property: unsupported object type "property graph property"
 -- miscellaneous other errors
 select * from pg_get_object_address('operator of access method', '{btree,integer_ops,1}', '{int4,bool}');
 ERROR:  operator 1 (int4, bool) of operator family integer_ops for access method btree does not exist
@@ -98,7 +103,7 @@ DECLARE
 BEGIN
     FOR objtype IN VALUES
         ('table'), ('index'), ('sequence'), ('view'),
-        ('materialized view'), ('foreign table'),
+        ('materialized view'), ('foreign table'), ('property graph'),
         ('table column'), ('foreign table column'),
         ('aggregate'), ('function'), ('procedure'), ('type'), ('cast'),
         ('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
@@ -159,6 +164,12 @@ WARNING:  error for foreign table,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" d
 WARNING:  error for foreign table,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
 WARNING:  error for foreign table,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
 WARNING:  error for foreign table,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for property graph,{eins},{}: relation "eins" does not exist
+WARNING:  error for property graph,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for property graph,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for property graph,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for property graph,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for property graph,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
 WARNING:  error for table column,{eins},{}: column name must be qualified
 WARNING:  error for table column,{eins},{integer}: column name must be qualified
 WARNING:  error for table column,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
@@ -398,6 +409,7 @@ WITH objects (type, name, args) AS (VALUES
     ('view', '{addr_nsp, genview}', '{}'),
     ('materialized view', '{addr_nsp, genmatview}', '{}'),
     ('foreign table', '{addr_nsp, genftable}', '{}'),
+    ('property graph', '{addr_nsp, gengraph}', '{}'),
     ('table column', '{addr_nsp, gentable, b}', '{}'),
     ('foreign table column', '{addr_nsp, genftable, a}', '{}'),
     ('aggregate', '{addr_nsp, genaggr}', '{int4}'),
@@ -474,6 +486,7 @@ view|addr_nsp|genview|addr_nsp.genview|t
 materialized view|addr_nsp|genmatview|addr_nsp.genmatview|t
 foreign table|addr_nsp|genftable|addr_nsp.genftable|t
 foreign table column|addr_nsp|genftable|addr_nsp.genftable.a|t
+property graph|addr_nsp|gengraph|addr_nsp.gengraph|t
 role|NULL|regress_addr_user|regress_addr_user|t
 server|NULL|addr_fserv|addr_fserv|t
 user mapping|NULL|NULL|regress_addr_user on server integer|t
@@ -518,7 +531,7 @@ DROP PUBLICATION addr_pub;
 DROP PUBLICATION addr_pub_schema;
 DROP SUBSCRIPTION regress_addr_sub;
 DROP SCHEMA addr_nsp CASCADE;
-NOTICE:  drop cascades to 14 other objects
+NOTICE:  drop cascades to 15 other objects
 DETAIL:  drop cascades to text search dictionary addr_ts_dict
 drop cascades to text search configuration addr_ts_conf
 drop cascades to text search template addr_ts_temp
@@ -533,6 +546,7 @@ drop cascades to function genaggr(integer)
 drop cascades to type gendomain
 drop cascades to function trig()
 drop cascades to function proc(integer)
+drop cascades to property graph gengraph
 DROP OWNED BY regress_addr_user;
 DROP USER regress_addr_user;
 --
@@ -578,6 +592,9 @@ WITH objects (classid, objid, objsubid) AS (VALUES
     ('pg_event_trigger'::regclass, 0, 0), -- no event trigger
     ('pg_parameter_acl'::regclass, 0, 0), -- no parameter ACL
     ('pg_policy'::regclass, 0, 0), -- no policy
+    ('pg_propgraph_element'::regclass, 0, 0), -- no property graph element
+    ('pg_propgraph_label'::regclass, 0, 0), -- no property graph label
+    ('pg_propgraph_property'::regclass, 0, 0), -- no property graph property
     ('pg_publication'::regclass, 0, 0), -- no publication
     ('pg_publication_namespace'::regclass, 0, 0), -- no publication namespace
     ('pg_publication_rel'::regclass, 0, 0), -- no publication relation
@@ -634,5 +651,8 @@ ORDER BY objects.classid, objects.objid, objects.objsubid;
 ("(""publication relation"",,,)")|("(""publication relation"",,)")|NULL
 ("(""publication namespace"",,,)")|("(""publication namespace"",,)")|NULL
 ("(""parameter ACL"",,,)")|("(""parameter ACL"",,)")|NULL
+("(""property graph element"",,,)")|("(""property graph element"",,)")|NULL
+("(""property graph label"",,,)")|("(""property graph label"",,)")|NULL
+("(""property graph property"",,,)")|("(""property graph property"",,)")|NULL
 -- restore normal output mode
 \a\t

@@ -69,6 +69,11 @@ catalog_headers = [
   'pg_publication_rel.h',
   'pg_subscription.h',
   'pg_subscription_rel.h',
+  'pg_propgraph_element.h',
+  'pg_propgraph_element_label.h',
+  'pg_propgraph_label.h',
+  'pg_propgraph_label_property.h',
+  'pg_propgraph_property.h',
 ]
 
 # The .dat files we need can just be listed alphabetically.

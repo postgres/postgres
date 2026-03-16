@@ -1,0 +1,774 @@
+--
+--Test RLS with GRAPH_TABLE
+--
+--This test verifies that Row Level Security (RLS) policies are correctly
+--enforced when querying tables underlying property graphs using GRAPH_TABLE.
+--graph_table.sql has extensive tests covering interaction of GRAPH_TABLE with
+--other query constructs. rowsecurity.sql has extensive coverage of interaction
+--of RLS and other features of PostgreSQL. This test along with those two tests
+--is sufficient to make sure that all combinations of RLS and GRAPH_TABLE will
+--work as expected.
+-- Clean up in case a prior regression run failed
+-- Suppress NOTICE messages when users/groups don't exist
+SET client_min_messages TO 'warning';
+DROP USER IF EXISTS regress_graph_rls_alice;
+DROP USER IF EXISTS regress_graph_rls_bob;
+DROP USER IF EXISTS regress_graph_rls_carol;
+DROP USER IF EXISTS regress_graph_rls_dave;
+DROP USER IF EXISTS regress_graph_rls_exempt_user;
+DROP ROLE IF EXISTS regress_graph_rls_group1;
+DROP ROLE IF EXISTS regress_graph_rls_group2;
+DROP SCHEMA IF EXISTS graph_rls_schema CASCADE;
+RESET client_min_messages;
+-- initial setup
+CREATE USER regress_graph_rls_alice NOLOGIN;
+CREATE USER regress_graph_rls_bob NOLOGIN;
+CREATE USER regress_graph_rls_carol NOLOGIN;
+CREATE USER regress_graph_rls_dave NOLOGIN;
+CREATE USER regress_graph_rls_exempt_user BYPASSRLS NOLOGIN;
+CREATE ROLE regress_graph_rls_group1 NOLOGIN;
+CREATE ROLE regress_graph_rls_group2 NOLOGIN;
+GRANT regress_graph_rls_group1 TO regress_graph_rls_dave;
+GRANT regress_graph_rls_group2 TO regress_graph_rls_bob;
+CREATE SCHEMA graph_rls_schema;
+GRANT ALL ON SCHEMA graph_rls_schema to public;
+SET search_path = graph_rls_schema;
+-- setup for leaky-function tests
+CREATE FUNCTION f_leak(text) RETURNS bool
+    COST 0.0000001 LANGUAGE plpgsql
+    AS 'BEGIN RAISE NOTICE ''f_leak => %'', $1; RETURN true; END';
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+CREATE TABLE users (uid int PRIMARY KEY, pguser name, seclv int);
+INSERT INTO users VALUES
+    (1, 'regress_graph_rls_alice', 99),
+    (2, 'regress_graph_rls_bob', 1),
+    (3, 'regress_graph_rls_carol', 2),
+    (4, 'regress_graph_rls_dave', 3);
+GRANT SELECT ON users TO public;
+CREATE TABLE document_people (
+    did int,
+    dlevel int,
+    dtitle text);
+INSERT INTO document_people VALUES
+    ( 1, 2, 'Politicians'),
+    ( 2, 3, 'Artists'),
+    ( 3, 1, 'Scientists'),
+    ( 4, 100, 'Unspeakables');
+GRANT SELECT ON document_people TO public;
+CREATE TABLE accessed (
+    aid int,
+    uid int,
+    did int);
+INSERT INTO accessed VALUES
+    (1, 2, 3),
+    (2, 3, 1),
+    (3, 3, 3),
+    (4, 4, 3),
+    (5, 1, 1),
+    (6, 1, 4),
+    (7, 4, 2);
+GRANT SELECT ON accessed TO public;
+CREATE PROPERTY GRAPH cabinet
+    VERTEX TABLES (users KEY (uid),
+                   document_people AS document KEY (did))
+    EDGE TABLES (accessed KEY (aid)
+                 SOURCE KEY (uid) REFERENCES users (uid)
+                 DESTINATION KEY (did) REFERENCES document (did));
+GRANT SELECT ON cabinet TO public;
+--
+-- Basic RLS tests
+--
+ALTER TABLE document_people ENABLE ROW LEVEL SECURITY;
+-- user's security level must be higher than or equal to document's
+CREATE POLICY p1 ON document_people AS PERMISSIVE
+    USING (dlevel <= (SELECT seclv FROM users WHERE pguser = current_user));
+-- but Dave isn't allowed to see document titled 'Scientists'
+CREATE POLICY p2 ON document_people AS RESTRICTIVE TO regress_graph_rls_dave
+    USING (dtitle <> 'Scientists');
+CREATE POLICY p3 ON document_people AS RESTRICTIVE TO regress_graph_rls_group1
+    USING (dlevel < 3);
+CREATE POLICY p4 ON document_people AS PERMISSIVE TO regress_graph_rls_group2
+    USING (dlevel < 3);
+SET row_security TO ON;
+-- Use the same query in all the test cases below. Prepare it once and
+-- use multiple times. Apart from making the test file shorter and avoiding
+-- duplication, it also tests that a prepared statement correctly reflect changes
+-- to RLS policies, session user or RLS settings.
+PREPARE graph_rls_query AS
+SELECT * FROM GRAPH_TABLE (cabinet
+                           MATCH (u IS users)-[a IS accessed]->(d IS document)
+                           WHERE f_leak(d.dtitle)
+                           COLUMNS (u.pguser, a.aid, d.dtitle, d.dlevel))
+         ORDER BY 1, 2, 3, 4;
+-- viewpoint from regress_graph_rls_bob
+SET SESSION AUTHORIZATION regress_graph_rls_bob;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Scientists
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_bob   |   1 | Scientists  |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |   3 | Scientists  |      1
+ regress_graph_rls_dave  |   4 | Scientists  |      1
+(5 rows)
+
+-- viewpoint from regress_graph_rls_carol
+SET SESSION AUTHORIZATION regress_graph_rls_carol;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Scientists
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_bob   |   1 | Scientists  |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |   3 | Scientists  |      1
+ regress_graph_rls_dave  |   4 | Scientists  |      1
+(5 rows)
+
+-- viewpoint from regress_graph_rls_dave
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_carol |   2 | Politicians |      2
+(2 rows)
+
+-- RLS policy does not apply to table owner when RLS enabled
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+SET row_security TO ON;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+(7 rows)
+
+SET row_security TO OFF;
+-- database superuser does bypass RLS policy when disabled
+RESET SESSION AUTHORIZATION;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+(7 rows)
+
+-- database non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION regress_graph_rls_exempt_user;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+(7 rows)
+
+-- RLS policy does not apply to table owner when RLS disabled
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+(7 rows)
+
+-- When RLS disabled, other users get ERROR.
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query; -- error
+ERROR:  query would be affected by row-level security policy for table "document_people"
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+DROP PROPERTY GRAPH cabinet;
+--
+-- Table inheritance
+--
+ALTER TABLE document_people ADD COLUMN category text DEFAULT 'People';
+CREATE TABLE document_places (
+    did int,
+    dlevel int,
+    dtitle text,
+    category text DEFAULT 'Places');
+INSERT INTO document_places VALUES
+    ( 5, 1, 'Paris'),
+    ( 6, 2, 'Tokyo'),
+    ( 7, 3, 'New York');
+GRANT SELECT ON document_places TO public;
+-- Setup inheritance
+CREATE TABLE document (
+    did int,
+    dlevel int,
+    dtitle text);
+GRANT SELECT ON document TO public;
+ALTER TABLE document_people INHERIT document;
+ALTER TABLE document_places INHERIT document;
+INSERT INTO accessed VALUES
+    (11, 2, 5),
+    (12, 3, 6),
+    (13, 1, 7),
+    (14, 4, 5),
+    (15, 1, 6);
+-- Enable RLS and move policies p1 and p2 to parent table but leave p3 and p4 on
+-- child table. The policies on child table are not applied when querying parent
+-- table.
+ALTER TABLE document ENABLE ROW LEVEL SECURITY;
+DROP POLICY p1 ON document_people;
+DROP POLICY p2 ON document_people;
+CREATE POLICY p1 ON document AS PERMISSIVE
+    USING (dlevel <= (SELECT seclv FROM users WHERE pguser = current_user));
+CREATE POLICY p2 ON document AS RESTRICTIVE TO regress_graph_rls_dave
+    USING (dtitle <> 'Scientists');
+CREATE PROPERTY GRAPH cabinet
+    VERTEX TABLES (users KEY (uid), document KEY (did))
+    EDGE TABLES (accessed KEY (aid)
+                 SOURCE KEY (uid) REFERENCES users (uid)
+                 DESTINATION KEY (did) REFERENCES document (did));
+GRANT SELECT ON cabinet TO public;
+SET row_security TO ON;
+-- viewpoint from regress_graph_rls_bob
+SET SESSION AUTHORIZATION regress_graph_rls_bob;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Paris
+         pguser          | aid |   dtitle   | dlevel 
+-------------------------+-----+------------+--------
+ regress_graph_rls_bob   |   1 | Scientists |      1
+ regress_graph_rls_bob   |  11 | Paris      |      1
+ regress_graph_rls_carol |   3 | Scientists |      1
+ regress_graph_rls_dave  |   4 | Scientists |      1
+ regress_graph_rls_dave  |  14 | Paris      |      1
+(5 rows)
+
+-- viewpoint from regress_graph_rls_carol
+SET SESSION AUTHORIZATION regress_graph_rls_carol;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_alice |  15 | Tokyo       |      2
+ regress_graph_rls_bob   |   1 | Scientists  |      1
+ regress_graph_rls_bob   |  11 | Paris       |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |   3 | Scientists  |      1
+ regress_graph_rls_carol |  12 | Tokyo       |      2
+ regress_graph_rls_dave  |   4 | Scientists  |      1
+ regress_graph_rls_dave  |  14 | Paris       |      1
+(9 rows)
+
+-- viewpoint from regress_graph_rls_dave
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_alice |  13 | New York    |      3
+ regress_graph_rls_alice |  15 | Tokyo       |      2
+ regress_graph_rls_bob   |  11 | Paris       |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |  12 | Tokyo       |      2
+ regress_graph_rls_dave  |   7 | Artists     |      3
+ regress_graph_rls_dave  |  14 | Paris       |      1
+(8 rows)
+
+-- RLS policy does not apply to table owner when RLS enabled
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+SET row_security TO ON;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+SET row_security TO OFF;
+-- database superuser does bypass RLS policy when disabled
+RESET SESSION AUTHORIZATION;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- database non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION regress_graph_rls_exempt_user;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- RLS policy does not apply to table owner when RLS disabled
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- When RLS disabled, other users get ERROR.
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query; -- error
+ERROR:  query would be affected by row-level security policy for table "document"
+-- cleanup
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+DROP PROPERTY GRAPH cabinet;
+ALTER TABLE document_people NO INHERIT document;
+ALTER TABLE document_places NO INHERIT document;
+DROP TABLE document;
+--
+-- Partitioned Tables
+--
+CREATE TABLE document (
+    did int,
+    dlevel int,
+    dtitle text,
+    category text) PARTITION BY LIST (category);
+GRANT SELECT ON document TO public;
+ALTER TABLE document ATTACH PARTITION document_people FOR VALUES IN ('People');
+ALTER TABLE document ATTACH PARTITION document_places FOR VALUES IN ('Places');
+-- Enable RLS on partitioned table
+ALTER TABLE document ENABLE ROW LEVEL SECURITY;
+-- create policies on partitioned table
+CREATE POLICY p1 ON document AS PERMISSIVE
+    USING (dlevel <= (SELECT seclv FROM users WHERE pguser = current_user));
+CREATE POLICY p2 ON document AS RESTRICTIVE TO regress_graph_rls_dave
+    USING (dtitle <> 'Scientists');
+CREATE PROPERTY GRAPH cabinet
+    VERTEX TABLES (users KEY (uid), document KEY (did))
+    EDGE TABLES (accessed KEY (aid)
+                 SOURCE KEY (uid) REFERENCES users (uid)
+                 DESTINATION KEY (did) REFERENCES document (did));
+GRANT SELECT ON cabinet TO public;
+SET row_security TO ON;
+-- viewpoint from regress_graph_rls_bob
+SET SESSION AUTHORIZATION regress_graph_rls_bob;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Paris
+         pguser          | aid |   dtitle   | dlevel 
+-------------------------+-----+------------+--------
+ regress_graph_rls_bob   |   1 | Scientists |      1
+ regress_graph_rls_bob   |  11 | Paris      |      1
+ regress_graph_rls_carol |   3 | Scientists |      1
+ regress_graph_rls_dave  |   4 | Scientists |      1
+ regress_graph_rls_dave  |  14 | Paris      |      1
+(5 rows)
+
+-- viewpoint from regress_graph_rls_carol
+SET SESSION AUTHORIZATION regress_graph_rls_carol;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_alice |  15 | Tokyo       |      2
+ regress_graph_rls_bob   |   1 | Scientists  |      1
+ regress_graph_rls_bob   |  11 | Paris       |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |   3 | Scientists  |      1
+ regress_graph_rls_carol |  12 | Tokyo       |      2
+ regress_graph_rls_dave  |   4 | Scientists  |      1
+ regress_graph_rls_dave  |  14 | Paris       |      1
+(9 rows)
+
+-- viewpoint from regress_graph_rls_dave
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_alice |  13 | New York    |      3
+ regress_graph_rls_alice |  15 | Tokyo       |      2
+ regress_graph_rls_bob   |  11 | Paris       |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |  12 | Tokyo       |      2
+ regress_graph_rls_dave  |   7 | Artists     |      3
+ regress_graph_rls_dave  |  14 | Paris       |      1
+(8 rows)
+
+-- RLS policy does not apply to table owner when RLS enabled
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+SET row_security TO ON;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+SET row_security TO OFF;
+-- database superuser does bypass RLS policy when disabled
+RESET SESSION AUTHORIZATION;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- database non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION regress_graph_rls_exempt_user;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- RLS policy does not apply to table owner when RLS disabled
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- When RLS disabled, other users get ERROR.
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query; -- error
+ERROR:  query would be affected by row-level security policy for table "document"
+--
+-- Recursion through GRAPH_TABLE also throws error
+--
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+SET row_security TO ON;
+-- Create a policy on document that references document itself via GRAPH_TABLE
+CREATE POLICY pr ON document TO regress_graph_rls_dave
+    USING (EXISTS (SELECT 1 FROM GRAPH_TABLE (cabinet
+                           MATCH (u IS users)-[a IS accessed]->(d IS document)
+                           WHERE u.pguser = current_user
+                           COLUMNS (a.aid))));
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query; -- error
+ERROR:  infinite recursion detected in policy for relation "document"
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+DROP POLICY pr ON document;
+--
+-- Command specific policy. Since GRAPH_TABLE can be used in only SELECT, test
+-- only FOR SELECT policies.
+--
+DROP POLICY p1 ON document;
+DROP POLICY p2 ON document;
+CREATE POLICY p1 ON document AS PERMISSIVE
+    FOR SELECT
+    USING (dlevel <= (SELECT seclv FROM users WHERE pguser = current_user));
+CREATE POLICY p2 ON document AS RESTRICTIVE
+    FOR SELECT TO regress_graph_rls_dave
+    USING (dtitle <> 'Scientists');
+SET SESSION AUTHORIZATION regress_graph_rls_dave;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |   dtitle    | dlevel 
+-------------------------+-----+-------------+--------
+ regress_graph_rls_alice |   5 | Politicians |      2
+ regress_graph_rls_alice |  13 | New York    |      3
+ regress_graph_rls_alice |  15 | Tokyo       |      2
+ regress_graph_rls_bob   |  11 | Paris       |      1
+ regress_graph_rls_carol |   2 | Politicians |      2
+ regress_graph_rls_carol |  12 | Tokyo       |      2
+ regress_graph_rls_dave  |   7 | Artists     |      3
+ regress_graph_rls_dave  |  14 | Paris       |      1
+(8 rows)
+
+--
+-- Default deny policy, FORCE ROW LEVEL SECURITY
+--
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+DROP POLICY p1 ON document;
+DROP POLICY p2 ON document;
+-- default deny policy applies to non-owners, non-rls-exempt and non-superusers
+SET SESSION AUTHORIZATION regress_graph_rls_bob;
+EXECUTE graph_rls_query;
+ pguser | aid | dtitle | dlevel 
+--------+-----+--------+--------
+(0 rows)
+
+-- Deny RLS policy does not apply to table owner, superuser or RLS exempt user
+SET SESSION AUTHORIZATION regress_graph_rls_exempt_user;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+RESET SESSION AUTHORIZATION;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+SET SESSION AUTHORIZATION regress_graph_rls_alice;
+EXECUTE graph_rls_query;
+NOTICE:  f_leak => Politicians
+NOTICE:  f_leak => Artists
+NOTICE:  f_leak => Scientists
+NOTICE:  f_leak => Unspeakables
+NOTICE:  f_leak => Paris
+NOTICE:  f_leak => Tokyo
+NOTICE:  f_leak => New York
+         pguser          | aid |    dtitle    | dlevel 
+-------------------------+-----+--------------+--------
+ regress_graph_rls_alice |   5 | Politicians  |      2
+ regress_graph_rls_alice |   6 | Unspeakables |    100
+ regress_graph_rls_alice |  13 | New York     |      3
+ regress_graph_rls_alice |  15 | Tokyo        |      2
+ regress_graph_rls_bob   |   1 | Scientists   |      1
+ regress_graph_rls_bob   |  11 | Paris        |      1
+ regress_graph_rls_carol |   2 | Politicians  |      2
+ regress_graph_rls_carol |   3 | Scientists   |      1
+ regress_graph_rls_carol |  12 | Tokyo        |      2
+ regress_graph_rls_dave  |   4 | Scientists   |      1
+ regress_graph_rls_dave  |   7 | Artists      |      3
+ regress_graph_rls_dave  |  14 | Paris        |      1
+(12 rows)
+
+-- FORCE ROW LEVEL SECURITY applies RLS to owners too
+ALTER TABLE document FORCE ROW LEVEL SECURITY;
+EXECUTE graph_rls_query;
+ pguser | aid | dtitle | dlevel 
+--------+-----+--------+--------
+(0 rows)
+
+SET row_security TO OFF;
+EXECUTE graph_rls_query; -- error
+ERROR:  query would be affected by row-level security policy for table "document"
+HINT:  To disable the policy for the table's owner, use ALTER TABLE NO FORCE ROW LEVEL SECURITY.
+-- Clean up
+DEALLOCATE graph_rls_query;
+-- leave objects behind for pg_upgrade/pg_dump tests

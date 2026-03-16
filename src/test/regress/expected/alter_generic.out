@@ -525,6 +525,49 @@ ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4) test_opclass_o
 ALTER OPERATOR FAMILY alt_opf19 USING btree DROP FUNCTION 5 (int4, int4);
 DROP OPERATOR FAMILY alt_opf19 USING btree;
 --
+-- Property Graph
+--
+SET SESSION AUTHORIZATION regress_alter_generic_user1;
+CREATE PROPERTY GRAPH alt_graph1;
+CREATE PROPERTY GRAPH alt_graph2;
+CREATE PROPERTY GRAPH alt_graph3;
+ALTER PROPERTY GRAPH alt_graph1 RENAME TO alt_graph2; -- failed (name conflict)
+ERROR:  relation "alt_graph2" already exists
+ALTER PROPERTY GRAPH alt_graph1 RENAME TO alt_graph4; -- OK
+ALTER PROPERTY GRAPH alt_graph2 OWNER TO regress_alter_generic_user2;  -- failed (no role membership)
+ERROR:  must be able to SET ROLE "regress_alter_generic_user2"
+ALTER PROPERTY GRAPH alt_graph2 OWNER TO regress_alter_generic_user3;  -- OK
+ALTER PROPERTY GRAPH alt_graph4 SET SCHEMA alt_nsp2;  -- OK
+ALTER PROPERTY GRAPH alt_nsp2.alt_graph4 RENAME TO alt_graph2;  -- OK
+ALTER PROPERTY GRAPH alt_graph2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ERROR:  relation "alt_graph2" already exists in schema "alt_nsp2"
+SET SESSION AUTHORIZATION regress_alter_generic_user2;
+CREATE PROPERTY GRAPH alt_graph5;
+ALTER PROPERTY GRAPH alt_graph3 RENAME TO alt_graph5;  -- failed (not owner)
+ERROR:  must be owner of property graph alt_graph3
+ALTER PROPERTY GRAPH alt_graph5 RENAME TO alt_graph6;  -- OK
+ALTER PROPERTY GRAPH alt_graph3 OWNER TO regress_alter_generic_user2;  -- failed (not owner)
+ERROR:  must be owner of property graph alt_graph3
+ALTER PROPERTY GRAPH alt_graph6 OWNER TO regress_alter_generic_user3;  -- failed (no role membership)
+ERROR:  must be able to SET ROLE "regress_alter_generic_user3"
+ALTER PROPERTY GRAPH alt_graph3 SET SCHEMA alt_nsp2;  -- failed (not owner)
+ERROR:  must be owner of property graph alt_graph3
+RESET SESSION AUTHORIZATION;
+SELECT nspname, relname, rolname
+  FROM pg_class c, pg_namespace n, pg_authid a
+  WHERE c.relnamespace = n.oid AND c.relowner = a.oid
+    AND n.nspname in ('alt_nsp1', 'alt_nsp2')
+    AND c.relkind = 'g'
+  ORDER BY nspname, relname;
+ nspname  |  relname   |           rolname           
+----------+------------+-----------------------------
+ alt_nsp1 | alt_graph2 | regress_alter_generic_user3
+ alt_nsp1 | alt_graph3 | regress_alter_generic_user1
+ alt_nsp1 | alt_graph6 | regress_alter_generic_user2
+ alt_nsp2 | alt_graph2 | regress_alter_generic_user1
+(4 rows)
+
+--
 -- Statistics
 --
 SET SESSION AUTHORIZATION regress_alter_generic_user1;
@@ -714,7 +757,7 @@ NOTICE:  drop cascades to server alt_fserv3
 DROP LANGUAGE alt_lang2 CASCADE;
 DROP LANGUAGE alt_lang3 CASCADE;
 DROP SCHEMA alt_nsp1 CASCADE;
-NOTICE:  drop cascades to 28 other objects
+NOTICE:  drop cascades to 31 other objects
 DETAIL:  drop cascades to function alt_func3(integer)
 drop cascades to function alt_agg3(integer)
 drop cascades to function alt_func4(integer)
@@ -731,6 +774,9 @@ drop cascades to operator family alt_opc1 for access method hash
 drop cascades to operator family alt_opc2 for access method hash
 drop cascades to operator family alt_opf4 for access method hash
 drop cascades to operator family alt_opf2 for access method hash
+drop cascades to property graph alt_graph2
+drop cascades to property graph alt_graph3
+drop cascades to property graph alt_graph6
 drop cascades to table alt_regress_1
 drop cascades to table alt_regress_2
 drop cascades to text search dictionary alt_ts_dict3
@@ -744,12 +790,13 @@ drop cascades to text search template alt_ts_temp2
 drop cascades to text search parser alt_ts_prs3
 drop cascades to text search parser alt_ts_prs2
 DROP SCHEMA alt_nsp2 CASCADE;
-NOTICE:  drop cascades to 9 other objects
+NOTICE:  drop cascades to 10 other objects
 DETAIL:  drop cascades to function alt_nsp2.alt_func2(integer)
 drop cascades to function alt_nsp2.alt_agg2(integer)
 drop cascades to conversion alt_nsp2.alt_conv2
 drop cascades to operator alt_nsp2.@-@(integer,integer)
 drop cascades to operator family alt_nsp2.alt_opf2 for access method hash
+drop cascades to property graph alt_nsp2.alt_graph2
 drop cascades to text search dictionary alt_nsp2.alt_ts_dict2
 drop cascades to text search configuration alt_nsp2.alt_ts_conf2
 drop cascades to text search template alt_nsp2.alt_ts_temp2

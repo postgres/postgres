@@ -3965,6 +3965,9 @@
   proargtypes => 'oid oid', prosrc => 'oidge' },
 
 # System-view support functions
+{ oid => '8302', descr => 'source text of a property graph',
+  proname => 'pg_get_propgraphdef', provolatile => 's', prorettype => 'text',
+  proargtypes => 'oid', prosrc => 'pg_get_propgraphdef' },
 { oid => '1573', descr => 'source text of a rule',
   proname => 'pg_get_ruledef', provolatile => 's', prorettype => 'text',
   proargtypes => 'oid', prosrc => 'pg_get_ruledef' },

@@ -482,6 +482,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 		case OBJECT_FOREIGN_TABLE:
 		case OBJECT_INDEX:
 		case OBJECT_MATVIEW:
+		case OBJECT_PROPGRAPH:
 		case OBJECT_ROLE:
 		case OBJECT_SEQUENCE:
 		case OBJECT_SUBSCRIPTION:

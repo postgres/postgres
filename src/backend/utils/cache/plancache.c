@@ -2014,7 +2014,11 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 				break;
 
 			case RTE_SUBQUERY:
-				/* If this was a view, must lock/unlock the view */
+
+				/*
+				 * If this was a view or a property graph, must lock/unlock
+				 * it.
+				 */
 				if (OidIsValid(rte->relid))
 				{
 					if (acquire)

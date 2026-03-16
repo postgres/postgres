@@ -17,6 +17,7 @@
 
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/relation.h"
 #include "access/table.h"
 #include "access/tsmapi.h"
 #include "catalog/catalog.h"
@@ -35,6 +36,7 @@
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_graphtable.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -65,6 +67,8 @@ static ParseNamespaceItem *transformRangeFunction(ParseState *pstate,
 												  RangeFunction *r);
 static ParseNamespaceItem *transformRangeTableFunc(ParseState *pstate,
 												   RangeTableFunc *rtf);
+static ParseNamespaceItem *transformRangeGraphTable(ParseState *pstate,
+													RangeGraphTable *rgt);
 static TableSampleClause *transformRangeTableSample(ParseState *pstate,
 													RangeTableSample *rts);
 static ParseNamespaceItem *getNSItemForSpecialRelationTypes(ParseState *pstate,
@@ -899,6 +903,126 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 }
 
 /*
+ * Similar to parserOpenTable() but for property graphs.
+ */
+static Relation
+parserOpenPropGraph(ParseState *pstate, const RangeVar *relation, LOCKMODE lockmode)
+{
+	Relation	rel;
+	ParseCallbackState pcbstate;
+
+	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
+
+	rel = relation_openrv(relation, lockmode);
+
+	/*
+	 * In parserOpenTable(), the relkind check is done inside table_openrv*.
+	 * We do it here since we don't have anything like propgraph_open.
+	 */
+	if (rel->rd_rel->relkind != RELKIND_PROPGRAPH)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a property graph",
+					   RelationGetRelationName(rel)));
+
+	cancel_parser_errposition_callback(&pcbstate);
+	return rel;
+}
+
+/*
+ * transformRangeGraphTable -- transform a GRAPH_TABLE clause
+ */
+static ParseNamespaceItem *
+transformRangeGraphTable(ParseState *pstate, RangeGraphTable *rgt)
+{
+	Relation	rel;
+	Oid			graphid;
+	GraphTableParseState *gpstate = palloc0_object(GraphTableParseState);
+	Node	   *gp;
+	List	   *columns = NIL;
+	List	   *colnames = NIL;
+	ListCell   *lc;
+	int			resno = 0;
+	bool		saved_hasSublinks;
+
+	rel = parserOpenPropGraph(pstate, rgt->graph_name, AccessShareLock);
+
+	graphid = RelationGetRelid(rel);
+
+	gpstate->graphid = graphid;
+
+	/*
+	 * The syntax does not allow nested GRAPH_TABLE and this function
+	 * prohibits subquery within GRAPH_TABLE. There should be only one
+	 * GRAPH_TABLE being transformed at a time.
+	 */
+	Assert(!pstate->p_graph_table_pstate);
+	pstate->p_graph_table_pstate = gpstate;
+
+	Assert(!pstate->p_lateral_active);
+	pstate->p_lateral_active = true;
+
+	saved_hasSublinks = pstate->p_hasSubLinks;
+	pstate->p_hasSubLinks = false;
+
+	gp = transformGraphPattern(pstate, rgt->graph_pattern);
+
+	/*
+	 * Construct a targetlist representing the COLUMNS specified in the
+	 * GRAPH_TABLE. This uses previously constructed list of element pattern
+	 * variables in the GraphTableParseState.
+	 */
+	foreach(lc, rgt->columns)
+	{
+		ResTarget  *rt = lfirst_node(ResTarget, lc);
+		Node	   *colexpr;
+		TargetEntry *te;
+		char	   *colname;
+
+		colexpr = transformExpr(pstate, rt->val, EXPR_KIND_SELECT_TARGET);
+
+		if (rt->name)
+			colname = rt->name;
+		else
+		{
+			if (IsA(colexpr, GraphPropertyRef))
+				colname = get_propgraph_property_name(castNode(GraphPropertyRef, colexpr)->propid);
+			else
+			{
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("complex graph table column must specify an explicit column name"),
+						parser_errposition(pstate, rt->location));
+				colname = NULL;
+			}
+		}
+
+		colnames = lappend(colnames, makeString(colname));
+
+		te = makeTargetEntry((Expr *) colexpr, ++resno, colname, false);
+		columns = lappend(columns, te);
+	}
+
+	table_close(rel, NoLock);
+
+	pstate->p_graph_table_pstate = NULL;
+	pstate->p_lateral_active = false;
+
+	/*
+	 * If we support subqueries within GRAPH_TABLE, those need to be
+	 * propagated to the queries resulting from rewriting graph table RTE. We
+	 * don't do that right now, hence prohibit it for now.
+	 */
+	if (pstate->p_hasSubLinks)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("subqueries within GRAPH_TABLE reference are not supported")));
+	pstate->p_hasSubLinks = saved_hasSublinks;
+
+	return addRangeTableEntryForGraphTable(pstate, graphid, castNode(GraphPattern, gp), columns, colnames, rgt->alias, false, true);
+}
+
+/*
  * transformRangeTableSample --- transform a TABLESAMPLE clause
  *
  * Caller has already transformed rts->relation, we just have to validate
@@ -1115,6 +1239,18 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		else
 			nsitem = transformRangeTableFunc(pstate, (RangeTableFunc *) n);
 
+		*top_nsitem = nsitem;
+		*namespace = list_make1(nsitem);
+		rtr = makeNode(RangeTblRef);
+		rtr->rtindex = nsitem->p_rtindex;
+		return (Node *) rtr;
+	}
+	else if (IsA(n, RangeGraphTable))
+	{
+		RangeTblRef *rtr;
+		ParseNamespaceItem *nsitem;
+
+		nsitem = transformRangeGraphTable(pstate, (RangeGraphTable *) n);
 		*top_nsitem = nsitem;
 		*namespace = list_make1(nsitem);
 		rtr = makeNode(RangeTblRef);

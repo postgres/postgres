@@ -1,0 +1,105 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+int
+main(void)
+{
+exec sql begin declare section;
+	char command[512];
+	char search_address[10];
+	char cname[100];
+	int reg;
+exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	exec sql connect to REGRESSDB1 as main;
+
+	/* Create schema and tables for property graph testing */
+	exec sql create schema graph_ecpg_tests;
+	exec sql set search_path = graph_ecpg_tests;
+
+	exec sql create table customers (
+		customer_id integer primary key,
+		name varchar,
+		address varchar
+	);
+
+	exec sql create table orders (
+		order_id integer primary key,
+		register integer
+	);
+
+	exec sql create table customer_orders (
+		customer_orders_id integer primary key,
+		customer_id integer references customers (customer_id),
+		order_id integer references orders (order_id)
+	);
+
+	/* Insert test data */
+	exec sql insert into customers values (1, 'customer1', 'US'), (2, 'customer2', 'CA'), (3, 'customer3', 'GL');
+	exec sql insert into orders values (1, 100), (2, 200), (3, 500);
+	exec sql insert into customer_orders (customer_orders_id, customer_id, order_id) values (1, 1, 1), (2, 2, 2), (3, 3, 3);
+
+	/* Create property graph */
+	exec sql create property graph shopgraph
+		vertex tables (
+			customers,
+			orders
+		)
+		edge tables (
+			customer_orders key (customer_orders_id)
+				source key (customer_id) references customers (customer_id)
+				destination key (order_id) references orders (order_id)
+		);
+
+	exec sql commit;
+
+	/* direct sql - US customers */
+	exec sql select * into :cname, :reg from graph_table (shopgraph match (c is customers where c.address = 'US')-[is customer_orders]->(o is orders) columns (c.name, o.register));
+	printf("found %ld results (%s, %d)\n", sqlca.sqlerrd[2], cname, reg);
+
+	/* direct sql with C variable - GL customers */
+	strcpy(search_address, "GL");
+	exec sql select * into :cname, :reg from graph_table (shopgraph match (c is customers where c.address = :search_address)-[is customer_orders]->(o is orders) columns (c.name, o.register));
+	printf("found %ld results (%s, %d)\n", sqlca.sqlerrd[2], cname, reg);
+
+	/* prepared statement - CA customers */
+	sprintf(command, "select * from graph_table (shopgraph match (c is customers where c.address = $1)-[is customer_orders]->(o is orders) columns (c.name, o.register))");
+	exec sql prepare graph_stmt from :command;
+	strcpy(search_address, "CA");
+	exec sql execute graph_stmt into :cname, :reg using :search_address;
+	printf("found %ld results (%s, %d)\n", sqlca.sqlerrd[2], cname, reg);
+	exec sql deallocate graph_stmt;
+
+	/* cursor test - all customers with orders */
+	exec sql declare graph_cursor cursor for select * from graph_table (shopgraph match (c is customers)-[is customer_orders]->(o is orders) columns (c.name, o.register)) order by name;
+	exec sql open graph_cursor;
+	exec sql whenever not found do break;
+	while (1) {
+		exec sql fetch graph_cursor into :cname, :reg;
+		printf("cursor result: %s, %d\n", cname, reg);
+	}
+	exec sql whenever not found continue;
+	exec sql close graph_cursor;
+
+	/* label disjunction syntax test */
+	exec sql select * into :cname from graph_table (shopgraph match (c is customers | customers where c.address = 'US') columns (c.name));
+	printf("found %ld results (%s)\n", sqlca.sqlerrd[2], cname);
+
+	/* Clean up */
+	exec sql drop property graph shopgraph;
+	exec sql drop table customer_orders;
+	exec sql drop table orders;
+	exec sql drop table customers;
+	exec sql drop schema graph_ecpg_tests;
+	exec sql commit;
+	exec sql disconnect;
+
+	return 0;
+}

@@ -241,6 +241,31 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-propgraph-element"><structname>pg_propgraph_element</structname></link></entry>
+      <entry>property graph elements (vertices and edges)</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-propgraph-element-label"><structname>pg_propgraph_element_label</structname></link></entry>
+      <entry>property graph links between elements and labels</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-propgraph-label"><structname>pg_propgraph_label</structname></link></entry>
+      <entry>property graph labels</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-propgraph-label-property"><structname>pg_propgraph_label_property</structname></link></entry>
+      <entry>property graph label-specific property definitions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-propgraph-property"><structname>pg_propgraph_property</structname></link></entry>
+      <entry>property graph properties</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-publication"><structname>pg_publication</structname></link></entry>
       <entry>publications for logical replication</entry>
      </row>
@@ -2141,7 +2166,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <literal>c</literal> = composite type,
        <literal>f</literal> = foreign table,
        <literal>p</literal> = partitioned table,
-       <literal>I</literal> = partitioned index
+       <literal>I</literal> = partitioned index,
+       <literal>g</literal> = property graph
       </para></entry>
      </row>
 
@@ -6306,6 +6332,498 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    shared library file containing the function.
   </para>
 
+ </sect1>
+
+ <sect1 id="catalog-pg-propgraph-element">
+  <title><structname>pg_propgraph_element</structname></title>
+
+  <indexterm zone="catalog-pg-propgraph-element">
+   <primary>pg_propgraph_element</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_propgraph_element</structname> stores
+   information about the vertices and edges of a property graph, collectively
+   called the elements of the property graph.
+  </para>
+
+  <table>
+   <title><structname>pg_propgraph_element</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgepgid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the property graph that this element belongs to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgerelid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the table that contains the data for this property graph element
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgealias</structfield> <type>name</type>
+      </para>
+      <para>
+       The alias of the element.  This is a unique identifier for the element
+       within the graph.  It is set when the property graph is defined and
+       defaults to the name of the underlying element table.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgekind</structfield> <type>char</type>
+      </para>
+      <para>
+       <literal>v</literal> for a vertex, <literal>e</literal> for an edge
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgesrcvertexid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-propgraph-element"><structname>pg_propgraph_element</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       For an edge, a link to the source vertex.  (Zero for a vertex.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgedestvertexid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-propgraph-element"><structname>pg_propgraph_element</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       For an edge, a link to the destination vertex.  (Zero for a vertex.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgekey</structfield> <type>int2[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       An array of column numbers in the table referenced by
+       <structname>pgerelid</structname> that defines the key to use for this
+       element table.  (This defaults to the primary key when the property
+       graph is created.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgesrckey</structfield> <type>int2[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       For an edge, an array of column numbers in the table referenced by
+       <structname>pgerelid</structname> that defines the source key to use
+       for this element table.  (Null for a vertex.)  The combination of
+       <structfield>pgesrckey</structfield> and
+       <structfield>pgesrcref</structfield> creates the link between the edge
+       and the source vertex.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgesrcref</structfield> <type>int2[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       For an edge, an array of column numbers in the table reached via
+       <structname>pgesrcvertexid</structname>.  (Null for a vertex.)  The
+       combination of <structfield>pgesrckey</structfield> and
+       <structfield>pgesrcref</structfield> creates the link between the edge
+       and the source vertex.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgesrceqop</structfield> <type>oid[]</type>
+       (references <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       For an edge, an array of equality operators for
+       <structfield>pgesrcref</structfield> =
+       <structfield>pgesrckey</structfield> comparison. (Null for a vertex.)
+       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgedestkey</structfield> <type>int2[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       For an edge, an array of column numbers in the table referenced by
+       <structname>pgerelid</structname> that defines the destination key to use
+       for this element table.  (Null for a vertex.)  The combination of
+       <structfield>pgedestkey</structfield> and
+       <structfield>pgedestref</structfield> creates the link between the edge
+       and the destination vertex.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgedestref</structfield> <type>int2[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       For an edge, an array of column numbers in the table reached via
+       <structname>pgedestvertexid</structname>.  (Null for a vertex.)  The
+       combination of <structfield>pgedestkey</structfield> and
+       <structfield>pgedestref</structfield> creates the link between the edge
+       and the destination vertex.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgedesteqop</structfield> <type>oid[]</type>
+       (references <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       For an edge, an array of equality operators for
+       <structfield>pgedestref</structfield> =
+       <structfield>pgedestkey</structfield> comparison. (Null for a vertex.)
+       </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-propgraph-element-label">
+  <title><structname>pg_propgraph_element_label</structname></title>
+
+  <indexterm zone="catalog-pg-propgraph-element-label">
+   <primary>pg_propgraph_element_label</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_propgraph_element_label</structname> stores
+   information about which labels apply to which elements.
+  </para>
+
+  <table>
+   <title><structname>pg_propgraph_element_label</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgellabelid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-propgraph-label"><structname>pg_propgraph_label</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the label
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgelelid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-propgraph-element"><structname>pg_propgraph_element</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the element
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-propgraph-label">
+  <title><structname>pg_propgraph_label</structname></title>
+
+  <indexterm zone="catalog-pg-propgraph-label">
+   <primary>pg_propgraph_label</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_propgraph_label</structname> stores
+   information about the labels in a property graph.
+  </para>
+
+  <table>
+   <title><structname>pg_propgraph_label</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pglpgid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the property graph that this label belongs to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgllabel</structfield> <type>name</type>
+      </para>
+      <para>
+       The name of the label.  This is unique among the labels in a graph.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-propgraph-label-property">
+  <title><structname>pg_propgraph_label_property</structname></title>
+
+  <indexterm zone="catalog-pg-propgraph-label-property">
+   <primary>pg_propgraph_label_property</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_propgraph_label_property</structname> stores
+   information about the properties in a property graph that are specific to a
+   label.  In particular, this stores the expression that defines the
+   property.
+  </para>
+
+  <table>
+   <title><structname>pg_propgraph_label_property</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>plppropid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-propgraph-property"><structname>pg_propgraph_property</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the property
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>plpellabelid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-propgraph-element-label"><structname>pg_propgraph_element_label</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the label (indirectly via
+       <structname>pg_propgraph_element_label</structname>, which then links
+       to <structname>pg_propgraph_label</structname>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>plpexpr</structfield> <type>pg_node_tree</type>
+      </para>
+      <para>
+       Expression tree (in <function>nodeToString()</function> representation)
+       for the property's definition.  The expression references the table
+       reached via <structname>pg_propgraph_element_label</structname> and
+       <structname>pg_propgraph_element</structname>.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="catalog-pg-propgraph-property">
+  <title><structname>pg_propgraph_property</structname></title>
+
+  <indexterm zone="catalog-pg-propgraph-property">
+   <primary>pg_propgraph_property</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_propgraph_property</structname> stores
+   information about the properties in a property graph.  This only stores
+   information that applies to a property throughout the graph, independent of
+   what label or element it is on.  Additional information, including the
+   actual expressions that define the properties are in the catalog <link
+   linkend="catalog-pg-propgraph-label-property"><structname>pg_propgraph_label_property</structname></link>.
+  </para>
+
+  <table>
+   <title><structname>pg_propgraph_property</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgppgid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to the property graph that this property belongs to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgpname</structfield> <type>name</type>
+      </para>
+      <para>
+       The name of the property.  This is unique among the properties in a
+       graph.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgptypid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       The data type of this property.  (This is required to be fixed for a
+       given property in a property graph, even if the property is defined
+       multiple times in different elements and labels.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgptypmod</structfield> <type>int4</type>
+      </para>
+      <para>
+      <literal>typmod</literal> to be applied to the data type of this property.
+      (This is required to be fixed for a given property in a property graph,
+      even if the property is defined multiple times in different elements and
+      labels.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pgpcollation</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       The defined collation of this property, or zero if the property is not of
+       a collatable data type.  (This is required to be fixed for a given
+       property in a property graph, even if the property is defined multiple
+       times in different elements and labels.)
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
  <sect1 id="catalog-pg-publication">

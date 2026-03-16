@@ -120,3 +120,14 @@ SELECT * FROM vegetables v,
 EXPLAIN (RANGE_TABLE, COSTS OFF)
 SELECT * FROM vegetables v,
        (SELECT * FROM vegetables WHERE genus = 'daucus' OFFSET 0);
+
+-- Property graph test
+CREATE PROPERTY GRAPH vegetables_graph
+VERTEX TABLES
+(
+	daucus KEY(name) DEFAULT LABEL LABEL vegetables,
+	brassica KEY(name) DEFAULT LABEL LABEL vegetables
+);
+
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM GRAPH_TABLE (vegetables_graph MATCH (v1 IS vegetables) WHERE v1.genus = 'daucus' COLUMNS (v1.name));

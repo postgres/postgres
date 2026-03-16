@@ -2315,6 +2315,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
        This privilege is also needed to reference existing column values in
        <command>UPDATE</command>, <command>DELETE</command>,
        or <command>MERGE</command>.
+       For property graphs, this privilege allows the object to be referenced
+       in a <literal>GRAPH_TABLE</literal> clause.
        For sequences, this privilege also allows use of the
        <function>currval</function> function.
        For large objects, this privilege allows the object to be read.
@@ -5691,6 +5693,242 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     <xref linkend="sql-createforeigntable"/>, and
     <xref linkend="sql-importforeignschema"/>.
    </para>
+ </sect1>
+
+ <sect1 id="ddl-property-graphs">
+  <title>Property Graphs</title>
+
+  <indexterm zone="ddl-property-graphs">
+   <primary>property graph</primary>
+  </indexterm>
+
+  <para>
+   A property graph is a way to represent database contents, as an alternative
+   to the usual (in SQL) approach of representing database contents using
+   relational structures such as tables. A property graph can then be queried
+   using graph pattern matching syntax, instead of join queries typical of
+   relational databases.  PostgreSQL implements SQL/PGQ<footnote><para>Here, PGQ
+   stands for <quote>property graph query</quote>.  In the jargon of graph
+   databases, <quote>property graph</quote> is normally abbreviated as PG, which
+   is clearly confusing for practioners of PostgreSQL, also usually abbreviated
+   as PG.</para></footnote>, which is part of the SQL standard, where a property
+   graph is defined as a kind of read-only view over relational tables.  So the
+   actual data is still in tables or table-like objects, but is exposed as a
+   graph for graph querying operations.  (This is in contrast to native graph
+   databases, where the data is stored directly in a graph structure.)
+   Underneath, both relational queries and graph queries use the same query
+   planning and execution infrastructure, and in fact relational and graph
+   queries can be combined and mixed in single queries.
+  </para>
+
+  <para>
+   A graph is a set of vertices and edges.  Each edge has two distinguishable
+   associated vertices called the source and destination vertices.  (So in
+   this model, all edges are directed.)  Vertices and edges together are
+   called the elements of the graph.  A property graph extends this well-known
+   mathematical structure with a way to represent user data.  In a property
+   graph, each vertex or edge has one or more associated labels, and each
+   label has zero or more properties.  The labels are similar to table row
+   types in that they define the kind of the contained data and its structure.
+   The properties are similar to columns in that they contain the actual data.
+   In fact, by default, a property graph definition exposes the underlying
+   tables and columns as labels and properties, but more complicated
+   definitions are possible.
+  </para>
+
+  <para>
+   Consider the following table definitions:
+<programlisting>
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name varchar,
+    price numeric
+);
+
+CREATE TABLE customers (
+    customer_id integer PRIMARY KEY,
+    name varchar,
+    address varchar
+);
+
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    ordered_when date
+);
+
+CREATE TABLE order_items (
+    order_items_id integer PRIMARY KEY,
+    order_id integer REFERENCES orders (order_id),
+    product_no integer REFERENCES products (product_no),
+    quantity integer
+);
+
+CREATE TABLE customer_orders (
+    customer_orders_id integer PRIMARY KEY,
+    customer_id integer REFERENCES customers (customer_id),
+    order_id integer REFERENCES orders (order_id)
+);
+</programlisting>
+   When mapping this to a graph, the first three tables would be the vertices
+   and the last two tables would be the edges.  The foreign-key definitions
+   correspond to the fact that edges link two vertices.  (Graph definitions
+   work more naturally with many-to-many relationships, so this example is
+   organized like that, even though one-to-many relationships might be used
+   here in a pure relational approach.)
+  </para>
+
+  <para>
+   Here is an example how a property graph could be defined on top of these
+   tables:
+<programlisting>
+CREATE PROPERTY GRAPH myshop
+    VERTEX TABLES (
+        products,
+        customers,
+        orders
+    )
+    EDGE TABLES (
+        order_items SOURCE orders DESTINATION products,
+        customer_orders SOURCE customers DESTINATION orders
+    );
+</programlisting>
+  </para>
+
+  <para>
+   This graph could then be queried like this:
+<programlisting>
+-- get list of customers active today
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)-[IS customer_orders]->(o IS orders WHERE o.ordered_when = current_date) COLUMNS (c.name AS customer_name));
+</programlisting>
+   corresponding approximately to this relational query:
+<programlisting>
+-- get list of customers active today
+SELECT customers.name FROM customers JOIN customer_orders USING (customer_id) JOIN orders USING (order_id) WHERE orders.ordered_when = current_date;
+</programlisting>
+  </para>
+
+  <para>
+   The above definition requires that all tables have primary keys and that
+   for each edge there is an appropriate foreign key.  Otherwise, additional
+   clauses have to be specified to identify the key columns.  For example,
+   this would be the fully verbose definition that does not rely on primary
+   and foreign keys:
+<programlisting>
+CREATE PROPERTY GRAPH myshop
+    VERTEX TABLES (
+        products KEY (product_no),
+        customers KEY (customer_id),
+        orders KEY (order_id)
+    )
+    EDGE TABLES (
+        order_items KEY (order_items_id)
+            SOURCE KEY (order_id) REFERENCES orders (order_id)
+            DESTINATION KEY (product_no) REFERENCES products (product_no),
+        customer_orders KEY (customer_orders_id)
+            SOURCE KEY (customer_id) REFERENCES customers (customer_id)
+            DESTINATION KEY (order_id) REFERENCES orders (order_id)
+    );
+</programlisting>
+  </para>
+
+  <para>
+   As mentioned above, by default, the names of the tables and columns are
+   exposed as labels and properties, respectively.  The clauses <literal>IS
+   customer</literal>, <literal>IS order</literal>, etc. in the
+   <literal>MATCH</literal> clause in fact refer to labels, not table names.
+  </para>
+
+  <para>
+   One use of labels is to expose a table through a different name in the graph.
+   For example, in graphs, vertices typically have singular nouns as labels and
+   edges typically have verbs or phrases derived from verbs as labels, such as
+   <quote>has</quote>, <quote>contains</quote>, or something specific like
+   <quote>approved_by</quote>. We can introduce such labels into our example like
+   this:
+<programlisting>
+CREATE PROPERTY GRAPH myshop
+    VERTEX TABLES (
+        products LABEL product,
+        customers LABEL customer,
+        orders LABEL "order"
+    )
+    EDGE TABLES (
+        order_items SOURCE orders DESTINATION products LABEL contains,
+        customer_orders SOURCE customers DESTINATION orders LABEL has_placed
+    );
+</programlisting>
+  </para>
+
+  <para>
+   With this definition, we can write a query like this:
+<programlisting>
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customer)-[IS has_placed]->(o IS "order" WHERE o.ordered_when = current_date) COLUMNS (c.name AS customer_name));
+</programlisting>
+   With the new labels the <literal>MATCH</literal> clause is now more intuitive.
+  </para>
+
+  <para>
+   Notice that the label <literal>order</literal> is quoted. If we run above
+   statements without adding quotes around <literal>order</literal>, we will get
+   a syntax error since <literal>order</literal> is a keyword.
+  </para>
+
+  <para>
+   Another use is to apply the same label to multiple element tables.  For
+   example, consider this additional table:
+<programlisting>
+CREATE TABLE employees (
+    employee_id integer PRIMARY KEY,
+    employee_name varchar,
+    ...
+);
+</programlisting>
+and the following graph definition:
+<programlisting>
+CREATE PROPERTY GRAPH myshop
+    VERTEX TABLES (
+        products LABEL product,
+        customers LABEL customer LABEL person PROPERTIES (name),
+        orders LABEL order,
+        employees LABEL employee LABEL person PROPERTIES (employee_name AS name)
+    )
+    EDGE TABLES (
+        order_items SOURCE orders DESTINATION products LABEL contains,
+        customer_orders SOURCE customers DESTINATION orders LABEL has
+    );
+</programlisting>
+   (In practice, there ought to be an edge linking the
+   <literal>employees</literal> table to something, but it is allowed like
+   this.)  Then we can run a query like this (incomplete):
+<programlisting>
+SELECT ... FROM GRAPH_TABLE (myshop MATCH (IS person WHERE name = '...')-[]->... COLUMNS (...));
+</programlisting>
+   This would automatically consider both the <literal>customers</literal> and
+   the <literal>employees</literal> tables when looking for an edge with the
+   <literal>person</literal> label.
+  </para>
+
+  <para>
+   When more than one element table has the same label, it is required that
+   the properties match in number, name, and type.  In the example, we specify
+   an explicit property list and in one case override the name of the column
+   to achieve this.
+  </para>
+
+  <para>
+   Using more than one label associated with an element table and each label
+   exposing a different set of properties, the same relational data, and the
+   graph structure contained therein, can be exposed through multiple
+   co-existing logical views, which can be queried using graph pattern matching
+   constructs.
+  </para>
+
+  <para>
+   For more details on the syntax for creating property graphs, see <link
+   linkend="sql-create-property-graph"><command>CREATE PROPERTY
+   GRAPH</command></link>.  More details about the graph query syntax is in
+   <xref linkend="queries-graph"/>.
+  </para>
  </sect1>
 
  <sect1 id="ddl-others">

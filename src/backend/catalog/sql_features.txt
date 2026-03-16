@@ -348,6 +348,106 @@ F866	FETCH FIRST clause: PERCENT option			NO
 F867	FETCH FIRST clause: WITH TIES option			YES	
 F868	ORDER BY in grouped table			YES	
 F869	SQL implementation info population			YES	
+G000	Graph pattern			YES	SQL/PGQ required
+G001	Repeatable-elements match mode			YES	SQL/PGQ required
+G002	Different-edges match mode			NO	
+G003	Explicit REPEATABLE ELEMENTS keyword			NO	
+G004	Path variables			NO	
+G005	Path search prefix in a path pattern			NO	
+G006	Graph pattern KEEP clause: path mode prefix			NO	
+G007	Graph pattern KEEP clause: path search prefix			NO	
+G008	Graph pattern WHERE clause			YES	SQL/PGQ required
+G010	Explicit WALK keyword			NO	
+G011	Advanced path modes: TRAIL			NO	
+G012	Advanced path modes: SIMPLE			NO	
+G013	Advanced path modes: ACYCLIC			NO	
+G014	Explicit PATH/PATHS keywords			NO	
+G015	All path search: explicit ALL keyword			NO	
+G016	Any path search			NO	
+G017	All shortest path search			NO	
+G018	Any shortest path search			NO	
+G019	Counted shortest path search			NO	
+G020	Counted shortest group search			NO	
+G030	Path multiset alternation			NO	
+G031	Path multiset alternation: variable length path operands			NO	
+G032	Path pattern union			NO	
+G033	Path pattern union: variable length path operands			NO	
+G034	Path concatenation			YES	SQL/PGQ required
+G035	Quantified paths			NO	
+G036	Quantified edges			NO	
+G037	Questioned paths			NO	
+G038	Parenthesized path pattern expression			NO	
+G039	Simplified path pattern expression: full defaulting			NO	
+G040	Vertex pattern			YES	SQL/PGQ required
+G041	Non-local element pattern predicates			NO	
+G042	Basic full edge patterns			YES	SQL/PGQ required
+G043	Complete full edge patterns			NO	
+G044	Basic abbreviated edge patterns			YES	
+G045	Complete abbreviated edge patterns			NO	
+G046	Relaxed topological consistency: adjacent vertex patterns			NO	
+G047	Relaxed topological consistency: concise edge patterns			NO	
+G048	Parenthesized path pattern: subpath variable declaration			NO	
+G049	Parenthesized path pattern: path mode prefix			NO	
+G050	Parenthesized path pattern: WHERE clause			NO	
+G051	Parenthesized path pattern: non-local predicates			NO	
+G060	Bounded graph pattern quantifiers			NO	
+G061	Unbounded graph pattern quantifiers			NO	
+G070	Label expression: label disjunction			YES	SQL/PGQ required
+G071	Label expression: label conjunction			NO	
+G072	Label expression: label negation			NO	
+G073	Label expression: individual label name			YES	SQL/PGQ required
+G074	Label expression: wildcard label			NO	
+G075	Parenthesized label expression			NO	
+G080	Simplified path pattern expression: basic defaulting			NO	
+G081	Simplified path pattern expression: full overrides			NO	
+G082	Simplified path pattern expression: basic overrides			NO	
+G090	Property reference			YES	SQL/PGQ required
+G100	ELEMENT_ID function			NO	
+G110	IS DIRECTED predicate			NO	
+G111	IS LABELED predicate			NO	
+G112	IS SOURCE and IS DESTINATION predicate			NO	
+G113	ALL_DIFFERENT predicate			NO	
+G114	SAME predicate			NO	
+G115	PROPERTY_EXISTS predicate			NO	
+G120	Within-match aggregates			NO	
+G800	PATH_NAME function			NO	
+G801	ELEMENT_NUMBER function			NO	
+G802	PATH_LENGTH function			NO	
+G803	MATCHNUM function			NO	
+G810	IS BOUND predicate			NO	
+G811	IS BOUND predicate: AS option			NO	
+G820	BINDING_COUNT			NO	
+G830	Colon in 'is label' expression			NO	
+G840	Path-ordered aggregates			NO	
+G850	SQL/PGQ Information Schema views			YES	
+G860	GET DIAGNOSTICS enhancements for SQL-property graphs			NO	
+G900	GRAPH_TABLE			YES	SQL/PGQ required
+G901	GRAPH_TABLE: ONE ROW PER VERTEX			NO	
+G902	GRAPH_TABLE: ONE ROW PER STEP			NO	
+G903	GRAPH_TABLE: explicit ONE ROW PER MATCH keywords			NO	
+G904	All properties reference			NO	
+G905	GRAPH_TABLE: optional COLUMNS clause			NO	
+G906	GRAPH_TABLE: explicit EXPORT ALL			NO	
+G907	GRAPH_TABLE: EXPORT ALL EXCEPT			NO	
+G908	GRAPH_TABLE: EXPORT SINGLETONS list			NO	
+G909	GRAPH_TABLE: explicit EXPORT NO SINGLETONS			NO	
+G910	GRAPH_TABLE: 'in paths clause'			NO	
+G920	DDL-based SQL-property graphs			YES	SQL/PGQ required
+G921	Empty SQL-property graph			YES	
+G922	Views as element tables			YES	
+G923	In-line views as element tables			NO	
+G924	Explicit key clause for element tables			YES	SQL/PGQ required
+G925	Explicit label and properties clause for element tables			YES	SQL/PGQ required
+G926	More than one label for vertex tables			YES	
+G927	More than one label for edge tables			YES	
+G928	Value expressions as properties and renaming of properties			YES	
+G929	Labels and properties: EXCEPT list			NO	
+G940	Multi-sourced/destined edges			YES	
+G941	Implicit removal of incomplete edges			YES	
+G950	Alter property graph statement: ADD/DROP element table			YES	
+G960	Alter element table definition: ADD/DROP LABEL			YES	
+G970	Alter element table definition: ALTER LABEL			YES	
+G980	DROP PROPERTY GRAPH: CASCADE drop behavior			YES	
 R010	Row pattern recognition: FROM clause			NO	
 R020	Row pattern recognition: WINDOW clause			NO	
 R030	Row pattern recognition: full aggregate support			NO	

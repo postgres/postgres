@@ -864,6 +864,11 @@ ORDER BY p;
     </para>
 
     <para>
+     A <literal>GRAPH_TABLE</literal> <literal>FROM</literal> item can also
+     always contain lateral references.
+    </para>
+
+    <para>
      A <literal>LATERAL</literal> item can appear at the top level in the
      <literal>FROM</literal> list, or within a <literal>JOIN</literal> tree.  In the latter
      case it can also refer to any items that are on the left-hand side of a
@@ -2769,6 +2774,163 @@ SELECT * FROM t;
 
   </sect2>
 
+ </sect1>
+
+ <sect1 id="queries-graph">
+  <title>Graph Queries</title>
+
+  <para>
+   This section describes the sublanguage for querying property graphs,
+   defined as described in <xref linkend="ddl-property-graphs"/>.
+  </para>
+
+  <sect2 id="queries-graph-overview">
+   <title>Overview</title>
+
+   <para>
+    Consider this example from <xref linkend="ddl-property-graphs"/>:
+<programlisting>
+-- get list of customers active today
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)-[IS customer_orders]->(o IS orders WHERE o.ordered_when = current_date) COLUMNS (c.name AS customer_name));
+</programlisting>
+    The graph query part happens inside the <literal>GRAPH_TABLE</literal>
+    construct.  As far as the rest of the query is concerned, this acts like a
+    table function in that it produces a computed table as output.  Like other
+    <literal>FROM</literal> clause elements, table alias and column alias
+    names can be assigned to the result, and the result can be joined with
+    other tables, subsequently filtered, and so on, for example:
+<programlisting>
+SELECT ... FROM GRAPH_TABLE (mygraph MATCH ... COLUMNS (...)) AS myresult (a, b, c) JOIN othertable USING (a) WHERE b > 0 ORDER BY c;
+</programlisting>
+   </para>
+
+   <para>
+    The <literal>GRAPH_TABLE</literal> clause consists of the graph name,
+    followed by the keyword <literal>MATCH</literal>, followed by a graph
+    pattern expression (see below), followed by the keyword
+    <literal>COLUMNS</literal> and a column list.
+   </para>
+  </sect2>
+
+  <sect2 id="queries-graph-patterns">
+   <title>Graph Patterns</title>
+
+   <para>
+    The core of the graph querying functionality is the graph pattern, which
+    appears after the keyword <literal>MATCH</literal>.  Formally, a graph
+    pattern consists of one or more path patterns.  A path is a sequence of
+    graph elements, starting and ending with a vertex and alternating between
+    vertices and edges.  A path pattern is a syntactic expressions that
+    matches paths.
+   </para>
+
+   <para>
+    A path pattern thus matches a sequence of vertices and edges.  The
+    simplest possible path pattern is
+<programlisting>
+()
+</programlisting>
+    which matches a single vertex.  The next simplest pattern would be
+<programlisting>
+()-[]->()
+</programlisting>
+    which matches a vertex followed by an edge followed by a vertex.  The
+    characters <literal>()</literal> are a vertex pattern and the characters
+    <literal>-[]-></literal> are an edge pattern.
+   </para>
+
+   <para>
+    These characters can also be separated by whitespace, for example:
+<programlisting>
+( ) - [ ] - > ( )
+</programlisting>
+   </para>
+
+   <tip>
+    <para>
+     A way to remember these symbols is that in visual representations of
+     property graphs, vertices are usually circles (like
+     <literal>()</literal>) and edges have rectangular labels (like
+     <literal>[]</literal>).
+    </para>
+   </tip>
+
+   <para>
+    The above patterns would match any vertex, or any two vertices connected
+    by any edge, which isn't very interesting.  Normally, we want to search
+    for elements (vertices and edges) that have certain characteristics.
+    These characteristics are written in between the parentheses or brackets.
+    (This is also called an element pattern filler.)  Typically, we would
+    search for elements with a certain label.  This is written by <literal>IS
+    <replaceable>labelname</replaceable></literal>.  For example, this would
+    match all vertices with the label <literal>person</literal>:
+<programlisting>
+(IS person)
+</programlisting>
+    The next
+    example would match a vertex with the label <literal>person</literal>
+    connected to a vertex with the label <literal>account</literal> connected
+    by an edge with the label <literal>has</literal>.
+<programlisting>
+(IS person)-[IS has]->(IS account)
+</programlisting>
+    Multiple labels can also be matched, using <quote>or</quote> semantics:
+<programlisting>
+(IS person)-[IS has]->(IS account|creditcard)
+</programlisting>
+   </para>
+
+   <para>
+    Recall that edges are directed.  The other direction is also possible in a
+    path pattern, for example:
+<programlisting>
+(IS account)&lt;-[IS has]-(IS person)
+</programlisting>
+    It is also possible to match both directions:
+<programlisting>
+(IS person)-[IS is_friend_of]-(IS person)
+</programlisting>
+    This has a meaning of <quote>or</quote>: An edge in either direction would
+    match.
+   </para>
+
+   <para>
+    In many cases, the edge patterns don't need a filler.  (All the filtering
+    then happens on the vertices.)  For these cases, an abbreviated edge
+    pattern syntax is available that omits the brackets, for example:
+<programlisting>
+(IS person)->(IS account)
+(IS account)&lt;-(IS person)
+(IS person)-(IS person)
+</programlisting>
+    As is often the case, abbreviated syntax can make expressions more compact
+    but also sometimes harder to understand.
+   </para>
+
+   <para>
+    Furthermore, it is possible to define graph pattern variables in the path
+    pattern expressions.  These are bound to the matched elements and can be
+    used to refer to the property values from those elements.  The most
+    important use is to use them in the <literal>COLUMNS</literal> clause to
+    define the tabular result of the <literal>GRAPH_TABLE</literal> clause.
+    For example (assuming appropriate definitions of the property graph as
+    well as the underlying tables):
+<programlisting>
+GRAPH_TABLE (mygraph MATCH (p IS person)-[h IS has]->(a IS account)
+             COLUMNS (p.name AS person_name, h.since AS has_account_since, a.num AS account_number)
+</programlisting>
+    <literal>WHERE</literal> clauses can be used inside element patterns to
+    filter matches:
+<programlisting>
+(IS person)-[IS has]->(a IS account WHERE a.type = 'savings')
+</programlisting>
+   </para>
+
+   <!-- TODO: multiple path patterns in a graph pattern (comma-separated) -->
+
+   <!-- TODO: quantifiers -->
+
+  </sect2>
  </sect1>
 
 </chapter>

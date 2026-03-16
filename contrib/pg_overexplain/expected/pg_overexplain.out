@@ -612,3 +612,57 @@ SELECT * FROM vegetables v,
  Unprunable RTIs: 1 3 4 5 6
 (51 rows)
 
+-- Property graph test
+CREATE PROPERTY GRAPH vegetables_graph
+VERTEX TABLES
+(
+	daucus KEY(name) DEFAULT LABEL LABEL vegetables,
+	brassica KEY(name) DEFAULT LABEL LABEL vegetables
+);
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM GRAPH_TABLE (vegetables_graph MATCH (v1 IS vegetables) WHERE v1.genus = 'daucus' COLUMNS (v1.name));
+                  QUERY PLAN                  
+----------------------------------------------
+ Append
+   Append RTIs: 1
+   Child Append RTIs: none
+   ->  Seq Scan on daucus
+         Filter: (genus = 'daucus'::text)
+         Scan RTI: 4
+         Elided Node Type: SubqueryScan
+         Elided Node RTIs: 2
+   ->  Seq Scan on brassica
+         Filter: (genus = 'daucus'::text)
+         Scan RTI: 5
+         Elided Node Type: SubqueryScan
+         Elided Node RTIs: 3
+ RTI 1 (subquery, inherited, in-from-clause):
+   Eref: "graph_table" (name)
+   Relation: vegetables_graph
+   Relation Kind: property_graph
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 1
+   Lateral: true
+ RTI 2 (subquery):
+   Eref: unnamed_subquery (name)
+   Lateral: true
+ RTI 3 (subquery):
+   Eref: unnamed_subquery (name)
+   Lateral: true
+ RTI 4 (relation):
+   Subplan: unnamed_subquery
+   Eref: daucus (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 2
+ RTI 5 (relation):
+   Subplan: unnamed_subquery_1
+   Eref: brassica (id, name, genus)
+   Relation: brassica
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 3
+ Unprunable RTIs: 1 4 5
+(41 rows)
+

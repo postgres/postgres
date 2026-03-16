@@ -34,6 +34,11 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_propgraph_element.h"
+#include "catalog/pg_propgraph_element_label.h"
+#include "catalog/pg_propgraph_label.h"
+#include "catalog/pg_propgraph_label_property.h"
+#include "catalog/pg_propgraph_property.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -361,6 +366,9 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 									bool attrsOnly, bool keysOnly,
 									bool showTblSpc, bool inherits,
 									int prettyFlags, bool missing_ok);
+static void make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind);
+static void make_propgraphdef_labels(StringInfo buf, Oid elid, const char *elalias, Oid elrelid);
+static void make_propgraphdef_properties(StringInfo buf, Oid ellabelid, Oid elrelid);
 static char *pg_get_statisticsobj_worker(Oid statextid, bool columns_only,
 										 bool missing_ok);
 static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
@@ -1599,6 +1607,325 @@ pg_get_querydef(Query *query, bool pretty)
 				  prettyFlags, WRAP_COLUMN_DEFAULT, 0);
 
 	return buf.data;
+}
+
+/*
+ * pg_get_propgraphdef - get the definition of a property graph
+ */
+Datum
+pg_get_propgraphdef(PG_FUNCTION_ARGS)
+{
+	Oid			pgrelid = PG_GETARG_OID(0);
+	StringInfoData buf;
+	HeapTuple	classtup;
+	Form_pg_class classform;
+	char	   *name;
+	char	   *nsp;
+
+	initStringInfo(&buf);
+
+	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(pgrelid));
+	if (!HeapTupleIsValid(classtup))
+		PG_RETURN_NULL();
+
+	classform = (Form_pg_class) GETSTRUCT(classtup);
+	name = NameStr(classform->relname);
+
+	if (classform->relkind != RELKIND_PROPGRAPH)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a property graph", name)));
+
+	nsp = get_namespace_name(classform->relnamespace);
+
+	appendStringInfo(&buf, "CREATE PROPERTY GRAPH %s",
+					 quote_qualified_identifier(nsp, name));
+
+	ReleaseSysCache(classtup);
+
+	make_propgraphdef_elements(&buf, pgrelid, PGEKIND_VERTEX);
+	make_propgraphdef_elements(&buf, pgrelid, PGEKIND_EDGE);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
+/*
+ * Generates a VERTEX TABLES (...) or EDGE TABLES (...) clause.  Pass in the
+ * property graph relation OID and the element kind (vertex or edge).  Result
+ * is appended to buf.
+ */
+static void
+make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
+{
+	Relation	pgerel;
+	ScanKeyData scankey[1];
+	SysScanDesc scan;
+	bool		first;
+	HeapTuple	tup;
+
+	pgerel = table_open(PropgraphElementRelationId, AccessShareLock);
+
+	ScanKeyInit(&scankey[0],
+				Anum_pg_propgraph_element_pgepgid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pgrelid));
+
+	scan = systable_beginscan(pgerel, PropgraphElementAliasIndexId, true, NULL, 1, scankey);
+
+	first = true;
+	while ((tup = systable_getnext(scan)))
+	{
+		Form_pg_propgraph_element pgeform = (Form_pg_propgraph_element) GETSTRUCT(tup);
+		char	   *relname;
+		Datum		datum;
+		bool		isnull;
+
+		if (pgeform->pgekind != pgekind)
+			continue;
+
+		if (first)
+		{
+			appendStringInfo(buf, "\n    %s TABLES (\n", pgekind == PGEKIND_VERTEX ? "VERTEX" : "EDGE");
+			first = false;
+		}
+		else
+			appendStringInfo(buf, ",\n");
+
+		relname = get_rel_name(pgeform->pgerelid);
+		if (relname && strcmp(relname, NameStr(pgeform->pgealias)) == 0)
+			appendStringInfo(buf, "        %s",
+							 generate_relation_name(pgeform->pgerelid, NIL));
+		else
+			appendStringInfo(buf, "        %s AS %s",
+							 generate_relation_name(pgeform->pgerelid, NIL),
+							 quote_identifier(NameStr(pgeform->pgealias)));
+
+		datum = heap_getattr(tup, Anum_pg_propgraph_element_pgekey, RelationGetDescr(pgerel), &isnull);
+		if (!isnull)
+		{
+			appendStringInfoString(buf, " KEY (");
+			decompile_column_index_array(datum, pgeform->pgerelid, false, buf);
+			appendStringInfoString(buf, ")");
+		}
+		else
+			elog(ERROR, "null pgekey for element %u", pgeform->oid);
+
+		if (pgekind == PGEKIND_EDGE)
+		{
+			Datum		srckey;
+			Datum		srcref;
+			Datum		destkey;
+			Datum		destref;
+			HeapTuple	tup2;
+			Form_pg_propgraph_element pgeform2;
+
+			datum = heap_getattr(tup, Anum_pg_propgraph_element_pgesrckey, RelationGetDescr(pgerel), &isnull);
+			srckey = isnull ? 0 : datum;
+			datum = heap_getattr(tup, Anum_pg_propgraph_element_pgesrcref, RelationGetDescr(pgerel), &isnull);
+			srcref = isnull ? 0 : datum;
+			datum = heap_getattr(tup, Anum_pg_propgraph_element_pgedestkey, RelationGetDescr(pgerel), &isnull);
+			destkey = isnull ? 0 : datum;
+			datum = heap_getattr(tup, Anum_pg_propgraph_element_pgedestref, RelationGetDescr(pgerel), &isnull);
+			destref = isnull ? 0 : datum;
+
+			appendStringInfoString(buf, " SOURCE");
+			tup2 = SearchSysCache1(PROPGRAPHELOID, ObjectIdGetDatum(pgeform->pgesrcvertexid));
+			if (!tup2)
+				elog(ERROR, "cache lookup failed for property graph element %u", pgeform->pgesrcvertexid);
+			pgeform2 = (Form_pg_propgraph_element) GETSTRUCT(tup2);
+			if (srckey)
+			{
+				appendStringInfoString(buf, " KEY (");
+				decompile_column_index_array(srckey, pgeform->pgerelid, false, buf);
+				appendStringInfo(buf, ") REFERENCES %s (", quote_identifier(NameStr(pgeform2->pgealias)));
+				decompile_column_index_array(srcref, pgeform2->pgerelid, false, buf);
+				appendStringInfoString(buf, ")");
+			}
+			else
+				appendStringInfo(buf, " %s ", quote_identifier(NameStr(pgeform2->pgealias)));
+			ReleaseSysCache(tup2);
+
+			appendStringInfoString(buf, " DESTINATION");
+			tup2 = SearchSysCache1(PROPGRAPHELOID, ObjectIdGetDatum(pgeform->pgedestvertexid));
+			if (!tup2)
+				elog(ERROR, "cache lookup failed for property graph element %u", pgeform->pgedestvertexid);
+			pgeform2 = (Form_pg_propgraph_element) GETSTRUCT(tup2);
+			if (destkey)
+			{
+				appendStringInfoString(buf, " KEY (");
+				decompile_column_index_array(destkey, pgeform->pgerelid, false, buf);
+				appendStringInfo(buf, ") REFERENCES %s (", quote_identifier(NameStr(pgeform2->pgealias)));
+				decompile_column_index_array(destref, pgeform2->pgerelid, false, buf);
+				appendStringInfoString(buf, ")");
+			}
+			else
+				appendStringInfo(buf, " %s", quote_identifier(NameStr(pgeform2->pgealias)));
+			ReleaseSysCache(tup2);
+		}
+
+		make_propgraphdef_labels(buf, pgeform->oid, NameStr(pgeform->pgealias), pgeform->pgerelid);
+	}
+	if (!first)
+		appendStringInfo(buf, "\n    )");
+
+	systable_endscan(scan);
+	table_close(pgerel, AccessShareLock);
+}
+
+/*
+ * Generates label and properties list.  Pass in the element OID, the element
+ * alias, and the graph relation OID.  Result is appended to buf.
+ */
+static void
+make_propgraphdef_labels(StringInfo buf, Oid elid, const char *elalias, Oid elrelid)
+{
+	Relation	pglrel;
+	ScanKeyData scankey[1];
+	SysScanDesc scan;
+	int			count;
+	HeapTuple	tup;
+
+	pglrel = table_open(PropgraphElementLabelRelationId, AccessShareLock);
+
+	ScanKeyInit(&scankey[0],
+				Anum_pg_propgraph_element_label_pgelelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(elid));
+
+	count = 0;
+	scan = systable_beginscan(pglrel, PropgraphElementLabelElementLabelIndexId, true, NULL, 1, scankey);
+	while ((tup = systable_getnext(scan)))
+	{
+		count++;
+	}
+	systable_endscan(scan);
+
+	scan = systable_beginscan(pglrel, PropgraphElementLabelElementLabelIndexId, true, NULL, 1, scankey);
+
+	while ((tup = systable_getnext(scan)))
+	{
+		Form_pg_propgraph_element_label pgelform = (Form_pg_propgraph_element_label) GETSTRUCT(tup);
+		const char *labelname;
+
+		labelname = get_propgraph_label_name(pgelform->pgellabelid);
+
+		if (strcmp(labelname, elalias) == 0)
+		{
+			/* If the default label is the only label, don't print anything. */
+			if (count != 1)
+				appendStringInfo(buf, " DEFAULT LABEL");
+		}
+		else
+			appendStringInfo(buf, " LABEL %s", quote_identifier(labelname));
+
+		make_propgraphdef_properties(buf, pgelform->oid, elrelid);
+	}
+
+	systable_endscan(scan);
+
+	table_close(pglrel, AccessShareLock);
+}
+
+/*
+ * Helper function for make_propgraphdef_properties(): Sort (propname, expr)
+ * pairs by name.
+ */
+static int
+propdata_by_name_cmp(const ListCell *a, const ListCell *b)
+{
+	List	   *la = lfirst_node(List, a);
+	List	   *lb = lfirst_node(List, b);
+	char	   *pna = strVal(linitial(la));
+	char	   *pnb = strVal(linitial(lb));
+
+	return strcmp(pna, pnb);
+}
+
+/*
+ * Generates element table properties clause (PROPERTIES (...) or NO
+ * PROPERTIES).  Pass in label OID and element table OID.  Result is appended
+ * to buf.
+ */
+static void
+make_propgraphdef_properties(StringInfo buf, Oid ellabelid, Oid elrelid)
+{
+	Relation	plprel;
+	ScanKeyData scankey[1];
+	SysScanDesc scan;
+	HeapTuple	tup;
+	List	   *outlist = NIL;
+
+	plprel = table_open(PropgraphLabelPropertyRelationId, AccessShareLock);
+
+	ScanKeyInit(&scankey[0],
+				Anum_pg_propgraph_label_property_plpellabelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(ellabelid));
+
+	/*
+	 * We want to output the properties in a deterministic order.  So we first
+	 * read all the data, then sort, then print it.
+	 */
+	scan = systable_beginscan(plprel, PropgraphLabelPropertyLabelPropIndexId, true, NULL, 1, scankey);
+
+	while ((tup = systable_getnext(scan)))
+	{
+		Form_pg_propgraph_label_property plpform = (Form_pg_propgraph_label_property) GETSTRUCT(tup);
+		Datum		exprDatum;
+		bool		isnull;
+		char	   *tmp;
+		Node	   *expr;
+		char	   *propname;
+
+		exprDatum = heap_getattr(tup, Anum_pg_propgraph_label_property_plpexpr, RelationGetDescr(plprel), &isnull);
+		Assert(!isnull);
+		tmp = TextDatumGetCString(exprDatum);
+		expr = stringToNode(tmp);
+		pfree(tmp);
+
+		propname = get_propgraph_property_name(plpform->plppropid);
+
+		outlist = lappend(outlist, list_make2(makeString(propname), expr));
+	}
+
+	systable_endscan(scan);
+	table_close(plprel, AccessShareLock);
+
+	list_sort(outlist, propdata_by_name_cmp);
+
+	if (outlist)
+	{
+		List	   *context;
+		ListCell   *lc;
+		bool		first = true;
+
+		context = deparse_context_for(get_relation_name(elrelid), elrelid);
+
+		appendStringInfo(buf, " PROPERTIES (");
+
+		foreach(lc, outlist)
+		{
+			List	   *data = lfirst_node(List, lc);
+			char	   *propname = strVal(linitial(data));
+			Node	   *expr = lsecond(data);
+
+			if (first)
+				first = false;
+			else
+				appendStringInfo(buf, ", ");
+
+			if (IsA(expr, Var) && strcmp(propname, get_attname(elrelid, castNode(Var, expr)->varattno, false)) == 0)
+				appendStringInfo(buf, "%s", quote_identifier(propname));
+			else
+				appendStringInfo(buf, "%s AS %s",
+								 deparse_expression_pretty(expr, context, false, false, 0, 0),
+								 quote_identifier(propname));
+		}
+
+		appendStringInfo(buf, ")");
+	}
+	else
+		appendStringInfo(buf, " NO PROPERTIES");
 }
 
 /*
@@ -7610,6 +7937,171 @@ get_utility_query_def(Query *query, deparse_context *context)
 	}
 }
 
+
+/*
+ * Parse back a graph label expression
+ */
+static void
+get_graph_label_expr(Node *label_expr, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+
+	check_stack_depth();
+
+	switch (nodeTag(label_expr))
+	{
+		case T_GraphLabelRef:
+			{
+				GraphLabelRef *lref = (GraphLabelRef *) label_expr;
+
+				appendStringInfoString(buf, quote_identifier(get_propgraph_label_name(lref->labelid)));
+				break;
+			}
+
+		case T_BoolExpr:
+			{
+				BoolExpr   *be = (BoolExpr *) label_expr;
+				ListCell   *lc;
+				bool		first = true;
+
+				Assert(be->boolop == OR_EXPR);
+
+				foreach(lc, be->args)
+				{
+					if (!first)
+					{
+						if (be->boolop == OR_EXPR)
+							appendStringInfoString(buf, "|");
+					}
+					else
+						first = false;
+					get_graph_label_expr(lfirst(lc), context);
+				}
+
+				break;
+			}
+
+		default:
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(label_expr));
+			break;
+	}
+}
+
+/*
+ * Parse back a path pattern expression
+ */
+static void
+get_path_pattern_expr_def(List *path_pattern_expr, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	ListCell   *lc;
+
+	foreach(lc, path_pattern_expr)
+	{
+		GraphElementPattern *gep = lfirst_node(GraphElementPattern, lc);
+		const char *sep = "";
+
+		switch (gep->kind)
+		{
+			case VERTEX_PATTERN:
+				appendStringInfoString(buf, "(");
+				break;
+			case EDGE_PATTERN_LEFT:
+				appendStringInfoString(buf, "<-[");
+				break;
+			case EDGE_PATTERN_RIGHT:
+			case EDGE_PATTERN_ANY:
+				appendStringInfoString(buf, "-[");
+				break;
+			case PAREN_EXPR:
+				appendStringInfoString(buf, "(");
+				break;
+		}
+
+		if (gep->variable)
+		{
+			appendStringInfoString(buf, quote_identifier(gep->variable));
+			sep = " ";
+		}
+
+		if (gep->labelexpr)
+		{
+			appendStringInfoString(buf, sep);
+			appendStringInfoString(buf, "IS ");
+			get_graph_label_expr(gep->labelexpr, context);
+			sep = " ";
+		}
+
+		if (gep->subexpr)
+		{
+			appendStringInfoString(buf, sep);
+			get_path_pattern_expr_def(gep->subexpr, context);
+			sep = " ";
+		}
+
+		if (gep->whereClause)
+		{
+			appendStringInfoString(buf, sep);
+			appendStringInfoString(buf, "WHERE ");
+			get_rule_expr(gep->whereClause, context, false);
+		}
+
+		switch (gep->kind)
+		{
+			case VERTEX_PATTERN:
+				appendStringInfoString(buf, ")");
+				break;
+			case EDGE_PATTERN_LEFT:
+			case EDGE_PATTERN_ANY:
+				appendStringInfoString(buf, "]-");
+				break;
+			case EDGE_PATTERN_RIGHT:
+				appendStringInfoString(buf, "]->");
+				break;
+			case PAREN_EXPR:
+				appendStringInfoString(buf, ")");
+				break;
+		}
+
+		if (gep->quantifier)
+		{
+			int			lower = linitial_int(gep->quantifier);
+			int			upper = lsecond_int(gep->quantifier);
+
+			appendStringInfo(buf, "{%d,%d}", lower, upper);
+		}
+	}
+}
+
+/*
+ * Parse back a graph pattern
+ */
+static void
+get_graph_pattern_def(GraphPattern *graph_pattern, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	ListCell   *lc;
+	bool		first = true;
+
+	foreach(lc, graph_pattern->path_pattern_list)
+	{
+		List	   *path_pattern_expr = lfirst_node(List, lc);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		else
+			first = false;
+
+		get_path_pattern_expr_def(path_pattern_expr, context);
+	}
+
+	if (graph_pattern->whereClause)
+	{
+		appendStringInfoString(buf, "WHERE ");
+		get_rule_expr(graph_pattern->whereClause, context, false);
+	}
+}
+
 /*
  * Display a Var appropriately.
  *
@@ -8220,6 +8712,7 @@ get_name_for_var_field(Var *var, int fieldno,
 		case RTE_RELATION:
 		case RTE_VALUES:
 		case RTE_NAMEDTUPLESTORE:
+		case RTE_GRAPH_TABLE:
 		case RTE_RESULT:
 
 			/*
@@ -10664,6 +11157,14 @@ get_rule_expr(Node *node, deparse_context *context,
 			get_tablefunc((TableFunc *) node, context, showimplicit);
 			break;
 
+		case T_GraphPropertyRef:
+			{
+				GraphPropertyRef *gpr = (GraphPropertyRef *) node;
+
+				appendStringInfo(buf, "%s.%s", quote_identifier(gpr->elvarname), quote_identifier(get_propgraph_property_name(gpr->propid)));
+				break;
+			}
+
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
@@ -12545,6 +13046,36 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				break;
 			case RTE_TABLEFUNC:
 				get_tablefunc(rte->tablefunc, context, true);
+				break;
+			case RTE_GRAPH_TABLE:
+				appendStringInfoString(buf, "GRAPH_TABLE (");
+				appendStringInfoString(buf, generate_relation_name(rte->relid, context->namespaces));
+				appendStringInfoString(buf, " MATCH ");
+				get_graph_pattern_def(rte->graph_pattern, context);
+				appendStringInfoString(buf, " COLUMNS (");
+				{
+					ListCell   *lc;
+					bool		first = true;
+
+					foreach(lc, rte->graph_table_columns)
+					{
+						TargetEntry *te = lfirst_node(TargetEntry, lc);
+						deparse_context context = {0};
+
+						if (!first)
+							appendStringInfoString(buf, ", ");
+						else
+							first = false;
+
+						context.buf = buf;
+
+						get_rule_expr((Node *) te->expr, &context, false);
+						appendStringInfoString(buf, " AS ");
+						appendStringInfoString(buf, quote_identifier(te->resname));
+					}
+				}
+				appendStringInfoString(buf, ")");
+				appendStringInfoString(buf, ")");
 				break;
 			case RTE_VALUES:
 				/* Values list RTE */

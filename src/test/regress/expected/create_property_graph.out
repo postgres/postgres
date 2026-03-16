@@ -1,0 +1,926 @@
+CREATE SCHEMA create_property_graph_tests;
+GRANT USAGE ON SCHEMA create_property_graph_tests TO PUBLIC;
+SET search_path = create_property_graph_tests;
+CREATE SCHEMA create_property_graph_tests_2;
+GRANT USAGE ON SCHEMA create_property_graph_tests_2 TO PUBLIC;
+CREATE ROLE regress_graph_user1;
+CREATE ROLE regress_graph_user2;
+CREATE PROPERTY GRAPH g1;
+COMMENT ON PROPERTY GRAPH g1 IS 'a graph';
+CREATE PROPERTY GRAPH g1;  -- error: duplicate
+ERROR:  relation "g1" already exists
+CREATE TABLE t1 (a int, b text);
+CREATE TABLE t2 (i int PRIMARY KEY, j int, k int);
+CREATE TABLE t3 (x int, y text, z text);
+CREATE TABLE e1 (a int, i int, t text, PRIMARY KEY (a, i));
+CREATE TABLE e2 (a int, x int, t text);
+CREATE PROPERTY GRAPH g2
+    VERTEX TABLES (t1 KEY (a), t2 DEFAULT LABEL, t3 KEY (x) LABEL t3l1 LABEL t3l2)
+    EDGE TABLES (
+        e1
+            SOURCE KEY (a) REFERENCES t1 (a)
+            DESTINATION KEY (i) REFERENCES t2 (i),
+        e2 KEY (a, x)
+            SOURCE KEY (a) REFERENCES t1 (a)
+            DESTINATION KEY (x, t) REFERENCES t3 (x, y)
+    );
+-- test dependencies/object descriptions
+DROP TABLE t1;  -- fail
+ERROR:  cannot drop table t1 because other objects depend on it
+DETAIL:  vertex t1 of property graph g2 depends on table t1
+edge e1 of property graph g2 depends on table t1
+edge e2 of property graph g2 depends on table t1
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TABLE t1 DROP COLUMN b;  -- non-key column; fail
+ERROR:  cannot drop column b of table t1 because other objects depend on it
+DETAIL:  property b of label t1 of vertex t1 of property graph g2 depends on column b of table t1
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TABLE t1 DROP COLUMN a;  -- key column; fail
+ERROR:  cannot drop column a of table t1 because other objects depend on it
+DETAIL:  vertex t1 of property graph g2 depends on column a of table t1
+edge e1 of property graph g2 depends on column a of table t1
+edge e2 of property graph g2 depends on column a of table t1
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- like g2 but assembled with ALTER
+CREATE PROPERTY GRAPH g3;
+ALTER PROPERTY GRAPH g3 ADD VERTEX TABLES (t1 KEY (a), t2 DEFAULT LABEL);
+ALTER PROPERTY GRAPH g3
+    ADD VERTEX TABLES (t3 KEY (x) LABEL t3l1)
+    ADD EDGE TABLES (
+        e1 SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (i) REFERENCES t2 (i),
+        e2 KEY (a, x) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (x, t) REFERENCES t3 (x, y)
+    );
+ALTER PROPERTY GRAPH g3
+    ALTER VERTEX TABLE t3
+        ADD LABEL t3l2 PROPERTIES ALL COLUMNS
+        ADD LABEL t3l3 PROPERTIES ALL COLUMNS;
+ALTER PROPERTY GRAPH g3 ALTER VERTEX TABLE t3 DROP LABEL t3l3x;  -- error
+ERROR:  property graph "g3" element "t3" has no label "t3l3x"
+ALTER PROPERTY GRAPH g3 ALTER VERTEX TABLE t3 DROP LABEL t3l3;
+ALTER PROPERTY GRAPH g3 DROP VERTEX TABLES (t2);  -- fail
+ERROR:  cannot drop vertex t2 of property graph g3 because other objects depend on it
+DETAIL:  edge e1 of property graph g3 depends on vertex t2 of property graph g3
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER PROPERTY GRAPH g3 DROP VERTEX TABLES (t2) CASCADE;
+NOTICE:  drop cascades to edge e1 of property graph g3
+ALTER PROPERTY GRAPH g3 DROP EDGE TABLES (e2);
+CREATE PROPERTY GRAPH g4
+    VERTEX TABLES (
+        t1 KEY (a) NO PROPERTIES,
+        t2 DEFAULT LABEL PROPERTIES (i + j AS i_j, k),
+        t3 KEY (x) LABEL t3l1 PROPERTIES (x, y AS yy) LABEL t3l2 PROPERTIES (x, z AS zz)
+    )
+    EDGE TABLES (
+        e1
+            SOURCE KEY (a) REFERENCES t1 (a)
+            DESTINATION KEY (i) REFERENCES t2 (i)
+            PROPERTIES ALL COLUMNS,
+        e2 KEY (a, x)
+            SOURCE KEY (a) REFERENCES t1 (a)
+            DESTINATION KEY (x, t) REFERENCES t3 (x, y)
+            PROPERTIES ALL COLUMNS
+    );
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t2 ALTER LABEL t2 ADD PROPERTIES (k * 2 AS kk);
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t2 ALTER LABEL t2 DROP PROPERTIES (k);
+CREATE TABLE t11 (a int PRIMARY KEY);
+CREATE TABLE t12 (b int PRIMARY KEY);
+CREATE TABLE t13 (
+    c int PRIMARY KEY,
+    d int REFERENCES t11,
+    e int REFERENCES t12
+);
+CREATE PROPERTY GRAPH g5
+    VERTEX TABLES (t11, t12)
+    EDGE TABLES (t13 SOURCE t11 DESTINATION t12);
+SELECT pg_get_propgraphdef('g5'::regclass);
+                                                pg_get_propgraphdef                                                
+-------------------------------------------------------------------------------------------------------------------
+ CREATE PROPERTY GRAPH create_property_graph_tests.g5                                                             +
+     VERTEX TABLES (                                                                                              +
+         t11 KEY (a) PROPERTIES (a),                                                                              +
+         t12 KEY (b) PROPERTIES (b)                                                                               +
+     )                                                                                                            +
+     EDGE TABLES (                                                                                                +
+         t13 KEY (c) SOURCE KEY (d) REFERENCES t11 (a) DESTINATION KEY (e) REFERENCES t12 (b) PROPERTIES (c, d, e)+
+     )
+(1 row)
+
+-- error cases
+CREATE UNLOGGED PROPERTY GRAPH gx VERTEX TABLES (xx, yy);
+ERROR:  property graphs cannot be unlogged because they do not have storage
+CREATE PROPERTY GRAPH gx VERTEX TABLES (xx, yy);
+ERROR:  relation "xx" does not exist
+CREATE PROPERTY GRAPH gx VERTEX TABLES (t1 KEY (a), t2 KEY (i), t1 KEY (a));
+ERROR:  alias "t1" used more than once as element table
+LINE 1: ...Y GRAPH gx VERTEX TABLES (t1 KEY (a), t2 KEY (i), t1 KEY (a)...
+                                                             ^
+ALTER PROPERTY GRAPH g3 ADD VERTEX TABLES (t3 KEY (x));  -- duplicate alias
+ERROR:  alias "t3" already exists in property graph "g3"
+LINE 1: ALTER PROPERTY GRAPH g3 ADD VERTEX TABLES (t3 KEY (x));
+                                                   ^
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (t1 AS tt KEY (a), t2 KEY (i))
+    EDGE TABLES (
+        e1 SOURCE t1 DESTINATION t2
+    );
+ERROR:  source vertex "t1" of edge "e1" does not exist
+LINE 4:         e1 SOURCE t1 DESTINATION t2
+                ^
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (t1 KEY (a), t2 KEY (i))
+    EDGE TABLES (
+        e1 SOURCE t1 DESTINATION tx
+    );
+ERROR:  destination vertex "tx" of edge "e1" does not exist
+LINE 4:         e1 SOURCE t1 DESTINATION tx
+                ^
+COMMENT ON PROPERTY GRAPH gx IS 'not a graph';
+ERROR:  relation "gx" does not exist
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (t1 KEY (a), t2)
+    EDGE TABLES (
+        e1 SOURCE t1 DESTINATION t2  -- no foreign keys
+    );
+ERROR:  no SOURCE key specified and no suitable foreign key exists for definition of edge "e1"
+LINE 4:         e1 SOURCE t1 DESTINATION t2  -- no foreign keys
+                ^
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1 KEY (a)
+            LABEL foo PROPERTIES (a + 1 AS aa)
+            LABEL bar PROPERTIES (1 + a AS aa)  -- expression mismatch
+    );
+ERROR:  element "t1" property "aa" expression mismatch: (1 + a) vs. (a + 1)
+DETAIL:  In a property graph element, a property of the same name has to have the same expression in each label.
+ALTER PROPERTY GRAPH g2
+    ADD VERTEX TABLES (
+        t1 AS t1x KEY (a)
+            LABEL foo PROPERTIES (a + 1 AS aa)
+            LABEL bar PROPERTIES (1 + a AS aa)  -- expression mismatch
+    );
+ERROR:  element "t1x" property "aa" expression mismatch: (1 + a) vs. (a + 1)
+DETAIL:  In a property graph element, a property of the same name has to have the same expression in each label.
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1 KEY (a) PROPERTIES (b AS p1),
+        t2 PROPERTIES (k AS p1)  -- type mismatch
+    );
+ERROR:  property "p1" data type mismatch: text vs. integer
+DETAIL:  In a property graph, a property of the same name has to have the same data type in each label.
+ALTER PROPERTY GRAPH g2 ALTER VERTEX TABLE t1 ADD LABEL foo PROPERTIES (b AS k);  -- type mismatch
+ERROR:  property "k" data type mismatch: integer vs. text
+DETAIL:  In a property graph, a property of the same name has to have the same data type in each label.
+CREATE TABLE t1x (a int, b varchar(10));
+CREATE TABLE t2x (i int, j varchar(15));
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1x KEY (a) PROPERTIES (b AS p1),
+        t2x KEY (i) PROPERTIES (j AS p1)  -- typmod mismatch
+    );
+ERROR:  property "p1" data type mismatch: character varying(10) vs. character varying(15)
+DETAIL:  In a property graph, a property of the same name has to have the same data type in each label.
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1x KEY (a) PROPERTIES (b::varchar(20) AS p1),
+        t2x KEY (i) PROPERTIES (j::varchar(25) AS p1)  -- typmod mismatch
+    );
+ERROR:  property "p1" data type mismatch: character varying(20) vs. character varying(25)
+DETAIL:  In a property graph, a property of the same name has to have the same data type in each label.
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1x KEY (a) PROPERTIES (b::varchar(20) AS p1),
+        t2x KEY (i) PROPERTIES (j::varchar(20) AS p1)  -- matching typmods by casting works
+    );
+DROP PROPERTY GRAPH gx;
+DROP TABLE t1x, t2x;
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1 KEY (a) LABEL l1 PROPERTIES (a, a AS aa),
+        t2 KEY (i) LABEL l1 PROPERTIES (i AS a, j AS b, k)  -- mismatching number of properties on label
+    );
+ERROR:  mismatching number of properties in definition of label "l1"
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1 KEY (a) LABEL l1 PROPERTIES (a, b),
+        t2 KEY (i) LABEL l1 PROPERTIES (i AS a)  -- mismatching number of properties on label
+    );
+ERROR:  mismatching number of properties in definition of label "l1"
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1 KEY (a) LABEL l1 PROPERTIES (a, b),
+        t2 KEY (i) LABEL l1 PROPERTIES (i AS a, j AS j)  -- mismatching property names on label
+    );
+ERROR:  mismatching properties names in definition of label "l1"
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t1 ADD LABEL t3l1 PROPERTIES (a AS x, b AS yy, b AS zz);  -- mismatching number of properties on label
+ERROR:  mismatching number of properties in definition of label "t3l1"
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t1 ADD LABEL t3l1 PROPERTIES (a AS x, b AS zz);  -- mismatching property names on label
+ERROR:  mismatching properties names in definition of label "t3l1"
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t1 ADD LABEL t3l1 PROPERTIES (a AS x);  -- mismatching number of properties on label
+ERROR:  mismatching number of properties in definition of label "t3l1"
+ALTER PROPERTY GRAPH g1 OWNER TO regress_graph_user1;
+SET ROLE regress_graph_user1;
+GRANT SELECT ON PROPERTY GRAPH g1 TO regress_graph_user2;
+GRANT UPDATE ON PROPERTY GRAPH g1 TO regress_graph_user2;  -- fail
+ERROR:  invalid privilege type UPDATE for property graph
+RESET ROLE;
+-- collation
+CREATE TABLE tc1 (a int, b text);
+CREATE TABLE tc2 (a int, b text);
+CREATE TABLE tc3 (a int, b text COLLATE "C");
+CREATE TABLE ec1 (ek1 int, ek2 int, eb text);
+CREATE TABLE ec2 (ek1 int, ek2 int, eb text COLLATE "POSIX");
+CREATE PROPERTY GRAPH gc1
+    VERTEX TABLES (tc1 KEY (a), tc2 KEY (a), tc3 KEY (a)); -- fail
+ERROR:  property "b" collation mismatch: default vs. C
+DETAIL:  In a property graph, a property of the same name has to have the same collation in each label.
+CREATE PROPERTY GRAPH gc1
+    VERTEX TABLES (tc1 KEY (a), tc2 KEY (a))
+    EDGE TABLES (
+        ec1 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a),
+        ec2 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a)
+    ); -- fail
+ERROR:  property "eb" collation mismatch: default vs. POSIX
+DETAIL:  In a property graph, a property of the same name has to have the same collation in each label.
+CREATE PROPERTY GRAPH gc1
+    VERTEX TABLES (tc1 KEY (a) DEFAULT LABEL PROPERTIES (a), tc3 KEY (b))
+    EDGE TABLES (
+        ec2 KEY (ek1, eb)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (eb) REFERENCES tc3 (b)
+    ); -- fail
+ERROR:  collation mismatch in DESTINATION key of edge "ec2": POSIX vs. C
+LINE 4:         ec2 KEY (ek1, eb)
+                ^
+CREATE PROPERTY GRAPH gc1
+    VERTEX TABLES (tc1 KEY (a), tc2 KEY (a))
+    EDGE TABLES (
+        ec1 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a)
+    );
+ALTER PROPERTY GRAPH gc1 ADD VERTEX TABLES (tc3 KEY (a)); -- fail
+ERROR:  property "b" collation mismatch: default vs. C
+DETAIL:  In a property graph, a property of the same name has to have the same collation in each label.
+ALTER PROPERTY GRAPH gc1
+    ADD EDGE TABLES (
+        ec2 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a)
+    ); -- fail
+ERROR:  property "eb" collation mismatch: default vs. POSIX
+DETAIL:  In a property graph, a property of the same name has to have the same collation in each label.
+ALTER PROPERTY GRAPH gc1
+    ADD VERTEX TABLES (
+        tc3 KEY (a) DEFAULT LABEL PROPERTIES (a, b COLLATE pg_catalog.DEFAULT AS b)
+    );
+ALTER PROPERTY GRAPH gc1
+    ADD EDGE TABLES (
+        ec2 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a)
+            DEFAULT LABEL PROPERTIES (ek1, ek2, eb COLLATE pg_catalog.DEFAULT AS eb)
+    );
+DROP PROPERTY GRAPH gc1;
+CREATE PROPERTY GRAPH gc1
+    VERTEX TABLES (
+        tc1 KEY (a) DEFAULT LABEL PROPERTIES (a, b::varchar COLLATE "C" AS b),
+        tc2 KEY (a) DEFAULT LABEL PROPERTIES (a, (b COLLATE "C")::varchar AS b),
+        tc3 KEY (a) DEFAULT LABEL PROPERTIES (a, b::varchar AS b)
+    )
+    EDGE TABLES (
+        ec1 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a)
+            DEFAULT LABEL PROPERTIES (ek1, ek2, eb),
+        ec2 KEY (ek1, ek2)
+            SOURCE KEY (ek1) REFERENCES tc1 (a)
+            DESTINATION KEY (ek2) REFERENCES tc2 (a)
+            DEFAULT LABEL PROPERTIES (ek1, ek2, eb COLLATE pg_catalog.DEFAULT AS eb)
+    );
+-- type inconsistency check
+CREATE TABLE v1 (a int primary key, b text);
+CREATE TABLE e(k1 text, k2 text, c text);
+CREATE TABLE v2 (m text, n text);
+CREATE PROPERTY GRAPH gt
+    VERTEX TABLES (v1 KEY (a), v2 KEY (m))
+    EDGE TABLES (
+        e KEY (k1, k2)
+            SOURCE KEY (k1) REFERENCES v1(a)
+            DESTINATION KEY (k2) REFERENCES v2(m)
+    ); -- fail
+ERROR:  no equality operator exists for SOURCE key comparison of edge "e"
+LINE 4:         e KEY (k1, k2)
+                ^
+ALTER TABLE e DROP COLUMN k1, ADD COLUMN k1 bigint primary key;
+CREATE PROPERTY GRAPH gt
+    VERTEX TABLES (v1 KEY (a), v2 KEY (m))
+    EDGE TABLES (
+        e KEY (k1, k2)
+            SOURCE KEY (k1) REFERENCES v1(a)
+            DESTINATION KEY (k2) REFERENCES v2(m)
+    );
+-- information schema
+SELECT * FROM information_schema.property_graphs ORDER BY property_graph_name;
+ property_graph_catalog |    property_graph_schema    | property_graph_name 
+------------------------+-----------------------------+---------------------
+ regression             | create_property_graph_tests | g1
+ regression             | create_property_graph_tests | g2
+ regression             | create_property_graph_tests | g3
+ regression             | create_property_graph_tests | g4
+ regression             | create_property_graph_tests | g5
+ regression             | create_property_graph_tests | gc1
+ regression             | create_property_graph_tests | gt
+(7 rows)
+
+SELECT * FROM information_schema.pg_element_tables ORDER BY property_graph_name, element_table_alias;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | element_table_alias | element_table_kind | table_catalog |        table_schema         | table_name | element_table_definition 
+------------------------+-----------------------------+---------------------+---------------------+--------------------+---------------+-----------------------------+------------+--------------------------
+ regression             | create_property_graph_tests | g2                  | e1                  | EDGE               | regression    | create_property_graph_tests | e1         | 
+ regression             | create_property_graph_tests | g2                  | e2                  | EDGE               | regression    | create_property_graph_tests | e2         | 
+ regression             | create_property_graph_tests | g2                  | t1                  | VERTEX             | regression    | create_property_graph_tests | t1         | 
+ regression             | create_property_graph_tests | g2                  | t2                  | VERTEX             | regression    | create_property_graph_tests | t2         | 
+ regression             | create_property_graph_tests | g2                  | t3                  | VERTEX             | regression    | create_property_graph_tests | t3         | 
+ regression             | create_property_graph_tests | g3                  | t1                  | VERTEX             | regression    | create_property_graph_tests | t1         | 
+ regression             | create_property_graph_tests | g3                  | t3                  | VERTEX             | regression    | create_property_graph_tests | t3         | 
+ regression             | create_property_graph_tests | g4                  | e1                  | EDGE               | regression    | create_property_graph_tests | e1         | 
+ regression             | create_property_graph_tests | g4                  | e2                  | EDGE               | regression    | create_property_graph_tests | e2         | 
+ regression             | create_property_graph_tests | g4                  | t1                  | VERTEX             | regression    | create_property_graph_tests | t1         | 
+ regression             | create_property_graph_tests | g4                  | t2                  | VERTEX             | regression    | create_property_graph_tests | t2         | 
+ regression             | create_property_graph_tests | g4                  | t3                  | VERTEX             | regression    | create_property_graph_tests | t3         | 
+ regression             | create_property_graph_tests | g5                  | t11                 | VERTEX             | regression    | create_property_graph_tests | t11        | 
+ regression             | create_property_graph_tests | g5                  | t12                 | VERTEX             | regression    | create_property_graph_tests | t12        | 
+ regression             | create_property_graph_tests | g5                  | t13                 | EDGE               | regression    | create_property_graph_tests | t13        | 
+ regression             | create_property_graph_tests | gc1                 | ec1                 | EDGE               | regression    | create_property_graph_tests | ec1        | 
+ regression             | create_property_graph_tests | gc1                 | ec2                 | EDGE               | regression    | create_property_graph_tests | ec2        | 
+ regression             | create_property_graph_tests | gc1                 | tc1                 | VERTEX             | regression    | create_property_graph_tests | tc1        | 
+ regression             | create_property_graph_tests | gc1                 | tc2                 | VERTEX             | regression    | create_property_graph_tests | tc2        | 
+ regression             | create_property_graph_tests | gc1                 | tc3                 | VERTEX             | regression    | create_property_graph_tests | tc3        | 
+ regression             | create_property_graph_tests | gt                  | e                   | EDGE               | regression    | create_property_graph_tests | e          | 
+ regression             | create_property_graph_tests | gt                  | v1                  | VERTEX             | regression    | create_property_graph_tests | v1         | 
+ regression             | create_property_graph_tests | gt                  | v2                  | VERTEX             | regression    | create_property_graph_tests | v2         | 
+(23 rows)
+
+SELECT * FROM information_schema.pg_element_table_key_columns ORDER BY property_graph_name, element_table_alias, ordinal_position;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | element_table_alias | column_name | ordinal_position 
+------------------------+-----------------------------+---------------------+---------------------+-------------+------------------
+ regression             | create_property_graph_tests | g2                  | e1                  | a           |                1
+ regression             | create_property_graph_tests | g2                  | e1                  | i           |                2
+ regression             | create_property_graph_tests | g2                  | e2                  | a           |                1
+ regression             | create_property_graph_tests | g2                  | e2                  | x           |                2
+ regression             | create_property_graph_tests | g2                  | t1                  | a           |                1
+ regression             | create_property_graph_tests | g2                  | t2                  | i           |                1
+ regression             | create_property_graph_tests | g2                  | t3                  | x           |                1
+ regression             | create_property_graph_tests | g3                  | t1                  | a           |                1
+ regression             | create_property_graph_tests | g3                  | t3                  | x           |                1
+ regression             | create_property_graph_tests | g4                  | e1                  | a           |                1
+ regression             | create_property_graph_tests | g4                  | e1                  | i           |                2
+ regression             | create_property_graph_tests | g4                  | e2                  | a           |                1
+ regression             | create_property_graph_tests | g4                  | e2                  | x           |                2
+ regression             | create_property_graph_tests | g4                  | t1                  | a           |                1
+ regression             | create_property_graph_tests | g4                  | t2                  | i           |                1
+ regression             | create_property_graph_tests | g4                  | t3                  | x           |                1
+ regression             | create_property_graph_tests | g5                  | t11                 | a           |                1
+ regression             | create_property_graph_tests | g5                  | t12                 | b           |                1
+ regression             | create_property_graph_tests | g5                  | t13                 | c           |                1
+ regression             | create_property_graph_tests | gc1                 | ec1                 | ek1         |                1
+ regression             | create_property_graph_tests | gc1                 | ec1                 | ek2         |                2
+ regression             | create_property_graph_tests | gc1                 | ec2                 | ek1         |                1
+ regression             | create_property_graph_tests | gc1                 | ec2                 | ek2         |                2
+ regression             | create_property_graph_tests | gc1                 | tc1                 | a           |                1
+ regression             | create_property_graph_tests | gc1                 | tc2                 | a           |                1
+ regression             | create_property_graph_tests | gc1                 | tc3                 | a           |                1
+ regression             | create_property_graph_tests | gt                  | e                   | k1          |                1
+ regression             | create_property_graph_tests | gt                  | e                   | k2          |                2
+ regression             | create_property_graph_tests | gt                  | v1                  | a           |                1
+ regression             | create_property_graph_tests | gt                  | v2                  | m           |                1
+(30 rows)
+
+SELECT * FROM information_schema.pg_edge_table_components ORDER BY property_graph_name, edge_table_alias, edge_end DESC, ordinal_position;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | edge_table_alias | vertex_table_alias |  edge_end   | edge_table_column_name | vertex_table_column_name | ordinal_position 
+------------------------+-----------------------------+---------------------+------------------+--------------------+-------------+------------------------+--------------------------+------------------
+ regression             | create_property_graph_tests | g2                  | e1               | t1                 | SOURCE      | a                      | a                        |                1
+ regression             | create_property_graph_tests | g2                  | e1               | t2                 | DESTINATION | i                      | i                        |                1
+ regression             | create_property_graph_tests | g2                  | e2               | t1                 | SOURCE      | a                      | a                        |                1
+ regression             | create_property_graph_tests | g2                  | e2               | t3                 | DESTINATION | x                      | x                        |                1
+ regression             | create_property_graph_tests | g2                  | e2               | t3                 | DESTINATION | t                      | y                        |                2
+ regression             | create_property_graph_tests | g4                  | e1               | t1                 | SOURCE      | a                      | a                        |                1
+ regression             | create_property_graph_tests | g4                  | e1               | t2                 | DESTINATION | i                      | i                        |                1
+ regression             | create_property_graph_tests | g4                  | e2               | t1                 | SOURCE      | a                      | a                        |                1
+ regression             | create_property_graph_tests | g4                  | e2               | t3                 | DESTINATION | x                      | x                        |                1
+ regression             | create_property_graph_tests | g4                  | e2               | t3                 | DESTINATION | t                      | y                        |                2
+ regression             | create_property_graph_tests | g5                  | t13              | t11                | SOURCE      | d                      | a                        |                1
+ regression             | create_property_graph_tests | g5                  | t13              | t12                | DESTINATION | e                      | b                        |                1
+ regression             | create_property_graph_tests | gc1                 | ec1              | tc1                | SOURCE      | ek1                    | a                        |                1
+ regression             | create_property_graph_tests | gc1                 | ec1              | tc2                | DESTINATION | ek2                    | a                        |                1
+ regression             | create_property_graph_tests | gc1                 | ec2              | tc1                | SOURCE      | ek1                    | a                        |                1
+ regression             | create_property_graph_tests | gc1                 | ec2              | tc2                | DESTINATION | ek2                    | a                        |                1
+ regression             | create_property_graph_tests | gt                  | e                | v1                 | SOURCE      | k1                     | a                        |                1
+ regression             | create_property_graph_tests | gt                  | e                | v2                 | DESTINATION | k2                     | m                        |                1
+(18 rows)
+
+SELECT * FROM information_schema.pg_element_table_labels ORDER BY property_graph_name, element_table_alias, label_name;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | element_table_alias | label_name 
+------------------------+-----------------------------+---------------------+---------------------+------------
+ regression             | create_property_graph_tests | g2                  | e1                  | e1
+ regression             | create_property_graph_tests | g2                  | e2                  | e2
+ regression             | create_property_graph_tests | g2                  | t1                  | t1
+ regression             | create_property_graph_tests | g2                  | t2                  | t2
+ regression             | create_property_graph_tests | g2                  | t3                  | t3l1
+ regression             | create_property_graph_tests | g2                  | t3                  | t3l2
+ regression             | create_property_graph_tests | g3                  | t1                  | t1
+ regression             | create_property_graph_tests | g3                  | t3                  | t3l1
+ regression             | create_property_graph_tests | g3                  | t3                  | t3l2
+ regression             | create_property_graph_tests | g4                  | e1                  | e1
+ regression             | create_property_graph_tests | g4                  | e2                  | e2
+ regression             | create_property_graph_tests | g4                  | t1                  | t1
+ regression             | create_property_graph_tests | g4                  | t2                  | t2
+ regression             | create_property_graph_tests | g4                  | t3                  | t3l1
+ regression             | create_property_graph_tests | g4                  | t3                  | t3l2
+ regression             | create_property_graph_tests | g5                  | t11                 | t11
+ regression             | create_property_graph_tests | g5                  | t12                 | t12
+ regression             | create_property_graph_tests | g5                  | t13                 | t13
+ regression             | create_property_graph_tests | gc1                 | ec1                 | ec1
+ regression             | create_property_graph_tests | gc1                 | ec2                 | ec2
+ regression             | create_property_graph_tests | gc1                 | tc1                 | tc1
+ regression             | create_property_graph_tests | gc1                 | tc2                 | tc2
+ regression             | create_property_graph_tests | gc1                 | tc3                 | tc3
+ regression             | create_property_graph_tests | gt                  | e                   | e
+ regression             | create_property_graph_tests | gt                  | v1                  | v1
+ regression             | create_property_graph_tests | gt                  | v2                  | v2
+(26 rows)
+
+SELECT * FROM information_schema.pg_element_table_properties ORDER BY property_graph_name, element_table_alias, property_name;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | element_table_alias | property_name |         property_expression          
+------------------------+-----------------------------+---------------------+---------------------+---------------+--------------------------------------
+ regression             | create_property_graph_tests | g2                  | e1                  | a             | a
+ regression             | create_property_graph_tests | g2                  | e1                  | i             | i
+ regression             | create_property_graph_tests | g2                  | e1                  | t             | t
+ regression             | create_property_graph_tests | g2                  | e2                  | a             | a
+ regression             | create_property_graph_tests | g2                  | e2                  | t             | t
+ regression             | create_property_graph_tests | g2                  | e2                  | x             | x
+ regression             | create_property_graph_tests | g2                  | t1                  | a             | a
+ regression             | create_property_graph_tests | g2                  | t1                  | b             | b
+ regression             | create_property_graph_tests | g2                  | t2                  | i             | i
+ regression             | create_property_graph_tests | g2                  | t2                  | j             | j
+ regression             | create_property_graph_tests | g2                  | t2                  | k             | k
+ regression             | create_property_graph_tests | g2                  | t3                  | x             | x
+ regression             | create_property_graph_tests | g2                  | t3                  | y             | y
+ regression             | create_property_graph_tests | g2                  | t3                  | z             | z
+ regression             | create_property_graph_tests | g3                  | t1                  | a             | a
+ regression             | create_property_graph_tests | g3                  | t1                  | b             | b
+ regression             | create_property_graph_tests | g3                  | t3                  | x             | x
+ regression             | create_property_graph_tests | g3                  | t3                  | y             | y
+ regression             | create_property_graph_tests | g3                  | t3                  | z             | z
+ regression             | create_property_graph_tests | g4                  | e1                  | a             | a
+ regression             | create_property_graph_tests | g4                  | e1                  | i             | i
+ regression             | create_property_graph_tests | g4                  | e1                  | t             | t
+ regression             | create_property_graph_tests | g4                  | e2                  | a             | a
+ regression             | create_property_graph_tests | g4                  | e2                  | t             | t
+ regression             | create_property_graph_tests | g4                  | e2                  | x             | x
+ regression             | create_property_graph_tests | g4                  | t2                  | i_j           | (i + j)
+ regression             | create_property_graph_tests | g4                  | t2                  | kk            | (k * 2)
+ regression             | create_property_graph_tests | g4                  | t3                  | x             | x
+ regression             | create_property_graph_tests | g4                  | t3                  | yy            | y
+ regression             | create_property_graph_tests | g4                  | t3                  | zz            | z
+ regression             | create_property_graph_tests | g5                  | t11                 | a             | a
+ regression             | create_property_graph_tests | g5                  | t12                 | b             | b
+ regression             | create_property_graph_tests | g5                  | t13                 | c             | c
+ regression             | create_property_graph_tests | g5                  | t13                 | d             | d
+ regression             | create_property_graph_tests | g5                  | t13                 | e             | e
+ regression             | create_property_graph_tests | gc1                 | ec1                 | eb            | eb
+ regression             | create_property_graph_tests | gc1                 | ec1                 | ek1           | ek1
+ regression             | create_property_graph_tests | gc1                 | ec1                 | ek2           | ek2
+ regression             | create_property_graph_tests | gc1                 | ec2                 | eb            | (eb COLLATE "default")
+ regression             | create_property_graph_tests | gc1                 | ec2                 | ek1           | ek1
+ regression             | create_property_graph_tests | gc1                 | ec2                 | ek2           | ek2
+ regression             | create_property_graph_tests | gc1                 | tc1                 | a             | a
+ regression             | create_property_graph_tests | gc1                 | tc1                 | b             | ((b)::character varying COLLATE "C")
+ regression             | create_property_graph_tests | gc1                 | tc2                 | a             | a
+ regression             | create_property_graph_tests | gc1                 | tc2                 | b             | ((b)::character varying COLLATE "C")
+ regression             | create_property_graph_tests | gc1                 | tc3                 | a             | a
+ regression             | create_property_graph_tests | gc1                 | tc3                 | b             | (b)::character varying
+ regression             | create_property_graph_tests | gt                  | e                   | c             | c
+ regression             | create_property_graph_tests | gt                  | e                   | k1            | k1
+ regression             | create_property_graph_tests | gt                  | e                   | k2            | k2
+ regression             | create_property_graph_tests | gt                  | v1                  | a             | a
+ regression             | create_property_graph_tests | gt                  | v1                  | b             | b
+ regression             | create_property_graph_tests | gt                  | v2                  | m             | m
+ regression             | create_property_graph_tests | gt                  | v2                  | n             | n
+(54 rows)
+
+SELECT * FROM information_schema.pg_label_properties ORDER BY property_graph_name, label_name, property_name;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | label_name | property_name 
+------------------------+-----------------------------+---------------------+------------+---------------
+ regression             | create_property_graph_tests | g2                  | e1         | a
+ regression             | create_property_graph_tests | g2                  | e1         | i
+ regression             | create_property_graph_tests | g2                  | e1         | t
+ regression             | create_property_graph_tests | g2                  | e2         | a
+ regression             | create_property_graph_tests | g2                  | e2         | t
+ regression             | create_property_graph_tests | g2                  | e2         | x
+ regression             | create_property_graph_tests | g2                  | t1         | a
+ regression             | create_property_graph_tests | g2                  | t1         | b
+ regression             | create_property_graph_tests | g2                  | t2         | i
+ regression             | create_property_graph_tests | g2                  | t2         | j
+ regression             | create_property_graph_tests | g2                  | t2         | k
+ regression             | create_property_graph_tests | g2                  | t3l1       | x
+ regression             | create_property_graph_tests | g2                  | t3l1       | y
+ regression             | create_property_graph_tests | g2                  | t3l1       | z
+ regression             | create_property_graph_tests | g2                  | t3l2       | x
+ regression             | create_property_graph_tests | g2                  | t3l2       | y
+ regression             | create_property_graph_tests | g2                  | t3l2       | z
+ regression             | create_property_graph_tests | g3                  | t1         | a
+ regression             | create_property_graph_tests | g3                  | t1         | b
+ regression             | create_property_graph_tests | g3                  | t3l1       | x
+ regression             | create_property_graph_tests | g3                  | t3l1       | y
+ regression             | create_property_graph_tests | g3                  | t3l1       | z
+ regression             | create_property_graph_tests | g3                  | t3l2       | x
+ regression             | create_property_graph_tests | g3                  | t3l2       | y
+ regression             | create_property_graph_tests | g3                  | t3l2       | z
+ regression             | create_property_graph_tests | g4                  | e1         | a
+ regression             | create_property_graph_tests | g4                  | e1         | i
+ regression             | create_property_graph_tests | g4                  | e1         | t
+ regression             | create_property_graph_tests | g4                  | e2         | a
+ regression             | create_property_graph_tests | g4                  | e2         | t
+ regression             | create_property_graph_tests | g4                  | e2         | x
+ regression             | create_property_graph_tests | g4                  | t2         | i_j
+ regression             | create_property_graph_tests | g4                  | t2         | kk
+ regression             | create_property_graph_tests | g4                  | t3l1       | x
+ regression             | create_property_graph_tests | g4                  | t3l1       | yy
+ regression             | create_property_graph_tests | g4                  | t3l2       | x
+ regression             | create_property_graph_tests | g4                  | t3l2       | zz
+ regression             | create_property_graph_tests | g5                  | t11        | a
+ regression             | create_property_graph_tests | g5                  | t12        | b
+ regression             | create_property_graph_tests | g5                  | t13        | c
+ regression             | create_property_graph_tests | g5                  | t13        | d
+ regression             | create_property_graph_tests | g5                  | t13        | e
+ regression             | create_property_graph_tests | gc1                 | ec1        | eb
+ regression             | create_property_graph_tests | gc1                 | ec1        | ek1
+ regression             | create_property_graph_tests | gc1                 | ec1        | ek2
+ regression             | create_property_graph_tests | gc1                 | ec2        | eb
+ regression             | create_property_graph_tests | gc1                 | ec2        | ek1
+ regression             | create_property_graph_tests | gc1                 | ec2        | ek2
+ regression             | create_property_graph_tests | gc1                 | tc1        | a
+ regression             | create_property_graph_tests | gc1                 | tc1        | b
+ regression             | create_property_graph_tests | gc1                 | tc2        | a
+ regression             | create_property_graph_tests | gc1                 | tc2        | b
+ regression             | create_property_graph_tests | gc1                 | tc3        | a
+ regression             | create_property_graph_tests | gc1                 | tc3        | b
+ regression             | create_property_graph_tests | gt                  | e          | c
+ regression             | create_property_graph_tests | gt                  | e          | k1
+ regression             | create_property_graph_tests | gt                  | e          | k2
+ regression             | create_property_graph_tests | gt                  | v1         | a
+ regression             | create_property_graph_tests | gt                  | v1         | b
+ regression             | create_property_graph_tests | gt                  | v2         | m
+ regression             | create_property_graph_tests | gt                  | v2         | n
+(61 rows)
+
+SELECT * FROM information_schema.pg_labels ORDER BY property_graph_name, label_name;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | label_name 
+------------------------+-----------------------------+---------------------+------------
+ regression             | create_property_graph_tests | g2                  | e1
+ regression             | create_property_graph_tests | g2                  | e2
+ regression             | create_property_graph_tests | g2                  | t1
+ regression             | create_property_graph_tests | g2                  | t2
+ regression             | create_property_graph_tests | g2                  | t3l1
+ regression             | create_property_graph_tests | g2                  | t3l2
+ regression             | create_property_graph_tests | g3                  | t1
+ regression             | create_property_graph_tests | g3                  | t3l1
+ regression             | create_property_graph_tests | g3                  | t3l2
+ regression             | create_property_graph_tests | g4                  | e1
+ regression             | create_property_graph_tests | g4                  | e2
+ regression             | create_property_graph_tests | g4                  | t1
+ regression             | create_property_graph_tests | g4                  | t2
+ regression             | create_property_graph_tests | g4                  | t3l1
+ regression             | create_property_graph_tests | g4                  | t3l2
+ regression             | create_property_graph_tests | g5                  | t11
+ regression             | create_property_graph_tests | g5                  | t12
+ regression             | create_property_graph_tests | g5                  | t13
+ regression             | create_property_graph_tests | gc1                 | ec1
+ regression             | create_property_graph_tests | gc1                 | ec2
+ regression             | create_property_graph_tests | gc1                 | tc1
+ regression             | create_property_graph_tests | gc1                 | tc2
+ regression             | create_property_graph_tests | gc1                 | tc3
+ regression             | create_property_graph_tests | gt                  | e
+ regression             | create_property_graph_tests | gt                  | v1
+ regression             | create_property_graph_tests | gt                  | v2
+(26 rows)
+
+SELECT * FROM information_schema.pg_property_data_types ORDER BY property_graph_name, property_name;
+ property_graph_catalog |    property_graph_schema    | property_graph_name | property_name |     data_type     | character_maximum_length | character_octet_length | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema | collation_name | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | user_defined_type_catalog | user_defined_type_schema | user_defined_type_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier 
+------------------------+-----------------------------+---------------------+---------------+-------------------+--------------------------+------------------------+-----------------------+----------------------+--------------------+-------------------+------------------+----------------+-------------------+-------------------------+---------------+--------------------+---------------+--------------------+---------------------------+--------------------------+------------------------+---------------+--------------+------------+---------------------+----------------
+ regression             | create_property_graph_tests | g2                  | a             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | a
+ regression             | create_property_graph_tests | g2                  | b             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | b
+ regression             | create_property_graph_tests | g2                  | i             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | i
+ regression             | create_property_graph_tests | g2                  | j             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | j
+ regression             | create_property_graph_tests | g2                  | k             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | k
+ regression             | create_property_graph_tests | g2                  | t             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | t
+ regression             | create_property_graph_tests | g2                  | x             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | x
+ regression             | create_property_graph_tests | g2                  | y             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | y
+ regression             | create_property_graph_tests | g2                  | z             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | z
+ regression             | create_property_graph_tests | g3                  | a             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | a
+ regression             | create_property_graph_tests | g3                  | b             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | b
+ regression             | create_property_graph_tests | g3                  | x             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | x
+ regression             | create_property_graph_tests | g3                  | y             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | y
+ regression             | create_property_graph_tests | g3                  | z             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | z
+ regression             | create_property_graph_tests | g4                  | a             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | a
+ regression             | create_property_graph_tests | g4                  | i             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | i
+ regression             | create_property_graph_tests | g4                  | i_j           | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | i_j
+ regression             | create_property_graph_tests | g4                  | kk            | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | kk
+ regression             | create_property_graph_tests | g4                  | t             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | t
+ regression             | create_property_graph_tests | g4                  | x             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | x
+ regression             | create_property_graph_tests | g4                  | yy            | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | yy
+ regression             | create_property_graph_tests | g4                  | zz            | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | zz
+ regression             | create_property_graph_tests | g5                  | a             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | a
+ regression             | create_property_graph_tests | g5                  | b             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | b
+ regression             | create_property_graph_tests | g5                  | c             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | c
+ regression             | create_property_graph_tests | g5                  | d             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | d
+ regression             | create_property_graph_tests | g5                  | e             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | e
+ regression             | create_property_graph_tests | gc1                 | a             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | a
+ regression             | create_property_graph_tests | gc1                 | b             | character varying |                          |                        |                       |                      |                    | regression        | pg_catalog       | C              |                   |                         |               |                    |               |                    | regression                | pg_catalog               | varchar                |               |              |            |                     | b
+ regression             | create_property_graph_tests | gc1                 | eb            | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | eb
+ regression             | create_property_graph_tests | gc1                 | ek1           | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | ek1
+ regression             | create_property_graph_tests | gc1                 | ek2           | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | ek2
+ regression             | create_property_graph_tests | gt                  | a             | integer           |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int4                   |               |              |            |                     | a
+ regression             | create_property_graph_tests | gt                  | b             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | b
+ regression             | create_property_graph_tests | gt                  | c             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | c
+ regression             | create_property_graph_tests | gt                  | k1            | bigint            |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | int8                   |               |              |            |                     | k1
+ regression             | create_property_graph_tests | gt                  | k2            | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | k2
+ regression             | create_property_graph_tests | gt                  | m             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | m
+ regression             | create_property_graph_tests | gt                  | n             | text              |                          |                        |                       |                      |                    | regression        |                  |                |                   |                         |               |                    |               |                    | regression                | pg_catalog               | text                   |               |              |            |                     | n
+(39 rows)
+
+SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE 'regress%' ORDER BY property_graph_name;
+       grantor       |       grantee       | property_graph_catalog |    property_graph_schema    | property_graph_name | privilege_type | is_grantable 
+---------------------+---------------------+------------------------+-----------------------------+---------------------+----------------+--------------
+ regress_graph_user1 | regress_graph_user1 | regression             | create_property_graph_tests | g1                  | SELECT         | YES
+ regress_graph_user1 | regress_graph_user2 | regression             | create_property_graph_tests | g1                  | SELECT         | NO
+(2 rows)
+
+-- test object address functions
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid, refobjid, refobjsubid) as reference_graph
+    FROM pg_depend
+    WHERE refclassid = 'pg_class'::regclass AND
+          refobjid = 'create_property_graph_tests.g2'::regclass
+    ORDER BY 1, 2;
+               obj               |  reference_graph  
+---------------------------------+-------------------
+ edge e1 of property graph g2    | property graph g2
+ edge e2 of property graph g2    | property graph g2
+ label e1 of property graph g2   | property graph g2
+ label e2 of property graph g2   | property graph g2
+ label t1 of property graph g2   | property graph g2
+ label t2 of property graph g2   | property graph g2
+ label t3l1 of property graph g2 | property graph g2
+ label t3l2 of property graph g2 | property graph g2
+ property a of property graph g2 | property graph g2
+ property b of property graph g2 | property graph g2
+ property i of property graph g2 | property graph g2
+ property j of property graph g2 | property graph g2
+ property k of property graph g2 | property graph g2
+ property t of property graph g2 | property graph g2
+ property x of property graph g2 | property graph g2
+ property y of property graph g2 | property graph g2
+ property z of property graph g2 | property graph g2
+ type g2                         | property graph g2
+ vertex t1 of property graph g2  | property graph g2
+ vertex t2 of property graph g2  | property graph g2
+ vertex t3 of property graph g2  | property graph g2
+(21 rows)
+
+SELECT (pg_identify_object_as_address(classid, objid, objsubid)).*
+    FROM pg_depend
+    WHERE refclassid = 'pg_class'::regclass AND
+          refobjid = 'create_property_graph_tests.g2'::regclass
+    ORDER BY 1, 2, 3;
+          type           |             object_names              | object_args 
+-------------------------+---------------------------------------+-------------
+ property graph element  | {create_property_graph_tests,g2,e1}   | {}
+ property graph element  | {create_property_graph_tests,g2,e2}   | {}
+ property graph element  | {create_property_graph_tests,g2,t1}   | {}
+ property graph element  | {create_property_graph_tests,g2,t2}   | {}
+ property graph element  | {create_property_graph_tests,g2,t3}   | {}
+ property graph label    | {create_property_graph_tests,g2,e1}   | {}
+ property graph label    | {create_property_graph_tests,g2,e2}   | {}
+ property graph label    | {create_property_graph_tests,g2,t1}   | {}
+ property graph label    | {create_property_graph_tests,g2,t2}   | {}
+ property graph label    | {create_property_graph_tests,g2,t3l1} | {}
+ property graph label    | {create_property_graph_tests,g2,t3l2} | {}
+ property graph property | {create_property_graph_tests,g2,a}    | {}
+ property graph property | {create_property_graph_tests,g2,b}    | {}
+ property graph property | {create_property_graph_tests,g2,i}    | {}
+ property graph property | {create_property_graph_tests,g2,j}    | {}
+ property graph property | {create_property_graph_tests,g2,k}    | {}
+ property graph property | {create_property_graph_tests,g2,t}    | {}
+ property graph property | {create_property_graph_tests,g2,x}    | {}
+ property graph property | {create_property_graph_tests,g2,y}    | {}
+ property graph property | {create_property_graph_tests,g2,z}    | {}
+ type                    | {create_property_graph_tests.g2}      | {}
+(21 rows)
+
+SELECT (pg_identify_object(classid, objid, objsubid)).*
+    FROM pg_depend
+    WHERE refclassid = 'pg_class'::regclass AND
+          refobjid = 'create_property_graph_tests.g2'::regclass
+    ORDER BY 1, 2, 3, 4;
+          type           |           schema            | name |                identity                
+-------------------------+-----------------------------+------+----------------------------------------
+ property graph element  |                             |      | e1 of create_property_graph_tests.g2
+ property graph element  |                             |      | e2 of create_property_graph_tests.g2
+ property graph element  |                             |      | t1 of create_property_graph_tests.g2
+ property graph element  |                             |      | t2 of create_property_graph_tests.g2
+ property graph element  |                             |      | t3 of create_property_graph_tests.g2
+ property graph label    |                             |      | e1 of create_property_graph_tests.g2
+ property graph label    |                             |      | e2 of create_property_graph_tests.g2
+ property graph label    |                             |      | t1 of create_property_graph_tests.g2
+ property graph label    |                             |      | t2 of create_property_graph_tests.g2
+ property graph label    |                             |      | t3l1 of create_property_graph_tests.g2
+ property graph label    |                             |      | t3l2 of create_property_graph_tests.g2
+ property graph property |                             |      | a of create_property_graph_tests.g2
+ property graph property |                             |      | b of create_property_graph_tests.g2
+ property graph property |                             |      | i of create_property_graph_tests.g2
+ property graph property |                             |      | j of create_property_graph_tests.g2
+ property graph property |                             |      | k of create_property_graph_tests.g2
+ property graph property |                             |      | t of create_property_graph_tests.g2
+ property graph property |                             |      | x of create_property_graph_tests.g2
+ property graph property |                             |      | y of create_property_graph_tests.g2
+ property graph property |                             |      | z of create_property_graph_tests.g2
+ type                    | create_property_graph_tests | g2   | create_property_graph_tests.g2
+(21 rows)
+
+\a\t
+SELECT pg_get_propgraphdef('g2'::regclass);
+CREATE PROPERTY GRAPH create_property_graph_tests.g2
+    VERTEX TABLES (
+        t1 KEY (a) PROPERTIES (a, b),
+        t2 KEY (i) PROPERTIES (i, j, k),
+        t3 KEY (x) LABEL t3l1 PROPERTIES (x, y, z) LABEL t3l2 PROPERTIES (x, y, z)
+    )
+    EDGE TABLES (
+        e1 KEY (a, i) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (i) REFERENCES t2 (i) PROPERTIES (a, i, t),
+        e2 KEY (a, x) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (x, t) REFERENCES t3 (x, y) PROPERTIES (a, t, x)
+    )
+SELECT pg_get_propgraphdef('g3'::regclass);
+CREATE PROPERTY GRAPH create_property_graph_tests.g3
+    VERTEX TABLES (
+        t1 KEY (a) PROPERTIES (a, b),
+        t3 KEY (x) LABEL t3l1 PROPERTIES (x, y, z) LABEL t3l2 PROPERTIES (x, y, z)
+    )
+SELECT pg_get_propgraphdef('g4'::regclass);
+CREATE PROPERTY GRAPH create_property_graph_tests.g4
+    VERTEX TABLES (
+        t1 KEY (a) NO PROPERTIES,
+        t2 KEY (i) PROPERTIES ((i + j) AS i_j, (k * 2) AS kk),
+        t3 KEY (x) LABEL t3l1 PROPERTIES (x, y AS yy) LABEL t3l2 PROPERTIES (x, z AS zz)
+    )
+    EDGE TABLES (
+        e1 KEY (a, i) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (i) REFERENCES t2 (i) PROPERTIES (a, i, t),
+        e2 KEY (a, x) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (x, t) REFERENCES t3 (x, y) PROPERTIES (a, t, x)
+    )
+SELECT pg_get_propgraphdef('pg_type'::regclass);  -- error
+ERROR:  "pg_type" is not a property graph
+\a\t
+-- Test \d variants for property graphs
+\dG g1
+                          List of property graphs
+           Schema            | Name |      Type      |        Owner        
+-----------------------------+------+----------------+---------------------
+ create_property_graph_tests | g1   | property graph | regress_graph_user1
+(1 row)
+
+\dG+ g1
+                                             List of property graphs
+           Schema            | Name |      Type      |        Owner        | Persistence |  Size   | Description 
+-----------------------------+------+----------------+---------------------+-------------+---------+-------------
+ create_property_graph_tests | g1   | property graph | regress_graph_user1 | permanent   | 0 bytes | a graph
+(1 row)
+
+\dGx g1
+List of property graphs
+-[ RECORD 1 ]-----------------------
+Schema | create_property_graph_tests
+Name   | g1
+Type   | property graph
+Owner  | regress_graph_user1
+
+\d g2
+                                Property Graph "create_property_graph_tests.g2"
+ Element Alias |         Element Table          | Element Kind | Source Vertex Alias | Destination Vertex Alias 
+---------------+--------------------------------+--------------+---------------------+--------------------------
+ e1            | create_property_graph_tests.e1 | edge         | t1                  | t2
+ e2            | create_property_graph_tests.e2 | edge         | t1                  | t3
+ t1            | create_property_graph_tests.t1 | vertex       |                     | 
+ t2            | create_property_graph_tests.t2 | vertex       |                     | 
+ t3            | create_property_graph_tests.t3 | vertex       |                     | 
+
+\d g1
+                        Property Graph "create_property_graph_tests.g1"
+ Element Alias | Element Table | Element Kind | Source Vertex Alias | Destination Vertex Alias 
+---------------+---------------+--------------+---------------------+--------------------------
+
+\d+ g2
+                                Property Graph "create_property_graph_tests.g2"
+ Element Alias |         Element Table          | Element Kind | Source Vertex Alias | Destination Vertex Alias 
+---------------+--------------------------------+--------------+---------------------+--------------------------
+ e1            | create_property_graph_tests.e1 | edge         | t1                  | t2
+ e2            | create_property_graph_tests.e2 | edge         | t1                  | t3
+ t1            | create_property_graph_tests.t1 | vertex       |                     | 
+ t2            | create_property_graph_tests.t2 | vertex       |                     | 
+ t3            | create_property_graph_tests.t3 | vertex       |                     | 
+Property graph definition:
+CREATE PROPERTY GRAPH create_property_graph_tests.g2
+    VERTEX TABLES (
+        t1 KEY (a) PROPERTIES (a, b),
+        t2 KEY (i) PROPERTIES (i, j, k),
+        t3 KEY (x) LABEL t3l1 PROPERTIES (x, y, z) LABEL t3l2 PROPERTIES (x, y, z)
+    )
+    EDGE TABLES (
+        e1 KEY (a, i) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (i) REFERENCES t2 (i) PROPERTIES (a, i, t),
+        e2 KEY (a, x) SOURCE KEY (a) REFERENCES t1 (a) DESTINATION KEY (x, t) REFERENCES t3 (x, y) PROPERTIES (a, t, x)
+    )
+
+\d+ g1
+                        Property Graph "create_property_graph_tests.g1"
+ Element Alias | Element Table | Element Kind | Source Vertex Alias | Destination Vertex Alias 
+---------------+---------------+--------------+---------------------+--------------------------
+Property graph definition:
+CREATE PROPERTY GRAPH create_property_graph_tests.g1
+
+\dG g_nonexistent
+   List of property graphs
+ Schema | Name | Type | Owner 
+--------+------+------+-------
+(0 rows)
+
+\dG t11
+   List of property graphs
+ Schema | Name | Type | Owner 
+--------+------+------+-------
+(0 rows)
+
+\set QUIET 'off'
+\dG g_nonexistent
+Did not find any property graphs named "g_nonexistent".
+\set QUIET 'on'
+-- temporary property graph
+-- Keep this at the end to avoid test failure due to changing temporary
+-- namespace names in information schema query outputs
+CREATE TEMPORARY PROPERTY GRAPH g1; -- same name as persistent graph
+DROP PROPERTY GRAPH g1;  -- drops temporary graph retaining persistent graph
+\dG g1
+                          List of property graphs
+           Schema            | Name |      Type      |        Owner        
+-----------------------------+------+----------------+---------------------
+ create_property_graph_tests | g1   | property graph | regress_graph_user1
+(1 row)
+
+CREATE TEMPORARY TABLE v2tmp (m text, n text);
+CREATE TEMPORARY PROPERTY GRAPH gtmp
+    VERTEX TABLES (v1 KEY (a), v2tmp KEY (m))
+    EDGE TABLES (
+        e KEY (k1, k2)
+            SOURCE KEY (k1) REFERENCES v1(a)
+            DESTINATION KEY (k2) REFERENCES v2tmp(m)
+    );
+DROP PROPERTY GRAPH gtmp;
+CREATE PROPERTY GRAPH gtmp
+    VERTEX TABLES (v1 KEY (a), v2tmp KEY (m))
+    EDGE TABLES (
+        e KEY (k1, k2)
+            SOURCE KEY (k1) REFERENCES v1(a)
+            DESTINATION KEY (k2) REFERENCES v2tmp(m)
+    );
+NOTICE:  property graph "gtmp" will be temporary
+ALTER PROPERTY GRAPH g1
+    ADD VERTEX TABLES (v2tmp KEY (m));  -- error
+ERROR:  cannot add temporary element table to non-temporary property graph
+LINE 2:     ADD VERTEX TABLES (v2tmp KEY (m));
+                               ^
+DETAIL:  Table "v2tmp" is a temporary table.
+-- DROP, ALTER SET SCHEMA, ALTER PROPERTY GRAPH RENAME TO
+DROP TABLE g2;  -- error: wrong object type
+ERROR:  "g2" is not a table
+HINT:  Use DROP PROPERTY GRAPH to remove a property graph.
+CREATE VIEW vg1 AS SELECT * FROM GRAPH_TABLE(g1 MATCH () COLUMNS (1 AS one));
+DROP PROPERTY GRAPH g1; -- error
+ERROR:  cannot drop property graph g1 because other objects depend on it
+DETAIL:  view vg1 depends on property graph g1
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER PROPERTY GRAPH g1 SET SCHEMA create_property_graph_tests_2;
+ALTER PROPERTY GRAPH create_property_graph_tests_2.g1 RENAME TO g2;
+DROP PROPERTY GRAPH create_property_graph_tests_2.g2 CASCADE;
+NOTICE:  drop cascades to view vg1
+DROP PROPERTY GRAPH g1;  -- error
+ERROR:  property graph "g1" does not exist
+ALTER PROPERTY GRAPH g1 ADD VERTEX TABLES (t1 KEY (a));  -- error
+ERROR:  relation "g1" does not exist
+ALTER PROPERTY GRAPH IF EXISTS g1 SET SCHEMA create_property_graph_tests_2;
+NOTICE:  relation "g1" does not exist, skipping
+DROP PROPERTY GRAPH IF EXISTS g1;
+NOTICE:  property graph "g1" does not exist, skipping
+DROP ROLE regress_graph_user1, regress_graph_user2;
+-- leave remaining objects behind for pg_upgrade/pg_dump tests

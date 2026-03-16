@@ -304,6 +304,10 @@ print_rt(const List *rtable)
 				printf("%d\t%s\t[group]",
 					   i, rte->eref->aliasname);
 				break;
+			case RTE_GRAPH_TABLE:
+				printf("%d\t%s\t[graph table]",
+					   i, rte->eref->aliasname);
+				break;
 			default:
 				printf("%d\t%s\t[unknown rtekind]",
 					   i, rte->eref->aliasname);

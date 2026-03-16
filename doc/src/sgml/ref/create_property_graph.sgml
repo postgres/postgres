@@ -1,0 +1,318 @@
+<!--
+doc/src/sgml/ref/create_property_graph.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-create-property-graph">
+ <indexterm zone="sql-create-property-graph">
+  <primary>CREATE PROPERTY GRAPH</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE PROPERTY GRAPH</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE PROPERTY GRAPH</refname>
+  <refpurpose>define an SQL-property graph</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE [ TEMP | TEMPORARY ] PROPERTY GRAPH <replaceable class="parameter">name</replaceable>
+    [ {VERTEX|NODE} TABLES ( <replaceable class="parameter">vertex_table_definition</replaceable> [, ...] ) ]
+    [ {EDGE|RELATIONSHIP} TABLES ( <replaceable class="parameter">edge_table_definition</replaceable> [, ...] ) ]
+
+<phrase>where <replaceable class="parameter">vertex_table_definition</replaceable> is:</phrase>
+
+    <replaceable class="parameter">vertex_table_name</replaceable> [ AS <replaceable class="parameter">alias</replaceable> ] [ KEY ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] [ <replaceable class="parameter">element_table_label_and_properties</replaceable> ]
+
+<phrase>and <replaceable class="parameter">edge_table_definition</replaceable> is:</phrase>
+
+    <replaceable class="parameter">edge_table_name</replaceable> [ AS <replaceable class="parameter">alias</replaceable> ] [ KEY ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
+        SOURCE [ KEY ( <replaceable class="parameter">column_name</replaceable> [, ...] ) REFERENCES ] <replaceable class="parameter">source_table</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
+        DESTINATION [ KEY ( <replaceable class="parameter">column_name</replaceable> [, ...] ) REFERENCES ] <replaceable class="parameter">dest_table</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
+        [ <replaceable class="parameter">element_table_label_and_properties</replaceable> ]
+
+<phrase>and <replaceable class="parameter">element_table_label_and_properties</replaceable> is either:</phrase>
+
+    NO PROPERTIES | PROPERTIES ALL COLUMNS | PROPERTIES ( { <replaceable class="parameter">expression</replaceable> [ AS <replaceable class="parameter">property_name</replaceable> ] } [, ...] )
+
+<phrase>or:</phrase>
+
+   { { LABEL <replaceable class="parameter">label_name</replaceable> | DEFAULT LABEL } [ NO PROPERTIES | PROPERTIES ALL COLUMNS | PROPERTIES ( { <replaceable class="parameter">expression</replaceable> [ AS <replaceable class="parameter">property_name</replaceable> ] } [, ...] ) ] } [...]
+</synopsis>
+</refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE PROPERTY GRAPH</command> defines a property graph.  A
+   property graph consists of vertices and edges, together called elements,
+   each with associated labels and properties, and can be queried using the
+   <literal>GRAPH_TABLE</literal> clause of <xref linkend="sql-select"/> with
+   a special path matching syntax.  The data in the graph is stored in regular
+   tables (or views, foreign tables, etc.).  Each vertex or edge corresponds
+   to a table.  The property graph definition links these tables together into
+   a graph structure that can be queried using graph query techniques.
+  </para>
+
+  <para>
+   <command>CREATE PROPERTY GRAPH</command> does not physically materialize a
+   graph.  It is thus similar to <command>CREATE VIEW</command> in that it
+   records a structure that is used only when the defined object is queried.
+  </para>
+
+  <para>
+   If a schema name is given (for example, <literal>CREATE PROPERTY GRAPH
+   myschema.mygraph ...</literal>) then the property graph is created in the
+   specified schema.  Otherwise it is created in the current schema.
+   Temporary property graphs exist in a special schema, so a schema name
+   cannot be given when creating a temporary property graph.  Property graphs
+   share a namespace with tables and other relation types, so the name of the
+   property graph must be distinct from the name of any other relation (table,
+   sequence, index, view, materialized view, or foreign table) in the same
+   schema.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the new property graph.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VERTEX</literal>/<literal>NODE</literal></term>
+    <term><literal>EDGE</literal>/<literal>RELATIONSHIP</literal></term>
+    <listitem>
+     <para>
+      These keywords are synonyms, respectively.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">vertex_table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a table that will contain vertices in the new property
+      graph.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">edge_table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a table that will contain edges in the new property graph.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">alias</replaceable></term>
+    <listitem>
+     <para>
+      A unique identifier for the vertex or edge table.  This defaults to the
+      name of the table.  Aliases must be unique in a property graph
+      definition (across all vertex table and edge table definitions).
+      (Therefore, if a table is used more than once as a vertex or edge table,
+      then an explicit alias must be specified for at least one of them to
+      distinguish them.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>KEY ( <replaceable class="parameter">column_name</replaceable> [, ...] )</literal></term>
+    <listitem>
+     <para>
+      A set of columns that uniquely identifies a row in the vertex or edge
+      table.  Defaults to the primary key.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">source_table</replaceable></term>
+    <term><replaceable class="parameter">dest_table</replaceable></term>
+    <listitem>
+     <para>
+      The vertex tables that the edge table is linked to.  These refer to the
+      aliases of the source and destination vertex tables respectively.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>KEY ( <replaceable class="parameter">column_name</replaceable> [, ...] ) REFERENCES ... ( <replaceable class="parameter">column_name</replaceable> [, ...] )</literal></term>
+    <listitem>
+     <para>
+      Two sets of columns that connect the edge table and the source or
+      destination vertex table, like in a foreign-key relationship.  If a
+      foreign-key constraint between the two tables exists, it is used by
+      default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">element_table_label_and_properties</replaceable></term>
+    <listitem>
+     <para>
+      Defines the labels and properties for the element (vertex or edge)
+      table.  Each element has at least one label.  By default, the label is
+      the same as the element table alias.  This can be specified explicitly
+      as <literal>DEFAULT LABEL</literal>.  Alternatively, one or more freely
+      chosen label names can be specified.  (Label names do not have to be
+      unique across a property graph.  It can be useful to assign the same
+      label to different elements.)  Each label has a list (possibly empty) of
+      properties.  By default, all columns of a table are automatically
+      exposed as properties.  This can be specified explicitly as
+      <literal>PROPERTIES ALL COLUMNS</literal>.  Alternatively, a list of
+      expressions, which can refer to the columns of the underlying table, can
+      be specified as properties.  If the expressions are not a plain column
+      reference, then an explicit property name must also be specified.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-create-property-graph-notes">
+  <title>Notes</title>
+
+  <para>
+   The following consistency checks must be satisfied by a property graph definition:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      In a property graph, labels with the same name applied to different
+      property graph elements must have the same number of properties and
+      those properties must have the same names.  For example, the following
+      would be allowed:
+<programlisting>
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (
+        v1 LABEL foo PROPERTIES (x, y),
+        v2 LABEL foo PROPERTIES (x, y)
+    ) ...
+</programlisting>
+      but this would not:
+<programlisting>
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (
+        v1 LABEL foo PROPERTIES (x, y),
+        v2 LABEL foo PROPERTIES (z)
+    ) ...
+</programlisting></para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In a property graph, all properties with the same name must have the
+      same data type, independent of which label they are on.  For example,
+      this would be allowed:
+<programlisting>
+CREATE TABLE v1 (a int, b int);
+CREATE TABLE v2 (a int, b int);
+
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (
+        v1 LABEL foo PROPERTIES (a, b),
+        v2 LABEL bar PROPERTIES (a, b)
+    ) ...
+</programlisting>
+      but this would not:
+<programlisting>
+CREATE TABLE v1 (a int, b int);
+CREATE TABLE v2 (a int, b varchar);
+
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (
+        v1 LABEL foo PROPERTIES (a, b),
+        v2 LABEL bar PROPERTIES (a, b)
+    ) ...
+</programlisting></para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For each property graph element, all properties with the same name must
+      have the same expression for each label.  For example, this would be
+      allowed:
+<programlisting>
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (
+        v1 LABEL foo PROPERTIES (a * 2 AS x) LABEL bar PROPERTIES (a * 2 AS x)
+    ) ...
+</programlisting>
+      but this would not:
+<programlisting>
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (
+        v1 LABEL foo PROPERTIES (a * 2 AS x) LABEL bar PROPERTIES (a * 10 AS x)
+    ) ...
+</programlisting></para>
+    </listitem>
+
+   </itemizedlist>
+  </para>
+
+  <para>
+   Property graphs are queried using the <literal>GRAPH_TABLE</literal> clause
+   of <xref linkend="sql-select"/>.
+  </para>
+
+  <para>
+   Access to the base relations underlying the <literal>GRAPH_TABLE</literal>
+   clause is determined by the permissions of the user executing the query,
+   rather than the property graph owner. Thus, the user of a property graph must
+   have the relevant permissions on the property graph and base relations
+   underlying the <literal>GRAPH_TABLE</literal> clause.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+<programlisting>
+CREATE PROPERTY GRAPH g1
+    VERTEX TABLES (v1, v2, v3)
+    EDGE TABLES (e1 SOURCE v1 DESTINATION v2,
+                 e2 SOURCE v1 DESTINATION v3);
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE PROPERTY GRAPH</command> conforms to ISO/IEC 9075-16
+   (SQL/PGQ).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alter-property-graph"/></member>
+   <member><xref linkend="sql-drop-property-graph"/></member>
+  </simplelist>
+ </refsect1>
+</refentry>

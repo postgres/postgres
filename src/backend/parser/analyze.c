@@ -79,9 +79,6 @@ static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 									   bool isTopLevel, List **targetlist);
-static void constructSetOpTargetlist(ParseState *pstate, SetOperationStmt *op,
-									 const List *ltargetlist, const List *rtargetlist,
-									 List **targetlist, const char *context, bool recursive);
 static void determineRecursiveColTypes(ParseState *pstate,
 									   Node *larg, List *nrtargetlist);
 static Query *transformReturnStmt(ParseState *pstate, ReturnStmt *stmt);
@@ -2271,7 +2268,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
  * given SetOperationStmt node.  context is a string for error messages
  * ("UNION" etc.).  recursive is true if it is a recursive union.
  */
-static void
+void
 constructSetOpTargetlist(ParseState *pstate, SetOperationStmt *op,
 						 const List *ltargetlist, const List *rtargetlist,
 						 List **targetlist, const char *context, bool recursive)
