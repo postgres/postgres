@@ -4909,6 +4909,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        Number of buffer hits in this sequence
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -5406,6 +5415,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <para>
         Resets statistics for a single table or index in the current database
         or shared across all databases in the cluster to zero.
+        It also resets statistics for a single sequence or materialized view
+        in the current database.
        </para>
        <para>
         This function is restricted to superusers by default, but other users

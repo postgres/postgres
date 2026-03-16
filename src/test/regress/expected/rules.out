@@ -2451,7 +2451,8 @@ pg_statio_all_sequences| SELECT c.oid AS relid,
     n.nspname AS schemaname,
     c.relname,
     (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS blks_read,
-    pg_stat_get_blocks_hit(c.oid) AS blks_hit
+    pg_stat_get_blocks_hit(c.oid) AS blks_hit,
+    pg_stat_get_stat_reset_time(c.oid) AS stats_reset
    FROM (pg_class c
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = 'S'::"char");
@@ -2493,7 +2494,8 @@ pg_statio_sys_sequences| SELECT relid,
     schemaname,
     relname,
     blks_read,
-    blks_hit
+    blks_hit,
+    stats_reset
    FROM pg_statio_all_sequences
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_statio_sys_tables| SELECT relid,
@@ -2524,7 +2526,8 @@ pg_statio_user_sequences| SELECT relid,
     schemaname,
     relname,
     blks_read,
-    blks_hit
+    blks_hit,
+    stats_reset
    FROM pg_statio_all_sequences
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_statio_user_tables| SELECT relid,

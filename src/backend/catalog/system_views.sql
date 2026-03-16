@@ -896,7 +896,8 @@ CREATE VIEW pg_statio_all_sequences AS
             C.relname AS relname,
             pg_stat_get_blocks_fetched(C.oid) -
                     pg_stat_get_blocks_hit(C.oid) AS blks_read,
-            pg_stat_get_blocks_hit(C.oid) AS blks_hit
+            pg_stat_get_blocks_hit(C.oid) AS blks_hit,
+            pg_stat_get_stat_reset_time(C.oid) AS stats_reset
     FROM pg_class C
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
     WHERE C.relkind = 'S';

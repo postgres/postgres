@@ -536,6 +536,21 @@ SELECT pg_stat_reset();
 SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = (SELECT current_database());
 SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database());
 
+-- Test that reset works for pg_statio_all_sequences
+
+-- Use the sequence to accumulate its stats, and reset them once first
+-- so that we have a baseline for comparison, similar to the previous test.
+-- stats_reset to compare to.
+CREATE SEQUENCE test_seq1;
+SELECT nextval('test_seq1');
+SELECT pg_stat_reset_single_table_counters('test_seq1'::regclass);
+SELECT stats_reset AS seq_reset_ts
+  FROM pg_statio_all_sequences WHERE relname ='test_seq1' \gset
+SELECT pg_stat_reset_single_table_counters('test_seq1'::regclass);
+SELECT stats_reset > :'seq_reset_ts'::timestamptz, blks_read + blks_hit
+  FROM pg_statio_all_sequences WHERE relname ='test_seq1';
+DROP SEQUENCE test_seq1;
+
 
 ----
 -- pg_stat_get_snapshot_timestamp behavior
