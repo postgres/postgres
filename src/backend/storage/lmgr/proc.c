@@ -1309,6 +1309,7 @@ ProcSleep(LOCALLOCK *locallock)
 	TimestampTz standbyWaitStart = 0;
 	bool		allow_autovacuum_cancel = true;
 	bool		logged_recovery_conflict = false;
+	bool		logged_lock_wait = false;
 	ProcWaitStatus myWaitStatus;
 	DeadLockState deadlock_state;
 
@@ -1606,12 +1607,29 @@ ProcSleep(LOCALLOCK *locallock)
 			}
 
 			if (myWaitStatus == PROC_WAIT_STATUS_WAITING)
-				ereport(LOG,
-						(errmsg("process %d still waiting for %s on %s after %ld.%03d ms",
-								MyProcPid, modename, buf.data, msecs, usecs),
-						 (errdetail_log_plural("Process holding the lock: %s. Wait queue: %s.",
-											   "Processes holding the lock: %s. Wait queue: %s.",
-											   lockHoldersNum, lock_holders_sbuf.data, lock_waiters_sbuf.data))));
+			{
+				/*
+				 * Guard the "still waiting on lock" log message so it is
+				 * reported at most once while waiting for the lock.
+				 *
+				 * Without this guard, the message can be emitted whenever the
+				 * lock-wait sleep is interrupted (for example by SIGHUP for
+				 * config reload or by client_connection_check_interval). For
+				 * example, if client_connection_check_interval is set very
+				 * low (e.g., 100 ms), the message could be logged repeatedly,
+				 * flooding the log and making it difficult to use.
+				 */
+				if (!logged_lock_wait)
+				{
+					ereport(LOG,
+							(errmsg("process %d still waiting for %s on %s after %ld.%03d ms",
+									MyProcPid, modename, buf.data, msecs, usecs),
+							 (errdetail_log_plural("Process holding the lock: %s. Wait queue: %s.",
+												   "Processes holding the lock: %s. Wait queue: %s.",
+												   lockHoldersNum, lock_holders_sbuf.data, lock_waiters_sbuf.data))));
+					logged_lock_wait = true;
+				}
+			}
 			else if (myWaitStatus == PROC_WAIT_STATUS_OK)
 				ereport(LOG,
 						(errmsg("process %d acquired %s on %s after %ld.%03d ms",
