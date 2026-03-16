@@ -578,7 +578,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
     printf("count: %d, length: %d, data: %s\n", count, length, f3[0]);
 }
 
-void commitTable()
+void commitTable(void)
 {
     { ECPGtrans(__LINE__, "con1", "commit");
 #line 187 "declare.pgc"
@@ -597,7 +597,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 /*
  * reset all the output variables
  */
-void reset()
+void reset(void)
 {
     memset(f1, 0, sizeof(f1));
     memset(f2, 0, sizeof(f2));

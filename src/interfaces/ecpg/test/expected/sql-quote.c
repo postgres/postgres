@@ -22,7 +22,7 @@
 #line 5 "quote.pgc"
 
 
-int main() {
+int main(void) {
   /* exec sql begin declare section */
      
       

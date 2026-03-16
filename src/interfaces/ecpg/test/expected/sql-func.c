@@ -22,7 +22,7 @@
 #line 5 "func.pgc"
 
 
-int main() {
+int main(void) {
   
 #line 8 "func.pgc"
  char text [ 25 ] ;

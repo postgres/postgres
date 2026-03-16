@@ -3,7 +3,7 @@
 exec sql include sqlca;
 exec sql include ../regression;
 
-int main()
+int main(void)
 {
 	exec sql begin declare section;
 		int intvar = 5;

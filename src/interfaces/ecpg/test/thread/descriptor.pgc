@@ -32,7 +32,7 @@ static void* fn(void* arg)
 	return 0;
 }
 
-int main ()
+int main(void)
 {
 	int i;
 #ifdef WIN32

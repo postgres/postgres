@@ -27,7 +27,7 @@ EXEC SQL TYPE company IS
         customer *customers;
     };
 
-int main()
+int main(void)
 {
     EXEC SQL begin declare section;
       customer  *custs1 = (customer *) malloc(sizeof(customer) * 10);

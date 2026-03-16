@@ -26,7 +26,7 @@ EXEC SQL TYPE company IS
         customer customers[10];
     };
 
-int main()
+int main(void)
 {
     EXEC SQL begin declare section;
       customer  custs1[10];

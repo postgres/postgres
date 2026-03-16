@@ -8,7 +8,7 @@ EXEC SQL BEGIN DECLARE SECTION;
     interval *interval_ptr;
 EXEC SQL END DECLARE SECTION;
 
-int main()
+int main(void)
 {
     interval_ptr = (interval *) malloc(sizeof(interval));
     interval_ptr->time = 100000000;

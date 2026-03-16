@@ -96,7 +96,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 int
-main ()
+main(void)
 {
   ECPGdebug (1, stderr);
 

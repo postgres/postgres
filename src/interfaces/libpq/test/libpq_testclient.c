@@ -13,7 +13,7 @@
 #include "libpq-fe.h"
 
 static void
-print_ssl_library()
+print_ssl_library(void)
 {
 	const char *lib = PQsslAttribute(NULL, "library");
 

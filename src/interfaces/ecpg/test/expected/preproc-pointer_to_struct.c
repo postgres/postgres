@@ -58,7 +58,7 @@ typedef  struct {
 #line 28 "pointer_to_struct.pgc"
 
 
-int main()
+int main(void)
 {
     /* exec sql begin declare section */
               

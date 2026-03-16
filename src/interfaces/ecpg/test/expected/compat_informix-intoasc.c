@@ -27,7 +27,7 @@
 #line 9 "intoasc.pgc"
 
 
-int main()
+int main(void)
 {
     interval_ptr = (interval *) malloc(sizeof(interval));
     interval_ptr->time = 100000000;

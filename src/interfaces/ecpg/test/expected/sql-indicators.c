@@ -91,7 +91,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 4 "indicators.pgc"
 
 
-int main()
+int main(void)
 {
 	/* exec sql begin declare section */
 		   

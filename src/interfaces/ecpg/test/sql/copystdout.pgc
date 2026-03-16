@@ -6,7 +6,7 @@ exec sql include ../regression;
 EXEC SQL WHENEVER SQLERROR sqlprint;
 
 int
-main ()
+main(void)
 {
   ECPGdebug (1, stderr);
 

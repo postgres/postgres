@@ -6,7 +6,7 @@ exec sql include ../regression;
 EXEC SQL WHENEVER SQLERROR sqlprint;
 
 int
-main ()
+main(void)
 {
 EXEC SQL BEGIN DECLARE SECTION;
   int foo;

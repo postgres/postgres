@@ -182,7 +182,7 @@ void execute_test(void)
     printf("count: %d, length: %d, data: %s\n", count, length, f3[0]);
 }
 
-void commitTable()
+void commitTable(void)
 {
     EXEC SQL AT con1 COMMIT;
     EXEC SQL AT con2 COMMIT;
@@ -191,7 +191,7 @@ void commitTable()
 /*
  * reset all the output variables
  */
-void reset()
+void reset(void)
 {
     memset(f1, 0, sizeof(f1));
     memset(f2, 0, sizeof(f2));

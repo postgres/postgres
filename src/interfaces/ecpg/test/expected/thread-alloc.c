@@ -179,7 +179,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	return 0;
 }
 
-int main ()
+int main(void)
 {
 	intptr_t i;
 #ifdef WIN32

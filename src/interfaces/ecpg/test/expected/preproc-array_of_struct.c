@@ -57,7 +57,7 @@ typedef  struct {
 #line 27 "array_of_struct.pgc"
 
 
-int main()
+int main(void)
 {
     /* exec sql begin declare section */
         

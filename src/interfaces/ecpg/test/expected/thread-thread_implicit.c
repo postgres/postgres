@@ -38,7 +38,7 @@ void *test_thread(void *arg);
 int nthreads   = 10;
 int iterations = 20;
 
-int main()
+int main(void)
 {
 #ifndef WIN32
   pthread_t *threads;

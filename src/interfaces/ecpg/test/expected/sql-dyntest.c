@@ -151,7 +151,7 @@ error (void)
 }
 
 int
-main ()
+main(void)
 {
   /* exec sql begin declare section */
    

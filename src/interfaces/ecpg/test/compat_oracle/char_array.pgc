@@ -17,7 +17,7 @@ static void warn(void)
    should be fixed-length, blank-padded, then null-terminated.
    Conforms to the ANSI Fixed Character type. */
 
-int main() {
+int main(void) {
 
   EXEC SQL WHENEVER SQLWARNING do warn();
   EXEC SQL WHENEVER SQLERROR STOP;
