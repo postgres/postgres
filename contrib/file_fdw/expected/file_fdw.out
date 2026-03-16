@@ -246,7 +246,17 @@ SELECT * FROM agg_bad;               -- ERROR
 ERROR:  invalid input syntax for type real: "aaa"
 CONTEXT:  COPY agg_bad, line 3, column b: "aaa"
 -- on_error, log_verbosity and reject_limit tests
-ALTER FOREIGN TABLE agg_bad OPTIONS (ADD on_error 'ignore');
+ALTER FOREIGN TABLE agg_bad OPTIONS (ADD on_error 'set_null');
+SELECT * FROM agg_bad;
+  a  |   b    
+-----+--------
+ 100 | 99.097
+   0 | _null_
+  42 | 324.78
+   1 | _null_
+(4 rows)
+
+ALTER FOREIGN TABLE agg_bad OPTIONS (SET on_error 'ignore');
 SELECT * FROM agg_bad;
 NOTICE:  2 rows were skipped due to data type incompatibility
   a  |   b    
