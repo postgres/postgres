@@ -455,6 +455,10 @@ main(int argc, char *argv[])
 						schema_only, "-s/--schema-only",
 						tablespaces_only, "-t/--tablespaces-only");
 
+	/* --clean and --data-only are incompatible */
+	check_mut_excl_opts(output_clean, "-c/--clean",
+						data_only, "-a/--data-only");
+
 	if (if_exists && !output_clean)
 		pg_fatal("option %s requires option %s",
 				 "--if-exists", "-c/--clean");

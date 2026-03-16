@@ -102,6 +102,11 @@ command_fails_like(
 	'pg_dump: options -c/--clean and -a/--data-only cannot be used together');
 
 command_fails_like(
+	[ 'pg_dumpall', '-c', '-a' ],
+	qr/\Qpg_dumpall: error: options -c\/--clean and -a\/--data-only cannot be used together\E/,
+	'pg_dumpall: options -c/--clean and -a/--data-only cannot be used together');
+
+command_fails_like(
 	[ 'pg_restore', '-c', '-a', '-f -' ],
 	qr/\Qpg_restore: error: options -c\/--clean and -a\/--data-only cannot be used together\E/,
 	'pg_restore: options -c/--clean and -a/--data-only cannot be used together'
