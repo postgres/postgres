@@ -530,6 +530,7 @@ ConversionLocation
 ConvertRowtypeExpr
 CookedConstraint
 CopyDest
+CopyFormat
 CopyFormatOptions
 CopyFromRoutine
 CopyFromState

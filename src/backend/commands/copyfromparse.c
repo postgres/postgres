@@ -175,7 +175,7 @@ ReceiveCopyBegin(CopyFromState cstate)
 {
 	StringInfoData buf;
 	int			natts = list_length(cstate->attnumlist);
-	int16		format = (cstate->opts.binary ? 1 : 0);
+	int16		format = (cstate->opts.format == COPY_FORMAT_BINARY ? 1 : 0);
 	int			i;
 
 	pq_beginmessage(&buf, PqMsg_CopyInResponse);
@@ -753,7 +753,7 @@ bool
 NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 {
 	return NextCopyFromRawFieldsInternal(cstate, fields, nfields,
-										 cstate->opts.csv_mode);
+										 cstate->opts.format == COPY_FORMAT_CSV);
 }
 
 /*
@@ -780,7 +780,8 @@ NextCopyFromRawFieldsInternal(CopyFromState cstate, char ***fields, int *nfields
 	bool		done = false;
 
 	/* only available for text or csv input */
-	Assert(!cstate->opts.binary);
+	Assert(cstate->opts.format == COPY_FORMAT_TEXT ||
+		   cstate->opts.format == COPY_FORMAT_CSV);
 
 	/* on input check that the header line is correct if needed */
 	if (cstate->cur_lineno == 0 && cstate->opts.header_line != COPY_HEADER_FALSE)

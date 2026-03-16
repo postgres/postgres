@@ -183,9 +183,9 @@ static const CopyToRoutine CopyToRoutineBinary = {
 static const CopyToRoutine *
 CopyToGetRoutine(const CopyFormatOptions *opts)
 {
-	if (opts->csv_mode)
+	if (opts->format == COPY_FORMAT_CSV)
 		return &CopyToRoutineCSV;
-	else if (opts->binary)
+	else if (opts->format == COPY_FORMAT_BINARY)
 		return &CopyToRoutineBinary;
 
 	/* default is text */
@@ -222,7 +222,7 @@ CopyToTextLikeStart(CopyToState cstate, TupleDesc tupDesc)
 
 			colname = NameStr(TupleDescAttr(tupDesc, attnum - 1)->attname);
 
-			if (cstate->opts.csv_mode)
+			if (cstate->opts.format == COPY_FORMAT_CSV)
 				CopyAttributeOutCSV(cstate, colname, false);
 			else
 				CopyAttributeOutText(cstate, colname);
@@ -399,7 +399,7 @@ SendCopyBegin(CopyToState cstate)
 {
 	StringInfoData buf;
 	int			natts = list_length(cstate->attnumlist);
-	int16		format = (cstate->opts.binary ? 1 : 0);
+	int16		format = (cstate->opts.format == COPY_FORMAT_BINARY ? 1 : 0);
 	int			i;
 
 	pq_beginmessage(&buf, PqMsg_CopyOutResponse);
