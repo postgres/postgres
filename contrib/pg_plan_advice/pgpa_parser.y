@@ -200,16 +200,16 @@ identifier: TOK_IDENT
  * when parsing advice, we accept a specification that lacks one.
  */
 opt_partition:
-	'/' TOK_IDENT '.' TOK_IDENT
+	'/' identifier '.' identifier
 		{ $$ = list_make2($2, $4); }
-	| '/' TOK_IDENT
+	| '/' identifier
 		{ $$ = list_make1($2); }
 	|
 		{ $$ = NIL; }
 	;
 
 opt_plan_name:
-	'@' TOK_IDENT
+	'@' identifier
 		{ $$ = $2; }
 	|
 		{ $$ = NULL; }

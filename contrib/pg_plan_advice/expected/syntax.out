@@ -190,3 +190,48 @@ DETAIL:  Could not parse advice: FOREIGN_JOIN targets must contain more than one
 SET pg_plan_advice.advice = 'FOREIGN_JOIN((a))';
 ERROR:  invalid value for parameter "pg_plan_advice.advice": "FOREIGN_JOIN((a))"
 DETAIL:  Could not parse advice: FOREIGN_JOIN targets must contain more than one relation identifier at or near ")"
+-- Tag keywords used as alias names work fine, because the 'identifier'
+-- nonterminal accepts all token types.
+SET pg_plan_advice.advice = 'SEQ_SCAN(hash_join)';
+EXPLAIN (COSTS OFF) SELECT 1;
+               QUERY PLAN                
+-----------------------------------------
+ Result
+ Supplied Plan Advice:
+   SEQ_SCAN(hash_join) /* not matched */
+(3 rows)
+
+SET pg_plan_advice.advice = 'SEQ_SCAN(seq_scan)';
+EXPLAIN (COSTS OFF) SELECT 1;
+               QUERY PLAN               
+----------------------------------------
+ Result
+ Supplied Plan Advice:
+   SEQ_SCAN(seq_scan) /* not matched */
+(3 rows)
+
+SET pg_plan_advice.advice = 'SEQ_SCAN(gather)';
+EXPLAIN (COSTS OFF) SELECT 1;
+              QUERY PLAN              
+--------------------------------------
+ Result
+ Supplied Plan Advice:
+   SEQ_SCAN(gather) /* not matched */
+(3 rows)
+
+SET pg_plan_advice.advice = 'SEQ_SCAN(join_order)';
+EXPLAIN (COSTS OFF) SELECT 1;
+                QUERY PLAN                
+------------------------------------------
+ Result
+ Supplied Plan Advice:
+   SEQ_SCAN(join_order) /* not matched */
+(3 rows)
+
+-- Tag keywords used as partition names or plan names should also work,
+-- since pgpa_identifier_string() can generate these from real partition
+-- and subquery names.
+SET pg_plan_advice.advice = 'SEQ_SCAN(t/public.hash_join)';
+SET pg_plan_advice.advice = 'SEQ_SCAN(t/hash_join.foo)';
+SET pg_plan_advice.advice = 'SEQ_SCAN(t@hash_join)';
+SET pg_plan_advice.advice = 'SEQ_SCAN(t@seq_scan)';

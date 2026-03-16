@@ -66,3 +66,22 @@ SET pg_plan_advice.advice = '/*/* stuff */*/';
 -- Foreign join requires multiple relation identifiers.
 SET pg_plan_advice.advice = 'FOREIGN_JOIN(a)';
 SET pg_plan_advice.advice = 'FOREIGN_JOIN((a))';
+
+-- Tag keywords used as alias names work fine, because the 'identifier'
+-- nonterminal accepts all token types.
+SET pg_plan_advice.advice = 'SEQ_SCAN(hash_join)';
+EXPLAIN (COSTS OFF) SELECT 1;
+SET pg_plan_advice.advice = 'SEQ_SCAN(seq_scan)';
+EXPLAIN (COSTS OFF) SELECT 1;
+SET pg_plan_advice.advice = 'SEQ_SCAN(gather)';
+EXPLAIN (COSTS OFF) SELECT 1;
+SET pg_plan_advice.advice = 'SEQ_SCAN(join_order)';
+EXPLAIN (COSTS OFF) SELECT 1;
+
+-- Tag keywords used as partition names or plan names should also work,
+-- since pgpa_identifier_string() can generate these from real partition
+-- and subquery names.
+SET pg_plan_advice.advice = 'SEQ_SCAN(t/public.hash_join)';
+SET pg_plan_advice.advice = 'SEQ_SCAN(t/hash_join.foo)';
+SET pg_plan_advice.advice = 'SEQ_SCAN(t@hash_join)';
+SET pg_plan_advice.advice = 'SEQ_SCAN(t@seq_scan)';
