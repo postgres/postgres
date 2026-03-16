@@ -3,7 +3,7 @@
 PGFILEDESC = "pg_upgrade - an in-place binary upgrade utility"
 PGAPPICON = win32
 
-EXTRA_INSTALL=contrib/test_decoding src/test/modules/dummy_seclabel
+EXTRA_INSTALL=contrib/test_decoding src/test/modules/dummy_seclabel src/test/modules/test_extensions
 
 subdir = src/bin/pg_upgrade
 top_builddir = ../../..
@@ -37,6 +37,10 @@ LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 # required for 002_pg_upgrade.pl
 REGRESS_SHLIB=$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)
 export REGRESS_SHLIB
+
+# required for 008_extension_control_path.pl
+TEST_EXT_LIB=$(abs_top_builddir)/src/test/modules/test_extensions/test_ext$(DLSUFFIX)
+export TEST_EXT_LIB
 
 all: pg_upgrade
 

@@ -120,6 +120,14 @@ get_loadable_libraries(void)
 		{
 			char	   *lib = PQgetvalue(res, rowno, 0);
 
+			/*
+			 * Starting with version 19, for extensions with hardcoded
+			 * '$libdir/' library names, we strip the prefix to allow the
+			 * library search path to be used.
+			 */
+			if (strncmp(lib, "$libdir/", 8) == 0)
+				lib += 8;
+
 			os_info.libraries[totaltups].name = pg_strdup(lib);
 			os_info.libraries[totaltups].dbnum = dbnum;
 
