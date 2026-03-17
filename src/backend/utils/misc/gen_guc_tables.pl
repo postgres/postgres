@@ -53,6 +53,25 @@ sub validate_guc_entry
 		string => [],    # no extra required fields
 	);
 
+	# All fields recognized by the generator.  "line_number" is injected
+	# by Catalog::ParseData and is not a user-facing field.
+	my %valid_fields = map { $_ => 1 } (
+		@required_common,
+		qw(long_desc flags ifdef min max options
+		  check_hook assign_hook show_hook
+		  line_number));
+
+	for my $f (sort keys %$entry)
+	{
+		unless ($valid_fields{$f})
+		{
+			die sprintf(
+				qq{%s:%d: error: entry "%s" has unrecognized field "%s"\n},
+				$input_fname, $entry->{line_number},
+				$entry->{name} // '<unknown>', $f);
+		}
+	}
+
 	for my $f (@required_common)
 	{
 		unless (defined $entry->{$f})
@@ -98,10 +117,16 @@ sub print_table
 	{
 		validate_guc_entry($entry);
 
-		if (defined($prev_name) && lc($prev_name) ge lc($entry->{name}))
+		if (defined($prev_name) && lc($prev_name) eq lc($entry->{name}))
+		{
+			die sprintf(qq{%s:%d: error: duplicate entry "%s"\n},
+				$input_fname, $entry->{line_number}, $entry->{name});
+		}
+		if (defined($prev_name) && lc($prev_name) gt lc($entry->{name}))
 		{
 			die sprintf(
-				"entries are not in alphabetical order: \"%s\", \"%s\"\n",
+				qq{%s:%d: error: entries are not in alphabetical order: "%s", "%s"\n},
+				$input_fname, $entry->{line_number},
 				$prev_name, $entry->{name});
 		}
 
