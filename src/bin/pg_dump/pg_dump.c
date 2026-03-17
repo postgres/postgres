@@ -7227,6 +7227,7 @@ getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
 		dobj->components |= DUMP_COMPONENT_STATISTICS;
 		dobj->name = pg_strdup(rel->name);
 		dobj->namespace = rel->namespace;
+		info->relid = rel->catId.oid;
 		info->relpages = relpages;
 		info->reltuples = pstrdup(reltuples);
 		info->relallvisible = relallvisible;
@@ -11122,6 +11123,7 @@ static PGresult *
 fetchAttributeStats(Archive *fout)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) fout;
+	PQExpBuffer relids = createPQExpBuffer();
 	PQExpBuffer nspnames = createPQExpBuffer();
 	PQExpBuffer relnames = createPQExpBuffer();
 	int			count = 0;
@@ -11157,6 +11159,7 @@ fetchAttributeStats(Archive *fout)
 		restarted = true;
 	}
 
+	appendPQExpBufferChar(relids, '{');
 	appendPQExpBufferChar(nspnames, '{');
 	appendPQExpBufferChar(relnames, '{');
 
@@ -11168,15 +11171,28 @@ fetchAttributeStats(Archive *fout)
 	 */
 	for (; te != AH->toc && count < max_rels; te = te->next)
 	{
-		if ((te->reqs & REQ_STATS) != 0 &&
-			strcmp(te->desc, "STATISTICS DATA") == 0)
+		if ((te->reqs & REQ_STATS) == 0 ||
+			strcmp(te->desc, "STATISTICS DATA") != 0)
+			continue;
+
+		if (fout->remoteVersion >= 190000)
+		{
+			RelStatsInfo *rsinfo = (RelStatsInfo *) te->defnDumperArg;
+			char		relid[32];
+
+			sprintf(relid, "%u", rsinfo->relid);
+			appendPGArray(relids, relid);
+		}
+		else
 		{
 			appendPGArray(nspnames, te->namespace);
 			appendPGArray(relnames, te->tag);
-			count++;
 		}
+
+		count++;
 	}
 
+	appendPQExpBufferChar(relids, '}');
 	appendPQExpBufferChar(nspnames, '}');
 	appendPQExpBufferChar(relnames, '}');
 
@@ -11186,14 +11202,25 @@ fetchAttributeStats(Archive *fout)
 		PQExpBuffer query = createPQExpBuffer();
 
 		appendPQExpBufferStr(query, "EXECUTE getAttributeStats(");
-		appendStringLiteralAH(query, nspnames->data, fout);
-		appendPQExpBufferStr(query, "::pg_catalog.name[],");
-		appendStringLiteralAH(query, relnames->data, fout);
-		appendPQExpBufferStr(query, "::pg_catalog.name[])");
+
+		if (fout->remoteVersion >= 190000)
+		{
+			appendStringLiteralAH(query, relids->data, fout);
+			appendPQExpBufferStr(query, "::pg_catalog.oid[])");
+		}
+		else
+		{
+			appendStringLiteralAH(query, nspnames->data, fout);
+			appendPQExpBufferStr(query, "::pg_catalog.name[],");
+			appendStringLiteralAH(query, relnames->data, fout);
+			appendPQExpBufferStr(query, "::pg_catalog.name[])");
+		}
+
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 		destroyPQExpBuffer(query);
 	}
 
+	destroyPQExpBuffer(relids);
 	destroyPQExpBuffer(nspnames);
 	destroyPQExpBuffer(relnames);
 	return res;
@@ -11254,8 +11281,14 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 	query = createPQExpBuffer();
 	if (!fout->is_prepared[PREPQUERY_GETATTRIBUTESTATS])
 	{
+		if (fout->remoteVersion >= 190000)
+			appendPQExpBufferStr(query,
+								 "PREPARE getAttributeStats(pg_catalog.oid[]) AS\n");
+		else
+			appendPQExpBufferStr(query,
+								 "PREPARE getAttributeStats(pg_catalog.name[], pg_catalog.name[]) AS\n");
+
 		appendPQExpBufferStr(query,
-							 "PREPARE getAttributeStats(pg_catalog.name[], pg_catalog.name[]) AS\n"
 							 "SELECT s.schemaname, s.tablename, s.attname, s.inherited, "
 							 "s.null_frac, s.avg_width, s.n_distinct, "
 							 "s.most_common_vals, s.most_common_freqs, "
@@ -11277,17 +11310,25 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 		/*
 		 * The results must be in the order of the relations supplied in the
 		 * parameters to ensure we remain in sync as we walk through the TOC.
-		 * The redundant filter clause on s.tablename = ANY(...) seems
-		 * sufficient to convince the planner to use
+		 *
+		 * For v9.4 through v18, the redundant filter clause on s.tablename =
+		 * ANY(...) seems sufficient to convince the planner to use
 		 * pg_class_relname_nsp_index, which avoids a full scan of pg_stats.
-		 * This may not work for all versions.
+		 * In newer versions, pg_stats returns the table OIDs, eliminating the
+		 * need for that hack.
 		 *
 		 * Our query for retrieving statistics for multiple relations uses
 		 * WITH ORDINALITY and multi-argument UNNEST(), both of which were
 		 * introduced in v9.4.  For older versions, we resort to gathering
 		 * statistics for a single relation at a time.
 		 */
-		if (fout->remoteVersion >= 90400)
+		if (fout->remoteVersion >= 190000)
+			appendPQExpBufferStr(query,
+								 "FROM pg_catalog.pg_stats s "
+								 "JOIN unnest($1) WITH ORDINALITY AS u (tableid, ord) "
+								 "ON s.tableid = u.tableid "
+								 "ORDER BY u.ord, s.attname, s.inherited");
+		else if (fout->remoteVersion >= 90400)
 			appendPQExpBufferStr(query,
 								 "FROM pg_catalog.pg_stats s "
 								 "JOIN unnest($1, $2) WITH ORDINALITY AS u (schemaname, tablename, ord) "
