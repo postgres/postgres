@@ -357,6 +357,11 @@ sub upgrade_and_compare
 		'multixact members from original and upgraded clusters match');
 }
 
+# In a VPATH build, we'll be started in the source directory, but we want
+# to run pg_upgrade in the build directory so that any files generated finish
+# in it, like delete_old_cluster.{sh,bat}.
+chdir ${PostgreSQL::Test::Utils::tmp_check};
+
 my $old_version;
 
 # Basic scenario: Create a cluster using old installation, run
