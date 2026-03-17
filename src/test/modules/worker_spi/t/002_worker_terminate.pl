@@ -59,6 +59,11 @@ sub run_bgworker_interruptible_test
 
 my $node = PostgreSQL::Test::Cluster->new('mynode');
 $node->init;
+$node->append_conf(
+	"postgresql.conf", qq(
+autovacuum = off
+debug_parallel_query = off
+));
 $node->start;
 
 # Check if the extension injection_points is available, as it may be
