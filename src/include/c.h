@@ -444,6 +444,9 @@ extern "C++"
 #if defined(__clang__)
 #if __clang_major__ < 19
 #undef HAVE_TYPEOF_UNQUAL
+#else
+#undef typeof_unqual
+#define typeof_unqual __typeof_unqual__
 #endif
 #endif							/* __clang__ */
 
