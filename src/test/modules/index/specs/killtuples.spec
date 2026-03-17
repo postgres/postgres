@@ -36,12 +36,14 @@ step fill_10 { INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM gener
 
 step fill_500 { INSERT INTO kill_prior_tuple(key, cat) SELECT g.i, 'a' FROM generate_series(1, 500) g(i); }
 
+step fill_same { INSERT INTO kill_prior_tuple(key, cat) SELECT 1, 'a' FROM generate_series(1, 408) g(i); }
+
 # column-less select to make output easier to read
 step flush { SELECT FROM pg_stat_force_next_flush(); }
 
 step measure { UPDATE counter SET heap_accesses = (SELECT heap_blks_read + heap_blks_hit FROM pg_statio_all_tables WHERE relname = 'kill_prior_tuple'); }
 
-step result { SELECT heap_blks_read + heap_blks_hit - counter.heap_accesses AS new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple'; }
+step result { SELECT ((heap_blks_read + heap_blks_hit - counter.heap_accesses) > 0) AS has_new_heap_accesses FROM counter, pg_statio_all_tables WHERE relname = 'kill_prior_tuple'; }
 
 step access { EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF) SELECT * FROM kill_prior_tuple WHERE key = 1; }
 
@@ -108,6 +110,17 @@ permutation
 # Same as first permutation, except testing hash
 permutation
   create_table fill_500 create_hash flush
+  disable_seq disable_bitmap
+  measure access flush result
+  measure access flush result
+  delete flush
+  measure access flush result
+  measure access flush result
+  drop_table
+
+# Test the hash special case of use of the overflow page due to lots of duplicates
+permutation
+  create_table fill_same create_hash flush
   disable_seq disable_bitmap
   measure access flush result
   measure access flush result

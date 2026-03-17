@@ -600,7 +600,7 @@ _hash_kill_items(IndexScanDesc scan)
 					 * update the page while just holding a share lock. If we
 					 * are not allowed, there's no point continuing.
 					 */
-					if (!BufferBeginSetHintBits(so->currPos.buf))
+					if (!BufferBeginSetHintBits(buf))
 						goto unlock_page;
 				}
 
@@ -621,7 +621,7 @@ _hash_kill_items(IndexScanDesc scan)
 	if (killedsomething)
 	{
 		opaque->hasho_flag |= LH_PAGE_HAS_DEAD_TUPLES;
-		BufferFinishSetHintBits(so->currPos.buf, true, true);
+		BufferFinishSetHintBits(buf, true, true);
 	}
 
 unlock_page:
