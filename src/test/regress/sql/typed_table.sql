@@ -20,7 +20,8 @@ ALTER TABLE persons DROP COLUMN name;
 ALTER TABLE persons RENAME COLUMN id TO num;
 ALTER TABLE persons ALTER COLUMN name TYPE varchar;
 CREATE TABLE stuff (id int);
-ALTER TABLE persons INHERIT stuff;
+ALTER TABLE persons INHERIT stuff; -- error
+ALTER TABLE persons NO INHERIT stuff; -- error
 
 CREATE TABLE personsx OF person_type (myname WITH OPTIONS NOT NULL); -- error
 

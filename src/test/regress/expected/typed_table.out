@@ -41,8 +41,10 @@ ERROR:  cannot alter column type of typed table
 LINE 1: ALTER TABLE persons ALTER COLUMN name TYPE varchar;
                                          ^
 CREATE TABLE stuff (id int);
-ALTER TABLE persons INHERIT stuff;
+ALTER TABLE persons INHERIT stuff; -- error
 ERROR:  cannot change inheritance of typed table
+ALTER TABLE persons NO INHERIT stuff; -- error
+ERROR:  relation "stuff" is not a parent of relation "persons"
 CREATE TABLE personsx OF person_type (myname WITH OPTIONS NOT NULL); -- error
 ERROR:  column "myname" does not exist
 CREATE TABLE persons2 OF person_type (
