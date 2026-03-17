@@ -1013,6 +1013,7 @@ static pg_attribute_always_inline void
 slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 					   int reqnatts)
 {
+	CompactAttribute *cattrs;
 	CompactAttribute *cattr;
 	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
 	HeapTupleHeader tup = tuple->t_data;
@@ -1095,6 +1096,13 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 	values = slot->tts_values;
 	slot->tts_nvalid = reqnatts;
 
+	/*
+	 * We store the tupleDesc's CompactAttribute array in 'cattrs' as gcc
+	 * seems to be unwilling to optimize accessing the CompactAttribute
+	 * element efficiently when accessing it via TupleDescCompactAttr().
+	 */
+	cattrs = tupleDesc->compact_attrs;
+
 	/* Ensure we calculated tp correctly */
 	Assert(tp == (char *) tup + tup->t_hoff);
 
@@ -1105,7 +1113,7 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 		do
 		{
 			isnull[attnum] = false;
-			cattr = TupleDescCompactAttr(tupleDesc, attnum);
+			cattr = &cattrs[attnum];
 			attlen = cattr->attlen;
 
 			/* We don't expect any non-byval types */
@@ -1150,9 +1158,8 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 		do
 		{
 			isnull[attnum] = false;
-			cattr = TupleDescCompactAttr(tupleDesc, attnum);
+			cattr = &cattrs[attnum];
 			attlen = cattr->attlen;
-
 			off = cattr->attcacheoff;
 			values[attnum] = fetch_att_noerr(tp + off,
 											 cattr->attbyval,
@@ -1179,7 +1186,7 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 		int			attlen;
 
 		isnull[attnum] = false;
-		cattr = TupleDescCompactAttr(tupleDesc, attnum);
+		cattr = &cattrs[attnum];
 		attlen = cattr->attlen;
 
 		/*
@@ -1212,7 +1219,7 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 			continue;
 		}
 
-		cattr = TupleDescCompactAttr(tupleDesc, attnum);
+		cattr = &cattrs[attnum];
 		attlen = cattr->attlen;
 
 		/* As above, we don't expect cstrings */

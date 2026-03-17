@@ -55,7 +55,7 @@ typedef struct TupleConstr
  *		directly after the FormData_pg_attribute struct is populated or
  *		altered in any way.
  *
- * Currently, this struct is 16 bytes.  Any code changes which enlarge this
+ * Currently, this struct is 8 bytes.  Any code changes which enlarge this
  * struct should be considered very carefully.
  *
  * Code which must access a TupleDesc's attribute data should always make use
@@ -67,17 +67,17 @@ typedef struct TupleConstr
  */
 typedef struct CompactAttribute
 {
-	int32		attcacheoff;	/* fixed offset into tuple, if known, or -1 */
+	int16		attcacheoff;	/* fixed offset into tuple, if known, or -1 */
 	int16		attlen;			/* attr len in bytes or -1 = varlen, -2 =
 								 * cstring */
 	bool		attbyval;		/* as FormData_pg_attribute.attbyval */
-	bool		attispackable;	/* FormData_pg_attribute.attstorage !=
-								 * TYPSTORAGE_PLAIN */
-	bool		atthasmissing;	/* as FormData_pg_attribute.atthasmissing */
-	bool		attisdropped;	/* as FormData_pg_attribute.attisdropped */
-	bool		attgenerated;	/* FormData_pg_attribute.attgenerated != '\0' */
-	char		attnullability; /* status of not-null constraint, see below */
 	uint8		attalignby;		/* alignment requirement in bytes */
+	bool		attispackable:1;	/* FormData_pg_attribute.attstorage !=
+									 * TYPSTORAGE_PLAIN */
+	bool		atthasmissing:1;	/* as FormData_pg_attribute.atthasmissing */
+	bool		attisdropped:1; /* as FormData_pg_attribute.attisdropped */
+	bool		attgenerated:1; /* FormData_pg_attribute.attgenerated != '\0' */
+	char		attnullability; /* status of not-null constraint, see below */
 } CompactAttribute;
 
 /* Valid values for CompactAttribute->attnullability */
