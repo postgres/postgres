@@ -191,7 +191,9 @@ CREATE VIEW pg_stats WITH (security_barrier) AS
     SELECT
         nspname AS schemaname,
         relname AS tablename,
+        attrelid AS tableid,
         attname AS attname,
+        attnum,
         stainherit AS inherited,
         stanullfrac AS null_frac,
         stawidth AS avg_width,
@@ -278,8 +280,10 @@ REVOKE ALL ON pg_statistic FROM public;
 CREATE VIEW pg_stats_ext WITH (security_barrier) AS
     SELECT cn.nspname AS schemaname,
            c.relname AS tablename,
+           s.stxrelid AS tableid,
            sn.nspname AS statistics_schemaname,
            s.stxname AS statistics_name,
+           s.oid AS statistics_id,
            pg_get_userbyid(s.stxowner) AS statistics_owner,
            ( SELECT array_agg(a.attname ORDER BY a.attnum)
              FROM unnest(s.stxkeys) k
@@ -312,8 +316,10 @@ CREATE VIEW pg_stats_ext WITH (security_barrier) AS
 CREATE VIEW pg_stats_ext_exprs WITH (security_barrier) AS
     SELECT cn.nspname AS schemaname,
            c.relname AS tablename,
+           s.stxrelid AS tableid,
            sn.nspname AS statistics_schemaname,
            s.stxname AS statistics_name,
+           s.oid AS statistics_id,
            pg_get_userbyid(s.stxowner) AS statistics_owner,
            stat.expr,
            sd.stxdinherit AS inherited,

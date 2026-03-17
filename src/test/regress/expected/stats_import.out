@@ -78,7 +78,7 @@ SELECT COUNT(*) FROM pg_attribute
     attnum > 0;
  count 
 -------
-    15
+    17
 (1 row)
 
 -- Create a view that is used purely for the type based on pg_stats_ext.
@@ -119,7 +119,7 @@ SELECT COUNT(*) FROM pg_attribute
     attnum > 0;
  count 
 -------
-    20
+    22
 (1 row)
 
 -- Create a view that is used purely for the type based on pg_stats_ext_exprs.
