@@ -996,7 +996,7 @@ pgpa_planner_apply_join_path_advice(JoinType jointype, uint64 *pgs_mask_p,
 	Bitmapset  *jo_deny_rel_indexes = NULL;
 	Bitmapset  *jm_indexes = NULL;
 	bool		jm_conflict = false;
-	uint32		join_mask = 0;
+	uint64		join_mask = 0;
 	Bitmapset  *sj_permit_indexes = NULL;
 	Bitmapset  *sj_deny_indexes = NULL;
 
@@ -1048,7 +1048,7 @@ pgpa_planner_apply_join_path_advice(JoinType jointype, uint64 *pgs_mask_p,
 	while ((i = bms_next_member(pjs->join_indexes, i)) >= 0)
 	{
 		pgpa_trove_entry *entry = &pjs->join_entries[i];
-		uint32		my_join_mask;
+		uint64		my_join_mask;
 
 		/* Handle join order advice. */
 		if (entry->tag == PGPA_TAG_JOIN_ORDER)
