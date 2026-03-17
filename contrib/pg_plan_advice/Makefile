@@ -15,6 +15,8 @@ OBJS = \
 	pgpa_trove.o \
 	pgpa_walker.o
 
+HEADERS_pg_plan_advice = pg_plan_advice.h
+
 PGFILEDESC = "pg_plan_advice - help the planner get the right plan"
 
 REGRESS = gather join_order join_strategy partitionwise prepared \
