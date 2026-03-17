@@ -20473,11 +20473,12 @@ getDependencies(Archive *fout)
 	 * Translate dependencies of pg_propgraph_element entries into
 	 * dependencies of their parent pg_class entry.
 	 */
-	appendPQExpBufferStr(query, "UNION ALL\n"
-						 "SELECT 'pg_class'::regclass AS classid, pgepgid AS objid, refclassid, refobjid, deptype "
-						 "FROM pg_depend d, pg_propgraph_element pge "
-						 "WHERE deptype NOT IN ('p', 'e', 'i') AND "
-						 "classid = 'pg_propgraph_element'::regclass AND objid = pge.oid\n");
+	if (fout->remoteVersion >= 190000)
+		appendPQExpBufferStr(query, "UNION ALL\n"
+							 "SELECT 'pg_class'::regclass AS classid, pgepgid AS objid, refclassid, refobjid, deptype "
+							 "FROM pg_depend d, pg_propgraph_element pge "
+							 "WHERE deptype NOT IN ('p', 'e', 'i') AND "
+							 "classid = 'pg_propgraph_element'::regclass AND objid = pge.oid\n");
 
 	/* Sort the output for efficiency below */
 	appendPQExpBufferStr(query, "ORDER BY 1,2");
