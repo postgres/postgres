@@ -4007,10 +4007,19 @@ CREATE TABLE nonpartitioned (
 	a int,
 	b int
 );
-ALTER TABLE partitioned INHERIT nonpartitioned;
-ERROR:  cannot change inheritance of partitioned table
-ALTER TABLE nonpartitioned INHERIT partitioned;
+ALTER TABLE partitioned INHERIT nonpartitioned; -- fail
+ERROR:  ALTER action INHERIT cannot be performed on relation "partitioned"
+DETAIL:  This operation is not supported for partitioned tables.
+ALTER TABLE partitioned NO INHERIT nonpartitioned; -- fail
+ERROR:  ALTER action NO INHERIT cannot be performed on relation "partitioned"
+DETAIL:  This operation is not supported for partitioned tables.
+ALTER TABLE nonpartitioned INHERIT partitioned; -- fail
 ERROR:  cannot inherit from partitioned table "partitioned"
+CREATE TABLE partitioned_p1 PARTITION OF partitioned FOR VALUES FROM (0, 0) TO (10, 100);
+ALTER TABLE partitioned_p1 INHERIT nonpartitioned; -- fail
+ERROR:  cannot change inheritance of a partition
+ALTER TABLE partitioned_p1 NO INHERIT nonpartitioned; -- fail
+ERROR:  cannot change inheritance of a partition
 -- cannot add NO INHERIT constraint to partitioned tables
 ALTER TABLE partitioned ADD CONSTRAINT chk_a CHECK (a > 0) NO INHERIT;
 ERROR:  cannot add NO INHERIT constraint to partitioned table "partitioned"

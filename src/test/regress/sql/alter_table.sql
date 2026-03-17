@@ -2405,8 +2405,12 @@ CREATE TABLE nonpartitioned (
 	a int,
 	b int
 );
-ALTER TABLE partitioned INHERIT nonpartitioned;
-ALTER TABLE nonpartitioned INHERIT partitioned;
+ALTER TABLE partitioned INHERIT nonpartitioned; -- fail
+ALTER TABLE partitioned NO INHERIT nonpartitioned; -- fail
+ALTER TABLE nonpartitioned INHERIT partitioned; -- fail
+CREATE TABLE partitioned_p1 PARTITION OF partitioned FOR VALUES FROM (0, 0) TO (10, 100);
+ALTER TABLE partitioned_p1 INHERIT nonpartitioned; -- fail
+ALTER TABLE partitioned_p1 NO INHERIT nonpartitioned; -- fail
 
 -- cannot add NO INHERIT constraint to partitioned tables
 ALTER TABLE partitioned ADD CONSTRAINT chk_a CHECK (a > 0) NO INHERIT;

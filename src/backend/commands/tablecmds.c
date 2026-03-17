@@ -701,7 +701,7 @@ static void ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 									   LOCKMODE lockmode);
 static void ATExecEnableDisableRule(Relation rel, const char *rulename,
 									char fires_when, LOCKMODE lockmode);
-static void ATPrepAddInherit(Relation child_rel);
+static void ATPrepChangeInherit(Relation child_rel);
 static ObjectAddress ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode);
 static ObjectAddress ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode);
 static void drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid,
@@ -5227,16 +5227,16 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_AddInherit:		/* INHERIT */
 			ATSimplePermissions(cmd->subtype, rel,
-								ATT_TABLE | ATT_PARTITIONED_TABLE | ATT_FOREIGN_TABLE);
+								ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* This command never recurses */
-			ATPrepAddInherit(rel);
+			ATPrepChangeInherit(rel);
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DropInherit:	/* NO INHERIT */
 			ATSimplePermissions(cmd->subtype, rel,
-								ATT_TABLE | ATT_PARTITIONED_TABLE | ATT_FOREIGN_TABLE);
+								ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* This command never recurses */
-			/* No command-specific prep needed */
+			ATPrepChangeInherit(rel);
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AlterConstraint:	/* ALTER CONSTRAINT */
@@ -17472,14 +17472,12 @@ ATExecEnableDisableRule(Relation rel, const char *rulename,
 }
 
 /*
- * ALTER TABLE INHERIT
+ * Preparation phase of [NO] INHERIT
  *
- * Add a parent to the child's parents. This verifies that all the columns and
- * check constraints of the parent appear in the child and that they have the
- * same data types and expressions.
+ * Check the relation defined as a child.
  */
 static void
-ATPrepAddInherit(Relation child_rel)
+ATPrepChangeInherit(Relation child_rel)
 {
 	if (child_rel->rd_rel->reloftype)
 		ereport(ERROR,
@@ -17490,14 +17488,11 @@ ATPrepAddInherit(Relation child_rel)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot change inheritance of a partition")));
-
-	if (child_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot change inheritance of partitioned table")));
 }
 
 /*
+ * ALTER TABLE INHERIT
+ *
  * Return the address of the new parent relation.
  */
 static ObjectAddress
@@ -17608,6 +17603,9 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
  * CreateInheritance
  *		Catalog manipulation portion of creating inheritance between a child
  *		table and a parent table.
+ *
+ * This verifies that all the columns and check constraints of the parent
+ * appear in the child and that they have the same data types and expressions.
  *
  * Common to ATExecAddInherit() and ATExecAttachPartition().
  */
@@ -18067,11 +18065,6 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 {
 	ObjectAddress address;
 	Relation	parent_rel;
-
-	if (rel->rd_rel->relispartition)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot change inheritance of a partition")));
 
 	/*
 	 * AccessShareLock on the parent is probably enough, seeing that DROP
