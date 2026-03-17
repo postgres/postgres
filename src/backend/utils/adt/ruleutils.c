@@ -1772,6 +1772,21 @@ make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
 	table_close(pgerel, AccessShareLock);
 }
 
+struct oid_str_pair
+{
+	Oid			oid;
+	char	   *str;
+};
+
+static int
+list_oid_str_pair_cmp_by_str(const ListCell *p1, const ListCell *p2)
+{
+	struct oid_str_pair *v1 = lfirst(p1);
+	struct oid_str_pair *v2 = lfirst(p2);
+
+	return strcmp(v1->str, v2->str);
+}
+
 /*
  * Generates label and properties list.  Pass in the element OID, the element
  * alias, and the graph relation OID.  Result is appended to buf.
@@ -1784,6 +1799,7 @@ make_propgraphdef_labels(StringInfo buf, Oid elid, const char *elalias, Oid elre
 	SysScanDesc scan;
 	int			count;
 	HeapTuple	tup;
+	List	   *label_list = NIL;
 
 	pglrel = table_open(PropgraphElementLabelRelationId, AccessShareLock);
 
@@ -1792,38 +1808,51 @@ make_propgraphdef_labels(StringInfo buf, Oid elid, const char *elalias, Oid elre
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(elid));
 
-	count = 0;
-	scan = systable_beginscan(pglrel, PropgraphElementLabelElementLabelIndexId, true, NULL, 1, scankey);
-	while ((tup = systable_getnext(scan)))
-	{
-		count++;
-	}
-	systable_endscan(scan);
-
+	/*
+	 * We want to output the labels in a deterministic order.  So we first
+	 * read all the data, then sort, then print it.
+	 */
 	scan = systable_beginscan(pglrel, PropgraphElementLabelElementLabelIndexId, true, NULL, 1, scankey);
 
 	while ((tup = systable_getnext(scan)))
 	{
 		Form_pg_propgraph_element_label pgelform = (Form_pg_propgraph_element_label) GETSTRUCT(tup);
-		const char *labelname;
+		struct oid_str_pair *osp;
 
-		labelname = get_propgraph_label_name(pgelform->pgellabelid);
+		osp = palloc_object(struct oid_str_pair);
+		osp->oid = pgelform->oid;
+		osp->str = get_propgraph_label_name(pgelform->pgellabelid);
 
-		if (strcmp(labelname, elalias) == 0)
+		label_list = lappend(label_list, osp);
+	}
+
+	systable_endscan(scan);
+	table_close(pglrel, AccessShareLock);
+
+	count = list_length(label_list);
+
+	/* Each element has at least one label. */
+	Assert(count > 0);
+
+	/*
+	 * It is enough for the comparison function to compare just labels, since
+	 * all the labels of an element table should have distinct names.
+	 */
+	list_sort(label_list, list_oid_str_pair_cmp_by_str);
+
+	foreach_ptr(struct oid_str_pair, osp, label_list)
+	{
+		if (strcmp(osp->str, elalias) == 0)
 		{
 			/* If the default label is the only label, don't print anything. */
 			if (count != 1)
 				appendStringInfo(buf, " DEFAULT LABEL");
 		}
 		else
-			appendStringInfo(buf, " LABEL %s", quote_identifier(labelname));
+			appendStringInfo(buf, " LABEL %s", quote_identifier(osp->str));
 
-		make_propgraphdef_properties(buf, pgelform->oid, elrelid);
+		make_propgraphdef_properties(buf, osp->oid, elrelid);
 	}
-
-	systable_endscan(scan);
-
-	table_close(pglrel, AccessShareLock);
 }
 
 /*
