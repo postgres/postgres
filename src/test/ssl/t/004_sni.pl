@@ -47,6 +47,9 @@ $ENV{PGHOST} = $node->host;
 $ENV{PGPORT} = $node->port;
 $node->start;
 
+my $exec_backend = $node->safe_psql('postgres', 'SHOW debug_exec_backend');
+chomp($exec_backend);
+
 $ssl_server->configure_test_server_for_ssl($node, $SERVERHOSTADDR,
 	$SERVERHOSTCIDR, 'trust');
 
@@ -320,9 +323,10 @@ unlike(
 
 SKIP:
 {
-	# Passphrase reloads must be enabled on Windows to succeed even without a
-	# restart
-	skip "Passphrase command reload required on Windows", 1 if ($windows_os);
+	# Passphrase reloads must be enabled on Windows (and EXEC_BACKEND) to
+	# succeed even without a restart
+	skip "Passphrase command reload required on Windows and EXEC_BACKEND", 1
+	  if ($windows_os || $exec_backend =~ /on/);
 
 	$node->connect_ok(
 		"$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require host=localhost",
