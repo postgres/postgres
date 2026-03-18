@@ -204,7 +204,12 @@ command_fails_like(
 command_fails_like(
 	[ 'pg_restore', '-f -', '-F', 'garbage' ],
 	qr/\Qpg_restore: error: unrecognized archive format "garbage";\E/,
-	'pg_dump: unrecognized archive format');
+	'pg_restore: unrecognized archive format');
+
+command_fails_like(
+	[ 'pg_restore', '-f -', '-F', '' ],
+	qr/\Qpg_restore: error: unrecognized archive format "";\E/,
+	'pg_restore: empty archive format');
 
 command_fails_like(
 	[ 'pg_dump', '--on-conflict-do-nothing' ],
