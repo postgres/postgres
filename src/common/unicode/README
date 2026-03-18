@@ -10,7 +10,7 @@ Update Unicode Version
 ----------------------
 
 Edit src/Makefile.global.in and src/common/unicode/meson.build
-to update the UNICODE_VERSION.
+to update the UNICODE_VERSION and the CLDR_VERSION.
 
 Then, generate the new header files with:
 

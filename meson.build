@@ -3263,6 +3263,7 @@ pl_targets = []
 contrib_targets = []
 testprep_targets = []
 nls_targets = []
+update_unicode_targets = []
 
 
 # Define the tests to distribute them to the correct test styles later
@@ -4050,6 +4051,10 @@ alias_target('testprep', testprep_targets)
 
 alias_target('world', all_built, docs)
 alias_target('install-world', install_quiet, installdocs)
+
+if update_unicode_targets.length() > 0
+  alias_target('update-unicode', update_unicode_targets)
+endif
 
 run_target('help',
   command: [

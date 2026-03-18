@@ -1,6 +1,7 @@
 # Copyright (c) 2022-2026, PostgreSQL Global Development Group
 
 UNICODE_VERSION = '16.0.0'
+CLDR_VERSION = '47'
 
 unicode_data = {}
 unicode_baseurl = 'https://www.unicode.org/Public/@0@/ucd/@1@'
@@ -22,9 +23,9 @@ foreach f : ['CompositionExclusions.txt', 'CaseFolding.txt', 'DerivedCorePropert
 endforeach
 
 
-update_unicode_targets = []
+update_unicode_common_targets = []
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_case_table.h',
     input: [unicode_data['CaseFolding.txt'], unicode_data['SpecialCasing.txt'], unicode_data['UnicodeData.txt']],
     output: ['unicode_case_table.h'],
@@ -34,7 +35,7 @@ update_unicode_targets += \
     build_by_default: false,
   )
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_category_table.h',
     input: [unicode_data['UnicodeData.txt'], unicode_data['DerivedCoreProperties.txt'], unicode_data['PropList.txt']],
     output: ['unicode_category_table.h'],
@@ -44,7 +45,7 @@ update_unicode_targets += \
     build_by_default: false,
   )
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_east_asian_fw_table.h',
     input: [unicode_data['EastAsianWidth.txt']],
     output: ['unicode_east_asian_fw_table.h'],
@@ -53,7 +54,7 @@ update_unicode_targets += \
     capture: true,
   )
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_nonspacing_table.h',
     input: [unicode_data['UnicodeData.txt']],
     output: ['unicode_nonspacing_table.h'],
@@ -63,7 +64,7 @@ update_unicode_targets += \
     capture: true,
   )
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_norm_table.h',
     input: [unicode_data['UnicodeData.txt'], unicode_data['CompositionExclusions.txt']],
     output: ['unicode_norm_table.h', 'unicode_norm_hashfunc.h'],
@@ -74,7 +75,7 @@ update_unicode_targets += \
     build_by_default: false,
   )
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_normprops_table.h',
     input: [unicode_data['DerivedNormalizationProps.txt']],
     output: ['unicode_normprops_table.h'],
@@ -84,7 +85,7 @@ update_unicode_targets += \
     capture: true,
   )
 
-update_unicode_targets += \
+update_unicode_common_targets += \
   custom_target('unicode_version.h',
     output: ['unicode_version.h'],
     command: [
@@ -140,7 +141,7 @@ update_unicode_dep = []
 if not meson.is_cross_build()
   update_unicode_dep += custom_target('case_test.run',
     output: 'case_test.run',
-    input: update_unicode_targets,
+    input: update_unicode_common_targets,
     command: [case_test, UNICODE_VERSION],
     build_by_default: false,
     build_always_stale: true,
@@ -150,7 +151,7 @@ endif
 if not meson.is_cross_build()
   update_unicode_dep += custom_target('category_test.run',
     output: 'category_test.run',
-    input: update_unicode_targets,
+    input: update_unicode_common_targets,
     command: [category_test, UNICODE_VERSION],
     build_by_default: false,
     build_always_stale: true,
@@ -160,7 +161,7 @@ endif
 if not meson.is_cross_build()
   update_unicode_dep += custom_target('norm_test.run',
     output: 'norm_test.run',
-    input: update_unicode_targets,
+    input: update_unicode_common_targets,
     command: [norm_test],
     build_by_default: false,
     build_always_stale: true,
@@ -170,13 +171,13 @@ endif
 
 # Use a custom target, as run targets serialize the output, making this harder
 # to debug, and don't deal well with targets with multiple outputs.
-update_unicode = custom_target('update-unicode',
+update_unicode_common = custom_target('update-unicode',
   depends: update_unicode_dep,
   output: ['dont-exist'],
-  input: update_unicode_targets,
+  input: update_unicode_common_targets,
   command: [cp, '@INPUT@', '@SOURCE_ROOT@/src/include/common/'],
   build_by_default: false,
   build_always_stale: true,
 )
 
-alias_target('update-unicode', update_unicode)
+update_unicode_targets += update_unicode_common
