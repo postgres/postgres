@@ -56,6 +56,7 @@
 #define CONFIG_FILENAME "postgresql.conf"
 #define HBA_FILENAME	"pg_hba.conf"
 #define IDENT_FILENAME	"pg_ident.conf"
+#define HOSTS_FILENAME	"pg_hosts.conf"
 
 #ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
@@ -1837,6 +1838,37 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		goto fail;
 	}
 	SetConfigOption("ident_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
+
+	if (fname_is_malloced)
+		free(fname);
+	else
+		guc_free(fname);
+
+	/*
+	 * Likewise for pg_hosts.conf.
+	 */
+	if (HostsFileName)
+	{
+		fname = make_absolute_path(HostsFileName);
+		fname_is_malloced = true;
+	}
+	else if (configdir)
+	{
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(HOSTS_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, HOSTS_FILENAME);
+		fname_is_malloced = false;
+	}
+	else
+	{
+		write_stderr("%s does not know where to find the \"hosts\" configuration file.\n"
+					 "This can be specified as \"hosts_file\" in \"%s\", "
+					 "or by the -D invocation option, or by the "
+					 "PGDATA environment variable.\n",
+					 progname, ConfigFileName);
+		goto fail;
+	}
+	SetConfigOption("hosts_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	if (fname_is_malloced)
 		free(fname);

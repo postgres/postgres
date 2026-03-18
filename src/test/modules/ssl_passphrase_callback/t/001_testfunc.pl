@@ -15,6 +15,8 @@ unless (($ENV{with_ssl} || "") eq 'openssl')
 	plan skip_all => 'OpenSSL not supported by this build';
 }
 
+my $libressl = not check_pg_config("#define HAVE_SSL_CTX_SET_CERT_CB 1");
+
 my $rot13pass = "SbbOnE1";
 
 # see the Makefile for how the certificate and key have been generated
@@ -75,5 +77,37 @@ ok(!-e "$ddir/postmaster.pid", "postgres not started with bad passphrase");
 
 # just in case
 $node->stop('fast');
+
+# Make sure the hook is bypassed when SNI is enabled.
+SKIP:
+{
+	skip 'SNI not supported with LibreSSL', 2 if ($libressl);
+
+	$node->append_conf(
+		'postgresql.conf', qq{
+ssl_passphrase_command = 'echo FooBaR1'
+ssl_sni = on
+});
+	$node->append_conf(
+		'pg_hosts.conf', qq{
+example.org $ddir/server.crt $ddir/server.key "" "echo FooBaR1" on
+example.com $ddir/server.crt $ddir/server.key "" "echo FooBaR1" on
+});
+
+	# If the servers starts and runs, the bad ssl_passphrase.passphrase was
+	# correctly ignored.
+	$node->start;
+	ok(-e "$ddir/postmaster.pid", "postgres started after SNI");
+
+	$node->stop('fast');
+	$log_contents = slurp_file($log);
+	like(
+		$log_contents,
+		qr/WARNING.*SNI is enabled; installed TLS init hook will be ignored/,
+		"server warns that init hook and SNI are incompatible");
+	# Ensure that the warning was printed once and not once per host line
+	my $count =()= $log_contents =~ m/installed TLS init hook will be ignored/;
+	is($count, 1, 'Only one WARNING');
+}
 
 done_testing();

@@ -2464,6 +2464,12 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
       <entry>client certificate must not be on this list</entry>
      </row>
 
+     <row>
+      <entry><filename>$PGDATA/pg_hosts.conf</filename></entry>
+      <entry>SNI configuration</entry>
+      <entry>defines which certificates to use for which server hostname</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -2591,6 +2597,123 @@ openssl x509 -req -in server.csr -text -days 365 \
    </para>
   </sect2>
 
+  <sect2 id="ssl-sni">
+   <title>SNI Configuration</title>
+
+   <para>
+    <productname>PostgreSQL</productname> can be configured for Server Name
+    Indication, <acronym>SNI</acronym>, using the <filename>pg_hosts.conf</filename>
+    configuration file. <productname>PostgreSQL</productname> inspects the TLS
+    hostname extension in the SSL connection handshake, and selects the right
+    TLS certificate, key and CA certificate to use for the connection based on
+    the hosts which are defined in <filename>pg_hosts.conf</filename>.
+   </para>
+
+   <para>
+    SNI configuration is defined in the hosts configuration file,
+    <filename>pg_hosts.conf</filename>, which is stored in the cluster's
+    data directory.  The hosts configuration file contains lines of the general
+    forms:
+<synopsis>
+<replaceable>hostname</replaceable> <replaceable>SSL_certificate</replaceable> <replaceable>SSL_key</replaceable> <replaceable>SSL_CA_certificate</replaceable> <replaceable>SSL_passphrase_cmd</replaceable> <replaceable>SSL_passphrase_cmd_reload</replaceable>
+<literal>include</literal> <replaceable>file</replaceable>
+<literal>include_if_exists</literal> <replaceable>file</replaceable>
+<literal>include_dir</literal> <replaceable>directory</replaceable>
+</synopsis>
+    Comments, whitespace and line continuations are handled in the same way as
+    in <filename>pg_hba.conf</filename>.  <replaceable>hostname</replaceable>
+    is matched against the hostname TLS extension in the SSL handshake.
+    <replaceable>SSL_certificate</replaceable>,
+    <replaceable>SSL_key</replaceable>,
+    <replaceable>SSL_CA_certificate</replaceable>,
+    <replaceable>SSL_passphrase_cmd</replaceable>, and
+    <replaceable>SSL_passphrase_cmd_reload</replaceable>
+    are treated like
+    <xref linkend="guc-ssl-cert-file"/>,
+    <xref linkend="guc-ssl-key-file"/>,
+    <xref linkend="guc-ssl-ca-file"/>,
+    <xref linkend="guc-ssl-passphrase-command"/>, and
+    <xref linkend="guc-ssl-passphrase-command-supports-reload"/> respectively.
+    All fields except <replaceable>SSL_CA_certificate</replaceable>,
+    <replaceable>SSL_passphrase_cmd</replaceable> and
+    <replaceable>SSL_passphrase_cmd_reload</replaceable> are required. If
+    <replaceable>SSL_passphrase_cmd</replaceable> is defined but not
+    <replaceable>SSL_passphrase_cmd_reload</replaceable> then the default
+    value for <replaceable>SSL_passphrase_cmd_reload</replaceable> is
+    <literal>off</literal>.
+   </para>
+
+   <para>
+    <replaceable>hostname</replaceable> should either be set to the literal
+    hostname for the connection, <literal>/no_sni/</literal> or <literal>*</literal>.
+    <xref linkend="hostname-values"/> contains details on how these values are
+    used.
+    <table id="hostname-values">
+     <title>Hostname setting values</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Host Entry</entry>
+        <entry>sslsni</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>*</literal></entry>
+        <entry>Not required</entry>
+        <entry>
+         Default host, matches all connections.
+        </entry>
+       </row>
+
+       <row>
+        <entry><literal>/no_sni/</literal></entry>
+        <entry>Not allowed</entry>
+        <entry>
+         Certificate and key to use for connections with no
+         <literal>sslsni</literal> defined.
+        </entry>
+       </row>
+
+       <row>
+        <entry><replaceable>hostname</replaceable></entry>
+        <entry>Required</entry>
+        <entry>
+         Certificate and key to use for connections to the host specified in
+         the connection.  Multiple hostnames can be defined by using a comma
+         separated list. The certificate and key will be used for connections
+         to all hosts in the list.
+        </entry>
+       </row>
+      </tbody>
+
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    If <filename>pg_hosts.conf</filename> is empty, or missing, then the SSL
+    configuration in <filename>postgresql.conf</filename> will be used for all
+    connections. If <filename>pg_hosts.conf</filename> is non-empty then it
+    will take precedence over certificate and key settings in
+    <filename>postgresql.conf</filename>.
+   </para>
+
+   <para>
+    It is currently not possible to set different <literal>clientname</literal>
+    values for the different certificates.  Any <literal>clientname</literal>
+    setting in <filename>pg_hba.conf</filename> will be applied during
+    authentication regardless of which set of certificates have been loaded
+    via an SNI enabled connection.
+   </para>
+
+   <para>
+    The CRL configuration in <filename>postgresql.conf</filename> is applied
+    on all connections regardless of if they use SNI or not.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="gssapi-enc">

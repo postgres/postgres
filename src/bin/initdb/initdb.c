@@ -177,6 +177,7 @@ static int	encodingid;
 static char *bki_file;
 static char *hba_file;
 static char *ident_file;
+static char *hosts_file;
 static char *conf_file;
 static char *dictionary_file;
 static char *info_schema_file;
@@ -1551,6 +1552,14 @@ setup_config(void)
 	if (chmod(path, pg_file_create_mode) != 0)
 		pg_fatal("could not change permissions of \"%s\": %m", path);
 
+	/* pg_hosts.conf */
+	conflines = readfile(hosts_file);
+	snprintf(path, sizeof(path), "%s/pg_hosts.conf", pg_data);
+
+	writefile(path, conflines);
+	if (chmod(path, pg_file_create_mode) != 0)
+		pg_fatal("could not change permissions of \"%s\": %m", path);
+
 	check_ok();
 }
 
@@ -2808,6 +2817,7 @@ setup_data_file_paths(void)
 	set_input(&bki_file, "postgres.bki");
 	set_input(&hba_file, "pg_hba.conf.sample");
 	set_input(&ident_file, "pg_ident.conf.sample");
+	set_input(&hosts_file, "pg_hosts.conf.sample");
 	set_input(&conf_file, "postgresql.conf.sample");
 	set_input(&dictionary_file, "snowball_create.sql");
 	set_input(&info_schema_file, "information_schema.sql");
@@ -2823,12 +2833,12 @@ setup_data_file_paths(void)
 				"PGDATA=%s\nshare_path=%s\nPGPATH=%s\n"
 				"POSTGRES_SUPERUSERNAME=%s\nPOSTGRES_BKI=%s\n"
 				"POSTGRESQL_CONF_SAMPLE=%s\n"
-				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
+				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\nPG_HOSTS_SAMPLE=%s\n",
 				PG_VERSION,
 				pg_data, share_path, bin_path,
 				username, bki_file,
 				conf_file,
-				hba_file, ident_file);
+				hba_file, ident_file, hosts_file);
 		if (show_setting)
 			exit(0);
 	}
@@ -2836,6 +2846,7 @@ setup_data_file_paths(void)
 	check_input(bki_file);
 	check_input(hba_file);
 	check_input(ident_file);
+	check_input(hosts_file);
 	check_input(conf_file);
 	check_input(dictionary_file);
 	check_input(info_schema_file);

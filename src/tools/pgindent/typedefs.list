@@ -1242,6 +1242,8 @@ HeapTupleHeader
 HeapTupleHeaderData
 HeapTupleTableSlot
 HistControl
+HostsFileLoadResult
+HostsLine
 HotStandbyState
 I32
 ICU_Convert_Func

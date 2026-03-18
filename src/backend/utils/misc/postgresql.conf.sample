@@ -45,6 +45,8 @@
                                         # (change requires restart)
 #ident_file = 'ConfigDir/pg_ident.conf' # ident configuration file
                                         # (change requires restart)
+#hosts_file = 'ConfigDir/pg_hosts.conf' # hosts configuration file
+                                        # (change requires restart)
 
 # If external_pid_file is not explicitly set, no extra PID file is written.
 #external_pid_file = ''                 # write an extra PID file
@@ -122,6 +124,7 @@
 #ssl_dh_params_file = ''
 #ssl_passphrase_command = ''
 #ssl_passphrase_command_supports_reload = off
+#ssl_sni = off
 
 
 #------------------------------------------------------------------------------

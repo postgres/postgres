@@ -1259,6 +1259,27 @@ check_ssl(bool *newval, void **extra, GucSource source)
 }
 
 bool
+check_ssl_sni(bool *newval, void **extra, GucSource source)
+{
+#ifndef USE_SSL
+	if (*newval)
+	{
+		GUC_check_errmsg("SSL is not supported by this build");
+		return false;
+	}
+#else
+#ifndef HAVE_SSL_CTX_SET_CLIENT_HELLO_CB
+	if (*newval)
+	{
+		GUC_check_errmsg("SNI requires OpenSSL 1.1.1 or later");
+		return false;
+	}
+#endif
+#endif
+	return true;
+}
+
+bool
 check_standard_conforming_strings(bool *newval, void **extra, GucSource source)
 {
 	if (!*newval)

@@ -372,6 +372,9 @@
 /* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
 #undef HAVE_SSL_CTX_SET_CIPHERSUITES
 
+/* Define to 1 if you have the `SSL_CTX_set_client_hello_cb' function. */
+#undef HAVE_SSL_CTX_SET_CLIENT_HELLO_CB
+
 /* Define to 1 if you have the `SSL_CTX_set_keylog_callback' function. */
 #undef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
 

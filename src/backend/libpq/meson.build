@@ -31,5 +31,6 @@ endif
 install_data(
   'pg_hba.conf.sample',
   'pg_ident.conf.sample',
+  'pg_hosts.conf.sample',
   install_dir: dir_data,
 )

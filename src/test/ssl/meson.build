@@ -13,6 +13,7 @@ tests += {
       't/001_ssltests.pl',
       't/002_scram.pl',
       't/003_sslinfo.pl',
+      't/004_sni.pl',
     ],
   },
 }

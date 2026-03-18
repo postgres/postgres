@@ -1,0 +1,4 @@
+# PostgreSQL SNI Hostname mappings
+# ================================
+
+# HOSTNAME       SSL CERTIFICATE             SSL KEY     SSL CA       PASSPHRASE COMMAND         PASSPHRASE COMMAND RELOAD

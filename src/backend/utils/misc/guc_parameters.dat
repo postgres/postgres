@@ -1177,6 +1177,13 @@
   boot_val => 'NULL',
 },
 
+{ name => 'hosts_file', type => 'string', context => 'PGC_POSTMASTER', group => 'FILE_LOCATIONS',
+  short_desc => 'Sets the server\'s "hosts" configuration file.',
+  flags => 'GUC_SUPERUSER_ONLY',
+  variable => 'HostsFileName',
+  boot_val => 'NULL',
+},
+
 { name => 'hot_standby', type => 'bool', context => 'PGC_POSTMASTER', group => 'REPLICATION_STANDBY',
   short_desc => 'Allows connections and queries during recovery.',
   variable => 'EnableHotStandby',
@@ -2762,6 +2769,14 @@
   boot_val => '0',
   min => '0',
   max => '0',
+},
+
+{ name => 'ssl_sni', type => 'bool', context => 'PGC_SIGHUP', group => 'CONN_AUTH_SSL',
+  short_desc => 'Sets whether to interpret SNI extensions in SSL connections.',
+  flags => 'GUC_SUPERUSER_ONLY',
+  variable => 'ssl_sni',
+  boot_val => 'false',
+  check_hook => 'check_ssl_sni',
 },
 
 { name => 'ssl_tls13_ciphers', type => 'string', context => 'PGC_SIGHUP', group => 'CONN_AUTH_SSL',

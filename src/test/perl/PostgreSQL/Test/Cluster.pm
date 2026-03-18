@@ -1302,6 +1302,27 @@ Wrapper for pg_ctl restart.
 With optional extra param fail_ok => 1, returns 0 for failure
 instead of bailing out.
 
+=over
+
+=item fail_ok => 1
+
+By default, failure terminates the entire F<prove> invocation.  If given,
+instead return 0 for failure instead of bailing out.
+
+=item log_unlike => B<pattern>
+
+When defined, the logfile is inspected for the presence of the fragment by
+matching the specified pattern. If the pattern matches against the logfile a
+test failure will be logged.
+
+=item log_like => B<pattern>
+
+When defined, the logfile is inspected for the presence of the fragment by
+matching the pattern. If the pattern doesn't match a test failure will be
+logged.
+
+=back
+
 =cut
 
 sub restart
@@ -1314,6 +1335,8 @@ sub restart
 
 	print "### Restarting node \"$name\"\n";
 
+	my $log_location = -s $self->logfile;
+
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
 	$ret = PostgreSQL::Test::Utils::system_log(
@@ -1321,6 +1344,18 @@ sub restart
 		'--pgdata' => $self->data_dir,
 		'--log' => $self->logfile,
 		'restart');
+
+	# Check for expected and/or unexpected log fragments if the caller
+	# specified such checks in the params
+	if (defined $params{log_unlike} || defined $params{log_like})
+	{
+		my $log =
+		  PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
+		unlike($log, $params{log_unlike}, "unexpected fragment found in log")
+			if defined $params{log_unlike};
+		like($log, $params{log_like}, "expected fragment not found in log")
+			if defined $params{log_like};
+	}
 
 	if ($ret != 0)
 	{
