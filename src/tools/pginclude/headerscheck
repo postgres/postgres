@@ -159,6 +159,7 @@ do
 	# without using "%code require", which old Bison versions lack.
 	# parser/gram.h will be included by parser/gramparse.h anyway.
 	test "$f" = contrib/cube/cubeparse.h && continue
+	test "$f" = contrib/pg_plan_advice/pgpa_parser.h && continue
 	test "$f" = contrib/seg/segparse.h && continue
 	test "$f" = src/backend/bootstrap/bootparse.h && continue
 	test "$f" = src/backend/parser/gram.h && continue
