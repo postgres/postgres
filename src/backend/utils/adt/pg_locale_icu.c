@@ -587,7 +587,7 @@ make_icu_collator(const char *iculocstr, const char *icurules)
 
 		status = U_ZERO_ERROR;
 		collator_all_rules = ucol_openRules(all_rules, u_strlen(all_rules),
-											UCOL_DEFAULT, UCOL_DEFAULT_STRENGTH,
+											UCOL_DEFAULT, UCOL_DEFAULT,
 											NULL, &status);
 		if (U_FAILURE(status))
 		{

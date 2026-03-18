@@ -1297,6 +1297,14 @@ DROP TABLE test7;
 CREATE COLLATION testcoll_rulesx (provider = icu, locale = '', rules = '!!wrong!!');
 NOTICE:  using standard form "und" for ICU locale ""
 ERROR:  could not open collator for locale "und" with rules "!!wrong!!": U_INVALID_FORMAT_ERROR
+-- strength specified in the rules
+CREATE COLLATION strength_in_rule (provider = icu, locale = 'und', deterministic = false, rules = '[strength 1]');
+SELECT 'a' = 'à' COLLATE strength_in_rule;  -- true because of the rule
+ ?column? 
+----------
+ t
+(1 row)
+
 -- nondeterministic collations
 CREATE COLLATION ctest_det (provider = icu, locale = '', deterministic = true);
 NOTICE:  using standard form "und" for ICU locale ""

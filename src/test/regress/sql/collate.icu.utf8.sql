@@ -513,6 +513,10 @@ DROP TABLE test7;
 
 CREATE COLLATION testcoll_rulesx (provider = icu, locale = '', rules = '!!wrong!!');
 
+-- strength specified in the rules
+CREATE COLLATION strength_in_rule (provider = icu, locale = 'und', deterministic = false, rules = '[strength 1]');
+SELECT 'a' = 'à' COLLATE strength_in_rule;  -- true because of the rule
+
 
 -- nondeterministic collations
 
