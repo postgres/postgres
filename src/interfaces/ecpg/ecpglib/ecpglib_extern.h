@@ -218,7 +218,7 @@ void		ecpg_log(const char *format,...) pg_attribute_printf(1, 2);
 bool		ecpg_auto_prepare(int lineno, const char *connection_name,
 							  const int compat, char **name, const char *query);
 bool		ecpg_register_prepared_stmt(struct statement *stmt);
-void		ecpg_init_sqlca(struct sqlca_t *sqlca);
+void		ecpg_init_sqlca(struct sqlca_t *sqlca_p);
 
 struct sqlda_compat *ecpg_build_compat_sqlda(int line, PGresult *res, int row,
 											 enum COMPAT_MODE compat);
