@@ -45,9 +45,9 @@ SELECT * FROM ptab;
    SEQ_SCAN(ptab) /* matched */
 (3 rows)
 
--- Prepared, so advice should not be generated.
+-- Prepared, so feedback should not be generated.
 PREPARE pt3 AS SELECT * FROM ptab;
-EXPLAIN (COSTS OFF) EXECUTE pt1;
+EXPLAIN (COSTS OFF) EXECUTE pt3;
     QUERY PLAN    
 ------------------
  Seq Scan on ptab
@@ -56,12 +56,14 @@ EXPLAIN (COSTS OFF) EXECUTE pt1;
 SET pg_plan_advice.always_store_advice_details = true;
 -- Prepared, but always_store_advice_details = true, so should show feedback.
 PREPARE pt4 AS SELECT * FROM ptab;
-EXPLAIN (COSTS OFF, PLAN_ADVICE) EXECUTE pt2;
-       QUERY PLAN       
-------------------------
+EXPLAIN (COSTS OFF, PLAN_ADVICE) EXECUTE pt4;
+           QUERY PLAN           
+--------------------------------
  Seq Scan on ptab
+ Supplied Plan Advice:
+   SEQ_SCAN(ptab) /* matched */
  Generated Plan Advice:
    SEQ_SCAN(ptab)
    NO_GATHER(ptab)
-(4 rows)
+(6 rows)
 
