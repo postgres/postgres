@@ -2027,6 +2027,14 @@ related to locating shared libraries.  Check the file 'config.log'
 for the exact reason.]])],
 [AC_MSG_RESULT([cross-compiling])])
 
+# These flags are supported in all C11-capable GCC/Clang versions,
+# so no capability test is needed.  Added here to avoid affecting configure probes,
+# particularly PGAC_PRINTF_ARCHETYPE which uses -Werror and would fail to detect
+# gnu_printf if -Wstrict-prototypes is active.
+if test "$GCC" = yes -a "$ICC" = no; then
+  CFLAGS="$CFLAGS -Wstrict-prototypes -Wold-style-definition"
+fi
+
 # --------------------
 # Run tests below here
 # --------------------

@@ -17,6 +17,15 @@
 #ifdef HAVE_LIBREADLINE
 #define USE_READLINE 1
 
+/*
+ * Readline headers trigger a lot of warnings with our preferred compiler flags
+ * (at least -Wstrict-prototypes is known to be problematic). The system_header
+ * pragma hides warnings from within the rest of this file, if supported.
+ */
+#ifdef HAVE_PRAGMA_GCC_SYSTEM_HEADER
+#pragma GCC system_header
+#endif
+
 #if defined(HAVE_READLINE_READLINE_H)
 #include <readline/readline.h>
 #if defined(HAVE_READLINE_HISTORY_H)

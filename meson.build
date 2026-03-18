@@ -2253,6 +2253,8 @@ if cc.has_argument('-Wmissing-variable-declarations')
   cflags_no_missing_var_decls += '-Wno-missing-variable-declarations'
 endif
 
+# These are C-only flags, supported in all C11-capable GCC/Clang versions.
+cflags_warn += cc.get_supported_arguments(['-Wstrict-prototypes', '-Wold-style-definition'])
 
 # The following tests want to suppress various unhelpful warnings by adding
 # -Wno-foo switches.  But gcc won't complain about unrecognized -Wno-foo
