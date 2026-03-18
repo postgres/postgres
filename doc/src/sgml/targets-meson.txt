@@ -17,6 +17,8 @@ Developer Targets:
   reformat-dat-files            Rewrite catalog data files into standard format
   expand-dat-files              Expand all data files to include defaults
   update-unicode                Update Unicode data to new version
+  headerscheck                  Check that all headers compile standalone
+  cpluspluscheck                Check that all headers compile as C++
 
 Documentation Targets:
   html                          Build documentation in multi-page HTML format
