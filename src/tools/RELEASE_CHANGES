@@ -84,8 +84,7 @@ but there may be reasons to do them at other times as well.
 * Update config.guess and config.sub
   (from https://savannah.gnu.org/projects/config)
 
-* Update Unicode data: Edit UNICODE_VERSION and CLDR_VERSION in
-  src/Makefile.global.in, run make update-unicode, and commit.
+* Update Unicode data (see src/common/unicode/README)
 
 
 Starting a New Development Cycle
