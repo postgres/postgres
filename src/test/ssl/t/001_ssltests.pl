@@ -1004,4 +1004,60 @@ $node->connect_fails(
 		qr{Failed certificate data \(unverified\): subject "/CN=\\xce\\x9f\\xce\\xb4\\xcf\\x85\\xcf\\x83\\xcf\\x83\\xce\\xad\\xce\\xb1\\xcf\\x82", serial number \d+, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
 	]);
 
+SKIP:
+{
+	skip "sslmode require not supported in this build", 4
+	  unless ($supports_sslcertmode_require);
+
+	# Test client CAs
+	my $connstr =
+	  "user=ssltestuser dbname=certdb hostaddr=$SERVERHOSTADDR sslmode=require sslsni=1";
+
+	switch_server_cert($node, certfile => 'server-cn-only', cafile => '');
+	# example.org is unconfigured and should fail.
+	$node->connect_fails(
+		"$connstr host=example.org sslcertmode=require sslcert=ssl/client.crt"
+		  . sslkey('client.key'),
+		"host: 'example.org', ca: '': connect with sslcert, no client CA configured",
+		expected_stderr =>
+		  qr/client certificates can only be checked if a root certificate store is available/
+	);
+
+	# example.com uses the client CA.
+	switch_server_cert(
+		$node,
+		certfile => 'server-cn-only',
+		cafile => 'root+client_ca');
+	# example.com is configured and should require a valid client cert.
+	$node->connect_fails(
+		"$connstr host=example.com sslcertmode=disable",
+		"host: 'example.com', ca: 'root+client_ca.crt': connect fails if no client certificate sent",
+		expected_stderr => qr/connection requires a valid client certificate/
+	);
+	$node->connect_ok(
+		"$connstr host=example.com sslcertmode=require sslcert=ssl/client.crt "
+		  . sslkey('client.key'),
+		"host: 'example.com', ca: 'root+client_ca.crt': connect with sslcert, client certificate sent"
+	);
+
+	# example.net uses the server CA (which is wrong).
+	switch_server_cert(
+		$node,
+		certfile => 'server-cn-only',
+		cafile => 'root+server_ca');
+	# example.net is configured and should require a client cert, but will
+	# always fail verification.
+	$node->connect_fails(
+		"$connstr host=example.net sslcertmode=disable",
+		"host: 'example.net', ca: 'root+server_ca.crt': connect fails if no client certificate sent",
+		expected_stderr => qr/connection requires a valid client certificate/
+	);
+
+	$node->connect_fails(
+		"$connstr host=example.net sslcertmode=require sslcert=ssl/client.crt "
+		  . sslkey('client.key'),
+		"host: 'example.net', ca: 'root+server_ca.crt': connect with sslcert, client certificate sent",
+		expected_stderr => qr/unknown ca/);
+}
+
 done_testing();

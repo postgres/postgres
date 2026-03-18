@@ -72,6 +72,7 @@ sub init
 	chmod(0600, glob "$pgdata/server-*.key")
 	  or die "failed to change permissions on server keys: $!";
 	_copy_files("ssl/root+client_ca.crt", $pgdata);
+	_copy_files("ssl/root+server_ca.crt", $pgdata);
 	_copy_files("ssl/root_ca.crt", $pgdata);
 	_copy_files("ssl/root+client.crl", $pgdata);
 	mkdir("$pgdata/root+client-crldir")
@@ -146,7 +147,8 @@ following parameters are supported:
 =item cafile => B<value>
 
 The CA certificate file to use for the C<ssl_ca_file> GUC. If omitted it will
-default to 'root+client_ca.crt'.
+default to 'root+client_ca.crt'. If empty, no C<ssl_ca_file> configuration
+parameter will be set.
 
 =item certfile => B<value>
 
@@ -181,10 +183,18 @@ sub set_server_cert
 	  unless defined $params->{keyfile};
 
 	my $sslconf =
-		"ssl_ca_file='$params->{cafile}.crt'\n"
-	  . "ssl_cert_file='$params->{certfile}.crt'\n"
+		"ssl_cert_file='$params->{certfile}.crt'\n"
 	  . "ssl_key_file='$params->{keyfile}.key'\n"
 	  . "ssl_crl_file='$params->{crlfile}'\n";
+	if ($params->{cafile} ne "")
+	{
+		$sslconf .= "ssl_ca_file='$params->{cafile}.crt'\n";
+	}
+	else
+	{
+		$sslconf .= "ssl_ca_file=''\n";
+	}
+
 	$sslconf .= "ssl_crl_dir='$params->{crldir}'\n"
 	  if defined $params->{crldir};
 
