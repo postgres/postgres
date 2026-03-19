@@ -130,6 +130,8 @@ test: partition_merge partition_split partition_join partition_prune reloptions 
 # oidjoins is read-only, though, and should run late for best coverage
 test: oidjoins event_trigger
 
+test: role_ddl
+
 # event_trigger_login cannot run concurrently with any other tests because
 # on-login event handling could catch connection of a concurrent test.
 test: event_trigger_login

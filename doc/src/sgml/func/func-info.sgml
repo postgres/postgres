@@ -3860,4 +3860,60 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
 
   </sect2>
 
+  <sect2 id="functions-get-object-ddl">
+   <title>Get Object DDL Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-get-object-ddl-table"/>
+    reconstruct DDL statements for various global database objects.
+    Each function returns a set of text rows, one SQL statement per row.
+    (This is a decompiled reconstruction, not the original text of the
+    command.)  Functions that accept <literal>VARIADIC</literal> options
+    take alternating name/value text pairs; values are parsed as boolean,
+    integer or text.
+   </para>
+
+   <table id="functions-get-object-ddl-table">
+    <title>Get Object DDL Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_role_ddl</primary>
+        </indexterm>
+        <function>pg_get_role_ddl</function>
+        ( <parameter>role</parameter> <type>regrole</type>
+        <optional>, <literal>VARIADIC</literal> <parameter>options</parameter>
+        <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the <command>CREATE ROLE</command> statement and any
+        <command>ALTER ROLE ... SET</command> statements for the given role.
+        Each statement is returned as a separate row.
+        Password information is never included in the output.
+        The following options are supported: <literal>pretty</literal> (boolean)
+        for pretty-printed output and <literal>memberships</literal> (boolean,
+        default true) to include <command>GRANT</command> statements for
+        role memberships and their options.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
   </sect1>
