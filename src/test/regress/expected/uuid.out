@@ -305,5 +305,27 @@ SELECT uuid_extract_timestamp('11111111-1111-1111-1111-111111111111');  -- null
  
 (1 row)
 
+-- casts
+SELECT '5b35380a-7143-4912-9b55-f322699c6770'::uuid::bytea;
+               bytea                
+------------------------------------
+ \x5b35380a714349129b55f322699c6770
+(1 row)
+
+SELECT '\x019a2f859ced7225b99d9c55044a2563'::bytea::uuid;
+                 uuid                 
+--------------------------------------
+ 019a2f85-9ced-7225-b99d-9c55044a2563
+(1 row)
+
+SELECT '\x1234567890abcdef'::bytea::uuid; -- error
+ERROR:  invalid input length for type uuid
+DETAIL:  Expected 16 bytes, got 8.
+SELECT v = v::bytea::uuid as matched FROM gen_random_uuid() v;
+ matched 
+---------
+ t
+(1 row)
+
 -- clean up
 DROP TABLE guid1, guid2, guid3 CASCADE;

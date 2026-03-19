@@ -362,6 +362,12 @@
 { castsource => 'bytea', casttarget => 'int8', castfunc => 'int8(bytea)',
   castcontext => 'e', castmethod => 'f' },
 
+# Allow explicit coercions between bytea and uuid type
+{ castsource => 'bytea', casttarget => 'uuid', castfunc => 'uuid(bytea)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'uuid', casttarget => 'bytea', castfunc => 'bytea(uuid)',
+  castcontext => 'e', castmethod => 'f' },
+
 # Allow explicit coercions between int4 and "char"
 { castsource => 'char', casttarget => 'int4', castfunc => 'int4(char)',
   castcontext => 'e', castmethod => 'f' },

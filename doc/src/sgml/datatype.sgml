@@ -4440,6 +4440,17 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
    </para>
 
    <para>
+    It is possible to cast <type>uuid</type> values to and from type
+    <type>bytea</type>. This is useful for using functions such as
+    <function>encode()</function> and <function>decode()</function>
+    with UUID values. For example:
+<programlisting>
+encode('1ea3d64c-bc40-4cc3-84bb-6b11ee31e5c2'::uuid::bytea, 'base64')
+decode('HqPWTLxATMOEu2sR7jHlwg==', 'base64')::uuid
+</programlisting>
+   </para>
+
+   <para>
     See <xref linkend="functions-uuid"/> for how to generate a UUID in
     <productname>PostgreSQL</productname>.
    </para>
