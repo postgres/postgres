@@ -1,0 +1,5 @@
+# test_saslprep extension
+comment = 'Test SASLprep implementation'
+default_version = '1.0'
+module_pathname = '$libdir/test_saslprep'
+relocatable = true

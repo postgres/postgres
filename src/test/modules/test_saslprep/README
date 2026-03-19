@@ -1,0 +1,25 @@
+src/test/modules/test_saslprep
+
+Tests for SASLprep
+==================
+
+This repository contains a test suite for stressing the SASLprep
+implementation internal to PostgreSQL.
+
+It provides a set of functions able to check the validity of a SASLprep
+operation for a single byte as well as a range of these, acting as
+wrappers around pg_saslprep().
+
+Running the tests
+=================
+
+NOTE: A portion of the tests requires --enable-tap-tests, with
+PG_TEST_EXTRA=saslprep set to run the TAP test suite.
+
+Run
+    make check PG_TEST_EXTRA=saslprep
+or
+    make installcheck PG_TEST_EXTRA=saslprep
+
+The SQL test suite can run with or without PG_TEST_EXTRA=saslprep
+set.

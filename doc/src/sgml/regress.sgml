@@ -343,6 +343,16 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
+     <term><literal>saslprep</literal></term>
+     <listitem>
+      <para>
+       Runs the TAP test suite under <filename>src/test/modules/test_saslprep</filename>.
+       Not enabled by default because it is resource-intensive.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>sepgsql</literal></term>
      <listitem>
       <para>
