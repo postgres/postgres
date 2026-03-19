@@ -67,6 +67,11 @@ CREATE FUNCTION invalid_fdw_handler() RETURNS int LANGUAGE SQL AS 'SELECT 1;';
 CREATE FOREIGN DATA WRAPPER test_fdw HANDLER invalid_fdw_handler;  -- ERROR
 CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER invalid_fdw_handler;  -- ERROR
 CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
+
+-- should preserve dependency on test_fdw_handler
+ALTER FOREIGN DATA WRAPPER test_fdw VALIDATOR postgresql_fdw_validator;
+DROP FUNCTION test_fdw_handler(); -- ERROR
+
 DROP FOREIGN DATA WRAPPER test_fdw;
 
 -- ALTER FOREIGN DATA WRAPPER
