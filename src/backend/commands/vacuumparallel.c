@@ -225,7 +225,7 @@ struct ParallelVacuumState
 static int	parallel_vacuum_compute_workers(Relation *indrels, int nindexes, int nrequested,
 											bool *will_parallel_vacuum);
 static void parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scans,
-												bool vacuum);
+												bool vacuum, PVWorkerStats *wstats);
 static void parallel_vacuum_process_safe_indexes(ParallelVacuumState *pvs);
 static void parallel_vacuum_process_unsafe_indexes(ParallelVacuumState *pvs);
 static void parallel_vacuum_process_one_index(ParallelVacuumState *pvs, Relation indrel,
@@ -499,7 +499,7 @@ parallel_vacuum_reset_dead_items(ParallelVacuumState *pvs)
  */
 void
 parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs, long num_table_tuples,
-									int num_index_scans)
+									int num_index_scans, PVWorkerStats *wstats)
 {
 	Assert(!IsParallelWorker());
 
@@ -510,7 +510,7 @@ parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs, long num_table_tup
 	pvs->shared->reltuples = num_table_tuples;
 	pvs->shared->estimated_count = true;
 
-	parallel_vacuum_process_all_indexes(pvs, num_index_scans, true);
+	parallel_vacuum_process_all_indexes(pvs, num_index_scans, true, wstats);
 }
 
 /*
@@ -518,7 +518,8 @@ parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs, long num_table_tup
  */
 void
 parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs, long num_table_tuples,
-									int num_index_scans, bool estimated_count)
+									int num_index_scans, bool estimated_count,
+									PVWorkerStats *wstats)
 {
 	Assert(!IsParallelWorker());
 
@@ -530,7 +531,7 @@ parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs, long num_table_tup
 	pvs->shared->reltuples = num_table_tuples;
 	pvs->shared->estimated_count = estimated_count;
 
-	parallel_vacuum_process_all_indexes(pvs, num_index_scans, false);
+	parallel_vacuum_process_all_indexes(pvs, num_index_scans, false, wstats);
 }
 
 /*
@@ -607,10 +608,12 @@ parallel_vacuum_compute_workers(Relation *indrels, int nindexes, int nrequested,
 /*
  * Perform index vacuum or index cleanup with parallel workers.  This function
  * must be used by the parallel vacuum leader process.
+ *
+ * If wstats is not NULL, the parallel worker statistics are updated.
  */
 static void
 parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scans,
-									bool vacuum)
+									bool vacuum, PVWorkerStats *wstats)
 {
 	int			nworkers;
 	PVIndVacStatus new_status;
@@ -646,6 +649,10 @@ parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scan
 	 * parallel_vacuum_compute_workers().
 	 */
 	nworkers = Min(nworkers, pvs->pcxt->nworkers);
+
+	/* Update the statistics, if we asked to */
+	if (wstats != NULL && nworkers > 0)
+		wstats->nplanned += nworkers;
 
 	/*
 	 * Set index vacuum status and mark whether parallel vacuum worker can
@@ -703,6 +710,10 @@ parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scan
 			/* Enable shared cost balance for leader backend */
 			VacuumSharedCostBalance = &(pvs->shared->cost_balance);
 			VacuumActiveNWorkers = &(pvs->shared->active_nworkers);
+
+			/* Update the statistics, if we asked to */
+			if (wstats != NULL)
+				wstats->nlaunched += pvs->pcxt->nworkers_launched;
 		}
 
 		if (vacuum)

@@ -2090,6 +2090,8 @@ PVIndStats
 PVIndVacStatus
 PVOID
 PVShared
+PVWorkerUsage
+PVWorkerStats
 PX_Alias
 PX_Cipher
 PX_Combo

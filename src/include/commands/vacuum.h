@@ -300,6 +300,28 @@ typedef struct VacDeadItemsInfo
 	int64		num_items;		/* current # of entries */
 } VacDeadItemsInfo;
 
+/*
+ * Statistics for parallel vacuum workers (planned vs. actual)
+ */
+typedef struct PVWorkerStats
+{
+	/* Number of parallel workers planned to launch */
+	int			nplanned;
+
+	/* Number of parallel workers that were successfully launched */
+	int			nlaunched;
+} PVWorkerStats;
+
+/*
+ * PVWorkerUsage stores information about total number of launched and
+ * planned workers during parallel vacuum (both for index vacuum and cleanup).
+ */
+typedef struct PVWorkerUsage
+{
+	PVWorkerStats vacuum;
+	PVWorkerStats cleanup;
+} PVWorkerUsage;
+
 /* GUC parameters */
 extern PGDLLIMPORT int default_statistics_target;	/* PGDLLIMPORT for PostGIS */
 extern PGDLLIMPORT int vacuum_freeze_min_age;
@@ -394,11 +416,13 @@ extern TidStore *parallel_vacuum_get_dead_items(ParallelVacuumState *pvs,
 extern void parallel_vacuum_reset_dead_items(ParallelVacuumState *pvs);
 extern void parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs,
 												long num_table_tuples,
-												int num_index_scans);
+												int num_index_scans,
+												PVWorkerStats *wstats);
 extern void parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs,
 												long num_table_tuples,
 												int num_index_scans,
-												bool estimated_count);
+												bool estimated_count,
+												PVWorkerStats *wstats);
 extern void parallel_vacuum_main(dsm_segment *seg, shm_toc *toc);
 
 /* in commands/analyze.c */

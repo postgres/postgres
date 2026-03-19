@@ -343,6 +343,13 @@ typedef struct LVRelState
 	int			num_index_scans;
 	int			num_dead_items_resets;
 	Size		total_dead_items_bytes;
+
+	/*
+	 * Total number of planned and actually launched parallel workers for
+	 * index vacuuming and index cleanup.
+	 */
+	PVWorkerUsage worker_usage;
+
 	/* Counters that follow are only for scanned_pages */
 	int64		tuples_deleted; /* # deleted from table */
 	int64		tuples_frozen;	/* # newly frozen */
@@ -781,6 +788,11 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	vacrel->new_all_visible_all_frozen_pages = 0;
 	vacrel->new_all_frozen_pages = 0;
 
+	vacrel->worker_usage.vacuum.nlaunched = 0;
+	vacrel->worker_usage.vacuum.nplanned = 0;
+	vacrel->worker_usage.cleanup.nlaunched = 0;
+	vacrel->worker_usage.cleanup.nplanned = 0;
+
 	/*
 	 * Get cutoffs that determine which deleted tuples are considered DEAD,
 	 * not just RECENTLY_DEAD, and which XIDs/MXIDs to freeze.  Then determine
@@ -1123,6 +1135,19 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 							 orig_rel_pages == 0 ? 100.0 :
 							 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
 							 vacrel->lpdead_items);
+
+			if (vacrel->worker_usage.vacuum.nplanned > 0)
+				appendStringInfo(&buf,
+								 _("parallel workers: index vacuum: %d planned, %d launched in total\n"),
+								 vacrel->worker_usage.vacuum.nplanned,
+								 vacrel->worker_usage.vacuum.nlaunched);
+
+			if (vacrel->worker_usage.cleanup.nplanned > 0)
+				appendStringInfo(&buf,
+								 _("parallel workers: index cleanup: %d planned, %d launched\n"),
+								 vacrel->worker_usage.cleanup.nplanned,
+								 vacrel->worker_usage.cleanup.nlaunched);
+
 			for (int i = 0; i < vacrel->nindexes; i++)
 			{
 				IndexBulkDeleteResult *istat = vacrel->indstats[i];
@@ -2669,7 +2694,8 @@ lazy_vacuum_all_indexes(LVRelState *vacrel)
 	{
 		/* Outsource everything to parallel variant */
 		parallel_vacuum_bulkdel_all_indexes(vacrel->pvs, old_live_tuples,
-											vacrel->num_index_scans);
+											vacrel->num_index_scans,
+											&(vacrel->worker_usage.vacuum));
 
 		/*
 		 * Do a postcheck to consider applying wraparound failsafe now.  Note
@@ -3103,7 +3129,8 @@ lazy_cleanup_all_indexes(LVRelState *vacrel)
 		/* Outsource everything to parallel variant */
 		parallel_vacuum_cleanup_all_indexes(vacrel->pvs, reltuples,
 											vacrel->num_index_scans,
-											estimated_count);
+											estimated_count,
+											&(vacrel->worker_usage.cleanup));
 	}
 
 	/* Reset the progress counters */
