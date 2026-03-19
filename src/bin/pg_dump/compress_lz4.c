@@ -715,13 +715,30 @@ LZ4Stream_open(const char *path, int fd, const char *mode,
 	LZ4State   *state = (LZ4State *) CFH->private_data;
 
 	if (fd >= 0)
-		state->fp = fdopen(dup(fd), mode);
-	else
-		state->fp = fopen(path, mode);
-	if (state->fp == NULL)
 	{
-		state->errcode = errno;
-		return false;
+		int			dup_fd = dup(fd);
+
+		if (dup_fd < 0)
+		{
+			state->errcode = errno;
+			return false;
+		}
+		state->fp = fdopen(dup_fd, mode);
+		if (state->fp == NULL)
+		{
+			state->errcode = errno;
+			close(dup_fd);
+			return false;
+		}
+	}
+	else
+	{
+		state->fp = fopen(path, mode);
+		if (state->fp == NULL)
+		{
+			state->errcode = errno;
+			return false;
+		}
 	}
 
 	return true;

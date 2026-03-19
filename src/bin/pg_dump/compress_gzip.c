@@ -386,12 +386,24 @@ Gzip_open(const char *path, int fd, const char *mode, CompressFileHandle *CFH)
 		strcpy(mode_compression, mode);
 
 	if (fd >= 0)
-		gzfp = gzdopen(dup(fd), mode_compression);
-	else
-		gzfp = gzopen(path, mode_compression);
+	{
+		int			dup_fd = dup(fd);
 
-	if (gzfp == NULL)
-		return false;
+		if (dup_fd < 0)
+			return false;
+		gzfp = gzdopen(dup_fd, mode_compression);
+		if (gzfp == NULL)
+		{
+			close(dup_fd);
+			return false;
+		}
+	}
+	else
+	{
+		gzfp = gzopen(path, mode_compression);
+		if (gzfp == NULL)
+			return false;
+	}
 
 	CFH->private_data = gzfp;
 

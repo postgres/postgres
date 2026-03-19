@@ -231,12 +231,24 @@ open_none(const char *path, int fd, const char *mode, CompressFileHandle *CFH)
 	Assert(CFH->private_data == NULL);
 
 	if (fd >= 0)
-		CFH->private_data = fdopen(dup(fd), mode);
-	else
-		CFH->private_data = fopen(path, mode);
+	{
+		int			dup_fd = dup(fd);
 
-	if (CFH->private_data == NULL)
-		return false;
+		if (dup_fd < 0)
+			return false;
+		CFH->private_data = fdopen(dup_fd, mode);
+		if (CFH->private_data == NULL)
+		{
+			close(dup_fd);
+			return false;
+		}
+	}
+	else
+	{
+		CFH->private_data = fopen(path, mode);
+		if (CFH->private_data == NULL)
+			return false;
+	}
 
 	return true;
 }
