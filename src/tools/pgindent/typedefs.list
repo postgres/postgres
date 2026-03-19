@@ -3977,6 +3977,7 @@ pg_regex_t
 pg_regmatch_t
 pg_regoff_t
 pg_saslprep_rc
+pg_saslprep_test_context
 pg_sha1_ctx
 pg_sha224_ctx
 pg_sha256_ctx
@@ -4000,6 +4001,7 @@ pg_unicode_properties
 pg_unicode_range
 pg_unicode_recompinfo
 pg_usec_time_t
+pg_utf8_codepoint_range
 pg_utf_to_local_combined
 pg_uuid_t
 pg_wchar

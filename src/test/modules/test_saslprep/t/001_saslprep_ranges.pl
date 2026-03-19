@@ -32,7 +32,8 @@ my $result = $node->safe_psql(
   WHERE status = 'SUCCESS' AND res IN (NULL, '')
 ]);
 
-is($result, 'U+0000|SUCCESS|\x00|\x', "valid codepoints returning an empty password");
+is($result, 'U+0000|SUCCESS|\x00|\x',
+	"valid codepoints returning an empty password");
 
 $node->stop;
 done_testing();

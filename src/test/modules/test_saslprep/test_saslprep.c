@@ -65,8 +65,8 @@ test_saslprep(PG_FUNCTION_ARGS)
 	Size		result_len;
 	bytea	   *result_bytea = NULL;
 	const char *status = NULL;
-	Datum      *values;
-	bool       *nulls;
+	Datum	   *values;
+	bool	   *nulls;
 	TupleDesc	tupdesc;
 	pg_saslprep_rc rc;
 
@@ -123,16 +123,16 @@ typedef struct
 
 static const pg_utf8_codepoint_range pg_utf8_test_ranges[] = {
 	/* 1, 2, 3 bytes */
-	{0x0000, 0xD7FF}, /* Basic Multilingual Plane, before surrogates */
-	{0xE000, 0xFFFF}, /* Basic Multilingual Plane, after surrogates */
+	{0x0000, 0xD7FF},			/* Basic Multilingual Plane, before surrogates */
+	{0xE000, 0xFFFF},			/* Basic Multilingual Plane, after surrogates */
 	/* 4 bytes */
-	{0x10000, 0x1FFFF}, /* Supplementary Multilingual Plane */
-	{0x20000, 0x2FFFF}, /* Supplementary Ideographic Plane */
-	{0x30000, 0x3FFFF}, /* Tertiary Ideographic Plane */
-	{0x40000, 0xDFFFF}, /* Unassigned planes */
-	{0xE0000, 0xEFFFF}, /* Supplementary Special-purpose Plane */
-	{0xF0000, 0xFFFFF}, /* Private Use Area A */
-	{0x100000, 0x10FFFF}, /* Private Use Area B */
+	{0x10000, 0x1FFFF},			/* Supplementary Multilingual Plane */
+	{0x20000, 0x2FFFF},			/* Supplementary Ideographic Plane */
+	{0x30000, 0x3FFFF},			/* Tertiary Ideographic Plane */
+	{0x40000, 0xDFFFF},			/* Unassigned planes */
+	{0xE0000, 0xEFFFF},			/* Supplementary Special-purpose Plane */
+	{0xF0000, 0xFFFFF},			/* Private Use Area A */
+	{0x100000, 0x10FFFF},		/* Private Use Area B */
 };
 
 #define PG_UTF8_TEST_RANGES_LEN \
