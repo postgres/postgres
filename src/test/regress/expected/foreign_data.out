@@ -106,6 +106,13 @@ ERROR:  conflicting or redundant options
 LINE 1: ...GN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER in...
                                                              ^
 CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
+-- should preserve dependency on test_fdw_handler
+ALTER FOREIGN DATA WRAPPER test_fdw VALIDATOR postgresql_fdw_validator;
+WARNING:  changing the foreign-data wrapper validator can cause the options for dependent objects to become invalid
+DROP FUNCTION test_fdw_handler(); -- ERROR
+ERROR:  cannot drop function test_fdw_handler() because other objects depend on it
+DETAIL:  foreign-data wrapper test_fdw depends on function test_fdw_handler()
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP FOREIGN DATA WRAPPER test_fdw;
 -- ALTER FOREIGN DATA WRAPPER
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (nonexistent 'fdw');         -- ERROR
