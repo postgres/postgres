@@ -631,12 +631,14 @@ DSMREntryType
 DSMRegistryCtxStruct
 DSMRegistryEntry
 DWORD
+DataChecksumsStateStruct
 DataChecksumsWorkerDatabase
 DataChecksumsWorkerResult
-DataChecksumsStateStruct
 DataDirSyncMethod
 DataDumperPtr
 DataPageDeleteStack
+DdlOptType
+DdlOption
 DataTypesUsageChecks
 DataTypesUsageVersionCheck
 DatabaseInfo
