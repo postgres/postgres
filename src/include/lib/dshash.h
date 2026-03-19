@@ -92,14 +92,22 @@ extern void dshash_detach(dshash_table *hash_table);
 extern dshash_table_handle dshash_get_hash_table_handle(dshash_table *hash_table);
 extern void dshash_destroy(dshash_table *hash_table);
 
+/* Flags for dshash_find_or_insert_extended. */
+#define DSHASH_INSERT_NO_OOM	0x01	/* no failure if out-of-memory */
+
 /* Finding, creating, deleting entries. */
 extern void *dshash_find(dshash_table *hash_table,
 						 const void *key, bool exclusive);
-extern void *dshash_find_or_insert(dshash_table *hash_table,
-								   const void *key, bool *found);
+extern void *dshash_find_or_insert_extended(dshash_table *hash_table,
+											const void *key, bool *found,
+											int flags);
 extern bool dshash_delete_key(dshash_table *hash_table, const void *key);
 extern void dshash_delete_entry(dshash_table *hash_table, void *entry);
 extern void dshash_release_lock(dshash_table *hash_table, void *entry);
+
+/* Find or insert with error on out-of-memory. */
+#define dshash_find_or_insert(hash_table, key, found) \
+	dshash_find_or_insert_extended(hash_table, key, found, 0)
 
 /* seq scan support */
 extern void dshash_seq_init(dshash_seq_status *status, dshash_table *hash_table,
