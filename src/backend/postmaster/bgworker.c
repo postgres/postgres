@@ -1413,6 +1413,9 @@ TerminateBackgroundWorkersForDatabase(Oid databaseId)
 {
 	bool		signal_postmaster = false;
 
+	elog(DEBUG1, "attempting worker termination for database %u",
+		 databaseId);
+
 	LWLockAcquire(BackgroundWorkerLock, LW_EXCLUSIVE);
 
 	/*
@@ -1432,6 +1435,9 @@ TerminateBackgroundWorkersForDatabase(Oid databaseId)
 			{
 				slot->terminate = true;
 				signal_postmaster = true;
+
+				elog(DEBUG1, "termination requested for worker (PID %d) on database %u",
+					 (int) slot->pid, databaseId);
 			}
 		}
 	}

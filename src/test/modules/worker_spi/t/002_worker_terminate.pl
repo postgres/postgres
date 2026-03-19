@@ -24,7 +24,7 @@ sub launch_bgworker
 
 	# Launch a background worker on the given database.
 	my $pid = $node->safe_psql(
-		$database, qq(
+		'postgres', qq(
         SELECT worker_spi_launch($testcase, '$database'::regdatabase, 0, '{}', $interruptible);
     ));
 
@@ -32,7 +32,7 @@ sub launch_bgworker
 	$node->wait_for_log(
 		qr/LOG: .*worker_spi dynamic worker $testcase initialized with .*\..*/,
 		$offset);
-	my $result = $node->safe_psql($database,
+	my $result = $node->safe_psql('postgres',
 		"SELECT count(*) > 0 FROM pg_stat_activity WHERE pid = $pid;");
 	is($result, 't', "dynamic bgworker $testcase launched");
 
@@ -52,6 +52,11 @@ sub run_bgworker_interruptible_test
 		qr/terminating background worker \"worker_spi dynamic\" due to administrator command/,
 		$offset);
 
+	# Postmaster entry reporting the worker as exiting.
+	$node->wait_for_log(
+		qr/LOG: .*background worker \"worker_spi dynamic\" \(PID $pid\) exited with exit code/,
+		$offset);
+
 	my $result = $node->safe_psql('postgres',
 		"SELECT count(*) = 0 FROM pg_stat_activity WHERE pid = $pid;");
 	is($result, 't', "dynamic bgworker stopped for $testname");
@@ -63,6 +68,7 @@ $node->append_conf(
 	"postgresql.conf", qq(
 autovacuum = off
 debug_parallel_query = off
+log_min_messages = debug1
 ));
 $node->start;
 
