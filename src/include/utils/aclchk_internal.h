@@ -38,6 +38,7 @@ typedef struct
 	List	   *col_privs;
 	List	   *grantees;
 	bool		grant_option;
+	RoleSpec   *grantor;
 	DropBehavior behavior;
 } InternalGrant;
 

@@ -321,7 +321,7 @@ SELECT pg_get_acl(0, 0, 0); -- null
 (1 row)
 
 GRANT TRUNCATE ON atest2 TO regress_priv_user4 GRANTED BY regress_priv_user5;  -- error
-ERROR:  grantor must be current user
+ERROR:  must inherit privileges of role "regress_priv_user5"
 SET SESSION AUTHORIZATION regress_priv_user2;
 SELECT session_user, current_user;
     session_user    |    current_user    
@@ -3621,3 +3621,61 @@ SELECT * FROM information_schema.table_privileges t
 
 DROP TABLE grantor_test1, grantor_test2, grantor_test3;
 DROP ROLE regress_grantor1, regress_grantor2, regress_grantor3;
+-- GRANTED BY
+CREATE ROLE regress_grantor1;
+CREATE ROLE regress_grantor2 ROLE regress_grantor1;
+CREATE ROLE regress_grantor3 ROLE regress_grantor1;
+CREATE ROLE regress_grantor4 ROLE regress_grantor1;
+CREATE ROLE regress_grantor5;
+CREATE TABLE grantor_test ();
+GRANT SELECT ON grantor_test TO regress_grantor2 WITH GRANT OPTION;
+GRANT UPDATE ON grantor_test TO regress_grantor3 WITH GRANT OPTION;
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor4 WITH GRANT OPTION;
+SET ROLE regress_grantor1;
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor5;
+SELECT * FROM information_schema.table_privileges t
+    WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+     grantor      |     grantee      | table_catalog | table_schema |  table_name  | privilege_type | is_grantable | with_hierarchy 
+------------------+------------------+---------------+--------------+--------------+----------------+--------------+----------------
+ regress_grantor4 | regress_grantor5 | regression    | public       | grantor_test | SELECT         | NO           | YES
+ regress_grantor4 | regress_grantor5 | regression    | public       | grantor_test | UPDATE         | NO           | NO
+(2 rows)
+
+REVOKE SELECT, UPDATE ON grantor_test FROM regress_grantor5;
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor5 GRANTED BY regress_grantor2;
+WARNING:  not all privileges were granted for "grantor_test"
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor5 GRANTED BY regress_grantor3;
+WARNING:  not all privileges were granted for "grantor_test"
+SELECT * FROM information_schema.table_privileges t
+    WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+     grantor      |     grantee      | table_catalog | table_schema |  table_name  | privilege_type | is_grantable | with_hierarchy 
+------------------+------------------+---------------+--------------+--------------+----------------+--------------+----------------
+ regress_grantor2 | regress_grantor5 | regression    | public       | grantor_test | SELECT         | NO           | YES
+ regress_grantor3 | regress_grantor5 | regression    | public       | grantor_test | UPDATE         | NO           | NO
+(2 rows)
+
+REVOKE SELECT, UPDATE ON grantor_test FROM regress_grantor5 GRANTED BY regress_grantor2;
+WARNING:  not all privileges could be revoked for "grantor_test"
+WARNING:  not all privileges could be revoked for column "tableoid" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "cmax" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "xmax" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "cmin" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "xmin" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "ctid" of relation "grantor_test"
+REVOKE SELECT, UPDATE ON grantor_test FROM regress_grantor5 GRANTED BY regress_grantor3;
+WARNING:  not all privileges could be revoked for "grantor_test"
+WARNING:  not all privileges could be revoked for column "tableoid" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "cmax" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "xmax" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "cmin" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "xmin" of relation "grantor_test"
+WARNING:  not all privileges could be revoked for column "ctid" of relation "grantor_test"
+SELECT * FROM information_schema.table_privileges t
+    WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+ grantor | grantee | table_catalog | table_schema | table_name | privilege_type | is_grantable | with_hierarchy 
+---------+---------+---------------+--------------+------------+----------------+--------------+----------------
+(0 rows)
+
+RESET ROLE;
+DROP TABLE grantor_test;
+DROP ROLE regress_grantor1, regress_grantor2, regress_grantor3, regress_grantor4, regress_grantor5;

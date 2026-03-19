@@ -224,7 +224,7 @@ extern void check_rolespec_name(const RoleSpec *role, const char *detail_msg);
 extern HeapTuple get_rolespec_tuple(const RoleSpec *role);
 extern char *get_rolespec_name(const RoleSpec *role);
 
-extern void select_best_grantor(Oid roleId, AclMode privileges,
+extern void select_best_grantor(const RoleSpec *grantedBy, AclMode privileges,
 								const Acl *acl, Oid ownerId,
 								Oid *grantorId, AclMode *grantOptions);
 

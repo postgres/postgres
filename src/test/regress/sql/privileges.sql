@@ -2211,3 +2211,37 @@ SELECT * FROM information_schema.table_privileges t
 
 DROP TABLE grantor_test1, grantor_test2, grantor_test3;
 DROP ROLE regress_grantor1, regress_grantor2, regress_grantor3;
+
+-- GRANTED BY
+CREATE ROLE regress_grantor1;
+CREATE ROLE regress_grantor2 ROLE regress_grantor1;
+CREATE ROLE regress_grantor3 ROLE regress_grantor1;
+CREATE ROLE regress_grantor4 ROLE regress_grantor1;
+CREATE ROLE regress_grantor5;
+CREATE TABLE grantor_test ();
+GRANT SELECT ON grantor_test TO regress_grantor2 WITH GRANT OPTION;
+GRANT UPDATE ON grantor_test TO regress_grantor3 WITH GRANT OPTION;
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor4 WITH GRANT OPTION;
+SET ROLE regress_grantor1;
+
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor5;
+
+SELECT * FROM information_schema.table_privileges t
+    WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+
+REVOKE SELECT, UPDATE ON grantor_test FROM regress_grantor5;
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor5 GRANTED BY regress_grantor2;
+GRANT SELECT, UPDATE ON grantor_test TO regress_grantor5 GRANTED BY regress_grantor3;
+
+SELECT * FROM information_schema.table_privileges t
+    WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+
+REVOKE SELECT, UPDATE ON grantor_test FROM regress_grantor5 GRANTED BY regress_grantor2;
+REVOKE SELECT, UPDATE ON grantor_test FROM regress_grantor5 GRANTED BY regress_grantor3;
+
+SELECT * FROM information_schema.table_privileges t
+    WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+
+RESET ROLE;
+DROP TABLE grantor_test;
+DROP ROLE regress_grantor1, regress_grantor2, regress_grantor3, regress_grantor4, regress_grantor5;

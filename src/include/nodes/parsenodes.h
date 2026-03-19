@@ -2672,7 +2672,7 @@ typedef struct GrantStmt
 	/* privileges == NIL denotes ALL PRIVILEGES */
 	List	   *grantees;		/* list of RoleSpec nodes */
 	bool		grant_option;	/* grant or revoke grant option */
-	RoleSpec   *grantor;
+	RoleSpec   *grantor;		/* GRANTED BY clause, or NULL if none */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */
 } GrantStmt;
 

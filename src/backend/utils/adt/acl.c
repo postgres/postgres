@@ -5481,6 +5481,10 @@ select_best_admin(Oid member, Oid role)
 /*
  * Select the effective grantor ID for a GRANT or REVOKE operation.
  *
+ * If the GRANT/REVOKE has an explicit GRANTED BY clause, we always use
+ * exactly that role (which may result in granting/revoking no privileges).
+ * Otherwise, we seek a "best" grantor, starting with the current user.
+ *
  * The grantor must always be either the object owner or some role that has
  * been explicitly granted grant options.  This ensures that all granted
  * privileges appear to flow from the object owner, and there are never
@@ -5493,24 +5497,43 @@ select_best_admin(Oid member, Oid role)
  * role has 'em all.  In this case we pick a role with the largest number
  * of desired options.  Ties are broken in favor of closer ancestors.
  *
- * roleId: the role attempting to do the GRANT/REVOKE
+ * grantedBy: the GRANTED BY clause of GRANT/REVOKE, or NULL if none
  * privileges: the privileges to be granted/revoked
  * acl: the ACL of the object in question
  * ownerId: the role owning the object in question
  * *grantorId: receives the OID of the role to do the grant as
- * *grantOptions: receives the grant options actually held by grantorId
- *
- * If no grant options exist, we set grantorId to roleId, grantOptions to 0.
+ * *grantOptions: receives grant options actually held by grantorId (maybe 0)
  */
 void
-select_best_grantor(Oid roleId, AclMode privileges,
+select_best_grantor(const RoleSpec *grantedBy, AclMode privileges,
 					const Acl *acl, Oid ownerId,
 					Oid *grantorId, AclMode *grantOptions)
 {
+	Oid			roleId = GetUserId();
 	AclMode		needed_goptions = ACL_GRANT_OPTION_FOR(privileges);
 	List	   *roles_list;
 	int			nrights;
 	ListCell   *l;
+
+	/*
+	 * If we have GRANTED BY, resolve it and verify current user is allowed to
+	 * specify that role.
+	 */
+	if (grantedBy)
+	{
+		Oid			grantor = get_rolespec_oid(grantedBy, false);
+
+		if (!has_privs_of_role(roleId, grantor))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must inherit privileges of role \"%s\"",
+							GetUserNameFromId(grantor, false))));
+		/* Use exactly that grantor, whether it has privileges or not */
+		*grantorId = grantor;
+		*grantOptions = aclmask_direct(acl, grantor, ownerId,
+									   needed_goptions, ACLMASK_ALL);
+		return;
+	}
 
 	/*
 	 * The object owner is always treated as having all grant options, so if

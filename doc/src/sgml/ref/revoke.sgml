@@ -182,6 +182,12 @@ REVOKE [ { ADMIN | INHERIT | SET } OPTION FOR ]
   </para>
 
   <para>
+   If <literal>GRANTED BY</literal> is specified, only privileges granted by
+   the specified role are revoked.  A role can only revoke grants by another
+   role if it inherits the privileges of that role.
+  </para>
+
+  <para>
    If a user holds a privilege with grant option and has granted it to
    other users then the privileges held by those other users are
    called dependent privileges. If the privilege or the grant option
@@ -282,7 +288,7 @@ REVOKE [ { ADMIN | INHERIT | SET } OPTION FOR ]
     If the role executing <command>REVOKE</command> holds privileges
     indirectly via more than one role membership path, it is unspecified
     which containing role will be used to perform the command.  In such cases
-    it is best practice to use <command>SET ROLE</command> to become the specific
+    it is best practice to use <literal>GRANTED BY</literal> to specify which
     role you want to do the <command>REVOKE</command> as.  Failure to do so might
     lead to revoking privileges other than the ones you intended, or not
     revoking anything at all.
