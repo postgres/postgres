@@ -4309,25 +4309,27 @@ ExecBuildHash32FromAttrs(TupleDesc desc, const TupleTableSlotOps *ops,
  * 'hash_exprs'.  When multiple expressions are present, the hash values
  * returned by each hash function are combined to produce a single hash value.
  *
+ * If any hash_expr yields NULL and the corresponding hash operator is strict,
+ * the created ExprState will return NULL.  (If the operator is not strict,
+ * we treat NULL values as having a hash value of zero.  The hash functions
+ * themselves are always treated as strict.)
+ *
  * desc: tuple descriptor for the to-be-hashed expressions
  * ops: TupleTableSlotOps for the TupleDesc
  * hashfunc_oids: Oid for each hash function to call, one for each 'hash_expr'
- * collations: collation to use when calling the hash function.
- * hash_expr: list of expressions to hash the value of
- * opstrict: array corresponding to the 'hashfunc_oids' to store op_strict()
+ * collations: collation to use when calling the hash function
+ * hash_exprs: list of expressions to hash the value of
+ * opstrict: strictness flag for each hash function's comparison operator
  * parent: PlanState node that the 'hash_exprs' will be evaluated at
  * init_value: Normally 0, but can be set to other values to seed the hash
  * with some other value.  Using non-zero is slightly less efficient but can
  * be useful.
- * keep_nulls: if true, evaluation of the returned ExprState will abort early
- * returning NULL if the given hash function is strict and the Datum to hash
- * is null.  When set to false, any NULL input Datums are skipped.
  */
 ExprState *
 ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 					const Oid *hashfunc_oids, const List *collations,
 					const List *hash_exprs, const bool *opstrict,
-					PlanState *parent, uint32 init_value, bool keep_nulls)
+					PlanState *parent, uint32 init_value)
 {
 	ExprState  *state = makeNode(ExprState);
 	ExprEvalStep scratch = {0};
@@ -4404,8 +4406,8 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 		fmgr_info(funcid, finfo);
 
 		/*
-		 * Build the steps to evaluate the hash function's argument have it so
-		 * the value of that is stored in the 0th argument of the hash func.
+		 * Build the steps to evaluate the hash function's argument, placing
+		 * the value in the 0th argument of the hash func.
 		 */
 		ExecInitExprRec(expr,
 						state,
@@ -4440,7 +4442,7 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 		scratch.d.hashdatum.fcinfo_data = fcinfo;
 		scratch.d.hashdatum.fn_addr = finfo->fn_addr;
 
-		scratch.opcode = opstrict[i] && !keep_nulls ? strict_opcode : opcode;
+		scratch.opcode = opstrict[i] ? strict_opcode : opcode;
 		scratch.d.hashdatum.jumpdone = -1;
 
 		ExprEvalPushStep(state, &scratch);

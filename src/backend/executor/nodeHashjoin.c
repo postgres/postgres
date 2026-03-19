@@ -172,6 +172,7 @@
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
 #include "utils/sharedtuplestore.h"
+#include "utils/tuplestore.h"
 #include "utils/wait_event.h"
 
 
@@ -183,7 +184,9 @@
 #define HJ_SCAN_BUCKET			3
 #define HJ_FILL_OUTER_TUPLE		4
 #define HJ_FILL_INNER_TUPLES	5
-#define HJ_NEED_NEW_BATCH		6
+#define HJ_FILL_OUTER_NULL_TUPLES	6
+#define HJ_FILL_INNER_NULL_TUPLES	7
+#define HJ_NEED_NEW_BATCH		8
 
 /* Returns true if doing null-fill on outer relation */
 #define HJ_FILL_OUTER(hjstate)	((hjstate)->hj_NullInnerTupleSlot != NULL)
@@ -347,9 +350,16 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				/*
 				 * If the inner relation is completely empty, and we're not
 				 * doing a left outer join, we can quit without scanning the
-				 * outer relation.
+				 * outer relation.  (If the inner relation contains only
+				 * null-keyed tuples that we need to emit, we'll fall through
+				 * and do the outer-relation scan.  In principle we could go
+				 * emit those tuples then quit, but it would complicate the
+				 * state machine logic.  The case seems rare enough to not be
+				 * worth optimizing.)
 				 */
-				if (hashtable->totalTuples == 0 && !HJ_FILL_OUTER(node))
+				if (hashtable->totalTuples == 0 &&
+					hashNode->null_tuple_store == NULL &&
+					!HJ_FILL_OUTER(node))
 				{
 					if (parallel)
 					{
@@ -396,21 +406,24 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 							ExecParallelHashJoinPartitionOuter(node);
 						BarrierArriveAndWait(build_barrier,
 											 WAIT_EVENT_HASH_BUILD_HASH_OUTER);
-					}
-					else if (BarrierPhase(build_barrier) == PHJ_BUILD_FREE)
-					{
-						/*
-						 * If we attached so late that the job is finished and
-						 * the batch state has been freed, we can return
-						 * immediately.
-						 */
-						return NULL;
+						Assert(BarrierPhase(build_barrier) == PHJ_BUILD_RUN);
 					}
 
-					/* Each backend should now select a batch to work on. */
-					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_RUN);
+					/*
+					 * Each backend should now select a batch to work on.
+					 * However, if we've already collected some null-keyed
+					 * tuples, dump them first.  (That is critical when we
+					 * arrive late enough that no more batches are available;
+					 * otherwise we'd fail to dump those tuples at all.)
+					 */
 					hashtable->curbatch = -1;
-					node->hj_JoinState = HJ_NEED_NEW_BATCH;
+
+					if (node->hj_NullOuterTupleStore)
+						node->hj_JoinState = HJ_FILL_OUTER_NULL_TUPLES;
+					else if (hashNode->null_tuple_store)
+						node->hj_JoinState = HJ_FILL_INNER_NULL_TUPLES;
+					else
+						node->hj_JoinState = HJ_NEED_NEW_BATCH;
 
 					continue;
 				}
@@ -441,12 +454,17 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 						if (parallel)
 						{
 							/*
-							 * Only one process is currently allow to handle
+							 * Only one process is currently allowed to handle
 							 * each batch's unmatched tuples, in a parallel
-							 * join.
+							 * join.  However, each process must deal with any
+							 * null-keyed tuples it found.
 							 */
 							if (ExecParallelPrepHashTableForUnmatched(node))
 								node->hj_JoinState = HJ_FILL_INNER_TUPLES;
+							else if (node->hj_NullOuterTupleStore)
+								node->hj_JoinState = HJ_FILL_OUTER_NULL_TUPLES;
+							else if (hashNode->null_tuple_store)
+								node->hj_JoinState = HJ_FILL_INNER_NULL_TUPLES;
 							else
 								node->hj_JoinState = HJ_NEED_NEW_BATCH;
 						}
@@ -457,7 +475,14 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 						}
 					}
 					else
-						node->hj_JoinState = HJ_NEED_NEW_BATCH;
+					{
+						/* might have outer null-keyed tuples to fill */
+						Assert(hashNode->null_tuple_store == NULL);
+						if (node->hj_NullOuterTupleStore)
+							node->hj_JoinState = HJ_FILL_OUTER_NULL_TUPLES;
+						else
+							node->hj_JoinState = HJ_NEED_NEW_BATCH;
+					}
 					continue;
 				}
 
@@ -633,8 +658,13 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				if (!(parallel ? ExecParallelScanHashTableForUnmatched(node, econtext)
 					  : ExecScanHashTableForUnmatched(node, econtext)))
 				{
-					/* no more unmatched tuples */
-					node->hj_JoinState = HJ_NEED_NEW_BATCH;
+					/* no more unmatched tuples, but maybe there are nulls */
+					if (node->hj_NullOuterTupleStore)
+						node->hj_JoinState = HJ_FILL_OUTER_NULL_TUPLES;
+					else if (hashNode->null_tuple_store)
+						node->hj_JoinState = HJ_FILL_INNER_NULL_TUPLES;
+					else
+						node->hj_JoinState = HJ_NEED_NEW_BATCH;
 					continue;
 				}
 
@@ -648,6 +678,93 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					return ExecProject(node->js.ps.ps_ProjInfo);
 				else
 					InstrCountFiltered2(node, 1);
+				break;
+
+			case HJ_FILL_OUTER_NULL_TUPLES:
+
+				/*
+				 * We have finished a batch, but we are doing left/full join,
+				 * so any null-keyed outer tuples have to be emitted before we
+				 * continue to the next batch.
+				 *
+				 * (We could delay this till the end of the join, but there
+				 * seems little percentage in that.)
+				 *
+				 * We have to use tuplestore_gettupleslot_force because
+				 * hj_OuterTupleSlot may not be able to store a MinimalTuple.
+				 */
+				while (tuplestore_gettupleslot_force(node->hj_NullOuterTupleStore,
+													 true, false,
+													 node->hj_OuterTupleSlot))
+				{
+					/*
+					 * Generate a fake join tuple with nulls for the inner
+					 * tuple, and return it if it passes the non-join quals.
+					 */
+					econtext->ecxt_outertuple = node->hj_OuterTupleSlot;
+					econtext->ecxt_innertuple = node->hj_NullInnerTupleSlot;
+
+					if (otherqual == NULL || ExecQual(otherqual, econtext))
+						return ExecProject(node->js.ps.ps_ProjInfo);
+					else
+						InstrCountFiltered2(node, 1);
+
+					ResetExprContext(econtext);
+
+					/* allow this loop to be cancellable */
+					CHECK_FOR_INTERRUPTS();
+				}
+
+				/* We don't need the tuplestore any more, so discard it. */
+				tuplestore_end(node->hj_NullOuterTupleStore);
+				node->hj_NullOuterTupleStore = NULL;
+
+				/* Fill inner tuples too if it's a full join, else advance. */
+				if (hashNode->null_tuple_store)
+					node->hj_JoinState = HJ_FILL_INNER_NULL_TUPLES;
+				else
+					node->hj_JoinState = HJ_NEED_NEW_BATCH;
+				break;
+
+			case HJ_FILL_INNER_NULL_TUPLES:
+
+				/*
+				 * We have finished a batch, but we are doing
+				 * right/right-anti/full join, so any null-keyed inner tuples
+				 * have to be emitted before we continue to the next batch.
+				 *
+				 * (We could delay this till the end of the join, but there
+				 * seems little percentage in that.)
+				 */
+				while (tuplestore_gettupleslot(hashNode->null_tuple_store,
+											   true, false,
+											   node->hj_HashTupleSlot))
+				{
+					/*
+					 * Generate a fake join tuple with nulls for the outer
+					 * tuple, and return it if it passes the non-join quals.
+					 */
+					econtext->ecxt_outertuple = node->hj_NullOuterTupleSlot;
+					econtext->ecxt_innertuple = node->hj_HashTupleSlot;
+
+					if (otherqual == NULL || ExecQual(otherqual, econtext))
+						return ExecProject(node->js.ps.ps_ProjInfo);
+					else
+						InstrCountFiltered2(node, 1);
+
+					ResetExprContext(econtext);
+
+					/* allow this loop to be cancellable */
+					CHECK_FOR_INTERRUPTS();
+				}
+
+				/*
+				 * Ideally we'd discard the tuplestore now, but we can't
+				 * because we might need it for rescans.
+				 */
+
+				/* Now we can advance to the next batch. */
+				node->hj_JoinState = HJ_NEED_NEW_BATCH;
 				break;
 
 			case HJ_NEED_NEW_BATCH:
@@ -832,10 +949,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 
 		/*
 		 * Build ExprStates to obtain hash values for either side of the join.
-		 * This must be done here as ExecBuildHash32Expr needs to know how to
-		 * handle NULL inputs and the required handling of that depends on the
-		 * jointype.  We don't know the join type in ExecInitHash() and we
-		 * must build the ExprStates before ExecHashTableCreate() so we
+		 * Note: must build the ExprStates before ExecHashTableCreate() so we
 		 * properly attribute any SubPlans that exist in the hash expressions
 		 * to the correct PlanState.
 		 */
@@ -847,7 +961,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 
 		/*
 		 * Determine the hash function for each side of the join for the given
-		 * hash operator.
+		 * join operator, and detect whether the join operator is strict.
 		 */
 		foreach(lc, node->hashoperators)
 		{
@@ -865,11 +979,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 
 		/*
 		 * Build an ExprState to generate the hash value for the expressions
-		 * on the outer of the join.  This ExprState must finish generating
-		 * the hash value when HJ_FILL_OUTER() is true.  Otherwise,
-		 * ExecBuildHash32Expr will set up the ExprState to abort early if it
-		 * finds a NULL.  In these cases, we don't need to store these tuples
-		 * in the hash table as the jointype does not require it.
+		 * on the outer side of the join.
 		 */
 		hjstate->hj_OuterHash =
 			ExecBuildHash32Expr(hjstate->js.ps.ps_ResultTupleDesc,
@@ -879,8 +989,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 								node->hashkeys,
 								hash_strict,
 								&hjstate->js.ps,
-								0,
-								HJ_FILL_OUTER(hjstate));
+								0);
 
 		/* As above, but for the inner side of the join */
 		hashstate->hash_expr =
@@ -891,8 +1000,11 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 								hash->hashkeys,
 								hash_strict,
 								&hashstate->ps,
-								0,
-								HJ_FILL_INNER(hjstate));
+								0);
+
+		/* Remember whether we need to save tuples with null join keys */
+		hjstate->hj_KeepNullTuples = HJ_FILL_OUTER(hjstate);
+		hashstate->keep_null_tuples = HJ_FILL_INNER(hjstate);
 
 		/*
 		 * Set up the skew table hash function while we have a record of the
@@ -925,6 +1037,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * initialize hash-specific info
 	 */
 	hjstate->hj_HashTable = NULL;
+	hjstate->hj_NullOuterTupleStore = NULL;
 	hjstate->hj_FirstOuterTupleSlot = NULL;
 
 	hjstate->hj_CurHashValue = 0;
@@ -948,6 +1061,23 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 void
 ExecEndHashJoin(HashJoinState *node)
 {
+	HashState  *hashNode = castNode(HashState, innerPlanState(node));
+
+	/*
+	 * Free tuple stores if we made them (must do this before
+	 * ExecHashTableDestroy deletes hashCxt)
+	 */
+	if (node->hj_NullOuterTupleStore)
+	{
+		tuplestore_end(node->hj_NullOuterTupleStore);
+		node->hj_NullOuterTupleStore = NULL;
+	}
+	if (hashNode->null_tuple_store)
+	{
+		tuplestore_end(hashNode->null_tuple_store);
+		hashNode->null_tuple_store = NULL;
+	}
+
 	/*
 	 * Free hash table
 	 */
@@ -1016,10 +1146,18 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 
 			if (!isnull)
 			{
+				/* normal case with a non-null join key */
 				/* remember outer relation is not empty for possible rescan */
 				hjstate->hj_OuterNotEmpty = true;
 
 				return slot;
+			}
+			else if (hjstate->hj_KeepNullTuples)
+			{
+				/* null join key, but we must save tuple to be emitted later */
+				if (hjstate->hj_NullOuterTupleStore == NULL)
+					hjstate->hj_NullOuterTupleStore = ExecHashBuildNullTupleStore(hashtable);
+				tuplestore_puttupleslot(hjstate->hj_NullOuterTupleStore, slot);
 			}
 
 			/*
@@ -1088,7 +1226,17 @@ ExecParallelHashJoinOuterGetTuple(PlanState *outerNode,
 																  &isnull));
 
 			if (!isnull)
+			{
+				/* normal case with a non-null join key */
 				return slot;
+			}
+			else if (hjstate->hj_KeepNullTuples)
+			{
+				/* null join key, but we must save tuple to be emitted later */
+				if (hjstate->hj_NullOuterTupleStore == NULL)
+					hjstate->hj_NullOuterTupleStore = ExecHashBuildNullTupleStore(hashtable);
+				tuplestore_puttupleslot(hjstate->hj_NullOuterTupleStore, slot);
+			}
 
 			/*
 			 * That tuple couldn't match because of a NULL, so discard it and
@@ -1274,6 +1422,14 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	int			start_batchno;
 	int			batchno;
+
+	/*
+	 * If we are a very slow worker, MultiExecParallelHash could have observed
+	 * build_barrier phase PHJ_BUILD_FREE and not bothered to set up batch
+	 * accessors.  In that case we must be done.
+	 */
+	if (hashtable->batches == NULL)
+		return false;
 
 	/*
 	 * If we were already attached to a batch, remember not to bother checking
@@ -1498,6 +1654,17 @@ ExecReScanHashJoin(HashJoinState *node)
 	PlanState  *innerPlan = innerPlanState(node);
 
 	/*
+	 * We're always going to rescan the outer rel, so drop the associated
+	 * null-keys tuplestore; we'll rebuild it during the rescan.  (Must do
+	 * this before ExecHashTableDestroy deletes hashCxt.)
+	 */
+	if (node->hj_NullOuterTupleStore)
+	{
+		tuplestore_end(node->hj_NullOuterTupleStore);
+		node->hj_NullOuterTupleStore = NULL;
+	}
+
+	/*
 	 * In a multi-batch join, we currently have to do rescans the hard way,
 	 * primarily because batch temp files may have already been released. But
 	 * if it's a single-batch join, and there is no parameter change for the
@@ -1506,6 +1673,10 @@ ExecReScanHashJoin(HashJoinState *node)
 	 */
 	if (node->hj_HashTable != NULL)
 	{
+		HashState  *hashNode = castNode(HashState, innerPlan);
+
+		Assert(hashNode->hashtable == node->hj_HashTable);
+
 		if (node->hj_HashTable->nbatch == 1 &&
 			innerPlan->chgParam == NULL)
 		{
@@ -1530,15 +1701,20 @@ ExecReScanHashJoin(HashJoinState *node)
 			 */
 			node->hj_OuterNotEmpty = false;
 
+			/*
+			 * Also, rewind inner null-key tuplestore so that we can return
+			 * those tuples again.
+			 */
+			if (hashNode->null_tuple_store)
+				tuplestore_rescan(hashNode->null_tuple_store);
+
 			/* ExecHashJoin can skip the BUILD_HASHTABLE step */
 			node->hj_JoinState = HJ_NEED_NEW_OUTER;
 		}
 		else
 		{
 			/* must destroy and rebuild hash table */
-			HashState  *hashNode = castNode(HashState, innerPlan);
 
-			Assert(hashNode->hashtable == node->hj_HashTable);
 			/* accumulate stats from old hash table, if wanted */
 			/* (this should match ExecShutdownHash) */
 			if (hashNode->ps.instrument && !hashNode->hinstrument)
@@ -1546,6 +1722,14 @@ ExecReScanHashJoin(HashJoinState *node)
 			if (hashNode->hinstrument)
 				ExecHashAccumInstrumentation(hashNode->hinstrument,
 											 hashNode->hashtable);
+
+			/* free inner null-key tuplestore before ExecHashTableDestroy */
+			if (hashNode->null_tuple_store)
+			{
+				tuplestore_end(hashNode->null_tuple_store);
+				hashNode->null_tuple_store = NULL;
+			}
+
 			/* for safety, be sure to clear child plan node's pointer too */
 			hashNode->hashtable = NULL;
 
@@ -1601,7 +1785,6 @@ ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate)
 	ExprContext *econtext = hjstate->js.ps.ps_ExprContext;
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	TupleTableSlot *slot;
-	uint32		hashvalue;
 	int			i;
 
 	Assert(hjstate->hj_FirstOuterTupleSlot == NULL);
@@ -1610,6 +1793,7 @@ ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate)
 	for (;;)
 	{
 		bool		isnull;
+		uint32		hashvalue;
 
 		slot = ExecProcNode(outerState);
 		if (TupIsNull(slot))
@@ -1624,6 +1808,7 @@ ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate)
 
 		if (!isnull)
 		{
+			/* normal case with a non-null join key */
 			int			batchno;
 			int			bucketno;
 			bool		shouldFree;
@@ -1637,6 +1822,15 @@ ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate)
 			if (shouldFree)
 				heap_free_minimal_tuple(mintup);
 		}
+		else if (hjstate->hj_KeepNullTuples)
+		{
+			/* null join key, but we must save tuple to be emitted later */
+			if (hjstate->hj_NullOuterTupleStore == NULL)
+				hjstate->hj_NullOuterTupleStore = ExecHashBuildNullTupleStore(hashtable);
+			tuplestore_puttupleslot(hjstate->hj_NullOuterTupleStore, slot);
+		}
+		/* else we can just discard the tuple immediately */
+
 		CHECK_FOR_INTERRUPTS();
 	}
 
@@ -1715,6 +1909,7 @@ ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 {
 	int			plan_node_id = state->js.ps.plan->plan_node_id;
 	ParallelHashJoinState *pstate;
+	HashState  *hashNode;
 
 	/* Nothing to do if we failed to create a DSM segment. */
 	if (pcxt->seg == NULL)
@@ -1743,6 +1938,20 @@ ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 
 	/* Clear any shared batch files. */
 	SharedFileSetDeleteAll(&pstate->fileset);
+
+	/* We'd better clear our local null-key tuplestores, too. */
+	if (state->hj_NullOuterTupleStore)
+	{
+		tuplestore_end(state->hj_NullOuterTupleStore);
+		state->hj_NullOuterTupleStore = NULL;
+	}
+	hashNode = (HashState *) innerPlanState(state);
+	if (hashNode->null_tuple_store)
+	{
+		tuplestore_end(hashNode->null_tuple_store);
+		hashNode->null_tuple_store = NULL;
+	}
+
 
 	/* Reset build_barrier to PHJ_BUILD_ELECT so we can go around again. */
 	BarrierInit(&pstate->build_barrier, 0);

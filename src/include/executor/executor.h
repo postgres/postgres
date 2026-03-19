@@ -346,7 +346,7 @@ extern ExprState *ExecBuildHash32Expr(TupleDesc desc,
 									  const List *collations,
 									  const List *hash_exprs,
 									  const bool *opstrict, PlanState *parent,
-									  uint32 init_value, bool keep_nulls);
+									  uint32 init_value);
 extern ExprState *ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 										 const TupleTableSlotOps *lops, const TupleTableSlotOps *rops,
 										 int numCols,

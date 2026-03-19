@@ -40,6 +40,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 #include "utils/wait_event.h"
 
 static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
@@ -115,7 +116,7 @@ MultiExecHash(HashState *node)
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
-		InstrStopNode(node->ps.instrument, node->hashtable->partialTuples);
+		InstrStopNode(node->ps.instrument, node->hashtable->reportTuples);
 
 	/*
 	 * We do not return the hash table directly because it's not a subtype of
@@ -141,6 +142,7 @@ MultiExecPrivateHash(HashState *node)
 	HashJoinTable hashtable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
+	double		nullTuples = 0;
 
 	/*
 	 * get state info from node
@@ -154,8 +156,11 @@ MultiExecPrivateHash(HashState *node)
 	econtext = node->ps.ps_ExprContext;
 
 	/*
-	 * Get all tuples from the node below the Hash node and insert into the
-	 * hash table (or temp files).
+	 * Get all tuples from the node below the Hash node and insert the
+	 * potentially-matchable ones into the hash table (or temp files).  Tuples
+	 * that can't possibly match because they have null join keys are dumped
+	 * into a separate tuplestore, or just summarily discarded if we don't
+	 * need to emit them with null-extension.
 	 */
 	for (;;)
 	{
@@ -175,6 +180,7 @@ MultiExecPrivateHash(HashState *node)
 
 		if (!isnull)
 		{
+			/* normal case with a non-null join key */
 			uint32		hashvalue = DatumGetUInt32(hashdatum);
 			int			bucketNumber;
 
@@ -184,7 +190,6 @@ MultiExecPrivateHash(HashState *node)
 				/* It's a skew tuple, so put it into that hash table */
 				ExecHashSkewTableInsert(hashtable, slot, hashvalue,
 										bucketNumber);
-				hashtable->skewTuples += 1;
 			}
 			else
 			{
@@ -193,6 +198,15 @@ MultiExecPrivateHash(HashState *node)
 			}
 			hashtable->totalTuples += 1;
 		}
+		else if (node->keep_null_tuples)
+		{
+			/* null join key, but we must save tuple to be emitted later */
+			if (node->null_tuple_store == NULL)
+				node->null_tuple_store = ExecHashBuildNullTupleStore(hashtable);
+			tuplestore_puttupleslot(node->null_tuple_store, slot);
+			nullTuples += 1;
+		}
+		/* else we can discard the tuple immediately */
 	}
 
 	/* resize the hash table if needed (NTUP_PER_BUCKET exceeded) */
@@ -204,7 +218,8 @@ MultiExecPrivateHash(HashState *node)
 	if (hashtable->spaceUsed > hashtable->spacePeak)
 		hashtable->spacePeak = hashtable->spaceUsed;
 
-	hashtable->partialTuples = hashtable->totalTuples;
+	/* Report total number of tuples output (but not those discarded) */
+	hashtable->reportTuples = hashtable->totalTuples + nullTuples;
 }
 
 /* ----------------------------------------------------------------
@@ -223,7 +238,6 @@ MultiExecParallelHash(HashState *node)
 	HashJoinTable hashtable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	uint32		hashvalue;
 	Barrier    *build_barrier;
 	int			i;
 
@@ -283,6 +297,7 @@ MultiExecParallelHash(HashState *node)
 			for (;;)
 			{
 				bool		isnull;
+				uint32		hashvalue;
 
 				slot = ExecProcNode(outerNode);
 				if (TupIsNull(slot))
@@ -296,8 +311,20 @@ MultiExecParallelHash(HashState *node)
 																	 &isnull));
 
 				if (!isnull)
+				{
+					/* normal case with a non-null join key */
 					ExecParallelHashTableInsert(hashtable, slot, hashvalue);
-				hashtable->partialTuples++;
+					hashtable->reportTuples++;
+				}
+				else if (node->keep_null_tuples)
+				{
+					/* null join key, but save tuple to be emitted later */
+					if (node->null_tuple_store == NULL)
+						node->null_tuple_store = ExecHashBuildNullTupleStore(hashtable);
+					tuplestore_puttupleslot(node->null_tuple_store, slot);
+					hashtable->reportTuples++;
+				}
+				/* else we can discard the tuple immediately */
 			}
 
 			/*
@@ -336,7 +363,9 @@ MultiExecParallelHash(HashState *node)
 
 	/*
 	 * We're not yet attached to a batch.  We all agree on the dimensions and
-	 * number of inner tuples (for the empty table optimization).
+	 * number of inner tuples.  (In parallel mode, totalTuples isn't used in
+	 * this module, but we must report it for nodeHashjoin.c's empty-table
+	 * optimization.)
 	 */
 	hashtable->curbatch = -1;
 	hashtable->nbuckets = pstate->nbuckets;
@@ -405,14 +434,10 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 
 	Assert(node->plan.qual == NIL);
 
-	/*
-	 * Delay initialization of hash_expr until ExecInitHashJoin().  We cannot
-	 * build the ExprState here as we don't yet know the join type we're going
-	 * to be hashing values for and we need to know that before calling
-	 * ExecBuildHash32Expr as the keep_nulls parameter depends on the join
-	 * type.
-	 */
+	/* these fields will be filled by ExecInitHashJoin() */
 	hashstate->hash_expr = NULL;
+	hashstate->null_tuple_store = NULL;
+	hashstate->keep_null_tuples = false;
 
 	return hashstate;
 }
@@ -508,7 +533,7 @@ ExecHashTableCreate(HashState *state)
 	hashtable->nbatch_outstart = nbatch;
 	hashtable->growEnabled = true;
 	hashtable->totalTuples = 0;
-	hashtable->partialTuples = 0;
+	hashtable->reportTuples = 0;
 	hashtable->skewTuples = 0;
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
@@ -1768,7 +1793,6 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 */
 		HashJoinTuple hashTuple;
 		int			hashTupleSize;
-		double		ntuples = (hashtable->totalTuples - hashtable->skewTuples);
 
 		/* Create the HashJoinTuple */
 		hashTupleSize = HJTUPLE_OVERHEAD + tuple->t_len;
@@ -1792,10 +1816,12 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		/*
 		 * Increase the (optimal) number of buckets if we just exceeded the
 		 * NTUP_PER_BUCKET threshold, but only when there's still a single
-		 * batch.
+		 * batch.  Note that totalTuples - skewTuples is a reliable indicator
+		 * of the hash table's size only as long as there's just one batch.
 		 */
 		if (hashtable->nbatch == 1 &&
-			ntuples > (hashtable->nbuckets_optimal * NTUP_PER_BUCKET))
+			(hashtable->totalTuples - hashtable->skewTuples) >
+			(hashtable->nbuckets_optimal * NTUP_PER_BUCKET))
 		{
 			/* Guard against integer overflow and alloc size overflow */
 			if (hashtable->nbuckets_optimal <= INT_MAX / 2 &&
@@ -2622,6 +2648,7 @@ ExecHashSkewTableInsert(HashJoinTable hashtable,
 	Assert(hashTuple != hashTuple->next.unshared);
 
 	/* Account for space used, and back off if we've used too much */
+	hashtable->skewTuples += 1;
 	hashtable->spaceUsed += hashTupleSize;
 	hashtable->spaceUsedSkew += hashTupleSize;
 	if (hashtable->spaceUsed > hashtable->spacePeak)
@@ -2714,6 +2741,12 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 			hashtable->spaceUsedSkew -= tupleSize;
 		}
 
+		/*
+		 * We must reduce skewTuples, but totalTuples doesn't change since it
+		 * counts both main and skew tuples.
+		 */
+		hashtable->skewTuples -= 1;
+
 		hashTuple = nextHashTuple;
 
 		/* allow this loop to be cancellable */
@@ -2752,6 +2785,31 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		hashtable->spaceUsed -= hashtable->spaceUsedSkew;
 		hashtable->spaceUsedSkew = 0;
 	}
+}
+
+/*
+ * Build a tuplestore suitable for holding null-keyed input tuples.
+ * (This function doesn't care whether it's for outer or inner tuples.)
+ *
+ * Note that in a parallel hash join, each worker has its own tuplestore(s)
+ * for these.  There's no need to interact with other workers to decide
+ * what to do with them.  So they're always in private storage.
+ */
+Tuplestorestate *
+ExecHashBuildNullTupleStore(HashJoinTable hashtable)
+{
+	Tuplestorestate *tstore;
+	MemoryContext oldcxt;
+
+	/*
+	 * We keep the tuplestore in the hashCxt to ensure it won't go away too
+	 * soon.  Size it at work_mem/16 so that it doesn't bloat the node's space
+	 * consumption too much.
+	 */
+	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
+	tstore = tuplestore_begin_heap(false, false, work_mem / 16);
+	MemoryContextSwitchTo(oldcxt);
+	return tstore;
 }
 
 /*

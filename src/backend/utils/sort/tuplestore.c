@@ -1154,6 +1154,38 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 }
 
 /*
+ * tuplestore_gettupleslot_force - exported function to fetch a tuple
+ *
+ * This is identical to tuplestore_gettupleslot except the given slot can be
+ * any kind of slot; it need not be one that will accept a MinimalTuple.
+ */
+bool
+tuplestore_gettupleslot_force(Tuplestorestate *state, bool forward,
+							  bool copy, TupleTableSlot *slot)
+{
+	MinimalTuple tuple;
+	bool		should_free;
+
+	tuple = (MinimalTuple) tuplestore_gettuple(state, forward, &should_free);
+
+	if (tuple)
+	{
+		if (copy && !should_free)
+		{
+			tuple = heap_copy_minimal_tuple(tuple, 0);
+			should_free = true;
+		}
+		ExecForceStoreMinimalTuple(tuple, slot, should_free);
+		return true;
+	}
+	else
+	{
+		ExecClearTuple(slot);
+		return false;
+	}
+}
+
+/*
  * tuplestore_advance - exported function to adjust position without fetching
  *
  * We could optimize this case to avoid palloc/pfree overhead, but for the

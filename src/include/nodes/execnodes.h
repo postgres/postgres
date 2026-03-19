@@ -2201,8 +2201,11 @@ typedef struct MergeJoinState
  *		hj_NullOuterTupleSlot	prepared null tuple for right/right-anti/full
  *								outer joins
  *		hj_NullInnerTupleSlot	prepared null tuple for left/full outer joins
+ *		hj_NullOuterTupleStore	tuplestore holding outer tuples that have
+ *								null join keys (but must be emitted anyway)
  *		hj_FirstOuterTupleSlot	first tuple retrieved from outer plan
  *		hj_JoinState			current state of ExecHashJoin state machine
+ *		hj_KeepNullTuples		true to keep outer tuples with null join keys
  *		hj_MatchedOuter			true if found a join match for current outer
  *		hj_OuterNotEmpty		true if outer relation known not empty
  * ----------------
@@ -2226,8 +2229,10 @@ typedef struct HashJoinState
 	TupleTableSlot *hj_HashTupleSlot;
 	TupleTableSlot *hj_NullOuterTupleSlot;
 	TupleTableSlot *hj_NullInnerTupleSlot;
+	Tuplestorestate *hj_NullOuterTupleStore;
 	TupleTableSlot *hj_FirstOuterTupleSlot;
 	int			hj_JoinState;
+	bool		hj_KeepNullTuples;
 	bool		hj_MatchedOuter;
 	bool		hj_OuterNotEmpty;
 } HashJoinState;
@@ -2663,6 +2668,9 @@ typedef struct HashState
 
 	FmgrInfo   *skew_hashfunction;	/* lookup data for skew hash function */
 	Oid			skew_collation; /* collation to call skew_hashfunction with */
+
+	Tuplestorestate *null_tuple_store;	/* where to put null-keyed tuples */
+	bool		keep_null_tuples;	/* do we need to save such tuples? */
 
 	/*
 	 * In a parallelized hash join, the leader retains a pointer to the

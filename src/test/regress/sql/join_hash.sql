@@ -57,6 +57,7 @@ $$;
 -- estimated size.
 create table simple as
   select generate_series(1, 20000) AS id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+insert into simple values (null, null);
 alter table simple set (parallel_workers = 2);
 analyze simple;
 

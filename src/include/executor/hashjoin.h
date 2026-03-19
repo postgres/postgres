@@ -70,6 +70,15 @@
  * inner batch file.  Subsequently, while reading either inner or outer batch
  * files, we might find tuples that no longer belong to the current batch;
  * if so, we just dump them out to the correct batch file.
+ *
+ * If an input tuple has a null join key, then it cannot match anything from
+ * the other side of the join.  Normally we can just discard such a tuple
+ * immediately, but if it comes from the outer side of an outer join then we
+ * must emit it with null-extension of the other side.  For various reasons
+ * it's not convenient to do that immediately on seeing the tuple, so we dump
+ * the tuple into a tuplestore and emit it later.  (In the unlikely but
+ * supported case of a non-strict join operator, we treat null keys as normal
+ * data.)
  * ----------------------------------------------------------------
  */
 
@@ -329,9 +338,16 @@ typedef struct HashJoinTableData
 
 	bool		growEnabled;	/* flag to shut off nbatch increases */
 
-	double		totalTuples;	/* # tuples obtained from inner plan */
-	double		partialTuples;	/* # tuples obtained from inner plan by me */
-	double		skewTuples;		/* # tuples inserted into skew tuples */
+	/*
+	 * totalTuples is the running total of tuples inserted into either the
+	 * main or skew hash tables.  reportTuples is the number of tuples that we
+	 * want EXPLAIN to show as output from the Hash node (this includes saved
+	 * null-keyed tuples as well as those inserted into the hash tables).
+	 * skewTuples is the number of tuples present in the skew hash table.
+	 */
+	double		totalTuples;
+	double		reportTuples;
+	double		skewTuples;
 
 	/*
 	 * These arrays are allocated for the life of the hash join, but only if
