@@ -23,11 +23,14 @@
 #include "access/table.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_collation.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/tablespace.h"
 #include "common/relpath.h"
 #include "funcapi.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/array.h"
@@ -36,6 +39,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/syscache.h"
@@ -80,6 +84,8 @@ static List *pg_get_role_ddl_internal(Oid roleid, bool pretty,
 									  bool memberships);
 static List *pg_get_tablespace_ddl_internal(Oid tsid, bool pretty, bool no_owner);
 static Datum pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull);
+static List *pg_get_database_ddl_internal(Oid dbid, bool pretty,
+										  bool no_owner, bool no_tablespace);
 
 
 /*
@@ -837,4 +843,328 @@ pg_get_tablespace_ddl_name(PG_FUNCTION_ARGS)
 	}
 
 	return pg_get_tablespace_ddl_srf(fcinfo, tsid, isnull);
+}
+
+/*
+ * pg_get_database_ddl_internal
+ *		Generate DDL statements to recreate a database.
+ *
+ * Returns a List of palloc'd strings.  The first element is the
+ * CREATE DATABASE statement; subsequent elements are ALTER DATABASE
+ * statements for properties and configuration settings.
+ */
+static List *
+pg_get_database_ddl_internal(Oid dbid, bool pretty,
+							 bool no_owner, bool no_tablespace)
+{
+	HeapTuple	tuple;
+	Form_pg_database dbform;
+	StringInfoData buf;
+	bool		isnull;
+	Datum		datum;
+	const char *encoding;
+	char	   *dbname;
+	char	   *collate;
+	char	   *ctype;
+	Relation	rel;
+	ScanKeyData scankey[2];
+	SysScanDesc scan;
+	List	   *statements = NIL;
+	AclResult	aclresult;
+
+	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("database with OID %u does not exist", dbid)));
+
+	/* User must have connect privilege for target database. */
+	aclresult = object_aclcheck(DatabaseRelationId, dbid, GetUserId(), ACL_CONNECT);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, OBJECT_DATABASE,
+					   get_database_name(dbid));
+
+	dbform = (Form_pg_database) GETSTRUCT(tuple);
+	dbname = pstrdup(NameStr(dbform->datname));
+
+	/*
+	 * We don't support generating DDL for system databases.  The primary
+	 * reason for this is that users shouldn't be recreating them.
+	 */
+	if (strcmp(dbname, "template0") == 0 || strcmp(dbname, "template1") == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("database \"%s\" is a system database", dbname),
+			 errdetail("DDL generation is not supported for template0 and template1.")));
+
+	initStringInfo(&buf);
+
+	/* --- Build CREATE DATABASE statement --- */
+	appendStringInfo(&buf, "CREATE DATABASE %s", quote_identifier(dbname));
+
+	/*
+	 * Always use template0: the target database already contains the catalog
+	 * data from whatever template was used originally, so we must start from
+	 * the pristine template to avoid duplication.
+	 */
+	append_ddl_option(&buf, pretty, 4, "WITH TEMPLATE = template0");
+
+	/* ENCODING */
+	encoding = pg_encoding_to_char(dbform->encoding);
+	if (strlen(encoding) > 0)
+		append_ddl_option(&buf, pretty, 4, "ENCODING = %s",
+						  quote_literal_cstr(encoding));
+
+	/* LOCALE_PROVIDER */
+	if (dbform->datlocprovider == COLLPROVIDER_BUILTIN ||
+		dbform->datlocprovider == COLLPROVIDER_ICU ||
+		dbform->datlocprovider == COLLPROVIDER_LIBC)
+		append_ddl_option(&buf, pretty, 4, "LOCALE_PROVIDER = %s",
+						  collprovider_name(dbform->datlocprovider));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("unrecognized locale provider: %c",
+						dbform->datlocprovider)));
+
+	/* LOCALE, LC_COLLATE, LC_CTYPE */
+	datum = SysCacheGetAttr(DATABASEOID, tuple,
+							Anum_pg_database_datcollate, &isnull);
+	collate = isnull ? NULL : TextDatumGetCString(datum);
+	datum = SysCacheGetAttr(DATABASEOID, tuple,
+							Anum_pg_database_datctype, &isnull);
+	ctype = isnull ? NULL : TextDatumGetCString(datum);
+	if (collate != NULL && ctype != NULL && strcmp(collate, ctype) == 0)
+	{
+		append_ddl_option(&buf, pretty, 4, "LOCALE = %s",
+						  quote_literal_cstr(collate));
+	}
+	else
+	{
+		if (collate != NULL)
+			append_ddl_option(&buf, pretty, 4, "LC_COLLATE = %s",
+							  quote_literal_cstr(collate));
+		if (ctype != NULL)
+			append_ddl_option(&buf, pretty, 4, "LC_CTYPE = %s",
+							  quote_literal_cstr(ctype));
+	}
+
+	/* LOCALE (provider-specific) */
+	datum = SysCacheGetAttr(DATABASEOID, tuple,
+							Anum_pg_database_datlocale, &isnull);
+	if (!isnull)
+	{
+		const char *locale = TextDatumGetCString(datum);
+
+		if (dbform->datlocprovider == COLLPROVIDER_BUILTIN)
+			append_ddl_option(&buf, pretty, 4, "BUILTIN_LOCALE = %s",
+							  quote_literal_cstr(locale));
+		else if (dbform->datlocprovider == COLLPROVIDER_ICU)
+			append_ddl_option(&buf, pretty, 4, "ICU_LOCALE = %s",
+							  quote_literal_cstr(locale));
+	}
+
+	/* ICU_RULES */
+	datum = SysCacheGetAttr(DATABASEOID, tuple,
+							Anum_pg_database_daticurules, &isnull);
+	if (!isnull && dbform->datlocprovider == COLLPROVIDER_ICU)
+		append_ddl_option(&buf, pretty, 4, "ICU_RULES = %s",
+						  quote_literal_cstr(TextDatumGetCString(datum)));
+
+	/* TABLESPACE */
+	if (!no_tablespace && OidIsValid(dbform->dattablespace))
+	{
+		char	   *spcname = get_tablespace_name(dbform->dattablespace);
+
+		if (pg_strcasecmp(spcname, "pg_default") != 0)
+			append_ddl_option(&buf, pretty, 4, "TABLESPACE = %s",
+							  quote_identifier(spcname));
+	}
+
+	appendStringInfoChar(&buf, ';');
+	statements = lappend(statements, pstrdup(buf.data));
+
+	/* OWNER */
+	if (!no_owner && OidIsValid(dbform->datdba))
+	{
+		char	   *owner = GetUserNameFromId(dbform->datdba, false);
+
+		resetStringInfo(&buf);
+		appendStringInfo(&buf, "ALTER DATABASE %s OWNER TO %s;",
+						 quote_identifier(dbname), quote_identifier(owner));
+		pfree(owner);
+		statements = lappend(statements, pstrdup(buf.data));
+	}
+
+	/* CONNECTION LIMIT */
+	if (dbform->datconnlimit != -1)
+	{
+		resetStringInfo(&buf);
+		appendStringInfo(&buf, "ALTER DATABASE %s CONNECTION LIMIT = %d;",
+						 quote_identifier(dbname), dbform->datconnlimit);
+		statements = lappend(statements, pstrdup(buf.data));
+	}
+
+	/* IS_TEMPLATE */
+	if (dbform->datistemplate)
+	{
+		resetStringInfo(&buf);
+		appendStringInfo(&buf, "ALTER DATABASE %s IS_TEMPLATE = true;",
+						 quote_identifier(dbname));
+		statements = lappend(statements, pstrdup(buf.data));
+	}
+
+	/* ALLOW_CONNECTIONS */
+	if (!dbform->datallowconn)
+	{
+		resetStringInfo(&buf);
+		appendStringInfo(&buf, "ALTER DATABASE %s ALLOW_CONNECTIONS = false;",
+						 quote_identifier(dbname));
+		statements = lappend(statements, pstrdup(buf.data));
+	}
+
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Now scan pg_db_role_setting for ALTER DATABASE SET configurations.
+	 *
+	 * It is only database-wide (setrole = 0). It generates one ALTER
+	 * statement per setting.
+	 */
+	rel = table_open(DbRoleSettingRelationId, AccessShareLock);
+	ScanKeyInit(&scankey[0],
+				Anum_pg_db_role_setting_setdatabase,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(dbid));
+	ScanKeyInit(&scankey[1],
+				Anum_pg_db_role_setting_setrole,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+
+	scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
+							  NULL, 2, scankey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		ArrayType  *dbconfig;
+		Datum	   *settings;
+		bool	   *nulls;
+		int			nsettings;
+
+		/*
+		 * The setconfig column is a text array in "name=value" format. It
+		 * should never be null for a valid row, but be defensive.
+		 */
+		datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
+							 RelationGetDescr(rel), &isnull);
+		if (isnull)
+			continue;
+
+		dbconfig = DatumGetArrayTypeP(datum);
+
+		deconstruct_array_builtin(dbconfig, TEXTOID, &settings, &nulls, &nsettings);
+
+		for (int i = 0; i < nsettings; i++)
+		{
+			char	   *s,
+					   *p;
+
+			if (nulls[i])
+				continue;
+
+			s = TextDatumGetCString(settings[i]);
+			p = strchr(s, '=');
+			if (p == NULL)
+			{
+				pfree(s);
+				continue;
+			}
+			*p++ = '\0';
+
+			resetStringInfo(&buf);
+			appendStringInfo(&buf, "ALTER DATABASE %s SET %s TO ",
+							 quote_identifier(dbname),
+							 quote_identifier(s));
+
+			append_guc_value(&buf, s, p);
+
+			appendStringInfoChar(&buf, ';');
+
+			statements = lappend(statements, pstrdup(buf.data));
+
+			pfree(s);
+		}
+
+		pfree(settings);
+		pfree(nulls);
+		pfree(dbconfig);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	pfree(buf.data);
+	pfree(dbname);
+
+	return statements;
+}
+
+/*
+ * pg_get_database_ddl
+ *		Return DDL to recreate a database as a set of text rows.
+ */
+Datum
+pg_get_database_ddl(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	List	   *statements;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		Oid			dbid;
+		DdlOption	opts[] = {
+			{"pretty", DDL_OPT_BOOL},
+			{"owner", DDL_OPT_BOOL},
+			{"tablespace", DDL_OPT_BOOL},
+		};
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		if (PG_ARGISNULL(0))
+		{
+			MemoryContextSwitchTo(oldcontext);
+			SRF_RETURN_DONE(funcctx);
+		}
+
+		dbid = PG_GETARG_OID(0);
+		parse_ddl_options(fcinfo, 1, opts, lengthof(opts));
+
+		statements = pg_get_database_ddl_internal(dbid,
+												  opts[0].isset && opts[0].boolval,
+												  opts[1].isset && !opts[1].boolval,
+												  opts[2].isset && !opts[2].boolval);
+		funcctx->user_fctx = statements;
+		funcctx->max_calls = list_length(statements);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	statements = (List *) funcctx->user_fctx;
+
+	if (funcctx->call_cntr < funcctx->max_calls)
+	{
+		char	   *stmt;
+
+		stmt = list_nth(statements, funcctx->call_cntr);
+
+		SRF_RETURN_NEXT(funcctx, CStringGetTextDatum(stmt));
+	}
+	else
+	{
+		list_free_deep(statements);
+		SRF_RETURN_DONE(funcctx);
+	}
 }

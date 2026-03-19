@@ -3938,6 +3938,29 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         <literal>OWNER</literal>.
        </para></entry>
       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_database_ddl</primary>
+        </indexterm>
+        <function>pg_get_database_ddl</function>
+        ( <parameter>database</parameter> <type>regdatabase</type>
+        <optional>, <literal>VARIADIC</literal> <parameter>options</parameter>
+        <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the <command>CREATE DATABASE</command> statement for the
+        specified database, followed by <command>ALTER DATABASE</command>
+        statements for connection limit, template status, and configuration
+        settings.  Each statement is returned as a separate row.
+        The following options are supported:
+        <literal>pretty</literal> (boolean) for formatted output,
+        <literal>owner</literal> (boolean) to include <literal>OWNER</literal>,
+        and <literal>tablespace</literal> (boolean) to include
+        <literal>TABLESPACE</literal>.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
