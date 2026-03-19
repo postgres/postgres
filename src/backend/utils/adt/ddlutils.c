@@ -20,11 +20,13 @@
 
 #include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/relation.h"
 #include "access/table.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_db_role_setting.h"
+#include "catalog/pg_tablespace.h"
+#include "commands/tablespace.h"
+#include "common/relpath.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
@@ -35,6 +37,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/ruleutils.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 #include "utils/varlena.h"
@@ -75,6 +78,8 @@ static void append_guc_value(StringInfo buf, const char *name,
 							 const char *value);
 static List *pg_get_role_ddl_internal(Oid roleid, bool pretty,
 									  bool memberships);
+static List *pg_get_tablespace_ddl_internal(Oid tsid, bool pretty, bool no_owner);
+static Datum pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull);
 
 
 /*
@@ -633,4 +638,203 @@ pg_get_role_ddl(PG_FUNCTION_ARGS)
 		list_free_deep(statements);
 		SRF_RETURN_DONE(funcctx);
 	}
+}
+
+/*
+ * pg_get_tablespace_ddl_internal
+ *		Generate DDL statements to recreate a tablespace.
+ *
+ * Returns a List of palloc'd strings.  The first element is the
+ * CREATE TABLESPACE statement; if the tablespace has reloptions,
+ * a second element with ALTER TABLESPACE SET (...) is appended.
+ */
+static List *
+pg_get_tablespace_ddl_internal(Oid tsid, bool pretty, bool no_owner)
+{
+	HeapTuple	tuple;
+	Form_pg_tablespace tspForm;
+	StringInfoData buf;
+	char	   *spcname;
+	char	   *spcowner;
+	char	   *path;
+	bool		isNull;
+	Datum		datum;
+	List	   *statements = NIL;
+
+	tuple = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(tsid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace with OID %u does not exist",
+						tsid)));
+
+	tspForm = (Form_pg_tablespace) GETSTRUCT(tuple);
+	spcname = pstrdup(NameStr(tspForm->spcname));
+
+	/* User must have SELECT privilege on pg_tablespace. */
+	if (pg_class_aclcheck(TableSpaceRelationId, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
+	{
+		ReleaseSysCache(tuple);
+		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLESPACE, spcname);
+	}
+
+	/*
+	 * We don't support generating DDL for system tablespaces.  The primary
+	 * reason for this is that users shouldn't be recreating them.
+	 */
+	if (IsReservedName(spcname))
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("tablespace name \"%s\" is reserved", spcname),
+				 errdetail("Tablespace names starting with \"pg_\" are reserved for system tablespaces.")));
+
+	initStringInfo(&buf);
+
+	/* Start building the CREATE TABLESPACE statement */
+	appendStringInfo(&buf, "CREATE TABLESPACE %s", quote_identifier(spcname));
+
+	/* Add OWNER clause */
+	if (!no_owner)
+	{
+		spcowner = GetUserNameFromId(tspForm->spcowner, false);
+		append_ddl_option(&buf, pretty, 4, "OWNER %s",
+						  quote_identifier(spcowner));
+		pfree(spcowner);
+	}
+
+	/* Find tablespace directory path */
+	path = get_tablespace_location(tsid);
+
+	/* Add directory LOCATION (path), if it exists */
+	if (path[0] != '\0')
+	{
+		/*
+		 * Special case: if the tablespace was created with GUC
+		 * "allow_in_place_tablespaces = true" and "LOCATION ''", path will
+		 * begin with "pg_tblspc/". In that case, show "LOCATION ''" as the
+		 * user originally specified.
+		 */
+		if (strncmp(PG_TBLSPC_DIR_SLASH, path, strlen(PG_TBLSPC_DIR_SLASH)) == 0)
+			append_ddl_option(&buf, pretty, 4, "LOCATION ''");
+		else
+			append_ddl_option(&buf, pretty, 4, "LOCATION %s",
+							  quote_literal_cstr(path));
+	}
+	pfree(path);
+
+	appendStringInfoChar(&buf, ';');
+	statements = lappend(statements, pstrdup(buf.data));
+
+	/* Check for tablespace options */
+	datum = SysCacheGetAttr(TABLESPACEOID, tuple,
+							Anum_pg_tablespace_spcoptions, &isNull);
+	if (!isNull)
+	{
+		resetStringInfo(&buf);
+		appendStringInfo(&buf, "ALTER TABLESPACE %s SET (",
+						 quote_identifier(spcname));
+		get_reloptions(&buf, datum);
+		appendStringInfoString(&buf, ");");
+		statements = lappend(statements, pstrdup(buf.data));
+	}
+
+	ReleaseSysCache(tuple);
+	pfree(spcname);
+	pfree(buf.data);
+
+	return statements;
+}
+
+/*
+ * pg_get_tablespace_ddl_srf - common SRF logic for tablespace DDL
+ */
+static Datum
+pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull)
+{
+	FuncCallContext *funcctx;
+	List	   *statements;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		DdlOption	opts[] = {
+			{"pretty", DDL_OPT_BOOL},
+			{"owner", DDL_OPT_BOOL},
+		};
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		if (isnull)
+		{
+			MemoryContextSwitchTo(oldcontext);
+			SRF_RETURN_DONE(funcctx);
+		}
+
+		parse_ddl_options(fcinfo, 1, opts, lengthof(opts));
+
+		statements = pg_get_tablespace_ddl_internal(tsid,
+													opts[0].isset && opts[0].boolval,
+													opts[1].isset && !opts[1].boolval);
+		funcctx->user_fctx = statements;
+		funcctx->max_calls = list_length(statements);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	statements = (List *) funcctx->user_fctx;
+
+	if (funcctx->call_cntr < funcctx->max_calls)
+	{
+		char	   *stmt;
+
+		stmt = (char *) list_nth(statements, funcctx->call_cntr);
+
+		SRF_RETURN_NEXT(funcctx, CStringGetTextDatum(stmt));
+	}
+	else
+	{
+		list_free_deep(statements);
+		SRF_RETURN_DONE(funcctx);
+	}
+}
+
+/*
+ * pg_get_tablespace_ddl_oid
+ *		Return DDL to recreate a tablespace, taking OID.
+ */
+Datum
+pg_get_tablespace_ddl_oid(PG_FUNCTION_ARGS)
+{
+	Oid			tsid = InvalidOid;
+	bool		isnull;
+
+	isnull = PG_ARGISNULL(0);
+	if (!isnull)
+		tsid = PG_GETARG_OID(0);
+
+	return pg_get_tablespace_ddl_srf(fcinfo, tsid, isnull);
+}
+
+/*
+ * pg_get_tablespace_ddl_name
+ *		Return DDL to recreate a tablespace, taking name.
+ */
+Datum
+pg_get_tablespace_ddl_name(PG_FUNCTION_ARGS)
+{
+	Oid			tsid = InvalidOid;
+	Name		tspname;
+	bool		isnull;
+
+	isnull = PG_ARGISNULL(0);
+
+	if (!isnull)
+	{
+		tspname = PG_GETARG_NAME(0);
+		tsid = get_tablespace_oid(NameStr(*tspname), false);
+	}
+
+	return pg_get_tablespace_ddl_srf(fcinfo, tsid, isnull);
 }

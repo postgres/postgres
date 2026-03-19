@@ -51,6 +51,7 @@ extern char *get_window_frame_options_for_explain(int frameOptions,
 extern char *generate_collation_name(Oid collid);
 extern char *generate_opclass_name(Oid opclass);
 extern char *get_range_partbound_string(List *bound_datums);
+extern void get_reloptions(StringInfo buf, Datum reloptions);
 
 extern char *pg_get_statisticsobjdef_string(Oid statextid);
 

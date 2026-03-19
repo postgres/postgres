@@ -3910,6 +3910,34 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         role memberships and their options.
        </para></entry>
       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_tablespace_ddl</primary>
+        </indexterm>
+        <function>pg_get_tablespace_ddl</function>
+        ( <parameter>tablespace</parameter> <type>oid</type>
+        <optional>, <literal>VARIADIC</literal> <parameter>options</parameter>
+        <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        <function>pg_get_tablespace_ddl</function>
+        ( <parameter>tablespace</parameter> <type>name</type>
+        <optional>, <literal>VARIADIC</literal> <parameter>options</parameter>
+        <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the <command>CREATE TABLESPACE</command> statement for
+        the specified tablespace (by OID or name).  If the tablespace has
+        options set, an <command>ALTER TABLESPACE ... SET</command> statement
+        is also returned.  Each statement is returned as a separate row.
+        The following options are supported: <literal>pretty</literal> (boolean)
+        for formatted output and <literal>owner</literal> (boolean) to include
+        <literal>OWNER</literal>.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
