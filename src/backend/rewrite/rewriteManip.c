@@ -1769,7 +1769,7 @@ typedef struct
 } ReplaceVarsFromTargetList_context;
 
 static Node *
-ReplaceVarsFromTargetList_callback(Var *var,
+ReplaceVarsFromTargetList_callback(const Var *var,
 								   replace_rte_variables_context *context)
 {
 	ReplaceVarsFromTargetList_context *rcon = (ReplaceVarsFromTargetList_context *) context->callback_arg;
@@ -1790,7 +1790,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 }
 
 Node *
-ReplaceVarFromTargetList(Var *var,
+ReplaceVarFromTargetList(const Var *var,
 						 RangeTblEntry *target_rte,
 						 List *targetlist,
 						 int result_relation,
@@ -1876,11 +1876,14 @@ ReplaceVarFromTargetList(Var *var,
 				break;
 
 			case REPLACEVARS_CHANGE_VARNO:
-				var = copyObject(var);
-				var->varno = nomatch_varno;
-				var->varlevelsup = 0;
-				/* we leave the syntactic referent alone */
-				return (Node *) var;
+				{
+					Var		   *newvar = copyObject(var);
+
+					newvar->varno = nomatch_varno;
+					newvar->varlevelsup = 0;
+					/* we leave the syntactic referent alone */
+					return (Node *) newvar;
+				}
 
 			case REPLACEVARS_SUBSTITUTE_NULL:
 				{

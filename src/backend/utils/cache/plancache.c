@@ -182,7 +182,7 @@ InitPlanCache(void)
  * commandTag: command tag for query, or UNKNOWN if empty query
  */
 CachedPlanSource *
-CreateCachedPlan(RawStmt *raw_parse_tree,
+CreateCachedPlan(const RawStmt *raw_parse_tree,
 				 const char *query_string,
 				 CommandTag commandTag)
 {

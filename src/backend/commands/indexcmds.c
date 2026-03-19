@@ -544,7 +544,7 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
 ObjectAddress
 DefineIndex(ParseState *pstate,
 			Oid tableId,
-			IndexStmt *stmt,
+			const IndexStmt *stmt,
 			Oid indexRelationId,
 			Oid parentIndexId,
 			Oid parentConstraintId,
@@ -4048,7 +4048,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 			ObjectAddressSet(address, RelationRelationId, newIndexId);
 			EventTriggerCollectSimpleCommand(address,
 											 InvalidObjectAddress,
-											 (Node *) stmt);
+											 (const Node *) stmt);
 		}
 	}
 

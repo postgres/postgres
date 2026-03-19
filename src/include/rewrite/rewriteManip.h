@@ -22,7 +22,7 @@ typedef struct AttrMap AttrMap; /* avoid including attmap.h here */
 
 typedef struct replace_rte_variables_context replace_rte_variables_context;
 
-typedef Node *(*replace_rte_variables_callback) (Var *var,
+typedef Node *(*replace_rte_variables_callback) (const Var *var,
 												 replace_rte_variables_context *context);
 
 struct replace_rte_variables_context
@@ -104,7 +104,7 @@ extern Node *map_variable_attnos(Node *node,
 								 const AttrMap *attno_map,
 								 Oid to_rowtype, bool *found_whole_row);
 
-extern Node *ReplaceVarFromTargetList(Var *var,
+extern Node *ReplaceVarFromTargetList(const Var *var,
 									  RangeTblEntry *target_rte,
 									  List *targetlist,
 									  int result_relation,

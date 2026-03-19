@@ -3708,7 +3708,7 @@ reindex_index(const ReindexStmt *stmt, Oid indexId,
 		ObjectAddressSet(address, RelationRelationId, indexId);
 		EventTriggerCollectSimpleCommand(address,
 										 InvalidObjectAddress,
-										 (Node *) stmt);
+										 (const Node *) stmt);
 	}
 
 	/*

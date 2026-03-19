@@ -202,7 +202,7 @@ extern void ResetPlanCache(void);
 
 extern void ReleaseAllPlanCacheRefsInOwner(ResourceOwner owner);
 
-extern CachedPlanSource *CreateCachedPlan(RawStmt *raw_parse_tree,
+extern CachedPlanSource *CreateCachedPlan(const RawStmt *raw_parse_tree,
 										  const char *query_string,
 										  CommandTag commandTag);
 extern CachedPlanSource *CreateCachedPlanForQuery(Query *analyzed_parse_tree,
