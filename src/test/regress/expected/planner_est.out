@@ -183,4 +183,31 @@ false, true, false, true);
  Function Scan on generate_series g  (cost=N..N rows=1000 width=N)
 (1 row)
 
+--
+-- Test ScalarArrayOpExpr row estimates for <> ALL for arrays with NULLs.  We
+-- expect the planner to estimate 1 row will match in both of the following
+-- tests.
+--
+-- Try a const array containing a NULL
+SELECT explain_mask_costs($$
+SELECT * FROM tenk1 WHERE unique1 <> ALL (ARRAY[1, 2, 99, NULL]);$$,
+false, true, false, true);
+                   explain_mask_costs                    
+---------------------------------------------------------
+ Seq Scan on tenk1  (cost=N..N rows=1 width=N)
+   Filter: (unique1 <> ALL ('{1,2,99,NULL}'::integer[]))
+(2 rows)
+
+-- Try a non-const array containing a NULL
+SELECT explain_mask_costs($$
+SELECT * FROM tenk1 WHERE unique1 <> ALL (ARRAY[1, 2, 98, (SELECT 99), NULL]);$$,
+false, true, false, true);
+                                 explain_mask_costs                                  
+-------------------------------------------------------------------------------------
+ Seq Scan on tenk1  (cost=N..N rows=1 width=N)
+   Filter: (unique1 <> ALL (ARRAY[1, 2, 98, (InitPlan expr_1).col1, NULL::integer]))
+   InitPlan expr_1
+     ->  Result  (cost=N..N rows=1 width=N)
+(4 rows)
+
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);

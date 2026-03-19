@@ -131,5 +131,20 @@ SELECT explain_mask_costs($$
 SELECT * FROM generate_series(25.0, 2.0, 0.0) g(s);$$,
 false, true, false, true);
 
+--
+-- Test ScalarArrayOpExpr row estimates for <> ALL for arrays with NULLs.  We
+-- expect the planner to estimate 1 row will match in both of the following
+-- tests.
+--
+
+-- Try a const array containing a NULL
+SELECT explain_mask_costs($$
+SELECT * FROM tenk1 WHERE unique1 <> ALL (ARRAY[1, 2, 99, NULL]);$$,
+false, true, false, true);
+
+-- Try a non-const array containing a NULL
+SELECT explain_mask_costs($$
+SELECT * FROM tenk1 WHERE unique1 <> ALL (ARRAY[1, 2, 98, (SELECT 99), NULL]);$$,
+false, true, false, true);
 
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);

@@ -2018,6 +2018,15 @@ scalararraysel(PlannerInfo *root,
 		if (arrayisnull)		/* qual can't succeed if null array */
 			return (Selectivity) 0.0;
 		arrayval = DatumGetArrayTypeP(arraydatum);
+
+		/*
+		 * When the array contains a NULL constant, same as var_eq_const, we
+		 * assume the operator is strict and nothing will match, thus return
+		 * 0.0.
+		 */
+		if (!useOr && array_contains_nulls(arrayval))
+			return (Selectivity) 0.0;
+
 		get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 							 &elmlen, &elmbyval, &elmalign);
 		deconstruct_array(arrayval,
@@ -2114,6 +2123,14 @@ scalararraysel(PlannerInfo *root,
 			Node	   *elem = (Node *) lfirst(l);
 			List	   *args;
 			Selectivity s2;
+
+			/*
+			 * When the array contains a NULL constant, same as var_eq_const,
+			 * we assume the operator is strict and nothing will match, thus
+			 * return 0.0.
+			 */
+			if (!useOr && IsA(elem, Const) && ((Const *) elem)->constisnull)
+				return (Selectivity) 0.0;
 
 			/*
 			 * Theoretically, if elem isn't of nominal_element_type we should
