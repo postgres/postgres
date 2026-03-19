@@ -744,6 +744,11 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		ereport(WARNING,
 				(errmsg("changing the foreign-data wrapper handler can change behavior of existing foreign tables")));
 	}
+	else
+	{
+		/* handler unchanged */
+		fdwhandler = fdwForm->fdwhandler;
+	}
 
 	if (validator_given)
 	{
