@@ -8137,11 +8137,11 @@ ATExecSetNotNull(List **wqueue, Relation rel, char *conName, char *colName,
 	ccon = linitial(cooked);
 	ObjectAddressSet(address, ConstraintRelationId, ccon->conoid);
 
-	InvokeObjectPostAlterHook(RelationRelationId,
-							  RelationGetRelid(rel), attnum);
-
 	/* Mark pg_attribute.attnotnull for the column and queue validation */
 	set_attnotnull(wqueue, rel, attnum, true, true);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), attnum);
 
 	/*
 	 * Recurse to propagate the constraint to children that don't have one.
