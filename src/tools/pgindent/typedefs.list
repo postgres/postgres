@@ -147,6 +147,9 @@ ArchiveOpts
 ArchiveShutdownCB
 ArchiveStartupCB
 ArchiveStreamState
+ArchivedWALFile
+ArchivedWAL_hash
+ArchivedWAL_iterator
 ArchiverOutput
 ArchiverStage
 ArrayAnalyzeExtraData
@@ -3545,6 +3548,7 @@ astreamer_recovery_injector
 astreamer_tar_archiver
 astreamer_tar_parser
 astreamer_verify
+astreamer_waldump
 astreamer_zstd_frame
 auth_password_hook_typ
 autovac_table

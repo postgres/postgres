@@ -141,12 +141,20 @@ PostgreSQL documentation
       <term><option>--path=<replaceable>path</replaceable></option></term>
       <listitem>
        <para>
-        Specifies a directory to search for WAL segment files or a
-        directory with a <literal>pg_wal</literal> subdirectory that
+        Specifies a tar archive or a directory to search for WAL segment files
+        or a directory with a <literal>pg_wal</literal> subdirectory that
         contains such files.  The default is to search in the current
         directory, the <literal>pg_wal</literal> subdirectory of the
         current directory, and the <literal>pg_wal</literal> subdirectory
         of <envar>PGDATA</envar>.
+       </para>
+       <para>
+        If a tar archive is provided and its WAL segment files are not in
+        sequential order, those files will be written to a temporary directory
+        named starting with <filename>waldump_tmp</filename>. This directory will be
+        created inside the directory specified by the <envar>TMPDIR</envar>
+        environment variable if it is set; otherwise, it will be created within
+        the same directory as the tar archive.
        </para>
       </listitem>
      </varlistentry>
@@ -380,6 +388,17 @@ PostgreSQL documentation
       Specifies whether to use color in diagnostic messages. Possible values
       are <literal>always</literal>, <literal>auto</literal> and
       <literal>never</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>TMPDIR</envar></term>
+    <listitem>
+     <para>
+      Directory in which to create temporary files when reading WAL from a
+      tar archive with out-of-order segment files. If not set, the temporary
+      directory is created within the same directory as the tar archive.
      </para>
     </listitem>
    </varlistentry>

@@ -1,6 +1,7 @@
 # Copyright (c) 2022-2026, PostgreSQL Global Development Group
 
 pg_waldump_sources = files(
+  'archive_waldump.c',
   'compat.c',
   'pg_waldump.c',
   'rmgrdesc.c',
@@ -18,7 +19,7 @@ endif
 
 pg_waldump = executable('pg_waldump',
   pg_waldump_sources,
-  dependencies: [frontend_code, lz4, zstd],
+  dependencies: [frontend_code, libpq, lz4, zstd],
   c_args: ['-DFRONTEND'], # needed for xlogreader et al
   kwargs: default_bin_args,
 )
@@ -29,6 +30,7 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
+    'env': {'TAR': tar.found() ? tar.full_path() : ''},
     'tests': [
       't/001_basic.pl',
       't/002_save_fullpage.pl',

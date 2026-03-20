@@ -176,7 +176,7 @@ split_path(const char *path, char **dir, char **fname)
  *
  * return a read only fd
  */
-static int
+int
 open_file_in_directory(const char *directory, const char *fname)
 {
 	int			fd = -1;
@@ -327,8 +327,8 @@ identify_target_directory(char *directory, char *fname, int *WalSegSz)
 }
 
 /*
- * Returns the size in bytes of the data to be read. Returns -1 if the end
- * point has already been reached.
+ * Returns the number of bytes to read for the given page.  Returns -1 if
+ * the requested range has already been reached or exceeded.
  */
 static inline int
 required_read_len(XLogDumpPrivate *private, XLogRecPtr targetPagePtr,
@@ -412,7 +412,7 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 	int			count = required_read_len(private, targetPagePtr, reqLen);
 	WALReadError errinfo;
 
-	/* Bail out if the count to be read is not valid */
+	/* Bail out if the end of the requested range has already been reached */
 	if (count < 0)
 		return -1;
 
@@ -438,6 +438,109 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 	}
 
 	return count;
+}
+
+/*
+ * pg_waldump's XLogReaderRoutine->segment_open callback to support dumping WAL
+ * files from tar archives.  Segment tracking is handled by
+ * TarWALDumpReadPage, so no action is needed here.
+ */
+static void
+TarWALDumpOpenSegment(XLogReaderState *state, XLogSegNo nextSegNo,
+					  TimeLineID *tli_p)
+{
+	/* No action needed */
+}
+
+/*
+ * pg_waldump's XLogReaderRoutine->segment_close callback to support dumping
+ * WAL files from tar archives.  Segment tracking is handled by
+ * TarWALDumpReadPage, so no action is needed here.
+ */
+static void
+TarWALDumpCloseSegment(XLogReaderState *state)
+{
+	/* No action needed */
+}
+
+/*
+ * pg_waldump's XLogReaderRoutine->page_read callback to support dumping WAL
+ * files from tar archives.
+ */
+static int
+TarWALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
+				   XLogRecPtr targetPtr, char *readBuff)
+{
+	XLogDumpPrivate *private = state->private_data;
+	int			count = required_read_len(private, targetPagePtr, reqLen);
+	int			segsize = state->segcxt.ws_segsize;
+	XLogSegNo	curSegNo;
+
+	/* Bail out if the end of the requested range has already been reached */
+	if (count < 0)
+		return -1;
+
+	/*
+	 * If the target page is in a different segment, release the hash entry
+	 * buffer and remove any spilled temporary file for the previous segment.
+	 * Since pg_waldump never requests the same WAL bytes twice, moving to a
+	 * new segment means the previous segment's data will not be needed again.
+	 *
+	 * Afterward, check whether the next required WAL segment was already
+	 * spilled to the temporary directory before invoking the archive
+	 * streamer.
+	 */
+	curSegNo = state->seg.ws_segno;
+	if (!XLByteInSeg(targetPagePtr, curSegNo, segsize))
+	{
+		char		fname[MAXFNAMELEN];
+		XLogSegNo	nextSegNo;
+
+		/*
+		 * Calculate the next WAL segment to be decoded from the given page
+		 * pointer.
+		 */
+		XLByteToSeg(targetPagePtr, nextSegNo, segsize);
+		state->seg.ws_tli = private->timeline;
+		state->seg.ws_segno = nextSegNo;
+
+		/* Close the WAL segment file if it is currently open */
+		if (state->seg.ws_file >= 0)
+		{
+			close(state->seg.ws_file);
+			state->seg.ws_file = -1;
+		}
+
+		/*
+		 * If in pre-reading mode (prior to actual decoding), do not delete
+		 * any entries that might be requested again once the decoding loop
+		 * starts. For more details, see the comments in
+		 * read_archive_wal_page().
+		 */
+		if (private->decoding_started && curSegNo < nextSegNo)
+		{
+			XLogFileName(fname, state->seg.ws_tli, curSegNo, segsize);
+			free_archive_wal_entry(fname, private);
+		}
+
+		/*
+		 * If the next segment exists in the temporary spill directory, open
+		 * it and continue reading from there.
+		 */
+		if (TmpWalSegDir != NULL)
+		{
+			XLogFileName(fname, state->seg.ws_tli, nextSegNo, segsize);
+			state->seg.ws_file = open_file_in_directory(TmpWalSegDir, fname);
+		}
+	}
+
+	/* Continue reading from the open WAL segment, if any */
+	if (state->seg.ws_file >= 0)
+		return WALDumpReadPage(state, targetPagePtr, count, targetPtr,
+							   readBuff);
+
+	/* Otherwise, read the WAL page from the archive streamer */
+	return read_archive_wal_page(private, targetPagePtr, count, readBuff);
 }
 
 /*
@@ -777,8 +880,8 @@ usage(void)
 	printf(_("  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
 			 "                         valid names are main, fsm, vm, init\n"));
 	printf(_("  -n, --limit=N          number of records to display\n"));
-	printf(_("  -p, --path=PATH        directory in which to find WAL segment files or a\n"
-			 "                         directory with a ./pg_wal that contains such files\n"
+	printf(_("  -p, --path=PATH        a tar archive or a directory in which to find WAL segment files or\n"
+			 "                         a directory with a pg_wal subdirectory containing such files\n"
 			 "                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"));
 	printf(_("  -q, --quiet            do not print any output, except for errors\n"));
 	printf(_("  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
@@ -811,6 +914,7 @@ main(int argc, char **argv)
 	XLogRecPtr	first_record;
 	char	   *waldir = NULL;
 	char	   *errormsg;
+	pg_compress_algorithm compression = PG_COMPRESSION_NONE;
 
 	static struct option long_options[] = {
 		{"bkp-details", no_argument, NULL, 'b'},
@@ -868,6 +972,10 @@ main(int argc, char **argv)
 	private.startptr = InvalidXLogRecPtr;
 	private.endptr = InvalidXLogRecPtr;
 	private.endptr_reached = false;
+	private.decoding_started = false;
+	private.archive_name = NULL;
+	private.start_segno = 0;
+	private.end_segno = UINT64_MAX;
 
 	config.quiet = false;
 	config.bkp_details = false;
@@ -1109,8 +1217,13 @@ main(int argc, char **argv)
 
 	if (waldir != NULL)
 	{
-		/* validate path points to directory */
-		if (!verify_directory(waldir))
+		/* Check whether the path looks like a tar archive by its extension */
+		if (parse_tar_compress_algorithm(waldir, &compression))
+		{
+			split_path(waldir, &private.archive_dir, &private.archive_name);
+		}
+		/* Otherwise it must be a directory */
+		else if (!verify_directory(waldir))
 		{
 			pg_log_error("could not open directory \"%s\": %m", waldir);
 			goto bad_argument;
@@ -1128,6 +1241,17 @@ main(int argc, char **argv)
 		int			fd;
 		XLogSegNo	segno;
 
+		/*
+		 * If a tar archive is passed using the --path option, all other
+		 * arguments become unnecessary.
+		 */
+		if (private.archive_name)
+		{
+			pg_log_error("unnecessary command-line arguments specified with tar archive (first is \"%s\")",
+						 argv[optind]);
+			goto bad_argument;
+		}
+
 		split_path(argv[optind], &directory, &fname);
 
 		if (waldir == NULL && directory != NULL)
@@ -1138,68 +1262,75 @@ main(int argc, char **argv)
 				pg_fatal("could not open directory \"%s\": %m", waldir);
 		}
 
-		waldir = identify_target_directory(waldir, fname, &private.segsize);
-		fd = open_file_in_directory(waldir, fname);
-		if (fd < 0)
-			pg_fatal("could not open file \"%s\"", fname);
-		close(fd);
-
-		/* parse position from file */
-		XLogFromFileName(fname, &private.timeline, &segno, private.segsize);
-
-		if (!XLogRecPtrIsValid(private.startptr))
-			XLogSegNoOffsetToRecPtr(segno, 0, private.segsize, private.startptr);
-		else if (!XLByteInSeg(private.startptr, segno, private.segsize))
+		if (fname != NULL && parse_tar_compress_algorithm(fname, &compression))
 		{
-			pg_log_error("start WAL location %X/%08X is not inside file \"%s\"",
-						 LSN_FORMAT_ARGS(private.startptr),
-						 fname);
-			goto bad_argument;
+			private.archive_dir = waldir;
+			private.archive_name = fname;
 		}
-
-		/* no second file specified, set end position */
-		if (!(optind + 1 < argc) && !XLogRecPtrIsValid(private.endptr))
-			XLogSegNoOffsetToRecPtr(segno + 1, 0, private.segsize, private.endptr);
-
-		/* parse ENDSEG if passed */
-		if (optind + 1 < argc)
+		else
 		{
-			XLogSegNo	endsegno;
-
-			/* ignore directory, already have that */
-			split_path(argv[optind + 1], &directory, &fname);
-
+			waldir = identify_target_directory(waldir, fname, &private.segsize);
 			fd = open_file_in_directory(waldir, fname);
 			if (fd < 0)
 				pg_fatal("could not open file \"%s\"", fname);
 			close(fd);
 
 			/* parse position from file */
-			XLogFromFileName(fname, &private.timeline, &endsegno, private.segsize);
+			XLogFromFileName(fname, &private.timeline, &segno, private.segsize);
 
-			if (endsegno < segno)
-				pg_fatal("ENDSEG %s is before STARTSEG %s",
-						 argv[optind + 1], argv[optind]);
+			if (!XLogRecPtrIsValid(private.startptr))
+				XLogSegNoOffsetToRecPtr(segno, 0, private.segsize, private.startptr);
+			else if (!XLByteInSeg(private.startptr, segno, private.segsize))
+			{
+				pg_log_error("start WAL location %X/%08X is not inside file \"%s\"",
+							 LSN_FORMAT_ARGS(private.startptr),
+							 fname);
+				goto bad_argument;
+			}
 
-			if (!XLogRecPtrIsValid(private.endptr))
-				XLogSegNoOffsetToRecPtr(endsegno + 1, 0, private.segsize,
-										private.endptr);
+			/* no second file specified, set end position */
+			if (!(optind + 1 < argc) && !XLogRecPtrIsValid(private.endptr))
+				XLogSegNoOffsetToRecPtr(segno + 1, 0, private.segsize, private.endptr);
 
-			/* set segno to endsegno for check of --end */
-			segno = endsegno;
-		}
+			/* parse ENDSEG if passed */
+			if (optind + 1 < argc)
+			{
+				XLogSegNo	endsegno;
 
+				/* ignore directory, already have that */
+				split_path(argv[optind + 1], &directory, &fname);
 
-		if (!XLByteInSeg(private.endptr, segno, private.segsize) &&
-			private.endptr != (segno + 1) * private.segsize)
-		{
-			pg_log_error("end WAL location %X/%08X is not inside file \"%s\"",
-						 LSN_FORMAT_ARGS(private.endptr),
-						 argv[argc - 1]);
-			goto bad_argument;
+				fd = open_file_in_directory(waldir, fname);
+				if (fd < 0)
+					pg_fatal("could not open file \"%s\"", fname);
+				close(fd);
+
+				/* parse position from file */
+				XLogFromFileName(fname, &private.timeline, &endsegno, private.segsize);
+
+				if (endsegno < segno)
+					pg_fatal("ENDSEG %s is before STARTSEG %s",
+							 argv[optind + 1], argv[optind]);
+
+				if (!XLogRecPtrIsValid(private.endptr))
+					XLogSegNoOffsetToRecPtr(endsegno + 1, 0, private.segsize,
+											private.endptr);
+
+				/* set segno to endsegno for check of --end */
+				segno = endsegno;
+			}
+
+			if (!XLByteInSeg(private.endptr, segno, private.segsize) &&
+				private.endptr != (segno + 1) * private.segsize)
+			{
+				pg_log_error("end WAL location %X/%08X is not inside file \"%s\"",
+							 LSN_FORMAT_ARGS(private.endptr),
+							 argv[argc - 1]);
+				goto bad_argument;
+			}
 		}
 	}
-	else
+	else if (!private.archive_name)
 		waldir = identify_target_directory(waldir, NULL, &private.segsize);
 
 	/* we don't know what to print */
@@ -1209,15 +1340,46 @@ main(int argc, char **argv)
 		goto bad_argument;
 	}
 
+	/* --follow is not supported with tar archives */
+	if (config.follow && private.archive_name)
+	{
+		pg_log_error("--follow is not supported when reading from a tar archive");
+		goto bad_argument;
+	}
+
 	/* done with argument parsing, do the actual work */
 
 	/* we have everything we need, start reading */
-	xlogreader_state =
-		XLogReaderAllocate(private.segsize, waldir,
-						   XL_ROUTINE(.page_read = WALDumpReadPage,
-									  .segment_open = WALDumpOpenSegment,
-									  .segment_close = WALDumpCloseSegment),
-						   &private);
+	if (private.archive_name)
+	{
+		/*
+		 * A NULL directory indicates that the archive file is located in the
+		 * current working directory.
+		 */
+		if (private.archive_dir == NULL)
+			private.archive_dir = pg_strdup(".");
+
+		/* Set up for reading tar file */
+		init_archive_reader(&private, compression);
+
+		/* Routine to decode WAL files in tar archive */
+		xlogreader_state =
+			XLogReaderAllocate(private.segsize, private.archive_dir,
+							   XL_ROUTINE(.page_read = TarWALDumpReadPage,
+										  .segment_open = TarWALDumpOpenSegment,
+										  .segment_close = TarWALDumpCloseSegment),
+							   &private);
+	}
+	else
+	{
+		xlogreader_state =
+			XLogReaderAllocate(private.segsize, waldir,
+							   XL_ROUTINE(.page_read = WALDumpReadPage,
+										  .segment_open = WALDumpOpenSegment,
+										  .segment_close = WALDumpCloseSegment),
+							   &private);
+	}
+
 	if (!xlogreader_state)
 		pg_fatal("out of memory while allocating a WAL reading processor");
 
@@ -1244,6 +1406,9 @@ main(int argc, char **argv)
 
 	if (config.stats == true && !config.quiet)
 		stats.startptr = first_record;
+
+	/* Flag indicating that the decoding loop has been entered */
+	private.decoding_started = true;
 
 	for (;;)
 	{
@@ -1325,6 +1490,9 @@ main(int argc, char **argv)
 				 errormsg);
 
 	XLogReaderFree(xlogreader_state);
+
+	if (private.archive_name)
+		free_archive_reader(&private);
 
 	return EXIT_SUCCESS;
 
