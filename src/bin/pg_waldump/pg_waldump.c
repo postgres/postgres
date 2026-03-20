@@ -29,6 +29,7 @@
 #include "common/logging.h"
 #include "common/relpath.h"
 #include "getopt_long.h"
+#include "pg_waldump.h"
 #include "rmgrdesc.h"
 #include "storage/bufpage.h"
 
@@ -42,14 +43,6 @@ static const char *progname;
 static volatile sig_atomic_t time_to_stop = false;
 
 static const RelFileLocator emptyRelFileLocator = {0, 0, 0};
-
-typedef struct XLogDumpPrivate
-{
-	TimeLineID	timeline;
-	XLogRecPtr	startptr;
-	XLogRecPtr	endptr;
-	bool		endptr_reached;
-} XLogDumpPrivate;
 
 typedef struct XLogDumpConfig
 {
@@ -333,6 +326,32 @@ identify_target_directory(char *directory, char *fname, int *WalSegSz)
 	return NULL;				/* not reached */
 }
 
+/*
+ * Returns the size in bytes of the data to be read. Returns -1 if the end
+ * point has already been reached.
+ */
+static inline int
+required_read_len(XLogDumpPrivate *private, XLogRecPtr targetPagePtr,
+				  int reqLen)
+{
+	int			count = XLOG_BLCKSZ;
+
+	if (XLogRecPtrIsValid(private->endptr))
+	{
+		if (targetPagePtr + XLOG_BLCKSZ <= private->endptr)
+			count = XLOG_BLCKSZ;
+		else if (targetPagePtr + reqLen <= private->endptr)
+			count = private->endptr - targetPagePtr;
+		else
+		{
+			private->endptr_reached = true;
+			return -1;
+		}
+	}
+
+	return count;
+}
+
 /* pg_waldump's XLogReaderRoutine->segment_open callback */
 static void
 WALDumpOpenSegment(XLogReaderState *state, XLogSegNo nextSegNo,
@@ -390,21 +409,12 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 				XLogRecPtr targetPtr, char *readBuff)
 {
 	XLogDumpPrivate *private = state->private_data;
-	int			count = XLOG_BLCKSZ;
+	int			count = required_read_len(private, targetPagePtr, reqLen);
 	WALReadError errinfo;
 
-	if (XLogRecPtrIsValid(private->endptr))
-	{
-		if (targetPagePtr + XLOG_BLCKSZ <= private->endptr)
-			count = XLOG_BLCKSZ;
-		else if (targetPagePtr + reqLen <= private->endptr)
-			count = private->endptr - targetPagePtr;
-		else
-		{
-			private->endptr_reached = true;
-			return -1;
-		}
-	}
+	/* Bail out if the count to be read is not valid */
+	if (count < 0)
+		return -1;
 
 	if (!WALRead(state, readBuff, targetPagePtr, count, private->timeline,
 				 &errinfo))
@@ -801,7 +811,6 @@ main(int argc, char **argv)
 	XLogRecPtr	first_record;
 	char	   *waldir = NULL;
 	char	   *errormsg;
-	int			WalSegSz;
 
 	static struct option long_options[] = {
 		{"bkp-details", no_argument, NULL, 'b'},
@@ -855,6 +864,7 @@ main(int argc, char **argv)
 	memset(&stats, 0, sizeof(XLogStats));
 
 	private.timeline = 1;
+	private.segsize = 0;
 	private.startptr = InvalidXLogRecPtr;
 	private.endptr = InvalidXLogRecPtr;
 	private.endptr_reached = false;
@@ -1128,18 +1138,18 @@ main(int argc, char **argv)
 				pg_fatal("could not open directory \"%s\": %m", waldir);
 		}
 
-		waldir = identify_target_directory(waldir, fname, &WalSegSz);
+		waldir = identify_target_directory(waldir, fname, &private.segsize);
 		fd = open_file_in_directory(waldir, fname);
 		if (fd < 0)
 			pg_fatal("could not open file \"%s\"", fname);
 		close(fd);
 
 		/* parse position from file */
-		XLogFromFileName(fname, &private.timeline, &segno, WalSegSz);
+		XLogFromFileName(fname, &private.timeline, &segno, private.segsize);
 
 		if (!XLogRecPtrIsValid(private.startptr))
-			XLogSegNoOffsetToRecPtr(segno, 0, WalSegSz, private.startptr);
-		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
+			XLogSegNoOffsetToRecPtr(segno, 0, private.segsize, private.startptr);
+		else if (!XLByteInSeg(private.startptr, segno, private.segsize))
 		{
 			pg_log_error("start WAL location %X/%08X is not inside file \"%s\"",
 						 LSN_FORMAT_ARGS(private.startptr),
@@ -1149,7 +1159,7 @@ main(int argc, char **argv)
 
 		/* no second file specified, set end position */
 		if (!(optind + 1 < argc) && !XLogRecPtrIsValid(private.endptr))
-			XLogSegNoOffsetToRecPtr(segno + 1, 0, WalSegSz, private.endptr);
+			XLogSegNoOffsetToRecPtr(segno + 1, 0, private.segsize, private.endptr);
 
 		/* parse ENDSEG if passed */
 		if (optind + 1 < argc)
@@ -1165,14 +1175,14 @@ main(int argc, char **argv)
 			close(fd);
 
 			/* parse position from file */
-			XLogFromFileName(fname, &private.timeline, &endsegno, WalSegSz);
+			XLogFromFileName(fname, &private.timeline, &endsegno, private.segsize);
 
 			if (endsegno < segno)
 				pg_fatal("ENDSEG %s is before STARTSEG %s",
 						 argv[optind + 1], argv[optind]);
 
 			if (!XLogRecPtrIsValid(private.endptr))
-				XLogSegNoOffsetToRecPtr(endsegno + 1, 0, WalSegSz,
+				XLogSegNoOffsetToRecPtr(endsegno + 1, 0, private.segsize,
 										private.endptr);
 
 			/* set segno to endsegno for check of --end */
@@ -1180,8 +1190,8 @@ main(int argc, char **argv)
 		}
 
 
-		if (!XLByteInSeg(private.endptr, segno, WalSegSz) &&
-			private.endptr != (segno + 1) * WalSegSz)
+		if (!XLByteInSeg(private.endptr, segno, private.segsize) &&
+			private.endptr != (segno + 1) * private.segsize)
 		{
 			pg_log_error("end WAL location %X/%08X is not inside file \"%s\"",
 						 LSN_FORMAT_ARGS(private.endptr),
@@ -1190,7 +1200,7 @@ main(int argc, char **argv)
 		}
 	}
 	else
-		waldir = identify_target_directory(waldir, NULL, &WalSegSz);
+		waldir = identify_target_directory(waldir, NULL, &private.segsize);
 
 	/* we don't know what to print */
 	if (!XLogRecPtrIsValid(private.startptr))
@@ -1203,7 +1213,7 @@ main(int argc, char **argv)
 
 	/* we have everything we need, start reading */
 	xlogreader_state =
-		XLogReaderAllocate(WalSegSz, waldir,
+		XLogReaderAllocate(private.segsize, waldir,
 						   XL_ROUTINE(.page_read = WALDumpReadPage,
 									  .segment_open = WALDumpOpenSegment,
 									  .segment_close = WALDumpCloseSegment),
@@ -1224,7 +1234,7 @@ main(int argc, char **argv)
 	 * a segment (e.g. we were used in file mode).
 	 */
 	if (first_record != private.startptr &&
-		XLogSegmentOffset(private.startptr, WalSegSz) != 0)
+		XLogSegmentOffset(private.startptr, private.segsize) != 0)
 		pg_log_info(ngettext("first record is after %X/%08X, at %X/%08X, skipping over %u byte",
 							 "first record is after %X/%08X, at %X/%08X, skipping over %u bytes",
 							 (first_record - private.startptr)),
