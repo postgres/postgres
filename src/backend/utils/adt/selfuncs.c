@@ -7388,6 +7388,11 @@ index_other_operands_eval_cost(PlannerInfo *root, List *indexquals)
 	return qual_arg_cost;
 }
 
+/*
+ * Compute generic index access cost estimates.
+ *
+ * See struct GenericCosts in selfuncs.h for more info.
+ */
 void
 genericcostestimate(PlannerInfo *root,
 					IndexPath *path,
@@ -7483,16 +7488,18 @@ genericcostestimate(PlannerInfo *root,
 	 * Estimate the number of index pages that will be retrieved.
 	 *
 	 * We use the simplistic method of taking a pro-rata fraction of the total
-	 * number of index pages.  In effect, this counts only leaf pages and not
-	 * any overhead such as index metapage or upper tree levels.
+	 * number of index leaf pages.  We disregard any overhead such as index
+	 * metapages or upper tree levels.
 	 *
 	 * In practice access to upper index levels is often nearly free because
 	 * those tend to stay in cache under load; moreover, the cost involved is
 	 * highly dependent on index type.  We therefore ignore such costs here
 	 * and leave it to the caller to add a suitable charge if needed.
 	 */
-	if (index->pages > 1 && index->tuples > 1)
-		numIndexPages = ceil(numIndexTuples * index->pages / index->tuples);
+	if (index->pages > costs->numNonLeafPages && index->tuples > 1)
+		numIndexPages =
+			ceil(numIndexTuples * (index->pages - costs->numNonLeafPages)
+				 / index->tuples);
 	else
 		numIndexPages = 1.0;
 
@@ -8083,9 +8090,18 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 	/*
 	 * Now do generic index cost estimation.
+	 *
+	 * While we expended effort to make realistic estimates of numIndexTuples
+	 * and num_sa_scans, we are content to count only the btree metapage as
+	 * non-leaf.  btree fanout is typically high enough that upper pages are
+	 * few relative to leaf pages, so accounting for them would move the
+	 * estimates at most a percent or two.  Given the uncertainty in just how
+	 * many upper pages exist in a particular index, we'll skip trying to
+	 * handle that.
 	 */
 	costs.numIndexTuples = numIndexTuples;
 	costs.num_sa_scans = num_sa_scans;
+	costs.numNonLeafPages = 1;
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -8150,6 +8166,9 @@ hashcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 {
 	GenericCosts costs = {0};
 
+	/* As in btcostestimate, count only the metapage as non-leaf */
+	costs.numNonLeafPages = 1;
+
 	genericcostestimate(root, path, loop_count, &costs);
 
 	/*
@@ -8193,6 +8212,8 @@ gistcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	IndexOptInfo *index = path->indexinfo;
 	GenericCosts costs = {0};
 	Cost		descentCost;
+
+	/* GiST has no metapage, so we treat all pages as leaf pages */
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -8248,6 +8269,9 @@ spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	IndexOptInfo *index = path->indexinfo;
 	GenericCosts costs = {0};
 	Cost		descentCost;
+
+	/* As in btcostestimate, count only the metapage as non-leaf */
+	costs.numNonLeafPages = 1;
 
 	genericcostestimate(root, path, loop_count, &costs);
 

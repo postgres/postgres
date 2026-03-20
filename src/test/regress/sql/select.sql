@@ -221,7 +221,6 @@ SET enable_indexscan TO off;
 explain (costs off)
 select unique2 from onek2 where unique2 = 11 and stringu1 < 'B';
 select unique2 from onek2 where unique2 = 11 and stringu1 < 'B';
-RESET enable_indexscan;
 -- check multi-index cases too
 explain (costs off)
 select unique1, unique2 from onek2
@@ -233,6 +232,16 @@ select unique1, unique2 from onek2
   where (unique2 = 11 and stringu1 < 'B') or unique1 = 0;
 select unique1, unique2 from onek2
   where (unique2 = 11 and stringu1 < 'B') or unique1 = 0;
+RESET enable_indexscan;
+
+-- onek2_u2_prtl should be preferred over this index, but we have to
+-- discount the metapage to arrive at that answer
+begin;
+create index onek2_index_full on onek2 (stringu1, unique2);
+explain (costs off)
+select unique2 from onek2
+  where stringu1 < 'B'::name;
+rollback;
 
 --
 -- Test some corner cases that have been known to confuse the planner

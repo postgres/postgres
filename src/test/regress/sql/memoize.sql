@@ -139,6 +139,7 @@ INSERT INTO flt VALUES('-0.0'::float),('+0.0'::float);
 ANALYZE flt;
 
 SET enable_seqscan TO off;
+SET enable_material TO off;
 
 -- Ensure memoize operates in logical mode
 SELECT explain_memoize('
@@ -218,6 +219,7 @@ WHERE unique1 < 3
 	WHERE t0.ten = t1.twenty AND t0.two <> t2.four OFFSET 0);
 
 RESET enable_seqscan;
+RESET enable_material;
 RESET enable_mergejoin;
 RESET work_mem;
 RESET hash_mem_multiplier;

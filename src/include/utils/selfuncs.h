@@ -122,6 +122,12 @@ typedef struct VariableStatData
  * Similarly, they can set num_sa_scans to some value >= 1 for an index AM
  * that doesn't necessarily perform exactly one primitive index scan per
  * distinct combination of ScalarArrayOp array elements.
+ * Similarly, they can set numNonLeafPages to some value >= 1 if they know
+ * how many index pages are not leaf pages.  (It's always good to count
+ * totally non-data-bearing pages such as metapages here, since accounting
+ * for the metapage can move cost estimates for a small index significantly.
+ * But upper pages in large indexes may be few enough relative to leaf pages
+ * that it's not worth trying to count them.)
  */
 typedef struct
 {
@@ -136,6 +142,7 @@ typedef struct
 	double		numIndexTuples; /* number of leaf tuples visited */
 	double		spc_random_page_cost;	/* relevant random_page_cost value */
 	double		num_sa_scans;	/* # indexscans from ScalarArrayOpExprs */
+	BlockNumber numNonLeafPages;	/* # of index pages that are not leaves */
 } GenericCosts;
 
 /* Hooks for plugins to get control when we ask for stats */

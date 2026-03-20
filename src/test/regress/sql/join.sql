@@ -3723,13 +3723,15 @@ set enable_nestloop to 0;
 set enable_hashjoin to 0;
 set enable_sort to 0;
 
+-- we need additional data to get the partial indexes to be preferred
+insert into j1 select 2, i from generate_series(1, 100) i;
+insert into j2 select 1, i from generate_series(2, 100) i;
+analyze j1;
+analyze j2;
+
 -- create indexes that will be preferred over the PKs to perform the join
 create index j1_id1_idx on j1 (id1) where id1 % 1000 = 1;
 create index j2_id1_idx on j2 (id1) where id1 % 1000 = 1;
-
--- need an additional row in j2, if we want j2_id1_idx to be preferred
-insert into j2 values(1,2);
-analyze j2;
 
 explain (costs off) select * from j1
 inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2

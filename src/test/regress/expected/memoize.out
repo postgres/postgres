@@ -262,6 +262,7 @@ CREATE INDEX flt_f_idx ON flt (f);
 INSERT INTO flt VALUES('-0.0'::float),('+0.0'::float);
 ANALYZE flt;
 SET enable_seqscan TO off;
+SET enable_material TO off;
 -- Ensure memoize operates in logical mode
 SELECT explain_memoize('
 SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f = f2.f;', false);
@@ -455,6 +456,7 @@ WHERE unique1 < 3
 (1 row)
 
 RESET enable_seqscan;
+RESET enable_material;
 RESET enable_mergejoin;
 RESET work_mem;
 RESET hash_mem_multiplier;
