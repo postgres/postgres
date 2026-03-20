@@ -32,7 +32,6 @@ print $jf $junk_data;
 close $jf;
 
 my $backup_path = $primary->backup_dir . '/client-backup';
-my $extract_path = $primary->backup_dir . '/extracted-backup';
 
 my @test_configuration = (
 	{
@@ -137,13 +136,11 @@ for my $tc (@test_configuration)
 		# Verify tar backup.
 		$primary->command_ok(
 			[
-				'pg_verifybackup', '--no-parse-wal',
-				'--exit-on-error', $backup_path,
+				'pg_verifybackup', '--exit-on-error', $backup_path,
 			],
 			"verify backup, compression $method");
 
 		# Cleanup.
-		rmtree($extract_path);
 		rmtree($backup_path);
 	}
 }
