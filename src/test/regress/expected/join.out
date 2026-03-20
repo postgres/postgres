@@ -7896,6 +7896,22 @@ WHERE q0.a = 1;
    ->  Seq Scan on sj n1
 (7 rows)
 
+-- Do not forget to replace relid in bare Var join clause (bug #19435)
+ALTER TABLE sl ADD COLUMN bool_col boolean;
+EXPLAIN (COSTS OFF)
+SELECT 1 AS c1 FROM sl sl1 LEFT JOIN (sl AS sl2 NATURAL JOIN sl AS sl3)
+  ON sl2.bool_col LEFT JOIN sl AS sl4 ON sl2.bool_col;
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on sl sl1
+   ->  Nested Loop Left Join
+         Join Filter: sl3.bool_col
+         ->  Seq Scan on sl sl3
+               Filter: (bool_col AND (a IS NOT NULL) AND (b IS NOT NULL) AND (c IS NOT NULL) AND (bool_col IS NOT NULL))
+         ->  Seq Scan on sl sl4
+(7 rows)
+
 -- Check optimization disabling if it will violate special join conditions.
 -- Two identical joined relations satisfies self join removal conditions but
 -- stay in different special join infos.
