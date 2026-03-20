@@ -1070,12 +1070,9 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	astreamer  *manifest_inject_streamer = NULL;
 	bool		inject_manifest;
 	bool		is_tar,
-				is_tar_gz,
-				is_tar_lz4,
-				is_tar_zstd,
 				is_compressed_tar;
+	pg_compress_algorithm compressed_tar_algorithm;
 	bool		must_parse_archive;
-	int			archive_name_len = strlen(archive_name);
 
 	/*
 	 * Normally, we emit the backup manifest as a separate file, but when
@@ -1084,24 +1081,13 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	 */
 	inject_manifest = (format == 't' && strcmp(basedir, "-") == 0 && manifest);
 
-	/* Is this a tar archive? */
-	is_tar = (archive_name_len > 4 &&
-			  strcmp(archive_name + archive_name_len - 4, ".tar") == 0);
-
-	/* Is this a .tar.gz archive? */
-	is_tar_gz = (archive_name_len > 7 &&
-				 strcmp(archive_name + archive_name_len - 7, ".tar.gz") == 0);
-
-	/* Is this a .tar.lz4 archive? */
-	is_tar_lz4 = (archive_name_len > 8 &&
-				  strcmp(archive_name + archive_name_len - 8, ".tar.lz4") == 0);
-
-	/* Is this a .tar.zst archive? */
-	is_tar_zstd = (archive_name_len > 8 &&
-				   strcmp(archive_name + archive_name_len - 8, ".tar.zst") == 0);
+	/* Check whether it is a tar archive and its compression type */
+	is_tar = parse_tar_compress_algorithm(archive_name,
+										  &compressed_tar_algorithm);
 
 	/* Is this any kind of compressed tar? */
-	is_compressed_tar = is_tar_gz || is_tar_lz4 || is_tar_zstd;
+	is_compressed_tar = (is_tar &&
+						 compressed_tar_algorithm != PG_COMPRESSION_NONE);
 
 	/*
 	 * Injecting the manifest into a compressed tar file would be possible if
@@ -1128,7 +1114,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 						  (spclocation == NULL && writerecoveryconf));
 
 	/* At present, we only know how to parse tar archives. */
-	if (must_parse_archive && !is_tar && !is_compressed_tar)
+	if (must_parse_archive && !is_tar)
 	{
 		pg_log_error("cannot parse archive \"%s\"", archive_name);
 		pg_log_error_detail("Only tar archives can be parsed.");
@@ -1263,13 +1249,13 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	 * If the user has requested a server compressed archive along with
 	 * archive extraction at client then we need to decompress it.
 	 */
-	if (format == 'p')
+	if (format == 'p' && is_compressed_tar)
 	{
-		if (is_tar_gz)
+		if (compressed_tar_algorithm == PG_COMPRESSION_GZIP)
 			streamer = astreamer_gzip_decompressor_new(streamer);
-		else if (is_tar_lz4)
+		else if (compressed_tar_algorithm == PG_COMPRESSION_LZ4)
 			streamer = astreamer_lz4_decompressor_new(streamer);
-		else if (is_tar_zstd)
+		else if (compressed_tar_algorithm == PG_COMPRESSION_ZSTD)
 			streamer = astreamer_zstd_decompressor_new(streamer);
 	}
 

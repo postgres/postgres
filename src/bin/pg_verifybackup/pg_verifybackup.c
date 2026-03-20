@@ -941,17 +941,7 @@ precheck_tar_backup_file(verifier_context *context, char *relpath,
 	}
 
 	/* Now, check the compression type of the tar */
-	if (strcmp(suffix, ".tar") == 0)
-		compress_algorithm = PG_COMPRESSION_NONE;
-	else if (strcmp(suffix, ".tgz") == 0)
-		compress_algorithm = PG_COMPRESSION_GZIP;
-	else if (strcmp(suffix, ".tar.gz") == 0)
-		compress_algorithm = PG_COMPRESSION_GZIP;
-	else if (strcmp(suffix, ".tar.lz4") == 0)
-		compress_algorithm = PG_COMPRESSION_LZ4;
-	else if (strcmp(suffix, ".tar.zst") == 0)
-		compress_algorithm = PG_COMPRESSION_ZSTD;
-	else
+	if (!parse_tar_compress_algorithm(suffix, &compress_algorithm))
 	{
 		report_backup_error(context,
 							"file \"%s\" is not expected in a tar format backup",
