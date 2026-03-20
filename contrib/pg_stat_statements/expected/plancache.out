@@ -159,11 +159,10 @@ SELECT calls, generic_plan_calls, custom_plan_calls, toplevel, query FROM pg_sta
  calls | generic_plan_calls | custom_plan_calls | toplevel |                       query                        
 -------+--------------------+-------------------+----------+----------------------------------------------------
      2 |                  0 |                 0 | t        | CALL select_one_proc($1)
-     4 |                  2 |                 2 | f        | SELECT $1
      1 |                  0 |                 0 | t        | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      2 |                  0 |                 0 | t        | SELECT select_one_func($1)
      2 |                  0 |                 0 | t        | SET plan_cache_mode TO $1
-(5 rows)
+(4 rows)
 
 --
 -- EXPLAIN [ANALYZE] EXECUTE + functions/procedures
@@ -211,10 +210,9 @@ SELECT calls, generic_plan_calls, custom_plan_calls, toplevel, query FROM pg_sta
      2 |                  0 |                 0 | t        | EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT select_one_func($1)
      4 |                  0 |                 0 | f        | EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT select_one_func($1);
      2 |                  0 |                 0 | t        | EXPLAIN (COSTS OFF) SELECT select_one_func($1)
-     4 |                  2 |                 2 | f        | SELECT $1
      1 |                  0 |                 0 | t        | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      2 |                  0 |                 0 | t        | SET plan_cache_mode TO $1
-(7 rows)
+(6 rows)
 
 RESET pg_stat_statements.track;
 --

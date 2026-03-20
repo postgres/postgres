@@ -267,6 +267,7 @@ typedef struct count_param_references_context
 static void coerce_function_result_tuple(PLpgSQL_execstate *estate,
 										 TupleDesc tupdesc);
 static void plpgsql_exec_error_callback(void *arg);
+static void plpgsql_execsql_error_callback(void *arg);
 static void copy_plpgsql_datums(PLpgSQL_execstate *estate,
 								PLpgSQL_function *func);
 static void plpgsql_fulfill_promise(PLpgSQL_execstate *estate,
@@ -1299,6 +1300,37 @@ plpgsql_exec_error_callback(void *arg)
 	else
 		errcontext("PL/pgSQL function %s",
 				   estate->func->fn_signature);
+}
+
+/*
+ * error context callback used for "SELECT simple-expr INTO var"
+ *
+ * This should match the behavior of spi.c's _SPI_error_callback(),
+ * so that the construct still reports errors the same as it did
+ * before we optimized it with the simple-expression code path.
+ */
+static void
+plpgsql_execsql_error_callback(void *arg)
+{
+	PLpgSQL_expr *expr = (PLpgSQL_expr *) arg;
+	const char *query = expr->query;
+	int			syntaxerrposition;
+
+	/*
+	 * If there is a syntax error position, convert to internal syntax error;
+	 * otherwise treat the query as an item of context stack
+	 */
+	syntaxerrposition = geterrposition();
+	if (syntaxerrposition > 0)
+	{
+		errposition(0);
+		internalerrposition(syntaxerrposition);
+		internalerrquery(query);
+	}
+	else
+	{
+		errcontext("SQL statement \"%s\"", query);
+	}
 }
 
 
@@ -4251,6 +4283,74 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			}
 		}
 		stmt->mod_stmt_set = true;
+	}
+
+	/*
+	 * Some users write "SELECT expr INTO var" instead of "var := expr".  If
+	 * the expression is simple and the INTO target is a single variable, we
+	 * can bypass SPI and call ExecEvalExpr() directly.  (exec_eval_expr would
+	 * actually work for non-simple expressions too, but such an expression
+	 * might return more or less than one row, complicating matters greatly.
+	 * The potential performance win is small if it's non-simple, and any
+	 * errors we might issue would likely look different, so avoid using this
+	 * code path for non-simple cases.)
+	 */
+	if (expr->expr_simple_expr && stmt->into)
+	{
+		PLpgSQL_datum *target = estate->datums[stmt->target->dno];
+
+		if (target->dtype == PLPGSQL_DTYPE_ROW)
+		{
+			PLpgSQL_row *row = (PLpgSQL_row *) target;
+
+			if (row->nfields == 1)
+			{
+				ErrorContextCallback plerrcontext;
+				Datum		value;
+				bool		isnull;
+				Oid			valtype;
+				int32		valtypmod;
+
+				/*
+				 * Setup error traceback support for ereport().  This is so
+				 * that error reports for the expression will look similar
+				 * whether or not we take this code path.
+				 */
+				plerrcontext.callback = plpgsql_execsql_error_callback;
+				plerrcontext.arg = expr;
+				plerrcontext.previous = error_context_stack;
+				error_context_stack = &plerrcontext;
+
+				/* If first time through, create a plan for this expression */
+				if (expr->plan == NULL)
+					exec_prepare_plan(estate, expr, 0);
+
+				/* And evaluate the expression */
+				value = exec_eval_expr(estate, expr,
+									   &isnull, &valtype, &valtypmod);
+
+				/*
+				 * Pop the error context stack: the code below would not use
+				 * SPI's error handling during the assignment step.
+				 */
+				error_context_stack = plerrcontext.previous;
+
+				/* Assign the result to the INTO target */
+				exec_assign_value(estate, estate->datums[row->varnos[0]],
+								  value, isnull, valtype, valtypmod);
+				exec_eval_cleanup(estate);
+
+				/*
+				 * We must duplicate the other effects of the code below, as
+				 * well.  We know that exactly one row was returned, so it
+				 * doesn't matter whether the INTO was STRICT or not.
+				 */
+				exec_set_found(estate, true);
+				estate->eval_processed = 1;
+
+				return PLPGSQL_RC_OK;
+			}
+		}
 	}
 
 	/*

@@ -114,3 +114,20 @@ begin
  fetch p_CurData into val;
  raise notice 'val = %', val;
 end; $$;
+
+-- We now optimize "SELECT simple-expr INTO var" using the simple-expression
+-- logic.  Verify that error reporting works the same as it did before.
+
+do $$
+declare x bigint := 2^30; y int;
+begin
+  -- overflow during assignment step does not get an extra context line
+  select x*x into y;
+end $$;
+
+do $$
+declare x bigint := 2^30; y int;
+begin
+  -- overflow during expression evaluation step does get an extra context line
+  select x*x*x into y;
+end $$;

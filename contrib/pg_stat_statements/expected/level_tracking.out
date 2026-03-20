@@ -1500,12 +1500,11 @@ SELECT PLUS_ONE(1);
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
  calls | rows |                       query                        
 -------+------+----------------------------------------------------
-     2 |    2 | SELECT (i + $2 + $3)::INTEGER
      2 |    2 | SELECT (i + $2)::INTEGER LIMIT $3
      2 |    2 | SELECT PLUS_ONE($1)
      2 |    2 | SELECT PLUS_TWO($1)
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
-(5 rows)
+(4 rows)
 
 -- immutable SQL function --- can be executed at plan time
 CREATE FUNCTION PLUS_THREE(i INTEGER) RETURNS INTEGER AS
@@ -1525,15 +1524,14 @@ SELECT PLUS_THREE(10);
 SELECT toplevel, calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
  toplevel | calls | rows |                                    query                                     
 ----------+-------+------+------------------------------------------------------------------------------
- f        |     2 |    2 | SELECT (i + $2 + $3)::INTEGER
  f        |     2 |    2 | SELECT (i + $2)::INTEGER LIMIT $3
  t        |     2 |    2 | SELECT PLUS_ONE($1)
  t        |     2 |    2 | SELECT PLUS_THREE($1)
  t        |     2 |    2 | SELECT PLUS_TWO($1)
- t        |     1 |    5 | SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C"
+ t        |     1 |    4 | SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C"
  f        |     2 |    2 | SELECT i + $2 LIMIT $3
  t        |     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
-(8 rows)
+(7 rows)
 
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t 

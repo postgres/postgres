@@ -129,3 +129,22 @@ begin
  raise notice 'val = %', val;
 end; $$;
 NOTICE:  val = 42
+-- We now optimize "SELECT simple-expr INTO var" using the simple-expression
+-- logic.  Verify that error reporting works the same as it did before.
+do $$
+declare x bigint := 2^30; y int;
+begin
+  -- overflow during assignment step does not get an extra context line
+  select x*x into y;
+end $$;
+ERROR:  integer out of range
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at SQL statement
+do $$
+declare x bigint := 2^30; y int;
+begin
+  -- overflow during expression evaluation step does get an extra context line
+  select x*x*x into y;
+end $$;
+ERROR:  bigint out of range
+CONTEXT:  SQL statement "select x*x*x"
+PL/pgSQL function inline_code_block line 5 at SQL statement
