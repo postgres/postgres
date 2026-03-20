@@ -195,10 +195,12 @@ extern Oid	GetTopMostAncestorInPublication(Oid puboid, List *ancestors,
 
 extern bool is_publishable_relation(Relation rel);
 extern bool is_schema_publication(Oid pubid);
+extern bool is_table_publication(Oid pubid);
 extern bool check_and_fetch_column_list(Publication *pub, Oid relid,
 										MemoryContext mcxt, Bitmapset **cols);
 extern ObjectAddress publication_add_relation(Oid pubid, PublicationRelInfo *pri,
-											  bool if_not_exists);
+											  bool if_not_exists,
+											  AlterPublicationStmt *alter_stmt);
 extern Bitmapset *pub_collist_validate(Relation targetrel, List *columns);
 extern ObjectAddress publication_add_schema(Oid pubid, Oid schemaid,
 											bool if_not_exists);

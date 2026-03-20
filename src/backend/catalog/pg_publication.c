@@ -271,6 +271,49 @@ is_schema_publication(Oid pubid)
 }
 
 /*
+ * Returns true if the publication has explicitly included relation (i.e.,
+ * not marked as EXCEPT).
+ */
+bool
+is_table_publication(Oid pubid)
+{
+	Relation	pubrelsrel;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+	HeapTuple	tup;
+	bool		result = false;
+
+	pubrelsrel = table_open(PublicationRelRelationId, AccessShareLock);
+	ScanKeyInit(&scankey,
+				Anum_pg_publication_rel_prpubid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pubid));
+
+	scan = systable_beginscan(pubrelsrel,
+							  PublicationRelPrpubidIndexId,
+							  true, NULL, 1, &scankey);
+	tup = systable_getnext(scan);
+	if (HeapTupleIsValid(tup))
+	{
+		Form_pg_publication_rel pubrel;
+
+		pubrel = (Form_pg_publication_rel) GETSTRUCT(tup);
+
+		/*
+		 * For any publication, pg_publication_rel contains either only EXCEPT
+		 * entries or only explicitly included tables. Therefore, examining
+		 * the first tuple is sufficient to determine table inclusion.
+		 */
+		result = !pubrel->prexcept;
+	}
+
+	systable_endscan(scan);
+	table_close(pubrelsrel, AccessShareLock);
+
+	return result;
+}
+
+/*
  * Returns true if the relation has column list associated with the
  * publication, false otherwise.
  *
@@ -440,7 +483,7 @@ attnumstoint2vector(Bitmapset *attrs)
  */
 ObjectAddress
 publication_add_relation(Oid pubid, PublicationRelInfo *pri,
-						 bool if_not_exists)
+						 bool if_not_exists, AlterPublicationStmt *alter_stmt)
 {
 	Relation	rel;
 	HeapTuple	tup;
@@ -455,6 +498,7 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 				referenced;
 	List	   *relids = NIL;
 	int			i;
+	bool		inval_except_table;
 
 	rel = table_open(PublicationRelRelationId, RowExclusiveLock);
 
@@ -543,11 +587,23 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 	table_close(rel, RowExclusiveLock);
 
 	/*
-	 * Relations excluded via the EXCEPT clause do not need explicit
-	 * invalidation as CreatePublication() function invalidates all relations
-	 * as part of defining a FOR ALL TABLES publication.
+	 * Determine whether EXCEPT tables require explicit relcache invalidation.
+	 *
+	 * For CREATE PUBLICATION with EXCEPT tables, invalidation is skipped
+	 * here, as CreatePublication() function invalidates all relations as part
+	 * of defining a FOR ALL TABLES publication.
+	 *
+	 * For ALTER PUBLICATION, invalidation is needed only when adding an
+	 * EXCEPT table to a publication already marked as ALL TABLES. For
+	 * publications that were originally empty or defined as ALL SEQUENCES and
+	 * are being converted to ALL TABLES, invalidation is skipped here, as
+	 * AlterPublicationAllFlags() function invalidates all relations while
+	 * marking the publication as ALL TABLES publication.
 	 */
-	if (!pri->except)
+	inval_except_table = (alter_stmt != NULL) && pub->alltables &&
+		(alter_stmt->for_all_tables && pri->except);
+
+	if (!pri->except || inval_except_table)
 	{
 		/*
 		 * Invalidate relcache so that publication info is rebuilt.

@@ -1272,15 +1272,37 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 		PublicationDropTables(pubid, rels, false);
 	else						/* AP_SetObjects */
 	{
-		List	   *oldrelids = GetIncludedPublicationRelations(pubid,
-																PUBLICATION_PART_ROOT);
+		List	   *oldrelids = NIL;
 		List	   *delrels = NIL;
 		ListCell   *oldlc;
 
-		TransformPubWhereClauses(rels, queryString, pubform->pubviaroot);
+		if (stmt->for_all_tables || stmt->for_all_sequences)
+		{
+			/*
+			 * In FOR ALL TABLES mode, relations are tracked as exclusions
+			 * (EXCEPT TABLES). Fetch the current excluded relations so they
+			 * can be reconciled with the specified EXCEPT list.
+			 *
+			 * This applies only if the existing publication is already
+			 * defined as FOR ALL TABLES; otherwise, there are no exclusion
+			 * entries to process.
+			 */
+			if (pubform->puballtables)
+			{
+				oldrelids = GetExcludedPublicationTables(pubid,
+														 PUBLICATION_PART_ROOT);
+			}
+		}
+		else
+		{
+			oldrelids = GetIncludedPublicationRelations(pubid,
+														PUBLICATION_PART_ROOT);
 
-		CheckPubRelationColumnList(stmt->pubname, rels, publish_schema,
-								   pubform->pubviaroot);
+			TransformPubWhereClauses(rels, queryString, pubform->pubviaroot);
+
+			CheckPubRelationColumnList(stmt->pubname, rels, publish_schema,
+									   pubform->pubviaroot);
+		}
 
 		/*
 		 * To recreate the relation list for the publication, look for
@@ -1498,6 +1520,16 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to add or set schemas")));
 
+	if (stmt->for_all_tables && !superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to set ALL TABLES"));
+
+	if (stmt->for_all_sequences && !superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to set ALL SEQUENCES"));
+
 	/*
 	 * Check that user is allowed to manipulate the publication tables in
 	 * schema
@@ -1546,6 +1578,73 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 						   NameStr(pubform->pubname)),
 					errdetail("Tables or sequences cannot be added to or dropped from FOR ALL SEQUENCES publications."));
 	}
+
+	if (stmt->for_all_tables || stmt->for_all_sequences)
+	{
+		/*
+		 * If the publication already contains specific tables or schemas, we
+		 * prevent switching to a ALL state.
+		 */
+		if (is_table_publication(pubform->oid) ||
+			is_schema_publication(pubform->oid))
+		{
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					stmt->for_all_tables ?
+					errmsg("publication \"%s\" does not support ALL TABLES operations", NameStr(pubform->pubname)) :
+					errmsg("publication \"%s\" does not support ALL SEQUENCES operations", NameStr(pubform->pubname)),
+					errdetail("This operation requires the publication to be defined as FOR ALL TABLES/SEQUENCES or to be empty."));
+		}
+	}
+}
+
+/*
+ * Update FOR ALL TABLES / FOR ALL SEQUENCES flags of a publication.
+ */
+static void
+AlterPublicationAllFlags(AlterPublicationStmt *stmt, Relation rel,
+						 HeapTuple tup)
+{
+	Form_pg_publication pubform;
+	bool		nulls[Natts_pg_publication] = {0};
+	bool		replaces[Natts_pg_publication] = {0};
+	Datum		values[Natts_pg_publication] = {0};
+	bool		dirty = false;
+
+	if (!stmt->for_all_tables && !stmt->for_all_sequences)
+		return;
+
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+
+	/* Update FOR ALL TABLES flag if changed */
+	if (stmt->for_all_tables != pubform->puballtables)
+	{
+		values[Anum_pg_publication_puballtables - 1] =
+			BoolGetDatum(stmt->for_all_tables);
+		replaces[Anum_pg_publication_puballtables - 1] = true;
+		dirty = true;
+	}
+
+	/* Update FOR ALL SEQUENCES flag if changed */
+	if (stmt->for_all_sequences != pubform->puballsequences)
+	{
+		values[Anum_pg_publication_puballsequences - 1] =
+			BoolGetDatum(stmt->for_all_sequences);
+		replaces[Anum_pg_publication_puballsequences - 1] = true;
+		dirty = true;
+	}
+
+	if (dirty)
+	{
+		tup = heap_modify_tuple(tup, RelationGetDescr(rel), values,
+								nulls, replaces);
+		CatalogTupleUpdate(rel, &tup->t_self, tup);
+		CommandCounterIncrement();
+
+		/* For ALL TABLES, we must invalidate all relcache entries */
+		if (replaces[Anum_pg_publication_puballtables - 1])
+			CacheInvalidateRelcacheAll();
+	}
 }
 
 /*
@@ -1591,9 +1690,6 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 		ObjectsInPublicationToOids(stmt->pubobjects, pstate, &relations,
 								   &exceptrelations, &schemaidlist);
 
-		/* EXCEPT clause is not supported with ALTER PUBLICATION */
-		Assert(exceptrelations == NIL);
-
 		CheckAlterPublication(stmt, tup, relations, schemaidlist);
 
 		heap_freetuple(tup);
@@ -1615,9 +1711,11 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 					errmsg("publication \"%s\" does not exist",
 						   stmt->pubname));
 
+		relations = list_concat(relations, exceptrelations);
 		AlterPublicationTables(stmt, tup, relations, pstate->p_sourcetext,
 							   schemaidlist != NIL);
 		AlterPublicationSchemas(stmt, tup, schemaidlist);
+		AlterPublicationAllFlags(stmt, rel, tup);
 	}
 
 	/* Cleanup. */
@@ -1953,7 +2051,7 @@ PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
 
-		obj = publication_add_relation(pubid, pub_rel, if_not_exists);
+		obj = publication_add_relation(pubid, pub_rel, if_not_exists, stmt);
 		if (stmt)
 		{
 			EventTriggerCollectSimpleCommand(obj, InvalidObjectAddress,

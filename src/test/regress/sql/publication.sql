@@ -119,9 +119,49 @@ CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT TABLE
 -- in the EXCEPT TABLE clause
 \d testpub_tbl1
 
+---------------------------------------------
+-- SET ALL TABLES/SEQUENCES
+---------------------------------------------
+-- Replace the existing EXCEPT TABLE list (testpub_tbl1) with a new
+-- EXCEPT TABLE list containing only (testpub_tbl2).
+ALTER PUBLICATION testpub_foralltables_excepttable SET ALL TABLES EXCEPT TABLE (testpub_tbl2);
+\dRp+ testpub_foralltables_excepttable
+
+-- Clear the EXCEPT TABLE list, making the publication include all tables.
+ALTER PUBLICATION testpub_foralltables_excepttable SET ALL TABLES;
+\dRp+ testpub_foralltables_excepttable
+
+-- Create an empty publication for subsequent tests.
+CREATE PUBLICATION testpub_forall_tbls_seqs;
+
+-- Enable both puballtables and puballsequences
+ALTER PUBLICATION testpub_forall_tbls_seqs SET ALL TABLES, ALL SEQUENCES;
+\dRp+ testpub_forall_tbls_seqs
+
+-- Explicitly test that SET ALL TABLES resets puballsequences to false
+-- Result should be: puballtables = true, puballsequences = false
+ALTER PUBLICATION testpub_forall_tbls_seqs SET ALL TABLES;
+\dRp+ testpub_forall_tbls_seqs
+
+-- Explicitly test that SET ALL SEQUENCES resets puballtables to false
+-- Result should be: puballtables = false, puballsequences = true
+ALTER PUBLICATION testpub_forall_tbls_seqs SET ALL SEQUENCES;
+\dRp+ testpub_forall_tbls_seqs
+
+-- fail - SET ALL TABLES/SEQUENCES is not allowed for a 'FOR TABLE' publication
+ALTER PUBLICATION testpub_fortable SET ALL TABLES EXCEPT TABLE (testpub_tbl1);
+ALTER PUBLICATION testpub_fortable SET ALL TABLES;
+ALTER PUBLICATION testpub_fortable SET ALL SEQUENCES;
+
+-- fail - SET ALL TABLES/SEQUENCES is not allowed for a schema publication
+ALTER PUBLICATION testpub_forschema SET ALL TABLES EXCEPT TABLE (pub_test.testpub_nopk);
+ALTER PUBLICATION testpub_forschema SET ALL TABLES;
+ALTER PUBLICATION testpub_forschema SET ALL SEQUENCES;
+
 RESET client_min_messages;
 DROP TABLE testpub_tbl2;
-DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema, testpub_foralltables_excepttable, testpub_foralltables_excepttable1;
+DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema;
+DROP PUBLICATION testpub_forall_tbls_seqs, testpub_foralltables_excepttable, testpub_foralltables_excepttable1;
 
 ---------------------------------------------
 -- Tests for inherited tables, and
@@ -991,7 +1031,18 @@ ALTER PUBLICATION testpub4 owner to regress_publication_user2; -- fail
 ALTER PUBLICATION testpub4 owner to regress_publication_user; -- ok
 
 SET ROLE regress_publication_user;
-DROP PUBLICATION testpub4;
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub5 FOR ALL TABLES;
+RESET client_min_messages;
+ALTER PUBLICATION testpub5 OWNER TO regress_publication_user3;
+SET ROLE regress_publication_user3;
+-- fail - SET ALL TABLES/SEQUENCES on a publication requires superuser privileges
+ALTER PUBLICATION testpub5 SET ALL TABLES EXCEPT TABLE (testpub_tbl1); -- fail
+ALTER PUBLICATION testpub5 SET ALL TABLES; -- fail
+ALTER PUBLICATION testpub5 SET ALL SEQUENCES; -- fail
+
+SET ROLE regress_publication_user;
+DROP PUBLICATION testpub4, testpub5;
 DROP ROLE regress_publication_user3;
 
 REVOKE CREATE ON DATABASE regression FROM regress_publication_user2;

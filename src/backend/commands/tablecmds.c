@@ -20614,7 +20614,8 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 							  list_length(exceptpuboids),
 							  RelationGetRelationName(attachrel),
 							  pubnames.data),
-				errdetail("The publication EXCEPT clause cannot contain tables that are partitions."));
+				errdetail("The publication EXCEPT clause cannot contain tables that are partitions."),
+				errhint("Change the publication's EXCEPT clause using ALTER PUBLICATION ... SET ALL TABLES."));
 	}
 
 	list_free(exceptpuboids);

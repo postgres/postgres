@@ -152,18 +152,50 @@ $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM child1");
 is($result, qq(10), 'check replicated inserts on subscriber');
 
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab2 AS SELECT generate_series(1,10) AS a");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE tab2 (a int)");
+
+# Replace the EXCEPT TABLE list so that only tab2 is excluded.
+$node_publisher->safe_psql('postgres',
+	"ALTER PUBLICATION tab_pub SET ALL TABLES EXCEPT TABLE (tab2)");
+
+# Refresh the subscription so the subscriber picks up the updated
+# publication definition and initiates table synchronization.
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tab_sub REFRESH PUBLICATION");
+
+# Wait for initial table sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tab_sub');
+
+# Verify that initial table synchronization does not occur for tables
+# listed in the EXCEPT TABLE clause.
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab2");
+is($result, qq(0),
+	'check there is no initial data copied for the tables specified in the EXCEPT TABLE clause'
+);
+
+# Verify that table synchronization now happens for tab1. Table tab1 is
+# included now since the EXCEPT TABLE list is only (tab2).
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab1");
+is($result, qq(20),
+	'check that the data is copied as the tab1 is removed from EXCEPT TABLE clause'
+);
+
 # cleanup
 $node_subscriber->safe_psql(
 	'postgres', qq(
 	DROP SUBSCRIPTION tab_sub;
 	TRUNCATE TABLE tab1;
-	DROP TABLE parent, parent1, child, child1;
+	DROP TABLE parent, parent1, child, child1, tab2;
 ));
 $node_publisher->safe_psql(
 	'postgres', qq(
 	DROP PUBLICATION tab_pub;
 	TRUNCATE TABLE tab1;
-    DROP TABLE parent, parent1, child, child1;
+    DROP TABLE parent, parent1, child, child1, tab2;
 ));
 
 # ============================================

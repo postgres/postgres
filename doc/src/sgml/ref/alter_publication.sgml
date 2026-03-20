@@ -22,8 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> ADD <replaceable class="parameter">publication_object</replaceable> [, ...]
-ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET <replaceable class="parameter">publication_object</replaceable> [, ...]
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> DROP <replaceable class="parameter">publication_drop_object</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET { <replaceable class="parameter">publication_object</replaceable> [, ...] | <replaceable class="parameter">publication_all_object</replaceable> [, ... ] }
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
@@ -33,6 +33,11 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
     TABLE <replaceable class="parameter">table_and_columns</replaceable> [, ... ]
     TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 
+<phrase>and <replaceable class="parameter">publication_all_object</replaceable> is one of:</phrase>
+
+    ALL TABLES [ EXCEPT TABLE ( <replaceable class="parameter">except_table_object</replaceable> [, ... ] ) ]
+    ALL SEQUENCES
+
 <phrase>and <replaceable class="parameter">publication_drop_object</replaceable> is one of:</phrase>
 
     TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ... ]
@@ -41,6 +46,10 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
     [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ]
+
+<phrase>and <replaceable class="parameter">except_table_object</replaceable> is:</phrase>
+
+    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -53,18 +62,46 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   </para>
 
   <para>
-   The first three variants change which tables/schemas are part of the
-   publication.  The <literal>SET</literal> clause will replace the list of
-   tables/schemas in the publication with the specified list; the existing
-   tables/schemas that were present in the publication will be removed.  The
-   <literal>ADD</literal> and <literal>DROP</literal> clauses will add and
-   remove one or more tables/schemas from the publication.  Note that adding
-   tables/schemas to a publication that is already subscribed to will require an
+   The first two variants modify which tables/schemas are part of the
+   publication. The <literal>ADD</literal> and <literal>DROP</literal> clauses
+   will add and remove one or more tables/schemas from the publication.
+  </para>
+
+  <para>
+   The third variant either modifies the included tables/schemas
+   or marks the publication as <literal>FOR ALL SEQUENCES</literal> or
+   <literal>FOR ALL TABLES</literal>, optionally using
+   <literal>EXCEPT TABLE</literal> to exclude specific tables. The
+   <literal>SET ALL TABLES</literal> clause can transform an empty publication,
+   or one defined for <literal>ALL SEQUENCES</literal> (or both
+   <literal>ALL TABLES</literal> and <literal>ALL SEQUENCES</literal>), into
+   a publication defined for ALL TABLES. Likewise,
+   <literal>SET ALL SEQUENCES</literal> can convert an empty publication, or
+   one defined for <literal>ALL TABLES</literal> (or both
+   <literal>ALL TABLES</literal> and <literal>ALL SEQUENCES</literal>), into a
+   publication defined for <literal>ALL SEQUENCES</literal>. In addition,
+   <literal>SET ALL TABLES</literal> can be used to update the
+   <literal>EXCEPT TABLE</literal> list of a <literal>FOR ALL TABLES</literal>
+   publication. If <literal>EXCEPT TABLE</literal> is specified with a list of
+   tables, the existing exclusion list is replaced with the specified tables.
+   If <literal>EXCEPT TABLE</literal> is omitted, the existing exclusion list
+   is cleared. The <literal>SET</literal> clause, when used with a publication
+   defined with <literal>FOR TABLE</literal> or
+   <literal>FOR TABLES IN SCHEMA</literal>, replaces the list of tables/schemas
+   in the publication with the specified list; the existing tables or schemas
+   that were present in the publication will be removed.
+  </para>
+
+  <para>
+   Note that adding tables/except tables/schemas to a publication that is
+   already subscribed to will require an
    <link linkend="sql-altersubscription-params-refresh-publication">
-   <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal></link> action on the
-   subscribing side in order to become effective. Note also that
-   <literal>DROP TABLES IN SCHEMA</literal> will not drop any schema tables
-   that were specified using
+   <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal></link> action
+   on the subscribing side in order to become effective. Likewise altering a
+   publication to set <literal>ALL TABLES</literal> or to set or unset
+   <literal>ALL SEQUENCES</literal> also requires the subscriber to refresh the
+   publication. Note also that <literal>DROP TABLES IN SCHEMA</literal> will
+   not drop any schema tables that were specified using
    <link linkend="sql-createpublication-params-for-table"><literal>FOR TABLE</literal></link>/
    <literal>ADD TABLE</literal>.
   </para>
@@ -83,8 +120,9 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   <para>
    You must own the publication to use <command>ALTER PUBLICATION</command>.
    Adding a table to a publication additionally requires owning that table.
-   The <literal>ADD TABLES IN SCHEMA</literal> and
-   <literal>SET TABLES IN SCHEMA</literal> to a publication requires the
+   The <literal>ADD TABLES IN SCHEMA</literal>,
+   <literal>SET TABLES IN SCHEMA</literal>, <literal>SET ALL TABLES</literal>,
+   and <literal>SET ALL SEQUENCES</literal> to a publication requires the
    invoking user to be a superuser.
    To alter the owner, you must be able to <literal>SET ROLE</literal> to the
    new owning role, and that role must have <literal>CREATE</literal>
@@ -222,6 +260,19 @@ ALTER PUBLICATION mypublication ADD TABLE users (user_id, firstname), department
    Change the set of columns published for a table:
 <programlisting>
 ALTER PUBLICATION mypublication SET TABLE users (user_id, firstname, lastname), TABLE departments;
+</programlisting></para>
+
+  <para>
+   Replace the publication's EXCEPT TABLE list:
+<programlisting>
+ALTER PUBLICATION mypublication SET ALL TABLES EXCEPT TABLE (users, departments);
+</programlisting></para>
+
+  <para>
+   Reset the publication to be a FOR ALL TABLES publication with no excluded
+   tables:
+<programlisting>
+ALTER PUBLICATION mypublication SET ALL TABLES;
 </programlisting></para>
 
   <para>

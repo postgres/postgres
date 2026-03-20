@@ -4525,6 +4525,8 @@ typedef struct AlterPublicationStmt
 	List	   *pubobjects;		/* Optional list of publication objects */
 	AlterPublicationAction action;	/* What action to perform with the given
 									 * objects */
+	bool		for_all_tables; /* True if ALL TABLES is specified */
+	bool		for_all_sequences;	/* True if ALL SEQUENCES is specified */
 } AlterPublicationStmt;
 
 typedef struct CreateSubscriptionStmt
