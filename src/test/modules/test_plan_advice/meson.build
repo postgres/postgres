@@ -25,5 +25,6 @@ tests += {
     'tests': [
       't/001_replan_regress.pl',
     ],
+    'test_kwargs': {'priority': 50}
   },
 }
