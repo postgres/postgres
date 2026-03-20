@@ -1,6 +1,6 @@
 # Copyright (c) 2022-2026, PostgreSQL Global Development Group
 
-UNICODE_VERSION = '16.0.0'
+UNICODE_VERSION = '17.0.0'
 CLDR_VERSION = '47'
 
 unicode_data = {}
