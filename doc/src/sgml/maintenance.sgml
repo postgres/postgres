@@ -674,6 +674,7 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 
 <programlisting>
 WARNING:  database "mydb" must be vacuumed within 39985967 transactions
+DETAIL:  Approximately 1.86% of transaction IDs are available for use.
 HINT:  To avoid XID assignment failures, execute a database-wide VACUUM in that database.
 </programlisting>
 

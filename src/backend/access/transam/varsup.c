@@ -175,6 +175,8 @@ GetNewTransactionId(bool isSubXact)
 						(errmsg("database \"%s\" must be vacuumed within %u transactions",
 								oldest_datname,
 								xidWrapLimit - xid),
+						 errdetail("Approximately %.2f%% of transaction IDs are available for use.",
+								   (double) (xidWrapLimit - xid) / (MaxTransactionId / 2) * 100),
 						 errhint("To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 			else
@@ -182,6 +184,8 @@ GetNewTransactionId(bool isSubXact)
 						(errmsg("database with OID %u must be vacuumed within %u transactions",
 								oldest_datoid,
 								xidWrapLimit - xid),
+						 errdetail("Approximately %.2f%% of transaction IDs are available for use.",
+								   (double) (xidWrapLimit - xid) / (MaxTransactionId / 2) * 100),
 						 errhint("To avoid XID assignment failures, execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 		}
@@ -490,6 +494,8 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 					(errmsg("database \"%s\" must be vacuumed within %u transactions",
 							oldest_datname,
 							xidWrapLimit - curXid),
+					 errdetail("Approximately %.2f%% of transaction IDs are available for use.",
+							   (double) (xidWrapLimit - curXid) / (MaxTransactionId / 2) * 100),
 					 errhint("To avoid XID assignment failures, execute a database-wide VACUUM in that database.\n"
 							 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 		else
@@ -497,6 +503,8 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 					(errmsg("database with OID %u must be vacuumed within %u transactions",
 							oldest_datoid,
 							xidWrapLimit - curXid),
+					 errdetail("Approximately %.2f%% of transaction IDs are available for use.",
+							   (double) (xidWrapLimit - curXid) / (MaxTransactionId / 2) * 100),
 					 errhint("To avoid XID assignment failures, execute a database-wide VACUUM in that database.\n"
 							 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 	}
