@@ -185,6 +185,15 @@ DROP SUBSCRIPTION regress_testsub6;
 SET SESSION AUTHORIZATION regress_subscription_user;
 REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
 DROP SERVER test_server;
+-- fail, FDW is dependent
+DROP FUNCTION test_fdw_connection(oid, oid, internal);
+ERROR:  cannot drop function test_fdw_connection(oid,oid,internal) because other objects depend on it
+DETAIL:  foreign-data wrapper test_fdw depends on function test_fdw_connection(oid,oid,internal)
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- warn
+ALTER FOREIGN DATA WRAPPER test_fdw NO CONNECTION;
+WARNING:  removing the foreign-data wrapper connection function will cause dependent subscriptions to fail
+DROP FUNCTION test_fdw_connection(oid, oid, internal);
 DROP FOREIGN DATA WRAPPER test_fdw;
 -- fail - invalid connection string during ALTER
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';

@@ -138,6 +138,14 @@ SET SESSION AUTHORIZATION regress_subscription_user;
 REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
 
 DROP SERVER test_server;
+
+-- fail, FDW is dependent
+DROP FUNCTION test_fdw_connection(oid, oid, internal);
+-- warn
+ALTER FOREIGN DATA WRAPPER test_fdw NO CONNECTION;
+
+DROP FUNCTION test_fdw_connection(oid, oid, internal);
+
 DROP FOREIGN DATA WRAPPER test_fdw;
 
 -- fail - invalid connection string during ALTER
