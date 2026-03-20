@@ -670,11 +670,11 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
    <para>
     If for some reason autovacuum fails to clear old XIDs from a table, the
     system will begin to emit warning messages like this when the database's
-    oldest XIDs reach forty million transactions from the wraparound point:
+    oldest XIDs reach one hundred million transactions from the wraparound point:
 
 <programlisting>
-WARNING:  database "mydb" must be vacuumed within 39985967 transactions
-DETAIL:  Approximately 1.86% of transaction IDs are available for use.
+WARNING:  database "mydb" must be vacuumed within 99985967 transactions
+DETAIL:  Approximately 4.66% of transaction IDs are available for use.
 HINT:  To avoid XID assignment failures, execute a database-wide VACUUM in that database.
 </programlisting>
 
@@ -853,7 +853,7 @@ HINT:  Execute a database-wide VACUUM in that database.
 
     <para>
      Similar to the XID case, if autovacuum fails to clear old MXIDs from a table, the
-     system will begin to emit warning messages when the database's oldest MXIDs reach forty
+     system will begin to emit warning messages when the database's oldest MXIDs reach one hundred
      million transactions from the wraparound point.  And, just as in the XID case, if these
      warnings are ignored, the system will refuse to generate new MXIDs once there are fewer
      than three million left until wraparound.

@@ -2102,16 +2102,16 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 		multiStopLimit -= FirstMultiXactId;
 
 	/*
-	 * We'll start complaining loudly when we get within 40M multis of data
+	 * We'll start complaining loudly when we get within 100M multis of data
 	 * loss.  This is kind of arbitrary, but if you let your gas gauge get
-	 * down to 2% of full, would you be looking for the next gas station?  We
+	 * down to 5% of full, would you be looking for the next gas station?  We
 	 * need to be fairly liberal about this number because there are lots of
 	 * scenarios where most transactions are done by automatic clients that
 	 * won't pay attention to warnings.  (No, we're not gonna make this
 	 * configurable.  If you know enough to configure it, you know enough to
 	 * not get in this kind of trouble in the first place.)
 	 */
-	multiWarnLimit = multiWrapLimit - 40000000;
+	multiWarnLimit = multiWrapLimit - 100000000;
 	if (multiWarnLimit < FirstMultiXactId)
 		multiWarnLimit -= FirstMultiXactId;
 
