@@ -744,9 +744,7 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 bool
 ChangeVarNodesWalkExpression(Node *node, ChangeVarNodes_context *context)
 {
-	return expression_tree_walker(node,
-								  ChangeVarNodes_walker,
-								  (void *) context);
+	return ChangeVarNodes_walker(node, context);
 }
 
 /*

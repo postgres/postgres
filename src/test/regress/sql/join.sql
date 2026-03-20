@@ -3156,6 +3156,12 @@ SELECT * FROM
 (SELECT n2.a FROM sj n1, sj n2 WHERE n1.a <> n2.a) q0, sl
 WHERE q0.a = 1;
 
+-- Do not forget to replace relid in bare Var join clause (bug #19435)
+ALTER TABLE sl ADD COLUMN bool_col boolean;
+EXPLAIN (COSTS OFF)
+SELECT 1 AS c1 FROM sl sl1 LEFT JOIN (sl AS sl2 NATURAL JOIN sl AS sl3)
+  ON sl2.bool_col LEFT JOIN sl AS sl4 ON sl2.bool_col;
+
 -- Check optimization disabling if it will violate special join conditions.
 -- Two identical joined relations satisfies self join removal conditions but
 -- stay in different special join infos.
