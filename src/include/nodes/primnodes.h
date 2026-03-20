@@ -1124,6 +1124,7 @@ typedef struct SubPlan
 	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
 	/* Estimated execution costs: */
+	int			disabled_nodes; /* count of disabled nodes in the plan */
 	Cost		startup_cost;	/* one-time setup cost */
 	Cost		per_call_cost;	/* cost for each subplan evaluation */
 } SubPlan;

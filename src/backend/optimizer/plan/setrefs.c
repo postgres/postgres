@@ -2234,9 +2234,12 @@ fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
 
 	/*
 	 * Compute the estimated cost of each subplan assuming num_exec
-	 * executions, and keep the cheapest one.  In event of exact equality of
-	 * estimates, we prefer the later plan; this is a bit arbitrary, but in
-	 * current usage it biases us to break ties against fast-start subplans.
+	 * executions, and keep the cheapest one.  If one subplan has more
+	 * disabled nodes than another, choose the one with fewer disabled nodes
+	 * regardless of cost; this parallels compare_path_costs.  In event of
+	 * exact equality of estimates, we prefer the later plan; this is a bit
+	 * arbitrary, but in current usage it biases us to break ties against
+	 * fast-start subplans.
 	 */
 	Assert(asplan->subplans != NIL);
 
@@ -2246,7 +2249,10 @@ fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
 		Cost		curcost;
 
 		curcost = curplan->startup_cost + num_exec * curplan->per_call_cost;
-		if (bestplan == NULL || curcost <= bestcost)
+		if (bestplan == NULL ||
+			curplan->disabled_nodes < bestplan->disabled_nodes ||
+			(curplan->disabled_nodes == bestplan->disabled_nodes &&
+			 curcost <= bestcost))
 		{
 			bestplan = curplan;
 			bestcost = curcost;
