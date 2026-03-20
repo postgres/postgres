@@ -360,4 +360,19 @@ EXECUTE graph_rls_query; -- error
 -- Clean up
 DEALLOCATE graph_rls_query;
 
--- leave objects behind for pg_upgrade/pg_dump tests
+-- leave as many objects behind for pg_upgrade/pg_dump tests as possible. The
+-- pg_dump test only dumps the regression database, not the global objects like
+-- users and roles. Reassign ownership of all objects to superuser and drop
+-- users and roles created in this test. Policies can not be reassigned, so drop
+-- them explicitly.
+RESET SESSION AUTHORIZATION;
+REASSIGN OWNED BY regress_graph_rls_alice TO current_user;
+DROP USER regress_graph_rls_alice;
+DROP USER regress_graph_rls_bob;
+DROP USER regress_graph_rls_carol;
+DROP USER regress_graph_rls_dave;
+DROP USER regress_graph_rls_exempt_user;
+DROP POLICY p3 ON document_people;
+DROP POLICY p4 ON document_people;
+DROP ROLE regress_graph_rls_group1;
+DROP ROLE regress_graph_rls_group2;
