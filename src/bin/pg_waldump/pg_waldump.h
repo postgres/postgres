@@ -35,6 +35,7 @@ typedef struct XLogDumpPrivate
 	char	   *archive_dir;
 	char	   *archive_name;	/* Tar archive filename */
 	int			archive_fd;		/* File descriptor for the open tar file */
+	bool		archive_fd_eof; /* Have we reached EOF on archive_fd? */
 
 	astreamer  *archive_streamer;
 	char	   *archive_read_buf;	/* Reusable read buffer for archive I/O */
@@ -43,7 +44,14 @@ typedef struct XLogDumpPrivate
 	Size		archive_read_buf_size;
 #endif
 
-	/* What the archive streamer is currently reading */
+	/*
+	 * The buffer for the WAL file the archive streamer is currently reading,
+	 * or NULL if none.  It is quite risky to examine this anywhere except in
+	 * astreamer_waldump_content(), since it can change multiple times during
+	 * a single read_archive_file() call.  However, it is safe to assume that
+	 * if cur_file is different from a particular ArchivedWALFile of interest,
+	 * then the archive streamer has finished reading that file.
+	 */
 	struct ArchivedWALFile *cur_file;
 
 	/*
