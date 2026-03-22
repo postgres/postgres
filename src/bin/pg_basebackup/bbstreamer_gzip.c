@@ -323,10 +323,11 @@ bbstreamer_gzip_decompressor_finalize(bbstreamer *streamer)
 	 * End of the stream, if there is some pending data in output buffers then
 	 * we must forward it to next streamer.
 	 */
-	bbstreamer_content(mystreamer->base.bbs_next, NULL,
-					   mystreamer->base.bbs_buffer.data,
-					   mystreamer->base.bbs_buffer.maxlen,
-					   BBSTREAMER_UNKNOWN);
+	if (mystreamer->bytes_written > 0)
+		bbstreamer_content(mystreamer->base.bbs_next, NULL,
+						   mystreamer->base.bbs_buffer.data,
+						   mystreamer->bytes_written,
+						   BBSTREAMER_UNKNOWN);
 
 	bbstreamer_finalize(mystreamer->base.bbs_next);
 }
