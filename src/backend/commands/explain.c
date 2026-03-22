@@ -3880,7 +3880,7 @@ show_indexsearches_info(PlanState *planstate, ExplainState *es)
 			{
 				IndexScanState *indexstate = ((IndexScanState *) planstate);
 
-				nsearches = indexstate->iss_Instrument.nsearches;
+				nsearches = indexstate->iss_Instrument->nsearches;
 				SharedInfo = indexstate->iss_SharedInfo;
 				break;
 			}
@@ -3888,7 +3888,7 @@ show_indexsearches_info(PlanState *planstate, ExplainState *es)
 			{
 				IndexOnlyScanState *indexstate = ((IndexOnlyScanState *) planstate);
 
-				nsearches = indexstate->ioss_Instrument.nsearches;
+				nsearches = indexstate->ioss_Instrument->nsearches;
 				SharedInfo = indexstate->ioss_SharedInfo;
 				break;
 			}
@@ -3896,7 +3896,7 @@ show_indexsearches_info(PlanState *planstate, ExplainState *es)
 			{
 				BitmapIndexScanState *indexstate = ((BitmapIndexScanState *) planstate);
 
-				nsearches = indexstate->biss_Instrument.nsearches;
+				nsearches = indexstate->biss_Instrument->nsearches;
 				SharedInfo = indexstate->biss_SharedInfo;
 				break;
 			}

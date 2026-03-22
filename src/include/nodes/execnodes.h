@@ -1732,7 +1732,7 @@ typedef struct IndexScanState
 	ExprContext *iss_RuntimeContext;
 	Relation	iss_RelationDesc;
 	struct IndexScanDescData *iss_ScanDesc;
-	IndexScanInstrumentation iss_Instrument;
+	IndexScanInstrumentation *iss_Instrument;
 	SharedIndexScanInstrumentation *iss_SharedInfo;
 
 	/* These are needed for re-checking ORDER BY expr ordering */
@@ -1783,7 +1783,7 @@ typedef struct IndexOnlyScanState
 	ExprContext *ioss_RuntimeContext;
 	Relation	ioss_RelationDesc;
 	struct IndexScanDescData *ioss_ScanDesc;
-	IndexScanInstrumentation ioss_Instrument;
+	IndexScanInstrumentation *ioss_Instrument;
 	SharedIndexScanInstrumentation *ioss_SharedInfo;
 	TupleTableSlot *ioss_TableSlot;
 	Buffer		ioss_VMBuffer;
@@ -1824,7 +1824,7 @@ typedef struct BitmapIndexScanState
 	ExprContext *biss_RuntimeContext;
 	Relation	biss_RelationDesc;
 	struct IndexScanDescData *biss_ScanDesc;
-	IndexScanInstrumentation biss_Instrument;
+	IndexScanInstrumentation *biss_Instrument;
 	SharedIndexScanInstrumentation *biss_SharedInfo;
 } BitmapIndexScanState;
 
