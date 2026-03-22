@@ -263,6 +263,12 @@ typedef struct PruneFreezeParams
 	Buffer		buffer;			/* buffer to be pruned */
 
 	/*
+	 * Callers should provide a pinned vmbuffer corresponding to the heap
+	 * block in buffer. We will check for and repair any corruption in the VM.
+	 */
+	Buffer		vmbuffer;
+
+	/*
 	 * The reason pruning was performed.  It is used to set the WAL record
 	 * opcode which is used for debugging and analysis purposes.
 	 */
@@ -323,6 +329,12 @@ typedef struct PruneFreezeResult
 	bool		set_all_visible;
 	bool		set_all_frozen;
 	TransactionId vm_conflict_horizon;
+
+	/*
+	 * The value of the vmbuffer's vmbits at the beginning of pruning. It is
+	 * cleared if VM corruption is found and corrected.
+	 */
+	uint8		old_vmbits;
 
 	/*
 	 * Whether or not the page makes rel truncation unsafe.  This is set to

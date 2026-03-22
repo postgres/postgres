@@ -3277,6 +3277,7 @@ UserAuth
 UserContext
 UserMapping
 UserOpts
+VMCorruptionType
 VacAttrStats
 VacAttrStatsP
 VacDeadItemsInfo

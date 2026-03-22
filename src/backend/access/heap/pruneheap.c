@@ -19,7 +19,7 @@
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/transam.h"
-#include "access/visibilitymapdefs.h"
+#include "access/visibilitymap.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "commands/vacuum.h"
@@ -115,6 +115,21 @@ typedef struct
 	HeapPageFreeze pagefrz;
 
 	/*-------------------------------------------------------
+	 * Working state for visibility map processing
+	 *-------------------------------------------------------
+	 */
+
+	/*
+	 * Caller must provide a pinned vmbuffer corresponding to the heap block
+	 * passed to heap_page_prune_and_freeze(). We will fix any corruption
+	 * found in the VM.
+	 */
+	Buffer		vmbuffer;
+
+	/* Bits in the vmbuffer for this heap page */
+	uint8		old_vmbits;
+
+	/*-------------------------------------------------------
 	 * Information about what was done
 	 *
 	 * These fields are not used by pruning itself for the most part, but are
@@ -162,12 +177,31 @@ typedef struct
 	TransactionId visibility_cutoff_xid;
 } PruneState;
 
+/*
+ * Type of visibility map corruption detected on a heap page and its
+ * associated VM page. Passed to heap_page_fix_vm_corruption() so the caller
+ * can specify what it found rather than having the function rederive the
+ * corruption from page state.
+ */
+typedef enum VMCorruptionType
+{
+	/* VM bits are set but the heap page-level PD_ALL_VISIBLE flag is not */
+	VM_CORRUPT_MISSING_PAGE_HINT,
+	/* LP_DEAD line pointers found on a page marked all-visible */
+	VM_CORRUPT_LPDEAD,
+	/* Tuple not visible to all transactions on a page marked all-visible */
+	VM_CORRUPT_TUPLE_VISIBILITY,
+} VMCorruptionType;
+
 /* Local functions */
 static void prune_freeze_setup(PruneFreezeParams *params,
 							   TransactionId *new_relfrozen_xid,
 							   MultiXactId *new_relmin_mxid,
 							   PruneFreezeResult *presult,
 							   PruneState *prstate);
+static void heap_page_fix_vm_corruption(PruneState *prstate,
+										OffsetNumber offnum,
+										VMCorruptionType ctype);
 static void prune_freeze_plan(PruneState *prstate,
 							  OffsetNumber *off_loc);
 static HTSV_Result heap_prune_satisfies_vacuum(PruneState *prstate,
@@ -175,7 +209,8 @@ static HTSV_Result heap_prune_satisfies_vacuum(PruneState *prstate,
 static inline HTSV_Result htsv_get_valid_status(int status);
 static void heap_prune_chain(OffsetNumber maxoff,
 							 OffsetNumber rootoffnum, PruneState *prstate);
-static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid);
+static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid,
+									   OffsetNumber offnum);
 static void heap_prune_record_redirect(PruneState *prstate,
 									   OffsetNumber offnum, OffsetNumber rdoffnum,
 									   bool was_normal);
@@ -209,8 +244,9 @@ static bool heap_page_will_freeze(bool did_tuple_hint_fpi, bool do_prune, bool d
  * Caller must have pin on the buffer, and must *not* have a lock on it.
  *
  * This function may pin *vmbuffer. It's passed by reference so the caller can
- * reuse the pin across calls, avoiding repeated pin/unpin cycles. Caller is
- * responsible for unpinning it.
+ * reuse the pin across calls, avoiding repeated pin/unpin cycles. If we find
+ * VM corruption during pruning, we will fix it. Caller is responsible for
+ * unpinning *vmbuffer.
  */
 void
 heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
@@ -277,6 +313,17 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
 		{
 			OffsetNumber dummy_off_loc;
 			PruneFreezeResult presult;
+			PruneFreezeParams params;
+
+			visibilitymap_pin(relation, BufferGetBlockNumber(buffer),
+							  vmbuffer);
+
+			params.relation = relation;
+			params.buffer = buffer;
+			params.vmbuffer = *vmbuffer;
+			params.reason = PRUNE_ON_ACCESS;
+			params.vistest = vistest;
+			params.cutoffs = NULL;
 
 			/*
 			 * We don't pass the HEAP_PAGE_PRUNE_MARK_UNUSED_NOW option
@@ -284,14 +331,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
 			 * cannot safely determine that during on-access pruning with the
 			 * current implementation.
 			 */
-			PruneFreezeParams params = {
-				.relation = relation,
-				.buffer = buffer,
-				.reason = PRUNE_ON_ACCESS,
-				.options = 0,
-				.vistest = vistest,
-				.cutoffs = NULL,
-			};
+			params.options = 0;
 
 			heap_page_prune_and_freeze(&params, &presult, &dummy_off_loc,
 									   NULL, NULL);
@@ -353,6 +393,12 @@ prune_freeze_setup(PruneFreezeParams *params,
 	prstate->block = BufferGetBlockNumber(params->buffer);
 	prstate->buffer = params->buffer;
 	prstate->page = BufferGetPage(params->buffer);
+
+	Assert(BufferIsValid(params->vmbuffer));
+	prstate->vmbuffer = params->vmbuffer;
+	prstate->old_vmbits = visibilitymap_get_status(prstate->relation,
+												   prstate->block,
+												   &prstate->vmbuffer);
 
 	/*
 	 * Our strategy is to scan the page and make lists of items to change,
@@ -770,6 +816,108 @@ heap_page_will_freeze(bool did_tuple_hint_fpi,
 	return do_freeze;
 }
 
+/*
+ * Emit a warning about and fix visibility map corruption on the given page.
+ *
+ * The caller specifies the type of corruption it has already detected via
+ * corruption_type, so that we can emit the appropriate warning. All cases
+ * result in the VM bits being cleared; corruption types where PD_ALL_VISIBLE
+ * is incorrectly set also clear PD_ALL_VISIBLE.
+ *
+ * Must be called while holding an exclusive lock on the heap buffer. Dead
+ * items and not all-visible tuples must have been discovered under that same
+ * lock. Although we do not hold a lock on the VM buffer, it is pinned, and
+ * the heap buffer is exclusively locked, ensuring that no other backend can
+ * update the VM bits corresponding to this heap page.
+ *
+ * This function makes changes to the VM and, potentially, the heap page, but
+ * it does not need to be done in a critical section.
+ */
+static void
+heap_page_fix_vm_corruption(PruneState *prstate, OffsetNumber offnum,
+							VMCorruptionType corruption_type)
+{
+	const char *relname = RelationGetRelationName(prstate->relation);
+	bool		do_clear_vm = false;
+	bool		do_clear_heap = false;
+
+	Assert(BufferIsLockedByMeInMode(prstate->buffer, BUFFER_LOCK_EXCLUSIVE));
+
+	switch (corruption_type)
+	{
+		case VM_CORRUPT_LPDEAD:
+			ereport(WARNING,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("dead line pointer found on page marked all-visible"),
+					 errcontext("relation \"%s\", page %u, tuple %u",
+								relname, prstate->block, offnum)));
+			do_clear_vm = true;
+			do_clear_heap = true;
+			break;
+
+		case VM_CORRUPT_TUPLE_VISIBILITY:
+
+			/*
+			 * A HEAPTUPLE_LIVE tuple on an all-visible page can appear to not
+			 * be visible to everyone when
+			 * GetOldestNonRemovableTransactionId() returns a conservative
+			 * value that's older than the real safe xmin. That is not
+			 * corruption -- the PD_ALL_VISIBLE flag is still correct.
+			 *
+			 * However, dead tuple versions, in-progress inserts, and
+			 * in-progress deletes should never appear on a page marked
+			 * all-visible. That indicates real corruption. PD_ALL_VISIBLE
+			 * should have been cleared by the DML operation that deleted or
+			 * inserted the tuple.
+			 */
+			ereport(WARNING,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("tuple not visible to all transactions found on page marked all-visible"),
+					 errcontext("relation \"%s\", page %u, tuple %u",
+								relname, prstate->block, offnum)));
+			do_clear_vm = true;
+			do_clear_heap = true;
+			break;
+
+		case VM_CORRUPT_MISSING_PAGE_HINT:
+
+			/*
+			 * As of PostgreSQL 9.2, the visibility map bit should never be
+			 * set if the page-level bit is clear. However, for vacuum, it's
+			 * possible that the bit got cleared after
+			 * heap_vac_scan_next_block() was called, so we must recheck now
+			 * that we have the buffer lock before concluding that the VM is
+			 * corrupt.
+			 */
+			Assert(!PageIsAllVisible(prstate->page));
+			Assert(prstate->old_vmbits & VISIBILITYMAP_VALID_BITS);
+			ereport(WARNING,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("page is not marked all-visible but visibility map bit is set"),
+					 errcontext("relation \"%s\", page %u",
+								relname, prstate->block)));
+			do_clear_vm = true;
+			break;
+	}
+
+	Assert(do_clear_heap || do_clear_vm);
+
+	/* Avoid marking the buffer dirty if PD_ALL_VISIBLE is already clear */
+	if (do_clear_heap)
+	{
+		Assert(PageIsAllVisible(prstate->page));
+		PageClearAllVisible(prstate->page);
+		MarkBufferDirtyHint(prstate->buffer, true);
+	}
+
+	if (do_clear_vm)
+	{
+		visibilitymap_clear(prstate->relation, prstate->block,
+							prstate->vmbuffer,
+							VISIBILITYMAP_VALID_BITS);
+		prstate->old_vmbits = 0;
+	}
+}
 
 /*
  * Prune and repair fragmentation and potentially freeze tuples on the
@@ -829,6 +977,16 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	prune_freeze_setup(params,
 					   new_relfrozen_xid, new_relmin_mxid,
 					   presult, &prstate);
+
+	/*
+	 * If the VM is set but PD_ALL_VISIBLE is clear, fix that corruption
+	 * before pruning and freezing so that the page and VM start out in a
+	 * consistent state.
+	 */
+	if ((prstate.old_vmbits & VISIBILITYMAP_VALID_BITS) &&
+		!PageIsAllVisible(prstate.page))
+		heap_page_fix_vm_corruption(&prstate, InvalidOffsetNumber,
+									VM_CORRUPT_MISSING_PAGE_HINT);
 
 	/*
 	 * Examine all line pointers and tuple visibility information to determine
@@ -973,6 +1131,7 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	presult->set_all_visible = prstate.set_all_visible;
 	presult->set_all_frozen = prstate.set_all_frozen;
 	presult->hastup = prstate.hastup;
+	presult->old_vmbits = prstate.old_vmbits;
 
 	/*
 	 * For callers planning to update the visibility map, the conflict horizon
@@ -1295,7 +1454,8 @@ process_chain:
 
 /* Record lowest soon-prunable XID */
 static void
-heap_prune_record_prunable(PruneState *prstate, TransactionId xid)
+heap_prune_record_prunable(PruneState *prstate, TransactionId xid,
+						   OffsetNumber offnum)
 {
 	/*
 	 * This should exactly match the PageSetPrunable macro.  We can't store
@@ -1305,6 +1465,14 @@ heap_prune_record_prunable(PruneState *prstate, TransactionId xid)
 	if (!TransactionIdIsValid(prstate->new_prune_xid) ||
 		TransactionIdPrecedes(xid, prstate->new_prune_xid))
 		prstate->new_prune_xid = xid;
+
+	/*
+	 * It's incorrect for a page to be marked all-visible if it contains
+	 * prunable items.
+	 */
+	if (PageIsAllVisible(prstate->page))
+		heap_page_fix_vm_corruption(prstate, offnum,
+									VM_CORRUPT_TUPLE_VISIBILITY);
 }
 
 /* Record line pointer to be redirected */
@@ -1388,6 +1556,15 @@ heap_prune_record_dead_or_unused(PruneState *prstate, OffsetNumber offnum,
 		heap_prune_record_unused(prstate, offnum, was_normal);
 	else
 		heap_prune_record_dead(prstate, offnum, was_normal);
+
+	/*
+	 * It's incorrect for the page to be set all-visible if it contains dead
+	 * items. Fix that on the heap page and check the VM for corruption as
+	 * well. Do that here rather than in heap_prune_record_dead() so we also
+	 * cover tuples that are directly marked LP_UNUSED via mark_unused_now.
+	 */
+	if (PageIsAllVisible(prstate->page))
+		heap_page_fix_vm_corruption(prstate, offnum, VM_CORRUPT_LPDEAD);
 }
 
 /* Record line pointer to be marked unused */
@@ -1527,7 +1704,8 @@ heap_prune_record_unchanged_lp_normal(PruneState *prstate, OffsetNumber offnum)
 			 * that the page is reconsidered for pruning in future.
 			 */
 			heap_prune_record_prunable(prstate,
-									   HeapTupleHeaderGetUpdateXid(htup));
+									   HeapTupleHeaderGetUpdateXid(htup),
+									   offnum);
 			break;
 
 		case HEAPTUPLE_INSERT_IN_PROGRESS:
@@ -1541,6 +1719,11 @@ heap_prune_record_unchanged_lp_normal(PruneState *prstate, OffsetNumber offnum)
 			 */
 			prstate->set_all_visible = false;
 			prstate->set_all_frozen = false;
+
+			/* The page should not be marked all-visible */
+			if (PageIsAllVisible(page))
+				heap_page_fix_vm_corruption(prstate, offnum,
+											VM_CORRUPT_TUPLE_VISIBILITY);
 
 			/*
 			 * If we wanted to optimize for aborts, we might consider marking
@@ -1566,7 +1749,8 @@ heap_prune_record_unchanged_lp_normal(PruneState *prstate, OffsetNumber offnum)
 			 * the page is reconsidered for pruning in future.
 			 */
 			heap_prune_record_prunable(prstate,
-									   HeapTupleHeaderGetUpdateXid(htup));
+									   HeapTupleHeaderGetUpdateXid(htup),
+									   offnum);
 			break;
 
 		default:
@@ -1632,6 +1816,13 @@ heap_prune_record_unchanged_lp_dead(PruneState *prstate, OffsetNumber offnum)
 
 	/* Record the dead offset for vacuum */
 	prstate->deadoffsets[prstate->lpdead_items++] = offnum;
+
+	/*
+	 * It's incorrect for a page to be marked all-visible if it contains dead
+	 * items.
+	 */
+	if (PageIsAllVisible(prstate->page))
+		heap_page_fix_vm_corruption(prstate, offnum, VM_CORRUPT_LPDEAD);
 }
 
 /*
