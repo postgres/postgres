@@ -630,6 +630,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	uint32		lowmask;
 	bool		metap_update_masks = false;
 	bool		metap_update_splitpoint = false;
+	XLogRecPtr	recptr;
 
 restart_expand:
 
@@ -900,7 +901,6 @@ restart_expand:
 	if (RelationNeedsWAL(rel))
 	{
 		xl_hash_split_allocate_page xlrec;
-		XLogRecPtr	recptr;
 
 		xlrec.new_bucket = maxbucket;
 		xlrec.old_bucket_flag = oopaque->hasho_flag;
@@ -933,11 +933,13 @@ restart_expand:
 		XLogRegisterData(&xlrec, SizeOfHashSplitAllocPage);
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_ALLOCATE_PAGE);
-
-		PageSetLSN(BufferGetPage(buf_oblkno), recptr);
-		PageSetLSN(BufferGetPage(buf_nblkno), recptr);
-		PageSetLSN(BufferGetPage(metabuf), recptr);
 	}
+	else
+		recptr = XLogGetFakeLSN(rel);
+
+	PageSetLSN(BufferGetPage(buf_oblkno), recptr);
+	PageSetLSN(BufferGetPage(buf_nblkno), recptr);
+	PageSetLSN(BufferGetPage(metabuf), recptr);
 
 	END_CRIT_SECTION();
 
@@ -1092,6 +1094,7 @@ _hash_splitbucket(Relation rel,
 	Size		all_tups_size = 0;
 	int			i;
 	uint16		nitups = 0;
+	XLogRecPtr	recptr;
 
 	bucket_obuf = obuf;
 	opage = BufferGetPage(obuf);
@@ -1296,7 +1299,6 @@ _hash_splitbucket(Relation rel,
 
 	if (RelationNeedsWAL(rel))
 	{
-		XLogRecPtr	recptr;
 		xl_hash_split_complete xlrec;
 
 		xlrec.old_bucket_flag = oopaque->hasho_flag;
@@ -1310,10 +1312,12 @@ _hash_splitbucket(Relation rel,
 		XLogRegisterBuffer(1, bucket_nbuf, REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_COMPLETE);
-
-		PageSetLSN(BufferGetPage(bucket_obuf), recptr);
-		PageSetLSN(BufferGetPage(bucket_nbuf), recptr);
 	}
+	else
+		recptr = XLogGetFakeLSN(rel);
+
+	PageSetLSN(BufferGetPage(bucket_obuf), recptr);
+	PageSetLSN(BufferGetPage(bucket_nbuf), recptr);
 
 	END_CRIT_SECTION();
 

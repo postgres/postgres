@@ -132,6 +132,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	uint32		i,
 				j;
 	bool		page_found = false;
+	XLogRecPtr	recptr;
 
 	/*
 	 * Write-lock the tail page.  Here, we need to maintain locking order such
@@ -381,7 +382,6 @@ found:
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
 	{
-		XLogRecPtr	recptr;
 		xl_hash_add_ovfl_page xlrec;
 
 		xlrec.bmpage_found = page_found;
@@ -408,18 +408,20 @@ found:
 		XLogRegisterBufData(4, &metap->hashm_firstfree, sizeof(uint32));
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_ADD_OVFL_PAGE);
-
-		PageSetLSN(BufferGetPage(ovflbuf), recptr);
-		PageSetLSN(BufferGetPage(buf), recptr);
-
-		if (BufferIsValid(mapbuf))
-			PageSetLSN(BufferGetPage(mapbuf), recptr);
-
-		if (BufferIsValid(newmapbuf))
-			PageSetLSN(BufferGetPage(newmapbuf), recptr);
-
-		PageSetLSN(BufferGetPage(metabuf), recptr);
 	}
+	else
+		recptr = XLogGetFakeLSN(rel);
+
+	PageSetLSN(BufferGetPage(ovflbuf), recptr);
+	PageSetLSN(BufferGetPage(buf), recptr);
+
+	if (BufferIsValid(mapbuf))
+		PageSetLSN(BufferGetPage(mapbuf), recptr);
+
+	if (BufferIsValid(newmapbuf))
+		PageSetLSN(BufferGetPage(newmapbuf), recptr);
+
+	PageSetLSN(BufferGetPage(metabuf), recptr);
 
 	END_CRIT_SECTION();
 
@@ -510,7 +512,11 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	Bucket		bucket PG_USED_FOR_ASSERTS_ONLY;
 	Buffer		prevbuf = InvalidBuffer;
 	Buffer		nextbuf = InvalidBuffer;
-	bool		update_metap = false;
+	bool		update_metap = false,
+				mod_wbuf,
+				is_prim_bucket_same_wrt,
+				is_prev_bucket_same_wrt;
+	XLogRecPtr	recptr;
 
 	/* Get information from the doomed page */
 	_hash_checkpage(rel, ovflbuf, LH_OVERFLOW_PAGE);
@@ -641,19 +647,21 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		MarkBufferDirty(metabuf);
 	}
 
+	/* Determine which pages are modified */
+	is_prim_bucket_same_wrt = (wbuf == bucketbuf);
+	is_prev_bucket_same_wrt = (wbuf == prevbuf);
+	mod_wbuf = (nitups > 0 || is_prev_bucket_same_wrt);
+
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
 	{
 		xl_hash_squeeze_page xlrec;
-		XLogRecPtr	recptr;
-		int			i;
-		bool		mod_wbuf = false;
 
 		xlrec.prevblkno = prevblkno;
 		xlrec.nextblkno = nextblkno;
 		xlrec.ntups = nitups;
-		xlrec.is_prim_bucket_same_wrt = (wbuf == bucketbuf);
-		xlrec.is_prev_bucket_same_wrt = (wbuf == prevbuf);
+		xlrec.is_prim_bucket_same_wrt = is_prim_bucket_same_wrt;
+		xlrec.is_prev_bucket_same_wrt = is_prev_bucket_same_wrt;
 
 		XLogBeginInsert();
 		XLogRegisterData(&xlrec, SizeOfHashSqueezePage);
@@ -662,26 +670,22 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		 * bucket buffer was not changed, but still needs to be registered to
 		 * ensure that we can acquire a cleanup lock on it during replay.
 		 */
-		if (!xlrec.is_prim_bucket_same_wrt)
+		if (!is_prim_bucket_same_wrt)
 		{
 			uint8		flags = REGBUF_STANDARD | REGBUF_NO_IMAGE | REGBUF_NO_CHANGE;
 
 			XLogRegisterBuffer(0, bucketbuf, flags);
 		}
 
-		if (xlrec.ntups > 0)
+		if (nitups > 0)
 		{
 			XLogRegisterBuffer(1, wbuf, REGBUF_STANDARD);
-
-			/* Remember that wbuf is modified. */
-			mod_wbuf = true;
-
 			XLogRegisterBufData(1, itup_offsets,
 								nitups * sizeof(OffsetNumber));
-			for (i = 0; i < nitups; i++)
+			for (int i = 0; i < nitups; i++)
 				XLogRegisterBufData(1, itups[i], tups_size[i]);
 		}
-		else if (xlrec.is_prim_bucket_same_wrt || xlrec.is_prev_bucket_same_wrt)
+		else if (is_prim_bucket_same_wrt || is_prev_bucket_same_wrt)
 		{
 			uint8		wbuf_flags;
 
@@ -691,18 +695,13 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 			 * if it is the same as primary bucket buffer or update the
 			 * nextblkno if it is same as the previous bucket buffer.
 			 */
-			Assert(xlrec.ntups == 0);
+			Assert(nitups == 0);
 
 			wbuf_flags = REGBUF_STANDARD;
-			if (!xlrec.is_prev_bucket_same_wrt)
-			{
+			if (!is_prev_bucket_same_wrt)
 				wbuf_flags |= REGBUF_NO_CHANGE;
-			}
 			else
-			{
-				/* Remember that wbuf is modified. */
-				mod_wbuf = true;
-			}
+				Assert(mod_wbuf);
 			XLogRegisterBuffer(1, wbuf, wbuf_flags);
 		}
 
@@ -714,7 +713,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		 * prevpage.  During replay, we can directly update the nextblock in
 		 * writepage.
 		 */
-		if (BufferIsValid(prevbuf) && !xlrec.is_prev_bucket_same_wrt)
+		if (BufferIsValid(prevbuf) && !is_prev_bucket_same_wrt)
 			XLogRegisterBuffer(3, prevbuf, REGBUF_STANDARD);
 
 		if (BufferIsValid(nextbuf))
@@ -730,23 +729,25 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		}
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SQUEEZE_PAGE);
-
-		/* Set LSN iff wbuf is modified. */
-		if (mod_wbuf)
-			PageSetLSN(BufferGetPage(wbuf), recptr);
-
-		PageSetLSN(BufferGetPage(ovflbuf), recptr);
-
-		if (BufferIsValid(prevbuf) && !xlrec.is_prev_bucket_same_wrt)
-			PageSetLSN(BufferGetPage(prevbuf), recptr);
-		if (BufferIsValid(nextbuf))
-			PageSetLSN(BufferGetPage(nextbuf), recptr);
-
-		PageSetLSN(BufferGetPage(mapbuf), recptr);
-
-		if (update_metap)
-			PageSetLSN(BufferGetPage(metabuf), recptr);
 	}
+	else						/* !RelationNeedsWAL(rel) */
+		recptr = XLogGetFakeLSN(rel);
+
+	/* Set LSN iff wbuf is modified. */
+	if (mod_wbuf)
+		PageSetLSN(BufferGetPage(wbuf), recptr);
+
+	PageSetLSN(BufferGetPage(ovflbuf), recptr);
+
+	if (BufferIsValid(prevbuf) && !is_prev_bucket_same_wrt)
+		PageSetLSN(BufferGetPage(prevbuf), recptr);
+	if (BufferIsValid(nextbuf))
+		PageSetLSN(BufferGetPage(nextbuf), recptr);
+
+	PageSetLSN(BufferGetPage(mapbuf), recptr);
+
+	if (update_metap)
+		PageSetLSN(BufferGetPage(metabuf), recptr);
 
 	END_CRIT_SECTION();
 
@@ -959,6 +960,8 @@ readpage:
 
 				if (nitups > 0)
 				{
+					XLogRecPtr	recptr;
+
 					Assert(nitups == ndeletable);
 
 					/*
@@ -986,7 +989,6 @@ readpage:
 					/* XLOG stuff */
 					if (RelationNeedsWAL(rel))
 					{
-						XLogRecPtr	recptr;
 						xl_hash_move_page_contents xlrec;
 
 						xlrec.ntups = nitups;
@@ -1018,10 +1020,12 @@ readpage:
 											ndeletable * sizeof(OffsetNumber));
 
 						recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_MOVE_PAGE_CONTENTS);
-
-						PageSetLSN(BufferGetPage(wbuf), recptr);
-						PageSetLSN(BufferGetPage(rbuf), recptr);
 					}
+					else
+						recptr = XLogGetFakeLSN(rel);
+
+					PageSetLSN(BufferGetPage(wbuf), recptr);
+					PageSetLSN(BufferGetPage(rbuf), recptr);
 
 					END_CRIT_SECTION();
 
