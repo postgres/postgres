@@ -343,7 +343,7 @@ bbstreamer_zstd_decompressor_finalize(bbstreamer *streamer)
 	if (mystreamer->zstd_outBuf.pos > 0)
 		bbstreamer_content(mystreamer->base.bbs_next, NULL,
 						   mystreamer->base.bbs_buffer.data,
-						   mystreamer->base.bbs_buffer.maxlen,
+						   mystreamer->zstd_outBuf.pos,
 						   BBSTREAMER_UNKNOWN);
 
 	bbstreamer_finalize(mystreamer->base.bbs_next);
