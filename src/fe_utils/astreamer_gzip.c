@@ -347,10 +347,11 @@ astreamer_gzip_decompressor_finalize(astreamer *streamer)
 	 * End of the stream, if there is some pending data in output buffers then
 	 * we must forward it to next streamer.
 	 */
-	astreamer_content(mystreamer->base.bbs_next, NULL,
-					  mystreamer->base.bbs_buffer.data,
-					  mystreamer->base.bbs_buffer.maxlen,
-					  ASTREAMER_UNKNOWN);
+	if (mystreamer->bytes_written > 0)
+		astreamer_content(mystreamer->base.bbs_next, NULL,
+						  mystreamer->base.bbs_buffer.data,
+						  mystreamer->bytes_written,
+						  ASTREAMER_UNKNOWN);
 
 	astreamer_finalize(mystreamer->base.bbs_next);
 }
