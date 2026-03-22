@@ -510,7 +510,9 @@ get_archive_wal_entry(const char *fname, XLogDumpPrivate *privateInfo)
 			/* Write out the completed WAL file contents to a temp file. */
 			write_fp = prepare_tmp_write(entry->fname, privateInfo);
 			perform_tmp_write(entry->fname, entry->buf, write_fp);
-			fclose(write_fp);
+			if (fclose(write_fp) != 0)
+				pg_fatal("could not close file \"%s/%s\": %m",
+						 TmpWalSegDir, entry->fname);
 
 			/* resetStringInfo won't release storage, so delete/recreate. */
 			destroyStringInfo(entry->buf);
