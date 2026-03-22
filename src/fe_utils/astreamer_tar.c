@@ -236,12 +236,16 @@ astreamer_tar_parser_content(astreamer *streamer, astreamer_member *member,
 
 				/*
 				 * We've seen an end-of-archive indicator, so anything more is
-				 * buffered and sent as part of the archive trailer. But we
-				 * don't expect more than 2 blocks.
+				 * buffered and sent as part of the archive trailer.
+				 *
+				 * Per POSIX, the last physical block of a tar archive is
+				 * always full-sized, so there may be undefined data after the
+				 * two zero blocks that mark end-of-archive.  GNU tar, for
+				 * example, zero-pads to a 10kB boundary by default.  We just
+				 * buffer whatever we receive and pass it along at finalize
+				 * time.
 				 */
 				astreamer_buffer_bytes(streamer, &data, &len, len);
-				if (len > 2 * TAR_BLOCK_SIZE)
-					pg_fatal("tar file trailer exceeds 2 blocks");
 				return;
 
 			default:
