@@ -2044,6 +2044,16 @@ lazy_scan_prune(LVRelState *vacrel,
 	if (vacrel->nindexes == 0)
 		params.options |= HEAP_PAGE_PRUNE_MARK_UNUSED_NOW;
 
+	/*
+	 * Allow skipping full inspection of pages that the VM indicates are
+	 * already all-frozen (which may be scanned due to SKIP_PAGES_THRESHOLD).
+	 * However, if DISABLE_PAGE_SKIPPING was specified, we can't trust the VM,
+	 * so we must examine the page to make sure it is truly all-frozen and fix
+	 * it otherwise.
+	 */
+	if (vacrel->skipwithvm)
+		params.options |= HEAP_PAGE_PRUNE_ALLOW_FAST_PATH;
+
 	heap_page_prune_and_freeze(&params,
 							   &presult,
 							   &vacrel->offnum,

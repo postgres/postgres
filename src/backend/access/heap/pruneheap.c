@@ -202,6 +202,8 @@ static void prune_freeze_setup(PruneFreezeParams *params,
 static void heap_page_fix_vm_corruption(PruneState *prstate,
 										OffsetNumber offnum,
 										VMCorruptionType ctype);
+static void prune_freeze_fast_path(PruneState *prstate,
+								   PruneFreezeResult *presult);
 static void prune_freeze_plan(PruneState *prstate,
 							  OffsetNumber *off_loc);
 static HTSV_Result heap_prune_satisfies_vacuum(PruneState *prstate,
@@ -331,7 +333,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
 			 * cannot safely determine that during on-access pruning with the
 			 * current implementation.
 			 */
-			params.options = 0;
+			params.options = HEAP_PAGE_PRUNE_ALLOW_FAST_PATH;
 
 			heap_page_prune_and_freeze(&params, &presult, &dummy_off_loc,
 									   NULL, NULL);
@@ -920,6 +922,73 @@ heap_page_fix_vm_corruption(PruneState *prstate, OffsetNumber offnum,
 }
 
 /*
+ * If the page is already all-frozen, or already all-visible and freezing
+ * won't be attempted, there is no remaining work and we can use the fast path
+ * to avoid the expensive overhead of heap_page_prune_and_freeze().
+ *
+ * This can happen when the page has a stale prune hint, or if VACUUM is
+ * scanning an already all-frozen page due to SKIP_PAGES_THRESHOLD.
+ *
+ * The caller must already have examined the visibility map and saved the
+ * status of the page's VM bits in prstate->old_vmbits. Caller must hold a
+ * content lock on the heap page since it will examine line pointers.
+ *
+ * Before calling prune_freeze_fast_path(), the caller should first
+ * check for and fix any discrepancy between the page-level visibility hint
+ * and the visibility map. Otherwise, the fast path will always prevent us
+ * from getting them in sync. Note that if there are tuples on the page that
+ * are not visible to all but the VM is incorrectly marked
+ * all-visible/all-frozen, we will not get the chance to fix that corruption
+ * when using the fast path.
+ */
+static void
+prune_freeze_fast_path(PruneState *prstate, PruneFreezeResult *presult)
+{
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(prstate->page);
+	Page		page = prstate->page;
+
+	Assert((prstate->old_vmbits & VISIBILITYMAP_ALL_FROZEN) ||
+		   ((prstate->old_vmbits & VISIBILITYMAP_ALL_VISIBLE) &&
+			!prstate->attempt_freeze));
+
+	/* We'll fill in presult for the caller */
+	memset(presult, 0, sizeof(PruneFreezeResult));
+
+	presult->old_vmbits = prstate->old_vmbits;
+
+	/* Clear any stale prune hint */
+	if (TransactionIdIsValid(PageGetPruneXid(page)))
+	{
+		PageClearPrunable(page);
+		MarkBufferDirtyHint(prstate->buffer, true);
+	}
+
+	if (PageIsEmpty(page))
+		return;
+
+	/*
+	 * Since the page is all-visible, a count of the normal ItemIds on the
+	 * page should be sufficient for vacuum's live tuple count.
+	 */
+	for (OffsetNumber off = FirstOffsetNumber;
+		 off <= maxoff;
+		 off = OffsetNumberNext(off))
+	{
+		ItemId		lp = PageGetItemId(page, off);
+
+		if (!ItemIdIsUsed(lp))
+			continue;
+
+		presult->hastup = true;
+
+		if (ItemIdIsNormal(lp))
+			prstate->live_tuples++;
+	}
+
+	presult->live_tuples = prstate->live_tuples;
+}
+
+/*
  * Prune and repair fragmentation and potentially freeze tuples on the
  * specified page.
  *
@@ -987,6 +1056,22 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 		!PageIsAllVisible(prstate.page))
 		heap_page_fix_vm_corruption(&prstate, InvalidOffsetNumber,
 									VM_CORRUPT_MISSING_PAGE_HINT);
+
+	/*
+	 * If the page is already all-frozen, or already all-visible when freezing
+	 * is not being attempted, take the fast path, skipping pruning and
+	 * freezing code entirely. This must be done after fixing any discrepancy
+	 * between the page-level visibility hint and the VM, since that may have
+	 * cleared old_vmbits.
+	 */
+	if ((params->options & HEAP_PAGE_PRUNE_ALLOW_FAST_PATH) != 0 &&
+		((prstate.old_vmbits & VISIBILITYMAP_ALL_FROZEN) ||
+		 ((prstate.old_vmbits & VISIBILITYMAP_ALL_VISIBLE) &&
+		  !prstate.attempt_freeze)))
+	{
+		prune_freeze_fast_path(&prstate, presult);
+		return;
+	}
 
 	/*
 	 * Examine all line pointers and tuple visibility information to determine
