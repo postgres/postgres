@@ -333,6 +333,27 @@ ROLLBACK;
 INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 50) as i;
 CHECKPOINT;
 VACUUM hash_cleanup_heap;
+-- Test cleanup of dead index tuples on single page with INSERT.
+TRUNCATE hash_cleanup_heap;
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 1000) as i;
+-- This relies on a rollbacked INSERT instead of a DELETE to make the creation
+-- of the dead tuples concurrent-safe.
+BEGIN;
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 500) as i;
+ROLLBACK;
+SET enable_seqscan = off;
+SET enable_bitmapscan = off;
+SELECT count(*) FROM hash_cleanup_heap WHERE keycol = 1;
+ count 
+-------
+  1000
+(1 row)
+
+-- This query checks the hash index pages for dead tuples where the data
+-- is inserted, and performs a local VACUUM on a single page.
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 200) as i;
+RESET enable_seqscan;
+RESET enable_bitmapscan;
 -- Clean up.
 DROP TABLE hash_cleanup_heap;
 -- Index on temp table.
