@@ -347,7 +347,7 @@ astreamer_zstd_decompressor_finalize(astreamer *streamer)
 	if (mystreamer->zstd_outBuf.pos > 0)
 		astreamer_content(mystreamer->base.bbs_next, NULL,
 						  mystreamer->base.bbs_buffer.data,
-						  mystreamer->base.bbs_buffer.maxlen,
+						  mystreamer->zstd_outBuf.pos,
 						  ASTREAMER_UNKNOWN);
 
 	astreamer_finalize(mystreamer->base.bbs_next);
