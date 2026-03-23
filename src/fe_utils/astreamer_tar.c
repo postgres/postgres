@@ -224,7 +224,8 @@ astreamer_tar_parser_content(astreamer *streamer, astreamer_member *member,
 				/* OK, now we can send it. */
 				astreamer_content(mystreamer->base.bbs_next,
 								  &mystreamer->member,
-								  data, mystreamer->pad_bytes_expected,
+								  mystreamer->base.bbs_buffer.data,
+								  mystreamer->pad_bytes_expected,
 								  ASTREAMER_MEMBER_TRAILER);
 
 				/* Expect next file header. */
@@ -346,6 +347,7 @@ astreamer_tar_parser_free(astreamer *streamer)
 {
 	pfree(streamer->bbs_buffer.data);
 	astreamer_free(streamer->bbs_next);
+	pfree(streamer);
 }
 
 /*
