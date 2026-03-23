@@ -149,7 +149,7 @@ retry:
 		if (owner_pid != 0)
 			values[0] = Int32GetDatum(owner_pid);
 		else
-			nulls[0] = false;
+			nulls[0] = true;
 
 		/* column: IO's id */
 		values[1] = Int32GetDatum(ioh_id);
