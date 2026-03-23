@@ -416,7 +416,17 @@ static MemoryContext MXactContext = NULL;
 #define debug_elog6(a,b,c,d,e,f)
 #endif
 
-/* hack to deal with WAL generated with older minor versions */
+/*
+ * Hack to deal with WAL generated with older minor versions.
+ *
+ * last_initialized_offsets_page is the XLOG_MULTIXACT_ZERO_OFF_PAGE record
+ * that we saw during WAL replay, or -1 if we haven't seen any yet.
+ *
+ * pre_initialized_offsets_page is the last page that was implicitly
+ * initialized by replaying a XLOG_MULTIXACT_CREATE_ID record, when we had not
+ * seen a XLOG_MULTIXACT_ZERO_OFF_PAGE record for the page yet.
+ */
+static int64 last_initialized_offsets_page = -1;
 static int64 pre_initialized_offsets_page = -1;
 
 /* internal MultiXactId management */
@@ -976,29 +986,68 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 	 * such a version, the next page might not be initialized yet.  Initialize
 	 * it now.
 	 */
-	if (InRecovery &&
-		next_pageno != pageno &&
-		pg_atomic_read_u64(&MultiXactOffsetCtl->shared->latest_page_number) == pageno)
+	if (InRecovery && next_pageno != pageno)
 	{
-		elog(DEBUG1, "next offsets page is not initialized, initializing it now");
+		bool		init_needed;
 
-		lock = SimpleLruGetBankLock(MultiXactOffsetCtl, next_pageno);
-		LWLockAcquire(lock, LW_EXCLUSIVE);
-
-		/* Create and zero the page */
-		slotno = SimpleLruZeroPage(MultiXactOffsetCtl, next_pageno);
-
-		/* Make sure it's written out */
-		SimpleLruWritePage(MultiXactOffsetCtl, slotno);
-		Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
-
-		LWLockRelease(lock);
-
-		/*
-		 * Remember that we initialized the page, so that we don't zero it
-		 * again at the XLOG_MULTIXACT_ZERO_OFF_PAGE record.
+		/*----------
+		 * Check if the page exists, and if not, initialize it now.
+		 *
+		 * The straightforward way to check if the page exists is to call
+		 * SimpleLruDoesPhysicalPageExist().  However, there two problems with
+		 * that:
+		 *
+		 * 1. It's somewhat expensive to call on every page switch.
+		 *
+		 * 2. It does not take into account pages that have been initialized
+		 *    in the SLRU buffer cache but not yet flushed to disk.  For such
+		 *    pages, it will incorrectly return false.
+		 *
+		 * To fix both of those problems, if we have replayed any
+		 * XLOG_MULTIXACT_ZERO_OFF_PAGE records, we assume that the last page
+		 * that was zeroed by XLOG_MULTIXACT_ZERO_OFF_PAGE is the last page
+		 * that exists.  This works because the XLOG_MULTIXACT_ZERO_OFF_PAGE
+		 * records must appear in the WAL in order, unlike CREATE_ID records.
+		 * We only resort to SimpleLruDoesPhysicalPageExist() if we haven't
+		 * seen any XLOG_MULTIXACT_ZERO_OFF_PAGE records yet, which should
+		 * happen at most once after starting WAL recovery.
+		 *
+		 * As an extra safety measure, if we do resort to
+		 * SimpleLruDoesPhysicalPageExist(), flush the SLRU buffers first so
+		 * that it will return an accurate result.
+		 *----------
 		 */
-		pre_initialized_offsets_page = next_pageno;
+		if (last_initialized_offsets_page == -1)
+		{
+			SimpleLruWriteAll(MultiXactOffsetCtl, false);
+			init_needed = !SimpleLruDoesPhysicalPageExist(MultiXactOffsetCtl, next_pageno);
+		}
+		else
+			init_needed = (last_initialized_offsets_page == pageno);
+
+		if (init_needed)
+		{
+			elog(DEBUG1, "next offsets page is not initialized, initializing it now");
+
+			lock = SimpleLruGetBankLock(MultiXactOffsetCtl, next_pageno);
+			LWLockAcquire(lock, LW_EXCLUSIVE);
+
+			/* Create and zero the page */
+			slotno = SimpleLruZeroPage(MultiXactOffsetCtl, next_pageno);
+
+			/* Make sure it's written out */
+			SimpleLruWritePage(MultiXactOffsetCtl, slotno);
+			Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
+
+			LWLockRelease(lock);
+
+			/*
+			 * Remember that we initialized the page, so that we don't zero it
+			 * again at the XLOG_MULTIXACT_ZERO_OFF_PAGE record.
+			 */
+			pre_initialized_offsets_page = next_pageno;
+			last_initialized_offsets_page = next_pageno;
+		}
 	}
 
 	/*
@@ -3554,6 +3603,8 @@ multixact_redo(XLogReaderState *record)
 			Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
 
 			LWLockRelease(lock);
+
+			last_initialized_offsets_page = pageno;
 		}
 		else
 			elog(DEBUG1, "skipping initialization of offsets page " INT64_FORMAT " because it was already initialized on multixid creation", pageno);
