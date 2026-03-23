@@ -32,6 +32,9 @@ typedef struct bbsink_gzip
 
 	/* Number of bytes staged in output buffer. */
 	size_t		bytes_written;
+
+	/* Has the zstream been initialized? */
+	bool		zstream_initialized;
 } bbsink_gzip;
 
 static void bbsink_gzip_begin_backup(bbsink *sink);
@@ -39,6 +42,7 @@ static void bbsink_gzip_begin_archive(bbsink *sink, const char *archive_name);
 static void bbsink_gzip_archive_contents(bbsink *sink, size_t len);
 static void bbsink_gzip_manifest_contents(bbsink *sink, size_t len);
 static void bbsink_gzip_end_archive(bbsink *sink);
+static void bbsink_gzip_cleanup(bbsink *sink);
 static void *gzip_palloc(void *opaque, unsigned items, unsigned size);
 static void gzip_pfree(void *opaque, void *address);
 
@@ -51,7 +55,7 @@ static const bbsink_ops bbsink_gzip_ops = {
 	.manifest_contents = bbsink_gzip_manifest_contents,
 	.end_manifest = bbsink_forward_end_manifest,
 	.end_backup = bbsink_forward_end_backup,
-	.cleanup = bbsink_forward_cleanup
+	.cleanup = bbsink_gzip_cleanup
 };
 #endif
 
@@ -141,6 +145,7 @@ bbsink_gzip_begin_archive(bbsink *sink, const char *archive_name)
 		ereport(ERROR,
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not initialize compression library"));
+	mysink->zstream_initialized = true;
 
 	/*
 	 * Add ".gz" to the archive name. Note that the pg_basebackup -z produces
@@ -266,6 +271,10 @@ bbsink_gzip_end_archive(bbsink *sink)
 		mysink->bytes_written = 0;
 	}
 
+	/* Release the compression resources. */
+	deflateEnd(zs);
+	mysink->zstream_initialized = false;
+
 	/* Must also pass on the information that this archive has ended. */
 	bbsink_forward_end_archive(sink);
 }
@@ -299,6 +308,22 @@ static void
 gzip_pfree(void *opaque, void *address)
 {
 	pfree(address);
+}
+
+/*
+ * In case the backup fails, make sure we free the compression context by
+ * calling deflateEnd() if needed to avoid a resource leak.
+ */
+static void
+bbsink_gzip_cleanup(bbsink *sink)
+{
+	bbsink_gzip *mysink = (bbsink_gzip *) sink;
+
+	if (mysink->zstream_initialized)
+	{
+		deflateEnd(&mysink->zstream);
+		mysink->zstream_initialized = false;
+	}
 }
 
 #endif
