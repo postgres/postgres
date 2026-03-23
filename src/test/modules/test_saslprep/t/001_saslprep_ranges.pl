@@ -25,15 +25,12 @@ $node->safe_psql('postgres', 'CREATE EXTENSION test_saslprep;');
 # Among all the valid UTF-8 codepoint ranges, our implementation of
 # SASLprep should never return an empty password if the operation is
 # considered a success.
-# The only exception is currently the nul character, prohibited in
-# input of CREATE/ALTER ROLE.
 my $result = $node->safe_psql(
 	'postgres', qq[SELECT * FROM test_saslprep_ranges()
   WHERE status = 'SUCCESS' AND res IN (NULL, '')
 ]);
 
-is($result, 'U+0000|SUCCESS|\x00|\x',
-	"valid codepoints returning an empty password");
+is($result, '', "valid codepoints returning an empty password");
 
 $node->stop;
 done_testing();

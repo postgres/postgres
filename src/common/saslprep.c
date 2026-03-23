@@ -1062,18 +1062,6 @@ pg_saslprep(const char *input, char **output)
 	*output = NULL;
 
 	/*
-	 * Quick check if the input is pure ASCII.  An ASCII string requires no
-	 * further processing.
-	 */
-	if (pg_is_ascii(input))
-	{
-		*output = STRDUP(input);
-		if (!(*output))
-			goto oom;
-		return SASLPREP_SUCCESS;
-	}
-
-	/*
 	 * Convert the input from UTF-8 to an array of Unicode codepoints.
 	 *
 	 * This also checks that the input is a legal UTF-8 string.
