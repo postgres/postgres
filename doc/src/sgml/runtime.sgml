@@ -2606,21 +2606,22 @@ openssl x509 -req -in server.csr -text -days 365 \
     configuration file. <productname>PostgreSQL</productname> inspects the TLS
     hostname extension in the SSL connection handshake, and selects the right
     TLS certificate, key and CA certificate to use for the connection based on
-    the hosts which are defined in <filename>pg_hosts.conf</filename>.
+    entries in the configuration file <filename>pg_hosts.conf</filename>.
    </para>
 
    <para>
     SNI configuration is defined in the hosts configuration file,
     <filename>pg_hosts.conf</filename>, which is stored in the cluster's
-    data directory.  The hosts configuration file contains lines of the general
-    forms:
+    data directory.  The hosts configuration file contains lines of these
+    general forms:
 <synopsis>
-<replaceable>hostname</replaceable> <replaceable>SSL_certificate</replaceable> <replaceable>SSL_key</replaceable> <replaceable>SSL_CA_certificate</replaceable> <replaceable>SSL_passphrase_cmd</replaceable> <replaceable>SSL_passphrase_cmd_reload</replaceable>
+<replaceable>hostname</replaceable> <replaceable>SSL_certificate</replaceable> <replaceable>SSL_key</replaceable> <optional> <replaceable>SSL_CA_certificate</replaceable> <optional> <replaceable>SSL_passphrase_cmd</replaceable> <optional> <replaceable>SSL_passphrase_cmd_reload</replaceable> </optional> </optional> </optional>
 <literal>include</literal> <replaceable>file</replaceable>
 <literal>include_if_exists</literal> <replaceable>file</replaceable>
 <literal>include_dir</literal> <replaceable>directory</replaceable>
 </synopsis>
-    Comments, whitespace and line continuations are handled in the same way as
+    Comments, whitespace, line continuations, and inclusion directives are
+    handled in the same way as
     in <filename>pg_hba.conf</filename>.  <replaceable>hostname</replaceable>
     is matched against the hostname TLS extension in the SSL handshake.
     <replaceable>SSL_certificate</replaceable>,
@@ -2635,21 +2636,21 @@ openssl x509 -req -in server.csr -text -days 365 \
     <xref linkend="guc-ssl-passphrase-command"/>, and
     <xref linkend="guc-ssl-passphrase-command-supports-reload"/> respectively.
     All fields except <replaceable>SSL_CA_certificate</replaceable>,
-    <replaceable>SSL_passphrase_cmd</replaceable> and
+    <replaceable>SSL_passphrase_cmd</replaceable>, and
     <replaceable>SSL_passphrase_cmd_reload</replaceable> are required. If
-    <replaceable>SSL_passphrase_cmd</replaceable> is defined but not
-    <replaceable>SSL_passphrase_cmd_reload</replaceable> then the default
+    <replaceable>SSL_passphrase_cmd</replaceable> is provided but not
+    <replaceable>SSL_passphrase_cmd_reload</replaceable>, then the default
     value for <replaceable>SSL_passphrase_cmd_reload</replaceable> is
     <literal>off</literal>.
    </para>
 
    <para>
-    <replaceable>hostname</replaceable> should either be set to the literal
-    hostname for the connection, <literal>/no_sni/</literal> or <literal>*</literal>.
+    <replaceable>hostname</replaceable> can be either the literal
+    hostname for the connection, <literal>/no_sni/</literal>, or <literal>*</literal>.
     <xref linkend="hostname-values"/> contains details on how these values are
     used.
     <table id="hostname-values">
-     <title>Hostname setting values</title>
+     <title>Hostname field values</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -2661,10 +2662,13 @@ openssl x509 -req -in server.csr -text -days 365 \
 
       <tbody>
        <row>
-        <entry><literal>*</literal></entry>
-        <entry>Not required</entry>
+        <entry><replaceable>hostname</replaceable></entry>
+        <entry>Required</entry>
         <entry>
-         Default host, matches all connections.
+         Certificate and key to use for connections to the host specified in
+         the connection.  Multiple hostnames can be defined by using a comma
+         separated list. The certificate and key will be used for connections
+         to all hosts in the list.
         </entry>
        </row>
 
@@ -2678,13 +2682,10 @@ openssl x509 -req -in server.csr -text -days 365 \
        </row>
 
        <row>
-        <entry><replaceable>hostname</replaceable></entry>
-        <entry>Required</entry>
+        <entry><literal>*</literal></entry>
+        <entry>Not required</entry>
         <entry>
-         Certificate and key to use for connections to the host specified in
-         the connection.  Multiple hostnames can be defined by using a comma
-         separated list. The certificate and key will be used for connections
-         to all hosts in the list.
+         Default host, matches all connections.
         </entry>
        </row>
       </tbody>
@@ -2694,7 +2695,7 @@ openssl x509 -req -in server.csr -text -days 365 \
    </para>
 
    <para>
-    If <filename>pg_hosts.conf</filename> is empty, or missing, then the SSL
+    If <filename>pg_hosts.conf</filename> is empty or missing, then the SSL
     configuration in <filename>postgresql.conf</filename> will be used for all
     connections. If <filename>pg_hosts.conf</filename> is non-empty then it
     will take precedence over certificate and key settings in
@@ -2711,7 +2712,7 @@ openssl x509 -req -in server.csr -text -days 365 \
 
    <para>
     The CRL configuration in <filename>postgresql.conf</filename> is applied
-    on all connections regardless of if they use SNI or not.
+    to all connections regardless of whether they use SNI or not.
    </para>
   </sect2>
  </sect1>
