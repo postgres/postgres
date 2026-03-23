@@ -7628,7 +7628,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				 * Phase 3 will re-evaluate with hard errors, so the user gets
 				 * an error only if the table has rows.
 				 */
-				if (SOFT_ERROR_OCCURRED(&escontext))
+				if (escontext.error_occurred)
 				{
 					missingIsNull = true;
 					tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
