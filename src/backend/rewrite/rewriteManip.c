@@ -672,7 +672,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
  * value indicating if the given node should be skipped from further processing
  * by ChangeVarNodes_walker.  The callback is called only for expressions and
  * other children nodes of a Query processed by a walker.  Initial processing
- * of the root Query doesn't involve the callback.
+ * of the root Query node doesn't invoke the callback.
  */
 void
 ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
@@ -737,9 +737,16 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 }
 
 /*
- * ChangeVarNodesWalkExpression - process expression within the custom
- *								  callback provided to the
- *								  ChangeVarNodesExtended.
+ * ChangeVarNodesWalkExpression - process subexpression within a callback
+ *								  function passed to ChangeVarNodesExtended.
+ *
+ * This is intended to be used by a callback that needs to recursively
+ * process subexpressions of some node being visited by an outer
+ * ChangeVarNodesExtended call (not letting ChangeVarNodes_walker do that).
+ * Hence, we invoke ChangeVarNodes_walker directly.  This means that if
+ * the passed Node is a Query node, it will be treated as a sub-Query,
+ * so sublevels_up will be incremented immediately.  Do not apply this
+ * to a top-level Query node, or you'll likely get wrong results.
  */
 bool
 ChangeVarNodesWalkExpression(Node *node, ChangeVarNodes_context *context)
