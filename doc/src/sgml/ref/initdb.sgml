@@ -28,7 +28,7 @@ PostgreSQL documentation
      <arg choice="plain"><option>--pgdata</option></arg>
      <arg choice="plain"><option>-D</option></arg>
     </group>
-    <replaceable> directory</replaceable>
+    <replaceable> datadir</replaceable>
    </group>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -190,8 +190,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry id="app-initdb-option-pgdata">
-      <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
+      <term><option>--pgdata=<replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
         This option specifies the directory where the database cluster

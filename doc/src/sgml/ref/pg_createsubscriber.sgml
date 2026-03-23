@@ -126,8 +126,8 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
-     <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
+     <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
+     <term><option>--pgdata=<replaceable class="parameter">datadir</replaceable></option></term>
      <listitem>
       <para>
        The target directory that contains a cluster directory from a physical

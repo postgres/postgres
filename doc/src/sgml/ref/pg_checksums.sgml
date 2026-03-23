@@ -61,8 +61,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-D <replaceable>directory</replaceable></option></term>
-      <term><option>--pgdata=<replaceable>directory</replaceable></option></term>
+      <term><option>-D <replaceable>datadir</replaceable></option></term>
+      <term><option>--pgdata=<replaceable>datadir</replaceable></option></term>
       <listitem>
        <para>
         Specifies the directory where the database cluster is stored.

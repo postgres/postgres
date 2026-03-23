@@ -28,9 +28,9 @@ PostgreSQL documentation
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--target-pgdata</option></arg>
     </group>
-    <replaceable> directory</replaceable>
+    <replaceable> datadir</replaceable>
     <group choice="req">
-     <arg choice="plain"><option>--source-pgdata=<replaceable>directory</replaceable></option></arg>
+     <arg choice="plain"><option>--source-pgdata=<replaceable>datadir</replaceable></option></arg>
      <arg choice="plain"><option>--source-server=<replaceable>connstr</replaceable></option></arg>
     </group>
    </group>
@@ -162,8 +162,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--target-pgdata=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
+      <term><option>--target-pgdata=<replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
         This option specifies the target data directory that is synchronized
@@ -174,7 +174,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--source-pgdata=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--source-pgdata=<replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
         Specifies the file system path to the data directory of the source
