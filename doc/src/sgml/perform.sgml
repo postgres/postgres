@@ -758,8 +758,64 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
     values shown are averages per-execution.  This is done to make the numbers
     comparable with the way that the cost estimates are shown.  Multiply by
     the <literal>loops</literal> value to get the total time actually spent in
-    the node.  In the above example, we spent a total of 0.030 milliseconds
-    executing the index scans on <literal>tenk2</literal>.
+    the node and the total number of rows processed by the node across all
+    executions.  In the above example, we spent a total of 0.030 milliseconds
+    executing the index scans on <literal>tenk2</literal>, and they handled a
+    total of 10 rows.
+   </para>
+
+   <para>
+    Parallel execution will also cause nodes to be executed more than once.
+    This is also reported with the <literal>loops</literal> value. We can
+    change some planner settings to make the planner pick a parallel plan for
+    the above query:
+   </para>
+
+<screen>
+SET min_parallel_table_scan_size = 0;
+SET parallel_tuple_cost = 0;
+SET parallel_setup_cost = 0;
+
+EXPLAIN ANALYZE SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
+                                                                QUERY PLAN
+-------------------------------------------------------------------&zwsp;-------------------------------------------------------------------&zwsp;----
+ Gather  (cost=4.65..70.96 rows=10 width=488) (actual time=1.161..11.655 rows=10.00 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   Buffers: shared hit=78 read=6
+   -&gt;  Nested Loop  (cost=4.65..70.96 rows=4 width=488) (actual time=0.247..0.317 rows=3.33 loops=3)
+         Buffers: shared hit=78 read=6
+         -&gt;  Parallel Bitmap Heap Scan on tenk1 t1  (cost=4.36..39.31 rows=4 width=244) (actual time=0.228..0.249 rows=3.33 loops=3)
+               Recheck Cond: (unique1 &lt; 10)
+               Heap Blocks: exact=10
+               Buffers: shared hit=54
+               -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.36 rows=10 width=0) (actual time=0.438..0.439 rows=10.00 loops=1)
+                     Index Cond: (unique1 &lt; 10)
+                     Index Searches: 1
+                     Buffers: shared hit=2
+         -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.90 rows=1 width=244) (actual time=0.016..0.017 rows=1.00 loops=10)
+               Index Cond: (unique2 = t1.unique2)
+               Index Searches: 10
+               Buffers: shared hit=24 read=6
+ Planning:
+   Buffers: shared hit=327 read=3
+ Planning Time: 4.781 ms
+ Execution Time: 11.858 ms
+(22 rows)
+</screen>
+
+   <para>
+    The parallel bitmap heap scan was split into three separate
+    executions: one in the leader (since
+    <xref linkend="guc-parallel-leader-participation"/> is on by default),
+    and one in each of the two launched workers.  Similarly to sequential
+    repeated executions, rows and actual time are averages per-worker.
+    Multiply by the <literal>loops</literal> value to get the total number
+    of rows processed by the node across all workers.  The total time
+    spent in all workers can be calculated similarly, but since this time
+    is spent concurrently, it is not equivalent to total elapsed time.
    </para>
 
    <para>
