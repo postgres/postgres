@@ -37,13 +37,11 @@ fi
 
 me=`basename $0`
 
-# These switches are g++ specific, you may override if necessary.
-CXXFLAGS=${CXXFLAGS:- -fsyntax-only -Wall}
-
 # Pull some info from configure's results.
 MGLOB="$builddir/src/Makefile.global"
 CPPFLAGS=`sed -n 's/^CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CFLAGS=`sed -n 's/^CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
+CXXFLAGS=`sed -n 's/^CXXFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 ICU_CFLAGS=`sed -n 's/^ICU_CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 LLVM_CPPFLAGS=`sed -n 's/^LLVM_CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CC=`sed -n 's/^CC[ 	]*=[ 	]*//p' "$MGLOB"`

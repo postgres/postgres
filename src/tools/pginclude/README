@@ -95,10 +95,6 @@ related headers not being found.
 When using meson, run "meson compile -C build cpluspluscheck" or
 "ninja -C build cpluspluscheck".
 
-If you are using a non-g++-compatible C++ compiler, you may need to
-override the script's CXXFLAGS setting by setting a suitable environment
-value.
-
 A limitation of the current script is that it doesn't know exactly which
 headers are for frontend or backend; when in doubt it uses postgres.h as
 prerequisite, even if postgres_fe.h or c.h would be more appropriate.
