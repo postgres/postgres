@@ -39,10 +39,7 @@ typedef struct XLogDumpPrivate
 
 	astreamer  *archive_streamer;
 	char	   *archive_read_buf;	/* Reusable read buffer for archive I/O */
-
-#ifdef USE_ASSERT_CHECKING
 	Size		archive_read_buf_size;
-#endif
 
 	/*
 	 * The buffer for the WAL file the archive streamer is currently reading,

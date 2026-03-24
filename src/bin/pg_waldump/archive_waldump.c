@@ -89,7 +89,7 @@ typedef struct astreamer_waldump
 
 static ArchivedWALFile *get_archive_wal_entry(const char *fname,
 											  XLogDumpPrivate *privateInfo);
-static bool read_archive_file(XLogDumpPrivate *privateInfo, Size count);
+static bool read_archive_file(XLogDumpPrivate *privateInfo);
 static void setup_tmpwal_dir(const char *waldir);
 static void cleanup_tmpwal_dir_atexit(void);
 
@@ -156,14 +156,11 @@ init_archive_reader(XLogDumpPrivate *privateInfo,
 	privateInfo->archive_streamer = streamer;
 
 	/*
-	 * Allocate a buffer for reading the archive file to facilitate content
-	 * decoding; read requests must not exceed the allocated buffer size.
+	 * Allocate a buffer for reading the archive file to begin content
+	 * decoding.
 	 */
 	privateInfo->archive_read_buf = pg_malloc(READ_CHUNK_SIZE);
-
-#ifdef USE_ASSERT_CHECKING
 	privateInfo->archive_read_buf_size = READ_CHUNK_SIZE;
-#endif
 
 	/*
 	 * Hash table storing WAL entries read from the archive with an arbitrary
@@ -182,7 +179,7 @@ init_archive_reader(XLogDumpPrivate *privateInfo,
 	 */
 	while (entry == NULL)
 	{
-		if (!read_archive_file(privateInfo, XLOG_BLCKSZ))
+		if (!read_archive_file(privateInfo))
 			pg_fatal("could not find WAL in archive \"%s\"",
 					 privateInfo->archive_name);
 
@@ -402,7 +399,7 @@ read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
 						 fname, privateInfo->archive_name,
 						 (long long int) (count - nbytes),
 						 (long long int) count);
-			if (!read_archive_file(privateInfo, READ_CHUNK_SIZE))
+			if (!read_archive_file(privateInfo))
 				pg_fatal("unexpected end of archive \"%s\" while reading \"%s\": read %lld of %lld bytes",
 						 privateInfo->archive_name, fname,
 						 (long long int) (count - nbytes),
@@ -523,7 +520,7 @@ get_archive_wal_entry(const char *fname, XLogDumpPrivate *privateInfo)
 		/*
 		 * Read more data.  If we reach EOF, the desired file is not present.
 		 */
-		if (!read_archive_file(privateInfo, READ_CHUNK_SIZE))
+		if (!read_archive_file(privateInfo))
 			pg_fatal("could not find WAL \"%s\" in archive \"%s\"",
 					 fname, privateInfo->archive_name);
 	}
@@ -532,10 +529,6 @@ get_archive_wal_entry(const char *fname, XLogDumpPrivate *privateInfo)
 /*
  * Reads a chunk from the archive file and passes it through the streamer
  * pipeline for decompression (if needed) and tar member extraction.
- *
- * count is the maximum amount to try to read this time.  Note that it's
- * measured in raw file bytes, and may have little to do with how much
- * comes out of decompression/extraction.
  *
  * Returns true if successful, false if there is no more data.
  *
@@ -548,19 +541,17 @@ get_archive_wal_entry(const char *fname, XLogDumpPrivate *privateInfo)
  * within the same call.
  */
 static bool
-read_archive_file(XLogDumpPrivate *privateInfo, Size count)
+read_archive_file(XLogDumpPrivate *privateInfo)
 {
 	int			rc;
-
-	/* The read request must not exceed the allocated buffer size. */
-	Assert(privateInfo->archive_read_buf_size >= count);
 
 	/* Fail if we already reached EOF in a prior call. */
 	if (privateInfo->archive_fd_eof)
 		return false;
 
 	/* Try to read some more data. */
-	rc = read(privateInfo->archive_fd, privateInfo->archive_read_buf, count);
+	rc = read(privateInfo->archive_fd, privateInfo->archive_read_buf,
+			  privateInfo->archive_read_buf_size);
 	if (rc < 0)
 		pg_fatal("could not read file \"%s\": %m",
 				 privateInfo->archive_name);
