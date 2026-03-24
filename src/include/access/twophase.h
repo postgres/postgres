@@ -17,7 +17,12 @@
 #include "access/xact.h"
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
-#include "storage/lock.h"
+
+/*
+ * forward references in this file
+ */
+typedef struct PGPROC PGPROC;
+typedef struct VirtualTransactionId VirtualTransactionId;
 
 /*
  * GlobalTransactionData is defined in twophase.c; other places have no

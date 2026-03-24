@@ -15,9 +15,12 @@
 #define STANDBY_H
 
 #include "datatype/timestamp.h"
-#include "storage/lock.h"
+#include "storage/locktag.h"
 #include "storage/relfilelocator.h"
 #include "storage/standbydefs.h"
+
+typedef struct PGPROC PGPROC;
+typedef struct VirtualTransactionId VirtualTransactionId;
 
 /* User-settable GUC parameters */
 extern PGDLLIMPORT int max_standby_archive_delay;

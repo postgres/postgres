@@ -14,7 +14,7 @@
 #ifndef TOASTING_H
 #define TOASTING_H
 
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 
 /*
  * toasting.c prototypes

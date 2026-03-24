@@ -22,7 +22,7 @@
 #include "catalog/pg_inherits_d.h"	/* IWYU pragma: export */
 
 #include "nodes/pg_list.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 
 /* ----------------
  *		pg_inherits definition.  cpp turns this into

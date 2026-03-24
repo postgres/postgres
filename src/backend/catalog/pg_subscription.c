@@ -26,6 +26,7 @@
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
+#include "storage/lock.h"
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"

@@ -15,7 +15,7 @@
 
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 #include "utils/relcache.h"
 
 

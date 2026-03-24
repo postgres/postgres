@@ -23,7 +23,6 @@
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "nodes/pg_list.h"
-#include "storage/lock.h"
 
 /* types supported by reloptions */
 typedef enum relopt_type

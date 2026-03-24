@@ -44,6 +44,7 @@
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/guc_hooks.h"
+#include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"

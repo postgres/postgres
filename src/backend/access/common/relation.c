@@ -25,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "pgstat.h"
 #include "storage/lmgr.h"
+#include "storage/lock.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
 

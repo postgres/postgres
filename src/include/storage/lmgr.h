@@ -16,7 +16,7 @@
 
 #include "lib/stringinfo.h"
 #include "storage/itemptr.h"
-#include "storage/lock.h"
+#include "storage/locktag.h"
 #include "utils/rel.h"
 
 

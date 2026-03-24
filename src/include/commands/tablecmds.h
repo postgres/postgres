@@ -18,7 +18,7 @@
 #include "catalog/dependency.h"
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 #include "utils/relcache.h"
 
 typedef struct AlterTableUtilityContext AlterTableUtilityContext;	/* avoid including

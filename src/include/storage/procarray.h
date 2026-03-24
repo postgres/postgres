@@ -14,7 +14,6 @@
 #ifndef PROCARRAY_H
 #define PROCARRAY_H
 
-#include "storage/lock.h"
 #include "storage/standby.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"

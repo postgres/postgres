@@ -53,6 +53,7 @@
 #include "nodes/execnodes.h"
 #include "pgstat.h"
 #include "storage/lmgr.h"
+#include "storage/lock.h"
 #include "storage/predicate.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"

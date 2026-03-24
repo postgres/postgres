@@ -20,7 +20,6 @@
 #include "replication/walreceiver.h"
 #include "storage/buffile.h"
 #include "storage/fileset.h"
-#include "storage/lock.h"
 #include "storage/shm_mq.h"
 #include "storage/shm_toc.h"
 #include "storage/spin.h"

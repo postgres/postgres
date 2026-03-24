@@ -22,8 +22,9 @@
  */
 #include "postgres.h"
 
-#include "storage/lmgr.h"		/* for GetLockNameFromTagType */
-#include "storage/lwlock.h"		/* for GetLWLockIdentifier */
+#include "storage/lmgr.h"
+#include "storage/lwlock.h"
+#include "storage/shmem.h"
 #include "storage/spin.h"
 #include "utils/wait_event.h"
 

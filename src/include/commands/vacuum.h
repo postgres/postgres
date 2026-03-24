@@ -23,7 +23,6 @@
 #include "catalog/pg_type.h"
 #include "parser/parse_node.h"
 #include "storage/buf.h"
-#include "storage/lock.h"
 #include "utils/relcache.h"
 
 /*

@@ -77,6 +77,7 @@
 #include "rewrite/rowsecurity.h"
 #include "storage/fd.h"
 #include "storage/lmgr.h"
+#include "storage/lock.h"
 #include "storage/smgr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"

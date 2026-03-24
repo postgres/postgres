@@ -14,6 +14,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/partition.h"

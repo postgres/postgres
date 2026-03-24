@@ -30,6 +30,7 @@
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "storage/lwlock.h"
 #include "storage/read_stream.h"
 #include "utils/datum.h"
 #include "utils/fmgrprotos.h"

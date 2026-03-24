@@ -59,7 +59,7 @@ extern PGDLLIMPORT bool Debug_deadlocks;
  * coding errors from trying to use struct assignment with it; instead use
  * GET_VXID_FROM_PGPROC().
  */
-typedef struct
+typedef struct VirtualTransactionId
 {
 	ProcNumber	procNumber;		/* proc number of the PGPROC */
 	LocalTransactionId localTransactionId;	/* lxid from PGPROC */
