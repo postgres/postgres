@@ -536,7 +536,7 @@ vacuumRedirectAndPlaceholder(Relation index, Relation heaprel, Buffer buffer)
 		 */
 		if (dt->tupstate == SPGIST_REDIRECT &&
 			(!TransactionIdIsValid(dt->xid) ||
-			 GlobalVisTestIsRemovableXid(vistest, dt->xid)))
+			 GlobalVisTestIsRemovableXid(vistest, dt->xid, true)))
 		{
 			dt->tupstate = SPGIST_PLACEHOLDER;
 			Assert(opaque->nRedirection > 0);

@@ -4223,11 +4223,17 @@ GlobalVisUpdate(void)
  * The state passed needs to have been initialized for the relation fxid is
  * from (NULL is also OK), otherwise the result may not be correct.
  *
+ * If allow_update is false, the GlobalVisState boundaries will not be updated
+ * even if it would otherwise be beneficial. This is useful for callers that
+ * do not want GlobalVisState to advance at all, for example because they need
+ * a conservative answer based on the current boundaries.
+ *
  * See comment for GlobalVisState for details.
  */
 bool
 GlobalVisTestIsRemovableFullXid(GlobalVisState *state,
-								FullTransactionId fxid)
+								FullTransactionId fxid,
+								bool allow_update)
 {
 	/*
 	 * If fxid is older than maybe_needed bound, it definitely is visible to
@@ -4248,7 +4254,7 @@ GlobalVisTestIsRemovableFullXid(GlobalVisState *state,
 	 * might not exist a snapshot considering fxid running. If it makes sense,
 	 * update boundaries and recheck.
 	 */
-	if (GlobalVisTestShouldUpdate(state))
+	if (allow_update && GlobalVisTestShouldUpdate(state))
 	{
 		GlobalVisUpdate();
 
@@ -4268,7 +4274,8 @@ GlobalVisTestIsRemovableFullXid(GlobalVisState *state,
  * relfrozenxid).
  */
 bool
-GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid)
+GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid,
+							bool allow_update)
 {
 	FullTransactionId fxid;
 
@@ -4282,7 +4289,33 @@ GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid)
 	 */
 	fxid = FullXidRelativeTo(state->definitely_needed, xid);
 
-	return GlobalVisTestIsRemovableFullXid(state, fxid);
+	return GlobalVisTestIsRemovableFullXid(state, fxid, allow_update);
+}
+
+/*
+ * Wrapper around GlobalVisTestIsRemovableXid() for use when examining live
+ * tuples. Returns true if the given XID may be considered running by at least
+ * one snapshot.
+ *
+ * This function alone is insufficient to determine tuple visibility; callers
+ * must also consider the XID's commit status. Its purpose is purely semantic:
+ * when applied to live tuples, GlobalVisTestIsRemovableXid() is checking
+ * whether the inserting transaction is still considered running, not whether
+ * the tuple is removable. Live tuples are, by definition, not removable, but
+ * the snapshot criteria for "transaction still running" are identical to
+ * those used for removal XIDs.
+ *
+ * If allow_update is true, the GlobalVisState boundaries may be updated. If
+ * it is false, they definitely will not be updated.
+ *
+ * See the comment above GlobalVisTestIsRemovable[Full]Xid() for details on
+ * the required preconditions for calling this function.
+ */
+bool
+GlobalVisTestXidConsideredRunning(GlobalVisState *state, TransactionId xid,
+								  bool allow_update)
+{
+	return !GlobalVisTestIsRemovableXid(state, xid, allow_update);
 }
 
 /*
@@ -4296,7 +4329,7 @@ GlobalVisCheckRemovableFullXid(Relation rel, FullTransactionId fxid)
 
 	state = GlobalVisTestFor(rel);
 
-	return GlobalVisTestIsRemovableFullXid(state, fxid);
+	return GlobalVisTestIsRemovableFullXid(state, fxid, true);
 }
 
 /*
@@ -4310,7 +4343,7 @@ GlobalVisCheckRemovableXid(Relation rel, TransactionId xid)
 
 	state = GlobalVisTestFor(rel);
 
-	return GlobalVisTestIsRemovableXid(state, xid);
+	return GlobalVisTestIsRemovableXid(state, xid, true);
 }
 
 /*
