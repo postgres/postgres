@@ -1929,32 +1929,42 @@ lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf, BlockNumber blkno,
 		 */
 		if (!PageIsAllVisible(page))
 		{
+			/* Lock vmbuffer before entering critical section */
+			LockBuffer(vmbuffer, BUFFER_LOCK_EXCLUSIVE);
+
 			START_CRIT_SECTION();
 
 			/* mark buffer dirty before writing a WAL record */
 			MarkBufferDirty(buf);
 
-			/*
-			 * It's possible that another backend has extended the heap,
-			 * initialized the page, and then failed to WAL-log the page due
-			 * to an ERROR.  Since heap extension is not WAL-logged, recovery
-			 * might try to replay our record setting the page all-visible and
-			 * find that the page isn't initialized, which will cause a PANIC.
-			 * To prevent that, check whether the page has been previously
-			 * WAL-logged, and if not, do that now.
-			 */
-			if (RelationNeedsWAL(vacrel->rel) &&
-				!XLogRecPtrIsValid(PageGetLSN(page)))
-				log_newpage_buffer(buf, true);
-
 			PageSetAllVisible(page);
 			PageClearPrunable(page);
-			visibilitymap_set(vacrel->rel, blkno, buf,
-							  InvalidXLogRecPtr,
-							  vmbuffer, InvalidTransactionId,
-							  VISIBILITYMAP_ALL_VISIBLE |
-							  VISIBILITYMAP_ALL_FROZEN);
+			visibilitymap_set_vmbits(blkno,
+									 vmbuffer,
+									 VISIBILITYMAP_ALL_VISIBLE |
+									 VISIBILITYMAP_ALL_FROZEN,
+									 vacrel->rel->rd_locator);
+
+			/*
+			 * Emit WAL for setting PD_ALL_VISIBLE on the heap page and
+			 * setting the VM.
+			 */
+			if (RelationNeedsWAL(vacrel->rel))
+				log_heap_prune_and_freeze(vacrel->rel, buf,
+										  vmbuffer,
+										  VISIBILITYMAP_ALL_VISIBLE |
+										  VISIBILITYMAP_ALL_FROZEN,
+										  InvalidTransactionId, /* conflict xid */
+										  false,	/* cleanup lock */
+										  PRUNE_VACUUM_SCAN,	/* reason */
+										  NULL, 0,
+										  NULL, 0,
+										  NULL, 0,
+										  NULL, 0);
+
 			END_CRIT_SECTION();
+
+			LockBuffer(vmbuffer, BUFFER_LOCK_UNLOCK);
 
 			/* Count the newly all-frozen pages for logging */
 			vacrel->new_all_visible_pages++;

@@ -2541,6 +2541,8 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	uint8		info;
 	uint8		regbuf_flags_heap;
 
+	Page		heap_page = BufferGetPage(buffer);
+
 	/* The following local variables hold data registered in the WAL record: */
 	xlhp_freeze_plan plans[MaxHeapTuplesPerPage];
 	xlhp_freeze_plans freeze_plans;
@@ -2550,6 +2552,7 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	OffsetNumber frz_offsets[MaxHeapTuplesPerPage];
 	bool		do_prune = nredirected > 0 || ndead > 0 || nunused > 0;
 	bool		do_set_vm = vmflags & VISIBILITYMAP_VALID_BITS;
+	bool		heap_fpi_allowed = true;
 
 	Assert((vmflags & VISIBILITYMAP_VALID_BITS) == vmflags);
 
@@ -2559,15 +2562,22 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	/*
 	 * We can avoid an FPI of the heap page if the only modification we are
 	 * making to it is to set PD_ALL_VISIBLE and checksums/wal_log_hints are
-	 * disabled. Note that if we explicitly skip an FPI, we must not stamp the
-	 * heap page with this record's LSN. Recovery skips records <= the stamped
-	 * LSN, so this could lead to skipping an earlier FPI needed to repair a
-	 * torn page.
+	 * disabled.
+	 *
+	 * However, if the page has never been WAL-logged (LSN is invalid), we
+	 * must force an FPI regardless.  This can happen when another backend
+	 * extends the heap, initializes the page, and then fails before WAL-
+	 * logging it.  Since heap extension is not WAL-logged, recovery might try
+	 * to replay our record and find that the page isn't initialized, which
+	 * would cause a PANIC.
 	 */
-	if (!do_prune &&
-		nfrozen == 0 &&
-		(!do_set_vm || !XLogHintBitIsNeeded()))
+	if (!XLogRecPtrIsValid(PageGetLSN(heap_page)))
+		regbuf_flags_heap |= REGBUF_FORCE_IMAGE;
+	else if (!do_prune && nfrozen == 0 && (!do_set_vm || !XLogHintBitIsNeeded()))
+	{
 		regbuf_flags_heap |= REGBUF_NO_IMAGE;
+		heap_fpi_allowed = false;
+	}
 
 	/*
 	 * Prepare data for the buffer.  The arrays are not actually in the
@@ -2681,12 +2691,13 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	}
 
 	/*
-	 * See comment at the top of the function about regbuf_flags_heap for
-	 * details on when we can advance the page LSN.
+	 * If we explicitly skip an FPI, we must not stamp the heap page with this
+	 * record's LSN. Recovery skips records <= the stamped LSN, so this could
+	 * lead to skipping an earlier FPI needed to repair a torn page.
 	 */
-	if (do_prune || nfrozen > 0 || (do_set_vm && XLogHintBitIsNeeded()))
+	if (heap_fpi_allowed)
 	{
 		Assert(BufferIsDirty(buffer));
-		PageSetLSN(BufferGetPage(buffer), recptr);
+		PageSetLSN(heap_page, recptr);
 	}
 }
