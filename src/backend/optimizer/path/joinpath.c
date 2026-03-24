@@ -729,8 +729,13 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	 * than one inner scan.  The first scan is always going to be a cache
 	 * miss.  This would likely fail later anyway based on costs, so this is
 	 * really just to save some wasted effort.
+	 *
+	 * However, if the "plain nested loop" strategy is disabled, then it is no
+	 * longer certain that any path we'd construct here would lose on cost.
+	 * So, in that case, continue and let cost comparison sort things out.
 	 */
-	if (outer_path->parent->rows < 2)
+	if (outer_path->parent->rows < 2 &&
+		(extra->pgs_mask & PGS_NESTLOOP_PLAIN) != 0)
 		return NULL;
 
 	/*
