@@ -1741,6 +1741,42 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 									wal_stats->stat_reset_timestamp));
 }
 
+Datum
+pg_stat_get_lock(PG_FUNCTION_ARGS)
+{
+#define PG_STAT_LOCK_COLS	5
+	ReturnSetInfo *rsinfo;
+	PgStat_Lock *lock_stats;
+
+	InitMaterializedSRF(fcinfo, 0);
+	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	lock_stats = pgstat_fetch_stat_lock();
+
+	for (int lcktype = 0; lcktype <= LOCKTAG_LAST_TYPE; lcktype++)
+	{
+		const char *locktypename;
+		Datum		values[PG_STAT_LOCK_COLS] = {0};
+		bool		nulls[PG_STAT_LOCK_COLS] = {0};
+		PgStat_LockEntry *lck_stats = &lock_stats->stats[lcktype];
+		int			i = 0;
+
+		locktypename = LockTagTypeNames[lcktype];
+
+		values[i++] = CStringGetTextDatum(locktypename);
+		values[i++] = Int64GetDatum(lck_stats->waits);
+		values[i++] = Int64GetDatum(lck_stats->wait_time);
+		values[i++] = Int64GetDatum(lck_stats->fastpath_exceeded);
+		values[i] = TimestampTzGetDatum(lock_stats->stat_reset_timestamp);
+
+		Assert(i + 1 == PG_STAT_LOCK_COLS);
+
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
+	}
+
+	return (Datum) 0;
+}
+
 /*
  * Returns statistics of SLRU caches.
  */
@@ -1925,6 +1961,7 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 		pgstat_reset_of_kind(PGSTAT_KIND_BGWRITER);
 		pgstat_reset_of_kind(PGSTAT_KIND_CHECKPOINTER);
 		pgstat_reset_of_kind(PGSTAT_KIND_IO);
+		pgstat_reset_of_kind(PGSTAT_KIND_LOCK);
 		XLogPrefetchResetStats();
 		pgstat_reset_of_kind(PGSTAT_KIND_SLRU);
 		pgstat_reset_of_kind(PGSTAT_KIND_WAL);
@@ -1942,6 +1979,8 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 		pgstat_reset_of_kind(PGSTAT_KIND_CHECKPOINTER);
 	else if (strcmp(target, "io") == 0)
 		pgstat_reset_of_kind(PGSTAT_KIND_IO);
+	else if (strcmp(target, "lock") == 0)
+		pgstat_reset_of_kind(PGSTAT_KIND_LOCK);
 	else if (strcmp(target, "recovery_prefetch") == 0)
 		XLogPrefetchResetStats();
 	else if (strcmp(target, "slru") == 0)

@@ -1952,6 +1952,12 @@ pg_stat_io| SELECT backend_type,
     fsync_time,
     stats_reset
    FROM pg_stat_get_io() b(backend_type, object, context, reads, read_bytes, read_time, writes, write_bytes, write_time, writebacks, writeback_time, extends, extend_bytes, extend_time, hits, evictions, reuses, fsyncs, fsync_time, stats_reset);
+pg_stat_lock| SELECT locktype,
+    waits,
+    wait_time,
+    fastpath_exceeded,
+    stats_reset
+   FROM pg_stat_get_lock() l(locktype, waits, wait_time, fastpath_exceeded, stats_reset);
 pg_stat_progress_analyze| SELECT s.pid,
     s.datid,
     d.datname,

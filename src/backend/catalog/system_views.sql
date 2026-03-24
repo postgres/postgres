@@ -985,6 +985,15 @@ CREATE VIEW pg_stat_slru AS
             s.stats_reset
     FROM pg_stat_get_slru() s;
 
+CREATE VIEW pg_stat_lock AS
+    SELECT
+            l.locktype,
+            l.waits,
+            l.wait_time,
+            l.fastpath_exceeded,
+            l.stats_reset
+    FROM pg_stat_get_lock() l;
+
 CREATE VIEW pg_stat_wal_receiver AS
     SELECT
             s.pid,

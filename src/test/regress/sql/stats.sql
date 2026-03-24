@@ -964,4 +964,40 @@ SELECT * FROM check_estimated_rows('SELECT * FROM table_fillfactor');
 
 DROP TABLE table_fillfactor;
 
+-- Test fastpath_exceeded stat
+CREATE TABLE part_test (id int) PARTITION BY RANGE (id);
+
+SELECT pg_stat_reset_shared('lock');
+
+-- Create partitions (exceeds number of slots)
+DO $$
+DECLARE
+  max_locks int;
+BEGIN
+  SELECT setting::int INTO max_locks
+  FROM pg_settings
+  WHERE name = 'max_locks_per_transaction';
+
+  FOR i IN 1..(max_locks + 10) LOOP
+    EXECUTE format(
+      'CREATE TABLE part_test_%s PARTITION OF part_test
+       FOR VALUES FROM (%s) TO (%s)',
+      i, (i-1)*1000, i*1000
+    );
+  END LOOP;
+END;
+$$;
+
+SELECT fastpath_exceeded AS fastpath_exceeded_before FROM pg_stat_lock WHERE locktype = 'relation' \gset
+
+-- Needs a lock on each partition
+SELECT count(*) FROM part_test;
+
+-- Ensure pending stats are flushed
+SELECT pg_stat_force_next_flush();
+
+SELECT fastpath_exceeded > :fastpath_exceeded_before FROM pg_stat_lock WHERE locktype = 'relation';
+
+DROP TABLE part_test;
+
 -- End of Stats Test

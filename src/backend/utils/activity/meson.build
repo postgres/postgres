@@ -11,6 +11,7 @@ backend_sources += files(
   'pgstat_database.c',
   'pgstat_function.c',
   'pgstat_io.c',
+  'pgstat_lock.c',
   'pgstat_relation.c',
   'pgstat_replslot.c',
   'pgstat_shmem.c',

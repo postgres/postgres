@@ -1549,8 +1549,9 @@ ProcSleep(LOCALLOCK *locallock)
 		}
 
 		/*
-		 * If awoken after the deadlock check interrupt has run, and
-		 * log_lock_waits is on, then report about the wait.
+		 * If awoken after the deadlock check interrupt has run, increment the
+		 * lock statistics counters and if log_lock_waits is on, then report
+		 * about the wait.
 		 */
 		if (deadlock_state != DS_NOT_YET_CHECKED)
 		{
@@ -1563,6 +1564,10 @@ ProcSleep(LOCALLOCK *locallock)
 								&secs, &usecs);
 			msecs = secs * 1000 + usecs / 1000;
 			usecs = usecs % 1000;
+
+			/* Increment the lock statistics counters if done waiting. */
+			if (myWaitStatus == PROC_WAIT_STATUS_OK)
+				pgstat_count_lock_waits(locallock->tag.lock.locktag_type, msecs);
 
 			if (log_lock_waits)
 			{

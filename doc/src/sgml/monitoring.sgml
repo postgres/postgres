@@ -510,6 +510,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_lock</structname><indexterm><primary>pg_stat_lock</primary></indexterm></entry>
+      <entry>
+       One row for each lock type, containing cluster-wide locks statistics.
+       See <link linkend="monitoring-pg-stat-lock-view">
+       <structname>pg_stat_lock</structname></link> for details.
+     </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_replication_slots</structname><indexterm><primary>pg_stat_replication_slots</primary></indexterm></entry>
       <entry>One row per replication slot, showing statistics about the
        replication slot's usage. See
@@ -3283,6 +3292,101 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
  </sect2>
 
+
+ <sect2 id="monitoring-pg-stat-lock-view">
+  <title><structname>pg_stat_lock</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_lock</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_lock</structname> view will contain one row for each
+   lock type, showing cluster-wide locks statistics.
+  </para>
+
+  <table id="pg-stat-lock-view" xreflabel="pg_stat_lock">
+   <title><structname>pg_stat_lock</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        Column Type
+       </para>
+       <para>
+        Description
+       </para>
+      </entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>locktype</structfield> <type>text</type>
+       </para>
+       <para>
+        Type of the lockable object. See <link linkend="view-pg-locks">
+        <structname>pg_locks</structname></link> for details.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>waits</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of times a lock of this type had to wait because of a
+        conflicting lock. Only incremented when the lock was successfully
+        acquired after waiting longer than <xref linkend="guc-deadlock-timeout"/>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>wait_time</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Total time spent waiting for locks of this type, in milliseconds.
+        Only incremented when the lock was successfully acquired after waiting
+        longer than <xref linkend="guc-deadlock-timeout"/>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>fastpath_exceeded</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of times a lock of this type could not be acquired via fast path
+        because the fast path slot limit was exceeded. Increasing
+        <xref linkend="guc-max-locks-per-transaction"/> can reduce this number.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset.
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
  <sect2 id="monitoring-pg-stat-bgwriter-view">
   <title><structname>pg_stat_bgwriter</structname></title>
 
@@ -5370,6 +5474,12 @@ description | Waiting for a newly initialized WAL file to reach durable storage
          <para>
           <literal>io</literal>: Reset all the counters shown in the
           <structname>pg_stat_io</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>lock</literal>: Reset all the counters shown in the
+          <structname>pg_stat_lock</structname> view.
          </para>
         </listitem>
         <listitem>
