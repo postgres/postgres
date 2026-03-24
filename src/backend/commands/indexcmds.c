@@ -1116,7 +1116,8 @@ DefineIndex(Oid tableId,
 					 errmsg("index creation on system columns is not supported")));
 
 
-		if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+		if (attno > 0 &&
+			TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
 			ereport(ERROR,
 					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					stmt->primary ?
@@ -1157,7 +1158,8 @@ DefineIndex(Oid tableId,
 		{
 			AttrNumber	attno = j + FirstLowInvalidHeapAttributeNumber;
 
-			if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+			if (attno > 0 &&
+				TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 stmt->isconstraint ?
