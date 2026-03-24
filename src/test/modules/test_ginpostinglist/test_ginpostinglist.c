@@ -72,12 +72,12 @@ test_itemptr_pair(BlockNumber blk, OffsetNumber off, int maxsize)
 			 ItemPointerGetOffsetNumber(&decoded_itemptrs[0]));
 
 	if (ndecoded == 2 &&
-		!ItemPointerEquals(&orig_itemptrs[0], &decoded_itemptrs[0]))
+		!ItemPointerEquals(&orig_itemptrs[1], &decoded_itemptrs[1]))
 	{
 		elog(ERROR, "mismatch on second itemptr: (%u, %d) vs (%u, %d)",
-			 0, 1,
-			 ItemPointerGetBlockNumber(&decoded_itemptrs[0]),
-			 ItemPointerGetOffsetNumber(&decoded_itemptrs[0]));
+			 blk, off,
+			 ItemPointerGetBlockNumber(&decoded_itemptrs[1]),
+			 ItemPointerGetOffsetNumber(&decoded_itemptrs[1]));
 	}
 }
 
