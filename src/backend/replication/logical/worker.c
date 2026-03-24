@@ -5043,7 +5043,6 @@ apply_worker_exit(void)
 void
 maybe_reread_subscription(void)
 {
-	MemoryContext oldctx;
 	Subscription *newsub;
 	bool		started_tx = false;
 
@@ -5058,17 +5057,18 @@ maybe_reread_subscription(void)
 		started_tx = true;
 	}
 
-	/* Ensure allocations in permanent context. */
-	oldctx = MemoryContextSwitchTo(ApplyContext);
-
 	newsub = GetSubscription(MyLogicalRepWorker->subid, true, true);
 
-	/*
-	 * Exit if the subscription was removed. This normally should not happen
-	 * as the worker gets killed during DROP SUBSCRIPTION.
-	 */
-	if (!newsub)
+	if (newsub)
 	{
+		MemoryContextSetParent(newsub->cxt, ApplyContext);
+	}
+	else
+	{
+		/*
+		 * Exit if the subscription was removed. This normally should not
+		 * happen as the worker gets killed during DROP SUBSCRIPTION.
+		 */
 		ereport(LOG,
 				(errmsg("logical replication worker for subscription \"%s\" will stop because the subscription was removed",
 						MySubscription->name)));
@@ -5151,10 +5151,8 @@ maybe_reread_subscription(void)
 	}
 
 	/* Clean old subscription info and switch to new one. */
-	FreeSubscription(MySubscription);
+	MemoryContextDelete(MySubscription->cxt);
 	MySubscription = newsub;
-
-	MemoryContextSwitchTo(oldctx);
 
 	/* Change synchronous commit according to the user's wishes */
 	SetConfigOption("synchronous_commit", MySubscription->synccommit,
@@ -5779,8 +5777,6 @@ run_apply_worker(void)
 void
 InitializeLogRepWorker(void)
 {
-	MemoryContext oldctx;
-
 	/* Run as replica session replication role. */
 	SetConfigOption("session_replication_role", "replica",
 					PGC_SUSET, PGC_S_OVERRIDE);
@@ -5796,12 +5792,11 @@ InitializeLogRepWorker(void)
 	 */
 	SetConfigOption("search_path", "", PGC_SUSET, PGC_S_OVERRIDE);
 
-	/* Load the subscription into persistent memory context. */
 	ApplyContext = AllocSetContextCreate(TopMemoryContext,
 										 "ApplyContext",
 										 ALLOCSET_DEFAULT_SIZES);
+
 	StartTransactionCommand();
-	oldctx = MemoryContextSwitchTo(ApplyContext);
 
 	/*
 	 * Lock the subscription to prevent it from being concurrently dropped,
@@ -5810,8 +5805,14 @@ InitializeLogRepWorker(void)
 	 */
 	LockSharedObject(SubscriptionRelationId, MyLogicalRepWorker->subid, 0,
 					 AccessShareLock);
+
 	MySubscription = GetSubscription(MyLogicalRepWorker->subid, true, true);
-	if (!MySubscription)
+
+	if (MySubscription)
+	{
+		MemoryContextSetParent(MySubscription->cxt, ApplyContext);
+	}
+	else
 	{
 		ereport(LOG,
 				(errmsg("logical replication worker for subscription %u will not start because the subscription was removed during startup",
@@ -5825,7 +5826,6 @@ InitializeLogRepWorker(void)
 	}
 
 	MySubscriptionValid = true;
-	MemoryContextSwitchTo(oldctx);
 
 	if (!MySubscription->enabled)
 	{

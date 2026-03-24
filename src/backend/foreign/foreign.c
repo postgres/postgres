@@ -220,62 +220,32 @@ GetForeignServerByName(const char *srvname, bool missing_ok)
 
 /*
  * Retrieve connection string from server's FDW.
+ *
+ * NB: leaks into CurrentMemoryContext.
  */
 char *
 ForeignServerConnectionString(Oid userid, Oid serverid)
 {
-	MemoryContext tempContext;
-	MemoryContext oldcxt;
-	text	   *volatile connection_text = NULL;
-	char	   *result = NULL;
+	ForeignServer *server;
+	ForeignDataWrapper *fdw;
+	Datum		connection_datum;
 
-	/*
-	 * GetForeignServer, GetForeignDataWrapper, and the connection function
-	 * itself all leak memory into CurrentMemoryContext. Switch to a temporary
-	 * context for easy cleanup.
-	 */
-	tempContext = AllocSetContextCreate(CurrentMemoryContext,
-										"FDWConnectionContext",
-										ALLOCSET_SMALL_SIZES);
+	server = GetForeignServer(serverid);
+	fdw = GetForeignDataWrapper(server->fdwid);
 
-	oldcxt = MemoryContextSwitchTo(tempContext);
+	if (!OidIsValid(fdw->fdwconnection))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("foreign data wrapper \"%s\" does not support subscription connections",
+						fdw->fdwname),
+				 errdetail("Foreign data wrapper must be defined with CONNECTION specified.")));
 
-	PG_TRY();
-	{
-		ForeignServer *server;
-		ForeignDataWrapper *fdw;
-		Datum		connection_datum;
+	connection_datum = OidFunctionCall3(fdw->fdwconnection,
+										ObjectIdGetDatum(userid),
+										ObjectIdGetDatum(serverid),
+										PointerGetDatum(NULL));
 
-		server = GetForeignServer(serverid);
-		fdw = GetForeignDataWrapper(server->fdwid);
-
-		if (!OidIsValid(fdw->fdwconnection))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("foreign data wrapper \"%s\" does not support subscription connections",
-							fdw->fdwname),
-					 errdetail("Foreign data wrapper must be defined with CONNECTION specified.")));
-
-
-		connection_datum = OidFunctionCall3(fdw->fdwconnection,
-											ObjectIdGetDatum(userid),
-											ObjectIdGetDatum(serverid),
-											PointerGetDatum(NULL));
-
-		connection_text = DatumGetTextPP(connection_datum);
-	}
-	PG_FINALLY();
-	{
-		MemoryContextSwitchTo(oldcxt);
-
-		if (connection_text)
-			result = text_to_cstring((text *) connection_text);
-
-		MemoryContextDelete(tempContext);
-	}
-	PG_END_TRY();
-
-	return result;
+	return text_to_cstring(DatumGetTextPP(connection_datum));
 }
 
 

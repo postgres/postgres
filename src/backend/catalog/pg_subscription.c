@@ -32,6 +32,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -80,6 +81,8 @@ GetSubscription(Oid subid, bool missing_ok, bool aclcheck)
 	Form_pg_subscription subform;
 	Datum		datum;
 	bool		isnull;
+	MemoryContext cxt;
+	MemoryContext oldcxt;
 
 	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
 
@@ -91,9 +94,14 @@ GetSubscription(Oid subid, bool missing_ok, bool aclcheck)
 		elog(ERROR, "cache lookup failed for subscription %u", subid);
 	}
 
+	cxt = AllocSetContextCreate(CurrentMemoryContext, "subscription",
+								ALLOCSET_SMALL_SIZES);
+	oldcxt = MemoryContextSwitchTo(cxt);
+
 	subform = (Form_pg_subscription) GETSTRUCT(tup);
 
 	sub = palloc_object(Subscription);
+	sub->cxt = cxt;
 	sub->oid = subid;
 	sub->dbid = subform->subdbid;
 	sub->skiplsn = subform->subskiplsn;
@@ -181,6 +189,8 @@ GetSubscription(Oid subid, bool missing_ok, bool aclcheck)
 
 	ReleaseSysCache(tup);
 
+	MemoryContextSwitchTo(oldcxt);
+
 	return sub;
 }
 
@@ -215,20 +225,6 @@ CountDBSubscriptions(Oid dbid)
 	table_close(rel, NoLock);
 
 	return nsubs;
-}
-
-/*
- * Free memory allocated by subscription struct.
- */
-void
-FreeSubscription(Subscription *sub)
-{
-	pfree(sub->name);
-	pfree(sub->conninfo);
-	if (sub->slotname)
-		pfree(sub->slotname);
-	list_free_deep(sub->publications);
-	pfree(sub);
 }
 
 /*
