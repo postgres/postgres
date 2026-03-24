@@ -1390,14 +1390,21 @@ XLogReaderResetError(XLogReaderState *state)
  *
  * This positions the reader, like XLogBeginRead(), so that the next call to
  * XLogReadRecord() will read the next valid record.
+ *
+ * On failure, InvalidXLogRecPtr is returned, and *errormsg is set to a string
+ * with details of the failure.
+ *
+ * When set, *errormsg points to an internal buffer that's valid until the next
+ * call to XLogReadRecord.
  */
 XLogRecPtr
-XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
+XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 {
 	XLogRecPtr	tmpRecPtr;
 	XLogRecPtr	found = InvalidXLogRecPtr;
 	XLogPageHeader header;
-	char	   *errormsg;
+
+	*errormsg = NULL;
 
 	Assert(XLogRecPtrIsValid(RecPtr));
 
@@ -1482,7 +1489,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	 * or we just jumped over the remaining data of a continuation.
 	 */
 	XLogBeginRead(state, tmpRecPtr);
-	while (XLogReadRecord(state, &errormsg) != NULL)
+	while (XLogReadRecord(state, errormsg) != NULL)
 	{
 		/* past the record we've found, break out */
 		if (RecPtr <= state->ReadRecPtr)
@@ -1496,6 +1503,17 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 
 err:
 	XLogReaderInvalReadState(state);
+
+	/*
+	 * We may have reported errors due to invalid WAL header, propagate the
+	 * error message to the caller.
+	 */
+	if (state->errormsg_deferred)
+	{
+		if (state->errormsg_buf[0] != '\0')
+			*errormsg = state->errormsg_buf;
+		state->errormsg_deferred = false;
+	}
 
 	return InvalidXLogRecPtr;
 }

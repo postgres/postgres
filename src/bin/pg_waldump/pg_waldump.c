@@ -1384,11 +1384,17 @@ main(int argc, char **argv)
 		pg_fatal("out of memory while allocating a WAL reading processor");
 
 	/* first find a valid recptr to start from */
-	first_record = XLogFindNextRecord(xlogreader_state, private.startptr);
+	first_record = XLogFindNextRecord(xlogreader_state, private.startptr, &errormsg);
 
 	if (!XLogRecPtrIsValid(first_record))
-		pg_fatal("could not find a valid record after %X/%08X",
-				 LSN_FORMAT_ARGS(private.startptr));
+	{
+		if (errormsg)
+			pg_fatal("could not find a valid record after %X/%08X: %s",
+					 LSN_FORMAT_ARGS(private.startptr), errormsg);
+		else
+			pg_fatal("could not find a valid record after %X/%08X",
+					 LSN_FORMAT_ARGS(private.startptr));
+	}
 
 	/*
 	 * Display a message that we're skipping data if `from` wasn't a pointer

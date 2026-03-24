@@ -915,6 +915,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	WalSummaryIO io;
 	BlockRefTable *brtab = CreateEmptyBlockRefTable();
 	bool		fast_forward = true;
+	char	   *errormsg;
 
 	/* Initialize private data for xlogreader. */
 	private_data = palloc0_object(SummarizerReadLocalXLogPrivate);
@@ -966,7 +967,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	}
 	else
 	{
-		summary_start_lsn = XLogFindNextRecord(xlogreader, start_lsn);
+		summary_start_lsn = XLogFindNextRecord(xlogreader, start_lsn, &errormsg);
 		if (!XLogRecPtrIsValid(summary_start_lsn))
 		{
 			/*
@@ -995,9 +996,16 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 				switch_lsn = xlogreader->EndRecPtr;
 			}
 			else
-				ereport(ERROR,
-						errmsg("could not find a valid record after %X/%08X",
-							   LSN_FORMAT_ARGS(start_lsn)));
+			{
+				if (errormsg)
+					ereport(ERROR,
+							errmsg("could not find a valid record after %X/%08X: %s",
+								   LSN_FORMAT_ARGS(start_lsn), errormsg));
+				else
+					ereport(ERROR,
+							errmsg("could not find a valid record after %X/%08X",
+								   LSN_FORMAT_ARGS(start_lsn)));
+			}
 		}
 
 		/* We shouldn't go backward. */
@@ -1010,7 +1018,6 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	while (1)
 	{
 		int			block_id;
-		char	   *errormsg;
 		XLogRecord *record;
 		uint8		rmid;
 
