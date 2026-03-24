@@ -123,6 +123,9 @@ GetSubscription(Oid subid, bool missing_ok, bool aclcheck)
 	if (OidIsValid(subform->subserver))
 	{
 		AclResult	aclresult;
+		ForeignServer *server;
+
+		server = GetForeignServer(subform->subserver);
 
 		/* recheck ACL if requested */
 		if (aclcheck)
@@ -136,11 +139,11 @@ GetSubscription(Oid subid, bool missing_ok, bool aclcheck)
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
 								GetUserNameFromId(subform->subowner, false),
-								ForeignServerName(subform->subserver))));
+								server->servername)));
 		}
 
 		sub->conninfo = ForeignServerConnectionString(subform->subowner,
-													  subform->subserver);
+													  server);
 	}
 	else
 	{
