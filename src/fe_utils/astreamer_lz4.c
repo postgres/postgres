@@ -288,6 +288,8 @@ astreamer_lz4_decompressor_new(astreamer *next)
 
 	streamer->base.bbs_next = next;
 	initStringInfo(&streamer->base.bbs_buffer);
+	/* Use a buffer size comparable to the compressor's */
+	enlargeStringInfo(&streamer->base.bbs_buffer, 256 * 1024 - 1);
 
 	/* Initialize internal stream state for decompression */
 	ctxError = LZ4F_createDecompressionContext(&streamer->dctx, LZ4F_VERSION);

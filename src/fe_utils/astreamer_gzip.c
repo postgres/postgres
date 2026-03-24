@@ -247,6 +247,8 @@ astreamer_gzip_decompressor_new(astreamer *next)
 
 	streamer->base.bbs_next = next;
 	initStringInfo(&streamer->base.bbs_buffer);
+	/* Use a buffer size comparable to the other decompressors */
+	enlargeStringInfo(&streamer->base.bbs_buffer, 256 * 1024 - 1);
 
 	/* Initialize internal stream state for decompression */
 	zs = &streamer->zstream;
