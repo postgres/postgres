@@ -3401,7 +3401,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					PLpgSQL_var *var = (PLpgSQL_var *) retvar;
 					Datum		retval = var->value;
 					bool		isNull = var->isnull;
-					Form_pg_attribute attr = TupleDescAttr(tupdesc, 0);
+					Form_pg_attribute attr;
 
 					if (natts != 1)
 						ereport(ERROR,
@@ -3414,6 +3414,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 														var->datatype->typlen);
 
 					/* coerce type if needed */
+					attr = TupleDescAttr(tupdesc, 0);
 					retval = exec_cast_value(estate,
 											 retval,
 											 &isNull,
@@ -3532,7 +3533,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		}
 		else
 		{
-			Form_pg_attribute attr = TupleDescAttr(tupdesc, 0);
+			Form_pg_attribute attr;
 
 			/* Simple scalar result */
 			if (natts != 1)
@@ -3541,6 +3542,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 						 errmsg("wrong result type supplied in RETURN NEXT")));
 
 			/* coerce type if needed */
+			attr = TupleDescAttr(tupdesc, 0);
 			retval = exec_cast_value(estate,
 									 retval,
 									 &isNull,
