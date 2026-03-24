@@ -349,13 +349,6 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 			}
 		}
 	}
-	else if (info == XLOG_HEAP2_VISIBLE)
-	{
-		xl_heap_visible *xlrec = (xl_heap_visible *) rec;
-
-		appendStringInfo(buf, "snapshotConflictHorizon: %u, flags: 0x%02X",
-						 xlrec->snapshotConflictHorizon, xlrec->flags);
-	}
 	else if (info == XLOG_HEAP2_MULTI_INSERT)
 	{
 		xl_heap_multi_insert *xlrec = (xl_heap_multi_insert *) rec;
@@ -460,9 +453,6 @@ heap2_identify(uint8 info)
 			break;
 		case XLOG_HEAP2_PRUNE_VACUUM_CLEANUP:
 			id = "PRUNE_VACUUM_CLEANUP";
-			break;
-		case XLOG_HEAP2_VISIBLE:
-			id = "VISIBLE";
 			break;
 		case XLOG_HEAP2_MULTI_INSERT:
 			id = "MULTI_INSERT";

@@ -239,7 +239,7 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 		if (PageIsNew(vmpage))
 			PageInit(vmpage, BLCKSZ, 0);
 
-		visibilitymap_set_vmbits(blkno, vmbuffer, vmflags, rlocator);
+		visibilitymap_set(blkno, vmbuffer, vmflags, rlocator);
 
 		Assert(BufferIsDirty(vmbuffer));
 		PageSetLSN(vmpage, lsn);
@@ -250,143 +250,6 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 
 	if (freespace > 0)
 		XLogRecordPageWithFreeSpace(rlocator, blkno, freespace);
-}
-
-/*
- * Replay XLOG_HEAP2_VISIBLE records.
- *
- * The critical integrity requirement here is that we must never end up with
- * a situation where the visibility map bit is set, and the page-level
- * PD_ALL_VISIBLE bit is clear.  If that were to occur, then a subsequent
- * page modification would fail to clear the visibility map bit.
- */
-static void
-heap_xlog_visible(XLogReaderState *record)
-{
-	XLogRecPtr	lsn = record->EndRecPtr;
-	xl_heap_visible *xlrec = (xl_heap_visible *) XLogRecGetData(record);
-	Buffer		vmbuffer = InvalidBuffer;
-	Buffer		buffer;
-	Page		page;
-	RelFileLocator rlocator;
-	BlockNumber blkno;
-	XLogRedoAction action;
-
-	Assert((xlrec->flags & VISIBILITYMAP_XLOG_VALID_BITS) == xlrec->flags);
-
-	XLogRecGetBlockTag(record, 1, &rlocator, NULL, &blkno);
-
-	/*
-	 * If there are any Hot Standby transactions running that have an xmin
-	 * horizon old enough that this page isn't all-visible for them, they
-	 * might incorrectly decide that an index-only scan can skip a heap fetch.
-	 *
-	 * NB: It might be better to throw some kind of "soft" conflict here that
-	 * forces any index-only scan that is in flight to perform heap fetches,
-	 * rather than killing the transaction outright.
-	 */
-	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(xlrec->snapshotConflictHorizon,
-											xlrec->flags & VISIBILITYMAP_XLOG_CATALOG_REL,
-											rlocator);
-
-	/*
-	 * Read the heap page, if it still exists. If the heap file has dropped or
-	 * truncated later in recovery, we don't need to update the page, but we'd
-	 * better still update the visibility map.
-	 */
-	action = XLogReadBufferForRedo(record, 1, &buffer);
-	if (action == BLK_NEEDS_REDO)
-	{
-		/*
-		 * We don't bump the LSN of the heap page when setting the visibility
-		 * map bit (unless checksums or wal_hint_bits is enabled, in which
-		 * case we must). This exposes us to torn page hazards, but since
-		 * we're not inspecting the existing page contents in any way, we
-		 * don't care.
-		 */
-		page = BufferGetPage(buffer);
-
-		PageSetAllVisible(page);
-		PageClearPrunable(page);
-
-		if (XLogHintBitIsNeeded())
-			PageSetLSN(page, lsn);
-
-		MarkBufferDirty(buffer);
-	}
-	else if (action == BLK_RESTORED)
-	{
-		/*
-		 * If heap block was backed up, we already restored it and there's
-		 * nothing more to do. (This can only happen with checksums or
-		 * wal_log_hints enabled.)
-		 */
-	}
-
-	if (BufferIsValid(buffer))
-	{
-		Size		space = PageGetFreeSpace(BufferGetPage(buffer));
-
-		UnlockReleaseBuffer(buffer);
-
-		/*
-		 * Since FSM is not WAL-logged and only updated heuristically, it
-		 * easily becomes stale in standbys.  If the standby is later promoted
-		 * and runs VACUUM, it will skip updating individual free space
-		 * figures for pages that became all-visible (or all-frozen, depending
-		 * on the vacuum mode,) which is troublesome when FreeSpaceMapVacuum
-		 * propagates too optimistic free space values to upper FSM layers;
-		 * later inserters try to use such pages only to find out that they
-		 * are unusable.  This can cause long stalls when there are many such
-		 * pages.
-		 *
-		 * Forestall those problems by updating FSM's idea about a page that
-		 * is becoming all-visible or all-frozen.
-		 *
-		 * Do this regardless of a full-page image being applied, since the
-		 * FSM data is not in the page anyway.
-		 */
-		if (xlrec->flags & VISIBILITYMAP_VALID_BITS)
-			XLogRecordPageWithFreeSpace(rlocator, blkno, space);
-	}
-
-	/*
-	 * Even if we skipped the heap page update due to the LSN interlock, it's
-	 * still safe to update the visibility map.  Any WAL record that clears
-	 * the visibility map bit does so before checking the page LSN, so any
-	 * bits that need to be cleared will still be cleared.
-	 */
-	if (XLogReadBufferForRedoExtended(record, 0, RBM_ZERO_ON_ERROR, false,
-									  &vmbuffer) == BLK_NEEDS_REDO)
-	{
-		Page		vmpage = BufferGetPage(vmbuffer);
-		Relation	reln;
-		uint8		vmbits;
-
-		/* initialize the page if it was read as zeros */
-		if (PageIsNew(vmpage))
-			PageInit(vmpage, BLCKSZ, 0);
-
-		/* remove VISIBILITYMAP_XLOG_* */
-		vmbits = xlrec->flags & VISIBILITYMAP_VALID_BITS;
-
-		/*
-		 * XLogReadBufferForRedoExtended locked the buffer. But
-		 * visibilitymap_set will handle locking itself.
-		 */
-		LockBuffer(vmbuffer, BUFFER_LOCK_UNLOCK);
-
-		reln = CreateFakeRelcacheEntry(rlocator);
-
-		visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
-						  xlrec->snapshotConflictHorizon, vmbits);
-
-		ReleaseBuffer(vmbuffer);
-		FreeFakeRelcacheEntry(reln);
-	}
-	else if (BufferIsValid(vmbuffer))
-		UnlockReleaseBuffer(vmbuffer);
 }
 
 /*
@@ -769,8 +632,8 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	 *
 	 * During recovery, however, no concurrent writers exist. Therefore,
 	 * updating the VM without holding the heap page lock is safe enough. This
-	 * same approach is taken when replaying xl_heap_visible records (see
-	 * heap_xlog_visible()).
+	 * same approach is taken when replaying XLOG_HEAP2_PRUNE* records (see
+	 * heap_xlog_prune_freeze()).
 	 */
 	if ((xlrec->flags & XLH_INSERT_ALL_FROZEN_SET) &&
 		XLogReadBufferForRedoExtended(record, 1, RBM_ZERO_ON_ERROR, false,
@@ -782,11 +645,11 @@ heap_xlog_multi_insert(XLogReaderState *record)
 		if (PageIsNew(vmpage))
 			PageInit(vmpage, BLCKSZ, 0);
 
-		visibilitymap_set_vmbits(blkno,
-								 vmbuffer,
-								 VISIBILITYMAP_ALL_VISIBLE |
-								 VISIBILITYMAP_ALL_FROZEN,
-								 rlocator);
+		visibilitymap_set(blkno,
+						  vmbuffer,
+						  VISIBILITYMAP_ALL_VISIBLE |
+						  VISIBILITYMAP_ALL_FROZEN,
+						  rlocator);
 
 		Assert(BufferIsDirty(vmbuffer));
 		PageSetLSN(vmpage, lsn);
@@ -1368,9 +1231,6 @@ heap2_redo(XLogReaderState *record)
 		case XLOG_HEAP2_PRUNE_VACUUM_SCAN:
 		case XLOG_HEAP2_PRUNE_VACUUM_CLEANUP:
 			heap_xlog_prune_freeze(record);
-			break;
-		case XLOG_HEAP2_VISIBLE:
-			heap_xlog_visible(record);
 			break;
 		case XLOG_HEAP2_MULTI_INSERT:
 			heap_xlog_multi_insert(record);

@@ -2589,11 +2589,11 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		{
 			PageSetAllVisible(page);
 			PageClearPrunable(page);
-			visibilitymap_set_vmbits(BufferGetBlockNumber(buffer),
-									 vmbuffer,
-									 VISIBILITYMAP_ALL_VISIBLE |
-									 VISIBILITYMAP_ALL_FROZEN,
-									 relation->rd_locator);
+			visibilitymap_set(BufferGetBlockNumber(buffer),
+							  vmbuffer,
+							  VISIBILITYMAP_ALL_VISIBLE |
+							  VISIBILITYMAP_ALL_FROZEN,
+							  relation->rd_locator);
 		}
 
 		/*
@@ -8884,50 +8884,6 @@ bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate)
 	pfree(blockgroups);
 
 	return nblocksfavorable;
-}
-
-/*
- * Perform XLogInsert for a heap-visible operation.  'block' is the block
- * being marked all-visible, and vm_buffer is the buffer containing the
- * corresponding visibility map block.  Both should have already been modified
- * and dirtied.
- *
- * snapshotConflictHorizon comes from the largest xmin on the page being
- * marked all-visible.  REDO routine uses it to generate recovery conflicts.
- *
- * If checksums or wal_log_hints are enabled, we may also generate a full-page
- * image of heap_buffer. Otherwise, we optimize away the FPI (by specifying
- * REGBUF_NO_IMAGE for the heap buffer), in which case the caller should *not*
- * update the heap page's LSN.
- */
-XLogRecPtr
-log_heap_visible(Relation rel, Buffer heap_buffer, Buffer vm_buffer,
-				 TransactionId snapshotConflictHorizon, uint8 vmflags)
-{
-	xl_heap_visible xlrec;
-	XLogRecPtr	recptr;
-	uint8		flags;
-
-	Assert(BufferIsValid(heap_buffer));
-	Assert(BufferIsValid(vm_buffer));
-
-	xlrec.snapshotConflictHorizon = snapshotConflictHorizon;
-	xlrec.flags = vmflags;
-	if (RelationIsAccessibleInLogicalDecoding(rel))
-		xlrec.flags |= VISIBILITYMAP_XLOG_CATALOG_REL;
-	XLogBeginInsert();
-	XLogRegisterData(&xlrec, SizeOfHeapVisible);
-
-	XLogRegisterBuffer(0, vm_buffer, 0);
-
-	flags = REGBUF_STANDARD;
-	if (!XLogHintBitIsNeeded())
-		flags |= REGBUF_NO_IMAGE;
-	XLogRegisterBuffer(1, heap_buffer, flags);
-
-	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_VISIBLE);
-
-	return recptr;
 }
 
 /*

@@ -4425,7 +4425,6 @@ xl_heap_prune
 xl_heap_rewrite_mapping
 xl_heap_truncate
 xl_heap_update
-xl_heap_visible
 xl_invalid_page
 xl_invalid_page_key
 xl_invalidations
