@@ -742,11 +742,17 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
  *
  * This is intended to be used by a callback that needs to recursively
  * process subexpressions of some node being visited by an outer
- * ChangeVarNodesExtended call (not letting ChangeVarNodes_walker do that).
- * Hence, we invoke ChangeVarNodes_walker directly.  This means that if
- * the passed Node is a Query node, it will be treated as a sub-Query,
- * so sublevels_up will be incremented immediately.  Do not apply this
- * to a top-level Query node, or you'll likely get wrong results.
+ * ChangeVarNodesExtended call, instead of relying on ChangeVarNodes_walker's
+ * default recursion.  We invoke ChangeVarNodes_walker directly rather than
+ * via expression_tree_walker, because expression_tree_walker only visits
+ * child nodes and would fail to process the passed node itself --
+ * for example, a bare Var node would not get its varno adjusted.
+ *
+ * Because this calls ChangeVarNodes_walker directly, if the passed node is
+ * a Query, it will be treated as a sub-Query: sublevels_up is incremented
+ * before recursing into it, and Query-level fields (resultRelation,
+ * mergeTargetRelation, rowMarks, etc.) will not be adjusted.  Do not apply
+ * this to a top-level Query node; use ChangeVarNodesExtended for that.
  */
 bool
 ChangeVarNodesWalkExpression(Node *node, ChangeVarNodes_context *context)
