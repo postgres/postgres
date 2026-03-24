@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+#include "access/clog.h"
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xlogutils.h"
