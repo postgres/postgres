@@ -2627,7 +2627,7 @@ check_backtrace_functions(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
-	if (*newval[0] == '\0')
+	if ((*newval)[0] == '\0')
 	{
 		*extra = NULL;
 		return true;

@@ -100,7 +100,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 	 * Our check_configured callback also checks for this and prevents
 	 * archiving from proceeding if it is still empty.
 	 */
-	if (*newval == NULL || *newval[0] == '\0')
+	if (*newval == NULL || (*newval)[0] == '\0')
 		return true;
 
 	/*
