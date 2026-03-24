@@ -470,7 +470,7 @@ static void dead_items_cleanup(LVRelState *vacrel);
 static bool heap_page_is_all_visible(Relation rel, Buffer buf,
 									 GlobalVisState *vistest,
 									 bool *all_frozen,
-									 TransactionId *visibility_cutoff_xid,
+									 TransactionId *newest_live_xid,
 									 OffsetNumber *logging_offnum);
 #endif
 static bool heap_page_would_be_all_visible(Relation rel, Buffer buf,
@@ -479,7 +479,7 @@ static bool heap_page_would_be_all_visible(Relation rel, Buffer buf,
 										   OffsetNumber *deadoffsets,
 										   int ndeadoffsets,
 										   bool *all_frozen,
-										   TransactionId *visibility_cutoff_xid,
+										   TransactionId *newest_live_xid,
 										   OffsetNumber *logging_offnum);
 static void update_relstats_all_indexes(LVRelState *vacrel);
 static void vacuum_error_callback(void *arg);
@@ -2829,7 +2829,7 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 	Page		page = BufferGetPage(buffer);
 	OffsetNumber unused[MaxHeapTuplesPerPage];
 	int			nunused = 0;
-	TransactionId visibility_cutoff_xid;
+	TransactionId newest_live_xid;
 	TransactionId conflict_xid = InvalidTransactionId;
 	bool		all_frozen;
 	LVSavedErrInfo saved_err_info;
@@ -2855,14 +2855,14 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 	if (heap_page_would_be_all_visible(vacrel->rel, buffer,
 									   vacrel->vistest, true,
 									   deadoffsets, num_offsets,
-									   &all_frozen, &visibility_cutoff_xid,
+									   &all_frozen, &newest_live_xid,
 									   &vacrel->offnum))
 	{
 		vmflags |= VISIBILITYMAP_ALL_VISIBLE;
 		if (all_frozen)
 		{
 			vmflags |= VISIBILITYMAP_ALL_FROZEN;
-			Assert(!TransactionIdIsValid(visibility_cutoff_xid));
+			Assert(!TransactionIdIsValid(newest_live_xid));
 		}
 
 		/*
@@ -2903,7 +2903,7 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 		visibilitymap_set_vmbits(blkno,
 								 vmbuffer, vmflags,
 								 vacrel->rel->rd_locator);
-		conflict_xid = visibility_cutoff_xid;
+		conflict_xid = newest_live_xid;
 	}
 
 	/*
@@ -3617,7 +3617,7 @@ static bool
 heap_page_is_all_visible(Relation rel, Buffer buf,
 						 GlobalVisState *vistest,
 						 bool *all_frozen,
-						 TransactionId *visibility_cutoff_xid,
+						 TransactionId *newest_live_xid,
 						 OffsetNumber *logging_offnum)
 {
 	/*
@@ -3630,7 +3630,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 										  vistest, false,
 										  NULL, 0,
 										  all_frozen,
-										  visibility_cutoff_xid,
+										  newest_live_xid,
 										  logging_offnum);
 }
 #endif
@@ -3655,7 +3655,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
  * Output parameters:
  *
  *  - *all_frozen: true if every tuple on the page is frozen
- *  - *visibility_cutoff_xid: newest xmin; valid only if page is all-visible
+ *  - *newest_live_xid: newest xmin of live tuples on the page
  *  - *logging_offnum: OffsetNumber of current tuple being processed;
  *     used by vacuum's error callback system.
  *
@@ -3674,7 +3674,7 @@ heap_page_would_be_all_visible(Relation rel, Buffer buf,
 							   OffsetNumber *deadoffsets,
 							   int ndeadoffsets,
 							   bool *all_frozen,
-							   TransactionId *visibility_cutoff_xid,
+							   TransactionId *newest_live_xid,
 							   OffsetNumber *logging_offnum)
 {
 	Page		page = BufferGetPage(buf);
@@ -3684,7 +3684,7 @@ heap_page_would_be_all_visible(Relation rel, Buffer buf,
 	bool		all_visible = true;
 	int			matched_dead_count = 0;
 
-	*visibility_cutoff_xid = InvalidTransactionId;
+	*newest_live_xid = InvalidTransactionId;
 	*all_frozen = true;
 
 	Assert(ndeadoffsets == 0 || deadoffsets);
@@ -3773,9 +3773,9 @@ heap_page_would_be_all_visible(Relation rel, Buffer buf,
 					xmin = HeapTupleHeaderGetXmin(tuple.t_data);
 
 					/* Track newest xmin on page. */
-					if (TransactionIdFollows(xmin, *visibility_cutoff_xid) &&
+					if (TransactionIdFollows(xmin, *newest_live_xid) &&
 						TransactionIdIsNormal(xmin))
-						*visibility_cutoff_xid = xmin;
+						*newest_live_xid = xmin;
 
 					/* Check whether this tuple is already frozen or not */
 					if (all_visible && *all_frozen &&
@@ -3805,8 +3805,8 @@ heap_page_would_be_all_visible(Relation rel, Buffer buf,
 	 * cannot be all-visible.
 	 */
 	if (all_visible &&
-		TransactionIdIsNormal(*visibility_cutoff_xid) &&
-		GlobalVisTestXidConsideredRunning(vistest, *visibility_cutoff_xid,
+		TransactionIdIsNormal(*newest_live_xid) &&
+		GlobalVisTestXidConsideredRunning(vistest, *newest_live_xid,
 										  allow_update_vistest))
 	{
 		all_visible = false;

@@ -129,6 +129,9 @@ typedef struct
 	/* Bits in the vmbuffer for this heap page */
 	uint8		old_vmbits;
 
+	/* The newest xmin of live tuples on the page */
+	TransactionId newest_live_xid;
+
 	/*-------------------------------------------------------
 	 * Information about what was done
 	 *
@@ -160,14 +163,6 @@ typedef struct
 	 * all-frozen bits in the visibility map can be set for this page after
 	 * pruning.
 	 *
-	 * visibility_cutoff_xid is the newest xmin of live tuples on the page. It
-	 * is used after processing all tuples to determine if the page can be
-	 * considered all-visible (if the newest xmin is still considered running
-	 * by some snapshot, it cannot be). It is also used by the caller as the
-	 * conflict horizon when setting the VM bits, unless we froze all tuples
-	 * on the page (in which case the conflict xid was already included in the
-	 * WAL record).
-	 *
 	 * NOTE: set_all_visible and set_all_frozen initially don't include
 	 * LP_DEAD items. That's convenient for heap_page_prune_and_freeze() to
 	 * use them to decide whether to freeze the page or not.  The
@@ -177,7 +172,6 @@ typedef struct
 	 */
 	bool		set_all_visible;
 	bool		set_all_frozen;
-	TransactionId visibility_cutoff_xid;
 } PruneState;
 
 /*
@@ -458,53 +452,43 @@ prune_freeze_setup(PruneFreezeParams *params,
 	prstate->deadoffsets = presult->deadoffsets;
 
 	/*
-	 * Vacuum may update the VM after we're done.  We can keep track of
-	 * whether the page will be all-visible and all-frozen after pruning and
-	 * freezing to help the caller to do that.
+	 * We track whether the page will be all-visible/all-frozen at the end of
+	 * pruning and freezing. While examining tuple visibility, we'll set
+	 * set_all_visible to false if there are tuples on the page not visible to
+	 * all running and future transactions. set_all_visible is always
+	 * maintained but only VACUUM will set the VM if the page ends up being
+	 * all-visible.
 	 *
-	 * Currently, only VACUUM sets the VM bits.  To save the effort, only do
-	 * the bookkeeping if the caller needs it.  Currently, that's tied to
-	 * HEAP_PAGE_PRUNE_FREEZE, but it could be a separate flag if you wanted
-	 * to update the VM bits without also freezing or freeze without also
-	 * setting the VM bits.
-	 *
-	 * In addition to telling the caller whether it can set the VM bit, we
-	 * also use 'set_all_visible' and 'set_all_frozen' for our own
-	 * decision-making. If the whole page would become frozen, we consider
-	 * opportunistically freezing tuples.  We will not be able to freeze the
-	 * whole page if there are tuples present that are not visible to everyone
-	 * or if there are dead tuples which are not yet removable.  However, dead
-	 * tuples which will be removed by the end of vacuuming should not
-	 * preclude us from opportunistically freezing.  Because of that, we do
-	 * not immediately clear set_all_visible and set_all_frozen when we see
-	 * LP_DEAD items.  We fix that after scanning the line pointers. We must
-	 * correct set_all_visible and set_all_frozen before we return them to the
-	 * caller, so that the caller doesn't set the VM bits incorrectly.
+	 * We also keep track of the newest live XID, which is used to calculate
+	 * the snapshot conflict horizon for a WAL record setting the VM.
 	 */
-	if (prstate->attempt_freeze)
-	{
-		prstate->set_all_visible = true;
-		prstate->set_all_frozen = true;
-	}
-	else
-	{
-		/*
-		 * Initializing to false allows skipping the work to update them in
-		 * heap_prune_record_unchanged_lp_normal().
-		 */
-		prstate->set_all_visible = false;
-		prstate->set_all_frozen = false;
-	}
+	prstate->set_all_visible = true;
+	prstate->newest_live_xid = InvalidTransactionId;
 
 	/*
-	 * The visibility cutoff xid is the newest xmin of live tuples on the
-	 * page.  In the common case, this will be set as the conflict horizon the
-	 * caller can use for updating the VM.  If, at the end of freezing and
-	 * pruning, the page is all-frozen, there is no possibility that any
-	 * running transaction on the standby does not see tuples on the page as
-	 * all-visible, so the conflict horizon remains InvalidTransactionId.
+	 * Currently, only VACUUM performs freezing, but other callers may in the
+	 * future. We must initialize set_all_frozen based on whether or not the
+	 * caller passed HEAP_PAGE_PRUNE_FREEZE, because if they did not, we won't
+	 * call heap_prepare_freeze_tuple() for each tuple, and set_all_frozen
+	 * will never be cleared for tuples that need freezing. This would lead to
+	 * incorrectly setting the visibility map all-frozen for this page.
+	 *
+	 * When freezing is not required (no XIDs/MXIDs older than the freeze
+	 * cutoff), we may still choose to "opportunistically" freeze if doing so
+	 * would make the page all-frozen.
+	 *
+	 * We will not be able to freeze the whole page at the end of vacuum if
+	 * there are tuples present that are not visible to everyone or if there
+	 * are dead tuples which will not be removable. However, dead tuples that
+	 * will be removed by the end of vacuum should not prevent this
+	 * opportunistic freezing.
+	 *
+	 * Therefore, we do not clear set_all_visible and set_all_frozen when we
+	 * encounter LP_DEAD items. Instead, we correct them after deciding
+	 * whether to freeze, but before updating the VM, to avoid setting the VM
+	 * bits incorrectly.
 	 */
-	prstate->visibility_cutoff_xid = InvalidTransactionId;
+	prstate->set_all_frozen = prstate->attempt_freeze;
 }
 
 /*
@@ -734,7 +718,6 @@ heap_page_will_freeze(bool did_tuple_hint_fpi,
 	if (!prstate->attempt_freeze)
 	{
 		Assert(!prstate->set_all_frozen && prstate->nfrozen == 0);
-		Assert(prstate->lpdead_items == 0 || !prstate->set_all_visible);
 		return false;
 	}
 
@@ -1012,9 +995,8 @@ prune_freeze_fast_path(PruneState *prstate, PruneFreezeResult *presult)
  * HEAP_PAGE_PRUNE_FREEZE option is passed, we also set
  * presult->set_all_visible and presult->set_all_frozen after determining
  * whether or not to opportunistically freeze, to indicate if the VM bits can
- * be set.  They are always set to false when the HEAP_PAGE_PRUNE_FREEZE
- * option is not passed, because at the moment only callers that also freeze
- * need that information.
+ * be set. 'set_all_frozen' is always set to false when the
+ * HEAP_PAGE_PRUNE_FREEZE option is not passed.
  *
  * presult contains output parameters needed by callers, such as the number of
  * tuples removed and the offsets of dead items on the page after pruning.
@@ -1091,9 +1073,9 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	 * to opportunistically freeze.
 	 */
 	if (prstate.set_all_visible &&
-		TransactionIdIsNormal(prstate.visibility_cutoff_xid) &&
+		TransactionIdIsNormal(prstate.newest_live_xid) &&
 		GlobalVisTestXidConsideredRunning(prstate.vistest,
-										  prstate.visibility_cutoff_xid,
+										  prstate.newest_live_xid,
 										  true))
 		prstate.set_all_visible = prstate.set_all_frozen = false;
 
@@ -1245,7 +1227,7 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	if (presult->set_all_frozen)
 		presult->vm_conflict_horizon = InvalidTransactionId;
 	else
-		presult->vm_conflict_horizon = prstate.visibility_cutoff_xid;
+		presult->vm_conflict_horizon = prstate.newest_live_xid;
 
 	presult->lpdead_items = prstate.lpdead_items;
 	/* the presult->deadoffsets array was already filled in */
@@ -1706,6 +1688,7 @@ static void
 heap_prune_record_unchanged_lp_normal(PruneState *prstate, OffsetNumber offnum)
 {
 	HeapTupleHeader htup;
+	TransactionId xmin;
 	Page		page = prstate->page;
 
 	Assert(!prstate->processed[offnum]);
@@ -1753,32 +1736,27 @@ heap_prune_record_unchanged_lp_normal(PruneState *prstate, OffsetNumber offnum)
 			 * See SetHintBits for more info.  Check that the tuple is hinted
 			 * xmin-committed because of that.
 			 */
-			if (prstate->set_all_visible)
+			if (!HeapTupleHeaderXminCommitted(htup))
 			{
-				TransactionId xmin;
-
-				if (!HeapTupleHeaderXminCommitted(htup))
-				{
-					prstate->set_all_visible = false;
-					prstate->set_all_frozen = false;
-					break;
-				}
-
-				/*
-				 * The inserter definitely committed. But we don't know if it
-				 * is old enough that everyone sees it as committed. Later,
-				 * after processing all the tuples on the page, we'll check if
-				 * there is any snapshot that still considers the newest xid
-				 * on the page to be running. If so, we don't consider the
-				 * page all-visible.
-				 */
-				xmin = HeapTupleHeaderGetXmin(htup);
-
-				/* Track newest xmin on page. */
-				if (TransactionIdFollows(xmin, prstate->visibility_cutoff_xid) &&
-					TransactionIdIsNormal(xmin))
-					prstate->visibility_cutoff_xid = xmin;
+				prstate->set_all_visible = false;
+				prstate->set_all_frozen = false;
+				break;
 			}
+
+			/*
+			 * The inserter definitely committed. But we don't know if it is
+			 * old enough that everyone sees it as committed. Later, after
+			 * processing all the tuples on the page, we'll check if there is
+			 * any snapshot that still considers the newest xid on the page to
+			 * be running. If so, we don't consider the page all-visible.
+			 */
+			xmin = HeapTupleHeaderGetXmin(htup);
+
+			/* Track newest xmin on page. */
+			if (TransactionIdFollows(xmin, prstate->newest_live_xid) &&
+				TransactionIdIsNormal(xmin))
+				prstate->newest_live_xid = xmin;
+
 			break;
 
 		case HEAPTUPLE_RECENTLY_DEAD:
