@@ -125,7 +125,7 @@ test_bloomfilter(PG_FUNCTION_ARGS)
 		elog(ERROR, "invalid number of tests: %d", tests);
 
 	if (nelements < 0)
-		elog(ERROR, "invalid number of elements: %d", tests);
+		elog(ERROR, "invalid number of elements: " INT64_FORMAT, nelements);
 
 	for (i = 0; i < tests; i++)
 	{
