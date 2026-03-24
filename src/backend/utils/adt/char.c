@@ -192,7 +192,7 @@ i4tochar(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 
 	if (arg1 < SCHAR_MIN || arg1 > SCHAR_MAX)
-		ereport(ERROR,
+		ereturn(fcinfo->context, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("\"char\" out of range")));
 

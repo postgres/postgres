@@ -550,7 +550,7 @@ macaddr8tomacaddr(PG_FUNCTION_ARGS)
 	result = palloc0_object(macaddr);
 
 	if ((addr->d != 0xFF) || (addr->e != 0xFE))
-		ereport(ERROR,
+		ereturn(fcinfo->context, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("macaddr8 data out of range to convert to macaddr"),
 				 errhint("Only addresses that have FF and FE as values in the "

@@ -307,7 +307,7 @@ bpchar(PG_FUNCTION_ARGS)
 		{
 			for (i = maxmblen; i < len; i++)
 				if (s[i] != ' ')
-					ereport(ERROR,
+					ereturn(fcinfo->context, (Datum) 0,
 							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 							 errmsg("value too long for type character(%d)",
 									maxlen)));
@@ -634,7 +634,7 @@ varchar(PG_FUNCTION_ARGS)
 	{
 		for (i = maxmblen; i < len; i++)
 			if (s_data[i] != ' ')
-				ereport(ERROR,
+				ereturn(fcinfo->context, (Datum) 0,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 						 errmsg("value too long for type character varying(%d)",
 								maxlen)));

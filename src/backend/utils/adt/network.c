@@ -1137,7 +1137,7 @@ network_show(PG_FUNCTION_ARGS)
 
 	if (pg_inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
 						 tmp, sizeof(tmp)) == NULL)
-		ereport(ERROR,
+		ereturn(fcinfo->context, (Datum) 0,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
 

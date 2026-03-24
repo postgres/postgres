@@ -1244,7 +1244,8 @@ numeric		(PG_FUNCTION_ARGS)
 	 */
 	if (NUMERIC_IS_SPECIAL(num))
 	{
-		(void) apply_typmod_special(num, typmod, NULL);
+		if (!apply_typmod_special(num, typmod, fcinfo->context))
+			PG_RETURN_NULL();
 		PG_RETURN_NUMERIC(duplicate_numeric(num));
 	}
 
@@ -1295,8 +1296,9 @@ numeric		(PG_FUNCTION_ARGS)
 	init_var(&var);
 
 	set_var_from_num(num, &var);
-	(void) apply_typmod(&var, typmod, NULL);
-	new = make_result(&var);
+	if (!apply_typmod(&var, typmod, fcinfo->context))
+		PG_RETURN_NULL();
+	new = make_result_safe(&var, fcinfo->context);
 
 	free_var(&var);
 
@@ -3018,7 +3020,10 @@ numeric_mul(PG_FUNCTION_ARGS)
 	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	Numeric		res;
 
-	res = numeric_mul_safe(num1, num2, NULL);
+	res = numeric_mul_safe(num1, num2, fcinfo->context);
+
+	if (unlikely(SOFT_ERROR_OCCURRED(fcinfo->context)))
+		PG_RETURN_NULL();
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -4393,8 +4398,14 @@ Datum
 numeric_int4(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
+	int32		result;
 
-	PG_RETURN_INT32(numeric_int4_safe(num, NULL));
+	result = numeric_int4_safe(num, fcinfo->context);
+
+	if (unlikely(SOFT_ERROR_OCCURRED(fcinfo->context)))
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(result);
 }
 
 /*
@@ -4463,8 +4474,14 @@ Datum
 numeric_int8(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
+	int64		result;
 
-	PG_RETURN_INT64(numeric_int8_safe(num, NULL));
+	result = numeric_int8_safe(num, fcinfo->context);
+
+	if (unlikely(SOFT_ERROR_OCCURRED(fcinfo->context)))
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT64(result);
 }
 
 
@@ -4488,11 +4505,11 @@ numeric_int2(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_SPECIAL(num))
 	{
 		if (NUMERIC_IS_NAN(num))
-			ereport(ERROR,
+			ereturn(fcinfo->context, (Datum) 0,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot convert NaN to %s", "smallint")));
 		else
-			ereport(ERROR,
+			ereturn(fcinfo->context, (Datum) 0,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot convert infinity to %s", "smallint")));
 	}
@@ -4501,12 +4518,12 @@ numeric_int2(PG_FUNCTION_ARGS)
 	init_var_from_num(num, &x);
 
 	if (!numericvar_to_int64(&x, &val))
-		ereport(ERROR,
+		ereturn(fcinfo->context, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 
 	if (unlikely(val < PG_INT16_MIN) || unlikely(val > PG_INT16_MAX))
-		ereport(ERROR,
+		ereturn(fcinfo->context, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 
@@ -4542,7 +4559,8 @@ float8_numeric(PG_FUNCTION_ARGS)
 	init_var(&result);
 
 	/* Assume we need not worry about leading/trailing spaces */
-	(void) set_var_from_str(buf, buf, &result, &endptr, NULL);
+	if (!set_var_from_str(buf, buf, &result, &endptr, fcinfo->context))
+		PG_RETURN_NULL();
 
 	res = make_result(&result);
 
@@ -4571,10 +4589,14 @@ numeric_float8(PG_FUNCTION_ARGS)
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
-
-	result = DirectFunctionCall1(float8in, CStringGetDatum(tmp));
-
-	pfree(tmp);
+	if (!DirectInputFunctionCallSafe(float8in, tmp,
+									 InvalidOid, -1,
+									 (Node *) fcinfo->context,
+									 &result))
+	{
+		pfree(tmp);
+		PG_RETURN_NULL();
+	}
 
 	PG_RETURN_DATUM(result);
 }
@@ -4636,7 +4658,8 @@ float4_numeric(PG_FUNCTION_ARGS)
 	init_var(&result);
 
 	/* Assume we need not worry about leading/trailing spaces */
-	(void) set_var_from_str(buf, buf, &result, &endptr, NULL);
+	if (!set_var_from_str(buf, buf, &result, &endptr, fcinfo->context))
+		PG_RETURN_NULL();
 
 	res = make_result(&result);
 
@@ -4666,7 +4689,14 @@ numeric_float4(PG_FUNCTION_ARGS)
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
 
-	result = DirectFunctionCall1(float4in, CStringGetDatum(tmp));
+	if (!DirectInputFunctionCallSafe(float4in, tmp,
+									 InvalidOid, -1,
+									 (Node *) fcinfo->context,
+									 &result))
+	{
+		pfree(tmp);
+		PG_RETURN_NULL();
+	}
 
 	pfree(tmp);
 
