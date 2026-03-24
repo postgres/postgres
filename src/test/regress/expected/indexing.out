@@ -1669,3 +1669,14 @@ reindex index test_pg_index_toast_index;
 drop index test_pg_index_toast_index;
 drop function test_pg_index_toast_func;
 drop table test_pg_index_toast_table;
+-- test creation of an index involving a whole-row expression
+create table test_pg_wholerow_index (a int, b text, c numeric);
+create or replace function row_image(test_pg_wholerow_index)
+    returns test_pg_wholerow_index as $$select $1$$ language sql immutable;
+insert into test_pg_wholerow_index values (1, 'multiplication', 1.0);
+create index row_image_index
+    on test_pg_wholerow_index ((row_image(test_pg_wholerow_index)));
+insert into test_pg_wholerow_index values (2, 'addition', 0);
+drop index row_image_index;
+drop function row_image(test_pg_wholerow_index);
+drop table test_pg_wholerow_index;
