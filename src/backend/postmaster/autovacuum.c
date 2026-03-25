@@ -206,7 +206,6 @@ typedef struct autovac_table
 	double		at_storage_param_vac_cost_delay;
 	int			at_storage_param_vac_cost_limit;
 	bool		at_dobalance;
-	bool		at_sharedrel;
 	char	   *at_relname;
 	char	   *at_nspname;
 	char	   *at_datname;
@@ -2837,7 +2836,6 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 
 		tab = palloc_object(autovac_table);
 		tab->at_relid = relid;
-		tab->at_sharedrel = classForm->relisshared;
 
 		/*
 		 * Select VACUUM options.  Note we don't say VACOPT_PROCESS_TOAST, so
