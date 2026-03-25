@@ -835,9 +835,64 @@ SELECT encode('\x01'::bytea, 'invalid');  -- error
 SELECT decode('00', 'invalid');           -- error
 
 --
--- base64url encoding/decoding
+-- base32hex encoding/decoding
 --
 SET bytea_output TO hex;
+
+SELECT encode('', 'base32hex');  -- ''
+SELECT encode('\x11', 'base32hex');  -- '24======'
+SELECT encode('\x1122', 'base32hex');  -- '24H0===='
+SELECT encode('\x112233', 'base32hex');  -- '24H36==='
+SELECT encode('\x11223344', 'base32hex');  -- '24H36H0='
+SELECT encode('\x1122334455', 'base32hex');  -- '24H36H2L'
+SELECT encode('\x112233445566', 'base32hex');  -- '24H36H2LCO======'
+
+SELECT decode('', 'base32hex');  -- ''
+SELECT decode('24======', 'base32hex');  -- \x11
+SELECT decode('24H0====', 'base32hex');  -- \x1122
+SELECT decode('24H36===', 'base32hex');  -- \x112233
+SELECT decode('24H36H0=', 'base32hex');  -- \x11223344
+SELECT decode('24H36H2L', 'base32hex');  -- \x1122334455
+SELECT decode('24H36H2LCO======', 'base32hex');  -- \x112233445566
+
+SELECT decode('24h36h2lco', 'base32hex');  -- OK, the encoding is case-insensitive
+
+-- Tests for decoding unpadded base32hex strings. Padding '=' are optional.
+SELECT decode('24', 'base32hex');
+SELECT decode('24H', 'base32hex');
+SELECT decode('24H36', 'base32hex');
+SELECT decode('24H36H0', 'base32hex');
+
+SELECT decode('2', 'base32hex'); -- \x, 5 bits isn't enough for a byte, so nothing is emitted
+SELECT decode('11=', 'base32hex');  -- OK, non-zero padding bits are accepted (consistent with base64)
+
+SELECT decode('2=', 'base32hex'); -- error
+SELECT decode('=', 'base32hex');  -- error
+SELECT decode('W', 'base32hex');  -- error
+SELECT decode('24H36H0=24', 'base32hex'); -- error
+
+-- Check round-trip capability of base32hex encoding for multiple random UUIDs.
+DO $$
+DECLARE
+  v1 uuid;
+  v2 uuid;
+BEGIN
+  FOR i IN 1..10 LOOP
+    v1 := gen_random_uuid();
+    v2 := decode(encode(v1::bytea, 'base32hex'), 'base32hex')::uuid;
+
+    IF v1 != v2 THEN
+      RAISE EXCEPTION 'base32hex encoding round-trip failed, expected % got %', v1, v2;
+    END IF;
+  END LOOP;
+  RAISE NOTICE 'OK';
+END;
+$$;
+
+
+--
+-- base64url encoding/decoding
+--
 
 -- Simple encoding/decoding
 SELECT encode('\x69b73eff', 'base64url');  -- abc-_w

@@ -2600,14 +2600,170 @@ SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
 -- report an error with a hint listing valid encodings when an invalid encoding is specified
 SELECT encode('\x01'::bytea, 'invalid');  -- error
 ERROR:  unrecognized encoding: "invalid"
-HINT:  Valid encodings are "base64", "base64url", "escape", and "hex".
+HINT:  Valid encodings are "base32hex", "base64", "base64url", "escape", and "hex".
 SELECT decode('00', 'invalid');           -- error
 ERROR:  unrecognized encoding: "invalid"
-HINT:  Valid encodings are "base64", "base64url", "escape", and "hex".
+HINT:  Valid encodings are "base32hex", "base64", "base64url", "escape", and "hex".
+--
+-- base32hex encoding/decoding
+--
+SET bytea_output TO hex;
+SELECT encode('', 'base32hex');  -- ''
+ encode 
+--------
+ 
+(1 row)
+
+SELECT encode('\x11', 'base32hex');  -- '24======'
+  encode  
+----------
+ 24======
+(1 row)
+
+SELECT encode('\x1122', 'base32hex');  -- '24H0===='
+  encode  
+----------
+ 24H0====
+(1 row)
+
+SELECT encode('\x112233', 'base32hex');  -- '24H36==='
+  encode  
+----------
+ 24H36===
+(1 row)
+
+SELECT encode('\x11223344', 'base32hex');  -- '24H36H0='
+  encode  
+----------
+ 24H36H0=
+(1 row)
+
+SELECT encode('\x1122334455', 'base32hex');  -- '24H36H2L'
+  encode  
+----------
+ 24H36H2L
+(1 row)
+
+SELECT encode('\x112233445566', 'base32hex');  -- '24H36H2LCO======'
+      encode      
+------------------
+ 24H36H2LCO======
+(1 row)
+
+SELECT decode('', 'base32hex');  -- ''
+ decode 
+--------
+ \x
+(1 row)
+
+SELECT decode('24======', 'base32hex');  -- \x11
+ decode 
+--------
+ \x11
+(1 row)
+
+SELECT decode('24H0====', 'base32hex');  -- \x1122
+ decode 
+--------
+ \x1122
+(1 row)
+
+SELECT decode('24H36===', 'base32hex');  -- \x112233
+  decode  
+----------
+ \x112233
+(1 row)
+
+SELECT decode('24H36H0=', 'base32hex');  -- \x11223344
+   decode   
+------------
+ \x11223344
+(1 row)
+
+SELECT decode('24H36H2L', 'base32hex');  -- \x1122334455
+    decode    
+--------------
+ \x1122334455
+(1 row)
+
+SELECT decode('24H36H2LCO======', 'base32hex');  -- \x112233445566
+     decode     
+----------------
+ \x112233445566
+(1 row)
+
+SELECT decode('24h36h2lco', 'base32hex');  -- OK, the encoding is case-insensitive
+     decode     
+----------------
+ \x112233445566
+(1 row)
+
+-- Tests for decoding unpadded base32hex strings. Padding '=' are optional.
+SELECT decode('24', 'base32hex');
+ decode 
+--------
+ \x11
+(1 row)
+
+SELECT decode('24H', 'base32hex');
+ decode 
+--------
+ \x11
+(1 row)
+
+SELECT decode('24H36', 'base32hex');
+  decode  
+----------
+ \x112233
+(1 row)
+
+SELECT decode('24H36H0', 'base32hex');
+   decode   
+------------
+ \x11223344
+(1 row)
+
+SELECT decode('2', 'base32hex'); -- \x, 5 bits isn't enough for a byte, so nothing is emitted
+ decode 
+--------
+ \x
+(1 row)
+
+SELECT decode('11=', 'base32hex');  -- OK, non-zero padding bits are accepted (consistent with base64)
+ decode 
+--------
+ \x08
+(1 row)
+
+SELECT decode('2=', 'base32hex'); -- error
+ERROR:  unexpected "=" while decoding base32hex sequence
+SELECT decode('=', 'base32hex');  -- error
+ERROR:  unexpected "=" while decoding base32hex sequence
+SELECT decode('W', 'base32hex');  -- error
+ERROR:  invalid symbol "W" found while decoding base32hex sequence
+SELECT decode('24H36H0=24', 'base32hex'); -- error
+ERROR:  invalid symbol "2" found while decoding base32hex sequence
+-- Check round-trip capability of base32hex encoding for multiple random UUIDs.
+DO $$
+DECLARE
+  v1 uuid;
+  v2 uuid;
+BEGIN
+  FOR i IN 1..10 LOOP
+    v1 := gen_random_uuid();
+    v2 := decode(encode(v1::bytea, 'base32hex'), 'base32hex')::uuid;
+
+    IF v1 != v2 THEN
+      RAISE EXCEPTION 'base32hex encoding round-trip failed, expected % got %', v1, v2;
+    END IF;
+  END LOOP;
+  RAISE NOTICE 'OK';
+END;
+$$;
+NOTICE:  OK
 --
 -- base64url encoding/decoding
 --
-SET bytea_output TO hex;
 -- Simple encoding/decoding
 SELECT encode('\x69b73eff', 'base64url');  -- abc-_w
  encode 

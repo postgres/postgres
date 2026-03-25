@@ -13,7 +13,8 @@ CREATE TABLE guid2
 CREATE TABLE guid3
 (
 	id SERIAL,
-	guid_field UUID
+	guid_field UUID,
+	guid_encoded text GENERATED ALWAYS AS (encode(guid_field::bytea, 'base32hex')) STORED
 );
 -- inserting invalid data tests
 -- too long
@@ -226,11 +227,20 @@ SELECT count(DISTINCT guid_field) FROM guid1;
 (1 row)
 
 -- test sortability of v7
+INSERT INTO guid3 (guid_field) VALUES ('00000000-0000-0000-0000-000000000000'::uuid);
 INSERT INTO guid3 (guid_field) SELECT uuidv7() FROM generate_series(1, 10);
+INSERT INTO guid3 (guid_field) VALUES ('ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid);
 SELECT array_agg(id ORDER BY guid_field) FROM guid3;
-       array_agg        
-------------------------
- {1,2,3,4,5,6,7,8,9,10}
+          array_agg           
+------------------------------
+ {1,2,3,4,5,6,7,8,9,10,11,12}
+(1 row)
+
+-- make sure base32hex encoding works with UUIDs and preserves ordering
+SELECT array_agg(id ORDER BY guid_encoded) FROM guid3;
+          array_agg           
+------------------------------
+ {1,2,3,4,5,6,7,8,9,10,11,12}
 (1 row)
 
 -- Check the timestamp offsets for v7.

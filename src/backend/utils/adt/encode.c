@@ -65,8 +65,8 @@ binary_encode(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("unrecognized encoding: \"%s\"", namebuf),
-				 errhint("Valid encodings are \"%s\", \"%s\", \"%s\", and \"%s\".",
-						 "base64", "base64url", "escape", "hex")));
+				 errhint("Valid encodings are \"%s\", \"%s\", \"%s\", \"%s\", and \"%s\".",
+						 "base32hex", "base64", "base64url", "escape", "hex")));
 
 	dataptr = VARDATA_ANY(data);
 	datalen = VARSIZE_ANY_EXHDR(data);
@@ -115,8 +115,8 @@ binary_decode(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("unrecognized encoding: \"%s\"", namebuf),
-				 errhint("Valid encodings are \"%s\", \"%s\", \"%s\", and \"%s\".",
-						 "base64", "base64url", "escape", "hex")));
+				 errhint("Valid encodings are \"%s\", \"%s\", \"%s\", \"%s\", and \"%s\".",
+						 "base32hex", "base64", "base64url", "escape", "hex")));
 
 	dataptr = VARDATA_ANY(data);
 	datalen = VARSIZE_ANY_EXHDR(data);
@@ -826,6 +826,153 @@ esc_dec_len(const char *src, size_t srclen)
 }
 
 /*
+ * BASE32HEX
+ */
+
+static const char base32hex_table[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+
+static const int8 b32hexlookup[128] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+	25, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+	25, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+static uint64
+base32hex_enc_len(const char *src, size_t srclen)
+{
+	/* 5 bytes encode to 8 characters, round up to multiple of 8 for padding */
+	return ((uint64) srclen + 4) / 5 * 8;
+}
+
+static uint64
+base32hex_dec_len(const char *src, size_t srclen)
+{
+	/* Each 8 characters of input produces at most 5 bytes of output */
+	return ((uint64) srclen * 5) / 8;
+}
+
+static uint64
+base32hex_encode(const char *src, size_t srclen, char *dst)
+{
+	const unsigned char *data = (const unsigned char *) src;
+	uint32		bits_buffer = 0;
+	int			bits_in_buffer = 0;
+	uint64		output_pos = 0;
+	size_t		i;
+
+	for (i = 0; i < srclen; i++)
+	{
+		/* Add 8 bits to the buffer */
+		bits_buffer = (bits_buffer << 8) | data[i];
+		bits_in_buffer += 8;
+
+		/* Extract 5-bit chunks while we have enough bits */
+		while (bits_in_buffer >= 5)
+		{
+			bits_in_buffer -= 5;
+			/* Extract top 5 bits */
+			dst[output_pos++] = base32hex_table[(bits_buffer >> bits_in_buffer) & 0x1F];
+			/* Clear the extracted bits by masking */
+			bits_buffer &= ((1U << bits_in_buffer) - 1);
+		}
+	}
+
+	/* Handle remaining bits (if any) */
+	if (bits_in_buffer > 0)
+		dst[output_pos++] = base32hex_table[(bits_buffer << (5 - bits_in_buffer)) & 0x1F];
+
+	/* Add padding to make length a multiple of 8 (per RFC 4648) */
+	while (output_pos % 8 != 0)
+		dst[output_pos++] = '=';
+
+	return output_pos;
+}
+
+static uint64
+base32hex_decode(const char *src, size_t srclen, char *dst)
+{
+	const char *srcend = src + srclen,
+			   *s = src;
+	uint32		bits_buffer = 0;
+	int			bits_in_buffer = 0;
+	uint64		output_pos = 0;
+	int			pos = 0;		/* position within 8-character group (0-7) */
+	bool		end = false;	/* have we seen padding? */
+
+	while (s < srcend)
+	{
+		char		c = *s++;
+		int			val;
+
+		/* Skip whitespace */
+		if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+			continue;
+
+		if (c == '=')
+		{
+			/*
+			 * The first padding is only valid at positions 2, 4, 5, or 7
+			 * within an 8-character group (corresponding to 1, 2, 3, or 4
+			 * input bytes). We only check the position for the first '='
+			 * character.
+			 */
+			if (!end)
+			{
+				if (pos != 2 && pos != 4 && pos != 5 && pos != 7)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("unexpected \"=\" while decoding base32hex sequence")));
+				end = true;
+			}
+			pos++;
+			continue;
+		}
+
+		/* No data characters allowed after padding */
+		if (end)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid symbol \"%.*s\" found while decoding base32hex sequence",
+							pg_mblen_range(s - 1, srcend), s - 1)));
+
+		/* Decode base32hex character (0-9, A-V, case-insensitive) */
+		val = -1;
+		if ((unsigned char) c < 128)
+			val = b32hexlookup[(unsigned char) c];
+		if (val < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid symbol \"%.*s\" found while decoding base32hex sequence",
+							pg_mblen_range(s - 1, srcend), s - 1)));
+
+		/* Add 5 bits to buffer */
+		bits_buffer = (bits_buffer << 5) | val;
+		bits_in_buffer += 5;
+		pos++;
+
+		/* Extract 8-bit bytes when we have enough bits */
+		while (bits_in_buffer >= 8)
+		{
+			bits_in_buffer -= 8;
+			dst[output_pos++] = (unsigned char) (bits_buffer >> bits_in_buffer);
+			/* Clear the extracted bits */
+			bits_buffer &= ((1U << bits_in_buffer) - 1);
+		}
+
+		/* Reset position after each complete 8-character group */
+		if (pos == 8)
+			pos = 0;
+	}
+
+	return output_pos;
+}
+
+/*
  * Common
  */
 
@@ -852,6 +999,12 @@ static const struct
 		"base64url",
 		{
 			pg_base64url_enc_len, pg_base64url_dec_len, pg_base64url_encode, pg_base64url_decode
+		}
+	},
+	{
+		"base32hex",
+		{
+			base32hex_enc_len, base32hex_dec_len, base32hex_encode, base32hex_decode
 		}
 	},
 	{
