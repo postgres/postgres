@@ -2204,7 +2204,6 @@ common_warning_flags = [
   '-Werror=vla',
   # On macOS, complain about usage of symbols newer than the deployment target
   '-Werror=unguarded-availability-new',
-  '-Wendif-labels',
   '-Wmissing-format-attribute',
   '-Wcast-function-type',
   '-Wshadow=compatible-local',
