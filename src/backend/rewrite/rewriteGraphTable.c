@@ -33,7 +33,6 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
-#include "parser/parse_relation.h"
 #include "parser/parse_graphtable.h"
 #include "rewrite/rewriteGraphTable.h"
 #include "rewrite/rewriteHandler.h"
@@ -247,16 +246,14 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 
 		if (!pf)
 		{
-			{
-				pf = palloc0_object(struct path_factor);
-				pf->factorpos = factorpos++;
-				pf->kind = gep->kind;
-				pf->labelexpr = gep->labelexpr;
-				pf->variable = gep->variable;
-				pf->whereClause = gep->whereClause;
+			pf = palloc0_object(struct path_factor);
+			pf->factorpos = factorpos++;
+			pf->kind = gep->kind;
+			pf->labelexpr = gep->labelexpr;
+			pf->variable = gep->variable;
+			pf->whereClause = gep->whereClause;
 
-				path_factors = lappend(path_factors, pf);
-			}
+			path_factors = lappend(path_factors, pf);
 		}
 
 		/*
@@ -280,7 +277,7 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 		 * be merged even though they have different variables. Such element
 		 * patterns form a walk of graph where vertex and edges are repeated.
 		 * For example, in (a)-[b]->(c)<-[b]-(d), (a) and (d) represent the
-		 * same vertex element. This is slighly harder to implement and
+		 * same vertex element. This is slightly harder to implement and
 		 * probably less useful. Hence not supported for now.
 		 */
 		if (prev_pf)
@@ -423,7 +420,7 @@ generate_query_for_graph_path(RangeTblEntry *rte, List *graph_path)
 
 		Assert(pf->kind == VERTEX_PATTERN || IS_EDGE_PATTERN(pf->kind));
 
-		/* Add conditions representing edge connnections. */
+		/* Add conditions representing edge connections. */
 		if (IS_EDGE_PATTERN(pf->kind))
 		{
 			struct path_element *src_pe;
@@ -736,7 +733,7 @@ generate_setop_from_pathqueries(List *pathqueries, List **rtable, List **targetl
 
 /*
  * Construct a path_element object for the graph element given by `elemoid`
- * statisfied by the path factor `pf`.
+ * satisfied by the path factor `pf`.
  *
  * If the type of graph element does not fit the element pattern kind, the
  * function returns NULL.
@@ -936,7 +933,7 @@ get_path_elements_for_path_factor(Oid propgraphid, struct path_factor *pf)
 				}
 
 				/*
-				 * Rememeber qualified and unqualified elements processed so
+				 * Remember qualified and unqualified elements processed so
 				 * far to avoid processing already processed elements again.
 				 */
 				elem_oids_seen = lappend_oid(elem_oids_seen, label_elem->pgelelid);
@@ -1105,8 +1102,9 @@ replace_property_refs_mutator(Node *node, struct replace_property_refs_context *
 				 * The property is associated with at least one of the labels
 				 * that satisfy given element pattern. If it's associated with
 				 * the given element (through some other label), use
-				 * correspondig value expression. Otherwise NULL. Ref. SQL/PGQ
-				 * standard section 6.5 Property Reference, General Rule 2.b.
+				 * corresponding value expression. Otherwise NULL. Ref.
+				 * SQL/PGQ standard section 6.5 Property Reference, General
+				 * Rule 2.b.
 				 */
 				n = get_element_property_expr(found_mapping->elemoid, gpr->propid,
 											  mapping_factor->factorpos + 1);
