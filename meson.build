@@ -2309,6 +2309,10 @@ if cc.get_id() == 'msvc'
     '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
     '/w24102', # unreferenced label [like -Wunused-label]
     '/w24777', # 'function' : format string 'string' requires an argument of type 'type1', but variadic argument number has type 'type2' [like -Wformat]
+
+    # Disable warnings in system headers
+    '/external:anglebrackets',
+    '/external:W0',
   ]
 
   cppflags += [
