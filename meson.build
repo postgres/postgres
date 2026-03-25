@@ -2307,6 +2307,7 @@ if cc.get_id() == 'msvc'
     # Additional warnings to enable:
     '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
     '/w24102', # unreferenced label [like -Wunused-label]
+    '/w24255', # 'function' : no function prototype given: converting '()' to '(void)' [like -Wstrict-prototypes]
 
     # Disable warnings in system headers
     '/external:anglebrackets',
