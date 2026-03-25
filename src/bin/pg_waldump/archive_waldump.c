@@ -307,6 +307,7 @@ read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
 	XLByteToSeg(targetPagePtr, segno, segsize);
 	XLogFileName(fname, privateInfo->timeline, segno, segsize);
 	entry = get_archive_wal_entry(fname, privateInfo);
+	Assert(!entry->spilled);
 
 	while (nbytes > 0)
 	{
@@ -403,6 +404,14 @@ read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
 						 privateInfo->archive_name, fname,
 						 (long long int) (count - nbytes),
 						 (long long int) count);
+
+			/*
+			 * Loading more data may have moved hash table entries, so we must
+			 * re-look-up the one we are reading from.
+			 */
+			entry = ArchivedWAL_lookup(privateInfo->archive_wal_htab, fname);
+			/* ... it had better still be there */
+			Assert(entry != NULL);
 		}
 	}
 
@@ -429,6 +438,7 @@ void
 free_archive_wal_entry(const char *fname, XLogDumpPrivate *privateInfo)
 {
 	ArchivedWALFile *entry;
+	const char *oldfname;
 
 	entry = ArchivedWAL_lookup(privateInfo->archive_wal_htab, fname);
 
@@ -454,7 +464,23 @@ free_archive_wal_entry(const char *fname, XLogDumpPrivate *privateInfo)
 	if (privateInfo->cur_file == entry)
 		privateInfo->cur_file = NULL;
 
+	/*
+	 * ArchivedWAL_delete_item may cause other hash table entries to move.
+	 * Therefore, if cur_file isn't NULL now, we have to be prepared to look
+	 * that entry up again after the deletion.  Fortunately, the entry's fname
+	 * string won't move.
+	 */
+	oldfname = privateInfo->cur_file ? privateInfo->cur_file->fname : NULL;
+
 	ArchivedWAL_delete_item(privateInfo->archive_wal_htab, entry);
+
+	if (oldfname)
+	{
+		privateInfo->cur_file = ArchivedWAL_lookup(privateInfo->archive_wal_htab,
+												   oldfname);
+		/* ... it had better still be there */
+		Assert(privateInfo->cur_file != NULL);
+	}
 }
 
 /*
@@ -700,6 +726,9 @@ astreamer_waldump_content(astreamer *streamer, astreamer_member *member,
 				ArchivedWALFile *entry;
 				bool		found;
 
+				/* Shouldn't see MEMBER_HEADER in the middle of a file */
+				Assert(privateInfo->cur_file == NULL);
+
 				pg_log_debug("reading \"%s\"", member->pathname);
 
 				if (!member_is_wal_file(mystreamer, member, &fname))
@@ -728,6 +757,13 @@ astreamer_waldump_content(astreamer *streamer, astreamer_member *member,
 					}
 				}
 
+				/*
+				 * Note: ArchivedWAL_insert may cause existing hash table
+				 * entries to move.  While cur_file is known to be NULL right
+				 * now, read_archive_wal_page may have a live hash entry
+				 * pointer, which it needs to take care to update after
+				 * read_archive_file completes.
+				 */
 				entry = ArchivedWAL_insert(privateInfo->archive_wal_htab,
 										   fname, &found);
 
