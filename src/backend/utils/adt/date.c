@@ -1402,7 +1402,7 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	DateADT		result;
 
 	result = timestamptz2date_safe(timestamp, fcinfo->context);
-	if (SOFT_ERROR_OCCURRED(fcinfo->args))
+	if (SOFT_ERROR_OCCURRED(fcinfo->context))
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATEADT(result);
