@@ -91,7 +91,6 @@ static ArchivedWALFile *get_archive_wal_entry(const char *fname,
 											  XLogDumpPrivate *privateInfo);
 static bool read_archive_file(XLogDumpPrivate *privateInfo);
 static void setup_tmpwal_dir(const char *waldir);
-static void cleanup_tmpwal_dir_atexit(void);
 
 static FILE *prepare_tmp_write(const char *fname, XLogDumpPrivate *privateInfo);
 static void perform_tmp_write(const char *fname, StringInfo buf, FILE *file);
@@ -608,22 +607,9 @@ setup_tmpwal_dir(const char *waldir)
 }
 
 /*
- * Remove temporary directory at exit, if any.
- */
-static void
-cleanup_tmpwal_dir_atexit(void)
-{
-	Assert(TmpWalSegDir != NULL);
-
-	rmtree(TmpWalSegDir, true);
-
-	TmpWalSegDir = NULL;
-}
-
-/*
  * Open a file in the temporary spill directory for writing an out-of-order
- * WAL segment, creating the directory and registering the cleanup callback
- * if not already done.  Returns the open file handle.
+ * WAL segment, creating the directory if not already done.
+ * Returns the open file handle.
  */
 static FILE *
 prepare_tmp_write(const char *fname, XLogDumpPrivate *privateInfo)
@@ -631,15 +617,9 @@ prepare_tmp_write(const char *fname, XLogDumpPrivate *privateInfo)
 	char		fpath[MAXPGPATH];
 	FILE	   *file;
 
-	/*
-	 * Setup temporary directory to store WAL segments and set up an exit
-	 * callback to remove it upon completion if not already.
-	 */
+	/* Setup temporary directory to store WAL segments, if we didn't already */
 	if (unlikely(TmpWalSegDir == NULL))
-	{
 		setup_tmpwal_dir(privateInfo->archive_dir);
-		atexit(cleanup_tmpwal_dir_atexit);
-	}
 
 	snprintf(fpath, MAXPGPATH, "%s/%s", TmpWalSegDir, fname);
 

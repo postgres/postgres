@@ -42,6 +42,8 @@ static const char *progname;
 
 static volatile sig_atomic_t time_to_stop = false;
 
+static XLogReaderState *xlogreader_state_cleanup = NULL;
+
 static const RelFileLocator emptyRelFileLocator = {0, 0, 0};
 
 typedef struct XLogDumpConfig
@@ -454,13 +456,14 @@ TarWALDumpOpenSegment(XLogReaderState *state, XLogSegNo nextSegNo,
 
 /*
  * pg_waldump's XLogReaderRoutine->segment_close callback to support dumping
- * WAL files from tar archives.  Segment tracking is handled by
- * TarWALDumpReadPage, so no action is needed here.
+ * WAL files from tar archives.  Same as wal_segment_close.
  */
 static void
 TarWALDumpCloseSegment(XLogReaderState *state)
 {
-	/* No action needed */
+	close(state->seg.ws_file);
+	/* need to check errno? */
+	state->seg.ws_file = -1;
 }
 
 /*
@@ -863,6 +866,27 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogStats *stats)
 		   total_rec_len, psprintf("[%.02f%%]", rec_len_pct),
 		   total_fpi_len, psprintf("[%.02f%%]", fpi_len_pct),
 		   total_len, "[100%]");
+}
+
+/*
+ * Remove temporary directory at exit, if any.
+ */
+static void
+cleanup_tmpwal_dir_atexit(void)
+{
+	/*
+	 * Before calling rmtree, we must close any open file we have in the temp
+	 * directory; else rmdir fails on Windows.
+	 */
+	if (xlogreader_state_cleanup != NULL &&
+		xlogreader_state_cleanup->seg.ws_file >= 0)
+		WALDumpCloseSegment(xlogreader_state_cleanup);
+
+	if (TmpWalSegDir != NULL)
+	{
+		rmtree(TmpWalSegDir, true);
+		TmpWalSegDir = NULL;
+	}
 }
 
 static void
@@ -1383,6 +1407,14 @@ main(int argc, char **argv)
 	if (!xlogreader_state)
 		pg_fatal("out of memory while allocating a WAL reading processor");
 
+	/*
+	 * Set up atexit cleanup of temporary directory.  This must happen before
+	 * archive_waldump.c could possibly create the temporary directory.  Also
+	 * arm the callback to cleanup the xlogreader state.
+	 */
+	atexit(cleanup_tmpwal_dir_atexit);
+	xlogreader_state_cleanup = xlogreader_state;
+
 	/* first find a valid recptr to start from */
 	first_record = XLogFindNextRecord(xlogreader_state, private.startptr, &errormsg);
 
@@ -1494,6 +1526,12 @@ main(int argc, char **argv)
 		pg_fatal("error in WAL record at %X/%08X: %s",
 				 LSN_FORMAT_ARGS(xlogreader_state->ReadRecPtr),
 				 errormsg);
+
+	/*
+	 * Disarm atexit cleanup of open WAL file; XLogReaderFree will close it,
+	 * and we don't want the atexit callback trying to touch freed memory.
+	 */
+	xlogreader_state_cleanup = NULL;
 
 	XLogReaderFree(xlogreader_state);
 
