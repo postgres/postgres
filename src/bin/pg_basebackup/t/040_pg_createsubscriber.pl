@@ -14,6 +14,7 @@ program_version_ok('pg_createsubscriber');
 program_options_handling_ok('pg_createsubscriber');
 
 my $datadir = PostgreSQL::Test::Utils::tempdir;
+my $logdir = PostgreSQL::Test::Utils::tempdir;
 
 # Generate a database with a name made of a range of ASCII characters.
 # Extracted from 002_pg_upgrade.pl.
@@ -362,8 +363,34 @@ command_ok(
 		'--subscription' => 'sub2',
 		'--database' => $db1,
 		'--database' => $db2,
+		'--logdir' => $logdir,
 	],
 	'run pg_createsubscriber --dry-run on node S');
+
+# Check that the log files were created
+my @server_log_files = glob "$logdir/*/pg_createsubscriber_server.log";
+is(scalar(@server_log_files),
+	1, "pg_createsubscriber_server.log file was created");
+my $server_log_file_size = -s $server_log_files[0];
+isnt($server_log_file_size, 0,
+	"pg_createsubscriber_server.log file not empty");
+my $server_log = slurp_file($server_log_files[0]);
+like(
+	$server_log,
+	qr/consistent recovery state reached/,
+	"server reached consistent recovery state");
+
+my @internal_log_files = glob "$logdir/*/pg_createsubscriber_internal.log";
+is(scalar(@internal_log_files),
+	1, "pg_createsubscriber_internal.log file was created");
+my $internal_log_file_size = -s $internal_log_files[0];
+isnt($internal_log_file_size, 0,
+	"pg_createsubscriber_internal.log file not empty");
+my $internal_log = slurp_file($internal_log_files[0]);
+like(
+	$internal_log,
+	qr/target server reached the consistent state/,
+	"log shows consistent state reached");
 
 # Check if node S is still a standby
 $node_s->start;
@@ -444,7 +471,8 @@ is(scalar(() = $stderr =~ /would create subscription/g),
 
 # Create a user-defined publication, and a table that is not a member of that
 # publication.
-$node_p->safe_psql($db1, qq(
+$node_p->safe_psql(
+	$db1, qq(
 	CREATE PUBLICATION test_pub3 FOR TABLE tbl1;
 	CREATE TABLE not_replicated (a int);
 ));
@@ -540,8 +568,7 @@ second row
 third row),
 	"logical replication works in database $db1");
 $result = $node_s->safe_psql($db1, 'SELECT * FROM not_replicated');
-is($result, qq(),
-	"table is not replicated in database $db1");
+is($result, qq(), "table is not replicated in database $db1");
 
 # Check result in database $db2
 $result = $node_s->safe_psql($db2, 'SELECT * FROM tbl2');
@@ -555,8 +582,10 @@ my $sysid_s = $node_s->safe_psql('postgres',
 isnt($sysid_p, $sysid_s, 'system identifier was changed');
 
 # Verify that pub2 was created in $db2
-is($node_p->safe_psql($db2, "SELECT COUNT(*) FROM pg_publication WHERE pubname = 'pub2'"),
-	'1', "publication pub2 was created in $db2");
+is( $node_p->safe_psql(
+		$db2, "SELECT COUNT(*) FROM pg_publication WHERE pubname = 'pub2'"),
+	'1',
+	"publication pub2 was created in $db2");
 
 # Get subscription and publication names
 $result = $node_s->safe_psql(
@@ -581,7 +610,7 @@ $result = $node_s->safe_psql(
     )
 );
 
-is($result, qq($db1|{test_pub3}
+is( $result, qq($db1|{test_pub3}
 $db2|{pub2}),
 	"subscriptions use the correct publications");
 

@@ -20,6 +20,7 @@
 
 #include "common/connect.h"
 #include "common/controldata_utils.h"
+#include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
 #include "common/pg_prng.h"
@@ -49,10 +50,14 @@
 #define INCLUDED_CONF_FILE			"pg_createsubscriber.conf"
 #define INCLUDED_CONF_FILE_DISABLED	INCLUDED_CONF_FILE ".disabled"
 
+#define SERVER_LOG_FILE_NAME "pg_createsubscriber_server.log"
+#define INTERNAL_LOG_FILE_NAME "pg_createsubscriber_internal.log"
+
 /* Command-line options */
 struct CreateSubscriberOptions
 {
 	char	   *config_file;	/* configuration file */
+	char	   *log_dir;		/* log directory name */
 	char	   *pub_conninfo_str;	/* publisher connection string */
 	char	   *socket_dir;		/* directory for Unix-domain socket, if any */
 	char	   *sub_port;		/* subscriber port number */
@@ -149,8 +154,15 @@ static void get_publisher_databases(struct CreateSubscriberOptions *opt,
 static void report_createsub_log(enum pg_log_level, enum pg_log_part,
 								 const char *pg_restrict fmt,...)
 			pg_attribute_printf(3, 4);
+static void report_createsub_log_v(enum pg_log_level level, enum pg_log_part part,
+								   const char *pg_restrict fmt, va_list args)
+			pg_attribute_printf(3, 0);
 pg_noreturn static void report_createsub_fatal(const char *pg_restrict fmt,...)
 			pg_attribute_printf(1, 2);
+static void internal_log_file_write(enum pg_log_level level,
+									enum pg_log_part part,
+									const char *pg_restrict fmt, va_list args)
+			pg_attribute_printf(3, 0);
 
 #define	WAIT_INTERVAL	1		/* 1 second */
 
@@ -172,6 +184,11 @@ static pg_prng_state prng_state;
 static char *pg_ctl_path = NULL;
 static char *pg_resetwal_path = NULL;
 
+static FILE *internal_log_file_fp = NULL;	/* File ptr to log all messages to */
+static char logdir[MAXPGPATH];	/* Subdirectory of the user specified logdir
+								 * where the log files are written (if
+								 * specified) */
+
 /* standby / subscriber data directory */
 static char *subscriber_dir = NULL;
 
@@ -180,8 +197,31 @@ static bool standby_running = false;
 static bool recovery_params_set = false;
 
 /*
- * Report a message with a given log level
+ * Report a message with a given log level.
+ *
+ * Writes to stderr, and also to the log file, if --logdir option was
+ * specified.
  */
+static void
+report_createsub_log_v(enum pg_log_level level, enum pg_log_part part,
+					   const char *pg_restrict fmt, va_list args)
+{
+	int			save_errno = errno;
+
+	if (internal_log_file_fp != NULL)
+	{
+		/* Output to both stderr and the log file */
+		va_list		arg_cpy;
+
+		va_copy(arg_cpy, args);
+		internal_log_file_write(level, part, fmt, arg_cpy);
+		va_end(arg_cpy);
+		/* Restore errno in case internal_log_file_write changed it */
+		errno = save_errno;
+	}
+	pg_log_generic_v(level, part, fmt, args);
+}
+
 static void
 report_createsub_log(enum pg_log_level level, enum pg_log_part part,
 					 const char *pg_restrict fmt,...)
@@ -190,7 +230,7 @@ report_createsub_log(enum pg_log_level level, enum pg_log_part part,
 
 	va_start(args, fmt);
 
-	pg_log_generic_v(level, part, fmt, args);
+	report_createsub_log_v(level, part, fmt, args);
 
 	va_end(args);
 }
@@ -205,7 +245,7 @@ report_createsub_fatal(const char *pg_restrict fmt,...)
 
 	va_start(args, fmt);
 
-	pg_log_generic_v(PG_LOG_ERROR, PG_LOG_PRIMARY, fmt, args);
+	report_createsub_log_v(PG_LOG_ERROR, PG_LOG_PRIMARY, fmt, args);
 
 	va_end(args);
 
@@ -327,6 +367,7 @@ usage(void)
 			 "                                  databases and databases that don't allow connections\n"));
 	printf(_("  -d, --database=DBNAME           database in which to create a subscription\n"));
 	printf(_("  -D, --pgdata=DATADIR            location for the subscriber data directory\n"));
+	printf(_("  -l, --logdir=LOGDIR             location for the log directory\n"));
 	printf(_("  -n, --dry-run                   dry run, just show what would be done\n"));
 	printf(_("  -p, --subscriber-port=PORT      subscriber port number (default %s)\n"), DEFAULT_SUB_PORT);
 	printf(_("  -P, --publisher-server=CONNSTR  publisher connection string\n"));
@@ -761,6 +802,7 @@ modify_subscriber_sysid(const struct CreateSubscriberOptions *opt)
 	bool		crc_ok;
 	struct timeval tv;
 
+	char	   *out_file;
 	char	   *cmd_str;
 
 	report_createsub_log(PG_LOG_INFO, PG_LOG_PRIMARY,
@@ -799,8 +841,20 @@ modify_subscriber_sysid(const struct CreateSubscriberOptions *opt)
 		report_createsub_log(PG_LOG_INFO, PG_LOG_PRIMARY,
 							 "running pg_resetwal on the subscriber");
 
-	cmd_str = psprintf("\"%s\" -D \"%s\" > \"%s\"", pg_resetwal_path,
-					   subscriber_dir, DEVNULL);
+	/*
+	 * Redirecting the output to the logfile if specified. Since the output
+	 * would be very short, around one line, we do not provide a separate file
+	 * for it; it's done as a part of the server log.
+	 */
+	if (opt->log_dir)
+		out_file = psprintf("%s/%s", logdir, SERVER_LOG_FILE_NAME);
+	else
+		out_file = DEVNULL;
+
+	cmd_str = psprintf("\"%s\" -D \"%s\" >> \"%s\"", pg_resetwal_path,
+					   subscriber_dir, out_file);
+	if (opt->log_dir)
+		pg_free(out_file);
 
 	report_createsub_log(PG_LOG_DEBUG, PG_LOG_PRIMARY,
 						 "pg_resetwal command is: %s", cmd_str);
@@ -817,6 +871,7 @@ modify_subscriber_sysid(const struct CreateSubscriberOptions *opt)
 	}
 
 	pg_free(cf);
+	pg_free(cmd_str);
 }
 
 /*
@@ -1021,6 +1076,99 @@ server_is_in_recovery(PGconn *conn)
 	PQclear(res);
 
 	return ret == 0;
+}
+
+static void
+internal_log_file_write(enum pg_log_level level, enum pg_log_part part,
+						const char *pg_restrict fmt, va_list args)
+{
+	Assert(internal_log_file_fp);
+
+	/* Do nothing if log level is too low. */
+	if (level < __pg_log_level)
+		return;
+
+	/* Add prefix based on the log part and log level */
+	switch (part)
+	{
+		case PG_LOG_PRIMARY:
+			switch (level)
+			{
+				case PG_LOG_ERROR:
+					fprintf(internal_log_file_fp, _("error: "));
+					break;
+				case PG_LOG_WARNING:
+					fprintf(internal_log_file_fp, _("warning: "));
+					break;
+				default:
+					break;
+			}
+			break;
+		case PG_LOG_DETAIL:
+			fprintf(internal_log_file_fp, _("detail: "));
+			break;
+		case PG_LOG_HINT:
+			fprintf(internal_log_file_fp, _("hint: "));
+			break;
+	}
+
+	vfprintf(internal_log_file_fp, _(fmt), args);
+
+	fprintf(internal_log_file_fp, "\n");
+	fflush(internal_log_file_fp);
+}
+
+/*
+ * Open a new logfile with proper permissions.
+ */
+static FILE *
+logfile_open(const char *filename, const char *mode)
+{
+	FILE	   *fh;
+
+	fh = fopen(filename, mode);
+
+	if (!fh)
+		report_createsub_fatal("could not open log file \"%s\": %m",
+							   filename);
+
+	return fh;
+}
+
+static void
+make_output_dirs(const char *log_basedir)
+{
+	char		timestamp[128];
+	struct timeval tval;
+	time_t		now;
+	struct tm	tmbuf;
+	int			len;
+
+	/* Generate timestamp */
+	gettimeofday(&tval, NULL);
+	now = tval.tv_sec;
+
+	strftime(timestamp, sizeof(timestamp), "%Y%m%dT%H%M%S",
+			 localtime_r(&now, &tmbuf));
+
+	/* Append milliseconds */
+	snprintf(timestamp + strlen(timestamp),
+			 sizeof(timestamp) - strlen(timestamp), ".%03u",
+			 (unsigned int) (tval.tv_usec / 1000));
+
+	/* Build timestamp directory path */
+	len = snprintf(logdir, MAXPGPATH, "%s/%s", log_basedir, timestamp);
+
+	if (len >= MAXPGPATH)
+		report_createsub_fatal("directory path for log files is too long");
+
+	/* Create base directory (ignore if exists) */
+	if (mkdir(log_basedir, pg_dir_create_mode) < 0 && errno != EEXIST)
+		report_createsub_fatal("could not create directory \"%s\": %m", log_basedir);
+
+	/* Create a timestamp-named subdirectory under the base directory */
+	if (mkdir(logdir, pg_dir_create_mode) < 0)
+		report_createsub_fatal("could not create directory \"%s\": %m", logdir);
 }
 
 /*
@@ -1781,6 +1929,9 @@ start_standby_server(const struct CreateSubscriberOptions *opt, bool restricted_
 	if (restrict_logical_worker)
 		appendPQExpBufferStr(pg_ctl_cmd, " -o \"-c max_logical_replication_workers=0\"");
 
+	if (opt->log_dir)
+		appendPQExpBuffer(pg_ctl_cmd, " -l \"%s/%s\"", logdir, SERVER_LOG_FILE_NAME);
+
 	report_createsub_log(PG_LOG_DEBUG, PG_LOG_PRIMARY,
 						 "pg_ctl command is: %s", pg_ctl_cmd->data);
 	rc = system(pg_ctl_cmd->data);
@@ -2351,6 +2502,7 @@ main(int argc, char **argv)
 		{"all", no_argument, NULL, 'a'},
 		{"database", required_argument, NULL, 'd'},
 		{"pgdata", required_argument, NULL, 'D'},
+		{"logdir", required_argument, NULL, 'l'},
 		{"dry-run", no_argument, NULL, 'n'},
 		{"subscriber-port", required_argument, NULL, 'p'},
 		{"publisher-server", required_argument, NULL, 'P'},
@@ -2409,6 +2561,7 @@ main(int argc, char **argv)
 	/* Default settings */
 	subscriber_dir = NULL;
 	opt.config_file = NULL;
+	opt.log_dir = NULL;
 	opt.pub_conninfo_str = NULL;
 	opt.socket_dir = NULL;
 	opt.sub_port = DEFAULT_SUB_PORT;
@@ -2439,7 +2592,7 @@ main(int argc, char **argv)
 
 	get_restricted_token();
 
-	while ((c = getopt_long(argc, argv, "ad:D:np:P:s:t:TU:v",
+	while ((c = getopt_long(argc, argv, "ad:D:l:np:P:s:t:TU:v",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2459,6 +2612,10 @@ main(int argc, char **argv)
 			case 'D':
 				subscriber_dir = pg_strdup(optarg);
 				canonicalize_path(subscriber_dir);
+				break;
+			case 'l':
+				opt.log_dir = pg_strdup(optarg);
+				canonicalize_path(opt.log_dir);
 				break;
 			case 'n':
 				dry_run = true;
@@ -2605,6 +2762,31 @@ main(int argc, char **argv)
 		report_createsub_log(PG_LOG_ERROR, PG_LOG_HINT,
 							 "Try \"%s --help\" for more information.", progname);
 		exit(1);
+	}
+
+	if (opt.log_dir != NULL)
+	{
+		char	   *internal_log_file;
+
+		umask(PG_MODE_MASK_OWNER);
+
+		/*
+		 * Set mask based on PGDATA permissions, needed for the creation of
+		 * the output directories with correct permissions, similar with
+		 * pg_ctl and pg_upgrade.
+		 *
+		 * Don't error here if the data directory cannot be stat'd. Upcoming
+		 * checks for the data directory would raise the fatal error later.
+		 */
+		if (GetDataDirectoryCreatePerm(subscriber_dir))
+			umask(pg_mode_mask);
+
+		make_output_dirs(opt.log_dir);
+		internal_log_file = psprintf("%s/%s", logdir, INTERNAL_LOG_FILE_NAME);
+
+		/* logfile_open() will exit if there is an error */
+		internal_log_file_fp = logfile_open(internal_log_file, "a");
+		pg_free(internal_log_file);
 	}
 
 	if (dry_run)

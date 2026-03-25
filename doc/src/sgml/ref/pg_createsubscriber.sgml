@@ -137,6 +137,40 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-l <replaceable class="parameter">directory</replaceable></option></term>
+     <term><option>--logdir=<replaceable class="parameter">directory</replaceable></option></term>
+     <listitem>
+      <para>
+       Specify the name of the log directory. A new directory is created with
+       this name if it does not exist. A subdirectory with a timestamp
+       indicating the time at which <application>pg_createsubscriber</application>
+       was run will be created. The following two log files will be created in
+       the subdirectory.
+       <itemizedlist>
+        <listitem>
+         <para>
+          <filename>pg_createsubscriber_server.log</filename> which captures logs
+          related to stopping and starting the standby server,
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <filename>pg_createsubscriber_internal.log</filename> which captures
+          internal diagnostic output (validations, checks, etc.)
+         </para>
+        </listitem>
+       </itemizedlist>
+       By default, the <systemitem>umask</systemitem> is set to 077 so that the
+       log files are only readable by the user running the command. However, if
+       the target data directory is configured to allow group-read access,
+       <application>pg_createsubscriber</application> will adjust the log file
+       permissions to match. This ensures that the log file security remains
+       consistent with the database cluster itself.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-n</option></term>
      <term><option>--dry-run</option></term>
      <listitem>
