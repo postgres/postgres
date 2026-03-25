@@ -52,8 +52,13 @@ char	   *TmpWalSegDir = NULL;
  * are archived or retrieved out of sequence.
  *
  * To minimize the memory footprint, entries and their associated buffers are
- * freed immediately once consumed. Since pg_waldump does not request the same
- * bytes twice, a segment is discarded as soon as pg_waldump moves past it.
+ * freed once consumed.  Since pg_waldump does not request the same bytes
+ * twice (after it's located the point at which it should start decoding),
+ * a segment can be discarded as soon as pg_waldump moves past it.  Moreover,
+ * if we read a segment that won't be needed till later, we spill its data to
+ * a temporary file instead of retaining it in memory.  This ensures that
+ * pg_waldump can process even very large tar archives without needing more
+ * than a few WAL segments' worth of memory space.
  */
 typedef struct ArchivedWALFile
 {
@@ -65,7 +70,8 @@ typedef struct ArchivedWALFile
 								 * temporary file */
 
 	int			read_len;		/* total bytes received from archive for this
-								 * segment, including already-consumed data */
+								 * segment (same as buf->len, unless we have
+								 * spilled the data to a temp file) */
 } ArchivedWALFile;
 
 static uint32 hash_string_pointer(const char *s);
@@ -319,9 +325,9 @@ read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
 		/*
 		 * Calculate the LSN range currently residing in the buffer.
 		 *
-		 * read_len tracks total bytes received for this segment (including
-		 * already-discarded data), so endPtr is the LSN just past the last
-		 * buffered byte, and startPtr is the LSN of the first buffered byte.
+		 * read_len tracks total bytes received for this segment, so endPtr is
+		 * the LSN just past the last buffered byte, and startPtr is the LSN
+		 * of the first buffered byte.
 		 */
 		XLogSegNoOffsetToRecPtr(segno, entry->read_len, segsize, endPtr);
 		startPtr = endPtr - bufLen;
@@ -352,47 +358,10 @@ read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
 		else
 		{
 			/*
-			 * Before starting the actual decoding loop, pg_waldump tries to
-			 * locate the first valid record from the user-specified start
-			 * position, which might not be the start of a WAL record and
-			 * could fall in the middle of a record that spans multiple pages.
-			 * Consequently, the valid start position the decoder is looking
-			 * for could be far away from that initial position.
-			 *
-			 * This may involve reading across multiple pages, and this
-			 * pre-reading fetches data in multiple rounds from the archive
-			 * streamer; normally, we would throw away existing buffer
-			 * contents to fetch the next set of data, but that existing data
-			 * might be needed once the main loop starts. Because previously
-			 * read data cannot be re-read by the archive streamer, we delay
-			 * resetting the buffer until the main decoding loop is entered.
-			 *
-			 * Once pg_waldump has entered the main loop, it may re-read the
-			 * currently active page, but never an older one; therefore, any
-			 * fully consumed WAL data preceding the current page can then be
-			 * safely discarded.
-			 */
-			if (privateInfo->decoding_started)
-			{
-				resetStringInfo(entry->buf);
-
-				/*
-				 * Push back the partial page data for the current page to the
-				 * buffer, ensuring a full page remains available for
-				 * re-reading if requested.
-				 */
-				if (p > readBuff)
-				{
-					Assert((count - nbytes) > 0);
-					appendBinaryStringInfo(entry->buf, readBuff, count - nbytes);
-				}
-			}
-
-			/*
-			 * Now, fetch more data.  Raise an error if the archive streamer
-			 * has moved past our segment (meaning the WAL file in the archive
-			 * is shorter than expected) or if reading the archive reached
-			 * EOF.
+			 * We evidently need to fetch more data.  Raise an error if the
+			 * archive streamer has moved past our segment (meaning the WAL
+			 * file in the archive is shorter than expected) or if reading the
+			 * archive reached EOF.
 			 */
 			if (privateInfo->cur_file != entry)
 				pg_fatal("WAL segment \"%s\" in archive \"%s\" is too short: read %lld of %lld bytes",
