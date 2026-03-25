@@ -2353,6 +2353,8 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH("CONNECTION", "ENABLE", "DISABLE", "OWNER TO",
 					  "RENAME TO", "REFRESH PUBLICATION", "REFRESH SEQUENCES",
 					  "SERVER", "SET", "SKIP (", "ADD PUBLICATION", "DROP PUBLICATION");
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, "SERVER"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_servers);
 	/* ALTER SUBSCRIPTION <name> REFRESH */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "REFRESH"))
 		COMPLETE_WITH("PUBLICATION", "SEQUENCES");
@@ -2469,10 +2471,10 @@ match_previous_words(int pattern_id,
 
 	/* ALTER FOREIGN DATA WRAPPER <name> */
 	else if (Matches("ALTER", "FOREIGN", "DATA", "WRAPPER", MatchAny))
-		COMPLETE_WITH("HANDLER", "VALIDATOR", "NO",
-					  "OPTIONS", "OWNER TO", "RENAME TO");
+		COMPLETE_WITH("CONNECTION", "HANDLER", "NO",
+					  "OPTIONS", "OWNER TO", "RENAME TO", "VALIDATOR");
 	else if (Matches("ALTER", "FOREIGN", "DATA", "WRAPPER", MatchAny, "NO"))
-		COMPLETE_WITH("HANDLER", "VALIDATOR");
+		COMPLETE_WITH("CONNECTION", "HANDLER", "VALIDATOR");
 
 	/* ALTER FOREIGN TABLE <name> */
 	else if (Matches("ALTER", "FOREIGN", "TABLE", MatchAny))
@@ -3559,7 +3561,7 @@ match_previous_words(int pattern_id,
 
 	/* CREATE FOREIGN DATA WRAPPER */
 	else if (Matches("CREATE", "FOREIGN", "DATA", "WRAPPER", MatchAny))
-		COMPLETE_WITH("HANDLER", "VALIDATOR", "OPTIONS");
+		COMPLETE_WITH("CONNECTION", "HANDLER", "OPTIONS", "VALIDATOR");
 
 	/* CREATE FOREIGN TABLE */
 	else if (Matches("CREATE", "FOREIGN", "TABLE", MatchAny))
@@ -3925,7 +3927,9 @@ match_previous_words(int pattern_id,
 
 /* CREATE SUBSCRIPTION */
 	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny))
-		COMPLETE_WITH("SERVER", "CONNECTION");
+		COMPLETE_WITH("CONNECTION", "SERVER");
+	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "SERVER"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_servers);
 	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "SERVER", MatchAny))
 		COMPLETE_WITH("PUBLICATION");
 	else if (Matches("CREATE", "SUBSCRIPTION", MatchAny, "CONNECTION", MatchAny))
