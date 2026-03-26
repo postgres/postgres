@@ -122,8 +122,11 @@ INSERT INTO guid3 (guid_field) SELECT uuidv7() FROM generate_series(1, 10);
 INSERT INTO guid3 (guid_field) VALUES ('ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid);
 SELECT array_agg(id ORDER BY guid_field) FROM guid3;
 
--- make sure base32hex encoding works with UUIDs and preserves ordering
-SELECT array_agg(id ORDER BY guid_encoded) FROM guid3;
+-- Test base32hex encoding of UUIDs and its lexicographical sorting property.
+-- COLLATE "C" is required to prevent buildfarm failures in non-C locales
+-- where natural language collations (such as cs_CZ) would break strict
+-- byte-wise ordering.
+SELECT array_agg(id ORDER BY guid_encoded COLLATE "C") FROM guid3;
 
 -- Check the timestamp offsets for v7.
 --

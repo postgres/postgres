@@ -236,8 +236,11 @@ SELECT array_agg(id ORDER BY guid_field) FROM guid3;
  {1,2,3,4,5,6,7,8,9,10,11,12}
 (1 row)
 
--- make sure base32hex encoding works with UUIDs and preserves ordering
-SELECT array_agg(id ORDER BY guid_encoded) FROM guid3;
+-- Test base32hex encoding of UUIDs and its lexicographical sorting property.
+-- COLLATE "C" is required to prevent buildfarm failures in non-C locales
+-- where natural language collations (such as cs_CZ) would break strict
+-- byte-wise ordering.
+SELECT array_agg(id ORDER BY guid_encoded COLLATE "C") FROM guid3;
           array_agg           
 ------------------------------
  {1,2,3,4,5,6,7,8,9,10,11,12}
