@@ -99,8 +99,6 @@ typedef struct
 #ifdef USE_INJECTION_POINTS
 	struct InjectionPointsCtl *ActiveInjectionPoints;
 #endif
-	LWLockTrancheShmemData *LWLockTranches;
-	LWLockPadded *MainLWLockArray;
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
 	PGPROC	   *PreparedXactProcs;
@@ -726,8 +724,6 @@ save_backend_variables(BackendParameters *param,
 	param->ActiveInjectionPoints = ActiveInjectionPoints;
 #endif
 
-	param->LWLockTranches = LWLockTranches;
-	param->MainLWLockArray = MainLWLockArray;
 	param->ProcGlobal = ProcGlobal;
 	param->AuxiliaryProcs = AuxiliaryProcs;
 	param->PreparedXactProcs = PreparedXactProcs;
@@ -982,8 +978,6 @@ restore_backend_variables(BackendParameters *param)
 	ActiveInjectionPoints = param->ActiveInjectionPoints;
 #endif
 
-	LWLockTranches = param->LWLockTranches;
-	MainLWLockArray = param->MainLWLockArray;
 	ProcGlobal = param->ProcGlobal;
 	AuxiliaryProcs = param->AuxiliaryProcs;
 	PreparedXactProcs = param->PreparedXactProcs;

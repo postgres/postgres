@@ -73,11 +73,6 @@ typedef union LWLockPadded
 
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 
-/* forward declaration of private type for use only by lwlock.c */
-typedef struct LWLockTrancheShmemData LWLockTrancheShmemData;
-
-extern PGDLLIMPORT LWLockTrancheShmemData *LWLockTranches;
-
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS
  * here, but we need them to figure out offsets within MainLWLockArray, and
@@ -132,7 +127,7 @@ extern bool LWLockWaitForVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldv
 extern void LWLockUpdateVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 val);
 
 extern Size LWLockShmemSize(void);
-extern void CreateLWLocks(void);
+extern void LWLockShmemInit(void);
 extern void InitLWLockAccess(void);
 
 extern const char *GetLWLockIdentifier(uint32 classId, uint16 eventId);
