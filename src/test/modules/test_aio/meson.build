@@ -32,6 +32,7 @@ tests += {
     'tests': [
       't/001_aio.pl',
       't/002_io_workers.pl',
+      't/003_initdb.pl',
     ],
   },
 }

@@ -7,53 +7,48 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+use FindBin;
+use lib $FindBin::RealBin;
+
+use TestAio;
+
+my @methods = TestAio::supported_io_methods();
+my %nodes;
+
 
 ###
-# Test io_method=worker
+# Create and configure one instance for each io_method
 ###
-my $node_worker = create_node('worker');
-$node_worker->start();
 
-test_generic('worker', $node_worker);
-SKIP:
+foreach my $method (@methods)
 {
-	skip 'Injection points not supported by this build', 1
-	  unless $ENV{enable_injection_points} eq 'yes';
-	test_inject_worker('worker', $node_worker);
+	my $node = PostgreSQL::Test::Cluster->new($method);
+
+	$nodes{$method} = $node;
+	$node->init();
+	$node->append_conf('postgresql.conf', "io_method=$method");
+	TestAio::configure($node);
 }
 
-$node_worker->stop();
-
-
-###
-# Test io_method=io_uring
-###
-
-if (have_io_uring())
-{
-	my $node_uring = create_node('io_uring');
-	$node_uring->start();
-	test_generic('io_uring', $node_uring);
-	$node_uring->stop();
-}
-
-
-###
-# Test io_method=sync
-###
-
-my $node_sync = create_node('sync');
-
-# just to have one test not use the default auto-tuning
-
-$node_sync->append_conf(
+# Just to have one test not use the default auto-tuning
+$nodes{'sync'}->append_conf(
 	'postgresql.conf', qq(
-io_max_concurrency=4
+ io_max_concurrency=4
 ));
 
-$node_sync->start();
-test_generic('sync', $node_sync);
-$node_sync->stop();
+
+###
+# Execute the tests for each io_method
+###
+
+foreach my $method (@methods)
+{
+	my $node = $nodes{$method};
+
+	$node->start();
+	test_io_method($method, $node);
+	$node->stop();
+}
 
 done_testing();
 
@@ -62,71 +57,6 @@ done_testing();
 # Test Helpers
 ###
 
-sub create_node
-{
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	my $io_method = shift;
-
-	my $node = PostgreSQL::Test::Cluster->new($io_method);
-
-	# Want to test initdb for each IO method, otherwise we could just reuse
-	# the cluster.
-	#
-	# Unfortunately Cluster::init() puts PG_TEST_INITDB_EXTRA_OPTS after the
-	# options specified by ->extra, if somebody puts -c io_method=xyz in
-	# PG_TEST_INITDB_EXTRA_OPTS it would break this test. Fix that up if we
-	# detect it.
-	local $ENV{PG_TEST_INITDB_EXTRA_OPTS} = $ENV{PG_TEST_INITDB_EXTRA_OPTS};
-	if (defined $ENV{PG_TEST_INITDB_EXTRA_OPTS}
-		&& $ENV{PG_TEST_INITDB_EXTRA_OPTS} =~ m/io_method=/)
-	{
-		$ENV{PG_TEST_INITDB_EXTRA_OPTS} .= " -c io_method=$io_method";
-	}
-
-	$node->init(extra => [ '-c', "io_method=$io_method" ]);
-
-	$node->append_conf(
-		'postgresql.conf', qq(
-shared_preload_libraries=test_aio
-log_min_messages = 'DEBUG3'
-log_statement=all
-log_error_verbosity=default
-restart_after_crash=false
-temp_buffers=100
-));
-
-	# Even though we used -c io_method=... above, if TEMP_CONFIG sets
-	# io_method, it'd override the setting persisted at initdb time. While
-	# using (and later verifying) the setting from initdb provides some
-	# verification of having used the io_method during initdb, it's probably
-	# not worth the complication of only appending if the variable is set in
-	# in TEMP_CONFIG.
-	$node->append_conf(
-		'postgresql.conf', qq(
-io_method=$io_method
-));
-
-	ok(1, "$io_method: initdb");
-
-	return $node;
-}
-
-sub have_io_uring
-{
-	# To detect if io_uring is supported, we look at the error message for
-	# assigning an invalid value to an enum GUC, which lists all the valid
-	# options. We need to use -C to deal with running as administrator on
-	# windows, the superuser check is omitted if -C is used.
-	my ($stdout, $stderr) =
-	  run_command [qw(postgres -C invalid -c io_method=invalid)];
-	die "can't determine supported io_method values"
-	  unless $stderr =~ m/Available values: ([^\.]+)\./;
-	my $methods = $1;
-	note "supported io_method values are: $methods";
-
-	return ($methods =~ m/io_uring/) ? 1 : 0;
-}
 
 sub psql_like
 {
@@ -1490,8 +1420,8 @@ SELECT read_rel_block_ll('tbl_cs_fail', 3, nblocks=>1, zero_on_error=>true);),
 }
 
 
-# Run all tests that are supported for all io_methods
-sub test_generic
+# Run all tests that for the specified node / io_method
+sub test_io_method
 {
 	my $io_method = shift;
 	my $node = shift;
@@ -1526,10 +1456,23 @@ CHECKPOINT;
 	test_ignore_checksum($io_method, $node);
 	test_checksum_createdb($io_method, $node);
 
+	# generic injection tests
   SKIP:
 	{
 		skip 'Injection points not supported by this build', 1
 		  unless $ENV{enable_injection_points} eq 'yes';
 		test_inject($io_method, $node);
+	}
+
+	# worker specific injection tests
+	if ($io_method eq 'worker')
+	{
+	  SKIP:
+		{
+			skip 'Injection points not supported by this build', 1
+			  unless $ENV{enable_injection_points} eq 'yes';
+
+			test_inject_worker($io_method, $node);
+		}
 	}
 }
