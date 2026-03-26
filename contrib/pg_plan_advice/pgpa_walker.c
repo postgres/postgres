@@ -59,6 +59,10 @@ static bool pgpa_walker_contains_join(pgpa_plan_walker_context *walker,
 									  Bitmapset *relids);
 static bool pgpa_walker_contains_no_gather(pgpa_plan_walker_context *walker,
 										   Bitmapset *relids);
+static void pgpa_classify_alternative_subplans(pgpa_plan_walker_context *walker,
+											   List *proots,
+											   List **chosen_proots,
+											   List **discarded_proots);
 
 /*
  * Top-level entrypoint for the plan tree walk.
@@ -75,6 +79,8 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 	ListCell   *lc;
 	List	   *sj_unique_rtis = NULL;
 	List	   *sj_nonunique_qfs = NULL;
+	List	   *chosen_proots;
+	List	   *discarded_proots;
 
 	/* Initialization. */
 	memset(walker, 0, sizeof(pgpa_plan_walker_context));
@@ -95,42 +101,23 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 	/* Adjust RTIs from sj_unique_rels for the flattened range table. */
 	foreach_ptr(pgpa_planner_info, proot, proots)
 	{
-		int			rtoffset = 0;
-		bool		dummy = false;
-
 		/* If there are no sj_unique_rels for this proot, we can skip it. */
 		if (proot->sj_unique_rels == NIL)
 			continue;
 
 		/* If this is a subplan, find the range table offset. */
-		if (proot->plan_name != NULL)
-		{
-			foreach_node(SubPlanRTInfo, rtinfo, pstmt->subrtinfos)
-			{
-				if (strcmp(proot->plan_name, rtinfo->plan_name) == 0)
-				{
-					rtoffset = rtinfo->rtoffset;
-					dummy = rtinfo->dummy;
-					break;
-				}
-			}
+		if (!proot->has_rtoffset)
+			elog(ERROR, "no rtoffset for plan %s", proot->plan_name);
 
-			if (rtoffset == 0)
-				elog(ERROR, "no rtoffset for plan %s", proot->plan_name);
-		}
-
-		/* If this entry pertains to a dummy subquery, ignore it. */
-		if (dummy)
-			continue;
-
-		/* Offset each relid set by the rtoffset we just computed. */
+		/* Offset each relid set by the proot's rtoffset. */
 		foreach_node(Bitmapset, relids, proot->sj_unique_rels)
 		{
 			int			rtindex = -1;
 			Bitmapset  *flat_relids = NULL;
 
 			while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
-				flat_relids = bms_add_member(flat_relids, rtindex + rtoffset);
+				flat_relids = bms_add_member(flat_relids,
+											 rtindex + proot->rtoffset);
 
 			sj_unique_rtis = lappend(sj_unique_rtis, flat_relids);
 		}
@@ -192,6 +179,42 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 		}
 
 		walker->query_features[t] = query_features;
+	}
+
+	/* Classify alternative subplans. */
+	pgpa_classify_alternative_subplans(walker, proots,
+									   &chosen_proots, &discarded_proots);
+
+	/*
+	 * Figure out which of the discarded alternatives have a non-discarded
+	 * alternative. Those are the ones for which we want to emit DO_NOT_SCAN
+	 * advice. (If every alternative was discarded, then there's no point.)
+	 */
+	foreach_ptr(pgpa_planner_info, discarded_proot, discarded_proots)
+	{
+		bool		some_alternative_chosen = false;
+
+		foreach_ptr(pgpa_planner_info, chosen_proot, chosen_proots)
+		{
+			if (strings_equal_or_both_null(discarded_proot->alternative_plan_name,
+										   chosen_proot->alternative_plan_name))
+			{
+				some_alternative_chosen = true;
+				break;
+			}
+		}
+
+		if (some_alternative_chosen)
+		{
+			for (int rti = 1; rti <= discarded_proot->rid_array_size; rti++)
+			{
+				pgpa_identifier *rid = &discarded_proot->rid_array[rti - 1];
+
+				if (rid->alias_name != NULL)
+					walker->do_not_scan_identifiers =
+						lappend(walker->do_not_scan_identifiers, rid);
+			}
+		}
 	}
 }
 
@@ -697,6 +720,30 @@ pgpa_walker_would_advise(pgpa_plan_walker_context *walker,
 		return false;
 	}
 
+	/*
+	 * DO_NOT_SCAN advice targets rels that may not be in the flat range table
+	 * (e.g. MinMaxAgg losers), so we can't use pgpa_compute_rti_from_identifier.
+	 * Instead, check directly against the do_not_scan_identifiers list.
+	 */
+	if (tag == PGPA_TAG_DO_NOT_SCAN)
+	{
+		if (target->ttype != PGPA_TARGET_IDENTIFIER)
+			return false;
+		foreach_ptr(pgpa_identifier, rid, walker->do_not_scan_identifiers)
+		{
+			if (strcmp(rid->alias_name, target->rid.alias_name) == 0 &&
+				rid->occurrence == target->rid.occurrence &&
+				strings_equal_or_both_null(rid->partnsp,
+										   target->rid.partnsp) &&
+				strings_equal_or_both_null(rid->partrel,
+										   target->rid.partrel) &&
+				strings_equal_or_both_null(rid->plan_name,
+										   target->rid.plan_name))
+				return true;
+		}
+		return false;
+	}
+
 	if (target->ttype == PGPA_TARGET_IDENTIFIER)
 	{
 		Index		rti;
@@ -727,6 +774,10 @@ pgpa_walker_would_advise(pgpa_plan_walker_context *walker,
 	switch (tag)
 	{
 		case PGPA_TAG_JOIN_ORDER:
+			/* should have been handled above */
+			pg_unreachable();
+			break;
+		case PGPA_TAG_DO_NOT_SCAN:
 			/* should have been handled above */
 			pg_unreachable();
 			break;
@@ -1034,4 +1085,61 @@ pgpa_walker_contains_no_gather(pgpa_plan_walker_context *walker,
 							   Bitmapset *relids)
 {
 	return bms_is_subset(relids, walker->no_gather_scans);
+}
+
+/*
+ * Classify alternative subplans as chosen or discarded.
+ */
+static void
+pgpa_classify_alternative_subplans(pgpa_plan_walker_context *walker,
+								   List *proots,
+								   List **chosen_proots,
+								   List **discarded_proots)
+{
+	Bitmapset  *all_scan_rtis = NULL;
+
+	/* Initialize both output lists to empty. */
+	*chosen_proots = NIL;
+	*discarded_proots = NIL;
+
+	/* Collect all scan RTIs. */
+	for (int s = 0; s < NUM_PGPA_SCAN_STRATEGY; s++)
+		foreach_ptr(pgpa_scan, scan, walker->scans[s])
+			all_scan_rtis = bms_add_members(all_scan_rtis, scan->relids);
+
+	/* Now classify each subplan. */
+	foreach_ptr(pgpa_planner_info, proot, proots)
+	{
+		bool		chosen = false;
+
+		/*
+		 * We're only interested in classifying subplans for which there are
+		 * alternatives.
+		 */
+		if (!proot->is_alternative_plan)
+			continue;
+
+		/*
+		 * A subplan has been chosen if any of its scan RTIs appear in the
+		 * final plan. This cannot be the case if it has no RT offset.
+		 */
+		if (proot->has_rtoffset)
+		{
+			for (int rti = 1; rti <= proot->rid_array_size; rti++)
+			{
+				if (proot->rid_array[rti - 1].alias_name != NULL &&
+					bms_is_member(proot->rtoffset + rti, all_scan_rtis))
+				{
+					chosen = true;
+					break;
+				}
+			}
+		}
+
+		/* Add it to the correct list. */
+		if (chosen)
+			*chosen_proots = lappend(*chosen_proots, proot);
+		else
+			*discarded_proots = lappend(*discarded_proots, proot);
+	}
 }

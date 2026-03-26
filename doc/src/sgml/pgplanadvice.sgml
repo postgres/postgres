@@ -267,7 +267,8 @@ TID_SCAN(<replaceable>target</replaceable> [ ... ])
 INDEX_SCAN(<replaceable>target</replaceable> <replaceable>index_name</replaceable> [ ... ])
 INDEX_ONLY_SCAN(<replaceable>target</replaceable> <replaceable>index_name</replaceable> [ ... ])
 FOREIGN_SCAN((<replaceable>target</replaceable> [ ... ]) [ ... ])
-BITMAP_HEAP_SCAN(<replaceable>target</replaceable> [ ... ])</synopsis>
+BITMAP_HEAP_SCAN(<replaceable>target</replaceable> [ ... ])
+DO_NOT_SCAN(<replaceable>target</replaceable> [ ... ])</synopsis>
 
    <para>
     <literal>SEQ_SCAN</literal> specifies that each target should be
@@ -295,6 +296,17 @@ BITMAP_HEAP_SCAN(<replaceable>target</replaceable> [ ... ])</synopsis>
     need to be used regardless. If you want to prevent a join from being
     pushed down, consider using the <literal>JOIN_ORDER</literal> tag for
     that purpose.
+   </para>
+
+   <para>
+    <literal>DO_NOT_SCAN</literal> specifies that a particular target
+    should not appear in the final plan at all. In most cases, this is
+    impossible, and will simply cause the scan of the target relation to
+    be marked disabled. However, in certain cases, the planner considers
+    optimizations where a portion of the plan tree is copied and mutated,
+    and then considered as an alternative to the original. In those cases,
+    <literal>DO_NOT_SCAN</literal> can be used to exclude the non-preferred
+    alternative.
    </para>
 
    <para>

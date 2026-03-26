@@ -24,11 +24,33 @@ typedef struct pgpa_planner_info
 	/* Plan name taken from the corresponding PlannerInfo; NULL at top level. */
 	char	   *plan_name;
 
-#ifdef USE_ASSERT_CHECKING
+	/*
+	 * If the corresponding PlannerInfo has an alternative_root, then this is
+	 * the plan name from that PlannerInfo; otherwise, it is the same as
+	 * plan_name.
+	 *
+	 * is_alternative_plan is set to true for every pgpa_planner_info that
+	 * shares an alternative_plan_name with at least one other, and to false
+	 * otherwise.
+	 */
+	char	   *alternative_plan_name;
+	bool		is_alternative_plan;
+
 	/* Relation identifiers computed for baserels at this query level. */
 	pgpa_identifier *rid_array;
 	int			rid_array_size;
-#endif
+
+	/*
+	 * If has_rtoffset is true, then rtoffset is the offset required to align
+	 * RTIs for this query level with RTIs from the final, flattened rangetable.
+	 * If has_rtoffset is false, then this subquery's range table wasn't copied,
+	 * or was only partially copied, into the final range table. (Note that
+	 * we can't determine the rtoffset values until the final range table
+	 * actually exists; before that time, has_rtoffset will be false everywhere
+	 * except at the top level.)
+	 */
+	bool		has_rtoffset;
+	Index		rtoffset;
 
 	/*
 	 * List of Bitmapset objects. Each represents the relid set of a relation

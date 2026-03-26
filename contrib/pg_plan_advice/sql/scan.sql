@@ -79,13 +79,16 @@ COMMIT;
 
 -- We can force a primary key lookup to use a sequential scan, but we
 -- can't force it to use an index-only scan (due to the column list)
--- or a TID scan (due to the absence of a TID qual).
+-- or a TID scan (due to the absence of a TID qual). If we apply DO_NOT_SCAN
+-- here, we should get a valid plan anyway, but with the scan disabled.
 BEGIN;
 SET LOCAL pg_plan_advice.advice = 'SEQ_SCAN(scan_table)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE) SELECT * FROM scan_table WHERE a = 1;
 SET LOCAL pg_plan_advice.advice = 'INDEX_ONLY_SCAN(scan_table scan_table_pkey)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE) SELECT * FROM scan_table WHERE a = 1;
 SET LOCAL pg_plan_advice.advice = 'TID_SCAN(scan_table)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE) SELECT * FROM scan_table WHERE a = 1;
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(scan_table)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE) SELECT * FROM scan_table WHERE a = 1;
 COMMIT;
 

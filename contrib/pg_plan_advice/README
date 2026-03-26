@@ -109,6 +109,13 @@ Bitmap heap scans currently do not allow for an index specification:
 BITMAP_HEAP_SCAN(foo bar) simply means that each of foo and bar should use
 some sort of bitmap heap scan.
 
+There is a special DO_NOT_SCAN() advice tag which says that a certain
+relation shouldn't be scanned at all. This is used to control which of
+two choices is selected when an AlternativeSubPlan is resolved, and
+whether or not a MinMaxAggPath is chosen. Control over upper planner
+behavior is generally out-of-scope at the moment, but these cases had
+to be handled to prevent test_plan_advice failures in the buildfarm.
+
 Join Order Advice
 =================
 

@@ -1,0 +1,158 @@
+LOAD 'pg_plan_advice';
+SET max_parallel_workers_per_gather = 0;
+CREATE TABLE alt_t1 (a int) WITH (autovacuum_enabled = false);
+CREATE TABLE alt_t2 (a int) WITH (autovacuum_enabled = false);
+CREATE INDEX ON alt_t2(a);
+INSERT INTO alt_t1 SELECT generate_series(1, 1000);
+INSERT INTO alt_t2 SELECT generate_series(1, 100000);
+VACUUM ANALYZE alt_t1;
+VACUUM ANALYZE alt_t2;
+-- This query uses an OR to prevent the EXISTS from being converted to a
+-- semi-join, forcing the planner through the AlternativeSubPlan path.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM alt_t1
+WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Seq Scan on alt_t1
+   Filter: ((ANY (a = (hashed SubPlan exists_2).col1)) OR (a < 0))
+   SubPlan exists_2
+     ->  Seq Scan on alt_t2
+ Generated Plan Advice:
+   SEQ_SCAN(alt_t1 alt_t2@exists_2)
+   NO_GATHER(alt_t1 alt_t2@exists_2)
+   DO_NOT_SCAN(alt_t2@exists_1)
+(8 rows)
+
+-- We should be able to force either AlternativeSubPlan by advising against
+-- scanning the other relation.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_1)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM alt_t1
+WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Seq Scan on alt_t1
+   Filter: ((ANY (a = (hashed SubPlan exists_2).col1)) OR (a < 0))
+   SubPlan exists_2
+     ->  Seq Scan on alt_t2
+ Supplied Plan Advice:
+   DO_NOT_SCAN(alt_t2@exists_1) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(alt_t1 alt_t2@exists_2)
+   NO_GATHER(alt_t1 alt_t2@exists_2)
+   DO_NOT_SCAN(alt_t2@exists_1)
+(10 rows)
+
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM alt_t1
+WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on alt_t1
+   Filter: (EXISTS(SubPlan exists_1) OR (a < 0))
+   SubPlan exists_1
+     ->  Index Only Scan using alt_t2_a_idx on alt_t2
+           Index Cond: (a = alt_t1.a)
+ Supplied Plan Advice:
+   DO_NOT_SCAN(alt_t2@exists_2) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(alt_t1)
+   INDEX_ONLY_SCAN(alt_t2@exists_1 public.alt_t2_a_idx)
+   NO_GATHER(alt_t1 alt_t2@exists_1)
+   DO_NOT_SCAN(alt_t2@exists_2)
+(12 rows)
+
+COMMIT;
+-- Now let's test a case involving MinMaxAggPath, which we treat similarly
+-- to the AlternativeSubPlan case.
+CREATE TABLE alt_minmax (a int) WITH (autovacuum_enabled = false);
+CREATE INDEX ON alt_minmax(a);
+INSERT INTO alt_minmax SELECT generate_series(1, 10000);
+VACUUM ANALYZE alt_minmax;
+-- Using an Index Scan inside of an InitPlan should win over a full table
+-- scan.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT min(a), max(a) FROM alt_minmax;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Result
+   Replaces: MinMaxAggregate
+   InitPlan minmax_1
+     ->  Limit
+           ->  Index Only Scan using alt_minmax_a_idx on alt_minmax
+                 Index Cond: (a IS NOT NULL)
+   InitPlan minmax_2
+     ->  Limit
+           ->  Index Only Scan Backward using alt_minmax_a_idx on alt_minmax alt_minmax_1
+                 Index Cond: (a IS NOT NULL)
+ Generated Plan Advice:
+   INDEX_ONLY_SCAN(alt_minmax@minmax_1 public.alt_minmax_a_idx
+    alt_minmax@minmax_2 public.alt_minmax_a_idx)
+   NO_GATHER(alt_minmax@minmax_1 alt_minmax@minmax_2)
+   DO_NOT_SCAN(alt_minmax)
+(15 rows)
+
+-- Advising against the scan of alt_minmax at the root query level should
+-- change nothing, but if we say we don't want either of or both of the
+-- minmax-variant scans, the plan should switch to a full table scan.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_minmax)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT min(a), max(a) FROM alt_minmax;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Result
+   Replaces: MinMaxAggregate
+   InitPlan minmax_1
+     ->  Limit
+           ->  Index Only Scan using alt_minmax_a_idx on alt_minmax
+                 Index Cond: (a IS NOT NULL)
+   InitPlan minmax_2
+     ->  Limit
+           ->  Index Only Scan Backward using alt_minmax_a_idx on alt_minmax alt_minmax_1
+                 Index Cond: (a IS NOT NULL)
+ Supplied Plan Advice:
+   DO_NOT_SCAN(alt_minmax) /* matched */
+ Generated Plan Advice:
+   INDEX_ONLY_SCAN(alt_minmax@minmax_1 public.alt_minmax_a_idx
+    alt_minmax@minmax_2 public.alt_minmax_a_idx)
+   NO_GATHER(alt_minmax@minmax_1 alt_minmax@minmax_2)
+   DO_NOT_SCAN(alt_minmax)
+(17 rows)
+
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_minmax@minmax_1)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT min(a), max(a) FROM alt_minmax;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on alt_minmax
+ Supplied Plan Advice:
+   DO_NOT_SCAN(alt_minmax@minmax_1) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(alt_minmax)
+   NO_GATHER(alt_minmax)
+   DO_NOT_SCAN(alt_minmax@minmax_1 alt_minmax@minmax_2)
+(8 rows)
+
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_minmax@minmax_1) DO_NOT_SCAN(alt_minmax@minmax_2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT min(a), max(a) FROM alt_minmax;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on alt_minmax
+ Supplied Plan Advice:
+   DO_NOT_SCAN(alt_minmax@minmax_1) /* matched */
+   DO_NOT_SCAN(alt_minmax@minmax_2) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(alt_minmax)
+   NO_GATHER(alt_minmax)
+   DO_NOT_SCAN(alt_minmax@minmax_1 alt_minmax@minmax_2)
+(9 rows)
+
+COMMIT;
+DROP TABLE alt_t1, alt_t2, alt_minmax;

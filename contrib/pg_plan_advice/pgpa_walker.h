@@ -100,6 +100,7 @@ typedef struct pgpa_plan_walker_context
 	List	   *join_strategies[NUM_PGPA_JOIN_STRATEGY];
 	List	   *query_features[NUM_PGPA_QF_TYPES];
 	List	   *future_query_features;
+	List	   *do_not_scan_identifiers;
 } pgpa_plan_walker_context;
 
 extern void pgpa_plan_walker(pgpa_plan_walker_context *walker,

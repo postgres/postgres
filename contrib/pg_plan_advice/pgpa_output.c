@@ -54,6 +54,8 @@ static void pgpa_output_simple_strategy(pgpa_output_context *context,
 										List *relid_sets);
 static void pgpa_output_no_gather(pgpa_output_context *context,
 								  Bitmapset *relids);
+static void pgpa_output_do_not_scan(pgpa_output_context *context,
+									List *identifiers);
 static void pgpa_output_relations(pgpa_output_context *context, StringInfo buf,
 								  Bitmapset *relids);
 
@@ -156,6 +158,9 @@ pgpa_output_advice(StringInfo buf, pgpa_plan_walker_context *walker,
 
 	/* Emit NO_GATHER advice. */
 	pgpa_output_no_gather(&context, walker->no_gather_scans);
+
+	/* Emit DO_NOT_SCAN advice. */
+	pgpa_output_do_not_scan(&context, walker->do_not_scan_identifiers);
 }
 
 /*
@@ -392,6 +397,36 @@ pgpa_output_no_gather(pgpa_output_context *context, Bitmapset *relids)
 		appendStringInfoChar(context->buf, '\n');
 	appendStringInfoString(context->buf, "NO_GATHER(");
 	pgpa_output_relations(context, context->buf, relids);
+	appendStringInfoChar(context->buf, ')');
+}
+
+/*
+ * Output DO_NOT_SCAN advice for all relations in the provided list of
+ * identifiers.
+ */
+static void
+pgpa_output_do_not_scan(pgpa_output_context *context, List *identifiers)
+{
+	bool		first = true;
+
+	if (identifiers == NIL)
+		return;
+	if (context->buf->len > 0)
+		appendStringInfoChar(context->buf, '\n');
+	appendStringInfoString(context->buf, "DO_NOT_SCAN(");
+
+	foreach_ptr(pgpa_identifier, rid, identifiers)
+	{
+		if (first)
+			first = false;
+		else
+		{
+			pgpa_maybe_linebreak(context->buf, context->wrap_column);
+			appendStringInfoChar(context->buf, ' ');
+		}
+		appendStringInfoString(context->buf, pgpa_identifier_string(rid));
+	}
+
 	appendStringInfoChar(context->buf, ')');
 }
 

@@ -164,11 +164,13 @@ static void pgpa_planner_feedback_warning(List *feedback);
 static pgpa_planner_info *pgpa_planner_get_proot(pgpa_planner_state *pps,
 												 PlannerInfo *root);
 
-static inline void pgpa_ri_checker_save(pgpa_planner_state *pps,
-										PlannerInfo *root,
-										RelOptInfo *rel);
-static void pgpa_ri_checker_validate(pgpa_planner_state *pps,
-									 PlannedStmt *pstmt);
+static inline void pgpa_compute_rt_identifier(pgpa_planner_info *proot,
+											  PlannerInfo *root,
+											  RelOptInfo *rel);
+static void pgpa_compute_rt_offsets(pgpa_planner_state *pps,
+									PlannedStmt *pstmt);
+static void pgpa_validate_rt_identifiers(pgpa_planner_state *pps,
+										 PlannedStmt *pstmt);
 
 static char *pgpa_bms_to_cstring(Bitmapset *bms);
 static const char *pgpa_jointype_to_cstring(JoinType jointype);
@@ -264,20 +266,10 @@ pgpa_planner_setup(PlannerGlobal *glob, Query *parse, const char *query_string,
 		}
 	}
 
-#ifdef USE_ASSERT_CHECKING
-
-	/*
-	 * If asserts are enabled, always build a private state object for
-	 * cross-checks.
-	 */
-	needs_pps = true;
-#endif
-
 	/*
 	 * We only create and initialize a private state object if it's needed for
 	 * some purpose. That could be (1) recording that we will need to generate
-	 * an advice string, (2) storing a trove of supplied advice, or (3)
-	 * facilitating debugging cross-checks when asserts are enabled.
+	 * an advice string or (2) storing a trove of supplied advice.
 	 *
 	 * Currently, the active memory context should be one that will last for
 	 * the entire duration of query planning, but if GEQO is in use, it's
@@ -321,9 +313,16 @@ pgpa_planner_shutdown(PlannerGlobal *glob, Query *parse,
 	pps = GetPlannerGlobalExtensionState(glob, planner_extension_id);
 	if (pps != NULL)
 	{
+		/* Set up some local variables. */
 		trove = pps->trove;
 		generate_advice_feedback = pps->generate_advice_feedback;
 		generate_advice_string = pps->generate_advice_string;
+
+		/* Compute range table offsets. */
+		pgpa_compute_rt_offsets(pps, pstmt);
+
+		/* Cross-check range table identifiers. */
+		pgpa_validate_rt_identifiers(pps, pstmt);
 	}
 
 	/*
@@ -394,13 +393,6 @@ pgpa_planner_shutdown(PlannerGlobal *glob, Query *parse,
 			lappend(pstmt->extension_state,
 					makeDefElem("pg_plan_advice", (Node *) pgpa_items, -1));
 
-	/*
-	 * If assertions are enabled, cross-check the generated range table
-	 * identifiers.
-	 */
-	if (pps != NULL)
-		pgpa_ri_checker_validate(pps, pstmt);
-
 	/* Pass call to previous hook. */
 	if (prev_planner_shutdown)
 		(*prev_planner_shutdown) (glob, parse, query_string, pstmt);
@@ -408,35 +400,38 @@ pgpa_planner_shutdown(PlannerGlobal *glob, Query *parse,
 
 /*
  * Hook function for build_simple_rel().
- *
- * We can apply scan advice at this point, and we also use this as an
- * opportunity to do range-table identifier cross-checking in assert-enabled
- * builds.
  */
 static void
 pgpa_build_simple_rel(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	pgpa_planner_state *pps;
+	pgpa_planner_info *proot = NULL;
 
 	/* Fetch our private state, set up by pgpa_planner_setup(). */
 	pps = GetPlannerGlobalExtensionState(root->glob, planner_extension_id);
 
-	/* Save details needed for range table identifier cross-checking. */
+	/*
+	 * Look up the pgpa_planner_info for this subquery, and make sure we've
+	 * saved a range table identifier.
+	 */
 	if (pps != NULL)
-		pgpa_ri_checker_save(pps, root, rel);
+	{
+		proot = pgpa_planner_get_proot(pps, root);
+		pgpa_compute_rt_identifier(proot, root, rel);
+	}
 
 	/* If query advice was provided, search for relevant entries. */
 	if (pps != NULL && pps->trove != NULL)
 	{
-		pgpa_identifier rid;
+		pgpa_identifier *rid;
 		pgpa_trove_result tresult_scan;
 		pgpa_trove_result tresult_rel;
 
 		/* Search for scan advice and general rel advice. */
-		pgpa_compute_identifier_by_rti(root, rel->relid, &rid);
-		pgpa_trove_lookup(pps->trove, PGPA_TROVE_LOOKUP_SCAN, 1, &rid,
+		rid = &proot->rid_array[rel->relid - 1];
+		pgpa_trove_lookup(pps->trove, PGPA_TROVE_LOOKUP_SCAN, 1, rid,
 						  &tresult_scan);
-		pgpa_trove_lookup(pps->trove, PGPA_TROVE_LOOKUP_REL, 1, &rid,
+		pgpa_trove_lookup(pps->trove, PGPA_TROVE_LOOKUP_REL, 1, rid,
 						  &tresult_rel);
 
 		/* If relevant entries were found, apply them. */
@@ -1626,6 +1621,8 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 							   pgpa_trove_entry *rel_entries,
 							   Bitmapset *rel_indexes)
 {
+	const uint64 all_scan_mask = PGS_SCAN_ANY | PGS_APPEND |
+		PGS_MERGE_APPEND | PGS_CONSIDER_INDEXONLY;
 	bool		gather_conflict = false;
 	Bitmapset  *gather_partial_match = NULL;
 	Bitmapset  *gather_full_match = NULL;
@@ -1636,16 +1633,18 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 	Bitmapset  *scan_type_indexes = NULL;
 	Bitmapset  *scan_type_rel_indexes = NULL;
 	uint64		gather_mask = 0;
-	uint64		scan_type = 0;
+	uint64		scan_type = all_scan_mask;	/* sentinel: no advice yet */
 
 	/* Scrutinize available scan advice. */
 	while ((i = bms_next_member(scan_indexes, i)) >= 0)
 	{
 		pgpa_trove_entry *my_entry = &scan_entries[i];
-		uint64		my_scan_type = 0;
+		uint64		my_scan_type = all_scan_mask;
 
 		/* Translate our advice tags to a scan strategy advice value. */
-		if (my_entry->tag == PGPA_TAG_BITMAP_HEAP_SCAN)
+		if (my_entry->tag == PGPA_TAG_DO_NOT_SCAN)
+			my_scan_type = 0;
+		else if (my_entry->tag == PGPA_TAG_BITMAP_HEAP_SCAN)
 		{
 			/*
 			 * Currently, PGS_CONSIDER_INDEXONLY can suppress Bitmap Heap
@@ -1679,9 +1678,9 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 		 * INDEX_SCAN(a b.c) as non-conflicting if it happens that the only
 		 * index named c is in schema b, but it doesn't seem worth the code.
 		 */
-		if (my_scan_type != 0)
+		if (my_scan_type != all_scan_mask)
 		{
-			if (scan_type != 0 && scan_type != my_scan_type)
+			if (scan_type != all_scan_mask && scan_type != my_scan_type)
 				scan_type_conflict = true;
 			if (!scan_type_conflict && scan_entry != NULL &&
 				my_entry->target->itarget != NULL &&
@@ -1716,7 +1715,7 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 			{
 				const uint64 my_scan_type = PGS_APPEND | PGS_MERGE_APPEND;
 
-				if (scan_type != 0 && scan_type != my_scan_type)
+				if (scan_type != all_scan_mask && scan_type != my_scan_type)
 					scan_type_conflict = true;
 				scan_entry = my_entry;
 				scan_type = my_scan_type;
@@ -1795,7 +1794,7 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 		if (matched_index == NULL)
 		{
 			/* Don't force the scan type if the index doesn't exist. */
-			scan_type = 0;
+			scan_type = all_scan_mask;
 
 			/* Mark advice as inapplicable. */
 			pgpa_trove_set_flags(scan_entries, scan_type_indexes,
@@ -1839,14 +1838,8 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 	 * Only clear bits here, so that we still respect the enable_* GUCs. Do
 	 * nothing in cases where the advice on a single topic conflicts.
 	 */
-	if (scan_type != 0 && !scan_type_conflict)
-	{
-		uint64		all_scan_mask;
-
-		all_scan_mask = PGS_SCAN_ANY | PGS_APPEND | PGS_MERGE_APPEND |
-			PGS_CONSIDER_INDEXONLY;
+	if (scan_type != all_scan_mask && !scan_type_conflict)
 		rel->pgs_mask &= ~(all_scan_mask & ~scan_type);
-	}
 	if (gather_mask != 0 && !gather_conflict)
 	{
 		uint64		all_gather_mask;
@@ -2001,9 +1994,38 @@ pgpa_planner_get_proot(pgpa_planner_state *pps, PlannerInfo *root)
 		}
 	}
 
-	/* Create new object, add to list, and make it most recently used. */
+	/* Create new object. */
 	new_proot = palloc0_object(pgpa_planner_info);
+
+	/* Set plan name and alternative plan name. */
 	new_proot->plan_name = root->plan_name;
+	new_proot->alternative_plan_name = root->alternative_plan_name;
+
+	/*
+	 * If the newly-created proot shares an alternative_plan_name with one or
+	 * more others, all should have the is_alternative_plan flag set.
+	 */
+	foreach_ptr(pgpa_planner_info, other_proot, pps->proots)
+	{
+		if (strings_equal_or_both_null(new_proot->alternative_plan_name,
+									   other_proot->alternative_plan_name))
+		{
+			new_proot->is_alternative_plan = true;
+			other_proot->is_alternative_plan = true;
+		}
+	}
+
+	/*
+	 * Outermost query level always has rtoffset 0; other rtoffset values are
+	 * computed later.
+	 */
+	if (root->plan_name == NULL)
+	{
+		new_proot->has_rtoffset = true;
+		new_proot->rtoffset = 0;
+	}
+
+	/* Add to list and make it most recently used. */
 	pps->proots = lappend(pps->proots, new_proot);
 	pps->last_proot = new_proot;
 
@@ -2011,18 +2033,14 @@ pgpa_planner_get_proot(pgpa_planner_state *pps, PlannerInfo *root)
 }
 
 /*
- * Save the range table identifier for one relation for future cross-checking.
+ * Compute the range table identifier for one relation and save it for future
+ * use.
  */
 static void
-pgpa_ri_checker_save(pgpa_planner_state *pps, PlannerInfo *root,
-					 RelOptInfo *rel)
+pgpa_compute_rt_identifier(pgpa_planner_info *proot, PlannerInfo *root,
+						   RelOptInfo *rel)
 {
-#ifdef USE_ASSERT_CHECKING
-	pgpa_planner_info *proot;
 	pgpa_identifier *rid;
-
-	/* Get the pgpa_planner_info for this PlannerInfo. */
-	proot = pgpa_planner_get_proot(pps, root);
 
 	/* Allocate or extend the proot's rid_array as necessary. */
 	if (proot->rid_array_size < rel->relid)
@@ -2043,7 +2061,60 @@ pgpa_ri_checker_save(pgpa_planner_state *pps, PlannerInfo *root,
 	rid = &proot->rid_array[rel->relid - 1];
 	if (rid->alias_name == NULL)
 		pgpa_compute_identifier_by_rti(root, rel->relid, rid);
-#endif
+}
+
+/*
+ * Compute the range table offset for each pgpa_planner_info for which it
+ * is possible to meaningfully do so.
+ */
+static void
+pgpa_compute_rt_offsets(pgpa_planner_state *pps, PlannedStmt *pstmt)
+{
+	foreach_ptr(pgpa_planner_info, proot, pps->proots)
+	{
+		/* For the top query level, we've previously set rtoffset 0. */
+		if (proot->plan_name == NULL)
+		{
+			Assert(proot->has_rtoffset);
+			continue;
+		}
+
+		/*
+		 * It's not guaranteed that every plan name we saw during planning has
+		 * a SubPlanInfo, but any that do not certainly don't appear in the
+		 * final range table.
+		 */
+		foreach_node(SubPlanRTInfo, rtinfo, pstmt->subrtinfos)
+		{
+			if (strcmp(proot->plan_name, rtinfo->plan_name) == 0)
+			{
+				/*
+				 * If rtinfo->dummy is set, then the subquery's range table
+				 * will only have been partially copied to the final range
+				 * table. Specifically, only RTE_RELATION entries and
+				 * RTE_SUBQUERY entries that were once RTE_RELATION entries
+				 * will be copied, as per add_rtes_to_flat_rtable. Therefore,
+				 * there's no fixed rtoffset that we can apply to the RTIs
+				 * used during planning to locate the corresponding relations.
+				 */
+				if (rtinfo->dummy)
+				{
+					/*
+					 * It will not be possible to make any effective use of the
+					 * sj_unique_rels list in this case, and it also won't be
+					 * important to do so. So just throw the list away to avoid
+					 * confusing pgpa_plan_walker.
+					 */
+					proot->sj_unique_rels = NIL;
+					break;
+				}
+				Assert(!proot->has_rtoffset);
+				proot->has_rtoffset = true;
+				proot->rtoffset = rtinfo->rtoffset;
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -2051,7 +2122,7 @@ pgpa_ri_checker_save(pgpa_planner_state *pps, PlannerInfo *root,
  * planning match the ones we generated from the final plan.
  */
 static void
-pgpa_ri_checker_validate(pgpa_planner_state *pps, PlannedStmt *pstmt)
+pgpa_validate_rt_identifiers(pgpa_planner_state *pps, PlannedStmt *pstmt)
 {
 #ifdef USE_ASSERT_CHECKING
 	pgpa_identifier *rt_identifiers;
@@ -2063,48 +2134,12 @@ pgpa_ri_checker_validate(pgpa_planner_state *pps, PlannedStmt *pstmt)
 	/* Iterate over identifiers created during planning, so we can compare. */
 	foreach_ptr(pgpa_planner_info, proot, pps->proots)
 	{
-		int			rtoffset = 0;
-
-		/*
-		 * If there's no plan name associated with this entry, then the
-		 * rtoffset is 0. Otherwise, we can search the SubPlanRTInfo list to
-		 * find the rtoffset.
-		 */
-		if (proot->plan_name != NULL)
-		{
-			foreach_node(SubPlanRTInfo, rtinfo, pstmt->subrtinfos)
-			{
-				/*
-				 * If rtinfo->dummy is set, then the subquery's range table
-				 * will only have been partially copied to the final range
-				 * table. Specifically, only RTE_RELATION entries and
-				 * RTE_SUBQUERY entries that were once RTE_RELATION entries
-				 * will be copied, as per add_rtes_to_flat_rtable. Therefore,
-				 * there's no fixed rtoffset that we can apply to the RTIs
-				 * used during planning to locate the corresponding relations
-				 */
-				if (strcmp(proot->plan_name, rtinfo->plan_name) == 0
-					&& !rtinfo->dummy)
-				{
-					rtoffset = rtinfo->rtoffset;
-					Assert(rtoffset > 0);
-					break;
-				}
-			}
-
-			/*
-			 * It's not an error if we don't find the plan name: that just
-			 * means that we planned a subplan by this name but it ended up
-			 * being a dummy subplan and so wasn't included in the final plan
-			 * tree.
-			 */
-			if (rtoffset == 0)
-				continue;
-		}
+		if (!proot->has_rtoffset)
+			continue;
 
 		for (int rti = 1; rti <= proot->rid_array_size; ++rti)
 		{
-			Index		flat_rti = rtoffset + rti;
+			Index		flat_rti = proot->rtoffset + rti;
 			pgpa_identifier *rid1 = &proot->rid_array[rti - 1];
 			pgpa_identifier *rid2;
 
