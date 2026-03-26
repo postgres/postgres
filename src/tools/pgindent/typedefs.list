@@ -4034,14 +4034,12 @@ pgpa_join_strategy
 pgpa_join_unroller
 pgpa_output_context
 pgpa_plan_walker_context
+pgpa_planner_info
 pgpa_planner_state
 pgpa_qf_type
 pgpa_query_feature
-pgpa_ri_checker
-pgpa_ri_checker_key
 pgpa_scan
 pgpa_scan_strategy
-pgpa_sj_unique_rel
 pgpa_target_type
 pgpa_trove
 pgpa_trove_entry

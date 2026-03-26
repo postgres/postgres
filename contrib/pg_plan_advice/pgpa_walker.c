@@ -12,6 +12,7 @@
 #include "postgres.h"
 
 #include "pgpa_join.h"
+#include "pgpa_planner.h"
 #include "pgpa_scan.h"
 #include "pgpa_walker.h"
 
@@ -64,12 +65,12 @@ static bool pgpa_walker_contains_no_gather(pgpa_plan_walker_context *walker,
  *
  * Populates walker based on a traversal of the Plan trees in pstmt.
  *
- * sj_unique_rels is a list of pgpa_sj_unique_rel objects, one for each
- * relation we considered making unique as part of semijoin planning.
+ * proots is the list of pgpa_planner_info objects that were generated
+ * during planning.
  */
 void
 pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
-				 List *sj_unique_rels)
+				 List *proots)
 {
 	ListCell   *lc;
 	List	   *sj_unique_rtis = NULL;
@@ -92,19 +93,21 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 	}
 
 	/* Adjust RTIs from sj_unique_rels for the flattened range table. */
-	foreach_ptr(pgpa_sj_unique_rel, ur, sj_unique_rels)
+	foreach_ptr(pgpa_planner_info, proot, proots)
 	{
-		int			rtindex = -1;
 		int			rtoffset = 0;
 		bool		dummy = false;
-		Bitmapset  *relids = NULL;
+
+		/* If there are no sj_unique_rels for this proot, we can skip it. */
+		if (proot->sj_unique_rels == NIL)
+			continue;
 
 		/* If this is a subplan, find the range table offset. */
-		if (ur->plan_name != NULL)
+		if (proot->plan_name != NULL)
 		{
 			foreach_node(SubPlanRTInfo, rtinfo, pstmt->subrtinfos)
 			{
-				if (strcmp(ur->plan_name, rtinfo->plan_name) == 0)
+				if (strcmp(proot->plan_name, rtinfo->plan_name) == 0)
 				{
 					rtoffset = rtinfo->rtoffset;
 					dummy = rtinfo->dummy;
@@ -113,19 +116,24 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 			}
 
 			if (rtoffset == 0)
-				elog(ERROR, "no rtoffset for plan %s", ur->plan_name);
+				elog(ERROR, "no rtoffset for plan %s", proot->plan_name);
 		}
 
 		/* If this entry pertains to a dummy subquery, ignore it. */
 		if (dummy)
 			continue;
 
-		/* Offset each entry from the original set. */
-		while ((rtindex = bms_next_member(ur->relids, rtindex)) >= 0)
-			relids = bms_add_member(relids, rtindex + rtoffset);
+		/* Offset each relid set by the rtoffset we just computed. */
+		foreach_node(Bitmapset, relids, proot->sj_unique_rels)
+		{
+			int			rtindex = -1;
+			Bitmapset  *flat_relids = NULL;
 
-		/* Store the resulting set. */
-		sj_unique_rtis = lappend(sj_unique_rtis, relids);
+			while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
+				flat_relids = bms_add_member(flat_relids, rtindex + rtoffset);
+
+			sj_unique_rtis = lappend(sj_unique_rtis, flat_relids);
+		}
 	}
 
 	/*
