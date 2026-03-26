@@ -124,6 +124,14 @@ Datum		pg_numa_available(PG_FUNCTION_ARGS);
 void
 InitShmemAllocator(PGShmemHeader *seghdr)
 {
+	Size		offset;
+	HASHCTL		info;
+	int			hash_flags;
+	size_t		size;
+
+#ifndef EXEC_BACKEND
+	Assert(!IsUnderPostmaster);
+#endif
 	Assert(seghdr != NULL);
 
 	/*
@@ -133,45 +141,58 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 	Assert(seghdr == (void *) MAXALIGN(seghdr));
 	Assert(seghdr->content_offset == MAXALIGN(seghdr->content_offset));
 
+	/*
+	 * Allocations after this point should go through ShmemAlloc, which
+	 * expects to allocate everything on cache line boundaries.  Make sure the
+	 * first allocation begins on a cache line boundary.
+	 */
+	offset = CACHELINEALIGN(seghdr->content_offset + sizeof(ShmemAllocatorData));
+	if (offset > seghdr->totalsize)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory (%zu bytes requested)",
+						offset)));
+
+	/*
+	 * In postmaster or stand-alone backend, initialize the shared memory
+	 * allocator and the spinlock so that we can allocate shared memory for
+	 * ShmemIndex using ShmemAlloc().  In a regular backend just set up the
+	 * pointers required by ShmemAlloc().
+	 */
+	ShmemAllocator = (ShmemAllocatorData *) ((char *) seghdr + seghdr->content_offset);
+	if (!IsUnderPostmaster)
+	{
+		SpinLockInit(&ShmemAllocator->shmem_lock);
+		ShmemAllocator->free_offset = offset;
+	}
+
+	ShmemLock = &ShmemAllocator->shmem_lock;
 	ShmemSegHdr = seghdr;
 	ShmemBase = seghdr;
 	ShmemEnd = (char *) ShmemBase + seghdr->totalsize;
 
-#ifndef EXEC_BACKEND
-	Assert(!IsUnderPostmaster);
-#endif
-	if (IsUnderPostmaster)
+	/*
+	 * Create (or attach to) the shared memory index of shmem areas.
+	 *
+	 * This is the same initialization as ShmemInitHash() does, but we cannot
+	 * use ShmemInitHash() here because it relies on ShmemIndex being already
+	 * initialized.
+	 */
+	info.keysize = SHMEM_INDEX_KEYSIZE;
+	info.entrysize = sizeof(ShmemIndexEnt);
+	info.dsize = info.max_dsize = hash_select_dirsize(SHMEM_INDEX_SIZE);
+	info.alloc = ShmemAllocNoError;
+	hash_flags = HASH_ELEM | HASH_STRINGS | HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
+	if (!IsUnderPostmaster)
 	{
-		PGShmemHeader *shmhdr = ShmemSegHdr;
-
-		ShmemAllocator = (ShmemAllocatorData *) ((char *) shmhdr + shmhdr->content_offset);
-		ShmemLock = &ShmemAllocator->shmem_lock;
+		size = hash_get_shared_size(&info, hash_flags);
+		ShmemAllocator->index = (HASHHDR *) ShmemAlloc(size);
 	}
 	else
-	{
-		Size		offset;
-
-		/*
-		 * Allocations after this point should go through ShmemAlloc, which
-		 * expects to allocate everything on cache line boundaries.  Make sure
-		 * the first allocation begins on a cache line boundary.
-		 */
-		offset = CACHELINEALIGN(seghdr->content_offset + sizeof(ShmemAllocatorData));
-		if (offset > seghdr->totalsize)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory (%zu bytes requested)",
-							offset)));
-
-		ShmemAllocator = (ShmemAllocatorData *) ((char *) seghdr + seghdr->content_offset);
-
-		SpinLockInit(&ShmemAllocator->shmem_lock);
-		ShmemLock = &ShmemAllocator->shmem_lock;
-		ShmemAllocator->free_offset = offset;
-		/* ShmemIndex can't be set up yet (need LWLocks first) */
-		ShmemAllocator->index = NULL;
-		ShmemIndex = (HTAB *) NULL;
-	}
+		hash_flags |= HASH_ATTACH;
+	info.hctl = ShmemAllocator->index;
+	ShmemIndex = hash_create("ShmemIndex", SHMEM_INDEX_SIZE, &info, hash_flags);
+	Assert(ShmemIndex != NULL);
 }
 
 /*
@@ -271,31 +292,6 @@ ShmemAddrIsValid(const void *addr)
 }
 
 /*
- *	InitShmemIndex() --- set up or attach to shmem index table.
- */
-void
-InitShmemIndex(void)
-{
-	HASHCTL		info;
-
-	/*
-	 * Create the shared memory shmem index.
-	 *
-	 * Since ShmemInitHash calls ShmemInitStruct, which expects the ShmemIndex
-	 * hashtable to exist already, we have a bit of a circularity problem in
-	 * initializing the ShmemIndex itself.  The special "ShmemIndex" hash
-	 * table name will tell ShmemInitStruct to fake it.
-	 */
-	info.keysize = SHMEM_INDEX_KEYSIZE;
-	info.entrysize = sizeof(ShmemIndexEnt);
-
-	ShmemIndex = ShmemInitHash("ShmemIndex",
-							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
-							   &info,
-							   HASH_ELEM | HASH_STRINGS);
-}
-
-/*
  * ShmemInitHash -- Create and initialize, or attach to, a
  *		shared memory hash table.
  *
@@ -383,38 +379,9 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	ShmemIndexEnt *result;
 	void	   *structPtr;
 
+	Assert(ShmemIndex != NULL);
+
 	LWLockAcquire(ShmemIndexLock, LW_EXCLUSIVE);
-
-	if (!ShmemIndex)
-	{
-		/* Must be trying to create/attach to ShmemIndex itself */
-		Assert(strcmp(name, "ShmemIndex") == 0);
-
-		if (IsUnderPostmaster)
-		{
-			/* Must be initializing a (non-standalone) backend */
-			Assert(ShmemAllocator->index != NULL);
-			structPtr = ShmemAllocator->index;
-			*foundPtr = true;
-		}
-		else
-		{
-			/*
-			 * If the shmem index doesn't exist, we are bootstrapping: we must
-			 * be trying to init the shmem index itself.
-			 *
-			 * Notice that the ShmemIndexLock is released before the shmem
-			 * index has been initialized.  This should be OK because no other
-			 * process can be accessing shared memory yet.
-			 */
-			Assert(ShmemAllocator->index == NULL);
-			structPtr = ShmemAlloc(size);
-			ShmemAllocator->index = structPtr;
-			*foundPtr = false;
-		}
-		LWLockRelease(ShmemIndexLock);
-		return structPtr;
-	}
 
 	/* look it up in the shmem index */
 	result = (ShmemIndexEnt *)
