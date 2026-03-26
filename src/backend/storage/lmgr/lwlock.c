@@ -202,7 +202,7 @@ int		   *LWLockCounter = NULL;
 /* backend-local counter of registered tranches */
 static int	LocalLWLockCounter;
 
-#define MAX_NAMED_TRANCHES 256
+#define MAX_USER_DEFINED_TRANCHES 256
 
 static void InitializeLWLocks(void);
 static inline void LWLockReportWaitStart(LWLock *lock);
@@ -392,7 +392,8 @@ NumLWLocksForNamedTranches(void)
 }
 
 /*
- * Compute shmem space needed for LWLocks and named tranches.
+ * Compute shmem space needed for user-defined tranches and the main LWLock
+ * array.
  */
 Size
 LWLockShmemSize(void)
@@ -415,9 +416,9 @@ LWLockShmemSize(void)
 	/* Space for dynamic allocation counter. */
 	size = MAXALIGN(sizeof(int));
 
-	/* Space for named tranches. */
-	size = add_size(size, mul_size(MAX_NAMED_TRANCHES, sizeof(char *)));
-	size = add_size(size, mul_size(MAX_NAMED_TRANCHES, NAMEDATALEN));
+	/* Space for user-defined tranches. */
+	size = add_size(size, mul_size(MAX_USER_DEFINED_TRANCHES, sizeof(char *)));
+	size = add_size(size, mul_size(MAX_USER_DEFINED_TRANCHES, NAMEDATALEN));
 
 	/*
 	 * Make space for named tranche requests.  This is done for the benefit of
@@ -435,8 +436,8 @@ LWLockShmemSize(void)
 }
 
 /*
- * Allocate shmem space for the main LWLock array and all tranches and
- * initialize it.
+ * Allocate shmem space for user-defined tranches and the main LWLock array,
+ * and initialize it.
  */
 void
 CreateLWLocks(void)
@@ -454,10 +455,10 @@ CreateLWLocks(void)
 		*LWLockCounter = LWTRANCHE_FIRST_USER_DEFINED;
 		ptr += MAXALIGN(sizeof(int));
 
-		/* Initialize tranche names */
+		/* Initialize user-defined tranche names */
 		LWLockTrancheNames = (char **) ptr;
-		ptr += MAX_NAMED_TRANCHES * sizeof(char *);
-		for (int i = 0; i < MAX_NAMED_TRANCHES; i++)
+		ptr += MAX_USER_DEFINED_TRANCHES * sizeof(char *);
+		for (int i = 0; i < MAX_USER_DEFINED_TRANCHES; i++)
 		{
 			LWLockTrancheNames[i] = ptr;
 			ptr += NAMEDATALEN;
@@ -616,13 +617,13 @@ LWLockNewTrancheId(const char *name)
 	 */
 	SpinLockAcquire(ShmemLock);
 
-	if (*LWLockCounter - LWTRANCHE_FIRST_USER_DEFINED >= MAX_NAMED_TRANCHES)
+	if (*LWLockCounter - LWTRANCHE_FIRST_USER_DEFINED >= MAX_USER_DEFINED_TRANCHES)
 	{
 		SpinLockRelease(ShmemLock);
 		ereport(ERROR,
 				(errmsg("maximum number of tranches already registered"),
 				 errdetail("No more than %d tranches may be registered.",
-						   MAX_NAMED_TRANCHES)));
+						   MAX_USER_DEFINED_TRANCHES)));
 	}
 
 	result = (*LWLockCounter)++;
