@@ -10,6 +10,9 @@ TestAio - helpers for writing AIO related tests
 
 package TestAio;
 
+use strict;
+use warnings FATAL => 'all';
+
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
