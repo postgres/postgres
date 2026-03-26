@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable> ( [
-  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN | DEFAULT } ] [ COMPRESSION <replaceable>compression_method</replaceable> ] [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
+CREATE [ <replaceable>persistence_mode</replaceable> ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable> ( [
+  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ <replaceable>column_storage</replaceable> ] [ <replaceable>column_compression</replaceable> ] [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable>column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>source_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
@@ -34,7 +34,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
+CREATE [ <replaceable>persistence_mode</replaceable> ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
     OF <replaceable class="parameter">type_name</replaceable> [ (
   { <replaceable class="parameter">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
@@ -46,7 +46,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
+CREATE [ <replaceable>persistence_mode</replaceable> ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
     PARTITION OF <replaceable class="parameter">parent_table</replaceable> [ (
   { <replaceable class="parameter">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
@@ -58,7 +58,19 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-<phrase>where <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
+<phrase>where <replaceable>persistence_mode</replaceable> is:</phrase>
+
+{ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } } | UNLOGGED
+
+<phrase>and <replaceable>column_storage</replaceable> is:</phrase>
+
+STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN | DEFAULT }
+
+<phrase>and <replaceable>column_compression</replaceable> is:</phrase>
+
+COMPRESSION <replaceable>compression_method</replaceable>
+
+<phrase>and <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { NOT NULL [ NO INHERIT ]  |
@@ -97,17 +109,17 @@ FROM ( { <replaceable class="parameter">partition_bound_expr</replaceable> | MIN
   TO ( { <replaceable class="parameter">partition_bound_expr</replaceable> | MINVALUE | MAXVALUE } [, ...] ) |
 WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REMAINDER <replaceable class="parameter">numeric_literal</replaceable> )
 
-<phrase><replaceable class="parameter">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
+<phrase>and <replaceable class="parameter">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
 [ INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ]
 [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 [ USING INDEX TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-<phrase><replaceable class="parameter">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
+<phrase>and <replaceable class="parameter">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
 
 { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> [ ( <replaceable class="parameter">opclass_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] ) ] ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
 
-<phrase><replaceable class="parameter">referential_action</replaceable> in a <literal>FOREIGN KEY</literal>/<literal>REFERENCES</literal> constraint is:</phrase>
+<phrase>and <replaceable class="parameter">referential_action</replaceable> in a <literal>FOREIGN KEY</literal>/<literal>REFERENCES</literal> constraint is:</phrase>
 
 { NO ACTION | RESTRICT | CASCADE | SET NULL [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] | SET DEFAULT [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] }
 </synopsis>
@@ -121,6 +133,14 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    <command>CREATE TABLE</command> will create a new, initially empty table
    in the current database. The table will be owned by the user issuing the
    command.
+  </para>
+
+  <para>
+   The durability characteristics of a table are governed by its persistence
+   mode.  By default, the data will be persistent and crash-safe.
+   For less stringent requirements and better performance, a table can be
+   specified as <link linkend="sql-createtable-temporary">temporary</link>
+   or <link linkend="sql-createtable-unlogged">unlogged</link>.
   </para>
 
   <para>
@@ -312,7 +332,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </term>
     <listitem>
      <para>
-      This form sets the storage mode for the column. This controls whether this
+      This clause sets the storage mode for the column. This controls whether this
       column is held inline or in a secondary <acronym>TOAST</acronym> table,
       and whether the data should be compressed or not. <literal>PLAIN</literal>
       must be used for fixed-length values such as <type>integer</type> and is

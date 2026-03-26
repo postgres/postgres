@@ -21,14 +21,18 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
-    [ (<replaceable>column_name</replaceable> [, ...] ) ]
+CREATE [ <replaceable>persistence_mode</replaceable> ] TABLE [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
+    [ ( <replaceable>column_name</replaceable> [, ...] ) ]
     [ USING <replaceable class="parameter">method</replaceable> ]
     [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITHOUT OIDS ]
     [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
     [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     AS <replaceable>query</replaceable>
     [ WITH [ NO ] DATA ]
+
+<phrase>where <replaceable>persistence_mode</replaceable> is:</phrase>
+
+{ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } } | UNLOGGED
 </synopsis>
  </refsynopsisdiv>
 
