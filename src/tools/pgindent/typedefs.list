@@ -1577,6 +1577,7 @@ LWLock
 LWLockHandle
 LWLockMode
 LWLockPadded
+LWLockTrancheShmemData
 LZ4F_compressionContext_t
 LZ4F_decompressOptions_t
 LZ4F_decompressionContext_t

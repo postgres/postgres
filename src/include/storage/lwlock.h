@@ -74,12 +74,9 @@ typedef union LWLockPadded
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 
 /* forward declaration of private type for use only by lwlock.c */
-typedef struct NamedLWLockTrancheRequest NamedLWLockTrancheRequest;
+typedef struct LWLockTrancheShmemData LWLockTrancheShmemData;
 
-extern PGDLLIMPORT char **LWLockTrancheNames;
-extern PGDLLIMPORT int NamedLWLockTrancheRequests;
-extern PGDLLIMPORT NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray;
-extern PGDLLIMPORT int *LWLockCounter;
+extern PGDLLIMPORT LWLockTrancheShmemData *LWLockTranches;
 
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS
