@@ -6158,14 +6158,14 @@ echo_hidden_command(const char *query)
 {
 	if (pset.echo_hidden != PSQL_ECHO_HIDDEN_OFF)
 	{
-		printf(_("/******** QUERY *********/\n"
+		printf(_("/**** INTERNAL QUERY ****/\n"
 				 "%s\n"
 				 "/************************/\n\n"), query);
 		fflush(stdout);
 		if (pset.logfile)
 		{
 			fprintf(pset.logfile,
-					_("/******** QUERY *********/\n"
+					_("/**** INTERNAL QUERY ****/\n"
 					  "%s\n"
 					  "/************************/\n\n"), query);
 			fflush(pset.logfile);
@@ -6202,6 +6202,7 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 			 * query to retrieve the function's OID using a cast to regproc or
 			 * regprocedure (as appropriate).
 			 */
+			printfPQExpBuffer(query, "/* %s */\n", _("Get function's OID"));
 			appendPQExpBufferStr(query, "SELECT ");
 			appendStringLiteralConn(query, desc, pset.db);
 			appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
@@ -6215,6 +6216,7 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 			 * this code doesn't check if the relation is actually a view.
 			 * We'll detect that in get_create_object_cmd().
 			 */
+			printfPQExpBuffer(query, "/* %s */\n", _("Get view's OID"));
 			appendPQExpBufferStr(query, "SELECT ");
 			appendStringLiteralConn(query, desc, pset.db);
 			appendPQExpBufferStr(query, "::pg_catalog.regclass::pg_catalog.oid");
@@ -6256,7 +6258,8 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 	switch (obj_type)
 	{
 		case EditableFunction:
-			printfPQExpBuffer(query,
+			printfPQExpBuffer(query, "/* %s */\n", _("Get function's definition"));
+			appendPQExpBuffer(query,
 							  "SELECT pg_catalog.pg_get_functiondef(%u)",
 							  oid);
 			break;
@@ -6275,9 +6278,10 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 			 * separately.  Materialized views (introduced in 9.3) may have
 			 * arbitrary storage parameter reloptions.
 			 */
+			printfPQExpBuffer(query, "/* %s */\n", _("Get view's definition and details"));
 			if (pset.sversion >= 90400)
 			{
-				printfPQExpBuffer(query,
+				appendPQExpBuffer(query,
 								  "SELECT nspname, relname, relkind, "
 								  "pg_catalog.pg_get_viewdef(c.oid, true), "
 								  "pg_catalog.array_remove(pg_catalog.array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
@@ -6290,7 +6294,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 			}
 			else
 			{
-				printfPQExpBuffer(query,
+				appendPQExpBuffer(query,
 								  "SELECT nspname, relname, relkind, "
 								  "pg_catalog.pg_get_viewdef(c.oid, true), "
 								  "c.reloptions AS reloptions, "
