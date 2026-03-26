@@ -1875,10 +1875,10 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 {
 	Buffer	   *buffers = &operation->buffers[0];
 	int			flags = operation->flags;
-	BlockNumber blocknum = operation->blocknum;
 	ForkNumber	forknum = operation->forknum;
 	char		persistence = operation->persistence;
 	int16		nblocks_done = operation->nblocks_done;
+	BlockNumber blocknum = operation->blocknum + nblocks_done;
 	Buffer	   *io_buffers = &operation->buffers[nblocks_done];
 	int			io_buffers_len = 0;
 	PgAioHandle *ioh;
@@ -1990,7 +1990,7 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 		 * must have started out as a miss in PinBufferForBlock(). The other
 		 * backend will track this as a 'read'.
 		 */
-		TRACE_POSTGRESQL_BUFFER_READ_DONE(forknum, blocknum + operation->nblocks_done,
+		TRACE_POSTGRESQL_BUFFER_READ_DONE(forknum, blocknum,
 										  operation->smgr->smgr_rlocator.locator.spcOid,
 										  operation->smgr->smgr_rlocator.locator.dbOid,
 										  operation->smgr->smgr_rlocator.locator.relNumber,
@@ -2062,7 +2062,7 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 		 */
 		io_start = pgstat_prepare_io_time(track_io_timing);
 		smgrstartreadv(ioh, operation->smgr, forknum,
-					   blocknum + nblocks_done,
+					   blocknum,
 					   io_pages, io_buffers_len);
 		pgstat_count_io_op_time(io_object, io_context, IOOP_READ,
 								io_start, 1, io_buffers_len * BLCKSZ);
