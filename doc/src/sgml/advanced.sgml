@@ -149,7 +149,7 @@ DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
     systems.  The essential point of a transaction is that it bundles
     multiple steps into a single, all-or-nothing operation.  The intermediate
     states between the steps are not visible to other concurrent transactions,
-    and if some failure occurs that prevents the transaction from completing,
+    and if an error occurs that prevents the transaction from completing,
     then none of the steps affect the database at all.
    </para>
 
@@ -218,7 +218,8 @@ UPDATE branches SET balance = balance + 100.00
    <para>
     In <productname>PostgreSQL</productname>, a transaction is set up by surrounding
     the SQL commands of the transaction with
-    <command>BEGIN</command> and <command>COMMIT</command> commands.  So our banking
+    <xref linkend="sql-begin"/> and
+    <xref linkend="sql-commit"/> commands.  So our banking
     transaction would actually look like:
 
 <programlisting>
@@ -233,7 +234,7 @@ COMMIT;
    <para>
     If, partway through the transaction, we decide we do not want to
     commit (perhaps we just noticed that Alice's balance went negative),
-    we can issue the command <command>ROLLBACK</command> instead of
+    we can issue the command <xref linkend="sql-rollback"/> instead of
     <command>COMMIT</command>, and all our updates so far will be canceled.
    </para>
 
@@ -255,6 +256,17 @@ COMMIT;
      you are using.
     </para>
    </note>
+
+   <para>
+    When an error occurs within a transaction block the transaction is not
+    ended, but instead goes into an aborted state.  While in this state all
+    commands except <xref linkend="sql-commit"/> and
+    <xref linkend="sql-rollback"/> are rejected.  Importantly, both those
+    commands will behave identically &mdash; they roll back and close the
+    failed transaction, returning the session to a state where new commands
+    can be issued.  They will also automatically begin a new transaction if
+    executed with the <literal>AND CHAIN</literal> option.
+   </para>
 
    <para>
     It's possible to control the statements in a transaction in a more

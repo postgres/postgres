@@ -33,6 +33,22 @@ COMMIT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
    changes made by the transaction become visible to others
    and are guaranteed to be durable if a crash occurs.
   </para>
+
+  <para>
+   If the transaction is in an aborted state then no changes will be made
+   and the effect of the <command>COMMIT</command> will be identical to that
+   of <command>ROLLBACK</command>, including the command tag output.
+  </para>
+
+  <para>
+   In either case, if the <literal>AND CHAIN</literal> parameter is
+   specified then a new, identically configured, transaction is started.
+  </para>
+
+  <para>
+   For more information regarding transactions see
+   <xref linkend="tutorial-transactions"/>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -68,6 +84,25 @@ COMMIT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
  </refsect1>
 
  <refsect1>
+  <title>Outputs</title>
+
+  <para>
+   On successful completion of a non-aborted transaction,
+   a <command>COMMIT</command> command returns a command tag of the form
+<screen>
+COMMIT
+</screen>
+  </para>
+  <para>
+   However, in an aborted transaction, a <command>COMMIT</command>
+   command returns a command tag of the form
+<screen>
+ROLLBACK
+</screen>
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Notes</title>
 
   <para>
@@ -96,8 +131,13 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   The command <command>COMMIT</command> conforms to the SQL standard.  The
-   form <literal>COMMIT TRANSACTION</literal> is a PostgreSQL extension.
+   The command <command>COMMIT</command> conforms to the SQL standard, except
+   that no exception condition is raised in the case where the transaction
+   was already aborted.
+  </para>
+
+  <para>
+   The form <literal>COMMIT TRANSACTION</literal> is a PostgreSQL extension.
   </para>
  </refsect1>
 
@@ -107,6 +147,7 @@ COMMIT;
   <simplelist type="inline">
    <member><xref linkend="sql-begin"/></member>
    <member><xref linkend="sql-rollback"/></member>
+   <member><xref linkend="tutorial-transactions"/></member>
   </simplelist>
  </refsect1>
 </refentry>
