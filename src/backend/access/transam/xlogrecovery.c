@@ -2015,7 +2015,7 @@ ApplyWalRecord(XLogReaderState *xlogreader, XLogRecord *record, TimeLineID *repl
 	if (doRequestWalReceiverReply)
 	{
 		doRequestWalReceiverReply = false;
-		WalRcvForceReply();
+		WalRcvRequestApplyReply();
 	}
 
 	/* Allow read-only connections if we're consistent now */
@@ -3970,7 +3970,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 */
 					if (!streaming_reply_sent)
 					{
-						WalRcvForceReply();
+						WalRcvRequestApplyReply();
 						streaming_reply_sent = true;
 					}
 
