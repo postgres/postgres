@@ -158,7 +158,7 @@ static PartitionPruneStep *gen_prune_step_combine(GeneratePruningStepsContext *c
 static List *gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 										 List **keyclauses, Bitmapset *nullkeys);
 static PartClauseMatchStatus match_clause_to_partition_key(GeneratePruningStepsContext *context,
-														   const Expr *clause, const Expr *partkey, int partkeyidx,
+														   Expr *clause, const Expr *partkey, int partkeyidx,
 														   bool *clause_is_not_null,
 														   PartClauseInfo **pc, List **clause_steps);
 static List *get_steps_using_prefix(GeneratePruningStepsContext *context,
@@ -196,7 +196,7 @@ static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *cont
 													 PartitionPruneStepCombine *cstep,
 													 PruneStepResult **step_results);
 static PartClauseMatchStatus match_boolean_partition_clause(Oid partopfamily,
-															const Expr *clause,
+															Expr *clause,
 															const Expr *partkey,
 															Expr **outconst,
 															bool *notclause);
@@ -1816,7 +1816,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
  */
 static PartClauseMatchStatus
 match_clause_to_partition_key(GeneratePruningStepsContext *context,
-							  const Expr *clause, const Expr *partkey, int partkeyidx,
+							  Expr *clause, const Expr *partkey, int partkeyidx,
 							  bool *clause_is_not_null, PartClauseInfo **pc,
 							  List **clause_steps)
 {
@@ -3697,10 +3697,10 @@ perform_pruning_combine_step(PartitionPruneContext *context,
  * 'partkey'.
  */
 static PartClauseMatchStatus
-match_boolean_partition_clause(Oid partopfamily, const Expr *clause, const Expr *partkey,
+match_boolean_partition_clause(Oid partopfamily, Expr *clause, const Expr *partkey,
 							   Expr **outconst, bool *notclause)
 {
-	const Expr *leftop;
+	Expr	   *leftop;
 
 	*outconst = NULL;
 	*notclause = false;
