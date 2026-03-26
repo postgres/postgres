@@ -1223,11 +1223,11 @@ PinBufferForBlock(Relation rel,
 				  ForkNumber forkNum,
 				  BlockNumber blockNum,
 				  BufferAccessStrategy strategy,
+				  IOObject io_object,
+				  IOContext io_context,
 				  bool *foundPtr)
 {
 	BufferDesc *bufHdr;
-	IOContext	io_context;
-	IOObject	io_object;
 
 	Assert(blockNum != P_NEW);
 
@@ -1235,17 +1235,6 @@ PinBufferForBlock(Relation rel,
 	Assert((persistence == RELPERSISTENCE_TEMP ||
 			persistence == RELPERSISTENCE_PERMANENT ||
 			persistence == RELPERSISTENCE_UNLOGGED));
-
-	if (persistence == RELPERSISTENCE_TEMP)
-	{
-		io_context = IOCONTEXT_NORMAL;
-		io_object = IOOBJECT_TEMP_RELATION;
-	}
-	else
-	{
-		io_context = IOContextForStrategy(strategy);
-		io_object = IOOBJECT_RELATION;
-	}
 
 	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
 									   smgr->smgr_rlocator.locator.spcOid,
@@ -1339,9 +1328,23 @@ ReadBuffer_common(Relation rel, SMgrRelation smgr, char smgr_persistence,
 				 mode == RBM_ZERO_AND_LOCK))
 	{
 		bool		found;
+		IOContext	io_context;
+		IOObject	io_object;
+
+		if (persistence == RELPERSISTENCE_TEMP)
+		{
+			io_context = IOCONTEXT_NORMAL;
+			io_object = IOOBJECT_TEMP_RELATION;
+		}
+		else
+		{
+			io_context = IOContextForStrategy(strategy);
+			io_object = IOOBJECT_RELATION;
+		}
 
 		buffer = PinBufferForBlock(rel, smgr, persistence,
-								   forkNum, blockNum, strategy, &found);
+								   forkNum, blockNum, strategy,
+								   io_object, io_context, &found);
 		ZeroAndLockBuffer(buffer, mode, found);
 		return buffer;
 	}
@@ -1379,10 +1382,23 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
 	int			actual_nblocks = *nblocks;
 	int			maxcombine = 0;
 	bool		did_start_io;
+	IOContext	io_context;
+	IOObject	io_object;
 
 	Assert(*nblocks == 1 || allow_forwarding);
 	Assert(*nblocks > 0);
 	Assert(*nblocks <= MAX_IO_COMBINE_LIMIT);
+
+	if (operation->persistence == RELPERSISTENCE_TEMP)
+	{
+		io_context = IOCONTEXT_NORMAL;
+		io_object = IOOBJECT_TEMP_RELATION;
+	}
+	else
+	{
+		io_context = IOContextForStrategy(operation->strategy);
+		io_object = IOOBJECT_RELATION;
+	}
 
 	for (int i = 0; i < actual_nblocks; ++i)
 	{
@@ -1432,6 +1448,7 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
 										   operation->forknum,
 										   blockNum + i,
 										   operation->strategy,
+										   io_object, io_context,
 										   &found);
 		}
 
