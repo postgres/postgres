@@ -2472,7 +2472,9 @@ ProcessStandbyReplyMessage(void)
 	TimestampTz now;
 	TimestampTz replyTime;
 
-	static bool fullyAppliedLastTime = false;
+	static XLogRecPtr prevWritePtr = InvalidXLogRecPtr;
+	static XLogRecPtr prevFlushPtr = InvalidXLogRecPtr;
+	static XLogRecPtr prevApplyPtr = InvalidXLogRecPtr;
 
 	/* the caller already consumed the msgtype byte */
 	writePtr = pq_getmsgint64(&reply_message);
@@ -2505,22 +2507,23 @@ ProcessStandbyReplyMessage(void)
 	applyLag = LagTrackerRead(SYNC_REP_WAIT_APPLY, applyPtr, now);
 
 	/*
-	 * If the standby reports that it has fully replayed the WAL in two
-	 * consecutive reply messages, then the second such message must result
-	 * from wal_receiver_status_interval expiring on the standby.  This is a
-	 * convenient time to forget the lag times measured when it last
-	 * wrote/flushed/applied a WAL record, to avoid displaying stale lag data
-	 * until more WAL traffic arrives.
+	 * If the standby reports that it has fully replayed the WAL, and the
+	 * write/flush/apply positions remain unchanged across two consecutive
+	 * reply messages, forget the lag times measured when it last
+	 * wrote/flushed/applied a WAL record.
+	 *
+	 * The second message with unchanged positions typically results from
+	 * wal_receiver_status_interval expiring on the standby, so lag values are
+	 * usually cleared after that interval when there is no activity. This
+	 * avoids displaying stale lag data until more WAL traffic arrives.
 	 */
-	clearLagTimes = false;
-	if (applyPtr == sentPtr)
-	{
-		if (fullyAppliedLastTime)
-			clearLagTimes = true;
-		fullyAppliedLastTime = true;
-	}
-	else
-		fullyAppliedLastTime = false;
+	clearLagTimes = (applyPtr == sentPtr && flushPtr == sentPtr &&
+					 writePtr == prevWritePtr && flushPtr == prevFlushPtr &&
+					 applyPtr == prevApplyPtr);
+
+	prevWritePtr = writePtr;
+	prevFlushPtr = flushPtr;
+	prevApplyPtr = applyPtr;
 
 	/* Send a reply if the standby requested one. */
 	if (replyRequested)
