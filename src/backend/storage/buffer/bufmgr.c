@@ -648,6 +648,11 @@ static inline BufferDesc *BufferAlloc(SMgrRelation smgr,
 									  bool *foundPtr, IOContext io_context);
 static bool AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress);
 static void CheckReadBuffersOperation(ReadBuffersOperation *operation, bool is_complete);
+
+static pg_attribute_always_inline void TrackBufferHit(IOObject io_object,
+													  IOContext io_context,
+													  Relation rel, char persistence, SMgrRelation smgr,
+													  ForkNumber forknum, BlockNumber blocknum);
 static Buffer GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context);
 static void FlushUnlockedBuffer(BufferDesc *buf, SMgrRelation reln,
 								IOObject io_object, IOContext io_context);
@@ -1243,18 +1248,14 @@ PinBufferForBlock(Relation rel,
 									   smgr->smgr_rlocator.backend);
 
 	if (persistence == RELPERSISTENCE_TEMP)
-	{
 		bufHdr = LocalBufferAlloc(smgr, forkNum, blockNum, foundPtr);
-		if (*foundPtr)
-			pgBufferUsage.local_blks_hit++;
-	}
 	else
-	{
 		bufHdr = BufferAlloc(smgr, persistence, forkNum, blockNum,
 							 strategy, foundPtr, io_context);
-		if (*foundPtr)
-			pgBufferUsage.shared_blks_hit++;
-	}
+
+	if (*foundPtr)
+		TrackBufferHit(io_object, io_context, rel, persistence, smgr, forkNum, blockNum);
+
 	if (rel)
 	{
 		/*
@@ -1263,21 +1264,6 @@ PinBufferForBlock(Relation rel,
 		 * zeroed instead), the per-relation stats always count them.
 		 */
 		pgstat_count_buffer_read(rel);
-		if (*foundPtr)
-			pgstat_count_buffer_hit(rel);
-	}
-	if (*foundPtr)
-	{
-		pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1, 0);
-		if (VacuumCostActive)
-			VacuumCostBalance += VacuumCostPageHit;
-
-		TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-										  smgr->smgr_rlocator.locator.spcOid,
-										  smgr->smgr_rlocator.locator.dbOid,
-										  smgr->smgr_rlocator.locator.relNumber,
-										  smgr->smgr_rlocator.backend,
-										  true);
 	}
 
 	return BufferDescriptorGetBuffer(bufHdr);
@@ -1713,6 +1699,37 @@ ReadBuffersCanStartIO(Buffer buffer, bool nowait)
 }
 
 /*
+ * We track various stats related to buffer hits. Because this is done in a
+ * few separate places, this helper exists for convenience.
+ */
+static pg_attribute_always_inline void
+TrackBufferHit(IOObject io_object, IOContext io_context,
+			   Relation rel, char persistence, SMgrRelation smgr,
+			   ForkNumber forknum, BlockNumber blocknum)
+{
+	TRACE_POSTGRESQL_BUFFER_READ_DONE(forknum,
+									  blocknum,
+									  smgr->smgr_rlocator.locator.spcOid,
+									  smgr->smgr_rlocator.locator.dbOid,
+									  smgr->smgr_rlocator.locator.relNumber,
+									  smgr->smgr_rlocator.backend,
+									  true);
+
+	if (persistence == RELPERSISTENCE_TEMP)
+		pgBufferUsage.local_blks_hit += 1;
+	else
+		pgBufferUsage.shared_blks_hit += 1;
+
+	pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1, 0);
+
+	if (VacuumCostActive)
+		VacuumCostBalance += VacuumCostPageHit;
+
+	if (rel)
+		pgstat_count_buffer_hit(rel);
+}
+
+/*
  * Helper for WaitReadBuffers() that processes the results of a readv
  * operation, raising an error if necessary.
  */
@@ -2007,25 +2024,8 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 		 * must have started out as a miss in PinBufferForBlock(). The other
 		 * backend will track this as a 'read'.
 		 */
-		TRACE_POSTGRESQL_BUFFER_READ_DONE(forknum, blocknum,
-										  operation->smgr->smgr_rlocator.locator.spcOid,
-										  operation->smgr->smgr_rlocator.locator.dbOid,
-										  operation->smgr->smgr_rlocator.locator.relNumber,
-										  operation->smgr->smgr_rlocator.backend,
-										  true);
-
-		if (persistence == RELPERSISTENCE_TEMP)
-			pgBufferUsage.local_blks_hit += 1;
-		else
-			pgBufferUsage.shared_blks_hit += 1;
-
-		if (operation->rel)
-			pgstat_count_buffer_hit(operation->rel);
-
-		pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1, 0);
-
-		if (VacuumCostActive)
-			VacuumCostBalance += VacuumCostPageHit;
+		TrackBufferHit(io_object, io_context, operation->rel, persistence,
+					   operation->smgr, forknum, blocknum);
 	}
 	else
 	{
