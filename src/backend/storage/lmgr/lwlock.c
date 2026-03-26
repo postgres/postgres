@@ -191,6 +191,8 @@ typedef struct LWLockTrancheShmemData
 	}			user_defined[MAX_USER_DEFINED_TRANCHES];
 
 	int			num_user_defined;	/* 'user_defined' entries in use */
+
+	slock_t		lock;			/* protects the above */
 } LWLockTrancheShmemData;
 
 LWLockTrancheShmemData *LWLockTranches;
@@ -435,6 +437,7 @@ CreateLWLocks(void)
 			ShmemAlloc(sizeof(LWLockTrancheShmemData));
 
 		/* Initialize the dynamic-allocation counter for tranches */
+		SpinLockInit(&LWLockTranches->lock);
 		LWLockTranches->num_user_defined = 0;
 
 		/* Allocate and initialize the main array */
@@ -515,9 +518,9 @@ InitLWLockAccess(void)
 LWLockPadded *
 GetNamedLWLockTranche(const char *tranche_name)
 {
-	SpinLockAcquire(ShmemLock);
+	SpinLockAcquire(&LWLockTranches->lock);
 	LocalNumUserDefinedTranches = LWLockTranches->num_user_defined;
-	SpinLockRelease(ShmemLock);
+	SpinLockRelease(&LWLockTranches->lock);
 
 	/*
 	 * Obtain the position of base address of LWLock belonging to requested
@@ -568,15 +571,12 @@ LWLockNewTrancheId(const char *name)
 				 errdetail("LWLock tranche names must be no longer than %d bytes.",
 						   NAMEDATALEN - 1)));
 
-	/*
-	 * We use the ShmemLock spinlock to protect the counter and the tranche
-	 * names.
-	 */
-	SpinLockAcquire(ShmemLock);
+	/* The counter and the tranche names are protected by the spinlock */
+	SpinLockAcquire(&LWLockTranches->lock);
 
 	if (LWLockTranches->num_user_defined >= MAX_USER_DEFINED_TRANCHES)
 	{
-		SpinLockRelease(ShmemLock);
+		SpinLockRelease(&LWLockTranches->lock);
 		ereport(ERROR,
 				(errmsg("maximum number of tranches already registered"),
 				 errdetail("No more than %d tranches may be registered.",
@@ -595,7 +595,7 @@ LWLockNewTrancheId(const char *name)
 	/* the locks are not in the main array */
 	LWLockTranches->user_defined[idx].main_array_idx = -1;
 
-	SpinLockRelease(ShmemLock);
+	SpinLockRelease(&LWLockTranches->lock);
 
 	return LWTRANCHE_FIRST_USER_DEFINED + idx;
 }
@@ -705,14 +705,14 @@ GetLWTrancheName(uint16 trancheId)
 	 * lookups can avoid taking the spinlock as long as the backend-local
 	 * counter (LocalNumUserDefinedTranches) is greater than the requested
 	 * tranche ID.  Else, we need to first update the backend-local counter
-	 * with ShmemLock held before attempting the lookup again.  In practice,
-	 * the latter case is probably rare.
+	 * with the spinlock held before attempting the lookup again.  In
+	 * practice, the latter case is probably rare.
 	 */
 	if (idx >= LocalNumUserDefinedTranches)
 	{
-		SpinLockAcquire(ShmemLock);
+		SpinLockAcquire(&LWLockTranches->lock);
 		LocalNumUserDefinedTranches = LWLockTranches->num_user_defined;
-		SpinLockRelease(ShmemLock);
+		SpinLockRelease(&LWLockTranches->lock);
 
 		if (idx >= LocalNumUserDefinedTranches)
 			elog(ERROR, "tranche %d is not registered", trancheId);

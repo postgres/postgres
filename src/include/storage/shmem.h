@@ -26,7 +26,6 @@
 
 
 /* shmem.c */
-extern PGDLLIMPORT slock_t *ShmemLock;
 typedef struct PGShmemHeader PGShmemHeader; /* avoid including
 											 * storage/pg_shmem.h here */
 extern void InitShmemAllocator(PGShmemHeader *seghdr);

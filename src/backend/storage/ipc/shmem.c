@@ -105,7 +105,6 @@ static void *ShmemBase;			/* start address of shared memory */
 static void *ShmemEnd;			/* end+1 address of shared memory */
 
 static ShmemAllocatorData *ShmemAllocator;
-slock_t    *ShmemLock;			/* points to ShmemAllocator->shmem_lock */
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 /* To get reliable results for NUMA inquiry we need to "touch pages" once */
@@ -166,7 +165,6 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 		ShmemAllocator->free_offset = offset;
 	}
 
-	ShmemLock = &ShmemAllocator->shmem_lock;
 	ShmemSegHdr = seghdr;
 	ShmemBase = seghdr;
 	ShmemEnd = (char *) ShmemBase + seghdr->totalsize;
@@ -200,7 +198,7 @@ InitShmemAllocator(PGShmemHeader *seghdr)
  *
  * Throws error if request cannot be satisfied.
  *
- * Assumes ShmemLock and ShmemSegHdr are initialized.
+ * Assumes ShmemSegHdr is initialized.
  */
 void *
 ShmemAlloc(Size size)
@@ -259,7 +257,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 
 	Assert(ShmemSegHdr != NULL);
 
-	SpinLockAcquire(ShmemLock);
+	SpinLockAcquire(&ShmemAllocator->shmem_lock);
 
 	newStart = ShmemAllocator->free_offset;
 
@@ -272,7 +270,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 	else
 		newSpace = NULL;
 
-	SpinLockRelease(ShmemLock);
+	SpinLockRelease(&ShmemAllocator->shmem_lock);
 
 	/* note this assert is okay with newSpace == NULL */
 	Assert(newSpace == (void *) CACHELINEALIGN(newSpace));
