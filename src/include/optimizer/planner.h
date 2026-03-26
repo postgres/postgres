@@ -63,6 +63,7 @@ extern PlannedStmt *standard_planner(Query *parse, const char *query_string,
 extern PlannerInfo *subquery_planner(PlannerGlobal *glob, Query *parse,
 									 char *plan_name,
 									 PlannerInfo *parent_root,
+									 PlannerInfo *alternative_root,
 									 bool hasRecursion, double tuple_fraction,
 									 SetOperationStmt *setops);
 

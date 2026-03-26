@@ -2833,7 +2833,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/* Generate a subroot and Paths for the subquery */
 	plan_name = choose_plan_name(root->glob, rte->eref->aliasname, false);
 	rel->subroot = subquery_planner(root->glob, subquery, plan_name,
-									root, false, tuple_fraction, NULL);
+									root, NULL, false, tuple_fraction, NULL);
 
 	/* Isolate the params needed by this specific subplan */
 	rel->subplan_params = root->plan_params;

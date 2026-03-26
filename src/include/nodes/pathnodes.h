@@ -321,6 +321,18 @@ struct PlannerInfo
 	char	   *plan_name;
 
 	/*
+	 * If this PlannerInfo exists to consider an alternative implementation
+	 * strategy for a portion of the query that could also be implemented by
+	 * some other PlannerInfo, this is the plan_name for that other
+	 * PlannerInfo. When we are considering the first or only alternative,
+	 * it is the same as plan_name.
+	 *
+	 * Currently, we set this to a value other than plan_name only when
+	 * considering a MinMaxAggPath or a hashed SubPlan.
+	 */
+	char	   *alternative_plan_name;
+
+	/*
 	 * plan_params contains the expressions that this query level needs to
 	 * make available to a lower query level that is currently being planned.
 	 * outer_params contains the paramIds of PARAM_EXEC Params that outer
