@@ -32,7 +32,7 @@
  */
 
 /* 0 is available; was formerly BufFreelistLock */
-PG_LWLOCK(1, ShmemIndex)
+/* 1 was ShmemIndex */
 PG_LWLOCK(2, OidGen)
 PG_LWLOCK(3, XidGen)
 PG_LWLOCK(4, ProcArray)
@@ -137,3 +137,4 @@ PG_LWLOCKTRANCHE(SUBTRANS_SLRU, SubtransSLRU)
 PG_LWLOCKTRANCHE(XACT_SLRU, XactSLRU)
 PG_LWLOCKTRANCHE(PARALLEL_VACUUM_DSA, ParallelVacuumDSA)
 PG_LWLOCKTRANCHE(AIO_URING_COMPLETION, AioUringCompletion)
+PG_LWLOCKTRANCHE(SHMEM_INDEX, ShmemIndex)

@@ -90,11 +90,15 @@
 typedef struct ShmemAllocatorData
 {
 	Size		free_offset;	/* offset to first free space from ShmemBase */
-	HASHHDR    *index;			/* location of ShmemIndex */
 
-	/* protects shared memory and LWLock allocation */
+	/* protects 'free_offset' */
 	slock_t		shmem_lock;
+
+	HASHHDR    *index;			/* location of ShmemIndex */
+	LWLock		index_lock;		/* protects ShmemIndex */
 } ShmemAllocatorData;
+
+#define ShmemIndexLock (&ShmemAllocator->index_lock)
 
 static void *ShmemAllocRaw(Size size, Size *allocated_size);
 
@@ -154,15 +158,16 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 
 	/*
 	 * In postmaster or stand-alone backend, initialize the shared memory
-	 * allocator and the spinlock so that we can allocate shared memory for
-	 * ShmemIndex using ShmemAlloc().  In a regular backend just set up the
-	 * pointers required by ShmemAlloc().
+	 * allocator so that we can allocate shared memory for ShmemIndex using
+	 * ShmemAlloc().  In a regular backend just set up the pointers required
+	 * by ShmemAlloc().
 	 */
 	ShmemAllocator = (ShmemAllocatorData *) ((char *) seghdr + seghdr->content_offset);
 	if (!IsUnderPostmaster)
 	{
 		SpinLockInit(&ShmemAllocator->shmem_lock);
 		ShmemAllocator->free_offset = offset;
+		LWLockInitialize(&ShmemAllocator->index_lock, LWTRANCHE_SHMEM_INDEX);
 	}
 
 	ShmemSegHdr = seghdr;
