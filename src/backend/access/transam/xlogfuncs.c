@@ -691,7 +691,7 @@ pg_promote(PG_FUNCTION_ARGS)
 	bool		wait = PG_GETARG_BOOL(0);
 	int			wait_seconds = PG_GETARG_INT32(1);
 	FILE	   *promote_file;
-	int			i;
+	TimestampTz end_time;
 
 	if (!RecoveryInProgress())
 		ereport(ERROR,
@@ -732,8 +732,8 @@ pg_promote(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(true);
 
 	/* wait for the amount of time wanted until promotion */
-#define WAITS_PER_SECOND 10
-	for (i = 0; i < WAITS_PER_SECOND * wait_seconds; i++)
+	end_time = TimestampTzPlusSeconds(GetCurrentTimestamp(), wait_seconds);
+	while (GetCurrentTimestamp() < end_time)
 	{
 		int			rc;
 
@@ -746,7 +746,7 @@ pg_promote(PG_FUNCTION_ARGS)
 
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   1000L / WAITS_PER_SECOND,
+					   100L,
 					   WAIT_EVENT_PROMOTE);
 
 		/*
