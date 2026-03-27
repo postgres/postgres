@@ -685,14 +685,67 @@ INSERT INTO gtest21a (a) VALUES (1);  -- ok
 INSERT INTO gtest21a (a) VALUES (0);  -- violates constraint
 ERROR:  null value in column "b" of relation "gtest21a" violates not-null constraint
 DETAIL:  Failing row contains (0, null).
-CREATE TABLE gtest21b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED);
+-- also check with table constraint syntax
+CREATE TABLE gtest21ax (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED, CONSTRAINT cc NOT NULL b);
+INSERT INTO gtest21ax (a) VALUES (0);  -- violates constraint
+ERROR:  null value in column "b" of relation "gtest21ax" violates not-null constraint
+DETAIL:  Failing row contains (0, null).
+INSERT INTO gtest21ax (a) VALUES (1);  --ok
+-- SET EXPRESSION supports not null constraint
+ALTER TABLE gtest21ax ALTER COLUMN b SET EXPRESSION AS (nullif(a, 1)); --error
+ERROR:  column "b" of relation "gtest21ax" contains null values
+DROP TABLE gtest21ax;
+CREATE TABLE gtest21ax (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED);
+ALTER TABLE gtest21ax ADD CONSTRAINT cc NOT NULL b;
+INSERT INTO gtest21ax (a) VALUES (0);  -- violates constraint
+ERROR:  null value in column "b" of relation "gtest21ax" violates not-null constraint
+DETAIL:  Failing row contains (0, null).
+DROP TABLE gtest21ax;
+CREATE TABLE gtest21b (a int, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED);
 ALTER TABLE gtest21b ALTER COLUMN b SET NOT NULL;
 INSERT INTO gtest21b (a) VALUES (1);  -- ok
-INSERT INTO gtest21b (a) VALUES (0);  -- violates constraint
+INSERT INTO gtest21b (a) VALUES (2), (0);  -- violates constraint
 ERROR:  null value in column "b" of relation "gtest21b" violates not-null constraint
 DETAIL:  Failing row contains (0, null).
+INSERT INTO gtest21b (a) VALUES (NULL);  -- error
+ERROR:  null value in column "b" of relation "gtest21b" violates not-null constraint
+DETAIL:  Failing row contains (null, null).
 ALTER TABLE gtest21b ALTER COLUMN b DROP NOT NULL;
 INSERT INTO gtest21b (a) VALUES (0);  -- ok now
+-- not-null constraint with partitioned table
+CREATE TABLE gtestnn_parent (
+    f1 int,
+    f2 bigint,
+    f3 bigint GENERATED ALWAYS AS (nullif(f1, 1) + nullif(f2, 10)) STORED NOT NULL
+) PARTITION BY RANGE (f1);
+CREATE TABLE gtestnn_child PARTITION OF gtestnn_parent FOR VALUES FROM (1) TO (5);
+CREATE TABLE gtestnn_childdef PARTITION OF gtestnn_parent default;
+-- check the error messages
+INSERT INTO gtestnn_parent VALUES (2, 2, default), (3, 5, default), (14, 12, default);  -- ok
+INSERT INTO gtestnn_parent VALUES (1, 2, default);  -- error
+ERROR:  null value in column "f3" of relation "gtestnn_child" violates not-null constraint
+DETAIL:  Failing row contains (1, 2, null).
+INSERT INTO gtestnn_parent VALUES (2, 10, default);  -- error
+ERROR:  null value in column "f3" of relation "gtestnn_child" violates not-null constraint
+DETAIL:  Failing row contains (2, 10, null).
+ALTER TABLE gtestnn_parent ALTER COLUMN f3 SET EXPRESSION AS (nullif(f1, 2) + nullif(f2, 11));  -- error
+ERROR:  column "f3" of relation "gtestnn_child" contains null values
+INSERT INTO gtestnn_parent VALUES (10, 11, default);  -- ok
+SELECT * FROM gtestnn_parent ORDER BY f1, f2, f3;
+ f1 | f2 | f3 
+----+----+----
+  2 |  2 |  4
+  3 |  5 |  8
+ 10 | 11 | 21
+ 14 | 12 | 26
+(4 rows)
+
+-- test ALTER TABLE ADD COLUMN
+ALTER TABLE gtestnn_parent ADD COLUMN c int NOT NULL GENERATED ALWAYS AS (nullif(f1, 14) + nullif(f2, 10)) STORED;  -- error
+ERROR:  column "c" of relation "gtestnn_childdef" contains null values
+ALTER TABLE gtestnn_parent ADD COLUMN c int NOT NULL GENERATED ALWAYS AS (nullif(f1, 13) + nullif(f2, 5)) STORED;  -- error
+ERROR:  column "c" of relation "gtestnn_child" contains null values
+ALTER TABLE gtestnn_parent ADD COLUMN c int NOT NULL GENERATED ALWAYS AS (nullif(f1, 4) + nullif(f2, 6)) STORED;  -- ok
 -- index constraints
 CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) STORED UNIQUE);
 INSERT INTO gtest22a VALUES (2);
@@ -853,6 +906,10 @@ CREATE TABLE gtest24r (a int PRIMARY KEY, b gtestdomain1range GENERATED ALWAYS A
 INSERT INTO gtest24r (a) VALUES (4);  -- ok
 INSERT INTO gtest24r (a) VALUES (6);  -- error
 ERROR:  value for domain gtestdomain1 violates check constraint "gtestdomain1_check"
+CREATE TABLE gtest24at (a int PRIMARY KEY);
+ALTER TABLE gtest24at ADD COLUMN b gtestdomain1 GENERATED ALWAYS AS (a * 2) STORED;  -- ok
+CREATE TABLE gtest24ata (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
+ALTER TABLE gtest24ata ALTER COLUMN b TYPE gtestdomain1;  -- ok
 CREATE DOMAIN gtestdomainnn AS int CHECK (VALUE IS NOT NULL);
 CREATE TABLE gtest24nn (a int, b gtestdomainnn GENERATED ALWAYS AS (a * 2) STORED);
 INSERT INTO gtest24nn (a) VALUES (4);  -- ok
@@ -1175,6 +1232,15 @@ DETAIL:  Column "x" is a generated column.
 ALTER TABLE gtest27 ALTER COLUMN x DROP DEFAULT;  -- error
 ERROR:  column "x" of relation "gtest27" is a generated column
 HINT:  Use ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION instead.
+-- test not-null checking during table rewrite
+INSERT INTO gtest27 (a, b) VALUES (NULL, NULL);
+ALTER TABLE gtest27
+  DROP COLUMN x,
+  ALTER COLUMN a TYPE bigint,
+  ALTER COLUMN b TYPE bigint,
+  ADD COLUMN x bigint GENERATED ALWAYS AS ((a + b) * 2) STORED NOT NULL;  -- error
+ERROR:  column "x" of relation "gtest27" contains null values
+DELETE FROM gtest27 WHERE a IS NULL AND b IS NULL;
 -- It's possible to alter the column types this way:
 ALTER TABLE gtest27
   DROP COLUMN x,
