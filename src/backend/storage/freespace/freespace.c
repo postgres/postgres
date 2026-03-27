@@ -915,9 +915,8 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 		((FSMPage) PageGetContents(page))->fp_next_slot = 0;
 		BufferFinishSetHintBits(buf, false, false);
 	}
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
-	ReleaseBuffer(buf);
+	UnlockReleaseBuffer(buf);
 
 	return max_avail;
 }

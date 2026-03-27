@@ -193,8 +193,7 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 
 	memcpy(raw_page_data, BufferGetPage(buf), BLCKSZ);
 
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buf);
+	UnlockReleaseBuffer(buf);
 
 	relation_close(rel, AccessShareLock);
 

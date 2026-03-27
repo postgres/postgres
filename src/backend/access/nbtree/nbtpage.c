@@ -1011,24 +1011,47 @@ _bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
 
 	Assert(BlockNumberIsValid(blkno));
 	if (BufferIsValid(obuf))
-		_bt_unlockbuf(rel, obuf);
-	buf = ReleaseAndReadBuffer(obuf, rel, blkno);
-	_bt_lockbuf(rel, buf, access);
+	{
+		if (BufferGetBlockNumber(obuf) == blkno)
+		{
+			/* trade in old lock mode for new lock */
+			_bt_unlockbuf(rel, obuf);
+			buf = obuf;
+		}
+		else
+		{
+			/* release lock and pin at once, that's a bit more efficient */
+			_bt_relbuf(rel, obuf);
+			buf = ReadBuffer(rel, blkno);
+		}
+	}
+	else
+		buf = ReadBuffer(rel, blkno);
 
+	_bt_lockbuf(rel, buf, access);
 	_bt_checkpage(rel, buf);
+
 	return buf;
 }
 
 /*
  *	_bt_relbuf() -- release a locked buffer.
  *
- * Lock and pin (refcount) are both dropped.
+ * Lock and pin (refcount) are both dropped. This is a bit more efficient than
+ * doing the two operations separately.
  */
 void
 _bt_relbuf(Relation rel, Buffer buf)
 {
-	_bt_unlockbuf(rel, buf);
-	ReleaseBuffer(buf);
+	/*
+	 * Buffer is pinned and locked, which means that it is expected to be
+	 * defined and addressable.  Check that proactively.
+	 */
+	VALGRIND_CHECK_MEM_IS_DEFINED(BufferGetPage(buf), BLCKSZ);
+	if (!RelationUsesLocalBuffers(rel))
+		VALGRIND_MAKE_MEM_NOACCESS(BufferGetPage(buf), BLCKSZ);
+
+	UnlockReleaseBuffer(buf);
 }
 
 /*

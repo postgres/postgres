@@ -368,8 +368,7 @@ gin_check_posting_tree_parent_keys_consistency(Relation rel, BlockNumber posting
 				stack->next = ptr;
 			}
 		}
-		LockBuffer(buffer, GIN_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 
 		/* Step to next item in the queue */
 		stack_next = stack->next;
@@ -642,8 +641,7 @@ gin_check_parent_keys_consistency(Relation rel,
 			prev_attnum = current_attnum;
 		}
 
-		LockBuffer(buffer, GIN_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 
 		/* Step to next item in the queue */
 		stack_next = stack->next;
