@@ -239,6 +239,9 @@ sub pre_indent
 {
 	my $source = shift;
 
+	## Ensure file ends with a newline (pg_bsd_indent messes up otherwise)
+	$source .= "\n" unless substr($source, -1) eq "\n";
+
 	## Comments
 
 	# Convert // comments to /* */
