@@ -136,6 +136,14 @@
   max => '100.0',
 },
 
+{ name => 'autovacuum_analyze_score_weight', type => 'real', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
+  short_desc => 'Scaling factor of analyze score for autovacuum prioritization.',
+  variable => 'autovacuum_analyze_score_weight',
+  boot_val => '1.0',
+  min => '0.0',
+  max => '10.0',
+},
+
 { name => 'autovacuum_analyze_threshold', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
   short_desc => 'Minimum number of tuple inserts, updates, or deletes prior to analyze.',
   variable => 'autovacuum_anl_thresh',
@@ -154,6 +162,14 @@
   max => '2000000000',
 },
 
+{ name => 'autovacuum_freeze_score_weight', type => 'real', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
+  short_desc => 'Scaling factor of freeze score for autovacuum prioritization.',
+  variable => 'autovacuum_freeze_score_weight',
+  boot_val => '1.0',
+  min => '0.0',
+  max => '10.0',
+},
+
 { name => 'autovacuum_max_workers', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
   short_desc => 'Sets the maximum number of simultaneously running autovacuum worker processes.',
   variable => 'autovacuum_max_workers',
@@ -169,6 +185,14 @@
   boot_val => '400000000',
   min => '10000',
   max => '2000000000',
+},
+
+{ name => 'autovacuum_multixact_freeze_score_weight', type => 'real', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
+  short_desc => 'Scaling factor of multixact freeze score for autovacuum prioritization.',
+  variable => 'autovacuum_multixact_freeze_score_weight',
+  boot_val => '1.0',
+  min => '0.0',
+  max => '10.0',
 },
 
 { name => 'autovacuum_naptime', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
@@ -207,6 +231,14 @@
   max => '100.0',
 },
 
+{ name => 'autovacuum_vacuum_insert_score_weight', type => 'real', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
+  short_desc => 'Scaling factor of vacuum insert score for autovacuum prioritization.',
+  variable => 'autovacuum_vacuum_insert_score_weight',
+  boot_val => '1.0',
+  min => '0.0',
+  max => '10.0',
+},
+
 { name => 'autovacuum_vacuum_insert_threshold', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
   short_desc => 'Minimum number of tuple inserts prior to vacuum.',
   long_desc => '-1 disables insert vacuums.',
@@ -231,6 +263,14 @@
   boot_val => '0.2',
   min => '0.0',
   max => '100.0',
+},
+
+{ name => 'autovacuum_vacuum_score_weight', type => 'real', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
+  short_desc => 'Scaling factor of vacuum score for autovacuum prioritization.',
+  variable => 'autovacuum_vacuum_score_weight',
+  boot_val => '1.0',
+  min => '0.0',
+  max => '10.0',
 },
 
 { name => 'autovacuum_vacuum_threshold', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',

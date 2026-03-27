@@ -9395,6 +9395,96 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-autovacuum-freeze-score-weight" xreflabel="autovacuum_freeze_score_weight">
+       <term><varname>autovacuum_freeze_score_weight</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_freeze_score_weight</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the scaling factor of the transaction ID age component of
+         the score used by autovacuum for prioritization purposes.  The default
+         is <literal>1.0</literal>.  This parameter can only be set in the
+         <filename>postgresql.conf</filename> file or on the server command
+         line.  See <xref linkend="autovacuum-priority"/> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-autovacuum-multixact-freeze-score-weight" xreflabel="autovacuum_multixact_freeze_score_weight">
+       <term><varname>autovacuum_multixact_freeze_score_weight</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_multixact_freeze_score_weight</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the scaling factor of the multixact ID age component of the
+         score used by autovacuum for prioritization purposes.  The default is
+         <literal>1.0</literal>.  This parameter can only be set in the
+         <filename>postgresql.conf</filename> file or on the server command
+         line.  See <xref linkend="autovacuum-priority"/> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-autovacuum-vacuum-score-weight" xreflabel="autovacuum_vacuum_score_weight">
+       <term><varname>autovacuum_vacuum_score_weight</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_score_weight</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the scaling factor of the vacuum threshold component of the
+         score used by autovacuum for prioritization purposes.  The default is
+         <literal>1.0</literal>.  This parameter can only be set in the
+         <filename>postgresql.conf</filename> file or on the server command
+         line.  See <xref linkend="autovacuum-priority"/> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-autovacuum-vacuum-insert-score-weight" xreflabel="autovacuum_vacuum_insert_score_weight">
+       <term><varname>autovacuum_vacuum_insert_score_weight</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_insert_score_weight</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the scaling factor of the vacuum insert threshold component
+         of the score used by autovacuum for prioritization purposes.  The
+         default is <literal>1.0</literal>.  This parameter can only be set in
+         the <filename>postgresql.conf</filename> file or on the server command
+         line.  See <xref linkend="autovacuum-priority"/> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-autovacuum-analyze-score-weight" xreflabel="autovacuum_analyze_score_weight">
+       <term><varname>autovacuum_analyze_score_weight</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_analyze_score_weight</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the scaling factor of the analyze threshold component of the
+         score used by autovacuum for prioritization purposes.  The default is
+         <literal>1.0</literal>.  This parameter can only be set in the
+         <filename>postgresql.conf</filename> file or on the server command
+         line.  See <xref linkend="autovacuum-priority"/> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
     </sect2>
 

@@ -62,6 +62,7 @@
  */
 #include "postgres.h"
 
+#include <math.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -130,7 +131,11 @@ int			autovacuum_anl_thresh;
 double		autovacuum_anl_scale;
 int			autovacuum_freeze_max_age;
 int			autovacuum_multixact_freeze_max_age;
-
+double		autovacuum_freeze_score_weight = 1.0;
+double		autovacuum_multixact_freeze_score_weight = 1.0;
+double		autovacuum_vacuum_score_weight = 1.0;
+double		autovacuum_vacuum_insert_score_weight = 1.0;
+double		autovacuum_analyze_score_weight = 1.0;
 double		autovacuum_vac_cost_delay;
 int			autovacuum_vac_cost_limit;
 
@@ -312,6 +317,30 @@ static dlist_head DatabaseList = DLIST_STATIC_INIT(DatabaseList);
 static MemoryContext DatabaseListCxt = NULL;
 
 /*
+ * This struct is used by relation_needs_vacanalyze() to return the table's
+ * score (i.e., the maximum of the component scores) as well as the component
+ * scores themselves.
+ */
+typedef struct
+{
+	double		max;			/* maximum of all values below */
+	double		xid;			/* transaction ID component */
+	double		mxid;			/* multixact ID component */
+	double		vac;			/* vacuum component */
+	double		vac_ins;		/* vacuum insert component */
+	double		anl;			/* analyze component */
+} AutoVacuumScores;
+
+/*
+ * This struct is used to track and sort the list of tables to process.
+ */
+typedef struct
+{
+	Oid			oid;
+	double		score;
+} TableToProcess;
+
+/*
  * Dummy pointer to persuade Valgrind that we've not leaked the array of
  * avl_dbase structs.  Make it global to ensure the compiler doesn't
  * optimize it away.
@@ -349,7 +378,8 @@ static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 									  Form_pg_class classForm,
 									  PgStat_StatTabEntry *tabentry,
 									  int effective_multixact_freeze_max_age,
-									  bool *dovacuum, bool *doanalyze, bool *wraparound);
+									  bool *dovacuum, bool *doanalyze, bool *wraparound,
+									  AutoVacuumScores *scores);
 
 static void autovacuum_do_vac_analyze(autovac_table *tab,
 									  BufferAccessStrategy bstrategy);
@@ -1867,6 +1897,19 @@ get_database_list(void)
 }
 
 /*
+ * List comparator for TableToProcess.  Note that this sorts the tables based
+ * on their scores in descending order.
+ */
+static int
+TableToProcessComparator(const ListCell *a, const ListCell *b)
+{
+	TableToProcess *t1 = (TableToProcess *) lfirst(a);
+	TableToProcess *t2 = (TableToProcess *) lfirst(b);
+
+	return (t2->score < t1->score) ? -1 : (t2->score > t1->score) ? 1 : 0;
+}
+
+/*
  * Process a database table-by-table
  *
  * Note that CHECK_FOR_INTERRUPTS is supposed to be used in certain spots in
@@ -1879,7 +1922,7 @@ do_autovacuum(void)
 	HeapTuple	tuple;
 	TableScanDesc relScan;
 	Form_pg_database dbForm;
-	List	   *table_oids = NIL;
+	List	   *tables_to_process = NIL;
 	List	   *orphan_oids = NIL;
 	HASHCTL		ctl;
 	HTAB	   *table_toast_map;
@@ -1991,6 +2034,7 @@ do_autovacuum(void)
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
+		AutoVacuumScores scores;
 
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_MATVIEW)
@@ -2031,11 +2075,18 @@ do_autovacuum(void)
 		/* Check if it needs vacuum or analyze */
 		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
 								  effective_multixact_freeze_max_age,
-								  &dovacuum, &doanalyze, &wraparound);
+								  &dovacuum, &doanalyze, &wraparound,
+								  &scores);
 
-		/* Relations that need work are added to table_oids */
+		/* Relations that need work are added to tables_to_process */
 		if (dovacuum || doanalyze)
-			table_oids = lappend_oid(table_oids, relid);
+		{
+			TableToProcess *table = palloc_object(TableToProcess);
+
+			table->oid = relid;
+			table->score = scores.max;
+			tables_to_process = lappend(tables_to_process, table);
+		}
 
 		/*
 		 * Remember TOAST associations for the second pass.  Note: we must do
@@ -2091,6 +2142,7 @@ do_autovacuum(void)
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
+		AutoVacuumScores scores;
 
 		/*
 		 * We cannot safely process other backends' temp tables, so skip 'em.
@@ -2123,11 +2175,18 @@ do_autovacuum(void)
 
 		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
 								  effective_multixact_freeze_max_age,
-								  &dovacuum, &doanalyze, &wraparound);
+								  &dovacuum, &doanalyze, &wraparound,
+								  &scores);
 
 		/* ignore analyze for toast tables */
 		if (dovacuum)
-			table_oids = lappend_oid(table_oids, relid);
+		{
+			TableToProcess *table = palloc_object(TableToProcess);
+
+			table->oid = relid;
+			table->score = scores.max;
+			tables_to_process = lappend(tables_to_process, table);
+		}
 
 		/* Release stuff to avoid leakage */
 		if (free_relopts)
@@ -2252,6 +2311,19 @@ do_autovacuum(void)
 	}
 
 	/*
+	 * In case list_sort() would modify the list even when all the scores are
+	 * 0.0, skip sorting if all the weight parameters are set to 0.0.  This is
+	 * probably not necessary, but we want to ensure folks have a guaranteed
+	 * escape hatch from the scoring system.
+	 */
+	if (autovacuum_freeze_score_weight != 0.0 ||
+		autovacuum_multixact_freeze_score_weight != 0.0 ||
+		autovacuum_vacuum_score_weight != 0.0 ||
+		autovacuum_vacuum_insert_score_weight != 0.0 ||
+		autovacuum_analyze_score_weight != 0.0)
+		list_sort(tables_to_process, TableToProcessComparator);
+
+	/*
 	 * Optionally, create a buffer access strategy object for VACUUM to use.
 	 * We use the same BufferAccessStrategy object for all tables VACUUMed by
 	 * this worker to prevent autovacuum from blowing out shared buffers.
@@ -2279,9 +2351,9 @@ do_autovacuum(void)
 	/*
 	 * Perform operations on collected tables.
 	 */
-	foreach(cell, table_oids)
+	foreach_ptr(TableToProcess, table, tables_to_process)
 	{
-		Oid			relid = lfirst_oid(cell);
+		Oid			relid = table->oid;
 		HeapTuple	classTup;
 		autovac_table *tab;
 		bool		isshared;
@@ -2512,7 +2584,7 @@ deleted:
 		pg_atomic_test_set_flag(&MyWorkerInfo->wi_dobalance);
 	}
 
-	list_free(table_oids);
+	list_free_deep(tables_to_process);
 
 	/*
 	 * Perform additional work items, as requested by backends.
@@ -2913,6 +2985,7 @@ recheck_relation_needs_vacanalyze(Oid relid,
 								  bool *wraparound)
 {
 	PgStat_StatTabEntry *tabentry;
+	AutoVacuumScores scores;
 
 	/* fetch the pgstat table entry */
 	tabentry = pgstat_fetch_stat_tabentry_ext(classForm->relisshared,
@@ -2920,15 +2993,12 @@ recheck_relation_needs_vacanalyze(Oid relid,
 
 	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
 							  effective_multixact_freeze_max_age,
-							  dovacuum, doanalyze, wraparound);
+							  dovacuum, doanalyze, wraparound,
+							  &scores);
 
 	/* Release tabentry to avoid leakage */
 	if (tabentry)
 		pfree(tabentry);
-
-	/* ignore ANALYZE for toast tables */
-	if (classForm->relkind == RELKIND_TOASTVALUE)
-		*doanalyze = false;
 }
 
 /*
@@ -2969,6 +3039,47 @@ recheck_relation_needs_vacanalyze(Oid relid,
  * autovacuum_vacuum_threshold GUC variable.  Similarly, a vac_scale_factor
  * value < 0 is substituted with the value of
  * autovacuum_vacuum_scale_factor GUC variable.  Ditto for analyze.
+ *
+ * This function also returns scores that can be used to sort the list of
+ * tables to process.  The idea is to have autovacuum prioritize tables that
+ * are furthest beyond their thresholds (e.g., a table nearing transaction ID
+ * wraparound should be vacuumed first).  This prioritization scheme is
+ * certainly far from perfect; there are simply too many possibilities for any
+ * scoring technique to work across all workloads, and the situation might
+ * change significantly between the time we calculate the score and the time
+ * that autovacuum processes it.  However, we have attempted to develop
+ * something that is expected to work for a large portion of workloads with
+ * reasonable parameter settings.
+ *
+ * The autovacuum table score is calculated as the maximum of the ratios of
+ * each of the table's relevant values to its threshold.  For example, if the
+ * number of inserted tuples is 100, and the insert threshold for the table is
+ * 80, the insert score is 1.25.  If all other scores are below that value, the
+ * returned score will be 1.25.  The other criteria considered for the score
+ * are the table ages (both relfrozenxid and relminmxid) compared to the
+ * corresponding freeze-max-age setting, the number of updated/deleted tuples
+ * compared to the vacuum threshold, and the number of inserted/updated/deleted
+ * tuples compared to the analyze threshold.
+ *
+ * One exception to the previous paragraph is for tables nearing wraparound,
+ * i.e., those that have surpassed the effective failsafe ages.  In that case,
+ * the relfrozen/relminmxid-based score is scaled aggressively so that the
+ * table has a decent chance of sorting to the front of the list.
+ *
+ * To adjust how strongly each component contributes to the score, the
+ * following parameters can be adjusted from their default of 1.0 to anywhere
+ * between 0.0 and 10.0 (inclusive).  Setting all of these to 0.0 restores
+ * pre-v19 prioritization behavior:
+ *
+ *     autovacuum_freeze_score_weight
+ *     autovacuum_multixact_freeze_score_weight
+ *     autovacuum_vacuum_score_weight
+ *     autovacuum_vacuum_insert_score_weight
+ *     autovacuum_analyze_score_weight
+ *
+ * The autovacuum table score is returned in scores->max.  The component scores
+ * are also returned in the "scores" argument via the other members of the
+ * AutoVacuumScores struct.
  */
 static void
 relation_needs_vacanalyze(Oid relid,
@@ -2979,7 +3090,8 @@ relation_needs_vacanalyze(Oid relid,
  /* output params below */
 						  bool *dovacuum,
 						  bool *doanalyze,
-						  bool *wraparound)
+						  bool *wraparound,
+						  AutoVacuumScores *scores)
 {
 	bool		force_vacuum;
 	bool		av_enabled;
@@ -3008,10 +3120,15 @@ relation_needs_vacanalyze(Oid relid,
 	int			multixact_freeze_max_age;
 	TransactionId xidForceLimit;
 	TransactionId relfrozenxid;
+	MultiXactId relminmxid;
 	MultiXactId multiForceLimit;
 
 	Assert(classForm != NULL);
 	Assert(OidIsValid(relid));
+
+	memset(scores, 0, sizeof(AutoVacuumScores));
+	*dovacuum = false;
+	*doanalyze = false;
 
 	/*
 	 * Determine vacuum/analyze equation parameters.  We have two possible
@@ -3060,17 +3177,17 @@ relation_needs_vacanalyze(Oid relid,
 
 	av_enabled = (relopts ? relopts->enabled : true);
 
+	relfrozenxid = classForm->relfrozenxid;
+	relminmxid = classForm->relminmxid;
+
 	/* Force vacuum if table is at risk of wraparound */
 	xidForceLimit = recentXid - freeze_max_age;
 	if (xidForceLimit < FirstNormalTransactionId)
 		xidForceLimit -= FirstNormalTransactionId;
-	relfrozenxid = classForm->relfrozenxid;
 	force_vacuum = (TransactionIdIsNormal(relfrozenxid) &&
 					TransactionIdPrecedes(relfrozenxid, xidForceLimit));
 	if (!force_vacuum)
 	{
-		MultiXactId relminmxid = classForm->relminmxid;
-
 		multiForceLimit = recentMulti - multixact_freeze_max_age;
 		if (multiForceLimit < FirstMultiXactId)
 			multiForceLimit -= FirstMultiXactId;
@@ -3079,13 +3196,65 @@ relation_needs_vacanalyze(Oid relid,
 	}
 	*wraparound = force_vacuum;
 
+	/* Update the score. */
+	if (force_vacuum)
+	{
+		uint32		xid_age;
+		uint32		mxid_age;
+		int			effective_xid_failsafe_age;
+		int			effective_mxid_failsafe_age;
+
+		/*
+		 * To calculate the (M)XID age portion of the score, divide the age by
+		 * its respective *_freeze_max_age parameter.
+		 */
+		xid_age = TransactionIdIsNormal(relfrozenxid) ? recentXid - relfrozenxid : 0;
+		mxid_age = MultiXactIdIsValid(relminmxid) ? recentMulti - relminmxid : 0;
+
+		scores->xid = (double) xid_age / freeze_max_age;
+		scores->mxid = (double) mxid_age / multixact_freeze_max_age;
+
+		/*
+		 * To ensure tables are given increased priority once they begin
+		 * approaching wraparound, we scale the score aggressively if the ages
+		 * surpass vacuum_failsafe_age or vacuum_multixact_failsafe_age.
+		 *
+		 * As in vacuum_xid_failsafe_check(), the effective failsafe age is no
+		 * less than 105% the value of the respective *_freeze_max_age
+		 * parameter.  Note that per-table settings could result in a low
+		 * score even if the table surpasses the failsafe settings.  However,
+		 * this is a strange enough corner case that we don't bother trying to
+		 * handle it.
+		 *
+		 * We further adjust the effective failsafe ages with the weight
+		 * parameters so that increasing them lowers the ages at which we
+		 * begin scaling aggressively.
+		 */
+		effective_xid_failsafe_age = Max(vacuum_failsafe_age,
+										 autovacuum_freeze_max_age * 1.05);
+		effective_mxid_failsafe_age = Max(vacuum_multixact_failsafe_age,
+										  autovacuum_multixact_freeze_max_age * 1.05);
+
+		if (autovacuum_freeze_score_weight > 1.0)
+			effective_xid_failsafe_age /= autovacuum_freeze_score_weight;
+		if (autovacuum_multixact_freeze_score_weight > 1.0)
+			effective_mxid_failsafe_age /= autovacuum_multixact_freeze_score_weight;
+
+		if (xid_age >= effective_xid_failsafe_age)
+			scores->xid = pow(scores->xid, Max(1.0, (double) xid_age / 100000000));
+		if (mxid_age >= effective_mxid_failsafe_age)
+			scores->mxid = pow(scores->mxid, Max(1.0, (double) mxid_age / 100000000));
+
+		scores->xid *= autovacuum_freeze_score_weight;
+		scores->mxid *= autovacuum_multixact_freeze_score_weight;
+
+		scores->max = Max(scores->xid, scores->mxid);
+		*dovacuum = true;
+	}
+
 	/* User disabled it in pg_class.reloptions?  (But ignore if at risk) */
 	if (!av_enabled && !force_vacuum)
-	{
-		*doanalyze = false;
-		*dovacuum = false;
 		return;
-	}
 
 	/*
 	 * If we found stats for the table, and autovacuum is currently enabled,
@@ -3134,34 +3303,54 @@ relation_needs_vacanalyze(Oid relid,
 			vac_ins_scale_factor * reltuples * pcnt_unfrozen;
 		anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
 
-		if (vac_ins_base_thresh >= 0)
-			elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), ins: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
-				 NameStr(classForm->relname),
-				 vactuples, vacthresh, instuples, vacinsthresh, anltuples, anlthresh);
-		else
-			elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), ins: (disabled), anl: %.0f (threshold %.0f)",
-				 NameStr(classForm->relname),
-				 vactuples, vacthresh, anltuples, anlthresh);
-
-		/* Determine if this table needs vacuum or analyze. */
-		*dovacuum = force_vacuum || (vactuples > vacthresh) ||
-			(vac_ins_base_thresh >= 0 && instuples > vacinsthresh);
-		*doanalyze = (anltuples > anlthresh);
-	}
-	else
-	{
 		/*
-		 * Skip a table not found in stat hash, unless we have to force vacuum
-		 * for anti-wrap purposes.  If it's not acted upon, there's no need to
-		 * vacuum it.
+		 * Determine if this table needs vacuum, and update the score if it
+		 * does.
 		 */
-		*dovacuum = force_vacuum;
-		*doanalyze = false;
-	}
+		if (vactuples > vacthresh)
+		{
+			scores->vac = (double) vactuples / Max(vacthresh, 1);
+			scores->vac *= autovacuum_vacuum_score_weight;
+			scores->max = Max(scores->max, scores->vac);
+			*dovacuum = true;
+		}
 
-	/* ANALYZE refuses to work with pg_statistic */
-	if (relid == StatisticRelationId)
-		*doanalyze = false;
+		if (vac_ins_base_thresh >= 0 && instuples > vacinsthresh)
+		{
+			scores->vac_ins = (double) instuples / Max(vacinsthresh, 1);
+			scores->vac_ins *= autovacuum_vacuum_insert_score_weight;
+			scores->max = Max(scores->max, scores->vac_ins);
+			*dovacuum = true;
+		}
+
+		/*
+		 * Determine if this table needs analyze, and update the score if it
+		 * does.  Note that we don't analyze TOAST tables and pg_statistic.
+		 */
+		if (anltuples > anlthresh &&
+			relid != StatisticRelationId &&
+			classForm->relkind != RELKIND_TOASTVALUE)
+		{
+			scores->anl = (double) anltuples / Max(anlthresh, 1);
+			scores->anl *= autovacuum_analyze_score_weight;
+			scores->max = Max(scores->max, scores->anl);
+			*doanalyze = true;
+		}
+
+		if (vac_ins_base_thresh >= 0)
+			elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: %.0f (thresh %.0f, score %.2f), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
+				 NameStr(classForm->relname),
+				 vactuples, vacthresh, scores->vac,
+				 instuples, vacinsthresh, scores->vac_ins,
+				 anltuples, anlthresh, scores->anl,
+				 scores->xid, scores->mxid);
+		else
+			elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: (disabled), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
+				 NameStr(classForm->relname),
+				 vactuples, vacthresh, scores->vac,
+				 anltuples, anlthresh, scores->anl,
+				 scores->xid, scores->mxid);
+	}
 }
 
 /*

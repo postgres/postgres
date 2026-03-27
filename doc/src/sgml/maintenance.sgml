@@ -1062,6 +1062,109 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
      effectively prevent autovacuums from ever completing.
     </para>
    </warning>
+
+   <sect3 id="autovacuum-priority">
+    <title>Autovacuum Prioritization</title>
+
+    <para>
+     Autovacuum decides what to process in two steps: first it chooses a
+     database, then it chooses the tables within that database.  The autovacuum
+     launcher process prioritizes databases at risk of transaction ID or
+     multixact ID wraparound, else it chooses the database processed least
+     recently.  As an exception, it skips databases with no connections or no
+     activity since the last statistics reset, unless at risk of wraparound.
+    </para>
+
+    <para>
+     Within a database, the autovacuum worker process builds a list of tables
+     that require vacuum or analyze and sorts them using a scoring system.  It
+     scores each table by taking the maximum value of several component scores
+     representing various criteria important to vacuum or analyze.  Those
+     components are as follows:
+    </para>
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       The <emphasis>transaction ID</emphasis> component measures the age in
+       transactions of the table's
+       <structname>pg_class</structname>.<structfield>relfrozenxid</structfield>
+       field as compared to <xref linkend="guc-autovacuum-freeze-max-age"/>.
+       Furthermore, this component increases greatly once the age surpasses
+       <xref linkend="guc-vacuum-failsafe-age"/>.  The final value for this
+       component can be adjusted via
+       <xref linkend="guc-autovacuum-freeze-score-weight"/>.  Note that
+       increasing this parameter's value also lowers the age at which this
+       component begins scaling aggressively, i.e., the scaling age is divided
+       by its value if greater than <literal>1.0</literal>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <emphasis>multixact ID</emphasis> component measures the age in
+       multixacts of the table's
+       <structname>pg_class</structname>.<structfield>relminmxid</structfield>
+       field as compared to
+       <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>.  Furthermore,
+       this component increases greatly once the age surpasses
+       <xref linkend="guc-vacuum-multixact-failsafe-age"/>.  The final value
+       for this component can be adjusted via
+       <xref linkend="guc-autovacuum-multixact-freeze-score-weight"/>.  Note
+       that increasing this parameter's value also lowers the age at which this
+       component begins scaling aggressively, i.e., the scaling age is divided
+       by its value if greater than <literal>1.0</literal>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <emphasis>vacuum</emphasis> component measures the number of updated
+       or deleted tuples as compared to the threshold calculated with
+       <xref linkend="guc-autovacuum-vacuum-threshold"/>,
+       <xref linkend="guc-autovacuum-vacuum-scale-factor"/>, and
+       <xref linkend="guc-autovacuum-vacuum-max-threshold"/>.  The final value
+       for this component can be adjusted via
+       <xref linkend="guc-autovacuum-vacuum-score-weight"/>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <emphasis>vacuum insert</emphasis> component measures the number of
+       inserted tuples as compared to the threshold calculated with
+       <xref linkend="guc-autovacuum-vacuum-insert-threshold"/> and
+       <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>.  The final
+       value for this component can be adjusted via
+       <xref linkend="guc-autovacuum-vacuum-insert-score-weight"/>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <emphasis>analyze</emphasis> component measures the number of
+       inserted, updated, or deleted tuples as compared to the threshold
+       calculated with
+       <xref linkend="guc-autovacuum-analyze-threshold"/> and
+       <xref linkend="guc-autovacuum-analyze-scale-factor"/>.  The final value
+       for this component can be adjusted via
+       <xref linkend="guc-autovacuum-analyze-score-weight"/>.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    <para>
+     To revert to the prioritization strategy used before
+     <productname>PostgreSQL</productname> 19 (i.e., the order the tables are
+     listed in the <literal>pg_class</literal> system catalog), set all of the
+     aforementioned "weight" parameters to <literal>0.0</literal>.  Otherwise,
+     these "weight" parameters are multiplied to their respective component
+     scores.  For example, raising
+     <xref linkend="guc-autovacuum-analyze-score-weight"/> to
+     <literal>2.0</literal> effectively doubles the
+     <emphasis>analyze</emphasis> component score.
+    </para>
+   </sect3>
   </sect2>
  </sect1>
 

@@ -187,6 +187,7 @@ AuthToken
 AutoPrewarmReadStreamData
 AutoPrewarmSharedState
 AutoVacOpts
+AutoVacuumScores
 AutoVacuumShmemStruct
 AutoVacuumWorkItem
 AutoVacuumWorkItemType
@@ -3099,6 +3100,7 @@ TableScanDesc
 TableScanDescData
 TableSpaceCacheEntry
 TableSpaceOpts
+TableToProcess
 TablespaceList
 TablespaceListCell
 TapeBlockTrailer
