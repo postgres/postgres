@@ -383,7 +383,7 @@ sub test_startwait_io
 		$io_method,
 		$psql_a,
 		"first StartBufferIO",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true);),
 		qr/^t$/,
 		qr/^$/);
 
@@ -392,14 +392,14 @@ sub test_startwait_io
 		$io_method,
 		$psql_a,
 		"second StartBufferIO fails, same session",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>true);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>false);),
 		qr/^f$/,
 		qr/^$/);
 	psql_like(
 		$io_method,
 		$psql_b,
 		"second StartBufferIO fails, other session",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>true);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>false);),
 		qr/^f$/,
 		qr/^$/);
 
@@ -409,7 +409,7 @@ sub test_startwait_io
 		$node,
 		$psql_b,
 		"blocking start buffer io",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true);),
 		"BufferIo");
 
 	# Terminate the IO, without marking it as success, this should trigger the
@@ -438,7 +438,7 @@ sub test_startwait_io
 		$io_method,
 		$psql_a,
 		"blocking buffer io w/ success: first start buffer io",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true);),
 		qr/^t$/,
 		qr/^$/);
 
@@ -448,7 +448,7 @@ sub test_startwait_io
 		$node,
 		$psql_b,
 		"blocking start buffer io",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true);),
 		"BufferIo");
 
 	# Terminate the IO, marking it as success
@@ -486,7 +486,7 @@ INSERT INTO tmp_ok SELECT generate_series(1, 10000);
 		$io_method,
 		$psql_a,
 		"first StartLocalBufferIO",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>true);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>false);),
 		qr/^t$/,
 		qr/^$/);
 
@@ -497,7 +497,7 @@ INSERT INTO tmp_ok SELECT generate_series(1, 10000);
 		$io_method,
 		$psql_a,
 		"second StartLocalBufferIO succeeds, same session",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>true);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>false);),
 		qr/^t$/,
 		qr/^$/);
 
@@ -509,7 +509,7 @@ INSERT INTO tmp_ok SELECT generate_series(1, 10000);
 		$io_method,
 		$psql_a,
 		"StartLocalBufferIO after not marking valid succeeds, same session",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>true);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>false);),
 		qr/^t$/,
 		qr/^$/);
 
@@ -524,7 +524,7 @@ INSERT INTO tmp_ok SELECT generate_series(1, 10000);
 		$io_method,
 		$psql_a,
 		"StartLocalBufferIO after marking valid fails",
-		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false);),
+		qq(SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true);),
 		qr/^f$/,
 		qr/^$/);
 
@@ -1612,7 +1612,7 @@ read_buffers('$table', 1, 3)|,
 		my $buf_id =
 		  $psql_b->query_safe(qq|SELECT buffer_create_toy('$table', 3)|);
 		$psql_b->query_safe(
-			qq|SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false)|
+			qq|SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true)|
 		);
 
 		query_wait_block(
@@ -1637,7 +1637,7 @@ read_buffers('$table', 1, 3)|,
 		$buf_id =
 		  $psql_b->query_safe(qq|SELECT buffer_create_toy('$table', 3)|);
 		$psql_b->query_safe(
-			qq|SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false)|
+			qq|SELECT buffer_call_start_io($buf_id, for_input=>true, wait=>true)|
 		);
 
 		query_wait_block(

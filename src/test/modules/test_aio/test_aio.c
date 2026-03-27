@@ -434,13 +434,13 @@ read_rel_block_ll(PG_FUNCTION_ARGS)
 	if (RelationUsesLocalBuffers(rel))
 	{
 		for (int i = 0; i < nblocks; i++)
-			StartLocalBufferIO(buf_hdrs[i], true, false);
+			StartLocalBufferIO(buf_hdrs[i], true, true, NULL);
 		pgaio_io_set_flag(ioh, PGAIO_HF_REFERENCES_LOCAL);
 	}
 	else
 	{
 		for (int i = 0; i < nblocks; i++)
-			StartBufferIO(buf_hdrs[i], true, false);
+			StartSharedBufferIO(buf_hdrs[i], true, true, NULL);
 	}
 
 	pgaio_io_set_handle_data_32(ioh, (uint32 *) bufs, nblocks);
@@ -622,15 +622,18 @@ buffer_call_start_io(PG_FUNCTION_ARGS)
 {
 	Buffer		buf = PG_GETARG_INT32(0);
 	bool		for_input = PG_GETARG_BOOL(1);
-	bool		nowait = PG_GETARG_BOOL(2);
+	bool		wait = PG_GETARG_BOOL(2);
+	StartBufferIOResult result;
 	bool		can_start;
 
 	if (BufferIsLocal(buf))
-		can_start = StartLocalBufferIO(GetLocalBufferDescriptor(-buf - 1),
-									   for_input, nowait);
+		result = StartLocalBufferIO(GetLocalBufferDescriptor(-buf - 1),
+									for_input, wait, NULL);
 	else
-		can_start = StartBufferIO(GetBufferDescriptor(buf - 1),
-								  for_input, nowait);
+		result = StartSharedBufferIO(GetBufferDescriptor(buf - 1),
+									 for_input, wait, NULL);
+
+	can_start = result == BUFFER_IO_READY_FOR_IO;
 
 	/*
 	 * For tests we don't want the resowner release preventing us from

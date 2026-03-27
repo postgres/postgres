@@ -189,9 +189,10 @@ FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln)
 
 	/*
 	 * Try to start an I/O operation.  There currently are no reasons for
-	 * StartLocalBufferIO to return false, so we raise an error in that case.
+	 * StartLocalBufferIO to return anything other than
+	 * BUFFER_IO_READY_FOR_IO, so we raise an error in that case.
 	 */
-	if (!StartLocalBufferIO(bufHdr, false, false))
+	if (StartLocalBufferIO(bufHdr, false, true, NULL) != BUFFER_IO_READY_FOR_IO)
 		elog(ERROR, "failed to start write IO on local buffer");
 
 	/* Find smgr relation for buffer */
@@ -435,7 +436,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 			pg_atomic_unlocked_write_u64(&existing_hdr->state, buf_state);
 
 			/* no need to loop for local buffers */
-			StartLocalBufferIO(existing_hdr, true, false);
+			StartLocalBufferIO(existing_hdr, true, true, NULL);
 		}
 		else
 		{
@@ -451,7 +452,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 
 			hresult->id = victim_buf_id;
 
-			StartLocalBufferIO(victim_buf_hdr, true, false);
+			StartLocalBufferIO(victim_buf_hdr, true, true, NULL);
 		}
 	}
 
@@ -517,26 +518,41 @@ MarkLocalBufferDirty(Buffer buffer)
 }
 
 /*
- * Like StartBufferIO, but for local buffers
+ * Like StartSharedBufferIO, but for local buffers
  */
-bool
-StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool nowait)
+StartBufferIOResult
+StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool wait, PgAioWaitRef *io_wref)
 {
 	uint64		buf_state;
 
 	/*
 	 * With AIO the buffer could have IO in progress, e.g. when there are two
-	 * scans of the same relation. Either wait for the other IO or return
-	 * false.
+	 * scans of the same relation.  Either wait for the other IO (if wait =
+	 * true and io_wref == NULL) or return BUFFER_IO_IN_PROGRESS;
 	 */
 	if (pgaio_wref_valid(&bufHdr->io_wref))
 	{
-		PgAioWaitRef iow = bufHdr->io_wref;
+		PgAioWaitRef buf_wref = bufHdr->io_wref;
 
-		if (nowait)
-			return false;
+		if (io_wref != NULL)
+		{
+			/* We've already asynchronously started this IO, so join it */
+			*io_wref = buf_wref;
+			return BUFFER_IO_IN_PROGRESS;
+		}
 
-		pgaio_wref_wait(&iow);
+		/*
+		 * For temp buffers we should never need to wait in
+		 * StartLocalBufferIO() when called with io_wref == NULL while there
+		 * are staged IOs, as it's not allowed to call code that is not aware
+		 * of AIO while in batch mode.
+		 */
+		Assert(!pgaio_have_staged());
+
+		if (!wait)
+			return BUFFER_IO_IN_PROGRESS;
+
+		pgaio_wref_wait(&buf_wref);
 	}
 
 	/* Once we get here, there is definitely no I/O active on this buffer */
@@ -545,14 +561,14 @@ StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool nowait)
 	buf_state = pg_atomic_read_u64(&bufHdr->state);
 	if (forInput ? (buf_state & BM_VALID) : !(buf_state & BM_DIRTY))
 	{
-		return false;
+		return BUFFER_IO_ALREADY_DONE;
 	}
 
 	/* BM_IO_IN_PROGRESS isn't currently used for local buffers */
 
 	/* local buffers don't track IO using resowners */
 
-	return true;
+	return BUFFER_IO_READY_FOR_IO;
 }
 
 /*
