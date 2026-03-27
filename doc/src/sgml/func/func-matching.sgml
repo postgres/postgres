@@ -417,36 +417,6 @@ substring('foobar' SIMILAR '#"o_b#"%' ESCAPE '#')    <lineannotation>NULL</linea
     <primary>regular expression</primary>
     <seealso>pattern matching</seealso>
    </indexterm>
-   <indexterm>
-    <primary>substring</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_count</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_instr</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_like</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_match</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_matches</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_replace</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_split_to_table</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_split_to_array</primary>
-   </indexterm>
-   <indexterm>
-    <primary>regexp_substr</primary>
-   </indexterm>
 
    <para>
     <xref linkend="functions-posix-table"/> lists the available
@@ -569,15 +539,34 @@ substring('foobar' SIMILAR '#"o_b#"%' ESCAPE '#')    <lineannotation>NULL</linea
 
     <para>
      The <acronym>POSIX</acronym> pattern language is described in much
-     greater detail below.
+     greater detail in <xref linkend="posix-syntax-details"/>.
     </para>
 
+   <sect3 id="functions-posix-list">
+    <title>POSIX Regular Expression Functions</title>
+
     <para>
-     The <function>substring</function> function with two parameters,
-     <function>substring(<replaceable>string</replaceable> from
-     <replaceable>pattern</replaceable>)</function>, provides extraction of a
-     substring
-     that matches a POSIX regular expression pattern.  It returns null if
+     This section describes the available functions for pattern matching
+     using POSIX regular expressions.
+    </para>
+
+   <sect4 id="functions-posix-substring">
+   <title><function>substring</function></title>
+   <indexterm>
+    <primary>substring</primary>
+   </indexterm>
+
+    <para>
+     The <function>substring</function> function with two parameters
+     provides extraction of a substring that matches a POSIX regular
+     expression pattern.  It has the syntax:
+<synopsis>
+substring(<replaceable>string</replaceable> from <replaceable>pattern</replaceable>) <returnvalue>text</returnvalue>
+substring(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>) <returnvalue>text</returnvalue>
+</synopsis>
+     (The syntax with <literal>from</literal> is SQL-standard, but
+     <productname>PostgreSQL</productname> also accepts a comma.)
+     It returns null if
      there is no match, otherwise the first portion of the text that matched the
      pattern.  But if the pattern contains any parentheses, the portion
      of the text that matched the first parenthesized subexpression (the
@@ -586,7 +575,7 @@ substring('foobar' SIMILAR '#"o_b#"%' ESCAPE '#')    <lineannotation>NULL</linea
      if you want to use parentheses within it without triggering this
      exception.  If you need parentheses in the pattern before the
      subexpression you want to extract, see the non-capturing parentheses
-     described below.
+     described in <xref linkend="posix-atoms-table"/>.
     </para>
 
    <para>
@@ -596,16 +585,21 @@ substring('foobar' FROM 'o.b')     <lineannotation>oob</lineannotation>
 substring('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
 </programlisting>
    </para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-count">
+   <title><function>regexp_count</function></title>
+   <indexterm>
+    <primary>regexp_count</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_count</function> function counts the number of
      places where a POSIX regular expression pattern matches a string.
-     It has the syntax
-     <function>regexp_count</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable>
-     <optional>, <replaceable>start</replaceable>
-     <optional>, <replaceable>flags</replaceable>
-     </optional></optional>).
+     It has the syntax:
+<synopsis>
+regexp_count(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>start</replaceable> <optional>, <replaceable>flags</replaceable> </optional></optional>) <returnvalue>integer</returnvalue>
+</synopsis>
      <replaceable>pattern</replaceable> is searched for
      in <replaceable>string</replaceable>, normally from the beginning of
      the string, but if the <replaceable>start</replaceable> parameter is
@@ -625,20 +619,22 @@ regexp_count('ABCABCAXYaxy', 'A.')          <lineannotation>3</lineannotation>
 regexp_count('ABCABCAXYaxy', 'A.', 1, 'i')  <lineannotation>4</lineannotation>
 </programlisting>
     </para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-instr">
+   <title><function>regexp_instr</function></title>
+   <indexterm>
+    <primary>regexp_instr</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_instr</function> function returns the starting or
      ending position of the <replaceable>N</replaceable>'th match of a
      POSIX regular expression pattern to a string, or zero if there is no
-     such match.  It has the syntax
-     <function>regexp_instr</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable>
-     <optional>, <replaceable>start</replaceable>
-     <optional>, <replaceable>N</replaceable>
-     <optional>, <replaceable>endoption</replaceable>
-     <optional>, <replaceable>flags</replaceable>
-     <optional>, <replaceable>subexpr</replaceable>
-     </optional></optional></optional></optional></optional>).
+     such match.  It has the syntax:
+<synopsis>
+regexp_instr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>start</replaceable> <optional>, <replaceable>N</replaceable> <optional>, <replaceable>endoption</replaceable> <optional>, <replaceable>flags</replaceable> <optional>, <replaceable>subexpr</replaceable> </optional></optional></optional></optional></optional>) <returnvalue>integer</returnvalue>
+</synopsis>
      <replaceable>pattern</replaceable> is searched for
      in <replaceable>string</replaceable>, normally from the beginning of
      the string, but if the <replaceable>start</replaceable> parameter is
@@ -674,14 +670,21 @@ regexp_instr(string=>'ABCDEFGHI', pattern=>'(c..)(...)', start=>1, "N"=>1, endop
                                    <lineannotation>6</lineannotation>
 </programlisting>
     </para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-like">
+   <title><function>regexp_like</function></title>
+   <indexterm>
+    <primary>regexp_like</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_like</function> function checks whether a match
      of a POSIX regular expression pattern occurs within a string,
-     returning boolean true or false.  It has the syntax
-     <function>regexp_like</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable>
-     <optional>, <replaceable>flags</replaceable> </optional>).
+     returning boolean true or false.  It has the syntax:
+<synopsis>
+regexp_like(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>) <returnvalue>boolean</returnvalue>
+</synopsis>
      The <replaceable>flags</replaceable> parameter is an optional text
      string containing zero or more single-letter flags that change the
      function's behavior.  Supported flags are described
@@ -699,13 +702,21 @@ regexp_like('Hello World', 'world')       <lineannotation>false</lineannotation>
 regexp_like('Hello World', 'world', 'i')  <lineannotation>true</lineannotation>
 </programlisting>
     </para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-match">
+   <title><function>regexp_match</function></title>
+   <indexterm>
+    <primary>regexp_match</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_match</function> function returns a text array of
      matching substring(s) within the first match of a POSIX
-     regular expression pattern to a string.  It has the syntax
-     <function>regexp_match</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>).
+     regular expression pattern to a string.  It has the syntax:
+<synopsis>
+regexp_match(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>) <returnvalue>text[]</returnvalue>
+</synopsis>
      If there is no match, the result is <literal>NULL</literal>.
      If a match is found, and the <replaceable>pattern</replaceable> contains no
      parenthesized subexpressions, then the result is a single-element text
@@ -715,7 +726,7 @@ regexp_like('Hello World', 'world', 'i')  <lineannotation>true</lineannotation>
      whose <replaceable>n</replaceable>'th element is the substring matching
      the <replaceable>n</replaceable>'th parenthesized subexpression of
      the <replaceable>pattern</replaceable> (not counting <quote>non-capturing</quote>
-     parentheses; see below for details).
+     parentheses; see <xref linkend="posix-atoms-table"/> for details).
      The <replaceable>flags</replaceable> parameter is an optional text string
      containing zero or more single-letter flags that change the function's
      behavior.  Supported flags are described
@@ -757,12 +768,23 @@ SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
 </programlisting>
      </para>
     </tip>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-matches">
+   <title><function>regexp_matches</function></title>
+   <indexterm>
+    <primary>regexp_matches</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_matches</function> function returns a set of text arrays
      of matching substring(s) within matches of a POSIX regular
-     expression pattern to a string.  It has the same syntax as
-     <function>regexp_match</function>.
+     expression pattern to a string.  It has the syntax:
+<synopsis>
+regexp_matches(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>) <returnvalue>setof text[]</returnvalue>
+</synopsis>
+     The parameters are the same as
+     for <link linkend="functions-posix-regexp-match">regexp_match</link>.
      This function returns no rows if there is no match, one row if there is
      a match and the <literal>g</literal> flag is not given, or <replaceable>N</replaceable>
      rows if there are <replaceable>N</replaceable> matches and the <literal>g</literal> flag
@@ -811,20 +833,22 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      without a match, which is typically not the desired behavior.
     </para>
    </tip>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-replace">
+   <title><function>regexp_replace</function></title>
+   <indexterm>
+    <primary>regexp_replace</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_replace</function> function provides substitution of
      new text for substrings that match POSIX regular expression patterns.
-     It has the syntax
-     <function>regexp_replace</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
-     <optional>, <replaceable>flags</replaceable> </optional>)
-     or
-     <function>regexp_replace</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>,
-     <replaceable>start</replaceable>
-     <optional>, <replaceable>N</replaceable>
-     <optional>, <replaceable>flags</replaceable> </optional></optional>).
+     It has the syntax:
+<synopsis>
+regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable> <optional>, <replaceable>flags</replaceable> </optional>) <returnvalue>text</returnvalue>
+regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>, <replaceable>start</replaceable> <optional>, <replaceable>N </replaceable><optional>, <replaceable>flags</replaceable> </optional></optional>) <returnvalue>text</returnvalue>
+</synopsis>
      The source <replaceable>string</replaceable> is returned unchanged if
      there is no match to the <replaceable>pattern</replaceable>.  If there is a
      match, the <replaceable>string</replaceable> is returned with the
@@ -872,12 +896,20 @@ regexp_replace(string=>'A PostgreSQL function', pattern=>'a|e|i|o|u', replacemen
                                    <lineannotation>A PostgrXSQL function</lineannotation>
 </programlisting>
    </para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-split-to-table">
+   <title><function>regexp_split_to_table</function></title>
+   <indexterm>
+    <primary>regexp_split_to_table</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_split_to_table</function> function splits a string using a POSIX
-     regular expression pattern as a delimiter.  It has the syntax
-     <function>regexp_split_to_table</function>(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>
-     <optional>, <replaceable>flags</replaceable> </optional>).
+     regular expression pattern as a delimiter.  It has the syntax:
+<synopsis>
+regexp_split_to_table(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>) <returnvalue>setof text</returnvalue>
+</synopsis>
      If there is no match to the <replaceable>pattern</replaceable>, the function returns the
      <replaceable>string</replaceable>.  If there is at least one match, for each match it returns
      the text from the end of the last match (or the beginning of the string)
@@ -887,15 +919,6 @@ regexp_replace(string=>'A PostgreSQL function', pattern=>'a|e|i|o|u', replacemen
      zero or more single-letter flags that change the function's behavior.
      <function>regexp_split_to_table</function> supports the flags described in
      <xref linkend="posix-embedded-options-table"/>.
-    </para>
-
-    <para>
-     The <function>regexp_split_to_array</function> function behaves the same as
-     <function>regexp_split_to_table</function>, except that <function>regexp_split_to_array</function>
-     returns its result as an array of <type>text</type>.  It has the syntax
-     <function>regexp_split_to_array</function>(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>
-     <optional>, <replaceable>flags</replaceable> </optional>).
-     The parameters are the same as for <function>regexp_split_to_table</function>.
     </para>
 
    <para>
@@ -914,12 +937,6 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy d
  lazy
  dog
 (9 rows)
-
-SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', '\s+');
-              regexp_split_to_array
------------------------------------------------
- {the,quick,brown,fox,jumps,over,the,lazy,dog}
-(1 row)
 
 SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
  foo
@@ -945,25 +962,61 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
    </para>
 
    <para>
-    As the last example demonstrates, the regexp split functions ignore
+    As the last example demonstrates,
+    <function>regexp_split_to_table</function> ignores
     zero-length matches that occur at the start or end of the string
     or immediately after a previous match.  This is contrary to the strict
     definition of regexp matching that is implemented by
     the other regexp functions, but is usually the most convenient behavior
     in practice.  Other software systems such as Perl use similar definitions.
    </para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-split-to-array">
+   <title><function>regexp_split_to_array</function></title>
+   <indexterm>
+    <primary>regexp_split_to_array</primary>
+   </indexterm>
+
+    <para>
+     The <function>regexp_split_to_array</function> function behaves the
+     same as
+     <link linkend="functions-posix-regexp-split-to-table">regexp_split_to_table</link>,
+     except that <function>regexp_split_to_array</function> returns its
+     result as an array of <type>text</type> rather than a set.  It has
+     the syntax:
+<synopsis>
+regexp_split_to_array(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>) <returnvalue>text[]</returnvalue>
+</synopsis>
+     The parameters are the same as
+     for <function>regexp_split_to_table</function>.
+    </para>
+
+   <para>
+    An example:
+<programlisting>
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', '\s+');
+              regexp_split_to_array
+-----------------------------------------------
+ {the,quick,brown,fox,jumps,over,the,lazy,dog}
+(1 row)
+</programlisting>
+</para>
+   </sect4>
+
+   <sect4 id="functions-posix-regexp-substr">
+   <title><function>regexp_substr</function></title>
+   <indexterm>
+    <primary>regexp_substr</primary>
+   </indexterm>
 
     <para>
      The <function>regexp_substr</function> function returns the substring
      that matches a POSIX regular expression pattern,
-     or <literal>NULL</literal> if there is no match.  It has the syntax
-     <function>regexp_substr</function>(<replaceable>string</replaceable>,
-     <replaceable>pattern</replaceable>
-     <optional>, <replaceable>start</replaceable>
-     <optional>, <replaceable>N</replaceable>
-     <optional>, <replaceable>flags</replaceable>
-     <optional>, <replaceable>subexpr</replaceable>
-     </optional></optional></optional></optional>).
+     or <literal>NULL</literal> if there is no match.  It has the syntax:
+<synopsis>
+regexp_substr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable> <optional>, <replaceable>start</replaceable> <optional>, <replaceable>N</replaceable> <optional>, <replaceable>flags</replaceable> <optional>, <replaceable>subexpr</replaceable> </optional></optional></optional></optional>) <returnvalue>text</returnvalue>
+</synopsis>
      <replaceable>pattern</replaceable> is searched for
      in <replaceable>string</replaceable>, normally from the beginning of
      the string, but if the <replaceable>start</replaceable> parameter is
@@ -993,11 +1046,13 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
                                    <lineannotation>FGH</lineannotation>
 </programlisting>
     </para>
+   </sect4>
+   </sect3>
 
 <!-- derived from the re_syntax.n man page -->
 
    <sect3 id="posix-syntax-details">
-    <title>Regular Expression Details</title>
+    <title>POSIX Regular Expression Details</title>
 
    <para>
     <productname>PostgreSQL</productname>'s regular expressions are implemented

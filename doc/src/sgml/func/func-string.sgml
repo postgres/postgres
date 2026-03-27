@@ -431,7 +431,7 @@
        </para>
        <para>
         Extracts the first substring matching POSIX regular expression; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-substring"/>.
        </para>
        <para>
         <literal>substring('Thomas' FROM '...$')</literal>
@@ -961,7 +961,7 @@
         Returns the number of times the POSIX regular
         expression <parameter>pattern</parameter> matches in
         the <parameter>string</parameter>; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-count"/>.
        </para>
        <para>
         <literal>regexp_count('123456789012', '\d\d\d', 2)</literal>
@@ -986,7 +986,7 @@
         Returns the position within <parameter>string</parameter> where
         the <parameter>N</parameter>'th match of the POSIX regular
         expression <parameter>pattern</parameter> occurs, or zero if there is
-        no such match; see <xref linkend="functions-posix-regexp"/>.
+        no such match; see <xref linkend="functions-posix-regexp-instr"/>.
        </para>
        <para>
         <literal>regexp_instr('ABCDEF', 'c(.)(..)', 1, 1, 0, 'i')</literal>
@@ -1011,7 +1011,7 @@
         Checks whether a match of the POSIX regular
         expression <parameter>pattern</parameter> occurs
         within <parameter>string</parameter>; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-like"/>.
        </para>
        <para>
         <literal>regexp_like('Hello World', 'world$', 'i')</literal>
@@ -1031,7 +1031,7 @@
         Returns substrings within the first match of the POSIX regular
         expression <parameter>pattern</parameter> to
         the <parameter>string</parameter>; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-match"/>.
        </para>
        <para>
         <literal>regexp_match('foobarbequebaz', '(bar)(beque)')</literal>
@@ -1052,7 +1052,7 @@
         expression <parameter>pattern</parameter> to
         the <parameter>string</parameter>, or substrings within all
         such matches if the <literal>g</literal> flag is used;
-        see <xref linkend="functions-posix-regexp"/>.
+        see <xref linkend="functions-posix-regexp-matches"/>.
        </para>
        <para>
         <literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal>
@@ -1077,7 +1077,7 @@
         Replaces the substring that is the first match to the POSIX
         regular expression <parameter>pattern</parameter>, or all such
         matches if the <literal>g</literal> flag is used; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-replace"/>.
        </para>
        <para>
         <literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal>
@@ -1100,7 +1100,7 @@
         search beginning at the <parameter>start</parameter>'th character
         of <parameter>string</parameter>.  If <parameter>N</parameter> is
         omitted, it defaults to 1.  See
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-replace"/>.
        </para>
        <para>
         <literal>regexp_replace('Thomas', '.', 'X', 3, 2)</literal>
@@ -1123,7 +1123,7 @@
        <para>
         Splits <parameter>string</parameter> using a POSIX regular
         expression as the delimiter, producing an array of results; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-split-to-array"/>.
        </para>
        <para>
         <literal>regexp_split_to_array('hello world', '\s+')</literal>
@@ -1142,7 +1142,7 @@
        <para>
         Splits <parameter>string</parameter> using a POSIX regular
         expression as the delimiter, producing a set of results; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-split-to-table"/>.
        </para>
        <para>
         <literal>regexp_split_to_table('hello world', '\s+')</literal>
@@ -1171,7 +1171,7 @@
         matches the <parameter>N</parameter>'th occurrence of the POSIX
         regular expression <parameter>pattern</parameter>,
         or <literal>NULL</literal> if there is no such match; see
-        <xref linkend="functions-posix-regexp"/>.
+        <xref linkend="functions-posix-regexp-substr"/>.
        </para>
        <para>
         <literal>regexp_substr('ABCDEF', 'c(.)(..)', 1, 1, 'i')</literal>

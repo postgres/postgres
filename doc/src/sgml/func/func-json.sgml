@@ -3149,7 +3149,7 @@ $[*] ? (@ like_regex "^[aeiou]" flag "i")
      <literal>LIKE_REGEX</literal> operator.  Therefore,
      the <literal>like_regex</literal> filter is implemented using the
      POSIX regular expression engine described in
-     <xref linkend="functions-posix-regexp"/>.  This leads to various minor
+     <xref linkend="posix-syntax-details"/>.  This leads to various minor
      discrepancies from standard SQL/JSON behavior, which are cataloged in
      <xref linkend="posix-vs-xquery"/>.
      Note, however, that the flag-letter incompatibilities described there

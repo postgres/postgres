@@ -4131,7 +4131,7 @@ SELECT 1\; SELECT 2\; SELECT 3;
    Advanced users can use regular-expression notations such as character
    classes, for example <literal>[0-9]</literal> to match any digit.  All regular
    expression special characters work as specified in
-   <xref linkend="functions-posix-regexp"/>, except for <literal>.</literal> which
+   <xref linkend="posix-syntax-details"/>, except for <literal>.</literal> which
    is taken as a separator as mentioned above, <literal>*</literal> which is
    translated to the regular-expression notation <literal>.*</literal>,
    <literal>?</literal> which is translated to <literal>.</literal>, and
