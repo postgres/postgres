@@ -289,6 +289,12 @@ SELECT * FROM GRAPH_TABLE (g1 MATCH (src IS el1 | vl1)-[conn]->(dest) COLUMNS (c
 SELECT * FROM GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.address = 'US')-[IS customer_orders]->(o IS orders) COLUMNS (c.*));
 -- star anywhere else is not allowed as a property reference
 SELECT * FROM GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.* IS NOT NULL)-[IS customer_orders]->(o IS orders) COLUMNS (c.name));
+-- consecutive element patterns with same kind
+SELECT * FROM GRAPH_TABLE (g1 MATCH ()() COLUMNS (1 as one));
+SELECT * FROM GRAPH_TABLE (g1 MATCH -> COLUMNS (1 AS one));
+SELECT * FROM GRAPH_TABLE (g1 MATCH ()-[]- COLUMNS (1 AS one));
+SELECT * FROM GRAPH_TABLE (g1 MATCH ()-> ->() COLUMNS (1 AS one));
+
 
 -- select all the properties across all the labels associated with a given type
 -- of graph element

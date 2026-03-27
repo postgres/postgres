@@ -103,6 +103,8 @@ SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)->{1,2}(o IS
 ERROR:  element pattern quantifier is not supported
 SELECT * FROM GRAPH_TABLE (myshop MATCH ((c IS customers)->(o IS orders)) COLUMNS (c.name));
 ERROR:  unsupported element pattern kind: "nested path pattern"
+LINE 1: SELECT * FROM GRAPH_TABLE (myshop MATCH ((c IS customers)->(...
+                                                ^
 -- a property graph can be referenced only from within GRAPH_TABLE clause.
 SELECT * FROM myshop; -- error
 ERROR:  cannot open relation "myshop"
@@ -420,6 +422,23 @@ SELECT * FROM GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.* IS NOT NULL)-[
 ERROR:  "*" not allowed here
 LINE 1: ...M GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.* IS NOT...
                                                              ^
+-- consecutive element patterns with same kind
+SELECT * FROM GRAPH_TABLE (g1 MATCH ()() COLUMNS (1 as one));
+ERROR:  adjacent vertex patterns are not supported
+LINE 1: SELECT * FROM GRAPH_TABLE (g1 MATCH ()() COLUMNS (1 as one))...
+                                              ^
+SELECT * FROM GRAPH_TABLE (g1 MATCH -> COLUMNS (1 AS one));
+ERROR:  path pattern cannot start with an edge pattern
+LINE 1: SELECT * FROM GRAPH_TABLE (g1 MATCH -> COLUMNS (1 AS one));
+                                            ^
+SELECT * FROM GRAPH_TABLE (g1 MATCH ()-[]- COLUMNS (1 AS one));
+ERROR:  path pattern cannot end with an edge pattern
+LINE 1: SELECT * FROM GRAPH_TABLE (g1 MATCH ()-[]- COLUMNS (1 AS one...
+                                              ^
+SELECT * FROM GRAPH_TABLE (g1 MATCH ()-> ->() COLUMNS (1 AS one));
+ERROR:  edge pattern must be preceded by a vertex pattern
+LINE 1: SELECT * FROM GRAPH_TABLE (g1 MATCH ()-> ->() COLUMNS (1 AS ...
+                                                 ^
 -- select all the properties across all the labels associated with a given type
 -- of graph element
 SELECT * FROM GRAPH_TABLE (g1 MATCH (src)-[conn]->(dest) COLUMNS (src.vname AS svname, conn.ename AS cename, dest.vname AS dvname, src.vprop1 AS svp1, src.vprop2 AS svp2, src.lprop1 AS slp1, dest.vprop1 AS dvp1, dest.vprop2 AS dvp2, dest.lprop1 AS dlp1, conn.eprop1 AS cep1, conn.lprop2 AS clp2));

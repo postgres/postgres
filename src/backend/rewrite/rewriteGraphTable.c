@@ -300,6 +300,11 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 							errmsg("an edge cannot connect more than two vertexes even in a cyclic pattern"));
 				prev_pf->src_pf = pf;
 			}
+			else
+			{
+				Assert(prev_pf->kind == VERTEX_PATTERN);
+				Assert(IS_EDGE_PATTERN(pf->kind));
+			}
 
 			if (pf->kind == EDGE_PATTERN_RIGHT || pf->kind == EDGE_PATTERN_ANY)
 			{
@@ -318,6 +323,11 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							errmsg("an edge cannot connect more than two vertexes even in a cyclic pattern"));
 				pf->dest_pf = prev_pf;
+			}
+			else
+			{
+				Assert(pf->kind == VERTEX_PATTERN);
+				Assert(IS_EDGE_PATTERN(prev_pf->kind));
 			}
 		}
 
