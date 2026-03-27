@@ -324,8 +324,8 @@ struct PlannerInfo
 	 * If this PlannerInfo exists to consider an alternative implementation
 	 * strategy for a portion of the query that could also be implemented by
 	 * some other PlannerInfo, this is the plan_name for that other
-	 * PlannerInfo. When we are considering the first or only alternative,
-	 * it is the same as plan_name.
+	 * PlannerInfo. When we are considering the first or only alternative, it
+	 * is the same as plan_name.
 	 *
 	 * Currently, we set this to a value other than plan_name only when
 	 * considering a MinMaxAggPath or a hashed SubPlan.

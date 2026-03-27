@@ -42,12 +42,12 @@ typedef struct pgpa_planner_info
 
 	/*
 	 * If has_rtoffset is true, then rtoffset is the offset required to align
-	 * RTIs for this query level with RTIs from the final, flattened rangetable.
-	 * If has_rtoffset is false, then this subquery's range table wasn't copied,
-	 * or was only partially copied, into the final range table. (Note that
-	 * we can't determine the rtoffset values until the final range table
-	 * actually exists; before that time, has_rtoffset will be false everywhere
-	 * except at the top level.)
+	 * RTIs for this query level with RTIs from the final, flattened
+	 * rangetable. If has_rtoffset is false, then this subquery's range table
+	 * wasn't copied, or was only partially copied, into the final range
+	 * table. (Note that we can't determine the rtoffset values until the
+	 * final range table actually exists; before that time, has_rtoffset will
+	 * be false everywhere except at the top level.)
 	 */
 	bool		has_rtoffset;
 	Index		rtoffset;

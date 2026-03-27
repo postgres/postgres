@@ -2100,10 +2100,10 @@ pgpa_compute_rt_offsets(pgpa_planner_state *pps, PlannedStmt *pstmt)
 				if (rtinfo->dummy)
 				{
 					/*
-					 * It will not be possible to make any effective use of the
-					 * sj_unique_rels list in this case, and it also won't be
-					 * important to do so. So just throw the list away to avoid
-					 * confusing pgpa_plan_walker.
+					 * It will not be possible to make any effective use of
+					 * the sj_unique_rels list in this case, and it also won't
+					 * be important to do so. So just throw the list away to
+					 * avoid confusing pgpa_plan_walker.
 					 */
 					proot->sj_unique_rels = NIL;
 					break;

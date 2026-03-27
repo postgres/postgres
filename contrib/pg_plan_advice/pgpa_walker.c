@@ -722,8 +722,8 @@ pgpa_walker_would_advise(pgpa_plan_walker_context *walker,
 
 	/*
 	 * DO_NOT_SCAN advice targets rels that may not be in the flat range table
-	 * (e.g. MinMaxAgg losers), so we can't use pgpa_compute_rti_from_identifier.
-	 * Instead, check directly against the do_not_scan_identifiers list.
+	 * (e.g. MinMaxAgg losers), so pgpa_compute_rti_from_identifier won't work
+	 * here. Instead, check directly against the do_not_scan_identifiers list.
 	 */
 	if (tag == PGPA_TAG_DO_NOT_SCAN)
 	{
