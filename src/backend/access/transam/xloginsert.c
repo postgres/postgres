@@ -252,9 +252,9 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
 	Assert(begininsert_called);
 
 	/*
-	 * Ordinarily, buffer should be exclusive-locked and marked dirty before
-	 * we get here, otherwise we could end up violating one of the rules in
-	 * access/transam/README.
+	 * Ordinarily, the buffer should be exclusive-locked (or share-exclusive
+	 * in case of hint bits) and marked dirty before we get here, otherwise we
+	 * could end up violating one of the rules in access/transam/README.
 	 *
 	 * Some callers intentionally register a clean page and never update that
 	 * page's LSN; in that case they can pass the flag REGBUF_NO_CHANGE to
@@ -262,8 +262,11 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
 	 */
 #ifdef USE_ASSERT_CHECKING
 	if (!(flags & REGBUF_NO_CHANGE))
-		Assert(BufferIsLockedByMeInMode(buffer, BUFFER_LOCK_EXCLUSIVE) &&
-			   BufferIsDirty(buffer));
+	{
+		Assert(BufferIsDirty(buffer));
+		Assert(BufferIsLockedByMeInMode(buffer, BUFFER_LOCK_EXCLUSIVE) ||
+			   BufferIsLockedByMeInMode(buffer, BUFFER_LOCK_SHARE_EXCLUSIVE));
+	}
 #endif
 
 	if (block_id >= max_registered_block_id)
@@ -1123,12 +1126,6 @@ XLogCheckBufferNeedsBackup(Buffer buffer)
  * buffer. The buffer already needs to have been marked dirty by
  * MarkBufferDirtyHint().
  *
- * We can't use the plain backup block mechanism since that relies on the
- * Buffer being exclusively locked. Since some modifications (setting LSN, hint
- * bits) are allowed in a sharelocked buffer that can lead to wal checksum
- * failures. So instead we copy the page and insert the copied data as normal
- * record data.
- *
  * We only need to do something if page has not yet been full page written in
  * this checkpoint round. The LSN of the inserted wal record is returned if we
  * had to write, InvalidXLogRecPtr otherwise.
@@ -1164,37 +1161,13 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 	if (lsn <= RedoRecPtr)
 	{
 		int			flags = 0;
-		PGAlignedBlock copied_buffer;
-		char	   *origdata = (char *) BufferGetBlock(buffer);
-		RelFileLocator rlocator;
-		ForkNumber	forkno;
-		BlockNumber blkno;
-
-		/*
-		 * Copy buffer so we don't have to worry about concurrent hint bit or
-		 * lsn updates. We assume pd_lower/upper cannot be changed without an
-		 * exclusive lock, so the contents bkp are not racy.
-		 */
-		if (buffer_std)
-		{
-			/* Assume we can omit data between pd_lower and pd_upper */
-			Page		page = BufferGetPage(buffer);
-			uint16		lower = ((PageHeader) page)->pd_lower;
-			uint16		upper = ((PageHeader) page)->pd_upper;
-
-			memcpy(copied_buffer.data, origdata, lower);
-			memcpy(copied_buffer.data + upper, origdata + upper, BLCKSZ - upper);
-		}
-		else
-			memcpy(copied_buffer.data, origdata, BLCKSZ);
 
 		XLogBeginInsert();
 
 		if (buffer_std)
 			flags |= REGBUF_STANDARD;
 
-		BufferGetTag(buffer, &rlocator, &forkno, &blkno);
-		XLogRegisterBlock(0, &rlocator, forkno, blkno, copied_buffer.data, flags);
+		XLogRegisterBuffer(0, buffer, flags);
 
 		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI_FOR_HINT);
 	}

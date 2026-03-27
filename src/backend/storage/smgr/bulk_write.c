@@ -279,7 +279,7 @@ smgr_bulk_flush(BulkWriteState *bulkstate)
 		BlockNumber blkno = pending_writes[i].blkno;
 		Page		page = pending_writes[i].buf->data;
 
-		PageSetChecksumInplace(page, blkno);
+		PageSetChecksum(page, blkno);
 
 		if (blkno >= bulkstate->relsize)
 		{

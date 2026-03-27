@@ -4440,7 +4440,6 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	ErrorContextCallback errcallback;
 	instr_time	io_start;
 	Block		bufBlock;
-	char	   *bufToWrite;
 
 	Assert(BufferLockHeldByMeInMode(buf, BUFFER_LOCK_EXCLUSIVE) ||
 		   BufferLockHeldByMeInMode(buf, BUFFER_LOCK_SHARE_EXCLUSIVE));
@@ -4503,22 +4502,15 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	 */
 	bufBlock = BufHdrGetBlock(buf);
 
-	/*
-	 * Update page checksum if desired.  Since we have only shared lock on the
-	 * buffer, other processes might be updating hint bits in it, so we must
-	 * copy the page to private storage if we do checksumming.
-	 */
-	bufToWrite = PageSetChecksumCopy((Page) bufBlock, buf->tag.blockNum);
+	/* Update page checksum if desired. */
+	PageSetChecksum((Page) bufBlock, buf->tag.blockNum);
 
 	io_start = pgstat_prepare_io_time(track_io_timing);
 
-	/*
-	 * bufToWrite is either the shared buffer or a copy, as appropriate.
-	 */
 	smgrwrite(reln,
 			  BufTagGetForkNum(&buf->tag),
 			  buf->tag.blockNum,
-			  bufToWrite,
+			  bufBlock,
 			  false);
 
 	/*

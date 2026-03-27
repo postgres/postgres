@@ -288,7 +288,7 @@ modify_rel_block(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		PageSetChecksumInplace(page, blkno);
+		PageSetChecksum(page, blkno);
 	}
 
 	smgrwrite(RelationGetSmgr(rel),

@@ -537,7 +537,6 @@ extern void PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems);
 extern void PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offnum);
 extern bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 									const void *newtup, Size newsize);
-extern char *PageSetChecksumCopy(Page page, BlockNumber blkno);
-extern void PageSetChecksumInplace(Page page, BlockNumber blkno);
+extern void PageSetChecksum(Page page, BlockNumber blkno);
 
 #endif							/* BUFPAGE_H */
