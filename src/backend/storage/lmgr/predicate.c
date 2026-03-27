@@ -1156,7 +1156,10 @@ void
 PredicateLockShmemInit(void)
 {
 	HASHCTL		info;
-	int64		max_table_size;
+	int64		max_predicate_lock_targets;
+	int64		max_predicate_locks;
+	int64		max_serializable_xacts;
+	int64		max_rw_conflicts;
 	Size		requestSize;
 	bool		found;
 
@@ -1168,7 +1171,7 @@ PredicateLockShmemInit(void)
 	 * Compute size of predicate lock target hashtable. Note these
 	 * calculations must agree with PredicateLockShmemSize!
 	 */
-	max_table_size = NPREDICATELOCKTARGETENTS();
+	max_predicate_lock_targets = NPREDICATELOCKTARGETENTS();
 
 	/*
 	 * Allocate hash table for PREDICATELOCKTARGET structs.  This stores
@@ -1179,8 +1182,8 @@ PredicateLockShmemInit(void)
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
 
 	PredicateLockTargetHash = ShmemInitHash("PREDICATELOCKTARGET hash",
-											max_table_size,
-											max_table_size,
+											max_predicate_lock_targets,
+											max_predicate_lock_targets,
 											&info,
 											HASH_ELEM | HASH_BLOBS |
 											HASH_PARTITION | HASH_FIXED_SIZE);
@@ -1212,11 +1215,11 @@ PredicateLockShmemInit(void)
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
 
 	/* Assume an average of 2 xacts per target */
-	max_table_size *= 2;
+	max_predicate_locks = max_predicate_lock_targets * 2;
 
 	PredicateLockHash = ShmemInitHash("PREDICATELOCK hash",
-									  max_table_size,
-									  max_table_size,
+									  max_predicate_locks,
+									  max_predicate_locks,
 									  &info,
 									  HASH_ELEM | HASH_FUNCTION |
 									  HASH_PARTITION | HASH_FIXED_SIZE);
@@ -1224,23 +1227,20 @@ PredicateLockShmemInit(void)
 	/*
 	 * Compute size for serializable transaction hashtable. Note these
 	 * calculations must agree with PredicateLockShmemSize!
-	 */
-	max_table_size = (MaxBackends + max_prepared_xacts);
-
-	/*
-	 * Allocate a list to hold information on transactions participating in
-	 * predicate locking.
 	 *
 	 * Assume an average of 10 predicate locking transactions per backend.
 	 * This allows aggressive cleanup while detail is present before data must
 	 * be summarized for storage in SLRU and the "dummy" transaction.
 	 */
-	max_table_size *= 10;
+	max_serializable_xacts = (MaxBackends + max_prepared_xacts) * 10;
 
+	/*
+	 * Allocate a list to hold information on transactions participating in
+	 * predicate locking.
+	 */
 	requestSize = add_size(PredXactListDataSize,
-						   (mul_size((Size) max_table_size,
+						   (mul_size((Size) max_serializable_xacts,
 									 sizeof(SERIALIZABLEXACT))));
-
 	PredXact = ShmemInitStruct("PredXactList",
 							   requestSize,
 							   &found);
@@ -1263,7 +1263,7 @@ PredicateLockShmemInit(void)
 		PredXact->element
 			= (SERIALIZABLEXACT *) ((char *) PredXact + PredXactListDataSize);
 		/* Add all elements to available list, clean. */
-		for (i = 0; i < max_table_size; i++)
+		for (i = 0; i < max_serializable_xacts; i++)
 		{
 			LWLockInitialize(&PredXact->element[i].perXactPredicateListLock,
 							 LWTRANCHE_PER_XACT_PREDICATE_LIST);
@@ -1297,8 +1297,8 @@ PredicateLockShmemInit(void)
 	info.entrysize = sizeof(SERIALIZABLEXID);
 
 	SerializableXidHash = ShmemInitHash("SERIALIZABLEXID hash",
-										max_table_size,
-										max_table_size,
+										max_serializable_xacts,
+										max_serializable_xacts,
 										&info,
 										HASH_ELEM | HASH_BLOBS |
 										HASH_FIXED_SIZE);
@@ -1314,10 +1314,10 @@ PredicateLockShmemInit(void)
 	 * occasional transactions canceled when trying to flag conflicts. That's
 	 * probably OK.
 	 */
-	max_table_size *= 5;
+	max_rw_conflicts = max_serializable_xacts * 5;
 
 	requestSize = RWConflictPoolHeaderDataSize +
-		mul_size((Size) max_table_size,
+		mul_size((Size) max_rw_conflicts,
 				 RWConflictDataSize);
 
 	RWConflictPool = ShmemInitStruct("RWConflictPool",
@@ -1335,7 +1335,7 @@ PredicateLockShmemInit(void)
 		RWConflictPool->element = (RWConflict) ((char *) RWConflictPool +
 												RWConflictPoolHeaderDataSize);
 		/* Add all elements to available list, clean. */
-		for (i = 0; i < max_table_size; i++)
+		for (i = 0; i < max_rw_conflicts; i++)
 		{
 			dlist_push_tail(&RWConflictPool->availableList,
 							&RWConflictPool->element[i].outLink);
@@ -1368,16 +1368,19 @@ Size
 PredicateLockShmemSize(void)
 {
 	Size		size = 0;
-	long		max_table_size;
+	int64		max_predicate_lock_targets;
+	int64		max_predicate_locks;
+	int64		max_serializable_xacts;
+	int64		max_rw_conflicts;
 
 	/* predicate lock target hash table */
-	max_table_size = NPREDICATELOCKTARGETENTS();
-	size = add_size(size, hash_estimate_size(max_table_size,
+	max_predicate_lock_targets = NPREDICATELOCKTARGETENTS();
+	size = add_size(size, hash_estimate_size(max_predicate_lock_targets,
 											 sizeof(PREDICATELOCKTARGET)));
 
 	/* predicate lock hash table */
-	max_table_size *= 2;
-	size = add_size(size, hash_estimate_size(max_table_size,
+	max_predicate_locks = max_predicate_lock_targets * 2;
+	size = add_size(size, hash_estimate_size(max_predicate_locks,
 											 sizeof(PREDICATELOCK)));
 
 	/*
@@ -1387,20 +1390,19 @@ PredicateLockShmemSize(void)
 	size = add_size(size, size / 10);
 
 	/* transaction list */
-	max_table_size = MaxBackends + max_prepared_xacts;
-	max_table_size *= 10;
+	max_serializable_xacts = (MaxBackends + max_prepared_xacts) * 10;
 	size = add_size(size, PredXactListDataSize);
-	size = add_size(size, mul_size((Size) max_table_size,
+	size = add_size(size, mul_size((Size) max_serializable_xacts,
 								   sizeof(SERIALIZABLEXACT)));
 
 	/* transaction xid table */
-	size = add_size(size, hash_estimate_size(max_table_size,
+	size = add_size(size, hash_estimate_size(max_serializable_xacts,
 											 sizeof(SERIALIZABLEXID)));
 
 	/* rw-conflict pool */
-	max_table_size *= 5;
+	max_rw_conflicts = max_serializable_xacts * 5;
 	size = add_size(size, RWConflictPoolHeaderDataSize);
-	size = add_size(size, mul_size((Size) max_table_size,
+	size = add_size(size, mul_size((Size) max_rw_conflicts,
 								   RWConflictDataSize));
 
 	/* Head for list of finished serializable transactions. */
