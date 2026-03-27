@@ -1420,6 +1420,248 @@ SELECT read_rel_block_ll('tbl_cs_fail', 3, nblocks=>1, zero_on_error=>true);),
 }
 
 
+# Tests for StartReadBuffers()
+sub test_read_buffers
+{
+	my $io_method = shift;
+	my $node = shift;
+	my ($ret, $output);
+	my $table;
+
+	my $psql_a = $node->background_psql('postgres', on_error_stop => 0);
+	my $psql_b = $node->background_psql('postgres', on_error_stop => 0);
+
+	$psql_a->query_safe(
+		qq(
+CREATE TEMPORARY TABLE tmp_ok(data int not null);
+INSERT INTO tmp_ok SELECT generate_series(1, 5000);
+));
+
+	foreach my $persistency (qw(normal temporary))
+	{
+		$table = $persistency eq 'normal' ? 'tbl_ok' : 'tmp_ok';
+
+		# check that consecutive misses are combined into one read
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, combine, block 0-1",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 2)|,
+			qr/^0\|0\|t\|2$/,
+			qr/^$/);
+
+		# but if we do it again, i.e. it's in the buffer pool, there will be
+		# two operations
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, doesn't combine hits, block 0-1",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 2)|,
+			qr/^0\|0\|f\|1\n1\|1\|f\|1$/,
+			qr/^$/);
+
+		# Check that a larger read interrupted by a hit works
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, prep, block 3",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 3, 1)|,
+			qr/^0\|3\|t\|1$/,
+			qr/^$/);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, interrupted by hit on 3, block 2-5",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 2, 4)|,
+			qr/^0\|2\|t\|1\n1\|3\|f\|1\n2\|4\|t\|2$/,
+			qr/^$/);
+
+
+		# Verify that a read with an initial buffer hit works
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, miss, block 0",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 1)|,
+			qr/^0\|0\|t\|1$/,
+			qr/^$/);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, hit, block 0",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 1)|,
+			qr/^0\|0\|f\|1$/,
+			qr/^$/);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, miss, block 1",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 1)|,
+			qr/^0\|1\|t\|1$/,
+			qr/^$/);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, hit, block 1",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 1)|,
+			qr/^0\|1\|f\|1$/,
+			qr/^$/);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, hit, block 0-1",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 2)|,
+			qr/^0\|0\|f\|1\n1\|1\|f\|1$/,
+			qr/^$/);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, hit 0-1, miss 2",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 3)|,
+			qr/^0\|0\|f\|1\n1\|1\|f\|1\n2\|2\|t\|1$/,
+			qr/^$/);
+
+		# Verify that a read with an initial miss and trailing buffer hit(s) works
+		$psql_a->query_safe(qq|SELECT invalidate_rel_block('$table', 0)|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, miss 0, hit 1-2",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 0, 3)|,
+			qr/^0\|0\|t\|1\n1\|1\|f\|1\n2\|2\|f\|1$/,
+			qr/^$/);
+		$psql_a->query_safe(qq|SELECT invalidate_rel_block('$table', 1)|);
+		$psql_a->query_safe(qq|SELECT invalidate_rel_block('$table', 2)|);
+		$psql_a->query_safe(qq|SELECT * FROM read_buffers('$table', 3, 2)|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, miss 1-2, hit 3-4",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 4)|,
+			qr/^0\|1\|t\|2\n2\|3\|f\|1\n3\|4\|f\|1$/,
+			qr/^$/);
+
+		# Verify that we aren't doing reads larger than
+		# io_combine_limit. That's just enforced in read_buffers() function,
+		# but kinda still worth testing.
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		$psql_a->query_safe(qq|SET io_combine_limit=3|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, io_combine_limit has effect",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 5)|,
+			qr/^0\|1\|t\|3\n3\|4\|t\|2$/,
+			qr/^$/);
+		$psql_a->query_safe(qq|RESET io_combine_limit|);
+
+
+		# Test encountering buffer IO we started in the first block of the
+		# range.
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		$psql_a->query_safe(
+			qq|SELECT read_rel_block_ll('$table', 1, wait_complete=>false)|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, in-progress 1, read 1-3",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 3)|,
+			qr/^0\|1\|f\|1\n1\|2\|t\|2$/,
+			qr/^$/);
+
+		# Test in-progress IO in the middle block of the range
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		$psql_a->query_safe(
+			qq|SELECT read_rel_block_ll('$table', 2, wait_complete=>false)|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, in-progress 2, read 1-3",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 3)|,
+			qr/^0\|1\|t\|1\n1\|2\|f\|1\n2\|3\|t\|1$/,
+			qr/^$/);
+
+		# Test in-progress IO on the last block of the range
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		$psql_a->query_safe(
+			qq|SELECT read_rel_block_ll('$table', 3, wait_complete=>false)|);
+		psql_like(
+			$io_method,
+			$psql_a,
+			"$persistency: read buffers, in-progress 3, read 1-3",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM
+read_buffers('$table', 1, 3)|,
+			qr/^0\|1\|t\|2\n2\|3\|f\|1$/,
+			qr/^$/);
+	}
+
+	# The remaining tests don't make sense for temp tables, as they are
+	# concerned with multiple sessions interacting with each other.
+	$table = 'tbl_ok';
+	my $persistency = 'normal';
+
+	# Test start buffer IO will split IO if there's IO in progress. We can't
+	# observe this with sync, as that does not start the IO operation in
+	# StartReadBuffers().
+	if ($io_method ne 'sync')
+	{
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+
+		my $buf_id =
+		  $psql_b->query_safe(qq|SELECT buffer_create_toy('$table', 3)|);
+		$psql_b->query_safe(
+			qq|SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false)|
+		);
+
+		query_wait_block(
+			$io_method,
+			$node,
+			$psql_a,
+			"$persistency: read buffers blocks waiting for concurrent IO",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 5);\n|,
+			"BufferIo");
+		$psql_b->query_safe(
+			qq|SELECT buffer_call_terminate_io($buf_id, for_input=>true, succeed=>false, io_error=>false, release_aio=>false)|
+		);
+		pump_until(
+			$psql_a->{run}, $psql_a->{timeout},
+			\$psql_a->{stdout}, qr/0\|1\|t\|2\n2\|3\|t\|3/);
+		ok(1,
+			"$io_method: $persistency: IO was split due to concurrent failed IO"
+		);
+
+		# Same as before, except the concurrent IO succeeds this time
+		$psql_a->query_safe(qq|SELECT evict_rel('$table')|);
+		$buf_id =
+		  $psql_b->query_safe(qq|SELECT buffer_create_toy('$table', 3)|);
+		$psql_b->query_safe(
+			qq|SELECT buffer_call_start_io($buf_id, for_input=>true, nowait=>false)|
+		);
+
+		query_wait_block(
+			$io_method,
+			$node,
+			$psql_a,
+			"$persistency: read buffers blocks waiting for concurrent IO",
+			qq|SELECT blockoff, blocknum, io_reqd, nblocks FROM read_buffers('$table', 1, 5);\n|,
+			"BufferIo");
+		$psql_b->query_safe(
+			qq|SELECT buffer_call_terminate_io($buf_id, for_input=>true, succeed=>true, io_error=>false, release_aio=>false)|
+		);
+		pump_until($psql_a->{run}, $psql_a->{timeout}, \$psql_a->{stdout},
+			qr/0\|1\|t\|2\n2\|3\|f\|1\n3\|4\|t\|2/);
+		ok(1,
+			"$io_method: $persistency: IO was split due to concurrent successful IO"
+		);
+	}
+
+	$psql_a->quit();
+	$psql_b->quit();
+}
+
+
 # Run all tests that for the specified node / io_method
 sub test_io_method
 {
@@ -1455,6 +1697,7 @@ CHECKPOINT;
 	test_checksum($io_method, $node);
 	test_ignore_checksum($io_method, $node);
 	test_checksum_createdb($io_method, $node);
+	test_read_buffers($io_method, $node);
 
 	# generic injection tests
   SKIP:

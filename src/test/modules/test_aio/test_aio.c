@@ -19,7 +19,9 @@
 #include "postgres.h"
 
 #include "access/relation.h"
+#include "catalog/pg_type.h"
 #include "fmgr.h"
+#include "funcapi.h"
 #include "storage/aio.h"
 #include "storage/aio_internal.h"
 #include "storage/buf_internals.h"
@@ -27,9 +29,11 @@
 #include "storage/checksum.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/injection_point.h"
 #include "utils/rel.h"
+#include "utils/tuplestore.h"
 
 
 PG_MODULE_MAGIC;
@@ -456,29 +460,24 @@ read_rel_block_ll(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-PG_FUNCTION_INFO_V1(invalidate_rel_block);
-Datum
-invalidate_rel_block(PG_FUNCTION_ARGS)
+/* helper for invalidate_rel_block() and evict_rel() */
+static void
+invalidate_one_block(Relation rel, ForkNumber forknum, BlockNumber blkno)
 {
-	Oid			relid = PG_GETARG_OID(0);
-	BlockNumber blkno = PG_GETARG_UINT32(1);
-	Relation	rel;
 	PrefetchBufferResult pr;
 	Buffer		buf;
-
-	rel = relation_open(relid, AccessExclusiveLock);
 
 	/*
 	 * This is a gross hack, but there's no other API exposed that allows to
 	 * get a buffer ID without actually reading the block in.
 	 */
-	pr = PrefetchBuffer(rel, MAIN_FORKNUM, blkno);
+	pr = PrefetchBuffer(rel, forknum, blkno);
 	buf = pr.recent_buffer;
 
 	if (BufferIsValid(buf))
 	{
 		/* if the buffer contents aren't valid, this'll return false */
-		if (ReadRecentBuffer(rel->rd_locator, MAIN_FORKNUM, blkno, buf))
+		if (ReadRecentBuffer(rel->rd_locator, forknum, blkno, buf))
 		{
 			BufferDesc *buf_hdr = BufferIsLocal(buf) ?
 				GetLocalBufferDescriptor(-buf - 1)
@@ -503,7 +502,70 @@ invalidate_rel_block(PG_FUNCTION_ARGS)
 		}
 	}
 
+}
+
+PG_FUNCTION_INFO_V1(invalidate_rel_block);
+Datum
+invalidate_rel_block(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	BlockNumber blkno = PG_GETARG_UINT32(1);
+	Relation	rel;
+
+	rel = relation_open(relid, AccessExclusiveLock);
+
+	invalidate_one_block(rel, MAIN_FORKNUM, blkno);
+
 	relation_close(rel, AccessExclusiveLock);
+
+	PG_RETURN_VOID();
+}
+
+PG_FUNCTION_INFO_V1(evict_rel);
+Datum
+evict_rel(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+
+	rel = relation_open(relid, AccessExclusiveLock);
+
+	/*
+	 * EvictRelUnpinnedBuffers() doesn't support temp tables, so for temp
+	 * tables we have to do it the expensive way and evict every possible
+	 * buffer.
+	 */
+	if (RelationUsesLocalBuffers(rel))
+	{
+		SMgrRelation smgr = RelationGetSmgr(rel);
+
+		for (int forknum = MAIN_FORKNUM; forknum <= MAX_FORKNUM; forknum++)
+		{
+			BlockNumber nblocks;
+
+			if (!smgrexists(smgr, forknum))
+				continue;
+
+			nblocks = smgrnblocks(smgr, forknum);
+
+			for (int blkno = 0; blkno < nblocks; blkno++)
+			{
+				invalidate_one_block(rel, forknum, blkno);
+			}
+		}
+	}
+	else
+	{
+		int32		buffers_evicted,
+					buffers_flushed,
+					buffers_skipped;
+
+		EvictRelUnpinnedBuffers(rel, &buffers_evicted, &buffers_flushed,
+								&buffers_skipped);
+	}
+
+	relation_close(rel, AccessExclusiveLock);
+
 
 	PG_RETURN_VOID();
 }
@@ -606,6 +668,153 @@ buffer_call_terminate_io(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+
+PG_FUNCTION_INFO_V1(read_buffers);
+/*
+ * Infrastructure to test StartReadBuffers()
+ */
+Datum
+read_buffers(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	BlockNumber startblock = PG_GETARG_UINT32(1);
+	int32		nblocks = PG_GETARG_INT32(2);
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	Relation	rel;
+	SMgrRelation smgr;
+	int			nblocks_done = 0;
+	int			nblocks_disp = 0;
+	int			nios = 0;
+	ReadBuffersOperation *operations;
+	Buffer	   *buffers;
+	Datum	   *buffers_datum;
+	bool	   *io_reqds;
+
+	Assert(nblocks > 0);
+
+	InitMaterializedSRF(fcinfo, 0);
+
+	/* at worst each block gets its own IO */
+	operations = palloc0(sizeof(ReadBuffersOperation) * nblocks);
+	buffers = palloc0(sizeof(Buffer) * nblocks);
+	buffers_datum = palloc0(sizeof(Datum) * nblocks);
+	io_reqds = palloc0(sizeof(bool) * nblocks);
+
+	rel = relation_open(relid, AccessShareLock);
+	smgr = RelationGetSmgr(rel);
+
+	/*
+	 * Do StartReadBuffers() until IO for all the required blocks has been
+	 * started (if required).
+	 */
+	while (nblocks_done < nblocks)
+	{
+		ReadBuffersOperation *operation = &operations[nios];
+		int			nblocks_this_io =
+			Min(nblocks - nblocks_done, io_combine_limit);
+
+		operation->rel = rel;
+		operation->smgr = smgr;
+		operation->persistence = rel->rd_rel->relpersistence;
+		operation->strategy = NULL;
+		operation->forknum = MAIN_FORKNUM;
+
+		io_reqds[nios] = StartReadBuffers(operation,
+										  &buffers[nblocks_done],
+										  startblock + nblocks_done,
+										  &nblocks_this_io,
+										  0);
+		nios++;
+		nblocks_done += nblocks_this_io;
+	}
+
+	/*
+	 * Now wait for all operations that required IO. This is done at the end,
+	 * as otherwise waiting for IO in progress in other backends could
+	 * influence the result for subsequent buffers / blocks.
+	 */
+	for (int nio = 0; nio < nios; nio++)
+	{
+		ReadBuffersOperation *operation = &operations[nio];
+
+		if (io_reqds[nio])
+			WaitReadBuffers(operation);
+	}
+
+	/*
+	 * Convert what has been done into SQL SRF return value.
+	 */
+	for (int nio = 0; nio < nios; nio++)
+	{
+		ReadBuffersOperation *operation = &operations[nio];
+		int			nblocks_this_io = operation->nblocks;
+		Datum		values[5] = {0};
+		bool		nulls[5] = {0};
+		ArrayType  *buffers_arr;
+
+		/* convert buffer array to datum array */
+		for (int i = 0; i < nblocks_this_io; i++)
+		{
+			Buffer		buf = operation->buffers[i];
+
+			Assert(buffers[nblocks_disp + i] == buf);
+			Assert(BufferGetBlockNumber(buf) == startblock + nblocks_disp + i);
+
+			buffers_datum[nblocks_disp + i] = Int32GetDatum(buf);
+		}
+
+		buffers_arr = construct_array_builtin(&buffers_datum[nblocks_disp],
+											  nblocks_this_io,
+											  INT4OID);
+
+		/* blockoff */
+		values[0] = Int32GetDatum(nblocks_disp);
+		nulls[0] = false;
+
+		/* blocknum */
+		values[1] = UInt32GetDatum(startblock + nblocks_disp);
+		nulls[1] = false;
+
+		/* io_reqd */
+		values[2] = BoolGetDatum(io_reqds[nio]);
+		nulls[2] = false;
+
+		/* nblocks */
+		values[3] = Int32GetDatum(nblocks_this_io);
+		nulls[3] = false;
+
+		/* array of buffers */
+		values[4] = PointerGetDatum(buffers_arr);
+		nulls[4] = false;
+
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
+
+		nblocks_disp += nblocks_this_io;
+	}
+
+	/* release pins on all the buffers */
+	for (int nio = 0; nio < nios; nio++)
+	{
+		ReadBuffersOperation *operation = &operations[nio];
+
+		for (int i = 0; i < operation->nblocks; i++)
+			ReleaseBuffer(operation->buffers[i]);
+	}
+
+	/*
+	 * Free explicitly, to have a chance to detect potential issues with too
+	 * long lived references to the operation.
+	 */
+	pfree(operations);
+	pfree(buffers);
+	pfree(buffers_datum);
+	pfree(io_reqds);
+
+	relation_close(rel, NoLock);
+
+	return (Datum) 0;
+}
+
 
 PG_FUNCTION_INFO_V1(handle_get);
 Datum
