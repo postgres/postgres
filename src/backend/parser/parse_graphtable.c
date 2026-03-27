@@ -231,7 +231,7 @@ transformGraphElementPattern(ParseState *pstate, GraphElementPattern *gep)
 				 errmsg("element pattern quantifier is not supported")));
 
 	if (gep->variable)
-		gpstate->variables = lappend(gpstate->variables, makeString(pstrdup(gep->variable)));
+		gpstate->variables = list_append_unique(gpstate->variables, makeString(pstrdup(gep->variable)));
 
 	gep->labelexpr = transformLabelExpr(gpstate, gep->labelexpr);
 
