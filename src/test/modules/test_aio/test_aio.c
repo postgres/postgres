@@ -778,8 +778,8 @@ read_buffers(PG_FUNCTION_ARGS)
 	{
 		ReadBuffersOperation *operation = &operations[nio];
 		int			nblocks_this_io = operation->nblocks;
-		Datum		values[5] = {0};
-		bool		nulls[5] = {0};
+		Datum		values[6] = {0};
+		bool		nulls[6] = {0};
 		ArrayType  *buffers_arr;
 
 		/* convert buffer array to datum array */
@@ -809,13 +809,17 @@ read_buffers(PG_FUNCTION_ARGS)
 		values[2] = BoolGetDatum(io_reqds[nio]);
 		nulls[2] = false;
 
-		/* nblocks */
-		values[3] = Int32GetDatum(nblocks_this_io);
+		/* foreign IO */
+		values[3] = BoolGetDatum(operation->foreign_io);
 		nulls[3] = false;
 
-		/* array of buffers */
-		values[4] = PointerGetDatum(buffers_arr);
+		/* nblocks */
+		values[4] = Int32GetDatum(nblocks_this_io);
 		nulls[4] = false;
+
+		/* array of buffers */
+		values[5] = PointerGetDatum(buffers_arr);
+		nulls[5] = false;
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 

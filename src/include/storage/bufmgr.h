@@ -144,9 +144,11 @@ struct ReadBuffersOperation
 	 */
 	Buffer	   *buffers;
 	BlockNumber blocknum;
-	int			flags;
+	uint16		flags;
 	int16		nblocks;
 	int16		nblocks_done;
+	/* true if waiting on another backend's IO */
+	bool		foreign_io;
 	PgAioWaitRef io_wref;
 	PgAioReturn io_return;
 };

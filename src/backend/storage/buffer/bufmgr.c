@@ -1800,8 +1800,11 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 			 * b) reports some time as waiting, even if we never waited
 			 *
 			 * we first check if we already know the IO is complete.
+			 *
+			 * Note that operation->io_return is uninitialized for foreign IO,
+			 * so we cannot use the cheaper PGAIO_RS_UNKNOWN pre-check.
 			 */
-			if (aio_ret->result.status == PGAIO_RS_UNKNOWN &&
+			if ((operation->foreign_io || aio_ret->result.status == PGAIO_RS_UNKNOWN) &&
 				!pgaio_wref_check_done(&operation->io_wref))
 			{
 				instr_time	io_start = pgstat_prepare_io_time(track_io_timing);
@@ -1820,11 +1823,45 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 				Assert(pgaio_wref_check_done(&operation->io_wref));
 			}
 
-			/*
-			 * We now are sure the IO completed. Check the results. This
-			 * includes reporting on errors if there were any.
-			 */
-			ProcessReadBuffersResult(operation);
+			if (unlikely(operation->foreign_io))
+			{
+				Buffer		buffer = operation->buffers[operation->nblocks_done];
+				BufferDesc *desc = BufferIsLocal(buffer) ?
+					GetLocalBufferDescriptor(-buffer - 1) :
+					GetBufferDescriptor(buffer - 1);
+				uint64		buf_state = pg_atomic_read_u64(&desc->state);
+
+				if (buf_state & BM_VALID)
+				{
+					BlockNumber blocknum = operation->blocknum + operation->nblocks_done;
+
+					operation->nblocks_done += 1;
+					Assert(operation->nblocks_done <= operation->nblocks);
+
+					/*
+					 * Track this as a 'hit' for this backend. The backend
+					 * performing the IO will track it as a 'read'.
+					 */
+					TrackBufferHit(io_object, io_context,
+								   operation->rel, operation->persistence,
+								   operation->smgr, operation->forknum,
+								   blocknum);
+				}
+
+				/*
+				 * If the foreign IO failed and left the buffer invalid,
+				 * nblocks_done is not incremented. The retry loop below will
+				 * call AsyncReadBuffers() which will attempt the IO itself.
+				 */
+			}
+			else
+			{
+				/*
+				 * We now are sure the IO completed. Check the results. This
+				 * includes reporting on errors if there were any.
+				 */
+				ProcessReadBuffersResult(operation);
+			}
 		}
 
 		/*
@@ -1870,7 +1907,8 @@ WaitReadBuffers(ReadBuffersOperation *operation)
  * affected by the call. If the first buffer is valid, *nblocks_progress is
  * set to 1 and operation->nblocks_done is incremented.
  *
- * Returns true if IO was initiated, false if no IO was necessary.
+ * Returns true if IO was initiated or is already in progress (foreign IO),
+ * false if the buffer was already valid.
  */
 static bool
 AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
@@ -1943,8 +1981,9 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 	pgstat_prepare_report_checksum_failure(operation->smgr->smgr_rlocator.locator.dbOid);
 
 	/*
-	 * Get IO handle before StartBufferIO(), as pgaio_io_acquire() might
-	 * block, which we don't want after setting IO_IN_PROGRESS.
+	 * We must get an IO handle before StartBufferIO(), as pgaio_io_acquire()
+	 * might block, which we don't want after setting IO_IN_PROGRESS. If we
+	 * don't need to do the IO, we'll release the handle.
 	 *
 	 * If we need to wait for IO before we can get a handle, submit
 	 * already-staged IO first, so that other backends don't need to wait.
@@ -1966,14 +2005,34 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 		ioh = pgaio_io_acquire(CurrentResourceOwner, &operation->io_return);
 	}
 
+	operation->foreign_io = false;
+	pgaio_wref_clear(&operation->io_wref);
+
 	/*
-	 * Check if we can start IO on the first to-be-read buffer.
+	 * Try to start IO on the first buffer in a new run of blocks. If AIO is
+	 * in progress, be it in this backend or another backend, we just
+	 * associate the wait reference with the operation and wait in
+	 * WaitReadBuffers(). This turns out to be important for performance in
+	 * two workloads:
 	 *
-	 * If an I/O is already in progress in another backend, we want to wait
-	 * for the outcome: either done, or something went wrong and we will
-	 * retry.
+	 * 1) A read stream that has to read the same block multiple times within
+	 * the readahead distance. This can happen e.g. for the table accesses of
+	 * an index scan.
+	 *
+	 * 2) Concurrent scans by multiple backends on the same relation.
+	 *
+	 * If we were to synchronously wait for the in-progress IO, we'd not be
+	 * able to keep enough I/O in flight.
+	 *
+	 * If we do find there is ongoing I/O for the buffer, we set up a 1-block
+	 * ReadBuffersOperation that WaitReadBuffers then can wait on.
+	 *
+	 * It's possible that another backend has started IO on the buffer but not
+	 * yet set its wait reference. In this case, we have no choice but to wait
+	 * for either the wait reference to be valid or the IO to be done.
 	 */
-	status = StartBufferIO(buffers[nblocks_done], true, true, NULL);
+	status = StartBufferIO(buffers[nblocks_done], true, true,
+						   &operation->io_wref);
 	if (status != BUFFER_IO_READY_FOR_IO)
 	{
 		pgaio_io_release(ioh);
@@ -2006,6 +2065,8 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 
 		/* The IO is already in-progress */
 		Assert(status == BUFFER_IO_IN_PROGRESS);
+		Assert(pgaio_wref_valid(&operation->io_wref));
+		operation->foreign_io = true;
 
 		return true;
 	}
