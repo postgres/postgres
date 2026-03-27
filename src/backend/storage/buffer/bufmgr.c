@@ -5529,13 +5529,65 @@ ReleaseBuffer(Buffer buffer)
 /*
  * UnlockReleaseBuffer -- release the content lock and pin on a buffer
  *
- * This is just a shorthand for a common combination.
+ * This is just a, more efficient, shorthand for a common combination.
  */
 void
 UnlockReleaseBuffer(Buffer buffer)
 {
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buffer);
+	int			mode;
+	BufferDesc *buf;
+	PrivateRefCountEntry *ref;
+	uint64		sub;
+	uint64		lockstate;
+
+	Assert(BufferIsPinned(buffer));
+
+	if (BufferIsLocal(buffer))
+	{
+		UnpinLocalBuffer(buffer);
+		return;
+	}
+
+	ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
+
+	buf = GetBufferDescriptor(buffer - 1);
+
+	mode = BufferLockDisownInternal(buffer, buf);
+
+	/* compute state modification for lock release */
+	sub = BufferLockReleaseSub(mode);
+
+	/* compute state modification for pin release */
+	ref = GetPrivateRefCountEntry(buffer, false);
+	Assert(ref != NULL);
+	Assert(ref->data.refcount > 0);
+	ref->data.refcount--;
+
+	/* no more backend local pins, reduce shared pin count */
+	if (likely(ref->data.refcount == 0))
+	{
+		/* See comment in UnpinBufferNoOwner() */
+		VALGRIND_MAKE_MEM_NOACCESS(BufHdrGetBlock(buf), BLCKSZ);
+
+		sub |= BUF_REFCOUNT_ONE;
+		ForgetPrivateRefCountEntry(ref);
+	}
+
+	/* perform the lock and pin release in one atomic op */
+	lockstate = pg_atomic_sub_fetch_u64(&buf->state, sub);
+
+	/* wake up waiters for the lock */
+	BufferLockProcessRelease(buf, mode, lockstate);
+
+	/* wake up waiter for the pin release */
+	if (lockstate & BM_PIN_COUNT_WAITER)
+		WakePinCountWaiter(buf);
+
+	/*
+	 * Now okay to allow cancel/die interrupts again, which were held when the
+	 * lock was acquired.
+	 */
+	RESUME_INTERRUPTS();
 }
 
 /*
