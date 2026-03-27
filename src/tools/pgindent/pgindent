@@ -19,6 +19,15 @@ use File::Temp;
 use IO::Handle;
 use Getopt::Long;
 
+# By default Perl's SIGINT/SIGTERM kill the process without running
+# END blocks, so File::Temp never gets to clean up.  Converting the
+# signal into an exit() makes END-block cleanup run.  See:
+# <http://www.perlmonks.org/?node_id=714225>.  Exit codes use the
+# 128+signum convention so callers can tell the process was killed by
+# a signal.
+$SIG{INT} = sub { exit 130; };     # 128 + 2 (SIGINT)
+$SIG{TERM} = sub { exit 143; };    # 128 + 15 (SIGTERM)
+
 # Update for pg_bsd_indent version
 my $INDENT_VERSION = "2.1.2";
 
