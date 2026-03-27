@@ -778,18 +778,26 @@
        <ulink url="https://datatracker.ietf.org/doc/html/rfc4648#section-7">
        RFC 4648 Section 7</ulink>.  It uses the extended hex alphabet
        (<literal>0</literal>-<literal>9</literal> and
-       <literal>A</literal>-<literal>V</literal>) which preserves the lexicographical
-       sort order of the encoded data. The <function>encode</function> function
+       <literal>A</literal>-<literal>V</literal>) which preserves the sort order of
+       the encoded data when compared byte-wise. The <function>encode</function> function
        produces output padded with <literal>'='</literal>, while <function>decode</function>
        accepts both padded and unpadded input. Decoding is case-insensitive and ignores
        whitespace characters.
       </para>
       <para>
-       This format is useful for encoding UUIDs in a compact, sortable format:
+       This format is useful for encoding UUIDs in a compact, byte-wise sortable format:
        <literal>rtrim(encode(uuid_value::bytea, 'base32hex'), '=')</literal>
        produces a 26-character string compared to the standard 36-character
        UUID representation.
       </para>
+      <note>
+       <para>
+        To maintain the lexicographical sort order of the encoded data,
+        ensure that the text is sorted using the C collation
+        (e.g., using <literal>COLLATE "C"</literal>). Natural language
+        collations may sort characters differently and break the ordering.
+       </para>
+      </note>
      </listitem>
     </varlistentry>
 
