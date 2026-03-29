@@ -33,6 +33,9 @@ extern PGDLLIMPORT int extra_float_digits;
 pg_noreturn extern void float_overflow_error(void);
 pg_noreturn extern void float_underflow_error(void);
 pg_noreturn extern void float_zero_divide_error(void);
+extern float8 float_overflow_error_ext(struct Node *escontext);
+extern float8 float_underflow_error_ext(struct Node *escontext);
+extern float8 float_zero_divide_error_ext(struct Node *escontext);
 extern int	is_infinite(float8 val);
 extern float8 float8in_internal(char *num, char **endptr_p,
 								const char *type_name, const char *orig_string,
@@ -110,15 +113,21 @@ float4_pl(const float4 val1, const float4 val2)
 }
 
 static inline float8
-float8_pl(const float8 val1, const float8 val2)
+float8_pl_safe(const float8 val1, const float8 val2, struct Node *escontext)
 {
 	float8		result;
 
 	result = val1 + val2;
 	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
-		float_overflow_error();
+		return float_overflow_error_ext(escontext);
 
 	return result;
+}
+
+static inline float8
+float8_pl(const float8 val1, const float8 val2)
+{
+	return float8_pl_safe(val1, val2, NULL);
 }
 
 static inline float4
@@ -134,15 +143,21 @@ float4_mi(const float4 val1, const float4 val2)
 }
 
 static inline float8
-float8_mi(const float8 val1, const float8 val2)
+float8_mi_safe(const float8 val1, const float8 val2, struct Node *escontext)
 {
 	float8		result;
 
 	result = val1 - val2;
 	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
-		float_overflow_error();
+		return float_overflow_error_ext(escontext);
 
 	return result;
+}
+
+static inline float8
+float8_mi(const float8 val1, const float8 val2)
+{
+	return float8_mi_safe(val1, val2, NULL);
 }
 
 static inline float4
@@ -160,17 +175,23 @@ float4_mul(const float4 val1, const float4 val2)
 }
 
 static inline float8
-float8_mul(const float8 val1, const float8 val2)
+float8_mul_safe(const float8 val1, const float8 val2, struct Node *escontext)
 {
 	float8		result;
 
 	result = val1 * val2;
 	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
-		float_overflow_error();
+		return float_overflow_error_ext(escontext);
 	if (unlikely(result == 0.0) && val1 != 0.0 && val2 != 0.0)
-		float_underflow_error();
+		return float_underflow_error_ext(escontext);
 
 	return result;
+}
+
+static inline float8
+float8_mul(const float8 val1, const float8 val2)
+{
+	return float8_mul_safe(val1, val2, NULL);
 }
 
 static inline float4
@@ -190,19 +211,25 @@ float4_div(const float4 val1, const float4 val2)
 }
 
 static inline float8
-float8_div(const float8 val1, const float8 val2)
+float8_div_safe(const float8 val1, const float8 val2, struct Node *escontext)
 {
 	float8		result;
 
 	if (unlikely(val2 == 0.0) && !isnan(val1))
-		float_zero_divide_error();
+		return float_zero_divide_error_ext(escontext);
 	result = val1 / val2;
 	if (unlikely(isinf(result)) && !isinf(val1))
-		float_overflow_error();
+		return float_overflow_error_ext(escontext);
 	if (unlikely(result == 0.0) && val1 != 0.0 && !isinf(val2))
-		float_underflow_error();
+		return float_underflow_error_ext(escontext);
 
 	return result;
+}
+
+static inline float8
+float8_div(const float8 val1, const float8 val2)
+{
+	return float8_div_safe(val1, val2, NULL);
 }
 
 /*

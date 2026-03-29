@@ -123,6 +123,30 @@ float_zero_divide_error(void)
 			 errmsg("division by zero")));
 }
 
+float8
+float_overflow_error_ext(struct Node *escontext)
+{
+	ereturn(escontext, 0.0,
+			errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			errmsg("value out of range: overflow"));
+}
+
+float8
+float_underflow_error_ext(struct Node *escontext)
+{
+	ereturn(escontext, 0.0,
+			errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			errmsg("value out of range: underflow"));
+}
+
+float8
+float_zero_divide_error_ext(struct Node *escontext)
+{
+	ereturn(escontext, 0.0,
+			(errcode(ERRCODE_DIVISION_BY_ZERO),
+			 errmsg("division by zero")));
+}
+
 
 /*
  * Returns -1 if 'val' represents negative infinity, 1 if 'val'
@@ -1216,9 +1240,9 @@ dtof(PG_FUNCTION_ARGS)
 
 	result = (float4) num;
 	if (unlikely(isinf(result)) && !isinf(num))
-		float_overflow_error();
+		float_overflow_error_ext(fcinfo->context);
 	if (unlikely(result == 0.0f) && num != 0.0)
-		float_underflow_error();
+		float_underflow_error_ext(fcinfo->context);
 
 	PG_RETURN_FLOAT4(result);
 }
