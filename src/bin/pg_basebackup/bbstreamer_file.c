@@ -263,7 +263,9 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 		case BBSTREAMER_MEMBER_TRAILER:
 			if (mystreamer->file == NULL)
 				break;
-			fclose(mystreamer->file);
+			if (fclose(mystreamer->file) != 0)
+				pg_fatal("could not close file \"%s\": %m",
+						 mystreamer->filename);
 			mystreamer->file = NULL;
 			break;
 
