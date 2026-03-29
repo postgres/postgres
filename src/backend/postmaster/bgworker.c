@@ -121,10 +121,6 @@ static const struct
 
 {
 	{
-		.fn_name = "ParallelWorkerMain",
-		.fn_addr = ParallelWorkerMain
-	},
-	{
 		.fn_name = "ApplyLauncherMain",
 		.fn_addr = ApplyLauncherMain
 	},
@@ -137,13 +133,18 @@ static const struct
 		.fn_addr = ParallelApplyWorkerMain
 	},
 	{
-		.fn_name = "TableSyncWorkerMain",
-		.fn_addr = TableSyncWorkerMain
+		.fn_name = "ParallelWorkerMain",
+		.fn_addr = ParallelWorkerMain
 	},
 	{
 		.fn_name = "SequenceSyncWorkerMain",
 		.fn_addr = SequenceSyncWorkerMain
-	}
+	},
+	{
+		.fn_name = "TableSyncWorkerMain",
+		.fn_addr = TableSyncWorkerMain
+	},
+
 };
 
 /* Private functions. */
