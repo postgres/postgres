@@ -36,14 +36,33 @@ PostgreSQL documentation
   <para>
    <application>pg_dumpall</application> is a utility for writing out
    (<quote>dumping</quote>) all <productname>PostgreSQL</productname> databases
-   of a cluster into an SQL script file or an archive.  The output contains
-   <acronym>SQL</acronym> commands that can be used as input to <xref
-   linkend="app-psql"/> to restore the databases.  It does this by
+   of a cluster into an SQL script file or an archive.  It does this by
    calling <xref linkend="app-pgdump"/> for each database in the cluster.
+   The output contains <acronym>SQL</acronym> commands that can be used
+   as input to <xref linkend="app-psql"/> or <xref linkend="app-pgrestore"/>
+   to restore the databases.
    <application>pg_dumpall</application> also dumps global objects
    that are common to all databases, namely database roles, tablespaces,
    and privilege grants for configuration parameters.
    (<application>pg_dump</application> does not save these objects.)
+   The only parts of a database cluster's state that
+   are <emphasis>not</emphasis> included in the default output
+   of <application>pg_dumpall</application> are the configuration files
+   and any database parameter setting changes made with
+   <xref linkend="sql-altersystem"/>.
+  </para>
+
+  <para>
+   If the output format is a
+   plain text SQL script, it will be written to the standard output.  Use the
+   <option>-f</option>/<option>--file</option> option or shell operators to
+   redirect it into a file.
+  </para>
+
+  <para>
+   If another output format is selected, the archive will be placed in a
+   directory named using the <option>-f</option>/<option>--file</option>
+   option, which is required in this case.
   </para>
 
   <para>
@@ -52,17 +71,6 @@ PostgreSQL documentation
    superuser in order to produce a complete dump.  Also you will need
    superuser privileges to execute the saved script in order to be
    allowed to add roles and create databases.
-  </para>
-
-  <para>
-   Plain text SQL scripts will be written to the standard output.  Use the
-   <option>-f</option>/<option>--file</option> option or shell operators to
-   redirect it into a file.
-  </para>
-
-  <para>
-   Archives in other formats will be placed in a directory named using the
-   <option>-f</option>/<option>--file</option>, which is required in this case.
   </para>
 
   <para>
