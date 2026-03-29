@@ -190,6 +190,11 @@ PostgreSQL documentation
         <command>CREATE DATABASE</command> commands.  All data is restored into the
         database name that appears in the archive.
        </para>
+
+       <para>
+        This option cannot be used together
+        with <option>--single-transaction</option>.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -600,6 +605,8 @@ PostgreSQL documentation
         ensures that either all the commands complete successfully, or no
         changes are applied. This option implies
         <option>--exit-on-error</option>.
+        It cannot be used together with <option>--create</option>, nor with
+        multiple jobs (<option>--jobs</option>).
        </para>
       </listitem>
      </varlistentry>
