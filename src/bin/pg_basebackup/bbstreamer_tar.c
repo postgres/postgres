@@ -224,7 +224,8 @@ bbstreamer_tar_parser_content(bbstreamer *streamer, bbstreamer_member *member,
 				/* OK, now we can send it. */
 				bbstreamer_content(mystreamer->base.bbs_next,
 								   &mystreamer->member,
-								   data, mystreamer->pad_bytes_expected,
+								   mystreamer->base.bbs_buffer.data,
+								   mystreamer->pad_bytes_expected,
 								   BBSTREAMER_MEMBER_TRAILER);
 
 				/* Expect next file header. */
@@ -342,6 +343,7 @@ bbstreamer_tar_parser_free(bbstreamer *streamer)
 {
 	pfree(streamer->bbs_buffer.data);
 	bbstreamer_free(streamer->bbs_next);
+	pfree(streamer);
 }
 
 /*
