@@ -2198,7 +2198,6 @@ vectorize_cflags = cc.get_supported_arguments(['-ftree-vectorize'])
 unroll_loops_cflags = cc.get_supported_arguments(['-funroll-loops'])
 
 common_warning_flags = [
-  '-Wmissing-prototypes',
   '-Wpointer-arith',
   # Really don't want VLAs to be used in our dialect of C
   '-Werror=vla',
@@ -2211,7 +2210,15 @@ common_warning_flags = [
   '-Wformat-security',
 ]
 
-cflags_warn += cc.get_supported_arguments(common_warning_flags)
+# C-only warnings
+c_warning_flags = [
+  '-Wmissing-prototypes',
+  '-Wold-style-declaration',
+  '-Wold-style-definition',
+  '-Wstrict-prototypes',
+]
+
+cflags_warn += cc.get_supported_arguments(common_warning_flags, c_warning_flags)
 if have_cxx
   cxxflags_warn += cxx.get_supported_arguments(common_warning_flags)
 endif
@@ -2251,9 +2258,6 @@ if cc.has_argument('-Wmissing-variable-declarations')
   cflags_warn += '-Wmissing-variable-declarations'
   cflags_no_missing_var_decls += '-Wno-missing-variable-declarations'
 endif
-
-# These are C-only flags, supported in all C11-capable GCC/Clang versions.
-cflags_warn += cc.get_supported_arguments(['-Wstrict-prototypes', '-Wold-style-definition'])
 
 # The following tests want to suppress various unhelpful warnings by adding
 # -Wno-foo switches.  But gcc won't complain about unrecognized -Wno-foo

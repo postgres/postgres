@@ -555,6 +555,8 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CXX_CFLAGS_OPT([-Werror=unguarded-availability-new])
   PGAC_PROG_CC_CFLAGS_OPT([-Wmissing-format-attribute])
   PGAC_PROG_CXX_CFLAGS_OPT([-Wmissing-format-attribute])
+  PGAC_PROG_CC_CFLAGS_OPT([-Wold-style-declaration])
+  # -Wold-style-declaration is not applicable for C++
 
   # To require fallthrough attribute annotations, use
   # -Wimplicit-fallthrough=5 with gcc and -Wimplicit-fallthrough with
