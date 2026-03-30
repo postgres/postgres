@@ -125,6 +125,7 @@ static float8 circle_ar(CIRCLE *circle);
 
 /* Routines for polygons */
 static void make_bound_box(POLYGON *poly);
+static POLYGON *circle_poly_internal(int32 npts, const CIRCLE *circle, FunctionCallInfo fcinfo);
 static void poly_to_circle(CIRCLE *result, POLYGON *poly, Node *escontext);
 static bool lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start);
 static bool poly_contain_poly(POLYGON *contains_poly, POLYGON *contained_poly);
@@ -5317,11 +5318,9 @@ fail:
 }
 
 
-Datum
-circle_poly(PG_FUNCTION_ARGS)
+static POLYGON *
+circle_poly_internal(int32 npts, const CIRCLE *circle, FunctionCallInfo fcinfo)
 {
-	int32		npts = PG_GETARG_INT32(0);
-	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
 	POLYGON    *poly;
 	int			base_size,
 				size;
@@ -5330,12 +5329,12 @@ circle_poly(PG_FUNCTION_ARGS)
 	float8		anglestep;
 
 	if (FPzero(circle->radius))
-		ereport(ERROR,
+		ereturn(fcinfo->context, NULL,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot convert circle with radius zero to polygon")));
 
 	if (npts < 2)
-		ereport(ERROR,
+		ereturn(fcinfo->context, NULL,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("must request at least 2 points")));
 
@@ -5344,7 +5343,7 @@ circle_poly(PG_FUNCTION_ARGS)
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
-		ereport(ERROR,
+		ereturn(fcinfo->context, NULL,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("too many points requested")));
 
@@ -5356,17 +5355,51 @@ circle_poly(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < npts; i++)
 	{
-		angle = float8_mul(anglestep, i);
+		float8		temp;
 
-		poly->p[i].x = float8_mi(circle->center.x,
-								 float8_mul(circle->radius, cos(angle)));
-		poly->p[i].y = float8_pl(circle->center.y,
-								 float8_mul(circle->radius, sin(angle)));
+		angle = float8_mul_safe(anglestep, i, fcinfo->context);
+		if (SOFT_ERROR_OCCURRED(fcinfo->context))
+			return NULL;
+
+		temp = float8_mul_safe(circle->radius, cos(angle), fcinfo->context);
+		if (SOFT_ERROR_OCCURRED(fcinfo->context))
+			return NULL;
+
+		poly->p[i].x = float8_mi_safe(circle->center.x, temp, fcinfo->context);
+		if (SOFT_ERROR_OCCURRED(fcinfo->context))
+			return NULL;
+
+		temp = float8_mul_safe(circle->radius, sin(angle), fcinfo->context);
+		if (SOFT_ERROR_OCCURRED(fcinfo->context))
+			return NULL;
+
+		poly->p[i].y = float8_pl_safe(circle->center.y, temp, fcinfo->context);
+		if (SOFT_ERROR_OCCURRED(fcinfo->context))
+			return NULL;
 	}
 
 	make_bound_box(poly);
 
-	PG_RETURN_POLYGON_P(poly);
+	return poly;
+}
+
+Datum
+circle_poly(PG_FUNCTION_ARGS)
+{
+	int32		npts = PG_GETARG_INT32(0);
+	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
+
+	PG_RETURN_POLYGON_P(circle_poly_internal(npts, circle, fcinfo));
+}
+
+/* convert circle to 12-vertex polygon */
+Datum
+circle_to_poly(PG_FUNCTION_ARGS)
+{
+	int32		npts = 12;
+	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
+
+	PG_RETURN_POLYGON_P(circle_poly_internal(npts, circle, fcinfo));
 }
 
 /*
