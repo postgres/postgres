@@ -259,8 +259,13 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 /*-------------------------------------------------------------------------
  * datum_image_eq
  *
- * Compares two datums for identical contents, based on byte images.  Return
- * true if the two datums are equal, false otherwise.
+ * Compares two datums for identical contents when coerced to a signed integer
+ * of typLen bytes.  Return true if the two datums are equal, false otherwise.
+ *
+ * The coercion is required as we're not always careful to use the correct
+ * PG_RETURN_* macro.  If we didn't do this, a Datum that's been formed and
+ * deformed into a tuple may not have the same signed representation as the
+ * other datum value.
  *-------------------------------------------------------------------------
  */
 bool
@@ -272,7 +277,21 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 
 	if (typByVal)
 	{
-		result = (value1 == value2);
+		switch (typLen)
+		{
+			case sizeof(char):
+				result = (DatumGetChar(value1) == DatumGetChar(value2));
+				break;
+			case sizeof(int16):
+				result = (DatumGetInt16(value1) == DatumGetInt16(value2));
+				break;
+			case sizeof(int32):
+				result = (DatumGetInt32(value1) == DatumGetInt32(value2));
+				break;
+			default:
+				result = (value1 == value2);
+				break;
+		}
 	}
 	else if (typLen > 0)
 	{
@@ -329,10 +348,11 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 /*-------------------------------------------------------------------------
  * datum_image_hash
  *
- * Generate a hash value based on the binary representation of 'value'.  Most
- * use cases will want to use the hash function specific to the Datum's type,
- * however, some corner cases require generating a hash value based on the
- * actual bits rather than the logical value.
+ * Generate a hash value based on the binary representation of 'value' when
+ * represented as a signed integer of typLen bytes.  Most use cases will want
+ * to use the hash function specific to the Datum's type, however, some corner
+ * cases require generating a hash value based on the actual bits rather than
+ * the logical value.
  *-------------------------------------------------------------------------
  */
 uint32
@@ -342,7 +362,23 @@ datum_image_hash(Datum value, bool typByVal, int typLen)
 	uint32		result;
 
 	if (typByVal)
+	{
+		switch (typLen)
+		{
+			case sizeof(char):
+				value = CharGetDatum(DatumGetChar(value));
+				break;
+			case sizeof(int16):
+				value = Int16GetDatum(DatumGetInt16(value));
+				break;
+			case sizeof(int32):
+				value = Int32GetDatum(DatumGetInt32(value));
+				break;
+				/* Nothing needs done for 64-bit types */
+		}
+
 		result = hash_bytes((unsigned char *) &value, sizeof(Datum));
+	}
 	else if (typLen > 0)
 		result = hash_bytes((unsigned char *) DatumGetPointer(value), typLen);
 	else if (typLen == -1)
