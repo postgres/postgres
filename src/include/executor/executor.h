@@ -690,6 +690,8 @@ extern void ExecCreateScanSlotFromOuterPlan(EState *estate,
 
 extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 
+extern bool ScanRelIsReadOnly(ScanState *ss);
+
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
 
 extern void ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos,

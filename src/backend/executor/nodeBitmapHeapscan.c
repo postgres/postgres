@@ -149,7 +149,8 @@ BitmapTableScanSetup(BitmapHeapScanState *node)
 							   node->ss.ps.state->es_snapshot,
 							   0,
 							   NULL,
-							   SO_NONE);
+							   ScanRelIsReadOnly(&node->ss) ?
+							   SO_HINT_REL_READ_ONLY : SO_NONE);
 	}
 
 	node->ss.ss_currentScanDesc->st.rs_tbmiterator = tbmiterator;

@@ -65,6 +65,9 @@ typedef enum ScanOptions
 
 	/* unregister snapshot at scan end? */
 	SO_TEMP_SNAPSHOT = 1 << 9,
+
+	/* set if the query doesn't modify the relation */
+	SO_HINT_REL_READ_ONLY = 1 << 10,
 }			ScanOptions;
 
 /*

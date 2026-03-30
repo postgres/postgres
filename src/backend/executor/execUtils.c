@@ -736,6 +736,27 @@ ExecRelationIsTargetRelation(EState *estate, Index scanrelid)
 	return bms_is_member(scanrelid, estate->es_plannedstmt->resultRelationRelids);
 }
 
+/*
+ * Return true if the scan node's relation is not modified by the query.
+ *
+ * This is not perfectly accurate. INSERT ... SELECT from the same table does
+ * not add the scan relation to resultRelationRelids, so it will be reported
+ * as read-only even though the query modifies it.
+ *
+ * Conversely, when any relation in the query has a modifying row mark, all
+ * other relations get a ROW_MARK_REFERENCE, causing them to be reported as
+ * not read-only even though they may be.
+ */
+bool
+ScanRelIsReadOnly(ScanState *ss)
+{
+	Index		scanrelid = ((Scan *) ss->ps.plan)->scanrelid;
+	PlannedStmt *pstmt = ss->ps.state->es_plannedstmt;
+
+	return !bms_is_member(scanrelid, pstmt->resultRelationRelids) &&
+		!bms_is_member(scanrelid, pstmt->rowMarkRelids);
+}
+
 /* ----------------------------------------------------------------
  *		ExecOpenScanRelation
  *
