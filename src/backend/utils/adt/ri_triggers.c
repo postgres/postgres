@@ -2582,7 +2582,13 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE |
 						   SECURITY_NOFORCE_RLS);
 
-	/* Finally we can run the query. */
+	/*
+	 * Finally we can run the query.
+	 *
+	 * Set fire_triggers to false to ensure that AFTER triggers are queued in
+	 * the outer query's after-trigger context and fire after all RI updates
+	 * on the same row are complete, rather than immediately.
+	 */
 	spi_result = SPI_execute_snapshot(qplan,
 									  vals, nulls,
 									  test_snapshot, crosscheck_snapshot,
