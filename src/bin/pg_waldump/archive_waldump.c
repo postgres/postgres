@@ -852,7 +852,7 @@ member_is_wal_file(astreamer_waldump *mystreamer, astreamer_member *member,
 static uint32
 hash_string_pointer(const char *s)
 {
-	unsigned char *ss = (unsigned char *) s;
+	const unsigned char *ss = (const unsigned char *) s;
 
 	return hash_bytes(ss, strlen(s));
 }
