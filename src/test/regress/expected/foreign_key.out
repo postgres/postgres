@@ -1157,6 +1157,59 @@ INSERT INTO fktable VALUES (500, 1000);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
 DETAIL:  Key (fk)=(1000) is not present in table "pktable".
 COMMIT;
+-- Check that the existing FK trigger is both deferrable and initially deferred
+SELECT conname, tgrelid::regclass as tgrel,
+       regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype,
+       tgdeferrable, tginitdeferred
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE conrelid = 'fktable'::regclass AND conname = 'fktable_fk_fkey'
+ORDER BY tgrelid, tgtype;
+     conname     |  tgrel  |          tgname          | tgtype | tgdeferrable | tginitdeferred 
+-----------------+---------+--------------------------+--------+--------------+----------------
+ fktable_fk_fkey | pktable | RI_ConstraintTrigger_a_N |      9 | t            | t
+ fktable_fk_fkey | pktable | RI_ConstraintTrigger_a_N |     17 | t            | t
+ fktable_fk_fkey | fktable | RI_ConstraintTrigger_c_N |      5 | t            | t
+ fktable_fk_fkey | fktable | RI_ConstraintTrigger_c_N |     17 | t            | t
+(4 rows)
+
+-- Changing the constraint to NOT ENFORCED drops the associated FK triggers
+ALTER TABLE FKTABLE ALTER CONSTRAINT fktable_fk_fkey NOT ENFORCED;
+SELECT conname, tgrelid::regclass as tgrel,
+       regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype,
+       tgdeferrable, tginitdeferred
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE conrelid = 'fktable'::regclass AND conname = 'fktable_fk_fkey'
+ORDER BY tgrelid, tgtype;
+ conname | tgrel | tgname | tgtype | tgdeferrable | tginitdeferred 
+---------+-------+--------+--------+--------------+----------------
+(0 rows)
+
+-- Changing it back to ENFORCED will recreate the necessary FK triggers
+-- that are deferrable and initially deferred
+ALTER TABLE FKTABLE ALTER CONSTRAINT fktable_fk_fkey ENFORCED;
+SELECT conname, tgrelid::regclass as tgrel,
+       regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype,
+       tgdeferrable, tginitdeferred
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE conrelid = 'fktable'::regclass AND conname = 'fktable_fk_fkey'
+ORDER BY tgrelid, tgtype;
+     conname     |  tgrel  |          tgname          | tgtype | tgdeferrable | tginitdeferred 
+-----------------+---------+--------------------------+--------+--------------+----------------
+ fktable_fk_fkey | pktable | RI_ConstraintTrigger_a_N |      9 | t            | t
+ fktable_fk_fkey | pktable | RI_ConstraintTrigger_a_N |     17 | t            | t
+ fktable_fk_fkey | fktable | RI_ConstraintTrigger_c_N |      5 | t            | t
+ fktable_fk_fkey | fktable | RI_ConstraintTrigger_c_N |     17 | t            | t
+(4 rows)
+
+-- Verify that a deferrable, initially deferred foreign key still works
+-- as expected after being set to NOT ENFORCED and then re-enabled
+BEGIN;
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (2, 20);
+-- should catch error from INSERT at commit
+COMMIT;
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
+DETAIL:  Key (fk)=(20) is not present in table "pktable".
 DROP TABLE fktable, pktable;
 -- tricky behavior: according to SQL99, if a deferred constraint is set
 -- to 'immediate' mode, it should be checked for validity *immediately*,
