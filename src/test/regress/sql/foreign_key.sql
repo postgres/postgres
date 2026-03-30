@@ -784,6 +784,43 @@ INSERT INTO fktable VALUES (500, 1000);
 
 COMMIT;
 
+-- Check that the existing FK trigger is both deferrable and initially deferred
+SELECT conname, tgrelid::regclass as tgrel,
+       regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype,
+       tgdeferrable, tginitdeferred
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE conrelid = 'fktable'::regclass AND conname = 'fktable_fk_fkey'
+ORDER BY tgrelid, tgtype;
+
+-- Changing the constraint to NOT ENFORCED drops the associated FK triggers
+ALTER TABLE FKTABLE ALTER CONSTRAINT fktable_fk_fkey NOT ENFORCED;
+SELECT conname, tgrelid::regclass as tgrel,
+       regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype,
+       tgdeferrable, tginitdeferred
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE conrelid = 'fktable'::regclass AND conname = 'fktable_fk_fkey'
+ORDER BY tgrelid, tgtype;
+
+-- Changing it back to ENFORCED will recreate the necessary FK triggers
+-- that are deferrable and initially deferred
+ALTER TABLE FKTABLE ALTER CONSTRAINT fktable_fk_fkey ENFORCED;
+SELECT conname, tgrelid::regclass as tgrel,
+       regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype,
+       tgdeferrable, tginitdeferred
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE conrelid = 'fktable'::regclass AND conname = 'fktable_fk_fkey'
+ORDER BY tgrelid, tgtype;
+
+-- Verify that a deferrable, initially deferred foreign key still works
+-- as expected after being set to NOT ENFORCED and then re-enabled
+BEGIN;
+
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (2, 20);
+
+-- should catch error from INSERT at commit
+COMMIT;
+
 DROP TABLE fktable, pktable;
 
 -- tricky behavior: according to SQL99, if a deferred constraint is set

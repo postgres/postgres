@@ -12474,6 +12474,8 @@ ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 		fkconstraint->fk_matchtype = currcon->confmatchtype;
 		fkconstraint->fk_upd_action = currcon->confupdtype;
 		fkconstraint->fk_del_action = currcon->confdeltype;
+		fkconstraint->deferrable = currcon->condeferrable;
+		fkconstraint->initdeferred = currcon->condeferred;
 
 		/* Create referenced triggers */
 		if (currcon->conrelid == fkrelid)
