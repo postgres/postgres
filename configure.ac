@@ -547,9 +547,9 @@ if test "$GCC" = yes -a "$ICC" = no; then
     PERMIT_DECLARATION_AFTER_STATEMENT=-Wno-declaration-after-statement
   fi
   AC_SUBST(PERMIT_DECLARATION_AFTER_STATEMENT)
-  # Really don't want VLAs to be used in our dialect of C
+  # Really don't want VLAs to be used
   PGAC_PROG_CC_CFLAGS_OPT([-Werror=vla])
-  # -Wvla is not applicable for C++
+  PGAC_PROG_CXX_CFLAGS_OPT([-Werror=vla])
   # On macOS, complain about usage of symbols newer than the deployment target
   PGAC_PROG_CC_CFLAGS_OPT([-Werror=unguarded-availability-new])
   PGAC_PROG_CXX_CFLAGS_OPT([-Werror=unguarded-availability-new])
