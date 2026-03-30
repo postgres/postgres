@@ -68,8 +68,15 @@ pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 		 * Note that the PGPA_SCAN_PARTITIONWISE case also includes
 		 * partitionwise joins; this module considers those to be a form of
 		 * scan, since they lack internal structure that we can decompose.
+		 *
+		 * Note also that it's possible for relids to be NULL here, if the
+		 * elided Append node is part of a partitionwise aggregate. In that
+		 * case, it doesn't matter what strategy we choose, but we do need to
+		 * avoid calling unique_nonjoin_rtekind(), which would fail an
+		 * assertion.
 		 */
 		if ((nodetype == T_Append || nodetype == T_MergeAppend) &&
+			relids != NULL &&
 			unique_nonjoin_rtekind(relids,
 								   walker->pstmt->rtable) == RTE_RELATION)
 			strategy = PGPA_SCAN_PARTITIONWISE;
