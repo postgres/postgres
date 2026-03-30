@@ -24,6 +24,7 @@
 
 #include "common/int.h"
 #include "libpq/pqformat.h"
+#include "nodes/miscnodes.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
 #include "utils/float.h"
@@ -1106,12 +1107,12 @@ cash_numeric(PG_FUNCTION_ARGS)
 Datum
 numeric_cash(PG_FUNCTION_ARGS)
 {
-	Datum		amount = PG_GETARG_DATUM(0);
+	Numeric		amount = PG_GETARG_NUMERIC(0);
 	Cash		result;
 	int			fpoint;
 	int64		scale;
 	int			i;
-	Datum		numeric_scale;
+	Numeric		numeric_scale;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
@@ -1125,11 +1126,16 @@ numeric_cash(PG_FUNCTION_ARGS)
 		scale *= 10;
 
 	/* multiply the input amount by scale factor */
-	numeric_scale = NumericGetDatum(int64_to_numeric(scale));
-	amount = DirectFunctionCall2(numeric_mul, amount, numeric_scale);
+	numeric_scale = int64_to_numeric(scale);
+
+	amount = numeric_mul_safe(amount, numeric_scale, fcinfo->context);
+	if (unlikely(SOFT_ERROR_OCCURRED(fcinfo->context)))
+		PG_RETURN_NULL();
 
 	/* note that numeric_int8 will round to nearest integer for us */
-	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, amount));
+	result = numeric_int8_safe(amount, fcinfo->context);
+	if (unlikely(SOFT_ERROR_OCCURRED(fcinfo->context)))
+		PG_RETURN_NULL();
 
 	PG_RETURN_CASH(result);
 }
@@ -1158,8 +1164,10 @@ int4_cash(PG_FUNCTION_ARGS)
 		scale *= 10;
 
 	/* compute amount * scale, checking for overflow */
-	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
-											   Int64GetDatum(scale)));
+	if (unlikely(pg_mul_s64_overflow(amount, scale, &result)))
+		ereturn(fcinfo->context, (Datum) 0,
+				errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("bigint out of range"));
 
 	PG_RETURN_CASH(result);
 }
@@ -1188,8 +1196,10 @@ int8_cash(PG_FUNCTION_ARGS)
 		scale *= 10;
 
 	/* compute amount * scale, checking for overflow */
-	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
-											   Int64GetDatum(scale)));
+	if (unlikely(pg_mul_s64_overflow(amount, scale, &result)))
+		ereturn(fcinfo->context, (Datum) 0,
+				errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("bigint out of range"));
 
 	PG_RETURN_CASH(result);
 }
