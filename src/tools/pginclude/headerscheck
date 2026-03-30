@@ -213,11 +213,16 @@ do
 	    # info to guess which, but in some subdirectories there's a
 	    # reasonable choice to make, and otherwise we use postgres.h.
 	    # Also, those three files should compile with no pre-include, as
-	    # should src/interfaces headers meant to be exposed to clients.
+	    # should files included early by c.h, as well as
+	    # src/interfaces headers meant to be exposed to clients.
 	    case "$f" in
-		src/include/postgres.h) ;;
-		src/include/postgres_fe.h) ;;
 		src/include/c.h) ;;
+		src/include/pg_config.h) ;;
+		src/include/pg_config_manual.h) ;;
+		src/include/pg_config_os.h) ;;
+		src/include/postgres.h) ;;
+		src/include/postgres_ext.h) ;;
+		src/include/postgres_fe.h) ;;
 		src/interfaces/libpq/libpq-fe.h) ;;
 		src/interfaces/libpq/libpq-events.h) ;;
 		src/interfaces/ecpg/ecpglib/ecpglib_extern.h)
