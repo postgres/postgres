@@ -149,7 +149,8 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		 */
 		if (prev_buf != hscan->xs_cbuf)
 			heap_page_prune_opt(hscan->xs_base.rel, hscan->xs_cbuf,
-								&hscan->xs_vmbuffer);
+								&hscan->xs_vmbuffer,
+								hscan->xs_base.flags & SO_HINT_REL_READ_ONLY);
 	}
 
 	/* Obtain share-lock on the buffer so we can examine visibility */
@@ -2546,7 +2547,8 @@ BitmapHeapScanNextBlock(TableScanDesc scan,
 	/*
 	 * Prune and repair fragmentation for the whole page, if possible.
 	 */
-	heap_page_prune_opt(scan->rs_rd, buffer, &hscan->rs_vmbuffer);
+	heap_page_prune_opt(scan->rs_rd, buffer, &hscan->rs_vmbuffer,
+						scan->rs_flags & SO_HINT_REL_READ_ONLY);
 
 	/*
 	 * We must hold share lock on the buffer content while examining tuple

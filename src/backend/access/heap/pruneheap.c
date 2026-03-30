@@ -44,6 +44,8 @@ typedef struct
 	bool		mark_unused_now;
 	/* whether to attempt freezing tuples */
 	bool		attempt_freeze;
+	/* whether to attempt setting the VM */
+	bool		attempt_set_vm;
 	struct VacuumCutoffs *cutoffs;
 	Relation	relation;
 
@@ -75,7 +77,8 @@ typedef struct
 	/*
 	 * set_all_visible and set_all_frozen indicate if the all-visible and
 	 * all-frozen bits in the visibility map can be set for this page after
-	 * pruning.
+	 * pruning. They are only tracked when the caller requests VM updates
+	 * (attempt_set_vm); otherwise they remain false throughout.
 	 *
 	 * NOTE: set_all_visible and set_all_frozen initially don't include
 	 * LP_DEAD items. That's convenient for heap_page_prune_and_freeze() to
@@ -232,7 +235,8 @@ static void page_verify_redirects(Page page);
 
 static bool heap_page_will_freeze(bool did_tuple_hint_fpi, bool do_prune, bool do_hint_prune,
 								  PruneState *prstate);
-static bool heap_page_will_set_vm(PruneState *prstate, PruneReason reason);
+static bool heap_page_will_set_vm(PruneState *prstate, PruneReason reason,
+								  bool do_prune, bool do_freeze);
 
 
 /*
@@ -251,9 +255,21 @@ static bool heap_page_will_set_vm(PruneState *prstate, PruneReason reason);
  * reuse the pin across calls, avoiding repeated pin/unpin cycles. If we find
  * VM corruption during pruning, we will fix it. Caller is responsible for
  * unpinning *vmbuffer.
+ *
+ * rel_read_only is true if we determined at plan time that the query does not
+ * modify the relation. It is counterproductive to set the VM if the query
+ * will immediately clear it.
+ *
+ * As noted in ScanRelIsReadOnly(), INSERT ... SELECT from the same table will
+ * report the scan relation as read-only. This is usually harmless in
+ * practice. It is useful to set scanned pages all-visible that won't be
+ * inserted into. Pages it does insert to will rarely meet the criteria for
+ * pruning, and those that do are likely to contain in-progress inserts which
+ * make the page not fully all-visible.
  */
 void
-heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
+heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer,
+					bool rel_read_only)
 {
 	Page		page = BufferGetPage(buffer);
 	TransactionId prune_xid;
@@ -336,6 +352,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer)
 			 * current implementation.
 			 */
 			params.options = HEAP_PAGE_PRUNE_ALLOW_FAST_PATH;
+			if (rel_read_only)
+				params.options |= HEAP_PAGE_PRUNE_SET_VM;
 
 			heap_page_prune_and_freeze(&params, &presult, &dummy_off_loc,
 									   NULL, NULL);
@@ -392,6 +410,7 @@ prune_freeze_setup(PruneFreezeParams *params,
 	/* cutoffs must be provided if we will attempt freezing */
 	Assert(!(params->options & HEAP_PAGE_PRUNE_FREEZE) || params->cutoffs);
 	prstate->attempt_freeze = (params->options & HEAP_PAGE_PRUNE_FREEZE) != 0;
+	prstate->attempt_set_vm = (params->options & HEAP_PAGE_PRUNE_SET_VM) != 0;
 	prstate->cutoffs = params->cutoffs;
 	prstate->relation = params->relation;
 	prstate->block = BufferGetBlockNumber(params->buffer);
@@ -461,14 +480,13 @@ prune_freeze_setup(PruneFreezeParams *params,
 	 * We track whether the page will be all-visible/all-frozen at the end of
 	 * pruning and freezing. While examining tuple visibility, we'll set
 	 * set_all_visible to false if there are tuples on the page not visible to
-	 * all running and future transactions. set_all_visible is always
-	 * maintained but only VACUUM will set the VM if the page ends up being
-	 * all-visible.
+	 * all running and future transactions. If setting the VM is enabled for
+	 * this scan, we will do so if the page ends up being all-visible.
 	 *
 	 * We also keep track of the newest live XID, which is used to calculate
 	 * the snapshot conflict horizon for a WAL record setting the VM.
 	 */
-	prstate->set_all_visible = true;
+	prstate->set_all_visible = prstate->attempt_set_vm;
 	prstate->newest_live_xid = InvalidTransactionId;
 
 	/*
@@ -477,7 +495,9 @@ prune_freeze_setup(PruneFreezeParams *params,
 	 * caller passed HEAP_PAGE_PRUNE_FREEZE, because if they did not, we won't
 	 * call heap_prepare_freeze_tuple() for each tuple, and set_all_frozen
 	 * will never be cleared for tuples that need freezing. This would lead to
-	 * incorrectly setting the visibility map all-frozen for this page.
+	 * incorrectly setting the visibility map all-frozen for this page. We
+	 * can't set the page all-frozen in the VM if the caller didn't pass
+	 * HEAP_PAGE_PRUNE_SET_VM.
 	 *
 	 * When freezing is not required (no XIDs/MXIDs older than the freeze
 	 * cutoff), we may still choose to "opportunistically" freeze if doing so
@@ -494,7 +514,7 @@ prune_freeze_setup(PruneFreezeParams *params,
 	 * whether to freeze, but before updating the VM, to avoid setting the VM
 	 * bits incorrectly.
 	 */
-	prstate->set_all_frozen = prstate->attempt_freeze;
+	prstate->set_all_frozen = prstate->attempt_freeze && prstate->attempt_set_vm;
 }
 
 /*
@@ -920,20 +940,33 @@ heap_page_fix_vm_corruption(PruneState *prstate, OffsetNumber offnum,
  * This function does not actually set the VM bits or page-level visibility
  * hint, PD_ALL_VISIBLE.
  *
+ * This should be called only after do_freeze has been decided (and do_prune
+ * has been set), as these factor into our heuristic-based decision.
+ *
  * Returns true if one or both VM bits should be set and false otherwise.
  */
 static bool
-heap_page_will_set_vm(PruneState *prstate, PruneReason reason)
+heap_page_will_set_vm(PruneState *prstate, PruneReason reason,
+					  bool do_prune, bool do_freeze)
 {
-	/*
-	 * Though on-access pruning maintains prstate->set_all_visible, we don't
-	 * set the VM on-access for now.
-	 */
-	if (reason == PRUNE_ON_ACCESS)
+	if (!prstate->attempt_set_vm)
 		return false;
 
 	if (!prstate->set_all_visible)
 		return false;
+
+	/*
+	 * If this is an on-access call and we're not actually pruning, avoid
+	 * setting the visibility map if it would newly dirty the heap page or, if
+	 * the page is already dirty, if doing so would require including a
+	 * full-page image (FPI) of the heap page in the WAL.
+	 */
+	if (reason == PRUNE_ON_ACCESS && !do_prune && !do_freeze &&
+		(!BufferIsDirty(prstate->buffer) || XLogCheckBufferNeedsBackup(prstate->buffer)))
+	{
+		prstate->set_all_visible = prstate->set_all_frozen = false;
+		return false;
+	}
 
 	prstate->new_vmbits = VISIBILITYMAP_ALL_VISIBLE;
 
@@ -1165,9 +1198,10 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 		prstate.set_all_visible = prstate.set_all_frozen = false;
 
 	Assert(!prstate.set_all_frozen || prstate.set_all_visible);
+	Assert(!prstate.set_all_visible || prstate.attempt_set_vm);
 	Assert(!prstate.set_all_visible || (prstate.lpdead_items == 0));
 
-	do_set_vm = heap_page_will_set_vm(&prstate, params->reason);
+	do_set_vm = heap_page_will_set_vm(&prstate, params->reason, do_prune, do_freeze);
 
 	/*
 	 * new_vmbits should be 0 regardless of whether or not the page is

@@ -43,6 +43,7 @@
 #define HEAP_PAGE_PRUNE_MARK_UNUSED_NOW		(1 << 0)
 #define HEAP_PAGE_PRUNE_FREEZE				(1 << 1)
 #define HEAP_PAGE_PRUNE_ALLOW_FAST_PATH		(1 << 2)
+#define HEAP_PAGE_PRUNE_SET_VM				(1 << 3)
 
 typedef struct BulkInsertStateData *BulkInsertState;
 typedef struct GlobalVisState GlobalVisState;
@@ -431,7 +432,7 @@ extern TransactionId heap_index_delete_tuples(Relation rel,
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,
-								Buffer *vmbuffer);
+								Buffer *vmbuffer, bool rel_read_only);
 extern void heap_page_prune_and_freeze(PruneFreezeParams *params,
 									   PruneFreezeResult *presult,
 									   OffsetNumber *off_loc,

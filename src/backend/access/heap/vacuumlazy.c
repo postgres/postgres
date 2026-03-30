@@ -2021,7 +2021,7 @@ lazy_scan_prune(LVRelState *vacrel,
 		.buffer = buf,
 		.vmbuffer = vmbuffer,
 		.reason = PRUNE_VACUUM_SCAN,
-		.options = HEAP_PAGE_PRUNE_FREEZE,
+		.options = HEAP_PAGE_PRUNE_FREEZE | HEAP_PAGE_PRUNE_SET_VM,
 		.vistest = vacrel->vistest,
 		.cutoffs = &vacrel->cutoffs,
 	};
