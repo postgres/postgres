@@ -2585,6 +2585,23 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-oauth-ca-file" xreflabel="oauth_ca_file">
+      <term><literal>oauth_ca_file</literal></term>
+      <listitem>
+       <para>
+        The name of a file containing one or more SSL certificate authority
+        (<acronym>CA</acronym>) certificates, which will be used to verify the
+        identity of the authorization server and its endpoints. By default, the
+        <productname>Curl</productname> system certificate bundle is used.
+       </para>
+       <para>
+        This parameter does not affect verification of the
+        <productname>PostgreSQL</productname> server certificate; see
+        <xref linkend="libpq-connect-sslrootcert"/> instead.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </sect2>
@@ -9422,6 +9439,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       linkend="libpq-connect-max-protocol-version"/> connection parameter.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGOAUTHCAFILE</envar></primary>
+      </indexterm>
+      <envar>PGOAUTHCAFILE</envar> behaves the same as the <xref
+      linkend="libpq-connect-oauth-ca-file"/> connection parameter.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
@@ -10609,6 +10636,13 @@ typedef struct
    <title>Debugging and Developer Settings</title>
 
    <para>
+    While developing against a local authorization server, it may be helpful to
+    make use of the <xref linkend="libpq-connect-oauth-ca-file"/> connection
+    parameter (or the equivalent <envar>PGOAUTHCAFILE</envar> environment
+    variable) in the client application.
+   </para>
+
+   <para>
     A "dangerous debugging mode" may be enabled by setting the environment
     variable <envar>PGOAUTHDEBUG=UNSAFE</envar>. This functionality is provided
     for ease of local development and testing only. It does several things that
@@ -10618,12 +10652,6 @@ typedef struct
      <listitem>
       <para>
        permits the use of unencrypted HTTP during the OAuth provider exchange
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       allows the system's trusted CA list to be completely replaced using the
-       <envar>PGOAUTHCAFILE</envar> environment variable
       </para>
      </listitem>
      <listitem>

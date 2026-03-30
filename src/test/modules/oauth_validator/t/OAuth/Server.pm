@@ -28,7 +28,7 @@ daemon implemented in t/oauth_server.py. (Python has a fairly usable HTTP server
 in its standard library, so the implementation was ported from Perl.)
 
 This authorization server serves HTTPS on 127.0.0.1 (IPv4 only). libpq will need
-to set PGOAUTHDEBUG=UNSAFE and PGOAUTHCAFILE with the right CA.
+to set PGOAUTHCAFILE with the right CA.
 
 =cut
 

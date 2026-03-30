@@ -216,6 +216,7 @@ struct async_ctx
 	/* relevant connection options cached from the PGconn */
 	char	   *client_id;		/* oauth_client_id */
 	char	   *client_secret;	/* oauth_client_secret (may be NULL) */
+	char	   *ca_file;		/* oauth_ca_file */
 
 	/* options cached from the PGoauthBearerRequest (we don't own these) */
 	const char *discovery_uri;
@@ -336,6 +337,7 @@ free_async_ctx(struct async_ctx *actx)
 
 	free(actx->client_id);
 	free(actx->client_secret);
+	free(actx->ca_file);
 
 	free(actx);
 }
@@ -1833,21 +1835,9 @@ setup_curl_handles(struct async_ctx *actx)
 		CHECK_SETOPT(actx, popt, protos, return false);
 	}
 
-	/*
-	 * If we're in debug mode, allow the developer to change the trusted CA
-	 * list. For now, this is not something we expose outside of the UNSAFE
-	 * mode, because it's not clear that it's useful in production: both libpq
-	 * and the user's browser must trust the same authorization servers for
-	 * the flow to work at all, so any changes to the roots are likely to be
-	 * done system-wide.
-	 */
-	if (actx->debugging)
-	{
-		const char *env;
-
-		if ((env = getenv("PGOAUTHCAFILE")) != NULL)
-			CHECK_SETOPT(actx, CURLOPT_CAINFO, env, return false);
-	}
+	/* Allow the user to change the trusted CA list. */
+	if (actx->ca_file != NULL)
+		CHECK_SETOPT(actx, CURLOPT_CAINFO, actx->ca_file, return false);
 
 	/*
 	 * Suppress the Accept header to make our request as minimal as possible.
@@ -3123,6 +3113,12 @@ pg_start_oauthbearer(PGconn *conn, PGoauthBearerRequestV2 *request)
 		{
 			actx->client_secret = strdup(opt->val);
 			if (!actx->client_secret)
+				goto oom;
+		}
+		else if (strcmp(opt->keyword, "oauth_ca_file") == 0)
+		{
+			actx->ca_file = strdup(opt->val);
+			if (!actx->ca_file)
 				goto oom;
 		}
 	}

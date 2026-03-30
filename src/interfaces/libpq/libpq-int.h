@@ -444,6 +444,7 @@ struct pg_conn
 	char	   *oauth_client_secret;	/* client secret */
 	char	   *oauth_scope;	/* access token scope */
 	char	   *oauth_token;	/* access token */
+	char	   *oauth_ca_file;	/* CA file path */
 	bool		oauth_want_retry;	/* should we retry on failure? */
 
 	/* Optional file to write trace info to */
