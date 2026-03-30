@@ -196,6 +196,7 @@ void
 PGReserveSemaphores(int maxSemas)
 {
 	struct stat statbuf;
+	bool		found;
 
 	/*
 	 * We use the data directory's inode number to seed the search for free
@@ -216,7 +217,8 @@ PGReserveSemaphores(int maxSemas)
 #else
 
 	sharedSemas = (PGSemaphore)
-		ShmemAlloc(PGSemaphoreShmemSize(maxSemas));
+		ShmemInitStruct("Semaphores", PGSemaphoreShmemSize(maxSemas), &found);
+	Assert(!found);
 #endif
 
 	numSems = 0;
