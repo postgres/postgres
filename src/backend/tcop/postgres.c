@@ -3796,9 +3796,9 @@ get_stats_option_name(const char *arg)
 	switch (arg[0])
 	{
 		case 'p':
-			if (optarg[1] == 'a')	/* "parser" */
+			if (arg[1] == 'a')	/* "parser" */
 				return "log_parser_stats";
-			else if (optarg[1] == 'l')	/* "planner" */
+			else if (arg[1] == 'l') /* "planner" */
 				return "log_planner_stats";
 			break;
 
