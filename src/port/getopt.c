@@ -32,11 +32,7 @@
 #include "c.h"
 
 #include "pg_getopt.h"
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
-#endif							/* LIBC_SCCS and not lint */
-
+#include "port/pg_getopt_ctx.h"
 
 /*
  * On OpenBSD and some versions of Solaris, opterr and friends are defined in
@@ -54,84 +50,39 @@ char	   *optarg;				/* argument associated with option */
 
 #endif
 
-#define BADCH	(int)'?'
-#define BADARG	(int)':'
-#define EMSG	""
-
 /*
  * getopt
  *	Parse argc/argv argument vector.
  *
+ * We use the re-entrant pg_getopt_start/next() functions under the hood, but
+ * expose the standard non re-entrant API.
+ *
  * This implementation does not use optreset.  Instead, we guarantee that
  * it can be restarted on a new argv array after a previous call returned -1,
  * if the caller resets optind to 1 before the first call of the new series.
- * (Internally, this means we must be sure to reset "place" to EMSG before
+ * (Internally, this means we must be sure to reset "active" before
  * returning -1.)
  */
 int
 getopt(int nargc, char *const *nargv, const char *ostr)
 {
-	static char *place = EMSG;	/* option letter processing */
-	const char *oli;			/* option letter list index */
+	static bool active = false;
+	static pg_getopt_ctx ctx;
+	int			result;
 
-	if (!*place)
-	{							/* update scanning pointer */
-		if (optind >= nargc || *(place = nargv[optind]) != '-')
-		{
-			place = EMSG;
-			return -1;
-		}
-		if (place[1] && *++place == '-' && place[1] == '\0')
-		{						/* found "--" */
-			++optind;
-			place = EMSG;
-			return -1;
-		}
-	}							/* option letter okay? */
-	if ((optopt = (int) *place++) == (int) ':' ||
-		!(oli = strchr(ostr, optopt)))
+	if (!active)
 	{
-		/*
-		 * if the user didn't specify '-' as an option, assume it means -1.
-		 */
-		if (optopt == (int) '-')
-		{
-			place = EMSG;
-			return -1;
-		}
-		if (!*place)
-			++optind;
-		if (opterr && *ostr != ':')
-			(void) fprintf(stderr,
-						   "illegal option -- %c\n", optopt);
-		return BADCH;
+		pg_getopt_start(&ctx, nargc, nargv, ostr);
+		ctx.opterr = opterr;
+		active = true;
 	}
-	if (*++oli != ':')
-	{							/* don't need argument */
-		optarg = NULL;
-		if (!*place)
-			++optind;
-	}
-	else
-	{							/* need an argument */
-		if (*place)				/* no white space */
-			optarg = place;
-		else if (nargc <= ++optind)
-		{						/* no arg */
-			place = EMSG;
-			if (*ostr == ':')
-				return BADARG;
-			if (opterr)
-				(void) fprintf(stderr,
-							   "option requires an argument -- %c\n",
-							   optopt);
-			return BADCH;
-		}
-		else
-			/* white space */
-			optarg = nargv[optind];
-		place = EMSG;
-		++optind;
-	}
-	return optopt;				/* dump back option letter */
+
+	result = pg_getopt_next(&ctx);
+	opterr = ctx.opterr;
+	optind = ctx.optind;
+	optopt = ctx.optopt;
+	optarg = ctx.optarg;
+	if (result == -1)
+		active = false;
+	return result;
 }

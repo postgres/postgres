@@ -3980,6 +3980,7 @@ pg_enc2name
 pg_encname
 pg_fe_sasl_mech
 pg_funcptr_t
+pg_getopt_ctx
 pg_gssinfo
 pg_hmac_ctx
 pg_hmac_errno
