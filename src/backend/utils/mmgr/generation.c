@@ -762,6 +762,11 @@ GenerationFree(void *pointer)
 	}
 
 #ifdef MEMORY_CONTEXT_CHECKING
+	/* See comments in AllocSetFree about uses of ERROR and WARNING here */
+	/* Test for previously-freed chunk */
+	if (unlikely(chunk->requested_size == InvalidAllocSize))
+		elog(ERROR, "detected double pfree in %s %p",
+			 ((MemoryContext) block->context)->name, chunk);
 	/* Test for someone scribbling on unused space in chunk */
 	Assert(chunk->requested_size < chunksize);
 	if (!sentinel_ok(pointer, chunk->requested_size))
@@ -867,6 +872,11 @@ GenerationRealloc(void *pointer, Size size, int flags)
 	set = block->context;
 
 #ifdef MEMORY_CONTEXT_CHECKING
+	/* See comments in AllocSetFree about uses of ERROR and WARNING here */
+	/* Test for previously-freed chunk */
+	if (unlikely(chunk->requested_size == InvalidAllocSize))
+		elog(ERROR, "detected realloc of freed chunk in %s %p",
+			 ((MemoryContext) set)->name, chunk);
 	/* Test for someone scribbling on unused space in chunk */
 	Assert(chunk->requested_size < oldsize);
 	if (!sentinel_ok(pointer, chunk->requested_size))
