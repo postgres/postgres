@@ -189,7 +189,6 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->rtable = estate->es_range_table;
 	pstmt->unprunableRelids = estate->es_unpruned_relids;
 	pstmt->permInfos = estate->es_rteperminfos;
-	pstmt->resultRelations = NIL;
 	pstmt->appendRelations = NIL;
 	pstmt->planOrigin = PLAN_STMT_INTERNAL;
 

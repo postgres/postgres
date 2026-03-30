@@ -117,10 +117,6 @@ typedef struct PlannedStmt
 	 */
 	List	   *permInfos;
 
-	/* rtable indexes of target relations for INSERT/UPDATE/DELETE/MERGE */
-	/* integer list of RT indexes, or NIL */
-	List	   *resultRelations;
-
 	/* RT indexes of relations targeted by INSERT/UPDATE/DELETE/MERGE */
 	Bitmapset  *resultRelationRelids;
 

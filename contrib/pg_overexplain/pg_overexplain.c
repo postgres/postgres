@@ -780,8 +780,9 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 		overexplain_bitmapset("Unprunable RTIs", plannedstmt->unprunableRelids,
 							  es);
 	if (es->format != EXPLAIN_FORMAT_TEXT ||
-		plannedstmt->resultRelations != NIL)
-		overexplain_intlist("Result RTIs", plannedstmt->resultRelations, es);
+		!bms_is_empty(plannedstmt->resultRelationRelids))
+		overexplain_bitmapset("Result RTIs", plannedstmt->resultRelationRelids,
+							  es);
 
 	/* Close group, we're all done */
 	ExplainCloseGroup("Range Table", "Range Table", false, es);

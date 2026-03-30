@@ -657,7 +657,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 											  glob->prunableRelids);
 	result->permInfos = glob->finalrteperminfos;
 	result->subrtinfos = glob->subrtinfos;
-	result->resultRelations = glob->resultRelations;
 	result->appendRelations = glob->appendRelations;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;

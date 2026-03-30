@@ -733,7 +733,7 @@ ExecCreateScanSlotFromOuterPlan(EState *estate,
 bool
 ExecRelationIsTargetRelation(EState *estate, Index scanrelid)
 {
-	return list_member_int(estate->es_plannedstmt->resultRelations, scanrelid);
+	return bms_is_member(scanrelid, estate->es_plannedstmt->resultRelationRelids);
 }
 
 /* ----------------------------------------------------------------
