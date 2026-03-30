@@ -3676,21 +3676,18 @@ describeOneTableDetails(const char *schemaname,
 		else
 		{
 			const char *s = _("Inherits");
-			int			sw = pg_wcswidth(s, strlen(s), pset.encoding);
 
 			tuples = PQntuples(result);
 
+			if (tuples > 0)
+			{
+				printfPQExpBuffer(&buf, "%s:", s);
+				printTableAddFooter(&cont, buf.data);
+			}
+
 			for (i = 0; i < tuples; i++)
 			{
-				if (i == 0)
-					printfPQExpBuffer(&buf, "%s: %s",
-									  s, PQgetvalue(result, i, 0));
-				else
-					printfPQExpBuffer(&buf, "%*s  %s",
-									  sw, "", PQgetvalue(result, i, 0));
-				if (i < tuples - 1)
-					appendPQExpBufferChar(&buf, ',');
-
+				printfPQExpBuffer(&buf, "    %s", PQgetvalue(result, i, 0));
 				printTableAddFooter(&cont, buf.data);
 			}
 

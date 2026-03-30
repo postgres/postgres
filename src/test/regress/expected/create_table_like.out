@@ -261,8 +261,9 @@ CREATE TABLE test_like_5c (LIKE test_like_4 INCLUDING ALL)
 Check constraints:
     "test_like_4_a_check" CHECK (a > 0)
     "test_like_5x_p_check" CHECK (p > 0)
-Inherits: test_like_5,
-          test_like_5x
+Inherits:
+    test_like_5
+    test_like_5x
 
 -- Test updating of column numbers in statistics expressions (bug #18468)
 CREATE TABLE test_like_6 (a int, c text, b text);
@@ -394,7 +395,8 @@ Check constraints:
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
 Not-null constraints:
     "ctlt1_a_not_null" NOT NULL "a" (local, inherited)
-Inherits: ctlt1
+Inherits:
+    ctlt1
 
 SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 'ctlt1_inh'::regclass;
  description 
@@ -419,8 +421,9 @@ Check constraints:
     "ctlt3_c_check" CHECK (length(c) < 7)
 Not-null constraints:
     "ctlt1_a_not_null" NOT NULL "a" (inherited)
-Inherits: ctlt1,
-          ctlt3
+Inherits:
+    ctlt1
+    ctlt3
 
 CREATE TABLE ctlt13_like (LIKE ctlt3 INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
@@ -441,7 +444,8 @@ Check constraints:
     "ctlt3_c_check" CHECK (length(c) < 7)
 Not-null constraints:
     "ctlt1_a_not_null" NOT NULL "a" (inherited)
-Inherits: ctlt1
+Inherits:
+    ctlt1
 
 SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 'ctlt13_like'::regclass;
  description 

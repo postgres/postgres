@@ -1084,7 +1084,8 @@ CREATE TABLE ATACC2 () INHERITS (ATACC1);
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
-Inherits: atacc1
+Inherits:
+    atacc1
 
 DROP TABLE ATACC1, ATACC2;
 CREATE TABLE ATACC1 (a int);
@@ -1095,7 +1096,8 @@ CREATE TABLE ATACC2 () INHERITS (ATACC1);
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
-Inherits: atacc1
+Inherits:
+    atacc1
 
 DROP TABLE ATACC1, ATACC2;
 CREATE TABLE ATACC1 (a int);
@@ -1106,7 +1108,8 @@ ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
-Inherits: atacc1
+Inherits:
+    atacc1
 
 CREATE TABLE ATACC3 (PRIMARY KEY (a)) INHERITS (ATACC1);
 \d+ ATACC3
@@ -1118,7 +1121,8 @@ Indexes:
     "atacc3_pkey" PRIMARY KEY, btree (a)
 Not-null constraints:
     "atacc3_a_not_null" NOT NULL "a"
-Inherits: atacc1
+Inherits:
+    atacc1
 
 DROP TABLE ATACC1, ATACC2, ATACC3;
 -- NOT NULL NO INHERIT is not possible on partitioned tables
@@ -1146,7 +1150,8 @@ ALTER TABLE ATACC1 ADD CONSTRAINT ditto NOT NULL a;
  a      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "ditto" NOT NULL "a" (inherited)
-Inherits: atacc2
+Inherits:
+    atacc2
 
 DROP TABLE ATACC1, ATACC2, ATACC3;
 -- Can't have two constraints with the same name
@@ -1205,7 +1210,8 @@ Child tables:
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b" (inherited)
-Inherits: cnn_pk
+Inherits:
+    cnn_pk
 
 ALTER TABLE cnn_pk DROP CONSTRAINT cnn_primarykey;
 \d+ cnn_pk*
@@ -1226,7 +1232,8 @@ Child tables:
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b" (inherited)
-Inherits: cnn_pk
+Inherits:
+    cnn_pk
 
 DROP TABLE cnn_pk, cnn_pk_child;
 -- As above, but create the primary key ahead of time
@@ -1252,7 +1259,8 @@ Child tables:
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b" (inherited)
-Inherits: cnn_pk
+Inherits:
+    cnn_pk
 
 ALTER TABLE cnn_pk DROP CONSTRAINT cnn_primarykey;
 \d+ cnn_pk*
@@ -1273,7 +1281,8 @@ Child tables:
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b" (inherited)
-Inherits: cnn_pk
+Inherits:
+    cnn_pk
 
 DROP TABLE cnn_pk, cnn_pk_child;
 -- As above, but create the primary key using a UNIQUE index
@@ -1302,7 +1311,8 @@ Child tables:
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b" (inherited)
-Inherits: cnn_pk
+Inherits:
+    cnn_pk
 
 DROP TABLE cnn_pk, cnn_pk_child;
 -- Unique constraints don't give raise to not-null constraints, however.
@@ -1401,7 +1411,8 @@ Not-null constraints:
  a      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "notnull_tbl4_a_not_null" NOT NULL "a" (inherited)
-Inherits: notnull_tbl4
+Inherits:
+    notnull_tbl4
 
 \d+ notnull_tbl4_cld2
                              Table "public.notnull_tbl4_cld2"
@@ -1412,7 +1423,8 @@ Indexes:
     "notnull_tbl4_cld2_pkey" PRIMARY KEY, btree (a) DEFERRABLE
 Not-null constraints:
     "notnull_tbl4_cld2_a_not_null" NOT NULL "a" (local, inherited)
-Inherits: notnull_tbl4
+Inherits:
+    notnull_tbl4
 
 \d+ notnull_tbl4_cld3
                              Table "public.notnull_tbl4_cld3"
@@ -1423,7 +1435,8 @@ Indexes:
     "notnull_tbl4_cld3_pkey" PRIMARY KEY, btree (a) DEFERRABLE
 Not-null constraints:
     "a_nn" NOT NULL "a" (local, inherited)
-Inherits: notnull_tbl4
+Inherits:
+    notnull_tbl4
 
 -- leave these tables around for pg_upgrade testing
 -- It's possible to remove a constraint from parents without affecting children
@@ -1441,7 +1454,8 @@ ALTER TABLE ONLY notnull_tbl5 ALTER b DROP NOT NULL;
 Not-null constraints:
     "ann" NOT NULL "a"
     "bnn" NOT NULL "b"
-Inherits: notnull_tbl5
+Inherits:
+    notnull_tbl5
 
 CREATE TABLE notnull_tbl6 (a int CONSTRAINT ann NOT NULL,
 	b int CONSTRAINT bnn NOT NULL, check (a > 0)) PARTITION BY LIST (a);

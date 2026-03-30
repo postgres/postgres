@@ -350,7 +350,8 @@ NOTICE:  merging constraint "con1" with inherited definition
  d      | integer |           |          | 
 Check constraints:
     "con1" CHECK (a > 0)
-Inherits: constraint_rename_test
+Inherits:
+    constraint_rename_test
 
 ALTER TABLE constraint_rename_test2 RENAME CONSTRAINT con1 TO con1foo; -- fail
 ERROR:  cannot rename inherited constraint "con1"
@@ -378,7 +379,8 @@ Number of child tables: 1 (Use \d+ to list them.)
  d      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
-Inherits: constraint_rename_test
+Inherits:
+    constraint_rename_test
 
 ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0) NO INHERIT;
 ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
@@ -405,7 +407,8 @@ Number of child tables: 1 (Use \d+ to list them.)
  d      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
-Inherits: constraint_rename_test
+Inherits:
+    constraint_rename_test
 
 ALTER TABLE constraint_rename_test ADD CONSTRAINT con3 PRIMARY KEY (a);
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
@@ -433,7 +436,8 @@ Number of child tables: 1 (Use \d+ to list them.)
  d      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
-Inherits: constraint_rename_test
+Inherits:
+    constraint_rename_test
 
 DROP TABLE constraint_rename_test2;
 DROP TABLE constraint_rename_test;
@@ -650,7 +654,8 @@ alter table nv_parent add check (d between '2001-01-01'::date and '2099-12-31'::
 Check constraints:
     "nv_child_2009_d_check" CHECK (d >= '01-01-2009'::date AND d <= '12-31-2009'::date)
     "nv_parent_d_check" CHECK (d >= '01-01-2001'::date AND d <= '12-31-2099'::date) NOT VALID
-Inherits: nv_parent
+Inherits:
+    nv_parent
 
 -- we leave nv_parent and children around to help test pg_dump logic
 -- Foreign key adding test with mixed types
@@ -2408,7 +2413,8 @@ Number of child tables: 1 (Use \d+ to list them.)
  b      | double precision |           |          | 
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
-Inherits: test_inh_check
+Inherits:
+    test_inh_check
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2439,7 +2445,8 @@ Number of child tables: 1 (Use \d+ to list them.)
  b      | double precision |           |          | 
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
-Inherits: test_inh_check
+Inherits:
+    test_inh_check
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2479,7 +2486,8 @@ Check constraints:
     "blocal" CHECK (b < 1000::double precision)
     "bmerged" CHECK (b > 1::double precision)
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
-Inherits: test_inh_check
+Inherits:
+    test_inh_check
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2519,7 +2527,8 @@ Check constraints:
     "blocal" CHECK (b::double precision < 1000::double precision)
     "bmerged" CHECK (b::double precision > 1::double precision)
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
-Inherits: test_inh_check
+Inherits:
+    test_inh_check
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -3308,7 +3317,8 @@ Typed table of type: test_type2
 --------+---------+-----------+----------+---------
  aa     | integer |           |          | 
  c      | text    |           |          | 
-Inherits: test_tbl2
+Inherits:
+    test_tbl2
 
 DROP TABLE test_tbl2_subclass, test_tbl2;
 DROP TYPE test_type2;

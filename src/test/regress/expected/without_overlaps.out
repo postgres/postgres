@@ -80,7 +80,8 @@ CREATE TABLE temporal_rng2 () INHERITS (temporal_rng);
 ----------+-----------+-----------+----------+---------
  id       | int4range |           | not null | 
  valid_at | daterange |           | not null | 
-Inherits: temporal_rng
+Inherits:
+    temporal_rng
 
 DROP TABLE temporal_rng2;
 DROP TABLE temporal_rng;
@@ -100,7 +101,8 @@ CREATE TABLE temporal_rng2 (
  valid_at | daterange |           | not null | 
 Indexes:
     "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
-Inherits: temporal_rng
+Inherits:
+    temporal_rng
 
 DROP TABLE temporal_rng CASCADE;
 NOTICE:  drop cascades to table temporal_rng2
@@ -120,7 +122,8 @@ ALTER TABLE temporal_rng2
  valid_at | daterange |           | not null | 
 Indexes:
     "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
-Inherits: temporal_rng
+Inherits:
+    temporal_rng
 
 DROP TABLE temporal_rng2;
 DROP TABLE temporal_rng;

@@ -1459,7 +1459,8 @@ Not-null constraints:
     "fd_pt1_c1_not_null" NOT NULL "c1" (inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 
 DROP FOREIGN TABLE ft2;
 \d+ fd_pt1
@@ -1513,7 +1514,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 
 CREATE TABLE ct3() INHERITS(ft2);
 CREATE FOREIGN TABLE ft3 (
@@ -1536,7 +1538,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 Child tables:
     ct3
     ft3, FOREIGN
@@ -1550,7 +1553,8 @@ Child tables:
  c3     | date    |           |          |         | plain    |              | 
 Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (inherited)
-Inherits: ft2
+Inherits:
+    ft2
 
 \d+ ft3
                                        Foreign table "public.ft3"
@@ -1562,7 +1566,8 @@ Inherits: ft2
 Not-null constraints:
     "ft3_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
-Inherits: ft2
+Inherits:
+    ft2
 
 -- add attributes recursively
 ALTER TABLE fd_pt1 ADD COLUMN c4 integer;
@@ -1605,7 +1610,8 @@ Not-null constraints:
     "fd_pt1_c7_not_null" NOT NULL "c7" (inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 Child tables:
     ct3
     ft3, FOREIGN
@@ -1625,7 +1631,8 @@ Child tables:
 Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (inherited)
     "fd_pt1_c7_not_null" NOT NULL "c7" (inherited)
-Inherits: ft2
+Inherits:
+    ft2
 
 \d+ ft3
                                        Foreign table "public.ft3"
@@ -1643,7 +1650,8 @@ Not-null constraints:
     "ft3_c1_not_null" NOT NULL "c1" (local, inherited)
     "fd_pt1_c7_not_null" NOT NULL "c7" (inherited)
 Server: s0
-Inherits: ft2
+Inherits:
+    ft2
 
 -- alter attributes recursively
 ALTER TABLE fd_pt1 ALTER COLUMN c4 SET DEFAULT 0;
@@ -1693,7 +1701,8 @@ Not-null constraints:
     "fd_pt1_c6_not_null" NOT NULL "c6" (inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 Child tables:
     ct3
     ft3, FOREIGN
@@ -1727,7 +1736,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 Child tables:
     ct3
     ft3, FOREIGN
@@ -1776,7 +1786,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 Child tables:
     ct3
     ft3, FOREIGN
@@ -1829,7 +1840,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 
 -- drop constraints recursively
 ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk1 CASCADE;
@@ -1865,7 +1877,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 
 -- VALIDATE CONSTRAINT need do nothing on foreign tables
 ALTER TABLE fd_pt1 VALIDATE CONSTRAINT fd_pt1chk3;
@@ -1897,7 +1910,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "c1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 
 -- changes name of an attribute recursively
 ALTER TABLE fd_pt1 RENAME COLUMN c1 TO f1;
@@ -1933,7 +1947,8 @@ Not-null constraints:
     "ft2_c1_not_null" NOT NULL "f1" (local, inherited)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
+Inherits:
+    fd_pt1
 
 DROP TABLE fd_pt1 CASCADE;
 NOTICE:  drop cascades to foreign table ft2

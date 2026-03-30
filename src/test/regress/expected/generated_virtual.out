@@ -318,7 +318,8 @@ SELECT * FROM gtest1_1;
 --------+---------+-----------+----------+-----------------------------
  a      | integer |           | not null | 
  b      | integer |           |          | generated always as (a * 2)
-Inherits: gtest1
+Inherits:
+    gtest1
 
 INSERT INTO gtest1_1 VALUES (4);
 SELECT * FROM gtest1_1;
@@ -367,7 +368,8 @@ NOTICE:  merging column "b" with inherited definition
  x      | integer |           |          |                              | plain   |              | 
 Not-null constraints:
     "gtest1_a_not_null" NOT NULL "a" (inherited)
-Inherits: gtest1
+Inherits:
+    gtest1
 
 INSERT INTO gtestx (a, x) VALUES (11, 22);
 SELECT * FROM gtest1;
@@ -418,8 +420,9 @@ DETAIL:  User-specified column moved to the position of the inherited column.
  a      | integer |           | not null | 
  b      | integer |           |          | generated always as (x + 1)
  x      | integer |           |          | 
-Inherits: gtest1,
-          gtesty
+Inherits:
+    gtest1
+    gtesty
 
 -- test correct handling of GENERATED column that's only in child
 CREATE TABLE gtestp (f1 int);
@@ -1291,7 +1294,8 @@ Number of child tables: 1 (Use \d+ to list them.)
 --------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
  b      | integer |           |          | generated always as (a * 2)
-Inherits: gtest30
+Inherits:
+    gtest30
 
 DROP TABLE gtest30 CASCADE;
 NOTICE:  drop cascades to table gtest30_1
@@ -1316,7 +1320,8 @@ Number of child tables: 1 (Use \d+ to list them.)
 --------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
  b      | integer |           |          | generated always as (a * 2)
-Inherits: gtest30
+Inherits:
+    gtest30
 
 ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
 ERROR:  cannot drop generation expression from inherited column
