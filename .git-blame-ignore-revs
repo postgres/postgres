@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+874da8b1f6143808a4433df645c1e81f6a8bbd1e # 2026-03-26 20:10:13 -0400
+# pg_plan_advice: pgindent
+
 015d32016d845f8a29b3ec3ab7fa98a69cea1a0f # 2026-03-19 13:42:24 +0900
 # test_saslprep: Apply proper indentation
 
