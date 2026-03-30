@@ -145,11 +145,7 @@ StaticAssertDecl(lengthof(BuiltinTrancheNames) ==
 				 LWTRANCHE_FIRST_USER_DEFINED,
 				 "missing entries in BuiltinTrancheNames[]");
 
-/*
- * This points to the main array of LWLocks in shared memory.  Backends inherit
- * the pointer by fork from the postmaster (except in the EXEC_BACKEND case,
- * where we have special measures to pass it down).
- */
+/* Main array of LWLocks in shared memory */
 LWLockPadded *MainLWLockArray = NULL;
 
 /*
