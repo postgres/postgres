@@ -1501,20 +1501,6 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
-   <varlistentry id="ddl-system-columns-cmin">
-    <term><structfield>cmin</structfield></term>
-    <listitem>
-     <indexterm>
-      <primary>cmin</primary>
-     </indexterm>
-
-     <para>
-      The command identifier (starting at zero) within the inserting
-      transaction.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry id="ddl-system-columns-xmax">
     <term><structfield>xmax</structfield></term>
     <listitem>
@@ -1532,6 +1518,29 @@ CREATE TABLE circles (
     </listitem>
    </varlistentry>
 
+   <varlistentry id="ddl-system-columns-cmin">
+    <term><structfield>cmin</structfield></term>
+    <listitem>
+     <indexterm>
+      <primary>cmin</primary>
+     </indexterm>
+
+     <para>
+      Originally, <structfield>cmin</structfield>
+      and <structfield>cmax</structfield> were separate fields.
+      <structfield>cmin</structfield> was the inserting command's command
+      identifier (starting at zero) within the inserting transaction,
+      while <structfield>cmax</structfield> was the deleting command's
+      command identifier within the deleting transaction, or zero if no
+      delete attempt had occurred yet.  Nowadays these columns refer to
+      the same field and will always read as the same value.  That might
+      be the inserting command's command identifier, or the deleting
+      command's command identifier, or a <quote>combocid</quote> that
+      reflects both actions when those happened in the same transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="ddl-system-columns-cmax">
     <term><structfield>cmax</structfield></term>
     <listitem>
@@ -1540,7 +1549,7 @@ CREATE TABLE circles (
      </indexterm>
 
      <para>
-      The command identifier within the deleting transaction, or zero.
+      See <structfield>cmin</structfield>.
      </para>
     </listitem>
    </varlistentry>
