@@ -450,6 +450,14 @@ heap_xlog_insert(XLogReaderState *record)
 
 		freespace = PageGetHeapFreeSpace(page); /* needed to update FSM below */
 
+		/*
+		 * Set the page prunable to trigger on-access pruning later, which may
+		 * set the page all-visible in the VM. See comments in heap_insert().
+		 */
+		if (TransactionIdIsNormal(XLogRecGetXid(record)) &&
+			!HeapTupleHeaderXminFrozen(htup))
+			PageSetPrunable(page, XLogRecGetXid(record));
+
 		PageSetLSN(page, lsn);
 
 		if (xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED)
@@ -599,12 +607,19 @@ heap_xlog_multi_insert(XLogReaderState *record)
 		if (xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED)
 			PageClearAllVisible(page);
 
-		/* XLH_INSERT_ALL_FROZEN_SET implies that all tuples are visible */
+		/*
+		 * XLH_INSERT_ALL_FROZEN_SET implies that all tuples are visible. If
+		 * we are not setting the page frozen, then set the page's prunable
+		 * hint so that we trigger on-access pruning later which may set the
+		 * page all-visible in the VM.
+		 */
 		if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)
 		{
 			PageSetAllVisible(page);
 			PageClearPrunable(page);
 		}
+		else
+			PageSetPrunable(page, XLogRecGetXid(record));
 
 		MarkBufferDirty(buffer);
 	}
@@ -921,6 +936,8 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 		freespace = PageGetHeapFreeSpace(npage);
 
 		PageSetLSN(npage, lsn);
+		/* See heap_insert() for why we set pd_prune_xid on insert */
+		PageSetPrunable(npage, XLogRecGetXid(record));
 		MarkBufferDirty(nbuffer);
 	}
 

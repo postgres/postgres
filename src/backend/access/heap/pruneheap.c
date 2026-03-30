@@ -287,7 +287,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer,
 	/*
 	 * First check whether there's any chance there's something to prune,
 	 * determining the appropriate horizon is a waste if there's no prune_xid
-	 * (i.e. no updates/deletes left potentially dead tuples around).
+	 * (i.e. no updates/deletes left potentially dead tuples around and no
+	 * inserts inserted new tuples that may be visible to all).
 	 */
 	prune_xid = PageGetPruneXid(page);
 	if (!TransactionIdIsValid(prune_xid))
@@ -1930,17 +1931,14 @@ heap_prune_record_unchanged_lp_normal(PruneState *prstate, OffsetNumber offnum)
 			prstate->set_all_visible = false;
 			prstate->set_all_frozen = false;
 
-			/* The page should not be marked all-visible */
-			if (PageIsAllVisible(page))
-				heap_page_fix_vm_corruption(prstate, offnum,
-											VM_CORRUPT_TUPLE_VISIBILITY);
-
 			/*
-			 * If we wanted to optimize for aborts, we might consider marking
-			 * the page prunable when we see INSERT_IN_PROGRESS.  But we
-			 * don't.  See related decisions about when to mark the page
-			 * prunable in heapam.c.
+			 * Though there is nothing "prunable" on the page, we maintain
+			 * pd_prune_xid for inserts so that we have the opportunity to
+			 * mark them all-visible during the next round of pruning.
 			 */
+			heap_prune_record_prunable(prstate,
+									   HeapTupleHeaderGetXmin(htup),
+									   offnum);
 			break;
 
 		case HEAPTUPLE_DELETE_IN_PROGRESS:
