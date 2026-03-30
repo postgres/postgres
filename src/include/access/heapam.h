@@ -95,10 +95,7 @@ typedef struct HeapScanDescData
 	 */
 	ParallelBlockTableScanWorkerData *rs_parallelworkerdata;
 
-	/*
-	 * For sequential scans and bitmap heap scans. The current heap block's
-	 * corresponding page in the visibility map.
-	 */
+	/* Current heap block's corresponding page in the visibility map */
 	Buffer		rs_vmbuffer;
 
 	/* these fields only used in page-at-a-time mode and for bitmap scans */

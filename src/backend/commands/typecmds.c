@@ -3185,7 +3185,8 @@ validateDomainNotNullConstraint(Oid domainoid)
 
 		/* Scan all tuples in this relation */
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
-		scan = table_beginscan(testrel, snapshot, 0, NULL);
+		scan = table_beginscan(testrel, snapshot, 0, NULL,
+							   SO_NONE);
 		slot = table_slot_create(testrel, NULL);
 		while (table_scan_getnextslot(scan, ForwardScanDirection, slot))
 		{
@@ -3266,7 +3267,8 @@ validateDomainCheckConstraint(Oid domainoid, const char *ccbin, LOCKMODE lockmod
 
 		/* Scan all tuples in this relation */
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
-		scan = table_beginscan(testrel, snapshot, 0, NULL);
+		scan = table_beginscan(testrel, snapshot, 0, NULL,
+							   SO_NONE);
 		slot = table_slot_create(testrel, NULL);
 		while (table_scan_getnextslot(scan, ForwardScanDirection, slot))
 		{

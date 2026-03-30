@@ -258,7 +258,8 @@ index_beginscan(Relation heapRelation,
 				Relation indexRelation,
 				Snapshot snapshot,
 				IndexScanInstrumentation *instrument,
-				int nkeys, int norderbys)
+				int nkeys, int norderbys,
+				uint32 flags)
 {
 	IndexScanDesc scan;
 
@@ -285,7 +286,7 @@ index_beginscan(Relation heapRelation,
 	scan->instrument = instrument;
 
 	/* prepare to fetch index matches from table */
-	scan->xs_heapfetch = table_index_fetch_begin(heapRelation);
+	scan->xs_heapfetch = table_index_fetch_begin(heapRelation, flags);
 
 	return scan;
 }
@@ -588,13 +589,17 @@ index_parallelrescan(IndexScanDesc scan)
 /*
  * index_beginscan_parallel - join parallel index scan
  *
+ * flags is a bitmask of ScanOptions affecting the underlying table scan. No
+ * SO_INTERNAL_FLAGS are permitted.
+ *
  * Caller must be holding suitable locks on the heap and the index.
  */
 IndexScanDesc
 index_beginscan_parallel(Relation heaprel, Relation indexrel,
 						 IndexScanInstrumentation *instrument,
 						 int nkeys, int norderbys,
-						 ParallelIndexScanDesc pscan)
+						 ParallelIndexScanDesc pscan,
+						 uint32 flags)
 {
 	Snapshot	snapshot;
 	IndexScanDesc scan;
@@ -616,7 +621,7 @@ index_beginscan_parallel(Relation heaprel, Relation indexrel,
 	scan->instrument = instrument;
 
 	/* prepare to fetch index matches from table */
-	scan->xs_heapfetch = table_index_fetch_begin(heaprel);
+	scan->xs_heapfetch = table_index_fetch_begin(heaprel, flags);
 
 	return scan;
 }

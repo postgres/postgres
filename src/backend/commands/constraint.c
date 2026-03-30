@@ -106,7 +106,8 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 */
 	tmptid = checktid;
 	{
-		IndexFetchTableData *scan = table_index_fetch_begin(trigdata->tg_relation);
+		IndexFetchTableData *scan = table_index_fetch_begin(trigdata->tg_relation,
+															SO_NONE);
 		bool		call_again = false;
 
 		if (!table_index_fetch_tuple(scan, &tmptid, SnapshotSelf, slot,

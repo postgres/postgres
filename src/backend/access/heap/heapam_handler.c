@@ -81,11 +81,12 @@ heapam_slot_callbacks(Relation relation)
  */
 
 static IndexFetchTableData *
-heapam_index_fetch_begin(Relation rel)
+heapam_index_fetch_begin(Relation rel, uint32 flags)
 {
 	IndexFetchHeapData *hscan = palloc0_object(IndexFetchHeapData);
 
 	hscan->xs_base.rel = rel;
+	hscan->xs_base.flags = flags;
 	hscan->xs_cbuf = InvalidBuffer;
 	hscan->xs_vmbuffer = InvalidBuffer;
 
@@ -763,7 +764,8 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 		tableScan = NULL;
 		heapScan = NULL;
-		indexScan = index_beginscan(OldHeap, OldIndex, SnapshotAny, NULL, 0, 0);
+		indexScan = index_beginscan(OldHeap, OldIndex, SnapshotAny, NULL, 0, 0,
+									SO_NONE);
 		index_rescan(indexScan, NULL, 0, NULL, 0);
 	}
 	else
@@ -772,7 +774,8 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 		pgstat_progress_update_param(PROGRESS_REPACK_PHASE,
 									 PROGRESS_REPACK_PHASE_SEQ_SCAN_HEAP);
 
-		tableScan = table_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
+		tableScan = table_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL,
+									SO_NONE);
 		heapScan = (HeapScanDesc) tableScan;
 		indexScan = NULL;
 

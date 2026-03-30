@@ -122,6 +122,12 @@ typedef struct ParallelBlockTableScanWorkerData *ParallelBlockTableScanWorker;
 typedef struct IndexFetchTableData
 {
 	Relation	rel;
+
+	/*
+	 * Bitmask of ScanOptions affecting the relation. No SO_INTERNAL_FLAGS are
+	 * permitted.
+	 */
+	uint32		flags;
 } IndexFetchTableData;
 
 struct IndexScanInstrumentation;

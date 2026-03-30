@@ -71,7 +71,8 @@ SeqNext(SeqScanState *node)
 		 */
 		scandesc = table_beginscan(node->ss.ss_currentRelation,
 								   estate->es_snapshot,
-								   0, NULL);
+								   0, NULL,
+								   SO_NONE);
 		node->ss.ss_currentScanDesc = scandesc;
 	}
 
@@ -375,7 +376,8 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 								  estate->es_snapshot);
 	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, pscan);
 	node->ss.ss_currentScanDesc =
-		table_beginscan_parallel(node->ss.ss_currentRelation, pscan);
+		table_beginscan_parallel(node->ss.ss_currentRelation, pscan,
+								 SO_NONE);
 }
 
 /* ----------------------------------------------------------------
@@ -408,5 +410,6 @@ ExecSeqScanInitializeWorker(SeqScanState *node,
 
 	pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ss.ss_currentScanDesc =
-		table_beginscan_parallel(node->ss.ss_currentRelation, pscan);
+		table_beginscan_parallel(node->ss.ss_currentRelation, pscan,
+								 SO_NONE);
 }

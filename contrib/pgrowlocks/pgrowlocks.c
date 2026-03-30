@@ -115,7 +115,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 					   RelationGetRelationName(rel));
 
 	/* Scan the relation */
-	scan = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
+	scan = table_beginscan(rel, GetActiveSnapshot(), 0, NULL, SO_NONE);
 	hscan = (HeapScanDesc) scan;
 
 	attinmeta = TupleDescGetAttInMetadata(rsinfo->setDesc);

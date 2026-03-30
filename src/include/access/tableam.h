@@ -45,6 +45,8 @@ typedef struct ValidateIndexState ValidateIndexState;
  */
 typedef enum ScanOptions
 {
+	SO_NONE = 0,
+
 	/* one of SO_TYPE_* may be specified */
 	SO_TYPE_SEQSCAN = 1 << 0,
 	SO_TYPE_BITMAPSCAN = 1 << 1,
@@ -64,6 +66,19 @@ typedef enum ScanOptions
 	/* unregister snapshot at scan end? */
 	SO_TEMP_SNAPSHOT = 1 << 9,
 }			ScanOptions;
+
+/*
+ * Mask of flags that are set internally by the table scan functions and
+ * shouldn't be passed by callers. Some of these are effectively set by callers
+ * through parameters to table scan functions (e.g. SO_ALLOW_STRAT/allow_strat),
+ * however, for now, retain tight control over them and don't allow users to
+ * pass these themselves to table scan functions.
+ */
+#define SO_INTERNAL_FLAGS \
+	(SO_TYPE_SEQSCAN | SO_TYPE_BITMAPSCAN | SO_TYPE_SAMPLESCAN | \
+	 SO_TYPE_TIDSCAN | SO_TYPE_TIDRANGESCAN | SO_TYPE_ANALYZE | \
+	 SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE | \
+	 SO_TEMP_SNAPSHOT)
 
 /*
  * Result codes for table_{update,delete,lock_tuple}, and for visibility
@@ -324,8 +339,9 @@ typedef struct TableAmRoutine
 	 * `flags` is a bitmask indicating the type of scan (ScanOptions's
 	 * SO_TYPE_*, currently only one may be specified), options controlling
 	 * the scan's behaviour (ScanOptions's SO_ALLOW_*, several may be
-	 * specified, an AM may ignore unsupported ones) and whether the snapshot
-	 * needs to be deallocated at scan_end (ScanOptions's SO_TEMP_SNAPSHOT).
+	 * specified, an AM may ignore unsupported ones), whether the snapshot
+	 * needs to be deallocated at scan_end (ScanOptions's SO_TEMP_SNAPSHOT),
+	 * and any number of the other ScanOptions values.
 	 */
 	TableScanDesc (*scan_begin) (Relation rel,
 								 Snapshot snapshot,
@@ -421,9 +437,12 @@ typedef struct TableAmRoutine
 	 * IndexFetchTableData, which the AM will typically embed in a larger
 	 * structure with additional information.
 	 *
+	 * flags is a bitmask of ScanOptions affecting underlying table scan
+	 * behavior. See scan_begin() for more information on passing these.
+	 *
 	 * Tuples for an index scan can then be fetched via index_fetch_tuple.
 	 */
-	struct IndexFetchTableData *(*index_fetch_begin) (Relation rel);
+	struct IndexFetchTableData *(*index_fetch_begin) (Relation rel, uint32 flags);
 
 	/*
 	 * Reset index fetch. Typically this will release cross index fetch
@@ -874,12 +893,19 @@ extern TupleTableSlot *table_slot_create(Relation relation, List **reglist);
  * A wrapper around the Table Access Method scan_begin callback, to centralize
  * error checking. All calls to ->scan_begin() should go through this
  * function.
+ *
+ * The caller-provided user_flags are validated against SO_INTERNAL_FLAGS to
+ * catch callers that accidentally pass scan-type or other internal flags.
  */
 static TableScanDesc
 table_beginscan_common(Relation rel, Snapshot snapshot, int nkeys,
 					   ScanKeyData *key, ParallelTableScanDesc pscan,
-					   uint32 flags)
+					   uint32 flags, uint32 user_flags)
 {
+	Assert((user_flags & SO_INTERNAL_FLAGS) == 0);
+	Assert((flags & ~SO_INTERNAL_FLAGS) == 0);
+	flags |= user_flags;
+
 	/*
 	 * We don't allow scans to be started while CheckXidAlive is set, except
 	 * via systable_beginscan() et al.  See detailed comments in xact.c where
@@ -894,15 +920,18 @@ table_beginscan_common(Relation rel, Snapshot snapshot, int nkeys,
 /*
  * Start a scan of `rel`. Returned tuples pass a visibility test of
  * `snapshot`, and if nkeys != 0, the results are filtered by those scan keys.
+ *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
  */
 static inline TableScanDesc
 table_beginscan(Relation rel, Snapshot snapshot,
-				int nkeys, ScanKeyData *key)
+				int nkeys, ScanKeyData *key, uint32 flags)
 {
-	uint32		flags = SO_TYPE_SEQSCAN |
+	uint32		internal_flags = SO_TYPE_SEQSCAN |
 		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
-	return table_beginscan_common(rel, snapshot, nkeys, key, NULL, flags);
+	return table_beginscan_common(rel, snapshot, nkeys, key, NULL,
+								  internal_flags, flags);
 }
 
 /*
@@ -931,7 +960,8 @@ table_beginscan_strat(Relation rel, Snapshot snapshot,
 	if (allow_sync)
 		flags |= SO_ALLOW_SYNC;
 
-	return table_beginscan_common(rel, snapshot, nkeys, key, NULL, flags);
+	return table_beginscan_common(rel, snapshot, nkeys, key, NULL,
+								  flags, SO_NONE);
 }
 
 /*
@@ -939,14 +969,17 @@ table_beginscan_strat(Relation rel, Snapshot snapshot,
  * TableScanDesc for a bitmap heap scan.  Although that scan technology is
  * really quite unlike a standard seqscan, there is just enough commonality to
  * make it worth using the same data structure.
+ *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
  */
 static inline TableScanDesc
 table_beginscan_bm(Relation rel, Snapshot snapshot,
-				   int nkeys, ScanKeyData *key)
+				   int nkeys, ScanKeyData *key, uint32 flags)
 {
-	uint32		flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
+	uint32		internal_flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
 
-	return table_beginscan_common(rel, snapshot, nkeys, key, NULL, flags);
+	return table_beginscan_common(rel, snapshot, nkeys, key, NULL,
+								  internal_flags, flags);
 }
 
 /*
@@ -955,23 +988,26 @@ table_beginscan_bm(Relation rel, Snapshot snapshot,
  * using the same data structure although the behavior is rather different.
  * In addition to the options offered by table_beginscan_strat, this call
  * also allows control of whether page-mode visibility checking is used.
+ *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
  */
 static inline TableScanDesc
 table_beginscan_sampling(Relation rel, Snapshot snapshot,
 						 int nkeys, ScanKeyData *key,
 						 bool allow_strat, bool allow_sync,
-						 bool allow_pagemode)
+						 bool allow_pagemode, uint32 flags)
 {
-	uint32		flags = SO_TYPE_SAMPLESCAN;
+	uint32		internal_flags = SO_TYPE_SAMPLESCAN;
 
 	if (allow_strat)
-		flags |= SO_ALLOW_STRAT;
+		internal_flags |= SO_ALLOW_STRAT;
 	if (allow_sync)
-		flags |= SO_ALLOW_SYNC;
+		internal_flags |= SO_ALLOW_SYNC;
 	if (allow_pagemode)
-		flags |= SO_ALLOW_PAGEMODE;
+		internal_flags |= SO_ALLOW_PAGEMODE;
 
-	return table_beginscan_common(rel, snapshot, nkeys, key, NULL, flags);
+	return table_beginscan_common(rel, snapshot, nkeys, key, NULL,
+								  internal_flags, flags);
 }
 
 /*
@@ -984,7 +1020,8 @@ table_beginscan_tid(Relation rel, Snapshot snapshot)
 {
 	uint32		flags = SO_TYPE_TIDSCAN;
 
-	return table_beginscan_common(rel, snapshot, 0, NULL, NULL, flags);
+	return table_beginscan_common(rel, snapshot, 0, NULL, NULL,
+								  flags, SO_NONE);
 }
 
 /*
@@ -997,7 +1034,8 @@ table_beginscan_analyze(Relation rel)
 {
 	uint32		flags = SO_TYPE_ANALYZE;
 
-	return table_beginscan_common(rel, NULL, 0, NULL, NULL, flags);
+	return table_beginscan_common(rel, NULL, 0, NULL, NULL,
+								  flags, SO_NONE);
 }
 
 /*
@@ -1058,16 +1096,19 @@ table_scan_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableS
 /*
  * table_beginscan_tidrange is the entry point for setting up a TableScanDesc
  * for a TID range scan.
+ *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
  */
 static inline TableScanDesc
 table_beginscan_tidrange(Relation rel, Snapshot snapshot,
 						 ItemPointer mintid,
-						 ItemPointer maxtid)
+						 ItemPointer maxtid, uint32 flags)
 {
 	TableScanDesc sscan;
-	uint32		flags = SO_TYPE_TIDRANGESCAN | SO_ALLOW_PAGEMODE;
+	uint32		internal_flags = SO_TYPE_TIDRANGESCAN | SO_ALLOW_PAGEMODE;
 
-	sscan = table_beginscan_common(rel, snapshot, 0, NULL, NULL, flags);
+	sscan = table_beginscan_common(rel, snapshot, 0, NULL, NULL,
+								   internal_flags, flags);
 
 	/* Set the range of TIDs to scan */
 	sscan->rs_rd->rd_tableam->scan_set_tidrange(sscan, mintid, maxtid);
@@ -1139,20 +1180,26 @@ extern void table_parallelscan_initialize(Relation rel,
  * table_parallelscan_initialize(), for the same relation. The initialization
  * does not need to have happened in this backend.
  *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
+ *
  * Caller must hold a suitable lock on the relation.
  */
 extern TableScanDesc table_beginscan_parallel(Relation relation,
-											  ParallelTableScanDesc pscan);
+											  ParallelTableScanDesc pscan,
+											  uint32 flags);
 
 /*
  * Begin a parallel tid range scan. `pscan` needs to have been initialized
  * with table_parallelscan_initialize(), for the same relation. The
  * initialization does not need to have happened in this backend.
  *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
+ *
  * Caller must hold a suitable lock on the relation.
  */
 extern TableScanDesc table_beginscan_parallel_tidrange(Relation relation,
-													   ParallelTableScanDesc pscan);
+													   ParallelTableScanDesc pscan,
+													   uint32 flags);
 
 /*
  * Restart a parallel scan.  Call this in the leader process.  Caller is
@@ -1175,11 +1222,15 @@ table_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
  * Prepare to fetch tuples from the relation, as needed when fetching tuples
  * for an index scan.
  *
+ * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
+ *
  * Tuples for an index scan can then be fetched via table_index_fetch_tuple().
  */
 static inline IndexFetchTableData *
-table_index_fetch_begin(Relation rel)
+table_index_fetch_begin(Relation rel, uint32 flags)
 {
+	Assert((flags & SO_INTERNAL_FLAGS) == 0);
+
 	/*
 	 * We don't allow scans to be started while CheckXidAlive is set, except
 	 * via systable_beginscan() et al.  See detailed comments in xact.c where
@@ -1188,7 +1239,7 @@ table_index_fetch_begin(Relation rel)
 	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
 		elog(ERROR, "scan started during logical decoding");
 
-	return rel->rd_tableam->index_fetch_begin(rel);
+	return rel->rd_tableam->index_fetch_begin(rel, flags);
 }
 
 /*

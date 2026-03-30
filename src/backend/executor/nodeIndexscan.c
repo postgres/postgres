@@ -113,7 +113,8 @@ IndexNext(IndexScanState *node)
 								   estate->es_snapshot,
 								   node->iss_Instrument,
 								   node->iss_NumScanKeys,
-								   node->iss_NumOrderByKeys);
+								   node->iss_NumOrderByKeys,
+								   SO_NONE);
 
 		node->iss_ScanDesc = scandesc;
 
@@ -209,7 +210,8 @@ IndexNextWithReorder(IndexScanState *node)
 								   estate->es_snapshot,
 								   node->iss_Instrument,
 								   node->iss_NumScanKeys,
-								   node->iss_NumOrderByKeys);
+								   node->iss_NumOrderByKeys,
+								   SO_NONE);
 
 		node->iss_ScanDesc = scandesc;
 
@@ -1730,7 +1732,8 @@ ExecIndexScanInitializeDSM(IndexScanState *node,
 								 node->iss_Instrument,
 								 node->iss_NumScanKeys,
 								 node->iss_NumOrderByKeys,
-								 piscan);
+								 piscan,
+								 SO_NONE);
 
 	/*
 	 * If no run-time keys to calculate or they are ready, go ahead and pass
@@ -1794,7 +1797,8 @@ ExecIndexScanInitializeWorker(IndexScanState *node,
 								 node->iss_Instrument,
 								 node->iss_NumScanKeys,
 								 node->iss_NumOrderByKeys,
-								 piscan);
+								 piscan,
+								 SO_NONE);
 
 	/*
 	 * If no run-time keys to calculate or they are ready, go ahead and pass

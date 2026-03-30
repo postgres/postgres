@@ -118,7 +118,7 @@ table_beginscan_catalog(Relation relation, int nkeys, ScanKeyData *key)
 	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
 
 	return table_beginscan_common(relation, snapshot, nkeys, key,
-								  NULL, flags);
+								  NULL, flags, SO_NONE);
 }
 
 
@@ -163,10 +163,11 @@ table_parallelscan_initialize(Relation rel, ParallelTableScanDesc pscan,
 }
 
 TableScanDesc
-table_beginscan_parallel(Relation relation, ParallelTableScanDesc pscan)
+table_beginscan_parallel(Relation relation, ParallelTableScanDesc pscan,
+						 uint32 flags)
 {
 	Snapshot	snapshot;
-	uint32		flags = SO_TYPE_SEQSCAN |
+	uint32		internal_flags = SO_TYPE_SEQSCAN |
 		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
 	Assert(RelFileLocatorEquals(relation->rd_locator, pscan->phs_locator));
@@ -176,7 +177,7 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc pscan)
 		/* Snapshot was serialized -- restore it */
 		snapshot = RestoreSnapshot((char *) pscan + pscan->phs_snapshot_off);
 		RegisterSnapshot(snapshot);
-		flags |= SO_TEMP_SNAPSHOT;
+		internal_flags |= SO_TEMP_SNAPSHOT;
 	}
 	else
 	{
@@ -185,16 +186,17 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc pscan)
 	}
 
 	return table_beginscan_common(relation, snapshot, 0, NULL,
-								  pscan, flags);
+								  pscan, internal_flags, flags);
 }
 
 TableScanDesc
 table_beginscan_parallel_tidrange(Relation relation,
-								  ParallelTableScanDesc pscan)
+								  ParallelTableScanDesc pscan,
+								  uint32 flags)
 {
 	Snapshot	snapshot;
-	uint32		flags = SO_TYPE_TIDRANGESCAN | SO_ALLOW_PAGEMODE;
 	TableScanDesc sscan;
+	uint32		internal_flags = SO_TYPE_TIDRANGESCAN | SO_ALLOW_PAGEMODE;
 
 	Assert(RelFileLocatorEquals(relation->rd_locator, pscan->phs_locator));
 
@@ -206,7 +208,7 @@ table_beginscan_parallel_tidrange(Relation relation,
 		/* Snapshot was serialized -- restore it */
 		snapshot = RestoreSnapshot((char *) pscan + pscan->phs_snapshot_off);
 		RegisterSnapshot(snapshot);
-		flags |= SO_TEMP_SNAPSHOT;
+		internal_flags |= SO_TEMP_SNAPSHOT;
 	}
 	else
 	{
@@ -215,7 +217,7 @@ table_beginscan_parallel_tidrange(Relation relation,
 	}
 
 	sscan = table_beginscan_common(relation, snapshot, 0, NULL,
-								   pscan, flags);
+								   pscan, internal_flags, flags);
 	return sscan;
 }
 
@@ -248,7 +250,7 @@ table_index_fetch_tuple_check(Relation rel,
 	bool		found;
 
 	slot = table_slot_create(rel, NULL);
-	scan = table_index_fetch_begin(rel);
+	scan = table_index_fetch_begin(rel, SO_NONE);
 	found = table_index_fetch_tuple(scan, tid, snapshot, slot, &call_again,
 									all_dead);
 	table_index_fetch_end(scan);

@@ -1336,7 +1336,8 @@ CopyRelationTo(CopyToState cstate, Relation rel, Relation root_rel, uint64 *proc
 	AttrMap    *map = NULL;
 	TupleTableSlot *root_slot = NULL;
 
-	scandesc = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
+	scandesc = table_beginscan(rel, GetActiveSnapshot(), 0, NULL,
+							   SO_NONE);
 	slot = table_slot_create(rel, NULL);
 
 	/*

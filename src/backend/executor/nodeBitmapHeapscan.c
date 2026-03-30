@@ -148,7 +148,8 @@ BitmapTableScanSetup(BitmapHeapScanState *node)
 			table_beginscan_bm(node->ss.ss_currentRelation,
 							   node->ss.ps.state->es_snapshot,
 							   0,
-							   NULL);
+							   NULL,
+							   SO_NONE);
 	}
 
 	node->ss.ss_currentScanDesc->st.rs_tbmiterator = tbmiterator;

@@ -298,7 +298,8 @@ tablesample_init(SampleScanState *scanstate)
 									 0, NULL,
 									 scanstate->use_bulkread,
 									 allow_sync,
-									 scanstate->use_pagemode);
+									 scanstate->use_pagemode,
+									 SO_NONE);
 	}
 	else
 	{
