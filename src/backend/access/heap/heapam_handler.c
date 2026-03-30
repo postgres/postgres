@@ -253,7 +253,7 @@ heapam_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
 
 static void
 heapam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
-					bits32 options, BulkInsertState bistate)
+					uint32 options, BulkInsertState bistate)
 {
 	bool		shouldFree = true;
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
@@ -272,7 +272,7 @@ heapam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 
 static void
 heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
-								CommandId cid, bits32 options,
+								CommandId cid, uint32 options,
 								BulkInsertState bistate, uint32 specToken)
 {
 	bool		shouldFree = true;

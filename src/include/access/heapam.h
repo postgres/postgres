@@ -376,9 +376,9 @@ extern void FreeBulkInsertState(BulkInsertState);
 extern void ReleaseBulkInsertStatePin(BulkInsertState bistate);
 
 extern void heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-						bits32 options, BulkInsertState bistate);
+						uint32 options, BulkInsertState bistate);
 extern void heap_multi_insert(Relation relation, TupleTableSlot **slots,
-							  int ntuples, CommandId cid, bits32 options,
+							  int ntuples, CommandId cid, uint32 options,
 							  BulkInsertState bistate);
 extern TM_Result heap_delete(Relation relation, const ItemPointerData *tid,
 							 CommandId cid, Snapshot crosscheck, bool wait,

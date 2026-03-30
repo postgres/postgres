@@ -530,14 +530,14 @@ typedef struct TableAmRoutine
 
 	/* see table_tuple_insert() for reference about parameters */
 	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot,
-								 CommandId cid, bits32 options,
+								 CommandId cid, uint32 options,
 								 BulkInsertStateData *bistate);
 
 	/* see table_tuple_insert_speculative() for reference about parameters */
 	void		(*tuple_insert_speculative) (Relation rel,
 											 TupleTableSlot *slot,
 											 CommandId cid,
-											 bits32 options,
+											 uint32 options,
 											 BulkInsertStateData *bistate,
 											 uint32 specToken);
 
@@ -549,7 +549,7 @@ typedef struct TableAmRoutine
 
 	/* see table_multi_insert() for reference about parameters */
 	void		(*multi_insert) (Relation rel, TupleTableSlot **slots, int nslots,
-								 CommandId cid, bits32 options, BulkInsertStateData *bistate);
+								 CommandId cid, uint32 options, BulkInsertStateData *bistate);
 
 	/* see table_tuple_delete() for reference about parameters */
 	TM_Result	(*tuple_delete) (Relation rel,
@@ -596,7 +596,7 @@ typedef struct TableAmRoutine
 	 *
 	 * Optional callback.
 	 */
-	void		(*finish_bulk_insert) (Relation rel, bits32 options);
+	void		(*finish_bulk_insert) (Relation rel, uint32 options);
 
 
 	/* ------------------------------------------------------------------------
@@ -1440,7 +1440,7 @@ table_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
  */
 static inline void
 table_tuple_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
-				   bits32 options, BulkInsertStateData *bistate)
+				   uint32 options, BulkInsertStateData *bistate)
 {
 	rel->rd_tableam->tuple_insert(rel, slot, cid, options,
 								  bistate);
@@ -1459,7 +1459,7 @@ table_tuple_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
  */
 static inline void
 table_tuple_insert_speculative(Relation rel, TupleTableSlot *slot,
-							   CommandId cid, bits32 options,
+							   CommandId cid, uint32 options,
 							   BulkInsertStateData *bistate,
 							   uint32 specToken)
 {
@@ -1495,7 +1495,7 @@ table_tuple_complete_speculative(Relation rel, TupleTableSlot *slot,
  */
 static inline void
 table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
-				   CommandId cid, bits32 options, BulkInsertStateData *bistate)
+				   CommandId cid, uint32 options, BulkInsertStateData *bistate)
 {
 	rel->rd_tableam->multi_insert(rel, slots, nslots,
 								  cid, options, bistate);
@@ -1636,7 +1636,7 @@ table_tuple_lock(Relation rel, ItemPointer tid, Snapshot snapshot,
  * tuple_insert and multi_insert with a BulkInsertState specified.
  */
 static inline void
-table_finish_bulk_insert(Relation rel, bits32 options)
+table_finish_bulk_insert(Relation rel, uint32 options)
 {
 	/* optional callback */
 	if (rel->rd_tableam && rel->rd_tableam->finish_bulk_insert)
