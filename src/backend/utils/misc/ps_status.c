@@ -234,7 +234,8 @@ save_ps_display_args(int argc, char **argv)
 	 * into the argv array, and will get horribly confused when it is
 	 * re-called to analyze a subprocess' argument string if the argv storage
 	 * has been clobbered meanwhile.  Other platforms have other dependencies
-	 * on argv[].
+	 * on argv[]. (We use custom pg_getopt_start/next() functions nowadays
+	 * that don't do that, but those other dependencies might still exist.)
 	 */
 	{
 		char	  **new_argv;
