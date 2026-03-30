@@ -20,7 +20,7 @@
 #include "vacuuming.h"
 
 static void help(const char *progname);
-static void check_objfilter(bits32 objfilter);
+static void check_objfilter(uint32 objfilter);
 
 
 int
@@ -322,7 +322,7 @@ main(int argc, char *argv[])
  * Verify that the filters used at command line are compatible.
  */
 void
-check_objfilter(bits32 objfilter)
+check_objfilter(uint32 objfilter)
 {
 	if ((objfilter & OBJFILTER_ALL_DBS) &&
 		(objfilter & OBJFILTER_DATABASE))

@@ -35,7 +35,7 @@ static PyObject *PLyUnicode_FromScalar(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyObject_FromTransform(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
-										   char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
+										   char **dataptr_p, uint8 **bitmap_p, int *bitmask_p);
 static PyObject *PLyDict_FromComposite(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool include_generated);
 
@@ -671,7 +671,7 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 	int			ndim;
 	int		   *dims;
 	char	   *dataptr;
-	bits8	   *bitmap;
+	uint8	   *bitmap;
 	int			bitmask;
 
 	if (ARR_NDIM(array) == 0)
@@ -705,7 +705,7 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 
 static PyObject *
 PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
-						  char **dataptr_p, bits8 **bitmap_p, int *bitmask_p)
+						  char **dataptr_p, uint8 **bitmap_p, int *bitmask_p)
 {
 	int			i;
 	PyObject   *list;
@@ -733,7 +733,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 		 * for this slice.
 		 */
 		char	   *dataptr = *dataptr_p;
-		bits8	   *bitmap = *bitmap_p;
+		uint8	   *bitmap = *bitmap_p;
 		int			bitmask = *bitmask_p;
 		uint8		typalignby = typalign_to_alignby(elm->typalign);
 

@@ -3039,7 +3039,7 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 
 		case ProcedureRelationId:
 			{
-				bits16		flags = FORMAT_PROC_INVALID_AS_NULL;
+				uint16		flags = FORMAT_PROC_INVALID_AS_NULL;
 				char	   *proname = format_procedure_extended(object->objectId,
 																flags);
 
@@ -3052,7 +3052,7 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 
 		case TypeRelationId:
 			{
-				bits16		flags = FORMAT_TYPE_INVALID_AS_NULL;
+				uint16		flags = FORMAT_TYPE_INVALID_AS_NULL;
 				char	   *typname = format_type_extended(object->objectId, -1,
 														   flags);
 
@@ -3245,7 +3245,7 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 
 		case OperatorRelationId:
 			{
-				bits16		flags = FORMAT_OPERATOR_INVALID_AS_NULL;
+				uint16		flags = FORMAT_OPERATOR_INVALID_AS_NULL;
 				char	   *oprname = format_operator_extended(object->objectId,
 															   flags);
 
@@ -5160,7 +5160,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case ProcedureRelationId:
 			{
-				bits16		flags = FORMAT_PROC_FORCE_QUALIFY | FORMAT_PROC_INVALID_AS_NULL;
+				uint16		flags = FORMAT_PROC_FORCE_QUALIFY | FORMAT_PROC_INVALID_AS_NULL;
 				char	   *proname = format_procedure_extended(object->objectId,
 																flags);
 
@@ -5176,7 +5176,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case TypeRelationId:
 			{
-				bits16		flags = FORMAT_TYPE_INVALID_AS_NULL | FORMAT_TYPE_FORCE_QUALIFY;
+				uint16		flags = FORMAT_TYPE_INVALID_AS_NULL | FORMAT_TYPE_FORCE_QUALIFY;
 				char	   *typeout;
 
 				typeout = format_type_extended(object->objectId, -1, flags);
@@ -5383,7 +5383,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case OperatorRelationId:
 			{
-				bits16		flags = FORMAT_OPERATOR_FORCE_QUALIFY | FORMAT_OPERATOR_INVALID_AS_NULL;
+				uint16		flags = FORMAT_OPERATOR_FORCE_QUALIFY | FORMAT_OPERATOR_INVALID_AS_NULL;
 				char	   *oprname = format_operator_extended(object->objectId,
 															   flags);
 

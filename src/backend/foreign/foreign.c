@@ -48,7 +48,7 @@ GetForeignDataWrapper(Oid fdwid)
  * be found instead of raising an error.
  */
 ForeignDataWrapper *
-GetForeignDataWrapperExtended(Oid fdwid, bits16 flags)
+GetForeignDataWrapperExtended(Oid fdwid, uint16 flags)
 {
 	Form_pg_foreign_data_wrapper fdwform;
 	ForeignDataWrapper *fdw;
@@ -123,7 +123,7 @@ GetForeignServer(Oid serverid)
  * instead of raising an error.
  */
 ForeignServer *
-GetForeignServerExtended(Oid serverid, bits16 flags)
+GetForeignServerExtended(Oid serverid, uint16 flags)
 {
 	Form_pg_foreign_server serverform;
 	ForeignServer *server;

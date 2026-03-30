@@ -88,7 +88,7 @@ count_nulls(FunctionCallInfo fcinfo,
 		int			ndims,
 					nitems,
 				   *dims;
-		bits8	   *bitmap;
+		uint8	   *bitmap;
 
 		Assert(PG_NARGS() == 1);
 

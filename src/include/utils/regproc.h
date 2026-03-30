@@ -18,12 +18,12 @@
 /* Control flags for format_procedure_extended */
 #define FORMAT_PROC_INVALID_AS_NULL	0x01	/* NULL if undefined */
 #define FORMAT_PROC_FORCE_QUALIFY	0x02	/* force qualification */
-extern char *format_procedure_extended(Oid procedure_oid, bits16 flags);
+extern char *format_procedure_extended(Oid procedure_oid, uint16 flags);
 
 /* Control flags for format_operator_extended */
 #define FORMAT_OPERATOR_INVALID_AS_NULL	0x01	/* NULL if undefined */
 #define FORMAT_OPERATOR_FORCE_QUALIFY	0x02	/* force qualification */
-extern char *format_operator_extended(Oid operator_oid, bits16 flags);
+extern char *format_operator_extended(Oid operator_oid, uint16 flags);
 
 extern List *stringToQualifiedNameList(const char *string, Node *escontext);
 extern char *format_procedure(Oid procedure_oid);

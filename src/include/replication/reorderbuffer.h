@@ -293,7 +293,7 @@ typedef struct ReorderBufferChange
 typedef struct ReorderBufferTXN
 {
 	/* See above */
-	bits32		txn_flags;
+	uint32		txn_flags;
 
 	/* The transaction's transaction id, can be a toplevel or sub xid. */
 	TransactionId xid;

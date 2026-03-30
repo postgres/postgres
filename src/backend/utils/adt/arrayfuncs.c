@@ -70,7 +70,7 @@ typedef struct ArrayIteratorData
 {
 	/* basic info about the array, set up during array_create_iterator() */
 	ArrayType  *arr;			/* array we're iterating through */
-	bits8	   *nullbitmap;		/* its null bitmap, if any */
+	uint8	   *nullbitmap;		/* its null bitmap, if any */
 	int			nitems;			/* total number of elements in array */
 	int16		typlen;			/* element type's length */
 	bool		typbyval;		/* element type's byval property */
@@ -120,26 +120,26 @@ static Datum array_set_element_expanded(Datum arraydatum,
 										Datum dataValue, bool isNull,
 										int arraytyplen,
 										int elmlen, bool elmbyval, char elmalign);
-static bool array_get_isnull(const bits8 *nullbitmap, int offset);
-static void array_set_isnull(bits8 *nullbitmap, int offset, bool isNull);
+static bool array_get_isnull(const uint8 *nullbitmap, int offset);
+static void array_set_isnull(uint8 *nullbitmap, int offset, bool isNull);
 static Datum ArrayCast(char *value, bool byval, int len);
 static int	ArrayCastAndSet(Datum src,
 							int typlen, bool typbyval, uint8 typalignby,
 							char *dest);
-static char *array_seek(char *ptr, int offset, bits8 *nullbitmap, int nitems,
+static char *array_seek(char *ptr, int offset, uint8 *nullbitmap, int nitems,
 						int typlen, bool typbyval, char typalign);
-static int	array_nelems_size(char *ptr, int offset, bits8 *nullbitmap,
+static int	array_nelems_size(char *ptr, int offset, uint8 *nullbitmap,
 							  int nitems, int typlen, bool typbyval, char typalign);
 static int	array_copy(char *destptr, int nitems,
-					   char *srcptr, int offset, bits8 *nullbitmap,
+					   char *srcptr, int offset, uint8 *nullbitmap,
 					   int typlen, bool typbyval, char typalign);
-static int	array_slice_size(char *arraydataptr, bits8 *arraynullsptr,
+static int	array_slice_size(char *arraydataptr, uint8 *arraynullsptr,
 							 int ndim, int *dim, int *lb,
 							 int *st, int *endp,
 							 int typlen, bool typbyval, char typalign);
 static void array_extract_slice(ArrayType *newarray,
 								int ndim, int *dim, int *lb,
-								char *arraydataptr, bits8 *arraynullsptr,
+								char *arraydataptr, uint8 *arraynullsptr,
 								int *st, int *endp,
 								int typlen, bool typbyval, char typalign);
 static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
@@ -972,7 +972,7 @@ CopyArrayEls(ArrayType *array,
 			 bool freedata)
 {
 	char	   *p = ARR_DATA_PTR(array);
-	bits8	   *bitmap = ARR_NULLBITMAP(array);
+	uint8	   *bitmap = ARR_NULLBITMAP(array);
 	int			bitval = 0;
 	int			bitmask = 1;
 	uint8		typalignby = typalign_to_alignby(typalign);
@@ -1839,7 +1839,7 @@ array_get_element(Datum arraydatum,
 				fixedLb[1];
 	char	   *arraydataptr,
 			   *retptr;
-	bits8	   *arraynullsptr;
+	uint8	   *arraynullsptr;
 
 	if (arraytyplen > 0)
 	{
@@ -2053,7 +2053,7 @@ array_get_slice(Datum arraydatum,
 				fixedLb[1];
 	Oid			elemtype;
 	char	   *arraydataptr;
-	bits8	   *arraynullsptr;
+	uint8	   *arraynullsptr;
 	int32		dataoffset;
 	int			bytes,
 				span[MAXDIM];
@@ -2221,7 +2221,7 @@ array_set_element(Datum arraydatum,
 				offset;
 	char	   *elt_ptr;
 	bool		newhasnulls;
-	bits8	   *oldnullbitmap;
+	uint8	   *oldnullbitmap;
 	int			oldnitems,
 				newnitems,
 				olddatasize,
@@ -2467,7 +2467,7 @@ array_set_element(Datum arraydatum,
 	 */
 	if (newhasnulls)
 	{
-		bits8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
+		uint8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
 
 		/* palloc0 above already marked any inserted positions as nulls */
 		/* Fix the inserted value */
@@ -3059,7 +3059,7 @@ array_set_slice(Datum arraydatum,
 		int			slicelb = Max(oldlb, lowerIndx[0]);
 		int			sliceub = Min(oldub, upperIndx[0]);
 		char	   *oldarraydata = ARR_DATA_PTR(array);
-		bits8	   *oldarraybitmap = ARR_NULLBITMAP(array);
+		uint8	   *oldarraybitmap = ARR_NULLBITMAP(array);
 
 		/* count/size of old array entries that will go before the slice */
 		itemsbefore = Min(slicelb, oldub + 1) - oldlb;
@@ -3121,8 +3121,8 @@ array_set_slice(Datum arraydatum,
 		/* fill in nulls bitmap if needed */
 		if (newhasnulls)
 		{
-			bits8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
-			bits8	   *oldnullbitmap = ARR_NULLBITMAP(array);
+			uint8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
+			uint8	   *oldnullbitmap = ARR_NULLBITMAP(array);
 
 			/* palloc0 above already marked any inserted positions as nulls */
 			array_bitmap_copy(newnullbitmap, addedbefore,
@@ -3644,7 +3644,7 @@ deconstruct_array(const ArrayType *array,
 	bool	   *nulls;
 	int			nelems;
 	char	   *p;
-	bits8	   *bitmap;
+	uint8	   *bitmap;
 	int			bitmask;
 	int			i;
 	uint8		elmalignby = typalign_to_alignby(elmalign);
@@ -3781,7 +3781,7 @@ bool
 array_contains_nulls(const ArrayType *array)
 {
 	int			nelems;
-	bits8	   *bitmap;
+	uint8	   *bitmap;
 	int			bitmask;
 
 	/* Easy answer if there's no null bitmap */
@@ -4791,7 +4791,7 @@ array_free_iterator(ArrayIterator iterator)
  * offset: 0-based linear element number of array element
  */
 static bool
-array_get_isnull(const bits8 *nullbitmap, int offset)
+array_get_isnull(const uint8 *nullbitmap, int offset)
 {
 	if (nullbitmap == NULL)
 		return false;			/* assume not null */
@@ -4808,7 +4808,7 @@ array_get_isnull(const bits8 *nullbitmap, int offset)
  * isNull: null status to set
  */
 static void
-array_set_isnull(bits8 *nullbitmap, int offset, bool isNull)
+array_set_isnull(uint8 *nullbitmap, int offset, bool isNull)
 {
 	int			bitmask;
 
@@ -4876,7 +4876,7 @@ ArrayCastAndSet(Datum src,
  * It is caller's responsibility to ensure that nitems is within range
  */
 static char *
-array_seek(char *ptr, int offset, bits8 *nullbitmap, int nitems,
+array_seek(char *ptr, int offset, uint8 *nullbitmap, int nitems,
 		   int typlen, bool typbyval, char typalign)
 {
 	uint8		typalignby = typalign_to_alignby(typalign);
@@ -4925,7 +4925,7 @@ array_seek(char *ptr, int offset, bits8 *nullbitmap, int nitems,
  * Parameters same as for array_seek
  */
 static int
-array_nelems_size(char *ptr, int offset, bits8 *nullbitmap, int nitems,
+array_nelems_size(char *ptr, int offset, uint8 *nullbitmap, int nitems,
 				  int typlen, bool typbyval, char typalign)
 {
 	return array_seek(ptr, offset, nullbitmap, nitems,
@@ -4948,7 +4948,7 @@ array_nelems_size(char *ptr, int offset, bits8 *nullbitmap, int nitems,
  */
 static int
 array_copy(char *destptr, int nitems,
-		   char *srcptr, int offset, bits8 *nullbitmap,
+		   char *srcptr, int offset, uint8 *nullbitmap,
 		   int typlen, bool typbyval, char typalign)
 {
 	int			numbytes;
@@ -4977,8 +4977,8 @@ array_copy(char *destptr, int nitems,
  * to make it worth worrying too much.  For the moment, KISS.
  */
 void
-array_bitmap_copy(bits8 *destbitmap, int destoffset,
-				  const bits8 *srcbitmap, int srcoffset,
+array_bitmap_copy(uint8 *destbitmap, int destoffset,
+				  const uint8 *srcbitmap, int srcoffset,
 				  int nitems)
 {
 	int			destbitmask,
@@ -5048,7 +5048,7 @@ array_bitmap_copy(bits8 *destbitmap, int destoffset,
  * We assume the caller has verified that the slice coordinates are valid.
  */
 static int
-array_slice_size(char *arraydataptr, bits8 *arraynullsptr,
+array_slice_size(char *arraydataptr, uint8 *arraynullsptr,
 				 int ndim, int *dim, int *lb,
 				 int *st, int *endp,
 				 int typlen, bool typbyval, char typalign)
@@ -5114,7 +5114,7 @@ array_extract_slice(ArrayType *newarray,
 					int *dim,
 					int *lb,
 					char *arraydataptr,
-					bits8 *arraynullsptr,
+					uint8 *arraynullsptr,
 					int *st,
 					int *endp,
 					int typlen,
@@ -5122,7 +5122,7 @@ array_extract_slice(ArrayType *newarray,
 					char typalign)
 {
 	char	   *destdataptr = ARR_DATA_PTR(newarray);
-	bits8	   *destnullsptr = ARR_NULLBITMAP(newarray);
+	uint8	   *destnullsptr = ARR_NULLBITMAP(newarray);
 	char	   *srcdataptr;
 	int			src_offset,
 				dest_offset,
@@ -5197,9 +5197,9 @@ array_insert_slice(ArrayType *destArray,
 	char	   *destPtr = ARR_DATA_PTR(destArray);
 	char	   *origPtr = ARR_DATA_PTR(origArray);
 	char	   *srcPtr = ARR_DATA_PTR(srcArray);
-	bits8	   *destBitmap = ARR_NULLBITMAP(destArray);
-	bits8	   *origBitmap = ARR_NULLBITMAP(origArray);
-	bits8	   *srcBitmap = ARR_NULLBITMAP(srcArray);
+	uint8	   *destBitmap = ARR_NULLBITMAP(destArray);
+	uint8	   *origBitmap = ARR_NULLBITMAP(origArray);
+	uint8	   *srcBitmap = ARR_NULLBITMAP(srcArray);
 	int			orignitems = ArrayGetNItems(ARR_NDIM(origArray),
 											ARR_DIMS(origArray));
 	int			dest_offset,
@@ -5679,7 +5679,7 @@ accumArrayResultArr(ArrayBuildStateArr *astate,
 			 * previous inputs by marking all their items non-null.
 			 */
 			astate->aitems = pg_nextpower2_32(Max(256, newnitems + 1));
-			astate->nullbitmap = (bits8 *) palloc((astate->aitems + 7) / 8);
+			astate->nullbitmap = (uint8 *) palloc((astate->aitems + 7) / 8);
 			array_bitmap_copy(astate->nullbitmap, 0,
 							  NULL, 0,
 							  astate->nitems);
@@ -5687,7 +5687,7 @@ accumArrayResultArr(ArrayBuildStateArr *astate,
 		else if (newnitems > astate->aitems)
 		{
 			astate->aitems = Max(astate->aitems * 2, newnitems);
-			astate->nullbitmap = (bits8 *)
+			astate->nullbitmap = (uint8 *)
 				repalloc(astate->nullbitmap, (astate->aitems + 7) / 8);
 		}
 		array_bitmap_copy(astate->nullbitmap, astate->nitems,
@@ -6419,7 +6419,7 @@ array_replace_internal(ArrayType *array,
 	char		typalign;
 	uint8		typalignby;
 	char	   *arraydataptr;
-	bits8	   *bitmap;
+	uint8	   *bitmap;
 	int			bitmask;
 	bool		changed = false;
 	TypeCacheEntry *typentry;

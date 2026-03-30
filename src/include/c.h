@@ -619,14 +619,6 @@ typedef uint32_t uint32;
 typedef uint64_t uint64;
 
 /*
- * bitsN
- *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
- */
-typedef uint8 bits8;			/* >= 8 bits */
-typedef uint16 bits16;			/* >= 16 bits */
-typedef uint32 bits32;			/* >= 32 bits */
-
-/*
  * 64-bit integers
  */
 #define INT64CONST(x)  INT64_C(x)

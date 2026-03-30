@@ -581,8 +581,8 @@ DefineIndex(ParseState *pstate,
 	Datum		reloptions;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
-	bits16		flags;
-	bits16		constr_flags;
+	uint16		flags;
+	uint16		constr_flags;
 	int			numberOfAttributes;
 	int			numberOfKeyAttributes;
 	TransactionId limitXmin;

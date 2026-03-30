@@ -309,7 +309,7 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 List *
 ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 					  EState *estate,
-					  bits32 flags,
+					  uint32 flags,
 					  TupleTableSlot *slot,
 					  List *arbiterIndexes,
 					  bool *specConflict)

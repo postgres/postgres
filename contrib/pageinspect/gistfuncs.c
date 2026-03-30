@@ -203,7 +203,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	Page		page;
 	uint16		flagbits;
-	bits16		printflags = 0;
+	uint16		printflags = 0;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
 	char	   *index_columns;

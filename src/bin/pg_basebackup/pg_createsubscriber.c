@@ -94,7 +94,7 @@ struct LogicalRepInfos
 {
 	struct LogicalRepInfo *dbinfo;
 	bool		two_phase;		/* enable-two-phase option */
-	bits32		objecttypes_to_clean;	/* flags indicating which object types
+	uint32		objecttypes_to_clean;	/* flags indicating which object types
 										 * to clean up on subscriber */
 };
 

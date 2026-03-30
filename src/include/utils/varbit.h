@@ -20,7 +20,7 @@
 #include "fmgr.h"
 
 /*
- * Modeled on varlena from c.h, but data type is bits8.
+ * Modeled on varlena from c.h, but data type is uint8.
  *
  * Caution: if bit_len is not a multiple of BITS_PER_BYTE, the low-order
  * bits of the last byte of bit_dat[] are unused and MUST be zeroes.
@@ -31,7 +31,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		bit_len;		/* number of valid bits */
-	bits8		bit_dat[FLEXIBLE_ARRAY_MEMBER]; /* bit string, most sig. byte
+	uint8		bit_dat[FLEXIBLE_ARRAY_MEMBER]; /* bit string, most sig. byte
 												 * first */
 } VarBit;
 
@@ -82,7 +82,7 @@ VarBitPGetDatum(const VarBit *X)
  */
 #define VARBITMAXLEN		(INT_MAX - BITS_PER_BYTE + 1)
 /* pointer beyond the end of the bit string (like end() in STL containers) */
-#define VARBITEND(PTR)		(((bits8 *) (PTR)) + VARSIZE(PTR))
+#define VARBITEND(PTR)		(((uint8 *) (PTR)) + VARSIZE(PTR))
 /* Mask that will cover exactly one byte, i.e. BITS_PER_BYTE bits */
 #define BITMASK 0xFF
 

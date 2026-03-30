@@ -73,7 +73,7 @@ static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
  * RECORD datatype.
  */
 void
-InitMaterializedSRF(FunctionCallInfo fcinfo, bits32 flags)
+InitMaterializedSRF(FunctionCallInfo fcinfo, uint32 flags)
 {
 	bool		random_access;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;

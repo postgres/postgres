@@ -329,7 +329,7 @@ format_procedure_qualified(Oid procedure_oid)
  *			always schema-qualify procedure names, regardless of search_path
  */
 char *
-format_procedure_extended(Oid procedure_oid, bits16 flags)
+format_procedure_extended(Oid procedure_oid, uint16 flags)
 {
 	char	   *result;
 	HeapTuple	proctup;
@@ -727,7 +727,7 @@ to_regoperator(PG_FUNCTION_ARGS)
  *			always schema-qualify operator names, regardless of search_path
  */
 char *
-format_operator_extended(Oid operator_oid, bits16 flags)
+format_operator_extended(Oid operator_oid, uint16 flags)
 {
 	char	   *result;
 	HeapTuple	opertup;

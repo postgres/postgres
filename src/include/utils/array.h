@@ -206,7 +206,7 @@ typedef struct ArrayBuildStateArr
 {
 	MemoryContext mcontext;		/* where all the temp stuff is kept */
 	char	   *data;			/* accumulated data */
-	bits8	   *nullbitmap;		/* bitmap of is-null flags, or NULL if none */
+	uint8	   *nullbitmap;		/* bitmap of is-null flags, or NULL if none */
 	int			abytes;			/* allocated length of "data" */
 	int			nbytes;			/* number of bytes used so far */
 	int			aitems;			/* allocated length of bitmap (in elements) */
@@ -299,9 +299,9 @@ typedef struct ArrayIteratorData *ArrayIterator;
 
 #define ARR_NULLBITMAP(a) \
 		(ARR_HASNULL(a) ? \
-		 (bits8 *) (((char *) (a)) + sizeof(ArrayType) + \
+		 (uint8 *) (((char *) (a)) + sizeof(ArrayType) + \
 					2 * sizeof(int) * ARR_NDIM(a)) \
-		 : (bits8 *) NULL)
+		 : (uint8 *) NULL)
 
 /*
  * The total array header size (in bytes) for an array with the specified
@@ -387,8 +387,8 @@ extern Datum array_map(Datum arrayd,
 					   ExprState *exprstate, ExprContext *econtext,
 					   Oid retType, ArrayMapState *amstate);
 
-extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
-							  const bits8 *srcbitmap, int srcoffset,
+extern void array_bitmap_copy(uint8 *destbitmap, int destoffset,
+							  const uint8 *srcbitmap, int srcoffset,
 							  int nitems);
 
 extern ArrayType *construct_array(Datum *elems, int nelems,

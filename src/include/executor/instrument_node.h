@@ -192,7 +192,7 @@ typedef struct IncrementalSortGroupInfo
 	int64		totalDiskSpaceUsed;
 	int64		maxMemorySpaceUsed;
 	int64		totalMemorySpaceUsed;
-	bits32		sortMethods;	/* bitmask of TuplesortMethod */
+	uint32		sortMethods;	/* bitmask of TuplesortMethod */
 } IncrementalSortGroupInfo;
 
 typedef struct IncrementalSortInfo

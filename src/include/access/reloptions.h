@@ -66,7 +66,7 @@ typedef struct relopt_gen
 	const char *name;			/* must be first (used as list termination
 								 * marker) */
 	const char *desc;
-	bits32		kinds;
+	uint32		kinds;
 	LOCKMODE	lockmode;
 	int			namelen;
 	relopt_type type;
@@ -187,20 +187,20 @@ typedef struct local_relopts
 	 (char *)(optstruct) + (optstruct)->member)
 
 extern relopt_kind add_reloption_kind(void);
-extern void add_bool_reloption(bits32 kinds, const char *name, const char *desc,
+extern void add_bool_reloption(uint32 kinds, const char *name, const char *desc,
 							   bool default_val, LOCKMODE lockmode);
-extern void add_ternary_reloption(bits32 kinds, const char *name,
+extern void add_ternary_reloption(uint32 kinds, const char *name,
 								  const char *desc, LOCKMODE lockmode);
-extern void add_int_reloption(bits32 kinds, const char *name, const char *desc,
+extern void add_int_reloption(uint32 kinds, const char *name, const char *desc,
 							  int default_val, int min_val, int max_val,
 							  LOCKMODE lockmode);
-extern void add_real_reloption(bits32 kinds, const char *name, const char *desc,
+extern void add_real_reloption(uint32 kinds, const char *name, const char *desc,
 							   double default_val, double min_val, double max_val,
 							   LOCKMODE lockmode);
-extern void add_enum_reloption(bits32 kinds, const char *name, const char *desc,
+extern void add_enum_reloption(uint32 kinds, const char *name, const char *desc,
 							   relopt_enum_elt_def *members, int default_val,
 							   const char *detailmsg, LOCKMODE lockmode);
-extern void add_string_reloption(bits32 kinds, const char *name, const char *desc,
+extern void add_string_reloption(uint32 kinds, const char *name, const char *desc,
 								 const char *default_val, validate_string_relopt validator,
 								 LOCKMODE lockmode);
 

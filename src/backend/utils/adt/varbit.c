@@ -154,13 +154,13 @@ bit_in(PG_FUNCTION_ARGS)
 	Node	   *escontext = fcinfo->context;
 	VarBit	   *result;			/* The resulting bit string			  */
 	char	   *sp;				/* pointer into the character string  */
-	bits8	   *r;				/* pointer into the result */
+	uint8	   *r;				/* pointer into the result */
 	int			len,			/* Length of the whole data structure */
 				bitlen,			/* Number of bits in the bit string   */
 				slen;			/* Length of the input string		  */
 	bool		bit_not_hex;	/* false = hex string  true = bit string */
 	int			bc;
-	bits8		x = 0;
+	uint8		x = 0;
 
 	/* Check that the first character is a b or an x */
 	if (input_string[0] == 'b' || input_string[0] == 'B')
@@ -248,11 +248,11 @@ bit_in(PG_FUNCTION_ARGS)
 		for (bc = 0; *sp; sp++)
 		{
 			if (*sp >= '0' && *sp <= '9')
-				x = (bits8) (*sp - '0');
+				x = (uint8) (*sp - '0');
 			else if (*sp >= 'A' && *sp <= 'F')
-				x = (bits8) (*sp - 'A') + 10;
+				x = (uint8) (*sp - 'A') + 10;
 			else if (*sp >= 'a' && *sp <= 'f')
-				x = (bits8) (*sp - 'a') + 10;
+				x = (uint8) (*sp - 'a') + 10;
 			else
 				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -291,7 +291,7 @@ bit_out(PG_FUNCTION_ARGS)
 	VarBit	   *s = PG_GETARG_VARBIT_P(0);
 	char	   *result,
 			   *r;
-	bits8	   *sp;
+	uint8	   *sp;
 	int			i,
 				len,
 				bitlen;
@@ -459,13 +459,13 @@ varbit_in(PG_FUNCTION_ARGS)
 	Node	   *escontext = fcinfo->context;
 	VarBit	   *result;			/* The resulting bit string			  */
 	char	   *sp;				/* pointer into the character string  */
-	bits8	   *r;				/* pointer into the result */
+	uint8	   *r;				/* pointer into the result */
 	int			len,			/* Length of the whole data structure */
 				bitlen,			/* Number of bits in the bit string   */
 				slen;			/* Length of the input string		  */
 	bool		bit_not_hex;	/* false = hex string  true = bit string */
 	int			bc;
-	bits8		x = 0;
+	uint8		x = 0;
 
 	/* Check that the first character is a b or an x */
 	if (input_string[0] == 'b' || input_string[0] == 'B')
@@ -549,11 +549,11 @@ varbit_in(PG_FUNCTION_ARGS)
 		for (bc = 0; *sp; sp++)
 		{
 			if (*sp >= '0' && *sp <= '9')
-				x = (bits8) (*sp - '0');
+				x = (uint8) (*sp - '0');
 			else if (*sp >= 'A' && *sp <= 'F')
-				x = (bits8) (*sp - 'A') + 10;
+				x = (uint8) (*sp - 'A') + 10;
 			else if (*sp >= 'a' && *sp <= 'f')
-				x = (bits8) (*sp - 'a') + 10;
+				x = (uint8) (*sp - 'a') + 10;
 			else
 				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -589,8 +589,8 @@ varbit_out(PG_FUNCTION_ARGS)
 	VarBit	   *s = PG_GETARG_VARBIT_P(0);
 	char	   *result,
 			   *r;
-	bits8	   *sp;
-	bits8		x;
+	uint8	   *sp;
+	uint8		x;
 	int			i,
 				k,
 				len;
@@ -982,7 +982,7 @@ bit_catenate(VarBit *arg1, VarBit *arg2)
 				bytelen,
 				bit1pad,
 				bit2shift;
-	bits8	   *pr,
+	uint8	   *pr,
 			   *pa;
 
 	bitlen1 = VARBITLEN(arg1);
@@ -1063,7 +1063,7 @@ bitsubstring(VarBit *arg, int32 s, int32 l, bool length_not_specified)
 	int32		e,
 				s1,
 				e1;
-	bits8	   *r,
+	uint8	   *r,
 			   *ps;
 
 	bitlen = VARBITLEN(arg);
@@ -1249,7 +1249,7 @@ bit_and(PG_FUNCTION_ARGS)
 				bitlen1,
 				bitlen2,
 				i;
-	bits8	   *p1,
+	uint8	   *p1,
 			   *p2,
 			   *r;
 
@@ -1290,7 +1290,7 @@ bit_or(PG_FUNCTION_ARGS)
 				bitlen1,
 				bitlen2,
 				i;
-	bits8	   *p1,
+	uint8	   *p1,
 			   *p2,
 			   *r;
 
@@ -1330,7 +1330,7 @@ bitxor(PG_FUNCTION_ARGS)
 				bitlen1,
 				bitlen2,
 				i;
-	bits8	   *p1,
+	uint8	   *p1,
 			   *p2,
 			   *r;
 
@@ -1366,7 +1366,7 @@ bitnot(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	VarBit	   *result;
-	bits8	   *p,
+	uint8	   *p,
 			   *r;
 
 	result = (VarBit *) palloc(VARSIZE(arg));
@@ -1397,7 +1397,7 @@ bitshiftleft(PG_FUNCTION_ARGS)
 	int			byte_shift,
 				ishift,
 				len;
-	bits8	   *p,
+	uint8	   *p,
 			   *r;
 
 	/* Negative shift is a shift to the right */
@@ -1464,7 +1464,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 	int			byte_shift,
 				ishift,
 				len;
-	bits8	   *p,
+	uint8	   *p,
 			   *r;
 
 	/* Negative shift is a shift to the left */
@@ -1533,7 +1533,7 @@ bitfromint4(PG_FUNCTION_ARGS)
 	int32		a = PG_GETARG_INT32(0);
 	int32		typmod = PG_GETARG_INT32(1);
 	VarBit	   *result;
-	bits8	   *r;
+	uint8	   *r;
 	int			rlen;
 	int			destbitsleft,
 				srcbitsleft;
@@ -1554,7 +1554,7 @@ bitfromint4(PG_FUNCTION_ARGS)
 	/* sign-fill any excess bytes in output */
 	while (destbitsleft >= srcbitsleft + 8)
 	{
-		*r++ = (bits8) ((a < 0) ? BITMASK : 0);
+		*r++ = (uint8) ((a < 0) ? BITMASK : 0);
 		destbitsleft -= 8;
 	}
 	/* store first fractional byte */
@@ -1565,19 +1565,19 @@ bitfromint4(PG_FUNCTION_ARGS)
 		/* Force sign-fill in case the compiler implements >> as zero-fill */
 		if (a < 0)
 			val |= ((unsigned int) -1) << (srcbitsleft + 8 - destbitsleft);
-		*r++ = (bits8) (val & BITMASK);
+		*r++ = (uint8) (val & BITMASK);
 		destbitsleft -= 8;
 	}
 	/* Now srcbitsleft and destbitsleft are the same, need not track both */
 	/* store whole bytes */
 	while (destbitsleft >= 8)
 	{
-		*r++ = (bits8) ((a >> (destbitsleft - 8)) & BITMASK);
+		*r++ = (uint8) ((a >> (destbitsleft - 8)) & BITMASK);
 		destbitsleft -= 8;
 	}
 	/* store last fractional byte */
 	if (destbitsleft > 0)
-		*r = (bits8) ((a << (8 - destbitsleft)) & BITMASK);
+		*r = (uint8) ((a << (8 - destbitsleft)) & BITMASK);
 
 	PG_RETURN_VARBIT_P(result);
 }
@@ -1587,7 +1587,7 @@ bittoint4(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	uint32		result;
-	bits8	   *r;
+	uint8	   *r;
 
 	/* Check that the bit string is not too long */
 	if (VARBITLEN(arg) > sizeof(result) * BITS_PER_BYTE)
@@ -1613,7 +1613,7 @@ bitfromint8(PG_FUNCTION_ARGS)
 	int64		a = PG_GETARG_INT64(0);
 	int32		typmod = PG_GETARG_INT32(1);
 	VarBit	   *result;
-	bits8	   *r;
+	uint8	   *r;
 	int			rlen;
 	int			destbitsleft,
 				srcbitsleft;
@@ -1634,7 +1634,7 @@ bitfromint8(PG_FUNCTION_ARGS)
 	/* sign-fill any excess bytes in output */
 	while (destbitsleft >= srcbitsleft + 8)
 	{
-		*r++ = (bits8) ((a < 0) ? BITMASK : 0);
+		*r++ = (uint8) ((a < 0) ? BITMASK : 0);
 		destbitsleft -= 8;
 	}
 	/* store first fractional byte */
@@ -1645,19 +1645,19 @@ bitfromint8(PG_FUNCTION_ARGS)
 		/* Force sign-fill in case the compiler implements >> as zero-fill */
 		if (a < 0)
 			val |= ((unsigned int) -1) << (srcbitsleft + 8 - destbitsleft);
-		*r++ = (bits8) (val & BITMASK);
+		*r++ = (uint8) (val & BITMASK);
 		destbitsleft -= 8;
 	}
 	/* Now srcbitsleft and destbitsleft are the same, need not track both */
 	/* store whole bytes */
 	while (destbitsleft >= 8)
 	{
-		*r++ = (bits8) ((a >> (destbitsleft - 8)) & BITMASK);
+		*r++ = (uint8) ((a >> (destbitsleft - 8)) & BITMASK);
 		destbitsleft -= 8;
 	}
 	/* store last fractional byte */
 	if (destbitsleft > 0)
-		*r = (bits8) ((a << (8 - destbitsleft)) & BITMASK);
+		*r = (uint8) ((a << (8 - destbitsleft)) & BITMASK);
 
 	PG_RETURN_VARBIT_P(result);
 }
@@ -1667,7 +1667,7 @@ bittoint8(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	uint64		result;
-	bits8	   *r;
+	uint8	   *r;
 
 	/* Check that the bit string is not too long */
 	if (VARBITLEN(arg) > sizeof(result) * BITS_PER_BYTE)
@@ -1703,9 +1703,9 @@ bitposition(PG_FUNCTION_ARGS)
 				str_length,
 				i,
 				is;
-	bits8	   *s,				/* pointer into substring */
+	uint8	   *s,				/* pointer into substring */
 			   *p;				/* pointer into str */
-	bits8		cmp,			/* shifted substring byte to compare */
+	uint8		cmp,			/* shifted substring byte to compare */
 				mask1,			/* mask for substring byte shifted right */
 				mask2,			/* mask for substring byte shifted left */
 				end_mask,		/* pad mask for last substring byte */
@@ -1812,7 +1812,7 @@ bitsetbit(PG_FUNCTION_ARGS)
 	VarBit	   *result;
 	int			len,
 				bitlen;
-	bits8	   *r,
+	uint8	   *r,
 			   *p;
 	int			byteNo,
 				bitNo;
@@ -1871,7 +1871,7 @@ bitgetbit(PG_FUNCTION_ARGS)
 	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
 	int32		n = PG_GETARG_INT32(1);
 	int			bitlen;
-	bits8	   *p;
+	uint8	   *p;
 	int			byteNo,
 				bitNo;
 

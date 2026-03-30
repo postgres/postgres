@@ -268,7 +268,7 @@ pgstat_flush_backend_entry_wal(PgStat_EntryRef *entry_ref)
  * if some statistics could not be flushed due to lock contention.
  */
 bool
-pgstat_flush_backend(bool nowait, bits32 flags)
+pgstat_flush_backend(bool nowait, uint32 flags)
 {
 	PgStat_EntryRef *entry_ref;
 	bool		has_pending_data = false;

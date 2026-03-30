@@ -50,7 +50,7 @@
 
 
 static inline void brin_deconstruct_tuple(BrinDesc *brdesc,
-										  char *tp, bits8 *nullbits, bool nulls,
+										  char *tp, uint8 *nullbits, bool nulls,
 										  Datum *values, bool *allnulls, bool *hasnulls);
 
 
@@ -107,7 +107,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	int			keyno;
 	int			idxattno;
 	uint16		phony_infomask = 0;
-	bits8	   *phony_nullbitmap;
+	uint8	   *phony_nullbitmap;
 	Size		len,
 				hoff,
 				data_len;
@@ -122,7 +122,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 	values = palloc_array(Datum, brdesc->bd_totalstored);
 	nulls = palloc0_array(bool, brdesc->bd_totalstored);
-	phony_nullbitmap = palloc_array(bits8, BITMAPLEN(brdesc->bd_totalstored));
+	phony_nullbitmap = palloc_array(uint8, BITMAPLEN(brdesc->bd_totalstored));
 
 #ifdef TOAST_INDEX_HACK
 	untoasted_values = palloc_array(Datum, brdesc->bd_totalstored);
@@ -322,7 +322,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	 */
 	if (anynulls)
 	{
-		bits8	   *bitP;
+		uint8	   *bitP;
 		int			bitmask;
 
 		rettuple->bt_info |= BRIN_NULLS_MASK;
@@ -332,7 +332,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 		 * store a 1 for a null attribute rather than a 0.  So we must reverse
 		 * the sense of the att_isnull test in brin_deconstruct_tuple as well.
 		 */
-		bitP = ((bits8 *) ((char *) rettuple + SizeOfBrinTuple)) - 1;
+		bitP = ((uint8 *) ((char *) rettuple + SizeOfBrinTuple)) - 1;
 		bitmask = HIGHBIT;
 		for (keyno = 0; keyno < brdesc->bd_tupdesc->natts; keyno++)
 		{
@@ -391,7 +391,7 @@ brin_form_placeholder_tuple(BrinDesc *brdesc, BlockNumber blkno, Size *size)
 	Size		hoff;
 	BrinTuple  *rettuple;
 	int			keyno;
-	bits8	   *bitP;
+	uint8	   *bitP;
 	int			bitmask;
 
 	/* compute total space needed: always add nulls */
@@ -404,7 +404,7 @@ brin_form_placeholder_tuple(BrinDesc *brdesc, BlockNumber blkno, Size *size)
 	rettuple->bt_info = hoff;
 	rettuple->bt_info |= BRIN_NULLS_MASK | BRIN_PLACEHOLDER_MASK | BRIN_EMPTY_RANGE_MASK;
 
-	bitP = ((bits8 *) ((char *) rettuple + SizeOfBrinTuple)) - 1;
+	bitP = ((uint8 *) ((char *) rettuple + SizeOfBrinTuple)) - 1;
 	bitmask = HIGHBIT;
 	/* set allnulls true for all attributes */
 	for (keyno = 0; keyno < brdesc->bd_tupdesc->natts; keyno++)
@@ -557,7 +557,7 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple, BrinMemTuple *dMemtuple)
 	bool	   *allnulls;
 	bool	   *hasnulls;
 	char	   *tp;
-	bits8	   *nullbits;
+	uint8	   *nullbits;
 	int			keyno;
 	int			valueno;
 	MemoryContext oldcxt;
@@ -581,7 +581,7 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple, BrinMemTuple *dMemtuple)
 	tp = (char *) tuple + BrinTupleDataOffset(tuple);
 
 	if (BrinTupleHasNulls(tuple))
-		nullbits = (bits8 *) ((char *) tuple + SizeOfBrinTuple);
+		nullbits = (uint8 *) ((char *) tuple + SizeOfBrinTuple);
 	else
 		nullbits = NULL;
 	brin_deconstruct_tuple(brdesc,
@@ -643,7 +643,7 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple, BrinMemTuple *dMemtuple)
  */
 static inline void
 brin_deconstruct_tuple(BrinDesc *brdesc,
-					   char *tp, bits8 *nullbits, bool nulls,
+					   char *tp, uint8 *nullbits, bool nulls,
 					   Datum *values, bool *allnulls, bool *hasnulls)
 {
 	int			attnum;

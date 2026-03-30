@@ -717,7 +717,7 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
  */
 bool
 vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
-								 bits32 options)
+								 uint32 options)
 {
 	char	   *relname;
 
@@ -768,7 +768,7 @@ vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
  * or locked, a log is emitted if possible.
  */
 Relation
-vacuum_open_relation(Oid relid, RangeVar *relation, bits32 options,
+vacuum_open_relation(Oid relid, RangeVar *relation, uint32 options,
 					 bool verbose, LOCKMODE lmode)
 {
 	Relation	rel;

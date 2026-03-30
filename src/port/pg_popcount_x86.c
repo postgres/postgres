@@ -30,14 +30,14 @@
  * follow than "popcnt" for these names.
  */
 static uint64 pg_popcount_sse42(const char *buf, int bytes);
-static uint64 pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask);
+static uint64 pg_popcount_masked_sse42(const char *buf, int bytes, uint8 mask);
 
 /*
  * These are the AVX-512 implementations of the popcount functions.
  */
 #ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
 static uint64 pg_popcount_avx512(const char *buf, int bytes);
-static uint64 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask);
+static uint64 pg_popcount_masked_avx512(const char *buf, int bytes, uint8 mask);
 #endif							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
 
 /*
@@ -47,9 +47,9 @@ static uint64 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask);
  * caller's request.
  */
 static uint64 pg_popcount_choose(const char *buf, int bytes);
-static uint64 pg_popcount_masked_choose(const char *buf, int bytes, bits8 mask);
+static uint64 pg_popcount_masked_choose(const char *buf, int bytes, uint8 mask);
 uint64		(*pg_popcount_optimized) (const char *buf, int bytes) = pg_popcount_choose;
-uint64		(*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask) = pg_popcount_masked_choose;
+uint64		(*pg_popcount_masked_optimized) (const char *buf, int bytes, uint8 mask) = pg_popcount_masked_choose;
 
 
 #ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
@@ -104,7 +104,7 @@ pg_popcount_choose(const char *buf, int bytes)
 }
 
 static uint64
-pg_popcount_masked_choose(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_choose(const char *buf, int bytes, uint8 mask)
 {
 	choose_popcount_functions();
 	return pg_popcount_masked(buf, bytes, mask);
@@ -174,7 +174,7 @@ pg_popcount_avx512(const char *buf, int bytes)
  */
 pg_attribute_target("avx512vpopcntdq,avx512bw")
 static uint64
-pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_avx512(const char *buf, int bytes, uint8 mask)
 {
 	__m512i		val,
 				vmasked,
@@ -280,7 +280,7 @@ pg_popcount_sse42(const char *buf, int bytes)
  */
 pg_attribute_no_sanitize_alignment()
 static uint64
-pg_popcount_masked_sse42(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_sse42(const char *buf, int bytes, uint8 mask)
 {
 	uint64		popcnt = 0;
 	uint64		maskv = ~UINT64CONST(0) / 0xFF * mask;

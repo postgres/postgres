@@ -54,7 +54,7 @@ typedef IndexTupleData *IndexTuple;
 
 typedef struct IndexAttributeBitMapData
 {
-	bits8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
+	uint8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
 }			IndexAttributeBitMapData;
 
 typedef IndexAttributeBitMapData * IndexAttributeBitMap;
@@ -99,7 +99,7 @@ extern void index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
 							   Datum *values, bool *isnull);
 extern void index_deform_tuple_internal(TupleDesc tupleDescriptor,
 										Datum *values, bool *isnull,
-										char *tp, bits8 *bp, int hasnulls);
+										char *tp, uint8 *bp, int hasnulls);
 extern IndexTuple CopyIndexTuple(IndexTuple source);
 extern IndexTuple index_truncate_tuple(TupleDesc sourceDescriptor,
 									   IndexTuple source, int leavenatts);
@@ -151,7 +151,7 @@ index_getattr(IndexTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 	}
 	else
 	{
-		if (att_isnull(attnum - 1, (bits8 *) tup + sizeof(IndexTupleData)))
+		if (att_isnull(attnum - 1, (uint8 *) tup + sizeof(IndexTupleData)))
 		{
 			*isnull = true;
 			return (Datum) 0;

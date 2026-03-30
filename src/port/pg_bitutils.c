@@ -133,7 +133,7 @@ pg_popcount_portable(const char *buf, int bytes)
  *		Returns the number of 1-bits in buf after applying the mask to each byte
  */
 uint64
-pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_portable(const char *buf, int bytes, uint8 mask)
 {
 	uint64		popcnt = 0;
 
@@ -186,7 +186,7 @@ pg_popcount_optimized(const char *buf, int bytes)
  *		Returns the number of 1-bits in buf after applying the mask to each byte
  */
 uint64
-pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked_optimized(const char *buf, int bytes, uint8 mask)
 {
 	return pg_popcount_masked_portable(buf, bytes, mask);
 }

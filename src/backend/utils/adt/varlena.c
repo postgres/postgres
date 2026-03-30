@@ -3952,7 +3952,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	StringInfoData buf;
 	bool		printed = false;
 	char	   *p;
-	bits8	   *bitmap;
+	uint8	   *bitmap;
 	int			bitmask;
 	int			i;
 	ArrayMetaState *my_extra;

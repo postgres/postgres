@@ -1702,7 +1702,7 @@ ReparameterizeForeignPathByChild(PlannerInfo *root, List *fdw_private,
     <para>
 <programlisting>
 ForeignDataWrapper *
-GetForeignDataWrapperExtended(Oid fdwid, bits16 flags);
+GetForeignDataWrapperExtended(Oid fdwid, uint16 flags);
 </programlisting>
 
      This function returns a <structname>ForeignDataWrapper</structname>
@@ -1731,7 +1731,7 @@ GetForeignDataWrapper(Oid fdwid);
     <para>
 <programlisting>
 ForeignServer *
-GetForeignServerExtended(Oid serverid, bits16 flags);
+GetForeignServerExtended(Oid serverid, uint16 flags);
 </programlisting>
 
      This function returns a <structname>ForeignServer</structname> object

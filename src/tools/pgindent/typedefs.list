@@ -3591,9 +3591,6 @@ bh_node_type
 binaryheap
 binaryheap_comparator
 bitmapword
-bits16
-bits32
-bits8
 blockreftable_hash
 blockreftable_iterator
 bloom_filter

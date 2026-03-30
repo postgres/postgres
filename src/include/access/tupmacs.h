@@ -25,7 +25,7 @@
  * non-null.
  */
 static inline bool
-att_isnull(int ATT, const bits8 *BITS)
+att_isnull(int ATT, const uint8 *BITS)
 {
 	return !(BITS[ATT >> 3] & (1 << (ATT & 0x07)));
 }
@@ -40,7 +40,7 @@ att_isnull(int ATT, const bits8 *BITS)
  * effectively as if natts is rounded up to the next multiple of 8.
  */
 static inline void
-populate_isnull_array(const bits8 *bits, int natts, bool *isnull)
+populate_isnull_array(const uint8 *bits, int natts, bool *isnull)
 {
 	int			nbytes = (natts + 7) >> 3;
 
@@ -60,7 +60,7 @@ populate_isnull_array(const bits8 *bits, int natts, bool *isnull)
 	for (int i = 0; i < nbytes; i++, isnull += 8)
 	{
 		uint64		isnull_8;
-		bits8		nullbyte = ~bits[i];
+		uint8		nullbyte = ~bits[i];
 
 		/* Convert the lower 4 bits of NULL bitmap word into a 64 bit int */
 		isnull_8 = (nullbyte & 0xf) * SPREAD_BITS_MULTIPLIER_32;
@@ -241,7 +241,7 @@ align_fetch_then_add(const char *tupptr, uint32 *off, bool attbyval, int attlen,
  * case.
  */
 static inline int
-first_null_attr(const bits8 *bits, int natts)
+first_null_attr(const uint8 *bits, int natts)
 {
 	int			nattByte = natts >> 3;
 	int			bytenum;

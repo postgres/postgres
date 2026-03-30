@@ -100,7 +100,7 @@ typedef struct
 	 * can't reload the config file safely, so checkpointer updates this value
 	 * as needed. Protected by SyncRepLock.
 	 */
-	bits8		sync_standbys_status;
+	uint8		sync_standbys_status;
 
 	/* used as a registry of physical / logical walsenders to wake */
 	ConditionVariable wal_flush_cv;

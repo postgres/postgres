@@ -1059,7 +1059,7 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 		natts = Min(natts, reqnatts);
 		if (natts > firstNonGuaranteedAttr)
 		{
-			bits8	   *bp = tup->t_bits;
+			uint8	   *bp = tup->t_bits;
 
 			/* Find the first NULL attr */
 			firstNullAttr = first_null_attr(bp, natts);

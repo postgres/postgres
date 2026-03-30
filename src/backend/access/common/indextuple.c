@@ -175,7 +175,7 @@ index_form_tuple_context(TupleDesc tupleDescriptor,
 					tp + hoff,
 					data_size,
 					&tupmask,
-					(hasnull ? (bits8 *) tp + sizeof(IndexTupleData) : NULL));
+					(hasnull ? (uint8 *) tp + sizeof(IndexTupleData) : NULL));
 
 #ifdef TOAST_INDEX_HACK
 	for (i = 0; i < numberOfAttributes; i++)
@@ -232,7 +232,7 @@ nocache_index_getattr(IndexTuple tup,
 {
 	CompactAttribute *cattr;
 	char	   *tp;				/* ptr to data part of tuple */
-	bits8	   *bp = NULL;		/* ptr to null bitmap in tuple */
+	uint8	   *bp = NULL;		/* ptr to null bitmap in tuple */
 	int			data_off;		/* tuple data offset */
 	int			off;			/* current offset within data */
 	int			startAttr;
@@ -255,7 +255,7 @@ nocache_index_getattr(IndexTuple tup,
 	 */
 	if (hasnulls)
 	{
-		bp = (bits8 *) ((char *) tup + sizeof(IndexTupleData));
+		bp = (uint8 *) ((char *) tup + sizeof(IndexTupleData));
 		firstNullAttr = first_null_attr(bp, attnum);
 	}
 	else
@@ -365,10 +365,10 @@ index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
 				   Datum *values, bool *isnull)
 {
 	char	   *tp;				/* ptr to tuple data */
-	bits8	   *bp;				/* ptr to null bitmap in tuple */
+	uint8	   *bp;				/* ptr to null bitmap in tuple */
 
 	/* XXX "knows" t_bits are just after fixed tuple header! */
-	bp = (bits8 *) ((char *) tup + sizeof(IndexTupleData));
+	bp = (uint8 *) ((char *) tup + sizeof(IndexTupleData));
 
 	tp = (char *) tup + IndexInfoFindDataOffset(tup->t_info);
 
@@ -386,7 +386,7 @@ index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
 void
 index_deform_tuple_internal(TupleDesc tupleDescriptor,
 							Datum *values, bool *isnull,
-							char *tp, bits8 *bp, int hasnulls)
+							char *tp, uint8 *bp, int hasnulls)
 {
 	CompactAttribute *cattr;
 	int			natts = tupleDescriptor->natts; /* number of atts to extract */

@@ -38,7 +38,7 @@ typedef enum
 /* options for REINDEX */
 typedef struct ReindexParams
 {
-	bits32		options;		/* bitmask of REINDEXOPT_* */
+	uint32		options;		/* bitmask of REINDEXOPT_* */
 	Oid			tablespaceOid;	/* New tablespace to move indexes to.
 								 * InvalidOid to do nothing. */
 } ReindexParams;
@@ -88,8 +88,8 @@ extern Oid	index_create(Relation heapRelation,
 						 const int16 *coloptions,
 						 const NullableDatum *stattargets,
 						 Datum reloptions,
-						 bits16 flags,
-						 bits16 constr_flags,
+						 uint16 flags,
+						 uint16 constr_flags,
 						 bool allow_system_table_mods,
 						 bool is_internal,
 						 Oid *constraintId);
@@ -122,7 +122,7 @@ extern ObjectAddress index_constraint_create(Relation heapRelation,
 											 const IndexInfo *indexInfo,
 											 const char *constraintName,
 											 char constraintType,
-											 bits16 constr_flags,
+											 uint16 constr_flags,
 											 bool allow_system_table_mods,
 											 bool is_internal);
 

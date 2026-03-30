@@ -337,7 +337,7 @@ array_cat(PG_FUNCTION_ARGS)
 	int			i;
 	char	   *dat1,
 			   *dat2;
-	bits8	   *bitmap1,
+	uint8	   *bitmap1,
 			   *bitmap2;
 	Oid			element_type;
 	Oid			element_type1;
@@ -1013,7 +1013,7 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 		{
 			int			size = (state2->aitems + 7) / 8;
 
-			state1->nullbitmap = (bits8 *) palloc(size);
+			state1->nullbitmap = (uint8 *) palloc(size);
 			memcpy(state1->nullbitmap, state2->nullbitmap, size);
 		}
 
@@ -1084,7 +1084,7 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 				 * previous inputs by marking all their items non-null.
 				 */
 				state1->aitems = pg_nextpower2_32(Max(256, newnitems + 1));
-				state1->nullbitmap = (bits8 *) palloc((state1->aitems + 7) / 8);
+				state1->nullbitmap = (uint8 *) palloc((state1->aitems + 7) / 8);
 				array_bitmap_copy(state1->nullbitmap, 0,
 								  NULL, 0,
 								  state1->nitems);
@@ -1094,7 +1094,7 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 				int			newaitems = state1->aitems + state2->aitems;
 
 				state1->aitems = pg_nextpower2_32(newaitems);
-				state1->nullbitmap = (bits8 *)
+				state1->nullbitmap = (uint8 *)
 					repalloc(state1->nullbitmap, (state1->aitems + 7) / 8);
 			}
 			array_bitmap_copy(state1->nullbitmap, state1->nitems,
@@ -1238,7 +1238,7 @@ array_agg_array_deserialize(PG_FUNCTION_ARGS)
 	{
 		int			size = (result->aitems + 7) / 8;
 
-		result->nullbitmap = (bits8 *) palloc(size);
+		result->nullbitmap = (uint8 *) palloc(size);
 		temp = pq_getmsgbytes(&buf, size);
 		memcpy(result->nullbitmap, temp, size);
 	}

@@ -141,7 +141,7 @@ worker_spi_main(Datum main_arg)
 	Oid			dboid;
 	Oid			roleoid;
 	char	   *p;
-	bits32		flags = 0;
+	uint32		flags = 0;
 
 	table = palloc_object(worktable);
 	sprintf(name, "schema%d", index);
@@ -154,7 +154,7 @@ worker_spi_main(Datum main_arg)
 	p += sizeof(Oid);
 	memcpy(&roleoid, p, sizeof(Oid));
 	p += sizeof(Oid);
-	memcpy(&flags, p, sizeof(bits32));
+	memcpy(&flags, p, sizeof(uint32));
 
 	/* Establish signal handlers before unblocking signals. */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
@@ -400,7 +400,7 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	BgwHandleStatus status;
 	pid_t		pid;
 	char	   *p;
-	bits32		flags = 0;
+	uint32		flags = 0;
 	ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(3);
 	Size		ndim;
 	int			nelems;
@@ -472,7 +472,7 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	p += sizeof(Oid);
 	memcpy(p, &roleoid, sizeof(Oid));
 	p += sizeof(Oid);
-	memcpy(p, &flags, sizeof(bits32));
+	memcpy(p, &flags, sizeof(uint32));
 
 	if (!RegisterDynamicBackgroundWorker(&worker, &handle))
 		PG_RETURN_NULL();

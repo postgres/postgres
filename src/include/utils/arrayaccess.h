@@ -40,7 +40,7 @@ typedef struct array_iter
 
 	/* Fields used when we have a flat array */
 	char	   *dataptr;		/* Current spot in the data area */
-	bits8	   *bitmapptr;		/* Current byte of the nulls bitmap, or NULL */
+	uint8	   *bitmapptr;		/* Current byte of the nulls bitmap, or NULL */
 	int			bitmask;		/* mask for current bit in nulls bitmap */
 
 	/* Fields used in both cases: data about array's element type */

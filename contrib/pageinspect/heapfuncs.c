@@ -56,11 +56,11 @@ HeapTupleHeaderGetOidOld(const HeapTupleHeaderData *tup)
 /*
  * bits_to_text
  *
- * Converts a bits8-array of 'len' bits to a human-readable
+ * Converts a uint8-array of 'len' bits to a human-readable
  * c-string representation.
  */
 static char *
-bits_to_text(bits8 *bits, int len)
+bits_to_text(uint8 *bits, int len)
 {
 	int			i;
 	char	   *str;
@@ -79,13 +79,13 @@ bits_to_text(bits8 *bits, int len)
 /*
  * text_to_bits
  *
- * Converts a c-string representation of bits into a bits8-array. This is
+ * Converts a c-string representation of bits into a uint8-array. This is
  * the reverse operation of previous routine.
  */
-static bits8 *
+static uint8 *
 text_to_bits(char *str, int len)
 {
-	bits8	   *bits;
+	uint8	   *bits;
 	int			off = 0;
 	char		byte = 0;
 
@@ -305,7 +305,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 static Datum
 tuple_data_split_internal(Oid relid, char *tupdata,
 						  uint16 tupdata_len, uint16 t_infomask,
-						  uint16 t_infomask2, bits8 *t_bits,
+						  uint16 t_infomask2, uint8 *t_bits,
 						  bool do_detoast)
 {
 	ArrayBuildState *raw_attrs;
@@ -434,7 +434,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	uint16		t_infomask2;
 	char	   *t_bits_str;
 	bool		do_detoast = false;
-	bits8	   *t_bits = NULL;
+	uint8	   *t_bits = NULL;
 	Datum		res;
 
 	relid = PG_GETARG_OID(0);
@@ -456,7 +456,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/*
-	 * Convert t_bits string back to the bits8 array as represented in the
+	 * Convert t_bits string back to the uint8 array as represented in the
 	 * tuple header.
 	 */
 	if (t_infomask & HEAP_HASNULL)

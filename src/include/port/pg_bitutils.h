@@ -277,7 +277,7 @@ pg_ceil_log2_64(uint64 num)
 }
 
 extern uint64 pg_popcount_portable(const char *buf, int bytes);
-extern uint64 pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask);
+extern uint64 pg_popcount_masked_portable(const char *buf, int bytes, uint8 mask);
 
 #if defined(HAVE_X86_64_POPCNTQ) || defined(USE_SVE_POPCNT_WITH_RUNTIME_CHECK)
 /*
@@ -285,12 +285,12 @@ extern uint64 pg_popcount_masked_portable(const char *buf, int bytes, bits8 mask
  * first.
  */
 extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
-extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask);
+extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, uint8 mask);
 
 #else
 /* Use a portable implementation -- no need for a function pointer. */
 extern uint64 pg_popcount_optimized(const char *buf, int bytes);
-extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask);
+extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, uint8 mask);
 
 #endif
 
@@ -369,7 +369,7 @@ pg_popcount(const char *buf, int bytes)
  * it's likely to be faster.
  */
 static inline uint64
-pg_popcount_masked(const char *buf, int bytes, bits8 mask)
+pg_popcount_masked(const char *buf, int bytes, uint8 mask)
 {
 	/*
 	 * We set the threshold to the point at which we'll first use special

@@ -32,7 +32,7 @@ typedef enum
 typedef struct vacuumingOptions
 {
 	RunMode		mode;
-	bits32		objfilter;
+	uint32		objfilter;
 	bool		verbose;
 	bool		and_analyze;
 	bool		full;

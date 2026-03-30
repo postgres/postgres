@@ -29,7 +29,7 @@
 /* options for CLUSTER */
 typedef struct ClusterParams
 {
-	bits32		options;		/* bitmask of CLUOPT_* */
+	uint32		options;		/* bitmask of CLUOPT_* */
 } ClusterParams;
 
 
