@@ -121,6 +121,9 @@ typedef struct PlannedStmt
 	/* integer list of RT indexes, or NIL */
 	List	   *resultRelations;
 
+	/* RT indexes of relations targeted by INSERT/UPDATE/DELETE/MERGE */
+	Bitmapset  *resultRelationRelids;
+
 	/* list of AppendRelInfo nodes */
 	List	   *appendRelations;
 
@@ -137,6 +140,9 @@ typedef struct PlannedStmt
 
 	/* a list of PlanRowMark's */
 	List	   *rowMarks;
+
+	/* RT indexes of relations with row marks */
+	Bitmapset  *rowMarkRelids;
 
 	/* OIDs of relations the plan depends on */
 	List	   *relationOids;

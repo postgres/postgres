@@ -212,6 +212,13 @@ ExecSerializePlan(Plan *plan, EState *estate)
 
 	pstmt->rewindPlanIDs = NULL;
 	pstmt->rowMarks = NIL;
+
+	/*
+	 * Pass the row mark and result relation relids to parallel workers. They
+	 * may need to check them to inform heuristics.
+	 */
+	pstmt->rowMarkRelids = estate->es_plannedstmt->rowMarkRelids;
+	pstmt->resultRelationRelids = estate->es_plannedstmt->resultRelationRelids;
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
 	pstmt->paramExecTypes = estate->es_plannedstmt->paramExecTypes;
