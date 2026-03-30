@@ -1110,8 +1110,9 @@ NOTICE:  merging definition of column "j" for child "inhtd"
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  i      | integer |           |          |         | plain   |              | 
  j      | bigint  |           |          | 1       | plain   |              | 
-Child tables: inhtb,
-              inhtd
+Child tables:
+    inhtb
+    inhtd
 
 \d+ inhtd
                                    Table "public.inhtd"
@@ -1204,7 +1205,8 @@ CREATE TABLE test_constraints_inh () INHERITS (test_constraints);
  val2   | integer           |           |          |         | plain    |              | 
 Indexes:
     "test_constraints_val1_val2_key" UNIQUE CONSTRAINT, btree (val1, val2)
-Child tables: test_constraints_inh
+Child tables:
+    test_constraints_inh
 
 ALTER TABLE ONLY test_constraints DROP CONSTRAINT test_constraints_val1_val2_key;
 \d+ test_constraints
@@ -1214,7 +1216,8 @@ ALTER TABLE ONLY test_constraints DROP CONSTRAINT test_constraints_val1_val2_key
  id     | integer           |           |          |         | plain    |              | 
  val1   | character varying |           |          |         | extended |              | 
  val2   | integer           |           |          |         | plain    |              | 
-Child tables: test_constraints_inh
+Child tables:
+    test_constraints_inh
 
 \d+ test_constraints_inh
                                  Table "public.test_constraints_inh"
@@ -1239,7 +1242,8 @@ CREATE TABLE test_ex_constraints_inh () INHERITS (test_ex_constraints);
  c      | circle |           |          |         | plain   |              | 
 Indexes:
     "test_ex_constraints_c_excl" EXCLUDE USING gist (c WITH &&)
-Child tables: test_ex_constraints_inh
+Child tables:
+    test_ex_constraints_inh
 
 ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
 \d+ test_ex_constraints
@@ -1247,7 +1251,8 @@ ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
  Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+--------+-----------+----------+---------+---------+--------------+-------------
  c      | circle |           |          |         | plain   |              | 
-Child tables: test_ex_constraints_inh
+Child tables:
+    test_ex_constraints_inh
 
 \d+ test_ex_constraints_inh
                          Table "public.test_ex_constraints_inh"
@@ -1281,7 +1286,8 @@ Not-null constraints:
  id1    | integer |           |          |         | plain   |              | 
 Foreign-key constraints:
     "test_foreign_constraints_id1_fkey" FOREIGN KEY (id1) REFERENCES test_primary_constraints(id)
-Child tables: test_foreign_constraints_inh
+Child tables:
+    test_foreign_constraints_inh
 
 ALTER TABLE test_foreign_constraints DROP CONSTRAINT test_foreign_constraints_id1_fkey;
 \d+ test_foreign_constraints
@@ -1289,7 +1295,8 @@ ALTER TABLE test_foreign_constraints DROP CONSTRAINT test_foreign_constraints_id
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  id1    | integer |           |          |         | plain   |              | 
-Child tables: test_foreign_constraints_inh
+Child tables:
+    test_foreign_constraints_inh
 
 \d+ test_foreign_constraints_inh
                        Table "public.test_foreign_constraints_inh"
@@ -2290,7 +2297,8 @@ Not-null constraints:
     "pp1_f1_not_null" NOT NULL "f1" (inherited)
     "nn" NOT NULL "a2"
 Inherits: pp1
-Child tables: cc2
+Child tables:
+    cc2
 
 \d+ cc2
                                          Table "public.cc2"
@@ -2315,8 +2323,9 @@ alter table pp1 alter column f1 set not null;
  f1     | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "pp1_f1_not_null" NOT NULL "f1"
-Child tables: cc1,
-              cc2
+Child tables:
+    cc1
+    cc2
 
 \d+ cc1
                                     Table "public.cc1"
@@ -2330,7 +2339,8 @@ Not-null constraints:
     "pp1_f1_not_null" NOT NULL "f1" (inherited)
     "nn" NOT NULL "a2"
 Inherits: pp1
-Child tables: cc2
+Child tables:
+    cc2
 
 \d+ cc2
                                          Table "public.cc2"
@@ -2373,7 +2383,8 @@ alter table cc1 alter column a2 drop not null;
 Not-null constraints:
     "pp1_f1_not_null" NOT NULL "f1" (inherited)
 Inherits: pp1
-Child tables: cc2
+Child tables:
+    cc2
 
 -- same for cc2
 alter table cc2 alter column f1 drop not null;
@@ -2402,8 +2413,9 @@ alter table pp1 alter column f1 drop not null;
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  f1     | integer |           |          |         | plain   |              | 
-Child tables: cc1,
-              cc2
+Child tables:
+    cc1
+    cc2
 
 alter table pp1 add primary key (f1);
 -- Leave these tables around, for pg_upgrade testing
@@ -2572,8 +2584,9 @@ Inherits: inh_nn_parent
  a      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "inh_nn_parent_a_not_null" NOT NULL "a" NO INHERIT
-Child tables: inh_nn_child,
-              inh_nn_child2
+Child tables:
+    inh_nn_child
+    inh_nn_child2
 
 drop table inh_nn_parent, inh_nn_child, inh_nn_child2;
 CREATE TABLE inh_nn_parent (a int, NOT NULL a NO INHERIT);
@@ -2632,7 +2645,8 @@ alter table inh_parent alter column f1 set not null;
  f1     | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "inh_parent_f1_not_null" NOT NULL "f1"
-Child tables: inh_child1
+Child tables:
+    inh_child1
 
 \d+ inh_child1
                                 Table "public.inh_child1"
@@ -2642,7 +2656,8 @@ Child tables: inh_child1
 Not-null constraints:
     "inh_child1_f1_not_null" NOT NULL "f1" (local, inherited)
 Inherits: inh_parent
-Child tables: inh_child2
+Child tables:
+    inh_child2
 
 \d+ inh_child2
                                 Table "public.inh_child2"
@@ -2685,8 +2700,9 @@ Not-null constraints:
  f1     | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "inh_child1_f1_not_null" NOT NULL "f1"
-Child tables: inh_child2,
-              inh_child3
+Child tables:
+    inh_child2
+    inh_child3
 
 \d+ inh_child2
                                 Table "public.inh_child2"

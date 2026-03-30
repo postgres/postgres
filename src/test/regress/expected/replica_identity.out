@@ -262,7 +262,8 @@ Indexes:
     "test_replica_identity4_pkey" PRIMARY KEY, btree (id) INVALID REPLICA IDENTITY
 Not-null constraints:
     "test_replica_identity4_id_not_null" NOT NULL "id"
-Partitions: test_replica_identity4_1 FOR VALUES IN (1)
+Partitions:
+    test_replica_identity4_1 FOR VALUES IN (1)
 
 ALTER INDEX test_replica_identity4_pkey
   ATTACH PARTITION test_replica_identity4_1_pkey;
@@ -276,7 +277,8 @@ Indexes:
     "test_replica_identity4_pkey" PRIMARY KEY, btree (id) REPLICA IDENTITY
 Not-null constraints:
     "test_replica_identity4_id_not_null" NOT NULL "id"
-Partitions: test_replica_identity4_1 FOR VALUES IN (1)
+Partitions:
+    test_replica_identity4_1 FOR VALUES IN (1)
 
 -- Dropping the primary key is not allowed if that would leave the replica
 -- identity as nullable

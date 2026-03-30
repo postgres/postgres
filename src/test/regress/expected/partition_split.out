@@ -138,10 +138,11 @@ SET search_path = partition_split_schema, public;
  salesperson_id | integer |           |          |         | plain   |              | 
  sales_date     | date    |           |          |         | plain   |              | 
 Partition key: RANGE (sales_date)
-Partitions: partition_split_schema2.sales_apr2022 FOR VALUES FROM ('04-01-2022') TO ('05-01-2022'),
-            partition_split_schema2.sales_feb2022 FOR VALUES FROM ('02-01-2022') TO ('03-01-2022'),
-            partition_split_schema2.sales_mar2022 FOR VALUES FROM ('03-01-2022') TO ('04-01-2022'),
-            sales_jan2022 FOR VALUES FROM ('01-01-2022') TO ('02-01-2022')
+Partitions:
+    partition_split_schema2.sales_apr2022 FOR VALUES FROM ('04-01-2022') TO ('05-01-2022')
+    partition_split_schema2.sales_feb2022 FOR VALUES FROM ('02-01-2022') TO ('03-01-2022')
+    partition_split_schema2.sales_mar2022 FOR VALUES FROM ('03-01-2022') TO ('04-01-2022')
+    sales_jan2022 FOR VALUES FROM ('01-01-2022') TO ('02-01-2022')
 
 DROP TABLE sales_range;
 DROP TABLE sales_others;
@@ -242,11 +243,12 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
  sales_amount     | integer               |           |          |         | plain    |              | 
  sales_date       | date                  |           |          |         | plain    |              | 
 Partition key: RANGE (sales_date)
-Partitions: partition_split_schema2.sales_mar2022 FOR VALUES FROM ('03-01-2022') TO ('04-01-2022'),
-            sales_apr2022 FOR VALUES FROM ('04-01-2022') TO ('05-01-2022'),
-            sales_feb2022 FOR VALUES FROM ('02-01-2022') TO ('03-01-2022'),
-            sales_jan2022 FOR VALUES FROM ('01-01-2022') TO ('02-01-2022'),
-            sales_others DEFAULT
+Partitions:
+    partition_split_schema2.sales_mar2022 FOR VALUES FROM ('03-01-2022') TO ('04-01-2022')
+    sales_apr2022 FOR VALUES FROM ('04-01-2022') TO ('05-01-2022')
+    sales_feb2022 FOR VALUES FROM ('02-01-2022') TO ('03-01-2022')
+    sales_jan2022 FOR VALUES FROM ('01-01-2022') TO ('02-01-2022')
+    sales_others DEFAULT
 
 SELECT tableoid::regclass, * FROM sales_range ORDER BY tableoid::regclass::text COLLATE "C", salesperson_id;
                tableoid                | salesperson_id | salesperson_name | sales_amount | sales_date 
@@ -1317,7 +1319,8 @@ CREATE TABLE t_bigint_default PARTITION OF t_bigint DEFAULT;
  j      | integer |           |          | 101                                   | plain   |              | 
  k      | integer |           |          | generated always as ((b + 10)) stored | plain   |              | 
 Partition key: RANGE (b)
-Partitions: t_bigint_default DEFAULT
+Partitions:
+    t_bigint_default DEFAULT
 
 \d+ t_bigint_default
                                     Table "partition_split_schema.t_bigint_default"

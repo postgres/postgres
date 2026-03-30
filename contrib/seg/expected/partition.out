@@ -35,8 +35,9 @@ Indexes:
     "pti1" btree ((mydouble(category) + 1))
     "pti2" btree (sdata)
     "pti3" btree (tdata COLLATE mycollation)
-Partitions: pt12 FOR VALUES IN (1, 2),
-            pt34 FOR VALUES IN (3, 4)
+Partitions:
+    pt12 FOR VALUES IN (1, 2)
+    pt34 FOR VALUES IN (3, 4)
 
 \d+ pt12
                                      Table "public.pt12"

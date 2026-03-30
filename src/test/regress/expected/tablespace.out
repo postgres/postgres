@@ -355,8 +355,9 @@ Number of partitions: 2 (Use \d+ to list them.)
 Partition key: LIST (a)
 Indexes:
     "part_a_idx" btree (a), tablespace "regress_tblspace"
-Partitions: testschema.part1 FOR VALUES IN (1),
-            testschema.part2 FOR VALUES IN (2)
+Partitions:
+    testschema.part1 FOR VALUES IN (1)
+    testschema.part2 FOR VALUES IN (2)
 
 \d testschema.part1
              Table "testschema.part1"
@@ -392,8 +393,9 @@ Tablespace: "regress_tblspace"
 --------+---------+------+------------+---------+--------------
  a      | integer | yes  | a          | plain   | 
 btree, for table "testschema.part"
-Partitions: testschema.part1_a_idx,
-            testschema.part2_a_idx
+Partitions:
+    testschema.part1_a_idx
+    testschema.part2_a_idx
 Tablespace: "regress_tblspace"
 
 -- partitioned rels cannot specify the default tablespace.  These fail:

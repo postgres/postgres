@@ -1195,7 +1195,8 @@ Indexes:
     "cnn_primarykey" PRIMARY KEY, btree (b)
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b"
-Child tables: cnn_pk_child
+Child tables:
+    cnn_pk_child
 
                                Table "public.cnn_pk_child"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -1215,7 +1216,8 @@ ALTER TABLE cnn_pk DROP CONSTRAINT cnn_primarykey;
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b"
-Child tables: cnn_pk_child
+Child tables:
+    cnn_pk_child
 
                                Table "public.cnn_pk_child"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -1240,7 +1242,8 @@ Indexes:
     "cnn_primarykey" PRIMARY KEY, btree (b)
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b"
-Child tables: cnn_pk_child
+Child tables:
+    cnn_pk_child
 
                                Table "public.cnn_pk_child"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -1260,7 +1263,8 @@ ALTER TABLE cnn_pk DROP CONSTRAINT cnn_primarykey;
  b      | integer |           | not null |         | plain   |              | 
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b"
-Child tables: cnn_pk_child
+Child tables:
+    cnn_pk_child
 
                                Table "public.cnn_pk_child"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -1288,7 +1292,8 @@ Indexes:
     "cnn_primarykey" PRIMARY KEY, btree (b)
 Not-null constraints:
     "cnn_pk_b_not_null" NOT NULL "b"
-Child tables: cnn_pk_child
+Child tables:
+    cnn_pk_child
 
                                Table "public.cnn_pk_child"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -1356,9 +1361,10 @@ Indexes:
     "notnull_tbl4_pkey" PRIMARY KEY, btree (a) DEFERRABLE INITIALLY DEFERRED
 Not-null constraints:
     "notnull_tbl4_a_not_null" NOT NULL "a"
-Child tables: notnull_tbl4_cld,
-              notnull_tbl4_cld2,
-              notnull_tbl4_cld3
+Child tables:
+    notnull_tbl4_cld
+    notnull_tbl4_cld2
+    notnull_tbl4_cld3
 
 \d+ notnull_tbl4_lk
                               Table "public.notnull_tbl4_lk"

@@ -1261,9 +1261,10 @@ Policies:
       USING ((cid < 55))
 Not-null constraints:
     "part_document_dlevel_not_null" NOT NULL "dlevel"
-Partitions: part_document_fiction FOR VALUES FROM (11) TO (12),
-            part_document_nonfiction FOR VALUES FROM (99) TO (100),
-            part_document_satire FOR VALUES FROM (55) TO (56)
+Partitions:
+    part_document_fiction FOR VALUES FROM (11) TO (12)
+    part_document_nonfiction FOR VALUES FROM (99) TO (100)
+    part_document_satire FOR VALUES FROM (55) TO (56)
 
 SELECT * FROM pg_policies WHERE schemaname = 'regress_rls_schema' AND tablename like '%part_document%' ORDER BY policyname;
      schemaname     |   tablename   | policyname | permissive  |       roles        | cmd |                    qual                    | with_check 

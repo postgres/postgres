@@ -1236,7 +1236,8 @@ primary key, btree, for table "public.atnnpart1"
 Partition key: LIST (id)
 Not-null constraints:
     "dummy_constr" NOT NULL "id" NOT VALID
-Partitions: atnnpart1 FOR VALUES IN (1)
+Partitions:
+    atnnpart1 FOR VALUES IN (1)
 
 BEGIN;
 ALTER TABLE atnnparted VALIDATE CONSTRAINT dummy_constr;
@@ -1267,7 +1268,8 @@ primary key, btree, for table "public.atnnpart1"
 Partition key: LIST (id)
 Not-null constraints:
     "dummy_constr" NOT NULL "id"
-Partitions: atnnpart1 FOR VALUES IN (1)
+Partitions:
+    atnnpart1 FOR VALUES IN (1)
 
 ROLLBACK;
 -- leave a table in this state for the pg_upgrade test
