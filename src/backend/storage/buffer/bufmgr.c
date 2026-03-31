@@ -3281,8 +3281,13 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 			 * We're not allowed to increase the refcount while the buffer
 			 * header spinlock is held. Wait for the lock to be released.
 			 */
-			if (old_buf_state & BM_LOCKED)
+			if (unlikely(old_buf_state & BM_LOCKED))
+			{
 				old_buf_state = WaitBufHdrUnlocked(buf);
+
+				/* perform checks at the top of the loop again */
+				continue;
+			}
 
 			buf_state = old_buf_state;
 
