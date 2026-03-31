@@ -110,6 +110,9 @@ typedef struct GraphTableParseState
 	Oid			graphid;		/* OID of the graph being referenced */
 	List	   *variables;		/* list of element pattern variables in
 								 * GRAPH_TABLE */
+	GraphElementPattern *cur_gep;	/* The element pattern being transformed.
+									 * NULL if no element pattern is being
+									 * transformed. */
 } GraphTableParseState;
 
 /*

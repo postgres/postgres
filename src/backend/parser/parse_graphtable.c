@@ -109,10 +109,25 @@ transformGraphTablePropertyRef(ParseState *pstate, ColumnRef *cref)
 
 		if (list_member(gpstate->variables, field1))
 		{
-			GraphPropertyRef *gpr = makeNode(GraphPropertyRef);
+			GraphPropertyRef *gpr;
 			HeapTuple	pgptup;
 			Form_pg_propgraph_property pgpform;
 
+			/*
+			 * If we are transforming expression in an element pattern,
+			 * property references containing only that variable are allowed.
+			 */
+			if (gpstate->cur_gep)
+			{
+				if (!gpstate->cur_gep->variable ||
+					strcmp(elvarname, gpstate->cur_gep->variable) != 0)
+					ereport(ERROR,
+							errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("non-local element variable reference is not supported"),
+							parser_errposition(pstate, cref->location));
+			}
+
+			gpr = makeNode(GraphPropertyRef);
 			pgptup = SearchSysCache2(PROPGRAPHPROPNAME, ObjectIdGetDatum(gpstate->graphid), CStringGetDatum(propname));
 			if (!HeapTupleIsValid(pgptup))
 				ereport(ERROR,
@@ -230,13 +245,16 @@ transformGraphElementPattern(ParseState *pstate, GraphElementPattern *gep)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("element pattern quantifier is not supported")));
 
-	if (gep->variable)
-		gpstate->variables = list_append_unique(gpstate->variables, makeString(pstrdup(gep->variable)));
+	Assert(!gpstate->cur_gep);
+
+	gpstate->cur_gep = gep;
 
 	gep->labelexpr = transformLabelExpr(gpstate, gep->labelexpr);
 
 	gep->whereClause = transformExpr(pstate, gep->whereClause, EXPR_KIND_WHERE);
 	assign_expr_collations(pstate, gep->whereClause);
+
+	gpstate->cur_gep = NULL;
 
 	return (Node *) gep;
 }
@@ -306,6 +324,9 @@ static Node *
 transformPathPatternList(ParseState *pstate, List *path_pattern)
 {
 	List	   *result = NIL;
+	GraphTableParseState *gpstate = pstate->p_graph_table_pstate;
+
+	Assert(gpstate);
 
 	/* Grammar doesn't allow empty path pattern list */
 	Assert(list_length(path_pattern) > 0);
@@ -318,6 +339,22 @@ transformPathPatternList(ParseState *pstate, List *path_pattern)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("multiple path patterns in one GRAPH_TABLE clause not supported")));
+
+	/*
+	 * Collect all the variables in the path pattern into the
+	 * GraphTableParseState so that we can detect any non-local element
+	 * variable references. We need to do this before transforming the path
+	 * pattern so as to detect forward references to element variables in the
+	 * WHERE clause of an element pattern.
+	 */
+	foreach_node(List, path_term, path_pattern)
+	{
+		foreach_node(GraphElementPattern, gep, path_term)
+		{
+			if (gep->variable)
+				gpstate->variables = list_append_unique(gpstate->variables, makeString(pstrdup(gep->variable)));
+		}
+	}
 
 	foreach_node(List, path_term, path_pattern)
 		result = lappend(result, transformPathTerm(pstate, path_term));
