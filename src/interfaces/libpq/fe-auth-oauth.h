@@ -36,7 +36,7 @@ typedef struct
 
 	bool		v1;
 	bool		builtin;
-	void	   *builtin_flow;
+	void	   *flow_module;
 } fe_oauth_state;
 
 extern void pqClearOAuthToken(PGconn *conn);

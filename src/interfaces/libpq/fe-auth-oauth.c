@@ -890,8 +890,8 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *re
 		"libpq-oauth" DLSUFFIX;
 #endif
 
-	state->builtin_flow = dlopen(module_name, RTLD_NOW | RTLD_LOCAL);
-	if (!state->builtin_flow)
+	state->flow_module = dlopen(module_name, RTLD_NOW | RTLD_LOCAL);
+	if (!state->flow_module)
 	{
 		/*
 		 * For end users, this probably isn't an error condition, it just
@@ -906,8 +906,16 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *re
 		return 0;
 	}
 
-	if ((init = dlsym(state->builtin_flow, "libpq_oauth_init")) == NULL
-		|| (start_flow = dlsym(state->builtin_flow, "pg_start_oauthbearer")) == NULL)
+	/*
+	 * Our libpq-oauth.so provides a special initialization function for libpq
+	 * integration. If we don't find this, assume that a custom module is in
+	 * use instead.
+	 */
+	init = dlsym(state->flow_module, "libpq_oauth_init");
+	if (!init)
+		state->builtin = false; /* adjust our error messages */
+
+	if ((start_flow = dlsym(state->flow_module, "pg_start_oauthbearer")) == NULL)
 	{
 		/*
 		 * This is more of an error condition than the one above, but the
@@ -917,8 +925,8 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *re
 		if (oauth_unsafe_debugging_enabled())
 			fprintf(stderr, "failed dlsym for libpq-oauth: %s\n", dlerror());
 
-		dlclose(state->builtin_flow);
-		state->builtin_flow = NULL;
+		dlclose(state->flow_module);
+		state->flow_module = NULL;
 
 		request->error = libpq_gettext("could not find entry point for libpq-oauth");
 		return -1;
@@ -929,39 +937,42 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *re
 	 * permanently.
 	 */
 
-	/*
-	 * We need to inject necessary function pointers into the module. This
-	 * only needs to be done once -- even if the pointers are constant,
-	 * assigning them while another thread is executing the flows feels like
-	 * tempting fate.
-	 */
-	if ((lockerr = pthread_mutex_lock(&init_mutex)) != 0)
+	if (init)
 	{
-		/* Should not happen... but don't continue if it does. */
-		Assert(false);
+		/*
+		 * We need to inject necessary function pointers into the module. This
+		 * only needs to be done once -- even if the pointers are constant,
+		 * assigning them while another thread is executing the flows feels
+		 * like tempting fate.
+		 */
+		if ((lockerr = pthread_mutex_lock(&init_mutex)) != 0)
+		{
+			/* Should not happen... but don't continue if it does. */
+			Assert(false);
 
-		appendPQExpBuffer(&conn->errorMessage,
-						  "use_builtin_flow: failed to lock mutex (%d)\n",
-						  lockerr);
+			appendPQExpBuffer(&conn->errorMessage,
+							  "use_builtin_flow: failed to lock mutex (%d)\n",
+							  lockerr);
 
-		request->error = "";	/* satisfy report_flow_error() */
-		return -1;
-	}
+			request->error = "";	/* satisfy report_flow_error() */
+			return -1;
+		}
 
-	if (!initialized)
-	{
-		init(
+		if (!initialized)
+		{
+			init(
 #ifdef ENABLE_NLS
-			 libpq_gettext
+				 libpq_gettext
 #else
-			 NULL
+				 NULL
 #endif
-			);
+				);
 
-		initialized = true;
+			initialized = true;
+		}
+
+		pthread_mutex_unlock(&init_mutex);
 	}
-
-	pthread_mutex_unlock(&init_mutex);
 
 	return (start_flow(conn, request) == 0) ? 1 : -1;
 }
