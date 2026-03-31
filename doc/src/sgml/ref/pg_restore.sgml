@@ -1216,19 +1216,27 @@ CREATE DATABASE foo WITH TEMPLATE template0;
     </listitem>
 
     <listitem>
+     <para>
+      Parallel restore (<option>--jobs</option> greater than 1) requires
+      applying dependency information from the archive file to ensure
+      that an object is not restored before other objects it depends on.
+      This information will be incomplete, leading to unexpected restore
+      failures, if the archive does not include object definitions
+      (the <option>pre-data</option> section).  Therefore, avoid
+      using <application>pg_dump</application> options such
+      as <option>--no-schema</option>, <option>-a/--data-only</option>,
+      or <option>--section</option> without <option>pre-data</option> when
+      creating an archive you wish to restore in parallel.  Instead, you
+      may provide such options to <application>pg_restore</application>.
+     </para>
+    </listitem>
+
+    <listitem>
      <para><application>pg_restore</application> cannot restore large objects
       selectively;  for instance, only those for a specific table.  If
       an archive contains large objects, then all large objects will be
       restored, or none of them if they are excluded via <option>-L</option>,
       <option>-t</option>, or other options.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      When restoring from a non-plain-text archive made using
-      <application>pg_dumpall</application>, the <option>--section</option>
-      option may be used, but must include <option>pre-data</option>.
      </para>
     </listitem>
 
@@ -1242,6 +1250,8 @@ CREATE DATABASE foo WITH TEMPLATE template0;
       <option>--no-schema</option>,
       <option>--statistics-only</option>, and
       <option>--strict-names</option>.
+      Also, if the <option>--section</option> option is used, it must
+      include <option>pre-data</option>.
      </para>
     </listitem>
 

@@ -1688,6 +1688,18 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
+   When creating an archive (non-text) output file, it is advisable not to
+   restrict the set of database objects dumped, but instead plan to apply
+   any desired object filtering when reading the archive
+   with <application>pg_restore</application>.  This will preserve
+   flexibility and possibly avoid problems at restore time; for details
+   see the <xref linkend="app-pgrestore"/> documentation.
+   In particular, dumping table data without the corresponding table
+   definition (via <option>--no-schema</option> and related options) is
+   not recommended.
+  </para>
+
+  <para>
    When <option>--statistics</option> is specified,
    <command>pg_dump</command> will include most optimizer statistics in the
    resulting dump file.  This does not include all statistics, such as
