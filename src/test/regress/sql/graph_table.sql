@@ -151,9 +151,13 @@ SELECT * FROM GRAPH_TABLE (myshop MATCH (c IS customers)-[IS customer_orders | c
 SELECT * FROM GRAPH_TABLE (myshop MATCH (c IS customers)->(o IS orders) COLUMNS (c.name, o.ordered_when)) ORDER BY 1;
 
 -- lateral test
-CREATE TABLE x1 (a int, b text);
+-- Use table with a column name same as a property in the property graph so as
+-- to test resolution preferences. Property references are preferred over
+-- lateral table references.
+CREATE TABLE x1 (a int, address text);
 INSERT INTO x1 VALUES (1, 'one'), (2, 'two');
 SELECT * FROM x1, GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.address = 'US' AND c.customer_id = x1.a)-[IS customer_orders]->(o IS orders) COLUMNS (c.name AS customer_name, c.customer_id AS cid));
+SELECT x1.a, g.* FROM x1, GRAPH_TABLE (myshop MATCH (x1 IS customers WHERE x1.address = 'US')-[IS customer_orders]->(o IS orders) COLUMNS (x1.name AS customer_name, x1.customer_id AS cid, o.order_id)) g;
 DROP TABLE x1;
 
 CREATE TABLE v1 (

@@ -614,6 +614,16 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			return node;
 	}
 
+	/*
+	 * Element pattern variables in a GRAPH_TABLE clause form the innermost
+	 * namespace since we do not allow subqueries in GRAPH_TABLE patterns. Try
+	 * to resolve the column reference as a graph table property reference
+	 * before trying to resolve it as a regular column reference.
+	 */
+	node = transformGraphTablePropertyRef(pstate, cref);
+	if (node != NULL)
+		return node;
+
 	/*----------
 	 * The allowed syntaxes are:
 	 *
@@ -825,10 +835,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			crerr = CRERR_TOO_MANY; /* too many dotted names */
 			break;
 	}
-
-	/* Try it as a graph table property reference. */
-	if (node == NULL)
-		node = transformGraphTablePropertyRef(pstate, cref);
 
 	/*
 	 * Now give the PostParseColumnRefHook, if any, a chance.  We pass the
