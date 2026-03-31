@@ -719,6 +719,7 @@ read_buffers(PG_FUNCTION_ARGS)
 	Buffer	   *buffers;
 	Datum	   *buffers_datum;
 	bool	   *io_reqds;
+	int		   *nblocks_per_io;
 
 	Assert(nblocks > 0);
 
@@ -729,6 +730,7 @@ read_buffers(PG_FUNCTION_ARGS)
 	buffers = palloc0(sizeof(Buffer) * nblocks);
 	buffers_datum = palloc0(sizeof(Datum) * nblocks);
 	io_reqds = palloc0(sizeof(bool) * nblocks);
+	nblocks_per_io = palloc0(sizeof(int) * nblocks);
 
 	rel = relation_open(relid, AccessShareLock);
 	smgr = RelationGetSmgr(rel);
@@ -754,6 +756,7 @@ read_buffers(PG_FUNCTION_ARGS)
 										  startblock + nblocks_done,
 										  &nblocks_this_io,
 										  0);
+		nblocks_per_io[nios] = nblocks_this_io;
 		nios++;
 		nblocks_done += nblocks_this_io;
 	}
@@ -777,7 +780,7 @@ read_buffers(PG_FUNCTION_ARGS)
 	for (int nio = 0; nio < nios; nio++)
 	{
 		ReadBuffersOperation *operation = &operations[nio];
-		int			nblocks_this_io = operation->nblocks;
+		int			nblocks_this_io = nblocks_per_io[nio];
 		Datum		values[6] = {0};
 		bool		nulls[6] = {0};
 		ArrayType  *buffers_arr;
@@ -785,9 +788,8 @@ read_buffers(PG_FUNCTION_ARGS)
 		/* convert buffer array to datum array */
 		for (int i = 0; i < nblocks_this_io; i++)
 		{
-			Buffer		buf = operation->buffers[i];
+			Buffer		buf = buffers[nblocks_disp + i];
 
-			Assert(buffers[nblocks_disp + i] == buf);
 			Assert(BufferGetBlockNumber(buf) == startblock + nblocks_disp + i);
 
 			buffers_datum[nblocks_disp + i] = Int32GetDatum(buf);
@@ -809,8 +811,8 @@ read_buffers(PG_FUNCTION_ARGS)
 		values[2] = BoolGetDatum(io_reqds[nio]);
 		nulls[2] = false;
 
-		/* foreign IO */
-		values[3] = BoolGetDatum(operation->foreign_io);
+		/* foreign IO - only valid when IO was required */
+		values[3] = BoolGetDatum(io_reqds[nio] ? operation->foreign_io : false);
 		nulls[3] = false;
 
 		/* nblocks */
@@ -827,13 +829,8 @@ read_buffers(PG_FUNCTION_ARGS)
 	}
 
 	/* release pins on all the buffers */
-	for (int nio = 0; nio < nios; nio++)
-	{
-		ReadBuffersOperation *operation = &operations[nio];
-
-		for (int i = 0; i < operation->nblocks; i++)
-			ReleaseBuffer(operation->buffers[i]);
-	}
+	for (int i = 0; i < nblocks_done; i++)
+		ReleaseBuffer(buffers[i]);
 
 	/*
 	 * Free explicitly, to have a chance to detect potential issues with too
@@ -843,6 +840,7 @@ read_buffers(PG_FUNCTION_ARGS)
 	pfree(buffers);
 	pfree(buffers_datum);
 	pfree(io_reqds);
+	pfree(nblocks_per_io);
 
 	relation_close(rel, NoLock);
 
