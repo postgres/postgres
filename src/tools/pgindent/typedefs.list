@@ -3293,6 +3293,7 @@ VacAttrStatsP
 VacDeadItemsInfo
 VacErrPhase
 VacOptValue
+VacuumCutoffs
 VacuumParams
 VacuumRelation
 VacuumStmt

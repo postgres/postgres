@@ -927,7 +927,7 @@ copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex, bool verb
 	 * not to be aggressive about this.
 	 */
 	memset(&params, 0, sizeof(VacuumParams));
-	vacuum_get_cutoffs(OldHeap, params, &cutoffs);
+	vacuum_get_cutoffs(OldHeap, &params, &cutoffs);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
@@ -1950,7 +1950,7 @@ process_single_relation(RepackStmt *stmt, ClusterParams *params)
 			vac_params.options |= VACOPT_ANALYZE;
 			if (params->options & CLUOPT_VERBOSE)
 				vac_params.options |= VACOPT_VERBOSE;
-			analyze_rel(tableOid, NULL, vac_params,
+			analyze_rel(tableOid, NULL, &vac_params,
 						stmt->relation->va_cols, true, NULL);
 			PopActiveSnapshot();
 			CommandCounterIncrement();

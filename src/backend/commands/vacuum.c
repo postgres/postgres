@@ -462,7 +462,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	}
 
 	/* Now go through the common routine */
-	vacuum(vacstmt->rels, params, bstrategy, vac_context, isTopLevel);
+	vacuum(vacstmt->rels, &params, bstrategy, vac_context, isTopLevel);
 
 	/* Finally, clean up the vacuum memory context */
 	MemoryContextDelete(vac_context);
@@ -491,7 +491,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
  * memory context that will not disappear at transaction commit.
  */
 void
-vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrategy,
+vacuum(List *relations, const VacuumParams *params, BufferAccessStrategy bstrategy,
 	   MemoryContext vac_context, bool isTopLevel)
 {
 	static bool in_vacuum = false;
@@ -500,7 +500,7 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 	volatile bool in_outer_xact,
 				use_own_xacts;
 
-	stmttype = (params.options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
+	stmttype = (params->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were inside
@@ -510,7 +510,7 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
 	 */
-	if (params.options & VACOPT_VACUUM)
+	if (params->options & VACOPT_VACUUM)
 	{
 		PreventInTransactionBlock(isTopLevel, stmttype);
 		in_outer_xact = false;
@@ -533,7 +533,7 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 	 * Build list of relation(s) to process, putting any new data in
 	 * vac_context for safekeeping.
 	 */
-	if (params.options & VACOPT_ONLY_DATABASE_STATS)
+	if (params->options & VACOPT_ONLY_DATABASE_STATS)
 	{
 		/* We don't process any tables in this case */
 		Assert(relations == NIL);
@@ -549,7 +549,7 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 			List	   *sublist;
 			MemoryContext old_context;
 
-			sublist = expand_vacuum_rel(vrel, vac_context, params.options);
+			sublist = expand_vacuum_rel(vrel, vac_context, params->options);
 			old_context = MemoryContextSwitchTo(vac_context);
 			newrels = list_concat(newrels, sublist);
 			MemoryContextSwitchTo(old_context);
@@ -557,7 +557,7 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 		relations = newrels;
 	}
 	else
-		relations = get_all_vacuum_rels(vac_context, params.options);
+		relations = get_all_vacuum_rels(vac_context, params->options);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -573,11 +573,11 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 	 * transaction block, and also in an autovacuum worker, use own
 	 * transactions so we can release locks sooner.
 	 */
-	if (params.options & VACOPT_VACUUM)
+	if (params->options & VACOPT_VACUUM)
 		use_own_xacts = true;
 	else
 	{
-		Assert(params.options & VACOPT_ANALYZE);
+		Assert(params->options & VACOPT_ANALYZE);
 		if (AmAutoVacuumWorkerProcess())
 			use_own_xacts = true;
 		else if (in_outer_xact)
@@ -628,13 +628,13 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 		{
 			VacuumRelation *vrel = lfirst_node(VacuumRelation, cur);
 
-			if (params.options & VACOPT_VACUUM)
+			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, params, bstrategy))
+				if (!vacuum_rel(vrel->oid, vrel->relation, *params, bstrategy))
 					continue;
 			}
 
-			if (params.options & VACOPT_ANALYZE)
+			if (params->options & VACOPT_ANALYZE)
 			{
 				/*
 				 * If using separate xacts, start one for analyze. Otherwise,
@@ -698,8 +698,8 @@ vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrateg
 		StartTransactionCommand();
 	}
 
-	if ((params.options & VACOPT_VACUUM) &&
-		!(params.options & VACOPT_SKIP_DATABASE_STATS))
+	if ((params->options & VACOPT_VACUUM) &&
+		!(params->options & VACOPT_SKIP_DATABASE_STATS))
 	{
 		/*
 		 * Update pg_database.datfrozenxid, and truncate pg_xact if possible.
@@ -1097,7 +1097,7 @@ get_all_vacuum_rels(MemoryContext vac_context, int options)
  * minimum).
  */
 bool
-vacuum_get_cutoffs(Relation rel, const VacuumParams params,
+vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 				   struct VacuumCutoffs *cutoffs)
 {
 	int			freeze_min_age,
@@ -1113,10 +1113,10 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams params,
 				aggressiveMXIDCutoff;
 
 	/* Use mutable copies of freeze age parameters */
-	freeze_min_age = params.freeze_min_age;
-	multixact_freeze_min_age = params.multixact_freeze_min_age;
-	freeze_table_age = params.freeze_table_age;
-	multixact_freeze_table_age = params.multixact_freeze_table_age;
+	freeze_min_age = params->freeze_min_age;
+	multixact_freeze_min_age = params->multixact_freeze_min_age;
+	freeze_table_age = params->freeze_table_age;
+	multixact_freeze_table_age = params->multixact_freeze_table_age;
 
 	/* Set pg_class fields in cutoffs */
 	cutoffs->relfrozenxid = rel->rd_rel->relfrozenxid;
@@ -2301,7 +2301,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 			rel = NULL;
 		}
 		else
-			table_relation_vacuum(rel, params, bstrategy);
+			table_relation_vacuum(rel, &params, bstrategy);
 	}
 
 	/* Roll back any GUC changes executed by index functions */

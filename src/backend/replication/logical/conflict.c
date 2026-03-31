@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/commit_ts.h"
+#include "access/genam.h"
 #include "access/tableam.h"
 #include "executor/executor.h"
 #include "pgstat.h"

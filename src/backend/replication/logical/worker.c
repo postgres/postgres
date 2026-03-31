@@ -247,6 +247,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/genam.h"
 #include "access/commit_ts.h"
 #include "access/table.h"
 #include "access/tableam.h"

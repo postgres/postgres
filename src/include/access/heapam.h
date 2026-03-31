@@ -21,7 +21,6 @@
 #include "access/skey.h"
 #include "access/table.h"		/* for backward compatibility */
 #include "access/tableam.h"
-#include "commands/vacuum.h"
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "storage/bufpage.h"
@@ -48,7 +47,8 @@
 typedef struct BulkInsertStateData *BulkInsertState;
 typedef struct GlobalVisState GlobalVisState;
 typedef struct TupleTableSlot TupleTableSlot;
-struct VacuumCutoffs;
+typedef struct VacuumCutoffs VacuumCutoffs;
+typedef struct VacuumParams VacuumParams;
 
 #define MaxLockTupleMode	LockTupleExclusive
 
@@ -297,7 +297,7 @@ typedef struct PruneFreezeParams
 	 * HEAPTUPLE_DEAD. Currently only vacuum passes in cutoffs. Vacuum
 	 * calculates them once, at the beginning of vacuuming the relation.
 	 */
-	struct VacuumCutoffs *cutoffs;
+	VacuumCutoffs *cutoffs;
 } PruneFreezeParams;
 
 /*
@@ -405,7 +405,7 @@ extern void heap_inplace_update_and_unlock(Relation relation,
 extern void heap_inplace_unlock(Relation relation,
 								HeapTuple oldtup, Buffer buffer);
 extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
-									  const struct VacuumCutoffs *cutoffs,
+									  const VacuumCutoffs *cutoffs,
 									  HeapPageFreeze *pagefrz,
 									  HeapTupleFreeze *frz, bool *totally_frozen);
 
@@ -417,7 +417,7 @@ extern bool heap_freeze_tuple(HeapTupleHeader tuple,
 							  TransactionId relfrozenxid, TransactionId relminmxid,
 							  TransactionId FreezeLimit, TransactionId MultiXactCutoff);
 extern bool heap_tuple_should_freeze(HeapTupleHeader tuple,
-									 const struct VacuumCutoffs *cutoffs,
+									 const VacuumCutoffs *cutoffs,
 									 TransactionId *NoFreezePageRelfrozenXid,
 									 MultiXactId *NoFreezePageRelminMxid);
 extern bool heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple);
@@ -455,7 +455,7 @@ extern void log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 
 /* in heap/vacuumlazy.c */
 extern void heap_vacuum_rel(Relation rel,
-							const VacuumParams params, BufferAccessStrategy bstrategy);
+							const VacuumParams *params, BufferAccessStrategy bstrategy);
 #ifdef USE_ASSERT_CHECKING
 extern bool heap_page_is_all_visible(Relation rel, Buffer buf,
 									 GlobalVisState *vistest,
