@@ -45,7 +45,8 @@
  * Global authentication functions
  *----------------------------------------------------------------
  */
-static void auth_failed(Port *port, int status, const char *logdetail);
+static void auth_failed(Port *port, int elevel, int status,
+						const char *logdetail);
 static char *recv_password_packet(Port *port);
 
 
@@ -233,14 +234,17 @@ ClientAuthentication_hook_type ClientAuthentication_hook = NULL;
  * anyway.
  * Note that many sorts of failure report additional information in the
  * postmaster log, which we hope is only readable by good guys.  In
- * particular, if logdetail isn't NULL, we send that string to the log.
+ * particular, if logdetail isn't NULL, we send that string to the log
+ * when the elevel allows.
  */
 static void
-auth_failed(Port *port, int status, const char *logdetail)
+auth_failed(Port *port, int elevel, int status, const char *logdetail)
 {
 	const char *errstr;
 	char	   *cdetail;
 	int			errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
+
+	Assert(elevel >= FATAL);	/* we must exit here */
 
 	/*
 	 * If we failed due to EOF from client, just quit; there's no point in
@@ -314,12 +318,13 @@ auth_failed(Port *port, int status, const char *logdetail)
 	else
 		logdetail = cdetail;
 
-	ereport(FATAL,
+	ereport(elevel,
 			(errcode(errcode_return),
 			 errmsg(errstr, port->user_name),
 			 logdetail ? errdetail_log("%s", logdetail) : 0));
 
 	/* doesn't return */
+	pg_unreachable();
 }
 
 
@@ -380,6 +385,15 @@ ClientAuthentication(Port *port)
 {
 	int			status = STATUS_ERROR;
 	const char *logdetail = NULL;
+
+	/*
+	 * "Abandoned" is a SASL-specific state similar to STATUS_EOF, in that we
+	 * don't want to generate any server logs. But it's caused by an in-band
+	 * client action that requires a server response, not an out-of-band
+	 * connection closure, so we can't just proc_exit() like we do with
+	 * STATUS_EOF.
+	 */
+	bool		abandoned = false;
 
 	/*
 	 * Get the authentication method to use for this frontend/database
@@ -625,7 +639,8 @@ ClientAuthentication(Port *port)
 			status = STATUS_OK;
 			break;
 		case uaOAuth:
-			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, NULL);
+			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, NULL,
+								   &abandoned);
 			break;
 	}
 
@@ -666,7 +681,10 @@ ClientAuthentication(Port *port)
 	if (status == STATUS_OK)
 		sendAuthRequest(port, AUTH_REQ_OK, NULL, 0);
 	else
-		auth_failed(port, status, logdetail);
+		auth_failed(port,
+					abandoned ? FATAL_CLIENT_ONLY : FATAL,
+					status,
+					logdetail);
 }
 
 
@@ -860,7 +878,7 @@ CheckPWChallengeAuth(Port *port, const char **logdetail)
 		auth_result = CheckMD5Auth(port, shadow_pass, logdetail);
 	else
 		auth_result = CheckSASLAuth(&pg_be_scram_mech, port, shadow_pass,
-									logdetail);
+									logdetail, NULL /* can't abandon SCRAM */ );
 
 	if (shadow_pass)
 		pfree(shadow_pass);

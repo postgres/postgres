@@ -25,6 +25,7 @@
 #define PG_SASL_EXCHANGE_CONTINUE		0
 #define PG_SASL_EXCHANGE_SUCCESS		1
 #define PG_SASL_EXCHANGE_FAILURE		2
+#define PG_SASL_EXCHANGE_ABANDONED		3
 
 /*
  * Maximum accepted size of SASL messages.
@@ -92,8 +93,8 @@ typedef struct pg_be_sasl_mech
 	 *
 	 * Produces a server challenge to be sent to the client.  The callback
 	 * must return one of the PG_SASL_EXCHANGE_* values, depending on
-	 * whether the exchange continues, has finished successfully, or has
-	 * failed.
+	 * whether the exchange continues, has finished successfully, has
+	 * failed, or was abandoned by the client.
 	 *
 	 * Input parameters:
 	 *
@@ -118,8 +119,9 @@ typedef struct pg_be_sasl_mech
 	 *			   returned and the mechanism requires data to be sent during
 	 *			   a successful outcome).  The callback should set this to
 	 *			   NULL if the exchange is over and no output should be sent,
-	 *			   which should correspond to either PG_SASL_EXCHANGE_FAILURE
-	 *			   or a PG_SASL_EXCHANGE_SUCCESS with no outcome data.
+	 *			   which should correspond to either PG_SASL_EXCHANGE_FAILURE,
+	 *			   PG_SASL_EXCHANGE_ABANDONED, or a PG_SASL_EXCHANGE_SUCCESS
+	 *			   with no outcome data.
 	 *
 	 *  outputlen: The length of the challenge data.  Ignored if *output is
 	 *			   NULL.
@@ -128,7 +130,7 @@ typedef struct pg_be_sasl_mech
 	 *			   server log, to disambiguate failure modes.  (The client
 	 *			   will only ever see the same generic authentication
 	 *			   failure message.) Ignored if the exchange is completed
-	 *			   with PG_SASL_EXCHANGE_SUCCESS.
+	 *			   with PG_SASL_EXCHANGE_SUCCESS or PG_SASL_EXCHANGE_ABANDONED.
 	 *---------
 	 */
 	int			(*exchange) (void *state,
@@ -142,6 +144,7 @@ typedef struct pg_be_sasl_mech
 
 /* Common implementation for auth.c */
 extern int	CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port,
-						  char *shadow_pass, const char **logdetail);
+						  char *shadow_pass, const char **logdetail,
+						  bool *abandoned);
 
 #endif							/* PG_SASL_H */

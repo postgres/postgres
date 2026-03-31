@@ -30,6 +30,12 @@
  * be found for the role (or the user does not exist), and the mechanism
  * should fail the authentication exchange.
  *
+ * Some SASL mechanisms (e.g. OAUTHBEARER) define special exchanges for
+ * parameter discovery. These exchanges will always result in STATUS_ERROR,
+ * since we can't let the connection continue, but we shouldn't consider them to
+ * be failed authentication attempts. *abandoned will be set to true in this
+ * case.
+ *
  * Mechanisms must take care not to reveal to the client that a user entry
  * does not exist; ideally, the external failure mode is identical to that
  * of an incorrect password.  Mechanisms may instead use the logdetail
@@ -42,7 +48,7 @@
  */
 int
 CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
-			  const char **logdetail)
+			  const char **logdetail, bool *abandoned)
 {
 	StringInfoData sasl_mechs;
 	int			mtype;
@@ -167,7 +173,7 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 			 * PG_SASL_EXCHANGE_FAILURE with some output is forbidden by SASL.
 			 * Make sure here that the mechanism used got that right.
 			 */
-			if (result == PG_SASL_EXCHANGE_FAILURE)
+			if (result == PG_SASL_EXCHANGE_FAILURE || result == PG_SASL_EXCHANGE_ABANDONED)
 				elog(ERROR, "output message found after SASL exchange failure");
 
 			/*
@@ -183,6 +189,20 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 			pfree(output);
 		}
 	} while (result == PG_SASL_EXCHANGE_CONTINUE);
+
+	if (result == PG_SASL_EXCHANGE_ABANDONED)
+	{
+		if (!abandoned)
+		{
+			/*
+			 * Programmer error: caller needs to track the abandoned state for
+			 * this mechanism.
+			 */
+			elog(ERROR, "SASL exchange was abandoned, but CheckSASLAuth isn't tracking it");
+		}
+
+		*abandoned = true;
+	}
 
 	/* Oops, Something bad happened */
 	if (result != PG_SASL_EXCHANGE_SUCCESS)
