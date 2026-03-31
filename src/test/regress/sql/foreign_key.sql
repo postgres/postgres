@@ -243,6 +243,70 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
 --
+-- Check RLS
+--
+CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
+CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE, ftest2 int );
+
+-- Insert test data into PKTABLE
+INSERT INTO PKTABLE VALUES (1, 'Test1');
+INSERT INTO PKTABLE VALUES (2, 'Test2');
+INSERT INTO PKTABLE VALUES (3, 'Test3');
+
+-- Grant privileges on PKTABLE/FKTABLE to user regress_foreign_key_user
+CREATE USER regress_foreign_key_user NOLOGIN;
+GRANT SELECT ON PKTABLE TO regress_foreign_key_user;
+GRANT SELECT, INSERT ON FKTABLE TO regress_foreign_key_user;
+
+-- Enable RLS on PKTABLE and Create policies
+ALTER TABLE PKTABLE ENABLE ROW LEVEL SECURITY;
+CREATE POLICY pktable_view_odd_policy ON PKTABLE TO regress_foreign_key_user USING (ptest1 % 2 = 1);
+
+ALTER TABLE PKTABLE OWNER to regress_foreign_key_user;
+
+SET ROLE regress_foreign_key_user;
+
+INSERT INTO FKTABLE VALUES (3, 5);
+INSERT INTO FKTABLE VALUES (2, 5); -- success, REFERENCES are not subject to row security
+
+RESET ROLE;
+
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+DROP USER regress_foreign_key_user;
+
+--
+-- Check ACL
+--
+CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
+CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE, ftest2 int );
+
+-- Insert test data into PKTABLE
+INSERT INTO PKTABLE VALUES (1, 'Test1');
+INSERT INTO PKTABLE VALUES (2, 'Test2');
+INSERT INTO PKTABLE VALUES (3, 'Test3');
+
+-- Grant usage on PKTABLE to user regress_foreign_key_user
+CREATE USER regress_foreign_key_user NOLOGIN;
+GRANT SELECT ON PKTABLE TO regress_foreign_key_user;
+
+ALTER TABLE PKTABLE OWNER to regress_foreign_key_user;
+
+-- Inserting into FKTABLE should work
+INSERT INTO FKTABLE VALUES (3, 5);
+
+-- Revoke usage on PKTABLE from user regress_foreign_key_user
+REVOKE SELECT ON PKTABLE FROM regress_foreign_key_user;
+
+-- Inserting into FKTABLE should fail
+INSERT INTO FKTABLE VALUES (2, 6);
+
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+
+DROP USER regress_foreign_key_user;
+
+--
 -- Check initial check upon ALTER TABLE
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, PRIMARY KEY(ptest1, ptest2) );
