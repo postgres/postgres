@@ -2297,26 +2297,41 @@ endforeach
 
 
 if cc.get_id() == 'msvc'
-  cflags_warn += [
+  msvc_common_warning_flags = [
+    # Disable warnings in system headers
+    '/external:anglebrackets',
+    '/external:W0',
+
+    # Warnings to disable:
+    # from /W2:
+    '/wd4244', # conversion from 'type1' to 'type2', possible loss of data
+
+    # Additional warnings to enable:
+    '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
+    '/w24102', # unreferenced label [like -Wunused-label]
+  ]
+
+  msvc_c_warning_flags = [
     # Warnings to disable:
     # from /W1:
     '/wd4090', # different 'modifier' qualifiers
-    # from /W2:
-    '/wd4244', # conversion from 'type1' to 'type2', possible loss of data
     # from /W3:
     '/wd4018', # signed/unsigned mismatch
     '/wd4101', # unreferenced local variable [like -Wunused-variable, but there is no "unused" attribute, so too noisy]
     '/wd4267', # conversion from 'size_t' to 'type', possible loss of data
 
     # Additional warnings to enable:
-    '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
-    '/w24102', # unreferenced label [like -Wunused-label]
     '/w24255', # 'function' : no function prototype given: converting '()' to '(void)' [like -Wstrict-prototypes]
-
-    # Disable warnings in system headers
-    '/external:anglebrackets',
-    '/external:W0',
   ]
+
+  msvc_cxx_warning_flags = [
+  ]
+
+  cflags_warn += msvc_common_warning_flags
+  cflags_warn += msvc_c_warning_flags
+
+  cxxflags_warn += msvc_common_warning_flags
+  cxxflags_warn += msvc_cxx_warning_flags
 
   cppflags += [
     '/DWIN32',
