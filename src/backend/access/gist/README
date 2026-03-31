@@ -10,9 +10,13 @@ GiST stands for Generalized Search Tree. It was introduced in the seminal paper
 Jeffrey F. Naughton, Avi Pfeffer:
 
     http://www.sai.msu.su/~megera/postgres/gist/papers/gist.ps
+
+Concurrency support was described in "Concurrency and Recovery in Generalized
+Search Trees", 1997, Marcel Kornacker, C. Mohan, Joseph M. Hellerstein:
+
     https://dsf.berkeley.edu/papers/sigmod97-gist.pdf
 
-and implemented by J. Hellerstein and P. Aoki in an early version of
+GiST was implemented by J. Hellerstein and P. Aoki in an early version of
 PostgreSQL (more details are available from The GiST Indexing Project
 at Berkeley at http://gist.cs.berkeley.edu/). As a "university"
 project it had a limited number of features and was in rare use.
@@ -55,6 +59,9 @@ The original algorithms were modified in several ways:
   it is now a single-pass algorithm.
 * Since the papers were theoretical, some details were omitted and we
   had to find out ourself how to solve some specific problems.
+* The 1997 paper above (but not the 1995 one) states that leaf pages should
+  store the original key.  While that can be done in PostgreSQL, it is
+  also possible to use a compressed representation in leaf pages.
 
 Because of the above reasons, we have revised the interaction of GiST
 core and PostgreSQL WAL system. Moreover, we encountered (and solved)

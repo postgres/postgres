@@ -273,14 +273,10 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    index will depend on the <function>penalty</function> and <function>picksplit</function>
    methods.
    Two optional methods are <function>compress</function> and
-   <function>decompress</function>, which allow an index to have internal tree data of
-   a different type than the data it indexes. The leaves are to be of the
-   indexed data type, while the other tree nodes can be of any C struct (but
-   you still have to follow <productname>PostgreSQL</productname> data type rules here,
-   see about <literal>varlena</literal> for variable sized data). If the tree's
-   internal data type exists at the SQL level, the <literal>STORAGE</literal> option
-   of the <command>CREATE OPERATOR CLASS</command> command can be used.
-   The optional eighth method is <function>distance</function>, which is needed
+   <function>decompress</function>, which allow an index to store keys that
+   are of a different type than the data it indexes, or are a compressed
+   representation of that type.
+   The optional eighth method <function>distance</function> is needed
    if the operator class wishes to support ordered scans (nearest-neighbor
    searches). The optional ninth method <function>fetch</function> is needed if the
    operator class wishes to support index-only scans, except when the
@@ -294,6 +290,7 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    <filename>src/include/access/cmptype.h</filename>) into strategy numbers
    used by the operator class.  This lets the core code look up operators for
    temporal constraint indexes.
+   All these methods are described in more detail below.
  </para>
 
  <variablelist>
@@ -482,6 +479,24 @@ my_union(PG_FUNCTION_ARGS)
        an index page.
        If the <function>compress</function> method is omitted, data items are stored
        in the index without modification.
+      </para>
+
+      <para>
+       Use the <literal>STORAGE</literal> option of the <command>CREATE
+       OPERATOR CLASS</command> command to define the data type that is
+       stored in the index, if it is different from the data type being
+       indexed.  Be aware however that the <literal>STORAGE</literal> data
+       type is only used to define the physical properties of the index
+       entries (their <replaceable>typlen</replaceable>,
+       <replaceable>typbyval</replaceable>,
+       and <replaceable>typalign</replaceable> attributes).  What is
+       actually in the index datums is under the control of the
+       <function>compress</function> and <function>decompress</function>
+       methods, so long as the stored datums match those properties.
+       It is allowed for <function>compress</function> to produce different
+       representations for leaf keys than for keys on higher-level index
+       pages, so long as both representations match
+       the <literal>STORAGE</literal> data type.
       </para>
 
       <para>
