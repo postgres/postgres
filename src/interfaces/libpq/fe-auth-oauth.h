@@ -34,6 +34,7 @@ typedef struct
 	PGconn	   *conn;
 	void	   *async_ctx;
 
+	bool		v1;
 	bool		builtin;
 	void	   *builtin_flow;
 } fe_oauth_state;
