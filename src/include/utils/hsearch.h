@@ -37,11 +37,10 @@ typedef int (*HashCompareFunc) (const void *key1, const void *key2,
 typedef void *(*HashCopyFunc) (void *dest, const void *src, Size keysize);
 
 /*
- * Space allocation function for a hashtable --- designed to match malloc().
- * Note: there is no free function API; can't destroy a hashtable unless you
- * use the default allocator.
+ * Space allocation function for a hashtable.  Note: there is no free function
+ * API; can't destroy a hashtable unless you use the default allocator.
  */
-typedef void *(*HashAllocFunc) (Size request);
+typedef void *(*HashAllocFunc) (Size request, void *alloc_arg);
 
 /*
  * HASHELEMENT is the private part of a hashtable entry.  The caller's data
@@ -80,6 +79,7 @@ typedef struct HASHCTL
 	HashCopyFunc keycopy;		/* key copying function */
 	/* Used if HASH_ALLOC flag is set: */
 	HashAllocFunc alloc;		/* memory allocator */
+	void	   *alloc_arg;		/* opaque argument passed to allocator */
 	/* Used if HASH_CONTEXT flag is set: */
 	MemoryContext hcxt;			/* memory context to use for allocations */
 	/* Used if HASH_SHARED_MEM flag is set: */

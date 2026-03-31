@@ -100,6 +100,7 @@ typedef struct ShmemAllocatorData
 
 #define ShmemIndexLock (&ShmemAllocator->index_lock)
 
+static void *ShmemHashAlloc(Size size, void *alloc_arg);
 static void *ShmemAllocRaw(Size size, Size *allocated_size);
 
 /* shared memory global variables */
@@ -184,7 +185,8 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 	info.keysize = SHMEM_INDEX_KEYSIZE;
 	info.entrysize = sizeof(ShmemIndexEnt);
 	info.dsize = info.max_dsize = hash_select_dirsize(SHMEM_INDEX_SIZE);
-	info.alloc = ShmemAllocNoError;
+	info.alloc = ShmemHashAlloc;
+	info.alloc_arg = NULL;
 	hash_flags = HASH_ELEM | HASH_STRINGS | HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
 	if (!IsUnderPostmaster)
 	{
@@ -227,6 +229,15 @@ ShmemAlloc(Size size)
  */
 void *
 ShmemAllocNoError(Size size)
+{
+	Size		allocated_size;
+
+	return ShmemAllocRaw(size, &allocated_size);
+}
+
+/* Alloc callback for shared memory hash tables */
+static void *
+ShmemHashAlloc(Size size, void *alloc_arg)
 {
 	Size		allocated_size;
 
@@ -339,7 +350,8 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
 	 * The shared memory allocator must be specified too.
 	 */
 	infoP->dsize = infoP->max_dsize = hash_select_dirsize(max_size);
-	infoP->alloc = ShmemAllocNoError;
+	infoP->alloc = ShmemHashAlloc;
+	infoP->alloc_arg = NULL;
 	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
 
 	/* look it up in the shmem index */
