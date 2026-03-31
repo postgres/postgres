@@ -108,11 +108,11 @@
 /*
  * Constants
  *
- * A hash table has a top-level "directory", each of whose entries points
- * to a "segment" of ssize bucket headers.  The maximum number of hash
- * buckets is thus dsize * ssize (but dsize may be expansible).  Of course,
- * the number of records in the table can be larger, but we don't want a
- * whole lot of records per bucket or performance goes down.
+ * A hash table has a top-level "directory", each of whose entries points to a
+ * "segment" of HASH_SEGSIZE bucket headers.  The maximum number of hash
+ * buckets is thus dsize * HASH_SEGSIZE (but dsize may be expansible).  Of
+ * course, the number of records in the table can be larger, but we don't want
+ * a whole lot of records per bucket or performance goes down.
  *
  * In a hash table allocated in shared memory, the directory cannot be
  * expanded because it must stay at a fixed address.  The directory size
@@ -120,8 +120,8 @@
  * a good idea of the maximum number of entries!).  For non-shared hash
  * tables, the initial directory size can be left at the default.
  */
-#define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT	   8	/* must be log2(DEF_SEGSIZE) */
+#define HASH_SEGSIZE			   256
+#define HASH_SEGSIZE_SHIFT	   8	/* must be log2(HASH_SEGSIZE) */
 #define DEF_DIRSIZE			   256
 
 /* Number of freelists to be used for a partitioned hash table. */
@@ -192,8 +192,6 @@ struct HASHHDR
 	Size		entrysize;		/* total user element size in bytes */
 	int64		num_partitions; /* # partitions (must be power of 2), or 0 */
 	int64		max_dsize;		/* 'dsize' limit if directory is fixed size */
-	int64		ssize;			/* segment size --- must be power of 2 */
-	int			sshift;			/* segment shift = log2(ssize) */
 	int			nelem_alloc;	/* number of entries to allocate at once */
 	bool		isfixed;		/* if true, don't enlarge */
 
@@ -235,8 +233,6 @@ struct HTAB
 
 	/* We keep local copies of these fixed values to reduce contention */
 	Size		keysize;		/* hash key length in bytes */
-	int64		ssize;			/* segment size --- must be power of 2 */
-	int			sshift;			/* segment shift = log2(ssize) */
 
 	/*
 	 * In a USE_VALGRIND build, non-shared hashtables keep an slist chain of
@@ -499,8 +495,6 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 			/* make local copies of some heavily-used values */
 			hctl = hashp->hctl;
 			hashp->keysize = hctl->keysize;
-			hashp->ssize = hctl->ssize;
-			hashp->sshift = hctl->sshift;
 
 			return hashp;
 		}
@@ -544,14 +538,6 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 		hctl->num_partitions = info->num_partitions;
 	}
 
-	if (flags & HASH_SEGMENT)
-	{
-		hctl->ssize = info->ssize;
-		hctl->sshift = my_log2(info->ssize);
-		/* ssize had better be a power of 2 */
-		Assert(hctl->ssize == (1L << hctl->sshift));
-	}
-
 	/*
 	 * SHM hash tables have fixed directory size passed by the caller.
 	 */
@@ -567,8 +553,6 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 
 	/* make local copies of heavily-used constant fields */
 	hashp->keysize = hctl->keysize;
-	hashp->ssize = hctl->ssize;
-	hashp->sshift = hctl->sshift;
 
 	/* Build the hash directory structure */
 	if (!init_htab(hashp, nelem))
@@ -648,9 +632,6 @@ hdefault(HTAB *hashp)
 
 	/* table has no fixed maximum size */
 	hctl->max_dsize = NO_MAX_DSIZE;
-
-	hctl->ssize = DEF_SEGSIZE;
-	hctl->sshift = DEF_SEGSIZE_SHIFT;
 
 	hctl->isfixed = false;		/* can be enlarged */
 
@@ -733,7 +714,7 @@ init_htab(HTAB *hashp, int64 nelem)
 	/*
 	 * Figure number of directory segments needed, round up to a power of 2
 	 */
-	nsegs = (nbuckets - 1) / hctl->ssize + 1;
+	nsegs = (nbuckets - 1) / HASH_SEGSIZE + 1;
 	nsegs = next_pow2_int(nsegs);
 
 	/*
@@ -793,7 +774,7 @@ hash_estimate_size(int64 num_entries, Size entrysize)
 	/* estimate number of buckets wanted */
 	nBuckets = next_pow2_int64(num_entries);
 	/* # of segments needed for nBuckets */
-	nSegments = next_pow2_int64((nBuckets - 1) / DEF_SEGSIZE + 1);
+	nSegments = next_pow2_int64((nBuckets - 1) / HASH_SEGSIZE + 1);
 	/* directory entries */
 	nDirEntries = DEF_DIRSIZE;
 	while (nDirEntries < nSegments)
@@ -805,7 +786,7 @@ hash_estimate_size(int64 num_entries, Size entrysize)
 	size = add_size(size, mul_size(nDirEntries, sizeof(HASHSEGMENT)));
 	/* segments */
 	size = add_size(size, mul_size(nSegments,
-								   MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
+								   MAXALIGN(HASH_SEGSIZE * sizeof(HASHBUCKET))));
 	/* elements --- allocated in groups of choose_nelem_alloc() entries */
 	elementAllocCnt = choose_nelem_alloc(entrysize);
 	nElementAllocs = (num_entries - 1) / elementAllocCnt + 1;
@@ -836,7 +817,7 @@ hash_select_dirsize(int64 num_entries)
 	/* estimate number of buckets wanted */
 	nBuckets = next_pow2_int64(num_entries);
 	/* # of segments needed for nBuckets */
-	nSegments = next_pow2_int64((nBuckets - 1) / DEF_SEGSIZE + 1);
+	nSegments = next_pow2_int64((nBuckets - 1) / HASH_SEGSIZE + 1);
 	/* directory entries */
 	nDirEntries = DEF_DIRSIZE;
 	while (nDirEntries < nSegments)
@@ -1417,7 +1398,6 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	HTAB	   *hashp;
 	HASHHDR    *hctl;
 	uint32		max_bucket;
-	int64		ssize;
 	int64		segment_num;
 	int64		segment_ndx;
 	HASHSEGMENT segp;
@@ -1457,7 +1437,6 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	curBucket = status->curBucket;
 	hashp = status->hashp;
 	hctl = hashp->hctl;
-	ssize = hashp->ssize;
 	max_bucket = hctl->max_bucket;
 
 	if (curBucket > max_bucket)
@@ -1469,8 +1448,8 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	/*
 	 * first find the right segment in the table directory.
 	 */
-	segment_num = curBucket >> hashp->sshift;
-	segment_ndx = MOD(curBucket, ssize);
+	segment_num = curBucket >> HASH_SEGSIZE_SHIFT;
+	segment_ndx = MOD(curBucket, HASH_SEGSIZE);
 
 	segp = hashp->dir[segment_num];
 
@@ -1489,7 +1468,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 			hash_seq_term(status);
 			return NULL;		/* search is done */
 		}
-		if (++segment_ndx >= ssize)
+		if (++segment_ndx >= HASH_SEGSIZE)
 		{
 			segment_num++;
 			segment_ndx = 0;
@@ -1566,8 +1545,8 @@ expand_table(HTAB *hashp)
 #endif
 
 	new_bucket = hctl->max_bucket + 1;
-	new_segnum = new_bucket >> hashp->sshift;
-	new_segndx = MOD(new_bucket, hashp->ssize);
+	new_segnum = new_bucket >> HASH_SEGSIZE_SHIFT;
+	new_segndx = MOD(new_bucket, HASH_SEGSIZE);
 
 	if (new_segnum >= hctl->nsegs)
 	{
@@ -1606,8 +1585,8 @@ expand_table(HTAB *hashp)
 	 * split at this point.  With a different way of reducing the hash value,
 	 * that might not be true!
 	 */
-	old_segnum = old_bucket >> hashp->sshift;
-	old_segndx = MOD(old_bucket, hashp->ssize);
+	old_segnum = old_bucket >> HASH_SEGSIZE_SHIFT;
+	old_segndx = MOD(old_bucket, HASH_SEGSIZE);
 
 	old_seg = hashp->dir[old_segnum];
 	new_seg = hashp->dir[new_segnum];
@@ -1684,12 +1663,12 @@ seg_alloc(HTAB *hashp)
 	HASHSEGMENT segp;
 
 	CurrentDynaHashCxt = hashp->hcxt;
-	segp = (HASHSEGMENT) hashp->alloc(sizeof(HASHBUCKET) * hashp->ssize);
+	segp = (HASHSEGMENT) hashp->alloc(sizeof(HASHBUCKET) * HASH_SEGSIZE);
 
 	if (!segp)
 		return NULL;
 
-	MemSet(segp, 0, sizeof(HASHBUCKET) * hashp->ssize);
+	MemSet(segp, 0, sizeof(HASHBUCKET) * HASH_SEGSIZE);
 
 	return segp;
 }
@@ -1786,8 +1765,8 @@ hash_initial_lookup(HTAB *hashp, uint32 hashvalue, HASHBUCKET **bucketptr)
 
 	bucket = calc_bucket(hctl, hashvalue);
 
-	segment_num = bucket >> hashp->sshift;
-	segment_ndx = MOD(bucket, hashp->ssize);
+	segment_num = bucket >> HASH_SEGSIZE_SHIFT;
+	segment_ndx = MOD(bucket, HASH_SEGSIZE);
 
 	segp = hashp->dir[segment_num];
 

@@ -66,8 +66,6 @@ typedef struct HASHCTL
 {
 	/* Used if HASH_PARTITION flag is set: */
 	int64		num_partitions; /* # partitions (must be power of 2) */
-	/* Used if HASH_SEGMENT flag is set: */
-	int64		ssize;			/* segment size */
 	/* Used if HASH_DIRSIZE flag is set: */
 	int64		dsize;			/* (initial) directory size */
 	int64		max_dsize;		/* limit to dsize if dir size is limited */
@@ -90,7 +88,7 @@ typedef struct HASHCTL
 
 /* Flag bits for hash_create; most indicate which parameters are supplied */
 #define HASH_PARTITION	0x0001	/* Hashtable is used w/partitioned locking */
-#define HASH_SEGMENT	0x0002	/* Set segment size */
+/* 0x0002 is unused */
 #define HASH_DIRSIZE	0x0004	/* Set directory size (initial and max) */
 #define HASH_ELEM		0x0008	/* Set keysize and entrysize (now required!) */
 #define HASH_STRINGS	0x0010	/* Select support functions for string keys */
