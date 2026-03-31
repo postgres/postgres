@@ -163,10 +163,10 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 	}
 	else if (info == XLOG_CHECKPOINT_REDO)
 	{
-		int			wal_level;
+		xl_checkpoint_redo xlrec;
 
-		memcpy(&wal_level, rec, sizeof(int));
-		appendStringInfo(buf, "wal_level %s", get_wal_level_string(wal_level));
+		memcpy(&xlrec, rec, sizeof(xl_checkpoint_redo));
+		appendStringInfo(buf, "wal_level %s", get_wal_level_string(xlrec.wal_level));
 	}
 	else if (info == XLOG_LOGICAL_DECODING_STATUS_CHANGE)
 	{

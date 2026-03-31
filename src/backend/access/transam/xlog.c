@@ -7179,9 +7179,15 @@ CreateCheckPoint(int flags)
 	 */
 	if (!shutdown)
 	{
+		xl_checkpoint_redo redo_rec;
+
+		WALInsertLockAcquire();
+		redo_rec.wal_level = wal_level;
+		WALInsertLockRelease();
+
 		/* Include WAL level in record for WAL summarizer's benefit. */
 		XLogBeginInsert();
-		XLogRegisterData(&wal_level, sizeof(wal_level));
+		XLogRegisterData(&redo_rec, sizeof(xl_checkpoint_redo));
 		(void) XLogInsert(RM_XLOG_ID, XLOG_CHECKPOINT_REDO);
 
 		/*

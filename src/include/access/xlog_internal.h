@@ -303,6 +303,12 @@ typedef struct xl_end_of_recovery
 	int			wal_level;
 } xl_end_of_recovery;
 
+/* checkpoint redo */
+typedef struct xl_checkpoint_redo
+{
+	int			wal_level;
+} xl_checkpoint_redo;
+
 /*
  * The functions in xloginsert.c construct a chain of XLogRecData structs
  * to represent the final WAL record.

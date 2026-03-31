@@ -1435,8 +1435,11 @@ SummarizeXlogRecord(XLogReaderState *xlogreader, bool *new_fast_forward)
 
 	if (info == XLOG_CHECKPOINT_REDO)
 	{
+		xl_checkpoint_redo xlrec;
+
 		/* Payload is wal_level at the time record was written. */
-		memcpy(&record_wal_level, XLogRecGetData(xlogreader), sizeof(int));
+		memcpy(&xlrec, XLogRecGetData(xlogreader), sizeof(xl_checkpoint_redo));
+		record_wal_level = xlrec.wal_level;
 	}
 	else if (info == XLOG_CHECKPOINT_SHUTDOWN)
 	{

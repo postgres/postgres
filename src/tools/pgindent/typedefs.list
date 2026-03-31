@@ -4397,6 +4397,7 @@ xl_btree_split
 xl_btree_unlink_page
 xl_btree_update
 xl_btree_vacuum
+xl_checkpoint_redo
 xl_clog_truncate
 xl_commit_ts_truncate
 xl_dbase_create_file_copy_rec
