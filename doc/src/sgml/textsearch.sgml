@@ -4050,11 +4050,6 @@ Parser: "pg_catalog.default"
      less than 1 megabyte</para>
     </listitem>
     <listitem>
-     <!-- TODO: number of lexemes in what?  This is unclear -->
-     <para>The number of lexemes must be less than
-     2<superscript>64</superscript></para>
-    </listitem>
-    <listitem>
      <para>Position values in <type>tsvector</type> must be greater than 0 and
      no more than 16,383</para>
     </listitem>
