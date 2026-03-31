@@ -2325,6 +2325,9 @@ if cc.get_id() == 'msvc'
   ]
 
   msvc_cxx_warning_flags = [
+    # Warnings to disable:
+    # from /W2:
+    '/wd4200', # nonstandard extension used: zero-sized array in struct/union [widely used in PostgreSQL C headers]
   ]
 
   cflags_warn += msvc_common_warning_flags
