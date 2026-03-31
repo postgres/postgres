@@ -217,7 +217,7 @@ is_log_level_output(int elevel, int log_min_level)
 		if (log_min_level == LOG || log_min_level <= ERROR)
 			return true;
 	}
-	else if (elevel == WARNING_CLIENT_ONLY)
+	else if (elevel == WARNING_CLIENT_ONLY || elevel == FATAL_CLIENT_ONLY)
 	{
 		/* never sent to log, regardless of log_min_level */
 		return false;
@@ -573,7 +573,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	/*
 	 * Perform error recovery action as specified by elevel.
 	 */
-	if (elevel == FATAL)
+	if (elevel == FATAL || elevel == FATAL_CLIENT_ONLY)
 	{
 		/*
 		 * For a FATAL error, we let proc_exit clean up and exit.
@@ -2965,6 +2965,7 @@ write_eventlog(int level, const char *line, int len)
 			break;
 		case ERROR:
 		case FATAL:
+		case FATAL_CLIENT_ONLY:
 		case PANIC:
 		default:
 			eventlevel = EVENTLOG_ERROR_TYPE;
@@ -3800,6 +3801,7 @@ send_message_to_server_log(ErrorData *edata)
 				syslog_level = LOG_WARNING;
 				break;
 			case FATAL:
+			case FATAL_CLIENT_ONLY:
 				syslog_level = LOG_ERR;
 				break;
 			case PANIC:
@@ -4182,6 +4184,7 @@ error_severity(int elevel)
 			prefix = gettext_noop("ERROR");
 			break;
 		case FATAL:
+		case FATAL_CLIENT_ONLY:
 			prefix = gettext_noop("FATAL");
 			break;
 		case PANIC:
