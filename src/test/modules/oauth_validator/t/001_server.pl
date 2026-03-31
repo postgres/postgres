@@ -169,7 +169,8 @@ $node->connect_ok(
 		qr/oauth_validator: issuer="\Q$issuer\E", scope="openid postgres"/,
 		qr/connection authenticated: identity="test" method=oauth/,
 		qr/connection authorized/,
-	]);
+	],
+	log_unlike => [qr/FATAL.*OAuth bearer authentication failed/]);
 
 # Enable PGOAUTHDEBUG for all remaining tests.
 $ENV{PGOAUTHDEBUG} = "UNSAFE";
@@ -187,7 +188,8 @@ $node->connect_ok(
 		qr|oauth_validator: issuer="\Q$issuer/.well-known/oauth-authorization-server/alternate\E", scope="openid postgres alt"|,
 		qr/connection authenticated: identity="testalt" method=oauth/,
 		qr/connection authorized/,
-	]);
+	],
+	log_unlike => [qr/FATAL.*OAuth bearer authentication failed/]);
 
 # The issuer linked by the server must match the client's oauth_issuer setting.
 $node->connect_fails(
