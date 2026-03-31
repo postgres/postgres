@@ -831,7 +831,7 @@ publication_add_schema(Oid pubid, Oid schemaid, bool if_not_exists)
  * Internal function to get the list of publication oids for a relation.
  *
  * If except_flag is true, returns the list of publication that specified the
- * relation in EXCEPT clause; otherwise, returns the list of publications
+ * relation in the EXCEPT clause; otherwise, returns the list of publications
  * in which relation is included.
  */
 static List *
@@ -868,7 +868,7 @@ GetRelationIncludedPublications(Oid relid)
 }
 
 /*
- * Gets list of publication oids which has relation in EXCEPT clause.
+ * Gets list of publication oids which has relation in the EXCEPT clause.
  */
 List *
 GetRelationExcludedPublications(Oid relid)
@@ -1001,7 +1001,7 @@ GetAllTablesPublications(void)
  * publication.
  *
  * For a FOR ALL TABLES publication, the returned list excludes tables mentioned
- * in EXCEPT TABLE clause.
+ * in the EXCEPT clause.
  */
 List *
 GetAllPublicationRelations(Oid pubid, char relkind, bool pubviaroot)

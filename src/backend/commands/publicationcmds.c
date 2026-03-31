@@ -1280,7 +1280,7 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 		{
 			/*
 			 * In FOR ALL TABLES mode, relations are tracked as exclusions
-			 * (EXCEPT TABLES). Fetch the current excluded relations so they
+			 * (EXCEPT clause). Fetch the current excluded relations so they
 			 * can be reconciled with the specified EXCEPT list.
 			 *
 			 * This applies only if the existing publication is already

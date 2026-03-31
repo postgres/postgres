@@ -1,7 +1,7 @@
 
 # Copyright (c) 2026, PostgreSQL Global Development Group
 
-# Logical replication tests for EXCEPT TABLE publications
+# Logical replication tests for publications with EXCEPT clause
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
@@ -26,12 +26,12 @@ sub test_except_root_partition
 {
 	my ($pubviaroot) = @_;
 
-	# If the root partitioned table is in the EXCEPT TABLE clause, all its
+	# If the root partitioned table is in the EXCEPT clause, all its
 	# partitions are excluded from publication, regardless of the
 	# publish_via_partition_root setting.
 	$node_publisher->safe_psql(
 		'postgres', qq(
-		CREATE PUBLICATION tap_pub_part FOR ALL TABLES EXCEPT TABLE (root1) WITH (publish_via_partition_root = $pubviaroot);
+		CREATE PUBLICATION tap_pub_part FOR ALL TABLES EXCEPT (TABLE root1) WITH (publish_via_partition_root = $pubviaroot);
 		INSERT INTO root1 VALUES (1), (101);
 	));
 	$node_subscriber->safe_psql('postgres',
@@ -48,7 +48,7 @@ sub test_except_root_partition
 		"INSERT INTO root1 VALUES (2), (102)");
 
 	# Verify that data inserted into the partitioned table is not published when
-	# it is in the EXCEPT TABLE clause.
+	# it is in the EXCEPT clause.
 	$result = $node_publisher->safe_psql('postgres',
 		"SELECT count(*) = 0 FROM pg_logical_slot_get_binary_changes('test_slot', NULL, NULL, 'proto_version', '1', 'publication_names', 'tap_pub_part')"
 	);
@@ -67,7 +67,7 @@ sub test_except_root_partition
 }
 
 # ============================================
-# EXCEPT TABLE test cases for non-partitioned tables and inherited tables.
+# EXCEPT clause test cases for non-partitioned tables and inherited tables.
 # ============================================
 
 # Create schemas and tables on publisher
@@ -92,9 +92,9 @@ $node_subscriber->safe_psql(
 
 # Exclude tab1 (non-inheritance case), and also exclude parent and ONLY parent1
 # to verify exclusion behavior for inherited tables, including the effect of
-# ONLY in the EXCEPT TABLE clause.
+# ONLY in the EXCEPT clause.
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tab_pub FOR ALL TABLES EXCEPT TABLE (tab1, parent, only parent1)"
+	"CREATE PUBLICATION tab_pub FOR ALL TABLES EXCEPT (TABLE tab1, parent, only parent1)"
 );
 
 # Create a logical replication slot to help with later tests.
@@ -108,38 +108,38 @@ $node_subscriber->safe_psql('postgres',
 # Wait for initial table sync to finish
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'tab_sub');
 
-# Check the table data does not sync for the tables specified in EXCEPT TABLE
+# Check the table data does not sync for the tables specified in the EXCEPT
 # clause.
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab1");
 is($result, qq(0),
-	'check there is no initial data copied for the tables specified in the EXCEPT TABLE clause'
+	'check there is no initial data copied for the tables specified in the EXCEPT clause'
 );
 
-# Insert some data into the table listed in the EXCEPT TABLE clause
+# Insert some data into the table listed in the EXCEPT clause
 $node_publisher->safe_psql(
 	'postgres', qq(
 	INSERT INTO tab1 VALUES(generate_series(11,20));
 	INSERT INTO child VALUES(generate_series(11,20), generate_series(11,20));
 ));
 
-# Verify that data inserted into a table listed in the EXCEPT TABLE clause is
+# Verify that data inserted into a table listed in the EXCEPT clause is
 # not published.
 $result = $node_publisher->safe_psql('postgres',
 	"SELECT count(*) = 0 FROM pg_logical_slot_get_binary_changes('test_slot', NULL, NULL, 'proto_version', '1', 'publication_names', 'tab_pub')"
 );
 is($result, qq(t),
-	'verify no changes for table listed in the EXCEPT TABLE clause are present in the replication slot'
+	'verify no changes for table listed in the EXCEPT clause are present in the replication slot'
 );
 
 # This should be published because ONLY parent1 was specified in the
-# EXCEPT TABLE clause, so the exclusion applies only to the parent table and not
+# EXCEPT clause, so the exclusion applies only to the parent table and not
 # to its child.
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO child1 VALUES(generate_series(11,20), generate_series(11,20))"
 );
 
-# Verify that data inserted into a table listed in the EXCEPT TABLE clause is
+# Verify that data inserted into a table listed in the EXCEPT clause is
 # not replicated.
 $node_publisher->wait_for_catchup('tab_sub');
 $result =
@@ -156,9 +156,9 @@ $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab2 AS SELECT generate_series(1,10) AS a");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab2 (a int)");
 
-# Replace the EXCEPT TABLE list so that only tab2 is excluded.
+# Replace the table list in the EXCEPT clause so that only tab2 is excluded.
 $node_publisher->safe_psql('postgres',
-	"ALTER PUBLICATION tab_pub SET ALL TABLES EXCEPT TABLE (tab2)");
+	"ALTER PUBLICATION tab_pub SET ALL TABLES EXCEPT (TABLE tab2)");
 
 # Refresh the subscription so the subscriber picks up the updated
 # publication definition and initiates table synchronization.
@@ -169,19 +169,19 @@ $node_subscriber->safe_psql('postgres',
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'tab_sub');
 
 # Verify that initial table synchronization does not occur for tables
-# listed in the EXCEPT TABLE clause.
+# listed in the EXCEPT clause.
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab2");
 is($result, qq(0),
-	'check there is no initial data copied for the tables specified in the EXCEPT TABLE clause'
+	'check there is no initial data copied for the tables specified in the EXCEPT clause'
 );
 
 # Verify that table synchronization now happens for tab1. Table tab1 is
-# included now since the EXCEPT TABLE list is only (tab2).
+# included now since the table list of EXCEPT clause is only (tab2).
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab1");
 is($result, qq(20),
-	'check that the data is copied as the tab1 is removed from EXCEPT TABLE clause'
+	'check that the data is copied as the tab1 is removed from EXCEPT clause'
 );
 
 # cleanup
@@ -199,7 +199,7 @@ $node_publisher->safe_psql(
 ));
 
 # ============================================
-# EXCEPT TABLE test cases for partitioned tables
+# EXCEPT clause test cases for partitioned tables
 # ============================================
 # Setup partitioned table and partitions on the publisher that map to normal
 # tables on the subscriber.
@@ -227,11 +227,11 @@ test_except_root_partition('true');
 # Test when a subscription is subscribing to multiple publications
 # ============================================
 
-# OK when a table is excluded by pub1 EXCEPT TABLE, but it is included by pub2
+# OK when a table is excluded by pub1 EXCEPT clause, but it is included by pub2
 # FOR TABLE.
 $node_publisher->safe_psql(
 	'postgres', qq(
-	CREATE PUBLICATION tap_pub1 FOR ALL TABLES EXCEPT TABLE (tab1);
+	CREATE PUBLICATION tap_pub1 FOR ALL TABLES EXCEPT (TABLE tab1);
 	CREATE PUBLICATION tap_pub2 FOR TABLE tab1;
 	INSERT INTO tab1 VALUES(1);
 ));
@@ -247,7 +247,7 @@ $result =
   $node_publisher->safe_psql('postgres', "SELECT * FROM tab1 ORDER BY a");
 is( $result, qq(1
 2),
-	"check replication of a table in the EXCEPT TABLE clause of one publication but included by another"
+	"check replication of a table in the EXCEPT clause of one publication but included by another"
 );
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -256,7 +256,7 @@ $node_publisher->safe_psql(
 ));
 $node_subscriber->safe_psql('postgres', qq(TRUNCATE tab1));
 
-# OK when a table is excluded by pub1 EXCEPT TABLE, but it is included by pub2
+# OK when a table is excluded by pub1 EXCEPT clause, but it is included by pub2
 # FOR ALL TABLES.
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -275,7 +275,7 @@ $result =
   $node_publisher->safe_psql('postgres', "SELECT * FROM tab1 ORDER BY a");
 is( $result, qq(1
 2),
-	"check replication of a table in the EXCEPT TABLE clause of one publication but included by another"
+	"check replication of a table in the EXCEPT clause of one publication but included by another"
 );
 
 $node_subscriber->safe_psql('postgres', 'DROP SUBSCRIPTION tap_sub');

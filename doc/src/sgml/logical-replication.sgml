@@ -119,7 +119,7 @@
    <xref linkend="logical-replication-sequences"/>. When a publication is
    created with <literal>FOR ALL TABLES</literal>, a table or set of tables can
    be explicitly excluded from publication using the
-   <link linkend="sql-createpublication-params-for-except-table"><literal>EXCEPT TABLE</literal></link>
+   <link linkend="sql-createpublication-params-for-except-table"><literal>EXCEPT</literal></link>
    clause.
   </para>
 

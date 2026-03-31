@@ -11256,7 +11256,7 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
  *
  * pub_all_obj_type is one of:
  *
- *		TABLES [EXCEPT TABLE ( table [, ...] )]
+ *		TABLES [EXCEPT (TABLE table [, ...] )]
  *		SEQUENCES
  *
  * CREATE PUBLICATION FOR pub_obj [, ...] [WITH options]
@@ -11399,7 +11399,7 @@ pub_obj_list:	PublicationObjSpec
 	;
 
 opt_pub_except_clause:
-			EXCEPT TABLE '(' pub_except_obj_list ')'	{ $$ = $4; }
+			EXCEPT '(' TABLE pub_except_obj_list ')'	{ $$ = $4; }
 			| /*EMPTY*/									{ $$ = NIL; }
 		;
 
@@ -11439,8 +11439,8 @@ PublicationExceptObjSpec:
 
 pub_except_obj_list: PublicationExceptObjSpec
 					{ $$ = list_make1($1); }
-			| pub_except_obj_list ',' PublicationExceptObjSpec
-					{ $$ = lappend($1, $3); }
+			| pub_except_obj_list ',' opt_table PublicationExceptObjSpec
+					{ $$ = lappend($1, $4); }
 	;
 
 /*****************************************************************************
@@ -11462,7 +11462,7 @@ pub_except_obj_list: PublicationExceptObjSpec
  *
  * pub_all_obj_type is one of:
  *
- *		ALL TABLES [ EXCEPT TABLE ( table_name [, ...] ) ]
+ *		ALL TABLES [ EXCEPT ( TABLE table_name [, ...] ) ]
  *		ALL SEQUENCES
  *
  *****************************************************************************/

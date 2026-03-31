@@ -35,7 +35,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 
 <phrase>and <replaceable class="parameter">publication_all_object</replaceable> is one of:</phrase>
 
-    ALL TABLES [ EXCEPT TABLE ( <replaceable class="parameter">except_table_object</replaceable> [, ... ] ) ]
+    ALL TABLES [ EXCEPT ( <replaceable class="parameter">except_table_object</replaceable> [, ... ] ) ]
     ALL SEQUENCES
 
 <phrase>and <replaceable class="parameter">publication_drop_object</replaceable> is one of:</phrase>
@@ -49,7 +49,11 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 
 <phrase>and <replaceable class="parameter">except_table_object</replaceable> is:</phrase>
 
-    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
+    TABLE <replaceable class="parameter">table_object</replaceable> [, ... ]
+
+<phrase>and <replaceable class="parameter">table_object</replaceable> is:</phrase>
+
+   [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -71,7 +75,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    The third variant either modifies the included tables/schemas
    or marks the publication as <literal>FOR ALL SEQUENCES</literal> or
    <literal>FOR ALL TABLES</literal>, optionally using
-   <literal>EXCEPT TABLE</literal> to exclude specific tables. The
+   <literal>EXCEPT</literal> to exclude specific tables. The
    <literal>SET ALL TABLES</literal> clause can transform an empty publication,
    or one defined for <literal>ALL SEQUENCES</literal> (or both
    <literal>ALL TABLES</literal> and <literal>ALL SEQUENCES</literal>), into
@@ -80,13 +84,13 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    one defined for <literal>ALL TABLES</literal> (or both
    <literal>ALL TABLES</literal> and <literal>ALL SEQUENCES</literal>), into a
    publication defined for <literal>ALL SEQUENCES</literal>. In addition,
-   <literal>SET ALL TABLES</literal> can be used to update the
-   <literal>EXCEPT TABLE</literal> list of a <literal>FOR ALL TABLES</literal>
-   publication. If <literal>EXCEPT TABLE</literal> is specified with a list of
-   tables, the existing exclusion list is replaced with the specified tables.
-   If <literal>EXCEPT TABLE</literal> is omitted, the existing exclusion list
-   is cleared. The <literal>SET</literal> clause, when used with a publication
-   defined with <literal>FOR TABLE</literal> or
+   <literal>SET ALL TABLES</literal> can be used to update the tables specified
+   in the <literal>EXCEPT</literal> clause of a
+   <literal>FOR ALL TABLES</literal> publication. If <literal>EXCEPT</literal>
+   is specified with a list of tables, the existing exclusion list is replaced
+   with the specified tables. If <literal>EXCEPT</literal> is omitted, the
+   existing exclusion list is cleared. The <literal>SET</literal> clause, when
+   used with a publication defined with <literal>FOR TABLE</literal> or
    <literal>FOR TABLES IN SCHEMA</literal>, replaces the list of tables/schemas
    in the publication with the specified list; the existing tables or schemas
    that were present in the publication will be removed.
@@ -263,9 +267,9 @@ ALTER PUBLICATION mypublication SET TABLE users (user_id, firstname, lastname), 
 </programlisting></para>
 
   <para>
-   Replace the publication's EXCEPT TABLE list:
+   Replace the table list in the publication's EXCEPT clause:
 <programlisting>
-ALTER PUBLICATION mypublication SET ALL TABLES EXCEPT TABLE (users, departments);
+ALTER PUBLICATION mypublication SET ALL TABLES EXCEPT (TABLE users, departments);
 </programlisting></para>
 
   <para>

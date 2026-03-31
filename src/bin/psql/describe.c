@@ -3206,7 +3206,7 @@ describeOneTableDetails(const char *schemaname,
 				{
 					/*
 					 * Skip entries where this relation appears in the
-					 * publication's EXCEPT TABLE list.
+					 * publication's EXCEPT list.
 					 */
 					appendPQExpBuffer(&buf,
 									  " AND NOT pr.prexcept\n"

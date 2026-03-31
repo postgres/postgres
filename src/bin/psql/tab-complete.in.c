@@ -2333,14 +2333,18 @@ match_previous_words(int pattern_id,
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL"))
 		COMPLETE_WITH("SEQUENCES", "TABLES");
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES"))
-		COMPLETE_WITH("EXCEPT TABLE (");
+		COMPLETE_WITH("EXCEPT ( TABLE");
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT"))
-		COMPLETE_WITH("TABLE (");
-	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT", "TABLE"))
-		COMPLETE_WITH("(");
+		COMPLETE_WITH("( TABLE");
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT", "("))
+		COMPLETE_WITH("TABLE");
 	/* Complete "ALTER PUBLICATION <name> FOR TABLE" with "<table>, ..." */
-	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT", "TABLE", "("))
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT", "(", "TABLE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT", "(", "TABLE", MatchAnyN) && ends_with(prev_wd, ','))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET", "ALL", "TABLES", "EXCEPT", "(", "TABLE", MatchAnyN) && !ends_with(prev_wd, ','))
+		COMPLETE_WITH(")");
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|DROP|SET", "TABLES", "IN", "SCHEMA"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_schemas
 								 " AND nspname NOT LIKE E'pg\\\\_%%'",
@@ -3738,16 +3742,16 @@ match_previous_words(int pattern_id,
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL"))
 		COMPLETE_WITH("TABLES", "SEQUENCES");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES"))
-		COMPLETE_WITH("EXCEPT TABLE (", "WITH (");
+		COMPLETE_WITH("EXCEPT ( TABLE", "WITH (");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT"))
-		COMPLETE_WITH("TABLE (");
-	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "TABLE"))
-		COMPLETE_WITH("(");
-	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "TABLE", "("))
+		COMPLETE_WITH("( TABLE");
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "("))
+		COMPLETE_WITH("TABLE");
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "(", "TABLE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
-	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "TABLE", "(", MatchAnyN) && ends_with(prev_wd, ','))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "(", "TABLE", MatchAnyN) && ends_with(prev_wd, ','))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
-	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "TABLE", "(", MatchAnyN) && !ends_with(prev_wd, ','))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "EXCEPT", "(", "TABLE", MatchAnyN) && !ends_with(prev_wd, ','))
 		COMPLETE_WITH(")");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLES"))
 		COMPLETE_WITH("IN SCHEMA");

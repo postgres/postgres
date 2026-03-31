@@ -3215,9 +3215,9 @@ my %tests = (
 	'CREATE PUBLICATION pub8' => {
 		create_order => 50,
 		create_sql =>
-		  'CREATE PUBLICATION pub8 FOR ALL TABLES EXCEPT TABLE (dump_test.test_table);',
+		  'CREATE PUBLICATION pub8 FOR ALL TABLES EXCEPT (TABLE dump_test.test_table);',
 		regexp => qr/^
-			\QCREATE PUBLICATION pub8 FOR ALL TABLES EXCEPT TABLE (ONLY dump_test.test_table) WITH (publish = 'insert, update, delete, truncate');\E
+			\QCREATE PUBLICATION pub8 FOR ALL TABLES EXCEPT (TABLE ONLY dump_test.test_table) WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 	},
@@ -3225,9 +3225,9 @@ my %tests = (
 	'CREATE PUBLICATION pub9' => {
 		create_order => 50,
 		create_sql =>
-		  'CREATE PUBLICATION pub9 FOR ALL TABLES EXCEPT TABLE (dump_test.test_table, dump_test.test_second_table);',
+		  'CREATE PUBLICATION pub9 FOR ALL TABLES EXCEPT (TABLE dump_test.test_table, dump_test.test_second_table);',
 		regexp => qr/^
-			\QCREATE PUBLICATION pub9 FOR ALL TABLES EXCEPT TABLE (ONLY dump_test.test_table, ONLY dump_test.test_second_table) WITH (publish = 'insert, update, delete, truncate');\E
+			\QCREATE PUBLICATION pub9 FOR ALL TABLES EXCEPT (TABLE ONLY dump_test.test_table, TABLE ONLY dump_test.test_second_table) WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 	},
@@ -3235,9 +3235,9 @@ my %tests = (
 	'CREATE PUBLICATION pub10' => {
 		create_order => 92,
 		create_sql =>
-		  'CREATE PUBLICATION pub10 FOR ALL TABLES EXCEPT TABLE (dump_test.test_inheritance_parent);',
+		  'CREATE PUBLICATION pub10 FOR ALL TABLES EXCEPT (TABLE dump_test.test_inheritance_parent);',
 		regexp => qr/^
-			\QCREATE PUBLICATION pub10 FOR ALL TABLES EXCEPT TABLE (ONLY dump_test.test_inheritance_parent, ONLY dump_test.test_inheritance_child) WITH (publish = 'insert, update, delete, truncate');\E
+			\QCREATE PUBLICATION pub10 FOR ALL TABLES EXCEPT (TABLE ONLY dump_test.test_inheritance_parent, TABLE ONLY dump_test.test_inheritance_child) WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 	},

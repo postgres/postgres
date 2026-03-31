@@ -106,28 +106,37 @@ SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_forall
 \dRp+ testpub_foralltables
 
 ---------------------------------------------
--- EXCEPT TABLE tests for normal tables
+-- EXCEPT clause tests for normal tables
 ---------------------------------------------
 SET client_min_messages = 'ERROR';
--- Specify table list in the EXCEPT TABLE clause of a FOR ALL TABLES publication
-CREATE PUBLICATION testpub_foralltables_excepttable FOR ALL TABLES EXCEPT TABLE (testpub_tbl1, testpub_tbl2);
+CREATE TABLE testpub_tbl3 (id serial primary key, data text);
+-- Specify table list in the EXCEPT clause of a FOR ALL TABLES publication
+CREATE PUBLICATION testpub_foralltables_excepttable FOR ALL TABLES EXCEPT (TABLE testpub_tbl1, testpub_tbl2, TABLE testpub_tbl3);
 \dRp+ testpub_foralltables_excepttable
--- Specify table in the EXCEPT TABLE clause of a FOR ALL TABLES publication
-CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT TABLE (testpub_tbl1);
+-- Specify table in the EXCEPT clause of a FOR ALL TABLES publication
+CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT (TABLE testpub_tbl1);
 \dRp+ testpub_foralltables_excepttable1
 -- Check that the table description shows the publications where it is listed
--- in the EXCEPT TABLE clause
+-- in the EXCEPT clause
 \d testpub_tbl1
+-- fail - first table in the EXCEPT list should use TABLE keyword
+CREATE PUBLICATION testpub_foralltables_excepttable2 FOR ALL TABLES EXCEPT (testpub_tbl1, testpub_tbl2);
 
 ---------------------------------------------
 -- SET ALL TABLES/SEQUENCES
 ---------------------------------------------
--- Replace the existing EXCEPT TABLE list (testpub_tbl1) with a new
--- EXCEPT TABLE list containing only (testpub_tbl2).
-ALTER PUBLICATION testpub_foralltables_excepttable SET ALL TABLES EXCEPT TABLE (testpub_tbl2);
+-- Replace the existing table list in the EXCEPT clause (testpub_tbl1,
+-- testpub_tbl2, testpub_tbl3) with table (testpub_tbl2).
+ALTER PUBLICATION testpub_foralltables_excepttable SET ALL TABLES EXCEPT (TABLE testpub_tbl2);
 \dRp+ testpub_foralltables_excepttable
 
--- Clear the EXCEPT TABLE list, making the publication include all tables.
+-- Replace the existing table list in the EXCEPT clause (testpub_tbl2) with a
+-- table list containing (testpub_tbl1, testpub_tbl2, testpub_tbl3).
+ALTER PUBLICATION testpub_foralltables_excepttable SET ALL TABLES EXCEPT (TABLE testpub_tbl1, testpub_tbl2, TABLE testpub_tbl3);
+\dRp+ testpub_foralltables_excepttable
+
+-- Clear the table list in the EXCEPT clause, making the publication include all
+-- tables.
 ALTER PUBLICATION testpub_foralltables_excepttable SET ALL TABLES;
 \dRp+ testpub_foralltables_excepttable
 
@@ -149,23 +158,23 @@ ALTER PUBLICATION testpub_forall_tbls_seqs SET ALL SEQUENCES;
 \dRp+ testpub_forall_tbls_seqs
 
 -- fail - SET ALL TABLES/SEQUENCES is not allowed for a 'FOR TABLE' publication
-ALTER PUBLICATION testpub_fortable SET ALL TABLES EXCEPT TABLE (testpub_tbl1);
+ALTER PUBLICATION testpub_fortable SET ALL TABLES EXCEPT (TABLE testpub_tbl1);
 ALTER PUBLICATION testpub_fortable SET ALL TABLES;
 ALTER PUBLICATION testpub_fortable SET ALL SEQUENCES;
 
 -- fail - SET ALL TABLES/SEQUENCES is not allowed for a schema publication
-ALTER PUBLICATION testpub_forschema SET ALL TABLES EXCEPT TABLE (pub_test.testpub_nopk);
+ALTER PUBLICATION testpub_forschema SET ALL TABLES EXCEPT (TABLE pub_test.testpub_nopk);
 ALTER PUBLICATION testpub_forschema SET ALL TABLES;
 ALTER PUBLICATION testpub_forschema SET ALL SEQUENCES;
 
 RESET client_min_messages;
-DROP TABLE testpub_tbl2;
+DROP TABLE testpub_tbl2, testpub_tbl3;
 DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema;
 DROP PUBLICATION testpub_forall_tbls_seqs, testpub_foralltables_excepttable, testpub_foralltables_excepttable1;
 
 ---------------------------------------------
 -- Tests for inherited tables, and
--- EXCEPT TABLE tests for inherited tables
+-- EXCEPT clause tests for inherited tables
 ---------------------------------------------
 SET client_min_messages = 'ERROR';
 CREATE TABLE testpub_tbl_parent (a int);
@@ -174,14 +183,14 @@ CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl_parent;
 \dRp+ testpub3
 CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl_parent;
 \dRp+ testpub4
--- List the parent table in the EXCEPT TABLE clause (without ONLY or '*')
-CREATE PUBLICATION testpub5 FOR ALL TABLES EXCEPT TABLE (testpub_tbl_parent);
+-- List the parent table in the EXCEPT clause (without ONLY or '*')
+CREATE PUBLICATION testpub5 FOR ALL TABLES EXCEPT (TABLE testpub_tbl_parent);
 \dRp+ testpub5
--- EXCEPT with '*': list the table and all its descendants in the EXCEPT TABLE clause
-CREATE PUBLICATION testpub6 FOR ALL TABLES EXCEPT TABLE (testpub_tbl_parent *);
+-- EXCEPT with '*': list the table and all its descendants in the EXCEPT clause
+CREATE PUBLICATION testpub6 FOR ALL TABLES EXCEPT (TABLE testpub_tbl_parent *);
 \dRp+ testpub6
--- EXCEPT with ONLY: list the table in the EXCEPT TABLE clause, but not its descendants
-CREATE PUBLICATION testpub7 FOR ALL TABLES EXCEPT TABLE (ONLY testpub_tbl_parent);
+-- EXCEPT with ONLY: list the table in the EXCEPT clause, but not its descendants
+CREATE PUBLICATION testpub7 FOR ALL TABLES EXCEPT (TABLE ONLY testpub_tbl_parent);
 \dRp+ testpub7
 
 RESET client_min_messages;
@@ -189,20 +198,20 @@ DROP TABLE testpub_tbl_parent, testpub_tbl_child;
 DROP PUBLICATION testpub3, testpub4, testpub5, testpub6, testpub7;
 
 ---------------------------------------------
--- EXCEPT TABLE tests for partitioned tables
+-- EXCEPT clause tests for partitioned tables
 ---------------------------------------------
 SET client_min_messages = 'ERROR';
 CREATE TABLE testpub_root(a int) PARTITION BY RANGE(a);
 CREATE TABLE testpub_part1 PARTITION OF testpub_root FOR VALUES FROM (0) TO (100);
-CREATE PUBLICATION testpub8 FOR ALL TABLES EXCEPT TABLE (testpub_root);
+CREATE PUBLICATION testpub8 FOR ALL TABLES EXCEPT (TABLE testpub_root);
 \dRp+ testpub8;
 \d testpub_part1
 \d testpub_root
-CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT TABLE (testpub_part1);
+CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT (TABLE testpub_part1);
 
 CREATE TABLE tab_main (a int) PARTITION BY RANGE(a);
 -- Attaching a partition is not allowed if the partitioned table appears in a
--- publication's EXCEPT TABLE clause.
+-- publication's EXCEPT clause.
 ALTER TABLE tab_main ATTACH PARTITION testpub_root FOR VALUES FROM (0) TO (200);
 
 RESET client_min_messages;
@@ -1037,7 +1046,7 @@ RESET client_min_messages;
 ALTER PUBLICATION testpub5 OWNER TO regress_publication_user3;
 SET ROLE regress_publication_user3;
 -- fail - SET ALL TABLES/SEQUENCES on a publication requires superuser privileges
-ALTER PUBLICATION testpub5 SET ALL TABLES EXCEPT TABLE (testpub_tbl1); -- fail
+ALTER PUBLICATION testpub5 SET ALL TABLES EXCEPT (TABLE testpub_tbl1); -- fail
 ALTER PUBLICATION testpub5 SET ALL TABLES; -- fail
 ALTER PUBLICATION testpub5 SET ALL SEQUENCES; -- fail
 
