@@ -782,6 +782,7 @@ task:
     CIRRUS_WINDOWS_ERROR_MODE: 0x8001
 
     MESON_FEATURES:
+      -Dcpp_args=/std:c++20
       -Dauto_features=disabled
       -Dldap=enabled
       -Dssl=openssl

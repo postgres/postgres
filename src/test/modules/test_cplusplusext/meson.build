@@ -1,11 +1,6 @@
 # Copyright (c) 2025-2026, PostgreSQL Global Development Group
 
-if not have_cxx
-  subdir_done()
-endif
-
-# Currently not supported, to be fixed.
-if cc.get_id() == 'msvc'
+if not have_cxx or not have_cxx_desinit
   subdir_done()
 endif
 

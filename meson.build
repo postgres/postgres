@@ -2176,6 +2176,20 @@ choke me
 endif
 
 
+# Check whether the C++ compiler supports designated initializers.
+# These are used by PG_MODULE_MAGIC, and we use the result of this
+# test to decide whether to enable the test_cplusplusext test module.
+# Designated initializers only got standardized in C++20.  In GCC and
+# Clang they also work when using earlier C++ versions, but MSVC
+# really only supports them when its configured to be in C++20 mode or
+# higher.
+if have_cxx
+  have_cxx_desinit = cxx.compiles('struct S { int x; } s = { .x = 1 };', name: 'C++ designated initializers')
+else
+  have_cxx_desinit = false
+endif
+
+
 
 ###############################################################
 # Compiler flags
