@@ -280,32 +280,20 @@ else
 	# --inputdir points to the path of the input files.
 	my $inputdir = "$srcdir/src/test/regress";
 
-	note 'running regression tests in old instance';
-	my $rc =
-	  system($ENV{PG_REGRESS}
-		  . " $extra_opts "
-		  . "--dlpath=\"$dlpath\" "
-		  . "--bindir= "
-		  . "--host="
-		  . $oldnode->host . " "
-		  . "--port="
-		  . $oldnode->port . " "
-		  . "--schedule=$srcdir/src/test/regress/parallel_schedule "
-		  . "--max-concurrent-tests=20 "
-		  . "--inputdir=\"$inputdir\" "
-		  . "--outputdir=\"$outputdir\"");
-	if ($rc != 0)
-	{
-		# Dump out the regression diffs file, if there is one
-		my $diffs = "$outputdir/regression.diffs";
-		if (-e $diffs)
-		{
-			print "=== dumping $diffs ===\n";
-			print slurp_file($diffs);
-			print "=== EOF ===\n";
-		}
-	}
-	is($rc, 0, 'regression tests pass');
+	command_ok(
+		[
+			$ENV{PG_REGRESS},
+			split(' ', $extra_opts),
+			"--dlpath=$dlpath",
+			'--bindir=',
+			'--host=' . $oldnode->host,
+			'--port=' . $oldnode->port,
+			"--schedule=$srcdir/src/test/regress/parallel_schedule",
+			'--max-concurrent-tests=20',
+			"--inputdir=$inputdir",
+			"--outputdir=$outputdir"
+		],
+		'regression tests in old instance');
 }
 
 # Initialize a new node for the upgrade.

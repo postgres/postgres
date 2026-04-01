@@ -68,48 +68,23 @@ my $outputdir = $PostgreSQL::Test::Utils::tmp_check;
 
 # Run the regression tests against the primary.
 my $extra_opts = $ENV{EXTRA_REGRESS_OPTS} || "";
-my $rc =
-  system($ENV{PG_REGRESS}
-	  . " $extra_opts "
-	  . "--dlpath=\"$dlpath\" "
-	  . "--bindir= "
-	  . "--host="
-	  . $node_primary->host . " "
-	  . "--port="
-	  . $node_primary->port . " "
-	  . "--schedule=../regress/parallel_schedule "
-	  . "--max-concurrent-tests=20 "
-	  . "--inputdir=../regress "
-	  . "--outputdir=\"$outputdir\"");
+command_ok(
+	[
+		$ENV{PG_REGRESS},
+		split(' ', $extra_opts),
+		"--dlpath=$dlpath",
+		'--bindir=',
+		'--host=' . $node_primary->host,
+		'--port=' . $node_primary->port,
+		'--schedule=../regress/parallel_schedule',
+		'--max-concurrent-tests=20',
+		'--inputdir=../regress',
+		"--outputdir=$outputdir"
+	],
+	'regression tests pass');
 
-# Regression diffs are only meaningful if both the primary and the standby
-# are still alive after a regression test failure.
 my $primary_alive = $node_primary->is_alive;
 my $standby_alive = $node_standby_1->is_alive;
-if ($rc != 0 && $primary_alive && $standby_alive)
-{
-	# Dump out the regression diffs file, if there is one
-	my $diffs = "$outputdir/regression.diffs";
-	if (-e $diffs)
-	{
-		# Dump portions of the diff file.
-		my ($head, $tail) = read_head_tail($diffs);
-
-		diag("=== dumping $diffs (head) ===");
-		foreach my $line (@$head)
-		{
-			diag($line);
-		}
-
-		diag("=== dumping $diffs (tail) ===");
-		foreach my $line (@$tail)
-		{
-			diag($line);
-		}
-		diag("=== EOF ===");
-	}
-}
-is($rc, 0, 'regression tests pass');
 is($primary_alive, 1, 'primary alive after regression test run');
 is($standby_alive, 1, 'standby alive after regression test run');
 
