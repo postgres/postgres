@@ -63,6 +63,10 @@ use Time::HiRes qw(usleep);
 # We need a version of Test::More recent enough to support subtests
 use Test::More 0.98;
 
+# When Utils functions are called via Cluster.pm wrappers, croak() should
+# skip both packages and report the caller in the test script.
+our @CARP_NOT = qw(PostgreSQL::Test::Cluster);
+
 our @EXPORT = qw(
   generate_ascii_string
   slurp_dir
@@ -636,7 +640,7 @@ sub read_head_tail
 
 	return ([], []) if $line_count <= 0;
 
-	open my $fh, '<', $filename or die "couldn't open file: $filename\n";
+	open my $fh, '<', $filename or croak "couldn't open file: $filename\n";
 	my @lines = <$fh>;
 	close $fh;
 
@@ -701,7 +705,7 @@ sub check_mode_recursive
 					}
 					else
 					{
-						die $msg;
+						croak $msg;
 					}
 				}
 
@@ -740,7 +744,7 @@ sub check_mode_recursive
 				# Else something we can't handle
 				else
 				{
-					die "unknown file type for $File::Find::name";
+					croak "unknown file type for $File::Find::name";
 				}
 			}
 		},
@@ -772,7 +776,7 @@ sub chmod_recursive
 					chmod(
 						S_ISDIR($file_stat->mode) ? $dir_mode : $file_mode,
 						$File::Find::name
-					) or die "unable to chmod $File::Find::name";
+					) or croak "unable to chmod $File::Find::name";
 				}
 			}
 		},
@@ -798,11 +802,11 @@ sub scan_server_header
 	my $result = IPC::Run::run [ 'pg_config', '--includedir-server' ],
 	  '>' => \$stdout,
 	  '2>' => \$stderr
-	  or die "could not execute pg_config";
+	  or croak "could not execute pg_config";
 	chomp($stdout);
 	$stdout =~ s/\r$//;
 
-	open my $header_h, '<', "$stdout/$header_path" or die "$!";
+	open my $header_h, '<', "$stdout/$header_path" or croak "$!";
 
 	my @match = undef;
 	while (<$header_h>)
@@ -816,7 +820,7 @@ sub scan_server_header
 	}
 
 	close $header_h;
-	die "could not find match in header $header_path\n"
+	croak "could not find match in header $header_path\n"
 	  unless @match;
 	return @match;
 }
@@ -837,11 +841,11 @@ sub check_pg_config
 	my $result = IPC::Run::run [ 'pg_config', '--includedir' ],
 	  '>' => \$stdout,
 	  '2>' => \$stderr
-	  or die "could not execute pg_config";
+	  or croak "could not execute pg_config";
 	chomp($stdout);
 	$stdout =~ s/\r$//;
 
-	open my $pg_config_h, '<', "$stdout/pg_config.h" or die "$!";
+	open my $pg_config_h, '<', "$stdout/pg_config.h" or croak "$!";
 	my $match = (grep { /^$regexp/ } <$pg_config_h>);
 	close $pg_config_h;
 	return $match;
@@ -946,13 +950,13 @@ sub dir_symlink
 			# need some indirection on msys
 			$cmd = qq{echo '$cmd' | \$COMSPEC /Q};
 		}
-		system($cmd) == 0 or die;
+		system($cmd) == 0 or croak;
 	}
 	else
 	{
-		symlink $oldname, $newname or die $!;
+		symlink $oldname, $newname or croak $!;
 	}
-	die "No $newname" unless -e $newname;
+	croak "No $newname" unless -e $newname;
 }
 
 # Log command output. Truncates to first/last 30 lines if over 60 lines.
@@ -1275,7 +1279,7 @@ sub command_checks_all
 
 	# See http://perldoc.perl.org/perlvar.html#%24CHILD_ERROR
 	my $ret = $?;
-	die "command exited with signal " . ($ret & 127)
+	croak "command exited with signal " . ($ret & 127)
 	  if $ret & 127;
 	$ret = $ret >> 8;
 
