@@ -382,13 +382,14 @@ extern void heap_multi_insert(Relation relation, TupleTableSlot **slots,
 							  int ntuples, CommandId cid, uint32 options,
 							  BulkInsertState bistate);
 extern TM_Result heap_delete(Relation relation, const ItemPointerData *tid,
-							 CommandId cid, Snapshot crosscheck, bool wait,
-							 TM_FailureData *tmfd, bool changingPart);
+							 CommandId cid, uint32 options, Snapshot crosscheck,
+							 bool wait, TM_FailureData *tmfd);
 extern void heap_finish_speculative(Relation relation, const ItemPointerData *tid);
 extern void heap_abort_speculative(Relation relation, const ItemPointerData *tid);
 extern TM_Result heap_update(Relation relation, const ItemPointerData *otid,
 							 HeapTuple newtup,
-							 CommandId cid, Snapshot crosscheck, bool wait,
+							 CommandId cid, uint32 options,
+							 Snapshot crosscheck, bool wait,
 							 TM_FailureData *tmfd, LockTupleMode *lockmode,
 							 TU_UpdateIndexes *update_indexes);
 extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,

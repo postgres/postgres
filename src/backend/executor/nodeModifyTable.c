@@ -1751,14 +1751,18 @@ ExecDeleteAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 			  ItemPointer tupleid, bool changingPart)
 {
 	EState	   *estate = context->estate;
+	uint32		options = 0;
+
+	if (changingPart)
+		options |= TABLE_DELETE_CHANGING_PARTITION;
 
 	return table_tuple_delete(resultRelInfo->ri_RelationDesc, tupleid,
 							  estate->es_output_cid,
+							  options,
 							  estate->es_snapshot,
 							  estate->es_crosscheck_snapshot,
 							  true /* wait for commit */ ,
-							  &context->tmfd,
-							  changingPart);
+							  &context->tmfd);
 }
 
 /*
@@ -2568,6 +2572,7 @@ lreplace:
 	 */
 	result = table_tuple_update(resultRelationDesc, tupleid, slot,
 								estate->es_output_cid,
+								0,
 								estate->es_snapshot,
 								estate->es_crosscheck_snapshot,
 								true /* wait for commit */ ,

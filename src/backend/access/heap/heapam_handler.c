@@ -313,21 +313,23 @@ heapam_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
 
 static TM_Result
 heapam_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
-					Snapshot snapshot, Snapshot crosscheck, bool wait,
-					TM_FailureData *tmfd, bool changingPart)
+					uint32 options, Snapshot snapshot, Snapshot crosscheck,
+					bool wait, TM_FailureData *tmfd)
 {
 	/*
 	 * Currently Deleting of index tuples are handled at vacuum, in case if
 	 * the storage itself is cleaning the dead tuples by itself, it is the
 	 * time to call the index tuple deletion also.
 	 */
-	return heap_delete(relation, tid, cid, crosscheck, wait, tmfd, changingPart);
+	return heap_delete(relation, tid, cid, options, crosscheck, wait,
+					   tmfd);
 }
 
 
 static TM_Result
 heapam_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
-					CommandId cid, Snapshot snapshot, Snapshot crosscheck,
+					CommandId cid, uint32 options,
+					Snapshot snapshot, Snapshot crosscheck,
 					bool wait, TM_FailureData *tmfd,
 					LockTupleMode *lockmode, TU_UpdateIndexes *update_indexes)
 {
@@ -339,7 +341,8 @@ heapam_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
 	slot->tts_tableOid = RelationGetRelid(relation);
 	tuple->t_tableOid = slot->tts_tableOid;
 
-	result = heap_update(relation, otid, tuple, cid, crosscheck, wait,
+	result = heap_update(relation, otid, tuple, cid, options,
+						 crosscheck, wait,
 						 tmfd, lockmode, update_indexes);
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 

@@ -320,9 +320,9 @@ simple_table_tuple_delete(Relation rel, ItemPointer tid, Snapshot snapshot)
 
 	result = table_tuple_delete(rel, tid,
 								GetCurrentCommandId(true),
-								snapshot, InvalidSnapshot,
+								0, snapshot, InvalidSnapshot,
 								true /* wait for commit */ ,
-								&tmfd, false /* changingPart */ );
+								&tmfd);
 
 	switch (result)
 	{
@@ -369,7 +369,7 @@ simple_table_tuple_update(Relation rel, ItemPointer otid,
 
 	result = table_tuple_update(rel, otid, slot,
 								GetCurrentCommandId(true),
-								snapshot, InvalidSnapshot,
+								0, snapshot, InvalidSnapshot,
 								true /* wait for commit */ ,
 								&tmfd, &lockmode, update_indexes);
 

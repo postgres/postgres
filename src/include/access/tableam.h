@@ -282,6 +282,12 @@ typedef struct TM_IndexDeleteOp
 #define TABLE_INSERT_FROZEN			0x0004
 #define TABLE_INSERT_NO_LOGICAL		0x0008
 
+/* "options" flag bits for table_tuple_delete */
+#define TABLE_DELETE_CHANGING_PARTITION			(1 << 0)
+
+/* "options" flag bits for table_tuple_update */
+/* XXX none at present */
+
 /* flag bits for table_tuple_lock */
 /* Follow tuples whose update is in progress if lock modes don't conflict  */
 #define TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS	(1 << 0)
@@ -559,17 +565,18 @@ typedef struct TableAmRoutine
 	TM_Result	(*tuple_delete) (Relation rel,
 								 ItemPointer tid,
 								 CommandId cid,
+								 uint32 options,
 								 Snapshot snapshot,
 								 Snapshot crosscheck,
 								 bool wait,
-								 TM_FailureData *tmfd,
-								 bool changingPart);
+								 TM_FailureData *tmfd);
 
 	/* see table_tuple_update() for reference about parameters */
 	TM_Result	(*tuple_update) (Relation rel,
 								 ItemPointer otid,
 								 TupleTableSlot *slot,
 								 CommandId cid,
+								 uint32 options,
 								 Snapshot snapshot,
 								 Snapshot crosscheck,
 								 bool wait,
@@ -1516,10 +1523,11 @@ table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
  *	tid - TID of tuple to be deleted
  *	cid - delete command ID (used for visibility test, and stored into
  *		cmax if successful)
+ *	options - bitmask of options.  Supported values:
+ *		TABLE_DELETE_CHANGING_PARTITION: the tuple is being moved to another
+ *		partition table due to an update of the partition key.
  *	crosscheck - if not InvalidSnapshot, also check tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
- *	changingPart - true iff the tuple is being moved to another partition
- *		table due to an update of the partition key. Otherwise, false.
  *
  * Output parameters:
  *	tmfd - filled in failure cases (see below)
@@ -1534,12 +1542,12 @@ table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
  */
 static inline TM_Result
 table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
-				   Snapshot snapshot, Snapshot crosscheck, bool wait,
-				   TM_FailureData *tmfd, bool changingPart)
+				   uint32 options, Snapshot snapshot, Snapshot crosscheck,
+				   bool wait, TM_FailureData *tmfd)
 {
-	return rel->rd_tableam->tuple_delete(rel, tid, cid,
+	return rel->rd_tableam->tuple_delete(rel, tid, cid, options,
 										 snapshot, crosscheck,
-										 wait, tmfd, changingPart);
+										 wait, tmfd);
 }
 
 /*
@@ -1553,6 +1561,7 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  *	otid - TID of old tuple to be replaced
  *	cid - update command ID (used for visibility test, and stored into
  *		cmax/cmin if successful)
+ *	options - bitmask of options.  No values are currently recognized.
  *	crosscheck - if not InvalidSnapshot, also check old tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
  *
@@ -1579,12 +1588,13 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  */
 static inline TM_Result
 table_tuple_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
-				   CommandId cid, Snapshot snapshot, Snapshot crosscheck,
+				   CommandId cid, uint32 options,
+				   Snapshot snapshot, Snapshot crosscheck,
 				   bool wait, TM_FailureData *tmfd, LockTupleMode *lockmode,
 				   TU_UpdateIndexes *update_indexes)
 {
 	return rel->rd_tableam->tuple_update(rel, otid, slot,
-										 cid, snapshot, crosscheck,
+										 cid, options, snapshot, crosscheck,
 										 wait, tmfd,
 										 lockmode, update_indexes);
 }
