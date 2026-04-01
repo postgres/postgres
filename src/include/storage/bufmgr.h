@@ -251,7 +251,7 @@ extern bool StartReadBuffers(ReadBuffersOperation *operation,
 							 BlockNumber blockNum,
 							 int *nblocks,
 							 int flags);
-extern void WaitReadBuffers(ReadBuffersOperation *operation);
+extern bool WaitReadBuffers(ReadBuffersOperation *operation);
 
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);

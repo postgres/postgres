@@ -1740,12 +1740,19 @@ ProcessReadBuffersResult(ReadBuffersOperation *operation)
 	Assert(operation->nblocks_done <= operation->nblocks);
 }
 
-void
+/*
+ * Wait for the IO operation initiated by StartReadBuffers() et al to
+ * complete.
+ *
+ * Returns true if we needed to wait for the IO operation, false otherwise.
+ */
+bool
 WaitReadBuffers(ReadBuffersOperation *operation)
 {
 	PgAioReturn *aio_ret = &operation->io_return;
 	IOContext	io_context;
 	IOObject	io_object;
+	bool		needed_wait = false;
 
 	if (operation->persistence == RELPERSISTENCE_TEMP)
 	{
@@ -1810,6 +1817,7 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 				instr_time	io_start = pgstat_prepare_io_time(track_io_timing);
 
 				pgaio_wref_wait(&operation->io_wref);
+				needed_wait = true;
 
 				/*
 				 * The IO operation itself was already counted earlier, in
@@ -1875,6 +1883,12 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
+		 * If the IO completed only partially, we need to perform additional
+		 * work, consider that a form of having had to wait.
+		 */
+		needed_wait = true;
+
+		/*
 		 * This may only complete the IO partially, either because some
 		 * buffers were already valid, or because of a partial read.
 		 *
@@ -1890,6 +1904,7 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 	CheckReadBuffersOperation(operation, true);
 
 	/* NB: READ_DONE tracepoint was already executed in completion callback */
+	return needed_wait;
 }
 
 /*
