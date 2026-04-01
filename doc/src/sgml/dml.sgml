@@ -261,6 +261,141 @@ DELETE FROM products;
   </para>
  </sect1>
 
+ <sect1 id="dml-application-time-update-delete">
+  <title>Updating and Deleting Temporal Data</title>
+
+  <para>
+   Special syntax is available to update and delete from application-time
+   temporal tables (see <xref linkend="ddl-application-time" />).  (No extra
+   syntax is required to insert into them: the user just provides the
+   application time values like any other column.)  When updating or deleting,
+   the user can target a specific portion of history.  Only rows overlapping
+   that history are affected, and within those rows only the targeted history
+   is changed.  If a row contains more history beyond what is targeted, its
+   application time is reduced to fit within the targeted portion, and new
+   rows are inserted to preserve the history that was not targeted.
+  </para>
+
+  <para>
+   Recall the example table from <xref linkend="temporal-entities-figure" />,
+   containing this data:
+
+<programlisting>
+ product_no | price |        valid_at
+------------+-------+-------------------------
+          5 |  5.00 | [2020-01-01,2022-01-01)
+          5 |  8.00 | [2022-01-01,)
+          6 |  9.00 | [2021-01-01,2024-01-01)
+</programlisting>
+
+   A temporal update might look like this:
+
+<programlisting>
+UPDATE products
+  <emphasis>FOR PORTION OF valid_at FROM '2023-09-01' TO '2025-03-01'</emphasis>
+  SET price = 12.00
+  WHERE product_no = 5;
+</programlisting>
+
+   That command will update the second record for product 5.  It will set the
+   price to 12.00 and the application time to
+   <literal>[2023-09-01,2025-03-01)</literal>.  Then, since the row's
+   application time was originally <literal>[2022-01-01,)</literal>, the
+   command must insert two <glossterm
+   linkend="glossary-temporal-leftovers">temporal leftovers</glossterm>: one
+   for history before September 1, 2023, and another for history since March
+   1, 2025.  After the update, the table has four rows for product 5:
+
+<programlisting>
+ product_no | price |        valid_at
+------------+-------+-------------------------
+          5 |  5.00 | [2020-01-01,2022-01-01)
+          5 |  8.00 | [2022-01-01,2023-09-01)
+          5 | 12.00 | [2023-09-01,2025-03-01)
+          5 |  8.00 | [2025-03-01,)
+          6 |  9.00 | [2021-01-01,2024-01-01)
+</programlisting>
+
+   The new history could be plotted as in <xref linkend="temporal-update-figure"/>.
+  </para>
+
+  <figure id="temporal-update-figure">
+   <title>Temporal Update Example</title>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="images/temporal-update.svg" format="SVG" width="100%"/>
+    </imageobject>
+   </mediaobject>
+  </figure>
+
+  <para>
+   Similarly, a specific portion of history may be targeted when deleting rows
+   from a table.  In that case, the original rows are removed, but new
+   <glossterm linkend="glossary-temporal-leftovers">temporal
+   leftovers</glossterm> are inserted to preserve the untouched history.  The
+   syntax for a temporal delete is:
+
+<programlisting>
+DELETE FROM products
+  <emphasis>FOR PORTION OF valid_at FROM '2021-08-01' TO '2023-09-01'</emphasis>
+  WHERE product_no = 5;
+</programlisting>
+
+   Continuing the example, this command would delete two records.  The
+   first record would yield a single temporal leftover, and the second
+   would be deleted entirely.  The rows in the table would now be:
+
+<programlisting>
+ product_no | price |        valid_at
+------------+-------+-------------------------
+          5 |  5.00 | [2020-01-01,2021-08-01)
+          5 | 12.00 | [2023-09-01,2025-03-01)
+          5 |  8.00 | [2025-03-01,)
+          6 |  9.00 | [2021-01-01,2024-01-01)
+</programlisting>
+
+   The new history could be plotted as in <xref linkend="temporal-delete-figure"/>.
+  </para>
+
+  <figure id="temporal-delete-figure">
+   <title>Temporal Delete Example</title>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="images/temporal-delete.svg" format="SVG" width="100%"/>
+    </imageobject>
+   </mediaobject>
+  </figure>
+
+  <para>
+   Instead of using the <literal>FROM ... TO ...</literal> syntax, temporal
+   update/delete commands can also give the targeted range/multirange
+   directly, inside parentheses.  For example: <literal>DELETE FROM products
+   FOR PORTION OF valid_at ('[2028-01-01,)') ...</literal>.  This syntax is
+   required when application time is stored in a multirange column.
+  </para>
+
+  <para>
+   When application time is stored in a range type column, zero, one or two
+   temporal leftovers are produced by each row that is updated/deleted.  With
+   a multirange column, only zero or one temporal leftover is produced.  The
+   leftover bounds are computed using <literal>range_minus_multi</literal> and
+   <literal>multirange_minus_multi</literal> (see <xref
+   linkend="functions-range"/>).
+  </para>
+
+  <para>
+   The bounds given to <literal>FOR PORTION OF</literal> must be constant.
+   Functions like <literal>now()</literal> are allowed, but column references
+   are not.
+  </para>
+
+  <para>
+   When temporal leftovers are inserted, all <literal>INSERT</literal>
+   triggers are fired, but permission checks for inserting rows are
+   skipped.
+  </para>
+ </sect1>
+
  <sect1 id="dml-returning">
   <title>Returning Data from Modified Rows</title>
 

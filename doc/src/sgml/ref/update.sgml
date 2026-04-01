@@ -22,7 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
+    [ FOR PORTION OF <replaceable class="parameter">range_column_name</replaceable> <replaceable class="parameter">for_portion_of_target</replaceable> ]
+    [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
           ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
           ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
@@ -31,6 +33,11 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
     [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
     [ RETURNING [ WITH ( { OLD | NEW } AS <replaceable class="parameter">output_alias</replaceable> [, ...] ) ]
                 { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
+
+<phrase>where <replaceable class="parameter">for_portion_of_target</replaceable> is:</phrase>
+
+{ FROM <replaceable class="parameter">start_time</replaceable> TO <replaceable class="parameter">end_time</replaceable> |
+  ( <replaceable class="parameter">portion</replaceable> ) }
 </synopsis>
  </refsynopsisdiv>
 
@@ -64,12 +71,37 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
   </para>
 
   <para>
+   If the <literal>FOR PORTION OF</literal> clause is used, the update will
+   only affect rows that overlap the given portion.  Furthermore, if a row's
+   application time extends outside the <literal>FOR PORTION OF</literal>
+   bounds, then the update will only change the application time within those
+   bounds.  In effect, only the history targeted by <literal>FOR PORTION
+   OF</literal> is updated, and no moments outside.  Furthermore, after a row
+   is updated, the range or multirange is first shrunk so that its application
+   time no longer extends beyond the targeted <literal>FOR PORTION
+   OF</literal> bounds.  Then, new <glossterm
+   linkend="glossary-temporal-leftovers">temporal leftovers</glossterm> might
+   be inserted: rows whose range or multirange receives the remaining
+   application time outside the targeted
+   <literal>FROM</literal>/<literal>TO</literal> bounds, with the original
+   values in their other columns.  For range columns, there will be zero to
+   two inserted records, depending on whether the original application time
+   was completely updated, extended before/after the change, or both.
+   Multiranges never require two temporal leftovers, because one value can
+   always contain whatever application time remains.
+  </para>
+
+  <para>
    You must have the <literal>UPDATE</literal> privilege on the table,
    or at least on the column(s) that are listed to be updated.
    You must also have the <literal>SELECT</literal>
    privilege on any column whose values are read in the
    <replaceable class="parameter">expressions</replaceable> or
    <replaceable class="parameter">condition</replaceable>.
+   When <literal>FOR PORTION OF</literal> is used, the secondary inserts do
+   not require <literal>INSERT</literal> privilege on the table.  (This is
+   because conceptually no new information is being added; the inserted rows
+   only preserve existing data about the untargeted time period.)
   </para>
  </refsect1>
 
@@ -112,6 +144,56 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
       example, given <literal>UPDATE foo AS f</literal>, the remainder of the
       <command>UPDATE</command> statement must refer to this table as
       <literal>f</literal> not <literal>foo</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">range_column_name</replaceable></term>
+    <listitem>
+     <para>
+      The range or multirange column to use when performing a temporal update.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">for_portion_of_target</replaceable></term>
+    <listitem>
+     <para>
+      The portion to update.  If targeting a range column, this can be in the
+      form <literal>FROM</literal> <replaceable
+      class="parameter">start_time</replaceable> <literal>TO</literal>
+      <replaceable class="parameter">end_time</replaceable>.  Otherwise, it
+      must be in the form <literal>(</literal><replaceable
+      class="parameter">portion</replaceable><literal>)</literal> where
+      <replaceable class="parameter">portion</replaceable> is an expression
+      that yields a value of the same type as <replaceable
+      class="parameter">range_column_name</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">start_time</replaceable></term>
+    <listitem>
+     <para>
+      The earliest time (inclusive) to change in a temporal update.  This must
+      be a value matching the base type of the range from <replaceable
+      class="parameter">range_column_name</replaceable>.  A null value here
+      indicates an update whose beginning is unbounded (as with range types).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">end_time</replaceable></term>
+    <listitem>
+     <para>
+      The latest time (exclusive) to change in a temporal update.  This must
+      be a value matching the base type of the range from <replaceable
+      class="parameter">range_column_name</replaceable>.  A null value here
+      indicates an update whose end is unbounded (as with range types).
      </para>
     </listitem>
    </varlistentry>
@@ -283,6 +365,10 @@ UPDATE <replaceable class="parameter">count</replaceable>
    updates were suppressed by a <literal>BEFORE UPDATE</literal> trigger.  If
    <replaceable class="parameter">count</replaceable> is 0, no rows were
    updated by the query (this is not considered an error).
+   If <literal>FOR PORTION OF</literal> was used, the
+   <replaceable class="parameter">count</replaceable> does not include
+   <glossterm linkend="glossary-temporal-leftovers">temporal leftovers</glossterm>
+   that were inserted.
   </para>
 
   <para>
@@ -290,7 +376,12 @@ UPDATE <replaceable class="parameter">count</replaceable>
    clause, the result will be similar to that of a <command>SELECT</command>
    statement containing the columns and values defined in the
    <literal>RETURNING</literal> list, computed over the row(s) updated by the
-   command.
+   command. If <literal>FOR PORTION OF</literal> was used, the
+   <literal>RETURNING</literal> clause gives one result for each updated row,
+   but does not include inserted
+   <glossterm linkend="glossary-temporal-leftovers">temporal leftovers</glossterm>.
+   The value of the application-time column matches the new value of the updated
+   row(s).
   </para>
  </refsect1>
 
@@ -354,6 +445,13 @@ UPDATE <replaceable class="parameter">count</replaceable>
    foreign key is found to directly reference an ancestor of the source
    partition that is not the same as the ancestor that's mentioned in the
    <command>UPDATE</command> query.
+  </para>
+
+  <para>
+   When <literal>FOR PORTION OF</literal> is used, this can result in users
+   who don't have <literal>INSERT</literal> privileges firing
+   <literal>INSERT</literal> triggers.  This should be considered when
+   using <literal>SECURITY DEFINER</literal> trigger functions.
   </para>
  </refsect1>
 
@@ -474,6 +572,16 @@ COMMIT;
    <literal>c_films</literal> is currently positioned:
 <programlisting>
 UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
+</programlisting>
+  </para>
+
+  <para>
+   An example of a temporal update:
+<programlisting>
+UPDATE products
+  FOR PORTION OF valid_at FROM '2023-09-01' TO '2025-03-01'
+  SET price = 12.00
+  WHERE product_no = 5;
 </programlisting>
   </para>
 

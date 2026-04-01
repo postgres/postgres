@@ -783,6 +783,33 @@ UPDATE errtst SET a = 'aaaa', b = NULL WHERE a = 'aaa';
 SET SESSION AUTHORIZATION regress_priv_user1;
 DROP TABLE errtst;
 
+-- test column-level privileges on the range used in FOR PORTION OF
+SET SESSION AUTHORIZATION regress_priv_user1;
+CREATE TABLE t1 (
+  c1 int4range,
+  valid_at tsrange,
+	CONSTRAINT t1pk PRIMARY KEY (c1, valid_at WITHOUT OVERLAPS)
+);
+-- UPDATE requires select permission on the valid_at column (but not update):
+GRANT SELECT (c1) ON t1 TO regress_priv_user2;
+GRANT UPDATE (c1) ON t1 TO regress_priv_user2;
+GRANT SELECT (c1, valid_at) ON t1 TO regress_priv_user3;
+GRANT UPDATE (c1) ON t1 TO regress_priv_user3;
+SET SESSION AUTHORIZATION regress_priv_user2;
+UPDATE t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01' SET c1 = '[2,3)';
+SET SESSION AUTHORIZATION regress_priv_user3;
+UPDATE t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01' SET c1 = '[2,3)';
+SET SESSION AUTHORIZATION regress_priv_user1;
+-- DELETE requires select permission on the valid_at column:
+GRANT DELETE ON t1 TO regress_priv_user2;
+GRANT DELETE ON t1 TO regress_priv_user3;
+SET SESSION AUTHORIZATION regress_priv_user2;
+DELETE FROM t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01';
+SET SESSION AUTHORIZATION regress_priv_user3;
+DELETE FROM t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01';
+SET SESSION AUTHORIZATION regress_priv_user1;
+DROP TABLE t1;
+
 -- test column-level privileges when involved with DELETE
 SET SESSION AUTHORIZATION regress_priv_user1;
 ALTER TABLE atest6 ADD COLUMN three integer;

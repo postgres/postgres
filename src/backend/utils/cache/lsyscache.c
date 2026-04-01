@@ -3671,6 +3671,31 @@ get_range_collation(Oid rangeOid)
 }
 
 /*
+ * get_range_constructor2
+ *		Gets the 2-arg constructor for the given rangetype.
+ *
+ *	Raises an error if not found.
+ */
+RegProcedure
+get_range_constructor2(Oid rangeOid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rangeOid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_range rngtup = (Form_pg_range) GETSTRUCT(tp);
+		RegProcedure result;
+
+		result = rngtup->rngconstruct2;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		elog(ERROR, "cache lookup failed for range type %u", rangeOid);
+}
+
+/*
  * get_range_multirange
  *		Returns the multirange type of a given range type
  *

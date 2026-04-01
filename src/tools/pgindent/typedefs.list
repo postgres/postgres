@@ -865,6 +865,9 @@ ForBothState
 ForEachState
 ForFiveState
 ForFourState
+ForPortionOfClause
+ForPortionOfExpr
+ForPortionOfState
 ForThreeState
 ForeignAsyncConfigureWait_function
 ForeignAsyncNotify_function

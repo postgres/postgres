@@ -43,7 +43,8 @@ extern List *transformInsertRow(ParseState *pstate, List *exprlist,
 								List *stmtcols, List *icolumns, List *attrnos,
 								bool strip_indirection);
 extern List *transformUpdateTargetList(ParseState *pstate,
-									   List *origTlist);
+									   List *origTlist,
+									   ForPortionOfExpr *forPortionOf);
 extern void transformReturningClause(ParseState *pstate, Query *qry,
 									 ReturningClause *returningClause,
 									 ParseExprKind exprKind);

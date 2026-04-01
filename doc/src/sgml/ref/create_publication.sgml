@@ -437,6 +437,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   For an <command>UPDATE/DELETE ... FOR PORTION OF</command> command, the
+   publication will publish an <command>UPDATE</command> or <command>DELETE</command>,
+   followed by one <command>INSERT</command> for each temporal leftover row inserted.
+  </para>
+
+  <para>
    <command>ATTACH</command>ing a table into a partition tree whose root is
    published using a publication with <literal>publish_via_partition_root</literal>
    set to <literal>true</literal> does not result in the table's existing contents

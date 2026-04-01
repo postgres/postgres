@@ -1933,6 +1933,21 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-temporal-leftovers">
+   <glossterm>Temporal leftovers</glossterm>
+   <glossdef>
+    <para>
+     After a temporal update or delete, the portion of history that was not
+     updated/deleted. When using ranges to track application time, there may be
+     zero, one, or two stretches of history that were not updated/deleted
+     (before and/or after the portion that was updated/deleted). New rows are
+     automatically inserted into the table to preserve that history. A single
+     multirange can accommodate the untouched history before and after the
+     update/delete, so there will be only zero or one leftover.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-temporal-table">
    <glossterm>Temporal table</glossterm>
    <glossdef>

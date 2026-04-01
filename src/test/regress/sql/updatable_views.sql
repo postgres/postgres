@@ -1889,6 +1889,20 @@ select * from uv_iocu_tab;
 drop view uv_iocu_view;
 drop table uv_iocu_tab;
 
+-- Check UPDATE FOR PORTION OF works correctly
+create table uv_fpo_tab (id int4range, valid_at tsrange, b float,
+    constraint pk_uv_fpo_tab primary key (id, valid_at without overlaps));
+insert into uv_fpo_tab values ('[1,1]', '[2020-01-01, 2030-01-01)', 0);
+create view uv_fpo_view as
+    select b, b+1 as c, valid_at, id, '2.0'::text as two from uv_fpo_tab;
+
+insert into uv_fpo_view (id, valid_at, b) values ('[1,1]', '[2010-01-01, 2020-01-01)', 1);
+select * from uv_fpo_view order by id, valid_at;
+update uv_fpo_view for portion of valid_at from '2015-01-01' to '2020-01-01' set b = 2 where id = '[1,1]';
+select * from uv_fpo_view order by id, valid_at;
+delete from uv_fpo_view for portion of valid_at from '2017-01-01' to '2022-01-01' where id = '[1,1]';
+select * from uv_fpo_view order by id, valid_at;
+
 -- Test whole-row references to the view
 create table uv_iocu_tab (a int unique, b text);
 create view uv_iocu_view as

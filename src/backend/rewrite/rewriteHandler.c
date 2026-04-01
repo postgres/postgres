@@ -3757,6 +3757,30 @@ rewriteTargetView(Query *parsetree, Relation view)
 									  &parsetree->hasSubLinks);
 	}
 
+	if (parsetree->forPortionOf && parsetree->commandType == CMD_UPDATE)
+	{
+		/*
+		 * Like the INSERT/UPDATE code above, update the resnos in the
+		 * auxiliary UPDATE targetlist to refer to columns of the base
+		 * relation.
+		 */
+		foreach(lc, parsetree->forPortionOf->rangeTargetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			TargetEntry *view_tle;
+
+			if (tle->resjunk)
+				continue;
+
+			view_tle = get_tle_by_resno(view_targetlist, tle->resno);
+			if (view_tle != NULL && !view_tle->resjunk && IsA(view_tle->expr, Var))
+				tle->resno = ((Var *) view_tle->expr)->varattno;
+			else
+				elog(ERROR, "attribute number %d not found in view targetlist",
+					 tle->resno);
+		}
+	}
+
 	/*
 	 * For UPDATE/DELETE/MERGE, pull up any WHERE quals from the view.  We
 	 * know that any Vars in the quals must reference the one base relation,
@@ -4113,6 +4137,37 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 		else if (event == CMD_UPDATE)
 		{
 			Assert(parsetree->override == OVERRIDING_NOT_SET);
+
+			if (parsetree->forPortionOf)
+			{
+				/*
+				 * Don't add FOR PORTION OF details until we're done rewriting
+				 * a view update, so that we don't add the same qual and TLE
+				 * on the recursion.
+				 *
+				 * Views don't need to do anything special here to remap Vars;
+				 * that is handled by the tree walker.
+				 */
+				if (rt_entry_relation->rd_rel->relkind != RELKIND_VIEW)
+				{
+					ListCell   *tl;
+
+					/*
+					 * Add qual: UPDATE FOR PORTION OF should be limited to
+					 * rows that overlap the target range.
+					 */
+					AddQual(parsetree, parsetree->forPortionOf->overlapsExpr);
+
+					/* Update FOR PORTION OF column(s) automatically. */
+					foreach(tl, parsetree->forPortionOf->rangeTargetList)
+					{
+						TargetEntry *tle = (TargetEntry *) lfirst(tl);
+
+						parsetree->targetList = lappend(parsetree->targetList, tle);
+					}
+				}
+			}
+
 			parsetree->targetList =
 				rewriteTargetListIU(parsetree->targetList,
 									parsetree->commandType,
@@ -4158,7 +4213,25 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 		}
 		else if (event == CMD_DELETE)
 		{
-			/* Nothing to do here */
+			if (parsetree->forPortionOf)
+			{
+				/*
+				 * Don't add FOR PORTION OF details until we're done rewriting
+				 * a view delete, so that we don't add the same qual on the
+				 * recursion.
+				 *
+				 * Views don't need to do anything special here to remap Vars;
+				 * that is handled by the tree walker.
+				 */
+				if (rt_entry_relation->rd_rel->relkind != RELKIND_VIEW)
+				{
+					/*
+					 * Add qual: DELETE FOR PORTION OF should be limited to
+					 * rows that overlap the target range.
+					 */
+					AddQual(parsetree, parsetree->forPortionOf->overlapsExpr);
+				}
+			}
 		}
 		else
 			elog(ERROR, "unrecognized commandType: %d", (int) event);

@@ -93,6 +93,36 @@ COMMIT;
 /* display results */
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
+-- FOR PORTION OF setup
+CREATE TABLE replication_example_temporal(id int4range, valid_at daterange, somedata int, text varchar(120), PRIMARY KEY (id, valid_at WITHOUT OVERLAPS));
+INSERT INTO replication_example_temporal VALUES ('[1,2)', '[2000-01-01,2020-01-01)', 1, 'aaa');
+INSERT INTO replication_example_temporal VALUES ('[2,3)', '[2000-01-01,2020-01-01)', 1, 'aaa');
+
+/* display results */
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
+-- UPDATE FOR PORTION OF support
+BEGIN;
+  UPDATE replication_example_temporal
+    FOR PORTION OF valid_at FROM '2010-01-01' TO '2011-01-01'
+    SET somedata = 2,
+        text = 'bbb'
+    WHERE id = '[1,2)';
+COMMIT;
+
+/* display results */
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
+-- DELETE FOR PORTION OF support
+BEGIN;
+  DELETE FROM replication_example_temporal
+    FOR PORTION OF valid_at FROM '2012-01-01' TO '2013-01-01'
+    WHERE id = '[2,3)';
+COMMIT;
+
+/* display results */
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
 -- MERGE support
 BEGIN;
 MERGE INTO replication_example t

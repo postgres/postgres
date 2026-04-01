@@ -216,6 +216,18 @@
    </para>
 
    <para>
+    If an <command>UPDATE</command> or <command>DELETE</command> uses
+    <literal>FOR PORTION OF</literal>, causing new rows to be inserted
+    to preserve the leftover untargeted part of modified records, then
+    <command>INSERT</command> triggers are fired for each inserted
+    row. Each row is inserted separately, so they fire their own
+    statement triggers, and they have their own transition tables.
+    (The <literal>BEFORE DELETE/UPDATE</literal> triggers are fired first,
+    then <literal>BEFORE INSERT</literal>, then <literal>AFTER
+    INSERT</literal>, then <literal>AFTER DELETE/UPDATE</literal>.)
+   </para>
+
+   <para>
     Trigger functions invoked by per-statement triggers should always
     return <symbol>NULL</symbol>. Trigger functions invoked by per-row
     triggers can return a table row (a value of

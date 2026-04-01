@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1330 224" width="1330" height="224" shape-rendering="geometricPrecision" version="1.0">
+  <defs>
+    <filter id="f2" x="0" y="0" width="200%" height="200%">
+      <feOffset result="offOut" in="SourceGraphic" dx="5" dy="5"/>
+      <feGaussianBlur result="blurOut" in="offOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+  </defs>
+  <g stroke-width="1" stroke-linecap="square" stroke-linejoin="round">
+    <rect x="0" y="0" width="1330" height="224" style="fill: #ffffff"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M685.0 63.0 L685.0 147.0 L1005.0 147.0 L1005.0 63.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M315.0 63.0 L315.0 147.0 L25.0 147.0 L25.0 63.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M1005.0 63.0 L1005.0 147.0 L1275.0 147.0 L1275.0 63.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M205.0 168.0 L205.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M25.0 168.0 L25.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M385.0 168.0 L385.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M565.0 168.0 L565.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M745.0 168.0 L745.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M925.0 168.0 L925.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M1105.0 168.0 L1105.0 181.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M1285.0 168.0 L1285.0 181.0 "/>
+    <text x="46" y="96" font-family="Courier" font-size="15" stroke="none" fill="#000000">products</text>
+    <text x="40" y="110" font-family="Courier" font-size="15" stroke="none" fill="#000000">(5, 5.00,</text>
+    <text x="83" y="124" font-family="Courier" font-size="15" stroke="none" fill="#000000">[1 Jan 2020,1 Aug 2021))</text>
+    <text x="20" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2020</text>
+    <text x="200" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2021</text>
+    <text x="380" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2022</text>
+    <text x="560" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2023</text>
+    <text x="706" y="96" font-family="Courier" font-size="15" stroke="none" fill="#000000">products</text>
+    <text x="700" y="110" font-family="Courier" font-size="15" stroke="none" fill="#000000">(5, 12.00,</text>
+    <text x="743" y="124" font-family="Courier" font-size="15" stroke="none" fill="#000000">[1 Sep 2023,1 Mar 2025))</text>
+    <text x="740" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2024</text>
+    <text x="920" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2025</text>
+    <text x="1026" y="96" font-family="Courier" font-size="15" stroke="none" fill="#000000">products</text>
+    <text x="1020" y="110" font-family="Courier" font-size="15" stroke="none" fill="#000000">(5, 8.00,</text>
+    <text x="1056" y="124" font-family="Courier" font-size="15" stroke="none" fill="#000000">[1 Mar 2025,))</text>
+    <text x="1100" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">2026</text>
+    <text x="1289" y="194" font-family="Courier" font-size="15" stroke="none" fill="#000000">...</text>
+  </g>
+</svg>

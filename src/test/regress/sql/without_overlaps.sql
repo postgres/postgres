@@ -2,7 +2,7 @@
 --
 -- We leave behind several tables to test pg_dump etc:
 -- temporal_rng, temporal_rng2,
--- temporal_fk_rng2rng.
+-- temporal_fk_rng2rng, temporal_fk2_rng2rng.
 
 SET datestyle TO ISO, YMD;
 
@@ -632,6 +632,20 @@ INSERT INTO temporal3 (id, valid_at, id2, name)
   ('[1,2)', daterange('2000-01-01', '2010-01-01'), '[7,8)', 'foo'),
   ('[2,3)', daterange('2000-01-01', '2010-01-01'), '[9,10)', 'bar')
 ;
+UPDATE temporal3 FOR PORTION OF valid_at FROM '2000-05-01' TO '2000-07-01'
+  SET name = name || '1';
+UPDATE temporal3 FOR PORTION OF valid_at FROM '2000-04-01' TO '2000-06-01'
+  SET name = name || '2'
+  WHERE id = '[2,3)';
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+-- conflicting id only:
+INSERT INTO temporal3 (id, valid_at, id2, name)
+  VALUES
+  ('[1,2)', daterange('2005-01-01', '2006-01-01'), '[8,9)', 'foo3');
+-- conflicting id2 only:
+INSERT INTO temporal3 (id, valid_at, id2, name)
+  VALUES
+  ('[3,4)', daterange('2005-01-01', '2010-01-01'), '[9,10)', 'bar3');
 DROP TABLE temporal3;
 
 --
@@ -667,9 +681,23 @@ INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
   ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
   ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
   ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
-SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
-SELECT * FROM tp1 ORDER BY id, valid_at;
-SELECT * FROM tp2 ORDER BY id, valid_at;
+SELECT tableoid::regclass, * FROM temporal_partitioned ORDER BY id, valid_at;
+UPDATE  temporal_partitioned
+  FOR PORTION OF valid_at FROM '2000-01-15' TO '2000-02-15'
+  SET name = 'one2'
+  WHERE id = '[1,2)';
+UPDATE  temporal_partitioned
+  FOR PORTION OF valid_at FROM '2000-02-20' TO '2000-02-25'
+  SET id = '[4,5)'
+  WHERE name = 'one';
+UPDATE  temporal_partitioned
+  FOR PORTION OF valid_at FROM '2002-01-01' TO '2003-01-01'
+  SET id = '[2,3)'
+  WHERE name = 'three';
+DELETE FROM temporal_partitioned
+  FOR PORTION OF valid_at FROM '2000-01-15' TO '2000-02-15'
+  WHERE id = '[3,4)';
+SELECT tableoid::regclass, * FROM temporal_partitioned ORDER BY id, valid_at;
 DROP TABLE temporal_partitioned;
 
 -- temporal UNIQUE:
@@ -685,9 +713,23 @@ INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
   ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
   ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
   ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
-SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
-SELECT * FROM tp1 ORDER BY id, valid_at;
-SELECT * FROM tp2 ORDER BY id, valid_at;
+SELECT tableoid::regclass, * FROM temporal_partitioned ORDER BY id, valid_at;
+UPDATE  temporal_partitioned
+  FOR PORTION OF valid_at FROM '2000-01-15' TO '2000-02-15'
+  SET name = 'one2'
+  WHERE id = '[1,2)';
+UPDATE  temporal_partitioned
+  FOR PORTION OF valid_at FROM '2000-02-20' TO '2000-02-25'
+  SET id = '[4,5)'
+  WHERE name = 'one';
+UPDATE  temporal_partitioned
+  FOR PORTION OF valid_at FROM '2002-01-01' TO '2003-01-01'
+  SET id = '[2,3)'
+  WHERE name = 'three';
+DELETE FROM temporal_partitioned
+  FOR PORTION OF valid_at FROM '2000-01-15' TO '2000-02-15'
+  WHERE id = '[3,4)';
+SELECT tableoid::regclass, * FROM temporal_partitioned ORDER BY id, valid_at;
 DROP TABLE temporal_partitioned;
 
 -- ALTER TABLE REPLICA IDENTITY
@@ -1291,6 +1333,18 @@ COMMIT;
 -- changing the scalar part fails:
 UPDATE temporal_rng SET id = '[7,8)'
   WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+-- changing an unreferenced part is okay:
+UPDATE temporal_rng
+  FOR PORTION OF valid_at FROM '2018-01-02' TO '2018-01-03'
+  SET id = '[7,8)'
+  WHERE id = '[5,6)';
+-- changing just a part fails:
+UPDATE temporal_rng
+  FOR PORTION OF valid_at FROM '2018-01-05' TO '2018-01-10'
+  SET id = '[7,8)'
+  WHERE id = '[5,6)';
+SELECT * FROM temporal_rng WHERE id in ('[5,6)', '[7,8)') ORDER BY id, valid_at;
+SELECT * FROM temporal_fk_rng2rng WHERE id in ('[3,4)') ORDER BY id, valid_at;
 -- then delete the objecting FK record and the same PK update succeeds:
 DELETE FROM temporal_fk_rng2rng WHERE id = '[3,4)';
 UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
@@ -1338,6 +1392,18 @@ BEGIN;
 
   DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
 COMMIT;
+-- deleting an unreferenced part is okay:
+DELETE FROM temporal_rng
+FOR PORTION OF valid_at FROM '2018-01-02' TO '2018-01-03'
+WHERE id = '[5,6)';
+SELECT * FROM temporal_rng WHERE id in ('[5,6)', '[7,8)') ORDER BY id, valid_at;
+SELECT * FROM temporal_fk_rng2rng WHERE id in ('[3,4)') ORDER BY id, valid_at;
+-- deleting just a part fails:
+DELETE FROM temporal_rng
+FOR PORTION OF valid_at FROM '2018-01-05' TO '2018-01-10'
+WHERE id = '[5,6)';
+SELECT * FROM temporal_rng WHERE id in ('[5,6)', '[7,8)') ORDER BY id, valid_at;
+SELECT * FROM temporal_fk_rng2rng WHERE id in ('[3,4)') ORDER BY id, valid_at;
 -- then delete the objecting FK record and the same PK delete succeeds:
 DELETE FROM temporal_fk_rng2rng WHERE id = '[3,4)';
 DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
@@ -1356,12 +1422,13 @@ ALTER TABLE temporal_fk_rng2rng
   ON DELETE RESTRICT;
 
 --
--- test ON UPDATE/DELETE options
+-- rng2rng test ON UPDATE/DELETE options
 --
 
 -- test FK referenced updates CASCADE
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
 INSERT INTO temporal_rng (id, valid_at) VALUES ('[6,7)', daterange('2018-01-01', '2021-01-01'));
-INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[4,5)', daterange('2018-01-01', '2021-01-01'), '[6,7)');
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[100,101)', daterange('2018-01-01', '2021-01-01'), '[6,7)');
 ALTER TABLE temporal_fk_rng2rng
   ADD CONSTRAINT temporal_fk_rng2rng_fk
     FOREIGN KEY (parent_id, PERIOD valid_at)
@@ -1369,8 +1436,9 @@ ALTER TABLE temporal_fk_rng2rng
     ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- test FK referenced updates SET NULL
-INSERT INTO temporal_rng (id, valid_at) VALUES ('[9,10)', daterange('2018-01-01', '2021-01-01'));
-INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[6,7)', daterange('2018-01-01', '2021-01-01'), '[9,10)');
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[6,7)', daterange('2018-01-01', '2021-01-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[100,101)', daterange('2018-01-01', '2021-01-01'), '[6,7)');
 ALTER TABLE temporal_fk_rng2rng
   ADD CONSTRAINT temporal_fk_rng2rng_fk
     FOREIGN KEY (parent_id, PERIOD valid_at)
@@ -1378,9 +1446,10 @@ ALTER TABLE temporal_fk_rng2rng
     ON DELETE SET NULL ON UPDATE SET NULL;
 
 -- test FK referenced updates SET DEFAULT
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
 INSERT INTO temporal_rng (id, valid_at) VALUES ('[-1,-1]', daterange(null, null));
-INSERT INTO temporal_rng (id, valid_at) VALUES ('[12,13)', daterange('2018-01-01', '2021-01-01'));
-INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[8,9)', daterange('2018-01-01', '2021-01-01'), '[12,13)');
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[6,7)', daterange('2018-01-01', '2021-01-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[100,101)', daterange('2018-01-01', '2021-01-01'), '[6,7)');
 ALTER TABLE temporal_fk_rng2rng
   ALTER COLUMN parent_id SET DEFAULT '[-1,-1]',
   ADD CONSTRAINT temporal_fk_rng2rng_fk
@@ -1718,6 +1787,20 @@ COMMIT;
 -- changing the scalar part fails:
 UPDATE temporal_mltrng SET id = '[7,8)'
   WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+-- changing an unreferenced part is okay:
+UPDATE temporal_mltrng
+  FOR PORTION OF valid_at (datemultirange(daterange('2018-01-02', '2018-01-03')))
+  SET id = '[7,8)'
+  WHERE id = '[5,6)';
+-- changing just a part fails:
+UPDATE temporal_mltrng
+  FOR PORTION OF valid_at (datemultirange(daterange('2018-01-05', '2018-01-10')))
+  SET id = '[7,8)'
+  WHERE id = '[5,6)';
+-- then delete the objecting FK record and the same PK update succeeds:
+DELETE FROM temporal_fk_mltrng2mltrng WHERE id = '[3,4)';
+UPDATE temporal_mltrng SET id = '[7,8)'
+  WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
 
 --
 -- test FK referenced updates RESTRICT
@@ -1760,6 +1843,17 @@ BEGIN;
 
   DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
 COMMIT;
+-- deleting an unreferenced part is okay:
+DELETE FROM temporal_mltrng
+FOR PORTION OF valid_at (datemultirange(daterange('2018-01-02', '2018-01-03')))
+WHERE id = '[5,6)';
+-- deleting just a part fails:
+DELETE FROM temporal_mltrng
+FOR PORTION OF valid_at (datemultirange(daterange('2018-01-05', '2018-01-10')))
+WHERE id = '[5,6)';
+-- then delete the objecting FK record and the same PK delete succeeds:
+DELETE FROM temporal_fk_mltrng2mltrng WHERE id = '[3,4)';
+DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
 
 --
 -- FK between partitioned tables: ranges

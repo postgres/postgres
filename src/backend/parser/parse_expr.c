@@ -588,6 +588,9 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		case EXPR_KIND_PARTITION_BOUND:
 			err = _("cannot use column reference in partition bound expression");
 			break;
+		case EXPR_KIND_FOR_PORTION:
+			err = _("cannot use column reference in FOR PORTION OF expression");
+			break;
 
 			/*
 			 * There is intentionally no default: case here, so that the
@@ -1885,6 +1888,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_PROPGRAPH_PROPERTY:
 			err = _("cannot use subquery in property definition expression");
+			break;
+		case EXPR_KIND_FOR_PORTION:
+			err = _("cannot use subquery in FOR PORTION OF expression");
 			break;
 
 			/*
@@ -3247,6 +3253,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "CYCLE";
 		case EXPR_KIND_PROPGRAPH_PROPERTY:
 			return "property definition expression";
+		case EXPR_KIND_FOR_PORTION:
+			return "FOR PORTION OF";
 
 			/*
 			 * There is intentionally no default: case here, so that the

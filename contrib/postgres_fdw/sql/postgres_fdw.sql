@@ -54,12 +54,20 @@ CREATE TABLE "S 1"."T 4" (
 	c3 text,
 	CONSTRAINT t4_pkey PRIMARY KEY (c1)
 );
+CREATE TABLE "S 1"."T 5" (
+	c1 int4range NOT NULL,
+	c2 int NOT NULL,
+	c3 text,
+	c4 daterange NOT NULL,
+	CONSTRAINT t5_pkey PRIMARY KEY (c1, c4 WITHOUT OVERLAPS)
+);
 
 -- Disable autovacuum for these tables to avoid unexpected effects of that
 ALTER TABLE "S 1"."T 1" SET (autovacuum_enabled = 'false');
 ALTER TABLE "S 1"."T 2" SET (autovacuum_enabled = 'false');
 ALTER TABLE "S 1"."T 3" SET (autovacuum_enabled = 'false');
 ALTER TABLE "S 1"."T 4" SET (autovacuum_enabled = 'false');
+ALTER TABLE "S 1"."T 5" SET (autovacuum_enabled = 'false');
 
 INSERT INTO "S 1"."T 1"
 	SELECT id,
@@ -87,11 +95,18 @@ INSERT INTO "S 1"."T 4"
 	       'AAA' || to_char(id, 'FM000')
 	FROM generate_series(1, 100) id;
 DELETE FROM "S 1"."T 4" WHERE c1 % 3 != 0;	-- delete for outer join tests
+INSERT INTO "S 1"."T 5"
+	SELECT int4range(id, id + 1),
+	       id + 1,
+	       'AAA' || to_char(id, 'FM000'),
+        '[2000-01-01,2020-01-01)'
+	FROM generate_series(1, 100) id;
 
 ANALYZE "S 1"."T 1";
 ANALYZE "S 1"."T 2";
 ANALYZE "S 1"."T 3";
 ANALYZE "S 1"."T 4";
+ANALYZE "S 1"."T 5";
 
 -- ===================================================================
 -- create foreign tables
@@ -145,6 +160,14 @@ CREATE FOREIGN TABLE ft7 (
 	c2 int NOT NULL,
 	c3 text
 ) SERVER loopback3 OPTIONS (schema_name 'S 1', table_name 'T 4');
+
+CREATE FOREIGN TABLE ft8 (
+	c1 int4range NOT NULL,
+	c2 int NOT NULL,
+	c3 text,
+	c4 daterange NOT NULL
+) SERVER loopback OPTIONS (schema_name 'S 1', table_name 'T 5');
+
 
 -- ===================================================================
 -- tests for validator
@@ -1552,6 +1575,17 @@ UPDATE ft2 SET c3 = 'bar' WHERE c1 = 1200 RETURNING tableoid::regclass;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2 WHERE c1 = 1200 RETURNING tableoid::regclass;                       -- can be pushed down
 DELETE FROM ft2 WHERE c1 = 1200 RETURNING tableoid::regclass;
+
+-- Test UPDATE FOR PORTION OF
+UPDATE ft8 FOR PORTION OF c4 FROM '2005-01-01' TO '2006-01-01'
+SET c2 = c2 + 1
+WHERE c1 = '[1,2)';
+SELECT * FROM ft8 WHERE c1 = '[1,2)' ORDER BY c1, c4;
+
+-- Test DELETE FOR PORTION OF
+DELETE FROM ft8 FOR PORTION OF c4 FROM '2005-01-01' TO '2006-01-01'
+WHERE c1 = '[2,3)';
+SELECT * FROM ft8 WHERE c1 = '[2,3)' ORDER BY c1, c4;
 
 -- Test UPDATE/DELETE with RETURNING on a three-table join
 INSERT INTO ft2 (c1,c2,c3)
