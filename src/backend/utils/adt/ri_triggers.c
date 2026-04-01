@@ -2488,6 +2488,11 @@ InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cacheid,
 			riinfo->rootHashValue == hashvalue)
 		{
 			riinfo->valid = false;
+			if (riinfo->fpmeta)
+			{
+				pfree(riinfo->fpmeta);
+				riinfo->fpmeta = NULL;
+			}
 			/* Remove invalidated entries from the list, too */
 			dclist_delete_from(&ri_constraint_cache_valid_list, iter.cur);
 		}
@@ -2722,11 +2727,6 @@ ri_FastPathCheck(const RI_ConstraintInfo *riinfo,
 							   riinfo->nkeys, 0,
 							   SO_NONE);
 
-	if (riinfo->fpmeta == NULL)
-		ri_populate_fastpath_metadata((RI_ConstraintInfo *) riinfo,
-									  fk_rel, idx_rel);
-	Assert(riinfo->fpmeta);
-
 	GetUserIdAndSecContext(&saved_userid, &saved_sec_context);
 	SetUserIdAndSecContext(RelationGetForm(pk_rel)->relowner,
 						   saved_sec_context |
@@ -2734,6 +2734,14 @@ ri_FastPathCheck(const RI_ConstraintInfo *riinfo,
 						   SECURITY_NOFORCE_RLS);
 	ri_CheckPermissions(pk_rel);
 
+	if (riinfo->fpmeta == NULL)
+	{
+		/* Reload to ensure it's valid. */
+		riinfo = ri_LoadConstraintInfo(riinfo->constraint_id);
+		ri_populate_fastpath_metadata((RI_ConstraintInfo *) riinfo,
+									  fk_rel, idx_rel);
+	}
+	Assert(riinfo->fpmeta);
 	ri_ExtractValues(fk_rel, newslot, riinfo, false, pk_vals, pk_nulls);
 	build_index_scankeys(riinfo, idx_rel, pk_vals, pk_nulls, skey);
 	found = ri_FastPathProbeOne(pk_rel, idx_rel, scandesc, slot,
