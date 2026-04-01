@@ -119,6 +119,8 @@ extern "C++"
 /*
  * Attribute macros
  *
+ * C23: https://en.cppreference.com/w/c/language/attributes.html
+ * C++: https://en.cppreference.com/w/cpp/language/attributes.html
  * GCC: https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
  * GCC: https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html
  * Clang: https://clang.llvm.org/docs/AttributeReference.html
@@ -128,13 +130,20 @@ extern "C++"
  * For compilers which don't support __has_attribute, we just define
  * __has_attribute(x) to 0 so that we can define macros for various
  * __attribute__s more easily below.
+ *
+ * Note that __has_attribute only tells about GCC-style attributes, not C23 or
+ * C++ attributes.
  */
 #ifndef __has_attribute
 #define __has_attribute(attribute) 0
 #endif
 
-/* only GCC supports the unused attribute */
-#ifdef __GNUC__
+/*
+ * pg_attribute_unused() suppresses compiler warnings on unused entities.
+ */
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || (defined(__cplusplus) && __cplusplus >= 201703L)
+#define pg_attribute_unused() [[maybe_unused]]
+#elif defined(__GNUC__)
 #define pg_attribute_unused() __attribute__((unused))
 #else
 #define pg_attribute_unused()
@@ -154,11 +163,11 @@ extern "C++"
 
 /*
  * pg_nodiscard means the compiler should warn if the result of a function
- * call is ignored.  The name "nodiscard" is chosen in alignment with the C23
- * standard attribute with the same name.  For maximum forward compatibility,
- * place it before the declaration.
+ * call is ignored.
  */
-#ifdef __GNUC__
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || (defined(__cplusplus) && __cplusplus >= 201703L)
+#define pg_nodiscard [[nodiscard]]
+#elif defined(__GNUC__)
 #define pg_nodiscard __attribute__((warn_unused_result))
 #else
 #define pg_nodiscard
@@ -170,18 +179,15 @@ extern "C++"
  * uses __attribute__((noreturn)) in headers, which would get confused if
  * "noreturn" is defined to "_Noreturn", as is done by <stdnoreturn.h>.
  *
- * In a declaration, function specifiers go before the function name.  The
- * common style is to put them before the return type.  (The MSVC fallback has
- * the same requirement.  The GCC fallback is more flexible.)
+ * C23 attributes must be placed at the start of a declaration or statement.
+ * C11 function specifiers go before the function name in a declaration, but
+ * it is common style (and required for C23 compatibility) to put them before
+ * the return type.
  */
-#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && !defined(__cplusplus)
-#define pg_noreturn _Noreturn
-#elif defined(__GNUC__)
-#define pg_noreturn __attribute__((noreturn))
-#elif defined(_MSC_VER)
-#define pg_noreturn __declspec(noreturn)
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || defined(__cplusplus)
+#define pg_noreturn [[noreturn]]
 #else
-#define pg_noreturn
+#define pg_noreturn _Noreturn
 #endif
 
 /*

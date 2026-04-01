@@ -629,8 +629,8 @@ SlabAllocFromNewBlock(MemoryContext context, Size size, int flags)
  *		to setup the stack frame in SlabAlloc.  For performance reasons, we
  *		want to avoid that.
  */
-pg_noinline
 pg_noreturn
+pg_noinline
 static void
 SlabAllocInvalidSize(MemoryContext context, Size size)
 {

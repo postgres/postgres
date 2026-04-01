@@ -45,7 +45,7 @@ PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(worker_spi_launch);
 
-PGDLLEXPORT pg_noreturn void worker_spi_main(Datum main_arg);
+pg_noreturn PGDLLEXPORT void worker_spi_main(Datum main_arg);
 
 /* GUC variables */
 static int	worker_spi_naptime = 10;

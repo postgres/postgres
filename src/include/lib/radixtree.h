@@ -2777,8 +2777,8 @@ RT_STATS(RT_RADIX_TREE * tree)
 /*
  * Print out debugging information about the given node.
  */
-static void
 pg_attribute_unused()
+static void
 RT_DUMP_NODE(RT_NODE * node)
 {
 #ifdef RT_SHMEM
