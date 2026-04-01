@@ -37,7 +37,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
-    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ]
+    <replaceable class="parameter">table_object</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ]
 
 <phrase>and <replaceable class="parameter">except_table_object</replaceable> is:</phrase>
 
@@ -218,8 +218,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      <para>
       There can be a case where a subscription includes multiple publications.
       In such a case, a table or partition that is included in one publication
-      and listed in the <literal>EXCEPT</literal> clause of another is
-      considered included for replication.
+      but excluded (explicitly or implicitly) by the <literal>EXCEPT</literal>
+      clause of another is considered included for replication.
      </para>
     </listitem>
    </varlistentry>

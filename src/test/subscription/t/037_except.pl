@@ -70,7 +70,7 @@ sub test_except_root_partition
 # EXCEPT clause test cases for non-partitioned tables and inherited tables.
 # ============================================
 
-# Create schemas and tables on publisher
+# Create tables on publisher
 $node_publisher->safe_psql(
 	'postgres', qq(
 	CREATE TABLE tab1 AS SELECT generate_series(1,10) AS a;
@@ -80,7 +80,7 @@ $node_publisher->safe_psql(
 	CREATE TABLE child1 (b int) INHERITS (parent1);
 ));
 
-# Create schemas and tables on subscriber
+# Create tables on subscriber
 $node_subscriber->safe_psql(
 	'postgres', qq(
 	CREATE TABLE tab1 (a int);
@@ -94,7 +94,7 @@ $node_subscriber->safe_psql(
 # to verify exclusion behavior for inherited tables, including the effect of
 # ONLY in the EXCEPT clause.
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tab_pub FOR ALL TABLES EXCEPT (TABLE tab1, parent, only parent1)"
+	"CREATE PUBLICATION tap_pub FOR ALL TABLES EXCEPT (TABLE tab1, parent, only parent1)"
 );
 
 # Create a logical replication slot to help with later tests.
@@ -102,11 +102,11 @@ $node_publisher->safe_psql('postgres',
 	"SELECT pg_create_logical_replication_slot('test_slot', 'pgoutput')");
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tab_sub CONNECTION '$publisher_connstr' PUBLICATION tab_pub"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub"
 );
 
 # Wait for initial table sync to finish
-$node_subscriber->wait_for_subscription_sync($node_publisher, 'tab_sub');
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Check the table data does not sync for the tables specified in the EXCEPT
 # clause.
@@ -126,7 +126,7 @@ $node_publisher->safe_psql(
 # Verify that data inserted into a table listed in the EXCEPT clause is
 # not published.
 $result = $node_publisher->safe_psql('postgres',
-	"SELECT count(*) = 0 FROM pg_logical_slot_get_binary_changes('test_slot', NULL, NULL, 'proto_version', '1', 'publication_names', 'tab_pub')"
+	"SELECT count(*) = 0 FROM pg_logical_slot_get_binary_changes('test_slot', NULL, NULL, 'proto_version', '1', 'publication_names', 'tap_pub')"
 );
 is($result, qq(t),
 	'verify no changes for table listed in the EXCEPT clause are present in the replication slot'
@@ -141,7 +141,7 @@ $node_publisher->safe_psql('postgres',
 
 # Verify that data inserted into a table listed in the EXCEPT clause is
 # not replicated.
-$node_publisher->wait_for_catchup('tab_sub');
+$node_publisher->wait_for_catchup('tap_sub');
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab1");
 is($result, qq(0), 'check replicated inserts on subscriber');
@@ -158,15 +158,15 @@ $node_subscriber->safe_psql('postgres', "CREATE TABLE tab2 (a int)");
 
 # Replace the table list in the EXCEPT clause so that only tab2 is excluded.
 $node_publisher->safe_psql('postgres',
-	"ALTER PUBLICATION tab_pub SET ALL TABLES EXCEPT (TABLE tab2)");
+	"ALTER PUBLICATION tap_pub SET ALL TABLES EXCEPT (TABLE tab2)");
 
 # Refresh the subscription so the subscriber picks up the updated
 # publication definition and initiates table synchronization.
 $node_subscriber->safe_psql('postgres',
-	"ALTER SUBSCRIPTION tab_sub REFRESH PUBLICATION");
+	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION");
 
 # Wait for initial table sync to finish
-$node_subscriber->wait_for_subscription_sync($node_publisher, 'tab_sub');
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Verify that initial table synchronization does not occur for tables
 # listed in the EXCEPT clause.
@@ -187,13 +187,13 @@ is($result, qq(20),
 # cleanup
 $node_subscriber->safe_psql(
 	'postgres', qq(
-	DROP SUBSCRIPTION tab_sub;
+	DROP SUBSCRIPTION tap_sub;
 	TRUNCATE TABLE tab1;
 	DROP TABLE parent, parent1, child, child1, tab2;
 ));
 $node_publisher->safe_psql(
 	'postgres', qq(
-	DROP PUBLICATION tab_pub;
+	DROP PUBLICATION tap_pub;
 	TRUNCATE TABLE tab1;
     DROP TABLE parent, parent1, child, child1, tab2;
 ));

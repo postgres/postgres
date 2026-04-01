@@ -59,7 +59,7 @@ check_publication_add_relation(PublicationRelInfo *pri)
 	const char *errormsg;
 
 	if (pri->except)
-		errormsg = gettext_noop("cannot use publication EXCEPT clause for relation \"%s\"");
+		errormsg = gettext_noop("cannot specify relation \"%s\" in the publication EXCEPT clause");
 	else
 		errormsg = gettext_noop("cannot add relation \"%s\" to publication");
 

@@ -449,7 +449,7 @@ Except Publications:
 Number of partitions: 1 (Use \d+ to list them.)
 
 CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT (TABLE testpub_part1);
-ERROR:  cannot use publication EXCEPT clause for relation "testpub_part1"
+ERROR:  cannot specify relation "testpub_part1" in the publication EXCEPT clause
 DETAIL:  This operation is not supported for individual partitions.
 CREATE TABLE tab_main (a int) PARTITION BY RANGE(a);
 -- Attaching a partition is not allowed if the partitioned table appears in a
