@@ -84,6 +84,8 @@ const char *pretty_diff_opts = "--strip-trailing-cr -U3";
 typedef enum TAPtype
 {
 	DIAG = 0,
+	DIAG_DETAIL,
+	DIAG_END,
 	BAIL,
 	NOTE,
 	NOTE_DETAIL,
@@ -131,6 +133,7 @@ static char sockself[MAXPGPATH];
 static char socklock[MAXPGPATH];
 static StringInfo failed_tests = NULL;
 static bool in_note = false;
+static bool in_diag = false;
 
 static _resultmap *resultmap = NULL;
 
@@ -162,6 +165,8 @@ static void psql_end_command(StringInfo buf, const char *database);
 #define note(...)			emit_tap_output(NOTE, __VA_ARGS__)
 #define note_detail(...)	emit_tap_output(NOTE_DETAIL, __VA_ARGS__)
 #define diag(...)			emit_tap_output(DIAG, __VA_ARGS__)
+#define diag_detail(...)	emit_tap_output(DIAG_DETAIL, __VA_ARGS__)
+#define diag_end()			emit_tap_output(DIAG_END, "\n");
 #define note_end()			emit_tap_output(NOTE_END, "\n");
 #define bail_noatexit(...)	bail_out(true, __VA_ARGS__)
 #define bail(...)			bail_out(false, __VA_ARGS__)
@@ -356,7 +361,7 @@ emit_tap_output_v(TAPtype type, const char *fmt, va_list argp)
 	 * Bail message is also printed to stderr to aid debugging under a harness
 	 * which might otherwise not emit such an important message.
 	 */
-	if (type == DIAG || type == BAIL)
+	if (type == DIAG || type == DIAG_DETAIL || type == DIAG_END || type == BAIL)
 		fp = stderr;
 	else
 		fp = stdout;
@@ -365,9 +370,12 @@ emit_tap_output_v(TAPtype type, const char *fmt, va_list argp)
 	 * If we are ending a note_detail line we can avoid further processing and
 	 * immediately return following a newline.
 	 */
-	if (type == NOTE_END)
+	if (type == NOTE_END || type == DIAG_END)
 	{
-		in_note = false;
+		if (type == NOTE_END)
+			in_note = false;
+		else
+			in_diag = false;
 		fprintf(fp, "\n");
 		if (logfile)
 			fprintf(logfile, "\n");
@@ -382,7 +390,8 @@ emit_tap_output_v(TAPtype type, const char *fmt, va_list argp)
 	 * '#' character. We print the Bail message like this too.
 	 */
 	if ((type == NOTE || type == DIAG || type == BAIL)
-		|| (type == NOTE_DETAIL && !in_note))
+		|| (type == NOTE_DETAIL && !in_note)
+		|| (type == DIAG_DETAIL && !in_diag))
 	{
 		fprintf(fp, "# ");
 		if (logfile)
@@ -403,6 +412,8 @@ emit_tap_output_v(TAPtype type, const char *fmt, va_list argp)
 	 */
 	if (type == NOTE_DETAIL)
 		in_note = true;
+	if (type == DIAG_DETAIL)
+		in_diag = true;
 
 	/*
 	 * If this was a Bail message, the bail protocol message must go to stdout
@@ -417,7 +428,7 @@ emit_tap_output_v(TAPtype type, const char *fmt, va_list argp)
 
 	va_end(argp_logfile);
 
-	if (type != NOTE_DETAIL)
+	if (type != NOTE_DETAIL && type != DIAG_DETAIL)
 	{
 		fprintf(fp, "\n");
 		if (logfile)
@@ -1414,6 +1425,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	int			best_line_count;
 	int			i;
 	int			l;
+	long		startpos;
 	const char *platform_expectfile;
 
 	/*
@@ -1521,21 +1533,80 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	 * append to the diffs summary file.
 	 */
 
-	/* Write diff header */
 	difffile = fopen(difffilename, "a");
 	if (difffile)
 	{
+		startpos = ftell(difffile);
+
+		/* Write diff header */
 		fprintf(difffile,
 				"diff %s %s %s\n",
 				pretty_diff_opts, best_expect_file, resultsfile);
 		fclose(difffile);
+
+		/* Run diff */
+		snprintf(cmd, sizeof(cmd),
+				 "diff %s \"%s\" \"%s\" >> \"%s\"",
+				 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
+		run_diff(cmd, difffilename);
+
+		/*
+		 * Reopen the file for reading to emit the diff as TAP diagnostics. We
+		 * can't keep the file open while diff appends to it, because on
+		 * Windows the file lock prevents diff from writing.
+		 */
+		difffile = fopen(difffilename, "r");
 	}
 
-	/* Run diff */
-	snprintf(cmd, sizeof(cmd),
-			 "diff %s \"%s\" \"%s\" >> \"%s\"",
-			 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
-	run_diff(cmd, difffilename);
+	if (difffile)
+	{
+		/*
+		 * In case of a crash the diff can be huge and all of the subsequent
+		 * tests will fail with essentially useless diffs too. So to avoid
+		 * flooding the output, while still providing useful info in most
+		 * cases we output only the first 80 lines of the *combined* diff. The
+		 * number 80 is chosen so that we output less than 100 lines of
+		 * diagnostics per pg_regress run. Otherwise if meson is run with the
+		 * --quiet flag only the last 100 lines are shown and usually the most
+		 * useful information is actually in the first few lines.
+		 */
+		static int	nlines = 0;
+		const int	max_diff_lines = 80;
+		char		line[1024];
+
+		fseek(difffile, startpos, SEEK_SET);
+		while (nlines < max_diff_lines &&
+			   fgets(line, sizeof(line), difffile))
+		{
+			size_t		len = strlen(line);
+			bool		newline_found = (len > 0 && line[len - 1] == '\n');
+
+			if (newline_found)
+				line[len - 1] = '\0';
+
+			diag_detail("%s", line);
+			if (newline_found)
+			{
+				diag_end();
+				nlines++;
+			}
+		}
+
+		if (in_diag)
+		{
+			/*
+			 * If there was no final newline for some reason, we should still
+			 * end the diagnostic.
+			 */
+			diag_end();
+			nlines++;
+		}
+
+		if (nlines >= max_diff_lines)
+			diag("(diff output truncated and silencing output for further failing tests...)");
+
+		fclose(difffile);
+	}
 
 	unlink(diff);
 	return true;
