@@ -131,7 +131,7 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 	Size		offset;
 	HASHCTL		info;
 	int			hash_flags;
-	size_t		size;
+	size_t		size = 0;
 
 #ifndef EXEC_BACKEND
 	Assert(!IsUnderPostmaster);
@@ -198,6 +198,22 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 	info.hctl = ShmemAllocator->index;
 	ShmemIndex = hash_create("ShmemIndex", SHMEM_INDEX_SIZE, &info, hash_flags);
 	Assert(ShmemIndex != NULL);
+
+	/*
+	 * Add an entry for ShmemIndex itself into ShmemIndex, so that it's
+	 * visible in the pg_shmem_allocations view
+	 */
+	if (!IsUnderPostmaster)
+	{
+		bool		found;
+		ShmemIndexEnt *result = (ShmemIndexEnt *)
+			hash_search(ShmemIndex, "ShmemIndex", HASH_ENTER, &found);
+
+		Assert(!found);
+		result->size = size;
+		result->allocated_size = size;
+		result->location = ShmemAllocator->index;
+	}
 }
 
 /*
