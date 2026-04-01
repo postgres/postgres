@@ -95,7 +95,7 @@
  * ----------
  */
 extern HeapTuple heap_toast_insert_or_update(Relation rel, HeapTuple newtup,
-											 HeapTuple oldtup, int options);
+											 HeapTuple oldtup, uint32 options);
 
 /* ----------
  * heap_toast_delete -

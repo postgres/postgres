@@ -6195,7 +6195,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	EState	   *estate;
 	CommandId	mycid;
 	BulkInsertState bistate;
-	int			ti_options;
+	uint32		ti_options;
 	ExprState  *partqualstate = NULL;
 
 	/*
@@ -22835,7 +22835,7 @@ MergePartitionsMoveRows(List **wqueue, List *mergingPartitions, Relation newPart
 	ListCell   *ltab;
 
 	/* The FSM is empty, so don't bother using it. */
-	int			ti_options = TABLE_INSERT_SKIP_FSM;
+	uint32		ti_options = TABLE_INSERT_SKIP_FSM;
 	BulkInsertState bistate;	/* state of bulk inserts for partition */
 	TupleTableSlot *dstslot;
 
@@ -23226,7 +23226,7 @@ createSplitPartitionContext(Relation partRel)
  * deleteSplitPartitionContext: delete context for partition
  */
 static void
-deleteSplitPartitionContext(SplitPartitionContext *pc, List **wqueue, int ti_options)
+deleteSplitPartitionContext(SplitPartitionContext *pc, List **wqueue, uint32 ti_options)
 {
 	ListCell   *ltab;
 
@@ -23268,7 +23268,7 @@ SplitPartitionMoveRows(List **wqueue, Relation rel, Relation splitRel,
 					   List *partlist, List *newPartRels)
 {
 	/* The FSM is empty, so don't bother using it. */
-	int			ti_options = TABLE_INSERT_SKIP_FSM;
+	uint32		ti_options = TABLE_INSERT_SKIP_FSM;
 	CommandId	mycid;
 	EState	   *estate;
 	ListCell   *listptr,

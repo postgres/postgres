@@ -498,7 +498,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
  */
 Buffer
 RelationGetBufferForTuple(Relation relation, Size len,
-						  Buffer otherBuffer, int options,
+						  Buffer otherBuffer, uint32 options,
 						  BulkInsertState bistate,
 						  Buffer *vmbuffer, Buffer *vmbuffer_other,
 						  int num_pages)

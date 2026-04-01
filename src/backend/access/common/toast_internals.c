@@ -117,7 +117,7 @@ toast_compress_datum(Datum value, char cmethod)
  */
 Datum
 toast_save_datum(Relation rel, Datum value,
-				 varlena *oldexternal, int options)
+				 varlena *oldexternal, uint32 options)
 {
 	Relation	toastrel;
 	Relation   *toastidxs;

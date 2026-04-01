@@ -618,7 +618,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	}
 	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
 	{
-		int			options = HEAP_INSERT_SKIP_FSM;
+		uint32		options = HEAP_INSERT_SKIP_FSM;
 
 		/*
 		 * While rewriting the heap for VACUUM FULL / CLUSTER, make sure data

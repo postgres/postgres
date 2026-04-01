@@ -101,7 +101,7 @@ typedef struct CopyMultiInsertInfo
 	CopyFromState cstate;		/* Copy state for this CopyMultiInsertInfo */
 	EState	   *estate;			/* Executor state used for COPY */
 	CommandId	mycid;			/* Command Id used for COPY */
-	int			ti_options;		/* table insert options */
+	uint32		ti_options;		/* table insert options */
 } CopyMultiInsertInfo;
 
 
@@ -401,7 +401,7 @@ CopyMultiInsertInfoSetupBuffer(CopyMultiInsertInfo *miinfo,
 static void
 CopyMultiInsertInfoInit(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,
 						CopyFromState cstate, EState *estate, CommandId mycid,
-						int ti_options)
+						uint32 ti_options)
 {
 	miinfo->multiInsertBuffers = NIL;
 	miinfo->bufferedTuples = 0;
@@ -535,7 +535,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	else
 	{
 		CommandId	mycid = miinfo->mycid;
-		int			ti_options = miinfo->ti_options;
+		uint32		ti_options = miinfo->ti_options;
 		bool		line_buf_valid = cstate->line_buf_valid;
 		uint64		save_cur_lineno = cstate->cur_lineno;
 		MemoryContext oldcontext;
@@ -792,7 +792,7 @@ CopyFrom(CopyFromState cstate)
 	PartitionTupleRouting *proute = NULL;
 	ErrorContextCallback errcallback;
 	CommandId	mycid = GetCurrentCommandId(true);
-	int			ti_options = 0; /* start with default options for insert */
+	uint32		ti_options = 0; /* start with default options for insert */
 	BulkInsertState bistate = NULL;
 	CopyInsertMethod insertMethod;
 	CopyMultiInsertInfo multiInsertInfo = {0};	/* pacify compiler */
