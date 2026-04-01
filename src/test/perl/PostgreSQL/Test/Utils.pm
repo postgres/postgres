@@ -244,6 +244,24 @@ INIT
 	autoflush STDOUT 1;
 	autoflush STDERR 1;
 	autoflush $testlog 1;
+
+	# Because of the above redirection the tap output wouldn't contain
+	# information about tests failing due to die etc. Fix that by also
+	# printing the failure to the original stderr.
+	$SIG{__DIE__} = sub {
+		# Ignore dies because of syntax errors, those will be displayed
+		# correctly anyway.
+		return if !defined $^S;
+
+		# Ignore dies inside evals
+		return if $^S == 1;
+
+		diag("die: $_[0]");
+		# Also call done_testing() to avoid the confusing "no plan was declared"
+		# message in TAP output when a test dies.
+		eval { done_testing(); }
+	};
+
 }
 
 END
