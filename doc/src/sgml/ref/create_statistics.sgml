@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable> ]
-    ON ( <replaceable class="parameter">expression</replaceable> )
+    ON { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) }
     FROM <replaceable class="parameter">table_name</replaceable>
 
 CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable> ]
@@ -45,7 +45,8 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
 
   <para>
    The <command>CREATE STATISTICS</command> command has two basic forms. The
-   first form allows univariate statistics for a single expression to be
+   first form allows univariate statistics for a single expression
+   or virtual generated column to be
    collected, providing benefits similar to an expression index without the
    overhead of index maintenance.  This form does not allow the statistics
    kind to be specified, since the various statistics kinds refer only to
@@ -53,7 +54,7 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
    multivariate statistics on multiple columns and/or expressions to be
    collected, optionally specifying which statistics kinds to include.  This
    form will also automatically cause univariate statistics to be collected on
-   any expressions included in the list.
+   any expressions and virtual generated columns included in the list.
   </para>
 
   <para>
@@ -109,7 +110,8 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
       If this clause is omitted, all supported statistics kinds are
       included in the statistics object. Univariate expression statistics are
       built automatically if the statistics definition includes any complex
-      expressions rather than just simple column references.
+      expressions or references to virtual generated columns
+      rather than just simple column references.
       For more information, see <xref linkend="planner-stats-extended"/>
       and <xref linkend="multivariate-statistics-examples"/>.
      </para>
@@ -121,9 +123,16 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
     <listitem>
      <para>
       The name of a table column to be covered by the computed statistics.
-      This is only allowed when building multivariate statistics.  At least
-      two column names or expressions must be specified, and their order is
-      not significant.
+      This may be used to build univariate statistics on a single virtual
+      generated column, or as part of a list of multiple columns (virtual or
+      non-virtual) and/or expressions to build multivariate statistics.  In
+      the latter case, separate univariate statistics are built automatically
+      for each expression and virtual generated column in the list.
+     </para>
+     <para>
+      Defining extended statistics on a single <emphasis>non-virtual</emphasis>
+      column is not supported or necessary, because statistics are built
+      automatically on such columns without defining extended statistics.
      </para>
     </listitem>
    </varlistentry>
@@ -136,7 +145,8 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
       used to build univariate statistics on a single expression, or as part
       of a list of multiple column names and/or expressions to build
       multivariate statistics.  In the latter case, separate univariate
-      statistics are built automatically for each expression in the list.
+      statistics are built automatically for each expression and virtual
+      generated column in the list.
      </para>
     </listitem>
    </varlistentry>
@@ -169,7 +179,9 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
    Expression statistics are per-expression and are similar to creating an
    index on the expression, except that they avoid the overhead of index
    maintenance. Expression statistics are built automatically for each
-   expression in the statistics object definition.
+   expression in the statistics object definition.  Extended statistics on
+   a virtual generated column behave the same as expression statistics on the
+   column's generation expression.
   </para>
 
   <para>

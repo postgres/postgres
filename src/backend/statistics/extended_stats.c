@@ -32,6 +32,7 @@
 #include "parser/parsetree.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
+#include "rewrite/rewriteHandler.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
 #include "utils/acl.h"
@@ -73,7 +74,7 @@ typedef struct StatExtEntry
 } StatExtEntry;
 
 
-static List *fetch_statentries_for_relation(Relation pg_statext, Oid relid);
+static List *fetch_statentries_for_relation(Relation pg_statext, Relation rel);
 static VacAttrStats **lookup_var_attr_stats(Bitmapset *attrs, List *exprs,
 											int nvacatts, VacAttrStats **vacatts);
 static void statext_store(Oid statOid, bool inh,
@@ -125,7 +126,7 @@ BuildRelationExtStatistics(Relation onerel, bool inh, double totalrows,
 
 	/* the list of stats has to be allocated outside the memory context */
 	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
-	statslist = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
+	statslist = fetch_statentries_for_relation(pg_stext, onerel);
 
 	/* memory context for building each statistics object */
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -279,7 +280,7 @@ ComputeExtStatisticsRows(Relation onerel,
 	oldcxt = MemoryContextSwitchTo(cxt);
 
 	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
-	lstats = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
+	lstats = fetch_statentries_for_relation(pg_stext, onerel);
 
 	foreach(lc, lstats)
 	{
@@ -416,12 +417,13 @@ statext_is_kind_built(HeapTuple htup, char type)
  * Return a list (of StatExtEntry) of statistics objects for the given relation.
  */
 static List *
-fetch_statentries_for_relation(Relation pg_statext, Oid relid)
+fetch_statentries_for_relation(Relation pg_statext, Relation rel)
 {
 	SysScanDesc scan;
 	ScanKeyData skey;
 	HeapTuple	htup;
 	List	   *result = NIL;
+	Oid			relid = RelationGetRelid(rel);
 
 	/*
 	 * Prepare to scan pg_statistic_ext for entries having stxrelid = this
@@ -490,6 +492,9 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 			exprs = (List *) stringToNode(exprsString);
 
 			pfree(exprsString);
+
+			/* Expand virtual generated columns in the expressions */
+			exprs = (List *) expand_generated_columns_in_expr((Node *) exprs, rel, 1);
 
 			/*
 			 * Run the expressions through eval_const_expressions. This is not

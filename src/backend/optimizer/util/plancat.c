@@ -1792,6 +1792,9 @@ get_relation_statistics(PlannerInfo *root, RelOptInfo *rel,
 				exprs = (List *) stringToNode(exprsString);
 				pfree(exprsString);
 
+				/* Expand virtual generated columns in the expressions */
+				exprs = (List *) expand_generated_columns_in_expr((Node *) exprs, relation, 1);
+
 				/*
 				 * Modify the copies we obtain from the relcache to have the
 				 * correct varno for the parent relation, so that they match

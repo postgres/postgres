@@ -217,7 +217,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       so running <link linkend="sql-analyze"><command>ANALYZE</command></link>
       on the table afterwards is recommended.
       For a virtual generated column, <command>ANALYZE</command>
-      is not necessary because such columns never have statistics.
+      is not necessary unless extended statistics are defined on it,
+      since such columns do not have statistics by default.
      </para>
     </listitem>
    </varlistentry>
@@ -289,7 +290,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <link linkend="sql-analyze"><command>ANALYZE</command></link>
       on the table afterwards is recommended.
       For a virtual generated column, <command>ANALYZE</command>
-      is not necessary because such columns never have statistics.
+      is not necessary unless extended statistics are defined on it,
+      since such columns do not have statistics by default.
      </para>
     </listitem>
    </varlistentry>
@@ -367,6 +369,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       For more information on the use of statistics by the
       <productname>PostgreSQL</productname> query planner, refer to
       <xref linkend="planner-stats"/>.
+     </para>
+     <para>
+      This form is not supported on virtual generated columns, since such
+      columns do not have statistics by default.  If extended statistics are
+      defined on such columns, the statistics-gathering target may be set on
+      the extended statistics object using <xref linkend="sql-alterstatistics"/>.
      </para>
      <para>
       <literal>SET STATISTICS</literal> acquires a

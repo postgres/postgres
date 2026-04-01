@@ -28,6 +28,7 @@
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "statistics/statistics.h"
@@ -232,7 +233,8 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 	 * Convert the expression list to a simple array of attnums, but also keep
 	 * a list of more complex expressions.  While at it, enforce some
 	 * constraints - we don't allow extended statistics on system attributes,
-	 * and we require the data type to have a less-than operator.
+	 * and we require the data type to have a less-than operator, if we're
+	 * building multivariate statistics.
 	 *
 	 * There are many ways to "mask" a simple attribute reference as an
 	 * expression, for example "(a+0)" etc. We can't possibly detect all of
@@ -268,22 +270,38 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("statistics creation on system columns is not supported")));
 
-			/* Disallow use of virtual generated columns in extended stats */
+			/*
+			 * Disallow data types without a less-than operator in
+			 * multivariate statistics.
+			 */
+			if (numcols > 1)
+			{
+				type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
+				if (type->lt_opr == InvalidOid)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("column \"%s\" cannot be used in multivariate statistics because its type %s has no default btree operator class",
+									attname, format_type_be(attForm->atttypid))));
+			}
+
+			/* Treat virtual generated columns as expressions */
 			if (attForm->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("statistics creation on virtual generated columns is not supported")));
+			{
+				Node	   *expr;
 
-			/* Disallow data types without a less-than operator */
-			type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
-			if (type->lt_opr == InvalidOid)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("column \"%s\" cannot be used in statistics because its type %s has no default btree operator class",
-								attname, format_type_be(attForm->atttypid))));
-
-			attnums[nattnums] = attForm->attnum;
-			nattnums++;
+				expr = (Node *) makeVar(1,
+										attForm->attnum,
+										attForm->atttypid,
+										attForm->atttypmod,
+										attForm->attcollation,
+										0);
+				stxexprs = lappend(stxexprs, expr);
+			}
+			else
+			{
+				attnums[nattnums] = attForm->attnum;
+				nattnums++;
+			}
 			ReleaseSysCache(atttuple);
 		}
 		else if (IsA(selem->expr, Var)) /* column reference in parens */
@@ -297,22 +315,30 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("statistics creation on system columns is not supported")));
 
-			/* Disallow use of virtual generated columns in extended stats */
+			/*
+			 * Disallow data types without a less-than operator in
+			 * multivariate statistics.
+			 */
+			if (numcols > 1)
+			{
+				type = lookup_type_cache(var->vartype, TYPECACHE_LT_OPR);
+				if (type->lt_opr == InvalidOid)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("column \"%s\" cannot be used in multivariate statistics because its type %s has no default btree operator class",
+									get_attname(relid, var->varattno, false), format_type_be(var->vartype))));
+			}
+
+			/* Treat virtual generated columns as expressions */
 			if (get_attgenerated(relid, var->varattno) == ATTRIBUTE_GENERATED_VIRTUAL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("statistics creation on virtual generated columns is not supported")));
-
-			/* Disallow data types without a less-than operator */
-			type = lookup_type_cache(var->vartype, TYPECACHE_LT_OPR);
-			if (type->lt_opr == InvalidOid)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("column \"%s\" cannot be used in statistics because its type %s has no default btree operator class",
-								get_attname(relid, var->varattno, false), format_type_be(var->vartype))));
-
-			attnums[nattnums] = var->varattno;
-			nattnums++;
+			{
+				stxexprs = lappend(stxexprs, (Node *) var);
+			}
+			else
+			{
+				attnums[nattnums] = var->varattno;
+				nattnums++;
+			}
 		}
 		else					/* expression */
 		{
@@ -336,22 +362,13 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("statistics creation on system columns is not supported")));
-
-				/* Disallow use of virtual generated columns in extended stats */
-				if (get_attgenerated(relid, attnum) == ATTRIBUTE_GENERATED_VIRTUAL)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("statistics creation on virtual generated columns is not supported")));
 			}
 
 			/*
-			 * Disallow data types without a less-than operator.
-			 *
-			 * We ignore this for statistics on a single expression, in which
-			 * case we'll build the regular statistics only (and that code can
-			 * deal with such data types).
+			 * Disallow data types without a less-than operator in
+			 * multivariate statistics.
 			 */
-			if (list_length(stmt->exprs) > 1)
+			if (numcols > 1)
 			{
 				atttype = exprType(expr);
 				type = lookup_type_cache(atttype, TYPECACHE_LT_OPR);
@@ -367,22 +384,25 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 	}
 
 	/*
-	 * Parse the statistics kinds.
-	 *
-	 * First check that if this is the case with a single expression, there
-	 * are no statistics kinds specified (we don't allow that for the simple
-	 * CREATE STATISTICS form).
+	 * Check that at least two columns were specified in the statement, or
+	 * that we're building statistics on a single expression (or virtual
+	 * generated column).
 	 */
-	if ((list_length(stmt->exprs) == 1) && (list_length(stxexprs) == 1))
-	{
-		/* statistics kinds not specified */
-		if (stmt->stat_types != NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("when building statistics on a single expression, statistics kinds may not be specified")));
-	}
+	if (numcols < 2 && list_length(stxexprs) != 1)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("cannot create extended statistics on a single non-virtual column"),
+				errdetail("Univariate statistics are already built for each individual non-virtual table column."));
 
-	/* OK, let's check that we recognize the statistics kinds. */
+	/*
+	 * Parse the statistics kinds (not allowed when building univariate
+	 * statistics).
+	 */
+	if (numcols == 1 && stmt->stat_types != NIL)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("cannot specify statistics kinds when building univariate statistics"));
+
 	build_ndistinct = false;
 	build_dependencies = false;
 	build_mcv = false;
@@ -429,15 +449,6 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 	 * consider per-clause estimates (e.g. functional dependencies).
 	 */
 	build_expressions = (stxexprs != NIL);
-
-	/*
-	 * Check that at least two columns were specified in the statement, or
-	 * that we're building statistics on a single expression.
-	 */
-	if ((numcols < 2) && (list_length(stxexprs) != 1))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("extended statistics require at least 2 columns")));
 
 	/*
 	 * Sort the attnums, which makes detecting duplicates somewhat easier, and
