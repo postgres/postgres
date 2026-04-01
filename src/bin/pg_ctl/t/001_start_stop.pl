@@ -112,7 +112,7 @@ SKIP:
 	ok(check_mode_recursive("$tempdir/data", 0750, 0640));
 }
 
-command_ok([ 'pg_ctl', 'restart', '--pgdata' => "$tempdir/data" ],
+command_ok([ 'pg_ctl', 'restart', '--pgdata' => "$tempdir/data", '--log' => $logFileName ],
 	'pg_ctl restart with server running');
 
 system_or_bail 'pg_ctl', 'stop', '--pgdata' => "$tempdir/data";

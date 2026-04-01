@@ -937,6 +937,35 @@ sub dir_symlink
 	die "No $newname" unless -e $newname;
 }
 
+# Log command output. Truncates to first/last 30 lines if over 60 lines.
+sub _diag_command_output
+{
+	my ($cmd, $stdout, $stderr) = @_;
+
+	diag(join(" ", @$cmd));
+
+	for my $channel (['stdout', $stdout], ['stderr', $stderr])
+	{
+		my ($name, $output) = @$channel;
+		next unless $output;
+
+		diag("-------------- $name --------------");
+		my @lines = split /\n/, $output;
+		if (@lines > 60)
+		{
+			diag(join("\n", @lines[0 .. 29]));
+			diag("... " . (@lines - 60) . " lines omitted ...");
+			diag(join("\n", @lines[-30 .. -1]));
+		}
+		else
+		{
+			diag($output);
+		}
+	}
+
+	diag("------------------------------------");
+}
+
 =pod
 
 =back
@@ -947,7 +976,7 @@ sub dir_symlink
 
 =item command_ok(cmd, test_name)
 
-Check that the command runs (via C<run_log>) successfully.
+Check that the command runs successfully.
 
 =cut
 
@@ -955,8 +984,14 @@ sub command_ok
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 	my ($cmd, $test_name) = @_;
-	my $result = run_log($cmd);
-	ok($result, $test_name);
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>' => \$stdout, '2>' => \$stderr;
+	ok($result, $test_name) or do
+	{
+		diag("---------- command failed ----------");
+		_diag_command_output($cmd, $stdout, $stderr);
+	};
 	return;
 }
 
@@ -964,7 +999,7 @@ sub command_ok
 
 =item command_fails(cmd, test_name)
 
-Check that the command fails (when run via C<run_log>).
+Check that the command fails.
 
 =cut
 
@@ -972,8 +1007,14 @@ sub command_fails
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 	my ($cmd, $test_name) = @_;
-	my $result = run_log($cmd);
-	ok(!$result, $test_name);
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>' => \$stdout, '2>' => \$stderr;
+	ok(!$result, $test_name) or do
+	{
+		diag("-- command succeeded unexpectedly --");
+		_diag_command_output($cmd, $stdout, $stderr);
+	};
 	return;
 }
 
