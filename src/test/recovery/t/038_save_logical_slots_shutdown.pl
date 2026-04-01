@@ -48,6 +48,7 @@ $node_publisher->append_conf(
 	'postgresql.conf', q{
 checkpoint_timeout = 1h
 autovacuum = off
+log_min_messages = 'debug1'
 });
 $node_publisher->start;
 

@@ -598,7 +598,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 
 	ctx->reorder->output_rewrites = ctx->options.receive_rewrites;
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("starting logical decoding for slot \"%s\"",
 					NameStr(slot->data.name)),
 			 errdetail("Streaming transactions committing after %X/%08X, reading WAL from %X/%08X.",
