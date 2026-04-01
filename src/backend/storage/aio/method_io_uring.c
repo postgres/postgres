@@ -54,6 +54,7 @@ static void pgaio_uring_shmem_init(bool first_time);
 static void pgaio_uring_init_backend(void);
 static int	pgaio_uring_submit(uint16 num_staged_ios, PgAioHandle **staged_ios);
 static void pgaio_uring_wait_one(PgAioHandle *ioh, uint64 ref_generation);
+static void pgaio_uring_check_one(PgAioHandle *ioh, uint64 ref_generation);
 
 /* helper functions */
 static void pgaio_uring_sq_from_io(PgAioHandle *ioh, struct io_uring_sqe *sqe);
@@ -75,6 +76,7 @@ const IoMethodOps pgaio_uring_ops = {
 
 	.submit = pgaio_uring_submit,
 	.wait_one = pgaio_uring_wait_one,
+	.check_one = pgaio_uring_check_one,
 };
 
 /*
@@ -656,6 +658,47 @@ pgaio_uring_wait_one(PgAioHandle *ioh, uint64 ref_generation)
 	pgaio_debug(DEBUG3,
 				"wait_one with %d sleeps",
 				waited);
+}
+
+static void
+pgaio_uring_check_one(PgAioHandle *ioh, uint64 ref_generation)
+{
+	ProcNumber	owner_procno = ioh->owner_procno;
+	PgAioUringContext *owner_context = &pgaio_uring_contexts[owner_procno];
+
+	/*
+	 * This check is not reliable when not holding the completion lock, but
+	 * it's a useful cheap pre-check to see if it's worth trying to get the
+	 * completion lock.
+	 */
+	if (!io_uring_cq_ready(&owner_context->io_uring_ring))
+		return;
+
+	/*
+	 * If the completion lock is currently held, the holder will likely
+	 * process any pending completions, give up.
+	 */
+	if (!LWLockConditionalAcquire(&owner_context->completion_lock, LW_EXCLUSIVE))
+		return;
+
+	pgaio_debug_io(DEBUG3, ioh,
+				   "check_one io_gen: %" PRIu64 ", ref_gen: %" PRIu64,
+				   ioh->generation,
+				   ref_generation);
+
+	/*
+	 * Recheck if there are any completions, another backend could have
+	 * processed them since we checked above, or our unlocked pre-check could
+	 * have been reading outdated values.
+	 *
+	 * It is possible that the IO handle has been reused since the start of
+	 * the call, but now that we have the lock, we can just as well drain all
+	 * completions.
+	 */
+	if (io_uring_cq_ready(&owner_context->io_uring_ring))
+		pgaio_uring_drain_locked(owner_context);
+
+	LWLockRelease(&owner_context->completion_lock);
 }
 
 static void

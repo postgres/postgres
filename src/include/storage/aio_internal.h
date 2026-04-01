@@ -328,6 +328,21 @@ typedef struct IoMethodOps
 	 */
 	void		(*wait_one) (PgAioHandle *ioh,
 							 uint64 ref_generation);
+
+	/* ---
+	 * Check if IO has already completed. Optional.
+	 *
+	 * Some IO methods need to poll a kernel object to see if IO has already
+	 * completed in the background. This callback allows to do so.
+	 *
+	 * This callback may not wait for IO to complete, however it is allowed,
+	 * although not desirable, to wait for short-lived locks. It is ok from a
+	 * correctness perspective to not process any/all available completions,
+	 * it just can lead to inferior performance.
+	 * ---
+	 */
+	void		(*check_one) (PgAioHandle *ioh,
+							  uint64 ref_generation);
 } IoMethodOps;
 
 
