@@ -589,14 +589,6 @@ nocachegetattr(HeapTuple tup,
 
 			cattr = TupleDescCompactAttr(tupleDesc, i);
 			attlen = cattr->attlen;
-
-			/*
-			 * cstrings don't exist in heap tuples.  Use pg_assume to instruct
-			 * the compiler not to emit the cstring-related code in
-			 * att_addlength_pointer().
-			 */
-			pg_assume(attlen > 0 || attlen == -1);
-
 			off = att_pointer_alignby(off,
 									  cattr->attalignby,
 									  attlen,
@@ -613,10 +605,6 @@ nocachegetattr(HeapTuple tup,
 
 			cattr = TupleDescCompactAttr(tupleDesc, i);
 			attlen = cattr->attlen;
-
-			/* As above, heaptuples have no cstrings */
-			pg_assume(attlen > 0 || attlen == -1);
-
 			off = att_pointer_alignby(off, cattr->attalignby, attlen,
 									  tp + off);
 			off = att_addlength_pointer(off, attlen, tp + off);
