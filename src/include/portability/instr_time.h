@@ -22,6 +22,8 @@
  *
  * INSTR_TIME_ADD(x, y)				x += y
  *
+ * INSTR_TIME_ADD_NANOSEC(t, n)		x += y in nanoseconds (converts to ticks)
+ *
  * INSTR_TIME_SUBTRACT(x, y)		x -= y
  *
  * INSTR_TIME_ACCUM_DIFF(x, y, z)	x += (y - z)
@@ -125,6 +127,9 @@ pg_clock_gettime_ns(void)
 #define INSTR_TIME_GET_NANOSEC(t) \
 	((int64) (t).ticks)
 
+#define INSTR_TIME_ADD_NANOSEC(t, n) \
+	((t).ticks += (n))
+
 
 #else							/* WIN32 */
 
@@ -158,6 +163,9 @@ GetTimerFrequency(void)
 
 #define INSTR_TIME_GET_NANOSEC(t) \
 	((int64) ((t).ticks * ((double) NS_PER_S / GetTimerFrequency())))
+
+#define INSTR_TIME_ADD_NANOSEC(t, n) \
+	((t).ticks += ((n) / ((double) NS_PER_S / GetTimerFrequency())))
 
 #endif							/* WIN32 */
 
