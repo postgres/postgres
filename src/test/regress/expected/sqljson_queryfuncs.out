@@ -1147,7 +1147,7 @@ INSERT INTO test_jsonb_constraints VALUES ('{"a": 10}', 1);
 ERROR:  new row for relation "test_jsonb_constraints" violates check constraint "test_jsonb_constraint4"
 DETAIL:  Failing row contains ({"a": 10}, 1, [1, 2]).
 DROP TABLE test_jsonb_constraints;
--- Test mutabilily of query functions
+-- Test mutability of query functions
 CREATE TABLE test_jsonb_mutability(js jsonb, b int);
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a[0]'));
@@ -1272,6 +1272,14 @@ CREATE INDEX ON test_jsonb_mutability (JSON_VALUE(js, '$' DEFAULT random()::int 
 ERROR:  functions in index expression must be marked IMMUTABLE
 LINE 1: CREATE INDEX ON test_jsonb_mutability (JSON_VALUE(js, '$' DE...
                                                ^
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.rtrim()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.ltrim()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.btrim()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.lower()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.upper()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.initcap()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.replace("hello", "bye")'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.split_part(",", 2)'));
 -- DEFAULT expression
 CREATE OR REPLACE FUNCTION ret_setint() RETURNS SETOF integer AS
 $$

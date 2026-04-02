@@ -357,7 +357,7 @@ INSERT INTO test_jsonb_constraints VALUES ('{"a": 10}', 1);
 
 DROP TABLE test_jsonb_constraints;
 
--- Test mutabilily of query functions
+-- Test mutability of query functions
 CREATE TABLE test_jsonb_mutability(js jsonb, b int);
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$'));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.a[0]'));
@@ -401,6 +401,15 @@ CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, $.a ? (@.datetime() 
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, 0 to $.a ? (@.datetime() == $x)]' PASSING '12:34'::time AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, $.a ? (@.datetime("HH:MI") == $x)]' PASSING '12:34'::time AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_VALUE(js, '$' DEFAULT random()::int ON ERROR));
+
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.rtrim()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.ltrim()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.btrim()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.lower()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.upper()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.initcap()'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.replace("hello", "bye")'));
+CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$.split_part(",", 2)'));
 
 -- DEFAULT expression
 CREATE OR REPLACE FUNCTION ret_setint() RETURNS SETOF integer AS

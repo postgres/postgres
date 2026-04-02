@@ -78,6 +78,47 @@ select '$.boolean()'::jsonpath;
 select '$.date()'::jsonpath;
 select '$.decimal(4,2)'::jsonpath;
 select '$.string()'::jsonpath;
+select '$.replace("hello","bye")'::jsonpath;
+select '$.lower()'::jsonpath;
+select '$.upper()'::jsonpath;
+select '$.lower().upper().lower().replace("hello","bye")'::jsonpath;
+select '$.ltrim()'::jsonpath;
+select '$.ltrim("xyz")'::jsonpath;
+select '$.rtrim()'::jsonpath;
+select '$.rtrim("xyz")'::jsonpath;
+select '$.btrim()'::jsonpath;
+select '$.btrim("xyz")'::jsonpath;
+select '$.initcap()'::jsonpath;
+select '$.split_part("~@~", 2)'::jsonpath;
+
+-- Parse errors
+select '$.replace("hello")'::jsonpath;
+select '$.replace()'::jsonpath;
+select '$.replace("hello","bye","extra")'::jsonpath;
+select '$.split_part("~@~")'::jsonpath;
+select '$.split_part()'::jsonpath;
+select '$.split_part("~@~", "hi")'::jsonpath;
+select '$.split_part("~@~", 2, "extra")'::jsonpath;
+select '$.lower("hi")'::jsonpath;
+select '$.upper("hi")'::jsonpath;
+select '$.initcap("hi")'::jsonpath;
+select '$.ltrim(42)'::jsonpath;
+select '$.ltrim("x", "y")'::jsonpath;
+select '$.rtrim(42)'::jsonpath;
+select '$.rtrim("x", "y")'::jsonpath;
+select '$.trim(42)'::jsonpath;
+select '$.trim("x", "y")'::jsonpath;
+
+-- Verify method keywords work as object key names
+select '$.lower'::jsonpath;
+select '$.upper'::jsonpath;
+select '$.initcap'::jsonpath;
+select '$.replace'::jsonpath;
+select '$.split_part'::jsonpath;
+select '$.ltrim'::jsonpath;
+select '$.rtrim'::jsonpath;
+select '$.btrim'::jsonpath;
+
 select '$.time()'::jsonpath;
 select '$.time(6)'::jsonpath;
 select '$.time_tz()'::jsonpath;

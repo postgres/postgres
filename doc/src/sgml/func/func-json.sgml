@@ -2781,6 +2781,146 @@ ERROR:  jsonpath member accessor can only be applied to an object
         <returnvalue>[{"id": 0, "key": "x", "value": "20"}, {"id": 0, "key": "y", "value": 32}]</returnvalue>
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>lower()</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String converted to all lower case according to the rules of the database's locale.
+       </para>
+       <para>
+        <literal>jsonb_path_query('"TOM"', '$.lower()')</literal>
+        <returnvalue>"tom"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>upper()</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String converted to all upper case according to the rules of the database's locale.
+       </para>
+       <para>
+        <literal>jsonb_path_query('"tom"', '$.upper()')</literal>
+        <returnvalue>"TOM"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>initcap()</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String with the first letter of each word converted to upper case
+        according to the rules of the database's locale. Words are sequences
+        of alphanumeric characters separated by non-alphanumeric characters.
+       </para>
+       <para>
+        <literal>jsonb_path_query('"hi THOMAS"', '$.initcap()')</literal>
+        <returnvalue>"Hi Thomas"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>replace(<replaceable>from</replaceable>, <replaceable>to</replaceable>)</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String with all occurrences of substring from replaced with substring to.
+       </para>
+       <para>
+        <literal>jsonb_path_query('"abcdefabcdef"', '$.replace("cd", "XX")')</literal>
+        <returnvalue>"abXXefabXXef"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>split_part(<replaceable>delimiter</replaceable>, <replaceable>n</replaceable>)</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String split at occurrences of <replaceable>delimiter</replaceable>
+        and returns the <replaceable>n</replaceable>'th field (counting from
+        one) or, when <replaceable>n</replaceable> is negative, returns the
+        |<replaceable>n</replaceable>|'th-from-last field.
+       </para>
+       <para>
+        <literal>jsonb_path_query('"abc~@~def~@~ghi"', '$.split_part("~@~", 2)')</literal>
+        <returnvalue>"def"</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"abc,def,ghi,jkl"', '$.split_part(",", 3)')</literal>
+        <returnvalue>"ghi"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>ltrim([ <replaceable>characters</replaceable> ])</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String with the longest string containing only spaces or the
+        characters in <replaceable>characters</replaceable> removed from the
+        start of <replaceable>string</replaceable>
+       </para>
+       <para>
+        <literal> jsonb_path_query('"  hello"', '$.ltrim()')</literal>
+        <returnvalue>"hello"</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"zzzytest"', '$.ltrim("xyz")')</literal>
+        <returnvalue>"test"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>rtrim([ <replaceable>characters</replaceable> ])</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String with the longest string containing only spaces or the
+        characters in <replaceable>characters</replaceable> removed from the
+        end of <replaceable>string</replaceable>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"hello  "', '$.rtrim()')</literal>
+        <returnvalue>"hello"</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"testxxzx"', '$.rtrim("xyz")')</literal>
+        <returnvalue>"test"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>btrim([ <replaceable>characters</replaceable> ])</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String with the longest string containing only spaces or the
+        characters in <replaceable>characters</replaceable> removed from the
+        start and end of <replaceable>string</replaceable>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"  hello  "', '$.btrim()')</literal>
+        <returnvalue>"hello"</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"xyxtrimyyx"', '$.btrim("xyz")')</literal>
+        <returnvalue>"trim"</returnvalue>
+       </para></entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>

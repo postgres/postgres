@@ -298,6 +298,8 @@ flattenJsonPathParseItem(StringInfo buf, int *result, struct Node *escontext,
 		case jpiMod:
 		case jpiStartsWith:
 		case jpiDecimal:
+		case jpiStrReplace:
+		case jpiStrSplitPart:
 			{
 				/*
 				 * First, reserve place for left/right arg's positions, then
@@ -362,6 +364,9 @@ flattenJsonPathParseItem(StringInfo buf, int *result, struct Node *escontext,
 		case jpiTimeTz:
 		case jpiTimestamp:
 		case jpiTimestampTz:
+		case jpiStrLtrim:
+		case jpiStrRtrim:
+		case jpiStrBtrim:
 			{
 				int32		arg = reserveSpaceForItemPointer(buf);
 
@@ -457,6 +462,9 @@ flattenJsonPathParseItem(StringInfo buf, int *result, struct Node *escontext,
 		case jpiInteger:
 		case jpiNumber:
 		case jpiStringFunc:
+		case jpiStrLower:
+		case jpiStrUpper:
+		case jpiStrInitcap:
 			break;
 		default:
 			elog(ERROR, "unrecognized jsonpath item type: %d", item->type);
@@ -831,6 +839,60 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			}
 			appendStringInfoChar(buf, ')');
 			break;
+		case jpiStrReplace:
+			appendStringInfoString(buf, ".replace(");
+			jspGetLeftArg(v, &elem);
+			printJsonPathItem(buf, &elem, false, false);
+			appendStringInfoChar(buf, ',');
+			jspGetRightArg(v, &elem);
+			printJsonPathItem(buf, &elem, false, false);
+			appendStringInfoChar(buf, ')');
+			break;
+		case jpiStrLower:
+			appendStringInfoString(buf, ".lower()");
+			break;
+		case jpiStrUpper:
+			appendStringInfoString(buf, ".upper()");
+			break;
+		case jpiStrSplitPart:
+			appendStringInfoString(buf, ".split_part(");
+			jspGetLeftArg(v, &elem);
+			printJsonPathItem(buf, &elem, false, false);
+			appendStringInfoChar(buf, ',');
+			jspGetRightArg(v, &elem);
+			printJsonPathItem(buf, &elem, false, false);
+			appendStringInfoChar(buf, ')');
+			break;
+		case jpiStrLtrim:
+			appendStringInfoString(buf, ".ltrim(");
+			if (v->content.arg)
+			{
+				jspGetArg(v, &elem);
+				printJsonPathItem(buf, &elem, false, false);
+			}
+			appendStringInfoChar(buf, ')');
+			break;
+		case jpiStrRtrim:
+			appendStringInfoString(buf, ".rtrim(");
+			if (v->content.arg)
+			{
+				jspGetArg(v, &elem);
+				printJsonPathItem(buf, &elem, false, false);
+			}
+			appendStringInfoChar(buf, ')');
+			break;
+		case jpiStrBtrim:
+			appendStringInfoString(buf, ".btrim(");
+			if (v->content.arg)
+			{
+				jspGetArg(v, &elem);
+				printJsonPathItem(buf, &elem, false, false);
+			}
+			appendStringInfoChar(buf, ')');
+			break;
+		case jpiStrInitcap:
+			appendStringInfoString(buf, ".initcap()");
+			break;
 		default:
 			elog(ERROR, "unrecognized jsonpath item type: %d", v->type);
 	}
@@ -914,6 +976,22 @@ jspOperationName(JsonPathItemType type)
 			return "timestamp";
 		case jpiTimestampTz:
 			return "timestamp_tz";
+		case jpiStrReplace:
+			return "replace";
+		case jpiStrLower:
+			return "lower";
+		case jpiStrUpper:
+			return "upper";
+		case jpiStrLtrim:
+			return "ltrim";
+		case jpiStrRtrim:
+			return "rtrim";
+		case jpiStrBtrim:
+			return "btrim";
+		case jpiStrInitcap:
+			return "initcap";
+		case jpiStrSplitPart:
+			return "split_part";
 		default:
 			elog(ERROR, "unrecognized jsonpath item type: %d", type);
 			return NULL;
@@ -1016,6 +1094,9 @@ jspInitByBuffer(JsonPathItem *v, char *base, int32 pos)
 		case jpiInteger:
 		case jpiNumber:
 		case jpiStringFunc:
+		case jpiStrLower:
+		case jpiStrUpper:
+		case jpiStrInitcap:
 			break;
 		case jpiString:
 		case jpiKey:
@@ -1041,6 +1122,8 @@ jspInitByBuffer(JsonPathItem *v, char *base, int32 pos)
 		case jpiMod:
 		case jpiStartsWith:
 		case jpiDecimal:
+		case jpiStrReplace:
+		case jpiStrSplitPart:
 			read_int32(v->content.args.left, base, pos);
 			read_int32(v->content.args.right, base, pos);
 			break;
@@ -1055,6 +1138,9 @@ jspInitByBuffer(JsonPathItem *v, char *base, int32 pos)
 		case jpiTimeTz:
 		case jpiTimestamp:
 		case jpiTimestampTz:
+		case jpiStrLtrim:
+		case jpiStrRtrim:
+		case jpiStrBtrim:
 			read_int32(v->content.arg, base, pos);
 			break;
 		case jpiIndexArray:
@@ -1090,7 +1176,10 @@ jspGetArg(JsonPathItem *v, JsonPathItem *a)
 		   v->type == jpiTime ||
 		   v->type == jpiTimeTz ||
 		   v->type == jpiTimestamp ||
-		   v->type == jpiTimestampTz);
+		   v->type == jpiTimestampTz ||
+		   v->type == jpiStrLtrim ||
+		   v->type == jpiStrRtrim ||
+		   v->type == jpiStrBtrim);
 
 	jspInitByBuffer(a, v->base, v->content.arg);
 }
@@ -1152,7 +1241,15 @@ jspGetNext(JsonPathItem *v, JsonPathItem *a)
 			   v->type == jpiTime ||
 			   v->type == jpiTimeTz ||
 			   v->type == jpiTimestamp ||
-			   v->type == jpiTimestampTz);
+			   v->type == jpiTimestampTz ||
+			   v->type == jpiStrReplace ||
+			   v->type == jpiStrLower ||
+			   v->type == jpiStrUpper ||
+			   v->type == jpiStrLtrim ||
+			   v->type == jpiStrRtrim ||
+			   v->type == jpiStrBtrim ||
+			   v->type == jpiStrInitcap ||
+			   v->type == jpiStrSplitPart);
 
 		if (a)
 			jspInitByBuffer(a, v->base, v->nextPos);
@@ -1179,7 +1276,9 @@ jspGetLeftArg(JsonPathItem *v, JsonPathItem *a)
 		   v->type == jpiDiv ||
 		   v->type == jpiMod ||
 		   v->type == jpiStartsWith ||
-		   v->type == jpiDecimal);
+		   v->type == jpiDecimal ||
+		   v->type == jpiStrReplace ||
+		   v->type == jpiStrSplitPart);
 
 	jspInitByBuffer(a, v->base, v->content.args.left);
 }
@@ -1201,7 +1300,9 @@ jspGetRightArg(JsonPathItem *v, JsonPathItem *a)
 		   v->type == jpiDiv ||
 		   v->type == jpiMod ||
 		   v->type == jpiStartsWith ||
-		   v->type == jpiDecimal);
+		   v->type == jpiDecimal ||
+		   v->type == jpiStrReplace ||
+		   v->type == jpiStrSplitPart);
 
 	jspInitByBuffer(a, v->base, v->content.args.right);
 }
@@ -1501,6 +1602,14 @@ jspIsMutableWalker(JsonPathItem *jpi, struct JsonPathMutableContext *cxt)
 			case jpiInteger:
 			case jpiNumber:
 			case jpiStringFunc:
+			case jpiStrReplace:
+			case jpiStrLower:
+			case jpiStrUpper:
+			case jpiStrLtrim:
+			case jpiStrRtrim:
+			case jpiStrBtrim:
+			case jpiStrInitcap:
+			case jpiStrSplitPart:
 				status = jpdsNonDateTime;
 				break;
 

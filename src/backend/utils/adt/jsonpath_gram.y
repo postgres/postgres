@@ -86,6 +86,8 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 %token	<str>		DATETIME_P
 %token	<str>		BIGINT_P BOOLEAN_P DATE_P DECIMAL_P INTEGER_P NUMBER_P
 %token	<str>		STRINGFUNC_P TIME_P TIME_TZ_P TIMESTAMP_P TIMESTAMP_TZ_P
+%token	<str>		STR_REPLACE_P STR_LOWER_P STR_UPPER_P STR_LTRIM_P STR_RTRIM_P STR_BTRIM_P
+					STR_INITCAP_P STR_SPLIT_PART_P
 
 %type	<result>	result
 
@@ -95,7 +97,7 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 					str_elem opt_str_arg int_elem
 					uint_elem opt_uint_arg
 
-%type	<elems>		accessor_expr int_list opt_int_list
+%type	<elems>		accessor_expr int_list opt_int_list str_int_args str_str_args
 
 %type	<indexs>	index_list
 
@@ -278,6 +280,16 @@ accessor_op:
 		{ $$ = makeItemUnary(jpiTimestamp, $4); }
 	| '.' TIMESTAMP_TZ_P '(' opt_uint_arg ')'
 		{ $$ = makeItemUnary(jpiTimestampTz, $4); }
+	| '.' STR_REPLACE_P '(' str_str_args ')'
+		{ $$ = makeItemBinary(jpiStrReplace, linitial($4), lsecond($4)); }
+	| '.' STR_SPLIT_PART_P '(' str_int_args ')'
+		{ $$ = makeItemBinary(jpiStrSplitPart, linitial($4), lsecond($4)); }
+	| '.' STR_LTRIM_P '(' opt_str_arg ')'
+		{ $$ = makeItemUnary(jpiStrLtrim, $4); }
+	| '.' STR_RTRIM_P '(' opt_str_arg ')'
+		{ $$ = makeItemUnary(jpiStrRtrim, $4); }
+	| '.' STR_BTRIM_P '(' opt_str_arg ')'
+		{ $$ = makeItemUnary(jpiStrBtrim, $4); }
 	;
 
 int_elem:
@@ -315,6 +327,14 @@ str_elem:
 opt_str_arg:
 	str_elem						{ $$ = $1; }
 	| /* EMPTY */					{ $$ = NULL; }
+	;
+
+str_int_args:
+	str_elem ',' int_elem			{ $$ = list_make2($1, $3); }
+	;
+
+str_str_args:
+	str_elem ',' str_elem 			{ $$ = list_make2($1, $3); }
 	;
 
 key:
@@ -357,6 +377,14 @@ key_name:
 	| TIME_TZ_P
 	| TIMESTAMP_P
 	| TIMESTAMP_TZ_P
+	| STR_LOWER_P
+	| STR_UPPER_P
+	| STR_INITCAP_P
+	| STR_REPLACE_P
+	| STR_SPLIT_PART_P
+	| STR_LTRIM_P
+	| STR_RTRIM_P
+	| STR_BTRIM_P
 	;
 
 method:
@@ -373,6 +401,9 @@ method:
 	| INTEGER_P						{ $$ = jpiInteger; }
 	| NUMBER_P						{ $$ = jpiNumber; }
 	| STRINGFUNC_P					{ $$ = jpiStringFunc; }
+	| STR_LOWER_P					{ $$ = jpiStrLower; }
+	| STR_UPPER_P					{ $$ = jpiStrUpper; }
+	| STR_INITCAP_P					{ $$ = jpiStrInitcap; }
 	;
 %%
 

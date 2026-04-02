@@ -435,6 +435,192 @@ select '$.string()'::jsonpath;
  $.string()
 (1 row)
 
+select '$.replace("hello","bye")'::jsonpath;
+         jsonpath         
+--------------------------
+ $.replace("hello","bye")
+(1 row)
+
+select '$.lower()'::jsonpath;
+ jsonpath  
+-----------
+ $.lower()
+(1 row)
+
+select '$.upper()'::jsonpath;
+ jsonpath  
+-----------
+ $.upper()
+(1 row)
+
+select '$.lower().upper().lower().replace("hello","bye")'::jsonpath;
+                     jsonpath                     
+--------------------------------------------------
+ $.lower().upper().lower().replace("hello","bye")
+(1 row)
+
+select '$.ltrim()'::jsonpath;
+ jsonpath  
+-----------
+ $.ltrim()
+(1 row)
+
+select '$.ltrim("xyz")'::jsonpath;
+    jsonpath    
+----------------
+ $.ltrim("xyz")
+(1 row)
+
+select '$.rtrim()'::jsonpath;
+ jsonpath  
+-----------
+ $.rtrim()
+(1 row)
+
+select '$.rtrim("xyz")'::jsonpath;
+    jsonpath    
+----------------
+ $.rtrim("xyz")
+(1 row)
+
+select '$.btrim()'::jsonpath;
+ jsonpath  
+-----------
+ $.btrim()
+(1 row)
+
+select '$.btrim("xyz")'::jsonpath;
+    jsonpath    
+----------------
+ $.btrim("xyz")
+(1 row)
+
+select '$.initcap()'::jsonpath;
+  jsonpath   
+-------------
+ $.initcap()
+(1 row)
+
+select '$.split_part("~@~", 2)'::jsonpath;
+       jsonpath        
+-----------------------
+ $.split_part("~@~",2)
+(1 row)
+
+-- Parse errors
+select '$.replace("hello")'::jsonpath;
+ERROR:  syntax error at or near ")" of jsonpath input
+LINE 1: select '$.replace("hello")'::jsonpath;
+               ^
+select '$.replace()'::jsonpath;
+ERROR:  syntax error at or near ")" of jsonpath input
+LINE 1: select '$.replace()'::jsonpath;
+               ^
+select '$.replace("hello","bye","extra")'::jsonpath;
+ERROR:  syntax error at or near "," of jsonpath input
+LINE 1: select '$.replace("hello","bye","extra")'::jsonpath;
+               ^
+select '$.split_part("~@~")'::jsonpath;
+ERROR:  syntax error at or near ")" of jsonpath input
+LINE 1: select '$.split_part("~@~")'::jsonpath;
+               ^
+select '$.split_part()'::jsonpath;
+ERROR:  syntax error at or near ")" of jsonpath input
+LINE 1: select '$.split_part()'::jsonpath;
+               ^
+select '$.split_part("~@~", "hi")'::jsonpath;
+ERROR:  syntax error at or near """ of jsonpath input
+LINE 1: select '$.split_part("~@~", "hi")'::jsonpath;
+               ^
+select '$.split_part("~@~", 2, "extra")'::jsonpath;
+ERROR:  syntax error at or near "," of jsonpath input
+LINE 1: select '$.split_part("~@~", 2, "extra")'::jsonpath;
+               ^
+select '$.lower("hi")'::jsonpath;
+ERROR:  syntax error at or near """ of jsonpath input
+LINE 1: select '$.lower("hi")'::jsonpath;
+               ^
+select '$.upper("hi")'::jsonpath;
+ERROR:  syntax error at or near """ of jsonpath input
+LINE 1: select '$.upper("hi")'::jsonpath;
+               ^
+select '$.initcap("hi")'::jsonpath;
+ERROR:  syntax error at or near """ of jsonpath input
+LINE 1: select '$.initcap("hi")'::jsonpath;
+               ^
+select '$.ltrim(42)'::jsonpath;
+ERROR:  syntax error at or near "42" of jsonpath input
+LINE 1: select '$.ltrim(42)'::jsonpath;
+               ^
+select '$.ltrim("x", "y")'::jsonpath;
+ERROR:  syntax error at or near "," of jsonpath input
+LINE 1: select '$.ltrim("x", "y")'::jsonpath;
+               ^
+select '$.rtrim(42)'::jsonpath;
+ERROR:  syntax error at or near "42" of jsonpath input
+LINE 1: select '$.rtrim(42)'::jsonpath;
+               ^
+select '$.rtrim("x", "y")'::jsonpath;
+ERROR:  syntax error at or near "," of jsonpath input
+LINE 1: select '$.rtrim("x", "y")'::jsonpath;
+               ^
+select '$.trim(42)'::jsonpath;
+ERROR:  syntax error at or near "(" of jsonpath input
+LINE 1: select '$.trim(42)'::jsonpath;
+               ^
+select '$.trim("x", "y")'::jsonpath;
+ERROR:  syntax error at or near "(" of jsonpath input
+LINE 1: select '$.trim("x", "y")'::jsonpath;
+               ^
+-- Verify method keywords work as object key names
+select '$.lower'::jsonpath;
+ jsonpath  
+-----------
+ $."lower"
+(1 row)
+
+select '$.upper'::jsonpath;
+ jsonpath  
+-----------
+ $."upper"
+(1 row)
+
+select '$.initcap'::jsonpath;
+  jsonpath   
+-------------
+ $."initcap"
+(1 row)
+
+select '$.replace'::jsonpath;
+  jsonpath   
+-------------
+ $."replace"
+(1 row)
+
+select '$.split_part'::jsonpath;
+    jsonpath    
+----------------
+ $."split_part"
+(1 row)
+
+select '$.ltrim'::jsonpath;
+ jsonpath  
+-----------
+ $."ltrim"
+(1 row)
+
+select '$.rtrim'::jsonpath;
+ jsonpath  
+-----------
+ $."rtrim"
+(1 row)
+
+select '$.btrim'::jsonpath;
+ jsonpath  
+-----------
+ $."btrim"
+(1 row)
+
 select '$.time()'::jsonpath;
  jsonpath 
 ----------
