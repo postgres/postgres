@@ -13,6 +13,7 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 
 my $tar = $ENV{TAR};
+my @tar_p_flags = tar_portability_options($tar);
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
@@ -154,8 +155,8 @@ for my $scenario (@scenario)
 		# have a TAR program available. Note that this destructively modifies
 		# the backup directory.
 		if (   !$scenario->{'needs_unix_permissions'}
-			|| !defined $tar
-			|| $tar eq '')
+			&& defined $tar
+			&& $tar ne '')
 		{
 			my $tar_backup_path = $primary->backup_dir . '/tar_' . $name;
 			mkdir($tar_backup_path) || die "mkdir $tar_backup_path: $!";
@@ -171,14 +172,23 @@ for my $scenario (@scenario)
 
 				chdir($tspath) || die "chdir: $!";
 				command_ok(
-					[ $tar, '-cf', "$tar_backup_path/$tsoid.tar", '.' ]);
+					[
+						$tar, @tar_p_flags,
+						'-cf' => "$tar_backup_path/$tsoid.tar",
+						'.'
+					]);
 				chdir($cwd) || die "chdir: $!";
 				rmtree($tspath);
 			}
 
 			# tar and remove pg_wal
 			chdir($backup_path . '/pg_wal') || die "chdir: $!";
-			command_ok([ $tar, '-cf', "$tar_backup_path/pg_wal.tar", '.' ]);
+			command_ok(
+				[
+					$tar, @tar_p_flags,
+					'-cf' => "$tar_backup_path/pg_wal.tar",
+					'.'
+				]);
 			chdir($cwd) || die "chdir: $!";
 			rmtree($backup_path . '/pg_wal');
 
@@ -190,7 +200,12 @@ for my $scenario (@scenario)
 
 			# Construct base.tar with what's left.
 			chdir($backup_path) || die "chdir: $!";
-			command_ok([ $tar, '-cf' => "$tar_backup_path/base.tar", '.' ]);
+			command_ok(
+				[
+					$tar, @tar_p_flags,
+					'-cf' => "$tar_backup_path/base.tar",
+					'.'
+				]);
 			chdir($cwd) || die "chdir: $!";
 
 			# Now check that the backup no longer verifies. We must use -n
