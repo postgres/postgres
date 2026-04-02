@@ -87,7 +87,7 @@ read_tar_number(const char *s, int len)
  * be 512 bytes, per the tar standard.
  */
 int
-tarChecksum(char *header)
+tarChecksum(const char *header)
 {
 	int			i,
 				sum;
@@ -95,13 +95,42 @@ tarChecksum(char *header)
 	/*
 	 * Per POSIX, the checksum is the simple sum of all bytes in the header,
 	 * treating the bytes as unsigned, and treating the checksum field (at
-	 * offset 148) as though it contained 8 spaces.
+	 * offset TAR_OFFSET_CHECKSUM) as though it contained 8 spaces.
 	 */
 	sum = 8 * ' ';				/* presumed value for checksum field */
-	for (i = 0; i < 512; i++)
-		if (i < 148 || i >= 156)
+	for (i = 0; i < TAR_BLOCK_SIZE; i++)
+		if (i < TAR_OFFSET_CHECKSUM || i >= TAR_OFFSET_CHECKSUM + 8)
 			sum += 0xFF & header[i];
 	return sum;
+}
+
+/*
+ * Check validity of a tar header (assumed to be 512 bytes long).
+ * We verify the checksum and the magic number / version.
+ */
+bool
+isValidTarHeader(const char *header)
+{
+	int			sum;
+	int			chk = tarChecksum(header);
+
+	sum = read_tar_number(&header[TAR_OFFSET_CHECKSUM], 8);
+
+	if (sum != chk)
+		return false;
+
+	/* POSIX tar format */
+	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar\0", 6) == 0 &&
+		memcmp(&header[TAR_OFFSET_VERSION], "00", 2) == 0)
+		return true;
+	/* GNU tar format */
+	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar  \0", 8) == 0)
+		return true;
+	/* not-quite-POSIX format written by pre-9.3 pg_dump */
+	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar00\0", 8) == 0)
+		return true;
+
+	return false;
 }
 
 

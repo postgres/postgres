@@ -228,9 +228,13 @@ astreamer_extractor_content(astreamer *streamer, astreamer_member *member,
 				mystreamer->filename[fnamelen - 1] = '\0';
 
 			/* Dispatch based on file type. */
-			if (member->is_directory)
+			if (member->is_regular)
+				mystreamer->file =
+					create_file_for_extract(mystreamer->filename,
+											member->mode);
+			else if (member->is_directory)
 				extract_directory(mystreamer->filename, member->mode);
-			else if (member->is_link)
+			else if (member->is_symlink)
 			{
 				const char *linktarget = member->linktarget;
 
@@ -238,10 +242,6 @@ astreamer_extractor_content(astreamer *streamer, astreamer_member *member,
 					linktarget = mystreamer->link_map(linktarget);
 				extract_link(mystreamer->filename, linktarget);
 			}
-			else
-				mystreamer->file =
-					create_file_for_extract(mystreamer->filename,
-											member->mode);
 
 			/* Report output file change. */
 			if (mystreamer->report_output_file)

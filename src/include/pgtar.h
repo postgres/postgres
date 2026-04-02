@@ -55,11 +55,15 @@ enum tarHeaderOffset
 	/* last 12 bytes of the 512-byte block are unassigned */
 };
 
+/* See POSIX (not all the standard file type codes are listed here) */
 enum tarFileType
 {
 	TAR_FILETYPE_PLAIN = '0',
+	TAR_FILETYPE_PLAIN_OLD = '\0',	/* backwards compatibility, per POSIX */
 	TAR_FILETYPE_SYMLINK = '2',
 	TAR_FILETYPE_DIRECTORY = '5',
+	TAR_FILETYPE_PAX_EXTENDED = 'x',
+	TAR_FILETYPE_PAX_EXTENDED_GLOBAL = 'g',
 };
 
 extern enum tarError tarCreateHeader(char *h, const char *filename,
@@ -68,7 +72,8 @@ extern enum tarError tarCreateHeader(char *h, const char *filename,
 									 time_t mtime);
 extern uint64 read_tar_number(const char *s, int len);
 extern void print_tar_number(char *s, int len, uint64 val);
-extern int	tarChecksum(char *header);
+extern int	tarChecksum(const char *header);
+extern bool isValidTarHeader(const char *header);
 
 /*
  * Compute the number of padding bytes required for an entry in a tar

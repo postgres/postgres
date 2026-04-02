@@ -224,8 +224,9 @@ astreamer_inject_file(astreamer *streamer, char *pathname, char *data,
 	strlcpy(member.pathname, pathname, MAXPGPATH);
 	member.size = len;
 	member.mode = pg_file_create_mode;
+	member.is_regular = true;
 	member.is_directory = false;
-	member.is_link = false;
+	member.is_symlink = false;
 	member.linktarget[0] = '\0';
 
 	/*

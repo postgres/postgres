@@ -165,7 +165,7 @@ member_verify_header(astreamer *streamer, astreamer_member *member)
 	char		pathname[MAXPGPATH];
 
 	/* We are only interested in normal files. */
-	if (member->is_directory || member->is_link)
+	if (!member->is_regular)
 		return;
 
 	/*
