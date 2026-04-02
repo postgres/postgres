@@ -164,6 +164,37 @@ is_publishable_relation(Relation rel)
 }
 
 /*
+ * Similar to is_publishable_class() but checks whether the given OID
+ * is a publishable "table" or not.
+ */
+static bool
+is_publishable_table(Oid tableoid)
+{
+	HeapTuple	tuple;
+	Form_pg_class relform;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(tableoid));
+	if (!HeapTupleIsValid(tuple))
+		return false;
+
+	relform = (Form_pg_class) GETSTRUCT(tuple);
+
+	/*
+	 * is_publishable_class() includes sequences, so we need to explicitly
+	 * check the relkind to filter them out here.
+	 */
+	if (relform->relkind != RELKIND_SEQUENCE &&
+		is_publishable_class(tableoid, relform))
+	{
+		ReleaseSysCache(tuple);
+		return true;
+	}
+
+	ReleaseSysCache(tuple);
+	return false;
+}
+
+/*
  * SQL-callable variant of the above
  *
  * This returns null when the relation does not exist.  This is intended to be
@@ -1264,12 +1295,116 @@ GetPublicationByName(const char *pubname, bool missing_ok)
 }
 
 /*
- * Get information of the tables in the given publication array.
+ * A helper function for pg_get_publication_tables() to check whether the
+ * table with the given relid is published in the specified publication.
  *
- * Returns pubid, relid, column list, row filter for each table.
+ * This function evaluates the effective published OID based on the
+ * publish_via_partition_root setting, rather than just checking catalog entries
+ * (e.g., pg_publication_rel). For instance, when publish_via_partition_root is
+ * false, it returns false for a parent partitioned table and returns true
+ * for its leaf partitions, even if the parent is the one explicitly added
+ * to the publication.
+ *
+ * For performance reasons, this function avoids the overhead of constructing
+ * the complete list of published tables during the evaluation. It can execute
+ * quickly even when the publication contains a large number of relations.
+ *
+ * Note: this leaks memory for the ancestors list into the current memory
+ * context.
  */
-Datum
-pg_get_publication_tables(PG_FUNCTION_ARGS)
+static bool
+is_table_publishable_in_publication(Oid relid, Publication *pub)
+{
+	bool		relispartition;
+	List	   *ancestors = NIL;
+
+	/*
+	 * For non-pubviaroot publications, a partitioned table is never the
+	 * effective published OID; only its leaf partitions can be.
+	 */
+	if (!pub->pubviaroot && get_rel_relkind(relid) == RELKIND_PARTITIONED_TABLE)
+		return false;
+
+	relispartition = get_rel_relispartition(relid);
+
+	if (relispartition)
+		ancestors = get_partition_ancestors(relid);
+
+	if (pub->alltables)
+	{
+		/*
+		 * ALL TABLES with pubviaroot includes only regular tables or top-most
+		 * partitioned tables -- never child partitions.
+		 */
+		if (pub->pubviaroot && relispartition)
+			return false;
+
+		/*
+		 * For ALL TABLES publications, the table is published unless it
+		 * appears in the EXCEPT clause. Only the top-most can appear in the
+		 * EXCEPT clause, so exclusion must be evaluated at the top-most
+		 * ancestor if it has. These publications store only EXCEPT'ed tables
+		 * in pg_publication_rel, so checking existence is sufficient.
+		 *
+		 * Note that this existence check below would incorrectly return true
+		 * (published) for partitions when pubviaroot is enabled; however,
+		 * that case is already caught and returned false by the above check.
+		 */
+		return !SearchSysCacheExists2(PUBLICATIONRELMAP,
+									  ObjectIdGetDatum(ancestors
+													   ? llast_oid(ancestors) : relid),
+									  ObjectIdGetDatum(pub->oid));
+	}
+
+	/*
+	 * Non-ALL-TABLE publication cases.
+	 *
+	 * A table is published if it (or a containing schema) was explicitly
+	 * added, or if it is a partition whose ancestor was added.
+	 */
+
+	/*
+	 * If an ancestor is published, the partition's status depends on
+	 * publish_via_partition_root value.
+	 *
+	 * If it's true, the ancestor's relation OID is the effective published
+	 * OID, so the partition itself should be excluded (return false).
+	 *
+	 * If it's false, the partition is covered by its ancestor's presence in
+	 * the publication, it should be included (return true).
+	 */
+	if (relispartition &&
+		OidIsValid(GetTopMostAncestorInPublication(pub->oid, ancestors, NULL)))
+		return !pub->pubviaroot;
+
+	/*
+	 * Check whether the table is explicitly published via pg_publication_rel
+	 * or pg_publication_namespace.
+	 */
+	return (SearchSysCacheExists2(PUBLICATIONRELMAP,
+								  ObjectIdGetDatum(relid),
+								  ObjectIdGetDatum(pub->oid)) ||
+			SearchSysCacheExists2(PUBLICATIONNAMESPACEMAP,
+								  ObjectIdGetDatum(get_rel_namespace(relid)),
+								  ObjectIdGetDatum(pub->oid)));
+}
+
+/*
+ * Helper function to get information of the tables in the given
+ * publication(s).
+ *
+ * If filter_by_relid is true, only the row(s) for target_relid is returned;
+ * if target_relid does not exist or is not part of the publications, zero
+ * rows are returned.  If filter_by_relid is false, rows for all tables
+ * within the specified publications are returned and target_relid is
+ * ignored.
+ *
+ * Returns pubid, relid, column list, and row filter for each table.
+ */
+static Datum
+pg_get_publication_tables(FunctionCallInfo fcinfo, ArrayType *pubnames,
+						  Oid target_relid, bool filter_by_relid,
+						  bool pub_missing_ok)
 {
 #define NUM_PUBLICATION_TABLES_ELEM	4
 	FuncCallContext *funcctx;
@@ -1280,7 +1415,6 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 	{
 		TupleDesc	tupdesc;
 		MemoryContext oldcontext;
-		ArrayType  *arr;
 		Datum	   *elems;
 		int			nelems,
 					i;
@@ -1289,6 +1423,14 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
+		/*
+		 * Preliminary check if the specified table can be published in the
+		 * first place. If not, we can return early without checking the given
+		 * publications and the table.
+		 */
+		if (filter_by_relid && !is_publishable_table(target_relid))
+			SRF_RETURN_DONE(funcctx);
+
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -1296,8 +1438,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		 * Deconstruct the parameter into elements where each element is a
 		 * publication name.
 		 */
-		arr = PG_GETARG_ARRAYTYPE_P(0);
-		deconstruct_array_builtin(arr, TEXTOID, &elems, NULL, &nelems);
+		deconstruct_array_builtin(pubnames, TEXTOID, &elems, NULL, &nelems);
 
 		/* Get Oids of tables from each publication. */
 		for (i = 0; i < nelems; i++)
@@ -1306,32 +1447,48 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			List	   *pub_elem_tables = NIL;
 			ListCell   *lc;
 
-			pub_elem = GetPublicationByName(TextDatumGetCString(elems[i]), false);
+			pub_elem = GetPublicationByName(TextDatumGetCString(elems[i]),
+											pub_missing_ok);
 
-			/*
-			 * Publications support partitioned tables. If
-			 * publish_via_partition_root is false, all changes are replicated
-			 * using leaf partition identity and schema, so we only need
-			 * those. Otherwise, get the partitioned table itself.
-			 */
-			if (pub_elem->alltables)
-				pub_elem_tables = GetAllPublicationRelations(pub_elem->oid,
-															 RELKIND_RELATION,
-															 pub_elem->pubviaroot);
+			if (pub_elem == NULL)
+				continue;
+
+			if (filter_by_relid)
+			{
+				/* Check if the given table is published for the publication */
+				if (is_table_publishable_in_publication(target_relid, pub_elem))
+				{
+					pub_elem_tables = list_make1_oid(target_relid);
+				}
+			}
 			else
 			{
-				List	   *relids,
-						   *schemarelids;
+				/*
+				 * Publications support partitioned tables. If
+				 * publish_via_partition_root is false, all changes are
+				 * replicated using leaf partition identity and schema, so we
+				 * only need those. Otherwise, get the partitioned table
+				 * itself.
+				 */
+				if (pub_elem->alltables)
+					pub_elem_tables = GetAllPublicationRelations(pub_elem->oid,
+																 RELKIND_RELATION,
+																 pub_elem->pubviaroot);
+				else
+				{
+					List	   *relids,
+							   *schemarelids;
 
-				relids = GetIncludedPublicationRelations(pub_elem->oid,
-														 pub_elem->pubviaroot ?
-														 PUBLICATION_PART_ROOT :
-														 PUBLICATION_PART_LEAF);
-				schemarelids = GetAllSchemaPublicationRelations(pub_elem->oid,
-																pub_elem->pubviaroot ?
-																PUBLICATION_PART_ROOT :
-																PUBLICATION_PART_LEAF);
-				pub_elem_tables = list_concat_unique_oid(relids, schemarelids);
+					relids = GetIncludedPublicationRelations(pub_elem->oid,
+															 pub_elem->pubviaroot ?
+															 PUBLICATION_PART_ROOT :
+															 PUBLICATION_PART_LEAF);
+					schemarelids = GetAllSchemaPublicationRelations(pub_elem->oid,
+																	pub_elem->pubviaroot ?
+																	PUBLICATION_PART_ROOT :
+																	PUBLICATION_PART_LEAF);
+					pub_elem_tables = list_concat_unique_oid(relids, schemarelids);
+				}
 			}
 
 			/*
@@ -1489,6 +1646,30 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 	}
 
 	SRF_RETURN_DONE(funcctx);
+}
+
+Datum
+pg_get_publication_tables_a(PG_FUNCTION_ARGS)
+{
+	/*
+	 * Get information for all tables in the given publications.
+	 * filter_by_relid is false so all tables are returned; pub_missing_ok is
+	 * false for backward compatibility.
+	 */
+	return pg_get_publication_tables(fcinfo, PG_GETARG_ARRAYTYPE_P(0),
+									 InvalidOid, false, false);
+}
+
+Datum
+pg_get_publication_tables_b(PG_FUNCTION_ARGS)
+{
+	/*
+	 * Get information for the specified table in the given publications. The
+	 * SQL-level function is declared STRICT, so target_relid is guaranteed to
+	 * be non-NULL here.
+	 */
+	return pg_get_publication_tables(fcinfo, PG_GETARG_ARRAYTYPE_P(0),
+									 PG_GETARG_OID(1), true, true);
 }
 
 /*

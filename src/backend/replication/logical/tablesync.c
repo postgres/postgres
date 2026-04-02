@@ -798,17 +798,35 @@ fetch_remote_table_info(char *nspname, char *relname, LogicalRepRelation *lrel,
 		 * publications).
 		 */
 		resetStringInfo(&cmd);
-		appendStringInfo(&cmd,
-						 "SELECT DISTINCT"
-						 "  (CASE WHEN (array_length(gpt.attrs, 1) = c.relnatts)"
-						 "   THEN NULL ELSE gpt.attrs END)"
-						 "  FROM pg_publication p,"
-						 "  LATERAL pg_get_publication_tables(p.pubname) gpt,"
-						 "  pg_class c"
-						 " WHERE gpt.relid = %u AND c.oid = gpt.relid"
-						 "   AND p.pubname IN ( %s )",
-						 lrel->remoteid,
-						 pub_names->data);
+
+		if (server_version >= 190000)
+		{
+			/*
+			 * We can pass both publication names and relid to
+			 * pg_get_publication_tables() since version 19.
+			 */
+			appendStringInfo(&cmd,
+							 "SELECT DISTINCT"
+							 "  (CASE WHEN (array_length(gpt.attrs, 1) = c.relnatts)"
+							 "   THEN NULL ELSE gpt.attrs END)"
+							 "  FROM pg_get_publication_tables(ARRAY[%s], %u) gpt,"
+							 "  pg_class c"
+							 " WHERE c.oid = gpt.relid",
+							 pub_names->data,
+							 lrel->remoteid);
+		}
+		else
+			appendStringInfo(&cmd,
+							 "SELECT DISTINCT"
+							 "  (CASE WHEN (array_length(gpt.attrs, 1) = c.relnatts)"
+							 "   THEN NULL ELSE gpt.attrs END)"
+							 "  FROM pg_publication p,"
+							 "  LATERAL pg_get_publication_tables(p.pubname) gpt,"
+							 "  pg_class c"
+							 " WHERE gpt.relid = %u AND c.oid = gpt.relid"
+							 "   AND p.pubname IN ( %s )",
+							 lrel->remoteid,
+							 pub_names->data);
 
 		pubres = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data,
 							 lengthof(attrsRow), attrsRow);
@@ -982,14 +1000,28 @@ fetch_remote_table_info(char *nspname, char *relname, LogicalRepRelation *lrel,
 
 		/* Check for row filters. */
 		resetStringInfo(&cmd);
-		appendStringInfo(&cmd,
-						 "SELECT DISTINCT pg_get_expr(gpt.qual, gpt.relid)"
-						 "  FROM pg_publication p,"
-						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
-						 " WHERE gpt.relid = %u"
-						 "   AND p.pubname IN ( %s )",
-						 lrel->remoteid,
-						 pub_names->data);
+
+		if (server_version >= 190000)
+		{
+			/*
+			 * We can pass both publication names and relid to
+			 * pg_get_publication_tables() since version 19.
+			 */
+			appendStringInfo(&cmd,
+							 "SELECT DISTINCT pg_get_expr(gpt.qual, gpt.relid)"
+							 "  FROM pg_get_publication_tables(ARRAY[%s], %u) gpt",
+							 pub_names->data,
+							 lrel->remoteid);
+		}
+		else
+			appendStringInfo(&cmd,
+							 "SELECT DISTINCT pg_get_expr(gpt.qual, gpt.relid)"
+							 "  FROM pg_publication p,"
+							 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
+							 " WHERE gpt.relid = %u"
+							 "   AND p.pubname IN ( %s )",
+							 lrel->remoteid,
+							 pub_names->data);
 
 		res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data, 1, qualRow);
 

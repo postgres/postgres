@@ -1438,6 +1438,113 @@ RESET SESSION AUTHORIZATION;
 DROP ROLE regress_publication_user, regress_publication_user2;
 DROP ROLE regress_publication_user_dummy;
 
+-- Test pg_get_publication_tables(text[], oid) function
+CREATE SCHEMA gpt_test_sch;
+CREATE TABLE gpt_test_sch.tbl_sch (id int);
+CREATE TABLE tbl_normal (id int);
+CREATE TABLE tbl_parent (id1 int, id2 int, id3 int) PARTITION BY RANGE (id1);
+CREATE TABLE tbl_part1 PARTITION OF tbl_parent FOR VALUES FROM (1) TO (10);
+CREATE VIEW gpt_test_view AS SELECT * FROM tbl_normal;
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION pub_all FOR ALL TABLES WITH (publish_via_partition_root = true);
+CREATE PUBLICATION pub_all_no_viaroot FOR ALL TABLES WITH (publish_via_partition_root = false);
+CREATE PUBLICATION pub_all_except FOR ALL TABLES EXCEPT (TABLE tbl_parent, gpt_test_sch.tbl_sch) WITH (publish_via_partition_root = true);
+CREATE PUBLICATION pub_all_except_no_viaroot FOR ALL TABLES EXCEPT (TABLE tbl_parent, gpt_test_sch.tbl_sch) WITH (publish_via_partition_root = false);
+CREATE PUBLICATION pub_schema FOR TABLES IN SCHEMA gpt_test_sch;
+CREATE PUBLICATION pub_normal FOR TABLE tbl_normal WHERE (id < 10);
+CREATE PUBLICATION pub_part_leaf FOR TABLE tbl_part1 WITH (publish_via_partition_root = false);
+CREATE PUBLICATION pub_part_parent FOR TABLE tbl_parent (id1, id2) WHERE (id1 = 10) WITH (publish_via_partition_root = true);
+CREATE PUBLICATION pub_part_parent_no_viaroot FOR TABLE tbl_parent WITH (publish_via_partition_root = false);
+CREATE PUBLICATION pub_part_parent_child FOR TABLE tbl_parent, tbl_part1 WITH (publish_via_partition_root = true);
+RESET client_min_messages;
+
+CREATE FUNCTION test_gpt(pubnames text[], relname text)
+RETURNS TABLE (
+  pubname text,
+  relname name,
+  attrs text,
+  qual text
+)
+BEGIN ATOMIC
+  SELECT p.pubname, c.relname, gpt.attrs::text, pg_get_expr(gpt.qual, gpt.relid)
+    FROM pg_get_publication_tables(pubnames, relname::regclass::oid) gpt
+    JOIN pg_publication p ON p.oid = gpt.pubid
+    JOIN pg_class c ON c.oid = gpt.relid
+  ORDER BY p.pubname, c.relname;
+END;
+
+SELECT * FROM test_gpt(ARRAY['pub_normal'], 'tbl_normal');
+SELECT * FROM test_gpt(ARRAY['pub_normal'], 'gpt_test_sch.tbl_sch'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_schema'], 'gpt_test_sch.tbl_sch');
+SELECT * FROM test_gpt(ARRAY['pub_schema'], 'tbl_normal'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_part_parent'], 'tbl_parent');
+SELECT * FROM test_gpt(ARRAY['pub_part_parent'], 'tbl_part1'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_part_parent_no_viaroot'], 'tbl_part1');
+SELECT * FROM test_gpt(ARRAY['pub_part_parent_no_viaroot'], 'tbl_parent'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_part_leaf'], 'tbl_part1');
+SELECT * FROM test_gpt(ARRAY['pub_part_leaf'], 'tbl_parent'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_all'], 'tbl_parent');
+SELECT * FROM test_gpt(ARRAY['pub_all'], 'tbl_part1'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_all_no_viaroot'], 'tbl_part1');
+SELECT * FROM test_gpt(ARRAY['pub_all_no_viaroot'], 'tbl_parent'); -- no result
+
+SELECT * FROM test_gpt(ARRAY['pub_part_parent_child'], 'tbl_parent');
+SELECT * FROM test_gpt(ARRAY['pub_part_parent_child'], 'tbl_part1'); -- no result
+
+-- test for the EXCEPT clause
+SELECT * FROM test_gpt(ARRAY['pub_all_except'], 'tbl_normal');
+SELECT * FROM test_gpt(ARRAY['pub_all_except'], 'gpt_test_sch.tbl_sch'); -- no result (excluded)
+SELECT * FROM test_gpt(ARRAY['pub_all_except'], 'tbl_parent'); -- no result (excluded)
+SELECT * FROM test_gpt(ARRAY['pub_all_except'], 'tbl_part1'); -- no result
+SELECT * FROM test_gpt(ARRAY['pub_all_except_no_viaroot'], 'tbl_normal');
+SELECT * FROM test_gpt(ARRAY['pub_all_except_no_viaroot'], 'gpt_test_sch.tbl_sch'); -- no result (excluded)
+SELECT * FROM test_gpt(ARRAY['pub_all_except_no_viaroot'], 'tbl_parent'); -- no result (excluded)
+SELECT * FROM test_gpt(ARRAY['pub_all_except_no_viaroot'], 'tbl_part1'); -- no result
+
+-- two rows with different row filter
+SELECT * FROM test_gpt(ARRAY['pub_all', 'pub_normal'], 'tbl_normal');
+
+-- one row with 'pub_part_parent'
+SELECT * FROM test_gpt(ARRAY['pub_part_parent', 'pub_part_parent_no_viaroot'], 'tbl_parent');
+
+-- no result, tbl_parent is the effective published OID due to pubviaroot
+SELECT * FROM test_gpt(ARRAY['pub_part_parent', 'pub_all'], 'tbl_part1');
+
+-- no result, non-existent publication
+SELECT * FROM test_gpt(ARRAY['no_such_pub'], 'tbl_normal');
+
+-- no result, non-table object
+SELECT * FROM test_gpt(ARRAY['pub_all'], 'gpt_test_view');
+
+-- no result, empty publication array
+SELECT * FROM test_gpt(ARRAY[]::text[], 'tbl_normal');
+
+-- no result, OID 0 as target_relid
+SELECT * FROM pg_get_publication_tables(ARRAY['pub_normal'], 0::oid);
+
+-- Clean up
+DROP FUNCTION test_gpt(text[], text);
+DROP PUBLICATION pub_all;
+DROP PUBLICATION pub_all_no_viaroot;
+DROP PUBLICATION pub_all_except;
+DROP PUBLICATION pub_all_except_no_viaroot;
+DROP PUBLICATION pub_schema;
+DROP PUBLICATION pub_normal;
+DROP PUBLICATION pub_part_leaf;
+DROP PUBLICATION pub_part_parent;
+DROP PUBLICATION pub_part_parent_no_viaroot;
+DROP PUBLICATION pub_part_parent_child;
+DROP VIEW gpt_test_view;
+DROP TABLE tbl_normal, tbl_parent, tbl_part1;
+DROP SCHEMA gpt_test_sch CASCADE;
+
 -- stage objects for pg_dump tests
 CREATE SCHEMA pubme CREATE TABLE t0 (c int, d int) CREATE TABLE t1 (c int);
 CREATE SCHEMA pubme2 CREATE TABLE t0 (c int, d int);
