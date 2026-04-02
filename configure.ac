@@ -2107,7 +2107,7 @@ else
   fi
 fi
 
-# Check for __get_cpuid_count() and __cpuidex() in a similar fashion.
+# Check for __get_cpuid_count()
 AC_CACHE_CHECK([for __get_cpuid_count], [pgac_cv__get_cpuid_count],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <cpuid.h>],
   [[unsigned int exx[4] = {0, 0, 0, 0};
@@ -2117,18 +2117,22 @@ AC_CACHE_CHECK([for __get_cpuid_count], [pgac_cv__get_cpuid_count],
   [pgac_cv__get_cpuid_count="no"])])
 if test x"$pgac_cv__get_cpuid_count" = x"yes"; then
   AC_DEFINE(HAVE__GET_CPUID_COUNT, 1, [Define to 1 if you have __get_cpuid_count.])
-else
-  # __cpuidex()
-  AC_CACHE_CHECK([for __cpuidex], [pgac_cv__cpuidex],
-  [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <intrin.h>],
-    [[unsigned int exx[4] = {0, 0, 0, 0};
-    __cpuidex(exx, 7, 0);
-    ]])],
-    [pgac_cv__cpuidex="yes"],
-    [pgac_cv__cpuidex="no"])])
-  if test x"$pgac_cv__cpuidex" = x"yes"; then
-    AC_DEFINE(HAVE__CPUIDEX, 1, [Define to 1 if you have __cpuidex.])
-  fi
+fi
+
+# Check for __cpuidex()
+AC_CACHE_CHECK([for __cpuidex], [pgac_cv__cpuidex],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#ifdef _MSC_VER
+    #include <intrin.h>
+    #else
+    #include <cpuid.h>
+    #endif],
+  [[unsigned int exx[4] = {0, 0, 0, 0};
+  __cpuidex((int *) exx, 7, 0);
+  ]])],
+  [pgac_cv__cpuidex="yes"],
+  [pgac_cv__cpuidex="no"])])
+if test x"$pgac_cv__cpuidex" = x"yes"; then
+  AC_DEFINE(HAVE__CPUIDEX, 1, [Define to 1 if you have __cpuidex.])
 fi
 
 # Check for XSAVE intrinsics
