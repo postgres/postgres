@@ -1000,7 +1000,7 @@ HandleParallelApplyMessageInterrupt(void)
 {
 	InterruptPending = true;
 	ParallelApplyMessagePending = true;
-	SetLatch(MyLatch);
+	/* latch will be set by procsignal_sigusr1_handler */
 }
 
 /*

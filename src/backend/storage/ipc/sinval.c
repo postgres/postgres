@@ -160,8 +160,7 @@ HandleCatchupInterrupt(void)
 
 	catchupInterruptPending = true;
 
-	/* make sure the event is processed in due course */
-	SetLatch(MyLatch);
+	/* latch will be set by procsignal_sigusr1_handler */
 }
 
 /*

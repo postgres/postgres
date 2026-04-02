@@ -3730,6 +3730,8 @@ HandleWalSndInitStopping(void)
 		kill(MyProcPid, SIGTERM);
 	else
 		got_STOPPING = true;
+
+	/* latch will be set by procsignal_sigusr1_handler */
 }
 
 /*

@@ -1047,7 +1047,7 @@ HandleParallelMessageInterrupt(void)
 {
 	InterruptPending = true;
 	ParallelMessagePending = true;
-	SetLatch(MyLatch);
+	/* latch will be set by procsignal_sigusr1_handler */
 }
 
 /*
