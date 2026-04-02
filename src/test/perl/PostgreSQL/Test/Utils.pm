@@ -99,6 +99,8 @@ our @EXPORT = qw(
   command_ok_or_fails_like
   command_checks_all
 
+  tar_portability_options
+
   $windows_os
   $is_msys2
   $use_unix_sockets
@@ -1300,6 +1302,48 @@ sub command_checks_all
 	}
 
 	return;
+}
+
+=pod
+
+=item tar_portability_options(tar)
+
+Check for non-default options we need to give to tar to create
+a tarfile we can decode (i.e., no "pax" extensions).
+Not needed in tests that only use tar to read tarfiles.
+
+Returns options as an array.
+
+=cut
+
+sub tar_portability_options
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my ($tar) = @_;
+
+	my @tar_p_flags = ();
+
+	return @tar_p_flags if (!defined $tar || $tar eq '');
+
+	# GNU tar typically produces gnu-format archives, which we can read fine.
+	# But some platforms configure it to default to posix/pax format, and
+	# apparently they enable --sparse too.  Override that.
+	if (system("$tar --format=ustar -c -O /dev/null >/dev/null 2>/dev/null")
+		== 0)
+	{
+		push(@tar_p_flags, "--format=ustar");
+	}
+
+	# bsdtar also archives sparse files by default, but it spells the switch
+	# to disable that differently.
+	if (system("$tar --no-read-sparse -c - /dev/null >/dev/null 2>/dev/null")
+		== 0)
+	{
+		push(@tar_p_flags, "--no-read-sparse");
+	}
+
+	return @tar_p_flags;
 }
 
 =pod

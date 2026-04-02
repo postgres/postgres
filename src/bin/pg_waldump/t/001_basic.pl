@@ -11,15 +11,7 @@ use Test::More;
 use List::Util qw(shuffle);
 
 my $tar = $ENV{TAR};
-my @tar_c_flags;
-
-# By default, bsdtar archives sparse files in GNU tar's --format=posix --sparse
-# format, so pg_waldump can't find files that ZFS has decided to store with
-# holes.  Turn that off.
-if (system("$tar --no-read-sparse -c - /dev/null > /dev/null") == 0)
-{
-  push(@tar_c_flags, "--no-read-sparse");
-}
+my @tar_p_flags = tar_portability_options($tar);
 
 program_help_ok('pg_waldump');
 program_version_ok('pg_waldump');
@@ -355,7 +347,7 @@ sub generate_archive
 	# move into the WAL directory before archiving files
 	my $cwd = getcwd;
 	chdir($directory) || die "chdir: $!";
-	command_ok([$tar, @tar_c_flags, $compression_flags, $archive, @files]);
+	command_ok([ $tar, @tar_p_flags, $compression_flags, $archive, @files ]);
 	chdir($cwd) || die "chdir: $!";
 }
 
@@ -389,7 +381,7 @@ for my $scenario (@scenarios)
 	SKIP:
 	{
 		skip "tar command is not available", 56
-		  if !defined $tar && $scenario->{'is_archive'};
+		  if (!defined $tar || $tar eq '') && $scenario->{'is_archive'};
 		skip "$scenario->{'compression_method'} compression not supported by this build", 56
 		  if !$scenario->{'enabled'} && $scenario->{'is_archive'};
 
