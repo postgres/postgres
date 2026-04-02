@@ -984,31 +984,6 @@ tarPrintf(TAR_MEMBER *th, const char *fmt,...)
 	return (int) cnt;
 }
 
-bool
-isValidTarHeader(char *header)
-{
-	int			sum;
-	int			chk = tarChecksum(header);
-
-	sum = read_tar_number(&header[TAR_OFFSET_CHECKSUM], 8);
-
-	if (sum != chk)
-		return false;
-
-	/* POSIX tar format */
-	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar\0", 6) == 0 &&
-		memcmp(&header[TAR_OFFSET_VERSION], "00", 2) == 0)
-		return true;
-	/* GNU tar format */
-	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar  \0", 8) == 0)
-		return true;
-	/* not-quite-POSIX format written by pre-9.3 pg_dump */
-	if (memcmp(&header[TAR_OFFSET_MAGIC], "ustar00\0", 8) == 0)
-		return true;
-
-	return false;
-}
-
 /* Given the member, write the TAR header & copy the file */
 static void
 _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)

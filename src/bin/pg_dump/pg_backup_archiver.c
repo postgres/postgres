@@ -44,6 +44,7 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
+#include "pgtar.h"
 
 #define TEXT_DUMP_HEADER "--\n-- PostgreSQL database dump\n--\n\n"
 #define TEXT_DUMPALL_HEADER "--\n-- PostgreSQL database cluster dump\n--\n\n"
@@ -2372,7 +2373,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		}
 
 		if (!isValidTarHeader(AH->lookahead))
-			pg_fatal("input file does not appear to be a valid archive");
+			pg_fatal("input file does not appear to be a valid tar archive");
 
 		AH->format = archTar;
 	}

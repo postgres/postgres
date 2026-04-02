@@ -815,7 +815,7 @@ member_is_wal_file(astreamer_waldump *mystreamer, astreamer_member *member,
 	char	   *filename;
 
 	/* We are only interested in normal files */
-	if (member->is_directory || member->is_link)
+	if (!member->is_regular)
 		return false;
 
 	if (strlen(member->pathname) < XLOG_FNAME_LEN)
