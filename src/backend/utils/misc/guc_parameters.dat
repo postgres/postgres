@@ -1410,7 +1410,7 @@
   short_desc => 'Allow JIT compilation.',
   flags => 'GUC_EXPLAIN',
   variable => 'jit_enabled',
-  boot_val => 'true',
+  boot_val => 'false',
 },
 
 { name => 'jit_above_cost', type => 'real', context => 'PGC_USERSET', group => 'QUERY_TUNING_COST',

@@ -6591,7 +6591,7 @@ SELECT * FROM parent WHERE key = 2400;
         Determines whether <acronym>JIT</acronym> compilation may be used by
         <productname>PostgreSQL</productname>, if available (see <xref
         linkend="jit"/>).
-        The default is <literal>on</literal>.
+        The default is <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>

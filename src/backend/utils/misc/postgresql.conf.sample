@@ -477,7 +477,7 @@
 #constraint_exclusion = partition       # on, off, or partition
 #cursor_tuple_fraction = 0.1            # range 0.0-1.0
 #from_collapse_limit = 8
-#jit = on                               # allow JIT compilation
+#jit = off                              # allow JIT compilation
 #join_collapse_limit = 8                # 1 disables collapsing of explicit
                                         # JOIN clauses
 #plan_cache_mode = auto                 # auto, force_generic_plan or
