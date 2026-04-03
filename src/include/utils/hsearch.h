@@ -65,9 +65,6 @@ typedef struct HASHCTL
 {
 	/* Used if HASH_PARTITION flag is set: */
 	int64		num_partitions; /* # partitions (must be power of 2) */
-	/* Used if HASH_DIRSIZE flag is set: */
-	int64		dsize;			/* (initial) directory size */
-	int64		max_dsize;		/* limit to dsize if dir size is limited */
 	/* Used if HASH_ELEM flag is set (which is now required): */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
@@ -89,7 +86,7 @@ typedef struct HASHCTL
 /* Flag bits for hash_create; most indicate which parameters are supplied */
 #define HASH_PARTITION	0x0001	/* Hashtable is used w/partitioned locking */
 /* 0x0002 is unused */
-#define HASH_DIRSIZE	0x0004	/* Set directory size (initial and max) */
+/* 0x0004 is unused */
 #define HASH_ELEM		0x0008	/* Set keysize and entrysize (now required!) */
 #define HASH_STRINGS	0x0010	/* Select support functions for string keys */
 #define HASH_BLOBS		0x0020	/* Select support functions for binary keys */
@@ -148,7 +145,6 @@ extern void *hash_seq_search(HASH_SEQ_STATUS *status);
 extern void hash_seq_term(HASH_SEQ_STATUS *status);
 extern void hash_freeze(HTAB *hashp);
 extern Size hash_estimate_size(int64 num_entries, Size entrysize);
-extern int64 hash_select_dirsize(int64 num_entries);
 extern void AtEOXact_HashTables(bool isCommit);
 extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
 

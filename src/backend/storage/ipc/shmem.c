@@ -399,10 +399,9 @@ shmem_hash_create(void *location, size_t size, bool found,
 	 *
 	 * The shared memory allocator must be specified too.
 	 */
-	infoP->dsize = infoP->max_dsize = hash_select_dirsize(nelems);
 	infoP->alloc = ShmemHashAlloc;
 	infoP->alloc_arg = NULL;
-	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE | HASH_FIXED_SIZE;
+	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_FIXED_SIZE;
 
 	/*
 	 * if it already exists, attach to it rather than allocate and initialize
