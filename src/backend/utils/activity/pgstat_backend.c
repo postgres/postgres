@@ -380,6 +380,8 @@ pgstat_tracks_backend_bktype(BackendType bktype)
 		case B_CHECKPOINTER:
 		case B_IO_WORKER:
 		case B_STARTUP:
+		case B_DATACHECKSUMSWORKER_LAUNCHER:
+		case B_DATACHECKSUMSWORKER_WORKER:
 			return false;
 
 		case B_AUTOVAC_WORKER:

@@ -35,6 +35,7 @@
 #include "port/pg_getopt_ctx.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufpage.h"
+#include "storage/checksum.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

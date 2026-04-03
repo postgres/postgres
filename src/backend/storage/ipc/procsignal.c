@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/pg_bitutils.h"
+#include "postmaster/datachecksum_state.h"
 #include "replication/logicalctl.h"
 #include "replication/logicalworker.h"
 #include "replication/walsender.h"
@@ -581,6 +582,13 @@ ProcessProcSignalBarrier(void)
 						break;
 					case PROCSIGNAL_BARRIER_UPDATE_XLOG_LOGICAL_INFO:
 						processed = ProcessBarrierUpdateXLogLogicalInfo();
+						break;
+
+					case PROCSIGNAL_BARRIER_CHECKSUM_INPROGRESS_ON:
+					case PROCSIGNAL_BARRIER_CHECKSUM_ON:
+					case PROCSIGNAL_BARRIER_CHECKSUM_INPROGRESS_OFF:
+					case PROCSIGNAL_BARRIER_CHECKSUM_OFF:
+						processed = AbsorbDataChecksumsBarrier(type);
 						break;
 				}
 

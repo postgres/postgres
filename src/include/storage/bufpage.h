@@ -230,7 +230,6 @@ typedef PageHeaderData *PageHeader;
  * handling pages.
  */
 #define PG_PAGE_LAYOUT_VERSION		4
-#define PG_DATA_CHECKSUM_VERSION	1
 
 /* ----------------------------------------------------------------
  *						page support functions
@@ -501,6 +500,7 @@ do { \
 #define PIV_LOG_WARNING			(1 << 0)
 #define PIV_LOG_LOG				(1 << 1)
 #define PIV_IGNORE_CHECKSUM_FAILURE (1 << 2)
+#define PIV_ZERO_BUFFERS_ON_ERROR (1 << 3)
 
 #define PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
 	PageAddItemExtended(page, item, size, offsetNumber, \

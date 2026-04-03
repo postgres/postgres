@@ -22,6 +22,7 @@ typedef struct XLogRecordBuffer
 } XLogRecordBuffer;
 
 extern void xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
+extern void xlog2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
 extern void heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
 extern void heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
 extern void xact_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);

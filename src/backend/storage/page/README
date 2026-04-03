@@ -10,7 +10,9 @@ http://www.cs.toronto.edu/~bianca/papers/sigmetrics09.pdf, discussed
 2010/12/22 on -hackers list.
 
 Current implementation requires this be enabled system-wide at initdb time, or
-by using the pg_checksums tool on an offline cluster.
+by using the pg_checksums tool on an offline cluster.  Checksums can also be
+enabled at runtime using pg_enable_data_checksums(), and disabled by using
+pg_disable_data_checksums().
 
 The checksum is not valid at all times on a data page!!
 The checksum is valid when the page leaves the shared pool and is checked

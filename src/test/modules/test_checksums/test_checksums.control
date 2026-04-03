@@ -1,0 +1,4 @@
+comment = 'Test code for data checksums'
+default_version = '1.0'
+module_pathname = '$libdir/test_checksums'
+relocatable = true

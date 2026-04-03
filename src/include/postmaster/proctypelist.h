@@ -38,6 +38,8 @@ PG_PROCTYPE(B_BACKEND, "backend", gettext_noop("client backend"), BackendMain, t
 PG_PROCTYPE(B_BG_WORKER, "bgworker", gettext_noop("background worker"), BackgroundWorkerMain, true)
 PG_PROCTYPE(B_BG_WRITER, "bgwriter", gettext_noop("background writer"), BackgroundWriterMain, true)
 PG_PROCTYPE(B_CHECKPOINTER, "checkpointer", gettext_noop("checkpointer"), CheckpointerMain, true)
+PG_PROCTYPE(B_DATACHECKSUMSWORKER_LAUNCHER, "checksums", gettext_noop("datachecksum launcher"), NULL, false)
+PG_PROCTYPE(B_DATACHECKSUMSWORKER_WORKER, "checksums", gettext_noop("datachecksum worker"), NULL, false)
 PG_PROCTYPE(B_DEAD_END_BACKEND, "backend", gettext_noop("dead-end client backend"), BackendMain, true)
 PG_PROCTYPE(B_INVALID, "postmaster", gettext_noop("unrecognized"), NULL, false)
 PG_PROCTYPE(B_IO_WORKER, "ioworker", gettext_noop("io worker"), IoWorkerMain, true)

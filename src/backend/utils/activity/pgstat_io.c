@@ -362,6 +362,8 @@ pgstat_tracks_io_bktype(BackendType bktype)
 		case B_LOGGER:
 			return false;
 
+		case B_DATACHECKSUMSWORKER_LAUNCHER:
+		case B_DATACHECKSUMSWORKER_WORKER:
 		case B_AUTOVAC_LAUNCHER:
 		case B_AUTOVAC_WORKER:
 		case B_BACKEND:

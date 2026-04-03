@@ -1613,10 +1613,11 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 	/*
 	 * If we weren't told not to verify checksums, and if checksums are
 	 * enabled for this cluster, and if this is a relation file, then verify
-	 * the checksum.
+	 * the checksum.  We cannot at this point check if checksums are enabled
+	 * or disabled as that might change, thus we check at each point where we
+	 * could be validating a checksum.
 	 */
-	if (!noverify_checksums && DataChecksumsEnabled() &&
-		RelFileNumberIsValid(relfilenumber))
+	if (!noverify_checksums && RelFileNumberIsValid(relfilenumber))
 		verify_checksum = true;
 
 	/*
@@ -1749,7 +1750,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 		 * If the amount of data we were able to read was not a multiple of
 		 * BLCKSZ, we cannot verify checksums, which are block-level.
 		 */
-		if (verify_checksum && (cnt % BLCKSZ != 0))
+		if (verify_checksum && DataChecksumsNeedVerify() && (cnt % BLCKSZ != 0))
 		{
 			ereport(WARNING,
 					(errmsg("could not verify checksum in file \"%s\", block "
@@ -1844,9 +1845,10 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
  * 'blkno' is the block number of the first page in the bbsink's buffer
  * relative to the start of the relation.
  *
- * 'verify_checksum' indicates whether we should try to verify checksums
- * for the blocks we read. If we do this, we'll update *checksum_failures
- * and issue warnings as appropriate.
+ * 'verify_checksum' determines if the user has asked to verify checksums, but
+ * since data checksums can be disabled, or become disabled, we need to check
+ * state before verifying individual pages.  If we do this, we'll update
+ * *checksum_failures and issue warnings as appropriate.
  */
 static off_t
 read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
@@ -1872,6 +1874,13 @@ read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
 		int			reread_cnt;
 		uint16		expected_checksum;
 
+		/*
+		 * The data checksum state can change at any point, so we need to
+		 * re-check before each page.
+		 */
+		if (!DataChecksumsNeedVerify())
+			return cnt;
+
 		page = sink->bbs_buffer + BLCKSZ * i;
 
 		/* If the page is OK, go on to the next one. */
@@ -1894,7 +1903,12 @@ read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
 		 * allows us to wait until we can be certain that no write to the
 		 * block is in progress. Since we don't have any such thing right now,
 		 * we just do this and hope for the best.
+		 *
+		 * The data checksum state may also have changed concurrently so check
+		 * again.
 		 */
+		if (!DataChecksumsNeedVerify())
+			return cnt;
 		reread_cnt =
 			basebackup_read_file(fd, sink->bbs_buffer + BLCKSZ * i,
 								 BLCKSZ, offset + BLCKSZ * i,
@@ -2007,6 +2021,9 @@ verify_page_checksum(Page page, XLogRecPtr start_lsn, BlockNumber blkno,
 	 * pages, since they don't have a checksum yet.
 	 */
 	if (PageIsNew(page) || PageGetLSN(page) >= start_lsn)
+		return true;
+
+	if (!DataChecksumsNeedVerify())
 		return true;
 
 	/* Perform the actual checksum calculation. */

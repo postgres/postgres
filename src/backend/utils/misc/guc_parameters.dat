@@ -571,11 +571,12 @@
   max => '1.0',
 },
 
-{ name => 'data_checksums', type => 'bool', context => 'PGC_INTERNAL', group => 'PRESET_OPTIONS',
+{ name => 'data_checksums', type => 'enum', context => 'PGC_INTERNAL', group => 'PRESET_OPTIONS',
   short_desc => 'Shows whether data checksums are turned on for this cluster.',
   flags => 'GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED',
   variable => 'data_checksums',
-  boot_val => 'false',
+  boot_val => 'PG_DATA_CHECKSUM_OFF',
+  options => 'data_checksums_options',
 },
 
 # Can't be set by ALTER SYSTEM as it can lead to recursive definition

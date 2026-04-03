@@ -246,9 +246,10 @@
   <para>
    Checksums can be disabled when the cluster is initialized using <link
    linkend="app-initdb-data-checksums"><application>initdb</application></link>.
-   They can also be enabled or disabled at a later time as an offline
-   operation. Data checksums are enabled or disabled at the full cluster
-   level, and cannot be specified individually for databases or tables.
+   They can also be enabled or disabled at a later time either as an offline
+   operation or online in a running cluster allowing concurrent access. Data
+   checksums are enabled or disabled at the full cluster level, and cannot be
+   specified individually for databases, tables or replicated cluster members.
   </para>
 
   <para>
@@ -265,13 +266,130 @@
   </para>
 
   <sect2 id="checksums-offline-enable-disable">
-   <title>Off-line Enabling of Checksums</title>
+   <title>Offline Enabling of Checksums</title>
 
    <para>
     The <link linkend="app-pgchecksums"><application>pg_checksums</application></link>
     application can be used to enable or disable data checksums, as well as
     verify checksums, on an offline cluster.
    </para>
+
+  </sect2>
+
+  <sect2 id="checksums-online-enable-disable">
+   <title>Online Enabling of Checksums</title>
+
+   <para>
+    Checksums can be enabled or disabled online, by calling the appropriate
+    <link linkend="functions-admin-checksum">functions</link>.
+   </para>
+
+   <para>
+    Both enabling and disabling data checksums happens in two phases, separated
+    by a checkpoint to ensure durability.  The different states, and their
+    transitions, are illustrated in <xref linkend="data-checksums-states-figure"/>
+    and discussed in further detail in this section.
+   </para>
+
+   <para>
+    <figure id="data-checksums-states-figure">
+     <title>data checksums states</title>
+     <mediaobject>
+      <imageobject>
+       <imagedata fileref="images/datachecksums.svg" format="SVG" width="100%"/>
+      </imageobject>
+     </mediaobject>
+    </figure>
+   </para>
+
+   <para>
+    Enabling checksums will set the cluster checksum state to
+    <literal>inprogress-on</literal>.  During this time, checksums will be
+    written but not verified. In addition to this, a background worker process
+    is started that enables checksums on all existing data in the cluster. Once
+    this worker has completed processing all databases in the cluster, the
+    checksum state will automatically switch to <literal>on</literal>. The
+    processing will consume two background worker processes, make sure that
+    <varname>max_worker_processes</varname> allows for at least two more
+    additional processes.
+   </para>
+
+   <para>
+    The process will initially wait for all open transactions to finish before
+    it starts, so that it can be certain that there are no tables that have been
+    created inside a transaction that has not committed yet and thus would not
+    be visible to the process enabling checksums. It will also, for each database,
+    wait for all pre-existing temporary tables to get removed before it finishes.
+    If long-lived temporary tables are used in an application it may be necessary
+    to terminate these application connections to allow the process to complete.
+   </para>
+
+   <para>
+    If the cluster is stopped while in <literal>inprogress-on</literal> state,
+    for any reason, or processing was interrupted, then the checksum enable
+    process must be restarted manually.  To do this, re-execute the function
+    <function>pg_enable_data_checksums()</function> once the cluster has been
+    restarted.  The process will start over, there is no support for resuming
+    work from where it was interrupted.  If the cluster is stopped while in
+    <literal>inprogress-off</literal>, then the checksum state will be set to
+    <literal>off</literal> when the cluster is restarted.
+   </para>
+
+   <para>
+    Disabling data checksums will set the data checksum state to
+    <literal>inprogress-off</literal>.  During this time, checksums will be
+    written but not verified.  After all processes acknowledge the change,
+    the state will automatically be set to <literal>off</literal>.
+   </para>
+
+   <para>
+    Disabling data checksums while data checksums are actively being enabled
+    will abort the current processing.
+   </para>
+
+   <sect3 id="checksums-online-system-impact">
+    <title>Impact on system of online operations</title>
+    <para>
+     Enabling data checksums can cause significant I/O to the system, as all of the
+     database pages will need to be rewritten, and will be written both to the
+     data files and the WAL. The impact may be limited by throttling using the
+     <parameter>cost_delay</parameter> and <parameter>cost_limit</parameter>
+     parameters of the <function>pg_enable_data_checksums()</function> function.
+    </para>
+
+    <para>
+     <itemizedlist>
+      <listitem><para>
+       I/O: all pages need to have data checksums calculated and written which
+       will generate a lot of dirty pages that will need to be flushed to disk,
+       as well as WAL logged.
+      </para></listitem>
+      <listitem><para>
+       Replication: When the standby receives the data checksum state change
+       in the WAL stream it will issue a <glossterm linkend="glossary-restartpoint">
+       restartpoint</glossterm> in order to flush the current state into the
+       <filename>pg_control</filename> file.  The restartpoint will flush the
+       current state to disk and will block redo until finished.  This in turn
+       will induce replication lag, which on synchronous standbys also blocks
+       the primary.  Reducing <xref linkend="guc-max-wal-size"/> before the
+       process is started can help with reducing the time it takes for the
+       restartpoint to finish.
+      </para></listitem>
+      <listitem><para>
+       Shutdown/Restart: If the server is shut down or restarted when data
+       checksums are being enabled, the process will not resume and all pages
+       need to be recalculated and rewritten.  Enabling data checksums should
+       be done when there is no need for regular maintenance or during a
+       service window.
+      </para></listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     No I/O is incurred when disabling data checksums, but checkpoints are
+     still required.
+    </para>
+   </sect3>
 
   </sect2>
  </sect1>

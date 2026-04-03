@@ -759,6 +759,24 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	ProcSignalInit(MyCancelKey, MyCancelKeyLength);
 
 	/*
+	 * Initialize a local cache of the data_checksum_version, to be updated by
+	 * the procsignal-based barriers.
+	 *
+	 * This intentionally happens after initializing the procsignal, otherwise
+	 * we might miss a state change. This means we can get a barrier for the
+	 * state we've just initialized.
+	 *
+	 * The postmaster (which is what gets forked into the new child process)
+	 * does not handle barriers, therefore it may not have the current value
+	 * of LocalDataChecksumVersion value (it'll have the value read from the
+	 * control file, which may be arbitrarily old).
+	 *
+	 * NB: Even if the postmaster handled barriers, the value might still be
+	 * stale, as it might have changed after this process forked.
+	 */
+	InitLocalDataChecksumState();
+
+	/*
 	 * Also set up timeout handlers needed for backend operation.  We need
 	 * these in every case except bootstrap.
 	 */
@@ -886,7 +904,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username != NULL ? username : "postgres")));
 	}
-	else if (AmBackgroundWorkerProcess())
+	else if (AmBackgroundWorkerProcess() || AmDataChecksumsWorkerProcess())
 	{
 		if (username == NULL && !OidIsValid(useroid))
 		{

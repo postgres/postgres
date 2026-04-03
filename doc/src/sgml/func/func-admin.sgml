@@ -3123,4 +3123,82 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
 
   </sect2>
 
+  <sect2 id="functions-admin-checksum">
+   <title>Data Checksum Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-checksums-table" /> can
+    be used to enable or disable data checksums in a running cluster.
+   </para>
+   <para>
+    Changing data checksums can be done in a cluster with concurrent activity
+    without blocking queries, but overall system performance will be affected.
+    See <xref linkend="checksums" /> for further details on how changing the
+    data checksums state can affect a system and possible mitigations for how
+    to reduce the impact.
+   </para>
+
+   <table id="functions-checksums-table">
+    <title>Data Checksum Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_enable_data_checksums</primary>
+        </indexterm>
+        <function>pg_enable_data_checksums</function> ( <optional><parameter>cost_delay</parameter> <type>int</type>, <parameter>cost_limit</parameter> <type>int</type></optional> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Initiates the process of enabling data checksums for the cluster. This
+        will set the data checksums state to <literal>inprogress-on</literal>
+        as well as start a background worker that will process all pages in all
+        databases and enable data checksums on them.  When all pages have
+        been processed, the cluster will automatically set data checksums state
+        to <literal>on</literal>.  This operation is WAL logged and replicated
+        to all standby nodes.
+       </para>
+       <para>
+        If <parameter>cost_delay</parameter> and <parameter>cost_limit</parameter> are
+        specified, the process is throttled using the same principles as
+        <link linkend="runtime-config-resource-vacuum-cost">Cost-based Vacuum Delay</link>.
+       </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_disable_data_checksums</primary>
+        </indexterm>
+        <function>pg_disable_data_checksums</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Disables data checksum calculation and validation for the cluster. This
+        will set the data checksum state to <literal>inprogress-off</literal>
+        while data checksums are being disabled.  When all active backends have
+        stopped validating data checksums, the data checksum state will be
+        set to <literal>off</literal>.
+       </para>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
   </sect1>

@@ -297,6 +297,8 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		cmdtype = PROGRESS_COMMAND_BASEBACKUP;
 	else if (pg_strcasecmp(cmd, "COPY") == 0)
 		cmdtype = PROGRESS_COMMAND_COPY;
+	else if (pg_strcasecmp(cmd, "DATACHECKSUMS") == 0)
+		cmdtype = PROGRESS_COMMAND_DATACHECKSUMS;
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1182,9 +1184,6 @@ pg_stat_get_db_checksum_failures(PG_FUNCTION_ARGS)
 	int64		result;
 	PgStat_StatDBEntry *dbentry;
 
-	if (!DataChecksumsEnabled())
-		PG_RETURN_NULL();
-
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;
 	else
@@ -1199,9 +1198,6 @@ pg_stat_get_db_checksum_last_failure(PG_FUNCTION_ARGS)
 	Oid			dbid = PG_GETARG_OID(0);
 	TimestampTz result;
 	PgStat_StatDBEntry *dbentry;
-
-	if (!DataChecksumsEnabled())
-		PG_RETURN_NULL();
 
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;

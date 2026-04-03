@@ -3885,9 +3885,14 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Number of data page checksum failures detected in this
-       database (or on a shared object), or NULL if data checksums are
-       disabled.
-      </para></entry>
+       database (or on a shared object).  Detected failures are not reset if
+       the <xref linkend="guc-data-checksums"/> setting changes.  Clusters
+       which are initialized without data checksums will show this as
+       <literal>0</literal>. In <productname>PostgreSQL</productname> version
+       18 and earlier, this was set to <literal>NULL</literal> for clusters
+       with data checksums disabled.
+      </para>
+     </entry>
      </row>
 
      <row>
@@ -3896,8 +3901,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Time at which the last data page checksum failure was detected in
-       this database (or on a shared object), or NULL if data checksums are
-       disabled.
+       this database (or on a shared object). Last failure is reported
+       regardless of the <xref linkend="guc-data-checksums"/> setting.
       </para></entry>
      </row>
 
@@ -7632,6 +7637,219 @@ FROM pg_stat_get_backend_idset() AS backendid;
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="data-checksum-progress-reporting">
+  <title>Data Checksum Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_data_checksums</primary>
+  </indexterm>
+
+  <para>
+   When data checksums are being enabled on a running cluster, the
+   <structname>pg_stat_progress_data_checksums</structname> view will contain
+   a row for the launcher process, and one row for each worker process which
+   is currently calculating and writing checksums for the data pages in a database.
+   The launcher provides overview of the overall progress (how many databases
+   have been processed, how many remain), while the workers track progress for
+   currently processed databases.
+  </para>
+
+  <table id="pg-stat-progress-data-checksums-view" xreflabel="pg_stat_progress_data_checksums">
+   <title><structname>pg_stat_progress_data_checksums</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        Column Type
+       </para>
+       <para>
+        Description
+       </para>
+      </entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>pid</structfield> <type>integer</type>
+       </para>
+       <para>
+        Process ID of the data checksum process, launcher or worker.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>datid</structfield> <type>oid</type>
+       </para>
+       <para>
+        OID of this database, or <literal>0</literal> for the launcher process.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>datname</structfield> <type>name</type>
+       </para>
+       <para>
+        Name of this database, or <literal>NULL</literal> for the
+        launcher process.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>phase</structfield> <type>text</type>
+       </para>
+       <para>
+        Current processing phase, see <xref linkend="datachecksum-phases"/>
+        for description of the phases.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>databases_total</structfield> <type>integer</type>
+       </para>
+       <para>
+        The total number of databases which will be processed. Only the
+        launcher process has this value set, the worker processes have this
+        set to <literal>NULL</literal>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>databases_done</structfield> <type>integer</type>
+       </para>
+       <para>
+        The number of databases which have been processed. Only the launcher
+        process has this value set, the worker processes have this set to
+        <literal>NULL</literal>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>relations_total</structfield> <type>integer</type>
+       </para>
+       <para>
+        The total number of relations which will be processed, or
+        <literal>NULL</literal> if the worker process hasn't
+        calculated the number of relations yet. The launcher process has
+        this set to <literal>NULL</literal> since it isn't responsible for
+        processing relations, only launching worker processes.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>relations_done</structfield> <type>integer</type>
+       </para>
+       <para>
+        The number of relations which have been processed. The launcher
+        process has this set to <literal>NULL</literal>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>blocks_total</structfield> <type>integer</type>
+       </para>
+       <para>
+        The number of blocks in the current relation which will be processed,
+        or <literal>NULL</literal> if the worker process hasn't
+        calculated the number of blocks yet. The launcher process has
+        this set to <literal>NULL</literal>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>blocks_done</structfield> <type>integer</type>
+       </para>
+       <para>
+        The number of blocks in the current relation which have been processed.
+        The launcher process has this set to <literal>NULL</literal>.
+       </para>
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="datachecksum-phases">
+   <title>Data Checksum Phases</title>
+   <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
+    <thead>
+     <row>
+      <entry>Phase</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>enabling</literal></entry>
+      <entry>
+       The command is currently enabling data checksums on the cluster.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>disabling</literal></entry>
+      <entry>
+       The command is currently disabling data checksums on the cluster.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>done</literal></entry>
+      <entry>
+       The command is done and the data checksum state in the cluster has
+       changed.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>waiting on barrier</literal></entry>
+      <entry>
+       The command is currently waiting for the current active backends to
+       acknowledge the change in data checksum state.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>waiting on temporary tables</literal></entry>
+      <entry>
+       The command is currently waiting for all temporary tables which existed
+       at the time the command was started to be removed.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect2>
 
  </sect1>

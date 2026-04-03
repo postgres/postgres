@@ -57,6 +57,7 @@ extern PGDLLIMPORT int CommitDelay;
 extern PGDLLIMPORT int CommitSiblings;
 extern PGDLLIMPORT bool track_wal_io_timing;
 extern PGDLLIMPORT int wal_decode_buffer_size;
+extern PGDLLIMPORT int data_checksums;
 
 extern PGDLLIMPORT int CheckPointSegments;
 
@@ -119,7 +120,7 @@ extern PGDLLIMPORT bool XLogLogicalInfo;
  * of the bits make it to disk, but the checksum wouldn't match.  Also WAL-log
  * them if forced by wal_log_hints=on.
  */
-#define XLogHintBitIsNeeded() (DataChecksumsEnabled() || wal_log_hints)
+#define XLogHintBitIsNeeded() (wal_log_hints || DataChecksumsNeedWrite())
 
 /* Do we need to WAL-log information required only for Hot Standby and logical replication? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_REPLICA)
@@ -229,8 +230,11 @@ extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
 extern XLogRecPtr XLogGetReplicationSlotMinimumLSN(void);
 
 extern void xlog_redo(struct XLogReaderState *record);
+extern void xlog2_redo(struct XLogReaderState *record);
 extern void xlog_desc(StringInfo buf, struct XLogReaderState *record);
+extern void xlog2_desc(StringInfo buf, struct XLogReaderState *record);
 extern const char *xlog_identify(uint8 info);
+extern const char *xlog2_identify(uint8 info);
 
 extern void issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli);
 
@@ -243,7 +247,16 @@ extern XLogRecPtr GetXLogWriteRecPtr(void);
 
 extern uint64 GetSystemIdentifier(void);
 extern char *GetMockAuthenticationNonce(void);
-extern bool DataChecksumsEnabled(void);
+extern bool DataChecksumsNeedWrite(void);
+extern bool DataChecksumsNeedVerify(void);
+extern bool DataChecksumsInProgressOn(void);
+extern void SetDataChecksumsOnInProgress(void);
+extern void SetDataChecksumsOn(void);
+extern void SetDataChecksumsOff(void);
+extern const char *show_data_checksums(void);
+extern const char *get_checksum_state_string(uint32 state);
+extern void InitLocalDataChecksumState(void);
+extern void SetLocalDataChecksumState(uint32 data_checksum_version);
 extern bool GetDefaultCharSignedness(void);
 extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
 extern Size XLOGShmemSize(void);

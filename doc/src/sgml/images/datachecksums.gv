@@ -1,0 +1,14 @@
+digraph G {
+    A -> B [label="SELECT pg_enable_data_checksums()"];
+    B -> C;
+    D -> A;
+    C -> D [label="SELECT pg_disable_data_checksums()"];
+    E -> A [label=" --no-data-checksums"];
+    E -> C [label=" --data-checksums"];
+
+    A [label="off"];
+    B [label="inprogress-on"];
+    C [label="on"];
+    D [label="inprogress-off"];
+    E [label="initdb"];
+}

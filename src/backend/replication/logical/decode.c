@@ -189,6 +189,22 @@ xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	}
 }
 
+void
+xlog2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
+{
+	uint8		info = XLogRecGetInfo(buf->record) & ~XLR_INFO_MASK;
+
+	ReorderBufferProcessXid(ctx->reorder, XLogRecGetXid(buf->record), buf->origptr);
+
+	switch (info)
+	{
+		case XLOG2_CHECKSUMS:
+			break;
+		default:
+			elog(ERROR, "unexpected RM_XLOG2_ID record type: %u", info);
+	}
+}
+
 /*
  * Handle rmgr XACT_ID records for LogicalDecodingProcessRecord().
  */

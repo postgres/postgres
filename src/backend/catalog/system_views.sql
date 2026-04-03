@@ -1451,6 +1451,25 @@ CREATE VIEW pg_stat_progress_copy AS
     FROM pg_stat_get_progress_info('COPY') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
+CREATE VIEW pg_stat_progress_data_checksums AS
+    SELECT
+        S.pid AS pid, S.datid, D.datname AS datname,
+        CASE S.param1 WHEN 0 THEN 'enabling'
+                      WHEN 1 THEN 'disabling'
+                      WHEN 2 THEN 'waiting on temporary tables'
+					  WHEN 3 THEN 'waiting on barrier'
+                      WHEN 4 THEN 'done'
+                      END AS phase,
+        CASE S.param2 WHEN -1 THEN NULL ELSE S.param2 END AS databases_total,
+        S.param3 AS databases_done,
+        CASE S.param4 WHEN -1 THEN NULL ELSE S.param4 END AS relations_total,
+        CASE S.param5 WHEN -1 THEN NULL ELSE S.param5 END AS relations_done,
+        CASE S.param6 WHEN -1 THEN NULL ELSE S.param6 END AS blocks_total,
+        CASE S.param7 WHEN -1 THEN NULL ELSE S.param7 END AS blocks_done
+    FROM pg_stat_get_progress_info('DATACHECKSUMS') AS S
+        LEFT JOIN pg_database D ON S.datid = D.oid
+    ORDER BY S.datid; -- return the launcher process first
+
 CREATE VIEW pg_user_mappings AS
     SELECT
         U.oid       AS umid,

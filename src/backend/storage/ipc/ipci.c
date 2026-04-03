@@ -31,6 +31,7 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/datachecksum_state.h"
 #include "postmaster/walsummarizer.h"
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
@@ -142,6 +143,7 @@ CalculateShmemSize(void)
 	size = add_size(size, AioShmemSize());
 	size = add_size(size, WaitLSNShmemSize());
 	size = add_size(size, LogicalDecodingCtlShmemSize());
+	size = add_size(size, DataChecksumsShmemSize());
 
 	/* include additional requested shmem from preload libraries */
 	size = add_size(size, total_addin_request);
@@ -310,6 +312,7 @@ CreateOrAttachShmemStructs(void)
 	PgArchShmemInit();
 	ApplyLauncherShmemInit();
 	SlotSyncShmemInit();
+	DataChecksumsShmemInit();
 
 	/*
 	 * Set up other modules that need some shared memory space

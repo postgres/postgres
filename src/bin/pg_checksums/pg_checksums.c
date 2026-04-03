@@ -585,7 +585,7 @@ main(int argc, char *argv[])
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
 		pg_fatal("cluster must be shut down");
 
-	if (ControlFile->data_checksum_version == 0 &&
+	if (ControlFile->data_checksum_version != PG_DATA_CHECKSUM_VERSION &&
 		mode == PG_MODE_CHECK)
 		pg_fatal("data checksums are not enabled in cluster");
 
@@ -593,7 +593,7 @@ main(int argc, char *argv[])
 		mode == PG_MODE_DISABLE)
 		pg_fatal("data checksums are already disabled in cluster");
 
-	if (ControlFile->data_checksum_version > 0 &&
+	if (ControlFile->data_checksum_version == PG_DATA_CHECKSUM_VERSION &&
 		mode == PG_MODE_ENABLE)
 		pg_fatal("data checksums are already enabled in cluster");
 

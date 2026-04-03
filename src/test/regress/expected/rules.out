@@ -2085,6 +2085,41 @@ pg_stat_progress_create_index| SELECT s.pid,
     s.param15 AS partitions_done
    FROM (pg_stat_get_progress_info('CREATE INDEX'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
+pg_stat_progress_data_checksums| SELECT s.pid,
+    s.datid,
+    d.datname,
+        CASE s.param1
+            WHEN 0 THEN 'enabling'::text
+            WHEN 1 THEN 'disabling'::text
+            WHEN 2 THEN 'waiting on temporary tables'::text
+            WHEN 3 THEN 'waiting on barrier'::text
+            WHEN 4 THEN 'done'::text
+            ELSE NULL::text
+        END AS phase,
+        CASE s.param2
+            WHEN '-1'::integer THEN NULL::bigint
+            ELSE s.param2
+        END AS databases_total,
+    s.param3 AS databases_done,
+        CASE s.param4
+            WHEN '-1'::integer THEN NULL::bigint
+            ELSE s.param4
+        END AS relations_total,
+        CASE s.param5
+            WHEN '-1'::integer THEN NULL::bigint
+            ELSE s.param5
+        END AS relations_done,
+        CASE s.param6
+            WHEN '-1'::integer THEN NULL::bigint
+            ELSE s.param6
+        END AS blocks_total,
+        CASE s.param7
+            WHEN '-1'::integer THEN NULL::bigint
+            ELSE s.param7
+        END AS blocks_done
+   FROM (pg_stat_get_progress_info('DATACHECKSUMS'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
+     LEFT JOIN pg_database d ON ((s.datid = d.oid)))
+  ORDER BY s.datid;
 pg_stat_progress_repack| SELECT s.pid,
     s.datid,
     d.datname,

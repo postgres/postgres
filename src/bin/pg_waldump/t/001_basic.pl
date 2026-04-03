@@ -79,7 +79,8 @@ BRIN
 CommitTs
 ReplicationOrigin
 Generic
-LogicalMessage$/,
+LogicalMessage
+XLOG2$/,
 	'rmgr list');
 
 

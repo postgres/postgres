@@ -20,6 +20,7 @@ SUBDIRS = \
 		  test_bitmapset \
 		  test_bloomfilter \
 		  test_cloexec \
+		  test_checksums \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
 		  test_custom_stats \

@@ -438,6 +438,8 @@ CheckPointStmt
 CheckpointStatsData
 CheckpointerRequest
 CheckpointerShmemStruct
+ChecksumBarrierCondition
+ChecksumStateType
 Chromosome
 CkptSortItem
 CkptTsStatus
@@ -610,6 +612,7 @@ CustomScan
 CustomScanMethods
 CustomScanState
 CycleCtr
+DataChecksumsWorkerOperation
 DBState
 DbOidName
 DCHCacheEntry
@@ -628,6 +631,9 @@ DSMREntryType
 DSMRegistryCtxStruct
 DSMRegistryEntry
 DWORD
+DataChecksumsWorkerDatabase
+DataChecksumsWorkerResult
+DataChecksumsStateStruct
 DataDirSyncMethod
 DataDumperPtr
 DataPageDeleteStack
@@ -4405,6 +4411,7 @@ xl_btree_unlink_page
 xl_btree_update
 xl_btree_vacuum
 xl_checkpoint_redo
+xl_checksum_state
 xl_clog_truncate
 xl_commit_ts_truncate
 xl_dbase_create_file_copy_rec

@@ -2991,6 +2991,11 @@ PostmasterStateMachine(void)
 									B_INVALID,
 									B_STANDALONE_BACKEND);
 
+			/* also add data checksums processes */
+			remainMask = btmask_add(remainMask,
+									B_DATACHECKSUMSWORKER_LAUNCHER,
+									B_DATACHECKSUMSWORKER_WORKER);
+
 			/* All types should be included in targetMask or remainMask */
 			Assert((remainMask.mask | targetMask.mask) == BTYPE_MASK_ALL.mask);
 		}

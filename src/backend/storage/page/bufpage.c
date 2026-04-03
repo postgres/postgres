@@ -107,7 +107,15 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
 	 */
 	if (!PageIsNew(page))
 	{
-		if (DataChecksumsEnabled())
+		/*
+		 * There shouldn't be any check for interrupt calls happening in this
+		 * codepath, but just to be on the safe side we hold interrupts since
+		 * if they did happen the data checksum state could change during
+		 * verifying checksums, which could lead to incorrect verification
+		 * results.
+		 */
+		HOLD_INTERRUPTS();
+		if (DataChecksumsNeedVerify())
 		{
 			checksum = pg_checksum_page(page, blkno);
 
@@ -118,6 +126,7 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
 					*checksum_failure_p = true;
 			}
 		}
+		RESUME_INTERRUPTS();
 
 		/*
 		 * The following checks don't prove the header is correct, only that
@@ -151,8 +160,9 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
 		if ((flags & (PIV_LOG_WARNING | PIV_LOG_LOG)) != 0)
 			ereport(flags & PIV_LOG_WARNING ? WARNING : LOG,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("page verification failed, calculated checksum %u but expected %u",
-							checksum, p->pd_checksum)));
+					 errmsg("page verification failed, calculated checksum %u but expected %u%s",
+							checksum, p->pd_checksum,
+							(flags & PIV_ZERO_BUFFERS_ON_ERROR ? ", buffer will be zeroed" : ""))));
 
 		if (header_sane && (flags & PIV_IGNORE_CHECKSUM_FAILURE))
 			return true;
@@ -1507,9 +1517,14 @@ PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 void
 PageSetChecksum(Page page, BlockNumber blkno)
 {
+	HOLD_INTERRUPTS();
 	/* If we don't need a checksum, just return */
-	if (PageIsNew(page) || !DataChecksumsEnabled())
+	if (PageIsNew(page) || !DataChecksumsNeedWrite())
+	{
+		RESUME_INTERRUPTS();
 		return;
+	}
 
 	((PageHeader) page)->pd_checksum = pg_checksum_page(page, blkno);
+	RESUME_INTERRUPTS();
 }

@@ -1044,7 +1044,14 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		if (pg_strcasecmp(strategy, "wal_log") == 0)
 			dbstrategy = CREATEDB_WAL_LOG;
 		else if (pg_strcasecmp(strategy, "file_copy") == 0)
+		{
+			if (DataChecksumsInProgressOn())
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("create database strategy \"%s\" not allowed when data checksums are being enabled",
+							   strategy));
 			dbstrategy = CREATEDB_FILE_COPY;
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

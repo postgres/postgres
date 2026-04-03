@@ -87,6 +87,7 @@ PG_LWLOCK(52, SerialControl)
 PG_LWLOCK(53, AioWorkerSubmissionQueue)
 PG_LWLOCK(54, WaitLSN)
 PG_LWLOCK(55, LogicalDecodingControl)
+PG_LWLOCK(56, DataChecksumsWorker)
 
 /*
  * There also exist several built-in LWLock tranches.  As with the predefined

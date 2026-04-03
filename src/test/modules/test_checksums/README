@@ -1,0 +1,30 @@
+src/test/modules/test_checksums/README
+
+Regression tests for data checksums
+===================================
+This directory contains a test suite for enabling, and disabling, data
+checksums both offline as well as in a running cluster.
+
+Running the tests with autoconf
+===============================
+
+    make check
+
+or
+
+    make installcheck
+
+Running the tests with meson
+============================
+From your build directory, issue the following command:
+
+    meson test -q --print-errorlogs --suite setup --suite test_checksums
+
+NOTE: This creates a temporary installation (in the case of "make check" or
+"--suite setup"), with multiple nodes, be they master or standby(s) for the
+purpose of the tests.
+
+NOTE: This test suite requires TAP tests to be enabled, a subset of the tests
+also require injection points to function.  In order to run the extended test
+then "checksum_extended" must be set in the PG_TEST_EXTRA environment
+variable.

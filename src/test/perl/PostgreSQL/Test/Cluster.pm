@@ -3898,6 +3898,42 @@ sub advance_wal
 	}
 }
 
+=item $node->checksum_enable_offline()
+
+Enable data page checksums in an offline cluster with B<pg_checksums>. The
+caller is responsible for ensuring that the cluster is in the right state for
+this operation.
+
+=cut
+
+sub checksum_enable_offline
+{
+	my ($self) = @_;
+
+	print "# Enabling checksums in \"$self->data_dir\"\n";
+	PostgreSQL::Test::Utils::system_or_bail('pg_checksums', '-D',
+		$self->data_dir, '-e');
+	return;
+}
+
+=item $node->checksum_disable_offline()
+
+Disable data page checksums in an offline cluster with B<pg_checksums>. The
+caller is responsible for ensuring that the cluster is in the right state for
+this operation.
+
+=cut
+
+sub checksum_disable_offline
+{
+	my ($self) = @_;
+
+	print "# Disabling checksums in \"$self->data_dir\"\n";
+	PostgreSQL::Test::Utils::system_or_bail('pg_checksums', '-D',
+		$self->data_dir, '-d');
+	return;
+}
+
 =pod
 
 =back

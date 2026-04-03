@@ -8567,6 +8567,13 @@ buffer_readv_complete_one(PgAioTargetData *td, uint8 buf_off, Buffer buffer,
 	if (flags & READ_BUFFERS_IGNORE_CHECKSUM_FAILURES)
 		piv_flags |= PIV_IGNORE_CHECKSUM_FAILURE;
 
+	/*
+	 * If the buffers are marked for zero on error, we want to log that in
+	 * case of a checksum failure.
+	 */
+	if (flags & READ_BUFFERS_ZERO_ON_ERROR)
+		piv_flags |= PIV_ZERO_BUFFERS_ON_ERROR;
+
 	/* Check for garbage data. */
 	if (!failed)
 	{
