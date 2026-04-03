@@ -195,6 +195,9 @@ struct HASHHDR
 	int			nelem_alloc;	/* number of entries to allocate at once */
 	bool		isfixed;		/* if true, don't enlarge */
 
+	/* Current directory.  In shared tables, this doesn't change */
+	HASHSEGMENT *dir;
+
 #ifdef HASH_STATISTICS
 
 	/*
@@ -374,6 +377,8 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 	 * hash_destroy very simple.  The memory context is made a child of either
 	 * a context specified by the caller, or TopMemoryContext if nothing is
 	 * specified.
+	 *
+	 * Note that HASH_DIRSIZE and HASH_ALLOC had better be set as well.
 	 */
 	if (flags & HASH_SHARED_MEM)
 	{
@@ -485,22 +490,19 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 
 	if (flags & HASH_SHARED_MEM)
 	{
-		/*
-		 * ctl structure and directory are preallocated for shared memory
-		 * tables.  Note that HASH_DIRSIZE and HASH_ALLOC had better be set as
-		 * well.
-		 */
-		hashp->hctl = info->hctl;
-		hashp->dir = (HASHSEGMENT *) (((char *) info->hctl) + sizeof(HASHHDR));
 		hashp->hcxt = NULL;
 		hashp->isshared = true;
 
 		/* hash table already exists, we're just attaching to it */
 		if (flags & HASH_ATTACH)
 		{
+			/* Caller must pass the pointer to the shared header */
+			Assert(info->hctl);
+			hashp->hctl = info->hctl;
+
 			/* make local copies of some heavily-used values */
-			hctl = hashp->hctl;
-			hashp->keysize = hctl->keysize;
+			hashp->dir = info->hctl->dir;
+			hashp->keysize = info->hctl->keysize;
 
 			return hashp;
 		}
@@ -514,14 +516,20 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 		hashp->isshared = false;
 	}
 
+	/*
+	 * Allocate the header structure.
+	 *
+	 * XXX: In case of a shared memory hash table, other processes need the
+	 * pointer to the header to re-find the hash table.  There is currently no
+	 * explicit way to pass it back from here, the caller relies on the fact
+	 * that this is the first allocation made with the alloc function.  That's
+	 * a little ugly, but works for now.
+	 */
+	hashp->hctl = (HASHHDR *) hashp->alloc(sizeof(HASHHDR), hashp->alloc_arg);
 	if (!hashp->hctl)
-	{
-		hashp->hctl = (HASHHDR *) hashp->alloc(sizeof(HASHHDR), hashp->alloc_arg);
-		if (!hashp->hctl)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	hashp->frozen = false;
 
@@ -724,25 +732,17 @@ init_htab(HTAB *hashp, int64 nelem)
 	nsegs = next_pow2_int(nsegs);
 
 	/*
-	 * Make sure directory is big enough. If pre-allocated directory is too
-	 * small, choke (caller screwed up).
+	 * Make sure directory is big enough.
 	 */
 	if (nsegs > hctl->dsize)
-	{
-		if (!(hashp->dir))
-			hctl->dsize = nsegs;
-		else
-			return false;
-	}
+		hctl->dsize = nsegs;
 
 	/* Allocate a directory */
-	if (!(hashp->dir))
-	{
-		hashp->dir = (HASHSEGMENT *)
-			hashp->alloc(hctl->dsize * sizeof(HASHSEGMENT), hashp->alloc_arg);
-		if (!hashp->dir)
-			return false;
-	}
+	hctl->dir = (HASHSEGMENT *)
+		hashp->alloc(hctl->dsize * sizeof(HASHSEGMENT), hashp->alloc_arg);
+	if (!hctl->dir)
+		return false;
+	hashp->dir = hctl->dir;
 
 	/* Allocate initial segments */
 	for (segp = hashp->dir; hctl->nsegs < nsegs; hctl->nsegs++, segp++)
@@ -829,19 +829,6 @@ hash_select_dirsize(int64 num_entries)
 		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	return nDirEntries;
-}
-
-/*
- * Compute the required initial memory allocation for a shared-memory
- * hashtable with the given parameters.  We need space for the HASHHDR
- * and for the (non expansible) directory.
- */
-Size
-hash_get_shared_size(HASHCTL *info, int flags)
-{
-	Assert(flags & HASH_DIRSIZE);
-	Assert(info->dsize == info->max_dsize);
-	return sizeof(HASHHDR) + info->dsize * sizeof(HASHSEGMENT);
 }
 
 
@@ -1647,6 +1634,7 @@ dir_realloc(HTAB *hashp)
 	{
 		memcpy(p, old_p, old_dirsize);
 		MemSet(((char *) p) + old_dirsize, 0, new_dirsize - old_dirsize);
+		hashp->hctl->dir = p;
 		hashp->dir = p;
 		hashp->hctl->dsize = new_dsize;
 
