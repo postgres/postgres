@@ -856,7 +856,7 @@
 #------------------------------------------------------------------------------
 
 #deadlock_timeout = 1s
-#max_locks_per_transaction = 64         # min 10
+#max_locks_per_transaction = 128        # min 10
                                         # (change requires restart)
 #max_pred_locks_per_transaction = 64    # min 10
                                         # (change requires restart)

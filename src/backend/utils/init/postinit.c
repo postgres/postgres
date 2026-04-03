@@ -593,7 +593,7 @@ InitializeFastPathLocks(void)
 	 * value at FP_LOCK_GROUPS_PER_BACKEND_MAX and insist the value is at
 	 * least 1.
 	 *
-	 * The default max_locks_per_transaction = 64 means 4 groups by default.
+	 * The default max_locks_per_transaction = 128 means 8 groups by default.
 	 */
 	FastPathLockGroupsPerBackend =
 		Max(Min(pg_nextpower2_32(max_locks_per_xact) / FP_LOCK_SLOTS_PER_GROUP,

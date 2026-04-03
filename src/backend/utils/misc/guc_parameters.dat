@@ -1979,7 +1979,7 @@
   short_desc => 'Sets the maximum number of locks per transaction.',
   long_desc => 'The shared lock table is sized on the assumption that at most "max_locks_per_transaction" objects per server process or prepared transaction will need to be locked at any one time.',
   variable => 'max_locks_per_xact',
-  boot_val => '64',
+  boot_val => '128',
   min => '10',
   max => 'INT_MAX',
 },

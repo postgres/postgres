@@ -11470,7 +11470,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
         can lock more objects as long as the locks of all transactions
         fit in the lock table.  This is <emphasis>not</emphasis> the number of
         rows that can be locked; that value is unlimited.  The default,
-        64, has historically proven sufficient, but you might need to
+        128, has historically proven sufficient, but you might need to
         raise this value if you have queries that touch many different
         tables in a single transaction, e.g., query of a parent table with
         many children.  This parameter can only be set at server start.
