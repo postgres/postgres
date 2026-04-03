@@ -24,9 +24,8 @@
  *	available to POSTGRES: fixed-size structures, queues and hash
  *	tables.  Fixed-size structures contain things like global variables
  *	for a module and should never be allocated after the shared memory
- *	initialization phase.  Hash tables have a fixed maximum size, but
- *	their actual size can vary dynamically.  When entries are added
- *	to the table, more space is allocated.  Queues link data structures
+ *	initialization phase.  Hash tables have a fixed maximum size and
+ *	cannot grow beyond that.  Queues link data structures
  *	that have been allocated either within fixed-size structures or as hash
  *	buckets.  Each shared data structure has a string name to identify
  *	it (assigned in the module that declares it).
@@ -56,11 +55,7 @@
  *
  *		(d) memory allocation model: shared memory can never be
  *	freed, once allocated.   Each hash table has its own free list,
- *	so hash buckets can be reused when an item is deleted.  However,
- *	if one hash table grows very large and then shrinks, its space
- *	cannot be redistributed to other tables.  We could build a simple
- *	hash bucket garbage collector if need be.  Right now, it seems
- *	unnecessary.
+ *	so hash buckets can be reused when an item is deleted.
  */
 
 #include "postgres.h"
@@ -187,7 +182,7 @@ InitShmemAllocator(PGShmemHeader *seghdr)
 	info.dsize = info.max_dsize = hash_select_dirsize(SHMEM_INDEX_SIZE);
 	info.alloc = ShmemHashAlloc;
 	info.alloc_arg = NULL;
-	hash_flags = HASH_ELEM | HASH_STRINGS | HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
+	hash_flags = HASH_ELEM | HASH_STRINGS | HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE | HASH_FIXED_SIZE;
 	if (!IsUnderPostmaster)
 	{
 		size = hash_get_shared_size(&info, hash_flags);
@@ -335,7 +330,7 @@ ShmemAddrIsValid(const void *addr)
  * *infoP and hash_flags must specify at least the entry sizes and key
  * comparison semantics (see hash_create()).  Flag bits and values specific
  * to shared-memory hash tables are added here, except that callers may
- * choose to specify HASH_PARTITION and/or HASH_FIXED_SIZE.
+ * choose to specify HASH_PARTITION.
  *
  * Note: before Postgres 9.0, this function returned NULL for some failure
  * cases.  Now, it always throws error instead, so callers need not check
@@ -353,14 +348,15 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
 	/*
 	 * Hash tables allocated in shared memory have a fixed directory; it can't
 	 * grow or other backends wouldn't be able to find it. So, make sure we
-	 * make it big enough to start with.
+	 * make it big enough to start with.  We also allocate all the buckets
+	 * upfront.
 	 *
 	 * The shared memory allocator must be specified too.
 	 */
 	infoP->dsize = infoP->max_dsize = hash_select_dirsize(nelems);
 	infoP->alloc = ShmemHashAlloc;
 	infoP->alloc_arg = NULL;
-	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
+	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE | HASH_FIXED_SIZE;
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
