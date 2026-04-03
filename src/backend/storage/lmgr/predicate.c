@@ -1383,12 +1383,6 @@ PredicateLockShmemSize(void)
 	size = add_size(size, hash_estimate_size(max_predicate_locks,
 											 sizeof(PREDICATELOCK)));
 
-	/*
-	 * Since NPREDICATELOCKTARGETENTS is only an estimate, add 10% safety
-	 * margin.
-	 */
-	size = add_size(size, size / 10);
-
 	/* transaction list */
 	max_serializable_xacts = (MaxBackends + max_prepared_xacts) * 10;
 	size = add_size(size, PredXactListDataSize);
