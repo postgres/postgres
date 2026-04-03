@@ -49,6 +49,20 @@ typedef struct ValidatorModuleResult
 	 * delegation. See the validator module documentation for details.
 	 */
 	char	   *authn_id;
+
+	/*
+	 * When validation fails, this may optionally be set to a string
+	 * containing an explanation for the failure. It will be sent to the
+	 * server log only; it is not provided to the client, and it's ignored if
+	 * validation succeeds.
+	 *
+	 * This description will be attached to the final authentication failure
+	 * message in the logs, as a DETAIL, which may be preferable to separate
+	 * ereport() calls that have to be correlated by the reader.
+	 *
+	 * This string may be either of static duration or palloc'd.
+	 */
+	char	   *error_detail;
 } ValidatorModuleResult;
 
 /*

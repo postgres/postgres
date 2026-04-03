@@ -74,7 +74,7 @@ struct oauth_ctx
 static char *sanitize_char(char c);
 static char *parse_kvpairs_for_auth(char **input);
 static void generate_error_response(struct oauth_ctx *ctx, char **output, int *outputlen);
-static bool validate(Port *port, const char *auth);
+static bool validate(Port *port, const char *auth, const char **logdetail);
 
 /* Constants seen in an OAUTHBEARER client initial response. */
 #define KVSEP 0x01				/* separator byte for key/value pairs */
@@ -305,7 +305,7 @@ oauth_exchange(void *opaq, const char *input, int inputlen,
 		ctx->state = OAUTH_STATE_ERROR_DISCOVERY;
 		status = PG_SASL_EXCHANGE_CONTINUE;
 	}
-	else if (!validate(ctx->port, auth))
+	else if (!validate(ctx->port, auth, logdetail))
 	{
 		generate_error_response(ctx, output, outputlen);
 
@@ -650,7 +650,7 @@ validate_token_format(const char *header)
  * authorization. Returns true if validation succeeds.
  */
 static bool
-validate(Port *port, const char *auth)
+validate(Port *port, const char *auth, const char **logdetail)
 {
 	int			map_status;
 	ValidatorModuleResult *ret;
@@ -677,7 +677,10 @@ validate(Port *port, const char *auth)
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("internal error in OAuth validator module"));
+				errmsg("internal error in OAuth validator module"),
+				ret->error_detail ? errdetail_log("%s", ret->error_detail) : 0);
+
+		*logdetail = ret->error_detail;
 		return false;
 	}
 
@@ -690,10 +693,10 @@ validate(Port *port, const char *auth)
 
 	if (!ret->authorized)
 	{
-		ereport(LOG,
-				errmsg("OAuth bearer authentication failed for user \"%s\"",
-					   port->user_name),
-				errdetail_log("Validator failed to authorize the provided token."));
+		if (ret->error_detail)
+			*logdetail = ret->error_detail;
+		else
+			*logdetail = _("Validator failed to authorize the provided token.");
 
 		status = false;
 		goto cleanup;
@@ -714,10 +717,7 @@ validate(Port *port, const char *auth)
 	/* Make sure the validator authenticated the user. */
 	if (ret->authn_id == NULL || ret->authn_id[0] == '\0')
 	{
-		ereport(LOG,
-				errmsg("OAuth bearer authentication failed for user \"%s\"",
-					   port->user_name),
-				errdetail_log("Validator provided no identity."));
+		*logdetail = _("Validator provided no identity.");
 
 		status = false;
 		goto cleanup;

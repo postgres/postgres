@@ -40,6 +40,8 @@ static const OAuthValidatorCallbacks validator_callbacks = {
 /* GUCs */
 static char *authn_id = NULL;
 static bool authorize_tokens = true;
+static char *error_detail = NULL;
+static bool internal_error = false;
 
 /*---
  * Extension entry point. Sets up GUCs for use by tests:
@@ -51,6 +53,13 @@ static bool authorize_tokens = true;
  * - oauth_validator.authorize_tokens
  *								Sets whether to successfully validate incoming
  *								tokens. Defaults to true.
+ *
+ * - oauth_validator.error_detail
+ *                              Sets an error message to be included as a
+ *                              DETAIL on failure.
+ *
+ * - oauth_validator.internal_error
+ *                              Reports an internal error to the server.
  */
 void
 _PG_init(void)
@@ -68,6 +77,22 @@ _PG_init(void)
 							 NULL,
 							 &authorize_tokens,
 							 true,
+							 PGC_SIGHUP,
+							 0,
+							 NULL, NULL, NULL);
+	DefineCustomStringVariable("oauth_validator.error_detail",
+							   "Error message to print during failures",
+							   NULL,
+							   &error_detail,
+							   NULL,
+							   PGC_SIGHUP,
+							   0,
+							   NULL, NULL, NULL);
+	DefineCustomBoolVariable("oauth_validator.internal_error",
+							 "Should the validator report an internal error?",
+							 NULL,
+							 &internal_error,
+							 false,
 							 PGC_SIGHUP,
 							 0,
 							 NULL, NULL, NULL);
@@ -132,6 +157,10 @@ validate_token(const ValidatorModuleState *state,
 	elog(LOG, "oauth_validator: issuer=\"%s\", scope=\"%s\"",
 		 MyProcPort->hba->oauth_issuer,
 		 MyProcPort->hba->oauth_scope);
+
+	res->error_detail = error_detail;	/* only relevant for failures */
+	if (internal_error)
+		return false;
 
 	res->authorized = authorize_tokens;
 	if (authn_id)

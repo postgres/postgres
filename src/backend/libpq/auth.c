@@ -639,7 +639,7 @@ ClientAuthentication(Port *port)
 			status = STATUS_OK;
 			break;
 		case uaOAuth:
-			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, NULL,
+			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, &logdetail,
 								   &abandoned);
 			break;
 	}

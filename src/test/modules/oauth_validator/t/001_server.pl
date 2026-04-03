@@ -544,8 +544,8 @@ $node->connect_fails(
 	expected_stderr => qr/OAuth bearer authentication failed/,
 	log_like => [
 		qr/connection authenticated: identity=""/,
-		qr/DETAIL:\s+Validator provided no identity/,
 		qr/FATAL:\s+OAuth bearer authentication failed/,
+		qr/DETAIL:\s+Validator provided no identity/,
 	]);
 
 # Even if a validator authenticates the user, if the token isn't considered
@@ -564,9 +564,47 @@ $node->connect_fails(
 	expected_stderr => qr/OAuth bearer authentication failed/,
 	log_like => [
 		qr/connection authenticated: identity="test\@example\.org"/,
-		qr/DETAIL:\s+Validator failed to authorize the provided token/,
 		qr/FATAL:\s+OAuth bearer authentication failed/,
+		qr/DETAIL:\s+Validator failed to authorize the provided token/,
 	]);
+
+# Validators can provide their own explanations.
+$bgconn->query_safe(
+	"ALTER SYSTEM SET oauth_validator.error_detail TO 'something failed'");
+$node->reload;
+$log_start =
+  $node->wait_for_log(qr/reloading configuration files/, $log_start);
+
+$node->connect_fails(
+	"$common_connstr user=test",
+	"validator must authorize token explicitly (custom logdetail)",
+	expected_stderr => qr/OAuth bearer authentication failed/,
+	log_like => [
+		qr/connection authenticated: identity="test\@example\.org"/,
+		qr/FATAL:\s+OAuth bearer authentication failed/,
+		qr/DETAIL:\s+something failed/,
+	]);
+
+$bgconn->query_safe(
+	"ALTER SYSTEM SET oauth_validator.internal_error TO true");
+$node->reload;
+$log_start =
+  $node->wait_for_log(qr/reloading configuration files/, $log_start);
+
+$node->connect_fails(
+	"$common_connstr user=test",
+	"validator internal error (custom logdetail)",
+	expected_stderr => qr/OAuth bearer authentication failed/,
+	log_like => [
+		qr/WARNING:\s+internal error in OAuth validator module/,
+		qr/DETAIL:\s+something failed/,
+	]);
+
+$bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.error_detail");
+$bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.internal_error");
+$node->reload;
+$log_start =
+  $node->wait_for_log(qr/reloading configuration files/, $log_start);
 
 #
 # Test user mapping.

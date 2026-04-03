@@ -192,11 +192,20 @@
      <term>Logging</term>
      <listitem>
       <para>
-       Modules may use the same <link linkend="error-message-reporting">logging
+       To simply log the reason for a validation failure, modules may set the
+       freeform <structfield>error_detail</structfield> field during the
+       <link linkend="oauth-validator-callback-validate">validate callback</link>.
+       (<xref linkend="error-style-guide"/> has guidelines for writing good
+       <literal>DETAIL</literal> messages.) <structfield>error_detail</structfield>
+       is printed only to the server log, as part of the final authentication
+       failure message, and it is not shared with the client.
+      </para>
+      <para>
+       Modules may also use the same <link linkend="error-message-reporting">logging
        facilities</link> as standard extensions; however, the rules for emitting
        log entries to the client are subtly different during the authentication
        phase of the connection. Generally speaking, modules should log
-       verification problems at the <symbol>COMMERROR</symbol> level and return
+       problems at the <symbol>COMMERROR</symbol> level and return
        normally, instead of using <symbol>ERROR</symbol>/<symbol>FATAL</symbol>
        to unwind the stack, to avoid leaking information to unauthenticated
        clients.
@@ -370,6 +379,7 @@ typedef struct ValidatorModuleResult
 {
     bool        authorized;
     char       *authn_id;
+    char       *error_detail;
 } ValidatorModuleResult;
 </programlisting>
 
@@ -386,6 +396,15 @@ typedef struct ValidatorModuleResult
     in which case any result parameters are ignored and the connection fails.
     Otherwise the validator should return <literal>true</literal> to indicate
     that it has processed the token and made an authorization decision.
+   </para>
+   <para>
+    In either failure case (validation error or internal error) the module may
+    store a user-readable reason for the failure in <structfield>result->error_detail</structfield>.
+    This will be printed to the server logs (not sent to the client) as a
+    <literal>DETAIL</literal> entry for the authentication failure. The memory
+    pointed to by <structfield>error_detail</structfield> may be either palloc'd
+    or of static duration. <structfield>error_detail</structfield> is ignored
+    on success.
    </para>
    <para>
     The behavior after <function>validate_cb</function> returns depends on the
