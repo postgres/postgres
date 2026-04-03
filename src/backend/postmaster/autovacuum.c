@@ -3122,6 +3122,10 @@ relation_needs_vacanalyze(Oid relid,
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
 	MultiXactId multiForceLimit;
+	uint32		xid_age;
+	uint32		mxid_age;
+	int			effective_xid_failsafe_age;
+	int			effective_mxid_failsafe_age;
 
 	float4		pcnt_unfrozen = 1;
 	float4		reltuples = classForm->reltuples;
@@ -3181,6 +3185,7 @@ relation_needs_vacanalyze(Oid relid,
 		: effective_multixact_freeze_max_age;
 
 	av_enabled = (relopts ? relopts->enabled : true);
+	av_enabled &= AutoVacuumingActive();
 
 	relfrozenxid = classForm->relfrozenxid;
 	relminmxid = classForm->relminmxid;
@@ -3201,65 +3206,52 @@ relation_needs_vacanalyze(Oid relid,
 	}
 	*wraparound = force_vacuum;
 
-	/* Update the score. */
+	/*
+	 * To calculate the (M)XID age portion of the score, divide the age by its
+	 * respective *_freeze_max_age parameter.
+	 */
+	xid_age = TransactionIdIsNormal(relfrozenxid) ? recentXid - relfrozenxid : 0;
+	mxid_age = MultiXactIdIsValid(relminmxid) ? recentMulti - relminmxid : 0;
+
+	scores->xid = (double) xid_age / freeze_max_age;
+	scores->mxid = (double) mxid_age / multixact_freeze_max_age;
+
+	/*
+	 * To ensure tables are given increased priority once they begin
+	 * approaching wraparound, we scale the score aggressively if the ages
+	 * surpass vacuum_failsafe_age or vacuum_multixact_failsafe_age.
+	 *
+	 * As in vacuum_xid_failsafe_check(), the effective failsafe age is no
+	 * less than 105% the value of the respective *_freeze_max_age parameter.
+	 * Note that per-table settings could result in a low score even if the
+	 * table surpasses the failsafe settings.  However, this is a strange
+	 * enough corner case that we don't bother trying to handle it.
+	 *
+	 * We further adjust the effective failsafe ages with the weight
+	 * parameters so that increasing them lowers the ages at which we begin
+	 * scaling aggressively.
+	 */
+	effective_xid_failsafe_age = Max(vacuum_failsafe_age,
+									 autovacuum_freeze_max_age * 1.05);
+	effective_mxid_failsafe_age = Max(vacuum_multixact_failsafe_age,
+									  autovacuum_multixact_freeze_max_age * 1.05);
+
+	if (autovacuum_freeze_score_weight > 1.0)
+		effective_xid_failsafe_age /= autovacuum_freeze_score_weight;
+	if (autovacuum_multixact_freeze_score_weight > 1.0)
+		effective_mxid_failsafe_age /= autovacuum_multixact_freeze_score_weight;
+
+	if (xid_age >= effective_xid_failsafe_age)
+		scores->xid = pow(scores->xid, Max(1.0, (double) xid_age / 100000000));
+	if (mxid_age >= effective_mxid_failsafe_age)
+		scores->mxid = pow(scores->mxid, Max(1.0, (double) mxid_age / 100000000));
+
+	scores->xid *= autovacuum_freeze_score_weight;
+	scores->mxid *= autovacuum_multixact_freeze_score_weight;
+
+	scores->max = Max(scores->xid, scores->mxid);
 	if (force_vacuum)
-	{
-		uint32		xid_age;
-		uint32		mxid_age;
-		int			effective_xid_failsafe_age;
-		int			effective_mxid_failsafe_age;
-
-		/*
-		 * To calculate the (M)XID age portion of the score, divide the age by
-		 * its respective *_freeze_max_age parameter.
-		 */
-		xid_age = TransactionIdIsNormal(relfrozenxid) ? recentXid - relfrozenxid : 0;
-		mxid_age = MultiXactIdIsValid(relminmxid) ? recentMulti - relminmxid : 0;
-
-		scores->xid = (double) xid_age / freeze_max_age;
-		scores->mxid = (double) mxid_age / multixact_freeze_max_age;
-
-		/*
-		 * To ensure tables are given increased priority once they begin
-		 * approaching wraparound, we scale the score aggressively if the ages
-		 * surpass vacuum_failsafe_age or vacuum_multixact_failsafe_age.
-		 *
-		 * As in vacuum_xid_failsafe_check(), the effective failsafe age is no
-		 * less than 105% the value of the respective *_freeze_max_age
-		 * parameter.  Note that per-table settings could result in a low
-		 * score even if the table surpasses the failsafe settings.  However,
-		 * this is a strange enough corner case that we don't bother trying to
-		 * handle it.
-		 *
-		 * We further adjust the effective failsafe ages with the weight
-		 * parameters so that increasing them lowers the ages at which we
-		 * begin scaling aggressively.
-		 */
-		effective_xid_failsafe_age = Max(vacuum_failsafe_age,
-										 autovacuum_freeze_max_age * 1.05);
-		effective_mxid_failsafe_age = Max(vacuum_multixact_failsafe_age,
-										  autovacuum_multixact_freeze_max_age * 1.05);
-
-		if (autovacuum_freeze_score_weight > 1.0)
-			effective_xid_failsafe_age /= autovacuum_freeze_score_weight;
-		if (autovacuum_multixact_freeze_score_weight > 1.0)
-			effective_mxid_failsafe_age /= autovacuum_multixact_freeze_score_weight;
-
-		if (xid_age >= effective_xid_failsafe_age)
-			scores->xid = pow(scores->xid, Max(1.0, (double) xid_age / 100000000));
-		if (mxid_age >= effective_mxid_failsafe_age)
-			scores->mxid = pow(scores->mxid, Max(1.0, (double) mxid_age / 100000000));
-
-		scores->xid *= autovacuum_freeze_score_weight;
-		scores->mxid *= autovacuum_multixact_freeze_score_weight;
-
-		scores->max = Max(scores->xid, scores->mxid);
 		*dovacuum = true;
-	}
-
-	/* User disabled it in pg_class.reloptions?  (But ignore if at risk) */
-	if (!av_enabled && !force_vacuum)
-		return;
 
 	/*
 	 * If we found stats for the table, and autovacuum is currently enabled,
@@ -3268,7 +3260,7 @@ relation_needs_vacanalyze(Oid relid,
 	 * vacuuming only, so don't vacuum (or analyze) anything that's not being
 	 * forced.
 	 */
-	if (!tabentry || !AutoVacuumingActive())
+	if (!tabentry)
 		return;
 
 	vactuples = tabentry->dead_tuples;
@@ -3304,37 +3296,43 @@ relation_needs_vacanalyze(Oid relid,
 		vac_ins_scale_factor * reltuples * pcnt_unfrozen;
 	anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
 
-	/*
-	 * Determine if this table needs vacuum, and update the score if it does.
-	 */
-	if (vactuples > vacthresh)
-	{
-		scores->vac = (double) vactuples / Max(vacthresh, 1);
-		scores->vac *= autovacuum_vacuum_score_weight;
-		scores->max = Max(scores->max, scores->vac);
+	/* Determine if this table needs vacuum, and update the score. */
+	scores->vac = (double) vactuples / Max(vacthresh, 1);
+	scores->vac *= autovacuum_vacuum_score_weight;
+	scores->max = Max(scores->max, scores->vac);
+	if (av_enabled && vactuples > vacthresh)
 		*dovacuum = true;
-	}
 
-	if (vac_ins_base_thresh >= 0 && instuples > vacinsthresh)
+	if (vac_ins_base_thresh >= 0)
 	{
 		scores->vac_ins = (double) instuples / Max(vacinsthresh, 1);
 		scores->vac_ins *= autovacuum_vacuum_insert_score_weight;
 		scores->max = Max(scores->max, scores->vac_ins);
-		*dovacuum = true;
+		if (av_enabled && instuples > vacinsthresh)
+			*dovacuum = true;
 	}
 
 	/*
-	 * Determine if this table needs analyze, and update the score if it does.
-	 * Note that we don't analyze TOAST tables and pg_statistic.
+	 * Determine if this table needs analyze, and update the score.  Note that
+	 * we don't analyze TOAST tables and pg_statistic.
 	 */
-	if (anltuples > anlthresh &&
-		relid != StatisticRelationId &&
+	if (relid != StatisticRelationId &&
 		classForm->relkind != RELKIND_TOASTVALUE)
 	{
 		scores->anl = (double) anltuples / Max(anlthresh, 1);
 		scores->anl *= autovacuum_analyze_score_weight;
 		scores->max = Max(scores->max, scores->anl);
-		*doanalyze = true;
+		if (av_enabled && anltuples > anlthresh)
+			*doanalyze = true;
+
+		/*
+		 * For historical reasons, we analyze even when autovacuum is disabled
+		 * for the table if at risk of wraparound.  It's not clear if this is
+		 * intentional, but it has been this way for a very long time, so it
+		 * seems best to avoid changing it without further discussion.
+		 */
+		if (force_vacuum && AutoVacuumingActive() && anltuples > anlthresh)
+			*doanalyze = true;
 	}
 
 	if (vac_ins_base_thresh >= 0)
