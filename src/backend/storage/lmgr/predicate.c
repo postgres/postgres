@@ -1183,7 +1183,6 @@ PredicateLockShmemInit(void)
 
 	PredicateLockTargetHash = ShmemInitHash("PREDICATELOCKTARGET hash",
 											max_predicate_lock_targets,
-											max_predicate_lock_targets,
 											&info,
 											HASH_ELEM | HASH_BLOBS |
 											HASH_PARTITION | HASH_FIXED_SIZE);
@@ -1218,7 +1217,6 @@ PredicateLockShmemInit(void)
 	max_predicate_locks = max_predicate_lock_targets * 2;
 
 	PredicateLockHash = ShmemInitHash("PREDICATELOCK hash",
-									  max_predicate_locks,
 									  max_predicate_locks,
 									  &info,
 									  HASH_ELEM | HASH_FUNCTION |
@@ -1297,7 +1295,6 @@ PredicateLockShmemInit(void)
 	info.entrysize = sizeof(SERIALIZABLEXID);
 
 	SerializableXidHash = ShmemInitHash("SERIALIZABLEXID hash",
-										max_serializable_xacts,
 										max_serializable_xacts,
 										&info,
 										HASH_ELEM | HASH_BLOBS |

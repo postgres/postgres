@@ -330,14 +330,7 @@ ShmemAddrIsValid(const void *addr)
  * table at once.  (In practice, all creations are done in the postmaster
  * process; child processes should always be attaching to existing tables.)
  *
- * max_size is the estimated maximum number of hashtable entries.  This is
- * not a hard limit, but the access efficiency will degrade if it is
- * exceeded substantially (since it's used to compute directory size and
- * the hash table buckets will get overfull).
- *
- * init_size is the number of hashtable entries to preallocate.  For a table
- * whose maximum size is certain, this should be equal to max_size; that
- * ensures that no run-time out-of-shared-memory failures can occur.
+ * nelems is the maximum number of hashtable entries.
  *
  * *infoP and hash_flags must specify at least the entry sizes and key
  * comparison semantics (see hash_create()).  Flag bits and values specific
@@ -350,8 +343,7 @@ ShmemAddrIsValid(const void *addr)
  */
 HTAB *
 ShmemInitHash(const char *name,		/* table string name for shmem index */
-			  int64 init_size,	/* initial table size */
-			  int64 max_size,	/* max size of the table */
+			  int64 nelems,		/* size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {
@@ -365,7 +357,7 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
 	 *
 	 * The shared memory allocator must be specified too.
 	 */
-	infoP->dsize = infoP->max_dsize = hash_select_dirsize(max_size);
+	infoP->dsize = infoP->max_dsize = hash_select_dirsize(nelems);
 	infoP->alloc = ShmemHashAlloc;
 	infoP->alloc_arg = NULL;
 	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
@@ -385,7 +377,7 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
 	/* Pass location of hashtable header to hash_create */
 	infoP->hctl = (HASHHDR *) location;
 
-	return hash_create(name, init_size, infoP, hash_flags);
+	return hash_create(name, nelems, infoP, hash_flags);
 }
 
 /*

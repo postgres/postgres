@@ -60,7 +60,7 @@ InitBufTable(int size)
 	info.num_partitions = NUM_BUFFER_PARTITIONS;
 
 	SharedBufHash = ShmemInitHash("Shared Buffer Lookup Table",
-								  size, size,
+								  size,
 								  &info,
 								  HASH_ELEM | HASH_BLOBS | HASH_PARTITION | HASH_FIXED_SIZE);
 }

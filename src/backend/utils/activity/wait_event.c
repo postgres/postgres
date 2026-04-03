@@ -56,16 +56,14 @@ uint32	   *my_wait_event_info = &local_my_wait_event_info;
  * For simplicity, we use the same ID counter across types of custom events.
  * We could end that anytime the need arises.
  *
- * The size of the hash table is based on the assumption that
- * WAIT_EVENT_CUSTOM_HASH_INIT_SIZE is enough for most cases, and it seems
- * unlikely that the number of entries will reach
- * WAIT_EVENT_CUSTOM_HASH_MAX_SIZE.
+ * The size of the hash table is based on the assumption that usually only a
+ * handful of entries are needed, but since it's small in absolute terms
+ * anyway, we leave a generous amount of headroom.
  */
 static HTAB *WaitEventCustomHashByInfo; /* find names from infos */
 static HTAB *WaitEventCustomHashByName; /* find infos from names */
 
-#define WAIT_EVENT_CUSTOM_HASH_INIT_SIZE	16
-#define WAIT_EVENT_CUSTOM_HASH_MAX_SIZE	128
+#define WAIT_EVENT_CUSTOM_HASH_SIZE	128
 
 /* hash table entries */
 typedef struct WaitEventCustomEntryByInfo
@@ -106,9 +104,9 @@ WaitEventCustomShmemSize(void)
 	Size		sz;
 
 	sz = MAXALIGN(sizeof(WaitEventCustomCounterData));
-	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_SIZE,
 										 sizeof(WaitEventCustomEntryByInfo)));
-	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_SIZE,
 										 sizeof(WaitEventCustomEntryByName)));
 	return sz;
 }
@@ -138,8 +136,7 @@ WaitEventCustomShmemInit(void)
 	info.entrysize = sizeof(WaitEventCustomEntryByInfo);
 	WaitEventCustomHashByInfo =
 		ShmemInitHash("WaitEventCustom hash by wait event information",
-					  WAIT_EVENT_CUSTOM_HASH_INIT_SIZE,
-					  WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+					  WAIT_EVENT_CUSTOM_HASH_SIZE,
 					  &info,
 					  HASH_ELEM | HASH_BLOBS);
 
@@ -148,8 +145,7 @@ WaitEventCustomShmemInit(void)
 	info.entrysize = sizeof(WaitEventCustomEntryByName);
 	WaitEventCustomHashByName =
 		ShmemInitHash("WaitEventCustom hash by name",
-					  WAIT_EVENT_CUSTOM_HASH_INIT_SIZE,
-					  WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+					  WAIT_EVENT_CUSTOM_HASH_SIZE,
 					  &info,
 					  HASH_ELEM | HASH_STRINGS);
 }
@@ -238,7 +234,7 @@ WaitEventCustomNew(uint32 classId, const char *wait_event_name)
 	/* Allocate a new event Id */
 	SpinLockAcquire(&WaitEventCustomCounter->mutex);
 
-	if (WaitEventCustomCounter->nextId >= WAIT_EVENT_CUSTOM_HASH_MAX_SIZE)
+	if (WaitEventCustomCounter->nextId >= WAIT_EVENT_CUSTOM_HASH_SIZE)
 	{
 		SpinLockRelease(&WaitEventCustomCounter->mutex);
 		ereport(ERROR,
