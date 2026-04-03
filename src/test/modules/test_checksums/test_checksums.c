@@ -108,7 +108,9 @@ dcw_inject_startup_delay(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+#ifdef USE_INJECTION_POINTS
 static uint32 db_fail = DATACHECKSUMSWORKER_FAILED;
+#endif
 
 void
 dc_modify_db_result(const char *name, const void *private_data, void *arg)
