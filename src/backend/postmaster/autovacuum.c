@@ -3123,6 +3123,11 @@ relation_needs_vacanalyze(Oid relid,
 	MultiXactId relminmxid;
 	MultiXactId multiForceLimit;
 
+	float4		pcnt_unfrozen = 1;
+	float4		reltuples = classForm->reltuples;
+	int32		relpages = classForm->relpages;
+	int32		relallfrozen = classForm->relallfrozen;
+
 	Assert(classForm != NULL);
 	Assert(OidIsValid(relid));
 
@@ -3263,94 +3268,88 @@ relation_needs_vacanalyze(Oid relid,
 	 * vacuuming only, so don't vacuum (or analyze) anything that's not being
 	 * forced.
 	 */
-	if (tabentry && AutoVacuumingActive())
+	if (!tabentry || !AutoVacuumingActive())
+		return;
+
+	vactuples = tabentry->dead_tuples;
+	instuples = tabentry->ins_since_vacuum;
+	anltuples = tabentry->mod_since_analyze;
+
+	/* If the table hasn't yet been vacuumed, take reltuples as zero */
+	if (reltuples < 0)
+		reltuples = 0;
+
+	/*
+	 * If we have data for relallfrozen, calculate the unfrozen percentage of
+	 * the table to modify insert scale factor. This helps us decide whether
+	 * or not to vacuum an insert-heavy table based on the number of inserts
+	 * to the more "active" part of the table.
+	 */
+	if (relpages > 0 && relallfrozen > 0)
 	{
-		float4		pcnt_unfrozen = 1;
-		float4		reltuples = classForm->reltuples;
-		int32		relpages = classForm->relpages;
-		int32		relallfrozen = classForm->relallfrozen;
-
-		vactuples = tabentry->dead_tuples;
-		instuples = tabentry->ins_since_vacuum;
-		anltuples = tabentry->mod_since_analyze;
-
-		/* If the table hasn't yet been vacuumed, take reltuples as zero */
-		if (reltuples < 0)
-			reltuples = 0;
-
 		/*
-		 * If we have data for relallfrozen, calculate the unfrozen percentage
-		 * of the table to modify insert scale factor. This helps us decide
-		 * whether or not to vacuum an insert-heavy table based on the number
-		 * of inserts to the more "active" part of the table.
+		 * It could be the stats were updated manually and relallfrozen >
+		 * relpages. Clamp relallfrozen to relpages to avoid nonsensical
+		 * calculations.
 		 */
-		if (relpages > 0 && relallfrozen > 0)
-		{
-			/*
-			 * It could be the stats were updated manually and relallfrozen >
-			 * relpages. Clamp relallfrozen to relpages to avoid nonsensical
-			 * calculations.
-			 */
-			relallfrozen = Min(relallfrozen, relpages);
-			pcnt_unfrozen = 1 - ((float4) relallfrozen / relpages);
-		}
-
-		vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
-		if (vac_max_thresh >= 0 && vacthresh > (float4) vac_max_thresh)
-			vacthresh = (float4) vac_max_thresh;
-
-		vacinsthresh = (float4) vac_ins_base_thresh +
-			vac_ins_scale_factor * reltuples * pcnt_unfrozen;
-		anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
-
-		/*
-		 * Determine if this table needs vacuum, and update the score if it
-		 * does.
-		 */
-		if (vactuples > vacthresh)
-		{
-			scores->vac = (double) vactuples / Max(vacthresh, 1);
-			scores->vac *= autovacuum_vacuum_score_weight;
-			scores->max = Max(scores->max, scores->vac);
-			*dovacuum = true;
-		}
-
-		if (vac_ins_base_thresh >= 0 && instuples > vacinsthresh)
-		{
-			scores->vac_ins = (double) instuples / Max(vacinsthresh, 1);
-			scores->vac_ins *= autovacuum_vacuum_insert_score_weight;
-			scores->max = Max(scores->max, scores->vac_ins);
-			*dovacuum = true;
-		}
-
-		/*
-		 * Determine if this table needs analyze, and update the score if it
-		 * does.  Note that we don't analyze TOAST tables and pg_statistic.
-		 */
-		if (anltuples > anlthresh &&
-			relid != StatisticRelationId &&
-			classForm->relkind != RELKIND_TOASTVALUE)
-		{
-			scores->anl = (double) anltuples / Max(anlthresh, 1);
-			scores->anl *= autovacuum_analyze_score_weight;
-			scores->max = Max(scores->max, scores->anl);
-			*doanalyze = true;
-		}
-
-		if (vac_ins_base_thresh >= 0)
-			elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: %.0f (thresh %.0f, score %.2f), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
-				 NameStr(classForm->relname),
-				 vactuples, vacthresh, scores->vac,
-				 instuples, vacinsthresh, scores->vac_ins,
-				 anltuples, anlthresh, scores->anl,
-				 scores->xid, scores->mxid);
-		else
-			elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: (disabled), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
-				 NameStr(classForm->relname),
-				 vactuples, vacthresh, scores->vac,
-				 anltuples, anlthresh, scores->anl,
-				 scores->xid, scores->mxid);
+		relallfrozen = Min(relallfrozen, relpages);
+		pcnt_unfrozen = 1 - ((float4) relallfrozen / relpages);
 	}
+
+	vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
+	if (vac_max_thresh >= 0 && vacthresh > (float4) vac_max_thresh)
+		vacthresh = (float4) vac_max_thresh;
+
+	vacinsthresh = (float4) vac_ins_base_thresh +
+		vac_ins_scale_factor * reltuples * pcnt_unfrozen;
+	anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
+
+	/*
+	 * Determine if this table needs vacuum, and update the score if it does.
+	 */
+	if (vactuples > vacthresh)
+	{
+		scores->vac = (double) vactuples / Max(vacthresh, 1);
+		scores->vac *= autovacuum_vacuum_score_weight;
+		scores->max = Max(scores->max, scores->vac);
+		*dovacuum = true;
+	}
+
+	if (vac_ins_base_thresh >= 0 && instuples > vacinsthresh)
+	{
+		scores->vac_ins = (double) instuples / Max(vacinsthresh, 1);
+		scores->vac_ins *= autovacuum_vacuum_insert_score_weight;
+		scores->max = Max(scores->max, scores->vac_ins);
+		*dovacuum = true;
+	}
+
+	/*
+	 * Determine if this table needs analyze, and update the score if it does.
+	 * Note that we don't analyze TOAST tables and pg_statistic.
+	 */
+	if (anltuples > anlthresh &&
+		relid != StatisticRelationId &&
+		classForm->relkind != RELKIND_TOASTVALUE)
+	{
+		scores->anl = (double) anltuples / Max(anlthresh, 1);
+		scores->anl *= autovacuum_analyze_score_weight;
+		scores->max = Max(scores->max, scores->anl);
+		*doanalyze = true;
+	}
+
+	if (vac_ins_base_thresh >= 0)
+		elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: %.0f (thresh %.0f, score %.2f), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
+			 NameStr(classForm->relname),
+			 vactuples, vacthresh, scores->vac,
+			 instuples, vacinsthresh, scores->vac_ins,
+			 anltuples, anlthresh, scores->anl,
+			 scores->xid, scores->mxid);
+	else
+		elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: (disabled), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
+			 NameStr(classForm->relname),
+			 vactuples, vacthresh, scores->vac,
+			 anltuples, anlthresh, scores->anl,
+			 scores->xid, scores->mxid);
 }
 
 /*
