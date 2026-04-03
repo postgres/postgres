@@ -378,6 +378,7 @@ static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 									  Form_pg_class classForm,
 									  PgStat_StatTabEntry *tabentry,
 									  int effective_multixact_freeze_max_age,
+									  int elevel,
 									  bool *dovacuum, bool *doanalyze, bool *wraparound,
 									  AutoVacuumScores *scores);
 
@@ -2075,6 +2076,7 @@ do_autovacuum(void)
 		/* Check if it needs vacuum or analyze */
 		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
 								  effective_multixact_freeze_max_age,
+								  DEBUG3,
 								  &dovacuum, &doanalyze, &wraparound,
 								  &scores);
 
@@ -2175,6 +2177,7 @@ do_autovacuum(void)
 
 		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
 								  effective_multixact_freeze_max_age,
+								  DEBUG3,
 								  &dovacuum, &doanalyze, &wraparound,
 								  &scores);
 
@@ -2993,6 +2996,7 @@ recheck_relation_needs_vacanalyze(Oid relid,
 
 	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
 							  effective_multixact_freeze_max_age,
+							  DEBUG3,
 							  dovacuum, doanalyze, wraparound,
 							  &scores);
 
@@ -3087,6 +3091,7 @@ relation_needs_vacanalyze(Oid relid,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry,
 						  int effective_multixact_freeze_max_age,
+						  int elevel,
  /* output params below */
 						  bool *dovacuum,
 						  bool *doanalyze,
@@ -3336,14 +3341,14 @@ relation_needs_vacanalyze(Oid relid,
 	}
 
 	if (vac_ins_base_thresh >= 0)
-		elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: %.0f (thresh %.0f, score %.2f), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
+		elog(elevel, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: %.0f (thresh %.0f, score %.2f), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
 			 NameStr(classForm->relname),
 			 vactuples, vacthresh, scores->vac,
 			 instuples, vacinsthresh, scores->vac_ins,
 			 anltuples, anlthresh, scores->anl,
 			 scores->xid, scores->mxid);
 	else
-		elog(DEBUG3, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: (disabled), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
+		elog(elevel, "%s: vac: %.0f (thresh %.0f, score %.2f), ins: (disabled), anl: %.0f (thresh %.0f, score %.2f), xid score: %.2f, mxid score: %.2f",
 			 NameStr(classForm->relname),
 			 vactuples, vacthresh, scores->vac,
 			 anltuples, anlthresh, scores->anl,
