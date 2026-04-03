@@ -445,16 +445,14 @@ void
 LockManagerShmemInit(void)
 {
 	HASHCTL		info;
-	int64		init_table_size,
-				max_table_size;
+	int64		max_table_size;
 	bool		found;
 
 	/*
-	 * Compute init/max size to request for lock hashtables.  Note these
-	 * calculations must agree with LockManagerShmemSize!
+	 * Compute sizes for lock hashtables.  Note that these calculations must
+	 * agree with LockManagerShmemSize!
 	 */
 	max_table_size = NLOCKENTS();
-	init_table_size = max_table_size / 2;
 
 	/*
 	 * Allocate hash table for LOCK structs.  This stores per-locked-object
@@ -465,14 +463,14 @@ LockManagerShmemInit(void)
 	info.num_partitions = NUM_LOCK_PARTITIONS;
 
 	LockMethodLockHash = ShmemInitHash("LOCK hash",
-									   init_table_size,
+									   max_table_size,
 									   max_table_size,
 									   &info,
-									   HASH_ELEM | HASH_BLOBS | HASH_PARTITION);
+									   HASH_ELEM | HASH_BLOBS |
+									   HASH_PARTITION | HASH_FIXED_SIZE);
 
 	/* Assume an average of 2 holders per lock */
 	max_table_size *= 2;
-	init_table_size *= 2;
 
 	/*
 	 * Allocate hash table for PROCLOCK structs.  This stores
@@ -484,10 +482,11 @@ LockManagerShmemInit(void)
 	info.num_partitions = NUM_LOCK_PARTITIONS;
 
 	LockMethodProcLockHash = ShmemInitHash("PROCLOCK hash",
-										   init_table_size,
+										   max_table_size,
 										   max_table_size,
 										   &info,
-										   HASH_ELEM | HASH_FUNCTION | HASH_PARTITION);
+										   HASH_ELEM | HASH_FUNCTION |
+										   HASH_FIXED_SIZE | HASH_PARTITION);
 
 	/*
 	 * Allocate fast-path structures.
