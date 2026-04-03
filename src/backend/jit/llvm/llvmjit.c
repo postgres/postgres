@@ -1176,7 +1176,10 @@ llvm_log_jit_error(void *ctx, LLVMErrorRef error)
 static LLVMOrcObjectLayerRef
 llvm_create_object_layer(void *Ctx, LLVMOrcExecutionSessionRef ES, const char *Triple)
 {
-#ifdef USE_LLVM_BACKPORT_SECTION_MEMORY_MANAGER
+#if LLVM_VERSION_MAJOR >= 22
+	LLVMOrcObjectLayerRef objlayer =
+		LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManagerReserveAlloc(ES, true);
+#elif defined(USE_LLVM_BACKPORT_SECTION_MEMORY_MANAGER)
 	LLVMOrcObjectLayerRef objlayer =
 		LLVMOrcCreateRTDyldObjectLinkingLayerWithSafeSectionMemoryManager(ES);
 #else

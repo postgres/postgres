@@ -1,18 +1,11 @@
 /*
- * This file is from https://github.com/llvm/llvm-project/pull/71968
- * with minor modifications to avoid name clash and work with older
- * LLVM versions.  The llvm::backport::SectionMemoryManager class is a
- * drop-in replacement for llvm::SectionMemoryManager, for use with
- * llvm::RuntimeDyld.  It fixes a memory layout bug on large memory
- * ARM systems (see pull request for details).  If the LLVM project
- * eventually commits the change, we may need to resynchronize our
- * copy with any further modifications, but they would be unlikely to
- * backport it into the LLVM versions that we target so we would still
- * need this copy.
+ * This file is from LLVM 22 (originally pull request #71968), with minor
+ * modifications to avoid name clash and work with older LLVM versions.  It
+ * replaces llvm::SectionMemoryManager, and is injected into llvm::RuntimeDyld
+ * to fix a memory layout bug on large memory ARM systems on LLVM < 22.
  *
- * In the future we will switch to using JITLink instead of
- * RuntimeDyld where possible, and later remove this code (.cpp, .h,
- * .LICENSE) after all LLVM versions that we target allow it.
+ * We can remove this code (.cpp, .h, .LICENSE) once LLVM 22 is our minimum
+ * supported version or we've switched to JITLink for at least Aarch64.
  *
  * This file is a modified copy of a part of the LLVM source code that
  * we would normally access from the LLVM library.  It is therefore

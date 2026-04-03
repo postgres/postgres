@@ -1,5 +1,5 @@
 /*
- * This is a copy LLVM source code modified by the PostgreSQL project.
+ * This is a copy of LLVM source code modified by the PostgreSQL project.
  * See SectionMemoryManager.cpp for notes on provenance and license.
  */
 
