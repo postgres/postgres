@@ -8,7 +8,7 @@
 #include <llvm/Config/llvm-config.h>
 
 /*
- * LLVM's RuntimeDyld can produce code that crashes on larger memory ARM
+ * Pre-LLVM 22 RuntimeDyld can produce code that crashes on large memory ARM
  * systems, because llvm::SectionMemoryManager allocates multiple pieces of
  * memory that can be placed too far apart for the generated code.  See
  * src/backend/jit/llvm/SectionMemoryManager.cpp for the patched replacement
@@ -18,7 +18,7 @@
  * We have adjusted it to compile against a range of LLVM versions, but not
  * further back than 12 for now.
  */
-#if defined(__aarch64__) && LLVM_VERSION_MAJOR > 11
+#if defined(__aarch64__) && LLVM_VERSION_MAJOR > 11 && LLVM_VERSION_MAJOR < 22
 #define USE_LLVM_BACKPORT_SECTION_MEMORY_MANAGER
 #endif
 
