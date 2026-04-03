@@ -3778,11 +3778,6 @@ LockManagerShmemSize(void)
 	max_table_size *= 2;
 	size = add_size(size, hash_estimate_size(max_table_size, sizeof(PROCLOCK)));
 
-	/*
-	 * Since NLOCKENTS is only an estimate, add 10% safety margin.
-	 */
-	size = add_size(size, size / 10);
-
 	return size;
 }
 
