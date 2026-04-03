@@ -30,6 +30,8 @@ AddForeignUpdateTargets_function
 AddrInfo
 AffixNode
 AffixNodeData
+AfterTriggerBatchCallback
+AfterTriggerCallbackItem
 AfterTriggerEvent
 AfterTriggerEventChunk
 AfterTriggerEventData
@@ -2488,6 +2490,7 @@ RIX
 RI_CompareHashEntry
 RI_CompareKey
 RI_ConstraintInfo
+RI_FastPathEntry
 RI_QueryHashEntry
 RI_QueryKey
 RTEKind
