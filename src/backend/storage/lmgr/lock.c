@@ -3775,6 +3775,9 @@ LockManagerShmemSize(void)
 	max_table_size *= 2;
 	size = add_size(size, hash_estimate_size(max_table_size, sizeof(PROCLOCK)));
 
+	/* fast-path structures */
+	size = add_size(size, sizeof(FastPathStrongRelationLockData));
+
 	return size;
 }
 
