@@ -24,6 +24,9 @@ typedef enum X86FeatureId
 	PG_SSE4_2,
 	PG_POPCNT,
 
+	/* 256-bit YMM registers */
+	PG_AVX2,
+
 	/* 512-bit ZMM registers */
 	PG_AVX512_BW,
 	PG_AVX512_VL,

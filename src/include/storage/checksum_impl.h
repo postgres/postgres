@@ -72,12 +72,13 @@
  * random segments of page with 0x00, 0xFF and random data all show optimal
  * 2e-16 false positive rate within margin of error.
  *
- * Vectorization of the algorithm requires 32bit x 32bit -> 32bit integer
- * multiplication instruction. As of 2013 the corresponding instruction is
- * available on x86 SSE4.1 extensions (pmulld) and ARM NEON (vmul.i32).
- * Vectorization requires a compiler to do the vectorization for us. For recent
- * GCC versions the flags -msse4.1 -funroll-loops -ftree-vectorize are enough
- * to achieve vectorization.
+ * Vectorization of the algorithm works best with a 32bit x 32bit -> 32bit
+ * vector integer multiplication instruction, Examples include x86 AVX2
+ * extensions (vpmulld) and ARM NEON (vmul.i32). Without that, vectorization
+ * is still possible if the compiler can turn multiplication by FNV_PRIME
+ * into a sequence of vectorized shifts and adds.  For simplicity we rely
+ * on the compiler to do the vectorization for us. For GCC and clang the
+ * flags -funroll-loops -ftree-vectorize are enough to achieve vectorization.
  *
  * The optimal amount of parallelism to use depends on CPU specific instruction
  * latency, SIMD instruction width, throughput and the amount of registers
@@ -89,8 +90,9 @@
  *
  * The parallelism number 32 was chosen based on the fact that it is the
  * largest state that fits into architecturally visible x86 SSE registers while
- * leaving some free registers for intermediate values. For future processors
- * with 256bit vector registers this will leave some performance on the table.
+ * leaving some free registers for intermediate values. For processors
+ * with 256-bit vector registers this leaves some performance on the table.
+ *
  * When vectorization is not available it might be beneficial to restructure
  * the computation to calculate a subset of the columns at a time and perform
  * multiple passes to avoid register spilling. This optimization opportunity
@@ -142,36 +144,19 @@ do { \
  * Block checksum algorithm.  The page must be adequately aligned
  * (at least on 4-byte boundary).
  */
+#ifdef PG_CHECKSUM_INTERNAL
+/* definitions in src/backend/storage/page/checksum.c */
+static uint32 (*pg_checksum_block) (const PGChecksummablePage *page);
+
+#else
+/* static definition for external programs */
 static uint32
 pg_checksum_block(const PGChecksummablePage *page)
 {
-	uint32		sums[N_SUMS];
-	uint32		result = 0;
-	uint32		i,
-				j;
-
-	/* ensure that the size is compatible with the algorithm */
-	Assert(sizeof(PGChecksummablePage) == BLCKSZ);
-
-	/* initialize partial checksums to their corresponding offsets */
-	memcpy(sums, checksumBaseOffsets, sizeof(checksumBaseOffsets));
-
-	/* main checksum calculation */
-	for (i = 0; i < (uint32) (BLCKSZ / (sizeof(uint32) * N_SUMS)); i++)
-		for (j = 0; j < N_SUMS; j++)
-			CHECKSUM_COMP(sums[j], page->data[i][j]);
-
-	/* finally add in two rounds of zeroes for additional mixing */
-	for (i = 0; i < 2; i++)
-		for (j = 0; j < N_SUMS; j++)
-			CHECKSUM_COMP(sums[j], 0);
-
-	/* xor fold partial checksums together */
-	for (i = 0; i < N_SUMS; i++)
-		result ^= sums[i];
-
-	return result;
+#include "storage/checksum_block.inc.c"
 }
+
+#endif
 
 /*
  * Compute the checksum for a Postgres page.

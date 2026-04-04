@@ -119,6 +119,10 @@ set_x86_features(void)
 		xcr0_val = _xgetbv(0);
 #endif
 
+		/* Are YMM registers enabled? */
+		if (mask_available(xcr0_val, XMM | YMM))
+			X86Features[PG_AVX2] = reg[EBX] >> 5 & 1;
+
 		/* Are ZMM registers enabled? */
 		if (mask_available(xcr0_val, XMM | YMM |
 						   OPMASK | ZMM0_15 | ZMM16_31))

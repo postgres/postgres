@@ -2135,6 +2135,15 @@ if test x"$pgac_cv__cpuidex" = x"yes"; then
   AC_DEFINE(HAVE__CPUIDEX, 1, [Define to 1 if you have __cpuidex.])
 fi
 
+# Check for AVX2 target support
+#
+if test x"$host_cpu" = x"x86_64"; then
+  PGAC_AVX2_SUPPORT()
+  if test x"$pgac_avx2_support" = x"yes"; then
+    AC_DEFINE(USE_AVX2_WITH_RUNTIME_CHECK, 1, [Define to 1 to use AVX2 instructions with a runtime check.])
+  fi
+fi
+
 # Check for XSAVE intrinsics
 #
 PGAC_XSAVE_INTRINSICS()

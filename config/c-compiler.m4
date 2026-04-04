@@ -687,6 +687,31 @@ fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_SSE42_CRC32_INTRINSICS
 
+# PGAC_AVX2_SUPPORT
+# ---------------------------
+# Check if the compiler supports AVX2 as a target
+#
+# If AVX2 target attribute is supported, sets pgac_avx2_support.
+#
+# There is deliberately not a guard for __has_attribute here
+AC_DEFUN([PGAC_AVX2_SUPPORT],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_avx2_support])])dnl
+AC_CACHE_CHECK([for AVX2 target attribute support], [Ac_cachevar],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+    __attribute__((target("avx2")))
+    static int avx2_test(void)
+    {
+      return 0;
+    }],
+  [return avx2_test();])],
+  [Ac_cachevar=yes],
+  [Ac_cachevar=no])])
+if test x"$Ac_cachevar" = x"yes"; then
+  pgac_avx2_support=yes
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_AVX2_SUPPORT
+
 # PGAC_AVX512_PCLMUL_INTRINSICS
 # ---------------------------
 # Check if the compiler supports AVX-512 carryless multiplication
