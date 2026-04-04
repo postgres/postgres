@@ -101,10 +101,9 @@ extern Oid	index_create(Relation heapRelation,
 #define	INDEX_CONSTR_CREATE_REMOVE_OLD_DEPS	(1 << 4)
 #define	INDEX_CONSTR_CREATE_WITHOUT_OVERLAPS (1 << 5)
 
-extern Oid	index_concurrently_create_copy(Relation heapRelation,
-										   Oid oldIndexId,
-										   Oid tablespaceOid,
-										   const char *newName);
+extern Oid	index_create_copy(Relation heapRelation, bool concurrently,
+							  Oid oldIndexId, Oid tablespaceOid,
+							  const char *newName);
 
 extern void index_concurrently_build(Oid heapRelationId,
 									 Oid indexRelationId);

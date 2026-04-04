@@ -3989,10 +3989,11 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 			tablespaceid = indexRel->rd_rel->reltablespace;
 
 		/* Create new index definition based on given index */
-		newIndexId = index_concurrently_create_copy(heapRel,
-													idx->indexId,
-													tablespaceid,
-													concurrentName);
+		newIndexId = index_create_copy(heapRel,
+									   true,
+									   idx->indexId,
+									   tablespaceid,
+									   concurrentName);
 
 		/*
 		 * Now open the relation of the new index, a session-level lock is

@@ -1289,17 +1289,17 @@ index_create(Relation heapRelation,
 }
 
 /*
- * index_concurrently_create_copy
+ * index_create_copy
  *
- * Create concurrently an index based on the definition of the one provided by
- * caller.  The index is inserted into catalogs and needs to be built later
- * on.  This is called during concurrent reindex processing.
+ * Create an index based on the definition of the one provided by caller.  The
+ * index is inserted into catalogs. If 'concurrently' is TRUE, it needs to be
+ * built later on; otherwise it's built immediately.
  *
  * "tablespaceOid" is the tablespace to use for this index.
  */
 Oid
-index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
-							   Oid tablespaceOid, const char *newName)
+index_create_copy(Relation heapRelation, bool concurrently,
+				  Oid oldIndexId, Oid tablespaceOid, const char *newName)
 {
 	Relation	indexRelation;
 	IndexInfo  *oldInfo,
@@ -1318,6 +1318,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	List	   *indexColNames = NIL;
 	List	   *indexExprs = NIL;
 	List	   *indexPreds = NIL;
+	int			flags = 0;
 
 	indexRelation = index_open(oldIndexId, RowExclusiveLock);
 
@@ -1328,7 +1329,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	 * Concurrent build of an index with exclusion constraints is not
 	 * supported.
 	 */
-	if (oldInfo->ii_ExclusionOps != NULL)
+	if (oldInfo->ii_ExclusionOps != NULL && concurrently)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("concurrent index creation for exclusion constraints is not supported")));
@@ -1384,9 +1385,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	}
 
 	/*
-	 * Build the index information for the new index.  Note that rebuild of
-	 * indexes with exclusion constraints is not supported, hence there is no
-	 * need to fill all the ii_Exclusion* fields.
+	 * Build the index information for the new index.
 	 */
 	newInfo = makeIndexInfo(oldInfo->ii_NumIndexAttrs,
 							oldInfo->ii_NumIndexKeyAttrs,
@@ -1395,10 +1394,23 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 							indexPreds,
 							oldInfo->ii_Unique,
 							oldInfo->ii_NullsNotDistinct,
-							false,	/* not ready for inserts */
-							true,
+							!concurrently,	/* isready */
+							concurrently,	/* concurrent */
 							indexRelation->rd_indam->amsummarizing,
 							oldInfo->ii_WithoutOverlaps);
+
+	/* fetch exclusion constraint info if any */
+	if (indexRelation->rd_index->indisexclusion)
+	{
+		/*
+		 * XXX Beware: we're making newInfo point to oldInfo-owned memory.  It
+		 * would be more orthodox to palloc+memcpy, but we don't need that
+		 * here at present.
+		 */
+		newInfo->ii_ExclusionOps = oldInfo->ii_ExclusionOps;
+		newInfo->ii_ExclusionProcs = oldInfo->ii_ExclusionProcs;
+		newInfo->ii_ExclusionStrats = oldInfo->ii_ExclusionStrats;
+	}
 
 	/*
 	 * Extract the list of column names and the column numbers for the new
@@ -1436,6 +1448,9 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 		stattargets[i].isnull = isnull;
 	}
 
+	if (concurrently)
+		flags = INDEX_CREATE_SKIP_BUILD | INDEX_CREATE_CONCURRENT;
+
 	/*
 	 * Now create the new index.
 	 *
@@ -1459,7 +1474,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 							  indcoloptions->values,
 							  stattargets,
 							  reloptionsDatum,
-							  INDEX_CREATE_SKIP_BUILD | INDEX_CREATE_CONCURRENT,
+							  flags,
 							  0,
 							  true, /* allow table to be a system catalog? */
 							  false,	/* is_internal? */
