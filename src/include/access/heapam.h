@@ -366,9 +366,6 @@ extern bool heap_getnextslot_tidrange(TableScanDesc sscan,
 									  TupleTableSlot *slot);
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
 					   HeapTuple tuple, Buffer *userbuf, bool keep_buf);
-extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
-								   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
-								   bool *all_dead, bool first_call);
 
 extern void heap_get_latest_tid(TableScanDesc sscan, ItemPointer tid);
 
@@ -430,6 +427,18 @@ extern void simple_heap_update(Relation relation, const ItemPointerData *otid,
 
 extern TransactionId heap_index_delete_tuples(Relation rel,
 											  TM_IndexDeleteOp *delstate);
+
+/* in heap/heapam_indexscan.c */
+extern IndexFetchTableData *heapam_index_fetch_begin(Relation rel, uint32 flags);
+extern void heapam_index_fetch_reset(IndexFetchTableData *scan);
+extern void heapam_index_fetch_end(IndexFetchTableData *scan);
+extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
+								   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
+								   bool *all_dead, bool first_call);
+extern bool heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
+									 ItemPointer tid, Snapshot snapshot,
+									 TupleTableSlot *slot, bool *heap_continue,
+									 bool *all_dead);
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,

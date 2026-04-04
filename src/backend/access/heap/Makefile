@@ -15,6 +15,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = \
 	heapam.o \
 	heapam_handler.o \
+	heapam_indexscan.o \
 	heapam_visibility.o \
 	heapam_xlog.o \
 	heaptoast.o \
