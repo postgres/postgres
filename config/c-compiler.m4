@@ -784,6 +784,44 @@ fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_ARMV8_CRC32C_INTRINSICS
 
+# PGAC_ARM_PLMULL
+# ---------------------------
+# Check if the compiler supports Arm CRYPTO PMULL (carryless multiplication)
+# instructions used for vectorized CRC.
+#
+# If the instructions are supported, sets pgac_arm_pmull.
+AC_DEFUN([PGAC_ARM_PLMULL],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_arm_pmull_$1])])dnl
+AC_CACHE_CHECK([for pmull and pmull2], [Ac_cachevar],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <arm_acle.h>
+#include <arm_neon.h>
+uint64x2_t  a;
+uint64x2_t  b;
+uint64x2_t  c;
+uint64x2_t  r1;
+uint64x2_t  r2;
+
+  #if defined(__has_attribute) && __has_attribute (target)
+  __attribute__((target("+crypto")))
+  #endif
+  static int pmull_test(void)
+  {
+    __asm("pmull  %0.1q, %2.1d, %3.1d\neor %0.16b, %0.16b, %1.16b\n":"=w"(r1), "+w"(c):"w"(a), "w"(b));
+    __asm("pmull2 %0.1q, %2.2d, %3.2d\neor %0.16b, %0.16b, %1.16b\n":"=w"(r2), "+w"(c):"w"(a), "w"(b));
+
+    r1 = veorq_u64(r1, r2);
+    /* return computed value, to prevent the above being optimized away */
+    return (int) vgetq_lane_u64(r1, 0);
+  }],
+  [return pmull_test();])],
+  [Ac_cachevar=yes],
+  [Ac_cachevar=no])])
+if test x"$Ac_cachevar" = x"yes"; then
+  pgac_arm_pmull=yes
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_ARM_PLMULL
+
 # PGAC_LOONGARCH_CRC32C_INTRINSICS
 # ---------------------------
 # Check if the compiler supports the LoongArch CRCC instructions, using

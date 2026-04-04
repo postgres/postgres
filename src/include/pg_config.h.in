@@ -732,6 +732,9 @@
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
 
+/* Define to 1 to use Arm PMULL CRC algorithms with a runtime check. */
+#undef USE_PMULL_CRC32C_WITH_RUNTIME_CHECK
+
 /* Define to 1 to use software CRC-32C implementation (slicing-by-8). */
 #undef USE_SLICING_BY_8_CRC32C
 

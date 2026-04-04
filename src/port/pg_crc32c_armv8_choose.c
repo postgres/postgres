@@ -108,6 +108,27 @@ pg_crc32c_armv8_available(void)
 #endif
 }
 
+static inline bool
+pg_pmull_available(void)
+{
+#if defined(__aarch64__) && defined(HWCAP_PMULL)
+
+#ifdef HAVE_ELF_AUX_INFO
+	unsigned long value;
+
+	return elf_aux_info(AT_HWCAP, &value, sizeof(value)) == 0 &&
+		(value & HWCAP_PMULL) != 0;
+#elif defined(HAVE_GETAUXVAL)
+	return (getauxval(AT_HWCAP) & HWCAP_PMULL) != 0;
+#else
+	return false;
+#endif
+
+#else
+	return false;
+#endif
+}
+
 /*
  * This gets called on the first call. It replaces the function pointer
  * so that subsequent calls are routed directly to the chosen implementation.
@@ -115,10 +136,23 @@ pg_crc32c_armv8_available(void)
 static pg_crc32c
 pg_comp_crc32c_choose(pg_crc32c crc, const void *data, size_t len)
 {
+	/* set fallbacks */
+#ifdef USE_ARMV8_CRC32C
+	/* On e.g. MacOS, our runtime feature detection doesn't work */
+	pg_comp_crc32c = pg_comp_crc32c_armv8;
+#else
+	pg_comp_crc32c = pg_comp_crc32c_sb8;
+#endif
+
 	if (pg_crc32c_armv8_available())
+	{
 		pg_comp_crc32c = pg_comp_crc32c_armv8;
-	else
-		pg_comp_crc32c = pg_comp_crc32c_sb8;
+
+#ifdef USE_PMULL_CRC32C_WITH_RUNTIME_CHECK
+		if (pg_pmull_available())
+			pg_comp_crc32c = pg_comp_crc32c_pmull;
+#endif
+	}
 
 	return pg_comp_crc32c(crc, data, len);
 }

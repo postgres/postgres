@@ -2277,7 +2277,7 @@ else
   else
     if test x"$USE_ARMV8_CRC32C" = x"1"; then
       AC_DEFINE(USE_ARMV8_CRC32C, 1, [Define to 1 to use ARMv8 CRC Extension.])
-      PG_CRC32C_OBJS="pg_crc32c_armv8.o"
+      PG_CRC32C_OBJS="pg_crc32c_armv8.o pg_crc32c_armv8_choose.o"
       AC_MSG_RESULT(ARMv8 CRC instructions)
     else
       if test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x"1"; then
@@ -2304,6 +2304,10 @@ AC_SUBST(PG_CRC32C_OBJS)
 #
 if test x"$host_cpu" = x"x86_64"; then
   PGAC_AVX512_PCLMUL_INTRINSICS()
+else
+  if test x"$host_cpu" = x"aarch64"; then
+    PGAC_ARM_PLMULL()
+  fi
 fi
 
 AC_MSG_CHECKING([for vectorized CRC-32C])
@@ -2311,7 +2315,12 @@ if test x"$pgac_avx512_pclmul_intrinsics" = x"yes"; then
   AC_DEFINE(USE_AVX512_CRC32C_WITH_RUNTIME_CHECK, 1, [Define to 1 to use AVX-512 CRC algorithms with a runtime check.])
   AC_MSG_RESULT(AVX-512 with runtime check)
 else
-  AC_MSG_RESULT(none)
+  if test x"$pgac_arm_pmull" = x"yes"; then
+    AC_DEFINE(USE_PMULL_CRC32C_WITH_RUNTIME_CHECK, 1, [Define to 1 to use Arm PMULL CRC algorithms with a runtime check.])
+    AC_MSG_RESULT(CRYPTO PMULL with runtime check)
+  else
+    AC_MSG_RESULT(none)
+  fi
 fi
 
 # Select semaphore implementation type.

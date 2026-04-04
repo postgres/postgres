@@ -93,6 +93,7 @@ replace_funcs_pos = [
   # arm / aarch64
   ['pg_crc32c_armv8', 'USE_ARMV8_CRC32C'],
   ['pg_crc32c_armv8', 'USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK', 'crc'],
+  ['pg_crc32c_armv8_choose', 'USE_ARMV8_CRC32C'],
   ['pg_crc32c_armv8_choose', 'USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK'],
   ['pg_crc32c_sb8', 'USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK'],
 

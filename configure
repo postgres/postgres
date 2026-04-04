@@ -18358,7 +18358,7 @@ $as_echo "SSE 4.2 with runtime check" >&6; }
 
 $as_echo "#define USE_ARMV8_CRC32C 1" >>confdefs.h
 
-      PG_CRC32C_OBJS="pg_crc32c_armv8.o"
+      PG_CRC32C_OBJS="pg_crc32c_armv8.o pg_crc32c_armv8_choose.o"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ARMv8 CRC instructions" >&5
 $as_echo "ARMv8 CRC instructions" >&6; }
     else
@@ -18443,6 +18443,58 @@ if test x"$pgac_cv_avx512_pclmul_intrinsics" = x"yes"; then
   pgac_avx512_pclmul_intrinsics=yes
 fi
 
+else
+  if test x"$host_cpu" = x"aarch64"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pmull and pmull2" >&5
+$as_echo_n "checking for pmull and pmull2... " >&6; }
+if ${pgac_cv_arm_pmull_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <arm_acle.h>
+#include <arm_neon.h>
+uint64x2_t  a;
+uint64x2_t  b;
+uint64x2_t  c;
+uint64x2_t  r1;
+uint64x2_t  r2;
+
+  #if defined(__has_attribute) && __has_attribute (target)
+  __attribute__((target("+crypto")))
+  #endif
+  static int pmull_test(void)
+  {
+    __asm("pmull  %0.1q, %2.1d, %3.1d\neor %0.16b, %0.16b, %1.16b\n":"=w"(r1), "+w"(c):"w"(a), "w"(b));
+    __asm("pmull2 %0.1q, %2.2d, %3.2d\neor %0.16b, %0.16b, %1.16b\n":"=w"(r2), "+w"(c):"w"(a), "w"(b));
+
+    r1 = veorq_u64(r1, r2);
+    /* return computed value, to prevent the above being optimized away */
+    return (int) vgetq_lane_u64(r1, 0);
+  }
+int
+main ()
+{
+return pmull_test();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_arm_pmull_=yes
+else
+  pgac_cv_arm_pmull_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_arm_pmull_" >&5
+$as_echo "$pgac_cv_arm_pmull_" >&6; }
+if test x"$pgac_cv_arm_pmull_" = x"yes"; then
+  pgac_arm_pmull=yes
+fi
+
+  fi
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for vectorized CRC-32C" >&5
@@ -18454,8 +18506,16 @@ $as_echo "#define USE_AVX512_CRC32C_WITH_RUNTIME_CHECK 1" >>confdefs.h
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: AVX-512 with runtime check" >&5
 $as_echo "AVX-512 with runtime check" >&6; }
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: none" >&5
+  if test x"$pgac_arm_pmull" = x"yes"; then
+
+$as_echo "#define USE_PMULL_CRC32C_WITH_RUNTIME_CHECK 1" >>confdefs.h
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: CRYPTO PMULL with runtime check" >&5
+$as_echo "CRYPTO PMULL with runtime check" >&6; }
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: none" >&5
 $as_echo "none" >&6; }
+  fi
 fi
 
 # Select semaphore implementation type.
