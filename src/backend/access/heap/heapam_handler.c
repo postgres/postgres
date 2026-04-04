@@ -126,7 +126,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 						 ItemPointer tid,
 						 Snapshot snapshot,
 						 TupleTableSlot *slot,
-						 bool *call_again, bool *all_dead)
+						 bool *heap_continue, bool *all_dead)
 {
 	IndexFetchHeapData *hscan = (IndexFetchHeapData *) scan;
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
@@ -135,7 +135,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 	Assert(TTS_IS_BUFFERTUPLE(slot));
 
 	/* We can skip the buffer-switching logic if we're in mid-HOT chain. */
-	if (!*call_again)
+	if (!*heap_continue)
 	{
 		/* Switch to correct buffer if we don't have it already */
 		Buffer		prev_buf = hscan->xs_cbuf;
@@ -161,7 +161,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 											snapshot,
 											&bslot->base.tupdata,
 											all_dead,
-											!*call_again);
+											!*heap_continue);
 	bslot->base.tupdata.t_self = *tid;
 	LockBuffer(hscan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 
@@ -171,7 +171,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		 * Only in a non-MVCC snapshot can more than one member of the HOT
 		 * chain be visible.
 		 */
-		*call_again = !IsMVCCLikeSnapshot(snapshot);
+		*heap_continue = !IsMVCCLikeSnapshot(snapshot);
 
 		slot->tts_tableOid = RelationGetRelid(scan->rel);
 		ExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);
@@ -179,7 +179,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 	else
 	{
 		/* We've reached the end of the HOT chain. */
-		*call_again = false;
+		*heap_continue = false;
 	}
 
 	return got_heap_tuple;
