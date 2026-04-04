@@ -162,8 +162,8 @@ pg_comp_crc32c_pmull(pg_crc32c crc, const void *data, size_t len)
 		}
 
 		/*
-		 * pgindent complained of unmatched parens, so the following has
-		 * been re-written with intrinsics:
+		 * pgindent complained of unmatched parens, so the following has been
+		 * re-written with intrinsics:
 		 *
 		 * x0 = veorq_u64((uint64x2_t) {crc0, 0}, x0);
 		 */
