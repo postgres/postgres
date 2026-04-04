@@ -21,7 +21,6 @@
 #ifndef SHMEM_H
 #define SHMEM_H
 
-#include "storage/spin.h"
 #include "utils/hsearch.h"
 
 

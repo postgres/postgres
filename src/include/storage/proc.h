@@ -22,6 +22,7 @@
 #include "storage/pg_sema.h"
 #include "storage/proclist_types.h"
 #include "storage/procnumber.h"
+#include "storage/spin.h"
 
 /* Avoid including clog.h here */
 typedef int XidStatus;
