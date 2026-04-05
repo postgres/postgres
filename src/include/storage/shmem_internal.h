@@ -16,26 +16,37 @@
 #include "storage/shmem.h"
 #include "utils/hsearch.h"
 
+/* Different kinds of shmem areas. */
+typedef enum
+{
+	SHMEM_KIND_STRUCT = 0,		/* plain, contiguous area of memory */
+	SHMEM_KIND_HASH,			/* a hash table */
+} ShmemRequestKind;
+
+/* shmem.c */
 typedef struct PGShmemHeader PGShmemHeader; /* avoid including
 											 * storage/pg_shmem.h here */
+extern void ShmemCallRequestCallbacks(void);
 extern void InitShmemAllocator(PGShmemHeader *seghdr);
+#ifdef EXEC_BACKEND
+extern void AttachShmemAllocator(PGShmemHeader *seghdr);
+#endif
+extern void ResetShmemAllocator(void);
 
+extern void ShmemRequestInternal(ShmemStructOpts *options, ShmemRequestKind kind);
+
+extern size_t ShmemGetRequestedSize(void);
+extern void ShmemInitRequested(void);
+#ifdef EXEC_BACKEND
+extern void ShmemAttachRequested(void);
+#endif
+
+extern PGDLLIMPORT Size pg_get_shmem_pagesize(void);
+
+/* shmem_hash.c */
 extern HTAB *shmem_hash_create(void *location, size_t size, bool found,
 							   const char *name, int64 nelems, HASHCTL *infoP, int hash_flags);
-
-/* size constants for the shmem index table */
- /* max size of data structure string name */
-#define SHMEM_INDEX_KEYSIZE		 (48)
- /* max number of named shmem structures and hash tables */
-#define SHMEM_INDEX_SIZE		 (256)
-
-/* this is a hash bucket in the shmem index table */
-typedef struct
-{
-	char		key[SHMEM_INDEX_KEYSIZE];	/* string name */
-	void	   *location;		/* location in shared mem */
-	Size		size;			/* # bytes requested for the structure */
-	Size		allocated_size; /* # bytes actually allocated */
-} ShmemIndexEnt;
+extern void shmem_hash_init(void *location, ShmemStructOpts *base_options);
+extern void shmem_hash_attach(void *location, ShmemStructOpts *base_options);
 
 #endif							/* SHMEM_INTERNAL_H */

@@ -121,6 +121,9 @@ FastPathLockShmemSize(void)
 
 	size = add_size(size, mul_size(TotalProcs, (fpLockBitsSize + fpRelIdSize)));
 
+	Assert(TotalProcs > 0);
+	Assert(size > 0);
+
 	return size;
 }
 

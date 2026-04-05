@@ -67,6 +67,7 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
+#include "storage/shmem_internal.h"
 #include "storage/sinval.h"
 #include "storage/standby.h"
 #include "tcop/backend_startup.h"
@@ -4155,7 +4156,14 @@ PostgresSingleUserMain(int argc, char *argv[],
 	InitializeFastPathLocks();
 
 	/*
-	 * Give preloaded libraries a chance to request additional shared memory.
+	 * Before computing the total size needed, give all subsystems, including
+	 * add-ins, a chance to chance to adjust their requested shmem sizes.
+	 */
+	ShmemCallRequestCallbacks();
+
+	/*
+	 * Also call any legacy shmem request hooks that might'be been installed
+	 * by preloaded libraries.
 	 */
 	process_shmem_requests();
 

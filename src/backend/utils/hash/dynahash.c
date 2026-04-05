@@ -119,8 +119,8 @@
  * chosen at creation based on the initial number of elements, so even though
  * we support allocating more elements later, performance will suffer if the
  * table grows much beyond the initial size.  (Currently, shared memory hash
- * tables are only created by ShmemInitHash() though, which doesn't support
- * growing at all.)
+ * tables are only created by ShmemRequestHash()/ShmemInitHash() though, which
+ * doesn't support growing at all.)
  */
 #define HASH_SEGSIZE			   256
 #define HASH_SEGSIZE_SHIFT	   8	/* must be log2(HASH_SEGSIZE) */

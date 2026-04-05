@@ -49,6 +49,7 @@
 #include "replication/walreceiver.h"
 #include "storage/dsm.h"
 #include "storage/io_worker.h"
+#include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/shmem_internal.h"
 #include "tcop/backend_startup.h"
@@ -673,7 +674,10 @@ SubPostmasterMain(int argc, char *argv[])
 
 	/* Restore basic shared memory pointers */
 	if (UsedShmemSegAddr != NULL)
+	{
 		InitShmemAllocator(UsedShmemSegAddr);
+		ShmemCallRequestCallbacks();
+	}
 
 	/*
 	 * Run the appropriate Main function
