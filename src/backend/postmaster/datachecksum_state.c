@@ -797,6 +797,19 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 	status = WaitForBackgroundWorkerStartup(bgw_handle, &pid);
 	if (status == BGWH_STOPPED)
 	{
+		/*
+		 * If the worker managed to start, and stop, before we got to waiting
+		 * for it we can se a STOPPED status here without it being a failure.
+		 */
+		if (DataChecksumState->success == DATACHECKSUMSWORKER_SUCCESSFUL)
+		{
+			pgstat_report_activity(STATE_IDLE, NULL);
+			LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
+			DataChecksumState->worker_pid = InvalidPid;
+			LWLockRelease(DataChecksumsWorkerLock);
+			return DataChecksumState->success;
+		}
+
 		ereport(WARNING,
 				errmsg("could not start background worker for enabling data checksums in database \"%s\"",
 					   db->dbname),
@@ -1595,5 +1608,7 @@ DataChecksumsWorkerMain(Datum arg)
 	/* worker done */
 	pgstat_progress_end_command();
 
+	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
 	DataChecksumState->success = DATACHECKSUMSWORKER_SUCCESSFUL;
+	LWLockRelease(DataChecksumsWorkerLock);
 }
