@@ -4159,16 +4159,20 @@ PostgresSingleUserMain(int argc, char *argv[],
 	InitializeFastPathLocks();
 
 	/*
+	 * Also call any legacy shmem request hooks that might'be been installed
+	 * by preloaded libraries.
+	 *
+	 * Note: this must be done before ShmemCallRequestCallbacks(), because the
+	 * hooks may request LWLocks with RequestNamedLWLockTranche(), which in
+	 * turn affects the size of the LWLock array calculated in lwlock.c.
+	 */
+	process_shmem_requests();
+
+	/*
 	 * Before computing the total size needed, give all subsystems, including
 	 * add-ins, a chance to chance to adjust their requested shmem sizes.
 	 */
 	ShmemCallRequestCallbacks();
-
-	/*
-	 * Also call any legacy shmem request hooks that might'be been installed
-	 * by preloaded libraries.
-	 */
-	process_shmem_requests();
 
 	/*
 	 * Now that loadable modules have had their chance to request additional

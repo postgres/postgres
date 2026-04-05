@@ -957,16 +957,20 @@ PostmasterMain(int argc, char *argv[])
 	InitializeFastPathLocks();
 
 	/*
+	 * Also call any legacy shmem request hooks that might've been installed
+	 * by preloaded libraries.
+	 *
+	 * Note: this must be done before ShmemCallRequestCallbacks(), because the
+	 * hooks may request LWLocks with RequestNamedLWLockTranche(), which in
+	 * turn affects the size of the LWLock array calculated in lwlock.c.
+	 */
+	process_shmem_requests();
+
+	/*
 	 * Ask all subsystems, including preloaded libraries, to register their
 	 * shared memory needs.
 	 */
 	ShmemCallRequestCallbacks();
-
-	/*
-	 * Also call any legacy shmem request hooks that might've been installed
-	 * by preloaded libraries.
-	 */
-	process_shmem_requests();
 
 	/*
 	 * Now that loadable modules have had their chance to request additional

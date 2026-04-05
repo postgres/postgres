@@ -126,8 +126,6 @@ extern bool LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode);
 extern bool LWLockWaitForVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 oldval, uint64 *newval);
 extern void LWLockUpdateVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 val);
 
-extern Size LWLockShmemSize(void);
-extern void LWLockShmemInit(void);
 extern void InitLWLockAccess(void);
 
 extern const char *GetLWLockIdentifier(uint32 classId, uint16 eventId);

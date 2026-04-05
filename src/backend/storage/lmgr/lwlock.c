@@ -84,6 +84,7 @@
 #include "storage/proclist.h"
 #include "storage/procnumber.h"
 #include "storage/spin.h"
+#include "storage/subsystems.h"
 #include "utils/memutils.h"
 #include "utils/wait_event.h"
 
@@ -189,9 +190,6 @@ typedef struct LWLockTrancheShmemData
 	int			num_user_defined;	/* 'user_defined' entries in use */
 
 	slock_t		lock;			/* protects the above */
-
-	/* Size of MainLWLockArray */
-	int			num_main_array_locks;
 } LWLockTrancheShmemData;
 
 static LWLockTrancheShmemData *LWLockTranches;
@@ -212,7 +210,18 @@ typedef struct NamedLWLockTrancheRequest
 
 static List *NamedLWLockTrancheRequests = NIL;
 
-static void InitializeLWLocks(int numLocks);
+/* Size of MainLWLockArray.  Only valid in postmaster. */
+static int	num_main_array_locks;
+
+static void LWLockShmemRequest(void *arg);
+static void LWLockShmemInit(void *arg);
+
+const ShmemCallbacks LWLockCallbacks = {
+	.request_fn = LWLockShmemRequest,
+	.init_fn = LWLockShmemInit,
+};
+
+
 static inline void LWLockReportWaitStart(LWLock *lock);
 static inline void LWLockReportWaitEnd(void);
 static const char *GetLWTrancheName(uint16 trancheId);
@@ -401,68 +410,53 @@ NumLWLocksForNamedTranches(void)
 }
 
 /*
- * Compute shmem space needed for user-defined tranches and the main LWLock
- * array.
- */
-Size
-LWLockShmemSize(void)
-{
-	Size		size;
-	int			numLocks;
-
-	/* Space for user-defined tranches */
-	size = sizeof(LWLockTrancheShmemData);
-
-	/* Space for the LWLock array */
-	numLocks = NUM_FIXED_LWLOCKS + NumLWLocksForNamedTranches();
-	size = add_size(size, mul_size(numLocks, sizeof(LWLockPadded)));
-
-	return size;
-}
-
-/*
- * Allocate shmem space for user-defined tranches and the main LWLock array,
- * and initialize it.
- */
-void
-LWLockShmemInit(void)
-{
-	int			numLocks;
-	bool		found;
-
-	LWLockTranches = (LWLockTrancheShmemData *)
-		ShmemInitStruct("LWLock tranches", sizeof(LWLockTrancheShmemData), &found);
-	if (!found)
-	{
-		/* Calculate total number of locks needed in the main array */
-		LWLockTranches->num_main_array_locks =
-			NUM_FIXED_LWLOCKS + NumLWLocksForNamedTranches();
-
-		/* Initialize the dynamic-allocation counter for tranches */
-		LWLockTranches->num_user_defined = 0;
-
-		SpinLockInit(&LWLockTranches->lock);
-	}
-
-	/* Allocate and initialize the main array */
-	numLocks = LWLockTranches->num_main_array_locks;
-	MainLWLockArray = (LWLockPadded *)
-		ShmemInitStruct("Main LWLock array", numLocks * sizeof(LWLockPadded), &found);
-	if (!found)
-	{
-		/* Initialize all LWLocks */
-		InitializeLWLocks(numLocks);
-	}
-}
-
-/*
- * Initialize LWLocks for built-in tranches and those requested with
- * RequestNamedLWLockTranche().
+ * Request shmem space for user-defined tranches and the main LWLock array.
  */
 static void
-InitializeLWLocks(int numLocks)
+LWLockShmemRequest(void *arg)
 {
-	int			pos = 0;
+	size_t		size;
+
+	/* Space for user-defined tranches */
+	ShmemRequestStruct(.name = "LWLock tranches",
+					   .size = sizeof(LWLockTrancheShmemData),
+					   .ptr = (void **) &LWLockTranches,
+		);
+
+	/* Space for the LWLock array */
+	if (!IsUnderPostmaster)
+	{
+		num_main_array_locks = NUM_FIXED_LWLOCKS + NumLWLocksForNamedTranches();
+		size = num_main_array_locks * sizeof(LWLockPadded);
+	}
+	else
+		size = SHMEM_ATTACH_UNKNOWN_SIZE;
+
+	ShmemRequestStruct(.name = "Main LWLock array",
+					   .size = size,
+					   .ptr = (void **) &MainLWLockArray,
+		);
+}
+
+/*
+ * Initialize shmem space for user-defined tranches and the main LWLock array.
+ */
+static void
+LWLockShmemInit(void *arg)
+{
+	int			pos;
+
+	/* Initialize the dynamic-allocation counter for tranches */
+	LWLockTranches->num_user_defined = 0;
+
+	SpinLockInit(&LWLockTranches->lock);
+
+	/*
+	 * Allocate and initialize all LWLocks in the main array.  It includes all
+	 * LWLocks for built-in tranches and those requested with
+	 * RequestNamedLWLockTranche().
+	 */
+	pos = 0;
 
 	/* Initialize all individual LWLocks in main array */
 	for (int id = 0; id < NUM_INDIVIDUAL_LWLOCKS; id++)
@@ -501,8 +495,8 @@ InitializeLWLocks(int numLocks)
 			LWLockInitialize(&MainLWLockArray[pos++].lock, LWTRANCHE_FIRST_USER_DEFINED + idx);
 	}
 
-	/* Cross-check that we agree on the total size with the caller */
-	Assert(pos == numLocks);
+	/* Cross-check that we agree on the total size with LWLockShmemRequest() */
+	Assert(pos == num_main_array_locks);
 }
 
 /*

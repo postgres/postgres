@@ -20,4 +20,11 @@
  * of these matter.
  */
 
-/* TODO: empty for now */
+/*
+ * LWLocks first, in case any of the other shmem init functions use LWLocks.
+ * (Nothing else can be running during startup, so they don't need to do any
+ * locking yet, but we nevertheless allow it.)
+ */
+PG_SHMEM_SUBSYSTEM(LWLockCallbacks)
+
+/* TODO: nothing else for now */

@@ -121,7 +121,6 @@ CalculateShmemSize(void)
 	size = add_size(size, TwoPhaseShmemSize());
 	size = add_size(size, BackgroundWorkerShmemSize());
 	size = add_size(size, MultiXactShmemSize());
-	size = add_size(size, LWLockShmemSize());
 	size = add_size(size, ProcArrayShmemSize());
 	size = add_size(size, BackendStatusShmemSize());
 	size = add_size(size, SharedInvalShmemSize());
@@ -179,11 +178,6 @@ AttachSharedMemoryStructs(void)
 	 */
 	InitializeFastPathLocks();
 
-	/*
-	 * Attach to LWLocks first. They are needed by most other subsystems.
-	 */
-	LWLockShmemInit();
-
 	/* Establish pointers to all shared memory areas in this backend */
 	ShmemAttachRequested();
 	CreateOrAttachShmemStructs();
@@ -229,13 +223,6 @@ CreateSharedMemoryAndSemaphores(void)
 	 * Set up shared memory allocation mechanism
 	 */
 	InitShmemAllocator(seghdr);
-
-	/*
-	 * Initialize LWLocks first, in case any of the shmem init function use
-	 * LWLocks.  (Nothing else can be running during startup, so they don't
-	 * need to do any locking yet, but we nevertheless allow it.)
-	 */
-	LWLockShmemInit();
 
 	/* Initialize all shmem areas */
 	ShmemInitRequested();
