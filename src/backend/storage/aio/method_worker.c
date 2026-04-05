@@ -239,8 +239,8 @@ pgaio_worker_needs_synchronous_execution(PgAioHandle *ioh)
 		|| !pgaio_io_can_reopen(ioh);
 }
 
-static void
-pgaio_worker_submit_internal(int num_staged_ios, PgAioHandle **staged_ios)
+static int
+pgaio_worker_submit(uint16 num_staged_ios, PgAioHandle **staged_ios)
 {
 	PgAioHandle **synchronous_ios = NULL;
 	int			nsync = 0;
@@ -248,6 +248,9 @@ pgaio_worker_submit_internal(int num_staged_ios, PgAioHandle **staged_ios)
 	int			worker;
 
 	Assert(num_staged_ios <= PGAIO_SUBMIT_BATCH_SIZE);
+
+	for (int i = 0; i < num_staged_ios; i++)
+		pgaio_io_prepare_submit(staged_ios[i]);
 
 	if (LWLockConditionalAcquire(AioWorkerSubmissionQueueLock, LW_EXCLUSIVE))
 	{
@@ -299,19 +302,6 @@ pgaio_worker_submit_internal(int num_staged_ios, PgAioHandle **staged_ios)
 			pgaio_io_perform_synchronously(synchronous_ios[i]);
 		}
 	}
-}
-
-static int
-pgaio_worker_submit(uint16 num_staged_ios, PgAioHandle **staged_ios)
-{
-	for (int i = 0; i < num_staged_ios; i++)
-	{
-		PgAioHandle *ioh = staged_ios[i];
-
-		pgaio_io_prepare_submit(ioh);
-	}
-
-	pgaio_worker_submit_internal(num_staged_ios, staged_ios);
 
 	return num_staged_ios;
 }
