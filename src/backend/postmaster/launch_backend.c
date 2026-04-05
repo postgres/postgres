@@ -664,6 +664,8 @@ SubPostmasterMain(int argc, char *argv[])
 	 */
 	LocalProcessControlFile(false);
 
+	RegisterBuiltinShmemCallbacks();
+
 	/*
 	 * Reload any libraries that were preloaded by the postmaster.  Since we
 	 * exec'd this process, those libraries didn't come along with us; but we

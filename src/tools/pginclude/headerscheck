@@ -131,6 +131,7 @@ do
 	test "$f" = src/include/postmaster/proctypelist.h && continue
 	test "$f" = src/include/regex/regerrs.h && continue
 	test "$f" = src/include/storage/lwlocklist.h && continue
+	test "$f" = src/include/storage/subsystemlist.h && continue
 	test "$f" = src/include/tcop/cmdtaglist.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/c_kwlist.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/ecpg_kwlist.h && continue

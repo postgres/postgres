@@ -77,8 +77,10 @@
  *			);
  *	}
  *
- * Register the callbacks by calling RegisterShmemCallbacks(&MyShmemCallbacks)
- * in the extension's _PG_init() function.
+ * In builtin PostgreSQL code, add the callbacks to the list in
+ * src/include/storage/subsystemlist.h.  In an add-in module, you can register
+ * the callbacks by calling RegisterShmemCallbacks(&MyShmemCallbacks) in the
+ * extension's _PG_init() function.
  *
  * Lifecycle
  * ---------

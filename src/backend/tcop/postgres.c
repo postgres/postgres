@@ -4138,6 +4138,9 @@ PostgresSingleUserMain(int argc, char *argv[],
 	/* read control file (error checking and contains config ) */
 	LocalProcessControlFile(false);
 
+	/* Register the shared memory needs of all core subsystems. */
+	RegisterBuiltinShmemCallbacks();
+
 	/*
 	 * process any libraries that should be preloaded at postmaster start
 	 */
