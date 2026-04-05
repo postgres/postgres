@@ -60,6 +60,7 @@ typedef struct ConnCacheEntry
 	/* Remaining fields are invalid when conn is NULL: */
 	int			xact_depth;		/* 0 = no xact open, 1 = main xact open, 2 =
 								 * one level of subxact open, etc */
+	bool		xact_read_only; /* xact r/o state */
 	bool		have_prep_stmt; /* have we prepared any stmts in this xact? */
 	bool		have_error;		/* have any subxacts aborted in this xact? */
 	bool		changing_xact_state;	/* xact state change in process */
@@ -85,6 +86,12 @@ static unsigned int prep_stmt_number = 0;
 
 /* tracks whether any work is needed in callback functions */
 static bool xact_got_connection = false;
+
+/*
+ * tracks the topmost read-only local transaction's nesting level determined
+ * by GetTopReadOnlyTransactionNestLevel()
+ */
+static int	read_only_level = 0;
 
 /* custom wait event values, retrieved from shared memory */
 static uint32 pgfdw_we_cleanup_result = 0;
@@ -378,6 +385,7 @@ make_new_connection(ConnCacheEntry *entry, UserMapping *user)
 
 	/* Reset all transient state fields, to be sure all are clean */
 	entry->xact_depth = 0;
+	entry->xact_read_only = false;
 	entry->have_prep_stmt = false;
 	entry->have_error = false;
 	entry->changing_xact_state = false;
@@ -871,28 +879,105 @@ do_sql_command_end(PGconn *conn, const char *sql, bool consume_input)
  * those scans.  A disadvantage is that we can't provide sane emulation of
  * READ COMMITTED behavior --- it would be nice if we had some other way to
  * control which remote queries share a snapshot.
+ *
+ * Note also that we always start the remote transaction with the same
+ * read/write and deferrable properties as the local transaction, and start
+ * the remote subtransaction with the same read/write property as the local
+ * subtransaction.
  */
 static void
 begin_remote_xact(ConnCacheEntry *entry)
 {
 	int			curlevel = GetCurrentTransactionNestLevel();
 
-	/* Start main transaction if we haven't yet */
+	/*
+	 * If the current local (sub)transaction is read-only, set the topmost
+	 * read-only local transaction's nesting level if we haven't yet.
+	 *
+	 * Note: once it's set, it's retained until the topmost read-only local
+	 * transaction is committed/aborted (see pgfdw_xact_callback and
+	 * pgfdw_subxact_callback).
+	 */
+	if (XactReadOnly)
+	{
+		if (read_only_level == 0)
+			read_only_level = GetTopReadOnlyTransactionNestLevel();
+		Assert(read_only_level > 0);
+	}
+	else
+		Assert(read_only_level == 0);
+
+	/*
+	 * Start main transaction if we haven't yet; otherwise, change the current
+	 * remote (sub)transaction's read/write mode if needed.
+	 */
 	if (entry->xact_depth <= 0)
 	{
-		const char *sql;
+		/*
+		 * This is the case when we haven't yet started a main transaction.
+		 */
+		StringInfoData sql;
+		bool		ro = (read_only_level == 1);
 
 		elog(DEBUG3, "starting remote transaction on connection %p",
 			 entry->conn);
 
+		initStringInfo(&sql);
+		appendStringInfoString(&sql, "START TRANSACTION ISOLATION LEVEL ");
 		if (IsolationIsSerializable())
-			sql = "START TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+			appendStringInfoString(&sql, "SERIALIZABLE");
 		else
-			sql = "START TRANSACTION ISOLATION LEVEL REPEATABLE READ";
+			appendStringInfoString(&sql, "REPEATABLE READ");
+		if (ro)
+			appendStringInfoString(&sql, " READ ONLY");
+		if (XactDeferrable)
+			appendStringInfoString(&sql, " DEFERRABLE");
 		entry->changing_xact_state = true;
-		do_sql_command(entry->conn, sql);
+		do_sql_command(entry->conn, sql.data);
 		entry->xact_depth = 1;
+		if (ro)
+		{
+			Assert(!entry->xact_read_only);
+			entry->xact_read_only = true;
+		}
 		entry->changing_xact_state = false;
+	}
+	else if (!entry->xact_read_only)
+	{
+		/*
+		 * The remote (sub)transaction has been opened in read-write mode.
+		 */
+		Assert(read_only_level == 0 ||
+			   entry->xact_depth <= read_only_level);
+
+		/*
+		 * If its nesting depth matches read_only_level, it means that the
+		 * local read-write (sub)transaction that started it has changed to
+		 * read-only after that; in which case change it to read-only as well.
+		 * Otherwise, the local (sub)transaction is still read-write, so there
+		 * is no need to do anything.
+		 */
+		if (entry->xact_depth == read_only_level)
+		{
+			entry->changing_xact_state = true;
+			do_sql_command(entry->conn, "SET transaction_read_only = on");
+			entry->xact_read_only = true;
+			entry->changing_xact_state = false;
+		}
+	}
+	else
+	{
+		/*
+		 * The remote (sub)transaction has been opened in read-only mode.
+		 */
+		Assert(read_only_level > 0 &&
+			   entry->xact_depth >= read_only_level);
+
+		/*
+		 * The local read-only (sub)transaction that started it is guaranteed
+		 * to be still read-only (see check_transaction_read_only), so there
+		 * is no need to do anything.
+		 */
 	}
 
 	/*
@@ -902,12 +987,21 @@ begin_remote_xact(ConnCacheEntry *entry)
 	 */
 	while (entry->xact_depth < curlevel)
 	{
-		char		sql[64];
+		StringInfoData sql;
+		bool		ro = (entry->xact_depth + 1 == read_only_level);
 
-		snprintf(sql, sizeof(sql), "SAVEPOINT s%d", entry->xact_depth + 1);
+		initStringInfo(&sql);
+		appendStringInfo(&sql, "SAVEPOINT s%d", entry->xact_depth + 1);
+		if (ro)
+			appendStringInfoString(&sql, "; SET transaction_read_only = on");
 		entry->changing_xact_state = true;
-		do_sql_command(entry->conn, sql);
+		do_sql_command(entry->conn, sql.data);
 		entry->xact_depth++;
+		if (ro)
+		{
+			Assert(!entry->xact_read_only);
+			entry->xact_read_only = true;
+		}
 		entry->changing_xact_state = false;
 	}
 }
@@ -1212,6 +1306,9 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 
 	/* Also reset cursor numbering for next transaction */
 	cursor_number = 0;
+
+	/* Likewise for read_only_level */
+	read_only_level = 0;
 }
 
 /*
@@ -1310,6 +1407,10 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 									   false);
 		}
 	}
+
+	/* If in read_only_level, reset it */
+	if (curlevel == read_only_level)
+		read_only_level = 0;
 }
 
 /*
@@ -1412,6 +1513,9 @@ pgfdw_reset_xact_state(ConnCacheEntry *entry, bool toplevel)
 		/* Reset state to show we're out of a transaction */
 		entry->xact_depth = 0;
 
+		/* Reset xact r/o state */
+		entry->xact_read_only = false;
+
 		/*
 		 * If the connection isn't in a good idle state, it is marked as
 		 * invalid or keep_connections option of its server is disabled, then
@@ -1432,6 +1536,10 @@ pgfdw_reset_xact_state(ConnCacheEntry *entry, bool toplevel)
 	{
 		/* Reset state to show we're out of a subtransaction */
 		entry->xact_depth--;
+
+		/* If in read_only_level, reset xact r/o state */
+		if (entry->xact_depth + 1 == read_only_level)
+			entry->xact_read_only = false;
 	}
 }
 
