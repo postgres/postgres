@@ -29,10 +29,19 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/timestamp.h"
 #include "utils/wait_event.h"
 
 WalRcvData *WalRcv = NULL;
+
+static void WalRcvShmemRequest(void *arg);
+static void WalRcvShmemInit(void *arg);
+
+const ShmemCallbacks WalRcvShmemCallbacks = {
+	.request_fn = WalRcvShmemRequest,
+	.init_fn = WalRcvShmemInit,
+};
 
 /*
  * How long to wait for walreceiver to start up after requesting
@@ -40,36 +49,26 @@ WalRcvData *WalRcv = NULL;
  */
 #define WALRCV_STARTUP_TIMEOUT 10
 
-/* Report shared memory space needed by WalRcvShmemInit */
-Size
-WalRcvShmemSize(void)
+/* Register shared memory space needed by walreceiver */
+static void
+WalRcvShmemRequest(void *arg)
 {
-	Size		size = 0;
-
-	size = add_size(size, sizeof(WalRcvData));
-
-	return size;
+	ShmemRequestStruct(.name = "Wal Receiver Ctl",
+					   .size = sizeof(WalRcvData),
+					   .ptr = (void **) &WalRcv,
+		);
 }
 
-/* Allocate and initialize walreceiver-related shared memory */
-void
-WalRcvShmemInit(void)
+/* Initialize walreceiver-related shared memory */
+static void
+WalRcvShmemInit(void *arg)
 {
-	bool		found;
-
-	WalRcv = (WalRcvData *)
-		ShmemInitStruct("Wal Receiver Ctl", WalRcvShmemSize(), &found);
-
-	if (!found)
-	{
-		/* First time through, so initialize */
-		MemSet(WalRcv, 0, WalRcvShmemSize());
-		WalRcv->walRcvState = WALRCV_STOPPED;
-		ConditionVariableInit(&WalRcv->walRcvStoppedCV);
-		SpinLockInit(&WalRcv->mutex);
-		pg_atomic_init_u64(&WalRcv->writtenUpto, 0);
-		WalRcv->procno = INVALID_PROC_NUMBER;
-	}
+	MemSet(WalRcv, 0, sizeof(WalRcvData));
+	WalRcv->walRcvState = WALRCV_STOPPED;
+	ConditionVariableInit(&WalRcv->walRcvStoppedCV);
+	SpinLockInit(&WalRcv->mutex);
+	pg_atomic_init_u64(&WalRcv->writtenUpto, 0);
+	WalRcv->procno = INVALID_PROC_NUMBER;
 }
 
 /* Is walreceiver running (or starting up)? */

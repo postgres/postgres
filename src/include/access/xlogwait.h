@@ -100,8 +100,6 @@ typedef struct WaitLSNState
 
 extern PGDLLIMPORT WaitLSNState *waitLSNState;
 
-extern Size WaitLSNShmemSize(void);
-extern void WaitLSNShmemInit(void);
 extern XLogRecPtr GetCurrentLSNForWaitType(WaitLSNType lsnType);
 extern void WaitLSNWakeup(WaitLSNType lsnType, XLogRecPtr currentLSN);
 extern void WaitLSNCleanup(void);

@@ -41,8 +41,6 @@ typedef struct RegisteredBgWorker
 
 extern PGDLLIMPORT dlist_head BackgroundWorkerList;
 
-extern Size BackgroundWorkerShmemSize(void);
-extern void BackgroundWorkerShmemInit(void);
 extern void BackgroundWorkerStateChange(bool allow_new_workers);
 extern void ForgetBackgroundWorker(RegisteredBgWorker *rw);
 extern void ReportBackgroundWorkerPID(RegisteredBgWorker *rw);

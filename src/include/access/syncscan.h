@@ -24,7 +24,5 @@ extern PGDLLIMPORT bool trace_syncscan;
 
 extern void ss_report_location(Relation rel, BlockNumber location);
 extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
-extern void SyncScanShmemInit(void);
-extern Size SyncScanShmemSize(void);
 
 #endif

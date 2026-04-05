@@ -32,6 +32,9 @@ PG_SHMEM_SUBSYSTEM(DSMRegistryShmemCallbacks)
 
 /* xlog, clog, and buffers */
 PG_SHMEM_SUBSYSTEM(VarsupShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(XLOGShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(XLogPrefetchShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(XLogRecoveryShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(CLOGShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(CommitTsShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(SUBTRANSShmemCallbacks)
@@ -40,12 +43,18 @@ PG_SHMEM_SUBSYSTEM(BufferManagerShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(StrategyCtlShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(BufTableShmemCallbacks)
 
+/* lock manager */
+PG_SHMEM_SUBSYSTEM(LockManagerShmemCallbacks)
+
 /* predicate lock manager */
 PG_SHMEM_SUBSYSTEM(PredicateLockShmemCallbacks)
 
 /* process table */
 PG_SHMEM_SUBSYSTEM(ProcGlobalShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(ProcArrayShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(BackendStatusShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(TwoPhaseShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(BackgroundWorkerShmemCallbacks)
 
 /* shared-inval messaging */
 PG_SHMEM_SUBSYSTEM(SharedInvalShmemCallbacks)
@@ -53,9 +62,27 @@ PG_SHMEM_SUBSYSTEM(SharedInvalShmemCallbacks)
 /* interprocess signaling mechanisms */
 PG_SHMEM_SUBSYSTEM(PMSignalShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(ProcSignalShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(CheckpointerShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(AutoVacuumShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(ReplicationSlotsShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(ReplicationOriginShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(WalSndShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(WalRcvShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(WalSummarizerShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(PgArchShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(ApplyLauncherShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(SlotSyncShmemCallbacks)
 
 /* other modules that need some shared memory space */
+PG_SHMEM_SUBSYSTEM(BTreeShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(SyncScanShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(AsyncShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(StatsShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(WaitEventCustomShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(InjectionPointShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(WaitLSNShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(LogicalDecodingCtlShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(DataChecksumsShmemCallbacks)
 
 /* AIO subsystem. This delegates to the method-specific callbacks */
 PG_SHMEM_SUBSYSTEM(AioShmemCallbacks)

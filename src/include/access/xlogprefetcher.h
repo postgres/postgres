@@ -34,9 +34,6 @@ typedef struct XLogPrefetcher XLogPrefetcher;
 
 extern void XLogPrefetchReconfigure(void);
 
-extern size_t XLogPrefetchShmemSize(void);
-extern void XLogPrefetchShmemInit(void);
-
 extern void XLogPrefetchResetStats(void);
 
 extern XLogPrefetcher *XLogPrefetcherAllocate(XLogReaderState *reader);

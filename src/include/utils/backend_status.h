@@ -299,14 +299,6 @@ extern PGDLLIMPORT PgBackendStatus *MyBEEntry;
 
 
 /* ----------
- * Functions called from postmaster
- * ----------
- */
-extern Size BackendStatusShmemSize(void);
-extern void BackendStatusShmemInit(void);
-
-
-/* ----------
  * Functions called from backends
  * ----------
  */

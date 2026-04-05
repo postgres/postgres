@@ -26,8 +26,6 @@
 #define MAX_XFN_CHARS	40
 #define VALID_XFN_CHARS "0123456789ABCDEF.history.backup.partial"
 
-extern Size PgArchShmemSize(void);
-extern void PgArchShmemInit(void);
 extern bool PgArchCanRestart(void);
 pg_noreturn extern void PgArchiverMain(const void *startup_data, size_t startup_data_len);
 extern void PgArchWakeup(void);

@@ -14,41 +14,16 @@
  */
 #include "postgres.h"
 
-#include "access/clog.h"
-#include "access/commit_ts.h"
-#include "access/multixact.h"
-#include "access/nbtree.h"
-#include "access/subtrans.h"
-#include "access/syncscan.h"
-#include "access/twophase.h"
-#include "access/xlogprefetcher.h"
-#include "access/xlogrecovery.h"
-#include "access/xlogwait.h"
-#include "commands/async.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "postmaster/autovacuum.h"
-#include "postmaster/bgworker_internals.h"
-#include "postmaster/bgwriter.h"
-#include "postmaster/datachecksum_state.h"
-#include "postmaster/walsummarizer.h"
-#include "replication/logicallauncher.h"
-#include "replication/origin.h"
-#include "replication/slot.h"
-#include "replication/slotsync.h"
-#include "replication/walreceiver.h"
-#include "replication/walsender.h"
-#include "storage/aio_subsys.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
+#include "storage/lock.h"
 #include "storage/pg_shmem.h"
-#include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/shmem_internal.h"
 #include "storage/subsystems.h"
 #include "utils/guc.h"
-#include "utils/injection_point.h"
-#include "utils/wait_event.h"
 
 /* GUCs */
 int			shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
@@ -56,8 +31,6 @@ int			shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
 shmem_startup_hook_type shmem_startup_hook = NULL;
 
 static Size total_addin_request = 0;
-
-static void CreateOrAttachShmemStructs(void);
 
 /*
  * RequestAddinShmemSpace
@@ -97,33 +70,6 @@ CalculateShmemSize(void)
 	size = 100000;
 	size = add_size(size, ShmemGetRequestedSize());
 
-	/* legacy subsystems */
-	size = add_size(size, LockManagerShmemSize());
-	size = add_size(size, XLogPrefetchShmemSize());
-	size = add_size(size, XLOGShmemSize());
-	size = add_size(size, XLogRecoveryShmemSize());
-	size = add_size(size, TwoPhaseShmemSize());
-	size = add_size(size, BackgroundWorkerShmemSize());
-	size = add_size(size, BackendStatusShmemSize());
-	size = add_size(size, CheckpointerShmemSize());
-	size = add_size(size, AutoVacuumShmemSize());
-	size = add_size(size, ReplicationSlotsShmemSize());
-	size = add_size(size, ReplicationOriginShmemSize());
-	size = add_size(size, WalSndShmemSize());
-	size = add_size(size, WalRcvShmemSize());
-	size = add_size(size, WalSummarizerShmemSize());
-	size = add_size(size, PgArchShmemSize());
-	size = add_size(size, ApplyLauncherShmemSize());
-	size = add_size(size, BTreeShmemSize());
-	size = add_size(size, SyncScanShmemSize());
-	size = add_size(size, StatsShmemSize());
-	size = add_size(size, WaitEventCustomShmemSize());
-	size = add_size(size, InjectionPointShmemSize());
-	size = add_size(size, SlotSyncShmemSize());
-	size = add_size(size, WaitLSNShmemSize());
-	size = add_size(size, LogicalDecodingCtlShmemSize());
-	size = add_size(size, DataChecksumsShmemSize());
-
 	/* include additional requested shmem from preload libraries */
 	size = add_size(size, total_addin_request);
 
@@ -157,7 +103,6 @@ AttachSharedMemoryStructs(void)
 
 	/* Establish pointers to all shared memory areas in this backend */
 	ShmemAttachRequested();
-	CreateOrAttachShmemStructs();
 
 	/*
 	 * Now give loadable modules a chance to set up their shmem allocations
@@ -204,9 +149,6 @@ CreateSharedMemoryAndSemaphores(void)
 	/* Initialize all shmem areas */
 	ShmemInitRequested();
 
-	/* Initialize legacy subsystems */
-	CreateOrAttachShmemStructs();
-
 	/* Initialize dynamic shared memory facilities. */
 	dsm_postmaster_startup(shim);
 
@@ -235,70 +177,6 @@ RegisterBuiltinShmemCallbacks(void)
 #include "storage/subsystemlist.h"
 
 #undef PG_SHMEM_SUBSYSTEM
-}
-
-/*
- * Initialize various subsystems, setting up their data structures in
- * shared memory.
- *
- * This is called by the postmaster or by a standalone backend.
- * It is also called by a backend forked from the postmaster in the
- * EXEC_BACKEND case.  In the latter case, the shared memory segment
- * already exists and has been physically attached to, but we have to
- * initialize pointers in local memory that reference the shared structures,
- * because we didn't inherit the correct pointer values from the postmaster
- * as we do in the fork() scenario.  The easiest way to do that is to run
- * through the same code as before.  (Note that the called routines mostly
- * check IsUnderPostmaster, rather than EXEC_BACKEND, to detect this case.
- * This is a bit code-wasteful and could be cleaned up.)
- */
-static void
-CreateOrAttachShmemStructs(void)
-{
-	/*
-	 * Set up xlog, clog, and buffers
-	 */
-	XLOGShmemInit();
-	XLogPrefetchShmemInit();
-	XLogRecoveryShmemInit();
-
-	/*
-	 * Set up lock manager
-	 */
-	LockManagerShmemInit();
-
-	/*
-	 * Set up process table
-	 */
-	BackendStatusShmemInit();
-	TwoPhaseShmemInit();
-	BackgroundWorkerShmemInit();
-
-	/*
-	 * Set up interprocess signaling mechanisms
-	 */
-	CheckpointerShmemInit();
-	AutoVacuumShmemInit();
-	ReplicationSlotsShmemInit();
-	ReplicationOriginShmemInit();
-	WalSndShmemInit();
-	WalRcvShmemInit();
-	WalSummarizerShmemInit();
-	PgArchShmemInit();
-	ApplyLauncherShmemInit();
-	SlotSyncShmemInit();
-	DataChecksumsShmemInit();
-
-	/*
-	 * Set up other modules that need some shared memory space
-	 */
-	BTreeShmemInit();
-	SyncScanShmemInit();
-	StatsShmemInit();
-	WaitEventCustomShmemInit();
-	InjectionPointShmemInit();
-	WaitLSNShmemInit();
-	LogicalDecodingCtlShmemInit();
 }
 
 /*

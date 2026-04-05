@@ -17,6 +17,7 @@
  */
 #include "postgres.h"
 
+#include "storage/subsystems.h"
 #include "utils/injection_point.h"
 
 #ifdef USE_INJECTION_POINTS
@@ -108,6 +109,11 @@ typedef struct InjectionPointCacheEntry
 } InjectionPointCacheEntry;
 
 static HTAB *InjectionPointCache = NULL;
+
+#ifdef USE_INJECTION_POINTS
+static void InjectionPointShmemRequest(void *arg);
+static void InjectionPointShmemInit(void *arg);
+#endif
 
 /*
  * injection_point_cache_add
@@ -226,45 +232,34 @@ injection_point_cache_get(const char *name)
 }
 #endif							/* USE_INJECTION_POINTS */
 
-/*
- * Return the space for dynamic shared hash table.
- */
-Size
-InjectionPointShmemSize(void)
-{
+const ShmemCallbacks InjectionPointShmemCallbacks = {
 #ifdef USE_INJECTION_POINTS
-	Size		sz = 0;
-
-	sz = add_size(sz, sizeof(InjectionPointsCtl));
-	return sz;
-#else
-	return 0;
+	.request_fn = InjectionPointShmemRequest,
+	.init_fn = InjectionPointShmemInit,
 #endif
-}
+};
 
 /*
- * Allocate shmem space for dynamic shared hash.
+ * Reserve space for the dynamic shared hash table
  */
-void
-InjectionPointShmemInit(void)
-{
 #ifdef USE_INJECTION_POINTS
-	bool		found;
-
-	ActiveInjectionPoints = ShmemInitStruct("InjectionPoint hash",
-											sizeof(InjectionPointsCtl),
-											&found);
-	if (!IsUnderPostmaster)
-	{
-		Assert(!found);
-		pg_atomic_init_u32(&ActiveInjectionPoints->max_inuse, 0);
-		for (int i = 0; i < MAX_INJECTION_POINTS; i++)
-			pg_atomic_init_u64(&ActiveInjectionPoints->entries[i].generation, 0);
-	}
-	else
-		Assert(found);
-#endif
+static void
+InjectionPointShmemRequest(void *arg)
+{
+	ShmemRequestStruct(.name = "InjectionPoint hash",
+					   .size = sizeof(InjectionPointsCtl),
+					   .ptr = (void **) &ActiveInjectionPoints,
+		);
 }
+
+static void
+InjectionPointShmemInit(void *arg)
+{
+	pg_atomic_init_u32(&ActiveInjectionPoints->max_inuse, 0);
+	for (int i = 0; i < MAX_INJECTION_POINTS; i++)
+		pg_atomic_init_u64(&ActiveInjectionPoints->entries[i].generation, 0);
+}
+#endif
 
 /*
  * Attach a new injection point.

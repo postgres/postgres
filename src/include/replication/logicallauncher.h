@@ -19,9 +19,6 @@ extern PGDLLIMPORT int max_parallel_apply_workers_per_subscription;
 extern void ApplyLauncherRegister(void);
 extern void ApplyLauncherMain(Datum main_arg);
 
-extern Size ApplyLauncherShmemSize(void);
-extern void ApplyLauncherShmemInit(void);
-
 extern void ApplyLauncherForgetWorkerStartTime(Oid subid);
 
 extern void ApplyLauncherWakeupAtCommit(void);

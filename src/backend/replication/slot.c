@@ -55,6 +55,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/subsystems.h"
 #include "utils/builtins.h"
 #include "utils/guc_hooks.h"
 #include "utils/injection_point.h"
@@ -145,6 +146,14 @@ StaticAssertDecl(lengthof(SlotInvalidationCauses) == (RS_INVAL_MAX_CAUSES + 1),
 /* Control array for replication slot management */
 ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
 
+static void ReplicationSlotsShmemRequest(void *arg);
+static void ReplicationSlotsShmemInit(void *arg);
+
+const ShmemCallbacks ReplicationSlotsShmemCallbacks = {
+	.request_fn = ReplicationSlotsShmemRequest,
+	.init_fn = ReplicationSlotsShmemInit,
+};
+
 /* My backend's replication slot in the shared memory array */
 ReplicationSlot *MyReplicationSlot = NULL;
 
@@ -183,56 +192,41 @@ static void CreateSlotOnDisk(ReplicationSlot *slot);
 static void SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel);
 
 /*
- * Report shared-memory space needed by ReplicationSlotsShmemInit.
+ * Register shared memory space needed for replication slots.
  */
-Size
-ReplicationSlotsShmemSize(void)
+static void
+ReplicationSlotsShmemRequest(void *arg)
 {
-	Size		size = 0;
-
-	if (max_replication_slots == 0)
-		return size;
-
-	size = offsetof(ReplicationSlotCtlData, replication_slots);
-	size = add_size(size,
-					mul_size(max_replication_slots, sizeof(ReplicationSlot)));
-
-	return size;
-}
-
-/*
- * Allocate and initialize shared memory for replication slots.
- */
-void
-ReplicationSlotsShmemInit(void)
-{
-	bool		found;
+	Size		size;
 
 	if (max_replication_slots == 0)
 		return;
 
-	ReplicationSlotCtl = (ReplicationSlotCtlData *)
-		ShmemInitStruct("ReplicationSlot Ctl", ReplicationSlotsShmemSize(),
-						&found);
+	size = offsetof(ReplicationSlotCtlData, replication_slots);
+	size = add_size(size,
+					mul_size(max_replication_slots, sizeof(ReplicationSlot)));
+	ShmemRequestStruct(.name = "ReplicationSlot Ctl",
+					   .size = size,
+					   .ptr = (void **) &ReplicationSlotCtl,
+		);
+}
 
-	if (!found)
+/*
+ * Initialize shared memory for replication slots.
+ */
+static void
+ReplicationSlotsShmemInit(void *arg)
+{
+	for (int i = 0; i < max_replication_slots; i++)
 	{
-		int			i;
+		ReplicationSlot *slot = &ReplicationSlotCtl->replication_slots[i];
 
-		/* First time through, so initialize */
-		MemSet(ReplicationSlotCtl, 0, ReplicationSlotsShmemSize());
-
-		for (i = 0; i < max_replication_slots; i++)
-		{
-			ReplicationSlot *slot = &ReplicationSlotCtl->replication_slots[i];
-
-			/* everything else is zeroed by the memset above */
-			slot->active_proc = INVALID_PROC_NUMBER;
-			SpinLockInit(&slot->mutex);
-			LWLockInitialize(&slot->io_in_progress_lock,
-							 LWTRANCHE_REPLICATION_SLOT_IO);
-			ConditionVariableInit(&slot->active_cv);
-		}
+		/* everything else is zeroed by the memset above */
+		slot->active_proc = INVALID_PROC_NUMBER;
+		SpinLockInit(&slot->mutex);
+		LWLockInitialize(&slot->io_in_progress_lock,
+						 LWTRANCHE_REPLICATION_SLOT_IO);
+		ConditionVariableInit(&slot->active_cv);
 	}
 }
 

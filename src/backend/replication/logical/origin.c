@@ -88,6 +88,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "storage/subsystems.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
@@ -175,6 +176,16 @@ ReplOriginXactState replorigin_xact_state = {
  * max_active_replication_origins.
  */
 static ReplicationState *replication_states;
+
+static void ReplicationOriginShmemRequest(void *arg);
+static void ReplicationOriginShmemInit(void *arg);
+static void ReplicationOriginShmemAttach(void *arg);
+
+const ShmemCallbacks ReplicationOriginShmemCallbacks = {
+	.request_fn = ReplicationOriginShmemRequest,
+	.init_fn = ReplicationOriginShmemInit,
+	.attach_fn = ReplicationOriginShmemAttach,
+};
 
 /*
  * Actual shared memory block (replication_states[] is now part of this).
@@ -539,50 +550,48 @@ replorigin_by_oid(ReplOriginId roident, bool missing_ok, char **roname)
  * ---------------------------------------------------------------------------
  */
 
-Size
-ReplicationOriginShmemSize(void)
+static void
+ReplicationOriginShmemRequest(void *arg)
 {
 	Size		size = 0;
 
 	if (max_active_replication_origins == 0)
-		return size;
+		return;
 
 	size = add_size(size, offsetof(ReplicationStateCtl, states));
-
 	size = add_size(size,
 					mul_size(max_active_replication_origins, sizeof(ReplicationState)));
-	return size;
+	ShmemRequestStruct(.name = "ReplicationOriginState",
+					   .size = size,
+					   .ptr = (void **) &replication_states_ctl,
+		);
 }
 
-void
-ReplicationOriginShmemInit(void)
+static void
+ReplicationOriginShmemInit(void *arg)
 {
-	bool		found;
-
 	if (max_active_replication_origins == 0)
 		return;
 
-	replication_states_ctl = (ReplicationStateCtl *)
-		ShmemInitStruct("ReplicationOriginState",
-						ReplicationOriginShmemSize(),
-						&found);
 	replication_states = replication_states_ctl->states;
 
-	if (!found)
+	replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN_STATE;
+
+	for (int i = 0; i < max_active_replication_origins; i++)
 	{
-		int			i;
-
-		MemSet(replication_states_ctl, 0, ReplicationOriginShmemSize());
-
-		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN_STATE;
-
-		for (i = 0; i < max_active_replication_origins; i++)
-		{
-			LWLockInitialize(&replication_states[i].lock,
-							 replication_states_ctl->tranche_id);
-			ConditionVariableInit(&replication_states[i].origin_cv);
-		}
+		LWLockInitialize(&replication_states[i].lock,
+						 replication_states_ctl->tranche_id);
+		ConditionVariableInit(&replication_states[i].origin_cv);
 	}
+}
+
+static void
+ReplicationOriginShmemAttach(void *arg)
+{
+	if (max_active_replication_origins == 0)
+		return;
+
+	replication_states = replication_states_ctl->states;
 }
 
 /* ---------------------------------------------------------------------------

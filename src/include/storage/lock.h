@@ -375,8 +375,6 @@ typedef enum
 /*
  * function prototypes
  */
-extern void LockManagerShmemInit(void);
-extern Size LockManagerShmemSize(void);
 extern void InitLockManagerAccess(void);
 extern LockMethod GetLocksMethodTable(const LOCK *lock);
 extern LockMethod GetLockTagsMethodTable(const LOCKTAG *locktag);

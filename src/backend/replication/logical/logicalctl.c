@@ -72,6 +72,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
+#include "storage/subsystems.h"
 #include "utils/injection_point.h"
 
 /*
@@ -98,6 +99,12 @@ typedef struct LogicalDecodingCtlData
 
 static LogicalDecodingCtlData *LogicalDecodingCtl = NULL;
 
+static void LogicalDecodingCtlShmemRequest(void *arg);
+
+const ShmemCallbacks LogicalDecodingCtlShmemCallbacks = {
+	.request_fn = LogicalDecodingCtlShmemRequest,
+};
+
 /*
  * A process-local cache of LogicalDecodingCtl->xlog_logical_info. This is
  * initialized at process startup, and updated when processing the process
@@ -120,23 +127,13 @@ static void update_xlog_logical_info(void);
 static void abort_logical_decoding_activation(int code, Datum arg);
 static void write_logical_decoding_status_update_record(bool status);
 
-Size
-LogicalDecodingCtlShmemSize(void)
+static void
+LogicalDecodingCtlShmemRequest(void *arg)
 {
-	return sizeof(LogicalDecodingCtlData);
-}
-
-void
-LogicalDecodingCtlShmemInit(void)
-{
-	bool		found;
-
-	LogicalDecodingCtl = ShmemInitStruct("Logical decoding control",
-										 LogicalDecodingCtlShmemSize(),
-										 &found);
-
-	if (!found)
-		MemSet(LogicalDecodingCtl, 0, LogicalDecodingCtlShmemSize());
+	ShmemRequestStruct(.name = "Logical decoding control",
+					   .size = sizeof(LogicalDecodingCtlData),
+					   .ptr = (void **) &LogicalDecodingCtl,
+		);
 }
 
 /*

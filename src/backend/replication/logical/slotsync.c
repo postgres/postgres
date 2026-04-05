@@ -73,6 +73,7 @@
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/subsystems.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
@@ -117,6 +118,14 @@ typedef struct SlotSyncCtxStruct
 } SlotSyncCtxStruct;
 
 static SlotSyncCtxStruct *SlotSyncCtx = NULL;
+
+static void SlotSyncShmemRequest(void *arg);
+static void SlotSyncShmemInit(void *arg);
+
+const ShmemCallbacks SlotSyncShmemCallbacks = {
+	.request_fn = SlotSyncShmemRequest,
+	.init_fn = SlotSyncShmemInit,
+};
 
 /* GUC variable */
 bool		sync_replication_slots = false;
@@ -1828,32 +1837,26 @@ IsSyncingReplicationSlots(void)
 }
 
 /*
- * Amount of shared memory required for slot synchronization.
+ * Register shared memory space needed for slot synchronization.
  */
-Size
-SlotSyncShmemSize(void)
+static void
+SlotSyncShmemRequest(void *arg)
 {
-	return sizeof(SlotSyncCtxStruct);
+	ShmemRequestStruct(.name = "Slot Sync Data",
+					   .size = sizeof(SlotSyncCtxStruct),
+					   .ptr = (void **) &SlotSyncCtx,
+		);
 }
 
 /*
- * Allocate and initialize the shared memory of slot synchronization.
+ * Initialize shared memory for slot synchronization.
  */
-void
-SlotSyncShmemInit(void)
+static void
+SlotSyncShmemInit(void *arg)
 {
-	Size		size = SlotSyncShmemSize();
-	bool		found;
-
-	SlotSyncCtx = (SlotSyncCtxStruct *)
-		ShmemInitStruct("Slot Sync Data", size, &found);
-
-	if (!found)
-	{
-		memset(SlotSyncCtx, 0, size);
-		SlotSyncCtx->pid = InvalidPid;
-		SpinLockInit(&SlotSyncCtx->mutex);
-	}
+	memset(SlotSyncCtx, 0, sizeof(SlotSyncCtxStruct));
+	SlotSyncCtx->pid = InvalidPid;
+	SpinLockInit(&SlotSyncCtx->mutex);
 }
 
 /*

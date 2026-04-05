@@ -25,6 +25,7 @@
 #include "storage/lmgr.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "storage/spin.h"
 #include "utils/wait_event.h"
 
@@ -95,59 +96,47 @@ static WaitEventCustomCounterData *WaitEventCustomCounter;
 static uint32 WaitEventCustomNew(uint32 classId, const char *wait_event_name);
 static const char *GetWaitEventCustomIdentifier(uint32 wait_event_info);
 
-/*
- *  Return the space for dynamic shared hash tables and dynamic allocation counter.
- */
-Size
-WaitEventCustomShmemSize(void)
-{
-	Size		sz;
+static void WaitEventCustomShmemRequest(void *arg);
+static void WaitEventCustomShmemInit(void *arg);
 
-	sz = MAXALIGN(sizeof(WaitEventCustomCounterData));
-	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_SIZE,
-										 sizeof(WaitEventCustomEntryByInfo)));
-	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_SIZE,
-										 sizeof(WaitEventCustomEntryByName)));
-	return sz;
+const ShmemCallbacks WaitEventCustomShmemCallbacks = {
+	.request_fn = WaitEventCustomShmemRequest,
+	.init_fn = WaitEventCustomShmemInit,
+};
+
+/*
+ * Register shmem space for dynamic shared hash and dynamic allocation counter.
+ */
+static void
+WaitEventCustomShmemRequest(void *arg)
+{
+	ShmemRequestStruct(.name = "WaitEventCustomCounterData",
+					   .size = sizeof(WaitEventCustomCounterData),
+					   .ptr = (void **) &WaitEventCustomCounter,
+		);
+	ShmemRequestHash(.name = "WaitEventCustom hash by wait event information",
+					 .ptr = &WaitEventCustomHashByInfo,
+					 .nelems = WAIT_EVENT_CUSTOM_HASH_SIZE,
+					 .hash_info.keysize = sizeof(uint32),
+					 .hash_info.entrysize = sizeof(WaitEventCustomEntryByInfo),
+					 .hash_flags = HASH_ELEM | HASH_BLOBS,
+		);
+	ShmemRequestHash(.name = "WaitEventCustom hash by name",
+					 .ptr = &WaitEventCustomHashByName,
+					 .nelems = WAIT_EVENT_CUSTOM_HASH_SIZE,
+	/* key is a NULL-terminated string */
+					 .hash_info.keysize = sizeof(char[NAMEDATALEN]),
+					 .hash_info.entrysize = sizeof(WaitEventCustomEntryByName),
+					 .hash_flags = HASH_ELEM | HASH_STRINGS,
+		);
 }
 
-/*
- * Allocate shmem space for dynamic shared hash and dynamic allocation counter.
- */
-void
-WaitEventCustomShmemInit(void)
+static void
+WaitEventCustomShmemInit(void *arg)
 {
-	bool		found;
-	HASHCTL		info;
-
-	WaitEventCustomCounter = (WaitEventCustomCounterData *)
-		ShmemInitStruct("WaitEventCustomCounterData",
-						sizeof(WaitEventCustomCounterData), &found);
-
-	if (!found)
-	{
-		/* initialize the allocation counter and its spinlock. */
-		WaitEventCustomCounter->nextId = WAIT_EVENT_CUSTOM_INITIAL_ID;
-		SpinLockInit(&WaitEventCustomCounter->mutex);
-	}
-
-	/* initialize or attach the hash tables to store custom wait events */
-	info.keysize = sizeof(uint32);
-	info.entrysize = sizeof(WaitEventCustomEntryByInfo);
-	WaitEventCustomHashByInfo =
-		ShmemInitHash("WaitEventCustom hash by wait event information",
-					  WAIT_EVENT_CUSTOM_HASH_SIZE,
-					  &info,
-					  HASH_ELEM | HASH_BLOBS);
-
-	/* key is a NULL-terminated string */
-	info.keysize = sizeof(char[NAMEDATALEN]);
-	info.entrysize = sizeof(WaitEventCustomEntryByName);
-	WaitEventCustomHashByName =
-		ShmemInitHash("WaitEventCustom hash by name",
-					  WAIT_EVENT_CUSTOM_HASH_SIZE,
-					  &info,
-					  HASH_ELEM | HASH_STRINGS);
+	/* initialize the allocation counter and its spinlock. */
+	WaitEventCustomCounter->nextId = WAIT_EVENT_CUSTOM_INITIAL_ID;
+	SpinLockInit(&WaitEventCustomCounter->mutex);
 }
 
 /*

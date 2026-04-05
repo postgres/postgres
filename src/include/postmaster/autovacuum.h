@@ -66,8 +66,4 @@ pg_noreturn extern void AutoVacWorkerMain(const void *startup_data, size_t start
 extern bool AutoVacuumRequestWork(AutoVacuumWorkItemType type,
 								  Oid relationId, BlockNumber blkno);
 
-/* shared memory stuff */
-extern Size AutoVacuumShmemSize(void);
-extern void AutoVacuumShmemInit(void);
-
 #endif							/* AUTOVACUUM_H */

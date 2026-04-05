@@ -491,8 +491,6 @@ pg_noreturn extern void WalReceiverMain(const void *startup_data, size_t startup
 extern void WalRcvRequestApplyReply(void);
 
 /* prototypes for functions in walreceiverfuncs.c */
-extern Size WalRcvShmemSize(void);
-extern void WalRcvShmemInit(void);
 extern void ShutdownWalRcv(void);
 extern bool WalRcvStreaming(void);
 extern bool WalRcvRunning(void);

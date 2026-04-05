@@ -31,8 +31,6 @@ pg_noreturn extern void ReplSlotSyncWorkerMain(const void *startup_data, size_t 
 extern void ShutDownSlotSync(void);
 extern bool SlotSyncWorkerCanRestart(void);
 extern bool IsSyncingReplicationSlots(void);
-extern Size SlotSyncShmemSize(void);
-extern void SlotSyncShmemInit(void);
 extern void SyncReplicationSlots(WalReceiverConn *wrconn);
 
 #endif							/* SLOTSYNC_H */

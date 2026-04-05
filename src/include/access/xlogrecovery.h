@@ -153,9 +153,6 @@ extern PGDLLIMPORT bool reachedConsistency;
 /* Are we currently in standby mode? */
 extern PGDLLIMPORT bool StandbyMode;
 
-extern Size XLogRecoveryShmemSize(void);
-extern void XLogRecoveryShmemInit(void);
-
 extern void InitWalRecovery(ControlFileData *ControlFile,
 							bool *wasShutdown_ptr, bool *haveBackupLabel_ptr,
 							bool *haveTblspcMap_ptr);

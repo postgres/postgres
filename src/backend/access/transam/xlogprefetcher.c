@@ -39,6 +39,7 @@
 #include "storage/fd.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
+#include "storage/subsystems.h"
 #include "utils/fmgrprotos.h"
 #include "utils/guc_hooks.h"
 #include "utils/hsearch.h"
@@ -200,6 +201,14 @@ static LsnReadQueueNextStatus XLogPrefetcherNextBlock(uintptr_t pgsr_private,
 
 static XLogPrefetchStats *SharedStats;
 
+static void XLogPrefetchShmemRequest(void *arg);
+static void XLogPrefetchShmemInit(void *arg);
+
+const ShmemCallbacks XLogPrefetchShmemCallbacks = {
+	.request_fn = XLogPrefetchShmemRequest,
+	.init_fn = XLogPrefetchShmemInit,
+};
+
 static inline LsnReadQueue *
 lrq_alloc(uint32 max_distance,
 		  uint32 max_inflight,
@@ -292,10 +301,25 @@ lrq_complete_lsn(LsnReadQueue *lrq, XLogRecPtr lsn)
 		lrq_prefetch(lrq);
 }
 
-size_t
-XLogPrefetchShmemSize(void)
+static void
+XLogPrefetchShmemRequest(void *arg)
 {
-	return sizeof(XLogPrefetchStats);
+	ShmemRequestStruct(.name = "XLogPrefetchStats",
+					   .size = sizeof(XLogPrefetchStats),
+					   .ptr = (void **) &SharedStats,
+		);
+}
+
+static void
+XLogPrefetchShmemInit(void *arg)
+{
+	pg_atomic_init_u64(&SharedStats->reset_time, GetCurrentTimestamp());
+	pg_atomic_init_u64(&SharedStats->prefetch, 0);
+	pg_atomic_init_u64(&SharedStats->hit, 0);
+	pg_atomic_init_u64(&SharedStats->skip_init, 0);
+	pg_atomic_init_u64(&SharedStats->skip_new, 0);
+	pg_atomic_init_u64(&SharedStats->skip_fpw, 0);
+	pg_atomic_init_u64(&SharedStats->skip_rep, 0);
 }
 
 /*
@@ -313,27 +337,6 @@ XLogPrefetchResetStats(void)
 	pg_atomic_write_u64(&SharedStats->skip_rep, 0);
 }
 
-void
-XLogPrefetchShmemInit(void)
-{
-	bool		found;
-
-	SharedStats = (XLogPrefetchStats *)
-		ShmemInitStruct("XLogPrefetchStats",
-						sizeof(XLogPrefetchStats),
-						&found);
-
-	if (!found)
-	{
-		pg_atomic_init_u64(&SharedStats->reset_time, GetCurrentTimestamp());
-		pg_atomic_init_u64(&SharedStats->prefetch, 0);
-		pg_atomic_init_u64(&SharedStats->hit, 0);
-		pg_atomic_init_u64(&SharedStats->skip_init, 0);
-		pg_atomic_init_u64(&SharedStats->skip_new, 0);
-		pg_atomic_init_u64(&SharedStats->skip_fpw, 0);
-		pg_atomic_init_u64(&SharedStats->skip_rep, 0);
-	}
-}
 
 /*
  * Called when any GUC is changed that affects prefetching.

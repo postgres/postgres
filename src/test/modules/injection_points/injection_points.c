@@ -107,9 +107,13 @@ extern PGDLLEXPORT void injection_wait(const char *name,
 /* track if injection points attached in this process are linked to it */
 static bool injection_point_local = false;
 
-/* Shared memory init callbacks */
-static shmem_request_hook_type prev_shmem_request_hook = NULL;
-static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
+static void injection_shmem_request(void *arg);
+static void injection_shmem_init(void *arg);
+
+static const ShmemCallbacks injection_shmem_callbacks = {
+	.request_fn = injection_shmem_request,
+	.init_fn = injection_shmem_init,
+};
 
 /*
  * Routine for shared memory area initialization, used as a callback
@@ -126,44 +130,23 @@ injection_point_init_state(void *ptr, void *arg)
 	ConditionVariableInit(&state->wait_point);
 }
 
-/* Shared memory initialization when loading module */
 static void
-injection_shmem_request(void)
+injection_shmem_request(void *arg)
 {
-	Size		size;
-
-	if (prev_shmem_request_hook)
-		prev_shmem_request_hook();
-
-	size = MAXALIGN(sizeof(InjectionPointSharedState));
-	RequestAddinShmemSpace(size);
+	ShmemRequestStruct(.name = "injection_points",
+					   .size = sizeof(InjectionPointSharedState),
+					   .ptr = (void **) &inj_state,
+		);
 }
 
 static void
-injection_shmem_startup(void)
+injection_shmem_init(void *arg)
 {
-	bool		found;
-
-	if (prev_shmem_startup_hook)
-		prev_shmem_startup_hook();
-
-	/* Create or attach to the shared memory state */
-	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-
-	inj_state = ShmemInitStruct("injection_points",
-								sizeof(InjectionPointSharedState),
-								&found);
-
-	if (!found)
-	{
-		/*
-		 * First time through, so initialize.  This is shared with the dynamic
-		 * initialization using a DSM.
-		 */
-		injection_point_init_state(inj_state, NULL);
-	}
-
-	LWLockRelease(AddinShmemInitLock);
+	/*
+	 * First time through, so initialize.  This is shared with the dynamic
+	 * initialization using a DSM.
+	 */
+	injection_point_init_state(inj_state, NULL);
 }
 
 /*
@@ -601,9 +584,5 @@ _PG_init(void)
 	if (!process_shared_preload_libraries_in_progress)
 		return;
 
-	/* Shared memory initialization */
-	prev_shmem_request_hook = shmem_request_hook;
-	shmem_request_hook = injection_shmem_request;
-	prev_shmem_startup_hook = shmem_startup_hook;
-	shmem_startup_hook = injection_shmem_startup;
+	RegisterShmemCallbacks(&injection_shmem_callbacks);
 }

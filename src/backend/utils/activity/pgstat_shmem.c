@@ -14,6 +14,7 @@
 
 #include "pgstat.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/memutils.h"
 #include "utils/pgstat_internal.h"
 
@@ -57,6 +58,13 @@ static void pgstat_release_matching_entry_refs(bool discard_pending, ReleaseMatc
 
 static void pgstat_setup_memcxt(void);
 
+static void StatsShmemRequest(void *arg);
+static void StatsShmemInit(void *arg);
+
+const ShmemCallbacks StatsShmemCallbacks = {
+	.request_fn = StatsShmemRequest,
+	.init_fn = StatsShmemInit,
+};
 
 /* parameter for the shared hash */
 static const dshash_parameters dsh_params = {
@@ -123,7 +131,7 @@ pgstat_dsa_init_size(void)
 /*
  * Compute shared memory space needed for cumulative statistics
  */
-Size
+static Size
 StatsShmemSize(void)
 {
 	Size		sz;
@@ -150,100 +158,96 @@ StatsShmemSize(void)
 }
 
 /*
+ * Register shared memory area for cumulative statistics
+ */
+static void
+StatsShmemRequest(void *arg)
+{
+	ShmemRequestStruct(.name = "Shared Memory Stats",
+					   .size = StatsShmemSize(),
+					   .ptr = (void **) &pgStatLocal.shmem,
+		);
+}
+
+/*
  * Initialize cumulative statistics system during startup
  */
-void
-StatsShmemInit(void)
+static void
+StatsShmemInit(void *arg)
 {
-	bool		found;
-	Size		sz;
+	dsa_area   *dsa;
+	dshash_table *dsh;
+	PgStat_ShmemControl *ctl = pgStatLocal.shmem;
+	char	   *p = (char *) ctl;
 
-	sz = StatsShmemSize();
-	pgStatLocal.shmem = (PgStat_ShmemControl *)
-		ShmemInitStruct("Shared Memory Stats", sz, &found);
+	/* the allocation of pgStatLocal.shmem itself */
+	p += MAXALIGN(sizeof(PgStat_ShmemControl));
 
-	if (!IsUnderPostmaster)
+	/*
+	 * Create a small dsa allocation in plain shared memory. This is required
+	 * because postmaster cannot use dsm segments. It also provides a small
+	 * efficiency win.
+	 */
+	ctl->raw_dsa_area = p;
+	dsa = dsa_create_in_place(ctl->raw_dsa_area,
+							  pgstat_dsa_init_size(),
+							  LWTRANCHE_PGSTATS_DSA, NULL);
+	dsa_pin(dsa);
+
+	/*
+	 * To ensure dshash is created in "plain" shared memory, temporarily limit
+	 * size of dsa to the initial size of the dsa.
+	 */
+	dsa_set_size_limit(dsa, pgstat_dsa_init_size());
+
+	/*
+	 * With the limit in place, create the dshash table. XXX: It'd be nice if
+	 * there were dshash_create_in_place().
+	 */
+	dsh = dshash_create(dsa, &dsh_params, NULL);
+	ctl->hash_handle = dshash_get_hash_table_handle(dsh);
+
+	/* lift limit set above */
+	dsa_set_size_limit(dsa, -1);
+
+	/*
+	 * Postmaster will never access these again, thus free the local
+	 * dsa/dshash references.
+	 */
+	dshash_detach(dsh);
+	dsa_detach(dsa);
+
+	pg_atomic_init_u64(&ctl->gc_request_count, 1);
+
+	/* Do the per-kind initialization */
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
 	{
-		dsa_area   *dsa;
-		dshash_table *dsh;
-		PgStat_ShmemControl *ctl = pgStatLocal.shmem;
-		char	   *p = (char *) ctl;
+		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+		char	   *ptr;
 
-		Assert(!found);
+		if (!kind_info)
+			continue;
 
-		/* the allocation of pgStatLocal.shmem itself */
-		p += MAXALIGN(sizeof(PgStat_ShmemControl));
+		/* initialize entry count tracking */
+		if (kind_info->track_entry_count)
+			pg_atomic_init_u64(&ctl->entry_counts[kind - 1], 0);
 
-		/*
-		 * Create a small dsa allocation in plain shared memory. This is
-		 * required because postmaster cannot use dsm segments. It also
-		 * provides a small efficiency win.
-		 */
-		ctl->raw_dsa_area = p;
-		dsa = dsa_create_in_place(ctl->raw_dsa_area,
-								  pgstat_dsa_init_size(),
-								  LWTRANCHE_PGSTATS_DSA, NULL);
-		dsa_pin(dsa);
-
-		/*
-		 * To ensure dshash is created in "plain" shared memory, temporarily
-		 * limit size of dsa to the initial size of the dsa.
-		 */
-		dsa_set_size_limit(dsa, pgstat_dsa_init_size());
-
-		/*
-		 * With the limit in place, create the dshash table. XXX: It'd be nice
-		 * if there were dshash_create_in_place().
-		 */
-		dsh = dshash_create(dsa, &dsh_params, NULL);
-		ctl->hash_handle = dshash_get_hash_table_handle(dsh);
-
-		/* lift limit set above */
-		dsa_set_size_limit(dsa, -1);
-
-		/*
-		 * Postmaster will never access these again, thus free the local
-		 * dsa/dshash references.
-		 */
-		dshash_detach(dsh);
-		dsa_detach(dsa);
-
-		pg_atomic_init_u64(&ctl->gc_request_count, 1);
-
-		/* Do the per-kind initialization */
-		for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
+		/* initialize fixed-numbered stats */
+		if (kind_info->fixed_amount)
 		{
-			const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
-			char	   *ptr;
-
-			if (!kind_info)
-				continue;
-
-			/* initialize entry count tracking */
-			if (kind_info->track_entry_count)
-				pg_atomic_init_u64(&ctl->entry_counts[kind - 1], 0);
-
-			/* initialize fixed-numbered stats */
-			if (kind_info->fixed_amount)
+			if (pgstat_is_kind_builtin(kind))
+				ptr = ((char *) ctl) + kind_info->shared_ctl_off;
+			else
 			{
-				if (pgstat_is_kind_builtin(kind))
-					ptr = ((char *) ctl) + kind_info->shared_ctl_off;
-				else
-				{
-					int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+				int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
 
-					Assert(kind_info->shared_size != 0);
-					ctl->custom_data[idx] = ShmemAlloc(kind_info->shared_size);
-					ptr = ctl->custom_data[idx];
-				}
-
-				kind_info->init_shmem_cb(ptr);
+				Assert(kind_info->shared_size != 0);
+				ctl->custom_data[idx] = ShmemAlloc(kind_info->shared_size);
+				ptr = ctl->custom_data[idx];
 			}
+
+			kind_info->init_shmem_cb(ptr);
 		}
-	}
-	else
-	{
-		Assert(found);
 	}
 }
 

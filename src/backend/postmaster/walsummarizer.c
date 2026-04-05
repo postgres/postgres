@@ -47,6 +47,7 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/wait_event.h"
@@ -109,6 +110,14 @@ typedef struct
 /* Pointer to shared memory state. */
 static WalSummarizerData *WalSummarizerCtl;
 
+static void WalSummarizerShmemRequest(void *arg);
+static void WalSummarizerShmemInit(void *arg);
+
+const ShmemCallbacks WalSummarizerShmemCallbacks = {
+	.request_fn = WalSummarizerShmemRequest,
+	.init_fn = WalSummarizerShmemInit,
+};
+
 /*
  * When we reach end of WAL and need to read more, we sleep for a number of
  * milliseconds that is an integer multiple of MS_PER_SLEEP_QUANTUM. This is
@@ -168,43 +177,34 @@ static void summarizer_wait_for_wal(void);
 static void MaybeRemoveOldWalSummaries(void);
 
 /*
- * Amount of shared memory required for this module.
+ * Register shared memory space needed by this module.
  */
-Size
-WalSummarizerShmemSize(void)
+static void
+WalSummarizerShmemRequest(void *arg)
 {
-	return sizeof(WalSummarizerData);
+	ShmemRequestStruct(.name = "Wal Summarizer Ctl",
+					   .size = sizeof(WalSummarizerData),
+					   .ptr = (void **) &WalSummarizerCtl,
+		);
 }
 
 /*
- * Create or attach to shared memory segment for this module.
+ * Initialize shared memory for this module.
  */
-void
-WalSummarizerShmemInit(void)
+static void
+WalSummarizerShmemInit(void *arg)
 {
-	bool		found;
-
-	WalSummarizerCtl = (WalSummarizerData *)
-		ShmemInitStruct("Wal Summarizer Ctl", WalSummarizerShmemSize(),
-						&found);
-
-	if (!found)
-	{
-		/*
-		 * First time through, so initialize.
-		 *
-		 * We're just filling in dummy values here -- the real initialization
-		 * will happen when GetOldestUnsummarizedLSN() is called for the first
-		 * time.
-		 */
-		WalSummarizerCtl->initialized = false;
-		WalSummarizerCtl->summarized_tli = 0;
-		WalSummarizerCtl->summarized_lsn = InvalidXLogRecPtr;
-		WalSummarizerCtl->lsn_is_exact = false;
-		WalSummarizerCtl->summarizer_pgprocno = INVALID_PROC_NUMBER;
-		WalSummarizerCtl->pending_lsn = InvalidXLogRecPtr;
-		ConditionVariableInit(&WalSummarizerCtl->summary_file_cv);
-	}
+	/*
+	 * We're just filling in dummy values here -- the real initialization will
+	 * happen when GetOldestUnsummarizedLSN() is called for the first time.
+	 */
+	WalSummarizerCtl->initialized = false;
+	WalSummarizerCtl->summarized_tli = 0;
+	WalSummarizerCtl->summarized_lsn = InvalidXLogRecPtr;
+	WalSummarizerCtl->lsn_is_exact = false;
+	WalSummarizerCtl->summarizer_pgprocno = INVALID_PROC_NUMBER;
+	WalSummarizerCtl->pending_lsn = InvalidXLogRecPtr;
+	ConditionVariableInit(&WalSummarizerCtl->summary_file_cv);
 }
 
 /*

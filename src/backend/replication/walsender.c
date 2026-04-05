@@ -86,6 +86,7 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/subsystems.h"
 #include "tcop/dest.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -116,6 +117,14 @@
 
 /* Array of WalSnds in shared memory */
 WalSndCtlData *WalSndCtl = NULL;
+
+static void WalSndShmemRequest(void *arg);
+static void WalSndShmemInit(void *arg);
+
+const ShmemCallbacks WalSndShmemCallbacks = {
+	.request_fn = WalSndShmemRequest,
+	.init_fn = WalSndShmemInit,
+};
 
 /* My slot in the shared memory array */
 WalSnd	   *MyWalSnd = NULL;
@@ -3765,47 +3774,37 @@ WalSndSignals(void)
 	pqsignal(SIGCHLD, SIG_DFL);
 }
 
-/* Report shared-memory space needed by WalSndShmemInit */
-Size
-WalSndShmemSize(void)
+/* Register shared-memory space needed by walsender */
+static void
+WalSndShmemRequest(void *arg)
 {
-	Size		size = 0;
+	Size		size;
 
 	size = offsetof(WalSndCtlData, walsnds);
 	size = add_size(size, mul_size(max_wal_senders, sizeof(WalSnd)));
-
-	return size;
+	ShmemRequestStruct(.name = "Wal Sender Ctl",
+					   .size = size,
+					   .ptr = (void **) &WalSndCtl,
+		);
 }
 
-/* Allocate and initialize walsender-related shared memory */
-void
-WalSndShmemInit(void)
+/* Initialize walsender-related shared memory */
+static void
+WalSndShmemInit(void *arg)
 {
-	bool		found;
-	int			i;
+	for (int i = 0; i < NUM_SYNC_REP_WAIT_MODE; i++)
+		dlist_init(&(WalSndCtl->SyncRepQueue[i]));
 
-	WalSndCtl = (WalSndCtlData *)
-		ShmemInitStruct("Wal Sender Ctl", WalSndShmemSize(), &found);
-
-	if (!found)
+	for (int i = 0; i < max_wal_senders; i++)
 	{
-		/* First time through, so initialize */
-		MemSet(WalSndCtl, 0, WalSndShmemSize());
+		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
-		for (i = 0; i < NUM_SYNC_REP_WAIT_MODE; i++)
-			dlist_init(&(WalSndCtl->SyncRepQueue[i]));
-
-		for (i = 0; i < max_wal_senders; i++)
-		{
-			WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
-
-			SpinLockInit(&walsnd->mutex);
-		}
-
-		ConditionVariableInit(&WalSndCtl->wal_flush_cv);
-		ConditionVariableInit(&WalSndCtl->wal_replay_cv);
-		ConditionVariableInit(&WalSndCtl->wal_confirm_rcv_cv);
+		SpinLockInit(&walsnd->mutex);
 	}
+
+	ConditionVariableInit(&WalSndCtl->wal_flush_cv);
+	ConditionVariableInit(&WalSndCtl->wal_replay_cv);
+	ConditionVariableInit(&WalSndCtl->wal_confirm_rcv_cv);
 }
 
 /*

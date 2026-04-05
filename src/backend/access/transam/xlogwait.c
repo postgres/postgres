@@ -57,6 +57,7 @@
 #include "storage/latch.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/fmgrprotos.h"
 #include "utils/pg_lsn.h"
 #include "utils/snapmgr.h"
@@ -67,6 +68,14 @@ static int	waitlsn_cmp(const pairingheap_node *a, const pairingheap_node *b,
 						void *arg);
 
 struct WaitLSNState *waitLSNState = NULL;
+
+static void WaitLSNShmemRequest(void *arg);
+static void WaitLSNShmemInit(void *arg);
+
+const ShmemCallbacks WaitLSNShmemCallbacks = {
+	.request_fn = WaitLSNShmemRequest,
+	.init_fn = WaitLSNShmemInit,
+};
 
 /*
  * Wait event for each WaitLSNType, used with WaitLatch() to report
@@ -109,41 +118,34 @@ GetCurrentLSNForWaitType(WaitLSNType lsnType)
 	pg_unreachable();
 }
 
-/* Report the amount of shared memory space needed for WaitLSNState. */
-Size
-WaitLSNShmemSize(void)
+/* Register the shared memory space needed for WaitLSNState. */
+static void
+WaitLSNShmemRequest(void *arg)
 {
 	Size		size;
 
 	size = offsetof(WaitLSNState, procInfos);
 	size = add_size(size, mul_size(MaxBackends + NUM_AUXILIARY_PROCS, sizeof(WaitLSNProcInfo)));
-	return size;
+	ShmemRequestStruct(.name = "WaitLSNState",
+					   .size = size,
+					   .ptr = (void **) &waitLSNState,
+		);
 }
 
 /* Initialize the WaitLSNState in the shared memory. */
-void
-WaitLSNShmemInit(void)
+static void
+WaitLSNShmemInit(void *arg)
 {
-	bool		found;
-
-	waitLSNState = (WaitLSNState *) ShmemInitStruct("WaitLSNState",
-													WaitLSNShmemSize(),
-													&found);
-	if (!found)
+	/* Initialize heaps and tracking */
+	for (int i = 0; i < WAIT_LSN_TYPE_COUNT; i++)
 	{
-		int			i;
-
-		/* Initialize heaps and tracking */
-		for (i = 0; i < WAIT_LSN_TYPE_COUNT; i++)
-		{
-			pg_atomic_init_u64(&waitLSNState->minWaitedLSN[i], PG_UINT64_MAX);
-			pairingheap_initialize(&waitLSNState->waitersHeap[i], waitlsn_cmp, NULL);
-		}
-
-		/* Initialize process info array */
-		memset(&waitLSNState->procInfos, 0,
-			   (MaxBackends + NUM_AUXILIARY_PROCS) * sizeof(WaitLSNProcInfo));
+		pg_atomic_init_u64(&waitLSNState->minWaitedLSN[i], PG_UINT64_MAX);
+		pairingheap_initialize(&waitLSNState->waitersHeap[i], waitlsn_cmp, NULL);
 	}
+
+	/* Initialize process info array */
+	memset(&waitLSNState->procInfos, 0,
+		   (MaxBackends + NUM_AUXILIARY_PROCS) * sizeof(WaitLSNProcInfo));
 }
 
 /*

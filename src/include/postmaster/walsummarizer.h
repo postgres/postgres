@@ -19,8 +19,6 @@
 extern PGDLLIMPORT bool summarize_wal;
 extern PGDLLIMPORT int wal_summary_keep_time;
 
-extern Size WalSummarizerShmemSize(void);
-extern void WalSummarizerShmemInit(void);
 pg_noreturn extern void WalSummarizerMain(const void *startup_data, size_t startup_data_len);
 
 extern void GetWalSummarizerState(TimeLineID *summarized_tli,

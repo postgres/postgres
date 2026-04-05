@@ -25,6 +25,7 @@
 #include "lib/qunique.h"
 #include "miscadmin.h"
 #include "storage/lwlock.h"
+#include "storage/subsystems.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -417,6 +418,13 @@ typedef struct BTVacInfo
 
 static BTVacInfo *btvacinfo;
 
+static void BTreeShmemRequest(void *arg);
+static void BTreeShmemInit(void *arg);
+
+const ShmemCallbacks BTreeShmemCallbacks = {
+	.request_fn = BTreeShmemRequest,
+	.init_fn = BTreeShmemInit,
+};
 
 /*
  * _bt_vacuum_cycleid --- get the active vacuum cycle ID for an index,
@@ -553,47 +561,37 @@ _bt_end_vacuum_callback(int code, Datum arg)
 }
 
 /*
- * BTreeShmemSize --- report amount of shared memory space needed
+ * BTreeShmemRequest --- register this module's shared memory
  */
-Size
-BTreeShmemSize(void)
+static void
+BTreeShmemRequest(void *arg)
 {
 	Size		size;
 
 	size = offsetof(BTVacInfo, vacuums);
 	size = add_size(size, mul_size(MaxBackends, sizeof(BTOneVacInfo)));
-	return size;
+
+	ShmemRequestStruct(.name = "BTree Vacuum State",
+					   .size = size,
+					   .ptr = (void **) &btvacinfo,
+		);
 }
 
 /*
  * BTreeShmemInit --- initialize this module's shared memory
  */
-void
-BTreeShmemInit(void)
+static void
+BTreeShmemInit(void *arg)
 {
-	bool		found;
+	/*
+	 * It doesn't really matter what the cycle counter starts at, but having
+	 * it always start the same doesn't seem good.  Seed with low-order bits
+	 * of time() instead.
+	 */
+	btvacinfo->cycle_ctr = (BTCycleId) time(NULL);
 
-	btvacinfo = (BTVacInfo *) ShmemInitStruct("BTree Vacuum State",
-											  BTreeShmemSize(),
-											  &found);
-
-	if (!IsUnderPostmaster)
-	{
-		/* Initialize shared memory area */
-		Assert(!found);
-
-		/*
-		 * It doesn't really matter what the cycle counter starts at, but
-		 * having it always start the same doesn't seem good.  Seed with
-		 * low-order bits of time() instead.
-		 */
-		btvacinfo->cycle_ctr = (BTCycleId) time(NULL);
-
-		btvacinfo->num_vacuums = 0;
-		btvacinfo->max_vacuums = MaxBackends;
-	}
-	else
-		Assert(found);
+	btvacinfo->num_vacuums = 0;
+	btvacinfo->max_vacuums = MaxBackends;
 }
 
 bytea *

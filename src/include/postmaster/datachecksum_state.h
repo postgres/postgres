@@ -17,10 +17,6 @@
 
 #include "storage/procsignal.h"
 
-/* Shared memory */
-extern Size DataChecksumsShmemSize(void);
-extern void DataChecksumsShmemInit(void);
-
 /* Possible operations the Datachecksumsworker can perform */
 typedef enum DataChecksumsWorkerOperation
 {

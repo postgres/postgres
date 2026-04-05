@@ -63,6 +63,7 @@
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
+#include "storage/subsystems.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -142,6 +143,14 @@ typedef struct
 } CheckpointerShmemStruct;
 
 static CheckpointerShmemStruct *CheckpointerShmem;
+
+static void CheckpointerShmemRequest(void *arg);
+static void CheckpointerShmemInit(void *arg);
+
+const ShmemCallbacks CheckpointerShmemCallbacks = {
+	.request_fn = CheckpointerShmemRequest,
+	.init_fn = CheckpointerShmemInit,
+};
 
 /* interval for calling AbsorbSyncRequests in CheckpointWriteDelay */
 #define WRITES_PER_ABSORB		1000
@@ -950,11 +959,11 @@ ReqShutdownXLOG(SIGNAL_ARGS)
  */
 
 /*
- * CheckpointerShmemSize
- *		Compute space needed for checkpointer-related shared memory
+ * CheckpointerShmemRequest
+ *		Register shared memory space needed for checkpointer
  */
-Size
-CheckpointerShmemSize(void)
+static void
+CheckpointerShmemRequest(void *arg)
 {
 	Size		size;
 
@@ -967,39 +976,24 @@ CheckpointerShmemSize(void)
 	size = add_size(size, mul_size(Min(NBuffers,
 									   MAX_CHECKPOINT_REQUESTS),
 								   sizeof(CheckpointerRequest)));
-
-	return size;
+	ShmemRequestStruct(.name = "Checkpointer Data",
+					   .size = size,
+					   .ptr = (void **) &CheckpointerShmem,
+		);
 }
 
 /*
  * CheckpointerShmemInit
- *		Allocate and initialize checkpointer-related shared memory
+ *		Initialize checkpointer-related shared memory
  */
-void
-CheckpointerShmemInit(void)
+static void
+CheckpointerShmemInit(void *arg)
 {
-	Size		size = CheckpointerShmemSize();
-	bool		found;
-
-	CheckpointerShmem = (CheckpointerShmemStruct *)
-		ShmemInitStruct("Checkpointer Data",
-						size,
-						&found);
-
-	if (!found)
-	{
-		/*
-		 * First time through, so initialize.  Note that we zero the whole
-		 * requests array; this is so that CompactCheckpointerRequestQueue can
-		 * assume that any pad bytes in the request structs are zeroes.
-		 */
-		MemSet(CheckpointerShmem, 0, size);
-		SpinLockInit(&CheckpointerShmem->ckpt_lck);
-		CheckpointerShmem->max_requests = Min(NBuffers, MAX_CHECKPOINT_REQUESTS);
-		CheckpointerShmem->head = CheckpointerShmem->tail = 0;
-		ConditionVariableInit(&CheckpointerShmem->start_cv);
-		ConditionVariableInit(&CheckpointerShmem->done_cv);
-	}
+	SpinLockInit(&CheckpointerShmem->ckpt_lck);
+	CheckpointerShmem->max_requests = Min(NBuffers, MAX_CHECKPOINT_REQUESTS);
+	CheckpointerShmem->head = CheckpointerShmem->tail = 0;
+	ConditionVariableInit(&CheckpointerShmem->start_cv);
+	ConditionVariableInit(&CheckpointerShmem->done_cv);
 }
 
 /*

@@ -46,9 +46,6 @@ typedef void (*InjectionPointCallback) (const char *name,
 										const void *private_data,
 										void *arg);
 
-extern Size InjectionPointShmemSize(void);
-extern void InjectionPointShmemInit(void);
-
 extern void InjectionPointAttach(const char *name,
 								 const char *library,
 								 const char *function,

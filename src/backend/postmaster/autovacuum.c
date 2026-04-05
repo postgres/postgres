@@ -98,6 +98,7 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/smgr.h"
+#include "storage/subsystems.h"
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
@@ -308,6 +309,14 @@ typedef struct
 } AutoVacuumShmemStruct;
 
 static AutoVacuumShmemStruct *AutoVacuumShmem;
+
+static void AutoVacuumShmemRequest(void *arg);
+static void AutoVacuumShmemInit(void *arg);
+
+const ShmemCallbacks AutoVacuumShmemCallbacks = {
+	.request_fn = AutoVacuumShmemRequest,
+	.init_fn = AutoVacuumShmemInit,
+};
 
 /*
  * the database list (of avl_dbase elements) in the launcher, and the context
@@ -3545,11 +3554,11 @@ autovac_init(void)
 }
 
 /*
- * AutoVacuumShmemSize
- *		Compute space needed for autovacuum-related shared memory
+ * AutoVacuumShmemRequest
+ *		Register shared memory space needed for autovacuum
  */
-Size
-AutoVacuumShmemSize(void)
+static void
+AutoVacuumShmemRequest(void *arg)
 {
 	Size		size;
 
@@ -3560,53 +3569,41 @@ AutoVacuumShmemSize(void)
 	size = MAXALIGN(size);
 	size = add_size(size, mul_size(autovacuum_worker_slots,
 								   sizeof(WorkerInfoData)));
-	return size;
+
+	ShmemRequestStruct(.name = "AutoVacuum Data",
+					   .size = size,
+					   .ptr = (void **) &AutoVacuumShmem,
+		);
 }
 
 /*
  * AutoVacuumShmemInit
- *		Allocate and initialize autovacuum-related shared memory
+ *		Initialize autovacuum-related shared memory
  */
-void
-AutoVacuumShmemInit(void)
+static void
+AutoVacuumShmemInit(void *arg)
 {
-	bool		found;
+	WorkerInfo	worker;
 
-	AutoVacuumShmem = (AutoVacuumShmemStruct *)
-		ShmemInitStruct("AutoVacuum Data",
-						AutoVacuumShmemSize(),
-						&found);
+	AutoVacuumShmem->av_launcherpid = 0;
+	dclist_init(&AutoVacuumShmem->av_freeWorkers);
+	dlist_init(&AutoVacuumShmem->av_runningWorkers);
+	AutoVacuumShmem->av_startingWorker = NULL;
+	memset(AutoVacuumShmem->av_workItems, 0,
+		   sizeof(AutoVacuumWorkItem) * NUM_WORKITEMS);
 
-	if (!IsUnderPostmaster)
+	worker = (WorkerInfo) ((char *) AutoVacuumShmem +
+						   MAXALIGN(sizeof(AutoVacuumShmemStruct)));
+
+	/* initialize the WorkerInfo free list */
+	for (int i = 0; i < autovacuum_worker_slots; i++)
 	{
-		WorkerInfo	worker;
-		int			i;
-
-		Assert(!found);
-
-		AutoVacuumShmem->av_launcherpid = 0;
-		dclist_init(&AutoVacuumShmem->av_freeWorkers);
-		dlist_init(&AutoVacuumShmem->av_runningWorkers);
-		AutoVacuumShmem->av_startingWorker = NULL;
-		memset(AutoVacuumShmem->av_workItems, 0,
-			   sizeof(AutoVacuumWorkItem) * NUM_WORKITEMS);
-
-		worker = (WorkerInfo) ((char *) AutoVacuumShmem +
-							   MAXALIGN(sizeof(AutoVacuumShmemStruct)));
-
-		/* initialize the WorkerInfo free list */
-		for (i = 0; i < autovacuum_worker_slots; i++)
-		{
-			dclist_push_head(&AutoVacuumShmem->av_freeWorkers,
-							 &worker[i].wi_links);
-			pg_atomic_init_flag(&worker[i].wi_dobalance);
-		}
-
-		pg_atomic_init_u32(&AutoVacuumShmem->av_nworkersForBalance, 0);
-
+		dclist_push_head(&AutoVacuumShmem->av_freeWorkers,
+						 &worker[i].wi_links);
+		pg_atomic_init_flag(&worker[i].wi_dobalance);
 	}
-	else
-		Assert(found);
+
+	pg_atomic_init_u32(&AutoVacuumShmem->av_nworkersForBalance, 0);
 }
 
 /*

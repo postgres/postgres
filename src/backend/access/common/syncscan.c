@@ -50,6 +50,7 @@
 #include "miscadmin.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/rel.h"
 
 
@@ -111,6 +112,14 @@ typedef struct ss_scan_locations_t
 #define SizeOfScanLocations(N) \
 	(offsetof(ss_scan_locations_t, items) + (N) * sizeof(ss_lru_item_t))
 
+static void SyncScanShmemRequest(void *arg);
+static void SyncScanShmemInit(void *arg);
+
+const ShmemCallbacks SyncScanShmemCallbacks = {
+	.request_fn = SyncScanShmemRequest,
+	.init_fn = SyncScanShmemInit,
+};
+
 /* Pointer to struct in shared memory */
 static ss_scan_locations_t *scan_locations;
 
@@ -120,58 +129,47 @@ static BlockNumber ss_search(RelFileLocator relfilelocator,
 
 
 /*
- * SyncScanShmemSize --- report amount of shared memory space needed
+ * SyncScanShmemRequest --- register this module's shared memory
  */
-Size
-SyncScanShmemSize(void)
+static void
+SyncScanShmemRequest(void *arg)
 {
-	return SizeOfScanLocations(SYNC_SCAN_NELEM);
+	ShmemRequestStruct(.name = "Sync Scan Locations List",
+					   .size = SizeOfScanLocations(SYNC_SCAN_NELEM),
+					   .ptr = (void **) &scan_locations,
+		);
 }
 
 /*
  * SyncScanShmemInit --- initialize this module's shared memory
  */
-void
-SyncScanShmemInit(void)
+static void
+SyncScanShmemInit(void *arg)
 {
 	int			i;
-	bool		found;
 
-	scan_locations = (ss_scan_locations_t *)
-		ShmemInitStruct("Sync Scan Locations List",
-						SizeOfScanLocations(SYNC_SCAN_NELEM),
-						&found);
+	scan_locations->head = &scan_locations->items[0];
+	scan_locations->tail = &scan_locations->items[SYNC_SCAN_NELEM - 1];
 
-	if (!IsUnderPostmaster)
+	for (i = 0; i < SYNC_SCAN_NELEM; i++)
 	{
-		/* Initialize shared memory area */
-		Assert(!found);
+		ss_lru_item_t *item = &scan_locations->items[i];
 
-		scan_locations->head = &scan_locations->items[0];
-		scan_locations->tail = &scan_locations->items[SYNC_SCAN_NELEM - 1];
+		/*
+		 * Initialize all slots with invalid values. As scans are started,
+		 * these invalid entries will fall off the LRU list and get replaced
+		 * with real entries.
+		 */
+		item->location.relfilelocator.spcOid = InvalidOid;
+		item->location.relfilelocator.dbOid = InvalidOid;
+		item->location.relfilelocator.relNumber = InvalidRelFileNumber;
+		item->location.location = InvalidBlockNumber;
 
-		for (i = 0; i < SYNC_SCAN_NELEM; i++)
-		{
-			ss_lru_item_t *item = &scan_locations->items[i];
-
-			/*
-			 * Initialize all slots with invalid values. As scans are started,
-			 * these invalid entries will fall off the LRU list and get
-			 * replaced with real entries.
-			 */
-			item->location.relfilelocator.spcOid = InvalidOid;
-			item->location.relfilelocator.dbOid = InvalidOid;
-			item->location.relfilelocator.relNumber = InvalidRelFileNumber;
-			item->location.location = InvalidBlockNumber;
-
-			item->prev = (i > 0) ?
-				(&scan_locations->items[i - 1]) : NULL;
-			item->next = (i < SYNC_SCAN_NELEM - 1) ?
-				(&scan_locations->items[i + 1]) : NULL;
-		}
+		item->prev = (i > 0) ?
+			(&scan_locations->items[i - 1]) : NULL;
+		item->next = (i < SYNC_SCAN_NELEM - 1) ?
+			(&scan_locations->items[i + 1]) : NULL;
 	}
-	else
-		Assert(found);
 }
 
 /*

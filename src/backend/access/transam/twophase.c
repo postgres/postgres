@@ -102,6 +102,7 @@
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/subsystems.h"
 #include "utils/builtins.h"
 #include "utils/injection_point.h"
 #include "utils/memutils.h"
@@ -189,6 +190,14 @@ typedef struct TwoPhaseStateData
 
 static TwoPhaseStateData *TwoPhaseState;
 
+static void TwoPhaseShmemRequest(void *arg);
+static void TwoPhaseShmemInit(void *arg);
+
+const ShmemCallbacks TwoPhaseShmemCallbacks = {
+	.request_fn = TwoPhaseShmemRequest,
+	.init_fn = TwoPhaseShmemInit,
+};
+
 /*
  * Global transaction entry currently locked by us, if any.  Note that any
  * access to the entry pointed to by this variable must be protected by
@@ -234,10 +243,10 @@ static void RemoveTwoPhaseFile(FullTransactionId fxid, bool giveWarning);
 static void RecreateTwoPhaseFile(FullTransactionId fxid, void *content, int len);
 
 /*
- * Initialization of shared memory
+ * Register shared memory for two-phase state.
  */
-Size
-TwoPhaseShmemSize(void)
+static void
+TwoPhaseShmemRequest(void *arg)
 {
 	Size		size;
 
@@ -248,46 +257,40 @@ TwoPhaseShmemSize(void)
 	size = MAXALIGN(size);
 	size = add_size(size, mul_size(max_prepared_xacts,
 								   sizeof(GlobalTransactionData)));
-
-	return size;
+	ShmemRequestStruct(.name = "Prepared Transaction Table",
+					   .size = size,
+					   .ptr = (void **) &TwoPhaseState,
+		);
 }
 
-void
-TwoPhaseShmemInit(void)
+/*
+ * Initialize shared memory for two-phase state.
+ */
+static void
+TwoPhaseShmemInit(void *arg)
 {
-	bool		found;
+	GlobalTransaction gxacts;
+	int			i;
 
-	TwoPhaseState = ShmemInitStruct("Prepared Transaction Table",
-									TwoPhaseShmemSize(),
-									&found);
-	if (!IsUnderPostmaster)
+	TwoPhaseState->freeGXacts = NULL;
+	TwoPhaseState->numPrepXacts = 0;
+
+	/*
+	 * Initialize the linked list of free GlobalTransactionData structs
+	 */
+	gxacts = (GlobalTransaction)
+		((char *) TwoPhaseState +
+		 MAXALIGN(offsetof(TwoPhaseStateData, prepXacts) +
+				  sizeof(GlobalTransaction) * max_prepared_xacts));
+	for (i = 0; i < max_prepared_xacts; i++)
 	{
-		GlobalTransaction gxacts;
-		int			i;
+		/* insert into linked list */
+		gxacts[i].next = TwoPhaseState->freeGXacts;
+		TwoPhaseState->freeGXacts = &gxacts[i];
 
-		Assert(!found);
-		TwoPhaseState->freeGXacts = NULL;
-		TwoPhaseState->numPrepXacts = 0;
-
-		/*
-		 * Initialize the linked list of free GlobalTransactionData structs
-		 */
-		gxacts = (GlobalTransaction)
-			((char *) TwoPhaseState +
-			 MAXALIGN(offsetof(TwoPhaseStateData, prepXacts) +
-					  sizeof(GlobalTransaction) * max_prepared_xacts));
-		for (i = 0; i < max_prepared_xacts; i++)
-		{
-			/* insert into linked list */
-			gxacts[i].next = TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = &gxacts[i];
-
-			/* associate it with a PGPROC assigned by ProcGlobalShmemInit */
-			gxacts[i].pgprocno = GetNumberFromPGProc(&PreparedXactProcs[i]);
-		}
+		/* associate it with a PGPROC assigned by ProcGlobalShmemInit */
+		gxacts[i].pgprocno = GetNumberFromPGProc(&PreparedXactProcs[i]);
 	}
-	else
-		Assert(found);
 }
 
 /*

@@ -541,10 +541,6 @@ typedef struct PgStat_BackendPending
  * Functions in pgstat.c
  */
 
-/* functions called from postmaster */
-extern Size StatsShmemSize(void);
-extern void StatsShmemInit(void);
-
 /* Functions called during server startup / shutdown */
 extern void pgstat_restore_stats(void);
 extern void pgstat_discard_stats(void);

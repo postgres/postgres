@@ -14,8 +14,6 @@
 #ifndef LOGICALCTL_H
 #define LOGICALCTL_H
 
-extern Size LogicalDecodingCtlShmemSize(void);
-extern void LogicalDecodingCtlShmemInit(void);
 extern void StartupLogicalDecodingStatus(bool last_status);
 extern void InitializeProcessXLogLogicalInfo(void);
 extern bool ProcessBarrierUpdateXLogLogicalInfo(void);

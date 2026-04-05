@@ -96,6 +96,7 @@
 #include "storage/procsignal.h"
 #include "storage/reinit.h"
 #include "storage/spin.h"
+#include "storage/subsystems.h"
 #include "storage/sync.h"
 #include "utils/guc_hooks.h"
 #include "utils/guc_tables.h"
@@ -579,7 +580,18 @@ static WALInsertLockPadded *WALInsertLocks = NULL;
 /*
  * We maintain an image of pg_control in shared memory.
  */
+static ControlFileData *LocalControlFile = NULL;
 static ControlFileData *ControlFile = NULL;
+
+static void XLOGShmemRequest(void *arg);
+static void XLOGShmemInit(void *arg);
+static void XLOGShmemAttach(void *arg);
+
+const ShmemCallbacks XLOGShmemCallbacks = {
+	.request_fn = XLOGShmemRequest,
+	.init_fn = XLOGShmemInit,
+	.attach_fn = XLOGShmemAttach,
+};
 
 /*
  * Calculate the amount of space left on the page after 'endptr'. Beware
@@ -5257,7 +5269,8 @@ void
 LocalProcessControlFile(bool reset)
 {
 	Assert(reset || ControlFile == NULL);
-	ControlFile = palloc_object(ControlFileData);
+	LocalControlFile = palloc_object(ControlFileData);
+	ControlFile = LocalControlFile;
 	ReadControlFile();
 	SetLocalDataChecksumState(ControlFile->data_checksum_version);
 }
@@ -5274,10 +5287,10 @@ GetActiveWalLevelOnStandby(void)
 }
 
 /*
- * Initialization of shared memory for XLOG
+ * Register shared memory for XLOG.
  */
-Size
-XLOGShmemSize(void)
+static void
+XLOGShmemRequest(void *arg)
 {
 	Size		size;
 
@@ -5317,23 +5330,24 @@ XLOGShmemSize(void)
 	/* and the buffers themselves */
 	size = add_size(size, mul_size(XLOG_BLCKSZ, XLOGbuffers));
 
-	/*
-	 * Note: we don't count ControlFileData, it comes out of the "slop factor"
-	 * added by CreateSharedMemoryAndSemaphores.  This lets us use this
-	 * routine again below to compute the actual allocation size.
-	 */
-
-	return size;
+	ShmemRequestStruct(.name = "XLOG Ctl",
+					   .size = size,
+					   .ptr = (void **) &XLogCtl,
+		);
+	ShmemRequestStruct(.name = "Control File",
+					   .size = sizeof(ControlFileData),
+					   .ptr = (void **) &ControlFile,
+		);
 }
 
-void
-XLOGShmemInit(void)
+/*
+ * XLOGShmemInit - initialize the XLogCtl shared memory area.
+ */
+static void
+XLOGShmemInit(void *arg)
 {
-	bool		foundCFile,
-				foundXLog;
 	char	   *allocptr;
 	int			i;
-	ControlFileData *localControlFile;
 
 #ifdef WAL_DEBUG
 
@@ -5351,36 +5365,17 @@ XLOGShmemInit(void)
 	}
 #endif
 
-
-	XLogCtl = (XLogCtlData *)
-		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
-
-	localControlFile = ControlFile;
-	ControlFile = (ControlFileData *)
-		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
-
-	if (foundCFile || foundXLog)
-	{
-		/* both should be present or neither */
-		Assert(foundCFile && foundXLog);
-
-		/* Initialize local copy of WALInsertLocks */
-		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
-
-		if (localControlFile)
-			pfree(localControlFile);
-		return;
-	}
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
 
 	/*
 	 * Already have read control file locally, unless in bootstrap mode. Move
 	 * contents into shared memory.
 	 */
-	if (localControlFile)
+	if (LocalControlFile)
 	{
-		memcpy(ControlFile, localControlFile, sizeof(ControlFileData));
-		pfree(localControlFile);
+		memcpy(ControlFile, LocalControlFile, sizeof(ControlFileData));
+		pfree(LocalControlFile);
+		LocalControlFile = NULL;
 	}
 
 	/*
@@ -5440,6 +5435,15 @@ XLOGShmemInit(void)
 	pg_atomic_init_u64(&XLogCtl->logWriteResult, InvalidXLogRecPtr);
 	pg_atomic_init_u64(&XLogCtl->logFlushResult, InvalidXLogRecPtr);
 	pg_atomic_init_u64(&XLogCtl->unloggedLSN, InvalidXLogRecPtr);
+}
+
+/*
+ * XLOGShmemAttach - re-establish WALInsertLocks pointer after attaching.
+ */
+static void
+XLOGShmemAttach(void *arg)
+{
+	WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
 }
 
 /*

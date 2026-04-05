@@ -211,6 +211,7 @@
 #include "storage/lwlock.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
+#include "storage/subsystems.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -346,6 +347,7 @@ static volatile sig_atomic_t launcher_running = false;
 static DataChecksumsWorkerOperation operation;
 
 /* Prototypes */
+static void DataChecksumsShmemRequest(void *arg);
 static bool DatabaseExists(Oid dboid);
 static List *BuildDatabaseList(void);
 static List *BuildRelationList(bool temp_relations, bool include_shared);
@@ -355,6 +357,10 @@ static bool ProcessAllDatabases(void);
 static bool ProcessSingleRelationFork(Relation reln, ForkNumber forkNum, BufferAccessStrategy strategy);
 static void launcher_cancel_handler(SIGNAL_ARGS);
 static void WaitForAllTransactionsToFinish(void);
+
+const ShmemCallbacks DataChecksumsShmemCallbacks = {
+	.request_fn = DataChecksumsShmemRequest,
+};
 
 /*****************************************************************************
  * Functionality for manipulating the data checksum state in the cluster
@@ -1236,35 +1242,16 @@ ProcessAllDatabases(void)
 }
 
 /*
- * DataChecksumStateSize
- *		Compute required space for datachecksumsworker-related shared memory
+ * DataChecksumShmemRequest
+ *		Request datachecksumsworker-related shared memory
  */
-Size
-DataChecksumsShmemSize(void)
+static void
+DataChecksumsShmemRequest(void *arg)
 {
-	Size		size;
-
-	size = sizeof(DataChecksumsStateStruct);
-	size = MAXALIGN(size);
-
-	return size;
-}
-
-/*
- * DataChecksumStateInit
- *		Allocate and initialize datachecksumsworker-related shared memory
- */
-void
-DataChecksumsShmemInit(void)
-{
-	bool		found;
-
-	DataChecksumState = (DataChecksumsStateStruct *)
-		ShmemInitStruct("DataChecksumsWorker Data",
-						DataChecksumsShmemSize(),
-						&found);
-	if (!found)
-		MemSet(DataChecksumState, 0, DataChecksumsShmemSize());
+	ShmemRequestStruct(.name = "DataChecksumsWorker Data",
+					   .size = sizeof(DataChecksumsStateStruct),
+					   .ptr = (void **) &DataChecksumState,
+		);
 }
 
 /*
