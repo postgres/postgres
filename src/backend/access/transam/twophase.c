@@ -282,7 +282,7 @@ TwoPhaseShmemInit(void)
 			gxacts[i].next = TwoPhaseState->freeGXacts;
 			TwoPhaseState->freeGXacts = &gxacts[i];
 
-			/* associate it with a PGPROC assigned by InitProcGlobal */
+			/* associate it with a PGPROC assigned by ProcGlobalShmemInit */
 			gxacts[i].pgprocno = GetNumberFromPGProc(&PreparedXactProcs[i]);
 		}
 	}

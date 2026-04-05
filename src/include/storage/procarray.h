@@ -19,8 +19,6 @@
 #include "utils/snapshot.h"
 
 
-extern Size ProcArrayShmemSize(void);
-extern void ProcArrayShmemInit(void);
 extern void ProcArrayAdd(PGPROC *proc);
 extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid);
 

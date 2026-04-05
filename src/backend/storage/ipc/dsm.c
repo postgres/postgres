@@ -43,6 +43,7 @@
 #include "storage/lwlock.h"
 #include "storage/pg_shmem.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/freepage.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
@@ -109,6 +110,15 @@ static bool dsm_init_done = false;
 
 /* Preallocated DSM space in the main shared memory region. */
 static void *dsm_main_space_begin = NULL;
+static size_t dsm_main_space_size;
+
+static void dsm_main_space_request(void *arg);
+static void dsm_main_space_init(void *arg);
+
+const ShmemCallbacks dsm_shmem_callbacks = {
+	.request_fn = dsm_main_space_request,
+	.init_fn = dsm_main_space_init,
+};
 
 /*
  * List of dynamic shared memory segments used by this backend.
@@ -464,42 +474,40 @@ dsm_set_control_handle(dsm_handle h)
 #endif
 
 /*
- * Reserve some space in the main shared memory segment for DSM segments.
+ * Reserve space in the main shared memory segment for DSM segments.
  */
-size_t
-dsm_estimate_size(void)
+static void
+dsm_main_space_request(void *arg)
 {
-	return 1024 * 1024 * (size_t) min_dynamic_shared_memory;
-}
+	dsm_main_space_size = 1024 * 1024 * (size_t) min_dynamic_shared_memory;
 
-/*
- * Initialize space in the main shared memory segment for DSM segments.
- */
-void
-dsm_shmem_init(void)
-{
-	size_t		size = dsm_estimate_size();
-	bool		found;
-
-	if (size == 0)
+	if (dsm_main_space_size == 0)
 		return;
 
-	dsm_main_space_begin = ShmemInitStruct("Preallocated DSM", size, &found);
-	if (!found)
-	{
-		FreePageManager *fpm = (FreePageManager *) dsm_main_space_begin;
-		size_t		first_page = 0;
-		size_t		pages;
+	ShmemRequestStruct(.name = "Preallocated DSM",
+					   .size = dsm_main_space_size,
+					   .ptr = &dsm_main_space_begin,
+		);
+}
 
-		/* Reserve space for the FreePageManager. */
-		while (first_page * FPM_PAGE_SIZE < sizeof(FreePageManager))
-			++first_page;
+static void
+dsm_main_space_init(void *arg)
+{
+	FreePageManager *fpm = (FreePageManager *) dsm_main_space_begin;
+	size_t		first_page = 0;
+	size_t		pages;
 
-		/* Initialize it and give it all the rest of the space. */
-		FreePageManagerInitialize(fpm, dsm_main_space_begin);
-		pages = (size / FPM_PAGE_SIZE) - first_page;
-		FreePageManagerPut(fpm, first_page, pages);
-	}
+	if (dsm_main_space_size == 0)
+		return;
+
+	/* Reserve space for the FreePageManager. */
+	while (first_page * FPM_PAGE_SIZE < sizeof(FreePageManager))
+		++first_page;
+
+	/* Initialize it and give it all the rest of the space. */
+	FreePageManagerInitialize(fpm, dsm_main_space_begin);
+	pages = (dsm_main_space_size / FPM_PAGE_SIZE) - first_page;
+	FreePageManagerPut(fpm, first_page, pages);
 }
 
 /*

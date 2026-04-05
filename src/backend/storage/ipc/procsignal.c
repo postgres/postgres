@@ -33,6 +33,7 @@
 #include "storage/shmem.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "storage/subsystems.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 #include "utils/wait_event.h"
@@ -106,7 +107,16 @@ struct ProcSignalHeader
 #define BARRIER_CLEAR_BIT(flags, type) \
 	((flags) &= ~(((uint32) 1) << (uint32) (type)))
 
+static void ProcSignalShmemRequest(void *arg);
+static void ProcSignalShmemInit(void *arg);
+
+const ShmemCallbacks ProcSignalShmemCallbacks = {
+	.request_fn = ProcSignalShmemRequest,
+	.init_fn = ProcSignalShmemInit,
+};
+
 NON_EXEC_STATIC ProcSignalHeader *ProcSignal = NULL;
+
 static ProcSignalSlot *MyProcSignalSlot = NULL;
 
 static bool CheckProcSignal(ProcSignalReason reason);
@@ -114,51 +124,39 @@ static void CleanupProcSignalState(int status, Datum arg);
 static void ResetProcSignalBarrierBits(uint32 flags);
 
 /*
- * ProcSignalShmemSize
- *		Compute space needed for ProcSignal's shared memory
+ * ProcSignalShmemRequest
+ *		Register ProcSignal's shared memory needs at postmaster startup
  */
-Size
-ProcSignalShmemSize(void)
+static void
+ProcSignalShmemRequest(void *arg)
 {
 	Size		size;
 
 	size = mul_size(NumProcSignalSlots, sizeof(ProcSignalSlot));
 	size = add_size(size, offsetof(ProcSignalHeader, psh_slot));
-	return size;
+
+	ShmemRequestStruct(.name = "ProcSignal",
+					   .size = size,
+					   .ptr = (void **) &ProcSignal,
+		);
 }
 
-/*
- * ProcSignalShmemInit
- *		Allocate and initialize ProcSignal's shared memory
- */
-void
-ProcSignalShmemInit(void)
+static void
+ProcSignalShmemInit(void *arg)
 {
-	Size		size = ProcSignalShmemSize();
-	bool		found;
+	pg_atomic_init_u64(&ProcSignal->psh_barrierGeneration, 0);
 
-	ProcSignal = (ProcSignalHeader *)
-		ShmemInitStruct("ProcSignal", size, &found);
-
-	/* If we're first, initialize. */
-	if (!found)
+	for (int i = 0; i < NumProcSignalSlots; ++i)
 	{
-		int			i;
+		ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
 
-		pg_atomic_init_u64(&ProcSignal->psh_barrierGeneration, 0);
-
-		for (i = 0; i < NumProcSignalSlots; ++i)
-		{
-			ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
-
-			SpinLockInit(&slot->pss_mutex);
-			pg_atomic_init_u32(&slot->pss_pid, 0);
-			slot->pss_cancel_key_len = 0;
-			MemSet(slot->pss_signalFlags, 0, sizeof(slot->pss_signalFlags));
-			pg_atomic_init_u64(&slot->pss_barrierGeneration, PG_UINT64_MAX);
-			pg_atomic_init_u32(&slot->pss_barrierCheckMask, 0);
-			ConditionVariableInit(&slot->pss_barrierCV);
-		}
+		SpinLockInit(&slot->pss_mutex);
+		pg_atomic_init_u32(&slot->pss_pid, 0);
+		slot->pss_cancel_key_len = 0;
+		MemSet(slot->pss_signalFlags, 0, sizeof(slot->pss_signalFlags));
+		pg_atomic_init_u64(&slot->pss_barrierGeneration, PG_UINT64_MAX);
+		pg_atomic_init_u32(&slot->pss_barrierCheckMask, 0);
+		ConditionVariableInit(&slot->pss_barrierCV);
 	}
 }
 

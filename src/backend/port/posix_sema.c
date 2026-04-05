@@ -159,22 +159,24 @@ PosixSemaphoreKill(sem_t *sem)
 
 
 /*
- * Report amount of shared memory needed for semaphores
+ * Request shared memory needed for semaphores
  */
-Size
-PGSemaphoreShmemSize(int maxSemas)
+void
+PGSemaphoreShmemRequest(int maxSemas)
 {
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	/* No shared memory needed in this case */
-	return 0;
 #else
 	/* Need a PGSemaphoreData per semaphore */
-	return mul_size(maxSemas, sizeof(PGSemaphoreData));
+	ShmemRequestStruct(.name = "Semaphores",
+					   .size = mul_size(maxSemas, sizeof(PGSemaphoreData)),
+					   .ptr = (void **) &sharedSemas,
+		);
 #endif
 }
 
 /*
- * PGReserveSemaphores --- initialize semaphore support
+ * PGSemaphoreInit --- initialize semaphore support
  *
  * This is called during postmaster start or shared memory reinitialization.
  * It should do whatever is needed to be able to support up to maxSemas
@@ -193,10 +195,9 @@ PGSemaphoreShmemSize(int maxSemas)
  * we don't have to expose the counters to other processes.)
  */
 void
-PGReserveSemaphores(int maxSemas)
+PGSemaphoreInit(int maxSemas)
 {
 	struct stat statbuf;
-	bool		found;
 
 	/*
 	 * We use the data directory's inode number to seed the search for free
@@ -214,11 +215,6 @@ PGReserveSemaphores(int maxSemas)
 	mySemPointers = (sem_t **) malloc(maxSemas * sizeof(sem_t *));
 	if (mySemPointers == NULL)
 		elog(PANIC, "out of memory");
-#else
-
-	sharedSemas = (PGSemaphore)
-		ShmemInitStruct("Semaphores", PGSemaphoreShmemSize(maxSemas), &found);
-	Assert(!found);
 #endif
 
 	numSems = 0;

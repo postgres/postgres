@@ -23,6 +23,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/subsystems.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -30,35 +31,25 @@
 /* Number of OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_OID_PREFETCH		8192
 
+static void VarsupShmemRequest(void *arg);
+
 /* pointer to variables struct in shared memory */
 TransamVariablesData *TransamVariables = NULL;
 
+const ShmemCallbacks VarsupShmemCallbacks = {
+	.request_fn = VarsupShmemRequest,
+};
 
 /*
- * Initialization of shared memory for TransamVariables.
+ * Request shared memory for TransamVariables.
  */
-Size
-VarsupShmemSize(void)
+static void
+VarsupShmemRequest(void *arg)
 {
-	return sizeof(TransamVariablesData);
-}
-
-void
-VarsupShmemInit(void)
-{
-	bool		found;
-
-	/* Initialize our shared state struct */
-	TransamVariables = ShmemInitStruct("TransamVariables",
-									   sizeof(TransamVariablesData),
-									   &found);
-	if (!IsUnderPostmaster)
-	{
-		Assert(!found);
-		memset(TransamVariables, 0, sizeof(TransamVariablesData));
-	}
-	else
-		Assert(found);
+	ShmemRequestStruct(.name = "TransamVariables",
+					   .size = sizeof(TransamVariablesData),
+					   .ptr = (void **) &TransamVariables,
+		);
 }
 
 /*

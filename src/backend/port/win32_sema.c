@@ -25,17 +25,16 @@ static void ReleaseSemaphores(int code, Datum arg);
 
 
 /*
- * Report amount of shared memory needed for semaphores
+ * Request shared memory needed for semaphores
  */
-Size
-PGSemaphoreShmemSize(int maxSemas)
+void
+PGSemaphoreShmemRequest(int maxSemas)
 {
 	/* No shared memory needed on Windows */
-	return 0;
 }
 
 /*
- * PGReserveSemaphores --- initialize semaphore support
+ * PGSemaphoreInit --- initialize semaphore support
  *
  * In the Win32 implementation, we acquire semaphores on-demand; the
  * maxSemas parameter is just used to size the array that keeps track of
@@ -44,7 +43,7 @@ PGSemaphoreShmemSize(int maxSemas)
  * process exits.
  */
 void
-PGReserveSemaphores(int maxSemas)
+PGSemaphoreInit(int maxSemas)
 {
 	mySemSet = (HANDLE *) malloc(maxSemas * sizeof(HANDLE));
 	if (mySemSet == NULL)

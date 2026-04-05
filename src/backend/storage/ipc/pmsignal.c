@@ -27,6 +27,7 @@
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/memutils.h"
 
 
@@ -83,6 +84,14 @@ struct PMSignalData
 /* PMSignalState pointer is valid in both postmaster and child processes */
 NON_EXEC_STATIC volatile PMSignalData *PMSignalState = NULL;
 
+static void PMSignalShmemRequest(void *);
+static void PMSignalShmemInit(void *);
+
+const ShmemCallbacks PMSignalShmemCallbacks = {
+	.request_fn = PMSignalShmemRequest,
+	.init_fn = PMSignalShmemInit,
+};
+
 /*
  * Local copy of PMSignalState->num_child_flags, only valid in the
  * postmaster.  Postmaster keeps a local copy so that it doesn't need to
@@ -123,39 +132,29 @@ postmaster_death_handler(SIGNAL_ARGS)
 static void MarkPostmasterChildInactive(int code, Datum arg);
 
 /*
- * PMSignalShmemSize
- *		Compute space needed for pmsignal.c's shared memory
+ * PMSignalShmemRequest - Register pmsignal.c's shared memory needs
  */
-Size
-PMSignalShmemSize(void)
+static void
+PMSignalShmemRequest(void *arg)
 {
-	Size		size;
+	size_t		size;
 
-	size = offsetof(PMSignalData, PMChildFlags);
-	size = add_size(size, mul_size(MaxLivePostmasterChildren(),
-								   sizeof(sig_atomic_t)));
+	num_child_flags = MaxLivePostmasterChildren();
 
-	return size;
+	size = add_size(offsetof(PMSignalData, PMChildFlags),
+					mul_size(num_child_flags, sizeof(sig_atomic_t)));
+	ShmemRequestStruct(.name = "PMSignalState",
+					   .size = size,
+					   .ptr = (void **) &PMSignalState,
+		);
 }
 
-/*
- * PMSignalShmemInit - initialize during shared-memory creation
- */
-void
-PMSignalShmemInit(void)
+static void
+PMSignalShmemInit(void *arg)
 {
-	bool		found;
-
-	PMSignalState = (PMSignalData *)
-		ShmemInitStruct("PMSignalState", PMSignalShmemSize(), &found);
-
-	if (!found)
-	{
-		/* initialize all flags to zeroes */
-		MemSet(unvolatize(PMSignalData *, PMSignalState), 0, PMSignalShmemSize());
-		num_child_flags = MaxLivePostmasterChildren();
-		PMSignalState->num_child_flags = num_child_flags;
-	}
+	Assert(PMSignalState);
+	Assert(num_child_flags > 0);
+	PMSignalState->num_child_flags = num_child_flags;
 }
 
 /*

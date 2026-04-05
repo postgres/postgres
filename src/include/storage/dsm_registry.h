@@ -22,7 +22,5 @@ extern dsa_area *GetNamedDSA(const char *name, bool *found);
 extern dshash_table *GetNamedDSHash(const char *name,
 									const dshash_parameters *params,
 									bool *found);
-extern Size DSMRegistryShmemSize(void);
-extern void DSMRegistryShmemInit(void);
 
 #endif							/* DSM_REGISTRY_H */

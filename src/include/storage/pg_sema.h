@@ -37,11 +37,11 @@ typedef HANDLE PGSemaphore;
 #endif
 
 
-/* Report amount of shared memory needed */
-extern Size PGSemaphoreShmemSize(int maxSemas);
+/* Request shared memory needed for semaphores */
+extern void PGSemaphoreShmemRequest(int maxSemas);
 
 /* Module initialization (called during postmaster start or shmem reinit) */
-extern void PGReserveSemaphores(int maxSemas);
+extern void PGSemaphoreInit(int maxSemas);
 
 /* Allocate a PGSemaphore structure with initial count 1 */
 extern PGSemaphore PGSemaphoreCreate(void);

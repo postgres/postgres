@@ -338,7 +338,8 @@ string_compare(const char *key1, const char *key2, Size keysize)
  * under info->hcxt rather than under TopMemoryContext; the default
  * behavior is only suitable for session-lifespan hash tables.
  * Other flags bits are special-purpose and seldom used, except for those
- * associated with shared-memory hash tables, for which see ShmemInitHash().
+ * associated with shared-memory hash tables, for which see
+ * ShmemRequestHash().
  *
  * Fields in *info are read only when the associated flags bit is set.
  * It is not necessary to initialize other fields of *info.

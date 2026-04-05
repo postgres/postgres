@@ -66,8 +66,6 @@ extern PGDLLIMPORT volatile PMSignalData *PMSignalState;
 /*
  * prototypes for functions in pmsignal.c
  */
-extern Size PMSignalShmemSize(void);
-extern void PMSignalShmemInit(void);
 extern void SendPostmasterSignal(PMSignalReason reason);
 extern bool CheckPostmasterSignal(PMSignalReason reason);
 extern void SetQuitSignalReason(QuitSignalReason reason);
