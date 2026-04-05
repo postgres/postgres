@@ -50,6 +50,7 @@
 #include "storage/dsm.h"
 #include "storage/io_worker.h"
 #include "storage/pg_shmem.h"
+#include "storage/shmem_internal.h"
 #include "tcop/backend_startup.h"
 #include "utils/memutils.h"
 
