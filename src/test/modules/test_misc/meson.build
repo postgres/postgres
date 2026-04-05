@@ -19,6 +19,7 @@ tests += {
       't/008_replslot_single_user.pl',
       't/009_log_temp_files.pl',
       't/010_index_concurrently_upsert.pl',
+      't/011_lock_stats.pl',
     ],
     # The injection points are cluster-wide, so disable installcheck
     'runningcheck': false,
