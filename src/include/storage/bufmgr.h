@@ -371,10 +371,6 @@ extern void MarkDirtyAllUnpinnedBuffers(int32 *buffers_dirtied,
 										int32 *buffers_already_dirty,
 										int32 *buffers_skipped);
 
-/* in buf_init.c */
-extern void BufferManagerShmemInit(void);
-extern Size BufferManagerShmemSize(void);
-
 /* in localbuf.c */
 extern void AtProcExit_LocalBuffers(void);
 

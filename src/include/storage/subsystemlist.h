@@ -36,6 +36,9 @@ PG_SHMEM_SUBSYSTEM(CLOGShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(CommitTsShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(SUBTRANSShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(MultiXactShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(BufferManagerShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(StrategyCtlShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(BufTableShmemCallbacks)
 
 /* predicate lock manager */
 PG_SHMEM_SUBSYSTEM(PredicateLockShmemCallbacks)

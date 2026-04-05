@@ -20,6 +20,8 @@
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
+#include "storage/shmem.h"
+#include "storage/subsystems.h"
 
 #define INT_ACCESS_ONCE(var)	((int)(*((volatile int *)&(var))))
 
@@ -55,6 +57,14 @@ typedef struct
 
 /* Pointers to shared state */
 static BufferStrategyControl *StrategyControl = NULL;
+
+static void StrategyCtlShmemRequest(void *arg);
+static void StrategyCtlShmemInit(void *arg);
+
+const ShmemCallbacks StrategyCtlShmemCallbacks = {
+	.request_fn = StrategyCtlShmemRequest,
+	.init_fn = StrategyCtlShmemInit,
+};
 
 /*
  * Private (non-shared) state for managing a ring of shared buffers to re-use.
@@ -369,80 +379,35 @@ StrategyNotifyBgWriter(int bgwprocno)
 
 
 /*
- * StrategyShmemSize
- *
- * estimate the size of shared memory used by the freelist-related structures.
- *
- * Note: for somewhat historical reasons, the buffer lookup hashtable size
- * is also determined here.
+ * StrategyCtlShmemRequest -- request shared memory for the buffer
+ *		cache replacement strategy.
  */
-Size
-StrategyShmemSize(void)
+static void
+StrategyCtlShmemRequest(void *arg)
 {
-	Size		size = 0;
-
-	/* size of lookup hash table ... see comment in StrategyInitialize */
-	size = add_size(size, BufTableShmemSize(NBuffers + NUM_BUFFER_PARTITIONS));
-
-	/* size of the shared replacement strategy control block */
-	size = add_size(size, MAXALIGN(sizeof(BufferStrategyControl)));
-
-	return size;
+	ShmemRequestStruct(.name = "Buffer Strategy Status",
+					   .size = sizeof(BufferStrategyControl),
+					   .ptr = (void **) &StrategyControl
+		);
 }
 
 /*
- * StrategyInitialize -- initialize the buffer cache replacement
- *		strategy.
- *
- * Assumes: All of the buffers are already built into a linked list.
- *		Only called by postmaster and only during initialization.
+ * StrategyCtlShmemInit -- initialize the buffer cache replacement strategy.
  */
-void
-StrategyInitialize(bool init)
+static void
+StrategyCtlShmemInit(void *arg)
 {
-	bool		found;
+	SpinLockInit(&StrategyControl->buffer_strategy_lock);
 
-	/*
-	 * Initialize the shared buffer lookup hashtable.
-	 *
-	 * Since we can't tolerate running out of lookup table entries, we must be
-	 * sure to specify an adequate table size here.  The maximum steady-state
-	 * usage is of course NBuffers entries, but BufferAlloc() tries to insert
-	 * a new entry before deleting the old.  In principle this could be
-	 * happening in each partition concurrently, so we could need as many as
-	 * NBuffers + NUM_BUFFER_PARTITIONS entries.
-	 */
-	InitBufTable(NBuffers + NUM_BUFFER_PARTITIONS);
+	/* Initialize the clock-sweep pointer */
+	pg_atomic_init_u32(&StrategyControl->nextVictimBuffer, 0);
 
-	/*
-	 * Get or create the shared strategy control block
-	 */
-	StrategyControl = (BufferStrategyControl *)
-		ShmemInitStruct("Buffer Strategy Status",
-						sizeof(BufferStrategyControl),
-						&found);
+	/* Clear statistics */
+	StrategyControl->completePasses = 0;
+	pg_atomic_init_u32(&StrategyControl->numBufferAllocs, 0);
 
-	if (!found)
-	{
-		/*
-		 * Only done once, usually in postmaster
-		 */
-		Assert(init);
-
-		SpinLockInit(&StrategyControl->buffer_strategy_lock);
-
-		/* Initialize the clock-sweep pointer */
-		pg_atomic_init_u32(&StrategyControl->nextVictimBuffer, 0);
-
-		/* Clear statistics */
-		StrategyControl->completePasses = 0;
-		pg_atomic_init_u32(&StrategyControl->numBufferAllocs, 0);
-
-		/* No pending notification */
-		StrategyControl->bgwprocno = -1;
-	}
-	else
-		Assert(!init);
+	/* No pending notification */
+	StrategyControl->bgwprocno = -1;
 }
 
 

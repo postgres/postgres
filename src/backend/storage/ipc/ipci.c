@@ -39,7 +39,6 @@
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/aio_subsys.h"
-#include "storage/bufmgr.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -99,7 +98,6 @@ CalculateShmemSize(void)
 	size = add_size(size, ShmemGetRequestedSize());
 
 	/* legacy subsystems */
-	size = add_size(size, BufferManagerShmemSize());
 	size = add_size(size, LockManagerShmemSize());
 	size = add_size(size, XLogPrefetchShmemSize());
 	size = add_size(size, XLOGShmemSize());
@@ -263,7 +261,6 @@ CreateOrAttachShmemStructs(void)
 	XLOGShmemInit();
 	XLogPrefetchShmemInit();
 	XLogRecoveryShmemInit();
-	BufferManagerShmemInit();
 
 	/*
 	 * Set up lock manager
