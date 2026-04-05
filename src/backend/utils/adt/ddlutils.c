@@ -895,7 +895,7 @@ pg_get_database_ddl_internal(Oid dbid, bool pretty,
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("database \"%s\" is a system database", dbname),
-			 errdetail("DDL generation is not supported for template0 and template1.")));
+				 errdetail("DDL generation is not supported for template0 and template1.")));
 
 	initStringInfo(&buf);
 

@@ -22,12 +22,12 @@ SELECT regexp_replace(
 $$;
 
 CREATE ROLE regress_datdba;
-CREATE DATABASE regress_database_ddl
+CREATE DATABASE regression_database_ddl
     ENCODING utf8 LC_COLLATE "C" LC_CTYPE "C" TEMPLATE template0
     OWNER regress_datdba;
-ALTER DATABASE regress_database_ddl CONNECTION_LIMIT 123;
-ALTER DATABASE regress_database_ddl SET random_page_cost = 2.0;
-ALTER ROLE regress_datdba IN DATABASE regress_database_ddl SET random_page_cost = 1.1;
+ALTER DATABASE regression_database_ddl CONNECTION_LIMIT 123;
+ALTER DATABASE regression_database_ddl SET random_page_cost = 2.0;
+ALTER ROLE regress_datdba IN DATABASE regression_database_ddl SET random_page_cost = 1.1;
 
 -- Database doesn't exist
 SELECT * FROM pg_get_database_ddl('regression_database');
@@ -36,31 +36,31 @@ SELECT * FROM pg_get_database_ddl('regression_database');
 SELECT * FROM pg_get_database_ddl(NULL);
 
 -- Invalid option value (should error)
-SELECT * FROM pg_get_database_ddl('regress_database_ddl', 'owner', 'invalid');
+SELECT * FROM pg_get_database_ddl('regression_database_ddl', 'owner', 'invalid');
 
 -- Duplicate option (should error)
-SELECT * FROM pg_get_database_ddl('regress_database_ddl', 'owner', 'false', 'owner', 'true');
+SELECT * FROM pg_get_database_ddl('regression_database_ddl', 'owner', 'false', 'owner', 'true');
 
 -- Without options
-SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regress_database_ddl');
+SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regression_database_ddl');
 
 -- With owner
-SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regress_database_ddl', 'owner', 'true');
+SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regression_database_ddl', 'owner', 'true');
 
 -- Pretty-printed output
 \pset format unaligned
-SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regress_database_ddl', 'pretty', 'true', 'tablespace', 'false');
+SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regression_database_ddl', 'pretty', 'true', 'tablespace', 'false');
 \pset format aligned
 
 -- Permission check: revoke CONNECT on database
 CREATE ROLE regress_db_ddl_noaccess;
-REVOKE CONNECT ON DATABASE regress_database_ddl FROM PUBLIC;
+REVOKE CONNECT ON DATABASE regression_database_ddl FROM PUBLIC;
 SET ROLE regress_db_ddl_noaccess;
-SELECT * FROM pg_get_database_ddl('regress_database_ddl');  -- should fail
+SELECT * FROM pg_get_database_ddl('regression_database_ddl');  -- should fail
 RESET ROLE;
-GRANT CONNECT ON DATABASE regress_database_ddl TO PUBLIC;
+GRANT CONNECT ON DATABASE regression_database_ddl TO PUBLIC;
 DROP ROLE regress_db_ddl_noaccess;
 
-DROP DATABASE regress_database_ddl;
+DROP DATABASE regression_database_ddl;
 DROP FUNCTION ddl_filter(text);
 DROP ROLE regress_datdba;

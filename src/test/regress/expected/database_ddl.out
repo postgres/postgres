@@ -19,12 +19,12 @@ SELECT regexp_replace(
   '\s*\S*COLLATION\S*\s*=?\s*([''"])[^''"]*\1', '', 'gi')
 $$;
 CREATE ROLE regress_datdba;
-CREATE DATABASE regress_database_ddl
+CREATE DATABASE regression_database_ddl
     ENCODING utf8 LC_COLLATE "C" LC_CTYPE "C" TEMPLATE template0
     OWNER regress_datdba;
-ALTER DATABASE regress_database_ddl CONNECTION_LIMIT 123;
-ALTER DATABASE regress_database_ddl SET random_page_cost = 2.0;
-ALTER ROLE regress_datdba IN DATABASE regress_database_ddl SET random_page_cost = 1.1;
+ALTER DATABASE regression_database_ddl CONNECTION_LIMIT 123;
+ALTER DATABASE regression_database_ddl SET random_page_cost = 2.0;
+ALTER ROLE regress_datdba IN DATABASE regression_database_ddl SET random_page_cost = 1.1;
 -- Database doesn't exist
 SELECT * FROM pg_get_database_ddl('regression_database');
 ERROR:  database "regression_database" does not exist
@@ -37,52 +37,52 @@ SELECT * FROM pg_get_database_ddl(NULL);
 (0 rows)
 
 -- Invalid option value (should error)
-SELECT * FROM pg_get_database_ddl('regress_database_ddl', 'owner', 'invalid');
+SELECT * FROM pg_get_database_ddl('regression_database_ddl', 'owner', 'invalid');
 ERROR:  invalid value for boolean option "owner": invalid
 -- Duplicate option (should error)
-SELECT * FROM pg_get_database_ddl('regress_database_ddl', 'owner', 'false', 'owner', 'true');
+SELECT * FROM pg_get_database_ddl('regression_database_ddl', 'owner', 'false', 'owner', 'true');
 ERROR:  option "owner" is specified more than once
 -- Without options
-SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regress_database_ddl');
-                                    ddl_filter                                     
------------------------------------------------------------------------------------
- CREATE DATABASE regress_database_ddl WITH TEMPLATE = template0 ENCODING = 'UTF8';
- ALTER DATABASE regress_database_ddl OWNER TO regress_datdba;
- ALTER DATABASE regress_database_ddl CONNECTION LIMIT = 123;
- ALTER DATABASE regress_database_ddl SET random_page_cost TO '2.0';
+SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regression_database_ddl');
+                                      ddl_filter                                      
+--------------------------------------------------------------------------------------
+ CREATE DATABASE regression_database_ddl WITH TEMPLATE = template0 ENCODING = 'UTF8';
+ ALTER DATABASE regression_database_ddl OWNER TO regress_datdba;
+ ALTER DATABASE regression_database_ddl CONNECTION LIMIT = 123;
+ ALTER DATABASE regression_database_ddl SET random_page_cost TO '2.0';
 (4 rows)
 
 -- With owner
-SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regress_database_ddl', 'owner', 'true');
-                                    ddl_filter                                     
------------------------------------------------------------------------------------
- CREATE DATABASE regress_database_ddl WITH TEMPLATE = template0 ENCODING = 'UTF8';
- ALTER DATABASE regress_database_ddl OWNER TO regress_datdba;
- ALTER DATABASE regress_database_ddl CONNECTION LIMIT = 123;
- ALTER DATABASE regress_database_ddl SET random_page_cost TO '2.0';
+SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regression_database_ddl', 'owner', 'true');
+                                      ddl_filter                                      
+--------------------------------------------------------------------------------------
+ CREATE DATABASE regression_database_ddl WITH TEMPLATE = template0 ENCODING = 'UTF8';
+ ALTER DATABASE regression_database_ddl OWNER TO regress_datdba;
+ ALTER DATABASE regression_database_ddl CONNECTION LIMIT = 123;
+ ALTER DATABASE regression_database_ddl SET random_page_cost TO '2.0';
 (4 rows)
 
 -- Pretty-printed output
 \pset format unaligned
-SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regress_database_ddl', 'pretty', 'true', 'tablespace', 'false');
+SELECT ddl_filter(pg_get_database_ddl) FROM pg_get_database_ddl('regression_database_ddl', 'pretty', 'true', 'tablespace', 'false');
 ddl_filter
-CREATE DATABASE regress_database_ddl
+CREATE DATABASE regression_database_ddl
     WITH TEMPLATE = template0
     ENCODING = 'UTF8';
-ALTER DATABASE regress_database_ddl OWNER TO regress_datdba;
-ALTER DATABASE regress_database_ddl CONNECTION LIMIT = 123;
-ALTER DATABASE regress_database_ddl SET random_page_cost TO '2.0';
+ALTER DATABASE regression_database_ddl OWNER TO regress_datdba;
+ALTER DATABASE regression_database_ddl CONNECTION LIMIT = 123;
+ALTER DATABASE regression_database_ddl SET random_page_cost TO '2.0';
 (4 rows)
 \pset format aligned
 -- Permission check: revoke CONNECT on database
 CREATE ROLE regress_db_ddl_noaccess;
-REVOKE CONNECT ON DATABASE regress_database_ddl FROM PUBLIC;
+REVOKE CONNECT ON DATABASE regression_database_ddl FROM PUBLIC;
 SET ROLE regress_db_ddl_noaccess;
-SELECT * FROM pg_get_database_ddl('regress_database_ddl');  -- should fail
-ERROR:  permission denied for database regress_database_ddl
+SELECT * FROM pg_get_database_ddl('regression_database_ddl');  -- should fail
+ERROR:  permission denied for database regression_database_ddl
 RESET ROLE;
-GRANT CONNECT ON DATABASE regress_database_ddl TO PUBLIC;
+GRANT CONNECT ON DATABASE regression_database_ddl TO PUBLIC;
 DROP ROLE regress_db_ddl_noaccess;
-DROP DATABASE regress_database_ddl;
+DROP DATABASE regression_database_ddl;
 DROP FUNCTION ddl_filter(text);
 DROP ROLE regress_datdba;
