@@ -60,6 +60,7 @@ typedef struct ScanKeyData ScanKeyData;
 typedef struct SnapshotData *Snapshot;
 typedef struct SortSupportData *SortSupport;
 typedef struct TIDBitmap TIDBitmap;
+typedef struct TriggerInstrumentation TriggerInstrumentation;
 typedef struct TupleConversionMap TupleConversionMap;
 typedef struct TupleDescData *TupleDesc;
 typedef struct Tuplesortstate Tuplesortstate;
@@ -552,7 +553,7 @@ typedef struct ResultRelInfo
 	ExprState **ri_TrigWhenExprs;
 
 	/* optional runtime measurements for triggers */
-	Instrumentation *ri_TrigInstrument;
+	TriggerInstrumentation *ri_TrigInstrument;
 
 	/* On-demand created slots for triggers / returning processing */
 	TupleTableSlot *ri_ReturningSlot;	/* for trigger output tuples */

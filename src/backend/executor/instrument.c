@@ -26,28 +26,20 @@ static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
 static void WalUsageAdd(WalUsage *dst, WalUsage *add);
 
 
-/* Allocate new instrumentation structure(s) */
+/* Allocate new instrumentation structure */
 Instrumentation *
-InstrAlloc(int n, int instrument_options, bool async_mode)
+InstrAlloc(int instrument_options, bool async_mode)
 {
 	Instrumentation *instr;
 
 	/* initialize all fields to zeroes, then modify as needed */
-	instr = palloc0(n * sizeof(Instrumentation));
+	instr = palloc0_object(Instrumentation);
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_WAL))
 	{
-		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
-		bool		need_wal = (instrument_options & INSTRUMENT_WAL) != 0;
-		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
-		int			i;
-
-		for (i = 0; i < n; i++)
-		{
-			instr[i].need_bufusage = need_buffers;
-			instr[i].need_walusage = need_wal;
-			instr[i].need_timer = need_timer;
-			instr[i].async_mode = async_mode;
-		}
+		instr->need_bufusage = (instrument_options & INSTRUMENT_BUFFERS) != 0;
+		instr->need_walusage = (instrument_options & INSTRUMENT_WAL) != 0;
+		instr->need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
+		instr->async_mode = async_mode;
 	}
 
 	return instr;
@@ -194,6 +186,32 @@ InstrAggNode(Instrumentation *dst, Instrumentation *add)
 
 	if (dst->need_walusage)
 		WalUsageAdd(&dst->walusage, &add->walusage);
+}
+
+/* Trigger instrumentation handling */
+TriggerInstrumentation *
+InstrAllocTrigger(int n, int instrument_options)
+{
+	TriggerInstrumentation *tginstr = palloc0_array(TriggerInstrumentation, n);
+	int			i;
+
+	for (i = 0; i < n; i++)
+		InstrInit(&tginstr[i].instr, instrument_options);
+
+	return tginstr;
+}
+
+void
+InstrStartTrigger(TriggerInstrumentation *tginstr)
+{
+	InstrStartNode(&tginstr->instr);
+}
+
+void
+InstrStopTrigger(TriggerInstrumentation *tginstr, int64 firings)
+{
+	InstrStopNode(&tginstr->instr, 0);
+	tginstr->firings += firings;
 }
 
 /* note current values during parallel executor startup */

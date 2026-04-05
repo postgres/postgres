@@ -100,17 +100,28 @@ typedef struct WorkerInstrumentation
 	Instrumentation instrument[FLEXIBLE_ARRAY_MEMBER];
 } WorkerInstrumentation;
 
+typedef struct TriggerInstrumentation
+{
+	Instrumentation instr;
+	int64		firings;		/* number of times the instrumented trigger
+								 * was fired */
+} TriggerInstrumentation;
+
 extern PGDLLIMPORT BufferUsage pgBufferUsage;
 extern PGDLLIMPORT WalUsage pgWalUsage;
 
-extern Instrumentation *InstrAlloc(int n, int instrument_options,
-								   bool async_mode);
+extern Instrumentation *InstrAlloc(int instrument_options, bool async_mode);
 extern void InstrInit(Instrumentation *instr, int instrument_options);
 extern void InstrStartNode(Instrumentation *instr);
 extern void InstrStopNode(Instrumentation *instr, double nTuples);
 extern void InstrUpdateTupleCount(Instrumentation *instr, double nTuples);
 extern void InstrEndLoop(Instrumentation *instr);
 extern void InstrAggNode(Instrumentation *dst, Instrumentation *add);
+
+extern TriggerInstrumentation *InstrAllocTrigger(int n, int instrument_options);
+extern void InstrStartTrigger(TriggerInstrumentation *tginstr);
+extern void InstrStopTrigger(TriggerInstrumentation *tginstr, int64 firings);
+
 extern void InstrStartParallelQuery(void);
 extern void InstrEndParallelQuery(BufferUsage *bufusage, WalUsage *walusage);
 extern void InstrAccumParallelQuery(BufferUsage *bufusage, WalUsage *walusage);
