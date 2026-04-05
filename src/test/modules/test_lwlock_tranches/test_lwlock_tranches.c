@@ -21,14 +21,6 @@
 
 PG_MODULE_MAGIC;
 
-#define STARTUP_TRANCHE_NAME "test_lwlock_tranches_startup"
-#define DYNAMIC_TRANCHE_NAME "test_lwlock_tranches_dynamic"
-
-#define NUM_STARTUP_TRANCHES (32)
-#define NUM_DYNAMIC_TRANCHES (256 - NUM_STARTUP_TRANCHES)
-
-#define GET_TRANCHE_NAME(a) GetLWLockIdentifier(PG_WAIT_LWLOCK, (a))
-
 static shmem_request_hook_type prev_shmem_request_hook;
 static void test_lwlock_tranches_shmem_request(void);
 
@@ -45,36 +37,46 @@ test_lwlock_tranches_shmem_request(void)
 	if (prev_shmem_request_hook)
 		prev_shmem_request_hook();
 
-	for (int i = 0; i < NUM_STARTUP_TRANCHES; i++)
-		RequestNamedLWLockTranche(STARTUP_TRANCHE_NAME, 1);
+	/*
+	 * Request some tranches with RequestNamedLWLockTranche() for
+	 * test_startup_lwlocks()
+	 */
+	RequestNamedLWLockTranche("test_lwlock_tranches_startup", 1);
+	RequestNamedLWLockTranche("test_lwlock_tranches_startup10", 10);
 }
 
 /*
- * Checks that GetLWLockIdentifier() returns the expected value for tranches
- * registered via RequestNamedLWLockTranche() and LWLockNewTrancheId().
+ * Test locks requested with RequestNamedLWLockTranche
  */
-PG_FUNCTION_INFO_V1(test_lwlock_tranches);
+PG_FUNCTION_INFO_V1(test_startup_lwlocks);
 Datum
-test_lwlock_tranches(PG_FUNCTION_ARGS)
+test_startup_lwlocks(PG_FUNCTION_ARGS)
 {
-	int			dynamic_tranches[NUM_DYNAMIC_TRANCHES];
+	LWLockPadded *lwlock_startup;
+	LWLockPadded *lwlock_startup10;
 
-	for (int i = 0; i < NUM_DYNAMIC_TRANCHES; i++)
-		dynamic_tranches[i] = LWLockNewTrancheId(DYNAMIC_TRANCHE_NAME);
+	/* Check that the locks can be used */
+	lwlock_startup = GetNamedLWLockTranche("test_lwlock_tranches_startup");
+	lwlock_startup10 = GetNamedLWLockTranche("test_lwlock_tranches_startup10");
 
-	for (int i = 0; i < NUM_STARTUP_TRANCHES; i++)
-	{
-		if (strcmp(GET_TRANCHE_NAME(LWTRANCHE_FIRST_USER_DEFINED + i),
-				   STARTUP_TRANCHE_NAME) != 0)
-			elog(ERROR, "incorrect startup lock tranche name");
-	}
+	LWLockAcquire(&lwlock_startup->lock, LW_EXCLUSIVE);
+	for (int i = 0; i < 10; i++)
+		LWLockAcquire(&lwlock_startup10[i].lock, LW_EXCLUSIVE);
 
-	for (int i = 0; i < NUM_DYNAMIC_TRANCHES; i++)
-	{
-		if (strcmp(GET_TRANCHE_NAME(dynamic_tranches[i]),
-				   DYNAMIC_TRANCHE_NAME) != 0)
-			elog(ERROR, "incorrect dynamic lock tranche name");
-	}
+	LWLockRelease(&lwlock_startup->lock);
+	for (int i = 0; i < 10; i++)
+		LWLockRelease(&lwlock_startup10[i].lock);
+
+	/*
+	 * Check that GetLWLockIdentifier() returns the expected value for
+	 * tranches
+	 */
+	if (strcmp("test_lwlock_tranches_startup",
+			   GetLWLockIdentifier(PG_WAIT_LWLOCK, LWTRANCHE_FIRST_USER_DEFINED)) != 0)
+		elog(ERROR, "incorrect startup lock tranche name");
+	if (strcmp("test_lwlock_tranches_startup10",
+			   GetLWLockIdentifier(PG_WAIT_LWLOCK, LWTRANCHE_FIRST_USER_DEFINED + 1)) != 0)
+		elog(ERROR, "incorrect startup lock tranche name");
 
 	PG_RETURN_VOID();
 }
@@ -82,15 +84,16 @@ test_lwlock_tranches(PG_FUNCTION_ARGS)
 /*
  * Wrapper for LWLockNewTrancheId().
  */
-PG_FUNCTION_INFO_V1(test_lwlock_tranche_creation);
+PG_FUNCTION_INFO_V1(test_lwlock_tranche_create);
 Datum
-test_lwlock_tranche_creation(PG_FUNCTION_ARGS)
+test_lwlock_tranche_create(PG_FUNCTION_ARGS)
 {
 	char	   *tranche_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_DATUM(0));
+	int			tranche_id;
 
-	(void) LWLockNewTrancheId(tranche_name);
+	tranche_id = LWLockNewTrancheId(tranche_name);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(tranche_id);
 }
 
 /*
@@ -105,6 +108,21 @@ test_lwlock_tranche_lookup(PG_FUNCTION_ARGS)
 	(void) GetNamedLWLockTranche(tranche_name);
 
 	PG_RETURN_VOID();
+}
+
+PG_FUNCTION_INFO_V1(test_lwlock_get_lwlock_identifier);
+Datum
+test_lwlock_get_lwlock_identifier(PG_FUNCTION_ARGS)
+{
+	int			eventId = PG_GETARG_INT32(0);
+	const char *tranche_name;
+
+	tranche_name = GetLWLockIdentifier(PG_WAIT_LWLOCK, eventId);
+
+	if (tranche_name)
+		PG_RETURN_TEXT_P(cstring_to_text(tranche_name));
+	else
+		PG_RETURN_NULL();
 }
 
 /*

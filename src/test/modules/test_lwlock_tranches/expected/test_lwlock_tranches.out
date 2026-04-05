@@ -1,25 +1,60 @@
 CREATE EXTENSION test_lwlock_tranches;
-SELECT test_lwlock_tranches();
- test_lwlock_tranches 
+-- Test lock tranches created with RequestNamedLWLockTranche()
+SELECT test_startup_lwlocks();
+ test_startup_lwlocks 
 ----------------------
  
 (1 row)
 
-SELECT test_lwlock_tranche_creation(NULL);
-ERROR:  tranche name cannot be NULL
-SELECT test_lwlock_tranche_creation(repeat('a', 64));
-ERROR:  tranche name too long
-DETAIL:  LWLock tranche names must be no longer than 63 bytes.
-SELECT test_lwlock_tranche_creation('test');
-ERROR:  maximum number of tranches already registered
-DETAIL:  No more than 256 tranches may be registered.
-SELECT test_lwlock_tranche_lookup('test_lwlock_tranches_startup');
- test_lwlock_tranche_lookup 
-----------------------------
- 
+-- Test creating new lock tranches with LWLockNewTrancheId()
+CREATE TEMP TABLE test_tranches(tranche_name text, tranche_id int);
+INSERT INTO test_tranches VALUES
+    ('test_tranche_a', test_lwlock_tranche_create('test_tranche_a')),
+    ('test_tranche_b', test_lwlock_tranche_create('test_tranche_b'));
+-- You can create multiple tranches with the same name. It's confusing, so
+-- not recommended, but test it.
+INSERT INTO test_tranches VALUES
+    ('test_tranche_duplicate', test_lwlock_tranche_create('test_tranche_duplicate')),
+    ('test_tranche_duplicate', test_lwlock_tranche_create('test_tranche_duplicate'));
+-- Check that all tranches were assigned different tranche IDs, including
+-- the ones with duplicate names
+select count(distinct tranche_id) from  test_tranches;
+ count 
+-------
+     4
 (1 row)
 
+-- Test GetLWLockIdentifier() on tranches created with LWLockNewTrancheId()
+select tranche_name, test_lwlock_get_lwlock_identifier(tranche_id) as lookup_result
+from test_tranches;
+      tranche_name      |     lookup_result      
+------------------------+------------------------
+ test_tranche_a         | test_tranche_a
+ test_tranche_b         | test_tranche_b
+ test_tranche_duplicate | test_tranche_duplicate
+ test_tranche_duplicate | test_tranche_duplicate
+(4 rows)
+
+-- negative tests
+SELECT test_lwlock_tranche_create(NULL);
+ERROR:  tranche name cannot be NULL
+SELECT test_lwlock_tranche_create(repeat('a', 64));
+ERROR:  tranche name too long
+DETAIL:  LWLock tranche names must be no longer than 63 bytes.
 SELECT test_lwlock_tranche_lookup('bogus');
 ERROR:  requested tranche is not registered
+SELECT test_lwlock_tranche_lookup('test_tranche_a');
+ERROR:  requested tranche was not registered with RequestNamedLWLockTranche()
 SELECT test_lwlock_initialize(65535);
 ERROR:  tranche 65535 is not registered
+-- Test what happens when you use up all the slots.
+--
+-- MAX_USER_DEFINED_TRANCHES is 256. Two locks were created with
+-- RequestNamedLWLockTranche() when the library was loaded, and we created
+-- four more.
+insert into test_tranches
+    select 'test_tranche_consume_all', test_lwlock_tranche_create('test_tranche_consume_all')
+    from generate_series(1, 256 - 2 - 4);
+select test_lwlock_tranche_create('out-of-tranches');
+ERROR:  maximum number of tranches already registered
+DETAIL:  No more than 256 tranches may be registered.
