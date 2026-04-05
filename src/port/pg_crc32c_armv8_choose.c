@@ -108,7 +108,8 @@ pg_crc32c_armv8_available(void)
 #endif
 }
 
-static inline bool
+#ifdef USE_PMULL_CRC32C_WITH_RUNTIME_CHECK
+static bool
 pg_pmull_available(void)
 {
 #if defined(__aarch64__) && defined(HWCAP_PMULL)
@@ -128,6 +129,7 @@ pg_pmull_available(void)
 	return false;
 #endif
 }
+#endif							/* USE_PMULL_CRC32C_WITH_RUNTIME_CHECK */
 
 /*
  * This gets called on the first call. It replaces the function pointer
