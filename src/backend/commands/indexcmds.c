@@ -3990,7 +3990,9 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 
 		/* Create new index definition based on given index */
 		newIndexId = index_create_copy(heapRel,
-									   true,
+									   INDEX_CREATE_CONCURRENT |
+									   INDEX_CREATE_SKIP_BUILD |
+									   INDEX_CREATE_SUPPRESS_PROGRESS,
 									   idx->indexId,
 									   tablespaceid,
 									   concurrentName);

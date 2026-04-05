@@ -3570,7 +3570,8 @@ RelationTruncateIndexes(Relation heapRelation)
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
-		index_build(heapRelation, currentIndex, indexInfo, true, false);
+		index_build(heapRelation, currentIndex, indexInfo, true, false,
+					true);
 
 		/* We're done with this index */
 		index_close(currentIndex, NoLock);
