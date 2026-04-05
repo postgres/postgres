@@ -53,3 +53,6 @@ PG_SHMEM_SUBSYSTEM(ProcSignalShmemCallbacks)
 
 /* other modules that need some shared memory space */
 PG_SHMEM_SUBSYSTEM(AsyncShmemCallbacks)
+
+/* AIO subsystem. This delegates to the method-specific callbacks */
+PG_SHMEM_SUBSYSTEM(AioShmemCallbacks)

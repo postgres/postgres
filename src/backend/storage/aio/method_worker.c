@@ -41,6 +41,7 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/proc.h"
+#include "storage/shmem.h"
 #include "tcop/tcopprot.h"
 #include "utils/injection_point.h"
 #include "utils/memdebug.h"
@@ -73,16 +74,16 @@ typedef struct PgAioWorkerControl
 } PgAioWorkerControl;
 
 
-static size_t pgaio_worker_shmem_size(void);
-static void pgaio_worker_shmem_init(bool first_time);
+static void pgaio_worker_shmem_request(void *arg);
+static void pgaio_worker_shmem_init(void *arg);
 
 static bool pgaio_worker_needs_synchronous_execution(PgAioHandle *ioh);
 static int	pgaio_worker_submit(uint16 num_staged_ios, PgAioHandle **staged_ios);
 
 
 const IoMethodOps pgaio_worker_ops = {
-	.shmem_size = pgaio_worker_shmem_size,
-	.shmem_init = pgaio_worker_shmem_init,
+	.shmem_callbacks.request_fn = pgaio_worker_shmem_request,
+	.shmem_callbacks.init_fn = pgaio_worker_shmem_init,
 
 	.needs_synchronous_execution = pgaio_worker_needs_synchronous_execution,
 	.submit = pgaio_worker_submit,
@@ -99,64 +100,45 @@ static PgAioWorkerSubmissionQueue *io_worker_submission_queue;
 static PgAioWorkerControl *io_worker_control;
 
 
-static size_t
-pgaio_worker_queue_shmem_size(int *queue_size)
+static void
+pgaio_worker_shmem_request(void *arg)
 {
-	/* Round size up to next power of two so we can make a mask. */
-	*queue_size = pg_nextpower2_32(io_worker_queue_size);
-
-	return offsetof(PgAioWorkerSubmissionQueue, sqes) +
-		sizeof(int) * *queue_size;
-}
-
-static size_t
-pgaio_worker_control_shmem_size(void)
-{
-	return offsetof(PgAioWorkerControl, workers) +
-		sizeof(PgAioWorkerSlot) * MAX_IO_WORKERS;
-}
-
-static size_t
-pgaio_worker_shmem_size(void)
-{
-	size_t		sz;
+	size_t		size;
 	int			queue_size;
 
-	sz = pgaio_worker_queue_shmem_size(&queue_size);
-	sz = add_size(sz, pgaio_worker_control_shmem_size());
+	/* Round size up to next power of two so we can make a mask. */
+	queue_size = pg_nextpower2_32(io_worker_queue_size);
 
-	return sz;
+	size = offsetof(PgAioWorkerSubmissionQueue, sqes) + sizeof(int) * queue_size;
+	ShmemRequestStruct(.name = "AioWorkerSubmissionQueue",
+					   .size = size,
+					   .ptr = (void **) &io_worker_submission_queue,
+		);
+
+	size = offsetof(PgAioWorkerControl, workers) + sizeof(PgAioWorkerSlot) * MAX_IO_WORKERS;
+	ShmemRequestStruct(.name = "AioWorkerControl",
+					   .size = size,
+					   .ptr = (void **) &io_worker_control,
+		);
 }
 
 static void
-pgaio_worker_shmem_init(bool first_time)
+pgaio_worker_shmem_init(void *arg)
 {
-	bool		found;
 	int			queue_size;
 
-	io_worker_submission_queue =
-		ShmemInitStruct("AioWorkerSubmissionQueue",
-						pgaio_worker_queue_shmem_size(&queue_size),
-						&found);
-	if (!found)
-	{
-		io_worker_submission_queue->size = queue_size;
-		io_worker_submission_queue->head = 0;
-		io_worker_submission_queue->tail = 0;
-	}
+	/* Round size up like in pgaio_worker_shmem_request() */
+	queue_size = pg_nextpower2_32(io_worker_queue_size);
 
-	io_worker_control =
-		ShmemInitStruct("AioWorkerControl",
-						pgaio_worker_control_shmem_size(),
-						&found);
-	if (!found)
+	io_worker_submission_queue->size = queue_size;
+	io_worker_submission_queue->head = 0;
+	io_worker_submission_queue->tail = 0;
+
+	io_worker_control->idle_worker_mask = 0;
+	for (int i = 0; i < MAX_IO_WORKERS; ++i)
 	{
-		io_worker_control->idle_worker_mask = 0;
-		for (int i = 0; i < MAX_IO_WORKERS; ++i)
-		{
-			io_worker_control->workers[i].latch = NULL;
-			io_worker_control->workers[i].in_use = false;
-		}
+		io_worker_control->workers[i].latch = NULL;
+		io_worker_control->workers[i].in_use = false;
 	}
 }
 

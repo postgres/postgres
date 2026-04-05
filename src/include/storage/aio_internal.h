@@ -20,6 +20,8 @@
 #include "port/pg_iovec.h"
 #include "storage/aio.h"
 #include "storage/condition_variable.h"
+#include "storage/ipc.h"
+#include "storage/shmem.h"
 
 
 /*
@@ -267,20 +269,8 @@ typedef struct IoMethodOps
 	 */
 	bool		wait_on_fd_before_close;
 
-
 	/* global initialization */
-
-	/*
-	 * Amount of additional shared memory to reserve for the io_method. Called
-	 * just like a normal ipci.c style *Size() function. Optional.
-	 */
-	size_t		(*shmem_size) (void);
-
-	/*
-	 * Initialize shared memory. First time is true if AIO's shared memory was
-	 * just initialized, false otherwise. Optional.
-	 */
-	void		(*shmem_init) (bool first_time);
+	ShmemCallbacks shmem_callbacks;
 
 	/*
 	 * Per-backend initialization. Optional.
