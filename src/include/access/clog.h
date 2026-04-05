@@ -40,8 +40,6 @@ extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
 									   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
 extern XidStatus TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn);
 
-extern Size CLOGShmemSize(void);
-extern void CLOGShmemInit(void);
 extern void BootStrapCLOG(void);
 extern void StartupCLOG(void);
 extern void TrimCLOG(void);

@@ -130,6 +130,7 @@
 
 #include <unistd.h>
 
+#include "access/slru.h"
 #include "common/int.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -302,8 +303,6 @@ Datum		pg_numa_available(PG_FUNCTION_ARGS);
  * re-establish the struct descriptors.  By calling the same function in both
  * cases, we ensure that all the shmem areas are registered the same way in
  * all processes.
- *
- * 'desc' is a backend-private handle for the shared memory area.
  *
  * 'options' defines the name and size of the area, and any other optional
  * features.  Leave unused options as zeros.  The options are copied to
@@ -546,6 +545,9 @@ InitShmemIndexEntry(ShmemRequest *request)
 		case SHMEM_KIND_HASH:
 			shmem_hash_init(structPtr, request->options);
 			break;
+		case SHMEM_KIND_SLRU:
+			shmem_slru_init(structPtr, request->options);
+			break;
 	}
 }
 
@@ -598,6 +600,9 @@ AttachShmemIndexEntry(ShmemRequest *request, bool missing_ok)
 			break;
 		case SHMEM_KIND_HASH:
 			shmem_hash_attach(index_entry->location, request->options);
+			break;
+		case SHMEM_KIND_SLRU:
+			shmem_slru_attach(index_entry->location, request->options);
 			break;
 	}
 

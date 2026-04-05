@@ -121,8 +121,6 @@ extern void AtEOXact_MultiXact(void);
 extern void AtPrepare_MultiXact(void);
 extern void PostPrepare_MultiXact(FullTransactionId fxid);
 
-extern Size MultiXactShmemSize(void);
-extern void MultiXactShmemInit(void);
 extern void BootStrapMultiXact(void);
 extern void StartupMultiXact(void);
 extern void TrimMultiXact(void);

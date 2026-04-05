@@ -32,6 +32,13 @@ PG_SHMEM_SUBSYSTEM(DSMRegistryShmemCallbacks)
 
 /* xlog, clog, and buffers */
 PG_SHMEM_SUBSYSTEM(VarsupShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(CLOGShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(CommitTsShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(SUBTRANSShmemCallbacks)
+PG_SHMEM_SUBSYSTEM(MultiXactShmemCallbacks)
+
+/* predicate lock manager */
+PG_SHMEM_SUBSYSTEM(PredicateLockShmemCallbacks)
 
 /* process table */
 PG_SHMEM_SUBSYSTEM(ProcGlobalShmemCallbacks)
@@ -43,3 +50,6 @@ PG_SHMEM_SUBSYSTEM(SharedInvalShmemCallbacks)
 /* interprocess signaling mechanisms */
 PG_SHMEM_SUBSYSTEM(PMSignalShmemCallbacks)
 PG_SHMEM_SUBSYSTEM(ProcSignalShmemCallbacks)
+
+/* other modules that need some shared memory space */
+PG_SHMEM_SUBSYSTEM(AsyncShmemCallbacks)

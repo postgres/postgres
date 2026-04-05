@@ -119,6 +119,7 @@ pgstat_get_slru_index(const char *name)
 {
 	int			i;
 
+	Assert(name);
 	for (i = 0; i < SLRU_NUM_ELEMENTS; i++)
 	{
 		if (strcmp(slru_names[i], name) == 0)

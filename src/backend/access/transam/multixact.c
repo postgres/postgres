@@ -83,6 +83,7 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/subsystems.h"
 #include "utils/guc_hooks.h"
 #include "utils/injection_point.h"
 #include "utils/lsyscache.h"
@@ -113,11 +114,16 @@ PreviousMultiXactId(MultiXactId multi)
 /*
  * Links to shared-memory data structures for MultiXact control
  */
-static SlruCtlData MultiXactOffsetCtlData;
-static SlruCtlData MultiXactMemberCtlData;
+static bool MultiXactOffsetPagePrecedes(int64 page1, int64 page2);
+static int	MultiXactOffsetIoErrorDetail(const void *opaque_data);
+static bool MultiXactMemberPagePrecedes(int64 page1, int64 page2);
+static int	MultiXactMemberIoErrorDetail(const void *opaque_data);
 
-#define MultiXactOffsetCtl	(&MultiXactOffsetCtlData)
-#define MultiXactMemberCtl	(&MultiXactMemberCtlData)
+static SlruDesc MultiXactOffsetSlruDesc;
+static SlruDesc MultiXactMemberSlruDesc;
+
+#define MultiXactOffsetCtl	(&MultiXactOffsetSlruDesc)
+#define MultiXactMemberCtl	(&MultiXactMemberSlruDesc)
 
 /*
  * MultiXact state shared across all backends.  All this state is protected
@@ -220,6 +226,15 @@ static MultiXactStateData *MultiXactState;
 static MultiXactId *OldestMemberMXactId;
 static MultiXactId *OldestVisibleMXactId;
 
+static void MultiXactShmemRequest(void *arg);
+static void MultiXactShmemInit(void *arg);
+static void MultiXactShmemAttach(void *arg);
+
+const ShmemCallbacks MultiXactShmemCallbacks = {
+	.request_fn = MultiXactShmemRequest,
+	.init_fn = MultiXactShmemInit,
+	.attach_fn = MultiXactShmemAttach,
+};
 
 static inline MultiXactId *
 MyOldestMemberMXactIdSlot(void)
@@ -321,10 +336,6 @@ typedef struct MultiXactMemberSlruReadContext
 	MultiXactOffset offset;
 } MultiXactMemberSlruReadContext;
 
-static bool MultiXactOffsetPagePrecedes(int64 page1, int64 page2);
-static bool MultiXactMemberPagePrecedes(int64 page1, int64 page2);
-static int	MultiXactOffsetIoErrorDetail(const void *opaque_data);
-static int	MultiXactMemberIoErrorDetail(const void *opaque_data);
 static void ExtendMultiXactOffset(MultiXactId multi);
 static void ExtendMultiXactMember(MultiXactOffset offset, int nmembers);
 static void SetOldestOffset(void);
@@ -1747,83 +1758,80 @@ multixact_twophase_postabort(FullTransactionId fxid, uint16 info,
 	multixact_twophase_postcommit(fxid, info, recdata, len);
 }
 
+
 /*
- * Initialization of shared memory for MultiXact.
- *
- * MultiXactSharedStateShmemSize() calculates the size of the MultiXactState
- * struct, and the two per-backend MultiXactId arrays.  They are carved out of
- * the same allocation.  MultiXactShmemSize() additionally includes the memory
- * needed for the two SLRU areas.
+ * Register shared memory needs for MultiXact.
  */
-static Size
-MultiXactSharedStateShmemSize(void)
+static void
+MultiXactShmemRequest(void *arg)
 {
 	Size		size;
 
+	/*
+	 * Calculate the size of the MultiXactState struct, and the two
+	 * per-backend MultiXactId arrays.  They are carved out of the same
+	 * allocation.
+	 */
 	size = offsetof(MultiXactStateData, perBackendXactIds);
 	size = add_size(size,
 					mul_size(sizeof(MultiXactId), NumMemberSlots));
 	size = add_size(size,
 					mul_size(sizeof(MultiXactId), NumVisibleSlots));
-	return size;
+	ShmemRequestStruct(.name = "Shared MultiXact State",
+					   .size = size,
+					   .ptr = (void **) &MultiXactState,
+		);
+
+	SimpleLruRequest(.desc = &MultiXactOffsetSlruDesc,
+					 .name = "multixact_offset",
+					 .Dir = "pg_multixact/offsets",
+					 .long_segment_names = false,
+
+					 .nslots = multixact_offset_buffers,
+
+					 .sync_handler = SYNC_HANDLER_MULTIXACT_OFFSET,
+					 .PagePrecedes = MultiXactOffsetPagePrecedes,
+					 .errdetail_for_io_error = MultiXactOffsetIoErrorDetail,
+
+					 .buffer_tranche_id = LWTRANCHE_MULTIXACTOFFSET_BUFFER,
+					 .bank_tranche_id = LWTRANCHE_MULTIXACTOFFSET_SLRU,
+		);
+
+	SimpleLruRequest(.desc = &MultiXactMemberSlruDesc,
+					 .name = "multixact_member",
+					 .Dir = "pg_multixact/members",
+					 .long_segment_names = true,
+
+					 .nslots = multixact_member_buffers,
+
+					 .sync_handler = SYNC_HANDLER_MULTIXACT_MEMBER,
+					 .PagePrecedes = MultiXactMemberPagePrecedes,
+					 .errdetail_for_io_error = MultiXactMemberIoErrorDetail,
+
+					 .buffer_tranche_id = LWTRANCHE_MULTIXACTMEMBER_BUFFER,
+					 .bank_tranche_id = LWTRANCHE_MULTIXACTMEMBER_SLRU,
+		);
 }
 
-Size
-MultiXactShmemSize(void)
+static void
+MultiXactShmemInit(void *arg)
 {
-	Size		size;
-
-	size = MultiXactSharedStateShmemSize();
-	size = add_size(size, SimpleLruShmemSize(multixact_offset_buffers, 0));
-	size = add_size(size, SimpleLruShmemSize(multixact_member_buffers, 0));
-
-	return size;
-}
-
-void
-MultiXactShmemInit(void)
-{
-	bool		found;
-
-	debug_elog2(DEBUG2, "Shared Memory Init for MultiXact");
-
-	MultiXactOffsetCtl->PagePrecedes = MultiXactOffsetPagePrecedes;
-	MultiXactMemberCtl->PagePrecedes = MultiXactMemberPagePrecedes;
-	MultiXactOffsetCtl->errdetail_for_io_error = MultiXactOffsetIoErrorDetail;
-	MultiXactMemberCtl->errdetail_for_io_error = MultiXactMemberIoErrorDetail;
-
-	SimpleLruInit(MultiXactOffsetCtl,
-				  "multixact_offset", multixact_offset_buffers, 0,
-				  "pg_multixact/offsets", LWTRANCHE_MULTIXACTOFFSET_BUFFER,
-				  LWTRANCHE_MULTIXACTOFFSET_SLRU,
-				  SYNC_HANDLER_MULTIXACT_OFFSET,
-				  false);
 	SlruPagePrecedesUnitTests(MultiXactOffsetCtl, MULTIXACT_OFFSETS_PER_PAGE);
-	SimpleLruInit(MultiXactMemberCtl,
-				  "multixact_member", multixact_member_buffers, 0,
-				  "pg_multixact/members", LWTRANCHE_MULTIXACTMEMBER_BUFFER,
-				  LWTRANCHE_MULTIXACTMEMBER_SLRU,
-				  SYNC_HANDLER_MULTIXACT_MEMBER,
-				  true);
-	/* doesn't call SimpleLruTruncate() or meet criteria for unit tests */
-
-	/* Initialize our shared state struct */
-	MultiXactState = ShmemInitStruct("Shared MultiXact State",
-									 MultiXactSharedStateShmemSize(),
-									 &found);
-	if (!IsUnderPostmaster)
-	{
-		Assert(!found);
-
-		/* Make sure we zero out the per-backend state */
-		MemSet(MultiXactState, 0, MultiXactSharedStateShmemSize());
-	}
-	else
-		Assert(found);
 
 	/*
-	 * Set up array pointers.
+	 * members SLRU doesn't call SimpleLruTruncate() or meet criteria for unit
+	 * tests
 	 */
+
+	/* Set up array pointers */
+	OldestMemberMXactId = MultiXactState->perBackendXactIds;
+	OldestVisibleMXactId = OldestMemberMXactId + NumMemberSlots;
+}
+
+static void
+MultiXactShmemAttach(void *arg)
+{
+	/* Set up array pointers */
 	OldestMemberMXactId = MultiXactState->perBackendXactIds;
 	OldestVisibleMXactId = OldestMemberMXactId + NumMemberSlots;
 }

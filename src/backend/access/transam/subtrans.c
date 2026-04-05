@@ -33,6 +33,7 @@
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "storage/subsystems.h"
 #include "utils/guc_hooks.h"
 #include "utils/snapmgr.h"
 
@@ -66,16 +67,22 @@ TransactionIdToPage(TransactionId xid)
 #define TransactionIdToEntry(xid) ((xid) % (TransactionId) SUBTRANS_XACTS_PER_PAGE)
 
 
+static void SUBTRANSShmemRequest(void *arg);
+static void SUBTRANSShmemInit(void *arg);
+static bool SubTransPagePrecedes(int64 page1, int64 page2);
+static int	subtrans_errdetail_for_io_error(const void *opaque_data);
+
+const ShmemCallbacks SUBTRANSShmemCallbacks = {
+	.request_fn = SUBTRANSShmemRequest,
+	.init_fn = SUBTRANSShmemInit,
+};
+
 /*
  * Link to shared-memory data structures for SUBTRANS control
  */
-static SlruCtlData SubTransCtlData;
+static SlruDesc SubTransSlruDesc;
 
-#define SubTransCtl  (&SubTransCtlData)
-
-
-static bool SubTransPagePrecedes(int64 page1, int64 page2);
-static int	subtrans_errdetail_for_io_error(const void *opaque_data);
+#define SubTransCtl  (&SubTransSlruDesc)
 
 
 /*
@@ -207,17 +214,13 @@ SUBTRANSShmemBuffers(void)
 	return Min(Max(16, subtransaction_buffers), SLRU_MAX_ALLOWED_BUFFERS);
 }
 
-/*
- * Initialization of shared memory for SUBTRANS
- */
-Size
-SUBTRANSShmemSize(void)
-{
-	return SimpleLruShmemSize(SUBTRANSShmemBuffers(), 0);
-}
 
-void
-SUBTRANSShmemInit(void)
+
+/*
+ * Register shared memory for SUBTRANS
+ */
+static void
+SUBTRANSShmemRequest(void *arg)
 {
 	/* If auto-tuning is requested, now is the time to do it */
 	if (subtransaction_buffers == 0)
@@ -240,11 +243,25 @@ SUBTRANSShmemInit(void)
 	}
 	Assert(subtransaction_buffers != 0);
 
-	SubTransCtl->PagePrecedes = SubTransPagePrecedes;
-	SubTransCtl->errdetail_for_io_error = subtrans_errdetail_for_io_error;
-	SimpleLruInit(SubTransCtl, "subtransaction", SUBTRANSShmemBuffers(), 0,
-				  "pg_subtrans", LWTRANCHE_SUBTRANS_BUFFER,
-				  LWTRANCHE_SUBTRANS_SLRU, SYNC_HANDLER_NONE, false);
+	SimpleLruRequest(.desc = &SubTransSlruDesc,
+					 .name = "subtransaction",
+					 .Dir = "pg_subtrans",
+					 .long_segment_names = false,
+
+					 .nslots = SUBTRANSShmemBuffers(),
+
+					 .sync_handler = SYNC_HANDLER_NONE,
+					 .PagePrecedes = SubTransPagePrecedes,
+					 .errdetail_for_io_error = subtrans_errdetail_for_io_error,
+
+					 .buffer_tranche_id = LWTRANCHE_SUBTRANS_BUFFER,
+					 .bank_tranche_id = LWTRANCHE_SUBTRANS_SLRU,
+		);
+}
+
+static void
+SUBTRANSShmemInit(void *arg)
+{
 	SlruPagePrecedesUnitTests(SubTransCtl, SUBTRANS_XACTS_PER_PAGE);
 }
 

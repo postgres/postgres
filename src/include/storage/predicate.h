@@ -41,11 +41,6 @@ typedef void *SerializableXactHandle;
 /*
  * function prototypes
  */
-
-/* housekeeping for shared memory predicate lock structures */
-extern void PredicateLockShmemInit(void);
-extern Size PredicateLockShmemSize(void);
-
 extern void CheckPointPredicate(void);
 
 /* predicate lock reporting */

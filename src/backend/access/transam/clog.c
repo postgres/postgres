@@ -43,6 +43,7 @@
 #include "pg_trace.h"
 #include "pgstat.h"
 #include "storage/proc.h"
+#include "storage/subsystems.h"
 #include "storage/sync.h"
 #include "utils/guc_hooks.h"
 #include "utils/wait_event.h"
@@ -106,13 +107,21 @@ TransactionIdToPage(TransactionId xid)
 /*
  * Link to shared-memory data structures for CLOG control
  */
-static SlruCtlData XactCtlData;
-
-#define XactCtl (&XactCtlData)
-
-
+static void CLOGShmemRequest(void *arg);
+static void CLOGShmemInit(void *arg);
 static bool CLOGPagePrecedes(int64 page1, int64 page2);
 static int	clog_errdetail_for_io_error(const void *opaque_data);
+
+const ShmemCallbacks CLOGShmemCallbacks = {
+	.request_fn = CLOGShmemRequest,
+	.init_fn = CLOGShmemInit,
+};
+
+static SlruDesc XactSlruDesc;
+
+#define XactCtl (&XactSlruDesc)
+
+
 static void WriteTruncateXlogRec(int64 pageno, TransactionId oldestXact,
 								 Oid oldestXactDb);
 static void TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
@@ -775,16 +784,10 @@ CLOGShmemBuffers(void)
 }
 
 /*
- * Initialization of shared memory for CLOG
+ * Register shared memory for CLOG
  */
-Size
-CLOGShmemSize(void)
-{
-	return SimpleLruShmemSize(CLOGShmemBuffers(), CLOG_LSNS_PER_PAGE);
-}
-
-void
-CLOGShmemInit(void)
+static void
+CLOGShmemRequest(void *arg)
 {
 	/* If auto-tuning is requested, now is the time to do it */
 	if (transaction_buffers == 0)
@@ -806,12 +809,26 @@ CLOGShmemInit(void)
 							PGC_S_OVERRIDE);
 	}
 	Assert(transaction_buffers != 0);
+	SimpleLruRequest(.desc = &XactSlruDesc,
+					 .name = "transaction",
+					 .Dir = "pg_xact",
+					 .long_segment_names = false,
 
-	XactCtl->PagePrecedes = CLOGPagePrecedes;
-	XactCtl->errdetail_for_io_error = clog_errdetail_for_io_error;
-	SimpleLruInit(XactCtl, "transaction", CLOGShmemBuffers(), CLOG_LSNS_PER_PAGE,
-				  "pg_xact", LWTRANCHE_XACT_BUFFER,
-				  LWTRANCHE_XACT_SLRU, SYNC_HANDLER_CLOG, false);
+					 .nslots = CLOGShmemBuffers(),
+					 .nlsns = CLOG_LSNS_PER_PAGE,
+
+					 .sync_handler = SYNC_HANDLER_CLOG,
+					 .PagePrecedes = CLOGPagePrecedes,
+					 .errdetail_for_io_error = clog_errdetail_for_io_error,
+
+					 .buffer_tranche_id = LWTRANCHE_XACT_BUFFER,
+					 .bank_tranche_id = LWTRANCHE_XACT_SLRU,
+		);
+}
+
+static void
+CLOGShmemInit(void *arg)
+{
 	SlruPagePrecedesUnitTests(XactCtl, CLOG_XACTS_PER_PAGE);
 }
 

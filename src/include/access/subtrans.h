@@ -15,8 +15,6 @@ extern void SubTransSetParent(TransactionId xid, TransactionId parent);
 extern TransactionId SubTransGetParent(TransactionId xid);
 extern TransactionId SubTransGetTopmostTransaction(TransactionId xid);
 
-extern Size SUBTRANSShmemSize(void);
-extern void SUBTRANSShmemInit(void);
 extern void BootStrapSUBTRANS(void);
 extern void StartupSUBTRANS(TransactionId oldestActiveXID);
 extern void CheckPointSUBTRANS(void);
