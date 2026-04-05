@@ -62,6 +62,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 &func-geometry;
 &func-net;
 &func-textsearch;
+&func-tid;
 &func-uuid;
 &func-xml;
 &func-json;

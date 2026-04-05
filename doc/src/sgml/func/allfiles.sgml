@@ -17,6 +17,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY func-formatting            SYSTEM "func-formatting.sgml">
 <!ENTITY func-datetime              SYSTEM "func-datetime.sgml">
 <!ENTITY func-enum                  SYSTEM "func-enum.sgml">
+<!ENTITY func-tid                   SYSTEM "func-tid.sgml">
 <!ENTITY func-geometry              SYSTEM "func-geometry.sgml">
 <!ENTITY func-net                   SYSTEM "func-net.sgml">
 <!ENTITY func-textsearch            SYSTEM "func-textsearch.sgml">

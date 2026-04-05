@@ -16,6 +16,22 @@ SELECT pg_input_is_valid('(0,-1)', 'tid');
 SELECT * FROM pg_input_error_info('(0,-1)', 'tid');
 
 
+-- tests for tid_block() and tid_offset()
+SELECT tid_block('(0,0)'::tid), tid_offset('(0,0)'::tid);
+SELECT tid_block('(0,1)'::tid), tid_offset('(0,1)'::tid);
+SELECT tid_block('(42,7)'::tid), tid_offset('(42,7)'::tid);
+-- max values: blockno uint32 max, offset uint16 max
+SELECT tid_block('(4294967295,65535)'::tid), tid_offset('(4294967295,65535)'::tid);
+-- (-1,0) wraps to blockno 4294967295
+SELECT tid_block('(-1,0)'::tid);
+-- NULL handling (strict functions)
+SELECT tid_block(NULL::tid), tid_offset(NULL::tid);
+-- round-trip: blockno + offset reconstruct the original TID
+SELECT t, tid_block(t), tid_offset(t),
+       format('(%s,%s)', tid_block(t), tid_offset(t))::tid = t AS roundtrip_ok
+FROM (VALUES ('(0,0)'::tid), ('(1,42)'::tid), ('(4294967295,65535)'::tid)) AS v(t);
+
+
 -- tests for functions related to TID handling
 
 CREATE TABLE tid_tab (a int);
@@ -24,6 +40,11 @@ CREATE TABLE tid_tab (a int);
 INSERT INTO tid_tab VALUES (1), (2);
 SELECT min(ctid) FROM tid_tab;
 SELECT max(ctid) FROM tid_tab;
+
+-- tid_block() and tid_offset() with real table ctid
+SELECT ctid, tid_block(ctid), tid_offset(ctid) FROM tid_tab;
+-- use in WHERE clause
+SELECT ctid FROM tid_tab WHERE tid_block(ctid) = 0 AND tid_offset(ctid) = 1;
 TRUNCATE tid_tab;
 
 -- Tests for currtid2() with various relation kinds

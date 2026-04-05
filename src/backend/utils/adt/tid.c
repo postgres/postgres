@@ -279,6 +279,35 @@ hashtidextended(PG_FUNCTION_ARGS)
 							 seed);
 }
 
+/*
+ * Extract the block number from a TID
+ *
+ * Returns int8 because BlockNumber is uint32, which exceeds the range of int4.
+ */
+Datum
+tid_block(PG_FUNCTION_ARGS)
+{
+	ItemPointer tid = PG_GETARG_ITEMPOINTER(0);
+
+	/* need to use NoCheck, as tidin allows InvalidBlockNumber */
+	PG_RETURN_INT64((int64) ItemPointerGetBlockNumberNoCheck(tid));
+}
+
+/*
+ * Extract the offset number from a TID
+ *
+ * Returns int4 because OffsetNumber is uint16, which exceeds the range of
+ * int2.
+ */
+Datum
+tid_offset(PG_FUNCTION_ARGS)
+{
+	ItemPointer tid = PG_GETARG_ITEMPOINTER(0);
+
+	/* need to use NoCheck, as tidin allows InvalidOffsetNumber */
+	PG_RETURN_INT32((int32) ItemPointerGetOffsetNumberNoCheck(tid));
+}
+
 
 /*
  *	Functions to get latest tid of a specified tuple.

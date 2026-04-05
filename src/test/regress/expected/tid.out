@@ -42,6 +42,57 @@ SELECT * FROM pg_input_error_info('(0,-1)', 'tid');
  invalid input syntax for type tid: "(0,-1)" |        |      | 22P02
 (1 row)
 
+-- tests for tid_block() and tid_offset()
+SELECT tid_block('(0,0)'::tid), tid_offset('(0,0)'::tid);
+ tid_block | tid_offset 
+-----------+------------
+         0 |          0
+(1 row)
+
+SELECT tid_block('(0,1)'::tid), tid_offset('(0,1)'::tid);
+ tid_block | tid_offset 
+-----------+------------
+         0 |          1
+(1 row)
+
+SELECT tid_block('(42,7)'::tid), tid_offset('(42,7)'::tid);
+ tid_block | tid_offset 
+-----------+------------
+        42 |          7
+(1 row)
+
+-- max values: blockno uint32 max, offset uint16 max
+SELECT tid_block('(4294967295,65535)'::tid), tid_offset('(4294967295,65535)'::tid);
+ tid_block  | tid_offset 
+------------+------------
+ 4294967295 |      65535
+(1 row)
+
+-- (-1,0) wraps to blockno 4294967295
+SELECT tid_block('(-1,0)'::tid);
+ tid_block  
+------------
+ 4294967295
+(1 row)
+
+-- NULL handling (strict functions)
+SELECT tid_block(NULL::tid), tid_offset(NULL::tid);
+ tid_block | tid_offset 
+-----------+------------
+           |           
+(1 row)
+
+-- round-trip: blockno + offset reconstruct the original TID
+SELECT t, tid_block(t), tid_offset(t),
+       format('(%s,%s)', tid_block(t), tid_offset(t))::tid = t AS roundtrip_ok
+FROM (VALUES ('(0,0)'::tid), ('(1,42)'::tid), ('(4294967295,65535)'::tid)) AS v(t);
+         t          | tid_block  | tid_offset | roundtrip_ok 
+--------------------+------------+------------+--------------
+ (0,0)              |          0 |          0 | t
+ (1,42)             |          1 |         42 | t
+ (4294967295,65535) | 4294967295 |      65535 | t
+(3 rows)
+
 -- tests for functions related to TID handling
 CREATE TABLE tid_tab (a int);
 -- min() and max() for TIDs
@@ -56,6 +107,21 @@ SELECT max(ctid) FROM tid_tab;
   max  
 -------
  (0,2)
+(1 row)
+
+-- tid_block() and tid_offset() with real table ctid
+SELECT ctid, tid_block(ctid), tid_offset(ctid) FROM tid_tab;
+ ctid  | tid_block | tid_offset 
+-------+-----------+------------
+ (0,1) |         0 |          1
+ (0,2) |         0 |          2
+(2 rows)
+
+-- use in WHERE clause
+SELECT ctid FROM tid_tab WHERE tid_block(ctid) = 0 AND tid_offset(ctid) = 1;
+ ctid  
+-------
+ (0,1)
 (1 row)
 
 TRUNCATE tid_tab;

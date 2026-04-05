@@ -887,6 +887,8 @@ oid8le(oid8,oid8)
 oid8gt(oid8,oid8)
 oid8ge(oid8,oid8)
 btoid8cmp(oid8,oid8)
+tid_block(tid)
+tid_offset(tid)
 -- Check that functions without argument are not marked as leakproof.
 SELECT p1.oid::regprocedure
 FROM pg_proc p1 JOIN pg_namespace pn

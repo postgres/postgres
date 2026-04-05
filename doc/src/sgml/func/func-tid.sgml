@@ -1,0 +1,70 @@
+ <sect1 id="functions-tid">
+  <title>TID Functions</title>
+
+  <indexterm zone="functions-tid">
+   <primary>TID</primary>
+   <secondary>functions</secondary>
+  </indexterm>
+
+  <indexterm>
+   <primary>tid_block</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>tid_offset</primary>
+  </indexterm>
+
+  <para>
+   <xref linkend="functions-tid-table"/> lists functions for
+   the <type>tid</type> data type (tuple identifier).
+  </para>
+
+  <table id="functions-tid-table">
+   <title><acronym>TID</acronym> Functions</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       Function
+      </para>
+      <para>
+       Description
+      </para>
+      <para>
+       Example(s)
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <function>tid_block</function> ( <type>tid</type> )
+       <returnvalue>bigint</returnvalue>
+      </para>
+      <para>
+       Extracts the block number from a tuple identifier.
+      </para>
+      <para>
+       <literal>tid_block('(42,7)'::tid)</literal>
+       <returnvalue>42</returnvalue>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <function>tid_offset</function> ( <type>tid</type> )
+       <returnvalue>integer</returnvalue>
+      </para>
+      <para>
+       Extracts the tuple offset within the block from a tuple identifier.
+      </para>
+      <para>
+       <literal>tid_offset('(42,7)'::tid)</literal>
+       <returnvalue>7</returnvalue>
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
