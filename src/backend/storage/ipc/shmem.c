@@ -135,6 +135,7 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "port/pg_numa.h"
 #include "storage/lwlock.h"
 #include "storage/pg_shmem.h"
@@ -235,7 +236,7 @@ typedef struct ShmemAllocatorData
 
 #define ShmemIndexLock (&ShmemAllocator->index_lock)
 
-static void *ShmemAllocRaw(Size size, Size *allocated_size);
+static void *ShmemAllocRaw(Size size, Size alignment, Size *allocated_size);
 
 /* shared memory global variables */
 
@@ -336,6 +337,7 @@ ShmemRequestInternal(ShmemStructOpts *options, ShmemRequestKind kind)
 {
 	ShmemRequest *request;
 
+	/* Check the options */
 	if (options->name == NULL)
 		elog(ERROR, "shared memory request is missing 'name' option");
 
@@ -354,6 +356,11 @@ ShmemRequestInternal(ShmemStructOpts *options, ShmemRequestKind kind)
 				 options->size, options->name);
 	}
 
+	if (options->alignment != 0 && pg_nextpower2_size_t(options->alignment) != options->alignment)
+		elog(ERROR, "invalid alignment %zu for shared memory request for \"%s\"",
+			 options->alignment, options->name);
+
+	/* Check that we're in the right state */
 	if (shmem_request_state != SRS_REQUESTING)
 		elog(ERROR, "ShmemRequestStruct can only be called from a shmem_request callback");
 
@@ -393,9 +400,14 @@ ShmemGetRequestedSize(void)
 	/* memory needed for all the requested areas */
 	foreach_ptr(ShmemRequest, request, pending_shmem_requests)
 	{
+		size_t		alignment = request->options->alignment;
+
+		/* pad the start address for alignment like ShmemAllocRaw() does */
+		if (alignment < PG_CACHE_LINE_SIZE)
+			alignment = PG_CACHE_LINE_SIZE;
+		size = TYPEALIGN(alignment, size);
+
 		size = add_size(size, request->options->size);
-		/* calculate alignment padding like ShmemAllocRaw() does */
-		size = CACHELINEALIGN(size);
 	}
 
 	return size;
@@ -520,7 +532,9 @@ InitShmemIndexEntry(ShmemRequest *request)
 	 * We inserted the entry to the shared memory index.  Allocate requested
 	 * amount of shared memory for it, and initialize the index entry.
 	 */
-	structPtr = ShmemAllocRaw(request->options->size, &allocated_size);
+	structPtr = ShmemAllocRaw(request->options->size,
+							  request->options->alignment,
+							  &allocated_size);
 	if (structPtr == NULL)
 	{
 		/* out of memory; remove the failed ShmemIndex entry */
@@ -749,7 +763,7 @@ ShmemAlloc(Size size)
 	void	   *newSpace;
 	Size		allocated_size;
 
-	newSpace = ShmemAllocRaw(size, &allocated_size);
+	newSpace = ShmemAllocRaw(size, 0, &allocated_size);
 	if (!newSpace)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -768,7 +782,7 @@ ShmemAllocNoError(Size size)
 {
 	Size		allocated_size;
 
-	return ShmemAllocRaw(size, &allocated_size);
+	return ShmemAllocRaw(size, 0, &allocated_size);
 }
 
 /*
@@ -778,8 +792,9 @@ ShmemAllocNoError(Size size)
  * be equal to the number requested plus any padding we choose to add.
  */
 static void *
-ShmemAllocRaw(Size size, Size *allocated_size)
+ShmemAllocRaw(Size size, Size alignment, Size *allocated_size)
 {
+	Size		rawStart;
 	Size		newStart;
 	Size		newFree;
 	void	   *newSpace;
@@ -795,14 +810,15 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 	 * structures out to a power-of-two size - but without this, even that
 	 * won't be sufficient.
 	 */
-	size = CACHELINEALIGN(size);
-	*allocated_size = size;
+	if (alignment < PG_CACHE_LINE_SIZE)
+		alignment = PG_CACHE_LINE_SIZE;
 
 	Assert(ShmemSegHdr != NULL);
 
 	SpinLockAcquire(&ShmemAllocator->shmem_lock);
 
-	newStart = ShmemAllocator->free_offset;
+	rawStart = ShmemAllocator->free_offset;
+	newStart = TYPEALIGN(alignment, rawStart);
 
 	newFree = newStart + size;
 	if (newFree <= ShmemSegHdr->totalsize)
@@ -816,8 +832,9 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 	SpinLockRelease(&ShmemAllocator->shmem_lock);
 
 	/* note this assert is okay with newSpace == NULL */
-	Assert(newSpace == (void *) CACHELINEALIGN(newSpace));
+	Assert(newSpace == (void *) TYPEALIGN(alignment, newSpace));
 
+	*allocated_size = newFree - rawStart;
 	return newSpace;
 }
 

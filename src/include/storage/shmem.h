@@ -52,6 +52,12 @@ typedef struct ShmemStructOpts
 	ssize_t		size;
 
 	/*
+	 * Alignment of the starting address. If not set, defaults to cacheline
+	 * boundary.  Must be a power of two.
+	 */
+	size_t		alignment;
+
+	/*
 	 * When the shmem area is initialized or attached to, pointer to it is
 	 * stored in *ptr.  It usually points to a global variable, used to access
 	 * the shared memory area later.  *ptr is set before the init_fn or
