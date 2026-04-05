@@ -649,6 +649,13 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 				 errdetail("No more than %d tranches may be registered.",
 						   MAX_USER_DEFINED_TRANCHES)));
 
+	/* Check that the name isn't already in use */
+	foreach_ptr(NamedLWLockTrancheRequest, existing, NamedLWLockTrancheRequests)
+	{
+		if (strcmp(existing->tranche_name, tranche_name) == 0)
+			elog(ERROR, "requested tranche \"%s\" is already registered", tranche_name);
+	}
+
 	if (IsPostmasterEnvironment)
 		oldcontext = MemoryContextSwitchTo(PostmasterContext);
 	else
