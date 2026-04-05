@@ -440,6 +440,78 @@ read_stream_start_pending_read(ReadStream *stream)
 	return true;
 }
 
+/*
+ * Should we continue to perform look ahead?  Looking ahead may allow us to
+ * make the pending IO larger via IO combining or to issue more read-ahead.
+ */
+static inline bool
+read_stream_should_look_ahead(ReadStream *stream)
+{
+	/* If the callback has signaled end-of-stream, we're done */
+	if (stream->distance == 0)
+		return false;
+
+	/* never start more IOs than our cap */
+	if (stream->ios_in_progress >= stream->max_ios)
+		return false;
+
+	/*
+	 * Don't start more read-ahead if that'd put us over the distance limit
+	 * for doing read-ahead. As stream->distance is capped by
+	 * max_pinned_buffers, this prevents us from looking ahead so far that it
+	 * would put us over the pin limit.
+	 */
+	if (stream->pinned_buffers + stream->pending_read_nblocks >= stream->distance)
+		return false;
+
+	return true;
+}
+
+/*
+ * We don't start the pending read just because we've hit the distance limit,
+ * preferring to give it another chance to grow to full io_combine_limit size
+ * once more buffers have been consumed.  But this is not desirable in all
+ * situations - see below.
+ */
+static inline bool
+read_stream_should_issue_now(ReadStream *stream)
+{
+	int16		pending_read_nblocks = stream->pending_read_nblocks;
+
+	/* there is no pending IO that could be issued */
+	if (pending_read_nblocks == 0)
+		return false;
+
+	/* never start more IOs than our cap */
+	if (stream->ios_in_progress >= stream->max_ios)
+		return false;
+
+	/*
+	 * If the callback has signaled end-of-stream, start the pending read
+	 * immediately. There is no further potential for IO combining.
+	 */
+	if (stream->distance == 0)
+		return true;
+
+	/*
+	 * If we've already reached io_combine_limit, there's no chance of growing
+	 * the read further.
+	 */
+	if (pending_read_nblocks >= stream->io_combine_limit)
+		return true;
+
+	/*
+	 * If we currently have no reads in flight or prepared, issue the IO once
+	 * we are not looking ahead further. This ensures there's always at least
+	 * one IO prepared.
+	 */
+	if (stream->pinned_buffers == 0 &&
+		!read_stream_should_look_ahead(stream))
+		return true;
+
+	return false;
+}
+
 static void
 read_stream_look_ahead(ReadStream *stream)
 {
@@ -452,14 +524,13 @@ read_stream_look_ahead(ReadStream *stream)
 	if (stream->batch_mode)
 		pgaio_enter_batchmode();
 
-	while (stream->ios_in_progress < stream->max_ios &&
-		   stream->pinned_buffers + stream->pending_read_nblocks < stream->distance)
+	while (read_stream_should_look_ahead(stream))
 	{
 		BlockNumber blocknum;
 		int16		buffer_index;
 		void	   *per_buffer_data;
 
-		if (stream->pending_read_nblocks == stream->io_combine_limit)
+		if (read_stream_should_issue_now(stream))
 		{
 			read_stream_start_pending_read(stream);
 			continue;
@@ -511,21 +582,13 @@ read_stream_look_ahead(ReadStream *stream)
 	}
 
 	/*
-	 * We don't start the pending read just because we've hit the distance
-	 * limit, preferring to give it another chance to grow to full
-	 * io_combine_limit size once more buffers have been consumed.  However,
-	 * if we've already reached io_combine_limit, or we've reached the
-	 * distance limit and there isn't anything pinned yet, or the callback has
-	 * signaled end-of-stream, we start the read immediately.  Note that the
-	 * pending read can exceed the distance goal, if the latter was reduced
-	 * after hitting the per-backend buffer limit.
+	 * Check if the pending read should be issued now, or if we should give it
+	 * another chance to grow to the full size.
+	 *
+	 * Note that the pending read can exceed the distance goal, if the latter
+	 * was reduced after hitting the per-backend buffer limit.
 	 */
-	if (stream->pending_read_nblocks > 0 &&
-		(stream->pending_read_nblocks == stream->io_combine_limit ||
-		 (stream->pending_read_nblocks >= stream->distance &&
-		  stream->pinned_buffers == 0) ||
-		 stream->distance == 0) &&
-		stream->ios_in_progress < stream->max_ios)
+	if (read_stream_should_issue_now(stream))
 		read_stream_start_pending_read(stream);
 
 	/*
