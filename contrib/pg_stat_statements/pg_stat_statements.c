@@ -249,7 +249,7 @@ typedef struct pgssEntry
  */
 typedef struct pgssSharedState
 {
-	LWLock	   *lock;			/* protects hashtable search/modification */
+	LWLockPadded lock;			/* protects hashtable search/modification */
 	double		cur_median_usage;	/* current median usage in hashtable */
 	Size		mean_query_len; /* current mean entry text length */
 	slock_t		mutex;			/* protects following fields only: */
@@ -259,14 +259,24 @@ typedef struct pgssSharedState
 	pgssGlobalStats stats;		/* global statistics for pgss */
 } pgssSharedState;
 
+/* Links to shared memory state */
+static pgssSharedState *pgss;
+static HTAB *pgss_hash;
+
+static void pgss_shmem_request(void *arg);
+static void pgss_shmem_init(void *arg);
+
+static const ShmemCallbacks pgss_shmem_callbacks = {
+	.request_fn = pgss_shmem_request,
+	.init_fn = pgss_shmem_init,
+};
+
 /*---- Local variables ----*/
 
 /* Current nesting depth of planner/ExecutorRun/ProcessUtility calls */
 static int	nesting_level = 0;
 
 /* Saved hook values */
-static shmem_request_hook_type prev_shmem_request_hook = NULL;
-static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static post_parse_analyze_hook_type prev_post_parse_analyze_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
@@ -274,10 +284,6 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
-
-/* Links to shared memory state */
-static pgssSharedState *pgss = NULL;
-static HTAB *pgss_hash = NULL;
 
 /*---- GUC variables ----*/
 
@@ -331,8 +337,6 @@ PG_FUNCTION_INFO_V1(pg_stat_statements_1_13);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
 PG_FUNCTION_INFO_V1(pg_stat_statements_info);
 
-static void pgss_shmem_request(void);
-static void pgss_shmem_startup(void);
 static void pgss_shmem_shutdown(int code, Datum arg);
 static void pgss_post_parse_analyze(ParseState *pstate, Query *query,
 									JumbleState *jstate);
@@ -366,7 +370,6 @@ static void pgss_store(const char *query, int64 queryId,
 static void pg_stat_statements_internal(FunctionCallInfo fcinfo,
 										pgssVersion api_version,
 										bool showtext);
-static Size pgss_memsize(void);
 static pgssEntry *entry_alloc(pgssHashKey *key, Size query_offset, int query_len,
 							  int encoding, bool sticky);
 static void entry_dealloc(void);
@@ -472,12 +475,13 @@ _PG_init(void)
 	MarkGUCPrefixReserved("pg_stat_statements");
 
 	/*
+	 * Register our shared memory needs.
+	 */
+	RegisterShmemCallbacks(&pgss_shmem_callbacks);
+
+	/*
 	 * Install hooks.
 	 */
-	prev_shmem_request_hook = shmem_request_hook;
-	shmem_request_hook = pgss_shmem_request;
-	prev_shmem_startup_hook = shmem_startup_hook;
-	shmem_startup_hook = pgss_shmem_startup;
 	prev_post_parse_analyze_hook = post_parse_analyze_hook;
 	post_parse_analyze_hook = pgss_post_parse_analyze;
 	prev_planner_hook = planner_hook;
@@ -495,30 +499,42 @@ _PG_init(void)
 }
 
 /*
- * shmem_request hook: request additional shared resources.  We'll allocate or
- * attach to the shared resources in pgss_shmem_startup().
+ * shmem request callback: Request shared memory resources.
+ *
+ * This is called at postmaster startup.  Note that the shared memory isn't
+ * allocated here yet, this merely register our needs.
+ *
+ * In EXEC_BACKEND mode, this is also called in each backend, to re-attach to
+ * the shared memory area that was already initialized.
  */
 static void
-pgss_shmem_request(void)
+pgss_shmem_request(void *arg)
 {
-	if (prev_shmem_request_hook)
-		prev_shmem_request_hook();
-
-	RequestAddinShmemSpace(pgss_memsize());
-	RequestNamedLWLockTranche("pg_stat_statements", 1);
+	ShmemRequestHash(.name = "pg_stat_statements hash",
+					 .nelems = pgss_max,
+					 .hash_info.keysize = sizeof(pgssHashKey),
+					 .hash_info.entrysize = sizeof(pgssEntry),
+					 .hash_flags = HASH_ELEM | HASH_BLOBS,
+					 .ptr = &pgss_hash,
+		);
+	ShmemRequestStruct(.name = "pg_stat_statements",
+					   .size = sizeof(pgssSharedState),
+					   .ptr = (void **) &pgss,
+		);
 }
 
 /*
- * shmem_startup hook: allocate or attach to shared memory,
- * then load any pre-existing statistics from file.
- * Also create and load the query-texts file, which is expected to exist
- * (even if empty) while the module is enabled.
+ * shmem init callback: Initialize our shared memory data structures at
+ * postmaster startup.
+ *
+ * Load any pre-existing statistics from file.  Also create and load the
+ * query-texts file, which is expected to exist (even if empty) while the
+ * module is enabled.
  */
 static void
-pgss_shmem_startup(void)
+pgss_shmem_init(void *arg)
 {
-	bool		found;
-	HASHCTL		info;
+	int			tranche_id;
 	FILE	   *file = NULL;
 	FILE	   *qfile = NULL;
 	uint32		header;
@@ -528,59 +544,38 @@ pgss_shmem_startup(void)
 	int			buffer_size;
 	char	   *buffer = NULL;
 
-	if (prev_shmem_startup_hook)
-		prev_shmem_startup_hook();
-
-	/* reset in case this is a restart within the postmaster */
-	pgss = NULL;
-	pgss_hash = NULL;
-
 	/*
-	 * Create or attach to the shared memory state, including hash table
+	 * We already checked that we're loaded from shared_preload_libraries in
+	 * _PG_init(), so we should not get here after postmaster startup.
 	 */
-	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-
-	pgss = ShmemInitStruct("pg_stat_statements",
-						   sizeof(pgssSharedState),
-						   &found);
-
-	if (!found)
-	{
-		/* First time through ... */
-		pgss->lock = &(GetNamedLWLockTranche("pg_stat_statements"))->lock;
-		pgss->cur_median_usage = ASSUMED_MEDIAN_INIT;
-		pgss->mean_query_len = ASSUMED_LENGTH_INIT;
-		SpinLockInit(&pgss->mutex);
-		pgss->extent = 0;
-		pgss->n_writers = 0;
-		pgss->gc_count = 0;
-		pgss->stats.dealloc = 0;
-		pgss->stats.stats_reset = GetCurrentTimestamp();
-	}
-
-	info.keysize = sizeof(pgssHashKey);
-	info.entrysize = sizeof(pgssEntry);
-	pgss_hash = ShmemInitHash("pg_stat_statements hash",
-							  pgss_max,
-							  &info,
-							  HASH_ELEM | HASH_BLOBS);
-
-	LWLockRelease(AddinShmemInitLock);
+	Assert(!IsUnderPostmaster);
 
 	/*
-	 * If we're in the postmaster (or a standalone backend...), set up a shmem
-	 * exit hook to dump the statistics to disk.
+	 * Initialize the shmem area with no statistics.
 	 */
-	if (!IsUnderPostmaster)
-		on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
+	tranche_id = LWLockNewTrancheId("pg_stat_statements");
+	LWLockInitialize(&pgss->lock.lock, tranche_id);
+	pgss->cur_median_usage = ASSUMED_MEDIAN_INIT;
+	pgss->mean_query_len = ASSUMED_LENGTH_INIT;
+	SpinLockInit(&pgss->mutex);
+	pgss->extent = 0;
+	pgss->n_writers = 0;
+	pgss->gc_count = 0;
+	pgss->stats.dealloc = 0;
+	pgss->stats.stats_reset = GetCurrentTimestamp();
+
+	/* The hash table must've also been initialized by now */
+	Assert(pgss_hash != NULL);
 
 	/*
-	 * Done if some other process already completed our initialization.
+	 * Set up a shmem exit hook to dump the statistics to disk on postmaster
+	 * (or standalone backend) exit.
 	 */
-	if (found)
-		return;
+	on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
 
 	/*
+	 * Load any pre-existing statistics from file.
+	 *
 	 * Note: we don't bother with locks here, because there should be no other
 	 * processes running when this code is reached.
 	 */
@@ -1333,7 +1328,7 @@ pgss_store(const char *query, int64 queryId,
 	key.toplevel = (nesting_level == 0);
 
 	/* Lookup the hash table entry with shared lock. */
-	LWLockAcquire(pgss->lock, LW_SHARED);
+	LWLockAcquire(&pgss->lock.lock, LW_SHARED);
 
 	entry = (pgssEntry *) hash_search(pgss_hash, &key, HASH_FIND, NULL);
 
@@ -1354,11 +1349,11 @@ pgss_store(const char *query, int64 queryId,
 		 */
 		if (jstate)
 		{
-			LWLockRelease(pgss->lock);
+			LWLockRelease(&pgss->lock.lock);
 			norm_query = generate_normalized_query(jstate, query,
 												   query_location,
 												   &query_len);
-			LWLockAcquire(pgss->lock, LW_SHARED);
+			LWLockAcquire(&pgss->lock.lock, LW_SHARED);
 		}
 
 		/* Append new query text to file with only shared lock held */
@@ -1373,8 +1368,8 @@ pgss_store(const char *query, int64 queryId,
 		do_gc = need_gc_qtexts();
 
 		/* Need exclusive lock to make a new hashtable entry - promote */
-		LWLockRelease(pgss->lock);
-		LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
+		LWLockRelease(&pgss->lock.lock);
+		LWLockAcquire(&pgss->lock.lock, LW_EXCLUSIVE);
 
 		/*
 		 * A garbage collection may have occurred while we weren't holding the
@@ -1513,7 +1508,7 @@ pgss_store(const char *query, int64 queryId,
 	}
 
 done:
-	LWLockRelease(pgss->lock);
+	LWLockRelease(&pgss->lock.lock);
 
 	/* We postpone this clean-up until we're out of the lock */
 	if (norm_query)
@@ -1802,7 +1797,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	 * we need to partition the hash table to limit the time spent holding any
 	 * one lock.
 	 */
-	LWLockAcquire(pgss->lock, LW_SHARED);
+	LWLockAcquire(&pgss->lock.lock, LW_SHARED);
 
 	if (showtext)
 	{
@@ -2040,7 +2035,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	LWLockRelease(pgss->lock);
+	LWLockRelease(&pgss->lock.lock);
 
 	if (qbuffer)
 		pfree(qbuffer);
@@ -2078,20 +2073,6 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 	values[1] = TimestampTzGetDatum(stats.stats_reset);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
-}
-
-/*
- * Estimate shared memory space needed.
- */
-static Size
-pgss_memsize(void)
-{
-	Size		size;
-
-	size = MAXALIGN(sizeof(pgssSharedState));
-	size = add_size(size, hash_estimate_size(pgss_max, sizeof(pgssEntry)));
-
-	return size;
 }
 
 /*
@@ -2724,7 +2705,7 @@ entry_reset(Oid userid, Oid dbid, int64 queryid, bool minmax_only)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("pg_stat_statements must be loaded via \"shared_preload_libraries\"")));
 
-	LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
+	LWLockAcquire(&pgss->lock.lock, LW_EXCLUSIVE);
 	num_entries = hash_get_num_entries(pgss_hash);
 
 	stats_reset = GetCurrentTimestamp();
@@ -2818,7 +2799,7 @@ done:
 	record_gc_qtexts();
 
 release_lock:
-	LWLockRelease(pgss->lock);
+	LWLockRelease(&pgss->lock.lock);
 
 	return stats_reset;
 }
