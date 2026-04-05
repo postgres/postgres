@@ -67,38 +67,55 @@ typedef enum InstrumentOption
 	INSTRUMENT_ALL = PG_INT32_MAX
 } InstrumentOption;
 
+/*
+ * General purpose instrumentation that can capture time and WAL/buffer usage
+ *
+ * Initialized through InstrAlloc, followed by one or more calls to a pair of
+ * InstrStart/InstrStop (activity is measured in between).
+ */
 typedef struct Instrumentation
 {
-	/* Parameters set at node creation: */
+	/* Parameters set at creation: */
 	bool		need_timer;		/* true if we need timer data */
 	bool		need_bufusage;	/* true if we need buffer usage data */
 	bool		need_walusage;	/* true if we need WAL usage data */
+	/* Internal state keeping: */
+	instr_time	starttime;		/* start time of last InstrStart */
+	BufferUsage bufusage_start; /* buffer usage at start */
+	WalUsage	walusage_start; /* WAL usage at start */
+	/* Accumulated statistics: */
+	instr_time	total;			/* total runtime */
+	BufferUsage bufusage;		/* total buffer usage */
+	WalUsage	walusage;		/* total WAL usage */
+} Instrumentation;
+
+/*
+ * Specialized instrumentation for per-node execution statistics
+ */
+typedef struct NodeInstrumentation
+{
+	Instrumentation instr;
+	/* Parameters set at node creation: */
 	bool		async_mode;		/* true if node is in async mode */
 	/* Info about current plan cycle: */
 	bool		running;		/* true if we've completed first tuple */
-	instr_time	starttime;		/* start time of current iteration of node */
 	instr_time	counter;		/* accumulated runtime for this node */
 	instr_time	firsttuple;		/* time for first tuple of this cycle */
 	double		tuplecount;		/* # of tuples emitted so far this cycle */
-	BufferUsage bufusage_start; /* buffer usage at start */
-	WalUsage	walusage_start; /* WAL usage at start */
 	/* Accumulated statistics across all completed cycles: */
 	instr_time	startup;		/* total startup time */
-	instr_time	total;			/* total time */
 	double		ntuples;		/* total tuples produced */
 	double		ntuples2;		/* secondary node-specific tuple counter */
 	double		nloops;			/* # of run cycles for this node */
 	double		nfiltered1;		/* # of tuples removed by scanqual or joinqual */
 	double		nfiltered2;		/* # of tuples removed by "other" quals */
-	BufferUsage bufusage;		/* total buffer usage */
-	WalUsage	walusage;		/* total WAL usage */
-} Instrumentation;
+} NodeInstrumentation;
 
-typedef struct WorkerInstrumentation
+typedef struct WorkerNodeInstrumentation
 {
 	int			num_workers;	/* # of structures that follow */
-	Instrumentation instrument[FLEXIBLE_ARRAY_MEMBER];
-} WorkerInstrumentation;
+	NodeInstrumentation instrument[FLEXIBLE_ARRAY_MEMBER];
+} WorkerNodeInstrumentation;
 
 typedef struct TriggerInstrumentation
 {
@@ -110,13 +127,20 @@ typedef struct TriggerInstrumentation
 extern PGDLLIMPORT BufferUsage pgBufferUsage;
 extern PGDLLIMPORT WalUsage pgWalUsage;
 
-extern Instrumentation *InstrAlloc(int instrument_options, bool async_mode);
-extern void InstrInit(Instrumentation *instr, int instrument_options);
-extern void InstrStartNode(Instrumentation *instr);
-extern void InstrStopNode(Instrumentation *instr, double nTuples);
-extern void InstrUpdateTupleCount(Instrumentation *instr, double nTuples);
-extern void InstrEndLoop(Instrumentation *instr);
-extern void InstrAggNode(Instrumentation *dst, Instrumentation *add);
+extern Instrumentation *InstrAlloc(int instrument_options);
+extern void InstrInitOptions(Instrumentation *instr, int instrument_options);
+extern void InstrStart(Instrumentation *instr);
+extern void InstrStop(Instrumentation *instr);
+
+extern NodeInstrumentation *InstrAllocNode(int instrument_options,
+										   bool async_mode);
+extern void InstrInitNode(NodeInstrumentation *instr, int instrument_options,
+						  bool async_mode);
+extern void InstrStartNode(NodeInstrumentation *instr);
+extern void InstrStopNode(NodeInstrumentation *instr, double nTuples);
+extern void InstrUpdateTupleCount(NodeInstrumentation *instr, double nTuples);
+extern void InstrEndLoop(NodeInstrumentation *instr);
+extern void InstrAggNode(NodeInstrumentation *dst, NodeInstrumentation *add);
 
 extern TriggerInstrumentation *InstrAllocTrigger(int n, int instrument_options);
 extern void InstrStartTrigger(TriggerInstrumentation *tginstr);

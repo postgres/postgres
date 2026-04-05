@@ -414,8 +414,8 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 	/* Set up instrumentation for this node if requested */
 	if (estate->es_instrument)
-		result->instrument = InstrAlloc(estate->es_instrument,
-										result->async_capable);
+		result->instrument = InstrAllocNode(estate->es_instrument,
+											result->async_capable);
 
 	return result;
 }

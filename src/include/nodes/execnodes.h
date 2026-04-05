@@ -60,6 +60,7 @@ typedef struct ScanKeyData ScanKeyData;
 typedef struct SnapshotData *Snapshot;
 typedef struct SortSupportData *SortSupport;
 typedef struct TIDBitmap TIDBitmap;
+typedef struct NodeInstrumentation NodeInstrumentation;
 typedef struct TriggerInstrumentation TriggerInstrumentation;
 typedef struct TupleConversionMap TupleConversionMap;
 typedef struct TupleDescData *TupleDesc;
@@ -68,7 +69,7 @@ typedef struct Tuplestorestate Tuplestorestate;
 typedef struct TupleTableSlot TupleTableSlot;
 typedef struct TupleTableSlotOps TupleTableSlotOps;
 typedef struct WalUsage WalUsage;
-typedef struct WorkerInstrumentation WorkerInstrumentation;
+typedef struct WorkerNodeInstrumentation WorkerNodeInstrumentation;
 
 
 /* ----------------
@@ -1207,8 +1208,10 @@ typedef struct PlanState
 	ExecProcNodeMtd ExecProcNodeReal;	/* actual function, if above is a
 										 * wrapper */
 
-	Instrumentation *instrument;	/* Optional runtime stats for this node */
-	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
+	NodeInstrumentation *instrument;	/* Optional runtime stats for this
+										 * node */
+	WorkerNodeInstrumentation *worker_instrument;	/* per-worker
+													 * instrumentation */
 
 	/* Per-worker JIT instrumentation */
 	struct SharedJitInstrumentation *worker_jit_instrument;

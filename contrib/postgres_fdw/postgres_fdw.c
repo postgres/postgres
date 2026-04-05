@@ -2779,7 +2779,7 @@ postgresIterateDirectModify(ForeignScanState *node)
 	if (!resultRelInfo->ri_projectReturning)
 	{
 		TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
-		Instrumentation *instr = node->ss.ps.instrument;
+		NodeInstrumentation *instr = node->ss.ps.instrument;
 
 		Assert(!dmstate->has_returning);
 
