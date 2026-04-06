@@ -1,0 +1,5 @@
+# pg_stash_advice extension
+comment = 'store and automatically apply plan advice'
+default_version = '1.0'
+module_pathname = '$libdir/pg_stash_advice'
+relocatable = true

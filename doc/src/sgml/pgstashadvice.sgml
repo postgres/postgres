@@ -1,0 +1,216 @@
+<!-- doc/src/sgml/pgstashadvice.sgml -->
+
+<sect1 id="pgstashadvice" xreflabel="pg_stash_advice">
+ <title>pg_stash_advice &mdash; store and automatically apply plan advice</title>
+
+ <indexterm zone="pgstashadvice">
+  <primary>pg_stash_advice</primary>
+ </indexterm>
+
+ <para>
+  The <filename>pg_stash_advice</filename> extension allows you to stash
+  <link linkend="pgplanadvice">plan advice</link> strings in dynamic
+  shared memory where they can be automatically applied. An
+  <literal>advice stash</literal> is a mapping from
+  <link linkend="guc-compute-query-id">query identifiers</link> to plan advice
+  strings. Whenever a session is asked to plan a query whose query ID appears
+  in the relevant advice stash, the plan advice string is automatically applied
+  to guide planning. Note that advice stashes exist purely in memory. This
+  means both that it is important to be mindful of memory consumption when
+  deciding how much plan advice to stash, and also that advice stashes must
+  be recreated and repopulated whenever the server is restarted.
+ </para>
+
+ <para>
+  In order to use this module, you will need to execute
+  <literal>CREATE EXTENSION pg_stash_advice</literal> in at least
+  one database, so that you have access to the SQL functions to manage
+  advice stashes. You will also need the <literal>pg_stash_advice</literal>
+  module to be loaded in all sessions where you want this module to
+  automatically apply advice. It will usually be best to do this by adding
+  <literal>pg_stash_advice</literal> to
+  <xref linkend="guc-shared-preload-libraries"/> and restarting the server.
+ </para>
+
+ <para>
+  Once you have met the above criteria, you can create advice stashes
+  using the <literal>pg_create_advice_stash</literal> function described
+  below and set the plan advice for a given query ID in a given stash using
+  the <literal>pg_set_stashed_advice</literal> function. Then, you need
+  only configure <literal>pg_stash_advice.stash_name</literal> to point
+  to the chosen advice stash name. For some use cases, rather than setting
+  this on a system-wide basis, you may find it helpful to use
+  <literal>ALTER DATABASE ... SET</literal> or
+  <literal>ALTER ROLE ... SET</literal> to configure values that will apply
+  only to a database or only to a certain role. Likewise, it may sometimes
+  be better to set the stash name in a particular session using
+  <literal>SET</literal>.
+ </para>
+
+ <para>
+  Because <literal>pg_stash_advice</literal> works on the basis of query
+  identifiers, you will need to determine the query identifier for each query
+  whose plan you wish to control. You will also need to determine the advice
+  string that you wish to store for each query. One way to do this is to use
+  <literal>EXPLAIN</literal>: the <literal>VERBOSE</literal> option will
+  show the query ID, and the <literal>PLAN_ADVICE</literal> option will
+  show plan advice.  Query identifiers can also be obtained through tools
+  such as <xref linkend="pgstatstatements" /> or
+  <xref linkend="monitoring-pg-stat-activity-view" />, but these tools
+  will not provide plan advice strings. Note that
+  <xref linkend="guc-compute-query-id" /> must be enabled for query
+  identifiers to be computed; if set to <literal>auto</literal>, loading
+  <literal>pg_stash_advice</literal> will enable it automatically.
+ </para>
+
+ <para>
+  Generally, the fact that the planner is able to change query plans as
+  the underlying distribution of data changes is a feature, not a bug.
+  Moreover, applying plan advice can have a noticeable performance cost even
+  when it does not result in a change to the query plan. Therefore, it is
+  a good idea to use this feature only when and to the extent needed.
+  Plan advice strings can be trimmed down to mention only those aspects
+  of the plan that need to be controlled, and used only for queries where
+  there is believed to be a significant risk of planner error.
+ </para>
+
+ <para>
+  Note that <literal>pg_stash_advice</literal> currently lacks a sophisticated
+  security model. Only the superuser, or a user to whom the superuser has
+  granted <literal>EXECUTE</literal> permission on the relevant functions,
+  may create advice stashes or alter their contents, but any user may set
+  <literal>pg_stash_advice.stash_name</literal> for their session, and this
+  may reveal the contents of any advice stash with that name. Users should
+  assume that information embedded in stashed advice strings may become visible
+  to nonprivileged users.
+ </para>
+
+ <sect2 id="pgstashadvice-functions">
+  <title>Functions</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term>
+     <function>pg_create_advice_stash(stash_name text) returns void</function>
+     <indexterm>
+      <primary>pg_create_advice_stash</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Creates a new, empty advice stash with the given name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>pg_drop_advice_stash(stash_name text) returns void</function>
+     <indexterm>
+      <primary>pg_drop_advice_stash</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Drops the named advice stash and all of its entries.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>pg_set_stashed_advice(stash_name text, query_id bigint,
+       advice_string text) returns void</function>
+     <indexterm>
+      <primary>pg_set_stashed_advice</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Stores an advice string in the named advice stash, associated with
+      the given query identifier. If an entry for that query identifier
+      already exists in the stash, it is replaced. If
+      <parameter>advice_string</parameter> is <literal>NULL</literal>,
+      any existing entry for that query identifier is removed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>pg_get_advice_stashes() returns setof (stash_name text,
+       num_entries bigint)</function>
+     <indexterm>
+      <primary>pg_get_advice_stashes</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Returns one row for each advice stash, showing the stash name and
+      the number of entries it contains.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>pg_get_advice_stash_contents(stash_name text) returns setof
+       (stash_name text, query_id bigint, advice_string text)</function>
+     <indexterm>
+      <primary>pg_get_advice_stash_contents</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Returns one row for each entry in the named advice stash. If
+      <parameter>stash_name</parameter> is <literal>NULL</literal>, returns
+      entries from all stashes.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+ </sect2>
+
+ <sect2 id="pgstashadvice-config-params">
+  <title>Configuration Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term>
+     <varname>pg_stash_advice.stash_name</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>pg_stash_advice.stash_name</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Specifies the name of the advice stash to consult during query
+      planning. The default value is the empty string, which disables
+      this module.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+ </sect2>
+
+ <sect2 id="pgstashadvice-author">
+  <title>Author</title>
+
+  <para>
+   Robert Haas <email>rhaas@postgresql.org</email>
+  </para>
+ </sect2>
+
+</sect1>

@@ -4077,6 +4077,12 @@ pgpa_trove_lookup_type
 pgpa_trove_result
 pgpa_trove_slice
 pgpa_unrolled_join
+pgsa_entry
+pgsa_entry_key
+pgsa_shared_state
+pgsa_stash
+pgsa_stash_count
+pgsa_stash_name
 pgsocket
 pgsql_thing_t
 pgssEntry

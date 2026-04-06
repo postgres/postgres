@@ -159,6 +159,7 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
  &pgplanadvice;
  &pgprewarm;
  &pgrowlocks;
+ &pgstashadvice;
  &pgstatstatements;
  &pgstattuple;
  &pgsurgery;

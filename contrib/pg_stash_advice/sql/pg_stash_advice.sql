@@ -1,0 +1,150 @@
+CREATE EXTENSION pg_stash_advice;
+SET compute_query_id = on;
+SET max_parallel_workers_per_gather = 0;
+
+-- Helper: extract query identifier from EXPLAIN VERBOSE output.
+CREATE OR REPLACE FUNCTION get_query_id(query_text text) RETURNS bigint
+LANGUAGE plpgsql AS $$
+DECLARE
+    line text;
+    qid bigint;
+BEGIN
+    FOR line IN EXECUTE 'EXPLAIN (VERBOSE, FORMAT TEXT) ' || query_text
+    LOOP
+        IF line ~ 'Query Identifier:' THEN
+            qid := regexp_replace(line, '.*Query Identifier:\s*(-?\d+).*', '\1')::bigint;
+            RETURN qid;
+        END IF;
+    END LOOP;
+    RAISE EXCEPTION 'Query Identifier not found in EXPLAIN output';
+END;
+$$;
+
+CREATE TABLE aa_dim1 (id integer primary key, dim1 text, val1 int)
+	WITH (autovacuum_enabled = false);
+INSERT INTO aa_dim1 (id, dim1, val1)
+	SELECT g, 'some filler text ' || g, (g % 3) + 1
+	  FROM generate_series(1,100) g;
+VACUUM ANALYZE aa_dim1;
+
+CREATE TABLE aa_dim2 (id integer primary key, dim2 text, val2 int)
+	WITH (autovacuum_enabled = false);
+INSERT INTO aa_dim2 (id, dim2, val2)
+	SELECT g, 'some filler text ' || g, (g % 7) + 1
+	  FROM generate_series(1,1000) g;
+VACUUM ANALYZE aa_dim2;
+
+CREATE TABLE aa_fact (
+	id int primary key,
+	dim1_id integer not null references aa_dim1 (id),
+	dim2_id integer not null references aa_dim2 (id)
+) WITH (autovacuum_enabled = false);
+INSERT INTO aa_fact
+	SELECT g, (g%100)+1, (g%100)+1 FROM generate_series(1,100000) g;
+VACUUM ANALYZE aa_fact;
+
+-- Get the query identifier.
+SELECT get_query_id($$
+SELECT * FROM aa_fact f LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+$$) AS qid \gset
+
+-- Create an advice stash and point pg_stash_advice at it.
+SELECT pg_create_advice_stash('regress_stash');
+SET pg_stash_advice.stash_name = 'regress_stash';
+
+-- Run our test query for the first time with no stashed advice.
+EXPLAIN (COSTS OFF)
+SELECT * FROM aa_fact f LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+
+-- Force an index scan on dim1
+SELECT pg_set_stashed_advice('regress_stash', :'qid',
+	'INDEX_SCAN(d1 aa_dim1_pkey)');
+EXPLAIN (COSTS OFF) SELECT * FROM aa_fact f
+	LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+
+-- Force an alternative join order
+SELECT pg_set_stashed_advice('regress_stash', :'qid',
+	'join_order(f d1 d2)');
+EXPLAIN (COSTS OFF) SELECT * FROM aa_fact f
+	LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+
+-- Force an alternative join strategy
+SELECT pg_set_stashed_advice('regress_stash', :'qid',
+	'NESTED_LOOP_PLAIN(d1)');
+EXPLAIN (COSTS OFF) SELECT * FROM aa_fact f
+	LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+
+-- Add a useless extra entry to our test stash. Shouldn't change the result
+-- from the previous test.
+-- (If we're unlucky enough that this ever fails due to query ID actually
+-- being 1, then just put some other constant here. Seems unlikely.)
+SELECT pg_set_stashed_advice('regress_stash', 1, 'SEQ_SCAN(d1)');
+EXPLAIN (COSTS OFF) SELECT * FROM aa_fact f
+	LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+
+-- Try an empty stash to be sure it does nothing
+SELECT pg_create_advice_stash('regress_empty_stash');
+SET pg_stash_advice.stash_name = 'regress_empty_stash';
+EXPLAIN (COSTS OFF) SELECT * FROM aa_fact f
+	LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+
+-- Test that we can list each stash individually and all of them together,
+-- but not a nonexistent stash.
+SELECT * FROM pg_get_advice_stashes() ORDER BY stash_name;
+SELECT stash_name, advice_string
+	FROM pg_get_advice_stash_contents('regress_stash') ORDER BY advice_string;
+SELECT stash_name, advice_string
+	 FROM pg_get_advice_stash_contents('regress_empty_stash')
+	 ORDER BY advice_string;
+SELECT stash_name, advice_string
+	 FROM pg_get_advice_stash_contents(NULL) ORDER BY advice_string;
+SELECT stash_name, advice_string
+	 FROM pg_get_advice_stash_contents('no_such_stash')
+	 ORDER BY advice_string;
+
+-- Test that we can remove advice.
+SELECT pg_set_stashed_advice('regress_stash', :'qid', null);
+SET pg_stash_advice.stash_name = 'regress_stash';
+EXPLAIN (COSTS OFF) SELECT * FROM aa_fact f
+	LEFT JOIN aa_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN aa_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+SELECT * FROM pg_get_advice_stashes() ORDER BY stash_name;
+SELECT stash_name, advice_string
+	FROM pg_get_advice_stash_contents('regress_stash') ORDER BY advice_string;
+
+-- Can't create a stash that already exists, or drop one that doesn't.
+SELECT pg_create_advice_stash('regress_stash');
+SELECT pg_drop_advice_stash('no_such_stash');
+
+-- Can't add to or remove from a stash that does not exist.
+SELECT pg_set_stashed_advice('no_such_stash', 1, 'SEQ_SCAN(t)');
+SELECT pg_set_stashed_advice('no_such_stash', 1, null);
+
+-- Can't use query ID 0.
+SELECT pg_set_stashed_advice('regress_stash', 0, 'SEQ_SCAN(t)');
+
+-- Stash names must be non-empty, ASCII, and not too long, and must look
+-- like identifiers.
+SELECT pg_create_advice_stash('');
+SELECT pg_create_advice_stash('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+SELECT pg_create_advice_stash('   ');
+SET pg_stash_advice.stash_name = '99bottles';
+
+-- Clean up state in dynamic shared memory.
+SELECT pg_drop_advice_stash('regress_stash');
+SELECT pg_drop_advice_stash('regress_empty_stash');
