@@ -1494,6 +1494,13 @@ ReplSlotSyncWorkerMain(const void *startup_data, size_t startup_data_len)
 
 	Assert(startup_data_len == 0);
 
+	/* Release postmaster's working memory context */
+	if (PostmasterContext)
+	{
+		MemoryContextDelete(PostmasterContext);
+		PostmasterContext = NULL;
+	}
+
 	init_ps_display(NULL);
 
 	Assert(GetProcessingMode() == InitProcessing);
