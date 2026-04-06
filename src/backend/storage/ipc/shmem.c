@@ -327,9 +327,10 @@ ShmemRequestStructWithOpts(const ShmemStructOpts *options)
 /*
  * Internal workhorse of ShmemRequestStruct() and ShmemRequestHash().
  *
- * Note: 'options' must live until the init/attach callbacks have been called.
- * Unlike in the public ShmemRequestStruct() and ShmemRequestHash() functions,
- * 'options' is *not* copied.  This allows ShmemRequestHash() to pass a
+ * Note: Unlike in the public ShmemRequestStruct() and ShmemRequestHash()
+ * functions, 'options' is *not* copied.  It must be allocated in
+ * TopMemoryContext by the caller, and will be freed after the init/attach
+ * callbacks have been called.  This allows ShmemRequestHash() to pass a
  * pointer to the extended ShmemHashOpts struct instead.
  */
 void
@@ -435,6 +436,7 @@ ShmemInitRequested(void)
 	foreach_ptr(ShmemRequest, request, pending_shmem_requests)
 	{
 		InitShmemIndexEntry(request);
+		pfree(request->options);
 	}
 	list_free_deep(pending_shmem_requests);
 	pending_shmem_requests = NIL;
@@ -477,6 +479,7 @@ ShmemAttachRequested(void)
 	foreach_ptr(ShmemRequest, request, pending_shmem_requests)
 	{
 		AttachShmemIndexEntry(request, false);
+		pfree(request->options);
 	}
 	list_free_deep(pending_shmem_requests);
 	pending_shmem_requests = NIL;
@@ -947,6 +950,8 @@ CallShmemCallbacksAfterStartup(const ShmemCallbacks *callbacks)
 			AttachShmemIndexEntry(request, false);
 		else
 			InitShmemIndexEntry(request);
+
+		pfree(request->options);
 	}
 	list_free_deep(pending_shmem_requests);
 	pending_shmem_requests = NIL;
