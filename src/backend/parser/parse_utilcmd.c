@@ -99,18 +99,6 @@ typedef struct
 	bool		ofType;			/* true if statement contains OF typename */
 } CreateStmtContext;
 
-/* State shared by transformCreateSchemaStmtElements and its subroutines */
-typedef struct
-{
-	const char *schemaname;		/* name of schema */
-	List	   *sequences;		/* CREATE SEQUENCE items */
-	List	   *tables;			/* CREATE TABLE items */
-	List	   *views;			/* CREATE VIEW items */
-	List	   *indexes;		/* CREATE INDEX items */
-	List	   *triggers;		/* CREATE TRIGGER items */
-	List	   *grants;			/* GRANT items */
-} CreateSchemaStmtContext;
-
 
 static void transformColumnDefinition(CreateStmtContext *cxt,
 									  ColumnDef *column);
@@ -137,7 +125,8 @@ static void transformCheckConstraints(CreateStmtContext *cxt,
 static void transformConstraintAttrs(CreateStmtContext *cxt,
 									 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
-static void setSchemaName(const char *context_schema, char **stmt_schema_name);
+static void checkSchemaNameRV(ParseState *pstate, const char *context_schema,
+							  RangeVar *relation);
 static void transformPartitionCmd(CreateStmtContext *cxt, PartitionBoundSpec *bound);
 static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
 										   Relation parent);
@@ -4395,51 +4384,35 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
  * transformCreateSchemaStmtElements -
  *	  analyzes the elements of a CREATE SCHEMA statement
  *
- * Split the schema element list from a CREATE SCHEMA statement into
- * individual commands and place them in the result list in an order
- * such that there are no forward references (e.g. GRANT to a table
- * created later in the list). Note that the logic we use for determining
- * forward references is presently quite incomplete.
+ * This is now somewhat vestigial: its only real responsibility is to complain
+ * if any of the elements are trying to create objects outside the new schema.
+ * We used to try to re-order the commands in a way that would work even if
+ * the user-written order would not, but that's too hard (perhaps impossible)
+ * to do correctly with not-yet-parse-analyzed commands.  Now we'll just
+ * execute the elements in the order given.
  *
  * "schemaName" is the name of the schema that will be used for the creation
- * of the objects listed, that may be compiled from the schema name defined
+ * of the objects listed.  It may be obtained from the schema name defined
  * in the statement or a role specification.
- *
- * SQL also allows constraints to make forward references, so thumb through
- * the table columns and move forward references to a posterior alter-table
- * command.
  *
  * The result is a list of parse nodes that still need to be analyzed ---
  * but we can't analyze the later commands until we've executed the earlier
  * ones, because of possible inter-object references.
- *
- * Note: this breaks the rules a little bit by modifying schema-name fields
- * within passed-in structs.  However, the transformation would be the same
- * if done over, so it should be all right to scribble on the input to this
- * extent.
  */
 List *
-transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
+transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
+								  const char *schemaName)
 {
-	CreateSchemaStmtContext cxt;
-	List	   *result;
-	ListCell   *elements;
-
-	cxt.schemaname = schemaName;
-	cxt.sequences = NIL;
-	cxt.tables = NIL;
-	cxt.views = NIL;
-	cxt.indexes = NIL;
-	cxt.triggers = NIL;
-	cxt.grants = NIL;
+	List	   *elements = NIL;
+	ListCell   *lc;
 
 	/*
-	 * Run through each schema element in the schema element list. Separate
-	 * statements by type, and do preliminary analysis.
+	 * Run through each schema element in the schema element list.  Check
+	 * target schema names, and collect the list of actions to be done.
 	 */
-	foreach(elements, schemaElts)
+	foreach(lc, schemaElts)
 	{
-		Node	   *element = lfirst(elements);
+		Node	   *element = lfirst(lc);
 
 		switch (nodeTag(element))
 		{
@@ -4447,8 +4420,8 @@ transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 				{
 					CreateSeqStmt *elp = (CreateSeqStmt *) element;
 
-					setSchemaName(cxt.schemaname, &elp->sequence->schemaname);
-					cxt.sequences = lappend(cxt.sequences, element);
+					checkSchemaNameRV(pstate, schemaName, elp->sequence);
+					elements = lappend(elements, element);
 				}
 				break;
 
@@ -4456,12 +4429,8 @@ transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 				{
 					CreateStmt *elp = (CreateStmt *) element;
 
-					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
-
-					/*
-					 * XXX todo: deal with constraints
-					 */
-					cxt.tables = lappend(cxt.tables, element);
+					checkSchemaNameRV(pstate, schemaName, elp->relation);
+					elements = lappend(elements, element);
 				}
 				break;
 
@@ -4469,12 +4438,8 @@ transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 				{
 					ViewStmt   *elp = (ViewStmt *) element;
 
-					setSchemaName(cxt.schemaname, &elp->view->schemaname);
-
-					/*
-					 * XXX todo: deal with references between views
-					 */
-					cxt.views = lappend(cxt.views, element);
+					checkSchemaNameRV(pstate, schemaName, elp->view);
+					elements = lappend(elements, element);
 				}
 				break;
 
@@ -4482,8 +4447,8 @@ transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 				{
 					IndexStmt  *elp = (IndexStmt *) element;
 
-					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
-					cxt.indexes = lappend(cxt.indexes, element);
+					checkSchemaNameRV(pstate, schemaName, elp->relation);
+					elements = lappend(elements, element);
 				}
 				break;
 
@@ -4491,13 +4456,13 @@ transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 				{
 					CreateTrigStmt *elp = (CreateTrigStmt *) element;
 
-					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
-					cxt.triggers = lappend(cxt.triggers, element);
+					checkSchemaNameRV(pstate, schemaName, elp->relation);
+					elements = lappend(elements, element);
 				}
 				break;
 
 			case T_GrantStmt:
-				cxt.grants = lappend(cxt.grants, element);
+				elements = lappend(elements, element);
 				break;
 
 			default:
@@ -4506,32 +4471,41 @@ transformCreateSchemaStmtElements(List *schemaElts, const char *schemaName)
 		}
 	}
 
-	result = NIL;
-	result = list_concat(result, cxt.sequences);
-	result = list_concat(result, cxt.tables);
-	result = list_concat(result, cxt.views);
-	result = list_concat(result, cxt.indexes);
-	result = list_concat(result, cxt.triggers);
-	result = list_concat(result, cxt.grants);
-
-	return result;
+	return elements;
 }
 
 /*
- * setSchemaName
- *		Set or check schema name in an element of a CREATE SCHEMA command
+ * checkSchemaNameRV
+ *		Check schema name in an element of a CREATE SCHEMA command,
+ *		where the element's name is given by a RangeVar
+ *
+ * It's okay if the command doesn't specify a target schema name, because
+ * CreateSchemaCommand will set up the default creation schema to be the
+ * new schema.  But if a target schema name is given, it had better match.
+ * We also have to check that the command doesn't say CREATE TEMP, since
+ * that would likewise put the object into the wrong schema.
  */
 static void
-setSchemaName(const char *context_schema, char **stmt_schema_name)
+checkSchemaNameRV(ParseState *pstate, const char *context_schema,
+				  RangeVar *relation)
 {
-	if (*stmt_schema_name == NULL)
-		*stmt_schema_name = unconstify(char *, context_schema);
-	else if (strcmp(context_schema, *stmt_schema_name) != 0)
+	if (relation->schemaname != NULL &&
+		strcmp(context_schema, relation->schemaname) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
 				 errmsg("CREATE specifies a schema (%s) "
 						"different from the one being created (%s)",
-						*stmt_schema_name, context_schema)));
+						relation->schemaname, context_schema),
+				 parser_errposition(pstate, relation->location)));
+
+	if (relation->relpersistence == RELPERSISTENCE_TEMP)
+	{
+		/* spell this error the same as in RangeVarAdjustRelationPersistence */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot create temporary relation in non-temporary schema"),
+				 parser_errposition(pstate, relation->location)));
+	}
 }
 
 /*

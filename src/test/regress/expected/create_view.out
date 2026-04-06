@@ -128,6 +128,8 @@ ERROR:  cannot create temporary relation in non-temporary schema
 CREATE SCHEMA test_view_schema
     CREATE TEMP VIEW testview AS SELECT 1;
 ERROR:  cannot create temporary relation in non-temporary schema
+LINE 2:     CREATE TEMP VIEW testview AS SELECT 1;
+                             ^
 -- joins: if any of the join relations are temporary, the view
 -- should also be temporary
 -- should be non-temp

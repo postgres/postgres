@@ -131,6 +131,11 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
    <literal>CREATE</literal> privilege for the current database.
    (Of course, superusers bypass this check.)
   </para>
+
+  <para>
+   The <replaceable class="parameter">schema_element</replaceable>
+   subcommands, if any, are executed in the order they are written.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -193,12 +198,12 @@ CREATE VIEW hollywood.winners AS
   </para>
 
   <para>
-   The SQL standard specifies that the subcommands in <command>CREATE
-   SCHEMA</command> can appear in any order.  The present
-   <productname>PostgreSQL</productname> implementation does not
-   handle all cases of forward references in subcommands; it might
-   sometimes be necessary to reorder the subcommands in order to avoid
-   forward references.
+   Some other SQL implementations attempt to allow more kinds of forward
+   references to objects defined in
+   later <replaceable class="parameter">schema_element</replaceable>
+   subcommands than just foreign key constraints.  This is difficult or
+   impossible to do correctly in general, and it is not clear that the SQL
+   standard requires any such behavior except for foreign keys.
   </para>
 
   <para>

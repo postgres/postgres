@@ -49,7 +49,7 @@ static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerI
  * a subquery.
  */
 Oid
-CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
+CreateSchemaCommand(ParseState *pstate, CreateSchemaStmt *stmt,
 					int stmt_location, int stmt_len)
 {
 	const char *schemaName = stmt->schemaname;
@@ -189,12 +189,12 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
-	 * reorganize them into a sequentially executable order with no forward
-	 * references.  Note that the result is still a list of raw parsetrees ---
-	 * we cannot, in general, run parse analysis on one statement until we
-	 * have actually executed the prior ones.
+	 * do preliminary transformations.  Note that the result is still a list
+	 * of raw parsetrees --- we cannot, in general, run parse analysis on one
+	 * statement until we have actually executed the prior ones.
 	 */
-	parsetree_list = transformCreateSchemaStmtElements(stmt->schemaElts,
+	parsetree_list = transformCreateSchemaStmtElements(pstate,
+													   stmt->schemaElts,
 													   schemaName);
 
 	/*
@@ -219,7 +219,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 
 		/* do this step */
 		ProcessUtility(wrapper,
-					   queryString,
+					   pstate->p_sourcetext,
 					   false,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,

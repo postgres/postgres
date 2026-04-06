@@ -585,7 +585,6 @@ CreateRangeStmt
 CreateReplicationSlotCmd
 CreateRoleStmt
 CreateSchemaStmt
-CreateSchemaStmtContext
 CreateSeqStmt
 CreateStatsStmt
 CreateStmt

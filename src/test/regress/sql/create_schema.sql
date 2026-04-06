@@ -47,6 +47,11 @@ CREATE SCHEMA regress_schema_1 AUTHORIZATION CURRENT_ROLE
   EXECUTE FUNCTION schema_trig.no_func();
 RESET ROLE;
 
+-- Forward references no longer work in general.
+CREATE SCHEMA regress_schema_1 AUTHORIZATION CURRENT_ROLE
+  CREATE VIEW abcd_view AS SELECT a FROM abcd
+  CREATE TABLE abcd (a int);
+
 -- Cases where the schema creation succeeds.
 -- The schema created matches the role name.
 CREATE SCHEMA AUTHORIZATION regress_create_schema_role

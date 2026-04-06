@@ -7,15 +7,16 @@
 SELECT pg_catalog.set_config('search_path', ' ', false);
 
 CREATE SCHEMA test_ns_schema_1
+       CREATE TABLE abc (
+              a serial,
+              b int UNIQUE
+       )
+
        CREATE UNIQUE INDEX abc_a_idx ON abc (a)
 
        CREATE VIEW abc_view AS
               SELECT a+1 AS a, b+1 AS b FROM abc
-
-       CREATE TABLE abc (
-              a serial,
-              b int UNIQUE
-       );
+;
 
 -- verify that the correct search_path restored on abort
 SET search_path to public;

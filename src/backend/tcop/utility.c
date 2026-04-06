@@ -1122,8 +1122,8 @@ ProcessUtilitySlow(ParseState *pstate,
 				 * relation and attribute manipulation
 				 */
 			case T_CreateSchemaStmt:
-				CreateSchemaCommand((CreateSchemaStmt *) parsetree,
-									queryString,
+				CreateSchemaCommand(pstate,
+									(CreateSchemaStmt *) parsetree,
 									pstmt->stmt_location,
 									pstmt->stmt_len);
 

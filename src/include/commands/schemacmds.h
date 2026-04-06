@@ -16,12 +16,11 @@
 #define SCHEMACMDS_H
 
 #include "catalog/objectaddress.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 
-extern Oid	CreateSchemaCommand(CreateSchemaStmt *stmt,
-								const char *queryString,
+extern Oid	CreateSchemaCommand(ParseState *pstate,
+								CreateSchemaStmt *stmt,
 								int stmt_location, int stmt_len);
-
 extern ObjectAddress RenameSchema(const char *oldname, const char *newname);
 extern ObjectAddress AlterSchemaOwner(const char *name, Oid newOwnerId);
 extern void AlterSchemaOwner_oid(Oid schemaoid, Oid newOwnerId);
