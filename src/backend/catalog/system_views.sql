@@ -795,6 +795,24 @@ CREATE VIEW pg_stat_xact_user_tables AS
     WHERE schemaname NOT IN ('pg_catalog', 'information_schema') AND
           schemaname !~ '^pg_toast';
 
+CREATE VIEW pg_stat_autovacuum_scores AS
+    SELECT
+        s.oid AS relid,
+        n.nspname AS schemaname,
+        c.relname AS relname,
+        s.score,
+        s.xid_score,
+        s.mxid_score,
+        s.vacuum_score,
+        s.vacuum_insert_score,
+        s.analyze_score,
+        s.do_vacuum,
+        s.do_analyze,
+        s.for_wraparound
+    FROM pg_stat_get_autovacuum_scores() s
+    JOIN pg_class c on c.oid = s.oid
+    LEFT JOIN pg_namespace n ON n.oid = c.relnamespace;
+
 CREATE VIEW pg_statio_all_tables AS
     SELECT
             C.oid AS relid,

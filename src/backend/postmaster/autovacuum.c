@@ -80,6 +80,7 @@
 #include "catalog/pg_namespace.h"
 #include "commands/vacuum.h"
 #include "common/int.h"
+#include "funcapi.h"
 #include "lib/ilist.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -112,6 +113,7 @@
 #include "utils/syscache.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
+#include "utils/tuplestore.h"
 #include "utils/wait_event.h"
 
 
@@ -3626,4 +3628,75 @@ check_av_worker_gucs(void)
 						autovacuum_max_workers, autovacuum_worker_slots),
 				 errdetail("The server will only start up to \"autovacuum_worker_slots\" (%d) autovacuum workers at a given time.",
 						   autovacuum_worker_slots)));
+}
+
+/*
+ * pg_stat_get_autovacuum_scores
+ *
+ * Returns current autovacuum scores for all relevant tables in the current
+ * database.
+ */
+Datum
+pg_stat_get_autovacuum_scores(PG_FUNCTION_ARGS)
+{
+	int			effective_multixact_freeze_max_age;
+	Relation	rel;
+	TableScanDesc scan;
+	HeapTuple	tup;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	InitMaterializedSRF(fcinfo, 0);
+
+	/* some prerequisite initialization */
+	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
+	recentXid = ReadNextTransactionId();
+	recentMulti = ReadNextMultiXactId();
+
+	/* scan pg_class */
+	rel = table_open(RelationRelationId, AccessShareLock);
+	scan = table_beginscan_catalog(rel, 0, NULL);
+	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Form_pg_class form = (Form_pg_class) GETSTRUCT(tup);
+		AutoVacOpts *avopts;
+		bool		dovacuum;
+		bool		doanalyze;
+		bool		wraparound;
+		AutoVacuumScores scores;
+		Datum		vals[10];
+		bool		nulls[10] = {false};
+
+		/* skip ineligible entries */
+		if (form->relkind != RELKIND_RELATION &&
+			form->relkind != RELKIND_MATVIEW &&
+			form->relkind != RELKIND_TOASTVALUE)
+			continue;
+		if (form->relpersistence == RELPERSISTENCE_TEMP)
+			continue;
+
+		avopts = extract_autovac_opts(tup, RelationGetDescr(rel));
+		relation_needs_vacanalyze(form->oid, avopts, form,
+								  effective_multixact_freeze_max_age, 0,
+								  &dovacuum, &doanalyze, &wraparound,
+								  &scores);
+		if (avopts)
+			pfree(avopts);
+
+		vals[0] = ObjectIdGetDatum(form->oid);
+		vals[1] = Float8GetDatum(scores.max);
+		vals[2] = Float8GetDatum(scores.xid);
+		vals[3] = Float8GetDatum(scores.mxid);
+		vals[4] = Float8GetDatum(scores.vac);
+		vals[5] = Float8GetDatum(scores.vac_ins);
+		vals[6] = Float8GetDatum(scores.anl);
+		vals[7] = BoolGetDatum(dovacuum);
+		vals[8] = BoolGetDatum(doanalyze);
+		vals[9] = BoolGetDatum(wraparound);
+
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, vals, nulls);
+	}
+	table_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return (Datum) 0;
 }

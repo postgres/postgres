@@ -1168,6 +1168,12 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
      <literal>2.0</literal> effectively doubles the
      <emphasis>analyze</emphasis> component score.
     </para>
+
+    <para>
+     The <link linkend="monitoring-pg-stat-autovacuum-scores-view">
+     <structname>pg_stat_autovacuum_scores</structname></link>
+     view shows the current scores of all tables in the current database.
+    </para>
    </sect3>
   </sect2>
 

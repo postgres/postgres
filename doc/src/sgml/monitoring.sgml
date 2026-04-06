@@ -597,6 +597,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_autovacuum_scores</structname><indexterm><primary>pg_stat_autovacuum_scores</primary></indexterm></entry>
+      <entry>
+       One row for each table in the current database, showing the current
+       autovacuum scores for that specific table.  See
+       <link linkend="monitoring-pg-stat-autovacuum-scores-view">
+       <structname>pg_stat_autovacuum_scores</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_all_indexes</structname><indexterm><primary>pg_stat_all_indexes</primary></indexterm></entry>
       <entry>
        One row for each index in the current database, showing statistics
@@ -4500,6 +4510,175 @@ description | Waiting for a newly initialized WAL file to reach durable storage
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-autovacuum-scores-view">
+  <title><structname>pg_stat_autovacuum_scores</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_autovacuum_scores</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_autovacuum_scores</structname> view will contain one
+   row for each table in the current database (including TOAST tables), showing
+   the current autovacuum scores for that specific table.  Autovacuum
+   prioritizes tables deemed eligible for processing based on their
+   <structfield>score</structfield>, with higher scores indicating higher
+   priority.  See <xref linkend="autovacuum-priority"/> for more information.
+  </para>
+
+  <para>
+   While this view generates its results the same way that autovacuum workers
+   do, it does so using the current source information, which might differ from
+   the source information that an autovacuum worker sees when it gathers its
+   list of tables to process.  Therefore, this view is not a completely
+   reliable indicator of which tables autovacuum will process and what order it
+   will process them.
+  </para>
+
+  <table id="pg-stat-autovacuum-scores-view" xreflabel="pg_stat_autovacuum_scores">
+   <title><structname>pg_stat_autovacuum_scores</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Oid of the table.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema that the table is in.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the table.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>score</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Maximum value of all component scores.  This is the value that
+       autovacuum would use to sort the list of tables to process.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>xid_score</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Transaction ID age component score.  Scores greater than or equal to
+       <xref linkend="guc-autovacuum-freeze-score-weight"/> indicate that
+       autovacuum would vacuum the table for transaction ID wraparound
+       prevention.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>mxid_score</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Multixact ID age component score.  Scores greater than or equal to
+       <xref linkend="guc-autovacuum-multixact-freeze-score-weight"/> indicate
+       that autovacuum would vacuum the table for multixact ID wraparound
+       prevention.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>vacuum_score</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Vacuum component score.  Scores greater than or equal to
+       <xref linkend="guc-autovacuum-vacuum-score-weight"/> indicate that
+       autovacuum would vacuum the table (unless autovacuum is disabled).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>vacuum_insert_score</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Vacuum insert component score.  Scores greater than or equal to
+       <xref linkend="guc-autovacuum-vacuum-insert-score-weight"/> indicate
+       that autovacuum would vacuum the table (unless autovacuum is disabled).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>analyze_score</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Analyze component score.  Scores greater than or equal to
+       <xref linkend="guc-autovacuum-analyze-score-weight"/> indicate that
+       autovacuum would analyze the table (unless autovacuum is disabled).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>do_vacuum</structfield> <type>bool</type>
+      </para>
+      <para>
+       Whether autovacuum would vacuum the table.  Note that even if the
+       component scores indicate that autovacuum would vacuum the table, this
+       may be <literal>false</literal> if autovacuum is disabled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>do_analyze</structfield> <type>bool</type>
+      </para>
+      <para>
+       Whether autovacuum would analyze the table.  Note that even if the
+       component scores indicate that autovacuum would analyze the table, this
+       may be <literal>false</literal> if autovacuum is disabled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>for_wraparound</structfield> <type>bool</type>
+      </para>
+      <para>
+       Whether autovacuum would vacuum the table for wraparound prevention.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect2>
 
  <sect2 id="monitoring-pg-stat-all-indexes-view">
