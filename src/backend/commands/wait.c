@@ -335,10 +335,17 @@ WaitStmtResultDesc(WaitStmt *stmt)
 {
 	TupleDesc	tupdesc;
 
-	/* Need a tuple descriptor representing a single TEXT  column */
+	/*
+	 * Need a tuple descriptor representing a single TEXT column.
+	 *
+	 * We use TupleDescInitBuiltinEntry instead of TupleDescInitEntry to avoid
+	 * syscache access. This is important because WaitStmtResultDesc may be
+	 * called after snapshots have been released, and we must not re-establish
+	 * a catalog snapshot which could cause recovery conflicts on a standby.
+	 */
 	tupdesc = CreateTemplateTupleDesc(1);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-					   TEXTOID, -1, 0);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "status",
+							  TEXTOID, -1, 0);
 	TupleDescFinalize(tupdesc);
 	return tupdesc;
 }
