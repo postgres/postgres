@@ -41,7 +41,7 @@ $node_standby->start;
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE t AS SELECT generate_series(1,10000) AS a;");
 
-# Wait for standbys to catch up
+# Wait for standby to catch up
 $node_primary->wait_for_catchup($node_standby, 'replay',
 	$node_primary->lsn('insert'));
 
@@ -54,8 +54,14 @@ test_checksum_state($node_standby, 'off');
 # standby change state.
 #
 
-# Ensure that the primary switches to "inprogress-on"
-enable_data_checksums($node_primary, wait => 'inprogress-on');
+# Initiate enabling of checksums and ensure that the primary switches to
+# either "inprogress-on" or "on"
+enable_data_checksums($node_primary);
+my $result = $node_primary->poll_query_until(
+	'postgres',
+	"SELECT setting = 'off' FROM pg_catalog.pg_settings WHERE name = 'data_checksums';",
+	'f');
+is($result, 1, 'ensure primary has transitioned from off');
 # Wait for checksum enable to be replayed
 $node_primary->wait_for_catchup($node_standby, 'replay');
 
@@ -63,7 +69,7 @@ $node_primary->wait_for_catchup($node_standby, 'replay');
 # would be "inprogress-on", but it is theoretically possible for the primary to
 # complete the checksum enabling *and* have the standby replay that record
 # before we reach the check below.
-my $result = $node_standby->poll_query_until(
+$result = $node_standby->poll_query_until(
 	'postgres',
 	"SELECT setting = 'off' FROM pg_catalog.pg_settings WHERE name = 'data_checksums';",
 	'f');

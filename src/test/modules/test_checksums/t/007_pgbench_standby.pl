@@ -99,6 +99,8 @@ sub background_pgbench
 # before and after state.
 sub flip_data_checksums
 {
+	my $temptablewait = 0;
+
 	# First, make sure the cluster is in the state we expect it to be
 	test_checksum_state($node_primary, $data_checksum_state);
 	test_checksum_state($node_standby, $data_checksum_state);
@@ -106,8 +108,13 @@ sub flip_data_checksums
 	if ($data_checksum_state eq 'off')
 	{
 		# Coin-toss to see if we are injecting a retry due to a temptable
-		$node_primary->safe_psql('postgres', 'SELECT dcw_fake_temptable();')
-		  if cointoss();
+		if (cointoss())
+		{
+			$node_primary->safe_psql('postgres',
+				"SELECT injection_points_attach('datachecksumsworker-fake-temptable-wait', 'notice');"
+			);
+			$temptablewait = 1;
+		}
 
 		# log LSN right before we start changing checksums
 		my $result =
@@ -154,7 +161,8 @@ sub flip_data_checksums
 		wait_for_checksum_state($node_standby, 'on');
 
 		$node_primary->safe_psql('postgres',
-			'SELECT dcw_fake_temptable(false);');
+			"SELECT injection_points_detach('datachecksumsworker-fake-temptable-wait');"
+		) if ($temptablewait);
 		$data_checksum_state = 'on';
 	}
 	elsif ($data_checksum_state eq 'on')
@@ -170,6 +178,7 @@ sub flip_data_checksums
 		$node_primary->wait_for_catchup($node_standby, 'replay');
 
 		# Wait for checksums disabled on the primary and standby
+		random_sleep() if ($extended);
 		wait_for_checksum_state($node_primary, 'off');
 		wait_for_checksum_state($node_standby, 'off');
 
@@ -177,9 +186,6 @@ sub flip_data_checksums
 		$result =
 		  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
 		note("LSN after disabling: " . $result . "\n");
-
-		random_sleep() if ($extended);
-		wait_for_checksum_state($node_standby, 'off');
 
 		$data_checksum_state = 'off';
 	}
@@ -207,6 +213,7 @@ log_statement = none
 ]);
 $node_primary->start;
 $node_primary->safe_psql('postgres', 'CREATE EXTENSION test_checksums;');
+$node_primary->safe_psql('postgres', 'CREATE EXTENSION injection_points;');
 # Create some content to have un-checksummed data in the cluster
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE t AS SELECT generate_series(1, 100000) AS a;");

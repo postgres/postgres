@@ -62,11 +62,15 @@ $result = $node->safe_psql('postgres',
 	"SELECT relpersistence FROM pg_catalog.pg_class WHERE relname = 'tt';");
 is($result, 't', 'ensure we can see the temporary table');
 
+# Enable, but stop waiting at inprogress-on since it will sit there until the
+# above temporary table is removed.
 enable_data_checksums($node, wait => 'inprogress-on');
 
-# Turn the cluster off and enable checksums offline, then start back up
+# Turn the cluster off and enable checksums offline, then start back up.
+# Stop the cluster before exiting the background session since otherwise
+# checksums might have time to get enabled before shutting down the cluster.
+$node->stop('fast');
 $bsession->quit;
-$node->stop;
 $node->checksum_enable_offline;
 $node->start;
 

@@ -89,14 +89,21 @@ sub background_rw_pgbench
 # before and after state.
 sub flip_data_checksums
 {
+	my $temptablewait = 0;
+
 	# First, make sure the cluster is in the state we expect it to be
 	test_checksum_state($node, $data_checksum_state);
 
 	if ($data_checksum_state eq 'off')
 	{
 		# Coin-toss to see if we are injecting a retry due to a temptable
-		$node->safe_psql('postgres', 'SELECT dcw_fake_temptable();')
-		  if cointoss();
+		if (cointoss())
+		{
+			$node->safe_psql('postgres',
+				"SELECT injection_points_attach('datachecksumsworker-fake-temptable-wait', 'notice');"
+			);
+			$temptablewait = 1;
+		}
 
 		# log LSN right before we start changing checksums
 		my $result =
@@ -117,7 +124,9 @@ sub flip_data_checksums
 
 		random_sleep() if ($extended);
 
-		$node->safe_psql('postgres', 'SELECT dcw_fake_temptable(false);');
+		$node->safe_psql('postgres',
+			"SELECT injection_points_detach('datachecksumsworker-fake-temptable-wait');"
+		) if ($temptablewait);
 		$data_checksum_state = 'on';
 	}
 	elsif ($data_checksum_state eq 'on')
@@ -165,6 +174,7 @@ log_statement = none
 ]);
 $node->start;
 $node->safe_psql('postgres', 'CREATE EXTENSION test_checksums;');
+$node->safe_psql('postgres', 'CREATE EXTENSION injection_points;');
 # Create some content to have un-checksummed data in the cluster
 $node->safe_psql('postgres',
 	"CREATE TABLE t AS SELECT generate_series(1, 100000) AS a;");

@@ -14,11 +14,3 @@ CREATE FUNCTION dcw_inject_launcher_delay(attach boolean DEFAULT true)
 CREATE FUNCTION dcw_inject_startup_delay(attach boolean DEFAULT true)
 	RETURNS pg_catalog.void
 	AS 'MODULE_PATHNAME' LANGUAGE C;
-
-CREATE FUNCTION dcw_inject_fail_database(attach boolean DEFAULT true)
-	RETURNS pg_catalog.void
-	AS 'MODULE_PATHNAME' LANGUAGE C;
-
-CREATE FUNCTION dcw_fake_temptable(attach boolean DEFAULT true)
-	RETURNS pg_catalog.void
-	AS 'MODULE_PATHNAME' LANGUAGE C;

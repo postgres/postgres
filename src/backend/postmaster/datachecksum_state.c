@@ -1216,8 +1216,15 @@ ProcessAllDatabases(void)
 
 		result = ProcessDatabase(db);
 
+#ifdef USE_INJECTION_POINTS
 		/* Allow a test process to alter the result of the operation */
-		INJECTION_POINT("datachecksumsworker-modify-db-result", &result);
+		if (IS_INJECTION_POINT_ATTACHED("datachecksumsworker-fail-db-result"))
+		{
+			result = DATACHECKSUMSWORKER_FAILED;
+			INJECTION_POINT_CACHED("datachecksumsworker-fail-db-result",
+								   db->dbname);
+		}
+#endif
 
 		pgstat_progress_update_param(PROGRESS_DATACHECKSUMS_DBS_DONE,
 									 ++cumulative_total);
@@ -1451,6 +1458,9 @@ DataChecksumsWorkerMain(Datum arg)
 	BufferAccessStrategy strategy;
 	bool		aborted = false;
 	int64		rels_done;
+#ifdef USE_INJECTION_POINTS
+	bool		retried = false;
+#endif
 
 	operation = ENABLE_DATACHECKSUMS;
 
@@ -1566,7 +1576,19 @@ DataChecksumsWorkerMain(Datum arg)
 		}
 		list_free(CurrentTempTables);
 
-		INJECTION_POINT("datachecksumsworker-fake-temptable-wait", &numleft);
+#ifdef USE_INJECTION_POINTS
+		if (IS_INJECTION_POINT_ATTACHED("datachecksumsworker-fake-temptable-wait"))
+		{
+			/* Make sure to just cause one retry */
+			if (!retried && numleft == 0)
+			{
+				numleft = 1;
+				retried = true;
+
+				INJECTION_POINT_CACHED("datachecksumsworker-fake-temptable-wait", NULL);
+			}
+		}
+#endif
 
 		if (numleft == 0)
 			break;

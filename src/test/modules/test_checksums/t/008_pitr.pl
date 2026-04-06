@@ -67,15 +67,15 @@ sub flip_data_checksums
 		# log LSN right before we start changing checksums
 		$lsn_pre =
 		  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
+		note("LSN before disabling: " . $lsn_pre . "\n");
 
-		disable_data_checksums($node_primary);
-
-		# Wait for checksums disabled on the primary
-		wait_for_checksum_state($node_primary, 'off');
+		# Disable checksums on the primary and wait for completion
+		disable_data_checksums($node_primary, wait => 1);
 
 		# log LSN right after the primary flips checksums to "off"
 		$lsn_post =
 		  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
+		note("LSN after disabling: " . $lsn_post . "\n");
 
 		$data_checksum_state = 'off';
 	}

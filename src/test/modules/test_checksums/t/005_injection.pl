@@ -32,6 +32,7 @@ $node->start;
 
 # Set up test environment
 $node->safe_psql('postgres', 'CREATE EXTENSION test_checksums;');
+$node->safe_psql('postgres', 'CREATE EXTENSION injection_points;');
 
 # ---------------------------------------------------------------------------
 # Inducing failures and crashes in processing
@@ -39,9 +40,12 @@ $node->safe_psql('postgres', 'CREATE EXTENSION test_checksums;');
 # Force enabling checksums to fail by marking one of the databases as having
 # failed in processing.
 disable_data_checksums($node, wait => 1);
-$node->safe_psql('postgres', 'SELECT dcw_inject_fail_database(true);');
+$node->safe_psql('postgres',
+	"SELECT injection_points_attach('datachecksumsworker-fail-db-result','notice');"
+);
 enable_data_checksums($node, wait => 'off');
-$node->safe_psql('postgres', 'SELECT dcw_inject_fail_database(false);');
+$node->safe_psql('postgres',
+	"SELECT injection_points_detach('datachecksumsworker-fail-db-result');");
 
 # Make sure that disabling after a failure works
 disable_data_checksums($node);
@@ -66,7 +70,9 @@ SKIP:
 	# will force the processing to wait and retry in order to wait for it to
 	# disappear.
 	disable_data_checksums($node, wait => 1);
-	$node->safe_psql('postgres', 'SELECT dcw_fake_temptable(true);');
+	$node->safe_psql('postgres',
+		"SELECT injection_points_attach('datachecksumsworker-fake-temptable-wait', 'notice');"
+	);
 	enable_data_checksums($node, wait => 'on');
 }
 

@@ -175,8 +175,19 @@ EOQ
 	$postgresnode->safe_psql('postgres',
 		sprintf($query, $params{cost_delay}, $params{cost_limit}));
 
-	wait_for_checksum_state($postgresnode, $params{wait})
-	  if (defined($params{wait}));
+	if (defined($params{wait}))
+	{
+		wait_for_checksum_state($postgresnode, $params{wait});
+		# If we are tasked with waiting for an end state, also wait for the
+		# launcher to exit.
+		if ($params{wait} eq 'on' || $params{wait} eq 'off')
+		{
+			$postgresnode->poll_query_until('postgres',
+					"SELECT count(*) = 0 "
+				  . "FROM pg_catalog.pg_stat_activity "
+				  . "WHERE backend_type = 'datachecksum launcher';");
+		}
+	}
 }
 
 =item disable_data_checksums($node, %params)
@@ -204,7 +215,14 @@ sub disable_data_checksums
 	$postgresnode->safe_psql('postgres',
 		'SELECT pg_disable_data_checksums();');
 
-	wait_for_checksum_state($postgresnode, 'off') if (defined($params{wait}));
+	if (defined($params{wait}))
+	{
+		wait_for_checksum_state($postgresnode, 'off');
+		$postgresnode->poll_query_until('postgres',
+				"SELECT count(*) = 0 "
+			  . "FROM pg_catalog.pg_stat_activity "
+			  . "WHERE backend_type = 'datachecksum launcher';");
+	}
 }
 
 =item cointoss

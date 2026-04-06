@@ -35,11 +35,7 @@ my $result =
 is($result, '9999', 'ensure checksummed pages can be read back');
 
 # Enable data checksums again which should be a no-op so we explicitly don't
-# wait for any state transition as none should happen here. Make sure to let
-# any running launcher finish in case it's still wrapping up.
-$result = $node->poll_query_until('postgres',
-	"SELECT count(*) = 0 FROM pg_catalog.pg_stat_activity WHERE backend_type = 'datachecksum launcher';"
-);
+# wait for any state transition as none should happen here.
 enable_data_checksums($node);
 test_checksum_state($node, 'on');
 # ..and make sure we can still read/write data
