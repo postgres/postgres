@@ -3004,9 +3004,17 @@ init_grouping_targets(PlannerInfo *root, RelOptInfo *rel,
 											   tce->btree_opintype,
 											   tce->btree_opintype,
 											   BTEQUALIMAGE_PROC);
+
+			/*
+			 * If there is no BTEQUALIMAGE_PROC, eager aggregation is assumed
+			 * to be unsafe.  Otherwise, we call the procedure to check.  We
+			 * must be careful to pass the expression's actual collation,
+			 * rather than the data type's default collation, to ensure that
+			 * non-deterministic collations are correctly handled.
+			 */
 			if (!OidIsValid(equalimageproc) ||
 				!DatumGetBool(OidFunctionCall1Coll(equalimageproc,
-												   tce->typcollation,
+												   exprCollation((Node *) expr),
 												   ObjectIdGetDatum(tce->btree_opintype))))
 				return false;
 

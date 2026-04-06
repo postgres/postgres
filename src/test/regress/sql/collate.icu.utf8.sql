@@ -990,6 +990,51 @@ RESET enable_partitionwise_aggregate;
 RESET max_parallel_workers_per_gather;
 RESET enable_incremental_sort;
 
+--
+-- Test for eager aggregation non-deterministic collation bug
+--
+
+CREATE TABLE eager_agg_t1 (id int, val text COLLATE case_insensitive);
+CREATE TABLE eager_agg_t2 (val text COLLATE case_insensitive);
+
+INSERT INTO eager_agg_t1 SELECT 1, 'a' FROM generate_series(1, 50);
+INSERT INTO eager_agg_t1 SELECT 1, 'A' FROM generate_series(1, 50);
+INSERT INTO eager_agg_t2 VALUES ('A');
+
+ANALYZE eager_agg_t1;
+ANALYZE eager_agg_t2;
+
+-- Ensure that eager aggregation is not used for t1.val due to the
+-- non-deterministic collation.
+EXPLAIN (COSTS OFF)
+SELECT t1.id, count(t1.val)
+  FROM eager_agg_t1 t1
+  JOIN eager_agg_t2 t2 ON t1.val = t2.val COLLATE "C"
+GROUP BY t1.id;
+
+-- Ensure it returns 1 row with count = 50
+SELECT t1.id, count(t1.val)
+  FROM eager_agg_t1 t1
+  JOIN eager_agg_t2 t2 ON t1.val = t2.val COLLATE "C"
+GROUP BY t1.id;
+
+-- Ensure that eager aggregation is not used when grouping by a column with
+-- non-deterministic collation.
+EXPLAIN (COSTS OFF)
+SELECT t1.id, t1.val, count(t1.val)
+  FROM eager_agg_t1 t1
+  JOIN eager_agg_t2 t2 ON t1.val = t2.val COLLATE "C"
+GROUP BY t1.id, t1.val;
+
+-- Ensure it returns 1 row with count = 50
+SELECT t1.id, t1.val, count(t1.val)
+  FROM eager_agg_t1 t1
+  JOIN eager_agg_t2 t2 ON t1.val = t2.val COLLATE "C"
+GROUP BY t1.id, t1.val;
+
+DROP TABLE eager_agg_t1;
+DROP TABLE eager_agg_t2;
+
 -- virtual generated columns
 CREATE TABLE t5 (
     a int,
