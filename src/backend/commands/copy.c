@@ -176,7 +176,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 				 * would need to expand them somewhere around here), but for
 				 * now we keep them consistent with the stored variant.
 				 */
-				if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+				if (attno > 0 &&
+					TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 							errmsg("generated columns are not supported in COPY FROM WHERE conditions"),
