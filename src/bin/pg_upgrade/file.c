@@ -331,7 +331,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 				break;
 
 			/* Set new checksum for visibility map page, if enabled */
-			if (new_cluster.controldata.data_checksum_version != 0)
+			if (new_cluster.controldata.data_checksum_version != PG_DATA_CHECKSUM_OFF)
 				((PageHeader) new_vmbuf.data)->pd_checksum =
 					pg_checksum_page(new_vmbuf.data, new_blkno);
 

@@ -4836,7 +4836,7 @@ SetDataChecksumsOn(void)
 
 	/*
 	 * Await state transition to "on" in all backends. When done we know that
-	 * data data checksums are both written and verified in all backends.
+	 * data checksums are both written and verified in all backends.
 	 */
 	WaitForProcSignalBarrier(barrier);
 }
@@ -4864,7 +4864,7 @@ SetDataChecksumsOff(void)
 	SpinLockAcquire(&XLogCtl->info_lck);
 
 	/* If data checksums are already disabled there is nothing to do */
-	if (XLogCtl->data_checksum_version == 0)
+	if (XLogCtl->data_checksum_version == PG_DATA_CHECKSUM_OFF)
 	{
 		SpinLockRelease(&XLogCtl->info_lck);
 		return;
@@ -4931,7 +4931,7 @@ SetDataChecksumsOff(void)
 	XLogChecksums(PG_DATA_CHECKSUM_OFF);
 
 	SpinLockAcquire(&XLogCtl->info_lck);
-	XLogCtl->data_checksum_version = 0;
+	XLogCtl->data_checksum_version = PG_DATA_CHECKSUM_OFF;
 	SpinLockRelease(&XLogCtl->info_lck);
 
 	barrier = EmitProcSignalBarrier(PROCSIGNAL_BARRIER_CHECKSUM_OFF);
@@ -6605,7 +6605,7 @@ StartupXLOG(void)
 		XLogChecksums(PG_DATA_CHECKSUM_OFF);
 
 		SpinLockAcquire(&XLogCtl->info_lck);
-		XLogCtl->data_checksum_version = 0;
+		XLogCtl->data_checksum_version = PG_DATA_CHECKSUM_OFF;
 		SetLocalDataChecksumState(XLogCtl->data_checksum_version);
 		SpinLockRelease(&XLogCtl->info_lck);
 
@@ -6625,7 +6625,7 @@ StartupXLOG(void)
 		XLogChecksums(PG_DATA_CHECKSUM_OFF);
 
 		SpinLockAcquire(&XLogCtl->info_lck);
-		XLogCtl->data_checksum_version = 0;
+		XLogCtl->data_checksum_version = PG_DATA_CHECKSUM_OFF;
 		SetLocalDataChecksumState(XLogCtl->data_checksum_version);
 		SpinLockRelease(&XLogCtl->info_lck);
 	}

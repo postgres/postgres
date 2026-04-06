@@ -241,7 +241,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	pg_getopt_ctx optctx;
 	int			flag;
 	char	   *userDoption = NULL;
-	uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
+	uint32		bootstrap_data_checksum_version = PG_DATA_CHECKSUM_OFF;
 	yyscan_t	scanner;
 
 	Assert(!IsUnderPostmaster);

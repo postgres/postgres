@@ -615,7 +615,7 @@ check_control_files(int n_backups, char **backup_dirs)
 {
 	int			i;
 	uint64		system_identifier = 0;	/* placate compiler */
-	uint32		data_checksum_version = 0;	/* placate compiler */
+	uint32		data_checksum_version = PG_DATA_CHECKSUM_OFF;	/* placate compiler */
 	bool		data_checksum_mismatch = false;
 
 	/* Try to read each control file in turn, last to first. */
@@ -652,7 +652,7 @@ check_control_files(int n_backups, char **backup_dirs)
 		 */
 		if (i == n_backups - 1)
 			data_checksum_version = control_file->data_checksum_version;
-		else if (data_checksum_version != 0 &&
+		else if (data_checksum_version != PG_DATA_CHECKSUM_OFF &&
 				 data_checksum_version != control_file->data_checksum_version)
 			data_checksum_mismatch = true;
 
