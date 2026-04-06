@@ -50,99 +50,71 @@ pgstat_lock_flush(bool nowait)
 bool
 pgstat_lock_flush_cb(bool nowait)
 {
-	LWLock	   *lcktype_lock;
-	PgStat_LockEntry *lck_shstats;
-	bool		lock_not_acquired = false;
+	LWLock	   *lckstat_lock;
+	PgStatShared_Lock *shstats;
 
 	if (!have_lockstats)
 		return false;
 
+	shstats = &pgStatLocal.shmem->lock;
+	lckstat_lock = &shstats->lock;
+
+	if (!nowait)
+		LWLockAcquire(lckstat_lock, LW_EXCLUSIVE);
+	else if (!LWLockConditionalAcquire(lckstat_lock, LW_EXCLUSIVE))
+		return true;
+
 	for (int i = 0; i <= LOCKTAG_LAST_TYPE; i++)
 	{
-		lcktype_lock = &pgStatLocal.shmem->lock.locks[i];
-		lck_shstats =
-			&pgStatLocal.shmem->lock.stats.stats[i];
-
-		if (!nowait)
-			LWLockAcquire(lcktype_lock, LW_EXCLUSIVE);
-		else if (!LWLockConditionalAcquire(lcktype_lock, LW_EXCLUSIVE))
-		{
-			lock_not_acquired = true;
-			continue;
-		}
-
 #define LOCKSTAT_ACC(fld) \
-	(lck_shstats->fld += PendingLockStats.stats[i].fld)
+	(shstats->stats.stats[i].fld += PendingLockStats.stats[i].fld)
 		LOCKSTAT_ACC(waits);
 		LOCKSTAT_ACC(wait_time);
 		LOCKSTAT_ACC(fastpath_exceeded);
 #undef LOCKSTAT_ACC
-
-		LWLockRelease(lcktype_lock);
 	}
 
-	memset(&PendingLockStats, 0, sizeof(PendingLockStats));
+	LWLockRelease(lckstat_lock);
 
+	memset(&PendingLockStats, 0, sizeof(PendingLockStats));
 	have_lockstats = false;
 
-	return lock_not_acquired;
+	return false;
 }
-
 
 void
 pgstat_lock_init_shmem_cb(void *stats)
 {
 	PgStatShared_Lock *stat_shmem = (PgStatShared_Lock *) stats;
 
-	for (int i = 0; i <= LOCKTAG_LAST_TYPE; i++)
-		LWLockInitialize(&stat_shmem->locks[i], LWTRANCHE_PGSTATS_DATA);
+	LWLockInitialize(&stat_shmem->lock, LWTRANCHE_PGSTATS_DATA);
 }
 
 void
 pgstat_lock_reset_all_cb(TimestampTz ts)
 {
-	for (int i = 0; i <= LOCKTAG_LAST_TYPE; i++)
-	{
-		LWLock	   *lcktype_lock = &pgStatLocal.shmem->lock.locks[i];
-		PgStat_LockEntry *lck_shstats = &pgStatLocal.shmem->lock.stats.stats[i];
+	LWLock	   *lckstat_lock = &pgStatLocal.shmem->lock.lock;
 
-		LWLockAcquire(lcktype_lock, LW_EXCLUSIVE);
+	LWLockAcquire(lckstat_lock, LW_EXCLUSIVE);
 
-		/*
-		 * Use the lock in the first lock type PgStat_LockEntry to protect the
-		 * reset timestamp as well.
-		 */
-		if (i == 0)
-			pgStatLocal.shmem->lock.stats.stat_reset_timestamp = ts;
+	pgStatLocal.shmem->lock.stats.stat_reset_timestamp = ts;
 
-		memset(lck_shstats, 0, sizeof(*lck_shstats));
-		LWLockRelease(lcktype_lock);
-	}
+	memset(pgStatLocal.shmem->lock.stats.stats, 0,
+		   sizeof(pgStatLocal.shmem->lock.stats.stats));
+
+	LWLockRelease(lckstat_lock);
 }
 
 void
 pgstat_lock_snapshot_cb(void)
 {
-	for (int i = 0; i <= LOCKTAG_LAST_TYPE; i++)
-	{
-		LWLock	   *lcktype_lock = &pgStatLocal.shmem->lock.locks[i];
-		PgStat_LockEntry *lck_shstats = &pgStatLocal.shmem->lock.stats.stats[i];
-		PgStat_LockEntry *lck_snap = &pgStatLocal.snapshot.lock.stats[i];
+	LWLock	   *lckstat_lock = &pgStatLocal.shmem->lock.lock;
 
-		LWLockAcquire(lcktype_lock, LW_SHARED);
+	LWLockAcquire(lckstat_lock, LW_SHARED);
 
-		/*
-		 * Use the lock in the first lock type PgStat_LockEntry to protect the
-		 * reset timestamp as well.
-		 */
-		if (i == 0)
-			pgStatLocal.snapshot.lock.stat_reset_timestamp =
-				pgStatLocal.shmem->lock.stats.stat_reset_timestamp;
+	pgStatLocal.snapshot.lock = pgStatLocal.shmem->lock.stats;
 
-		/* using struct assignment due to better type safety */
-		*lck_snap = *lck_shstats;
-		LWLockRelease(lcktype_lock);
-	}
+	LWLockRelease(lckstat_lock);
 }
 
 /*
