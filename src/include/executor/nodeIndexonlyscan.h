@@ -32,6 +32,12 @@ extern void ExecIndexOnlyScanReInitializeDSM(IndexOnlyScanState *node,
 											 ParallelContext *pcxt);
 extern void ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 											  ParallelWorkerContext *pwcxt);
+extern void ExecIndexOnlyScanInstrumentEstimate(IndexOnlyScanState *node,
+												ParallelContext *pcxt);
+extern void ExecIndexOnlyScanInstrumentInitDSM(IndexOnlyScanState *node,
+											   ParallelContext *pcxt);
+extern void ExecIndexOnlyScanInstrumentInitWorker(IndexOnlyScanState *node,
+												  ParallelWorkerContext *pwcxt);
 extern void ExecIndexOnlyScanRetrieveInstrumentation(IndexOnlyScanState *node);
 
 #endif							/* NODEINDEXONLYSCAN_H */

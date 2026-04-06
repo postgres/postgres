@@ -736,21 +736,11 @@ ExecIndexOnlyScanEstimate(IndexOnlyScanState *node,
 						  ParallelContext *pcxt)
 {
 	EState	   *estate = node->ss.ps.state;
-	bool		instrument = (node->ss.ps.instrument != NULL);
-	bool		parallel_aware = node->ss.ps.plan->parallel_aware;
-
-	if (!instrument && !parallel_aware)
-	{
-		/* No DSM required by the scan */
-		return;
-	}
 
 	node->ioss_PscanLen = index_parallelscan_estimate(node->ioss_RelationDesc,
 													  node->ioss_NumScanKeys,
 													  node->ioss_NumOrderByKeys,
-													  estate->es_snapshot,
-													  instrument, parallel_aware,
-													  pcxt->nworkers);
+													  estate->es_snapshot);
 	shm_toc_estimate_chunk(&pcxt->estimator, node->ioss_PscanLen);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 }
@@ -767,28 +757,13 @@ ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 {
 	EState	   *estate = node->ss.ps.state;
 	ParallelIndexScanDesc piscan;
-	bool		instrument = node->ss.ps.instrument != NULL;
-	bool		parallel_aware = node->ss.ps.plan->parallel_aware;
-
-	if (!instrument && !parallel_aware)
-	{
-		/* No DSM required by the scan */
-		return;
-	}
 
 	piscan = shm_toc_allocate(pcxt->toc, node->ioss_PscanLen);
 	index_parallelscan_initialize(node->ss.ss_currentRelation,
 								  node->ioss_RelationDesc,
 								  estate->es_snapshot,
-								  instrument, parallel_aware, pcxt->nworkers,
-								  &node->ioss_SharedInfo, piscan);
+								  piscan);
 	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, piscan);
-
-	if (!parallel_aware)
-	{
-		/* Only here to initialize SharedInfo in DSM */
-		return;
-	}
 
 	node->ioss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
@@ -837,26 +812,8 @@ ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 								  ParallelWorkerContext *pwcxt)
 {
 	ParallelIndexScanDesc piscan;
-	bool		instrument = node->ss.ps.instrument != NULL;
-	bool		parallel_aware = node->ss.ps.plan->parallel_aware;
-
-	if (!instrument && !parallel_aware)
-	{
-		/* No DSM required by the scan */
-		return;
-	}
 
 	piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
-
-	if (instrument)
-		node->ioss_SharedInfo = (SharedIndexScanInstrumentation *)
-			OffsetToPointer(piscan, piscan->ps_offset_ins);
-
-	if (!parallel_aware)
-	{
-		/* Only here to set up worker node's SharedInfo */
-		return;
-	}
 
 	node->ioss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
@@ -877,6 +834,73 @@ ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 		index_rescan(node->ioss_ScanDesc,
 					 node->ioss_ScanKeys, node->ioss_NumScanKeys,
 					 node->ioss_OrderByKeys, node->ioss_NumOrderByKeys);
+}
+
+/*
+ * Compute the amount of space we'll need for the shared instrumentation and
+ * inform pcxt->estimator.
+ */
+void
+ExecIndexOnlyScanInstrumentEstimate(IndexOnlyScanState *node,
+									ParallelContext *pcxt)
+{
+	Size		size;
+
+	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
+		return;
+
+	/*
+	 * This size calculation is trivial enough that we don't bother saving it
+	 * in the IndexOnlyScanState. We'll recalculate the needed size in
+	 * ExecIndexOnlyScanInstrumentInitDSM().
+	 */
+	size = offsetof(SharedIndexScanInstrumentation, winstrument) +
+		pcxt->nworkers * sizeof(IndexScanInstrumentation);
+	shm_toc_estimate_chunk(&pcxt->estimator, size);
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
+}
+
+/*
+ * Set up parallel index-only scan instrumentation.
+ */
+void
+ExecIndexOnlyScanInstrumentInitDSM(IndexOnlyScanState *node,
+								   ParallelContext *pcxt)
+{
+	Size		size;
+
+	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
+		return;
+
+	size = offsetof(SharedIndexScanInstrumentation, winstrument) +
+		pcxt->nworkers * sizeof(IndexScanInstrumentation);
+	node->ioss_SharedInfo =
+		(SharedIndexScanInstrumentation *) shm_toc_allocate(pcxt->toc, size);
+
+	/* Each per-worker area must start out as zeroes */
+	memset(node->ioss_SharedInfo, 0, size);
+	node->ioss_SharedInfo->num_workers = pcxt->nworkers;
+	shm_toc_insert(pcxt->toc,
+				   node->ss.ps.plan->plan_node_id +
+				   PARALLEL_KEY_SCAN_INSTRUMENT_OFFSET,
+				   node->ioss_SharedInfo);
+}
+
+/*
+ * Look up and save the location of the shared instrumentation.
+ */
+void
+ExecIndexOnlyScanInstrumentInitWorker(IndexOnlyScanState *node,
+									  ParallelWorkerContext *pwcxt)
+{
+	if (!node->ss.ps.instrument)
+		return;
+
+	node->ioss_SharedInfo = (SharedIndexScanInstrumentation *)
+		shm_toc_lookup(pwcxt->toc,
+					   node->ss.ps.plan->plan_node_id +
+					   PARALLEL_KEY_SCAN_INSTRUMENT_OFFSET,
+					   false);
 }
 
 /* ----------------------------------------------------------------

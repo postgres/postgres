@@ -203,7 +203,6 @@ typedef struct ParallelIndexScanDescData
 {
 	RelFileLocator ps_locator;	/* physical table relation to scan */
 	RelFileLocator ps_indexlocator; /* physical index relation to scan */
-	Size		ps_offset_ins;	/* Offset to SharedIndexScanInstrumentation */
 	Size		ps_offset_am;	/* Offset to am-specific structure */
 	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
 }			ParallelIndexScanDescData;

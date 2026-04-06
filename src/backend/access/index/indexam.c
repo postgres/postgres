@@ -463,20 +463,14 @@ index_restrpos(IndexScanDesc scan)
 }
 
 /*
- * index_parallelscan_estimate - estimate shared memory for parallel scan
- *
- * When instrument=true, estimate includes SharedIndexScanInstrumentation
- * space.  When parallel_aware=true, estimate includes whatever space the
- * index AM's amestimateparallelscan routine requested when called.
+ * Estimates the shared memory needed for parallel scan, including any
+ * AM-specific parallel scan state.
  */
 Size
 index_parallelscan_estimate(Relation indexRelation, int nkeys, int norderbys,
-							Snapshot snapshot, bool instrument,
-							bool parallel_aware, int nworkers)
+							Snapshot snapshot)
 {
 	Size		nbytes;
-
-	Assert(instrument || parallel_aware);
 
 	RELATION_CHECKS;
 
@@ -484,22 +478,11 @@ index_parallelscan_estimate(Relation indexRelation, int nkeys, int norderbys,
 	nbytes = add_size(nbytes, EstimateSnapshotSpace(snapshot));
 	nbytes = MAXALIGN(nbytes);
 
-	if (instrument)
-	{
-		Size		sharedinfosz;
-
-		sharedinfosz = offsetof(SharedIndexScanInstrumentation, winstrument) +
-			nworkers * sizeof(IndexScanInstrumentation);
-		nbytes = add_size(nbytes, sharedinfosz);
-		nbytes = MAXALIGN(nbytes);
-	}
-
 	/*
 	 * If parallel scan index AM interface can't be used (or index AM provides
 	 * no such interface), assume there is no AM-specific data needed
 	 */
-	if (parallel_aware &&
-		indexRelation->rd_indam->amestimateparallelscan != NULL)
+	if (indexRelation->rd_indam->amestimateparallelscan != NULL)
 		nbytes = add_size(nbytes,
 						  indexRelation->rd_indam->amestimateparallelscan(indexRelation,
 																		  nkeys,
@@ -520,14 +503,10 @@ index_parallelscan_estimate(Relation indexRelation, int nkeys, int norderbys,
  */
 void
 index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
-							  Snapshot snapshot, bool instrument,
-							  bool parallel_aware, int nworkers,
-							  SharedIndexScanInstrumentation **sharedinfo,
+							  Snapshot snapshot,
 							  ParallelIndexScanDesc target)
 {
 	Size		offset;
-
-	Assert(instrument || parallel_aware);
 
 	RELATION_CHECKS;
 
@@ -537,29 +516,11 @@ index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 
 	target->ps_locator = heapRelation->rd_locator;
 	target->ps_indexlocator = indexRelation->rd_locator;
-	target->ps_offset_ins = 0;
 	target->ps_offset_am = 0;
 	SerializeSnapshot(snapshot, target->ps_snapshot_data);
 
-	if (instrument)
-	{
-		Size		sharedinfosz;
-
-		target->ps_offset_ins = offset;
-		sharedinfosz = offsetof(SharedIndexScanInstrumentation, winstrument) +
-			nworkers * sizeof(IndexScanInstrumentation);
-		offset = add_size(offset, sharedinfosz);
-		offset = MAXALIGN(offset);
-
-		/* Set leader's *sharedinfo pointer, and initialize stats */
-		*sharedinfo = (SharedIndexScanInstrumentation *)
-			OffsetToPointer(target, target->ps_offset_ins);
-		memset(*sharedinfo, 0, sharedinfosz);
-		(*sharedinfo)->num_workers = nworkers;
-	}
-
 	/* aminitparallelscan is optional; assume no-op if not provided by AM */
-	if (parallel_aware && indexRelation->rd_indam->aminitparallelscan != NULL)
+	if (indexRelation->rd_indam->aminitparallelscan != NULL)
 	{
 		void	   *amtarget;
 

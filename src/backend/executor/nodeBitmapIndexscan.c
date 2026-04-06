@@ -394,7 +394,9 @@ ExecBitmapIndexScanInitializeDSM(BitmapIndexScanState *node,
 	node->biss_SharedInfo =
 		(SharedIndexScanInstrumentation *) shm_toc_allocate(pcxt->toc,
 															size);
-	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id,
+	shm_toc_insert(pcxt->toc,
+				   node->ss.ps.plan->plan_node_id +
+				   PARALLEL_KEY_SCAN_INSTRUMENT_OFFSET,
 				   node->biss_SharedInfo);
 
 	/* Each per-worker area must start out as zeroes */
@@ -417,7 +419,10 @@ ExecBitmapIndexScanInitializeWorker(BitmapIndexScanState *node,
 		return;
 
 	node->biss_SharedInfo = (SharedIndexScanInstrumentation *)
-		shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+		shm_toc_lookup(pwcxt->toc,
+					   node->ss.ps.plan->plan_node_id +
+					   PARALLEL_KEY_SCAN_INSTRUMENT_OFFSET,
+					   false);
 }
 
 /* ----------------------------------------------------------------

@@ -28,6 +28,12 @@ extern void ExecIndexScanInitializeDSM(IndexScanState *node, ParallelContext *pc
 extern void ExecIndexScanReInitializeDSM(IndexScanState *node, ParallelContext *pcxt);
 extern void ExecIndexScanInitializeWorker(IndexScanState *node,
 										  ParallelWorkerContext *pwcxt);
+extern void ExecIndexScanInstrumentEstimate(IndexScanState *node,
+											ParallelContext *pcxt);
+extern void ExecIndexScanInstrumentInitDSM(IndexScanState *node,
+										   ParallelContext *pcxt);
+extern void ExecIndexScanInstrumentInitWorker(IndexScanState *node,
+											  ParallelWorkerContext *pwcxt);
 extern void ExecIndexScanRetrieveInstrumentation(IndexScanState *node);
 
 /*
