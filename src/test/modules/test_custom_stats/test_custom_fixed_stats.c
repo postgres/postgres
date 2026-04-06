@@ -50,7 +50,7 @@ static const PgStat_KindInfo custom_stats = {
 	.fixed_amount = true,		/* exactly one entry */
 	.write_to_file = true,		/* persist to stats file */
 
-	.shared_size = sizeof(PgStat_StatCustomFixedEntry),
+	.shared_size = sizeof(PgStatShared_CustomFixedEntry),
 	.shared_data_off = offsetof(PgStatShared_CustomFixedEntry, stats),
 	.shared_data_len = sizeof(((PgStatShared_CustomFixedEntry *) 0)->stats),
 
