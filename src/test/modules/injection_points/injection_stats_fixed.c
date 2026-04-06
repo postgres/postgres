@@ -52,7 +52,7 @@ static const PgStat_KindInfo injection_stats_fixed = {
 	.fixed_amount = true,
 	.write_to_file = true,
 
-	.shared_size = sizeof(PgStat_StatInjFixedEntry),
+	.shared_size = sizeof(PgStatShared_InjectionPointFixed),
 	.shared_data_off = offsetof(PgStatShared_InjectionPointFixed, stats),
 	.shared_data_len = sizeof(((PgStatShared_InjectionPointFixed *) 0)->stats),
 
