@@ -3338,15 +3338,6 @@ relation_needs_vacanalyze(Oid relid,
 		scores->max = Max(scores->max, scores->anl);
 		if (av_enabled && anltuples > anlthresh)
 			*doanalyze = true;
-
-		/*
-		 * For historical reasons, we analyze even when autovacuum is disabled
-		 * for the table if at risk of wraparound.  It's not clear if this is
-		 * intentional, but it has been this way for a very long time, so it
-		 * seems best to avoid changing it without further discussion.
-		 */
-		if (force_vacuum && AutoVacuumingActive() && anltuples > anlthresh)
-			*doanalyze = true;
 	}
 
 	if (vac_ins_base_thresh >= 0)
