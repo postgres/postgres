@@ -174,7 +174,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 				 * generated columns are not yet computed when the filtering
 				 * happens.
 				 */
-				if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+				if (attno > 0 &&
+					TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 							errmsg("generated columns are not supported in COPY FROM WHERE conditions"),
