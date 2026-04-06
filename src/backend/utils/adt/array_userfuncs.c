@@ -24,6 +24,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/tuplesort.h"
 #include "utils/typcache.h"
 
@@ -1033,10 +1034,11 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 	}
 
 	/* We only need to combine the two states if state2 has any items */
-	else if (state2->nitems > 0)
+	if (state2->nitems > 0)
 	{
 		MemoryContext oldContext;
-		int			reqsize = state1->nbytes + state2->nbytes;
+		int			reqsize;
+		int			newnitems;
 		int			i;
 
 		/*
@@ -1059,6 +1061,17 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 						 errmsg("cannot accumulate arrays of different dimensionality")));
 		}
 
+		/* Types should match already. */
+		Assert(state1->array_type == state2->array_type);
+		Assert(state1->element_type == state2->element_type);
+
+		/* Calculate new sizes, guarding against overflow. */
+		if (pg_add_s32_overflow(state1->nbytes, state2->nbytes, &reqsize) ||
+			pg_add_s32_overflow(state1->nitems, state2->nitems, &newnitems))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array size exceeds the maximum allowed (%zu)",
+							MaxArraySize)));
 
 		oldContext = MemoryContextSwitchTo(state1->mcontext);
 
@@ -1073,17 +1086,16 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 			state1->data = (char *) repalloc(state1->data, state1->abytes);
 		}
 
-		if (state2->nullbitmap)
+		/* Combine the null bitmaps, if present. */
+		if (state1->nullbitmap || state2->nullbitmap)
 		{
-			int			newnitems = state1->nitems + state2->nitems;
-
 			if (state1->nullbitmap == NULL)
 			{
 				/*
 				 * First input with nulls; we must retrospectively handle any
 				 * previous inputs by marking all their items non-null.
 				 */
-				state1->aitems = pg_nextpower2_32(Max(256, newnitems + 1));
+				state1->aitems = pg_nextpower2_32(Max(256, newnitems));
 				state1->nullbitmap = (uint8 *) palloc((state1->aitems + 7) / 8);
 				array_bitmap_copy(state1->nullbitmap, 0,
 								  NULL, 0,
@@ -1091,26 +1103,23 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 			}
 			else if (newnitems > state1->aitems)
 			{
-				int			newaitems = state1->aitems + state2->aitems;
-
-				state1->aitems = pg_nextpower2_32(newaitems);
+				state1->aitems = pg_nextpower2_32(newnitems);
 				state1->nullbitmap = (uint8 *)
 					repalloc(state1->nullbitmap, (state1->aitems + 7) / 8);
 			}
+			/* This will do the right thing if state2->nullbitmap is NULL: */
 			array_bitmap_copy(state1->nullbitmap, state1->nitems,
 							  state2->nullbitmap, 0,
 							  state2->nitems);
 		}
 
+		/* Finally, combine the data and adjust sizes. */
 		memcpy(state1->data + state1->nbytes, state2->data, state2->nbytes);
 		state1->nbytes += state2->nbytes;
 		state1->nitems += state2->nitems;
 
 		state1->dims[0] += state2->dims[0];
 		/* remaining dims already match, per test above */
-
-		Assert(state1->array_type == state2->array_type);
-		Assert(state1->element_type == state2->element_type);
 
 		MemoryContextSwitchTo(oldContext);
 	}
