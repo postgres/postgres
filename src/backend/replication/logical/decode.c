@@ -33,6 +33,7 @@
 #include "access/xlogreader.h"
 #include "access/xlogrecord.h"
 #include "catalog/pg_control.h"
+#include "commands/repack.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/message.h"
@@ -436,7 +437,8 @@ heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	{
 		case XLOG_HEAP2_MULTI_INSERT:
 			if (SnapBuildProcessChange(builder, xid, buf->origptr) &&
-				!ctx->fast_forward)
+				!ctx->fast_forward &&
+				!change_useless_for_repack(buf))
 				DecodeMultiInsert(ctx, buf);
 			break;
 		case XLOG_HEAP2_NEW_CID:
@@ -498,7 +500,8 @@ heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	{
 		case XLOG_HEAP_INSERT:
 			if (SnapBuildProcessChange(builder, xid, buf->origptr) &&
-				!ctx->fast_forward)
+				!ctx->fast_forward &&
+				!change_useless_for_repack(buf))
 				DecodeInsert(ctx, buf);
 			break;
 
@@ -510,19 +513,22 @@ heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		case XLOG_HEAP_HOT_UPDATE:
 		case XLOG_HEAP_UPDATE:
 			if (SnapBuildProcessChange(builder, xid, buf->origptr) &&
-				!ctx->fast_forward)
+				!ctx->fast_forward &&
+				!change_useless_for_repack(buf))
 				DecodeUpdate(ctx, buf);
 			break;
 
 		case XLOG_HEAP_DELETE:
 			if (SnapBuildProcessChange(builder, xid, buf->origptr) &&
-				!ctx->fast_forward)
+				!ctx->fast_forward &&
+				!change_useless_for_repack(buf))
 				DecodeDelete(ctx, buf);
 			break;
 
 		case XLOG_HEAP_TRUNCATE:
 			if (SnapBuildProcessChange(builder, xid, buf->origptr) &&
-				!ctx->fast_forward)
+				!ctx->fast_forward &&
+				!change_useless_for_repack(buf))
 				DecodeTruncate(ctx, buf);
 			break;
 
@@ -538,7 +544,8 @@ heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 		case XLOG_HEAP_CONFIRM:
 			if (SnapBuildProcessChange(builder, xid, buf->origptr) &&
-				!ctx->fast_forward)
+				!ctx->fast_forward &&
+				!change_useless_for_repack(buf))
 				DecodeSpecConfirm(ctx, buf);
 			break;
 
@@ -1034,6 +1041,15 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	RelFileLocator target_locator;
 
 	xlrec = (xl_heap_delete *) XLogRecGetData(r);
+
+	/*
+	 * Skip changes that were marked as ignorable at origin.
+	 *
+	 * (This is used for changes that affect relations not visible to other
+	 * transactions, such as the transient table during concurrent repack.)
+	 */
+	if (xlrec->flags & XLH_DELETE_NO_LOGICAL)
+		return;
 
 	/* only interested in our database */
 	XLogRecGetBlockTag(r, 0, &target_locator, NULL, NULL);

@@ -127,7 +127,7 @@ static void vac_truncate_clog(TransactionId frozenXID,
 							  TransactionId lastSaneFrozenXid,
 							  MultiXactId lastSaneMinMulti);
 static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
-					   BufferAccessStrategy bstrategy);
+					   BufferAccessStrategy bstrategy, bool isTopLevel);
 static double compute_parallel_delay(void);
 static VacOptValue get_vacoptval_from_boolean(DefElem *def);
 static bool vac_tid_reaped(ItemPointer itemptr, void *state);
@@ -630,7 +630,8 @@ vacuum(List *relations, const VacuumParams *params, BufferAccessStrategy bstrate
 
 			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, *params, bstrategy))
+				if (!vacuum_rel(vrel->oid, vrel->relation, *params, bstrategy,
+								isTopLevel))
 					continue;
 			}
 
@@ -2004,7 +2005,7 @@ vac_truncate_clog(TransactionId frozenXID,
  */
 static bool
 vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
-		   BufferAccessStrategy bstrategy)
+		   BufferAccessStrategy bstrategy, bool isTopLevel)
 {
 	LOCKMODE	lmode;
 	Relation	rel;
@@ -2295,7 +2296,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 
 			/* VACUUM FULL is a variant of REPACK; see repack.c */
 			cluster_rel(REPACK_COMMAND_VACUUMFULL, rel, InvalidOid,
-						&cluster_params);
+						&cluster_params, isTopLevel);
 			/* cluster_rel closes the relation, but keeps lock */
 
 			rel = NULL;
@@ -2338,7 +2339,8 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
 		toast_vacuum_params.toast_parent = relid;
 
-		vacuum_rel(toast_relid, NULL, toast_vacuum_params, bstrategy);
+		vacuum_rel(toast_relid, NULL, toast_vacuum_params, bstrategy,
+				   isTopLevel);
 	}
 
 	/*

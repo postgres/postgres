@@ -39,6 +39,7 @@ backend_sources += files(
   'propgraphcmds.c',
   'publicationcmds.c',
   'repack.c',
+  'repack_worker.c',
   'schemacmds.c',
   'seclabel.c',
   'sequence.c',

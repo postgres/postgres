@@ -45,6 +45,8 @@ tests += {
     'specs': [
       'basic',
       'inplace',
+      'repack',
+      'repack_toast',
       'syscache-update-pruned',
       'heap_lock_update',
     ],

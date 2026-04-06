@@ -430,6 +430,7 @@ CatCacheHeader
 CatalogId
 CatalogIdMapEntry
 CatalogIndexState
+ChangeContext
 ChangeVarNodes_callback
 ChangeVarNodes_context
 ChannelName
@@ -509,6 +510,7 @@ CompressFileHandle
 CompressionLocation
 CompressorState
 ComputeXidHorizonsResult
+ConcurrentChangeKind
 ConditionVariable
 ConditionVariableMinimallyPadded
 ConditionalStack
@@ -655,6 +657,8 @@ DeclareCursorStmt
 DecodedBkpBlock
 DecodedXLogRecord
 DecodingOutputState
+DecodingWorker
+DecodingWorkerShared
 DefElem
 DefElemAction
 DefaultACLInfo
@@ -1318,6 +1322,7 @@ IndexElem
 IndexFetchHeapData
 IndexFetchTableData
 IndexInfo
+IndexInsertState
 IndexList
 IndexOnlyScan
 IndexOnlyScanState
@@ -2635,6 +2640,7 @@ ReorderBufferTupleCidKey
 ReorderBufferUpdateProgressTxnCB
 ReorderTuple
 RepackCommand
+RepackDecodingState
 RepackStmt
 ReparameterizeForeignPathByChild_function
 ReplOriginId

@@ -707,6 +707,9 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 	if (CheckProcSignal(PROCSIG_PARALLEL_APPLY_MESSAGE))
 		HandleParallelApplyMessageInterrupt();
 
+	if (CheckProcSignal(PROCSIG_REPACK_MESSAGE))
+		HandleRepackMessageInterrupt();
+
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT))
 		HandleRecoveryConflictInterrupt();
 

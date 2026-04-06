@@ -51,6 +51,7 @@ OBJS = \
 	propgraphcmds.o \
 	publicationcmds.o \
 	repack.o \
+	repack_worker.o \
 	schemacmds.o \
 	seclabel.o \
 	sequence.o \

@@ -1845,15 +1845,17 @@ SELECT pg_advisory_lock(q.id) FROM
    <title>Caveats</title>
 
    <para>
-    Some DDL commands, currently only <link linkend="sql-truncate"><command>TRUNCATE</command></link> and the
-    table-rewriting forms of <link linkend="sql-altertable"><command>ALTER TABLE</command></link>, are not
+    Some commands, currently only <link linkend="sql-truncate"><command>TRUNCATE</command></link>, the
+    table-rewriting forms of <link linkend="sql-altertable"><command>ALTER
+    TABLE</command></link> and <command>REPACK</command> with
+    the <literal>CONCURRENTLY</literal> option, are not
     MVCC-safe.  This means that after the truncation or rewrite commits, the
     table will appear empty to concurrent transactions, if they are using a
-    snapshot taken before the DDL command committed.  This will only be an
+    snapshot taken before the command committed.  This will only be an
     issue for a transaction that did not access the table in question
-    before the DDL command started &mdash; any transaction that has done so
+    before the command started &mdash; any transaction that has done so
     would hold at least an <literal>ACCESS SHARE</literal> table lock,
-    which would block the DDL command until that transaction completes.
+    which would block the truncating or rewriting command until that transaction completes.
     So these commands will not cause any apparent inconsistency in the
     table contents for successive queries on the target table, but they
     could cause visible inconsistency between the contents of the target

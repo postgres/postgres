@@ -284,9 +284,10 @@ typedef struct TM_IndexDeleteOp
 
 /* "options" flag bits for table_tuple_delete */
 #define TABLE_DELETE_CHANGING_PARTITION			(1 << 0)
+#define TABLE_DELETE_NO_LOGICAL					(1 << 1)
 
 /* "options" flag bits for table_tuple_update */
-/* XXX none at present */
+#define TABLE_UPDATE_NO_LOGICAL					(1 << 0)
 
 /* flag bits for table_tuple_lock */
 /* Follow tuples whose update is in progress if lock modes don't conflict  */
@@ -662,6 +663,7 @@ typedef struct TableAmRoutine
 											  Relation OldIndex,
 											  bool use_sort,
 											  TransactionId OldestXmin,
+											  Snapshot snapshot,
 											  TransactionId *xid_cutoff,
 											  MultiXactId *multi_cutoff,
 											  double *num_tuples,
@@ -1563,7 +1565,12 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  *		cmax/cmin if successful)
  *	options - bitmask of options.  No values are currently recognized.
  *	crosscheck - if not InvalidSnapshot, also check old tuple against this
- *	wait - true if should wait for any conflicting update to commit/abort
+ *	options - These allow the caller to specify options that may change the
+ *	behavior of the AM. The AM will ignore options that it does not support.
+ *		TABLE_UPDATE_WAIT -- set if should wait for any conflicting update to
+ *		commit/abort
+ *		TABLE_UPDATE_NO_LOGICAL -- force-disables the emitting of logical
+ *		decoding information for the tuple.
  *
  * Output parameters:
  *	slot - newly constructed tuple data to store
@@ -1725,6 +1732,8 @@ table_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
  *   not needed for the relation's AM
  * - *xid_cutoff - ditto
  * - *multi_cutoff - ditto
+ * - snapshot - if != NULL, ignore data changes done by transactions that this
+ *	 (MVCC) snapshot considers still in-progress or in the future.
  *
  * Output parameters:
  * - *xid_cutoff - rel's new relfrozenxid value, may be invalid
@@ -1737,6 +1746,7 @@ table_relation_copy_for_cluster(Relation OldTable, Relation NewTable,
 								Relation OldIndex,
 								bool use_sort,
 								TransactionId OldestXmin,
+								Snapshot snapshot,
 								TransactionId *xid_cutoff,
 								MultiXactId *multi_cutoff,
 								double *num_tuples,
@@ -1745,6 +1755,7 @@ table_relation_copy_for_cluster(Relation OldTable, Relation NewTable,
 {
 	OldTable->rd_tableam->relation_copy_for_cluster(OldTable, NewTable, OldIndex,
 													use_sort, OldestXmin,
+													snapshot,
 													xid_cutoff, multi_cutoff,
 													num_tuples, tups_vacuumed,
 													tups_recently_dead);

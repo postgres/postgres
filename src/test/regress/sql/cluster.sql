@@ -248,6 +248,9 @@ REPACK clstrpart;
 CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
 SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
 
+-- CONCURRENTLY doesn't like partitioned tables
+REPACK (CONCURRENTLY) clstrpart;
+
 DROP TABLE clstrpart;
 
 -- Ownership of partitions is checked
@@ -382,6 +385,9 @@ SELECT o.relname FROM relnodes_old o
 JOIN relnodes_new n ON o.relname = n.relname
 WHERE o.relfilenode <> n.relfilenode
 ORDER BY o.relname;
+
+-- concurrently
+REPACK (CONCURRENTLY) pg_class;
 
 -- clean up
 DROP TABLE clustertest;

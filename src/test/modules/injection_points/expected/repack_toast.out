@@ -1,0 +1,65 @@
+Parsed test spec with 2 sessions
+
+starting permutation: wait_before_lock change check2 wakeup_before_lock check1
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_test;
+ <waiting ...>
+step change: 
+	UPDATE repack_test SET j=get_long_string() where i=2;
+	DELETE FROM repack_test WHERE i=3;
+	INSERT INTO repack_test(i, j) VALUES (4, get_long_string());
+	UPDATE repack_test SET i=3 where i=1;
+
+step check2: 
+	INSERT INTO relfilenodes(node)
+	SELECT c2.relfilenode
+	FROM pg_class c1 JOIN pg_class c2 ON c2.oid = c1.oid OR c2.oid = c1.reltoastrelid
+	WHERE c1.relname='repack_test';
+
+	INSERT INTO data_s2(i, j)
+	SELECT i, j FROM repack_test;
+
+step wakeup_before_lock: 
+	SELECT injection_points_wakeup('repack-concurrently-before-lock');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step wait_before_lock: <... completed>
+step check1: 
+	INSERT INTO relfilenodes(node)
+	SELECT c2.relfilenode
+	FROM pg_class c1 JOIN pg_class c2 ON c2.oid = c1.oid OR c2.oid = c1.reltoastrelid
+	WHERE c1.relname='repack_test';
+
+	SELECT count(DISTINCT node) FROM relfilenodes;
+
+	INSERT INTO data_s1(i, j)
+	SELECT i, j FROM repack_test;
+
+	SELECT count(*)
+	FROM data_s1 d1 FULL JOIN data_s2 d2 USING (i, j)
+	WHERE d1.i ISNULL OR d2.i ISNULL;
+
+count
+-----
+    4
+(1 row)
+
+count
+-----
+    0
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+

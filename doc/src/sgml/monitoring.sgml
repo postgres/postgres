@@ -6990,14 +6990,35 @@ FROM pg_stat_get_backend_idset() AS backendid;
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>heap_tuples_written</structfield> <type>bigint</type>
+       <structfield>heap_tuples_inserted</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of heap tuples written.
+       Number of heap tuples inserted.
        This counter only advances when the phase is
        <literal>seq scanning heap</literal>,
-       <literal>index scanning heap</literal>
-       or <literal>writing new heap</literal>.
+       <literal>index scanning heap</literal>,
+       <literal>writing new heap</literal>
+       or <literal>catch-up</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_updated</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap tuples updated.
+       This counter only advances when the phase is <literal>catch-up</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_deleted</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap tuples deleted.
+       This counter only advances when the phase is <literal>catch-up</literal>.
       </para></entry>
      </row>
 
@@ -7076,6 +7097,14 @@ FROM pg_stat_get_backend_idset() AS backendid;
      <entry><literal>writing new heap</literal></entry>
      <entry>
        <command>REPACK</command> is currently writing the new heap.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>catch-up</literal></entry>
+     <entry>
+       <command>REPACK CONCURRENTLY</command> is currently processing the DML
+       commands that other transactions executed during any of the preceding
+       phases.
      </entry>
     </row>
     <row>

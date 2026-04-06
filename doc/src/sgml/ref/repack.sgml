@@ -28,6 +28,7 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
 
     VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
     ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
+    CONCURRENTLY [ <replaceable class="parameter">boolean</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -54,7 +55,8 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
    processes every table and materialized view in the current database that
    the current user has the <literal>MAINTAIN</literal> privilege on. This
    form of <command>REPACK</command> cannot be executed inside a transaction
-   block.
+   block.  Also, this form is not allowed if
+   the <literal>CONCURRENTLY</literal> option is used.
   </para>
 
   <para>
@@ -67,7 +69,8 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
    When a table is being repacked, an <literal>ACCESS EXCLUSIVE</literal> lock
    is acquired on it. This prevents any other database operations (both reads
    and writes) from operating on the table until the <command>REPACK</command>
-   is finished.
+   is finished. If you want to keep the table accessible during the repacking,
+   consider using the <literal>CONCURRENTLY</literal> option.
   </para>
 
   <refsect2 id="sql-repack-notes-on-clustering" xreflabel="Notes on Clustering">
@@ -195,6 +198,117 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
      <para>
       The name of an index.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONCURRENTLY</literal></term>
+    <listitem>
+     <para>
+      Allow other transactions to use the table while it is being repacked.
+     </para>
+
+     <para>
+      Internally, <command>REPACK</command> copies the contents of the table
+      (ignoring dead tuples) into a new file, sorted by the specified index,
+      and also creates a new file for each index. Then it swaps the old and
+      new files for the table and all the indexes, and deletes the old
+      files. The <literal>ACCESS EXCLUSIVE</literal> lock is needed to make
+      sure that the old files do not change during the processing because the
+      changes would get lost due to the swap.
+     </para>
+
+     <para>
+      With the <literal>CONCURRENTLY</literal> option, the <literal>ACCESS
+      EXCLUSIVE</literal> lock is only acquired to swap the table and index
+      files. The data changes that took place during the creation of the new
+      table and index files are captured using logical decoding
+      (<xref linkend="logicaldecoding"/>) and applied before
+      the <literal>ACCESS EXCLUSIVE</literal> lock is requested. Thus the lock
+      is typically held only for the time needed to swap the files, which
+      should be pretty short. However, the time might still be noticeable if
+      too many data changes have been done to the table while
+      <command>REPACK</command> was waiting for the lock: those changes must
+      be processed just before the files are swapped, while the
+      <literal>ACCESS EXCLUSIVE</literal> lock is being held.
+     </para>
+
+     <para>
+      Note that <command>REPACK</command> with the
+      <literal>CONCURRENTLY</literal> option does not try to order the rows
+      inserted into the table after the repacking started. Also
+      note <command>REPACK</command> might fail to complete due to DDL
+      commands executed on the table by other transactions during the
+      repacking.
+     </para>
+
+     <note>
+      <para>
+       In addition to the temporary space requirements explained in
+       <xref linkend="sql-repack-notes-on-resources"/>,
+       the <literal>CONCURRENTLY</literal> option can add to the usage of
+       temporary space a bit more. The reason is that other transactions can
+       perform DML operations which cannot be applied to the new file until
+       <command>REPACK</command> has copied all the existing tuples from the
+       old file. Thus the tuples inserted into the old file during the copying
+       are also stored separately in a temporary file, until they can be
+       processed.
+      </para>
+     </note>
+
+     <para>
+      The <literal>CONCURRENTLY</literal> option cannot be used in the
+      following cases:
+
+      <itemizedlist>
+       <listitem>
+        <para>
+          The table is <literal>UNLOGGED</literal>.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+          The table is partitioned.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         The table lacks a primary key and index-based replica identity.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+          The table is a system catalog or a <acronym>TOAST</acronym> table.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <command>REPACK</command> is executed inside a transaction block.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         The <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+         configuration parameter does not allow for creation of an additional
+         replication slot.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+
+     <warning>
+      <para>
+       <command>REPACK</command> with the <literal>CONCURRENTLY</literal>
+       option is not MVCC-safe, see <xref linkend="mvcc-caveats"/> for
+       details.
+      </para>
+     </warning>
+
     </listitem>
    </varlistentry>
 

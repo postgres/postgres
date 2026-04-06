@@ -61,7 +61,8 @@ static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 								  Buffer newbuf, HeapTuple oldtup,
 								  HeapTuple newtup, HeapTuple old_key_tuple,
-								  bool all_visible_cleared, bool new_all_visible_cleared);
+								  bool all_visible_cleared, bool new_all_visible_cleared,
+								  bool walLogical);
 #ifdef USE_ASSERT_CHECKING
 static void check_lock_if_inplace_updateable_rel(Relation relation,
 												 const ItemPointerData *otid,
@@ -2716,6 +2717,7 @@ heap_delete(Relation relation, const ItemPointerData *tid,
 	uint16		new_infomask,
 				new_infomask2;
 	bool		changingPart = (options & TABLE_DELETE_CHANGING_PARTITION) != 0;
+	bool		walLogical = (options & TABLE_DELETE_NO_LOGICAL) == 0;
 	bool		have_tuple_lock = false;
 	bool		iscombo;
 	bool		all_visible_cleared = false;
@@ -2950,7 +2952,8 @@ l1:
 	 * Compute replica identity tuple before entering the critical section so
 	 * we don't PANIC upon a memory allocation failure.
 	 */
-	old_key_tuple = ExtractReplicaIdentity(relation, &tp, true, &old_key_copied);
+	old_key_tuple = walLogical ?
+		ExtractReplicaIdentity(relation, &tp, true, &old_key_copied) : NULL;
 
 	/*
 	 * If this is the first possibly-multixact-able operation in the current
@@ -3039,6 +3042,16 @@ l1:
 			else
 				xlrec.flags |= XLH_DELETE_CONTAINS_OLD_KEY;
 		}
+
+		/*
+		 * Mark the change as not-for-logical-decoding if caller requested so.
+		 *
+		 * (This is used for changes that affect relations not visible to
+		 * other transactions, such as the transient table during concurrent
+		 * repack.)
+		 */
+		if (!walLogical)
+			xlrec.flags |= XLH_DELETE_NO_LOGICAL;
 
 		XLogBeginInsert();
 		XLogRegisterData(&xlrec, SizeOfHeapDelete);
@@ -3190,6 +3203,7 @@ heap_update(Relation relation, const ItemPointerData *otid, HeapTuple newtup,
 	HeapTuple	heaptup;
 	HeapTuple	old_key_tuple = NULL;
 	bool		old_key_copied = false;
+	bool		walLogical = (options & TABLE_UPDATE_NO_LOGICAL) == 0;
 	Page		page,
 				newpage;
 	BlockNumber block;
@@ -4071,7 +4085,8 @@ l2:
 								 newbuf, &oldtup, heaptup,
 								 old_key_tuple,
 								 all_visible_cleared,
-								 all_visible_cleared_new);
+								 all_visible_cleared_new,
+								 walLogical);
 		if (newbuf != buffer)
 		{
 			PageSetLSN(newpage, recptr);
@@ -8747,7 +8762,8 @@ static XLogRecPtr
 log_heap_update(Relation reln, Buffer oldbuf,
 				Buffer newbuf, HeapTuple oldtup, HeapTuple newtup,
 				HeapTuple old_key_tuple,
-				bool all_visible_cleared, bool new_all_visible_cleared)
+				bool all_visible_cleared, bool new_all_visible_cleared,
+				bool walLogical)
 {
 	xl_heap_update xlrec;
 	xl_heap_header xlhdr;
@@ -8758,7 +8774,7 @@ log_heap_update(Relation reln, Buffer oldbuf,
 				suffixlen = 0;
 	XLogRecPtr	recptr;
 	Page		page = BufferGetPage(newbuf);
-	bool		need_tuple_data = RelationIsLogicallyLogged(reln);
+	bool		need_tuple_data = walLogical && RelationIsLogicallyLogged(reln);
 	bool		init;
 	int			bufflags;
 

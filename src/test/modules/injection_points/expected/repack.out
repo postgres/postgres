@@ -1,0 +1,113 @@
+Parsed test spec with 2 sessions
+
+starting permutation: wait_before_lock change_existing change_new change_subxact1 change_subxact2 check2 wakeup_before_lock check1
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_test USING INDEX repack_test_pkey;
+ <waiting ...>
+step change_existing: 
+	UPDATE repack_test SET i=10 where i=1;
+	UPDATE repack_test SET j=20 where i=2;
+	UPDATE repack_test SET i=30 where i=3;
+	UPDATE repack_test SET i=40 where i=30;
+	DELETE FROM repack_test WHERE i=4;
+
+step change_new: 
+	INSERT INTO repack_test(i, j) VALUES (5, 5), (6, 6), (7, 7), (8, 8);
+	UPDATE repack_test SET i=50 where i=5;
+	UPDATE repack_test SET j=60 where i=6;
+	DELETE FROM repack_test WHERE i=7;
+
+step change_subxact1: 
+	BEGIN;
+	INSERT INTO repack_test(i, j) VALUES (100, 100);
+	SAVEPOINT s1;
+	UPDATE repack_test SET i=101 where i=100;
+	SAVEPOINT s2;
+	UPDATE repack_test SET i=102 where i=101;
+	COMMIT;
+
+step change_subxact2: 
+	BEGIN;
+	SAVEPOINT s1;
+	INSERT INTO repack_test(i, j) VALUES (110, 110);
+	ROLLBACK TO SAVEPOINT s1;
+	INSERT INTO repack_test(i, j) VALUES (110, 111);
+	COMMIT;
+
+step check2: 
+	INSERT INTO relfilenodes(node)
+	SELECT relfilenode FROM pg_class WHERE relname='repack_test';
+
+	SELECT i, j FROM repack_test ORDER BY i, j;
+
+	INSERT INTO data_s2(i, j)
+	SELECT i, j FROM repack_test;
+
+  i|  j
+---+---
+  2| 20
+  6| 60
+  8|  8
+ 10|  1
+ 40|  3
+ 50|  5
+102|100
+110|111
+(8 rows)
+
+step wakeup_before_lock: 
+	SELECT injection_points_wakeup('repack-concurrently-before-lock');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step wait_before_lock: <... completed>
+step check1: 
+	INSERT INTO relfilenodes(node)
+	SELECT relfilenode FROM pg_class WHERE relname='repack_test';
+
+	SELECT count(DISTINCT node) FROM relfilenodes;
+
+	SELECT i, j FROM repack_test ORDER BY i, j;
+
+	INSERT INTO data_s1(i, j)
+	SELECT i, j FROM repack_test;
+
+	SELECT count(*)
+	FROM data_s1 d1 FULL JOIN data_s2 d2 USING (i, j)
+	WHERE d1.i ISNULL OR d2.i ISNULL;
+
+count
+-----
+    2
+(1 row)
+
+  i|  j
+---+---
+  2| 20
+  6| 60
+  8|  8
+ 10|  1
+ 40|  3
+ 50|  5
+102|100
+110|111
+(8 rows)
+
+count
+-----
+    0
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
