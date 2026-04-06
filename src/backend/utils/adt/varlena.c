@@ -2751,6 +2751,96 @@ textToQualifiedNameList(text *textval)
 }
 
 /*
+ * scan_quoted_identifier - In-place scanner for quoted identifiers.
+ *
+ * *nextp should point to the opening double-quote character, and will be
+ * updated to point just past the end.  *endp is set to the position of
+ * the closing quote. The return value is the identifier, or NULL if the
+ * matching close-quote cannot be found.
+ *
+ * If we find two consecutive double quote characters, that doesn't end the
+ * identifier: instead, we collapse them into a double quote and include them
+ * in the resulting token. Note that this requires overwriting the rest of the
+ * string in place, including the portion beyond the final value of *nextp.
+ */
+char *
+scan_quoted_identifier(char **endp, char **nextp)
+{
+	char	   *token = *nextp + 1;
+
+	for (;;)
+	{
+		*endp = strchr(*nextp + 1, '"');
+		if (*endp == NULL)
+			return NULL;		/* mismatched quotes */
+		if ((*endp)[1] != '"')
+			break;				/* found end of quoted identifier */
+		/* Collapse adjacent quotes into one quote, and look again */
+		memmove(*endp, *endp + 1, strlen(*endp));
+		*nextp = *endp;
+	}
+	/* *endp now points at the terminating quote */
+	*nextp = *endp + 1;
+
+	return token;
+}
+
+/*
+ * scan_identifier - In-place scanner for quoted or unquoted identifiers.
+ *
+ * On success, *endp is set to the position where the caller should write '\0'
+ * to null-terminate the token, and *nextp is advanced past the token (and past
+ * the closing quote, if any).  The return value is the token content, or NULL
+ * if there is a syntax error (mismatched quotes or empty unquoted token).
+ *
+ * Unquoted identifiers are terminated by whitespace or the first occurrence
+ * of the separator character. Additionally, if downcase_unquoted = true,
+ * unquoted identifiers are downcased in place. See scan_quoted_identifier for
+ * an additional way in which we modify the string in place.
+ */
+char *
+scan_identifier(char **endp, char **nextp, char separator, bool downcase_unquoted)
+{
+	char	   *token;
+
+	if (**nextp == '"')
+		return scan_quoted_identifier(endp, nextp);
+
+	/* Unquoted identifier --- extends to separator or whitespace */
+	token = *nextp;
+
+	while (**nextp && **nextp != separator && !scanner_isspace(**nextp))
+		(*nextp)++;
+
+	if (*nextp == token)
+		return NULL;			/* empty token */
+
+	*endp = *nextp;
+
+	if (downcase_unquoted)
+	{
+		/*
+		 * Downcase the identifier, using same code as main lexer does.
+		 *
+		 * XXX because we want to overwrite the input in-place, we cannot
+		 * support a downcasing transformation that increases the string
+		 * length.  This is not a problem given the current implementation of
+		 * downcase_truncate_identifier, but we'll probably have to do
+		 * something about this someday.
+		 */
+		int			len = *endp - token;
+		char	   *downname = downcase_truncate_identifier(token, len, false);
+
+		Assert(strlen(downname) <= len);
+		strncpy(token, downname, len);	/* strncpy is required here */
+		pfree(downname);
+	}
+
+	return token;
+}
+
+
+/*
  * SplitIdentifierString --- parse a string containing identifiers
  *
  * This is the guts of textToQualifiedNameList, and is exported for use in
@@ -2794,53 +2884,9 @@ SplitIdentifierString(char *rawstring, char separator,
 		char	   *curname;
 		char	   *endp;
 
-		if (*nextp == '"')
-		{
-			/* Quoted name --- collapse quote-quote pairs, no downcasing */
-			curname = nextp + 1;
-			for (;;)
-			{
-				endp = strchr(nextp + 1, '"');
-				if (endp == NULL)
-					return false;	/* mismatched quotes */
-				if (endp[1] != '"')
-					break;		/* found end of quoted name */
-				/* Collapse adjacent quotes into one quote, and look again */
-				memmove(endp, endp + 1, strlen(endp));
-				nextp = endp;
-			}
-			/* endp now points at the terminating quote */
-			nextp = endp + 1;
-		}
-		else
-		{
-			/* Unquoted name --- extends to separator or whitespace */
-			char	   *downname;
-			int			len;
-
-			curname = nextp;
-			while (*nextp && *nextp != separator &&
-				   !scanner_isspace(*nextp))
-				nextp++;
-			endp = nextp;
-			if (curname == nextp)
-				return false;	/* empty unquoted name not allowed */
-
-			/*
-			 * Downcase the identifier, using same code as main lexer does.
-			 *
-			 * XXX because we want to overwrite the input in-place, we cannot
-			 * support a downcasing transformation that increases the string
-			 * length.  This is not a problem given the current implementation
-			 * of downcase_truncate_identifier, but we'll probably have to do
-			 * something about this someday.
-			 */
-			len = endp - curname;
-			downname = downcase_truncate_identifier(curname, len, false);
-			Assert(strlen(downname) <= len);
-			strncpy(curname, downname, len);	/* strncpy is required here */
-			pfree(downname);
-		}
+		curname = scan_identifier(&endp, &nextp, separator, true);
+		if (curname == NULL)
+			return false;		/* mismatched quotes or empty name */
 
 		while (scanner_isspace(*nextp))
 			nextp++;			/* skip trailing whitespace */
@@ -2924,20 +2970,9 @@ SplitDirectoriesString(char *rawstring, char separator,
 		if (*nextp == '"')
 		{
 			/* Quoted name --- collapse quote-quote pairs */
-			curname = nextp + 1;
-			for (;;)
-			{
-				endp = strchr(nextp + 1, '"');
-				if (endp == NULL)
-					return false;	/* mismatched quotes */
-				if (endp[1] != '"')
-					break;		/* found end of quoted name */
-				/* Collapse adjacent quotes into one quote, and look again */
-				memmove(endp, endp + 1, strlen(endp));
-				nextp = endp;
-			}
-			/* endp now points at the terminating quote */
-			nextp = endp + 1;
+			curname = scan_quoted_identifier(&endp, &nextp);
+			if (curname == NULL)
+				return false;	/* mismatched quotes */
 		}
 		else
 		{
@@ -3042,35 +3077,9 @@ SplitGUCList(char *rawstring, char separator,
 		char	   *curname;
 		char	   *endp;
 
-		if (*nextp == '"')
-		{
-			/* Quoted name --- collapse quote-quote pairs */
-			curname = nextp + 1;
-			for (;;)
-			{
-				endp = strchr(nextp + 1, '"');
-				if (endp == NULL)
-					return false;	/* mismatched quotes */
-				if (endp[1] != '"')
-					break;		/* found end of quoted name */
-				/* Collapse adjacent quotes into one quote, and look again */
-				memmove(endp, endp + 1, strlen(endp));
-				nextp = endp;
-			}
-			/* endp now points at the terminating quote */
-			nextp = endp + 1;
-		}
-		else
-		{
-			/* Unquoted name --- extends to separator or whitespace */
-			curname = nextp;
-			while (*nextp && *nextp != separator &&
-				   !scanner_isspace(*nextp))
-				nextp++;
-			endp = nextp;
-			if (curname == nextp)
-				return false;	/* empty unquoted name not allowed */
-		}
+		curname = scan_identifier(&endp, &nextp, separator, false);
+		if (curname == NULL)
+			return false;		/* mismatched quotes or empty name */
 
 		while (scanner_isspace(*nextp))
 			nextp++;			/* skip trailing whitespace */
