@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * cluster.c
+ * repack.c
  *    REPACK a table; formerly known as CLUSTER.  VACUUM FULL also uses
  *    parts of this code.
  *
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/commands/cluster.c
+ *	  src/backend/commands/repack.c
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/toasting.h"
-#include "commands/cluster.h"
 #include "commands/defrem.h"
 #include "commands/progress.h"
+#include "commands/repack.h"
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"

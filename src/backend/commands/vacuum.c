@@ -9,7 +9,7 @@
  *
  * VACUUM for heap AM is implemented in vacuumlazy.c, parallel vacuum in
  * vacuumparallel.c, ANALYZE in analyze.c, and VACUUM FULL is a variant of
- * CLUSTER, handled in cluster.c.
+ * REPACK, handled in repack.c.
  *
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
@@ -38,9 +38,9 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
 #include "commands/async.h"
-#include "commands/cluster.h"
 #include "commands/defrem.h"
 #include "commands/progress.h"
+#include "commands/repack.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -2293,7 +2293,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 			if ((params.options & VACOPT_VERBOSE) != 0)
 				cluster_params.options |= CLUOPT_VERBOSE;
 
-			/* VACUUM FULL is a variant of REPACK; see cluster.c */
+			/* VACUUM FULL is a variant of REPACK; see repack.c */
 			cluster_rel(REPACK_COMMAND_VACUUMFULL, rel, InvalidOid,
 						&cluster_params);
 			/* cluster_rel closes the relation, but keeps lock */

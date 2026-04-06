@@ -18,7 +18,6 @@ OBJS = \
 	amcmds.o \
 	analyze.o \
 	async.o \
-	cluster.o \
 	collationcmds.o \
 	comment.o \
 	constraint.o \
@@ -51,6 +50,7 @@ OBJS = \
 	proclang.o \
 	propgraphcmds.o \
 	publicationcmds.o \
+	repack.o \
 	schemacmds.o \
 	seclabel.o \
 	sequence.o \

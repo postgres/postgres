@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- * cluster.h
- *	  header file for postgres cluster command stuff
+ * repack.h
+ *	  header file for the REPACK command
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * src/include/commands/cluster.h
+ * src/include/commands/repack.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef CLUSTER_H
-#define CLUSTER_H
+#ifndef REPACK_H
+#define REPACK_H
 
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
@@ -52,4 +52,4 @@ extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 							 MultiXactId cutoffMulti,
 							 char newrelpersistence);
 
-#endif							/* CLUSTER_H */
+#endif							/* REPACK_H */
