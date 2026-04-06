@@ -135,6 +135,9 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
   <para>
    The <replaceable class="parameter">schema_element</replaceable>
    subcommands, if any, are executed in the order they are written.
+   An exception is that foreign key constraint clauses in <command>CREATE
+   TABLE</command> subcommands are postponed and added at the end.
+   This allows circular foreign key references, which are sometimes useful.
   </para>
  </refsect1>
 

@@ -17,3 +17,28 @@ CREATE SCHEMA element_test
 NOTICE:  DDL test: type simple, tag CREATE SCHEMA
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 NOTICE:  DDL test: type simple, tag CREATE VIEW
+CREATE SCHEMA regress_schema_1
+CREATE TABLE t4(
+    b INT,
+    a INT REFERENCES t5 DEFERRABLE INITIALLY DEFERRED NOT ENFORCED
+          REFERENCES t6 DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT fk FOREIGN KEY (a) REFERENCES t6 DEFERRABLE)
+CREATE TABLE t5 (a INT, b INT, PRIMARY KEY (a))
+CREATE TABLE t6 (a INT, b INT, PRIMARY KEY (a));
+NOTICE:  DDL test: type simple, tag CREATE SCHEMA
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+NOTICE:  DDL test: type simple, tag CREATE INDEX
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+NOTICE:  DDL test: type simple, tag CREATE INDEX
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint t4_a_fkey on table regress_schema_1.t4
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint t4_a_fkey1 on table regress_schema_1.t4
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fk on table regress_schema_1.t4
+DROP SCHEMA regress_schema_1 CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table regress_schema_1.t4
+drop cascades to table regress_schema_1.t5
+drop cascades to table regress_schema_1.t6

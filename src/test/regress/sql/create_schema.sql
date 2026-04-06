@@ -71,5 +71,32 @@ CREATE SCHEMA regress_schema_1 AUTHORIZATION CURRENT_ROLE
 DROP SCHEMA regress_schema_1 CASCADE;
 RESET ROLE;
 
+-- Test forward-referencing foreign key clauses.
+CREATE SCHEMA regress_schema_fk
+    CREATE TABLE regress_schema_fk.t2 (
+        b int,
+        a int REFERENCES t1 DEFERRABLE INITIALLY DEFERRED NOT ENFORCED
+              REFERENCES t3 DEFERRABLE INITIALLY DEFERRED,
+        CONSTRAINT fk FOREIGN KEY (a) REFERENCES t1 NOT DEFERRABLE)
+
+    CREATE TABLE regress_schema_fk.t1 (a int PRIMARY KEY)
+
+    CREATE TABLE t3 (a int PRIMARY KEY)
+
+    CREATE TABLE t4 (
+        b int,
+        a int REFERENCES t5 NOT DEFERRABLE ENFORCED
+              REFERENCES t6 DEFERRABLE INITIALLY IMMEDIATE,
+        CONSTRAINT fk FOREIGN KEY (a) REFERENCES t6 DEFERRABLE INITIALLY DEFERRED)
+
+    CREATE TABLE t5 (a int, b int, PRIMARY KEY (a))
+
+    CREATE TABLE t6 (a int, b int, PRIMARY KEY (a));
+
+\d regress_schema_fk.t2
+\d regress_schema_fk.t4
+
+DROP SCHEMA regress_schema_fk CASCADE;
+
 -- Clean up
 DROP ROLE regress_create_schema_role;

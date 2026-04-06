@@ -131,5 +131,51 @@ CREATE SCHEMA regress_schema_1 AUTHORIZATION CURRENT_ROLE
 DROP SCHEMA regress_schema_1 CASCADE;
 NOTICE:  drop cascades to table regress_schema_1.tab
 RESET ROLE;
+-- Test forward-referencing foreign key clauses.
+CREATE SCHEMA regress_schema_fk
+    CREATE TABLE regress_schema_fk.t2 (
+        b int,
+        a int REFERENCES t1 DEFERRABLE INITIALLY DEFERRED NOT ENFORCED
+              REFERENCES t3 DEFERRABLE INITIALLY DEFERRED,
+        CONSTRAINT fk FOREIGN KEY (a) REFERENCES t1 NOT DEFERRABLE)
+    CREATE TABLE regress_schema_fk.t1 (a int PRIMARY KEY)
+    CREATE TABLE t3 (a int PRIMARY KEY)
+    CREATE TABLE t4 (
+        b int,
+        a int REFERENCES t5 NOT DEFERRABLE ENFORCED
+              REFERENCES t6 DEFERRABLE INITIALLY IMMEDIATE,
+        CONSTRAINT fk FOREIGN KEY (a) REFERENCES t6 DEFERRABLE INITIALLY DEFERRED)
+    CREATE TABLE t5 (a int, b int, PRIMARY KEY (a))
+    CREATE TABLE t6 (a int, b int, PRIMARY KEY (a));
+\d regress_schema_fk.t2
+           Table "regress_schema_fk.t2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | integer |           |          | 
+ a      | integer |           |          | 
+Foreign-key constraints:
+    "fk" FOREIGN KEY (a) REFERENCES regress_schema_fk.t1(a)
+    "t2_a_fkey" FOREIGN KEY (a) REFERENCES regress_schema_fk.t1(a) DEFERRABLE INITIALLY DEFERRED NOT ENFORCED
+    "t2_a_fkey1" FOREIGN KEY (a) REFERENCES regress_schema_fk.t3(a) DEFERRABLE INITIALLY DEFERRED
+
+\d regress_schema_fk.t4
+           Table "regress_schema_fk.t4"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | integer |           |          | 
+ a      | integer |           |          | 
+Foreign-key constraints:
+    "fk" FOREIGN KEY (a) REFERENCES regress_schema_fk.t6(a) DEFERRABLE INITIALLY DEFERRED
+    "t4_a_fkey" FOREIGN KEY (a) REFERENCES regress_schema_fk.t5(a)
+    "t4_a_fkey1" FOREIGN KEY (a) REFERENCES regress_schema_fk.t6(a) DEFERRABLE
+
+DROP SCHEMA regress_schema_fk CASCADE;
+NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to table regress_schema_fk.t2
+drop cascades to table regress_schema_fk.t1
+drop cascades to table regress_schema_fk.t3
+drop cascades to table regress_schema_fk.t4
+drop cascades to table regress_schema_fk.t5
+drop cascades to table regress_schema_fk.t6
 -- Clean up
 DROP ROLE regress_create_schema_role;
