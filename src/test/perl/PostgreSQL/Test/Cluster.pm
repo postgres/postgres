@@ -3333,11 +3333,10 @@ sub wait_for_event
 
 =item $node->wait_for_catchup(standby_name, mode, target_lsn)
 
-Wait for the replication connection with application_name standby_name until
-its 'mode' replication column in pg_stat_replication equals or passes the
-specified or default target_lsn.  By default the replay_lsn is waited for,
-but 'mode' may be specified to wait for any of sent|write|flush|replay.
-The replication connection must be in a streaming state.
+Wait until the standby identified by standby_name has reached the specified
+or default target_lsn for the given 'mode'.  By default the replay_lsn
+is waited for, but 'mode' may be specified to wait for any of
+sent|write|flush|replay.
 
 When doing physical replication, the standby is usually identified by
 passing its PostgreSQL::Test::Cluster instance.  When doing logical
@@ -3355,8 +3354,16 @@ If you pass an explicit value of target_lsn, it should almost always be
 the primary's write LSN; so this parameter is seldom needed except when
 querying some intermediate replication node rather than the primary.
 
-If there is no active replication connection from this peer, waits until
-poll_query_until timeout.
+When the standby is passed as a PostgreSQL::Test::Cluster instance and the
+mode is replay, write, or flush, the function uses WAIT FOR LSN on the
+standby for latch-based wakeup instead of polling.  If the standby has been
+promoted, if the session is interrupted by a recovery conflict, or if the
+standby is unreachable, it falls back to polling.
+
+For 'sent' mode, when the standby is passed as a string (e.g., a
+subscription name), when the sparc64+ext4 bug is detected, or as a fallback
+from the above, the function polls pg_stat_replication on the upstream.
+The replication connection must be in a streaming state for this path.
 
 Requires that the 'postgres' db exists and is accessible.
 
@@ -3374,10 +3381,13 @@ sub wait_for_catchup
 	  . join(', ', keys(%valid_modes))
 	  unless exists($valid_modes{$mode});
 
-	# Allow passing of a PostgreSQL::Test::Cluster instance as shorthand
+	# Keep a reference to the standby node if passed as an object, so we can
+	# use WAIT FOR LSN on it later.
+	my $standby_node;
 	if (blessed($standby_name)
 		&& $standby_name->isa("PostgreSQL::Test::Cluster"))
 	{
+		$standby_node = $standby_name;
 		$standby_name = $standby_name->name;
 	}
 	if (!defined($target_lsn))
@@ -3402,6 +3412,88 @@ sub wait_for_catchup
 	  . $self->name . "\n";
 	# Before release 12 walreceiver just set the application name to
 	# "walreceiver"
+
+	# Use WAIT FOR LSN on the standby when:
+	# - The standby was passed as a Cluster object (so we can connect to it)
+	# - The mode is replay, write, or flush (not 'sent')
+	# - There is no sparc64+ext4 bug
+	# This is more efficient than polling pg_stat_replication on the upstream,
+	# as WAIT FOR LSN uses a latch-based wakeup mechanism.
+	#
+	# We skip the pg_is_in_recovery() pre-check and just attempt WAIT FOR
+	# LSN directly.  If the standby was promoted, it returns 'not_in_recovery'
+	# and we fall back to polling.
+	if (   defined($standby_node)
+		&& ($mode ne 'sent')
+		&& (!PostgreSQL::Test::Utils::has_wal_read_bug))
+	{
+		# Map mode names to WAIT FOR LSN mode names
+		my %mode_map = (
+			'replay' => 'standby_replay',
+			'write' => 'standby_write',
+			'flush' => 'standby_flush',);
+		my $wait_mode = $mode_map{$mode};
+		my $timeout = $PostgreSQL::Test::Utils::timeout_default;
+		my $wait_query =
+		  qq[WAIT FOR LSN '${target_lsn}' WITH (MODE '${wait_mode}', timeout '${timeout}s', no_throw);];
+
+		# Try WAIT FOR LSN. If it succeeds, we're done. If it returns
+		# 'not_in_recovery' (standby was promoted), fall back to polling.
+		# If the session is interrupted (e.g., killed by recovery conflict),
+		# fall back to polling on the upstream which is immune to standby-
+		# side conflicts.
+		my $output;
+		local $@;
+		my $wait_succeeded = eval {
+			$output = $standby_node->safe_psql('postgres', $wait_query);
+			chomp($output);
+			1;
+		};
+
+		if ($wait_succeeded && $output eq 'success')
+		{
+			print "done\n";
+			return;
+		}
+
+		# 'not in recovery' means the standby was promoted.
+		if ($wait_succeeded && $output eq 'not in recovery')
+		{
+			diag
+			  "WAIT FOR LSN returned 'not in recovery', falling back to polling";
+		}
+		# 'timeout' is a hard failure - no point falling back to polling.
+		elsif ($wait_succeeded)
+		{
+			my $details = $self->safe_psql('postgres',
+				"SELECT * FROM pg_catalog.pg_stat_replication");
+			diag qq(WAIT FOR LSN returned '$output'
+pg_stat_replication on upstream:
+${details});
+			croak
+			  "WAIT FOR LSN '$wait_mode' to '$target_lsn' returned '$output'";
+		}
+		# WAIT FOR LSN was interrupted.  Fall back to polling if this
+		# looks like a recovery conflict.  We match the English error
+		# message "conflict with recovery" which is reliable because the
+		# test suite runs with LC_MESSAGES=C.  Other errors should fail
+		# immediately rather than being masked by a silent fallback.
+		elsif ($@ =~ /conflict with recovery/i)
+		{
+			diag qq(WAIT FOR LSN interrupted, falling back to polling:
+$@);
+		}
+		else
+		{
+			croak "WAIT FOR LSN failed: $@";
+		}
+	}
+
+	# Fall back to polling pg_stat_replication on the upstream for:
+	# - 'sent' mode (no corresponding WAIT FOR LSN mode)
+	# - When standby_name is a string (e.g., subscription name)
+	# - When the standby is no longer in recovery (was promoted)
+	# - When WAIT FOR LSN was interrupted (e.g., killed by a recovery conflict)
 	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn AND state = 'streaming'
          FROM pg_catalog.pg_stat_replication
          WHERE application_name IN ('$standby_name', 'walreceiver')];
