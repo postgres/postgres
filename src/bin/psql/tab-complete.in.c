@@ -2211,7 +2211,11 @@ match_previous_words(int pattern_id,
 	{
 		/* only some object types can be created as part of CREATE SCHEMA */
 		if (HeadMatches("CREATE", "SCHEMA"))
-			COMPLETE_WITH("TABLE", "VIEW", "INDEX", "SEQUENCE", "TRIGGER",
+			COMPLETE_WITH("AGGREGATE", "COLLATION", "DOMAIN", "FUNCTION",
+						  "INDEX", "OPERATOR", "PROCEDURE", "SEQUENCE", "TABLE",
+						  "TEXT SEARCH CONFIGURATION", "TEXT SEARCH DICTIONARY",
+						  "TEXT SEARCH PARSER", "TEXT SEARCH TEMPLATE",
+						  "TRIGGER", "TYPE", "VIEW",
 			/* for INDEX and TABLE/SEQUENCE, respectively */
 						  "UNIQUE", "UNLOGGED");
 		else
@@ -3535,15 +3539,15 @@ match_previous_words(int pattern_id,
 	else if (Matches("CREATE", "DATABASE", MatchAny, "STRATEGY"))
 		COMPLETE_WITH("WAL_LOG", "FILE_COPY");
 
-	/* CREATE DOMAIN */
-	else if (Matches("CREATE", "DOMAIN", MatchAny))
+	/* CREATE DOMAIN --- is allowed inside CREATE SCHEMA, so use TailMatches */
+	else if (TailMatches("CREATE", "DOMAIN", MatchAny))
 		COMPLETE_WITH("AS");
-	else if (Matches("CREATE", "DOMAIN", MatchAny, "AS"))
+	else if (TailMatches("CREATE", "DOMAIN", MatchAny, "AS"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes);
-	else if (Matches("CREATE", "DOMAIN", MatchAny, "AS", MatchAny))
+	else if (TailMatches("CREATE", "DOMAIN", MatchAny, "AS", MatchAny))
 		COMPLETE_WITH("COLLATE", "DEFAULT", "CONSTRAINT",
 					  "NOT NULL", "NULL", "CHECK (");
-	else if (Matches("CREATE", "DOMAIN", MatchAny, "COLLATE"))
+	else if (TailMatches("CREATE", "DOMAIN", MatchAny, "COLLATE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_collations);
 
 	/* CREATE EXTENSION */
@@ -3907,10 +3911,10 @@ match_previous_words(int pattern_id,
 	else if (Matches("CREATE", "TABLESPACE", MatchAny, "OWNER", MatchAny))
 		COMPLETE_WITH("LOCATION");
 
-/* CREATE TEXT SEARCH */
-	else if (Matches("CREATE", "TEXT", "SEARCH"))
+/* CREATE TEXT SEARCH --- is allowed inside CREATE SCHEMA, so use TailMatches */
+	else if (TailMatches("CREATE", "TEXT", "SEARCH"))
 		COMPLETE_WITH("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
-	else if (Matches("CREATE", "TEXT", "SEARCH", "CONFIGURATION|DICTIONARY|PARSER|TEMPLATE", MatchAny))
+	else if (TailMatches("CREATE", "TEXT", "SEARCH", "CONFIGURATION|DICTIONARY|PARSER|TEMPLATE", MatchAny))
 		COMPLETE_WITH("(");
 
 /* CREATE TRANSFORM */

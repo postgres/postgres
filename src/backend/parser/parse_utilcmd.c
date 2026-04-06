@@ -127,6 +127,8 @@ static void transformConstraintAttrs(ParseState *pstate,
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void checkSchemaNameRV(ParseState *pstate, const char *context_schema,
 							  RangeVar *relation);
+static void checkSchemaNameList(const char *context_schema,
+								List *qualified_name);
 static CreateStmt *transformCreateSchemaCreateTable(ParseState *pstate,
 													CreateStmt *stmt,
 													List **fk_elements);
@@ -4481,6 +4483,68 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				}
 				break;
 
+			case T_CreateDomainStmt:
+				{
+					CreateDomainStmt *elp = (CreateDomainStmt *) element;
+
+					checkSchemaNameList(schemaName, elp->domainname);
+					elements = lappend(elements, element);
+				}
+				break;
+
+			case T_CreateFunctionStmt:
+				{
+					CreateFunctionStmt *elp = (CreateFunctionStmt *) element;
+
+					checkSchemaNameList(schemaName, elp->funcname);
+					elements = lappend(elements, element);
+				}
+				break;
+
+				/*
+				 * CREATE TYPE can produce a DefineStmt, but also
+				 * CreateEnumStmt, CreateRangeStmt, and CompositeTypeStmt.
+				 * Allowing DefineStmt also provides support for several other
+				 * commands: currently, CREATE AGGREGATE, CREATE COLLATION,
+				 * CREATE OPERATOR, and text search objects.
+				 */
+
+			case T_DefineStmt:
+				{
+					DefineStmt *elp = (DefineStmt *) element;
+
+					checkSchemaNameList(schemaName, elp->defnames);
+					elements = lappend(elements, element);
+				}
+				break;
+
+			case T_CreateEnumStmt:
+				{
+					CreateEnumStmt *elp = (CreateEnumStmt *) element;
+
+					checkSchemaNameList(schemaName, elp->typeName);
+					elements = lappend(elements, element);
+				}
+				break;
+
+			case T_CreateRangeStmt:
+				{
+					CreateRangeStmt *elp = (CreateRangeStmt *) element;
+
+					checkSchemaNameList(schemaName, elp->typeName);
+					elements = lappend(elements, element);
+				}
+				break;
+
+			case T_CompositeTypeStmt:
+				{
+					CompositeTypeStmt *elp = (CompositeTypeStmt *) element;
+
+					checkSchemaNameRV(pstate, schemaName, elp->typevar);
+					elements = lappend(elements, element);
+				}
+				break;
+
 			case T_GrantStmt:
 				elements = lappend(elements, element);
 				break;
@@ -4526,6 +4590,30 @@ checkSchemaNameRV(ParseState *pstate, const char *context_schema,
 				 errmsg("cannot create temporary relation in non-temporary schema"),
 				 parser_errposition(pstate, relation->location)));
 	}
+}
+
+/*
+ * checkSchemaNameList
+ *		Check schema name in an element of a CREATE SCHEMA command,
+ *		where the element's name is given by a List
+ *
+ * Much as above, but we don't have to worry about TEMP.
+ * Sadly, this also means we don't have a parse location to report.
+ */
+static void
+checkSchemaNameList(const char *context_schema, List *qualified_name)
+{
+	char	   *obj_schema;
+	char	   *obj_name;
+
+	DeconstructQualifiedName(qualified_name, &obj_schema, &obj_name);
+	if (obj_schema != NULL &&
+		strcmp(context_schema, obj_schema) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+				 errmsg("CREATE specifies a schema (%s) "
+						"different from the one being created (%s)",
+						obj_schema, context_schema)));
 }
 
 /*

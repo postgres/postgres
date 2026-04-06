@@ -8,7 +8,7 @@ CREATE ROLE regress_create_schema_role SUPERUSER;
 
 -- Cases where schema creation fails as objects are qualified with a schema
 -- that does not match with what's expected.
--- This checks all the object types that include schema qualifications.
+-- This checks most object types that include schema qualifications.
 CREATE SCHEMA AUTHORIZATION regress_create_schema_role
   CREATE SEQUENCE schema_not_existing.seq;
 CREATE SCHEMA AUTHORIZATION regress_create_schema_role
@@ -20,6 +20,9 @@ CREATE SCHEMA AUTHORIZATION regress_create_schema_role
 CREATE SCHEMA AUTHORIZATION regress_create_schema_role
   CREATE TRIGGER schema_trig BEFORE INSERT ON schema_not_existing.tab
   EXECUTE FUNCTION schema_trig.no_func();
+CREATE SCHEMA AUTHORIZATION regress_create_schema_role
+  CREATE FUNCTION schema_not_existing.func(int) RETURNS int
+  AS 'SELECT $1' LANGUAGE sql;
 -- Again, with a role specification and no schema names.
 SET ROLE regress_create_schema_role;
 CREATE SCHEMA AUTHORIZATION CURRENT_ROLE
@@ -97,6 +100,77 @@ CREATE SCHEMA regress_schema_fk
 \d regress_schema_fk.t4
 
 DROP SCHEMA regress_schema_fk CASCADE;
+
+-- Test miscellaneous object types within CREATE SCHEMA.
+CREATE SCHEMA regress_schema_misc
+  CREATE AGGREGATE cs_sum(int4)
+    (
+        SFUNC = int4_sum(int8, int4),
+        STYPE = int8,
+        INITCOND = '0'
+    )
+
+  CREATE COLLATION cs_builtin_c ( PROVIDER = builtin, LOCALE = "C" )
+
+  CREATE DOMAIN cs_positive AS integer CHECK (VALUE > 0)
+
+  CREATE FUNCTION cs_add(int4, int4) returns int4 language sql
+    as 'select $1 + $2'
+
+  CREATE OPERATOR + (function = cs_add, leftarg = int4, rightarg = int4)
+
+  CREATE PROCEDURE cs_proc(int4, int4)
+    BEGIN ATOMIC SELECT cs_add($1,$2); END
+
+  CREATE TEXT SEARCH CONFIGURATION cs_ts_conf (copy=english)
+
+  CREATE TEXT SEARCH DICTIONARY cs_ts_dict (template=simple)
+
+  CREATE TEXT SEARCH PARSER cs_ts_prs
+    (start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end,
+     lextypes = prsd_lextype)
+
+  CREATE TEXT SEARCH TEMPLATE cs_ts_temp (lexize=dsimple_lexize)
+
+  CREATE TYPE regress_schema_misc.cs_enum AS ENUM ('red', 'orange')
+
+  CREATE TYPE cs_composite AS (a int, b float8)
+
+  CREATE TYPE cs_range AS RANGE (subtype = float8, subtype_diff = float8mi)
+
+  -- demonstrate creation of a base type with its I/O functions
+
+  CREATE TYPE cs_type
+
+  CREATE FUNCTION cs_type_in(cstring)
+    RETURNS cs_type LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT
+    AS 'int4in'
+
+  CREATE FUNCTION cs_type_out(cs_type)
+    RETURNS cstring LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT
+    AS 'int4out'
+
+  CREATE TYPE cs_type (
+    INPUT = cs_type_in,
+    OUTPUT = cs_type_out,
+    LIKE = int4
+  )
+
+  GRANT USAGE ON TYPE cs_type TO public
+;
+
+\df regress_schema_misc.cs_add
+\df regress_schema_misc.cs_proc
+\da regress_schema_misc.cs_sum
+\do regress_schema_misc.+
+\dO regress_schema_misc.*
+\dT regress_schema_misc.*
+\dF regress_schema_misc.*
+\dFd regress_schema_misc.*
+\dFp regress_schema_misc.*
+\dFt regress_schema_misc.*
+
+DROP SCHEMA regress_schema_misc CASCADE;
 
 -- Clean up
 DROP ROLE regress_create_schema_role;
