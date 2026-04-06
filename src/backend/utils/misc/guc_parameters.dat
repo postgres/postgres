@@ -3504,6 +3504,16 @@
   check_hook => 'check_wal_segment_size',
 },
 
+{ name => 'wal_sender_shutdown_timeout', type => 'int', context => 'PGC_USERSET', group => 'REPLICATION_SENDING',
+  short_desc => 'Sets the maximum time the server waits during shutdown for all WAL data to be replicated to the receiver.',
+  long_desc => '-1 disables the timeout',
+  flags => 'GUC_UNIT_MS',
+  variable => 'wal_sender_shutdown_timeout',
+  boot_val => '-1',
+  min => '-1',
+  max => 'INT_MAX',
+},
+
 { name => 'wal_sender_timeout', type => 'int', context => 'PGC_USERSET', group => 'REPLICATION_SENDING',
   short_desc => 'Sets the maximum time to wait for WAL replication.',
   flags => 'GUC_UNIT_MS',

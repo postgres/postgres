@@ -1190,10 +1190,12 @@ primary_slot_name = 'node_a_slot'
    </para>
 
    <para>
-    Users will stop waiting if a fast shutdown is requested.  However, as
-    when using asynchronous replication, the server will not fully
-    shutdown until all outstanding WAL records are transferred to the currently
-    connected standby servers.
+    Users will stop waiting if a fast shutdown is requested.  However, when
+    using replication, the server will not fully shutdown until all
+    outstanding WAL records are transferred to the currently connected
+    standby servers, or <xref linkend="guc-wal-sender-shutdown-timeout"/>
+    (if set) expires, regardless of whether replication is synchronous or
+    asynchronous.
    </para>
 
    </sect3>
