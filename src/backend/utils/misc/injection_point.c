@@ -230,19 +230,15 @@ injection_point_cache_get(const char *name)
 
 	return NULL;
 }
-#endif							/* USE_INJECTION_POINTS */
 
 const ShmemCallbacks InjectionPointShmemCallbacks = {
-#ifdef USE_INJECTION_POINTS
 	.request_fn = InjectionPointShmemRequest,
 	.init_fn = InjectionPointShmemInit,
-#endif
 };
 
 /*
  * Reserve space for the dynamic shared hash table
  */
-#ifdef USE_INJECTION_POINTS
 static void
 InjectionPointShmemRequest(void *arg)
 {
@@ -259,7 +255,7 @@ InjectionPointShmemInit(void *arg)
 	for (int i = 0; i < MAX_INJECTION_POINTS; i++)
 		pg_atomic_init_u64(&ActiveInjectionPoints->entries[i].generation, 0);
 }
-#endif
+#endif							/* USE_INJECTION_POINTS */
 
 /*
  * Attach a new injection point.
