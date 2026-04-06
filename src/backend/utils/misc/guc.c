@@ -3358,9 +3358,15 @@ set_config_with_handle(const char *name, config_handle *handle,
 	 *
 	 * Also allow normal setting if the GUC is marked GUC_ALLOW_IN_PARALLEL.
 	 *
-	 * Other changes might need to affect other workers, so forbid them.
+	 * Other changes might need to affect other workers, so forbid them. Note,
+	 * that parallel autovacuum leader is an exception because cost-based
+	 * delays need to be affected to parallel autovacuum workers. These
+	 * parameters are propagated to its workers during parallel vacuum (see
+	 * vacuumparallel.c for details). All other changes will affect only the
+	 * parallel autovacuum leader.
 	 */
-	if (IsInParallelMode() && changeVal && action != GUC_ACTION_SAVE &&
+	if (IsInParallelMode() && !AmAutoVacuumWorkerProcess() && changeVal &&
+		action != GUC_ACTION_SAVE &&
 		(record->flags & GUC_ALLOW_IN_PARALLEL) == 0)
 	{
 		ereport(elevel,

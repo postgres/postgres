@@ -2435,8 +2435,20 @@ vacuum_delay_point(bool is_analyze)
 	/* Always check for interrupts */
 	CHECK_FOR_INTERRUPTS();
 
-	if (InterruptPending ||
-		(!VacuumCostActive && !ConfigReloadPending))
+	if (InterruptPending)
+		return;
+
+	if (IsParallelWorker())
+	{
+		/*
+		 * Update cost-based vacuum delay parameters for a parallel autovacuum
+		 * worker if any changes are detected. It might enable cost-based
+		 * delay so it needs to be called before VacuumCostActive check.
+		 */
+		parallel_vacuum_update_shared_delay_params();
+	}
+
+	if (!VacuumCostActive && !ConfigReloadPending)
 		return;
 
 	/*
@@ -2450,6 +2462,12 @@ vacuum_delay_point(bool is_analyze)
 		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 		VacuumUpdateCosts();
+
+		/*
+		 * Propagate cost-based vacuum delay parameters to shared memory if
+		 * any of them have changed during the config reload.
+		 */
+		parallel_vacuum_propagate_shared_delay_params();
 	}
 
 	/*

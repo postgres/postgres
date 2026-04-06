@@ -1432,6 +1432,7 @@ static const char *const table_storage_parameters[] = {
 	"autovacuum_multixact_freeze_max_age",
 	"autovacuum_multixact_freeze_min_age",
 	"autovacuum_multixact_freeze_table_age",
+	"autovacuum_parallel_workers",
 	"autovacuum_vacuum_cost_delay",
 	"autovacuum_vacuum_cost_limit",
 	"autovacuum_vacuum_insert_scale_factor",

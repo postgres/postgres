@@ -170,6 +170,14 @@
   max => '10.0',
 },
 
+{ name => 'autovacuum_max_parallel_workers', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
+  short_desc => 'Maximum number of parallel workers that can be used by a single autovacuum worker.',
+  variable => 'autovacuum_max_parallel_workers',
+  boot_val => '0',
+  min => '0',
+  max => 'MAX_PARALLEL_WORKER_LIMIT',
+},
+
 { name => 'autovacuum_max_workers', type => 'int', context => 'PGC_SIGHUP', group => 'VACUUM_AUTOVACUUM',
   short_desc => 'Sets the maximum number of simultaneously running autovacuum worker processes.',
   variable => 'autovacuum_max_workers',

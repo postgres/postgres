@@ -238,6 +238,15 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"autovacuum_parallel_workers",
+			"Maximum number of parallel autovacuum workers that can be used for processing this table.",
+			RELOPT_KIND_HEAP,
+			ShareUpdateExclusiveLock
+		},
+		-1, -1, 1024
+	},
+	{
+		{
 			"autovacuum_vacuum_threshold",
 			"Minimum number of tuple updates or deletes prior to vacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
@@ -1969,6 +1978,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
 		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
+		{"autovacuum_parallel_workers", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, autovacuum_parallel_workers)},
 		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
 		{"autovacuum_vacuum_max_threshold", RELOPT_TYPE_INT,

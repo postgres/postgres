@@ -422,6 +422,8 @@ extern void parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs,
 												int num_index_scans,
 												bool estimated_count,
 												PVWorkerStats *wstats);
+extern void parallel_vacuum_update_shared_delay_params(void);
+extern void parallel_vacuum_propagate_shared_delay_params(void);
 extern void parallel_vacuum_main(dsm_segment *seg, shm_toc *toc);
 
 /* in commands/analyze.c */

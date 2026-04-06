@@ -143,6 +143,7 @@ int			NBuffers = 16384;
 int			MaxConnections = 100;
 int			max_worker_processes = 8;
 int			max_parallel_workers = 8;
+int			autovacuum_max_parallel_workers = 0;
 int			MaxBackends = 0;
 
 /* GUC parameters for vacuum */

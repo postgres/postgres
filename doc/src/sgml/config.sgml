@@ -2918,6 +2918,7 @@ include_dir 'conf.d'
         <para>
          When changing this value, consider also adjusting
          <xref linkend="guc-max-parallel-workers"/>,
+         <xref linkend="guc-autovacuum-max-parallel-workers"/>,
          <xref linkend="guc-max-parallel-maintenance-workers"/>, and
          <xref linkend="guc-max-parallel-workers-per-gather"/>.
         </para>
@@ -9527,6 +9528,29 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry id="guc-autovacuum-max-parallel-workers" xreflabel="autovacuum_max_parallel_workers">
+       <term><varname>autovacuum_max_parallel_workers</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_max_parallel_workers</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Sets the maximum number of parallel workers that can be used by a
+         single autovacuum worker to process indexes. This limit applies
+         specifically to the index vacuuming and index cleanup phases (for the
+         details of each autovacuum phase, please refer to <xref linkend="vacuum-phases"/>).
+         The actual number of parallel workers is further limited by
+         <xref linkend="guc-max-parallel-workers"/>. This is the
+         per-autovacuum worker equivalent of the <literal>PARALLEL</literal>
+         option of the <link linkend="sql-vacuum"><command>VACUUM</command></link>
+         command. Setting this value to 0 disables parallel vacuum during autovacuum.
+         The default is 0.
+        </para>
+       </listitem>
+     </varlistentry>
 
      </variablelist>
     </sect2>

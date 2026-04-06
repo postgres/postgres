@@ -714,6 +714,7 @@
 #autovacuum_worker_slots = 16           # autovacuum worker slots to allocate
                                         # (change requires restart)
 #autovacuum_max_workers = 3             # max number of autovacuum subprocesses
+#autovacuum_max_parallel_workers = 0    # limited by max_parallel_workers
 #autovacuum_naptime = 1min              # time between autovacuum runs
 #autovacuum_vacuum_threshold = 50       # min number of row updates before
                                         # vacuum

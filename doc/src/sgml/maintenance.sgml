@@ -1038,6 +1038,10 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     per-table <literal>autovacuum_vacuum_cost_delay</literal> or
     <literal>autovacuum_vacuum_cost_limit</literal> storage parameters have been set
     are not considered in the balancing algorithm.
+    Parallel workers launched for <xref linkend="parallel-vacuum"/> are using
+    the same cost delay parameters as the leader worker. If any of these
+    parameters are changed in the leader worker, it will propagate the new
+    parameter values to all of its parallel workers.
    </para>
 
    <para>
@@ -1165,6 +1169,36 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
      <emphasis>analyze</emphasis> component score.
     </para>
    </sect3>
+  </sect2>
+
+  <sect2 id="parallel-vacuum" xreflabel="Parallel Vacuum">
+   <title>Parallel Vacuum</title>
+
+   <para>
+    <command>VACUUM</command> can perform index vacuuming and index cleanup
+    phases in parallel using background workers (for the details of each
+    vacuum phase, please refer to <xref linkend="vacuum-phases"/>).  The
+    degree of parallelism is determined by the number of indexes on the
+    relation that support parallel vacuum.  For manual <command>VACUUM</command>,
+    this is limited by the <literal>PARALLEL</literal> option, which is
+    further capped by <xref linkend="guc-max-parallel-maintenance-workers"/>.
+    For autovacuum, it is limited by the table's
+    <xref linkend="reloption-autovacuum-parallel-workers"/> if any which is
+    capped limited by
+    <xref linkend="guc-autovacuum-max-parallel-workers"/> parameter.  Please
+    note that it is not guaranteed that the number of parallel workers that was
+    calculated will be used during execution.  It is possible for a vacuum to
+    run with fewer workers than specified, or even with no workers at all.
+   </para>
+
+   <para>
+    An index can participate in parallel vacuum if and only if the size of the
+    index is more than <xref linkend="guc-min-parallel-index-scan-size"/>.
+    Only one worker can be used per index.  So parallel workers are launched
+    only when there are at least <literal>2</literal> indexes in the table.
+    Workers for vacuum are launched before the start of each phase and exit at
+    the end of the phase.  These behaviors might change in a future release.
+   </para>
   </sect2>
  </sect1>
 

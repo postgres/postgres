@@ -152,6 +152,7 @@
 #include "storage/latch.h"
 #include "storage/lmgr.h"
 #include "storage/read_stream.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_rusage.h"
 #include "utils/timestamp.h"
@@ -861,6 +862,17 @@ heap_vacuum_rel(Relation rel, const VacuumParams *params,
 	 */
 	lazy_check_wraparound_failsafe(vacrel);
 	dead_items_alloc(vacrel, params->nworkers);
+
+#ifdef USE_INJECTION_POINTS
+
+	/*
+	 * Used by tests to pause before parallel vacuum is launched, allowing
+	 * test code to modify configuration that the leader then propagates to
+	 * workers.
+	 */
+	if (AmAutoVacuumWorkerProcess() && ParallelVacuumIsActive(vacrel))
+		INJECTION_POINT("autovacuum-start-parallel-vacuum", NULL);
+#endif
 
 	/*
 	 * Call lazy_scan_heap to perform all required heap pruning, index

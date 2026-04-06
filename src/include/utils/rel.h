@@ -311,6 +311,8 @@ typedef struct ForeignKeyCacheInfo
 typedef struct AutoVacOpts
 {
 	bool		enabled;
+
+	int			autovacuum_parallel_workers;
 	int			vacuum_threshold;
 	int			vacuum_max_threshold;
 	int			vacuum_ins_threshold;

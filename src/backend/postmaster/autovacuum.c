@@ -1698,7 +1698,7 @@ VacuumUpdateCosts(void)
 	}
 	else
 	{
-		/* Must be explicit VACUUM or ANALYZE */
+		/* Must be explicit VACUUM or ANALYZE or parallel autovacuum worker */
 		vacuum_cost_delay = VacuumCostDelay;
 		vacuum_cost_limit = VacuumCostLimit;
 	}
@@ -2940,8 +2940,6 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		 */
 		tab->at_params.index_cleanup = VACOPTVALUE_UNSPECIFIED;
 		tab->at_params.truncate = VACOPTVALUE_UNSPECIFIED;
-		/* As of now, we don't support parallel vacuum for autovacuum */
-		tab->at_params.nworkers = -1;
 		tab->at_params.freeze_min_age = freeze_min_age;
 		tab->at_params.freeze_table_age = freeze_table_age;
 		tab->at_params.multixact_freeze_min_age = multixact_freeze_min_age;
@@ -2950,6 +2948,27 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_params.log_vacuum_min_duration = log_vacuum_min_duration;
 		tab->at_params.log_analyze_min_duration = log_analyze_min_duration;
 		tab->at_params.toast_parent = InvalidOid;
+
+		/* Determine the number of parallel vacuum workers to use */
+		tab->at_params.nworkers = 0;
+		if (avopts)
+		{
+			if (avopts->autovacuum_parallel_workers == 0)
+			{
+				/*
+				 * Disable parallel vacuum, if the reloption sets the parallel
+				 * degree as zero.
+				 */
+				tab->at_params.nworkers = -1;
+			}
+			else if (avopts->autovacuum_parallel_workers > 0)
+				tab->at_params.nworkers = avopts->autovacuum_parallel_workers;
+
+			/*
+			 * autovacuum_parallel_workers == -1 falls through, keep
+			 * nworkers=0
+			 */
+		}
 
 		/*
 		 * Later, in vacuum_rel(), we check reloptions for any

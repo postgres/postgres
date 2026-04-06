@@ -1,7 +1,9 @@
 /*-------------------------------------------------------------------------
  *
  * vacuumparallel.c
- *	  Support routines for parallel vacuum execution.
+ *	  Support routines for parallel vacuum and autovacuum execution. In the
+ *	  comments below, the word "vacuum" will refer to both vacuum and
+ *	  autovacuum.
  *
  * This file contains routines that are intended to support setting up, using,
  * and tearing down a ParallelVacuumState.
@@ -15,6 +17,13 @@
  * parallel worker processes exit.  Each time we process indexes in parallel,
  * the parallel context is re-initialized so that the same DSM can be used for
  * multiple passes of index bulk-deletion and index cleanup.
+ *
+ * For parallel autovacuum, we need to propagate cost-based vacuum delay
+ * parameters from the leader to its workers, as the leader's parameters can
+ * change even while processing a table (e.g., due to a config reload).
+ * The PVSharedCostParams struct manages these parameters using a
+ * generation counter. Each parallel worker polls this shared state and
+ * refreshes its local delay parameters whenever a change is detected.
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -50,6 +59,33 @@
 #define PARALLEL_VACUUM_KEY_BUFFER_USAGE	3
 #define PARALLEL_VACUUM_KEY_WAL_USAGE		4
 #define PARALLEL_VACUUM_KEY_INDEX_STATS		5
+
+/*
+ * Struct for cost-based vacuum delay related parameters to share among an
+ * autovacuum worker and its parallel vacuum workers.
+ */
+typedef struct PVSharedCostParams
+{
+	/*
+	 * The generation counter is incremented by the leader process each time
+	 * it updates the shared cost-based vacuum delay parameters. Parallel
+	 * vacuum workers compare it with their local generation,
+	 * shared_params_generation_local, to detect whether they need to refresh
+	 * their local parameters. The generation starts from 1 so that a freshly
+	 * started worker (whose local copy is 0) will always load the initial
+	 * parameters on its first check.
+	 */
+	pg_atomic_uint32 generation;
+
+	slock_t		mutex;			/* protects all fields below */
+
+	/* Parameters to share with parallel workers */
+	double		cost_delay;
+	int			cost_limit;
+	int			cost_page_dirty;
+	int			cost_page_hit;
+	int			cost_page_miss;
+} PVSharedCostParams;
 
 /*
  * Shared information among parallel workers.  So this is allocated in the DSM
@@ -120,6 +156,18 @@ typedef struct PVShared
 
 	/* Statistics of shared dead items */
 	VacDeadItemsInfo dead_items_info;
+
+	/*
+	 * If 'true' then we are running parallel autovacuum. Otherwise, we are
+	 * running parallel maintenance VACUUM.
+	 */
+	bool		is_autovacuum;
+
+	/*
+	 * Cost-based vacuum delay parameters shared between the autovacuum leader
+	 * and its parallel workers.
+	 */
+	PVSharedCostParams cost_params;
 } PVShared;
 
 /* Status used during parallel index vacuum or cleanup */
@@ -222,6 +270,17 @@ struct ParallelVacuumState
 	PVIndVacStatus status;
 };
 
+static PVSharedCostParams *pv_shared_cost_params = NULL;
+
+/*
+ * Worker-local copy of the last cost-parameter generation this worker has
+ * applied.  Initialized to 0; since the leader initializes the shared
+ * generation counter to 1, the first call to
+ * parallel_vacuum_update_shared_delay_params() will always detect a
+ * mismatch and read the initial parameters from shared memory.
+ */
+static uint32 shared_params_generation_local = 0;
+
 static int	parallel_vacuum_compute_workers(Relation *indrels, int nindexes, int nrequested,
 											bool *will_parallel_vacuum);
 static void parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scans,
@@ -233,6 +292,8 @@ static void parallel_vacuum_process_one_index(ParallelVacuumState *pvs, Relation
 static bool parallel_vacuum_index_is_parallel_safe(Relation indrel, int num_index_scans,
 												   bool vacuum);
 static void parallel_vacuum_error_callback(void *arg);
+static inline void parallel_vacuum_set_cost_parameters(PVSharedCostParams *params);
+static void parallel_vacuum_dsm_detach(dsm_segment *seg, Datum arg);
 
 /*
  * Try to enter parallel mode and create a parallel context.  Then initialize
@@ -374,8 +435,9 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 	shared->queryid = pgstat_get_my_query_id();
 	shared->maintenance_work_mem_worker =
 		(nindexes_mwm > 0) ?
-		maintenance_work_mem / Min(parallel_workers, nindexes_mwm) :
-		maintenance_work_mem;
+		vac_work_mem / Min(parallel_workers, nindexes_mwm) :
+		vac_work_mem;
+
 	shared->dead_items_info.max_bytes = vac_work_mem * (size_t) 1024;
 
 	/* Prepare DSA space for dead items */
@@ -391,6 +453,22 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 	pg_atomic_init_u32(&(shared->cost_balance), 0);
 	pg_atomic_init_u32(&(shared->active_nworkers), 0);
 	pg_atomic_init_u32(&(shared->idx), 0);
+
+	shared->is_autovacuum = AmAutoVacuumWorkerProcess();
+
+	/*
+	 * Initialize shared cost-based vacuum delay parameters if it's for
+	 * autovacuum.
+	 */
+	if (shared->is_autovacuum)
+	{
+		parallel_vacuum_set_cost_parameters(&shared->cost_params);
+		pg_atomic_init_u32(&shared->cost_params.generation, 1);
+		SpinLockInit(&shared->cost_params.mutex);
+
+		pv_shared_cost_params = &(shared->cost_params);
+		on_dsm_detach(pcxt->seg, parallel_vacuum_dsm_detach, (Datum) 0);
+	}
 
 	shm_toc_insert(pcxt->toc, PARALLEL_VACUUM_KEY_SHARED, shared);
 	pvs->shared = shared;
@@ -457,8 +535,24 @@ parallel_vacuum_end(ParallelVacuumState *pvs, IndexBulkDeleteResult **istats)
 	DestroyParallelContext(pvs->pcxt);
 	ExitParallelMode();
 
+	if (AmAutoVacuumWorkerProcess())
+		pv_shared_cost_params = NULL;
+
 	pfree(pvs->will_parallel_vacuum);
 	pfree(pvs);
+}
+
+/*
+ * DSM detach callback. This is invoked when an autovacuum worker detaches
+ * from the DSM segment holding PVShared. It ensures to reset the local pointer
+ * to the shared state even if paralell vacuum raises an error and doesn't
+ * call parallel_vacuum_end().
+ */
+static void
+parallel_vacuum_dsm_detach(dsm_segment *seg, Datum arg)
+{
+	Assert(AmAutoVacuumWorkerProcess());
+	pv_shared_cost_params = NULL;
 }
 
 /*
@@ -535,6 +629,103 @@ parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs, long num_table_tup
 }
 
 /*
+ * Fill in the given structure with cost-based vacuum delay parameter values.
+ */
+static inline void
+parallel_vacuum_set_cost_parameters(PVSharedCostParams *params)
+{
+	params->cost_delay = vacuum_cost_delay;
+	params->cost_limit = vacuum_cost_limit;
+	params->cost_page_dirty = VacuumCostPageDirty;
+	params->cost_page_hit = VacuumCostPageHit;
+	params->cost_page_miss = VacuumCostPageMiss;
+}
+
+/*
+ * Updates the cost-based vacuum delay parameters for parallel autovacuum
+ * workers.
+ *
+ * For non-autovacuum parallel workers, this function will have no effect.
+ */
+void
+parallel_vacuum_update_shared_delay_params(void)
+{
+	uint32		params_generation;
+
+	Assert(IsParallelWorker());
+
+	/* Quick return if the worker is not running for the autovacuum */
+	if (pv_shared_cost_params == NULL)
+		return;
+
+	params_generation = pg_atomic_read_u32(&pv_shared_cost_params->generation);
+	Assert(shared_params_generation_local <= params_generation);
+
+	/* Return if parameters had not changed in the leader */
+	if (params_generation == shared_params_generation_local)
+		return;
+
+	SpinLockAcquire(&pv_shared_cost_params->mutex);
+	VacuumCostDelay = pv_shared_cost_params->cost_delay;
+	VacuumCostLimit = pv_shared_cost_params->cost_limit;
+	VacuumCostPageDirty = pv_shared_cost_params->cost_page_dirty;
+	VacuumCostPageHit = pv_shared_cost_params->cost_page_hit;
+	VacuumCostPageMiss = pv_shared_cost_params->cost_page_miss;
+	SpinLockRelease(&pv_shared_cost_params->mutex);
+
+	VacuumUpdateCosts();
+
+	shared_params_generation_local = params_generation;
+
+	elog(DEBUG2,
+		 "parallel autovacuum worker updated cost params: cost_limit=%d, cost_delay=%g, cost_page_miss=%d, cost_page_dirty=%d, cost_page_hit=%d",
+		 vacuum_cost_limit,
+		 vacuum_cost_delay,
+		 VacuumCostPageMiss,
+		 VacuumCostPageDirty,
+		 VacuumCostPageHit);
+}
+
+/*
+ * Store the cost-based vacuum delay parameters in the shared memory so that
+ * parallel vacuum workers can consume them (see
+ * parallel_vacuum_update_shared_delay_params()).
+ */
+void
+parallel_vacuum_propagate_shared_delay_params(void)
+{
+	Assert(AmAutoVacuumWorkerProcess());
+
+	/*
+	 * Quick return if the leader process is not sharing the delay parameters.
+	 */
+	if (pv_shared_cost_params == NULL)
+		return;
+
+	/*
+	 * Check if any delay parameters have changed. We can read them without
+	 * locks as only the leader can modify them.
+	 */
+	if (vacuum_cost_delay == pv_shared_cost_params->cost_delay &&
+		vacuum_cost_limit == pv_shared_cost_params->cost_limit &&
+		VacuumCostPageDirty == pv_shared_cost_params->cost_page_dirty &&
+		VacuumCostPageHit == pv_shared_cost_params->cost_page_hit &&
+		VacuumCostPageMiss == pv_shared_cost_params->cost_page_miss)
+		return;
+
+	/* Update the shared delay parameters */
+	SpinLockAcquire(&pv_shared_cost_params->mutex);
+	parallel_vacuum_set_cost_parameters(pv_shared_cost_params);
+	SpinLockRelease(&pv_shared_cost_params->mutex);
+
+	/*
+	 * Increment the generation of the parameters, i.e. let parallel workers
+	 * know that they should re-read shared cost params.
+	 */
+	pg_atomic_fetch_add_u32(&pv_shared_cost_params->generation, 1);
+}
+
+/*
  * Compute the number of parallel worker processes to request.  Both index
  * vacuum and index cleanup can be executed with parallel workers.
  * The index is eligible for parallel vacuum iff its size is greater than
@@ -555,12 +746,17 @@ parallel_vacuum_compute_workers(Relation *indrels, int nindexes, int nrequested,
 	int			nindexes_parallel_bulkdel = 0;
 	int			nindexes_parallel_cleanup = 0;
 	int			parallel_workers;
+	int			max_workers;
+
+	max_workers = AmAutoVacuumWorkerProcess() ?
+		autovacuum_max_parallel_workers :
+		max_parallel_maintenance_workers;
 
 	/*
 	 * We don't allow performing parallel operation in standalone backend or
 	 * when parallelism is disabled.
 	 */
-	if (!IsUnderPostmaster || max_parallel_maintenance_workers == 0)
+	if (!IsUnderPostmaster || max_workers == 0)
 		return 0;
 
 	/*
@@ -599,8 +795,8 @@ parallel_vacuum_compute_workers(Relation *indrels, int nindexes, int nrequested,
 	parallel_workers = (nrequested > 0) ?
 		Min(nrequested, nindexes_parallel) : nindexes_parallel;
 
-	/* Cap by max_parallel_maintenance_workers */
-	parallel_workers = Min(parallel_workers, max_parallel_maintenance_workers);
+	/* Cap by GUC variable */
+	parallel_workers = Min(parallel_workers, max_workers);
 
 	return parallel_workers;
 }
@@ -1064,7 +1260,21 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 								shared->dead_items_handle);
 
 	/* Set cost-based vacuum delay */
-	VacuumUpdateCosts();
+	if (shared->is_autovacuum)
+	{
+		/*
+		 * Parallel autovacuum workers initialize cost-based delay parameters
+		 * from the leader's shared state rather than GUC defaults, because
+		 * the leader may have applied per-table or autovacuum-specific
+		 * overrides. pv_shared_cost_params must be set before calling
+		 * parallel_vacuum_update_shared_delay_params().
+		 */
+		pv_shared_cost_params = &(shared->cost_params);
+		parallel_vacuum_update_shared_delay_params();
+	}
+	else
+		VacuumUpdateCosts();
+
 	VacuumCostBalance = 0;
 	VacuumCostBalanceLocal = 0;
 	VacuumSharedCostBalance = &(shared->cost_balance);
@@ -1119,6 +1329,9 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	vac_close_indexes(nindexes, indrels, RowExclusiveLock);
 	table_close(rel, ShareUpdateExclusiveLock);
 	FreeAccessStrategy(pvs.bstrategy);
+
+	if (shared->is_autovacuum)
+		pv_shared_cost_params = NULL;
 }
 
 /*

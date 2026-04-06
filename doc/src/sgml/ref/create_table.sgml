@@ -1738,6 +1738,22 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+  <varlistentry id="reloption-autovacuum-parallel-workers" xreflabel="autovacuum_parallel_workers">
+    <term><literal>autovacuum_parallel_workers</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_parallel_workers</varname> storage parameter</primary>
+    </indexterm>
+    </term>
+    <listitem>
+      <para>
+       Per-table value for <xref linkend="guc-autovacuum-max-parallel-workers"/>
+       parameter. If -1 is specified, <varname>autovacuum_max_parallel_workers</varname>
+       value will be used. If set to 0, parallel vacuum is disabled for
+       this table. The default value is -1.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="reloption-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
     <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)
     <indexterm>
