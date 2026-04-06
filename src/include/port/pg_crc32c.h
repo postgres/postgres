@@ -113,13 +113,21 @@ extern pg_crc32c pg_comp_crc32c_avx512(pg_crc32c crc, const void *data, size_t l
 #elif defined(USE_ARMV8_CRC32C)
 /*
  * Use either ARMv8 CRC Extension or CRYPTO Extension (PMULL) instructions.
+ */
+#ifdef HAVE_PG_INTEGER_CONSTANT_P
+/*
  * We don't need a runtime check for CRC, so for constant inputs, where
  * we assume the input is small, we can avoid an indirect function call.
  */
 #define COMP_CRC32C(crc, data, len)							\
-	((crc) = __builtin_constant_p(len) ? 					\
+	((crc) = pg_integer_constant_p(len) ? 					\
 		pg_comp_crc32c_armv8((crc), (data), (len)) : 		\
 		pg_comp_crc32c((crc), (data), (len)))
+#else
+#define COMP_CRC32C(crc, data, len)							\
+		((crc) = pg_comp_crc32c((crc), (data), (len)))
+#endif							/* HAVE_PG_INTEGER_CONSTANT_P */
+
 #define FIN_CRC32C(crc) ((crc) ^= 0xFFFFFFFF)
 
 extern pg_crc32c (*pg_comp_crc32c) (pg_crc32c crc, const void *data, size_t len);
