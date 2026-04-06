@@ -142,12 +142,11 @@ my ($ret, $out, $err) = $node->psql('postgres',
 is($ret, 2, 'server crash: psql exit code');
 like($out, qr/before/, 'server crash: output before crash');
 unlike($out, qr/AFTER/, 'server crash: no output after crash');
-is( $err,
-	'psql:<stdin>:2: FATAL:  terminating connection due to administrator command
-psql:<stdin>:2: server closed the connection unexpectedly
+like( $err, qr/psql:<stdin>:2: FATAL:  terminating connection due to administrator command
+(?:DETAIL:  Signal sent by PID \d+, UID \d+\.\n)?psql:<stdin>:2: server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
-psql:<stdin>:2: error: connection to server was lost',
+psql:<stdin>:2: error: connection to server was lost/,
 	'server crash: error message');
 
 # test \errverbose

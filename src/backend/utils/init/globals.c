@@ -43,6 +43,8 @@ volatile sig_atomic_t IdleStatsUpdateTimeoutPending = false;
 volatile uint32 InterruptHoldoffCount = 0;
 volatile uint32 QueryCancelHoldoffCount = 0;
 volatile uint32 CritSectionCount = 0;
+volatile int ProcDieSenderPid = 0;
+volatile int ProcDieSenderUid = 0;
 
 int			MyProcPid;
 pg_time_t	MyStartTime;

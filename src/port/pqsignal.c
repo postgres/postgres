@@ -82,10 +82,19 @@ static volatile pqsigfunc pqsignal_handlers[PG_NSIG];
  *
  * This wrapper also handles restoring the value of errno.
  */
+#if !defined(FRONTEND) && defined(HAVE_SA_SIGINFO)
+static void
+wrapper_handler(int signo, siginfo_t * info, void *context)
+#else
 static void
 wrapper_handler(SIGNAL_ARGS)
+#endif
 {
 	int			save_errno = errno;
+#if !defined(FRONTEND) && defined(HAVE_SA_SIGINFO)
+	/* SA_SIGINFO signature uses signo, not SIGNAL_ARGS macro */
+	int			postgres_signal_arg = signo;
+#endif
 
 	Assert(postgres_signal_arg > 0);
 	Assert(postgres_signal_arg < PG_NSIG);
@@ -105,6 +114,14 @@ wrapper_handler(SIGNAL_ARGS)
 		raise(postgres_signal_arg);
 		return;
 	}
+
+#ifdef HAVE_SA_SIGINFO
+	if (signo == SIGTERM && info)
+	{
+		ProcDieSenderPid = info->si_pid;
+		ProcDieSenderUid = info->si_uid;
+	}
+#endif
 #endif
 
 	(*pqsignal_handlers[postgres_signal_arg]) (postgres_signal_arg);
@@ -125,6 +142,7 @@ pqsignal(int signo, pqsigfunc func)
 #if !(defined(WIN32) && defined(FRONTEND))
 	struct sigaction act;
 #endif
+	bool		use_wrapper = false;
 
 	Assert(signo > 0);
 	Assert(signo < PG_NSIG);
@@ -132,13 +150,24 @@ pqsignal(int signo, pqsigfunc func)
 	if (func != SIG_IGN && func != SIG_DFL)
 	{
 		pqsignal_handlers[signo] = func;	/* assumed atomic */
-		func = wrapper_handler;
+		use_wrapper = true;
 	}
 
 #if !(defined(WIN32) && defined(FRONTEND))
-	act.sa_handler = func;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_RESTART;
+#if !defined(FRONTEND) && defined(HAVE_SA_SIGINFO)
+	if (use_wrapper)
+	{
+		act.sa_sigaction = wrapper_handler;
+		act.sa_flags |= SA_SIGINFO;
+	}
+	else
+		act.sa_handler = func;
+#else
+	act.sa_handler = use_wrapper ? wrapper_handler : func;
+#endif
+
 #ifdef SA_NOCLDSTOP
 	if (signo == SIGCHLD)
 		act.sa_flags |= SA_NOCLDSTOP;
@@ -147,7 +176,7 @@ pqsignal(int signo, pqsigfunc func)
 		Assert(false);			/* probably indicates coding error */
 #else
 	/* Forward to Windows native signal system. */
-	if (signal(signo, func) == SIG_ERR)
+	if (signal(signo, use_wrapper ? wrapper_handler : func) == SIG_ERR)
 		Assert(false);			/* probably indicates coding error */
 #endif
 }

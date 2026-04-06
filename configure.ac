@@ -1817,6 +1817,24 @@ if test "$ac_cv_sizeof_off_t" -lt 8; then
   fi
 fi
 
+# Check for SA_SIGINFO extended signal handler availability
+AC_CACHE_CHECK([for SA_SIGINFO], [ac_cv_have_sa_siginfo], [
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[
+            #include <signal.h>
+            #include <stddef.h>
+        ]], [[
+            struct sigaction sa;
+            sa.sa_flags = SA_SIGINFO;
+        ]])
+    ],
+    [ac_cv_have_sa_siginfo=yes],
+    [ac_cv_have_sa_siginfo=no])
+])
+
+if test "x$ac_cv_have_sa_siginfo" = "xyes"; then
+    AC_DEFINE([HAVE_SA_SIGINFO], 1, [Define to 1 if you have SA_SIGINFO available.])
+fi
 
 ##
 ## Functions, global variables

@@ -2985,6 +2985,10 @@ if cc.has_member('struct sockaddr', 'sa_len',
   cdata.set('HAVE_STRUCT_SOCKADDR_SA_LEN', 1)
 endif
 
+if cc.has_header_symbol('signal.h', 'SA_SIGINFO')
+  cdata.set('HAVE_SA_SIGINFO', 1)
+endif
+
 if cc.has_member('struct tm', 'tm_zone',
     args: test_c_args, include_directories: postgres_inc,
     prefix: '''
