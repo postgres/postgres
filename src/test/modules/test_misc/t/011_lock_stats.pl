@@ -1,13 +1,18 @@
 
 # Copyright (c) 2026, PostgreSQL Global Development Group
 
-# Test for the lock statistics
+# Test for the lock statistics and log_lock_waits
 #
 # This test creates multiple locking situations when a session (s2) has to
 # wait on a lock for longer than deadlock_timeout. The first tests each test a
 # dedicated lock type.
 # The last one checks that log_lock_waits has no impact on the statistics
 # counters.
+#
+# This test also checks that log_lock_waits messages are emitted both when
+# a wait occurs and when the lock is acquired, and that the "still waiting for"
+# message is logged exactly once per wait, even if the backend wakes due
+# to signals.
 
 use strict;
 use warnings FATAL => 'all';
@@ -90,6 +95,8 @@ INSERT INTO test_stat_tab(key, value) VALUES('k0', 1);
 
 setup_sessions();
 
+my $log_offset = -s $node->logfile;
+
 $s1->query_safe(
 	q[
 SELECT pg_stat_reset_shared('lock');
@@ -112,6 +119,21 @@ LOCK TABLE test_stat_tab;
 
 wait_and_detach($node, 'deadlock-timeout-fired');
 
+# Check that log_lock_waits message is emitted during a lock wait.
+$node->wait_for_log(qr/still waiting for AccessExclusiveLock on relation/,
+	$log_offset);
+
+# Wake the backend waiting on the lock and confirm it woke by calling
+# pg_log_backend_memory_contexts() and checking for the logged memory
+# contexts. This is necessary to test later that the "still waiting for"
+# message is logged exactly once per wait, even if the backend wakes
+# during the wait.
+$node->safe_psql(
+	'postgres', q[SELECT pg_log_backend_memory_contexts(pid)
+	FROM pg_locks WHERE locktype = 'relation' AND
+	relation = 'test_stat_tab'::regclass AND NOT granted;]);
+$node->wait_for_log(qr/logging memory contexts/, $log_offset);
+
 # deadlock_timeout fired, now commit in s1 and s2
 $s1->query_safe(q(COMMIT));
 $s2->query_safe(q(COMMIT));
@@ -120,6 +142,20 @@ $s2->query_safe(q(COMMIT));
 wait_for_pg_stat_lock($node, 'relation');
 ok(1, "Lock stats ok for relation");
 
+# Check that log_lock_waits message is emitted when the lock is acquired
+# after waiting.
+$node->wait_for_log(qr/acquired AccessExclusiveLock on relation/,
+	$log_offset);
+
+# Check that the "still waiting for" message is logged exactly once per wait,
+# even if the backend wakes during the wait.
+my $log_contents = slurp_file($node->logfile, $log_offset);
+my @still_waiting = ($log_contents =~ /still waiting for/g);
+is( scalar @still_waiting,
+	1,
+	"still waiting logged exactly once despite wakeups from pg_log_backend_memory_contexts()"
+);
+
 # close sessions
 $s1->quit;
 $s2->quit;
@@ -127,6 +163,8 @@ $s2->quit;
 ####### transaction lock
 
 setup_sessions();
+
+$log_offset = -s $node->logfile;
 
 $s1->query_safe(
 	q[
@@ -152,6 +190,10 @@ UPDATE test_stat_tab SET value = value + 1 WHERE key = 'k1';
 
 wait_and_detach($node, 'deadlock-timeout-fired');
 
+# Check that log_lock_waits message is emitted during a lock wait.
+$node->wait_for_log(qr/still waiting for ShareLock on transaction/,
+	$log_offset);
+
 # deadlock_timeout fired, now commit in s1 and s2
 $s1->query_safe(q(COMMIT));
 $s2->query_safe(q(COMMIT));
@@ -160,6 +202,10 @@ $s2->query_safe(q(COMMIT));
 wait_for_pg_stat_lock($node, 'transactionid');
 ok(1, "Lock stats ok for transactionid");
 
+# Check that log_lock_waits message is emitted when the lock is acquired
+# after waiting.
+$node->wait_for_log(qr/acquired ShareLock on transaction/, $log_offset);
+
 # Close sessions
 $s1->quit;
 $s2->quit;
@@ -167,6 +213,8 @@ $s2->quit;
 ####### advisory lock
 
 setup_sessions();
+
+$log_offset = -s $node->logfile;
 
 $s1->query_safe(
 	q[
@@ -190,6 +238,10 @@ SELECT pg_advisory_lock(1);
 
 wait_and_detach($node, 'deadlock-timeout-fired');
 
+# Check that log_lock_waits message is emitted during a lock wait.
+$node->wait_for_log(qr/still waiting for ExclusiveLock on advisory lock/,
+	$log_offset);
+
 # deadlock_timeout fired, now unlock and commit s2
 $s1->query_safe(q(SELECT pg_advisory_unlock(1)));
 $s2->query_safe(
@@ -202,6 +254,10 @@ COMMIT;
 wait_for_pg_stat_lock($node, 'advisory');
 ok(1, "Lock stats ok for advisory");
 
+# Check that log_lock_waits message is emitted when the lock is acquired
+# after waiting.
+$node->wait_for_log(qr/acquired ExclusiveLock on advisory lock/, $log_offset);
+
 # Close sessions
 $s1->quit;
 $s2->quit;
@@ -209,6 +265,8 @@ $s2->quit;
 ####### Ensure log_lock_waits has no impact
 
 setup_sessions();
+
+$log_offset = -s $node->logfile;
 
 $s1->query_safe(
 	q[
@@ -240,6 +298,15 @@ $s2->query_safe(q(COMMIT));
 # check that pg_stat_lock has been updated
 wait_for_pg_stat_lock($node, 'relation');
 ok(1, "log_lock_waits has no impact on Lock stats");
+
+# Check that no log_lock_waits messages are emitted
+ok( !$node->log_contains(
+		"still waiting for AccessExclusiveLock on relation", $log_offset),
+	'check that no log_lock_waits message is emitted during a lock wait');
+ok( !$node->log_contains(
+		"acquired AccessExclusiveLock on relation", $log_offset),
+	'check that no log_lock_waits message is emitted when the lock is acquired after waiting'
+);
 
 # close sessions
 $s1->quit;
