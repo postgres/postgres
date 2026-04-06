@@ -36,6 +36,8 @@
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/explain_state.h"
+#include "utils/builtins.h"
+#include "utils/guc.h"
 
 /* Hook to perform additional EXPLAIN options validation */
 explain_validate_options_hook_type explain_validate_options_hook = NULL;
@@ -44,6 +46,7 @@ typedef struct
 {
 	const char *option_name;
 	ExplainOptionHandler option_handler;
+	ExplainOptionGUCCheckHandler guc_check_handler;
 } ExplainExtensionOption;
 
 static const char **ExplainExtensionNameArray = NULL;
@@ -304,18 +307,28 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 /*
  * Register a new EXPLAIN option.
  *
+ * option_name is assumed to be a constant string or allocated in storage
+ * that will never be freed.
+ *
  * When option_name is used as an EXPLAIN option, handler will be called and
  * should update the ExplainState passed to it. See comments at top of file
  * for a more detailed explanation.
  *
- * option_name is assumed to be a constant string or allocated in storage
- * that will never be freed.
+ * guc_check_handler is a function that can be safely called from a
+ * GUC check hook to validate a proposed value for a custom EXPLAIN option.
+ * Boolean-valued options can pass GUCCheckBooleanExplainOption. See the
+ * comments for GUCCheckBooleanExplainOption for further information on
+ * how a guc_check_handler should behave.
  */
 void
 RegisterExtensionExplainOption(const char *option_name,
-							   ExplainOptionHandler handler)
+							   ExplainOptionHandler handler,
+							   ExplainOptionGUCCheckHandler guc_check_handler)
 {
 	ExplainExtensionOption *exopt;
+
+	Assert(handler != NULL);
+	Assert(guc_check_handler != NULL);
 
 	/* Search for an existing option by this name; if found, update handler. */
 	for (int i = 0; i < ExplainExtensionOptionsAssigned; ++i)
@@ -323,7 +336,10 @@ RegisterExtensionExplainOption(const char *option_name,
 		if (strcmp(ExplainExtensionOptionArray[i].option_name,
 				   option_name) == 0)
 		{
-			ExplainExtensionOptionArray[i].option_handler = handler;
+			exopt = &ExplainExtensionOptionArray[i];
+
+			exopt->option_handler = handler;
+			exopt->guc_check_handler = guc_check_handler;
 			return;
 		}
 	}
@@ -352,6 +368,7 @@ RegisterExtensionExplainOption(const char *option_name,
 	exopt = &ExplainExtensionOptionArray[ExplainExtensionOptionsAssigned++];
 	exopt->option_name = option_name;
 	exopt->option_handler = handler;
+	exopt->guc_check_handler = guc_check_handler;
 }
 
 /*
@@ -374,4 +391,100 @@ ApplyExtensionExplainOption(ExplainState *es, DefElem *opt, ParseState *pstate)
 	}
 
 	return false;
+}
+
+/*
+ * Determine whether an EXPLAIN extension option will be accepted without
+ * error. Returns true if so, and false if not. See the comments for
+ * GUCCheckBooleanExplainOption for more details.
+ *
+ * The caller need not know that the option_name is valid; this function
+ * will indicate that the option is unrecognized if that is the case.
+ */
+bool
+GUCCheckExplainExtensionOption(const char *option_name,
+							   const char *option_value,
+							   NodeTag option_type)
+{
+	for (int i = 0; i < ExplainExtensionOptionsAssigned; i++)
+	{
+		ExplainExtensionOption *exopt = &ExplainExtensionOptionArray[i];
+
+		if (strcmp(exopt->option_name, option_name) == 0)
+			return exopt->guc_check_handler(option_name, option_value,
+											option_type);
+	}
+
+	/* Unrecognized option name. */
+	GUC_check_errmsg("unrecognized EXPLAIN option \"%s\"", option_name);
+	return false;
+}
+
+/*
+ * guc_check_handler for Boolean-valued EXPLAIN extension options.
+ *
+ * After receiving a "true" value from this or any other GUC check handler
+ * for an EXPLAIN extension option, the caller is entitled to assume that
+ * a suitably constructed DefElem passed to the main option handler will
+ * not cause an error. To construct this DefElem, the caller should set
+ * the DefElem's defname to option_name. If option_values is NULL, arg
+ * should be NULL. Otherwise, arg should be of the type given by
+ * option_type, with option_value as the associated value. The only option
+ * types that should be passed are T_String, T_Float, and T_Integer; in
+ * the last case, the caller will need to perform a string-to-integer
+ * conversion.
+ *
+ * A guc_check_handler should not throw an error, and should not allocate
+ * memory.  If it returns false to indicate that the option_value is not
+ * acceptable, it may use GUC_check_errmsg(), GUC_check_errdetail(), etc.
+ * to clarify the nature of the problem.
+ *
+ * Since we're concerned with Boolean options here, the logic below must
+ * exactly match the semantics of defGetBoolean.
+ */
+bool
+GUCCheckBooleanExplainOption(const char *option_name,
+							 const char *option_value,
+							 NodeTag option_type)
+{
+	bool		valid = false;
+
+	if (option_value == NULL)
+	{
+		/* defGetBoolean treats no argument as valid */
+		valid = true;
+	}
+	else if (option_type == T_String)
+	{
+		/* defGetBoolean accepts exactly these string values */
+		if (pg_strcasecmp(option_value, "true") == 0 ||
+			pg_strcasecmp(option_value, "false") == 0 ||
+			pg_strcasecmp(option_value, "on") == 0 ||
+			pg_strcasecmp(option_value, "off") == 0)
+			valid = true;
+	}
+	else if (option_type == T_Integer)
+	{
+		long		value;
+		char	   *end;
+
+		/*
+		 * defGetBoolean accepts only 0 and 1, but those can be spelled in
+		 * various ways (e.g. 01, 0x01).
+		 */
+		errno = 0;
+		value = strtol(option_value, &end, 0);
+		if (errno == 0 && *end == '\0' && end != option_value &&
+			value == (int) value && (value == 0 || value == 1))
+			valid = true;
+	}
+
+	if (!valid)
+	{
+		GUC_check_errmsg("EXPLAIN option \"%s\" requires a Boolean value",
+						 option_name);
+		return false;
+	}
+
+	return true;
 }

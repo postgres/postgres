@@ -126,7 +126,8 @@ _PG_init(void)
 
 	/* Register the new EXPLAIN options implemented by this module. */
 	RegisterExtensionExplainOption("plan_advice",
-								   pg_plan_advice_explain_option_handler);
+								   pg_plan_advice_explain_option_handler,
+								   GUCCheckBooleanExplainOption);
 
 	/* Install hooks */
 	pgpa_planner_install_hooks();

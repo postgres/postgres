@@ -78,6 +78,9 @@ typedef struct ExplainState
 } ExplainState;
 
 typedef void (*ExplainOptionHandler) (ExplainState *, DefElem *, ParseState *);
+typedef bool (*ExplainOptionGUCCheckHandler) (const char *option_name,
+											  const char *option_value,
+											  NodeTag option_type);
 
 /* Hook to perform additional EXPLAIN options validation */
 typedef void (*explain_validate_options_hook_type) (ExplainState *es, List *options,
@@ -94,8 +97,16 @@ extern void SetExplainExtensionState(ExplainState *es, int extension_id,
 									 void *opaque);
 
 extern void RegisterExtensionExplainOption(const char *option_name,
-										   ExplainOptionHandler handler);
+										   ExplainOptionHandler handler,
+										   ExplainOptionGUCCheckHandler guc_check_handler);
 extern bool ApplyExtensionExplainOption(ExplainState *es, DefElem *opt,
 										ParseState *pstate);
+extern bool GUCCheckExplainExtensionOption(const char *option_name,
+										   const char *option_value,
+										   NodeTag option_type);
+
+extern bool GUCCheckBooleanExplainOption(const char *option_name,
+										 const char *option_value,
+										 NodeTag option_type);
 
 #endif							/* EXPLAIN_STATE_H */
