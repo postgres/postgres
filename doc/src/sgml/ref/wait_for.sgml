@@ -253,6 +253,16 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
    timeline.
   </para>
 
+  <para>
+   On a standby server, <command>WAIT FOR</command> sessions may be
+   interrupted by recovery conflicts.  Some recovery conflicts are
+   unavoidable: for example, replaying a tablespace drop resolves
+   conflicts by terminating all backends, regardless of what they are
+   doing.  Applications using <command>WAIT FOR</command> on a standby
+   should be prepared to handle such interruptions, for example by
+   retrying the command or falling back to an alternative mechanism.
+  </para>
+
 </refsect1>
 
  <refsect1>
