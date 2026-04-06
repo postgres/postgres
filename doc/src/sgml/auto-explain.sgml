@@ -245,6 +245,29 @@ LOAD 'auto_explain';
     </listitem>
    </varlistentry>
 
+   <varlistentry id="auto-explain-configuration-parameters-log-extension-options">
+    <term>
+     <varname>auto_explain.log_extension_options</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_extension_options</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Loadable modules can extend the <literal>EXPLAIN</literal> command with
+      additional options that affect the output format. Such options can also
+      be specified here. The value of this parameter is a comma-separated
+      list of options, each of which is an option name followed optionally by
+      an associated value. The module that provides the
+      <literal>EXPLAIN</literal> option, such as
+      <link linkend="pgplanadvice"><literal>pg_plan_advice</literal></link> or
+      <link linkend="pgoverexplain"><literal>pg_overexplain</literal></link>,
+      should be loaded before this parameter is set.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="auto-explain-configuration-parameters-log-level">
     <term>
      <varname>auto_explain.log_level</varname> (<type>enum</type>)

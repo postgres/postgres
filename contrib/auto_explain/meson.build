@@ -23,6 +23,7 @@ tests += {
   'regress': {
     'sql': [
       'alter_reset',
+      'extension_options',
     ],
   },
   'tap': {

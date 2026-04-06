@@ -3585,6 +3585,8 @@ astreamer_verify
 astreamer_waldump
 astreamer_zstd_frame
 auth_password_hook_typ
+auto_explain_extension_options
+auto_explain_option
 autovac_table
 av_relation
 avc_cache

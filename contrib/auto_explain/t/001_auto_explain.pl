@@ -30,7 +30,7 @@ sub query_log
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init(auth_extra => [ '--create-role' => 'regress_user1' ]);
 $node->append_conf('postgresql.conf',
-	"session_preload_libraries = 'auto_explain'");
+	"session_preload_libraries = 'pg_overexplain,auto_explain'");
 $node->append_conf('postgresql.conf', "auto_explain.log_min_duration = 0");
 $node->append_conf('postgresql.conf', "auto_explain.log_analyze = on");
 $node->start;
@@ -171,6 +171,22 @@ like(
 	$log_contents,
 	qr/"Node Type": "Index Scan"[^}]*"Index Name": "pg_class_relname_nsp_index"/s,
 	"index scan logged, json mode");
+
+# Extension options.
+$log_contents = query_log(
+	$node,
+	"SELECT 1;",
+	{ "auto_explain.log_extension_options" => "debug" });
+
+like(
+	$log_contents,
+	qr/Parallel Safe:/,
+	"extension option produces per-node output");
+
+like(
+	$log_contents,
+	qr/Command Type: select/,
+	"extension option produces per-plan output");
 
 # Check that PGC_SUSET parameters can be set by non-superuser if granted,
 # otherwise not

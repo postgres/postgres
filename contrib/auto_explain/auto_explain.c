@@ -15,12 +15,17 @@
 #include <limits.h>
 
 #include "access/parallel.h"
+#include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/explain_format.h"
 #include "commands/explain_state.h"
 #include "common/pg_prng.h"
 #include "executor/instrument.h"
+#include "nodes/makefuncs.h"
+#include "nodes/value.h"
+#include "parser/scansup.h"
 #include "utils/guc.h"
+#include "utils/varlena.h"
 
 PG_MODULE_MAGIC_EXT(
 					.name = "auto_explain",
@@ -41,6 +46,31 @@ static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static int	auto_explain_log_level = LOG;
 static bool auto_explain_log_nested_statements = false;
 static double auto_explain_sample_rate = 1;
+static char *auto_explain_log_extension_options = NULL;
+
+/*
+ * Parsed form of one option from auto_explain.log_extension_options.
+ */
+typedef struct auto_explain_option
+{
+	char	   *name;
+	char	   *value;
+	NodeTag		type;
+} auto_explain_option;
+
+/*
+ * Parsed form of the entirety of auto_explain.log_extension_options, stored
+ * as GUC extra. The options[] array will have pointers into the string
+ * following the array.
+ */
+typedef struct auto_explain_extension_options
+{
+	int			noptions;
+	auto_explain_option options[FLEXIBLE_ARRAY_MEMBER];
+	/* a null-terminated copy of the GUC string follows the array */
+} auto_explain_extension_options;
+
+static auto_explain_extension_options *extension_options = NULL;
 
 static const struct config_enum_entry format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -88,6 +118,15 @@ static void explain_ExecutorRun(QueryDesc *queryDesc,
 static void explain_ExecutorFinish(QueryDesc *queryDesc);
 static void explain_ExecutorEnd(QueryDesc *queryDesc);
 
+static bool check_log_extension_options(char **newval, void **extra,
+										GucSource source);
+static void assign_log_extension_options(const char *newval, void *extra);
+static void apply_extension_options(ExplainState *es,
+									auto_explain_extension_options *ext);
+static char *auto_explain_scan_literal(char **endp, char **nextp);
+static int	auto_explain_split_options(char *rawstring,
+									   auto_explain_option *options,
+									   int maxoptions, char **errmsg);
 
 /*
  * Module load callback
@@ -231,6 +270,17 @@ _PG_init(void)
 							 NULL,
 							 NULL,
 							 NULL);
+
+	DefineCustomStringVariable("auto_explain.log_extension_options",
+							   "Extension EXPLAIN options to be added.",
+							   NULL,
+							   &auto_explain_log_extension_options,
+							   NULL,
+							   PGC_SUSET,
+							   0,
+							   check_log_extension_options,
+							   assign_log_extension_options,
+							   NULL);
 
 	DefineCustomRealVariable("auto_explain.sample_rate",
 							 "Fraction of queries to process.",
@@ -398,6 +448,8 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es->format = auto_explain_log_format;
 			es->settings = auto_explain_log_settings;
 
+			apply_extension_options(es, extension_options);
+
 			ExplainBeginOutput(es);
 			ExplainQueryText(es, queryDesc);
 			ExplainQueryParameters(es, queryDesc->params, auto_explain_log_parameter_max_length);
@@ -406,6 +458,12 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 				ExplainPrintTriggers(es, queryDesc);
 			if (es->costs)
 				ExplainPrintJITSummary(es, queryDesc);
+			if (explain_per_plan_hook)
+				(*explain_per_plan_hook) (queryDesc->plannedstmt,
+										  NULL, es,
+										  queryDesc->sourceText,
+										  queryDesc->params,
+										  queryDesc->estate->es_queryEnv);
 			ExplainEndOutput(es);
 
 			/* Remove last line break */
@@ -438,4 +496,333 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 		prev_ExecutorEnd(queryDesc);
 	else
 		standard_ExecutorEnd(queryDesc);
+}
+
+/*
+ * GUC check hook for auto_explain.log_extension_options.
+ */
+static bool
+check_log_extension_options(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	auto_explain_extension_options *result;
+	auto_explain_option *options;
+	int			maxoptions = 8;
+	Size		rawstring_len;
+	Size		allocsize;
+	char	   *errmsg;
+
+	/* NULL or empty string means no options. */
+	if (*newval == NULL || (*newval)[0] == '\0')
+	{
+		*extra = NULL;
+		return true;
+	}
+
+	rawstring_len = strlen(*newval) + 1;
+
+retry:
+	/* Try to allocate an auto_explain_extension_options object. */
+	allocsize = offsetof(auto_explain_extension_options, options) +
+		sizeof(auto_explain_option) * maxoptions +
+		rawstring_len;
+	result = (auto_explain_extension_options *) guc_malloc(LOG, allocsize);
+	if (result == NULL)
+		return false;
+
+	/* Copy the string after the options array. */
+	rawstring = (char *) &result->options[maxoptions];
+	memcpy(rawstring, *newval, rawstring_len);
+
+	/* Parse. */
+	options = result->options;
+	result->noptions = auto_explain_split_options(rawstring, options,
+												  maxoptions, &errmsg);
+	if (result->noptions < 0)
+	{
+		GUC_check_errdetail("%s", errmsg);
+		guc_free(result);
+		return false;
+	}
+
+	/*
+	 * Retry with a larger array if needed.
+	 *
+	 * It should be impossible for this to loop more than once, because
+	 * auto_explain_split_options tells us how many entries are needed.
+	 */
+	if (result->noptions > maxoptions)
+	{
+		maxoptions = result->noptions;
+		guc_free(result);
+		goto retry;
+	}
+
+	/* Validate each option against its registered check handler. */
+	for (int i = 0; i < result->noptions; i++)
+	{
+		if (!GUCCheckExplainExtensionOption(options[i].name, options[i].value,
+											options[i].type))
+		{
+			guc_free(result);
+			return false;
+		}
+	}
+
+	*extra = result;
+	return true;
+}
+
+/*
+ * GUC assign hook for auto_explain.log_extension_options.
+ */
+static void
+assign_log_extension_options(const char *newval, void *extra)
+{
+	extension_options = (auto_explain_extension_options *) extra;
+}
+
+/*
+ * Apply parsed extension options to an ExplainState.
+ */
+static void
+apply_extension_options(ExplainState *es, auto_explain_extension_options *ext)
+{
+	if (ext == NULL)
+		return;
+
+	for (int i = 0; i < ext->noptions; i++)
+	{
+		auto_explain_option *opt = &ext->options[i];
+		DefElem    *def;
+		Node	   *arg;
+
+		if (opt->value == NULL)
+			arg = NULL;
+		else if (opt->type == T_Integer)
+			arg = (Node *) makeInteger(strtol(opt->value, NULL, 0));
+		else if (opt->type == T_Float)
+			arg = (Node *) makeFloat(opt->value);
+		else
+			arg = (Node *) makeString(opt->value);
+
+		def = makeDefElem(opt->name, arg, -1);
+		ApplyExtensionExplainOption(es, def, NULL);
+	}
+}
+
+/*
+ * auto_explain_scan_literal - In-place scanner for single-quoted string
+ * literals.
+ *
+ * This is the single-quote analog of scan_quoted_identifier from varlena.c.
+ */
+static char *
+auto_explain_scan_literal(char **endp, char **nextp)
+{
+	char	   *token = *nextp + 1;
+
+	for (;;)
+	{
+		*endp = strchr(*nextp + 1, '\'');
+		if (*endp == NULL)
+			return NULL;		/* mismatched quotes */
+		if ((*endp)[1] != '\'')
+			break;				/* found end of literal */
+		/* Collapse adjacent quotes into one quote, and look again */
+		memmove(*endp, *endp + 1, strlen(*endp));
+		*nextp = *endp;
+	}
+	/* *endp now points at the terminating quote */
+	*nextp = *endp + 1;
+
+	return token;
+}
+
+/*
+ * auto_explain_split_options - Parse an option string into an array of
+ * auto_explain_option structs.
+ *
+ * Much of this logic is similar to SplitIdentifierString and friends, but our
+ * needs are different enough that we roll our own parsing logic. The goal here
+ * is to accept the same syntax that the main parser would accept inside of
+ * an EXPLAIN option list. While we can't do that perfectly without adding a
+ * lot more code, the goal of this implementation is to be close enough that
+ * users don't really notice the differences.
+ *
+ * The input string is modified in place (null-terminated, downcased, quotes
+ * collapsed).  All name and value pointers in the output array refer into
+ * this string, so the caller must ensure the string outlives the array.
+ *
+ * Returns the full number of options in the input string, but stores no
+ * more than maxoptions into the caller-provided array. If a syntax error
+ * occurs, returns -1 and sets *errmsg.
+ */
+static int
+auto_explain_split_options(char *rawstring, auto_explain_option *options,
+						   int maxoptions, char **errmsg)
+{
+	char	   *nextp = rawstring;
+	int			noptions = 0;
+	bool		done = false;
+
+	*errmsg = NULL;
+
+	while (scanner_isspace(*nextp))
+		nextp++;				/* skip leading whitespace */
+
+	if (*nextp == '\0')
+		return 0;				/* empty string is fine */
+
+	while (!done)
+	{
+		char	   *name;
+		char	   *name_endp;
+		char	   *value = NULL;
+		char	   *value_endp = NULL;
+		NodeTag		type = T_Invalid;
+
+		/* Parse the option name. */
+		name = scan_identifier(&name_endp, &nextp, ',', true);
+		if (name == NULL || name_endp == name)
+		{
+			*errmsg = "option name missing or empty";
+			return -1;
+		}
+
+		/* Skip whitespace after the option name. */
+		while (scanner_isspace(*nextp))
+			nextp++;
+
+		/*
+		 * Determine whether we have an option value.  A comma or end of
+		 * string means no value; otherwise we have one.
+		 */
+		if (*nextp != '\0' && *nextp != ',')
+		{
+			if (*nextp == '\'')
+			{
+				/* Single-quoted string literal. */
+				type = T_String;
+				value = auto_explain_scan_literal(&value_endp, &nextp);
+				if (value == NULL)
+				{
+					*errmsg = "unterminated single-quoted string";
+					return -1;
+				}
+			}
+			else if (isdigit((unsigned char) *nextp) ||
+					 ((*nextp == '+' || *nextp == '-') &&
+					  isdigit((unsigned char) nextp[1])))
+			{
+				char	   *endptr;
+				long		intval;
+				char		saved;
+
+				/* Remember the start of the next token, and find the end. */
+				value = nextp;
+				while (*nextp && *nextp != ',' && !scanner_isspace(*nextp))
+					nextp++;
+				value_endp = nextp;
+
+				/* Temporarily '\0'-terminate so we can use strtol/strtod. */
+				saved = *value_endp;
+				*value_endp = '\0';
+
+				/*
+				 * Integer, float, or neither?
+				 *
+				 * NB: Since we use strtol and strtod here rather than
+				 * pg_strtoint64_safe, some syntax that would be accepted by
+				 * the main parser is not accepted here, e.g. 100_000. On the
+				 * plus side, strtol and strtod won't allocate, and
+				 * pg_strtoint64_safe might. For now, it seems better to keep
+				 * things simple here.
+				 */
+				errno = 0;
+				intval = strtol(value, &endptr, 0);
+				if (errno == 0 && *endptr == '\0' && endptr != value &&
+					intval == (int) intval)
+					type = T_Integer;
+				else
+				{
+					type = T_Float;
+					(void) strtod(value, &endptr);
+					if (*endptr != '\0')
+					{
+						*value_endp = saved;
+						*errmsg = "invalid numeric value";
+						return -1;
+					}
+				}
+
+				/* Remove temporary terminator. */
+				*value_endp = saved;
+			}
+			else
+			{
+				/* Identifier, possibly double-quoted. */
+				type = T_String;
+				value = scan_identifier(&value_endp, &nextp, ',', true);
+				if (value == NULL)
+				{
+					/*
+					 * scan_identifier will return NULL if it finds an
+					 * unterminated double-quoted identifier or it finds no
+					 * identifier at all because the next character is
+					 * whitespace or the separator character, here a comma.
+					 * But the latter case is impossible here because the code
+					 * above has skipped whitespace and checked for commas.
+					 */
+					*errmsg = "unterminated double-quoted string";
+					return -1;
+				}
+			}
+		}
+
+		/* Skip trailing whitespace. */
+		while (scanner_isspace(*nextp))
+			nextp++;
+
+		/* Expect comma or end of string. */
+		if (*nextp == ',')
+		{
+			nextp++;
+			while (scanner_isspace(*nextp))
+				nextp++;
+			if (*nextp == '\0')
+			{
+				*errmsg = "trailing comma in option list";
+				return -1;
+			}
+		}
+		else if (*nextp == '\0')
+			done = true;
+		else
+		{
+			*errmsg = "expected comma or end of option list";
+			return -1;
+		}
+
+		/*
+		 * Now safe to null-terminate the name and value.  We couldn't do this
+		 * earlier because in the unquoted case, the null terminator position
+		 * may coincide with a character that the scanning logic above still
+		 * needed to read.
+		 */
+		*name_endp = '\0';
+		if (value_endp != NULL)
+			*value_endp = '\0';
+
+		/* Always count this option, and store the details if there is room. */
+		if (noptions < maxoptions)
+		{
+			options[noptions].name = name;
+			options[noptions].type = type;
+			options[noptions].value = value;
+		}
+		noptions++;
+	}
+
+	return noptions;
 }
