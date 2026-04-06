@@ -811,6 +811,17 @@ create_agg_clause_infos(PlannerInfo *root)
 		Assert(aggref->aggdistinct == NIL);
 
 		/*
+		 * We cannot push down aggregates that contain volatile functions.
+		 * Doing so would change the number of times the function is
+		 * evaluated.
+		 */
+		if (contain_volatile_functions((Node *) aggref))
+		{
+			eager_agg_applicable = false;
+			break;
+		}
+
+		/*
 		 * If there are any securityQuals, do not try to apply eager
 		 * aggregation if any non-leakproof aggregate functions are present.
 		 * This is overly strict, but for now...
