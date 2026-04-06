@@ -186,6 +186,13 @@ shm_toc_insert(shm_toc *toc, uint64 key, void *address)
 	total_bytes = vtoc->toc_total_bytes;
 	allocated_bytes = vtoc->toc_allocated_bytes;
 	nentry = vtoc->toc_nentry;
+
+#ifdef USE_ASSERT_CHECKING
+	/* Verify no duplicate keys */
+	for (Size i = 0; i < nentry; i++)
+		Assert(vtoc->toc_entry[i].key != key);
+#endif
+
 	toc_bytes = offsetof(shm_toc, toc_entry) + nentry * sizeof(shm_toc_entry)
 		+ allocated_bytes;
 
