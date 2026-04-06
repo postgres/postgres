@@ -379,13 +379,8 @@ static void FreeWorkerInfo(int code, Datum arg);
 static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 											TupleDesc pg_class_desc,
 											int effective_multixact_freeze_max_age);
-static void recheck_relation_needs_vacanalyze(Oid relid, AutoVacOpts *avopts,
-											  Form_pg_class classForm,
-											  int effective_multixact_freeze_max_age,
-											  bool *dovacuum, bool *doanalyze, bool *wraparound);
 static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 									  Form_pg_class classForm,
-									  PgStat_StatTabEntry *tabentry,
 									  int effective_multixact_freeze_max_age,
 									  int elevel,
 									  bool *dovacuum, bool *doanalyze, bool *wraparound,
@@ -2038,7 +2033,6 @@ do_autovacuum(void)
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-		PgStat_StatTabEntry *tabentry;
 		AutoVacOpts *relopts;
 		Oid			relid;
 		bool		dovacuum;
@@ -2079,11 +2073,9 @@ do_autovacuum(void)
 
 		/* Fetch reloptions and the pgstat entry for this table */
 		relopts = extract_autovac_opts(tuple, pg_class_desc);
-		tabentry = pgstat_fetch_stat_tabentry_ext(classForm->relisshared,
-												  relid);
 
 		/* Check if it needs vacuum or analyze */
-		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
+		relation_needs_vacanalyze(relid, relopts, classForm,
 								  effective_multixact_freeze_max_age,
 								  DEBUG3,
 								  &dovacuum, &doanalyze, &wraparound,
@@ -2130,8 +2122,6 @@ do_autovacuum(void)
 		/* Release stuff to avoid per-relation leakage */
 		if (relopts)
 			pfree(relopts);
-		if (tabentry)
-			pfree(tabentry);
 	}
 
 	table_endscan(relScan);
@@ -2146,7 +2136,6 @@ do_autovacuum(void)
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-		PgStat_StatTabEntry *tabentry;
 		Oid			relid;
 		AutoVacOpts *relopts;
 		bool		free_relopts = false;
@@ -2180,11 +2169,7 @@ do_autovacuum(void)
 				relopts = &hentry->ar_reloptions;
 		}
 
-		/* Fetch the pgstat entry for this table */
-		tabentry = pgstat_fetch_stat_tabentry_ext(classForm->relisshared,
-												  relid);
-
-		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
+		relation_needs_vacanalyze(relid, relopts, classForm,
 								  effective_multixact_freeze_max_age,
 								  DEBUG3,
 								  &dovacuum, &doanalyze, &wraparound,
@@ -2203,8 +2188,6 @@ do_autovacuum(void)
 		/* Release stuff to avoid leakage */
 		if (free_relopts)
 			pfree(relopts);
-		if (tabentry)
-			pfree(tabentry);
 	}
 
 	table_endscan(relScan);
@@ -2843,6 +2826,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	bool		wraparound;
 	AutoVacOpts *avopts;
 	bool		free_avopts = false;
+	AutoVacuumScores scores;
 
 	/* fetch the relation's relcache entry */
 	classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
@@ -2868,9 +2852,11 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 			avopts = &hentry->ar_reloptions;
 	}
 
-	recheck_relation_needs_vacanalyze(relid, avopts, classForm,
-									  effective_multixact_freeze_max_age,
-									  &dovacuum, &doanalyze, &wraparound);
+	relation_needs_vacanalyze(relid, avopts, classForm,
+							  effective_multixact_freeze_max_age,
+							  DEBUG3,
+							  &dovacuum, &doanalyze, &wraparound,
+							  &scores);
 
 	/* OK, it needs something done */
 	if (doanalyze || dovacuum)
@@ -2999,41 +2985,6 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 }
 
 /*
- * recheck_relation_needs_vacanalyze
- *
- * Subroutine for table_recheck_autovac.
- *
- * Fetch the pgstat of a relation and recheck whether a relation
- * needs to be vacuumed or analyzed.
- */
-static void
-recheck_relation_needs_vacanalyze(Oid relid,
-								  AutoVacOpts *avopts,
-								  Form_pg_class classForm,
-								  int effective_multixact_freeze_max_age,
-								  bool *dovacuum,
-								  bool *doanalyze,
-								  bool *wraparound)
-{
-	PgStat_StatTabEntry *tabentry;
-	AutoVacuumScores scores;
-
-	/* fetch the pgstat table entry */
-	tabentry = pgstat_fetch_stat_tabentry_ext(classForm->relisshared,
-											  relid);
-
-	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
-							  effective_multixact_freeze_max_age,
-							  DEBUG3,
-							  dovacuum, doanalyze, wraparound,
-							  &scores);
-
-	/* Release tabentry to avoid leakage */
-	if (tabentry)
-		pfree(tabentry);
-}
-
-/*
  * relation_needs_vacanalyze
  *
  * Check whether a relation needs to be vacuumed or analyzed; return each into
@@ -3042,8 +2993,7 @@ recheck_relation_needs_vacanalyze(Oid relid,
  *
  * relopts is a pointer to the AutoVacOpts options (either for itself in the
  * case of a plain table, or for either itself or its parent table in the case
- * of a TOAST table), NULL if none; tabentry is the pgstats entry, which can be
- * NULL.
+ * of a TOAST table), NULL if none.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
  * threshold.  This threshold is calculated as
@@ -3117,7 +3067,6 @@ static void
 relation_needs_vacanalyze(Oid relid,
 						  AutoVacOpts *relopts,
 						  Form_pg_class classForm,
-						  PgStat_StatTabEntry *tabentry,
 						  int effective_multixact_freeze_max_age,
 						  int elevel,
  /* output params below */
@@ -3126,6 +3075,7 @@ relation_needs_vacanalyze(Oid relid,
 						  bool *wraparound,
 						  AutoVacuumScores *scores)
 {
+	PgStat_StatTabEntry *tabentry;
 	bool		force_vacuum;
 	bool		av_enabled;
 
@@ -3293,6 +3243,8 @@ relation_needs_vacanalyze(Oid relid,
 	 * vacuuming only, so don't vacuum (or analyze) anything that's not being
 	 * forced.
 	 */
+	tabentry = pgstat_fetch_stat_tabentry_ext(classForm->relisshared,
+											  relid);
 	if (!tabentry)
 		return;
 
@@ -3372,6 +3324,8 @@ relation_needs_vacanalyze(Oid relid,
 			 vactuples, vacthresh, scores->vac,
 			 anltuples, anlthresh, scores->anl,
 			 scores->xid, scores->mxid);
+
+	pfree(tabentry);
 }
 
 /*
