@@ -947,7 +947,7 @@ SELECT (n_tup_ins + n_tup_upd) > 0 AS has_data FROM pg_stat_all_tables
 -- Test that various stats views are being properly populated
 -----
 -- Test that sessions is incremented when a new session is started in pg_stat_database
-SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
+SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = current_database() \gset
 \c
 SELECT pg_stat_force_next_flush();
  pg_stat_force_next_flush 
@@ -955,7 +955,7 @@ SELECT pg_stat_force_next_flush();
  
 (1 row)
 
-SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database());
+SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = current_database();
  ?column? 
 ----------
  t
@@ -1157,8 +1157,8 @@ SELECT pg_stat_reset();
  
 (1 row)
 
-SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
-SELECT stats_reset AS dbc_reset_ts FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database()) \gset
+SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = current_database() \gset
+SELECT stats_reset AS dbc_reset_ts FROM pg_stat_database_conflicts WHERE datname = current_database() \gset
 SELECT :'db_reset_ts'::timestamptz = :'dbc_reset_ts'::timestamptz;
  ?column? 
 ----------
@@ -1171,13 +1171,13 @@ SELECT pg_stat_reset();
  
 (1 row)
 
-SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = (SELECT current_database());
+SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = current_database();
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database());
+SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = current_database();
  ?column? 
 ----------
  t

@@ -432,10 +432,10 @@ SELECT (n_tup_ins + n_tup_upd) > 0 AS has_data FROM pg_stat_all_tables
 -----
 
 -- Test that sessions is incremented when a new session is started in pg_stat_database
-SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
+SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = current_database() \gset
 \c
 SELECT pg_stat_force_next_flush();
-SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database());
+SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = current_database();
 
 -- Test pg_stat_checkpointer checkpointer-related stats, together with pg_stat_wal
 SELECT num_requested AS rqst_ckpts_before FROM pg_stat_checkpointer \gset
@@ -529,12 +529,12 @@ SELECT pg_stat_reset_shared('unknown');
 -- have a baseline for comparison. The same for pg_stat_database_conflicts as it shares
 -- the same stats_reset as pg_stat_database.
 SELECT pg_stat_reset();
-SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
-SELECT stats_reset AS dbc_reset_ts FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database()) \gset
+SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = current_database() \gset
+SELECT stats_reset AS dbc_reset_ts FROM pg_stat_database_conflicts WHERE datname = current_database() \gset
 SELECT :'db_reset_ts'::timestamptz = :'dbc_reset_ts'::timestamptz;
 SELECT pg_stat_reset();
-SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = (SELECT current_database());
-SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = (SELECT current_database());
+SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = current_database();
+SELECT stats_reset > :'dbc_reset_ts'::timestamptz FROM pg_stat_database_conflicts WHERE datname = current_database();
 
 -- Test that reset works for pg_statio_all_sequences
 
