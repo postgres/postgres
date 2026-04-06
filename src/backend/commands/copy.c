@@ -137,22 +137,22 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			Bitmapset  *expr_attrs = NULL;
 			int			i;
 
-			/* add nsitem to query namespace */
+			/* Add nsitem to query namespace */
 			addNSItemToQuery(pstate, nsitem, false, true, true);
 
 			/* Transform the raw expression tree */
 			whereClause = transformExpr(pstate, stmt->whereClause, EXPR_KIND_COPY_WHERE);
 
-			/* Make sure it yields a boolean result. */
+			/* Make sure it yields a boolean result */
 			whereClause = coerce_to_boolean(pstate, whereClause, "WHERE");
 
-			/* we have to fix its collations too */
+			/* We have to fix its collations too */
 			assign_expr_collations(pstate, whereClause);
 
 			/*
-			 * Examine all the columns in the WHERE clause expression.  When
-			 * the whole-row reference is present, examine all the columns of
-			 * the table.
+			 * Identify all columns used in the WHERE clause's expression.  If
+			 * there's a whole-row reference, replace it with a range of all
+			 * the user columns (caution: that'll include dropped columns).
 			 */
 			pull_varattnos(whereClause, 1, &expr_attrs);
 			if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber, expr_attrs))
@@ -163,12 +163,30 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 				expr_attrs = bms_del_member(expr_attrs, 0 - FirstLowInvalidHeapAttributeNumber);
 			}
 
+			/* Now we can scan each column needed in the WHERE clause */
 			i = -1;
 			while ((i = bms_next_member(expr_attrs, i)) >= 0)
 			{
 				AttrNumber	attno = i + FirstLowInvalidHeapAttributeNumber;
+				Form_pg_attribute att;
 
-				Assert(attno != 0);
+				Assert(attno != 0); /* removed above */
+
+				/*
+				 * Prohibit system columns in the WHERE clause.  They won't
+				 * have been filled yet when the filtering happens.  (We could
+				 * allow tableoid, but right now it isn't really useful: it
+				 * will read as the target table's OID.  Any conceivable use
+				 * for such a WHERE clause would probably wish it to read as
+				 * the target partition's OID, which is not known yet.
+				 * Disallow it to keep flexibility to change that sometime.)
+				 */
+				if (attno < 0)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+							errmsg("system columns are not supported in COPY FROM WHERE conditions"),
+							errdetail("Column \"%s\" is a system column.",
+									  get_attname(RelationGetRelid(rel), attno, false)));
 
 				/*
 				 * Prohibit generated columns in the WHERE clause.  Stored
@@ -177,7 +195,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 				 * would need to expand them somewhere around here), but for
 				 * now we keep them consistent with the stored variant.
 				 */
-				if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+				att = TupleDescAttr(RelationGetDescr(rel), attno - 1);
+				if (att->attgenerated && !att->attisdropped)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 							errmsg("generated columns are not supported in COPY FROM WHERE conditions"),
@@ -185,6 +204,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 									  get_attname(RelationGetRelid(rel), attno, false)));
 			}
 
+			/* Reduce WHERE clause to standard list-of-AND-terms form */
 			whereClause = eval_const_expressions(NULL, whereClause);
 
 			whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);

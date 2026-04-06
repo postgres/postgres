@@ -204,6 +204,9 @@ COPY x from stdin WHERE a = row_number() over(b);
 ERROR:  window functions are not allowed in COPY FROM WHERE conditions
 LINE 1: COPY x from stdin WHERE a = row_number() over(b);
                                     ^
+COPY x from stdin WHERE tableoid = 'x'::regclass;
+ERROR:  system columns are not supported in COPY FROM WHERE conditions
+DETAIL:  Column "tableoid" is a system column.
 -- check results of copy in
 SELECT * FROM x;
    a   | b  |     c      |   d    |          e           

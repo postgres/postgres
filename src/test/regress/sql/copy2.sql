@@ -168,6 +168,8 @@ COPY x from stdin WHERE a IN (generate_series(1,5));
 
 COPY x from stdin WHERE a = row_number() over(b);
 
+COPY x from stdin WHERE tableoid = 'x'::regclass;
+
 
 -- check results of copy in
 SELECT * FROM x;
