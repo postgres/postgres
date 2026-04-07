@@ -1279,6 +1279,7 @@ IOContext
 IOFuncSelector
 IOObject
 IOOp
+IOStats
 IO_STATUS_BLOCK
 IPCompareMethod
 ITEM
@@ -3127,6 +3128,7 @@ TableLikeClause
 TableSampleClause
 TableScanDesc
 TableScanDescData
+TableScanInstrumentation
 TableSpaceCacheEntry
 TableSpaceOpts
 TableToProcess

@@ -144,13 +144,20 @@ BitmapTableScanSetup(BitmapHeapScanState *node)
 	 */
 	if (!node->ss.ss_currentScanDesc)
 	{
+		uint32		flags = SO_NONE;
+
+		if (ScanRelIsReadOnly(&node->ss))
+			flags |= SO_HINT_REL_READ_ONLY;
+
+		if (node->ss.ps.state->es_instrument & INSTRUMENT_IO)
+			flags |= SO_SCAN_INSTRUMENT;
+
 		node->ss.ss_currentScanDesc =
 			table_beginscan_bm(node->ss.ss_currentRelation,
 							   node->ss.ps.state->es_snapshot,
 							   0,
 							   NULL,
-							   ScanRelIsReadOnly(&node->ss) ?
-							   SO_HINT_REL_READ_ONLY : SO_NONE);
+							   flags);
 	}
 
 	node->ss.ss_currentScanDesc->st.rs_tbmiterator = tbmiterator;
@@ -330,6 +337,14 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 		 */
 		si->exact_pages += node->stats.exact_pages;
 		si->lossy_pages += node->stats.lossy_pages;
+
+		/* collect I/O instrumentation for this process */
+		if (node->ss.ss_currentScanDesc &&
+			node->ss.ss_currentScanDesc->rs_instrument)
+		{
+			AccumulateIOStats(&si->stats.io,
+							  &node->ss.ss_currentScanDesc->rs_instrument->io);
+		}
 	}
 
 	/*

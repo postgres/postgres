@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/relscan.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/createas.h"
@@ -139,6 +140,8 @@ static void show_hashagg_info(AggState *aggstate, ExplainState *es);
 static void show_indexsearches_info(PlanState *planstate, ExplainState *es);
 static void show_tidbitmap_info(BitmapHeapScanState *planstate,
 								ExplainState *es);
+static void show_scan_io_usage(ScanState *planstate,
+							   ExplainState *es);
 static void show_instrumentation_count(const char *qlabel, int which,
 									   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
@@ -519,6 +522,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 		instrument_option |= INSTRUMENT_BUFFERS;
 	if (es->wal)
 		instrument_option |= INSTRUMENT_WAL;
+	if (es->io)
+		instrument_option |= INSTRUMENT_IO;
 
 	/*
 	 * We always collect timing for the entire statement, even when node-level
@@ -2008,6 +2013,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			show_tidbitmap_info((BitmapHeapScanState *) planstate, es);
+			show_scan_io_usage((ScanState *) planstate, es);
 			break;
 		case T_SampleScan:
 			show_tablesample(((SampleScan *) plan)->tablesample,
@@ -3982,6 +3988,128 @@ show_tidbitmap_info(BitmapHeapScanState *planstate, ExplainState *es)
 				ExplainCloseWorker(n, es);
 		}
 	}
+}
+
+/*
+ * Print I/O stats - prefetching and I/O performed
+ *
+ * This prints two types of stats - "prefetch" about the prefetching done by
+ * ReadStream, and "I/O" issued by the stream. The prefetch stats are based
+ * on buffers pulled from the stream (even if no I/O is needed). The I/O
+ * information is related to I/O requests issued by the stream.
+ *
+ * The prefetch stats are printed if any buffer was pulled from the stream.
+ * For the I/O stats it depend on the output format. In non-text formats the
+ * information is printed if prefetch stats were printed. In text format it
+ * gets printed only if there were any I/O requests.
+ */
+static void
+print_io_usage(ExplainState *es, IOStats *stats)
+{
+	/* don't print prefetch stats if there's nothing to report */
+	if (stats->prefetch_count > 0)
+	{
+		if (es->format == EXPLAIN_FORMAT_TEXT)
+		{
+			/* prefetch distance info */
+			ExplainIndentText(es);
+			appendStringInfo(es->str, "Prefetch: avg=%.2f max=%d capacity=%d\n",
+							 (stats->distance_sum * 1.0 / stats->prefetch_count),
+							 stats->distance_max,
+							 stats->distance_capacity);
+
+			/* prefetch I/O info (only if there were actual I/Os) */
+			if (stats->io_count > 0)
+			{
+				ExplainIndentText(es);
+				appendStringInfo(es->str, "I/O: count=%" PRIu64 " waits=%" PRIu64
+								 " size=%.2f in-progress=%.2f\n",
+								 stats->io_count, stats->wait_count,
+								 (stats->io_nblocks * 1.0 / stats->io_count),
+								 (stats->io_in_progress * 1.0 / stats->io_count));
+			}
+		}
+		else
+		{
+			ExplainPropertyFloat("Average Prefetch Distance", NULL,
+								 (stats->distance_sum * 1.0 / stats->prefetch_count), 3, es);
+			ExplainPropertyInteger("Max Prefetch Distance", NULL,
+								   stats->distance_max, es);
+			ExplainPropertyInteger("Prefetch Capacity", NULL,
+								   stats->distance_capacity, es);
+
+			ExplainPropertyUInteger("I/O Count", NULL,
+									stats->io_count, es);
+			ExplainPropertyUInteger("I/O Waits", NULL,
+									stats->wait_count, es);
+			ExplainPropertyFloat("Average I/O Size", NULL,
+								 (stats->io_nblocks * 1.0 / Max(1, stats->io_count)), 3, es);
+			ExplainPropertyFloat("Average I/Os In Progress", NULL,
+								 (stats->io_in_progress * 1.0 / Max(1, stats->io_count)), 3, es);
+		}
+	}
+}
+
+/*
+ * Show information about prefetch and I/O in a scan node.
+ */
+static void
+show_scan_io_usage(ScanState *planstate, ExplainState *es)
+{
+	Plan	   *plan = planstate->ps.plan;
+	IOStats		stats = {0};
+
+	if (!es->io)
+		return;
+
+	/*
+	 * Initialize counters with stats from the local process first.
+	 *
+	 * The scan descriptor may not exist, e.g. if the scan did not start, or
+	 * because of debug_parallel_query=regress. We still want to collect data
+	 * from workers.
+	 */
+	if (planstate->ss_currentScanDesc &&
+		planstate->ss_currentScanDesc->rs_instrument)
+	{
+		stats = planstate->ss_currentScanDesc->rs_instrument->io;
+	}
+
+	/*
+	 * Accumulate data from parallel workers (if any).
+	 */
+	switch (nodeTag(plan))
+	{
+		case T_BitmapHeapScan:
+			{
+				SharedBitmapHeapInstrumentation *sinstrument
+				= ((BitmapHeapScanState *) planstate)->sinstrument;
+
+				if (sinstrument)
+				{
+					for (int i = 0; i < sinstrument->num_workers; ++i)
+					{
+						BitmapHeapScanInstrumentation *winstrument = &sinstrument->sinstrument[i];
+
+						AccumulateIOStats(&stats, &winstrument->stats.io);
+
+						if (!es->workers_state)
+							continue;
+
+						ExplainOpenWorker(i, es);
+						print_io_usage(es, &winstrument->stats.io);
+						ExplainCloseWorker(i, es);
+					}
+				}
+
+				break;
+			}
+		default:
+			/* ignore other plans */
+			return;
+	}
+
+	print_io_usage(es, &stats);
 }
 
 /*

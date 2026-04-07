@@ -69,6 +69,9 @@ typedef enum ScanOptions
 
 	/* set if the query doesn't modify the relation */
 	SO_HINT_REL_READ_ONLY = 1 << 10,
+
+	/* collect scan instrumentation */
+	SO_SCAN_INSTRUMENT = 1 << 11,
 }			ScanOptions;
 
 /*

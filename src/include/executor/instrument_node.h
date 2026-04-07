@@ -49,6 +49,55 @@ typedef struct SharedAggInfo
 
 
 /* ---------------------
+ *	Instrumentation information about read streams and I/O
+ * ---------------------
+ */
+typedef struct IOStats
+{
+	/* number of buffers returned to consumer (for averaging distance) */
+	uint64		prefetch_count;
+
+	/* sum of pinned_buffers sampled at each buffer return */
+	uint64		distance_sum;
+
+	/* maximum actual pinned_buffers observed during the scan */
+	int16		distance_max;
+
+	/* maximum possible look-ahead distance (max_pinned_buffers) */
+	int16		distance_capacity;
+
+	/* number of waits for a read (for the I/O) */
+	uint64		wait_count;
+
+	/* I/O stats */
+	uint64		io_count;		/* number of I/Os */
+	uint64		io_nblocks;		/* sum of blocks for all I/Os */
+	uint64		io_in_progress; /* sum of in-progress I/Os */
+} IOStats;
+
+typedef struct TableScanInstrumentation
+{
+	IOStats		io;
+} TableScanInstrumentation;
+
+/* merge IO statistics from 'src' into 'dst' */
+static inline void
+AccumulateIOStats(IOStats *dst, IOStats *src)
+{
+	dst->prefetch_count += src->prefetch_count;
+	dst->distance_sum += src->distance_sum;
+	if (src->distance_max > dst->distance_max)
+		dst->distance_max = src->distance_max;
+	if (src->distance_capacity > dst->distance_capacity)
+		dst->distance_capacity = src->distance_capacity;
+	dst->wait_count += src->wait_count;
+	dst->io_count += src->io_count;
+	dst->io_nblocks += src->io_nblocks;
+	dst->io_in_progress += src->io_in_progress;
+}
+
+
+/* ---------------------
  *	Instrumentation information for indexscans (amgettuple and amgetbitmap)
  * ---------------------
  */
@@ -79,6 +128,7 @@ typedef struct BitmapHeapScanInstrumentation
 {
 	uint64		exact_pages;
 	uint64		lossy_pages;
+	TableScanInstrumentation stats;
 } BitmapHeapScanInstrumentation;
 
 /*
