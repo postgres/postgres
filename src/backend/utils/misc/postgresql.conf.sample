@@ -196,6 +196,10 @@
 #max_files_per_process = 1000           # min 64
                                         # (change requires restart)
 
+# - Time -
+
+#timing_clock_source = auto             # auto, system, tsc (if supported)
+
 # - Background Writer -
 
 #bgwriter_delay = 200ms                 # 10-10000ms between rounds

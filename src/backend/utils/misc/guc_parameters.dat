@@ -3060,6 +3060,17 @@
   assign_hook => 'assign_timezone_abbreviations',
 },
 
+{ name => 'timing_clock_source', type => 'enum', context => 'PGC_SUSET', group => 'RESOURCES_TIME',
+  short_desc => 'Controls the clock source used for collecting timing measurements.',
+  long_desc => 'This enables the use of specialized clock sources, specifically the RDTSC clock source on x86-64 systems (if available), to support timing measurements with lower overhead during EXPLAIN and other instrumentation.',
+  variable => 'timing_clock_source',
+  boot_val => 'TIMING_CLOCK_SOURCE_AUTO',
+  options => 'timing_clock_source_options',
+  check_hook => 'check_timing_clock_source',
+  assign_hook => 'assign_timing_clock_source',
+  show_hook => 'show_timing_clock_source',
+},
+
 { name => 'trace_connection_negotiation', type => 'bool', context => 'PGC_POSTMASTER', group => 'DEVELOPER_OPTIONS',
   short_desc => 'Logs details of pre-authentication connection handshake.',
   flags => 'GUC_NOT_IN_SAMPLE',
