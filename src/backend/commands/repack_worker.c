@@ -212,7 +212,7 @@ repack_setup_logical_decoding(Oid relid)
 	 * Make sure we can use logical decoding.
 	 */
 	CheckSlotPermissions();
-	CheckLogicalDecodingRequirements();
+	CheckLogicalDecodingRequirements(true);
 
 	/*
 	 * A single backend should not execute multiple REPACK commands at a time,
@@ -221,8 +221,8 @@ repack_setup_logical_decoding(Oid relid)
 	 * RS_TEMPORARY so that the slot gets cleaned up on ERROR.
 	 */
 	snprintf(NameStr(slotname), NAMEDATALEN, "repack_%d", MyProcPid);
-	ReplicationSlotCreate(NameStr(slotname), true, RS_TEMPORARY, false, false,
-						  false);
+	ReplicationSlotCreate(NameStr(slotname), true, RS_TEMPORARY, false, true,
+						  false, false);
 
 	EnsureLogicalDecodingEnabled();
 
@@ -232,6 +232,7 @@ repack_setup_logical_decoding(Oid relid)
 	 */
 	ctx = CreateInitDecodingContext(REPL_PLUGIN_NAME,
 									NIL,
+									true,
 									true,
 									InvalidXLogRecPtr,
 									XL_ROUTINE(.page_read = read_local_xlog_page,

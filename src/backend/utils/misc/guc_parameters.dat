@@ -2079,6 +2079,14 @@
   max => 'MAX_BACKENDS',
 },
 
+{ name => 'max_repack_replication_slots', type => 'int', context => 'PGC_POSTMASTER', group => 'REPLICATION_SENDING',
+  short_desc => 'Sets the maximum number of replication slots for use by REPACK.',
+  variable => 'max_repack_replication_slots',
+  boot_val => '5',
+  min => '0',
+  max => 'MAX_BACKENDS',
+},
+
 /* see max_wal_senders */
 { name => 'max_replication_slots', type => 'int', context => 'PGC_POSTMASTER', group => 'REPLICATION_SENDING',
   short_desc => 'Sets the maximum number of simultaneously defined replication slots.',

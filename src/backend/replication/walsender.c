@@ -1241,7 +1241,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	{
 		ReplicationSlotCreate(cmd->slotname, false,
 							  cmd->temporary ? RS_TEMPORARY : RS_PERSISTENT,
-							  false, false, false);
+							  false, false, false, false);
 
 		if (reserve_wal)
 		{
@@ -1261,7 +1261,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 		Assert(cmd->kind == REPLICATION_KIND_LOGICAL);
 
-		CheckLogicalDecodingRequirements();
+		CheckLogicalDecodingRequirements(false);
 
 		/*
 		 * Initially create persistent slot as ephemeral - that allows us to
@@ -1272,7 +1272,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		 */
 		ReplicationSlotCreate(cmd->slotname, true,
 							  cmd->temporary ? RS_TEMPORARY : RS_EPHEMERAL,
-							  two_phase, failover, false);
+							  two_phase, false, failover, false);
 
 		/*
 		 * Do options check early so that we can bail before calling the
@@ -1330,6 +1330,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		Assert(IsLogicalDecodingEnabled());
 
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL, need_full_snapshot,
+										false,
 										InvalidXLogRecPtr,
 										XL_ROUTINE(.page_read = logical_read_xlog_page,
 												   .segment_open = WalSndSegmentOpen,
@@ -1487,7 +1488,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	QueryCompletion qc;
 
 	/* make sure that our requirements are still fulfilled */
-	CheckLogicalDecodingRequirements();
+	CheckLogicalDecodingRequirements(false);
 
 	Assert(!MyReplicationSlot);
 

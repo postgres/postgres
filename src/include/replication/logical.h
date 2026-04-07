@@ -115,11 +115,12 @@ typedef struct LogicalDecodingContext
 } LogicalDecodingContext;
 
 
-extern void CheckLogicalDecodingRequirements(void);
+extern void CheckLogicalDecodingRequirements(bool repack);
 
 extern LogicalDecodingContext *CreateInitDecodingContext(const char *plugin,
 														 List *output_plugin_options,
 														 bool need_full_snapshot,
+														 bool for_repack,
 														 XLogRecPtr restart_lsn,
 														 XLogReaderRoutine *xl_routine,
 														 LogicalOutputPluginWriterPrepareWrite prepare_write,

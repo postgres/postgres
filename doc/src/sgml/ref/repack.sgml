@@ -293,9 +293,9 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
 
        <listitem>
         <para>
-         The <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
-         configuration parameter does not allow for creation of an additional
-         replication slot.
+         The <link linkend="guc-max-repack-replication-slots"><varname>max_repack_replication_slots</varname></link>
+         configuration parameter does not allow for the creation of an
+         additional replication slot.
         </para>
        </listitem>
       </itemizedlist>

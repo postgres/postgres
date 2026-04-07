@@ -4639,6 +4639,21 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-max-repack-replication-slots" xreflabel="max_repack_replication_slots">
+       <term><varname>max_repack_replication_slots</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>max_repack_replication_slots</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum number of replication slots for use of
+         the <command>REPACK</command> command.  The default is 5.
+         This parameter can only be set at server start.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-max-replication-slots" xreflabel="max_replication_slots">
        <term><varname>max_replication_slots</varname> (<type>integer</type>)
        <indexterm>
