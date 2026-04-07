@@ -1465,6 +1465,10 @@ ExecForPortionOfLeftovers(ModifyTableContext *context,
 	 * We have already locked the tuple in ExecUpdate/ExecDelete, and it has
 	 * passed EvalPlanQual. This ensures that concurrent updates in READ
 	 * COMMITTED can't insert conflicting temporal leftovers.
+	 *
+	 * It does *not* protect against concurrent update/deletes overlooking
+	 * each others' leftovers though. See our isolation tests for details
+	 * about that and a viable workaround.
 	 */
 	if (!table_tuple_fetch_row_version(resultRelInfo->ri_RelationDesc, tupleid, SnapshotAny, oldtupleSlot))
 		elog(ERROR, "failed to fetch tuple for FOR PORTION OF");

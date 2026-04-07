@@ -18,6 +18,7 @@ all_files = [
   'temporal-references.txt',
   'temporal-update.txt',
   'temporal-delete.txt',
+  'temporal-isolation.txt',
 ]
 
 foreach file : all_files

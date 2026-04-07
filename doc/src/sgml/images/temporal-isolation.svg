@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 672" width="350" height="672" shape-rendering="geometricPrecision" version="1.0">
+  <defs>
+    <filter id="f2" x="0" y="0" width="200%" height="200%">
+      <feOffset result="offOut" in="SourceGraphic" dx="5" dy="5"/>
+      <feGaussianBlur result="blurOut" in="offOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+  </defs>
+  <g stroke-width="1" stroke-linecap="square" stroke-linejoin="round">
+    <rect x="0" y="0" width="350" height="672" style="fill: #ffffff"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#ffff33" d="M205.0 301.0 L205.0 371.0 L325.0 371.0 L325.0 301.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#ffff33" d="M325.0 469.0 L325.0 539.0 L205.0 539.0 L205.0 469.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M25.0 35.0 L25.0 91.0 L145.0 91.0 L145.0 35.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M25.0 133.0 L25.0 189.0 L145.0 189.0 L145.0 133.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M25.0 287.0 L145.0 287.0 L145.0 231.0 L25.0 231.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#ffff33" d="M205.0 133.0 L205.0 189.0 L325.0 189.0 L325.0 133.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#ffff33" d="M325.0 581.0 L205.0 581.0 L205.0 637.0 L325.0 637.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#ffff33" d="M205.0 91.0 L325.0 91.0 L325.0 35.0 L205.0 35.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#99dd99" d="M145.0 399.0 L145.0 455.0 L25.0 455.0 L25.0 399.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M80.0 112.0 L85.0 126.0 L90.0 112.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M260.0 112.0 L265.0 126.0 L270.0 112.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M80.0 210.0 L85.0 224.0 L90.0 210.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M260.0 280.0 L265.0 294.0 L270.0 280.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M80.0 378.0 L85.0 392.0 L90.0 378.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M260.0 448.0 L265.0 462.0 L270.0 448.0 z"/>
+    <path stroke="none" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="#000000" d="M260.0 560.0 L265.0 574.0 L270.0 560.0 z"/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M85.0 91.0 L85.0 119.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M85.0 189.0 L85.0 217.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M265.0 539.0 L265.0 567.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M265.0 91.0 L265.0 119.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M265.0 371.0 L265.0 455.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M85.0 385.0 L85.0 287.0 "/>
+    <path stroke="#000000" stroke-width="1.000000" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M265.0 189.0 L265.0 287.0 "/>
+    <text x="46" y="68" font-family="Courier" font-size="13" stroke="none" fill="#000000">Session 1</text>
+    <text x="220" y="334" font-family="Courier" font-size="13" stroke="none" fill="#000000">UPDATE;</text>
+    <text x="220" y="348" font-family="Courier" font-size="13" stroke="none" fill="#000000">waits...</text>
+    <text x="48" y="166" font-family="Courier" font-size="13" stroke="none" fill="#000000">BEGIN;</text>
+    <text x="228" y="166" font-family="Courier" font-size="13" stroke="none" fill="#000000">BEGIN;</text>
+    <text x="226" y="68" font-family="Courier" font-size="13" stroke="none" fill="#000000">Session 2</text>
+    <text x="47" y="264" font-family="Courier" font-size="13" stroke="none" fill="#000000">UPDATE;</text>
+    <text x="46" y="432" font-family="Courier" font-size="13" stroke="none" fill="#000000">COMMIT;</text>
+    <text x="226" y="614" font-family="Courier" font-size="13" stroke="none" fill="#000000">COMMIT;</text>
+    <text x="220" y="502" font-family="Courier" font-size="13" stroke="none" fill="#000000">...resumes</text>
+    <text x="220" y="516" font-family="Courier" font-size="13" stroke="none" fill="#000000">rechecks</text>
+  </g>
+</svg>

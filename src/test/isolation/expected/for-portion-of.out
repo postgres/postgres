@@ -1,0 +1,4089 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1rc s2rc s2lock2027 s2upd2027 s2c s1lock2025 s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2upd202503 s2c s1lock2025 s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-03-01,2025-04-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2upd20252026 s2c s1lock2025 s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+(2 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1upd2025 s1c s2lock2027 s2upd2027 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1upd2025 s1c s2lock202503 s2upd202503 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1upd2025 s1c s2lock20252026 s2upd20252026 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)|10.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s2upd2027 s1upd2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2upd2027 s1lock2025 s2c s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s2upd202503 s1upd2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)| 8.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2upd202503 s1lock2025 s2c s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-03-01,2025-04-01)|10.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-03-01,2025-04-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s2upd20252026 s1upd2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2upd20252026 s1lock2025 s2c s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-06-01,2026-06-01)|10.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2del2027 s2c s1lock2025 s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2del202503 s2c s1lock2025 s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2del20252026 s2c s1lock2025 s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1upd2025 s1c s2lock2027 s2del2027 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1upd2025 s1c s2lock202503 s2del202503 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1upd2025 s1c s2lock20252026 s2del20252026 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2del2027 s1upd2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2del2027 s1lock2025 s2c s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2del202503 s1upd2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2del202503 s1lock2025 s2c s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2del20252026 s1upd2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2del20252026 s1lock2025 s2c s1upd2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2upd2027 s2c s1lock2025 s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2upd202503 s2c s1lock2025 s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2upd20252026 s2c s1lock2025 s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+(2 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1del2025 s1c s2lock2027 s2upd2027 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1del2025 s1c s2lock202503 s2upd202503 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1del2025 s1c s2lock20252026 s2upd20252026 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2upd2027 s1del2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2upd2027 s1lock2025 s2c s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rc s2rc s2upd202503 s1del2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2upd202503 s1lock2025 s2c s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-03-01,2025-04-01)|10.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2upd20252026 s1del2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2upd20252026 s1lock2025 s2c s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2025-06-01,2026-06-01)|10.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2del2027 s2c s1lock2025 s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2del202503 s2c s1lock2025 s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2del20252026 s2c s1lock2025 s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1del2025 s1c s2lock2027 s2del2027 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1del2025 s1c s2lock202503 s2del202503 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s1lock2025 s1del2025 s1c s2lock20252026 s2del20252026 s2c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2del2027 s1del2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock2027 s2del2027 s1lock2025 s2c s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock2027: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2027-01-01,2028-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rc s2rc s2del202503 s1del2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock202503 s2del202503 s1lock2025 s2c s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock202503: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-03-01,2025-04-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2del20252026 s1del2025 s2c s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rc s2rc s2lock20252026 s2del20252026 s1lock2025 s2c s1del2025 s1c s1q
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2lock20252026: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-06-01,2026-06-01)'
+  ORDER BY valid_at FOR UPDATE;
+
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1lock2025: 
+  SELECT * FROM products
+  WHERE id = '[1,2)' AND valid_at && '[2025-01-01,2026-01-01)'
+  ORDER BY valid_at FOR UPDATE;
+ <waiting ...>
+step s2c: COMMIT;
+step s1lock2025: <... completed>
+id|valid_at|price
+--+--------+-----
+(0 rows)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2upd2027 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s2upd202503 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-03-01,2025-04-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s2upd20252026 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s1upd2025 s1c s2upd2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s1upd2025 s1c s2upd202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s1upd2025 s1c s2upd20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)|10.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s2upd2027 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2upd202503 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2upd20252026 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd2027 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd202503 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd20252026 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s1upd2025 s1c s2upd2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s1q s1upd2025 s1c s2upd202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s1q s1upd2025 s1c s2upd20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)|10.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd2027 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd202503 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd20252026 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2del2027 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s2del202503 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s2del20252026 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1upd2025 s1c s2del2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s1upd2025 s1c s2del202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s1upd2025 s1c s2del20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2del2027 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2del202503 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2del20252026 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del2027 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del202503 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del20252026 s2c s1upd2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s1upd2025 s1c s2del2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s1q s1upd2025 s1c s2del202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-03-01)| 8.00
+[1,2)|[2025-04-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s1q s1upd2025 s1c s2del20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del2027 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del202503 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del20252026 s1upd2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1upd2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2upd2027 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s2upd202503 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2upd20252026 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1del2025 s1c s2upd2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s1del2025 s1c s2upd202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1del2025 s1c s2upd20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2upd2027 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2upd202503 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2upd20252026 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd2027 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd202503 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd20252026 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s1del2025 s1c s2upd2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(4 rows)
+
+
+starting permutation: s1rr s2rr s1q s1del2025 s1c s2upd202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s1del2025 s1c s2upd20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd2027 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd202503 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd202503: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-03-01,2025-04-01)|10.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s2upd20252026 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2025-06-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2del2027 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s2del202503 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2del20252026 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1del2025 s1c s2del2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1del2025 s1c s2del202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1del2025 s1c s2del20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2del2027 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2del202503 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s2del20252026 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del2027 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del202503 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del20252026 s2c s1del2025 s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s1del2025 s1c s2del2027 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(3 rows)
+
+
+starting permutation: s1rr s2rr s1q s1del2025 s1c s2del202503 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s1del2025 s1c s2del20252026 s2c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del2027 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del2027: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2027-01-01)| 5.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del202503 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del202503: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-03-01' TO '2025-04-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-03-01)| 5.00
+[1,2)|[2025-04-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1rr s2rr s1q s2del20252026 s1del2025 s2c s1c s1q
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2030-01-01)| 5.00
+(1 row)
+
+step s2del20252026: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  WHERE id = '[1,2)';
+
+step s1del2025: 
+  DELETE FROM products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  WHERE id = '[1,2)';
+ <waiting ...>
+step s2c: COMMIT;
+step s1del2025: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-06-01)| 5.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(2 rows)
+
+
+starting permutation: s1ser s2ser s2upd2027 s2c s1upd2025 s1c s1q
+step s1ser: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2ser: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2upd2027: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2027-01-01' TO '2028-01-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2027-01-01)| 5.00
+[1,2)|[2027-01-01,2028-01-01)|10.00
+[1,2)|[2028-01-01,2030-01-01)| 5.00
+(5 rows)
+
+
+starting permutation: s1ser s2ser s2upd20252026 s2c s1upd2025 s1c s1q
+step s1ser: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2ser: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2upd20252026: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-06-01' TO '2026-06-01'
+  SET price = 10.00
+  WHERE id = '[1,2)';
+
+step s2c: COMMIT;
+step s1upd2025: 
+  UPDATE products
+  FOR PORTION OF valid_at FROM '2025-01-01' TO '2026-01-01'
+  SET price = 8.00
+  WHERE id = '[1,2)';
+
+step s1c: COMMIT;
+step s1q: SELECT * FROM products ORDER BY id, valid_at;
+id   |valid_at               |price
+-----+-----------------------+-----
+[1,2)|[2020-01-01,2025-01-01)| 5.00
+[1,2)|[2025-01-01,2025-06-01)| 8.00
+[1,2)|[2025-06-01,2026-01-01)| 8.00
+[1,2)|[2026-01-01,2026-06-01)|10.00
+[1,2)|[2026-06-01,2030-01-01)| 5.00
+(5 rows)
+

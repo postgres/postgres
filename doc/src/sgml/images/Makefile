@@ -10,7 +10,8 @@ ALL_IMAGES = \
 	temporal-entities.svg \
 	temporal-references.svg \
 	temporal-update.svg \
-	temporal-delete.svg
+	temporal-delete.svg \
+	temporal-isolation.svg
 
 DITAA = ditaa
 DOT = dot

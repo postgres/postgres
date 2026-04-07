@@ -394,6 +394,44 @@ DELETE FROM products
    triggers are fired, but permission checks for inserting rows are
    skipped.
   </para>
+
+  <para>
+   In <literal>READ COMMITTED</literal> mode, temporal updates and deletes can
+   yield unexpected results when they concurrently touch the same row.  It is
+   possible to lose all or part of the second update or delete.  The scenario
+   is illustrated in <xref linkend="temporal-isolation-figure"/>.  Session 2
+   searches for rows to change, and it finds one that Session 1 has already
+   modified.  It waits for Session 1 to commit. Then it re-checks whether the
+   row still matches its search criteria (including the start/end times
+   targeted by <literal>FOR PORTION OF</literal>).  Session 1 may have changed
+   those times so that they no longer qualify.
+  </para>
+
+  <para>
+   In addition, the temporal leftovers inserted by Session 1 are not visible
+   within Session 2's transaction, because they are not yet committed.
+   Therefore there is nothing for Session 2 to update/delete: neither the
+   modified row nor the leftovers.  The portion of history that Session 2
+   intended to change is not affected.
+  </para>
+
+  <figure id="temporal-isolation-figure">
+   <title>Temporal Isolation Example</title>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="images/temporal-isolation.svg" format="SVG" width="35%"/>
+    </imageobject>
+   </mediaobject>
+  </figure>
+
+  <para>
+   To solve these problems, precede every temporal update/delete with a
+   <literal>SELECT FOR UPDATE</literal> matching the same criteria (including
+   the targeted portion of application time).  That way the actual
+   update/delete doesn't begin until the lock is held, and all concurrent
+   leftovers will be visible.  In higher transaction isolation levels, this
+   lock is not required.
+  </para>
  </sect1>
 
  <sect1 id="dml-returning">
