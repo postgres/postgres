@@ -1670,6 +1670,7 @@ typedef struct SeqScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	Size		pscan_len;		/* size of parallel heap scan descriptor */
+	struct SharedSeqScanInstrumentation *sinstrument;
 } SeqScanState;
 
 /* ----------------

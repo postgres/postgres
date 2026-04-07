@@ -100,7 +100,7 @@ select explain_filter('explain (buffers, format text) select * from int8_tbl i8'
 (1 row)
 
 \a
-select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
+select explain_filter('explain (analyze, buffers, io, format xml) select * from int8_tbl i8');
 explain_filter
 <explain xmlns="http://www.postgresql.org/N/explain">
   <Query>
@@ -119,6 +119,13 @@ explain_filter
       <Actual-Rows>N.N</Actual-Rows>
       <Actual-Loops>N</Actual-Loops>
       <Disabled>false</Disabled>
+      <Average-Prefetch-Distance>N.N</Average-Prefetch-Distance>
+      <Max-Prefetch-Distance>N</Max-Prefetch-Distance>
+      <Prefetch-Capacity>N</Prefetch-Capacity>
+      <I-O-Count>N</I-O-Count>
+      <I-O-Waits>N</I-O-Waits>
+      <Average-I-O-Size>N.N</Average-I-O-Size>
+      <Average-I-Os-In-Progress>N.N</Average-I-Os-In-Progress>
       <Shared-Hit-Blocks>N</Shared-Hit-Blocks>
       <Shared-Read-Blocks>N</Shared-Read-Blocks>
       <Shared-Dirtied-Blocks>N</Shared-Dirtied-Blocks>
@@ -149,7 +156,7 @@ explain_filter
   </Query>
 </explain>
 (1 row)
-select explain_filter('explain (analyze, serialize, buffers, format yaml) select * from int8_tbl i8');
+select explain_filter('explain (analyze, serialize, buffers, io, format yaml) select * from int8_tbl i8');
 explain_filter
 - Plan: 
     Node Type: "Seq Scan"
@@ -166,6 +173,13 @@ explain_filter
     Actual Rows: N.N
     Actual Loops: N
     Disabled: false
+    Average Prefetch Distance: N.N
+    Max Prefetch Distance: N
+    Prefetch Capacity: N
+    I/O Count: N
+    I/O Waits: N
+    Average I/O Size: N.N
+    Average I/Os In Progress: N.N
     Shared Hit Blocks: N
     Shared Read Blocks: N
     Shared Dirtied Blocks: N

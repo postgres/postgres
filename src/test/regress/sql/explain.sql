@@ -69,8 +69,8 @@ select explain_filter('explain (analyze, buffers, format text) select * from int
 select explain_filter('explain (buffers, format text) select * from int8_tbl i8');
 
 \a
-select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
-select explain_filter('explain (analyze, serialize, buffers, format yaml) select * from int8_tbl i8');
+select explain_filter('explain (analyze, buffers, io, format xml) select * from int8_tbl i8');
+select explain_filter('explain (analyze, serialize, buffers, io, format yaml) select * from int8_tbl i8');
 select explain_filter('explain (buffers, format json) select * from int8_tbl i8');
 \a
 

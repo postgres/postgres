@@ -2800,6 +2800,7 @@ SelfJoinCandidate
 SemTPadded
 SemiAntiJoinFactors
 SeqScan
+SeqScanInstrumentation
 SeqScanState
 SeqTable
 SeqTableData
@@ -2864,6 +2865,7 @@ SharedMemoizeInfo
 SharedRecordTableEntry
 SharedRecordTableKey
 SharedRecordTypmodRegistry
+SharedSeqScanInstrumentation
 SharedSortInfo
 SharedTuplestore
 SharedTuplestoreAccessor

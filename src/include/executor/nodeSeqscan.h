@@ -28,4 +28,13 @@ extern void ExecSeqScanReInitializeDSM(SeqScanState *node, ParallelContext *pcxt
 extern void ExecSeqScanInitializeWorker(SeqScanState *node,
 										ParallelWorkerContext *pwcxt);
 
+/* instrument support */
+extern void ExecSeqScanInstrumentEstimate(SeqScanState *node,
+										  ParallelContext *pcxt);
+extern void ExecSeqScanInstrumentInitDSM(SeqScanState *node,
+										 ParallelContext *pcxt);
+extern void ExecSeqScanInstrumentInitWorker(SeqScanState *node,
+											ParallelWorkerContext *pwcxt);
+extern void ExecSeqScanRetrieveInstrumentation(SeqScanState *node);
+
 #endif							/* NODESEQSCAN_H */

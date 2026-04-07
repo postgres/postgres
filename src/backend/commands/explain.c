@@ -2032,6 +2032,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			if (IsA(plan, CteScan))
 				show_ctescan_info(castNode(CteScanState, planstate), es);
+			show_scan_io_usage((ScanState *) planstate, es);
 			break;
 		case T_Gather:
 			{
@@ -4090,6 +4091,30 @@ show_scan_io_usage(ScanState *planstate, ExplainState *es)
 					for (int i = 0; i < sinstrument->num_workers; ++i)
 					{
 						BitmapHeapScanInstrumentation *winstrument = &sinstrument->sinstrument[i];
+
+						AccumulateIOStats(&stats, &winstrument->stats.io);
+
+						if (!es->workers_state)
+							continue;
+
+						ExplainOpenWorker(i, es);
+						print_io_usage(es, &winstrument->stats.io);
+						ExplainCloseWorker(i, es);
+					}
+				}
+
+				break;
+			}
+		case T_SeqScan:
+			{
+				SharedSeqScanInstrumentation *sinstrument
+				= ((SeqScanState *) planstate)->sinstrument;
+
+				if (sinstrument)
+				{
+					for (int i = 0; i < sinstrument->num_workers; ++i)
+					{
+						SeqScanInstrumentation *winstrument = &sinstrument->sinstrument[i];
 
 						AccumulateIOStats(&stats, &winstrument->stats.io);
 
