@@ -91,6 +91,9 @@ extern PGDLLIMPORT int compute_query_id;
 
 
 extern const char *CleanQuerytext(const char *query, int *location, int *len);
+extern LocationLen *ComputeConstantLengths(const JumbleState *jstate,
+										   const char *query,
+										   int query_loc);
 extern JumbleState *JumbleQuery(Query *query);
 extern void EnableQueryId(void);
 

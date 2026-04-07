@@ -40,10 +40,12 @@
 #include "access/transam.h"
 #include "catalog/pg_proc.h"
 #include "common/hashfn.h"
+#include "common/int.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/queryjumble.h"
 #include "utils/lsyscache.h"
+#include "parser/scanner.h"
 #include "parser/scansup.h"
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
@@ -772,4 +774,157 @@ _jumbleRangeTblEntry_eref(JumbleState *jstate,
 	 * This includes only the table name, the list of column names is ignored.
 	 */
 	JUMBLE_STRING(aliasname);
+}
+
+/*
+ * CompLocation: comparator for qsorting LocationLen structs by location
+ */
+static int
+CompLocation(const void *a, const void *b)
+{
+	int			l = ((const LocationLen *) a)->location;
+	int			r = ((const LocationLen *) b)->location;
+
+	return pg_cmp_s32(l, r);
+}
+
+/*
+ * Given a valid SQL string and an array of constant-location records, return
+ * the textual lengths of those constants in a newly allocated LocationLen
+ * array, or NULL if there are no constants.
+ *
+ * The constants may use any allowed constant syntax, such as float literals,
+ * bit-strings, single-quoted strings and dollar-quoted strings.  This is
+ * accomplished by using the public API for the core scanner.
+ *
+ * It is the caller's job to ensure that the string is a valid SQL statement
+ * with constants at the indicated locations.  Since in practice the string
+ * has already been parsed, and the locations that the caller provides will
+ * have originated from within the authoritative parser, this should not be
+ * a problem.
+ *
+ * Multiple constants can have the same location.  We reset lengths of those
+ * past the first to -1 so that they can later be ignored.
+ *
+ * If query_loc > 0, then "query" has been advanced by that much compared to
+ * the original string start, as is the case with multi-statement strings, so
+ * we need to translate the provided locations to compensate.  (This lets us
+ * avoid re-scanning statements before the one of interest, so it's worth
+ * doing.)
+ *
+ * N.B. There is an assumption that a '-' character at a Const location begins
+ * a negative numeric constant.  This precludes there ever being another
+ * reason for a constant to start with a '-'.
+ *
+ * It is the caller's responsibility to free the result, if necessary.
+ */
+LocationLen *
+ComputeConstantLengths(const JumbleState *jstate, const char *query,
+					   int query_loc)
+{
+	LocationLen *locs;
+	core_yyscan_t yyscanner;
+	core_yy_extra_type yyextra;
+	core_YYSTYPE yylval;
+	YYLTYPE		yylloc;
+
+	if (jstate->clocations_count == 0)
+		return NULL;
+
+	/* Copy constant locations to avoid modifying jstate */
+	locs = palloc_array(LocationLen, jstate->clocations_count);
+	memcpy(locs, jstate->clocations, jstate->clocations_count * sizeof(LocationLen));
+
+	/*
+	 * Sort the records by location so that we can process them in order while
+	 * scanning the query text.
+	 */
+	if (jstate->clocations_count > 1)
+		qsort(locs, jstate->clocations_count,
+			  sizeof(LocationLen), CompLocation);
+
+	/* initialize the flex scanner --- should match raw_parser() */
+	yyscanner = scanner_init(query,
+							 &yyextra,
+							 &ScanKeywords,
+							 ScanKeywordTokens);
+
+	/* Search for each constant, in sequence */
+	for (int i = 0; i < jstate->clocations_count; i++)
+	{
+		int			loc;
+		int			tok;
+
+		/* Ignore constants after the first one in the same location */
+		if (i > 0 && locs[i].location == locs[i - 1].location)
+		{
+			locs[i].length = -1;
+			continue;
+		}
+
+		if (locs[i].squashed)
+			continue;			/* squashable list, ignore */
+
+		/*
+		 * Adjust the constant's location using the provided starting location
+		 * of the current statement.  This allows us to avoid scanning a
+		 * multi-statement string from the beginning.
+		 */
+		loc = locs[i].location - query_loc;
+		Assert(loc >= 0);
+
+		/*
+		 * We have a valid location for a constant that's not a dupe. Lex
+		 * tokens until we find the desired constant.
+		 */
+		for (;;)
+		{
+			tok = core_yylex(&yylval, &yylloc, yyscanner);
+
+			/* We should not hit end-of-string, but if we do, behave sanely */
+			if (tok == 0)
+				break;			/* out of inner for-loop */
+
+			/*
+			 * We should find the token position exactly, but if we somehow
+			 * run past it, work with that.
+			 */
+			if (yylloc >= loc)
+			{
+				if (query[loc] == '-')
+				{
+					/*
+					 * It's a negative value - this is the one and only case
+					 * where we replace more than a single token.
+					 *
+					 * Do not compensate for the special-case adjustment of
+					 * location to that of the leading '-' operator in the
+					 * event of a negative constant (see doNegate() in
+					 * gram.y).  It is also useful for our purposes to start
+					 * from the minus symbol.  In this way, queries like
+					 * "select * from foo where bar = 1" and "select * from
+					 * foo where bar = -2" can be treated similarly.
+					 */
+					tok = core_yylex(&yylval, &yylloc, yyscanner);
+					if (tok == 0)
+						break;	/* out of inner for-loop */
+				}
+
+				/*
+				 * We now rely on the assumption that flex has placed a zero
+				 * byte after the text of the current token in scanbuf.
+				 */
+				locs[i].length = strlen(yyextra.scanbuf + loc);
+				break;			/* out of inner for-loop */
+			}
+		}
+
+		/* If we hit end-of-string, give up, leaving remaining lengths -1 */
+		if (tok == 0)
+			break;
+	}
+
+	scanner_finish(yyscanner);
+
+	return locs;
 }

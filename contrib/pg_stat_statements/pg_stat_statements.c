@@ -50,7 +50,6 @@
 #include "access/htup_details.h"
 #include "access/parallel.h"
 #include "catalog/pg_authid.h"
-#include "common/int.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
 #include "jit/jit.h"
@@ -59,7 +58,6 @@
 #include "nodes/queryjumble.h"
 #include "optimizer/planner.h"
 #include "parser/analyze.h"
-#include "parser/scanner.h"
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -339,7 +337,7 @@ PG_FUNCTION_INFO_V1(pg_stat_statements_info);
 
 static void pgss_shmem_shutdown(int code, Datum arg);
 static void pgss_post_parse_analyze(ParseState *pstate, Query *query,
-									JumbleState *jstate);
+									const JumbleState *jstate);
 static PlannedStmt *pgss_planner(Query *parse,
 								 const char *query_string,
 								 int cursorOptions,
@@ -363,7 +361,7 @@ static void pgss_store(const char *query, int64 queryId,
 					   const BufferUsage *bufusage,
 					   const WalUsage *walusage,
 					   const struct JitInstrumentation *jitusage,
-					   JumbleState *jstate,
+					   const JumbleState *jstate,
 					   int parallel_workers_to_launch,
 					   int parallel_workers_launched,
 					   PlannedStmtOrigin planOrigin);
@@ -381,12 +379,9 @@ static char *qtext_fetch(Size query_offset, int query_len,
 static bool need_gc_qtexts(void);
 static void gc_qtexts(void);
 static TimestampTz entry_reset(Oid userid, Oid dbid, int64 queryid, bool minmax_only);
-static char *generate_normalized_query(JumbleState *jstate, const char *query,
+static char *generate_normalized_query(const JumbleState *jstate,
+									   const char *query,
 									   int query_loc, int *query_len_p);
-static void fill_in_constant_lengths(JumbleState *jstate, const char *query,
-									 int query_loc);
-static int	comp_location(const void *a, const void *b);
-
 
 /*
  * Module load callback
@@ -836,7 +831,7 @@ error:
  * Post-parse-analysis hook: mark query with a queryId
  */
 static void
-pgss_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
+pgss_post_parse_analyze(ParseState *pstate, Query *query, const JumbleState *jstate)
 {
 	if (prev_post_parse_analyze_hook)
 		prev_post_parse_analyze_hook(pstate, query, jstate);
@@ -1287,7 +1282,7 @@ pgss_store(const char *query, int64 queryId,
 		   const BufferUsage *bufusage,
 		   const WalUsage *walusage,
 		   const struct JitInstrumentation *jitusage,
-		   JumbleState *jstate,
+		   const JumbleState *jstate,
 		   int parallel_workers_to_launch,
 		   int parallel_workers_launched,
 		   PlannedStmtOrigin planOrigin)
@@ -2824,7 +2819,7 @@ release_lock:
  * Returns a palloc'd string.
  */
 static char *
-generate_normalized_query(JumbleState *jstate, const char *query,
+generate_normalized_query(const JumbleState *jstate, const char *query,
 						  int query_loc, int *query_len_p)
 {
 	char	   *norm_query;
@@ -2836,12 +2831,14 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 				last_off = 0,	/* Offset from start for previous tok */
 				last_tok_len = 0;	/* Length (in bytes) of that tok */
 	int			num_constants_replaced = 0;
+	LocationLen *locs = NULL;
 
 	/*
-	 * Get constants' lengths (core system only gives us locations).  Note
-	 * this also ensures the items are sorted by location.
+	 * Determine constants' lengths (core system only gives us locations), and
+	 * return a sorted copy of jstate's LocationLen data with lengths filled
+	 * in.
 	 */
-	fill_in_constant_lengths(jstate, query, query_loc);
+	locs = ComputeConstantLengths(jstate, query, query_loc);
 
 	/*
 	 * Allow for $n symbols to be longer than the constants they replace.
@@ -2867,15 +2864,15 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 		 * the parameter in the next iteration (or after the loop is done),
 		 * which is a bit odd but seems to work okay in most cases.
 		 */
-		if (jstate->clocations[i].extern_param && !jstate->has_squashed_lists)
+		if (locs[i].extern_param && !jstate->has_squashed_lists)
 			continue;
 
-		off = jstate->clocations[i].location;
+		off = locs[i].location;
 
 		/* Adjust recorded location if we're dealing with partial string */
 		off -= query_loc;
 
-		tok_len = jstate->clocations[i].length;
+		tok_len = locs[i].length;
 
 		if (tok_len < 0)
 			continue;			/* ignore any duplicates */
@@ -2894,7 +2891,7 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 		 */
 		n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d%s",
 							  num_constants_replaced + 1 + jstate->highest_extern_param_id,
-							  jstate->clocations[i].squashed ? " /*, ... */" : "");
+							  locs[i].squashed ? " /*, ... */" : "");
 		num_constants_replaced++;
 
 		/* move forward */
@@ -2902,6 +2899,10 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 		last_off = off;
 		last_tok_len = tok_len;
 	}
+
+	/* Clean up, if needed */
+	if (locs)
+		pfree(locs);
 
 	/*
 	 * We've copied up until the last ignorable constant.  Copy over the
@@ -2918,141 +2919,4 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 
 	*query_len_p = n_quer_loc;
 	return norm_query;
-}
-
-/*
- * Given a valid SQL string and an array of constant-location records,
- * fill in the textual lengths of those constants.
- *
- * The constants may use any allowed constant syntax, such as float literals,
- * bit-strings, single-quoted strings and dollar-quoted strings.  This is
- * accomplished by using the public API for the core scanner.
- *
- * It is the caller's job to ensure that the string is a valid SQL statement
- * with constants at the indicated locations.  Since in practice the string
- * has already been parsed, and the locations that the caller provides will
- * have originated from within the authoritative parser, this should not be
- * a problem.
- *
- * Multiple constants can have the same location.  We reset lengths of those
- * past the first to -1 so that they can later be ignored.
- *
- * If query_loc > 0, then "query" has been advanced by that much compared to
- * the original string start, so we need to translate the provided locations
- * to compensate.  (This lets us avoid re-scanning statements before the one
- * of interest, so it's worth doing.)
- *
- * N.B. There is an assumption that a '-' character at a Const location begins
- * a negative numeric constant.  This precludes there ever being another
- * reason for a constant to start with a '-'.
- */
-static void
-fill_in_constant_lengths(JumbleState *jstate, const char *query,
-						 int query_loc)
-{
-	LocationLen *locs;
-	core_yyscan_t yyscanner;
-	core_yy_extra_type yyextra;
-	core_YYSTYPE yylval;
-	YYLTYPE		yylloc;
-
-	/*
-	 * Sort the records by location so that we can process them in order while
-	 * scanning the query text.
-	 */
-	if (jstate->clocations_count > 1)
-		qsort(jstate->clocations, jstate->clocations_count,
-			  sizeof(LocationLen), comp_location);
-	locs = jstate->clocations;
-
-	/* initialize the flex scanner --- should match raw_parser() */
-	yyscanner = scanner_init(query,
-							 &yyextra,
-							 &ScanKeywords,
-							 ScanKeywordTokens);
-
-	/* Search for each constant, in sequence */
-	for (int i = 0; i < jstate->clocations_count; i++)
-	{
-		int			loc;
-		int			tok;
-
-		/* Ignore constants after the first one in the same location */
-		if (i > 0 && locs[i].location == locs[i - 1].location)
-		{
-			locs[i].length = -1;
-			continue;
-		}
-
-		if (locs[i].squashed)
-			continue;			/* squashable list, ignore */
-
-		/* Adjust recorded location if we're dealing with partial string */
-		loc = locs[i].location - query_loc;
-		Assert(loc >= 0);
-
-		/*
-		 * We have a valid location for a constant that's not a dupe. Lex
-		 * tokens until we find the desired constant.
-		 */
-		for (;;)
-		{
-			tok = core_yylex(&yylval, &yylloc, yyscanner);
-
-			/* We should not hit end-of-string, but if we do, behave sanely */
-			if (tok == 0)
-				break;			/* out of inner for-loop */
-
-			/*
-			 * We should find the token position exactly, but if we somehow
-			 * run past it, work with that.
-			 */
-			if (yylloc >= loc)
-			{
-				if (query[loc] == '-')
-				{
-					/*
-					 * It's a negative value - this is the one and only case
-					 * where we replace more than a single token.
-					 *
-					 * Do not compensate for the core system's special-case
-					 * adjustment of location to that of the leading '-'
-					 * operator in the event of a negative constant.  It is
-					 * also useful for our purposes to start from the minus
-					 * symbol.  In this way, queries like "select * from foo
-					 * where bar = 1" and "select * from foo where bar = -2"
-					 * will have identical normalized query strings.
-					 */
-					tok = core_yylex(&yylval, &yylloc, yyscanner);
-					if (tok == 0)
-						break;	/* out of inner for-loop */
-				}
-
-				/*
-				 * We now rely on the assumption that flex has placed a zero
-				 * byte after the text of the current token in scanbuf.
-				 */
-				locs[i].length = strlen(yyextra.scanbuf + loc);
-				break;			/* out of inner for-loop */
-			}
-		}
-
-		/* If we hit end-of-string, give up, leaving remaining lengths -1 */
-		if (tok == 0)
-			break;
-	}
-
-	scanner_finish(yyscanner);
-}
-
-/*
- * comp_location: comparator for qsorting LocationLen structs by location
- */
-static int
-comp_location(const void *a, const void *b)
-{
-	int			l = ((const LocationLen *) a)->location;
-	int			r = ((const LocationLen *) b)->location;
-
-	return pg_cmp_s32(l, r);
 }
