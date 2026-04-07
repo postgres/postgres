@@ -226,6 +226,55 @@ CMPTRGM_CHOOSE(const void *a, const void *b)
 	return CMPTRGM(a, b);
 }
 
+#define ST_SORT trigram_qsort_signed
+#define ST_ELEMENT_TYPE_VOID
+#define ST_COMPARE(a, b) CMPTRGM_SIGNED(a, b)
+#define ST_SCOPE static
+#define ST_DEFINE
+#define ST_DECLARE
+#include "lib/sort_template.h"
+
+#define ST_SORT trigram_qsort_unsigned
+#define ST_ELEMENT_TYPE_VOID
+#define ST_COMPARE(a, b) CMPTRGM_UNSIGNED(a, b)
+#define ST_SCOPE static
+#define ST_DEFINE
+#define ST_DECLARE
+#include "lib/sort_template.h"
+
+/* Sort an array of trigrams, handling signedess correctly */
+static void
+trigram_qsort(trgm *array, size_t n)
+{
+	if (GetDefaultCharSignedness())
+		trigram_qsort_signed(array, n, sizeof(trgm));
+	else
+		trigram_qsort_unsigned(array, n, sizeof(trgm));
+}
+
+
+/*
+ * Compare two trigrams for equality.  This has the same signature as
+ * comparison functions used for sorting, so that this can be used with
+ * qunique().  This doesn't need separate versions for "signed char" and "
+ * unsigned char" because equality is the same for both.
+ */
+static inline int
+CMPTRGM_EQ(const void *a, const void *b)
+{
+	char	   *aa = (char *) a;
+	char	   *bb = (char *) b;
+
+	return aa[0] != bb[0] || aa[1] != bb[1] || aa[2] != bb[2] ? 1 : 0;
+}
+
+/* Deduplicate an array of trigrams */
+static size_t
+trigram_qunique(trgm *array, size_t n)
+{
+	return qunique(array, n, sizeof(trgm), CMPTRGM_EQ);
+}
+
 /*
  * Deprecated function.
  * Use "pg_trgm.similarity_threshold" GUC variable instead of this function.
@@ -279,12 +328,6 @@ Datum
 show_limit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT4(similarity_threshold);
-}
-
-static int
-comp_trgm(const void *a, const void *b)
-{
-	return CMPTRGM(a, b);
 }
 
 /*
@@ -569,8 +612,8 @@ generate_trgm(char *str, int slen)
 	 */
 	if (len > 1)
 	{
-		qsort(GETARR(trg), len, sizeof(trgm), comp_trgm);
-		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
+		trigram_qsort(GETARR(trg), len);
+		len = trigram_qunique(GETARR(trg), len);
 	}
 
 	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));
@@ -1100,8 +1143,8 @@ generate_wildcard_trgm(const char *str, int slen)
 	len = arr.length;
 	if (len > 1)
 	{
-		qsort(GETARR(trg), len, sizeof(trgm), comp_trgm);
-		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
+		trigram_qsort(GETARR(trg), len);
+		len = trigram_qunique(GETARR(trg), len);
 	}
 
 	trg->flag = ARRKEY;
