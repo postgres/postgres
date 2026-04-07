@@ -22,6 +22,8 @@
 #include "lib/dshash.h"
 #include "storage/lwlock.h"
 
+#define PGSA_DUMP_FILE		"pg_stash_advice.tsv"
+
 /*
  * The key that we use to find a particular stash entry.
  */
@@ -62,6 +64,9 @@ typedef struct pgsa_shared_state
 	dsa_handle	area;
 	dshash_table_handle stash_hash;
 	dshash_table_handle entry_hash;
+	pid_t		bgworker_pid;
+	pg_atomic_flag stashes_ready;
+	pg_atomic_uint64 change_count;
 } pgsa_shared_state;
 
 /* For stash ID -> stash name hash table */
@@ -86,14 +91,21 @@ extern dsa_area *pgsa_dsa_area;
 extern dshash_table *pgsa_stash_dshash;
 extern dshash_table *pgsa_entry_dshash;
 
+/* GUC variables */
+extern bool pg_stash_advice_persist;
+extern int	pg_stash_advice_persist_interval;
+
 /* Function prototypes */
 extern void pgsa_attach(void);
+extern void pgsa_check_lockout(void);
 extern void pgsa_check_stash_name(char *stash_name);
 extern void pgsa_clear_advice_string(char *stash_name, int64 queryId);
 extern void pgsa_create_stash(char *stash_name);
 extern void pgsa_drop_stash(char *stash_name);
 extern uint64 pgsa_lookup_stash_id(char *stash_name);
+extern void pgsa_reset_all_stashes(void);
 extern void pgsa_set_advice_string(char *stash_name, int64 queryId,
 								   char *advice_string);
+extern void pgsa_start_worker(void);
 
 #endif

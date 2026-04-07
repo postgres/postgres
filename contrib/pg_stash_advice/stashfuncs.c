@@ -14,6 +14,7 @@
 #include "common/hashfn.h"
 #include "fmgr.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "pg_stash_advice.h"
 #include "utils/builtins.h"
 #include "utils/tuplestore.h"
@@ -23,6 +24,7 @@ PG_FUNCTION_INFO_V1(pg_drop_advice_stash);
 PG_FUNCTION_INFO_V1(pg_get_advice_stash_contents);
 PG_FUNCTION_INFO_V1(pg_get_advice_stashes);
 PG_FUNCTION_INFO_V1(pg_set_stashed_advice);
+PG_FUNCTION_INFO_V1(pg_start_stash_advice_worker);
 
 typedef struct pgsa_stash_count
 {
@@ -53,6 +55,7 @@ pg_create_advice_stash(PG_FUNCTION_ARGS)
 	pgsa_check_stash_name(stash_name);
 	if (unlikely(pgsa_entry_dshash == NULL))
 		pgsa_attach();
+	pgsa_check_lockout();
 	LWLockAcquire(&pgsa_state->lock, LW_EXCLUSIVE);
 	pgsa_create_stash(stash_name);
 	LWLockRelease(&pgsa_state->lock);
@@ -70,6 +73,7 @@ pg_drop_advice_stash(PG_FUNCTION_ARGS)
 	pgsa_check_stash_name(stash_name);
 	if (unlikely(pgsa_entry_dshash == NULL))
 		pgsa_attach();
+	pgsa_check_lockout();
 	LWLockAcquire(&pgsa_state->lock, LW_EXCLUSIVE);
 	pgsa_drop_stash(stash_name);
 	LWLockRelease(&pgsa_state->lock);
@@ -93,6 +97,10 @@ pg_get_advice_stashes(PG_FUNCTION_ARGS)
 	/* Attach to dynamic shared memory if not already done. */
 	if (unlikely(pgsa_entry_dshash == NULL))
 		pgsa_attach();
+
+	/* If stash data is still being restored from disk, ignore. */
+	if (pg_atomic_unlocked_test_flag(&pgsa_state->stashes_ready))
+		return (Datum) 0;
 
 	/* Tally up the number of entries per stash. */
 	chash = pgsa_stash_count_table_create(CurrentMemoryContext, 64, NULL);
@@ -153,6 +161,10 @@ pg_get_advice_stash_contents(PG_FUNCTION_ARGS)
 	/* Attach to dynamic shared memory if not already done. */
 	if (unlikely(pgsa_entry_dshash == NULL))
 		pgsa_attach();
+
+	/* If stash data is still being restored from disk, ignore. */
+	if (pg_atomic_unlocked_test_flag(&pgsa_state->stashes_ready))
+		return (Datum) 0;
 
 	/* User can pass NULL for all stashes, or the name of a specific stash. */
 	if (!PG_ARGISNULL(0))
@@ -286,6 +298,9 @@ pg_set_stashed_advice(PG_FUNCTION_ARGS)
 	if (unlikely(pgsa_entry_dshash == NULL))
 		pgsa_attach();
 
+	/* Don't allow writes if stash data is still being restored from disk. */
+	pgsa_check_lockout();
+
 	/* Now call the appropriate function to do the real work. */
 	if (PG_ARGISNULL(2))
 	{
@@ -301,6 +316,32 @@ pg_set_stashed_advice(PG_FUNCTION_ARGS)
 		pgsa_set_advice_string(stash_name, queryId, advice_string);
 		LWLockRelease(&pgsa_state->lock);
 	}
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * SQL-callable function to start the persistence background worker.
+ */
+Datum
+pg_start_stash_advice_worker(PG_FUNCTION_ARGS)
+{
+	pid_t		pid;
+
+	if (unlikely(pgsa_entry_dshash == NULL))
+		pgsa_attach();
+
+	LWLockAcquire(&pgsa_state->lock, LW_SHARED);
+	pid = pgsa_state->bgworker_pid;
+	LWLockRelease(&pgsa_state->lock);
+
+	if (pid != InvalidPid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("pg_stash_advice worker is already running under PID %d",
+						(int) pid)));
+
+	pgsa_start_worker();
 
 	PG_RETURN_VOID();
 }

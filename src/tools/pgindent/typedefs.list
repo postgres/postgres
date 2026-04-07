@@ -4087,10 +4087,14 @@ pgpa_trove_slice
 pgpa_unrolled_join
 pgsa_entry
 pgsa_entry_key
+pgsa_saved_entry
+pgsa_saved_stash
+pgsa_saved_stash_table_hash
 pgsa_shared_state
 pgsa_stash
 pgsa_stash_count
 pgsa_stash_name
+pgsa_writer_context
 pgsocket
 pgsql_thing_t
 pgssEntry

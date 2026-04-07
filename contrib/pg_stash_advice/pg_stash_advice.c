@@ -13,9 +13,11 @@
 
 #include "common/hashfn.h"
 #include "common/string.h"
+#include "miscadmin.h"
 #include "nodes/queryjumble.h"
 #include "pg_plan_advice.h"
 #include "pg_stash_advice.h"
+#include "postmaster/bgworker.h"
 #include "storage/dsm_registry.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -41,8 +43,10 @@ static dshash_parameters pgsa_entry_dshash_parameters = {
 	LWTRANCHE_INVALID			/* gets set at runtime */
 };
 
-/* GUC variable */
+/* GUC variables */
 static char *pg_stash_advice_stash_name = "";
+bool		pg_stash_advice_persist = true;
+int			pg_stash_advice_persist_interval = 30;
 
 /* Shared memory pointers */
 pgsa_shared_state *pgsa_state;
@@ -87,6 +91,33 @@ _PG_init(void)
 	EnableQueryId();
 
 	/* Define our GUCs. */
+	if (process_shared_preload_libraries_in_progress)
+		DefineCustomBoolVariable("pg_stash_advice.persist",
+								 "Save and restore advice stash contents across restarts.",
+								 NULL,
+								 &pg_stash_advice_persist,
+								 true,
+								 PGC_POSTMASTER,
+								 0,
+								 NULL,
+								 NULL,
+								 NULL);
+	else
+		pg_stash_advice_persist = false;
+
+	DefineCustomIntVariable("pg_stash_advice.persist_interval",
+							"Interval between advice stash saves, in seconds.",
+							NULL,
+							&pg_stash_advice_persist_interval,
+							30,
+							0,
+							3600,
+							PGC_SIGHUP,
+							GUC_UNIT_S,
+							NULL,
+							NULL,
+							NULL);
+
 	DefineCustomStringVariable("pg_stash_advice.stash_name",
 							   "Name of the advice stash to be used in this session.",
 							   NULL,
@@ -99,6 +130,10 @@ _PG_init(void)
 							   NULL);
 
 	MarkGUCPrefixReserved("pg_stash_advice");
+
+	/* Start the background worker for persistence, if enabled. */
+	if (pg_stash_advice_persist)
+		pgsa_start_worker();
 
 	/* Tell pg_plan_advice that we want to provide advice strings. */
 	add_advisor_fn =
@@ -130,6 +165,10 @@ pgsa_advisor(PlannerGlobal *glob, Query *parse,
 	/* Attach to dynamic shared memory if not already done. */
 	if (unlikely(pgsa_entry_dshash == NULL))
 		pgsa_attach();
+
+	/* If stash data is still being restored from disk, ignore. */
+	if (pg_atomic_unlocked_test_flag(&pgsa_state->stashes_ready))
+		return NULL;
 
 	/*
 	 * Translate pg_stash_advice.stash_name to an integer ID.
@@ -280,6 +319,19 @@ pgsa_attach(void)
 }
 
 /*
+ * Error out if the stashes have not been loaded from disk yet.
+ */
+void
+pgsa_check_lockout(void)
+{
+	if (pg_atomic_unlocked_test_flag(&pgsa_state->stashes_ready))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("stash modifications are not allowed because \"%s\" has not been loaded yet",
+						PGSA_DUMP_FILE)));
+}
+
+/*
  * Check whether an advice stash name is legal, and signal an error if not.
  *
  * Keep this in sync with pgsa_check_stash_name_guc, below.
@@ -383,6 +435,9 @@ pgsa_create_stash(char *stash_name)
 				errmsg("advice stash \"%s\" already exists", stash_name));
 	stash->pgsa_stash_id = pgsa_state->next_stash_id++;
 	dshash_release_lock(pgsa_stash_dshash, stash);
+
+	/* Bump change count. */
+	pg_atomic_add_fetch_u64(&pgsa_state->change_count, 1);
 }
 
 /*
@@ -423,6 +478,9 @@ pgsa_clear_advice_string(char *stash_name, int64 queryId)
 	/* Now we free the advice string as well, if there was one. */
 	if (old_dp != InvalidDsaPointer)
 		dsa_free(pgsa_dsa_area, old_dp);
+
+	/* Bump change count. */
+	pg_atomic_add_fetch_u64(&pgsa_state->change_count, 1);
 }
 
 /*
@@ -464,6 +522,43 @@ pgsa_drop_stash(char *stash_name)
 		}
 	}
 	dshash_seq_term(&iterator);
+
+	/* Bump change count. */
+	pg_atomic_add_fetch_u64(&pgsa_state->change_count, 1);
+}
+
+/*
+ * Remove all stashes and entries from shared memory.
+ *
+ * This is intended to be called before reloading from a dump file, so that
+ * a failed previous attempt doesn't leave stale data behind.
+ */
+void
+pgsa_reset_all_stashes(void)
+{
+	dshash_seq_status iter;
+	pgsa_entry *entry;
+
+	Assert(LWLockHeldByMeInMode(&pgsa_state->lock, LW_EXCLUSIVE));
+
+	/* Remove all stashes. */
+	dshash_seq_init(&iter, pgsa_stash_dshash, true);
+	while (dshash_seq_next(&iter) != NULL)
+		dshash_delete_current(&iter);
+	dshash_seq_term(&iter);
+
+	/* Remove all entries. */
+	dshash_seq_init(&iter, pgsa_entry_dshash, true);
+	while ((entry = dshash_seq_next(&iter)) != NULL)
+	{
+		if (entry->advice_string != InvalidDsaPointer)
+			dsa_free(pgsa_dsa_area, entry->advice_string);
+		dshash_delete_current(&iter);
+	}
+	dshash_seq_term(&iter);
+
+	/* Reset the stash ID counter. */
+	pgsa_state->next_stash_id = UINT64CONST(1);
 }
 
 /*
@@ -483,6 +578,23 @@ pgsa_init_shared_state(void *ptr, void *arg)
 	state->area = DSA_HANDLE_INVALID;
 	state->stash_hash = DSHASH_HANDLE_INVALID;
 	state->entry_hash = DSHASH_HANDLE_INVALID;
+	state->bgworker_pid = InvalidPid;
+	pg_atomic_init_flag(&state->stashes_ready);
+	pg_atomic_init_u64(&state->change_count, 0);
+
+	/*
+	 * If this module was loaded via shared_preload_libraries, then
+	 * pg_stash_advice_persist is a GUC variable. If it's true, that means
+	 * that we should lock out manual stash modifications until the dump file
+	 * has been successfully loaded. If it's false, there's nothing to load,
+	 * so we set stashes_ready immediately.
+	 *
+	 * If this module was not loaded via shared_preload_libraries, then
+	 * pg_stash_advice_persist is not a GUC variable, but it will be false,
+	 * which leads to the correct behavior.
+	 */
+	if (!pg_stash_advice_persist)
+		pg_atomic_test_set_flag(&state->stashes_ready);
 }
 
 /*
@@ -602,4 +714,60 @@ pgsa_set_advice_string(char *stash_name, int64 queryId, char *advice_string)
 	 */
 	if (DsaPointerIsValid(old_dp))
 		dsa_free(pgsa_dsa_area, old_dp);
+
+	/* Bump change count. */
+	pg_atomic_add_fetch_u64(&pgsa_state->change_count, 1);
+}
+
+/*
+ * Start our worker process.
+ */
+void
+pgsa_start_worker(void)
+{
+	BackgroundWorker worker = {0};
+	BackgroundWorkerHandle *handle;
+	BgwHandleStatus status;
+	pid_t		pid;
+
+	worker.bgw_flags = BGWORKER_SHMEM_ACCESS;
+	worker.bgw_start_time = BgWorkerStart_ConsistentState;
+	worker.bgw_restart_time = BGW_DEFAULT_RESTART_INTERVAL;
+	strcpy(worker.bgw_library_name, "pg_stash_advice");
+	strcpy(worker.bgw_function_name, "pg_stash_advice_worker_main");
+	strcpy(worker.bgw_name, "pg_stash_advice worker");
+	strcpy(worker.bgw_type, "pg_stash_advice worker");
+
+	/*
+	 * If process_shared_preload_libraries_in_progress = true, we may be in
+	 * the postmaster, in which case this will really register the worker, or
+	 * we may be in a child process in an EXEC_BACKEND build, in which case it
+	 * will silently do nothing (which is the correct behavior).
+	 */
+	if (process_shared_preload_libraries_in_progress)
+	{
+		RegisterBackgroundWorker(&worker);
+		return;
+	}
+
+	/*
+	 * If process_shared_preload_libraries_in_progress = false, we're being
+	 * asked to start the worker after system startup time. In other words,
+	 * unless this is single-user mode, we're not in the postmaster, so we
+	 * should use RegisterDynamicBackgroundWorker and then wait for startup to
+	 * complete. (If we do happen to be in single-user mode, this will error
+	 * out, which is fine.)
+	 */
+	worker.bgw_notify_pid = MyProcPid;
+	if (!RegisterDynamicBackgroundWorker(&worker, &handle))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("could not register background process"),
+				 errhint("You may need to increase \"max_worker_processes\".")));
+	status = WaitForBackgroundWorkerStartup(handle, &pid);
+	if (status != BGWH_STARTED)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("could not start background process"),
+				 errhint("More details may be available in the server log.")));
 }

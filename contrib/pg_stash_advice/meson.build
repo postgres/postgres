@@ -2,7 +2,8 @@
 
 pg_stash_advice_sources = files(
   'pg_stash_advice.c',
-  'stashfuncs.c'
+  'stashfuncs.c',
+  'stashpersist.c'
 )
 
 if host_system == 'windows'
@@ -32,6 +33,11 @@ tests += {
     'sql': [
       'pg_stash_advice',
       'pg_stash_advice_utf8',
+    ],
+  },
+  'tap': {
+    'tests': [
+      't/001_persist.pl',
     ],
   },
 }

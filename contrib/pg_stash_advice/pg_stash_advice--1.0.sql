@@ -36,8 +36,14 @@ RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_get_advice_stash_contents'
 LANGUAGE C;
 
+CREATE FUNCTION pg_start_stash_advice_worker()
+RETURNS void
+AS 'MODULE_PATHNAME', 'pg_start_stash_advice_worker'
+LANGUAGE C STRICT;
+
 REVOKE ALL ON FUNCTION pg_create_advice_stash(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_drop_advice_stash(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_get_advice_stash_contents(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_get_advice_stashes() FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_set_stashed_advice(text, bigint, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_start_stash_advice_worker() FROM PUBLIC;

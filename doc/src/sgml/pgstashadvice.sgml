@@ -15,10 +15,12 @@
   <link linkend="guc-compute-query-id">query identifiers</link> to plan advice
   strings. Whenever a session is asked to plan a query whose query ID appears
   in the relevant advice stash, the plan advice string is automatically applied
-  to guide planning. Note that advice stashes exist purely in memory. This
-  means both that it is important to be mindful of memory consumption when
-  deciding how much plan advice to stash, and also that advice stashes must
-  be recreated and repopulated whenever the server is restarted.
+  to guide planning. Note that advice stashes are stored in dynamically
+  allocated shared memory. This means both that it is important to be mindful
+  of memory consumption when deciding how much plan advice to stash.
+  Optionally, advice stashes and their contents can automatically be persisted
+  to disk and reloaded from disk; see
+  <literal>pg_stash_advice.persist</literal>, below.
  </para>
 
  <para>
@@ -175,6 +177,28 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>
+     <function>pg_start_stash_advice_worker() returns void</function>
+     <indexterm>
+      <primary>pg_start_stash_advice_worker</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Starts the background worker, so that advice stash contents can be
+      automatically persisted to disk.  If this module is included in
+      <xref linkend="guc-shared-preload-libraries"/> at startup time with
+      <literal>pg_stash_advice.persist = true</literal>, the worker will be
+      started automatically. When started manually, the worker will not load
+      anything from disk, but it will still persist data to disk. You can then
+      configure the server to start the worker automatically after the next
+      restart, preserving any stashed advice you add now.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
 
  </sect2>
@@ -183,6 +207,44 @@
   <title>Configuration Parameters</title>
 
   <variablelist>
+
+   <varlistentry>
+    <term>
+     <varname>pg_stash_advice.persist</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>pg_stash_advice.persist</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Controls whether the advice stashes and stash entries should be
+      persisted to disk. This is on by default. If any stashes are persisted,
+      a file named <literal>pg_stash_advice.tsv</literal> will be created in
+      the data directory. Stashes are loaded and saved using a background
+      worker process.  This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>pg_stash_advice.persist_interval</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>pg_stash_advice.persist_interval</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Specifies the interval, in seconds, between checks for changes that
+      need to be written to <literal>pg_stash_advice.tsv</literal>. If set to
+      zero, changes are only written when the server shuts down. The default
+      value is <literal>30</literal>. This parameter can only be set in the
+      <filename>postgresql.conf</filename> file or on the server command line.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry>
     <term>
