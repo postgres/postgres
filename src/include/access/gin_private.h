@@ -100,7 +100,7 @@ extern void GinInitPage(Page page, uint32 f, Size pageSize);
 extern void GinInitMetabuffer(Buffer b);
 extern Datum *ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 								Datum value, bool isNull,
-								int32 *nentries, GinNullCategory **categories);
+								int32 *nentries_p, GinNullCategory **categories_p);
 
 extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
 extern Datum gintuple_get_key(GinState *ginstate, IndexTuple tuple,

@@ -28,6 +28,7 @@
 #include "utils/index_selfuncs.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
+#include "lib/qunique.h"
 
 
 /*
@@ -389,18 +390,9 @@ GinInitMetabuffer(Buffer b)
 }
 
 /*
- * Support for sorting key datums in ginExtractEntries
- *
- * Note: we only have to worry about null and not-null keys here;
- * ginExtractEntries never generates more than one placeholder null,
- * so it doesn't have to sort those.
+ * Support for sorting key datums and detecting duplicates in
+ * ginExtractEntries
  */
-typedef struct
-{
-	Datum		datum;
-	bool		isnull;
-} keyEntryData;
-
 typedef struct
 {
 	FmgrInfo   *cmpDatumFunc;
@@ -411,24 +403,14 @@ typedef struct
 static int
 cmpEntries(const void *a, const void *b, void *arg)
 {
-	const keyEntryData *aa = (const keyEntryData *) a;
-	const keyEntryData *bb = (const keyEntryData *) b;
+	const Datum *aa = (const Datum *) a;
+	const Datum *bb = (const Datum *) b;
 	cmpEntriesArg *data = (cmpEntriesArg *) arg;
 	int			res;
 
-	if (aa->isnull)
-	{
-		if (bb->isnull)
-			res = 0;			/* NULL "=" NULL */
-		else
-			res = 1;			/* NULL ">" not-NULL */
-	}
-	else if (bb->isnull)
-		res = -1;				/* not-NULL "<" NULL */
-	else
-		res = DatumGetInt32(FunctionCall2Coll(data->cmpDatumFunc,
-											  data->collation,
-											  aa->datum, bb->datum));
+	res = DatumGetInt32(FunctionCall2Coll(data->cmpDatumFunc,
+										  data->collation,
+										  *aa, *bb));
 
 	/*
 	 * Detect if we have any duplicates.  If there are equal keys, qsort must
@@ -441,6 +423,14 @@ cmpEntries(const void *a, const void *b, void *arg)
 	return res;
 }
 
+#define ST_SORT qsort_arg_entries
+#define ST_ELEMENT_TYPE Datum
+#define ST_COMPARE_ARG_TYPE cmpEntriesArg
+#define ST_COMPARE(a, b, arg) cmpEntries(a, b, arg)
+#define ST_SCOPE static
+#define ST_DEFINE
+#define ST_DECLARE
+#include "lib/sort_template.h"
 
 /*
  * Extract the index key values from an indexable item
@@ -451,11 +441,13 @@ cmpEntries(const void *a, const void *b, void *arg)
 Datum *
 ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 				  Datum value, bool isNull,
-				  int32 *nentries, GinNullCategory **categories)
+				  int32 *nentries_p, GinNullCategory **categories_p)
 {
 	Datum	   *entries;
 	bool	   *nullFlags;
-	int32		i;
+	GinNullCategory *categories;
+	bool		hasNull;
+	int32		nentries;
 
 	/*
 	 * We don't call the extractValueFn on a null item.  Instead generate a
@@ -463,42 +455,60 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	 */
 	if (isNull)
 	{
-		*nentries = 1;
+		*nentries_p = 1;
 		entries = palloc_object(Datum);
 		entries[0] = (Datum) 0;
-		*categories = palloc_object(GinNullCategory);
-		(*categories)[0] = GIN_CAT_NULL_ITEM;
+		*categories_p = palloc_object(GinNullCategory);
+		(*categories_p)[0] = GIN_CAT_NULL_ITEM;
 		return entries;
 	}
 
 	/* OK, call the opclass's extractValueFn */
 	nullFlags = NULL;			/* in case extractValue doesn't set it */
+	nentries = 0;
 	entries = (Datum *)
 		DatumGetPointer(FunctionCall3Coll(&ginstate->extractValueFn[attnum - 1],
 										  ginstate->supportCollation[attnum - 1],
 										  value,
-										  PointerGetDatum(nentries),
+										  PointerGetDatum(&nentries),
 										  PointerGetDatum(&nullFlags)));
 
 	/*
 	 * Generate a placeholder if the item contained no keys.
 	 */
-	if (entries == NULL || *nentries <= 0)
+	if (entries == NULL || nentries <= 0)
 	{
-		*nentries = 1;
+		*nentries_p = 1;
 		entries = palloc_object(Datum);
 		entries[0] = (Datum) 0;
-		*categories = palloc_object(GinNullCategory);
-		(*categories)[0] = GIN_CAT_EMPTY_ITEM;
+		*categories_p = palloc_object(GinNullCategory);
+		(*categories_p)[0] = GIN_CAT_EMPTY_ITEM;
 		return entries;
 	}
 
 	/*
-	 * If the extractValueFn didn't create a nullFlags array, create one,
-	 * assuming that everything's non-null.
+	 * Scan the items for any NULLs.  All NULLs are considered equal, so we
+	 * just need to check and remember if there are any.  We remove them from
+	 * the array here, and after deduplication, put back one NULL entry to
+	 * represent them all.
 	 */
-	if (nullFlags == NULL)
-		nullFlags = (bool *) palloc0(*nentries * sizeof(bool));
+	hasNull = false;
+	if (nullFlags)
+	{
+		int32		numNonNulls = 0;
+
+		for (int32 i = 0; i < nentries; i++)
+		{
+			if (nullFlags[i])
+				hasNull = true;
+			else
+			{
+				entries[numNonNulls] = entries[i];
+				numNonNulls++;
+			}
+		}
+		nentries = numNonNulls;
+	}
 
 	/*
 	 * If there's more than one key, sort and unique-ify.
@@ -507,63 +517,36 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	 * pretty bad too.  For small numbers of keys it'd likely be better to use
 	 * a simple insertion sort.
 	 */
-	if (*nentries > 1)
+	if (nentries > 1)
 	{
-		keyEntryData *keydata;
 		cmpEntriesArg arg;
-
-		keydata = palloc_array(keyEntryData, *nentries);
-		for (i = 0; i < *nentries; i++)
-		{
-			keydata[i].datum = entries[i];
-			keydata[i].isnull = nullFlags[i];
-		}
 
 		arg.cmpDatumFunc = &ginstate->compareFn[attnum - 1];
 		arg.collation = ginstate->supportCollation[attnum - 1];
 		arg.haveDups = false;
-		qsort_arg(keydata, *nentries, sizeof(keyEntryData),
-				  cmpEntries, &arg);
+
+		qsort_arg_entries(entries, nentries, &arg);
 
 		if (arg.haveDups)
-		{
-			/* there are duplicates, must get rid of 'em */
-			int32		j;
-
-			entries[0] = keydata[0].datum;
-			nullFlags[0] = keydata[0].isnull;
-			j = 1;
-			for (i = 1; i < *nentries; i++)
-			{
-				if (cmpEntries(&keydata[i - 1], &keydata[i], &arg) != 0)
-				{
-					entries[j] = keydata[i].datum;
-					nullFlags[j] = keydata[i].isnull;
-					j++;
-				}
-			}
-			*nentries = j;
-		}
-		else
-		{
-			/* easy, no duplicates */
-			for (i = 0; i < *nentries; i++)
-			{
-				entries[i] = keydata[i].datum;
-				nullFlags[i] = keydata[i].isnull;
-			}
-		}
-
-		pfree(keydata);
+			nentries = qunique_arg(entries, nentries, sizeof(Datum), cmpEntries, &arg);
 	}
 
 	/*
-	 * Create GinNullCategory representation from nullFlags.
+	 * Create GinNullCategory representation.
 	 */
-	*categories = (GinNullCategory *) palloc0(*nentries * sizeof(GinNullCategory));
-	for (i = 0; i < *nentries; i++)
-		(*categories)[i] = (nullFlags[i] ? GIN_CAT_NULL_KEY : GIN_CAT_NORM_KEY);
+	StaticAssertStmt(GIN_CAT_NORM_KEY == 0, "Assuming GIN_CAT_NORM_KEY=0");
+	categories = palloc0_array(GinNullCategory, nentries + (hasNull ? 1 : 0));
 
+	/* Put back a NULL entry, if there were any */
+	if (hasNull)
+	{
+		entries[nentries] = (Datum) 0;
+		categories[nentries] = GIN_CAT_NULL_KEY;
+		nentries++;
+	}
+
+	*nentries_p = nentries;
+	*categories_p = categories;
 	return entries;
 }
 
