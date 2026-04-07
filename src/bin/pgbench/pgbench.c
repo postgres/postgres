@@ -6820,6 +6820,9 @@ main(int argc, char **argv)
 	int			exit_code = 0;
 	struct timeval tv;
 
+	/* initialize timing infrastructure (required for INSTR_* calls) */
+	pg_initialize_timing();
+
 	/*
 	 * Record difference between Unix time and instr_time time.  We'll use
 	 * this for logging and aggregation.

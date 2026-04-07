@@ -22,7 +22,7 @@
  *
  * INSTR_TIME_ADD(x, y)				x += y
  *
- * INSTR_TIME_ADD_NANOSEC(t, n)		x += y in nanoseconds (converts to ticks)
+ * INSTR_TIME_ADD_NANOSEC(t, n)		t += n in nanoseconds (converts to ticks)
  *
  * INSTR_TIME_SUBTRACT(x, y)		x -= y
  *
@@ -80,11 +80,37 @@ typedef struct instr_time
 #define NS_PER_MS	INT64CONST(1000000)
 #define NS_PER_US	INT64CONST(1000)
 
+/* Shift amount for fixed-point ticks-to-nanoseconds conversion. */
+#define TICKS_TO_NS_SHIFT 14
+
+/*
+ * PG_INSTR_TICKS_TO_NS controls whether pg_ticks_to_ns/pg_ns_to_ticks needs to
+ * check ticks_per_ns_scaled and potentially convert ticks <=> nanoseconds.
+ */
+#ifdef WIN32
+#define PG_INSTR_TICKS_TO_NS 1
+#else
+#define PG_INSTR_TICKS_TO_NS 0
+#endif
+
+/*
+ * Variables used to translate ticks to nanoseconds, initialized by
+ * pg_initialize_timing.
+ */
+extern PGDLLIMPORT uint64 ticks_per_ns_scaled;
+extern PGDLLIMPORT uint64 max_ticks_no_overflow;
+extern PGDLLIMPORT bool timing_initialized;
+
+/*
+ * Initialize timing infrastructure
+ *
+ * This must be called at least once before using INSTR_TIME_SET_CURRENT* macros.
+ */
+extern void pg_initialize_timing(void);
 
 #ifndef WIN32
 
-
-/* Use clock_gettime() */
+/* On POSIX, use clock_gettime() for system clock source */
 
 #include <time.h>
 
@@ -108,12 +134,13 @@ typedef struct instr_time
 #define PG_INSTR_CLOCK	CLOCK_REALTIME
 #endif
 
-/* helper for INSTR_TIME_SET_CURRENT */
 static inline instr_time
-pg_clock_gettime_ns(void)
+pg_get_ticks(void)
 {
 	instr_time	now;
 	struct timespec tmp;
+
+	Assert(timing_initialized);
 
 	clock_gettime(PG_INSTR_CLOCK, &tmp);
 	now.ticks = tmp.tv_sec * NS_PER_S + tmp.tv_nsec;
@@ -121,27 +148,17 @@ pg_clock_gettime_ns(void)
 	return now;
 }
 
-#define INSTR_TIME_SET_CURRENT(t) \
-	((t) = pg_clock_gettime_ns())
-
-#define INSTR_TIME_GET_NANOSEC(t) \
-	((int64) (t).ticks)
-
-#define INSTR_TIME_ADD_NANOSEC(t, n) \
-	((t).ticks += (n))
-
-
 #else							/* WIN32 */
 
+/* On Windows, use QueryPerformanceCounter() for system clock source */
 
-/* Use QueryPerformanceCounter() */
-
-/* helper for INSTR_TIME_SET_CURRENT */
 static inline instr_time
-pg_query_performance_counter(void)
+pg_get_ticks(void)
 {
 	instr_time	now;
 	LARGE_INTEGER tmp;
+
+	Assert(timing_initialized);
 
 	QueryPerformanceCounter(&tmp);
 	now.ticks = tmp.QuadPart;
@@ -149,26 +166,87 @@ pg_query_performance_counter(void)
 	return now;
 }
 
-static inline double
-GetTimerFrequency(void)
-{
-	LARGE_INTEGER f;
-
-	QueryPerformanceFrequency(&f);
-	return (double) f.QuadPart;
-}
-
-#define INSTR_TIME_SET_CURRENT(t) \
-	((t) = pg_query_performance_counter())
-
-#define INSTR_TIME_GET_NANOSEC(t) \
-	((int64) ((t).ticks * ((double) NS_PER_S / GetTimerFrequency())))
-
-#define INSTR_TIME_ADD_NANOSEC(t, n) \
-	((t).ticks += ((n) / ((double) NS_PER_S / GetTimerFrequency())))
-
 #endif							/* WIN32 */
 
+static inline int64
+pg_ticks_to_ns(int64 ticks)
+{
+#if PG_INSTR_TICKS_TO_NS
+	int64		ns = 0;
+
+	Assert(timing_initialized);
+
+	/*
+	 * Avoid doing work if we don't use scaled ticks, e.g. system clock on
+	 * Unix (in that case ticks is counted in nanoseconds)
+	 */
+	if (ticks_per_ns_scaled == 0)
+		return ticks;
+
+	/*
+	 * Would multiplication overflow? If so perform computation in two parts.
+	 */
+	if (unlikely(ticks > (int64) max_ticks_no_overflow))
+	{
+		/*
+		 * To avoid overflow, first scale total ticks down by the fixed
+		 * factor, and *afterwards* multiply them by the frequency-based scale
+		 * factor.
+		 *
+		 * The remaining ticks can follow the regular formula, since they
+		 * won't overflow.
+		 */
+		int64		count = ticks >> TICKS_TO_NS_SHIFT;
+
+		ns = count * ticks_per_ns_scaled;
+		ticks -= (count << TICKS_TO_NS_SHIFT);
+	}
+
+	ns += (ticks * ticks_per_ns_scaled) >> TICKS_TO_NS_SHIFT;
+
+	return ns;
+#else
+	Assert(timing_initialized);
+
+	return ticks;
+#endif							/* PG_INSTR_TICKS_TO_NS */
+}
+
+static inline int64
+pg_ns_to_ticks(int64 ns)
+{
+#if PG_INSTR_TICKS_TO_NS
+	int64		ticks = 0;
+
+	Assert(timing_initialized);
+
+	/*
+	 * If ticks_per_ns_scaled is zero, ticks are already in nanoseconds (e.g.
+	 * system clock on Unix).
+	 */
+	if (ticks_per_ns_scaled == 0)
+		return ns;
+
+	/*
+	 * The reverse of pg_ticks_to_ns to avoid a similar overflow problem.
+	 */
+	if (unlikely(ns > (INT64_MAX >> TICKS_TO_NS_SHIFT)))
+	{
+		int64		count = ns / ticks_per_ns_scaled;
+
+		ticks = count << TICKS_TO_NS_SHIFT;
+		ns -= count * ticks_per_ns_scaled;
+	}
+
+	ticks += (ns << TICKS_TO_NS_SHIFT) / ticks_per_ns_scaled;
+
+	return ticks;
+#else
+	Assert(timing_initialized);
+
+	return ns;
+#endif							/* PG_INSTR_TICKS_TO_NS */
+}
 
 /*
  * Common macros
@@ -178,9 +256,15 @@ GetTimerFrequency(void)
 
 #define INSTR_TIME_SET_ZERO(t)	((t).ticks = 0)
 
+#define INSTR_TIME_SET_CURRENT(t) \
+	((t) = pg_get_ticks())
+
 
 #define INSTR_TIME_ADD(x,y) \
 	((x).ticks += (y).ticks)
+
+#define INSTR_TIME_ADD_NANOSEC(t, n) \
+	((t).ticks += pg_ns_to_ticks(n))
 
 #define INSTR_TIME_SUBTRACT(x,y) \
 	((x).ticks -= (y).ticks)
@@ -190,6 +274,9 @@ GetTimerFrequency(void)
 
 #define INSTR_TIME_GT(x,y) \
 	((x).ticks > (y).ticks)
+
+#define INSTR_TIME_GET_NANOSEC(t) \
+	(pg_ticks_to_ns((t).ticks))
 
 #define INSTR_TIME_GET_DOUBLE(t) \
 	((double) INSTR_TIME_GET_NANOSEC(t) / NS_PER_S)

@@ -349,3 +349,10 @@ SET ROLE regress_multixact_funcs;
 SELECT oldest_multixact IS NULL AS null_result FROM pg_get_multixact_stats();
 RESET ROLE;
 DROP ROLE regress_multixact_funcs;
+
+-- test instr_time nanosecond<->ticks conversion
+CREATE FUNCTION test_instr_time()
+    RETURNS bool
+    AS :'regresslib'
+    LANGUAGE C;
+SELECT test_instr_time();

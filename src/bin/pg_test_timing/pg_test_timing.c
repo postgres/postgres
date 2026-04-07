@@ -43,6 +43,9 @@ main(int argc, char *argv[])
 
 	handle_args(argc, argv);
 
+	/* initialize timing infrastructure (required for INSTR_* calls) */
+	pg_initialize_timing();
+
 	loop_count = test_timing(test_duration);
 
 	output(loop_count);

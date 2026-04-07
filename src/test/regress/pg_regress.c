@@ -2181,6 +2181,8 @@ regression_main(int argc, char *argv[],
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_regress"));
 
+	pg_initialize_timing();
+
 	get_restricted_token();
 
 	atexit(stop_postmaster);

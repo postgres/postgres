@@ -38,6 +38,7 @@
 #include "optimizer/plancat.h"
 #include "parser/parse_coerce.h"
 #include "port/atomics.h"
+#include "portability/instr_time.h"
 #include "postmaster/postmaster.h"	/* for MAX_BACKENDS */
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"
@@ -1383,4 +1384,39 @@ test_translation(PG_FUNCTION_ARGS)
 			errmsg("translated PRIXPTR = %" PRIXPTR, (uintptr_t) 9999));
 
 	PG_RETURN_VOID();
+}
+
+/* Verify that pg_ticks_to_ns behaves correct, including overflow */
+PG_FUNCTION_INFO_V1(test_instr_time);
+Datum
+test_instr_time(PG_FUNCTION_ARGS)
+{
+	instr_time	t;
+	int64		test_ns[] = {0, 1000, INT64CONST(1000000000000000)};
+	int64		max_err;
+
+	/*
+	 * The ns-to-ticks-to-ns roundtrip may lose precision due to integer
+	 * truncation in the fixed-point conversion. The maximum error depends on
+	 * ticks_per_ns_scaled relative to the shift factor.
+	 */
+	max_err = (ticks_per_ns_scaled >> TICKS_TO_NS_SHIFT) + 1;
+
+	for (int i = 0; i < lengthof(test_ns); i++)
+	{
+		int64		result;
+
+		INSTR_TIME_SET_ZERO(t);
+		INSTR_TIME_ADD_NANOSEC(t, test_ns[i]);
+		result = INSTR_TIME_GET_NANOSEC(t);
+
+		if (result < test_ns[i] - max_err || result > test_ns[i])
+			elog(ERROR,
+				 "INSTR_TIME_GET_NANOSEC(t) yielded " INT64_FORMAT
+				 ", expected " INT64_FORMAT " (max_err " INT64_FORMAT
+				 ") in file \"%s\" line %u",
+				 result, test_ns[i], max_err, __FILE__, __LINE__);
+	}
+
+	PG_RETURN_BOOL(true);
 }
