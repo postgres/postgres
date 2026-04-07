@@ -342,8 +342,8 @@ export_initial_snapshot(Snapshot snapshot, DecodingWorkerShared *shared)
 	/* To make restoration easier, write the snapshot size first. */
 	BufFileWrite(file, &snap_size, sizeof(snap_size));
 	BufFileWrite(file, snap_space, snap_size);
-	pfree(snap_space);
 	BufFileClose(file);
+	pfree(snap_space);
 
 	/* Increase the counter to tell the backend that the file is available. */
 	SpinLockAcquire(&shared->mutex);

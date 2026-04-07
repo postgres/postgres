@@ -1735,7 +1735,7 @@ EstimateSnapshotSpace(Snapshot snapshot)
 void
 SerializeSnapshot(Snapshot snapshot, char *start_address)
 {
-	SerializedSnapshotData serialized_snapshot;
+	SerializedSnapshotData serialized_snapshot = {0};
 
 	Assert(snapshot->subxcnt >= 0);
 
