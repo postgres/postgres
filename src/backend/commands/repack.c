@@ -2943,7 +2943,7 @@ initialize_change_context(ChangeContext *chgcxt,
 			ScanKeyInit(entry,
 						i + 1,
 						BTEqualStrategyNumber, opcode,
-						(Datum) NULL);
+						(Datum) 0);
 			entry->sk_collation = chgcxt->cc_ident_index->rd_indcollation[i];
 		}
 	}
