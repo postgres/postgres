@@ -241,9 +241,8 @@ x86_tsc_frequency_khz(void)
 static uint32
 x86_hypervisor_tsc_frequency_khz(void)
 {
-	unsigned int reg[4] = {0};
-
 #if defined(HAVE__CPUIDEX)
+	unsigned int reg[4] = {0};
 
 	/*
 	 * The hypervisor is determined using the 0x40000000 Hypervisor
