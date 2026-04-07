@@ -19,6 +19,9 @@ ISOLATION = basic \
 	    syscache-update-pruned \
 	    heap_lock_update
 
+# some isolation tests require wal_level=replica
+ISOLATION_OPTS = --temp-config $(top_srcdir)/src/test/modules/injection_points/extra.conf
+
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1
 
