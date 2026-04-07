@@ -36,9 +36,9 @@ sub setup_sessions
 	$s2 = $node->background_psql('postgres');
 
 	# Setup injection points for the waiting session
-	$s2->query_safe(
-		q[
-			SELECT injection_points_set_local();
+	$s2->query_until(
+		qr/attaching_injection_point/, q[
+			\echo attaching_injection_point
 			SELECT injection_points_attach('deadlock-timeout-fired', 'wait');
 		]);
 }
@@ -64,10 +64,11 @@ sub wait_and_detach
 	my ($node, $point_name) = @_;
 
 	$node->wait_for_event('client backend', $point_name);
-	$node->safe_psql('postgres',
-		"SELECT injection_points_detach('$point_name');");
-	$node->safe_psql('postgres',
-		"SELECT injection_points_wakeup('$point_name');");
+	$node->safe_psql(
+		'postgres', qq[
+SELECT injection_points_detach('$point_name');
+SELECT injection_points_wakeup('$point_name');
+]);
 }
 
 # Node initialization
