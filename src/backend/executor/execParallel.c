@@ -303,6 +303,9 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 			if (planstate->plan->parallel_aware)
 				ExecBitmapHeapEstimate((BitmapHeapScanState *) planstate,
 									   e->pcxt);
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecBitmapHeapInstrumentEstimate((BitmapHeapScanState *) planstate,
+											 e->pcxt);
 			break;
 		case T_HashJoinState:
 			if (planstate->plan->parallel_aware)
@@ -541,6 +544,9 @@ ExecParallelInitializeDSM(PlanState *planstate,
 		case T_BitmapHeapScanState:
 			if (planstate->plan->parallel_aware)
 				ExecBitmapHeapInitializeDSM((BitmapHeapScanState *) planstate,
+											d->pcxt);
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecBitmapHeapInstrumentInitDSM((BitmapHeapScanState *) planstate,
 											d->pcxt);
 			break;
 		case T_HashJoinState:
@@ -1426,6 +1432,9 @@ ExecParallelInitializeWorker(PlanState *planstate, ParallelWorkerContext *pwcxt)
 		case T_BitmapHeapScanState:
 			if (planstate->plan->parallel_aware)
 				ExecBitmapHeapInitializeWorker((BitmapHeapScanState *) planstate,
+											   pwcxt);
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecBitmapHeapInstrumentInitWorker((BitmapHeapScanState *) planstate,
 											   pwcxt);
 			break;
 		case T_HashJoinState:

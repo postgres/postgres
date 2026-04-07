@@ -3948,7 +3948,7 @@ show_tidbitmap_info(BitmapHeapScanState *planstate, ExplainState *es)
 	}
 
 	/* Display stats for each parallel worker */
-	if (planstate->pstate != NULL)
+	if (planstate->sinstrument != NULL)
 	{
 		for (int n = 0; n < planstate->sinstrument->num_workers; n++)
 		{
