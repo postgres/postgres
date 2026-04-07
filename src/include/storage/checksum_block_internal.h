@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * checksum_block.inc.c
+ * checksum_block_internal.h
  *	  Core algorithm for page checksums, semi-private to checksum_impl.h
  *	  and checksum.c.
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/storage/checksum_block.inc.c
+ * src/include/storage/checksum_block_internal.h
  *
  *-------------------------------------------------------------------------
  */
 
-/* there is deliberately not an #ifndef CHECKSUM_BLOCK_INC_C here */
+/* there is deliberately not an #ifndef CHECKSUM_BLOCK_INTERNAL_H here */
 
 uint32		sums[N_SUMS];
 uint32		result = 0;

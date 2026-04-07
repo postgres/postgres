@@ -30,7 +30,7 @@
 static uint32
 pg_checksum_block_fallback(const PGChecksummablePage *page)
 {
-#include "storage/checksum_block.inc.c"
+#include "storage/checksum_block_internal.h"
 }
 
 /*
@@ -41,7 +41,7 @@ pg_attribute_target("avx2")
 static uint32
 pg_checksum_block_avx2(const PGChecksummablePage *page)
 {
-#include "storage/checksum_block.inc.c"
+#include "storage/checksum_block_internal.h"
 }
 #endif							/* USE_AVX2_WITH_RUNTIME_CHECK */
 

@@ -153,7 +153,7 @@ static uint32 (*pg_checksum_block) (const PGChecksummablePage *page);
 static uint32
 pg_checksum_block(const PGChecksummablePage *page)
 {
-#include "storage/checksum_block.inc.c"
+#include "storage/checksum_block_internal.h"
 }
 
 #endif
