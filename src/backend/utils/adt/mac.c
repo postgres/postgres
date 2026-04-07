@@ -14,11 +14,9 @@
 #include "postgres.h"
 
 #include "common/hashfn.h"
-#include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
 #include "port/pg_bswap.h"
 #include "utils/fmgrprotos.h"
-#include "utils/guc.h"
 #include "utils/inet.h"
 #include "utils/sortsupport.h"
 
@@ -32,15 +30,6 @@
 
 #define lobits(addr) \
   ((unsigned long)(((addr)->d<<16)|((addr)->e<<8)|((addr)->f)))
-
-/* sortsupport for macaddr */
-typedef struct
-{
-	int64		input_count;	/* number of non-null values seen */
-	bool		estimating;		/* true if estimating cardinality */
-
-	hyperLogLogState abbr_card; /* cardinality estimator */
-} macaddr_sortsupport_state;
 
 static int	macaddr_cmp_internal(macaddr *a1, macaddr *a2);
 static int	macaddr_fast_cmp(Datum x, Datum y, SortSupport ssup);
@@ -369,24 +358,10 @@ macaddr_sortsupport(PG_FUNCTION_ARGS)
 
 	if (ssup->abbreviate)
 	{
-		macaddr_sortsupport_state *uss;
-		MemoryContext oldcontext;
-
-		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
-
-		uss = palloc_object(macaddr_sortsupport_state);
-		uss->input_count = 0;
-		uss->estimating = true;
-		initHyperLogLog(&uss->abbr_card, 10);
-
-		ssup->ssup_extra = uss;
-
 		ssup->comparator = ssup_datum_unsigned_cmp;
 		ssup->abbrev_converter = macaddr_abbrev_convert;
 		ssup->abbrev_abort = macaddr_abbrev_abort;
 		ssup->abbrev_full_comparator = macaddr_fast_cmp;
-
-		MemoryContextSwitchTo(oldcontext);
 	}
 
 	PG_RETURN_VOID();
@@ -406,61 +381,13 @@ macaddr_fast_cmp(Datum x, Datum y, SortSupport ssup)
 }
 
 /*
- * Callback for estimating effectiveness of abbreviated key optimization.
- *
- * We pay no attention to the cardinality of the non-abbreviated data, because
- * there is no equality fast-path within authoritative macaddr comparator.
+ * Abbreviation is never aborted for macaddr because the 6-byte MAC address
+ * fits entirely within a 64-bit Datum, making the abbreviated key
+ * authoritative.
  */
 static bool
 macaddr_abbrev_abort(int memtupcount, SortSupport ssup)
 {
-	macaddr_sortsupport_state *uss = ssup->ssup_extra;
-	double		abbr_card;
-
-	if (memtupcount < 10000 || uss->input_count < 10000 || !uss->estimating)
-		return false;
-
-	abbr_card = estimateHyperLogLog(&uss->abbr_card);
-
-	/*
-	 * If we have >100k distinct values, then even if we were sorting many
-	 * billion rows we'd likely still break even, and the penalty of undoing
-	 * that many rows of abbrevs would probably not be worth it. At this point
-	 * we stop counting because we know that we're now fully committed.
-	 */
-	if (abbr_card > 100000.0)
-	{
-		if (trace_sort)
-			elog(LOG,
-				 "macaddr_abbrev: estimation ends at cardinality %f"
-				 " after " INT64_FORMAT " values (%d rows)",
-				 abbr_card, uss->input_count, memtupcount);
-		uss->estimating = false;
-		return false;
-	}
-
-	/*
-	 * Target minimum cardinality is 1 per ~2k of non-null inputs. 0.5 row
-	 * fudge factor allows us to abort earlier on genuinely pathological data
-	 * where we've had exactly one abbreviated value in the first 2k
-	 * (non-null) rows.
-	 */
-	if (abbr_card < uss->input_count / 2000.0 + 0.5)
-	{
-		if (trace_sort)
-			elog(LOG,
-				 "macaddr_abbrev: aborting abbreviation at cardinality %f"
-				 " below threshold %f after " INT64_FORMAT " values (%d rows)",
-				 abbr_card, uss->input_count / 2000.0 + 0.5, uss->input_count,
-				 memtupcount);
-		return true;
-	}
-
-	if (trace_sort)
-		elog(LOG,
-			 "macaddr_abbrev: cardinality %f after " INT64_FORMAT
-			 " values (%d rows)", abbr_card, uss->input_count, memtupcount);
-
 	return false;
 }
 
@@ -469,14 +396,13 @@ macaddr_abbrev_abort(int memtupcount, SortSupport ssup)
  * to abbreviated key representation.
  *
  * Packs the bytes of a 6-byte MAC address into a Datum and treats it as an
- * unsigned integer for purposes of comparison. On a 64-bit machine, there
- * will be two zeroed bytes of padding. The integer is converted to native
- * endianness to facilitate easy comparison.
+ * unsigned integer for purposes of comparison. There will be two zeroed bytes
+ * of padding. The integer is converted to native endianness to facilitate
+ * easy comparison.
  */
 static Datum
 macaddr_abbrev_convert(Datum original, SortSupport ssup)
 {
-	macaddr_sortsupport_state *uss = ssup->ssup_extra;
 	macaddr    *authoritative = DatumGetMacaddrP(original);
 	Datum		res;
 
@@ -489,21 +415,6 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 					 "Datum is too small for macaddr");
 	memset(&res, 0, sizeof(res));
 	memcpy(&res, authoritative, sizeof(macaddr));
-	uss->input_count += 1;
-
-	/*
-	 * Cardinality estimation. The estimate uses uint32, so XOR the two 32-bit
-	 * halves together to produce slightly more entropy. The two zeroed bytes
-	 * won't have any practical impact on this operation.
-	 */
-	if (uss->estimating)
-	{
-		uint32		tmp;
-
-		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
-
-		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
-	}
 
 	/*
 	 * Byteswap on little-endian machines.
