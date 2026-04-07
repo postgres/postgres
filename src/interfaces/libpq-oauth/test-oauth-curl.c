@@ -89,7 +89,7 @@ init_test_actx(void)
 
 	actx->mux = PGINVALID_SOCKET;
 	actx->timerfd = -1;
-	actx->debugging = true;
+	actx->debug_flags = OAUTHDEBUG_LEGACY_UNSAFE;
 
 	initPQExpBuffer(&actx->errbuf);
 

@@ -156,6 +156,8 @@ do
 	test "$f" = src/include/catalog/syscache_ids.h && continue
 	test "$f" = src/include/catalog/syscache_info.h && continue
 
+	test "$f" = src/interfaces/libpq/oauth-debug.h && continue
+
 	# We can't make these Bison output files compilable standalone
 	# without using "%code require", which old Bison versions lack.
 	# parser/gram.h will be included by parser/gramparse.h anyway.

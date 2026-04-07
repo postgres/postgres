@@ -93,6 +93,21 @@ $node->connect_fails(
 	  qr@OAuth discovery URI "\Q$issuer\E/.well-known/openid-configuration" must use HTTPS@
 );
 
+{
+	# PGOAUTHDEBUG=http should have no effect (it needs an UNSAFE: marker).
+	local $ENV{PGOAUTHDEBUG} = "http";
+
+	$node->connect_fails(
+		"user=test dbname=postgres oauth_issuer=$issuer oauth_client_id=f02c6361-0635",
+		"HTTPS is required without debug mode (bad PGOAUTHDEBUG value)",
+		expected_stderr => qr[
+			^WARNING: .* \Qoption "http" is unsafe\E
+			.*
+			\QOAuth discovery URI "$issuer/.well-known/openid-configuration" must use HTTPS\E
+		]msx
+	);
+}
+
 # Switch to HTTPS.
 $issuer = "https://127.0.0.1:$port";
 
@@ -172,8 +187,11 @@ $node->connect_ok(
 	],
 	log_unlike => [qr/FATAL.*OAuth bearer authentication failed/]);
 
-# Enable PGOAUTHDEBUG for all remaining tests.
-$ENV{PGOAUTHDEBUG} = "UNSAFE";
+# Enable some debugging features for all remaining tests:
+# - trace, for detailed Curl logs on failure
+# - dos-endpoint, to speed up the three-way handshake
+# - call-count, for our later sanity check
+$ENV{PGOAUTHDEBUG} = "UNSAFE:trace,dos-endpoint,call-count";
 
 # The /alternate issuer uses slightly different parameters, along with an
 # OAuth-style discovery document.

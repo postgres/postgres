@@ -10643,35 +10643,104 @@ typedef struct
    </para>
 
    <para>
-    A "dangerous debugging mode" may be enabled by setting the environment
-    variable <envar>PGOAUTHDEBUG=UNSAFE</envar>. This functionality is provided
-    for ease of local development and testing only. It does several things that
-    you will not want a production system to do:
+    Debug features may be enabled by setting the <envar>PGOAUTHDEBUG</envar>
+    environment variable. This functionality is provided for ease of local
+    development and testing. The variable accepts a comma-separated list of
+    debug options:
 
-    <itemizedlist spacing="compact">
-     <listitem>
-      <para>
-       permits the use of unencrypted HTTP during the OAuth provider exchange
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       prints HTTP traffic (containing several critical secrets) to standard
-       error during the OAuth flow
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       permits the use of zero-second retry intervals, which can cause the
-       client to busy-loop and pointlessly consume CPU
-      </para>
-     </listitem>
-    </itemizedlist>
+    <programlisting>
+PGOAUTHDEBUG=option1,option2,...         <lineannotation>for safe options only</lineannotation>
+PGOAUTHDEBUG=UNSAFE:option1,option2,...  <lineannotation>when using unsafe options</lineannotation>
+PGOAUTHDEBUG=UNSAFE                      <lineannotation>legacy format; enables all options</lineannotation>
+    </programlisting>
    </para>
+
+   <para>
+    Available debug options:
+
+    <variablelist>
+     <varlistentry>
+      <term><literal>http</literal> (unsafe)</term>
+      <listitem>
+       <para>
+        Permits the use of unencrypted HTTP during the OAuth provider exchange.
+        This allows OAuth credentials to be transmitted over unencrypted
+        connections, which is extremely dangerous and should only be used for
+        local testing.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>trace</literal> (unsafe)</term>
+      <listitem>
+       <para>
+        Prints HTTP traffic to standard error during the OAuth flow. This output
+        contains critical secrets including bearer tokens, client secrets, access
+        tokens, and authorization codes. Never share this output with third
+        parties.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>dos-endpoint</literal> (unsafe)</term>
+      <listitem>
+       <para>
+        Permits the use of zero-second retry intervals instead of the normal
+        minimum of one second. This speeds up tests, but in normal operation it
+        will cause the client to busy-loop, consuming CPU and network resources.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>call-count</literal> (safe)</term>
+      <listitem>
+       <para>
+        Prints the total number of calls to the flow plugin to standard error
+        when the OAuth flow completes. This helps developers debug the async
+        callback behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>plugin-errors</literal> (safe)</term>
+      <listitem>
+       <para>
+        Prints plugin loading errors to standard error. This helps developers
+        and package maintainers debug issues when the OAuth plugin fails to load.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Unsafe options (<literal>http</literal>, <literal>trace</literal>,
+    <literal>dos-endpoint</literal>) require the <literal>UNSAFE:</literal> prefix.
+    If unsafe options are specified without this prefix, or if an option name is
+    unrecognized, a warning is printed to standard error and that option is
+    ignored. Other valid options in the list continue to work. Safe options
+    (<literal>call-count</literal>, <literal>plugin-errors</literal>) can be
+    used without the prefix.
+   </para>
+
+   <para>
+    Examples:
+    <programlisting>
+PGOAUTHDEBUG=call-count              <lineannotation>safe options only</lineannotation>
+PGOAUTHDEBUG=UNSAFE:http,trace       <lineannotation>enable HTTP and traffic logging</lineannotation>
+PGOAUTHDEBUG=UNSAFE:http,call-count  <lineannotation>mix of unsafe and safe</lineannotation>
+    </programlisting>
+   </para>
+
    <warning>
     <para>
-     Do not share the output of the OAuth flow traffic with third parties. It
-     contains secrets that can be used to attack your clients and servers.
+     Never use unsafe debug options in production environments. They expose
+     secrets and behaviors that can be used to attack your clients and servers.
+     Do not share <literal>trace</literal> output with third parties.
     </para>
    </warning>
   </sect2>

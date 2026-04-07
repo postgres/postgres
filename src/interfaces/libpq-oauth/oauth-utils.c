@@ -76,17 +76,6 @@ libpq_gettext(const char *msgid)
 #endif							/* ENABLE_NLS */
 
 /*
- * Returns true if the PGOAUTHDEBUG=UNSAFE flag is set in the environment.
- */
-bool
-oauth_unsafe_debugging_enabled(void)
-{
-	const char *env = getenv("PGOAUTHDEBUG");
-
-	return (env && strcmp(env, "UNSAFE") == 0);
-}
-
-/*
  * Duplicate SOCK_ERRNO* definitions from libpq-int.h, for use by
  * pq_block/reset_sigpipe().
  */

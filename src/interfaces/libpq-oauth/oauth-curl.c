@@ -49,6 +49,12 @@
 
 #endif							/* USE_DYNAMIC_OAUTH */
 
+/*
+ * oauth-debug.h needs the declaration of libpq_gettext(), from one of the above
+ * sources.
+ */
+#include "oauth-debug.h"
+
 /* One final guardrail against accidental inclusion... */
 #if defined(USE_DYNAMIC_OAUTH) && defined(LIBPQ_INT_H)
 #error do not rely on libpq-int.h in dynamic builds of libpq-oauth
@@ -274,7 +280,7 @@ struct async_ctx
 	int			running;		/* is asynchronous work in progress? */
 	bool		user_prompted;	/* have we already sent the authz prompt? */
 	bool		used_basic_auth;	/* did we send a client secret? */
-	bool		debugging;		/* can we give unsafe developer assistance? */
+	uint32		debug_flags;	/* can we give developer assistance? */
 	int			dbg_num_calls;	/* (debug mode) how many times were we called? */
 };
 
@@ -1023,7 +1029,7 @@ parse_interval(struct async_ctx *actx, const char *interval_str)
 	parsed = ceil(parsed);
 
 	if (parsed < 1)
-		return actx->debugging ? 0 : 1;
+		return (actx->debug_flags & OAUTHDEBUG_UNSAFE_DOS_ENDPOINT) ? 0 : 1;
 
 	else if (parsed >= INT_MAX)
 		return INT_MAX;
@@ -1797,7 +1803,7 @@ setup_curl_handles(struct async_ctx *actx)
 	 */
 	CHECK_SETOPT(actx, CURLOPT_NOSIGNAL, 1L, return false);
 
-	if (actx->debugging)
+	if (actx->debug_flags & OAUTHDEBUG_UNSAFE_TRACE)
 	{
 		/*
 		 * Set a callback for retrieving error information from libcurl, the
@@ -1829,7 +1835,7 @@ setup_curl_handles(struct async_ctx *actx)
 		const long	unsafe = CURLPROTO_HTTPS | CURLPROTO_HTTP;
 #endif
 
-		if (actx->debugging)
+		if (actx->debug_flags & OAUTHDEBUG_UNSAFE_HTTP)
 			protos = unsafe;
 
 		CHECK_SETOPT(actx, popt, protos, return false);
@@ -2297,7 +2303,7 @@ check_for_device_flow(struct async_ctx *actx)
 	 * decent time to bail out if we're not using HTTPS for the endpoints
 	 * we'll use for the flow.
 	 */
-	if (!actx->debugging)
+	if ((actx->debug_flags & OAUTHDEBUG_UNSAFE_HTTP) == 0)
 	{
 		if (pg_strncasecmp(provider->device_authorization_endpoint,
 						   HTTPS_SCHEME, strlen(HTTPS_SCHEME)) != 0)
@@ -3027,7 +3033,7 @@ pg_fe_run_oauth_flow(PGconn *conn, struct PGoauthBearerRequest *request,
 	 * drain_timer_events(), when we're in debug mode, track the total number
 	 * of calls to this function and print that at the end of the flow.
 	 */
-	if (actx->debugging)
+	if (actx->debug_flags & OAUTHDEBUG_CALL_COUNT)
 	{
 		actx->dbg_num_calls++;
 		if (result == PGRES_POLLING_OK || result == PGRES_POLLING_FAILED)
@@ -3087,8 +3093,8 @@ pg_start_oauthbearer(PGconn *conn, PGoauthBearerRequestV2 *request)
 	 * Now finish filling in the actx.
 	 */
 
-	/* Should we enable unsafe features? */
-	actx->debugging = oauth_unsafe_debugging_enabled();
+	/* Parse debug flags from the environment. */
+	actx->debug_flags = oauth_parse_debug_flags();
 
 	initPQExpBuffer(&actx->work_data);
 	initPQExpBuffer(&actx->errbuf);

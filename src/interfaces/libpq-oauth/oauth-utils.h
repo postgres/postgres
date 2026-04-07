@@ -35,7 +35,6 @@ typedef enum
 	PG_BOOL_NO					/* No (false) */
 } PGTernaryBool;
 
-extern bool oauth_unsafe_debugging_enabled(void);
 extern int	pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
 extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending, bool got_epipe);
 

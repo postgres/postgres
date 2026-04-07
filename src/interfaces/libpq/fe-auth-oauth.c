@@ -26,6 +26,7 @@
 #include "fe-auth.h"
 #include "fe-auth-oauth.h"
 #include "mb/pg_wchar.h"
+#include "oauth-debug.h"
 #include "pg_config_paths.h"
 #include "utils/memdebug.h"
 
@@ -389,7 +390,7 @@ issuer_from_well_known_uri(PGconn *conn, const char *wkuri)
 		authority_start = wkuri + strlen(HTTPS_SCHEME);
 
 	if (!authority_start
-		&& oauth_unsafe_debugging_enabled()
+		&& (oauth_parse_debug_flags() & OAUTHDEBUG_UNSAFE_HTTP)
 		&& pg_strncasecmp(wkuri, HTTP_SCHEME, strlen(HTTP_SCHEME)) == 0)
 	{
 		/* Allow http:// for testing only. */
@@ -900,7 +901,7 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *re
 		 *
 		 * Note that POSIX dlerror() isn't guaranteed to be threadsafe.
 		 */
-		if (oauth_unsafe_debugging_enabled())
+		if (oauth_parse_debug_flags() & OAUTHDEBUG_PLUGIN_ERRORS)
 			fprintf(stderr, "failed dlopen for libpq-oauth: %s\n", dlerror());
 
 		return 0;
@@ -922,7 +923,7 @@ use_builtin_flow(PGconn *conn, fe_oauth_state *state, PGoauthBearerRequestV2 *re
 		 * cause is still locked behind PGOAUTHDEBUG due to the dlerror()
 		 * threadsafety issue.
 		 */
-		if (oauth_unsafe_debugging_enabled())
+		if (oauth_parse_debug_flags() & OAUTHDEBUG_PLUGIN_ERRORS)
 			fprintf(stderr, "failed dlsym for libpq-oauth: %s\n", dlerror());
 
 		dlclose(state->flow_module);
@@ -1435,17 +1436,6 @@ pqClearOAuthToken(PGconn *conn)
 	explicit_bzero(conn->oauth_token, strlen(conn->oauth_token));
 	free(conn->oauth_token);
 	conn->oauth_token = NULL;
-}
-
-/*
- * Returns true if the PGOAUTHDEBUG=UNSAFE flag is set in the environment.
- */
-bool
-oauth_unsafe_debugging_enabled(void)
-{
-	const char *env = getenv("PGOAUTHDEBUG");
-
-	return (env && strcmp(env, "UNSAFE") == 0);
 }
 
 /*
