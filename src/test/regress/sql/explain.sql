@@ -66,10 +66,13 @@ select explain_filter('explain select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers off) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers off, verbose) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format text) select * from int8_tbl i8');
+select explain_filter('explain (buffers, format text) select * from int8_tbl i8');
+
+\a
 select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
 select explain_filter('explain (analyze, serialize, buffers, format yaml) select * from int8_tbl i8');
-select explain_filter('explain (buffers, format text) select * from int8_tbl i8');
 select explain_filter('explain (buffers, format json) select * from int8_tbl i8');
+\a
 
 -- Check expansion of window definitions
 
