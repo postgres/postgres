@@ -32,8 +32,16 @@ typedef enum X86FeatureId
 	PG_AVX512_VL,
 	PG_AVX512_VPCLMULQDQ,
 	PG_AVX512_VPOPCNTDQ,
+
+	/* identification */
+	PG_HYPERVISOR,
+
+	/* Time-Stamp Counter (TSC) flags */
+	PG_RDTSCP,
+	PG_TSC_INVARIANT,
+	PG_TSC_ADJUST,
 } X86FeatureId;
-#define X86FeaturesSize (PG_AVX512_VPOPCNTDQ + 1)
+#define X86FeaturesSize (PG_TSC_ADJUST + 1)
 
 extern PGDLLIMPORT bool X86Features[];
 
@@ -47,6 +55,8 @@ x86_feature_available(X86FeatureId feature)
 
 	return X86Features[feature];
 }
+
+extern uint32 x86_tsc_frequency_khz(void);
 
 #endif							/* defined(USE_SSE2) || defined(__i386__) */
 
