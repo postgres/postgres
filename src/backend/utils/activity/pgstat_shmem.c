@@ -150,8 +150,7 @@ StatsShmemSize(void)
 			continue;
 
 		Assert(kind_info->shared_size != 0);
-
-		sz += MAXALIGN(kind_info->shared_size);
+		sz = add_size(sz, MAXALIGN(kind_info->shared_size));
 	}
 
 	return sz;
@@ -189,6 +188,7 @@ StatsShmemInit(void *arg)
 	 * efficiency win.
 	 */
 	ctl->raw_dsa_area = p;
+	p += pgstat_dsa_init_size();
 	dsa = dsa_create_in_place(ctl->raw_dsa_area,
 							  pgstat_dsa_init_size(),
 							  LWTRANCHE_PGSTATS_DSA, NULL);
@@ -242,7 +242,8 @@ StatsShmemInit(void *arg)
 				int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
 
 				Assert(kind_info->shared_size != 0);
-				ctl->custom_data[idx] = ShmemAlloc(kind_info->shared_size);
+				ctl->custom_data[idx] = p;
+				p += MAXALIGN(kind_info->shared_size);
 				ptr = ctl->custom_data[idx];
 			}
 
