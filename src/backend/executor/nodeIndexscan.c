@@ -1789,8 +1789,8 @@ ExecIndexScanInstrumentEstimate(IndexScanState *node,
 	 * in the IndexScanState. We'll recalculate the needed size in
 	 * ExecIndexScanInstrumentInitDSM().
 	 */
-	size = offsetof(SharedIndexScanInstrumentation, winstrument) +
-		pcxt->nworkers * sizeof(IndexScanInstrumentation);
+	size = add_size(offsetof(SharedIndexScanInstrumentation, winstrument),
+					mul_size(pcxt->nworkers, sizeof(IndexScanInstrumentation)));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 }
@@ -1807,8 +1807,8 @@ ExecIndexScanInstrumentInitDSM(IndexScanState *node,
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = offsetof(SharedIndexScanInstrumentation, winstrument) +
-		pcxt->nworkers * sizeof(IndexScanInstrumentation);
+	size = add_size(offsetof(SharedIndexScanInstrumentation, winstrument),
+					mul_size(pcxt->nworkers, sizeof(IndexScanInstrumentation)));
 	node->iss_SharedInfo =
 		(SharedIndexScanInstrumentation *) shm_toc_allocate(pcxt->toc, size);
 
