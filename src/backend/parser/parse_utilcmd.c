@@ -2760,7 +2760,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 			/*
 			 * The WITHOUT OVERLAPS part (if any) must be a range or
-			 * multirange type.
+			 * multirange type, or a domain over such a type.
 			 */
 			if (constraint->without_overlaps && lc == list_last_cell(constraint->keys))
 			{
@@ -2778,8 +2778,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 						const char *attname;
 
 						if (attr->attisdropped)
-							break;
-
+							continue;
 						attname = NameStr(attr->attname);
 						if (strcmp(attname, key) == 0)
 						{
@@ -2791,10 +2790,16 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				}
 				if (found)
 				{
+					/* Look up column type if we didn't already */
 					if (!OidIsValid(typid) && column)
-						typid = typenameTypeId(NULL, column->typeName);
-
-					if (!OidIsValid(typid) || !(type_is_range(typid) || type_is_multirange(typid)))
+						typid = typenameTypeId(cxt->pstate,
+											   column->typeName);
+					/* Look through any domain */
+					if (OidIsValid(typid))
+						typid = getBaseType(typid);
+					/* Complain if not range/multirange */
+					if (!OidIsValid(typid) ||
+						!(type_is_range(typid) || type_is_multirange(typid)))
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("column \"%s\" in WITHOUT OVERLAPS is not a range or multirange type", key),

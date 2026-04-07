@@ -181,6 +181,37 @@ DROP TABLE temporal_rng3;
 DROP TYPE textrange2;
 
 --
+-- test PRIMARY KEY and UNIQUE constraints' interaction with domains
+--
+
+-- range over domain:
+CREATE DOMAIN int4_d as integer check (value <> 10);
+CREATE TYPE int4_d_range as range (subtype = int4_d);
+CREATE TABLE temporal_rng4 (
+  id int4range,
+  valid_at int4_d_range,
+  CONSTRAINT temporal_rng4_pk PRIMARY KEY(id, valid_at WITHOUT OVERLAPS)
+);
+INSERT INTO temporal_rng4 VALUES ('[1,11)', '[9,10)'); -- start bound violates domain
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[10,11)'); -- end bound violates domain
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[1,13)'), ('[1,2)', '[2,5)'); -- overlaps
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[1,13)'), ('[1,2)', '[20,23)'); -- okay
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[30,)'); -- null bound is okay
+DROP TABLE temporal_rng4;
+
+-- domain over range:
+CREATE DOMAIN int4range_d AS int4range CHECK (VALUE <> '[10,11)');
+CREATE TABLE temporal_rng4 (
+  id int4range,
+  valid_at int4range_d,
+  CONSTRAINT temporal_rng4_pk UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[10,11)'); -- violates domain
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[1,13)'), ('[1,2)', '[2,13)'); -- overlaps
+INSERT INTO temporal_rng4 VALUES ('[1,2)', '[1,13)'), ('[1,2)', '[20,23)'); -- okay
+DROP TABLE temporal_rng4;
+
+--
 -- test ALTER TABLE ADD CONSTRAINT
 --
 
