@@ -38,39 +38,6 @@ PG_MODULE_MAGIC_EXT(
 );
 
 /*
- * Record structure holding the to be exposed cache data.
- */
-typedef struct
-{
-	uint32		bufferid;
-	RelFileNumber relfilenumber;
-	Oid			reltablespace;
-	Oid			reldatabase;
-	ForkNumber	forknum;
-	BlockNumber blocknum;
-	bool		isvalid;
-	bool		isdirty;
-	uint16		usagecount;
-
-	/*
-	 * An int32 is sufficiently large, as MAX_BACKENDS prevents a buffer from
-	 * being pinned by too many backends and each backend will only pin once
-	 * because of bufmgr.c's PrivateRefCount infrastructure.
-	 */
-	int32		pinning_backends;
-} BufferCachePagesRec;
-
-
-/*
- * Function context for data persisting over repeated calls.
- */
-typedef struct
-{
-	TupleDesc	tupdesc;
-	BufferCachePagesRec *record;
-} BufferCachePagesContext;
-
-/*
  * Record structure holding the to be exposed cache data for OS pages.  This
  * structure is used by pg_buffercache_os_pages(), where NUMA information may
  * or may not be included.
@@ -117,142 +84,89 @@ static bool firstNumaTouch = true;
 Datum
 pg_buffercache_pages(PG_FUNCTION_ARGS)
 {
-	FuncCallContext *funcctx;
-	Datum		result;
-	MemoryContext oldcontext;
-	BufferCachePagesContext *fctx;	/* User function context. */
-	TupleDesc	tupledesc;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	expected_tupledesc;
-	HeapTuple	tuple;
+	int			i;
 
-	if (SRF_IS_FIRSTCALL())
+	/*
+	 * To smoothly support upgrades from version 1.0 of this extension
+	 * transparently handle the (non-)existence of the pinning_backends
+	 * column. We unfortunately have to get the result type for that... - we
+	 * can't use the result type determined by the function definition without
+	 * potentially crashing when somebody uses the old (or even wrong)
+	 * function definition though.
+	 */
+	if (get_call_result_type(fcinfo, NULL, &expected_tupledesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	if (expected_tupledesc->natts < NUM_BUFFERCACHE_PAGES_MIN_ELEM ||
+		expected_tupledesc->natts > NUM_BUFFERCACHE_PAGES_ELEM)
+		elog(ERROR, "incorrect number of output arguments");
+
+	InitMaterializedSRF(fcinfo, 0);
+
+	/*
+	 * Scan through all the buffers, adding one row for each of the buffers to
+	 * the tuplestore.
+	 *
+	 * We don't hold the partition locks, so we don't get a consistent
+	 * snapshot across all buffers, but we do grab the buffer header locks, so
+	 * the information of each buffer is self-consistent.
+	 */
+	for (i = 0; i < NBuffers; i++)
 	{
-		int			i;
-
-		funcctx = SRF_FIRSTCALL_INIT();
-
-		/* Switch context when allocating stuff to be used in later calls */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		/* Create a user function context for cross-call persistence */
-		fctx = palloc_object(BufferCachePagesContext);
-
-		/*
-		 * To smoothly support upgrades from version 1.0 of this extension
-		 * transparently handle the (non-)existence of the pinning_backends
-		 * column. We unfortunately have to get the result type for that... -
-		 * we can't use the result type determined by the function definition
-		 * without potentially crashing when somebody uses the old (or even
-		 * wrong) function definition though.
-		 */
-		if (get_call_result_type(fcinfo, NULL, &expected_tupledesc) != TYPEFUNC_COMPOSITE)
-			elog(ERROR, "return type must be a row type");
-
-		if (expected_tupledesc->natts < NUM_BUFFERCACHE_PAGES_MIN_ELEM ||
-			expected_tupledesc->natts > NUM_BUFFERCACHE_PAGES_ELEM)
-			elog(ERROR, "incorrect number of output arguments");
-
-		/* Construct a tuple descriptor for the result rows. */
-		tupledesc = CreateTemplateTupleDesc(expected_tupledesc->natts);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "bufferid",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "relfilenode",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 3, "reltablespace",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "reldatabase",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relforknumber",
-						   INT2OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "relblocknumber",
-						   INT8OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 7, "isdirty",
-						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 8, "usage_count",
-						   INT2OID, -1, 0);
-
-		if (expected_tupledesc->natts == NUM_BUFFERCACHE_PAGES_ELEM)
-			TupleDescInitEntry(tupledesc, (AttrNumber) 9, "pinning_backends",
-							   INT4OID, -1, 0);
-
-		TupleDescFinalize(tupledesc);
-		fctx->tupdesc = BlessTupleDesc(tupledesc);
-
-		/* Allocate NBuffers worth of BufferCachePagesRec records. */
-		fctx->record = (BufferCachePagesRec *)
-			MemoryContextAllocHuge(CurrentMemoryContext,
-								   sizeof(BufferCachePagesRec) * NBuffers);
-
-		/* Set max calls and remember the user function context. */
-		funcctx->max_calls = NBuffers;
-		funcctx->user_fctx = fctx;
-
-		/* Return to original context when allocating transient memory */
-		MemoryContextSwitchTo(oldcontext);
-
-		/*
-		 * Scan through all the buffers, saving the relevant fields in the
-		 * fctx->record structure.
-		 *
-		 * We don't hold the partition locks, so we don't get a consistent
-		 * snapshot across all buffers, but we do grab the buffer header
-		 * locks, so the information of each buffer is self-consistent.
-		 */
-		for (i = 0; i < NBuffers; i++)
-		{
-			BufferDesc *bufHdr;
-			uint64		buf_state;
-
-			CHECK_FOR_INTERRUPTS();
-
-			bufHdr = GetBufferDescriptor(i);
-			/* Lock each buffer header before inspecting. */
-			buf_state = LockBufHdr(bufHdr);
-
-			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
-			fctx->record[i].relfilenumber = BufTagGetRelNumber(&bufHdr->tag);
-			fctx->record[i].reltablespace = bufHdr->tag.spcOid;
-			fctx->record[i].reldatabase = bufHdr->tag.dbOid;
-			fctx->record[i].forknum = BufTagGetForkNum(&bufHdr->tag);
-			fctx->record[i].blocknum = bufHdr->tag.blockNum;
-			fctx->record[i].usagecount = BUF_STATE_GET_USAGECOUNT(buf_state);
-			fctx->record[i].pinning_backends = BUF_STATE_GET_REFCOUNT(buf_state);
-
-			if (buf_state & BM_DIRTY)
-				fctx->record[i].isdirty = true;
-			else
-				fctx->record[i].isdirty = false;
-
-			/* Note if the buffer is valid, and has storage created */
-			if ((buf_state & BM_VALID) && (buf_state & BM_TAG_VALID))
-				fctx->record[i].isvalid = true;
-			else
-				fctx->record[i].isvalid = false;
-
-			UnlockBufHdr(bufHdr);
-		}
-	}
-
-	funcctx = SRF_PERCALL_SETUP();
-
-	/* Get the saved state */
-	fctx = funcctx->user_fctx;
-
-	if (funcctx->call_cntr < funcctx->max_calls)
-	{
-		uint32		i = funcctx->call_cntr;
+		BufferDesc *bufHdr;
+		uint64		buf_state;
+		uint32		bufferid;
+		RelFileNumber relfilenumber;
+		Oid			reltablespace;
+		Oid			reldatabase;
+		ForkNumber	forknum;
+		BlockNumber blocknum;
+		bool		isvalid;
+		bool		isdirty;
+		uint16		usagecount;
+		int32		pinning_backends;
 		Datum		values[NUM_BUFFERCACHE_PAGES_ELEM];
 		bool		nulls[NUM_BUFFERCACHE_PAGES_ELEM];
 
-		values[0] = Int32GetDatum(fctx->record[i].bufferid);
+		CHECK_FOR_INTERRUPTS();
+
+		bufHdr = GetBufferDescriptor(i);
+		/* Lock each buffer header before inspecting. */
+		buf_state = LockBufHdr(bufHdr);
+
+		bufferid = BufferDescriptorGetBuffer(bufHdr);
+		relfilenumber = BufTagGetRelNumber(&bufHdr->tag);
+		reltablespace = bufHdr->tag.spcOid;
+		reldatabase = bufHdr->tag.dbOid;
+		forknum = BufTagGetForkNum(&bufHdr->tag);
+		blocknum = bufHdr->tag.blockNum;
+		usagecount = BUF_STATE_GET_USAGECOUNT(buf_state);
+		pinning_backends = BUF_STATE_GET_REFCOUNT(buf_state);
+
+		if (buf_state & BM_DIRTY)
+			isdirty = true;
+		else
+			isdirty = false;
+
+		/* Note if the buffer is valid, and has storage created */
+		if ((buf_state & BM_VALID) && (buf_state & BM_TAG_VALID))
+			isvalid = true;
+		else
+			isvalid = false;
+
+		UnlockBufHdr(bufHdr);
+
+		/* Build the tuple and add it to tuplestore */
+		values[0] = Int32GetDatum(bufferid);
 		nulls[0] = false;
 
 		/*
 		 * Set all fields except the bufferid to null if the buffer is unused
 		 * or not valid.
 		 */
-		if (fctx->record[i].blocknum == InvalidBlockNumber ||
-			fctx->record[i].isvalid == false)
+		if (blocknum == InvalidBlockNumber || isvalid == false)
 		{
 			nulls[1] = true;
 			nulls[2] = true;
@@ -266,33 +180,29 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			values[1] = ObjectIdGetDatum(fctx->record[i].relfilenumber);
+			values[1] = ObjectIdGetDatum(relfilenumber);
 			nulls[1] = false;
-			values[2] = ObjectIdGetDatum(fctx->record[i].reltablespace);
+			values[2] = ObjectIdGetDatum(reltablespace);
 			nulls[2] = false;
-			values[3] = ObjectIdGetDatum(fctx->record[i].reldatabase);
+			values[3] = ObjectIdGetDatum(reldatabase);
 			nulls[3] = false;
-			values[4] = Int16GetDatum(fctx->record[i].forknum);
+			values[4] = Int16GetDatum(forknum);
 			nulls[4] = false;
-			values[5] = Int64GetDatum((int64) fctx->record[i].blocknum);
+			values[5] = Int64GetDatum((int64) blocknum);
 			nulls[5] = false;
-			values[6] = BoolGetDatum(fctx->record[i].isdirty);
+			values[6] = BoolGetDatum(isdirty);
 			nulls[6] = false;
-			values[7] = UInt16GetDatum(fctx->record[i].usagecount);
+			values[7] = UInt16GetDatum(usagecount);
 			nulls[7] = false;
 			/* unused for v1.0 callers, but the array is always long enough */
-			values[8] = Int32GetDatum(fctx->record[i].pinning_backends);
+			values[8] = Int32GetDatum(pinning_backends);
 			nulls[8] = false;
 		}
 
-		/* Build and return the tuple. */
-		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
-
-		SRF_RETURN_NEXT(funcctx, result);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
-	else
-		SRF_RETURN_DONE(funcctx);
+
+	return (Datum) 0;
 }
 
 /*
