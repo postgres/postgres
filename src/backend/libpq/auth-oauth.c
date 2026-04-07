@@ -25,6 +25,7 @@
 #include "libpq/hba.h"
 #include "libpq/oauth.h"
 #include "libpq/sasl.h"
+#include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "utils/json.h"
@@ -40,9 +41,14 @@ static int	oauth_exchange(void *opaq, const char *input, int inputlen,
 
 static void load_validator_library(const char *libname);
 static void shutdown_validator_library(void *arg);
+static bool check_validator_hba_options(Port *port, const char **logdetail);
 
 static ValidatorModuleState *validator_module_state;
 static const OAuthValidatorCallbacks *ValidatorCallbacks;
+
+static MemoryContext ValidatorMemoryContext;
+static List *ValidatorOptions;
+static bool ValidatorOptionsChecked;
 
 /* Mechanism declaration */
 const pg_be_sasl_mech pg_be_oauth_mech = {
@@ -108,6 +114,9 @@ oauth_init(Port *port, const char *selected_mech, const char *shadow_pass)
 		ereport(ERROR,
 				errcode(ERRCODE_PROTOCOL_VIOLATION),
 				errmsg("client selected an invalid SASL authentication mechanism"));
+
+	/* Save our memory context for later use by client API calls. */
+	ValidatorMemoryContext = CurrentMemoryContext;
 
 	ctx = palloc0_object(struct oauth_ctx);
 
@@ -292,6 +301,16 @@ oauth_exchange(void *opaq, const char *input, int inputlen,
 				errcode(ERRCODE_PROTOCOL_VIOLATION),
 				errmsg("malformed OAUTHBEARER message"),
 				errdetail("Message contains additional data after the final terminator."));
+
+	/*
+	 * Make sure all custom HBA options are understood by the validator before
+	 * continuing, since we couldn't check them during server start/reload.
+	 */
+	if (!check_validator_hba_options(ctx->port, logdetail))
+	{
+		ctx->state = OAUTH_STATE_FINISHED;
+		return PG_SASL_EXCHANGE_FAILURE;
+	}
 
 	if (auth[0] == '\0')
 	{
@@ -822,6 +841,9 @@ shutdown_validator_library(void *arg)
 {
 	if (ValidatorCallbacks->shutdown_cb != NULL)
 		ValidatorCallbacks->shutdown_cb(validator_module_state);
+
+	/* The backing memory for this is about to disappear. */
+	ValidatorOptions = NIL;
 }
 
 /*
@@ -906,4 +928,207 @@ done:
 	pfree(rawstring);
 
 	return (*err_msg == NULL);
+}
+
+/*
+ * Client APIs for validator implementations
+ *
+ * Since we're currently not threaded, we only allow one validator in the
+ * process at a time. So we can make use of globals for now instead of looking
+ * up information using the state pointer. We probably shouldn't assume that the
+ * module hasn't temporarily changed memory contexts on us, though; functions
+ * here should defensively use an appropriate context when making global
+ * allocations.
+ */
+
+/*
+ * Adds to the list of allowed validator.* HBA options. Used during the
+ * startup_cb.
+ */
+void
+RegisterOAuthHBAOptions(ValidatorModuleState *state, int num,
+						const char *opts[])
+{
+	MemoryContext oldcontext;
+
+	if (!state)
+	{
+		Assert(false);
+		return;
+	}
+
+	oldcontext = MemoryContextSwitchTo(ValidatorMemoryContext);
+
+	for (int i = 0; i < num; i++)
+	{
+		if (!valid_oauth_hba_option_name(opts[i]))
+		{
+			/*
+			 * The user can't set this option in the HBA, so GetOAuthHBAOption
+			 * would always return NULL.
+			 */
+			ereport(WARNING,
+					errmsg("HBA option name \"%s\" is invalid and will be ignored",
+						   opts[i]),
+			/* translator: the second %s is a function name */
+					errcontext("validator module \"%s\", in call to %s",
+							   MyProcPort->hba->oauth_validator,
+							   "RegisterOAuthHBAOptions"));
+			continue;
+		}
+
+		ValidatorOptions = lappend(ValidatorOptions, pstrdup(opts[i]));
+	}
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Wait to validate the HBA against the registered options until later
+	 * (see check_validator_hba_options()).
+	 *
+	 * Delaying allows the validator to make multiple registration calls, to
+	 * append to the list; it lets us make the check in a place where we can
+	 * report the error without leaking details to the client; and it avoids
+	 * exporting the order of operations between HBA matching and the
+	 * startup_cb call as an API guarantee. (The last issue may become
+	 * relevant with a threaded model.)
+	 */
+}
+
+/*
+ * Restrict the names available to custom HBA options, so that we don't
+ * accidentally prevent future syntax extensions to HBA files.
+ */
+bool
+valid_oauth_hba_option_name(const char *name)
+{
+	/*
+	 * This list is not incredibly principled, since the goal is just to bound
+	 * compatibility guarantees for our HBA parser. Alphanumerics seem
+	 * obviously fine, and it's difficult to argue against the punctuation
+	 * that's already included in some HBA option names and identifiers.
+	 */
+	static const char *name_allowed_set =
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"0123456789_-";
+
+	size_t		span;
+
+	if (!name[0])
+		return false;
+
+	span = strspn(name, name_allowed_set);
+	return name[span] == '\0';
+}
+
+/*
+ * Verifies that all validator.* HBA options specified by the user were actually
+ * registered by the validator library in use.
+ */
+static bool
+check_validator_hba_options(Port *port, const char **logdetail)
+{
+	HbaLine    *hba = port->hba;
+
+	foreach_ptr(char, key, hba->oauth_opt_keys)
+	{
+		bool		found = false;
+
+		/* O(n^2) shouldn't be a problem here in practice. */
+		foreach_ptr(char, optname, ValidatorOptions)
+		{
+			if (strcmp(key, optname) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			/*
+			 * Unknown option name. Mirror the error messages in hba.c here,
+			 * keeping in mind that the original "validator." prefix was
+			 * stripped from the key during parsing.
+			 *
+			 * Since this is affecting live connections, which is unusual for
+			 * HBA, be noisy with a WARNING. (Warnings aren't sent to clients
+			 * prior to successful authentication, so this won't disclose the
+			 * server config.) It'll duplicate some of the information in the
+			 * logdetail, but that should make it hard to miss the connection
+			 * between the two.
+			 */
+			char	   *name = psprintf("validator.%s", key);
+
+			*logdetail = psprintf(_("unrecognized authentication option name: \"%s\""),
+								  name);
+			ereport(WARNING,
+					errcode(ERRCODE_CONFIG_FILE_ERROR),
+					errmsg("unrecognized authentication option name: \"%s\"",
+						   name),
+			/* translator: the first %s is the name of the module */
+					errdetail("The installed validator module (\"%s\") did not define an option named \"%s\".",
+							  hba->oauth_validator, key),
+					errhint("All OAuth connections matching this line will fail. Correct the option and reload the server configuration."),
+					errcontext("line %d of configuration file \"%s\"",
+							   hba->linenumber, hba->sourcefile));
+
+			return false;
+		}
+	}
+
+	ValidatorOptionsChecked = true; /* unfetter GetOAuthHBAOption() */
+	return true;
+}
+
+/*
+ * Retrieves the setting for a validator.* HBA option, or NULL if not found.
+ * This may only be used during the validate_cb and shutdown_cb.
+ */
+const char *
+GetOAuthHBAOption(const ValidatorModuleState *state, const char *optname)
+{
+	HbaLine    *hba = MyProcPort->hba;
+	ListCell   *lc_k;
+	ListCell   *lc_v;
+	const char *ret = NULL;
+
+	if (!ValidatorOptionsChecked)
+	{
+		/*
+		 * Prevent the startup_cb from retrieving HBA options that it has just
+		 * registered. This probably seems strange -- why refuse to hand out
+		 * information we already know? -- but this lets us reserve the
+		 * ability to perform the startup_cb call earlier, before we know
+		 * which HBA line is matched by a connection, without breaking this
+		 * API.
+		 */
+		return NULL;
+	}
+
+	if (!state || !hba)
+	{
+		Assert(false);
+		return NULL;
+	}
+
+	Assert(list_length(hba->oauth_opt_keys) == list_length(hba->oauth_opt_vals));
+
+	forboth(lc_k, hba->oauth_opt_keys, lc_v, hba->oauth_opt_vals)
+	{
+		const char *key = lfirst(lc_k);
+		const char *val = lfirst(lc_v);
+
+		if (strcmp(key, optname) == 0)
+		{
+			/*
+			 * Don't return yet -- when regular HBA options are specified more
+			 * than once, the last one wins. Do the same for these options.
+			 */
+			ret = val;
+		}
+	}
+
+	return ret;
 }

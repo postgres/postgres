@@ -97,6 +97,17 @@ typedef struct OAuthValidatorCallbacks
 } OAuthValidatorCallbacks;
 
 /*
+ * A validator can register a list of custom option names during its startup_cb,
+ * then later retrieve the user settings for each during validation. This
+ * enables per-HBA-line configuration. For more information, refer to the OAuth
+ * validator modules documentation.
+ */
+extern void RegisterOAuthHBAOptions(ValidatorModuleState *state, int num,
+									const char *opts[]);
+extern const char *GetOAuthHBAOption(const ValidatorModuleState *state,
+									 const char *optname);
+
+/*
  * Type of the shared library symbol _PG_oauth_validator_module_init which is
  * required for all validator modules.  This function will be invoked during
  * module loading.
@@ -107,9 +118,7 @@ extern PGDLLEXPORT const OAuthValidatorCallbacks *_PG_oauth_validator_module_ini
 /* Implementation */
 extern PGDLLIMPORT const pg_be_sasl_mech pg_be_oauth_mech;
 
-/*
- * Ensure a validator named in the HBA is permitted by the configuration.
- */
 extern bool check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg);
+extern bool valid_oauth_hba_option_name(const char *name);
 
 #endif							/* PG_OAUTH_H */

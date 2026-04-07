@@ -620,9 +620,28 @@ $node->connect_fails(
 
 $bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.error_detail");
 $bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.internal_error");
+
+# We complain when bad option names are registered, but connections may proceed
+# (since users can't set those options in the HBA anyway).
+$bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.authn_id");
+$bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.authorize_tokens");
+$bgconn->query_safe("ALTER SYSTEM SET oauth_validator.invalid_hba TO true");
+
 $node->reload;
 $log_start =
   $node->wait_for_log(qr/reloading configuration files/, $log_start);
+
+$node->connect_ok(
+	"$common_connstr user=test",
+	"bad registered HBA option",
+	expected_stderr =>
+	  qr@Visit https://example\.com/ and enter the code: postgresuser@,
+	log_like => [
+		qr/WARNING:\s+HBA option name "bad option name" is invalid and will be ignored/,
+		qr/CONTEXT:\s+validator module "validator", in call to RegisterOAuthHBAOptions/,
+	]);
+
+$bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.invalid_hba");
 
 #
 # Test user mapping.
@@ -691,6 +710,84 @@ $bgconn->query_safe("ALTER SYSTEM RESET oauth_validator.authn_id");
 $node->reload;
 $log_start =
   $node->wait_for_log(qr/reloading configuration files/, $log_start);
+
+$bgconn->quit;    # the tests below restart the server
+
+#
+# Test validator-specific HBA options.
+#
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf(
+	'pg_hba.conf', qq{
+local all test    oauth issuer="$issuer" scope="openid postgres" delegate_ident_mapping=1 \\
+                        validator.authn_id="ignored" validator.authn_id="other-identity"
+local all testalt oauth issuer="$issuer" scope="openid postgres" validator.log="testalt message"
+});
+
+$node->reload;
+$log_start =
+  $node->wait_for_log(qr/reloading configuration files/, $log_start);
+
+$node->connect_ok(
+	"$common_connstr user=test",
+	"custom HBA setting (test)",
+	expected_stderr =>
+	  qr@Visit https://example\.com/ and enter the code: postgresuser@,
+	log_like => [qr/connection authenticated: identity="other-identity"/]);
+$node->connect_ok(
+	"$common_connstr user=testalt",
+	"custom HBA setting (testalt)",
+	expected_stderr =>
+	  qr@Visit https://example\.com/ and enter the code: postgresuser@,
+	log_like => [
+		qr/LOG:\s+testalt message/,
+		qr/connection authenticated: identity="testalt"/,
+	]);
+
+# bad syntax
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf(
+	'pg_hba.conf', qq{
+local all testalt oauth issuer="$issuer" scope="openid postgres" validator.=1
+});
+
+$log_start = -s $node->logfile;
+$node->restart(fail_ok => 1);
+$node->log_check("empty HBA option name",
+	$log_start,
+	log_like => [qr/invalid OAuth validator option name: "validator\."/]);
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf(
+	'pg_hba.conf', qq{
+local all testalt oauth issuer="$issuer" scope="openid postgres" validator.@@=1
+});
+
+$log_start = -s $node->logfile;
+$node->restart(fail_ok => 1);
+$node->log_check("invalid HBA option name",
+	$log_start,
+	log_like => [qr/invalid OAuth validator option name: "validator\.@@"/]);
+
+# unknown settings (validation is deferred to connect time)
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf(
+	'pg_hba.conf', qq{
+local all testalt oauth issuer="$issuer" scope="openid postgres" \\
+                        validator.log=ignored validator.bad=1
+});
+$node->restart;
+
+$node->connect_fails(
+	"$common_connstr user=testalt",
+	"bad HBA setting",
+	expected_stderr => qr/OAuth bearer authentication failed/,
+	log_like => [
+		qr/WARNING:\s+unrecognized authentication option name: "validator\.bad"/,
+		qr/FATAL:\s+OAuth bearer authentication failed/,
+		qr/DETAIL:\s+unrecognized authentication option name: "validator\.bad"/,
+	]);
 
 #
 # Test multiple validators.

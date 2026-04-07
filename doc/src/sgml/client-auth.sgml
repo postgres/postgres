@@ -2533,6 +2533,45 @@ host ... radius radiusservers="server1,server2" radiussecrets="""secret one"",""
      </varlistentry>
 
      <varlistentry>
+      <term id="auth-oauth-validator-option">
+       <literal>validator.<replaceable>option</replaceable></literal>
+      </term>
+      <listitem>
+       <para>
+        Validator modules may <link linkend="oauth-validator-hba">define</link>
+        additional configuration options for <literal>oauth</literal>
+        HBA entries. These validator-specific options are accessible via the
+        <literal>validator.*</literal> "namespace". For example, a module may
+        register the <literal>validator.foo</literal> and
+        <literal>validator.bar</literal> options and define their effects on
+        authentication.
+       </para>
+       <para>
+        The name, syntax, and behavior of each <replaceable>option</replaceable>
+        are not determined by <productname>PostgreSQL</productname>; consult the
+        documentation for the validator module in use.
+       </para>
+       <warning>
+        <para>
+         A limitation of the current implementation is that unrecognized
+         <replaceable>option</replaceable> names will not be caught until
+         connection time. A <literal>pg_ctl reload</literal> will succeed, but
+         matching connections will fail:
+<programlisting>
+LOG:  connection received: host=[local]
+WARNING:  unrecognized authentication option name: "validator.bad"
+DETAIL:  The installed validator module ("my_validator") did not define an option named "bad".
+HINT:  All OAuth connections matching this line will fail. Correct the option and reload the server configuration.
+CONTEXT:  line 2 of configuration file "data/pg_hba.conf"
+</programlisting>
+         Use caution when making changes to validator-specific HBA options in
+         production systems.
+        </para>
+       </warning>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><literal>map</literal></term>
       <listitem>
        <para>

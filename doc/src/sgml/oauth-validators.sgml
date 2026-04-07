@@ -251,6 +251,11 @@
        <symbol>delegate_ident_mapping=1</symbol> mode, and what additional
        configuration is required in order to do so.
       </para>
+      <para>
+       If an implementation provides <link linkend="oauth-validator-hba">custom
+       HBA options</link>, the names and syntax of those options should be
+       documented as well.
+      </para>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -343,7 +348,8 @@ typedef const OAuthValidatorCallbacks *(*OAuthValidatorModuleInit) (void);
    <title>Startup Callback</title>
    <para>
     The <function>startup_cb</function> callback is executed directly after
-    loading the module. This callback can be used to set up local state and
+    loading the module. This callback can be used to set up local state,
+    define <link linkend="oauth-validator-hba">custom HBA options</link>, and
     perform additional initialization if required. If the validator module
     has state it can use <structfield>state->private_data</structfield> to
     store it.
@@ -431,5 +437,218 @@ typedef void (*ValidatorShutdownCB) (ValidatorModuleState *state);
    </para>
   </sect2>
 
+ </sect1>
+
+ <sect1 id="oauth-validator-hba">
+  <title>Custom HBA Options</title>
+
+  <para>
+   Like other preloaded libraries, validator modules may define
+   <link linkend="runtime-config-custom">custom GUC parameters</link> for user
+   configuration in <filename>postgresql.conf</filename>. However, it may be
+   desirable to configure behavior at a more granular level (say, for a
+   particular issuer or a group of users) instead of globally.
+  </para>
+
+  <para>
+   Beginning in <productname>PostgreSQL</productname> 19, validator
+   implementations may define custom options for use inside
+   <filename>pg_hba.conf</filename>. These options are then
+   <link linkend="auth-oauth-validator-option">made available</link> to the user
+   as <literal>validator.<replaceable>option</replaceable></literal>. The API
+   for registering and retrieving custom options is described below.
+  </para>
+
+  <sect2 id="oauth-validator-hba-api">
+   <title>Options API</title>
+    <para>
+     Modules register custom HBA option names during the <function>startup_cb</function>
+     callback, using <function>RegisterOAuthHBAOptions()</function>:
+
+<programlisting>
+/*
+ * Register a list of custom option names for use in pg_hba.conf. For each name
+ * "foo" registered here, that option will be provided as "validator.foo" in
+ * the HBA.
+ *
+ * Valid option names consist of alphanumeric ASCII, underscore (_), and hyphen
+ * (-). Invalid option names will be ignored with a WARNING logged at
+ * connection time.
+ *
+ * This function may only be called during the startup_cb callback. Multiple
+ * calls are permitted, which will append to the existing list of registered
+ * options; options cannot be unregistered.
+ *
+ * Parameters:
+ *
+ * - state: the state pointer passed to the startup_cb callback
+ * - num:   the number of options in the opts array
+ * - opts:  an array of null-terminated option names to register
+ *
+ * The list of option names is copied internally, and the opts array is not
+ * required to remain valid after the call.
+ */
+void RegisterOAuthHBAOptions(ValidatorModuleState *state, int num,
+                             const char *opts[]);
+</programlisting>
+    </para>
+
+    <para>
+     Each option's value, if set, may be later retrieved using
+     <function>GetOAuthHBAOption()</function>:
+
+<programlisting>
+/*
+ * Retrieve the string value of an HBA option which was registered via
+ * RegisterOAuthHBAOptions(). Usable only during validate_cb or shutdown_cb.
+ *
+ * If the user has set the corresponding option in pg_hba.conf, this function
+ * returns that value as a null-terminated string, which must not be modified
+ * or freed. NULL is returned instead if the user has not set this option, if
+ * the option name was not registered, or if this function is incorrectly called
+ * during the startup_cb.
+ *
+ * Parameters:
+ *
+ * - state:   the state pointer passed to the validate_cb/shutdown_cb callback
+ * - optname: the name of the option to retrieve
+ */
+const char *GetOAuthHBAOption(const ValidatorModuleState *state,
+                              const char *optname);
+</programlisting>
+    </para>
+
+    <para>
+     See <xref linkend="oauth-validator-hba-example-usage"/> for sample usage.
+    </para>
+  </sect2>
+
+  <sect2 id="oauth-validator-hba-limitations">
+   <title>Limitations</title>
+   <para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Option names are limited to ASCII alphanumeric characters,
+       underscores (<literal>_</literal>), and hyphens (<literal>-</literal>).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Option values are always freeform strings (in contrast to custom GUCs,
+       which support numerics, booleans, and enums).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Option names and values cannot be checked by the server during a reload of
+       the configuration. Any unregistered options in <filename>pg_hba.conf</filename>
+       will instead result in connection failures. It is the responsibility of
+       each module to document and verify the syntax of option values as needed.
+       <footnote>
+        <para>
+         If a module finds an invalid option value during <function>validate_cb</function>,
+         it's recommended to <link linkend="oauth-validator-callback-validate">signal
+         an internal error</link> by setting <structfield>result->error_detail</structfield>
+         to a description of the problem and returning <literal>false</literal>.
+        </para>
+       </footnote>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect2>
+
+  <sect2 id="oauth-validator-hba-example-usage">
+   <title>Example Usage</title>
+
+   <para>
+    For a hypothetical module, the options <literal>foo</literal> and
+    <literal>bar</literal> could be registered as follows:
+
+<programlisting>
+static void
+validator_startup(ValidatorModuleState *state)
+{
+    static const char *opts[] = {
+        "foo",      /* description of access privileges */
+        "bar",      /* magic URL for additional administrator powers */
+    };
+
+    RegisterOAuthHBAOptions(state, lengthof(opts), opts);
+
+    /* ...other setup... */
+}
+</programlisting>
+   </para>
+
+   <para>
+    The following sample entries in <filename>pg_hba.conf</filename> can then
+    make use of these options:
+
+<programlisting>
+# TYPE   DATABASE   USER   ADDRESS    METHOD
+hostssl  postgres   admin  0.0.0.0/0  oauth issuer=https://admin.example.com \
+                                            scope="pg-admin openid email" \
+                                            map=oauth-email \
+                                            validator.foo="admin access" \
+                                            validator.bar=https://magic.example.com
+
+hostssl  postgres   all    0.0.0.0/0  oauth issuer=https://www.example.com \
+                                            scope="pg-user openid email" \
+                                            map=oauth-email \
+                                            validator.foo="user access"
+</programlisting>
+   </para>
+
+   <para>
+    The module can retrieve the option settings from the HBA during validation:
+
+<programlisting>
+static bool
+validate_token(const ValidatorModuleState *state,
+               const char *token, const char *role,
+               ValidatorModuleResult *res)
+{
+    const char *foo = GetOAuthHBAOption(state, "foo"); /* "admin access" or "user access" */
+    const char *bar = GetOAuthHBAOption(state, "bar"); /* "https://magic.example.com" or NULL */
+
+    if (bar &amp;&amp; !is_valid_url(bar))
+    {
+        res->error_detail = psprintf("validator.bar (\"%s\") is not a valid URL.", bar);
+        return false;
+    }
+
+    /* proceed to validate token */
+}
+</programlisting>
+   </para>
+
+   <para>
+    When multiple validators are in use, their registered option lists remain
+    independent:
+
+<programlisting>
+<lineannotation>in postgresql.conf:</lineannotation>
+oauth_validator_libraries = 'example_org, my_validator'
+
+<lineannotation>in pg_hba.conf:</lineannotation>
+# TYPE   DATABASE   USER   ADDRESS    METHOD
+hostssl  postgres   admin  0.0.0.0/0  oauth issuer=https://admin.example.com \
+                                            scope="pg-admin openid email" \
+                                            map=oauth-email \
+                                            validator=my_validator \
+                                            validator.foo="admin access" \
+                                            validator.bar=https://magic.example.com
+
+hostssl  postgres   all    0.0.0.0/0  oauth issuer=https://www.example.org \
+                                            scope="pg-user openid profile" \
+                                            validator=example_org \
+                                            delegate_ident_mapping=1 \
+                                            validator.magic=on \
+                                            validator.more_magic=off
+</programlisting>
+   </para>
+  </sect2>
  </sect1>
 </chapter>

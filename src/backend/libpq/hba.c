@@ -2497,6 +2497,32 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 		REQUIRE_AUTH_OPTION(uaOAuth, "validator", "oauth");
 		hbaline->oauth_validator = pstrdup(val);
 	}
+	else if (strncmp(name, "validator.", strlen("validator.")) == 0)
+	{
+		const char *key = name + strlen("validator.");
+
+		REQUIRE_AUTH_OPTION(uaOAuth, name, "oauth");
+
+		/*
+		 * Validator modules may register their own per-HBA-line options.
+		 * Unfortunately, since we don't want to require these modules to be
+		 * loaded into the postmaster, we don't know if the options are valid
+		 * yet and must store them for later. Perform only a basic syntax
+		 * check here.
+		 */
+		if (!valid_oauth_hba_option_name(key))
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("invalid OAuth validator option name: \"%s\"", name),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, file_name)));
+			return false;
+		}
+
+		hbaline->oauth_opt_keys = lappend(hbaline->oauth_opt_keys, pstrdup(key));
+		hbaline->oauth_opt_vals = lappend(hbaline->oauth_opt_vals, pstrdup(val));
+	}
 	else if (strcmp(name, "delegate_ident_mapping") == 0)
 	{
 		REQUIRE_AUTH_OPTION(uaOAuth, "delegate_ident_mapping", "oauth");

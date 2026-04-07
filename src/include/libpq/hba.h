@@ -140,6 +140,8 @@ typedef struct HbaLine
 	char	   *oauth_scope;
 	char	   *oauth_validator;
 	bool		oauth_skip_usermap;
+	List	   *oauth_opt_keys;
+	List	   *oauth_opt_vals;
 } HbaLine;
 
 typedef struct IdentLine
