@@ -207,10 +207,13 @@ pg_current_timing_clock_source(void)
  */
 #if defined(__darwin__) && defined(CLOCK_MONOTONIC_RAW)
 #define PG_INSTR_SYSTEM_CLOCK	CLOCK_MONOTONIC_RAW
+#define PG_INSTR_SYSTEM_CLOCK_NAME	"clock_gettime (CLOCK_MONOTONIC_RAW)"
 #elif defined(CLOCK_MONOTONIC)
 #define PG_INSTR_SYSTEM_CLOCK	CLOCK_MONOTONIC
+#define PG_INSTR_SYSTEM_CLOCK_NAME	"clock_gettime (CLOCK_MONOTONIC)"
 #else
 #define PG_INSTR_SYSTEM_CLOCK	CLOCK_REALTIME
+#define PG_INSTR_SYSTEM_CLOCK_NAME	"clock_gettime (CLOCK_REALTIME)"
 #endif
 
 static inline instr_time
@@ -231,6 +234,7 @@ pg_get_ticks_system(void)
 
 /* On Windows, use QueryPerformanceCounter() for system clock source */
 
+#define PG_INSTR_SYSTEM_CLOCK_NAME	"QueryPerformanceCounter"
 static inline instr_time
 pg_get_ticks_system(void)
 {
@@ -328,6 +332,9 @@ pg_ns_to_ticks(int64 ns)
 }
 
 #if PG_INSTR_TSC_CLOCK
+
+#define PG_INSTR_TSC_CLOCK_NAME_FAST  "RDTSC"
+#define PG_INSTR_TSC_CLOCK_NAME "RDTSCP"
 
 #ifdef _MSC_VER
 #include <intrin.h>

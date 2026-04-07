@@ -2595,6 +2595,12 @@ include_dir 'conf.d'
          advised on systems that utilize an emulated <acronym>TSC</acronym>, as it
          is likely slower than the system clock source.
         </para>
+       <para>
+        To help decide which clock source to use you can run the
+        <xref linkend="pgtesttiming"/> utility to check <acronym>TSC</acronym>
+        availability, and perform timing measurements.
+       </para>
+
        </listitem>
       </varlistentry>
      </variablelist>
