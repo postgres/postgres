@@ -285,6 +285,9 @@ StartupDecodingContext(List *output_plugin_options,
 	ctx->write = do_write;
 	ctx->update_progress = update_progress;
 
+	/* Assume shared catalog access. The startup callback can change it. */
+	ctx->options.need_shared_catalogs = true;
+
 	ctx->output_plugin_options = output_plugin_options;
 
 	ctx->fast_forward = fast_forward;

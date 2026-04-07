@@ -1188,6 +1188,14 @@ standby_redo(XLogReaderState *record)
 		xl_running_xacts *xlrec = (xl_running_xacts *) XLogRecGetData(record);
 		RunningTransactionsData running;
 
+		/*
+		 * Records issued for specific database are not suitable for physical
+		 * replication because that affects the whole cluster. In particular,
+		 * the list of XID is probably incomplete here.
+		 */
+		if (OidIsValid(xlrec->dbid))
+			return;
+
 		running.xcnt = xlrec->xcnt;
 		running.subxcnt = xlrec->subxcnt;
 		running.subxid_status = xlrec->subxid_overflow ? SUBXIDS_MISSING : SUBXIDS_IN_ARRAY;
@@ -1277,11 +1285,22 @@ standby_redo(XLogReaderState *record)
  * as there's no independent knob to just enable logical decoding. For
  * details of how this is used, check snapbuild.c's introductory comment.
  *
+ * If 'dbid' is valid, only gather transactions running in that
+ * database. snapbuild.c can use such running xacts information for faster
+ * startup, but it still needs normal (cluster-wide) during the actual
+ * decoding - see standby_decode() and SnapBuildProcessRunningXacts() for
+ * details. Other processes (e.g. checkpointer) issue the cluster-wide records
+ * whether logical decoding is active or not.
+ *
+ * Please be careful about using this argument for other purposes. In
+ * particular, physical replication *must* ignore the database-specific
+ * records, exactly because they do not cover the whole cluster - see
+ * standby_redo().
  *
  * Returns the RecPtr of the last inserted record.
  */
 XLogRecPtr
-LogStandbySnapshot(void)
+LogStandbySnapshot(Oid dbid)
 {
 	XLogRecPtr	recptr;
 	RunningTransactions running;
@@ -1314,7 +1333,7 @@ LogStandbySnapshot(void)
 	 * Log details of all in-progress transactions. This should be the last
 	 * record we write, because standby will open up when it sees this.
 	 */
-	running = GetRunningTransactionData();
+	running = GetRunningTransactionData(dbid);
 
 	/*
 	 * GetRunningTransactionData() acquired ProcArrayLock, we must release it.
@@ -1358,6 +1377,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 	xl_running_xacts xlrec;
 	XLogRecPtr	recptr;
 
+	xlrec.dbid = CurrRunningXacts->dbid;
 	xlrec.xcnt = CurrRunningXacts->xcnt;
 	xlrec.subxcnt = CurrRunningXacts->subxcnt;
 	xlrec.subxid_overflow = (CurrRunningXacts->subxid_status != SUBXIDS_IN_ARRAY);

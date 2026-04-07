@@ -289,7 +289,7 @@ BackgroundWriterMain(const void *startup_data, size_t startup_data_len)
 			if (now >= timeout &&
 				last_snapshot_lsn <= GetLastImportantRecPtr())
 			{
-				last_snapshot_lsn = LogStandbySnapshot();
+				last_snapshot_lsn = LogStandbySnapshot(InvalidOid);
 				last_snapshot_ts = now;
 			}
 		}

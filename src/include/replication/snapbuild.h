@@ -92,7 +92,8 @@ extern void SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,
 								   XLogRecPtr lsn,
 								   xl_heap_new_cid *xlrec);
 extern void SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn,
-										 xl_running_xacts *running);
+										 xl_running_xacts *running,
+										 bool db_specific);
 extern void SnapBuildSerializationPoint(SnapBuild *builder, XLogRecPtr lsn);
 
 extern bool SnapBuildSnapshotExists(XLogRecPtr lsn);

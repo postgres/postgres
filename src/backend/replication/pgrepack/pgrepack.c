@@ -52,6 +52,13 @@ repack_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	/* Probably unnecessary, as we don't use the SQL interface ... */
 	opt->output_type = OUTPUT_PLUGIN_BINARY_OUTPUT;
 
+	/*
+	 * REPACK doesn't need access to shared catalogs, so we can speed up the
+	 * historic snapshot creation by setting this flag.  We'll only have to
+	 * wait for transactions in our database.
+	 */
+	opt->need_shared_catalogs = false;
+
 	if (ctx->output_plugin_options != NIL)
 	{
 		ereport(ERROR,

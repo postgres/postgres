@@ -310,6 +310,15 @@ extern void PreventCommandIfReadOnly(const char *cmdname);
 extern void PreventCommandIfParallelMode(const char *cmdname);
 extern void PreventCommandDuringRecovery(const char *cmdname);
 
+/* in replication/snapbuild.c */
+
+/*
+ * Keep track of whether logical decoding in this backend promised not to
+ * access shared catalogs, as a safety check.  This is checked by genam.c when
+ * a catalog scan takes place to verify that no shared catalogs are accessed.
+ */
+extern bool accessSharedCatalogsInDecoding;
+
 /*****************************************************************************
  *	  pdir.h --																 *
  *			POSTGRES directory path definitions.                             *

@@ -46,6 +46,7 @@ typedef struct xl_standby_locks
  */
 typedef struct xl_running_xacts
 {
+	Oid			dbid;			/* only track xacts in this database */
 	int			xcnt;			/* # of xact ids in xids[] */
 	int			subxcnt;		/* # of subxact ids in xids[] */
 	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */

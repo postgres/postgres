@@ -959,6 +959,7 @@ typedef struct OutputPluginOptions
 {
     OutputPluginOutputType output_type;
     bool        receive_rewrites;
+    bool        need_shared_catalogs;
 } OutputPluginOptions;
 </programlisting>
       <literal>output_type</literal> has to either be set to
@@ -969,6 +970,9 @@ typedef struct OutputPluginOptions
       also be called for changes made by heap rewrites during certain DDL
       operations.  These are of interest to plugins that handle DDL
       replication, but they require special handling.
+      <literal>need_shared_catalogs</literal> can be set to false if you are
+      certain the plugin functions do not access shared system catalogs.
+      Doing so can speed up creation of replication slots that use this plugin.
      </para>
 
      <para>

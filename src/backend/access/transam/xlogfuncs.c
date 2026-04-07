@@ -245,7 +245,7 @@ pg_log_standby_snapshot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("pg_log_standby_snapshot() can only be used if \"wal_level\" >= \"replica\"")));
 
-	recptr = LogStandbySnapshot();
+	recptr = LogStandbySnapshot(InvalidOid);
 
 	/*
 	 * As a convenience, return the WAL location of the last inserted record
