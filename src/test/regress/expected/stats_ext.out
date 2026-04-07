@@ -99,7 +99,8 @@ CREATE STATISTICS tst (ndistinct) ON (y + z) FROM ext_stats_test;
 ERROR:  cannot specify statistics kinds when building univariate statistics
 -- multivariate statistics without a less-than operator not supported
 CREATE STATISTICS tst (ndistinct) ON x, w from ext_stats_test;
-ERROR:  column "w" cannot be used in multivariate statistics because its type xid has no default btree operator class
+ERROR:  cannot create multivariate statistics on column "w"
+DETAIL:  The type xid has no default btree operator class.
 DROP TABLE ext_stats_test;
 -- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);

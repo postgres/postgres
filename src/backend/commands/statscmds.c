@@ -280,8 +280,10 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 				if (type->lt_opr == InvalidOid)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("column \"%s\" cannot be used in multivariate statistics because its type %s has no default btree operator class",
-									attname, format_type_be(attForm->atttypid))));
+							 errmsg("cannot create multivariate statistics on column \"%s\"",
+									attname),
+							 errdetail("The type %s has no default btree operator class.",
+									   format_type_be(attForm->atttypid))));
 			}
 
 			/* Treat virtual generated columns as expressions */
@@ -325,8 +327,10 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 				if (type->lt_opr == InvalidOid)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("column \"%s\" cannot be used in multivariate statistics because its type %s has no default btree operator class",
-									get_attname(relid, var->varattno, false), format_type_be(var->vartype))));
+							 errmsg("cannot create multivariate statistics on column \"%s\"",
+									get_attname(relid, var->varattno, false)),
+							 errdetail("The type %s has no default btree operator class.",
+									   format_type_be(var->vartype))));
 			}
 
 			/* Treat virtual generated columns as expressions */
@@ -375,8 +379,9 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 				if (type->lt_opr == InvalidOid)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("expression cannot be used in multivariate statistics because its type %s has no default btree operator class",
-									format_type_be(atttype))));
+							 errmsg("cannot create multivariate statistics on this expression"),
+							 errdetail("The type %s has no default btree operator class.",
+									   format_type_be(atttype))));
 			}
 
 			stxexprs = lappend(stxexprs, expr);
