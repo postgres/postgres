@@ -242,8 +242,6 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 
 	SpinLockRelease(&walrcv->mutex);
 
-	pg_atomic_write_u64(&WalRcv->writtenUpto, 0);
-
 	/* Arrange to clean up at walreceiver exit */
 	on_shmem_exit(WalRcvDie, PointerGetDatum(&startpointTLI));
 

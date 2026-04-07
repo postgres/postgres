@@ -321,6 +321,7 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 		walrcv->flushedUpto = recptr;
 		walrcv->receivedTLI = tli;
 		walrcv->latestChunkStart = recptr;
+		pg_atomic_write_u64(&walrcv->writtenUpto, recptr);
 	}
 	walrcv->receiveStart = recptr;
 	walrcv->receiveStartTLI = tli;
