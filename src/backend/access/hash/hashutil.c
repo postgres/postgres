@@ -625,8 +625,7 @@ _hash_kill_items(IndexScanDesc scan)
 	}
 
 unlock_page:
-	if (so->hashso_bucket_buf == so->currPos.buf ||
-		havePin)
+	if (havePin)
 		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
 	else
 		_hash_relbuf(rel, buf);
