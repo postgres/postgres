@@ -28,4 +28,13 @@ extern void ExecTidRangeScanInitializeDSM(TidRangeScanState *node, ParallelConte
 extern void ExecTidRangeScanReInitializeDSM(TidRangeScanState *node, ParallelContext *pcxt);
 extern void ExecTidRangeScanInitializeWorker(TidRangeScanState *node, ParallelWorkerContext *pwcxt);
 
+/* instrument support */
+extern void ExecTidRangeScanInstrumentEstimate(TidRangeScanState *node,
+											   ParallelContext *pcxt);
+extern void ExecTidRangeScanInstrumentInitDSM(TidRangeScanState *node,
+											  ParallelContext *pcxt);
+extern void ExecTidRangeScanInstrumentInitWorker(TidRangeScanState *node,
+												 ParallelWorkerContext *pwcxt);
+extern void ExecTidRangeScanRetrieveInstrumentation(TidRangeScanState *node);
+
 #endif							/* NODETIDRANGESCAN_H */

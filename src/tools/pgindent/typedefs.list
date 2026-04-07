@@ -2867,6 +2867,7 @@ SharedRecordTableKey
 SharedRecordTypmodRegistry
 SharedSeqScanInstrumentation
 SharedSortInfo
+SharedTidRangeScanInstrumentation
 SharedTuplestore
 SharedTuplestoreAccessor
 SharedTuplestoreChunk
@@ -3171,6 +3172,7 @@ TidOpExpr
 TidPath
 TidRangePath
 TidRangeScan
+TidRangeScanInstrumentation
 TidRangeScanState
 TidScan
 TidScanState

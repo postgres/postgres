@@ -285,4 +285,22 @@ typedef struct SharedSeqScanInstrumentation
 	SeqScanInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
 } SharedSeqScanInstrumentation;
 
+
+/*
+ *	Instrumentation information for TID range scans
+ */
+typedef struct TidRangeScanInstrumentation
+{
+	TableScanInstrumentation stats;
+} TidRangeScanInstrumentation;
+
+/*
+ * Shared memory container for per-worker information
+ */
+typedef struct SharedTidRangeScanInstrumentation
+{
+	int			num_workers;
+	TidRangeScanInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
+} SharedTidRangeScanInstrumentation;
+
 #endif							/* INSTRUMENT_NODE_H */

@@ -2149,6 +2149,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				if (plan->qual)
 					show_instrumentation_count("Rows Removed by Filter", 1,
 											   planstate, es);
+				show_scan_io_usage((ScanState *) planstate, es);
 			}
 			break;
 		case T_ForeignScan:
@@ -4115,6 +4116,30 @@ show_scan_io_usage(ScanState *planstate, ExplainState *es)
 					for (int i = 0; i < sinstrument->num_workers; ++i)
 					{
 						SeqScanInstrumentation *winstrument = &sinstrument->sinstrument[i];
+
+						AccumulateIOStats(&stats, &winstrument->stats.io);
+
+						if (!es->workers_state)
+							continue;
+
+						ExplainOpenWorker(i, es);
+						print_io_usage(es, &winstrument->stats.io);
+						ExplainCloseWorker(i, es);
+					}
+				}
+
+				break;
+			}
+		case T_TidRangeScan:
+			{
+				SharedTidRangeScanInstrumentation *sinstrument
+				= ((TidRangeScanState *) planstate)->trss_sinstrument;
+
+				if (sinstrument)
+				{
+					for (int i = 0; i < sinstrument->num_workers; ++i)
+					{
+						TidRangeScanInstrumentation *winstrument = &sinstrument->sinstrument[i];
 
 						AccumulateIOStats(&stats, &winstrument->stats.io);
 
