@@ -17,7 +17,6 @@
  */
 #include "postgres.h"
 
-#include "storage/subsystems.h"
 #include "utils/injection_point.h"
 
 #ifdef USE_INJECTION_POINTS
@@ -29,6 +28,7 @@
 #include "storage/fd.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "storage/subsystems.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
@@ -110,10 +110,8 @@ typedef struct InjectionPointCacheEntry
 
 static HTAB *InjectionPointCache = NULL;
 
-#ifdef USE_INJECTION_POINTS
 static void InjectionPointShmemRequest(void *arg);
 static void InjectionPointShmemInit(void *arg);
-#endif
 
 /*
  * injection_point_cache_add
