@@ -114,6 +114,7 @@
 #include "executor/executor.h"
 #include "nodes/nodeFuncs.h"
 #include "storage/lmgr.h"
+#include "utils/lsyscache.h"
 #include "utils/multirangetypes.h"
 #include "utils/rangetypes.h"
 #include "utils/snapmgr.h"
@@ -753,11 +754,18 @@ check_exclusion_or_unique_constraint(Relation heap, Relation index,
 		{
 			TupleDesc	tupdesc = RelationGetDescr(heap);
 			Form_pg_attribute att = TupleDescAttr(tupdesc, attno - 1);
-			TypeCacheEntry *typcache = lookup_type_cache(att->atttypid, 0);
+			TypeCacheEntry *typcache = lookup_type_cache(att->atttypid,
+														 TYPECACHE_DOMAIN_BASE_INFO);
+			char		typtype;
+
+			if (OidIsValid(typcache->domainBaseType))
+				typtype = get_typtype(typcache->domainBaseType);
+			else
+				typtype = typcache->typtype;
 
 			ExecWithoutOverlapsNotEmpty(heap, att->attname,
 										values[indnkeyatts - 1],
-										typcache->typtype, att->atttypid);
+										typtype, att->atttypid);
 		}
 	}
 
