@@ -272,9 +272,7 @@ BEGIN
   END IF;
 EXCEPTION
   -- character with byte sequence 0xc2 0xb0 in encoding "UTF8" has no equivalent in encoding "LATIN8"
-  WHEN untranslatable_character
-  -- default conversion function for encoding "UTF8" to "MULE_INTERNAL" does not exist
-  OR undefined_function
+  WHEN undefined_function
   -- unsupported XML feature
   OR feature_not_supported THEN
     RAISE LOG 'skip: %', SQLERRM;

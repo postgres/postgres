@@ -423,7 +423,7 @@ WITH objects (type, name, args) AS (VALUES
     ('collation', '{default}', '{}'),
     ('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
     ('domain constraint', '{addr_nsp.gendomain}', '{domconstr}'),
-    ('conversion', '{pg_catalog, koi8_r_to_mic}', '{}'),
+    ('conversion', '{pg_catalog, koi8_r_to_utf8}', '{}'),
     ('default value', '{addr_nsp, gentable, b}', '{}'),
     ('language', '{plpgsql}', '{}'),
     -- large object
@@ -498,7 +498,7 @@ default value|NULL|NULL|for addr_nsp.gentable.b|t
 cast|NULL|NULL|(bigint AS integer)|t
 table constraint|addr_nsp|NULL|a_chk on addr_nsp.gentable|t
 domain constraint|addr_nsp|NULL|domconstr on addr_nsp.gendomain|t
-conversion|pg_catalog|koi8_r_to_mic|pg_catalog.koi8_r_to_mic|t
+conversion|pg_catalog|koi8_r_to_utf8|pg_catalog.koi8_r_to_utf8|t
 language|NULL|plpgsql|plpgsql|t
 schema|NULL|addr_nsp|addr_nsp|t
 operator class|pg_catalog|int4_ops|pg_catalog.int4_ops USING btree|t

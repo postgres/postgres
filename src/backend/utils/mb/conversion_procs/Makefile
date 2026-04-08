@@ -14,8 +14,8 @@ top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = \
-	cyrillic_and_mic euc_cn_and_mic euc_jp_and_sjis \
-	euc_kr_and_mic euc_tw_and_big5 latin2_and_win1250 latin_and_mic \
+	cyrillic euc_jp_and_sjis \
+	euc_tw_and_big5 latin2_and_win1250 \
 	utf8_and_big5 utf8_and_cyrillic utf8_and_euc_cn \
 	utf8_and_euc_jp utf8_and_euc_kr utf8_and_euc_tw utf8_and_gb18030 \
 	utf8_and_gbk utf8_and_iso8859 utf8_and_iso8859_1 utf8_and_johab \

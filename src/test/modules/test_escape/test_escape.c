@@ -526,8 +526,6 @@ static pe_test_vector pe_test_vectors[] =
 	TV("gbk", "\x80\""),
 	TV("gbk", "\x80\\"),
 
-	TV("mule_internal", "\\\x9c';\0;"),
-
 	TV("sql_ascii", "1\xC0'"),
 
 	/*

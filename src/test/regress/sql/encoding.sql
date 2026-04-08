@@ -199,16 +199,7 @@ INSERT INTO encoding_tests VALUES
 	('UTF8',   '6 byte, unsupported', '\xfd8283'),
 	('UTF8',   '6 byte, unsupported', '\xfd828384'),
 	('UTF8',   '6 byte, unsupported', '\xfd82838485'),
-	('UTF8',   '6 byte, unsupported', '\xfd8283848586'),
-	-- MULE_INTERNAL
-	-- 2 81..8d LC1
-	-- 3 90..99 LC2
-	('MULE_INTERNAL', 'ASCII',         'a'),
-	('MULE_INTERNAL', 'LC1, short',    '\x81'),
-	('MULE_INTERNAL', 'LC1',           '\x8182'),
-	('MULE_INTERNAL', 'LC2, short',    '\x90'),
-	('MULE_INTERNAL', 'LC2, short',    '\x9082'),
-	('MULE_INTERNAL', 'LC2',           '\x908283');
+	('UTF8',   '6 byte, unsupported', '\xfd8283848586');
 
 SELECT COUNT(test_encoding(encoding, description, input)) > 0
 FROM encoding_tests;

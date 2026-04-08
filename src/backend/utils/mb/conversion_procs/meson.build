@@ -1,17 +1,14 @@
 # Copyright (c) 2022-2026, PostgreSQL Global Development Group
 
 encodings = {
-  'cyrillic_and_mic': ['cyrillic_and_mic/cyrillic_and_mic.c'],
+  'cyrillic': ['cyrillic/cyrillic.c'],
   'euc2004_sjis2004': ['euc2004_sjis2004/euc2004_sjis2004.c'],
-  'euc_cn_and_mic': ['euc_cn_and_mic/euc_cn_and_mic.c'],
   'euc_jp_and_sjis': ['euc_jp_and_sjis/euc_jp_and_sjis.c'],
-  'euc_kr_and_mic': ['euc_kr_and_mic/euc_kr_and_mic.c'],
   'euc_tw_and_big5': [
     'euc_tw_and_big5/euc_tw_and_big5.c',
     'euc_tw_and_big5/big5.c',
   ],
   'latin2_and_win1250': ['latin2_and_win1250/latin2_and_win1250.c'],
-  'latin_and_mic': ['latin_and_mic/latin_and_mic.c'],
   'utf8_and_big5': ['utf8_and_big5/utf8_and_big5.c'],
   'utf8_and_cyrillic': ['utf8_and_cyrillic/utf8_and_cyrillic.c'],
   'utf8_and_euc2004': ['utf8_and_euc2004/utf8_and_euc2004.c'],

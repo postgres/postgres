@@ -329,7 +329,6 @@ select description, inbytes, (test_conv(inbytes, 'iso8859-5', 'iso8859-5')).* fr
 -- Test conversions from ISO-8859-5
 select description, inbytes, (test_conv(inbytes, 'iso8859-5', 'utf8')).* from iso8859_5_inputs;
 select description, inbytes, (test_conv(inbytes, 'iso8859-5', 'koi8r')).* from iso8859_5_inputs;
-select description, inbytes, (test_conv(inbytes, 'iso8859_5', 'mule_internal')).* from iso8859_5_inputs;
 
 --
 -- Big5
@@ -346,29 +345,3 @@ insert into big5_inputs  values
 select description, inbytes, (test_conv(inbytes, 'big5', 'big5')).* from big5_inputs;
 -- Test conversions from Big5
 select description, inbytes, (test_conv(inbytes, 'big5', 'utf8')).* from big5_inputs;
-select description, inbytes, (test_conv(inbytes, 'big5', 'mule_internal')).* from big5_inputs;
-
---
--- MULE_INTERNAL
---
-CREATE TABLE mic_inputs (inbytes bytea, description text);
-insert into mic_inputs  values
-  ('\x666f6f',		'valid, pure ASCII'),
-  ('\x8bc68bcf8bcf',	'valid (in KOI8R)'),
-  ('\x8bc68bcf8b',	'invalid,incomplete char'),
-  ('\x92bedd',		'valid (in SHIFT_JIS)'),
-  ('\x92be',		'invalid, incomplete char)'),
-  ('\x666f6f95a3c1',	'valid (in Big5)'),
-  ('\x666f6f95a3',	'invalid, incomplete char'),
-  ('\x9200bedd',	'invalid, NUL byte'),
-  ('\x92bedd00',	'invalid, NUL byte'),
-  ('\x8b00c68bcf8bcf',	'invalid, NUL byte');
-
--- Test MULE_INTERNAL verification
-select description, inbytes, (test_conv(inbytes, 'mule_internal', 'mule_internal')).* from mic_inputs;
--- Test conversions from MULE_INTERNAL
-select description, inbytes, (test_conv(inbytes, 'mule_internal', 'koi8r')).* from mic_inputs;
-select description, inbytes, (test_conv(inbytes, 'mule_internal', 'iso8859-5')).* from mic_inputs;
-select description, inbytes, (test_conv(inbytes, 'mule_internal', 'sjis')).* from mic_inputs;
-select description, inbytes, (test_conv(inbytes, 'mule_internal', 'big5')).* from mic_inputs;
-select description, inbytes, (test_conv(inbytes, 'mule_internal', 'euc_jp')).* from mic_inputs;

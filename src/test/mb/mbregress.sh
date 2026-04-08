@@ -21,7 +21,7 @@ PSQL="psql -X -n -e -q"
 
 # in the test list, client-only encodings must follow the server encoding
 # they're to be tested with; see hard-coded cases below
-tests="euc_jp sjis euc_kr euc_cn euc_tw big5 utf8 gb18030 mule_internal"
+tests="euc_jp sjis euc_kr euc_cn euc_tw big5 utf8 gb18030"
 
 EXITCODE=0
 

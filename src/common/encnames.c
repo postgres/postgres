@@ -165,9 +165,6 @@ static const pg_encname pg_encname_tbl[] =
 		"mskanji", PG_SJIS
 	},							/* alias for Shift_JIS */
 	{
-		"muleinternal", PG_MULE_INTERNAL
-	},
-	{
 		"shiftjis", PG_SJIS
 	},							/* Shift_JIS; JIS X 0202-1991 */
 
@@ -314,7 +311,6 @@ const pg_enc2name pg_enc2name_tbl[] =
 	[PG_EUC_TW] = DEF_ENC2NAME(EUC_TW, 0),
 	[PG_EUC_JIS_2004] = DEF_ENC2NAME(EUC_JIS_2004, 20932),
 	[PG_UTF8] = DEF_ENC2NAME(UTF8, 65001),
-	[PG_MULE_INTERNAL] = DEF_ENC2NAME(MULE_INTERNAL, 0),
 	[PG_LATIN1] = DEF_ENC2NAME(LATIN1, 28591),
 	[PG_LATIN2] = DEF_ENC2NAME(LATIN2, 28592),
 	[PG_LATIN3] = DEF_ENC2NAME(LATIN3, 28593),
@@ -353,15 +349,12 @@ const pg_enc2name pg_enc2name_tbl[] =
 
 /* ----------
  * These are encoding names for gettext.
- *
- * This covers all encodings except MULE_INTERNAL, which is alien to gettext.
  * ----------
  */
 const char *pg_enc2gettext_tbl[] =
 {
 	[PG_SQL_ASCII] = "US-ASCII",
 	[PG_UTF8] = "UTF-8",
-	[PG_MULE_INTERNAL] = NULL,
 	[PG_LATIN1] = "LATIN1",
 	[PG_LATIN2] = "LATIN2",
 	[PG_LATIN3] = "LATIN3",
@@ -420,7 +413,6 @@ static const char *const pg_enc2icu_tbl[] =
 	[PG_EUC_TW] = "EUC-TW",
 	[PG_EUC_JIS_2004] = NULL,
 	[PG_UTF8] = "UTF-8",
-	[PG_MULE_INTERNAL] = NULL,
 	[PG_LATIN1] = "ISO-8859-1",
 	[PG_LATIN2] = "ISO-8859-2",
 	[PG_LATIN3] = "ISO-8859-3",

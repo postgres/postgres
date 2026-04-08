@@ -1,6 +1,5 @@
 /*
- * conversion between BIG5 and Mule Internal Code(CNS 116643-1992
- * plane 1 and plane 2).
+ * BIG5 support functions (CNS 116643-1992 * plane 1 and plane 2).
  * This program is partially copied from lv(Multilingual file viewer)
  * and slightly modified. lv is written and copyrighted by NARITA Tomio
  * (nrt@web.ad.jp).
