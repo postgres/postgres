@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+519acd1be59e407a62dbe6a5240d9d1dcb8cd062 # 2026-04-04 21:50:54 +0700
+# Fix indentation
+
 874da8b1f6143808a4433df645c1e81f6a8bbd1e # 2026-03-26 20:10:13 -0400
 # pg_plan_advice: pgindent
 
@@ -283,6 +286,9 @@ ce554810329b9b8e862eade08b598148931eb456 # 2017-05-17 19:01:23 -0400
 
 a6fd7b7a5f7bf3a8aa3f3d076cf09d922c1c6dd2 # 2017-05-17 16:31:56 -0400
 # Post-PG 10 beta1 pgindent run
+
+fcf70e0dbca1432959be5f3557acd546d639c9ba # 2016-11-17 14:36:59 -0500
+# Re-pgindent src/bin/pg_dump/*
 
 b5bce6c1ec6061c8a4f730d927e162db7e2ce365 # 2016-08-15 13:42:51 -0400
 # Final pgindent + perltidy run for 9.6.
