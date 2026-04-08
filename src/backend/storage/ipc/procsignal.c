@@ -26,6 +26,7 @@
 #include "postmaster/datachecksum_state.h"
 #include "replication/logicalctl.h"
 #include "replication/logicalworker.h"
+#include "replication/slotsync.h"
 #include "replication/walsender.h"
 #include "storage/condition_variable.h"
 #include "storage/ipc.h"
@@ -709,6 +710,9 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckProcSignal(PROCSIG_REPACK_MESSAGE))
 		HandleRepackMessageInterrupt();
+
+	if (CheckProcSignal(PROCSIG_SLOTSYNC_MESSAGE))
+		HandleSlotSyncMessageInterrupt();
 
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT))
 		HandleRecoveryConflictInterrupt();
