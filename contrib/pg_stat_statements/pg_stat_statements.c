@@ -993,11 +993,6 @@ pgss_planner(Query *parse,
 static void
 pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-	if (prev_ExecutorStart)
-		prev_ExecutorStart(queryDesc, eflags);
-	else
-		standard_ExecutorStart(queryDesc, eflags);
-
 	/*
 	 * If query has queryId zero, don't track it.  This prevents double
 	 * counting of optimizable statements that are directly contained in
@@ -1005,20 +1000,14 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 */
 	if (pgss_enabled(nesting_level) && queryDesc->plannedstmt->queryId != INT64CONST(0))
 	{
-		/*
-		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
-		 * space is allocated in the per-query context so it will go away at
-		 * ExecutorEnd.
-		 */
-		if (queryDesc->totaltime == NULL)
-		{
-			MemoryContext oldcxt;
-
-			oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-			queryDesc->totaltime = InstrAlloc(INSTRUMENT_ALL);
-			MemoryContextSwitchTo(oldcxt);
-		}
+		/* Request all summary instrumentation, i.e. timing, buffers and WAL */
+		queryDesc->query_instr_options |= INSTRUMENT_ALL;
 	}
+
+	if (prev_ExecutorStart)
+		prev_ExecutorStart(queryDesc, eflags);
+	else
+		standard_ExecutorStart(queryDesc, eflags);
 }
 
 /*
@@ -1071,7 +1060,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 {
 	int64		queryId = queryDesc->plannedstmt->queryId;
 
-	if (queryId != INT64CONST(0) && queryDesc->totaltime &&
+	if (queryId != INT64CONST(0) && queryDesc->query_instr &&
 		pgss_enabled(nesting_level))
 	{
 		pgss_store(queryDesc->sourceText,
@@ -1079,10 +1068,10 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 				   queryDesc->plannedstmt->stmt_location,
 				   queryDesc->plannedstmt->stmt_len,
 				   PGSS_EXEC,
-				   INSTR_TIME_GET_MILLISEC(queryDesc->totaltime->total),
+				   INSTR_TIME_GET_MILLISEC(queryDesc->query_instr->total),
 				   queryDesc->estate->es_total_processed,
-				   &queryDesc->totaltime->bufusage,
-				   &queryDesc->totaltime->walusage,
+				   &queryDesc->query_instr->bufusage,
+				   &queryDesc->query_instr->walusage,
 				   queryDesc->estate->es_jit ? &queryDesc->estate->es_jit->instr : NULL,
 				   NULL,
 				   queryDesc->estate->es_parallel_workers_to_launch,

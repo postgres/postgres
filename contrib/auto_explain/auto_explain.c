@@ -346,6 +346,9 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 
 	if (auto_explain_enabled())
 	{
+		/* We're always interested in runtime */
+		queryDesc->query_instr_options |= INSTRUMENT_TIMER;
+
 		/* Enable per-node instrumentation iff log_analyze is required. */
 		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
 		{
@@ -366,23 +369,6 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		prev_ExecutorStart(queryDesc, eflags);
 	else
 		standard_ExecutorStart(queryDesc, eflags);
-
-	if (auto_explain_enabled())
-	{
-		/*
-		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
-		 * space is allocated in the per-query context so it will go away at
-		 * ExecutorEnd.
-		 */
-		if (queryDesc->totaltime == NULL)
-		{
-			MemoryContext oldcxt;
-
-			oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-			queryDesc->totaltime = InstrAlloc(INSTRUMENT_ALL);
-			MemoryContextSwitchTo(oldcxt);
-		}
-	}
 }
 
 /*
@@ -434,7 +420,7 @@ explain_ExecutorFinish(QueryDesc *queryDesc)
 static void
 explain_ExecutorEnd(QueryDesc *queryDesc)
 {
-	if (queryDesc->totaltime && auto_explain_enabled())
+	if (queryDesc->query_instr && auto_explain_enabled())
 	{
 		MemoryContext oldcxt;
 		double		msec;
@@ -446,7 +432,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
 
 		/* Log plan if duration is exceeded. */
-		msec = INSTR_TIME_GET_MILLISEC(queryDesc->totaltime->total);
+		msec = INSTR_TIME_GET_MILLISEC(queryDesc->query_instr->total);
 		if (msec >= auto_explain_log_min_duration)
 		{
 			ExplainState *es = NewExplainState();
