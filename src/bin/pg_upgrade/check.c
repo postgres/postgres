@@ -13,11 +13,13 @@
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_class_d.h"
 #include "fe_utils/string_utils.h"
+#include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 #include "common/unicode_version.h"
 
 static void check_new_cluster_is_empty(void);
 static void check_is_install_user(ClusterInfo *cluster);
+static void check_for_unsupported_encodings(ClusterInfo *cluster);
 static void check_for_connection_status(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
@@ -600,6 +602,11 @@ check_and_dump_old_cluster(void)
 	 * fail in later stages.
 	 */
 	check_for_connection_status(&old_cluster);
+
+	/*
+	 * Check for encodings that are no longer supported.
+	 */
+	check_for_unsupported_encodings(&old_cluster);
 
 	/*
 	 * Validate database, user, role and tablespace names from the old
@@ -1232,6 +1239,64 @@ check_for_connection_status(ClusterInfo *cluster)
 				 "which cannot be connected to.  Consider allowing connection for all\n"
 				 "non-template0 databases or drop the databases which do not allow\n"
 				 "connections.  A list of databases with the problem is in the file:\n"
+				 "    %s", output_path);
+	}
+	else
+		check_ok();
+}
+
+
+/*
+ * check_for_unsupported_encodings()
+ */
+static void
+check_for_unsupported_encodings(ClusterInfo *cluster)
+{
+	int			i_datname;
+	int			i_encoding;
+	int			ntups;
+	PGresult   *res;
+	PGconn	   *conn;
+	FILE	   *script = NULL;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for unsupported encodings");
+
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
+			 "databases_unsupported_encoding.txt");
+
+	conn = connectToServer(cluster, "template1");
+
+	res = executeQueryOrDie(conn,
+							"SELECT datname, encoding "
+							"FROM pg_catalog.pg_database");
+	ntups = PQntuples(res);
+	i_datname = PQfnumber(res, "datname");
+	i_encoding = PQfnumber(res, "encoding");
+	for (int rowno = 0; rowno < ntups; rowno++)
+	{
+		char	   *datname = PQgetvalue(res, rowno, i_datname);
+		int			encoding = atoi(PQgetvalue(res, rowno, i_encoding));
+
+		if (!PG_VALID_BE_ENCODING(encoding))
+		{
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %m", output_path);
+
+			fprintf(script, "%s\n", datname);
+		}
+	}
+	PQclear(res);
+	PQfinish(conn);
+
+	if (script)
+	{
+		fclose(script);
+		pg_log(PG_REPORT, "fatal");
+		pg_fatal("Your installation contains databases using encodings that are\n"
+				 "no longer supported.  Consider dumping and restoring with UTF8.\n"
+				 "A list of databases with unsupported encodings is in the file:\n"
 				 "    %s", output_path);
 	}
 	else
