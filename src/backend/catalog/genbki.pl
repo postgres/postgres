@@ -795,7 +795,10 @@ print $fk_info "};\n\n#endif\t\t\t\t\t\t\t/* SYSTEM_FK_INFO_H */\n";
 # Now generate syscache info
 
 print_boilerplate($syscache_ids_fh, "syscache_ids.h", "SysCache identifiers");
-print $syscache_ids_fh "typedef enum SysCacheIdentifier
+print $syscache_ids_fh "#ifndef SYSCACHE_IDS_H
+#define SYSCACHE_IDS_H
+
+typedef enum SysCacheIdentifier
 {
 \tSYSCACHEID_INVALID = -1,\n";
 
@@ -833,7 +836,10 @@ foreach my $syscache (sort keys %syscaches)
 }
 
 print $syscache_ids_fh "} SysCacheIdentifier;\n";
-print $syscache_ids_fh "#define SysCacheSize ($last_syscache + 1)\n";
+print $syscache_ids_fh "#define SysCacheSize ($last_syscache + 1)\n\n";
+
+# Closing boilerplate for syscache_ids.h
+print $syscache_ids_fh "#endif\t\t\t\t\t\t\t/* SYSCACHE_IDS_H */\n";
 
 print $syscache_info_fh "};\n";
 

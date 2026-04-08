@@ -15,9 +15,9 @@
 #define INVAL_H
 
 #include "access/htup.h"
+#include "catalog/syscache_ids.h"
 #include "storage/relfilelocator.h"
 #include "utils/relcache.h"
-#include "utils/syscache.h"
 
 extern PGDLLIMPORT int debug_discard_caches;
 

@@ -14,10 +14,10 @@
 #define OBJECTADDRESS_H
 
 #include "access/htup.h"
+#include "catalog/syscache_ids.h"
 #include "nodes/parsenodes.h"
 #include "storage/lockdefs.h"
 #include "utils/relcache.h"
-#include "utils/syscache.h"
 
 /*
  * An ObjectAddress represents a database object of any type.
