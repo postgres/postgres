@@ -1,0 +1,20 @@
+<!-- doc/src/sgml/appendix-obsolete-auth-radius.sgml -->
+<!--
+  See doc/src/sgml/appendix-obsolete.sgml for why this file exists. Do not change the id attribute.
+-->
+
+<sect1 id="auth-radius">
+  <title>RADIUS authentication removed</title>
+
+   <indexterm zone="auth-radius">
+    <primary>RADIUS</primary>
+   </indexterm>
+
+   <para>
+    PostgreSQL 18 and below supported the RADIUS authentication protocol.
+    Information about an alternative way to configure RADIUS support
+    is available on the PostgreSQL
+    <ulink url="https://wiki.postgresql.org/wiki/RADIUS">wiki</ulink>.
+   </para>
+
+</sect1>

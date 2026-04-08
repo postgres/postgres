@@ -617,16 +617,6 @@ include_dir         <replaceable>directory</replaceable>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>radius</literal></term>
-        <listitem>
-         <para>
-          Authenticate using a RADIUS server. See <xref
-          linkend="auth-radius"/> for details.
-         </para>
-        </listitem>
-       </varlistentry>
-
-       <varlistentry>
         <term><literal>cert</literal></term>
         <listitem>
          <para>
@@ -1125,12 +1115,6 @@ omicron         bryanh                  guest1
      <para>
       <link linkend="auth-ldap">LDAP authentication</link>, which
       relies on an LDAP authentication server.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      <link linkend="auth-radius">RADIUS authentication</link>, which
-      relies on a RADIUS authentication server.
      </para>
     </listitem>
     <listitem>
@@ -2094,118 +2078,6 @@ host ... ldap ldapbasedn="dc=example,dc=net"
     </para>
    </tip>
 
-  </sect1>
-
-  <sect1 id="auth-radius">
-   <title>RADIUS Authentication</title>
-
-   <indexterm zone="auth-radius">
-    <primary>RADIUS</primary>
-   </indexterm>
-
-   <para>
-    This authentication method operates similarly to
-    <literal>password</literal> except that it uses RADIUS
-    as the password verification method. RADIUS is used only to validate
-    the user name/password pairs. Therefore the user must already
-    exist in the database before RADIUS can be used for
-    authentication.
-   </para>
-
-   <para>
-    When using RADIUS authentication, an Access Request message will be sent
-    to the configured RADIUS server. This request will be of type
-    <literal>Authenticate Only</literal>, and include parameters for
-    <literal>user name</literal>, <literal>password</literal> (encrypted) and
-    <literal>NAS Identifier</literal>. The request will be encrypted using
-    a secret shared with the server. The RADIUS server will respond to
-    this request with either <literal>Access Accept</literal> or
-    <literal>Access Reject</literal>. There is no support for RADIUS accounting.
-   </para>
-
-   <para>
-    Multiple RADIUS servers can be specified, in which case they will
-    be tried sequentially. If a negative response is received from
-    a server, the authentication will fail. If no response is received,
-    the next server in the list will be tried. To specify multiple
-    servers, separate the server names with commas and surround the list
-    with double quotes. If multiple servers are specified, the other
-    RADIUS options can also be given as comma-separated lists, to provide
-    individual values for each server. They can also be specified as
-    a single value, in which case that value will apply to all servers.
-   </para>
-
-   <para>
-    The following configuration options are supported for RADIUS:
-     <variablelist>
-      <varlistentry>
-       <term><literal>radiusservers</literal></term>
-       <listitem>
-        <para>
-         The DNS names or IP addresses of the RADIUS servers to connect to.
-         This parameter is required.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><literal>radiussecrets</literal></term>
-       <listitem>
-        <para>
-         The shared secrets used when talking securely to the RADIUS
-         servers. This must have exactly the same value on the PostgreSQL
-         and RADIUS servers. It is recommended that this be a string of
-         at least 16 characters. This parameter is required.
-         <note>
-         <para>
-          The encryption vector used will only be cryptographically
-          strong if <productname>PostgreSQL</productname> is built with support for
-          <productname>OpenSSL</productname>. In other cases, the transmission to the
-          RADIUS server should only be considered obfuscated, not secured, and
-          external security measures should be applied if necessary.
-         </para>
-         </note>
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><literal>radiusports</literal></term>
-       <listitem>
-        <para>
-         The port numbers to connect to on the RADIUS servers. If no port
-         is specified, the default RADIUS port (<literal>1812</literal>)
-         will be used.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><literal>radiusidentifiers</literal></term>
-       <listitem>
-        <para>
-         The strings to be used as <literal>NAS Identifier</literal> in the
-         RADIUS requests. This parameter can be used, for example, to
-         identify which database cluster the user is attempting to connect
-         to, which can be useful for policy matching on
-         the RADIUS server. If no identifier is specified, the default
-         <literal>postgresql</literal> will be used.
-        </para>
-       </listitem>
-      </varlistentry>
-
-     </variablelist>
-   </para>
-
-   <para>
-    If it is necessary to have a comma or whitespace in a RADIUS parameter
-    value, that can be done by putting double quotes around the value, but
-    it is tedious because two layers of double-quoting are now required.
-    An example of putting whitespace into RADIUS secret strings is:
-<programlisting>
-host ... radius radiusservers="server1,server2" radiussecrets="""secret one"",""secret two"""
-</programlisting>
-   </para>
   </sect1>
 
   <sect1 id="auth-cert">

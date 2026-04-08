@@ -135,25 +135,6 @@ get_hba_options(HbaLine *hba)
 				CStringGetTextDatum(psprintf("ldapscope=%d", hba->ldapscope));
 	}
 
-	if (hba->auth_method == uaRADIUS)
-	{
-		if (hba->radiusservers_s)
-			options[noptions++] =
-				CStringGetTextDatum(psprintf("radiusservers=%s", hba->radiusservers_s));
-
-		if (hba->radiussecrets_s)
-			options[noptions++] =
-				CStringGetTextDatum(psprintf("radiussecrets=%s", hba->radiussecrets_s));
-
-		if (hba->radiusidentifiers_s)
-			options[noptions++] =
-				CStringGetTextDatum(psprintf("radiusidentifiers=%s", hba->radiusidentifiers_s));
-
-		if (hba->radiusports_s)
-			options[noptions++] =
-				CStringGetTextDatum(psprintf("radiusports=%s", hba->radiusports_s));
-	}
-
 	if (hba->auth_method == uaOAuth)
 	{
 		if (hba->oauth_issuer)

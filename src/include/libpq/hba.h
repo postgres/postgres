@@ -37,7 +37,6 @@ typedef enum UserAuth
 	uaBSD,
 	uaLDAP,
 	uaCert,
-	uaRADIUS,
 	uaPeer,
 	uaOAuth,
 #define USER_AUTH_LAST uaOAuth	/* Must be last value of this enum */
@@ -128,14 +127,6 @@ typedef struct HbaLine
 	bool		include_realm;
 	bool		compat_realm;
 	bool		upn_username;
-	List	   *radiusservers;
-	char	   *radiusservers_s;
-	List	   *radiussecrets;
-	char	   *radiussecrets_s;
-	List	   *radiusidentifiers;
-	char	   *radiusidentifiers_s;
-	List	   *radiusports;
-	char	   *radiusports_s;
 	char	   *oauth_issuer;
 	char	   *oauth_scope;
 	char	   *oauth_validator;
