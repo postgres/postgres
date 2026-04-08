@@ -14,6 +14,9 @@ $node->init();
 $node->append_conf(
 	'postgresql.conf', qq(
 io_method=worker
+io_worker_idle_timeout=0ms
+io_worker_launch_interval=0ms
+io_max_workers=32
 ));
 
 $node->start();
@@ -31,7 +34,7 @@ sub test_number_of_io_workers_dynamic
 {
 	my $node = shift;
 
-	my $prev_worker_count = $node->safe_psql('postgres', 'SHOW io_workers');
+	my $prev_worker_count = $node->safe_psql('postgres', 'SHOW io_min_workers');
 
 	# Verify that worker count can't be set to 0
 	change_number_of_io_workers($node, 0, $prev_worker_count, 1);
@@ -62,24 +65,24 @@ sub change_number_of_io_workers
 	my ($result, $stdout, $stderr);
 
 	($result, $stdout, $stderr) =
-	  $node->psql('postgres', "ALTER SYSTEM SET io_workers = $worker_count");
+	  $node->psql('postgres', "ALTER SYSTEM SET io_min_workers = $worker_count");
 	$node->safe_psql('postgres', 'SELECT pg_reload_conf()');
 
 	if ($expect_failure)
 	{
 		like(
 			$stderr,
-			qr/$worker_count is outside the valid range for parameter "io_workers"/,
-			"updating number of io_workers to $worker_count failed, as expected"
+			qr/$worker_count is outside the valid range for parameter "io_min_workers"/,
+			"updating io_min_workers to $worker_count failed, as expected"
 		);
 
 		return $prev_worker_count;
 	}
 	else
 	{
-		is( $node->safe_psql('postgres', 'SHOW io_workers'),
+		is( $node->safe_psql('postgres', 'SHOW io_min_workers'),
 			$worker_count,
-			"updating number of io_workers from $prev_worker_count to $worker_count"
+			"updating number of io_min_workers from $prev_worker_count to $worker_count"
 		);
 
 		check_io_worker_count($node, $worker_count);

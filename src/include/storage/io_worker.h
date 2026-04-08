@@ -17,6 +17,15 @@
 
 pg_noreturn extern void IoWorkerMain(const void *startup_data, size_t startup_data_len);
 
-extern PGDLLIMPORT int io_workers;
+/* Public GUCs. */
+extern PGDLLIMPORT int io_min_workers;
+extern PGDLLIMPORT int io_max_workers;
+extern PGDLLIMPORT int io_worker_idle_timeout;
+extern PGDLLIMPORT int io_worker_launch_interval;
+
+/* Interfaces visible to the postmaster. */
+extern bool pgaio_worker_pm_test_grow_signal_sent(void);
+extern void pgaio_worker_pm_clear_grow_signal_sent(void);
+extern bool pgaio_worker_pm_test_grow(void);
 
 #endif							/* IO_WORKER_H */
