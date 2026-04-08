@@ -129,7 +129,7 @@ typedef enum
 #endif
 } TimingClockSourceType;
 
-extern int	timing_clock_source;
+extern PGDLLIMPORT int timing_clock_source;
 
 /*
  * Initialize timing infrastructure

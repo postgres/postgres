@@ -319,7 +319,7 @@ extern void PreventCommandDuringRecovery(const char *cmdname);
  * access shared catalogs, as a safety check.  This is checked by genam.c when
  * a catalog scan takes place to verify that no shared catalogs are accessed.
  */
-extern bool accessSharedCatalogsInDecoding;
+extern PGDLLIMPORT bool accessSharedCatalogsInDecoding;
 
 /*****************************************************************************
  *	  pdir.h --																 *
