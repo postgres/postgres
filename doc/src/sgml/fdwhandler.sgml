@@ -1409,6 +1409,45 @@ AcquireSampleRowsFunc(Relation relation,
      if the FDW does not have any concept of dead rows.)
     </para>
 
+    <para>
+<programlisting>
+bool
+ImportForeignStatistics(Relation relation,
+                        List *va_cols,
+                        int elevel);
+</programlisting>
+
+     This function is called before the <function>AnalyzeForeignTable</function>
+     callback function when <xref linkend="sql-analyze"/> is executed on a
+     foreign table, and is used to import remotely-calculated statistics (both
+     table-level and column-level) for the foreign table directly to the local
+     server.
+     <literal>relation</literal> is the <structname>Relation</structname> struct
+     describing the target foreign table.  <literal>va_cols</literal>, if not
+     NIL, contains the columns specified in the <command>ANALYZE</command>
+     command.  <literal>elevel</literal> contains a flag indicating a logging
+     level to use.
+     If the function imports the statistics successfully, it should return
+     <literal>true</literal>.  Otherwise, return <literal>false</literal>, in
+     which case <function>AnalyzeForeignTable</function> callback function is
+     called on the foreign table to collect statistics locally, if supported.
+    </para>
+
+    <para>
+     For reference, the logic for calculating statistics in
+     <productname>PostgreSQL</productname> is found in
+     <filename>src/backend/command/analyze.c</filename>.
+     It's recommended to import table-level and column-level statistics for the
+     foreign table using <function>pg_restore_relation_stats</function> and
+     <function>pg_restore_attribute_stats</function>, respectively.
+    </para>
+
+    <para>
+     If the FDW does not support importing remotely-calculated statistics for
+     any tables, the <function>ImportForeignStatistics</function> pointer can be
+     set to <literal>NULL</literal>.
+    </para>
+
    </sect2>
 
    <sect2 id="fdw-callbacks-import">

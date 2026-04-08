@@ -83,6 +83,7 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								AnlIndexData *indexdata, int nindexes,
 								HeapTuple *rows, int numrows,
 								MemoryContext col_context);
+static void validate_va_cols_list(Relation onerel, List *va_cols);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 									   Node *index_expr);
 static int	acquire_sample_rows(Relation onerel, int elevel,
@@ -114,6 +115,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 	int			elevel;
 	AcquireSampleRowsFunc acquirefunc = NULL;
 	BlockNumber relpages = 0;
+	bool		stats_imported = false;
 
 	/* Select logging level */
 	if (params->options & VACOPT_VERBOSE)
@@ -183,6 +185,28 @@ analyze_rel(Oid relid, RangeVar *relation,
 	}
 
 	/*
+	 * Check the given list of columns
+	 */
+	if (va_cols != NIL)
+		validate_va_cols_list(onerel, va_cols);
+
+	/*
+	 * Initialize progress reporting before setup for regular/foreign tables.
+	 * (For the former, the time spent on it would be negligible, but for the
+	 * latter, if FDWs support statistics import or analysis, they'd do some
+	 * work that needs the remote access, so the time might be
+	 * non-negligible.)
+	 */
+	pgstat_progress_start_command(PROGRESS_COMMAND_ANALYZE,
+								  RelationGetRelid(onerel));
+	if (AmAutoVacuumWorkerProcess())
+		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
+									 PROGRESS_ANALYZE_STARTED_BY_AUTOVACUUM);
+	else
+		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
+									 PROGRESS_ANALYZE_STARTED_BY_MANUAL);
+
+	/*
 	 * Check that it's of an analyzable relkind, and set up appropriately.
 	 */
 	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
@@ -196,26 +220,33 @@ analyze_rel(Oid relid, RangeVar *relation,
 	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		/*
-		 * For a foreign table, call the FDW's hook function to see whether it
-		 * supports analysis.
+		 * For a foreign table, call the FDW's hook functions to see whether
+		 * it supports statistics import or analysis.
 		 */
 		FdwRoutine *fdwroutine;
-		bool		ok = false;
 
 		fdwroutine = GetFdwRoutineForRelation(onerel, false);
 
-		if (fdwroutine->AnalyzeForeignTable != NULL)
-			ok = fdwroutine->AnalyzeForeignTable(onerel,
-												 &acquirefunc,
-												 &relpages);
-
-		if (!ok)
+		if (fdwroutine->ImportForeignStatistics != NULL &&
+			fdwroutine->ImportForeignStatistics(onerel, va_cols, elevel))
+			stats_imported = true;
+		else
 		{
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- cannot analyze this foreign table",
-							RelationGetRelationName(onerel))));
-			relation_close(onerel, ShareUpdateExclusiveLock);
-			return;
+			bool		ok = false;
+
+			if (fdwroutine->AnalyzeForeignTable != NULL)
+				ok = fdwroutine->AnalyzeForeignTable(onerel,
+													 &acquirefunc,
+													 &relpages);
+
+			if (!ok)
+			{
+				ereport(WARNING,
+						errmsg("skipping \"%s\" -- cannot analyze this foreign table.",
+							   RelationGetRelationName(onerel)));
+				relation_close(onerel, ShareUpdateExclusiveLock);
+				goto out;
+			}
 		}
 	}
 	else if (onerel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
@@ -232,26 +263,16 @@ analyze_rel(Oid relid, RangeVar *relation,
 					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
 							RelationGetRelationName(onerel))));
 		relation_close(onerel, ShareUpdateExclusiveLock);
-		return;
+		goto out;
 	}
 
 	/*
-	 * OK, let's do it.  First, initialize progress reporting.
-	 */
-	pgstat_progress_start_command(PROGRESS_COMMAND_ANALYZE,
-								  RelationGetRelid(onerel));
-	if (AmAutoVacuumWorkerProcess())
-		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
-									 PROGRESS_ANALYZE_STARTED_BY_AUTOVACUUM);
-	else
-		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
-									 PROGRESS_ANALYZE_STARTED_BY_MANUAL);
-
-	/*
 	 * Do the normal non-recursive ANALYZE.  We can skip this for partitioned
-	 * tables, which don't contain any rows.
+	 * tables, which don't contain any rows, and foreign tables that
+	 * successfully imported statistics.
 	 */
-	if (onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+	if ((onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		&& !stats_imported)
 		do_analyze_rel(onerel, params, va_cols, acquirefunc,
 					   relpages, false, in_outer_xact, elevel);
 
@@ -270,6 +291,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 */
 	relation_close(onerel, NoLock);
 
+out:
 	pgstat_progress_end_command();
 }
 
@@ -368,16 +390,10 @@ do_analyze_rel(Relation onerel, const VacuumParams *params,
 	starttime = GetCurrentTimestamp();
 
 	/*
-	 * Determine which columns to analyze
-	 *
-	 * Note that system attributes are never analyzed, so we just reject them
-	 * at the lookup stage.  We also reject duplicate column mentions.  (We
-	 * could alternatively ignore duplicates, but analyzing a column twice
-	 * won't work; we'd end up making a conflicting update in pg_statistic.)
+	 * Determine which columns to analyze.
 	 */
 	if (va_cols != NIL)
 	{
-		Bitmapset  *unique_cols = NULL;
 		ListCell   *le;
 
 		vacattrstats = (VacAttrStats **) palloc(list_length(va_cols) *
@@ -388,18 +404,7 @@ do_analyze_rel(Relation onerel, const VacuumParams *params,
 			char	   *col = strVal(lfirst(le));
 
 			i = attnameAttNum(onerel, col, false);
-			if (i == InvalidAttrNumber)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								col, RelationGetRelationName(onerel))));
-			if (bms_is_member(i, unique_cols))
-				ereport(ERROR,
-						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" appears more than once",
-								col, RelationGetRelationName(onerel))));
-			unique_cols = bms_add_member(unique_cols, i);
-
+			Assert(i != InvalidAttrNumber);
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
@@ -1031,6 +1036,40 @@ compute_index_stats(Relation onerel, double totalrows,
 }
 
 /*
+ * validate_va_cols_list -- validate the columns list given to analyze_rel
+ *
+ * Note that system attributes are never analyzed, so we just reject them at
+ * the lookup stage.  We also reject duplicate column mentions.  (We could
+ * alternatively ignore duplicates, but analyzing a column twice won't work;
+ * we'd end up making a conflicting update in pg_statistic.)
+ */
+static void
+validate_va_cols_list(Relation onerel, List *va_cols)
+{
+	Bitmapset  *unique_cols = NULL;
+	ListCell   *le;
+
+	Assert(va_cols != NIL);
+	foreach(le, va_cols)
+	{
+		char	   *col = strVal(lfirst(le));
+		int			i = attnameAttNum(onerel, col, false);
+
+		if (i == InvalidAttrNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							col, RelationGetRelationName(onerel))));
+		if (bms_is_member(i, unique_cols))
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" appears more than once",
+							col, RelationGetRelationName(onerel))));
+		unique_cols = bms_add_member(unique_cols, i);
+	}
+}
+
+/*
  * examine_attribute -- pre-analysis of a single column
  *
  * Determine whether the column is analyzable; if so, create and initialize
@@ -1044,37 +1083,15 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 {
 	Form_pg_attribute attr = TupleDescAttr(onerel->rd_att, attnum - 1);
 	int			attstattarget;
-	HeapTuple	atttuple;
-	Datum		dat;
-	bool		isnull;
 	HeapTuple	typtuple;
 	VacAttrStats *stats;
 	int			i;
 	bool		ok;
 
-	/* Never analyze dropped columns */
-	if (attr->attisdropped)
-		return NULL;
-
-	/* Don't analyze virtual generated columns */
-	if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
-		return NULL;
-
 	/*
-	 * Get attstattarget value.  Set to -1 if null.  (Analyze functions expect
-	 * -1 to mean use default_statistics_target; see for example
-	 * std_typanalyze.)
+	 * Check if the column is analyzable.
 	 */
-	atttuple = SearchSysCache2(ATTNUM, ObjectIdGetDatum(RelationGetRelid(onerel)), Int16GetDatum(attnum));
-	if (!HeapTupleIsValid(atttuple))
-		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-			 attnum, RelationGetRelid(onerel));
-	dat = SysCacheGetAttr(ATTNUM, atttuple, Anum_pg_attribute_attstattarget, &isnull);
-	attstattarget = isnull ? -1 : DatumGetInt16(dat);
-	ReleaseSysCache(atttuple);
-
-	/* Don't analyze column if user has specified not to */
-	if (attstattarget == 0)
+	if (!attribute_is_analyzable(onerel, attnum, attr, &attstattarget))
 		return NULL;
 
 	/*
@@ -1153,6 +1170,45 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	}
 
 	return stats;
+}
+
+bool
+attribute_is_analyzable(Relation onerel, int attnum, Form_pg_attribute attr,
+						int *p_attstattarget)
+{
+	int			attstattarget;
+	HeapTuple	atttuple;
+	Datum		dat;
+	bool		isnull;
+
+	/* Never analyze dropped columns */
+	if (attr->attisdropped)
+		return false;
+
+	/* Don't analyze virtual generated columns */
+	if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+		return false;
+
+	/*
+	 * Get attstattarget value.  Set to -1 if null.  (Analyze functions expect
+	 * -1 to mean use default_statistics_target; see for example
+	 * std_typanalyze.)
+	 */
+	atttuple = SearchSysCache2(ATTNUM, ObjectIdGetDatum(RelationGetRelid(onerel)), Int16GetDatum(attnum));
+	if (!HeapTupleIsValid(atttuple))
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+			 attnum, RelationGetRelid(onerel));
+	dat = SysCacheGetAttr(ATTNUM, atttuple, Anum_pg_attribute_attstattarget, &isnull);
+	attstattarget = isnull ? -1 : DatumGetInt16(dat);
+	ReleaseSysCache(atttuple);
+
+	/* Don't analyze column if user has specified not to */
+	if (attstattarget == 0)
+		return false;
+
+	if (p_attstattarget)
+		*p_attstattarget = attstattarget;
+	return true;
 }
 
 /*

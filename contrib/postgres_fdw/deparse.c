@@ -2541,8 +2541,8 @@ deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
 }
 
 /*
- * Construct SELECT statement to acquire the number of rows and the relkind of
- * a relation.
+ * Construct SELECT statement to acquire the number of pages, the number of
+ * rows, and the relkind of a relation.
  *
  * Note: we just return the remote server's reltuples value, which might
  * be off a good deal, but it doesn't seem worth working harder.  See
@@ -2557,7 +2557,7 @@ deparseAnalyzeInfoSql(StringInfo buf, Relation rel)
 	initStringInfo(&relname);
 	deparseRelation(&relname, rel);
 
-	appendStringInfoString(buf, "SELECT reltuples, relkind FROM pg_catalog.pg_class WHERE oid = ");
+	appendStringInfoString(buf, "SELECT relpages, reltuples, relkind FROM pg_catalog.pg_class WHERE oid = ");
 	deparseStringLiteral(buf, relname.data);
 	appendStringInfoString(buf, "::pg_catalog.regclass");
 }

@@ -4516,6 +4516,70 @@ DROP FOREIGN TABLE analyze_ftable;
 DROP TABLE analyze_table;
 
 -- ===================================================================
+-- test for statistics import
+-- ===================================================================
+
+CREATE TABLE simport_table (c1 int, c2 text);
+CREATE FOREIGN TABLE simport_ftable (c1 int, c2 text, cx int)
+       SERVER loopback OPTIONS (table_name 'simport_table');
+ALTER FOREIGN TABLE simport_ftable ALTER COLUMN cx OPTIONS (ADD column_name 'c1');
+ALTER FOREIGN TABLE simport_ftable OPTIONS (ADD restore_stats 'true');
+
+ANALYZE simport_ftable;                   -- should fail
+
+ANALYZE simport_table;
+
+ANALYZE VERBOSE simport_ftable;           -- should work
+
+ALTER TABLE simport_table ALTER COLUMN c1 SET STATISTICS 0;
+ALTER TABLE simport_table ALTER COLUMN c2 SET STATISTICS 0;
+INSERT INTO simport_table VALUES (1, 'foo'), (1, 'foo'), (2, 'bar'), (2, 'bar');
+ANALYZE simport_table;
+
+ANALYZE simport_ftable;                   -- should fail
+
+ALTER TABLE simport_table ALTER COLUMN c1 SET STATISTICS DEFAULT;
+ANALYZE simport_table;
+
+ANALYZE simport_ftable;                   -- should fail
+
+ALTER TABLE simport_table ALTER COLUMN c2 SET STATISTICS DEFAULT;
+ANALYZE simport_table;
+
+ANALYZE VERBOSE simport_ftable;           -- should work
+
+ANALYZE VERBOSE simport_ftable (c1);      -- should work
+
+ANALYZE VERBOSE simport_ftable (c2);      -- should work
+
+ANALYZE VERBOSE simport_ftable (c1, cx);  -- should work
+
+ANALYZE VERBOSE simport_ftable (c2, cx);  -- should work
+
+CREATE STATISTICS stats (dependencies) ON c1, c2 FROM simport_ftable;
+
+ANALYZE simport_ftable;                   -- should fail
+
+DROP STATISTICS stats;
+
+ANALYZE simport_ftable (cid);             -- should fail
+
+ANALYZE simport_ftable (c1, c1);          -- should fail
+
+CREATE VIEW simport_view AS SELECT * FROM simport_table;
+CREATE FOREIGN TABLE simport_fview (c1 int, c2 text)
+       SERVER loopback OPTIONS (table_name 'simport_view');
+ALTER FOREIGN TABLE simport_fview OPTIONS (ADD restore_stats 'true');
+
+ANALYZE simport_fview;                    -- should fail
+
+-- cleanup
+DROP FOREIGN TABLE simport_ftable;
+DROP FOREIGN TABLE simport_fview;
+DROP VIEW simport_view;
+DROP TABLE simport_table;
+
+-- ===================================================================
 -- test for postgres_fdw_get_connections function with check_conn = true
 -- ===================================================================
 

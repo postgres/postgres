@@ -120,7 +120,8 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 			strcmp(def->defname, "async_capable") == 0 ||
 			strcmp(def->defname, "parallel_commit") == 0 ||
 			strcmp(def->defname, "parallel_abort") == 0 ||
-			strcmp(def->defname, "keep_connections") == 0)
+			strcmp(def->defname, "keep_connections") == 0 ||
+			strcmp(def->defname, "restore_stats") == 0)
 		{
 			/* these accept only boolean values */
 			(void) defGetBoolean(def);
@@ -274,6 +275,9 @@ InitPgFdwOptions(void)
 		/* sampling is available on both server and table */
 		{"analyze_sampling", ForeignServerRelationId, false},
 		{"analyze_sampling", ForeignTableRelationId, false},
+		/* restore_stats is available on both server and table */
+		{"restore_stats", ForeignServerRelationId, false},
+		{"restore_stats", ForeignTableRelationId, false},
 
 		{"use_scram_passthrough", ForeignServerRelationId, false},
 		{"use_scram_passthrough", UserMappingRelationId, false},

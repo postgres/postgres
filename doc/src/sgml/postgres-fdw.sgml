@@ -332,7 +332,7 @@ OPTIONS (ADD password_required 'false');
    </para>
 
    <para>
-    The following option controls how such an <command>ANALYZE</command>
+    The following options control how such an <command>ANALYZE</command>
     operation behaves:
    </para>
 
@@ -360,6 +360,33 @@ OPTIONS (ADD password_required 'false');
        method automatically; currently it means
        either <literal>bernoulli</literal> or <literal>random</literal>
        depending on the remote server version.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>restore_stats</literal> (<type>boolean</type>)</term>
+     <listitem>
+      <para>
+       This option, which can be specified for a foreign table or a foreign
+       server, determines if <command>ANALYZE</command> on a foreign table
+       will instead attempt to fetch the existing statistics for the foreign
+       table on the remote server, and restore those statistics directly to
+       the local server.  If the attempt failed, statistics are collected by
+       row sampling on the foreign table.
+       This option is only useful if the remote table is one that can have
+       regular statistics (tables and materialized views).
+       When using this option, <emphasis>it is the user's responsibility
+       </emphasis> to ensure that the existing statistics for the foreign
+       table are up-to-date.
+       The default is <literal>false</literal>.
+      </para>
+
+      <para>
+       If the foreign table is a partition of a partitioned table, analyzing
+       the partitioned table will still result in row sampling on the foreign
+       table regardless of this setting, though direct analysis of the foreign
+       table would have attempted to fetch and restore remote statistics first.
       </para>
      </listitem>
     </varlistentry>

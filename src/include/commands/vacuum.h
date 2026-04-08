@@ -430,6 +430,8 @@ extern void parallel_vacuum_main(dsm_segment *seg, shm_toc *toc);
 extern void analyze_rel(Oid relid, RangeVar *relation,
 						const VacuumParams *params, List *va_cols, bool in_outer_xact,
 						BufferAccessStrategy bstrategy);
+extern bool attribute_is_analyzable(Relation onerel, int attnum, Form_pg_attribute attr,
+									int *p_attstattarget);
 extern bool std_typanalyze(VacAttrStats *stats);
 
 /* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */

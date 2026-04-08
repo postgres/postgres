@@ -247,6 +247,40 @@ BuildRelationExtStatistics(Relation onerel, bool inh, double totalrows,
 }
 
 /*
+ * Test if the given relation has extended statistics objects.
+ */
+bool
+HasRelationExtStatistics(Relation onerel)
+{
+	Relation	pg_statext;
+	SysScanDesc scan;
+	ScanKeyData skey;
+	bool		found;
+
+	pg_statext = table_open(StatisticExtRelationId, RowExclusiveLock);
+
+	/*
+	 * Prepare to scan pg_statistic_ext for entries having stxrelid = this
+	 * rel.
+	 */
+	ScanKeyInit(&skey,
+				Anum_pg_statistic_ext_stxrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(onerel)));
+
+	scan = systable_beginscan(pg_statext, StatisticExtRelidIndexId, true,
+							  NULL, 1, &skey);
+
+	found = HeapTupleIsValid(systable_getnext(scan));
+
+	systable_endscan(scan);
+
+	table_close(pg_statext, RowExclusiveLock);
+
+	return found;
+}
+
+/*
  * ComputeExtStatisticsRows
  *		Compute number of rows required by extended statistics on a table.
  *
