@@ -2710,11 +2710,7 @@ restore_tuple(BufFile *file, Relation relation, TupleTableSlot *slot)
 		{
 			CompactAttribute *attr = TupleDescCompactAttr(desc, i);
 			varlena    *varlen;
-			union
-			{
-				alignas(int32) varlena hdr;
-				char		data[sizeof(void *)];
-			}			chunk_header;
+			uint64		chunk_header;
 			void	   *value;
 			Size		varlensz;
 
