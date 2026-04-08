@@ -303,6 +303,13 @@ extern void ExecEndNode(PlanState *node);
 extern void ExecShutdownNode(PlanState *node);
 extern void ExecSetTupleBound(int64 tuples_needed, PlanState *child_node);
 
+/*
+ * ExecProcNodeInstr() is implemented in instrument.c, as that allows for
+ * inlining of the instrumentation functions, but thematically it ought to be
+ * in execProcnode.c.
+ */
+extern TupleTableSlot *ExecProcNodeInstr(PlanState *node);
+
 
 /* ----------------------------------------------------------------
  *		ExecProcNode
