@@ -36,6 +36,7 @@ typedef enum
 	PROCSIG_BARRIER,			/* global barrier interrupt  */
 	PROCSIG_LOG_MEMORY_CONTEXT, /* ask backend to log the memory contexts */
 	PROCSIG_PARALLEL_APPLY_MESSAGE, /* Message from parallel apply workers */
+	PROCSIG_SLOTSYNC_MESSAGE,	/* ask slot synchronization to stop */
 
 	/* Recovery conflict reasons */
 	PROCSIG_RECOVERY_CONFLICT_FIRST,
