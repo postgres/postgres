@@ -165,19 +165,16 @@ x86_tsc_frequency_khz(void)
 {
 	unsigned int reg[4] = {0};
 
+	/*
+	 * If we're inside a virtual machine, try to fetch the TSC frequency from
+	 * the hypervisor, using a hypervisor specific method.
+	 *
+	 * Note it is not safe to utilize the regular 0x15/0x16 CPUID registers
+	 * (i.e. the logic below) in virtual machines, as they have been observed
+	 * to be wildly incorrect when virtualized.
+	 */
 	if (x86_feature_available(PG_HYPERVISOR))
-	{
-		uint32		freq = x86_hypervisor_tsc_frequency_khz();
-
-		/*
-		 * If the hypervisor specific logic didn't figure out the frequency,
-		 * it's possible (although not likely, as often that's hidden from
-		 * guests) that the non-virtualized logic can figure out the
-		 * frequency.
-		 */
-		if (freq > 0)
-			return freq;
-	}
+		return x86_hypervisor_tsc_frequency_khz();
 
 	/*
 	 * On modern Intel CPUs, the TSC is implemented by invariant timekeeping
