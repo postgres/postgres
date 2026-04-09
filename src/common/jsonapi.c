@@ -1378,9 +1378,31 @@ json_lex(JsonLexContext *lex)
 
 			if (c == '-' || (c >= '0' && c <= '9'))
 			{
-				/* for numbers look for possible numeric continuations */
-
+				/*
+				 * Accumulate numeric continuations, respecting JSON number
+				 * grammar: -? int [frac] [exp]
+				 *
+				 * We must track what parts of the number we've already seen
+				 * so we don't over-consume.  '.' is valid only once and not
+				 * after 'e'/'E'; 'e'/'E' is valid only once; '+'/'-' are
+				 * valid only immediately after 'e'/'E'.
+				 */
 				bool		numend = false;
+				bool		seen_dot = false;
+				bool		seen_exp = false;
+				char		prev;
+
+				/* Scan existing partial token for state */
+				for (int j = 0; j < ptok->len; j++)
+				{
+					char		pc = ptok->data[j];
+
+					if (pc == '.')
+						seen_dot = true;
+					else if (pc == 'e' || pc == 'E')
+						seen_exp = true;
+				}
+				prev = ptok->data[ptok->len - 1];
 
 				for (size_t i = 0; i < lex->input_length && !numend; i++)
 				{
@@ -1390,8 +1412,35 @@ json_lex(JsonLexContext *lex)
 					{
 						case '+':
 						case '-':
+							if (prev != 'e' && prev != 'E')
+							{
+								numend = true;
+								break;
+							}
+							appendStringInfoCharMacro(ptok, cc);
+							added++;
+							break;
+						case '.':
+							if (seen_dot || seen_exp)
+							{
+								numend = true;
+								break;
+							}
+							seen_dot = true;
+							appendStringInfoCharMacro(ptok, cc);
+							added++;
+							break;
 						case 'e':
 						case 'E':
+							if (seen_exp)
+							{
+								numend = true;
+								break;
+							}
+							seen_exp = true;
+							appendStringInfoCharMacro(ptok, cc);
+							added++;
+							break;
 						case '0':
 						case '1':
 						case '2':
@@ -1410,6 +1459,8 @@ json_lex(JsonLexContext *lex)
 						default:
 							numend = true;
 					}
+					if (!numend)
+						prev = cc;
 				}
 			}
 
