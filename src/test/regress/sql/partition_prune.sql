@@ -1447,3 +1447,74 @@ select min(a) over (partition by a order by a) from part_abc where a >= stable_o
 
 drop view part_abc_view;
 drop table part_abc;
+
+--
+-- Check that operands wrapped in PlaceHolderVars are matched to partition
+-- keys, allowing partition pruning to occur.  PlaceHolderVars can be
+-- introduced when a subquery's output is used with grouping sets.
+--
+create table phv_part (a int, b text) partition by list (a);
+create table phv_part_1 partition of phv_part for values in (1);
+create table phv_part_2 partition of phv_part for values in (2);
+create table phv_part_null partition of phv_part for values in (null);
+insert into phv_part values (1, 'one'), (2, 'two'), (null, 'null');
+
+-- OpExpr: PHV-wrapped operand matched via equal()
+explain (costs off)
+select * from (select a, b from phv_part) t
+  where a = 1
+  group by grouping sets (a, b);
+
+select * from (select a, b from phv_part) t
+  where a = 1
+  group by grouping sets (a, b);
+
+-- OpExpr with RelabelType: PHV wrapped around a casted column
+explain (costs off)
+select * from (select a::oid as x, b from phv_part) t
+  where x::int = 1
+  group by grouping sets (x, b);
+
+select * from (select a::oid as x, b from phv_part) t
+  where x::int = 1
+  group by grouping sets (x, b);
+
+-- ScalarArrayOpExpr: IN clause with PHV-wrapped operand
+explain (costs off)
+select * from (select a, b from phv_part) t
+  where a in (1, null)
+  group by grouping sets (a, b);
+
+select * from (select a, b from phv_part) t
+  where a in (1, null)
+  group by grouping sets (a, b);
+
+-- NullTest: IS NULL with PHV-wrapped operand
+explain (costs off)
+select * from (select a, b from phv_part) t
+  where a is null
+  group by grouping sets (a, b);
+
+select * from (select a, b from phv_part) t
+  where a is null
+  group by grouping sets (a, b);
+
+drop table phv_part;
+
+-- BooleanTest: IS TRUE with PHV-wrapped boolean partition key
+create table phv_boolpart (a bool, b text) partition by list (a);
+create table phv_boolpart_t partition of phv_boolpart for values in (true);
+create table phv_boolpart_f partition of phv_boolpart for values in (false);
+create table phv_boolpart_null partition of phv_boolpart default;
+insert into phv_boolpart values (true, 'yes'), (false, 'no'), (null, 'unknown');
+
+explain (costs off)
+select * from (select a, b from phv_boolpart) t
+  where a is true
+  group by grouping sets (a, b);
+
+select * from (select a, b from phv_boolpart) t
+  where a is true
+  group by grouping sets (a, b);
+
+drop table phv_boolpart;

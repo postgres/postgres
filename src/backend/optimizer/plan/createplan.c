@@ -5271,7 +5271,7 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol)
 	/*
 	 * Remove any PlaceHolderVar wrapping of the indexkey
 	 */
-	node = strip_phvs_in_index_operand(node);
+	node = strip_noop_phvs(node);
 
 	/*
 	 * Remove any binary-compatible relabeling of the indexkey
