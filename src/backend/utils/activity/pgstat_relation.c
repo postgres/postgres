@@ -61,7 +61,8 @@ pgstat_copy_relation_stats(Relation dst, Relation src)
 	PgStat_EntryRef *dst_ref;
 
 	srcstats = pgstat_fetch_stat_tabentry_ext(src->rd_rel->relisshared,
-											  RelationGetRelid(src));
+											  RelationGetRelid(src),
+											  NULL);
 	if (!srcstats)
 		return;
 
@@ -468,20 +469,21 @@ pgstat_update_heap_dead_tuples(Relation rel, int delta)
 PgStat_StatTabEntry *
 pgstat_fetch_stat_tabentry(Oid relid)
 {
-	return pgstat_fetch_stat_tabentry_ext(IsSharedRelation(relid), relid);
+	return pgstat_fetch_stat_tabentry_ext(IsSharedRelation(relid), relid, NULL);
 }
 
 /*
  * More efficient version of pgstat_fetch_stat_tabentry(), allowing to specify
- * whether the to-be-accessed table is a shared relation or not.
+ * whether the to-be-accessed table is a shared relation or not.  This version
+ * also returns whether the caller can pfree() the result if desired.
  */
 PgStat_StatTabEntry *
-pgstat_fetch_stat_tabentry_ext(bool shared, Oid reloid)
+pgstat_fetch_stat_tabentry_ext(bool shared, Oid reloid, bool *may_free)
 {
 	Oid			dboid = (shared ? InvalidOid : MyDatabaseId);
 
 	return (PgStat_StatTabEntry *)
-		pgstat_fetch_entry(PGSTAT_KIND_RELATION, dboid, reloid);
+		pgstat_fetch_entry(PGSTAT_KIND_RELATION, dboid, reloid, may_free);
 }
 
 /*

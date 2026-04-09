@@ -763,7 +763,8 @@ extern void pgstat_twophase_postabort(FullTransactionId fxid, uint16 info,
 
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry_ext(bool shared,
-														   Oid reloid);
+														   Oid reloid,
+														   bool *may_free);
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 
 

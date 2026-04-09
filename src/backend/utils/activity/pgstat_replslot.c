@@ -208,7 +208,8 @@ pgstat_fetch_replslot(NameData slotname)
 
 	if (idx != -1)
 		slotentry = (PgStat_StatReplSlotEntry *) pgstat_fetch_entry(PGSTAT_KIND_REPLSLOT,
-																	InvalidOid, idx);
+																	InvalidOid, idx,
+																	NULL);
 
 	LWLockRelease(ReplicationSlotControlLock);
 

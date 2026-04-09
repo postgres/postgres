@@ -288,7 +288,7 @@ PgStat_StatDBEntry *
 pgstat_fetch_stat_dbentry(Oid dboid)
 {
 	return (PgStat_StatDBEntry *)
-		pgstat_fetch_entry(PGSTAT_KIND_DATABASE, dboid, InvalidOid);
+		pgstat_fetch_entry(PGSTAT_KIND_DATABASE, dboid, InvalidOid, NULL);
 }
 
 void

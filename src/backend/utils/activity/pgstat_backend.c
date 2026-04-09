@@ -95,7 +95,8 @@ pgstat_fetch_stat_backend(ProcNumber procNumber)
 	PgStat_Backend *backend_entry;
 
 	backend_entry = (PgStat_Backend *) pgstat_fetch_entry(PGSTAT_KIND_BACKEND,
-														  InvalidOid, procNumber);
+														  InvalidOid, procNumber,
+														  NULL);
 
 	return backend_entry;
 }

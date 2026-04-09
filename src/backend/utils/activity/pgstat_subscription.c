@@ -107,7 +107,7 @@ PgStat_StatSubEntry *
 pgstat_fetch_stat_subscription(Oid subid)
 {
 	return (PgStat_StatSubEntry *)
-		pgstat_fetch_entry(PGSTAT_KIND_SUBSCRIPTION, InvalidOid, subid);
+		pgstat_fetch_entry(PGSTAT_KIND_SUBSCRIPTION, InvalidOid, subid, NULL);
 }
 
 /*

@@ -960,7 +960,7 @@ pgstat_clear_snapshot(void)
 }
 
 void *
-pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
+pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid, bool *may_free)
 {
 	PgStat_HashKey key = {0};
 	PgStat_EntryRef *entry_ref;
@@ -970,6 +970,13 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 	/* should be called from backends */
 	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
 	Assert(!kind_info->fixed_amount);
+
+	/*
+	 * Initialize *may_free to false.  We'll change it to true later if we end
+	 * up allocating the result in the caller's context and not caching it.
+	 */
+	if (may_free)
+		*may_free = false;
 
 	pgstat_prep_snapshot();
 
@@ -1024,7 +1031,16 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 	 * repeated accesses.
 	 */
 	if (pgstat_fetch_consistency == PGSTAT_FETCH_CONSISTENCY_NONE)
+	{
 		stats_data = palloc(kind_info->shared_data_len);
+
+		/*
+		 * Since we allocated the result in the caller's context and aren't
+		 * caching it, the caller can safely pfree() it.
+		 */
+		if (may_free)
+			*may_free = true;
+	}
 	else
 		stats_data = MemoryContextAlloc(pgStatLocal.snapshot.context,
 										kind_info->shared_data_len);

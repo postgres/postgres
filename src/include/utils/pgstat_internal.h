@@ -685,7 +685,8 @@ extern PgStat_EntryRef *pgstat_prep_pending_entry(PgStat_Kind kind, Oid dboid,
 extern PgStat_EntryRef *pgstat_fetch_pending_entry(PgStat_Kind kind,
 												   Oid dboid, uint64 objid);
 
-extern void *pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid);
+extern void *pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid,
+								bool *may_free);
 extern void pgstat_snapshot_fixed(PgStat_Kind kind);
 
 
