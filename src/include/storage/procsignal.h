@@ -36,7 +36,6 @@ typedef enum
 	PROCSIG_BARRIER,			/* global barrier interrupt  */
 	PROCSIG_LOG_MEMORY_CONTEXT, /* ask backend to log the memory contexts */
 	PROCSIG_PARALLEL_APPLY_MESSAGE, /* Message from parallel apply workers */
-	PROCSIG_SLOTSYNC_MESSAGE,	/* ask slot synchronization to stop */
 
 	/* Recovery conflict reasons */
 	PROCSIG_RECOVERY_CONFLICT_FIRST,
@@ -48,9 +47,11 @@ typedef enum
 	PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
 	PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
 	PROCSIG_RECOVERY_CONFLICT_LAST = PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
+
+	PROCSIG_SLOTSYNC_MESSAGE,	/* ask slot synchronization to stop */
 } ProcSignalReason;
 
-#define NUM_PROCSIGNALS (PROCSIG_RECOVERY_CONFLICT_LAST + 1)
+#define NUM_PROCSIGNALS (PROCSIG_SLOTSYNC_MESSAGE + 1)
 
 typedef enum
 {
