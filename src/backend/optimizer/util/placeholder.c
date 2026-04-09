@@ -35,6 +35,8 @@ static void find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
 static void find_placeholders_in_expr(PlannerInfo *root, Node *expr);
 static bool contain_placeholder_references_walker(Node *node,
 												  contain_placeholder_references_context *context);
+static bool contain_noop_phv_walker(Node *node, void *context);
+static Node *strip_noop_phvs_mutator(Node *node, void *context);
 
 
 /*
@@ -584,4 +586,93 @@ get_placeholder_nulling_relids(PlannerInfo *root, PlaceHolderInfo *phinfo)
 	/* Now remove any OJs already included in ph_eval_at, and we're done. */
 	result = bms_del_members(result, phinfo->ph_eval_at);
 	return result;
+}
+
+/*
+ * strip_noop_phvs
+ *	  Strip no-op PlaceHolderVar nodes from the given expression tree.
+ *
+ * A PlaceHolderVar that is not marked as nullable (i.e., its phnullingrels
+ * is empty) is effectively a no-op when it appears in a relation-scan-level
+ * expression.  This function strips such PlaceHolderVars, which is useful
+ * for matching expressions to index keys or partition keys in cases where
+ * the expression has been wrapped in PlaceHolderVars during subquery pullup.
+ *
+ * IMPORTANT: the caller must ensure that the expression is a scan-level
+ * expression, so that non-nullable PlaceHolderVars in it are indeed no-ops.
+ *
+ * The removal is performed recursively because PlaceHolderVars can be nested
+ * or interleaved with other node types.  We must peel back all layers to
+ * expose the base expression.
+ *
+ * As a performance optimization, we first use a lightweight walker to check
+ * for the presence of strippable PlaceHolderVars.  The expensive mutator is
+ * invoked only if a candidate is found, avoiding unnecessary memory allocation
+ * and tree copying in the common case where no PlaceHolderVars are present.
+ */
+Node *
+strip_noop_phvs(Node *node)
+{
+	/* Don't mutate/copy if no target PHVs exist */
+	if (!contain_noop_phv_walker(node, NULL))
+		return node;
+
+	return strip_noop_phvs_mutator(node, NULL);
+}
+
+/*
+ * contain_noop_phv_walker
+ *	  Detect if there are any PlaceHolderVars in the tree that are candidates
+ *	  for stripping.
+ *
+ * We identify a PlaceHolderVar as strippable only if its phnullingrels is
+ * empty.
+ */
+static bool
+contain_noop_phv_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (bms_is_empty(phv->phnullingrels))
+			return true;
+	}
+
+	return expression_tree_walker(node, contain_noop_phv_walker,
+								  context);
+}
+
+/*
+ * strip_noop_phvs_mutator
+ *	  Recursively remove PlaceHolderVars that are not marked nullable.
+ *
+ * We strip a PlaceHolderVar only if its phnullingrels is empty, replacing it
+ * with its contained expression.
+ */
+static Node *
+strip_noop_phvs_mutator(Node *node, void *context)
+{
+	if (node == NULL)
+		return NULL;
+
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (bms_is_empty(phv->phnullingrels))
+		{
+			/* Recurse on its contained expression */
+			return strip_noop_phvs_mutator((Node *) phv->phexpr,
+										   context);
+		}
+
+		/* Otherwise, keep this PHV but check its contained expression */
+	}
+
+	return expression_tree_mutator(node, strip_noop_phvs_mutator,
+								   context);
 }
