@@ -3676,7 +3676,8 @@ pg_stat_get_autovacuum_scores(PG_FUNCTION_ARGS)
 
 		avopts = extract_autovac_opts(tup, RelationGetDescr(rel));
 		relation_needs_vacanalyze(form->oid, avopts, form,
-								  effective_multixact_freeze_max_age, 0,
+								  effective_multixact_freeze_max_age,
+								  LOG_NEVER,
 								  &dovacuum, &doanalyze, &wraparound,
 								  &scores);
 		if (avopts)

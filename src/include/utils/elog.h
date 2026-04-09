@@ -23,6 +23,7 @@ struct Node;
 
 
 /* Error level codes */
+#define LOG_NEVER	0			/* Never emit this message */
 #define DEBUG5		10			/* Debugging messages, in categories of
 								 * decreasing detail. */
 #define DEBUG4		11
