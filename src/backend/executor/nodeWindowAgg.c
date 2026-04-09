@@ -37,6 +37,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
+#include "common/int.h"
 #include "executor/executor.h"
 #include "executor/nodeWindowAgg.h"
 #include "miscadmin.h"
@@ -1402,12 +1403,21 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
 		if (frameOptions & FRAMEOPTION_ROWS)
 		{
 			int64		offset = DatumGetInt64(winstate->endOffsetValue);
+			int64		frameendpos = 0;
 
 			/* rows after current row + offset are out of frame */
 			if (frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 				offset = -offset;
 
-			if (pos > winstate->currentpos + offset)
+			/*
+			 * If we have an overflow, it means the frame end is beyond the
+			 * range of int64.  Since currentpos >= 0, this can only be a
+			 * positive overflow.  We treat this as meaning that the frame
+			 * extends to end of partition.
+			 */
+			if (!pg_add_s64_overflow(winstate->currentpos, offset,
+									 &frameendpos) &&
+				pos > frameendpos)
 				return -1;
 		}
 		else if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
@@ -1542,7 +1552,16 @@ update_frameheadpos(WindowAggState *winstate)
 			if (frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 				offset = -offset;
 
-			winstate->frameheadpos = winstate->currentpos + offset;
+			/*
+			 * If we have an overflow, it means the frame head is beyond the
+			 * range of int64.  Since currentpos >= 0, this can only be a
+			 * positive overflow.  We treat this as being beyond end of
+			 * partition.
+			 */
+			if (pg_add_s64_overflow(winstate->currentpos, offset,
+									&winstate->frameheadpos))
+				winstate->frameheadpos = PG_INT64_MAX;
+
 			/* frame head can't go before first row */
 			if (winstate->frameheadpos < 0)
 				winstate->frameheadpos = 0;
@@ -1654,12 +1673,21 @@ update_frameheadpos(WindowAggState *winstate)
 			 * framehead_slot empty.
 			 */
 			int64		offset = DatumGetInt64(winstate->startOffsetValue);
-			int64		minheadgroup;
+			int64		minheadgroup = 0;
 
 			if (frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 				minheadgroup = winstate->currentgroup - offset;
 			else
-				minheadgroup = winstate->currentgroup + offset;
+			{
+				/*
+				 * If we have an overflow, it means the target group is beyond
+				 * the range of int64.  We treat this as "infinity", which
+				 * ensures the loop below advances to end of partition.
+				 */
+				if (pg_add_s64_overflow(winstate->currentgroup, offset,
+										&minheadgroup))
+					minheadgroup = PG_INT64_MAX;
+			}
 
 			tuplestore_select_read_pointer(winstate->buffer,
 										   winstate->framehead_ptr);
@@ -1796,7 +1824,18 @@ update_frametailpos(WindowAggState *winstate)
 			if (frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 				offset = -offset;
 
-			winstate->frametailpos = winstate->currentpos + offset + 1;
+			/*
+			 * If we have an overflow, it means the frame tail is beyond the
+			 * range of int64.  Since currentpos >= 0, this can only be a
+			 * positive overflow.  We treat this as being beyond end of
+			 * partition.
+			 */
+			if (pg_add_s64_overflow(winstate->currentpos, offset,
+									&winstate->frametailpos) ||
+				pg_add_s64_overflow(winstate->frametailpos, 1,
+									&winstate->frametailpos))
+				winstate->frametailpos = PG_INT64_MAX;
+
 			/* smallest allowable value of frametailpos is 0 */
 			if (winstate->frametailpos < 0)
 				winstate->frametailpos = 0;
@@ -1908,12 +1947,21 @@ update_frametailpos(WindowAggState *winstate)
 			 * leave frametailpos = end+1 and frametail_slot empty.
 			 */
 			int64		offset = DatumGetInt64(winstate->endOffsetValue);
-			int64		maxtailgroup;
+			int64		maxtailgroup = 0;
 
 			if (frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 				maxtailgroup = winstate->currentgroup - offset;
 			else
-				maxtailgroup = winstate->currentgroup + offset;
+			{
+				/*
+				 * If we have an overflow, it means the target group is beyond
+				 * the range of int64.  We treat this as "infinity", which
+				 * ensures the loop below advances to end of partition.
+				 */
+				if (pg_add_s64_overflow(winstate->currentgroup, offset,
+										&maxtailgroup))
+					maxtailgroup = PG_INT64_MAX;
+			}
 
 			tuplestore_select_read_pointer(winstate->buffer,
 										   winstate->frametail_ptr);
