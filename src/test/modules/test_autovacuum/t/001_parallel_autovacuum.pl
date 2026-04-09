@@ -177,8 +177,6 @@ $node->wait_for_log(
 	qr/parallel autovacuum worker updated cost params: cost_limit=500, cost_delay=5, cost_page_miss=10, cost_page_dirty=10, cost_page_hit=10/,
 	$log_offset);
 
-wait_for_autovacuum_complete($node, $av_count);
-
 # Cleanup
 $node->safe_psql(
 	'postgres', qq{
