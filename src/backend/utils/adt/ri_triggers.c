@@ -3097,10 +3097,10 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 	 *
 	 * PK indexes are always btree, which supports SK_SEARCHARRAY.
 	 *
-	 * Reference index_attnos[0] for attribute number and collation since this
-	 * is a single-column fast path.
+	 * This path handles single-column FKs only, so index_attnos[0] == 1.
 	 */
 	Assert(idx_rel->rd_indam->amsearcharray);
+	Assert(fpmeta->index_attnos[0] == 1);
 	ScanKeyEntryInitialize(&skey[0],
 						   SK_SEARCHARRAY,
 						   fpmeta->index_attnos[0],
