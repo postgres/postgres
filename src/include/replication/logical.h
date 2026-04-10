@@ -154,4 +154,25 @@ extern XLogRecPtr LogicalReplicationSlotCheckPendingWal(XLogRecPtr end_of_wal,
 extern XLogRecPtr LogicalSlotAdvanceAndCheckSnapState(XLogRecPtr moveto,
 													  bool *found_consistent_snapshot);
 
+
+/*
+ * This macro determines the log level for messages about starting logical
+ * decoding and finding a consistent point.
+ *
+ * When logical decoding is triggered by a foreground SQL function (e.g.,
+ * pg_logical_slot_peek_binary_changes()), these messages are logged at DEBUG1
+ * to avoid excessive log noise. This is acceptable since such issues are
+ * typically less critical, and the messages can still be enabled by lowering
+ * client_min_messages or log_min_messages for the session.
+ *
+ * When the messages originate from background activity (e.g., walsender or
+ * slotsync worker), they are logged at LOG, as these events are less frequent
+ * and more likely to indicate issues that DBAs should notice by default.
+ *
+ * Note that SQL functions executed by the logical walsender are treated as
+ * background activity.
+ */
+#define LogicalDecodingLogLevel() \
+	(AmRegularBackendProcess() ? DEBUG1 : LOG)
+
 #endif

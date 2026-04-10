@@ -1365,7 +1365,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		builder->state = SNAPBUILD_CONSISTENT;
 		builder->next_phase_at = InvalidTransactionId;
 
-		ereport(DEBUG1,
+		ereport(LogicalDecodingLogLevel(),
 				errmsg("logical decoding found consistent point at %X/%08X",
 					   LSN_FORMAT_ARGS(lsn)),
 				errdetail("There are no running transactions."));
@@ -1462,7 +1462,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		builder->state = SNAPBUILD_CONSISTENT;
 		builder->next_phase_at = InvalidTransactionId;
 
-		ereport(DEBUG1,
+		ereport(LogicalDecodingLogLevel(),
 				errmsg("logical decoding found consistent point at %X/%08X",
 					   LSN_FORMAT_ARGS(lsn)),
 				errdetail("There are no old transactions anymore."));
@@ -1972,7 +1972,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	Assert(builder->state == SNAPBUILD_CONSISTENT);
 
-	ereport(DEBUG1,
+	ereport(LogicalDecodingLogLevel(),
 			errmsg("logical decoding found consistent point at %X/%08X",
 				   LSN_FORMAT_ARGS(lsn)),
 			errdetail("Logical decoding will begin using saved snapshot."));
