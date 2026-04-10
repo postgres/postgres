@@ -2625,6 +2625,24 @@ INSERT INTO fp_fk_multi SELECT i, i, i FROM generate_series(1, 100) i;
 INSERT INTO fp_fk_multi VALUES (1, 999, 999);
 DROP TABLE fp_fk_multi, fp_pk_multi;
 
+-- Multi-column FK with columns in different order than PK index.
+-- The FK references columns in a different order than they appear in the
+-- PK's primary key, which requires mapping constraint key positions to
+-- index column positions when building scan keys.
+CREATE TABLE fp_pk_order (a int, b text, c int, PRIMARY KEY (a, b, c));
+INSERT INTO fp_pk_order VALUES (1, 'one', 10), (2, 'two', 20);
+CREATE TABLE fp_fk_order (
+    x int,
+    c int,
+    b text,
+    a int,
+    FOREIGN KEY (a, c, b) REFERENCES fp_pk_order (a, c, b)  -- c and b swapped
+);
+INSERT INTO fp_fk_order VALUES (1, 10, 'one', 1);  -- should succeed
+INSERT INTO fp_fk_order VALUES (2, 20, 'two', 2);  -- should succeed
+INSERT INTO fp_fk_order VALUES (3, 99, 'none', 9);  -- should fail
+DROP TABLE fp_fk_order, fp_pk_order;
+
 -- Deferred constraint: batch flushed at COMMIT, not at statement end
 CREATE TABLE fp_pk_commit (a int PRIMARY KEY);
 CREATE TABLE fp_fk_commit (a int REFERENCES fp_pk_commit

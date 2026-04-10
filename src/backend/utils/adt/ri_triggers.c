@@ -156,6 +156,7 @@ typedef struct FastPathMeta
 	RegProcedure regops[RI_MAX_NUMKEYS];
 	Oid			subtypes[RI_MAX_NUMKEYS];
 	int			strats[RI_MAX_NUMKEYS];
+	AttrNumber	index_attnos[RI_MAX_NUMKEYS];	/* index column positions */
 } FastPathMeta;
 
 /*
@@ -3095,14 +3096,17 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 	 * sort and deduplicate, then walk leaf pages in order.
 	 *
 	 * PK indexes are always btree, which supports SK_SEARCHARRAY.
+	 *
+	 * Reference index_attnos[0] for attribute number and collation since this
+	 * is a single-column fast path.
 	 */
 	Assert(idx_rel->rd_indam->amsearcharray);
 	ScanKeyEntryInitialize(&skey[0],
 						   SK_SEARCHARRAY,
-						   1,	/* attno */
+						   fpmeta->index_attnos[0],
 						   fpmeta->strats[0],
 						   fpmeta->subtypes[0],
-						   idx_rel->rd_indcollation[0],
+						   idx_rel->rd_indcollation[fpmeta->index_attnos[0] - 1],
 						   fpmeta->regops[0],
 						   PointerGetDatum(arr));
 
@@ -3414,15 +3418,20 @@ build_index_scankeys(const RI_ConstraintInfo *riinfo,
 
 	/*
 	 * Set up ScanKeys for the index scan. This is essentially how
-	 * ExecIndexBuildScanKeys() sets them up.
+	 * ExecIndexBuildScanKeys() sets them up.  Use the cached index_attnos and
+	 * the corresponding collation since FK columns may be in a different
+	 * order than PK index columns.  Place each scan key at the array position
+	 * corresponding to its index column, since btree requires keys to be
+	 * ordered by attribute number.
 	 */
 	for (int i = 0; i < riinfo->nkeys; i++)
 	{
-		int			pkattrno = i + 1;
+		AttrNumber	pkattrno = fpmeta->index_attnos[i];
+		int			skey_pos = pkattrno - 1;	/* 0-based array position */
 
-		ScanKeyEntryInitialize(&skeys[i], 0, pkattrno,
+		ScanKeyEntryInitialize(&skeys[skey_pos], 0, pkattrno,
 							   fpmeta->strats[i], fpmeta->subtypes[i],
-							   idx_rel->rd_indcollation[i], fpmeta->regops[i],
+							   idx_rel->rd_indcollation[skey_pos], fpmeta->regops[i],
 							   pk_vals[i]);
 	}
 }
@@ -3451,6 +3460,23 @@ ri_populate_fastpath_metadata(RI_ConstraintInfo *riinfo,
 		Oid			typeid = RIAttType(fk_rel, riinfo->fk_attnums[i]);
 		Oid			lefttype;
 		RI_CompareHashEntry *entry = ri_HashCompareOp(eq_opr, typeid);
+		int			idx_col;
+
+		/*
+		 * Find the index column position for this constraint key.  The FK
+		 * constraint may reference columns in a different order than they
+		 * appear in the PK index, so we must map pk_attnums[i] to the
+		 * corresponding index column position.
+		 */
+		for (idx_col = 0; idx_col < riinfo->nkeys; idx_col++)
+		{
+			if (idx_rel->rd_index->indkey.values[idx_col] == riinfo->pk_attnums[i])
+				break;
+		}
+		Assert(idx_col < riinfo->nkeys);
+
+		/* 1-based attribute number */
+		fpmeta->index_attnos[i] = idx_col + 1;
 
 		fmgr_info_copy(&fpmeta->cast_func_finfo[i], &entry->cast_func_finfo,
 					   CurrentMemoryContext);
@@ -3459,7 +3485,7 @@ ri_populate_fastpath_metadata(RI_ConstraintInfo *riinfo,
 		fpmeta->regops[i] = get_opcode(eq_opr);
 
 		get_op_opfamily_properties(eq_opr,
-								   idx_rel->rd_opfamily[i],
+								   idx_rel->rd_opfamily[idx_col],
 								   false,
 								   &fpmeta->strats[i],
 								   &lefttype,
