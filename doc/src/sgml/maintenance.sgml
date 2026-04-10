@@ -1186,15 +1186,15 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     vacuum phase, please refer to <xref linkend="vacuum-phases"/>).  The
     degree of parallelism is determined by the number of indexes on the
     relation that support parallel vacuum.  For manual <command>VACUUM</command>,
-    this is limited by the <literal>PARALLEL</literal> option, which is
-    further capped by <xref linkend="guc-max-parallel-maintenance-workers"/>.
+    this is limited by the <literal>PARALLEL</literal> option if specified,
+    which is further capped by <xref linkend="guc-max-parallel-maintenance-workers"/>.
     For autovacuum, it is limited by the table's
-    <xref linkend="reloption-autovacuum-parallel-workers"/> if any which is
-    capped limited by
-    <xref linkend="guc-autovacuum-max-parallel-workers"/> parameter.  Please
-    note that it is not guaranteed that the number of parallel workers that was
-    calculated will be used during execution.  It is possible for a vacuum to
-    run with fewer workers than specified, or even with no workers at all.
+    <xref linkend="reloption-autovacuum-parallel-workers"/> if specified,
+    which is further capped by <xref linkend="guc-autovacuum-max-parallel-workers"/>
+    parameter. Please note that it is not guaranteed that the number of parallel
+    workers that was calculated will be used during execution.  It is possible for
+    a vacuum to run with fewer workers than specified, or even with no workers at
+    all.
    </para>
 
    <para>
