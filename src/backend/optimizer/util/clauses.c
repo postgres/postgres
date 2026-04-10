@@ -4635,6 +4635,14 @@ var_is_nonnullable(PlannerInfo *root, Var *var, NotNullSource source)
 	if (!bms_is_empty(var->varnullingrels))
 		return false;
 
+	/*
+	 * If the Var has a non-default returning type, it could be NULL
+	 * regardless of any NOT NULL constraint.  For example, OLD.col is NULL
+	 * for INSERT, and NEW.col is NULL for DELETE.
+	 */
+	if (var->varreturningtype != VAR_RETURNING_DEFAULT)
+		return false;
+
 	/* system columns cannot be NULL */
 	if (var->varattno < 0)
 		return true;
