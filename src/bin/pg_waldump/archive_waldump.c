@@ -299,10 +299,10 @@ free_archive_reader(XLogDumpPrivate *privateInfo)
  */
 int
 read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
-					  Size count, char *readBuff)
+					  size_t count, char *readBuff)
 {
 	char	   *p = readBuff;
-	Size		nbytes = count;
+	size_t		nbytes = count;
 	XLogRecPtr	recptr = targetPagePtr;
 	int			segsize = privateInfo->segsize;
 	XLogSegNo	segno;
@@ -364,15 +364,13 @@ read_archive_wal_page(XLogDumpPrivate *privateInfo, XLogRecPtr targetPagePtr,
 			 * archive reached EOF.
 			 */
 			if (privateInfo->cur_file != entry)
-				pg_fatal("WAL segment \"%s\" in archive \"%s\" is too short: read %lld of %lld bytes",
+				pg_fatal("WAL segment \"%s\" in archive \"%s\" is too short: read %zu of %zu bytes",
 						 fname, privateInfo->archive_name,
-						 (long long int) (count - nbytes),
-						 (long long int) count);
+						 (count - nbytes), count);
 			if (!read_archive_file(privateInfo))
-				pg_fatal("unexpected end of archive \"%s\" while reading \"%s\": read %lld of %lld bytes",
+				pg_fatal("unexpected end of archive \"%s\" while reading \"%s\": read %zu of %zu bytes",
 						 privateInfo->archive_name, fname,
-						 (long long int) (count - nbytes),
-						 (long long int) count);
+						 (count - nbytes), count);
 
 			/*
 			 * Loading more data may have moved hash table entries, so we must

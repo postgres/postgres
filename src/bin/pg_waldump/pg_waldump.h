@@ -39,7 +39,7 @@ typedef struct XLogDumpPrivate
 
 	astreamer  *archive_streamer;
 	char	   *archive_read_buf;	/* Reusable read buffer for archive I/O */
-	Size		archive_read_buf_size;
+	size_t		archive_read_buf_size;
 
 	/*
 	 * The buffer for the WAL file the archive streamer is currently reading,
@@ -75,7 +75,7 @@ extern void init_archive_reader(XLogDumpPrivate *privateInfo,
 extern void free_archive_reader(XLogDumpPrivate *privateInfo);
 extern int	read_archive_wal_page(XLogDumpPrivate *privateInfo,
 								  XLogRecPtr targetPagePtr,
-								  Size count, char *readBuff);
+								  size_t count, char *readBuff);
 extern void free_archive_wal_entry(const char *fname,
 								   XLogDumpPrivate *privateInfo);
 
