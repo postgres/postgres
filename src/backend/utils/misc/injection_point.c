@@ -335,6 +335,7 @@ InjectionPointAttach(const char *name,
 	entry->library[INJ_LIB_MAXLEN - 1] = '\0';
 	strlcpy(entry->function, function, sizeof(entry->function));
 	entry->function[INJ_FUNC_MAXLEN - 1] = '\0';
+	memset(entry->private_data, 0, INJ_PRIVATE_MAXLEN);
 	if (private_data != NULL)
 		memcpy(entry->private_data, private_data, private_data_size);
 
