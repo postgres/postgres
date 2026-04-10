@@ -2643,6 +2643,15 @@ INSERT INTO fp_fk_order VALUES (2, 20, 'two', 2);  -- should succeed
 INSERT INTO fp_fk_order VALUES (3, 99, 'none', 9);  -- should fail
 DROP TABLE fp_fk_order, fp_pk_order;
 
+-- Same-type columns in different order:
+CREATE TABLE fp_pk_same (c1 int, c2 int, PRIMARY KEY (c1, c2));
+INSERT INTO fp_pk_same VALUES (1, 2);
+CREATE TABLE fp_fk_same (c1 int, c2 int,
+    FOREIGN KEY (c2, c1) REFERENCES fp_pk_same (c2, c1));
+INSERT INTO fp_fk_same VALUES (1, 2);  -- should succeed
+INSERT INTO fp_fk_same VALUES (9, 9);  -- should fail
+DROP TABLE fp_fk_same, fp_pk_same;
+
 -- Deferred constraint: batch flushed at COMMIT, not at statement end
 CREATE TABLE fp_pk_commit (a int PRIMARY KEY);
 CREATE TABLE fp_fk_commit (a int REFERENCES fp_pk_commit
