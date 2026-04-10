@@ -556,10 +556,9 @@ read_stream_begin_impl(int flags,
 	Oid			tablespace_id;
 
 	/*
-	 * Decide how many I/Os we will allow to run at the same time.  That
-	 * currently means advice to the kernel to tell it that we will soon read.
-	 * This number also affects how far we look ahead for opportunities to
-	 * start more I/Os.
+	 * Decide how many I/Os we will allow to run at the same time.  This
+	 * number also affects how far we look ahead for opportunities to start
+	 * more I/Os.
 	 */
 	tablespace_id = smgr->smgr_rlocator.locator.spcOid;
 	if (!OidIsValid(MyDatabaseId) ||
