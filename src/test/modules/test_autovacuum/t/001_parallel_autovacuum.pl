@@ -15,8 +15,7 @@ if ($ENV{enable_injection_points} ne 'yes')
 }
 
 # Before each test we should disable autovacuum for 'test_autovac' table and
-# generate some dead tuples in it. Returns the current autovacuum_count of
-# the table test_autovac.
+# generate some dead tuples in it.
 sub prepare_for_next_test
 {
 	my ($node, $test_number) = @_;
@@ -25,24 +24,6 @@ sub prepare_for_next_test
 		'postgres', qq{
 		ALTER TABLE test_autovac SET (autovacuum_enabled = false);
 		UPDATE test_autovac SET col_1 = $test_number;
-	});
-
-	my $count = $node->safe_psql(
-		'postgres', qq{
-		SELECT autovacuum_count FROM pg_stat_user_tables WHERE relname = 'test_autovac'
-	});
-
-	return $count;
-}
-
-# Wait for the table to be vacuumed by an autovacuum worker.
-sub wait_for_autovacuum_complete
-{
-	my ($node, $old_count) = @_;
-
-	$node->poll_query_until(
-		'postgres', qq{
-		SELECT autovacuum_count > $old_count FROM pg_stat_user_tables WHERE relname = 'test_autovac'
 	});
 }
 
@@ -119,7 +100,7 @@ $node->safe_psql(
 # Our table has enough indexes and appropriate reloptions, so autovacuum must
 # be able to process it in parallel mode. Just check if it can do it.
 
-my $av_count = prepare_for_next_test($node, 1);
+prepare_for_next_test($node, 1);
 my $log_offset = -s $node->logfile;
 
 $node->safe_psql(
@@ -127,18 +108,17 @@ $node->safe_psql(
 	ALTER TABLE test_autovac SET (autovacuum_enabled = true);
 });
 
-# Wait until the parallel autovacuum on table is completed. At the same time,
-# we check that the required number of parallel workers has been started.
-wait_for_autovacuum_complete($node, $av_count);
-ok( $node->log_contains(
-		qr/parallel workers: index vacuum: 2 planned, 2 launched in total/,
-		$log_offset));
+# Wait for parallel autovacuum to complete; check worker count matches reloptions.
+$node->wait_for_log(
+	qr/parallel workers: index vacuum: 2 planned, 2 launched in total/,
+	$log_offset);
+ok(1, "parallel autovacuum on test_autovac table");
 
 # Test 2:
 # Check whether parallel autovacuum leader can propagate cost-based parameters
 # to the parallel workers.
 
-$av_count = prepare_for_next_test($node, 2);
+prepare_for_next_test($node, 2);
 $log_offset = -s $node->logfile;
 
 $node->safe_psql(
@@ -182,6 +162,10 @@ $node->safe_psql(
 	'postgres', qq{
 	SELECT injection_points_detach('autovacuum-start-parallel-vacuum');
 });
+
+ok(1,
+	"vacuum delay parameter changes are propagated to parallel vacuum workers"
+);
 
 $node->stop;
 done_testing();
