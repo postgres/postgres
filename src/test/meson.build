@@ -25,6 +25,4 @@ if icu.found()
   subdir('icu')
 endif
 
-subdir('fuzzing')
-
 subdir('perl')
