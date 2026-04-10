@@ -322,6 +322,7 @@ InjectionPointAttach(const char *name,
 	strlcpy(entry->name, name, sizeof(entry->name));
 	strlcpy(entry->library, library, sizeof(entry->library));
 	strlcpy(entry->function, function, sizeof(entry->function));
+	memset(entry->private_data, 0, INJ_PRIVATE_MAXLEN);
 	if (private_data != NULL)
 		memcpy(entry->private_data, private_data, private_data_size);
 
