@@ -3898,6 +3898,13 @@ typedef struct AfterTriggersData
 									 * deferred constraints */
 	bool		firing_batch_callbacks; /* true when in
 										 * FireAfterTriggerBatchCallbacks() */
+
+	/*
+	 * Incremented around the trigger-firing loops in AfterTriggerEndQuery,
+	 * AfterTriggerFireDeferred, and AfterTriggerSetState.  Used by
+	 * AfterTriggerIsActive() to signal that after-trigger firing is active.
+	 */
+	int			firing_depth;
 } AfterTriggersData;
 
 struct AfterTriggersQueryData
@@ -3943,13 +3950,6 @@ typedef struct AfterTriggerCallbackItem
 } AfterTriggerCallbackItem;
 
 static AfterTriggersData afterTriggers;
-
-/*
- * Incremented before invoking afterTriggerInvokeEvents().  Used by
- * AfterTriggerIsActive() to determine whether batch callbacks will fire,
- * so that RI trigger functions can take the batched fast path.
- */
-static int	afterTriggerFiringDepth = 0;
 
 static void AfterTriggerExecute(EState *estate,
 								AfterTriggerEvent event,
@@ -5110,6 +5110,7 @@ AfterTriggerBeginXact(void)
 	 */
 	afterTriggers.firing_counter = (CommandId) 1;	/* mustn't be 0 */
 	afterTriggers.query_depth = -1;
+	afterTriggers.firing_depth = 0;
 	afterTriggers.batch_callbacks = NIL;
 	afterTriggers.firing_batch_callbacks = false;
 
@@ -5125,7 +5126,6 @@ AfterTriggerBeginXact(void)
 	Assert(afterTriggers.events.head == NULL);
 	Assert(afterTriggers.trans_stack == NULL);
 	Assert(afterTriggers.maxtransdepth == 0);
-	Assert(afterTriggerFiringDepth == 0);
 }
 
 
@@ -5197,7 +5197,7 @@ AfterTriggerEndQuery(EState *estate)
 	 */
 	qs = &afterTriggers.query_stack[afterTriggers.query_depth];
 
-	afterTriggerFiringDepth++;
+	afterTriggers.firing_depth++;
 	for (;;)
 	{
 		if (afterTriggerMarkEvents(&qs->events, &afterTriggers.events, true))
@@ -5246,7 +5246,7 @@ AfterTriggerEndQuery(EState *estate)
 	AfterTriggerFreeQuery(&afterTriggers.query_stack[afterTriggers.query_depth]);
 
 	afterTriggers.query_depth--;
-	afterTriggerFiringDepth--;
+	afterTriggers.firing_depth--;
 }
 
 
@@ -5345,7 +5345,7 @@ AfterTriggerFireDeferred(void)
 	 * Run all the remaining triggers.  Loop until they are all gone, in case
 	 * some trigger queues more for us to do.
 	 */
-	afterTriggerFiringDepth++;
+	afterTriggers.firing_depth++;
 	while (afterTriggerMarkEvents(events, NULL, false))
 	{
 		CommandId	firing_id = afterTriggers.firing_counter++;
@@ -5357,7 +5357,7 @@ AfterTriggerFireDeferred(void)
 	/* Flush any fast-path batches accumulated by the triggers just fired. */
 	FireAfterTriggerBatchCallbacks(afterTriggers.batch_callbacks);
 
-	afterTriggerFiringDepth--;
+	afterTriggers.firing_depth--;
 
 	/*
 	 * We don't bother freeing the event list or batch_callbacks, since they
@@ -5425,7 +5425,7 @@ AfterTriggerEndXact(bool isCommit)
 	/* No more afterTriggers manipulation until next transaction starts. */
 	afterTriggers.query_depth = -1;
 
-	afterTriggerFiringDepth = 0;
+	afterTriggers.firing_depth = 0;
 
 	list_free_deep(afterTriggers.batch_callbacks);
 	afterTriggers.batch_callbacks = NIL;
@@ -6083,7 +6083,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 		AfterTriggerEventList *events = &afterTriggers.events;
 		bool		snapshot_set = false;
 
-		afterTriggerFiringDepth++;
+		afterTriggers.firing_depth++;
 		while (afterTriggerMarkEvents(events, NULL, true))
 		{
 			CommandId	firing_id = afterTriggers.firing_counter++;
@@ -6117,7 +6117,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 		 * Flush any fast-path batches accumulated by the triggers just fired.
 		 */
 		FireAfterTriggerBatchCallbacks(afterTriggers.batch_callbacks);
-		afterTriggerFiringDepth--;
+		afterTriggers.firing_depth--;
 		list_free_deep(afterTriggers.batch_callbacks);
 		afterTriggers.batch_callbacks = NIL;
 
@@ -6843,7 +6843,7 @@ RegisterAfterTriggerBatchCallback(AfterTriggerBatchCallback callback,
 	 * Must be called while afterTriggers is active; callbacks registered
 	 * outside a trigger-firing context would never fire.
 	 */
-	Assert(afterTriggerFiringDepth > 0);
+	Assert(afterTriggers.firing_depth > 0);
 	Assert(!afterTriggers.firing_batch_callbacks);
 	oldcxt = MemoryContextSwitchTo(TopTransactionContext);
 	item = palloc(sizeof(AfterTriggerCallbackItem));
@@ -6875,7 +6875,7 @@ FireAfterTriggerBatchCallbacks(List *callbacks)
 {
 	ListCell   *lc;
 
-	Assert(afterTriggerFiringDepth > 0);
+	Assert(afterTriggers.firing_depth > 0);
 	afterTriggers.firing_batch_callbacks = true;
 	foreach(lc, callbacks)
 	{
@@ -6897,5 +6897,5 @@ FireAfterTriggerBatchCallbacks(List *callbacks)
 bool
 AfterTriggerIsActive(void)
 {
-	return afterTriggerFiringDepth > 0;
+	return afterTriggers.firing_depth > 0;
 }
