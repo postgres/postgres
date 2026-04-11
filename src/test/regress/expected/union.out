@@ -1500,3 +1500,20 @@ on true limit 1;
                ->  Result
 (6 rows)
 
+-- Test handling of Vars with varno 0 in estimate_array_length
+explain (verbose, costs off)
+select null::int[] union all select null::int[] union all select null::bigint[];
+                 QUERY PLAN                  
+---------------------------------------------
+ Append
+   ->  Result
+         Output: (NULL::integer[])
+         ->  Append
+               ->  Result
+                     Output: NULL::integer[]
+               ->  Result
+                     Output: NULL::integer[]
+   ->  Result
+         Output: NULL::bigint[]
+(10 rows)
+
