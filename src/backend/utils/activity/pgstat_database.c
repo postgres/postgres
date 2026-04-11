@@ -243,7 +243,7 @@ pgstat_report_connect(Oid dboid)
 
 	pgLastSessionReportTime = MyStartTimestamp;
 
-	dbentry = pgstat_prep_database_pending(MyDatabaseId);
+	dbentry = pgstat_prep_database_pending(dboid);
 	dbentry->sessions++;
 }
 
@@ -258,7 +258,7 @@ pgstat_report_disconnect(Oid dboid)
 	if (!pgstat_should_report_connstat())
 		return;
 
-	dbentry = pgstat_prep_database_pending(MyDatabaseId);
+	dbentry = pgstat_prep_database_pending(dboid);
 
 	switch (pgStatSessionEndCause)
 	{
@@ -419,7 +419,7 @@ pgstat_reset_database_timestamp(Oid dboid, TimestampTz ts)
 	PgStat_EntryRef *dbref;
 	PgStatShared_Database *dbentry;
 
-	dbref = pgstat_get_entry_ref_locked(PGSTAT_KIND_DATABASE, MyDatabaseId, InvalidOid,
+	dbref = pgstat_get_entry_ref_locked(PGSTAT_KIND_DATABASE, dboid, InvalidOid,
 										false);
 
 	dbentry = (PgStatShared_Database *) dbref->shared_stats;

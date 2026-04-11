@@ -416,9 +416,17 @@ COMMIT;
 -- check that the stats are reset.
 SELECT (n_tup_ins + n_tup_upd) > 0 AS has_data FROM pg_stat_all_tables
   WHERE relid = 'pg_shdescription'::regclass;
+-- stats_reset may not be set for datid=0 and shared objects in
+-- pg_stat_database, so reset once.
 SELECT pg_stat_reset_single_table_counters('pg_shdescription'::regclass);
 SELECT (n_tup_ins + n_tup_upd) > 0 AS has_data FROM pg_stat_all_tables
   WHERE relid = 'pg_shdescription'::regclass;
+SELECT stats_reset AS shared_db_reset_before
+  FROM pg_stat_database WHERE datid = 0 \gset
+-- Second reset for comparison.
+SELECT pg_stat_reset_single_table_counters('pg_shdescription'::regclass);
+SELECT stats_reset > :'shared_db_reset_before'::timestamptz AS has_updated
+  FROM pg_stat_database WHERE datid = 0;
 
 -- set back comment
 \if :{?description_before}
