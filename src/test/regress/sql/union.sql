@@ -664,3 +664,7 @@ select * from tenk1 t1
 left join lateral
   (select t1.tenthous from tenk2 t2 union all (values(1)))
 on true limit 1;
+
+-- Test handling of Vars with varno 0 in estimate_array_length
+explain (verbose, costs off)
+select null::int[] union all select null::int[] union all select null::bigint[];
