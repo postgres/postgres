@@ -4230,7 +4230,7 @@ supportfn(internal) returns internal
     the <literal>FROM</literal> item as though a sub-select had been
     written instead.  The Query tree must appear as it would after parse
     analysis and rewrite processing.  One way to ensure that that's true
-    is to build a SQL string then feed it
+    is to build an SQL string then feed it
     through <function>pg_parse_query</function>
     and <function>pg_analyze_and_rewrite</function>, or related
     functions.  <literal>PARAM_EXTERN</literal> <structname>Param</structname>
