@@ -174,45 +174,45 @@ static void
 report_sequence_errors(List *mismatched_seqs_idx, List *insuffperm_seqs_idx,
 					   List *missing_seqs_idx)
 {
-	StringInfo	seqstr;
+	StringInfoData seqstr;
 
 	/* Quick exit if there are no errors to report */
 	if (!mismatched_seqs_idx && !insuffperm_seqs_idx && !missing_seqs_idx)
 		return;
 
-	seqstr = makeStringInfo();
+	initStringInfo(&seqstr);
 
 	if (mismatched_seqs_idx)
 	{
-		get_sequences_string(mismatched_seqs_idx, seqstr);
+		get_sequences_string(mismatched_seqs_idx, &seqstr);
 		ereport(WARNING,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg_plural("mismatched or renamed sequence on subscriber (%s)",
 							  "mismatched or renamed sequences on subscriber (%s)",
 							  list_length(mismatched_seqs_idx),
-							  seqstr->data));
+							  seqstr.data));
 	}
 
 	if (insuffperm_seqs_idx)
 	{
-		get_sequences_string(insuffperm_seqs_idx, seqstr);
+		get_sequences_string(insuffperm_seqs_idx, &seqstr);
 		ereport(WARNING,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg_plural("insufficient privileges on sequence (%s)",
 							  "insufficient privileges on sequences (%s)",
 							  list_length(insuffperm_seqs_idx),
-							  seqstr->data));
+							  seqstr.data));
 	}
 
 	if (missing_seqs_idx)
 	{
-		get_sequences_string(missing_seqs_idx, seqstr);
+		get_sequences_string(missing_seqs_idx, &seqstr);
 		ereport(WARNING,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg_plural("missing sequence on publisher (%s)",
 							  "missing sequences on publisher (%s)",
 							  list_length(missing_seqs_idx),
-							  seqstr->data));
+							  seqstr.data));
 	}
 
 	ereport(ERROR,
@@ -388,9 +388,12 @@ copy_sequences(WalReceiverConn *conn)
 	List	   *mismatched_seqs_idx = NIL;
 	List	   *missing_seqs_idx = NIL;
 	List	   *insuffperm_seqs_idx = NIL;
-	StringInfo	seqstr = makeStringInfo();
-	StringInfo	cmd = makeStringInfo();
+	StringInfoData seqstr;
+	StringInfoData cmd;
 	MemoryContext oldctx;
+
+	initStringInfo(&seqstr);
+	initStringInfo(&cmd);
 
 #define MAX_SEQUENCES_SYNC_PER_BATCH 100
 
@@ -423,13 +426,13 @@ copy_sequences(WalReceiverConn *conn)
 			LogicalRepSequenceInfo *seqinfo =
 				(LogicalRepSequenceInfo *) list_nth(seqinfos, idx);
 
-			if (seqstr->len > 0)
-				appendStringInfoString(seqstr, ", ");
+			if (seqstr.len > 0)
+				appendStringInfoString(&seqstr, ", ");
 
 			nspname_literal = quote_literal_cstr(seqinfo->nspname);
 			seqname_literal = quote_literal_cstr(seqinfo->seqname);
 
-			appendStringInfo(seqstr, "(%s, %s, %d)",
+			appendStringInfo(&seqstr, "(%s, %s, %d)",
 							 nspname_literal, seqname_literal, idx);
 
 			if (++batch_size == MAX_SEQUENCES_SYNC_PER_BATCH)
@@ -468,7 +471,7 @@ copy_sequences(WalReceiverConn *conn)
 		 * corresponding local entries without relying on result order or name
 		 * matching.
 		 */
-		appendStringInfo(cmd,
+		appendStringInfo(&cmd,
 						 "SELECT s.seqidx, ps.*, seq.seqtypid,\n"
 						 "       seq.seqstart, seq.seqincrement, seq.seqmin,\n"
 						 "       seq.seqmax, seq.seqcycle\n"
@@ -477,9 +480,9 @@ copy_sequences(WalReceiverConn *conn)
 						 "JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = s.seqname\n"
 						 "JOIN pg_sequence seq ON seq.seqrelid = c.oid\n"
 						 "JOIN LATERAL pg_get_sequence_data(seq.seqrelid) AS ps ON true\n",
-						 seqstr->data);
+						 seqstr.data);
 
-		res = walrcv_exec(conn, cmd->data, lengthof(seqRow), seqRow);
+		res = walrcv_exec(conn, cmd.data, lengthof(seqRow), seqRow);
 		if (res->status != WALRCV_OK_TUPLES)
 			ereport(ERROR,
 					errcode(ERRCODE_CONNECTION_FAILURE),
@@ -567,8 +570,8 @@ copy_sequences(WalReceiverConn *conn)
 
 		ExecDropSingleTupleTableSlot(slot);
 		walrcv_clear_result(res);
-		resetStringInfo(seqstr);
-		resetStringInfo(cmd);
+		resetStringInfo(&seqstr);
+		resetStringInfo(&cmd);
 
 		batch_missing_count = batch_size - (batch_succeeded_count +
 											batch_mismatched_count +
