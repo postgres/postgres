@@ -975,22 +975,6 @@ server_is_in_recovery(PGconn *conn)
 	return ret == 0;
 }
 
-/*
- * Open a new logfile with proper permissions.
- */
-static FILE *
-logfile_open(const char *filename, const char *mode)
-{
-	FILE	   *fh;
-
-	fh = fopen(filename, mode);
-
-	if (!fh)
-		pg_fatal("could not open log file \"%s\": %m", filename);
-
-	return fh;
-}
-
 static void
 make_output_dirs(const char *log_basedir)
 {
@@ -2530,8 +2514,10 @@ main(int argc, char **argv)
 		make_output_dirs(opt.log_dir);
 		internal_log_file = psprintf("%s/%s", logdir, INTERNAL_LOG_FILE_NAME);
 
-		/* logfile_open() will exit if there is an error */
-		internal_log_file_fp = logfile_open(internal_log_file, "a");
+		internal_log_file_fp = fopen(internal_log_file, "a");
+		if (!internal_log_file_fp)
+			pg_fatal("could not open log file \"%s\": %m", internal_log_file);
+
 		pg_free(internal_log_file);
 
 		pg_logging_set_logfile(internal_log_file_fp);
