@@ -770,3 +770,41 @@ SELECT * FROM (SELECT * FROM scan_table s WHERE a = 1 OFFSET 0);
 (7 rows)
 
 COMMIT;
+-- Test a non-repeatable tablesample method with a scan-level Materialize.
+CREATE EXTENSION tsm_system_time;
+CREATE TABLE scan_tsm (i int);
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT 1 FROM (SELECT i FROM scan_tsm TABLESAMPLE system_time (1000)),
+	LATERAL (SELECT i LIMIT 1);
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Nested Loop
+   ->  Materialize
+         ->  Sample Scan on scan_tsm
+               Sampling: system_time ('1000'::double precision)
+   ->  Limit
+         ->  Result
+ Generated Plan Advice:
+   JOIN_ORDER(scan_tsm unnamed_subquery#2)
+   NESTED_LOOP_PLAIN(unnamed_subquery#2)
+   NO_GATHER(unnamed_subquery#2 scan_tsm "*RESULT*"@unnamed_subquery)
+(10 rows)
+
+-- Same, but with the scan-level Materialize on the inner side of a join.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT 1 FROM (SELECT 1 AS x LIMIT 1),
+	LATERAL (SELECT x FROM scan_tsm TABLESAMPLE system_time (1000));
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Nested Loop
+   ->  Limit
+         ->  Result
+   ->  Materialize
+         ->  Sample Scan on scan_tsm
+               Sampling: system_time ('1000'::double precision)
+ Generated Plan Advice:
+   JOIN_ORDER(unnamed_subquery scan_tsm)
+   NESTED_LOOP_PLAIN(scan_tsm)
+   NO_GATHER(unnamed_subquery scan_tsm "*RESULT*"@unnamed_subquery)
+(10 rows)
+

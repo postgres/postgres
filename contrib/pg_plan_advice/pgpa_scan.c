@@ -120,6 +120,17 @@ pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 				break;
 		}
 	}
+	else if (pgpa_is_scan_level_materialize(plan))
+	{
+		/*
+		 * Non-repeatable tablesample methods can be wrapped in a Materialize
+		 * node that must be treated as part of the scan itself. See
+		 * set_tablesample_rel_pathlist().
+		 */
+		rti = pgpa_scanrelid(plan->lefttree);
+		relids = bms_make_singleton(rti);
+		strategy = PGPA_SCAN_ORDINARY;
+	}
 	else if ((relids = pgpa_relids(plan)) != NULL)
 	{
 		switch (nodeTag(plan))

@@ -114,6 +114,7 @@ extern void pgpa_add_future_feature(pgpa_plan_walker_context *walker,
 extern ElidedNode *pgpa_last_elided_node(PlannedStmt *pstmt, Plan *plan);
 extern Bitmapset *pgpa_relids(Plan *plan);
 extern Index pgpa_scanrelid(Plan *plan);
+extern bool pgpa_is_scan_level_materialize(Plan *plan);
 extern Bitmapset *pgpa_filter_out_join_relids(Bitmapset *relids, List *rtable);
 
 extern bool pgpa_walker_would_advise(pgpa_plan_walker_context *walker,

@@ -363,9 +363,11 @@ pgpa_decompose_join(pgpa_plan_walker_context *walker, Plan *plan,
 			/*
 			 * The planner may have chosen to place a Material node on the
 			 * inner side of the MergeJoin; if this is present, we record it
-			 * as part of the join strategy.
+			 * as part of the join strategy. (However, scan-level Materialize
+			 * nodes are an exception.)
 			 */
-			if (elidedinner == NULL && IsA(innerplan, Material))
+			if (elidedinner == NULL && IsA(innerplan, Material) &&
+				!pgpa_is_scan_level_materialize(innerplan))
 			{
 				elidedinner = pgpa_descend_node(pstmt, &innerplan);
 				strategy = JSTRAT_MERGE_JOIN_MATERIALIZE;
@@ -390,9 +392,11 @@ pgpa_decompose_join(pgpa_plan_walker_context *walker, Plan *plan,
 			/*
 			 * The planner may have chosen to place a Material or Memoize node
 			 * on the inner side of the NestLoop; if this is present, we
-			 * record it as part of the join strategy.
+			 * record it as part of the join strategy. (However, scan-level
+			 * Materialize nodes are an exception.)
 			 */
-			if (elidedinner == NULL && IsA(innerplan, Material))
+			if (elidedinner == NULL && IsA(innerplan, Material) &&
+				!pgpa_is_scan_level_materialize(innerplan))
 			{
 				elidedinner = pgpa_descend_node(pstmt, &innerplan);
 				strategy = JSTRAT_NESTED_LOOP_MATERIALIZE;

@@ -16,6 +16,7 @@
 #include "pgpa_scan.h"
 #include "pgpa_walker.h"
 
+#include "access/tsmapi.h"
 #include "nodes/plannodes.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
@@ -607,6 +608,34 @@ pgpa_scanrelid(Plan *plan)
 		default:
 			return 0;
 	}
+}
+
+/*
+ * Check whether a plan node is a Material node that should be treated as
+ * a scan. Currently, this only happens when set_tablesample_rel_pathlist
+ * inserts a Material node to protect a SampleScan that uses a non-repeatable
+ * tablesample method.
+ *
+ * (Most Material nodes we're likely to encounter are actually part of the
+ * join strategy: nested loops and merge joins can choose to materialize the
+ * inner sides of the join. The cases identified here are the rare
+ * exceptions.)
+ */
+bool
+pgpa_is_scan_level_materialize(Plan *plan)
+{
+	Plan	   *child;
+	SampleScan *sscan;
+	TsmRoutine *tsm;
+
+	if (!IsA(plan, Material))
+		return false;
+	child = plan->lefttree;
+	if (child == NULL || !IsA(child, SampleScan))
+		return false;
+	sscan = (SampleScan *) child;
+	tsm = GetTsmRoutine(sscan->tablesample->tsmhandler);
+	return !tsm->repeatable_across_scans;
 }
 
 /*

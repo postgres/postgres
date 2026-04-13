@@ -22,6 +22,8 @@ PGFILEDESC = "pg_plan_advice - help the planner get the right plan"
 REGRESS = gather join_order join_strategy partitionwise prepared \
 	scan semijoin syntax
 
+EXTRA_INSTALL = contrib/tsm_system_time
+
 EXTRA_CLEAN = pgpa_parser.h pgpa_parser.c pgpa_scanner.c
 
 ifdef USE_PGXS

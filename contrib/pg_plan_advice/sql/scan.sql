@@ -196,3 +196,15 @@ SELECT * FROM (SELECT * FROM scan_table s WHERE a = 1 OFFSET 0) x;
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM (SELECT * FROM scan_table s WHERE a = 1 OFFSET 0);
 COMMIT;
+
+-- Test a non-repeatable tablesample method with a scan-level Materialize.
+CREATE EXTENSION tsm_system_time;
+CREATE TABLE scan_tsm (i int);
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT 1 FROM (SELECT i FROM scan_tsm TABLESAMPLE system_time (1000)),
+	LATERAL (SELECT i LIMIT 1);
+
+-- Same, but with the scan-level Materialize on the inner side of a join.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT 1 FROM (SELECT 1 AS x LIMIT 1),
+	LATERAL (SELECT x FROM scan_tsm TABLESAMPLE system_time (1000));
