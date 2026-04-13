@@ -914,7 +914,7 @@ fetch_remote_slots(WalReceiverConn *wrconn, List *slot_names)
 			if (!first_slot)
 				appendStringInfoString(&query, ", ");
 
-			appendStringInfo(&query, "%s", quote_literal_cstr(slot_name));
+			appendStringInfoString(&query, quote_literal_cstr(slot_name));
 			first_slot = false;
 		}
 		appendStringInfoChar(&query, ')');

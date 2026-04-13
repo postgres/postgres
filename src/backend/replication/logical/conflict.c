@@ -364,7 +364,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 									 localxmin, timestamptz_to_str(localts));
 			}
 			else
-				appendStringInfo(&err_detail, _("The row to be updated was deleted"));
+				appendStringInfoString(&err_detail, _("The row to be updated was deleted"));
 
 			break;
 

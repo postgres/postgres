@@ -192,7 +192,7 @@ test_gb18030_page_multiple(pe_test_config *tc)
 	testname = createPQExpBuffer();
 	appendPQExpBuffer(testname, ">repeat(%c, %zu)", input[0], input_len - 1);
 	escapify(testname, input + input_len - 1, 1);
-	appendPQExpBuffer(testname, "< - GB18030 - PQescapeLiteral");
+	appendPQExpBufferStr(testname, "< - GB18030 - PQescapeLiteral");
 
 	/* test itself */
 	PQsetClientEncoding(tc->conn, "GB18030");
@@ -229,9 +229,9 @@ test_gb18030_json(pe_test_config *tc)
 
 	/* name to describe the test */
 	testname = createPQExpBuffer();
-	appendPQExpBuffer(testname, ">");
+	appendPQExpBufferChar(testname, '>');
 	escapify(testname, input, input_len);
-	appendPQExpBuffer(testname, "< - GB18030 - pg_parse_json");
+	appendPQExpBufferStr(testname, "< - GB18030 - pg_parse_json");
 
 	/* test itself */
 	lex = makeJsonLexContextCstringLen(NULL, raw_buf->data, input_len,

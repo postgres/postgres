@@ -1691,7 +1691,7 @@ make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
 			first = false;
 		}
 		else
-			appendStringInfo(buf, ",\n");
+			appendStringInfoString(buf, ",\n");
 
 		relname = get_rel_name(pgeform->pgerelid);
 		if (relname && strcmp(relname, NameStr(pgeform->pgealias)) == 0)
@@ -1707,7 +1707,7 @@ make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
 		{
 			appendStringInfoString(buf, " KEY (");
 			decompile_column_index_array(datum, pgeform->pgerelid, false, buf);
-			appendStringInfoString(buf, ")");
+			appendStringInfoChar(buf, ')');
 		}
 		else
 			elog(ERROR, "null pgekey for element %u", pgeform->oid);
@@ -1741,7 +1741,7 @@ make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
 				decompile_column_index_array(srckey, pgeform->pgerelid, false, buf);
 				appendStringInfo(buf, ") REFERENCES %s (", quote_identifier(NameStr(pgeform2->pgealias)));
 				decompile_column_index_array(srcref, pgeform2->pgerelid, false, buf);
-				appendStringInfoString(buf, ")");
+				appendStringInfoChar(buf, ')');
 			}
 			else
 				appendStringInfo(buf, " %s ", quote_identifier(NameStr(pgeform2->pgealias)));
@@ -1758,7 +1758,7 @@ make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
 				decompile_column_index_array(destkey, pgeform->pgerelid, false, buf);
 				appendStringInfo(buf, ") REFERENCES %s (", quote_identifier(NameStr(pgeform2->pgealias)));
 				decompile_column_index_array(destref, pgeform2->pgerelid, false, buf);
-				appendStringInfoString(buf, ")");
+				appendStringInfoChar(buf, ')');
 			}
 			else
 				appendStringInfo(buf, " %s", quote_identifier(NameStr(pgeform2->pgealias)));
@@ -1768,7 +1768,7 @@ make_propgraphdef_elements(StringInfo buf, Oid pgrelid, char pgekind)
 		make_propgraphdef_labels(buf, pgeform->oid, NameStr(pgeform->pgealias), pgeform->pgerelid);
 	}
 	if (!first)
-		appendStringInfo(buf, "\n    )");
+		appendStringInfoString(buf, "\n    )");
 
 	systable_endscan(scan);
 	table_close(pgerel, AccessShareLock);
@@ -1848,7 +1848,7 @@ make_propgraphdef_labels(StringInfo buf, Oid elid, const char *elalias, Oid elre
 		{
 			/* If the default label is the only label, don't print anything. */
 			if (count != 1)
-				appendStringInfo(buf, " DEFAULT LABEL");
+				appendStringInfoString(buf, " DEFAULT LABEL");
 		}
 		else
 			appendStringInfo(buf, " LABEL %s", quote_identifier(osp->str));
@@ -1932,7 +1932,7 @@ make_propgraphdef_properties(StringInfo buf, Oid ellabelid, Oid elrelid)
 
 		context = deparse_context_for(get_relation_name(elrelid), elrelid);
 
-		appendStringInfo(buf, " PROPERTIES (");
+		appendStringInfoString(buf, " PROPERTIES (");
 
 		foreach(lc, outlist)
 		{
@@ -1943,20 +1943,20 @@ make_propgraphdef_properties(StringInfo buf, Oid ellabelid, Oid elrelid)
 			if (first)
 				first = false;
 			else
-				appendStringInfo(buf, ", ");
+				appendStringInfoString(buf, ", ");
 
 			if (IsA(expr, Var) && strcmp(propname, get_attname(elrelid, castNode(Var, expr)->varattno, false)) == 0)
-				appendStringInfo(buf, "%s", quote_identifier(propname));
+				appendStringInfoString(buf, quote_identifier(propname));
 			else
 				appendStringInfo(buf, "%s AS %s",
 								 deparse_expression_pretty(expr, context, false, false, 0, 0),
 								 quote_identifier(propname));
 		}
 
-		appendStringInfo(buf, ")");
+		appendStringInfoChar(buf, ')');
 	}
 	else
-		appendStringInfo(buf, " NO PROPERTIES");
+		appendStringInfoString(buf, " NO PROPERTIES");
 }
 
 /*
@@ -8008,7 +8008,7 @@ get_graph_label_expr(Node *label_expr, deparse_context *context)
 					if (!first)
 					{
 						if (be->boolop == OR_EXPR)
-							appendStringInfoString(buf, "|");
+							appendStringInfoChar(buf, '|');
 					}
 					else
 						first = false;
@@ -8041,7 +8041,7 @@ get_path_pattern_expr_def(List *path_pattern_expr, deparse_context *context)
 		switch (gep->kind)
 		{
 			case VERTEX_PATTERN:
-				appendStringInfoString(buf, "(");
+				appendStringInfoChar(buf, '(');
 				break;
 			case EDGE_PATTERN_LEFT:
 				appendStringInfoString(buf, "<-[");
@@ -8051,7 +8051,7 @@ get_path_pattern_expr_def(List *path_pattern_expr, deparse_context *context)
 				appendStringInfoString(buf, "-[");
 				break;
 			case PAREN_EXPR:
-				appendStringInfoString(buf, "(");
+				appendStringInfoChar(buf, '(');
 				break;
 		}
 
@@ -8086,7 +8086,7 @@ get_path_pattern_expr_def(List *path_pattern_expr, deparse_context *context)
 		switch (gep->kind)
 		{
 			case VERTEX_PATTERN:
-				appendStringInfoString(buf, ")");
+				appendStringInfoChar(buf, ')');
 				break;
 			case EDGE_PATTERN_LEFT:
 			case EDGE_PATTERN_ANY:
@@ -8096,7 +8096,7 @@ get_path_pattern_expr_def(List *path_pattern_expr, deparse_context *context)
 				appendStringInfoString(buf, "]->");
 				break;
 			case PAREN_EXPR:
-				appendStringInfoString(buf, ")");
+				appendStringInfoChar(buf, ')');
 				break;
 		}
 
@@ -13111,8 +13111,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 						appendStringInfoString(buf, quote_identifier(te->resname));
 					}
 				}
-				appendStringInfoString(buf, ")");
-				appendStringInfoString(buf, ")");
+				appendStringInfoString(buf, "))");
 				break;
 			case RTE_VALUES:
 				/* Values list RTE */
@@ -13366,7 +13365,7 @@ get_for_portion_of(ForPortionOfExpr *forPortionOf, deparse_context *context)
 		{
 			appendStringInfoString(context->buf, " (");
 			get_rule_expr(forPortionOf->targetRange, context, false);
-			appendStringInfoString(context->buf, ")");
+			appendStringInfoChar(context->buf, ')');
 		}
 	}
 }

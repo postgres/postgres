@@ -728,7 +728,7 @@ main(int argc, char *argv[])
 		resetPQExpBuffer(qry);
 
 		/* Put the correct escape string behavior into the archive. */
-		appendPQExpBuffer(qry, "SET standard_conforming_strings = 'on';\n");
+		appendPQExpBufferStr(qry, "SET standard_conforming_strings = 'on';\n");
 		ArchiveEntry(fout,
 					 nilCatalogId,	/* catalog ID */
 					 createDumpId(),	/* dump ID */
@@ -1505,7 +1505,7 @@ dumpRoleMembership(PGconn *conn)
 					appendPQExpBuffer(querybuf, " WITH %s", optbuf->data);
 				if (dump_this_grantor)
 					appendPQExpBuffer(querybuf, " GRANTED BY %s", fmtId(grantor));
-				appendPQExpBuffer(querybuf, ";\n");
+				appendPQExpBufferStr(querybuf, ";\n");
 
 				if (archDumpFormat == archNull)
 					fprintf(OPF, "%s", querybuf->data);

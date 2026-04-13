@@ -128,7 +128,7 @@ pgpa_output_advice(StringInfo buf, pgpa_plan_walker_context *walker,
 
 		if (buf->len > 0)
 			appendStringInfoChar(buf, '\n');
-		appendStringInfo(context.buf, "JOIN_ORDER(");
+		appendStringInfoString(context.buf, "JOIN_ORDER(");
 		pgpa_output_unrolled_join(&context, ujoin);
 		appendStringInfoChar(context.buf, ')');
 		pgpa_maybe_linebreak(context.buf, context.wrap_column);

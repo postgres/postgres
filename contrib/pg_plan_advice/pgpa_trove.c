@@ -298,7 +298,7 @@ pgpa_cstring_trove_entry(pgpa_trove_entry *entry)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-	appendStringInfo(&buf, "%s", pgpa_cstring_advice_tag(entry->tag));
+	appendStringInfoString(&buf, pgpa_cstring_advice_tag(entry->tag));
 
 	/* JOIN_ORDER tags are transformed by pgpa_build_trove; undo that here */
 	if (entry->tag != PGPA_TAG_JOIN_ORDER)
@@ -346,18 +346,18 @@ pgpa_trove_append_flags(StringInfo buf, int flags)
 	if ((flags & PGPA_TE_MATCH_FULL) != 0)
 	{
 		Assert((flags & PGPA_TE_MATCH_PARTIAL) != 0);
-		appendStringInfo(buf, "matched");
+		appendStringInfoString(buf, "matched");
 	}
 	else if ((flags & PGPA_TE_MATCH_PARTIAL) != 0)
-		appendStringInfo(buf, "partially matched");
+		appendStringInfoString(buf, "partially matched");
 	else
-		appendStringInfo(buf, "not matched");
+		appendStringInfoString(buf, "not matched");
 	if ((flags & PGPA_TE_INAPPLICABLE) != 0)
-		appendStringInfo(buf, ", inapplicable");
+		appendStringInfoString(buf, ", inapplicable");
 	if ((flags & PGPA_TE_CONFLICTING) != 0)
-		appendStringInfo(buf, ", conflicting");
+		appendStringInfoString(buf, ", conflicting");
 	if ((flags & PGPA_TE_FAILED) != 0)
-		appendStringInfo(buf, ", failed");
+		appendStringInfoString(buf, ", failed");
 }
 
 /*

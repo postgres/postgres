@@ -1510,12 +1510,12 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 
 	printfPQExpBuffer(&buf, "/* %s */\n",
 					  _("Get matching relations to describe"));
-	appendPQExpBuffer(&buf,
-					  "SELECT c.oid,\n"
-					  "  n.nspname,\n"
-					  "  c.relname\n"
-					  "FROM pg_catalog.pg_class c\n"
-					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
+	appendPQExpBufferStr(&buf,
+						 "SELECT c.oid,\n"
+						 "  n.nspname,\n"
+						 "  c.relname\n"
+						 "FROM pg_catalog.pg_class c\n"
+						 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
@@ -2027,7 +2027,7 @@ describeOneTableDetails(const char *schemaname,
 	cols = 0;
 	printfPQExpBuffer(&buf, "/* %s */\n",
 					  _("Get per-column information for one relation"));
-	appendPQExpBuffer(&buf, "SELECT a.attname");
+	appendPQExpBufferStr(&buf, "SELECT a.attname");
 	attname_col = cols++;
 	appendPQExpBufferStr(&buf, ",\n  pg_catalog.format_type(a.atttypid, a.atttypmod)");
 	atttype_col = cols++;
@@ -2331,9 +2331,9 @@ describeOneTableDetails(const char *schemaname,
 
 		printfPQExpBuffer(&buf, "/* %s */\n",
 						  _("Get partitioning information for this partition"));
-		appendPQExpBuffer(&buf,
-						  "SELECT inhparent::pg_catalog.regclass,\n"
-						  "  pg_catalog.pg_get_expr(c.relpartbound, c.oid),\n  ");
+		appendPQExpBufferStr(&buf,
+							 "SELECT inhparent::pg_catalog.regclass,\n"
+							 "  pg_catalog.pg_get_expr(c.relpartbound, c.oid),\n  ");
 
 		appendPQExpBufferStr(&buf,
 							 pset.sversion >= 140000 ? "inhdetachpending" :
@@ -2441,25 +2441,25 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf, "/* %s */\n", _("Get index details"));
-		appendPQExpBuffer(&buf,
-						  "SELECT i.indisunique, i.indisprimary, i.indisclustered, "
-						  "i.indisvalid,\n"
-						  "  (NOT i.indimmediate) AND "
-						  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
-						  "WHERE conrelid = i.indrelid AND "
-						  "conindid = i.indexrelid AND "
-						  "contype IN (" CppAsString2(CONSTRAINT_PRIMARY) ","
-						  CppAsString2(CONSTRAINT_UNIQUE) ","
-						  CppAsString2(CONSTRAINT_EXCLUSION) ") AND "
-						  "condeferrable) AS condeferrable,\n"
-						  "  (NOT i.indimmediate) AND "
-						  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
-						  "WHERE conrelid = i.indrelid AND "
-						  "conindid = i.indexrelid AND "
-						  "contype IN (" CppAsString2(CONSTRAINT_PRIMARY) ","
-						  CppAsString2(CONSTRAINT_UNIQUE) ","
-						  CppAsString2(CONSTRAINT_EXCLUSION) ") AND "
-						  "condeferred) AS condeferred,\n");
+		appendPQExpBufferStr(&buf,
+							 "SELECT i.indisunique, i.indisprimary, i.indisclustered, "
+							 "i.indisvalid,\n"
+							 "  (NOT i.indimmediate) AND "
+							 "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							 "WHERE conrelid = i.indrelid AND "
+							 "conindid = i.indexrelid AND "
+							 "contype IN (" CppAsString2(CONSTRAINT_PRIMARY) ","
+							 CppAsString2(CONSTRAINT_UNIQUE) ","
+							 CppAsString2(CONSTRAINT_EXCLUSION) ") AND "
+							 "condeferrable) AS condeferrable,\n"
+							 "  (NOT i.indimmediate) AND "
+							 "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							 "WHERE conrelid = i.indrelid AND "
+							 "conindid = i.indexrelid AND "
+							 "contype IN (" CppAsString2(CONSTRAINT_PRIMARY) ","
+							 CppAsString2(CONSTRAINT_UNIQUE) ","
+							 CppAsString2(CONSTRAINT_EXCLUSION) ") AND "
+							 "condeferred) AS condeferred,\n");
 
 		if (pset.sversion >= 90400)
 			appendPQExpBufferStr(&buf, "i.indisreplident,\n");
@@ -2563,12 +2563,12 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasindex)
 		{
 			printfPQExpBuffer(&buf, "/* %s */\n", _("Get indexes for this table"));
-			appendPQExpBuffer(&buf,
-							  "SELECT c2.relname, i.indisprimary, i.indisunique, "
-							  "i.indisclustered, i.indisvalid, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true),\n  "
-							  "pg_catalog.pg_get_constraintdef(con.oid, true), "
-							  "contype, condeferrable, condeferred");
+			appendPQExpBufferStr(&buf,
+								 "SELECT c2.relname, i.indisprimary, i.indisunique, "
+								 "i.indisclustered, i.indisvalid, "
+								 "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true),\n  "
+								 "pg_catalog.pg_get_constraintdef(con.oid, true), "
+								 "contype, condeferrable, condeferred");
 			if (pset.sversion >= 90400)
 				appendPQExpBufferStr(&buf, ", i.indisreplident");
 			else
@@ -2827,7 +2827,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf, "/* %s */\n",
 							  _("Get row-level policies for this table"));
-			appendPQExpBuffer(&buf, "SELECT pol.polname,");
+			appendPQExpBufferStr(&buf, "SELECT pol.polname,");
 			if (pset.sversion >= 100000)
 				appendPQExpBufferStr(&buf,
 									 " pol.polpermissive,\n");
@@ -3011,18 +3011,18 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf, "/* %s */\n",
 							  _("Get extended statistics for this table"));
-			appendPQExpBuffer(&buf,
-							  "SELECT oid, "
-							  "stxrelid::pg_catalog.regclass, "
-							  "stxnamespace::pg_catalog.regnamespace AS nsp, "
-							  "stxname,\n"
-							  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname),', ')\n"
-							  "   FROM pg_catalog.unnest(stxkeys) s(attnum)\n"
-							  "   JOIN pg_catalog.pg_attribute a ON (stxrelid = a.attrelid AND\n"
-							  "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
-							  "  " CppAsString2(STATS_EXT_NDISTINCT) " = any(stxkind) AS ndist_enabled,\n"
-							  "  " CppAsString2(STATS_EXT_DEPENDENCIES) " = any(stxkind) AS deps_enabled,\n"
-							  "  " CppAsString2(STATS_EXT_MCV) " = any(stxkind) AS mcv_enabled,\n");
+			appendPQExpBufferStr(&buf,
+								 "SELECT oid, "
+								 "stxrelid::pg_catalog.regclass, "
+								 "stxnamespace::pg_catalog.regnamespace AS nsp, "
+								 "stxname,\n"
+								 "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(attname),', ')\n"
+								 "   FROM pg_catalog.unnest(stxkeys) s(attnum)\n"
+								 "   JOIN pg_catalog.pg_attribute a ON (stxrelid = a.attrelid AND\n"
+								 "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
+								 "  " CppAsString2(STATS_EXT_NDISTINCT) " = any(stxkind) AS ndist_enabled,\n"
+								 "  " CppAsString2(STATS_EXT_DEPENDENCIES) " = any(stxkind) AS deps_enabled,\n"
+								 "  " CppAsString2(STATS_EXT_MCV) " = any(stxkind) AS mcv_enabled,\n");
 
 			if (pset.sversion >= 130000)
 				appendPQExpBufferStr(&buf, "  stxstattarget\n");
@@ -3439,10 +3439,10 @@ describeOneTableDetails(const char *schemaname,
 
 		printfPQExpBuffer(&buf, "/* %s */\n",
 						  _("Get triggers for this relation"));
-		appendPQExpBuffer(&buf,
-						  "SELECT t.tgname, "
-						  "pg_catalog.pg_get_triggerdef(t.oid, true), "
-						  "t.tgenabled, t.tgisinternal,\n");
+		appendPQExpBufferStr(&buf,
+							 "SELECT t.tgname, "
+							 "pg_catalog.pg_get_triggerdef(t.oid, true), "
+							 "t.tgenabled, t.tgisinternal,\n");
 
 		/*
 		 * Detect whether each trigger is inherited, and if so, get the name
@@ -3953,10 +3953,10 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf, "/* %s */\n", _("Get matching roles"));
-	appendPQExpBuffer(&buf,
-					  "SELECT r.rolname, r.rolsuper, r.rolinherit,\n"
-					  "  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n"
-					  "  r.rolconnlimit, r.rolvaliduntil");
+	appendPQExpBufferStr(&buf,
+						 "SELECT r.rolname, r.rolsuper, r.rolinherit,\n"
+						 "  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n"
+						 "  r.rolconnlimit, r.rolvaliduntil");
 
 	if (verbose)
 	{
@@ -5646,12 +5646,12 @@ listTSParsersVerbose(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf, "/* %s */\n", _("Get matching text search parsers"));
-	appendPQExpBuffer(&buf,
-					  "SELECT p.oid,\n"
-					  "  n.nspname,\n"
-					  "  p.prsname\n"
-					  "FROM pg_catalog.pg_ts_parser p\n"
-					  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n"
+	appendPQExpBufferStr(&buf,
+						 "SELECT p.oid,\n"
+						 "  n.nspname,\n"
+						 "  p.prsname\n"
+						 "FROM pg_catalog.pg_ts_parser p\n"
+						 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n"
 		);
 
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
@@ -6027,16 +6027,16 @@ listTSConfigsVerbose(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf, "/* %s */\n", _("Get matching text search configurations"));
-	appendPQExpBuffer(&buf,
-					  "SELECT c.oid, c.cfgname,\n"
-					  "   n.nspname,\n"
-					  "   p.prsname,\n"
-					  "   np.nspname as pnspname\n"
-					  "FROM pg_catalog.pg_ts_config c\n"
-					  "   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace,\n"
-					  " pg_catalog.pg_ts_parser p\n"
-					  "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace\n"
-					  "WHERE  p.oid = c.cfgparser\n"
+	appendPQExpBufferStr(&buf,
+						 "SELECT c.oid, c.cfgname,\n"
+						 "   n.nspname,\n"
+						 "   p.prsname,\n"
+						 "   np.nspname as pnspname\n"
+						 "FROM pg_catalog.pg_ts_config c\n"
+						 "   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace,\n"
+						 " pg_catalog.pg_ts_parser p\n"
+						 "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace\n"
+						 "WHERE  p.oid = c.cfgparser\n"
 		);
 
 	if (!validateSQLNamePattern(&buf, pattern, true, false,
@@ -6522,9 +6522,9 @@ listExtensionContents(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf, "/* %s */\n", _("Get matching installed extensions"));
-	appendPQExpBuffer(&buf,
-					  "SELECT e.extname, e.oid\n"
-					  "FROM pg_catalog.pg_extension e\n");
+	appendPQExpBufferStr(&buf,
+						 "SELECT e.extname, e.oid\n"
+						 "FROM pg_catalog.pg_extension e\n");
 
 	if (!validateSQLNamePattern(&buf, pattern,
 								false, false,
@@ -6853,10 +6853,10 @@ describePublications(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf, "/* %s */\n", _("Get details about matching publications"));
-	appendPQExpBuffer(&buf,
-					  "SELECT oid, pubname,\n"
-					  "  pg_catalog.pg_get_userbyid(pubowner) AS owner,\n"
-					  "  puballtables");
+	appendPQExpBufferStr(&buf,
+						 "SELECT oid, pubname,\n"
+						 "  pg_catalog.pg_get_userbyid(pubowner) AS owner,\n"
+						 "  puballtables");
 
 	if (has_pubsequence)
 		appendPQExpBufferStr(&buf,
@@ -6991,7 +6991,7 @@ describePublications(const char *pattern)
 			/* Get the tables for the specified publication */
 			printfPQExpBuffer(&buf, "/* %s */\n",
 							  _("Get tables published by this publication"));
-			appendPQExpBuffer(&buf, "SELECT n.nspname, c.relname");
+			appendPQExpBufferStr(&buf, "SELECT n.nspname, c.relname");
 			if (pset.sversion >= 150000)
 			{
 				appendPQExpBufferStr(&buf,
@@ -7018,9 +7018,9 @@ describePublications(const char *pattern)
 							  "  AND pr.prpubid = '%s'\n", pubid);
 
 			if (pset.sversion >= 190000)
-				appendPQExpBuffer(&buf, "  AND NOT pr.prexcept\n");
+				appendPQExpBufferStr(&buf, "  AND NOT pr.prexcept\n");
 
-			appendPQExpBuffer(&buf, "ORDER BY 1,2");
+			appendPQExpBufferStr(&buf, "ORDER BY 1,2");
 			if (!addFooterToPublicationDesc(&buf, _("Tables:"), false, &cont))
 				goto error_return;
 
