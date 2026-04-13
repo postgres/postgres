@@ -26,6 +26,8 @@ static int	log_flags;
 static void (*log_pre_callback) (void);
 static void (*log_locus_callback) (const char **, uint64 *);
 
+static FILE *log_logfile;
+
 static const char *sgr_error = NULL;
 static const char *sgr_warning = NULL;
 static const char *sgr_note = NULL;
@@ -205,6 +207,18 @@ pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno)
 }
 
 void
+pg_logging_set_logfile(FILE *logfile)
+{
+	log_logfile = logfile;
+}
+
+void
+pg_logging_unset_logfile(void)
+{
+	log_logfile = NULL;
+}
+
+void
 pg_log_generic(enum pg_log_level level, enum pg_log_part part,
 			   const char *pg_restrict fmt,...)
 {
@@ -277,6 +291,8 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 						if (sgr_error)
 							fprintf(stderr, ANSI_ESCAPE_FMT, sgr_error);
 						fprintf(stderr, _("error: "));
+						if (log_logfile)
+							fprintf(log_logfile, _("error: "));
 						if (sgr_error)
 							fprintf(stderr, ANSI_ESCAPE_RESET);
 						break;
@@ -284,6 +300,8 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 						if (sgr_warning)
 							fprintf(stderr, ANSI_ESCAPE_FMT, sgr_warning);
 						fprintf(stderr, _("warning: "));
+						if (log_logfile)
+							fprintf(log_logfile, _("warning: "));
 						if (sgr_warning)
 							fprintf(stderr, ANSI_ESCAPE_RESET);
 						break;
@@ -295,6 +313,8 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 				if (sgr_note)
 					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_note);
 				fprintf(stderr, _("detail: "));
+				if (log_logfile)
+					fprintf(log_logfile, _("detail: "));
 				if (sgr_note)
 					fprintf(stderr, ANSI_ESCAPE_RESET);
 				break;
@@ -302,6 +322,8 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 				if (sgr_note)
 					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_note);
 				fprintf(stderr, _("hint: "));
+				if (log_logfile)
+					fprintf(log_logfile, _("hint: "));
 				if (sgr_note)
 					fprintf(stderr, ANSI_ESCAPE_RESET);
 				break;
@@ -332,6 +354,11 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 		buf[required_len - 2] = '\0';
 
 	fprintf(stderr, "%s\n", buf);
+	if (log_logfile)
+	{
+		fprintf(log_logfile, "%s\n", buf);
+		fflush(log_logfile);
+	}
 
 	free(buf);
 }
