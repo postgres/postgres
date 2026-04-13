@@ -2066,6 +2066,9 @@ pgpa_compute_rt_identifier(pgpa_planner_info *proot, PlannerInfo *root,
 /*
  * Compute the range table offset for each pgpa_planner_info for which it
  * is possible to meaningfully do so.
+ *
+ * For pgpa_planner_info objects for which no RT offset can be computed,
+ * clear sj_unique_rels, which is meaningless in such cases.
  */
 static void
 pgpa_compute_rt_offsets(pgpa_planner_state *pps, PlannedStmt *pstmt)
@@ -2097,23 +2100,24 @@ pgpa_compute_rt_offsets(pgpa_planner_state *pps, PlannedStmt *pstmt)
 				 * there's no fixed rtoffset that we can apply to the RTIs
 				 * used during planning to locate the corresponding relations.
 				 */
-				if (rtinfo->dummy)
+				if (!rtinfo->dummy)
 				{
-					/*
-					 * It will not be possible to make any effective use of
-					 * the sj_unique_rels list in this case, and it also won't
-					 * be important to do so. So just throw the list away to
-					 * avoid confusing pgpa_plan_walker.
-					 */
-					proot->sj_unique_rels = NIL;
-					break;
+					Assert(!proot->has_rtoffset);
+					proot->has_rtoffset = true;
+					proot->rtoffset = rtinfo->rtoffset;
 				}
-				Assert(!proot->has_rtoffset);
-				proot->has_rtoffset = true;
-				proot->rtoffset = rtinfo->rtoffset;
 				break;
 			}
 		}
+
+		/*
+		 * If we didn't end up setting has_rtoffset, then it will not be
+		 * possible to make any effective use of sj_unique_rels, and it also
+		 * won't be important to do so.  So just throw the list away to avoid
+		 * confusing pgpa_plan_walker.
+		 */
+		if (!proot->has_rtoffset)
+			proot->sj_unique_rels = NIL;
 	}
 }
 

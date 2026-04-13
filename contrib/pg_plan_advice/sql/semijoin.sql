@@ -116,3 +116,12 @@ SET LOCAL pg_plan_advice.advice = 'semijoin_unique(g)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM generate_series(1,1000) g, sj_narrow s WHERE g = s.val1;
 COMMIT;
+
+-- Test the case where the subquery containing a semijoin is removed from
+-- the query entirely; this test is just to make sure that advice generation
+-- does not fail.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM
+	(SELECT * FROM sj_narrow WHERE id IN (SELECT val1 FROM sj_wide)
+	 LIMIT 1) x,
+	LATERAL (SELECT 1 WHERE false) y;
