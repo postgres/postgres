@@ -275,9 +275,15 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 
 			if (found_consistent_snapshot)
 				*found_consistent_snapshot = true;
+
+			updated_xmin_or_lsn = true;
 		}
 		else
 		{
+			XLogRecPtr	old_confirmed_lsn = slot->data.confirmed_flush;
+			XLogRecPtr	old_restart_lsn = slot->data.restart_lsn;
+			XLogRecPtr	old_catalog_xmin = slot->data.catalog_xmin;
+
 			LogicalSlotAdvanceAndCheckSnapState(remote_slot->confirmed_lsn,
 												found_consistent_snapshot);
 
@@ -289,9 +295,16 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 						errdetail_internal("Remote slot has LSN %X/%X but local slot has LSN %X/%X.",
 										   LSN_FORMAT_ARGS(remote_slot->confirmed_lsn),
 										   LSN_FORMAT_ARGS(slot->data.confirmed_flush)));
-		}
 
-		updated_xmin_or_lsn = true;
+			/*
+			 * It is possible that the slot's xmin or LSNs are not updated,
+			 * when the synced slot has reached consistent snapshot state or
+			 * cannot build one at all.
+			 */
+			updated_xmin_or_lsn = (old_confirmed_lsn != slot->data.confirmed_flush ||
+								   old_restart_lsn != slot->data.restart_lsn ||
+								   old_catalog_xmin != slot->data.catalog_xmin);
+		}
 	}
 
 	if (remote_dbid != slot->data.database ||
