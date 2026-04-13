@@ -252,7 +252,7 @@ Indexes:
     "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
 Publications:
     "testpub_foralltables"
-Except Publications:
+Except publications:
     "testpub_foralltables_excepttable"
     "testpub_foralltables_excepttable1"
 
@@ -435,7 +435,7 @@ Except tables:
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
 Partition of: testpub_root FOR VALUES FROM (0) TO (100)
-Except Publications:
+Except publications:
     "testpub8"
 
 \d testpub_root
@@ -444,7 +444,7 @@ Except Publications:
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
 Partition key: RANGE (a)
-Except Publications:
+Except publications:
     "testpub8"
 Number of partitions: 1 (Use \d+ to list them.)
 

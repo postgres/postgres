@@ -3306,7 +3306,7 @@ describeOneTableDetails(const char *schemaname,
 				tuples = PQntuples(result);
 
 			if (tuples > 0)
-				printTableAddFooter(&cont, _("Except Publications:"));
+				printTableAddFooter(&cont, _("Except publications:"));
 
 			/* Might be an empty set - that's ok */
 			for (i = 0; i < tuples; i++)
