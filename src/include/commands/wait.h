@@ -16,7 +16,8 @@
 #include "parser/parse_node.h"
 #include "tcop/dest.h"
 
-extern void ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, DestReceiver *dest);
+extern void ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
+						 DestReceiver *dest);
 extern TupleDesc WaitStmtResultDesc(WaitStmt *stmt);
 
 #endif							/* WAIT_H */

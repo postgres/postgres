@@ -215,9 +215,33 @@ $node_standby->psql(
 	'postgres',
 	"SELECT pg_wal_replay_wait_wrap('${lsn3}');",
 	stderr => \$stderr);
-ok( $stderr =~
-	  /WAIT FOR must be called without an active or registered snapshot/,
-	"get an error when running within another function");
+ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
+	"get an error when running within a function");
+
+$node_primary->safe_psql(
+	'postgres', qq[
+CREATE PROCEDURE pg_wal_replay_wait_proc(target_lsn pg_lsn) AS \$\$
+  BEGIN
+    EXECUTE format('WAIT FOR LSN %L;', target_lsn);
+  END
+\$\$
+LANGUAGE plpgsql;
+]);
+
+$node_primary->wait_for_catchup($node_standby);
+$node_standby->psql(
+	'postgres',
+	"CALL pg_wal_replay_wait_proc('${lsn3}');",
+	stderr => \$stderr);
+ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
+	"get an error when running within a procedure");
+
+$node_standby->psql(
+	'postgres',
+	"DO \$\$ BEGIN EXECUTE format('WAIT FOR LSN %L;', '${lsn3}'); END \$\$;",
+	stderr => \$stderr);
+ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
+	"get an error when running within a DO block");
 
 # 6. Check parameter validation error cases on standby before promotion
 my $test_lsn =

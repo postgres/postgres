@@ -221,6 +221,14 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
 
  <refsect1>
   <title>Notes</title>
+  <para>
+   <command>WAIT FOR</command> must be executed as a top-level command.
+   It cannot be executed from a function, procedure, or
+   <command>DO</command> block. It also requires that no active or
+   registered snapshot be held, and therefore cannot be used in contexts
+   where such a snapshot must remain active, including transactions running
+   at isolation levels higher than <literal>READ COMMITTED</literal>.
+  </para>
 
   <para>
    <command>WAIT FOR</command> waits until the specified
