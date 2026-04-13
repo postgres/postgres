@@ -1,7 +1,7 @@
 # Copyright (c) 2022-2026, PostgreSQL Global Development Group
 
 UNICODE_VERSION = '17.0.0'
-CLDR_VERSION = '47'
+CLDR_VERSION = '48.2'
 
 unicode_data = {}
 unicode_baseurl = 'https://www.unicode.org/Public/@0@/ucd/@1@'
