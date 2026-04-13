@@ -15,6 +15,35 @@
 #include "commands/explain_state.h"
 #include "nodes/pathnodes.h"
 
+/*
+ * Flags used in plan advice feedback.
+ *
+ * PGPA_FB_MATCH_PARTIAL means that we found some part of the query that at
+ * least partially matched the target; e.g. given JOIN_ORDER(a b), this would
+ * be set if we ever saw any joinrel including either "a" or "b".
+ *
+ * PGPA_FB_MATCH_FULL means that we found an exact match for the target; e.g.
+ * given JOIN_ORDER(a b), this would be set if we saw a joinrel containing
+ * exactly "a" and "b" and nothing else.
+ *
+ * PGPA_FB_INAPPLICABLE means that the advice doesn't properly apply to the
+ * target; e.g. INDEX_SCAN(foo bar_idx) would be so marked if bar_idx does not
+ * exist on foo. The fact that this bit has been set does not mean that the
+ * advice had no effect.
+ *
+ * PGPA_FB_CONFLICTING means that a conflict was detected between what this
+ * advice wants and what some other plan advice wants; e.g. JOIN_ORDER(a b)
+ * would conflict with HASH_JOIN(a), because the former requires "a" to be the
+ * outer table while the latter requires it to be the inner table.
+ *
+ * PGPA_FB_FAILED means that the resulting plan did not conform to the advice.
+ */
+#define PGPA_FB_MATCH_PARTIAL		0x0001
+#define PGPA_FB_MATCH_FULL			0x0002
+#define PGPA_FB_INAPPLICABLE		0x0004
+#define PGPA_FB_CONFLICTING			0x0008
+#define PGPA_FB_FAILED				0x0010
+
 /* Hook for other plugins to supply advice strings */
 typedef char *(*pg_plan_advice_advisor_hook) (PlannerGlobal *glob,
 											  Query *parse,

@@ -159,7 +159,6 @@ static List *pgpa_planner_append_feedback(List *list, pgpa_trove *trove,
 										  pgpa_trove_lookup_type type,
 										  pgpa_identifier *rt_identifiers,
 										  pgpa_plan_walker_context *walker);
-static void pgpa_planner_feedback_warning(List *feedback);
 
 static pgpa_planner_info *pgpa_planner_get_proot(pgpa_planner_state *pps,
 												 PlannerInfo *root);
@@ -876,19 +875,19 @@ pgpa_planner_apply_joinrel_advice(uint64 *pgs_mask_p, char *plan_name,
 	 * the set of targets exactly matched this relation, fully matched. If
 	 * there was a conflict, mark them all as conflicting.
 	 */
-	flags = PGPA_TE_MATCH_PARTIAL;
+	flags = PGPA_FB_MATCH_PARTIAL;
 	if (gather_conflict)
-		flags |= PGPA_TE_CONFLICTING;
+		flags |= PGPA_FB_CONFLICTING;
 	pgpa_trove_set_flags(pjs->rel_entries, gather_partial_match, flags);
-	flags |= PGPA_TE_MATCH_FULL;
+	flags |= PGPA_FB_MATCH_FULL;
 	pgpa_trove_set_flags(pjs->rel_entries, gather_full_match, flags);
 
 	/* Likewise for partitionwise advice. */
-	flags = PGPA_TE_MATCH_PARTIAL;
+	flags = PGPA_FB_MATCH_PARTIAL;
 	if (partitionwise_conflict)
-		flags |= PGPA_TE_CONFLICTING;
+		flags |= PGPA_FB_CONFLICTING;
 	pgpa_trove_set_flags(pjs->rel_entries, partitionwise_partial_match, flags);
-	flags |= PGPA_TE_MATCH_FULL;
+	flags |= PGPA_FB_MATCH_FULL;
 	pgpa_trove_set_flags(pjs->rel_entries, partitionwise_full_match, flags);
 
 	/*
@@ -1082,7 +1081,7 @@ pgpa_planner_apply_join_path_advice(JoinType jointype, uint64 *pgs_mask_p,
 					 * This doesn't seem to be a semijoin to which SJ_UNIQUE
 					 * or SJ_NON_UNIQUE can be applied.
 					 */
-					entry->flags |= PGPA_TE_INAPPLICABLE;
+					entry->flags |= PGPA_FB_INAPPLICABLE;
 				}
 				else if (advice_unique != jt_unique)
 					sj_deny_indexes = bms_add_member(sj_deny_indexes, i);
@@ -1102,11 +1101,11 @@ pgpa_planner_apply_join_path_advice(JoinType jointype, uint64 *pgs_mask_p,
 		(jo_deny_indexes != NULL || jo_deny_rel_indexes != NULL))
 	{
 		pgpa_trove_set_flags(pjs->join_entries, jo_permit_indexes,
-							 PGPA_TE_CONFLICTING);
+							 PGPA_FB_CONFLICTING);
 		pgpa_trove_set_flags(pjs->join_entries, jo_deny_indexes,
-							 PGPA_TE_CONFLICTING);
+							 PGPA_FB_CONFLICTING);
 		pgpa_trove_set_flags(pjs->rel_entries, jo_deny_rel_indexes,
-							 PGPA_TE_CONFLICTING);
+							 PGPA_FB_CONFLICTING);
 	}
 
 	/*
@@ -1115,15 +1114,15 @@ pgpa_planner_apply_join_path_advice(JoinType jointype, uint64 *pgs_mask_p,
 	 */
 	if (jm_conflict)
 		pgpa_trove_set_flags(pjs->join_entries, jm_indexes,
-							 PGPA_TE_CONFLICTING);
+							 PGPA_FB_CONFLICTING);
 
 	/* If semijoin advice says both yes and no, mark it all as conflicting. */
 	if (sj_permit_indexes != NULL && sj_deny_indexes != NULL)
 	{
 		pgpa_trove_set_flags(pjs->join_entries, sj_permit_indexes,
-							 PGPA_TE_CONFLICTING);
+							 PGPA_FB_CONFLICTING);
 		pgpa_trove_set_flags(pjs->join_entries, sj_deny_indexes,
-							 PGPA_TE_CONFLICTING);
+							 PGPA_FB_CONFLICTING);
 	}
 
 	/*
@@ -1200,7 +1199,7 @@ pgpa_join_order_permits_join(int outer_count, int inner_count,
 	pgpa_advice_target *prefix_target;
 
 	/* We definitely have at least a partial match for this trove entry. */
-	entry->flags |= PGPA_TE_MATCH_PARTIAL;
+	entry->flags |= PGPA_FB_MATCH_PARTIAL;
 
 	/*
 	 * Find the innermost sublist that contains all keys; if no sublist does,
@@ -1308,7 +1307,7 @@ pgpa_join_order_permits_join(int outer_count, int inner_count,
 		 * answer is yes.
 		 */
 		if (!sublist && outer_length + 1 == length && itm == PGPA_ITM_EQUAL)
-			entry->flags |= PGPA_TE_MATCH_FULL;
+			entry->flags |= PGPA_FB_MATCH_FULL;
 
 		return (itm == PGPA_ITM_EQUAL) ? PGPA_JO_PERMITTED : PGPA_JO_DENIED;
 	}
@@ -1334,7 +1333,7 @@ pgpa_join_order_permits_join(int outer_count, int inner_count,
 	 * joining t1-t2 to the result would still be rejected.
 	 */
 	if (!sublist)
-		entry->flags |= PGPA_TE_MATCH_FULL;
+		entry->flags |= PGPA_FB_MATCH_FULL;
 	return sublist ? PGPA_JO_DENIED : PGPA_JO_PERMITTED;
 }
 
@@ -1365,7 +1364,7 @@ pgpa_join_method_permits_join(int outer_count, int inner_count,
 	pgpa_itm_type join_itm;
 
 	/* We definitely have at least a partial match for this trove entry. */
-	entry->flags |= PGPA_TE_MATCH_PARTIAL;
+	entry->flags |= PGPA_FB_MATCH_PARTIAL;
 
 	*restrict_method = false;
 
@@ -1382,7 +1381,7 @@ pgpa_join_method_permits_join(int outer_count, int inner_count,
 											  target);
 	if (inner_itm == PGPA_ITM_EQUAL)
 	{
-		entry->flags |= PGPA_TE_MATCH_FULL;
+		entry->flags |= PGPA_FB_MATCH_FULL;
 		*restrict_method = true;
 		return true;
 	}
@@ -1469,7 +1468,7 @@ pgpa_opaque_join_permits_join(int outer_count, int inner_count,
 	pgpa_itm_type join_itm;
 
 	/* We definitely have at least a partial match for this trove entry. */
-	entry->flags |= PGPA_TE_MATCH_PARTIAL;
+	entry->flags |= PGPA_FB_MATCH_PARTIAL;
 
 	*restrict_method = false;
 
@@ -1481,7 +1480,7 @@ pgpa_opaque_join_permits_join(int outer_count, int inner_count,
 		 * We have an exact match, and should therefore allow the join and
 		 * enforce the use of the relevant opaque join method.
 		 */
-		entry->flags |= PGPA_TE_MATCH_FULL;
+		entry->flags |= PGPA_FB_MATCH_FULL;
 		*restrict_method = true;
 		return true;
 	}
@@ -1539,7 +1538,7 @@ pgpa_semijoin_permits_join(int outer_count, int inner_count,
 	*restrict_method = false;
 
 	/* We definitely have at least a partial match for this trove entry. */
-	entry->flags |= PGPA_TE_MATCH_PARTIAL;
+	entry->flags |= PGPA_FB_MATCH_PARTIAL;
 
 	/*
 	 * If outer rel is the nullable side and contains exactly the same
@@ -1555,7 +1554,7 @@ pgpa_semijoin_permits_join(int outer_count, int inner_count,
 											  rids, target);
 	if (outer_itm == PGPA_ITM_EQUAL)
 	{
-		entry->flags |= PGPA_TE_MATCH_FULL;
+		entry->flags |= PGPA_FB_MATCH_FULL;
 		if (outer_is_nullable)
 		{
 			*restrict_method = true;
@@ -1571,7 +1570,7 @@ pgpa_semijoin_permits_join(int outer_count, int inner_count,
 											  target);
 	if (inner_itm == PGPA_ITM_EQUAL)
 	{
-		entry->flags |= PGPA_TE_MATCH_FULL;
+		entry->flags |= PGPA_FB_MATCH_FULL;
 		if (!outer_is_nullable)
 		{
 			*restrict_method = true;
@@ -1798,7 +1797,7 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 
 			/* Mark advice as inapplicable. */
 			pgpa_trove_set_flags(scan_entries, scan_type_indexes,
-								 PGPA_TE_INAPPLICABLE);
+								 PGPA_FB_INAPPLICABLE);
 		}
 		else
 		{
@@ -1815,9 +1814,9 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 	 * Mark all the scan method entries as fully matched; and if they specify
 	 * different things, mark them all as conflicting.
 	 */
-	flags = PGPA_TE_MATCH_PARTIAL | PGPA_TE_MATCH_FULL;
+	flags = PGPA_FB_MATCH_PARTIAL | PGPA_FB_MATCH_FULL;
 	if (scan_type_conflict)
-		flags |= PGPA_TE_CONFLICTING;
+		flags |= PGPA_FB_CONFLICTING;
 	pgpa_trove_set_flags(scan_entries, scan_type_indexes, flags);
 	pgpa_trove_set_flags(rel_entries, scan_type_rel_indexes, flags);
 
@@ -1826,11 +1825,11 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 	 * the ones that included this relation as a target by itself as fully
 	 * matched. If there was a conflict, mark them all as conflicting.
 	 */
-	flags = PGPA_TE_MATCH_PARTIAL;
+	flags = PGPA_FB_MATCH_PARTIAL;
 	if (gather_conflict)
-		flags |= PGPA_TE_CONFLICTING;
+		flags |= PGPA_FB_CONFLICTING;
 	pgpa_trove_set_flags(rel_entries, gather_partial_match, flags);
-	flags |= PGPA_TE_MATCH_FULL;
+	flags |= PGPA_FB_MATCH_FULL;
 	pgpa_trove_set_flags(rel_entries, gather_full_match, flags);
 
 	/*
@@ -1856,7 +1855,7 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
  *
  * Feedback entries are generated from the trove entry's flags. It's assumed
  * that the caller has already set all relevant flags with the exception of
- * PGPA_TE_FAILED. We set that flag here if appropriate.
+ * PGPA_FB_FAILED. We set that flag here if appropriate.
  */
 static List *
 pgpa_planner_append_feedback(List *list, pgpa_trove *trove,
@@ -1878,10 +1877,10 @@ pgpa_planner_append_feedback(List *list, pgpa_trove *trove,
 		 * from this plan would produce such an entry. If not, label the entry
 		 * as failed.
 		 */
-		if ((entry->flags & PGPA_TE_MATCH_FULL) != 0 &&
+		if ((entry->flags & PGPA_FB_MATCH_FULL) != 0 &&
 			!pgpa_walker_would_advise(walker, rt_identifiers,
 									  entry->tag, entry->target))
-			entry->flags |= PGPA_TE_FAILED;
+			entry->flags |= PGPA_FB_FAILED;
 
 		item = makeDefElem(pgpa_cstring_trove_entry(entry),
 						   (Node *) makeInteger(entry->flags), -1);
@@ -1895,7 +1894,7 @@ pgpa_planner_append_feedback(List *list, pgpa_trove *trove,
  * Emit a WARNING to tell the user about a problem with the supplied plan
  * advice.
  */
-static void
+void
 pgpa_planner_feedback_warning(List *feedback)
 {
 	StringInfoData detailbuf;
@@ -1920,7 +1919,7 @@ pgpa_planner_feedback_warning(List *feedback)
 		 * NB: Feedback should never be marked fully matched without also
 		 * being marked partially matched.
 		 */
-		if (flags == (PGPA_TE_MATCH_PARTIAL | PGPA_TE_MATCH_FULL))
+		if (flags == (PGPA_FB_MATCH_PARTIAL | PGPA_FB_MATCH_FULL))
 			continue;
 
 		/*

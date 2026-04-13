@@ -20,36 +20,6 @@
 typedef struct pgpa_trove pgpa_trove;
 
 /*
- * Flags that can be set on a pgpa_trove_entry to indicate what happened when
- * trying to plan using advice.
- *
- * PGPA_TE_MATCH_PARTIAL means that we found some part of the query that at
- * least partially matched the target; e.g. given JOIN_ORDER(a b), this would
- * be set if we ever saw any joinrel including either "a" or "b".
- *
- * PGPA_TE_MATCH_FULL means that we found an exact match for the target; e.g.
- * given JOIN_ORDER(a b), this would be set if we saw a joinrel containing
- * exactly "a" and "b" and nothing else.
- *
- * PGPA_TE_INAPPLICABLE means that the advice doesn't properly apply to the
- * target; e.g. INDEX_SCAN(foo bar_idx) would be so marked if bar_idx does not
- * exist on foo. The fact that this bit has been set does not mean that the
- * advice had no effect.
- *
- * PGPA_TE_CONFLICTING means that a conflict was detected between what this
- * advice wants and what some other plan advice wants; e.g. JOIN_ORDER(a b)
- * would conflict with HASH_JOIN(a), because the former requires "a" to be the
- * outer table while the latter requires it to be the inner table.
- *
- * PGPA_TE_FAILED means that the resulting plan did not conform to the advice.
- */
-#define PGPA_TE_MATCH_PARTIAL		0x0001
-#define PGPA_TE_MATCH_FULL			0x0002
-#define PGPA_TE_INAPPLICABLE		0x0004
-#define PGPA_TE_CONFLICTING			0x0008
-#define PGPA_TE_FAILED				0x0010
-
-/*
  * Each entry in a trove of advice represents the application of a tag to
  * a single target.
  */
