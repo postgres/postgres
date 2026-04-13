@@ -332,10 +332,15 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 			slot->data.confirmed_flush = remote_slot->confirmed_lsn;
 			slot->data.catalog_xmin = remote_slot->catalog_xmin;
 			SpinLockRelease(&slot->mutex);
+
+			updated_xmin_or_lsn = true;
 		}
 		else
 		{
 			bool		found_consistent_snapshot;
+			XLogRecPtr	old_confirmed_lsn = slot->data.confirmed_flush;
+			XLogRecPtr	old_restart_lsn = slot->data.restart_lsn;
+			XLogRecPtr	old_catalog_xmin = slot->data.catalog_xmin;
 
 			LogicalSlotAdvanceAndCheckSnapState(remote_slot->confirmed_lsn,
 												&found_consistent_snapshot);
@@ -365,9 +370,16 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 
 				skip_reason = SS_SKIP_NO_CONSISTENT_SNAPSHOT;
 			}
-		}
 
-		updated_xmin_or_lsn = true;
+			/*
+			 * It is possible that the slot's xmin or LSNs are not updated,
+			 * when the synced slot has reached consistent snapshot state or
+			 * cannot build one at all.
+			 */
+			updated_xmin_or_lsn = (old_confirmed_lsn != slot->data.confirmed_flush ||
+								   old_restart_lsn != slot->data.restart_lsn ||
+								   old_catalog_xmin != slot->data.catalog_xmin);
+		}
 	}
 
 	/* Update slot sync skip stats */
