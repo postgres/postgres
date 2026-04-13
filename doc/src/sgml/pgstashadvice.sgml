@@ -16,7 +16,7 @@
   strings. Whenever a session is asked to plan a query whose query ID appears
   in the relevant advice stash, the plan advice string is automatically applied
   to guide planning. Note that advice stashes are stored in dynamically
-  allocated shared memory. This means both that it is important to be mindful
+  allocated shared memory. This means that it is important to be mindful
   of memory consumption when deciding how much plan advice to stash.
   Optionally, advice stashes and their contents can automatically be persisted
   to disk and reloaded from disk; see
