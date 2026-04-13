@@ -172,7 +172,7 @@ static pg_prng_state prng_state;
 static char *pg_ctl_path = NULL;
 static char *pg_resetwal_path = NULL;
 
-static char logdir[MAXPGPATH];	/* Subdirectory of the user specified logdir
+static char *logdir = NULL;		/* Subdirectory of the user specified logdir
 								 * where the log files are written (if
 								 * specified) */
 
@@ -982,7 +982,6 @@ make_output_dirs(const char *log_basedir)
 	struct timeval tval;
 	time_t		now;
 	struct tm	tmbuf;
-	int			len;
 
 	/* Generate timestamp */
 	gettimeofday(&tval, NULL);
@@ -997,10 +996,7 @@ make_output_dirs(const char *log_basedir)
 			 (unsigned int) (tval.tv_usec / 1000));
 
 	/* Build timestamp directory path */
-	len = snprintf(logdir, MAXPGPATH, "%s/%s", log_basedir, timestamp);
-
-	if (len >= MAXPGPATH)
-		pg_fatal("directory path for log files is too long");
+	logdir = psprintf("%s/%s", log_basedir, timestamp);
 
 	/* Create base directory (ignore if exists) */
 	if (mkdir(log_basedir, pg_dir_create_mode) < 0 && errno != EEXIST)
