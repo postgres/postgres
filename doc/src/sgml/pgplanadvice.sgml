@@ -266,7 +266,7 @@ SEQ_SCAN(<replaceable>target</replaceable> [ ... ])
 TID_SCAN(<replaceable>target</replaceable> [ ... ])
 INDEX_SCAN(<replaceable>target</replaceable> <replaceable>index_name</replaceable> [ ... ])
 INDEX_ONLY_SCAN(<replaceable>target</replaceable> <replaceable>index_name</replaceable> [ ... ])
-FOREIGN_SCAN((<replaceable>target</replaceable> [ ... ]) [ ... ])
+FOREIGN_JOIN((<replaceable>target</replaceable> [ ... ]) [ ... ])
 BITMAP_HEAP_SCAN(<replaceable>target</replaceable> [ ... ])
 DO_NOT_SCAN(<replaceable>target</replaceable> [ ... ])</synopsis>
 
@@ -288,10 +288,10 @@ DO_NOT_SCAN(<replaceable>target</replaceable> [ ... ])</synopsis>
    </para>
 
    <para>
-    <literal>FOREIGN_SCAN</literal> specifies that a join between two or
+    <literal>FOREIGN_JOIN</literal> specifies that a join between two or
     more foreign tables should be pushed down to a remote server so
     that it can be implemented as a single <literal>Foreign Scan</literal>.
-    Specifying <literal>FOREIGN_SCAN</literal> for a single foreign table is
+    Specifying <literal>FOREIGN_JOIN</literal> for a single foreign table is
     neither necessary nor permissible: a <literal>Foreign Scan</literal> will
     need to be used regardless. If you want to prevent a join from being
     pushed down, consider using the <literal>JOIN_ORDER</literal> tag for
@@ -395,7 +395,7 @@ join_method_name(<replaceable>join_method_item</replaceable> [ ... ])
 
 <phrase>where <replaceable>join_method_name</replaceable> is:</phrase>
 
-{ MERGE_JOIN_MATERIALIZE | MERGE_JOIN_PLAIN | NESTED_LOOP_MATERIALIZE | NESTED_LOOP_PLAIN | HASH_JOIN }
+{ MERGE_JOIN_MATERIALIZE | MERGE_JOIN_PLAIN | NESTED_LOOP_MATERIALIZE | NESTED_LOOP_MEMOIZE | NESTED_LOOP_PLAIN | HASH_JOIN }
 
 <phrase>and <replaceable>join_method_item</replaceable> is:</phrase>
 
