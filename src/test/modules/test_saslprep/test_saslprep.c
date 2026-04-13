@@ -84,7 +84,8 @@ test_saslprep(PG_FUNCTION_ARGS)
 	 * Copy the input given, to make SASLprep() act on a sanitized string.
 	 */
 	input_data = palloc0(src_len + 1);
-	strlcpy(input_data, src, src_len + 1);
+	memcpy(input_data, src, src_len);
+	input_data[src_len] = '\0';
 
 	rc = pg_saslprep(input_data, &result);
 	status = saslprep_status_to_text(rc);
