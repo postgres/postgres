@@ -147,7 +147,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("invalid format of salt"),
-				errhint("magic byte format for shacrypt is either \"$5$\" or \"$6$\""));
+				errhint("Magic byte format for shacrypt is either \"$5$\" or \"$6$\"."));
 
 	/*
 	 * Check magic byte for supported shacrypt digest.

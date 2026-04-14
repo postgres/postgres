@@ -48,7 +48,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-10-01'));
 
 -- ERROR:  lower bound of partition "sales_feb2022" is not equal to lower bound of split partition "sales_feb_mar_apr2022"
--- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
+-- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-01-01') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
@@ -81,7 +81,7 @@ ALTER TABLE sales_feb_mar_apr2022 SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 
 -- ERROR:  upper bound of partition "sales_apr2022" is not equal to upper bound of split partition "sales_feb_mar_apr2022"
--- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
+-- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
@@ -97,7 +97,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
 ALTER TABLE sales_range DETACH PARTITION sales_others;
 
 -- ERROR:  lower bound of partition "sales_feb2022" is not equal to lower bound of split partition "sales_feb_mar_apr2022"
--- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
+-- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-02') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
@@ -122,7 +122,7 @@ CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01
 CREATE TABLE sales_feb_mar_apr2022 PARTITION OF sales_range FOR VALUES FROM ('2022-02-01') TO ('2022-05-01');
 
 -- ERROR:  upper bound of partition "sales_apr2022" is not equal to upper bound of split partition "sales_feb_mar_apr2022"
--- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
+-- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
@@ -331,7 +331,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_others DEFAULT);
 
 -- ERROR:  can not split DEFAULT partition "sales_others"
--- HINT:  To split DEFAULT partition one of the new partition msut be DEFAULT
+-- HINT:  To split DEFAULT partition one of the new partition must be DEFAULT.
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2021 FOR VALUES FROM ('2021-12-01') TO ('2022-01-01'),
    PARTITION sales_jan2022 FOR VALUES FROM ('2022-01-01') TO ('2022-02-01'),
@@ -661,14 +661,14 @@ CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Helsinki', 'St. 
 CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Beijing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok', NULL);
 
 -- ERROR:  new partitions combined partition bounds do not contain value (NULL) but split partition "sales_all" does
--- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
+-- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 
 -- ERROR:  new partitions combined partition bounds do not contain value ('Kyiv'::character varying(20)) but split partition "sales_all" does
--- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition
+-- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),

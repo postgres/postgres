@@ -3536,8 +3536,8 @@ checkPartition(Relation rel, Oid partRelOid, bool isMerge)
 				errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				errmsg("\"%s\" is not a table", RelationGetRelationName(partRel)),
 				isMerge
-				? errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions")
-				: errhint("ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions"));
+				? errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.")
+				: errhint("ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions."));
 
 	if (!partRel->rd_rel->relispartition)
 		ereport(ERROR,
@@ -3545,8 +3545,8 @@ checkPartition(Relation rel, Oid partRelOid, bool isMerge)
 				errmsg("\"%s\" is not a partition of partitioned table \"%s\"",
 					   RelationGetRelationName(partRel), RelationGetRelationName(rel)),
 				isMerge
-				? errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions")
-				: errhint("ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions"));
+				? errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.")
+				: errhint("ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions."));
 
 	if (get_partition_parent(partRelOid, false) != RelationGetRelid(rel))
 		ereport(ERROR,
@@ -3554,8 +3554,8 @@ checkPartition(Relation rel, Oid partRelOid, bool isMerge)
 				errmsg("relation \"%s\" is not a partition of relation \"%s\"",
 					   RelationGetRelationName(partRel), RelationGetRelationName(rel)),
 				isMerge
-				? errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions")
-				: errhint("ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions"));
+				? errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.")
+				: errhint("ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions."));
 
 	table_close(partRel, NoLock);
 }
@@ -3647,7 +3647,7 @@ transformPartitionCmdForSplit(CreateStmtContext *cxt, PartitionCmd *partcmd)
 				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				errmsg("can not split DEFAULT partition \"%s\"",
 					   get_rel_name(splitPartOid)),
-				errhint("To split DEFAULT partition one of the new partition msut be DEFAULT"),
+				errhint("To split DEFAULT partition one of the new partition must be DEFAULT."),
 				parser_errposition(cxt->pstate, ((SinglePartitionSpec *) linitial(splitlist))->name->location));
 
 	/*

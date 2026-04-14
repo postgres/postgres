@@ -5405,7 +5405,7 @@ check_partition_bounds_for_split_range(Relation parent,
 							errmsg("lower bound of partition \"%s\" is not equal to lower bound of split partition \"%s\"",
 								   relname,
 								   get_rel_name(splitPartOid)),
-							errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+							errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition.",
 									"ALTER TABLE ... SPLIT PARTITION"),
 							parser_errposition(pstate, exprLocation((Node *) datum)));
 			}
@@ -5415,7 +5415,7 @@ check_partition_bounds_for_split_range(Relation parent,
 						errmsg("lower bound of partition \"%s\" is less than lower bound of split partition \"%s\"",
 							   relname,
 							   get_rel_name(splitPartOid)),
-						errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+						errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition.",
 								"ALTER TABLE ... SPLIT PARTITION"),
 						parser_errposition(pstate, exprLocation((Node *) datum)));
 		}
@@ -5447,7 +5447,7 @@ check_partition_bounds_for_split_range(Relation parent,
 							errmsg("upper bound of partition \"%s\" is not equal to upper bound of split partition \"%s\"",
 								   relname,
 								   get_rel_name(splitPartOid)),
-							errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+							errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition.",
 									"ALTER TABLE ... SPLIT PARTITION"),
 							parser_errposition(pstate, exprLocation((Node *) datum)));
 			}
@@ -5457,7 +5457,7 @@ check_partition_bounds_for_split_range(Relation parent,
 						errmsg("upper bound of partition \"%s\" is greater than upper bound of split partition \"%s\"",
 							   relname,
 							   get_rel_name(splitPartOid)),
-						errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+						errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition.",
 								"ALTER TABLE ... SPLIT PARTITION"),
 						parser_errposition(pstate, exprLocation((Node *) datum)));
 		}
@@ -5653,7 +5653,7 @@ check_parent_values_in_new_partitions(Relation parent,
 				errmsg("new partitions combined partition bounds do not contain value (%s) but split partition \"%s\" does",
 					   "NULL",
 					   get_rel_name(partOid)),
-				errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+				errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition.",
 						"ALTER TABLE ... SPLIT PARTITION"));
 
 	/*
@@ -5696,7 +5696,7 @@ check_parent_values_in_new_partitions(Relation parent,
 				errmsg("new partitions combined partition bounds do not contain value (%s) but split partition \"%s\" does",
 					   deparse_expression((Node *) notFoundVal, NIL, false, false),
 					   get_rel_name(partOid)),
-				errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition",
+				errhint("%s require combined bounds of new partitions must exactly match the bound of the split partition.",
 						"ALTER TABLE ... SPLIT PARTITION"));
 	}
 }
