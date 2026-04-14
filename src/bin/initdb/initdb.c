@@ -2362,7 +2362,7 @@ icu_validate_locale(const char *loc_str)
 	/* validate that we can extract the language */
 	status = U_ZERO_ERROR;
 	uloc_getLanguage(loc_str, lang, ULOC_LANG_CAPACITY, &status);
-	if (U_FAILURE(status))
+	if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 	{
 		pg_fatal("could not get language from locale \"%s\": %s",
 				 loc_str, u_errorName(status));
@@ -2382,7 +2382,7 @@ icu_validate_locale(const char *loc_str)
 
 		status = U_ZERO_ERROR;
 		uloc_getLanguage(otherloc, otherlang, ULOC_LANG_CAPACITY, &status);
-		if (U_FAILURE(status))
+		if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 			continue;
 
 		if (strcmp(lang, otherlang) == 0)
