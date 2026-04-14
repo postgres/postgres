@@ -131,7 +131,12 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 # The stats test resets stats, so nothing else needing stats access can be in
 # this group.
 # ----------
-test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain compression memoize stats
+test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain memoize stats
+
+# ----------
+# Another group of parallel tests (compression)
+# ----------
+test: compression compression_pglz
 
 # event_trigger cannot run concurrently with any test that runs DDL
 # oidjoins is read-only, though, and should run late for best coverage
