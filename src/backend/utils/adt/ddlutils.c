@@ -480,7 +480,7 @@ pg_get_role_ddl_internal(Oid roleid, bool pretty, bool memberships)
 		if (isnull)
 			continue;
 
-		role_settings = DatumGetArrayTypeP(datum);
+		role_settings = DatumGetArrayTypePCopy(datum);
 
 		deconstruct_array_builtin(role_settings, TEXTOID, &settings, &nulls, &nsettings);
 
@@ -1060,7 +1060,7 @@ pg_get_database_ddl_internal(Oid dbid, bool pretty,
 		if (isnull)
 			continue;
 
-		dbconfig = DatumGetArrayTypeP(datum);
+		dbconfig = DatumGetArrayTypePCopy(datum);
 
 		deconstruct_array_builtin(dbconfig, TEXTOID, &settings, &nulls, &nsettings);
 
