@@ -27,6 +27,7 @@
 #include "catalog/pg_type.h"
 #include "commands/sequence.h"
 #include "commands/trigger.h"
+#include "common/pg_lzcompress.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
 #include "funcapi.h"
@@ -1166,4 +1167,69 @@ test_relpath(PG_FUNCTION_ARGS)
 			 strlen(rpath.str), REL_PATH_STR_MAXLEN);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * test_pglz_compress
+ *
+ * Compress the input using pglz_compress().  Only the "always" strategy is
+ * currently supported.
+ *
+ * Returns the compressed data, or NULL if compression fails.
+ */
+PG_FUNCTION_INFO_V1(test_pglz_compress);
+Datum
+test_pglz_compress(PG_FUNCTION_ARGS)
+{
+	bytea	   *input = PG_GETARG_BYTEA_PP(0);
+	char	   *source = VARDATA_ANY(input);
+	int32		slen = VARSIZE_ANY_EXHDR(input);
+	int32		maxout = PGLZ_MAX_OUTPUT(slen);
+	bytea	   *result;
+	int32		clen;
+
+	result = (bytea *) palloc(maxout + VARHDRSZ);
+	clen = pglz_compress(source, slen, VARDATA(result),
+						 PGLZ_strategy_always);
+	if (clen < 0)
+		PG_RETURN_NULL();
+
+	SET_VARSIZE(result, clen + VARHDRSZ);
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ * test_pglz_decompress
+ *
+ * Decompress the input using pglz_decompress().
+ *
+ * The second argument is the expected uncompressed data size.  The third
+ * argument is here for the check_complete flag.
+ *
+ * Returns the decompressed data, or raises an error if decompression fails.
+ */
+PG_FUNCTION_INFO_V1(test_pglz_decompress);
+Datum
+test_pglz_decompress(PG_FUNCTION_ARGS)
+{
+	bytea	   *input = PG_GETARG_BYTEA_PP(0);
+	int32		rawsize = PG_GETARG_INT32(1);
+	bool		check_complete = PG_GETARG_BOOL(2);
+	char	   *source = VARDATA_ANY(input);
+	int32		slen = VARSIZE_ANY_EXHDR(input);
+	bytea	   *result;
+	int32		dlen;
+
+	if (rawsize < 0)
+		elog(ERROR, "rawsize must not be negative");
+
+	result = (bytea *) palloc(rawsize + VARHDRSZ);
+
+	dlen = pglz_decompress(source, slen, VARDATA(result),
+						   rawsize, check_complete);
+	if (dlen < 0)
+		elog(ERROR, "pglz_decompress failed");
+
+	SET_VARSIZE(result, dlen + VARHDRSZ);
+	PG_RETURN_BYTEA_P(result);
 }
