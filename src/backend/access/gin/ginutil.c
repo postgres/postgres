@@ -534,8 +534,11 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	/*
 	 * Create GinNullCategory representation.
 	 */
-	StaticAssertStmt(GIN_CAT_NORM_KEY == 0, "Assuming GIN_CAT_NORM_KEY=0");
-	categories = palloc0_array(GinNullCategory, nentries + (hasNull ? 1 : 0));
+	{
+		/* palloc0 sets all entries to GIN_CAT_NORM_KEY */
+		StaticAssertDecl(GIN_CAT_NORM_KEY == 0, "Assuming GIN_CAT_NORM_KEY == 0");
+		categories = palloc0_array(GinNullCategory, nentries + (hasNull ? 1 : 0));
+	}
 
 	/* Put back a NULL entry, if there were any */
 	if (hasNull)
