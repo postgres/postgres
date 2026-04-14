@@ -36,10 +36,12 @@
  * is to ensure that no in-tree code accidentally calls this version.)
  */
 #undef pqsignal
-extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 
-pqsigfunc
-pqsignal(int signo, pqsigfunc func)
+typedef void (*pqsigfunc_legacy) (int postgres_signal_arg);
+extern pqsigfunc_legacy pqsignal(int signo, pqsigfunc_legacy func);
+
+pqsigfunc_legacy
+pqsignal(int signo, pqsigfunc_legacy func)
 {
 #ifndef WIN32
 	struct sigaction act,

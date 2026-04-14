@@ -1441,17 +1441,28 @@ extern int	fdatasync(int fd);
 #endif
 
 /*
- * The following is used as the arg list for signal handlers.  Any ports
- * that take something other than an int argument should override this in
- * their pg_config_os.h file.  Note that variable names are required
- * because it is used in both the prototypes as well as the definitions.
- * Note also the long name.  We expect that this won't collide with
- * other names causing compiler warnings.
+ * Platform independent struct representing additional information about the
+ * received signal.  If the system does not support the extended information,
+ * or a field does not apply to the signal, the value is instead reset to the
+ * documented default value.
  */
 
-#ifndef SIGNAL_ARGS
-#define SIGNAL_ARGS  int postgres_signal_arg
-#endif
+typedef struct pg_signal_info
+{
+	uint32_t	pid;			/* pid of sending process or 0 if unknown */
+	uint32_t	uid;			/* uid of sending process; only meaningful
+								 * when pid is not 0 */
+} pg_signal_info;
+
+/*
+ * The following is used as the arg list for signal handlers. These days we
+ * use the same argument to all signal handlers and hide the difference
+ * between platforms in wrapper functions.
+ *
+ * SIGNAL_ARGS just exists separately from the pqsignal() definition for
+ * historical reasons.
+ */
+#define SIGNAL_ARGS  int postgres_signal_arg, const pg_signal_info *pg_siginfo
 
 /*
  * When there is no sigsetjmp, its functionality is provided by plain

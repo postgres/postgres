@@ -684,10 +684,10 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 	 * Ignore SIGTERM, will get explicit shutdown via SIGUSR2 later in the
 	 * shutdown sequence, similar to checkpointer.
 	 */
-	pqsignal(SIGTERM, SIG_IGN);
+	pqsignal(SIGTERM, PG_SIG_IGN);
 	/* SIGQUIT handler was already set up by InitPostmasterChild */
-	pqsignal(SIGALRM, SIG_IGN);
-	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGALRM, PG_SIG_IGN);
+	pqsignal(SIGPIPE, PG_SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, SignalHandlerForShutdownRequest);
 

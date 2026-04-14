@@ -555,8 +555,8 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGINT, handle_pm_shutdown_request_signal);
 	pqsignal(SIGQUIT, handle_pm_shutdown_request_signal);
 	pqsignal(SIGTERM, handle_pm_shutdown_request_signal);
-	pqsignal(SIGALRM, SIG_IGN); /* ignored */
-	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
+	pqsignal(SIGALRM, PG_SIG_IGN);	/* ignored */
+	pqsignal(SIGPIPE, PG_SIG_IGN);	/* ignored */
 	pqsignal(SIGUSR1, handle_pm_pmsignal_signal);
 	pqsignal(SIGUSR2, dummy_handler);	/* unused, reserve for children */
 	pqsignal(SIGCHLD, handle_pm_child_exit_signal);
@@ -573,15 +573,15 @@ PostmasterMain(int argc, char *argv[])
 	 * child processes should just allow the inherited settings to stand.
 	 */
 #ifdef SIGTTIN
-	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
+	pqsignal(SIGTTIN, PG_SIG_IGN);	/* ignored */
 #endif
 #ifdef SIGTTOU
-	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
+	pqsignal(SIGTTOU, PG_SIG_IGN);	/* ignored */
 #endif
 
 	/* ignore SIGXFSZ, so that ulimit violations work like disk full */
 #ifdef SIGXFSZ
-	pqsignal(SIGXFSZ, SIG_IGN); /* ignored */
+	pqsignal(SIGXFSZ, PG_SIG_IGN);	/* ignored */
 #endif
 
 	/* Begin accepting signals. */
@@ -3967,7 +3967,7 @@ process_pm_pmsignal(void)
  * Dummy signal handler
  *
  * We use this for signals that we don't actually use in the postmaster,
- * but we do use in backends.  If we were to SIG_IGN such signals in the
+ * but we do use in backends.  If we were to PG_SIG_IGN such signals in the
  * postmaster, then a newly started backend might drop a signal that arrives
  * before it's able to reconfigure its signal processing.  (See notes in
  * tcop/postgres.c.)

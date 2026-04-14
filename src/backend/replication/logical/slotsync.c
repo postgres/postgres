@@ -1620,9 +1620,9 @@ ReplSlotSyncWorkerMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGTERM, die);
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-	pqsignal(SIGUSR2, SIG_IGN);
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGCHLD, SIG_DFL);
+	pqsignal(SIGUSR2, PG_SIG_IGN);
+	pqsignal(SIGPIPE, PG_SIG_IGN);
+	pqsignal(SIGCHLD, PG_SIG_DFL);
 
 	check_and_set_sync_info(MyProcPid);
 

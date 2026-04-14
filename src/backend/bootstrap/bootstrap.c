@@ -463,10 +463,10 @@ bootstrap_signals(void)
 	 * mode; "curl up and die" is a sufficient response for all these cases.
 	 * Let's set that handling explicitly, as documentation if nothing else.
 	 */
-	pqsignal(SIGHUP, SIG_DFL);
-	pqsignal(SIGINT, SIG_DFL);
-	pqsignal(SIGTERM, SIG_DFL);
-	pqsignal(SIGQUIT, SIG_DFL);
+	pqsignal(SIGHUP, PG_SIG_DFL);
+	pqsignal(SIGINT, PG_SIG_DFL);
+	pqsignal(SIGTERM, PG_SIG_DFL);
+	pqsignal(SIGQUIT, PG_SIG_DFL);
 }
 
 /* ----------------------------------------------------------------

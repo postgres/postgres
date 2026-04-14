@@ -63,6 +63,14 @@
 #define PG_NSIG (64)			/* XXX: wild guess */
 #endif
 
+#if !(defined(WIN32) && defined(FRONTEND))
+#define USE_SIGACTION
+#endif
+
+#if defined(USE_SIGACTION) && defined(HAVE_SA_SIGINFO)
+#define USE_SIGINFO
+#endif
+
 /* Check a couple of common signals to make sure PG_NSIG is accurate. */
 StaticAssertDecl(SIGUSR2 < PG_NSIG, "SIGUSR2 >= PG_NSIG");
 StaticAssertDecl(SIGHUP < PG_NSIG, "SIGHUP >= PG_NSIG");
@@ -82,19 +90,16 @@ static volatile pqsigfunc pqsignal_handlers[PG_NSIG];
  *
  * This wrapper also handles restoring the value of errno.
  */
-#if !defined(FRONTEND) && defined(HAVE_SA_SIGINFO)
+#if defined(USE_SIGACTION) && defined(USE_SIGINFO)
 static void
-wrapper_handler(int signo, siginfo_t * info, void *context)
-#else
+wrapper_handler(int postgres_signal_arg, siginfo_t * info, void *context)
+#else							/* no USE_SIGINFO */
 static void
-wrapper_handler(SIGNAL_ARGS)
+wrapper_handler(int postgres_signal_arg)
 #endif
 {
 	int			save_errno = errno;
-#if !defined(FRONTEND) && defined(HAVE_SA_SIGINFO)
-	/* SA_SIGINFO signature uses signo, not SIGNAL_ARGS macro */
-	int			postgres_signal_arg = signo;
-#endif
+	pg_signal_info pg_info;
 
 	Assert(postgres_signal_arg > 0);
 	Assert(postgres_signal_arg < PG_NSIG);
@@ -110,21 +115,32 @@ wrapper_handler(SIGNAL_ARGS)
 
 	if (unlikely(MyProcPid != (int) getpid()))
 	{
-		pqsignal(postgres_signal_arg, SIG_DFL);
+		pqsignal(postgres_signal_arg, PG_SIG_DFL);
 		raise(postgres_signal_arg);
 		return;
 	}
+#endif
 
 #ifdef HAVE_SA_SIGINFO
-	if (signo == SIGTERM && info)
-	{
-		ProcDieSenderPid = info->si_pid;
-		ProcDieSenderUid = info->si_uid;
-	}
-#endif
+
+	/*
+	 * If supported by the system, forward interesting information from the
+	 * system's extended signal information to our platform independent
+	 * format.
+	 */
+	pg_info.pid = info->si_pid;
+	pg_info.uid = info->si_uid;
+#else
+
+	/*
+	 * Otherwise forward values indicating that we do not have the
+	 * information.
+	 */
+	pg_info.pid = 0;
+	pg_info.uid = 0;
 #endif
 
-	(*pqsignal_handlers[postgres_signal_arg]) (postgres_signal_arg);
+	(*pqsignal_handlers[postgres_signal_arg]) (postgres_signal_arg, &pg_info);
 
 	errno = save_errno;
 }
@@ -139,33 +155,44 @@ wrapper_handler(SIGNAL_ARGS)
 void
 pqsignal(int signo, pqsigfunc func)
 {
-#if !(defined(WIN32) && defined(FRONTEND))
+#ifdef USE_SIGACTION
 	struct sigaction act;
+#else
+	void		(*wrapper_func_ptr) (int);
 #endif
-	bool		use_wrapper = false;
+	bool		is_ign = func == PG_SIG_IGN;
+	bool		is_dfl = func == PG_SIG_DFL;
 
 	Assert(signo > 0);
 	Assert(signo < PG_NSIG);
 
-	if (func != SIG_IGN && func != SIG_DFL)
+	/* set up indirection handler */
+	if (!(is_ign || is_dfl))
 	{
 		pqsignal_handlers[signo] = func;	/* assumed atomic */
-		use_wrapper = true;
 	}
 
-#if !(defined(WIN32) && defined(FRONTEND))
+	/*
+	 * Configure system to either ignore/reset the signal handler, or to
+	 * forward it to wrapper_handler.
+	 */
+#ifdef USE_SIGACTION
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_RESTART;
-#if !defined(FRONTEND) && defined(HAVE_SA_SIGINFO)
-	if (use_wrapper)
+
+	if (is_ign)
+		act.sa_handler = SIG_IGN;
+	else if (is_dfl)
+		act.sa_handler = SIG_DFL;
+#ifdef USE_SIGINFO
+	else
 	{
 		act.sa_sigaction = wrapper_handler;
 		act.sa_flags |= SA_SIGINFO;
 	}
-	else
-		act.sa_handler = func;
 #else
-	act.sa_handler = use_wrapper ? wrapper_handler : func;
+	else
+		act.sa_handler = wrapper_handler;
 #endif
 
 #ifdef SA_NOCLDSTOP
@@ -174,9 +201,20 @@ pqsignal(int signo, pqsigfunc func)
 #endif
 	if (sigaction(signo, &act, NULL) < 0)
 		Assert(false);			/* probably indicates coding error */
-#else
-	/* Forward to Windows native signal system. */
-	if (signal(signo, use_wrapper ? wrapper_handler : func) == SIG_ERR)
+#else							/* no USE_SIGACTION */
+
+	/*
+	 * Forward to Windows native signal system, we need to send this though
+	 * wrapper handler as it it needs to take single argument only.
+	 */
+	if (is_ign)
+		wrapper_func_ptr = SIG_IGN;
+	else if (is_dfl)
+		wrapper_func_ptr = SIG_DFL;
+	else
+		wrapper_func_ptr = wrapper_handler;
+
+	if (signal(signo, wrapper_func_ptr) == SIG_ERR)
 		Assert(false);			/* probably indicates coding error */
 #endif
 }

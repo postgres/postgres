@@ -546,6 +546,9 @@ extern int	pg_mkdir_p(char *path, int omode);
 #else
 #define pqsignal pqsignal_be
 #endif
+
+#define PG_SIG_DFL (pqsigfunc) (pg_funcptr_t) SIG_DFL
+#define PG_SIG_IGN (pqsigfunc) (pg_funcptr_t) SIG_IGN
 typedef void (*pqsigfunc) (SIGNAL_ARGS);
 extern void pqsignal(int signo, pqsigfunc func);
 

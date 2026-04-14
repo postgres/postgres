@@ -2748,11 +2748,11 @@ OpenPipeStream(const char *command, const char *mode)
 
 TryAgain:
 	fflush(NULL);
-	pqsignal(SIGPIPE, SIG_DFL);
+	pqsignal(SIGPIPE, PG_SIG_DFL);
 	errno = 0;
 	file = popen(command, mode);
 	save_errno = errno;
-	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGPIPE, PG_SIG_IGN);
 	errno = save_errno;
 	if (file != NULL)
 	{

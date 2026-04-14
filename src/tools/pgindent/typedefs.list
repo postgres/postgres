@@ -4039,6 +4039,7 @@ pg_sha224_ctx
 pg_sha256_ctx
 pg_sha384_ctx
 pg_sha512_ctx
+pg_signal_info
 pg_snapshot
 pg_special_case
 pg_stack_base_t

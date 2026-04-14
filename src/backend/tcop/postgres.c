@@ -3027,6 +3027,17 @@ die(SIGNAL_ARGS)
 	{
 		InterruptPending = true;
 		ProcDiePending = true;
+
+		/*
+		 * Record who sent the signal.  Will be 0 on platforms without
+		 * SA_SIGINFO, which is fine -- ProcessInterrupts() checks for that.
+		 * Only set on the first SIGTERM so we report the original sender.
+		 */
+		if (ProcDieSenderPid == 0)
+		{
+			ProcDieSenderPid = pg_siginfo->pid;
+			ProcDieSenderUid = pg_siginfo->uid;
+		}
 	}
 
 	/* for the cumulative stats system */
@@ -4316,17 +4327,17 @@ PostgresMain(const char *dbname, const char *username)
 		 * returns to outer loop.  This seems safer than forcing exit in the
 		 * midst of output during who-knows-what operation...
 		 */
-		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGPIPE, PG_SIG_IGN);
 		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-		pqsignal(SIGUSR2, SIG_IGN);
+		pqsignal(SIGUSR2, PG_SIG_IGN);
 		pqsignal(SIGFPE, FloatExceptionHandler);
 
 		/*
 		 * Reset some signals that are accepted by postmaster but not by
 		 * backend
 		 */
-		pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some
-									 * platforms */
+		pqsignal(SIGCHLD, PG_SIG_DFL);	/* system() requires this on some
+										 * platforms */
 	}
 
 	/* Early initialization */

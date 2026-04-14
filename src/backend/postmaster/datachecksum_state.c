@@ -1020,7 +1020,7 @@ DataChecksumsWorkerLauncherMain(Datum arg)
 	pqsignal(SIGTERM, die);
 	pqsignal(SIGINT, launcher_cancel_handler);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGUSR2, PG_SIG_IGN);
 
 	BackgroundWorkerUnblockSignals();
 

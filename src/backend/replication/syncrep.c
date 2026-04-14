@@ -300,22 +300,18 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		 */
 		if (ProcDiePending)
 		{
-			/*
-			 * ProcDieSenderPid/Uid are read directly from the globals here
-			 * rather than copied to locals first; a second SIGTERM could
-			 * change them between reads, but that is harmless because the
-			 * process is about to die anyway.  The signal sender detail is
-			 * inlined rather than using a separate errdetail() call because
-			 * it must be appended to the existing detail message.
-			 */
-			ereport(WARNING,
-					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-					 errmsg("canceling the wait for synchronous replication and terminating connection due to administrator command"),
-					 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.%s",
-							   ProcDieSenderPid == 0 ? "" :
-							   psprintf("\nSignal sent by PID %d, UID %d.",
-										(int) ProcDieSenderPid,
-										(int) ProcDieSenderUid))));
+			if (ProcDieSenderPid != 0)
+				ereport(WARNING,
+						(errcode(ERRCODE_ADMIN_SHUTDOWN),
+						 errmsg("canceling the wait for synchronous replication and terminating connection due to administrator command"),
+						 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.  Signal sent by PID %d, UID %d.",
+								   (int) ProcDieSenderPid,
+								   (int) ProcDieSenderUid)));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_ADMIN_SHUTDOWN),
+						 errmsg("canceling the wait for synchronous replication and terminating connection due to administrator command"),
+						 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.")));
 			whereToSendOutput = DestNone;
 			SyncRepCancelWait();
 			break;

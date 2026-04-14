@@ -2903,10 +2903,10 @@ setup_signals(void)
 	pqsignal(SIGQUIT, trapsig);
 
 	/* Ignore SIGPIPE when writing to backend, so we can clean up */
-	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGPIPE, PG_SIG_IGN);
 
 	/* Prevent SIGSYS so we can probe for kernel calls that might not work */
-	pqsignal(SIGSYS, SIG_IGN);
+	pqsignal(SIGSYS, PG_SIG_IGN);
 #endif
 }
 

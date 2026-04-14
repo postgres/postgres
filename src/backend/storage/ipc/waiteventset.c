@@ -348,7 +348,7 @@ InitializeWaitEventSupport(void)
 
 #ifdef WAIT_USE_KQUEUE
 	/* Ignore SIGURG, because we'll receive it via kqueue. */
-	pqsignal(SIGURG, SIG_IGN);
+	pqsignal(SIGURG, PG_SIG_IGN);
 #endif
 }
 

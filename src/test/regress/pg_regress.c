@@ -492,7 +492,7 @@ signal_remove_temp(SIGNAL_ARGS)
 {
 	remove_temp();
 
-	pqsignal(postgres_signal_arg, SIG_DFL);
+	pqsignal(postgres_signal_arg, PG_SIG_DFL);
 	raise(postgres_signal_arg);
 }
 
