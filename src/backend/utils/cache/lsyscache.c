@@ -1114,33 +1114,6 @@ get_attoptions(Oid relid, int16 attnum)
 	return result;
 }
 
-/*
- * get_attnotnull
- *
- *		Given the relation id and the attribute number,
- *		return the "attnotnull" field from the attribute relation.
- */
-bool
-get_attnotnull(Oid relid, AttrNumber attnum)
-{
-	HeapTuple	tp;
-	bool		result = false;
-
-	tp = SearchSysCache2(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum));
-
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-
-		result = att_tup->attnotnull;
-		ReleaseSysCache(tp);
-	}
-
-	return result;
-}
-
 /*				---------- PG_CAST CACHE ----------					 */
 
 /*

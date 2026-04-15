@@ -3761,4 +3761,27 @@ WHERE NOT id ?= ANY (SELECT id FROM not_null_tab);
            ->  Seq Scan on not_null_tab not_null_tab_1
 (5 rows)
 
+-- No ANTI JOIN: the inner side has an unvalidated NOT NULL constraint, so
+-- the column might contain NULLs.
+CREATE TEMP TABLE notnull_notvalid_tab (id int);
+INSERT INTO notnull_notvalid_tab VALUES (NULL);
+ALTER TABLE notnull_notvalid_tab ADD CONSTRAINT nn NOT NULL id NOT VALID;
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM notnull_notvalid_tab);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Seq Scan on not_null_tab
+   Filter: (NOT (ANY (id = (hashed SubPlan any_1).col1)))
+   SubPlan any_1
+     ->  Seq Scan on notnull_notvalid_tab
+(4 rows)
+
+-- NOT IN with NULL on inner side should return no rows
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM notnull_notvalid_tab);
+ id | val 
+----+-----
+(0 rows)
+
 ROLLBACK;

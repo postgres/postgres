@@ -135,7 +135,7 @@ typedef enum
 {
 	NOTNULL_SOURCE_RELOPT,		/* Use RelOptInfo */
 	NOTNULL_SOURCE_HASHTABLE,	/* Use Global Hash Table */
-	NOTNULL_SOURCE_SYSCACHE,	/* Use System Catalog */
+	NOTNULL_SOURCE_CATALOG,		/* Use System Catalog */
 } NotNullSource;
 
 extern bool contain_mutable_functions(Node *clause);

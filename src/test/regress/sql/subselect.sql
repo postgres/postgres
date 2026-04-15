@@ -1632,4 +1632,18 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM not_null_tab
 WHERE NOT id ?= ANY (SELECT id FROM not_null_tab);
 
+-- No ANTI JOIN: the inner side has an unvalidated NOT NULL constraint, so
+-- the column might contain NULLs.
+CREATE TEMP TABLE notnull_notvalid_tab (id int);
+INSERT INTO notnull_notvalid_tab VALUES (NULL);
+ALTER TABLE notnull_notvalid_tab ADD CONSTRAINT nn NOT NULL id NOT VALID;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM notnull_notvalid_tab);
+
+-- NOT IN with NULL on inner side should return no rows
+SELECT * FROM not_null_tab
+WHERE id NOT IN (SELECT id FROM notnull_notvalid_tab);
+
 ROLLBACK;

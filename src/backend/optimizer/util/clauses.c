@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/table.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_language.h"
@@ -59,6 +60,7 @@
 #include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -2134,7 +2136,7 @@ query_outputs_are_not_nullable(Query *query)
 		 * parse tree, we need to look up the not-null constraints from the
 		 * system catalogs.
 		 */
-		if (expr_is_nonnullable(&subroot, expr, NOTNULL_SOURCE_SYSCACHE))
+		if (expr_is_nonnullable(&subroot, expr, NOTNULL_SOURCE_CATALOG))
 			continue;
 
 		if (IsA(expr, Var))
@@ -4696,13 +4698,19 @@ var_is_nonnullable(PlannerInfo *root, Var *var, NotNullSource source)
 
 				return bms_is_member(var->varattno, notnullattnums);
 			}
-		case NOTNULL_SOURCE_SYSCACHE:
+		case NOTNULL_SOURCE_CATALOG:
 			{
 				/*
-				 * We look up the "attnotnull" field in the attribute
-				 * relation.
+				 * We check the attnullability field in the tuple descriptor.
+				 * This is necessary rather than checking the attnotnull field
+				 * from the attribute relation, because attnotnull is also set
+				 * for invalid (NOT VALID) NOT NULL constraints, which do not
+				 * guarantee the absence of NULLs.
 				 */
 				RangeTblEntry *rte;
+				Relation	rel;
+				CompactAttribute *attr;
+				bool		result;
 
 				rte = planner_rt_fetch(var->varno, root);
 
@@ -4723,7 +4731,14 @@ var_is_nonnullable(PlannerInfo *root, Var *var, NotNullSource source)
 					rte->relkind != RELKIND_PARTITIONED_TABLE)
 					return false;
 
-				return get_attnotnull(rte->relid, var->varattno);
+				/* We need not lock the relation since it was already locked */
+				rel = table_open(rte->relid, NoLock);
+				attr = TupleDescCompactAttr(RelationGetDescr(rel),
+											var->varattno - 1);
+				result = (attr->attnullability == ATTNULLABLE_VALID);
+				table_close(rel, NoLock);
+
+				return result;
 			}
 		default:
 			elog(ERROR, "unrecognized NotNullSource: %d",
@@ -4746,9 +4761,9 @@ var_is_nonnullable(PlannerInfo *root, Var *var, NotNullSource source)
  *	- NOTNULL_SOURCE_HASHTABLE: Used when RelOptInfos are not yet available,
  *	but we have already collected relation-level not-null constraints into the
  *	global hash table.
- *	- NOTNULL_SOURCE_SYSCACHE: Used for raw parse trees where neither
- *	RelOptInfos nor the hash table are available.  In this case, we have to
- *	look up the 'attnotnull' field directly in the system catalogs.
+ *	- NOTNULL_SOURCE_CATALOG: Used for raw parse trees where neither
+ *	RelOptInfos nor the hash table are available.  In this case, we check the
+ *	column's attnullability in the tuple descriptor.
  *
  * For now, we support only a limited set of expression types.  Support for
  * additional node types can be added in the future.
