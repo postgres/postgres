@@ -771,7 +771,7 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Improve timing performance measurements (Lukas Fittl, Andres Freund, David Geier, Lukas Fittl, David Geier)
+Improve timing performance measurements (Lukas Fittl, Andres Freund, David Geier, Lukas Fittl)
 <ulink url="&commit_baseurl;294520c44">&sect;</ulink>
 <ulink url="&commit_baseurl;16fca4825">&sect;</ulink>
 </para>
@@ -1717,7 +1717,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 
 <listitem>
 <para>
-Add support for INSERT ... RETURNING ... ON CONFLICT DO SELECT (Andreas Karlsson,  Marko Tiikkaja, Viktor Holmberg)
+Add support for INSERT ... ON CONFLICT DO SELECT ... RETURNING (Andreas Karlsson,  Marko Tiikkaja, Viktor Holmberg)
 <ulink url="&commit_baseurl;88327092f">&sect;</ulink>
 </para>
 
@@ -1999,7 +1999,7 @@ Allow COPY TO to output partitioned tables (Jian He, Ajin Cherian)
 </para>
 
 <para>
-Previously COPY (SELECT ...) has to be used to output partitioned tables.
+Previously COPY (SELECT ...) had to be used to output partitioned tables.  This also improves logical replication table synchronization.
 </para>
 </listitem>
 
