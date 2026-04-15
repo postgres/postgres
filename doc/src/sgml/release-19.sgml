@@ -597,6 +597,22 @@ New server variables are io_min_workers, io_max_workers, io_worker_idle_timeout,
 </listitem>
 
 <!--
+Author: Melanie Plageman <melanieplageman@gmail.com>
+2026-03-30 [b46e1e54d] Allow on-access pruning to set pages all-visible
+-->
+
+<listitem>
+<para>
+Allow query table scans to mark pages as all-visible in the free space map (Melanie Plageman)
+<ulink url="&commit_baseurl;b46e1e54d">&sect;</ulink>
+</para>
+
+<para>
+Previously only VACUUM and COPY FREEZE could this.
+</para>
+</listitem>
+
+<!--
 Author: Masahiko Sawada <msawada@postgresql.org>
 2026-04-06 [1ff3180ca] Allow autovacuum to use parallel vacuum workers.
 Author: Masahiko Sawada <msawada@postgresql.org>
