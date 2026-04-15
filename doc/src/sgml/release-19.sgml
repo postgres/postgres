@@ -1206,7 +1206,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Allow online enabling and disabling of data checksums (Daniel Gustafsson, Magnus Hagander, Tomas Vondra, Lakshmi N)
+Allow online enabling and disabling of data checksums (Daniel Gustafsson, Magnus Hagander, Tomas Vondra)
 <ulink url="&commit_baseurl;f19c0ecca">&sect;</ulink>
 <ulink url="&commit_baseurl;b364828f8">&sect;</ulink>
 </para>
