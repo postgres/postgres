@@ -733,7 +733,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Improve performance of internal row formation (David Rowley)
+Improve performance of internal row deformation (David Rowley)
 <ulink url="&commit_baseurl;c456e3911">&sect;</ulink>
 </para>
 </listitem>
@@ -1213,6 +1213,23 @@ Allow online enabling and disabling of data checksums (Daniel Gustafsson, Magnus
 
 <para>
 Previously the checksum status could only be set at initialization and changed only while the cluster was offline using pg_checksums.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-03-27 [d7965d65f] Add rudimentary table prioritization to autovacuum.
+-->
+
+<listitem>
+<para>
+Add scoring system to control the order that tables are autovacuumed (Nathan Bossart)
+<ulink url="&commit_baseurl;d7965d65f">&sect;</ulink>
+</para>
+
+<para>
+The new server variables are autovacuum_freeze_score_weight, autovacuum_multixact_freeze_score_weight, autovacuum_vacuum_score_weight, autovacuum_vacuum_insert_score_weight, and
+autovacuum_analyze_score_weight.
 </para>
 </listitem>
 
