@@ -1033,7 +1033,7 @@ BeginCopyTo(ParseState *pstate,
 	{
 		cstate->json_buf = makeStringInfo();
 
-		if (attnamelist != NIL && rel)
+		if (rel && list_length(cstate->attnumlist) < tupDesc->natts)
 		{
 			int			natts = list_length(cstate->attnumlist);
 			TupleDesc	resultDesc;
