@@ -1462,7 +1462,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Allow CREATE/ALTER PUBLICATION to exclude some tables using the EXCEPT TABLE clause (Vignesh C, Shlok Kyal)
+Allow CREATE/ALTER PUBLICATION to exclude some tables using the EXCEPT clause (Vignesh C, Shlok Kyal)
 <ulink url="&commit_baseurl;493f8c643">&sect;</ulink>
 <ulink url="&commit_baseurl;6b0550c45">&sect;</ulink>
 <ulink url="&commit_baseurl;fd366065e">&sect;</ulink>
