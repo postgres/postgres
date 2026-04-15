@@ -2562,7 +2562,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Change vacuumdb's --analyze-only option to analyze partitioned tables when now targets are specified (Laurenz Albe, Mircea Cadariu)
+Change vacuumdb's --analyze-only option to analyze partitioned tables when no targets are specified (Laurenz Albe, Mircea Cadariu)
 <ulink url="&commit_baseurl;6429e5b77">&sect;</ulink>
 </para>
 
