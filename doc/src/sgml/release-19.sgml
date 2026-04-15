@@ -621,7 +621,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Allow autovacuum to use parallel vacuum workers (Daniil Davydov, Aleksander Alekseev)
+Allow autovacuum to use parallel vacuum workers (Daniil Davydov)
 <ulink url="&commit_baseurl;1ff3180ca">&sect;</ulink>
 <ulink url="&commit_baseurl;2a3d2f9f6">&sect;</ulink>
 </para>
