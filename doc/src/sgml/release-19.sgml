@@ -6,11 +6,3387 @@
 
  <formalpara>
   <title>Release date:</title>
-  <para>2026-??-??</para>
+  <para>2026-??-??, AS OF 2026-04-13</para>
  </formalpara>
 
- <para>
-  This is just a placeholder for now.
- </para>
+  <sect2 id="release-19-highlights">
+   <title>Overview</title>
+
+   <para>
+    <productname>PostgreSQL</productname> 19 contains many new features
+    and enhancements, including:
+   </para>
+
+   <itemizedlist>
+    <listitem>
+     <para><emphasis>fill in later</emphasis></para>
+    </listitem>
+   </itemizedlist>
+
+   <para>
+    The above items and other new features of
+    <productname>PostgreSQL</productname> 19 are explained in more detail
+    in the sections below.
+   </para>
+
+  </sect2>
+
+  <sect2  id="release-19-migration">
+
+   <title>Migration to Version 19</title>
+
+   <para>
+    A dump/restore using <xref linkend="app-pg-dumpall"/> or use of
+    <xref linkend="pgupgrade"/> or logical replication is required for
+    those wishing to migrate data from any previous release.  See <xref
+    linkend="upgrading"/> for general information on migrating to new
+    major releases.
+   </para>
+
+   <para>
+    Version 19 contains a number of changes that may affect compatibility
+    with previous releases.  Observe the following incompatibilities:
+   </para>
+
+   <itemizedlist>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-11 [1d92e0c2c] Add password expiration warnings.
+-->
+
+<listitem>
+<para>
+Add server variable password_expiration_warning_threshold to warn about password expiration (Gilles Darold, Nathan Bossart)
+<ulink url="&commit_baseurl;1d92e0c2c">&sect;</ulink>
+</para>
+
+<para>
+The default warning period is seven days.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-23 [bc60ee860] Warn upon successful MD5 password authentication.
+-->
+
+<listitem>
+<para>
+Issue a warning after successful MD5 password authentication (Nathan Bossart)
+<ulink url="&commit_baseurl;bc60ee860">&sect;</ulink>
+</para>
+
+<para>
+The warning can be disabled via server variable md5_password_warnings.  MD5 passwords were marked marked as deprecated in Postgres 18.
+</para>
+</listitem>
+
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2026-04-08 [a1643d40b] Remove RADIUS support.
+-->
+
+<listitem>
+<para>
+Remove RADIUS support (Thomas Munro)
+<ulink url="&commit_baseurl;a1643d40b">&sect;</ulink>
+</para>
+
+<para>
+Postgres only supported RADIUS over UDP, which is unfixably insecure.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-01-21 [457620845] Force standard_conforming_strings to always be ON.
+-->
+
+<listitem>
+<para>
+Force standard_conforming_strings to always be "on" in the database server (Tom Lane)
+<ulink url="&commit_baseurl;457620845">&sect;</ulink>
+</para>
+
+<para>
+Server variable escape_string_warning has been removed as unnecessary.  Client applications still support "standard_conforming_strings = off" for compatibility with old servers.
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-02-23 [b380a56a3] Disallow CR and LF in database, role, and tablespace nam
+-->
+
+<listitem>
+<para>
+Prevent carriage returns and line feeds in database, role, and tablespace names (Mahendra Singh Thalor)
+<ulink url="&commit_baseurl;b380a56a3">&sect;</ulink>
+</para>
+
+<para>
+This was changed to avoid security problems.  pg_upgrade will also disallow upgrading from clusters that use such names.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-01-08 [b3b0b4571] Create btree_gist v1.9, in which inet/cidr opclasses are
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-01-08 [b352d3d80] Mark GiST inet_ops as opcdefault, and deal with ensuing
+-->
+
+<listitem>
+<para>
+Change the default index opclasses for inet and cidr data types from btree_gist to GiST (Tom Lane)
+<ulink url="&commit_baseurl;b3b0b4571">&sect;</ulink>
+<ulink url="&commit_baseurl;b352d3d80">&sect;</ulink>
+</para>
+
+<para>
+The btree_gist inet/cidr opclasses are broken because they can exclude rows that should be returned.  Pg_upgrade will fail to upgrade if btree_gist inet/cidr indexes exist in the old
+server.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-04-06 [a9c350d9e] Don't try to re-order the subcommands of CREATE SCHEMA.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-04-06 [404db8f9e] Execute foreign key constraints in CREATE SCHEMA at the
+-->
+
+<listitem>
+<para>
+Stop reordering non-schema objects created by CREATE SCHEMA (Tom Lane, Jian He)
+<ulink url="&commit_baseurl;a9c350d9e">&sect;</ulink>
+<ulink url="&commit_baseurl;404db8f9e">&sect;</ulink>
+</para>
+
+<para>
+The goal of the reordering was to avoid dependencies, but it was imperfect.  Postgres now uses the specified object ordering, except for foreign keys which are created last.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-04-06 [21c69dc73] Disallow system columns in COPY FROM WHERE conditions.
+-->
+
+<listitem>
+<para>
+Disallow system columns from being used in COPY FROM ... WHERE (Tom Lane)
+<ulink url="&commit_baseurl;21c69dc73">&sect;</ulink>
+</para>
+
+<para>
+The values of such columns were not well-defined.
+</para>
+</listitem>
+
+<!--
+Author: Etsuro Fujita <efujita@postgresql.org>
+2026-04-05 [de28140de] postgres_fdw: Inherit the local transaction's access/def
+-->
+
+<listitem>
+<para>
+Cause transactions to pass their READ ONLY and DEFERRABLE status to postgres_fdw sessions (Etsuro Fujita)
+<ulink url="&commit_baseurl;de28140de">&sect;</ulink>
+</para>
+
+<para>
+This means READ ONLY transactions can no longer modify rows processed by postgres_fdw sessions.
+</para>
+</listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2026-04-03 [79534f906] Change default of max_locks_per_transactions to 128
+-->
+
+<listitem>
+<para>
+Change default of max_locks_per_transactions from 64 to 128 (Heikki Linnakangas)
+<ulink url="&commit_baseurl;79534f906">&sect;</ulink>
+</para>
+
+<para>
+Lock size allocation has changed, so effectively settings must now be doubled to match their capacity in previous releases.
+</para>
+</listitem>
+
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2026-04-02 [7f8c88c2b] jit: Change the default to off.
+-->
+
+<listitem>
+<para>
+Change JIT to be disabled by default (Jelte Fennema-Nio)
+<ulink url="&commit_baseurl;7f8c88c2b">&sect;</ulink>
+</para>
+
+<para>
+Previously JIT was enabled by default, and activated based on optimizer costs.  Unfortunately, this costing has been determined to be unreliable, so require sites that are doing many
+large analytical queries to manually enable JIT.
+</para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2025-12-03 [6c5c393b7] Rename BUFFERPIN wait event class to BUFFER
+-->
+
+<listitem>
+<para>
+Rename wait event type BUFFERPIN to BUFFER (Andres Freund)
+<ulink url="&commit_baseurl;6c5c393b7">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-12-30 [bc6374cd7] Change IndexAmRoutines to be statically-allocated struct
+-->
+
+<listitem>
+<para>
+Change index access method handlers to use a static IndexAmRoutines structure, rather than dynamically allocated ones (Matthias van de Meent)
+<ulink url="&commit_baseurl;bc6374cd7">&sect;</ulink>
+</para>
+
+<para>
+This is a backwardly incompatible.
+</para>
+</listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2026-03-09 [91f33a2ae] Replace get_relation_info_hook with build_simple_rel_hoo
+-->
+
+<listitem>
+<para>
+Remove optimizer hook get_relation_info_hook and add better-placed hook build_simple_rel_hook (Robert Haas)
+<ulink url="&commit_baseurl;91f33a2ae">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2026-04-08 [77645d44e] Remove MULE_INTERNAL encoding.
+-->
+
+<listitem>
+<para>
+Remove MULE_INTERNAL encoding (Thomas Munro)
+<ulink url="&commit_baseurl;77645d44e">&sect;</ulink>
+</para>
+
+<para>
+This encoding was complex and rarely used.  Databases using it will need to be dumped and restored with a different encoding.
+</para>
+</listitem>
+
+   </itemizedlist>
+
+  </sect2>
+
+  <sect2 id="release-19-changes">
+   <title>Changes</title>
+
+    <para>
+     Below you will find a detailed account of the changes between
+    <productname>PostgreSQL</productname> 19 and the previous major
+    release.
+    </para>
+
+   <sect3 id="release-19-server">
+    <title>Server</title>
+
+    <sect4 id="release-19-optimizer">
+     <title>Optimizer</title>
+
+     <itemizedlist>
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-03-12 [383eb21eb] Convert NOT IN sublinks to anti-joins when safe
+-->
+
+<listitem>
+<para>
+Allow NOT INs to be converted to more efficient ANTI JOINs when NULLs are not present (Richard Guo)
+<ulink url="&commit_baseurl;383eb21eb">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-02-12 [cf74558fe] Reduce LEFT JOIN to ANTI JOIN using NOT NULL constraints
+-->
+
+<listitem>
+<para>
+Allow more LEFT JOINs to be converted to ANTI JOINs (Tender Wang)
+<ulink url="&commit_baseurl;cf74558fe">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-07-03 [0da29e4cb] Enable use of Memoize for ANTI joins
+-->
+
+<listitem>
+<para>
+Allow use of Memoize for ANTI JOINS with unique inner sides (Richard Guo)
+<ulink url="&commit_baseurl;0da29e4cb">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-08-19 [24225ad9a] Pathify RHS unique-ification for semijoin planning
+-->
+
+<listitem>
+<para>
+Improve the planning of semijoins (Richard Guo)
+<ulink url="&commit_baseurl;24225ad9a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-03-19 [1811f1af9] Improve hash join's handling of tuples with null join ke
+-->
+
+<listitem>
+<para>
+Improve hash join's handling of tuples with NULL join keys (Tom Lane)
+<ulink url="&commit_baseurl;1811f1af9">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-02-10 [f41ab5157] Teach planner to transform "x IS [NOT] DISTINCT FROM NUL
+-->
+
+<listitem>
+<para>
+Allow IS [NOT] DISTINCT FROM NULL to be converted to IS [NOT] NULL for proven null arguments (Richard Guo)
+<ulink url="&commit_baseurl;f41ab5157">&sect;</ulink>
+</para>
+
+<para>
+The latter form is more easily optimized.
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-07-22 [e2debb643] Reduce "Var IS [NOT] NULL" quals during constant folding
+-->
+
+<listitem>
+<para>
+Perform earlier constant folding of "Var IS [NOT] NULL" in the optimizer (Richard Guo)
+<ulink url="&commit_baseurl;e2debb643">&sect;</ulink>
+</para>
+
+<para>
+This allows for later optimizations.
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-07-08 [55a780e94] Consider explicit incremental sort for Append and MergeA
+-->
+
+<listitem>
+<para>
+Allow Append and MergeAppend to consider explicit incremental sorts (Richard Guo)
+<ulink url="&commit_baseurl;55a780e94">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-10-08 [8e1185910] Implement Eager Aggregation
+Author: Richard Guo <rguo@postgresql.org>
+2026-04-06 [bd94845e8] Fix collation handling for grouping keys in eager aggreg
+Author: Richard Guo <rguo@postgresql.org>
+2026-04-06 [3a08a2a8b] Fix volatile function evaluation in eager aggregation
+-->
+
+<listitem>
+<para>
+Allow some aggregate processing to be performed before joins (Richard Guo, Antonin Houska)
+<ulink url="&commit_baseurl;8e1185910">&sect;</ulink>
+<ulink url="&commit_baseurl;bd94845e8">&sect;</ulink>
+<ulink url="&commit_baseurl;3a08a2a8b">&sect;</ulink>
+</para>
+
+<para>
+This can reduce the number of rows needed to be processed.
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-10-08 [185e30426] Allow negative aggtransspace to indicate unbounded state
+-->
+
+<listitem>
+<para>
+Allow negative values of pg_aggregate.aggtransspace to indicate unbounded memory usage (Richard Guo)
+<ulink url="&commit_baseurl;185e30426">&sect;</ulink>
+</para>
+
+<para>
+This information is used by the optimizer in planning memory usage.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-11-19 [057012b20] Speed up eqjoinsel() with lots of MCV entries.
+-->
+
+<listitem>
+<para>
+Speed up join selectivity computations for large optimizer statistics targets (Ilia Evdokimov, David Geier)
+<ulink url="&commit_baseurl;057012b20">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-09-20 [1eccb9315] Re-allow using statistics for bool-valued functions in W
+-->
+
+<listitem>
+<para>
+Enable proper optimizer statistics for functions returning boolean values (Tom Lane)
+<ulink url="&commit_baseurl;1eccb9315">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2026-04-01 [f7f4052a4] Add support for extended statistics on virtual generated
+-->
+
+<listitem>
+<para>
+Allow extended statistics on virtual generated columns (Yugo Nagata)
+<ulink url="&commit_baseurl;f7f4052a4">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-26 [0e80f3f88] Add pg_restore_extended_stats()
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-27 [302879bd6] Add support for "dependencies" in pg_restore_extended_st
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-29 [efbebb4e8] Add support for "mcv" in pg_restore_extended_stats()
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-03 [ba97bf9cb] Add support for "exprs" in pg_restore_extended_stats()
+-->
+
+<listitem>
+<para>
+Allow function pg_restore_extended_stats() to restore optimizer extended statistics (Corey Huinker, Michael Paquier, Chao Li)
+<ulink url="&commit_baseurl;0e80f3f88">&sect;</ulink>
+<ulink url="&commit_baseurl;302879bd6">&sect;</ulink>
+<ulink url="&commit_baseurl;efbebb4e8">&sect;</ulink>
+<ulink url="&commit_baseurl;ba97bf9cb">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-16 [d756fa101] Add pg_clear_extended_stats()
+-->
+
+<listitem>
+<para>
+Add function pg_clear_extended_stats() to remove extended statistics (Corey Huinker, Michael Paquier)
+<ulink url="&commit_baseurl;d756fa101">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2026-03-09 [8300d3ad4] Consider startup cost as a figure of merit for partial p
+-->
+
+<listitem>
+<para>
+Adjust the optimizer to consider startup costs of partial paths (Robert Haas, Tomas Vondra)
+<ulink url="&commit_baseurl;8300d3ad4">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-performance">
+     <title>General Performance</title>
+
+     <itemizedlist>
+<!--
+Author: Amit Langote <amitlan@postgresql.org>
+2026-03-31 [2da86c1ef] Add fast path for foreign key constraint checks
+Author: Amit Langote <amitlan@postgresql.org>
+2026-04-01 [e484b0eea] Fix two issues in fast-path FK check introduced by commi
+Author: Amit Langote <amitlan@postgresql.org>
+2026-04-03 [b7b27eb41] Optimize fast-path FK checks with batched index probes
+Author: Amit Langote <amitlan@postgresql.org>
+2026-04-07 [5c54c3ed1] Fix deferred FK check batching introduced by commit b7b2
+-->
+
+<listitem>
+<para>
+Improve performance of foreign key constraint checks (Junwang Zhao, Amit Langote, Chao Li)
+<ulink url="&commit_baseurl;2da86c1ef">&sect;</ulink>
+<ulink url="&commit_baseurl;e484b0eea">&sect;</ulink>
+<ulink url="&commit_baseurl;b7b27eb41">&sect;</ulink>
+<ulink url="&commit_baseurl;5c54c3ed1">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2026-04-05 [a9ee66881] aio: io_uring: Trigger async processing for large IOs
+Author: Andres Freund <andres@anarazel.de>
+2026-04-05 [8ca147d58] read stream: Split decision about look ahead for AIO and
+Author: Andres Freund <andres@anarazel.de>
+2026-04-05 [f63ca3379] read_stream: Only increase read-ahead distance when wait
+-->
+
+<listitem>
+<para>
+Improve asynchronous I/O read-ahead scheduling for large requests (Andres Freund)
+<ulink url="&commit_baseurl;a9ee66881">&sect;</ulink>
+<ulink url="&commit_baseurl;8ca147d58">&sect;</ulink>
+<ulink url="&commit_baseurl;f63ca3379">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2026-04-08 [d1c01b79d] aio: Adjust I/O worker pool automatically.
+-->
+
+<listitem>
+<para>
+Allow io_method method "worker" to automatically control needed background workers (Thomas Munro)
+<ulink url="&commit_baseurl;d1c01b79d">&sect;</ulink>
+</para>
+
+<para>
+New server variables are io_min_workers, io_max_workers, io_worker_idle_timeout, and io_worker_launch_interval.
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-04-06 [1ff3180ca] Allow autovacuum to use parallel vacuum workers.
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-04-10 [2a3d2f9f6] doc: Improve consistency of parallel vacuum description.
+-->
+
+<listitem>
+<para>
+Allow autovacuum to use parallel vacuum workers (Daniil Davydov, Aleksander Alekseev)
+<ulink url="&commit_baseurl;1ff3180ca">&sect;</ulink>
+<ulink url="&commit_baseurl;2a3d2f9f6">&sect;</ulink>
+</para>
+
+<para>
+This is enabled via server variable autovacuum_max_parallel_workers and per-table storage parameter autovacuum_parallel_workers.
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2025-11-27 [0ca3b1697] Add parallelism support for TID Range Scans
+-->
+
+<listitem>
+<para>
+Allow TID Range Scans to be parallelized (Cary Huang, David Rowley)
+<ulink url="&commit_baseurl;0ca3b1697">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-03-13 [e0a3a3fd5] Optimize COPY FROM (FORMAT {text,csv}) using SIMD.
+-->
+
+<listitem>
+<para>
+Improve COPY FROM performance for text and CSV output using SIMD CPU instructions (Nazir Bilal Yavuz, Shinya Kato)
+<ulink url="&commit_baseurl;e0a3a3fd5">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-01-15 [282b1cde9] Optimize LISTEN/NOTIFY via shared channel map and direct
+-->
+
+<listitem>
+<para>
+Improve NOTIFY to only wake up backends that are listening to specified notifications (Joel Jacobson)
+<ulink url="&commit_baseurl;282b1cde9">&sect;</ulink>
+</para>
+
+<para>
+Previously most backends were woken by NOTIFY.
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-12 [a0b6ef29a] Enable fast default for domains with non-volatile constr
+-->
+
+<listitem>
+<para>
+Allow the addition of columns based on domains containing constraints to usually avoid a table rewrite (Jian He)
+<ulink url="&commit_baseurl;a0b6ef29a">&sect;</ulink>
+</para>
+
+<para>
+Previously this always required a table rewrite.
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-02-10 [0aaf0de7f] Optimize BooleanTest with non-nullable input
+-->
+
+<listitem>
+<para>
+Allow IS [NOT] TRUE/FALSE/UNKNOWN to be evaluated earlier for proven non-null arguments (Richard Guo)
+<ulink url="&commit_baseurl;0aaf0de7f">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-12-24 [10c4fe074] Simplify COALESCE expressions using non-nullable argumen
+Author: Richard Guo <rguo@postgresql.org>
+2025-12-24 [cb7b7ec7a] Optimize ROW(...) IS [NOT] NULL using non-nullable field
+-->
+
+<listitem>
+<para>
+Simplify COALESCE and ROW(...) IS [NOT] NULL to avoid evaluating unnecessary arguments (Richard Guo)
+<ulink url="&commit_baseurl;10c4fe074">&sect;</ulink>
+<ulink url="&commit_baseurl;cb7b7ec7a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-02-10 [0a3796125] Optimize IS DISTINCT FROM with non-nullable inputs
+-->
+
+<listitem>
+<para>
+Allow IS DISTINCT FROM to be evaluated earlier for non-constant arguments (Richard Guo)
+<ulink url="&commit_baseurl;0a3796125">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-05 [34dfca293] Change default value of default_toast_compression to "lz
+-->
+
+<listitem>
+<para>
+Change the default TOAST compression method from pglz to the more efficient lz4 (Euler Taveira)
+<ulink url="&commit_baseurl;34dfca293">&sect;</ulink>
+</para>
+
+<para>
+This is done by changing the default for server variable default_toast_compression.
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2026-03-16 [c456e3911] Optimize tuple deformation
+-->
+
+<listitem>
+<para>
+Improve performance of internal row formation (David Rowley)
+<ulink url="&commit_baseurl;c456e3911">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-16 [bfa3c4f10] Optimize hash index bulk-deletion with streaming read
+-->
+
+<listitem>
+<para>
+Improve performance of hash index bulk-deletion by using streaming reads (Xuneng Zhou)
+<ulink url="&commit_baseurl;bfa3c4f10">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+2026-02-14 [ef3c3cf6d] Perform radix sort on SortTuples with pass-by-value Datu
+-->
+
+<listitem>
+<para>
+Improve sort performance using radix sorts (John Naylor)
+<ulink url="&commit_baseurl;ef3c3cf6d">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2026-04-07 [294520c44] instrumentation: Use Time-Stamp Counter on x86-64 to low
+Author: Andres Freund <andres@anarazel.de>
+2026-04-07 [16fca4825] pg_test_timing: Also test RDTSC[P] timing, report time s
+-->
+
+<listitem>
+<para>
+Improve timing performance measurements (Lukas Fittl, Andres Freund, David Geier, Lukas Fittl, David Geier)
+<ulink url="&commit_baseurl;294520c44">&sect;</ulink>
+<ulink url="&commit_baseurl;16fca4825">&sect;</ulink>
+</para>
+
+<para>
+This benefits EXPLAIN (ANALYZE, TIMING) and pg_test_timing, and is controlled via server variable timing_clock_source.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-03-20 [ce8d5fe0e] plpgsql: optimize "SELECT simple-expression INTO var".
+-->
+
+<listitem>
+<para>
+Optimize plpgsql syntax SELECT simple-expression INTO var (Tom Lane)
+<ulink url="&commit_baseurl;ce8d5fe0e">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2025-08-07 [d699687b3] Extend int128.h to support more numeric code.
+-->
+
+<listitem>
+<para>
+Improve performance of numeric operations on platforms without 128-bit integer support (Dean Rasheed)
+<ulink url="&commit_baseurl;d699687b3">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-system-views">
+     <title>System Views</title>
+
+     <itemizedlist>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-24 [4019f725f] Add support for lock statistics in pgstats
+-->
+
+<listitem>
+<para>
+Add system view pg_stat_lock and function pg_stat_get_lock() to report per-lock type statistics (Bertrand Drouvot)
+<ulink url="&commit_baseurl;4019f725f">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-06 [01d485b14] Add system view pg_stat_recovery
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-06 [2d4ead6f4] Fix order of columns in pg_stat_recovery
+-->
+
+<listitem>
+<para>
+Add system view pg_stat_recovery to report recovery status (Xuneng Zhou, Shinya Kato)
+<ulink url="&commit_baseurl;01d485b14">&sect;</ulink>
+<ulink url="&commit_baseurl;2d4ead6f4">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-10-08 [d3b6183dd] Add mem_exceeded_count column to pg_stat_replication_slo
+-->
+
+<listitem>
+<para>
+Add mem_exceeded_count column to system view pg_stat_replication_slots (Bertrand Drouvot)
+<ulink url="&commit_baseurl;d3b6183dd">&sect;</ulink>
+</para>
+
+<para>
+This reports the number of times that logical_decoding_work_mem was exceeded.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-10-06 [a5b543258] Add stats_reset to pg_stat_all_{tables,indexes} and rela
+-->
+
+<listitem>
+<para>
+Add stats_reset column to system views pg_stat_all_tables, pg_stat_all_indexes, and pg_statio_all_sequences (Bertrand Drouvot, Sami Imseih, Shihao Zhong)
+<ulink url="&commit_baseurl;a5b543258">&sect;</ulink>
+</para>
+
+<para>
+It also appears in the "sys" and "user" view variants.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-10-08 [b71bae41a] Add stats_reset to pg_stat_user_functions
+Author: Fujii Masao <fujii@postgresql.org>
+2026-03-16 [8fe315f18] Add stats_reset column to pg_statio_all_sequences
+-->
+
+<listitem>
+<para>
+Add stats_reset column to system views pg_stat_user_functions and pg_stat_database_conflicts (Bertrand Drouvot, Shihao Zhong)
+<ulink url="&commit_baseurl;b71bae41a">&sect;</ulink>
+<ulink url="&commit_baseurl;8fe315f18">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-04-06 [87f61f0c8] Add pg_stat_autovacuum_scores system view.
+-->
+
+<listitem>
+<para>
+Add system view pg_stat_autovacuum_scores to report per-table autovacuum details (Sami Imseih)
+<ulink url="&commit_baseurl;87f61f0c8">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-12-09 [0d7895206] Add mode and started_by columns to pg_stat_progress_vacu
+-->
+
+<listitem>
+<para>
+Add vacuum initiation details to system view pg_stat_progress_vacuum (Shinya Kato)
+<ulink url="&commit_baseurl;0d7895206">&sect;</ulink>
+</para>
+
+<para>
+The new "started_by" column reports the initiator of the vacuum, and "mode" indicates its aggressiveness.
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-12-09 [ab40db385] Add started_by column to pg_stat_progress_analyze view.
+-->
+
+<listitem>
+<para>
+Add analyze initiation details to system view pg_stat_progress_analyze (Shinya Kato)
+<ulink url="&commit_baseurl;ab40db385">&sect;</ulink>
+</para>
+
+<para>
+The new "started_by" column reports the initiator of the analyze.
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-08-05 [deb674454] Add backup_type column to pg_stat_progress_basebackup.
+-->
+
+<listitem>
+<para>
+Add a column to system view pg_stat_progress_basebackup to report the type of backup (Shinya Kato)
+<ulink url="&commit_baseurl;deb674454">&sect;</ulink>
+</para>
+
+<para>
+Possible values are "full" or "incremental".
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-10-28 [f9a09aa29] Add wal_fpi_bytes to pg_stat_wal and pg_stat_get_backend
+-->
+
+<listitem>
+<para>
+Add reporting of the bytes written to WAL for full page images (Shinya Kato)
+<ulink url="&commit_baseurl;f9a09aa29">&sect;</ulink>
+</para>
+
+<para>
+This is accessible via system view pg_stat_wal and function pg_stat_get_backend_wal().
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-23 [a36164e74] Add WALRCV_CONNECTING state to the WAL receiver
+-->
+
+<listitem>
+<para>
+Add "connecting" status to system view column pg_stat_wal_receiver.status (Xuneng Zhou)
+<ulink url="&commit_baseurl;a36164e74">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-03-17 [3b88e50d6] Add more columns to pg_stats, pg_stats_ext, and pg_stats
+-->
+
+<listitem>
+<para>
+Add columns to system views pg_stats, pg_stats_ext, and pg_stats_ext_exprs (Corey Huinker)
+<ulink url="&commit_baseurl;3b88e50d6">&sect;</ulink>
+</para>
+
+<para>
+Adds table OID and attribute number columns to pg_stats, and table OID and statistics object OID columns to the other two.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-02-10 [307447e6d] Add information about range type stats to pg_stats_ext_e
+-->
+
+<listitem>
+<para>
+Add information about range type extended statistics to system view pg_stats_ext_exprs (Corey Huinker, Michael Paquier)
+<ulink url="&commit_baseurl;307447e6d">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-09 [167ed8082] Introduce pg_dsm_registry_allocations view.
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-12-02 [f894acb24] Show size of DSAs and dshashes in pg_dsm_registry_alloca
+-->
+
+<listitem>
+<para>
+Add system view pg_dsm_registry_allocations to report dynamic shared memory details (Florents Tselai, Nathan Bossart)
+<ulink url="&commit_baseurl;167ed8082">&sect;</ulink>
+<ulink url="&commit_baseurl;f894acb24">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-01-01 [f3c9e341c] Add paths of extensions to pg_available_extensions
+-->
+
+<listitem>
+<para>
+Add column "location" to system views pg_available_extensions and pg_available_extension_versions to report the file system directory of extensions (Matheus Alcantara)
+<ulink url="&commit_baseurl;f3c9e341c">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+    </sect4>
+
+    <sect4 id="release-19-monitoring">
+     <title>Monitoring</title>
+
+     <itemizedlist>
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-02-09 [38e0190ce] Allow log_min_messages to be set per process type
+-->
+
+<listitem>
+<para>
+Allow log_min_messages log levels to be specified by process type (Euler Taveira)
+<ulink url="&commit_baseurl;38e0190ce">&sect;</ulink>
+</para>
+
+<para>
+The new format is "type:level".  A value without a colon controls unspecified process types, enabling backward compatibility.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-10-15 [dd3ae3783] Add log_autoanalyze_min_duration
+-->
+
+<listitem>
+<para>
+Add server variable log_autoanalyze_min_duration to log long-running autoanalyze operations (Shinya Kato)
+<ulink url="&commit_baseurl;dd3ae3783">&sect;</ulink>
+</para>
+
+<para>
+Server variable log_autovacuum_min_duration now only controls logging of automatic vacuum operations.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-09-12 [2aac62be8] Default to log_lock_waits=on
+-->
+
+<listitem>
+<para>
+Enable server variable log_lock_waits by default (Laurenz Albe)
+<ulink url="&commit_baseurl;2aac62be8">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tatsuo Ishii <ishii@postgresql.org>
+2025-09-06 [06473f5a3] Allow to log raw parse tree.
+-->
+
+<listitem>
+<para>
+Add server variable debug_print_raw_parse to log the raw parse tree (Chao Li)
+<ulink url="&commit_baseurl;06473f5a3">&sect;</ulink>
+</para>
+
+<para>
+This is also enabled when the server is started with debug level 3 and higher.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2025-07-22 [112faf137] Log remote NOTICE, WARNING, and similar messages using e
+-->
+
+<listitem>
+<para>
+Make messages coming from remote servers appear in the server logs in the same format as local server messages (Vignesh C)
+<ulink url="&commit_baseurl;112faf137">&sect;</ulink>
+</para>
+
+<para>
+These include replication, postgres_fdw, and dblink servers.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-11-03 [ad25744f4] Add wal_fpi_bytes to VACUUM and ANALYZE logs
+-->
+
+<listitem>
+<para>
+Add WAL full page write bytes reporting to VACUUM and ANALYZE logging (Shinya Kato)
+<ulink url="&commit_baseurl;ad25744f4">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-02-03 [e05a24c2d] Add two IO wait events for COPY FROM/TO on a pipe/file/p
+-->
+
+<listitem>
+<para>
+Add IO wait events for COPY FROM/TO on a pipe/file/program (Nikolay Samokhvalov)
+<ulink url="&commit_baseurl;e05a24c2d">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2026-01-05 [7a39f43d8] Extend xlogwait infrastructure with write and flush wait
+-->
+
+<listitem>
+<para>
+Add wait events for WAL write and flush LSNs (Xuneng Zhou)
+<ulink url="&commit_baseurl;7a39f43d8">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-10-06 [b93172ca5] Expose sequence page LSN via pg_get_sequence_data.
+-->
+
+<listitem>
+<para>
+Have pg_get_sequence_data function return the sequence page LSN (Vignesh C)
+<ulink url="&commit_baseurl;b93172ca5">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-12-30 [97b101776] Add pg_get_multixact_stats()
+-->
+
+<listitem>
+<para>
+Add function pg_get_multixact_stats() to report multixact activity (Naga Appani)
+<ulink url="&commit_baseurl;97b101776">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-03-20 [48f11bfa0] Bump transaction/multixact ID warning limits to 100M.
+-->
+
+<listitem>
+<para>
+Issue warnings when the wraparound of xid and multi-xids is less then 100 million (Nathan Bossart)
+<ulink url="&commit_baseurl;48f11bfa0">&sect;</ulink>
+</para>
+
+<para>
+The previous warning was 40 million.  Warnings are issued to clients and the server log.
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-server-config">
+     <title>Server Configuration</title>
+
+     <itemizedlist>
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2026-04-03 [f19c0ecca] Online enabling and disabling of data checksums
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2026-04-08 [b364828f8] doc: Fix data_checksums data type
+-->
+
+<listitem>
+<para>
+Allow online enabling and disabling of data checksums (Daniel Gustafsson, Magnus Hagander, Tomas Vondra, Lakshmi N)
+<ulink url="&commit_baseurl;f19c0ecca">&sect;</ulink>
+<ulink url="&commit_baseurl;b364828f8">&sect;</ulink>
+</para>
+
+<para>
+Previously the checksum status could only be set at initialization and changed only while the cluster was offline using pg_checksums.
+</para>
+</listitem>
+
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2026-03-18 [4f433025f] ssl: Serverside SNI support for libpq
+-->
+
+<listitem>
+<para>
+Add server-side report for SNI (Server Name Indication) Daniel Gustafsson, Jacob Champion)
+<ulink url="&commit_baseurl;4f433025f">&sect;</ulink>
+</para>
+
+<para>
+New configuration file PGDATA/pg_hosts.conf specifies hostname/key pairs.
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-03-06 [e982331b5] libpq: Introduce PQAUTHDATA_OAUTH_BEARER_TOKEN_V2
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-03-31 [0af4d402c] libpq: Poison the v2 part of a v1 Bearer request
+-->
+
+<listitem>
+<para>
+Add a new OAUTH flow hook PQAUTHDATA_OAUTH_BEARER_TOKEN_V2 (Jacob Champion)
+<ulink url="&commit_baseurl;e982331b5">&sect;</ulink>
+<ulink url="&commit_baseurl;0af4d402c">&sect;</ulink>
+</para>
+
+<para>
+This is an improved version of PQAUTHDATA_OAUTH_BEARER_TOKEN by adding the issuer identifier and error message specification.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-06 [f1e251be8] Allow bgworkers to be terminated for database-related co
+-->
+
+<listitem>
+<para>
+Allow background workers to be configured to terminate before database-level operations (Aya Iwata)
+<ulink url="&commit_baseurl;f1e251be8">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-11-04 [ff4597acd] Allow "SET list_guc TO NULL" to specify setting the GUC
+-->
+
+<listitem>
+<para>
+Allow server variables that represent lists to be emptied by setting the value to NULL (Tom Lane)
+<ulink url="&commit_baseurl;ff4597acd">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+2025-09-24 [5334620ee] Update GB18030 encoding from version 2000 to 2022
+-->
+
+<listitem>
+<para>
+Update GB18030 encoding from version 2000 to 2022 (Chao Li, Zheng Tao)
+<ulink url="&commit_baseurl;5334620ee">&sect;</ulink>
+</para>
+
+<para>
+See the commit message for compatibility details.
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-replication">
+     <title>Streaming Replication and Recovery</title>
+
+     <itemizedlist>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2025-11-05 [447aae13b] Implement WAIT FOR command
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2026-01-05 [49a181b5d] Add the MODE option to the WAIT FOR LSN command
+-->
+
+<listitem>
+<para>
+Allow standbys to wait for LSN values to be replayed via WAIT FOR (Kartyshov Ivan, Alexander Korotkov, Xuneng Zhou)
+<ulink url="&commit_baseurl;447aae13b">&sect;</ulink>
+<ulink url="&commit_baseurl;49a181b5d">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-12-15 [0d2d4a0ec] Add retry logic to pg_sync_replication_slots().
+-->
+
+<listitem>
+<para>
+Improve function pg_sync_replication_slots() to wait for the synchronization completion (Ajin Cherian, Zhijie Hou)
+<ulink url="&commit_baseurl;0d2d4a0ec">&sect;</ulink>
+</para>
+
+<para>
+Previously, certain synchronization failures would not be reported.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2026-04-06 [a8f45dee9] Add wal_sender_shutdown_timeout GUC to limit shutdown wa
+-->
+
+<listitem>
+<para>
+Add server variable wal_sender_shutdown_timeout to limit replica synchronization waits during shutdown (Andrey Silitskiy, Hayato Kuroda)
+<ulink url="&commit_baseurl;a8f45dee9">&sect;</ulink>
+</para>
+
+<para>
+By default, senders still wait forever for synchronization.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2026-02-20 [8a6af3ad0] Make GUC wal_receiver_timeout user-settable.
+Author: Fujii Masao <fujii@postgresql.org>
+2026-02-20 [fb80f388f] Add per-subscription wal_receiver_timeout setting.
+-->
+
+<listitem>
+<para>
+Allow wal_receiver_timeout to be set per subscription and user (Fujii Masao)
+<ulink url="&commit_baseurl;8a6af3ad0">&sect;</ulink>
+<ulink url="&commit_baseurl;fb80f388f">&sect;</ulink>
+</para>
+
+<para>
+This allows subscriptions to use different wal_receiver_timeout values.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-09-19 [5b148706c] Add optional pid parameter to pg_replication_origin_sess
+-->
+
+<listitem>
+<para>
+Add optional pid parameter to pg_replication_origin_session_setup() to allow parallelization of SQL-level replication solutions (Doruk Yilmaz, Hayato Kuroda)
+<ulink url="&commit_baseurl;5b148706c">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-logical">
+     <title><link linkend="logical-replication">Logical Replication</link></title>
+
+     <itemizedlist>
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-10-23 [f0b3573c3] Introduce "REFRESH SEQUENCES" for subscriptions.
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-05 [5509055d6] Add sequence synchronization for logical replication.
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-12 [55cefadde] Doc: Add documentation for sequence synchronization.
+-->
+
+<listitem>
+<para>
+Allow sequence values stored in subscribers to match the publisher (Vignesh C)
+<ulink url="&commit_baseurl;f0b3573c3">&sect;</ulink>
+<ulink url="&commit_baseurl;5509055d6">&sect;</ulink>
+<ulink url="&commit_baseurl;55cefadde">&sect;</ulink>
+</para>
+
+<para>
+This is enabled during CREATE SUBSCRIPTION, ALTER SUBSCRIPTION ... REFRESH PUBLICATION, and ALTER SUBSCRIPTION ... REFRESH SEQUENCES.  The latter only updates values, not sequence
+existence.  Function pg_get_sequence_data() allows inspection of sequence synchronization.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-10-09 [96b378497] Add "ALL SEQUENCES" support to publications.
+-->
+
+<listitem>
+<para>
+Allow publications to be publish all sequences via the ALL SEQUENCES clause (Vignesh C, Tomas Vondra)
+<ulink url="&commit_baseurl;96b378497">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-10-23 [f0b3573c3] Introduce "REFRESH SEQUENCES" for subscriptions.
+-->
+
+<listitem>
+<para>
+Enhance ALTER SUBSCRIPTION on publications to synchronize the existence of sequences on subscribers to match the publisher (Vignesh C)
+<ulink url="&commit_baseurl;f0b3573c3">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2026-03-20 [493f8c643] Add support for EXCEPT TABLE in ALTER PUBLICATION.
+Author: Amit Kapila <akapila@postgresql.org>
+2026-04-01 [6b0550c45] Fix miscellaneous issues in EXCEPT publication clause.
+Author: Amit Kapila <akapila@postgresql.org>
+2026-03-04 [fd366065e] Allow table exclusions in publications via EXCEPT TABLE.
+Author: Amit Kapila <akapila@postgresql.org>
+2026-03-31 [5984ea868] Change syntax of EXCEPT TABLE clause in publication comm
+-->
+
+<listitem>
+<para>
+Allow CREATE/ALTER PUBLICATION to exclude some tables using the EXCEPT TABLE clause (Vignesh C, Shlok Kyal)
+<ulink url="&commit_baseurl;493f8c643">&sect;</ulink>
+<ulink url="&commit_baseurl;6b0550c45">&sect;</ulink>
+<ulink url="&commit_baseurl;fd366065e">&sect;</ulink>
+<ulink url="&commit_baseurl;5984ea868">&sect;</ulink>
+</para>
+
+<para>
+This is useful when specifying ALL TABLES.
+</para>
+</listitem>
+
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+2026-03-06 [8185bb534] CREATE SUBSCRIPTION ... SERVER.
+-->
+
+<listitem>
+<para>
+Allow CREATE SUBSCRIPTION to use postgres_fdw foreign data wrapper connection parameters (Jeff Davis)
+<ulink url="&commit_baseurl;8185bb534">&sect;</ulink>
+</para>
+
+<para>
+The connection parameters are referenced via CREATE SUBSCRIPTION ... SERVER.
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-12-23 [67c20979c] Toggle logical decoding dynamically based on logical slo
+-->
+
+<listitem>
+<para>
+When server variable wal_level is "replica", allow the automatic enablement of logical replication when needed (Masahiko Sawada)
+<ulink url="&commit_baseurl;67c20979c">&sect;</ulink>
+</para>
+
+<para>
+New server variable effective_wal_level reports the effective WAL level.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-07-23 [228c37086] Preserve conflict-relevant data during logical replicati
+-->
+
+<listitem>
+<para>
+Add logical subscriber setting retain_conflict_info to retain information needed for conflict resolution (Zhijie Hou)
+<ulink url="&commit_baseurl;228c37086">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-08-04 [fd5a1a0c3] Detect and report update_deleted conflicts.
+-->
+
+<listitem>
+<para>
+Report cases where an update is applied to a row that was already deleted on a subscriber (Zhijie Hou)
+<ulink url="&commit_baseurl;fd5a1a0c3">&sect;</ulink>
+</para>
+
+<para>
+This requires the subscriber have retain_dead_tuples enabled.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-09-15 [0d48d393d] Resume conflict-relevant data retention automatically.
+-->
+
+<listitem>
+<para>
+Re-enable retain_dead_tuples when the necessary transaction retention falls below max_retention_duration (Zhijie Hou)
+<ulink url="&commit_baseurl;0d48d393d">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-09-02 [a850be2fe] Add max_retention_duration option to subscriptions.
+-->
+
+<listitem>
+<para>
+Add subscription option max_retention_duration to limit retain_dead_tuples retention (Zhijie Hou)
+<ulink url="&commit_baseurl;a850be2fe">&sect;</ulink>
+</para>
+
+<para>
+When the limit is reached, dead tuple retention until manually re-enabled or a new subscription is created.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-07 [f6a4c498d] Add seq_sync_error_count to subscription statistics.
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-18 [3edaf29fa] Rename two columns in pg_stat_subscription_stats.
+-->
+
+<listitem>
+<para>
+Add column pg_stat_subscription_stats.sync_seq_error_count to report sequence synchronization errors (Vignesh C)
+<ulink url="&commit_baseurl;f6a4c498d">&sect;</ulink>
+<ulink url="&commit_baseurl;3edaf29fa">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-18 [3edaf29fa] Rename two columns in pg_stat_subscription_stats.
+-->
+
+<listitem>
+<para>
+Rename column sync_error_count to sync_table_error_count in system view pg_stat_subscription_stats (Vignesh C)
+<ulink url="&commit_baseurl;3edaf29fa">&sect;</ulink>
+</para>
+
+<para>
+This is necessary since sequences errors are now also tracked.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-25 [76b78721c] Add slotsync skip statistics.
+Author: Amit Kapila <akapila@postgresql.org>
+2025-11-28 [e68b6adad] Add slotsync_skip_reason column to pg_replication_slots
+Author: Amit Kapila <akapila@postgresql.org>
+2025-12-05 [5db6a344a] Rename column slotsync_skip_at to slotsync_last_skip.
+-->
+
+<listitem>
+<para>
+Add slot synchronization skip information to pg_stat_replication_slots (Shlok Kyal)
+<ulink url="&commit_baseurl;76b78721c">&sect;</ulink>
+<ulink url="&commit_baseurl;e68b6adad">&sect;</ulink>
+<ulink url="&commit_baseurl;5db6a344a">&sect;</ulink>
+</para>
+
+<para>
+The new columns are slotsync_skip_count, slotsync_last_skip, and slotsync_skip_reason.
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+   </sect3>
+
+   <sect3 id="release-19-query">
+    <title>Query Commands</title>
+
+    <itemizedlist>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-03-16 [2f094e7ac] SQL Property Graph Queries (SQL/PGQ)
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-03-31 [c5b3253b8] Property references are preferred over regular column re
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-03-31 [a0dd0702e] Fix cross variable references in graph pattern causing s
+-->
+
+<listitem>
+<para>
+Add support for SQL Property Graph Queries (SQL/PGQ) (Peter Eisentraut, Ashutosh Bapat)
+<ulink url="&commit_baseurl;2f094e7ac">&sect;</ulink>
+<ulink url="&commit_baseurl;c5b3253b8">&sect;</ulink>
+<ulink url="&commit_baseurl;a0dd0702e">&sect;</ulink>
+</para>
+
+<para>
+Internally these are processed like views so are written as standard relational queries.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-04-01 [8e72d914c] Add UPDATE/DELETE FOR PORTION OF
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-04-07 [b6ccd30d8] Add isolation tests for UPDATE/DELETE FOR PORTION OF
+-->
+
+<listitem>
+<para>
+Add UPDATE/DELETE FOR PORTION OF (Paul A. Jungwirth)
+<ulink url="&commit_baseurl;8e72d914c">&sect;</ulink>
+<ulink url="&commit_baseurl;b6ccd30d8">&sect;</ulink>
+</para>
+
+<para>
+This allows operations on a temporal range.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-09-29 [ef38a4d97] Add GROUP BY ALL.
+-->
+
+<listitem>
+<para>
+Add GROUP BY ALL syntax to automatically group all non-aggregate and non-window function target list parameters (David Christensen)
+<ulink url="&commit_baseurl;ef38a4d97">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-03-06 [415100aa6] Support grouping-expression references and GROUPING() in
+-->
+
+<listitem>
+<para>
+Allow GROUP BY to process target list subqueries that have expressions referencing non-subquery columns (Tom Lane)
+<ulink url="&commit_baseurl;415100aa6">&sect;</ulink>
+</para>
+
+<para>
+Also fix a bug in how GROUPING() handles target list subquery aliases.
+</para>
+</listitem>
+
+<!--
+Author: Tatsuo Ishii <ishii@postgresql.org>
+2025-10-03 [25a30bbd4] Add IGNORE NULLS/RESPECT NULLS option to Window function
+-->
+
+<listitem>
+<para>
+Allow window functions to ignore NULLs with IGNORE NULLS/RESPECT NULLS option (Oliver Ford, Tatsuo Ishii)
+<ulink url="&commit_baseurl;25a30bbd4">&sect;</ulink>
+</para>
+
+<para>
+Supported window functions are lead, lag, first_value, last_value and nth_value.
+</para>
+</listitem>
+
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2026-02-12 [88327092f] Add support for INSERT ... ON CONFLICT DO SELECT.
+-->
+
+<listitem>
+<para>
+Add support for INSERT ... RETURNING ... ON CONFLICT DO SELECT (Andreas Karlsson,  Marko Tiikkaja, Viktor Holmberg)
+<ulink url="&commit_baseurl;88327092f">&sect;</ulink>
+</para>
+
+<para>
+This allows conflicting rows to be returns, and optionally locked with FOR UPDATE/SHARE.
+</para>
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3 id="release-19-utility">
+    <title>Utility Commands</title>
+
+    <itemizedlist>
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-03-10 [ac58465e0] Introduce the REPACK command
+-->
+
+<listitem>
+<para>
+Create a REPACK command that replaces VACUUM FULL and CLUSTER (Antonin Houska)
+<ulink url="&commit_baseurl;ac58465e0">&sect;</ulink>
+</para>
+
+<para>
+The two former commands did similar things, but with confusing names, so unify them as REPACK.
+</para>
+</listitem>
+
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-04-06 [28d534e2a] Add CONCURRENTLY option to REPACK
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-04-07 [8fb95a8ab] doc: Add an example of REPACK (CONCURRENTLY)
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-04-07 [e76d8c749] Reserve replication slots specifically for REPACK
+-->
+
+<listitem>
+<para>
+Allow REPACK to rebuild tables without access-exclusive locking (Antonin Houska, Mihail Nikalayeu, Álvaro Herrera)
+<ulink url="&commit_baseurl;28d534e2a">&sect;</ulink>
+<ulink url="&commit_baseurl;8fb95a8ab">&sect;</ulink>
+<ulink url="&commit_baseurl;e76d8c749">&sect;</ulink>
+</para>
+
+<para>
+This is enabled via the CONCURRENTLY option.  Server variables max_repack_replication_slots was also added.
+</para>
+</listitem>
+
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2025-12-14 [f2e4cc427] Implement ALTER TABLE ... MERGE PARTITIONS ... command
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2025-12-14 [4b3d17362] Implement ALTER TABLE ... SPLIT PARTITION ... command
+-->
+
+<listitem>
+<para>
+Allow partitions to be merged and split using ALTER TABLE ... MERGE/SPLIT PARTITIONS (Dmitry Koval, Alexander Korotkov, Tender Wang, Richard Guo, Dagfinn Ilmari Mannsåker, Fujii Masao, Jian He)
+<ulink url="&commit_baseurl;f2e4cc427">&sect;</ulink>
+<ulink url="&commit_baseurl;4b3d17362">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-03-19 [dd1398f13] Allow choosing specific grantors via GRANT/REVOKE ... GR
+-->
+
+<listitem>
+<para>
+Allow GRANT/REVOKE to specify the effective role performing the privileges adjustment (Nathan Bossart, Tom Lane)
+<ulink url="&commit_baseurl;dd1398f13">&sect;</ulink>
+</para>
+
+<para>
+The GRANTED BY clause controls this.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-04-06 [d51697484] Support more object types within CREATE SCHEMA.
+-->
+
+<listitem>
+<para>
+Allow CREATE SCHEMA to create more types of non-schema objects (Kirill Reshke, Jian He, Tom Lane)
+<ulink url="&commit_baseurl;d51697484">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-11 [a4f126516] Add option list to CHECKPOINT command.
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-11 [2f698d7f4] Add MODE option to CHECKPOINT command.
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-11 [8d33fbacb] Add FLUSH_UNLOGGED option to CHECKPOINT command.
+-->
+
+<listitem>
+<para>
+Allow CHECKPOINT to accept a list of options (Christoph Berg)
+<ulink url="&commit_baseurl;a4f126516">&sect;</ulink>
+<ulink url="&commit_baseurl;2f698d7f4">&sect;</ulink>
+<ulink url="&commit_baseurl;8d33fbacb">&sect;</ulink>
+</para>
+
+<para>
+Supported options are MODE and FLUSH_UNLOGGED.
+</para>
+</listitem>
+
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+2026-03-06 [8185bb534] CREATE SUBSCRIPTION ... SERVER.
+Author: Jeff Davis <jdavis@postgresql.org>
+2026-04-09 [90630ec42] Document new catalog columns, missed in commit 8185bb534
+-->
+
+<listitem>
+<para>
+Add CONNECTION clause to CREATE FOREIGN DATA WRAPPER to specify a function to be called for subscription connection parameters (Jeff Davis, Noriyoshi Shinoda)
+<ulink url="&commit_baseurl;8185bb534">&sect;</ulink>
+<ulink url="&commit_baseurl;90630ec42">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-12-30 [736f754ee] Add dead items memory usage to VACUUM (VERBOSE) and auto
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-03-19 [adcdbe938] Add parallel vacuum worker usage to VACUUM (VERBOSE) and
+-->
+
+<listitem>
+<para>
+Add memory usage and parallelism reporting to VACUUM (VERBOSE) and autovacuum logs (Masahiko Sawada, Daniil Davydov)
+<ulink url="&commit_baseurl;736f754ee">&sect;</ulink>
+<ulink url="&commit_baseurl;adcdbe938">&sect;</ulink>
+</para>
+</listitem>
+
+    </itemizedlist>
+
+    <sect4 id="release-19-constraints">
+     <title><link linkend="ddl-constraints">Constraints</link></title>
+
+     <itemizedlist>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-11 [342051d73] Add support for altering CHECK constraint enforceability
+-->
+
+<listitem>
+<para>
+Allow ALTER TABLE ALTER CONSTRAINT ... [NOT] ENFORCED for CHECK constraints (Jian He)
+<ulink url="&commit_baseurl;342051d73">&sect;</ulink>
+</para>
+
+<para>
+Previously enforcement changes were only supported for foreign key constraints.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-02-24 [f80bedd52] Allow ALTER COLUMN SET EXPRESSION on virtual columns wit
+-->
+
+<listitem>
+<para>
+Allow ALTER COLUMN SET EXPRESSION to succeed on virtual columns with CHECK constraints (Jian He)
+<ulink url="&commit_baseurl;f80bedd52">&sect;</ulink>
+</para>
+
+<para>
+This was previously prohibited.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-08-22 [16a0039dc] Reduce lock level for ALTER DOMAIN ... VALIDATE CONSTRAI
+-->
+
+<listitem>
+<para>
+Reduce lock level of ALTER DOMAIN ... VALIDATE CONSTRAINT to match ALTER TABLE ... VALIDATE CONSTRAINT (Jian He)
+<ulink url="&commit_baseurl;16a0039dc">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+    </sect4>
+
+    <sect4 id="release-19-copy">
+     <title><xref linkend="sql-copy"/></title>
+
+     <itemizedlist>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2025-07-03 [bc2f348e8] Support multi-line headers in COPY FROM command.
+-->
+
+<listitem>
+<para>
+Allow multiple headers lines be skipped by COPY FROM (Shinya Kato, Fujii Masao)
+<ulink url="&commit_baseurl;bc2f348e8">&sect;</ulink>
+</para>
+
+<para>
+Previously only a single header line could be skipped.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-03-03 [2a525cc97] Add COPY (on_error set_null) option
+-->
+
+<listitem>
+<para>
+Allow COPY FROM to set invalid input values to NULL (Jian He, Kirill Reshke)
+<ulink url="&commit_baseurl;2a525cc97">&sect;</ulink>
+</para>
+
+<para>
+This is done using the COPY option ON_ERROR SET_NULL.
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-20 [7dadd38cd] json format for COPY TO
+-->
+
+<listitem>
+<para>
+Allow COPY TO to output JSON format (Joe Conway, Jian He, Andrew Dunstan)
+<ulink url="&commit_baseurl;7dadd38cd">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-20 [4c0390ac5] Add option force_array for COPY JSON FORMAT
+-->
+
+<listitem>
+<para>
+Allow COPY TO in JSON format to output its results as a single JSON array (Joe Conway, Jian He)
+<ulink url="&commit_baseurl;4c0390ac5">&sect;</ulink>
+</para>
+
+<para>
+The COPY option is FORCE_ARRAY.
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-10-20 [4bea91f21] Support COPY TO for partitioned tables.
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-11-20 [266543a62] Use "COPY table TO" for partitioned tables in initial ta
+-->
+
+<listitem>
+<para>
+Allow COPY TO to output partitioned tables (Jian He, Ajin Cherian)
+<ulink url="&commit_baseurl;4bea91f21">&sect;</ulink>
+<ulink url="&commit_baseurl;266543a62">&sect;</ulink>
+</para>
+
+<para>
+Previously COPY (SELECT ...) has to be used to output partitioned tables.
+</para>
+</listitem>
+
+     </itemizedlist>
+    </sect4>
+
+    <sect4 id="release-19-explain">
+     <title><xref linkend="sql-explain"/></title>
+
+     <itemizedlist>
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2026-04-07 [681daed93] Add EXPLAIN (IO) infrastructure with BitmapHeapScan supp
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2026-04-07 [3b1117d6e] Add EXPLAIN (IO) instrumentation for SeqScan
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2026-04-07 [e157fe6f7] Add EXPLAIN (IO) instrumentation for TidRangeScan
+-->
+
+<listitem>
+<para>
+Add EXPLAIN ANALYZE option IO to report asynchronous IO activity (Tomas Vondra)
+<ulink url="&commit_baseurl;681daed93">&sect;</ulink>
+<ulink url="&commit_baseurl;3b1117d6e">&sect;</ulink>
+<ulink url="&commit_baseurl;e157fe6f7">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-10-30 [5ab0b6a24] Expose wal_fpi_bytes in EXPLAIN (WAL)
+-->
+
+<listitem>
+<para>
+Add WAL full page write bytes reporting to EXPLAIN (ANALYZE, WAL) (Shinya Kato)
+<ulink url="&commit_baseurl;5ab0b6a24">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2025-07-29 [4bc62b868] Display Memoize planner estimates in EXPLAIN
+-->
+
+<listitem>
+<para>
+Add Memoize cache and lookup estimates to EXPLAIN output (Ilia Evdokimov, Lukas Fittl)
+<ulink url="&commit_baseurl;4bc62b868">&sect;</ulink>
+</para>
+
+<para>
+This will help illustrate why Memoize was chosen.
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+   </sect3>
+
+   <sect3 id="release-19-datatypes">
+    <title>Data Types</title>
+
+    <itemizedlist>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-07 [b139bd3b6] Add data type oid8, 64-bit unsigned identifier
+-->
+
+<listitem>
+<para>
+Add the 64-bit unsigned data type oid8 (Michael Paquier)
+<ulink url="&commit_baseurl;b139bd3b6">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-04-02 [bd4f879a9] Add additional jsonpath string methods
+-->
+
+<listitem>
+<para>
+Add more jsonpath string methods (Florents Tselai, David E. Wheeler)
+<ulink url="&commit_baseurl;bd4f879a9">&sect;</ulink>
+</para>
+
+<para>
+They are l/r/btrim(), lower(), upper(), initcap(), replace(), and split_part().  These are immutable like their non-JSON string variants.
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-03-19 [ba21f5bf8] Allow explicit casting between bytea and uuid.
+-->
+
+<listitem>
+<para>
+Allow casts between bytea and uuid date types (Dagfinn Ilmari Mannsåker, Aleksander Alekseev)
+<ulink url="&commit_baseurl;ba21f5bf8">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-06-30 [bd09f024a] Add new OID alias type regdatabase.
+-->
+
+<listitem>
+<para>
+Add ability to cast between database names and oids using regdatabase (Ian Lawrence Barwick)
+<ulink url="&commit_baseurl;bd09f024a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2026-04-05 [df6949ccf] Add tid_block() and tid_offset() accessor functions
+-->
+
+<listitem>
+<para>
+Add functions tid_block() and tid_offset() to extract block numbers and offsets from tid values (Ayush Tiwari)
+<ulink url="&commit_baseurl;df6949ccf">&sect;</ulink>
+</para>
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3 id="release-19-functions">
+    <title>Functions</title>
+
+    <itemizedlist>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2025-09-09 [faf071b55] Add date and timestamp variants of random(min, max).
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2025-09-11 [9c24111c4] doc: Improve description of new random(min, max) functio
+-->
+
+<listitem>
+<para>
+Add date, timestamp, and timestamptz versions of random(min, max) (Damien Clochard, Dean Rasheed)
+<ulink url="&commit_baseurl;faf071b55">&sect;</ulink>
+<ulink url="&commit_baseurl;9c24111c4">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-03-25 [497c1170c] Add base32hex support to encode() and decode() functions
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-03-27 [e752a2ccc] doc: Clarify collation requirements for base32hex sortab
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2025-09-20 [e1d917182] Add support for base64url encoding and decoding
+-->
+
+<listitem>
+<para>
+Allow encode() and decode() to process data in base64url and base32hex formats (Andrey Borodin, Aleksander Alekseev, Florents Tselai)
+<ulink url="&commit_baseurl;497c1170c">&sect;</ulink>
+<ulink url="&commit_baseurl;e752a2ccc">&sect;</ulink>
+<ulink url="&commit_baseurl;e1d917182">&sect;</ulink>
+</para>
+
+<para>
+This format retains ordering, unlike base32.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-11-22 [5eed8ce50] Add range_minus_multi and multirange_minus_multi functio
+-->
+
+<listitem>
+<para>
+Add functions to return a set of ranges resulting from range subtraction (Paul A. Jungwirth)
+<ulink url="&commit_baseurl;5eed8ce50">&sect;</ulink>
+</para>
+
+<para>
+The functions are range_minus_multi() and multirange_minus_multi().  This is useful to represent range subtractions results with gaps.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-10-22 [2b75c38b7] Add error_on_null(), checking if the input is the null v
+-->
+
+<listitem>
+<para>
+Add function error_on_null() to return the supplied parameter, or error on NULL input (Joel Jacobson)
+<ulink url="&commit_baseurl;2b75c38b7">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-17 [3b4c2b9db] Allow IS JSON predicate to work with domain types
+-->
+
+<listitem>
+<para>
+Allow IS JSON to work on domains defined over supported base types (Jian He)
+<ulink url="&commit_baseurl;3b4c2b9db">&sect;</ulink>
+</para>
+
+<para>
+The supported base domains are TEXT, JSON, JSONB, and BYTEA.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-01-05 [7dc95cc3b] Update to latest Snowball sources.
+-->
+
+<listitem>
+<para>
+Add full text stemmers for Polish and Esperanto (Tom Lane)
+<ulink url="&commit_baseurl;7dc95cc3b">&sect;</ulink>
+</para>
+
+<para>
+The Dutch stemmer has also be updated.  The old Dutch stemmer is available via "dutch_porter".
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-23 [d98197602] Allow pg_{read,write}_all_data to access large objects.
+-->
+
+<listitem>
+<para>
+Modify pg_read_all_data() and pg_write_all_data() to read/write large objects (Nitin Motiani, Nathan Bossart)
+<ulink url="&commit_baseurl;d98197602">&sect;</ulink>
+</para>
+
+<para>
+These functions are designed to allow non-super users to run pg_dump.
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-04-05 [76e514ebb] Add pg_get_role_ddl() function
+-->
+
+<listitem>
+<para>
+Add function pg_get_role_ddl() to output role creation commands (Mario Gonzalez, Bryan Green, Andrew Dunstan, Euler Taveira)
+<ulink url="&commit_baseurl;76e514ebb">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-04-05 [b99fd9fd7] Add pg_get_tablespace_ddl() function
+-->
+
+<listitem>
+<para>
+Add function Add pg_get_tablespace_ddl() to output tablespace creation commands (Nishant Sharma, Manni Wood, Andrew Dunstan, Euler Taveira)
+<ulink url="&commit_baseurl;b99fd9fd7">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-04-05 [a4f774cf1] Add pg_get_database_ddl() function
+-->
+
+<listitem>
+<para>
+Add function pg_get_database_ddl() to output database creation commands (Akshay Joshi, Andrew Dunstan, Euler Taveira)
+<ulink url="&commit_baseurl;a4f774cf1">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-08-21 [53eff471c] PL/Python: Add event trigger support
+-->
+
+<listitem>
+<para>
+Allow event triggers to be written using PL/Python (Euler Taveira, Dimitri Fontaine)
+<ulink url="&commit_baseurl;53eff471c">&sect;</ulink>
+</para>
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3 id="release-19-libpq">
+    <title><link linkend="libpq">Libpq</link></title>
+
+    <itemizedlist>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-07-13 [092f3c63e] libpq: Add "servicefile" connection option
+-->
+
+<listitem>
+<para>
+Allow libpq connections to specify a service file via "servicefile" (Torsten Förtsch, Ryo Kanbayashi)
+<ulink url="&commit_baseurl;092f3c63e">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-02-06 [d8d7c5dc8] libpq: Prepare for protocol grease during 19beta
+-->
+
+<listitem>
+<para>
+Add special libpq protocol version 3.9999 for version testing (Jelte Fennema-Nio)
+<ulink url="&commit_baseurl;d8d7c5dc8">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-03-05 [b8d768583] libpq: Add PQgetThreadLock() to mirror PQregisterThreadL
+-->
+
+<listitem>
+<para>
+Add libpq function PQgetThreadLock() to retrieve the current locking callback (Jacob Champion)
+<ulink url="&commit_baseurl;b8d768583">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-03-30 [993368113] libpq: Add oauth_ca_file option to change CAs without de
+-->
+
+<listitem>
+<para>
+Add libpq connection setting oauth_ca_file to specify the OAUTH certificate authority file (Jonathan Gonzalez V., Jacob Champion)
+<ulink url="&commit_baseurl;993368113">&sect;</ulink>
+</para>
+
+<para>
+This can also be set via the PGOAUTHCAFILE environment variable.  The default is to use curl's built-in certificates.
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-04-07 [b977bd308] oauth: Allow validators to register custom HBA options
+-->
+
+<listitem>
+<para>
+Allow custom OAUTH validators to register custom pg_hba.conf authentication options (Jacob Champion)
+<ulink url="&commit_baseurl;b977bd308">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-04-03 [d438a3659] oauth: Let validators provide failure DETAILs
+-->
+
+<listitem>
+<para>
+Allow OAUTH validators to supply failure details (Jacob Champion)
+<ulink url="&commit_baseurl;d438a3659">&sect;</ulink>
+</para>
+
+<para>
+This is done by setting the ValidatorModuleResult structure member error_detail.
+</para>
+</listitem>
+
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+2026-04-07 [6d00fb904] libpq: Split PGOAUTHDEBUG=UNSAFE into multiple options
+-->
+
+<listitem>
+<para>
+Allow libpq environment variable PGOAUTHDEBUG to specify specific debug options (Zsolt Parragi, Jacob Champion)
+<ulink url="&commit_baseurl;6d00fb904">&sect;</ulink>
+</para>
+
+<para>
+The UNSAFE option still generates all debugging output.
+</para>
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3 id="release-19-psql">
+    <title><xref linkend="app-psql"/></title>
+
+    <itemizedlist>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-10-28 [b3ce55f41] Add psql PROMPT variable for search_path.
+-->
+
+<listitem>
+<para>
+Allow the search path to appear in the psql prompt via "%S" (Florents Tselai)
+<ulink url="&commit_baseurl;b3ce55f41">&sect;</ulink>
+</para>
+
+<para>
+This works when psql is connected to Postgres 18 or later.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2026-02-03 [dddbbc253] psql: Add %i prompt escape to indicate hot standby statu
+-->
+
+<listitem>
+<para>
+Allow the hot standby status to appear in the psql prompt via "%i" (Jim Jones)
+<ulink url="&commit_baseurl;dddbbc253">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2026-02-28 [aecc55866] psql: Show comments in \dRp+, \dRs+, and \dX+ psql meta-
+-->
+
+<listitem>
+<para>
+Modify psql backslash commands to show comments for publications, subscriptions, and extended statistics (Fujii Masao, Jim Jones)
+<ulink url="&commit_baseurl;aecc55866">&sect;</ulink>
+</para>
+
+<para>
+The modified commands are \dRp+, \dRs+, and \dX+.
+</para>
+</listitem>
+
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2025-11-03 [645cb44c5] Add \pset options for boolean value display
+-->
+
+<listitem>
+<para>
+Allow control over how booleans are displayed in psql (David G. Johnston)
+<ulink url="&commit_baseurl;645cb44c5">&sect;</ulink>
+</para>
+
+<para>
+The \pset variables are display_true and display_false.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-07-14 [6b1c4d326] psql: Add variable SERVICEFILE
+-->
+
+<listitem>
+<para>
+Add psql variable SERVICEFILE to reference the service file location (Ryo Kanbayashi)
+<ulink url="&commit_baseurl;6b1c4d326">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-10-07 [27da1a796] Improve psql's ability to select pager mode accurately.
+-->
+
+<listitem>
+<para>
+Allow psql to more accurately determine if the pager is needed (Erik Wienhold)
+<ulink url="&commit_baseurl;27da1a796">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-03-25 [5fa7837d9] psql: Fix tab completion for FOREIGN DATA WRAPPER and SU
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-12-22 [c6a7d3bab] psql: Improve tab completion for COPY option lists.
+Author: Fujii Masao <fujii@postgresql.org>
+2025-11-23 [81966c545] psql: Improve tab-completion for PREPARE.
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2025-11-12 [a1f7f91be] Add tab completion support for the WAIT FOR command
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-11-04 [6d2ff1de4] psql: Add tab completion for COPY ... PROGRAM.
+Author: Masahiko Sawada <msawada@postgresql.org>
+2025-11-04 [02fd47dbf] psql: Improve tab completion for COPY ... STDIN/STDOUT.
+Author: Fujii Masao <fujii@postgresql.org>
+2025-10-24 [14ee8e640] psql: Improve tab completion for large objects.
+Author: Fujii Masao <fujii@postgresql.org>
+2025-07-15 [ff0bcb248] psql: Fix tab-completion after GRANT/REVOKE on LARGE OBJ
+Author: Fujii Masao <fujii@postgresql.org>
+2025-07-09 [86c539c5a] psql: Improve psql tab completion for GRANT/REVOKE on la
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2025-07-03 [a604affad] Add tab-completion for ALTER TABLE not-nulls
+Author: Fujii Masao <fujii@postgresql.org>
+2025-06-30 [a4c10de92] psql: Improve tab completion for COPY command.
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-01-07 [28c4b8a05] psql: Add tab completion for pstdin and pstdout in \copy
+Author: Fujii Masao <fujii@postgresql.org>
+2026-03-02 [0bf7d4ca9] psql: Add tab completion for DELETE ... USING.
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-03-02 [344b572e3] psql: Tab-complete ALTER ROLE ... IN DATABASE SET/RESET
+-->
+
+<listitem>
+<para>
+Add or improve psql tab completion (Yamaguchi Atsuo, Yugo Nagata, Haruna Miwa, Xuneng Zhou, Yugo Nagata, Dagfinn Ilmari Mannsåker, Fujii Masao, Álvaro Herrera, Jian He, Fujii Masao,
+Tatsuya Kawata, Ian Lawrence Barwick, Vasuki M)
+<ulink url="&commit_baseurl;5fa7837d9">&sect;</ulink>
+<ulink url="&commit_baseurl;c6a7d3bab">&sect;</ulink>
+<ulink url="&commit_baseurl;81966c545">&sect;</ulink>
+<ulink url="&commit_baseurl;a1f7f91be">&sect;</ulink>
+<ulink url="&commit_baseurl;6d2ff1de4">&sect;</ulink>
+<ulink url="&commit_baseurl;02fd47dbf">&sect;</ulink>
+<ulink url="&commit_baseurl;14ee8e640">&sect;</ulink>
+<ulink url="&commit_baseurl;ff0bcb248">&sect;</ulink>
+<ulink url="&commit_baseurl;86c539c5a">&sect;</ulink>
+<ulink url="&commit_baseurl;a604affad">&sect;</ulink>
+<ulink url="&commit_baseurl;a4c10de92">&sect;</ulink>
+<ulink url="&commit_baseurl;28c4b8a05">&sect;</ulink>
+<ulink url="&commit_baseurl;0bf7d4ca9">&sect;</ulink>
+<ulink url="&commit_baseurl;344b572e3">&sect;</ulink>
+</para>
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3 id="release-19-server-apps">
+    <title>Server Applications</title>
+
+    <itemizedlist>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2025-08-20 [6429e5b77] vacuumdb: Make vacuumdb - -analyze-only process partition
+-->
+
+<listitem>
+<para>
+Change vacuumdb's --analyze-only option to analyze partitioned tables when now targets are specified (Laurenz Albe, Mircea Cadariu)
+<ulink url="&commit_baseurl;6429e5b77">&sect;</ulink>
+</para>
+
+<para>
+Previously it skipped partitioned tables.  This now matches the behavior of ANALYZE.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-12-09 [d107176d2] vacuumdb: Add - -dry-run.
+-->
+
+<listitem>
+<para>
+Allow vacuumdb to report its commands without running them using option --dry-run (Corey Huinker)
+<ulink url="&commit_baseurl;d107176d2">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-20 [b3cf461b3] pg_verifybackup: Enable WAL parsing for tar-format backu
+-->
+
+<listitem>
+<para>
+Allow pg_verifybackup to read WAL files stored in tar archives (Amul Sul)
+<ulink url="&commit_baseurl;b3cf461b3">&sect;</ulink>
+</para>
+
+<para>
+Add option --wal-path as an alias for the existing and deprecated --wal-directory option.
+</para>
+</listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-20 [b15c15139] pg_waldump: Add support for reading WAL from tar archive
+-->
+
+<listitem>
+<para>
+Allow pg_waldump to read WAL files stored in tar archives (Amul Sul)
+<ulink url="&commit_baseurl;b15c15139">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2025-11-07 [0ab208fa5] pgbench: Add - -continue-on-error option.
+-->
+
+<listitem>
+<para>
+Add pgbench option --continue-on-error to continue after SQL errors (Rintaro Ikeda, Yugo Nagata, Fujii Masao)
+<ulink url="&commit_baseurl;0ab208fa5">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-07-08 [0b096e379] Change pg_test_timing to measure in nanoseconds not micr
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-07-09 [9dcc76414] Minor tweaks for pg_test_timing.
+-->
+
+<listitem>
+<para>
+Improve the usability of pg_test_timing (Hannu Krosing, Tom Lane)
+<ulink url="&commit_baseurl;0b096e379">&sect;</ulink>
+<ulink url="&commit_baseurl;9dcc76414">&sect;</ulink>
+</para>
+
+<para>
+Report nanoseconds instead of microseconds.  In addition to histogram output, output a second table that reports exact timings, with an optional cutoff set by --cutoff.
+</para>
+</listitem>
+
+    </itemizedlist>
+
+    <sect4 id="release-19-pgdump">
+     <title><link
+     linkend="app-pgdump"><application>pg_dump</application></link>/<link
+     linkend="app-pg-dumpall"><application>pg_dumpall</application></link>/<link
+     linkend="app-pgrestore"><application>pg_restore</application></link></title>
+
+     <itemizedlist>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-02-26 [763aaa06f] Add non-text output formats to pg_dumpall
+Author: Andrew Dunstan <andrew@dunslane.net>
+2026-03-04 [3c19983cc] pg_restore: add - -no-globals option to skip globals
+-->
+
+<listitem>
+<para>
+Allow pg_dumpall to product output in non-text formats (Mahendra Singh Thalor, Andrew Dunstan)
+<ulink url="&commit_baseurl;763aaa06f">&sect;</ulink>
+<ulink url="&commit_baseurl;3c19983cc">&sect;</ulink>
+</para>
+
+<para>
+The new output formats are custom, directory, or tar.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-27 [c32fb29e9] Include extended statistics data in pg_dump
+-->
+
+<listitem>
+<para>
+Allow pg_dump to include restorable extended statistics (Corey Huinker)
+<ulink url="&commit_baseurl;c32fb29e9">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-pgupgrade">
+     <title><xref linkend="pgupgrade"/></title>
+
+     <itemizedlist>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-09-08 [3bcfcd815] pg_upgrade: Transfer pg_largeobject_metadata's files whe
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-09 [158408fef] pg_upgrade: Fix handling of pg_largeobject_metadata.
+-->
+
+<listitem>
+<para>
+Have pg_upgrade copy large object metadata files rather than use COPY (Nathan Bossart)
+<ulink url="&commit_baseurl;3bcfcd815">&sect;</ulink>
+<ulink url="&commit_baseurl;158408fef">&sect;</ulink>
+</para>
+
+<para>
+This is possible when upgrading from Postgres 16 and later.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-18 [161a3e8b6] pg_upgrade: Use COPY for large object metadata.
+-->
+
+<listitem>
+<para>
+Allow pg_upgrade to use COPY for large object metadata (Nathan Bossart)
+<ulink url="&commit_baseurl;161a3e8b6">&sect;</ulink>
+</para>
+
+<para>
+This is used when upgrading from Postgres major versions 12-15.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-16 [b33f75361] pg_upgrade: Use COPY for LO metadata for upgrades from
+-->
+
+<listitem>
+<para>
+Improve pg_upgrade performance when restoring large object metadata for origin servers version 11 and earlier (Nathan Bossart)
+<ulink url="&commit_baseurl;b33f75361">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-30 [412036c22] Teach pg_upgrade to handle in-place tablespaces.
+-->
+
+<listitem>
+<para>
+Allow pg_upgrade to process non-default tablespaces stored in the PGDATA director (Nathan Bossart)
+<ulink url="&commit_baseurl;412036c22">&sect;</ulink>
+</para>
+
+<para>
+Previously such tablespaces generated an error.
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4 id="release-19-logicalrep-app">
+     <title>Logical Replication Applications</title>
+
+     <itemizedlist>
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-12-17 [85ddcc2f4] Support existing publications in pg_createsubscriber.
+-->
+
+<listitem>
+<para>
+Allow pg_createsubscriber to ignore specified publications that already exist (Shubham Khanna)
+<ulink url="&commit_baseurl;85ddcc2f4">&sect;</ulink>
+</para>
+
+<para>
+Previously this generated an error.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-01-08 [639352d90] pg_createsubscriber: Improve handling of automated recov
+-->
+
+<listitem>
+<para>
+Change the way pg_createsubscriber stores recovery parameters (Alyona Vinter)
+<ulink url="&commit_baseurl;639352d90">&sect;</ulink>
+</para>
+
+<para>
+Changes are stored in optionally-included pg_createsubscriber.conf rather than directly in postgresql.auto.conf.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2026-03-25 [6b5b7eae3] pg_createsubscriber: Add -l/- -logdir option to redirect
+-->
+
+<listitem>
+<para>
+Add pg_createsubscriber option -l/--logdir to redirect output to files (Gyan Sreejith, Hayato Kuroda)
+<ulink url="&commit_baseurl;6b5b7eae3">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+   </sect3>
+
+   <sect3 id="release-19-source-code">
+    <title>Source Code</title>
+
+    <itemizedlist>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-02-23 [ecae09725] Cope with AIX's alignment woes by using _Pragma("pack").
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-02-23 [4a1b05caa] Restore AIX support.
+-->
+
+<listitem>
+<para>
+Restore support for AIX (Aditya Kamath, Srirama Kucherlapati, Peter Eisentraut)
+<ulink url="&commit_baseurl;ecae09725">&sect;</ulink>
+<ulink url="&commit_baseurl;4a1b05caa">&sect;</ulink>
+</para>
+
+<para>
+This uses gcc and only supports 64-bit builds.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-03-14 [0123ce131] Switch the semaphore API on Solaris to unnamed POSIX.
+-->
+
+<listitem>
+<para>
+Change Solaris to use unnamed POSIX semaphores (Tom Lane)
+<ulink url="&commit_baseurl;0123ce131">&sect;</ulink>
+</para>
+
+<para>
+Previously it used System V semaphores.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-07-01 [8fd9bb1d9] Enable MSVC conforming preprocessor
+-->
+
+<listitem>
+<para>
+Require Visual Studio 2019 or later (Peter Eisentraut)
+<ulink url="&commit_baseurl;8fd9bb1d9">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-01-14 [2bc60f862] Enable Python Limited API for PL/Python on MSVC
+-->
+
+<listitem>
+<para>
+Allow MSVC to create PL/Python using the Python Limited API (Bryan Green)
+<ulink url="&commit_baseurl;2bc60f862">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-01-07 [a516b3f00] MSVC: Support building for AArch64.
+-->
+
+<listitem>
+<para>
+Allow building on AArch64 using MSVC (Niyas Sait, Greg Burd, Dave Cramer)
+<ulink url="&commit_baseurl;a516b3f00">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-02-24 [65707ed9a] Add backtrace support for Windows using DbgHelp API
+-->
+
+<listitem>
+<para>
+Allow execution stack backtraces on Windows using DbgHelp (Bryan Green)
+<ulink url="&commit_baseurl;65707ed9a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-08-26 [f5e0186f8] Raise C requirement to C11
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-09-11 [4fbe01514] Remove checks for no longer supported GCC versions
+-->
+
+<listitem>
+<para>
+Change the supported C language version to C11 (Peter Eisentraut)
+<ulink url="&commit_baseurl;f5e0186f8">&sect;</ulink>
+<ulink url="&commit_baseurl;4fbe01514">&sect;</ulink>
+</para>
+
+<para>
+Previously C99 was used.
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-04-01 [76f4b92ba] Use standard C23 and C++ attributes if available
+-->
+
+<listitem>
+<para>
+Use standard C23 and C++ attributes if available (Peter Eisentraut)
+<ulink url="&commit_baseurl;76f4b92ba">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+2025-07-09 [ed26c4e25] Hide ICU C++ APIs from pg_locale.h
+-->
+
+<listitem>
+<para>
+Allow C++ compiler mode to be used with ICU (John Naylor)
+<ulink url="&commit_baseurl;ed26c4e25">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+2026-04-04 [5e13b0f24] Use AVX2 for calculating page checksums where available
+-->
+
+<listitem>
+<para>
+Optionally use AVX2 CPU instructions for calculating page checksums (Matthew Sterrett, Andrew Kim)
+<ulink url="&commit_baseurl;5e13b0f24">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+2026-04-04 [fbc57f2bc] Compute CRC32C on ARM using the Crypto Extension where a
+-->
+
+<listitem>
+<para>
+Optionally use ARM Crypto Extension to Compute CRC32C (John Naylor)
+<ulink url="&commit_baseurl;fbc57f2bc">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-10-06 [ec8719ccb] Optimize hex_encode() and hex_decode() using SIMD.
+-->
+
+<listitem>
+<para>
+Change hex_encode() and hex_decode() to use SIMD CPU instructions (Nathan Bossart, Chiranmoy Bhattacharya)
+<ulink url="&commit_baseurl;ec8719ccb">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-07-02 [f039c2244] meson: Increase minimum version to 0.57.2
+-->
+
+<listitem>
+<para>
+Require Meson version 0.57.2 or later (Peter Eisentraut)
+<ulink url="&commit_baseurl;f039c2244">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-02-23 [78727dcba] meson: allow disabling building/installation of static l
+-->
+
+<listitem>
+<para>
+Add Meson option to build both shared and static libraries, or only shared (Peter Eisentraut)
+<ulink url="&commit_baseurl;78727dcba">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-03-20 [57ee39795] Update Unicode data to Unicode 17.0.0
+-->
+
+<listitem>
+<para>
+Update Unicode data to version 17.0.0 (Peter Eisentraut)
+<ulink url="&commit_baseurl;57ee39795">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2025-10-08 [94f3ad396] Add planner_setup_hook and planner_shutdown_hook.
+-->
+
+<listitem>
+<para>
+Add hooks planner_setup_hook and planner_shutdown_hook (Robert Haas)
+<ulink url="&commit_baseurl;94f3ad396">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-11-22 [b140c8d7a] Add SupportRequestInlineInFrom planner support request.
+-->
+
+<listitem>
+<para>
+Allow extensions to replace set-returning functions in the FROM clause with SQL queries (Paul A. Jungwirth)
+<ulink url="&commit_baseurl;b140c8d7a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2025-12-09 [bd8d9c9bd] Widen MultiXactOffset to 64 bits
+-->
+
+<listitem>
+<para>
+Make multixid members 64-bit (Maxim Orlov)
+<ulink url="&commit_baseurl;bd8d9c9bd">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2026-03-22 [e5836f7b7] Add fake LSN support to hash index AM.
+-->
+
+<listitem>
+<para>
+Add fake LSN support to hash index AM (Peter Geoghegan)
+<ulink url="&commit_baseurl;e5836f7b7">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-03-30 [bab2f27ea] Remove bits* typedefs.
+-->
+
+<listitem>
+<para>
+Change FDW function prototypes to use uint* instead of bit* typedefs (Nathan Bossart)
+<ulink url="&commit_baseurl;bab2f27ea">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-04-07 [0d3dba38c] Allow logical replication snapshots to be database-speci
+-->
+
+<listitem>
+<para>
+Allow logical decoding plugins to specify if they do not access shared catalogs (Antonin Houska)
+<ulink url="&commit_baseurl;0d3dba38c">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2026-04-06 [283e823f9] Introduce a new mechanism for registering shared memory
+-->
+
+<listitem>
+<para>
+Add simplified shared memory registration function ShmemRequestStruct() (Ashutosh Bapat)
+<ulink url="&commit_baseurl;283e823f9">&sect;</ulink>
+</para>
+
+<para>
+Functions ShmemInitStruct() and ShmemInitHash() remain for backward compatibility.
+</para>
+</listitem>
+
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2025-11-26 [b3fe098d3] Add GUC to show EXEC_BACKEND state
+-->
+
+<listitem>
+<para>
+Add server variable debug_exec_backend to report how parameters are passed to new backends (Daniel Gustafsson)
+<ulink url="&commit_baseurl;b3fe098d3">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-12 [02976b0a1] doc: Document variables for path substitution in SQL tes
+-->
+
+<listitem>
+<para>
+Document the environment variables that control the regression tests (Michael Paquier)
+<ulink url="&commit_baseurl;02976b0a1">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-11-05 [e4d8a2af0] doc: Add section for temporal tables
+-->
+
+<listitem>
+<para>
+Add documentation section about temporal tables (Paul A. Jungwirth)
+<ulink url="&commit_baseurl;e4d8a2af0">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-03-03 [b30656ce0] doc: Add restart on failure to example systemd file
+-->
+
+<listitem>
+<para>
+Update documented systemd example to include a restart setting (Andrew Jackson)
+<ulink url="&commit_baseurl;b30656ce0">&sect;</ulink>
+</para>
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3 id="release-19-modules">
+    <title>Additional Modules</title>
+
+    <itemizedlist>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2026-03-12 [5883ff30b] Add pg_plan_advice contrib module.
+Author: Robert Haas <rhaas@postgresql.org>
+2026-03-26 [6455e55b0] pg_plan_advice: Invent DO_NOT_SCAN(relation_identifier).
+-->
+
+<listitem>
+<para>
+Add pg_plan_advice module to stabilize and control planner decisions (Robert Haas)
+<ulink url="&commit_baseurl;5883ff30b">&sect;</ulink>
+<ulink url="&commit_baseurl;6455e55b0">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2026-04-06 [e8ec19aa3] Add pg_stash_advice contrib module.
+Author: Robert Haas <rhaas@postgresql.org>
+2026-04-07 [c10edb102] pg_stash_advice: Allow stashed advice to be persisted to
+-->
+
+<listitem>
+<para>
+Add extension pg_stash_advice to allow per-query-id advice to be specified (Robert Haas, Lukas Fittl)
+<ulink url="&commit_baseurl;e8ec19aa3">&sect;</ulink>
+<ulink url="&commit_baseurl;c10edb102">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-11-24 [4b203d499] pg_buffercache: Add pg_buffercache_os_pages
+-->
+
+<listitem>
+<para>
+Refactor pg_buffercache reporting of shared memory mapping (Bertrand Drouvot)
+<ulink url="&commit_baseurl;4b203d499">&sect;</ulink>
+</para>
+
+<para>
+New function pg_buffercache_os_pages() and system view pg_buffercache_os_pages allow reporting of shared memory mapping;  the function optionally includes NUMA details.  Function
+pg_buffercache_numa_pages() remains for backward compatibility.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-11-28 [9ccc049df] pg_buffercache: Add pg_buffercache_mark_dirty{,_relation
+-->
+
+<listitem>
+<para>
+Add functions to pg_buffercache to mark buffers as dirty (Nazir Bilal Yavuz)
+<ulink url="&commit_baseurl;9ccc049df">&sect;</ulink>
+</para>
+
+<para>
+The functions are pg_buffercache_mark_dirty(), pg_buffercache_mark_dirt_relation(), and pg_buffercache_mark_dirty_all().
+</para>
+</listitem>
+
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2025-07-18 [62c3b4cd9] Support for deparsing of ArrayCoerceExpr node in contrib
+-->
+
+<listitem>
+<para>
+Allow pushdown of array comparisons in prepared statements to postgres_fdw foreign servers (Alexander Pyhalov)
+<ulink url="&commit_baseurl;62c3b4cd9">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Etsuro Fujita <efujita@postgresql.org>
+2026-04-08 [28972b6fc] Add support for importing statistics from remote servers
+-->
+
+<listitem>
+<para>
+Allow the retrieval of statistics from foreign data wrapper servers (Corey Huinker, Etsuro Fujita)
+<ulink url="&commit_baseurl;28972b6fc">&sect;</ulink>
+</para>
+
+<para>
+This is enabled for postgres_fdw by using the option restore_stats.  The default is for ANALYZE to retrieve rows from the remote server to locally generate statistics.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2026-01-22 [26cb14aea] file_fdw: Support multi-line HEADER option.
+-->
+
+<listitem>
+<para>
+Allow file_fdw to read files or program output that uses multi-line headers (Shinya Kato)
+<ulink url="&commit_baseurl;26cb14aea">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2026-04-07 [61c36a34a] auto_explain: Add new GUC auto_explain.log_io
+-->
+
+<listitem>
+<para>
+Add server variable auto_explain.log_io to add IO reporting to auto_explain (Tomas Vondra)
+<ulink url="&commit_baseurl;61c36a34a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2026-04-06 [e972dff6c] auto_explain: Add new GUC, auto_explain.log_extension_op
+-->
+
+<listitem>
+<para>
+Allow auto_explain to add extension-specific EXPLAIN options via server variable auto_explain.log_extension_options (Robert Haas)
+<ulink url="&commit_baseurl;e972dff6c">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-07-03 [e2b64fcef] Add cross-type comparisons to contrib/btree_gin.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-07-03 [fc896821c] Add more cross-type comparisons to contrib/btree_gin.
+-->
+
+<listitem>
+<para>
+Allow btree_gin to match partial qualifications (Tom Lane)
+<ulink url="&commit_baseurl;e2b64fcef">&sect;</ulink>
+<ulink url="&commit_baseurl;fc896821c">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-11 [4c910f3bb] bloom: Optimize bitmap scan path with streaming read
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-12 [d841ca2d1] bloom: Optimize VACUUM and bulk-deletion with streaming
+-->
+
+<listitem>
+<para>
+Improve performance of bloom indexes by using streaming reads (Xuneng Zhou)
+<ulink url="&commit_baseurl;4c910f3bb">&sect;</ulink>
+<ulink url="&commit_baseurl;d841ca2d1">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-13 [213f0079b] pgstattuple: Optimize btree and hash index functions wit
+-->
+
+<listitem>
+<para>
+Improve performance of pgstattuple by using streaming reads (Xuneng Zhou)
+<ulink url="&commit_baseurl;213f0079b">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-01-12 [e39ece034] Make dmetaphone collation-aware
+-->
+
+<listitem>
+<para>
+Allow fuzzystrmatch's dmetaphone to use single-byte encodings beyond ASCII (Peter Eisentraut)
+<ulink url="&commit_baseurl;e39ece034">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2026-02-05 [3c5ec35de] oid2name: Add relation path to the information provided
+-->
+
+<listitem>
+<para>
+Modify oid2name --extended to report the relation file path (David Bidoc)
+<ulink url="&commit_baseurl;3c5ec35de">&sect;</ulink>
+</para>
+</listitem>
+
+    </itemizedlist>
+
+    <sect4 id="release-19-pgstatstatements">
+     <title><xref linkend="pgstatstatements"/></title>
+
+     <itemizedlist>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-07-02 [bee23ea4d] Show sizes of FETCH queries as constants in pg_stat_stat
+-->
+
+<listitem>
+<para>
+Show sizes of FETCH queries as constants in pg_stat_statements (Sami Imseih)
+<ulink url="&commit_baseurl;bee23ea4d">&sect;</ulink>
+</para>
+
+<para>
+Fetches of different sizes will now be grouped together in pg_stat_statements output.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-07-31 [3357471cf] pg_stat_statements: Add counters for generic and custom
+-->
+
+<listitem>
+<para>
+Add generic and custom plans counts to pg_stat_statements (Sami Imseih)
+<ulink url="&commit_baseurl;3357471cf">&sect;</ulink>
+</para>
+</listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+   </sect3>
+
+  </sect2>
+
+  <sect2 id="release-19-acknowledgements">
+   <title>Acknowledgments</title>
+
+   <para>
+    The following individuals (in alphabetical order) have contributed
+    to this release as patch authors, committers, reviewers, testers,
+    or reporters of issues.
+   </para>
+
+   <simplelist>
+    <member><emphasis>fill in later</emphasis></member>
+   </simplelist>
+  </sect2>
 
 </sect1>
