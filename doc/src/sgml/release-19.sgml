@@ -3075,7 +3075,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
 <listitem>
 <para>
-Add simplified shared memory registration function ShmemRequestStruct() (Ashutosh Bapat)
+Add simplified and improved shared memory registration function ShmemRequestStruct (Heikki Linnakangas, Ashutosh Bapat)
 <ulink url="&commit_baseurl;283e823f9">&sect;</ulink>
 </para>
 
