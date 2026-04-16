@@ -507,9 +507,10 @@ include_dir 'conf.d'
      <para>
       In addition to the <filename>postgresql.conf</filename> file
       already mentioned, <productname>PostgreSQL</productname> uses
-      two other manually-edited configuration files, which control
+      three other manually-edited configuration files, which control
       client authentication (their use is discussed in <xref
-      linkend="client-authentication"/>).  By default, all three
+      linkend="client-authentication"/>) and SSL host configuration.
+      By default, all four
       configuration files are stored in the database cluster's data
       directory.  The parameters described in this section allow the
       configuration files to be placed elsewhere.  (Doing so can ease
@@ -579,6 +580,22 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-hosts-file" xreflabel="hosts_file">
+      <term><varname>hosts_file</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>hosts_file</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+         Specifies the configuration file for host-based SSL configuration
+         (customarily called <filename>pg_hosts.conf</filename>).
+         This parameter can only be set at server start. See also
+         <xref linkend="ssl-sni"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-external-pid-file" xreflabel="external_pid_file">
       <term><varname>external_pid_file</varname> (<type>string</type>)
       <indexterm>
@@ -620,10 +637,11 @@ include_dir 'conf.d'
      <para>
       If you wish, you can specify the configuration file names and locations
       individually using the parameters <varname>config_file</varname>,
-      <varname>hba_file</varname> and/or <varname>ident_file</varname>.
+      <varname>hba_file</varname>, <varname>ident_file</varname> and/or
+      <varname>hosts_file</varname>.
       <varname>config_file</varname> can only be specified on the
       <command>postgres</command> command line, but the others can be
-      set within the main configuration file.  If all three parameters plus
+      set within the main configuration file.  If all four parameters plus
       <varname>data_directory</varname> are explicitly set, then it is not necessary
       to specify <option>-D</option> or <envar>PGDATA</envar>.
      </para>
@@ -1731,6 +1749,25 @@ include_dir 'conf.d'
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-sni" xreflabel="ssl_sni">
+      <term><varname>ssl_sni</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>ssl_sni</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables SNI configuration for SSL connections.  When set to <literal>on</literal>
+        host configuration from <xref linkend="guc-hosts-file"/> is used, see
+        <xref linkend="ssl-sni"/> for more details.
+       </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.  The default is <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
