@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+586f4266fb4945f6ea3564b9c1bab093eb74bee4
+#
+# Fix ABI break by moving PROCSIG_SLOTSYNC_MESSAGE in ProcSignalReason
+# 2026-04-09 15:30:59 +0900
+#
+# This commit added PROCSIG_SLOTSYNC_MESSAGE just before the final entry,
+# NUM_PROCSIGNALS, in enum ProcSignalReason. This increased the value of
+# NUM_PROCSIGNALS, but no affected third-party code is known.
+
 4dac22aa10d2882c2e6fb465d7c314cc2d8fb754
 #
 # Add file_extend_method=posix_fallocate,write_zeros.
