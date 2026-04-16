@@ -776,7 +776,14 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 		ExplainCloseGroup("Range Table Entry", NULL, true, es);
 	}
 
-	/* Print PlannedStmt fields that contain RTIs. */
+	/* Close the Range Table array before emitting PlannedStmt-level fields. */
+	ExplainCloseGroup("Range Table", "Range Table", false, es);
+
+	/*
+	 * Print PlannedStmt fields that contain RTIs.  These are properties of
+	 * the PlannedStmt, not of individual RTEs, so they belong outside the
+	 * Range Table array.
+	 */
 	if (es->format != EXPLAIN_FORMAT_TEXT ||
 		!bms_is_empty(plannedstmt->unprunableRelids))
 		overexplain_bitmapset("Unprunable RTIs", plannedstmt->unprunableRelids,
@@ -785,9 +792,6 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 		!bms_is_empty(plannedstmt->resultRelationRelids))
 		overexplain_bitmapset("Result RTIs", plannedstmt->resultRelationRelids,
 							  es);
-
-	/* Close group, we're all done */
-	ExplainCloseGroup("Range Table", "Range Table", false, es);
 }
 
 /*
