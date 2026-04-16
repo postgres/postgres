@@ -61,8 +61,9 @@ static const pg_encname pg_encname_tbl[] =
 								 * Japanese, standard OSF */
 	{
 		"euckr", PG_EUC_KR
-	},							/* EUC-KR; Extended Unix Code for Korean , KS
-								 * X 1001 standard */
+	},							/* EUC-KR; Extended Unix Code for Korean
+								 * precomposed (Wansung) encoding, standard KS
+								 * X 1001 */
 	{
 		"euctw", PG_EUC_TW
 	},							/* EUC-TW; Extended Unix Code for
@@ -119,8 +120,8 @@ static const pg_encname pg_encname_tbl[] =
 	},							/* ISO-8859-9; RFC1345,KXS2 */
 	{
 		"johab", PG_JOHAB
-	},							/* JOHAB; Extended Unix Code for simplified
-								 * Chinese */
+	},							/* JOHAB; Korean combining (Johab) encoding,
+								 * standard KS X 1001 annex 3 */
 	{
 		"koi8", PG_KOI8R
 	},							/* _dirty_ alias for KOI8-R (backward
@@ -189,7 +190,9 @@ static const pg_encname pg_encname_tbl[] =
 	},							/* alias for WIN1258 */
 	{
 		"uhc", PG_UHC
-	},							/* UHC; Korean Windows CodePage 949 */
+	},							/* UHC; Unified Hangul Code, Microsoft Windows
+								 * CodePage 949; superset of EUC-KR covering
+								 * all 11,172 precomposed Hangul syllables */
 	{
 		"unicode", PG_UTF8
 	},							/* alias for UTF8 */
