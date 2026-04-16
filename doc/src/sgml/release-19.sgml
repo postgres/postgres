@@ -49,7 +49,6 @@
    </para>
 
    <itemizedlist>
-
 <!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2026-02-11 [1d92e0c2c] Add password expiration warnings.
@@ -329,7 +328,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow more LEFT JOINs to be converted to ANTI JOINs (Tender Wang)
+Allow more LEFT JOINs to be converted to ANTI JOINs (Tender Wang, Richard Guo)
 <ulink url="&commit_baseurl;cf74558fe">&sect;</ulink>
 </para>
 </listitem>
@@ -377,7 +376,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow IS [NOT] DISTINCT FROM NULL to be converted to IS [NOT] NULL for proven null arguments (Richard Guo)
+Convert IS [NOT] DISTINCT FROM NULL to IS [NOT] NULL during constant folding (Richard Guo)
 <ulink url="&commit_baseurl;f41ab5157">&sect;</ulink>
 </para>
 
@@ -449,6 +448,45 @@ Allow negative values of pg_aggregate.aggtransspace to indicate unbounded memory
 
 <para>
 This information is used by the optimizer in planning memory usage.
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-02-10 [0aaf0de7f] Optimize BooleanTest with non-nullable input
+-->
+
+<listitem>
+<para>
+Simplify IS [NOT] TRUE/FALSE/UNKNOWN to plain boolean expressions when the input is proven non-nullable (Richard Guo)
+<ulink url="&commit_baseurl;0aaf0de7f">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-12-24 [10c4fe074] Simplify COALESCE expressions using non-nullable argumen
+Author: Richard Guo <rguo@postgresql.org>
+2025-12-24 [cb7b7ec7a] Optimize ROW(...) IS [NOT] NULL using non-nullable field
+-->
+
+<listitem>
+<para>
+Simplify COALESCE and ROW(...) IS [NOT] NULL to avoid evaluating unnecessary arguments (Richard Guo)
+<ulink url="&commit_baseurl;10c4fe074">&sect;</ulink>
+<ulink url="&commit_baseurl;cb7b7ec7a">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-02-10 [0a3796125] Optimize IS DISTINCT FROM with non-nullable inputs
+-->
+
+<listitem>
+<para>
+Simplify IS [NOT] DISTINCT FROM to equality/inequality operators when inputs are proven non-nullable (Richard Guo)
+<ulink url="&commit_baseurl;0a3796125">&sect;</ulink>
 </para>
 </listitem>
 
@@ -684,45 +722,6 @@ Allow the addition of columns based on domains containing constraints to usually
 
 <para>
 Previously this always required a table rewrite.
-</para>
-</listitem>
-
-<!--
-Author: Richard Guo <rguo@postgresql.org>
-2026-02-10 [0aaf0de7f] Optimize BooleanTest with non-nullable input
--->
-
-<listitem>
-<para>
-Allow IS [NOT] TRUE/FALSE/UNKNOWN to be evaluated earlier for proven non-null arguments (Richard Guo)
-<ulink url="&commit_baseurl;0aaf0de7f">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Richard Guo <rguo@postgresql.org>
-2025-12-24 [10c4fe074] Simplify COALESCE expressions using non-nullable argumen
-Author: Richard Guo <rguo@postgresql.org>
-2025-12-24 [cb7b7ec7a] Optimize ROW(...) IS [NOT] NULL using non-nullable field
--->
-
-<listitem>
-<para>
-Simplify COALESCE and ROW(...) IS [NOT] NULL to avoid evaluating unnecessary arguments (Richard Guo)
-<ulink url="&commit_baseurl;10c4fe074">&sect;</ulink>
-<ulink url="&commit_baseurl;cb7b7ec7a">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Richard Guo <rguo@postgresql.org>
-2026-02-10 [0a3796125] Optimize IS DISTINCT FROM with non-nullable inputs
--->
-
-<listitem>
-<para>
-Allow IS DISTINCT FROM to be evaluated earlier for non-constant arguments (Richard Guo)
-<ulink url="&commit_baseurl;0a3796125">&sect;</ulink>
 </para>
 </listitem>
 
