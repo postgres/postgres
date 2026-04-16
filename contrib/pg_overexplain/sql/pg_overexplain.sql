@@ -66,6 +66,12 @@ EXPLAIN (DEBUG, RANGE_TABLE, FORMAT XML, COSTS OFF)
 SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
 $$);
 
+-- Test JSON format with RANGE_TABLE to verify valid JSON structure.
+SELECT explain_filter($$
+EXPLAIN (RANGE_TABLE, FORMAT JSON, COSTS OFF)
+SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
+$$);
+
 -- Test just the DEBUG option. Verify that it shows information about
 -- disabled nodes, parallel safety, and the parallelModeNeeded flag.
 SET enable_seqscan = false;

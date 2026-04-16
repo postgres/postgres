@@ -291,11 +291,128 @@ $$);
          <Security-Barrier>false</Security-Barrier>                 +
          <Lateral>false</Lateral>                                   +
        </Range-Table-Entry>                                         +
-       <Unprunable-RTIs>1 3 4</Unprunable-RTIs>                     +
-       <Result-RTIs>none</Result-RTIs>                              +
      </Range-Table>                                                 +
+     <Unprunable-RTIs>1 3 4</Unprunable-RTIs>                       +
+     <Result-RTIs>none</Result-RTIs>                                +
    </Query>                                                         +
  </explain>
+(1 row)
+
+-- Test JSON format with RANGE_TABLE to verify valid JSON structure.
+SELECT explain_filter($$
+EXPLAIN (RANGE_TABLE, FORMAT JSON, COSTS OFF)
+SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
+$$);
+                         explain_filter                         
+----------------------------------------------------------------
+ [                                                             +
+   {                                                           +
+     "Plan": {                                                 +
+       "Node Type": "Aggregate",                               +
+       "Strategy": "Sorted",                                   +
+       "Partial Mode": "Simple",                               +
+       "Parallel Aware": false,                                +
+       "Async Capable": false,                                 +
+       "Disabled": false,                                      +
+       "Group Key": ["vegetables.genus"],                      +
+       "Plans": [                                              +
+         {                                                     +
+           "Node Type": "Sort",                                +
+           "Parent Relationship": "Outer",                     +
+           "Parallel Aware": false,                            +
+           "Async Capable": false,                             +
+           "Disabled": false,                                  +
+           "Sort Key": ["vegetables.genus", "vegetables.name"],+
+           "Plans": [                                          +
+             {                                                 +
+               "Node Type": "Append",                          +
+               "Parent Relationship": "Outer",                 +
+               "Parallel Aware": false,                        +
+               "Async Capable": false,                         +
+               "Disabled": false,                              +
+               "Append RTIs": "1",                             +
+               "Subplans Removed": 0,                          +
+               "Plans": [                                      +
+                 {                                             +
+                   "Node Type": "Seq Scan",                    +
+                   "Parent Relationship": "Member",            +
+                   "Parallel Aware": false,                    +
+                   "Async Capable": false,                     +
+                   "Relation Name": "brassica",                +
+                   "Alias": "vegetables_1",                    +
+                   "Disabled": false,                          +
+                   "Scan RTI": 3                               +
+                 },                                            +
+                 {                                             +
+                   "Node Type": "Seq Scan",                    +
+                   "Parent Relationship": "Member",            +
+                   "Parallel Aware": false,                    +
+                   "Async Capable": false,                     +
+                   "Relation Name": "daucus",                  +
+                   "Alias": "vegetables_2",                    +
+                   "Disabled": false,                          +
+                   "Scan RTI": 4                               +
+                 }                                             +
+               ]                                               +
+             }                                                 +
+           ]                                                   +
+         }                                                     +
+       ]                                                       +
+     },                                                        +
+     "Range Table": [                                          +
+       {                                                       +
+         "RTI": 1,                                             +
+         "Kind": "relation",                                   +
+         "Inherited": true,                                    +
+         "In From Clause": true,                               +
+         "Eref": "vegetables (id, name, genus)",               +
+         "Relation": "vegetables",                             +
+         "Relation Kind": "partitioned_table",                 +
+         "Relation Lock Mode": "AccessShareLock",              +
+         "Permission Info Index": 1,                           +
+         "Security Barrier": false,                            +
+         "Lateral": false                                      +
+       },                                                      +
+       {                                                       +
+         "RTI": 2,                                             +
+         "Kind": "group",                                      +
+         "Inherited": false,                                   +
+         "In From Clause": false,                              +
+         "Eref": "\"*GROUP*\" (genus)",                        +
+         "Security Barrier": false,                            +
+         "Lateral": false                                      +
+       },                                                      +
+       {                                                       +
+         "RTI": 3,                                             +
+         "Kind": "relation",                                   +
+         "Inherited": false,                                   +
+         "In From Clause": true,                               +
+         "Alias": "vegetables (id, name, genus)",              +
+         "Eref": "vegetables (id, name, genus)",               +
+         "Relation": "brassica",                               +
+         "Relation Kind": "relation",                          +
+         "Relation Lock Mode": "AccessShareLock",              +
+         "Security Barrier": false,                            +
+         "Lateral": false                                      +
+       },                                                      +
+       {                                                       +
+         "RTI": 4,                                             +
+         "Kind": "relation",                                   +
+         "Inherited": false,                                   +
+         "In From Clause": true,                               +
+         "Alias": "vegetables (id, name, genus)",              +
+         "Eref": "vegetables (id, name, genus)",               +
+         "Relation": "daucus",                                 +
+         "Relation Kind": "relation",                          +
+         "Relation Lock Mode": "AccessShareLock",              +
+         "Security Barrier": false,                            +
+         "Lateral": false                                      +
+       }                                                       +
+     ],                                                        +
+     "Unprunable RTIs": "1 3 4",                               +
+     "Result RTIs": "none"                                     +
+   }                                                           +
+ ]
 (1 row)
 
 -- Test just the DEBUG option. Verify that it shows information about
