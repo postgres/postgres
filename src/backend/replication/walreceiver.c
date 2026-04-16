@@ -30,9 +30,9 @@
  * a new one.
  *
  * Normal termination is by SIGTERM, which instructs the walreceiver to
- * exit(0). Emergency termination is by SIGQUIT; like any postmaster child
- * process, the walreceiver will simply abort and exit on SIGQUIT. A close
- * of the connection and a FATAL error are treated not as a crash but as
+ * ereport(FATAL). Emergency termination is by SIGQUIT; like any postmaster
+ * child process, the walreceiver will simply abort and exit on SIGQUIT. A
+ * close of the connection and a FATAL error are treated not as a crash but as
  * normal operation.
  *
  * This file contains the server-facing parts of walreceiver. The libpq-
@@ -710,7 +710,7 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 			 * to die, but might as well check it here too.
 			 */
 			SpinLockRelease(&walrcv->mutex);
-			exit(1);
+			proc_exit(1);
 		}
 		SpinLockRelease(&walrcv->mutex);
 
