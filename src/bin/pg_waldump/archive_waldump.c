@@ -216,11 +216,11 @@ init_archive_reader(XLogDumpPrivate *privateInfo,
 	 * With the WAL segment size available, we can now initialize the
 	 * dependent start and end segment numbers.
 	 */
-	Assert(!XLogRecPtrIsInvalid(privateInfo->startptr));
+	Assert(XLogRecPtrIsValid(privateInfo->startptr));
 	XLByteToSeg(privateInfo->startptr, privateInfo->start_segno,
 				privateInfo->segsize);
 
-	if (!XLogRecPtrIsInvalid(privateInfo->endptr))
+	if (XLogRecPtrIsValid(privateInfo->endptr))
 		XLByteToSeg(privateInfo->endptr, privateInfo->end_segno,
 					privateInfo->segsize);
 

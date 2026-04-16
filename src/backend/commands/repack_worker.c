@@ -268,7 +268,7 @@ repack_setup_logical_decoding(Oid relid)
 	ctx->reader->routine.page_read = read_local_xlog_page_no_wait;
 
 	/* Some WAL records should have been read. */
-	Assert(ctx->reader->EndRecPtr != InvalidXLogRecPtr);
+	Assert(XLogRecPtrIsValid(ctx->reader->EndRecPtr));
 
 	/*
 	 * Initialize repack_current_segment so that we can notice WAL segment
