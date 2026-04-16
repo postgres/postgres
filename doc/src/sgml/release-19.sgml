@@ -641,7 +641,7 @@ Author: Melanie Plageman <melanieplageman@gmail.com>
 
 <listitem>
 <para>
-Allow query table scans to mark pages as all-visible in the free space map (Melanie Plageman)
+Allow query table scans to mark pages as all-visible in the visibility map (Melanie Plageman)
 <ulink url="&commit_baseurl;b46e1e54d">&sect;</ulink>
 </para>
 
