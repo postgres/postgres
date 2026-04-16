@@ -38,6 +38,7 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 	Buffer		vmbuffer = InvalidBuffer;
 	uint8		vmflags = 0;
 	Size		freespace = 0;
+	bool		do_update_fsm = false;
 
 	XLogRecGetBlockTag(record, 0, &rlocator, NULL, &blkno);
 	memcpy(&xlrec, maindataptr, SizeOfHeapPrune);
@@ -211,7 +212,10 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 							XLHP_HAS_DEAD_ITEMS |
 							XLHP_HAS_NOW_UNUSED_ITEMS)) ||
 			(vmflags & VISIBILITYMAP_VALID_BITS))
+		{
 			freespace = PageGetHeapFreeSpace(BufferGetPage(buffer));
+			do_update_fsm = true;
+		}
 
 		/*
 		 * We want to avoid holding an exclusive lock on the heap buffer while
@@ -248,7 +252,7 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 	if (BufferIsValid(vmbuffer))
 		UnlockReleaseBuffer(vmbuffer);
 
-	if (freespace > 0)
+	if (do_update_fsm)
 		XLogRecordPageWithFreeSpace(rlocator, blkno, freespace);
 }
 
