@@ -1877,7 +1877,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add memory usage and parallelism reporting to VACUUM (VERBOSE) and autovacuum logs (Masahiko Sawada, Daniil Davydov)
+Add memory usage and parallelism reporting to VACUUM (VERBOSE) and autovacuum logs (Tatsuya Kawata, Daniil Davydov)
 <ulink url="&commit_baseurl;736f754ee">&sect;</ulink>
 <ulink url="&commit_baseurl;adcdbe938">&sect;</ulink>
 </para>
