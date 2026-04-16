@@ -2330,6 +2330,9 @@ if cc.get_id() == 'msvc'
     # Additional warnings to enable:
     '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
     '/w24102', # unreferenced label [like -Wunused-label]
+
+    # Turn this into an error, to match other compilers (as of C99)
+    '/we4013', # 'function' undefined; assuming extern returning int' [like -Wimplicit-function-declaration]
   ]
 
   msvc_c_warning_flags = [
