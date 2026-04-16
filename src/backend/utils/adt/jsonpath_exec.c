@@ -4419,7 +4419,7 @@ JsonTablePlanJoinNextRow(JsonTablePlanState *planstate)
 		 */
 		if (!JsonTablePlanNextRow(planstate->right))
 		{
-			/* Right sibling ran out of row, so there are more rows. */
+			/* Right sibling ran out of rows too, so there are no more rows. */
 			return false;
 		}
 	}
