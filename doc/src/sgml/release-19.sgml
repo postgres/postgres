@@ -608,7 +608,7 @@ Allow query table scans to mark pages as all-visible in the free space map (Mela
 </para>
 
 <para>
-Previously only VACUUM and COPY FREEZE could this.
+Previously only VACUUM and COPY FREEZE could do this.
 </para>
 </listitem>
 
@@ -787,7 +787,7 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Improve timing performance measurements (Lukas Fittl, Andres Freund, David Geier, Lukas Fittl)
+Improve timing performance measurements (Lukas Fittl, Andres Freund, David Geier)
 <ulink url="&commit_baseurl;294520c44">&sect;</ulink>
 <ulink url="&commit_baseurl;16fca4825">&sect;</ulink>
 </para>
@@ -1256,7 +1256,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Add server-side report for SNI (Server Name Indication) Daniel Gustafsson, Jacob Champion)
+Add server-side report for SNI (Server Name Indication) (Daniel Gustafsson, Jacob Champion)
 <ulink url="&commit_baseurl;4f433025f">&sect;</ulink>
 </para>
 
@@ -1448,7 +1448,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Allow publications to be publish all sequences via the ALL SEQUENCES clause (Vignesh C, Tomas Vondra)
+Allow publications to publish all sequences via the ALL SEQUENCES clause (Vignesh C, Tomas Vondra)
 <ulink url="&commit_baseurl;96b378497">&sect;</ulink>
 </para>
 </listitem>
@@ -1738,7 +1738,7 @@ Add support for INSERT ... ON CONFLICT DO SELECT ... RETURNING (Andreas Karlsson
 </para>
 
 <para>
-This allows conflicting rows to be returns, and optionally locked with FOR UPDATE/SHARE.
+This allows conflicting rows to be returned, and optionally locked with FOR UPDATE/SHARE.
 </para>
 </listitem>
 
@@ -2247,7 +2247,7 @@ Add full text stemmers for Polish and Esperanto (Tom Lane)
 </para>
 
 <para>
-The Dutch stemmer has also be updated.  The old Dutch stemmer is available via "dutch_porter".
+The Dutch stemmer has also been updated.  The old Dutch stemmer is available via "dutch_porter".
 </para>
 </listitem>
 
@@ -2286,7 +2286,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Add function Add pg_get_tablespace_ddl() to output tablespace creation commands (Nishant Sharma, Manni Wood, Andrew Dunstan, Euler Taveira)
+Add function pg_get_tablespace_ddl() to output tablespace creation commands (Nishant Sharma, Manni Wood, Andrew Dunstan, Euler Taveira)
 <ulink url="&commit_baseurl;b99fd9fd7">&sect;</ulink>
 </para>
 </listitem>
@@ -2760,7 +2760,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Allow pg_upgrade to process non-default tablespaces stored in the PGDATA director (Nathan Bossart)
+Allow pg_upgrade to process non-default tablespaces stored in the PGDATA directory (Nathan Bossart)
 <ulink url="&commit_baseurl;412036c22">&sect;</ulink>
 </para>
 
