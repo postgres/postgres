@@ -549,7 +549,7 @@ pgpa_join_path_setup(PlannerInfo *root, RelOptInfo *joinrel,
 		{
 			pgpa_planner_info *proot;
 			MemoryContext oldcontext;
-			Bitmapset *relids;
+			Bitmapset  *relids;
 
 			/*
 			 * Get or create a pgpa_planner_info object, and then add the
