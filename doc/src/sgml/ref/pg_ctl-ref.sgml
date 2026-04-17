@@ -299,8 +299,9 @@ PostgreSQL documentation
        <para>
         Append the server log output to
         <replaceable>filename</replaceable>.  If the file does not
-        exist, it is created.  The <systemitem>umask</systemitem> is set to 077,
-        so access to the log file is disallowed to other users by default.
+        exist, it is created.  By default, only the cluster owner can
+        access the log file.  If group access is enabled in the cluster,
+        users in the same group as the cluster owner can also read it.
        </para>
       </listitem>
      </varlistentry>
