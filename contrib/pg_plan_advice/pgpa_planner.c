@@ -549,6 +549,7 @@ pgpa_join_path_setup(PlannerInfo *root, RelOptInfo *joinrel,
 		{
 			pgpa_planner_info *proot;
 			MemoryContext oldcontext;
+			Bitmapset *relids;
 
 			/*
 			 * Get or create a pgpa_planner_info object, and then add the
@@ -558,12 +559,20 @@ pgpa_join_path_setup(PlannerInfo *root, RelOptInfo *joinrel,
 			 * context, since we might have been called by GEQO. We want all
 			 * the data we store here (including the proot, if we create it)
 			 * to last for as long as the pgpa_planner_state.
+			 *
+			 * pgpa_filter_out_join_relids copies the input Bitmapset whether
+			 * or not it is changed, so 'relids' is part of the long-lived
+			 * context.
 			 */
 			oldcontext = MemoryContextSwitchTo(pps->mcxt);
 			proot = pgpa_planner_get_proot(pps, root);
-			if (!list_member(proot->sj_unique_rels, uniquerel->relids))
+			relids = pgpa_filter_out_join_relids(uniquerel->relids,
+												 root->parse->rtable);
+			if (!list_member(proot->sj_unique_rels, relids))
 				proot->sj_unique_rels = lappend(proot->sj_unique_rels,
-												bms_copy(uniquerel->relids));
+												relids);
+			else
+				bms_free(relids);
 			MemoryContextSwitchTo(oldcontext);
 		}
 	}

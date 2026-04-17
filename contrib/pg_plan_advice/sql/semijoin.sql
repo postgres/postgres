@@ -125,3 +125,12 @@ SELECT * FROM
 	(SELECT * FROM sj_narrow WHERE id IN (SELECT val1 FROM sj_wide)
 	 LIMIT 1) x,
 	LATERAL (SELECT 1 WHERE false) y;
+
+-- Test the case where the planner makes one side of a semijoin unique, and
+-- that side contains an outer join; this test is just to make sure that
+-- advice generation does not fail.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT 1 FROM generate_series(1, 1000) g WHERE EXISTS
+	(SELECT 1 FROM
+		(SELECT 1 FROM (SELECT 1) LEFT JOIN sj_narrow ON true) s,
+		sj_narrow t2 WHERE g = t2.id);
