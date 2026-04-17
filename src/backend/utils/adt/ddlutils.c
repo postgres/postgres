@@ -888,6 +888,16 @@ pg_get_database_ddl_internal(Oid dbid, bool pretty,
 	dbname = pstrdup(NameStr(dbform->datname));
 
 	/*
+	 * Reject invalid databases. Deparsing a pg_database row in invalid state
+	 * can produce SQL that is not executable, such as CONNECTION LIMIT = -2.
+	 */
+	if (database_is_invalid_form(dbform))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot generate DDL for invalid database \"%s\"",
+						dbname)));
+
+	/*
 	 * We don't support generating DDL for system databases.  The primary
 	 * reason for this is that users shouldn't be recreating them.
 	 */
