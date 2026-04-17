@@ -4900,7 +4900,7 @@ match_previous_words(int pattern_id,
 	else if (Matches("IMPORT", "FOREIGN", "SCHEMA", MatchAny))
 		COMPLETE_WITH("EXCEPT (", "FROM SERVER", "LIMIT TO (");
 	else if (TailMatches("LIMIT", "TO", "(*)") ||
-			 TailMatches("EXCEPT", "(*)"))
+			 Matches("IMPORT", "FOREIGN", "SCHEMA", MatchAny, "EXCEPT", "(*)"))
 		COMPLETE_WITH("FROM SERVER");
 	else if (TailMatches("FROM", "SERVER", MatchAny))
 		COMPLETE_WITH("INTO");
