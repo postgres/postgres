@@ -337,12 +337,22 @@ DatumGetPointer(Datum X)
 /*
  * PointerGetDatum
  *		Returns datum representation for a pointer.
+ *
+ * This used to be defined as "static inline Datum PointerGetDatum(const void
+ * *X) ", but it had the problem that the compiler would see the const
+ * attribute, and could rightly assume that the function won't modify *X.
+ * While PointerGetDatum() itself doesn't modify *X, the resulting Datum could
+ * later be passed to a function that converts it back to a non-const pointer
+ * and modifies it.  Most functions don't modify their arguments passed by
+ * reference - that would be very bogus for any operators or functions exposed
+ * in SQL - but some functions like GIN support functions do have output
+ * arguments that are pointer Datums.
+ *
+ * The odd-looking "true ? (X) : NULL" conditional expression has the effect
+ * of producing a compiler error if X is not a pointer.
  */
-static inline Datum
-PointerGetDatum(const void *X)
-{
-	return (Datum) (uintptr_t) X;
-}
+#define PointerGetDatum(X) \
+	((Datum) (uintptr_t) (true ? (X) : NULL))
 
 /*
  * DatumGetCString
@@ -360,6 +370,9 @@ DatumGetCString(Datum X)
 /*
  * CStringGetDatum
  *		Returns datum representation for a C string (null-terminated string).
+ *
+ * We assume that the resulting Datum is not used to modify the string, hence
+ * the argument can be marked as const.
  *
  * Note: C string is not a full-fledged Postgres type at present,
  * but type output functions use this conversion for their outputs.
