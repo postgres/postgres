@@ -2785,18 +2785,17 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     </listitem>
     <listitem>
      <para>
-      All slots on the old cluster must be usable, i.e., there are no slots
-      whose
+      All slots on the old cluster must be usable, i.e., their
       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>conflicting</structfield>
-      is not <literal>true</literal>.
+      is <literal>false</literal>.
      </para>
     </listitem>
     <listitem>
      <para>
-      The new cluster must not have permanent logical slots, i.e.,
-      there must be no slots where
+      The new cluster must not have any permanent logical slots; i.e., any
+      existing logical slots must have
       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>temporary</structfield>
-      is <literal>false</literal>.
+      set to <literal>true</literal>.
      </para>
     </listitem>
    </itemizedlist>
