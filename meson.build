@@ -2331,6 +2331,10 @@ if cc.get_id() == 'msvc'
     '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
     '/w24102', # unreferenced label [like -Wunused-label]
 
+    # This one doesn't match a gcc warning, but it can help catch
+    # issues related to 4-byte long on Windows.
+    '/w24334', # 'operator': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+
     # Turn this into an error, to match other compilers (as of C99)
     '/we4013', # 'function' undefined; assuming extern returning int' [like -Wimplicit-function-declaration]
   ]

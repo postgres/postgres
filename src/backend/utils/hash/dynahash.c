@@ -1764,7 +1764,7 @@ static int64
 next_pow2_int64(int64 num)
 {
 	/* my_log2's internal range check is sufficient */
-	return 1L << my_log2(num);
+	return INT64CONST(1) << my_log2(num);
 }
 
 /* calculate first power of 2 >= num, bounded to what will fit in an int */
