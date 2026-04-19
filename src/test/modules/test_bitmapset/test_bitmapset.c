@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * test_bitmapset.c
- *      Test the Bitmapset data structure.
+ *	  Test the Bitmapset data structure.
  *
  * This module tests the Bitmapset implementation in PostgreSQL, covering
  * all public API functions.
@@ -19,11 +19,12 @@
 #include <stddef.h>
 #include "catalog/pg_type.h"
 #include "common/pg_prng.h"
-#include "utils/array.h"
 #include "fmgr.h"
+#include "miscadmin.h"
 #include "nodes/bitmapset.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
 
@@ -587,7 +588,7 @@ test_bitmap_match(PG_FUNCTION_ARGS)
  * "min_value" is the minimal value used for the members, that will stand
  * up to a range of "max_range".  "num_ops" defines the number of time each
  * operation is done.  "seed" is a random seed used to calculate the member
- * values.  When "seed" is <= 0, a random seed will be chosen automatically.
+ * values.  When "seed" is NULL, a random seed will be chosen automatically.
  *
  * The return value is the number of times all operations have been executed.
  */
@@ -608,12 +609,19 @@ test_random_operations(PG_FUNCTION_ARGS)
 	int			num_members = 0;
 	int			total_ops = 0;
 
-	if (PG_GETARG_INT32(0) > 0)
-		seed = PG_GETARG_INT32(0);
+	if (!PG_ARGISNULL(0))
+		seed = PG_GETARG_INT64(0);
 
 	num_ops = PG_GETARG_INT32(1);
 	max_range = PG_GETARG_INT32(2);
 	min_value = PG_GETARG_INT32(3);
+
+	if (PG_ARGISNULL(1) || num_ops <= 0)
+		elog(ERROR, "invalid number of operations");
+	if (PG_ARGISNULL(2) || max_range <= 0)
+		elog(ERROR, "invalid maximum range");
+	if (PG_ARGISNULL(3) || min_value < 0)
+		elog(ERROR, "invalid minimum value");
 
 	pg_prng_seed(&state, seed);
 
@@ -627,6 +635,8 @@ test_random_operations(PG_FUNCTION_ARGS)
 	/* Phase 1: Random insertions in first set */
 	for (int i = 0; i < num_ops / 2; i++)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		member = pg_prng_uint32(&state) % max_range + min_value;
 
 		if (!bms_is_member(member, bms1))
@@ -637,6 +647,8 @@ test_random_operations(PG_FUNCTION_ARGS)
 	/* Phase 2: Random insertions in second set */
 	for (int i = 0; i < num_ops / 4; i++)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		member = pg_prng_uint32(&state) % max_range + min_value;
 
 		if (!bms_is_member(member, bms2))
@@ -651,8 +663,11 @@ test_random_operations(PG_FUNCTION_ARGS)
 	/* Verify union contains all members from first and second sets */
 	for (int i = 0; i < num_members; i++)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		if (!bms_is_member(members[i], result))
-			elog(ERROR, "union missing member %d", members[i]);
+			elog(ERROR, "union missing member %d, seed " INT64_FORMAT,
+				 members[i], seed);
 	}
 	bms_free(result);
 
@@ -667,8 +682,11 @@ test_random_operations(PG_FUNCTION_ARGS)
 
 		while ((member = bms_next_member(result, member)) >= 0)
 		{
+			CHECK_FOR_INTERRUPTS();
+
 			if (!bms_is_member(member, bms1) || !bms_is_member(member, bms2))
-				elog(ERROR, "intersection contains invalid member %d", member);
+				elog(ERROR, "intersection contains invalid member %d, seed " INT64_FORMAT,
+					 member, seed);
 		}
 		bms_free(result);
 	}
@@ -679,6 +697,8 @@ test_random_operations(PG_FUNCTION_ARGS)
 	{
 		int			lower = pg_prng_uint32(&state) % 100;
 		int			upper = lower + (pg_prng_uint32(&state) % 20);
+
+		CHECK_FOR_INTERRUPTS();
 
 		result = bms_add_range(result, lower, upper);
 	}
@@ -699,6 +719,8 @@ test_random_operations(PG_FUNCTION_ARGS)
 
 	for (int op = 0; op < num_ops; op++)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		switch (pg_prng_uint32(&state) % 3)
 		{
 			case 0:				/* add */
@@ -714,7 +736,8 @@ test_random_operations(PG_FUNCTION_ARGS)
 
 					member = members[pos];
 					if (!bms_is_member(member, bms))
-						elog(ERROR, "expected %d to be a valid member", member);
+						elog(ERROR, "expected %d to be a valid member, seed " INT64_FORMAT,
+							 member, seed);
 
 					bms = bms_del_member(bms, member);
 
@@ -730,7 +753,8 @@ test_random_operations(PG_FUNCTION_ARGS)
 				for (int i = 0; i < num_members; i++)
 				{
 					if (!bms_is_member(members[i], bms))
-						elog(ERROR, "missing member %d", members[i]);
+						elog(ERROR, "missing member %d, seed " INT64_FORMAT,
+							 members[i], seed);
 				}
 				break;
 		}

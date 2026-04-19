@@ -1569,7 +1569,7 @@ SELECT test_bms_nonempty_difference('(b 1 2)', '(b 50 100)') AS result;
 (1 row)
 
 -- random operations
-SELECT test_random_operations(-1, 10000, 81920, 0) > 0 AS result;
+SELECT test_random_operations(NULL, 10000, 81920, 0) > 0 AS result;
  result 
 --------
  t

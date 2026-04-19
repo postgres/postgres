@@ -401,6 +401,6 @@ SELECT test_bms_nonempty_difference('(b 100)', '(b 5)') AS result;
 SELECT test_bms_nonempty_difference('(b 1 2)', '(b 50 100)') AS result;
 
 -- random operations
-SELECT test_random_operations(-1, 10000, 81920, 0) > 0 AS result;
+SELECT test_random_operations(NULL, 10000, 81920, 0) > 0 AS result;
 
 DROP EXTENSION test_bitmapset;
