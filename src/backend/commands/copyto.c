@@ -427,7 +427,25 @@ CopyToJsonOneRow(CopyToState cstate, TupleTableSlot *slot)
 		}
 	}
 
-	CopySendData(cstate, cstate->json_buf->data, cstate->json_buf->len);
+	/*
+	 * Convert the JSON output to the target encoding if needed.  Unlike the
+	 * text and CSV paths which convert per-attribute via CopyAttributeOut*,
+	 * composite_to_json() emits the whole row as one buffer, so we transcode
+	 * it here in a single call before sending.
+	 */
+	if (cstate->need_transcoding)
+	{
+		char	   *converted;
+
+		converted = pg_server_to_any(cstate->json_buf->data,
+									 cstate->json_buf->len,
+									 cstate->file_encoding);
+		CopySendData(cstate, converted, strlen(converted));
+		if (converted != cstate->json_buf->data)
+			pfree(converted);
+	}
+	else
+		CopySendData(cstate, cstate->json_buf->data, cstate->json_buf->len);
 
 	CopySendTextLikeEndOfRow(cstate);
 }
