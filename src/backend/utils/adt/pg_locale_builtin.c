@@ -91,7 +91,7 @@ strtitle_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 {
 	struct WordBoundaryState wbstate = {
 		.str = src,
-		.len = srclen,
+		.len = (srclen < 0) ? strlen(src) : srclen,
 		.offset = 0,
 		.posix = !locale->info.builtin.casemap_full,
 		.init = false,
