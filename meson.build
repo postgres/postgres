@@ -758,9 +758,7 @@ if not gssapiopt.disabled()
   gssapi = dependency('krb5-gssapi', required: false)
   have_gssapi = gssapi.found()
 
-  if have_gssapi
-      gssapi_deps = [gssapi]
-  elif not have_gssapi
+  if not have_gssapi
     # Hardcoded lookup for gssapi. This is necessary as gssapi on windows does
     # not install neither pkg-config nor cmake dependency information.
     if host_system == 'windows'
@@ -784,18 +782,15 @@ if not gssapiopt.disabled()
     endforeach
 
     if have_gssapi
-      # Meson before 0.57.0 did not support using check_header() etc with
-      # declare_dependency(). Thus the tests below use the library looked up
-      # above.  Once we require a newer meson version, we can simplify.
       gssapi = declare_dependency(dependencies: gssapi_deps)
     endif
   endif
 
   if not have_gssapi
-  elif cc.check_header('gssapi/gssapi.h', dependencies: gssapi_deps, required: false,
+  elif cc.check_header('gssapi/gssapi.h', dependencies: [gssapi], required: false,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_GSSAPI_H', 1)
-  elif cc.check_header('gssapi.h', dependencies: gssapi_deps, required: gssapiopt,
+  elif cc.check_header('gssapi.h', dependencies: [gssapi], required: gssapiopt,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_H', 1)
   else
@@ -803,10 +798,10 @@ if not gssapiopt.disabled()
   endif
 
   if not have_gssapi
-  elif cc.check_header('gssapi/gssapi_ext.h', dependencies: gssapi_deps, required: false,
+  elif cc.check_header('gssapi/gssapi_ext.h', dependencies: [gssapi], required: false,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_GSSAPI_EXT_H', 1)
-  elif cc.check_header('gssapi_ext.h', dependencies: gssapi_deps, required: gssapiopt,
+  elif cc.check_header('gssapi_ext.h', dependencies: [gssapi], required: gssapiopt,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_EXT_H', 1)
   else
@@ -814,7 +809,7 @@ if not gssapiopt.disabled()
   endif
 
   if not have_gssapi
-  elif cc.has_function('gss_store_cred_into', dependencies: gssapi_deps,
+  elif cc.has_function('gss_store_cred_into', dependencies: [gssapi],
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('ENABLE_GSS', 1)
 
@@ -1563,17 +1558,6 @@ Use -Dreadline=disabled to disable readline support.'''.format(readline_dep))
       'rl_filename_quoting_function',
     ]
 
-    foreach var : check_vars
-      cdata.set('HAVE_' + var.to_upper(),
-        cc.has_header_symbol(readline_h, var,
-          args: test_c_args, include_directories: postgres_inc,
-          prefix: '#include <stdio.h>',
-          dependencies: [readline]) ? 1 : false)
-    endforeach
-
-    # If found via cc.find_library() ensure headers are found when using the
-    # dependency. On meson < 0.57 one cannot do compiler checks using the
-    # dependency returned by declare_dependency(), so we can't do this above.
     if readline.type_name() == 'library'
       readline = declare_dependency(dependencies: readline,
         include_directories: postgres_inc)
@@ -1585,6 +1569,14 @@ Use -Dreadline=disabled to disable readline support.'''.format(readline_dep))
       readline = declare_dependency(dependencies: readline,
         link_args: '-Wl,--enable-auto-import')
     endif
+
+    foreach var : check_vars
+      cdata.set('HAVE_' + var.to_upper(),
+        cc.has_header_symbol(readline_h, var,
+          args: test_c_args, include_directories: postgres_inc,
+          prefix: '#include <stdio.h>',
+          dependencies: [readline]) ? 1 : false)
+    endforeach
   endif
 
   # XXX: Figure out whether to implement mingw warning equivalent
@@ -3755,7 +3747,7 @@ endforeach
 # find and report conflicting files
 foreach build_path : potentially_conflicting_files
   build_path = host_system == 'windows' ? fs.as_posix(build_path) : build_path
-  # str.replace is in 0.56
+  # str.replace is in meson 0.58.0.
   src_path = meson.current_source_dir() / build_path.split(meson.current_build_dir() / '')[1]
   if fs.exists(src_path) or fs.is_symlink(src_path)
     conflicting_files += src_path
