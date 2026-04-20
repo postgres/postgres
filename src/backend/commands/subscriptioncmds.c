@@ -797,7 +797,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		Int32GetDatum(opts.maxretention);
 	values[Anum_pg_subscription_subretentionactive - 1] =
 		Int32GetDatum(opts.retaindeadtuples);
-	values[Anum_pg_subscription_subserver - 1] = serverid;
+	values[Anum_pg_subscription_subserver - 1] = ObjectIdGetDatum(serverid);
 	if (!OidIsValid(serverid))
 		values[Anum_pg_subscription_subconninfo - 1] =
 			CStringGetTextDatum(conninfo);
@@ -1855,7 +1855,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				walrcv_check_conninfo(conninfo,
 									  sub->passwordrequired && !sub->ownersuperuser);
 
-				values[Anum_pg_subscription_subserver - 1] = new_server->serverid;
+				values[Anum_pg_subscription_subserver - 1] = ObjectIdGetDatum(new_server->serverid);
 				replaces[Anum_pg_subscription_subserver - 1] = true;
 
 				ObjectAddressSet(referenced, ForeignServerRelationId, new_server->serverid);
@@ -1873,7 +1873,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 												   DEPENDENCY_NORMAL,
 												   ForeignServerRelationId, form->subserver);
 
-				values[Anum_pg_subscription_subserver - 1] = InvalidOid;
+				values[Anum_pg_subscription_subserver - 1] = ObjectIdGetDatum(InvalidOid);
 				replaces[Anum_pg_subscription_subserver - 1] = true;
 			}
 

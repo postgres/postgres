@@ -4146,7 +4146,7 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				HeapTuple	tuple;
 				Form_pg_propgraph_label pglform;
 
-				tuple = SearchSysCache1(PROPGRAPHLABELOID, object->objectId);
+				tuple = SearchSysCache1(PROPGRAPHLABELOID, ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(tuple))
 				{
 					if (!missing_ok)
@@ -4206,7 +4206,7 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				HeapTuple	tuple;
 				Form_pg_propgraph_property pgpform;
 
-				tuple = SearchSysCache1(PROPGRAPHPROPOID, object->objectId);
+				tuple = SearchSysCache1(PROPGRAPHPROPOID, ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(tuple))
 				{
 					if (!missing_ok)
@@ -6166,7 +6166,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				HeapTuple	tup;
 				Form_pg_propgraph_element pge;
 
-				tup = SearchSysCache1(PROPGRAPHELOID, object->objectId);
+				tup = SearchSysCache1(PROPGRAPHELOID, ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(tup))
 				{
 					if (!missing_ok)
@@ -6189,7 +6189,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				HeapTuple	tup;
 				Form_pg_propgraph_label pgl;
 
-				tup = SearchSysCache1(PROPGRAPHLABELOID, object->objectId);
+				tup = SearchSysCache1(PROPGRAPHLABELOID, ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(tup))
 				{
 					if (!missing_ok)
@@ -6211,7 +6211,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				HeapTuple	tup;
 				Form_pg_propgraph_property pgp;
 
-				tup = SearchSysCache1(PROPGRAPHPROPOID, object->objectId);
+				tup = SearchSysCache1(PROPGRAPHPROPOID, ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(tup))
 				{
 					if (!missing_ok)

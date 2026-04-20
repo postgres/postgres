@@ -5062,7 +5062,7 @@ get_partition_bound_spec(Oid partOid)
 	PartitionBoundSpec *boundspec = NULL;
 
 	/* Try fetching the tuple from the catcache, for speed. */
-	tuple = SearchSysCache1(RELOID, partOid);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(partOid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", partOid);
 

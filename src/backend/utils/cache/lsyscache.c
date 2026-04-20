@@ -3941,7 +3941,7 @@ get_propgraph_label_name(Oid labeloid)
 	HeapTuple	tuple;
 	char	   *labelname;
 
-	tuple = SearchSysCache1(PROPGRAPHLABELOID, labeloid);
+	tuple = SearchSysCache1(PROPGRAPHLABELOID, ObjectIdGetDatum(labeloid));
 	if (!tuple)
 	{
 		elog(ERROR, "cache lookup failed for label %u", labeloid);
@@ -3959,7 +3959,7 @@ get_propgraph_property_name(Oid propoid)
 	HeapTuple	tuple;
 	char	   *propname;
 
-	tuple = SearchSysCache1(PROPGRAPHPROPOID, propoid);
+	tuple = SearchSysCache1(PROPGRAPHPROPOID, ObjectIdGetDatum(propoid));
 	if (!tuple)
 	{
 		elog(ERROR, "cache lookup failed for property %u", propoid);

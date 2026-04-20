@@ -1295,7 +1295,7 @@ DatabaseExists(Oid dboid)
 	ScanKeyInit(&skey,
 				Anum_pg_database_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				dboid);
+				ObjectIdGetDatum(dboid));
 	scan = systable_beginscan(rel, DatabaseOidIndexId, true, SnapshotSelf,
 							  1, &skey);
 	tuple = systable_getnext(scan);
