@@ -172,8 +172,8 @@ ok($output eq "timeout", "WAIT FOR returns correct status after timeout");
 
 # 5. Check mode validation: standby modes error on primary, primary mode errors
 # on standby, and primary_flush works on primary.  Also check that WAIT FOR
-# triggers an error if called within another function or inside a transaction
-# with an isolation level higher than READ COMMITTED.
+# triggers an error if called within a function, procedure, anonymous DO block,
+# or inside a transaction with an isolation level higher than READ COMMITTED.
 
 # Test standby_flush on primary - should error
 $node_primary->psql(
@@ -200,9 +200,18 @@ ok( $stderr =~
 	"get an error when running in a transaction with an isolation level higher than REPEATABLE READ"
 );
 
+# Test wrapping WAIT FOR into function, procedure, and anonymous DO block --
+# should error
 $node_primary->safe_psql(
 	'postgres', qq[
 CREATE FUNCTION pg_wal_replay_wait_wrap(target_lsn pg_lsn) RETURNS void AS \$\$
+  BEGIN
+    EXECUTE format('WAIT FOR LSN %L;', target_lsn);
+  END
+\$\$
+LANGUAGE plpgsql;
+
+CREATE PROCEDURE pg_wal_replay_wait_proc(target_lsn pg_lsn) AS \$\$
   BEGIN
     EXECUTE format('WAIT FOR LSN %L;', target_lsn);
   END
@@ -218,17 +227,6 @@ $node_standby->psql(
 ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
 	"get an error when running within a function");
 
-$node_primary->safe_psql(
-	'postgres', qq[
-CREATE PROCEDURE pg_wal_replay_wait_proc(target_lsn pg_lsn) AS \$\$
-  BEGIN
-    EXECUTE format('WAIT FOR LSN %L;', target_lsn);
-  END
-\$\$
-LANGUAGE plpgsql;
-]);
-
-$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"CALL pg_wal_replay_wait_proc('${lsn3}');",
