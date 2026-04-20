@@ -2999,7 +2999,7 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
       <varlistentry id="guc-io-max-workers" xreflabel="io_max_workers">
-       <term><varname>io_max_workers</varname> (<type>int</type>)
+       <term><varname>io_max_workers</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>io_max_workers</varname> configuration parameter</primary>
        </indexterm>
@@ -3018,7 +3018,7 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
       <varlistentry id="guc-io-worker-idle-timeout" xreflabel="io_worker_idle_timeout">
-       <term><varname>io_worker_idle_timeout</varname> (<type>int</type>)
+       <term><varname>io_worker_idle_timeout</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>io_worker_idle_timeout</varname> configuration parameter</primary>
        </indexterm>
@@ -3038,7 +3038,7 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
       <varlistentry id="guc-io-worker-launch-interval" xreflabel="io_worker_launch_interval">
-       <term><varname>io_worker_launch_interval</varname> (<type>int</type>)
+       <term><varname>io_worker_launch_interval</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>io_worker_launch_interval</varname> configuration parameter</primary>
        </indexterm>
