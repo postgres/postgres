@@ -202,8 +202,8 @@ init_archive_reader(XLogDumpPrivate *privateInfo,
 
 	if (!IsValidWalSegSize(longhdr->xlp_seg_size))
 	{
-		pg_log_error(ngettext("invalid WAL segment size in WAL file from archive \"%s\" (%d byte)",
-							  "invalid WAL segment size in WAL file from archive \"%s\" (%d bytes)",
+		pg_log_error(ngettext("invalid WAL segment size in WAL file from archive \"%s\" (%u byte)",
+							  "invalid WAL segment size in WAL file from archive \"%s\" (%u bytes)",
 							  longhdr->xlp_seg_size),
 					 privateInfo->archive_name, longhdr->xlp_seg_size);
 		pg_log_error_detail("The WAL segment size must be a power of two between 1 MB and 1 GB.");

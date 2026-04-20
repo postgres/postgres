@@ -545,7 +545,7 @@ InitShmemIndexEntry(ShmemRequest *request)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("not enough shared memory for data structure"
-						" \"%s\" (%zu bytes requested)",
+						" \"%s\" (%zd bytes requested)",
 						name, request->options->size)));
 	}
 	index_entry->size = request->options->size;
@@ -601,7 +601,7 @@ AttachShmemIndexEntry(ShmemRequest *request, bool missing_ok)
 	{
 		ereport(ERROR,
 				(errmsg("shared memory struct \"%s\" was created with"
-						" different size: existing %zu, requested %zu",
+						" different size: existing %zu, requested %zd",
 						name, index_entry->size, request->options->size)));
 	}
 
