@@ -2116,7 +2116,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Allow casts between bytea and uuid date types (Dagfinn Ilmari Mannsåker, Aleksander Alekseev)
+Allow casts between bytea and uuid data types (Dagfinn Ilmari Mannsåker, Aleksander Alekseev)
 <ulink url="&commit_baseurl;ba21f5bf8">&sect;</ulink>
 </para>
 </listitem>
