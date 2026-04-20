@@ -329,7 +329,7 @@ tfunc_fold(char *dst, size_t dstsize, const char *src,
 }
 
 static void
-test_convert_case()
+test_convert_case(void)
 {
 	/* test string with no case changes */
 	test_convert(tfunc_lower, "√∞", "√∞");

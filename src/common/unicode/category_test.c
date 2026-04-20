@@ -54,7 +54,7 @@ parse_unicode_version(const char *version)
  * White_Space, and Hex_Digit.
  */
 static void
-icu_test()
+icu_test(void)
 {
 	int			successful = 0;
 	int			pg_skipped_codepoints = 0;
