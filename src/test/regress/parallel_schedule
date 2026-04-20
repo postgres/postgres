@@ -102,7 +102,7 @@ test: publication subscription
 # Another group of parallel tests
 # select_views depends on create_view
 # ----------
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass stats_rewrite graph_table
+test: select_views portals_p2 foreign_key dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass stats_rewrite graph_table
 
 # ----------
 # Another group of parallel tests (JSON related)
@@ -128,7 +128,7 @@ test: partition_merge partition_split partition_join partition_prune reloptions 
 # ----------
 # Another group of parallel tests (compression)
 # ----------
-test: compression compression_lz4 compression_pglz
+test: compression compression_lz4 compression_pglz cluster
 
 # event_trigger depends on create_am and cannot run concurrently with
 # any test that runs DDL

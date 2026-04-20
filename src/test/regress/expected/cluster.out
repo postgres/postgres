@@ -543,7 +543,7 @@ ERROR:  REPACK (CONCURRENTLY) is not supported for partitioned tables
 HINT:  Consider running the command on individual partitions.
 DROP TABLE clstrpart;
 -- Ownership of partitions is checked
-CREATE TABLE ptnowner(i int unique) PARTITION BY LIST (i);
+CREATE TABLE ptnowner(i int unique not null) PARTITION BY LIST (i);
 CREATE INDEX ptnowner_i_idx ON ptnowner(i);
 CREATE TABLE ptnowner1 PARTITION OF ptnowner FOR VALUES IN (1);
 CREATE ROLE regress_ptnowner;
@@ -552,6 +552,8 @@ ALTER TABLE ptnowner1 OWNER TO regress_ptnowner;
 SET SESSION AUTHORIZATION regress_ptnowner;
 CLUSTER ptnowner USING ptnowner_i_idx;
 ERROR:  permission denied for table ptnowner
+ALTER TABLE ptnowner1 REPLICA IDENTITY USING INDEX ptnowner1_i_key;
+REPACK (CONCURRENTLY) ptnowner1;
 RESET SESSION AUTHORIZATION;
 ALTER TABLE ptnowner OWNER TO regress_ptnowner;
 CREATE TEMP TABLE ptnowner_oldnodes AS
@@ -560,7 +562,21 @@ CREATE TEMP TABLE ptnowner_oldnodes AS
 SET SESSION AUTHORIZATION regress_ptnowner;
 CLUSTER ptnowner USING ptnowner_i_idx;
 WARNING:  permission denied to execute CLUSTER on "ptnowner2", skipping it
+-- still can't repack without a replica identity
+ALTER TABLE ptnowner1 REPLICA IDENTITY DEFAULT;
+REPACK (CONCURRENTLY) ptnowner1;
+ERROR:  cannot process relation "ptnowner1"
+HINT:  Relation "ptnowner1" has no identity index.
 RESET SESSION AUTHORIZATION;
+SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
+  JOIN ptnowner_oldnodes b USING (oid) ORDER BY a.relname COLLATE "C";
+  relname  | ?column? 
+-----------+----------
+ ptnowner  | t
+ ptnowner1 | f
+ ptnowner2 | t
+(3 rows)
+
 SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
   JOIN ptnowner_oldnodes b USING (oid) ORDER BY a.relname COLLATE "C";
   relname  | ?column? 

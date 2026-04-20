@@ -18,6 +18,7 @@ $node->init();
 # Set up our desired configuration.
 $node->append_conf('postgresql.conf', <<EOM);
 shared_preload_libraries='test_plan_advice'
+wal_level=replica
 pg_plan_advice.always_explain_supplied_advice=false
 pg_plan_advice.feedback_warnings=true
 EOM

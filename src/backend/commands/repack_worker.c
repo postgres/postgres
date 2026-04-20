@@ -106,8 +106,9 @@ RepackWorkerMain(Datum main_arg)
 	pq_set_parallel_leader(shared->backend_pid,
 						   shared->backend_proc_number);
 
-	/* Connect to the database. */
-	BackgroundWorkerInitializeConnectionByOid(shared->dbid, shared->roleid, 0);
+	/* Connect to the database. LOGIN is not required. */
+	BackgroundWorkerInitializeConnectionByOid(shared->dbid, shared->roleid,
+											  BGWORKER_BYPASS_ROLELOGINCHECK);
 
 	/*
 	 * Transaction is needed to open relation, and it also provides us with a
@@ -214,7 +215,6 @@ repack_setup_logical_decoding(Oid relid)
 	/*
 	 * Make sure we can use logical decoding.
 	 */
-	CheckSlotPermissions();
 	CheckLogicalDecodingRequirements(true);
 
 	/*
