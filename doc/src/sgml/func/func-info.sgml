@@ -3921,7 +3921,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         <type>text</type> </optional> )
         <returnvalue>setof text</returnvalue>
        </para>
-       <para>
+       <para role="func_signature">
         <function>pg_get_tablespace_ddl</function>
         ( <parameter>tablespace</parameter> <type>name</type>
         <optional>, <literal>VARIADIC</literal> <parameter>options</parameter>
