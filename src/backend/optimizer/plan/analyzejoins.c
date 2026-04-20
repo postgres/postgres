@@ -649,7 +649,7 @@ remove_leftjoinrel_from_query(PlannerInfo *root, int relid,
 /*
  * Remove any references to relid or ojrelid from the RestrictInfo.
  *
- * We only bother to clean out bits in clause_relids and required_relids,
+ * We only bother to clean out bits in the RestrictInfo's various relid sets,
  * not nullingrel bits in contained Vars and PHVs.  (This might have to be
  * improved sometime.)  However, if the RestrictInfo contains an OR clause
  * we have to also clean up the sub-clauses.
@@ -671,6 +671,22 @@ remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
 	rinfo->required_relids = bms_copy(rinfo->required_relids);
 	rinfo->required_relids = bms_del_member(rinfo->required_relids, relid);
 	rinfo->required_relids = bms_del_member(rinfo->required_relids, ojrelid);
+	/* Likewise for incompatible_relids */
+	rinfo->incompatible_relids = bms_copy(rinfo->incompatible_relids);
+	rinfo->incompatible_relids = bms_del_member(rinfo->incompatible_relids, relid);
+	rinfo->incompatible_relids = bms_del_member(rinfo->incompatible_relids, ojrelid);
+	/* Likewise for outer_relids */
+	rinfo->outer_relids = bms_copy(rinfo->outer_relids);
+	rinfo->outer_relids = bms_del_member(rinfo->outer_relids, relid);
+	rinfo->outer_relids = bms_del_member(rinfo->outer_relids, ojrelid);
+	/* Likewise for left_relids */
+	rinfo->left_relids = bms_copy(rinfo->left_relids);
+	rinfo->left_relids = bms_del_member(rinfo->left_relids, relid);
+	rinfo->left_relids = bms_del_member(rinfo->left_relids, ojrelid);
+	/* Likewise for right_relids */
+	rinfo->right_relids = bms_copy(rinfo->right_relids);
+	rinfo->right_relids = bms_del_member(rinfo->right_relids, relid);
+	rinfo->right_relids = bms_del_member(rinfo->right_relids, ojrelid);
 
 	/* If it's an OR, recurse to clean up sub-clauses */
 	if (restriction_is_or_clause(rinfo))
