@@ -21,6 +21,7 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "utils/builtins.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -128,7 +129,7 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	if (isnull)
 		elog(ERROR, "could not find source text of function \"%s\"",
 			 proname);
-	source = DatumGetCString(DirectFunctionCall1(textout, ret));
+	source = TextDatumGetCString(ret);
 	ereport(NOTICE,
 			(errmsg("source text of function \"%s\": %s",
 					proname, source)));
@@ -244,7 +245,7 @@ plsample_trigger_handler(PG_FUNCTION_ARGS)
 	if (isnull)
 		elog(ERROR, "could not find source text of function \"%s\"",
 			 proname);
-	source = DatumGetCString(DirectFunctionCall1(textout, ret));
+	source = TextDatumGetCString(ret);
 	ereport(NOTICE,
 			(errmsg("source text of function \"%s\": %s",
 					proname, source)));
