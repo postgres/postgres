@@ -783,6 +783,8 @@ remove_rel_from_eclass(EquivalenceClass *ec, int relid, int ojrelid)
 			bms_is_member(ojrelid, cur_em->em_relids))
 		{
 			Assert(!cur_em->em_is_const);
+			/* em_relids is likely to be shared with some RestrictInfo */
+			cur_em->em_relids = bms_copy(cur_em->em_relids);
 			cur_em->em_relids = bms_del_member(cur_em->em_relids, relid);
 			cur_em->em_relids = bms_del_member(cur_em->em_relids, ojrelid);
 			if (bms_is_empty(cur_em->em_relids))
