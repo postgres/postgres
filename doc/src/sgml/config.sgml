@@ -10978,7 +10978,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         If LLVM has the required functionality, register generated functions
         with <productname>GDB</productname>.  This makes debugging easier.
         The default setting is <literal>off</literal>.
-        This parameter can only be set at server start.
+        Only superusers can change this parameter at session start,
+        and it cannot be changed at all within a session.
        </para>
       </listitem>
      </varlistentry>
@@ -11028,7 +11029,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         This writes out files to <filename>~/.debug/jit/</filename>; the
         user is responsible for performing cleanup when desired.
         The default setting is <literal>off</literal>.
-        This parameter can only be set at server start.
+        Only superusers can change this parameter at session start,
+        and it cannot be changed at all within a session.
        </para>
       </listitem>
      </varlistentry>
