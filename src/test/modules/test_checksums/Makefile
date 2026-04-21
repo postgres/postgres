@@ -22,6 +22,8 @@ PGFILEDESC = "test_checksums - test code for data checksums"
 EXTENSION = test_checksums
 DATA = test_checksums--1.0.sql
 
+TAP_TESTS = 1
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -32,9 +34,3 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-
-check:
-	$(prove_check)
-
-installcheck:
-	$(prove_installcheck)
