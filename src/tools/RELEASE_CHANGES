@@ -118,10 +118,6 @@ Starting a New Development Cycle
 * In the newly-made branch, replace "devel" with the branch's major version
   number in the URLs appearing in the top-level README and Makefile files.
 
-* In the newly-made branch, change src/backend/nodes/gen_node_support.pl
-  to enforce ABI stability of the NodeTag list (see "ARM ABI STABILITY
-  CHECK HERE" therein).
-
 * Notify the private committers email list, to ensure all committers
   are aware of the new branch even if they're not paying close attention
   to pgsql-hackers.

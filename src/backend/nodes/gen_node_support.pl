@@ -96,20 +96,6 @@ my @nodetag_only_files = qw(
   nodes/supportnodes.h
 );
 
-# ARM ABI STABILITY CHECK HERE:
-#
-# In stable branches, set $last_nodetag to the name of the last node type
-# that should receive an auto-generated nodetag number, and $last_nodetag_no
-# to its number.  (Find these values in the last line of the current
-# nodetags.h file.)  The script will then complain if those values don't
-# match reality, providing a cross-check that we haven't broken ABI by
-# adding or removing nodetags.
-# In HEAD, these variables should be left undef, since we don't promise
-# ABI stability during development.
-
-my $last_nodetag = undef;
-my $last_nodetag_no = undef;
-
 # output file names
 my @output_files;
 
@@ -615,29 +601,20 @@ open my $nt, '>', "$output_path/nodetags.h$tmpext"
 printf $nt $header_comment, 'nodetags.h';
 
 my $tagno = 0;
-my $last_tag = undef;
 foreach my $n (@node_types, @extra_tags)
 {
 	next if elem $n, @abstract_types;
 	if (defined $manual_nodetag_number{$n})
 	{
-		# do not change $tagno or $last_tag
+		# do not change $tagno
 		print $nt "\tT_${n} = $manual_nodetag_number{$n},\n";
 	}
 	else
 	{
 		$tagno++;
-		$last_tag = $n;
 		print $nt "\tT_${n} = $tagno,\n";
 	}
 }
-
-# verify that last auto-assigned nodetag stays stable
-die "ABI stability break: last nodetag is $last_tag not $last_nodetag\n"
-  if (defined $last_nodetag && $last_nodetag ne $last_tag);
-die
-  "ABI stability break: last nodetag number is $tagno not $last_nodetag_no\n"
-  if (defined $last_nodetag_no && $last_nodetag_no != $tagno);
 
 close $nt;
 
