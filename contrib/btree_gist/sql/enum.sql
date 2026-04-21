@@ -6,7 +6,7 @@ create type rainbow as enum ('r','o','g','b','i','v');
 -- so make sure we have coverage for those too
 alter type rainbow add value 'y' before 'g';
 
-CREATE TABLE enumtmp (a rainbow);
+CREATE TEMPORARY TABLE enumtmp (a rainbow);
 
 \copy enumtmp from 'data/enum.data'
 
