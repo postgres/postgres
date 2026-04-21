@@ -180,10 +180,15 @@ deallocate pstmt_def_insert;
 
 -- Test plan_cache_mode
 
-create table test_mode (a int);
+create table test_mode (a int) with (autovacuum_enabled = false);
 insert into test_mode select 1 from generate_series(1,1000) union all select 2;
-create index on test_mode (a);
+
+-- ANALYZE before creating the index. CREATE INDEX scans the table, which may
+-- set pages all-visible via on-access pruning. If relallvisible is then updated
+-- by ANALYZE, the generic plan may pick an index-only scan instead of the
+-- expected sequential scan.
 analyze test_mode;
+create index on test_mode (a);
 
 prepare test_mode_pp (int) as select count(*) from test_mode where a = $1;
 select name, generic_plans, custom_plans from pg_prepared_statements
