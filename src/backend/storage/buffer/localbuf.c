@@ -307,16 +307,24 @@ GetLocalVictimBuffer(void)
 uint32
 GetLocalPinLimit(void)
 {
-	/* Every backend has its own temporary buffers, and can pin them all. */
-	return num_temp_buffers;
+	/*
+	 * Every backend has its own temporary buffers, but we leave headroom for
+	 * concurrent pin-holders -- like multiple scans in the same query.
+	 */
+	return num_temp_buffers / 4;
 }
 
 /* see GetAdditionalPinLimit() */
 uint32
 GetAdditionalLocalPinLimit(void)
 {
+	uint32		total = GetLocalPinLimit();
+
 	Assert(NLocalPinnedBuffers <= num_temp_buffers);
-	return num_temp_buffers - NLocalPinnedBuffers;
+
+	if (NLocalPinnedBuffers >= total)
+		return 0;
+	return total - NLocalPinnedBuffers;
 }
 
 /* see LimitAdditionalPins() */
