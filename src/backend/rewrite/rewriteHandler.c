@@ -98,6 +98,7 @@ static List *matchLocks(CmdType event, RuleLock *rulelocks,
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
 static bool view_has_instead_trigger(Relation view, CmdType event);
 static Bitmapset *adjust_view_column_set(Bitmapset *cols, List *targetlist);
+static List *get_generated_columns(Relation rel, int rt_index);
 
 
 /*
@@ -633,12 +634,45 @@ rewriteRuleAction(Query *parsetree,
 	if ((event == CMD_INSERT || event == CMD_UPDATE) &&
 		sub_action->commandType != CMD_UTILITY)
 	{
+		RangeTblEntry *new_rte = rt_fetch(new_varno, sub_action->rtable);
+		Relation	new_rel;
+		List	   *gen_cols;
+
+		/*
+		 * The target list does not contain entries for generated columns
+		 * (they are removed by rewriteTargetListIU), so we must build entries
+		 * for them here, so that new.gen_col can be rewritten correctly.
+		 */
+		new_rel = relation_open(new_rte->relid, NoLock);
+		gen_cols = get_generated_columns(new_rel, new_varno);
+		relation_close(new_rel, NoLock);
+
+		/*
+		 * The generated column expressions refer to new.attribute, so they
+		 * must be rewritten before they can be used as replacements.
+		 */
+		gen_cols = (List *)
+			ReplaceVarsFromTargetList((Node *) gen_cols,
+									  new_varno,
+									  0,
+									  new_rte,
+									  parsetree->targetList,
+									  (event == CMD_UPDATE) ?
+									  REPLACEVARS_CHANGE_VARNO :
+									  REPLACEVARS_SUBSTITUTE_NULL,
+									  current_varno,
+									  &sub_action->hasSubLinks);
+
+		/*
+		 * Now rewrite new.attribute in sub_action, using both the target list
+		 * and the rewritten generated column expressions.
+		 */
 		sub_action = (Query *)
 			ReplaceVarsFromTargetList((Node *) sub_action,
 									  new_varno,
 									  0,
-									  rt_fetch(new_varno, sub_action->rtable),
-									  parsetree->targetList,
+									  new_rte,
+									  list_concat(gen_cols, parsetree->targetList),
 									  (event == CMD_UPDATE) ?
 									  REPLACEVARS_CHANGE_VARNO :
 									  REPLACEVARS_SUBSTITUTE_NULL,
@@ -2367,17 +2401,48 @@ CopyAndAddInvertedQual(Query *parsetree,
 	ChangeVarNodes(new_qual, PRS2_OLD_VARNO, rt_index, 0);
 	/* Fix references to NEW */
 	if (event == CMD_INSERT || event == CMD_UPDATE)
+	{
+		RangeTblEntry *rte = rt_fetch(rt_index, parsetree->rtable);
+		Relation	rel;
+		List	   *gen_cols;
+
+		/*
+		 * As in rewriteRuleAction, build entries for generated columns so
+		 * that new.gen_col in the rule qualification can be rewritten
+		 * correctly.
+		 */
+		rel = relation_open(rte->relid, NoLock);
+		gen_cols = get_generated_columns(rel, PRS2_NEW_VARNO);
+		relation_close(rel, NoLock);
+
+		/*
+		 * The generated column expressions refer to new.attribute, so they
+		 * must be rewritten before they can be used as replacements.
+		 */
+		gen_cols = (List *)
+			ReplaceVarsFromTargetList((Node *) gen_cols,
+									  PRS2_NEW_VARNO,
+									  0,
+									  rte,
+									  parsetree->targetList,
+									  (event == CMD_UPDATE) ?
+									  REPLACEVARS_CHANGE_VARNO :
+									  REPLACEVARS_SUBSTITUTE_NULL,
+									  rt_index,
+									  &parsetree->hasSubLinks);
+
 		new_qual = ReplaceVarsFromTargetList(new_qual,
 											 PRS2_NEW_VARNO,
 											 0,
-											 rt_fetch(rt_index,
-													  parsetree->rtable),
-											 parsetree->targetList,
+											 rte,
+											 list_concat(gen_cols,
+														 parsetree->targetList),
 											 (event == CMD_UPDATE) ?
 											 REPLACEVARS_CHANGE_VARNO :
 											 REPLACEVARS_SUBSTITUTE_NULL,
 											 rt_index,
 											 &parsetree->hasSubLinks);
+	}
 	/* And attach the fixed qual */
 	AddInvertedQual(parsetree, new_qual);
 
@@ -4226,6 +4291,65 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 	}
 
 	return rewritten;
+}
+
+
+/*
+ * Get a table's generated columns
+ *
+ * Returns a list of TargetEntry, one for each generated column, containing
+ * the attribute numbers and generation expressions.
+ */
+static List *
+get_generated_columns(Relation rel, int rt_index)
+{
+	List	   *gen_cols = NIL;
+	TupleDesc	tupdesc;
+
+	tupdesc = RelationGetDescr(rel);
+	if (tupdesc->constr && tupdesc->constr->has_generated_stored)
+	{
+		for (int i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+			if (attr->attgenerated == ATTRIBUTE_GENERATED_STORED)
+			{
+				Node	   *defexpr;
+				TargetEntry *te;
+				Oid			attcollid;
+
+				defexpr = build_column_default(rel, i + 1);
+				if (defexpr == NULL)
+					elog(ERROR, "no generation expression found for column number %d of table \"%s\"",
+						 i + 1, RelationGetRelationName(rel));
+
+				/*
+				 * If the column definition has a collation and it is
+				 * different from the collation of the generation expression,
+				 * put a COLLATE clause around the expression.
+				 */
+				attcollid = attr->attcollation;
+				if (attcollid && attcollid != exprCollation(defexpr))
+				{
+					CollateExpr *ce = makeNode(CollateExpr);
+
+					ce->arg = (Expr *) defexpr;
+					ce->collOid = attcollid;
+					ce->location = -1;
+
+					defexpr = (Node *) ce;
+				}
+
+				ChangeVarNodes(defexpr, 1, rt_index, 0);
+
+				te = makeTargetEntry((Expr *) defexpr, i + 1, 0, false);
+				gen_cols = lappend(gen_cols, te);
+			}
+		}
+	}
+
+	return gen_cols;
 }
 
 
