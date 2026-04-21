@@ -85,13 +85,11 @@ drop table foo;
 
 create function trap_timeout() returns void as $$
 begin
-  declare x int;
   begin
-    -- we assume this will take longer than 1 second:
-    select count(*) into x from generate_series(1, 1_000_000_000_000);
+    perform pg_sleep(10);
   exception
     when others then
-      raise notice 'caught others?';
+      raise notice 'caught others: %', sqlerrm;
     when query_canceled then
       raise notice 'nyeah nyeah, can''t stop me';
   end;
