@@ -138,13 +138,11 @@ select * from foo;
 drop table foo;
 create function trap_timeout() returns void as $$
 begin
-  declare x int;
   begin
-    -- we assume this will take longer than 1 second:
-    select count(*) into x from generate_series(1, 1_000_000_000_000);
+    perform pg_sleep(10);
   exception
     when others then
-      raise notice 'caught others?';
+      raise notice 'caught others: %', sqlerrm;
     when query_canceled then
       raise notice 'nyeah nyeah, can''t stop me';
   end;
@@ -157,7 +155,7 @@ set statement_timeout to 1000;
 select trap_timeout();
 NOTICE:  nyeah nyeah, can't stop me
 ERROR:  end of function
-CONTEXT:  PL/pgSQL function trap_timeout() line 15 at RAISE
+CONTEXT:  PL/pgSQL function trap_timeout() line 13 at RAISE
 rollback;
 -- Test for pass-by-ref values being stored in proper context
 create function test_variable_storage() returns text as $$
