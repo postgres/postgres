@@ -2601,7 +2601,7 @@ check_old_cluster_global_names(ClusterInfo *cluster)
 	conn_template1 = connectToServer(cluster, "template1");
 
 	/*
-	 * Get database, user/role and tablespacenames from cluster.  Can't use
+	 * Get database, user/role and tablespace names from cluster.  Can't use
 	 * pg_authid because only superusers can view it.
 	 */
 	res = executeQueryOrDie(conn_template1,

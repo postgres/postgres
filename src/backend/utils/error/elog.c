@@ -2353,7 +2353,7 @@ DebugFileOpen(void)
  * GUC check_hook for log_min_messages
  *
  * This value is parsed as a comma-separated list of zero or more TYPE:LEVEL
- * elements.  For each element, TYPE corresponds to a bk_category value (see
+ * elements.  For each element, TYPE corresponds to a bkcategory value (see
  * postmaster/proctypelist.h); LEVEL is one of server_message_level_options.
  *
  * In addition, there must be a single LEVEL element (with no TYPE part)

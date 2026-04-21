@@ -1371,7 +1371,7 @@ replorigin_session_get_progress(bool flush)
 /*
  * Clear the per-transaction replication origin state.
  *
- * replorigin_session_origin is also cleared if clear_origin is set.
+ * replorigin_xact_state.origin is also cleared if clear_origin is set.
  */
 void
 replorigin_xact_clear(bool clear_origin)

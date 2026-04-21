@@ -545,7 +545,7 @@ parallel_vacuum_end(ParallelVacuumState *pvs, IndexBulkDeleteResult **istats)
 /*
  * DSM detach callback. This is invoked when an autovacuum worker detaches
  * from the DSM segment holding PVShared. It ensures to reset the local pointer
- * to the shared state even if paralell vacuum raises an error and doesn't
+ * to the shared state even if parallel vacuum raises an error and doesn't
  * call parallel_vacuum_end().
  */
 static void

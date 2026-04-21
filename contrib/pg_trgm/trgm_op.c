@@ -242,7 +242,7 @@ CMPTRGM_CHOOSE(const void *a, const void *b)
 #define ST_DECLARE
 #include "lib/sort_template.h"
 
-/* Sort an array of trigrams, handling signedess correctly */
+/* Sort an array of trigrams, handling signedness correctly */
 static void
 trigram_qsort(trgm *array, size_t n)
 {

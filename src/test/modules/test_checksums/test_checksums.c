@@ -22,8 +22,6 @@
 PG_MODULE_MAGIC;
 
 extern PGDLLEXPORT void dc_delay_barrier(const char *name, const void *private_data, void *arg);
-extern PGDLLEXPORT void dc_modify_db_result(const char *name, const void *private_data, void *arg);
-extern PGDLLEXPORT void dc_fake_temptable(const char *name, const void *private_data, void *arg);
 
 /*
  * Test for delaying emission of procsignalbarriers.

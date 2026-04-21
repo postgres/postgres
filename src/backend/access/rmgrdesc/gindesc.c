@@ -126,7 +126,7 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				ginxlogSplit *xlrec = (ginxlogSplit *) rec;
 
 				appendStringInfo(buf, "isrootsplit: %c",
-								 (((ginxlogSplit *) rec)->flags & GIN_SPLIT_ROOT) ? 'T' : 'F');
+								 (xlrec->flags & GIN_SPLIT_ROOT) ? 'T' : 'F');
 				appendStringInfo(buf, " isdata: %c isleaf: %c",
 								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
 								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');

@@ -40,7 +40,7 @@ extension_control_path = '\$system$sep@{[ $windows_os ? ($ext_dir =~ s/\\/\\\\/g
 # Start node
 $node->start;
 
-# Create an user to test permissions to read extension locations.
+# Create a user to test permissions to read extension locations.
 my $user = "user01";
 $node->safe_psql('postgres', "CREATE USER $user");
 

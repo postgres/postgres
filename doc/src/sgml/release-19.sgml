@@ -3231,7 +3231,7 @@ Add functions to pg_buffercache to mark buffers as dirty (Nazir Bilal Yavuz)
 </para>
 
 <para>
-The functions are pg_buffercache_mark_dirty(), pg_buffercache_mark_dirt_relation(), and pg_buffercache_mark_dirty_all().
+The functions are pg_buffercache_mark_dirty(), pg_buffercache_mark_dirty_relation(), and pg_buffercache_mark_dirty_all().
 </para>
 </listitem>
 

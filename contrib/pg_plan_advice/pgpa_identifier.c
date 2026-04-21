@@ -211,7 +211,7 @@ pgpa_compute_identifier_by_rti(PlannerInfo *root, Index rti,
  * RTE_JOIN entries are excluded because they cannot be mentioned by plan
  * advice.
  *
- * The caller is responsible for making sure that the tkeys array is large
+ * The caller is responsible for making sure that the "rids" array is large
  * enough to store the results.
  *
  * The return value is the number of identifiers computed.

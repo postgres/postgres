@@ -286,7 +286,7 @@ pg_set_stashed_advice(PG_FUNCTION_ARGS)
 	/*
 	 * Get and check query ID.
 	 *
-	 * queryID 0 means no query ID was computed, so reject that.
+	 * Query ID 0 means no query ID was computed, so reject that.
 	 */
 	queryId = PG_GETARG_INT64(1);
 	if (queryId == 0)

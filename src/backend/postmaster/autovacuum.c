@@ -3047,7 +3047,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
  *
  * One exception to the previous paragraph is for tables nearing wraparound,
  * i.e., those that have surpassed the effective failsafe ages.  In that case,
- * the relfrozen/relminmxid-based score is scaled aggressively so that the
+ * the relfrozenxid/relminmxid-based score is scaled aggressively so that the
  * table has a decent chance of sorting to the front of the list.
  *
  * To adjust how strongly each component contributes to the score, the

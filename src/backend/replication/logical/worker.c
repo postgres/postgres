@@ -4980,7 +4980,7 @@ adjust_xid_advance_interval(RetainDeadTuplesData *rdt_data, bool new_xid_found)
 		/*
 		 * Retention has been stopped, so double the interval-capped at a
 		 * maximum of 3 minutes. The wal_receiver_status_interval is
-		 * intentionally not used as a upper bound, since the likelihood of
+		 * intentionally not used as an upper bound, since the likelihood of
 		 * retention resuming is lower than that of general activity resuming.
 		 */
 		rdt_data->xid_advance_interval = Min(rdt_data->xid_advance_interval * 2,

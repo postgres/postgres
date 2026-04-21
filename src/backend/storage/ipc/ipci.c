@@ -169,7 +169,7 @@ RegisterBuiltinShmemCallbacks(void)
 {
 	/*
 	 * Call RegisterShmemCallbacks(...) on each subsystem listed in
-	 * subsystemslist.h
+	 * subsystemlist.h
 	 */
 #define PG_SHMEM_SUBSYSTEM(subsystem_callbacks) \
 	RegisterShmemCallbacks(&(subsystem_callbacks));

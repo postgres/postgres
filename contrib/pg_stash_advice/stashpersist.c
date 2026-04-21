@@ -85,7 +85,7 @@ static void pgsa_write_to_disk(void);
 /*
  * Background worker entry point for pg_stash_advice persistence.
  *
- * On startup, if load_from_disk_pending is set, we load previously saved
+ * On startup, if stashes_ready is set, we load previously saved
  * stash data from disk.  Then we enter a loop, periodically checking whether
  * any changes have been made (via the change_count atomic counter) and
  * writing them to disk.  On shutdown, we perform a final write.

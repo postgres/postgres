@@ -99,12 +99,12 @@
  * state will also be set to "off".
  *
  * Backends transition Bd -> Bi via a procsignalbarrier which is emitted by the
- * DataChecksumsLauncher.  When all backends have acknowledged the barrier then
- * Bd will be empty and the next phase can begin: calculating and writing data
- * checksums with DataChecksumsWorkers.  When the DataChecksumsWorker processes
- * have finished writing checksums on all pages, data checksums are enabled
- * cluster-wide via another procsignalbarrier. There are four sets of backends
- * where Bd shall be an empty set:
+ * DataChecksumsWorkerLauncherMain.  When all backends have acknowledged the
+ * barrier then Bd will be empty and the next phase can begin: calculating and
+ * writing data checksums with DataChecksumsWorkers.  When the
+ * DataChecksumsWorker processes have finished writing checksums on all pages,
+ * data checksums are enabled cluster-wide via another procsignalbarrier.
+ * There are four sets of backends where Bd shall be an empty set:
  *
  * Bg: Backend updating the global state and emitting the procsignalbarrier
  * Bd: Backends in "off" state
@@ -634,7 +634,7 @@ ProcessSingleRelationFork(Relation reln, ForkNumber forkNum, BufferAccessStrateg
 
 	relns = get_namespace_name(RelationGetNamespace(reln));
 
-	/* Report the current relation to pgstat_activity */
+	/* Report the current relation to pg_stat_activity */
 	snprintf(activity, sizeof(activity) - 1, "processing: %s.%s (%s, %u blocks)",
 			 (relns ? relns : ""), RelationGetRelationName(reln), forkNames[forkNum], numblocks);
 	pgstat_report_activity(STATE_RUNNING, activity);
@@ -659,7 +659,7 @@ ProcessSingleRelationFork(Relation reln, ForkNumber forkNum, BufferAccessStrateg
 		 * re-write the page to WAL even if the checksum hasn't changed,
 		 * because if there is a replica it might have a slightly different
 		 * version of the page with an invalid checksum, caused by unlogged
-		 * changes (e.g. hintbits) on the primary happening while checksums
+		 * changes (e.g. hint bits) on the primary happening while checksums
 		 * were off. This can happen if there was a valid checksum on the page
 		 * at one point in the past, so only when checksums are first on, then
 		 * off, and then turned on again.  TODO: investigate if this could be
@@ -1262,7 +1262,7 @@ ProcessAllDatabases(void)
 }
 
 /*
- * DataChecksumShmemRequest
+ * DataChecksumsShmemRequest
  *		Request datachecksumsworker-related shared memory
  */
 static void

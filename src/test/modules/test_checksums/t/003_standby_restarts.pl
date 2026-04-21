@@ -110,7 +110,7 @@ $node_primary->wait_for_catchup($node_standby, 'replay');
 # Ensure that the primary and standby has switched to off
 wait_for_checksum_state($node_primary, 'off');
 wait_for_checksum_state($node_standby, 'off');
-# Doublecheck reading data without errors
+# Double-check reading data without errors
 $result =
   $node_primary->safe_psql('postgres', "SELECT count(a) FROM t WHERE a > 1");
 is($result, "19998", 'ensure we can safely read all data without checksums');

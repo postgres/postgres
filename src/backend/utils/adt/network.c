@@ -551,7 +551,7 @@ network_abbrev_abort(int memtupcount, SortSupport ssup)
  * all their subnet bits *must* be zero (1.2.3.0/24).
  *
  * IPv4 and IPv6 are identical in this makeup, with the difference being that
- * IPv4 addresses have a maximum of 32 bits compared to IPv6's 64 bits, so in
+ * IPv4 addresses have a maximum of 32 bits compared to IPv6's 128 bits, so in
  * IPv6 each part may be larger.
  *
  * inet/cidr types compare using these sorting rules. If inequality is detected

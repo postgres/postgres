@@ -228,7 +228,7 @@ estimateHyperLogLog(hyperLogLogState *cState)
  * starting from the first, reading from most significant to least significant
  * bits.
  *
- * Example (when considering fist 10 bits of x):
+ * Example (when considering first 10 bits of x):
  *
  * rho(x = 0b1000000000)   returns 1
  * rho(x = 0b0010000000)   returns 3

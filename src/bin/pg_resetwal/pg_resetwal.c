@@ -307,7 +307,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'l':
-				if (strspn(optarg, "01234567890ABCDEFabcdef") != XLOG_FNAME_LEN)
+				if (strspn(optarg, "0123456789ABCDEFabcdef") != XLOG_FNAME_LEN)
 				{
 					pg_log_error("invalid argument for option %s", "-l");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);

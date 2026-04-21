@@ -361,7 +361,7 @@ get_control_data(ClusterInfo *cluster)
 			p = strchr(p, ':');
 			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem", __LINE__);
-			p = strpbrk(p, "01234567890ABCDEF");
+			p = strpbrk(p, "0123456789ABCDEF");
 			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem", __LINE__);
 

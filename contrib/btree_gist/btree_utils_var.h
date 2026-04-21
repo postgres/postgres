@@ -42,7 +42,7 @@ typedef struct
 } gbtree_vinfo;
 
 /*
- * Free ptr1 in case its a copy of ptr2.
+ * Free ptr1 in case it's a copy of ptr2.
  *
  * This is adapted from varlena's PG_FREE_IF_COPY, though doesn't require
  * fcinfo access.

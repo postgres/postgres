@@ -84,7 +84,7 @@
   <literal>pg_stash_advice.stash_name</literal> for their session, and this
   may reveal the contents of any advice stash with that name. Users should
   assume that information embedded in stashed advice strings may become visible
-  to nonprivileged users.
+  to non-privileged users.
  </para>
 
  <sect2 id="pgstashadvice-functions">

@@ -58,7 +58,7 @@ my $initfile = $node->safe_psql('postgres',
 $node->safe_psql('postgres',
 	qq{SELECT pg_logical_emit_message(true, 'test 026', repeat('xyzxz', 123456))}
 );
-#$node->safe_psql('postgres', qq{create table foo ()});
+
 my $endfile = $node->safe_psql('postgres',
 	'SELECT pg_walfile_name(pg_current_wal_insert_lsn())');
 ok($initfile ne $endfile, "$initfile differs from $endfile");

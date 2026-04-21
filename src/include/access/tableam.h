@@ -1570,8 +1570,6 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  *	crosscheck - if not InvalidSnapshot, also check old tuple against this
  *	options - These allow the caller to specify options that may change the
  *	behavior of the AM. The AM will ignore options that it does not support.
- *		TABLE_UPDATE_WAIT -- set if should wait for any conflicting update to
- *		commit/abort
  *		TABLE_UPDATE_NO_LOGICAL -- force-disables the emitting of logical
  *		decoding information for the tuple.
  *

@@ -117,7 +117,7 @@ pr_comment(void)
 	if ( /* ps.bl_line && */ (s_lab == e_lab) && (s_code == e_code)) {
 	    /* klg: check only if this line is blank */
 	    /*
-	     * If this (*and previous lines are*) blank, dont put comment way
+	     * If this (*and previous lines are*) blank, don't put comment way
 	     * out at left
 	     */
 	    ps.com_col = (ps.ind_level - ps.unindent_displace) * ps.ind_size + 1;
@@ -234,7 +234,7 @@ pr_comment(void)
 	    last_bl = NULL;
 	    CHECK_SIZE_COM(4);
 	    if (ps.box_com || ps.last_nl) {	/* if this is a boxed comment,
-						 * we dont ignore the newline */
+						 * we don't ignore the newline */
 		if (s_com == e_com)
 		    *e_com++ = ' ';
 		if (!ps.box_com && e_com - s_com > 3) {

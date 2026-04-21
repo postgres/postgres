@@ -1156,8 +1156,7 @@ PredicateLockShmemRequest(void *arg)
 		);
 
 	/*
-	 * Compute size for serializable transaction hashtable. Note these
-	 * calculations must agree with PredicateLockShmemSize!
+	 * Compute size for serializable transaction hashtable.
 	 *
 	 * Assume an average of 10 predicate locking transactions per backend.
 	 * This allows aggressive cleanup while detail is present before data must

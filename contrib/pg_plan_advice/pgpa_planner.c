@@ -1657,13 +1657,14 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 			/*
 			 * Currently, PGS_CONSIDER_INDEXONLY can suppress Bitmap Heap
 			 * Scans, so don't clear it when such a scan is requested. This
-			 * happens because build_index_scan() thinks that the possibility
-			 * of an index-only scan is a sufficient reason to consider using
-			 * an otherwise-useless index, and get_index_paths() thinks that
-			 * the same paths that are useful for index or index-only scans
-			 * should also be considered for bitmap scans. Perhaps that logic
-			 * should be tightened up, but until then we need to include
-			 * PGS_CONSIDER_INDEXONLY in my_scan_type here.
+			 * happens because build_index_scankeys() thinks that the
+			 * possibility of an index-only scan is a sufficient reason to
+			 * consider using an otherwise-useless index, and
+			 * get_index_paths() thinks that the same paths that are useful
+			 * for index or index-only scans should also be considered for
+			 * bitmap scans. Perhaps that logic should be tightened up, but
+			 * until then we need to include PGS_CONSIDER_INDEXONLY in
+			 * my_scan_type here.
 			 */
 			my_scan_type = PGS_BITMAPSCAN | PGS_CONSIDER_INDEXONLY;
 		}
@@ -2092,7 +2093,7 @@ pgpa_compute_rt_offsets(pgpa_planner_state *pps, PlannedStmt *pstmt)
 
 		/*
 		 * It's not guaranteed that every plan name we saw during planning has
-		 * a SubPlanInfo, but any that do not certainly don't appear in the
+		 * a SubPlanRTInfo, but any that do not certainly don't appear in the
 		 * final range table.
 		 */
 		foreach_node(SubPlanRTInfo, rtinfo, pstmt->subrtinfos)

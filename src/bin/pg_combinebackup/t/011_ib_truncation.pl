@@ -102,7 +102,8 @@ is($vm_limits, '1',
 	'WAL summary has correct VM fork truncation limit');
 
 # Combine full and incremental backups.  Before the fix, this failed because
-# the INCREMENTAL file header contained an incorrect truncation_block value.
+# the INCREMENTAL file header contained an incorrect truncation_block_length
+# value.
 my $restored = PostgreSQL::Test::Cluster->new('node2');
 $restored->init_from_backup($primary, 'incr', combine_with_prior => ['full']);
 $restored->start();

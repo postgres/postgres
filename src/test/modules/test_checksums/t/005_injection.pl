@@ -25,7 +25,7 @@ if ($ENV{enable_injection_points} ne 'yes')
 # Test cluster setup
 #
 
-# Initiate testcluster
+# Initiate test cluster
 my $node = PostgreSQL::Test::Cluster->new('injection_node');
 $node->init(no_data_checksums => 1);
 $node->start;

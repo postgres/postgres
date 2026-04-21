@@ -668,7 +668,7 @@ static TimeLineID LocalMinRecoveryPointTLI;
 static bool updateMinRecoveryPoint = true;
 
 /*
- * Local state for Controlfile data_checksum_version.  After initialization
+ * Local state for ControlFile data_checksum_version.  After initialization
  * this is only updated when absorbing a procsignal barrier during interrupt
  * processing.  The reason for keeping a copy in backend-private memory is to
  * avoid locking for interrogating the data checksum state.  Possible values
@@ -5045,7 +5045,7 @@ check_wal_buffers(int *newval, void **extra, GucSource source)
 	{
 		/*
 		 * If we haven't yet changed the boot_val default of -1, just let it
-		 * be.  We'll fix it when XLOGShmemSize is called.
+		 * be.  We'll fix it when XLOGShmemRequest is called.
 		 */
 		if (XLOGbuffers == -1)
 			return true;

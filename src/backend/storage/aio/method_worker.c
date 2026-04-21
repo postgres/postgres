@@ -814,7 +814,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 			 * it.  Crossing the current worker count is a useful signal
 			 * because it's clearly too deep to avoid queuing latency already,
 			 * but still leaves a small window of opportunity to improve the
-			 * situation before the queue oveflows.
+			 * situation before the queue overflows.
 			 *
 			 * 2. The worker pool is keeping up, no latency is being
 			 * introduced and an extra worker would be a waste of resources.
@@ -830,10 +830,10 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 			 *
 			 * On its own, this is an extremely crude signal.  When combined
 			 * with the wakeup propagation test that precedes it (but on its
-			 * own tends to overshoot) and io_worker_launch_delay, the result
-			 * is that we gradually test each pool size until we find one that
-			 * doesn't trigger further expansion, and then hold it for at
-			 * least io_worker_idle_timeout.
+			 * own tends to overshoot) and io_worker_launch_interval, the
+			 * result is that we gradually test each pool size until we find
+			 * one that doesn't trigger further expansion, and then hold it
+			 * for at least io_worker_idle_timeout.
 			 *
 			 * XXX Perhaps ideas from queueing theory or control theory could
 			 * do a better job of this.

@@ -254,7 +254,7 @@ TidStoreAttach(dsa_handle area_handle, dsa_pointer handle)
 
 	area = dsa_attach(area_handle);
 
-	/* Find the shared the shared radix tree */
+	/* Find the shared radix tree */
 	ts->tree.shared = shared_ts_attach(area, handle);
 	ts->area = area;
 

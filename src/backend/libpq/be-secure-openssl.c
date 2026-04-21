@@ -200,7 +200,7 @@ be_tls_init(bool isServerStart)
 	 *
 	 * The reason for not doing everything in this if-else conditional is that
 	 * we want to use the same processing of postgresql.conf for when ssl_sni
-	 * is off as well as when it's on but the hostsfile is missing etc.  Thus
+	 * is off as well as when it's on but the hosts file is missing etc.  Thus
 	 * we set res to the state and continue with a new conditional instead of
 	 * duplicating logic and risk it diverging over time.
 	 */
@@ -208,7 +208,7 @@ be_tls_init(bool isServerStart)
 	{
 		/*
 		 * The GUC check hook should have already blocked this but to be on
-		 * the safe side we doublecheck here.
+		 * the safe side we double-check here.
 		 */
 #ifndef HAVE_SSL_CTX_SET_CLIENT_HELLO_CB
 		ereport(isServerStart ? FATAL : LOG,

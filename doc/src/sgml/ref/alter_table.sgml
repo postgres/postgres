@@ -279,7 +279,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This form replaces the expression of a generated column.  Existing data
       in a stored generated column is rewritten and all the future changes
       will apply the new generation expression.
-      Replacing the expression of a virtual generated column do not require a
+      Replacing the expression of a virtual generated column does not require a
       table rewrite, but if the column is used in a constraint, the table will
       be scanned to check that existing rows meet the constraint.
      </para>

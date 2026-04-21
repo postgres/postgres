@@ -321,7 +321,7 @@ pgpa_identifiers_match_target(int nrids, pgpa_identifier *rids,
  * Returns true if every target or sub-target is matched by at least one
  * identifier, and otherwise false.
  *
- * Also sets rids_used[i] = true for each idenifier that matches at least one
+ * Also sets rids_used[i] = true for each identifier that matches at least one
  * target.
  */
 static bool

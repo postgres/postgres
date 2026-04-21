@@ -5798,7 +5798,7 @@ fetch_remote_statistics(Relation relation,
 													  remote_relname,
 													  column_list.data);
 
-			/* If any attribute statsare missing, fallback to sampling. */
+			/* If any attribute stats are missing, fallback to sampling. */
 			if (!match_attrmap(attstats,
 							   local_schemaname, local_relname,
 							   remote_schemaname, remote_relname,

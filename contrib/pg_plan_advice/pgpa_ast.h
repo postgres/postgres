@@ -116,7 +116,7 @@ typedef struct pgpa_advice_item
 } pgpa_advice_item;
 
 /*
- * Result of comparing an array of pgpa_relation_identifier objects to a
+ * Result of comparing an array of pgpa_identifier objects to a
  * pgpa_advice_target.
  *
  * PGPA_ITM_EQUAL means all targets are matched by some identifier, and

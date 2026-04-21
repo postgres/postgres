@@ -1187,7 +1187,7 @@ typedef struct
 	Oid			inputcollid;	/* OID of the OpClause input collation */
 	int			argindex;		/* index of the clause in the list of
 								 * arguments */
-	int			groupindex;		/* value of argindex for the fist clause in
+	int			groupindex;		/* value of argindex for the first clause in
 								 * the group of similar clauses */
 } OrArgIndexMatch;
 

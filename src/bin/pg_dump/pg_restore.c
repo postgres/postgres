@@ -704,7 +704,7 @@ restore_one_database(const char *inputFileSpec, RestoreOptions *opts,
 	 * We don't have a connection yet but that doesn't matter. The connection
 	 * is initialized to NULL and if we terminate through exit_nicely() while
 	 * it's still NULL, the cleanup function will just be a no-op. If we are
-	 * restoring multiple databases, then only update AX handle for cleanup as
+	 * restoring multiple databases, then only update AH handle for cleanup as
 	 * the previous entry was already in the array and we had closed previous
 	 * connection, so we can use the same array slot.
 	 */

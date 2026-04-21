@@ -80,7 +80,7 @@ static OnConflictExpr *transformOnConflictClause(ParseState *pstate,
 												 OnConflictClause *onConflictClause);
 static ForPortionOfExpr *transformForPortionOfClause(ParseState *pstate,
 													 int rtindex,
-													 const ForPortionOfClause *forPortionOfClause,
+													 const ForPortionOfClause *forPortionOf,
 													 bool isUpdate);
 static int	count_rowexpr_columns(ParseState *pstate, Node *expr);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt,

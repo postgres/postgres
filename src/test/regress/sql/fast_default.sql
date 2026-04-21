@@ -375,7 +375,7 @@ SELECT attname, atthasmissing, attmissingval FROM pg_attribute
 DROP TABLE T;
 DROP FUNCTION foolme(timestamptz);
 
--- Simple querie
+-- Simple queries
 CREATE TABLE T (pk INT NOT NULL PRIMARY KEY);
 
 SELECT set('t');

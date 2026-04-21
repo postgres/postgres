@@ -93,7 +93,7 @@ pgpa_create_join_unroller(void)
  *
  * pgpa_plan_walker creates a "top level" join unroller object when it
  * encounters a join in a portion of the plan tree in which no join unroller
- * is already active. From there, this function is responsible for determing
+ * is already active. From there, this function is responsible for determining
  * to what portion of the plan tree that join unroller applies, and for
  * creating any subordinate join unroller objects that are needed as a result
  * of non-outer-deep join trees. We do this by returning the join unroller

@@ -341,8 +341,8 @@ static void ExtendMultiXactMember(MultiXactOffset offset, int nmembers);
 static void SetOldestOffset(void);
 static bool find_multixact_start(MultiXactId multi, MultiXactOffset *result);
 static void WriteMTruncateXlogRec(Oid oldestMultiDB,
-								  MultiXactId endTruncOff,
-								  MultiXactOffset endTruncMemb);
+								  MultiXactId oldestMulti,
+								  MultiXactOffset oldestOffset);
 
 
 /*

@@ -97,7 +97,7 @@ dump_line(void)
 	    putc('\n', output);
 	n_real_blanklines = 0;
 	if (ps.ind_level == 0)
-	    ps.ind_stmt = 0;	/* this is a class A kludge. dont do
+	    ps.ind_stmt = 0;	/* this is a class A kludge. don't do
 				 * additional statement indentation if we are
 				 * at bracket level 0 */
 

@@ -453,8 +453,7 @@ LockManagerShmemRequest(void *arg)
 	int64		max_table_size;
 
 	/*
-	 * Compute sizes for lock hashtables.  Note that these calculations must
-	 * agree with LockManagerShmemSize!
+	 * Compute sizes for lock hashtables.
 	 */
 	max_table_size = NLOCKENTS();
 

@@ -435,7 +435,7 @@ GUCCheckExplainExtensionOption(const char *option_name,
  * for an EXPLAIN extension option, the caller is entitled to assume that
  * a suitably constructed DefElem passed to the main option handler will
  * not cause an error. To construct this DefElem, the caller should set
- * the DefElem's defname to option_name. If option_values is NULL, arg
+ * the DefElem's defname to option_name. If option_value is NULL, arg
  * should be NULL. Otherwise, arg should be of the type given by
  * option_type, with option_value as the associated value. The only option
  * types that should be passed are T_String, T_Float, and T_Integer; in

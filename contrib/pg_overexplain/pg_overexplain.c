@@ -459,7 +459,7 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 		char	   *relkind;
 		SubPlanRTInfo *next_rtinfo;
 
-		/* Advance to next SubRTInfo, if it's time. */
+		/* Advance to next SubPlanRTInfo, if it's time. */
 		if (lc_subrtinfo != NULL)
 		{
 			next_rtinfo = lfirst(lc_subrtinfo);
@@ -512,8 +512,8 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 				/*
 				 * We should not see RTE of this kind here since property
 				 * graph RTE gets converted to subquery RTE in
-				 * RewriteGraphTable(). In case we decide not to do the
-				 * conversion and leave RTEkind unchanged in future, print
+				 * rewriteGraphTable(). In case we decide not to do the
+				 * conversion and leave RTE kind unchanged in future, print
 				 * correct name of RTE kind.
 				 */
 				kind = "graph_table";

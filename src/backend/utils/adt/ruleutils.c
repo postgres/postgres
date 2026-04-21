@@ -13352,7 +13352,7 @@ get_for_portion_of(ForPortionOfExpr *forPortionOf, deparse_context *context)
 
 		/*
 		 * Try to write it as FROM ... TO ... if we received it that way,
-		 * otherwise (targetExpr).
+		 * otherwise (targetRange).
 		 */
 		if (forPortionOf->targetFrom && forPortionOf->targetTo)
 		{

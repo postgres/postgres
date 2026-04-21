@@ -222,7 +222,7 @@ index_form_tuple_context(TupleDesc tupleDescriptor,
  *		nocache_index_getattr
  *
  *		This gets called from index_getattr() macro, and only in cases
- *		where we can't use cacheoffset and the value is not null.
+ *		where we can't use attcacheoff and the value is not null.
  * ----------------
  */
 Datum

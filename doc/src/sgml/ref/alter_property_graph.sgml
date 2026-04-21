@@ -78,7 +78,7 @@ ALTER PROPERTY GRAPH [ IF EXISTS ] <replaceable class="parameter">name</replacea
       <para>
        This form removes vertex or edge tables from the property graph.  (Only
        the association of the tables with the graph is removed.  The tables
-       themself are not dropped.)
+       themselves are not dropped.)
       </para>
      </listitem>
     </varlistentry>

@@ -1432,7 +1432,7 @@ ExecForPortionOfLeftovers(ModifyTableContext *context,
 		/*
 		 * If we don't have a ForPortionOfState yet, we must be a partition
 		 * child being hit for the first time. Make a copy from the root, with
-		 * our own tupleTableSlot. We do this lazily so that we don't pay the
+		 * our own TupleTableSlot. We do this lazily so that we don't pay the
 		 * price of unused partitions.
 		 */
 		ForPortionOfState *leafState = makeNode(ForPortionOfState);

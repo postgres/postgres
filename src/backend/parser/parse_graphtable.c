@@ -157,7 +157,7 @@ transformGraphTablePropertyRef(ParseState *pstate, ColumnRef *cref)
  * A label expression is parsed as either a ColumnRef with a single field or a
  * label expression like label disjunction. The single field in the ColumnRef is
  * treated as a label name and transformed to a GraphLabelRef node. The label
- * expression is recursively transformed into an expression tree containg
+ * expression is recursively transformed into an expression tree containing
  * GraphLabelRef nodes corresponding to the names of the labels appearing in the
  * expression. If any label name cannot be resolved to a label in the property
  * graph, an error is raised.

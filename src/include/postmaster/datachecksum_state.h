@@ -17,7 +17,7 @@
 
 #include "storage/procsignal.h"
 
-/* Possible operations the Datachecksumsworker can perform */
+/* Possible operations the DataChecksumsWorker can perform */
 typedef enum DataChecksumsWorkerOperation
 {
 	ENABLE_DATACHECKSUMS,

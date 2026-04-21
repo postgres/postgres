@@ -299,7 +299,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		/* frozen and bootstrap xids are always committed far in the past */
 		*ts = 0;
 		if (nodeid)
-			*nodeid = 0;
+			*nodeid = InvalidReplOriginId;
 		return false;
 	}
 
