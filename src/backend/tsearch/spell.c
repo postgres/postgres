@@ -908,14 +908,20 @@ parse_ooaffentry(char *str, char *type, char *flag, char *find,
  *
  * An .affix file entry has the following format:
  * <mask>  >  [-<find>,]<replace>
+ *
+ * Output buffers mask, find, repl must be of length BUFSIZ;
+ * we truncate the input to fit.
  */
 static bool
-parse_affentry(char *str, char *mask, char *find, char *repl)
+parse_affentry(const char *str, char *mask, char *find, char *repl)
 {
 	int			state = PAE_WAIT_MASK;
 	char	   *pmask = mask,
 			   *pfind = find,
 			   *prepl = repl;
+	char	   *emask = mask + BUFSIZ;
+	char	   *efind = find + BUFSIZ;
+	char	   *erepl = repl + BUFSIZ;
 
 	*mask = *find = *repl = '\0';
 
@@ -929,7 +935,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl)
 				return false;
 			else if (!t_isspace_cstr(str))
 			{
-				pmask += ts_copychar_with_len(pmask, str, clen);
+				if (pmask < emask - clen)
+					pmask += ts_copychar_with_len(pmask, str, clen);
 				state = PAE_INMASK;
 			}
 		}
@@ -942,7 +949,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl)
 			}
 			else if (!t_isspace_cstr(str))
 			{
-				pmask += ts_copychar_with_len(pmask, str, clen);
+				if (pmask < emask - clen)
+					pmask += ts_copychar_with_len(pmask, str, clen);
 			}
 		}
 		else if (state == PAE_WAIT_FIND)
@@ -953,7 +961,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl)
 			}
 			else if (t_isalpha_cstr(str) || t_iseq(str, '\'') /* english 's */ )
 			{
-				prepl += ts_copychar_with_len(prepl, str, clen);
+				if (prepl < erepl - clen)
+					prepl += ts_copychar_with_len(prepl, str, clen);
 				state = PAE_INREPL;
 			}
 			else if (!t_isspace_cstr(str))
@@ -970,7 +979,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl)
 			}
 			else if (t_isalpha_cstr(str))
 			{
-				pfind += ts_copychar_with_len(pfind, str, clen);
+				if (pfind < efind - clen)
+					pfind += ts_copychar_with_len(pfind, str, clen);
 			}
 			else if (!t_isspace_cstr(str))
 				ereport(ERROR,
@@ -985,7 +995,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl)
 			}
 			else if (t_isalpha_cstr(str))
 			{
-				prepl += ts_copychar_with_len(prepl, str, clen);
+				if (prepl < erepl - clen)
+					prepl += ts_copychar_with_len(prepl, str, clen);
 				state = PAE_INREPL;
 			}
 			else if (!t_isspace_cstr(str))
@@ -1002,7 +1013,8 @@ parse_affentry(char *str, char *mask, char *find, char *repl)
 			}
 			else if (t_isalpha_cstr(str))
 			{
-				prepl += ts_copychar_with_len(prepl, str, clen);
+				if (prepl < erepl - clen)
+					prepl += ts_copychar_with_len(prepl, str, clen);
 			}
 			else if (!t_isspace_cstr(str))
 				ereport(ERROR,
@@ -1060,7 +1072,7 @@ setCompoundAffixFlagValue(IspellDict *Conf, CompoundAffixFlag *entry,
  * val: affix parameter.
  */
 static void
-addCompoundAffixFlagValue(IspellDict *Conf, char *s, uint32 val)
+addCompoundAffixFlagValue(IspellDict *Conf, const char *s, uint32 val)
 {
 	CompoundAffixFlag *newValue;
 	char		sbuf[BUFSIZ];
@@ -1078,9 +1090,11 @@ addCompoundAffixFlagValue(IspellDict *Conf, char *s, uint32 val)
 	sflag = sbuf;
 	while (*s && !t_isspace_cstr(s) && *s != '\n')
 	{
-		int			clen = ts_copychar_cstr(sflag, s);
+		int			clen = pg_mblen_cstr(s);
 
-		sflag += clen;
+		/* Truncate the input to fit in BUFSIZ */
+		if (sflag < sbuf + BUFSIZ - clen)
+			sflag += ts_copychar_with_len(sflag, s, clen);
 		s += clen;
 	}
 	*sflag = '\0';
