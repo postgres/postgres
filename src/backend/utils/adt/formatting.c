@@ -1110,6 +1110,7 @@ static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
+static void NUM_add_locale_symbol(NUMProc *Np, const char *pattern);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 						   char *number, int input_len, int to_char_out_pre_spaces,
 						   int sign, bool is_to_char, Oid collid);
@@ -5455,11 +5456,9 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		{
 			if (Np->Num->lsign == NUM_LSIGN_PRE)
 			{
-				if (Np->sign == '-')
-					strcpy(Np->inout_p, Np->L_negative_sign);
-				else
-					strcpy(Np->inout_p, Np->L_positive_sign);
-				Np->inout_p += strlen(Np->inout_p);
+				NUM_add_locale_symbol(Np, (Np->sign == '-') ?
+									  Np->L_negative_sign :
+									  Np->L_positive_sign);
 				Np->sign_wrote = true;
 			}
 		}
@@ -5524,8 +5523,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			{
 				if (!Np->last_relevant || *Np->last_relevant != '.')
 				{
-					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
-					Np->inout_p += strlen(Np->inout_p);
+					NUM_add_locale_symbol(Np, Np->decimal); /* Write DEC/D */
 				}
 
 				/*
@@ -5534,8 +5532,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				else if (IS_FILLMODE(Np->Num) &&
 						 Np->last_relevant && *Np->last_relevant == '.')
 				{
-					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
-					Np->inout_p += strlen(Np->inout_p);
+					NUM_add_locale_symbol(Np, Np->decimal); /* Write DEC/D */
 				}
 			}
 			else
@@ -5593,16 +5590,31 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			}
 			else if (IS_LSIGN(Np->Num) && Np->Num->lsign == NUM_LSIGN_POST)
 			{
-				if (Np->sign == '-')
-					strcpy(Np->inout_p, Np->L_negative_sign);
-				else
-					strcpy(Np->inout_p, Np->L_positive_sign);
-				Np->inout_p += strlen(Np->inout_p);
+				NUM_add_locale_symbol(Np, (Np->sign == '-') ?
+									  Np->L_negative_sign :
+									  Np->L_positive_sign);
 			}
 		}
 	}
 
 	++Np->num_curr;
+}
+
+/*
+ * Append locale-specific symbol to Np->inout.
+ * Note we don't null-terminate the output
+ */
+static void
+NUM_add_locale_symbol(NUMProc *Np, const char *pattern)
+{
+	size_t		pattern_len = strlen(pattern);
+
+	/* Truncate symbol if it's potentially too long */
+	if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
+		pattern_len = pg_mbcliplen(pattern, pattern_len,
+								   NUM_MAX_ITEM_SIZ);
+	memcpy(Np->inout_p, pattern, pattern_len);
+	Np->inout_p += pattern_len;
 }
 
 /*
@@ -5879,6 +5891,10 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 					pattern_len = strlen(pattern);
 					if (Np->is_to_char)
 					{
+						/* Truncate symbol if it's potentially too long */
+						if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
+							pattern_len = pg_mbcliplen(pattern, pattern_len,
+													   NUM_MAX_ITEM_SIZ);
 						if (!Np->num_in)
 						{
 							if (IS_FILLMODE(Np->Num))
@@ -5886,19 +5902,21 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 							else
 							{
 								/* just in case there are MB chars */
-								pattern_len = pg_mbstrlen(pattern);
+								pattern_len = pg_mbstrlen_with_len(pattern,
+																   pattern_len);
 								memset(Np->inout_p, ' ', pattern_len);
 								Np->inout_p += pattern_len - 1;
 							}
 						}
 						else
 						{
-							strcpy(Np->inout_p, pattern);
+							memcpy(Np->inout_p, pattern, pattern_len);
 							Np->inout_p += pattern_len - 1;
 						}
 					}
 					else
 					{
+						/* Here we do not truncate the symbol ... */
 						if (!Np->num_in)
 						{
 							if (IS_FILLMODE(Np->Num))
@@ -5923,11 +5941,18 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 					pattern = Np->L_currency_symbol;
 					if (Np->is_to_char)
 					{
-						strcpy(Np->inout_p, pattern);
-						Np->inout_p += strlen(pattern) - 1;
+						/* Truncate symbol if it's potentially too long */
+						pattern_len = strlen(pattern);
+						if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
+							pattern_len = pg_mbcliplen(pattern, pattern_len,
+													   NUM_MAX_ITEM_SIZ);
+
+						memcpy(Np->inout_p, pattern, pattern_len);
+						Np->inout_p += pattern_len - 1;
 					}
 					else
 					{
+						/* Here we do not truncate the symbol ... */
 						NUM_eat_non_data_chars(Np, pg_mbstrlen(pattern), input_len);
 						continue;
 					}
