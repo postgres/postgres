@@ -743,7 +743,8 @@ get_old_cluster_logical_slot_infos_query(ClusterInfo *cluster)
 			"  confirmed_flush_lsn > last_pending_wal "
 			"END as caught_up, "
 			"invalidation_reason IS NOT NULL as invalid "
-			"FROM pg_catalog.pg_replication_slots, check_caught_up "
+			"FROM pg_catalog.pg_replication_slots "
+			"LEFT JOIN check_caught_up ON true "
 			"WHERE slot_type = 'logical' AND "
 			"database = current_database() AND "
 			"temporary IS FALSE ";
