@@ -56,7 +56,7 @@ ts_copychar_cstr(void *dest, const void *src)
 #define COPYCHAR ts_copychar_cstr
 
 #define GENERATE_T_ISCLASS_DECL(character_class) \
-extern int	t_is##character_class##_with_len(const char *ptr, int len); \
+extern int	t_is##character_class##_with_len(const char *ptr, int mblen); \
 extern int	t_is##character_class##_cstr(const char *ptr); \
 extern int	t_is##character_class##_unbounded(const char *ptr); \
 \

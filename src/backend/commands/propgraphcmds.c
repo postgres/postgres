@@ -73,7 +73,7 @@ struct element_info
 };
 
 
-static ArrayType *propgraph_element_get_key(ParseState *pstate, const List *keycols, Relation element_rel,
+static ArrayType *propgraph_element_get_key(ParseState *pstate, const List *key_clause, Relation element_rel,
 											const char *aliasname, int location);
 static void propgraph_edge_get_ref_keys(ParseState *pstate, const List *keycols, const List *refcols,
 										Relation edge_rel, Relation ref_rel,

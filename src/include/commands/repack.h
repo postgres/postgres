@@ -40,7 +40,7 @@ extern PGDLLIMPORT volatile sig_atomic_t RepackMessagePending;
 
 extern void ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel);
 
-extern void cluster_rel(RepackCommand command, Relation OldHeap, Oid indexOid,
+extern void cluster_rel(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 						ClusterParams *params, bool isTopLevel);
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
 									   LOCKMODE lockmode);

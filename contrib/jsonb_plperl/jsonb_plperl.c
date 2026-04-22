@@ -13,7 +13,7 @@ PG_MODULE_MAGIC_EXT(
 );
 
 static SV  *Jsonb_to_SV(JsonbContainer *jsonb);
-static void SV_to_JsonbValue(SV *obj, JsonbInState *ps, bool is_elem);
+static void SV_to_JsonbValue(SV *in, JsonbInState *jsonb_state, bool is_elem);
 
 
 static SV  *

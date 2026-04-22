@@ -205,7 +205,7 @@ static void prune_freeze_setup(PruneFreezeParams *params,
 							   PruneState *prstate);
 static void heap_page_fix_vm_corruption(PruneState *prstate,
 										OffsetNumber offnum,
-										VMCorruptionType ctype);
+										VMCorruptionType corruption_type);
 static void prune_freeze_fast_path(PruneState *prstate,
 								   PruneFreezeResult *presult);
 static void prune_freeze_plan(PruneState *prstate,

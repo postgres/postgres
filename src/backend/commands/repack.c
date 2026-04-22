@@ -180,7 +180,7 @@ static void adjust_toast_pointers(Relation relation, TupleTableSlot *dest,
 								  TupleTableSlot *src);
 static bool find_target_tuple(Relation rel, ChangeContext *chgcxt,
 							  TupleTableSlot *locator,
-							  TupleTableSlot *received);
+							  TupleTableSlot *retrieved);
 static void process_concurrent_changes(XLogRecPtr end_of_wal,
 									   ChangeContext *chgcxt,
 									   bool done);

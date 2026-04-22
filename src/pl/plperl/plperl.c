@@ -248,7 +248,7 @@ static plperl_call_data *current_call_data = NULL;
  **********************************************************************/
 
 static PerlInterpreter *plperl_init_interp(void);
-static void plperl_destroy_interp(PerlInterpreter **);
+static void plperl_destroy_interp(PerlInterpreter **interp);
 static void plperl_fini(int code, Datum arg);
 static void set_interp_require(bool trusted);
 
@@ -284,12 +284,14 @@ static Datum plperl_hash_to_datum(SV *src, TupleDesc td);
 static void plperl_init_shared_libs(pTHX);
 static void plperl_trusted_init(void);
 static void plperl_untrusted_init(void);
-static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, uint64, int);
+static HV  *plperl_spi_execute_fetch_result(SPITupleTable *tuptable,
+											uint64 processed, int status);
 static void plperl_return_next_internal(SV *sv);
 static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
-static void plperl_create_sub(plperl_proc_desc *desc, const char *s, Oid fn_oid);
+static void plperl_create_sub(plperl_proc_desc *prodesc, const char *s,
+							  Oid fn_oid);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc,
 								  FunctionCallInfo fcinfo);
 static void plperl_compile_callback(void *arg);

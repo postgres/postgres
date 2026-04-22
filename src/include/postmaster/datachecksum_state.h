@@ -37,7 +37,7 @@ typedef enum
 } DataChecksumsWorkerResult;
 
 /* Prototypes for data checksum state manipulation */
-bool		AbsorbDataChecksumsBarrier(ProcSignalBarrierType target_state);
+bool		AbsorbDataChecksumsBarrier(ProcSignalBarrierType barrier);
 void		EmitAndWaitDataChecksumsBarrier(uint32 state);
 
 /* Prototypes for data checksum background worker */

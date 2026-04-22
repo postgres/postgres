@@ -32,6 +32,6 @@ extern OldMultiXactReader *AllocOldMultiXactRead(char *pgdata,
 extern bool GetOldMultiXactIdSingleMember(OldMultiXactReader *state,
 										  MultiXactId multi,
 										  MultiXactMember *member);
-extern void FreeOldMultiXactReader(OldMultiXactReader *reader);
+extern void FreeOldMultiXactReader(OldMultiXactReader *state);
 
 #endif							/* MULTIXACT_READ_V18_H */

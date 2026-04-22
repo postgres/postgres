@@ -47,9 +47,9 @@ static void errdetail_apply_conflict(EState *estate,
 									 TimestampTz localts, StringInfo err_msg);
 static void get_tuple_desc(EState *estate, ResultRelInfo *relinfo,
 						   ConflictType type, char **key_desc,
-						   TupleTableSlot *searchslot, char **search_desc,
 						   TupleTableSlot *localslot, char **local_desc,
 						   TupleTableSlot *remoteslot, char **remote_desc,
+						   TupleTableSlot *searchslot, char **search_desc,
 						   Oid indexoid);
 static char *build_index_value_desc(EState *estate, Relation localrel,
 									TupleTableSlot *slot, Oid indexoid);

@@ -27,7 +27,7 @@ static void repack_begin_txn(LogicalDecodingContext *ctx,
 static void repack_commit_txn(LogicalDecodingContext *ctx,
 							  ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void repack_process_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
-								  Relation rel, ReorderBufferChange *change);
+								  Relation relation, ReorderBufferChange *change);
 static void repack_store_change(LogicalDecodingContext *ctx, Relation relation,
 								ConcurrentChangeKind kind, HeapTuple tuple);
 

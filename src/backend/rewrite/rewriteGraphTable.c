@@ -92,7 +92,7 @@ struct path_element
 static Node *replace_property_refs(Oid propgraphid, Node *node, const List *mappings);
 static List *build_edge_vertex_link_quals(HeapTuple edgetup, int edgerti, int refrti, Oid refid, AttrNumber catalog_key_attnum, AttrNumber catalog_ref_attnum, AttrNumber catalog_eqop_attnum);
 static List *generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern);
-static Query *generate_query_for_graph_path(RangeTblEntry *rte, List *path);
+static Query *generate_query_for_graph_path(RangeTblEntry *rte, List *graph_path);
 static Node *generate_setop_from_pathqueries(List *pathqueries, List **rtable, List **targetlist);
 static List *generate_queries_for_path_pattern_recurse(RangeTblEntry *rte, List *pathqueries, List *cur_path, List *path_elem_lists, int elempos);
 static Query *generate_query_for_empty_path_pattern(RangeTblEntry *rte);

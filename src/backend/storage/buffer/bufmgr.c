@@ -685,7 +685,7 @@ static inline int BufferLockDisownInternal(Buffer buffer, BufferDesc *buf_hdr);
 static inline bool BufferLockAttempt(BufferDesc *buf_hdr, BufferLockMode mode);
 static void BufferLockQueueSelf(BufferDesc *buf_hdr, BufferLockMode mode);
 static void BufferLockDequeueSelf(BufferDesc *buf_hdr);
-static void BufferLockWakeup(BufferDesc *buf_hdr, bool unlocked);
+static void BufferLockWakeup(BufferDesc *buf_hdr, bool wake_exclusive);
 static void BufferLockProcessRelease(BufferDesc *buf_hdr, BufferLockMode mode, uint64 lockstate);
 static inline uint64 BufferLockReleaseSub(BufferLockMode mode);
 

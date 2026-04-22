@@ -86,7 +86,7 @@ static struct pg_tm *gmtsub(pg_time_t const *timep, int_fast32_t offset,
 							struct pg_tm *tmp);
 static bool increment_overflow(int *ip, int j);
 static bool increment_overflow_time(pg_time_t *tp, int_fast32_t j);
-static int_fast64_t leapcorr(struct state const *sp, pg_time_t);
+static int_fast64_t leapcorr(struct state const *sp, pg_time_t t);
 static struct pg_tm *timesub(pg_time_t const *timep,
 							 int_fast32_t offset, struct state const *sp,
 							 struct pg_tm *tmp);

@@ -274,7 +274,7 @@ extern void sepgsql_object_relabel(const ObjectAddress *object,
 /*
  * dml.c
  */
-extern bool sepgsql_dml_privileges(List *rangeTabls, List *rteperminfos,
+extern bool sepgsql_dml_privileges(List *rangeTbls, List *rteperminfos,
 								   bool abort_on_violation);
 
 /*
