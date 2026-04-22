@@ -297,9 +297,9 @@ static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
 							int tgkind);
-static const RI_ConstraintInfo *ri_FetchConstraintInfo(Trigger *trigger,
-													   Relation trig_rel, bool rel_is_pk);
-static const RI_ConstraintInfo *ri_LoadConstraintInfo(Oid constraintOid);
+static RI_ConstraintInfo *ri_FetchConstraintInfo(Trigger *trigger,
+												 Relation trig_rel, bool rel_is_pk);
+static RI_ConstraintInfo *ri_LoadConstraintInfo(Oid constraintOid);
 static Oid	get_ri_constraint_root(Oid constrOid);
 static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 							   RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel);
@@ -309,12 +309,12 @@ static bool ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 							TupleTableSlot *oldslot, TupleTableSlot *newslot,
 							bool is_restrict,
 							bool detectNewRows, int expect_OK);
-static void ri_FastPathCheck(const RI_ConstraintInfo *riinfo,
+static void ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 							 Relation fk_rel, TupleTableSlot *newslot);
-static void ri_FastPathBatchAdd(const RI_ConstraintInfo *riinfo,
+static void ri_FastPathBatchAdd(RI_ConstraintInfo *riinfo,
 								Relation fk_rel, TupleTableSlot *newslot);
 static void ri_FastPathBatchFlush(RI_FastPathEntry *fpentry, Relation fk_rel,
-								  const RI_ConstraintInfo *riinfo);
+								  RI_ConstraintInfo *riinfo);
 static int	ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 								  const RI_ConstraintInfo *riinfo, Relation fk_rel,
 								  Snapshot snapshot, IndexScanDesc scandesc);
@@ -357,7 +357,7 @@ static void ri_FastPathTeardown(void);
 static Datum
 RI_FKey_check(TriggerData *trigdata)
 {
-	const RI_ConstraintInfo *riinfo;
+	RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
 	TupleTableSlot *newslot;
@@ -2341,11 +2341,11 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 /*
  * Fetch the RI_ConstraintInfo struct for the trigger's FK constraint.
  */
-static const RI_ConstraintInfo *
+static RI_ConstraintInfo *
 ri_FetchConstraintInfo(Trigger *trigger, Relation trig_rel, bool rel_is_pk)
 {
 	Oid			constraintOid = trigger->tgconstraint;
-	const RI_ConstraintInfo *riinfo;
+	RI_ConstraintInfo *riinfo;
 
 	/*
 	 * Check that the FK constraint's OID is available; it might not be if
@@ -2395,7 +2395,7 @@ ri_FetchConstraintInfo(Trigger *trigger, Relation trig_rel, bool rel_is_pk)
 /*
  * Fetch or create the RI_ConstraintInfo struct for an FK constraint.
  */
-static const RI_ConstraintInfo *
+static RI_ConstraintInfo *
 ri_LoadConstraintInfo(Oid constraintOid)
 {
 	RI_ConstraintInfo *riinfo;
@@ -2777,7 +2777,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
  * ri_FastPathBatchAdd().
  */
 static void
-ri_FastPathCheck(const RI_ConstraintInfo *riinfo,
+ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 				 Relation fk_rel, TupleTableSlot *newslot)
 {
 	Relation	pk_rel;
@@ -2820,8 +2820,7 @@ ri_FastPathCheck(const RI_ConstraintInfo *riinfo,
 	{
 		/* Reload to ensure it's valid. */
 		riinfo = ri_LoadConstraintInfo(riinfo->constraint_id);
-		ri_populate_fastpath_metadata((RI_ConstraintInfo *) riinfo,
-									  fk_rel, idx_rel);
+		ri_populate_fastpath_metadata(riinfo, fk_rel, idx_rel);
 	}
 	Assert(riinfo->fpmeta);
 	ri_ExtractValues(fk_rel, newslot, riinfo, false, pk_vals, pk_nulls);
@@ -2857,7 +2856,7 @@ ri_FastPathCheck(const RI_ConstraintInfo *riinfo,
  * ri_FastPathEndBatch().
  */
 static void
-ri_FastPathBatchAdd(const RI_ConstraintInfo *riinfo,
+ri_FastPathBatchAdd(RI_ConstraintInfo *riinfo,
 					Relation fk_rel, TupleTableSlot *newslot)
 {
 	RI_FastPathEntry *fpentry = ri_FastPathGetEntry(riinfo, fk_rel);
@@ -2884,7 +2883,7 @@ ri_FastPathBatchAdd(const RI_ConstraintInfo *riinfo,
  */
 static void
 ri_FastPathBatchFlush(RI_FastPathEntry *fpentry, Relation fk_rel,
-					  const RI_ConstraintInfo *riinfo)
+					  RI_ConstraintInfo *riinfo)
 {
 	Relation	pk_rel = fpentry->pk_rel;
 	Relation	idx_rel = fpentry->idx_rel;
@@ -2941,8 +2940,7 @@ ri_FastPathBatchFlush(RI_FastPathEntry *fpentry, Relation fk_rel,
 	{
 		/* Reload to ensure it's valid. */
 		riinfo = ri_LoadConstraintInfo(riinfo->constraint_id);
-		ri_populate_fastpath_metadata((RI_ConstraintInfo *) riinfo,
-									  fk_rel, idx_rel);
+		ri_populate_fastpath_metadata(riinfo, fk_rel, idx_rel);
 	}
 	Assert(riinfo->fpmeta);
 
@@ -4147,7 +4145,7 @@ ri_FastPathEndBatch(void *arg)
 		if (entry->batch_count > 0)
 		{
 			Relation	fk_rel = table_open(entry->fk_relid, AccessShareLock);
-			const RI_ConstraintInfo *riinfo = ri_LoadConstraintInfo(entry->conoid);
+			RI_ConstraintInfo *riinfo = ri_LoadConstraintInfo(entry->conoid);
 
 			ri_FastPathBatchFlush(entry, fk_rel, riinfo);
 			table_close(fk_rel, NoLock);
