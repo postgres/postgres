@@ -2079,9 +2079,32 @@ FindAffixes(AffixNode *node, const char *word, int wrdlen, int *level, int type)
 	return NULL;
 }
 
+/*
+ * Checks to see if affix applies to word, transforms word if so.
+ * The transformation consists of replacing Affix->replen leading or
+ * trailing bytes with the Affix->find string.
+ *
+ * word: input word
+ * len: length of input word
+ * Affix: affix to consider
+ * flagflags: context flags showing whether we are handling a compound word
+ * newword: output buffer (MUST be of length 2 * MAXNORMLEN)
+ * baselen: input/output argument
+ *
+ * If baselen isn't NULL, then *baselen is used to return the length of
+ * the non-changed part of the word when applying a suffix, and is used
+ * to detect whether the input contained only a prefix and suffix when
+ * later applying a prefix.
+ *
+ * Returns newword on success, or NULL if the affix can't be applied.
+ * On success, the modified word is stored into newword.
+ */
 static char *
 CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *newword, int *baselen)
 {
+	size_t		keeplen,
+				findlen;
+
 	/*
 	 * Check compound allow flags
 	 */
@@ -2115,14 +2138,26 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 	}
 
 	/*
+	 * Protect against output buffer overrun (len < Affix->replen would be
+	 * caller error, but check anyway)
+	 */
+	Assert(len == strlen(word));
+	if (len < Affix->replen)
+		return NULL;
+	keeplen = len - Affix->replen;	/* how much of word we will keep */
+	findlen = strlen(Affix->find);
+	if (keeplen + findlen >= 2 * MAXNORMLEN)
+		return NULL;
+
+	/*
 	 * make replace pattern of affix
 	 */
 	if (Affix->type == FF_SUFFIX)
 	{
-		strcpy(newword, word);
-		strcpy(newword + len - Affix->replen, Affix->find);
+		memcpy(newword, word, keeplen);
+		strcpy(newword + keeplen, Affix->find);
 		if (baselen)			/* store length of non-changed part of word */
-			*baselen = len - Affix->replen;
+			*baselen = keeplen;
 	}
 	else
 	{
@@ -2130,10 +2165,10 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 		 * if prefix is an all non-changed part's length then all word
 		 * contains only prefix and suffix, so out
 		 */
-		if (baselen && *baselen + strlen(Affix->find) <= Affix->replen)
+		if (baselen && *baselen + findlen <= Affix->replen)
 			return NULL;
-		strcpy(newword, Affix->find);
-		strcat(newword, word + Affix->replen);
+		memcpy(newword, Affix->find, findlen);
+		strcpy(newword + findlen, word + Affix->replen);
 	}
 
 	/*
