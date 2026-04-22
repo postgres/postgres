@@ -2200,6 +2200,7 @@ PartitionDirectoryEntry
 PartitionDispatch
 PartitionElem
 PartitionHashBound
+PartitionIndexExtDepEntry
 PartitionKey
 PartitionListValue
 PartitionMap

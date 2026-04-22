@@ -88,3 +88,107 @@ DROP FUNCTION b();
 DROP MATERIALIZED VIEW d;
 DROP INDEX e;
 DROP SCHEMA test_ext CASCADE;
+
+-- Fifth test: extension dependencies on partition indexes survive MERGE and
+-- SPLIT PARTITION operations, and mismatches between source partitions are
+-- reported.
+RESET search_path;
+CREATE EXTENSION test_ext3;
+CREATE EXTENSION test_ext5;
+
+CREATE TABLE part_extdep (i int, x int) PARTITION BY RANGE (i);
+CREATE TABLE part_extdep_1 PARTITION OF part_extdep FOR VALUES FROM (1) TO (2);
+CREATE TABLE part_extdep_2 PARTITION OF part_extdep FOR VALUES FROM (2) TO (3);
+CREATE TABLE part_extdep_3 PARTITION OF part_extdep FOR VALUES FROM (3) TO (4);
+CREATE TABLE part_extdep_4 PARTITION OF part_extdep FOR VALUES FROM (4) TO (5);
+CREATE TABLE part_extdep_5 PARTITION OF part_extdep FOR VALUES FROM (5) TO (6);
+CREATE INDEX part_extdep_i_idx ON part_extdep(i);
+CREATE INDEX part_extdep_x_idx ON part_extdep(x);
+
+-- Partitions 1, 2, 3 depend on the same two extensions.
+ALTER INDEX part_extdep_1_i_idx DEPENDS ON EXTENSION test_ext3;
+ALTER INDEX part_extdep_1_x_idx DEPENDS ON EXTENSION test_ext5;
+ALTER INDEX part_extdep_2_i_idx DEPENDS ON EXTENSION test_ext3;
+ALTER INDEX part_extdep_2_x_idx DEPENDS ON EXTENSION test_ext5;
+ALTER INDEX part_extdep_3_i_idx DEPENDS ON EXTENSION test_ext3;
+ALTER INDEX part_extdep_3_x_idx DEPENDS ON EXTENSION test_ext5;
+
+-- Partition 4 depends on a different extension on one index.
+ALTER INDEX part_extdep_4_i_idx DEPENDS ON EXTENSION test_ext5;
+
+-- Partition 5 has no dependency at all.
+
+-- Merge matching partitions: should succeed and preserve dependencies on the
+-- new partition's indexes (DROP EXTENSION must fail, naming the new index).
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_1, part_extdep_2)
+    INTO part_extdep_merged;
+DROP EXTENSION test_ext3;
+SELECT c.relname, e.extname
+FROM pg_depend d
+JOIN pg_class c ON d.objid = c.oid
+JOIN pg_extension e ON d.refobjid = e.oid
+WHERE c.relname IN ('part_extdep_merged_i_idx', 'part_extdep_merged_x_idx')
+  AND e.extname IN ('test_ext3', 'test_ext5')
+  AND d.deptype = 'x'
+ORDER BY c.relname, e.extname;
+
+-- An index created directly on a partition has no parent in the partitioned
+-- index tree.  Such an index is dropped with its old partition during merge,
+-- and any extension dependency it carries goes away with it: the dep is not
+-- promoted to the merged partition.  Verify by attaching test_ext9 to such
+-- an orphan index, merging, and observing that test_ext9 becomes droppable.
+CREATE EXTENSION test_ext9;
+CREATE INDEX part_extdep_3_extra_idx ON part_extdep_3(x);
+ALTER INDEX part_extdep_3_extra_idx DEPENDS ON EXTENSION test_ext9;
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_merged, part_extdep_3)
+    INTO part_extdep_merged2;
+DROP EXTENSION test_ext9;
+
+-- Mismatched dependencies: partition 4's index depends on a different
+-- extension than partition_merged2's. Both orderings must fail, and the
+-- error must cite both partition indexes.
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_merged2, part_extdep_4)
+    INTO part_extdep_bad;
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_4, part_extdep_merged2)
+    INTO part_extdep_bad;
+
+-- Empty vs non-empty dependency set (the subset case the earlier linear
+-- check missed in one direction).
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_4, part_extdep_5)
+    INTO part_extdep_bad;
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_5, part_extdep_4)
+    INTO part_extdep_bad;
+
+-- Subset: partition 5's i_idx depends on a strict superset of partition 4's
+-- i_idx dependencies. Partition 4 = {test_ext5}, partition 5 will be
+-- {test_ext3, test_ext5}. Both orderings must fail; in particular the case
+-- where the first partition we walk has fewer extensions than the second
+-- must still be rejected.
+ALTER INDEX part_extdep_5_i_idx DEPENDS ON EXTENSION test_ext3;
+ALTER INDEX part_extdep_5_i_idx DEPENDS ON EXTENSION test_ext5;
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_4, part_extdep_5)
+    INTO part_extdep_bad;
+ALTER TABLE part_extdep MERGE PARTITIONS (part_extdep_5, part_extdep_4)
+    INTO part_extdep_bad;
+-- Reset partition 5 so it doesn't interfere with the SPLIT test below.
+ALTER INDEX part_extdep_5_i_idx NO DEPENDS ON EXTENSION test_ext3;
+ALTER INDEX part_extdep_5_i_idx NO DEPENDS ON EXTENSION test_ext5;
+
+-- Split: the single source partition's dependencies must appear on every
+-- new partition's matching index, identified by extension name.
+ALTER TABLE part_extdep SPLIT PARTITION part_extdep_merged2 INTO
+    (PARTITION part_extdep_s1 FOR VALUES FROM (1) TO (3),
+     PARTITION part_extdep_s2 FOR VALUES FROM (3) TO (4));
+SELECT c.relname, e.extname
+FROM pg_depend d
+JOIN pg_class c ON d.objid = c.oid
+JOIN pg_extension e ON d.refobjid = e.oid
+WHERE c.relname IN ('part_extdep_s1_i_idx', 'part_extdep_s1_x_idx',
+                    'part_extdep_s2_i_idx', 'part_extdep_s2_x_idx')
+  AND e.extname IN ('test_ext3', 'test_ext5')
+  AND d.deptype = 'x'
+ORDER BY c.relname, e.extname;
+
+DROP TABLE part_extdep;
+DROP EXTENSION test_ext3;
+DROP EXTENSION test_ext5;

@@ -1255,6 +1255,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       (see <xref linkend="ddl-depend"/>).
      </para>
 
+     <para>
+      Extension dependencies on partition indexes (created via
+      <link linkend="sql-alterindex"><command>ALTER INDEX ... DEPENDS ON
+      EXTENSION</command></link>) are preserved during merge operations.
+      All source partition indexes must have the same extension dependencies;
+      if they differ, an error is raised. This ensures that extension
+      dependencies are not silently lost during merge.
+     </para>
+
      <note>
       <para>
        Merging partitions acquires an <literal>ACCESS EXCLUSIVE</literal> lock on
@@ -1340,6 +1349,14 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       (using <literal>RESTRICT</literal> mode) too;  therefore, if any objects
       are still dependent on it, <command>ALTER TABLE SPLIT PARTITION</command>
       would fail (see <xref linkend="ddl-depend"/>).
+     </para>
+
+     <para>
+      Extension dependencies on partition indexes (created via
+      <link linkend="sql-alterindex"><command>ALTER INDEX ... DEPENDS ON
+      EXTENSION</command></link>) are preserved during split operations.
+      The new partitions' indexes will inherit the extension dependencies
+      from the source partition's indexes.
      </para>
 
      <note>
