@@ -929,3 +929,18 @@ insert into gtest34p values (1, 7)
 insert into gtest34p values (1, 2)
     on conflict (id) do update set a = gtest34p.c + excluded.c returning *;
 drop table gtest34p;
+
+-- Ensure that virtual generated columns work with WHERE CURRENT OF
+create table gtest_cursor (id int primary key, a int, b int generated always as (a * 2) virtual);
+insert into gtest_cursor values (1, 10), (2, 20), (3, 30);
+
+begin;
+declare curs cursor for select * from gtest_cursor order by id for update;
+fetch 1 from curs;
+update gtest_cursor set a = 99 where current of curs;
+select * from gtest_cursor order by id;
+delete from gtest_cursor where current of curs;
+select * from gtest_cursor order by id;
+commit;
+
+drop table gtest_cursor;

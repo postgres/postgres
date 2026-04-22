@@ -1740,3 +1740,33 @@ insert into gtest34p values (1, 2)
 (1 row)
 
 drop table gtest34p;
+-- Ensure that virtual generated columns work with WHERE CURRENT OF
+create table gtest_cursor (id int primary key, a int, b int generated always as (a * 2) virtual);
+insert into gtest_cursor values (1, 10), (2, 20), (3, 30);
+begin;
+declare curs cursor for select * from gtest_cursor order by id for update;
+fetch 1 from curs;
+ id | a  | b  
+----+----+----
+  1 | 10 | 20
+(1 row)
+
+update gtest_cursor set a = 99 where current of curs;
+select * from gtest_cursor order by id;
+ id | a  |  b  
+----+----+-----
+  1 | 99 | 198
+  2 | 20 |  40
+  3 | 30 |  60
+(3 rows)
+
+delete from gtest_cursor where current of curs;
+select * from gtest_cursor order by id;
+ id | a  | b  
+----+----+----
+  2 | 20 | 40
+  3 | 30 | 60
+(2 rows)
+
+commit;
+drop table gtest_cursor;
