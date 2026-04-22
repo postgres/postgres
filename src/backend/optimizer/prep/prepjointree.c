@@ -994,6 +994,7 @@ expand_virtual_generated_columns(PlannerInfo *root)
 		{
 			List	   *tlist = NIL;
 			pullup_replace_vars_context rvcontext;
+			List	   *save_exclRelTlist = NIL;
 
 			for (int i = 0; i < tupdesc->natts; i++)
 			{
@@ -1061,8 +1062,26 @@ expand_virtual_generated_columns(PlannerInfo *root)
 
 			/*
 			 * Apply pullup variable replacement throughout the query tree.
+			 *
+			 * We intentionally do not touch the EXCLUDED pseudo-relation's
+			 * targetlist here.  Various places in the planner assume that it
+			 * contains only Vars, and we want that to remain the case.  More
+			 * importantly, we don't want setrefs.c to turn any expanded
+			 * EXCLUDED.virtual_column expressions in other parts of the query
+			 * back into Vars referencing the original virtual column, which
+			 * set_plan_refs() would do if exclRelTlist contained matching
+			 * expressions.
 			 */
+			if (parse->onConflict)
+			{
+				save_exclRelTlist = parse->onConflict->exclRelTlist;
+				parse->onConflict->exclRelTlist = NIL;
+			}
+
 			parse = (Query *) pullup_replace_vars((Node *) parse, &rvcontext);
+
+			if (parse->onConflict)
+				parse->onConflict->exclRelTlist = save_exclRelTlist;
 		}
 
 		table_close(rel, NoLock);
