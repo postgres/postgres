@@ -246,6 +246,65 @@ select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 drop table idxpart;
 
+-- Verify that re-attaching an already-attached partition index can
+-- validate the parent index if it was still invalid, including
+-- indirect ancestors in subpartitions.
+create table idxpart (a int, b int) partition by range (a);
+create table idxpart1 partition of idxpart for values from (0) to (1000) partition by range (a);
+create table idxpart11 partition of idxpart1 for values from (0) to (500);
+-- Partitioned table with no partitions
+create table idxpart2 partition of idxpart for values from (1000) to (2000) partition by range (a);
+-- create parent indexes
+create index on only idxpart ((a/b));
+create index on only idxpart1 ((a/b));
+create index on only idxpart2 ((a/b));
+-- fail, leaves behind an invalid index on the leaf partition
+insert into idxpart11 values (1, 0);
+create index concurrently on idxpart11 ((a/b));
+select relname, indisvalid from pg_class join pg_index on indexrelid = oid
+   where relname like 'idxpart%' order by relname;
+-- attach the indexes; parents stay invalid
+alter index idxpart1_expr_idx attach partition idxpart11_expr_idx;
+alter index idxpart_expr_idx attach partition idxpart1_expr_idx;
+alter index idxpart_expr_idx attach partition idxpart2_expr_idx;
+select relname, indisvalid from pg_class join pg_index on indexrelid = oid
+   where relname like 'idxpart%' order by relname;
+-- fix the index on the leaf partition
+delete from idxpart11 where b = 0;
+reindex index concurrently idxpart11_expr_idx;
+-- reattach the leaf partition index; parents should now be valid
+alter index idxpart1_expr_idx attach partition idxpart11_expr_idx;
+select relname, indisvalid from pg_class join pg_index on indexrelid = oid
+   where relname like 'idxpart%' order by relname;
+drop table idxpart;
+
+-- Verify that re-attaching does not validate the parent when another
+-- child index is still invalid.
+create table idxpart (a int, b int) partition by range (a);
+create table idxpart1 partition of idxpart for values from (0) to (500);
+create table idxpart2 partition of idxpart for values from (500) to (1000);
+create index on only idxpart ((a/b));
+-- create invalid indexes on both children
+insert into idxpart1 values (1, 0);
+insert into idxpart2 values (501, 0);
+create index concurrently on idxpart1 ((a/b));
+create index concurrently on idxpart2 ((a/b));
+select relname, indisvalid from pg_class join pg_index on indexrelid = oid
+   where relname like 'idxpart%' order by relname;
+-- attach both; parent stays invalid
+alter index idxpart_expr_idx attach partition idxpart1_expr_idx;
+alter index idxpart_expr_idx attach partition idxpart2_expr_idx;
+select relname, indisvalid from pg_class join pg_index on indexrelid = oid
+   where relname like 'idxpart%' order by relname;
+-- fix only idxpart1's index, leave idxpart2's still invalid
+delete from idxpart1 where b = 0;
+reindex index concurrently idxpart1_expr_idx;
+-- re-attach the fixed child; parent should stay invalid
+alter index idxpart_expr_idx attach partition idxpart1_expr_idx;
+select relname, indisvalid from pg_class join pg_index on indexrelid = oid
+   where relname like 'idxpart%' order by relname;
+drop table idxpart;
+
 -- verify dependency handling during ALTER TABLE DETACH PARTITION
 create table idxpart (a int) partition by range (a);
 create table idxpart1 (like idxpart);
