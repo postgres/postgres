@@ -508,6 +508,11 @@ DECLARE c1 CURSOR FOR SELECT * FROM ucview;
 FETCH FROM c1;
 DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
 ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM ucview;
+FETCH FROM c1;
+UPDATE ucview SET f1 = f1 + 10 WHERE CURRENT OF c1; -- fail, views not supported
+ROLLBACK;
 
 -- Check WHERE CURRENT OF with an index-only scan
 BEGIN;

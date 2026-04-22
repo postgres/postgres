@@ -1514,25 +1514,6 @@ replace_rte_variables_mutator(Node *node,
 		}
 		/* otherwise fall through to copy the var normally */
 	}
-	else if (IsA(node, CurrentOfExpr))
-	{
-		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
-
-		if (cexpr->cvarno == context->target_varno &&
-			context->sublevels_up == 0)
-		{
-			/*
-			 * We get here if a WHERE CURRENT OF expression turns out to apply
-			 * to a view.  Someday we might be able to translate the
-			 * expression to apply to an underlying table of the view, but
-			 * right now it's not implemented.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("WHERE CURRENT OF on a view is not implemented")));
-		}
-		/* otherwise fall through to copy the expr normally */
-	}
 	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */

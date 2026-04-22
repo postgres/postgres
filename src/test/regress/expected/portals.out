@@ -1336,6 +1336,17 @@ FETCH FROM c1;
 DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
 ERROR:  WHERE CURRENT OF on a view is not implemented
 ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM ucview;
+FETCH FROM c1;
+ f1 |  f2   
+----+-------
+ 13 | three
+(1 row)
+
+UPDATE ucview SET f1 = f1 + 10 WHERE CURRENT OF c1; -- fail, views not supported
+ERROR:  WHERE CURRENT OF on a view is not implemented
+ROLLBACK;
 -- Check WHERE CURRENT OF with an index-only scan
 BEGIN;
 EXPLAIN (costs off)
