@@ -75,8 +75,8 @@ typedef struct PGLZ_Strategy
  *									output would be larger than input.
  * ----------
  */
-extern const PGLZ_Strategy *const PGLZ_strategy_default;
-extern const PGLZ_Strategy *const PGLZ_strategy_always;
+extern PGDLLIMPORT const PGLZ_Strategy *const PGLZ_strategy_default;
+extern PGDLLIMPORT const PGLZ_Strategy *const PGLZ_strategy_always;
 
 
 /* ----------
