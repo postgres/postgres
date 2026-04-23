@@ -262,8 +262,8 @@ trigram_qsort(trgm *array, size_t n)
 static inline int
 CMPTRGM_EQ(const void *a, const void *b)
 {
-	char	   *aa = (char *) a;
-	char	   *bb = (char *) b;
+	const char *aa = a;
+	const char *bb = b;
 
 	return aa[0] != bb[0] || aa[1] != bb[1] || aa[2] != bb[2] ? 1 : 0;
 }
