@@ -504,11 +504,15 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		CheckAttributeType(NameStr(TupleDescAttr(tupdesc, i)->attname),
-						   TupleDescAttr(tupdesc, i)->atttypid,
-						   TupleDescAttr(tupdesc, i)->attcollation,
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+		if (attr->attisdropped)
+			continue;
+		CheckAttributeType(NameStr(attr->attname),
+						   attr->atttypid,
+						   attr->attcollation,
 						   NIL, /* assume we're creating a new rowtype */
-						   flags | (TupleDescAttr(tupdesc, i)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL ? CHKATYPE_IS_VIRTUAL : 0));
+						   flags | (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL ? CHKATYPE_IS_VIRTUAL : 0));
 	}
 }
 
