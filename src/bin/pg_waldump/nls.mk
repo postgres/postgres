@@ -1,6 +1,7 @@
 # src/bin/pg_waldump/nls.mk
 CATALOG_NAME     = pg_waldump
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
+                   archive_waldump.c \
                    pg_waldump.c \
                    xlogreader.c \
                    xlogstats.c \

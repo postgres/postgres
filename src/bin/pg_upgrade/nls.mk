@@ -7,11 +7,14 @@ GETTEXT_FILES    = check.c \
                    file.c \
                    function.c \
                    info.c \
+                   multixact_read_v18.c \
+                   multixact_rewrite.c \
                    option.c \
                    parallel.c \
                    pg_upgrade.c \
                    relfilenumber.c \
                    server.c \
+                   slru_io.c \
                    tablespace.c \
                    task.c \
                    util.c \
@@ -21,7 +24,8 @@ GETTEXT_FILES    = check.c \
                    ../../common/restricted_token.c \
                    ../../common/username.c \
                    ../../fe_utils/option_utils.c \
-                   ../../fe_utils/string_utils.c
+                   ../../fe_utils/string_utils.c \
+                   ../../fe_utils/version.c
 GETTEXT_TRIGGERS = pg_fatal \
                    pg_log:2 \
                    prep_status \

@@ -14,7 +14,8 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    ../../common/file_utils.c \
                    ../../common/jsonapi.c \
                    ../../common/parse_manifest.c \
-                   ../../fe_utils/option_utils.c
+                   ../../fe_utils/option_utils.c \
+                   ../../fe_utils/version.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
                    json_token_error:2 \
                    json_manifest_parse_failure:2 \

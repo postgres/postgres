@@ -5,6 +5,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    ../../common/controldata_utils.c \
                    ../../common/fe_memutils.c \
                    ../../common/file_utils.c \
-                   ../../fe_utils/option_utils.c
+                   ../../fe_utils/option_utils.c \
+                   ../../fe_utils/version.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS)
 GETTEXT_FLAGS    = $(FRONTEND_COMMON_GETTEXT_FLAGS)
