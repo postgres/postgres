@@ -537,11 +537,6 @@ SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM o
  clstrpart33 |     2 | r       | f
 (7 rows)
 
--- CONCURRENTLY doesn't like partitioned tables
-REPACK (CONCURRENTLY) clstrpart;
-ERROR:  REPACK (CONCURRENTLY) is not supported for partitioned tables
-HINT:  Consider running the command on individual partitions.
-DROP TABLE clstrpart;
 -- Ownership of partitions is checked
 CREATE TABLE ptnowner(i int unique not null) PARTITION BY LIST (i);
 CREATE INDEX ptnowner_i_idx ON ptnowner(i);
@@ -552,8 +547,6 @@ ALTER TABLE ptnowner1 OWNER TO regress_ptnowner;
 SET SESSION AUTHORIZATION regress_ptnowner;
 CLUSTER ptnowner USING ptnowner_i_idx;
 ERROR:  permission denied for table ptnowner
-ALTER TABLE ptnowner1 REPLICA IDENTITY USING INDEX ptnowner1_i_key;
-REPACK (CONCURRENTLY) ptnowner1;
 RESET SESSION AUTHORIZATION;
 ALTER TABLE ptnowner OWNER TO regress_ptnowner;
 CREATE TEMP TABLE ptnowner_oldnodes AS
@@ -562,30 +555,7 @@ CREATE TEMP TABLE ptnowner_oldnodes AS
 SET SESSION AUTHORIZATION regress_ptnowner;
 CLUSTER ptnowner USING ptnowner_i_idx;
 WARNING:  permission denied to execute CLUSTER on "ptnowner2", skipping it
--- still can't repack without a replica identity
-ALTER TABLE ptnowner1 REPLICA IDENTITY DEFAULT;
-REPACK (CONCURRENTLY) ptnowner1;
-ERROR:  cannot process relation "ptnowner1"
-HINT:  Relation "ptnowner1" has no identity index.
 RESET SESSION AUTHORIZATION;
-SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
-  JOIN ptnowner_oldnodes b USING (oid) ORDER BY a.relname COLLATE "C";
-  relname  | ?column? 
------------+----------
- ptnowner  | t
- ptnowner1 | f
- ptnowner2 | t
-(3 rows)
-
-SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
-  JOIN ptnowner_oldnodes b USING (oid) ORDER BY a.relname COLLATE "C";
-  relname  | ?column? 
------------+----------
- ptnowner  | t
- ptnowner1 | f
- ptnowner2 | t
-(3 rows)
-
 DROP TABLE ptnowner;
 DROP ROLE regress_ptnowner;
 -- Test CLUSTER with external tuplesorting
@@ -731,6 +701,10 @@ COMMIT;
 --
 -- REPACK
 --
+-- Note we cannot test working REPACK (CONCURRENTLY) here, because the
+-- tests are sometimes run with wal_level=minimal.  Tests for that appear
+-- elsewhere.
+--
 ----------------------------------------------------------------------
 -- REPACK handles individual tables identically to CLUSTER, but it's worth
 -- checking if it handles table hierarchies identically as well.
@@ -822,10 +796,14 @@ ORDER BY o.relname;
  clstr_3
 (2 rows)
 
--- concurrently
+-- concurrently disallowed in catalogs
 REPACK (CONCURRENTLY) pg_class;
 ERROR:  cannot repack relation "pg_class"
 HINT:  REPACK CONCURRENTLY is not supported for catalog relations.
+-- CONCURRENTLY doesn't like partitioned tables
+REPACK (CONCURRENTLY) clstrpart;
+ERROR:  REPACK (CONCURRENTLY) is not supported for partitioned tables
+HINT:  Consider running the command on individual partitions.
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
@@ -833,4 +811,5 @@ DROP TABLE clstr_2;
 DROP TABLE clstr_3;
 DROP TABLE clstr_4;
 DROP TABLE clstr_expression;
+DROP TABLE clstrpart;
 DROP USER regress_clstr_user;

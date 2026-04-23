@@ -34,6 +34,7 @@ tests += {
       'replorigin',
       'time',
       'messages',
+      'repack',
       'spill',
       'slot',
       'truncate',
