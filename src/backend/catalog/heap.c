@@ -509,9 +509,13 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		CheckAttributeType(NameStr(TupleDescAttr(tupdesc, i)->attname),
-						   TupleDescAttr(tupdesc, i)->atttypid,
-						   TupleDescAttr(tupdesc, i)->attcollation,
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+		if (attr->attisdropped)
+			continue;
+		CheckAttributeType(NameStr(attr->attname),
+						   attr->atttypid,
+						   attr->attcollation,
 						   NIL, /* assume we're creating a new rowtype */
 						   flags);
 	}
