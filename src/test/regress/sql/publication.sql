@@ -76,6 +76,8 @@ ALTER PUBLICATION testpub_fortable SET TABLES IN SCHEMA pub_test;
 
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_forschema FOR TABLES IN SCHEMA pub_test;
+\dn pub_test
+
 -- should be able to create publication with schema and table of the same
 -- schema
 CREATE PUBLICATION testpub_for_tbl_schema FOR TABLES IN SCHEMA pub_test, TABLE pub_test.testpub_nopk;

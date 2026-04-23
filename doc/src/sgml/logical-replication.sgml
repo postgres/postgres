@@ -1099,7 +1099,7 @@ Tables:
  c      | text    |           | not null |
 Indexes:
     "t1_pkey" PRIMARY KEY, btree (a, c)
-Publications:
+Included in publications:
     "p1" WHERE ((a > 5) AND (c = 'NSW'::text))
     "p2"
 
@@ -1112,7 +1112,7 @@ Publications:
  f      | integer |           |          |
 Indexes:
     "t2_pkey" PRIMARY KEY, btree (d)
-Publications:
+Included in publications:
     "p2" WHERE (e = 99)
     "p3" WHERE (d = 10)
 
@@ -1125,7 +1125,7 @@ Publications:
  i      | integer |           |          |
 Indexes:
     "t3_pkey" PRIMARY KEY, btree (g)
-Publications:
+Included in publications:
     "p3" WHERE (g = 10)
 ]]></programlisting></para>
 
@@ -1526,7 +1526,7 @@ Tables:
  e      | text    |           |          |
 Indexes:
     "t1_pkey" PRIMARY KEY, btree (id)
-Publications:
+Included in publications:
     "p1" (id, a, b, d)
 </programlisting></para>
 

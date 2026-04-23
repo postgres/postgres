@@ -4868,7 +4868,7 @@ alter table alter1.t1 set schema alter2;
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
-Publications:
+Included in publications:
     "pub1"
 
 drop publication pub1;

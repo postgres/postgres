@@ -1895,7 +1895,7 @@ describeOneTableDetails(const char *schemaname,
 
 				if (nrows > 0)
 				{
-					printfPQExpBuffer(&tmpbuf, _("Publications:"));
+					printfPQExpBuffer(&tmpbuf, _("Included in publications:"));
 					for (i = 0; i < nrows; i++)
 						appendPQExpBuffer(&tmpbuf, "\n    \"%s\"", PQgetvalue(result, i, 0));
 
@@ -3263,7 +3263,7 @@ describeOneTableDetails(const char *schemaname,
 				tuples = PQntuples(result);
 
 			if (tuples > 0)
-				printTableAddFooter(&cont, _("Publications:"));
+				printTableAddFooter(&cont, _("Included in publications:"));
 
 			/* Might be an empty set - that's ok */
 			for (i = 0; i < tuples; i++)
@@ -3306,7 +3306,7 @@ describeOneTableDetails(const char *schemaname,
 				tuples = PQntuples(result);
 
 			if (tuples > 0)
-				printTableAddFooter(&cont, _("Except publications:"));
+				printTableAddFooter(&cont, _("Excluded from publications:"));
 
 			/* Might be an empty set - that's ok */
 			for (i = 0; i < tuples; i++)
@@ -5533,11 +5533,11 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 		{
 			/*
 			 * Allocate memory for footers. Size of footers will be 1 (for
-			 * storing "Publications:" string) + publication schema mapping
-			 * count +  1 (for storing NULL).
+			 * storing "Included in publications:" string) + publication
+			 * schema mapping count + 1 (for storing NULL).
 			 */
 			footers = pg_malloc_array(char *, 1 + pub_schema_tuples + 1);
-			footers[0] = pg_strdup(_("Publications:"));
+			footers[0] = pg_strdup(_("Included in publications:"));
 
 			/* Might be an empty set - that's ok */
 			for (i = 0; i < pub_schema_tuples; i++)
