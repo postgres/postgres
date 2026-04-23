@@ -648,6 +648,16 @@ CheckAttributeType(const char *attname,
 						   containing_rowtypes,
 						   flags);
 	}
+	else if (att_typtype == TYPTYPE_MULTIRANGE)
+	{
+		/*
+		 * If it's a multirange, recurse to check its plain range type.
+		 */
+		CheckAttributeType(attname, get_multirange_range(atttypid),
+						   InvalidOid,	/* range types are not collatable */
+						   containing_rowtypes,
+						   flags);
+	}
 	else if (OidIsValid((att_typelem = get_element_type(atttypid))))
 	{
 		/*
