@@ -1938,7 +1938,7 @@ describeOneTableDetails(const char *schemaname,
 	 */
 	if (tableinfo.relkind == RELKIND_PROPGRAPH)
 	{
-		printQueryOpt myopt = pset.popt;
+		printQueryOpt popt = pset.popt;
 		char	   *footers[3] = {NULL, NULL, NULL};
 
 		printfPQExpBuffer(&buf, "/* %s */\n", _("Get property graph information"));
@@ -1993,12 +1993,12 @@ describeOneTableDetails(const char *schemaname,
 			}
 		}
 
-		myopt.footers = footers;
-		myopt.topt.default_footer = false;
-		myopt.title = title.data;
-		myopt.translate_header = true;
+		popt.footers = footers;
+		popt.topt.default_footer = false;
+		popt.title = title.data;
+		popt.translate_header = true;
 
-		printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+		printQuery(res, &popt, pset.queryFout, false, pset.logfile);
 
 		free(footers[0]);
 		free(footers[1]);

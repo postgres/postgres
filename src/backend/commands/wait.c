@@ -92,7 +92,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 		{
 			char	   *timeout_str;
 			const char *hintmsg;
-			double		result;
+			double		dval;
 
 			if (timeout_specified)
 				errorConflictingDefElem(defel, pstate);
@@ -100,7 +100,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 
 			timeout_str = defGetString(defel);
 
-			if (!parse_real(timeout_str, &result, GUC_UNIT_MS, &hintmsg))
+			if (!parse_real(timeout_str, &dval, GUC_UNIT_MS, &hintmsg))
 			{
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -113,20 +113,20 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 			 * don't fail on just-out-of-range values that would round into
 			 * range.
 			 */
-			result = rint(result);
+			dval = rint(dval);
 
 			/* Range check */
-			if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
+			if (unlikely(isnan(dval) || !FLOAT8_FITS_IN_INT64(dval)))
 				ereport(ERROR,
 						errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						errmsg("timeout value is out of range"));
 
-			if (result < 0)
+			if (dval < 0)
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("timeout cannot be negative"));
 
-			timeout = (int64) result;
+			timeout = (int64) dval;
 		}
 		else if (strcmp(defel->defname, "no_throw") == 0)
 		{

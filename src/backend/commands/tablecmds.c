@@ -22636,7 +22636,7 @@ createTableConstraints(List **wqueue, AlteredTableInfo *tab,
 		bool		ccvalid = constr->check[ccnum].ccvalid;
 		Node	   *ccbin_node;
 		bool		found_whole_row;
-		Constraint *constr;
+		Constraint *con;
 
 		/*
 		 * The partitioned table can not have a NO INHERIT check constraint
@@ -22658,19 +22658,19 @@ createTableConstraints(List **wqueue, AlteredTableInfo *tab,
 				 ccname,
 				 RelationGetRelationName(parent_rel));
 
-		constr = makeNode(Constraint);
-		constr->contype = CONSTR_CHECK;
-		constr->conname = pstrdup(ccname);
-		constr->deferrable = false;
-		constr->initdeferred = false;
-		constr->is_enforced = ccenforced;
-		constr->skip_validation = !ccvalid;
-		constr->initially_valid = ccvalid;
-		constr->is_no_inherit = ccnoinherit;
-		constr->raw_expr = NULL;
-		constr->cooked_expr = nodeToString(ccbin_node);
-		constr->location = -1;
-		constraints = lappend(constraints, constr);
+		con = makeNode(Constraint);
+		con->contype = CONSTR_CHECK;
+		con->conname = pstrdup(ccname);
+		con->deferrable = false;
+		con->initdeferred = false;
+		con->is_enforced = ccenforced;
+		con->skip_validation = !ccvalid;
+		con->initially_valid = ccvalid;
+		con->is_no_inherit = ccnoinherit;
+		con->raw_expr = NULL;
+		con->cooked_expr = nodeToString(ccbin_node);
+		con->location = -1;
+		constraints = lappend(constraints, con);
 	}
 
 	/* Install all CHECK constraints. */

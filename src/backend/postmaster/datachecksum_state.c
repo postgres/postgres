@@ -546,7 +546,7 @@ StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 {
 	BackgroundWorker bgw;
 	BackgroundWorkerHandle *bgw_handle;
-	bool		launcher_running;
+	bool		running;
 	DataChecksumsWorkerOperation launcher_running_op;
 
 #ifdef USE_ASSERT_CHECKING
@@ -565,8 +565,8 @@ StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 	DataChecksumState->launch_cost_limit = cost_limit;
 
 	/* Is the launcher already running? If so, what is it doing? */
-	launcher_running = DataChecksumState->launcher_running;
-	if (launcher_running)
+	running = DataChecksumState->launcher_running;
+	if (running)
 		launcher_running_op = DataChecksumState->operation;
 
 	LWLockRelease(DataChecksumsWorkerLock);
@@ -589,7 +589,7 @@ StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 	 * already in the desired state, i.e. if the checksums are already enabled
 	 * and you call pg_enable_data_checksums().
 	 */
-	if (!launcher_running)
+	if (!running)
 	{
 		/*
 		 * Prepare the BackgroundWorker and launch it.

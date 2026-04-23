@@ -83,7 +83,7 @@ static void buildShSecLabels(PGconn *conn,
 							 PQExpBuffer buffer);
 static void executeCommand(PGconn *conn, const char *query);
 static void check_for_invalid_global_names(PGconn *conn,
-										   SimpleStringList *database_exclude_names);
+										   SimpleStringList *excluded_names);
 static void expand_dbname_patterns(PGconn *conn, SimpleStringList *patterns,
 								   SimpleStringList *names);
 static void read_dumpall_filters(const char *filename, SimpleStringList *pattern);
@@ -2269,7 +2269,7 @@ executeCommand(PGconn *conn, const char *query)
  */
 static void
 check_for_invalid_global_names(PGconn *conn,
-							   SimpleStringList *database_exclude_names)
+							   SimpleStringList *excluded_names)
 {
 	PGresult   *res;
 	int			i;
@@ -2296,7 +2296,7 @@ check_for_invalid_global_names(PGconn *conn,
 
 		/* Skip excluded databases since they won't be in map.dat */
 		if (strcmp(objtype, "database") == 0 &&
-			simple_string_list_member(database_exclude_names, objname))
+			simple_string_list_member(excluded_names, objname))
 			continue;
 
 		if (strpbrk(objname, "\n\r"))
@@ -2406,29 +2406,27 @@ read_dumpall_filters(const char *filename, SimpleStringList *pattern)
 static ArchiveFormat
 parseDumpFormat(const char *format)
 {
-	ArchiveFormat archDumpFormat;
-
 	if (pg_strcasecmp(format, "c") == 0)
-		archDumpFormat = archCustom;
+		return archCustom;
 	else if (pg_strcasecmp(format, "custom") == 0)
-		archDumpFormat = archCustom;
+		return archCustom;
 	else if (pg_strcasecmp(format, "d") == 0)
-		archDumpFormat = archDirectory;
+		return archDirectory;
 	else if (pg_strcasecmp(format, "directory") == 0)
-		archDumpFormat = archDirectory;
+		return archDirectory;
 	else if (pg_strcasecmp(format, "p") == 0)
-		archDumpFormat = archNull;
+		return archNull;
 	else if (pg_strcasecmp(format, "plain") == 0)
-		archDumpFormat = archNull;
+		return archNull;
 	else if (pg_strcasecmp(format, "t") == 0)
-		archDumpFormat = archTar;
+		return archTar;
 	else if (pg_strcasecmp(format, "tar") == 0)
-		archDumpFormat = archTar;
+		return archTar;
 	else
 		pg_fatal("unrecognized output format \"%s\"; please specify \"c\", \"d\", \"p\", or \"t\"",
 				 format);
 
-	return archDumpFormat;
+	return archUnknown;
 }
 
 /*
