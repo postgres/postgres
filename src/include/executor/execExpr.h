@@ -641,6 +641,10 @@ typedef struct ExprEvalStep
 		{
 			bool		has_nulls;
 			bool		inclause;	/* true for IN and false for NOT IN */
+			bool		null_lhs_result;	/* for non-strict lookups, we
+											 * cache what looking up NULL
+											 * returns. */
+			bool		null_lhs_isnull;
 			struct ScalarArrayOpExprHashTable *elements_tab;
 			FmgrInfo   *finfo;	/* function's lookup data */
 			FunctionCallInfo fcinfo_data;	/* arguments etc */

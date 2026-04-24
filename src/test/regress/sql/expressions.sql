@@ -196,16 +196,108 @@ default for type myint using hash as
   function    1   myinthash(myint);
 
 create table inttest (a myint);
-insert into inttest values(1::myint),(null);
+insert into inttest values (null), (0::myint), (1::myint);
 
--- try an array with enough elements to cause hashing
-select * from inttest where a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint, null);
-select * from inttest where a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint, null);
-select * from inttest where a not in (0::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint, null);
--- ensure the result matched with the non-hashed version.  We simply remove
--- some array elements so that we don't reach the hashing threshold.
-select * from inttest where a in (1::myint,2::myint,3::myint,4::myint,5::myint, null);
-select * from inttest where a not in (1::myint,2::myint,3::myint,4::myint,5::myint, null);
-select * from inttest where a not in (0::myint,2::myint,3::myint,4::myint,5::myint, null);
+-- Test EEOP_HASHED_SCALARARRAYOP against EEOP_SCALARARRAYOP.  Ensure the
+-- result of non-hashed vs hashed is the same.
+select
+  a,
+  a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as not_hashed,
+  a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint) as hashed
+from inttest;
+
+select
+  a,
+  a in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed,
+  a in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed
+ from inttest;
+
+select
+  a,
+  a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as not_hashed,
+  a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint) as hashed
+from inttest;
+
+select
+  a,
+  a not in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed,
+  a not in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed
+from inttest;
+
+-- Now make the equal function return false when given two NULLs
+create or replace function myinteq(myint, myint) returns bool as $$
+begin
+  if $1 is null and $2 is null then
+    return false;
+  else
+    return $1::int = $2::int;
+  end if;
+end;
+$$ language plpgsql immutable;
+
+-- And try the same again to ensure EEOP_HASHED_SCALARARRAYOP does the same
+-- thing as EEOP_SCALARARRAYOP.
+select
+  a,
+  a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as not_hashed,
+  a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint) as hashed
+from inttest;
+
+select
+  a,
+  a in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed,
+  a in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed
+ from inttest;
+
+select
+  a,
+  a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as not_hashed,
+  a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint) as hashed
+from inttest;
+
+select
+  a,
+  a not in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed,
+  a not in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed
+from inttest;
+
+-- Try again with an equality function that treats NULLs as equal to 0.
+create or replace function myinteq(myint, myint) returns bool as $$
+begin
+  if $1 is null and $2 is null then
+    return false;
+  else
+    return coalesce($1::int,0) = coalesce($2::int, 0);
+  end if;
+end;
+$$ language plpgsql immutable;
+
+select
+  a,
+  a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as not_hashed,
+  a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint) as hashed,
+  a in (0::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed_zero,
+  a in (0::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed_zero
+from inttest;
+
+select
+  a,
+  a in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed,
+  a in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed
+ from inttest;
+
+select
+  a,
+  a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as not_hashed,
+  a not in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint) as hashed,
+  a not in (0::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed_zero,
+  a not in (0::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed_zero
+from inttest;
+
+select
+  a,
+  a not in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint) as not_hashed,
+  a not in (null::myint,1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint) as hashed
+from inttest;
 
 rollback;
