@@ -23,6 +23,7 @@
 #include "catalog/pg_propgraph_label.h"
 #include "catalog/pg_propgraph_label_property.h"
 #include "catalog/pg_propgraph_property.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
@@ -361,6 +362,9 @@ generate_queries_for_path_pattern_recurse(RangeTblEntry *rte, List *pathqueries,
 {
 	List	   *path_elems = list_nth_node(List, path_elem_lists, elempos);
 
+	/* Guard against stack overflow due to complex path patterns. */
+	check_stack_depth();
+
 	foreach_ptr(struct path_element, pe, path_elems)
 	{
 		/* Update current path being built with current element. */
@@ -697,6 +701,9 @@ generate_setop_from_pathqueries(List *pathqueries, List **rtable, List **targetl
 	RangeTblRef *lrtr = makeNode(RangeTblRef);
 	List	   *rtargetlist;
 	ParseNamespaceItem *pni;
+
+	/* Guard against stack overflow due to many path queries. */
+	check_stack_depth();
 
 	/* Recursion termination condition. */
 	if (list_length(pathqueries) == 0)
