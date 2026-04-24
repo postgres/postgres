@@ -414,7 +414,7 @@ propgraph_edge_get_ref_keys(ParseState *pstate, const List *keycols, const List 
 			 * right operand. The method used to find the equality operators
 			 * is similar to the method used to find equality operators for
 			 * FK/PK comparison in ATAddForeignKeyConstraint() except that
-			 * opclass of the the vertex key type is used as a starting point.
+			 * opclass of the vertex key type is used as a starting point.
 			 * Since we need only equality operators we use both BT and HASH
 			 * strategies.
 			 *
@@ -1045,7 +1045,7 @@ insert_property_record(Oid graphid, Oid ellabeloid, Oid pgerelid, const char *pr
  * makes it easier to share this code between CREATE PROPERTY GRAPH and ALTER
  * PROPERTY GRAPH.  We pass in the element OID so that ALTER PROPERTY GRAPH
  * only has to check the element it has just operated on.  CREATE PROPERTY
- * GROUP checks all elements it has created.
+ * GRAPH checks all elements it has created.
  */
 static void
 check_element_properties(Oid peoid)
@@ -1214,8 +1214,8 @@ check_element_label_properties(Oid ellabeloid)
 
 	/*
 	 * Find a reference element label to fetch label properties.  The
-	 * reference element label has to have the label OID as the one being
-	 * checked but be distinct from the one being checked.
+	 * reference element label has to have the same label OID as the one being
+	 * checked but a different element OID.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_propgraph_element_label_pgellabelid,
@@ -1237,7 +1237,7 @@ check_element_label_properties(Oid ellabeloid)
 	table_close(rel, AccessShareLock);
 
 	/*
-	 * If there is not previous definition of this label, then we are done.
+	 * If there is no previous definition of this label, then we are done.
 	 */
 	if (!ref_ellabeloid)
 		return;
@@ -1669,7 +1669,7 @@ AlterPropGraph(ParseState *pstate, const AlterPropGraphStmt *stmt)
 	/*
 	 * Invalidate relcache entry of the property graph so that the queries in
 	 * the cached plans referencing the property graph will be rewritten
-	 * considering changes to the propert graph.
+	 * considering changes to the property graph.
 	 */
 	CacheInvalidateRelcacheByRelid(pgrelid);
 
