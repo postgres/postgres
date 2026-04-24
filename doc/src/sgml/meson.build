@@ -137,7 +137,7 @@ endif
 # Full documentation as html, text
 #
 if docs_dep.found()
-  html = custom_target('html',
+  html = custom_target('html-custom',
     input: ['stylesheet.xsl', postgres_full_xml],
     output: 'html',
     depfile: 'html.d',
@@ -146,7 +146,7 @@ if docs_dep.found()
   )
   alldocs += html
 
-  install_doc_html = custom_target('install-html',
+  install_doc_html = custom_target('install-html-custom',
     output: 'install-html',
     command: [
       python, install_files, '--prefix', dir_prefix,
@@ -189,7 +189,7 @@ endif
 #
 if docs_dep.found()
   # FIXME: implement / consider sqlmansectnum logic
-  man = custom_target('man',
+  man = custom_target('man-custom',
     input: ['stylesheet-man.xsl', postgres_full_xml],
     output: ['man1', 'man3', 'man7'],
     depfile: 'man.d',
@@ -198,7 +198,7 @@ if docs_dep.found()
   )
   alldocs += man
 
-  install_doc_man = custom_target('install-man',
+  install_doc_man = custom_target('install-man-custom',
     output: 'install-man',
     input: man,
     command: [
