@@ -1,4 +1,5 @@
-# version 2025c
+# version 2026b
+# redo posix_only
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -1304,8 +1305,8 @@ R MT 1974 o - S 16 0s 0 -
 R MT 1975 1979 - Ap Su>=15 2 1 S
 R MT 1975 1980 - S Su>=15 2 0 -
 R MT 1980 o - Mar 31 2 1 S
-R MD 1997 ma - Mar lastSu 2 1 S
-R MD 1997 ma - O lastSu 3 0 -
+R MD 1997 2021 - Mar lastSu 2 1 S
+R MD 1997 2021 - O lastSu 3 0 -
 R O 1918 1919 - S 16 2s 0 -
 R O 1919 o - Ap 15 2s 1 S
 R O 1944 o - Ap 3 2s 1 S
@@ -2965,7 +2966,9 @@ Z America/Toronto -5:17:32 - LMT 1895
 -5 C E%sT
 Z America/Vancouver -8:12:28 - LMT 1884
 -8 Va P%sT 1987
--8 C P%sT
+-8 C P%sT 2026 Mar 9
+-8 1 PDT 2026 N 1 2
+-7 - MST
 Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
 -9 Y Y%sT 1965
 -9 Yu Y%sT 1966 F 27
@@ -3666,7 +3669,8 @@ Z Europe/Chisinau 1:55:20 - LMT 1880
 3 R MSK/MSD 1990 May 6 2
 2 R EE%sT 1992
 2 e EE%sT 1997
-2 MD EE%sT
+2 MD EE%sT 2022
+2 E EE%sT
 Z Europe/Dublin -0:25:21 - LMT 1880 Au 2
 -0:25:21 - DMT 1916 May 21 2s
 -0:25:21 1 IST 1916 O 1 2s
