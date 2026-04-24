@@ -13091,22 +13091,16 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				get_graph_pattern_def(rte->graph_pattern, context);
 				appendStringInfoString(buf, " COLUMNS (");
 				{
-					ListCell   *lc;
 					bool		first = true;
 
-					foreach(lc, rte->graph_table_columns)
+					foreach_node(TargetEntry, te, rte->graph_table_columns)
 					{
-						TargetEntry *te = lfirst_node(TargetEntry, lc);
-						deparse_context context = {0};
-
 						if (!first)
 							appendStringInfoString(buf, ", ");
 						else
 							first = false;
 
-						context.buf = buf;
-
-						get_rule_expr((Node *) te->expr, &context, false);
+						get_rule_expr((Node *) te->expr, context, false);
 						appendStringInfoString(buf, " AS ");
 						appendStringInfoString(buf, quote_identifier(te->resname));
 					}
