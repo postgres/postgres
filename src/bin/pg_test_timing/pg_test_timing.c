@@ -18,14 +18,14 @@ static unsigned int test_duration = 3;
 static double max_rprct = 99.99;
 
 /* record duration in powers of 2 nanoseconds */
-static long long int histogram[32];
+static long long int histogram[64];
 
 /* record counts of first 10K durations directly */
 #define NUM_DIRECT 10000
 static long long int direct_histogram[NUM_DIRECT];
 
 /* separately record highest observed duration */
-static int32 largest_diff;
+static int64 largest_diff;
 static long long int largest_diff_count;
 
 
@@ -262,8 +262,8 @@ test_timing(unsigned int duration, TimingClockSourceType source, bool fast_timin
 
 	while (INSTR_TIME_GT(end_time, cur))
 	{
-		int32		diff,
-					bits;
+		int64		diff;
+		int32		bits;
 		instr_time	diff_time;
 
 		prev = cur;
@@ -281,13 +281,17 @@ test_timing(unsigned int duration, TimingClockSourceType source, bool fast_timin
 		if (unlikely(diff < 0))
 		{
 			fprintf(stderr, _("Detected clock going backwards in time.\n"));
-			fprintf(stderr, _("Time warp: %d ns\n"), diff);
+			fprintf(stderr, _("Time warp: " INT64_FORMAT " ns\n"), diff);
 			exit(1);
 		}
 
 		/* What is the highest bit in the time diff? */
 		if (diff > 0)
-			bits = pg_leftmost_one_pos32(diff) + 1;
+		{
+			bits = pg_leftmost_one_pos64(diff) + 1;
+			/* histogram should be defined large enough */
+			Assert(bits < lengthof(histogram));
+		}
 		else
 			bits = 0;
 
@@ -316,7 +320,7 @@ test_timing(unsigned int duration, TimingClockSourceType source, bool fast_timin
 	INSTR_TIME_SUBTRACT(end_time, start_time);
 
 	printf(_("Average loop time including overhead: %0.2f ns\n"),
-		   INSTR_TIME_GET_DOUBLE(end_time) * 1e9 / loop_count);
+		   INSTR_TIME_GET_DOUBLE(end_time) * NS_PER_S / loop_count);
 
 	return loop_count;
 }
@@ -324,7 +328,7 @@ test_timing(unsigned int duration, TimingClockSourceType source, bool fast_timin
 static void
 output(uint64 loop_count)
 {
-	int			max_bit = 31;
+	int			max_bit = lengthof(histogram) - 1;
 	const char *header1 = _("<= ns");
 	const char *header1b = _("ns");
 	const char *header2 = /* xgettext:no-c-format */ _("% of total");
@@ -342,7 +346,7 @@ output(uint64 loop_count)
 		max_bit--;
 
 	/* set minimum column widths */
-	len1 = Max(8, len1);
+	len1 = Max(19, len1);
 	len2 = Max(10, len2);
 	len3 = Max(10, len3);
 	len4 = Max(10, len4);
@@ -360,8 +364,8 @@ output(uint64 loop_count)
 		double		prct = (double) histogram[i] * 100 / loop_count;
 
 		rprct += prct;
-		printf("%*ld   %*.4f %*.4f %*lld\n",
-			   len1, (1L << i) - 1,
+		printf("%*llu   %*.4f %*.4f %*lld\n",
+			   len1, (1ULL << i) - 1,
 			   len2, prct,
 			   len3, rprct,
 			   len4, histogram[i]);
@@ -409,8 +413,8 @@ output(uint64 loop_count)
 		double		prct = (double) largest_diff_count * 100 / loop_count;
 
 		printf("...\n");
-		printf("%*d   %*.4f %*.4f %*lld\n",
-			   len1, largest_diff,
+		printf("%*lld   %*.4f %*.4f %*lld\n",
+			   len1, (long long) largest_diff,
 			   len2, prct,
 			   len3, 100.0,
 			   len4, largest_diff_count);
