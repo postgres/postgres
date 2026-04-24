@@ -394,9 +394,9 @@ SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(c)-[b]->(d) COLUMNS (a.vname AS an
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[c]-(a) COLUMNS (a.vname AS self, c.ename AS loop_name));
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-(a) COLUMNS (a.vname AS self));
 
--- test collation specified in the expression
+-- test explicit and implicit collation assignment
 INSERT INTO e3_3 VALUES (2003, 2003, 'E331', 10011);
-SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) COLUMNS (a.vname AS self, b.ename AS loop_name)) ORDER BY loop_name COLLATE "C" ASC;
+SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) COLUMNS (upper(a.vname) AS self, b.ename AS loop_name)) ORDER BY loop_name COLLATE "C" ASC;
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b IS el2 WHERE b.ename > 'E331' COLLATE "C"]->(a)-[b]->(a) COLUMNS (a.vname AS self, b.ename AS loop_name));
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) WHERE b.ename > 'E331' COLLATE "C" COLUMNS (a.vname AS self, b.ename AS loop_name));
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) COLUMNS (a.vname AS self, b.ename AS loop_name)) WHERE loop_name > 'E331' COLLATE "C";

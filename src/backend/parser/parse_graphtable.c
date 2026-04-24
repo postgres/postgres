@@ -252,6 +252,11 @@ transformGraphElementPattern(ParseState *pstate, GraphElementPattern *gep)
 	gep->labelexpr = transformLabelExpr(gpstate, gep->labelexpr);
 
 	gep->whereClause = transformExpr(pstate, gep->whereClause, EXPR_KIND_WHERE);
+
+	/*
+	 * Assign collations here for the reason mentioned in the prologue of
+	 * transformGraphPattern().
+	 */
 	assign_expr_collations(pstate, gep->whereClause);
 
 	gpstate->cur_gep = NULL;
@@ -366,9 +371,14 @@ transformPathPatternList(ParseState *pstate, List *path_pattern)
  * Transform a GraphPattern.
  *
  * A GraphPattern consists of a list of one or more path patterns and an
- * optional where clause. Transform them. We use the previously constructure
+ * optional where clause. Transform them. We use the previously constructed
  * list of variables in the GraphTableParseState to resolve property references
  * in the WHERE clause.
+ *
+ * Since most parts of the GraphPattern do not require collation assignment, we
+ * assign collations to the required expressions as they are transformed.  This
+ * avoids the need to traverse the whole GraphPattern again and avoids exposing
+ * it to assign_expr_collations().
  */
 Node *
 transformGraphPattern(ParseState *pstate, GraphPattern *graph_pattern)

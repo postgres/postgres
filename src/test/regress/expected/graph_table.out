@@ -652,13 +652,13 @@ SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-(a) COLUMNS (a.vname AS self));
  v33
 (1 row)
 
--- test collation specified in the expression
+-- test explicit and implicit collation assignment
 INSERT INTO e3_3 VALUES (2003, 2003, 'E331', 10011);
-SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) COLUMNS (a.vname AS self, b.ename AS loop_name)) ORDER BY loop_name COLLATE "C" ASC;
+SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) COLUMNS (upper(a.vname) AS self, b.ename AS loop_name)) ORDER BY loop_name COLLATE "C" ASC;
  self | loop_name 
 ------+-----------
- v33  | E331
- v33  | e331
+ V33  | E331
+ V33  | e331
 (2 rows)
 
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b IS el2 WHERE b.ename > 'E331' COLLATE "C"]->(a)-[b]->(a) COLUMNS (a.vname AS self, b.ename AS loop_name));

@@ -1003,6 +1003,12 @@ transformRangeGraphTable(ParseState *pstate, RangeGraphTable *rgt)
 		columns = lappend(columns, te);
 	}
 
+	/*
+	 * Assign collations to column expressions now since
+	 * assign_query_collations() does not process rangetable entries.
+	 */
+	assign_list_collations(pstate, columns);
+
 	table_close(rel, NoLock);
 
 	pstate->p_graph_table_pstate = NULL;
