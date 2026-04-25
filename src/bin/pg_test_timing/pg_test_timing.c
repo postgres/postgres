@@ -281,7 +281,7 @@ test_timing(unsigned int duration, TimingClockSourceType source, bool fast_timin
 		if (unlikely(diff < 0))
 		{
 			fprintf(stderr, _("Detected clock going backwards in time.\n"));
-			fprintf(stderr, _("Time warp: " INT64_FORMAT " ns\n"), diff);
+			fprintf(stderr, _("Time warp: %" PRId64 " ns\n"), diff);
 			exit(1);
 		}
 
