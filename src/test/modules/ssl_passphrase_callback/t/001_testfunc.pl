@@ -90,8 +90,8 @@ ssl_sni = on
 });
 	$node->append_conf(
 		'pg_hosts.conf', qq{
-example.org $ddir/server.crt $ddir/server.key "" "echo FooBaR1" on
-example.com $ddir/server.crt $ddir/server.key "" "echo FooBaR1" on
+example.org "$ddir/server.crt" "$ddir/server.key" "" "echo FooBaR1" on
+example.com "$ddir/server.crt" "$ddir/server.key" "" "echo FooBaR1" on
 });
 
 	# If the servers starts and runs, the bad ssl_passphrase.passphrase was
