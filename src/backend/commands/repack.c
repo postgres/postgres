@@ -62,6 +62,7 @@
 #include "miscadmin.h"
 #include "optimizer/optimizer.h"
 #include "pgstat.h"
+#include "replication/logicalrelation.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
@@ -919,14 +920,12 @@ check_concurrent_repack_requirements(Relation rel, Oid *ident_idx_p)
 
 	/*
 	 * Obtain the replica identity index -- either one that has been set
-	 * explicitly, or the primary key.  If none of these cases apply, the
-	 * table cannot be repacked concurrently.  It might be possible to have
-	 * repack work with a FULL replica identity; however that requires more
-	 * work and is not implemented yet.
+	 * explicitly, or a non-deferrable primary key.  If none of these cases
+	 * apply, the table cannot be repacked concurrently.  It might be possible
+	 * to have repack work with a FULL replica identity; however that requires
+	 * more work and is not implemented yet.
 	 */
-	ident_idx = RelationGetReplicaIndex(rel);
-	if (!OidIsValid(ident_idx) && OidIsValid(rel->rd_pkindex))
-		ident_idx = rel->rd_pkindex;
+	ident_idx = GetRelationIdentityOrPK(rel);
 	if (!OidIsValid(ident_idx))
 		ereport(ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

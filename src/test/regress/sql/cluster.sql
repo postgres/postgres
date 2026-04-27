@@ -383,13 +383,56 @@ JOIN relnodes_new n ON o.relname = n.relname
 WHERE o.relfilenode <> n.relfilenode
 ORDER BY o.relname;
 
--- concurrently disallowed in catalogs
+--
+-- Check concurrent mode requirements
+--
+
+-- Disallowed in catalogs
 REPACK (CONCURRENTLY) pg_class;
 
--- CONCURRENTLY doesn't like partitioned tables
+-- Doesn't like partitioned tables
 REPACK (CONCURRENTLY) clstrpart;
 
+-- Doesn't support catalog tables
+REPACK (CONCURRENTLY) pg_class;
+
+-- Only support permanent tables, temp and unlogged tables are not supported
+CREATE TEMP TABLE repack_conc_temp (i int PRIMARY KEY);
+REPACK (CONCURRENTLY) repack_conc_temp;
+DROP TABLE repack_conc_temp;
+CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
+REPACK (CONCURRENTLY) repack_conc_unlogged;
+DROP TABLE repack_conc_unlogged;
+
+-- Doesn't support TOAST tables directly
+CREATE TABLE repack_conc_toast (t text);
+SELECT reltoastrelid::regclass AS toast_rel
+FROM pg_class WHERE oid = 'repack_conc_toast'::regclass \gset
+\set VERBOSITY sqlstate
+REPACK (CONCURRENTLY) :toast_rel;
+\set VERBOSITY default
+DROP TABLE repack_conc_toast;
+
+-- Doesn't support tables with REPLICA IDENTITY NOTHING, even if they have a primary key
+CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
+ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
+-- Doesn't support tables with REPLICA IDENTITY FULL, even if they have a primary key
+ALTER TABLE repack_conc_replident REPLICA IDENTITY FULL;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
+-- Doesn't support tables without a primary key or replica identity index
+ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
+ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
+-- Doesn't support tables with deferrable primary keys
+ALTER TABLE repack_conc_replident ADD PRIMARY KEY (i) DEFERRABLE;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
 -- clean up
+DROP TABLE repack_conc_replident;
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
 DROP TABLE clstr_2;
