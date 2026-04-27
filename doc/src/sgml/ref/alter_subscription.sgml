@@ -272,7 +272,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       process reports an error if any prepared transactions done by the
       logical replication worker (from when <literal>two_phase</literal>
       parameter was still <literal>true</literal>) are found. You can resolve
-      prepared transactions on the publisher node, or manually roll back them
+      prepared transactions on the publisher node, or manually roll them back
       on the subscriber, and then try again. The transactions prepared by
       logical replication worker corresponding to a particular subscription have
       the following pattern: <quote><literal>pg_gid_%u_%u</literal></quote>
