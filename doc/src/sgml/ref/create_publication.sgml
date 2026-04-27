@@ -152,7 +152,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      </para>
 
      <para>
-      When a partitioned table is published via schema level publication, all
+      When a partitioned table is published via a schema-level publication, all
       of its existing and future partitions are implicitly considered to be part of the
       publication, regardless of whether they are from the publication schema or not.
       So, even operations that are performed directly on a
@@ -175,7 +175,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
         <listitem>
          <para>
           This parameter determines which DML operations will be published by
-          the new publication to the subscribers.  The value is
+          the new publication to the subscribers.  The value is a
           comma-separated list of operations.  The allowed operations are
           <literal>insert</literal>, <literal>update</literal>,
           <literal>delete</literal>, and <literal>truncate</literal>.
