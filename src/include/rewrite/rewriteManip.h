@@ -54,7 +54,7 @@ struct ChangeVarNodes_context
 	ChangeVarNodes_callback callback;
 };
 
-extern Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
+pg_nodiscard extern Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 extern void CombineRangeTables(List **dst_rtable, List **dst_perminfos,
 							   List *src_rtable, List *src_perminfos);
 extern void OffsetVarNodes(Node *node, int offset, int sublevels_up);

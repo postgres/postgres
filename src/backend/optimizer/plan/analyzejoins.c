@@ -1994,8 +1994,16 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	ChangeVarNodesExtended((Node *) root->processed_tlist, toRemove->relid,
 						   toKeep->relid, 0, replace_relid_callback);
 
-	adjust_relid_set(root->all_result_relids, toRemove->relid, toKeep->relid);
-	adjust_relid_set(root->leaf_result_relids, toRemove->relid, toKeep->relid);
+	/*
+	 * No need to touch all_result_relids or leaf_result_relids: at this point
+	 * those sets contain only parse->resultRelation; inheritance children
+	 * have not been added yet; that happens later in add_other_rels_to_query.
+	 * And remove_self_joins_recurse rejects parse->resultRelation as an SJE
+	 * candidate to preserve the EPQ mechanism.  So toRemove->relid cannot be
+	 * a member.
+	 */
+	Assert(!bms_is_member(toRemove->relid, root->all_result_relids));
+	Assert(!bms_is_member(toRemove->relid, root->leaf_result_relids));
 
 	/*
 	 * There may be references to the rel in root->fkey_list, but if so,
