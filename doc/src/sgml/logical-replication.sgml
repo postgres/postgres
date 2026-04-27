@@ -67,7 +67,7 @@
    <listitem>
     <para>
      Replicating between PostgreSQL instances on different platforms (for
-     example Linux to Windows)
+     example Linux to Windows).
     </para>
    </listitem>
 
@@ -88,7 +88,7 @@
  <para>
   The subscriber database behaves in the same way as any other PostgreSQL
   instance and can be used as a publisher for other databases by defining its
-  own publications.  When the subscriber is treated as read-only by
+  own publications.  When the subscriber is treated as read-only by an
   application, there will be no conflicts from a single subscription.  On the
   other hand, if there are other writes done either by an application or by other
   subscribers to the same set of tables, conflicts can arise.
@@ -167,8 +167,8 @@
    A <firstterm>subscription</firstterm> is the downstream side of logical
    replication.  The node where a subscription is defined is referred to as
    the <firstterm>subscriber</firstterm>.  A subscription defines the connection
-   to another database and set of publications (one or more) to which it wants
-   to subscribe.
+   to another database and the set of publications (one or more) to which it
+   wants to subscribe.
   </para>
 
   <para>
@@ -485,7 +485,7 @@
   <sect2 id="logical-replication-snapshot">
     <title>Initial Snapshot</title>
     <para>
-     The initial data in existing subscribed tables are snapshotted and
+     The initial data in existing subscribed tables is snapshotted and
      copied in a parallel instance of a special kind of apply process.
      This process will create its own replication slot and copy the existing
      data.  As soon as the copy is finished the table contents will become

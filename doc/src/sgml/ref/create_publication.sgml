@@ -112,7 +112,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
         <listitem>
          <para>
           This parameter determines which DML operations will be published by
-          the new publication to the subscribers.  The value is
+          the new publication to the subscribers.  The value is a
           comma-separated list of operations.  The allowed operations are
           <literal>insert</literal>, <literal>update</literal>,
           <literal>delete</literal>, and <literal>truncate</literal>.
