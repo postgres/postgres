@@ -1365,4 +1365,37 @@ SELECT * FROM temporal_partitioned_5 ORDER BY id, valid_at;
 
 DROP TABLE temporal_partitioned;
 
+-- UPDATE/DELETE FOR PORTION OF with RULEs
+CREATE TABLE fpo_rule (f1 bigint, f2 int4range);
+INSERT INTO fpo_rule VALUES (1, '[1, 11)');
+
+CREATE RULE fpo_rule1 AS ON INSERT TO fpo_rule
+  DO INSTEAD UPDATE fpo_rule FOR PORTION OF f2 FROM 1 TO 4 SET f1 = 2;
+INSERT INTO fpo_rule VALUES (1, '[1, 11)');
+SELECT * FROM fpo_rule ORDER BY f1;
+
+CREATE RULE fpo_rule2 AS ON INSERT TO fpo_rule
+  DO INSTEAD DELETE FROM fpo_rule FOR PORTION OF f2 FROM 1 TO 4;
+INSERT INTO fpo_rule VALUES (1, '[1, 11)');
+SELECT * FROM fpo_rule ORDER BY f1;
+
+CREATE RULE fpo_rule3 AS ON DELETE TO fpo_rule
+  DO INSTEAD UPDATE fpo_rule FOR PORTION OF f2 FROM 1 TO 8 SET f1 = 2;
+DELETE FROM fpo_rule FOR PORTION OF f2 FROM 1 TO 5;
+SELECT * FROM fpo_rule ORDER BY f1;
+
+DROP RULE fpo_rule3 ON fpo_rule;
+CREATE RULE fpo_rule4 AS ON UPDATE TO fpo_rule
+  DO INSTEAD DELETE FROM fpo_rule FOR PORTION OF f2 FROM 6 TO 9;
+UPDATE fpo_rule FOR PORTION OF f2 FROM 4 TO 9 SET f1 = 12;
+SELECT * FROM fpo_rule ORDER BY f1;
+
+DROP RULE fpo_rule4 ON fpo_rule;
+CREATE RULE fpo_rule5 AS ON UPDATE TO fpo_rule
+  DO ALSO DELETE FROM fpo_rule FOR PORTION OF f2 FROM 4 TO 6;
+UPDATE fpo_rule FOR PORTION OF f2 FROM 9 TO 10 SET f1 = 3;
+SELECT * FROM fpo_rule ORDER BY f1;
+
+DROP TABLE fpo_rule;
+
 RESET datestyle;
