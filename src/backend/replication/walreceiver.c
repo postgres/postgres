@@ -302,6 +302,9 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 	if (sender_host)
 		pfree(sender_host);
 
+	/* Initialize buffers for processing messages */
+	initStringInfo(&reply_message);
+
 	first_stream = true;
 	for (;;)
 	{
@@ -325,6 +328,7 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 					 errdetail("The primary's identifier is %s, the standby's identifier is %s.",
 							   primary_sysid, standby_sysid)));
 		}
+		pfree(primary_sysid);
 
 		/*
 		 * Confirm that the current timeline of the primary is the same or
@@ -405,9 +409,8 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 				walrcv->walRcvState = WALRCV_STREAMING;
 			SpinLockRelease(&walrcv->mutex);
 
-			/* Initialize LogstreamResult and buffers for processing messages */
+			/* Initialize LogstreamResult for processing messages */
 			LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr(NULL);
-			initStringInfo(&reply_message);
 
 			/* Initialize nap wakeup times. */
 			now = GetCurrentTimestamp();
