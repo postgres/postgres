@@ -796,7 +796,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	values[Anum_pg_subscription_submaxretention - 1] =
 		Int32GetDatum(opts.maxretention);
 	values[Anum_pg_subscription_subretentionactive - 1] =
-		Int32GetDatum(opts.retaindeadtuples);
+		BoolGetDatum(opts.retaindeadtuples);
 	values[Anum_pg_subscription_subserver - 1] = ObjectIdGetDatum(serverid);
 	if (!OidIsValid(serverid))
 		values[Anum_pg_subscription_subconninfo - 1] =
