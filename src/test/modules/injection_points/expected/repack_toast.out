@@ -1,30 +1,85 @@
 Parsed test spec with 2 sessions
 
-starting permutation: wait_before_lock change check2 wakeup_before_lock check1
+starting permutation: s1_wait_before_lock s2_updates s2_check s2_wakeup_before_lock s1_check
 injection_points_attach
 -----------------------
                        
 (1 row)
 
-step wait_before_lock: 
-	REPACK (CONCURRENTLY) repack_test;
+step s1_wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_toast;
  <waiting ...>
-step change: 
-	UPDATE repack_test SET j=get_long_string() where i=2;
-	DELETE FROM repack_test WHERE i=3;
-	INSERT INTO repack_test(i, j) VALUES (4, get_long_string());
-	UPDATE repack_test SET i=3 where i=1;
+step s2_updates: 
+	DELETE FROM repack_toast WHERE i=1;
+	INSERT INTO repack_toast(i, j, k) VALUES (1, gen_external(), gen_compressible(1));
 
-step check2: 
+	-- existing toast data unchanged.  (This covers the case where we
+	-- adjust the toast pointer.)
+	UPDATE repack_toast SET i=i+300 where i % 10 = 2 RETURNING OLD.i, NEW.i;
+
+	-- "j" is here an external indirect, written to the file separately.
+	UPDATE repack_toast SET j=gen_external() where i % 10 = 3 RETURNING OLD.i, NEW.i;
+
+	-- the updated value of "j" is compressed.
+	UPDATE repack_toast SET j=gen_compressible(1), k=k||'' where i % 10 = 4 RETURNING i;
+
+	-- the updated value of "j" is compressed externally.
+	UPDATE repack_toast SET j=gen_compressible_external(2) where i % 10 = 5 RETURNING i;
+
+	-- the updated value of "j" stays inline.
+	UPDATE repack_toast SET j=gen_inline(), k=repeat(k,5) where i % 10 = 6 RETURNING i;
+
+	-- updated value of "j" is a short varlena; "k" is written separately.
+	UPDATE repack_toast SET j=gen_short(), k=gen_external() where i % 10 = 7 RETURNING i;
+
+ i|  i
+--+---
+ 2|302
+12|312
+(2 rows)
+
+ i| i
+--+--
+ 3| 3
+13|13
+(2 rows)
+
+ i
+--
+ 4
+14
+(2 rows)
+
+ i
+--
+ 5
+15
+(2 rows)
+
+ i
+--
+ 6
+16
+(2 rows)
+
+ i
+--
+ 7
+17
+(2 rows)
+
+step s2_check: 
 	INSERT INTO relfilenodes(node)
 	SELECT c2.relfilenode
 	FROM pg_class c1 JOIN pg_class c2 ON c2.oid = c1.oid OR c2.oid = c1.reltoastrelid
-	WHERE c1.relname='repack_test';
+	WHERE c1.relname='repack_toast';
 
-	INSERT INTO data_s2(i, j)
-	SELECT i, j FROM repack_test;
+	INSERT INTO data_s2(i, j, j_toast, k, k_toast)
+	SELECT i, j, COALESCE(pg_column_toast_chunk_id(j), 0) AS j_toast,
+	k, COALESCE(pg_column_toast_chunk_id(k), 0) AS k_toast
+	FROM repack_toast;
 
-step wakeup_before_lock: 
+step s2_wakeup_before_lock: 
 	SELECT injection_points_wakeup('repack-concurrently-before-lock');
 
 injection_points_wakeup
@@ -32,20 +87,27 @@ injection_points_wakeup
                        
 (1 row)
 
-step wait_before_lock: <... completed>
-step check1: 
+step s1_wait_before_lock: <... completed>
+step s1_check: 
 	INSERT INTO relfilenodes(node)
 	SELECT c2.relfilenode
 	FROM pg_class c1 JOIN pg_class c2 ON c2.oid = c1.oid OR c2.oid = c1.reltoastrelid
-	WHERE c1.relname='repack_test';
+	WHERE c1.relname='repack_toast';
 
 	SELECT count(DISTINCT node) FROM relfilenodes;
 
-	INSERT INTO data_s1(i, j)
-	SELECT i, j FROM repack_test;
+	INSERT INTO data_s1(i, j, j_toast, k, k_toast)
+	SELECT i,
+	j, COALESCE(pg_column_toast_chunk_id(j), 0) AS j_toast,
+	k, COALESCE(pg_column_toast_chunk_id(k), 0) AS k_toast
+	FROM repack_toast;
 
-	SELECT count(*)
-	FROM data_s1 d1 FULL JOIN data_s2 d2 USING (i, j)
+	-- this should be empty
+	SELECT d1.i, substring(d1.j FOR 12) AS d1_j, substring(d1.k FOR 12) AS d1_k,
+		d2.i, substring(d2.j FOR 12) AS d2_j, substring(d2.k FOR 12) AS d2_k,
+		d1.j_toast as d1_j_tst, d2.j_toast as d2_j_tst,
+		d1.k_toast as d1_k_tst, d2.k_toast AS d2_k_tst
+	FROM data_s1 d1 FULL JOIN data_s2 d2 USING (i, j, k)
 	WHERE d1.i ISNULL OR d2.i ISNULL;
 
 count
@@ -53,10 +115,9 @@ count
     4
 (1 row)
 
-count
------
-    0
-(1 row)
+i|d1_j|d1_k|i|d2_j|d2_k|d1_j_tst|d2_j_tst|d1_k_tst|d2_k_tst
+-+----+----+-+----+----+--------+--------+--------+--------
+(0 rows)
 
 injection_points_detach
 -----------------------
