@@ -4997,9 +4997,10 @@ adjust_xid_advance_interval(RetainDeadTuplesData *rdt_data, bool new_xid_found)
 
 	/*
 	 * Ensure the wait time remains within the maximum retention time limit
-	 * when retention is active.
+	 * when retention is active.  Skip this cap when maxretention is zero,
+	 * which means unlimited retention (no timeout).
 	 */
-	if (MySubscription->retentionactive)
+	if (MySubscription->retentionactive && MySubscription->maxretention > 0)
 		rdt_data->xid_advance_interval = Min(rdt_data->xid_advance_interval,
 											 MySubscription->maxretention);
 }
