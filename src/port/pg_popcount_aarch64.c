@@ -463,4 +463,10 @@ pg_popcount_masked_neon(const char *buf, int bytes, uint8 mask)
 	return popcnt;
 }
 
-#endif							/* USE_NEON */
+#else							/* USE_NEON */
+
+/* prevent linker complaints about empty module */
+extern int	pg_popcount_aarch64_dummy_variable;
+int			pg_popcount_aarch64_dummy_variable = 0;
+
+#endif							/* ! USE_NEON */

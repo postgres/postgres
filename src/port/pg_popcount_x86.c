@@ -301,4 +301,10 @@ pg_popcount_masked_sse42(const char *buf, int bytes, uint8 mask)
 	return popcnt;
 }
 
-#endif							/* HAVE_X86_64_POPCNTQ */
+#else							/* HAVE_X86_64_POPCNTQ */
+
+/* prevent linker complaints about empty module */
+extern int	pg_popcount_x86_dummy_variable;
+int			pg_popcount_x86_dummy_variable = 0;
+
+#endif							/* ! HAVE_X86_64_POPCNTQ */

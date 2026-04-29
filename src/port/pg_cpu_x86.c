@@ -263,5 +263,10 @@ x86_hypervisor_tsc_frequency_khz(void)
 	return 0;
 }
 
+#else							/* defined(USE_SSE2) || defined(__i386__) */
 
-#endif							/* defined(USE_SSE2) || defined(__i386__) */
+/* prevent linker complaints about empty module */
+extern int	pg_cpu_x86_dummy_variable;
+int			pg_cpu_x86_dummy_variable = 0;
+
+#endif							/* ! (USE_SSE2 || __i386__) */
