@@ -41,7 +41,6 @@ static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
 
 typedef struct
 {
-	bool		abbreviate;		/* Should we abbreviate keys? */
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
 	double		prop_card;		/* Required cardinality proportion */
@@ -1229,7 +1228,6 @@ bytea_sortsupport(PG_FUNCTION_ARGS)
 		ByteaSortSupport *bss;
 
 		bss = palloc_object(ByteaSortSupport);
-		bss->abbreviate = true;
 		bss->prop_card = 0.20;
 		initHyperLogLog(&bss->abbr_card, 10);
 		initHyperLogLog(&bss->full_card, 10);
