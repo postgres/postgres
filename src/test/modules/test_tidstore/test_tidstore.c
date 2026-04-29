@@ -76,6 +76,19 @@ itemptr_cmp(const void *left, const void *right)
 	return 0;
 }
 
+static int
+offsetnumber_cmp(const void *a, const void *b)
+{
+	OffsetNumber l = *(const OffsetNumber *) a;
+	OffsetNumber r = *(const OffsetNumber *) b;
+
+	if (l < r)
+		return -1;
+	else if (l > r)
+		return 1;
+	return 0;
+}
+
 /*
  * Create a TidStore. If shared is false, the tidstore is created
  * on TopMemoryContext, otherwise on DSA. Although the tidstore
@@ -179,6 +192,9 @@ do_set_block_offsets(PG_FUNCTION_ARGS)
 
 	noffs = ArrayGetNItems(ARR_NDIM(ta), ARR_DIMS(ta));
 	offs = ((OffsetNumber *) ARR_DATA_PTR(ta));
+
+	/* TidStoreSetBlockOffsets() requires offsets to be strictly ascending. */
+	qsort(offs, noffs, sizeof(OffsetNumber), offsetnumber_cmp);
 
 	/* Set TIDs in the store */
 	TidStoreLockExclusive(tidstore);
