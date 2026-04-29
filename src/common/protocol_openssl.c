@@ -114,4 +114,10 @@ SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version)
 	return 1;					/* success */
 }
 
-#endif							/* !SSL_CTX_set_min_proto_version */
+#else							/* !SSL_CTX_set_min_proto_version */
+
+/* prevent linker complaints about empty module */
+extern int	protocol_openssl_dummy_variable;
+int			protocol_openssl_dummy_variable = 0;
+
+#endif							/* SSL_CTX_set_min_proto_version */
