@@ -478,4 +478,10 @@ pg_popcount_masked_neon(const char *buf, int bytes, bits8 mask)
 	return popcnt;
 }
 
-#endif							/* POPCNT_AARCH64 */
+#else							/* POPCNT_AARCH64 */
+
+/* prevent linker complaints about empty module */
+extern int	pg_popcount_aarch64_dummy_variable;
+int			pg_popcount_aarch64_dummy_variable = 0;
+
+#endif							/* ! POPCNT_AARCH64 */

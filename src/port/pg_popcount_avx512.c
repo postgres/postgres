@@ -220,4 +220,11 @@ pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
 }
 
 #endif							/* TRY_POPCNT_X86_64 */
-#endif							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
+
+#else							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
+
+/* prevent linker complaints about empty module */
+extern int	pg_popcount_avx512_dummy_variable;
+int			pg_popcount_avx512_dummy_variable = 0;
+
+#endif							/* ! USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
