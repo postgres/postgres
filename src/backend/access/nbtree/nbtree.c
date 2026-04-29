@@ -619,8 +619,11 @@ btestimateparallelscan(Relation rel, int nkeys, int norderbys)
 		 * also require a skip array.
 		 *
 		 * Every skip array must have space to store its scan key's sk_flags.
+		 * We also need space for each skip array's unused btps_arrElems slot
+		 * (we need to be able to subscript btps_arrElems using a simple
+		 * so->arrayKeys[]-wise offset for any subsequent SAOP arrays).
 		 */
-		estnbtreeshared = add_size(estnbtreeshared, sizeof(int));
+		estnbtreeshared = add_size(estnbtreeshared, sizeof(int) * 2);
 
 		/* Consider space required to store a datum of opclass input type */
 		attr = TupleDescCompactAttr(rel->rd_att, attnum - 1);
