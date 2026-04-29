@@ -15,6 +15,9 @@ use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
+# Force UTC so that timestamptz values (e.g. VALID UNTIL) render the same
+# way regardless of the host's local timezone.
+$node->append_conf('postgresql.conf', "timezone = 'UTC'\n");
 $node->start;
 
 # Perl helper that strips locale/collation details from DDL output so
