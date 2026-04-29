@@ -2589,7 +2589,7 @@ normalize_datum(Datum orig, SortSupport ssup)
 
 	if (ssup->comparator == ssup_datum_signed_cmp)
 	{
-		norm_datum1 = orig + ((uint64) PG_INT64_MAX) + 1;
+		norm_datum1 = orig + (Int64GetDatum(PG_INT64_MAX)) + 1;
 	}
 	else if (ssup->comparator == ssup_datum_int32_cmp)
 	{
@@ -2620,8 +2620,8 @@ normalize_datum(Datum orig, SortSupport ssup)
  * Radix sort by (pass-by-value) datum1, diverting to qsort_tuple()
  * for tiebreaks.
  *
- * This is a modification of
- * ska_byte_sort() from https://github.com/skarupke/ska_sort
+ * This is a modification of ska_byte_sort() from
+ * https://github.com/skarupke/ska_sort
  * The original copyright notice follows:
  *
  * Copyright Malte Skarupke 2016.
@@ -2783,6 +2783,8 @@ radix_sort_recursive(SortTuple *begin, size_t n_elems, int level, Tuplesortstate
 	else
 		next_level = level + 1;
 
+	Assert(next_level > level);
+
 	for (uint8 *rp = remaining_partitions;
 		 rp < remaining_partitions + num_partitions;
 		 rp++)
@@ -2849,7 +2851,8 @@ radix_sort_tuple(SortTuple *data, size_t n, Tuplesortstate *state)
 	/*
 	 * Find the first NOT NULL if NULLS FIRST, or first NULL if NULLS LAST.
 	 * This also serves as a quick check for the common case where all tuples
-	 * are NOT NULL in the first sort key.
+	 * are NOT NULL in the first sort key with the default order ASC NULLS
+	 * LAST.
 	 */
 	while (d1 < n && data[d1].isnull1 == nulls_first)
 	{
