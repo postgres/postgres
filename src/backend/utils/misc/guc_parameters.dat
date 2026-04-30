@@ -585,6 +585,7 @@
   variable => 'data_checksums',
   boot_val => 'PG_DATA_CHECKSUM_OFF',
   options => 'data_checksums_options',
+  show_hook => 'show_data_checksums',
 },
 
 # Can't be set by ALTER SYSTEM as it can lead to recursive definition
