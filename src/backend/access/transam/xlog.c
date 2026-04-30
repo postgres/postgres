@@ -4893,9 +4893,8 @@ SetDataChecksumsOff(void)
 	else
 	{
 		/*
-		 * Ending up here implies that the checksums state is "inprogress-on"
-		 * or "inprogress-off" and we can transition directly to "off" from
-		 * there.
+		 * Ending up here implies that the checksums state is "inprogress-off"
+		 * and we can transition directly to "off" from there.
 		 */
 		SpinLockRelease(&XLogCtl->info_lck);
 	}

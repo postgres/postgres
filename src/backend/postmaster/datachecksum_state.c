@@ -86,7 +86,7 @@
  * failing to validate the data checksum on the page when reading it.
  *
  * When processing starts all backends belong to one of the below sets, with
- * one if Bd and Bi being empty:
+ * one of Bd and Bi being empty:
  *
  * Bg: Backend updating the global state and emitting the procsignalbarrier
  * Bd: Backends in "off" state
@@ -286,7 +286,7 @@ typedef struct DataChecksumsStateStruct
 	int			launch_cost_limit;
 
 	/*
-	 * Is a launcher process is currently running?  This is set by the main
+	 * Is a launcher process currently running?  This is set by the main
 	 * launcher process, after it has read the above launch_* parameters.
 	 */
 	bool		launcher_running;
@@ -325,7 +325,7 @@ typedef struct DataChecksumsStateStruct
 	DataChecksumsWorkerResult success;
 
 	/*
-	 * tells the worker process whether it should also process the shared
+	 * Tells the worker process whether it should also process the shared
 	 * catalogs
 	 */
 	bool		process_shared_catalogs;
@@ -811,7 +811,7 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 	{
 		/*
 		 * If the worker managed to start, and stop, before we got to waiting
-		 * for it we can se a STOPPED status here without it being a failure.
+		 * for it we can see a STOPPED status here without it being a failure.
 		 */
 		if (DataChecksumState->success == DATACHECKSUMSWORKER_SUCCESSFUL)
 		{
@@ -1292,7 +1292,7 @@ DataChecksumsShmemRequest(void *arg)
  * DatabaseExists
  *
  * Scans the system catalog to check if a database with the given Oid exists
- * and returns true if it is found  else false.
+ * and returns true if it is found, else false.
  */
 static bool
 DatabaseExists(Oid dboid)
@@ -1455,7 +1455,7 @@ BuildRelationList(bool temp_relations, bool include_shared)
 /*
  * DataChecksumsWorkerMain
  *
- * Main function for enabling checksums in a single database, This is the
+ * Main function for enabling checksums in a single database. This is the
  * function set as the bgw_function_name in the dynamic background worker
  * process initiated for each database by the worker launcher. After enabling
  * data checksums in each applicable relation in the database, it will wait for
