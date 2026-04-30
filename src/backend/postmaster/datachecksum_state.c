@@ -235,7 +235,7 @@ typedef struct ChecksumBarrierCondition
 	int			to;
 } ChecksumBarrierCondition;
 
-static const ChecksumBarrierCondition checksum_barriers[6] =
+static const ChecksumBarrierCondition checksum_barriers[7] =
 {
 	/*
 	 * Disabling checksums: If checksums are currently enabled, disabling must
@@ -261,6 +261,12 @@ static const ChecksumBarrierCondition checksum_barriers[6] =
 	 * checksums, we can go straight back to 'on'
 	 */
 	{PG_DATA_CHECKSUM_INPROGRESS_OFF, PG_DATA_CHECKSUM_VERSION},
+
+	/*
+	 * If checksums are being enabled when launcher_exit is executed, state
+	 * is set to off since we cannot reach on at that point.
+	 */
+	{PG_DATA_CHECKSUM_INPROGRESS_ON, PG_DATA_CHECKSUM_INPROGRESS_OFF},
 };
 
 /*
@@ -771,7 +777,9 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 	pid_t		pid;
 	char		activity[NAMEDATALEN + 64];
 
+	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
 	DataChecksumState->success = DATACHECKSUMSWORKER_FAILED;
+	LWLockRelease(DataChecksumsWorkerLock);
 
 	memset(&bgw, 0, sizeof(bgw));
 	bgw.bgw_flags = BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION;
@@ -881,10 +889,12 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 /*
  * launcher_exit
  *
- * Internal routine for cleaning up state when the launcher process exits. We
- * need to clean up the abort flag to ensure that processing started again if
- * it was previously aborted (note: started again, *not* restarted from where
- * it left off).
+ * Internal routine for cleaning up state when a launcher process which has
+ * performed checksum operations exits. A launcher process which is exiting due
+ * to a duplicate started launcher does not need to perform any cleanup and
+ * this function should not be called. Otherwise, we need to clean up the abort
+ * flag to ensure that processing started again if it was previously aborted
+ * (note: started again, *not* restarted from where it left off).
  */
 static void
 launcher_exit(int code, Datum arg)
@@ -1016,7 +1026,6 @@ WaitForAllTransactionsToFinish(void)
 void
 DataChecksumsWorkerLauncherMain(Datum arg)
 {
-	on_shmem_exit(launcher_exit, 0);
 
 	ereport(DEBUG1,
 			errmsg("background worker \"datachecksums launcher\" started"));
@@ -1044,6 +1053,7 @@ DataChecksumsWorkerLauncherMain(Datum arg)
 		return;
 	}
 
+	on_shmem_exit(launcher_exit, 0);
 	launcher_running = true;
 
 	/* Initialize a connection to shared catalogs only */

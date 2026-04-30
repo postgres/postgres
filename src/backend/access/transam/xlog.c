@@ -4871,13 +4871,14 @@ SetDataChecksumsOff(void)
 	}
 
 	/*
-	 * If data checksums are currently enabled we first transition to the
-	 * "inprogress-off" state during which backends continue to write
-	 * checksums without verifying them. When all backends are in
-	 * "inprogress-off" the next transition to "off" can be performed, after
-	 * which all data checksum processing is disabled.
+	 * If data checksums are currently enabled, or in the process of being
+	 * enabled, we first transition to the "inprogress-off" state during which
+	 * backends continue to write checksums without verifying them. When all
+	 * backends are in "inprogress-off" the next transition to "off" can be
+	 * performed, after which all data checksum processing is disabled.
 	 */
-	if (XLogCtl->data_checksum_version == PG_DATA_CHECKSUM_VERSION)
+	if (XLogCtl->data_checksum_version == PG_DATA_CHECKSUM_VERSION ||
+		XLogCtl->data_checksum_version == PG_DATA_CHECKSUM_INPROGRESS_ON)
 	{
 		SpinLockRelease(&XLogCtl->info_lck);
 
