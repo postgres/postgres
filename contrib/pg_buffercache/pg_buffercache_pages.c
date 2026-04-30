@@ -192,7 +192,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			nulls[5] = false;
 			values[6] = BoolGetDatum(isdirty);
 			nulls[6] = false;
-			values[7] = UInt16GetDatum(usagecount);
+			values[7] = Int16GetDatum(usagecount);
 			nulls[7] = false;
 			/* unused for v1.0 callers, but the array is always long enough */
 			values[8] = Int32GetDatum(pinning_backends);
