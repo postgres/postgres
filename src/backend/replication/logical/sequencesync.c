@@ -254,8 +254,8 @@ get_and_validate_seq_info(TupleTableSlot *slot, Relation *sequence_rel,
 		(LogicalRepSequenceInfo *) list_nth(seqinfos, *seqidx);
 
 	/*
-	 * last_value can be NULL if the sequence was dropped concurrently (see
-	 * pg_get_sequence_data()).
+	 * The sequence data can be NULL due to insufficient privileges or if the
+	 * sequence was dropped concurrently (see pg_get_sequence_data()).
 	 */
 	datum = slot_getattr(slot, ++col, &isnull);
 	if (isnull)
@@ -411,7 +411,6 @@ copy_sequences(WalReceiverConn *conn)
 		int			batch_skipped_count = 0;
 		int			batch_insuffperm_count = 0;
 		int			batch_missing_count;
-		Relation	sequence_rel = NULL;
 
 		WalRcvExecResult *res;
 		TupleTableSlot *slot;
@@ -494,6 +493,7 @@ copy_sequences(WalReceiverConn *conn)
 		{
 			CopySeqResult sync_status;
 			LogicalRepSequenceInfo *seqinfo;
+			Relation	sequence_rel = NULL;
 			int			seqidx;
 
 			CHECK_FOR_INTERRUPTS();
