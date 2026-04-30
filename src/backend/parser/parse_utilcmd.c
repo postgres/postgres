@@ -1897,7 +1897,10 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
  * extended statistic "source_statsid", for the rel identified by heapRel and
  * heapRelid.
  *
- * Attribute numbers in expression Vars are adjusted according to attmap.
+ * stxkeys in the source statistic holds attribute numbers from the parent
+ * relation.  Those attnums, along with the attribute numbers referenced by
+ * Vars inside the expression tree, are remapped to the new relation's
+ * numbering according to attmap.
  */
 static CreateStatsStmt *
 generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
@@ -1955,7 +1958,8 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 		StatsElem  *selem = makeNode(StatsElem);
 		AttrNumber	attnum = statsrec->stxkeys.values[i];
 
-		selem->name = get_attname(heapRelid, attnum, false);
+		selem->name =
+			get_attname(heapRelid, attmap->attnums[attnum - 1], false);
 		selem->expr = NULL;
 
 		def_names = lappend(def_names, selem);
