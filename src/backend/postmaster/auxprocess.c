@@ -68,6 +68,14 @@ AuxiliaryProcessMainCommon(void)
 
 	BaseInit();
 
+	/*
+	 * Prevent consuming interrupts between setting ProcSignalInit and setting
+	 * the initial local data checksum value.  If a barrier is emitted, and
+	 * absorbed, before local cached state is initialized the state transition
+	 * can be invalid.
+	 */
+	HOLD_INTERRUPTS();
+
 	ProcSignalInit(NULL, 0);
 
 	/*
@@ -87,6 +95,8 @@ AuxiliaryProcessMainCommon(void)
 	 * stale, as it might have changed after this process forked.
 	 */
 	InitLocalDataChecksumState();
+
+	RESUME_INTERRUPTS();
 
 	/*
 	 * Auxiliary processes don't run transactions, but they may need a

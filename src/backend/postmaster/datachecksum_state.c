@@ -263,8 +263,8 @@ static const ChecksumBarrierCondition checksum_barriers[7] =
 	{PG_DATA_CHECKSUM_INPROGRESS_OFF, PG_DATA_CHECKSUM_VERSION},
 
 	/*
-	 * If checksums are being enabled when launcher_exit is executed, state
-	 * is set to off since we cannot reach on at that point.
+	 * If checksums are being enabled when launcher_exit is executed, state is
+	 * set to off since we cannot reach on at that point.
 	 */
 	{PG_DATA_CHECKSUM_INPROGRESS_ON, PG_DATA_CHECKSUM_INPROGRESS_OFF},
 };
@@ -1291,8 +1291,8 @@ DataChecksumsShmemRequest(void *arg)
 /*
  * DatabaseExists
  *
- * Scans the system catalog to check if a database with the given Oid exist
- * and returns true if it is found, else false.
+ * Scans the system catalog to check if a database with the given Oid exists
+ * and returns true if it is found  else false.
  */
 static bool
 DatabaseExists(Oid dboid)
