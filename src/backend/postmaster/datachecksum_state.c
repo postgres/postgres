@@ -487,6 +487,8 @@ AbsorbDataChecksumsBarrier(ProcSignalBarrierType barrier)
 Datum
 disable_data_checksums(PG_FUNCTION_ARGS)
 {
+	PreventCommandDuringRecovery("pg_disable_data_checksums()");
+
 	if (!superuser())
 		ereport(ERROR,
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -506,6 +508,8 @@ enable_data_checksums(PG_FUNCTION_ARGS)
 {
 	int			cost_delay = PG_GETARG_INT32(0);
 	int			cost_limit = PG_GETARG_INT32(1);
+
+	PreventCommandDuringRecovery("pg_enable_data_checksums()");
 
 	if (!superuser())
 		ereport(ERROR,
