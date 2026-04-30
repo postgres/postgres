@@ -49,8 +49,8 @@ my $node_standby_loglocation = 0;
 # of tests performed and the wall time taken is non-deterministic as the test
 # performs a lot of randomized actions, but 5 iterations will be a long test
 # run regardless.
-my $TEST_ITERATIONS = 5;
-$TEST_ITERATIONS = 1 if ($extended);
+my $TEST_ITERATIONS = 1;
+$TEST_ITERATIONS = 5 if ($extended);
 
 # Variables which record the current state of the cluster
 my $data_checksum_state = 'off';
@@ -83,6 +83,7 @@ sub background_pgbench
 	push(@cmd, '-C') if ($extended && cointoss());
 	# If we run on a standby it needs to be a read-only benchmark
 	push(@cmd, '-S') if ($standby);
+	push(@cmd, '-n') if ($standby);
 	# Finally add the database name to use
 	push(@cmd, 'postgres');
 
@@ -146,8 +147,10 @@ sub flip_data_checksums
 			  . "FROM pg_catalog.pg_settings "
 			  . "WHERE name = 'data_checksums';");
 
-		is(($result eq 'inprogress-on' || $result eq 'on'),
-			1, 'ensure checksums are on, or in progress, on standby_1');
+		is( ($result eq 'inprogress-on' || $result eq 'on'),
+			1,
+			'ensure checksums are on, or in progress, on standby_1, got: '
+			  . $result);
 
 		# Wait for checksums enabled on the primary and standby
 		wait_for_checksum_state($node_primary, 'on');
@@ -210,6 +213,7 @@ $node_primary->append_conf(
 	qq[
 max_connections = 30
 log_statement = none
+hot_standby_feedback = on
 ]);
 $node_primary->start;
 $node_primary->safe_psql('postgres', 'CREATE EXTENSION test_checksums;');

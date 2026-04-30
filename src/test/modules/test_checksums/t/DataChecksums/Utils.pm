@@ -43,7 +43,6 @@ our @EXPORT = qw(
   stopmode
   test_checksum_state
   wait_for_checksum_state
-  wait_for_cluster_crash
 );
 
 =pod
@@ -67,7 +66,10 @@ sub test_checksum_state
 	my $result = $postgresnode->safe_psql('postgres',
 		"SELECT setting FROM pg_catalog.pg_settings WHERE name = 'data_checksums';"
 	);
-	is($result, $state, 'ensure checksums are set to ' . $state);
+	is($result, $state,
+			'ensure checksums are set to '
+		  . $state . ' on '
+		  . $postgresnode->name());
 	return $result eq $state;
 }
 
@@ -89,50 +91,11 @@ sub wait_for_checksum_state
 		'postgres',
 		"SELECT setting FROM pg_catalog.pg_settings WHERE name = 'data_checksums';",
 		$state);
-	is($res, 1, 'ensure data checksums are transitioned to ' . $state);
+	is($res, 1,
+			'ensure data checksums are transitioned to '
+		  . $state . ' on '
+		  . $postgresnode->name());
 	return $res == 1;
-}
-
-=item wait_for_cluster_crash(node, params)
-
-Repeatedly test if the cluster running at B<node> responds to connections
-and return when it no longer does so, or when it times out.  Processing will
-run for $PostgreSQL::Test::Utils::timeout_default seconds unless a timeout
-value is specified as a parameter.  Returns True if the cluster crashed, else
-False if the process timed out.
-
-=over
-
-=item timeout
-
-Approximate number of seconds to wait for cluster to crash, default is
-$PostgreSQL::Test::Utils::timeout_default.  There are no real-time guarantees
-that the total process time won't exceed the timeout.
-
-=back
-
-=cut
-
-sub wait_for_cluster_crash
-{
-	my $postgresnode = shift;
-	my %params = @_;
-	my $crash = 0;
-
-	$params{timeout} = $PostgreSQL::Test::Utils::timeout_default
-	  unless (defined($params{timeout}));
-
-	for (my $naps = 0; $naps < $params{timeout}; $naps++)
-	{
-		if (!$postgresnode->is_alive)
-		{
-			$crash = 1;
-			last;
-		}
-		sleep(1);
-	}
-
-	return $crash == 1;
 }
 
 =item enable_data_checksums($node, %params)

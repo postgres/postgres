@@ -124,11 +124,14 @@ $node_primary->init(
 	has_archiving => 1,
 	allows_streaming => 1,
 	no_data_checksums => 1);
+my $timeout_unit = 's';
 $node_primary->append_conf(
 	'postgresql.conf',
 	qq[
 max_connections = 100
 log_statement = none
+wal_sender_timeout = $PostgreSQL::Test::Utils::timeout_default$timeout_unit
+wal_receiver_timeout = $PostgreSQL::Test::Utils::timeout_default$timeout_unit
 ]);
 $node_primary->start;
 
@@ -154,7 +157,7 @@ my ($pre_lsn, $post_lsn) = flip_data_checksums();
 $node_primary->safe_psql('postgres', "UPDATE t SET a = a + 1;");
 $node_primary->safe_psql('postgres', "SELECT pg_create_restore_point('a');");
 $node_primary->safe_psql('postgres', "UPDATE t SET a = a + 1;");
-$node_primary->stop('immediate');
+$node_primary->stop('fast');
 
 my $node_pitr = PostgreSQL::Test::Cluster->new('pitr_backup');
 $node_pitr->init_from_backup(
