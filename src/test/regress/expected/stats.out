@@ -1164,7 +1164,7 @@ SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
 -- Test error case for reset_shared with unknown stats type
 SELECT pg_stat_reset_shared('unknown');
 ERROR:  unrecognized reset target: "unknown"
-HINT:  Target must be "archiver", "bgwriter", "checkpointer", "io", "recovery_prefetch", "slru", or "wal".
+HINT:  Target must be "archiver", "bgwriter", "checkpointer", "io", "lock", "recovery_prefetch", "slru", or "wal".
 -- Test that reset works for pg_stat_database and pg_stat_database_conflicts
 -- Since pg_stat_database stats_reset starts out as NULL, reset it once first so that we
 -- have a baseline for comparison. The same for pg_stat_database_conflicts as it shares
