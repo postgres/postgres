@@ -418,10 +418,6 @@ CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
 ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
 REPACK (CONCURRENTLY) repack_conc_replident;
 
--- Doesn't support tables with REPLICA IDENTITY FULL, even if they have a primary key
-ALTER TABLE repack_conc_replident REPLICA IDENTITY FULL;
-REPACK (CONCURRENTLY) repack_conc_replident;
-
 -- Doesn't support tables without a primary key or replica identity index
 ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
 ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;

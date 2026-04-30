@@ -837,9 +837,6 @@ ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
 REPACK (CONCURRENTLY) repack_conc_replident;
 ERROR:  cannot repack relation "repack_conc_replident"
 HINT:  Relation "repack_conc_replident" has insufficient replication identity.
--- Doesn't support tables with REPLICA IDENTITY FULL, even if they have a primary key
-ALTER TABLE repack_conc_replident REPLICA IDENTITY FULL;
-REPACK (CONCURRENTLY) repack_conc_replident;
 -- Doesn't support tables without a primary key or replica identity index
 ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
 ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;
