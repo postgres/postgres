@@ -136,6 +136,8 @@ extern PGDLLIMPORT DestReceiver *None_Receiver; /* permanent receiver for
 
 extern void BeginCommand(CommandTag commandTag, CommandDest dest);
 extern DestReceiver *CreateDestReceiver(CommandDest dest);
+extern void EndCommandExtended(const QueryCompletion *qc, CommandDest dest,
+							   bool force_undecorated_output, bool noblock);
 extern void EndCommand(const QueryCompletion *qc, CommandDest dest,
 					   bool force_undecorated_output);
 extern void EndReplicationCommand(const char *commandTag);

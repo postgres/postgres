@@ -165,8 +165,10 @@ CreateDestReceiver(CommandDest dest)
  *		EndCommand - clean up the destination at end of command
  * ----------------
  */
+
 void
-EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_output)
+EndCommandExtended(const QueryCompletion *qc, CommandDest dest,
+				   bool force_undecorated_output, bool noblock)
 {
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
 	Size		len;
@@ -179,7 +181,10 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 
 			len = BuildQueryCompletionString(completionTag, qc,
 											 force_undecorated_output);
-			pq_putmessage(PqMsg_CommandComplete, completionTag, len + 1);
+			if (noblock)
+				pq_putmessage_noblock(PqMsg_CommandComplete, completionTag, len + 1);
+			else
+				pq_putmessage(PqMsg_CommandComplete, completionTag, len + 1);
 			break;
 
 		case DestNone:
@@ -194,6 +199,12 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 		case DestExplainSerialize:
 			break;
 	}
+}
+
+void
+EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_output)
+{
+	EndCommandExtended(qc, dest, force_undecorated_output, false);
 }
 
 /* ----------------

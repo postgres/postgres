@@ -210,6 +210,13 @@ static bool waiting_for_ping_response = false;
 static TimestampTz shutdown_request_timestamp = 0;
 
 /*
+ * Set after queueing the CommandComplete message that ends WAL streaming
+ * during shutdown. This prevents WalSndDone() and WalSndDoneImmediate()
+ * from queueing the same message twice.
+ */
+static bool shutdown_stream_done_queued = false;
+
+/*
  * While streaming WAL in Copy mode, streamingDoneSending is set to true
  * after we have sent CopyDone. We should not send any more CopyData messages
  * after that. streamingDoneReceiving is set to true when we receive CopyDone
@@ -3713,15 +3720,17 @@ WalSndDoneImmediate(void)
 {
 	WalSndState state = MyWalSnd->state;
 
-	if (state == WALSNDSTATE_CATCHUP ||
-		state == WALSNDSTATE_STREAMING ||
-		state == WALSNDSTATE_STOPPING)
+	if ((state == WALSNDSTATE_CATCHUP ||
+		 state == WALSNDSTATE_STREAMING ||
+		 state == WALSNDSTATE_STOPPING) &&
+		!shutdown_stream_done_queued)
 	{
 		QueryCompletion qc;
 
 		/* Try to inform receiver that XLOG streaming is done */
 		SetQueryCompletion(&qc, CMDTAG_COPY, 0);
-		EndCommand(&qc, DestRemote, false);
+		EndCommandExtended(&qc, DestRemote, false, true);
+		shutdown_stream_done_queued = true;
 
 		/*
 		 * Note that the output buffer may be full during the forced shutdown
@@ -3778,10 +3787,55 @@ WalSndDone(WalSndSendDataCallback send_data)
 	{
 		QueryCompletion qc;
 
+		Assert(!shutdown_stream_done_queued);
+
 		/* Inform the standby that XLOG streaming is done */
 		SetQueryCompletion(&qc, CMDTAG_COPY, 0);
-		EndCommand(&qc, DestRemote, false);
-		pq_flush();
+		EndCommandExtended(&qc, DestRemote, false, true);
+		shutdown_stream_done_queued = true;
+
+		/*
+		 * Reset last_reply_timestamp so subsequent WalSndComputeSleeptime()
+		 * calls ignore wal_sender_timeout during shutdown.
+		 */
+		last_reply_timestamp = 0;
+
+		/*
+		 * Do not call pq_flush() here, since it can block indefinitely while
+		 * waiting for the socket to become writable, preventing
+		 * wal_sender_shutdown_timeout from being enforced. Instead, use the
+		 * walsender nonblocking flush path so the shutdown timeout continues
+		 * to be checked while the send buffer drains.
+		 */
+		for (;;)
+		{
+			long		sleeptime;
+
+			/*
+			 * During shutdown, die if the shutdown timeout expires. Call this
+			 * before WalSndComputeSleeptime() so the timeout is considered
+			 * when computing sleep time.
+			 */
+			WalSndCheckShutdownTimeout();
+
+			if (!pq_is_send_pending())
+				break;
+
+			sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
+
+			/* Sleep until something happens or we time out */
+			WalSndWait(WL_SOCKET_WRITEABLE, sleeptime,
+					   WAIT_EVENT_WAL_SENDER_WRITE_DATA);
+
+			/* Clear any already-pending wakeups */
+			ResetLatch(MyLatch);
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* Try to flush pending output to the client */
+			if (pq_flush_if_writable() != 0)
+				WalSndShutdown();
+		}
 
 		proc_exit(0);
 	}
