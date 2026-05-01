@@ -3244,7 +3244,6 @@ eval_const_expressions_mutator(Node *node,
 				}
 				break;
 			}
-
 		case T_JsonValueExpr:
 			{
 				JsonValueExpr *jve = (JsonValueExpr *) node;
@@ -3268,7 +3267,21 @@ eval_const_expressions_mutator(Node *node,
 												  (Expr *) formatted_expr,
 												  copyObject(jve->format));
 			}
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *jce = (JsonConstructorExpr *) node;
 
+				/*
+				 * JSCTOR_JSON_ARRAY_QUERY carries a pre-built executable form
+				 * in its func field (a COALESCE-wrapped JSON_ARRAYAGG
+				 * subquery, constructed during parse analysis).  Replace the
+				 * node with that expression and continue simplifying.
+				 */
+				if (jce->type == JSCTOR_JSON_ARRAY_QUERY)
+					return eval_const_expressions_mutator((Node *) jce->func,
+														  context);
+			}
+			break;
 		case T_SubPlan:
 		case T_AlternativeSubPlan:
 

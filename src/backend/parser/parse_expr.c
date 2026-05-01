@@ -3792,24 +3792,53 @@ transformJsonObjectConstructor(ParseState *pstate, JsonObjectConstructor *ctor)
 }
 
 /*
- * Transform JSON_ARRAY(query [FORMAT] [RETURNING] [ON NULL]) into
- *  (SELECT  JSON_ARRAYAGG(a  [FORMAT] [RETURNING] [ON NULL]) FROM (query) q(a))
+ * Transform JSON_ARRAY(subquery) constructor.
+ *
+ * JSON_ARRAY(subquery) is transformed into a JsonConstructorExpr node of type
+ * JSCTOR_JSON_ARRAY_QUERY.  The node carries:
+ *
+ *  - func: the executable form, which is a COALESCE expression wrapping a
+ *    JSON_ARRAYAGG subquery:
+ *
+ *        COALESCE((SELECT JSON_ARRAYAGG(a) FROM (subquery) q(a)), '[]')
+ *
+ *    The COALESCE ensures that an empty result set produces '[]' rather than
+ *    NULL, per the SQL/JSON standard.
+ *
+ *  - orig_query: the transformed Query of the user's original subquery, so
+ *    that ruleutils.c can deparse the original JSON_ARRAY(SELECT ...) syntax
+ *    for view definitions.
  */
 static Node *
 transformJsonArrayQueryConstructor(ParseState *pstate,
 								   JsonArrayQueryConstructor *ctor)
 {
-	SubLink    *sublink = makeNode(SubLink);
-	SelectStmt *select = makeNode(SelectStmt);
-	RangeSubselect *range = makeNode(RangeSubselect);
-	Alias	   *alias = makeNode(Alias);
-	ResTarget  *target = makeNode(ResTarget);
-	JsonArrayAgg *agg = makeNode(JsonArrayAgg);
-	ColumnRef  *colref = makeNode(ColumnRef);
 	Query	   *query;
 	ParseState *qpstate;
+	SubLink    *sublink;
+	SelectStmt *select;
+	RangeSubselect *range;
+	Alias	   *alias;
+	ResTarget  *target;
+	JsonArrayAgg *agg;
+	ColumnRef  *colref;
+	Node	   *exec_expr;
+	CoalesceExpr *coalesce;
+	Const	   *empty_const;
+	Oid			result_type;
+	Oid			typinput;
+	Oid			typioparam;
+	int16		typlen;
+	bool		typbyval;
+	JsonReturning *returning;
+	List	   *args;
+	Node	   *result;
 
-	/* Transform query only for counting target list entries. */
+	/*
+	 * Transform a copy of the subquery to validate the single-column
+	 * constraint and to obtain the transformed Query for deparsing.  This
+	 * uses a private ParseState so it doesn't affect the main parse context.
+	 */
 	qpstate = make_parsestate(pstate);
 
 	query = transformStmt(qpstate, copyObject(ctor->query));
@@ -3822,14 +3851,20 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 
 	free_parsestate(qpstate);
 
+	/*
+	 * Build the executable form by constructing query:
+	 *
+	 * (SELECT JSON_ARRAYAGG(a [FORMAT] [RETURNING]) FROM (subquery) q(a))
+	 *
+	 * ... using raw parse tree nodes, then transforming via
+	 * transformExprRecurse.
+	 */
+	colref = makeNode(ColumnRef);
 	colref->fields = list_make2(makeString(pstrdup("q")),
 								makeString(pstrdup("a")));
 	colref->location = ctor->location;
 
-	/*
-	 * No formatting necessary, so set formatted_expr to be the same as
-	 * raw_expr.
-	 */
+	agg = makeNode(JsonArrayAgg);
 	agg->arg = makeJsonValueExpr((Expr *) colref, (Expr *) colref,
 								 ctor->format);
 	agg->absent_on_null = ctor->absent_on_null;
@@ -3838,21 +3873,26 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 	agg->constructor->output = ctor->output;
 	agg->constructor->location = ctor->location;
 
+	target = makeNode(ResTarget);
 	target->name = NULL;
 	target->indirection = NIL;
 	target->val = (Node *) agg;
 	target->location = ctor->location;
 
+	alias = makeNode(Alias);
 	alias->aliasname = pstrdup("q");
 	alias->colnames = list_make1(makeString(pstrdup("a")));
 
+	range = makeNode(RangeSubselect);
 	range->lateral = false;
 	range->subquery = ctor->query;
 	range->alias = alias;
 
+	select = makeNode(SelectStmt);
 	select->targetList = list_make1(target);
 	select->fromClause = list_make1(range);
 
+	sublink = makeNode(SubLink);
 	sublink->subLinkType = EXPR_SUBLINK;
 	sublink->subLinkId = 0;
 	sublink->testexpr = NULL;
@@ -3860,7 +3900,48 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 	sublink->subselect = (Node *) select;
 	sublink->location = ctor->location;
 
-	return transformExprRecurse(pstate, (Node *) sublink);
+	exec_expr = transformExprRecurse(pstate, (Node *) sublink);
+
+	/*
+	 * Wrap in COALESCE so that an empty result set produces '[]' rather than
+	 * NULL.  The empty-array constant is created in the output type so that
+	 * the COALESCE arguments have consistent types.
+	 */
+	result_type = exprType(exec_expr);
+	getTypeInputInfo(result_type, &typinput, &typioparam);
+	get_typlenbyval(result_type, &typlen, &typbyval);
+
+	empty_const = makeConst(result_type,
+							-1,
+							exprCollation(exec_expr),
+							(int) typlen,
+							OidInputFunctionCall(typinput, "[]",
+												 typioparam, -1),
+							false,
+							typbyval);
+
+	coalesce = makeNode(CoalesceExpr);
+	coalesce->coalescetype = result_type;
+	coalesce->coalescecollid = exprCollation(exec_expr);
+	coalesce->args = list_make2(exec_expr, empty_const);
+	coalesce->location = ctor->location;
+
+	/*
+	 * Build the JSCTOR_JSON_ARRAY_QUERY node.  The COALESCE goes in func as
+	 * the executable form; during planning, eval_const_expressions replaces
+	 * the entire node with func.  The transformed Query is stored in
+	 * orig_query so that ruleutils.c can deparse the original syntax.
+	 */
+	args = list_make1(linitial_node(TargetEntry, query->targetList)->expr);
+	returning = transformJsonConstructorOutput(pstate, ctor->output, args);
+
+	result = makeJsonConstructorExpr(pstate, JSCTOR_JSON_ARRAY_QUERY,
+									 NIL, (Expr *) coalesce, returning,
+									 false, ctor->absent_on_null,
+									 ctor->location);
+	((JsonConstructorExpr *) result)->orig_query = (Node *) query;
+
+	return result;
 }
 
 /*

@@ -193,6 +193,7 @@ SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' RETURNING text));
 SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' FORMAT JSON RETURNING text));
 SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' FORMAT JSON RETURNING text) FORMAT JSON);
 
+-- JSON_ARRAY(subquery)
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i));
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i));
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i) RETURNING jsonb);
@@ -200,6 +201,17 @@ SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL)
 --SELECT JSON_ARRAY(SELECT i FROM (VALUES (NULL::int[]), ('{1,2}'), (NULL), (NULL), ('{3,4}'), (NULL)) foo(i) NULL ON NULL RETURNING jsonb);
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (3), (1), (NULL), (2)) foo(i) ORDER BY i);
 SELECT JSON_ARRAY(WITH x AS (SELECT 1) VALUES (TRUE));
+
+-- JSON_ARRAY(subquery) with empty result set
+SELECT JSON_ARRAY(SELECT 1 WHERE FALSE);
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) WHERE i > 4);
+
+-- JSON_ARRAY(subquery) with a correlated subquery in the WHERE clause
+SELECT * FROM (VALUES (1), (2), (NULL), (4)) t1(a)
+WHERE JSON_ARRAY(
+    SELECT b FROM (VALUES (1), (2), (3)) t2(b) WHERE b = t1.a
+    RETURNING jsonb
+) = '[]'::jsonb;
 
 -- Should fail
 SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
@@ -381,6 +393,43 @@ SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING 
 
 CREATE VIEW json_array_subquery_view AS
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING jsonb);
+
+\sv json_array_subquery_view
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) ORDER BY i LIMIT 3 RETURNING jsonb);
+
+CREATE OR REPLACE VIEW json_array_subquery_view AS
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) ORDER BY i LIMIT 3 RETURNING jsonb);
+
+\sv json_array_subquery_view
+
+DROP VIEW json_array_subquery_view;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM (VALUES (1), (2), (NULL), (4)) t1(a)
+WHERE JSON_ARRAY(
+    SELECT b FROM (VALUES (1), (2), (3)) t2(b) WHERE b = t1.a
+    RETURNING jsonb
+) = '[]'::jsonb;
+
+CREATE VIEW json_array_subquery_view AS
+SELECT * FROM (VALUES (1), (2), (NULL), (4)) t1(a)
+WHERE JSON_ARRAY(
+    SELECT b FROM (VALUES (1), (2), (3)) t2(b) WHERE b = t1.a
+    RETURNING jsonb
+) = '[]'::jsonb;
+
+\sv json_array_subquery_view
+
+DROP VIEW json_array_subquery_view;
+
+-- JSON_ARRAY(subquery) with RETURNING text
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING text);
+
+CREATE VIEW json_array_subquery_view AS
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING text);
 
 \sv json_array_subquery_view
 

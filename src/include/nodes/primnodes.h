@@ -1715,26 +1715,38 @@ typedef struct JsonValueExpr
 typedef enum JsonConstructorType
 {
 	JSCTOR_JSON_OBJECT = 1,
-	JSCTOR_JSON_ARRAY = 2,
-	JSCTOR_JSON_OBJECTAGG = 3,
-	JSCTOR_JSON_ARRAYAGG = 4,
-	JSCTOR_JSON_PARSE = 5,
-	JSCTOR_JSON_SCALAR = 6,
-	JSCTOR_JSON_SERIALIZE = 7,
+	JSCTOR_JSON_ARRAY,
+	JSCTOR_JSON_ARRAY_QUERY,
+	JSCTOR_JSON_OBJECTAGG,
+	JSCTOR_JSON_ARRAYAGG,
+	JSCTOR_JSON_PARSE,
+	JSCTOR_JSON_SCALAR,
+	JSCTOR_JSON_SERIALIZE,
 } JsonConstructorType;
 
 /*
  * JsonConstructorExpr -
  *		wrapper over FuncExpr/Aggref/WindowFunc for SQL/JSON constructors
+ *
+ * func is the executable expression:
+ * - Aggref/WindowFunc for JSON_OBJECTAGG/JSON_ARRAYAGG,
+ * - CoalesceExpr for JSON_ARRAY_QUERY,
+ * - NULL for other types (the executor calls the underlying json[b]_xxx()
+ *   functions directly).
+ *
+ * orig_query holds the user's original subquery for JSON_ARRAY(query), used
+ * only by ruleutils.c for deparsing; it is not walked because func is
+ * authoritative for all other purposes.
  */
 typedef struct JsonConstructorExpr
 {
 	Expr		xpr;
 	JsonConstructorType type;	/* constructor type */
 	List	   *args;
-	Expr	   *func;			/* underlying json[b]_xxx() function call */
+	Expr	   *func;			/* executable expression or NULL */
 	Expr	   *coercion;		/* coercion to RETURNING type */
 	JsonReturning *returning;	/* RETURNING clause */
+	Node	   *orig_query;		/* original subquery for deparsing */
 	bool		absent_on_null; /* ABSENT ON NULL? */
 	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
 	ParseLoc	location;

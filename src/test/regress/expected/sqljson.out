@@ -724,6 +724,7 @@ SELECT JSON_ARRAY(JSON_ARRAY('{ "a" : 123 }' FORMAT JSON RETURNING text) FORMAT 
  [[{ "a" : 123 }]]
 (1 row)
 
+-- JSON_ARRAY(subquery)
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i));
  json_array 
 ------------
@@ -756,6 +757,31 @@ SELECT JSON_ARRAY(WITH x AS (SELECT 1) VALUES (TRUE));
 ------------
  [true]
 (1 row)
+
+-- JSON_ARRAY(subquery) with empty result set
+SELECT JSON_ARRAY(SELECT 1 WHERE FALSE);
+ json_array 
+------------
+ []
+(1 row)
+
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) WHERE i > 4);
+ json_array 
+------------
+ []
+(1 row)
+
+-- JSON_ARRAY(subquery) with a correlated subquery in the WHERE clause
+SELECT * FROM (VALUES (1), (2), (NULL), (4)) t1(a)
+WHERE JSON_ARRAY(
+    SELECT b FROM (VALUES (1), (2), (3)) t2(b) WHERE b = t1.a
+    RETURNING jsonb
+) = '[]'::jsonb;
+ a 
+---
+  
+ 4
+(2 rows)
 
 -- Should fail
 SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
@@ -1093,7 +1119,7 @@ SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING 
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Result
-   Output: (InitPlan expr_1).col1
+   Output: COALESCE((InitPlan expr_1).col1, '[]'::jsonb)
    InitPlan expr_1
      ->  Aggregate
            Output: JSON_ARRAYAGG("*VALUES*".column1 RETURNING jsonb)
@@ -1105,9 +1131,88 @@ CREATE VIEW json_array_subquery_view AS
 SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING jsonb);
 \sv json_array_subquery_view
 CREATE OR REPLACE VIEW public.json_array_subquery_view AS
- SELECT ( SELECT JSON_ARRAYAGG(q.a RETURNING jsonb) AS "json_arrayagg"
-           FROM ( SELECT foo.i
-                   FROM ( VALUES (1), (2), (NULL::integer), (4)) foo(i)) q(a)) AS "json_array"
+ SELECT JSON_ARRAY( SELECT foo.i
+           FROM ( VALUES (1), (2), (NULL::integer), (4)) foo(i) RETURNING jsonb) AS "json_array"
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) ORDER BY i LIMIT 3 RETURNING jsonb);
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Result
+   Output: COALESCE((InitPlan expr_1).col1, '[]'::jsonb)
+   InitPlan expr_1
+     ->  Aggregate
+           Output: JSON_ARRAYAGG("*VALUES*".column1 RETURNING jsonb)
+           ->  Limit
+                 Output: "*VALUES*".column1
+                 ->  Sort
+                       Output: "*VALUES*".column1
+                       Sort Key: "*VALUES*".column1
+                       ->  Values Scan on "*VALUES*"
+                             Output: "*VALUES*".column1
+(12 rows)
+
+CREATE OR REPLACE VIEW json_array_subquery_view AS
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) ORDER BY i LIMIT 3 RETURNING jsonb);
+\sv json_array_subquery_view
+CREATE OR REPLACE VIEW public.json_array_subquery_view AS
+ SELECT JSON_ARRAY( SELECT foo.i
+           FROM ( VALUES (1), (2), (NULL::integer), (4)) foo(i)
+          ORDER BY foo.i
+         LIMIT 3 RETURNING jsonb) AS "json_array"
+DROP VIEW json_array_subquery_view;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM (VALUES (1), (2), (NULL), (4)) t1(a)
+WHERE JSON_ARRAY(
+    SELECT b FROM (VALUES (1), (2), (3)) t2(b) WHERE b = t1.a
+    RETURNING jsonb
+) = '[]'::jsonb;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Values Scan on "*VALUES*"
+   Output: "*VALUES*".column1
+   Filter: (COALESCE((SubPlan expr_1), '[]'::jsonb) = '[]'::jsonb)
+   SubPlan expr_1
+     ->  Aggregate
+           Output: JSON_ARRAYAGG("*VALUES*_1".column1 RETURNING jsonb)
+           ->  Values Scan on "*VALUES*_1"
+                 Output: "*VALUES*_1".column1
+                 Filter: ("*VALUES*_1".column1 = "*VALUES*".column1)
+(9 rows)
+
+CREATE VIEW json_array_subquery_view AS
+SELECT * FROM (VALUES (1), (2), (NULL), (4)) t1(a)
+WHERE JSON_ARRAY(
+    SELECT b FROM (VALUES (1), (2), (3)) t2(b) WHERE b = t1.a
+    RETURNING jsonb
+) = '[]'::jsonb;
+\sv json_array_subquery_view
+CREATE OR REPLACE VIEW public.json_array_subquery_view AS
+ SELECT a
+   FROM ( VALUES (1), (2), (NULL::integer), (4)) t1(a)
+  WHERE JSON_ARRAY( SELECT t2.b
+           FROM ( VALUES (1), (2), (3)) t2(b)
+          WHERE t2.b = t1.a RETURNING jsonb) = '[]'::jsonb
+DROP VIEW json_array_subquery_view;
+-- JSON_ARRAY(subquery) with RETURNING text
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING text);
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Result
+   Output: COALESCE((InitPlan expr_1).col1, '[]'::text)
+   InitPlan expr_1
+     ->  Aggregate
+           Output: JSON_ARRAYAGG("*VALUES*".column1 RETURNING text)
+           ->  Values Scan on "*VALUES*"
+                 Output: "*VALUES*".column1
+(7 rows)
+
+CREATE VIEW json_array_subquery_view AS
+SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING text);
+\sv json_array_subquery_view
+CREATE OR REPLACE VIEW public.json_array_subquery_view AS
+ SELECT JSON_ARRAY( SELECT foo.i
+           FROM ( VALUES (1), (2), (NULL::integer), (4)) foo(i) RETURNING text) AS "json_array"
 DROP VIEW json_array_subquery_view;
 -- Test mutability of JSON_OBJECTAGG, JSON_ARRAYAGG, JSON_ARRAY, JSON_OBJECT
 create type comp1 as (a int, b date);

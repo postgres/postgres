@@ -620,7 +620,8 @@
          which must be a SELECT query returning a single column. If
          <literal>ABSENT ON NULL</literal> is specified, NULL values are ignored.
          This is always the case if a
-         <replaceable>query_expression</replaceable> is used.
+         <replaceable>query_expression</replaceable> is used. If the query returns
+         no rows, an empty JSON array is returned.
         </para>
         <para>
          <literal>json_array(1,true,json '{"a":null}')</literal>
