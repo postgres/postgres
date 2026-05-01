@@ -349,8 +349,12 @@ ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con)
 bool
 ECPGdeallocate_all(int lineno, int compat, const char *connection_name)
 {
-	return ecpg_deallocate_all_conn(lineno, compat,
-									ecpg_get_connection(connection_name));
+	struct connection *con = ecpg_get_connection(connection_name);
+
+	if (!ecpg_init(con, connection_name, lineno))
+		return false;
+
+	return ecpg_deallocate_all_conn(lineno, compat, con);
 }
 
 char *
@@ -363,13 +367,15 @@ ecpg_prepared(const char *name, struct connection *con)
 }
 
 /* return the prepared statement */
-/* lineno is not used here, but kept in to not break API */
 char *
 ECPGprepared_statement(const char *connection_name, const char *name, int lineno)
 {
-	(void) lineno;				/* keep the compiler quiet */
+	struct connection *con = ecpg_get_connection(connection_name);
 
-	return ecpg_prepared(name, ecpg_get_connection(connection_name));
+	if (!ecpg_init(con, connection_name, lineno))
+		return NULL;
+
+	return ecpg_prepared(name, con);
 }
 
 /*
@@ -466,10 +472,18 @@ ecpg_freeStmtCacheEntry(int lineno, int compat,
 
 	con = ecpg_get_connection(entry->connection);
 
-	/* free the 'prepared_statement' list entry */
-	this = ecpg_find_prepared_statement(entry->stmtID, con, &prev);
-	if (this && !deallocate_one(lineno, compat, con, prev, this))
-		return -1;
+	/*
+	 * If the connection is gone, the prepared_statement list it owned is
+	 * already unreachable, so just skip that cleanup.  We must still clear
+	 * the cache slot below so it can be reused.
+	 */
+	if (con)
+	{
+		/* free the 'prepared_statement' list entry */
+		this = ecpg_find_prepared_statement(entry->stmtID, con, &prev);
+		if (this && !deallocate_one(lineno, compat, con, prev, this))
+			return -1;
+	}
 
 	entry->stmtID[0] = '\0';
 
