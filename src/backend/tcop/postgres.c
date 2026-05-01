@@ -111,12 +111,13 @@ int			client_connection_check_interval = 0;
 int			restrict_nonsystem_relation_kind;
 
 /*
- * Include signal sender PID/UID as errdetail when available (SA_SIGINFO).
- * The caller must supply the (already-captured) pid and uid values.
+ * Include signal sender PID/UID in the server log when available
+ * (SA_SIGINFO). The caller must supply the already-captured pid and uid
+ * values.
  */
 #define ERRDETAIL_SIGNAL_SENDER(pid, uid) \
 	((pid) == 0 ? 0 : \
-	 errdetail("Signal sent by PID %d, UID %d.", (int) (pid), (int) (uid)))
+	 errdetail_log("Signal sent by PID %d, UID %d.", (int) (pid), (int) (uid)))
 
 /* ----------------
  *		private typedefs etc

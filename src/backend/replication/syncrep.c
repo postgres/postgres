@@ -304,9 +304,10 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 				ereport(WARNING,
 						(errcode(ERRCODE_ADMIN_SHUTDOWN),
 						 errmsg("canceling the wait for synchronous replication and terminating connection due to administrator command"),
-						 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.  Signal sent by PID %d, UID %d.",
-								   (int) ProcDieSenderPid,
-								   (int) ProcDieSenderUid)));
+						 errdetail("The transaction has already committed locally, but might not have been replicated to the standby."),
+						 errdetail_log("The transaction has already committed locally, but might not have been replicated to the standby.  Signal sent by PID %d, UID %d.",
+									   (int) ProcDieSenderPid,
+									   (int) ProcDieSenderUid)));
 			else
 				ereport(WARNING,
 						(errcode(ERRCODE_ADMIN_SHUTDOWN),
