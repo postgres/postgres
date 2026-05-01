@@ -10,7 +10,11 @@ use Test::More;
 
 # Initialize publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
-$node_publisher->init(allows_streaming => 'logical');
+# Make sure pg_hba.conf is set up to allow connections from regress_seq_repl.
+# This is only needed on Windows machines that don't use UNIX sockets.
+$node_publisher->init(
+	allows_streaming => 'logical',
+	auth_extra => [ '--create-role' => 'regress_seq_repl' ]);
 $node_publisher->start;
 
 # Initialize subscriber node
