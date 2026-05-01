@@ -134,9 +134,27 @@ typedef struct
 								 * subquery belonging to a set operation */
 } standard_qp_extra;
 
+/*
+ * Context for the find_having_collation_conflicts walker.
+ *
+ * ancestor_collids is a stack of inputcollids contributed by collation-aware
+ * ancestors of the current node.  Entries are pushed before recursing into a
+ * node's children and popped afterwards, so the stack reflects exactly the
+ * inputcollids on the current root-to-node path.
+ */
+typedef struct
+{
+	Index		group_rtindex;
+	List	   *ancestor_collids;
+} having_collation_ctx;
+
 /* Local functions */
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
+static Bitmapset *find_having_collation_conflicts(Query *parse,
+												  Index group_rtindex);
+static bool having_collation_conflict_walker(Node *node,
+											 having_collation_ctx *ctx);
 static void grouping_planner(PlannerInfo *root, double tuple_fraction,
 							 SetOperationStmt *setops);
 static grouping_sets_data *preprocess_grouping_sets(PlannerInfo *root);
@@ -762,6 +780,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	PlannerInfo *root;
 	List	   *newWithCheckOptions;
 	List	   *newHaving;
+	Bitmapset  *havingCollationConflicts;
+	int			havingIdx;
 	bool		hasOuterJoins;
 	bool		hasResultRTEs;
 	RelOptInfo *final_rel;
@@ -1176,6 +1196,27 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	}
 
 	/*
+	 * Before we flatten GROUP Vars, check which HAVING clauses have collation
+	 * conflicts.  When GROUP BY uses a nondeterministic collation, values
+	 * that are "equal" for grouping may be distinguishable under a different
+	 * collation.  If such a HAVING clause were moved to WHERE, it would
+	 * filter individual rows before grouping, potentially eliminating some
+	 * members of a group and thereby changing aggregate results.
+	 *
+	 * We do this check before flatten_group_exprs because we can easily
+	 * identify grouping expressions by checking whether a Var references
+	 * RTE_GROUP, and such Vars directly carry the GROUP BY collation as their
+	 * varcollid.  After flattening, these Vars are replaced by the underlying
+	 * expressions, and we would have to match expressions in the HAVING
+	 * clause back to grouping expressions, which is much more complex.
+	 */
+	if (parse->hasGroupRTE)
+		havingCollationConflicts =
+			find_having_collation_conflicts(parse, root->group_rtindex);
+	else
+		havingCollationConflicts = NULL;
+
+	/*
 	 * Replace any Vars in the subquery's targetlist and havingQual that
 	 * reference GROUP outputs with the underlying grouping expressions.
 	 *
@@ -1219,6 +1260,14 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	 * but it's okay: it's just an optimization to avoid running pull_varnos
 	 * when there cannot be any Vars in the HAVING clause.)
 	 *
+	 * We also cannot do this if the HAVING clause uses a different collation
+	 * than the GROUP BY for any grouping expression whose GROUP BY collation
+	 * is nondeterministic.  This is detected before flatten_group_exprs (see
+	 * find_having_collation_conflicts above) and recorded in the
+	 * havingCollationConflicts bitmapset.  The bitmapset indexes remain valid
+	 * here because flatten_group_exprs uses expression_tree_mutator, which
+	 * preserves the list length and ordering of havingQual.
+	 *
 	 * Also, it may be that the clause is so expensive to execute that we're
 	 * better off doing it only once per group, despite the loss of
 	 * selectivity.  This is hard to estimate short of doing the entire
@@ -1251,6 +1300,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	 * as Node *.
 	 */
 	newHaving = NIL;
+	havingIdx = 0;
 	foreach(l, (List *) parse->havingQual)
 	{
 		Node	   *havingclause = (Node *) lfirst(l);
@@ -1258,6 +1308,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 		if (contain_agg_clause(havingclause) ||
 			contain_volatile_functions(havingclause) ||
 			contain_subplans(havingclause) ||
+			bms_is_member(havingIdx, havingCollationConflicts) ||
 			(parse->groupClause && parse->groupingSets &&
 			 bms_is_member(root->group_rtindex, pull_varnos(root, havingclause))))
 		{
@@ -1294,6 +1345,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 			/* ... and also keep it in HAVING */
 			newHaving = lappend(newHaving, havingclause);
 		}
+
+		havingIdx++;
 	}
 	parse->havingQual = (Node *) newHaving;
 
@@ -1483,6 +1536,141 @@ preprocess_qual_conditions(PlannerInfo *root, Node *jtnode)
 	else
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
+}
+
+/*
+ * find_having_collation_conflicts
+ *	  Identify HAVING clauses that must not be moved to WHERE due to collation
+ *	  mismatches with GROUP BY.
+ *
+ * This must be called before flatten_group_exprs, while the HAVING clause
+ * still contains GROUP Vars (Vars referencing RTE_GROUP).  These GROUP Vars
+ * carry the GROUP BY collation as their varcollid.  A GROUP Var with a
+ * nondeterministic varcollid conflicts whenever some collation-aware ancestor
+ * on its path applies a different inputcollid: that operator would distinguish
+ * values which the GROUP BY considers equal, so the clause is unsafe to push
+ * to WHERE.
+ *
+ * Returns a Bitmapset of zero-based indexes into the havingQual list for
+ * clauses that have collation conflicts and must stay in HAVING.
+ */
+static Bitmapset *
+find_having_collation_conflicts(Query *parse, Index group_rtindex)
+{
+	Bitmapset  *result = NULL;
+	having_collation_ctx ctx;
+	int			idx;
+
+	if (parse->havingQual == NULL)
+		return NULL;
+
+	ctx.group_rtindex = group_rtindex;
+	ctx.ancestor_collids = NIL;
+
+	idx = 0;
+	foreach_ptr(Node, clause, (List *) parse->havingQual)
+	{
+		if (having_collation_conflict_walker(clause, &ctx))
+			result = bms_add_member(result, idx);
+		idx++;
+		Assert(ctx.ancestor_collids == NIL);
+	}
+
+	return result;
+}
+
+/*
+ * Walker function for find_having_collation_conflicts.
+ *
+ * Walk the clause top-down, maintaining a stack of inputcollids contributed
+ * by collation-aware ancestors.  At each GROUP Var with a nondeterministic
+ * varcollid, the clause has a conflict if any ancestor's inputcollid differs
+ * from the GROUP Var's varcollid.  Most collation-aware nodes expose their
+ * inputcollid through exprInputCollation(); RowCompareExpr is the exception,
+ * as it carries one inputcollid per column in inputcollids[], so we descend
+ * into its (largs[i], rargs[i]) pairs explicitly with the matching collation
+ * pushed onto the stack.
+ */
+static bool
+having_collation_conflict_walker(Node *node, having_collation_ctx *ctx)
+{
+	Oid			this_collid;
+	bool		result;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		/* We should not see any upper-level Vars here */
+		Assert(var->varlevelsup == 0);
+
+		if (var->varno == ctx->group_rtindex &&
+			OidIsValid(var->varcollid) &&
+			!get_collation_isdeterministic(var->varcollid))
+		{
+			foreach_oid(collid, ctx->ancestor_collids)
+			{
+				if (collid != var->varcollid)
+					return true;
+			}
+		}
+		return false;
+	}
+
+	if (IsA(node, RowCompareExpr))
+	{
+		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+		ListCell   *lc_l;
+		ListCell   *lc_r;
+		ListCell   *lc_c;
+
+		/*
+		 * Each column of a row comparison is compared under its own
+		 * inputcollids[i].  Walk each (largs[i], rargs[i]) pair with that
+		 * collation pushed, so a Var in column i is checked against the
+		 * collation that actually applies to it.
+		 */
+		forthree(lc_l, rcexpr->largs,
+				 lc_r, rcexpr->rargs,
+				 lc_c, rcexpr->inputcollids)
+		{
+			Oid			collid = lfirst_oid(lc_c);
+			bool		found;
+
+			if (OidIsValid(collid))
+				ctx->ancestor_collids = lappend_oid(ctx->ancestor_collids,
+													collid);
+
+			found = having_collation_conflict_walker((Node *) lfirst(lc_l),
+													 ctx) ||
+				having_collation_conflict_walker((Node *) lfirst(lc_r),
+												 ctx);
+
+			if (OidIsValid(collid))
+				ctx->ancestor_collids =
+					list_delete_last(ctx->ancestor_collids);
+
+			if (found)
+				return true;
+		}
+		return false;
+	}
+
+	this_collid = exprInputCollation(node);
+	if (OidIsValid(this_collid))
+		ctx->ancestor_collids = lappend_oid(ctx->ancestor_collids,
+											this_collid);
+
+	result = expression_tree_walker(node, having_collation_conflict_walker,
+									ctx);
+
+	if (OidIsValid(this_collid))
+		ctx->ancestor_collids = list_delete_last(ctx->ancestor_collids);
+
+	return result;
 }
 
 /*

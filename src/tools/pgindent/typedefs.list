@@ -3834,6 +3834,7 @@ gss_key_value_set_desc
 gss_name_t
 gtrgm_consistent_cache
 gzFile
+having_collation_ctx
 heap_page_items_state
 help_handler
 hlCheck
