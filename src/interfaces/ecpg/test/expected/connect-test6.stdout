@@ -1,0 +1,9 @@
+Test 1: Try to get descriptor on a disconnected connection
+sqlca.sqlcode = -220
+Test 2: deallocate all with non-existent connection
+sqlca.sqlcode = -220
+Test 3: deallocate all on disconnected connection
+sqlca.sqlcode = -220
+Test 4: Use prepared statement from non-existent connection
+sqlca.sqlcode = -220
+All tests completed !

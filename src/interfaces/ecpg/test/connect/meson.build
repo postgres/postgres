@@ -6,6 +6,7 @@ pgc_files = [
   'test3',
   'test4',
   'test5',
+  'test6',
 ]
 
 foreach pgc_file : pgc_files

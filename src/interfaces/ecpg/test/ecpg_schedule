@@ -13,6 +13,7 @@ test: connect/test2
 test: connect/test3
 test: connect/test4
 test: connect/test5
+test: connect/test6
 test: pgtypeslib/dt_test
 test: pgtypeslib/dt_test2
 test: pgtypeslib/num_test
