@@ -17,7 +17,7 @@ step s1del: DELETE FROM parent WHERE parent_id = 1;
 step s2ins: INSERT INTO child VALUES (1, 1); <waiting ...>
 step s1c: COMMIT;
 step s2ins: <... completed>
-ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent delete
 step s2c: COMMIT;
 
 starting permutation: s1rc s2rc s2ins s1del s2c s1c
@@ -57,5 +57,5 @@ step s1del: DELETE FROM parent WHERE parent_id = 1;
 step s2ins: INSERT INTO child VALUES (1, 1); <waiting ...>
 step s1c: COMMIT;
 step s2ins: <... completed>
-ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent delete
 step s2c: COMMIT;

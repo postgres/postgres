@@ -3244,7 +3244,7 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 			if (IsolationUsesXactSnapshot())
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
+						 errmsg("could not serialize access due to concurrent delete")));
 			return false;
 
 		case TM_Updated:

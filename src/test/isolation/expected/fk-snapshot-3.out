@@ -21,7 +21,7 @@ step s2ins:
  <waiting ...>
 step s1c: COMMIT;
 step s2ins: <... completed>
-ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent delete
 step s2c: COMMIT;
 
 starting permutation: s1rc s2rc s2ins s1del s2c s1c
@@ -69,7 +69,7 @@ step s2ins:
  <waiting ...>
 step s1c: COMMIT;
 step s2ins: <... completed>
-ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent delete
 step s2c: COMMIT;
 
 starting permutation: s1rc s2rc s2ins s1upok s2c s1c

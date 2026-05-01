@@ -234,7 +234,7 @@ lnext:
 				if (IsolationUsesXactSnapshot())
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-							 errmsg("could not serialize access due to concurrent update")));
+							 errmsg("could not serialize access due to concurrent delete")));
 				/* tuple was deleted so don't return it */
 				goto lnext;
 

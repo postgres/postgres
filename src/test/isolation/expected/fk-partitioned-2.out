@@ -22,7 +22,7 @@ step s2bs: begin isolation level serializable; select 1;
 step s2i: insert into pfk values (1); <waiting ...>
 step s1c: commit;
 step s2i: <... completed>
-ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent delete
 step s2c: commit;
 
 starting permutation: s1b s2b s1d s2i s1c s2c
@@ -47,7 +47,7 @@ step s1d: delete from ppk where a = 1;
 step s2i: insert into pfk values (1); <waiting ...>
 step s1c: commit;
 step s2i: <... completed>
-ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent delete
 step s2c: commit;
 
 starting permutation: s1b s2b s2i s1d s2c s1c

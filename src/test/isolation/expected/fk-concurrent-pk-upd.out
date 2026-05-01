@@ -84,6 +84,26 @@ child_key|parent_key
 (0 rows)
 
 
+starting permutation: s2b s2dkey s3b s3i s2c s3c s2s s3s
+step s2b: BEGIN;
+step s2dkey: DELETE FROM parent WHERE parent_key = 1;
+step s3b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s3i: INSERT INTO child VALUES (2, 1); <waiting ...>
+step s2c: COMMIT;
+step s3i: <... completed>
+ERROR:  could not serialize access due to concurrent delete
+step s3c: COMMIT;
+step s2s: SELECT * FROM parent;
+parent_key|aux
+----------+---
+(0 rows)
+
+step s3s: SELECT * FROM child;
+child_key|parent_key
+---------+----------
+(0 rows)
+
+
 starting permutation: s2b s2uaux s3b s3i s2c s3c s2s s3s
 step s2b: BEGIN;
 step s2uaux: UPDATE parent SET aux = 'bar' WHERE parent_key = 1;

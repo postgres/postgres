@@ -31,6 +31,7 @@ step s2b  { BEGIN; }
 step s2ukey { UPDATE parent SET parent_key = 2 WHERE parent_key = 1; }
 step s2uaux { UPDATE parent SET aux = 'bar' WHERE parent_key = 1; }
 step s2ukey2 { UPDATE parent SET parent_key = 1 WHERE parent_key = 2; }
+step s2dkey { DELETE FROM parent WHERE parent_key = 1; }
 step s2c { COMMIT; }
 step s2s { SELECT * FROM parent; }
 
@@ -49,5 +50,7 @@ permutation s2b s2ukey s1b s1i s2ukey2 s2c s1c s2s s1s
 
 # RR: key update -> serialization failure
 permutation s2b s2ukey s3b s3i s2c s3c s2s s3s
+# RR: key delete -> serialization failure
+permutation s2b s2dkey s3b s3i s2c s3c s2s s3s
 # RR: non-key update -> old version visible via transaction snapshot
 permutation s2b s2uaux s3b s3i s2c s3c s2s s3s
