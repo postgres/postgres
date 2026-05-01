@@ -1,0 +1,68 @@
+/*
+ * This test verifies that ecpg functions properly handle NULL connections
+ * (i.e., when a connection name doesn't exist or has been disconnected).
+ * Before the fix, these operations would cause a segmentation fault.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+exec sql include ../regression;
+
+int
+main(void)
+{
+exec sql begin declare section;
+	int val1output = 2;
+	int val1 = 1;
+	char val2[6] = "data1";
+	char *stmt1 = "SELECT * from test1 where a = $1 and b = $2";
+exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	/* Connect to the database */
+	exec sql connect to REGRESSDB1 as myconn;
+
+	/* Test 1: Try to get descriptor on a disconnected connection */
+	printf("Test 1: Try to get descriptor on a disconnected connection\n");
+	exec sql create table test1 (a int, b text);
+	exec sql insert into test1 (a,b) values (1, 'data1');
+
+	exec sql allocate descriptor indesc;
+	exec sql allocate descriptor outdesc;
+
+	exec sql prepare foo2 from :stmt1;
+
+	exec sql set descriptor indesc value 1 DATA = :val1;
+	exec sql set descriptor indesc value 2 DATA = :val2;
+
+	exec sql execute foo2 using sql descriptor indesc into sql descriptor outdesc;
+
+	exec sql rollback;
+	exec sql disconnect;
+	exec sql get descriptor outdesc value 1 :val1output = DATA;
+	printf("sqlca.sqlcode = %ld\n", sqlca.sqlcode);
+
+	/* Test 2: Try to deallocate all on a non-existent connection */
+	printf("Test 2: deallocate all with non-existent connection\n");
+	exec sql at nonexistent deallocate all;
+	printf("sqlca.sqlcode = %ld\n", sqlca.sqlcode);
+
+	/* Test 3: deallocate on disconnected connection */
+	printf("Test 3: deallocate all on disconnected connection\n");
+	exec sql deallocate all;
+	printf("sqlca.sqlcode = %ld\n", sqlca.sqlcode);
+
+	/* Test 4: Use prepared statement from non-existent connection */
+	printf("Test 4: Use prepared statement from non-existent connection\n");
+	exec sql at nonexistent prepare stmt1 FROM "SELECT 1";
+	exec sql at nonexistent declare cur1 cursor for stmt1;
+	exec sql at nonexistent open cur1;
+	printf("sqlca.sqlcode = %ld\n", sqlca.sqlcode);
+
+	printf("All tests completed !\n");
+
+	return 0;
+}
