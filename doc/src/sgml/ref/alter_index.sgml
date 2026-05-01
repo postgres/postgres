@@ -97,6 +97,11 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       index cannot be dropped by itself, and will automatically be dropped
       if its parent index is dropped.
      </para>
+     <para>
+      If the named index is already attached to the altered index, the
+      command will attempt to validate the parent index if the parent is
+      currently invalid.
+     </para>
     </listitem>
    </varlistentry>
 
