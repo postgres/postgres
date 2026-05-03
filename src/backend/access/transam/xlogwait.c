@@ -92,13 +92,19 @@ StaticAssertDecl(lengthof(WaitLSNWaitEvents) == WAIT_LSN_TYPE_COUNT,
 				 "WaitLSNWaitEvents must match WaitLSNType enum");
 
 /*
- * Get the current LSN for the specified wait type.
+ * Get the current LSN for the specified wait type.  Provide memory
+ * barrier semantics before getting the value.
  */
 XLogRecPtr
 GetCurrentLSNForWaitType(WaitLSNType lsnType)
 {
 	Assert(lsnType >= 0 && lsnType < WAIT_LSN_TYPE_COUNT);
 
+	/*
+	 * All of the cases below provide memory barrier semantics:
+	 * GetWalRcvWriteRecPtr() and GetFlushRecPtr() have explicit barriers,
+	 * while GetXLogReplayRecPtr() and GetWalRcvFlushRecPtr() use spinlocks.
+	 */
 	switch (lsnType)
 	{
 		case WAIT_LSN_TYPE_STANDBY_REPLAY:
@@ -184,7 +190,8 @@ updateMinWaitedLSN(WaitLSNType lsnType)
 
 		minWaitedLSN = procInfo->waitLSN;
 	}
-	pg_atomic_write_u64(&waitLSNState->minWaitedLSN[i], minWaitedLSN);
+	/* Pairs with pg_atomic_read_membarrier_u64() in WaitLSNWakeup(). */
+	pg_atomic_write_membarrier_u64(&waitLSNState->minWaitedLSN[i], minWaitedLSN);
 }
 
 /*
@@ -325,10 +332,11 @@ WaitLSNWakeup(WaitLSNType lsnType, XLogRecPtr currentLSN)
 
 	/*
 	 * Fast path check.  Skip if currentLSN is InvalidXLogRecPtr, which means
-	 * "wake all waiters" (e.g., during promotion when recovery ends).
+	 * "wake all waiters" (e.g., during promotion when recovery ends). Pairs
+	 * with pg_atomic_write_membarrier_u64() in updateMinWaitedLSN().
 	 */
 	if (XLogRecPtrIsValid(currentLSN) &&
-		pg_atomic_read_u64(&waitLSNState->minWaitedLSN[i]) > currentLSN)
+		pg_atomic_read_membarrier_u64(&waitLSNState->minWaitedLSN[i]) > currentLSN)
 		return;
 
 	wakeupWaiters(lsnType, currentLSN);
@@ -450,8 +458,7 @@ WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int64 timeout)
 					errmsg("terminating connection due to unexpected postmaster exit"),
 					errcontext("while waiting for LSN"));
 
-		if (rc & WL_LATCH_SET)
-			ResetLatch(MyLatch);
+		ResetLatch(MyLatch);
 	}
 
 	/*
