@@ -105,30 +105,25 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
           <listitem>
            <para>
             <literal>standby_write</literal>: Wait for the WAL containing the
-            LSN to be received from the primary and written to disk on a
-            standby server, but not yet flushed. This is faster than
+            LSN to be written to disk on a standby server, but not yet
+            necessarily flushed.  This is faster than
             <literal>standby_flush</literal> but provides weaker durability
             guarantees since the data may still be in operating system
-            buffers. After successful completion, the
-            <structfield>written_lsn</structfield> column in
-            <link linkend="monitoring-pg-stat-wal-receiver-view">
-            <structname>pg_stat_wal_receiver</structname></link> will show
-            a value greater than or equal to the target LSN. This mode can
-            only be used during recovery.
+            buffers.  This is satisfied by WAL already present on the
+            standby from a base backup, archive restore, or prior
+            streaming, as well as WAL newly received from the primary.
+            This mode can only be used during recovery.
            </para>
           </listitem>
           <listitem>
            <para>
             <literal>standby_flush</literal>: Wait for the WAL containing the
-            LSN to be received from the primary and flushed to disk on a
-            standby server. This provides a durability guarantee without
-            waiting for the WAL to be applied. After successful completion,
-            <function>pg_last_wal_receive_lsn()</function> will return a
-            value greater than or equal to the target LSN. This value is
-            also available as the <structfield>flushed_lsn</structfield>
-            column in <link linkend="monitoring-pg-stat-wal-receiver-view">
-            <structname>pg_stat_wal_receiver</structname></link>. This mode
-            can only be used during recovery.
+            LSN to be flushed to disk on a standby server.  This provides
+            a durability guarantee without waiting for the WAL to be
+            applied.  This is satisfied by WAL already present on the
+            standby from a base backup, archive restore, or prior
+            streaming, as well as WAL newly received from the primary.
+            This mode can only be used during recovery.
            </para>
           </listitem>
           <listitem>
@@ -238,10 +233,11 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
    useful to achieve read-your-writes consistency while using an async
    replica for reads and the primary for writes. The
    <literal>standby_flush</literal> mode waits for the WAL to be flushed
-   to durable storage on the replica, providing a durability guarantee
-   without waiting for replay. The <literal>standby_write</literal> mode
-   waits for the WAL to be written to the operating system, which is
-   faster than flush but provides weaker durability guarantees. The
+   to durable storage on the replica, or to have already been replayed
+   from WAL present on the standby. The <literal>standby_write</literal> mode
+   waits for the WAL to be written to the operating system, or to have
+   already been replayed, which is faster than flush for newly received
+   WAL but provides weaker durability guarantees. The
    <literal>primary_flush</literal> mode waits for WAL to be flushed on
    a primary server. In all cases, the <acronym>LSN</acronym> of the last
    modification should be stored on the client application side or the

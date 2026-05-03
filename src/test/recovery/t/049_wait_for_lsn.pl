@@ -674,4 +674,77 @@ for (my $i = 0; $i < 3; $i++)
 	$wait_sessions[$i]->{run}->finish;
 }
 
+# 9. Archive-only standby tests: verify standby_write/standby_flush work
+# without a walreceiver.  These exercises the replay-position floor in
+# GetCurrentLSNForWaitType().
+#
+# We set up a separate primary with archiving and an archive-only standby
+# (has_restoring, no has_streaming), so no walreceiver ever starts and the
+# shared walreceiver positions (writtenUpto, flushedUpto) stay at their
+# zero-initialized values.
+
+my $arc_primary = PostgreSQL::Test::Cluster->new('arc_primary');
+$arc_primary->init(has_archiving => 1, allows_streaming => 1);
+$arc_primary->start;
+
+$arc_primary->safe_psql('postgres',
+	"CREATE TABLE arc_test AS SELECT generate_series(1,10) AS a");
+
+my $arc_backup_name = 'arc_backup';
+$arc_primary->backup($arc_backup_name);
+
+# Generate WAL that will be archived and replayed on the standby.
+$arc_primary->safe_psql('postgres',
+	"INSERT INTO arc_test VALUES (generate_series(11, 20))");
+my $arc_target_lsn =
+  $arc_primary->safe_psql('postgres', "SELECT pg_current_wal_insert_lsn()");
+
+# Force WAL to be archived by switching segments, then wait for archiving.
+my $arc_segment = $arc_primary->safe_psql('postgres',
+	"SELECT pg_walfile_name(pg_current_wal_lsn())");
+$arc_primary->safe_psql('postgres', "SELECT pg_switch_wal()");
+$arc_primary->poll_query_until('postgres',
+	qq{SELECT last_archived_wal >= '$arc_segment' FROM pg_stat_archiver}, 't')
+  or die "Timed out waiting for WAL archiving on arc_primary";
+
+# Create an archive-only standby: has_restoring but NOT has_streaming.
+# No primary_conninfo means no walreceiver will start.
+my $arc_standby = PostgreSQL::Test::Cluster->new('arc_standby');
+$arc_standby->init_from_backup($arc_primary, $arc_backup_name,
+	has_restoring => 1);
+$arc_standby->start;
+
+# Wait for the standby to replay past our target LSN via archive recovery.
+$arc_standby->poll_query_until('postgres',
+	qq{SELECT pg_wal_lsn_diff(pg_last_wal_replay_lsn(), '$arc_target_lsn') >= 0}
+) or die "Timed out waiting for archive replay on arc_standby";
+
+# Sanity: verify no walreceiver is running.
+$output = $arc_standby->safe_psql('postgres',
+	"SELECT count(*) FROM pg_stat_wal_receiver");
+is($output, '0', "arc_standby has no walreceiver");
+
+# 9a. Getter fallback: standby_write/standby_flush succeed immediately when
+# the target LSN has already been replayed, even though writtenUpto and
+# flushedUpto are zero.  GetCurrentLSNForWaitType() returns
+# Max(walrcv_pos, replay), so replay >= target satisfies the check on the
+# first loop iteration without ever sleeping.
+
+$output = $arc_standby->safe_psql(
+	'postgres', qq[
+	WAIT FOR LSN '${arc_target_lsn}'
+		WITH (MODE 'standby_write', timeout '3s', no_throw);]);
+ok($output eq "success",
+	"standby_write succeeds on archive-only standby (getter fallback)");
+
+$output = $arc_standby->safe_psql(
+	'postgres', qq[
+	WAIT FOR LSN '${arc_target_lsn}'
+		WITH (MODE 'standby_flush', timeout '3s', no_throw);]);
+ok($output eq "success",
+	"standby_flush succeeds on archive-only standby (getter fallback)");
+
+$arc_standby->stop;
+$arc_primary->stop;
+
 done_testing();

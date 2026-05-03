@@ -111,10 +111,27 @@ GetCurrentLSNForWaitType(WaitLSNType lsnType)
 			return GetXLogReplayRecPtr(NULL);
 
 		case WAIT_LSN_TYPE_STANDBY_WRITE:
-			return GetWalRcvWriteRecPtr();
+			{
+				XLogRecPtr	recptr = GetWalRcvWriteRecPtr();
+				XLogRecPtr	replay = GetXLogReplayRecPtr(NULL);
+
+				/*
+				 * Use the replay position as a floor.  WAL up to the replay
+				 * point is already on disk from a base backup, archive
+				 * restore, or prior streaming, so there is no reason to wait
+				 * for the walreceiver to re-receive it.
+				 */
+				return Max(recptr, replay);
+			}
 
 		case WAIT_LSN_TYPE_STANDBY_FLUSH:
-			return GetWalRcvFlushRecPtr(NULL, NULL);
+			{
+				XLogRecPtr	recptr = GetWalRcvFlushRecPtr(NULL, NULL);
+				XLogRecPtr	replay = GetXLogReplayRecPtr(NULL);
+
+				/* Same floor as standby_write; see comment above. */
+				return Max(recptr, replay);
+			}
 
 		case WAIT_LSN_TYPE_PRIMARY_FLUSH:
 			return GetFlushRecPtr(NULL);
