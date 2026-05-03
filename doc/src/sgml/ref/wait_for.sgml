@@ -258,6 +258,20 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
   </para>
 
   <para>
+   <command>WAIT FOR</command> compares only the numeric
+   <acronym>LSN</acronym>; it has no notion of which timeline a WAL
+   record belongs to.  This matters when a standby continues recovery
+   across an upstream timeline switch &mdash; for example, a cascading
+   standby whose upstream gets promoted.  In that case
+   <command>WAIT FOR</command> will return <literal>success</literal>
+   as soon as the position used by the selected wait mode reaches or
+   passes the numeric <acronym>LSN</acronym>, regardless of which
+   timeline that <acronym>LSN</acronym> belongs to.  Applications that need to
+   confirm the target refers to the expected timeline must validate
+   the timeline themselves.
+  </para>
+
+  <para>
    On a standby server, <command>WAIT FOR</command> sessions may be
    interrupted by recovery conflicts.  Some recovery conflicts are
    unavoidable: for example, replaying a tablespace drop resolves
