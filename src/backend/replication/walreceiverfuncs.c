@@ -321,7 +321,12 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 		walrcv->flushedUpto = recptr;
 		walrcv->receivedTLI = tli;
 		walrcv->latestChunkStart = recptr;
-		pg_atomic_write_u64(&walrcv->writtenUpto, recptr);
+
+		/*
+		 * Pairs with pg_atomic_read_membarrier_u64() in
+		 * GetWalRcvWriteRecPtr().
+		 */
+		pg_atomic_write_membarrier_u64(&walrcv->writtenUpto, recptr);
 	}
 	walrcv->receiveStart = recptr;
 	walrcv->receiveStartTLI = tli;
@@ -363,14 +368,17 @@ GetWalRcvFlushRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI)
 
 /*
  * Returns the last+1 byte position that walreceiver has written.
- * This returns a recently written value without taking a lock.
+ *
+ * Use pg_atomic_read_membarrier_u64() to ensure that callers see up-to-date
+ * shared memory state, matching the barrier semantics provided by the
+ * spinlock in GetWalRcvFlushRecPtr() and other LSN-position functions.
  */
 XLogRecPtr
 GetWalRcvWriteRecPtr(void)
 {
 	WalRcvData *walrcv = WalRcv;
 
-	return pg_atomic_read_u64(&walrcv->writtenUpto);
+	return pg_atomic_read_membarrier_u64(&walrcv->writtenUpto);
 }
 
 /*

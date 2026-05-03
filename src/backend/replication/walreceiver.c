@@ -978,7 +978,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 	}
 
 	/* Update shared-memory status */
-	pg_atomic_write_u64(&WalRcv->writtenUpto, LogstreamResult.Write);
+	pg_atomic_write_membarrier_u64(&WalRcv->writtenUpto, LogstreamResult.Write);
 
 	/*
 	 * If we wrote an LSN that someone was waiting for, notify the waiters.
