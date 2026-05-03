@@ -2936,12 +2936,10 @@ XLogFlush(XLogRecPtr record)
 	WalSndWakeupProcessRequests(true, !RecoveryInProgress());
 
 	/*
-	 * If we flushed an LSN that someone was waiting for, notify the waiters.
+	 * Wake up processes waiting for primary flush LSN to reach current flush
+	 * position.
 	 */
-	if (waitLSNState &&
-		(LogwrtResult.Flush >=
-		 pg_atomic_read_u64(&waitLSNState->minWaitedLSN[WAIT_LSN_TYPE_PRIMARY_FLUSH])))
-		WaitLSNWakeup(WAIT_LSN_TYPE_PRIMARY_FLUSH, LogwrtResult.Flush);
+	WaitLSNWakeup(WAIT_LSN_TYPE_PRIMARY_FLUSH, LogwrtResult.Flush);
 
 	/*
 	 * If we still haven't flushed to the request point then we have a
@@ -3126,12 +3124,10 @@ XLogBackgroundFlush(void)
 	WalSndWakeupProcessRequests(true, !RecoveryInProgress());
 
 	/*
-	 * If we flushed an LSN that someone was waiting for, notify the waiters.
+	 * Wake up processes waiting for primary flush LSN to reach current flush
+	 * position.
 	 */
-	if (waitLSNState &&
-		(LogwrtResult.Flush >=
-		 pg_atomic_read_u64(&waitLSNState->minWaitedLSN[WAIT_LSN_TYPE_PRIMARY_FLUSH])))
-		WaitLSNWakeup(WAIT_LSN_TYPE_PRIMARY_FLUSH, LogwrtResult.Flush);
+	WaitLSNWakeup(WAIT_LSN_TYPE_PRIMARY_FLUSH, LogwrtResult.Flush);
 
 	/*
 	 * Great, done. To take some work off the critical path, try to initialize
