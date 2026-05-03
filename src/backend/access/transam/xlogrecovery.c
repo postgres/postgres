@@ -1782,10 +1782,16 @@ PerformWalRecovery(void)
 			ApplyWalRecord(xlogreader, record, &replayTLI);
 
 			/*
-			 * Wake up processes waiting for standby replay LSN to reach
-			 * current replay position.
+			 * Wake up processes waiting for standby replay, write, or flush
+			 * LSN to reach current replay position.  Replay implies that the
+			 * WAL was already written and flushed to disk, so write and flush
+			 * waiters can be woken at the replay position too.
 			 */
 			WaitLSNWakeup(WAIT_LSN_TYPE_STANDBY_REPLAY,
+						  XLogRecoveryCtl->lastReplayedEndRecPtr);
+			WaitLSNWakeup(WAIT_LSN_TYPE_STANDBY_WRITE,
+						  XLogRecoveryCtl->lastReplayedEndRecPtr);
+			WaitLSNWakeup(WAIT_LSN_TYPE_STANDBY_FLUSH,
 						  XLogRecoveryCtl->lastReplayedEndRecPtr);
 
 			/* Exit loop if we reached inclusive recovery target */

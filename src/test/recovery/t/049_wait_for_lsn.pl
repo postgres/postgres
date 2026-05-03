@@ -744,6 +744,70 @@ $output = $arc_standby->safe_psql(
 ok($output eq "success",
 	"standby_flush succeeds on archive-only standby (getter fallback)");
 
+# 9b. Replay waker: standby_write/standby_flush waiters that go to sleep
+# (target > replay at entry) are woken when replay catches up.  This tests
+# that PerformWalRecovery() calls WaitLSNWakeup for STANDBY_WRITE and
+# STANDBY_FLUSH, not just STANDBY_REPLAY.
+#
+# Pause replay, archive more WAL, start background waiters, then resume
+# replay and verify the waiters complete.
+
+$arc_standby->safe_psql('postgres', "SELECT pg_wal_replay_pause()");
+
+# Generate more WAL and archive it.
+$arc_primary->safe_psql('postgres',
+	"INSERT INTO arc_test VALUES (generate_series(21, 30))");
+my $arc_target_lsn2 =
+  $arc_primary->safe_psql('postgres', "SELECT pg_current_wal_insert_lsn()");
+
+my $arc_segment2 = $arc_primary->safe_psql('postgres',
+	"SELECT pg_walfile_name(pg_current_wal_lsn())");
+$arc_primary->safe_psql('postgres', "SELECT pg_switch_wal()");
+$arc_primary->poll_query_until('postgres',
+	qq{SELECT last_archived_wal >= '$arc_segment2' FROM pg_stat_archiver},
+	't')
+  or die "Timed out waiting for WAL archiving on arc_primary (round 2)";
+
+# Start background waiters.  With replay paused, target > replay, so they
+# will sleep on WaitLatch.  They can only be woken by the replay-loop
+# WaitLSNWakeup calls.
+my $arc_write_session = $arc_standby->background_psql('postgres');
+$arc_write_session->query_until(
+	qr/start/, qq[
+	\\echo start
+	WAIT FOR LSN '${arc_target_lsn2}'
+		WITH (MODE 'standby_write', timeout '1d', no_throw);
+]);
+
+my $arc_flush_session = $arc_standby->background_psql('postgres');
+$arc_flush_session->query_until(
+	qr/start/, qq[
+	\\echo start
+	WAIT FOR LSN '${arc_target_lsn2}'
+		WITH (MODE 'standby_flush', timeout '1d', no_throw);
+]);
+
+# Verify both waiters are blocked.
+$arc_standby->poll_query_until('postgres',
+	"SELECT count(*) = 2 FROM pg_stat_activity WHERE wait_event LIKE 'WaitForWal%'"
+) or die "Timed out waiting for arc_standby waiters to block";
+
+# Resume replay.  The startup process should wake the STANDBY_WRITE and
+# STANDBY_FLUSH waiters as it replays past arc_target_lsn2.
+$arc_standby->safe_psql('postgres', "SELECT pg_wal_replay_resume()");
+
+$arc_write_session->quit;
+$arc_flush_session->quit;
+chomp($arc_write_session->{stdout});
+chomp($arc_flush_session->{stdout});
+
+is($arc_write_session->{stdout},
+	'success',
+	"standby_write waiter woken by replay on archive-only standby");
+is($arc_flush_session->{stdout},
+	'success',
+	"standby_flush waiter woken by replay on archive-only standby");
+
 $arc_standby->stop;
 $arc_primary->stop;
 
