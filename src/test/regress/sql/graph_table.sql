@@ -593,6 +593,7 @@ SELECT sname, dname FROM GRAPH_TABLE (g1 MATCH (src)->(dest) WHERE out_degree(sr
 -- GRAPH_TABLE subquery in HAVING clause (tests expression mutator)
 SELECT src.vname, count(*) FROM v1 AS src
   GROUP BY src.vname
-  HAVING count(*) >= (SELECT count(*) FROM GRAPH_TABLE (g1 MATCH (a IS vl1 | vl2) COLUMNS (a.vname AS n)) WHERE n = src.vname);
+  HAVING count(*) >= (SELECT count(*) FROM GRAPH_TABLE (g1 MATCH (a IS vl1 | vl2) COLUMNS (a.vname AS n)) WHERE n = src.vname)
+  ORDER BY vname;
 
 -- leave the objects behind for pg_upgrade/pg_dump tests
