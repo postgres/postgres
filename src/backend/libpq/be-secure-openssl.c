@@ -156,7 +156,7 @@ be_tls_init(bool isServerStart)
 	MemoryContext host_memcxt = NULL;
 	MemoryContextCallback *host_memcxt_cb;
 	char	   *err_msg = NULL;
-	int			res;
+	HostsFileLoadResult res;
 	struct hosts *new_hosts;
 	SSL_CTX    *context = NULL;
 	int			ssl_ver_min = -1;

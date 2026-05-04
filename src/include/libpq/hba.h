@@ -165,15 +165,6 @@ typedef struct HostsLine
 	void	   *ssl_ctx;		/* associated SSL_CTX* for the above settings */
 } HostsLine;
 
-typedef enum HostsFileLoadResult
-{
-	HOSTSFILE_LOAD_OK = 0,
-	HOSTSFILE_LOAD_FAILED,
-	HOSTSFILE_EMPTY,
-	HOSTSFILE_MISSING,
-	HOSTSFILE_DISABLED,
-} HostsFileLoadResult;
-
 /*
  * TokenizedAuthLine represents one line lexed from an authentication
  * configuration file.  Each item in the "fields" list is a sub-list of

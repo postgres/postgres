@@ -361,7 +361,7 @@ parse_hosts_line(TokenizedAuthLine *tok_line, int elevel)
  * the hosts configuration failed to load, the err_msg variable may have more
  * information in case it was passed as non-NULL.
  */
-int
+HostsFileLoadResult
 load_hosts(List **hosts, char **err_msg)
 {
 	FILE	   *file;

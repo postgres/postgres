@@ -156,6 +156,15 @@ enum ssl_protocol_versions
 	PG_TLS1_3_VERSION,
 };
 
+typedef enum HostsFileLoadResult
+{
+	HOSTSFILE_LOAD_OK = 0,
+	HOSTSFILE_LOAD_FAILED,
+	HOSTSFILE_EMPTY,
+	HOSTSFILE_MISSING,
+	HOSTSFILE_DISABLED,
+} HostsFileLoadResult;
+
 /*
  * prototypes for functions in be-secure-common.c
  */
@@ -164,6 +173,6 @@ extern int	run_ssl_passphrase_command(const char *cmd, const char *prompt,
 									   char *buf, int size);
 extern bool check_ssl_key_file_permissions(const char *ssl_key_file,
 										   bool isServerStart);
-extern int	load_hosts(List **hosts, char **err_msg);
+extern HostsFileLoadResult load_hosts(List **hosts, char **err_msg);
 
 #endif							/* LIBPQ_H */
