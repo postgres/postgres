@@ -396,7 +396,7 @@ dependencies_object_field_start(void *state, char *fname, bool isnull)
 	errsave(parse->escontext,
 			errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			errmsg("malformed pg_dependencies: \"%s\"", parse->str),
-			errdetail("Only allowed keys are \"%s\", \"%s\" and \"%s\".",
+			errdetail("Only allowed keys are \"%s\", \"%s\", and \"%s\".",
 					  PG_DEPENDENCIES_KEY_ATTRIBUTES,
 					  PG_DEPENDENCIES_KEY_DEPENDENCY,
 					  PG_DEPENDENCIES_KEY_DEGREE));

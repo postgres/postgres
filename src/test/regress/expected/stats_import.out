@@ -2021,7 +2021,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
                         {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
   'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
   'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
-WARNING:  cannot specify parameters "most_common_vals", "most_common_freqs" or "most_common_base_freqs"
+WARNING:  cannot specify parameters "most_common_vals", "most_common_freqs", or "most_common_base_freqs"
 HINT:  Extended statistics object "stats_import.test_stat_dependencies" does not support statistics of this type.
  pg_restore_extended_stats 
 ---------------------------
@@ -2037,7 +2037,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'inherited', false,
   'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
   'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
-WARNING:  could not use "most_common_vals", "most_common_freqs" and "most_common_base_freqs": missing one or more parameters
+WARNING:  could not use "most_common_vals", "most_common_freqs", and "most_common_base_freqs": missing one or more parameters
  pg_restore_extended_stats 
 ---------------------------
  f
@@ -2054,7 +2054,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
                         {tre,"(3,3.3,TRE,03-03-2003,)"},
                         {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
   'most_common_base_freqs', '{0.0625,0.0625,0.0625,0.0625}'::double precision[]);
-WARNING:  could not use "most_common_vals", "most_common_freqs" and "most_common_base_freqs": missing one or more parameters
+WARNING:  could not use "most_common_vals", "most_common_freqs", and "most_common_base_freqs": missing one or more parameters
  pg_restore_extended_stats 
 ---------------------------
  f
@@ -2071,7 +2071,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
                         {tre,"(3,3.3,TRE,03-03-2003,)"},
                         {two,"(2,2.2,TWO,02-02-2002,\"[true, 4, \"\"six\"\"]\")"}}'::text[],
   'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[]);
-WARNING:  could not use "most_common_vals", "most_common_freqs" and "most_common_base_freqs": missing one or more parameters
+WARNING:  could not use "most_common_vals", "most_common_freqs", and "most_common_base_freqs": missing one or more parameters
  pg_restore_extended_stats 
 ---------------------------
  f

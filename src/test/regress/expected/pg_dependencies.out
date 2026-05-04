@@ -60,22 +60,22 @@ SELECT '[{"attributes_invalid" : [2,3], "dependency" : 4}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes_invalid" : [2,3], "dependency" : 4}]"
 LINE 1: SELECT '[{"attributes_invalid" : [2,3], "dependency" : 4}]':...
                ^
-DETAIL:  Only allowed keys are "attributes", "dependency" and "degree".
+DETAIL:  Only allowed keys are "attributes", "dependency", and "degree".
 SELECT '[{"attributes" : [2,3], "invalid" : 3, "dependency" : 4}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "invalid" : 3, "dependency" : 4}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "invalid" : 3, "dependency" ...
                ^
-DETAIL:  Only allowed keys are "attributes", "dependency" and "degree".
+DETAIL:  Only allowed keys are "attributes", "dependency", and "degree".
 SELECT * FROM pg_input_error_info('[{"attributes_invalid" : [2,3], "dependency" : 4}]', 'pg_dependencies');
-                                     message                                     |                             detail                             | hint | sql_error_code 
----------------------------------------------------------------------------------+----------------------------------------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes_invalid" : [2,3], "dependency" : 4}]" | Only allowed keys are "attributes", "dependency" and "degree". |      | 22P02
+                                     message                                     |                             detail                              | hint | sql_error_code 
+---------------------------------------------------------------------------------+-----------------------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes_invalid" : [2,3], "dependency" : 4}]" | Only allowed keys are "attributes", "dependency", and "degree". |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "invalid" : 3, "dependency" : 4}]', 'pg_dependencies');
-                                        message                                         |                             detail                             | hint | sql_error_code 
-----------------------------------------------------------------------------------------+----------------------------------------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "invalid" : 3, "dependency" : 4}]" | Only allowed keys are "attributes", "dependency" and "degree". |      | 22P02
+                                        message                                         |                             detail                              | hint | sql_error_code 
+----------------------------------------------------------------------------------------+-----------------------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "invalid" : 3, "dependency" : 4}]" | Only allowed keys are "attributes", "dependency", and "degree". |      | 22P02
 (1 row)
 
 -- Missing keys

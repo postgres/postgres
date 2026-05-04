@@ -520,7 +520,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		{
 			ereport(WARNING,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("cannot specify parameters \"%s\", \"%s\" or \"%s\"",
+					errmsg("cannot specify parameters \"%s\", \"%s\", or \"%s\"",
 						   extarginfo[MOST_COMMON_VALS_ARG].argname,
 						   extarginfo[MOST_COMMON_FREQS_ARG].argname,
 						   extarginfo[MOST_COMMON_BASE_FREQS_ARG].argname),
@@ -544,7 +544,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		{
 			ereport(WARNING,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("could not use \"%s\", \"%s\" and \"%s\": missing one or more parameters",
+					errmsg("could not use \"%s\", \"%s\", and \"%s\": missing one or more parameters",
 						   extarginfo[MOST_COMMON_VALS_ARG].argname,
 						   extarginfo[MOST_COMMON_FREQS_ARG].argname,
 						   extarginfo[MOST_COMMON_BASE_FREQS_ARG].argname));
