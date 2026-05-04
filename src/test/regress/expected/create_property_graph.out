@@ -686,11 +686,10 @@ SELECT pg_describe_object(classid, objid, objsubid) as obj,
  property x of property graph g2 | property graph g2
  property y of property graph g2 | property graph g2
  property z of property graph g2 | property graph g2
- type g2                         | property graph g2
  vertex t1 of property graph g2  | property graph g2
  vertex t2 of property graph g2  | property graph g2
  vertex t3 of property graph g2  | property graph g2
-(21 rows)
+(20 rows)
 
 SELECT (pg_identify_object_as_address(classid, objid, objsubid)).*
     FROM pg_depend
@@ -719,38 +718,36 @@ SELECT (pg_identify_object_as_address(classid, objid, objsubid)).*
  property graph property | {create_property_graph_tests,g2,x}    | {}
  property graph property | {create_property_graph_tests,g2,y}    | {}
  property graph property | {create_property_graph_tests,g2,z}    | {}
- type                    | {create_property_graph_tests.g2}      | {}
-(21 rows)
+(20 rows)
 
 SELECT (pg_identify_object(classid, objid, objsubid)).*
     FROM pg_depend
     WHERE refclassid = 'pg_class'::regclass AND
           refobjid = 'create_property_graph_tests.g2'::regclass
     ORDER BY 1, 2, 3, 4;
-          type           |           schema            | name |                identity                
--------------------------+-----------------------------+------+----------------------------------------
- property graph element  |                             |      | e1 of create_property_graph_tests.g2
- property graph element  |                             |      | e2 of create_property_graph_tests.g2
- property graph element  |                             |      | t1 of create_property_graph_tests.g2
- property graph element  |                             |      | t2 of create_property_graph_tests.g2
- property graph element  |                             |      | t3 of create_property_graph_tests.g2
- property graph label    |                             |      | e1 of create_property_graph_tests.g2
- property graph label    |                             |      | e2 of create_property_graph_tests.g2
- property graph label    |                             |      | t1 of create_property_graph_tests.g2
- property graph label    |                             |      | t2 of create_property_graph_tests.g2
- property graph label    |                             |      | t3l1 of create_property_graph_tests.g2
- property graph label    |                             |      | t3l2 of create_property_graph_tests.g2
- property graph property |                             |      | a of create_property_graph_tests.g2
- property graph property |                             |      | b of create_property_graph_tests.g2
- property graph property |                             |      | i of create_property_graph_tests.g2
- property graph property |                             |      | j of create_property_graph_tests.g2
- property graph property |                             |      | k of create_property_graph_tests.g2
- property graph property |                             |      | t of create_property_graph_tests.g2
- property graph property |                             |      | x of create_property_graph_tests.g2
- property graph property |                             |      | y of create_property_graph_tests.g2
- property graph property |                             |      | z of create_property_graph_tests.g2
- type                    | create_property_graph_tests | g2   | create_property_graph_tests.g2
-(21 rows)
+          type           | schema | name |                identity                
+-------------------------+--------+------+----------------------------------------
+ property graph element  |        |      | e1 of create_property_graph_tests.g2
+ property graph element  |        |      | e2 of create_property_graph_tests.g2
+ property graph element  |        |      | t1 of create_property_graph_tests.g2
+ property graph element  |        |      | t2 of create_property_graph_tests.g2
+ property graph element  |        |      | t3 of create_property_graph_tests.g2
+ property graph label    |        |      | e1 of create_property_graph_tests.g2
+ property graph label    |        |      | e2 of create_property_graph_tests.g2
+ property graph label    |        |      | t1 of create_property_graph_tests.g2
+ property graph label    |        |      | t2 of create_property_graph_tests.g2
+ property graph label    |        |      | t3l1 of create_property_graph_tests.g2
+ property graph label    |        |      | t3l2 of create_property_graph_tests.g2
+ property graph property |        |      | a of create_property_graph_tests.g2
+ property graph property |        |      | b of create_property_graph_tests.g2
+ property graph property |        |      | i of create_property_graph_tests.g2
+ property graph property |        |      | j of create_property_graph_tests.g2
+ property graph property |        |      | k of create_property_graph_tests.g2
+ property graph property |        |      | t of create_property_graph_tests.g2
+ property graph property |        |      | x of create_property_graph_tests.g2
+ property graph property |        |      | y of create_property_graph_tests.g2
+ property graph property |        |      | z of create_property_graph_tests.g2
+(20 rows)
 
 \a\t
 SELECT pg_get_propgraphdef('g2'::regclass);

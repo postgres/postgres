@@ -1347,12 +1347,14 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Decide whether to create a pg_type entry for the relation's rowtype.
 	 * These types are made except where the use of a relation as such is an
-	 * implementation detail: toast tables, sequences and indexes.
+	 * implementation detail: toast tables, sequences, indexes, and property
+	 * graphs.
 	 */
 	if (!(relkind == RELKIND_SEQUENCE ||
 		  relkind == RELKIND_TOASTVALUE ||
 		  relkind == RELKIND_INDEX ||
-		  relkind == RELKIND_PARTITIONED_INDEX))
+		  relkind == RELKIND_PARTITIONED_INDEX ||
+		  relkind == RELKIND_PROPGRAPH))
 	{
 		Oid			new_array_oid;
 		ObjectAddress new_type_addr;
