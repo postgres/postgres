@@ -3017,7 +3017,7 @@ rebuild_relation_finish_concurrent(Relation NewHeap, Relation OldHeap,
 		{
 			int			pos = foreach_current_index(ind_old);
 
-			if (unlikely(list_length(ind_oids_new) < pos))
+			if (list_length(ind_oids_new) <= pos)
 				elog(ERROR, "list of new indexes too short");
 			ident_idx_new = list_nth_oid(ind_oids_new, pos);
 			break;
