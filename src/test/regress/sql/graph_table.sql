@@ -590,4 +590,9 @@ SELECT * FROM customers co WHERE co.customer_id = (SELECT customer_id FROM GRAPH
 SELECT sname, dname FROM GRAPH_TABLE (g1 MATCH (src)->(dest) WHERE src.vprop1 > (SELECT max(v1.vprop1) FROM v1) COLUMNS(src.vname AS sname, dest.vname AS dname));
 SELECT sname, dname FROM GRAPH_TABLE (g1 MATCH (src)->(dest) WHERE out_degree(src.vname) > (SELECT max(out_degree(nname)) FROM GRAPH_TABLE (g1 MATCH (node) COLUMNS (node.vname AS nname))) COLUMNS(src.vname AS sname, dest.vname AS dname));
 
+-- GRAPH_TABLE subquery in HAVING clause (tests expression mutator)
+SELECT src.vname, count(*) FROM v1 AS src
+  GROUP BY src.vname
+  HAVING count(*) >= (SELECT count(*) FROM GRAPH_TABLE (g1 MATCH (a IS vl1 | vl2) COLUMNS (a.vname AS n)) WHERE n = src.vname);
+
 -- leave the objects behind for pg_upgrade/pg_dump tests
