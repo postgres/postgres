@@ -788,13 +788,13 @@ usage(const char *progname)
 	printf(_("  --no-data                    do not restore data\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
+	printf(_("  --no-globals                 do not restore global objects (roles and tablespaces)\n"));
 	printf(_("  --no-policies                do not restore row security policies\n"));
 	printf(_("  --no-publications            do not restore publications\n"));
 	printf(_("  --no-schema                  do not restore schema\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));
 	printf(_("  --no-statistics              do not restore statistics\n"));
 	printf(_("  --no-subscriptions           do not restore subscriptions\n"));
-	printf(_("  --no-globals                 do not restore global objects (roles and tablespaces)\n"));
 	printf(_("  --no-table-access-method     do not restore table access methods\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --restrict-key=RESTRICT_KEY  use provided string as psql \\restrict key\n"));
