@@ -10648,11 +10648,11 @@ typedef struct
     development and testing. The variable accepts a comma-separated list of
     debug options:
 
-    <programlisting>
+<programlisting>
 PGOAUTHDEBUG=option1,option2,...         <lineannotation>for safe options only</lineannotation>
 PGOAUTHDEBUG=UNSAFE:option1,option2,...  <lineannotation>when using unsafe options</lineannotation>
 PGOAUTHDEBUG=UNSAFE                      <lineannotation>legacy format; enables all options</lineannotation>
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
@@ -10729,11 +10729,11 @@ PGOAUTHDEBUG=UNSAFE                      <lineannotation>legacy format; enables 
 
    <para>
     Examples:
-    <programlisting>
+<programlisting>
 PGOAUTHDEBUG=call-count              <lineannotation>safe options only</lineannotation>
 PGOAUTHDEBUG=UNSAFE:http,trace       <lineannotation>enable HTTP and traffic logging</lineannotation>
 PGOAUTHDEBUG=UNSAFE:http,call-count  <lineannotation>mix of unsafe and safe</lineannotation>
-    </programlisting>
+</programlisting>
    </para>
 
    <warning>

@@ -517,14 +517,14 @@ NO_GATHER(<replaceable>advice_target</replaceable> [ ... ])
    </para>
 
 <programlisting>
- Finalize Aggregate
-   ->  Gather
-         ->  Partial Aggregate
-               ->  Parallel Seq Scan on outer_example
-                     Filter: (something = (hashed SubPlan any_1).col1)
-                     SubPlan any_1
-                       ->  Seq Scan on inner_example
-                             Filter: (something_else > 100)
+Finalize Aggregate
+  ->  Gather
+        ->  Partial Aggregate
+              ->  Parallel Seq Scan on outer_example
+                    Filter: (something = (hashed SubPlan any_1).col1)
+                    SubPlan any_1
+                      ->  Seq Scan on inner_example
+                            Filter: (something_else > 100)
 </programlisting>
 
    <para>
@@ -534,13 +534,13 @@ NO_GATHER(<replaceable>advice_target</replaceable> [ ... ])
    </para>
 
 <programlisting>
- Aggregate
-   ->  Seq Scan on outer_example
-         Filter: (something = (hashed SubPlan any_1).col1)
-         SubPlan any_1
-           ->  Gather
-                 -> Parallel Seq Scan on inner_example
-                      Filter: (something_else > 100)
+Aggregate
+  ->  Seq Scan on outer_example
+        Filter: (something = (hashed SubPlan any_1).col1)
+        SubPlan any_1
+          ->  Gather
+                -> Parallel Seq Scan on inner_example
+                     Filter: (something_else > 100)
 </programlisting>
 
   </sect3>

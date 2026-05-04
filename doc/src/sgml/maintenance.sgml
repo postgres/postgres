@@ -830,14 +830,14 @@ HINT:  Execute a database-wide VACUUM in that database.
      The <function>pg_get_multixact_stats()</function> function described in
      <xref linkend="functions-pg-snapshot"/> provides a way to monitor
      multixact allocation and usage patterns in real time, for example:
-     <programlisting>
+<screen>
 =# SELECT *, pg_size_pretty(members_size) members_size_pretty
      FROM pg_catalog.pg_get_multixact_stats();
  num_mxids | num_members | members_size | oldest_multixact | members_size_pretty
 -----------+-------------+--------------+------------------+---------------------
  311740299 |  2785241176 |  13926205880 |                2 | 13 GB
 (1 row)
-     </programlisting>
+</screen>
      This output shows a system with significant multixact activity: about
      312 million multixact IDs and about 2.8 billion member entries consuming
      13 GB of storage space.

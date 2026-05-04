@@ -1410,13 +1410,13 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     operations, the application retrieves the current WAL location using a
     function call like this.
 
-    <programlisting>
+<programlisting>
 postgres=# SELECT pg_current_wal_insert_lsn();
-pg_current_wal_insert_lsn
---------------------
-0/306EE20
+ pg_current_wal_insert_lsn
+---------------------------
+ 0/306EE20
 (1 row)
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
@@ -1427,13 +1427,13 @@ pg_current_wal_insert_lsn
     the standby's WAL replay process reaches (or exceeds) the specified
     <acronym>LSN</acronym>.
 
-    <programlisting>
+<programlisting>
 postgres=# WAIT FOR LSN '0/306EE20';
  status
---------
+---------
  success
 (1 row)
-    </programlisting>
+</programlisting>
     Once the command returns a status of success, it guarantees that all
     changes up to the provided <acronym>LSN</acronym> have been applied,
     ensuring that subsequent read queries will reflect the latest updates.

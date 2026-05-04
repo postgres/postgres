@@ -2189,7 +2189,7 @@ SELECT pg_restore_attribute_stats(
          arguments are passed as pairs of <replaceable>argname</replaceable>
          and <replaceable>argvalue</replaceable> in the form:
 <programlisting>
- SELECT pg_restore_extended_stats(
+SELECT pg_restore_extended_stats(
     '<replaceable>arg1name</replaceable>', '<replaceable>arg1value</replaceable>'::<replaceable>arg1type</replaceable>,
     '<replaceable>arg2name</replaceable>', '<replaceable>arg2value</replaceable>'::<replaceable>arg2type</replaceable>,
     '<replaceable>arg3name</replaceable>', '<replaceable>arg3value</replaceable>'::<replaceable>arg3type</replaceable>);
@@ -2199,7 +2199,7 @@ SELECT pg_restore_attribute_stats(
          For example, to set some values for the statistics object
          <structname>myschema.mystatsobj</structname>:
 <programlisting>
- SELECT pg_restore_extended_stats(
+SELECT pg_restore_extended_stats(
     'schemaname',            'tab_schema',
     'relname',               'tab_name',
     'statistics_schemaname', 'stats_schema',

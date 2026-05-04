@@ -268,8 +268,8 @@
   <para>
    The <literal>null treatment</literal> option must be one of:
 <synopsis>
-  RESPECT NULLS
-  IGNORE NULLS
+RESPECT NULLS
+IGNORE NULLS
 </synopsis>
    If unspecified, the default is <literal>RESPECT NULLS</literal> which includes NULL
    values in any result calculation. <literal>IGNORE NULLS</literal> ignores NULL values.
