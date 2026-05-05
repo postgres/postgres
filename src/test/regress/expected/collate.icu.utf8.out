@@ -1487,6 +1487,129 @@ SELECT string_to_array('ABCDEFGHI' COLLATE case_sensitive, NULL, 'b');
  {A,B,C,D,E,F,G,H,I}
 (1 row)
 
+--
+-- A unique index under one collation does not prove uniqueness under
+-- another, so the planner must not use such a proof for any optimization.
+--
+-- Ensure that we do not use inner-unique join execution
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM test1cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Sort
+   Output: t1.x, t2.x
+   Sort Key: t1.x COLLATE case_sensitive, t2.x COLLATE case_sensitive
+   ->  Hash Join
+         Output: t1.x, t2.x
+         Hash Cond: ((t2.x)::text = (t1.x)::text)
+         ->  Seq Scan on collate_tests.test3cs t2
+               Output: t2.x
+         ->  Hash
+               Output: t1.x
+               ->  Seq Scan on collate_tests.test1cs t1
+                     Output: t1.x
+(12 rows)
+
+SELECT * FROM test1cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+  x  |  x  
+-----+-----
+ abc | abc
+ abc | ABC
+ ABC | abc
+ ABC | ABC
+ def | def
+ ghi | ghi
+(6 rows)
+
+-- Ensure that left-join is not removed
+EXPLAIN (COSTS OFF)
+SELECT t1.* FROM test3cs t1
+       LEFT JOIN test3cs t2 ON t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1;
+                QUERY PLAN                
+------------------------------------------
+ Sort
+   Sort Key: t1.x COLLATE case_sensitive
+   ->  Hash Left Join
+         Hash Cond: (t1.x = (t2.x)::text)
+         ->  Seq Scan on test3cs t1
+         ->  Hash
+               ->  Seq Scan on test3cs t2
+(7 rows)
+
+SELECT t1.* FROM test3cs t1
+       LEFT JOIN test3cs t2 ON t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1;
+  x  
+-----
+ abc
+ abc
+ ABC
+ ABC
+ def
+ ghi
+(6 rows)
+
+-- Ensure that self-join is not removed
+EXPLAIN (COSTS OFF)
+SELECT * FROM test3cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Sort
+   Sort Key: t1.x COLLATE case_sensitive, t2.x COLLATE case_sensitive
+   ->  Hash Join
+         Hash Cond: ((t1.x)::text = (t2.x)::text)
+         ->  Seq Scan on test3cs t1
+         ->  Hash
+               ->  Seq Scan on test3cs t2
+(7 rows)
+
+SELECT * FROM test3cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+  x  |  x  
+-----+-----
+ abc | abc
+ abc | ABC
+ ABC | abc
+ ABC | ABC
+ def | def
+ ghi | ghi
+(6 rows)
+
+-- Ensure that semijoin is not reduced to innerjoin
+EXPLAIN (COSTS OFF)
+SELECT * FROM test3cs t1
+  WHERE EXISTS (SELECT 1 FROM test3cs t2 WHERE t1.x = t2.x COLLATE case_insensitive)
+ORDER BY 1;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sort
+   Sort Key: t1.x COLLATE case_sensitive
+   ->  Hash Semi Join
+         Hash Cond: ((t1.x)::text = (t2.x)::text)
+         ->  Seq Scan on test3cs t1
+         ->  Hash
+               ->  Seq Scan on test3cs t2
+(7 rows)
+
+SELECT * FROM test3cs t1
+  WHERE EXISTS (SELECT 1 FROM test3cs t2 WHERE t1.x = t2.x COLLATE case_insensitive)
+ORDER BY 1;
+  x  
+-----
+ abc
+ ABC
+ def
+ ghi
+(4 rows)
+
 CREATE TABLE test1ci (x text COLLATE case_insensitive);
 CREATE TABLE test2ci (x text COLLATE case_insensitive);
 CREATE TABLE test3ci (x text COLLATE case_insensitive);
