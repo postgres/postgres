@@ -1245,6 +1245,11 @@ pgfdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
  * Such connections can't safely be further used.  Re-establishing the
  * connection would change the snapshot and roll back any writes already
  * performed, so that's not an option, either. Thus, we must abort.
+ *
+ * Note: there might be open cursors that use the connection, so even if the
+ * connection cache entry is marked as such, we will retain it until abort
+ * cleanup of the main transaction, to ensure such open cursors can safely
+ * refer to the PGconn for the connection.
  */
 static void
 pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
@@ -1255,15 +1260,12 @@ pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
 	if (entry->conn == NULL || !entry->changing_xact_state)
 		return;
 
-	/* make sure this entry is inactive */
-	disconnect_pg_server(entry);
-
 	/* find server name to be shown in the message below */
 	server = GetForeignServer(entry->serverid);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_CONNECTION_EXCEPTION),
-			 errmsg("connection to server \"%s\" was lost",
+			 errmsg("connection to server \"%s\" cannot be used due to abort cleanup failure",
 					server->servername)));
 }
 
