@@ -23,3 +23,12 @@ SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
   JOIN ptnowner_oldnodes b USING (oid) ORDER BY a.relname COLLATE "C";
 DROP TABLE ptnowner;
 DROP ROLE regress_ptnowner;
+
+-- Verify that REPACK (CONCURRENTLY) doesn't lose "attmissingval" columns
+CREATE TABLE rpk_missing (id int PRIMARY KEY);
+INSERT INTO rpk_missing SELECT generate_series(1, 3);
+ALTER TABLE rpk_missing ADD COLUMN a int DEFAULT 42;
+SELECT * FROM rpk_missing;
+REPACK (CONCURRENTLY) rpk_missing;
+SELECT * FROM rpk_missing;
+DROP TABLE rpk_missing;

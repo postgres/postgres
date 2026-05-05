@@ -29,3 +29,25 @@ SELECT a.relname, a.relfilenode=b.relfilenode FROM pg_class a
 
 DROP TABLE ptnowner;
 DROP ROLE regress_ptnowner;
+-- Verify that REPACK (CONCURRENTLY) doesn't lose "attmissingval" columns
+CREATE TABLE rpk_missing (id int PRIMARY KEY);
+INSERT INTO rpk_missing SELECT generate_series(1, 3);
+ALTER TABLE rpk_missing ADD COLUMN a int DEFAULT 42;
+SELECT * FROM rpk_missing;
+ id | a  
+----+----
+  1 | 42
+  2 | 42
+  3 | 42
+(3 rows)
+
+REPACK (CONCURRENTLY) rpk_missing;
+SELECT * FROM rpk_missing;
+ id | a  
+----+----
+  1 | 42
+  2 | 42
+  3 | 42
+(3 rows)
+
+DROP TABLE rpk_missing;

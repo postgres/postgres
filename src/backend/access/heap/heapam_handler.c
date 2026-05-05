@@ -2396,10 +2396,10 @@ heap_insert_for_repack(HeapTuple tuple, Relation OldHeap, Relation NewHeap,
 /*
  * Subroutine for reform_and_rewrite_tuple and heap_insert_for_repack.
  *
- * Deform the given tuple, set values of dropped columns to NULL, form a new
- * tuple and return it.  If no attributes need to be changed in this way, a
- * copy of the original tuple is returned.  Caller is responsible for freeing
- * the returned tuple.
+ * Deform the given tuple, set values of dropped columns to NULL, and fill in
+ * any values from attmissingval; then form a new tuple and return it.  If no
+ * attributes need to be changed, a copy of the original tuple is returned.
+ * Caller is responsible for freeing the returned tuple.
  *
  * XXX this coding assumes that both relations have the same tupledesc.
  */
@@ -2411,13 +2411,33 @@ reform_tuple(HeapTuple tuple, Relation OldHeap, Relation NewHeap,
 	TupleDesc	newTupDesc = RelationGetDescr(NewHeap);
 	bool		needs_reform = false;
 
-	/* Skip work if the tuple doesn't need any attributes changed */
-	for (int i = 0; i < newTupDesc->natts; i++)
+	/*
+	 * A short tuple might require values from attmissing val, so activate the
+	 * coding unconditionally in that case.  The value might legitimally be
+	 * NULL otherwise, so this is slightly wasteful, but it probably beats
+	 * having to test each attribute for presence of attmissingval each time.
+	 */
+	if (HeapTupleHeaderGetNatts(tuple->t_data) < newTupDesc->natts)
+		needs_reform = true;
+
+	/*
+	 * If the column has been dropped but a value is still present, we can
+	 * optimize storage now by getting rid of it.
+	 */
+	if (!needs_reform)
 	{
-		if (TupleDescCompactAttr(newTupDesc, i)->attisdropped &&
-			!heap_attisnull(tuple, i + 1, newTupDesc))
-			needs_reform = true;
+		for (int i = 0; i < newTupDesc->natts; i++)
+		{
+			if (TupleDescCompactAttr(newTupDesc, i)->attisdropped &&
+				!heap_attisnull(tuple, i + 1, newTupDesc))
+			{
+				needs_reform = true;
+				break;
+			}
+		}
 	}
+
+	/* Skip work if no changes are needed */
 	if (!needs_reform)
 		return heap_copytuple(tuple);
 
