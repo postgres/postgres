@@ -2649,11 +2649,11 @@ openssl x509 -req -in server.csr -text -days 365 \
     <xref linkend="hostname-values"/> contains details on how these values are
     used.
     <table id="hostname-values">
-     <title>Hostname field values</title>
+     <title>Hostname Field Values</title>
      <tgroup cols="3">
       <thead>
        <row>
-        <entry>Host Entry</entry>
+        <entry>Host entry</entry>
         <entry>Hostname extension</entry>
         <entry>Description</entry>
        </row>

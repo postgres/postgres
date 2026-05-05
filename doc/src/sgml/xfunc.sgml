@@ -3716,7 +3716,7 @@ my_shmem_init(void *arg)
     </sect3>
 
     <sect3 id="xfunc-shared-addin-after-startup">
-     <title>Requesting Shared Memory After Startup with <function>ShmemRequestStruct</function></title>
+     <title>Requesting Shared Memory after Startup with <function>ShmemRequestStruct</function></title>
 
      <para>
       The <function>ShmemRequestStruct()</function> can also be called after
@@ -3745,7 +3745,7 @@ my_shmem_init(void *arg)
     </sect3>
 
     <sect3 id="xfunc-shared-addin-dynamic">
-     <title>Allocating Dynamic Shared Memory After Startup</title>
+     <title>Allocating Dynamic Shared Memory after Startup</title>
 
      <para>
       There is another, more flexible method of reserving shared memory that
@@ -3811,7 +3811,7 @@ LWLockPadded *GetNamedLWLockTranche(const char *tranche_name)
     </sect3>
 
     <sect3 id="xfunc-addin-lwlocks-after-startup">
-     <title>Requesting LWLocks After Startup</title>
+     <title>Requesting LWLocks after Startup</title>
 
      <para>
       There is another, more flexible method of obtaining LWLocks that can be

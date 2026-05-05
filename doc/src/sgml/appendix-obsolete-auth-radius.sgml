@@ -4,7 +4,7 @@
 -->
 
 <sect1 id="auth-radius">
-  <title>RADIUS authentication removed</title>
+  <title>RADIUS Authentication Removed</title>
 
    <indexterm zone="auth-radius">
     <primary>RADIUS</primary>

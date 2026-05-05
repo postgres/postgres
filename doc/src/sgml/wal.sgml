@@ -293,7 +293,7 @@
 
    <para>
     <figure id="data-checksums-states-figure">
-     <title>data checksums states</title>
+     <title>Data Checksums States</title>
      <mediaobject>
       <imageobject>
        <imagedata fileref="images/datachecksums.svg" format="SVG" width="100%"/>
@@ -348,7 +348,7 @@
    </para>
 
    <sect3 id="checksums-online-system-impact">
-    <title>Impact on system of online operations</title>
+    <title>Impact on System of Online Operations</title>
     <para>
      Enabling data checksums can cause significant I/O to the system, as all of the
      database pages will need to be rewritten, and will be written both to the
