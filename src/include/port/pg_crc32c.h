@@ -70,7 +70,8 @@ static inline
 pg_crc32c
 pg_comp_crc32c_dispatch(pg_crc32c crc, const void *data, size_t len)
 {
-	if (__builtin_constant_p(len) && len < 32)
+#ifdef HAVE_PG_INTEGER_CONSTANT_P
+	if (pg_integer_constant_p(len) && len < 32)
 	{
 		const unsigned char *p = (const unsigned char *) data;
 
@@ -91,6 +92,9 @@ pg_comp_crc32c_dispatch(pg_crc32c crc, const void *data, size_t len)
 	else
 		/* Otherwise, use a runtime check for AVX-512 instructions. */
 		return pg_comp_crc32c(crc, data, len);
+#else
+	return pg_comp_crc32c(crc, data, len);
+#endif							/* HAVE_PG_INTEGER_CONSTANT_P */
 }
 
 #elif defined(USE_SSE42_CRC32C_WITH_RUNTIME_CHECK)
