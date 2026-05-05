@@ -12714,3 +12714,79 @@ SELECT server_name,
 -- Clean up
 \set VERBOSITY default
 RESET debug_discard_caches;
+-- ===================================================================
+-- test cleanup of failed connections on abort
+-- ===================================================================
+CREATE VIEW my_backend_pid (pid) AS SELECT pg_backend_pid();
+CREATE FOREIGN TABLE remote_backend_pid (pid int)
+  SERVER loopback OPTIONS (table_name 'my_backend_pid');
+CREATE FUNCTION wait_for_backend_termination(int) RETURNS void AS $$
+  BEGIN
+    WHILE (SELECT count(*) FROM pg_stat_activity WHERE pid = $1) > 0
+    LOOP
+      PERFORM pg_stat_clear_snapshot();
+    END LOOP;
+  END
+$$ LANGUAGE plpgsql;
+SET client_min_messages = 'ERROR';
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM ft1 ORDER BY c1;
+SAVEPOINT s;
+SELECT pid AS remote_pid FROM remote_backend_pid \gset
+SELECT pg_terminate_backend(:remote_pid);
+ pg_terminate_backend 
+----------------------
+ t
+(1 row)
+
+SELECT wait_for_backend_termination(:remote_pid);
+ wait_for_backend_termination 
+------------------------------
+ 
+(1 row)
+
+ROLLBACK TO SAVEPOINT s;
+SELECT pid FROM remote_backend_pid;
+ERROR:  connection to server "loopback" cannot be used due to abort cleanup failure
+ROLLBACK TO SAVEPOINT s;
+RELEASE SAVEPOINT s;
+FETCH c;
+ERROR:  no connection to the server
+CONTEXT:  remote SQL command: DECLARE c1 CURSOR FOR
+SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
+ABORT;
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM ft1 ORDER BY c1;
+FETCH c;
+ c1 | c2 |        c3         |              c4              |            c5            | c6 |     c7     | c8  
+----+----+-------------------+------------------------------+--------------------------+----+------------+-----
+  1 |  2 | 00001_trig_update | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
+(1 row)
+
+SAVEPOINT s;
+SELECT pid AS remote_pid FROM remote_backend_pid \gset
+SELECT pg_terminate_backend(:remote_pid);
+ pg_terminate_backend 
+----------------------
+ t
+(1 row)
+
+SELECT wait_for_backend_termination(:remote_pid);
+ wait_for_backend_termination 
+------------------------------
+ 
+(1 row)
+
+ROLLBACK TO SAVEPOINT s;
+SELECT pid FROM remote_backend_pid;
+ERROR:  connection to server "loopback" cannot be used due to abort cleanup failure
+ROLLBACK TO SAVEPOINT s;
+RELEASE SAVEPOINT s;
+CLOSE c;
+ERROR:  no connection to the server
+CONTEXT:  remote SQL command: CLOSE c1
+ABORT;
+RESET client_min_messages;
+DROP FUNCTION wait_for_backend_termination(int);
+DROP FOREIGN TABLE remote_backend_pid;
+DROP VIEW my_backend_pid;
