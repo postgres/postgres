@@ -419,7 +419,7 @@ propgraph_edge_get_ref_keys(ParseState *pstate, const List *keycols, const List 
 			 * strategies.
 			 *
 			 * If the required operators do not exist, we can not construct
-			 * quals linking an edge to its adjacent vertexes.
+			 * quals linking an edge to its adjacent vertices.
 			 */
 			get_atttypetypmodcoll(RelationGetRelid(edge_rel), keyattnums[i], &keytype, &keytypmod, &keycoll);
 			get_atttypetypmodcoll(RelationGetRelid(ref_rel), refattnums[i], &reftype, &reftypmod, &refcoll);
@@ -456,7 +456,7 @@ propgraph_edge_get_ref_keys(ParseState *pstate, const List *keycols, const List 
 			/*
 			 * If collations of key attribute and referenced attribute are
 			 * different, an edge may end up being adjacent to undesired
-			 * vertexes.  Prohibit such a case.
+			 * vertices.  Prohibit such a case.
 			 *
 			 * PK/FK allows different collations as long as they are
 			 * deterministic for backward compatibility. But we can be a bit

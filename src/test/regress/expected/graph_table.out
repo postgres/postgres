@@ -310,7 +310,7 @@ CREATE PROPERTY GRAPH g1
     VERTEX TABLES (
         v1
             LABEL vl1 PROPERTIES (vname, vprop1)
-            LABEL l1 PROPERTIES (vname AS elname), -- label shared by vertexes as well as edges
+            LABEL l1 PROPERTIES (vname AS elname), -- label shared by vertices as well as edges
         v2 KEY (id1, id2)
             LABEL vl2 PROPERTIES (vname, vprop2, 'vl2_prop'::varchar(10) AS lprop1)
             LABEL vl3 PROPERTIES (vname, vprop1, 'vl2_prop'::varchar(10) AS lprop1)
@@ -637,7 +637,7 @@ SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(a)-[b]->(a) COLUMNS (a.vname AS se
 (1 row)
 
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[b]->(c)-[b]->(d) COLUMNS (a.vname AS aname, b.ename AS bname, c.vname AS cname, d.vname AS dname)); --error
-ERROR:  an edge cannot connect more than two vertexes even in a cyclic pattern
+ERROR:  an edge cannot connect more than two vertices even in a cyclic pattern
 -- the looping edge should be reported only once even when edge pattern with any direction is used
 SELECT * FROM GRAPH_TABLE (g1 MATCH (a)-[c]-(a) COLUMNS (a.vname AS self, c.ename AS loop_name));
  self | loop_name 
@@ -905,7 +905,7 @@ SELECT * FROM GRAPH_TABLE (g4 MATCH (s IS ptnv)-[e IS ptne]->(d IS ptnv) COLUMNS
   30 | 300 |  10
 (3 rows)
 
--- edges from the same vertex in both directions connecting to other vertexes in the same table
+-- edges from the same vertex in both directions connecting to other vertices in the same table
 SELECT * FROM GRAPH_TABLE (g4 MATCH (s)-[e]-(d) WHERE s.id = 3 COLUMNS (s.val, e.val, d.val)) ORDER BY 1, 2, 3;
  val | val | val 
 -----+-----+-----

@@ -153,7 +153,7 @@ rewriteGraphTable(Query *parsetree, int rt_index)
  * returned.
  *
  * Between every two vertex elements in the path there is an edge element that
- * connects them.  An edge connects two vertexes identified by the source and
+ * connects them.  An edge connects two vertices identified by the source and
  * destination keys respectively. The connection between an edge and its
  * adjacent vertex is naturally computed as an equi-join between edge and vertex
  * table on their respective keys. Hence the query representing one path
@@ -274,7 +274,7 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 		 *
 		 * If multiple edge patterns share the same variable name, they
 		 * constrain the adjacent vertex patterns since an edge can connect
-		 * only one pair of vertexes. These adjacent vertex patterns need to
+		 * only one pair of vertices. These adjacent vertex patterns need to
 		 * be merged even though they have different variables. Such element
 		 * patterns form a walk of graph where vertex and edges are repeated.
 		 * For example, in (a)-[b]->(c)<-[b]-(d), (a) and (d) represent the
@@ -289,7 +289,7 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 				if (prev_pf->dest_pf && prev_pf->dest_pf != pf)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							errmsg("an edge cannot connect more than two vertexes even in a cyclic pattern"));
+							errmsg("an edge cannot connect more than two vertices even in a cyclic pattern"));
 				prev_pf->dest_pf = pf;
 			}
 			else if (prev_pf->kind == EDGE_PATTERN_LEFT)
@@ -298,7 +298,7 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 				if (prev_pf->src_pf && prev_pf->src_pf != pf)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							errmsg("an edge cannot connect more than two vertexes even in a cyclic pattern"));
+							errmsg("an edge cannot connect more than two vertices even in a cyclic pattern"));
 				prev_pf->src_pf = pf;
 			}
 			else
@@ -313,7 +313,7 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 				if (pf->src_pf && pf->src_pf != prev_pf)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							errmsg("an edge cannot connect more than two vertexes even in a cyclic pattern"));
+							errmsg("an edge cannot connect more than two vertices even in a cyclic pattern"));
 				pf->src_pf = prev_pf;
 			}
 			else if (pf->kind == EDGE_PATTERN_LEFT)
@@ -322,7 +322,7 @@ generate_queries_for_path_pattern(RangeTblEntry *rte, List *path_pattern)
 				if (pf->dest_pf && pf->dest_pf != prev_pf)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							errmsg("an edge cannot connect more than two vertexes even in a cyclic pattern"));
+							errmsg("an edge cannot connect more than two vertices even in a cyclic pattern"));
 				pf->dest_pf = prev_pf;
 			}
 			else
