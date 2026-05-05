@@ -151,7 +151,7 @@ is( $contents,
 		# Key off of the "peer certificate" portion, since that seems to have
 		# remained constant over a long period of time.
 		expected_stderr =>
-		  qr/failed to fetch OpenID discovery document:.*peer certificate/i);
+		  qr/could not fetch OpenID discovery document:.*peer certificate/i);
 }
 
 my $alternative_ca = "$ENV{cert_dir}/root+server_ca.crt";
@@ -362,12 +362,12 @@ $node->connect_fails(
 	connstr(stage => 'device', huge_response => JSON::PP::true),
 	"bad device authz response: overlarge JSON",
 	expected_stderr =>
-	  qr/failed to obtain device authorization: response is too large/);
+	  qr/could not obtain device authorization: response is too large/);
 $node->connect_fails(
 	connstr(stage => 'token', huge_response => JSON::PP::true),
 	"bad token response: overlarge JSON",
 	expected_stderr =>
-	  qr/failed to obtain access token: response is too large/);
+	  qr/could not obtain access token: response is too large/);
 
 my $nesting_limit = 16;
 $node->connect_ok(
@@ -382,28 +382,28 @@ $node->connect_fails(
 	connstr(stage => 'device', nested_array => $nesting_limit + 1),
 	"bad discovery response: overly nested JSON array",
 	expected_stderr =>
-	  qr/failed to parse device authorization: JSON is too deeply nested/);
+	  qr/could not parse device authorization: JSON is too deeply nested/);
 $node->connect_fails(
 	connstr(stage => 'device', nested_object => $nesting_limit + 1),
 	"bad discovery response: overly nested JSON object",
 	expected_stderr =>
-	  qr/failed to parse device authorization: JSON is too deeply nested/);
+	  qr/could not parse device authorization: JSON is too deeply nested/);
 
 $node->connect_fails(
 	connstr(stage => 'device', content_type => 'text/plain'),
 	"bad device authz response: wrong content type",
 	expected_stderr =>
-	  qr/failed to parse device authorization: unexpected content type/);
+	  qr/could not parse device authorization: unexpected content type/);
 $node->connect_fails(
 	connstr(stage => 'token', content_type => 'text/plain'),
 	"bad token response: wrong content type",
 	expected_stderr =>
-	  qr/failed to parse access token response: unexpected content type/);
+	  qr/could not parse access token response: unexpected content type/);
 $node->connect_fails(
 	connstr(stage => 'token', content_type => 'application/jsonx'),
 	"bad token response: wrong content type (correct prefix)",
 	expected_stderr =>
-	  qr/failed to parse access token response: unexpected content type/);
+	  qr/could not parse access token response: unexpected content type/);
 
 $node->connect_fails(
 	connstr(
@@ -413,12 +413,12 @@ $node->connect_fails(
 		retry_code => "slow_down"),
 	"bad token response: server overflows the device authz interval",
 	expected_stderr =>
-	  qr/failed to obtain access token: slow_down interval overflow/);
+	  qr/could not obtain access token: slow_down interval overflow/);
 
 $node->connect_fails(
 	connstr(stage => 'token', error_code => "invalid_grant"),
 	"bad token response: invalid_grant, no description",
-	expected_stderr => qr/failed to obtain access token: \(invalid_grant\)/);
+	expected_stderr => qr/could not obtain access token: \(invalid_grant\)/);
 $node->connect_fails(
 	connstr(
 		stage => 'token',
@@ -426,7 +426,7 @@ $node->connect_fails(
 		error_desc => "grant expired"),
 	"bad token response: expired grant",
 	expected_stderr =>
-	  qr/failed to obtain access token: grant expired \(invalid_grant\)/);
+	  qr/could not obtain access token: grant expired \(invalid_grant\)/);
 $node->connect_fails(
 	connstr(
 		stage => 'token',
@@ -434,7 +434,7 @@ $node->connect_fails(
 		error_status => 401),
 	"bad token response: client authentication failure, default description",
 	expected_stderr =>
-	  qr/failed to obtain access token: provider requires client authentication, and no oauth_client_secret is set \(invalid_client\)/
+	  qr/could not obtain access token: provider requires client authentication, and no oauth_client_secret is set \(invalid_client\)/
 );
 $node->connect_fails(
 	connstr(
@@ -444,7 +444,7 @@ $node->connect_fails(
 		error_desc => "authn failure"),
 	"bad token response: client authentication failure, provided description",
 	expected_stderr =>
-	  qr/failed to obtain access token: authn failure \(invalid_client\)/);
+	  qr/could not obtain access token: authn failure \(invalid_client\)/);
 
 $node->connect_fails(
 	connstr(stage => 'token', token => ""),
@@ -479,7 +479,7 @@ $node->connect_fails(
 		error_status => 401),
 	"bad token response: client authentication failure, default description with oauth_client_secret",
 	expected_stderr =>
-	  qr/failed to obtain access token: provider rejected the oauth_client_secret \(invalid_client\)/
+	  qr/could not obtain access token: provider rejected the oauth_client_secret \(invalid_client\)/
 );
 $node->connect_fails(
 	connstr(
@@ -489,7 +489,7 @@ $node->connect_fails(
 		error_desc => "mutual TLS required for client"),
 	"bad token response: client authentication failure, provided description with oauth_client_secret",
 	expected_stderr =>
-	  qr/failed to obtain access token: mutual TLS required for client \(invalid_client\)/
+	  qr/could not obtain access token: mutual TLS required for client \(invalid_client\)/
 );
 
 # Count the number of calls to the internal flow when multiple retries are
@@ -802,7 +802,7 @@ is($result, 0,
 	'restart fails without explicit validators in oauth HBA entries');
 
 $log_start = $node->wait_for_log(
-	qr/authentication method "oauth" requires argument "validator" to be set/,
+	qr/authentication method "oauth" requires option "validator" to be set/,
 	$log_start);
 
 unlink($node->data_dir . '/pg_hba.conf');

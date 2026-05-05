@@ -542,7 +542,7 @@ generate_error_response(struct oauth_ctx *ctx, char **output, int *outputlen)
 		ereport(FATAL,
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("OAuth is not properly configured for this user"),
-				errdetail_log("The issuer and scope parameters must be set in pg_hba.conf."));
+				errdetail_log("The options \"issuer\" and \"scope\" must be set in pg_hba.conf."));
 
 	/*
 	 * Build a default .well-known URI based on our issuer, unless the HBA has
@@ -791,8 +791,8 @@ load_validator_library(const char *libname)
 	 */
 	if (validator_init == NULL)
 		ereport(ERROR,
-				errmsg("%s module \"%s\" must define the symbol %s",
-					   "OAuth validator", libname, "_PG_oauth_validator_module_init"));
+				errmsg("OAuth validator module \"%s\" must define the symbol \"%s\"",
+					   libname, "_PG_oauth_validator_module_init"));
 
 	ValidatorCallbacks = (*validator_init) ();
 	Assert(ValidatorCallbacks);
@@ -804,8 +804,8 @@ load_validator_library(const char *libname)
 	 */
 	if (ValidatorCallbacks->magic != PG_OAUTH_VALIDATOR_MAGIC)
 		ereport(ERROR,
-				errmsg("%s module \"%s\": magic number mismatch",
-					   "OAuth validator", libname),
+				errmsg("OAuth validator module \"%s\": magic number mismatch",
+					   libname),
 				errdetail("Server has magic number 0x%08X, module has 0x%08X.",
 						  PG_OAUTH_VALIDATOR_MAGIC, ValidatorCallbacks->magic));
 
@@ -815,8 +815,8 @@ load_validator_library(const char *libname)
 	 */
 	if (ValidatorCallbacks->validate_cb == NULL)
 		ereport(ERROR,
-				errmsg("%s module \"%s\" must provide a %s callback",
-					   "OAuth validator", libname, "validate_cb"));
+				errmsg("OAuth validator module \"%s\" must provide a \"%s\" callback",
+					   libname, "validate_cb"));
 
 	/* Allocate memory for validator library private state data */
 	validator_module_state = palloc0_object(ValidatorModuleState);
@@ -867,12 +867,12 @@ check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg)
 	{
 		ereport(elevel,
 				errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("oauth_validator_libraries must be set for authentication method %s",
-					   "oauth"),
+				errmsg("parameter \%s\" must be set for authentication method \"%s\"",
+					   "oauth_validator_libraries", "oauth"),
 				errcontext("line %d of configuration file \"%s\"",
 						   line_num, file_name));
-		*err_msg = psprintf("oauth_validator_libraries must be set for authentication method %s",
-							"oauth");
+		*err_msg = psprintf("parameter \"%s\" must be set for authentication method \"%s\"",
+							"oauth_validator_libraries", "oauth");
 		return false;
 	}
 
@@ -901,10 +901,12 @@ check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg)
 
 		ereport(elevel,
 				errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("authentication method \"oauth\" requires argument \"validator\" to be set when oauth_validator_libraries contains multiple options"),
+				errmsg("authentication method \"oauth\" requires option \"validator\" to be set when \"%s\" contains multiple options",
+					   "oauth_validator_libraries"),
 				errcontext("line %d of configuration file \"%s\"",
 						   line_num, file_name));
-		*err_msg = "authentication method \"oauth\" requires argument \"validator\" to be set when oauth_validator_libraries contains multiple options";
+		*err_msg = psprintf("authentication method \"oauth\" requires option \"validator\" to be set when \"%s\" contains multiple options",
+							"oauth_validator_libraries");
 		goto done;
 	}
 
@@ -916,11 +918,11 @@ check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg)
 
 	ereport(elevel,
 			errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("validator \"%s\" is not permitted by %s",
+			errmsg("validator \"%s\" is not permitted by \"%s\"",
 				   hbaline->oauth_validator, "oauth_validator_libraries"),
 			errcontext("line %d of configuration file \"%s\"",
 					   line_num, file_name));
-	*err_msg = psprintf("validator \"%s\" is not permitted by %s",
+	*err_msg = psprintf("validator \"%s\" is not permitted by \"%s\"",
 						hbaline->oauth_validator, "oauth_validator_libraries");
 
 done:

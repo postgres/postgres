@@ -435,7 +435,7 @@ append_actx_error(PGoauthBearerRequestV2 *req, struct async_ctx *actx)
 		struct async_ctx *_actx = (ACTX); \
 		CURLMcode	_setopterr = curl_multi_setopt(_actx->curlm, OPT, VAL); \
 		if (_setopterr) { \
-			actx_error(_actx, "failed to set %s on OAuth connection: %s",\
+			actx_error(_actx, "could not set libcurl option \"%s\" on OAuth connection: %s",\
 					   #OPT, curl_multi_strerror(_setopterr)); \
 			FAILACTION; \
 		} \
@@ -446,7 +446,7 @@ append_actx_error(PGoauthBearerRequestV2 *req, struct async_ctx *actx)
 		struct async_ctx *_actx = (ACTX); \
 		CURLcode	_setopterr = curl_easy_setopt(_actx->curl, OPT, VAL); \
 		if (_setopterr) { \
-			actx_error(_actx, "failed to set %s on OAuth connection: %s",\
+			actx_error(_actx, "could not set libcurl option \"%s\" on OAuth connection: %s",\
 					   #OPT, curl_easy_strerror(_setopterr)); \
 			FAILACTION; \
 		} \
@@ -457,7 +457,7 @@ append_actx_error(PGoauthBearerRequestV2 *req, struct async_ctx *actx)
 		struct async_ctx *_actx = (ACTX); \
 		CURLcode	_getinfoerr = curl_easy_getinfo(_actx->curl, INFO, OUT); \
 		if (_getinfoerr) { \
-			actx_error(_actx, "failed to get %s from OAuth response: %s",\
+			actx_error(_actx, "could not get libcurl info \"%s\" from OAuth response: %s",\
 					   #INFO, curl_easy_strerror(_getinfoerr)); \
 			FAILACTION; \
 		} \
@@ -882,7 +882,7 @@ parse_oauth_json(struct async_ctx *actx, const struct json_field *fields)
 
 	if (strlen(resp->data) != resp->len)
 	{
-		actx_error(actx, "response contains embedded NULLs");
+		actx_error(actx, "response contains embedded null");
 		return false;
 	}
 
@@ -1138,7 +1138,7 @@ parse_token_error(struct async_ctx *actx, struct token_error *err)
 	 * override the errctx if parsing explicitly fails.
 	 */
 	if (!result)
-		actx->errctx = libpq_gettext("failed to parse token error response");
+		actx->errctx = libpq_gettext("could not parse token error response");
 
 	return result;
 }
@@ -1230,20 +1230,20 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->mux = epoll_create1(EPOLL_CLOEXEC);
 	if (actx->mux < 0)
 	{
-		actx_error_internal(actx, "failed to create epoll set: %m");
+		actx_error_internal(actx, "could not create epoll set: %m");
 		return false;
 	}
 
 	actx->timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
 	if (actx->timerfd < 0)
 	{
-		actx_error_internal(actx, "failed to create timerfd: %m");
+		actx_error_internal(actx, "could not create timerfd: %m");
 		return false;
 	}
 
 	if (epoll_ctl(actx->mux, EPOLL_CTL_ADD, actx->timerfd, &ev) < 0)
 	{
-		actx_error_internal(actx, "failed to add timerfd to epoll set: %m");
+		actx_error_internal(actx, "could not add timerfd to epoll set: %m");
 		return false;
 	}
 
@@ -1252,7 +1252,7 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->mux = kqueue();
 	if (actx->mux < 0)
 	{
-		actx_error_internal(actx, "failed to create kqueue: %m");
+		actx_error_internal(actx, "could not create kqueue: %m");
 		return false;
 	}
 
@@ -1265,7 +1265,7 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->timerfd = kqueue();
 	if (actx->timerfd < 0)
 	{
-		actx_error_internal(actx, "failed to create timer kqueue: %m");
+		actx_error_internal(actx, "could not create timer kqueue: %m");
 		return false;
 	}
 
@@ -1309,7 +1309,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		default:
-			actx_error_internal(actx, "unknown libcurl socket operation: %d", what);
+			actx_error_internal(actx, "unrecognized libcurl socket operation: %d", what);
 			return -1;
 	}
 
@@ -1384,7 +1384,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		default:
-			actx_error_internal(actx, "unknown libcurl socket operation: %d", what);
+			actx_error_internal(actx, "unrecognized libcurl socket operation: %d", what);
 			return -1;
 	}
 
@@ -1520,7 +1520,7 @@ set_timer(struct async_ctx *actx, long timeout)
 
 	if (timerfd_settime(actx->timerfd, 0 /* no flags */ , &spec, NULL) < 0)
 	{
-		actx_error_internal(actx, "setting timerfd to %ld: %m", timeout);
+		actx_error_internal(actx, "could not set timerfd to %ld: %m", timeout);
 		return false;
 	}
 
@@ -1550,14 +1550,14 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error_internal(actx, "deleting kqueue timer: %m");
+		actx_error_internal(actx, "could not delete kqueue timer: %m");
 		return false;
 	}
 
 	EV_SET(&ev, actx->timerfd, EVFILT_READ, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->mux, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error_internal(actx, "removing kqueue timer from multiplexer: %m");
+		actx_error_internal(actx, "could not remove kqueue timer from multiplexer: %m");
 		return false;
 	}
 
@@ -1568,14 +1568,14 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, (EV_ADD | EV_ONESHOT), 0, timeout, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0)
 	{
-		actx_error_internal(actx, "setting kqueue timer to %ld: %m", timeout);
+		actx_error_internal(actx, "could not set kqueue timer to %ld: %m", timeout);
 		return false;
 	}
 
 	EV_SET(&ev, actx->timerfd, EVFILT_READ, EV_ADD, 0, 0, 0);
 	if (kevent(actx->mux, &ev, 1, NULL, 0, NULL) < 0)
 	{
-		actx_error_internal(actx, "adding kqueue timer to multiplexer: %m");
+		actx_error_internal(actx, "could not add kqueue timer to multiplexer: %m");
 		return false;
 	}
 
@@ -1600,7 +1600,7 @@ timer_expired(struct async_ctx *actx)
 	res = PQsocketPoll(actx->timerfd, 1 /* forRead */ , 0, 0);
 	if (res < 0)
 	{
-		actx_error(actx, "checking timer expiration: %m");
+		actx_error(actx, "could not check timer expiration: %m");
 		return -1;
 	}
 
@@ -1762,7 +1762,7 @@ setup_curl_handles(struct async_ctx *actx)
 	if (!actx->curlm)
 	{
 		/* We don't get a lot of feedback on the failure reason. */
-		actx_error(actx, "failed to create libcurl multi handle");
+		actx_error(actx, "could not create libcurl multi handle");
 		return false;
 	}
 
@@ -1782,7 +1782,7 @@ setup_curl_handles(struct async_ctx *actx)
 	actx->curl = curl_easy_init();
 	if (!actx->curl)
 	{
-		actx_error(actx, "failed to create libcurl handle");
+		actx_error(actx, "could not create libcurl handle");
 		return false;
 	}
 
@@ -1924,7 +1924,7 @@ start_request(struct async_ctx *actx)
 	err = curl_multi_add_handle(actx->curlm, actx->curl);
 	if (err)
 	{
-		actx_error(actx, "failed to queue HTTP request: %s",
+		actx_error(actx, "could not queue HTTP request: %s",
 				   curl_multi_strerror(err));
 		return false;
 	}
@@ -2191,7 +2191,7 @@ finish_discovery(struct async_ctx *actx)
 	/*
 	 * Pull the fields we care about from the document.
 	 */
-	actx->errctx = libpq_gettext("failed to parse OpenID discovery document");
+	actx->errctx = libpq_gettext("could not parse OpenID discovery document");
 	if (!parse_provider(actx, &actx->provider))
 		return false;			/* error message already set */
 
@@ -2256,7 +2256,7 @@ check_issuer(struct async_ctx *actx, PGconn *conn)
 	if (strcmp(oauth_issuer_id, provider->issuer) != 0)
 	{
 		actx_error(actx,
-				   "the issuer identifier (%s) does not match oauth_issuer (%s)",
+				   "issuer identifier (%s) does not match oauth_issuer (%s)",
 				   provider->issuer, oauth_issuer_id);
 		return false;
 	}
@@ -2458,7 +2458,7 @@ finish_device_authz(struct async_ctx *actx)
 	 */
 	if (response_code == 200)
 	{
-		actx->errctx = libpq_gettext("failed to parse device authorization");
+		actx->errctx = libpq_gettext("could not parse device authorization");
 		if (!parse_device_authz(actx, &actx->authz))
 			return false;		/* error message already set */
 
@@ -2545,7 +2545,7 @@ finish_token_request(struct async_ctx *actx, struct token *tok)
 	 */
 	if (response_code == 200)
 	{
-		actx->errctx = libpq_gettext("failed to parse access token response");
+		actx->errctx = libpq_gettext("could not parse access token response");
 		if (!parse_access_token(actx, tok))
 			return false;		/* error message already set */
 
@@ -2884,7 +2884,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn, PGoauthBearerRequestV2 *request,
 		switch (actx->step)
 		{
 			case OAUTH_STEP_INIT:
-				actx->errctx = libpq_gettext("failed to fetch OpenID discovery document");
+				actx->errctx = libpq_gettext("could not fetch OpenID discovery document");
 				if (!start_discovery(actx, actx->discovery_uri))
 					goto error_return;
 
@@ -2902,7 +2902,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn, PGoauthBearerRequestV2 *request,
 				if (!check_for_device_flow(actx))
 					goto error_return;
 
-				actx->errctx = libpq_gettext("failed to obtain device authorization");
+				actx->errctx = libpq_gettext("could not obtain device authorization");
 				if (!start_device_authz(actx, conn))
 					goto error_return;
 
@@ -2913,7 +2913,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn, PGoauthBearerRequestV2 *request,
 				if (!finish_device_authz(actx))
 					goto error_return;
 
-				actx->errctx = libpq_gettext("failed to obtain access token");
+				actx->errctx = libpq_gettext("could not obtain access token");
 				if (!start_token_request(actx, conn))
 					goto error_return;
 
@@ -2964,7 +2964,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn, PGoauthBearerRequestV2 *request,
 				break;
 
 			case OAUTH_STEP_WAIT_INTERVAL:
-				actx->errctx = libpq_gettext("failed to obtain access token");
+				actx->errctx = libpq_gettext("could not obtain access token");
 				if (!start_token_request(actx, conn))
 					goto error_return;
 
