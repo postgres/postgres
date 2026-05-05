@@ -612,6 +612,51 @@ CREATE UNIQUE INDEX ON test3cs (x);  -- ok
 SELECT string_to_array('ABC,DEF,GHI' COLLATE case_sensitive, ',', 'abc');
 SELECT string_to_array('ABCDEFGHI' COLLATE case_sensitive, NULL, 'b');
 
+--
+-- A unique index under one collation does not prove uniqueness under
+-- another, so the planner must not use such a proof for any optimization.
+--
+
+-- Ensure that we do not use inner-unique join execution
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM test1cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+
+SELECT * FROM test1cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+
+-- Ensure that left-join is not removed
+EXPLAIN (COSTS OFF)
+SELECT t1.* FROM test3cs t1
+       LEFT JOIN test3cs t2 ON t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1;
+
+SELECT t1.* FROM test3cs t1
+       LEFT JOIN test3cs t2 ON t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1;
+
+-- Ensure that self-join is not removed
+EXPLAIN (COSTS OFF)
+SELECT * FROM test3cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+
+SELECT * FROM test3cs t1, test3cs t2
+WHERE t1.x = t2.x COLLATE case_insensitive
+ORDER BY 1, 2;
+
+-- Ensure that semijoin is not reduced to innerjoin
+EXPLAIN (COSTS OFF)
+SELECT * FROM test3cs t1
+  WHERE EXISTS (SELECT 1 FROM test3cs t2 WHERE t1.x = t2.x COLLATE case_insensitive)
+ORDER BY 1;
+
+SELECT * FROM test3cs t1
+  WHERE EXISTS (SELECT 1 FROM test3cs t2 WHERE t1.x = t2.x COLLATE case_insensitive)
+ORDER BY 1;
+
 CREATE TABLE test1ci (x text COLLATE case_insensitive);
 CREATE TABLE test2ci (x text COLLATE case_insensitive);
 CREATE TABLE test3ci (x text COLLATE case_insensitive);

@@ -861,6 +861,44 @@ comparison_ops_are_compatible(Oid opno1, Oid opno2)
 }
 
 /*
+ * collations_agree_on_equality
+ *		Return true if the two collations have equivalent notions of equality,
+ *		so that a uniqueness or equality proof established under one side
+ *		carries over to a comparison performed under the other side.
+ *
+ * Note: this is equality compatibility only.  Do NOT use this to reason
+ * about ordering.
+ *
+ * An InvalidOid on either side denotes the absence of a collation -- that
+ * side's operation is not collation-sensitive (e.g. a non-collatable column
+ * type).  Absence of a collation cannot conflict with the other side's
+ * collation, so we treat such pairs as agreeing on equality.  This generalizes
+ * the asymmetric treatment in IndexCollMatchesExprColl().
+ *
+ * Otherwise the collations have equivalent equality if they match, or if both
+ * are deterministic: by definition a deterministic collation treats two
+ * strings as equal iff they are byte-wise equal (see CREATE COLLATION), so any
+ * two deterministic collations share the same equality relation.  A mismatch
+ * involving a nondeterministic collation, however, may mean the two equality
+ * relations disagree, and the proof is unsound.
+ */
+bool
+collations_agree_on_equality(Oid coll1, Oid coll2)
+{
+	if (!OidIsValid(coll1) || !OidIsValid(coll2))
+		return true;
+
+	if (coll1 == coll2)
+		return true;
+
+	if (!get_collation_isdeterministic(coll1) ||
+		!get_collation_isdeterministic(coll2))
+		return false;
+
+	return true;
+}
+
+/*
  * op_is_safe_index_member
  *		Check if the operator is a member of a B-tree or Hash operator family.
  *

@@ -89,6 +89,7 @@ extern bool get_op_hash_functions(Oid opno,
 extern List *get_op_index_interpretation(Oid opno);
 extern bool equality_ops_are_compatible(Oid opno1, Oid opno2);
 extern bool comparison_ops_are_compatible(Oid opno1, Oid opno2);
+extern bool collations_agree_on_equality(Oid coll1, Oid coll2);
 extern bool op_is_safe_index_member(Oid opno);
 extern Oid	get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
 							  int16 procnum);
