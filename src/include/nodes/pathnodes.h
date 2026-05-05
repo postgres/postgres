@@ -3376,6 +3376,20 @@ typedef struct RowIdentityVarInfo
 } RowIdentityVarInfo;
 
 /*
+ * One element of the list passed to query_is_distinct_for().  Each entry
+ * names a subquery output column that the caller needs to be distinct over,
+ * plus the upper-level equality operator and its input collation, so that
+ * the subquery's own DISTINCT/GROUP BY/set-op clauses can be compared for
+ * compatibility.
+ */
+typedef struct DistinctColInfo
+{
+	int			colno;			/* subquery output column resno */
+	Oid			opid;			/* upper-level equality operator */
+	Oid			collid;			/* input collation of opid */
+} DistinctColInfo;
+
+/*
  * For each distinct placeholder expression generated during planning, we
  * store a PlaceHolderInfo node in the PlannerInfo node's placeholder_list.
  * This stores info that is needed centrally rather than in each copy of the

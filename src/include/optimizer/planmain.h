@@ -111,7 +111,7 @@ extern void match_foreign_keys_to_quals(PlannerInfo *root);
 extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
 extern void reduce_unique_semijoins(PlannerInfo *root);
 extern bool query_supports_distinctness(Query *query);
-extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
+extern bool query_is_distinct_for(Query *query, List *distinct_cols);
 extern bool innerrel_is_unique(PlannerInfo *root,
 							   Relids joinrelids, Relids outerrelids, RelOptInfo *innerrel,
 							   JoinType jointype, List *restrictlist, bool force_cache);

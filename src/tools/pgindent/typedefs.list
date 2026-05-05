@@ -688,6 +688,7 @@ DiscardMode
 DiscardStmt
 DispatchOption
 DistanceValue
+DistinctColInfo
 DistinctExpr
 DoState
 DoStmt

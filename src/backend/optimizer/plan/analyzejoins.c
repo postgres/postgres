@@ -68,7 +68,7 @@ static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
 								List *clause_list, List **extra_clauses);
-static Oid	distinct_col_search(int colno, List *colnos, List *opids);
+static DistinctColInfo *distinct_col_search(int colno, List *distinct_cols);
 static bool is_innerrel_unique_for(PlannerInfo *root,
 								   Relids joinrelids,
 								   Relids outerrelids,
@@ -1032,15 +1032,17 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 	{
 		Index		relid = rel->relid;
 		Query	   *subquery = root->simple_rte_array[relid]->subquery;
-		List	   *colnos = NIL;
-		List	   *opids = NIL;
+		List	   *distinct_cols = NIL;
 		ListCell   *l;
 
 		/*
-		 * Build the argument lists for query_is_distinct_for: a list of
-		 * output column numbers that the query needs to be distinct over, and
-		 * a list of equality operators that the output columns need to be
-		 * distinct according to.
+		 * Build the argument list for query_is_distinct_for: a list of
+		 * DistinctColInfo entries, each holding an output column number that
+		 * the query needs to be distinct over, the equality operator that the
+		 * column needs to be distinct according to, and that operator's input
+		 * collation.  The collation matters because the subquery's own
+		 * DISTINCT / GROUP BY / set-op proves uniqueness under its own
+		 * collation, which need not agree with the operator's.
 		 *
 		 * (XXX we are not considering restriction clauses attached to the
 		 * subquery; is that worth doing?)
@@ -1048,18 +1050,18 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 		foreach(l, clause_list)
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
-			Oid			op;
+			OpExpr	   *opexpr;
 			Var		   *var;
+			DistinctColInfo *dcinfo;
 
 			/*
-			 * Get the equality operator we need uniqueness according to.
-			 * (This might be a cross-type operator and thus not exactly the
-			 * same operator the subquery would consider; that's all right
-			 * since query_is_distinct_for can resolve such cases.)  The
-			 * caller's mergejoinability test should have selected only
-			 * OpExprs.
+			 * The caller's mergejoinability test should have selected only
+			 * OpExprs.  The operator might be a cross-type operator and thus
+			 * not exactly the same operator the subquery would consider;
+			 * that's all right since query_is_distinct_for can resolve such
+			 * cases.
 			 */
-			op = castNode(OpExpr, rinfo->clause)->opno;
+			opexpr = castNode(OpExpr, rinfo->clause);
 
 			/* caller identified the inner side for us */
 			if (rinfo->outer_is_left)
@@ -1083,11 +1085,14 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 				var->varno != relid || var->varlevelsup != 0)
 				continue;
 
-			colnos = lappend_int(colnos, var->varattno);
-			opids = lappend_oid(opids, op);
+			dcinfo = palloc(sizeof(DistinctColInfo));
+			dcinfo->colno = var->varattno;
+			dcinfo->opid = opexpr->opno;
+			dcinfo->collid = opexpr->inputcollid;
+			distinct_cols = lappend(distinct_cols, dcinfo);
 		}
 
-		if (query_is_distinct_for(subquery, colnos, opids))
+		if (query_is_distinct_for(subquery, distinct_cols))
 			return true;
 	}
 	return false;
@@ -1131,25 +1136,32 @@ query_supports_distinctness(Query *query)
  * query is a not-yet-planned subquery (in current usage, it's always from
  * a subquery RTE, which the planner avoids scribbling on).
  *
- * colnos is an integer list of output column numbers (resno's).  We are
- * interested in whether rows consisting of just these columns are certain
- * to be distinct.  "Distinctness" is defined according to whether the
- * corresponding upper-level equality operators listed in opids would think
- * the values are distinct.  (Note: the opids entries could be cross-type
- * operators, and thus not exactly the equality operators that the subquery
- * would use itself.  We use equality_ops_are_compatible() to check
- * compatibility.  That looks at opfamily membership for index AMs that have
- * declared that they support consistent equality semantics within an
+ * distinct_cols is a list of DistinctColInfo, one per requested output column.
+ * Each entry names the subquery output column number we want distinct, the
+ * upper-level equality operator we'll compare values with, and that operator's
+ * input collation.  We are interested in whether rows consisting of just these
+ * columns are certain to be distinct.
+ *
+ * "Distinctness" is defined according to whether the corresponding upper-level
+ * equality operators would think the values are distinct.  (Note: each opid
+ * could be a cross-type operator, and thus not exactly the equality operator
+ * that the subquery would use itself.  We use equality_ops_are_compatible() to
+ * check compatibility.  That looks at opfamily membership for index AMs that
+ * have declared that they support consistent equality semantics within an
  * opfamily, and so should give trustworthy answers for all operators that we
  * might need to deal with here.)
+ *
+ * The collid must also agree on equality with the collation the subquery's own
+ * DISTINCT/GROUP BY/set-op uses to deduplicate the column, else the subquery's
+ * distinctness does not carry over to the caller's equality semantics.  Two
+ * collations agree on equality if they match or if both are deterministic (in
+ * which case both reduce equality to byte-equality; see CREATE COLLATION).
  */
 bool
-query_is_distinct_for(Query *query, List *colnos, List *opids)
+query_is_distinct_for(Query *query, List *distinct_cols)
 {
 	ListCell   *l;
-	Oid			opid;
-
-	Assert(list_length(colnos) == list_length(opids));
+	DistinctColInfo *dcinfo;
 
 	/*
 	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
@@ -1165,9 +1177,11 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 			TargetEntry *tle = get_sortgroupclause_tle(sgc,
 													   query->targetList);
 
-			opid = distinct_col_search(tle->resno, colnos, opids);
-			if (!OidIsValid(opid) ||
-				!equality_ops_are_compatible(opid, sgc->eqop))
+			dcinfo = distinct_col_search(tle->resno, distinct_cols);
+			if (dcinfo == NULL ||
+				!equality_ops_are_compatible(dcinfo->opid, sgc->eqop) ||
+				!collations_agree_on_equality(dcinfo->collid,
+											  exprCollation((Node *) tle->expr)))
 				break;			/* exit early if no match */
 		}
 		if (l == NULL)			/* had matches for all? */
@@ -1196,9 +1210,11 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 			TargetEntry *tle = get_sortgroupclause_tle(sgc,
 													   query->targetList);
 
-			opid = distinct_col_search(tle->resno, colnos, opids);
-			if (!OidIsValid(opid) ||
-				!equality_ops_are_compatible(opid, sgc->eqop))
+			dcinfo = distinct_col_search(tle->resno, distinct_cols);
+			if (dcinfo == NULL ||
+				!equality_ops_are_compatible(dcinfo->opid, sgc->eqop) ||
+				!collations_agree_on_equality(dcinfo->collid,
+											  exprCollation((Node *) tle->expr)))
 				break;			/* exit early if no match */
 		}
 		if (l == NULL)			/* had matches for all? */
@@ -1268,9 +1284,11 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 				sgc = (SortGroupClause *) lfirst(lg);
 				lg = lnext(topop->groupClauses, lg);
 
-				opid = distinct_col_search(tle->resno, colnos, opids);
-				if (!OidIsValid(opid) ||
-					!equality_ops_are_compatible(opid, sgc->eqop))
+				dcinfo = distinct_col_search(tle->resno, distinct_cols);
+				if (dcinfo == NULL ||
+					!equality_ops_are_compatible(dcinfo->opid, sgc->eqop) ||
+					!collations_agree_on_equality(dcinfo->collid,
+												  exprCollation((Node *) tle->expr)))
 					break;		/* exit early if no match */
 			}
 			if (l == NULL)		/* had matches for all? */
@@ -1292,22 +1310,21 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 /*
  * distinct_col_search - subroutine for query_is_distinct_for
  *
- * If colno is in colnos, return the corresponding element of opids,
- * else return InvalidOid.  (Ordinarily colnos would not contain duplicates,
- * but if it does, we arbitrarily select the first match.)
+ * If colno matches the colno field of an entry in distinct_cols, return a
+ * pointer to that entry; else return NULL.  (Ordinarily distinct_cols would
+ * not contain duplicate colnos, but if it does, we arbitrarily select the
+ * first match.)
  */
-static Oid
-distinct_col_search(int colno, List *colnos, List *opids)
+static DistinctColInfo *
+distinct_col_search(int colno, List *distinct_cols)
 {
-	ListCell   *lc1,
-			   *lc2;
-
-	forboth(lc1, colnos, lc2, opids)
+	foreach_ptr(DistinctColInfo, dcinfo, distinct_cols)
 	{
-		if (colno == lfirst_int(lc1))
-			return lfirst_oid(lc2);
+		if (dcinfo->colno == colno)
+			return dcinfo;
 	}
-	return InvalidOid;
+
+	return NULL;
 }
 
 
