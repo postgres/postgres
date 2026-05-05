@@ -2106,6 +2106,8 @@ get_tables_to_repack(RepackCommand cmd, bool usingindex, MemoryContext permcxt)
 		{
 			RelToCluster *rtc;
 			Form_pg_index index;
+			HeapTuple	classtup;
+			Form_pg_class classForm;
 			MemoryContext oldcxt;
 
 			index = (Form_pg_index) GETSTRUCT(tuple);
@@ -2120,11 +2122,24 @@ get_tables_to_repack(RepackCommand cmd, bool usingindex, MemoryContext permcxt)
 				continue;
 
 			/* Verify that the table still exists; skip if not */
-			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(index->indrelid)))
+			classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(index->indrelid));
+			if (!HeapTupleIsValid(classtup))
 			{
 				UnlockRelationOid(index->indrelid, AccessShareLock);
 				continue;
 			}
+			classForm = (Form_pg_class) GETSTRUCT(classtup);
+
+			/* Skip temp relations belonging to other sessions */
+			if (classForm->relpersistence == RELPERSISTENCE_TEMP &&
+				!isTempOrTempToastNamespace(classForm->relnamespace))
+			{
+				ReleaseSysCache(classtup);
+				UnlockRelationOid(index->indrelid, AccessShareLock);
+				continue;
+			}
+
+			ReleaseSysCache(classtup);
 
 			/* noisily skip rels which the user can't process */
 			if (!repack_is_permitted_for_relation(cmd, index->indrelid,
@@ -2175,6 +2190,14 @@ get_tables_to_repack(RepackCommand cmd, bool usingindex, MemoryContext permcxt)
 			/* Can only process plain tables and matviews */
 			if (class->relkind != RELKIND_RELATION &&
 				class->relkind != RELKIND_MATVIEW)
+			{
+				UnlockRelationOid(class->oid, AccessShareLock);
+				continue;
+			}
+
+			/* Skip temp relations belonging to other sessions */
+			if (class->relpersistence == RELPERSISTENCE_TEMP &&
+				!isTempOrTempToastNamespace(class->relnamespace))
 			{
 				UnlockRelationOid(class->oid, AccessShareLock);
 				continue;

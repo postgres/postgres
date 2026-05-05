@@ -1063,6 +1063,11 @@ get_all_vacuum_rels(MemoryContext vac_context, int options)
 			classForm->relkind != RELKIND_PARTITIONED_TABLE)
 			continue;
 
+		/* Skip temp relations belonging to other sessions */
+		if (classForm->relpersistence == RELPERSISTENCE_TEMP &&
+			!isTempOrTempToastNamespace(classForm->relnamespace))
+			continue;
+
 		/* check permissions of relation */
 		if (!vacuum_is_permitted_for_relation(relid, classForm, options))
 			continue;
