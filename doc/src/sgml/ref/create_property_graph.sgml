@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE PROPERTY GRAPH</refname>
-  <refpurpose>define an SQL-property graph</refpurpose>
+  <refpurpose>define a new SQL-property graph</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
