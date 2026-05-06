@@ -360,7 +360,7 @@ WaitLSNWakeup(WaitLSNType lsnType, XLogRecPtr currentLSN)
 }
 
 /*
- * Clean up LSN waiters for exiting process
+ * Clean up any LSN wait state for the current process.
  */
 void
 WaitLSNCleanup(void)

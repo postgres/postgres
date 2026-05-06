@@ -213,6 +213,54 @@ $output = $node_standby->safe_psql(
 	WAIT FOR LSN '${lsn3}' WITH (timeout '10ms', no_throw);]);
 ok($output eq "timeout", "WAIT FOR returns correct status after timeout");
 
+# 4a. Check that aborting a subtransaction during WAIT FOR LSN cleans up the
+# shared wait-state.  Poll pg_stat_activity before canceling the first WAIT
+# FOR to ensure that the backend has registered itself in the waiters heap.
+# After rolling back to the savepoint, a second WAIT FOR in the same backend
+# must be able to register itself again.
+my $subxact_lsn = $node_primary->safe_psql('postgres',
+	"SELECT pg_current_wal_insert_lsn() + 10000000000");
+my $subxact_appname = 'wait_for_lsn_subxact_cleanup';
+my $subxact_session =
+  $node_primary->background_psql('postgres', on_error_stop => 0);
+$subxact_session->query_until(
+	qr/start/, qq[
+	SET application_name = '$subxact_appname';
+	BEGIN;
+	SAVEPOINT wait_cleanup;
+	\\echo start
+	WAIT FOR LSN '${subxact_lsn}' WITH (MODE 'primary_flush');
+	ROLLBACK TO wait_cleanup;
+	WAIT FOR LSN '${subxact_lsn}'
+		WITH (MODE 'primary_flush', timeout '10ms', no_throw);
+	COMMIT;
+]);
+$node_primary->poll_query_until(
+	'postgres',
+	"SELECT count(*) = 1 FROM pg_stat_activity
+	 WHERE application_name = '$subxact_appname'
+	   AND wait_event = 'WaitForWalFlush'"
+) or die "WAIT FOR LSN did not enter the primary_flush wait path";
+my $subxact_cancelled = $node_primary->safe_psql(
+	'postgres',
+	"SELECT pg_cancel_backend(pid) FROM pg_stat_activity
+	 WHERE application_name = '$subxact_appname'
+	   AND wait_event = 'WaitForWalFlush'"
+);
+is($subxact_cancelled, 't', "canceled WAIT FOR LSN in subtransaction");
+$subxact_session->quit;
+chomp($subxact_session->{stdout});
+like(
+	$subxact_session->{stderr},
+	qr/canceling statement due to user request/,
+	"query cancel interrupted WAIT FOR LSN in subtransaction");
+is($subxact_session->{stdout},
+	"timeout", "second WAIT FOR LSN timed out after savepoint rollback");
+unlike(
+	$subxact_session->{stderr},
+	qr/server closed the connection unexpectedly/,
+	"WAIT FOR LSN after savepoint rollback did not disconnect");
+
 # 5. Check mode validation: standby modes error on primary, primary mode errors
 # on standby, and primary_flush works on primary.  Also check that WAIT FOR
 # triggers an error if called within a function, procedure, anonymous DO block,

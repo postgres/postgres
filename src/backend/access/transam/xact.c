@@ -5289,6 +5289,11 @@ AbortSubTransaction(void)
 	 */
 	LWLockReleaseAll();
 
+	/*
+	 * Cleanup waiting for LSN if any.
+	 */
+	WaitLSNCleanup();
+
 	pgstat_report_wait_end();
 	pgstat_progress_end_command();
 
