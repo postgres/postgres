@@ -690,11 +690,22 @@ ProcessSingleRelationFork(Relation reln, ForkNumber forkNum, BufferAccessStrateg
 		 * at one point in the past, so only when checksums are first on, then
 		 * off, and then turned on again.  TODO: investigate if this could be
 		 * avoided if the checksum is calculated to be correct and wal_level
-		 * is set to "minimal",
+		 * is set to "minimal".
+		 *
+		 * Unlogged relations don't need WAL since they are reset to their
+		 * init fork on recovery.  We still dirty the buffer so that the
+		 * checksum is written to disk at the next checkpoint.
+		 *
+		 * The init fork is an exception: it is WAL-logged so the standby can
+		 * materialize the relation after promotion (see
+		 * ResetUnloggedRelations()).  Skipping it here would leave the
+		 * standby with a stale init fork that, once copied to the main fork
+		 * on promotion, would fail checksum verification on every read.
 		 */
 		START_CRIT_SECTION();
 		MarkBufferDirty(buf);
-		log_newpage_buffer(buf, false);
+		if (RelationNeedsWAL(reln) || forkNum == INIT_FORKNUM)
+			log_newpage_buffer(buf, false);
 		END_CRIT_SECTION();
 
 		UnlockReleaseBuffer(buf);
