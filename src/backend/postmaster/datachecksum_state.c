@@ -1549,14 +1549,14 @@ DataChecksumsWorkerMain(Datum arg)
 	 * provides rather than inventing something bespoke. This is an internal
 	 * implementation detail and care should be taken to avoid it bleeding
 	 * through to the user to avoid confusion.
+	 *
+	 * VacuumUpdateCosts() propagates the values to the variables actually
+	 * read by vacuum_delay_point().
 	 */
 	VacuumCostDelay = DataChecksumState->cost_delay;
 	VacuumCostLimit = DataChecksumState->cost_limit;
-	VacuumCostActive = (VacuumCostDelay > 0);
+	VacuumUpdateCosts();
 	VacuumCostBalance = 0;
-	VacuumCostPageHit = 0;
-	VacuumCostPageMiss = 0;
-	VacuumCostPageDirty = 0;
 
 	/*
 	 * Create and set the vacuum strategy as our buffer strategy.
@@ -1613,7 +1613,7 @@ DataChecksumsWorkerMain(Datum arg)
 			costs_updated = true;
 			VacuumCostDelay = DataChecksumState->launch_cost_delay;
 			VacuumCostLimit = DataChecksumState->launch_cost_limit;
-			VacuumCostActive = (VacuumCostDelay > 0);
+			VacuumUpdateCosts();
 
 			DataChecksumState->cost_delay = DataChecksumState->launch_cost_delay;
 			DataChecksumState->cost_limit = DataChecksumState->launch_cost_limit;
