@@ -1399,6 +1399,7 @@ usage(void)
 	printf(_("  -q, --quiet                 do not print any output, except for errors\n"));
 	printf(_("  -s, --skip-checksums        skip checksum verification\n"));
 	printf(_("  -w, --wal-path=PATH         use specified path for WAL files\n"));
+	printf(_("      --wal-directory=PATH    (same as --wal-path, deprecated)\n"));
 	printf(_("  -V, --version               output version information, then exit\n"));
 	printf(_("  -?, --help                  show this help, then exit\n"));
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);

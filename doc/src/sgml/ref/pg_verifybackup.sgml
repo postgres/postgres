@@ -259,6 +259,7 @@ PostgreSQL documentation
      <varlistentry>
       <term><option>-w <replaceable class="parameter">path</replaceable></option></term>
       <term><option>--wal-path=<replaceable class="parameter">path</replaceable></option></term>
+      <term><option>--wal-directory=<replaceable class="parameter">path</replaceable></option> (deprecated)</term>
       <listitem>
        <para>
         Try to parse WAL files stored in the specified directory or tar
