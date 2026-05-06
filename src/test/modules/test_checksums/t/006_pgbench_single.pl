@@ -211,7 +211,7 @@ for (my $i = 0; $i < $TEST_ITERATIONS; $i++)
 			$node_loglocation);
 		unlike(
 			$log,
-			qr/page verification failed,.+\d$/,
+			qr/page verification failed,.+\d$/m,
 			"no checksum validation errors in primary log (during WAL recovery)"
 		);
 		$node_loglocation = -s $node->logfile;
@@ -249,7 +249,7 @@ for (my $i = 0; $i < $TEST_ITERATIONS; $i++)
 			$node_loglocation);
 		unlike(
 			$log,
-			qr/page verification failed,.+\d$/,
+			qr/page verification failed,.+\d$/m,
 			"no checksum validation errors in primary log (outside WAL recovery)"
 		);
 		$node_loglocation = -s $node->logfile;
@@ -276,7 +276,7 @@ my $log =
   PostgreSQL::Test::Utils::slurp_file($node->logfile, $node_loglocation);
 unlike(
 	$log,
-	qr/page verification failed,.+\d$/,
+	qr/page verification failed,.+\d$/m,
 	"no checksum validation errors in primary log");
 $node_loglocation = -s $node->logfile;
 

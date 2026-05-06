@@ -58,7 +58,7 @@ $node->stop;
 my $log = PostgreSQL::Test::Utils::slurp_file($node->logfile, 0);
 unlike(
 	$log,
-	qr/page verification failed,.+\d$/,
+	qr/page verification failed,.+\d$/m,
 	"no checksum validation errors in server log");
 
 done_testing();

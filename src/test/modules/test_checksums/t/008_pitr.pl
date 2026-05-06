@@ -186,7 +186,7 @@ $node_pitr->stop;
 my $log = PostgreSQL::Test::Utils::slurp_file($node_pitr->logfile, 0);
 unlike(
 	$log,
-	qr/page verification failed,.+\d$/,
+	qr/page verification failed,.+\d$/m,
 	"no checksum validation errors in pitr log");
 
 done_testing();
