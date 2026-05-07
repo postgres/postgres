@@ -2788,3 +2788,26 @@ drop table defer_trig;
 drop function whoami();
 drop role regress_fn_owner;
 drop role regress_caller;
+
+--
+-- Test a recursive AFTER ROW trigger that nests after-trigger query levels
+-- deeply enough to grow query_stack mid-fire.  Outer levels then resume their
+-- post-loop cleanup against the relocated stack.
+--
+create table trigger_recursive (id int);
+create function trigger_recursive_fn() returns trigger language plpgsql as $$
+begin
+    if new.id < 10 then
+        insert into trigger_recursive values (new.id + 1);
+    end if;
+    return new;
+end$$;
+
+create trigger trigger_recursive after insert on trigger_recursive
+    for each row execute function trigger_recursive_fn();
+
+insert into trigger_recursive values (1);
+select count(*) from trigger_recursive;
+
+drop table trigger_recursive;
+drop function trigger_recursive_fn();

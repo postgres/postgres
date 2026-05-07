@@ -5239,7 +5239,12 @@ AfterTriggerEndQuery(EState *estate)
 	 * Fire batch callbacks before releasing query-level storage and before
 	 * decrementing query_depth.  Callbacks may do real work (index probes,
 	 * error reporting).
+	 *
+	 * Recompute qs first: the loop above refreshes it after each
+	 * afterTriggerInvokeEvents() call (see comment there), but the "all
+	 * fired" break exits without doing so, leaving qs potentially stale here.
 	 */
+	qs = &afterTriggers.query_stack[afterTriggers.query_depth];
 	FireAfterTriggerBatchCallbacks(qs->batch_callbacks);
 
 	/* Release query-level-local storage, including tuplestores if any */
