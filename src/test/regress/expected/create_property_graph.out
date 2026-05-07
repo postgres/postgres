@@ -210,11 +210,11 @@ CREATE PROPERTY GRAPH gx
         t1 KEY (a) LABEL l1 PROPERTIES (a, b),
         t2 KEY (i) LABEL l1 PROPERTIES (i AS a, j AS j)  -- mismatching property names on label
     );
-ERROR:  mismatching properties names in definition of label "l1"
+ERROR:  mismatching property names in definition of label "l1"
 ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t1 ADD LABEL t3l1 PROPERTIES (a AS x, b AS yy, b AS zz);  -- mismatching number of properties on label
 ERROR:  mismatching number of properties in definition of label "t3l1"
 ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t1 ADD LABEL t3l1 PROPERTIES (a AS x, b AS zz);  -- mismatching property names on label
-ERROR:  mismatching properties names in definition of label "t3l1"
+ERROR:  mismatching property names in definition of label "t3l1"
 ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t1 ADD LABEL t3l1 PROPERTIES (a AS x);  -- mismatching number of properties on label
 ERROR:  mismatching number of properties in definition of label "t3l1"
 ALTER PROPERTY GRAPH g1 OWNER TO regress_graph_user1;

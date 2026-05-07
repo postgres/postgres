@@ -1266,7 +1266,7 @@ check_element_label_properties(Oid ellabeloid)
 	if (diff1 || diff2)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				errmsg("mismatching properties names in definition of label \"%s\"", get_propgraph_label_name(labelid)));
+				errmsg("mismatching property names in definition of label \"%s\"", get_propgraph_label_name(labelid)));
 }
 
 /*
