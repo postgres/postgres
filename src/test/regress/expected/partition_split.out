@@ -106,10 +106,10 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-02-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
-ERROR:  can not split to partition "sales_mar2022" together with partition "sales_feb2022"
+ERROR:  cannot split to partition "sales_mar2022" together with partition "sales_feb2022"
 LINE 3:    PARTITION sales_mar2022 FOR VALUES FROM ('2022-02-01') TO...
                                                     ^
-DETAIL:  lower bound of partition "sales_mar2022" is not equal to the upper bound of partition "sales_feb2022"
+DETAIL:  The lower bound of partition "sales_mar2022" is not equal to the upper bound of partition "sales_feb2022".
 HINT:  ALTER TABLE ... SPLIT PARTITION requires the partition bounds to be adjacent.
 -- Tests for spaces between partitions, them should be executed without DEFAULT partition
 ALTER TABLE sales_range DETACH PARTITION sales_others;
@@ -467,10 +467,10 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_error FOR VALUES FROM ('2021-12-30') TO ('2022-02-01'),
    PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_others DEFAULT);
-ERROR:  can not split to partition "sales_error" together with partition "sales_dec2021"
+ERROR:  cannot split to partition "sales_error" together with partition "sales_dec2021"
 LINE 3:    PARTITION sales_error FOR VALUES FROM ('2021-12-30') TO (...
                                                   ^
-DETAIL:  lower bound of partition "sales_error" is not equal to the upper bound of partition "sales_dec2021"
+DETAIL:  The lower bound of partition "sales_error" is not equal to the upper bound of partition "sales_dec2021".
 HINT:  ALTER TABLE ... SPLIT PARTITION requires the partition bounds to be adjacent.
 -- sales_error intersects with sales_feb2022 (upper bound)
 -- ERROR:  can not split to partition "sales_feb2022" together with partition "sales_error"
@@ -479,10 +479,10 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_error FOR VALUES FROM ('2022-01-01') TO ('2022-02-02'),
    PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_others DEFAULT);
-ERROR:  can not split to partition "sales_feb2022" together with partition "sales_error"
+ERROR:  cannot split to partition "sales_feb2022" together with partition "sales_error"
 LINE 4:    PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO...
                                                     ^
-DETAIL:  lower bound of partition "sales_feb2022" is not equal to the upper bound of partition "sales_error"
+DETAIL:  The lower bound of partition "sales_feb2022" is not equal to the upper bound of partition "sales_error".
 HINT:  ALTER TABLE ... SPLIT PARTITION requires the partition bounds to be adjacent.
 -- sales_error intersects with sales_dec2021 (inside bound)
 -- ERROR:  can not split to partition "sales_error" together with partition "sales_dec2021"
@@ -491,10 +491,10 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_error FOR VALUES FROM ('2021-12-10') TO ('2021-12-20'),
    PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_others DEFAULT);
-ERROR:  can not split to partition "sales_error" together with partition "sales_dec2021"
+ERROR:  cannot split to partition "sales_error" together with partition "sales_dec2021"
 LINE 3:    PARTITION sales_error FOR VALUES FROM ('2021-12-10') TO (...
                                                   ^
-DETAIL:  lower bound of partition "sales_error" is not equal to the upper bound of partition "sales_dec2021"
+DETAIL:  The lower bound of partition "sales_error" is not equal to the upper bound of partition "sales_dec2021".
 HINT:  ALTER TABLE ... SPLIT PARTITION requires the partition bounds to be adjacent.
 -- sales_error intersects with sales_dec2021 (exactly the same bounds)
 -- ERROR:  can not split to partition "sales_error" together with partition "sales_dec2021"
@@ -503,10 +503,10 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_error FOR VALUES FROM ('2021-12-01') TO ('2022-01-01'),
    PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_others DEFAULT);
-ERROR:  can not split to partition "sales_error" together with partition "sales_dec2021"
+ERROR:  cannot split to partition "sales_error" together with partition "sales_dec2021"
 LINE 3:    PARTITION sales_error FOR VALUES FROM ('2021-12-01') TO (...
                                                   ^
-DETAIL:  lower bound of partition "sales_error" is not equal to the upper bound of partition "sales_dec2021"
+DETAIL:  The lower bound of partition "sales_error" is not equal to the upper bound of partition "sales_dec2021".
 HINT:  ALTER TABLE ... SPLIT PARTITION requires the partition bounds to be adjacent.
 -- ERROR:  can not split DEFAULT partition "sales_others"
 -- HINT:  To split DEFAULT partition one of the new partition must be DEFAULT.
@@ -514,10 +514,8 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2021 FOR VALUES FROM ('2021-12-01') TO ('2022-01-01'),
    PARTITION sales_jan2022 FOR VALUES FROM ('2022-01-01') TO ('2022-02-01'),
    PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'));
-ERROR:  can not split DEFAULT partition "sales_others"
-LINE 2:   (PARTITION sales_dec2021 FOR VALUES FROM ('2021-12-01') TO...
-                     ^
-HINT:  To split DEFAULT partition one of the new partition must be DEFAULT.
+ERROR:  cannot split DEFAULT partition "sales_others"
+HINT:  To split a DEFAULT partition, one of the new partitions must be DEFAULT.
 -- no error: bounds of sales_noerror are between sales_dec2021 and sales_feb2022
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2021 FOR VALUES FROM ('2021-12-01') TO ('2022-01-01'),
@@ -878,7 +876,7 @@ ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', NULL),
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
-ERROR:  new partition "sales_west" cannot have NULL value because split partition "sales_all" does not have
+ERROR:  new partition "sales_west" cannot have NULL value because split partition "sales_all" does not have it
 LINE 2: ...s_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', NULL),
                                                                  ^
 -- ERROR:  new partition "sales_west" cannot have this value because split partition "sales_all" does not have
@@ -886,7 +884,7 @@ ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Melbourne'),
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
-ERROR:  new partition "sales_west" cannot have this value because split partition "sales_all" does not have
+ERROR:  new partition "sales_west" cannot have this value because split partition "sales_all" does not have it
 LINE 2: ...st FOR VALUES IN ('Lisbon', 'New York', 'Madrid', 'Melbourne...
                                                              ^
 -- ERROR:  new partition cannot be DEFAULT because DEFAULT partition "sales_others" already exists
@@ -895,9 +893,10 @@ ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'),
    PARTITION sales_others2 DEFAULT);
-ERROR:  new partition cannot be DEFAULT because DEFAULT partition "sales_others" already exists
+ERROR:  cannot split non-DEFAULT partition "sales_all"
 LINE 5:    PARTITION sales_others2 DEFAULT);
                      ^
+DETAIL:  New partition cannot be DEFAULT because DEFAULT partition "sales_others" already exists.
 DROP TABLE sales_list;
 -- Test for non-symbolic comparison of values (numeric values '0' and '0.0' are equal).
 CREATE TABLE t (a numeric) PARTITION BY LIST (a);
@@ -924,7 +923,7 @@ ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
-ERROR:  new partitions combined partition bounds do not contain value (NULL) but split partition "sales_all" does
+ERROR:  new partitions' combined partition bounds do not contain value (NULL) but split partition "sales_all" does
 HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 -- ERROR:  new partitions combined partition bounds do not contain value ('Kyiv'::character varying(20)) but split partition "sales_all" does
 -- HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
@@ -932,7 +931,7 @@ ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Beijing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', NULL));
-ERROR:  new partitions combined partition bounds do not contain value ('Kyiv'::character varying(20)) but split partition "sales_all" does
+ERROR:  new partitions' combined partition bounds do not contain value ('Kyiv'::character varying(20)) but split partition "sales_all" does
 HINT:  ALTER TABLE ... SPLIT PARTITION require combined bounds of new partitions must exactly match the bound of the split partition.
 -- ERROR  DEFAULT partition should be one
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
@@ -941,7 +940,7 @@ ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'),
    PARTITION sales_others DEFAULT,
    PARTITION sales_others2 DEFAULT);
-ERROR:  DEFAULT partition should be one
+ERROR:  cannot specify more than one DEFAULT partition
 LINE 6:    PARTITION sales_others2 DEFAULT);
                      ^
 DROP TABLE sales_list;
@@ -1207,7 +1206,7 @@ ALTER TABLE t2 SPLIT PARTITION t1pa INTO
    (PARTITION t2a FOR VALUES FROM ('A') TO ('B'),
     PARTITION t2b FOR VALUES FROM ('B') TO ('C'));
 ERROR:  relation "t1pa" is not a partition of relation "t2"
-HINT:  ALTER TABLE ... SPLIT PARTITION can only split partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... SPLIT PARTITION can only split partitions that don't have sub-partitions.
 DROP TABLE t2;
 DROP TABLE t1;
 --

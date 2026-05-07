@@ -29,20 +29,20 @@ LINE 1: ...e MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_feb2...
 -- ERROR:  "sales_apr2022" is not a table
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_apr2022) INTO sales_feb_mar_apr2022;
 ERROR:  "sales_apr2022" is not a table
-HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions that don't have sub-partitions.
 -- ERROR:  can not merge partition "sales_mar2022" together with partition "sales_jan2022"
 -- DETAIL:  lower bound of partition "sales_mar2022" is not equal to the upper bound of partition "sales_jan2022"
 -- (space between sections sales_jan2022 and sales_mar2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_jan2022, sales_mar2022) INTO sales_jan_mar2022;
-ERROR:  can not merge partition "sales_mar2022" together with partition "sales_jan2022"
-DETAIL:  lower bound of partition "sales_mar2022" is not equal to the upper bound of partition "sales_jan2022"
+ERROR:  cannot merge partition "sales_mar2022" together with partition "sales_jan2022"
+DETAIL:  The lower bound of partition "sales_mar2022" is not equal to the upper bound of partition "sales_jan2022".
 HINT:  ALTER TABLE ... MERGE PARTITIONS requires the partition bounds to be adjacent.
 -- ERROR:  can not merge partition "sales_jan2022" together with partition "sales_dec2021"
 -- DETAIL:  lower bound of partition "sales_jan2022" is not equal to the upper bound of partition "sales_dec2021"
 -- (space between sections sales_dec2021 and sales_jan2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_dec2021, sales_jan2022, sales_feb2022) INTO sales_dec_jan_feb2022;
-ERROR:  can not merge partition "sales_jan2022" together with partition "sales_dec2021"
-DETAIL:  lower bound of partition "sales_jan2022" is not equal to the upper bound of partition "sales_dec2021"
+ERROR:  cannot merge partition "sales_jan2022" together with partition "sales_dec2021"
+DETAIL:  The lower bound of partition "sales_jan2022" is not equal to the upper bound of partition "sales_dec2021".
 HINT:  ALTER TABLE ... MERGE PARTITIONS requires the partition bounds to be adjacent.
 -- ERROR:  partition with name "sales_feb2022" is already used
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, partitions_merge_schema.sales_feb2022) INTO sales_feb_mar_apr2022;
@@ -483,15 +483,15 @@ CREATE TABLE sales_external2 (vch VARCHAR(5));
 -- ERROR:  "sales_external" is not a partition of partitioned table "sales_list"
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_external) INTO sales_all;
 ERROR:  "sales_external" is not a partition of partitioned table "sales_list"
-HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions that don't have sub-partitions.
 -- ERROR:  "sales_external2" is not a partition of partitioned table "sales_list"
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_external2) INTO sales_all;
 ERROR:  "sales_external2" is not a partition of partitioned table "sales_list"
-HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions that don't have sub-partitions.
 -- ERROR:  relation "sales_nord2" is not a partition of relation "sales_list"
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_nord2, sales_east) INTO sales_all;
 ERROR:  relation "sales_nord2" is not a partition of relation "sales_list"
-HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions that don't have sub-partitions.
 DROP TABLE sales_external2;
 DROP TABLE sales_external;
 DROP TABLE sales_list2;
@@ -633,11 +633,11 @@ CREATE TABLE t3 (i int, t text);
 -- ERROR:  relation "t1p1" is not a partition of relation "t2"
 ALTER TABLE t2 MERGE PARTITIONS (t1p1, t2pa) INTO t2p;
 ERROR:  relation "t1p1" is not a partition of relation "t2"
-HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions that don't have sub-partitions.
 -- ERROR:  "t3" is not a partition of partitioned table "t2"
 ALTER TABLE t2 MERGE PARTITIONS (t2pa, t3) INTO t2p;
 ERROR:  "t3" is not a partition of partitioned table "t2"
-HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions.
+HINT:  ALTER TABLE ... MERGE PARTITIONS can only merge partitions that don't have sub-partitions.
 DROP TABLE t3;
 DROP TABLE t2;
 DROP TABLE t1;

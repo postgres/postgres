@@ -23661,7 +23661,7 @@ SplitPartitionMoveRows(List **wqueue, Relation rel, Relation splitRel,
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_CHECK_VIOLATION),
-						errmsg("can not find partition for split partition row"),
+						errmsg("cannot find partition for split partition row"),
 						errtable(splitRel));
 		}
 
