@@ -4106,26 +4106,19 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 		case PropgraphElementLabelRelationId:
 			{
 				Relation	rel;
-				SysScanDesc scan;
-				ScanKeyData key[1];
 				HeapTuple	tuple;
 				Form_pg_propgraph_element_label pgelform;
 				ObjectAddress oa;
 
 				rel = table_open(PropgraphElementLabelRelationId, AccessShareLock);
-				ScanKeyInit(&key[0],
-							Anum_pg_propgraph_element_label_oid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				scan = systable_beginscan(rel, PropgraphElementLabelObjectIndexId, true, NULL, 1, key);
-				tuple = systable_getnext(scan);
+				tuple = get_catalog_object_by_oid(rel,
+												  Anum_pg_propgraph_element_label_oid,
+												  object->objectId);
 				if (!HeapTupleIsValid(tuple))
 				{
 					if (!missing_ok)
 						elog(ERROR, "could not find tuple for element label %u", object->objectId);
 
-					systable_endscan(scan);
 					table_close(rel, AccessShareLock);
 					break;
 				}
@@ -4136,7 +4129,6 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				ObjectAddressSet(oa, PropgraphElementRelationId, pgelform->pgelelid);
 				appendStringInfoString(&buffer, getObjectDescription(&oa, false));
 
-				systable_endscan(scan);
 				table_close(rel, AccessShareLock);
 				break;
 			}
@@ -4166,26 +4158,19 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 		case PropgraphLabelPropertyRelationId:
 			{
 				Relation	rel;
-				SysScanDesc scan;
-				ScanKeyData key[1];
 				HeapTuple	tuple;
 				Form_pg_propgraph_label_property plpform;
 				ObjectAddress oa;
 
 				rel = table_open(PropgraphLabelPropertyRelationId, AccessShareLock);
-				ScanKeyInit(&key[0],
-							Anum_pg_propgraph_label_property_oid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				scan = systable_beginscan(rel, PropgraphLabelPropertyObjectIndexId, true, NULL, 1, key);
-				tuple = systable_getnext(scan);
+				tuple = get_catalog_object_by_oid(rel,
+												  Anum_pg_propgraph_label_property_oid,
+												  object->objectId);
 				if (!HeapTupleIsValid(tuple))
 				{
 					if (!missing_ok)
 						elog(ERROR, "could not find tuple for label property %u", object->objectId);
 
-					systable_endscan(scan);
 					table_close(rel, AccessShareLock);
 					break;
 				}
@@ -4196,7 +4181,6 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				ObjectAddressSet(oa, PropgraphElementLabelRelationId, plpform->plpellabelid);
 				appendStringInfoString(&buffer, getObjectDescription(&oa, false));
 
-				systable_endscan(scan);
 				table_close(rel, AccessShareLock);
 				break;
 			}
