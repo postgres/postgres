@@ -27,21 +27,19 @@ ALTER TABLE sales_range ATTACH PARTITION sales_apr2022 FOR VALUES FROM ('2022-04
 
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
 
--- ERROR:  partition with name "sales_feb2022" is already used
+-- ERROR
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_feb2022) INTO sales_feb_mar_apr2022;
--- ERROR:  "sales_apr2022" is not a table
+-- ERROR
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_apr2022) INTO sales_feb_mar_apr2022;
--- ERROR:  can not merge partition "sales_mar2022" together with partition "sales_jan2022"
--- DETAIL:  lower bound of partition "sales_mar2022" is not equal to the upper bound of partition "sales_jan2022"
+-- ERROR
 -- (space between sections sales_jan2022 and sales_mar2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_jan2022, sales_mar2022) INTO sales_jan_mar2022;
--- ERROR:  can not merge partition "sales_jan2022" together with partition "sales_dec2021"
--- DETAIL:  lower bound of partition "sales_jan2022" is not equal to the upper bound of partition "sales_dec2021"
+-- ERROR
 -- (space between sections sales_dec2021 and sales_jan2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_dec2021, sales_jan2022, sales_feb2022) INTO sales_dec_jan_feb2022;
--- ERROR:  partition with name "sales_feb2022" is already used
+-- ERROR
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, partitions_merge_schema.sales_feb2022) INTO sales_feb_mar_apr2022;
---ERROR, sales_apr_2 already exists
+-- ERROR
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_jan2022) INTO sales_apr_2;
 
 CREATE VIEW jan2022v as SELECT * FROM sales_jan2022;
@@ -357,11 +355,11 @@ CREATE TABLE sales_others2 PARTITION OF sales_list2 DEFAULT;
 CREATE TABLE sales_external (LIKE sales_list);
 CREATE TABLE sales_external2 (vch VARCHAR(5));
 
--- ERROR:  "sales_external" is not a partition of partitioned table "sales_list"
+-- ERROR
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_external) INTO sales_all;
--- ERROR:  "sales_external2" is not a partition of partitioned table "sales_list"
+-- ERROR
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_external2) INTO sales_all;
--- ERROR:  relation "sales_nord2" is not a partition of relation "sales_list"
+-- ERROR
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_nord2, sales_east) INTO sales_all;
 
 DROP TABLE sales_external2;
@@ -438,9 +436,9 @@ CREATE TABLE t2 (i int, t text) PARTITION BY RANGE (t);
 CREATE TABLE t2pa PARTITION OF t2 FOR VALUES FROM ('A') TO ('C');
 CREATE TABLE t3 (i int, t text);
 
--- ERROR:  relation "t1p1" is not a partition of relation "t2"
+-- ERROR
 ALTER TABLE t2 MERGE PARTITIONS (t1p1, t2pa) INTO t2p;
--- ERROR:  "t3" is not a partition of partitioned table "t2"
+-- ERROR
 ALTER TABLE t2 MERGE PARTITIONS (t2pa, t3) INTO t2p;
 
 DROP TABLE t3;
@@ -481,7 +479,7 @@ ALTER TABLE t MERGE PARTITIONS (tp_0_2, tp_2_3) INTO pg_temp.tp_0_3;
 
 -- Partition should be temporary.
 EXECUTE get_partition_info('{t}');
--- ERROR:  cannot create a permanent relation as partition of temporary relation "t"
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp_0_3, tp_3_4) INTO tp_0_4;
 ROLLBACK;
 
@@ -567,19 +565,19 @@ CREATE TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
 CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
 
 SET SESSION AUTHORIZATION regress_partition_merge_bob;
--- ERROR:  must be owner of table t
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 RESET SESSION AUTHORIZATION;
 
 ALTER TABLE t OWNER TO regress_partition_merge_bob;
 SET SESSION AUTHORIZATION regress_partition_merge_bob;
--- ERROR:  must be owner of table tp_0_1
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 RESET SESSION AUTHORIZATION;
 
 ALTER TABLE tp_0_1 OWNER TO regress_partition_merge_bob;
 SET SESSION AUTHORIZATION regress_partition_merge_bob;
--- ERROR:  must be owner of table tp_1_2
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 RESET SESSION AUTHORIZATION;
 
@@ -607,7 +605,7 @@ ALTER TABLE t ATTACH PARTITION tp_1_2 FOR VALUES FROM (1) TO (2);
 -- Owner is 'regress_partition_merge_bob':
 \dt tp_1_2
 
--- ERROR:  partitions being merged have different owners
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 
 DROP TABLE t;
@@ -622,10 +620,10 @@ CREATE TABLE t (i int) PARTITION BY HASH(i);
 CREATE TABLE tp1 PARTITION OF t FOR VALUES WITH (MODULUS 2, REMAINDER 0);
 CREATE TABLE tp2 PARTITION OF t FOR VALUES WITH (MODULUS 2, REMAINDER 1);
 
--- ERROR:  partition of hash-partitioned table cannot be merged
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp1, tp2) INTO tp3;
 
--- ERROR:  list of partitions to be merged should include at least two partitions
+-- ERROR
 ALTER TABLE t MERGE PARTITIONS (tp1) INTO tp3;
 
 DROP TABLE t;
@@ -712,7 +710,7 @@ ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 
 -- Should be NOT VALID FOREIGN KEY
 \d tp_0_2
--- ERROR:  insert or update on table "t_fk" violates foreign key constraint "t_fk_i_fkey"
+-- ERROR
 ALTER TABLE t_fk VALIDATE CONSTRAINT t_fk_i_fkey;
 
 DROP TABLE t_fk;
@@ -731,7 +729,7 @@ ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 
 -- Should be NOT ENFORCED FOREIGN KEY
 \d tp_0_2
--- ERROR:  insert or update on table "t_fk" violates foreign key constraint "t_fk_i_fkey"
+-- ERROR
 ALTER TABLE t_fk ALTER CONSTRAINT t_fk_i_fkey ENFORCED;
 
 DROP TABLE t_fk;
@@ -774,7 +772,7 @@ INSERT INTO t VALUES (5), (15);
 ALTER TABLE t MERGE PARTITIONS (tp_1, tp_2) INTO tp_12;
 
 INSERT INTO t VALUES (16);
--- ERROR:  new row for relation "tp_12" violates check constraint "t_i_check"
+-- ERROR
 INSERT INTO t VALUES (0);
 -- Should be 3 rows: (5), (15), (16):
 SELECT i FROM t ORDER BY i;
