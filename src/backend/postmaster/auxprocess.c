@@ -99,6 +99,14 @@ AuxiliaryProcessMainCommon(void)
 	RESUME_INTERRUPTS();
 
 	/*
+	 * Initialize the process-local logical info WAL logging state.
+	 *
+	 * This must be called after ProcSignalInit() so that the process can
+	 * participate in procsignal-based barriers that update this state.
+	 */
+	InitializeProcessXLogLogicalInfo();
+
+	/*
 	 * Auxiliary processes don't run transactions, but they may need a
 	 * resource owner anyway to manage buffer pins acquired outside
 	 * transactions (and, perhaps, other things in future).

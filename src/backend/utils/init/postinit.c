@@ -662,9 +662,6 @@ BaseInit(void)
 	/* Initialize lock manager's local structs */
 	InitLockManagerAccess();
 
-	/* Initialize logical info WAL logging state */
-	InitializeProcessXLogLogicalInfo();
-
 	/*
 	 * Initialize replication slots after pgstat. The exit hook might need to
 	 * drop ephemeral slots, which in turn triggers stats reporting.
@@ -832,6 +829,16 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		before_shmem_exit(pgstat_before_server_shutdown, 0);
 		before_shmem_exit(ShutdownXLOG, 0);
 	}
+
+	/*
+	 * Initialize the process-local logical info WAL logging state.
+	 *
+	 * This must be called after ProcSignalInit() so that the process can
+	 * participate in procsignal-based barriers that update this state.
+	 * Furthermore, in !IsUnderPostmaster cases, this must occur after
+	 * StartupXLOG() where the shared state is first established.
+	 */
+	InitializeProcessXLogLogicalInfo();
 
 	/*
 	 * Initialize the relation cache and the system catalog caches.  Note that
