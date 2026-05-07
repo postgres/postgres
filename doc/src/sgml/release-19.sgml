@@ -756,12 +756,15 @@ Improve performance of internal row deformation (David Rowley)
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2026-03-16 [bfa3c4f10] Optimize hash index bulk-deletion with streaming read
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-12 [6c228755a] Use streaming read for VACUUM cleanup of GIN
 -->
 
 <listitem>
 <para>
-Improve performance of hash index bulk-deletion by using streaming reads (Xuneng Zhou)
+Improve performance of hash index bulk-deletion and GIN index vacuuming using streaming reads (Xuneng Zhou)
 <ulink url="&commit_baseurl;bfa3c4f10">&sect;</ulink>
+<ulink url="&commit_baseurl;6c228755a">&sect;</ulink>
 </para>
 </listitem>
 
@@ -1340,7 +1343,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
 <listitem>
 <para>
-Allow standbys to wait for LSN values to be replayed via WAIT FOR (Kartyshov Ivan, Alexander Korotkov, Xuneng Zhou)
+Allow standbys to wait for LSN values to be written, flushed, or replayed via WAIT FOR (Kartyshov Ivan, Alexander Korotkov, Xuneng Zhou)
 <ulink url="&commit_baseurl;447aae13b">&sect;</ulink>
 <ulink url="&commit_baseurl;49a181b5d">&sect;</ulink>
 </para>
@@ -3332,12 +3335,15 @@ Improve performance of bloom indexes by using streaming reads (Xuneng Zhou)
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2026-03-13 [213f0079b] pgstattuple: Optimize btree and hash index functions wit
+Author: Michael Paquier <michael@paquier.xyz>
+2026-03-14 [ae58189a4] pgstattuple: Optimize pgstattuple_approx() with streamin
 -->
 
 <listitem>
 <para>
 Improve performance of pgstattuple by using streaming reads (Xuneng Zhou)
 <ulink url="&commit_baseurl;213f0079b">&sect;</ulink>
+<ulink url="&commit_baseurl;ae58189a4">&sect;</ulink>
 </para>
 </listitem>
 
