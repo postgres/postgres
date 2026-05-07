@@ -214,7 +214,7 @@ cleanup_objects_atexit(void)
 		if (durable_rename(conf_filename, conf_filename_disabled) != 0)
 		{
 			/* durable_rename() has already logged something. */
-			pg_log_warning_hint("A manual removal of the recovery parameters may be required.");
+			pg_log_warning_hint("A manual removal of the recovery parameters might be required.");
 		}
 	}
 
@@ -897,7 +897,7 @@ setup_publisher(struct LogicalRepInfo *dbinfo)
 		if (find_publication(conn, dbinfo[i].pubname, dbinfo[i].dbname))
 		{
 			/* Reuse existing publication on publisher. */
-			pg_log_info("use existing publication \"%s\" in database \"%s\"",
+			pg_log_info("using existing publication \"%s\" in database \"%s\"",
 						dbinfo[i].pubname, dbinfo[i].dbname);
 			/* Don't remove pre-existing publication if an error occurs. */
 			dbinfo[i].made_publication = false;
@@ -1965,7 +1965,7 @@ check_and_drop_publications(PGconn *conn, struct LogicalRepInfo *dbinfo)
 				pg_log_info("dry-run: would preserve existing publication \"%s\" in database \"%s\"",
 							dbinfo->pubname, dbinfo->dbname);
 			else
-				pg_log_info("preserve existing publication \"%s\" in database \"%s\"",
+				pg_log_info("preserving existing publication \"%s\" in database \"%s\"",
 							dbinfo->pubname, dbinfo->dbname);
 		}
 	}
@@ -2599,7 +2599,7 @@ main(int argc, char **argv)
 			dbinfos.objecttypes_to_clean |= OBJECTTYPE_PUBLICATIONS;
 		else
 		{
-			pg_log_error("invalid object type \"%s\" specified for %s",
+			pg_log_error("invalid object type \"%s\" specified for option %s",
 						 cell->val, "--clean");
 			pg_log_error_hint("The valid value is: \"%s\"", "publications");
 			exit(1);
