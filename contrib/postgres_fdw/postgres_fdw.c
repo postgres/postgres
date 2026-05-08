@@ -5876,7 +5876,7 @@ fetch_attstats(PGconn *conn, int server_version_num,
 							   " range_bounds_histogram");
 	else
 		appendStringInfoString(&sql,
-							   " NULL, NULL, NULL,");
+							   " NULL, NULL, NULL");
 
 	appendStringInfoString(&sql,
 						   " FROM pg_catalog.pg_stats"
