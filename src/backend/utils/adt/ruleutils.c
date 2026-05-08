@@ -13876,23 +13876,15 @@ generate_qualified_relation_name(Oid relid)
 {
 	HeapTuple	tp;
 	Form_pg_class reltup;
-	char	   *relname;
-	char	   *nspname;
 	char	   *result;
 
 	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	reltup = (Form_pg_class) GETSTRUCT(tp);
-	relname = NameStr(reltup->relname);
 
-	nspname = get_namespace_name_or_temp(reltup->relnamespace);
-	if (!nspname)
-		elog(ERROR, "cache lookup failed for namespace %u",
-			 reltup->relnamespace);
-
-	result = quote_qualified_identifier(nspname, relname);
-
+	result = get_qualified_objname(reltup->relnamespace,
+								   NameStr(reltup->relname));
 	ReleaseSysCache(tp);
 
 	return result;

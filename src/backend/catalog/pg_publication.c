@@ -56,18 +56,25 @@ static void
 check_publication_add_relation(PublicationRelInfo *pri)
 {
 	Relation	targetrel = pri->relation;
+	const char *relname;
 	const char *errormsg;
 
 	if (pri->except)
+	{
+		relname = RelationGetQualifiedRelationName(targetrel);
 		errormsg = gettext_noop("cannot specify relation \"%s\" in the publication EXCEPT clause");
+	}
 	else
+	{
+		relname = RelationGetRelationName(targetrel);
 		errormsg = gettext_noop("cannot add relation \"%s\" to publication");
+	}
 
 	/* If in EXCEPT clause, must be root partitioned table */
 	if (pri->except && targetrel->rd_rel->relispartition)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg(errormsg, RelationGetRelationName(targetrel)),
+				 errmsg(errormsg, relname),
 				 errdetail("This operation is not supported for individual partitions.")));
 
 	/* Must be a regular or partitioned table */
@@ -75,26 +82,26 @@ check_publication_add_relation(PublicationRelInfo *pri)
 		RelationGetForm(targetrel)->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg(errormsg, RelationGetRelationName(targetrel)),
+				 errmsg(errormsg, relname),
 				 errdetail_relkind_not_supported(RelationGetForm(targetrel)->relkind)));
 
 	/* Can't be system table */
 	if (IsCatalogRelation(targetrel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg(errormsg, RelationGetRelationName(targetrel)),
+				 errmsg(errormsg, relname),
 				 errdetail("This operation is not supported for system tables.")));
 
 	/* UNLOGGED and TEMP relations cannot be part of publication. */
 	if (targetrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg(errormsg, RelationGetRelationName(targetrel)),
+				 errmsg(errormsg, relname),
 				 errdetail("This operation is not supported for temporary tables.")));
 	else if (targetrel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg(errormsg, RelationGetRelationName(targetrel)),
+				 errmsg(errormsg, relname),
 				 errdetail("This operation is not supported for unlogged tables.")));
 }
 

@@ -2135,6 +2135,16 @@ RelationIdGetRelation(Oid relationId)
 	return rd;
 }
 
+/*
+ * Returns a schema-qualified name of the relation.
+ */
+char *
+RelationGetQualifiedRelationName(Relation rel)
+{
+	return get_qualified_objname(RelationGetNamespace(rel),
+								 RelationGetRelationName(rel));
+}
+
 /* ----------------------------------------------------------------
  *				cache invalidation support routines
  * ----------------------------------------------------------------
