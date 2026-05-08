@@ -63,12 +63,11 @@ mask_available(uint32 value, uint32 mask)
 static inline void
 pg_cpuid(int leaf, unsigned int *reg)
 {
+	memset(reg, 0, 4 * sizeof(unsigned int));
 #if defined(HAVE__GET_CPUID)
 	__get_cpuid(leaf, &reg[EAX], &reg[EBX], &reg[ECX], &reg[EDX]);
 #elif defined(HAVE__CPUID)
 	__cpuid((int *) reg, leaf);
-#else
-#error cpuid instruction not available
 #endif
 }
 
