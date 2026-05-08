@@ -1219,6 +1219,26 @@ GROUP BY t1.id, t1.val;
 DROP TABLE eager_agg_t1;
 DROP TABLE eager_agg_t2;
 
+--
+-- A unique index can prove functional dependency for GROUP BY column
+-- removal only if its per-column collation agrees on equality with
+-- the GROUP BY column's collation.  An index built under a different
+-- (deterministic) collation would otherwise let remove_useless_groupby_columns
+-- drop other columns whose values still differ within a nondeterministic
+-- group.
+--
+CREATE TABLE groupby_collation_t (a text COLLATE case_insensitive NOT NULL, b text);
+INSERT INTO groupby_collation_t VALUES ('foo', 'X'), ('FOO', 'Y');
+CREATE UNIQUE INDEX ON groupby_collation_t (a COLLATE "C");
+
+-- Column b must NOT be dropped: under case_insensitive on a, 'foo' and
+-- 'FOO' would merge, but they have distinct b values.
+EXPLAIN (COSTS OFF)
+SELECT a, b FROM groupby_collation_t GROUP BY a, b ORDER BY a, b;
+SELECT a, b FROM groupby_collation_t GROUP BY a, b ORDER BY a, b;
+
+DROP TABLE groupby_collation_t;
+
 -- virtual generated columns
 CREATE TABLE t5 (
     a int,

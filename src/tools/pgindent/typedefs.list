@@ -1166,6 +1166,7 @@ GraphPattern
 GraphPropertyRef
 GraphTableParseState
 Group
+GroupByColInfo
 GroupByOrdering
 GroupClause
 GroupPath

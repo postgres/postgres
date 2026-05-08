@@ -1645,6 +1645,37 @@ explain (costs off) select y,z from t2 group by y,z;
    ->  Seq Scan on t2
 (3 rows)
 
+-- A unique index proves uniqueness only under its own opfamily.  When the
+-- GROUP BY's eqop comes from a different opfamily with looser equality,
+-- rows the index regards as distinct can collapse into one GROUP BY group,
+-- so the index is not usable for removing redundant columns.
+create type t_rec as (x numeric);
+create temp table t_opf (a t_rec not null, b text);
+create unique index on t_opf (a record_image_ops);
+-- (1.0) and (1.00) are bytewise distinct but logically equal as records;
+-- the index admits both, but GROUP BY a (default record_ops) would merge
+-- them, so b must be retained as a grouping key.
+insert into t_opf values (row(1.0)::t_rec, 'X'), (row(1.00)::t_rec, 'Y');
+explain (costs off)
+select a, b from t_opf group by a, b order by b;
+          QUERY PLAN           
+-------------------------------
+ Group
+   Group Key: b, a
+   ->  Sort
+         Sort Key: b, a
+         ->  Seq Scan on t_opf
+(5 rows)
+
+select a, b from t_opf group by a, b order by b;
+   a    | b 
+--------+---
+ (1.0)  | X
+ (1.00) | Y
+(2 rows)
+
+drop table t_opf;
+drop type t_rec;
 drop table t1 cascade;
 NOTICE:  drop cascades to table t1c
 drop table t2;

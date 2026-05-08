@@ -577,6 +577,23 @@ alter table t2 alter column z drop not null;
 create unique index t2_z_uidx on t2(z) nulls not distinct;
 explain (costs off) select y,z from t2 group by y,z;
 
+-- A unique index proves uniqueness only under its own opfamily.  When the
+-- GROUP BY's eqop comes from a different opfamily with looser equality,
+-- rows the index regards as distinct can collapse into one GROUP BY group,
+-- so the index is not usable for removing redundant columns.
+create type t_rec as (x numeric);
+create temp table t_opf (a t_rec not null, b text);
+create unique index on t_opf (a record_image_ops);
+-- (1.0) and (1.00) are bytewise distinct but logically equal as records;
+-- the index admits both, but GROUP BY a (default record_ops) would merge
+-- them, so b must be retained as a grouping key.
+insert into t_opf values (row(1.0)::t_rec, 'X'), (row(1.00)::t_rec, 'Y');
+explain (costs off)
+select a, b from t_opf group by a, b order by b;
+select a, b from t_opf group by a, b order by b;
+drop table t_opf;
+drop type t_rec;
+
 drop table t1 cascade;
 drop table t2;
 drop table t3;

@@ -82,6 +82,18 @@ typedef struct JoinTreeItem
 									 * lateral references */
 } JoinTreeItem;
 
+/*
+ * Compatibility info for one GROUP BY item, precomputed for use by
+ * remove_useless_groupby_columns() when matching unique-index columns against
+ * GROUP BY items.
+ */
+typedef struct GroupByColInfo
+{
+	AttrNumber	attno;			/* var->varattno */
+	List	   *eq_opfamilies;	/* mergejoin opfamilies of sgc->eqop */
+	Oid			coll;			/* var->varcollid */
+} GroupByColInfo;
+
 
 static bool is_partial_agg_memory_risky(PlannerInfo *root);
 static void create_agg_clause_infos(PlannerInfo *root);
@@ -421,6 +433,7 @@ remove_useless_groupby_columns(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
 	Bitmapset **groupbyattnos;
+	List	  **groupbycols;
 	Bitmapset **surplusvars;
 	bool		tryremove = false;
 	ListCell   *lc;
@@ -437,14 +450,20 @@ remove_useless_groupby_columns(PlannerInfo *root)
 	/*
 	 * Scan the GROUP BY clause to find GROUP BY items that are simple Vars.
 	 * Fill groupbyattnos[k] with a bitmapset of the column attnos of RTE k
-	 * that are GROUP BY items.
+	 * that are GROUP BY items, and groupbycols[k] with a parallel list of
+	 * GroupByColInfo records.  We need the latter so that, when checking a
+	 * unique index against this rel's GROUP BY items, we can verify that the
+	 * index's notion of equality agrees with at least one GROUP BY item per
+	 * index column.
 	 */
 	groupbyattnos = palloc0_array(Bitmapset *, list_length(parse->rtable) + 1);
+	groupbycols = palloc0_array(List *, list_length(parse->rtable) + 1);
 	foreach(lc, root->processed_groupClause)
 	{
 		SortGroupClause *sgc = lfirst_node(SortGroupClause, lc);
 		TargetEntry *tle = get_sortgroupclause_tle(sgc, parse->targetList);
 		Var		   *var = (Var *) tle->expr;
+		GroupByColInfo *info;
 
 		/*
 		 * Ignore non-Vars and Vars from other query levels.
@@ -470,6 +489,12 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		tryremove |= !bms_is_empty(groupbyattnos[relid]);
 		groupbyattnos[relid] = bms_add_member(groupbyattnos[relid],
 											  var->varattno - FirstLowInvalidHeapAttributeNumber);
+
+		info = palloc(sizeof(GroupByColInfo));
+		info->attno = var->varattno;
+		info->eq_opfamilies = get_mergejoin_opfamilies(sgc->eqop);
+		info->coll = var->varcollid;
+		groupbycols[relid] = lappend(groupbycols[relid], info);
 	}
 
 	/*
@@ -524,7 +549,7 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		foreach_node(IndexOptInfo, index, rel->indexlist)
 		{
 			Bitmapset  *ind_attnos;
-			bool		nulls_check_ok;
+			bool		index_check_ok;
 
 			/*
 			 * Skip any non-unique and deferrable indexes.  Predicate indexes
@@ -539,9 +564,14 @@ remove_useless_groupby_columns(PlannerInfo *root)
 				continue;
 
 			ind_attnos = NULL;
-			nulls_check_ok = true;
+			index_check_ok = true;
 			for (int i = 0; i < index->nkeycolumns; i++)
 			{
+				AttrNumber	indkey_attno = index->indexkeys[i];
+				Oid			indkey_opfamily = index->opfamily[i];
+				Oid			indkey_coll = index->indexcollations[i];
+				ListCell   *lc2;
+
 				/*
 				 * We must insist that the index columns are all defined NOT
 				 * NULL otherwise duplicate NULLs could exist.  However, we
@@ -551,20 +581,41 @@ remove_useless_groupby_columns(PlannerInfo *root)
 				 * despite the NULL.
 				 */
 				if (!index->nullsnotdistinct &&
-					!bms_is_member(index->indexkeys[i],
-								   rel->notnullattnums))
+					!bms_is_member(indkey_attno, rel->notnullattnums))
 				{
-					nulls_check_ok = false;
+					index_check_ok = false;
+					break;
+				}
+
+				/*
+				 * The index proves uniqueness only under its own opfamily and
+				 * collation.  Require some GROUP BY item on this column to
+				 * use a compatible eqop and collation, the same check
+				 * relation_has_unique_index_for() applies to join clauses.
+				 */
+				foreach(lc2, groupbycols[relid])
+				{
+					GroupByColInfo *info = (GroupByColInfo *) lfirst(lc2);
+
+					if (info->attno != indkey_attno)
+						continue;
+					if (list_member_oid(info->eq_opfamilies, indkey_opfamily) &&
+						collations_agree_on_equality(indkey_coll, info->coll))
+						break;
+				}
+				if (lc2 == NULL)
+				{
+					index_check_ok = false;
 					break;
 				}
 
 				ind_attnos =
 					bms_add_member(ind_attnos,
-								   index->indexkeys[i] -
+								   indkey_attno -
 								   FirstLowInvalidHeapAttributeNumber);
 			}
 
-			if (!nulls_check_ok)
+			if (!index_check_ok)
 				continue;
 
 			/*
