@@ -783,6 +783,25 @@ WHERE JSON_ARRAY(
  4
 (2 rows)
 
+-- JSON_ARRAY(subquery) RETURNING with a length-restricted output type
+-- Should fail
+SELECT JSON_ARRAY(SELECT 1 RETURNING varchar(1));
+ERROR:  value too long for type character varying(1)
+SELECT JSON_ARRAY(SELECT 1 WHERE FALSE RETURNING varchar(1));
+ERROR:  value too long for type character varying(1)
+-- Should work
+SELECT JSON_ARRAY(SELECT 1 RETURNING varchar(3));
+ json_array 
+------------
+ [1]
+(1 row)
+
+SELECT JSON_ARRAY(SELECT 1 WHERE FALSE RETURNING varchar(2));
+ json_array 
+------------
+ []
+(1 row)
+
 -- Should fail
 SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
 ERROR:  subquery must return only one column

@@ -213,6 +213,14 @@ WHERE JSON_ARRAY(
     RETURNING jsonb
 ) = '[]'::jsonb;
 
+-- JSON_ARRAY(subquery) RETURNING with a length-restricted output type
+-- Should fail
+SELECT JSON_ARRAY(SELECT 1 RETURNING varchar(1));
+SELECT JSON_ARRAY(SELECT 1 WHERE FALSE RETURNING varchar(1));
+-- Should work
+SELECT JSON_ARRAY(SELECT 1 RETURNING varchar(3));
+SELECT JSON_ARRAY(SELECT 1 WHERE FALSE RETURNING varchar(2));
+
 -- Should fail
 SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
 SELECT JSON_ARRAY(SELECT i, i FROM (VALUES (1)) foo(i));

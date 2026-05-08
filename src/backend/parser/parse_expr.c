@@ -3826,6 +3826,7 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 	CoalesceExpr *coalesce;
 	Const	   *empty_const;
 	Oid			result_type;
+	int32		result_typmod;
 	Oid			typinput;
 	Oid			typioparam;
 	int16		typlen;
@@ -3904,19 +3905,22 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 
 	/*
 	 * Wrap in COALESCE so that an empty result set produces '[]' rather than
-	 * NULL.  The empty-array constant is created in the output type so that
-	 * the COALESCE arguments have consistent types.
+	 * NULL.  The empty-array constant is created in the output type and
+	 * typmod, so that the COALESCE arguments have consistent types and any
+	 * length restriction from the RETURNING clause is enforced uniformly
+	 * across the empty and non-empty paths.
 	 */
 	result_type = exprType(exec_expr);
+	result_typmod = exprTypmod(exec_expr);
 	getTypeInputInfo(result_type, &typinput, &typioparam);
 	get_typlenbyval(result_type, &typlen, &typbyval);
 
 	empty_const = makeConst(result_type,
-							-1,
+							result_typmod,
 							exprCollation(exec_expr),
 							(int) typlen,
 							OidInputFunctionCall(typinput, "[]",
-												 typioparam, -1),
+												 typioparam, result_typmod),
 							false,
 							typbyval);
 
