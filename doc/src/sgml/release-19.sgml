@@ -3086,7 +3086,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Change FDW function prototypes to use uint* instead of bit* typedefs (Nathan Bossart)
+Change function prototypes to use uint* instead of bit* typedefs (Nathan Bossart)
 <ulink url="&commit_baseurl;bab2f27ea">&sect;</ulink>
 </para>
 </listitem>
@@ -3311,7 +3311,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow btree_gin to match partial qualifications (Tom Lane)
+Change btree_gin to support all btree-supported cross-type comparisons (Tom Lane)
 <ulink url="&commit_baseurl;e2b64fcef">&sect;</ulink>
 <ulink url="&commit_baseurl;fc896821c">&sect;</ulink>
 </para>
