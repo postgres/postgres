@@ -1487,10 +1487,22 @@ find_having_collation_conflicts(Query *parse, Index group_rtindex)
  * by collation-aware ancestors.  At each GROUP Var with a nondeterministic
  * varcollid, the clause has a conflict if any ancestor's inputcollid differs
  * from the GROUP Var's varcollid.  Most collation-aware nodes expose their
- * inputcollid through exprInputCollation(); RowCompareExpr is the exception,
- * as it carries one inputcollid per column in inputcollids[], so we descend
- * into its (largs[i], rargs[i]) pairs explicitly with the matching collation
- * pushed onto the stack.
+ * inputcollid through exprInputCollation().  Two structural exceptions need
+ * special handling:
+ *
+ * - RowCompareExpr carries one inputcollid per column in inputcollids[], so we
+ *   descend into its (largs[i], rargs[i]) pairs explicitly with the matching
+ *   collation pushed onto the stack.
+ *
+ * - A simple CASE (CaseExpr with a non-NULL arg) holds the arg outside the
+ *   WHEN's OpExpr, even though the WHEN's OpExpr is the place where the
+ *   comparison's inputcollid lives.  Parse analysis builds each WHEN as
+ *   "OpExpr(CaseTestExpr op val)" -- the CaseTestExpr is a placeholder for
+ *   the arg.  Before walking cexpr->arg we therefore push every WHEN's
+ *   inputcollid onto the ancestor stack, so a GROUP Var at the arg is
+ *   checked against the same collations the WHEN comparisons would apply.
+ *   The WHEN bodies and defresult are then walked under the unchanged stack
+ *   so their own collation contexts are picked up by the default path.
  */
 static bool
 having_collation_conflict_walker(Node *node, having_collation_ctx *ctx)
@@ -1558,6 +1570,48 @@ having_collation_conflict_walker(Node *node, having_collation_ctx *ctx)
 				return true;
 		}
 		return false;
+	}
+
+	if (IsA(node, CaseExpr) && ((CaseExpr *) node)->arg != NULL)
+	{
+		CaseExpr   *cexpr = (CaseExpr *) node;
+		int			saved_len = list_length(ctx->ancestor_collids);
+		bool		found;
+
+		/*
+		 * Push every WHEN's inputcollid before walking cexpr->arg, since each
+		 * WHEN implicitly compares the arg under that inputcollid.
+		 */
+		foreach_node(CaseWhen, cw, cexpr->args)
+		{
+			Oid			collid = exprInputCollation((Node *) cw->expr);
+
+			if (OidIsValid(collid))
+				ctx->ancestor_collids = lappend_oid(ctx->ancestor_collids,
+													collid);
+		}
+
+		found = having_collation_conflict_walker((Node *) cexpr->arg, ctx);
+
+		ctx->ancestor_collids = list_truncate(ctx->ancestor_collids,
+											  saved_len);
+
+		if (found)
+			return true;
+
+		/*
+		 * Walk the WHEN bodies and defresult under the unchanged ancestor
+		 * stack; any inputcollids inside them are picked up by the default
+		 * path.
+		 */
+		foreach_node(CaseWhen, cw, cexpr->args)
+		{
+			if (having_collation_conflict_walker((Node *) cw->expr, ctx) ||
+				having_collation_conflict_walker((Node *) cw->result, ctx))
+				return true;
+		}
+		return having_collation_conflict_walker((Node *) cexpr->defresult,
+												ctx);
 	}
 
 	this_collid = exprInputCollation(node);

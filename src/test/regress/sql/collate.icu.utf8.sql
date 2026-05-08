@@ -793,6 +793,21 @@ EXPLAIN (COSTS OFF)
 SELECT x, count(*) FROM test3ci GROUP BY x HAVING ROW(x, 1) < ROW('ABC' COLLATE case_sensitive, 1) ORDER BY 1;
 SELECT x, count(*) FROM test3ci GROUP BY x HAVING ROW(x, 1) < ROW('ABC' COLLATE case_sensitive, 1) ORDER BY 1;
 
+-- Negative: simple-CASE form with conflicting WHEN comparison collation
+EXPLAIN (COSTS OFF)
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN 'abc' COLLATE case_sensitive THEN true ELSE false END);
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN 'abc' COLLATE case_sensitive THEN true ELSE false END);
+
+-- Positive: simple-CASE form with matching collation, safe to push
+EXPLAIN (COSTS OFF)
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN 'abc' COLLATE case_insensitive THEN true ELSE false END);
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN 'abc' COLLATE case_insensitive THEN true ELSE false END);
+
+-- Negative: nested CASE with collation conflict
+EXPLAIN (COSTS OFF)
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE WHEN (CASE x WHEN 'abc' COLLATE case_sensitive THEN 1 ELSE 0 END) = 1 THEN true ELSE false END);
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE WHEN (CASE x WHEN 'abc' COLLATE case_sensitive THEN 1 ELSE 0 END) = 1 THEN true ELSE false END);
+
 -- Positive: conflicting collation but no grouping expression reference
 EXPLAIN (COSTS OFF)
 SELECT x, count(*) FROM test3ci GROUP BY x HAVING current_setting('server_version') = 'abc' COLLATE case_sensitive;
