@@ -754,6 +754,18 @@ Improve performance of internal row deformation (David Rowley)
 </listitem>
 
 <!--
+Author: Jeff Davis <jdavis@postgresql.org>
+2026-01-06 [c4ff35f10] ICU: use UTF8-optimized case conversion API
+-->
+
+<listitem>
+<para>
+Improve performance of repeated UTF-8 case-folding operations (Andreas Karlsson)
+<ulink url="&commit_baseurl;c4ff35f10">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2026-03-16 [bfa3c4f10] Optimize hash index bulk-deletion with streaming read
 Author: Michael Paquier <michael@paquier.xyz>
