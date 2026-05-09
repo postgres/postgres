@@ -7976,6 +7976,12 @@ create_partial_grouping_paths(PlannerInfo *root,
 										 extra);
 	}
 
+	/* Let extensions possibly add some more partial paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_PARTIAL_GROUP_AGG,
+									input_rel, partially_grouped_rel,
+									extra);
+
 	return partially_grouped_rel;
 }
 
