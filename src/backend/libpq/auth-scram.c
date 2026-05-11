@@ -581,7 +581,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	 * Compare the secret's Server Key with the one computed from the
 	 * user-supplied password.
 	 */
-	return memcmp(computed_key, server_key, key_length) == 0;
+	return timingsafe_bcmp(computed_key, server_key, key_length) == 0;
 }
 
 
@@ -1132,9 +1132,9 @@ verify_final_nonce(scram_state *state)
 
 	if (final_nonce_len != client_nonce_len + server_nonce_len)
 		return false;
-	if (memcmp(state->client_final_nonce, state->client_nonce, client_nonce_len) != 0)
+	if (timingsafe_bcmp(state->client_final_nonce, state->client_nonce, client_nonce_len) != 0)
 		return false;
-	if (memcmp(state->client_final_nonce + client_nonce_len, state->server_nonce, server_nonce_len) != 0)
+	if (timingsafe_bcmp(state->client_final_nonce + client_nonce_len, state->server_nonce, server_nonce_len) != 0)
 		return false;
 
 	return true;
@@ -1188,7 +1188,7 @@ verify_client_proof(scram_state *state)
 				client_StoredKey, &errstr) < 0)
 		elog(ERROR, "could not hash stored key: %s", errstr);
 
-	if (memcmp(client_StoredKey, state->StoredKey, state->key_length) != 0)
+	if (timingsafe_bcmp(client_StoredKey, state->StoredKey, state->key_length) != 0)
 		return false;
 
 	return true;

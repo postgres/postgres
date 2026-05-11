@@ -230,7 +230,8 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
 		return STATUS_ERROR;
 	}
 
-	if (strcmp(client_pass, crypt_pwd) == 0)
+	if (strlen(client_pass) == strlen(crypt_pwd) &&
+		timingsafe_bcmp(client_pass, crypt_pwd, strlen(crypt_pwd)) == 0)
 		retval = STATUS_OK;
 	else
 	{
@@ -292,7 +293,8 @@ plain_crypt_verify(const char *role, const char *shadow_pass,
 				*logdetail = errstr;
 				return STATUS_ERROR;
 			}
-			if (strcmp(crypt_client_pass, shadow_pass) == 0)
+			if (strlen(crypt_client_pass) == strlen(shadow_pass) &&
+				timingsafe_bcmp(crypt_client_pass, shadow_pass, strlen(shadow_pass)) == 0)
 				return STATUS_OK;
 			else
 			{
