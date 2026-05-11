@@ -23,6 +23,7 @@
 #include "common/unicode_norm_hashfunc.h"
 #include "common/unicode_normprops_table.h"
 #include "port/pg_bswap.h"
+#include "utils/memutils.h"
 #else
 #include "common/unicode_norm_table.h"
 #endif
@@ -420,10 +421,28 @@ unicode_normalize(UnicodeNormalizationForm form, const char32_t *input)
 
 	/*
 	 * Calculate how many characters long the decomposed version will be.
+	 *
+	 * Some characters decompose to quite a few code points, so that the
+	 * decomposed version's size could overrun MaxAllocSize, and even 32-bit
+	 * size_t, even though the input string presumably fits in that.  In
+	 * frontend we want to just return NULL in that case, so monitor the sum
+	 * and exit early once we'd need more than MaxAllocSize bytes.
 	 */
 	decomp_size = 0;
 	for (p = input; *p; p++)
+	{
 		decomp_size += get_decomposed_size(*p, compat);
+		if (unlikely(decomp_size > MaxAllocSize / sizeof(char32_t)))
+		{
+#ifndef FRONTEND
+			/* Exit loop and let palloc() throw error below */
+			break;
+#else
+			/* Just return NULL with no explicit error */
+			return NULL;
+#endif
+		}
+	}
 
 	decomp_chars = (char32_t *) ALLOC((decomp_size + 1) * sizeof(char32_t));
 	if (decomp_chars == NULL)
