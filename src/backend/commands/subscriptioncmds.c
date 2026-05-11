@@ -2775,9 +2775,14 @@ check_publications_origin_tables(WalReceiverConn *wrconn, List *publications,
 			Oid			relid = subrel_local_oids[i];
 			char	   *schemaname = get_namespace_name(get_rel_namespace(relid));
 			char	   *tablename = get_rel_name(relid);
+			char	   *schemaname_lit = quote_literal_cstr(schemaname);
+			char	   *tablename_lit = quote_literal_cstr(tablename);
 
-			appendStringInfo(&cmd, "AND NOT (N.nspname = '%s' AND C.relname = '%s')\n",
-							 schemaname, tablename);
+			appendStringInfo(&cmd, "AND NOT (N.nspname = %s AND C.relname = %s)\n",
+							 schemaname_lit, tablename_lit);
+
+			pfree(schemaname_lit);
+			pfree(tablename_lit);
 		}
 	}
 
@@ -2897,10 +2902,15 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
 		Oid			relid = subrel_local_oids[i];
 		char	   *schemaname = get_namespace_name(get_rel_namespace(relid));
 		char	   *seqname = get_rel_name(relid);
+		char	   *schemaname_lit = quote_literal_cstr(schemaname);
+		char	   *seqname_lit = quote_literal_cstr(seqname);
 
 		appendStringInfo(&cmd,
-						 "AND NOT (N.nspname = '%s' AND C.relname = '%s')\n",
-						 schemaname, seqname);
+						 "AND NOT (N.nspname = %s AND C.relname = %s)\n",
+						 schemaname_lit, seqname_lit);
+
+		pfree(schemaname_lit);
+		pfree(seqname_lit);
 	}
 
 	res = walrcv_exec(wrconn, cmd.data, 1, tableRow);
