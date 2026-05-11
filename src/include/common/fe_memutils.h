@@ -10,6 +10,18 @@
 #define FE_MEMUTILS_H
 
 /*
+ * Assumed maximum size for allocation requests.
+ *
+ * We don't enforce this, so the actual maximum is the platform's SIZE_MAX.
+ * But it's useful to have it defined in frontend builds, so that common
+ * code can check for oversized requests without having frontend-vs-backend
+ * differences.  Also, some code relies on MaxAllocSize being no more than
+ * INT_MAX/2, so rather than setting this to SIZE_MAX, make it the same as
+ * the backend's value.
+ */
+#define MaxAllocSize	((Size) 0x3fffffff) /* 1 gigabyte - 1 */
+
+/*
  * Flags for pg_malloc_extended and palloc_extended, deliberately named
  * the same as the backend flags.
  */
