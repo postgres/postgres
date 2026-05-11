@@ -131,7 +131,6 @@
 #include <unistd.h>
 
 #include "access/slru.h"
-#include "common/int.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -1039,36 +1038,6 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	Assert(ptr != NULL);
 	return ptr;
-}
-
-/*
- * Add two Size values, checking for overflow
- */
-Size
-add_size(Size s1, Size s2)
-{
-	Size		result;
-
-	if (pg_add_size_overflow(s1, s2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("requested shared memory size overflows size_t")));
-	return result;
-}
-
-/*
- * Multiply two Size values, checking for overflow
- */
-Size
-mul_size(Size s1, Size s2)
-{
-	Size		result;
-
-	if (pg_mul_size_overflow(s1, s2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("requested shared memory size overflows size_t")));
-	return result;
 }
 
 /* SQL SRF showing allocated shared memory */

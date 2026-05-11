@@ -189,9 +189,6 @@ extern HTAB *ShmemInitHash(const char *name, int64 nelems,
 extern void *ShmemAlloc(Size size);
 extern void *ShmemAllocNoError(Size size);
 
-extern Size add_size(Size s1, Size s2);
-extern Size mul_size(Size s1, Size s2);
-
 extern PGDLLIMPORT Size pg_get_shmem_pagesize(void);
 
 /* ipci.c */
