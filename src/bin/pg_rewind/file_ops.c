@@ -48,6 +48,9 @@ open_target_file(const char *path, bool trunc)
 {
 	int			mode;
 
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target file path is unsafe for open: \"%s\"", path);
+
 	if (dry_run)
 		return;
 
@@ -188,6 +191,9 @@ remove_target_file(const char *path, bool missing_ok)
 {
 	char		dstpath[MAXPGPATH];
 
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target file path is unsafe for removal: \"%s\"", path);
+
 	if (dry_run)
 		return;
 
@@ -207,6 +213,9 @@ truncate_target_file(const char *path, off_t newsize)
 {
 	char		dstpath[MAXPGPATH];
 	int			fd;
+
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target file path is unsafe for truncation: \"%s\"", path);
 
 	if (dry_run)
 		return;
@@ -230,6 +239,10 @@ create_target_dir(const char *path)
 {
 	char		dstpath[MAXPGPATH];
 
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target directory path is unsafe for directory creation: \"%s\"",
+				 path);
+
 	if (dry_run)
 		return;
 
@@ -243,6 +256,10 @@ static void
 remove_target_dir(const char *path)
 {
 	char		dstpath[MAXPGPATH];
+
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target directory path is unsafe for directory removal: \"%s\"",
+				 path);
 
 	if (dry_run)
 		return;
@@ -258,6 +275,9 @@ create_target_symlink(const char *path, const char *link)
 {
 	char		dstpath[MAXPGPATH];
 
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target symlink path is unsafe for creation: \"%s\"", path);
+
 	if (dry_run)
 		return;
 
@@ -271,6 +291,9 @@ static void
 remove_target_symlink(const char *path)
 {
 	char		dstpath[MAXPGPATH];
+
+	if (!path_is_safe_for_extraction(path))
+		pg_fatal("target symlink path is unsafe for removal: \"%s\"", path);
 
 	if (dry_run)
 		return;
