@@ -1070,6 +1070,15 @@ array_in_safe(FmgrInfo *array_in, const char *s, Oid typid, int32 typmod,
 		return (Datum) 0;
 	}
 
+	if (ARR_NDIM(DatumGetArrayTypeP(result)) != 1)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not import element \"%s\" in expression %d: must be a one-dimensional array",
+						element_name, exprnum)));
+		return (Datum) 0;
+	}
+
 	if (array_contains_nulls(DatumGetArrayTypeP(result)))
 	{
 		ereport(WARNING,
@@ -1332,10 +1341,27 @@ import_pg_statistic(Relation pgsd, JsonbContainer *cont,
 
 		/* Only set the slot if both datums have been built */
 		if (val_ok && num_ok)
+		{
+			ArrayType  *vals_arr = DatumGetArrayTypeP(stavalues);
+			ArrayType  *nums_arr = DatumGetArrayTypeP(stanumbers);
+			int			nvals = ARR_DIMS(vals_arr)[0];
+			int			nnums = ARR_DIMS(nums_arr)[0];
+
+			if (nvals != nnums)
+			{
+				ereport(WARNING,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("could not parse \"%s\": incorrect number of elements (same as \"%s\" required)",
+								"most_common_vals",
+								"most_common_freqs")));
+				goto pg_statistic_error;
+			}
+
 			statatt_set_slot(values, nulls, replaces,
 							 STATISTIC_KIND_MCV,
 							 typcache->eq_opr, typcoll,
 							 stanumbers, false, stavalues, false);
+		}
 		else
 			goto pg_statistic_error;
 	}

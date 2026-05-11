@@ -373,10 +373,27 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 
 		if (converted)
 		{
-			statatt_set_slot(values, nulls, replaces,
-							 STATISTIC_KIND_MCV,
-							 eq_opr, atttypcoll,
-							 stanumbers, false, stavalues, false);
+			ArrayType  *vals_arr = DatumGetArrayTypeP(stavalues);
+			ArrayType  *nums_arr = DatumGetArrayTypeP(stanumbers);
+			int			nvals = ARR_DIMS(vals_arr)[0];
+			int			nnums = ARR_DIMS(nums_arr)[0];
+
+			if (nvals != nnums)
+			{
+				ereport(WARNING,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("could not parse \"%s\": incorrect number of elements (same as \"%s\" required)",
+								"most_common_vals",
+								"most_common_freqs")));
+				result = false;
+			}
+			else
+			{
+				statatt_set_slot(values, nulls, replaces,
+								 STATISTIC_KIND_MCV,
+								 eq_opr, atttypcoll,
+								 stanumbers, false, stavalues, false);
+			}
 		}
 		else
 			result = false;

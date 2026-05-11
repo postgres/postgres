@@ -645,6 +645,60 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
+-- warn: mcv / mcf array length mismatch (more vals), mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.24::real,
+    'most_common_vals', '{2,1,3}'::text,
+    'most_common_freqs', '{0.3,0.25}'::real[]
+    );
+
+SELECT *
+FROM stats_import.pg_stats_stable
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
+-- warn: mcv / mcf array length mismatch (more freqs), mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.25::real,
+    'most_common_vals', '{2,1}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05}'::real[]
+    );
+
+SELECT *
+FROM stats_import.pg_stats_stable
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
+-- warn: most_common_vals is multi-dimensional, mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.26::real,
+    'most_common_vals', '{{2,1},{3,4}}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05,0.04}'::real[]
+    );
+
+SELECT *
+FROM stats_import.pg_stats_stable
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
 -- ok: mcv+mcf
 SELECT pg_catalog.pg_restore_attribute_stats(
     'schemaname', 'stats_import',
@@ -1784,6 +1838,17 @@ SELECT pg_catalog.pg_restore_extended_stats(
               { "most_common_freqs": "{0.5}" },
               { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
           ]'::jsonb);
+-- exprs most_common_vals is multi-dimensional
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_vals": "{{1,2},{3,4}}", "most_common_freqs": "{0.3,0.25,0.05,0.04}" },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
 -- exprs most_common_vals element wrong type
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
@@ -1826,6 +1891,17 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'inherited', false,
   'exprs', '[
               { "most_common_vals": "{1}", "most_common_freqs": "{BADMCF}" },
+              { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
+          ]'::jsonb);
+-- exprs most_common_vals / most_common_freqs array length mismatch
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_clone',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_clone',
+  'inherited', false,
+  'exprs', '[
+              { "most_common_vals": "{1,3}", "most_common_freqs": "{0.5}" },
               { "most_common_vals": "{2}", "most_common_freqs": "{0.5}" }
           ]'::jsonb);
 -- exprs histogram wrong type

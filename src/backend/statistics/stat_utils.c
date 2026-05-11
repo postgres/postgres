@@ -600,6 +600,15 @@ statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid ty
 		return (Datum) 0;
 	}
 
+	if (ARR_NDIM(DatumGetArrayTypeP(result)) != 1)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"%s\" must be a one-dimensional array", staname)));
+		*ok = false;
+		return (Datum) 0;
+	}
+
 	if (array_contains_nulls(DatumGetArrayTypeP(result)))
 	{
 		ereport(WARNING,
