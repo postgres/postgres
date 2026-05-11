@@ -744,6 +744,22 @@ reset role;
 drop role regress_multirange_owner;
 
 --
+-- CREATE TYPE checks for CREATE on multirange schema
+--
+create role regress_mr;
+create schema mr_sch;
+set role regress_mr;
+create type mytype as range (subtype=int4, multirange_type_name=mr_sch.mr_type);
+reset role;
+grant create on schema mr_sch to regress_mr;
+set role regress_mr;
+create type mytype as range (subtype=int4, multirange_type_name=mr_sch.mr_type);
+reset role;
+drop type mytype;
+drop schema mr_sch;
+drop role regress_mr;
+
+--
 -- Test polymorphic type system
 --
 
