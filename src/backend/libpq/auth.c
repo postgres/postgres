@@ -3322,7 +3322,7 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 		}
 		pfree(cryptvector);
 
-		if (memcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH) != 0)
+		if (timingsafe_bcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH) != 0)
 		{
 			ereport(LOG,
 					(errmsg("RADIUS response from %s has incorrect MD5 signature",
