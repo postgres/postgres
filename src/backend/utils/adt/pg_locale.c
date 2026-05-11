@@ -1837,7 +1837,7 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 		ereport(ERROR,
 				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
 
-	*buff_uchar = palloc((len_uchar + 1) * sizeof(**buff_uchar));
+	*buff_uchar = palloc_array(UChar, len_uchar + 1);
 
 	status = U_ZERO_ERROR;
 	len_uchar = ucnv_toUChars(icu_converter, *buff_uchar, len_uchar + 1,
