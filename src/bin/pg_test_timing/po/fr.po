@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-04-22 04:17+0000\n"
-"PO-Revision-Date: 2024-09-16 16:36+0200\n"
+"POT-Creation-Date: 2026-04-24 03:38+0000\n"
+"PO-Revision-Date: 2026-04-24 17:50+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.9\n"
 
 #: pg_test_timing.c:59
 #, c-format
@@ -57,8 +57,8 @@ msgstr "Détection d'une horloge partant à rebours.\n"
 
 #: pg_test_timing.c:152
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "Décalage de temps : %d ms\n"
+msgid "Time warp: %d us\n"
+msgstr "Décalage de temps : %d us\n"
 
 #: pg_test_timing.c:175
 #, c-format

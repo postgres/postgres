@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-21 05:20+0200\n"
+"POT-Creation-Date: 2026-05-10 08:02+0300\n"
 "PO-Revision-Date: 2026-02-21 05:29+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -38,9 +38,9 @@ msgstr "не удалось открыть файл \"%s\" для чтения: 
 #: access/transam/timeline.c:143 access/transam/timeline.c:362
 #: access/transam/twophase.c:1329 access/transam/xlog.c:3594
 #: access/transam/xlog.c:4843 access/transam/xlog.c:11771
-#: access/transam/xlog.c:11784 access/transam/xlog.c:12239
-#: access/transam/xlog.c:12319 access/transam/xlog.c:12356
-#: access/transam/xlog.c:12416 access/transam/xlogfuncs.c:703
+#: access/transam/xlog.c:11784 access/transam/xlog.c:12255
+#: access/transam/xlog.c:12335 access/transam/xlog.c:12372
+#: access/transam/xlog.c:12432 access/transam/xlogfuncs.c:703
 #: access/transam/xlogfuncs.c:722 commands/extension.c:3622 libpq/hba.c:534
 #: replication/basebackup.c:2016 replication/logical/origin.c:729
 #: replication/logical/origin.c:765 replication/logical/reorderbuffer.c:5090
@@ -119,7 +119,7 @@ msgstr ""
 #: replication/logical/reorderbuffer.c:5070
 #: replication/logical/snapbuild.c:1783 replication/logical/snapbuild.c:1890
 #: replication/slot.c:1766 replication/walsender.c:532
-#: replication/walsender.c:2581 storage/file/copydir.c:161
+#: replication/walsender.c:2590 storage/file/copydir.c:161
 #: storage/file/fd.c:710 storage/file/fd.c:3297 storage/file/fd.c:3515
 #: storage/file/fd.c:3602 storage/smgr/md.c:506 utils/cache/relmapper.c:724
 #: utils/cache/relmapper.c:842 utils/error/elog.c:1958
@@ -170,8 +170,8 @@ msgstr "не удалось синхронизировать с ФС файл \"
 #: storage/ipc/procarray.c:2293 storage/ipc/procarray.c:2300
 #: storage/ipc/procarray.c:2805 storage/ipc/procarray.c:3482
 #: tcop/postgres.c:3620 utils/adt/cryptohashfuncs.c:46
-#: utils/adt/cryptohashfuncs.c:66 utils/adt/formatting.c:1699
-#: utils/adt/formatting.c:1823 utils/adt/formatting.c:1948
+#: utils/adt/cryptohashfuncs.c:66 utils/adt/formatting.c:1701
+#: utils/adt/formatting.c:1825 utils/adt/formatting.c:1950
 #: utils/adt/pg_locale.c:451 utils/adt/pg_locale.c:615 utils/adt/regexp.c:223
 #: utils/fmgr/dfmgr.c:229 utils/hash/dynahash.c:513 utils/hash/dynahash.c:613
 #: utils/hash/dynahash.c:1116 utils/mb/mbutils.c:410 utils/mb/mbutils.c:438
@@ -634,7 +634,7 @@ msgid "could not open parent table of index \"%s\""
 msgstr "не удалось открыть родительскую таблицу индекса \"%s\""
 
 #: access/brin/brin.c:1114 access/brin/brin.c:1213 access/gin/ginfast.c:1087
-#: parser/parse_utilcmd.c:2291
+#: parser/parse_utilcmd.c:2295
 #, c-format
 msgid "index \"%s\" is not valid"
 msgstr "индекс \"%s\" - нерабочий"
@@ -1059,11 +1059,11 @@ msgstr ""
 "не удалось определить, какое правило сортировки использовать для хеширования "
 "строк"
 
-#: access/hash/hashfunc.c:281 access/hash/hashfunc.c:338 catalog/heap.c:714
-#: catalog/heap.c:720 commands/createas.c:206 commands/createas.c:515
+#: access/hash/hashfunc.c:281 access/hash/hashfunc.c:338 catalog/heap.c:728
+#: catalog/heap.c:734 commands/createas.c:206 commands/createas.c:515
 #: commands/indexcmds.c:1971 commands/tablecmds.c:17208 commands/view.c:86
-#: regex/regc_pg_locale.c:263 utils/adt/formatting.c:1666
-#: utils/adt/formatting.c:1790 utils/adt/formatting.c:1915 utils/adt/like.c:194
+#: regex/regc_pg_locale.c:263 utils/adt/formatting.c:1668
+#: utils/adt/formatting.c:1792 utils/adt/formatting.c:1917 utils/adt/like.c:194
 #: utils/adt/like_support.c:1004 utils/adt/varchar.c:733
 #: utils/adt/varchar.c:994 utils/adt/varchar.c:1055 utils/adt/varlena.c:1563
 #, c-format
@@ -1609,7 +1609,7 @@ msgid "This may be because of a non-immutable index expression."
 msgstr "Возможно, это вызвано переменной природой индексного выражения."
 
 #: access/nbtree/nbtpage.c:159 access/nbtree/nbtpage.c:608
-#: parser/parse_utilcmd.c:2337
+#: parser/parse_utilcmd.c:2341
 #, c-format
 msgid "index \"%s\" is not a btree"
 msgstr "индекс \"%s\" не является b-деревом"
@@ -1766,7 +1766,7 @@ msgstr ""
 msgid "Make sure the configuration parameter \"%s\" is set."
 msgstr "Убедитесь, что в конфигурации установлен параметр \"%s\"."
 
-#: access/transam/multixact.c:1106
+#: access/transam/multixact.c:1155
 #, c-format
 msgid ""
 "database is not accepting commands that generate new MultiXactIds to avoid "
@@ -1775,8 +1775,8 @@ msgstr ""
 "база данных не принимает команды, создающие новые MultiXactId, во избежание "
 "потери данных из-за зацикливания в базе данных \"%s\""
 
-#: access/transam/multixact.c:1108 access/transam/multixact.c:1115
-#: access/transam/multixact.c:1139 access/transam/multixact.c:1148
+#: access/transam/multixact.c:1157 access/transam/multixact.c:1164
+#: access/transam/multixact.c:1188 access/transam/multixact.c:1197
 #, c-format
 msgid ""
 "Execute a database-wide VACUUM in that database.\n"
@@ -1787,7 +1787,7 @@ msgstr ""
 "Возможно, вам также придётся зафиксировать или откатить старые "
 "подготовленные транзакции и удалить неиспользуемые слоты репликации."
 
-#: access/transam/multixact.c:1113
+#: access/transam/multixact.c:1162
 #, c-format
 msgid ""
 "database is not accepting commands that generate new MultiXactIds to avoid "
@@ -1796,7 +1796,7 @@ msgstr ""
 "база данных не принимает команды, создающие новые MultiXactId, во избежание "
 "потери данных из-за зацикливания в базе данных с OID %u"
 
-#: access/transam/multixact.c:1134 access/transam/multixact.c:2421
+#: access/transam/multixact.c:1183 access/transam/multixact.c:2470
 #, c-format
 msgid "database \"%s\" must be vacuumed before %u more MultiXactId is used"
 msgid_plural ""
@@ -1811,7 +1811,7 @@ msgstr[2] ""
 "база данных \"%s\" должна быть очищена, прежде чем будут использованы "
 "оставшиеся MultiXactId (%u)"
 
-#: access/transam/multixact.c:1143 access/transam/multixact.c:2430
+#: access/transam/multixact.c:1192 access/transam/multixact.c:2479
 #, c-format
 msgid ""
 "database with OID %u must be vacuumed before %u more MultiXactId is used"
@@ -1827,12 +1827,12 @@ msgstr[2] ""
 "база данных с OID %u должна быть очищена, прежде чем будут использованы "
 "оставшиеся MultiXactId (%u)"
 
-#: access/transam/multixact.c:1207
+#: access/transam/multixact.c:1256
 #, c-format
 msgid "multixact \"members\" limit exceeded"
 msgstr "слишком много членов мультитранзакции"
 
-#: access/transam/multixact.c:1208
+#: access/transam/multixact.c:1257
 #, c-format
 msgid ""
 "This command would create a multixact with %u members, but the remaining "
@@ -1850,7 +1850,7 @@ msgstr[2] ""
 "Мультитранзакция, создаваемая этой командой, должна включать членов: %u, но "
 "оставшегося места хватает только для %u."
 
-#: access/transam/multixact.c:1213
+#: access/transam/multixact.c:1262
 #, c-format
 msgid ""
 "Execute a database-wide VACUUM in database with OID %u with reduced "
@@ -1860,7 +1860,7 @@ msgstr ""
 "Выполните очистку (VACUUM) всей базы данных с OID %u, уменьшив значения "
 "vacuum_multixact_freeze_min_age и vacuum_multixact_freeze_table_age."
 
-#: access/transam/multixact.c:1244
+#: access/transam/multixact.c:1293
 #, c-format
 msgid ""
 "database with OID %u must be vacuumed before %d more multixact member is used"
@@ -1877,7 +1877,7 @@ msgstr[2] ""
 "база данных с OID %u должна быть очищена, пока не использованы оставшиеся "
 "члены мультитранзакций (%d)"
 
-#: access/transam/multixact.c:1249
+#: access/transam/multixact.c:1298
 #, c-format
 msgid ""
 "Execute a database-wide VACUUM in that database with reduced "
@@ -1887,22 +1887,22 @@ msgstr ""
 "Выполните очистку (VACUUM) всей этой базы данных, уменьшив значения "
 "vacuum_multixact_freeze_min_age и vacuum_multixact_freeze_table_age."
 
-#: access/transam/multixact.c:1388
+#: access/transam/multixact.c:1437
 #, c-format
 msgid "MultiXactId %u does no longer exist -- apparent wraparound"
 msgstr "MultiXactId %u прекратил существование: видимо, произошло зацикливание"
 
-#: access/transam/multixact.c:1394
+#: access/transam/multixact.c:1443
 #, c-format
 msgid "MultiXactId %u has not been created yet -- apparent wraparound"
 msgstr "MultiXactId %u ещё не был создан: видимо, произошло зацикливание"
 
-#: access/transam/multixact.c:1469
+#: access/transam/multixact.c:1518
 #, c-format
 msgid "MultiXact %u has invalid next offset"
 msgstr "для мультитранзакции %u получено некорректное следующее смещение"
 
-#: access/transam/multixact.c:2426 access/transam/multixact.c:2435
+#: access/transam/multixact.c:2475 access/transam/multixact.c:2484
 #: access/transam/varsup.c:151 access/transam/varsup.c:158
 #: access/transam/varsup.c:466 access/transam/varsup.c:473
 #, c-format
@@ -1916,7 +1916,7 @@ msgstr ""
 "Возможно, вам также придётся зафиксировать или откатить старые "
 "подготовленные транзакции и удалить неиспользуемые слоты репликации."
 
-#: access/transam/multixact.c:2709
+#: access/transam/multixact.c:2758
 #, c-format
 msgid ""
 "MultiXact member wraparound protections are disabled because oldest "
@@ -1925,12 +1925,12 @@ msgstr ""
 "Защита от зацикливания членов мультитранзакций отключена, так как старейшая "
 "отмеченная мультитранзакция %u не найдена на диске"
 
-#: access/transam/multixact.c:2731
+#: access/transam/multixact.c:2780
 #, c-format
 msgid "MultiXact member wraparound protections are now enabled"
 msgstr "Защита от зацикливания мультитранзакций сейчас включена"
 
-#: access/transam/multixact.c:3125
+#: access/transam/multixact.c:3174
 #, c-format
 msgid ""
 "oldest MultiXact %u not found, earliest MultiXact %u, skipping truncation"
@@ -1938,7 +1938,7 @@ msgstr ""
 "старейшая мультитранзакция %u не найдена, новейшая мультитранзакция: %u, "
 "усечение пропускается"
 
-#: access/transam/multixact.c:3143
+#: access/transam/multixact.c:3192
 #, c-format
 msgid ""
 "cannot truncate up to MultiXact %u because it does not exist on disk, "
@@ -1947,7 +1947,7 @@ msgstr ""
 "выполнить усечение до мультитранзакции %u нельзя ввиду её отсутствия на "
 "диске, усечение пропускается"
 
-#: access/transam/multixact.c:3160
+#: access/transam/multixact.c:3209
 #, c-format
 msgid ""
 "cannot truncate up to MultiXact %u because it has invalid offset, skipping "
@@ -1956,7 +1956,7 @@ msgstr ""
 "выполнить усечение до мультитранзакции %u нельзя из-за некорректного "
 "смещения, усечение пропускается"
 
-#: access/transam/multixact.c:3489
+#: access/transam/multixact.c:3540
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "неверный MultiXactId: %u"
@@ -2471,7 +2471,7 @@ msgid "could not write to log file %s at offset %u, length %zu: %m"
 msgstr "не удалось записать в файл журнала %s (смещение: %u, длина: %zu): %m"
 
 #: access/transam/xlog.c:4039 access/transam/xlogutils.c:798
-#: replication/walsender.c:2575
+#: replication/walsender.c:2584
 #, c-format
 msgid "requested WAL segment %s has already been removed"
 msgstr "запрошенный сегмент WAL %s уже удалён"
@@ -3050,7 +3050,7 @@ msgstr "не удалось создать символическую ссылк
 msgid "ignoring file \"%s\" because no file \"%s\" exists"
 msgstr "файл \"%s\" игнорируется ввиду отсутствия файла \"%s\""
 
-#: access/transam/xlog.c:6847 access/transam/xlog.c:12495
+#: access/transam/xlog.c:6847 access/transam/xlog.c:12511
 #, c-format
 msgid "File \"%s\" was renamed to \"%s\"."
 msgstr "Файл \"%s\" был переименован в \"%s\"."
@@ -3494,9 +3494,9 @@ msgid "a backup is not in progress"
 msgstr "резервное копирование не выполняется"
 
 #: access/transam/xlog.c:11849 access/transam/xlog.c:11862
-#: access/transam/xlog.c:12253 access/transam/xlog.c:12259
-#: access/transam/xlog.c:12307 access/transam/xlog.c:12387
-#: access/transam/xlog.c:12411 access/transam/xlogfuncs.c:733
+#: access/transam/xlog.c:12269 access/transam/xlog.c:12275
+#: access/transam/xlog.c:12323 access/transam/xlog.c:12403
+#: access/transam/xlog.c:12427 access/transam/xlogfuncs.c:733
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "неверные данные в файле \"%s\""
@@ -3570,41 +3570,41 @@ msgstr ""
 "прерывание резервного копирования из-за завершения обслуживающего процесса "
 "до вызова pg_stop_backup"
 
-#: access/transam/xlog.c:12308
+#: access/transam/xlog.c:12324
 #, c-format
 msgid "Timeline ID parsed is %u, but expected %u."
 msgstr "Получен идентификатор линии времени %u, но ожидался %u."
 
 #. translator: %s is a WAL record description
-#: access/transam/xlog.c:12436
+#: access/transam/xlog.c:12452
 #, c-format
 msgid "WAL redo at %X/%X for %s"
 msgstr "запись REDO в WAL в позиции %X/%X для %s"
 
-#: access/transam/xlog.c:12484
+#: access/transam/xlog.c:12500
 #, c-format
 msgid "online backup mode was not canceled"
 msgstr "режим копирования \"на ходу\" не был отменён"
 
-#: access/transam/xlog.c:12485
+#: access/transam/xlog.c:12501
 #, c-format
 msgid "File \"%s\" could not be renamed to \"%s\": %m."
 msgstr "Не удалось переименовать файл \"%s\" в \"%s\": %m."
 
-#: access/transam/xlog.c:12494 access/transam/xlog.c:12506
-#: access/transam/xlog.c:12516
+#: access/transam/xlog.c:12510 access/transam/xlog.c:12522
+#: access/transam/xlog.c:12532
 #, c-format
 msgid "online backup mode canceled"
 msgstr "режим копирования \"на ходу\" отменён"
 
-#: access/transam/xlog.c:12507
+#: access/transam/xlog.c:12523
 #, c-format
 msgid ""
 "Files \"%s\" and \"%s\" were renamed to \"%s\" and \"%s\", respectively."
 msgstr ""
 "Файлы \"%s\" и \"%s\" были переименованы в \"%s\" и \"%s\", соответственно."
 
-#: access/transam/xlog.c:12517
+#: access/transam/xlog.c:12533
 #, c-format
 msgid ""
 "File \"%s\" was renamed to \"%s\", but file \"%s\" could not be renamed to "
@@ -3613,34 +3613,34 @@ msgstr ""
 "Файл \"%s\" был переименован в \"%s\", но переименовать \"%s\" в \"%s\" не "
 "удалось: %m."
 
-#: access/transam/xlog.c:12650 access/transam/xlogutils.c:967
+#: access/transam/xlog.c:12666 access/transam/xlogutils.c:967
 #, c-format
 msgid "could not read from log segment %s, offset %u: %m"
 msgstr "не удалось прочитать сегмент журнала %s, смещение %u: %m"
 
-#: access/transam/xlog.c:12656 access/transam/xlogutils.c:974
+#: access/transam/xlog.c:12672 access/transam/xlogutils.c:974
 #, c-format
 msgid "could not read from log segment %s, offset %u: read %d of %zu"
 msgstr ""
 "не удалось прочитать из сегмента журнала %s по смещению %u (прочитано байт: "
 "%d из %zu)"
 
-#: access/transam/xlog.c:13233
+#: access/transam/xlog.c:13249
 #, c-format
 msgid "WAL receiver process shutdown requested"
 msgstr "получен запрос на выключение процесса приёмника WAL"
 
-#: access/transam/xlog.c:13345
+#: access/transam/xlog.c:13361
 #, c-format
 msgid "received promote request"
 msgstr "получен запрос повышения статуса"
 
-#: access/transam/xlog.c:13358
+#: access/transam/xlog.c:13374
 #, c-format
 msgid "promote trigger file found: %s"
 msgstr "найден файл триггера повышения: %s"
 
-#: access/transam/xlog.c:13366
+#: access/transam/xlog.c:13382
 #, c-format
 msgid "could not stat promote trigger file \"%s\": %m"
 msgstr "не удалось получить информацию о файле триггера повышения \"%s\": %m"
@@ -3701,12 +3701,12 @@ msgid "Did you mean to use pg_stop_backup('f')?"
 msgstr "Вероятно, подразумевалось pg_stop_backup('f')?"
 
 #: access/transam/xlogfuncs.c:185 commands/event_trigger.c:1311
-#: commands/event_trigger.c:1869 commands/extension.c:2096
+#: commands/event_trigger.c:1872 commands/extension.c:2096
 #: commands/extension.c:2204 commands/extension.c:2489 commands/prepare.c:713
 #: executor/execExpr.c:2518 executor/execSRF.c:738 executor/functions.c:1074
 #: foreign/foreign.c:530 libpq/hba.c:2726 replication/logical/launcher.c:937
 #: replication/logical/logicalfuncs.c:157 replication/logical/origin.c:1494
-#: replication/slotfuncs.c:255 replication/walsender.c:3346
+#: replication/slotfuncs.c:255 replication/walsender.c:3355
 #: storage/ipc/shmem.c:554 utils/adt/datetime.c:4812 utils/adt/genfile.c:507
 #: utils/adt/genfile.c:590 utils/adt/jsonfuncs.c:1944
 #: utils/adt/jsonfuncs.c:2056 utils/adt/jsonfuncs.c:2244
@@ -3721,11 +3721,11 @@ msgstr ""
 "функция, возвращающая множество, вызвана в контексте, где ему нет места"
 
 #: access/transam/xlogfuncs.c:189 commands/event_trigger.c:1315
-#: commands/event_trigger.c:1873 commands/extension.c:2100
+#: commands/event_trigger.c:1876 commands/extension.c:2100
 #: commands/extension.c:2208 commands/extension.c:2493 commands/prepare.c:717
 #: foreign/foreign.c:535 libpq/hba.c:2730 replication/logical/launcher.c:941
 #: replication/logical/logicalfuncs.c:161 replication/logical/origin.c:1498
-#: replication/slotfuncs.c:259 replication/walsender.c:3350
+#: replication/slotfuncs.c:259 replication/walsender.c:3359
 #: storage/ipc/shmem.c:558 utils/adt/datetime.c:4816 utils/adt/genfile.c:511
 #: utils/adt/genfile.c:594 utils/adt/mcxtfuncs.c:136 utils/adt/misc.c:223
 #: utils/adt/pgstatfuncs.c:481 utils/adt/pgstatfuncs.c:591
@@ -4128,10 +4128,10 @@ msgid "large object %u does not exist"
 msgstr "большой объект %u не существует"
 
 #: catalog/aclchk.c:927 catalog/aclchk.c:936 commands/collationcmds.c:119
-#: commands/copy.c:402 commands/copy.c:422 commands/copy.c:432
-#: commands/copy.c:441 commands/copy.c:450 commands/copy.c:460
-#: commands/copy.c:469 commands/copy.c:478 commands/copy.c:496
-#: commands/copy.c:512 commands/copy.c:532 commands/copy.c:549
+#: commands/copy.c:403 commands/copy.c:423 commands/copy.c:433
+#: commands/copy.c:442 commands/copy.c:451 commands/copy.c:461
+#: commands/copy.c:470 commands/copy.c:479 commands/copy.c:497
+#: commands/copy.c:513 commands/copy.c:533 commands/copy.c:550
 #: commands/dbcommands.c:158 commands/dbcommands.c:167
 #: commands/dbcommands.c:176 commands/dbcommands.c:185
 #: commands/dbcommands.c:194 commands/dbcommands.c:203
@@ -4185,7 +4185,7 @@ msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "предложение IN SCHEMA нельзя использовать в GRANT/REVOKE ON SCHEMAS"
 
 #: catalog/aclchk.c:1545 catalog/catalog.c:587 catalog/objectaddress.c:1522
-#: commands/analyze.c:390 commands/copy.c:781 commands/sequence.c:1709
+#: commands/analyze.c:390 commands/copy.c:782 commands/sequence.c:1709
 #: commands/tablecmds.c:7180 commands/tablecmds.c:7336
 #: commands/tablecmds.c:7386 commands/tablecmds.c:7460
 #: commands/tablecmds.c:7530 commands/tablecmds.c:7642
@@ -4197,8 +4197,8 @@ msgstr "предложение IN SCHEMA нельзя использовать �
 #: commands/tablecmds.c:12260 commands/tablecmds.c:13446
 #: commands/tablecmds.c:15993 commands/trigger.c:942 parser/analyze.c:2471
 #: parser/parse_relation.c:714 parser/parse_target.c:1077
-#: parser/parse_type.c:144 parser/parse_utilcmd.c:3425
-#: parser/parse_utilcmd.c:3461 parser/parse_utilcmd.c:3503 utils/adt/acl.c:2862
+#: parser/parse_type.c:144 parser/parse_utilcmd.c:3429
+#: parser/parse_utilcmd.c:3465 parser/parse_utilcmd.c:3507 utils/adt/acl.c:2862
 #: utils/adt/ruleutils.c:2732
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
@@ -4753,7 +4753,7 @@ msgstr "выполнять pg_nextoid() может только суперпол
 msgid "pg_nextoid() can only be used on system catalogs"
 msgstr "pg_nextoid() можно использовать только для системных каталогов"
 
-#: catalog/catalog.c:579 parser/parse_utilcmd.c:2284
+#: catalog/catalog.c:579 parser/parse_utilcmd.c:2288
 #, c-format
 msgid "index \"%s\" does not belong to table \"%s\""
 msgstr "индекс \"%s\" не принадлежит таблице \"%s\""
@@ -4881,23 +4881,23 @@ msgid "column name \"%s\" specified more than once"
 msgstr "имя столбца \"%s\" указано неоднократно"
 
 #. translator: first %s is an integer not a name
-#: catalog/heap.c:621
+#: catalog/heap.c:625
 #, c-format
 msgid "partition key column %s has pseudo-type %s"
 msgstr "столбец \"%s\" ключа разбиения имеет псевдотип %s"
 
-#: catalog/heap.c:626
+#: catalog/heap.c:630
 #, c-format
 msgid "column \"%s\" has pseudo-type %s"
 msgstr "столбец \"%s\" имеет псевдотип %s"
 
-#: catalog/heap.c:657
+#: catalog/heap.c:661
 #, c-format
 msgid "composite type %s cannot be made a member of itself"
 msgstr "составной тип %s не может содержать себя же"
 
 #. translator: first %s is an integer not a name
-#: catalog/heap.c:712
+#: catalog/heap.c:726
 #, c-format
 msgid ""
 "no collation was derived for partition key column %s with collatable type %s"
@@ -4905,20 +4905,20 @@ msgstr ""
 "для входящего в ключ разбиения столбца \"%s\" с сортируемым типом %s не "
 "удалось получить правило сортировки"
 
-#: catalog/heap.c:718 commands/createas.c:203 commands/createas.c:512
+#: catalog/heap.c:732 commands/createas.c:203 commands/createas.c:512
 #, c-format
 msgid "no collation was derived for column \"%s\" with collatable type %s"
 msgstr ""
 "для столбца \"%s\" с сортируемым типом %s не удалось получить правило "
 "сортировки"
 
-#: catalog/heap.c:1203 catalog/index.c:872 commands/createas.c:408
+#: catalog/heap.c:1217 catalog/index.c:872 commands/createas.c:408
 #: commands/tablecmds.c:3872
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "отношение \"%s\" уже существует"
 
-#: catalog/heap.c:1219 catalog/pg_type.c:436 catalog/pg_type.c:784
+#: catalog/heap.c:1233 catalog/pg_type.c:436 catalog/pg_type.c:784
 #: catalog/pg_type.c:931 commands/typecmds.c:249 commands/typecmds.c:261
 #: commands/typecmds.c:757 commands/typecmds.c:1172 commands/typecmds.c:1398
 #: commands/typecmds.c:1590 commands/typecmds.c:2562
@@ -4926,7 +4926,7 @@ msgstr "отношение \"%s\" уже существует"
 msgid "type \"%s\" already exists"
 msgstr "тип \"%s\" уже существует"
 
-#: catalog/heap.c:1220
+#: catalog/heap.c:1234
 #, c-format
 msgid ""
 "A relation has an associated type of the same name, so you must use a name "
@@ -4935,43 +4935,43 @@ msgstr ""
 "С отношением уже связан тип с таким же именем; выберите имя, не "
 "конфликтующее с существующими типами."
 
-#: catalog/heap.c:1249
+#: catalog/heap.c:1263
 #, c-format
 msgid "pg_class heap OID value not set when in binary upgrade mode"
 msgstr "значение OID кучи в pg_class не задано в режиме двоичного обновления"
 
-#: catalog/heap.c:2529
+#: catalog/heap.c:2543
 #, c-format
 msgid "cannot add NO INHERIT constraint to partitioned table \"%s\""
 msgstr ""
 "добавить ограничение NO INHERIT к секционированной таблице \"%s\" нельзя"
 
-#: catalog/heap.c:2797
+#: catalog/heap.c:2811
 #, c-format
 msgid "check constraint \"%s\" already exists"
 msgstr "ограничение-проверка \"%s\" уже существует"
 
-#: catalog/heap.c:2967 catalog/index.c:886 catalog/pg_constraint.c:670
+#: catalog/heap.c:2981 catalog/index.c:886 catalog/pg_constraint.c:670
 #: commands/tablecmds.c:8802
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "ограничение \"%s\" для отношения \"%s\" уже существует"
 
-#: catalog/heap.c:2974
+#: catalog/heap.c:2988
 #, c-format
 msgid ""
 "constraint \"%s\" conflicts with non-inherited constraint on relation \"%s\""
 msgstr ""
 "ограничение \"%s\" конфликтует с ненаследуемым ограничением таблицы \"%s\""
 
-#: catalog/heap.c:2985
+#: catalog/heap.c:2999
 #, c-format
 msgid ""
 "constraint \"%s\" conflicts with inherited constraint on relation \"%s\""
 msgstr ""
 "ограничение \"%s\" конфликтует с наследуемым ограничением таблицы \"%s\""
 
-#: catalog/heap.c:2995
+#: catalog/heap.c:3009
 #, c-format
 msgid ""
 "constraint \"%s\" conflicts with NOT VALID constraint on relation \"%s\""
@@ -4979,64 +4979,64 @@ msgstr ""
 "ограничение \"%s\" конфликтует с непроверенным (NOT VALID) ограничением "
 "таблицы \"%s\""
 
-#: catalog/heap.c:3000
+#: catalog/heap.c:3014
 #, c-format
 msgid "merging constraint \"%s\" with inherited definition"
 msgstr "слияние ограничения \"%s\" с унаследованным определением"
 
-#: catalog/heap.c:3105
+#: catalog/heap.c:3119
 #, c-format
 msgid "cannot use generated column \"%s\" in column generation expression"
 msgstr ""
 "использовать генерируемый столбец \"%s\" в выражении генерируемого столбца "
 "нельзя"
 
-#: catalog/heap.c:3107
+#: catalog/heap.c:3121
 #, c-format
 msgid "A generated column cannot reference another generated column."
 msgstr ""
 "Генерируемый столбец не может ссылаться на другой генерируемый столбец."
 
-#: catalog/heap.c:3113
+#: catalog/heap.c:3127
 #, c-format
 msgid "cannot use whole-row variable in column generation expression"
 msgstr ""
 "в выражении генерируемого столбца нельзя использовать переменные «вся строка»"
 
-#: catalog/heap.c:3114
+#: catalog/heap.c:3128
 #, c-format
 msgid "This would cause the generated column to depend on its own value."
 msgstr ""
 "Это сделало бы генерируемый столбец зависимым от собственного значения."
 
-#: catalog/heap.c:3169
+#: catalog/heap.c:3183
 #, c-format
 msgid "generation expression is not immutable"
 msgstr "генерирующее выражение не является постоянным"
 
-#: catalog/heap.c:3197 rewrite/rewriteHandler.c:1288
+#: catalog/heap.c:3211 rewrite/rewriteHandler.c:1322
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "столбец \"%s\" имеет тип %s, но тип выражения по умолчанию %s"
 
-#: catalog/heap.c:3202 commands/prepare.c:368 parser/analyze.c:2695
+#: catalog/heap.c:3216 commands/prepare.c:368 parser/analyze.c:2695
 #: parser/parse_target.c:594 parser/parse_target.c:891
-#: parser/parse_target.c:901 rewrite/rewriteHandler.c:1293
+#: parser/parse_target.c:901 rewrite/rewriteHandler.c:1327
 #, c-format
 msgid "You will need to rewrite or cast the expression."
 msgstr "Перепишите выражение или преобразуйте его тип."
 
-#: catalog/heap.c:3249
+#: catalog/heap.c:3263
 #, c-format
 msgid "only table \"%s\" can be referenced in check constraint"
 msgstr "в ограничении-проверке можно ссылаться только на таблицу \"%s\""
 
-#: catalog/heap.c:3547
+#: catalog/heap.c:3561
 #, c-format
 msgid "unsupported ON COMMIT and foreign key combination"
 msgstr "неподдерживаемое сочетание внешнего ключа с ON COMMIT"
 
-#: catalog/heap.c:3548
+#: catalog/heap.c:3562
 #, c-format
 msgid ""
 "Table \"%s\" references \"%s\", but they do not have the same ON COMMIT "
@@ -5044,23 +5044,23 @@ msgid ""
 msgstr ""
 "Таблица \"%s\" ссылается на \"%s\", и для них задан разный режим ON COMMIT."
 
-#: catalog/heap.c:3553
+#: catalog/heap.c:3567
 #, c-format
 msgid "cannot truncate a table referenced in a foreign key constraint"
 msgstr "опустошить таблицу, на которую ссылается внешний ключ, нельзя"
 
-#: catalog/heap.c:3554
+#: catalog/heap.c:3568
 #, c-format
 msgid "Table \"%s\" references \"%s\"."
 msgstr "Таблица \"%s\" ссылается на \"%s\"."
 
-#: catalog/heap.c:3556
+#: catalog/heap.c:3570
 #, c-format
 msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr ""
 "Опустошите таблицу \"%s\" параллельно или используйте TRUNCATE ... CASCADE."
 
-#: catalog/index.c:223 parser/parse_utilcmd.c:2190
+#: catalog/index.c:223 parser/parse_utilcmd.c:2194
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
 msgstr "таблица \"%s\" не может иметь несколько первичных ключей"
@@ -5359,7 +5359,7 @@ msgid "user mapping for user \"%s\" on server \"%s\" does not exist"
 msgstr "сопоставление для пользователя \"%s\" на сервере \"%s\" не существует"
 
 #: catalog/objectaddress.c:1861 commands/foreigncmds.c:441
-#: commands/foreigncmds.c:1008 commands/foreigncmds.c:1371
+#: commands/foreigncmds.c:1013 commands/foreigncmds.c:1376
 #: foreign/foreign.c:733
 #, c-format
 msgid "server \"%s\" does not exist"
@@ -5809,7 +5809,7 @@ msgstr ""
 msgid "return type of inverse transition function %s is not %s"
 msgstr "обратная функция перехода %s должна возвращать тип %s"
 
-#: catalog/pg_aggregate.c:352 executor/nodeWindowAgg.c:2861
+#: catalog/pg_aggregate.c:352 executor/nodeWindowAgg.c:2909
 #, c-format
 msgid ""
 "strictness of aggregate's forward and inverse transition functions must match"
@@ -6560,7 +6560,7 @@ msgstr "событийный триггер \"%s\" уже существует"
 msgid "foreign-data wrapper \"%s\" already exists"
 msgstr "обёртка сторонних данных \"%s\" уже существует"
 
-#: commands/alter.c:91 commands/foreigncmds.c:899
+#: commands/alter.c:91 commands/foreigncmds.c:904
 #, c-format
 msgid "server \"%s\" already exists"
 msgstr "сервер \"%s\" уже существует"
@@ -7030,164 +7030,164 @@ msgstr ""
 "для выполнения COPY с записью в файл нужно быть суперпользователем или "
 "членом роли pg_write_server_files"
 
-#: commands/copy.c:175
+#: commands/copy.c:176
 #, c-format
 msgid "generated columns are not supported in COPY FROM WHERE conditions"
 msgstr "генерируемые столбцы не поддерживаются в условиях COPY FROM WHERE"
 
-#: commands/copy.c:176 commands/tablecmds.c:11928 commands/tablecmds.c:17048
+#: commands/copy.c:177 commands/tablecmds.c:11928 commands/tablecmds.c:17048
 #: commands/tablecmds.c:17127 commands/trigger.c:653
-#: rewrite/rewriteHandler.c:939 rewrite/rewriteHandler.c:974
+#: rewrite/rewriteHandler.c:973 rewrite/rewriteHandler.c:1008
 #, c-format
 msgid "Column \"%s\" is a generated column."
 msgstr "Столбец \"%s\" является генерируемым."
 
-#: commands/copy.c:225
+#: commands/copy.c:226
 #, c-format
 msgid "COPY FROM not supported with row-level security"
 msgstr "COPY FROM не поддерживается с защитой на уровне строк."
 
-#: commands/copy.c:226
+#: commands/copy.c:227
 #, c-format
 msgid "Use INSERT statements instead."
 msgstr "Используйте операторы INSERT."
 
-#: commands/copy.c:414
+#: commands/copy.c:415
 #, c-format
 msgid "COPY format \"%s\" not recognized"
 msgstr "формат \"%s\" для COPY не распознан"
 
-#: commands/copy.c:487 commands/copy.c:503 commands/copy.c:518
-#: commands/copy.c:540
+#: commands/copy.c:488 commands/copy.c:504 commands/copy.c:519
+#: commands/copy.c:541
 #, c-format
 msgid "argument to option \"%s\" must be a list of column names"
 msgstr "аргументом параметра \"%s\" должен быть список имён столбцов"
 
-#: commands/copy.c:555
+#: commands/copy.c:556
 #, c-format
 msgid "argument to option \"%s\" must be a valid encoding name"
 msgstr "аргументом параметра \"%s\" должно быть название допустимой кодировки"
 
-#: commands/copy.c:562 commands/dbcommands.c:254 commands/dbcommands.c:1575
+#: commands/copy.c:563 commands/dbcommands.c:254 commands/dbcommands.c:1575
 #, c-format
 msgid "option \"%s\" not recognized"
 msgstr "параметр \"%s\" не распознан"
 
-#: commands/copy.c:574
+#: commands/copy.c:575
 #, c-format
 msgid "cannot specify DELIMITER in BINARY mode"
 msgstr "в режиме BINARY нельзя указывать DELIMITER"
 
-#: commands/copy.c:579
+#: commands/copy.c:580
 #, c-format
 msgid "cannot specify NULL in BINARY mode"
 msgstr "в режиме BINARY нельзя указывать NULL"
 
-#: commands/copy.c:601
+#: commands/copy.c:602
 #, c-format
 msgid "COPY delimiter must be a single one-byte character"
 msgstr "разделитель для COPY должен быть однобайтным символом"
 
-#: commands/copy.c:608
+#: commands/copy.c:609
 #, c-format
 msgid "COPY delimiter cannot be newline or carriage return"
 msgstr ""
 "разделителем для COPY не может быть символ новой строки или возврата каретки"
 
-#: commands/copy.c:614
+#: commands/copy.c:615
 #, c-format
 msgid "COPY null representation cannot use newline or carriage return"
 msgstr ""
 "представление NULL для COPY не может включать символ новой строки или "
 "возврата каретки"
 
-#: commands/copy.c:631
+#: commands/copy.c:632
 #, c-format
 msgid "COPY delimiter cannot be \"%s\""
 msgstr "\"%s\" не может быть разделителем для COPY"
 
-#: commands/copy.c:637
+#: commands/copy.c:638
 #, c-format
 msgid "COPY HEADER available only in CSV mode"
 msgstr "COPY HEADER можно использовать только в режиме CSV"
 
-#: commands/copy.c:643
+#: commands/copy.c:644
 #, c-format
 msgid "COPY quote available only in CSV mode"
 msgstr "определить кавычки для COPY можно только в режиме CSV"
 
-#: commands/copy.c:648
+#: commands/copy.c:649
 #, c-format
 msgid "COPY quote must be a single one-byte character"
 msgstr "символ кавычек для COPY должен быть однобайтным"
 
-#: commands/copy.c:653
+#: commands/copy.c:654
 #, c-format
 msgid "COPY delimiter and quote must be different"
 msgstr "символ кавычек для COPY должен отличаться от разделителя"
 
-#: commands/copy.c:659
+#: commands/copy.c:660
 #, c-format
 msgid "COPY escape available only in CSV mode"
 msgstr "определить спецсимвол для COPY можно только в режиме CSV"
 
-#: commands/copy.c:664
+#: commands/copy.c:665
 #, c-format
 msgid "COPY escape must be a single one-byte character"
 msgstr "спецсимвол для COPY должен быть однобайтным"
 
-#: commands/copy.c:670
+#: commands/copy.c:671
 #, c-format
 msgid "COPY force quote available only in CSV mode"
 msgstr "параметр force quote для COPY можно использовать только в режиме CSV"
 
-#: commands/copy.c:674
+#: commands/copy.c:675
 #, c-format
 msgid "COPY force quote only available using COPY TO"
 msgstr "параметр force quote для COPY можно использовать только с COPY TO"
 
-#: commands/copy.c:680
+#: commands/copy.c:681
 #, c-format
 msgid "COPY force not null available only in CSV mode"
 msgstr ""
 "параметр force not null для COPY можно использовать только в режиме CSV"
 
-#: commands/copy.c:684
+#: commands/copy.c:685
 #, c-format
 msgid "COPY force not null only available using COPY FROM"
 msgstr "параметр force not null для COPY можно использовать только с COPY FROM"
 
-#: commands/copy.c:690
+#: commands/copy.c:691
 #, c-format
 msgid "COPY force null available only in CSV mode"
 msgstr "параметр force null для COPY можно использовать только в режиме CSV"
 
-#: commands/copy.c:695
+#: commands/copy.c:696
 #, c-format
 msgid "COPY force null only available using COPY FROM"
 msgstr "параметр force null для COPY можно использовать только с COPY FROM"
 
-#: commands/copy.c:701
+#: commands/copy.c:702
 #, c-format
 msgid "COPY delimiter must not appear in the NULL specification"
 msgstr "разделитель для COPY не должен присутствовать в представлении NULL"
 
-#: commands/copy.c:708
+#: commands/copy.c:709
 #, c-format
 msgid "CSV quote character must not appear in the NULL specification"
 msgstr "символ кавычек в CSV не должен присутствовать в представлении NULL"
 
-#: commands/copy.c:769
+#: commands/copy.c:770
 #, c-format
 msgid "column \"%s\" is a generated column"
 msgstr "столбец \"%s\" — генерируемый"
 
-#: commands/copy.c:771
+#: commands/copy.c:772
 #, c-format
 msgid "Generated columns cannot be used in COPY."
 msgstr "Генерируемые столбцы нельзя использовать в COPY."
 
-#: commands/copy.c:786 commands/indexcmds.c:1842 commands/statscmds.c:265
+#: commands/copy.c:787 commands/indexcmds.c:1842 commands/statscmds.c:265
 #: commands/tablecmds.c:2344 commands/tablecmds.c:3000
 #: commands/tablecmds.c:3508 parser/parse_relation.c:3651
 #: parser/parse_relation.c:3671 utils/adt/tsvector_op.c:2687
@@ -7195,7 +7195,7 @@ msgstr "Генерируемые столбцы нельзя использов�
 msgid "column \"%s\" does not exist"
 msgstr "столбец \"%s\" не существует"
 
-#: commands/copy.c:793 commands/tablecmds.c:2370 commands/trigger.c:951
+#: commands/copy.c:794 commands/tablecmds.c:2370 commands/trigger.c:951
 #: parser/parse_target.c:1093 parser/parse_target.c:1104
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -8063,7 +8063,7 @@ msgstr "правило \"%s\" для отношения \"%s\" не сущест
 msgid "foreign-data wrapper \"%s\" does not exist, skipping"
 msgstr "обёртка сторонних данных \"%s\" не существует, пропускается"
 
-#: commands/dropcmds.c:453 commands/foreigncmds.c:1375
+#: commands/dropcmds.c:453 commands/foreigncmds.c:1380
 #, c-format
 msgid "server \"%s\" does not exist, skipping"
 msgstr "сервер \"%s\" не существует, пропускается"
@@ -8149,7 +8149,7 @@ msgstr "%s можно вызывать только в событийной тр
 msgid "%s can only be called in a table_rewrite event trigger function"
 msgstr "%s можно вызывать только в событийной триггерной функции table_rewrite"
 
-#: commands/event_trigger.c:1862
+#: commands/event_trigger.c:1865
 #, c-format
 msgid "%s can only be called in an event trigger function"
 msgstr "%s можно вызывать только в событийной триггерной функции"
@@ -8518,7 +8518,7 @@ msgstr ""
 "при изменении обработчика в обёртке сторонних данных может измениться "
 "поведение существующих сторонних таблиц"
 
-#: commands/foreigncmds.c:760
+#: commands/foreigncmds.c:765
 #, c-format
 msgid ""
 "changing the foreign-data wrapper validator can cause the options for "
@@ -8527,46 +8527,46 @@ msgstr ""
 "при изменении функции проверки в обёртке сторонних данных параметры "
 "зависимых объектов могут стать неверными"
 
-#: commands/foreigncmds.c:891
+#: commands/foreigncmds.c:896
 #, c-format
 msgid "server \"%s\" already exists, skipping"
 msgstr "сервер \"%s\" уже существует, пропускается"
 
-#: commands/foreigncmds.c:1159
+#: commands/foreigncmds.c:1164
 #, c-format
 msgid "user mapping for \"%s\" already exists for server \"%s\", skipping"
 msgstr ""
 "сопоставление пользователя \"%s\" для сервера \"%s\" уже существует, "
 "пропускается"
 
-#: commands/foreigncmds.c:1169
+#: commands/foreigncmds.c:1174
 #, c-format
 msgid "user mapping for \"%s\" already exists for server \"%s\""
 msgstr "сопоставление пользователя \"%s\" для сервера \"%s\" уже существует"
 
-#: commands/foreigncmds.c:1269 commands/foreigncmds.c:1389
+#: commands/foreigncmds.c:1274 commands/foreigncmds.c:1394
 #, c-format
 msgid "user mapping for \"%s\" does not exist for server \"%s\""
 msgstr "сопоставление пользователя \"%s\" для сервера \"%s\" не существует"
 
-#: commands/foreigncmds.c:1394
+#: commands/foreigncmds.c:1399
 #, c-format
 msgid "user mapping for \"%s\" does not exist for server \"%s\", skipping"
 msgstr ""
 "сопоставление пользователя \"%s\" для сервера \"%s\" не существует, "
 "пропускается"
 
-#: commands/foreigncmds.c:1522 foreign/foreign.c:399
+#: commands/foreigncmds.c:1527 foreign/foreign.c:399
 #, c-format
 msgid "foreign-data wrapper \"%s\" has no handler"
 msgstr "обёртка сторонних данных \"%s\" не имеет обработчика"
 
-#: commands/foreigncmds.c:1528
+#: commands/foreigncmds.c:1533
 #, c-format
 msgid "foreign-data wrapper \"%s\" does not support IMPORT FOREIGN SCHEMA"
 msgstr "обёртка сторонних данных \"%s\" не поддерживает IMPORT FOREIGN SCHEMA"
 
-#: commands/foreigncmds.c:1630
+#: commands/foreigncmds.c:1635
 #, c-format
 msgid "importing foreign table \"%s\""
 msgstr "импорт сторонней таблицы \"%s\""
@@ -9083,8 +9083,8 @@ msgstr "Таблица \"%s\" содержит секции, являющиес�
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "функции в предикате индекса должны быть помечены как IMMUTABLE"
 
-#: commands/indexcmds.c:1837 parser/parse_utilcmd.c:2533
-#: parser/parse_utilcmd.c:2668
+#: commands/indexcmds.c:1837 parser/parse_utilcmd.c:2537
+#: parser/parse_utilcmd.c:2672
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "указанный в ключе столбец \"%s\" не существует"
@@ -9125,7 +9125,7 @@ msgid "could not determine which collation to use for index expression"
 msgstr "не удалось определить правило сортировки для индексного выражения"
 
 #: commands/indexcmds.c:1978 commands/tablecmds.c:17215 commands/typecmds.c:810
-#: parser/parse_expr.c:2701 parser/parse_type.c:566 parser/parse_utilcmd.c:3783
+#: parser/parse_expr.c:2701 parser/parse_type.c:566 parser/parse_utilcmd.c:3787
 #: utils/adt/misc.c:621
 #, c-format
 msgid "collations are not supported by type %s"
@@ -10287,7 +10287,7 @@ msgstr ""
 "представления."
 
 #: commands/tablecmds.c:265 commands/tablecmds.c:289 commands/tablecmds.c:18753
-#: parser/parse_utilcmd.c:2265
+#: parser/parse_utilcmd.c:2269
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "индекс \"%s\" не существует"
@@ -10424,8 +10424,8 @@ msgstr "наследование от секционированной табл�
 msgid "cannot inherit from partition \"%s\""
 msgstr "наследование от секции \"%s\" не допускается"
 
-#: commands/tablecmds.c:2440 parser/parse_utilcmd.c:2495
-#: parser/parse_utilcmd.c:2637
+#: commands/tablecmds.c:2440 parser/parse_utilcmd.c:2499
+#: parser/parse_utilcmd.c:2641
 #, c-format
 msgid "inherited relation \"%s\" is not a table or foreign table"
 msgstr ""
@@ -11891,29 +11891,29 @@ msgstr "секционированная таблица \"%s\" была пара
 msgid "partition \"%s\" was removed concurrently"
 msgstr "секция \"%s\" была параллельно удалена"
 
-#: commands/tablecmds.c:18787 commands/tablecmds.c:18807
-#: commands/tablecmds.c:18827 commands/tablecmds.c:18846
-#: commands/tablecmds.c:18888
+#: commands/tablecmds.c:18790 commands/tablecmds.c:18810
+#: commands/tablecmds.c:18830 commands/tablecmds.c:18849
+#: commands/tablecmds.c:18899
 #, c-format
 msgid "cannot attach index \"%s\" as a partition of index \"%s\""
 msgstr "нельзя присоединить индекс \"%s\" в качестве секции индекса \"%s\""
 
-#: commands/tablecmds.c:18790
+#: commands/tablecmds.c:18793
 #, c-format
 msgid "Index \"%s\" is already attached to another index."
 msgstr "Индекс \"%s\" уже присоединён к другому индексу."
 
-#: commands/tablecmds.c:18810
+#: commands/tablecmds.c:18813
 #, c-format
 msgid "Index \"%s\" is not an index on any partition of table \"%s\"."
 msgstr "Индекс \"%s\" не является индексом какой-либо секции таблицы \"%s\"."
 
-#: commands/tablecmds.c:18830
+#: commands/tablecmds.c:18833
 #, c-format
 msgid "The index definitions do not match."
 msgstr "Определения индексов не совпадают."
 
-#: commands/tablecmds.c:18849
+#: commands/tablecmds.c:18852
 #, c-format
 msgid ""
 "The index \"%s\" belongs to a constraint in table \"%s\" but no constraint "
@@ -11922,17 +11922,17 @@ msgstr ""
 "Индекс \"%s\" принадлежит ограничению в таблице \"%s\", но для индекса "
 "\"%s\" ограничения нет."
 
-#: commands/tablecmds.c:18891
+#: commands/tablecmds.c:18902
 #, c-format
 msgid "Another index is already attached for partition \"%s\"."
 msgstr "К секции \"%s\" уже присоединён другой индекс."
 
-#: commands/tablecmds.c:19128
+#: commands/tablecmds.c:19139
 #, c-format
 msgid "column data type %s does not support compression"
 msgstr "тим данных столбца %s не поддерживает сжатие"
 
-#: commands/tablecmds.c:19135
+#: commands/tablecmds.c:19146
 #, c-format
 msgid "invalid compression method \"%s\""
 msgstr "неверный метод сжатия \"%s\""
@@ -13424,7 +13424,7 @@ msgid "cursor \"%s\" is not a simply updatable scan of table \"%s\""
 msgstr ""
 "для курсора \"%s\" не выполняется обновляемое сканирование таблицы \"%s\""
 
-#: executor/execCurrent.c:280 executor/execExprInterp.c:2464
+#: executor/execCurrent.c:280 executor/execExprInterp.c:2472
 #, c-format
 msgid ""
 "type of parameter %d (%s) does not match that when preparing the plan (%s)"
@@ -13432,14 +13432,14 @@ msgstr ""
 "тип параметра %d (%s) не соответствует тому, с которым подготавливался план "
 "(%s)"
 
-#: executor/execCurrent.c:292 executor/execExprInterp.c:2476
+#: executor/execCurrent.c:292 executor/execExprInterp.c:2484
 #, c-format
 msgid "no value found for parameter %d"
 msgstr "не найдено значение параметра %d"
 
 #: executor/execExpr.c:636 executor/execExpr.c:643 executor/execExpr.c:649
-#: executor/execExprInterp.c:4045 executor/execExprInterp.c:4062
-#: executor/execExprInterp.c:4161 executor/nodeModifyTable.c:127
+#: executor/execExprInterp.c:4112 executor/execExprInterp.c:4129
+#: executor/execExprInterp.c:4228 executor/nodeModifyTable.c:127
 #: executor/nodeModifyTable.c:146 executor/nodeModifyTable.c:163
 #: executor/nodeModifyTable.c:173 executor/nodeModifyTable.c:183
 #, c-format
@@ -13457,7 +13457,7 @@ msgid "Query provides a value for a dropped column at ordinal position %d."
 msgstr ""
 "Запрос выдаёт значение для удалённого столбца (с порядковым номером %d)."
 
-#: executor/execExpr.c:650 executor/execExprInterp.c:4063
+#: executor/execExpr.c:650 executor/execExprInterp.c:4130
 #: executor/nodeModifyTable.c:174
 #, c-format
 msgid "Table has type %s at ordinal position %d, but query expects %s."
@@ -13501,23 +13501,23 @@ msgstr ""
 msgid "type %s does not support subscripted assignment"
 msgstr "тип %s не поддерживает изменение элемента по индексу"
 
-#: executor/execExprInterp.c:1928
+#: executor/execExprInterp.c:1936
 #, c-format
 msgid "attribute %d of type %s has been dropped"
 msgstr "атрибут %d типа %s был удалён"
 
-#: executor/execExprInterp.c:1934
+#: executor/execExprInterp.c:1942
 #, c-format
 msgid "attribute %d of type %s has wrong type"
 msgstr "атрибут %d типа %s имеет неправильный тип"
 
-#: executor/execExprInterp.c:1936 executor/execExprInterp.c:3070
-#: executor/execExprInterp.c:3116
+#: executor/execExprInterp.c:1944 executor/execExprInterp.c:3078
+#: executor/execExprInterp.c:3124
 #, c-format
 msgid "Table has type %s, but query expects %s."
 msgstr "В таблице задан тип %s, а в запросе ожидается %s."
 
-#: executor/execExprInterp.c:2016 utils/adt/expandedrecord.c:99
+#: executor/execExprInterp.c:2024 utils/adt/expandedrecord.c:99
 #: utils/adt/expandedrecord.c:231 utils/cache/typcache.c:1751
 #: utils/cache/typcache.c:1907 utils/cache/typcache.c:2054
 #: utils/fmgr/funcapi.c:500
@@ -13525,17 +13525,17 @@ msgstr "В таблице задан тип %s, а в запросе ожида�
 msgid "type %s is not composite"
 msgstr "тип %s не является составным"
 
-#: executor/execExprInterp.c:2554
+#: executor/execExprInterp.c:2562
 #, c-format
 msgid "WHERE CURRENT OF is not supported for this table type"
 msgstr "WHERE CURRENT OF для таблиц такого типа не поддерживается"
 
-#: executor/execExprInterp.c:2767
+#: executor/execExprInterp.c:2775
 #, c-format
 msgid "cannot merge incompatible arrays"
 msgstr "не удалось объединить несовместимые массивы"
 
-#: executor/execExprInterp.c:2768
+#: executor/execExprInterp.c:2776
 #, c-format
 msgid ""
 "Array with element type %s cannot be included in ARRAY construct with "
@@ -13544,7 +13544,7 @@ msgstr ""
 "Массив с типом элементов %s нельзя включить в конструкцию ARRAY с типом "
 "элементов %s."
 
-#: executor/execExprInterp.c:2789 utils/adt/arrayfuncs.c:264
+#: executor/execExprInterp.c:2797 utils/adt/arrayfuncs.c:264
 #: utils/adt/arrayfuncs.c:564 utils/adt/arrayfuncs.c:1306
 #: utils/adt/arrayfuncs.c:3515 utils/adt/arrayfuncs.c:5586
 #: utils/adt/arrayfuncs.c:6105 utils/adt/arraysubs.c:150
@@ -13553,7 +13553,7 @@ msgstr ""
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "число размерностей массива (%d) превышает предел (%d)"
 
-#: executor/execExprInterp.c:2809 executor/execExprInterp.c:2844
+#: executor/execExprInterp.c:2817 executor/execExprInterp.c:2852
 #, c-format
 msgid ""
 "multidimensional arrays must have array expressions with matching dimensions"
@@ -13561,7 +13561,7 @@ msgstr ""
 "для многомерных массивов должны задаваться выражения с соответствующими "
 "размерностями"
 
-#: executor/execExprInterp.c:2821 utils/adt/array_expanded.c:274
+#: executor/execExprInterp.c:2829 utils/adt/array_expanded.c:274
 #: utils/adt/arrayfuncs.c:937 utils/adt/arrayfuncs.c:1545
 #: utils/adt/arrayfuncs.c:2353 utils/adt/arrayfuncs.c:2368
 #: utils/adt/arrayfuncs.c:2630 utils/adt/arrayfuncs.c:2646
@@ -13574,22 +13574,22 @@ msgstr ""
 msgid "array size exceeds the maximum allowed (%d)"
 msgstr "размер массива превышает предел (%d)"
 
-#: executor/execExprInterp.c:3069 executor/execExprInterp.c:3115
+#: executor/execExprInterp.c:3077 executor/execExprInterp.c:3123
 #, c-format
 msgid "attribute %d has wrong type"
 msgstr "атрибут %d имеет неверный тип"
 
-#: executor/execExprInterp.c:3674 utils/adt/domains.c:149
+#: executor/execExprInterp.c:3741 utils/adt/domains.c:149
 #, c-format
 msgid "domain %s does not allow null values"
 msgstr "домен %s не допускает значения null"
 
-#: executor/execExprInterp.c:3689 utils/adt/domains.c:184
+#: executor/execExprInterp.c:3756 utils/adt/domains.c:184
 #, c-format
 msgid "value for domain %s violates check constraint \"%s\""
 msgstr "значение домена %s нарушает ограничение-проверку \"%s\""
 
-#: executor/execExprInterp.c:4046
+#: executor/execExprInterp.c:4113
 #, c-format
 msgid "Table row contains %d attribute, but query expects %d."
 msgid_plural "Table row contains %d attributes, but query expects %d."
@@ -13597,7 +13597,7 @@ msgstr[0] "Строка таблицы содержит %d атрибут, а в
 msgstr[1] "Строка таблицы содержит %d атрибута, а в запросе ожидается %d."
 msgstr[2] "Строка таблицы содержит %d атрибутов, а в запросе ожидается %d."
 
-#: executor/execExprInterp.c:4162 executor/execSRF.c:977
+#: executor/execExprInterp.c:4229 executor/execSRF.c:977
 #, c-format
 msgid "Physical storage mismatch on dropped attribute at ordinal position %d."
 msgstr ""
@@ -13653,14 +13653,14 @@ msgstr "последовательность \"%s\" изменить нельз�
 msgid "cannot change TOAST relation \"%s\""
 msgstr "TOAST-отношение \"%s\" изменить нельзя"
 
-#: executor/execMain.c:1040 rewrite/rewriteHandler.c:3148
-#: rewrite/rewriteHandler.c:4010
+#: executor/execMain.c:1040 rewrite/rewriteHandler.c:3213
+#: rewrite/rewriteHandler.c:4075
 #, c-format
 msgid "cannot insert into view \"%s\""
 msgstr "вставить данные в представление \"%s\" нельзя"
 
-#: executor/execMain.c:1042 rewrite/rewriteHandler.c:3151
-#: rewrite/rewriteHandler.c:4013
+#: executor/execMain.c:1042 rewrite/rewriteHandler.c:3216
+#: rewrite/rewriteHandler.c:4078
 #, c-format
 msgid ""
 "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or "
@@ -13669,14 +13669,14 @@ msgstr ""
 "Чтобы представление допускало добавление данных, установите триггер INSTEAD "
 "OF INSERT или безусловное правило ON INSERT DO INSTEAD."
 
-#: executor/execMain.c:1048 rewrite/rewriteHandler.c:3156
-#: rewrite/rewriteHandler.c:4018
+#: executor/execMain.c:1048 rewrite/rewriteHandler.c:3221
+#: rewrite/rewriteHandler.c:4083
 #, c-format
 msgid "cannot update view \"%s\""
 msgstr "изменить данные в представлении \"%s\" нельзя"
 
-#: executor/execMain.c:1050 rewrite/rewriteHandler.c:3159
-#: rewrite/rewriteHandler.c:4021
+#: executor/execMain.c:1050 rewrite/rewriteHandler.c:3224
+#: rewrite/rewriteHandler.c:4086
 #, c-format
 msgid ""
 "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an "
@@ -13685,14 +13685,14 @@ msgstr ""
 "Чтобы представление допускало изменение данных, установите триггер INSTEAD "
 "OF UPDATE или безусловное правило ON UPDATE DO INSTEAD."
 
-#: executor/execMain.c:1056 rewrite/rewriteHandler.c:3164
-#: rewrite/rewriteHandler.c:4026
+#: executor/execMain.c:1056 rewrite/rewriteHandler.c:3229
+#: rewrite/rewriteHandler.c:4091
 #, c-format
 msgid "cannot delete from view \"%s\""
 msgstr "удалить данные из представления \"%s\" нельзя"
 
-#: executor/execMain.c:1058 rewrite/rewriteHandler.c:3167
-#: rewrite/rewriteHandler.c:4029
+#: executor/execMain.c:1058 rewrite/rewriteHandler.c:3232
+#: rewrite/rewriteHandler.c:4094
 #, c-format
 msgid ""
 "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an "
@@ -14079,7 +14079,7 @@ msgstr ""
 msgid "aggregate function calls cannot be nested"
 msgstr "вложенные вызовы агрегатных функций недопустимы"
 
-#: executor/nodeAgg.c:4187 executor/nodeWindowAgg.c:2845
+#: executor/nodeAgg.c:4187 executor/nodeWindowAgg.c:2893
 #, c-format
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr ""
@@ -14222,32 +14222,32 @@ msgstr "Для столбца \"%s\" задано выражение NULL."
 msgid "null is not allowed in column \"%s\""
 msgstr "в столбце \"%s\" не допускается NULL"
 
-#: executor/nodeWindowAgg.c:356
+#: executor/nodeWindowAgg.c:357
 #, c-format
 msgid "moving-aggregate transition function must not return null"
 msgstr "функция перехода движимого агрегата не должна возвращать NULL"
 
-#: executor/nodeWindowAgg.c:2059
+#: executor/nodeWindowAgg.c:2107
 #, c-format
 msgid "frame starting offset must not be null"
 msgstr "смещение начала рамки не может быть NULL"
 
-#: executor/nodeWindowAgg.c:2072
+#: executor/nodeWindowAgg.c:2120
 #, c-format
 msgid "frame starting offset must not be negative"
 msgstr "смещение начала рамки не может быть отрицательным"
 
-#: executor/nodeWindowAgg.c:2084
+#: executor/nodeWindowAgg.c:2132
 #, c-format
 msgid "frame ending offset must not be null"
 msgstr "смещение конца рамки не может быть NULL"
 
-#: executor/nodeWindowAgg.c:2097
+#: executor/nodeWindowAgg.c:2145
 #, c-format
 msgid "frame ending offset must not be negative"
 msgstr "смещение конца рамки не может быть отрицательным"
 
-#: executor/nodeWindowAgg.c:2761
+#: executor/nodeWindowAgg.c:2809
 #, c-format
 msgid "aggregate function %s does not support use as a window function"
 msgstr ""
@@ -16499,7 +16499,7 @@ msgstr "расширенный тип узла \"%s\" уже существуе�
 msgid "ExtensibleNodeMethods \"%s\" was not registered"
 msgstr "методы расширенного узла \"%s\" не зарегистрированы"
 
-#: nodes/makefuncs.c:150 nodes/makefuncs.c:176 statistics/extended_stats.c:2326
+#: nodes/makefuncs.c:150 nodes/makefuncs.c:176 statistics/extended_stats.c:2336
 #, c-format
 msgid "relation \"%s\" does not have a composite type"
 msgstr "отношение \"%s\" не имеет составного типа"
@@ -19077,68 +19077,68 @@ msgstr "LIKE при создании сторонних таблиц не под
 msgid "Index \"%s\" contains a whole-row table reference."
 msgstr "Индекс \"%s\" ссылается на тип всей строки таблицы."
 
-#: parser/parse_utilcmd.c:2256
+#: parser/parse_utilcmd.c:2260
 #, c-format
 msgid "cannot use an existing index in CREATE TABLE"
 msgstr "в CREATE TABLE нельзя использовать существующий индекс"
 
-#: parser/parse_utilcmd.c:2276
+#: parser/parse_utilcmd.c:2280
 #, c-format
 msgid "index \"%s\" is already associated with a constraint"
 msgstr "индекс \"%s\" уже связан с ограничением"
 
-#: parser/parse_utilcmd.c:2297
+#: parser/parse_utilcmd.c:2301
 #, c-format
 msgid "\"%s\" is not a unique index"
 msgstr "\"%s\" не является уникальным индексом"
 
-#: parser/parse_utilcmd.c:2298 parser/parse_utilcmd.c:2305
-#: parser/parse_utilcmd.c:2312 parser/parse_utilcmd.c:2389
+#: parser/parse_utilcmd.c:2302 parser/parse_utilcmd.c:2309
+#: parser/parse_utilcmd.c:2316 parser/parse_utilcmd.c:2393
 #, c-format
 msgid "Cannot create a primary key or unique constraint using such an index."
 msgstr ""
 "Создать первичный ключ или ограничение уникальности для такого индекса "
 "нельзя."
 
-#: parser/parse_utilcmd.c:2304
+#: parser/parse_utilcmd.c:2308
 #, c-format
 msgid "index \"%s\" contains expressions"
 msgstr "индекс \"%s\" содержит выражения"
 
-#: parser/parse_utilcmd.c:2311
+#: parser/parse_utilcmd.c:2315
 #, c-format
 msgid "\"%s\" is a partial index"
 msgstr "\"%s\" - частичный индекс"
 
-#: parser/parse_utilcmd.c:2323
+#: parser/parse_utilcmd.c:2327
 #, c-format
 msgid "\"%s\" is a deferrable index"
 msgstr "\"%s\" - откладываемый индекс"
 
-#: parser/parse_utilcmd.c:2324
+#: parser/parse_utilcmd.c:2328
 #, c-format
 msgid "Cannot create a non-deferrable constraint using a deferrable index."
 msgstr ""
 "Создать не откладываемое ограничение на базе откладываемого индекса нельзя."
 
-#: parser/parse_utilcmd.c:2388
+#: parser/parse_utilcmd.c:2392
 #, c-format
 msgid "index \"%s\" column number %d does not have default sorting behavior"
 msgstr ""
 "в индексе \"%s\" для столбца номер %d не определено поведение сортировки по "
 "умолчанию"
 
-#: parser/parse_utilcmd.c:2545
+#: parser/parse_utilcmd.c:2549
 #, c-format
 msgid "column \"%s\" appears twice in primary key constraint"
 msgstr "столбец \"%s\" фигурирует в первичном ключе дважды"
 
-#: parser/parse_utilcmd.c:2551
+#: parser/parse_utilcmd.c:2555
 #, c-format
 msgid "column \"%s\" appears twice in unique constraint"
 msgstr "столбец \"%s\" фигурирует в ограничении уникальности дважды"
 
-#: parser/parse_utilcmd.c:2885
+#: parser/parse_utilcmd.c:2889
 #, c-format
 msgid ""
 "index expressions and predicates can refer only to the table being indexed"
@@ -19146,22 +19146,22 @@ msgstr ""
 "индексные выражения и предикаты могут ссылаться только на индексируемую "
 "таблицу"
 
-#: parser/parse_utilcmd.c:2957
+#: parser/parse_utilcmd.c:2961
 #, c-format
 msgid "statistics expressions can refer only to the table being referenced"
 msgstr "выражения статистики могут ссылаться только на целевую таблицу"
 
-#: parser/parse_utilcmd.c:3000
+#: parser/parse_utilcmd.c:3004
 #, c-format
 msgid "rules on materialized views are not supported"
 msgstr "правила для материализованных представлений не поддерживаются"
 
-#: parser/parse_utilcmd.c:3063
+#: parser/parse_utilcmd.c:3067
 #, c-format
 msgid "rule WHERE condition cannot contain references to other relations"
 msgstr "в условиях WHERE для правил нельзя ссылаться на другие отношения"
 
-#: parser/parse_utilcmd.c:3136
+#: parser/parse_utilcmd.c:3140
 #, c-format
 msgid ""
 "rules with WHERE conditions can only have SELECT, INSERT, UPDATE, or DELETE "
@@ -19170,158 +19170,158 @@ msgstr ""
 "правила с условиями WHERE могут содержать только действия SELECT, INSERT, "
 "UPDATE или DELETE"
 
-#: parser/parse_utilcmd.c:3154 parser/parse_utilcmd.c:3255
-#: rewrite/rewriteHandler.c:539 rewrite/rewriteManip.c:1022
+#: parser/parse_utilcmd.c:3158 parser/parse_utilcmd.c:3259
+#: rewrite/rewriteHandler.c:540 rewrite/rewriteManip.c:1022
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "условные операторы UNION/INTERSECT/EXCEPT не реализованы"
 
-#: parser/parse_utilcmd.c:3172
+#: parser/parse_utilcmd.c:3176
 #, c-format
 msgid "ON SELECT rule cannot use OLD"
 msgstr "в правиле ON SELECT нельзя использовать OLD"
 
-#: parser/parse_utilcmd.c:3176
+#: parser/parse_utilcmd.c:3180
 #, c-format
 msgid "ON SELECT rule cannot use NEW"
 msgstr "в правиле ON SELECT нельзя использовать NEW"
 
-#: parser/parse_utilcmd.c:3185
+#: parser/parse_utilcmd.c:3189
 #, c-format
 msgid "ON INSERT rule cannot use OLD"
 msgstr "в правиле ON INSERT нельзя использовать OLD"
 
-#: parser/parse_utilcmd.c:3191
+#: parser/parse_utilcmd.c:3195
 #, c-format
 msgid "ON DELETE rule cannot use NEW"
 msgstr "в правиле ON DELETE нельзя использовать NEW"
 
-#: parser/parse_utilcmd.c:3219
+#: parser/parse_utilcmd.c:3223
 #, c-format
 msgid "cannot refer to OLD within WITH query"
 msgstr "в запросе WITH нельзя ссылаться на OLD"
 
-#: parser/parse_utilcmd.c:3226
+#: parser/parse_utilcmd.c:3230
 #, c-format
 msgid "cannot refer to NEW within WITH query"
 msgstr "в запросе WITH нельзя ссылаться на NEW"
 
-#: parser/parse_utilcmd.c:3676
+#: parser/parse_utilcmd.c:3680
 #, c-format
 msgid "misplaced DEFERRABLE clause"
 msgstr "предложение DEFERRABLE расположено неправильно"
 
-#: parser/parse_utilcmd.c:3681 parser/parse_utilcmd.c:3696
+#: parser/parse_utilcmd.c:3685 parser/parse_utilcmd.c:3700
 #, c-format
 msgid "multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"
 msgstr "DEFERRABLE/NOT DEFERRABLE можно указать только один раз"
 
-#: parser/parse_utilcmd.c:3691
+#: parser/parse_utilcmd.c:3695
 #, c-format
 msgid "misplaced NOT DEFERRABLE clause"
 msgstr "предложение NOT DEFERRABLE расположено неправильно"
 
-#: parser/parse_utilcmd.c:3704 parser/parse_utilcmd.c:3730 gram.y:5559
+#: parser/parse_utilcmd.c:3708 parser/parse_utilcmd.c:3734 gram.y:5559
 #, c-format
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr ""
 "ограничение со свойством INITIALLY DEFERRED должно быть объявлено как "
 "DEFERRABLE"
 
-#: parser/parse_utilcmd.c:3712
+#: parser/parse_utilcmd.c:3716
 #, c-format
 msgid "misplaced INITIALLY DEFERRED clause"
 msgstr "предложение INITIALLY DEFERRED расположено неправильно"
 
-#: parser/parse_utilcmd.c:3717 parser/parse_utilcmd.c:3743
+#: parser/parse_utilcmd.c:3721 parser/parse_utilcmd.c:3747
 #, c-format
 msgid "multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
 msgstr "INITIALLY IMMEDIATE/DEFERRED можно указать только один раз"
 
-#: parser/parse_utilcmd.c:3738
+#: parser/parse_utilcmd.c:3742
 #, c-format
 msgid "misplaced INITIALLY IMMEDIATE clause"
 msgstr "предложение INITIALLY IMMEDIATE расположено неправильно"
 
-#: parser/parse_utilcmd.c:3931
+#: parser/parse_utilcmd.c:3935
 #, c-format
 msgid ""
 "CREATE specifies a schema (%s) different from the one being created (%s)"
 msgstr "в CREATE указана схема (%s), отличная от создаваемой (%s)"
 
-#: parser/parse_utilcmd.c:3966
+#: parser/parse_utilcmd.c:3970
 #, c-format
 msgid "\"%s\" is not a partitioned table"
 msgstr "\"%s\" — не секционированная таблица"
 
-#: parser/parse_utilcmd.c:3973
+#: parser/parse_utilcmd.c:3977
 #, c-format
 msgid "table \"%s\" is not partitioned"
 msgstr "таблица \"%s\" не является секционированной"
 
-#: parser/parse_utilcmd.c:3980
+#: parser/parse_utilcmd.c:3984
 #, c-format
 msgid "index \"%s\" is not partitioned"
 msgstr "индекс \"%s\" не секционирован"
 
-#: parser/parse_utilcmd.c:4020
+#: parser/parse_utilcmd.c:4024
 #, c-format
 msgid "a hash-partitioned table may not have a default partition"
 msgstr "у секционированной по хешу таблицы не может быть секции по умолчанию"
 
-#: parser/parse_utilcmd.c:4037
+#: parser/parse_utilcmd.c:4041
 #, c-format
 msgid "invalid bound specification for a hash partition"
 msgstr "неправильное указание ограничения для хеш-секции"
 
-#: parser/parse_utilcmd.c:4043 partitioning/partbounds.c:4711
+#: parser/parse_utilcmd.c:4047 partitioning/partbounds.c:4711
 #, c-format
 msgid "modulus for hash partition must be an integer value greater than zero"
 msgstr "модуль для хеш-секции должен быть положительным целым"
 
-#: parser/parse_utilcmd.c:4050 partitioning/partbounds.c:4719
+#: parser/parse_utilcmd.c:4054 partitioning/partbounds.c:4719
 #, c-format
 msgid "remainder for hash partition must be less than modulus"
 msgstr "остаток для хеш-секции должен быть меньше модуля"
 
-#: parser/parse_utilcmd.c:4063
+#: parser/parse_utilcmd.c:4067
 #, c-format
 msgid "invalid bound specification for a list partition"
 msgstr "неправильное указание ограничения для секции по списку"
 
-#: parser/parse_utilcmd.c:4116
+#: parser/parse_utilcmd.c:4120
 #, c-format
 msgid "invalid bound specification for a range partition"
 msgstr "неправильное указание ограничения для секции по диапазону"
 
-#: parser/parse_utilcmd.c:4122
+#: parser/parse_utilcmd.c:4126
 #, c-format
 msgid "FROM must specify exactly one value per partitioning column"
 msgstr ""
 "во FROM должно указываться ровно одно значение для секционирующего столбца"
 
-#: parser/parse_utilcmd.c:4126
+#: parser/parse_utilcmd.c:4130
 #, c-format
 msgid "TO must specify exactly one value per partitioning column"
 msgstr ""
 "в TO должно указываться ровно одно значение для секционирующего столбца"
 
-#: parser/parse_utilcmd.c:4242
+#: parser/parse_utilcmd.c:4246
 #, c-format
 msgid "cannot specify NULL in range bound"
 msgstr "указать NULL в диапазонном ограничении нельзя"
 
-#: parser/parse_utilcmd.c:4290
+#: parser/parse_utilcmd.c:4294
 #, c-format
 msgid "every bound following MAXVALUE must also be MAXVALUE"
 msgstr "за границей MAXVALUE могут следовать только границы MAXVALUE"
 
-#: parser/parse_utilcmd.c:4297
+#: parser/parse_utilcmd.c:4301
 #, c-format
 msgid "every bound following MINVALUE must also be MINVALUE"
 msgstr "за границей MINVALUE могут следовать только границы MINVALUE"
 
-#: parser/parse_utilcmd.c:4340
+#: parser/parse_utilcmd.c:4344
 #, c-format
 msgid "specified value cannot be cast to type %s for column \"%s\""
 msgstr "указанное значение нельзя привести к типу %s столбца \"%s\""
@@ -22115,26 +22115,26 @@ msgstr ""
 msgid "terminating walsender process after promotion"
 msgstr "завершение процесса передачи журнала после повышения"
 
-#: replication/walsender.c:1566
+#: replication/walsender.c:1572
 #, c-format
 msgid "cannot execute new commands while WAL sender is in stopping mode"
 msgstr ""
 "нельзя выполнять новые команды, пока процесс передачи WAL находится в режиме "
 "остановки"
 
-#: replication/walsender.c:1601
+#: replication/walsender.c:1607
 #, c-format
 msgid "cannot execute SQL commands in WAL sender for physical replication"
 msgstr ""
 "нельзя выполнять команды SQL в процессе, передающем WAL для физической "
 "репликации"
 
-#: replication/walsender.c:1634
+#: replication/walsender.c:1640
 #, c-format
 msgid "received replication command: %s"
 msgstr "получена команда репликации: %s"
 
-#: replication/walsender.c:1642 tcop/fastpath.c:208 tcop/postgres.c:1046
+#: replication/walsender.c:1648 tcop/fastpath.c:208 tcop/postgres.c:1046
 #: tcop/postgres.c:1405 tcop/postgres.c:1678 tcop/postgres.c:2159
 #: tcop/postgres.c:2592 tcop/postgres.c:2671
 #, c-format
@@ -22144,22 +22144,22 @@ msgid ""
 msgstr ""
 "текущая транзакция прервана, команды до конца блока транзакции игнорируются"
 
-#: replication/walsender.c:1777 replication/walsender.c:1812
+#: replication/walsender.c:1783 replication/walsender.c:1818
 #, c-format
 msgid "unexpected EOF on standby connection"
 msgstr "неожиданный обрыв соединения с резервным сервером"
 
-#: replication/walsender.c:1800
+#: replication/walsender.c:1806
 #, c-format
 msgid "invalid standby message type \"%c\""
 msgstr "неверный тип сообщения резервного сервера: \"%c\""
 
-#: replication/walsender.c:1889
+#: replication/walsender.c:1895
 #, c-format
 msgid "unexpected message type \"%c\""
 msgstr "неожиданный тип сообщения \"%c\""
 
-#: replication/walsender.c:2306
+#: replication/walsender.c:2315
 #, c-format
 msgid "terminating walsender process due to replication timeout"
 msgstr "завершение процесса передачи журнала из-за тайм-аута репликации"
@@ -22410,7 +22410,7 @@ msgstr "правило \"%s\" для отношения\"%s\" не сущест�
 msgid "renaming an ON SELECT rule is not allowed"
 msgstr "переименовывать правило ON SELECT нельзя"
 
-#: rewrite/rewriteHandler.c:583
+#: rewrite/rewriteHandler.c:584
 #, c-format
 msgid ""
 "WITH query name \"%s\" appears in both a rule action and the query being "
@@ -22419,7 +22419,7 @@ msgstr ""
 "имя запроса WITH \"%s\" оказалось и в действии правила, и в переписываемом "
 "запросе"
 
-#: rewrite/rewriteHandler.c:613
+#: rewrite/rewriteHandler.c:614
 #, c-format
 msgid ""
 "INSERT...SELECT rule actions are not supported for queries having data-"
@@ -22428,118 +22428,118 @@ msgstr ""
 "правила INSERT...SELECT не поддерживаются для запросов с операторами, "
 "изменяющими данные, в WITH"
 
-#: rewrite/rewriteHandler.c:666
+#: rewrite/rewriteHandler.c:700
 #, c-format
 msgid "cannot have RETURNING lists in multiple rules"
 msgstr "RETURNING можно определить только для одного правила"
 
-#: rewrite/rewriteHandler.c:898 rewrite/rewriteHandler.c:937
+#: rewrite/rewriteHandler.c:932 rewrite/rewriteHandler.c:971
 #, c-format
 msgid "cannot insert a non-DEFAULT value into column \"%s\""
 msgstr "в столбец \"%s\" можно вставить только значение по умолчанию"
 
-#: rewrite/rewriteHandler.c:900 rewrite/rewriteHandler.c:966
+#: rewrite/rewriteHandler.c:934 rewrite/rewriteHandler.c:1000
 #, c-format
 msgid "Column \"%s\" is an identity column defined as GENERATED ALWAYS."
 msgstr ""
 "Столбец \"%s\" является столбцом идентификации со свойством GENERATED ALWAYS."
 
-#: rewrite/rewriteHandler.c:902
+#: rewrite/rewriteHandler.c:936
 #, c-format
 msgid "Use OVERRIDING SYSTEM VALUE to override."
 msgstr "Для переопределения укажите OVERRIDING SYSTEM VALUE."
 
-#: rewrite/rewriteHandler.c:964 rewrite/rewriteHandler.c:972
+#: rewrite/rewriteHandler.c:998 rewrite/rewriteHandler.c:1006
 #, c-format
 msgid "column \"%s\" can only be updated to DEFAULT"
 msgstr "столбцу \"%s\" можно присвоить только значение DEFAULT"
 
-#: rewrite/rewriteHandler.c:1107 rewrite/rewriteHandler.c:1125
+#: rewrite/rewriteHandler.c:1141 rewrite/rewriteHandler.c:1159
 #, c-format
 msgid "multiple assignments to same column \"%s\""
 msgstr "многочисленные присвоения одному столбцу \"%s\""
 
-#: rewrite/rewriteHandler.c:1726 rewrite/rewriteHandler.c:3181
+#: rewrite/rewriteHandler.c:1760 rewrite/rewriteHandler.c:3246
 #, c-format
 msgid "access to non-system view \"%s\" is restricted"
 msgstr "доступ к несистемному представлению \"%s\" ограничен"
 
-#: rewrite/rewriteHandler.c:2158 rewrite/rewriteHandler.c:4084
+#: rewrite/rewriteHandler.c:2192 rewrite/rewriteHandler.c:4149
 #, c-format
 msgid "infinite recursion detected in rules for relation \"%s\""
 msgstr "обнаружена бесконечная рекурсия в правилах для отношения \"%s\""
 
-#: rewrite/rewriteHandler.c:2263
+#: rewrite/rewriteHandler.c:2297
 #, c-format
 msgid "infinite recursion detected in policy for relation \"%s\""
 msgstr "обнаружена бесконечная рекурсия в политике для отношения \"%s\""
 
-#: rewrite/rewriteHandler.c:2593
+#: rewrite/rewriteHandler.c:2658
 msgid "Junk view columns are not updatable."
 msgstr "Утилизируемые столбцы представлений не обновляются."
 
-#: rewrite/rewriteHandler.c:2598
+#: rewrite/rewriteHandler.c:2663
 msgid ""
 "View columns that are not columns of their base relation are not updatable."
 msgstr ""
 "Столбцы представлений, не являющиеся столбцами базовых отношений, не "
 "обновляются."
 
-#: rewrite/rewriteHandler.c:2601
+#: rewrite/rewriteHandler.c:2666
 msgid "View columns that refer to system columns are not updatable."
 msgstr ""
 "Столбцы представлений, ссылающиеся на системные столбцы, не обновляются."
 
-#: rewrite/rewriteHandler.c:2604
+#: rewrite/rewriteHandler.c:2669
 msgid "View columns that return whole-row references are not updatable."
 msgstr ""
 "Столбцы представлений, возвращающие ссылки на всю строку, не обновляются."
 
-#: rewrite/rewriteHandler.c:2665
+#: rewrite/rewriteHandler.c:2730
 msgid "Views containing DISTINCT are not automatically updatable."
 msgstr "Представления с DISTINCT не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2668
+#: rewrite/rewriteHandler.c:2733
 msgid "Views containing GROUP BY are not automatically updatable."
 msgstr "Представления с GROUP BY не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2671
+#: rewrite/rewriteHandler.c:2736
 msgid "Views containing HAVING are not automatically updatable."
 msgstr "Представления с HAVING не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2674
+#: rewrite/rewriteHandler.c:2739
 msgid ""
 "Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable."
 msgstr ""
 "Представления с UNION, INTERSECT или EXCEPT не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2677
+#: rewrite/rewriteHandler.c:2742
 msgid "Views containing WITH are not automatically updatable."
 msgstr "Представления с WITH не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2680
+#: rewrite/rewriteHandler.c:2745
 msgid "Views containing LIMIT or OFFSET are not automatically updatable."
 msgstr "Представления с LIMIT или OFFSET не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2692
+#: rewrite/rewriteHandler.c:2757
 msgid "Views that return aggregate functions are not automatically updatable."
 msgstr ""
 "Представления, возвращающие агрегатные функции, не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2695
+#: rewrite/rewriteHandler.c:2760
 msgid "Views that return window functions are not automatically updatable."
 msgstr ""
 "Представления, возвращающие оконные функции, не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2698
+#: rewrite/rewriteHandler.c:2763
 msgid ""
 "Views that return set-returning functions are not automatically updatable."
 msgstr ""
 "Представления, возвращающие функции с результатом-множеством, не обновляются "
 "автоматически."
 
-#: rewrite/rewriteHandler.c:2705 rewrite/rewriteHandler.c:2709
-#: rewrite/rewriteHandler.c:2717
+#: rewrite/rewriteHandler.c:2770 rewrite/rewriteHandler.c:2774
+#: rewrite/rewriteHandler.c:2782
 msgid ""
 "Views that do not select from a single table or view are not automatically "
 "updatable."
@@ -22547,27 +22547,27 @@ msgstr ""
 "Представления, выбирающие данные не из одной таблицы или представления, не "
 "обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2720
+#: rewrite/rewriteHandler.c:2785
 msgid "Views containing TABLESAMPLE are not automatically updatable."
 msgstr "Представления, содержащие TABLESAMPLE, не обновляются автоматически."
 
-#: rewrite/rewriteHandler.c:2744
+#: rewrite/rewriteHandler.c:2809
 msgid "Views that have no updatable columns are not automatically updatable."
 msgstr ""
 "Представления, не содержащие обновляемых столбцов, не обновляются "
 "автоматически."
 
-#: rewrite/rewriteHandler.c:3241
+#: rewrite/rewriteHandler.c:3306
 #, c-format
 msgid "cannot insert into column \"%s\" of view \"%s\""
 msgstr "вставить данные в столбец \"%s\" представления \"%s\" нельзя"
 
-#: rewrite/rewriteHandler.c:3249
+#: rewrite/rewriteHandler.c:3314
 #, c-format
 msgid "cannot update column \"%s\" of view \"%s\""
 msgstr "изменить данные в столбце \"%s\" представления \"%s\" нельзя"
 
-#: rewrite/rewriteHandler.c:3747
+#: rewrite/rewriteHandler.c:3812
 #, c-format
 msgid ""
 "DO INSTEAD NOTIFY rules are not supported for data-modifying statements in "
@@ -22576,7 +22576,7 @@ msgstr ""
 "правила DO INSTEAD NOTIFY не поддерживаются в операторах, изменяющих данные, "
 "в WITH"
 
-#: rewrite/rewriteHandler.c:3758
+#: rewrite/rewriteHandler.c:3823
 #, c-format
 msgid ""
 "DO INSTEAD NOTHING rules are not supported for data-modifying statements in "
@@ -22585,7 +22585,7 @@ msgstr ""
 "правила DO INSTEAD NOTHING не поддерживаются в операторах, изменяющих "
 "данные, в WITH"
 
-#: rewrite/rewriteHandler.c:3772
+#: rewrite/rewriteHandler.c:3837
 #, c-format
 msgid ""
 "conditional DO INSTEAD rules are not supported for data-modifying statements "
@@ -22594,13 +22594,13 @@ msgstr ""
 "условные правила DO INSTEAD не поддерживаются для операторов, изменяющих "
 "данные, в WITH"
 
-#: rewrite/rewriteHandler.c:3776
+#: rewrite/rewriteHandler.c:3841
 #, c-format
 msgid "DO ALSO rules are not supported for data-modifying statements in WITH"
 msgstr ""
 "правила DO ALSO не поддерживаются для операторов, изменяющих данные, в WITH"
 
-#: rewrite/rewriteHandler.c:3781
+#: rewrite/rewriteHandler.c:3846
 #, c-format
 msgid ""
 "multi-statement DO INSTEAD rules are not supported for data-modifying "
@@ -22609,8 +22609,8 @@ msgstr ""
 "составные правила DO INSTEAD не поддерживаются для операторов, изменяющих "
 "данные, в WITH"
 
-#: rewrite/rewriteHandler.c:4012 rewrite/rewriteHandler.c:4020
-#: rewrite/rewriteHandler.c:4028
+#: rewrite/rewriteHandler.c:4077 rewrite/rewriteHandler.c:4085
+#: rewrite/rewriteHandler.c:4093
 #, c-format
 msgid ""
 "Views with conditional DO INSTEAD rules are not automatically updatable."
@@ -22618,43 +22618,43 @@ msgstr ""
 "Представления в сочетании с правилами DO INSTEAD с условиями не обновляются "
 "автоматически."
 
-#: rewrite/rewriteHandler.c:4134
+#: rewrite/rewriteHandler.c:4199
 #, c-format
 msgid "cannot perform INSERT RETURNING on relation \"%s\""
 msgstr "выполнить INSERT RETURNING для отношения \"%s\" нельзя"
 
-#: rewrite/rewriteHandler.c:4136
+#: rewrite/rewriteHandler.c:4201
 #, c-format
 msgid ""
 "You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause."
 msgstr ""
 "Необходимо безусловное правило ON INSERT DO INSTEAD с предложением RETURNING."
 
-#: rewrite/rewriteHandler.c:4141
+#: rewrite/rewriteHandler.c:4206
 #, c-format
 msgid "cannot perform UPDATE RETURNING on relation \"%s\""
 msgstr "выполнить UPDATE RETURNING для отношения \"%s\" нельзя"
 
-#: rewrite/rewriteHandler.c:4143
+#: rewrite/rewriteHandler.c:4208
 #, c-format
 msgid ""
 "You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause."
 msgstr ""
 "Необходимо безусловное правило ON UPDATE DO INSTEAD с предложением RETURNING."
 
-#: rewrite/rewriteHandler.c:4148
+#: rewrite/rewriteHandler.c:4213
 #, c-format
 msgid "cannot perform DELETE RETURNING on relation \"%s\""
 msgstr "выполнить DELETE RETURNING для отношения \"%s\" нельзя"
 
-#: rewrite/rewriteHandler.c:4150
+#: rewrite/rewriteHandler.c:4215
 #, c-format
 msgid ""
 "You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause."
 msgstr ""
 "Необходимо безусловное правило ON DELETE DO INSTEAD с предложением RETURNING."
 
-#: rewrite/rewriteHandler.c:4168
+#: rewrite/rewriteHandler.c:4233
 #, c-format
 msgid ""
 "INSERT with ON CONFLICT clause cannot be used with table that has INSERT or "
@@ -22663,7 +22663,7 @@ msgstr ""
 "INSERT c предложением ON CONFLICT нельзя использовать с таблицей, для "
 "которой заданы правила INSERT или UPDATE"
 
-#: rewrite/rewriteHandler.c:4225
+#: rewrite/rewriteHandler.c:4290
 #, c-format
 msgid ""
 "WITH cannot be used in a query that is rewritten by rules into multiple "
@@ -24150,12 +24150,12 @@ msgid "missing Dictionary parameter"
 msgstr "отсутствует параметр Dictionary"
 
 #: tsearch/spell.c:383 tsearch/spell.c:400 tsearch/spell.c:409
-#: tsearch/spell.c:1060
+#: tsearch/spell.c:1072
 #, c-format
 msgid "invalid affix flag \"%s\""
 msgstr "неверный флаг аффиксов \"%s\""
 
-#: tsearch/spell.c:387 tsearch/spell.c:1064
+#: tsearch/spell.c:387 tsearch/spell.c:1076
 #, c-format
 msgid "affix flag \"%s\" is out of range"
 msgstr "флаг аффикса \"%s\" вне диапазона"
@@ -24180,24 +24180,24 @@ msgstr "не удалось открыть файл словаря \"%s\": %m"
 msgid "invalid regular expression: %s"
 msgstr "неверное регулярное выражение: %s"
 
-#: tsearch/spell.c:982 tsearch/spell.c:998 tsearch/spell.c:1014
-#: tsearch/spell.c:1030 tsearch/spell.c:1095 gram.y:16630 gram.y:16647
+#: tsearch/spell.c:991 tsearch/spell.c:1008 tsearch/spell.c:1025
+#: tsearch/spell.c:1042 tsearch/spell.c:1107 gram.y:16630 gram.y:16647
 #, c-format
 msgid "syntax error"
 msgstr "ошибка синтаксиса"
 
-#: tsearch/spell.c:1187 tsearch/spell.c:1199 tsearch/spell.c:1758
-#: tsearch/spell.c:1763 tsearch/spell.c:1768
+#: tsearch/spell.c:1201 tsearch/spell.c:1213 tsearch/spell.c:1772
+#: tsearch/spell.c:1777 tsearch/spell.c:1782
 #, c-format
 msgid "invalid affix alias \"%s\""
 msgstr "неверное указание аффикса \"%s\""
 
-#: tsearch/spell.c:1240 tsearch/spell.c:1311 tsearch/spell.c:1460
+#: tsearch/spell.c:1254 tsearch/spell.c:1325 tsearch/spell.c:1474
 #, c-format
 msgid "could not open affix file \"%s\": %m"
 msgstr "не удалось открыть файл аффиксов \"%s\": %m"
 
-#: tsearch/spell.c:1294
+#: tsearch/spell.c:1308
 #, c-format
 msgid ""
 "Ispell dictionary supports only \"default\", \"long\", and \"num\" flag "
@@ -24206,17 +24206,17 @@ msgstr ""
 "словарь Ispell поддерживает для флага только значения \"default\", \"long\" "
 "и \"num\""
 
-#: tsearch/spell.c:1338
+#: tsearch/spell.c:1352
 #, c-format
 msgid "invalid number of flag vector aliases"
 msgstr "неверное количество векторов флагов"
 
-#: tsearch/spell.c:1361
+#: tsearch/spell.c:1375
 #, c-format
 msgid "number of aliases exceeds specified number %d"
 msgstr "количество псевдонимов превышает заданное число %d"
 
-#: tsearch/spell.c:1575
+#: tsearch/spell.c:1589
 #, c-format
 msgid "affix file contains both old-style and new-style commands"
 msgstr "файл аффиксов содержит команды и в старом, и в новом стиле"
@@ -24578,7 +24578,7 @@ msgstr ""
 "(%s)"
 
 #: utils/adt/arrayfuncs.c:1379 utils/adt/multirangetypes.c:444
-#: utils/adt/rangetypes.c:333 utils/cache/lsyscache.c:2915
+#: utils/adt/rangetypes.c:333 utils/cache/lsyscache.c:2953
 #, c-format
 msgid "no binary input function available for type %s"
 msgstr "для типа %s нет функции ввода двоичных данных"
@@ -24589,7 +24589,7 @@ msgid "improper binary format in array element %d"
 msgstr "неподходящий двоичный формат в элементе массива %d"
 
 #: utils/adt/arrayfuncs.c:1600 utils/adt/multirangetypes.c:449
-#: utils/adt/rangetypes.c:338 utils/cache/lsyscache.c:2948
+#: utils/adt/rangetypes.c:338 utils/cache/lsyscache.c:2986
 #, c-format
 msgid "no binary output function available for type %s"
 msgstr "для типа %s нет функции вывода двоичных данных"
@@ -24834,9 +24834,9 @@ msgstr "TIME(%d)%s: точность должна быть неотрицате�
 msgid "TIME(%d)%s precision reduced to maximum allowed, %d"
 msgstr "TIME(%d)%s: точность уменьшена до дозволенного максимума: %d"
 
-#: utils/adt/date.c:159 utils/adt/date.c:167 utils/adt/formatting.c:4252
-#: utils/adt/formatting.c:4261 utils/adt/formatting.c:4367
-#: utils/adt/formatting.c:4377
+#: utils/adt/date.c:159 utils/adt/date.c:167 utils/adt/formatting.c:4254
+#: utils/adt/formatting.c:4263 utils/adt/formatting.c:4369
+#: utils/adt/formatting.c:4379
 #, c-format
 msgid "date out of range: \"%s\""
 msgstr "дата вне диапазона: \"%s\""
@@ -24881,8 +24881,8 @@ msgstr "дата содержит нераспознанные единицы \"
 #: utils/adt/date.c:1318 utils/adt/date.c:1364 utils/adt/date.c:1920
 #: utils/adt/date.c:1951 utils/adt/date.c:1980 utils/adt/date.c:2844
 #: utils/adt/datetime.c:405 utils/adt/datetime.c:1700
-#: utils/adt/formatting.c:4109 utils/adt/formatting.c:4141
-#: utils/adt/formatting.c:4221 utils/adt/formatting.c:4343 utils/adt/json.c:418
+#: utils/adt/formatting.c:4111 utils/adt/formatting.c:4143
+#: utils/adt/formatting.c:4223 utils/adt/formatting.c:4345 utils/adt/json.c:418
 #: utils/adt/json.c:457 utils/adt/timestamp.c:224 utils/adt/timestamp.c:256
 #: utils/adt/timestamp.c:698 utils/adt/timestamp.c:707
 #: utils/adt/timestamp.c:785 utils/adt/timestamp.c:818
@@ -24910,7 +24910,7 @@ msgstr "дата содержит нераспознанные единицы \"
 msgid "timestamp out of range"
 msgstr "timestamp вне диапазона"
 
-#: utils/adt/date.c:1537 utils/adt/date.c:2339 utils/adt/formatting.c:4429
+#: utils/adt/date.c:1537 utils/adt/date.c:2339 utils/adt/formatting.c:4431
 #, c-format
 msgid "time out of range"
 msgstr "время вне диапазона"
@@ -25199,106 +25199,106 @@ msgstr "неправильная спецификация формата для 
 msgid "Intervals are not tied to specific calendar dates."
 msgstr "Интервалы не привязываются к определённым календарным датам."
 
-#: utils/adt/formatting.c:1157
+#: utils/adt/formatting.c:1159
 #, c-format
 msgid "\"EEEE\" must be the last pattern used"
 msgstr "\"EEEE\" может быть только последним шаблоном"
 
-#: utils/adt/formatting.c:1165
+#: utils/adt/formatting.c:1167
 #, c-format
 msgid "\"9\" must be ahead of \"PR\""
 msgstr "\"9\" должна стоять до \"PR\""
 
-#: utils/adt/formatting.c:1181
+#: utils/adt/formatting.c:1183
 #, c-format
 msgid "\"0\" must be ahead of \"PR\""
 msgstr "\"0\" должен стоять до \"PR\""
 
-#: utils/adt/formatting.c:1208
+#: utils/adt/formatting.c:1210
 #, c-format
 msgid "multiple decimal points"
 msgstr "многочисленные десятичные точки"
 
-#: utils/adt/formatting.c:1212 utils/adt/formatting.c:1295
+#: utils/adt/formatting.c:1214 utils/adt/formatting.c:1297
 #, c-format
 msgid "cannot use \"V\" and decimal point together"
 msgstr "нельзя использовать \"V\" вместе с десятичной точкой"
 
-#: utils/adt/formatting.c:1224
+#: utils/adt/formatting.c:1226
 #, c-format
 msgid "cannot use \"S\" twice"
 msgstr "нельзя использовать \"S\" дважды"
 
-#: utils/adt/formatting.c:1228
+#: utils/adt/formatting.c:1230
 #, c-format
 msgid "cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together"
 msgstr "нельзя использовать \"S\" вместе с \"PL\"/\"MI\"/\"SG\"/\"PR\""
 
-#: utils/adt/formatting.c:1248
+#: utils/adt/formatting.c:1250
 #, c-format
 msgid "cannot use \"S\" and \"MI\" together"
 msgstr "нельзя использовать \"S\" вместе с \"MI\""
 
-#: utils/adt/formatting.c:1258
+#: utils/adt/formatting.c:1260
 #, c-format
 msgid "cannot use \"S\" and \"PL\" together"
 msgstr "нельзя использовать \"S\" вместе с \"PL\""
 
-#: utils/adt/formatting.c:1268
+#: utils/adt/formatting.c:1270
 #, c-format
 msgid "cannot use \"S\" and \"SG\" together"
 msgstr "нельзя использовать \"S\" вместе с \"SG\""
 
-#: utils/adt/formatting.c:1277
+#: utils/adt/formatting.c:1279
 #, c-format
 msgid "cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together"
 msgstr "нельзя использовать \"PR\" вместе с \"S\"/\"PL\"/\"MI\"/\"SG\""
 
-#: utils/adt/formatting.c:1303
+#: utils/adt/formatting.c:1305
 #, c-format
 msgid "cannot use \"EEEE\" twice"
 msgstr "нельзя использовать \"EEEE\" дважды"
 
-#: utils/adt/formatting.c:1309
+#: utils/adt/formatting.c:1311
 #, c-format
 msgid "\"EEEE\" is incompatible with other formats"
 msgstr "\"EEEE\" несовместим с другими форматами"
 
-#: utils/adt/formatting.c:1310
+#: utils/adt/formatting.c:1312
 #, c-format
 msgid ""
 "\"EEEE\" may only be used together with digit and decimal point patterns."
 msgstr ""
 "\"EEEE\" может использоваться только с шаблонами цифр и десятичной точки."
 
-#: utils/adt/formatting.c:1394
+#: utils/adt/formatting.c:1396
 #, c-format
 msgid "invalid datetime format separator: \"%s\""
 msgstr "неверный разделитель в формате datetime: \"%s\""
 
-#: utils/adt/formatting.c:1521
+#: utils/adt/formatting.c:1523
 #, c-format
 msgid "\"%s\" is not a number"
 msgstr "\"%s\" не является числом"
 
-#: utils/adt/formatting.c:1599
+#: utils/adt/formatting.c:1601
 #, c-format
 msgid "case conversion failed: %s"
 msgstr "преобразовать регистр не удалось: %s"
 
-#: utils/adt/formatting.c:1664 utils/adt/formatting.c:1788
-#: utils/adt/formatting.c:1913
+#: utils/adt/formatting.c:1666 utils/adt/formatting.c:1790
+#: utils/adt/formatting.c:1915
 #, c-format
 msgid "could not determine which collation to use for %s function"
 msgstr ""
 "не удалось определить, какое правило сортировки использовать для функции %s"
 
-#: utils/adt/formatting.c:2285
+#: utils/adt/formatting.c:2287
 #, c-format
 msgid "invalid combination of date conventions"
 msgstr "неверное сочетание стилей дат"
 
-#: utils/adt/formatting.c:2286
+#: utils/adt/formatting.c:2288
 #, c-format
 msgid ""
 "Do not mix Gregorian and ISO week date conventions in a formatting template."
@@ -25306,27 +25306,27 @@ msgstr ""
 "Не смешивайте Григорианский стиль дат (недель) с ISO в одном шаблоне "
 "форматирования."
 
-#: utils/adt/formatting.c:2309
+#: utils/adt/formatting.c:2311
 #, c-format
 msgid "conflicting values for \"%s\" field in formatting string"
 msgstr "конфликтующие значения поля \"%s\" в строке форматирования"
 
-#: utils/adt/formatting.c:2312
+#: utils/adt/formatting.c:2314
 #, c-format
 msgid "This value contradicts a previous setting for the same field type."
 msgstr "Это значение противоречит предыдущему значению поля того же типа."
 
-#: utils/adt/formatting.c:2383
+#: utils/adt/formatting.c:2385
 #, c-format
 msgid "source string too short for \"%s\" formatting field"
 msgstr "входная строка короче, чем требует поле форматирования \"%s\""
 
-#: utils/adt/formatting.c:2386
+#: utils/adt/formatting.c:2388
 #, c-format
 msgid "Field requires %d characters, but only %d remain."
 msgstr "Требуется символов: %d, а осталось только %d."
 
-#: utils/adt/formatting.c:2389 utils/adt/formatting.c:2404
+#: utils/adt/formatting.c:2391 utils/adt/formatting.c:2406
 #, c-format
 msgid ""
 "If your source string is not fixed-width, try using the \"FM\" modifier."
@@ -25334,132 +25334,132 @@ msgstr ""
 "Если входная строка имеет переменную длину, попробуйте использовать "
 "модификатор \"FM\"."
 
-#: utils/adt/formatting.c:2399 utils/adt/formatting.c:2413
-#: utils/adt/formatting.c:2636
+#: utils/adt/formatting.c:2401 utils/adt/formatting.c:2415
+#: utils/adt/formatting.c:2638
 #, c-format
 msgid "invalid value \"%s\" for \"%s\""
 msgstr "неверное значение \"%s\" для \"%s\""
 
-#: utils/adt/formatting.c:2401
+#: utils/adt/formatting.c:2403
 #, c-format
 msgid "Field requires %d characters, but only %d could be parsed."
 msgstr "Поле должно поглотить символов: %d, но удалось разобрать только %d."
 
-#: utils/adt/formatting.c:2415
+#: utils/adt/formatting.c:2417
 #, c-format
 msgid "Value must be an integer."
 msgstr "Значение должно быть целым числом."
 
-#: utils/adt/formatting.c:2420
+#: utils/adt/formatting.c:2422
 #, c-format
 msgid "value for \"%s\" in source string is out of range"
 msgstr "значение \"%s\" во входной строке вне диапазона"
 
-#: utils/adt/formatting.c:2422
+#: utils/adt/formatting.c:2424
 #, c-format
 msgid "Value must be in the range %d to %d."
 msgstr "Значение должно быть в интервале %d..%d."
 
-#: utils/adt/formatting.c:2638
+#: utils/adt/formatting.c:2640
 #, c-format
 msgid "The given value did not match any of the allowed values for this field."
 msgstr ""
 "Данное значение не соответствует ни одному из допустимых значений для этого "
 "поля."
 
-#: utils/adt/formatting.c:2855 utils/adt/formatting.c:2875
-#: utils/adt/formatting.c:2895 utils/adt/formatting.c:2915
-#: utils/adt/formatting.c:2934 utils/adt/formatting.c:2953
-#: utils/adt/formatting.c:2977 utils/adt/formatting.c:2995
-#: utils/adt/formatting.c:3013 utils/adt/formatting.c:3031
-#: utils/adt/formatting.c:3048 utils/adt/formatting.c:3065
+#: utils/adt/formatting.c:2857 utils/adt/formatting.c:2877
+#: utils/adt/formatting.c:2897 utils/adt/formatting.c:2917
+#: utils/adt/formatting.c:2936 utils/adt/formatting.c:2955
+#: utils/adt/formatting.c:2979 utils/adt/formatting.c:2997
+#: utils/adt/formatting.c:3015 utils/adt/formatting.c:3033
+#: utils/adt/formatting.c:3050 utils/adt/formatting.c:3067
 #, c-format
 msgid "localized string format value too long"
 msgstr "слишком длинное значение формата локализованной строки"
 
-#: utils/adt/formatting.c:3342
+#: utils/adt/formatting.c:3344
 #, c-format
 msgid "unmatched format separator \"%c\""
 msgstr "нет соответствия для заданного в формате разделителя \"%c\""
 
-#: utils/adt/formatting.c:3403
+#: utils/adt/formatting.c:3405
 #, c-format
 msgid "unmatched format character \"%s\""
 msgstr "нет соответствия для заданного в формате символа \"%s\""
 
-#: utils/adt/formatting.c:3509 utils/adt/formatting.c:3853
+#: utils/adt/formatting.c:3511 utils/adt/formatting.c:3855
 #, c-format
 msgid "formatting field \"%s\" is only supported in to_char"
 msgstr "поле форматирования \"%s\" поддерживается только в функции to_char"
 
-#: utils/adt/formatting.c:3684
+#: utils/adt/formatting.c:3686
 #, c-format
 msgid "invalid input string for \"Y,YYY\""
 msgstr "ошибка синтаксиса в значении для шаблона \"Y,YYY\""
 
-#: utils/adt/formatting.c:3770
+#: utils/adt/formatting.c:3772
 #, c-format
 msgid "input string is too short for datetime format"
 msgstr "входная строка короче, чем требует формат datetime"
 
-#: utils/adt/formatting.c:3778
+#: utils/adt/formatting.c:3780
 #, c-format
 msgid "trailing characters remain in input string after datetime format"
 msgstr ""
 "после разбора формата datetime во входной строке остались дополнительные "
 "символы"
 
-#: utils/adt/formatting.c:4323
+#: utils/adt/formatting.c:4325
 #, c-format
 msgid "missing time zone in input string for type timestamptz"
 msgstr "во входной строке для типа timestamptz нет указания часового пояса"
 
-#: utils/adt/formatting.c:4329
+#: utils/adt/formatting.c:4331
 #, c-format
 msgid "timestamptz out of range"
 msgstr "значение timestamptz вне диапазона"
 
-#: utils/adt/formatting.c:4357
+#: utils/adt/formatting.c:4359
 #, c-format
 msgid "datetime format is zoned but not timed"
 msgstr "в формате datetime указан часовой пояс, но отсутствует время"
 
-#: utils/adt/formatting.c:4409
+#: utils/adt/formatting.c:4411
 #, c-format
 msgid "missing time zone in input string for type timetz"
 msgstr "во входной строке для типа timetz нет указания часового пояса"
 
-#: utils/adt/formatting.c:4415
+#: utils/adt/formatting.c:4417
 #, c-format
 msgid "timetz out of range"
 msgstr "значение timetz вне диапазона"
 
-#: utils/adt/formatting.c:4441
+#: utils/adt/formatting.c:4443
 #, c-format
 msgid "datetime format is not dated and not timed"
 msgstr "в формате datetime нет ни даты, ни времени"
 
-#: utils/adt/formatting.c:4574
+#: utils/adt/formatting.c:4576
 #, c-format
 msgid "hour \"%d\" is invalid for the 12-hour clock"
 msgstr "час \"%d\" не соответствует 12-часовому формату времени"
 
-#: utils/adt/formatting.c:4576
+#: utils/adt/formatting.c:4578
 #, c-format
 msgid "Use the 24-hour clock, or give an hour between 1 and 12."
 msgstr "Используйте 24-часовой формат или передавайте часы от 1 до 12."
 
-#: utils/adt/formatting.c:4687
+#: utils/adt/formatting.c:4689
 #, c-format
 msgid "cannot calculate day of year without year information"
 msgstr "нельзя рассчитать день года без информации о годе"
 
-#: utils/adt/formatting.c:5608
+#: utils/adt/formatting.c:5621
 #, c-format
 msgid "\"EEEE\" not supported for input"
 msgstr "\"EEEE\" не поддерживается при вводе"
 
-#: utils/adt/formatting.c:5620
+#: utils/adt/formatting.c:5633
 #, c-format
 msgid "\"RN\" not supported for input"
 msgstr "\"RN\" не поддерживается при вводе"
@@ -27793,23 +27793,23 @@ msgstr "путь отбираемого столбца не должен быт�
 msgid "more than one value returned by column XPath expression"
 msgstr "выражение XPath, отбирающее столбец, возвратило более одного значения"
 
-#: utils/cache/lsyscache.c:1042
+#: utils/cache/lsyscache.c:1080
 #, c-format
 msgid "cast from type %s to type %s does not exist"
 msgstr "приведение типа %s к типу %s не существует"
 
-#: utils/cache/lsyscache.c:2844 utils/cache/lsyscache.c:2877
-#: utils/cache/lsyscache.c:2910 utils/cache/lsyscache.c:2943
+#: utils/cache/lsyscache.c:2882 utils/cache/lsyscache.c:2915
+#: utils/cache/lsyscache.c:2948 utils/cache/lsyscache.c:2981
 #, c-format
 msgid "type %s is only a shell"
 msgstr "тип %s является пустышкой"
 
-#: utils/cache/lsyscache.c:2849
+#: utils/cache/lsyscache.c:2887
 #, c-format
 msgid "no input function available for type %s"
 msgstr "для типа %s нет функции ввода"
 
-#: utils/cache/lsyscache.c:2882
+#: utils/cache/lsyscache.c:2920
 #, c-format
 msgid "no output function available for type %s"
 msgstr "для типа %s нет функции вывода"
@@ -31552,14 +31552,14 @@ msgstr "Данные содержат дублирующиеся ключи."
 #: utils/sort/tuplestore.c:518 utils/sort/tuplestore.c:528
 #: utils/sort/tuplestore.c:869 utils/sort/tuplestore.c:973
 #: utils/sort/tuplestore.c:1037 utils/sort/tuplestore.c:1054
-#: utils/sort/tuplestore.c:1256 utils/sort/tuplestore.c:1321
-#: utils/sort/tuplestore.c:1330
+#: utils/sort/tuplestore.c:1268 utils/sort/tuplestore.c:1333
+#: utils/sort/tuplestore.c:1342
 #, c-format
 msgid "could not seek in tuplestore temporary file"
 msgstr "не удалось переместиться во временном файле хранилища кортежей"
 
-#: utils/sort/tuplestore.c:1477 utils/sort/tuplestore.c:1540
-#: utils/sort/tuplestore.c:1548
+#: utils/sort/tuplestore.c:1491 utils/sort/tuplestore.c:1554
+#: utils/sort/tuplestore.c:1562
 #, c-format
 msgid ""
 "could not read from tuplestore temporary file: read only %zu of %zu bytes"
