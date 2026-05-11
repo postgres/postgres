@@ -295,6 +295,9 @@ bbstreamer_tar_header(bbstreamer_tar_parser *mystreamer)
 	strlcpy(member->pathname, &buffer[0], MAXPGPATH);
 	if (member->pathname[0] == '\0')
 		pg_fatal("tar member has empty name");
+	if (!path_is_safe_for_extraction(member->pathname))
+		pg_fatal("tar member has unsafe path name: \"%s\"",
+				 member->pathname);
 	member->size = read_tar_number(&buffer[124], 12);
 	member->mode = read_tar_number(&buffer[100], 8);
 	member->uid = read_tar_number(&buffer[108], 8);
