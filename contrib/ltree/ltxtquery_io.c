@@ -271,31 +271,60 @@ makepol(QPRS_STATE *state)
 	return END;
 }
 
+/*
+ * Recursively fill the "left" fields of an ITEM array that represents
+ * a valid postfix tree.
+ *
+ *	ptr: starting element of array
+ *	pos: in/out argument, the array index this call is responsible to fill
+ *
+ * At exit, *pos has been incremented to point after the sub-tree whose
+ * top is the entry-time value of *pos.
+ */
 static void
 findoprnd(ITEM *ptr, int32 *pos)
 {
+	int32		mypos;
+
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
 
-	if (ptr[*pos].type == VAL || ptr[*pos].type == VALTRUE)
+	/* get the position this call is supposed to update */
+	mypos = *pos;
+
+	/* in all cases, we should increment *pos to advance over this item */
+	(*pos)++;
+
+	if (ptr[mypos].type == VAL || ptr[mypos].type == VALTRUE)
 	{
-		ptr[*pos].left = 0;
-		(*pos)++;
+		/* base case: a VAL has no operand, so just set its left to zero */
+		ptr[mypos].left = 0;
 	}
-	else if (ptr[*pos].val == (int32) '!')
+	else if (ptr[mypos].val == (int32) '!')
 	{
-		ptr[*pos].left = 1;
-		(*pos)++;
+		/* unary operator, likewise easy: operand is just after it */
+		ptr[mypos].left = 1;
+		/* recurse to scan operand */
 		findoprnd(ptr, pos);
 	}
 	else
 	{
-		ITEM	   *curitem = &ptr[*pos];
-		int32		tmp = *pos;
+		/* binary operator */
+		int32		delta;
 
-		(*pos)++;
+		/* recurse to scan right operand */
 		findoprnd(ptr, pos);
-		curitem->left = *pos - tmp;
+		/* we must fill left with offset to left operand's top */
+		/* delta can't overflow, see LTXTQUERY_TOO_BIG ... */
+		delta = *pos - mypos;
+		/* ... but it might be too large to fit in the 16-bit left field */
+		Assert(delta > 0);
+		if (unlikely(delta > PG_INT16_MAX))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("ltxtquery is too large")));
+		ptr[mypos].left = (int16) delta;
+		/* recurse to scan left operand */
 		findoprnd(ptr, pos);
 	}
 }
@@ -372,6 +401,8 @@ queryin(char *buf)
 	/* set left operand's position for every operator */
 	pos = 0;
 	findoprnd(ptr, &pos);
+	/* if successful, findoprnd should have scanned the whole array */
+	Assert(pos == state.num);
 
 	return query;
 }

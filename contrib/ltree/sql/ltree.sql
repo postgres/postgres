@@ -246,6 +246,9 @@ SELECT 'tree.awdfg'::ltree @ 'tree & aWdfg@'::ltxtquery;
 SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_qw%*'::ltxtquery;
 SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_rw%*'::ltxtquery;
 
+SELECT (SELECT 'a | ' || string_agg('b', ' & ')
+        FROM generate_series(1, 17000) AS i)::ltxtquery;
+
 --arrays
 
 SELECT '{1.2.3}'::ltree[] @> '1.2.3.4';

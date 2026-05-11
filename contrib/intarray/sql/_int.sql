@@ -74,6 +74,8 @@ SELECT '1&(2&(4&(5&6)))'::query_int;
 SELECT '1&2&4&5&6'::query_int;
 SELECT '1&(2&(4&(5|6)))'::query_int;
 SELECT '1&(2&(4&(5|!6)))'::query_int;
+SELECT (SELECT '0 | ' || string_agg(i::text, ' & ')
+        FROM generate_series(1, 17000) AS i)::query_int;
 
 
 CREATE TABLE test__int( a int[] );
