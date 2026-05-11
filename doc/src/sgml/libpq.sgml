@@ -5722,15 +5722,20 @@ int PQrequestCancel(PGconn *conn);
    to send simple function calls to the server.
   </para>
 
-  <tip>
+  <warning>
    <para>
-    This interface is somewhat obsolete, as one can achieve similar
+    This interface is unsafe and should not be used.  When
+    <parameter>result_is_int</parameter> is set to <literal>0</literal>,
+    <function>PQfn</function> may write data beyond the end of
+    <parameter>result_buf</parameter>, regardless of whether the buffer has
+    enough space for the requested number of bytes.  Furthermore, it is
+    obsolete, as one can achieve similar
     performance and greater functionality by setting up a prepared
     statement to define the function call.  Then, executing the statement
     with binary transmission of parameters and results substitutes for a
     fast-path function call.
    </para>
-  </tip>
+  </warning>
 
   <para>
    The function <function id="libpq-PQfn">PQfn</function><indexterm><primary>PQfn</primary></indexterm>
