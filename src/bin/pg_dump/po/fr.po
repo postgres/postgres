@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-19 19:24+0000\n"
-"PO-Revision-Date: 2025-09-20 10:56+0200\n"
+"POT-Creation-Date: 2026-04-24 03:13+0000\n"
+"PO-Revision-Date: 2026-04-24 17:53+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.7\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -44,8 +44,8 @@ msgid "hint: "
 msgstr "astuce :  "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
-#: ../../common/compression.c:150 compress_gzip.c:428 compress_gzip.c:435
-#: compress_io.c:109 compress_lz4.c:801 compress_lz4.c:808 compress_zstd.c:26
+#: ../../common/compression.c:150 compress_gzip.c:441 compress_gzip.c:448
+#: compress_io.c:109 compress_lz4.c:810 compress_lz4.c:817 compress_zstd.c:26
 #: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
@@ -400,43 +400,43 @@ msgstr "n'a pas pu analyser le tableau numérique « %s » : trop de nombres"
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "n'a pas pu analyser le tableau numérique « %s » : caractère invalide dans le nombre"
 
-#: compress_gzip.c:69 compress_gzip.c:183
+#: compress_gzip.c:78 compress_gzip.c:192
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "n'a pas pu initialiser la bibliothèque de compression : %s"
 
-#: compress_gzip.c:93
+#: compress_gzip.c:102
 #, c-format
 msgid "could not close compression stream: %s"
 msgstr "n'a pas pu fermer le flux de compression : %s"
 
-#: compress_gzip.c:113 compress_lz4.c:229 compress_zstd.c:110
+#: compress_gzip.c:122 compress_lz4.c:229 compress_zstd.c:110
 #, c-format
 msgid "could not compress data: %s"
 msgstr "n'a pas pu compresser les données : %s"
 
-#: compress_gzip.c:199 compress_gzip.c:214
+#: compress_gzip.c:208 compress_gzip.c:223
 #, c-format
 msgid "could not uncompress data: %s"
 msgstr "n'a pas pu décompresser les données : %s"
 
-#: compress_gzip.c:221
+#: compress_gzip.c:230
 #, c-format
 msgid "could not close compression library: %s"
 msgstr "n'a pas pu fermer la bibliothèque de compression : %s"
 
-#: compress_gzip.c:277 compress_gzip.c:310 compress_lz4.c:514
+#: compress_gzip.c:290 compress_gzip.c:323 compress_lz4.c:514
 #: compress_lz4.c:617 compress_lz4.c:634 compress_none.c:94 compress_none.c:136
 #, c-format
 msgid "could not read from input file: %s"
 msgstr "n'a pas pu lire à partir du fichier en entrée : %s"
 
-#: compress_gzip.c:294 compress_zstd.c:381
+#: compress_gzip.c:307 compress_zstd.c:381
 #, c-format
 msgid "could not write to file: %s"
 msgstr "n'a pas pu écrire dans le fichier : %s"
 
-#: compress_gzip.c:312 compress_lz4.c:636 compress_none.c:138
+#: compress_gzip.c:325 compress_lz4.c:636 compress_none.c:138
 #: compress_zstd.c:399 pg_backup_custom.c:653 pg_backup_directory.c:535
 #: pg_backup_tar.c:725 pg_backup_tar.c:748
 #, c-format
@@ -458,7 +458,7 @@ msgstr "n'a pas pu décompresser : %s"
 msgid "could not free LZ4 decompression context: %s"
 msgstr "n'a pas pu libérer le contexte de décompression LZ4 : %s"
 
-#: compress_lz4.c:261 compress_lz4.c:268 compress_lz4.c:690 compress_lz4.c:705
+#: compress_lz4.c:261 compress_lz4.c:268 compress_lz4.c:691 compress_lz4.c:709
 #, c-format
 msgid "could not end compression: %s"
 msgstr "n'a pas pu terminer la compression : %s"
@@ -488,17 +488,17 @@ msgstr "erreur lors de l'écriture : %s"
 msgid "error during writing: %m"
 msgstr "erreur lors de l'écriture : %m"
 
-#: compress_lz4.c:699
+#: compress_lz4.c:701
 #, c-format
 msgid "could not write to output file: %m"
 msgstr "n'a pas pu écrire dans le fichier en sortie : %m"
 
-#: compress_lz4.c:712
+#: compress_lz4.c:719
 #, c-format
 msgid "could not end decompression: %s"
 msgstr "n'a pas pu terminer la décompression : %s"
 
-#: compress_lz4.c:727 compress_none.c:157
+#: compress_lz4.c:736 compress_none.c:157
 #, c-format
 msgid "could not close file: %m"
 msgstr "n'a pas pu fermer le fichier : %m"
@@ -1122,12 +1122,12 @@ msgstr "compression activée"
 msgid "could not get server_version from libpq"
 msgstr "n'a pas pu obtenir server_version de libpq"
 
-#: pg_backup_db.c:53 pg_dumpall.c:1906
+#: pg_backup_db.c:53 pg_dumpall.c:1917
 #, c-format
 msgid "aborting because of server version mismatch"
 msgstr "annulation à cause de la différence des versions"
 
-#: pg_backup_db.c:54 pg_dumpall.c:1907
+#: pg_backup_db.c:54 pg_dumpall.c:1918
 #, c-format
 msgid "server version: %s; %s version: %s"
 msgstr "version du serveur : %s ; %s version : %s"
@@ -1137,7 +1137,7 @@ msgstr "version du serveur : %s ; %s version : %s"
 msgid "already connected to a database"
 msgstr "déjà connecté à une base de données"
 
-#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1753 pg_dumpall.c:1855
+#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1764 pg_dumpall.c:1866
 msgid "Password: "
 msgstr "Mot de passe : "
 
@@ -1151,18 +1151,18 @@ msgstr "n'a pas pu se connecter à la base de données"
 msgid "reconnection failed: %s"
 msgstr "échec de la reconnexion : %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:776 pg_dump_sort.c:1503
-#: pg_dump_sort.c:1523 pg_dumpall.c:1780 pg_dumpall.c:1864
+#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:776 pg_dump_sort.c:1504
+#: pg_dump_sort.c:1524 pg_dumpall.c:1791 pg_dumpall.c:1875
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:271 pg_dumpall.c:1969 pg_dumpall.c:1992
+#: pg_backup_db.c:271 pg_dumpall.c:1980 pg_dumpall.c:2003
 #, c-format
 msgid "query failed: %s"
 msgstr "échec de la requête : %s"
 
-#: pg_backup_db.c:273 pg_dumpall.c:1970 pg_dumpall.c:1993
+#: pg_backup_db.c:273 pg_dumpall.c:1981 pg_dumpall.c:2004
 #, c-format
 msgid "Query was: %s"
 msgstr "La requête était : %s"
@@ -1964,7 +1964,7 @@ msgstr "les sauvegardes parallélisées sur un serveur standby ne sont pas suppo
 msgid "invalid output format \"%s\" specified"
 msgstr "format de sortie « %s » invalide"
 
-#: pg_dump.c:1439 pg_dump.c:1495 pg_dump.c:1548 pg_dumpall.c:1543
+#: pg_dump.c:1439 pg_dump.c:1495 pg_dump.c:1548 pg_dumpall.c:1554
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "mauvaise qualification du nom (trop de points entre les noms) : %s"
@@ -2390,39 +2390,39 @@ msgstr "pas d'objet référant %u %u"
 msgid "no referenced object %u %u"
 msgstr "pas d'objet référencé %u %u"
 
-#: pg_dump_sort.c:645
+#: pg_dump_sort.c:646
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "dumpId %d invalide"
 
-#: pg_dump_sort.c:651
+#: pg_dump_sort.c:652
 #, c-format
 msgid "invalid dependency %d"
 msgstr "dépendance invalide %d"
 
-#: pg_dump_sort.c:884
+#: pg_dump_sort.c:885
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "n'a pas pu identifier la boucle de dépendance"
 
-#: pg_dump_sort.c:1499
+#: pg_dump_sort.c:1500
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
 msgstr[0] "NOTE : il existe des constraintes de clés étrangères circulaires sur cette table :"
 msgstr[1] "NOTE : il existe des constraintes de clés étrangères circulaires sur ces tables :"
 
-#: pg_dump_sort.c:1504
+#: pg_dump_sort.c:1505
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
 msgstr "Il est possible de restaurer la sauvegarde sans utiliser --disable-triggers ou sans supprimer temporairement les constraintes."
 
-#: pg_dump_sort.c:1505
+#: pg_dump_sort.c:1506
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
 msgstr "Considérez l'utilisation d'une sauvegarde complète au lieu d'une sauvegarde des données seulement pour éviter ce problème."
 
-#: pg_dump_sort.c:1517
+#: pg_dump_sort.c:1518
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "n'a pas pu résoudre la boucle de dépendances parmi ces éléments :"
@@ -2457,7 +2457,7 @@ msgstr "les options « -g/--globals-only » et « -t/--tablespaces-only » ne pe
 msgid "options -r/--roles-only and -t/--tablespaces-only cannot be used together"
 msgstr "les options « -r/--roles-only » et « -t/--tablespaces-only » ne peuvent pas être utilisées ensemble"
 
-#: pg_dumpall.c:488 pg_dumpall.c:1847
+#: pg_dumpall.c:488 pg_dumpall.c:1858
 #, c-format
 msgid "could not connect to database \"%s\""
 msgstr "n'a pas pu se connecter à la base de données « %s »"
@@ -2572,62 +2572,79 @@ msgid "role name starting with \"pg_\" skipped (%s)"
 msgstr "nom de rôle commençant par « pg_ » ignoré (« %s »)"
 
 #. translator: %s represents a numeric role OID
-#: pg_dumpall.c:1085 pg_dumpall.c:1143 pg_dumpall.c:1152
+#: pg_dumpall.c:1085
 #, c-format
-msgid "found orphaned pg_auth_members entry for role %s"
-msgstr "a trouvé une entrée orpheline dans pg_auth_members pour le rôle %s"
+msgid "ignoring role grant for missing role with OID %s"
+msgstr "ignore la restitution du rôle pour le rôle manquant d'OID %s"
 
-#: pg_dumpall.c:1118
+#: pg_dumpall.c:1123
 #, c-format
 msgid "could not find a legal dump ordering for memberships in role \"%s\""
 msgstr "n'a pas pu trouver un ordre de sauvegarde correct pour les appartenances au rôle « %s »"
 
-#: pg_dumpall.c:1273
+#. translator: %s represents a numeric role OID
+#: pg_dumpall.c:1149
+#, c-format
+msgid "ignoring role grant to missing role with OID %s"
+msgstr "ignore la restitution du rôle vers le rôle manquant d'OID %s"
+
+#. translator: %s represents a numeric role OID
+#: pg_dumpall.c:1164
+#, c-format
+msgid "grant of role \"%s\" to \"%s\" has invalid grantor OID %s"
+msgstr "la restitution du rôle « %s » à « %s » a un OID invalide pour le rôle donneur %s"
+
+#: pg_dumpall.c:1166
+#, c-format
+msgid "This grant will be dumped without GRANTED BY."
+msgstr "Cette restitution de droit sera sauvegardée sans GRANTED BY."
+
+#: pg_dumpall.c:1284
 #, c-format
 msgid "could not parse ACL list (%s) for parameter \"%s\""
 msgstr "n'a pas pu analyser la liste d'ACL (%s) pour le paramètre « %s »"
 
-#: pg_dumpall.c:1391
+#: pg_dumpall.c:1402
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
 msgstr "n'a pas pu analyser la liste d'ACL (%s) pour le tablespace « %s »"
 
-#: pg_dumpall.c:1605
+#: pg_dumpall.c:1616
 #, c-format
 msgid "excluding database \"%s\""
 msgstr "exclusion de la base de données « %s »"
 
-#: pg_dumpall.c:1609
+#: pg_dumpall.c:1620
 #, c-format
 msgid "dumping database \"%s\""
 msgstr "sauvegarde de la base de données « %s »"
 
-#: pg_dumpall.c:1642
+#: pg_dumpall.c:1653
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
 msgstr "échec de pg_dump sur la base de données « %s », quitte"
 
-#: pg_dumpall.c:1648
+#: pg_dumpall.c:1659
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
 msgstr "n'a pas pu ré-ouvrir le fichier de sortie « %s » : %m"
 
-#: pg_dumpall.c:1689
+#: pg_dumpall.c:1700
 #, c-format
 msgid "running \"%s\""
 msgstr "exécute « %s »"
 
-#: pg_dumpall.c:1890
+#: pg_dumpall.c:1901
 #, c-format
 msgid "could not get server version"
 msgstr "n'a pas pu obtenir la version du serveur"
 
-#: pg_dumpall.c:1893
+#: pg_dumpall.c:1904
 #, c-format
 msgid "could not parse server version \"%s\""
 msgstr "n'a pas pu analyser la version du serveur « %s »"
 
-#: pg_dumpall.c:1963 pg_dumpall.c:1986
+#: pg_dumpall.c:1974 pg_dumpall.c:1997
 #, c-format
 msgid "executing %s"
 msgstr "exécution %s"
@@ -2897,6 +2914,10 @@ msgstr ""
 #, c-format
 #~ msgid "could not write to LOs TOC file: %s"
 #~ msgstr "n'a pas pu écrire dans le fichier TOC des Large Objects : %s"
+
+#, c-format
+#~ msgid "found orphaned pg_auth_members entry for role %s"
+#~ msgstr "a trouvé une entrée orpheline dans pg_auth_members pour le rôle %s"
 
 #, c-format
 #~ msgid "unhandled mode \"%s\""

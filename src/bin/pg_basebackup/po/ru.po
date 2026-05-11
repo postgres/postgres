@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 15:31+0300\n"
+"POT-Creation-Date: 2026-05-10 08:01+0300\n"
 "PO-Revision-Date: 2025-11-09 08:45+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -39,8 +39,8 @@ msgstr "подсказка: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
 #: ../../common/compression.c:150 bbstreamer_gzip.c:116 bbstreamer_gzip.c:249
-#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298 bbstreamer_zstd.c:129
-#: bbstreamer_zstd.c:284
+#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298 bbstreamer_zstd.c:126
+#: bbstreamer_zstd.c:281
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "эта сборка программы не поддерживает сжатие %s"
@@ -161,38 +161,38 @@ msgstr "нехватка памяти"
 msgid "could not write to file \"%s\": %m"
 msgstr "не удалось записать в файл \"%s\": %m"
 
-#: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:360
+#: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:362
 #: pg_basebackup.c:1471 pg_basebackup.c:1680
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "не удалось создать файл \"%s\": %m"
 
-#: bbstreamer_file.c:138 pg_recvlogical.c:633
+#: bbstreamer_file.c:138 bbstreamer_file.c:267 pg_recvlogical.c:633
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "не удалось закрыть файл \"%s\": %m"
 
-#: bbstreamer_file.c:275
+#: bbstreamer_file.c:277
 #, c-format
 msgid "unexpected state while extracting archive"
 msgstr "неожиданное состояние при извлечении архива"
 
-#: bbstreamer_file.c:320 pg_basebackup.c:687 pg_basebackup.c:731
+#: bbstreamer_file.c:322 pg_basebackup.c:687 pg_basebackup.c:731
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "не удалось создать каталог \"%s\": %m"
 
-#: bbstreamer_file.c:325
+#: bbstreamer_file.c:327
 #, c-format
 msgid "could not set permissions on directory \"%s\": %m"
 msgstr "не удалось установить права для каталога \"%s\": %m"
 
-#: bbstreamer_file.c:344
+#: bbstreamer_file.c:346
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "не удалось создать символическую ссылку \"%s\" в \"%s\": %m"
 
-#: bbstreamer_file.c:364
+#: bbstreamer_file.c:366
 #, c-format
 msgid "could not set permissions on file \"%s\": %m"
 msgstr "не удалось установить права доступа для файла \"%s\": %m"
@@ -232,7 +232,7 @@ msgstr "не удалось закрыть сжатый файл \"%s\": %m"
 msgid "could not initialize compression library"
 msgstr "не удалось инициализировать библиотеку сжатия"
 
-#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:329
+#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:326
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "не удалось распаковать данные: %s"
@@ -252,7 +252,7 @@ msgstr "не удалось создать контекст сжатия lz4: %s
 msgid "could not write lz4 header: %s"
 msgstr "не удалось записать заголовок lz4: %s"
 
-#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:181 bbstreamer_zstd.c:223
+#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:178 bbstreamer_zstd.c:220
 #, c-format
 msgid "could not compress data: %s"
 msgstr "не удалось сжать данные: %s"
@@ -267,22 +267,22 @@ msgstr "не удалось завершить сжатие lz4: %s"
 msgid "could not initialize compression library: %s"
 msgstr "не удалось инициализировать библиотеку сжатия: %s"
 
-#: bbstreamer_tar.c:244
+#: bbstreamer_tar.c:245
 #, c-format
 msgid "tar file trailer exceeds 2 blocks"
 msgstr "окончание файла tar занимает больше 2 блоков"
 
-#: bbstreamer_tar.c:249
+#: bbstreamer_tar.c:250
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "неожиданное состояние при разборе архива tar"
 
-#: bbstreamer_tar.c:296
+#: bbstreamer_tar.c:297
 #, c-format
 msgid "tar member has empty name"
 msgstr "пустое имя у компонента tar"
 
-#: bbstreamer_tar.c:328
+#: bbstreamer_tar.c:329
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "поток COPY закончился до завершения последнего файла"
@@ -302,12 +302,12 @@ msgstr "не удалось установить для zstd уровень сж
 msgid "could not set compression worker count to %d: %s"
 msgstr "не удалось установить число потоков сжатия %d: %s"
 
-#: bbstreamer_zstd.c:116
+#: bbstreamer_zstd.c:115
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "не удалось включить режим большой дистанции: %s"
 
-#: bbstreamer_zstd.c:275
+#: bbstreamer_zstd.c:272
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "не удалось создать контекст распаковки zstd"
