@@ -985,7 +985,7 @@ check_for_new_tablespace_dir(void)
 	int			tblnum;
 	char		new_tablespace_dir[MAXPGPATH];
 
-	prep_status("Checking for new cluster tablespace directories");
+	prep_status("Checking new cluster tablespace directories");
 
 	for (tblnum = 0; tblnum < new_cluster.num_tablespaces; tblnum++)
 	{
@@ -1859,10 +1859,10 @@ check_for_gist_inet_ops(ClusterInfo *cluster)
 	{
 		fclose(report.file);
 		pg_log(PG_REPORT, "fatal");
-		pg_fatal("Your installation contains indexes that use btree_gist's\n"
-				 "gist_inet_ops or gist_cidr_ops opclasses,\n"
-				 "which cannot be binary-upgraded.  Replace them with indexes\n"
-				 "that use the built-in GiST inet_ops opclass.\n"
+		pg_fatal("Your installation contains indexes that use btree_gist extension's\n"
+				 "gist_inet_ops or gist_cidr_ops operator classes, which cannot be\n"
+				 "binary-upgraded.  Replace them with indexes that use the built-in GiST\n"
+				 "inet_ops operator class.\n"
 				 "A list of indexes with the problem is in the file:\n"
 				 "    %s", report.path);
 	}
@@ -2194,11 +2194,11 @@ check_for_unicode_update(ClusterInfo *cluster)
  * check_new_cluster_replication_slots()
  *
  * Validate the new cluster's readiness for migrating replication slots:
- * - Ensures no existing logical replication slots on the new cluster when
+ * - Ensures no existing logical replication slots in the new cluster when
  *   migrating logical slots.
- * - Ensure conflict detection slot does not exist on the new cluster when
+ * - Ensure conflict detection slot does not exist in the new cluster when
  *   migrating subscriptions with retain_dead_tuples enabled.
- * - Ensure that the parameter settings on the new cluster necessary for
+ * - Ensure that the parameter settings in the new cluster necessary for
  *   creating slots are sufficient.
  */
 static void
@@ -2232,7 +2232,7 @@ check_new_cluster_replication_slots(void)
 
 	conn = connectToServer(&new_cluster, "template1");
 
-	prep_status("Checking for new cluster replication slots");
+	prep_status("Checking new cluster replication slots");
 
 	res = executeQueryOrDie(conn, "SELECT %s AS nslots_on_new, %s AS rdt_slot_on_new "
 							"FROM pg_catalog.pg_replication_slots",
@@ -2263,7 +2263,7 @@ check_new_cluster_replication_slots(void)
 	if (rdt_slot_on_new)
 	{
 		Assert(old_cluster.sub_retain_dead_tuples);
-		pg_fatal("The replication slot \"pg_conflict_detection\" already exists on the new cluster");
+		pg_fatal("replication slot \"%s\" already exists in the new cluster", "pg_conflict_detection");
 	}
 
 	PQclear(res);
@@ -2324,7 +2324,7 @@ check_new_cluster_subscription_configuration(void)
 	if (old_cluster.nsubs == 0)
 		return;
 
-	prep_status("Checking for new cluster configuration for subscriptions");
+	prep_status("Checking new cluster configuration for subscriptions");
 
 	conn = connectToServer(&new_cluster, "template1");
 
@@ -2358,7 +2358,7 @@ check_old_cluster_for_valid_slots(void)
 	char		output_path[MAXPGPATH];
 	FILE	   *script = NULL;
 
-	prep_status("Checking for valid logical replication slots");
+	prep_status("Checking logical replication slots");
 
 	snprintf(output_path, sizeof(output_path), "%s/%s",
 			 log_opts.basedir,
@@ -2484,7 +2484,7 @@ check_old_cluster_subscription_state(void)
 	PGconn	   *conn;
 	int			ntup;
 
-	prep_status("Checking for subscription state");
+	prep_status("Checking subscription state");
 
 	report.file = NULL;
 	snprintf(report.path, sizeof(report.path), "%s/%s",
@@ -2592,7 +2592,7 @@ check_old_cluster_global_names(ClusterInfo *cluster)
 	char		output_path[MAXPGPATH];
 	int			count = 0;
 
-	prep_status("Checking names of databases, roles and tablespaces");
+	prep_status("Checking names of databases, roles, and tablespaces");
 
 	snprintf(output_path, sizeof(output_path), "%s/%s",
 			 log_opts.basedir,
@@ -2635,11 +2635,11 @@ check_old_cluster_global_names(ClusterInfo *cluster)
 	{
 		fclose(script);
 		pg_log(PG_REPORT, "fatal");
-		pg_fatal("All the database, role and tablespace names should have only valid characters. A newline or \n"
-				 "carriage return character is not allowed in these object names.  To fix this, please \n"
-				 "rename these names with valid names. \n"
-				 "To see all %d invalid object names, refer db_role_tablespace_invalid_names.txt file. \n"
-				 "    %s", count, output_path);
+		pg_fatal("Your installation contains databases, roles, or tablespace with names\n"
+				 "with invalid characters (newline or carriage return).  To fix this,\n"
+				 "rename these objects.\n"
+				 "A list of all objects with invalid names is in the file:\n"
+				 "    %s", output_path);
 	}
 	else
 		check_ok();
