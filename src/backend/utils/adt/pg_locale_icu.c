@@ -111,8 +111,8 @@ static size_t strnxfrm_prefix_icu_utf8(char *dest, size_t destsize,
 									   const char *src, ssize_t srclen,
 									   pg_locale_t locale);
 static void init_icu_converter(void);
-static size_t uchar_length(UConverter *converter,
-						   const char *str, int32_t len);
+static int32_t uchar_length(UConverter *converter,
+							const char *str, int32_t len);
 static int32_t uchar_convert(UConverter *converter,
 							 UChar *dest, int32_t destlen,
 							 const char *src, int32_t srclen);
@@ -571,7 +571,7 @@ make_icu_collator(const char *iculocstr, const char *icurules)
 		total = u_strlen(std_rules) + u_strlen(my_rules) + 1;
 
 		/* avoid leaking collator on OOM */
-		all_rules = palloc_extended(sizeof(UChar) * total, MCXT_ALLOC_NO_OOM);
+		all_rules = palloc_array_extended(UChar, total, MCXT_ALLOC_NO_OOM);
 		if (!all_rules)
 		{
 			ucol_close(collator_std_rules);
@@ -755,23 +755,17 @@ size_t
 strnxfrm_icu(char *dest, size_t destsize, const char *src, ssize_t srclen,
 			 pg_locale_t locale)
 {
-	char		sbuf[TEXTBUFLEN];
-	char	   *buf = sbuf;
-	UChar	   *uchar;
+	UChar		sbuf[TEXTBUFLEN / sizeof(UChar)];
+	UChar	   *uchar = sbuf;
 	int32_t		ulen;
-	size_t		uchar_bsize;
 	Size		result_bsize;
 
 	init_icu_converter();
 
 	ulen = uchar_length(icu_converter, src, srclen);
 
-	uchar_bsize = (ulen + 1) * sizeof(UChar);
-
-	if (uchar_bsize > TEXTBUFLEN)
-		buf = palloc(uchar_bsize);
-
-	uchar = (UChar *) buf;
+	if (ulen >= lengthof(sbuf))
+		uchar = palloc_array(UChar, ulen + 1);
 
 	ulen = uchar_convert(icu_converter, uchar, ulen + 1, src, srclen);
 
@@ -786,8 +780,8 @@ strnxfrm_icu(char *dest, size_t destsize, const char *src, ssize_t srclen,
 	Assert(result_bsize > 0);
 	result_bsize--;
 
-	if (buf != sbuf)
-		pfree(buf);
+	if (uchar != sbuf)
+		pfree(uchar);
 
 	/* if dest is defined, it should be nul-terminated */
 	Assert(result_bsize >= destsize || dest[result_bsize] == '\0');
@@ -862,7 +856,7 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 
 	len_uchar = uchar_length(icu_converter, buff, nbytes);
 
-	*buff_uchar = palloc((len_uchar + 1) * sizeof(**buff_uchar));
+	*buff_uchar = palloc_array(UChar, len_uchar + 1);
 	len_uchar = uchar_convert(icu_converter,
 							  *buff_uchar, len_uchar + 1, buff, nbytes);
 
@@ -919,7 +913,7 @@ convert_case_uchar(ICU_Convert_Func func, pg_locale_t mylocale,
 	int32_t		len_dest;
 
 	len_dest = len_source;		/* try first with same length */
-	*buff_dest = palloc(len_dest * sizeof(**buff_dest));
+	*buff_dest = palloc_array(UChar, len_dest);
 	status = U_ZERO_ERROR;
 	len_dest = func(*buff_dest, len_dest, buff_source, len_source,
 					mylocale->icu.locale, &status);
@@ -927,7 +921,7 @@ convert_case_uchar(ICU_Convert_Func func, pg_locale_t mylocale,
 	{
 		/* try again with adjusted length */
 		pfree(*buff_dest);
-		*buff_dest = palloc(len_dest * sizeof(**buff_dest));
+		*buff_dest = palloc_array(UChar, len_dest);
 		status = U_ZERO_ERROR;
 		len_dest = func(*buff_dest, len_dest, buff_source, len_source,
 						mylocale->icu.locale, &status);
@@ -1020,12 +1014,11 @@ static int
 strncoll_icu(const char *arg1, ssize_t len1,
 			 const char *arg2, ssize_t len2, pg_locale_t locale)
 {
-	char		sbuf[TEXTBUFLEN];
-	char	   *buf = sbuf;
+	UChar		sbuf[TEXTBUFLEN / sizeof(UChar)];
+	UChar	   *buf = sbuf;
 	int32_t		ulen1;
 	int32_t		ulen2;
-	size_t		bufsize1;
-	size_t		bufsize2;
+	size_t		bufsize;
 	UChar	   *uchar1,
 			   *uchar2;
 	int			result;
@@ -1040,14 +1033,13 @@ strncoll_icu(const char *arg1, ssize_t len1,
 	ulen1 = uchar_length(icu_converter, arg1, len1);
 	ulen2 = uchar_length(icu_converter, arg2, len2);
 
-	bufsize1 = (ulen1 + 1) * sizeof(UChar);
-	bufsize2 = (ulen2 + 1) * sizeof(UChar);
+	/* ulen1+1 or ulen2+1 doesn't risk overflow, but summing them might */
+	bufsize = add_size(ulen1 + 1, ulen2 + 1);
+	if (bufsize > lengthof(sbuf))
+		buf = palloc_array(UChar, bufsize);
 
-	if (bufsize1 + bufsize2 > TEXTBUFLEN)
-		buf = palloc(bufsize1 + bufsize2);
-
-	uchar1 = (UChar *) buf;
-	uchar2 = (UChar *) (buf + bufsize1);
+	uchar1 = buf;
+	uchar2 = buf + ulen1 + 1;
 
 	ulen1 = uchar_convert(icu_converter, uchar1, ulen1 + 1, arg1, len1);
 	ulen2 = uchar_convert(icu_converter, uchar2, ulen2 + 1, arg2, len2);
@@ -1068,14 +1060,12 @@ strnxfrm_prefix_icu(char *dest, size_t destsize,
 					const char *src, ssize_t srclen,
 					pg_locale_t locale)
 {
-	char		sbuf[TEXTBUFLEN];
-	char	   *buf = sbuf;
+	UChar		sbuf[TEXTBUFLEN / sizeof(UChar)];
+	UChar	   *uchar = sbuf;
 	UCharIterator iter;
 	uint32_t	state[2];
 	UErrorCode	status;
-	int32_t		ulen = -1;
-	UChar	   *uchar = NULL;
-	size_t		uchar_bsize;
+	int32_t		ulen;
 	Size		result_bsize;
 
 	/* if encoding is UTF8, use more efficient strnxfrm_prefix_icu_utf8 */
@@ -1085,12 +1075,8 @@ strnxfrm_prefix_icu(char *dest, size_t destsize,
 
 	ulen = uchar_length(icu_converter, src, srclen);
 
-	uchar_bsize = (ulen + 1) * sizeof(UChar);
-
-	if (uchar_bsize > TEXTBUFLEN)
-		buf = palloc(uchar_bsize);
-
-	uchar = (UChar *) buf;
+	if (ulen >= lengthof(sbuf))
+		uchar = palloc_array(UChar, ulen + 1);
 
 	ulen = uchar_convert(icu_converter, uchar, ulen + 1, src, srclen);
 
@@ -1108,8 +1094,8 @@ strnxfrm_prefix_icu(char *dest, size_t destsize,
 				(errmsg("sort key generation failed: %s",
 						u_errorName(status))));
 
-	if (buf != sbuf)
-		pfree(buf);
+	if (uchar != sbuf)
+		pfree(uchar);
 
 	return result_bsize;
 }
@@ -1145,8 +1131,12 @@ init_icu_converter(void)
  * Find length, in UChars, of given string if converted to UChar string.
  *
  * A length of -1 indicates that the input string is NUL-terminated.
+ *
+ * Note: given the assumption that the input string fits in MaxAllocSize,
+ * the result cannot overflow int32_t.  But callers must be careful about
+ * multiplying the result by sizeof(UChar).
  */
-static size_t
+static int32_t
 uchar_length(UConverter *converter, const char *str, int32_t len)
 {
 	UErrorCode	status = U_ZERO_ERROR;
@@ -1172,7 +1162,6 @@ uchar_convert(UConverter *converter, UChar *dest, int32_t destlen,
 	UErrorCode	status = U_ZERO_ERROR;
 	int32_t		ulen;
 
-	status = U_ZERO_ERROR;
 	ulen = ucnv_toUChars(converter, dest, destlen, src, srclen, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
