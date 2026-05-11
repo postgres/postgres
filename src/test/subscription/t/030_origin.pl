@@ -9,6 +9,9 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+my $tab_unquoted = q{tab'le};
+my $tab = qq{"$tab_unquoted"};
+
 my $subname_AB = 'tap_sub_A_B';
 my $subname_AB2 = 'tap_sub_A_B_2';
 my $subname_BA = 'tap_sub_B_A';
@@ -38,15 +41,15 @@ $node_B->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 $node_B->start;
 
 # Create table on node_A
-$node_A->safe_psql('postgres', "CREATE TABLE tab (a int PRIMARY KEY)");
+$node_A->safe_psql('postgres', "CREATE TABLE $tab (a int PRIMARY KEY)");
 
 # Create the same table on node_B
-$node_B->safe_psql('postgres', "CREATE TABLE tab (a int PRIMARY KEY)");
+$node_B->safe_psql('postgres', "CREATE TABLE $tab (a int PRIMARY KEY)");
 
 # Setup logical replication
 # node_A (pub) -> node_B (sub)
 my $node_A_connstr = $node_A->connstr . ' dbname=postgres';
-$node_A->safe_psql('postgres', "CREATE PUBLICATION tap_pub_A FOR TABLE tab");
+$node_A->safe_psql('postgres', "CREATE PUBLICATION tap_pub_A FOR TABLE $tab");
 $node_B->safe_psql(
 	'postgres', "
 	CREATE SUBSCRIPTION $subname_BA
@@ -56,7 +59,7 @@ $node_B->safe_psql(
 
 # node_B (pub) -> node_A (sub)
 my $node_B_connstr = $node_B->connstr . ' dbname=postgres';
-$node_B->safe_psql('postgres', "CREATE PUBLICATION tap_pub_B FOR TABLE tab");
+$node_B->safe_psql('postgres', "CREATE PUBLICATION tap_pub_B FOR TABLE $tab");
 $node_A->safe_psql(
 	'postgres', "
 	CREATE SUBSCRIPTION $subname_AB
@@ -76,25 +79,25 @@ is(1, 1, 'Bidirectional replication setup is complete');
 ###############################################################################
 
 # insert a record
-$node_A->safe_psql('postgres', "INSERT INTO tab VALUES (11);");
-$node_B->safe_psql('postgres', "INSERT INTO tab VALUES (21);");
+$node_A->safe_psql('postgres', "INSERT INTO $tab VALUES (11);");
+$node_B->safe_psql('postgres', "INSERT INTO $tab VALUES (21);");
 
 $node_A->wait_for_catchup($subname_BA);
 $node_B->wait_for_catchup($subname_AB);
 
 # check that transaction was committed on subscriber(s)
-$result = $node_A->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_A->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is( $result, qq(11
 21),
 	'Inserted successfully without leading to infinite recursion in bidirectional replication setup'
 );
-$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_B->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is( $result, qq(11
 21),
 	'Inserted successfully without leading to infinite recursion in bidirectional replication setup'
 );
 
-$node_A->safe_psql('postgres', "DELETE FROM tab;");
+$node_A->safe_psql('postgres', "DELETE FROM $tab;");
 
 $node_A->wait_for_catchup($subname_BA);
 $node_B->wait_for_catchup($subname_AB);
@@ -103,10 +106,10 @@ $node_B->wait_for_catchup($subname_AB);
 # Check that remote data of node_B (that originated from node_C) is not
 # published to node_A.
 ###############################################################################
-$result = $node_A->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_A->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is($result, qq(), 'Check existing data');
 
-$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_B->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is($result, qq(), 'Check existing data');
 
 # Initialize node node_C
@@ -114,12 +117,12 @@ my $node_C = PostgreSQL::Test::Cluster->new('node_C');
 $node_C->init(allows_streaming => 'logical');
 $node_C->start;
 
-$node_C->safe_psql('postgres', "CREATE TABLE tab (a int PRIMARY KEY)");
+$node_C->safe_psql('postgres', "CREATE TABLE $tab (a int PRIMARY KEY)");
 
 # Setup logical replication
 # node_C (pub) -> node_B (sub)
 my $node_C_connstr = $node_C->connstr . ' dbname=postgres';
-$node_C->safe_psql('postgres', "CREATE PUBLICATION tap_pub_C FOR TABLE tab");
+$node_C->safe_psql('postgres', "CREATE PUBLICATION tap_pub_C FOR TABLE $tab");
 $node_B->safe_psql(
 	'postgres', "
 	CREATE SUBSCRIPTION $subname_BC
@@ -129,17 +132,17 @@ $node_B->safe_psql(
 $node_B->wait_for_subscription_sync($node_C, $subname_BC);
 
 # insert a record
-$node_C->safe_psql('postgres', "INSERT INTO tab VALUES (32);");
+$node_C->safe_psql('postgres', "INSERT INTO $tab VALUES (32);");
 
 $node_C->wait_for_catchup($subname_BC);
 $node_B->wait_for_catchup($subname_AB);
 $node_A->wait_for_catchup($subname_BA);
 
-$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_B->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is($result, qq(32), 'The node_C data replicated to node_B');
 
 # check that the data published from node_C to node_B is not sent to node_A
-$result = $node_A->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_A->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is($result, qq(),
 	'Remote data originating from another node (not the publisher) is not replicated when origin parameter is none'
 );
@@ -149,37 +152,37 @@ is($result, qq(),
 # delete a row that was previously modified by a different source.
 ###############################################################################
 
-$node_B->safe_psql('postgres', "DELETE FROM tab;");
+$node_B->safe_psql('postgres', "DELETE FROM $tab;");
 
-$node_A->safe_psql('postgres', "INSERT INTO tab VALUES (32);");
+$node_A->safe_psql('postgres', "INSERT INTO $tab VALUES (32);");
 
 $node_A->wait_for_catchup($subname_BA);
 $node_B->wait_for_catchup($subname_AB);
 
-$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_B->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is($result, qq(32), 'The node_A data replicated to node_B');
 
 # The update should update the row on node B that was inserted by node A.
-$node_C->safe_psql('postgres', "UPDATE tab SET a = 33 WHERE a = 32;");
+$node_C->safe_psql('postgres', "UPDATE $tab SET a = 33 WHERE a = 32;");
 
 $node_B->wait_for_log(
-	qr/conflict detected on relation "public.tab": conflict=update_origin_differs.*\n.*DETAIL:.* Updating the row that was modified by a different origin ".*" in transaction [0-9]+ at .*\n.*Existing local row \(32\); remote row \(33\); replica identity \(a\)=\(32\)/
+	qr/conflict detected on relation "public.$tab_unquoted": conflict=update_origin_differs.*\n.*DETAIL:.* Updating the row that was modified by a different origin ".*" in transaction [0-9]+ at .*\n.*Existing local row \(32\); remote row \(33\); replica identity \(a\)=\(32\)/
 );
 
-$node_B->safe_psql('postgres', "DELETE FROM tab;");
-$node_A->safe_psql('postgres', "INSERT INTO tab VALUES (33);");
+$node_B->safe_psql('postgres', "DELETE FROM $tab;");
+$node_A->safe_psql('postgres', "INSERT INTO $tab VALUES (33);");
 
 $node_A->wait_for_catchup($subname_BA);
 $node_B->wait_for_catchup($subname_AB);
 
-$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+$result = $node_B->safe_psql('postgres', "SELECT * FROM $tab ORDER BY 1;");
 is($result, qq(33), 'The node_A data replicated to node_B');
 
 # The delete should remove the row on node B that was inserted by node A.
-$node_C->safe_psql('postgres', "DELETE FROM tab WHERE a = 33;");
+$node_C->safe_psql('postgres', "DELETE FROM $tab WHERE a = 33;");
 
 $node_B->wait_for_log(
-	qr/conflict detected on relation "public.tab": conflict=delete_origin_differs.*\n.*DETAIL:.* Deleting the row that was modified by a different origin ".*" in transaction [0-9]+ at .*\n.*Existing local row \(33\); replica identity \(a\)=\(33\)/
+	qr/conflict detected on relation "public.$tab_unquoted": conflict=delete_origin_differs.*\n.*DETAIL:.* Deleting the row that was modified by a different origin ".*" in transaction [0-9]+ at .*\n.*Existing local row \(33\); replica identity \(a\)=\(33\)/
 );
 
 # The remaining tests no longer test conflict detection.
