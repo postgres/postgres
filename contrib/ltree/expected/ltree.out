@@ -1281,6 +1281,9 @@ SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_rw%*'::ltxtquery;
  f
 (1 row)
 
+SELECT (SELECT 'a | ' || string_agg('b', ' & ')
+        FROM generate_series(1, 17000) AS i)::ltxtquery;
+ERROR:  ltxtquery is too large
 --arrays
 SELECT '{1.2.3}'::ltree[] @> '1.2.3.4';
  ?column? 
