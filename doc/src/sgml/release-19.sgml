@@ -255,10 +255,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 Change index access method handlers to use a static IndexAmRoutines structure, rather than dynamically allocated ones (Matthias van de Meent)
 <ulink url="&commit_baseurl;bc6374cd7">&sect;</ulink>
 </para>
-
-<para>
-This is a backwardly incompatible.
-</para>
 </listitem>
 
 <!--
@@ -787,7 +783,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Improve sort performance using radix sorts (John Naylor)
+Improve sort performance using radix sort (John Naylor)
 <ulink url="&commit_baseurl;ef3c3cf6d">&sect;</ulink>
 </para>
 </listitem>
@@ -820,18 +816,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <para>
 Optimize plpgsql syntax SELECT simple-expression INTO var (Tom Lane)
 <ulink url="&commit_baseurl;ce8d5fe0e">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Dean Rasheed <dean.a.rasheed@gmail.com>
-2025-08-07 [d699687b3] Extend int128.h to support more numeric code.
--->
-
-<listitem>
-<para>
-Improve performance of numeric operations on platforms without 128-bit integer support (Dean Rasheed)
-<ulink url="&commit_baseurl;d699687b3">&sect;</ulink>
 </para>
 </listitem>
 
@@ -2956,18 +2940,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <para>
 Use standard C23 and C++ attributes if available (Peter Eisentraut)
 <ulink url="&commit_baseurl;76f4b92ba">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: John Naylor <john.naylor@postgresql.org>
-2025-07-09 [ed26c4e25] Hide ICU C++ APIs from pg_locale.h
--->
-
-<listitem>
-<para>
-Allow C++ compiler mode to be used with ICU (John Naylor)
-<ulink url="&commit_baseurl;ed26c4e25">&sect;</ulink>
 </para>
 </listitem>
 
