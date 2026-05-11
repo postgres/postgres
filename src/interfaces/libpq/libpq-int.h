@@ -762,6 +762,9 @@ extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
 extern void pqCommandQueueAdvance(PGconn *conn, bool isReadyForQuery,
 								  bool gotSync);
 extern int	PQsendQueryContinue(PGconn *conn, const char *query);
+extern PGresult *PQnfn(PGconn *conn, int fnid, int *result_buf, int buf_size,
+					   int *result_len, int result_is_int,
+					   const PQArgBlock *args, int nargs);
 
 /* === in fe-protocol3.c === */
 
@@ -777,7 +780,8 @@ extern int	pqGetline3(PGconn *conn, char *s, int maxlen);
 extern int	pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize);
 extern int	pqEndcopy3(PGconn *conn);
 extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
-								 int *result_buf, int *actual_result_len,
+								 int *result_buf, int buf_size,
+								 int *actual_result_len,
 								 int result_is_int,
 								 const PQArgBlock *args, int nargs);
 
