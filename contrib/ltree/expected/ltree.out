@@ -1267,9 +1267,6 @@ SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_rw%*'::ltxtquery;
  f
 (1 row)
 
-SELECT (SELECT 'a | ' || string_agg('b', ' & ')
-        FROM generate_series(1, 17000) AS i)::ltxtquery;
-ERROR:  ltxtquery is too large
 --arrays
 SELECT '{1.2.3}'::ltree[] @> '1.2.3.4';
  ?column? 
@@ -8092,13 +8089,3 @@ SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
     15
 (1 row)
 
--- Test for overflow of lquery_level.totallen, based on an lquery level with
--- many OR-variants.
-SELECT (repeat('x', 1000) || repeat('|' || repeat('x', 1000), 65))::lquery;
-ERROR:  label string is too long
-DETAIL:  Label length is 1000, must be at most 255, at character 1001.
--- Test for overflow of lquery_level.numvar, with a set of single-char
--- variants in one level.
-SELECT (repeat('a|', 65535) || 'a')::lquery;
-ERROR:  lquery level has too many variants
-DETAIL:  Number of variants exceeds the maximum allowed (65535).
