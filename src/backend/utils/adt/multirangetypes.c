@@ -335,7 +335,7 @@ multirange_recv(PG_FUNCTION_ARGS)
 	Oid			mltrngtypoid = PG_GETARG_OID(1);
 	int32		typmod = PG_GETARG_INT32(2);
 	MultirangeIOData *cache;
-	uint32		range_count;
+	int32		range_count;
 	RangeType **ranges;
 	MultirangeType *ret;
 	StringInfoData tmpbuf;
@@ -343,7 +343,8 @@ multirange_recv(PG_FUNCTION_ARGS)
 	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_receive);
 
 	range_count = pq_getmsgint(buf, 4);
-	ranges = palloc(range_count * sizeof(RangeType *));
+	/* palloc_array will enforce a more-or-less-sane range_count value */
+	ranges = palloc_array(RangeType *, range_count);
 
 	initStringInfo(&tmpbuf);
 	for (int i = 0; i < range_count; i++)
@@ -830,7 +831,7 @@ multirange_deserialize(TypeCacheEntry *rangetyp,
 	{
 		int			i;
 
-		*ranges = palloc(*range_count * sizeof(RangeType *));
+		*ranges = palloc_array(RangeType *, *range_count);
 		for (i = 0; i < *range_count; i++)
 			(*ranges)[i] = multirange_get_range(rangetyp, multirange, i);
 	}
@@ -994,7 +995,7 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 		deconstruct_array(rangeArray, rngtypid, rangetyp->typlen, rangetyp->typbyval,
 						  rangetyp->typalign, &elements, &nulls, &range_count);
 
-		ranges = palloc0(range_count * sizeof(RangeType *));
+		ranges = palloc_array(RangeType *, range_count);
 		for (i = 0; i < range_count; i++)
 		{
 			if (nulls[i])
