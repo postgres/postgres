@@ -35,6 +35,441 @@
 
     <listitem>
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [b63f25bdd] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [f7a191f53] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [32a4ce55c] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [66cf26b9e] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [3fb66d302] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [3b4e66739] 2026-05-11 05:13:51 -0700
+Branch: REL_17_STABLE [6dffaeb8e] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [c2e6ef863] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [16fda4df6] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [14a4a7040] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Prevent unbounded recursion while processing startup packets
+      (Michael Paquier)
+      <ulink url="&commit_baseurl;3fb66d302">&sect;</ulink>
+      <ulink url="&commit_baseurl;16fda4df6">&sect;</ulink>
+     </para>
+
+     <para>
+      A malicious client could crash the connected backend by alternating
+      rejected SSL and GSS encryption requests indefinitely.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Calif.io
+      (in collaboration with Claude and Anthropic Research) for reporting
+      this problem.
+      (CVE-2026-6479)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [46593aea0] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [e1c30458a] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [fe2720c45] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [cfb610eaa] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [bfc5cea76] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [61a9b4b6e] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c55cea529] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [01e568b8c] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [01b5ef7df] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [aff71f87b] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [4032c9d98] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [e31ef0720] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0dc1fdc75] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [f3cee4dc4] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [e3a2bea41] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [a4f089c79] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [7fdb0907e] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [39bc8f2ca] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b2869ebc4] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [dd8af778d] 2026-05-11 05:13:48 -0700
+Branch: REL_17_STABLE [26dd3cac2] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [c25973124] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [fb0bc321d] 2026-05-11 05:13:51 -0700
+Branch: REL_14_STABLE [bcfd848e7] 2026-05-11 05:13:51 -0700
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [6a985e71e] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [55328e3a9] 2026-05-11 05:13:48 -0700
+Branch: REL_17_STABLE [87357a606] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [32c525eb6] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [137013f60] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [986753361] 2026-05-11 05:13:51 -0700
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [6d68fcb28] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [67dd6243d] 2026-05-11 05:13:48 -0700
+Branch: REL_17_STABLE [3c41f5534] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [e24fb3247] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [e49e9590d] 2026-05-11 05:13:51 -0700
+Branch: REL_14_STABLE [8e81995de] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [066b7b144] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [8d1489d50] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [ebcfa7867] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [f20b84081] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [b11c3eadf] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [3e0eba196] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_18_STABLE [c7fb9f765] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [00e243e67] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [924b3e943] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [d75b1dc96] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [37842f3dc] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_17_STABLE [e5babf754] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [47dae5e74] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [d106295b6] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [6a423a256] 2026-05-11 05:13:51 -0700
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [c3f7dde39] 2026-05-11 21:27:55 +0300
+Branch: REL_18_STABLE [3fbec9e50] 2026-05-11 21:28:46 +0300
+Branch: REL_17_STABLE [8e909812d] 2026-05-11 21:28:57 +0300
+Branch: REL_16_STABLE [e42598a41] 2026-05-11 21:29:08 +0300
+Branch: REL_15_STABLE [dc6c85ff4] 2026-05-11 21:29:18 +0300
+Branch: REL_14_STABLE [c9447b8bd] 2026-05-11 21:29:27 +0300
+-->
+     <para>
+      Fix assorted integer overflows in memory-allocation calculations
+      (Tom Lane, Nathan Bossart, Heikki Linnakangas)
+      <ulink url="&commit_baseurl;bfc5cea76">&sect;</ulink>
+      <ulink url="&commit_baseurl;4032c9d98">&sect;</ulink>
+      <ulink url="&commit_baseurl;7fdb0907e">&sect;</ulink>
+      <ulink url="&commit_baseurl;fb0bc321d">&sect;</ulink>
+      <ulink url="&commit_baseurl;137013f60">&sect;</ulink>
+      <ulink url="&commit_baseurl;e49e9590d">&sect;</ulink>
+      <ulink url="&commit_baseurl;b11c3eadf">&sect;</ulink>
+      <ulink url="&commit_baseurl;d75b1dc96">&sect;</ulink>
+      <ulink url="&commit_baseurl;d106295b6">&sect;</ulink>
+      <ulink url="&commit_baseurl;dc6c85ff4">&sect;</ulink>
+     </para>
+
+     <para>
+      Various places were incautious about the possibility of integer
+      overflow in calculations of how much memory to allocate.  Overflow
+      would lead to allocating a too-small buffer which the caller would
+      then write past the end of.  This would at least trigger server
+      crashes, and probably could be exploited for arbitrary code
+      execution.  In many but by no means all cases, the hazard exists
+      only in 32-bit builds.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Xint Code,
+      Bruce Dang, Sven Klemm, and Pavel Kohout for reporting these problems.
+      (CVE-2026-6473)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [d388e1d7f] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [62ad26266] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [3ed3dbbf4] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [5919e0005] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [7fe365693] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [2d267ffc4] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Reject over-length options in <function>ts_headline()</function>
+      (Michael Paquier)
+      <ulink url="&commit_baseurl;7fe365693">&sect;</ulink>
+     </para>
+
+     <para>
+      The <literal>StartSel</literal>, <literal>StopSel</literal>
+      and <literal>FragmentDelimiter</literal> strings must not exceed
+      32Kb in length, but this was not checked for.  An over-length value
+      would typically crash the server.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Xint Code for reporting this problem.
+      (CVE-2026-6473)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [76ab76f87] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [ba27389c2] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [4197c880c] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [24e0e3254] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [126a236ba] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [a50ae8306] 2026-05-11 05:13:51 -0700
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ec8ded4b3] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [c6e7a9ef3] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [a386d14fe] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [79b7847c7] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [c3fff3950] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [2c8226f52] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Guard against malicious time zone names
+      in <function>timeofday()</function>
+      and <function>pg_strftime()</function> (Tom Lane)
+      <ulink url="&commit_baseurl;126a236ba">&sect;</ulink>
+      <ulink url="&commit_baseurl;c3fff3950">&sect;</ulink>
+     </para>
+
+     <para>
+      A crafted time zone setting could pass <literal>%</literal>
+      sequences to <function>snprintf()</function>, potentially causing
+      crashes or disclosure of server memory.  Another path to similar
+      results was to overflow the limited-size output buffer used
+      by <function>pg_strftime()</function>.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Xint Code for reporting this problem.
+      (CVE-2026-6474)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [4793fc41f] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [a44780f41] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [c27ba08cd] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [d92852d62] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [08c397b02] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [8bca85e9f] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      When creating a multirange type, ensure the user
+      has <literal>CREATE</literal> privilege on the schema specified for
+      the multirange type (Jelte Fennema-Nio)
+      <ulink url="&commit_baseurl;08c397b02">&sect;</ulink>
+     </para>
+
+     <para>
+      The multirange type can be put into a different schema than its
+      parent range type, but we neglected to apply the required privilege
+      check when doing so.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jelte Fennema-Nio for reporting this problem.
+      (CVE-2026-6472)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [5924e256c] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [d93ef4131] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [c4e7435b3] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [00e27235e] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [c95275f18] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [4608619a1] 2026-05-11 05:13:51 -0700
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: REL_17_STABLE [8e34acfda] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [1604939b2] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [9dcfcb92f] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [b282280e9] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Use timing-safe string comparisons in authentication code
+      (Michael Paquier)
+      <ulink url="&commit_baseurl;c95275f18">&sect;</ulink>
+      <ulink url="&commit_baseurl;9dcfcb92f">&sect;</ulink>
+     </para>
+
+     <para>
+      Use <function>timingsafe_bcmp()</function> instead
+      of <function>memcpy()</function> or <function>strcmp()</function>
+      when checking passwords, hashes, etc.  It is not known whether the
+      data dependency of those functions is usefully exploitable in any of
+      these places, but in the interests of safety, replace them.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Joe Conway for reporting this problem.
+      (CVE-2026-6478)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [bd4811493] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [be0136440] 2026-05-11 05:13:48 -0700
+Branch: REL_17_STABLE [d88c7be15] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [614474996] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [e3a1f83ea] 2026-05-11 05:13:51 -0700
+Branch: REL_14_STABLE [8ac723b2b] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Mark <function>PQfn()</function> as unsafe, and avoid using it
+      within <application>libpq</application> (Nathan Bossart)
+      <ulink url="&commit_baseurl;e3a1f83ea">&sect;</ulink>
+     </para>
+
+     <para>
+      For a non-integral result type, <function>PQfn()</function> is not
+      passed the size of the output buffer, so it cannot check that the
+      data returned by the server will fit.  A malicious server could
+      therefore overwrite client memory.  This is unfixable without an
+      API change, so mark the function as deprecated.  Internally
+      to <application>libpq</application>, use a variant version that can
+      apply the missing check.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Yu Kunpeng and Martin Heistermann for reporting this problem.
+      (CVE-2026-6477)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [a1063eece] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [6a67c540a] 2026-05-11 05:13:48 -0700
+Branch: REL_17_STABLE [8f881e188] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [6778af13e] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [0c83fe8e4] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [498829dca] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Prevent path traversal in <application>pg_basebackup</application>
+      and <application>pg_rewind</application> (Michael Paquier)
+      <ulink url="&commit_baseurl;0c83fe8e4">&sect;</ulink>
+     </para>
+
+     <para>
+      These applications failed to validate output file paths read from
+      their input, so that a malicious source could overwrite any file
+      writable by these applications.  Constrain where data can be written
+      by rejecting paths that are absolute or contain parent-directory
+      references.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks XlabAI Team
+      of Tencent Xuanwu Lab and Valery Gubanov for reporting this problem.
+      (CVE-2026-6475)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [43451a7a2] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [c5790ec4f] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [c4d04cc48] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [5c1069c35] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [84a9f2641] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [074702525] 2026-05-11 05:13:51 -0700
+Branch: master [906ea101d] 2026-05-11 12:12:03 -0400
+Branch: REL_18_STABLE [05e73b5c3] 2026-05-11 12:12:03 -0400
+Branch: REL_17_STABLE [2b429d887] 2026-05-11 12:12:03 -0400
+Branch: REL_16_STABLE [6f0bff33d] 2026-05-11 12:12:03 -0400
+Branch: REL_15_STABLE [fc1fd3d97] 2026-05-11 12:12:03 -0400
+Branch: REL_14_STABLE [479823a71] 2026-05-11 12:12:03 -0400
+-->
+     <para>
+      Guard against field overflow
+      within <filename>contrib/intarray</filename>'s <type>query_int</type>
+      type and <filename>contrib/ltree</filename>'s <type>ltxtquery</type>
+      type (Tom Lane)
+      <ulink url="&commit_baseurl;84a9f2641">&sect;</ulink>
+      <ulink url="&commit_baseurl;fc1fd3d97">&sect;</ulink>
+     </para>
+
+     <para>
+      Parsing of these query structures did not check for overflow of
+      16-bit fields, so that construction of an invalid query tree was
+      possible.  This can crash the server when executing the query.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Xint Code for reporting this problem.
+      (CVE-2026-6473)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [2f1b16e86] 2026-05-11 05:13:46 -0700
+Branch: REL_18_STABLE [7f019f341] 2026-05-11 05:13:47 -0700
+Branch: REL_17_STABLE [8c3426110] 2026-05-11 05:13:48 -0700
+Branch: REL_16_STABLE [6b6b26fde] 2026-05-11 05:13:49 -0700
+Branch: REL_15_STABLE [9c2fa5b6a] 2026-05-11 05:13:50 -0700
+Branch: REL_14_STABLE [b545c3787] 2026-05-11 05:13:51 -0700
+-->
+     <para>
+      Guard against overly long values
+      of <filename>contrib/ltree</filename>'s <type>lquery</type> type
+      (Michael Paquier)
+      <ulink url="&commit_baseurl;9c2fa5b6a">&sect;</ulink>
+     </para>
+
+     <para>
+      Values with more than 64K items caused internal overflows,
+      potentially resulting in stack smashes or wrong answers.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Vergissmeinnicht, A1ex, and Jihe Wang
+      for reporting this problem.
+      (CVE-2026-6473)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [260e97733] 2026-05-11 05:13:47 -0700
+Branch: REL_18_STABLE [1ebda7da9] 2026-05-11 05:13:48 -0700
+Branch: REL_17_STABLE [2dc64ef28] 2026-05-11 05:13:49 -0700
+Branch: REL_16_STABLE [710995782] 2026-05-11 05:13:50 -0700
+Branch: REL_15_STABLE [8053235ab] 2026-05-11 05:13:51 -0700
+Branch: REL_14_STABLE [2b026df29] 2026-05-11 05:13:52 -0700
+-->
+     <para>
+      Prevent SQL injection and buffer overruns
+      in <filename>contrib/spi</filename> (Nathan Bossart)
+      <ulink url="&commit_baseurl;8053235ab">&sect;</ulink>
+     </para>
+
+     <para>
+      <function>check_foreign_key()</function> was insufficiently careful
+      about quoting key values, and also used fixed-length buffers for
+      constructing queries.  While this module is only meant as example
+      code, it still shouldn't contain such dangerous errors.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Nikolay Samokhvalov for reporting this problem.
+      (CVE-2026-6637)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Richard Guo <rguo@postgresql.org>
 Branch: master [f76686ce7] 2026-05-01 11:13:50 +0900
 Branch: REL_18_STABLE [e8fd5e579] 2026-05-01 11:16:36 +0900
