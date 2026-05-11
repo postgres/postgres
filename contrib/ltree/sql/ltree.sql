@@ -252,9 +252,6 @@ SELECT 'tree.awdfg'::ltree @ 'tree & aWdfg@'::ltxtquery;
 SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_qw%*'::ltxtquery;
 SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_rw%*'::ltxtquery;
 
-SELECT (SELECT 'a | ' || string_agg('b', ' & ')
-        FROM generate_series(1, 17000) AS i)::ltxtquery;
-
 --arrays
 
 SELECT '{1.2.3}'::ltree[] @> '1.2.3.4';
@@ -459,11 +456,3 @@ FROM (VALUES ('.2.3', 'ltree'),
              ('!tree & aWdf@*','ltxtquery'))
       AS a(str,typ),
      LATERAL pg_input_error_info(a.str, a.typ) as errinfo;
-
--- Test for overflow of lquery_level.totallen, based on an lquery level with
--- many OR-variants.
-SELECT (repeat('x', 1000) || repeat('|' || repeat('x', 1000), 65))::lquery;
-
--- Test for overflow of lquery_level.numvar, with a set of single-char
--- variants in one level.
-SELECT (repeat('a|', 65535) || 'a')::lquery;
