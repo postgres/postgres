@@ -737,8 +737,9 @@ strncoll_libc_win32_utf8(const char *arg1, ssize_t len1, const char *arg2,
 	char	   *buf = sbuf;
 	char	   *a1p,
 			   *a2p;
-	int			a1len;
-	int			a2len;
+	size_t		a1len,
+				a2len,
+				buflen;
 	int			r;
 	int			result;
 
@@ -750,11 +751,16 @@ strncoll_libc_win32_utf8(const char *arg1, ssize_t len1, const char *arg2,
 	if (len2 == -1)
 		len2 = strlen(arg2);
 
-	a1len = len1 * 2 + 2;
-	a2len = len2 * 2 + 2;
+	/*
+	 * In a 32-bit build, twice the input length can overflow size_t, so we
+	 * must be careful.
+	 */
+	a1len = add_size(add_size(len1, len1), 2);
+	a2len = add_size(add_size(len2, len2), 2);
+	buflen = add_size(a1len, a2len);
 
-	if (a1len + a2len > TEXTBUFLEN)
-		buf = palloc(a1len + a2len);
+	if (buflen > TEXTBUFLEN)
+		buf = palloc(buflen);
 
 	a1p = buf;
 	a2p = buf + a1len;
