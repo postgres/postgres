@@ -3558,6 +3558,10 @@ compact(struct nfa *nfa,
 
 	assert(!NISERR());
 
+	/*
+	 * The REG_MAX_COMPILE_SPACE restriction ensures that integer overflow
+	 * can't occur in this loop nor in the allocation requests below.
+	 */
 	nstates = 0;
 	narcs = 0;
 	for (s = nfa->states; s != NULL; s = s->next)
@@ -3610,6 +3614,12 @@ compact(struct nfa *nfa,
 				case LACON:
 					assert(s->no != cnfa->pre);
 					assert(a->co >= 0);
+					/* make sure the modified color number will fit */
+					if (a->co > MAX_COLOR - cnfa->ncolors)
+					{
+						NERR(REG_ECOLORS);
+						return;
+					}
 					ca->co = (color) (cnfa->ncolors + a->co);
 					ca->to = a->to->no;
 					ca++;

@@ -519,6 +519,7 @@ moresubs(struct vars *v,
 	assert(wanted > 0 && (size_t) wanted >= v->nsubs);
 	n = (size_t) wanted * 3 / 2 + 1;
 
+	/* n is bounded by the number of states, so no chance of overflow here */
 	if (v->subs == v->sub10)
 	{
 		p = (struct subre **) MALLOC(n * sizeof(struct subre *));
@@ -2363,8 +2364,8 @@ newlacon(struct vars *v,
 	else
 	{
 		n = v->nlacons;
-		newlacons = (struct subre *) REALLOC(v->lacons,
-											 (n + 1) * sizeof(struct subre));
+		/* better use REALLOC_ARRAY here, as struct subre is big */
+		newlacons = REALLOC_ARRAY(v->lacons, struct subre, n + 1);
 	}
 	if (newlacons == NULL)
 	{

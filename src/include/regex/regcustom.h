@@ -50,8 +50,8 @@
 #include <wctype.h>
 #endif
 
+#include "common/int.h"
 #include "mb/pg_wchar.h"
-
 #include "miscadmin.h"			/* needed by rcancelrequested/rstacktoodeep */
 
 
@@ -60,7 +60,31 @@
 #define MALLOC(n)		malloc(n)
 #define FREE(p)			free(VS(p))
 #define REALLOC(p,n)	realloc(VS(p),n)
+#define MALLOC_ARRAY(type, n) \
+						((type *) pg_regex_malloc_array(sizeof(type), n))
+#define REALLOC_ARRAY(p, type, n) \
+						((type *) pg_regex_realloc_array(p, sizeof(type), n))
 #define assert(x)		Assert(x)
+
+static inline void *
+pg_regex_malloc_array(size_t s1, size_t s2)
+{
+	size_t		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		return NULL;
+	return malloc(req);
+}
+
+static inline void *
+pg_regex_realloc_array(void *p, size_t s1, size_t s2)
+{
+	size_t		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		return NULL;
+	return realloc(p, req);
+}
 
 /* internal character type and related */
 typedef pg_wchar chr;			/* the type itself */
