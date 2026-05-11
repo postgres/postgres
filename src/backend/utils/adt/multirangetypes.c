@@ -340,7 +340,7 @@ multirange_recv(PG_FUNCTION_ARGS)
 	Oid			mltrngtypoid = PG_GETARG_OID(1);
 	int32		typmod = PG_GETARG_INT32(2);
 	MultirangeIOData *cache;
-	uint32		range_count;
+	int32		range_count;
 	RangeType **ranges;
 	MultirangeType *ret;
 	StringInfoData tmpbuf;
@@ -348,6 +348,7 @@ multirange_recv(PG_FUNCTION_ARGS)
 	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_receive);
 
 	range_count = pq_getmsgint(buf, 4);
+	/* palloc_array will enforce a more-or-less-sane range_count value */
 	ranges = palloc_array(RangeType *, range_count);
 
 	initStringInfo(&tmpbuf);

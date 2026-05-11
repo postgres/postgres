@@ -657,6 +657,20 @@ BlockRefTableReaderNextRelation(BlockRefTableReader *reader,
 		return false;
 	}
 
+	/*
+	 * Sanity-check the nchunks value.  In the backend, palloc_array would
+	 * enforce this anyway (with a more generic error message); but in
+	 * frontend it would not, potentially allowing BlockRefTableRead's length
+	 * parameter to overflow.
+	 */
+	if (sentry.nchunks > MaxAllocSize / sizeof(uint16))
+	{
+		reader->error_callback(reader->error_callback_arg,
+							   "file \"%s\" has oversized chunk size array",
+							   reader->error_filename);
+		return false;
+	}
+
 	/* Read chunk size array. */
 	if (reader->chunk_size != NULL)
 		pfree(reader->chunk_size);
