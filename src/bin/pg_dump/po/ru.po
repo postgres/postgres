@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-07 11:39+0200\n"
-"PO-Revision-Date: 2025-09-04 22:18+0300\n"
+"POT-Creation-Date: 2026-05-10 08:01+0300\n"
+"PO-Revision-Date: 2026-05-10 08:53+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -43,7 +43,7 @@ msgstr "подсказка: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
 #: ../../common/compression.c:150 compress_gzip.c:441 compress_gzip.c:448
-#: compress_io.c:109 compress_lz4.c:800 compress_lz4.c:807 compress_zstd.c:26
+#: compress_io.c:109 compress_lz4.c:809 compress_lz4.c:816 compress_zstd.c:26
 #: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
@@ -548,7 +548,7 @@ msgstr "не удалось распаковать данные: %s"
 msgid "could not free LZ4 decompression context: %s"
 msgstr "не удалось освободить контекст распаковки LZ4: %s"
 
-#: compress_lz4.c:260 compress_lz4.c:267 compress_lz4.c:689 compress_lz4.c:704
+#: compress_lz4.c:260 compress_lz4.c:267 compress_lz4.c:690 compress_lz4.c:708
 #, c-format
 msgid "could not end compression: %s"
 msgstr "не удалось завершить сжатие: %s"
@@ -573,17 +573,17 @@ msgstr "ошибка при записи: %s"
 msgid "error during writing: %m"
 msgstr "ошибка при записи: %m"
 
-#: compress_lz4.c:698
+#: compress_lz4.c:700
 #, c-format
 msgid "could not write to output file: %m"
 msgstr "не удалось записать в выходной файл: %m"
 
-#: compress_lz4.c:711
+#: compress_lz4.c:718
 #, c-format
 msgid "could not end decompression: %s"
 msgstr "не удалось завершить распаковку: %s"
 
-#: compress_lz4.c:726 compress_none.c:156
+#: compress_lz4.c:735 compress_none.c:156
 #, c-format
 msgid "could not close file: %m"
 msgstr "не удалось закрыть файл: %m"
@@ -1292,12 +1292,12 @@ msgstr "сжатие активно"
 msgid "could not get server_version from libpq"
 msgstr "не удалось получить версию сервера из libpq"
 
-#: pg_backup_db.c:53 pg_dumpall.c:1924
+#: pg_backup_db.c:53 pg_dumpall.c:1935
 #, c-format
 msgid "aborting because of server version mismatch"
 msgstr "продолжение работы с другой версией сервера невозможно"
 
-#: pg_backup_db.c:54 pg_dumpall.c:1925
+#: pg_backup_db.c:54 pg_dumpall.c:1936
 #, c-format
 msgid "server version: %s; %s version: %s"
 msgstr "версия сервера: %s; версия %s: %s"
@@ -1307,7 +1307,7 @@ msgstr "версия сервера: %s; версия %s: %s"
 msgid "already connected to a database"
 msgstr "подключение к базе данных уже установлено"
 
-#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1771 pg_dumpall.c:1873
+#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1782 pg_dumpall.c:1884
 msgid "Password: "
 msgstr "Пароль: "
 
@@ -1322,17 +1322,17 @@ msgid "reconnection failed: %s"
 msgstr "переподключиться не удалось: %s"
 
 #: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:808 pg_dump_sort.c:1451
-#: pg_dump_sort.c:1471 pg_dumpall.c:1798 pg_dumpall.c:1882
+#: pg_dump_sort.c:1471 pg_dumpall.c:1809 pg_dumpall.c:1893
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:271 pg_dumpall.c:1987 pg_dumpall.c:2010
+#: pg_backup_db.c:271 pg_dumpall.c:1998 pg_dumpall.c:2021
 #, c-format
 msgid "query failed: %s"
 msgstr "ошибка при выполнении запроса: %s"
 
-#: pg_backup_db.c:273 pg_dumpall.c:1988 pg_dumpall.c:2011
+#: pg_backup_db.c:273 pg_dumpall.c:1999 pg_dumpall.c:2022
 #, c-format
 msgid "Query was: %s"
 msgstr "Выполнялся запрос: %s"
@@ -2223,7 +2223,7 @@ msgstr ""
 msgid "invalid output format \"%s\" specified"
 msgstr "указан неверный формат вывода: \"%s\""
 
-#: pg_dump.c:1481 pg_dump.c:1537 pg_dump.c:1590 pg_dumpall.c:1558
+#: pg_dump.c:1481 pg_dump.c:1537 pg_dump.c:1590 pg_dumpall.c:1569
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "неверное полное имя (слишком много компонентов): %s"
@@ -2696,7 +2696,7 @@ msgstr "нет подчинённого объекта %u %u"
 msgid "no referenced object %u %u"
 msgstr "нет вышестоящего объекта %u %u"
 
-#: pg_dump.c:19086 pg_dump.c:19124 pg_dumpall.c:2056 pg_restore.c:573
+#: pg_dump.c:19086 pg_dump.c:19124 pg_dumpall.c:2067 pg_restore.c:573
 #: pg_restore.c:619
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"
@@ -2789,7 +2789,7 @@ msgid ""
 "options -r/--roles-only and -t/--tablespaces-only cannot be used together"
 msgstr "параметры -r/--roles-only и -t/--tablespaces-only исключают друг друга"
 
-#: pg_dumpall.c:493 pg_dumpall.c:1865
+#: pg_dumpall.c:493 pg_dumpall.c:1876
 #, c-format
 msgid "could not connect to database \"%s\""
 msgstr "не удалось подключиться к базе данных: \"%s\""
@@ -2915,69 +2915,86 @@ msgid "role name starting with \"pg_\" skipped (%s)"
 msgstr "имя роли, начинающееся с \"pg_\", пропущено (%s)"
 
 #. translator: %s represents a numeric role OID
-#: pg_dumpall.c:1091 pg_dumpall.c:1149 pg_dumpall.c:1158
+#: pg_dumpall.c:1091
 #, c-format
-msgid "found orphaned pg_auth_members entry for role %s"
-msgstr "обнаружена потерянная запись pg_auth_members для роли %s"
+msgid "ignoring role grant for missing role with OID %s"
+msgstr "назначение прав для отсутствующей роли с OID %s игнорируется"
 
-#: pg_dumpall.c:1124
+#: pg_dumpall.c:1129
 #, c-format
 msgid "could not find a legal dump ordering for memberships in role \"%s\""
 msgstr "не удалось найти подходящий порядок выгрузки для членов роли \"%s\""
 
-#: pg_dumpall.c:1279
+#. translator: %s represents a numeric role OID
+#: pg_dumpall.c:1155
+#, c-format
+msgid "ignoring role grant to missing role with OID %s"
+msgstr "назначение прав отсутствующей роли с OID %s игнорируется"
+
+#. translator: %s represents a numeric role OID
+#: pg_dumpall.c:1170
+#, c-format
+msgid "grant of role \"%s\" to \"%s\" has invalid grantor OID %s"
+msgstr "роль \"%s\" назначена \"%s\" с некорректным OID праводателя %s"
+
+#: pg_dumpall.c:1172
+#, c-format
+msgid "This grant will be dumped without GRANTED BY."
+msgstr "Это назначение будет выгружено без GRANTED BY."
+
+#: pg_dumpall.c:1290
 #, c-format
 msgid "could not parse ACL list (%s) for parameter \"%s\""
 msgstr "не удалось разобрать список ACL (%s) для параметра \"%s\""
 
-#: pg_dumpall.c:1406
+#: pg_dumpall.c:1417
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
 msgstr ""
 "не удалось разобрать список управления доступом (%s) для табл. пространства "
 "\"%s\""
 
-#: pg_dumpall.c:1620
+#: pg_dumpall.c:1631
 #, c-format
 msgid "excluding database \"%s\""
 msgstr "база данных \"%s\" исключается"
 
-#: pg_dumpall.c:1624
+#: pg_dumpall.c:1635
 #, c-format
 msgid "dumping database \"%s\""
 msgstr "выгрузка базы данных \"%s\""
 
-#: pg_dumpall.c:1657
+#: pg_dumpall.c:1668
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
 msgstr "ошибка при обработке базы \"%s\", pg_dump завершается"
 
-#: pg_dumpall.c:1663
+#: pg_dumpall.c:1674
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
 msgstr "не удалось повторно открыть выходной файл \"%s\": %m"
 
-#: pg_dumpall.c:1707
+#: pg_dumpall.c:1718
 #, c-format
 msgid "running \"%s\""
 msgstr "выполняется \"%s\""
 
-#: pg_dumpall.c:1908
+#: pg_dumpall.c:1919
 #, c-format
 msgid "could not get server version"
 msgstr "не удалось узнать версию сервера"
 
-#: pg_dumpall.c:1911
+#: pg_dumpall.c:1922
 #, c-format
 msgid "could not parse server version \"%s\""
 msgstr "не удалось разобрать строку версии сервера \"%s\""
 
-#: pg_dumpall.c:1981 pg_dumpall.c:2004
+#: pg_dumpall.c:1992 pg_dumpall.c:2015
 #, c-format
 msgid "executing %s"
 msgstr "выполняется %s"
 
-#: pg_dumpall.c:2076
+#: pg_dumpall.c:2087
 msgid "unsupported filter object"
 msgstr "неподдерживаемый объект фильтра"
 
@@ -3288,6 +3305,10 @@ msgstr ""
 "Если имя входного файла не указано, используется стандартное устройство "
 "ввода.\n"
 "\n"
+
+#, c-format
+#~ msgid "found orphaned pg_auth_members entry for role %s"
+#~ msgstr "обнаружена потерянная запись pg_auth_members для роли %s"
 
 #, c-format
 #~ msgid "unhandled mode \"%s\""

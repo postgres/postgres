@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-07 11:39+0200\n"
+"POT-Creation-Date: 2026-05-10 08:01+0300\n"
 "PO-Revision-Date: 2026-02-07 09:22+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -165,91 +165,91 @@ msgstr "не удалось прочитать каталог \"%s\": %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "не удалось переименовать файл \"%s\" в \"%s\": %m"
 
-#: ../../common/jsonapi.c:2124
+#: ../../common/jsonapi.c:2175
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr ""
 "Инкрементальный лексический анализатор не подходит для нисходящего "
 "рекурсивного разбора."
 
-#: ../../common/jsonapi.c:2126
+#: ../../common/jsonapi.c:2177
 msgid "Incremental parser requires incremental lexer."
 msgstr ""
 "Для инкрементального разбора требуется инкрементальный лексический "
 "анализатор."
 
-#: ../../common/jsonapi.c:2128
+#: ../../common/jsonapi.c:2179
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr ""
 "Слишком большая вложенность JSON, максимальная допустимая глубина: 6400."
 
-#: ../../common/jsonapi.c:2130
+#: ../../common/jsonapi.c:2181
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Неверная спецпоследовательность: \"\\%.*s\"."
 
-#: ../../common/jsonapi.c:2134
+#: ../../common/jsonapi.c:2185
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Символ с кодом 0x%02x необходимо экранировать."
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2189
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Ожидался конец текста, но обнаружено продолжение \"%.*s\"."
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2192
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Ожидался элемент массива или \"]\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2195
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Ожидалась \",\" или \"]\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2198
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Ожидалось \":\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2201
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Ожидалось значение JSON, но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2153
+#: ../../common/jsonapi.c:2204
 msgid "The input string ended unexpectedly."
 msgstr "Неожиданный конец входной строки."
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2206
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Ожидалась строка или \"}\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2209
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Ожидалась \",\" или \"}\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2212
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Ожидалась строка, но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2215
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Ошибочный элемент \"%.*s\"."
 
-#: ../../common/jsonapi.c:2167
+#: ../../common/jsonapi.c:2218
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 нельзя преобразовать в текст."
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2220
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "За \"\\u\" должны следовать четыре шестнадцатеричные цифры."
 
-#: ../../common/jsonapi.c:2172
+#: ../../common/jsonapi.c:2223
 msgid ""
 "Unicode escape values cannot be used for code point values above 007F when "
 "the encoding is not UTF8."
@@ -257,18 +257,18 @@ msgstr ""
 "Спецкоды Unicode для значений выше 007F можно использовать только с "
 "кодировкой UTF8."
 
-#: ../../common/jsonapi.c:2181
+#: ../../common/jsonapi.c:2232
 #, c-format
 msgid ""
 "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Спецкод Unicode нельзя преобразовать в серверную кодировку %s."
 
-#: ../../common/jsonapi.c:2188
+#: ../../common/jsonapi.c:2239
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr ""
 "Старшее слово суррогата Unicode не может следовать за другим старшим словом."
 
-#: ../../common/jsonapi.c:2190
+#: ../../common/jsonapi.c:2241
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Младшее слово суррогата Unicode должно следовать за старшим словом."
 
