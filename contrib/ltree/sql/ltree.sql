@@ -384,3 +384,11 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.2' ;
 SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
+
+-- Test for overflow of lquery_level.totallen, based on an lquery level with
+-- many OR-variants.
+SELECT (repeat('x', 1000) || repeat('|' || repeat('x', 1000), 65))::lquery;
+
+-- Test for overflow of lquery_level.numvar, with a set of single-char
+-- variants in one level.
+SELECT (repeat('a|', 65535) || 'a')::lquery;
