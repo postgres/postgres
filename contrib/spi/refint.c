@@ -166,21 +166,24 @@ check_primary_key(PG_FUNCTION_ARGS)
 	if (plan->nplans <= 0)
 	{
 		SPIPlanPtr	pplan;
-		char		sql[8192];
+		StringInfoData sql;
+
+		initStringInfo(&sql);
 
 		/*
 		 * Construct query: SELECT 1 FROM _referenced_relation_ WHERE Pkey1 =
 		 * $1 [AND Pkey2 = $2 [...]]
 		 */
-		snprintf(sql, sizeof(sql), "select 1 from %s where ", relname);
-		for (i = 0; i < nkeys; i++)
+		appendStringInfo(&sql, "select 1 from %s where ", relname);
+		for (i = 1; i <= nkeys; i++)
 		{
-			snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "%s = $%d %s",
-					 args[i + nkeys + 1], i + 1, (i < nkeys - 1) ? "and " : "");
+			appendStringInfo(&sql, "%s = $%d ", args[i + nkeys], i);
+			if (i < nkeys)
+				appendStringInfoString(&sql, "and ");
 		}
 
 		/* Prepare plan for query */
-		pplan = SPI_prepare(sql, nkeys, argtypes);
+		pplan = SPI_prepare(sql.data, nkeys, argtypes);
 		if (pplan == NULL)
 			/* internal error */
 			elog(ERROR, "check_primary_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
@@ -196,6 +199,8 @@ check_primary_key(PG_FUNCTION_ARGS)
 														sizeof(SPIPlanPtr));
 		*(plan->splan) = pplan;
 		plan->nplans = 1;
+
+		pfree(sql.data);
 	}
 
 	/*
@@ -416,7 +421,6 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	if (plan->nplans <= 0)
 	{
 		SPIPlanPtr	pplan;
-		char		sql[8192];
 		char	  **args2 = args;
 
 		plan->splan = (SPIPlanPtr *) MemoryContextAlloc(TopMemoryContext,
@@ -424,6 +428,10 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 		for (r = 0; r < nrefs; r++)
 		{
+			StringInfoData sql;
+
+			initStringInfo(&sql);
+
 			relname = args2[0];
 
 			/*---------
@@ -437,8 +445,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			 *---------
 			 */
 			if (action == 'r')
-
-				snprintf(sql, sizeof(sql), "select 1 from %s where ", relname);
+				appendStringInfo(&sql, "select 1 from %s where ", relname);
 
 			/*---------
 			 * For 'C'ascade action we construct DELETE query
@@ -465,42 +472,23 @@ check_foreign_key(PG_FUNCTION_ARGS)
 					char	   *nv;
 					int			k;
 
-					snprintf(sql, sizeof(sql), "update %s set ", relname);
+					appendStringInfo(&sql, "update %s set ", relname);
 					for (k = 1; k <= nkeys; k++)
 					{
-						int			is_char_type = 0;
-						char	   *type;
-
 						fn = SPI_fnumber(tupdesc, args_temp[k - 1]);
 						Assert(fn > 0); /* already checked above */
 						nv = SPI_getvalue(newtuple, tupdesc, fn);
-						type = SPI_gettype(tupdesc, fn);
 
-						if (strcmp(type, "text") == 0 ||
-							strcmp(type, "varchar") == 0 ||
-							strcmp(type, "char") == 0 ||
-							strcmp(type, "bpchar") == 0 ||
-							strcmp(type, "date") == 0 ||
-							strcmp(type, "timestamp") == 0)
-							is_char_type = 1;
-#ifdef	DEBUG_QUERY
-						elog(DEBUG4, "check_foreign_key Debug value %s type %s %d",
-							 nv, type, is_char_type);
-#endif
-
-						/*
-						 * is_char_type =1 i set ' ' for define a new value
-						 */
-						snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql),
-								 " %s = %s%s%s %s ",
-								 args2[k], (is_char_type > 0) ? "'" : "",
-								 nv, (is_char_type > 0) ? "'" : "", (k < nkeys) ? ", " : "");
+						appendStringInfo(&sql, " %s = %s ",
+										 args2[k], quote_literal_cstr(nv));
+						if (k < nkeys)
+							appendStringInfoString(&sql, ", ");
 					}
-					strcat(sql, " where ");
+					appendStringInfoString(&sql, " where ");
 				}
 				else
 					/* DELETE */
-					snprintf(sql, sizeof(sql), "delete from %s where ", relname);
+					appendStringInfo(&sql, "delete from %s where ", relname);
 			}
 
 			/*
@@ -511,25 +499,26 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			 */
 			else if (action == 's')
 			{
-				snprintf(sql, sizeof(sql), "update %s set ", relname);
+				appendStringInfo(&sql, "update %s set ", relname);
 				for (i = 1; i <= nkeys; i++)
 				{
-					snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql),
-							 "%s = null%s",
-							 args2[i], (i < nkeys) ? ", " : "");
+					appendStringInfo(&sql, "%s = null", args2[i]);
+					if (i < nkeys)
+						appendStringInfoString(&sql, ", ");
 				}
-				strcat(sql, " where ");
+				appendStringInfoString(&sql, " where ");
 			}
 
 			/* Construct WHERE qual */
 			for (i = 1; i <= nkeys; i++)
 			{
-				snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "%s = $%d %s",
-						 args2[i], i, (i < nkeys) ? "and " : "");
+				appendStringInfo(&sql, "%s = $%d ", args2[i], i);
+				if (i < nkeys)
+					appendStringInfoString(&sql, "and ");
 			}
 
 			/* Prepare plan for query */
-			pplan = SPI_prepare(sql, nkeys, argtypes);
+			pplan = SPI_prepare(sql.data, nkeys, argtypes);
 			if (pplan == NULL)
 				/* internal error */
 				elog(ERROR, "check_foreign_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
@@ -545,11 +534,14 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			plan->splan[r] = pplan;
 
 			args2 += nkeys + 1; /* to the next relation */
+
+#ifdef DEBUG_QUERY
+			elog(DEBUG4, "check_foreign_key Debug Query is :  %s ", sql.data);
+#endif
+
+			pfree(sql.data);
 		}
 		plan->nplans = nrefs;
-#ifdef	DEBUG_QUERY
-		elog(DEBUG4, "check_foreign_key Debug Query is :  %s ", sql);
-#endif
 	}
 
 	/*
