@@ -218,6 +218,10 @@ astreamer_extractor_content(astreamer *streamer, astreamer_member *member,
 		case ASTREAMER_MEMBER_HEADER:
 			Assert(mystreamer->file == NULL);
 
+			if (!path_is_safe_for_extraction(member->pathname))
+				pg_fatal("tar member has unsafe path name: \"%s\"",
+						 member->pathname);
+
 			/* Prepend basepath. */
 			snprintf(mystreamer->filename, sizeof(mystreamer->filename),
 					 "%s/%s", mystreamer->basepath, member->pathname);
@@ -240,6 +244,14 @@ astreamer_extractor_content(astreamer *streamer, astreamer_member *member,
 
 				if (mystreamer->link_map)
 					linktarget = mystreamer->link_map(linktarget);
+
+				if (!is_absolute_path(linktarget) &&
+					!path_is_safe_for_extraction(member->linktarget))
+				{
+					pg_fatal("link target has unsafe path name: \"%s\"",
+							 member->linktarget);
+				}
+
 				extract_link(mystreamer->filename, linktarget);
 			}
 

@@ -305,6 +305,10 @@ astreamer_tar_header(astreamer_tar_parser *mystreamer)
 	strlcpy(member->pathname, &buffer[TAR_OFFSET_NAME], MAXPGPATH);
 	if (member->pathname[0] == '\0')
 		pg_fatal("tar member has empty name");
+	if (!path_is_safe_for_extraction(member->pathname))
+		pg_fatal("tar member has unsafe path name: \"%s\"",
+				 member->pathname);
+
 	member->size = read_tar_number(&buffer[TAR_OFFSET_SIZE], 12);
 	member->mode = read_tar_number(&buffer[TAR_OFFSET_MODE], 8);
 	member->uid = read_tar_number(&buffer[TAR_OFFSET_UID], 8);
