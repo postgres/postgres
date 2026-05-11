@@ -1257,18 +1257,23 @@ drop_existing_subscription(PGconn *conn, const char *subname, const char *dbname
 {
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
+	char	   *subname_esc;
 
 	Assert(conn != NULL);
+
+	subname_esc = PQescapeIdentifier(conn, subname, strlen(subname));
 
 	/*
 	 * Construct a query string. These commands are allowed to be executed
 	 * within a transaction.
 	 */
 	appendPQExpBuffer(query, "ALTER SUBSCRIPTION %s DISABLE;",
-					  subname);
+					  subname_esc);
 	appendPQExpBuffer(query, " ALTER SUBSCRIPTION %s SET (slot_name = NONE);",
-					  subname);
-	appendPQExpBuffer(query, " DROP SUBSCRIPTION %s;", subname);
+					  subname_esc);
+	appendPQExpBuffer(query, " DROP SUBSCRIPTION %s;", subname_esc);
+
+	PQfreemem(subname_esc);
 
 	if (dry_run)
 		pg_log_info("dry-run: would drop subscription \"%s\" in database \"%s\"",
