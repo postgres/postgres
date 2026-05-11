@@ -151,7 +151,7 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 		Py_ssize_t	i;
 		Pairs	   *pairs;
 
-		pairs = palloc(pcount * sizeof(*pairs));
+		pairs = palloc_array(Pairs, pcount);
 
 		for (i = 0; i < pcount; i++)
 		{
