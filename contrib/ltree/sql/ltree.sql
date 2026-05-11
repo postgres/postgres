@@ -456,3 +456,11 @@ FROM (VALUES ('.2.3', 'ltree'),
              ('!tree & aWdf@*','ltxtquery'))
       AS a(str,typ),
      LATERAL pg_input_error_info(a.str, a.typ) as errinfo;
+
+-- Test for overflow of lquery_level.totallen, based on an lquery level with
+-- many OR-variants.
+SELECT (repeat('x', 1000) || repeat('|' || repeat('x', 1000), 65))::lquery;
+
+-- Test for overflow of lquery_level.numvar, with a set of single-char
+-- variants in one level.
+SELECT (repeat('a|', 65535) || 'a')::lquery;
