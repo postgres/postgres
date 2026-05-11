@@ -224,8 +224,7 @@ pg_regexec(regex_t *re,
 		if (v->g->nsub + 1 <= LOCALMAT)
 			v->pmatch = mat;
 		else
-			v->pmatch = (regmatch_t *) MALLOC((v->g->nsub + 1) *
-											  sizeof(regmatch_t));
+			v->pmatch = MALLOC_ARRAY(regmatch_t, v->g->nsub + 1);
 		if (v->pmatch == NULL)
 			return REG_ESPACE;
 		v->nmatch = v->g->nsub + 1;
@@ -251,6 +250,7 @@ pg_regexec(regex_t *re,
 		v->subdfas = subdfas;
 	else
 	{
+		/* ntree is surely less than the number of states, so this is safe: */
 		v->subdfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
 		if (v->subdfas == NULL)
 		{
@@ -265,6 +265,7 @@ pg_regexec(regex_t *re,
 	n = (size_t) v->g->nlacons;
 	if (n > 0)
 	{
+		/* nlacons is surely less than the number of arcs, so this is safe: */
 		v->ladfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
 		if (v->ladfas == NULL)
 		{
@@ -1143,7 +1144,7 @@ citerdissect(struct vars *v,
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
-	endpts = (chr **) MALLOC((max_matches + 1) * sizeof(chr *));
+	endpts = MALLOC_ARRAY(chr *, max_matches + 1);
 	if (endpts == NULL)
 		return REG_ESPACE;
 	endpts[0] = begin;
@@ -1350,7 +1351,7 @@ creviterdissect(struct vars *v,
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
-	endpts = (chr **) MALLOC((max_matches + 1) * sizeof(chr *));
+	endpts = MALLOC_ARRAY(chr *, max_matches + 1);
 	if (endpts == NULL)
 		return REG_ESPACE;
 	endpts[0] = begin;

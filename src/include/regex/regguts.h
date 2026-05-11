@@ -76,6 +76,14 @@
 #ifndef FREE
 #define FREE(p)		free(VS(p))
 #endif
+#ifndef MALLOC_ARRAY
+/* we don't depend on calloc's zeroing behavior, we do need overflow check */
+#define MALLOC_ARRAY(type, n) ((type *) calloc(sizeof(type), n))
+#endif
+#ifndef REALLOC_ARRAY
+/* XXX this definition does not provide the desired overflow check */
+#define REALLOC_ARRAY(p, type, n) ((type *) REALLOC(p, sizeof(type) * (n)))
+#endif
 
 /* want size of a char in bits, and max value in bounded quantifiers */
 #ifndef _POSIX2_RE_DUP_MAX
@@ -441,6 +449,11 @@ struct cnfa
  * (the compacted NFA and the colormap).
  * The scaling here is based on an empirical measurement that very large
  * NFAs tend to have about 4 arcs/state.
+ *
+ * Do not raise this so high as to allow more than INT_MAX/8 states or arcs,
+ * or you risk integer overflows in various space allocation requests.
+ * (We could be more defensive in those places, but that's so far beyond the
+ * practical range of NFA sizes that it doesn't seem worth additional code.)
  */
 #ifndef REG_MAX_COMPILE_SPACE
 #define REG_MAX_COMPILE_SPACE  \
