@@ -2000,7 +2000,7 @@ pqEndcopy3(PGconn *conn)
  */
 PGresult *
 pqFunctionCall3(PGconn *conn, Oid fnid,
-				int *result_buf, int *actual_result_len,
+				int *result_buf, int buf_size, int *actual_result_len,
 				int result_is_int,
 				const PQArgBlock *args, int nargs)
 {
@@ -2134,6 +2134,17 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 					}
 					else
 					{
+						/*
+						 * If the server returned too much data for the
+						 * buffer, something fishy is going on.  Abandon ship.
+						 */
+						if (buf_size != -1 && *actual_result_len > buf_size)
+						{
+							libpq_append_conn_error(conn, "server returned too much data");
+							handleSyncLoss(conn, id, *actual_result_len);
+							return pqPrepareAsyncResult(conn);
+						}
+
 						if (pqGetnchar((char *) result_buf,
 									   *actual_result_len,
 									   conn))
