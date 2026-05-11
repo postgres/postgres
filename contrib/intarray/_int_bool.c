@@ -435,37 +435,77 @@ boolop(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(result);
 }
 
-static void
-findoprnd(ITEM *ptr, int32 *pos)
+/*
+ * Recursively fill the "left" fields of an ITEM array that represents
+ * a valid postfix tree.
+ *
+ *	state: only needed for error reporting
+ *	ptr: starting element of array
+ *	pos: in/out argument, the array index this call is responsible to fill
+ *
+ * At exit, *pos has been decremented to point before the sub-tree whose
+ * top is the entry-time value of *pos.
+ *
+ * Returns true if okay, false if error (the only possible error is
+ * overflow of a "left" field).
+ */
+static bool
+findoprnd(WORKSTATE *state, ITEM *ptr, int32 *pos)
 {
+	int32		mypos;
+
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
 
+	/* get the position this call is supposed to update */
+	mypos = *pos;
+	Assert(mypos >= 0);
+
+	/* in all cases, we should decrement *pos to advance over this item */
+	(*pos)--;
+
 #ifdef BS_DEBUG
-	elog(DEBUG3, (ptr[*pos].type == OPR) ?
-		 "%d  %c" : "%d  %d", *pos, ptr[*pos].val);
+	elog(DEBUG3, (ptr[mypos].type == OPR) ?
+		 "%d  %c" : "%d  %d", mypos, ptr[mypos].val);
 #endif
-	if (ptr[*pos].type == VAL)
+
+	if (ptr[mypos].type == VAL)
 	{
-		ptr[*pos].left = 0;
-		(*pos)--;
+		/* base case: a VAL has no operand, so just set its left to zero */
+		ptr[mypos].left = 0;
 	}
-	else if (ptr[*pos].val == (int32) '!')
+	else if (ptr[mypos].val == (int32) '!')
 	{
-		ptr[*pos].left = -1;
-		(*pos)--;
-		findoprnd(ptr, pos);
+		/* unary operator, likewise easy: operand is just before it */
+		ptr[mypos].left = -1;
+		/* recurse to scan operand */
+		if (!findoprnd(state, ptr, pos))
+			return false;
 	}
 	else
 	{
-		ITEM	   *curitem = &ptr[*pos];
-		int32		tmp = *pos;
+		/* binary operator */
+		int32		delta;
 
-		(*pos)--;
-		findoprnd(ptr, pos);
-		curitem->left = *pos - tmp;
-		findoprnd(ptr, pos);
+		/* recurse to scan right operand */
+		if (!findoprnd(state, ptr, pos))
+			return false;
+		/* we must fill left with offset to left operand's top */
+		/* abs(delta) < QUERYTYPEMAXITEMS, so it can't overflow ... */
+		delta = *pos - mypos;
+		/* ... but it might be too large to fit in the 16-bit left field */
+		Assert(delta < 0);
+		if (unlikely(delta < PG_INT16_MIN))
+			ereturn(state->escontext, false,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("query_int expression is too complex")));
+		ptr[mypos].left = (int16) delta;
+		/* recurse to scan left operand */
+		if (!findoprnd(state, ptr, pos))
+			return false;
 	}
+
+	return true;
 }
 
 
@@ -516,6 +556,7 @@ bqarr_in(PG_FUNCTION_ARGS)
 	query->size = state.num;
 	ptr = GETQUERY(query);
 
+	/* fill the query array from the data makepol constructed */
 	for (i = state.num - 1; i >= 0; i--)
 	{
 		ptr[i].type = state.str->type;
@@ -525,8 +566,13 @@ bqarr_in(PG_FUNCTION_ARGS)
 		state.str = tmp;
 	}
 
+	/* now fill the "left" fields */
 	pos = query->size - 1;
-	findoprnd(ptr, &pos);
+	if (!findoprnd(&state, ptr, &pos))
+		PG_RETURN_NULL();
+	/* if successful, findoprnd should have scanned the whole array */
+	Assert(pos == -1);
+
 #ifdef BS_DEBUG
 	initStringInfo(&pbuf);
 	for (i = 0; i < query->size; i++)
