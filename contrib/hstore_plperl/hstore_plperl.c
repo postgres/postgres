@@ -118,7 +118,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 
 	pcount = hv_iterinit(hv);
 
-	pairs = palloc(pcount * sizeof(Pairs));
+	pairs = palloc_array(Pairs, pcount);
 
 	i = 0;
 	while ((he = hv_iternext(hv)))
