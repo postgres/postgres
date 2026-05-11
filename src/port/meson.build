@@ -72,6 +72,7 @@ replace_funcs_neg = [
   ['strlcat'],
   ['strlcpy'],
   ['strnlen'],
+  ['timingsafe_bcmp'],
 ]
 
 if host_system != 'windows'

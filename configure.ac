@@ -1842,7 +1842,7 @@ AC_CHECK_DECLS(posix_fadvise, [], [], [#include <fcntl.h>])
 ]) # fi
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
-AC_CHECK_DECLS([strlcat, strlcpy, strnlen])
+AC_CHECK_DECLS([strlcat, strlcpy, strnlen, timingsafe_bcmp])
 
 # We can't use AC_REPLACE_FUNCS to replace these functions, because it
 # won't handle deployment target restrictions on macOS
@@ -1864,6 +1864,7 @@ AC_REPLACE_FUNCS(m4_normalize([
 	strlcat
 	strlcpy
 	strnlen
+	timingsafe_bcmp
 ]))
 
 if test "$enable_thread_safety" = yes; then
