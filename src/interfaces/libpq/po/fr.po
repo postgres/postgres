@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-18 04:40+0000\n"
-"PO-Revision-Date: 2026-02-18 14:28+0100\n"
+"POT-Creation-Date: 2026-05-08 20:10+0000\n"
+"PO-Revision-Date: 2026-05-10 17:11+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../libpq-oauth/oauth-curl.c:308 ../libpq-oauth/oauth-curl.c:2011
 #, c-format
@@ -45,28 +45,24 @@ msgstr "échec lors de la réception de %s à partir de la réponse OAuth : %s"
 
 #: ../libpq-oauth/oauth-curl.c:485 fe-auth-oauth.c:209 fe-auth-oauth.c:271
 #: fe-auth-oauth.c:333
-#, fuzzy, c-format
-#| msgid "field \"%s\" is missing"
+#, c-format
 msgid "field \"%s\" must be a string"
-msgstr "le champ « %s » est manquant"
+msgstr "le champ « %s » doit être une chaîne de caractères"
 
 #: ../libpq-oauth/oauth-curl.c:489
-#, fuzzy, c-format
-#| msgid "\"%s\" is not a number"
+#, c-format
 msgid "field \"%s\" must be a number"
-msgstr "« %s » n'est pas un nombre"
+msgstr "le champ « %s » doit être un nombre"
 
 #: ../libpq-oauth/oauth-curl.c:493
-#, fuzzy, c-format
-#| msgid "argument of %s must be an array of objects"
+#, c-format
 msgid "field \"%s\" must be an array of strings"
-msgstr "l'argument de %s doit être un tableau d'objets"
+msgstr "le champ « %s » doit être un tableau de chaînes"
 
 #: ../libpq-oauth/oauth-curl.c:498
-#, fuzzy, c-format
-#| msgid "field \"%s\" is duplicated"
+#, c-format
 msgid "field \"%s\" has unexpected type"
-msgstr "le champ « %s » est dupliqué"
+msgstr "le champ « %s » a un type inattendu"
 
 #: ../libpq-oauth/oauth-curl.c:522 ../libpq-oauth/oauth-curl.c:632
 #: fe-auth-oauth.c:215 fe-auth-oauth.c:277
@@ -111,10 +107,8 @@ msgid "field \"%s\" is missing"
 msgstr "le champ « %s » est manquant"
 
 #: ../libpq-oauth/oauth-curl.c:1097
-#, fuzzy
-#| msgid "failed to send SSL negotiation response: %m"
 msgid "failed to parse token error response"
-msgstr "échec lors de l'envoi de la réponse de négociation SSL : %m"
+msgstr "a échoué à analyser la répondu en erreur du jeton"
 
 #: ../libpq-oauth/oauth-curl.c:1125
 #, c-format
@@ -122,10 +116,9 @@ msgid "provider rejected the oauth_client_secret"
 msgstr "le fournisseur a rejeté oauth_client_secret"
 
 #: ../libpq-oauth/oauth-curl.c:1126
-#, fuzzy, c-format
-#| msgid "provider rejected the oauth_client_secret"
+#, c-format
 msgid "provider requires client authentication, and no oauth_client_secret is set"
-msgstr "le fournisseur a rejeté oauth_client_secret"
+msgstr "le fournisseur requiert l'authentification du client, et aucun oauth_client_secret n'est configuré"
 
 #: ../libpq-oauth/oauth-curl.c:1559
 #, c-format
@@ -199,7 +192,7 @@ msgstr "code de réponse inattendu %ld"
 
 #: ../libpq-oauth/oauth-curl.c:2162
 msgid "failed to parse OpenID discovery document"
-msgstr ""
+msgstr "échec lors de l'analyse du document découverte OpenID"
 
 #: ../libpq-oauth/oauth-curl.c:2227
 #, c-format
@@ -222,16 +215,12 @@ msgid "token endpoint \"%s\" must use HTTPS"
 msgstr "le endpoint « %s » du jeton doit utiliser HTTPS"
 
 #: ../libpq-oauth/oauth-curl.c:2430
-#, fuzzy
-#| msgid "permission denied to set session authorization"
 msgid "failed to parse device authorization"
-msgstr "droit refusé pour initialiser une autorisation de session"
+msgstr "a échoué à analyser l'autorisation du périphérique"
 
 #: ../libpq-oauth/oauth-curl.c:2518
-#, fuzzy
-#| msgid "failed to send SSL negotiation response: %m"
 msgid "failed to parse access token response"
-msgstr "échec lors de l'envoi de la réponse de négociation SSL : %m"
+msgstr "a échoué à analyser la réponse du jeton"
 
 #: ../libpq-oauth/oauth-curl.c:2598
 #, c-format
@@ -277,166 +266,149 @@ msgstr ""
 
 #: ../libpq-oauth/oauth-curl.c:2897
 msgid "failed to fetch OpenID discovery document"
-msgstr ""
+msgstr "échec de la récupération du document découverte OpenID"
 
 #: ../libpq-oauth/oauth-curl.c:2911
-#, fuzzy
-#| msgid "%s cannot run inside a subtransaction"
 msgid "cannot run OAuth device authorization"
-msgstr "%s ne peut pas être exécuté dans une sous-transaction"
+msgstr "ne peut pas exécuter l'autorisation du périphérique OAuth"
 
 #: ../libpq-oauth/oauth-curl.c:2915
-#, fuzzy
-#| msgid "permission denied to set session authorization"
 msgid "failed to obtain device authorization"
-msgstr "droit refusé pour initialiser une autorisation de session"
+msgstr "a échoué à obtenir l'autorisation du périphérique"
 
 #: ../libpq-oauth/oauth-curl.c:2926 ../libpq-oauth/oauth-curl.c:2977
 msgid "failed to obtain access token"
-msgstr ""
+msgstr "échec lors de l'obtention du jeton d'accès"
 
 #: fe-auth-oauth.c:133
-#, fuzzy, c-format
-#| msgid "internal error: async authentication has no handler"
+#, c-format
 msgid "internal error: no OAuth token was set for the connection"
-msgstr "erreur interne : async authentication n'a pas de gestionnaire"
+msgstr "erreur interne : aucun jeton OAuth n'était configuré pour la connexion"
 
 #: fe-auth-oauth.c:396
-#, fuzzy, c-format
-#| msgid "token endpoint \"%s\" must use HTTPS"
+#, c-format
 msgid "OAuth discovery URI \"%s\" must use HTTPS"
-msgstr "le endpoint « %s » du jeton doit utiliser HTTPS"
+msgstr "l'URI de découverte d'OAuth « %s » doit utiliser HTTPS"
 
 #: fe-auth-oauth.c:413
 #, c-format
 msgid "OAuth discovery URI \"%s\" must not contain query or fragment components"
-msgstr ""
+msgstr "L'URI de découverte OAuth « %s » ne doit pas contenir des composants requête ou fragment"
 
 #: fe-auth-oauth.c:428
 #, c-format
 msgid "OAuth discovery URI \"%s\" is not a .well-known URI"
-msgstr ""
+msgstr "L'URI de découverte OAuth « %s » n'est pas une URI .well-known"
 
 #: fe-auth-oauth.c:454
 #, c-format
 msgid "OAuth discovery URI \"%s\" uses an unsupported .well-known suffix"
-msgstr ""
+msgstr "L'URI de découverte OAuth « %s » utilisé un suffixe .well-known non supporté"
 
 #: fe-auth-oauth.c:479
 #, c-format
 msgid "OAuth discovery URI \"%s\" uses an invalid format"
-msgstr ""
+msgstr "L'URI de découverte OAuth « %s » utilise un format invalide"
 
 #: fe-auth-oauth.c:528
 #, c-format
 msgid "server's error message contained an embedded NULL, and was discarded"
-msgstr ""
+msgstr "le message d'erreur du serveur contenait un NULL embarqué, et a été annulé"
 
 #: fe-auth-oauth.c:539
-#, fuzzy, c-format
-#| msgid "response is not valid UTF-8"
+#, c-format
 msgid "server's error response is not valid UTF-8"
-msgstr "la réponse n'est pas de l'UTF-8 valide"
+msgstr "la réponse en erreur du serveur n'est pas de l'UTF-8 valide"
 
 #: fe-auth-oauth.c:579
-#, fuzzy, c-format
-#| msgid "failed to get %s from OAuth response: %s"
+#, c-format
 msgid "failed to parse server's error response: %s"
-msgstr "échec lors de la réception de %s à partir de la réponse OAuth : %s"
+msgstr "a échoué à analyser la réponse du serveur : %s"
 
 #: fe-auth-oauth.c:610
-#, fuzzy, c-format
-#| msgid "the issuer identifier (%s) does not match oauth_issuer (%s)"
+#, c-format
 msgid "server's discovery document at %s (issuer \"%s\") is incompatible with oauth_issuer (%s)"
-msgstr "l'identifiant du demandeur (%s) ne correspond pas à oauth_issuer (« %s »)"
+msgstr "le document de découverte du serveur à %s (émetteur « %s ») est incompatible avec oauth_issuer (%s)"
 
 #: fe-auth-oauth.c:631
 #, c-format
 msgid "server's discovery document has moved to %s (previous location was %s)"
-msgstr ""
+msgstr "le document de découverte du serveur a été déplacé dans %s (l'emplacement précédent était %s)"
 
 #: fe-auth-oauth.c:652
-#, fuzzy, c-format
-#| msgid "server sent an error response during SSL exchange"
+#, c-format
 msgid "server sent error response without a status"
-msgstr "le serveur a envoyé une erreur lors de l'échange SSL"
+msgstr "le serveur a répondu avec une erreur sans statut"
 
 #: fe-auth-oauth.c:663
-#, fuzzy, c-format
-#| msgid "server requested SASL authentication"
+#, c-format
 msgid "server rejected OAuth bearer token: %s"
-msgstr "le serveur a demandé l'authentification SASL"
+msgstr "le serveur a rejeté le jeton porteur OAuth : %s"
 
 #: fe-auth-oauth.c:696
 #, c-format
 msgid "user-defined OAuth flow provided neither a token nor an async callback"
-msgstr ""
+msgstr "le flux OAuth défini par l'utilisateur n'a fourni ni un jeton ni un appel fonction asynchrone"
 
 #: fe-auth-oauth.c:703 fe-auth-oauth.c:1041
-#, fuzzy, c-format
-#| msgid "reading user-defined operator families"
+#, c-format
 msgid "user-defined OAuth flow failed"
-msgstr "lecture des familles d'opérateurs utilisateur"
+msgstr "échec du flux OAuth défini par l'utilisateur"
 
 #: fe-auth-oauth.c:716
 #, c-format
 msgid "user-defined OAuth flow did not provide a token"
-msgstr ""
+msgstr "le flux OAuth défini par l'utilisateur n'a pas fourni de jeton"
 
 #: fe-auth-oauth.c:734
-#, fuzzy, c-format
-#| msgid "internal error: async authentication did not set a socket for polling"
+#, c-format
 msgid "user-defined OAuth flow did not provide a socket for polling"
-msgstr "erreur interne : une authentification asynchrone n'a pas configuré une socket pour le polling"
+msgstr "le flux OAuth défini par l'utilisateur n'a pas fourni de socket pour l'interrogation"
 
 #: fe-auth-oauth.c:917
-#, fuzzy, c-format
-#| msgid "failed to create kqueue: %m"
+#, c-format
 msgid "failed to lock mutex (%d)"
-msgstr "a échoué à créer kqueue : %m"
+msgstr "a échoué à verrouiller le mutex (%d)"
 
 #: fe-auth-oauth.c:1046
 #, c-format
 msgid "no OAuth flows are available (try installing the libpq-oauth package)"
-msgstr ""
+msgstr "aucun flux OAuth n'est disponible (essayez d'installer le paquet libpq-oauth)"
 
 #: fe-auth-oauth.c:1095
 #, c-format
 msgid "server requires OAuth authentication, but oauth_issuer and oauth_client_id are not both set"
-msgstr ""
+msgstr "le serveur requiert une authentification OAuth mais oauth_issuer et oauth_client_id ne sont pas configurés"
 
 #: fe-auth-oauth.c:1255
 #, c-format
 msgid "server sent unexpected additional OAuth data"
-msgstr ""
+msgstr "le serveur a envoyé des données OAuth supplémentaires inattendues"
 
 #: fe-auth-oauth.c:1295
 #, c-format
 msgid "server requires OAuth authentication, but no discovery metadata was provided"
-msgstr ""
+msgstr "le serveur réclame une authentification OAuth mais aucune métadonnée de découverte n'a été fournie"
 
 #: fe-auth-oauth.c:1333
-#, fuzzy, c-format
-#| msgid "internal error: async authentication did not set a socket for polling"
+#, c-format
 msgid "internal error: OAuth flow did not set a token"
-msgstr "erreur interne : une authentification asynchrone n'a pas configuré une socket pour le polling"
+msgstr "erreur interne : le flux OAuth n'a pas configuré un jeton"
 
 #: fe-auth-oauth.c:1351
 #, c-format
 msgid "server sent additional OAuth data after error"
-msgstr ""
+msgstr "le serveur a envoyé des données OAuth supplémentaire après l'erreur"
 
 #: fe-auth-oauth.c:1355
-#, fuzzy, c-format
-#| msgid "invalid SCRAM exchange state"
+#, c-format
 msgid "invalid OAuth exchange state"
-msgstr "état d'échange SCRAM invalide"
+msgstr "état d'échange OAuth invalide"
 
 #: fe-auth-oauth.c:1368
-#, fuzzy, c-format
-#| msgid "no connection to the server"
+#, c-format
 msgid "retrying connection with new bearer token"
-msgstr "aucune connexion au serveur"
+msgstr "nouvelle tentative de connexion avec un nouveau jeton porteur"
 
 #: fe-auth-scram.c:228
 #, c-format
@@ -603,7 +575,7 @@ msgstr "la demande de la méthode d'authentification « %s » a échoué : le se
 #: fe-auth.c:580
 #, c-format
 msgid "channel binding is required, but server did not offer an authentication method that supports channel binding"
-msgstr "Lien de canal requis, mais le serveur ne propose pas de méthode d'authentification le supportant"
+msgstr "lien de canal requis, mais le serveur ne propose pas de méthode d'authentification le supportant"
 
 #: fe-auth.c:716
 #, c-format
@@ -701,7 +673,7 @@ msgstr "authentification SSPI non supportée"
 #: fe-auth.c:1193
 #, c-format
 msgid "Crypt authentication not supported"
-msgstr "authentification crypt non supportée"
+msgstr "Authentification crypt non supportée"
 
 #: fe-auth.c:1267
 #, c-format

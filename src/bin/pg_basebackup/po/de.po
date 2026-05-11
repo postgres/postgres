@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-04 18:50+0000\n"
-"PO-Revision-Date: 2026-02-05 14:24+0100\n"
+"POT-Creation-Date: 2026-05-05 12:11+0000\n"
+"PO-Revision-Date: 2026-05-06 15:44+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -41,8 +41,8 @@ msgstr "Tipp: "
 #: ../../common/compression.c:132 ../../common/compression.c:141
 #: ../../common/compression.c:150 ../../fe_utils/astreamer_gzip.c:140
 #: ../../fe_utils/astreamer_gzip.c:273 ../../fe_utils/astreamer_lz4.c:102
-#: ../../fe_utils/astreamer_lz4.c:300 ../../fe_utils/astreamer_zstd.c:133
-#: ../../fe_utils/astreamer_zstd.c:288
+#: ../../fe_utils/astreamer_lz4.c:300 ../../fe_utils/astreamer_zstd.c:130
+#: ../../fe_utils/astreamer_zstd.c:285
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "diese Installation unterstützt keine Komprimierung mit %s"
@@ -108,7 +108,8 @@ msgid "could not read file \"%s\": read %d of %zu"
 msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: ../../fe_utils/astreamer_file.c:141 pg_recvlogical.c:653
+#: ../../fe_utils/astreamer_file.c:141 ../../fe_utils/astreamer_file.c:270
+#: pg_recvlogical.c:653
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht schließen: %m"
@@ -225,7 +226,7 @@ msgstr "konnte Prozess nicht mit beschränktem Token neu starten: Fehlercode %lu
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "konnte Statuscode des Subprozesses nicht ermitteln: Fehlercode %lu"
 
-#: ../../fe_utils/astreamer_file.c:96 ../../fe_utils/astreamer_file.c:364
+#: ../../fe_utils/astreamer_file.c:96 ../../fe_utils/astreamer_file.c:366
 #: ../../fe_utils/recovery_gen.c:153 pg_basebackup.c:1498 pg_basebackup.c:1707
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -237,28 +238,28 @@ msgstr "konnte Datei »%s« nicht erstellen: %m"
 msgid "could not write to file \"%s\": %m"
 msgstr "konnte nicht in Datei »%s« schreiben: %m"
 
-#: ../../fe_utils/astreamer_file.c:278
+#: ../../fe_utils/astreamer_file.c:280
 #, c-format
 msgid "unexpected state while extracting archive"
 msgstr "unerwarteter Zustand beim Extrahieren des Archivs"
 
-#: ../../fe_utils/astreamer_file.c:324 pg_basebackup.c:699 pg_basebackup.c:713
+#: ../../fe_utils/astreamer_file.c:326 pg_basebackup.c:699 pg_basebackup.c:713
 #: pg_basebackup.c:758
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht erzeugen: %m"
 
-#: ../../fe_utils/astreamer_file.c:329
+#: ../../fe_utils/astreamer_file.c:331
 #, c-format
 msgid "could not set permissions on directory \"%s\": %m"
 msgstr "konnte Zugriffsrechte für Verzeichnis »%s« nicht setzen: %m"
 
-#: ../../fe_utils/astreamer_file.c:348
+#: ../../fe_utils/astreamer_file.c:350
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung von »%s« nach »%s« nicht erzeugen: %m"
 
-#: ../../fe_utils/astreamer_file.c:368
+#: ../../fe_utils/astreamer_file.c:370
 #, c-format
 msgid "could not set permissions on file \"%s\": %m"
 msgstr "konnte Zugriffsrechte von Datei »%s« nicht setzen: %m"
@@ -299,7 +300,7 @@ msgid "could not initialize compression library"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
 #: ../../fe_utils/astreamer_gzip.c:320 ../../fe_utils/astreamer_lz4.c:356
-#: ../../fe_utils/astreamer_zstd.c:333
+#: ../../fe_utils/astreamer_zstd.c:330
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "konnte Daten nicht dekomprimieren: %s"
@@ -314,8 +315,8 @@ msgstr "konnte lz4-Komprimierungskontext nicht erzeugen: %s"
 msgid "could not write lz4 header: %s"
 msgstr "konnte lz4-Header nicht schreiben: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:185
-#: ../../fe_utils/astreamer_zstd.c:227
+#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
+#: ../../fe_utils/astreamer_zstd.c:224
 #, c-format
 msgid "could not compress data: %s"
 msgstr "konnte Daten nicht komprimieren: %s"
@@ -330,22 +331,27 @@ msgstr "konnte lz4-Komprimierung nicht beenden: %s"
 msgid "could not initialize compression library: %s"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren: %s"
 
-#: ../../fe_utils/astreamer_tar.c:244
-#, c-format
-msgid "tar file trailer exceeds 2 blocks"
-msgstr "Tar-Datei-Trailer überschreitet 2 Blöcke"
-
-#: ../../fe_utils/astreamer_tar.c:249
+#: ../../fe_utils/astreamer_tar.c:254
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "unerwarteter Zustand beim Parsen des Tar-Archivs"
 
-#: ../../fe_utils/astreamer_tar.c:292
+#: ../../fe_utils/astreamer_tar.c:300
+#, c-format
+msgid "input file does not appear to be a valid tar archive"
+msgstr "Eingabedatei scheint kein gültiges Tar-Archiv zu sein"
+
+#: ../../fe_utils/astreamer_tar.c:307
 #, c-format
 msgid "tar member has empty name"
 msgstr "Tar-Mitglied hat leeren Namen"
 
-#: ../../fe_utils/astreamer_tar.c:326
+#: ../../fe_utils/astreamer_tar.c:328
+#, c-format
+msgid "pax extensions to tar format are not supported"
+msgstr "PAX-Erweiterungen des Tar-Formats werden nicht unterstützt"
+
+#: ../../fe_utils/astreamer_tar.c:357
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-Strom endete vor dem Ende der letzten Datei"
@@ -365,12 +371,12 @@ msgstr "konnte zstd-Komprimierungsniveau nicht auf %d setzen: %s"
 msgid "could not set compression worker count to %d: %s"
 msgstr "konnte Komprimierungs-Worker-Anzahl nicht auf %d setzen: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:120
+#: ../../fe_utils/astreamer_zstd.c:119
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "konnte Long-Distance-Modus nicht einschalten: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:279
+#: ../../fe_utils/astreamer_zstd.c:276
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "konnte zstd-Dekomprimierungskontext nicht erzeugen"

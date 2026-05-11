@@ -1,15 +1,15 @@
 # German message translation file for pg_test_timing
-# Copyright (C) 2021 PostgreSQL Global Development Group
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 13\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-16 07:51+0000\n"
-"PO-Revision-Date: 2021-04-12 16:37+0200\n"
+"POT-Creation-Date: 2026-05-05 12:12+0000\n"
+"PO-Revision-Date: 2026-05-06 15:50+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -68,8 +68,8 @@ msgstr "Rückwärts gehende Uhr festgestellt.\n"
 
 #: pg_test_timing.c:152
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "Zeitdifferenz: %d ms\n"
+msgid "Time warp: %d us\n"
+msgstr "Zeitdifferenz: %d µs\n"
 
 #: pg_test_timing.c:175
 #, c-format

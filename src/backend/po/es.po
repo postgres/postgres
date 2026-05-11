@@ -65,7 +65,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-02-06 23:10+0000\n"
-"PO-Revision-Date: 2026-02-07 10:17+0100\n"
+"PO-Revision-Date: 2026-02-25 16:53+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -22171,7 +22171,7 @@ msgstr "Cambie «hot_standby» a «on»."
 #: replication/slot.c:2666
 #, c-format
 msgid "physical replication slot \"%s\" exists, but \"wal_level\" < \"replica\""
-msgstr "existe el slot de replicación lógica «%s», pero «wal_level» < «replica»"
+msgstr "existe el slot de replicación física «%s», pero «wal_level» < «replica»"
 
 # <> hello vim
 #: replication/slot.c:2668

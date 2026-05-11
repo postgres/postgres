@@ -1,13 +1,13 @@
 # German message translation file for pg_verifybackup
-# Copyright (C) 2020-2025 PostgreSQL Global Development Group
+# Copyright (C) 2020-2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-29 14:48+0000\n"
-"PO-Revision-Date: 2025-04-29 18:57+0200\n"
+"POT-Creation-Date: 2026-05-05 12:10+0000\n"
+"PO-Revision-Date: 2026-05-06 16:09+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -92,7 +92,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht fsyncen: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/jsonapi.c:2407 ../../common/parse_manifest.c:157
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
 #: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
@@ -122,103 +122,103 @@ msgstr "Speicher aufgebraucht\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
 
-#: ../../common/jsonapi.c:2432
+#: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen."
 
-#: ../../common/jsonapi.c:2434
+#: ../../common/jsonapi.c:2486
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementeller Parser benötigt inkrementellen Lexer."
 
-#: ../../common/jsonapi.c:2436
+#: ../../common/jsonapi.c:2488
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400."
 
-#: ../../common/jsonapi.c:2438
+#: ../../common/jsonapi.c:2490
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-Sequenz »\\%.*s« ist nicht gültig."
 
-#: ../../common/jsonapi.c:2442
+#: ../../common/jsonapi.c:2494
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Zeichen mit Wert 0x%02x muss escapt werden."
 
-#: ../../common/jsonapi.c:2446
+#: ../../common/jsonapi.c:2498
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Ende der Eingabe erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2449
+#: ../../common/jsonapi.c:2501
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Array-Element oder »]« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2452
+#: ../../common/jsonapi.c:2504
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "»,« oder »]« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2455
+#: ../../common/jsonapi.c:2507
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "»:« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2458
+#: ../../common/jsonapi.c:2510
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "JSON-Wert erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2461
+#: ../../common/jsonapi.c:2513
 msgid "The input string ended unexpectedly."
 msgstr "Die Eingabezeichenkette endete unerwartet."
 
-#: ../../common/jsonapi.c:2463
+#: ../../common/jsonapi.c:2515
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Zeichenkette oder »}« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2466
+#: ../../common/jsonapi.c:2518
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "»,« oder »}« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2469
+#: ../../common/jsonapi.c:2521
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Zeichenkette erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2472
+#: ../../common/jsonapi.c:2524
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token »%.*s« ist ungültig."
 
-#: ../../common/jsonapi.c:2478
+#: ../../common/jsonapi.c:2530
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kann nicht in »text« umgewandelt werden."
 
-#: ../../common/jsonapi.c:2480
+#: ../../common/jsonapi.c:2532
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "Nach »\\u« müssen vier Hexadezimalziffern folgen."
 
-#: ../../common/jsonapi.c:2483
+#: ../../common/jsonapi.c:2535
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Unicode-Escape-Werte können nicht für Code-Punkt-Werte über 007F verwendet werden, wenn die Kodierung nicht UTF8 ist."
 
-#: ../../common/jsonapi.c:2492
+#: ../../common/jsonapi.c:2544
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Unicode-Escape-Wert konnte nicht in die Serverkodierung %s umgewandelt werden."
 
-#: ../../common/jsonapi.c:2499
+#: ../../common/jsonapi.c:2551
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 
-#: ../../common/jsonapi.c:2501
+#: ../../common/jsonapi.c:2553
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
 
-#: ../../common/jsonapi.c:2523
+#: ../../common/jsonapi.c:2575
 msgid "out of memory while constructing error description"
 msgstr "Speicher aufgebraucht beim Konstruieren der Fehlerbeschreibung"
 
@@ -401,7 +401,7 @@ msgstr "konnte Komprimierungsniveau %d nicht setzen: %s"
 
 #: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:273
 #: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:300
-#: ../../fe_utils/astreamer_zstd.c:133 ../../fe_utils/astreamer_zstd.c:288
+#: ../../fe_utils/astreamer_zstd.c:130 ../../fe_utils/astreamer_zstd.c:285
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "diese Installation unterstützt keine Komprimierung mit %s"
@@ -422,7 +422,7 @@ msgid "could not initialize compression library"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
 #: ../../fe_utils/astreamer_gzip.c:320 ../../fe_utils/astreamer_lz4.c:356
-#: ../../fe_utils/astreamer_zstd.c:333
+#: ../../fe_utils/astreamer_zstd.c:330
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "konnte Daten nicht dekomprimieren: %s"
@@ -437,8 +437,8 @@ msgstr "konnte lz4-Komprimierungskontext nicht erzeugen: %s"
 msgid "could not write lz4 header: %s"
 msgstr "konnte lz4-Header nicht schreiben: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:185
-#: ../../fe_utils/astreamer_zstd.c:227
+#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
+#: ../../fe_utils/astreamer_zstd.c:224
 #, c-format
 msgid "could not compress data: %s"
 msgstr "konnte Daten nicht komprimieren: %s"
@@ -453,22 +453,27 @@ msgstr "konnte lz4-Komprimierung nicht beenden: %s"
 msgid "could not initialize compression library: %s"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren: %s"
 
-#: ../../fe_utils/astreamer_tar.c:244
-#, c-format
-msgid "tar file trailer exceeds 2 blocks"
-msgstr "Tar-Datei-Trailer überschreitet 2 Blöcke"
-
-#: ../../fe_utils/astreamer_tar.c:249 astreamer_verify.c:130
+#: ../../fe_utils/astreamer_tar.c:254 astreamer_verify.c:130
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "unerwarteter Zustand beim Parsen des Tar-Archivs"
 
-#: ../../fe_utils/astreamer_tar.c:292
+#: ../../fe_utils/astreamer_tar.c:300
+#, c-format
+msgid "input file does not appear to be a valid tar archive"
+msgstr "Eingabedatei scheint kein gültiges Tar-Archiv zu sein"
+
+#: ../../fe_utils/astreamer_tar.c:307
 #, c-format
 msgid "tar member has empty name"
 msgstr "Tar-Mitglied hat leeren Namen"
 
-#: ../../fe_utils/astreamer_tar.c:326
+#: ../../fe_utils/astreamer_tar.c:328
+#, c-format
+msgid "pax extensions to tar format are not supported"
+msgstr "PAX-Erweiterungen des Tar-Formats werden nicht unterstützt"
+
+#: ../../fe_utils/astreamer_tar.c:357
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-Strom endete vor dem Ende der letzten Datei"
@@ -488,12 +493,12 @@ msgstr "konnte zstd-Komprimierungsniveau nicht auf %d setzen: %s"
 msgid "could not set compression worker count to %d: %s"
 msgstr "konnte Komprimierungs-Worker-Anzahl nicht auf %d setzen: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:120
+#: ../../fe_utils/astreamer_zstd.c:119
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "konnte Long-Distance-Modus nicht einschalten: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:279
+#: ../../fe_utils/astreamer_zstd.c:276
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "konnte zstd-Dekomprimierungskontext nicht erzeugen"
