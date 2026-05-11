@@ -534,6 +534,10 @@ extern int	pqGethostbyname(const char *name,
 							struct hostent **result,
 							int *herrno);
 
+#if !HAVE_DECL_TIMINGSAFE_BCMP
+extern int	timingsafe_bcmp(const void *b1, const void *b2, size_t len);
+#endif
+
 extern void pg_qsort(void *base, size_t nel, size_t elsize,
 					 int (*cmp) (const void *, const void *));
 extern int	pg_qsort_strcmp(const void *a, const void *b);
