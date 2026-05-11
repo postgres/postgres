@@ -2007,6 +2007,16 @@ NOTICE:  text-search query doesn't contain lexemes: ""
  foo bar
 (1 row)
 
+-- Test for large values of StartSel, StopSel and FragmentDelimiter
+SELECT ts_headline('english', 'foo barbar', to_tsquery('english', 'foo'),
+  'StartSel=' || repeat('x', 32768));
+ERROR:  value for "StartSel" is too long
+SELECT ts_headline('english', 'foo barbar', to_tsquery('english', 'foo'),
+  'StopSel=' || repeat('x', 32768));
+ERROR:  value for "StopSel" is too long
+SELECT ts_headline('english', 'foo barbar', to_tsquery('english', 'foo'),
+  'FragmentDelimiter=' || repeat('x', 32768));
+ERROR:  value for "FragmentDelimiter" is too long
 --Rewrite sub system
 CREATE TABLE test_tsquery (txtkeyword TEXT, txtsample TEXT);
 \set ECHO none
