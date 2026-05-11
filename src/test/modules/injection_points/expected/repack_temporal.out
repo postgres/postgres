@@ -1,0 +1,68 @@
+Parsed test spec with 2 sessions
+
+starting permutation: wait_before_lock update_target check_after_update wakeup_before_lock check_after_repack
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_temporal USING INDEX rt_pkey;
+ <waiting ...>
+step update_target: 
+	UPDATE repack_temporal
+	SET label = 'updated'
+	WHERE id = '[2,3)' AND valid_at = '[2000-01-10,2000-01-20)';
+
+step check_after_update: 
+	INSERT INTO relfilenodes(node)
+	SELECT relfilenode FROM pg_class WHERE relname = 'repack_temporal';
+
+	-- Expect 2 rows
+	SELECT id, valid_at, label
+	FROM repack_temporal
+	ORDER BY id, valid_at, label;
+
+id    |valid_at               |label  
+------+-----------------------+-------
+[1,10)|[01-01-2000,02-01-2000)|other  
+[2,3) |[01-10-2000,01-20-2000)|updated
+(2 rows)
+
+step wakeup_before_lock: 
+	SELECT injection_points_wakeup('repack-concurrently-before-lock');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step wait_before_lock: <... completed>
+step check_after_repack: 
+	INSERT INTO relfilenodes(node)
+	SELECT relfilenode FROM pg_class WHERE relname = 'repack_temporal';
+
+	-- Expect 2, proving that repack has rewritten the table
+	SELECT count(DISTINCT node) FROM relfilenodes;
+
+	-- Expect 2 rows
+	SELECT id, valid_at, label
+	FROM repack_temporal
+	ORDER BY id, valid_at, label;
+
+count
+-----
+    2
+(1 row)
+
+id    |valid_at               |label  
+------+-----------------------+-------
+[1,10)|[01-01-2000,02-01-2000)|other  
+[2,3) |[01-10-2000,01-20-2000)|updated
+(2 rows)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+

@@ -46,6 +46,8 @@ tests += {
       'basic',
       'inplace',
       'repack',
+      'repack_temporal',
+      'repack_temporal_multirange',
       'repack_toast',
       'syscache-update-pruned',
       'heap_lock_update',

@@ -118,6 +118,9 @@ typedef struct ChangeContext
 	ScanKey		cc_ident_key;
 	int			cc_ident_key_nentries;
 
+	/* The latest column we need to deform to have the tuple identity */
+	AttrNumber	cc_last_key_attno;
+
 	/* Sequential number of the file containing the changes. */
 	int			cc_file_seq;
 } ChangeContext;
@@ -182,6 +185,9 @@ static void adjust_toast_pointers(Relation relation, TupleTableSlot *dest,
 static bool find_target_tuple(Relation rel, ChangeContext *chgcxt,
 							  TupleTableSlot *locator,
 							  TupleTableSlot *retrieved);
+static bool identity_key_equal(ChangeContext *chgcxt,
+							   TupleTableSlot *locator,
+							   TupleTableSlot *candidate);
 static void process_concurrent_changes(XLogRecPtr end_of_wal,
 									   ChangeContext *chgcxt,
 									   bool done);
@@ -2807,7 +2813,7 @@ find_target_tuple(Relation rel, ChangeContext *chgcxt, TupleTableSlot *locator,
 {
 	Form_pg_index idx = chgcxt->cc_ident_index->rd_index;
 	IndexScanDesc scan;
-	bool		retval;
+	bool		retval = false;
 
 	/*
 	 * Scan key is passed by caller, so it does not have to be constructed
@@ -2829,10 +2835,59 @@ find_target_tuple(Relation rel, ChangeContext *chgcxt, TupleTableSlot *locator,
 	scan = index_beginscan(rel, chgcxt->cc_ident_index, GetActiveSnapshot(),
 						   NULL, chgcxt->cc_ident_key_nentries, 0, 0);
 	index_rescan(scan, chgcxt->cc_ident_key, chgcxt->cc_ident_key_nentries, NULL, 0);
-	retval = index_getnext_slot(scan, ForwardScanDirection, retrieved);
+	while (index_getnext_slot(scan, ForwardScanDirection, retrieved))
+	{
+		/* Be wary of temporal constraints */
+		if (scan->xs_recheck && !identity_key_equal(chgcxt, locator, retrieved))
+		{
+			CHECK_FOR_INTERRUPTS();
+			continue;
+		}
+
+		retval = true;
+		break;
+	}
 	index_endscan(scan);
 
 	return retval;
+}
+
+/*
+ * Check whether the candidate tuple matches the locator tuple on all replica
+ * identity key columns, using the same equality operators as the identity
+ * index scan.  The locator tuple has already been loaded into cc_ident_key.
+ *
+ * This is needed to filter lossy index matches, such as GiST multirange scans
+ * used for temporal constraints.
+ */
+static bool
+identity_key_equal(ChangeContext *chgcxt, TupleTableSlot *locator,
+				   TupleTableSlot *candidate)
+{
+	slot_getsomeattrs(locator, chgcxt->cc_last_key_attno);
+	slot_getsomeattrs(candidate, chgcxt->cc_last_key_attno);
+
+	for (int i = 0; i < chgcxt->cc_ident_key_nentries; i++)
+	{
+		ScanKey		entry = &chgcxt->cc_ident_key[i];
+		AttrNumber	attno = chgcxt->cc_ident_index->rd_index->indkey.values[i];
+
+		Assert(attno > 0);
+
+		if (locator->tts_isnull[attno - 1] != candidate->tts_isnull[attno - 1])
+			return false;
+
+		if (locator->tts_isnull[attno - 1])
+			continue;
+
+		if (!DatumGetBool(FunctionCall2Coll(&entry->sk_func,
+											entry->sk_collation,
+											candidate->tts_values[attno - 1],
+											entry->sk_argument)))
+			return false;
+	}
+
+	return true;
 }
 
 /*
@@ -2944,26 +2999,44 @@ initialize_change_context(ChangeContext *chgcxt,
 						opcintype,
 						opno,
 						opcode;
+			StrategyNumber eq_strategy;
 
 			entry = &chgcxt->cc_ident_key[i];
 
 			opfamily = chgcxt->cc_ident_index->rd_opfamily[i];
 			opcintype = chgcxt->cc_ident_index->rd_opcintype[i];
+			eq_strategy = IndexAmTranslateCompareType(COMPARE_EQ,
+													  chgcxt->cc_ident_index->rd_rel->relam,
+													  opfamily, false);
+			if (eq_strategy == InvalidStrategy)
+				elog(ERROR, "could not find equality strategy for index operator family %u for type %u",
+					 opfamily, opcintype);
 			opno = get_opfamily_member(opfamily, opcintype, opcintype,
-									   BTEqualStrategyNumber);
+									   eq_strategy);
 			if (!OidIsValid(opno))
-				elog(ERROR, "failed to find = operator for type %u", opcintype);
+				elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+					 eq_strategy, opcintype, opcintype, opfamily);
 			opcode = get_opcode(opno);
 			if (!OidIsValid(opcode))
-				elog(ERROR, "failed to find = operator for operator %u", opno);
+				elog(ERROR, "missing oprcode for operator %u", opno);
 
 			/* Initialize everything but argument. */
 			ScanKeyInit(entry,
 						i + 1,
-						BTEqualStrategyNumber, opcode,
+						eq_strategy, opcode,
 						(Datum) 0);
 			entry->sk_collation = chgcxt->cc_ident_index->rd_indcollation[i];
 		}
+	}
+
+	/* Determine the last column we must deform to read the identity */
+	chgcxt->cc_last_key_attno = InvalidAttrNumber;
+	for (int i = 0; i < chgcxt->cc_ident_key_nentries; i++)
+	{
+		AttrNumber	attno = chgcxt->cc_ident_index->rd_index->indkey.values[i];
+
+		Assert(attno > 0);
+		chgcxt->cc_last_key_attno = Max(chgcxt->cc_last_key_attno, attno);
 	}
 
 	chgcxt->cc_file_seq = WORKER_FILE_SNAPSHOT + 1;
