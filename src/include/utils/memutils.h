@@ -41,7 +41,7 @@
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
-/* Must be less than SIZE_MAX */
+/* Do not make this any bigger; see add_size() and mul_size() */
 #define MaxAllocHugeSize	(SIZE_MAX / 2)
 
 #define InvalidAllocSize	SIZE_MAX

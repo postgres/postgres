@@ -21,6 +21,7 @@
 
 #include "postgres.h"
 
+#include "common/int.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/memdebug.h"
@@ -169,6 +170,8 @@ static void MemoryContextStatsInternal(MemoryContext context, int level,
 static void MemoryContextStatsPrint(MemoryContext context, void *passthru,
 									const char *stats_string,
 									bool print_to_stderr);
+pg_noreturn static pg_noinline void add_size_error(Size s1, Size s2);
+pg_noreturn static pg_noinline void mul_size_error(Size s1, Size s2);
 
 /*
  * You should not do memory allocations within a critical section, because
@@ -1657,6 +1660,132 @@ repalloc0(void *pointer, Size oldsize, Size size)
 	ret = repalloc(pointer, size);
 	memset((char *) ret + oldsize, 0, (size - oldsize));
 	return ret;
+}
+
+/*
+ * Support for safe calculation of memory request sizes
+ *
+ * These functions perform the requested calculation, but throw error if the
+ * result overflows.
+ *
+ * An important property of these functions is that if an argument was a
+ * negative signed int before promotion (implying overflow in calculating it)
+ * we will detect that as an error.  That happens because we reject results
+ * larger than SIZE_MAX / 2 later on, in the actual allocation step.
+ */
+Size
+add_size(Size s1, Size s2)
+{
+	Size		result;
+
+	if (unlikely(pg_add_size_overflow(s1, s2, &result)))
+		add_size_error(s1, s2);
+	return result;
+}
+
+pg_noreturn static pg_noinline void
+add_size_error(Size s1, Size s2)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			 errmsg("invalid memory allocation request size %zu + %zu",
+					s1, s2)));
+}
+
+Size
+mul_size(Size s1, Size s2)
+{
+	Size		result;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &result)))
+		mul_size_error(s1, s2);
+	return result;
+}
+
+pg_noreturn static pg_noinline void
+mul_size_error(Size s1, Size s2)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			 errmsg("invalid memory allocation request size %zu * %zu",
+					s1, s2)));
+}
+
+/*
+ * palloc_mul
+ *		Equivalent to palloc(mul_size(s1, s2)).
+ */
+void *
+palloc_mul(Size s1, Size s2)
+{
+	/* inline mul_size() for efficiency */
+	Size		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		mul_size_error(s1, s2);
+	return palloc(req);
+}
+
+/*
+ * palloc0_mul
+ *		Equivalent to palloc0(mul_size(s1, s2)).
+ *
+ * This is comparable to standard calloc's behavior.
+ */
+void *
+palloc0_mul(Size s1, Size s2)
+{
+	/* inline mul_size() for efficiency */
+	Size		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		mul_size_error(s1, s2);
+	return palloc0(req);
+}
+
+/*
+ * palloc_mul_extended
+ *		Equivalent to palloc_extended(mul_size(s1, s2), flags).
+ */
+void *
+palloc_mul_extended(Size s1, Size s2, int flags)
+{
+	/* inline mul_size() for efficiency */
+	Size		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		mul_size_error(s1, s2);
+	return palloc_extended(req, flags);
+}
+
+/*
+ * repalloc_mul
+ *		Equivalent to repalloc(p, mul_size(s1, s2)).
+ */
+void *
+repalloc_mul(void *p, Size s1, Size s2)
+{
+	/* inline mul_size() for efficiency */
+	Size		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		mul_size_error(s1, s2);
+	return repalloc(p, req);
+}
+
+/*
+ * repalloc_mul_extended
+ *		Equivalent to repalloc_extended(p, mul_size(s1, s2), flags).
+ */
+void *
+repalloc_mul_extended(void *p, Size s1, Size s2, int flags)
+{
+	/* inline mul_size() for efficiency */
+	Size		req;
+
+	if (unlikely(pg_mul_size_overflow(s1, s2, &req)))
+		mul_size_error(s1, s2);
+	return repalloc_extended(p, req, flags);
 }
 
 /*
