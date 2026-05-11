@@ -1487,6 +1487,13 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
 			/* we can look up the subtype name immediately */
 			multirangeNamespace = QualifiedNameGetCreationNamespace(defGetQualifiedName(defel),
 																	&multirangeTypeName);
+
+			/* Check we have creation rights in target namespace */
+			aclresult = object_aclcheck(NamespaceRelationId, multirangeNamespace,
+										GetUserId(), ACL_CREATE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, OBJECT_SCHEMA,
+							   get_namespace_name(multirangeNamespace));
 		}
 		else
 			ereport(ERROR,
