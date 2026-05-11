@@ -40,6 +40,9 @@
 
 /*
  * newcvec - allocate a new cvec
+ *
+ * Note: in current usage, nchrs and nranges are never so large that we risk
+ * integer overflow in these size calculations, even with 32-bit size_t.
  */
 static struct cvec *
 newcvec(int nchrs,				/* to hold this many chrs... */
