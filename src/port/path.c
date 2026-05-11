@@ -627,6 +627,23 @@ path_is_relative_and_below_cwd(const char *path)
 }
 
 /*
+ * Detect whether a path is safe for use during archive extraction.
+ *
+ * This applies canonicalize_path(), then it checks that the path does
+ * not contain any parent directory references.
+ */
+bool
+path_is_safe_for_extraction(const char *path)
+{
+	char		buf[MAXPGPATH];
+
+	strlcpy(buf, path, sizeof(buf));
+	canonicalize_path(buf);
+
+	return path_is_relative_and_below_cwd(buf);
+}
+
+/*
  * Detect whether path1 is a prefix of path2 (including equality).
  *
  * This is pretty trivial, but it seems better to export a function than
