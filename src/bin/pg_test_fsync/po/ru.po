@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-27 14:52+0300\n"
-"PO-Revision-Date: 2022-09-05 13:36+0300\n"
+"PO-Revision-Date: 2024-09-04 18:11+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -90,7 +90,7 @@ msgstr[2] "на тест отводится %u сек.\n"
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr ""
-"O_DIRECT на этой платформе не поддерживается для open_datasync и open_sync.\n"
+"O_DIRECT на этой платформе поддерживается для open_datasync и open_sync.\n"
 
 #: pg_test_fsync.c:218
 #, c-format

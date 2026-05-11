@@ -67,7 +67,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-02-06 21:12+0000\n"
-"PO-Revision-Date: 2025-02-15 12:02+0100\n"
+"PO-Revision-Date: 2026-02-25 16:52+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -20191,7 +20191,7 @@ msgstr "Cambie wal_level a logical o superior."
 #: replication/slot.c:1977
 #, c-format
 msgid "physical replication slot \"%s\" exists, but wal_level < replica"
-msgstr "existe el slot de replicación lógica «%s», pero wal_level < logical"
+msgstr "existe el slot de replicación física «%s», pero wal_level < replica"
 
 # <> hello vim
 #: replication/slot.c:1979
