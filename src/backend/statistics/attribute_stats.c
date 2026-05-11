@@ -384,10 +384,27 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 
 		if (converted)
 		{
-			set_stats_slot(values, nulls, replaces,
-						   STATISTIC_KIND_MCV,
-						   eq_opr, atttypcoll,
-						   stanumbers, false, stavalues, false);
+			ArrayType  *vals_arr = DatumGetArrayTypeP(stavalues);
+			ArrayType  *nums_arr = DatumGetArrayTypeP(stanumbers);
+			int			nvals = ARR_DIMS(vals_arr)[0];
+			int			nnums = ARR_DIMS(nums_arr)[0];
+
+			if (nvals != nnums)
+			{
+				ereport(WARNING,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("could not parse \"%s\": incorrect number of elements (same as \"%s\" required)",
+								"most_common_vals",
+								"most_common_freqs")));
+				result = false;
+			}
+			else
+			{
+				set_stats_slot(values, nulls, replaces,
+							   STATISTIC_KIND_MCV,
+							   eq_opr, atttypcoll,
+							   stanumbers, false, stavalues, false);
+			}
 		}
 		else
 			result = false;
@@ -727,6 +744,15 @@ text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 	{
 		escontext.error_data->elevel = WARNING;
 		ThrowErrorData(escontext.error_data);
+		*ok = false;
+		return (Datum) 0;
+	}
+
+	if (ARR_NDIM(DatumGetArrayTypeP(result)) != 1)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"%s\" must be a one-dimensional array", staname)));
 		*ok = false;
 		return (Datum) 0;
 	}

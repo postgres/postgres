@@ -457,6 +457,60 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
+-- warn: mcv / mcf array length mismatch (more vals), mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.24::real,
+    'most_common_vals', '{2,1,3}'::text,
+    'most_common_freqs', '{0.3,0.25}'::real[]
+    );
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
+-- warn: mcv / mcf array length mismatch (more freqs), mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.25::real,
+    'most_common_vals', '{2,1}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05}'::real[]
+    );
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
+-- warn: most_common_vals is multi-dimensional, mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.26::real,
+    'most_common_vals', '{{2,1},{3,4}}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05,0.04}'::real[]
+    );
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
 -- ok: mcv+mcf
 SELECT pg_catalog.pg_restore_attribute_stats(
     'schemaname', 'stats_import',

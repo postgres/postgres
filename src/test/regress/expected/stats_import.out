@@ -625,6 +625,87 @@ AND attname = 'id';
  stats_import | test      | id      | f         |      0.23 |         5 |        0.6 |                  |                   |                  |             |                   |                        |                      |                        |                  | 
 (1 row)
 
+-- warn: mcv / mcf array length mismatch (more vals), mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.24::real,
+    'most_common_vals', '{2,1,3}'::text,
+    'most_common_freqs', '{0.3,0.25}'::real[]
+    );
+WARNING:  could not parse "most_common_vals": incorrect number of elements (same as "most_common_freqs" required)
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test      | id      | f         |      0.24 |         5 |        0.6 |                  |                   |                  |             |                   |                        |                      |                        |                  | 
+(1 row)
+
+-- warn: mcv / mcf array length mismatch (more freqs), mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.25::real,
+    'most_common_vals', '{2,1}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05}'::real[]
+    );
+WARNING:  could not parse "most_common_vals": incorrect number of elements (same as "most_common_freqs" required)
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test      | id      | f         |      0.25 |         5 |        0.6 |                  |                   |                  |             |                   |                        |                      |                        |                  | 
+(1 row)
+
+-- warn: most_common_vals is multi-dimensional, mcv-pair fails, rest get set
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'null_frac', 0.26::real,
+    'most_common_vals', '{{2,1},{3,4}}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05,0.04}'::real[]
+    );
+WARNING:  "most_common_vals" must be a one-dimensional array
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test      | id      | f         |      0.26 |         5 |        0.6 |                  |                   |                  |             |                   |                        |                      |                        |                  | 
+(1 row)
+
 -- ok: mcv+mcf
 SELECT pg_catalog.pg_restore_attribute_stats(
     'schemaname', 'stats_import',
@@ -647,7 +728,7 @@ AND inherited = false
 AND attname = 'id';
   schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
 --------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
- stats_import | test      | id      | f         |      0.23 |         5 |        0.6 | {2,1,3}          | {0.3,0.25,0.05}   |                  |             |                   |                        |                      |                        |                  | 
+ stats_import | test      | id      | f         |      0.26 |         5 |        0.6 | {2,1,3}          | {0.3,0.25,0.05}   |                  |             |                   |                        |                      |                        |                  | 
 (1 row)
 
 -- warn: NULL in histogram array, rest get set
