@@ -2950,7 +2950,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Optionally use AVX2 CPU instructions for calculating page checksums (Matthew Sterrett, Andrew Kim)
+Use AVX2 CPU instructions for calculating page checksums (Matthew Sterrett, Andrew Kim)
 <ulink url="&commit_baseurl;5e13b0f24">&sect;</ulink>
 </para>
 </listitem>
@@ -2962,7 +2962,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Optionally use ARM Crypto Extension to Compute CRC32C (John Naylor)
+Use ARM Crypto Extension to Compute CRC32C (John Naylor)
 <ulink url="&commit_baseurl;fbc57f2bc">&sect;</ulink>
 </para>
 </listitem>
