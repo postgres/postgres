@@ -44,7 +44,9 @@ $node->safe_psql('postgres',
 	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
 	  . "CREATE TABLE \"mixedName\" (f1 int, f2 text);\n"
 	  . "CREATE TYPE enum1 AS ENUM ('foo', 'bar', 'baz', 'BLACK');\n"
-	  . "CREATE PUBLICATION some_publication;\n");
+	  . "CREATE PUBLICATION some_publication;\n"
+	  . "CREATE TABLE fpo_test (id int4range, valid_at daterange, name text);\n"
+);
 
 # In a VPATH build, we'll be started in the source directory, but we want
 # to run in the build directory so that we can use relative paths to
@@ -421,6 +423,42 @@ check_completion(
 	"COPY FROM with DEFAULT completion");
 
 clear_line();
+
+# check tab completion for DELETE ... FOR PORTION OF
+check_completion(
+	"DELETE FROM fpo_test F\t",
+	qr/FOR /,
+	"complete DELETE FROM <table> F<tab> to FOR");
+
+check_completion("P\t", qr/PORTION /, "complete FOR P<tab> to PORTION");
+
+check_completion("O\t", qr/OF /, "complete PORTION O<tab> to OF");
+
+check_completion("v\t", qr/valid_at /,
+	"complete FOR PORTION OF offers column names");
+
+check_completion("FR\t", qr/FROM /,
+	"complete FOR PORTION OF <col> FR<tab> to FROM");
+
+clear_query();
+
+# check tab completion for UPDATE ... FOR PORTION OF
+check_completion(
+	"UPDATE fpo_test F\t",
+	qr/FOR /,
+	"complete UPDATE <table> F<tab> to FOR");
+
+check_completion("P\t", qr/PORTION /, "complete FOR P<tab> to PORTION");
+
+check_completion("O\t", qr/OF /, "complete PORTION O<tab> to OF");
+
+check_completion("v\t", qr/valid_at /,
+	"complete FOR PORTION OF offers column names");
+
+check_completion("FR\t", qr/FROM /,
+	"complete FOR PORTION OF <col> FR<tab> to FROM");
+
+clear_query();
 
 # send psql an explicit \q to shut it down, else pty won't close properly
 $h->quit or die "psql returned $?";

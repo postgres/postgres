@@ -4362,7 +4362,19 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_updatables);
 	/* Complete DELETE FROM <table> */
 	else if (TailMatches("DELETE", "FROM", MatchAny))
-		COMPLETE_WITH("USING", "WHERE");
+		COMPLETE_WITH("FOR", "USING", "WHERE");
+	/* Complete DELETE FROM <table> FOR with PORTION */
+	else if (TailMatches("DELETE", "FROM", MatchAny, "FOR"))
+		COMPLETE_WITH("PORTION");
+	/* Complete DELETE FROM <table> FOR PORTION with OF */
+	else if (TailMatches("DELETE", "FROM", MatchAny, "FOR", "PORTION"))
+		COMPLETE_WITH("OF");
+	/* Complete DELETE FROM <table> FOR PORTION OF with column names */
+	else if (TailMatches("DELETE", "FROM", MatchAny, "FOR", "PORTION", "OF"))
+		COMPLETE_WITH_ATTR(prev4_wd);
+	/* Complete DELETE FROM <table> FOR PORTION OF <period> with FROM */
+	else if (TailMatches("DELETE", "FROM", MatchAny, "FOR", "PORTION", "OF", MatchAny))
+		COMPLETE_WITH("FROM");
 	/* Complete DELETE FROM <table> USING with relations supporting SELECT */
 	else if (TailMatches("DELETE", "FROM", MatchAny, "USING"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables);
@@ -5434,9 +5446,21 @@ match_previous_words(int pattern_id,
 	/* If prev. word is UPDATE suggest a list of tables */
 	else if (TailMatches("UPDATE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_updatables);
-	/* Complete UPDATE <table> with "SET" */
+	/* Complete UPDATE <table> with "SET" or "FOR" (for FOR PORTION OF) */
 	else if (TailMatches("UPDATE", MatchAny))
-		COMPLETE_WITH("SET");
+		COMPLETE_WITH("FOR", "SET");
+	/* Complete UPDATE <table> FOR with PORTION */
+	else if (TailMatches("UPDATE", MatchAny, "FOR"))
+		COMPLETE_WITH("PORTION");
+	/* Complete UPDATE <table> FOR PORTION with OF */
+	else if (TailMatches("UPDATE", MatchAny, "FOR", "PORTION"))
+		COMPLETE_WITH("OF");
+	/* Complete UPDATE <table> FOR PORTION OF with column names */
+	else if (TailMatches("UPDATE", MatchAny, "FOR", "PORTION", "OF"))
+		COMPLETE_WITH_ATTR(prev4_wd);
+	/* Complete UPDATE <table> FOR PORTION OF <period> with FROM */
+	else if (TailMatches("UPDATE", MatchAny, "FOR", "PORTION", "OF", MatchAny))
+		COMPLETE_WITH("FROM");
 	/* Complete UPDATE <table> SET with list of attributes */
 	else if (TailMatches("UPDATE", MatchAny, "SET"))
 		COMPLETE_WITH_ATTR(prev2_wd);
