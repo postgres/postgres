@@ -88,6 +88,25 @@ SELECT calls, generic_plan_calls, custom_plan_calls, toplevel, query FROM pg_sta
 RESET pg_stat_statements.track;
 
 --
+-- Procedure with internal ROLLBACK and the extended query protocol.
+-- The PlannedStmt used in pgss_ProcessUtility() is freed by the internal
+-- ROLLBACK.
+--
+CREATE OR REPLACE PROCEDURE rollback_proc(a INOUT int) AS $$
+BEGIN
+  ROLLBACK;
+END;
+$$ LANGUAGE plpgsql;
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+CALL rollback_proc($1) \parse stmt_rollback
+\bind_named stmt_rollback 1 \g
+\bind_named stmt_rollback 2 \g
+SELECT calls, query FROM pg_stat_statements
+  WHERE query LIKE '%rollback_proc%'
+  ORDER BY query COLLATE "C";
+DROP PROCEDURE rollback_proc;
+
+--
 -- Cleanup
 --
 DROP FUNCTION select_one_func(int);

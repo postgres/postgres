@@ -1099,6 +1099,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 	int64		saved_queryId = pstmt->queryId;
 	int			saved_stmt_location = pstmt->stmt_location;
 	int			saved_stmt_len = pstmt->stmt_len;
+	PlannedStmtOrigin saved_planOrigin = pstmt->planOrigin;
 	bool		enabled = pgss_track_utility && pgss_enabled(nesting_level);
 
 	/*
@@ -1210,7 +1211,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 				   NULL,
 				   0,
 				   0,
-				   pstmt->planOrigin);
+				   saved_planOrigin);
 	}
 	else
 	{
