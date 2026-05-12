@@ -313,6 +313,7 @@ calc_rank_or(const float *w, TSVector t, TSQuery q)
 
 		while (entry - firstentry < nitem)
 		{
+			/* Identify the weight data to use */
 			if (entry->haspos)
 			{
 				dimt = POSDATALEN(t, entry);
@@ -324,6 +325,33 @@ calc_rank_or(const float *w, TSVector t, TSQuery q)
 				post = posnull.pos;
 			}
 
+			/*
+			 * Compute the score for this term, then add it to "res".
+			 *
+			 * The ideal score for a term is the weighted harmonic sum:
+			 *
+			 * resj = sum(wi / i^2, i = 1..noccurrences)
+			 *
+			 * where wi is the weight of the i-th occurrence and weights are
+			 * sorted in descending order so that the highest-weight
+			 * occurrence gets the smallest divisor (i=1) and thus contributes
+			 * the most.
+			 *
+			 * This result should be divided by pi^2/6 ~= 1.64493406685, which
+			 * is the limit of sum(1/i^2, i=1..inf). This normalizes the score
+			 * to the [0, 1] range.
+			 *
+			 * As an approximation for efficiency, we skip doing a sort and
+			 * instead just promote the single highest-weight occurrence to
+			 * position i=1. This is done by taking the raw (unsorted) sum
+			 * resj, subtracting the maximum weight's actual contribution
+			 * wjm/(jm+1)^2, and adding back its corrected contribution
+			 * wjm/1^2 = wjm.
+			 *
+			 * The remaining occurrences are left in their original order.
+			 */
+
+			/* calculate harmonic sum without re-ordering */
 			resj = 0.0;
 			wjm = -1.0;
 			jm = 0;
@@ -336,14 +364,9 @@ calc_rank_or(const float *w, TSVector t, TSQuery q)
 					jm = j;
 				}
 			}
-/*
-			limit (sum(1/i^2),i=1,inf) = pi^2/6
-			resj = sum(wi/i^2),i=1,noccurrence,
-			wi - should be sorted desc,
-			don't sort for now, just choose maximum weight. This should be corrected
-			Oleg Bartunov
-*/
-			res = res + (wjm + resj - wjm / ((jm + 1) * (jm + 1))) / 1.64493406685;
+
+			/* apply correction as explained above, then add to res */
+			res = res + (resj - wjm / ((jm + 1) * (jm + 1)) + wjm) / 1.64493406685;
 
 			entry++;
 		}
