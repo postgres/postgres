@@ -107,6 +107,7 @@ use File::Path qw(rmtree mkpath);
 use File::Spec;
 use File::stat qw(stat);
 use File::Temp ();
+use IO::Socket::INET;
 use IPC::Run;
 use PostgreSQL::Version;
 use PostgreSQL::Test::RecursiveCopy;
