@@ -3018,12 +3018,15 @@ Update Unicode data to version 17.0.0 (Peter Eisentraut)
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2025-10-08 [94f3ad396] Add planner_setup_hook and planner_shutdown_hook.
+Author: Robert Haas <rhaas@postgresql.org>
+2026-01-28 [4020b370f] Allow for plugin control over path generation strategies
 -->
 
 <listitem>
 <para>
-Add hooks planner_setup_hook and planner_shutdown_hook (Robert Haas)
+Add hooks planner_setup_hook, planner_shutdown_hook, joinrel_setup_hook, and join_path_setup_hook (Robert Haas)
 <ulink url="&commit_baseurl;94f3ad396">&sect;</ulink>
+<ulink url="&commit_baseurl;4020b370f">&sect;</ulink>
 </para>
 </listitem>
 
