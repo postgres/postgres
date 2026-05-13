@@ -1175,6 +1175,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		 * For the same reason, we can't risk restoring pstmt->queryId to its
 		 * former value, which'd otherwise be a good idea.
 		 */
+		pstmt = NULL;
 
 		INSTR_TIME_SET_CURRENT(duration);
 		INSTR_TIME_SUBTRACT(duration, start);
