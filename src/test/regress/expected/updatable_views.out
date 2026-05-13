@@ -3754,6 +3754,20 @@ select * from uv_fpo_view order by id, valid_at;
  0 | 1 | ["Sat Jan 01 00:00:00 2022","Tue Jan 01 00:00:00 2030") | [1,2) | 2.0
 (3 rows)
 
+-- UPDATE/DELETE FOR PORTION fails if the column is not updatable
+-- (e.g. a computed expression, not a base column):
+create view uv_fpo_view_nonupd as
+  select id, '[1,20]'::int4range as valid_at, b
+  from uv_fpo_tab;
+-- Updating fails:
+update uv_fpo_view_nonupd for portion of valid_at from 1 to 10 set b = 2;
+ERROR:  cannot update column "valid_at" of view "uv_fpo_view_nonupd"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+-- Deleting fails:
+delete from uv_fpo_view_nonupd for portion of valid_at from 1 to 10;
+ERROR:  cannot delete from view "uv_fpo_view_nonupd" using FOR PORTION OF "valid_at"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+drop view uv_fpo_view_nonupd;
 -- Test whole-row references to the view
 create table uv_iocu_tab (a int unique, b text);
 create view uv_iocu_view as

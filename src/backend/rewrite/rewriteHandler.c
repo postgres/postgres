@@ -3482,6 +3482,53 @@ rewriteTargetView(Query *parsetree, Relation view)
 	}
 
 	/*
+	 * Similarly, make sure the FOR PORTION OF column is updateable. This is
+	 * not included in the columns tested above, and we have to test it even
+	 * for DELETEs.
+	 */
+	if (parsetree->forPortionOf)
+	{
+		AttrNumber	rangeAttno;
+		Bitmapset  *fpo_cols;
+		char	   *non_updatable_col;
+		const char *fpo_update_detail;
+
+		rangeAttno = parsetree->forPortionOf->rangeVar->varattno;
+		fpo_cols = bms_make_singleton(rangeAttno - FirstLowInvalidHeapAttributeNumber);
+
+		fpo_update_detail = view_cols_are_auto_updatable(viewquery,
+														 fpo_cols,
+														 NULL,
+														 &non_updatable_col);
+		if (fpo_update_detail)
+		{
+			switch (parsetree->commandType)
+			{
+				case CMD_UPDATE:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot update column \"%s\" of view \"%s\"",
+									non_updatable_col,
+									RelationGetRelationName(view)),
+							 errdetail_internal("%s", _(fpo_update_detail))));
+					break;
+				case CMD_DELETE:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot delete from view \"%s\" using FOR PORTION OF \"%s\"",
+									RelationGetRelationName(view),
+									non_updatable_col),
+							 errdetail_internal("%s", _(fpo_update_detail))));
+					break;
+				default:
+					elog(ERROR, "unrecognized CmdType: %d",
+						 (int) parsetree->commandType);
+					break;
+			}
+		}
+	}
+
+	/*
 	 * For MERGE, there must not be any INSTEAD OF triggers on an otherwise
 	 * updatable view.  The caller already checked that there isn't a full set
 	 * of INSTEAD OF triggers, so this is to guard against having a partial

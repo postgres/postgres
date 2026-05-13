@@ -1903,6 +1903,17 @@ select * from uv_fpo_view order by id, valid_at;
 delete from uv_fpo_view for portion of valid_at from '2017-01-01' to '2022-01-01' where id = '[1,1]';
 select * from uv_fpo_view order by id, valid_at;
 
+-- UPDATE/DELETE FOR PORTION fails if the column is not updatable
+-- (e.g. a computed expression, not a base column):
+create view uv_fpo_view_nonupd as
+  select id, '[1,20]'::int4range as valid_at, b
+  from uv_fpo_tab;
+-- Updating fails:
+update uv_fpo_view_nonupd for portion of valid_at from 1 to 10 set b = 2;
+-- Deleting fails:
+delete from uv_fpo_view_nonupd for portion of valid_at from 1 to 10;
+drop view uv_fpo_view_nonupd;
+
 -- Test whole-row references to the view
 create table uv_iocu_tab (a int unique, b text);
 create view uv_iocu_view as
