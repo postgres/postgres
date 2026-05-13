@@ -26,7 +26,7 @@
  */
 BEGIN_CATALOG_STRUCT
 
-CATALOG(pg_propgraph_element_label,8305,PropgraphElementLabelRelationId)
+CATALOG(pg_propgraph_element_label,6472,PropgraphElementLabelRelationId)
 {
 	Oid			oid;
 
@@ -46,9 +46,9 @@ END_CATALOG_STRUCT
  */
 typedef FormData_pg_propgraph_element_label *Form_pg_propgraph_element_label;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_propgraph_element_label_oid_index, 8312, PropgraphElementLabelObjectIndexId, pg_propgraph_element_label, btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_propgraph_element_label_element_label_index, 8313, PropgraphElementLabelElementLabelIndexId, pg_propgraph_element_label, btree(pgelelid oid_ops, pgellabelid oid_ops));
-DECLARE_INDEX(pg_propgraph_element_label_label_index, 8317, PropgraphElementLabelLabelIndexId, pg_propgraph_element_label, btree(pgellabelid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_propgraph_element_label_oid_index, 6476, PropgraphElementLabelObjectIndexId, pg_propgraph_element_label, btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_propgraph_element_label_element_label_index, 6477, PropgraphElementLabelElementLabelIndexId, pg_propgraph_element_label, btree(pgelelid oid_ops, pgellabelid oid_ops));
+DECLARE_INDEX(pg_propgraph_element_label_label_index, 6481, PropgraphElementLabelLabelIndexId, pg_propgraph_element_label, btree(pgellabelid oid_ops));
 
 MAKE_SYSCACHE(PROPGRAPHELEMENTLABELELEMENTLABEL, pg_propgraph_element_label_element_label_index, 128);
 

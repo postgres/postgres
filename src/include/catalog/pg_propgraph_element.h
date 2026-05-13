@@ -27,7 +27,7 @@
  */
 BEGIN_CATALOG_STRUCT
 
-CATALOG(pg_propgraph_element,8299,PropgraphElementRelationId)
+CATALOG(pg_propgraph_element,6466,PropgraphElementRelationId)
 {
 	Oid			oid;
 
@@ -97,10 +97,10 @@ END_CATALOG_STRUCT
  */
 typedef FormData_pg_propgraph_element *Form_pg_propgraph_element;
 
-DECLARE_TOAST(pg_propgraph_element, 8315, 8316);
+DECLARE_TOAST(pg_propgraph_element, 6479, 6480);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_propgraph_element_oid_index, 8300, PropgraphElementObjectIndexId, pg_propgraph_element, btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_propgraph_element_alias_index, 8301, PropgraphElementAliasIndexId, pg_propgraph_element, btree(pgepgid oid_ops, pgealias name_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_propgraph_element_oid_index, 6467, PropgraphElementObjectIndexId, pg_propgraph_element, btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_propgraph_element_alias_index, 6468, PropgraphElementAliasIndexId, pg_propgraph_element, btree(pgepgid oid_ops, pgealias name_ops));
 
 MAKE_SYSCACHE(PROPGRAPHELOID, pg_propgraph_element_oid_index, 128);
 MAKE_SYSCACHE(PROPGRAPHELALIAS, pg_propgraph_element_alias_index, 128);
