@@ -24,7 +24,7 @@
 
 
 static void exit_nicely(PGconn *conn);
-pg_noreturn static void pg_fatal_impl(int line, const char *fmt,...)
+pg_noreturn static void pg_fatal_impl(int line, const char *fmt, ...)
 			pg_attribute_printf(2, 3);
 static bool process_result(PGconn *conn, PGresult *res, int results,
 						   int numsent);
@@ -72,7 +72,7 @@ exit_nicely(PGconn *conn)
  */
 #define pg_fatal(...) pg_fatal_impl(__LINE__, __VA_ARGS__)
 pg_noreturn static void
-pg_fatal_impl(int line, const char *fmt,...)
+pg_fatal_impl(int line, const char *fmt, ...)
 {
 	va_list		args;
 

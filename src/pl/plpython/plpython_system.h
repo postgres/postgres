@@ -34,8 +34,10 @@
 #define HAVE_SNPRINTF 1
 
 #if defined(_MSC_VER) && defined(_DEBUG)
-/* Python uses #pragma to bring in a non-default libpython on VC++ if
- * _DEBUG is defined */
+/*
+ * Python uses #pragma to bring in a non-default libpython on VC++ if
+ * _DEBUG is defined
+ */
 #undef _DEBUG
 /* Also hide away errcode, since we load Python.h before postgres.h */
 #define errcode __msvc_errcode

@@ -339,7 +339,7 @@ extern void SortTocFromFile(Archive *AHX);
 
 /* Convenience functions used only when writing DATA */
 extern void archputs(const char *s, Archive *AH);
-extern int	archprintf(Archive *AH, const char *fmt,...) pg_attribute_printf(2, 3);
+extern int	archprintf(Archive *AH, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 #define appendStringLiteralAH(buf,str,AH) \
 	appendStringLiteral(buf, str, (AH)->encoding, (AH)->std_strings)

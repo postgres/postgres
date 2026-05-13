@@ -193,7 +193,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
  * Called by the Archiver when the dumper creates a new TOC entry.
  *
  * We determine the filename for this entry.
-*/
+ */
 static void
 _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
@@ -372,7 +372,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 
 /*
  * Print data for a given TOC entry
-*/
+ */
 static void
 _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 {

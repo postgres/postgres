@@ -34,7 +34,8 @@
 #include "executor/tuptable.h"
 
 
-/* Tuplestorestate is an opaque type whose details are not known outside
+/*
+ * Tuplestorestate is an opaque type whose details are not known outside
  * tuplestore.c.
  */
 typedef struct Tuplestorestate Tuplestorestate;

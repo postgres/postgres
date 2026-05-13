@@ -318,7 +318,7 @@ typedef struct
 
 /*
  *	LogOpts
-*/
+ */
 typedef struct
 {
 	FILE	   *internal;		/* internal log FILE */
@@ -335,7 +335,7 @@ typedef struct
 
 /*
  *	UserOpts
-*/
+ */
 typedef struct
 {
 	bool		check;			/* check clusters only, don't change any data */
@@ -414,7 +414,7 @@ void		generate_old_dump(void);
 #define EXEC_PSQL_ARGS "--echo-queries --set ON_ERROR_STOP=on --no-psqlrc --dbname=template1"
 
 bool		exec_prog(const char *log_filename, const char *opt_log_file,
-					  bool report_error, bool exit_on_error, const char *fmt,...) pg_attribute_printf(5, 6);
+					  bool report_error, bool exit_on_error, const char *fmt, ...) pg_attribute_printf(5, 6);
 void		verify_directories(void);
 bool		pid_lock_file_exists(const char *datadir);
 
@@ -474,7 +474,7 @@ void		init_tablespaces(void);
 /* server.c */
 
 PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
-PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt,...) pg_attribute_printf(2, 3);
+PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 char	   *cluster_conn_opts(ClusterInfo *cluster);
 
@@ -488,13 +488,13 @@ void		check_pghost_envvar(void);
 char	   *quote_identifier(const char *s);
 int			get_user_info(char **user_name_p);
 void		check_ok(void);
-void		report_status(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
-void		pg_log(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
-pg_noreturn void pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2);
+void		report_status(eLogType type, const char *fmt, ...) pg_attribute_printf(2, 3);
+void		pg_log(eLogType type, const char *fmt, ...) pg_attribute_printf(2, 3);
+pg_noreturn void pg_fatal(const char *fmt, ...) pg_attribute_printf(1, 2);
 void		end_progress_output(void);
 void		cleanup_output_dirs(void);
-void		prep_status(const char *fmt,...) pg_attribute_printf(1, 2);
-void		prep_status_progress(const char *fmt,...) pg_attribute_printf(1, 2);
+void		prep_status(const char *fmt, ...) pg_attribute_printf(1, 2);
+void		prep_status_progress(const char *fmt, ...) pg_attribute_printf(1, 2);
 unsigned int str2uint(const char *str);
 
 
@@ -512,7 +512,7 @@ MultiXactOffset rewrite_multixacts(MultiXactId from_multi, MultiXactId to_multi)
 
 /* parallel.c */
 void		parallel_exec_prog(const char *log_file, const char *opt_log_file,
-							   const char *fmt,...) pg_attribute_printf(3, 4);
+							   const char *fmt, ...) pg_attribute_printf(3, 4);
 void		parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 										  char *old_pgdata, char *new_pgdata,
 										  char *old_tablespace, char *new_tablespace);

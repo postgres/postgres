@@ -84,7 +84,7 @@ get_bin_version(ClusterInfo *cluster)
  */
 bool
 exec_prog(const char *log_filename, const char *opt_log_file,
-		  bool report_error, bool exit_on_error, const char *fmt,...)
+		  bool report_error, bool exit_on_error, const char *fmt, ...)
 {
 	int			result = 0;
 	int			written;

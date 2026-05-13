@@ -1213,7 +1213,8 @@ int2mod(PG_FUNCTION_ARGS)
 }
 
 
-/* int[24]abs()
+/*
+ * int[24]abs()
  * Absolute value
  */
 Datum

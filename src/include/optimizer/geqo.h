@@ -11,12 +11,13 @@
  *-------------------------------------------------------------------------
  */
 
-/* contributed by:
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch				 * Institute of Automatic Control	   *
-   =							 = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+/*
+ * contributed by:
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ * *  Martin Utesch				 * Institute of Automatic Control	   *
+ * =							 = University of Mining and Technology =
+ * *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
 #ifndef GEQO_H
@@ -30,17 +31,17 @@
 
 /* GEQO debug flag */
 /*
- #define GEQO_DEBUG
+ * #define GEQO_DEBUG
  */
 
 /* choose one recombination mechanism here */
 /*
- #define ERX
- #define PMX
- #define CX
- #define PX
- #define OX1
- #define OX2
+ * #define ERX
+ * #define PMX
+ * #define CX
+ * #define PX
+ * #define OX1
+ * #define OX2
  */
 #define ERX
 

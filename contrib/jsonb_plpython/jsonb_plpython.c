@@ -16,7 +16,7 @@ PG_MODULE_MAGIC_EXT(
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);
 static PLyObject_AsString_t PLyObject_AsString_p;
 
-typedef void (*PLy_elog_impl_t) (int elevel, const char *fmt,...);
+typedef void (*PLy_elog_impl_t) (int elevel, const char *fmt, ...);
 static PLy_elog_impl_t PLy_elog_impl_p;
 
 /*

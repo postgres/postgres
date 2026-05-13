@@ -66,7 +66,7 @@ typedef struct IfStackElem
 typedef struct ConditionalStackData
 {
 	IfStackElem *head;
-}			ConditionalStackData;
+} ConditionalStackData;
 
 typedef struct ConditionalStackData *ConditionalStack;
 

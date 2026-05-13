@@ -26,7 +26,8 @@ dt2local(timestamp dt, int tz)
 	return dt;
 }								/* dt2local() */
 
-/* tm2timestamp()
+/*
+ * tm2timestamp()
  * Convert a tm structure to a timestamp data type.
  * Note that year is _not_ 1900-based, but is an explicit full value.
  * Also, month is one-based, _not_ zero-based.
@@ -73,7 +74,8 @@ SetEpochTimestamp(void)
 	return dt;
 }								/* SetEpochTimestamp() */
 
-/* timestamp2tm()
+/*
+ * timestamp2tm()
  * Convert timestamp data type to POSIX time structure.
  * Note that year is _not_ 1900-based, but is an explicit full value.
  * Also, month is one-based, _not_ zero-based.
@@ -180,9 +182,11 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 	return 0;
 }								/* timestamp2tm() */
 
-/* EncodeSpecialTimestamp()
+/*
+ * EncodeSpecialTimestamp()
  *	* Convert reserved timestamp data type to string.
- *	 */
+ *
+ */
 static void
 EncodeSpecialTimestamp(timestamp dt, char *str)
 {
@@ -841,14 +845,14 @@ PGTYPEStimestamp_defmt_asc(const char *str, const char *fmt, timestamp * d)
 }
 
 /*
-* add an interval to a time stamp
-*
-*	*tout = tin + span
-*
-*	 returns 0 if successful
-*	 returns -1 if it fails
-*
-*/
+ * add an interval to a time stamp
+ *
+ *	*tout = tin + span
+ *
+ *	 returns 0 if successful
+ *	 returns -1 if it fails
+ *
+ */
 
 int
 PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout)
@@ -896,14 +900,14 @@ PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout
 
 
 /*
-* subtract an interval from a time stamp
-*
-*	*tout = tin - span
-*
-*	 returns 0 if successful
-*	 returns -1 if it fails
-*
-*/
+ * subtract an interval from a time stamp
+ *
+ *	*tout = tin - span
+ *
+ *	 returns 0 if successful
+ *	 returns -1 if it fails
+ *
+ */
 
 int
 PGTYPEStimestamp_sub_interval(timestamp * tin, interval * span, timestamp * tout)

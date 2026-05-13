@@ -201,7 +201,8 @@ union local_storage
 	/* We don't need the "fullname" member */
 };
 
-/* Load tz data from the file named NAME into *SP.  Read extended
+/*
+ * Load tz data from the file named NAME into *SP.  Read extended
  * format if DOEXTEND.  Use *LSP for temporary storage.  Return 0 on
  * success, an errno value on failure.
  * PG: If "canonname" is not NULL, then on success the canonical spelling of
@@ -578,7 +579,8 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 	return 0;
 }
 
-/* Load tz data from the file named NAME into *SP.  Read extended
+/*
+ * Load tz data from the file named NAME into *SP.  Read extended
  * format if DOEXTEND.  Return 0 on success, an errno value on failure.
  * PG: If "canonname" is not NULL, then on success the canonical spelling of
  * given name is stored there (the buffer must be > TZ_STRLEN_MAX bytes!).

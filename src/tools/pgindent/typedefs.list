@@ -7,7 +7,6 @@ ASN1_OBJECT
 ASN1_OCTET_STRING
 ASN1_STRING
 ATAlterConstraint
-AttrResultArgMap
 AV
 A_ArrayExpr
 A_Const
@@ -184,6 +183,7 @@ AttrDefault
 AttrMap
 AttrMissing
 AttrNumber
+AttrResultArgMap
 AttributeOpts
 AuthRequest
 AuthToken
@@ -359,8 +359,6 @@ BufferAccessStrategy
 BufferAccessStrategyType
 BufferCacheOsPagesContext
 BufferCacheOsPagesRec
-BufferCachePagesContext
-BufferCachePagesRec
 BufferDesc
 BufferDescPadded
 BufferHeapTupleTableSlot
@@ -458,7 +456,6 @@ ClosestMatchState
 Clump
 ClusterInfo
 ClusterParams
-ClusterStmt
 CmdType
 CoalesceExpr
 CoerceParamHook
@@ -515,6 +512,7 @@ ConcurrentChangeKind
 ConditionVariable
 ConditionVariableMinimallyPadded
 ConditionalStack
+ConditionalStackData
 ConfigData
 ConfigVariable
 ConflictTupleInfo
@@ -614,9 +612,7 @@ CustomScan
 CustomScanMethods
 CustomScanState
 CycleCtr
-DataChecksumsWorkerOperation
 DBState
-DbOidName
 DCHCacheEntry
 DEADLOCK_INFO
 DECountItem
@@ -633,14 +629,14 @@ DSMREntryType
 DSMRegistryCtxStruct
 DSMRegistryEntry
 DWORD
+DWORD64
 DataChecksumsStateStruct
 DataChecksumsWorkerDatabase
+DataChecksumsWorkerOperation
 DataChecksumsWorkerResult
 DataDirSyncMethod
 DataDumperPtr
 DataPageDeleteStack
-DdlOptType
-DdlOption
 DataTypesUsageChecks
 DataTypesUsageVersionCheck
 DatabaseInfo
@@ -651,6 +647,9 @@ DatumTupleFields
 DbInfo
 DbInfoArr
 DbLocaleInfo
+DbOidName
+DdlOptType
+DdlOption
 DeClonePtrType
 DeadLockState
 DeallocateStmt
@@ -806,6 +805,7 @@ ExplainForeignModify_function
 ExplainForeignScan_function
 ExplainFormat
 ExplainOneQuery_hook_type
+ExplainOptionGUCCheckHandler
 ExplainOptionHandler
 ExplainSerializeOption
 ExplainState
@@ -832,7 +832,6 @@ ExtensionInfo
 ExtensionLocation
 ExtensionSiblingCache
 ExtensionVersionInfo
-FastPathMeta
 FDWCollateState
 FD_SET
 FILE
@@ -843,6 +842,7 @@ FSMPage
 FSMPageData
 FakeRelCacheEntry
 FakeRelCacheEntryData
+FastPathMeta
 FastPathStrongRelationLockData
 FdwInfo
 FdwRoutine
@@ -912,6 +912,7 @@ FormData_pg_collation
 FormData_pg_constraint
 FormData_pg_conversion
 FormData_pg_database
+FormData_pg_db_role_setting
 FormData_pg_default_acl
 FormData_pg_depend
 FormData_pg_enum
@@ -976,6 +977,7 @@ Form_pg_collation
 Form_pg_constraint
 Form_pg_conversion
 Form_pg_database
+Form_pg_db_role_setting
 Form_pg_default_acl
 Form_pg_depend
 Form_pg_enum
@@ -996,6 +998,11 @@ Form_pg_opfamily
 Form_pg_partitioned_table
 Form_pg_policy
 Form_pg_proc
+Form_pg_propgraph_element
+Form_pg_propgraph_element_label
+Form_pg_propgraph_label
+Form_pg_propgraph_label_property
+Form_pg_propgraph_property
 Form_pg_publication
 Form_pg_publication_namespace
 Form_pg_publication_rel
@@ -1268,6 +1275,7 @@ HeapTupleHeader
 HeapTupleHeaderData
 HeapTupleTableSlot
 HistControl
+HostCacheEntry
 HostsFileLoadResult
 HostsLine
 HotStandbyState
@@ -1294,6 +1302,7 @@ IfStackElem
 ImportForeignSchemaStmt
 ImportForeignSchemaType
 ImportForeignSchema_function
+ImportForeignStatistics_function
 ImportQual
 InProgressEnt
 InProgressIO
@@ -1326,7 +1335,6 @@ IndexElem
 IndexFetchHeapData
 IndexFetchTableData
 IndexInfo
-IndexInsertState
 IndexList
 IndexOnlyScan
 IndexOnlyScanState
@@ -1639,6 +1647,7 @@ LoadStmt
 LocalBufferLookupEnt
 LocalPgBackendStatus
 LocalTransactionId
+Location
 LocationIndex
 LocationLen
 LockAcquireResult
@@ -1882,6 +1891,7 @@ Offset
 OffsetNumber
 OffsetVarNodes_context
 Oid
+Oid8
 OidOptions
 OkeysState
 OldMultiXactReader
@@ -2121,8 +2131,8 @@ PVIndVacStatus
 PVOID
 PVShared
 PVSharedCostParams
-PVWorkerUsage
 PVWorkerStats
+PVWorkerUsage
 PX_Alias
 PX_Cipher
 PX_Combo
@@ -2518,6 +2528,7 @@ RTEPermissionInfo
 RWConflict
 RWConflictData
 RWConflictPoolHeader
+RadixSortInfo
 Range
 RangeBound
 RangeBox
@@ -2613,7 +2624,9 @@ RelocationBufferInfo
 RelptrFreePageBtree
 RelptrFreePageManager
 RelptrFreePageSpanLeader
+RemoteAttributeMapping
 RemoteSlot
+RemoteStatsResults
 RenameStmt
 ReopenPtrType
 ReorderBuffer
@@ -2740,6 +2753,7 @@ SIZE_T
 SMgrRelation
 SMgrRelationData
 SMgrSortArray
+SN_local
 SOCKADDR
 SOCKET
 SPELL
@@ -2883,10 +2897,13 @@ ShellTypeInfo
 ShippableCacheEntry
 ShippableCacheKey
 ShmemAllocatorData
+ShmemAttachCallback
 ShmemCallbacks
-ShmemIndexEnt
 ShmemHashOpts
+ShmemIndexEnt
+ShmemInitCallback
 ShmemRequest
+ShmemRequestCallback
 ShmemRequestKind
 ShmemStructOpts
 ShutdownForeignScan_function
@@ -2988,9 +3005,9 @@ StartLOPtrType
 StartLOsPtrType
 StartReplicationCmd
 StartupStatusEnum
+StatApproxReadStreamPrivate
 StatEntry
 StatExtEntry
-StatApproxReadStreamPrivate
 StateFileChunk
 StatisticExtInfo
 StatsBuildData
@@ -3054,6 +3071,7 @@ SyncRequestHandler
 SyncRequestType
 SyncStandbySlotsConfigData
 SyncingRelationsState
+SysCacheIdentifier
 SysFKRelationship
 SysScanDesc
 SysScanDescData
@@ -3643,6 +3661,7 @@ brin_column_state
 brin_serialize_callback_type
 btree_gin_convert_function
 btree_gin_leftmost_function
+build_simple_rel_hook_type
 bytea
 cached_re_str
 canonicalize_state
@@ -3802,7 +3821,6 @@ generate_series_timestamptz_fctx
 generate_subscripts_fctx
 get_attavgwidth_hook_type
 get_index_stats_hook_type
-get_relation_info_hook_type
 get_relation_stats_hook_type
 gid_t
 gin_leafpage_items_state
@@ -3840,6 +3858,7 @@ having_collation_ctx
 heap_page_items_state
 help_handler
 hlCheck
+host_cache_hash
 hstoreCheckKeyLen_t
 hstoreCheckValLen_t
 hstorePairs_t
@@ -3888,7 +3907,9 @@ itemIdCompact
 itemIdCompactData
 iterator
 jmp_buf
+join_path_setup_hook_type
 join_search_hook_type
+joinrel_setup_hook_type
 json_aelem_action
 json_manifest_error_callback
 json_manifest_per_file_callback
@@ -3900,7 +3921,6 @@ json_scalar_action
 json_struct_action
 keepwal_entry
 keepwal_hash
-keyEntryData
 key_t
 lclContext
 lclTocEntry
@@ -3935,7 +3955,6 @@ mac8KEY
 macKEY
 macaddr
 macaddr8
-macaddr_sortsupport_state
 manifest_data
 manifest_file
 manifest_files_hash
@@ -3960,7 +3979,6 @@ movedb_failure_params
 multirange_bsearch_comparison
 multirange_unnest_fctx
 mxact
-mxtruncinfo
 needs_fmgr_hook_type
 network_sortsupport_state
 nl_item
@@ -3997,7 +4015,6 @@ pe_test_vector
 pendingPosition
 pending_label
 pgParameterStatus
-pgoff_t
 pg_atomic_flag
 pg_atomic_uint32
 pg_atomic_uint64
@@ -4031,6 +4048,7 @@ pg_locale_t
 pg_mb_radix_tree
 pg_md5_ctx
 pg_on_exit_callback
+pg_plan_advice_advisor_hook
 pg_prng_state
 pg_re_flags
 pg_regex_t
@@ -4067,16 +4085,15 @@ pg_utf_to_local_combined
 pg_uuid_t
 pg_wchar
 pg_wchar_tbl
+pgoff_t
 pgp_armor_headers_state
 pgpa_advice_item
 pgpa_advice_tag_type
 pgpa_advice_target
 pgpa_identifier
 pgpa_index_target
-pgpa_index_type
 pgpa_itm_type
 pgpa_jo_outcome
-pgpa_join_class
 pgpa_join_member
 pgpa_join_state
 pgpa_join_strategy
@@ -4099,15 +4116,19 @@ pgpa_trove_lookup_type
 pgpa_trove_result
 pgpa_trove_slice
 pgpa_unrolled_join
+pgpa_yy_extra_type
 pgsa_entry
 pgsa_entry_key
 pgsa_saved_entry
 pgsa_saved_stash
 pgsa_saved_stash_table_hash
+pgsa_saved_stash_table_iterator
 pgsa_shared_state
 pgsa_stash
 pgsa_stash_count
+pgsa_stash_count_table_hash
 pgsa_stash_name
+pgsa_stash_name_table_hash
 pgsa_writer_context
 pgsocket
 pgsql_thing_t
@@ -4155,6 +4176,7 @@ post_parse_analyze_hook_type
 postprocess_result_function
 pqbool
 pqsigfunc
+pqsigfunc_legacy
 printQueryOpt
 printTableContent
 printTableFooter
@@ -4190,7 +4212,6 @@ qc_hash_func
 qsort_arg_comparator
 qsort_comparator
 query_pathkeys_callback
-RadixSortInfo
 rangeTableEntry_used_context
 rank_context
 rbt_allocfunc
@@ -4222,11 +4243,9 @@ relopt_ternary
 relopt_type
 relopt_value
 relopts_validator
-RemoteAttributeMapping
 remoteConn
 remoteConnHashEnt
 remoteDep
-RemoteStatsResults
 remove_nulling_relids_context
 rendezvousHashEntry
 rep
@@ -4271,6 +4290,7 @@ shmem_hash_allocator
 shmem_request_hook_type
 shmem_startup_hook_type
 sig_atomic_t
+siginfo_t
 sigjmp_buf
 signedbitmapword
 sigset_t

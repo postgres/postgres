@@ -11,12 +11,13 @@
  *-------------------------------------------------------------------------
  */
 
-/* contributed by:
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch				 * Institute of Automatic Control	   *
-   =							 = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+/*
+ * contributed by:
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ * *  Martin Utesch				 * Institute of Automatic Control	   *
+ * =							 = University of Mining and Technology =
+ * *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
 
@@ -25,8 +26,10 @@
 
 #include "nodes/nodes.h"
 
-/* we presume that int instead of Relid
-   is o.k. for Gene; so don't change it! */
+/*
+ * we presume that int instead of Relid
+ * is o.k. for Gene; so don't change it!
+ */
 typedef int Gene;
 
 typedef struct Chromosome

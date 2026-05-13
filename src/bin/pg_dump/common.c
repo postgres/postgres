@@ -253,7 +253,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	return tblinfo;
 }
 
-/* flagInhTables -
+/*
+ * flagInhTables -
  *	 Fill in parent link fields of tables for which we need that information,
  *	 mark parents of target tables as interesting, and create
  *	 TableAttachInfo objects for partitioned tables with appropriate
@@ -448,7 +449,8 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	}
 }
 
-/* flagInhAttrs -
+/*
+ * flagInhAttrs -
  *	 for each dumpable table in tblinfo, flag its inherited attributes
  *
  * What we need to do here is:

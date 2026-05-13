@@ -331,22 +331,22 @@ pgstat_io_snapshot_cb(void)
 }
 
 /*
-* IO statistics are not collected for all BackendTypes.
-*
-* The following BackendTypes do not participate in the cumulative stats
-* subsystem or do not perform IO on which we currently track:
-* - Dead-end backend because it is not connected to shared memory and
-*   doesn't do any IO
-* - Syslogger because it is not connected to shared memory
-* - Archiver because most relevant archiving IO is delegated to a
-*   specialized command or module
-*
-* Function returns true if BackendType participates in the cumulative stats
-* subsystem for IO and false if it does not.
-*
-* When adding a new BackendType, also consider adding relevant restrictions to
-* pgstat_tracks_io_object() and pgstat_tracks_io_op().
-*/
+ * IO statistics are not collected for all BackendTypes.
+ *
+ * The following BackendTypes do not participate in the cumulative stats
+ * subsystem or do not perform IO on which we currently track:
+ * - Dead-end backend because it is not connected to shared memory and
+ *   doesn't do any IO
+ * - Syslogger because it is not connected to shared memory
+ * - Archiver because most relevant archiving IO is delegated to a
+ *   specialized command or module
+ *
+ * Function returns true if BackendType participates in the cumulative stats
+ * subsystem for IO and false if it does not.
+ *
+ * When adding a new BackendType, also consider adding relevant restrictions to
+ * pgstat_tracks_io_object() and pgstat_tracks_io_op().
+ */
 bool
 pgstat_tracks_io_bktype(BackendType bktype)
 {

@@ -49,9 +49,9 @@ gbtreekey_out(PG_FUNCTION_ARGS)
 
 
 /*
-** GiST DeCompress methods
-** do not do anything.
-*/
+ * GiST DeCompress methods
+ * do not do anything.
+ */
 Datum
 gbt_decompress(PG_FUNCTION_ARGS)
 {

@@ -8,12 +8,13 @@
 *-------------------------------------------------------------------------
 */
 
-/* contributed by:
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch				 * Institute of Automatic Control	   *
-   =							 = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+/*
+ * contributed by:
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ * *  Martin Utesch				 * Institute of Automatic Control	   *
+ * =							 = University of Mining and Technology =
+ * *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
@@ -61,7 +62,8 @@ init_tour(PlannerInfo *root, Gene *tour, int num_gene)
 /* city table is used in these recombination methods: */
 #if defined(CX) || defined(PX) || defined(OX1) || defined(OX2)
 
-/* alloc_city_table
+/*
+ * alloc_city_table
  *
  *	 allocate memory for city table
  */
@@ -79,7 +81,8 @@ alloc_city_table(PlannerInfo *root, int num_gene)
 	return city_table;
 }
 
-/* free_city_table
+/*
+ * free_city_table
  *
  *	  deallocate memory of city table
  */

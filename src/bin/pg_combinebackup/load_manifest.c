@@ -69,7 +69,7 @@ static void combinebackup_per_wal_range_cb(JsonManifestParseContext *context,
 										   XLogRecPtr start_lsn,
 										   XLogRecPtr end_lsn);
 pg_noreturn static void report_manifest_error(JsonManifestParseContext *context,
-											  const char *fmt,...)
+											  const char *fmt, ...)
 			pg_attribute_printf(2, 3);
 
 /*
@@ -225,7 +225,7 @@ load_backup_manifest(char *backup_directory)
  * expects this function not to return.
  */
 static void
-report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
+report_manifest_error(JsonManifestParseContext *context, const char *fmt, ...)
 {
 	va_list		ap;
 

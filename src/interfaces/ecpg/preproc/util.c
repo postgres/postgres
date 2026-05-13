@@ -47,7 +47,7 @@ vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 
 /* Report an error or warning */
 void
-mmerror(int error_code, enum errortype type, const char *error,...)
+mmerror(int error_code, enum errortype type, const char *error, ...)
 {
 	va_list		ap;
 
@@ -58,7 +58,7 @@ mmerror(int error_code, enum errortype type, const char *error,...)
 
 /* Report an error and abandon execution */
 void
-mmfatal(int error_code, const char *error,...)
+mmfatal(int error_code, const char *error, ...)
 {
 	va_list		ap;
 
@@ -217,7 +217,7 @@ cat2_str(const char *str1, const char *str2)
  * Concatenate N strings, inserting spaces between them unless they are empty
  */
 char *
-cat_str(int count,...)
+cat_str(int count, ...)
 {
 	va_list		args;
 	int			i;

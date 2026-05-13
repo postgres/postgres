@@ -5970,7 +5970,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 /*
  * strip_all_phvs_deep
  *		Deeply strip all PlaceHolderVars in an expression.
-
+ *
  * As a performance optimization, we first use a lightweight walker to check
  * for the presence of any PlaceHolderVars.  The expensive mutator is invoked
  * only if a PlaceHolderVar is found, avoiding unnecessary memory allocation

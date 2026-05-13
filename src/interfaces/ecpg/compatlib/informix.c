@@ -520,11 +520,11 @@ rdatestr(date d, char *str)
 }
 
 /*
-*
-* the input for this function is mmddyyyy and any non-numeric
-* character can be used as a separator
-*
-*/
+ *
+ * the input for this function is mmddyyyy and any non-numeric
+ * character can be used as a separator
+ *
+ */
 int
 rstrdate(const char *str, date * d)
 {

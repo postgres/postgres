@@ -29,7 +29,7 @@ bool		ECPGconnect(int lineno, int c, const char *name, const char *user,
 						const char *passwd, const char *connection_name, int autocommit);
 bool		ECPGdo(const int lineno, const int compat, const int force_indicator,
 				   const char *connection_name, const bool questionmarks,
-				   const int st, const char *query,...);
+				   const int st, const char *query, ...);
 bool		ECPGtrans(int lineno, const char *connection_name, const char *transaction);
 bool		ECPGdisconnect(int lineno, const char *connection_name);
 bool		ECPGprepare(int lineno, const char *connection_name, const bool questionmarks,
@@ -55,14 +55,14 @@ bool		ECPGdo_descriptor(int line, const char *connection,
 bool		ECPGdeallocate_desc(int line, const char *name);
 bool		ECPGallocate_desc(int line, const char *name);
 bool		ECPGget_desc_header(int lineno, const char *desc_name, int *count);
-bool		ECPGget_desc(int lineno, const char *desc_name, int index,...);
+bool		ECPGget_desc(int lineno, const char *desc_name, int index, ...);
 bool		ECPGset_desc_header(int lineno, const char *desc_name, int count);
-bool		ECPGset_desc(int lineno, const char *desc_name, int index,...);
+bool		ECPGset_desc(int lineno, const char *desc_name, int index, ...);
 
 void		ECPGset_noind_null(enum ECPGttype type, void *ptr);
 bool		ECPGis_noind_null(enum ECPGttype type, const void *ptr);
 bool		ECPGdescribe(int line, int compat, bool input,
-						 const char *connection_name, const char *stmt_name,...);
+						 const char *connection_name, const char *stmt_name, ...);
 
 void		ECPGset_var(int number, void *pointer, int lineno);
 void	   *ECPGget_var(int number);

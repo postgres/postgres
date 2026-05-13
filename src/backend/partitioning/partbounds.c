@@ -5713,7 +5713,7 @@ check_parent_values_in_new_partitions(Relation parent,
  * 3. In case new partitions don't contain the DEFAULT partition and the
  *	  partitioned table does not have the DEFAULT partition, the following
  *	  should be true: the sum of the bounds of new partitions should be equal
- &	  to the bound of the split partition.
+ *	  to the bound of the split partition.
  *
  * parent:			partitioned table
  * splitPartOid:	split partition Oid

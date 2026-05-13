@@ -3336,7 +3336,8 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	return true;
 }
 
-/* gettuple_eval_partition
+/*
+ * gettuple_eval_partition
  * get tuple in a partition and evaluate the window function's argument
  * expression on it.
  */
@@ -3527,7 +3528,7 @@ init_notnull_info(WindowObject winobj, WindowStatePerFunc perfuncstate)
  * expand notnull_info if necessary.
  * pos: not null info position
  * argno: argument number
-*/
+ */
 static void
 grow_notnull_info(WindowObject winobj, int64 pos, int argno)
 {

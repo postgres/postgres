@@ -159,14 +159,14 @@ l_load_gep1(LLVMBuilderRef b, LLVMTypeRef t, LLVMValueRef v, LLVMValueRef idx, c
 }
 
 /* separate, because pg_attribute_printf(2, 3) can't appear in definition */
-static inline LLVMBasicBlockRef l_bb_before_v(LLVMBasicBlockRef r, const char *fmt,...) pg_attribute_printf(2, 3);
+static inline LLVMBasicBlockRef l_bb_before_v(LLVMBasicBlockRef r, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 /*
  * Insert a new basic block, just before r, the name being determined by fmt
  * and arguments.
  */
 static inline LLVMBasicBlockRef
-l_bb_before_v(LLVMBasicBlockRef r, const char *fmt,...)
+l_bb_before_v(LLVMBasicBlockRef r, const char *fmt, ...)
 {
 	char		buf[512];
 	va_list		args;
@@ -182,14 +182,14 @@ l_bb_before_v(LLVMBasicBlockRef r, const char *fmt,...)
 }
 
 /* separate, because pg_attribute_printf(2, 3) can't appear in definition */
-static inline LLVMBasicBlockRef l_bb_append_v(LLVMValueRef f, const char *fmt,...) pg_attribute_printf(2, 3);
+static inline LLVMBasicBlockRef l_bb_append_v(LLVMValueRef f, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 /*
  * Insert a new basic block after previous basic blocks, the name being
  * determined by fmt and arguments.
  */
 static inline LLVMBasicBlockRef
-l_bb_append_v(LLVMValueRef f, const char *fmt,...)
+l_bb_append_v(LLVMValueRef f, const char *fmt, ...)
 {
 	char		buf[512];
 	va_list		args;

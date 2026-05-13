@@ -840,7 +840,8 @@ process_psqlrc_file(char *filename)
 
 
 
-/* showVersion
+/*
+ * showVersion
  *
  * This output format is intended to match GNU standards.
  */

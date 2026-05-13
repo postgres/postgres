@@ -165,7 +165,7 @@ pgwin32_open_handle(const char *fileName, int fileFlags, bool backup_semantics)
 }
 
 int
-pgwin32_open(const char *fileName, int fileFlags,...)
+pgwin32_open(const char *fileName, int fileFlags, ...)
 {
 	HANDLE		h;
 	int			fd;

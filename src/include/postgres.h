@@ -552,7 +552,7 @@ Float8GetDatum(float8 X)
  *
  * This enum can be used for values that want to distinguish between true,
  * false, and unset.
-*/
+ */
 typedef enum pg_ternary
 {
 	PG_TERNARY_FALSE = 0,

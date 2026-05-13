@@ -118,7 +118,7 @@ gbt_var_leaf2node(GBT_VARKEY *leaf, const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
  *
  * If the underlying type is character data, the prefix length may point in
  * the middle of a multibyte character.
-*/
+ */
 static int32
 gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 {
@@ -207,9 +207,9 @@ gbt_var_node_pf_match(const GBT_VARKEY_R *node, const bytea *query, const gbtree
 
 
 /*
-*  truncates / compresses the node key
-*  cpf_length .. common prefix length
-*/
+ *  truncates / compresses the node key
+ *  cpf_length .. common prefix length
+ */
 static GBT_VARKEY *
 gbt_var_node_truncate(const GBT_VARKEY *node, int32 cpf_length, const gbtree_vinfo *tinfo)
 {

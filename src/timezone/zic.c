@@ -54,9 +54,11 @@ static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #define _Alignof(type) offsetof(struct { char a; type b; }, b)
 #endif
 
-/* The type for line numbers.  Use PRIdMAX to format them; formerly
-   there was also "#define PRIdLINENO PRIdMAX" and formats used
-   PRIdLINENO, but xgettext cannot grok that.  */
+/*
+ * The type for line numbers.  Use PRIdMAX to format them; formerly
+ * there was also "#define PRIdLINENO PRIdMAX" and formats used
+ * PRIdLINENO, but xgettext cannot grok that.
+ */
 typedef intmax_t lineno_t;
 
 struct rule
@@ -123,8 +125,8 @@ extern int	link(const char *target, const char *linkname);
 #endif
 
 static void verror(const char *const string, va_list args) pg_attribute_printf(1, 0);
-static void error(const char *const string,...) pg_attribute_printf(1, 2);
-static void warning(const char *const string,...) pg_attribute_printf(1, 2);
+static void error(const char *const string, ...) pg_attribute_printf(1, 2);
+static void warning(const char *const string, ...) pg_attribute_printf(1, 2);
 static void addtt(zic_t starttime, int type);
 static int	addtype(zic_t utoff, char const *abbr,
 					bool isdst, bool ttisstd, bool ttisut);
@@ -164,11 +166,13 @@ enum
 {
 PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1};
 
-/* If true, work around a bug in Qt 5.6.1 and earlier, which mishandles
-   TZif files whose POSIX-TZ-style strings contain '<'; see
-   QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
-   workaround will no longer be needed when Qt 5.6.1 and earlier are
-   obsolete, say in the year 2021.  */
+/*
+ * If true, work around a bug in Qt 5.6.1 and earlier, which mishandles
+ * TZif files whose POSIX-TZ-style strings contain '<'; see
+ * QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
+ * workaround will no longer be needed when Qt 5.6.1 and earlier are
+ * obsolete, say in the year 2021.
+ */
 #ifndef WORK_AROUND_QTBUG_53071
 enum
 {
@@ -515,7 +519,7 @@ verror(const char *const string, va_list args)
 }
 
 static void
-error(const char *const string,...)
+error(const char *const string, ...)
 {
 	va_list		args;
 
@@ -526,7 +530,7 @@ error(const char *const string,...)
 }
 
 static void
-warning(const char *const string,...)
+warning(const char *const string, ...)
 {
 	va_list		args;
 
@@ -569,9 +573,11 @@ usage(FILE *stream, int status)
 	exit(status);
 }
 
-/* Change the working directory to DIR, possibly creating DIR and its
-   ancestors.  After this is done, all files are accessed with names
-   relative to DIR.  */
+/*
+ * Change the working directory to DIR, possibly creating DIR and its
+ * ancestors.  After this is done, all files are accessed with names
+ * relative to DIR.
+ */
 static void
 change_directory(char const *dir)
 {
@@ -599,8 +605,10 @@ change_directory(char const *dir)
 static zic_t const min_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
 static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
 
-/* The minimum, and one less than the maximum, values specified by
-   the -r option.  These default to MIN_TIME and MAX_TIME.  */
+/*
+ * The minimum, and one less than the maximum, values specified by
+ * the -r option.  These default to MIN_TIME and MAX_TIME.
+ */
 static zic_t lo_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
 static zic_t hi_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
 
@@ -610,8 +618,10 @@ static zic_t leapexpires = -1;
 /* The time specified by an #expires comment, or negative if no such line.  */
 static zic_t comment_leapexpires = -1;
 
-/* Set the time range of the output to TIMERANGE.
-   Return true if successful.  */
+/*
+ * Set the time range of the output to TIMERANGE.
+ * Return true if successful.
+ */
 static bool
 timerange_option(char *timerange)
 {
@@ -649,9 +659,11 @@ static const char *directory;
 static const char *leapsec;
 static const char *tzdefault;
 
-/* -1 if the TZif output file should be slim, 0 if default, 1 if the
-   output should be fat for backward compatibility.  ZIC_BLOAT_DEFAULT
-   determines the default.  */
+/*
+ * -1 if the TZif output file should be slim, 0 if default, 1 if the
+ * output should be fat for backward compatibility.  ZIC_BLOAT_DEFAULT
+ * determines the default.
+ */
 static int	bloat;
 
 static bool
@@ -1004,8 +1016,10 @@ relname(char const *target, char const *linkname)
 }
 #endif							/* HAVE_SYMLINK */
 
-/* Hard link FROM to TO, following any symbolic links.
-   Return 0 if successful, an error number otherwise.  */
+/*
+ * Hard link FROM to TO, following any symbolic links.
+ * Return 0 if successful, an error number otherwise.
+ */
 static int
 hardlinkerr(char const *target, char const *linkname)
 {
@@ -3534,8 +3548,10 @@ is_alpha(char a)
 	}
 }
 
-/* If A is an uppercase character in the C locale, return its lowercase
-   counterpart.  Otherwise, return A.  */
+/*
+ * If A is an uppercase character in the C locale, return its lowercase
+ * counterpart.  Otherwise, return A.
+ */
 static char
 lowerit(char a)
 {
@@ -3929,10 +3945,12 @@ newabbr(const char *string)
 	charcnt += i;
 }
 
-/* Ensure that the directories of ARGNAME exist, by making any missing
-   ones.  If ANCESTORS, do this only for ARGNAME's ancestors; otherwise,
-   do it for ARGNAME too.  Exit with failure if there is trouble.
-   Do not consider an existing non-directory to be trouble.  */
+/*
+ * Ensure that the directories of ARGNAME exist, by making any missing
+ * ones.  If ANCESTORS, do this only for ARGNAME's ancestors; otherwise,
+ * do it for ARGNAME too.  Exit with failure if there is trouble.
+ * Do not consider an existing non-directory to be trouble.
+ */
 static void
 mkdirs(char const *argname, bool ancestors)
 {

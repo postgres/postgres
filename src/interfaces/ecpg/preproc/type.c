@@ -194,19 +194,20 @@ get_type(enum ECPGttype type)
 	return NULL;
 }
 
-/* Dump a type.
-   The type is dumped as:
-   type-tag <comma>				   - enum ECPGttype
-   reference-to-variable <comma>		   - char *
-   size <comma>					   - long size of this field (if varchar)
-   arrsize <comma>				   - long number of elements in the arr
-   offset <comma>				   - offset to the next element
-   Where:
-   type-tag is one of the simple types or varchar.
-   reference-to-variable can be a reference to a struct element.
-   arrsize is the size of the array in case of array fetches. Otherwise 0.
-   size is the maxsize in case it is a varchar. Otherwise it is the size of
-   the variable (required to do array fetches of structs).
+/*
+ * Dump a type.
+ * The type is dumped as:
+ * type-tag <comma>				   - enum ECPGttype
+ * reference-to-variable <comma>		   - char *
+ * size <comma>					   - long size of this field (if varchar)
+ * arrsize <comma>				   - long number of elements in the arr
+ * offset <comma>				   - offset to the next element
+ * Where:
+ * type-tag is one of the simple types or varchar.
+ * reference-to-variable can be a reference to a struct element.
+ * arrsize is the size of the array in case of array fetches. Otherwise 0.
+ * size is the maxsize in case it is a varchar. Otherwise it is the size of
+ * the variable (required to do array fetches of structs).
  */
 static void ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 							  char *varcharsize,
@@ -382,8 +383,10 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brac
 }
 
 
-/* If size is NULL, then the offset is 0, if not use size as a
-   string, it represents the offset needed if we are in an array of structs. */
+/*
+ * If size is NULL, then the offset is 0, if not use size as a
+ * string, it represents the offset needed if we are in an array of structs.
+ */
 static void
 ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				  char *varcharsize,

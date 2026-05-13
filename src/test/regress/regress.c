@@ -162,7 +162,8 @@ overpaid(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(salary > 699);
 }
 
-/* New type "widget"
+/*
+ * New type "widget"
  * This used to be "circle", but I added circle to builtins,
  *	so needed to make sure the names do not collide. - tgl 97/04/21
  */

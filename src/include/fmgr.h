@@ -554,7 +554,8 @@ extern int no_such_variable
  *-------------------------------------------------------------------------
  */
 
-/* These are for invocation of a specifically named function with a
+/*
+ * These are for invocation of a specifically named function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.  Also, the function cannot be one that needs to
  * look at FmgrInfo, since there won't be any.
@@ -603,7 +604,8 @@ extern Datum CallerFInfoFunctionCall1(PGFunction func, FmgrInfo *flinfo,
 extern Datum CallerFInfoFunctionCall2(PGFunction func, FmgrInfo *flinfo,
 									  Oid collation, Datum arg1, Datum arg2);
 
-/* These are for invocation of a previously-looked-up function with a
+/*
+ * These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.
  */
@@ -639,7 +641,8 @@ extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
 							   Datum arg6, Datum arg7, Datum arg8,
 							   Datum arg9);
 
-/* These are for invocation of a function identified by OID with a
+/*
+ * These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.  These are essentially fmgr_info() followed by
  * FunctionCallN().  If the same function is to be invoked repeatedly, do the
@@ -677,7 +680,8 @@ extern Datum OidFunctionCall9Coll(Oid functionId, Oid collation,
 								  Datum arg6, Datum arg7, Datum arg8,
 								  Datum arg9);
 
-/* These macros allow the collation argument to be omitted (with a default of
+/*
+ * These macros allow the collation argument to be omitted (with a default of
  * InvalidOid, ie, no collation).  They exist mostly for backwards
  * compatibility of source code.
  */

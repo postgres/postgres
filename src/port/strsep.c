@@ -1,7 +1,8 @@
 /*
  * src/port/strsep.c
  *
- *	$OpenBSD: strsep.c,v 1.8 2015/08/31 02:53:57 guenther Exp $	*/
+ *	$OpenBSD: strsep.c,v 1.8 2015/08/31 02:53:57 guenther Exp $
+ */
 
 /*-
  * Copyright (c) 1990, 1993

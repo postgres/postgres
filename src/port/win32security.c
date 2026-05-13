@@ -17,7 +17,7 @@
 #include "postgres_fe.h"
 #endif
 
-static void log_error(const char *fmt,...) pg_attribute_printf(1, 2);
+static void log_error(const char *fmt, ...) pg_attribute_printf(1, 2);
 
 
 /*
@@ -25,7 +25,7 @@ static void log_error(const char *fmt,...) pg_attribute_printf(1, 2);
  * message.
  */
 static void
-log_error(const char *fmt,...)
+log_error(const char *fmt, ...)
 {
 	va_list		ap;
 

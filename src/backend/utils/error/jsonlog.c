@@ -30,7 +30,7 @@
 
 static void appendJSONKeyValueFmt(StringInfo buf, const char *key,
 								  bool escape_key,
-								  const char *fmt,...) pg_attribute_printf(4, 5);
+								  const char *fmt, ...) pg_attribute_printf(4, 5);
 
 /*
  * appendJSONKeyValue
@@ -68,7 +68,7 @@ appendJSONKeyValue(StringInfo buf, const char *key, const char *value,
  */
 static void
 appendJSONKeyValueFmt(StringInfo buf, const char *key,
-					  bool escape_key, const char *fmt,...)
+					  bool escape_key, const char *fmt, ...)
 {
 	int			save_errno = errno;
 	size_t		len = 128;		/* initial assumption about buffer size */

@@ -300,7 +300,7 @@ static JsonIncrementalState failed_inc_oom;
  * lex_peek
  *
  * what is the current look_ahead token?
-*/
+ */
 static inline JsonTokenType
 lex_peek(JsonLexContext *lex)
 {

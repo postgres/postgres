@@ -152,7 +152,8 @@
 #define sigma1_512(x)	(S64(19, (x)) ^ S64(61, (x)) ^ R( 6,   (x)))
 
 /*** INTERNAL FUNCTION PROTOTYPES *************************************/
-/* NOTE: These should not be accessed directly from outside this
+/*
+ * NOTE: These should not be accessed directly from outside this
  * library -- they are intended for private internal visibility/use
  * only.
  */

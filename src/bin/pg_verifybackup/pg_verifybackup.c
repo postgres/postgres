@@ -71,7 +71,7 @@ static void verifybackup_per_wal_range_cb(JsonManifestParseContext *context,
 										  XLogRecPtr start_lsn,
 										  XLogRecPtr end_lsn);
 pg_noreturn static void report_manifest_error(JsonManifestParseContext *context,
-											  const char *fmt,...)
+											  const char *fmt, ...)
 			pg_attribute_printf(2, 3);
 
 static void verify_tar_backup(verifier_context *context, DIR *dir,
@@ -521,7 +521,7 @@ parse_manifest_file(char *manifest_path)
  * expects this function not to return.
  */
 static void
-report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
+report_manifest_error(JsonManifestParseContext *context, const char *fmt, ...)
 {
 	va_list		ap;
 
@@ -1250,7 +1250,7 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
  * context says we should.
  */
 void
-report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
+report_backup_error(verifier_context *context, const char *pg_restrict fmt, ...)
 {
 	va_list		ap;
 
@@ -1267,7 +1267,7 @@ report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
  * Report a fatal error and exit
  */
 void
-report_fatal_error(const char *pg_restrict fmt,...)
+report_fatal_error(const char *pg_restrict fmt, ...)
 {
 	va_list		ap;
 

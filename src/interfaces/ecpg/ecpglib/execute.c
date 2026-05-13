@@ -5,13 +5,16 @@
  * All the tedious messing around with tuples is supposed to be hidden
  * by this function.
  */
-/* Author: Linus Tolke
-   (actually most if the code is "borrowed" from the distribution and just
-   slightly modified)
+/*
+ * Author: Linus Tolke
+ * (actually most if the code is "borrowed" from the distribution and just
+ * slightly modified)
  */
 
-/* Taken over as part of PostgreSQL by Michael Meskes <meskes@postgresql.org>
-   on Feb. 5th, 1998 */
+/*
+ * Taken over as part of PostgreSQL by Michael Meskes <meskes@postgresql.org>
+ * on Feb. 5th, 1998
+ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -2289,7 +2292,7 @@ fail:
  * The input/output parameters are passed as variable-length argument list.
  */
 bool
-ECPGdo(const int lineno, const int compat, const int force_indicator, const char *connection_name, const bool questionmarks, const int st, const char *query,...)
+ECPGdo(const int lineno, const int compat, const int force_indicator, const char *connection_name, const bool questionmarks, const int st, const char *query, ...)
 {
 	va_list		args;
 	bool		ret;

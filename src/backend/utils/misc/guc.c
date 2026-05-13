@@ -261,7 +261,7 @@ static bool valid_custom_variable_name(const char *name);
 static bool assignable_custom_variable_name(const char *name, bool skip_errors,
 											int elevel);
 static void do_serialize(char **destptr, Size *maxbytes,
-						 const char *fmt,...) pg_attribute_printf(3, 4);
+						 const char *fmt, ...) pg_attribute_printf(3, 4);
 static bool call_bool_check_hook(const struct config_generic *conf, bool *newval,
 								 void **extra, GucSource source, int elevel);
 static bool call_int_check_hook(const struct config_generic *conf, int *newval,
@@ -5883,7 +5883,7 @@ EstimateGUCStateSpace(void)
  * maxbytes is not sufficient to copy the string, error out.
  */
 static void
-do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
+do_serialize(char **destptr, Size *maxbytes, const char *fmt, ...)
 {
 	va_list		vargs;
 	int			n;

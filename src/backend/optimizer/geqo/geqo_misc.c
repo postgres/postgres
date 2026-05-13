@@ -11,12 +11,13 @@
  *-------------------------------------------------------------------------
  */
 
-/* contributed by:
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch				 * Institute of Automatic Control	   *
-   =							 = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+/*
+ * contributed by:
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ * *  Martin Utesch				 * Institute of Automatic Control	   *
+ * =							 = University of Mining and Technology =
+ * *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
 #include "postgres.h"
@@ -51,7 +52,8 @@ avg_pool(Pool *pool)
 	return cumulative;
 }
 
-/* print_pool
+/*
+ * print_pool
  */
 void
 print_pool(FILE *fp, Pool *pool, int start, int stop)
@@ -83,7 +85,8 @@ print_pool(FILE *fp, Pool *pool, int start, int stop)
 	fflush(fp);
 }
 
-/* print_gen
+/*
+ * print_gen
  *
  *	 printout for chromosome: best, worst, mean, average
  */

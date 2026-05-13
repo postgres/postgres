@@ -124,7 +124,7 @@ static bool dblink_connstr_has_pw(const char *connstr);
 static void dblink_security_check(PGconn *conn, const char *connname,
 								  const char *connstr);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-							 bool fail, const char *fmt,...) pg_attribute_printf(5, 6);
+							 bool fail, const char *fmt, ...) pg_attribute_printf(5, 6);
 static char *get_connect_string(const char *servername);
 static char *escape_param_str(const char *str);
 static void validate_pkattnums(Relation rel,
@@ -2793,7 +2793,7 @@ dblink_connstr_check(const char *connstr)
  */
 static void
 dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-				 bool fail, const char *fmt,...)
+				 bool fail, const char *fmt, ...)
 {
 	int			level;
 	char	   *pg_diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);

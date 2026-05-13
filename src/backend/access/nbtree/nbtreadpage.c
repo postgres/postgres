@@ -3339,7 +3339,7 @@ _bt_skiparray_set_isnull(Relation rel, ScanKey skey, BTArrayKeyInfo *array)
  * compare the value that they're searching for to a binary search pivot.
  * However, unlike _bt_compare, this function's "tuple argument" comes first,
  * while its "array/scankey argument" comes second.
-*/
+ */
 static inline int32
 _bt_compare_array_skey(FmgrInfo *orderproc,
 					   Datum tupdatum, bool tupnull,

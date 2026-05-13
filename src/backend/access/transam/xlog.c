@@ -1200,7 +1200,7 @@ ReserveXLogInsertLocation(int size, XLogRecPtr *StartPos, XLogRecPtr *EndPos,
  * *EndPos value. However, if we are already at the beginning of the current
  * segment, *StartPos and *EndPos are set to the current location without
  * reserving any space, and the function returns false.
-*/
+ */
 static bool
 ReserveXLogSwitch(XLogRecPtr *StartPos, XLogRecPtr *EndPos, XLogRecPtr *PrevPtr)
 {

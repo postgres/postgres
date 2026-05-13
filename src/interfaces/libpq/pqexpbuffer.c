@@ -232,7 +232,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
  * resetPQExpBuffer() followed by appendPQExpBuffer().
  */
 void
-printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
+printfPQExpBuffer(PQExpBuffer str, const char *fmt, ...)
 {
 	int			save_errno = errno;
 	va_list		args;
@@ -262,7 +262,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
  * strcat.
  */
 void
-appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
+appendPQExpBuffer(PQExpBuffer str, const char *fmt, ...)
 {
 	int			save_errno = errno;
 	va_list		args;

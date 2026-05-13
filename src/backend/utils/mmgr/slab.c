@@ -172,7 +172,7 @@ typedef struct SlabBlock
  * SlabChunkIndex
  *		Get the 0-based index of how many chunks into the block the given
  *		chunk is.
-*/
+ */
 #define SlabChunkIndex(slab, block, chunk)	\
 	(((char *) (chunk) - (char *) SlabBlockGetChunk(slab, block, 0)) / \
 	(slab)->fullChunkSize)

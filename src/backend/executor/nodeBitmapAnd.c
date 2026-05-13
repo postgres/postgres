@@ -12,7 +12,8 @@
  *
  *-------------------------------------------------------------------------
  */
-/* INTERFACE ROUTINES
+/*
+ * INTERFACE ROUTINES
  *		ExecInitBitmapAnd	- initialize the BitmapAnd node
  *		MultiExecBitmapAnd	- retrieve the result bitmap from the node
  *		ExecEndBitmapAnd	- shut down the BitmapAnd node

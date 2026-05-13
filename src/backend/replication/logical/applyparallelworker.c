@@ -228,11 +228,11 @@ typedef struct ParallelApplyWorkerEntry
 static HTAB *ParallelApplyTxnHash = NULL;
 
 /*
-* A list (pool) of active parallel apply workers. The information for
-* the new worker is added to the list after successfully launching it. The
-* list entry is removed if there are already enough workers in the worker
-* pool at the end of the transaction. For more information about the worker
-* pool, see comments atop this file.
+ * A list (pool) of active parallel apply workers. The information for
+ * the new worker is added to the list after successfully launching it. The
+ * list entry is removed if there are already enough workers in the worker
+ * pool at the end of the transaction. For more information about the worker
+ * pool, see comments atop this file.
  */
 static List *ParallelApplyWorkerPool = NIL;
 

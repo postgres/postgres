@@ -56,7 +56,7 @@
  * revised.
  */
 char *
-replace_percent_placeholders(const char *instr, const char *param_name, const char *letters,...)
+replace_percent_placeholders(const char *instr, const char *param_name, const char *letters, ...)
 {
 	StringInfoData result;
 

@@ -12,7 +12,8 @@
  *
  *-------------------------------------------------------------------------
  */
-/* INTERFACE ROUTINES
+/*
+ * INTERFACE ROUTINES
  *		ExecInitMergeAppend		- initialize the MergeAppend node
  *		ExecMergeAppend			- retrieve the next tuple from the node
  *		ExecEndMergeAppend		- shut down the MergeAppend node

@@ -92,7 +92,7 @@ static volatile pqsigfunc pqsignal_handlers[PG_NSIG];
  */
 #if defined(USE_SIGACTION) && defined(USE_SIGINFO)
 static void
-wrapper_handler(int postgres_signal_arg, siginfo_t * info, void *context)
+wrapper_handler(int postgres_signal_arg, siginfo_t *info, void *context)
 #else							/* no USE_SIGINFO */
 static void
 wrapper_handler(int postgres_signal_arg)

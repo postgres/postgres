@@ -1337,10 +1337,10 @@ pg_stat_get_buf_alloc(PG_FUNCTION_ARGS)
 }
 
 /*
-* When adding a new column to the pg_stat_io view and the
-* pg_stat_get_backend_io() function, add a new enum value here above
-* IO_NUM_COLUMNS.
-*/
+ * When adding a new column to the pg_stat_io view and the
+ * pg_stat_get_backend_io() function, add a new enum value here above
+ * IO_NUM_COLUMNS.
+ */
 typedef enum io_stat_col
 {
 	IO_COL_INVALID = -1,

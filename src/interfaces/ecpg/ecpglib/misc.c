@@ -229,7 +229,7 @@ ECPGdebug(int n, FILE *dbgs)
 }
 
 void
-ecpg_log(const char *format,...)
+ecpg_log(const char *format, ...)
 {
 	va_list		ap;
 	const char *intl_format;

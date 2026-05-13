@@ -47,15 +47,16 @@ struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *rm);
 void		ECPGfree_struct_member(struct ECPGstruct_member *rm);
 void		ECPGfree_type(struct ECPGtype *type);
 
-/* Dump a type.
-   The type is dumped as:
-   type-tag <comma> reference-to-variable <comma> arrsize <comma> size <comma>
-   Where:
-   type-tag is one of the simple types or varchar.
-   reference-to-variable can be a reference to a struct element.
-   arrsize is the size of the array in case of array fetches. Otherwise 0.
-   size is the maxsize in case it is a varchar. Otherwise it is the size of
-	   the variable (required to do array fetches of structs).
+/*
+ * Dump a type.
+ * The type is dumped as:
+ * type-tag <comma> reference-to-variable <comma> arrsize <comma> size <comma>
+ * Where:
+ * type-tag is one of the simple types or varchar.
+ * reference-to-variable can be a reference to a struct element.
+ * arrsize is the size of the array in case of array fetches. Otherwise 0.
+ * size is the maxsize in case it is a varchar. Otherwise it is the size of
+ * the variable (required to do array fetches of structs).
  */
 void		ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type,
 							const int brace_level, const char *ind_name,

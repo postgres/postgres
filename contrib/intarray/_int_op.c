@@ -96,7 +96,8 @@ _int_same(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(result);
 }
 
-/*	_int_overlap -- does a overlap b?
+/*
+ * _int_overlap -- does a overlap b?
  */
 Datum
 _int_overlap(PG_FUNCTION_ARGS)

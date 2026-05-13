@@ -1,18 +1,18 @@
 /*
-moddatetime.c
-
-contrib/spi/moddatetime.c
-
-What is this?
-It is a function to be called from a trigger for the purpose of updating
-a modification datetime stamp in a record when that record is UPDATEd.
-
-Credits
-This is 95%+ based on autoinc.c, which I used as a starting point as I do
-not really know what I am doing.  I also had help from
-Jan Wieck <jwieck@debis.com> who told me about the timestamp_in("now") function.
-OH, me, I'm Terry Mackintosh <terry@terrym.com>
-*/
+ * moddatetime.c
+ *
+ * contrib/spi/moddatetime.c
+ *
+ * What is this?
+ * It is a function to be called from a trigger for the purpose of updating
+ * a modification datetime stamp in a record when that record is UPDATEd.
+ *
+ * Credits
+ * This is 95%+ based on autoinc.c, which I used as a starting point as I do
+ * not really know what I am doing.  I also had help from
+ * Jan Wieck <jwieck@debis.com> who told me about the timestamp_in("now") function.
+ * OH, me, I'm Terry Mackintosh <terry@terrym.com>
+ */
 #include "postgres.h"
 
 #include "access/htup_details.h"

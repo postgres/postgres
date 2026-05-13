@@ -396,7 +396,7 @@ extern int	parallel_restore(ArchiveHandle *AH, TocEntry *te);
 extern void on_exit_close_archive(Archive *AHX);
 extern void replace_on_exit_close_archive(Archive *AHX);
 
-extern void warn_or_exit_horribly(ArchiveHandle *AH, const char *fmt,...) pg_attribute_printf(2, 3);
+extern void warn_or_exit_horribly(ArchiveHandle *AH, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 /* Options for ArchiveEntry */
 typedef struct _archiveOpts
@@ -472,6 +472,6 @@ extern void IssueACLPerBlob(ArchiveHandle *AH, TocEntry *te);
 extern void DropLOIfExists(ArchiveHandle *AH, Oid oid);
 
 void		ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
-int			ahprintf(ArchiveHandle *AH, const char *fmt,...) pg_attribute_printf(2, 3);
+int			ahprintf(ArchiveHandle *AH, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 #endif

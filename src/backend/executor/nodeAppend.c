@@ -12,7 +12,8 @@
  *
  *-------------------------------------------------------------------------
  */
-/* INTERFACE ROUTINES
+/*
+ * INTERFACE ROUTINES
  *		ExecInitAppend	- initialize the append node
  *		ExecAppend		- retrieve the next tuple from the node
  *		ExecEndAppend	- shut down the append node

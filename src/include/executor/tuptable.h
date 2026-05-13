@@ -480,7 +480,8 @@ ExecClearTuple(TupleTableSlot *slot)
 	return slot;
 }
 
-/* ExecMaterializeSlot - force a slot into the "materialized" state.
+/*
+ * ExecMaterializeSlot - force a slot into the "materialized" state.
  *
  * This causes the slot's tuple to be a local copy not dependent on any
  * external storage (i.e. pointing into a Buffer, or having allocations in

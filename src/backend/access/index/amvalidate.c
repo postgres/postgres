@@ -150,7 +150,7 @@ identify_opfamily_groups(CatCList *oprlist, CatCList *proclist)
  */
 bool
 check_amproc_signature(Oid funcid, Oid restype, bool exact,
-					   int minargs, int maxargs,...)
+					   int minargs, int maxargs, ...)
 {
 	bool		result = true;
 	HeapTuple	tp;

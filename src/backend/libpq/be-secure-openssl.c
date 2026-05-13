@@ -62,7 +62,7 @@ typedef struct
 {
 	uint32		status;
 	const char *hostname;
-}			HostCacheEntry;
+} HostCacheEntry;
 static uint32 host_cache_pointer(const char *key);
 #define SH_PREFIX		host_cache
 #define SH_ELEMENT_TYPE	HostCacheEntry

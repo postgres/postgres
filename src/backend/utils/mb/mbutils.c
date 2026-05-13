@@ -1178,7 +1178,8 @@ pg_mbstrlen(const char *mbstr)
 	return len;
 }
 
-/* returns the length (counted in wchars) of a multibyte string
+/*
+ * returns the length (counted in wchars) of a multibyte string
  * (stops at the first of "limit" or a NUL)
  */
 int

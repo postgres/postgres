@@ -306,7 +306,8 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	return rv;
 }
 
-/* trigger subhandler
+/*
+ * trigger subhandler
  *
  * the python function is expected to return Py_None if the tuple is
  * acceptable and unmodified.  Otherwise it should return a PyUnicode

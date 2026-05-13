@@ -204,30 +204,35 @@ typedef enum
 	PQAUTHDATA_OAUTH_BEARER_TOKEN_V2,	/* newest API for OAuth Bearer tokens */
 } PGauthData;
 
-/* PGconn encapsulates a connection to the backend.
+/*
+ * PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
  */
 typedef struct pg_conn PGconn;
 
-/* PGcancelConn encapsulates a cancel connection to the backend.
+/*
+ * PGcancelConn encapsulates a cancel connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
  */
 typedef struct pg_cancel_conn PGcancelConn;
 
-/* PGresult encapsulates the result of a query (or more precisely, of a single
+/*
+ * PGresult encapsulates the result of a query (or more precisely, of a single
  * SQL command --- a query string given to PQsendQuery can contain multiple
  * commands and thus return multiple PGresult objects).
  * The contents of this struct are not supposed to be known to applications.
  */
 typedef struct pg_result PGresult;
 
-/* PGcancel encapsulates the information needed to cancel a running
+/*
+ * PGcancel encapsulates the information needed to cancel a running
  * query on an existing connection.
  * The contents of this struct are not supposed to be known to applications.
  */
 typedef struct pg_cancel PGcancel;
 
-/* PGnotify represents the occurrence of a NOTIFY message.
+/*
+ * PGnotify represents the occurrence of a NOTIFY message.
  * Ideally this would be an opaque typedef, but it's so simple that it's
  * unlikely to change.
  * NOTE: in Postgres 6.4 and later, the be_pid is the notifying backend's,
@@ -435,8 +440,10 @@ extern void *PQsslStruct(PGconn *conn, const char *struct_name);
 extern const char *PQsslAttribute(PGconn *conn, const char *attribute_name);
 extern const char *const *PQsslAttributeNames(PGconn *conn);
 
-/* Get the OpenSSL structure associated with a connection. Returns NULL for
- * unencrypted connections or if any other TLS library is in use. */
+/*
+ * Get the OpenSSL structure associated with a connection. Returns NULL for
+ * unencrypted connections or if any other TLS library is in use.
+ */
 extern void *PQgetssl(PGconn *conn);
 
 /* Tell libpq whether it needs to initialize OpenSSL */

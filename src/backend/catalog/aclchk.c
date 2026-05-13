@@ -3057,7 +3057,8 @@ pg_aclmask(ObjectType objtype, Oid object_oid, AttrNumber attnum, Oid roleid,
 }
 
 
-/* ****************************************************************
+/*
+ * ****************************************************************
  * Exported routines for examining a user's privileges for various objects
  *
  * See aclmask() for a description of the common API for these functions.

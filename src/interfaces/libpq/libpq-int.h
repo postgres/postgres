@@ -90,7 +90,8 @@ typedef struct
  * hence there is no need for multiple descriptor sets.
  */
 
-/* Subsidiary-storage management structure for PGresult.
+/*
+ * Subsidiary-storage management structure for PGresult.
  * See space management routines in fe-exec.c for details.
  * Note that space[k] refers to the k'th byte starting from the physical
  * head of the block --- it's a union, not a struct!
@@ -292,7 +293,8 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 } PGlobjfuncs;
 
-/* PGdataValue represents a data field value being passed to a row processor.
+/*
+ * PGdataValue represents a data field value being passed to a row processor.
  * It could be either text or binary data; text data is not zero-terminated.
  * A SQL NULL is represented by len < 0; then value is still valid but there
  * are no data bytes there.
@@ -689,7 +691,8 @@ struct pg_conn
 };
 
 
-/* String descriptions of the ExecStatusTypes.
+/*
+ * String descriptions of the ExecStatusTypes.
  * direct use of this array is deprecated; call PQresStatus() instead.
  */
 extern char *const pgresStatus[];
@@ -753,7 +756,7 @@ extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
 extern void pqSaveErrorResult(PGconn *conn);
 extern PGresult *pqPrepareAsyncResult(PGconn *conn);
-extern void pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...) pg_attribute_printf(2, 3);
+extern void pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...) pg_attribute_printf(2, 3);
 extern void pqSaveMessageField(PGresult *res, char code,
 							   const char *value);
 extern int	pqSaveParameterStatus(PGconn *conn, const char *name,
@@ -961,8 +964,8 @@ extern char *libpq_ngettext(const char *msgid, const char *msgid_plural, unsigne
  */
 #undef _
 
-extern void libpq_append_error(PQExpBuffer errorMessage, const char *fmt,...) pg_attribute_printf(2, 3);
-extern void libpq_append_conn_error(PGconn *conn, const char *fmt,...) pg_attribute_printf(2, 3);
+extern void libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...) pg_attribute_printf(2, 3);
+extern void libpq_append_conn_error(PGconn *conn, const char *fmt, ...) pg_attribute_printf(2, 3);
 extern void libpq_append_grease_info(PGconn *conn);
 
 /*

@@ -114,7 +114,7 @@ static HANDLE shutdownHandles[2];
 #endif
 
 
-static void write_stderr(const char *fmt,...) pg_attribute_printf(1, 2);
+static void write_stderr(const char *fmt, ...) pg_attribute_printf(1, 2);
 static void do_advice(void);
 static void do_help(void);
 static void set_mode(char *modeopt);
@@ -200,7 +200,7 @@ write_eventlog(int level, const char *line)
  * not available).
  */
 static void
-write_stderr(const char *fmt,...)
+write_stderr(const char *fmt, ...)
 {
 	va_list		ap;
 

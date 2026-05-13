@@ -12,7 +12,8 @@
 #include "pgtypes_interval.h"
 #include "pgtypeslib_extern.h"
 
-/* copy&pasted from .../src/backend/utils/adt/datetime.c
+/*
+ * copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changed struct pg_tm to struct tm
  */
 static void
@@ -30,7 +31,8 @@ AdjustFractSeconds(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale
 }
 
 
-/* copy&pasted from .../src/backend/utils/adt/datetime.c
+/*
+ * copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changed struct pg_tm to struct tm
  */
 static void
@@ -83,7 +85,8 @@ ISO8601IntegerWidth(const char *fieldstart)
 }
 
 
-/* copy&pasted from .../src/backend/utils/adt/datetime.c
+/*
+ * copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changed struct pg_tm to struct tm
  */
 static inline void
@@ -98,7 +101,8 @@ ClearPgTm(struct /* pg_ */ tm *tm, fsec_t *fsec)
 	*fsec = 0;
 }
 
-/* copy&pasted from .../src/backend/utils/adt/datetime.c
+/*
+ * copy&pasted from .../src/backend/utils/adt/datetime.c
  *
  * * changed struct pg_tm to struct tm
  *
@@ -304,7 +308,8 @@ DecodeISO8601Interval(char *str,
 
 
 
-/* copy&pasted from .../src/backend/utils/adt/datetime.c
+/*
+ * copy&pasted from .../src/backend/utils/adt/datetime.c
  * with 3 exceptions
  *
  *	* changed struct pg_tm to struct tm
@@ -746,7 +751,8 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 }
 
 
-/* copy&pasted from .../src/backend/utils/adt/datetime.c
+/*
+ * copy&pasted from .../src/backend/utils/adt/datetime.c
  *
  * Change pg_tm to tm
  */
@@ -931,7 +937,8 @@ EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 }
 
 
-/* interval2tm()
+/*
+ * interval2tm()
  * Convert an interval data type to a tm structure.
  */
 static int

@@ -1643,7 +1643,7 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
  * with PG_TEMP_FILE_PREFIX, so that they can be identified as temporary and
  * deleted at startup by RemovePgTempFiles().  Further subdirectories below
  * that do not need any particular prefix.
-*/
+ */
 void
 PathNameCreateTemporaryDir(const char *basedir, const char *directory)
 {

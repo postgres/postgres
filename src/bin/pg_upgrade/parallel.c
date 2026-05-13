@@ -61,7 +61,7 @@ DWORD		win32_transfer_all_new_dbs(transfer_thread_arg *args);
  */
 void
 parallel_exec_prog(const char *log_file, const char *opt_log_file,
-				   const char *fmt,...)
+				   const char *fmt, ...)
 {
 	va_list		args;
 	char		cmd[MAX_STRING];

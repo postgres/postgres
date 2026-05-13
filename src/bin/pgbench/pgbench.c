@@ -239,7 +239,7 @@ static int64 random_seed = -1;
 
 /*
  * end of configurable parameters
- *********************************************************************/
+ */
 
 #define nbranches	1			/* Makes little sense to change this.  Change
 								 * -s instead */

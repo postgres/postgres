@@ -228,7 +228,8 @@ typedef struct DynamicZoneAbbrev
 } DynamicZoneAbbrev;
 
 
-/* FMODULO()
+/*
+ * FMODULO()
  * Macro to replace modf(), which is broken on some platforms.
  * t = input and remainder
  * q = integer part
@@ -240,7 +241,8 @@ do { \
 	if ((q) != 0) (t) -= rint((q) * (u)); \
 } while(0)
 
-/* TMODULO()
+/*
+ * TMODULO()
  * Like FMODULO(), but work on the timestamp datatype (now always int64).
  * We assume that int64 follows the C99 semantics for division (negative
  * quotients truncate towards zero).

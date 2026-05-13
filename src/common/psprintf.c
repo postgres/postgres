@@ -40,7 +40,7 @@
  * One should therefore think twice about using this in libpq.
  */
 char *
-psprintf(const char *fmt,...)
+psprintf(const char *fmt, ...)
 {
 	int			save_errno = errno;
 	size_t		len = 128;		/* initial assumption about buffer size */

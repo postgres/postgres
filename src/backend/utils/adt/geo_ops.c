@@ -413,7 +413,8 @@ pair_count(char *s, char delim)
  * Formatting and conversion routines.
  *---------------------------------------------------------*/
 
-/*		box_in	-		convert a string to internal form.
+/*
+ * box_in	-		convert a string to internal form.
  *
  *		External format: (two corners of box)
  *				"(f8, f8), (f8, f8)"
@@ -450,7 +451,8 @@ box_in(PG_FUNCTION_ARGS)
 	PG_RETURN_BOX_P(box);
 }
 
-/*		box_out -		convert a box to external form.
+/*
+ * box_out -		convert a box to external form.
  */
 Datum
 box_out(PG_FUNCTION_ARGS)
@@ -513,7 +515,8 @@ box_send(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_construct	-		fill in a new box.
+/*
+ * box_construct	-		fill in a new box.
  */
 static inline void
 box_construct(BOX *result, Point *pt1, Point *pt2)
@@ -546,7 +549,8 @@ box_construct(BOX *result, Point *pt1, Point *pt2)
  *		<, >, <=, >=, and == are based on box area.
  *---------------------------------------------------------*/
 
-/*		box_same		-		are two boxes identical?
+/*
+ * box_same		-		are two boxes identical?
  */
 Datum
 box_same(PG_FUNCTION_ARGS)
@@ -558,7 +562,8 @@ box_same(PG_FUNCTION_ARGS)
 				   point_eq_point(&box1->low, &box2->low));
 }
 
-/*		box_overlap		-		does box1 overlap box2?
+/*
+ * box_overlap		-		does box1 overlap box2?
  */
 Datum
 box_overlap(PG_FUNCTION_ARGS)
@@ -578,7 +583,8 @@ box_ov(BOX *box1, BOX *box2)
 			FPle(box2->low.y, box1->high.y));
 }
 
-/*		box_left		-		is box1 strictly left of box2?
+/*
+ * box_left		-		is box1 strictly left of box2?
  */
 Datum
 box_left(PG_FUNCTION_ARGS)
@@ -589,7 +595,8 @@ box_left(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPlt(box1->high.x, box2->low.x));
 }
 
-/*		box_overleft	-		is the right edge of box1 at or left of
+/*
+ * box_overleft	-		is the right edge of box1 at or left of
  *								the right edge of box2?
  *
  *		This is "less than or equal" for the end of a time range,
@@ -604,7 +611,8 @@ box_overleft(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPle(box1->high.x, box2->high.x));
 }
 
-/*		box_right		-		is box1 strictly right of box2?
+/*
+ * box_right		-		is box1 strictly right of box2?
  */
 Datum
 box_right(PG_FUNCTION_ARGS)
@@ -615,7 +623,8 @@ box_right(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPgt(box1->low.x, box2->high.x));
 }
 
-/*		box_overright	-		is the left edge of box1 at or right of
+/*
+ * box_overright	-		is the left edge of box1 at or right of
  *								the left edge of box2?
  *
  *		This is "greater than or equal" for time ranges, when time ranges
@@ -630,7 +639,8 @@ box_overright(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPge(box1->low.x, box2->low.x));
 }
 
-/*		box_below		-		is box1 strictly below box2?
+/*
+ * box_below		-		is box1 strictly below box2?
  */
 Datum
 box_below(PG_FUNCTION_ARGS)
@@ -641,7 +651,8 @@ box_below(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPlt(box1->high.y, box2->low.y));
 }
 
-/*		box_overbelow	-		is the upper edge of box1 at or below
+/*
+ * box_overbelow	-		is the upper edge of box1 at or below
  *								the upper edge of box2?
  */
 Datum
@@ -653,7 +664,8 @@ box_overbelow(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPle(box1->high.y, box2->high.y));
 }
 
-/*		box_above		-		is box1 strictly above box2?
+/*
+ * box_above		-		is box1 strictly above box2?
  */
 Datum
 box_above(PG_FUNCTION_ARGS)
@@ -664,7 +676,8 @@ box_above(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPgt(box1->low.y, box2->high.y));
 }
 
-/*		box_overabove	-		is the lower edge of box1 at or above
+/*
+ * box_overabove	-		is the lower edge of box1 at or above
  *								the lower edge of box2?
  */
 Datum
@@ -676,7 +689,8 @@ box_overabove(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPge(box1->low.y, box2->low.y));
 }
 
-/*		box_contained	-		is box1 contained by box2?
+/*
+ * box_contained	-		is box1 contained by box2?
  */
 Datum
 box_contained(PG_FUNCTION_ARGS)
@@ -687,7 +701,8 @@ box_contained(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(box_contain_box(box2, box1));
 }
 
-/*		box_contain		-		does box1 contain box2?
+/*
+ * box_contain		-		does box1 contain box2?
  */
 Datum
 box_contain(PG_FUNCTION_ARGS)
@@ -711,7 +726,8 @@ box_contain_box(BOX *contains_box, BOX *contained_box)
 }
 
 
-/*		box_positionop	-
+/*
+ * box_positionop	-
  *				is box1 entirely {above,below} box2?
  *
  * box_below_eq and box_above_eq are obsolete versions that (probably
@@ -738,7 +754,8 @@ box_above_eq(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_relop		-		is area(box1) relop area(box2), within
+/*
+ * box_relop		-		is area(box1) relop area(box2), within
  *								our accuracy constraint?
  */
 Datum
@@ -791,7 +808,8 @@ box_ge(PG_FUNCTION_ARGS)
  *	"Arithmetic" operators on boxes.
  *---------------------------------------------------------*/
 
-/*		box_area		-		returns the area of the box.
+/*
+ * box_area		-		returns the area of the box.
  */
 Datum
 box_area(PG_FUNCTION_ARGS)
@@ -802,7 +820,8 @@ box_area(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_width		-		returns the width of the box
+/*
+ * box_width		-		returns the width of the box
  *								  (horizontal magnitude).
  */
 Datum
@@ -814,7 +833,8 @@ box_width(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_height		-		returns the height of the box
+/*
+ * box_height		-		returns the height of the box
  *								  (vertical magnitude).
  */
 Datum
@@ -826,7 +846,8 @@ box_height(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_distance	-		returns the distance between the
+/*
+ * box_distance	-		returns the distance between the
  *								  center points of two boxes.
  */
 Datum
@@ -844,7 +865,8 @@ box_distance(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_center		-		returns the center point of the box.
+/*
+ * box_center		-		returns the center point of the box.
  */
 Datum
 box_center(PG_FUNCTION_ARGS)
@@ -860,7 +882,8 @@ box_center(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_ar	-		returns the area of the box.
+/*
+ * box_ar	-		returns the area of the box.
  */
 static float8
 box_ar(BOX *box)
@@ -869,7 +892,8 @@ box_ar(BOX *box)
 }
 
 
-/*		box_cn	-		stores the centerpoint of the box into *center.
+/*
+ * box_cn	-		stores the centerpoint of the box into *center.
  */
 static void
 box_cn(Point *center, BOX *box, Node *escontext)
@@ -894,7 +918,8 @@ box_cn(Point *center, BOX *box, Node *escontext)
 		return;
 }
 
-/*		box_wd	-		returns the width (length) of the box
+/*
+ * box_wd	-		returns the width (length) of the box
  *								  (horizontal magnitude).
  */
 static float8
@@ -904,7 +929,8 @@ box_wd(BOX *box)
 }
 
 
-/*		box_ht	-		returns the height of the box
+/*
+ * box_ht	-		returns the height of the box
  *								  (vertical magnitude).
  */
 static float8
@@ -918,7 +944,8 @@ box_ht(BOX *box)
  *	Funky operations.
  *---------------------------------------------------------*/
 
-/*		box_intersect	-
+/*
+ * box_intersect	-
  *				returns the overlapping portion of two boxes,
  *				  or NULL if they do not intersect.
  */
@@ -943,7 +970,8 @@ box_intersect(PG_FUNCTION_ARGS)
 }
 
 
-/*		box_diagonal	-
+/*
+ * box_diagonal	-
  *				returns a line segment which happens to be the
  *				  positive-slope diagonal of "box".
  */
@@ -1126,7 +1154,8 @@ line_construct(LINE *result, Point *pt, float8 m)
 	}
 }
 
-/* line_construct_pp()
+/*
+ * line_construct_pp()
  * two points
  */
 Datum
@@ -1272,7 +1301,8 @@ line_invsl(LINE *line)
 }
 
 
-/* line_distance()
+/*
+ * line_distance()
  * Distance between two lines.
  */
 Datum
@@ -1297,7 +1327,8 @@ line_distance(PG_FUNCTION_ARGS)
 								hypot(l1->A, l1->B)));
 }
 
-/* line_interpt()
+/*
+ * line_interpt()
  * Point where two lines l1, l2 intersect (if any)
  */
 Datum
@@ -1662,7 +1693,8 @@ path_open(PG_FUNCTION_ARGS)
 }
 
 
-/* path_inter -
+/*
+ * path_inter -
  *		Does p1 intersect p2 at any point?
  *		Use bounding boxes for a quick (O(n)) check, then do a
  *		O(n^2) iterative edge check.
@@ -1740,7 +1772,8 @@ path_inter(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
-/* path_distance()
+/*
+ * path_distance()
  * This essentially does a cartesian product of the lsegs in the
  *	two paths, and finds the min distance between any two lsegs
  */
@@ -2151,7 +2184,8 @@ lseg_send(PG_FUNCTION_ARGS)
 }
 
 
-/* lseg_construct -
+/*
+ * lseg_construct -
  *		form a LSEG from two Points.
  */
 Datum
@@ -2210,8 +2244,8 @@ lseg_length(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 /*
- **  find intersection of the two lines, and see if it falls on
- **  both segments.
+ *  find intersection of the two lines, and see if it falls on
+ *  both segments.
  */
 Datum
 lseg_intersect(PG_FUNCTION_ARGS)
@@ -2326,7 +2360,8 @@ lseg_ge(PG_FUNCTION_ARGS)
  *	Line arithmetic routines.
  *---------------------------------------------------------*/
 
-/* lseg_distance -
+/*
+ * lseg_distance -
  *		If two segments don't intersect, then the closest
  *		point will be from one of the endpoints to the other
  *		segment.
@@ -3198,7 +3233,8 @@ box_contain_pt(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(box_contain_point(box, pt));
 }
 
-/* on_ppath -
+/*
+ * on_ppath -
  *		Whether a point lies within (on) a polyline.
  *		If open, we have to (groan) check each segment.
  * (uses same algorithm as for point intersecting segment - tgl 1997-07-09)
@@ -3368,7 +3404,8 @@ inter_sb(PG_FUNCTION_ARGS)
 }
 
 
-/* inter_lb()
+/*
+ * inter_lb()
  * Do line and box intersect?
  */
 Datum
@@ -4397,7 +4434,8 @@ boxes_bound_box(PG_FUNCTION_ARGS)
  **
  ***********************************************************************/
 
-/* path_add()
+/*
+ * path_add()
  * Concatenate two paths (only if they are both open).
  */
 Datum
@@ -4445,7 +4483,8 @@ path_add(PG_FUNCTION_ARGS)
 	PG_RETURN_PATH_P(result);
 }
 
-/* path_add_pt()
+/*
+ * path_add_pt()
  * Translation operators.
  */
 Datum
@@ -4474,7 +4513,8 @@ path_sub_pt(PG_FUNCTION_ARGS)
 	PG_RETURN_PATH_P(path);
 }
 
-/* path_mul_pt()
+/*
+ * path_mul_pt()
  * Rotation and scaling operators.
  */
 Datum
@@ -4587,7 +4627,8 @@ poly_box(PG_FUNCTION_ARGS)
 }
 
 
-/* box_poly()
+/*
+ * box_poly()
  * Convert a box to a polygon.
  */
 Datum
@@ -4660,7 +4701,8 @@ poly_path(PG_FUNCTION_ARGS)
  * Formatting and conversion routines.
  *---------------------------------------------------------*/
 
-/*		circle_in		-		convert a string to internal form.
+/*
+ * circle_in		-		convert a string to internal form.
  *
  *		External format: (center and radius of circle)
  *				"<(f8,f8),f8>"
@@ -4734,7 +4776,8 @@ circle_in(PG_FUNCTION_ARGS)
 	PG_RETURN_CIRCLE_P(circle);
 }
 
-/*		circle_out		-		convert a circle to external form.
+/*
+ * circle_out		-		convert a circle to external form.
  */
 Datum
 circle_out(PG_FUNCTION_ARGS)
@@ -4801,7 +4844,8 @@ circle_send(PG_FUNCTION_ARGS)
  *		<, >, <=, >=, and == are based on circle area.
  *---------------------------------------------------------*/
 
-/*		circles identical?
+/*
+ * circles identical?
  *
  * We consider NaNs values to be equal to each other to let those circles
  * to be found.
@@ -4817,7 +4861,8 @@ circle_same(PG_FUNCTION_ARGS)
 				   point_eq_point(&circle1->center, &circle2->center));
 }
 
-/*		circle_overlap	-		does circle1 overlap circle2?
+/*
+ * circle_overlap	-		does circle1 overlap circle2?
  */
 Datum
 circle_overlap(PG_FUNCTION_ARGS)
@@ -4829,7 +4874,8 @@ circle_overlap(PG_FUNCTION_ARGS)
 						float8_pl(circle1->radius, circle2->radius)));
 }
 
-/*		circle_overleft -		is the right edge of circle1 at or left of
+/*
+ * circle_overleft -		is the right edge of circle1 at or left of
  *								the right edge of circle2?
  */
 Datum
@@ -4842,7 +4888,8 @@ circle_overleft(PG_FUNCTION_ARGS)
 						float8_pl(circle2->center.x, circle2->radius)));
 }
 
-/*		circle_left		-		is circle1 strictly left of circle2?
+/*
+ * circle_left		-		is circle1 strictly left of circle2?
  */
 Datum
 circle_left(PG_FUNCTION_ARGS)
@@ -4854,7 +4901,8 @@ circle_left(PG_FUNCTION_ARGS)
 						float8_mi(circle2->center.x, circle2->radius)));
 }
 
-/*		circle_right	-		is circle1 strictly right of circle2?
+/*
+ * circle_right	-		is circle1 strictly right of circle2?
  */
 Datum
 circle_right(PG_FUNCTION_ARGS)
@@ -4866,7 +4914,8 @@ circle_right(PG_FUNCTION_ARGS)
 						float8_pl(circle2->center.x, circle2->radius)));
 }
 
-/*		circle_overright	-	is the left edge of circle1 at or right of
+/*
+ * circle_overright	-	is the left edge of circle1 at or right of
  *								the left edge of circle2?
  */
 Datum
@@ -4879,7 +4928,8 @@ circle_overright(PG_FUNCTION_ARGS)
 						float8_mi(circle2->center.x, circle2->radius)));
 }
 
-/*		circle_contained		-		is circle1 contained by circle2?
+/*
+ * circle_contained		-		is circle1 contained by circle2?
  */
 Datum
 circle_contained(PG_FUNCTION_ARGS)
@@ -4891,7 +4941,8 @@ circle_contained(PG_FUNCTION_ARGS)
 						float8_mi(circle2->radius, circle1->radius)));
 }
 
-/*		circle_contain	-		does circle1 contain circle2?
+/*
+ * circle_contain	-		does circle1 contain circle2?
  */
 Datum
 circle_contain(PG_FUNCTION_ARGS)
@@ -4904,7 +4955,8 @@ circle_contain(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_below		-		is circle1 strictly below circle2?
+/*
+ * circle_below		-		is circle1 strictly below circle2?
  */
 Datum
 circle_below(PG_FUNCTION_ARGS)
@@ -4916,7 +4968,8 @@ circle_below(PG_FUNCTION_ARGS)
 						float8_mi(circle2->center.y, circle2->radius)));
 }
 
-/*		circle_above	-		is circle1 strictly above circle2?
+/*
+ * circle_above	-		is circle1 strictly above circle2?
  */
 Datum
 circle_above(PG_FUNCTION_ARGS)
@@ -4928,7 +4981,8 @@ circle_above(PG_FUNCTION_ARGS)
 						float8_pl(circle2->center.y, circle2->radius)));
 }
 
-/*		circle_overbelow -		is the upper edge of circle1 at or below
+/*
+ * circle_overbelow -		is the upper edge of circle1 at or below
  *								the upper edge of circle2?
  */
 Datum
@@ -4941,7 +4995,8 @@ circle_overbelow(PG_FUNCTION_ARGS)
 						float8_pl(circle2->center.y, circle2->radius)));
 }
 
-/*		circle_overabove	-	is the lower edge of circle1 at or above
+/*
+ * circle_overabove	-	is the lower edge of circle1 at or above
  *								the lower edge of circle2?
  */
 Datum
@@ -4955,7 +5010,8 @@ circle_overabove(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_relop	-		is area(circle1) relop area(circle2), within
+/*
+ * circle_relop	-		is area(circle1) relop area(circle2), within
  *								our accuracy constraint?
  */
 Datum
@@ -5017,7 +5073,8 @@ circle_ge(PG_FUNCTION_ARGS)
  *	"Arithmetic" operators on circles.
  *---------------------------------------------------------*/
 
-/* circle_add_pt()
+/*
+ * circle_add_pt()
  * Translation operator.
  */
 Datum
@@ -5051,7 +5108,8 @@ circle_sub_pt(PG_FUNCTION_ARGS)
 }
 
 
-/* circle_mul_pt()
+/*
+ * circle_mul_pt()
  * Rotation and scaling operators.
  */
 Datum
@@ -5085,7 +5143,8 @@ circle_div_pt(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_area		-		returns the area of the circle.
+/*
+ * circle_area		-		returns the area of the circle.
  */
 Datum
 circle_area(PG_FUNCTION_ARGS)
@@ -5096,7 +5155,8 @@ circle_area(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_diameter -		returns the diameter of the circle.
+/*
+ * circle_diameter -		returns the diameter of the circle.
  */
 Datum
 circle_diameter(PG_FUNCTION_ARGS)
@@ -5107,7 +5167,8 @@ circle_diameter(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_radius	-		returns the radius of the circle.
+/*
+ * circle_radius	-		returns the radius of the circle.
  */
 Datum
 circle_radius(PG_FUNCTION_ARGS)
@@ -5118,7 +5179,8 @@ circle_radius(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_distance -		returns the distance between
+/*
+ * circle_distance -		returns the distance between
  *								  two circles.
  */
 Datum
@@ -5161,7 +5223,8 @@ pt_contained_circle(PG_FUNCTION_ARGS)
 }
 
 
-/*		dist_pc -		returns the distance between
+/*
+ * dist_pc -		returns the distance between
  *						  a point and a circle.
  */
 Datum
@@ -5196,7 +5259,8 @@ dist_cpoint(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
-/*		circle_center	-		returns the center point of the circle.
+/*
+ * circle_center	-		returns the center point of the circle.
  */
 Datum
 circle_center(PG_FUNCTION_ARGS)
@@ -5212,7 +5276,8 @@ circle_center(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_ar		-		returns the area of the circle.
+/*
+ * circle_ar		-		returns the area of the circle.
  */
 static float8
 circle_ar(CIRCLE *circle)
@@ -5276,7 +5341,8 @@ fail:
 	PG_RETURN_NULL();
 }
 
-/* box_circle()
+/*
+ * box_circle()
  * Convert a box to a circle.
  */
 Datum
@@ -5536,7 +5602,8 @@ point_inside(Point *p, int npts, Point *plist)
 }
 
 
-/* lseg_crossing()
+/*
+ * lseg_crossing()
  * Returns +/-2 if line segment crosses the positive X-axis in a +/- direction.
  * Returns +/-1 if one point is on the positive X-axis.
  * Returns 0 if both points are on the positive X-axis, or there is no crossing.

@@ -121,7 +121,7 @@ cluster_conn_opts(ClusterInfo *cluster)
  *	message and calls exit() to kill the program.
  */
 PGresult *
-executeQueryOrDie(PGconn *conn, const char *fmt,...)
+executeQueryOrDie(PGconn *conn, const char *fmt, ...)
 {
 	static char query[QUERY_ALLOC];
 	va_list		args;

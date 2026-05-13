@@ -2405,7 +2405,7 @@ _gin_parse_tuple_key(GinTuple *a)
 }
 
 /*
-* _gin_parse_tuple_items
+ * _gin_parse_tuple_items
  *		Return a pointer to a palloc'd array of decompressed TID array.
  */
 static ItemPointer

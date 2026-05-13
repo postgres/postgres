@@ -147,7 +147,7 @@ px_set_debug_handler(void (*handler) (const char *))
 }
 
 void
-px_debug(const char *fmt,...)
+px_debug(const char *fmt, ...)
 {
 	va_list		ap;
 

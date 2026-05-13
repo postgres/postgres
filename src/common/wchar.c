@@ -618,7 +618,8 @@ mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 }
 
 
-/* The following functions define the column width of an ISO 10646
+/*
+ * The following functions define the column width of an ISO 10646
  * character as follows:
  *
  *	  - The null character (U+0000) has a column width of 0.

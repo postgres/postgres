@@ -93,7 +93,7 @@ offsetnumber_cmp(const void *a, const void *b)
  * on TopMemoryContext, otherwise on DSA. Although the tidstore
  * is created on DSA, only the same process can subsequently use
  * the tidstore. The tidstore handle is not shared anywhere.
-*/
+ */
 Datum
 test_create(PG_FUNCTION_ARGS)
 {

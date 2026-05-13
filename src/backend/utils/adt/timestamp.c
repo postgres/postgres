@@ -150,7 +150,8 @@ anytimestamp_typmodout(bool istz, int32 typmod)
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
 
-/* timestamp_in()
+/*
+ * timestamp_in()
  * Convert a string to internal form.
  */
 Datum
@@ -218,7 +219,8 @@ timestamp_in(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* timestamp_out()
+/*
+ * timestamp_out()
  * Convert a timestamp to external form.
  */
 Datum
@@ -330,7 +332,8 @@ timestamp_support(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(ret);
 }
 
-/* timestamp_scale()
+/*
+ * timestamp_scale()
  * Adjust time type for specified scale factor.
  * Used by PostgreSQL type system to stuff columns.
  */
@@ -403,7 +406,8 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod, Node *escontext)
 	return true;
 }
 
-/* timestamptz_in()
+/*
+ * timestamptz_in()
  * Convert a string to internal form.
  */
 Datum
@@ -761,7 +765,8 @@ float8_timestamptz(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* timestamptz_out()
+/*
+ * timestamptz_out()
  * Convert a timestamp to external form.
  */
 Datum
@@ -854,7 +859,8 @@ timestamptztypmodout(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamptz_scale()
+/*
+ * timestamptz_scale()
  * Adjust time type for specified scale factor.
  * Used by PostgreSQL type system to stuff columns.
  */
@@ -874,7 +880,8 @@ timestamptz_scale(PG_FUNCTION_ARGS)
 }
 
 
-/* interval_in()
+/*
+ * interval_in()
  * Convert a string to internal form.
  *
  * External format(s):
@@ -959,7 +966,8 @@ interval_in(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/* interval_out()
+/*
+ * interval_out()
  * Convert a time span to external form.
  */
 Datum
@@ -1313,7 +1321,8 @@ interval_support(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(ret);
 }
 
-/* interval_scale()
+/*
+ * interval_scale()
  * Adjust interval type for specified fields.
  * Used by PostgreSQL type system to stuff columns.
  */
@@ -1574,7 +1583,8 @@ out_of_range:
 	PG_RETURN_NULL();			/* keep compiler quiet */
 }
 
-/* EncodeSpecialTimestamp()
+/*
+ * EncodeSpecialTimestamp()
  * Convert reserved timestamp data type to string.
  */
 void
@@ -1993,7 +2003,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, const char 
 }
 
 
-/* tm2timestamp()
+/*
+ * tm2timestamp()
  * Convert a tm structure to a timestamp data type.
  * Note that year is _not_ 1900-based, but is an explicit full value.
  * Also, month is one-based, _not_ zero-based.
@@ -2036,7 +2047,8 @@ tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
 }
 
 
-/* interval2itm()
+/*
+ * interval2itm()
  * Convert an Interval to a pg_itm structure.
  * Note: overflow is not possible, because the pg_itm fields are
  * wide enough for all possible conversion results.
@@ -2064,7 +2076,8 @@ interval2itm(Interval span, struct pg_itm *itm)
 	itm->tm_usec = (int) time;
 }
 
-/* itm2interval()
+/*
+ * itm2interval()
  * Convert a pg_itm structure to an Interval.
  * Returns 0 if OK, -1 on overflow.
  *
@@ -2098,7 +2111,8 @@ itm2interval(struct pg_itm *itm, Interval *span)
 	return 0;
 }
 
-/* itmin2interval()
+/*
+ * itmin2interval()
  * Convert a pg_itm_in structure to an Interval.
  * Returns 0 if OK, -1 on overflow.
  *
@@ -2660,7 +2674,8 @@ interval_hash_extended(PG_FUNCTION_ARGS)
 							   PG_GETARG_DATUM(1));
 }
 
-/* overlaps_timestamp() --- implements the SQL OVERLAPS operator.
+/*
+ * overlaps_timestamp() --- implements the SQL OVERLAPS operator.
  *
  * Algorithm is per SQL spec.  This is much harder than you'd think
  * because the spec requires us to deliver a non-null answer in some cases
@@ -3074,7 +3089,8 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/* timestamp_pl_interval()
+/*
+ * timestamp_pl_interval()
  * Add an interval to a timestamp data type.
  * Note that interval has provisions for qualitative year/month and day
  *	units, so try to do the right thing with them.
@@ -3216,7 +3232,8 @@ timestamp_mi_interval(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamptz_pl_interval_internal()
+/*
+ * timestamptz_pl_interval_internal()
  * Add an interval to a timestamptz, in the given (or session) timezone.
  *
  * Note that interval has provisions for qualitative year/month and day
@@ -3356,7 +3373,8 @@ timestamptz_pl_interval_internal(TimestampTz timestamp,
 	return result;
 }
 
-/* timestamptz_mi_interval_internal()
+/*
+ * timestamptz_mi_interval_internal()
  * As above, but subtract the interval.
  */
 static TimestampTz
@@ -3371,7 +3389,8 @@ timestamptz_mi_interval_internal(TimestampTz timestamp,
 	return timestamptz_pl_interval_internal(timestamp, &tspan, attimezone);
 }
 
-/* timestamptz_pl_interval()
+/*
+ * timestamptz_pl_interval()
  * Add an interval to a timestamptz, in the session timezone.
  */
 Datum
@@ -3392,7 +3411,8 @@ timestamptz_mi_interval(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(timestamptz_mi_interval_internal(timestamp, span, NULL));
 }
 
-/* timestamptz_pl_interval_at_zone()
+/*
+ * timestamptz_pl_interval_at_zone()
  * Add an interval to a timestamptz, in the specified timezone.
  */
 Datum
@@ -3417,7 +3437,8 @@ timestamptz_mi_interval_at_zone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(timestamptz_mi_interval_internal(timestamp, span, attimezone));
 }
 
-/* interval_um_internal()
+/*
+ * interval_um_internal()
  * Negate an interval.
  */
 static void
@@ -4276,7 +4297,8 @@ interval_sum(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/* timestamp_age()
+/*
+ * timestamp_age()
  * Calculate time difference while retaining year/month fields.
  * Note that this does not result in an accurate absolute time span
  *	since year and month are out of context once the arithmetic
@@ -4422,7 +4444,8 @@ timestamp_age(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamptz_age()
+/*
+ * timestamptz_age()
  * Calculate time difference while retaining year/month fields.
  * Note that this does not result in an accurate absolute time span
  *	since year and month are out of context once the arithmetic
@@ -4579,7 +4602,8 @@ timestamptz_age(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 
-/* timestamp_bin()
+/*
+ * timestamp_bin()
  * Bin timestamp into specified interval.
  */
 Datum
@@ -4650,7 +4674,8 @@ timestamp_bin(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* timestamp_trunc()
+/*
+ * timestamp_trunc()
  * Truncate timestamp to specified units.
  */
 Datum
@@ -4814,7 +4839,8 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* timestamptz_bin()
+/*
+ * timestamptz_bin()
  * Bin timestamptz into specified interval using specified origin.
  */
 Datum
@@ -5066,7 +5092,8 @@ timestamptz_trunc_internal(text *units, TimestampTz timestamp, pg_tz *tzp)
 	return result;
 }
 
-/* timestamptz_trunc()
+/*
+ * timestamptz_trunc()
  * Truncate timestamptz to specified units in session timezone.
  */
 Datum
@@ -5081,7 +5108,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMPTZ(result);
 }
 
-/* timestamptz_trunc_zone()
+/*
+ * timestamptz_trunc_zone()
  * Truncate timestamptz to specified units in specified timezone.
  */
 Datum
@@ -5103,7 +5131,8 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMPTZ(result);
 }
 
-/* interval_trunc()
+/*
+ * interval_trunc()
  * Extract specified field from interval.
  */
 Datum
@@ -5229,7 +5258,8 @@ interval_trunc(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/* isoweek2j()
+/*
+ * isoweek2j()
  *
  *	Return the Julian day which corresponds to the first day (Monday) of the given ISO 8601 year and week.
  *	Julian days are used to convert between ISO week dates and Gregorian dates.
@@ -5253,7 +5283,8 @@ isoweek2j(int year, int week)
 	return ((week - 1) * 7) + (day4 - day0);
 }
 
-/* isoweek2date()
+/*
+ * isoweek2date()
  * Convert ISO week of year number to date.
  * The year field must be specified with the ISO year!
  * karel 2000/08/07
@@ -5264,7 +5295,8 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 	j2date(isoweek2j(*year, woy), year, mon, mday);
 }
 
-/* isoweekdate2date()
+/*
+ * isoweekdate2date()
  *
  *	Convert an ISO 8601 week date (ISO year, ISO week) into a Gregorian date.
  *	Gregorian day of week sent so weekday strings can be supplied.
@@ -5285,7 +5317,8 @@ isoweekdate2date(int isoweek, int wday, int *year, int *mon, int *mday)
 	j2date(jday, year, mon, mday);
 }
 
-/* date2isoweek()
+/*
+ * date2isoweek()
  *
  *	Returns ISO week number of year.
  */
@@ -5339,7 +5372,8 @@ date2isoweek(int year, int mon, int mday)
 }
 
 
-/* date2isoyear()
+/*
+ * date2isoyear()
  *
  *	Returns ISO 8601 year number.
  *	Note: zero or negative results follow the year-zero-exists convention.
@@ -5396,7 +5430,8 @@ date2isoyear(int year, int mon, int mday)
 }
 
 
-/* date2isoyearday()
+/*
+ * date2isoyearday()
  *
  *	Returns the ISO 8601 day-of-year, given a Gregorian year, month and day.
  *	Possible return values are 1 through 371 (364 in non-leap years).
@@ -5472,7 +5507,8 @@ NonFiniteTimestampTzPart(int type, int unit, char *lowunits,
 	}
 }
 
-/* timestamp_part() and extract_timestamp()
+/*
+ * timestamp_part() and extract_timestamp()
  * Extract specified field from timestamp.
  */
 static Datum
@@ -5745,7 +5781,8 @@ extract_timestamp(PG_FUNCTION_ARGS)
 	return timestamp_part_common(fcinfo, true);
 }
 
-/* timestamptz_part() and extract_timestamptz()
+/*
+ * timestamptz_part() and extract_timestamptz()
  * Extract specified field from timestamp with time zone.
  */
 static Datum
@@ -6071,7 +6108,8 @@ NonFiniteIntervalPart(int type, int unit, char *lowunits, bool isNegative)
 	}
 }
 
-/* interval_part() and extract_interval()
+/*
+ * interval_part() and extract_interval()
  * Extract specified field from interval.
  */
 static Datum
@@ -6294,7 +6332,8 @@ extract_interval(PG_FUNCTION_ARGS)
 }
 
 
-/*	timestamp_zone()
+/*
+ * timestamp_zone()
  *	Encode timestamp type with specified time zone.
  *	This function is just timestamp2timestamptz() except instead of
  *	shifting to the global timezone, we shift to the specified timezone.
@@ -6364,7 +6403,8 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMPTZ(result);
 }
 
-/* timestamp_izone()
+/*
+ * timestamp_izone()
  * Encode timestamp type with specified time interval as time zone.
  */
 Datum
@@ -6404,7 +6444,8 @@ timestamp_izone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMPTZ(result);
 }								/* timestamp_izone() */
 
-/* TimestampTimestampTzRequiresRewrite()
+/*
+ * TimestampTimestampTzRequiresRewrite()
  *
  * Returns false if the TimeZone GUC setting causes timestamp_timestamptz and
  * timestamptz_timestamp to be no-ops, where the return value has the same
@@ -6421,7 +6462,8 @@ TimestampTimestampTzRequiresRewrite(void)
 	return true;
 }
 
-/* timestamp_timestamptz()
+/*
+ * timestamp_timestamptz()
  * Convert local timestamp to timestamp at GMT
  */
 Datum
@@ -6489,7 +6531,8 @@ timestamp2timestamptz(Timestamp timestamp)
 	return timestamp2timestamptz_safe(timestamp, NULL);
 }
 
-/* timestamptz_timestamp()
+/*
+ * timestamptz_timestamp()
  * Convert timestamp at GMT to local timestamp
  */
 Datum
@@ -6563,7 +6606,8 @@ timestamptz2timestamp_safe(TimestampTz timestamp, Node *escontext)
 	return result;
 }
 
-/* timestamptz_zone()
+/*
+ * timestamptz_zone()
  * Evaluate timestamp with time zone type at the specified time zone.
  * Returns a timestamp without time zone.
  */
@@ -6627,7 +6671,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* timestamptz_izone()
+/*
+ * timestamptz_izone()
  * Encode timestamp with time zone type with specified time interval as time zone.
  * Returns a timestamp without time zone.
  */
@@ -6668,7 +6713,8 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* generate_series_timestamp()
+/*
+ * generate_series_timestamp()
  * Generate the set of timestamps from start to finish by step
  */
 Datum
@@ -6750,7 +6796,8 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 	}
 }
 
-/* generate_series_timestamptz()
+/*
+ * generate_series_timestamptz()
  * Generate the set of timestamps from start to finish by step,
  * doing arithmetic in the specified or session timezone.
  */
@@ -6934,7 +6981,8 @@ generate_series_timestamp_support(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_at_local()
+/*
+ * timestamp_at_local()
  * timestamptz_at_local()
  *
  * The regression tests do not like two functions with the same proargs and

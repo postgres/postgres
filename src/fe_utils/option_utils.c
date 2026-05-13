@@ -122,7 +122,7 @@ parse_sync_method(const char *optarg, DataDirSyncMethod *sync_method)
  * parameter (it discovers the number of arguments automagically).
  */
 void
-check_mut_excl_opts_internal(int n,...)
+check_mut_excl_opts_internal(int n, ...)
 {
 	char	   *first = NULL;
 	va_list		args;

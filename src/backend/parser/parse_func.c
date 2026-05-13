@@ -1019,7 +1019,8 @@ func_lookup_failure_details(int fgc_flags, List *argnames, bool proc_call)
 }
 
 
-/* func_match_argtypes()
+/*
+ * func_match_argtypes()
  *
  * Given a list of candidate functions (having the right name and number
  * of arguments) and an array of input datatype OIDs, produce a shortlist of
@@ -1062,7 +1063,8 @@ func_match_argtypes(int nargs,
 }								/* func_match_argtypes() */
 
 
-/* func_select_candidate()
+/*
+ * func_select_candidate()
  *		Given the input argtype array and more than one candidate
  *		for the function, attempt to resolve the conflict.
  *
@@ -1473,7 +1475,8 @@ func_select_candidate(int nargs,
 }								/* func_select_candidate() */
 
 
-/* func_get_detail()
+/*
+ * func_get_detail()
  *
  * Find the named function in the system catalogs.
  *

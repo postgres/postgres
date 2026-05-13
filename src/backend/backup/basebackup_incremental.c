@@ -140,7 +140,7 @@ static void manifest_process_wal_range(JsonManifestParseContext *context,
 									   XLogRecPtr start_lsn,
 									   XLogRecPtr end_lsn);
 pg_noreturn static void manifest_report_error(JsonManifestParseContext *context,
-											  const char *fmt,...)
+											  const char *fmt, ...)
 			pg_attribute_printf(2, 3);
 static int	compare_block_numbers(const void *a, const void *b);
 
@@ -1018,7 +1018,7 @@ manifest_process_wal_range(JsonManifestParseContext *context,
  * manifest.
  */
 static void
-manifest_report_error(JsonManifestParseContext *context, const char *fmt,...)
+manifest_report_error(JsonManifestParseContext *context, const char *fmt, ...)
 {
 	StringInfoData errbuf;
 

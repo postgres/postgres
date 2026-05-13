@@ -151,7 +151,7 @@ get_object_type(const char *keyword, int size, FilterObjectType *objtype)
 
 
 void
-pg_log_filter_error(FilterStateData *fstate, const char *fmt,...)
+pg_log_filter_error(FilterStateData *fstate, const char *fmt, ...)
 {
 	va_list		argp;
 	char		buf[256];

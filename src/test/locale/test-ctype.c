@@ -3,22 +3,22 @@
  */
 
 /*
-
-   test-ctype.c
-
-Written by Oleg BroytMann, phd2@earthling.net
-   with help from Oleg Bartunov, oleg@sai.msu.su
-Copyright (C) 1998 PhiloSoft Design
-
-This is copyrighted but free software. You can use it, modify and distribute
-in original or modified form providing that the author's names and the above
-copyright notice will remain.
-
-Disclaimer, legal notice and absence of warranty.
-   This software provided "as is" without any kind of warranty. In no event
-the author shall be liable for any damage, etc.
-
-*/
+ *
+ * test-ctype.c
+ *
+ * Written by Oleg BroytMann, phd2@earthling.net
+ * with help from Oleg Bartunov, oleg@sai.msu.su
+ * Copyright (C) 1998 PhiloSoft Design
+ *
+ * This is copyrighted but free software. You can use it, modify and distribute
+ * in original or modified form providing that the author's names and the above
+ * copyright notice will remain.
+ *
+ * Disclaimer, legal notice and absence of warranty.
+ * This software provided "as is" without any kind of warranty. In no event
+ * the author shall be liable for any damage, etc.
+ *
+ */
 
 #include <stdio.h>
 #include <locale.h>

@@ -149,12 +149,12 @@ static void make_directory(const char *dir);
 static void test_status_print(bool ok, const char *testname, double runtime, bool parallel);
 static void test_status_ok(const char *testname, double runtime, bool parallel);
 static void test_status_failed(const char *testname, double runtime, bool parallel);
-static void bail_out(bool noatexit, const char *fmt,...) pg_attribute_printf(2, 3);
-static void emit_tap_output(TAPtype type, const char *fmt,...) pg_attribute_printf(2, 3);
+static void bail_out(bool noatexit, const char *fmt, ...) pg_attribute_printf(2, 3);
+static void emit_tap_output(TAPtype type, const char *fmt, ...) pg_attribute_printf(2, 3);
 static void emit_tap_output_v(TAPtype type, const char *fmt, va_list argp) pg_attribute_printf(2, 0);
 
 static StringInfo psql_start_command(void);
-static void psql_add_command(StringInfo buf, const char *query,...) pg_attribute_printf(2, 3);
+static void psql_add_command(StringInfo buf, const char *query, ...) pg_attribute_printf(2, 3);
 static void psql_end_command(StringInfo buf, const char *database);
 
 /*
@@ -257,7 +257,7 @@ split_to_stringlist(const char *s, const char *delim, _stringlist **listhead)
  * exit handlers, thus avoid any risk of bottomless recursion calls to exit.
  */
 static void
-bail_out(bool noatexit, const char *fmt,...)
+bail_out(bool noatexit, const char *fmt, ...)
 {
 	va_list		ap;
 
@@ -333,7 +333,7 @@ test_status_failed(const char *testname, double runtime, bool parallel)
 
 
 static void
-emit_tap_output(TAPtype type, const char *fmt,...)
+emit_tap_output(TAPtype type, const char *fmt, ...)
 {
 	va_list		argp;
 
@@ -1140,7 +1140,7 @@ psql_start_command(void)
 }
 
 static void
-psql_add_command(StringInfo buf, const char *query,...)
+psql_add_command(StringInfo buf, const char *query, ...)
 {
 	StringInfoData cmdbuf;
 	const char *cmdptr;

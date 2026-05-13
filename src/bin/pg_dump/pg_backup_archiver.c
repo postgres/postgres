@@ -1674,7 +1674,7 @@ archputs(const char *s, Archive *AH)
 
 /* Public */
 int
-archprintf(Archive *AH, const char *fmt,...)
+archprintf(Archive *AH, const char *fmt, ...)
 {
 	int			save_errno = errno;
 	char	   *p;
@@ -1778,7 +1778,7 @@ RestoreOutput(ArchiveHandle *AH, CompressFileHandle *savedOutput)
  *	Print formatted text to the output file (usually stdout).
  */
 int
-ahprintf(ArchiveHandle *AH, const char *fmt,...)
+ahprintf(ArchiveHandle *AH, const char *fmt, ...)
 {
 	int			save_errno = errno;
 	char	   *p;
@@ -1916,7 +1916,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 
 /* on some error, we may decide to go on... */
 void
-warn_or_exit_horribly(ArchiveHandle *AH, const char *fmt,...)
+warn_or_exit_horribly(ArchiveHandle *AH, const char *fmt, ...)
 {
 	va_list		ap;
 

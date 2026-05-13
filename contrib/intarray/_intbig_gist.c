@@ -12,8 +12,8 @@
 
 #define GETENTRY(vec,pos) ((GISTTYPE *) DatumGetPointer((vec)->vector[(pos)].key))
 /*
-** _intbig methods
-*/
+ * _intbig methods
+ */
 PG_FUNCTION_INFO_V1(g_intbig_consistent);
 PG_FUNCTION_INFO_V1(g_intbig_compress);
 PG_FUNCTION_INFO_V1(g_intbig_decompress);

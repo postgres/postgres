@@ -154,7 +154,8 @@ typedef void (*amcostestimate_function) (PlannerInfo *root,
 										 double *indexCorrelation,
 										 double *indexPages);
 
-/* estimate height of a tree-structured index
+/*
+ * estimate height of a tree-structured index
  *
  * XXX This just computes a value that is later used by amcostestimate.  This
  * API could be expanded to support passing more values if the need arises.

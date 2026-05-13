@@ -1327,7 +1327,7 @@ DoCopyTo(CopyToState cstate)
  * root_rel can be set to the root table of rel if rel is a partition
  * table so that we can send tuples in root_rel's rowtype, which might
  * differ from individual partitions.
-*/
+ */
 static void
 CopyRelationTo(CopyToState cstate, Relation rel, Relation root_rel, uint64 *processed)
 {

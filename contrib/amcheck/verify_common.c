@@ -50,14 +50,14 @@ amcheck_index_mainfork_expected(Relation rel)
 }
 
 /*
-* Amcheck main workhorse.
-* Given index relation OID, lock relation.
-* Next, take a number of standard actions:
-* 1) Make sure the index can be checked
-* 2) change the context of the user,
-* 3) keep track of GUCs modified via index functions
-* 4) execute callback function to verify integrity.
-*/
+ * Amcheck main workhorse.
+ * Given index relation OID, lock relation.
+ * Next, take a number of standard actions:
+ * 1) Make sure the index can be checked
+ * 2) change the context of the user,
+ * 3) keep track of GUCs modified via index functions
+ * 4) execute callback function to verify integrity.
+ */
 void
 amcheck_lock_relation_and_check(Oid indrelid,
 								Oid am_id,

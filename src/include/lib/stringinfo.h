@@ -196,7 +196,7 @@ extern void resetStringInfo(StringInfo str);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void appendStringInfo(StringInfo str, const char *fmt,...) pg_attribute_printf(2, 3);
+extern void appendStringInfo(StringInfo str, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 /*------------------------
  * appendStringInfoVA

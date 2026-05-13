@@ -13,10 +13,10 @@
 #include "large_obj.h"
 #include "settings.h"
 
-static void print_lo_result(const char *fmt,...) pg_attribute_printf(1, 2);
+static void print_lo_result(const char *fmt, ...) pg_attribute_printf(1, 2);
 
 static void
-print_lo_result(const char *fmt,...)
+print_lo_result(const char *fmt, ...)
 {
 	va_list		ap;
 

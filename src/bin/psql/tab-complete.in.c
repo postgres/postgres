@@ -211,7 +211,8 @@ typedef struct SchemaQuery
 } SchemaQuery;
 
 
-/* Store maximum number of records we want from database queries
+/*
+ * Store maximum number of records we want from database queries
  * (implemented via SELECT ... LIMIT xx).
  */
 static int	completion_max_records;
@@ -1689,7 +1690,7 @@ TailMatchesArray(bool case_sensitive,
 static bool
 TailMatchesImpl(bool case_sensitive,
 				int previous_words_count, char **previous_words,
-				int narg,...)
+				int narg, ...)
 {
 	const char *argarray[64];
 	va_list		args;
@@ -1739,7 +1740,7 @@ HeadMatchesArray(bool case_sensitive,
 static bool
 HeadMatchesImpl(bool case_sensitive,
 				int previous_words_count, char **previous_words,
-				int narg,...)
+				int narg, ...)
 {
 	const char *argarray[64];
 	va_list		args;
@@ -1826,7 +1827,7 @@ MatchesArray(bool case_sensitive,
 static bool
 MatchesImpl(bool case_sensitive,
 			int previous_words_count, char **previous_words,
-			int narg,...)
+			int narg, ...)
 {
 	const char *argarray[64];
 	va_list		args;

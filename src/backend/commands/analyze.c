@@ -1880,7 +1880,8 @@ ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
 }
 
 
-/*==========================================================================
+/*
+ * ==========================================================================
  *
  * Code below this point represents the "standard" type-specific statistics
  * analysis algorithms.  This code can be replaced on a per-data-type basis

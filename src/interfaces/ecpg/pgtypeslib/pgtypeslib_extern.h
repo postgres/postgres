@@ -5,8 +5,10 @@
 
 #include "pgtypes_error.h"
 
-/* These are the constants that decide which printf() format we'll use in
- * order to get a string representation of the value */
+/*
+ * These are the constants that decide which printf() format we'll use in
+ * order to get a string representation of the value
+ */
 #define PGTYPES_TYPE_NOTHING			0
 #define PGTYPES_TYPE_STRING_MALLOCED		1
 #define PGTYPES_TYPE_STRING_CONSTANT		2

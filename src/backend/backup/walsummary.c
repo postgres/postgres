@@ -319,7 +319,7 @@ WriteWalSummary(void *wal_summary_io, void *data, int length)
  * Error-reporting callback for use with CreateBlockRefTableReader.
  */
 void
-ReportWalSummaryError(void *callback_arg, char *fmt,...)
+ReportWalSummaryError(void *callback_arg, char *fmt, ...)
 {
 	StringInfoData buf;
 	va_list		ap;

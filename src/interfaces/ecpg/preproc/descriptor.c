@@ -320,11 +320,12 @@ output_set_descr(const char *desc_name, const char *index)
 	whenever_action(2 | 1);
 }
 
-/* I consider dynamic allocation overkill since at most two descriptor
-   variables are possible per statement. (input and output descriptor)
-   And descriptors are no normal variables, so they don't belong into
-   the variable list.
-*/
+/*
+ * I consider dynamic allocation overkill since at most two descriptor
+ * variables are possible per statement. (input and output descriptor)
+ * And descriptors are no normal variables, so they don't belong into
+ * the variable list.
+ */
 
 #define MAX_DESCRIPTOR_NAMELEN 128
 struct variable *

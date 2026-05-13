@@ -1180,7 +1180,7 @@ AtEOXact_ApplyLauncher(bool isCommit)
  * This is used to send launcher signal to stop sleeping and process the
  * subscriptions when current transaction commits. Should be used when new
  * tuple was added to the pg_subscription catalog.
-*/
+ */
 void
 ApplyLauncherWakeupAtCommit(void)
 {

@@ -12,7 +12,8 @@
  *
  *-------------------------------------------------------------------------
  */
-/* INTERFACE ROUTINES
+/*
+ * INTERFACE ROUTINES
  *		ExecInitBitmapOr	- initialize the BitmapOr node
  *		MultiExecBitmapOr	- retrieve the result bitmap from the node
  *		ExecEndBitmapOr		- shut down the BitmapOr node

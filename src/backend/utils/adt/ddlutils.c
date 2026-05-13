@@ -76,7 +76,7 @@ typedef struct DdlOption
 static void parse_ddl_options(FunctionCallInfo fcinfo, int variadic_start,
 							  DdlOption *opts, int nopts);
 static void append_ddl_option(StringInfo buf, bool pretty, int indent,
-							  const char *fmt,...)
+							  const char *fmt, ...)
 			pg_attribute_printf(4, 5);
 static void append_guc_value(StringInfo buf, const char *name,
 							 const char *value);
@@ -232,7 +232,7 @@ parse_ddl_options(FunctionCallInfo fcinfo, int variadic_start,
  */
 static void
 append_ddl_option(StringInfo buf, bool pretty, int indent,
-				  const char *fmt,...)
+				  const char *fmt, ...)
 {
 	if (pretty)
 	{

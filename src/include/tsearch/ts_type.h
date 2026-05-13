@@ -228,7 +228,8 @@ typedef TSQueryData *TSQuery;
 
 #define HDRSIZETQ	( VARHDRSZ + sizeof(int32) )
 
-/* Computes the size of header and all QueryItems. size is the number of
+/*
+ * Computes the size of header and all QueryItems. size is the number of
  * QueryItems, and lenofoperand is the total length of all operands
  */
 #define COMPUTESIZE(size, lenofoperand) ( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )

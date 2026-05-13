@@ -479,7 +479,7 @@ pg_get_dsm_registry_allocations(PG_FUNCTION_ARGS)
 				 entry->dsa.handle != DSA_HANDLE_INVALID)
 			vals[2] = Int64GetDatum(dsa_get_total_size_from_handle(entry->dsa.handle));
 		else if (entry->type == DSMR_ENTRY_TYPE_DSH &&
-				 entry->dsh.dsa_handle !=DSA_HANDLE_INVALID)
+				 entry->dsh.dsa_handle != DSA_HANDLE_INVALID)
 			vals[2] = Int64GetDatum(dsa_get_total_size_from_handle(entry->dsh.dsa_handle));
 		else
 			nulls[2] = true;

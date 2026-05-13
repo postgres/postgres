@@ -38,7 +38,7 @@
  *   744300 instead of 743000 as for "BEST".
  * - "J" is considered (only) a consonant in DaitchMokotoffSoundex.java
  * - "Y" is not considered a vowel in DaitchMokotoffSoundex.java
-*/
+ */
 
 #include "postgres.h"
 
@@ -53,7 +53,7 @@
  * The soundex coding chart table is adapted from
  * https://www.jewishgen.org/InfoFiles/Soundex.html
  * See daitch_mokotoff_header.pl for details.
-*/
+ */
 
 /* Generated coding chart table */
 #include "daitch_mokotoff.h"

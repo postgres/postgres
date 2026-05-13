@@ -5593,7 +5593,7 @@ postgresImportForeignStatistics(Relation relation, List *va_cols, int elevel)
 	const char *relname = NULL;
 	ForeignTable *table;
 	ForeignServer *server;
-	RemoteStatsResults remstats = {.rel = NULL,.att = NULL};
+	RemoteStatsResults remstats = {.rel = NULL, .att = NULL};
 	RemoteAttributeMapping *remattrmap = NULL;
 	int			attrcnt = 0;
 	bool		restore_stats = false;

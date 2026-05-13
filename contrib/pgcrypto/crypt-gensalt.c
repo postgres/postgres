@@ -45,8 +45,10 @@ _crypt_gensalt_extended_rn(unsigned long count,
 {
 	unsigned long value;
 
-/* Even iteration counts make it easier to detect weak DES keys from a look
- * at the hash, so they should be avoided */
+/*
+ * Even iteration counts make it easier to detect weak DES keys from a look
+ * at the hash, so they should be avoided
+ */
 	if (size < 3 || output_size < 1 + 4 + 4 + 1 ||
 		(count && (count > 0xffffff || !(count & 1))))
 	{

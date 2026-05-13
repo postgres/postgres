@@ -13,6 +13,6 @@
 #ifndef PERCENTREPL_H
 #define PERCENTREPL_H
 
-extern char *replace_percent_placeholders(const char *instr, const char *param_name, const char *letters,...);
+extern char *replace_percent_placeholders(const char *instr, const char *param_name, const char *letters, ...);
 
 #endif							/* PERCENTREPL_H */

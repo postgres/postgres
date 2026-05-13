@@ -11,12 +11,13 @@
  *-------------------------------------------------------------------------
  */
 
-/* contributed by:
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch				 * Institute of Automatic Control	   *
-   =							 = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
-   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+/*
+ * contributed by:
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ * *  Martin Utesch				 * Institute of Automatic Control	   *
+ * =							 = University of Mining and Technology =
+ * *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
+ * =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
@@ -154,7 +155,8 @@ compare(const void *arg1, const void *arg2)
 		return -1;
 }
 
-/* alloc_chromo
+/*
+ * alloc_chromo
  *	  allocates a chromosome and string space
  */
 Chromosome *
@@ -168,7 +170,8 @@ alloc_chromo(PlannerInfo *root, int string_length)
 	return chromo;
 }
 
-/* free_chromo
+/*
+ * free_chromo
  *	  deallocates a chromosome and string space
  */
 void
@@ -178,7 +181,8 @@ free_chromo(PlannerInfo *root, Chromosome *chromo)
 	pfree(chromo);
 }
 
-/* spread_chromo
+/*
+ * spread_chromo
  *	 inserts a new chromosome into the pool, displacing worst gene in pool
  *	 assumes best->worst = smallest->largest
  */

@@ -1282,7 +1282,7 @@ ReceiveArchiveStream(PGconn *conn, pg_compress_specification *compress)
 	ReceiveCopyData(conn, ReceiveArchiveStreamChunk, &state);
 
 	/* If we wrote the backup manifest to a file, close the file. */
-	if (state.manifest_file !=NULL)
+	if (state.manifest_file != NULL)
 	{
 		fclose(state.manifest_file);
 		state.manifest_file = NULL;
@@ -1341,7 +1341,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 
 				/* Sanity check. */
 				if (state->manifest_buffer != NULL ||
-					state->manifest_file !=NULL)
+					state->manifest_file != NULL)
 					pg_fatal("archives must precede manifest");
 
 				/* Parse the rest of the CopyData message. */
@@ -1406,7 +1406,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 					appendPQExpBuffer(state->manifest_buffer, copybuf + 1,
 									  r - 1);
 				}
-				else if (state->manifest_file !=NULL)
+				else if (state->manifest_file != NULL)
 				{
 					/* Manifest data, write to disk. */
 					if (fwrite(copybuf + 1, r - 1, 1,

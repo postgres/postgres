@@ -194,7 +194,7 @@ bool		CheckFIPSMode(void);
 void		CheckBuiltinCryptoMode(void);
 
 #ifdef PX_DEBUG
-void		px_debug(const char *fmt,...) pg_attribute_printf(1, 2);
+void		px_debug(const char *fmt, ...) pg_attribute_printf(1, 2);
 #else
 #define px_debug(...)
 #endif

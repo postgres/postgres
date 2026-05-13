@@ -24,7 +24,7 @@ extern bool option_parse_int(const char *optarg, const char *optname,
 							 int *result);
 extern bool parse_sync_method(const char *optarg,
 							  DataDirSyncMethod *sync_method);
-extern void check_mut_excl_opts_internal(int n,...);
+extern void check_mut_excl_opts_internal(int n, ...);
 
 /* see comment for check_mut_excl_opts_internal() in option_utils.c for info */
 #define check_mut_excl_opts(set, opt, ...) \

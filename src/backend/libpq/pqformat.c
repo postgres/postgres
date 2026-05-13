@@ -98,7 +98,7 @@ pq_beginmessage(StringInfo buf, char msgtype)
 }
 
 /* --------------------------------
-
+ *
  *		pq_beginmessage_reuse - initialize for sending a message, reuse buffer
  *
  * This requires the buffer to be allocated in a sufficiently long-lived

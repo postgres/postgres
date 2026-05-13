@@ -142,7 +142,7 @@ resetStringInfo(StringInfo str)
  * strcat.
  */
 void
-appendStringInfo(StringInfo str, const char *fmt,...)
+appendStringInfo(StringInfo str, const char *fmt, ...)
 {
 	int			save_errno = errno;
 

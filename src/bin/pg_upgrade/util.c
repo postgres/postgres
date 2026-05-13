@@ -29,7 +29,7 @@ static void pg_log_v(eLogType type, const char *fmt, va_list ap) pg_attribute_pr
  *	results and other messages.
  */
 void
-report_status(eLogType type, const char *fmt,...)
+report_status(eLogType type, const char *fmt, ...)
 {
 	va_list		args;
 
@@ -126,7 +126,7 @@ cleanup_output_dirs(void)
  *		  pg_log(PG_FATAL, "failed: %s", message);
  */
 void
-prep_status(const char *fmt,...)
+prep_status(const char *fmt, ...)
 {
 	va_list		args;
 	char		message[MAX_STRING];
@@ -153,7 +153,7 @@ prep_status(const char *fmt,...)
  *   report_status(PG_REPORT, "ok");
  */
 void
-prep_status_progress(const char *fmt,...)
+prep_status_progress(const char *fmt, ...)
 {
 	va_list		args;
 	char		message[MAX_STRING];
@@ -256,7 +256,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 
 
 void
-pg_log(eLogType type, const char *fmt,...)
+pg_log(eLogType type, const char *fmt, ...)
 {
 	va_list		args;
 
@@ -267,7 +267,7 @@ pg_log(eLogType type, const char *fmt,...)
 
 
 void
-pg_fatal(const char *fmt,...)
+pg_fatal(const char *fmt, ...)
 {
 	va_list		args;
 

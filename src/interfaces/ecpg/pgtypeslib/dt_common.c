@@ -528,7 +528,8 @@ datebsearch(const char *key, const datetkn *base, unsigned int nel)
 	return NULL;
 }
 
-/* DecodeUnits()
+/*
+ * DecodeUnits()
  * Decode text string using lookup table.
  * This routine supports time interval decoding.
  */
@@ -626,7 +627,8 @@ j2date(int jd, int *year, int *month, int *day)
 	*month = (quad + 10) % 12 + 1;
 }								/* j2date() */
 
-/* DecodeSpecial()
+/*
+ * DecodeSpecial()
  * Decode text string using lookup table.
  * Implement a cache lookup since it is likely that dates
  *	will be related in format.
@@ -662,7 +664,8 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	return type;
 }								/* DecodeSpecial() */
 
-/* EncodeDateOnly()
+/*
+ * EncodeDateOnly()
  * Encode date as local time.
  */
 void
@@ -731,7 +734,8 @@ TrimTrailingZeros(char *str)
 	}
 }
 
-/* EncodeDateTime()
+/*
+ * EncodeDateTime()
  * Encode date and time interpreted as local time.
  *
  * tm and fsec are the value to encode, print_tz determines whether to include
@@ -1080,7 +1084,8 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 
 
 
-/* DecodeNumberField()
+/*
+ * DecodeNumberField()
  * Interpret numeric string as a concatenated date or time field.
  * Use the context of previously decoded fields to help with
  * the interpretation.
@@ -1192,7 +1197,8 @@ DecodeNumberField(int len, char *str, int fmask,
 }								/* DecodeNumberField() */
 
 
-/* DecodeNumber()
+/*
+ * DecodeNumber()
  * Interpret plain numeric field as a date value in context.
  */
 static int
@@ -1300,7 +1306,8 @@ DecodeNumber(int flen, char *str, int fmask,
 	return 0;
 }								/* DecodeNumber() */
 
-/* DecodeDate()
+/*
+ * DecodeDate()
  * Decode date string which includes delimiters.
  * Insist on a complete set of fields.
  */
@@ -1428,7 +1435,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 }								/* DecodeDate() */
 
 
-/* DecodeTime()
+/*
+ * DecodeTime()
  * Decode time string which includes delimiters.
  * Only check the lower limit on hours, since this same code
  *	can be used to represent time spans.
@@ -1492,7 +1500,8 @@ DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 	return 0;
 }								/* DecodeTime() */
 
-/* DecodeTimezone()
+/*
+ * DecodeTimezone()
  * Interpret string as a numeric timezone.
  *
  * Note: we allow timezone offsets up to 13:59.  There are places that
@@ -1537,7 +1546,8 @@ DecodeTimezone(char *str, int *tzp)
 }								/* DecodeTimezone() */
 
 
-/* DecodePosixTimezone()
+/*
+ * DecodePosixTimezone()
  * Interpret string as a POSIX-compatible timezone:
  *	PST-hh:mm
  *	PST+h
@@ -1578,7 +1588,8 @@ DecodePosixTimezone(char *str, int *tzp)
 	return 0;
 }								/* DecodePosixTimezone() */
 
-/* ParseDateTime()
+/*
+ * ParseDateTime()
  * Break string into tokens based on a date/time context.
  * Several field types are assigned:
  *	DTK_NUMBER - digits and (possibly) a decimal point
@@ -1758,7 +1769,8 @@ ParseDateTime(char *timestr, char *lowstr,
 }								/* ParseDateTime() */
 
 
-/* DecodeDateTime()
+/*
+ * DecodeDateTime()
  * Interpret previously parsed fields for general date and time.
  * Return 0 if full date, 1 if only time, and -1 if problems.
  *		External format(s):
@@ -2345,10 +2357,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	return 0;
 }								/* DecodeDateTime() */
 
-/* Function works as follows:
+/*
+ * Function works as follows:
  *
  *
- * */
+ *
+ */
 
 static char *
 find_end_token(char *str, char *fmt)

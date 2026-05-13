@@ -44,6 +44,6 @@ extern void RemoveWalSummaryIfOlderThan(WalSummaryFile *ws,
 
 extern int	ReadWalSummary(void *wal_summary_io, void *data, int length);
 extern int	WriteWalSummary(void *wal_summary_io, void *data, int length);
-extern void ReportWalSummaryError(void *callback_arg, char *fmt,...) pg_attribute_printf(2, 3);
+extern void ReportWalSummaryError(void *callback_arg, char *fmt, ...) pg_attribute_printf(2, 3);
 
 #endif							/* WALSUMMARY_H */

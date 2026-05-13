@@ -941,7 +941,7 @@ pqPrepareAsyncResult(PGconn *conn)
  * a trailing newline, and should not be more than one line).
  */
 void
-pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
 {
 	char		msgBuf[1024];
 	va_list		args;
@@ -3911,7 +3911,8 @@ PQgetvalue(const PGresult *res, int tup_num, int field_num)
 	return res->tuples[tup_num][field_num].value;
 }
 
-/* PQgetlength:
+/*
+ * PQgetlength:
  *	returns the actual length of a field value in bytes.
  */
 int
@@ -3925,7 +3926,8 @@ PQgetlength(const PGresult *res, int tup_num, int field_num)
 		return 0;
 }
 
-/* PQgetisnull:
+/*
+ * PQgetisnull:
  *	returns the null status of a field value.
  */
 int
@@ -3939,7 +3941,8 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 		return 0;
 }
 
-/* PQnparams:
+/*
+ * PQnparams:
  *	returns the number of input parameters of a prepared statement.
  */
 int
@@ -3950,7 +3953,8 @@ PQnparams(const PGresult *res)
 	return res->numParameters;
 }
 
-/* PQparamtype:
+/*
+ * PQparamtype:
  *	returns type Oid of the specified statement parameter.
  */
 Oid
@@ -3965,7 +3969,8 @@ PQparamtype(const PGresult *res, int param_num)
 }
 
 
-/* PQsetnonblocking:
+/*
+ * PQsetnonblocking:
  *	sets the PGconn's database connection non-blocking if the arg is true
  *	or makes it blocking if the arg is false, this will not protect
  *	you from PQexec(), you'll only be safe when using the non-blocking API.

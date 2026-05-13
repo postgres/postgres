@@ -447,9 +447,11 @@ reset_variables(void)
 	argsresult = NULL;
 }
 
-/* Insert a new variable into our request list.
+/*
+ * Insert a new variable into our request list.
  * Note: The list is dumped from the end,
- * so we have to add new entries at the beginning */
+ * so we have to add new entries at the beginning
+ */
 void
 add_variable_to_head(struct arguments **list, struct variable *var, struct variable *ind)
 {
@@ -506,9 +508,10 @@ remove_variable_from_list(struct arguments **list, struct variable *var)
 	}
 }
 
-/* Dump out a list of all the variable on this list.
-   This is a recursive function that works from the end of the list and
-   deletes the list as we go on.
+/*
+ * Dump out a list of all the variable on this list.
+ * This is a recursive function that works from the end of the list and
+ * deletes the list as we go on.
  */
 void
 dump_variables(struct arguments *list, int mode)

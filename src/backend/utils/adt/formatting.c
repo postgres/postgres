@@ -975,8 +975,8 @@ static const KeyWord NUM_keywords[] = {
  */
 static const int DCH_index[KeyWord_INDEX_SIZE] = {
 /*
-0	1	2	3	4	5	6	7	8	9
-*/
+ * 0	1	2	3	4	5	6	7	8	9
+ */
 	/*---- first 0..31 chars are skipped ----*/
 
 	-1, -1, -1, -1, -1, -1, -1, -1,
@@ -998,8 +998,8 @@ static const int DCH_index[KeyWord_INDEX_SIZE] = {
  */
 static const int NUM_index[KeyWord_INDEX_SIZE] = {
 /*
-0	1	2	3	4	5	6	7	8	9
-*/
+ * 0	1	2	3	4	5	6	7	8	9
+ */
 	/*---- first 0..31 chars are skipped ----*/
 
 	-1, -1, -1, -1, -1, -1, -1, -1,

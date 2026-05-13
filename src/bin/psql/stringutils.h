@@ -8,8 +8,10 @@
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
 
-/* The cooler version of strtok() which knows about quotes and doesn't
- * overwrite your input */
+/*
+ * The cooler version of strtok() which knows about quotes and doesn't
+ * overwrite your input
+ */
 extern char *strtokx(const char *s,
 					 const char *whitespace,
 					 const char *delim,
