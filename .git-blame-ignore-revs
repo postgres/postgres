@@ -23,6 +23,9 @@
 020794ee42a3413b416898e7931a8a3a5b43e9ab # 2026-05-13 10:34:17 -0400
 # Pre-beta mechanical code beautification, step 1: run pgindent.
 
+228a1f9542792c6533ef74c2e7aefad0da1d9a7a # 2026-04-17 17:46:27 -0400
+# pg_plan_advice: pgindent
+
 519acd1be59e407a62dbe6a5240d9d1dcb8cd062 # 2026-04-04 21:50:54 +0700
 # Fix indentation
 
@@ -68,6 +71,9 @@ e94a7afe44bfa1bd8dc929204a2d4ac8b3fa9854 # 2025-10-21 09:56:26 -0500
 9e345415bcd3c4358350b89edfd710469b8bfaf9 # 2025-07-01 15:23:07 +0200
 # Fix indentation in pg_numa code
 
+0ebd24255581837f9a5b189ef15147b769df116b # 2025-06-29 21:14:21 -0400
+# Run pgperltidy
+
 b27644bade0348d0dafd3036c47880a349fe9332 # 2025-06-15 13:04:24 -0400
 # Sync typedefs.list with the buildfarm.
 
@@ -79,6 +85,9 @@ b27644bade0348d0dafd3036c47880a349fe9332 # 2025-06-15 13:04:24 -0400
 
 e1a8b1ad587112e67fdc5aa7b388631dde4dbdda # 2025-04-04 09:38:22 -0500
 # Re-pgindent pg_largeobject.c after commit 0d6c477664.
+
+ec4327d106be745534592e8aff14effb716f4dc9 # 2025-03-29 16:47:44 +0100
+# amcheck: Fix indentation in verify_gin.c
 
 796bdda484c838313959f65e2b700f14ac7c0e66 # 2025-03-18 09:02:36 -0400
 # Fix indentation again.
@@ -92,6 +101,9 @@ b955df443405e056fd9047ef819a1465654f9d79 # 2025-03-13 12:41:44 +1300
 76aa615943049c04efd36ab4765c06eda89cdfea # 2025-01-31 16:44:24 +0900
 # Fix bad indentation introduced in commit d47cbf474
 
+be31ac25191b26a8a1db345a727545959654f4cb # 2025-01-22 10:15:32 +0900
+# Run perltidy
+
 6e826278f1ebd9967c0f8adda29c8960a812e344 # 2025-01-13 11:27:32 +0900
 # Fix pgindent damage
 
@@ -103,6 +115,9 @@ b955df443405e056fd9047ef819a1465654f9d79 # 2025-03-13 12:41:44 +1300
 
 a7f2f6adc240a2823c2344b89e90bb630dea8803 # 2024-10-16 12:21:13 -0700
 # Whitespace fixup from generated unicode tables.
+
+199ad00e4b59a04263fd79fb115aecce2fb0851b # 2024-10-14 11:25:03 +0200
+# Run pgperltidy on newly-added test code
 
 7f7474a8e4002ac9fd4979cc7b16b50b70b70c28 # 2024-09-27 11:14:31 -0400
 # Reindent pg_verifybackup.c.
@@ -125,14 +140,26 @@ c883453cb29cb40c1e59c3c54d159c5e744da8a9 # 2024-07-26 12:00:04 -0400
 47ecbfdfcc71e41d7dcc35f0be04f8adbe88397f # 2024-07-15 15:17:04 -0700
 # Fix bad indentation introduced in 43cd30bcd1c
 
+7dcc6f8e6d7a0eb0ce90802311278723843b4bbd # 2024-07-01 07:35:01 +0900
+# Run pgperltidy
+
 b48f275f18d7da4f4863888ad047cbd699698880 # 2024-06-28 10:51:05 -0400
 # pgindent, because I forgot to do that.
 
 da256a4a7fdcca35fe7ca808686ad3de6ee22306 # 2024-05-14 16:34:50 -0400
 # Pre-beta mechanical code beautification.
 
+9301308bd196f614696e0e9492cf0c52f7857f83 # 2024-04-03 09:44:47 +0200
+# Fix indentation from cafe1056558f
+
+b0be28761ec5958bb7bbf9a03d94ee6e1bc59849 # 2024-03-27 13:21:29 -0700
+# Run perltidy on generate-unicode_version.pl.
+
 64e401b62b1559d617db5c1e1070d7a05e794c27 # 2024-03-25 14:18:33 +0100
 # Fix indentation from a11f330b5
+
+b0289574bdf1202248201a3143d1459bdf5727fd # 2024-03-09 11:51:31 -0800
+# Run perltidy on 002_pg_upgrade.pl.
 
 0984a3b851abe89bec6c3eff51b03038808e1997 # 2024-03-05 11:16:23 -0800
 # Run pgindent again on the same file.
@@ -151,6 +178,24 @@ dd7ea37c435e10f9c5aa3fb257a05c08814a4ad2 # 2024-03-04 14:37:35 -0500
 
 96c019ffa3f883d139709ea0cfe76dc1bce0f1f8 # 2024-01-13 13:54:11 -0500
 # Re-pgindent catcache.c after previous commit.
+
+5faffa0434b484772782ff4763c0b2080222dde0 # 2024-01-11 13:24:35 -0500
+# Reindent after commit d9ef650fca7bc574586f4171cd929cfd5240326e.
+
+4d0cf0b05defcee985d5af38cb0db2b9c2f8dbae # 2023-12-05 15:54:59 +0100
+# Fix indentation
+
+0d93ce31a584ff454f39df9f94f84376756e074b # 2023-12-01 17:58:18 +0100
+# pgindent fix
+
+b2caf7c0e1ebada614b6aa3004d826080a07e7e4 # 2023-11-26 21:35:32 +0100
+# Fix brin.c indentation issues introduced by c1ec02be1d
+
+56b30e266eaa74f38bdda45067c9a5a63cd24c75 # 2023-10-30 14:52:35 -0400
+# pgindent run to fix commits de64268561 and 5ae2087202a
+
+675fed4df5db4e78d40a0ce9cb785cfba9fa480f # 2023-10-30 10:35:03 +0200
+# Fix indentation in contrib/amcheck/verify_nbtree.c
 
 611806cd726fc92989ac918eac48fd8d684869c7 # 2023-10-26 09:20:54 +0200
 # Add trailing commas to enum definitions
@@ -182,6 +227,9 @@ bc6041b61f6678d32a5cfb70744653cd8f8d01c0 # 2023-08-30 15:56:22 +0900
 328f492d2565cfbe383f13a69425d751fd79415f # 2023-07-13 22:26:10 +0900
 # Fix code indentation violation in commit b6e1157e7d
 
+a44d96add2eb377ab70055a54b713c5c78380383 # 2023-07-10 12:05:32 +0200
+# Fix pgindent
+
 69a674a170058e63e8178aec8a36a673efce8801 # 2023-07-06 11:49:18 +0530
 # Fix code indentation vioaltion introduced in commit cc32ec24fd.
 
@@ -194,17 +242,29 @@ b334612b8aee9f9a34378982d8938b201dfad323 # 2023-06-20 09:50:43 -0400
 0245f8db36f375326c2bae0c3420d3c77714e72d # 2023-05-19 17:24:48 -0400
 # Pre-beta mechanical code beautification.
 
+0b8ace8d773257fffeaceda196ed94877c2b74df # 2023-05-19 10:52:04 +0200
+# Reindent some comments
+
 b6dfee28f2b44e28b123b77a91fb05c47da63501 # 2023-03-09 15:09:45 +0900
 # Run pgindent on libpq's fe-auth.c, fe-auth-scram.c and fe-connect.c
 
+009dbdea02d74c72db2d1a57d5299f94f91fa975 # 2023-01-23 23:08:38 +1300
+# Run pgindent on heapam.c
+
 250c8ee07ede8a104ae1471f6ebca204d94267dd # 2023-01-13 15:23:17 -0800
 # Manual cleanup and pgindent of pgstat and bufmgr related code
+
+92c4dafe1eed511c5af92bcea5311cf627673377 # 2022-12-04 14:25:53 -0500
+# Re-pgindent a few files.
 
 b2e6e768230be334b12dae536ba4c147fba4e9c9 # 2022-09-08 14:01:13 +0700
 # Run perltidy over Catalog.pm
 
 82d0ffae3219e4bc153a1306ce23013d168e04a2 # 2022-06-30 11:03:03 -0400
 # pgindent run prior to branching v15.
+
+30ed71e423ee63b263730b86326da2a629a29f84 # 2022-05-13 07:17:29 +0200
+# Indent C code in flex and bison files
 
 23e7b38bfe396f919fdb66057174d29e17086418 # 2022-05-12 15:17:30 -0400
 # Pre-beta mechanical code beautification.
@@ -263,6 +323,9 @@ d8421390996dcd762383a28e57d1f3f16cc5f76f # 2018-06-30 12:28:55 -0400
 1e9c8580904625576871eeb2efec7f04d4c3bc1c # 2018-06-30 12:25:49 -0400
 # pgindent run prior to branching
 
+286bb240e1c8e279efa2d805c7f700abfb771925 # 2018-05-09 10:05:35 -0400
+# perltidy some recent code changes before changing perltidy settings
+
 bdf46af748d0f15f257c99bf06e9e25aba6a24f9 # 2018-04-26 14:47:16 -0400
 # Post-feature-freeze pgindent run.
 
@@ -296,11 +359,17 @@ ce554810329b9b8e862eade08b598148931eb456 # 2017-05-17 19:01:23 -0400
 a6fd7b7a5f7bf3a8aa3f3d076cf09d922c1c6dd2 # 2017-05-17 16:31:56 -0400
 # Post-PG 10 beta1 pgindent run
 
+27cdb3414b3fb4c8fcc069572568390450bb04c9 # 2017-01-24 10:20:02 -0500
+# Reindent table partitioning code.
+
 fcf70e0dbca1432959be5f3557acd546d639c9ba # 2016-11-17 14:36:59 -0500
 # Re-pgindent src/bin/pg_dump/*
 
 b5bce6c1ec6061c8a4f730d927e162db7e2ce365 # 2016-08-15 13:42:51 -0400
 # Final pgindent + perltidy run for 9.6.
+
+33fe7360afdc0bb1820743ea5bfe3fc7d522f6c4 # 2016-08-05 15:14:19 -0400
+# Re-pgindent tsvector_op.c.
 
 3be0a62ffe58f0753d190cbe22acbeb8b4926b85 # 2016-06-12 04:19:56 -0400
 # Finish pgindent run for 9.6: Perl files.
@@ -308,11 +377,17 @@ b5bce6c1ec6061c8a4f730d927e162db7e2ce365 # 2016-08-15 13:42:51 -0400
 4bc424b968058c7f0aa685821d7039e86faac99c # 2016-06-09 18:02:36 -0400
 # pgindent run for 9.6
 
+2dd318d277b8e1d8269b030f545240193943162f # 2016-04-09 13:33:33 -0400
+# Run pgindent on generic_xlog.c.
+
 de94e2af184e25576b13cbda8cf825118835d1cd # 2016-04-06 11:34:02 -0400
 # Run pgindent on a batch of (mostly-planner-related) source files.
 
 be060cbcd42737693f6fd425db4c139121181cce # 2016-03-09 13:51:11 -0500
 # Re-pgindent vacuumlazy.c.
+
+a361490806435fda6340fa13c0a881767c57c87a # 2016-02-12 13:36:13 -0500
+# Re-pgindent isolationtester.c.
 
 0231f838565d2921a0960407c4240237ba1d56ae # 2016-02-08 15:17:40 -0500
 # Re-pgindent varlena.c.
@@ -322,6 +397,9 @@ d0cd7bda97a626049aa7d247374909c52399c413 # 2016-02-04 22:30:08 -0500
 
 8d290c8ec6c182a4df1d089c21fe84c7912f01fe # 2016-01-17 19:13:18 -0500
 # Re-pgindent a few files.
+
+26905e009babe6020fddcf3820e57e2f87c5539c # 2016-01-13 15:48:54 -0500
+# Run pgindent on src/bin/pg_dump/*
 
 befa3e648ce018d84cd2a0df701927c56fe3da4e # 2015-05-24 21:45:01 -0400
 # Revert 9.5 pgindent changes to atomics directory files
@@ -341,17 +419,35 @@ befa3e648ce018d84cd2a0df701927c56fe3da4e # 2015-05-24 21:45:01 -0400
 0a7832005792fa6dad171f9cadb8d587fe0dd800 # 2014-05-06 12:12:18 -0400
 # pgindent run for 9.4
 
+243ee266339bd4a049ff92e101010242169b7287 # 2014-01-22 08:46:51 -0500
+# Reindent json.c and jsonfuncs.c.
+
 9af4159fce6654aa0e081b00d02bca40b978745c # 2013-05-29 16:58:43 -0400
 # pgindent run for release 9.3 This is the first run of the Perl-based pgindent script.  Also update pgindent instructions.
 
+042d9ffc282a8c796d2a5babc600c1a6db150dac # 2012-07-04 21:47:49 -0400
+# Run newly-configured perltidy script on Perl files.
+
 927d61eeff78363ea3938c818d07e511ebaf75cf # 2012-06-10 15:20:04 -0400
 # Run pgindent on 9.2 source tree in preparation for first 9.3 commit-fest.
+
+cdaa45fd4b09c64d634818e52ef7a2191ce40667 # 2011-11-14 12:08:48 -0500
+# Run pgindent on range type files, per request from Tom.
+
+fd6913a18955b0f89ca994b5036c103bcea23f28 # 2011-07-12 15:25:08 +0100
+# perltidy run over msvc build system
 
 6560407c7db2c7e32926a46f5fb52175ac10d9e5 # 2011-06-09 14:32:50 -0400
 # Pgindent run before 9.1 beta2.
 
 bf50caf105a901c4f83ac1df3cdaf910c26694a4 # 2011-04-10 11:42:00 -0400
 # pgindent run before PG 9.1 beta 1.
+
+f7b51d175a02a3b6589f091ca732959618844232 # 2011-02-17 22:20:39 -0300
+# pgindent run on plperl.c
+
+c0e96b49e588b2a5ab501a2acc03b96ff76cf288 # 2011-01-03 10:44:56 +0100
+# perltidy run on the MSVC build system
 
 239d769e7e05e0a5ef3bd6828e93e22ef3962780 # 2010-07-06 19:19:02 +0000
 # pgindent run for 9.0, second run
@@ -361,6 +457,9 @@ bf50caf105a901c4f83ac1df3cdaf910c26694a4 # 2011-04-10 11:42:00 -0400
 
 d7471402794266078953f1bd113dab4913d631a1 # 2009-06-11 14:49:15 +0000
 # 8.4 pgindent run, with new combined Linux/FreeBSD/MinGW typedef list provided by Andrew.
+
+5f0bf6cb0d1f1922a7da68392e50d214b1c2abe3 # 2007-11-16 01:12:24 +0000
+# Run pgindent on remaining files now that LOOPBYTE is a usable macro.
 
 f6e8730d11ddfc720eda1dde23794d262ad8cc08 # 2007-11-15 22:25:18 +0000
 # Re-run pgindent with updated list of typedefs.  (Updated README should avoid this problem in the future.)
@@ -403,6 +502,9 @@ ea08e6cd5542cb269ecd3e735f1dfa3bb61fbc4f # 2001-11-05 17:46:40 +0000
 
 b81844b1738c584d92330a5ccd0fbd8b603d2886 # 2001-10-25 05:50:21 +0000
 # pgindent run on all C files.  Java run to follow.  initdb/regression tests pass.
+
+1c551683cb99d94ebb44be0b94a0e03dd1d9a0f8 # 2001-05-08 17:12:36 +0000
+# Run pgindent on ODBC code only, to reformat new comments.
 
 0686d49da0a34ad92f61f791ea1039dec5d20f41 # 2001-03-22 06:16:21 +0000
 # Remove dashes in comments that don't need them, rewrap with pgindent.
