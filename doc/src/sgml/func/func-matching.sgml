@@ -505,7 +505,7 @@ substring('foobar' SIMILAR '#"o_b#"%' ESCAPE '#')    <lineannotation>NULL</linea
      <acronym>POSIX</acronym> regular expressions provide a more
      powerful means for pattern matching than the <function>LIKE</function> and
      <function>SIMILAR TO</function> operators.
-     Many Unix tools such as <command>egrep</command>,
+     Many Unix tools such as <command>grep -E</command>,
      <command>sed</command>, or <command>awk</command> use a pattern
      matching language that is similar to the one described here.
     </para>
@@ -1065,7 +1065,7 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     Regular expressions (<acronym>RE</acronym>s), as defined in
     <acronym>POSIX</acronym> 1003.2, come in two forms:
     <firstterm>extended</firstterm> <acronym>RE</acronym>s or <acronym>ERE</acronym>s
-    (roughly those of <command>egrep</command>), and
+    (roughly those of <command>grep -E</command>), and
     <firstterm>basic</firstterm> <acronym>RE</acronym>s or <acronym>BRE</acronym>s
     (roughly those of <command>ed</command>).
     <productname>PostgreSQL</productname> supports both forms, and

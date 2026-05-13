@@ -63,9 +63,9 @@ else
 	fi
 fi
 $NM -BCg $1 | \
-	egrep ' [TDB] ' | \
+	grep ' [TDB] ' | \
 	sed -e 's/.* //' | \
-	egrep -v '\$' | \
+	grep -v '\$' | \
 	sed -e 's/^[.]//' | \
 	sort | \
 	uniq

@@ -36,12 +36,12 @@ do	# if objdump -W is recognized, only one line of error should appear
 	if [ `objdump -W 2>&1 | wc -l` -eq 1 ]
 	then	# Linux
 		objdump -W "$DIR"/* |
-		egrep -A3 '\(DW_TAG_typedef\)' |
+		grep -E -A3 '\(DW_TAG_typedef\)' |
 		awk ' $2 == "DW_AT_name" {print $NF}'
 	elif [ `readelf -w 2>&1 | wc -l` -gt 1 ]
 	then	# FreeBSD, similar output to Linux
 		readelf -w "$DIR"/* |
-		egrep -A3 '\(DW_TAG_typedef\)' |
+		grep -E -A3 '\(DW_TAG_typedef\)' |
 		awk ' $1 == "DW_AT_name" {print $NF}'
 	fi
 done |
@@ -50,4 +50,4 @@ sort |
 uniq |
 # these are used both for typedefs and variable names
 # so do not include them
-egrep -v '^(date|interval|timestamp|ANY)$'
+grep -E -v '^(date|interval|timestamp|ANY)$'
