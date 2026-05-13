@@ -42,6 +42,16 @@ SELECT test_pglz_decompress('\x01ff'::bytea, 1024, true);
 SELECT test_pglz_decompress('\x010f01'::bytea, 1024, false);
 SELECT test_pglz_decompress('\x010f01'::bytea, 1024, true);
 
+-- Corrupted compressed data.  Set control bit with a valid 2-byte match
+-- tag where offset exceeds output written.
+SELECT test_pglz_decompress('\x011001'::bytea, 1024, false);
+SELECT test_pglz_decompress('\x011001'::bytea, 1024, true);
+
+-- Corrupted compressed data.  Set control bit with a valid 2-byte match
+-- tag where offset is 0.
+SELECT test_pglz_decompress('\x010300'::bytea, 1024, false);
+SELECT test_pglz_decompress('\x010300'::bytea, 1024, true);
+
 -- Clean up
 DROP FUNCTION test_pglz_compress;
 DROP FUNCTION test_pglz_decompress;
