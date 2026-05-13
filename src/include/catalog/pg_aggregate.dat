@@ -576,16 +576,16 @@
 { aggfnoid => 'string_agg(text,text)', aggtransfn => 'string_agg_transfn',
   aggfinalfn => 'string_agg_finalfn', aggcombinefn => 'string_agg_combine',
   aggserialfn => 'string_agg_serialize',
-  aggdeserialfn => 'string_agg_deserialize',
-  aggtranstype => 'internal', aggtransspace => '-1' },
+  aggdeserialfn => 'string_agg_deserialize', aggtranstype => 'internal',
+  aggtransspace => '-1' },
 
 # bytea
 { aggfnoid => 'string_agg(bytea,bytea)',
   aggtransfn => 'bytea_string_agg_transfn',
   aggfinalfn => 'bytea_string_agg_finalfn',
   aggcombinefn => 'string_agg_combine', aggserialfn => 'string_agg_serialize',
-  aggdeserialfn => 'string_agg_deserialize',
-  aggtranstype => 'internal', aggtransspace => '-1' },
+  aggdeserialfn => 'string_agg_deserialize', aggtranstype => 'internal',
+  aggtransspace => '-1' },
 
 # range
 { aggfnoid => 'range_intersect_agg(anyrange)',
