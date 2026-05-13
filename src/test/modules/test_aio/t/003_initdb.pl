@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025, PostgreSQL Global Development Group
+# Copyright (c) 2024-2026, PostgreSQL Global Development Group
 #
 # Test initdb for each IO method. This is done separately from 001_aio.pl, as
 # it isn't fast. This way the more commonly failing / hacked-on 001_aio.pl can
