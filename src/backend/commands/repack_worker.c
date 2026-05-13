@@ -415,7 +415,11 @@ decode_concurrent_changes(LogicalDecodingContext *ctx,
 
 			if (errm)
 				ereport(ERROR,
-						errmsg("%s", errm));
+						errcode_for_file_access(),
+						errmsg("could not read WAL from timeline %u at %X/%08X: %s",
+							   ctx->reader->currTLI,
+							   LSN_FORMAT_ARGS(ctx->reader->EndRecPtr),
+							   errm));
 
 			/*
 			 * In the decoding loop we do not want to get blocked when there

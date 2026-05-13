@@ -802,7 +802,7 @@ ORDER BY o.relname;
 -- Disallowed in catalogs
 REPACK (CONCURRENTLY) pg_class;
 ERROR:  cannot repack relation "pg_class"
-HINT:  REPACK CONCURRENTLY is not supported for catalog relations.
+HINT:  REPACK (CONCURRENTLY) is not supported for catalog relations.
 -- Doesn't like partitioned tables
 REPACK (CONCURRENTLY) clstrpart;
 ERROR:  REPACK (CONCURRENTLY) is not supported for partitioned tables
@@ -810,17 +810,17 @@ HINT:  Consider running the command on individual partitions.
 -- Doesn't support catalog tables
 REPACK (CONCURRENTLY) pg_class;
 ERROR:  cannot repack relation "pg_class"
-HINT:  REPACK CONCURRENTLY is not supported for catalog relations.
+HINT:  REPACK (CONCURRENTLY) is not supported for catalog relations.
 -- Only support permanent tables, temp and unlogged tables are not supported
 CREATE TEMP TABLE repack_conc_temp (i int PRIMARY KEY);
 REPACK (CONCURRENTLY) repack_conc_temp;
 ERROR:  cannot repack relation "repack_conc_temp"
-HINT:  REPACK CONCURRENTLY is only allowed for permanent relations.
+HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
 DROP TABLE repack_conc_temp;
 CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
 REPACK (CONCURRENTLY) repack_conc_unlogged;
 ERROR:  cannot repack relation "repack_conc_unlogged"
-HINT:  REPACK CONCURRENTLY is only allowed for permanent relations.
+HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
 DROP TABLE repack_conc_unlogged;
 -- Doesn't support TOAST tables directly
 CREATE TABLE repack_conc_toast (t text);
