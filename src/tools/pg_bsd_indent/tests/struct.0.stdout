@@ -21,3 +21,5 @@ u(struct x a)
 	int		b;
 	struct y	c = (struct y *)&a;
 }
+
+static struct foo f = {.a = 1, .b = 2};

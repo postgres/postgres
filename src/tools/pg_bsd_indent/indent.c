@@ -1013,6 +1013,8 @@ check_type:
 
 	case period:		/* treat a period kind of like a binary
 				 * operation */
+	    if (ps.want_blank && ps.last_token == comma)
+	        *e_code++ = ' ';
 	    *e_code++ = '.';	/* move the period into line */
 	    ps.want_blank = false;	/* don't put a blank after a period */
 	    break;

@@ -35,7 +35,7 @@ my $bak_to_cleanup;
 END { unlink $bak_to_cleanup if defined $bak_to_cleanup; }
 
 # Update for pg_bsd_indent version
-my $INDENT_VERSION = "2.1.2";
+my $INDENT_VERSION = "2.1.3";
 
 # Our standard indent settings
 my $indent_opts =
