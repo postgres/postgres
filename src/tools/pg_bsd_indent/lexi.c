@@ -363,7 +363,8 @@ lexi(struct parser_state *state)
 		  bsearch(s_token, typenames, typename_top + 1,
 		    sizeof(typenames[0]), strcmp_type))) {
 		state->keyword = 4;	/* a type name */
-		state->last_u_d = true;
+		if (state->last_token != period && state->last_token != unary_op)
+		    state->last_u_d = true;
 	        goto found_typename;
 	    }
 	} else {			/* we have a keyword */
