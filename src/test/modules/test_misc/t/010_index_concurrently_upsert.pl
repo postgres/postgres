@@ -603,7 +603,9 @@ clean_safe_quit_ok($s1, $s2, $s3);
 $node->safe_psql('postgres', 'TRUNCATE TABLE test.tblparted');
 
 ############################################################################
-note('Test: REINDEX on partitioned table, cache inval between two get_partition_ancestors');
+note(
+	'Test: REINDEX on partitioned table, cache inval between two get_partition_ancestors'
+);
 
 $s1 = $node->background_psql('postgres', on_error_stop => 0);
 $s2 = $node->background_psql('postgres', on_error_stop => 0);

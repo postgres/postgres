@@ -198,8 +198,8 @@ END
 $$;
 });
 
-my $contrecord_lsn = $node->safe_psql('postgres',
-	'SELECT pg_current_wal_insert_lsn()');
+my $contrecord_lsn =
+  $node->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn()');
 # Generate contrecord record
 $node->safe_psql('postgres',
 	qq{SELECT pg_logical_emit_message(true, 'test 026', repeat('xyzxz', 123456))}
@@ -243,8 +243,9 @@ command_like(
 	'runs with start and end segment specified');
 command_like(
 	[
-		'pg_waldump', '--quiet', '--path',
-		$node->data_dir . '/pg_wal/', $start_walfile
+		'pg_waldump', '--quiet',
+		'--path', $node->data_dir . '/pg_wal/',
+		$start_walfile
 	],
 	qr/^$/,
 	'no output with --quiet option');
@@ -336,7 +337,8 @@ sub generate_archive
 
 	my @files;
 	opendir my $dh, $directory or die "opendir: $!";
-	while (my $entry = readdir $dh) {
+	while (my $entry = readdir $dh)
+	{
 		# Skip '.' and '..'
 		next if $entry eq '.' || $entry eq '..';
 		push @files, $entry;
@@ -379,20 +381,23 @@ for my $scenario (@scenarios)
 {
 	my $path = $scenario->{'path'};
 
-	SKIP:
+  SKIP:
 	{
 		skip "tar command is not available", 56
 		  if (!defined $tar || $tar eq '') && $scenario->{'is_archive'};
-		skip "$scenario->{'compression_method'} compression not supported by this build", 56
+		skip
+		  "$scenario->{'compression_method'} compression not supported by this build",
+		  56
 		  if !$scenario->{'enabled'} && $scenario->{'is_archive'};
 
-		  # create pg_wal archive
-		  if ($scenario->{'is_archive'})
-		  {
-			  generate_archive($path,
-				  $node->data_dir . '/pg_wal',
-				  $scenario->{'compression_flags'});
-		  }
+		# create pg_wal archive
+		if ($scenario->{'is_archive'})
+		{
+			generate_archive(
+				$path,
+				$node->data_dir . '/pg_wal',
+				$scenario->{'compression_flags'});
+		}
 
 		command_fails_like(
 			[ 'pg_waldump', '--path' => $path ],
@@ -445,22 +450,28 @@ for my $scenario (@scenarios)
 		like($lines[0], qr/WAL statistics/, "statistics on stdout");
 		is(grep(/^rmgr:/, @lines), 0, 'no rmgr lines output');
 
-		@lines = test_pg_waldump($path, $start_lsn, $end_lsn, '--stats=record');
+		@lines =
+		  test_pg_waldump($path, $start_lsn, $end_lsn, '--stats=record');
 		like($lines[0], qr/WAL statistics/, "statistics on stdout");
 		is(grep(/^rmgr:/, @lines), 0, 'no rmgr lines output');
 
-		@lines = test_pg_waldump($path, $start_lsn, $end_lsn, '--rmgr' => 'Btree');
+		@lines =
+		  test_pg_waldump($path, $start_lsn, $end_lsn, '--rmgr' => 'Btree');
 		is(grep(!/^rmgr: Btree/, @lines), 0, 'only Btree lines');
 
-		@lines = test_pg_waldump($path, $start_lsn, $end_lsn, '--fork' => 'init');
+		@lines =
+		  test_pg_waldump($path, $start_lsn, $end_lsn, '--fork' => 'init');
 		is(grep(!/fork init/, @lines), 0, 'only init fork lines');
 
 		@lines = test_pg_waldump($path, $start_lsn, $end_lsn,
 			'--relation' => "$default_ts_oid/$postgres_db_oid/$rel_t1_oid");
-		is(grep(!/rel $default_ts_oid\/$postgres_db_oid\/$rel_t1_oid/, @lines),
-			0, 'only lines for selected relation');
+		is( grep(!/rel $default_ts_oid\/$postgres_db_oid\/$rel_t1_oid/,
+				@lines),
+			0,
+			'only lines for selected relation');
 
-		@lines = test_pg_waldump($path, $start_lsn, $end_lsn,
+		@lines = test_pg_waldump(
+			$path, $start_lsn, $end_lsn,
 			'--relation' => "$default_ts_oid/$postgres_db_oid/$rel_i1a_oid",
 			'--block' => 1);
 		is(grep(!/\bblk 1\b/, @lines), 0, 'only lines for selected block');

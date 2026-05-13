@@ -76,7 +76,8 @@ $primary->safe_psql('postgres', 'VACUUM (TRUNCATE) t;');
 # Verify expected length after truncation.
 $t_blocks = $primary->safe_psql('postgres',
 	"SELECT pg_relation_size('t') / current_setting('block_size')::int;");
-is($t_blocks, $rows_after_truncation, 'post-truncation row count as expected');
+is($t_blocks, $rows_after_truncation,
+	'post-truncation row count as expected');
 cmp_ok($t_blocks, '>', $target_blocks,
 	'post-truncation block count as expected');
 
@@ -89,17 +90,17 @@ $primary->backup('incr',
 # truncation limit. We can't just check whether the restored VM fork is
 # the right size on disk, because it's so small that the incremental backup
 # code will send the entire file.
-my $relfilenode = $primary->safe_psql('postgres',
-	"SELECT pg_relation_filenode('t');");
-my $vm_limits = $primary->safe_psql('postgres',
+my $relfilenode =
+  $primary->safe_psql('postgres', "SELECT pg_relation_filenode('t');");
+my $vm_limits = $primary->safe_psql(
+	'postgres',
 	"SELECT string_agg(relblocknumber::text, ',')
 	   FROM pg_available_wal_summaries() s,
 	        pg_wal_summary_contents(s.tli, s.start_lsn, s.end_lsn) c
 	  WHERE c.relfilenode = $relfilenode
 	    AND c.relforknumber = 2
 	    AND c.is_limit_block;");
-is($vm_limits, '1',
-	'WAL summary has correct VM fork truncation limit');
+is($vm_limits, '1', 'WAL summary has correct VM fork truncation limit');
 
 # Combine full and incremental backups.  Before the fix, this failed because
 # the INCREMENTAL file header contained an incorrect truncation_block_length

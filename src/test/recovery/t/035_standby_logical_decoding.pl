@@ -758,12 +758,14 @@ wait_until_vacuum_can_remove(
 
 # message should not be issued
 ok( !$node_standby->log_contains(
-		"invalidating obsolete replication slot \"no_conflict_inactiveslot\"", $logstart),
+		"invalidating obsolete replication slot \"no_conflict_inactiveslot\"",
+		$logstart),
 	'inactiveslot slot invalidation is not logged with vacuum on conflict_test'
 );
 
 ok( !$node_standby->log_contains(
-		"invalidating obsolete replication slot \"no_conflict_activeslot\"", $logstart),
+		"invalidating obsolete replication slot \"no_conflict_activeslot\"",
+		$logstart),
 	'activeslot slot invalidation is not logged with vacuum on conflict_test'
 );
 

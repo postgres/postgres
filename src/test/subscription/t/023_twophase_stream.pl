@@ -451,16 +451,14 @@ $offset = -s $node_subscriber->logfile;
 
 # Confirm the ERROR is reported because max_prepared_transactions is zero
 $node_subscriber->wait_for_log(
-	qr/ERROR: ( [A-Z0-9]+:)? prepared transactions are disabled/,
-	$offset);
+	qr/ERROR: ( [A-Z0-9]+:)? prepared transactions are disabled/, $offset);
 
 # Confirm that the parallel apply worker has encountered an error. The check
 # focuses on the worker type as a keyword, since the error message content may
 # differ based on whether the leader initially detected the parallel apply
 # worker's failure or received a signal from it.
 $node_subscriber->wait_for_log(
-	qr/ERROR: .*logical replication parallel apply worker.*/,
-	$offset);
+	qr/ERROR: .*logical replication parallel apply worker.*/, $offset);
 
 # Set max_prepared_transactions to correct value to resume the replication
 $node_subscriber->append_conf('postgresql.conf',

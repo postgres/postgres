@@ -39,8 +39,7 @@ $sock->recv($reply, 1);
 if ($reply ne 'N')
 {
 	$sock->close();
-	plan skip_all =>
-	  "server accepted SSL; test requires SSL to be rejected";
+	plan skip_all => "server accepted SSL; test requires SSL to be rejected";
 }
 
 # Send GSSENCRequest, reject or bypass test.
@@ -50,8 +49,7 @@ $sock->recv($reply, 1);
 if ($reply ne 'N')
 {
 	$sock->close();
-	plan skip_all =>
-	  "server accepted GSS; test requires GSS to be rejected";
+	plan skip_all => "server accepted GSS; test requires GSS to be rejected";
 }
 
 my $log_offset = -s $node->logfile;
@@ -71,7 +69,7 @@ isnt($reply, 'N',
 
 $sock->close();
 $node->wait_for_log(qr/FATAL: .* unsupported frontend protocol 1234.5679/,
-					$log_offset);
+	$log_offset);
 
 # Check extra connection with a simple query.
 my $result = $node->safe_psql('postgres', 'select 1;');

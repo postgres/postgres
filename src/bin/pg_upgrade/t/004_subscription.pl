@@ -390,7 +390,8 @@ is($result, qq($remote_lsn), "remote_lsn should have been preserved");
 
 # The conflict detection slot should be created
 $result = $new_sub->safe_psql('postgres',
-	"SELECT xmin IS NOT NULL from pg_replication_slots WHERE slot_name = 'pg_conflict_detection'");
+	"SELECT xmin IS NOT NULL from pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+);
 is($result, qq(t), "conflict detection slot exists");
 
 # Resume the initial sync and wait until all tables of subscription

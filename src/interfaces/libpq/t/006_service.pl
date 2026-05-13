@@ -53,8 +53,7 @@ append_to_file($srvfile_nested, "service=invalid_srv\n");
 my $srvfile_nested_2 = "$td/pg_service_nested_2.conf";
 copy($srvfile_valid, $srvfile_nested_2)
   or die "Could not copy $srvfile_valid to $srvfile_nested_2: $!";
-append_to_file($srvfile_nested_2,
-	'servicefile=' . $srvfile_default . "\n");
+append_to_file($srvfile_nested_2, 'servicefile=' . $srvfile_default . "\n");
 
 # Set the fallback directory lookup of the service file to the temporary
 # directory of this test.  PGSYSCONFDIR is used if the service file

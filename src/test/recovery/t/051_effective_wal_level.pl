@@ -100,7 +100,8 @@ command_fails(
 		'--log' => $primary->logfile,
 		'start',
 	],
-	"cannot start server with wal_level='minimal' as there is in-use logical slot");
+	"cannot start server with wal_level='minimal' as there is in-use logical slot"
+);
 
 my $logfile = slurp_file($primary->logfile());
 like(

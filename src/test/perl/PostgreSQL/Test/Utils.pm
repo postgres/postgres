@@ -968,7 +968,7 @@ sub _diag_command_output
 
 	diag(join(" ", @$cmd));
 
-	for my $channel (['stdout', $stdout], ['stderr', $stderr])
+	for my $channel ([ 'stdout', $stdout ], [ 'stderr', $stderr ])
 	{
 		my ($name, $output) = @$channel;
 		next unless $output;
@@ -977,9 +977,9 @@ sub _diag_command_output
 		my @lines = split /\n/, $output;
 		if (@lines > 60)
 		{
-			diag(join("\n", @lines[0 .. 29]));
+			diag(join("\n", @lines[ 0 .. 29 ]));
 			diag("... " . (@lines - 60) . " lines omitted ...");
-			diag(join("\n", @lines[-30 .. -1]));
+			diag(join("\n", @lines[ -30 .. -1 ]));
 		}
 		else
 		{

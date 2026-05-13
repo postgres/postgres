@@ -152,10 +152,8 @@ like(
 	slurp_file($slots_filename),
 	qr/The slot \"test_slot2\" has not consumed the WAL yet/m,
 	'the previous test failed due to unconsumed WALs');
-unlike(
-	slurp_file($slots_filename),
-	qr/test_slot3/m,
-	'caught-up slot is not reported');
+unlike(slurp_file($slots_filename),
+	qr/test_slot3/m, 'caught-up slot is not reported');
 
 
 # ------------------------------

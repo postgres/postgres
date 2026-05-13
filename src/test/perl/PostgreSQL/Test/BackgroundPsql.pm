@@ -246,7 +246,8 @@ sub query
 
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	note "issuing query $query_cnt via background psql: $query" unless !$params{verbose};
+	note "issuing query $query_cnt via background psql: $query"
+	  unless !$params{verbose};
 
 	$self->{timeout}->start() if (defined($self->{query_timer_restart}));
 
@@ -280,7 +281,8 @@ sub query
 	  explain {
 		stdout => $self->{stdout},
 		stderr => $self->{stderr},
-	  } unless !$params{verbose};
+	  }
+	  unless !$params{verbose};
 
 	die "psql query timed out" if $self->{timeout}->is_expired;
 

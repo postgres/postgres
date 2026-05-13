@@ -117,11 +117,17 @@ sub adjust_database_contents
 	{
 		if ($dbnames{"contrib_regression_btree_gist"})
 		{
-			_add_st($result, 'contrib_regression_btree_gist',
+			_add_st(
+				$result,
+				'contrib_regression_btree_gist',
 				"drop index if exists public.inettmp_a_a1_idx");
-			_add_st($result, 'contrib_regression_btree_gist',
+			_add_st(
+				$result,
+				'contrib_regression_btree_gist',
 				"drop index if exists public.inetidx");
-			_add_st($result, 'contrib_regression_btree_gist',
+			_add_st(
+				$result,
+				'contrib_regression_btree_gist',
 				"drop index public.cidridx");
 		}
 		if ($dbnames{"regression_btree_gist"})

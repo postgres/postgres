@@ -160,8 +160,7 @@ while (<$lwlocklist>)
 	die "unable to parse lwlocklist.h line \"$_\"";
 }
 
-die
-  "$wait_event_lwlocks[$lwlock_count] defined in wait_event_names.txt but "
+die "$wait_event_lwlocks[$lwlock_count] defined in wait_event_names.txt but "
   . " missing from lwlocklist.h"
   if $lwlock_count < scalar @wait_event_lwlocks;
 

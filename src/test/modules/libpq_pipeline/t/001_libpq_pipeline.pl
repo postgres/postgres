@@ -52,8 +52,7 @@ for my $testname (@tests)
 	# Execute the test using the latest protocol version.
 	$node->command_ok(
 		[
-			'libpq_pipeline', @extraargs,
-			$testname,
+			'libpq_pipeline', @extraargs, $testname,
 			$node->connstr('postgres') . " max_protocol_version=latest"
 		],
 		"libpq_pipeline $testname");

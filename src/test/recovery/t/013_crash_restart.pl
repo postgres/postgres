@@ -255,8 +255,10 @@ is( $node->safe_psql(
 
 # Confirm that the logical replication launcher, a background worker
 # without the never-restart flag, has also restarted successfully.
-is($node->poll_query_until('postgres',
-	"SELECT count(*) = 1 FROM pg_stat_activity WHERE backend_type = 'logical replication launcher'"),
+is( $node->poll_query_until(
+		'postgres',
+		"SELECT count(*) = 1 FROM pg_stat_activity WHERE backend_type = 'logical replication launcher'"
+	),
 	'1',
 	'logical replication launcher restarted after crash');
 

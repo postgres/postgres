@@ -45,28 +45,30 @@ ok( (        $stdout =~ qr/^[1-9][0-9]*$/
 	'prefetch mode succeeded');
 
 # test_user should be unable to prewarm table/index without privileges
-($cmdret, $stdout, $stderr) =
-  $node->psql(
-    "postgres", "SELECT pg_prewarm('test');",
-    extra_params => [ '--username' => 'test_user' ]);
-ok($stderr =~ /permission denied for table test/, 'pg_prewarm failed as expected');
-($cmdret, $stdout, $stderr) =
-  $node->psql(
-    "postgres", "SELECT pg_prewarm('test_idx');",
-    extra_params => [ '--username' => 'test_user' ]);
-ok($stderr =~ /permission denied for index test_idx/, 'pg_prewarm failed as expected');
+($cmdret, $stdout, $stderr) = $node->psql(
+	"postgres",
+	"SELECT pg_prewarm('test');",
+	extra_params => [ '--username' => 'test_user' ]);
+ok($stderr =~ /permission denied for table test/,
+	'pg_prewarm failed as expected');
+($cmdret, $stdout, $stderr) = $node->psql(
+	"postgres",
+	"SELECT pg_prewarm('test_idx');",
+	extra_params => [ '--username' => 'test_user' ]);
+ok($stderr =~ /permission denied for index test_idx/,
+	'pg_prewarm failed as expected');
 
 # test_user should be able to prewarm table/index with privileges
 $node->safe_psql("postgres", "GRANT SELECT ON test TO test_user;");
-$result =
-  $node->safe_psql(
-    "postgres", "SELECT pg_prewarm('test');",
-    extra_params => [ '--username' => 'test_user' ]);
+$result = $node->safe_psql(
+	"postgres",
+	"SELECT pg_prewarm('test');",
+	extra_params => [ '--username' => 'test_user' ]);
 like($result, qr/^[1-9][0-9]*$/, 'pg_prewarm succeeded as expected');
-$result =
-  $node->safe_psql(
-    "postgres", "SELECT pg_prewarm('test_idx');",
-    extra_params => [ '--username' => 'test_user' ]);
+$result = $node->safe_psql(
+	"postgres",
+	"SELECT pg_prewarm('test_idx');",
+	extra_params => [ '--username' => 'test_user' ]);
 like($result, qr/^[1-9][0-9]*$/, 'pg_prewarm succeeded as expected');
 
 # test autoprewarm_dump_now()

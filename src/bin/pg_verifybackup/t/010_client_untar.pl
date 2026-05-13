@@ -135,9 +135,7 @@ for my $tc (@test_configuration)
 
 		# Verify tar backup.
 		$primary->command_ok(
-			[
-				'pg_verifybackup', '--exit-on-error', $backup_path,
-			],
+			[ 'pg_verifybackup', '--exit-on-error', $backup_path, ],
 			"verify backup, compression $method");
 
 		# Cleanup.

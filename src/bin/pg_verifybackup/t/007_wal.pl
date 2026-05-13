@@ -102,8 +102,7 @@ $primary->command_ok(
 		'--checkpoint' => 'fast'
 	],
 	"tar backup with separate pg_wal.tar");
-command_ok(
-	[ 'pg_verifybackup', $backup_path3 ],
+command_ok([ 'pg_verifybackup', $backup_path3 ],
 	'WAL verification succeeds with separate pg_wal.tar');
 
 done_testing();

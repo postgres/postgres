@@ -1031,9 +1031,11 @@ $primary->wait_for_replay_catchup($standby2);
 ##################################################
 
 # Recreate the slot by creating a subscription on the subscriber, keep it disabled.
-$subscriber1->safe_psql('postgres', qq[
+$subscriber1->safe_psql(
+	'postgres', qq[
 	CREATE TABLE push_wal (a int);
-	CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, failover = true, enabled = false);]);
+	CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, failover = true, enabled = false);]
+);
 
 # Create some DDL on the primary so that the slot lags behind the standby
 $primary->safe_psql('postgres', "CREATE TABLE push_wal (a int);");
@@ -1059,7 +1061,8 @@ $standby2->reload;
 # further calls, call the API in a background process.
 my $h = $standby2->background_psql('postgres', on_error_stop => 0);
 
-$h->query_until(qr/start/, q(
+$h->query_until(
+	qr/start/, q(
 	\echo start
 	SELECT pg_sync_replication_slots();
 	));
@@ -1089,7 +1092,8 @@ synchronized_standby_slots = 'sb2_slot'
 $primary->reload;
 
 # Enable the Subscription, so that the remote slot catches up
-$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 ENABLE");
 $subscriber1->wait_for_subscription_sync;
 
 # Create xl_running_xacts on the primary to speed up restart_lsn advancement.
@@ -1097,8 +1101,8 @@ $primary->safe_psql('postgres', "SELECT pg_log_standby_snapshot();");
 
 # Confirm from the log that the slot is sync-ready now.
 $standby2->wait_for_log(
-    qr/newly created replication slot \"lsub1_slot\" is sync-ready now/,
-    $log_offset);
+	qr/newly created replication slot \"lsub1_slot\" is sync-ready now/,
+	$log_offset);
 
 $h->quit;
 

@@ -85,7 +85,8 @@ for (my $i = 0; $i <= 20; $i++)
 # before even looking up the user. Hence you now get "sorry, too many
 # clients already" instead of "role does not exist" error. Test that
 # to ensure that we have used up all the slots.
-$node->connect_fails("dbname=postgres user=invalid_user",
+$node->connect_fails(
+	"dbname=postgres user=invalid_user",
 	"connection is rejected when all slots are in use",
 	expected_stderr => qr/FATAL:  sorry, too many clients already/);
 

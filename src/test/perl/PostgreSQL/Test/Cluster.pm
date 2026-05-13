@@ -1352,9 +1352,9 @@ sub restart
 		my $log =
 		  PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 		unlike($log, $params{log_unlike}, "unexpected fragment found in log")
-			if defined $params{log_unlike};
+		  if defined $params{log_unlike};
 		like($log, $params{log_like}, "expected fragment not found in log")
-			if defined $params{log_like};
+		  if defined $params{log_like};
 	}
 
 	if ($ret != 0)
@@ -2270,7 +2270,7 @@ sub psql
 		my $exc_save = $@;
 
 		# we need a dummy $stderr from hereon, if we didn't collect it
-		if (! defined $stderr)
+		if (!defined $stderr)
 		{
 			my $errtxt = "<not collected>";
 			$stderr = \$errtxt;
@@ -3960,7 +3960,8 @@ sub validate_slot_inactive_since
 		),
 		't',
 		"last inactive time for slot $slot_name is valid on node $name")
-	  or croak "could not validate captured inactive_since for slot $slot_name";
+	  or croak
+	  "could not validate captured inactive_since for slot $slot_name";
 
 	return $inactive_since;
 }

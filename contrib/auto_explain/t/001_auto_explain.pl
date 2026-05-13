@@ -173,9 +173,7 @@ like(
 	"index scan logged, json mode");
 
 # Extension options.
-$log_contents = query_log(
-	$node,
-	"SELECT 1;",
+$log_contents = query_log($node, "SELECT 1;",
 	{ "auto_explain.log_extension_options" => "debug" });
 
 like(

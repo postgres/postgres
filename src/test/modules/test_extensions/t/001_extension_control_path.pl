@@ -46,7 +46,8 @@ $node->safe_psql('postgres', "CREATE USER $user");
 
 my $ecp = $node->safe_psql('postgres', 'show extension_control_path;');
 
-is($ecp, "\$system$sep$ext_dir$sep$ext_dir2",
+is( $ecp,
+	"\$system$sep$ext_dir$sep$ext_dir2",
 	"custom extension control directory path configured");
 
 $node->safe_psql('postgres', "CREATE EXTENSION $ext_name");
@@ -79,21 +80,25 @@ is( $ret,
 
 # Test that a non-superuser is not able to read the extension location in
 # pg_available_extensions
-$ret = $node->safe_psql('postgres',
+$ret = $node->safe_psql(
+	'postgres',
 	"select location from pg_available_extensions where name = '$ext_name2'",
 	connstr => "user=$user");
 is( $ret,
 	"<insufficient privilege>",
-	"extension location is hidden in pg_available_extensions for users with insufficient privilege");
+	"extension location is hidden in pg_available_extensions for users with insufficient privilege"
+);
 
 # Test that a non-superuser is not able to read the extension location in
 # pg_available_extension_versions
-$ret = $node->safe_psql('postgres',
+$ret = $node->safe_psql(
+	'postgres',
 	"select location from pg_available_extension_versions where name = '$ext_name2'",
 	connstr => "user=$user");
 is( $ret,
 	"<insufficient privilege>",
-	"extension location is hidden in pg_available_extension_versions for users with insufficient privilege");
+	"extension location is hidden in pg_available_extension_versions for users with insufficient privilege"
+);
 
 # Ensure that extensions installed in $system are still visible when used with
 # custom extension control path.

@@ -105,7 +105,8 @@ my @sample_intersect = grep($not_in_sample_hash{$_}, @gucs_in_file);
 is(scalar(@sample_intersect),
 	0, "no parameters marked as NOT_IN_SAMPLE in postgresql.conf.sample");
 
-is(scalar(@lines_with_tabs), 0, "no lines with tabs in postgresql.conf.sample");
+is(scalar(@lines_with_tabs),
+	0, "no lines with tabs in postgresql.conf.sample");
 
 # These would log some information only on errors.
 foreach my $param (@missing_from_file)

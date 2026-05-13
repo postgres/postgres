@@ -51,7 +51,7 @@ sub process_file
 	$file =~ m/-(\d+)\./;
 	my $major_version = $1;
 	die "file name $file is not in the expected format\n"
-		unless defined $major_version;
+	  unless defined $major_version;
 
 	open(my $fh, '<', $file) || die "could not open file $file: $!\n";
 	open(my $tfh, '>', $tmpfile) || die "could not open file $tmpfile: $!\n";

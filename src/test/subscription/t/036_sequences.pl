@@ -250,15 +250,12 @@ my $publisher_limited_connstr =
   $node_publisher->connstr . ' dbname=postgres user=regress_seq_repl';
 $log_offset = -s $node_subscriber->logfile;
 
-$node_subscriber->safe_psql(
-	'postgres',
+$node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION regress_seq_sub CONNECTION '$publisher_limited_connstr'"
 );
 
-$node_subscriber->safe_psql(
-	'postgres',
-	"ALTER SUBSCRIPTION regress_seq_sub REFRESH SEQUENCES"
-);
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_seq_sub REFRESH SEQUENCES");
 
 $node_subscriber->wait_for_log(
 	qr/WARNING: ( [A-Z0-9]+:)? missing sequence on publisher \("public.regress_s2"\)/,

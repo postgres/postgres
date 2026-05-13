@@ -5279,7 +5279,7 @@ foreach my $run (sort keys %pgdump_runs)
 		#
 		# Either "all_runs" should be set or there should be a "like" list,
 		# even if it is empty.  (This makes the test more self-documenting.)
-		if (!defined($tests{$test}->{all_runs})
+		if (   !defined($tests{$test}->{all_runs})
 			&& !defined($tests{$test}->{like}))
 		{
 			die "missing \"like\" in test \"$test\"";

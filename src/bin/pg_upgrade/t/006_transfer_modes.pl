@@ -41,8 +41,10 @@ sub test_mode
 	# allow_in_place_tablespaces is available as far back as v10.
 	if ($old->pg_version >= 10)
 	{
-		$new->append_conf('postgresql.conf', "allow_in_place_tablespaces = true");
-		$old->append_conf('postgresql.conf', "allow_in_place_tablespaces = true");
+		$new->append_conf('postgresql.conf',
+			"allow_in_place_tablespaces = true");
+		$old->append_conf('postgresql.conf',
+			"allow_in_place_tablespaces = true");
 	}
 
 	# We can only test security labels if both the old and new installations
@@ -95,13 +97,15 @@ sub test_mode
 		$old->safe_psql('postgres',
 			"CREATE DATABASE testdb3 TABLESPACE inplc_tblspc");
 		$old->safe_psql('postgres',
-			"CREATE TABLE test5 TABLESPACE inplc_tblspc AS SELECT generate_series(503, 606)");
+			"CREATE TABLE test5 TABLESPACE inplc_tblspc AS SELECT generate_series(503, 606)"
+		);
 		$old->safe_psql('testdb3',
 			"CREATE TABLE test6 AS SELECT generate_series(607, 711)");
 	}
 
 	# While we are here, test handling of large objects.
-	$old->safe_psql('postgres', q|
+	$old->safe_psql(
+		'postgres', q|
 		CREATE ROLE regress_lo_1;
 		CREATE ROLE regress_lo_2;
 
@@ -115,7 +119,8 @@ sub test_mode
 
 	if ($test_seclabel)
 	{
-		$old->safe_psql('postgres', q|
+		$old->safe_psql(
+			'postgres', q|
 			CREATE EXTENSION dummy_seclabel;
 
 			SELECT lo_from_bytea(4534, '\x00ffffff');
@@ -166,9 +171,11 @@ sub test_mode
 		# Tests for in-place tablespaces.
 		if ($old->pg_version >= 10)
 		{
-			$result = $new->safe_psql('postgres', "SELECT COUNT(*) FROM test5");
+			$result =
+			  $new->safe_psql('postgres', "SELECT COUNT(*) FROM test5");
 			is($result, '104', "test5 data after pg_upgrade $mode");
-			$result = $new->safe_psql('testdb3', "SELECT COUNT(*) FROM test6");
+			$result =
+			  $new->safe_psql('testdb3', "SELECT COUNT(*) FROM test6");
 			is($result, '105', "test6 data after pg_upgrade $mode");
 		}
 
@@ -182,18 +189,21 @@ sub test_mode
 		$result = $new->safe_psql('postgres', "SELECT lo_get(4533)");
 		is($result, '\x0f0f0f0f', "LO contents after upgrade");
 		$result = $new->safe_psql('postgres',
-			"SELECT lomowner::regrole FROM pg_largeobject_metadata WHERE oid = 4533");
+			"SELECT lomowner::regrole FROM pg_largeobject_metadata WHERE oid = 4533"
+		);
 		is($result, 'regress_lo_1', "LO owner after upgrade");
 		$result = $new->safe_psql('postgres',
 			"SELECT lomacl FROM pg_largeobject_metadata WHERE oid = 4533");
-		is($result, '{regress_lo_1=rw/regress_lo_1,regress_lo_2=r/regress_lo_1}',
+		is( $result,
+			'{regress_lo_1=rw/regress_lo_1,regress_lo_2=r/regress_lo_1}',
 			"LO ACL after upgrade");
 
 		if ($test_seclabel)
 		{
 			$result = $new->safe_psql('postgres', "SELECT lo_get(4534)");
 			is($result, '\x00ffffff', "LO contents after upgrade");
-			$result = $new->safe_psql('postgres', q|
+			$result = $new->safe_psql(
+				'postgres', q|
 				SELECT label FROM pg_seclabel WHERE objoid = 4534
 				AND classoid = 'pg_largeobject'::regclass
 			|);

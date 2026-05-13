@@ -106,7 +106,8 @@ example.com "$ddir/server.crt" "$ddir/server.key" "" "echo FooBaR1" on
 		qr/WARNING.*SNI is enabled; installed TLS init hook will be ignored/,
 		"server warns that init hook and SNI are incompatible");
 	# Ensure that the warning was printed once and not once per host line
-	my $count =()= $log_contents =~ m/installed TLS init hook will be ignored/;
+	my $count = () =
+	  $log_contents =~ m/installed TLS init hook will be ignored/;
 	is($count, 1, 'Only one WARNING');
 }
 

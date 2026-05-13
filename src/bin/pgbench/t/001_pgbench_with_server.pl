@@ -1823,10 +1823,9 @@ update counter set i = i+1 returning i \gset
 
 # Test copy in pgbench
 $node->pgbench(
-	'-t 10',
-	2,
+	'-t 10', 2,
 	[],
-	[ qr{COPY is not supported in pgbench, aborting} ],
+	[qr{COPY is not supported in pgbench, aborting}],
 	'Test copy in script',
 	{
 		'001_copy' => q{ COPY pgbench_accounts FROM stdin }
@@ -1836,16 +1835,12 @@ $node->pgbench(
 $node->safe_psql('postgres', 'DROP TABLE counter;');
 
 # Test --continue-on-error
-$node->safe_psql('postgres',
-	'CREATE TABLE unique_table(i int unique);');
+$node->safe_psql('postgres', 'CREATE TABLE unique_table(i int unique);');
 
 $node->pgbench(
 	'-n -t 10 --continue-on-error --failures-detailed',
 	0,
-	[
-		qr{processed: 1/10\b},
-		qr{other failures: 9\b}
-	],
+	[ qr{processed: 1/10\b}, qr{other failures: 9\b} ],
 	[],
 	'test --continue-on-error',
 	{

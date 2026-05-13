@@ -43,7 +43,7 @@ if (!-f $test_prog)
 note("Using test program: $test_prog");
 
 my ($stdout, $stderr);
-my $result = run [ $test_prog ], '>', \$stdout, '2>', \$stderr;
+my $result = run [$test_prog], '>', \$stdout, '2>', \$stderr;
 
 note("Test program output:");
 note($stdout) if $stdout;
@@ -55,6 +55,6 @@ if ($stderr)
 }
 
 ok($result && $stdout =~ /SUCCESS.*O_CLOEXEC behavior verified/s,
-   "O_CLOEXEC prevents handle inheritance");
+	"O_CLOEXEC prevents handle inheritance");
 
 done_testing();

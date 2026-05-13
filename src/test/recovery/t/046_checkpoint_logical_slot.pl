@@ -158,9 +158,7 @@ $primary->backup($backup_name);
 
 # Create a standby
 my $standby = PostgreSQL::Test::Cluster->new('standby');
-$standby->init_from_backup(
-	$primary, $backup_name,
-	has_streaming => 1);
+$standby->init_from_backup($primary, $backup_name, has_streaming => 1);
 
 my $connstr_1 = $primary->connstr;
 $standby->append_conf(
@@ -170,7 +168,8 @@ primary_slot_name = 'phys_slot'
 primary_conninfo = '$connstr_1 dbname=postgres'
 ));
 
-$primary->safe_psql('postgres',
+$primary->safe_psql(
+	'postgres',
 	q{SELECT pg_create_logical_replication_slot('failover_slot', 'test_decoding', false, false, true);
 	 SELECT pg_create_physical_replication_slot('phys_slot');}
 );
@@ -198,7 +197,8 @@ checkpoint;
 
 # Wait until the checkpoint stops right before invalidating slots
 note('waiting for injection_point');
-$standby->wait_for_event('checkpointer', 'restartpoint-before-slot-invalidation');
+$standby->wait_for_event('checkpointer',
+	'restartpoint-before-slot-invalidation');
 note('injection_point is reached');
 
 # Enable slot sync worker to synchronize the failover slot to the standby
@@ -206,12 +206,13 @@ $standby->append_conf('postgresql.conf', qq(sync_replication_slots = on));
 $standby->reload;
 
 # Wait for the slot to be synced
-$standby->poll_query_until(
-	'postgres',
-	"SELECT COUNT(*) > 0 FROM pg_replication_slots WHERE slot_name = 'failover_slot'");
+$standby->poll_query_until('postgres',
+	"SELECT COUNT(*) > 0 FROM pg_replication_slots WHERE slot_name = 'failover_slot'"
+);
 
 # Release the checkpointer
-$standby->safe_psql('postgres',
+$standby->safe_psql(
+	'postgres',
 	q{select injection_points_wakeup('restartpoint-before-slot-invalidation');
 	  select injection_points_detach('restartpoint-before-slot-invalidation')});
 
