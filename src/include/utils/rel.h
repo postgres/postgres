@@ -664,6 +664,20 @@ RelationCloseSmgr(Relation relation)
  * RELATION_IS_OTHER_TEMP
  *		Test for a temporary relation that belongs to some other session.
  *
+ * Reading another session's temp-table data through never works right:
+ * the owning session keeps the data in its private local buffer pool,
+ * which we cannot access.  The macro is therefore used at the buffer-manager
+ * level to reject such accesses, and by command-level code (TRUNCATE,
+ * ALTER TABLE, VACUUM, CLUSTER, REINDEX, ...) for command-specific error
+ * messages.
+ *
+ * Currenlty buffer manager checks include only ReadBufferExtended(), and
+ * PrefetchBuffer(); while ReadBuffer_common(), read_stream_begin_impl(), and
+ * StartReadBuffersImpl() are not covered.  As a result, read paths that
+ * bypass ReadBufferExtended() -- notably sequential scans that go through
+ * the read-stream API -- silently return no rows when targeted at another
+ * session's temp table instead of failing.
+ *
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
