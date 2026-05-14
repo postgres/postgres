@@ -666,17 +666,12 @@ RelationCloseSmgr(Relation relation)
  *
  * Reading another session's temp-table data through never works right:
  * the owning session keeps the data in its private local buffer pool,
- * which we cannot access.  The macro is therefore used at the buffer-manager
- * level to reject such accesses, and by command-level code (TRUNCATE,
- * ALTER TABLE, VACUUM, CLUSTER, REINDEX, ...) for command-specific error
- * messages.
- *
- * Currenlty buffer manager checks include only ReadBufferExtended(), and
- * PrefetchBuffer(); while ReadBuffer_common(), read_stream_begin_impl(), and
- * StartReadBuffersImpl() are not covered.  As a result, read paths that
- * bypass ReadBufferExtended() -- notably sequential scans that go through
- * the read-stream API -- silently return no rows when targeted at another
- * session's temp table instead of failing.
+ * which we cannot access.  Existing buffer-manager entry points
+ * (ReadBuffer_common(), StartReadBuffersImpl(), read_stream_begin_impl(),
+ * and PrefetchBuffer()) already enforce this; any new buffer-access entry
+ * points must do the same.  Command-level code (TRUNCATE, ALTER TABLE,
+ * VACUUM, CLUSTER, REINDEX, ...) additionally uses this macro for
+ * command-specific error messages.
  *
  * Beware of multiple eval of argument
  */

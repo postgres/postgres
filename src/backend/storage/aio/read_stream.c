@@ -777,6 +777,16 @@ read_stream_begin_impl(int flags,
 	Oid			tablespace_id;
 
 	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (rel && RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
+	/*
 	 * Decide how many I/Os we will allow to run at the same time.  This
 	 * number also affects how far we look ahead for opportunities to start
 	 * more I/Os.

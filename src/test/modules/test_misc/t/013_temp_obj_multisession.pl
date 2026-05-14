@@ -55,25 +55,20 @@ my ($stdout, $stderr);
 # DML and SELECT have to read the table's data and therefore go through
 # the buffer manager.  With no index on the table, the planner cannot
 # use index access, so SELECT/UPDATE/DELETE/MERGE/COPY all run through
-# the read-stream path.
-#
-# XXX: in current code, the read-stream path bypasses the
-# RELATION_IS_OTHER_TEMP() check, so these commands silently see no
-# rows / report zero affected rows -- the visible symptom of the bug
-# this test suite documents.  A follow-up patch will route the check
-# through read_stream_begin_impl() and these assertions will be
-# updated to expect "cannot access temporary tables of other sessions".
+# the read-stream path and are caught by read_stream_begin_impl().
 
 $node->psql(
 	'postgres',
 	"SELECT val FROM $tempschema.foo;",
-	stdout => \$stdout,
 	stderr => \$stderr);
-is($stderr, '', 'SELECT (currently no error -- bug to be fixed)');
+like(
+	$stderr,
+	qr/cannot access temporary tables of other sessions/,
+	'SELECT (seqscan via read_stream)');
 
 # INSERT goes through hio.c which calls ReadBufferExtended() to find a
-# page with free space; that hits the existing check before any data is
-# written.  This case currently errors as expected.
+# page with free space; that hits the existing check before any data
+# is written.
 $node->psql(
 	'postgres',
 	"INSERT INTO $tempschema.foo VALUES (73);",
@@ -87,21 +82,21 @@ $node->psql(
 	'postgres',
 	"UPDATE $tempschema.foo SET val = NULL;",
 	stderr => \$stderr);
-is($stderr, '', 'UPDATE (currently no error -- bug to be fixed)');
+like($stderr, qr/cannot access temporary tables of other sessions/, 'UPDATE');
 
 $node->psql('postgres', "DELETE FROM $tempschema.foo;", stderr => \$stderr);
-is($stderr, '', 'DELETE (currently no error -- bug to be fixed)');
+like($stderr, qr/cannot access temporary tables of other sessions/, 'DELETE');
 
 $node->psql(
 	'postgres',
 	"MERGE INTO $tempschema.foo USING (VALUES (42)) AS s(val) "
 	  . "ON foo.val = s.val WHEN MATCHED THEN DELETE;",
 	stderr => \$stderr);
-is($stderr, '', 'MERGE (currently no error -- bug to be fixed)');
+like($stderr, qr/cannot access temporary tables of other sessions/, 'MERGE');
 
 $node->psql('postgres', "COPY $tempschema.foo TO STDOUT;",
 	stderr => \$stderr);
-is($stderr, '', 'COPY (currently no error -- bug to be fixed)');
+like($stderr, qr/cannot access temporary tables of other sessions/, 'COPY');
 
 # DDL and maintenance commands have their own command-specific checks
 # (older than the buffer-manager check above), so they fail with
