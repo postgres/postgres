@@ -3630,22 +3630,19 @@ getTransactionStatus(PGconn *con)
 static void
 printVerboseErrorMessages(CState *st, pg_time_usec_t *now, bool is_retry)
 {
-	static PQExpBuffer buf = NULL;
+	PQExpBufferData buf;
 
-	if (buf == NULL)
-		buf = createPQExpBuffer();
-	else
-		resetPQExpBuffer(buf);
+	initPQExpBuffer(&buf);
 
-	printfPQExpBuffer(buf, "client %d ", st->id);
-	appendPQExpBufferStr(buf, (is_retry ?
-							   "repeats the transaction after the error" :
-							   "ends the failed transaction"));
-	appendPQExpBuffer(buf, " (try %u", st->tries);
+	printfPQExpBuffer(&buf, "client %d ", st->id);
+	appendPQExpBufferStr(&buf, (is_retry ?
+								"repeats the transaction after the error" :
+								"ends the failed transaction"));
+	appendPQExpBuffer(&buf, " (try %u", st->tries);
 
 	/* Print max_tries if it is not unlimited. */
 	if (max_tries)
-		appendPQExpBuffer(buf, "/%u", max_tries);
+		appendPQExpBuffer(&buf, "/%u", max_tries);
 
 	/*
 	 * If the latency limit is used, print a percentage of the current
@@ -3654,12 +3651,14 @@ printVerboseErrorMessages(CState *st, pg_time_usec_t *now, bool is_retry)
 	if (latency_limit)
 	{
 		pg_time_now_lazy(now);
-		appendPQExpBuffer(buf, ", %.3f%% of the maximum time of tries was used",
+		appendPQExpBuffer(&buf, ", %.3f%% of the maximum time of tries was used",
 						  (100.0 * (*now - st->txn_scheduled) / latency_limit));
 	}
-	appendPQExpBufferStr(buf, ")\n");
+	appendPQExpBufferStr(&buf, ")\n");
 
-	pg_log_info("%s", buf->data);
+	pg_log_info("%s", buf.data);
+
+	termPQExpBuffer(&buf);
 }
 
 /*
