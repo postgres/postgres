@@ -3017,7 +3017,8 @@ executeStringInternalMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		case jpiStrSplitPart:
 			{
 				char	   *from_str;
-				Numeric		n;
+				int32		n;
+				ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 				jspGetLeftArg(jsp, &elem);
 				if (elem.type != jpiString)
@@ -3029,13 +3030,25 @@ executeStringInternalMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				if (elem.type != jpiNumeric)
 					elog(ERROR, "invalid jsonpath item type for .split_part()");
 
-				n = jspGetNumeric(&elem);
+				n = numeric_int4_safe(jspGetNumeric(&elem),
+									  (Node *) &escontext);
+				if (escontext.error_occurred)
+					RETURN_ERROR(ereport(ERROR,
+										 errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+										 errmsg("field position of jsonpath item method .%s() is out of range for type integer",
+												jspOperationName(jsp->type))));
+
+				if (n == 0)
+					RETURN_ERROR(ereport(ERROR,
+										 errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+										 errmsg("field position of jsonpath item method .%s() must not be zero",
+												jspOperationName(jsp->type))));
 
 				resStr = TextDatumGetCString(DirectFunctionCall3Coll(split_part,
 																	 DEFAULT_COLLATION_OID,
 																	 str,
 																	 CStringGetTextDatum(from_str),
-																	 DirectFunctionCall1(numeric_int4, NumericGetDatum(n))));
+																	 Int32GetDatum(n)));
 				break;
 			}
 		default:

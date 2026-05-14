@@ -721,6 +721,10 @@ select jsonb_path_query('"hello world"', '$.replace("hello","bye") starts with "
 -- Test .split_part()
 select jsonb_path_query('"abc~@~def~@~ghi"', '$.split_part("~@~", 2)');
 select jsonb_path_query('"abc,def,ghi,jkl"', '$.split_part(",", -2)');
+select jsonb_path_query('"a,b"', '$.split_part(",", 0)');
+select jsonb_path_query('"a,b"', '$.split_part(",", 0)', silent => true);
+select jsonb_path_query('"a,b"', '$.split_part(",", 2147483648)');
+select jsonb_path_query('"a,b"', '$.split_part(",", 2147483648)', silent => true);
 
 -- Test string methods play nicely together
 select jsonb_path_query('"hello world"', '$.replace("hello","bye").upper()');
