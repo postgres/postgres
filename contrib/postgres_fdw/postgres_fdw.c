@@ -5886,7 +5886,7 @@ fetch_attstats(PGconn *conn, int server_version_num,
 						   " AND tablename = ");
 	deparseStringLiteral(&sql, remote_relname);
 	appendStringInfo(&sql,
-					 " AND attname = ANY('%s'::text[])",
+					 " AND attname = ANY(%s)",
 					 column_list);
 
 	/* inherited is supported since Postgres 9.0 */
@@ -5921,7 +5921,7 @@ build_remattrmap(Relation relation, List *va_cols,
 
 	remattrmap = palloc_array(RemoteAttributeMapping, tupdesc->natts);
 	initStringInfo(column_list);
-	appendStringInfoChar(column_list, '{');
+	appendStringInfoString(column_list, "ARRAY[");
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
@@ -5954,7 +5954,7 @@ build_remattrmap(Relation relation, List *va_cols,
 
 		if (attrcnt > 0)
 			appendStringInfoString(column_list, ", ");
-		appendStringInfoString(column_list, quote_identifier(remote_attname));
+		deparseStringLiteral(column_list, remote_attname);
 
 		remattrmap[attrcnt].local_attnum = attnum;
 		strncpy(remattrmap[attrcnt].local_attname, attname, NAMEDATALEN);
@@ -5962,7 +5962,7 @@ build_remattrmap(Relation relation, List *va_cols,
 		remattrmap[attrcnt].res_index = -1;
 		attrcnt++;
 	}
-	appendStringInfoChar(column_list, '}');
+	appendStringInfoChar(column_list, ']');
 
 	/* Sort mapping by remote attribute name if needed. */
 	if (attrcnt > 1)
