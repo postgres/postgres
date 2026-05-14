@@ -21,6 +21,7 @@ tests += {
       't/010_index_concurrently_upsert.pl',
       't/011_lock_stats.pl',
       't/012_ddlutils.pl',
+      't/013_temp_obj_multisession.pl',
     ],
     # The injection points are cluster-wide, so disable installcheck
     'runningcheck': false,
