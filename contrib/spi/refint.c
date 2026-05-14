@@ -487,7 +487,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 						nv = SPI_getvalue(newtuple, tupdesc, fn);
 
 						appendStringInfo(&sql, " %s = %s ",
-										 args2[k], quote_literal_cstr(nv));
+										 args2[k],
+										 nv ? quote_literal_cstr(nv) : "NULL");
 						if (k < nkeys)
 							appendStringInfoString(&sql, ", ");
 					}
