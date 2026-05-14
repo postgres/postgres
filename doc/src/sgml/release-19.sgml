@@ -6,7 +6,7 @@
 
  <formalpara>
   <title>Release date:</title>
-  <para>2026-??-??, AS OF 2026-04-13</para>
+  <para>2026-??-??, AS OF 2026-05-14</para>
  </formalpara>
 
   <sect2 id="release-19-highlights">
@@ -181,6 +181,21 @@ Disallow system columns from being used in COPY FROM ... WHERE (Tom Lane)
 
 <para>
 The values of such columns were not well-defined.
+</para>
+</listitem>
+
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2026-05-01 [8d829f5a0] Fix JSON_ARRAY(query) empty set handling and view depars
+-->
+
+<listitem>
+<para>
+Change a json_array() call which returns no rows to return an empty JSON array (Richard Guo)
+</para>
+
+<para>
+This previously returned NULL.
 </para>
 </listitem>
 
