@@ -1348,8 +1348,8 @@ CopyRelationTo(CopyToState cstate, Relation rel, Relation root_rel, uint64 *proc
 	if (root_rel != NULL)
 	{
 		root_slot = table_slot_create(root_rel, NULL);
-		map = build_attrmap_by_name_if_req(RelationGetDescr(root_rel),
-										   RelationGetDescr(rel),
+		map = build_attrmap_by_name_if_req(RelationGetDescr(rel),
+										   RelationGetDescr(root_rel),
 										   false);
 	}
 

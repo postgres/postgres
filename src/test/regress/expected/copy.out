@@ -594,3 +594,14 @@ id	val
 5	15
 6	16
 DROP TABLE PP;
+-- Check if COPY TO handles dropped columns in partitions.
+CREATE TABLE pp_dropcol (id int, val int) PARTITION BY RANGE (id);
+CREATE TABLE pp_dropcol_1 (dropme int, id int, val int);
+ALTER TABLE pp_dropcol_1 DROP COLUMN dropme;
+ALTER TABLE pp_dropcol ATTACH PARTITION pp_dropcol_1 FOR VALUES FROM (1) TO (10);
+INSERT INTO pp_dropcol VALUES (1, 11), (2, 12);
+COPY pp_dropcol TO stdout(header);
+id	val
+1	11
+2	12
+DROP TABLE pp_dropcol;
