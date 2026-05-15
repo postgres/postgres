@@ -369,7 +369,7 @@ Branch: REL_14_STABLE [b282280e9] 2026-05-11 05:13:51 -0700
 
      <para>
       Use <function>timingsafe_bcmp()</function> instead
-      of <function>memcpy()</function> or <function>strcmp()</function>
+      of <function>memcmp()</function> or <function>strcmp()</function>
       when checking passwords, hashes, etc.  It is not known whether the
       data dependency of those functions is usefully exploitable in any of
       these places, but in the interests of safety, replace them.
