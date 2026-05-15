@@ -192,6 +192,7 @@ Author: Richard Guo <rguo@postgresql.org>
 <listitem>
 <para>
 Change a json_array() call which returns no rows to return an empty JSON array (Richard Guo)
+<ulink url="&commit_baseurl;8d829f5a0">&sect;</ulink>
 </para>
 
 <para>
@@ -3066,18 +3067,6 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 <para>
 Make multixid members 64-bit (Maxim Orlov)
 <ulink url="&commit_baseurl;bd8d9c9bd">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2026-03-22 [e5836f7b7] Add fake LSN support to hash index AM.
--->
-
-<listitem>
-<para>
-Add fake LSN support to hash index AM (Peter Geoghegan)
-<ulink url="&commit_baseurl;e5836f7b7">&sect;</ulink>
 </para>
 </listitem>
 
