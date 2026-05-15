@@ -5250,7 +5250,7 @@ match_previous_words(int pattern_id,
 		 */
 		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
 			COMPLETE_WITH("ANALYZE", "CONCURRENTLY", "VERBOSE");
-		else if (TailMatches("ANALYZE", "CONCURRENTLY", "VERBOSE"))
+		else if (TailMatches("ANALYZE|CONCURRENTLY|VERBOSE"))
 			COMPLETE_WITH("ON", "OFF");
 	}
 
