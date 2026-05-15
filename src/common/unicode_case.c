@@ -39,7 +39,7 @@ static const char32_t *const casekind_map[NCaseKind] =
 };
 
 static char32_t find_case_map(char32_t ucs, const char32_t *map);
-static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+static size_t convert_case(char *dst, size_t dstsize, const char *src, size_t srclen,
 						   CaseKind str_casekind, bool full, WordBoundaryNext wbnext,
 						   void *wbstate);
 static enum CaseMapResult casemap(char32_t u1, CaseKind casekind, bool full,
@@ -84,8 +84,7 @@ unicode_casefold_simple(char32_t code)
  * Convert src to lowercase, and return the result length (not including
  * terminating NUL).
  *
- * String src must be encoded in UTF-8. If srclen < 0, src must be
- * NUL-terminated.
+ * String src must be encoded in UTF-8.
  *
  * Result string is stored in dst, truncating if larger than dstsize. If
  * dstsize is greater than the result length, dst will be NUL-terminated;
@@ -98,7 +97,7 @@ unicode_casefold_simple(char32_t code)
  * conditions are satisfied.
  */
 size_t
-unicode_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+unicode_strlower(char *dst, size_t dstsize, const char *src, size_t srclen,
 				 bool full)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseLower, full, NULL,
@@ -111,8 +110,7 @@ unicode_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * Convert src to titlecase, and return the result length (not including
  * terminating NUL).
  *
- * String src must be encoded in UTF-8. If srclen < 0, src must be
- * NUL-terminated.
+ * String src must be encoded in UTF-8.
  *
  * Result string is stored in dst, truncating if larger than dstsize. If
  * dstsize is greater than the result length, dst will be NUL-terminated;
@@ -135,7 +133,7 @@ unicode_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * the string to indicate the final boundary.
  */
 size_t
-unicode_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+unicode_strtitle(char *dst, size_t dstsize, const char *src, size_t srclen,
 				 bool full, WordBoundaryNext wbnext, void *wbstate)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseTitle, full, wbnext,
@@ -148,8 +146,7 @@ unicode_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * Convert src to uppercase, and return the result length (not including
  * terminating NUL).
  *
- * String src must be encoded in UTF-8. If srclen < 0, src must be
- * NUL-terminated.
+ * String src must be encoded in UTF-8.
  *
  * Result string is stored in dst, truncating if larger than dstsize. If
  * dstsize is greater than the result length, dst will be NUL-terminated;
@@ -162,7 +159,7 @@ unicode_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * conditions are satisfied.
  */
 size_t
-unicode_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+unicode_strupper(char *dst, size_t dstsize, const char *src, size_t srclen,
 				 bool full)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseUpper, full, NULL,
@@ -175,8 +172,7 @@ unicode_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * Case fold src, and return the result length (not including terminating
  * NUL).
  *
- * String src must be encoded in UTF-8. If srclen < 0, src must be
- * NUL-terminated.
+ * String src must be encoded in UTF-8.
  *
  * Result string is stored in dst, truncating if larger than dstsize. If
  * dstsize is greater than the result length, dst will be NUL-terminated;
@@ -186,7 +182,7 @@ unicode_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * required buffer size before allocating.
  */
 size_t
-unicode_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+unicode_strfold(char *dst, size_t dstsize, const char *src, size_t srclen,
 				bool full)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseFold, full, NULL,
@@ -210,7 +206,7 @@ unicode_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * map a single codepoint to multiple codepoints, or depend on conditions.
  */
 static size_t
-convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+convert_case(char *dst, size_t dstsize, const char *src, size_t srclen,
 			 CaseKind str_casekind, bool full, WordBoundaryNext wbnext,
 			 void *wbstate)
 {
@@ -229,7 +225,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 		Assert(boundary == 0);	/* start of text is always a boundary */
 	}
 
-	while ((srclen < 0 || srcoff < srclen) && src[srcoff] != '\0')
+	while (srcoff < srclen)
 	{
 		char32_t	u1 = utf8_to_unicode((const unsigned char *) src + srcoff);
 		int			u1len = unicode_utf8len(u1);

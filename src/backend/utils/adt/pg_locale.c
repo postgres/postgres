@@ -1262,11 +1262,10 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 /* lowercasing/casefolding in C locale */
 static size_t
-strlower_c(char *dst, size_t dstsize, const char *src, ssize_t srclen)
+strlower_c(char *dst, size_t dstsize, const char *src, size_t srclen)
 {
 	int			i;
 
-	srclen = (srclen >= 0) ? srclen : strlen(src);
 	for (i = 0; i < srclen && i < dstsize; i++)
 		dst[i] = pg_ascii_tolower(src[i]);
 	if (i < dstsize)
@@ -1276,12 +1275,11 @@ strlower_c(char *dst, size_t dstsize, const char *src, ssize_t srclen)
 
 /* titlecasing in C locale */
 static size_t
-strtitle_c(char *dst, size_t dstsize, const char *src, ssize_t srclen)
+strtitle_c(char *dst, size_t dstsize, const char *src, size_t srclen)
 {
 	bool		wasalnum = false;
 	int			i;
 
-	srclen = (srclen >= 0) ? srclen : strlen(src);
 	for (i = 0; i < srclen && i < dstsize; i++)
 	{
 		char		c = src[i];
@@ -1302,11 +1300,10 @@ strtitle_c(char *dst, size_t dstsize, const char *src, ssize_t srclen)
 
 /* uppercasing in C locale */
 static size_t
-strupper_c(char *dst, size_t dstsize, const char *src, ssize_t srclen)
+strupper_c(char *dst, size_t dstsize, const char *src, size_t srclen)
 {
 	int			i;
 
-	srclen = (srclen >= 0) ? srclen : strlen(src);
 	for (i = 0; i < srclen && i < dstsize; i++)
 		dst[i] = pg_ascii_toupper(src[i]);
 	if (i < dstsize)
@@ -1315,7 +1312,7 @@ strupper_c(char *dst, size_t dstsize, const char *src, ssize_t srclen)
 }
 
 size_t
-pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+pg_strlower(char *dst, size_t dstsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
 	if (locale->ctype == NULL)
@@ -1325,7 +1322,7 @@ pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 }
 
 size_t
-pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+pg_strtitle(char *dst, size_t dstsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
 	if (locale->ctype == NULL)
@@ -1335,7 +1332,7 @@ pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 }
 
 size_t
-pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+pg_strupper(char *dst, size_t dstsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
 	if (locale->ctype == NULL)
@@ -1345,7 +1342,7 @@ pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 }
 
 size_t
-pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+pg_strfold(char *dst, size_t dstsize, const char *src, size_t srclen,
 		   pg_locale_t locale)
 {
 	/* in the C locale, casefolding is the same as lowercasing */
@@ -1363,7 +1360,7 @@ pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * pg_strfold(..., default_locale)?
  */
 size_t
-pg_downcase_ident(char *dst, size_t dstsize, const char *src, ssize_t srclen)
+pg_downcase_ident(char *dst, size_t dstsize, const char *src, size_t srclen)
 {
 	pg_locale_t locale = default_locale;
 
@@ -1383,7 +1380,7 @@ pg_downcase_ident(char *dst, size_t dstsize, const char *src, ssize_t srclen)
 int
 pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale)
 {
-	return locale->collate->strncoll(arg1, -1, arg2, -1, locale);
+	return locale->collate->strcoll(arg1, arg2, locale);
 }
 
 /*
@@ -1393,15 +1390,14 @@ pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale)
  * appropriate for the given locale, platform, and database encoding. If the
  * locale is not specified, use the database collation.
  *
- * The input strings must be encoded in the database encoding. If an input
- * string is NUL-terminated, its length may be specified as -1.
+ * The input strings must be encoded in the database encoding.
  *
  * The caller is responsible for breaking ties if the collation is
  * deterministic; this maintains consistency with pg_strnxfrm(), which cannot
  * easily account for deterministic collations.
  */
 int
-pg_strncoll(const char *arg1, ssize_t len1, const char *arg2, ssize_t len2,
+pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
 			pg_locale_t locale)
 {
 	return locale->collate->strncoll(arg1, len1, arg2, len2, locale);
@@ -1433,7 +1429,7 @@ pg_strxfrm_enabled(pg_locale_t locale)
 size_t
 pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
 {
-	return locale->collate->strnxfrm(dest, destsize, src, -1, locale);
+	return locale->collate->strxfrm(dest, destsize, src, locale);
 }
 
 /*
@@ -1443,9 +1439,8 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  * ordinary strcmp() on transformed strings is equivalent to pg_strcoll() on
  * untransformed strings.
  *
- * The input string must be encoded in the database encoding. If the input
- * string is NUL-terminated, its length may be specified as -1. If 'destsize'
- * is zero, 'dest' may be NULL.
+ * The input string must be encoded in the database encoding. If 'destsize' is
+ * zero, 'dest' may be NULL.
  *
  * Not all providers support pg_strnxfrm() safely. The caller should check
  * pg_strxfrm_enabled() first, otherwise this function may return wrong
@@ -1456,7 +1451,7 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  * 'destsize' or greater, the resulting contents of 'dest' are undefined.
  */
 size_t
-pg_strnxfrm(char *dest, size_t destsize, const char *src, ssize_t srclen,
+pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
 	return locale->collate->strnxfrm(dest, destsize, src, srclen, locale);
@@ -1481,7 +1476,7 @@ size_t
 pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 				  pg_locale_t locale)
 {
-	return locale->collate->strnxfrm_prefix(dest, destsize, src, -1, locale);
+	return locale->collate->strxfrm_prefix(dest, destsize, src, locale);
 }
 
 /*
@@ -1491,8 +1486,7 @@ pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
  * memcmp() on the byte sequence is equivalent to pg_strncoll() on
  * untransformed strings. The result is not nul-terminated.
  *
- * The input string must be encoded in the database encoding. If the input
- * string is NUL-terminated, its length may be specified as -1.
+ * The input string must be encoded in the database encoding.
  *
  * Not all providers support pg_strnxfrm_prefix() safely. The caller should
  * check pg_strxfrm_prefix_enabled() first, otherwise this function may return
@@ -1504,7 +1498,7 @@ pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
  */
 size_t
 pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
-				   ssize_t srclen, pg_locale_t locale)
+				   size_t srclen, pg_locale_t locale)
 {
 	return locale->collate->strnxfrm_prefix(dest, destsize, src, srclen, locale);
 }

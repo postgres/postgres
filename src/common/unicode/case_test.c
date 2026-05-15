@@ -34,7 +34,7 @@ static UCaseMap *casemap = NULL;
 #endif
 
 typedef size_t (*TestFunc) (char *dst, size_t dstsize, const char *src,
-							ssize_t srclen);
+							size_t srclen);
 
 /* simple boundary iterator copied from pg_locale_builtin.c */
 struct WordBoundaryState
@@ -114,6 +114,7 @@ icu_test_full(char *str)
 	char		icu_upper[BUFSZ];
 	char		icu_fold[BUFSZ];
 	UErrorCode	status;
+	size_t		len = strlen(str);
 
 	/* full case mapping doesn't use posix semantics */
 	struct WordBoundaryState wbstate = {
@@ -125,18 +126,18 @@ icu_test_full(char *str)
 		.prev_alnum = false,
 	};
 
-	unicode_strlower(lower, BUFSZ, str, -1, true);
-	unicode_strtitle(title, BUFSZ, str, -1, true, initcap_wbnext, &wbstate);
-	unicode_strupper(upper, BUFSZ, str, -1, true);
-	unicode_strfold(fold, BUFSZ, str, -1, true);
+	unicode_strlower(lower, BUFSZ, str, len, true);
+	unicode_strtitle(title, BUFSZ, str, len, true, initcap_wbnext, &wbstate);
+	unicode_strupper(upper, BUFSZ, str, len, true);
+	unicode_strfold(fold, BUFSZ, str, len, true);
 	status = U_ZERO_ERROR;
-	ucasemap_utf8ToLower(casemap, icu_lower, BUFSZ, str, -1, &status);
+	ucasemap_utf8ToLower(casemap, icu_lower, BUFSZ, str, len, &status);
 	status = U_ZERO_ERROR;
-	ucasemap_utf8ToTitle(casemap, icu_title, BUFSZ, str, -1, &status);
+	ucasemap_utf8ToTitle(casemap, icu_title, BUFSZ, str, len, &status);
 	status = U_ZERO_ERROR;
-	ucasemap_utf8ToUpper(casemap, icu_upper, BUFSZ, str, -1, &status);
+	ucasemap_utf8ToUpper(casemap, icu_upper, BUFSZ, str, len, &status);
 	status = U_ZERO_ERROR;
-	ucasemap_utf8FoldCase(casemap, icu_fold, BUFSZ, str, -1, &status);
+	ucasemap_utf8FoldCase(casemap, icu_fold, BUFSZ, str, len, &status);
 
 	if (strcmp(lower, icu_lower) != 0)
 	{
@@ -209,18 +210,16 @@ static void
 test_convert(TestFunc tfunc, const char *test_string, const char *expected)
 {
 	size_t		src1len = strlen(test_string);
-	size_t		src2len = -1;	/* NUL-terminated */
 	size_t		dst1len = strlen(expected);
 	size_t		dst2len = strlen(expected) + 1; /* NUL-terminated */
 	char	   *src1 = malloc(src1len);
 	char	   *dst1 = malloc(dst1len);
-	char	   *src2 = strdup(test_string);
 	char	   *dst2 = malloc(dst2len);
 	size_t		needed;
 
 	memcpy(src1, test_string, src1len); /* not NUL-terminated */
 
-	/* neither source nor destination are NUL-terminated */
+	/* destination is not NUL-terminated */
 	memset(dst1, 0x7F, dst1len);
 	needed = tfunc(dst1, dst1len, src1, src1len);
 	if (needed != strlen(expected))
@@ -236,7 +235,7 @@ test_convert(TestFunc tfunc, const char *test_string, const char *expected)
 		exit(1);
 	}
 
-	/* destination is NUL-terminated and source is not */
+	/* destination is NUL-terminated */
 	memset(dst2, 0x7F, dst2len);
 	needed = tfunc(dst2, dst2len, src1, src1len);
 	if (needed != strlen(expected))
@@ -252,59 +251,25 @@ test_convert(TestFunc tfunc, const char *test_string, const char *expected)
 		exit(1);
 	}
 
-	/* source is NUL-terminated and destination is not */
-	memset(dst1, 0x7F, dst1len);
-	needed = tfunc(dst1, dst1len, src2, src2len);
-	if (needed != strlen(expected))
-	{
-		printf("case_test: convert_case test3 FAILURE: '%s' needed %zu expected %zu\n",
-			   test_string, needed, strlen(expected));
-		printf("case_test: convert_case test3 FAILURE: needed %zu\n", needed);
-		exit(1);
-	}
-	if (memcmp(dst1, expected, dst1len) != 0)
-	{
-		printf("case_test: convert_case test3 FAILURE: test: '%s' result: '%.*s' expected: '%s'\n",
-			   test_string, (int) dst1len, dst1, expected);
-		exit(1);
-	}
-
-	/* both source and destination are NUL-terminated */
-	memset(dst2, 0x7F, dst2len);
-	needed = tfunc(dst2, dst2len, src2, src2len);
-	if (needed != strlen(expected))
-	{
-		printf("case_test: convert_case test4 FAILURE: '%s' needed %zu expected %zu\n",
-			   test_string, needed, strlen(expected));
-		exit(1);
-	}
-	if (strcmp(dst2, expected) != 0)
-	{
-		printf("case_test: convert_case test4 FAILURE: test: '%s' result: '%s' expected: '%s'\n",
-			   test_string, dst2, expected);
-		exit(1);
-	}
-
 	free(src1);
 	free(dst1);
-	free(src2);
 	free(dst2);
 }
 
 static size_t
 tfunc_lower(char *dst, size_t dstsize, const char *src,
-			ssize_t srclen)
+			size_t srclen)
 {
 	return unicode_strlower(dst, dstsize, src, srclen, true);
 }
 
 static size_t
 tfunc_title(char *dst, size_t dstsize, const char *src,
-			ssize_t srclen)
+			size_t srclen)
 {
 	struct WordBoundaryState wbstate = {
 		.str = src,
-		.len = (srclen < 0) ? strlen(src) : srclen,
+		.len = srclen,
 		.offset = 0,
 		.init = false,
 		.prev_alnum = false,
@@ -316,14 +281,14 @@ tfunc_title(char *dst, size_t dstsize, const char *src,
 
 static size_t
 tfunc_upper(char *dst, size_t dstsize, const char *src,
-			ssize_t srclen)
+			size_t srclen)
 {
 	return unicode_strupper(dst, dstsize, src, srclen, true);
 }
 
 static size_t
 tfunc_fold(char *dst, size_t dstsize, const char *src,
-		   ssize_t srclen)
+		   size_t srclen)
 {
 	return unicode_strfold(dst, dstsize, src, srclen, true);
 }
