@@ -398,6 +398,21 @@ SELECT '1&(2&(4&(5|!6)))'::query_int;
  1 & 2 & 4 & ( 5 | !6 )
 (1 row)
 
+-- Test for overflow of the int16 "left" field in findoprnd().
+-- This query uses a balanced binary tree to avoid using too much stack.
+DO $$
+DECLARE
+  e text := '1';
+BEGIN
+  FOR i IN 1..15 LOOP
+    e := '(' || e || '&' || e || ')';
+  END LOOP;
+  PERFORM ('0|' || e)::query_int;
+END;
+$$;
+ERROR:  query_int expression is too complex
+CONTEXT:  SQL statement "SELECT ('0|' || e)::query_int"
+PL/pgSQL function inline_code_block line 8 at PERFORM
 -- test non-error-throwing input
 SELECT str as "query_int",
        pg_input_is_valid(str,'query_int') as ok,
