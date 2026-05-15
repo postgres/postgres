@@ -1427,6 +1427,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	bool		retain_dead_tuples;
 	int			max_retention;
 	bool		retention_active;
+	char	   *new_conninfo = NULL;
 	char	   *origin;
 	Subscription *sub;
 	Form_pg_subscription form;
@@ -1810,7 +1811,6 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				ForeignServer *new_server;
 				ObjectAddress referenced;
 				AclResult	aclresult;
-				char	   *conninfo;
 
 				/*
 				 * Remove what was there before, either another foreign server
@@ -1846,13 +1846,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				/* make sure a user mapping exists */
 				GetUserMapping(form->subowner, new_server->serverid);
 
-				conninfo = ForeignServerConnectionString(form->subowner,
-														 new_server);
+				new_conninfo = ForeignServerConnectionString(form->subowner,
+															 new_server);
 
 				/* Load the library providing us libpq calls. */
 				load_file("libpqwalreceiver", false);
 				/* Check the connection info string. */
-				walrcv_check_conninfo(conninfo,
+				walrcv_check_conninfo(new_conninfo,
 									  sub->passwordrequired && !sub->ownersuperuser);
 
 				values[Anum_pg_subscription_subserver - 1] = ObjectIdGetDatum(new_server->serverid);
@@ -1863,6 +1863,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 				update_tuple = true;
 			}
+
+			/*
+			 * Since the remote server configuration might have changed,
+			 * perform a check to ensure it permits enabling
+			 * retain_dead_tuples.
+			 */
+			check_pub_rdt = sub->retaindeadtuples;
 			break;
 
 		case ALTER_SUBSCRIPTION_CONNECTION:
@@ -1877,10 +1884,12 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				replaces[Anum_pg_subscription_subserver - 1] = true;
 			}
 
+			new_conninfo = stmt->conninfo;
+
 			/* Load the library providing us libpq calls. */
 			load_file("libpqwalreceiver", false);
 			/* Check the connection info string. */
-			walrcv_check_conninfo(stmt->conninfo,
+			walrcv_check_conninfo(new_conninfo,
 								  sub->passwordrequired && !sub->ownersuperuser);
 
 			values[Anum_pg_subscription_subconninfo - 1] =
@@ -2129,7 +2138,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 		 * available.
 		 */
 		must_use_password = sub->passwordrequired && !sub->ownersuperuser;
-		wrconn = walrcv_connect(stmt->conninfo ? stmt->conninfo : sub->conninfo,
+		wrconn = walrcv_connect(new_conninfo ? new_conninfo : sub->conninfo,
 								true, true, must_use_password, sub->name,
 								&err);
 		if (!wrconn)
