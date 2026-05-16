@@ -7,6 +7,7 @@
 #include "postgres_fe.h"
 
 #include <limits.h>
+#include <math.h>
 
 #include "getopt_long.h"
 #include "port/pg_bitutils.h"
@@ -184,7 +185,7 @@ static void
 test_tsc_timing(void)
 {
 	uint64		loop_count;
-	uint32		calibrated_freq;
+	const TscClockSourceInfo *info;
 
 	printf("\n");
 	loop_count = test_timing(test_duration, TIMING_CLOCK_SOURCE_TSC, false);
@@ -197,23 +198,51 @@ test_tsc_timing(void)
 		loop_count = test_timing(test_duration, TIMING_CLOCK_SOURCE_TSC, true);
 		output(loop_count);
 		printf("\n");
+	}
 
-		printf(_("TSC frequency in use: %u kHz\n"), timing_tsc_frequency_khz);
+	/*
+	 * Report TSC information regardless of whether it was usable, makes
+	 * debugging a lot easier.
+	 */
+	info = pg_timing_tsc_clock_source_info();
+	if (info->frequency_source[0] != '\0')
+		printf(_("TSC frequency source: %s\n"), info->frequency_source);
+	printf(_("TSC frequency in use: %d kHz\n"), info->frequency_khz);
 
-		calibrated_freq = pg_tsc_calibrate_frequency();
-		if (calibrated_freq > 0)
-			printf(_("TSC frequency from calibration: %u kHz\n"), calibrated_freq);
-		else
-			printf(_("TSC calibration did not converge\n"));
+	if (info->calibrated_frequency_khz > 0)
+	{
+		double		diff_pct;
 
-		pg_set_timing_clock_source(TIMING_CLOCK_SOURCE_AUTO);
-		if (pg_current_timing_clock_source() == TIMING_CLOCK_SOURCE_TSC)
-			printf(_("TSC clock source will be used by default, unless timing_clock_source is set to 'system'.\n"));
-		else
-			printf(_("TSC clock source will not be used by default, unless timing_clock_source is set to 'tsc'.\n"));
+		printf(_("TSC frequency from calibration: %d kHz\n"), info->calibrated_frequency_khz);
+
+		diff_pct = fabs((double) info->calibrated_frequency_khz - info->frequency_khz) /
+			info->frequency_khz * 100.0;
+
+		if (diff_pct > 10.0)
+		{
+			printf(_("WARNING: Calibrated TSC frequency differs by %.1f%% from the TSC frequency in use\n"),
+				   diff_pct);
+			printf(_("HINT: Consider setting timing_clock_source to 'system'. Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+			exit(1);
+		}
 	}
 	else
-		printf(_("TSC clock source is not usable. Likely unable to determine TSC frequency. Are you running in an unsupported virtualized environment?\n"));
+		printf(_("TSC calibration did not converge\n"));
+
+	/*
+	 * Report whether TSC was usable and, if so, whether it will be used
+	 * automatically.
+	 */
+	if (loop_count > 0)
+	{
+		pg_set_timing_clock_source(TIMING_CLOCK_SOURCE_AUTO);
+		if (pg_current_timing_clock_source() == TIMING_CLOCK_SOURCE_TSC)
+			printf(_("\nTSC clock source will be used by default, unless timing_clock_source is set to 'system'.\n"));
+		else
+			printf(_("\nTSC clock source will not be used by default, unless timing_clock_source is set to 'tsc'.\n"));
+	}
+	else
+		printf(_("\nTSC clock source is not usable. Likely unable to determine TSC frequency. Are you running in an unsupported virtualized environment?\n"));
 }
 #endif
 
@@ -340,6 +369,12 @@ output(uint64 loop_count)
 	int			len4 = strlen(header4);
 	double		rprct;
 	bool		stopped = false;
+
+	if (loop_count == 0)
+	{
+		printf(_("WARNING: No timing measurements collected. Report this as a bug to <%s>.\n"), PACKAGE_BUGREPORT);
+		return;
+	}
 
 	/* find highest bit value */
 	while (max_bit > 0 && histogram[max_bit] == 0)

@@ -3111,6 +3111,7 @@ TParserStateActionItem
 TQueueDestReceiver
 TRGM
 TSAnyCacheEntry
+TscClockSourceInfo
 TSConfigCacheEntry
 TSConfigInfo
 TSDictInfo

@@ -283,8 +283,10 @@ Observed timing durations up to 99.9900%:
 ...
 61594291       0.0000   100.0000          1
 
+TSC frequency source: x86, cpuid 0x15
 TSC frequency in use: 2449228 kHz
 TSC frequency from calibration: 2448603 kHz
+
 TSC clock source will be used by default, unless timing_clock_source is set to 'system'.
 ]]></screen>
   </para>
