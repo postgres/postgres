@@ -19,6 +19,7 @@
 
 #include "fmgr.h"
 #include "funcapi.h"
+#include "injection_points.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "nodes/value.h"
@@ -39,30 +40,6 @@ PG_MODULE_MAGIC;
 /* Maximum number of waits usable in injection points at once */
 #define INJ_MAX_WAIT	8
 #define INJ_NAME_MAXLEN	64
-
-/*
- * Conditions related to injection points.  This tracks in shared memory the
- * runtime conditions under which an injection point is allowed to run,
- * stored as private_data when an injection point is attached, and passed as
- * argument to the callback.
- *
- * If more types of runtime conditions need to be tracked, this structure
- * should be expanded.
- */
-typedef enum InjectionPointConditionType
-{
-	INJ_CONDITION_ALWAYS = 0,	/* always run */
-	INJ_CONDITION_PID,			/* PID restriction */
-} InjectionPointConditionType;
-
-typedef struct InjectionPointCondition
-{
-	/* Type of the condition */
-	InjectionPointConditionType type;
-
-	/* ID of the process where the injection point is allowed to run */
-	int			pid;
-} InjectionPointCondition;
 
 /*
  * List of injection points stored in TopMemoryContext attached
