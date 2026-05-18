@@ -76,6 +76,7 @@ typedef struct WindowObjectData
 	int64	   *num_notnull_info;	/* track size (number of tuples in
 									 * partition) of the notnull_info array
 									 * for each func args */
+	bool	   *notnull_info_cacheable; /* can we cache notnull_info? */
 
 	/*
 	 * Null treatment options. One of: NO_NULLTREATMENT, PARSER_IGNORE_NULLS,
@@ -3518,8 +3519,23 @@ init_notnull_info(WindowObject winobj, WindowStatePerFunc perfuncstate)
 
 	if (winobj->ignore_nulls == PARSER_IGNORE_NULLS)
 	{
+		int			argno = 0;
+		ListCell   *lc;
+
 		winobj->notnull_info = palloc0_array(uint8 *, numargs);
 		winobj->num_notnull_info = palloc0_array(int64, numargs);
+		winobj->notnull_info_cacheable = palloc_array(bool, numargs);
+
+		foreach(lc, perfuncstate->wfunc->args)
+		{
+			Node	   *arg = (Node *) lfirst(lc);
+
+			winobj->notnull_info_cacheable[argno] =
+				!contain_volatile_functions(arg) &&
+				!contain_subplans(arg);
+
+			argno++;
+		}
 	}
 }
 
@@ -3580,6 +3596,9 @@ get_notnull_info(WindowObject winobj, int64 pos, int argno)
 	uint8		mb;
 	int64		bpos;
 
+	if (!winobj->notnull_info_cacheable[argno])
+		return NN_UNKNOWN;
+
 	grow_notnull_info(winobj, pos, argno);
 	bpos = NN_POS_TO_BYTES(pos);
 	mbp = winobj->notnull_info[argno];
@@ -3602,6 +3621,9 @@ put_notnull_info(WindowObject winobj, int64 pos, int argno, bool isnull)
 	int64		bpos;
 	uint8		val = isnull ? NN_NULL : NN_NOTNULL;
 	int			shift;
+
+	if (!winobj->notnull_info_cacheable[argno])
+		return;
 
 	grow_notnull_info(winobj, pos, argno);
 	bpos = NN_POS_TO_BYTES(pos);
@@ -3812,6 +3834,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	int			notnull_relpos;
 	int			forward;
 	bool		myisout;
+	bool		got_datum;
 
 	Assert(WindowObjectIsValid(winobj));
 	winstate = winobj->winstate;
@@ -3860,6 +3883,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	notnull_relpos = abs(relpos);
 	forward = relpos > 0 ? 1 : -1;
 	myisout = false;
+	got_datum = false;
 	datum = 0;
 
 	/*
@@ -3905,25 +3929,29 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 		{
 			/*
 			 * NOT NULL info does not exist yet.  Get tuple and evaluate func
-			 * arg in partition. We ignore the return value from
-			 * gettuple_eval_partition because we are just interested in
-			 * whether we are inside or outside of partition, NULL or NOT
-			 * NULL.
+			 * arg in partition. Keep the return value in case this row is the
+			 * target; re-evaluating a volatile argument could give a
+			 * different nullness status.
 			 */
-			(void) gettuple_eval_partition(winobj, argno,
-										   abs_pos, isnull, &myisout);
+			datum = gettuple_eval_partition(winobj, argno,
+											abs_pos, isnull, &myisout);
 			if (myisout)		/* out of partition? */
 				break;
 			if (!*isnull)
+			{
 				notnull_offset++;
+				if (notnull_offset >= notnull_relpos)
+					got_datum = true;
+			}
 			/* record the row status */
 			put_notnull_info(winobj, abs_pos, argno, *isnull);
 		}
 	} while (notnull_offset < notnull_relpos);
 
 	/* get tuple and evaluate func arg in partition */
-	datum = gettuple_eval_partition(winobj, argno,
-									abs_pos, isnull, &myisout);
+	if (!got_datum)
+		datum = gettuple_eval_partition(winobj, argno,
+										abs_pos, isnull, &myisout);
 	if (!myisout && set_mark)
 		WinSetMarkPosition(winobj, mark_pos);
 	if (isout)
