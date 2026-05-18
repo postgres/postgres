@@ -224,6 +224,7 @@ ParseVariableDouble(const char *value, const char *name, double *result, double 
 			if (name)
 				pg_log_error("invalid value \"%s\" for variable \"%s\": must be less than %.2f",
 							 value, name, max);
+			return false;
 		}
 		*result = dblval;
 		return true;
