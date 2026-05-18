@@ -867,7 +867,7 @@ check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg)
 	{
 		ereport(elevel,
 				errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("parameter \%s\" must be set for authentication method \"%s\"",
+				errmsg("parameter \"%s\" must be set for authentication method \"%s\"",
 					   "oauth_validator_libraries", "oauth"),
 				errcontext("line %d of configuration file \"%s\"",
 						   line_num, file_name));
