@@ -1191,9 +1191,6 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
  * In any case, reset our state to empty.  We need not physically
  * free memory here, since TopTransactionContext is about to be emptied
  * anyway.
- *
- * Note:
- *		This should be called as the last step in processing a transaction.
  */
 void
 AtEOXact_Inval(bool isCommit)
