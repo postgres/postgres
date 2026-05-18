@@ -248,24 +248,26 @@ ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel)
 	MemoryContext repack_context;
 	LOCKMODE	lockmode;
 	List	   *rtcs;
+	bool		verbose = false;
+	bool		analyze = false;
+	bool		concurrently = false;
 
 	/* Parse option list */
 	foreach_node(DefElem, opt, stmt->params)
 	{
 		if (strcmp(opt->defname, "verbose") == 0)
-			params.options |= defGetBoolean(opt) ? CLUOPT_VERBOSE : 0;
+			verbose = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "analyze") == 0 ||
 				 strcmp(opt->defname, "analyse") == 0)
-			params.options |= defGetBoolean(opt) ? CLUOPT_ANALYZE : 0;
-		else if (strcmp(opt->defname, "concurrently") == 0 &&
-				 defGetBoolean(opt))
+			analyze = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "concurrently") == 0)
 		{
 			if (stmt->command != REPACK_COMMAND_REPACK)
 				ereport(ERROR,
 						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("CONCURRENTLY option not supported for %s",
 							   RepackCommandAsString(stmt->command)));
-			params.options |= CLUOPT_CONCURRENT;
+			concurrently = defGetBoolean(opt);
 		}
 		else
 			ereport(ERROR,
@@ -275,6 +277,11 @@ ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel)
 						   opt->defname),
 					parser_errposition(pstate, opt->location));
 	}
+
+	params.options |=
+		(verbose ? CLUOPT_VERBOSE : 0) |
+		(analyze ? CLUOPT_ANALYZE : 0) |
+		(concurrently ? CLUOPT_CONCURRENT : 0);
 
 	/* Determine the lock mode to use. */
 	lockmode = RepackLockLevel((params.options & CLUOPT_CONCURRENT) != 0);
