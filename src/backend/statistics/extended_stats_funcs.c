@@ -886,7 +886,8 @@ key_in_expr_argnames(JsonbValue *key)
 	Assert(key->type == jbvString);
 	for (int i = 0; i < NUM_ATTRIBUTE_STATS_ELEMS; i++)
 	{
-		if (strncmp(extexprargname[i], key->val.string.val, key->val.string.len) == 0)
+		if (strlen(extexprargname[i]) == key->val.string.len &&
+			strncmp(extexprargname[i], key->val.string.val, key->val.string.len) == 0)
 			return true;
 	}
 	return false;
@@ -1592,7 +1593,7 @@ import_expressions(Relation pgsd, int numexprs,
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("could not parse \"%s\": incorrect number of elements (%d required)",
-					   argname, num_root_elements));
+					   argname, numexprs));
 		goto exprs_error;
 	}
 
@@ -1816,6 +1817,7 @@ pg_clear_extended_stats(PG_FUNCTION_ARGS)
 	 */
 	if (stxform->stxrelid != relid)
 	{
+		heap_freetuple(tup);
 		table_close(pg_stext, RowExclusiveLock);
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
