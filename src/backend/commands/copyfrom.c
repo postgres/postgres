@@ -1636,8 +1636,6 @@ BeginCopyFrom(ParseState *pstate,
 
 	if (cstate->opts.on_error == COPY_ON_ERROR_SET_NULL)
 	{
-		int			attr_count = list_length(cstate->attnumlist);
-
 		/*
 		 * When data type conversion fails and ON_ERROR is SET_NULL, we need
 		 * ensure that the input column allow null values.  ExecConstraints()
@@ -1646,15 +1644,13 @@ BeginCopyFrom(ParseState *pstate,
 		 * check must be performed during the initial string-to-datum
 		 * conversion (see CopyFromTextLikeOneRow()).
 		 */
-		cstate->domain_with_constraint = palloc0_array(bool, attr_count);
+		cstate->domain_with_constraint = palloc0_array(bool, num_phys_attrs);
 
 		foreach_int(attno, cstate->attnumlist)
 		{
-			int			i = foreach_current_index(attno);
-
 			Form_pg_attribute att = TupleDescAttr(tupDesc, attno - 1);
 
-			cstate->domain_with_constraint[i] = DomainHasConstraints(att->atttypid, NULL);
+			cstate->domain_with_constraint[attno - 1] = DomainHasConstraints(att->atttypid, NULL);
 		}
 	}
 

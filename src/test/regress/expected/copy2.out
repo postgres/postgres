@@ -805,6 +805,10 @@ COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
 ERROR:  domain d_int_not_null does not allow null values
 DETAIL:  ON_ERROR SET_NULL cannot be applied because column "a" (domain d_int_not_null) does not accept null values.
 CONTEXT:  COPY t_on_error_null, line 1, column a: null input
+COPY t_on_error_null(c, a) FROM STDIN WITH (on_error set_null); -- fail
+ERROR:  domain d_int_not_null does not allow null values
+DETAIL:  ON_ERROR SET_NULL cannot be applied because column "a" (domain d_int_not_null) does not accept null values.
+CONTEXT:  COPY t_on_error_null, line 1, column a: null input
 COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
 ERROR:  domain d_int_not_null does not allow null values
 DETAIL:  ON_ERROR SET_NULL cannot be applied because column "a" (domain d_int_not_null) does not accept null values.

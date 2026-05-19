@@ -555,6 +555,10 @@ COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
 \N	11	13
 \.
 
+COPY t_on_error_null(c, a) FROM STDIN WITH (on_error set_null); -- fail
+11	\N
+\.
+
 COPY t_on_error_null FROM STDIN WITH (on_error set_null); -- fail
 ss	11	14
 \.
