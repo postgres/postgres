@@ -64,6 +64,7 @@
 #include "pgstat.h"
 #include "replication/logicalrelation.h"
 #include "storage/bufmgr.h"
+#include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
@@ -211,6 +212,7 @@ static Oid	determine_clustered_index(Relation rel, bool usingindex,
 
 static void start_repack_decoding_worker(Oid relid);
 static void stop_repack_decoding_worker(void);
+static void stop_repack_decoding_worker_cb(int code, Datum arg);
 static Snapshot get_initial_snapshot(DecodingWorker *worker);
 
 static void ProcessRepackMessage(StringInfo msg);
@@ -666,27 +668,26 @@ cluster_rel(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 	if (!concurrent)
 		TransferPredicateLocksToHeapRelation(OldHeap);
 
-	/* rebuild_relation does all the dirty work */
-	PG_TRY();
+	/*
+	 * rebuild_relation does all the dirty work, and closes OldHeap and index,
+	 * if valid.
+	 *
+	 * In concurrent mode, make sure the worker terminates; normally it does
+	 * so by itself, but a PG_ENSURE_ERROR_CLEANUP callback ensures that this
+	 * happens even in case this backend dies early on a FATAL exit.  Normal
+	 * mode doesn't need that overhead.
+	 */
+	if (concurrent)
 	{
-		rebuild_relation(OldHeap, index, verbose, ident_idx);
-	}
-	PG_FINALLY();
-	{
-		if (concurrent)
+		PG_ENSURE_ERROR_CLEANUP(stop_repack_decoding_worker_cb, 0);
 		{
-			/*
-			 * Since during normal operation the worker was already asked to
-			 * exit, stopping it explicitly is especially important on ERROR.
-			 * However it still seems a good practice to make sure that the
-			 * worker never survives the REPACK command.
-			 */
-			stop_repack_decoding_worker();
+			rebuild_relation(OldHeap, index, verbose, ident_idx);
 		}
+		PG_END_ENSURE_ERROR_CLEANUP(stop_repack_decoding_worker_cb, 0);
+		stop_repack_decoding_worker();
 	}
-	PG_END_TRY();
-
-	/* rebuild_relation closes OldHeap, and index if valid */
+	else
+		rebuild_relation(OldHeap, index, verbose, ident_idx);
 
 out:
 	/* Roll back any GUC changes executed by index functions */
@@ -3532,6 +3533,13 @@ stop_repack_decoding_worker(void)
 	dsm_detach(decoding_worker->seg);
 	pfree(decoding_worker);
 	decoding_worker = NULL;
+}
+
+/* stop_repack_decoding_worker, wrapped as a before_shmem_exit callback */
+static void
+stop_repack_decoding_worker_cb(int code, Datum arg)
+{
+	stop_repack_decoding_worker();
 }
 
 /*
