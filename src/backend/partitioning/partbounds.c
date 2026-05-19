@@ -5419,7 +5419,8 @@ check_partition_bounds_for_split_range(Relation parent,
 								"ALTER TABLE ... SPLIT PARTITION"),
 						parser_errposition(pstate, exprLocation((Node *) datum)));
 		}
-		else
+
+		if (last)
 		{
 			PartitionRangeBound *split_upper;
 

@@ -835,6 +835,21 @@ SELECT tableoid::regclass, * FROM sales_range ORDER BY tableoid::regclass::text 
 DROP TABLE sales_range;
 
 --
+-- Test that the explicit partition bound cannot extend outside the split
+-- partition's bound when a DEFAULT partition is specified.
+--
+CREATE TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TABLE tp_0_51 PARTITION OF t FOR VALUES FROM (0) TO (51);
+CREATE TABLE tp_51_100 PARTITION OF t FOR VALUES FROM (51) TO (100);
+
+-- ERROR
+ALTER TABLE t SPLIT PARTITION tp_0_51 INTO
+  (PARTITION tp_0_51 FOR VALUES FROM (0) TO (53),
+   PARTITION tp_default DEFAULT);
+
+DROP TABLE t;
+
+--
 -- Try to SPLIT partition of another table.
 --
 CREATE TABLE t1(i int, t text) PARTITION BY LIST (t);
