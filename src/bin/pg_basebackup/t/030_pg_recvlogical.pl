@@ -236,6 +236,52 @@ my $count = (() = $outfiledata =~ /INSERT/g);
 cmp_ok($count, '==', 2,
 	'pg_recvlogical has received and written two INSERTs');
 
+# Check that pg_recvlogical derives output file permissions from the source
+# cluster.
+SKIP:
+{
+	skip "unix-style permissions not supported on Windows", 2
+	  if ($Config{osname} eq 'MSWin32' || $Config{osname} eq 'cygwin');
+
+	# The cluster was initialized without group access, so pg_recvlogical
+	# should create the output file as 0600 (-rw-------).
+	my $mode = sprintf('%04o', (stat($outfile))[2] & 07777);
+	is($mode, '0600',
+		'pg_recvlogical output file has no group permissions (0600)');
+
+	# Enable group access on the source cluster and its files, then restart
+	# so pg_recvlogical observes the updated source cluster permissions.
+	$node->stop;
+	chmod_recursive($node->data_dir, 0750, 0640);
+	$node->start;
+
+	$outfile = $node->basedir . '/group_access.out';
+	@pg_recvlogical_cmd = (
+		'pg_recvlogical',
+		'--slot' => 'reconnect_test',
+		'--dbname' => $node->connstr('postgres'),
+		'--start',
+		'--file' => $outfile,
+		'--fsync-interval' => '1');
+
+	$recv = IPC::Run::start(
+		[@pg_recvlogical_cmd],
+		'>' => \$stdout,
+		'2>' => \$stderr);
+
+	$node->safe_psql('postgres', 'INSERT INTO test_table VALUES (3)');
+	wait_for_file($outfile, qr/INSERT/);
+
+	$recv->signal('TERM');
+	$recv->finish();
+
+	# With group access enabled on the source cluster, pg_recvlogical should
+	# create the output file as 0640 (-rw-r-----).
+	$mode = sprintf('%04o', (stat($outfile))[2] & 07777);
+	is($mode, '0640',
+		'pg_recvlogical output file respects group permissions (0640)');
+}
+
 $node->command_ok(
 	[
 		'pg_recvlogical',
