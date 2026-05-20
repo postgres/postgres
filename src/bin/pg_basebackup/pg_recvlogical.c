@@ -342,7 +342,7 @@ StreamLogicalLog(void)
 				outfd = fileno(stdout);
 			else
 				outfd = open(outfile, O_CREAT | O_APPEND | O_WRONLY | PG_BINARY,
-							 S_IRUSR | S_IWUSR);
+							 pg_file_create_mode);
 			if (outfd == -1)
 			{
 				pg_log_error("could not open log file \"%s\": %m", outfile);

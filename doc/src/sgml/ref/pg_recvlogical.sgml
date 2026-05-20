@@ -494,7 +494,7 @@ PostgreSQL documentation
 
   <para>
    <application>pg_recvlogical</application> will preserve group permissions on
-   the received WAL files if group permissions are enabled on the source
+   the output files if group permissions are enabled on the source
    cluster.
   </para>
 
