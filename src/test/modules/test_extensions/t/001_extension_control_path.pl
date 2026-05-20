@@ -109,10 +109,10 @@ is($ret, "t",
 	"\$system extension is shown correctly in pg_available_extensions");
 
 $ret = $node->safe_psql('postgres',
-	"set extension_control_path = ''; select count(*) > 0 as ok from pg_available_extensions where name = 'plpgsql'"
+	"set extension_control_path = ''; select location from pg_available_extensions where name = 'plpgsql'"
 );
-is($ret, "t",
-	"\$system extension is shown correctly in pg_available_extensions with empty extension_control_path"
+is($ret, "\$system",
+	"\$system location is shown correctly in pg_available_extensions with empty extension_control_path"
 );
 
 # Test with an extension that does not exists
