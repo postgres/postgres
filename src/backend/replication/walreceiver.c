@@ -267,6 +267,20 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 	/* Unblock signals (they were blocked when the postmaster forked us) */
 	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
+	/*
+	 * Switch the WAL receiver state as ready for display before doing a
+	 * connection attempt, so as its connecting state is visible before
+	 * attempting to contact the primary server.  Note that this resets the
+	 * original conninfo, sender_port and sender_host, for security.  These
+	 * fields are filled once the connection is fully established.
+	 */
+	SpinLockAcquire(&walrcv->mutex);
+	memset(walrcv->conninfo, 0, MAXCONNINFO);
+	memset(walrcv->sender_host, 0, NI_MAXHOST);
+	walrcv->sender_port = 0;
+	walrcv->ready_to_display = true;
+	SpinLockRelease(&walrcv->mutex);
+
 	/* Establish the connection to the primary for XLOG streaming */
 	appname = cluster_name[0] ? cluster_name : "walreceiver";
 	wrconn = walrcv_connect(conninfo, true, false, false, appname, &err);
@@ -277,23 +291,17 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 						appname, err)));
 
 	/*
-	 * Save user-visible connection string.  This clobbers the original
-	 * conninfo, for security. Also save host and port of the sender server
-	 * this walreceiver is connected to.
+	 * Save user-visible connection string, now that the connection has been
+	 * achieved.
 	 */
 	tmp_conninfo = walrcv_get_conninfo(wrconn);
 	walrcv_get_senderinfo(wrconn, &sender_host, &sender_port);
 	SpinLockAcquire(&walrcv->mutex);
-	memset(walrcv->conninfo, 0, MAXCONNINFO);
 	if (tmp_conninfo)
 		strlcpy(walrcv->conninfo, tmp_conninfo, MAXCONNINFO);
-
-	memset(walrcv->sender_host, 0, NI_MAXHOST);
 	if (sender_host)
 		strlcpy(walrcv->sender_host, sender_host, NI_MAXHOST);
-
 	walrcv->sender_port = sender_port;
-	walrcv->ready_to_display = true;
 	SpinLockRelease(&walrcv->mutex);
 
 	if (tmp_conninfo)
