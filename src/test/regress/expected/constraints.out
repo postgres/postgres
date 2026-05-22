@@ -1130,6 +1130,10 @@ CREATE TABLE ATACC1 (a int NOT NULL NO INHERIT) PARTITION BY LIST (a);
 ERROR:  not-null constraints on partitioned tables cannot be NO INHERIT
 CREATE TABLE ATACC1 (a int, NOT NULL a NO INHERIT) PARTITION BY LIST (a);
 ERROR:  not-null constraints on partitioned tables cannot be NO INHERIT
+CREATE TABLE ATACC1 (a int, CONSTRAINT a_is_not_null NOT NULL a) PARTITION BY LIST (a);
+ALTER TABLE ATACC1 ALTER CONSTRAINT a_is_not_null NO INHERIT;
+ERROR:  not-null constraint "a_is_not_null" on partitioned table "atacc1" cannot be NO INHERIT
+DROP TABLE ATACC1;
 -- it's not possible to override a no-inherit constraint with an inheritable one
 CREATE TABLE ATACC2 (a int, CONSTRAINT a_is_not_null NOT NULL a NO INHERIT);
 CREATE TABLE ATACC1 (a int);

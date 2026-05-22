@@ -12367,6 +12367,12 @@ ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
 				errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				errmsg("constraint \"%s\" of relation \"%s\" is not a not-null constraint",
 					   cmdcon->conname, RelationGetRelationName(rel)));
+	if (cmdcon->alterInheritability &&
+		cmdcon->noinherit && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("not-null constraint \"%s\" on partitioned table \"%s\" cannot be NO INHERIT",
+					   cmdcon->conname, RelationGetRelationName(rel)));
 
 	/* Refuse to modify inheritability of inherited constraints */
 	if (cmdcon->alterInheritability &&
