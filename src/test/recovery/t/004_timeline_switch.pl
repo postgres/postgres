@@ -47,11 +47,15 @@ $node_standby_1->psql(
 	stdout => \$psql_out);
 is($psql_out, 't', "promotion of standby with pg_promote");
 
-# Switch standby 2 to replay from standby 1
+# Switch standby 2 to replay from standby 1.  During the timeline switch,
+# the WAL receiver process on standby 2 should not be stopped, and the
+# new primary connection string should not be visible
+# in pg_stat_wal_receiver.
+my $secret = 'dont_show_me';
 my $connstr_1 = $node_standby_1->connstr;
 $node_standby_2->append_conf(
 	'postgresql.conf', qq(
-primary_conninfo='$connstr_1'
+primary_conninfo='$connstr_1 password=$secret'
 ));
 
 # Rotate logfile before restarting, for the log checks done below.
@@ -92,6 +96,13 @@ my $wr_pid_after_switch = $node_standby_2->safe_psql('postgres',
 
 is($wr_pid_before_switch, $wr_pid_after_switch,
 	'WAL receiver PID matches across timeline jumps');
+
+my $raw_conninfo_count = $node_standby_2->safe_psql('postgres',
+	"SELECT count(*) FROM pg_stat_wal_receiver WHERE conninfo LIKE '%$secret%'"
+);
+
+is($raw_conninfo_count, '0',
+	'pg_stat_wal_receiver.conninfo not updated across timeline jumps');
 
 # Ensure that a standby is able to follow a primary on a newer timeline
 # when WAL archiving is enabled.
