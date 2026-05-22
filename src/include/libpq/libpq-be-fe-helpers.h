@@ -39,10 +39,28 @@
 
 
 static inline void libpqsrv_connect_prepare(void);
-static inline void libpqsrv_connect_internal(PGconn *conn, uint32 wait_event_info);
+static inline void libpqsrv_connect_complete(PGconn *conn, uint32 wait_event_info);
 static inline PGresult *libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info);
 static inline PGresult *libpqsrv_get_result(PGconn *conn, uint32 wait_event_info);
 
+/*
+ * Start a connection using PQconnectStart().
+ *
+ * The returned connection has not yet completed its startup sequence.  Callers
+ * may perform per-connection setup, such as installing a notice receiver,
+ * before calling libpqsrv_connect_complete().
+ *
+ * Callers must call libpqsrv_connect_complete(), even if this function returns
+ * NULL, because libpqsrv_connect_prepare() may already have reserved an
+ * external FD that must be released.
+ */
+static inline PGconn *
+libpqsrv_connect_start(const char *conninfo)
+{
+	libpqsrv_connect_prepare();
+
+	return PQconnectStart(conninfo);
+}
 
 /*
  * PQconnectdb() wrapper that reserves a file descriptor and processes
@@ -55,15 +73,28 @@ static inline PGresult *libpqsrv_get_result(PGconn *conn, uint32 wait_event_info
 static inline PGconn *
 libpqsrv_connect(const char *conninfo, uint32 wait_event_info)
 {
-	PGconn	   *conn = NULL;
+	PGconn	   *conn;
 
-	libpqsrv_connect_prepare();
+	conn = libpqsrv_connect_start(conninfo);
 
-	conn = PQconnectStart(conninfo);
-
-	libpqsrv_connect_internal(conn, wait_event_info);
+	libpqsrv_connect_complete(conn, wait_event_info);
 
 	return conn;
+}
+
+/*
+ * Start a connection using PQconnectStartParams().
+ *
+ * See libpqsrv_connect_start() for the resource-lifetime rules.
+ */
+static inline PGconn *
+libpqsrv_connect_params_start(const char *const *keywords,
+							  const char *const *values,
+							  int expand_dbname)
+{
+	libpqsrv_connect_prepare();
+
+	return PQconnectStartParams(keywords, values, expand_dbname);
 }
 
 /*
@@ -76,13 +107,11 @@ libpqsrv_connect_params(const char *const *keywords,
 						int expand_dbname,
 						uint32 wait_event_info)
 {
-	PGconn	   *conn = NULL;
+	PGconn	   *conn;
 
-	libpqsrv_connect_prepare();
+	conn = libpqsrv_connect_params_start(keywords, values, expand_dbname);
 
-	conn = PQconnectStartParams(keywords, values, expand_dbname);
-
-	libpqsrv_connect_internal(conn, wait_event_info);
+	libpqsrv_connect_complete(conn, wait_event_info);
 
 	return conn;
 }
@@ -90,8 +119,9 @@ libpqsrv_connect_params(const char *const *keywords,
 /*
  * PQfinish() wrapper that additionally releases the reserved file descriptor.
  *
- * It is allowed to call this with a NULL pgconn iff NULL was returned by
- * libpqsrv_connect*.
+ * It is allowed to call this with NULL only when the external FD reservation
+ * has already been released, for example after calling
+ * libpqsrv_connect_complete() with a NULL connection.
  */
 static inline void
 libpqsrv_disconnect(PGconn *conn)
@@ -101,7 +131,7 @@ libpqsrv_disconnect(PGconn *conn)
 	 * already released it). This rule makes it easier to write PG_CATCH()
 	 * handlers for this facility's users.
 	 *
-	 * See also libpqsrv_connect_internal().
+	 * See also libpqsrv_connect_complete().
 	 */
 	if (conn == NULL)
 		return;
@@ -111,7 +141,7 @@ libpqsrv_disconnect(PGconn *conn)
 }
 
 
-/* internal helper functions follow */
+/* lower-level connection helper functions follow */
 
 
 /*
@@ -144,10 +174,11 @@ libpqsrv_connect_prepare(void)
 }
 
 /*
- * Helper function for all connection establishment functions.
+ * Complete a connection started by libpqsrv_connect_start() or
+ * libpqsrv_connect_params_start().
  */
 static inline void
-libpqsrv_connect_internal(PGconn *conn, uint32 wait_event_info)
+libpqsrv_connect_complete(PGconn *conn, uint32 wait_event_info)
 {
 	/*
 	 * With conn == NULL libpqsrv_disconnect() wouldn't release the FD. So do
