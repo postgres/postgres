@@ -265,11 +265,6 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 	Assert(walrcv->walRcvState == WALRCV_STOPPED ||
 		   walrcv->walRcvState == WALRCV_WAITING);
 
-	if (conninfo != NULL)
-		strlcpy((char *) walrcv->conninfo, conninfo, MAXCONNINFO);
-	else
-		walrcv->conninfo[0] = '\0';
-
 	/*
 	 * Use configured replication slot if present, and ignore the value of
 	 * create_temp_slot as the slot name should be persistent.  Otherwise, use
@@ -287,10 +282,19 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 		walrcv->is_temp_slot = create_temp_slot;
 	}
 
+	/*
+	 * While waiting for instructions, the WAL receiver uses the same
+	 * connection, so do not clobber the user-visible conninfo already saved.
+	 */
 	if (walrcv->walRcvState == WALRCV_STOPPED)
 	{
 		launch = true;
 		walrcv->walRcvState = WALRCV_STARTING;
+
+		if (conninfo != NULL)
+			strlcpy((char *) walrcv->conninfo, conninfo, MAXCONNINFO);
+		else
+			walrcv->conninfo[0] = '\0';
 	}
 	else
 		walrcv->walRcvState = WALRCV_RESTARTING;
