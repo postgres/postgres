@@ -1776,7 +1776,7 @@ ReplicationSlotReserveWal(void)
 		XLogRecPtr	flushptr;
 
 		/* make sure we have enough information to start */
-		flushptr = LogStandbySnapshot(InvalidOid);
+		flushptr = LogStandbySnapshot();
 
 		/* and make sure it's fsynced to disk */
 		XLogFlush(flushptr);

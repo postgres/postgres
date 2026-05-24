@@ -386,12 +386,8 @@ standby_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				 * Update this decoder's idea of transactions currently
 				 * running.  In doing so we will determine whether we have
 				 * reached consistent status.
-				 *
-				 * If the output plugin doesn't need access to shared
-				 * catalogs, we can ignore transactions in other databases.
 				 */
-				SnapBuildProcessRunningXacts(builder, buf->origptr, running,
-											 !ctx->options.need_shared_catalogs);
+				SnapBuildProcessRunningXacts(builder, buf->origptr, running);
 
 				/*
 				 * Abort all transactions that we keep track of, that are
@@ -401,12 +397,8 @@ standby_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				 * all running transactions which includes prepared ones,
 				 * while shutdown checkpoints just know that no non-prepared
 				 * transactions are in progress.
-				 *
-				 * The database-specific records might work here too, but it's
-				 * not their purpose.
 				 */
-				if (!OidIsValid(running->dbid))
-					ReorderBufferAbortOld(ctx->reorder, running->oldestRunningXid);
+				ReorderBufferAbortOld(ctx->reorder, running->oldestRunningXid);
 			}
 			break;
 		case XLOG_STANDBY_LOCK:

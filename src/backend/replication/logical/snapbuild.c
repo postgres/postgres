@@ -154,14 +154,6 @@
 static ResourceOwner SavedResourceOwnerDuringExport = NULL;
 static bool ExportInProgress = false;
 
-/*
- * If a backend is going to do logical decoding and the output plugin does
- * not need to access shared catalogs, setting this variable to false can make
- * the decoding startup faster. In particular, the backend will not need to
- * wait for completion of already running transactions in other databases.
- */
-bool		accessSharedCatalogsInDecoding = true;
-
 /* ->committed and ->catchange manipulation */
 static void SnapBuildPurgeOlderTxn(SnapBuild *builder);
 
@@ -235,9 +227,6 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/* The default is that shared catalog are used. */
-	accessSharedCatalogsInDecoding = true;
-
 	return builder;
 }
 
@@ -255,9 +244,6 @@ FreeSnapshotBuilder(SnapBuild *builder)
 		SnapBuildSnapDecRefcount(builder->snapshot);
 		builder->snapshot = NULL;
 	}
-
-	/* The default is that shared catalog are used. */
-	accessSharedCatalogsInDecoding = true;
 
 	/* other resources are deallocated via memory context reset */
 	MemoryContextDelete(context);
@@ -1151,8 +1137,7 @@ SnapBuildXidHasCatalogChanges(SnapBuild *builder, TransactionId xid,
  * anymore.
  */
 void
-SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *running,
-							 bool db_specific)
+SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *running)
 {
 	ReorderBufferTXN *txn;
 	TransactionId xmin;
@@ -1164,49 +1149,12 @@ SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xact
 	 */
 	if (builder->state < SNAPBUILD_CONSISTENT)
 	{
-		/*
-		 * To reduce the potential for unnecessarily waiting for completion of
-		 * unrelated transactions, the caller can declare that only
-		 * transactions of the current database are relevant at this stage.
-		 */
-		if (db_specific)
-		{
-			/*
-			 * If we must only keep track of transactions running in the
-			 * current database, we need transaction info from exactly that
-			 * database.
-			 */
-			if (running->dbid != MyDatabaseId)
-			{
-				LogStandbySnapshot(MyDatabaseId);
-
-				return;
-			}
-
-			/*
-			 * We'd better be able to check during scan if the plugin does not
-			 * lie.
-			 */
-			if (accessSharedCatalogsInDecoding)
-				accessSharedCatalogsInDecoding = false;
-		}
-
 		/* returns false if there's no point in performing cleanup just yet */
 		if (!SnapBuildFindSnapshot(builder, lsn, running))
 			return;
 	}
 	else
 		SnapBuildSerialize(builder, lsn);
-
-	/*
-	 * Database specific transaction info may exist to reach CONSISTENT state
-	 * faster, however the code below makes no use of it. Moreover, such
-	 * record might cause problems because the following normal (cluster-wide)
-	 * record can have lower value of oldestRunningXid. In that case, let's
-	 * wait with the cleanup for the next regular cluster-wide record.
-	 */
-	if (OidIsValid(running->dbid))
-		return;
 
 	/*
 	 * Update range of interesting xids based on the running xacts
@@ -1518,11 +1466,7 @@ SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff)
 	 */
 	if (!RecoveryInProgress())
 	{
-		/*
-		 * If the last transaction info was about specific database, so needs
-		 * to be the next one - at least until we're in the CONSISTENT state.
-		 */
-		LogStandbySnapshot(running->dbid);
+		LogStandbySnapshot();
 	}
 }
 

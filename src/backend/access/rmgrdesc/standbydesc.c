@@ -41,8 +41,6 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 		for (i = 0; i < xlrec->subxcnt; i++)
 			appendStringInfo(buf, " %u", xlrec->xids[xlrec->xcnt + i]);
 	}
-
-	appendStringInfo(buf, "; dbid: %u", xlrec->dbid);
 }
 
 void

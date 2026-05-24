@@ -47,7 +47,7 @@ extern bool ProcArrayInstallImportedXmin(TransactionId xmin,
 										 VirtualTransactionId *sourcevxid);
 extern bool ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc);
 
-extern RunningTransactions GetRunningTransactionData(Oid dbid);
+extern RunningTransactions GetRunningTransactionData(void);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern TransactionId GetOldestNonRemovableTransactionId(Relation rel);
