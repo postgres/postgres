@@ -3274,6 +3274,8 @@ match_previous_words(int pattern_id,
 			COMPLETE_WITH("MODE", "FLUSH_UNLOGGED");
 		else if (TailMatches("MODE"))
 			COMPLETE_WITH("FAST", "SPREAD");
+		else if (TailMatches("FLUSH_UNLOGGED"))
+			COMPLETE_WITH("ON", "OFF");
 	}
 /* CLOSE */
 	else if (Matches("CLOSE"))
