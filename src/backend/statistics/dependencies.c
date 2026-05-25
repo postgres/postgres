@@ -529,7 +529,7 @@ statext_dependencies_deserialize(bytea *data)
 		elog(ERROR, "invalid zero-length item array in MVDependencies");
 
 	/* what minimum bytea size do we expect for those parameters */
-	min_expected_size = SizeOfItem(dependencies->ndeps);
+	min_expected_size = MinSizeOfItems(dependencies->ndeps);
 
 	if (VARSIZE_ANY_EXHDR(data) < min_expected_size)
 		elog(ERROR, "invalid dependencies size %zu (expected at least %zu)",
