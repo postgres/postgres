@@ -6612,7 +6612,7 @@ StartupXLOG(void)
 
 		ereport(WARNING,
 				errmsg("enabling data checksums was interrupted"),
-				errhint("Data checksum processing must be manually restarted for checksums to be enabled"));
+				errhint("Data checksum processing must be manually restarted for checksums to be enabled."));
 	}
 
 	/*

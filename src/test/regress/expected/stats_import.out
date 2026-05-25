@@ -2493,7 +2493,7 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'exprs', '[ { "null_frac": 1 },
               { "null_frac": "0.25" } ]'::jsonb);
 WARNING:  could not parse "exprs": invalid element in expression -1
-HINT:  Value of element "null_frac" must be type a null or a string.
+HINT:  Value of element "null_frac" must be a null or a string.
  pg_restore_extended_stats 
 ---------------------------
  f

@@ -1160,7 +1160,7 @@ import_pg_statistic(Relation pgsd, JsonbContainer *cont,
 				ereport(WARNING,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("could not parse \"%s\": invalid element in expression %d", argname, exprnum),
-						errhint("Value of element \"%s\" must be type a null or a string.", s));
+						errhint("Value of element \"%s\" must be a null or a string.", s));
 				goto pg_statistic_error;
 		}
 	}
