@@ -35,8 +35,10 @@ CHECKPOINT [ ( option [, ...] ) ]
 
   <para>
    A checkpoint is a point in the write-ahead log sequence at which
-   all data files have been updated to reflect the information in the
-   log.  All data files will be flushed to disk.  Refer to
+   all data files for permanent relations have been updated to reflect the
+   information in the log.  All data for permanent relations files will be
+   flushed to disk, dirty buffers of unlogged relations are not flushed unless
+   <literal>FLUSH_UNLOGGED</literal> is specified.  Refer to
    <xref linkend="wal-configuration"/> for more details about what happens
    during a checkpoint.
   </para>
