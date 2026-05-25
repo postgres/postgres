@@ -151,7 +151,10 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	 * query_int.
 	 */
 	if (vardata.vartype != INT4ARRAYOID)
+	{
+		ReleaseVariableStats(vardata);
 		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
+	}
 
 	/*
 	 * Can't do anything useful if the something is not a constant, either.
