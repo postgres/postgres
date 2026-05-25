@@ -20,6 +20,7 @@ my $db1 = "db1";    # For node1
 my $db2 = "db2";    # For node2
 my $fdw_server = "db1_fdw";
 my $fdw_server2 = "db2_fdw";
+my $fdw_server3 = "db1_fdw_override";
 
 my $node1 = PostgreSQL::Test::Cluster->new('node1');
 my $node2 = PostgreSQL::Test::Cluster->new('node2');
@@ -46,9 +47,11 @@ setup_table($node2, $db2, "t2");
 $node1->safe_psql($db0, 'CREATE EXTENSION IF NOT EXISTS postgres_fdw');
 setup_fdw_server($node1, $db0, $fdw_server, $node1, $db1);
 setup_fdw_server($node1, $db0, $fdw_server2, $node2, $db2);
+setup_fdw_server($node1, $db0, $fdw_server3, $node1, $db1);
 
 setup_user_mapping($node1, $db0, $fdw_server);
 setup_user_mapping($node1, $db0, $fdw_server2);
+setup_user_mapping($node1, $db0, $fdw_server3);
 
 # Make the user have the same SCRAM key on both servers. Forcing to have the
 # same iteration and salt.
@@ -67,6 +70,33 @@ test_fdw_auth($node1, $db0, "t2", $fdw_server2,
 	"SCRAM auth on a different database cluster must succeed");
 test_auth($node2, $db2, "t2",
 	"SCRAM auth directly on foreign server should still succeed");
+
+# Test that use_scram_passthrough=false on user mapping overrides server setting
+{
+	my $connstr = $node1->connstr($db0) . qq' user=$user';
+
+	$node1->safe_psql($db0,
+		qq'ALTER USER MAPPING FOR $user SERVER $fdw_server3 OPTIONS(add use_scram_passthrough \'false\')',
+		connstr => $connstr
+	);
+
+	$node1->safe_psql(
+		$db0,
+		qq'CREATE FOREIGN TABLE override_t (g int, col2 int) SERVER $fdw_server3 OPTIONS (table_name \'t\');',
+		connstr => $connstr );
+	$node1->safe_psql($db0, qq'GRANT SELECT ON override_t TO $user;', connstr => $connstr);
+
+	my ($ret, $stdout, $stderr) = $node1->psql(
+		$db0,
+		qq'SELECT count(1) FROM override_t',
+		connstr => $connstr);
+
+	is($ret, 3, 'SCRAM passthrough disabled on user mapping should fail');
+	like(
+		$stderr,
+		qr/password/i,
+		'expected password-related error when scram passthrough disabled on user mapping');
+}
 
 SKIP:
 {

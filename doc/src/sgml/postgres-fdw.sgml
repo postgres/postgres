@@ -803,7 +803,9 @@ OPTIONS (ADD password_required 'false');
        <para>
         This option controls whether <filename>postgres_fdw</filename> will
         use the SCRAM pass-through authentication to connect to the foreign
-        server.  With SCRAM pass-through authentication,
+        server.  It can be specified for a foreign server or a user mapping.
+        A user mapping setting overrides the foreign server setting.
+        With SCRAM pass-through authentication,
         <filename>postgres_fdw</filename> uses SCRAM-hashed secrets instead of
         plain-text user passwords to connect to the remote server.  This
         avoids storing plain-text user passwords in PostgreSQL system
