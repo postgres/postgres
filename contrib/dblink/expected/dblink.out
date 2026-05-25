@@ -1220,6 +1220,11 @@ SHOW intervalstyle;
  postgres
 (1 row)
 
+-- Check that adding use_scram_passthrough option on an foreign data wrapper is
+-- not allowed
+ALTER FOREIGN DATA WRAPPER dblink_fdw OPTIONS(add use_scram_passthrough 'true');
+ERROR:  invalid option "use_scram_passthrough"
+HINT:  There are no valid options in this context.
 -- Clean up GUC-setting tests
 SELECT dblink_disconnect('myconn');
  dblink_disconnect 

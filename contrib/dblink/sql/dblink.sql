@@ -635,6 +635,10 @@ FROM dblink_fetch('myconn','error_cursor', 1) AS t(i int);
 SHOW datestyle;
 SHOW intervalstyle;
 
+-- Check that adding use_scram_passthrough option on an foreign data wrapper is
+-- not allowed
+ALTER FOREIGN DATA WRAPPER dblink_fdw OPTIONS(add use_scram_passthrough 'true');
+
 -- Clean up GUC-setting tests
 SELECT dblink_disconnect('myconn');
 RESET datestyle;
