@@ -24,6 +24,7 @@ my $db1 = "db1";                               # For node1
 my $db2 = "db2";                               # For node2
 my $fdw_server = "db1_fdw";
 my $fdw_server2 = "db2_fdw";
+my $fdw_server3 = "db1_fdw_override";
 my $fdw_invalid_server = "db2_fdw_invalid";    # For invalid fdw options
 my $fdw_invalid_server2 =
   "db2_fdw_invalid2";    # For invalid scram keys fdw options
@@ -55,10 +56,12 @@ setup_fdw_server($node1, $db0, $fdw_server, $node1, $db1);
 setup_fdw_server($node1, $db0, $fdw_server2, $node2, $db2);
 setup_invalid_fdw_server($node1, $db0, $fdw_invalid_server, $node2, $db2);
 setup_fdw_server($node1, $db0, $fdw_invalid_server2, $node2, $db2);
+setup_fdw_server($node1, $db0, $fdw_server3, $node1, $db1);
 
 setup_user_mapping($node1, $db0, $fdw_server);
 setup_user_mapping($node1, $db0, $fdw_server2);
 setup_user_mapping($node1, $db0, $fdw_invalid_server);
+setup_user_mapping($node1, $db0, $fdw_server3);
 
 # Make the user have the same SCRAM key on both servers. Forcing to have the
 # same iteration and salt.
@@ -95,6 +98,27 @@ test_fdw_auth($node1, $db0, "t2", $fdw_server2,
 	"SCRAM auth on a different database cluster must succeed");
 
 test_fdw_auth_with_invalid_overwritten_require_auth($fdw_invalid_server);
+
+# Test that use_scram_passthrough=false on user mapping overrides server setting
+{
+	my $connstr = $node1->connstr($db0) . qq' user=$user';
+
+	$node1->safe_psql($db0,
+		qq'ALTER USER MAPPING FOR $user SERVER $fdw_server3 OPTIONS(add use_scram_passthrough \'false\')',
+		connstr => $connstr
+	);
+
+	my ($ret, $stdout, $stderr) = $node1->psql(
+		$db0,
+		"select * from dblink('$fdw_server3', 'select * from t') as t(a int, b int)",
+		connstr => $connstr);
+
+	is($ret, 3, 'SCRAM passthrough disabled on user mapping should fail');
+	like(
+		$stderr,
+		qr/password/i,
+		'expected password-related error when scram passthrough disabled on user mapping');
+}
 
 # Ensure that trust connections fail without superuser opt-in.
 unlink($node1->data_dir . '/pg_hba.conf');
