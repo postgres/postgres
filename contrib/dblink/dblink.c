@@ -3133,8 +3133,15 @@ static bool
 is_valid_dblink_fdw_option(const PQconninfoOption *options, const char *option,
 						   Oid context)
 {
-	if (strcmp(option, "use_scram_passthrough") == 0)
-		return true;
+	/*
+	 * These options are only valid for foreign server or user mapping
+	 * contexts
+	 */
+	if (context == ForeignServerRelationId || context == UserMappingRelationId)
+	{
+		if (strcmp(option, "use_scram_passthrough") == 0)
+			return true;
+	}
 
 	return is_valid_dblink_option(options, option, context);
 }
