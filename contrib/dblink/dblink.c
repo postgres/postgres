@@ -3248,12 +3248,18 @@ appendSCRAMKeysInfo(StringInfo buf)
 }
 
 
+/*
+ * Return whether SCRAM pass-through is enabled.
+ *
+ * If use_scram_passthrough is specified in both the foreign server
+ * and the user mapping, the user mapping setting takes precedence.
+ */
 static bool
 UseScramPassthrough(ForeignServer *foreign_server, UserMapping *user)
 {
 	ListCell   *cell;
 
-	foreach(cell, foreign_server->options)
+	foreach(cell, user->options)
 	{
 		DefElem    *def = lfirst(cell);
 
@@ -3261,7 +3267,7 @@ UseScramPassthrough(ForeignServer *foreign_server, UserMapping *user)
 			return defGetBoolean(def);
 	}
 
-	foreach(cell, user->options)
+	foreach(cell, foreign_server->options)
 	{
 		DefElem    *def = (DefElem *) lfirst(cell);
 
