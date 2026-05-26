@@ -218,12 +218,12 @@ This means READ ONLY transactions can no longer modify rows processed by postgre
 
 <!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2026-04-03 [79534f906] Change default of max_locks_per_transactions to 128
+2026-04-03 [79534f906] Change default of max_locks_per_transaction to 128
 -->
 
 <listitem>
 <para>
-Change default of max_locks_per_transactions from 64 to 128 (Heikki Linnakangas)
+Change default of max_locks_per_transaction from 64 to 128 (Heikki Linnakangas)
 <ulink url="&commit_baseurl;79534f906">&sect;</ulink>
 </para>
 
@@ -1619,7 +1619,7 @@ Rename column sync_error_count to sync_table_error_count in system view pg_stat_
 </para>
 
 <para>
-This is necessary since sequences errors are now also tracked.
+This is necessary since sequence errors are now also tracked.
 </para>
 </listitem>
 
@@ -1747,7 +1747,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 
 <listitem>
 <para>
-Add support for INSERT ... ON CONFLICT DO SELECT ... RETURNING (Andreas Karlsson,  Marko Tiikkaja, Viktor Holmberg)
+Add support for INSERT ... ON CONFLICT DO SELECT ... RETURNING (Andreas Karlsson, Marko Tiikkaja, Viktor Holmberg)
 <ulink url="&commit_baseurl;88327092f">&sect;</ulink>
 </para>
 
@@ -1798,7 +1798,7 @@ Allow REPACK to rebuild tables without access-exclusive locking (Antonin Houska,
 </para>
 
 <para>
-This is enabled via the CONCURRENTLY option.  Server variables max_repack_replication_slots was also added.
+This is enabled via the CONCURRENTLY option.  Server variable max_repack_replication_slots was also added.
 </para>
 </listitem>
 
@@ -1961,7 +1961,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Allow multiple headers lines be skipped by COPY FROM (Shinya Kato, Fujii Masao)
+Allow multiple headers lines to be skipped by COPY FROM (Shinya Kato, Fujii Masao)
 <ulink url="&commit_baseurl;bc2f348e8">&sect;</ulink>
 </para>
 
@@ -2217,7 +2217,7 @@ Add functions to return a set of ranges resulting from range subtraction (Paul A
 </para>
 
 <para>
-The functions are range_minus_multi() and multirange_minus_multi().  This is useful to represent range subtractions results with gaps.
+The functions are range_minus_multi() and multirange_minus_multi().  This is useful to represent range subtraction results with gaps.
 </para>
 </listitem>
 
@@ -2245,7 +2245,7 @@ Allow IS JSON to work on domains defined over supported base types (Jian He)
 </para>
 
 <para>
-The supported base domains are TEXT, JSON, JSONB, and BYTEA.
+The supported base types are TEXT, JSON, JSONB, and BYTEA.
 </para>
 </listitem>
 
@@ -2424,7 +2424,7 @@ Author: Jacob Champion <jchampion@postgresql.org>
 
 <listitem>
 <para>
-Allow libpq environment variable PGOAUTHDEBUG to specify specific debug options (Zsolt Parragi, Jacob Champion)
+Allow libpq environment variable PGOAUTHDEBUG to specify particular debug options (Zsolt Parragi, Jacob Champion)
 <ulink url="&commit_baseurl;6d00fb904">&sect;</ulink>
 </para>
 
@@ -2690,7 +2690,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Allow pg_dumpall to product output in non-text formats (Mahendra Singh Thalor, Andrew Dunstan)
+Allow pg_dumpall to produce output in non-text formats (Mahendra Singh Thalor, Andrew Dunstan)
 <ulink url="&commit_baseurl;763aaa06f">&sect;</ulink>
 <ulink url="&commit_baseurl;3c19983cc">&sect;</ulink>
 </para>
