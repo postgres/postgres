@@ -126,9 +126,11 @@ static inline uint64
 MultiXactOffsetStorageSize(MultiXactOffset new_offset,
 						   MultiXactOffset old_offset)
 {
+	uint64		size_per_member;
+
 	Assert(new_offset >= old_offset);
-	return (uint64) ((new_offset - old_offset) / MULTIXACT_MEMBERS_PER_MEMBERGROUP) *
-		MULTIXACT_MEMBERGROUP_SIZE;
+	size_per_member = MULTIXACT_MEMBERGROUP_SIZE / MULTIXACT_MEMBERS_PER_MEMBERGROUP;
+	return (new_offset - old_offset) * size_per_member;
 }
 
 #endif							/* MULTIXACT_INTERNAL_H */
