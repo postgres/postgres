@@ -77,7 +77,7 @@ Issue a warning after successful MD5 password authentication (Nathan Bossart)
 </para>
 
 <para>
-The warning can be disabled via server variable md5_password_warnings.  MD5 passwords were marked marked as deprecated in Postgres 18.
+The warning can be disabled via server variable md5_password_warnings.  MD5 passwords were marked as deprecated in Postgres 18.
 </para>
 </listitem>
 
@@ -144,7 +144,7 @@ Change the default index opclasses for inet and cidr data types from btree_gist 
 </para>
 
 <para>
-The btree_gist inet/cidr opclasses are broken because they can exclude rows that should be returned.  Pg_upgrade will fail to upgrade if btree_gist inet/cidr indexes exist in the old
+The btree_gist inet/cidr opclasses are broken because they can exclude rows that should be returned.  pg_upgrade will fail to upgrade if btree_gist inet/cidr indexes exist in the old
 server.
 </para>
 </listitem>
@@ -328,7 +328,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow NOT INs to be converted to more efficient ANTI JOINs when NULLs are not present (Richard Guo)
+Allow NOT IN clauses to be converted to more efficient anti-joins when NULLs are not present (Richard Guo)
 <ulink url="&commit_baseurl;383eb21eb">&sect;</ulink>
 </para>
 </listitem>
@@ -700,7 +700,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Improve COPY FROM performance for text and CSV output using SIMD CPU instructions (Nazir Bilal Yavuz, Shinya Kato)
+Improve COPY FROM performance for text and CSV input using SIMD CPU instructions (Nazir Bilal Yavuz, Shinya Kato)
 <ulink url="&commit_baseurl;e0a3a3fd5">&sect;</ulink>
 </para>
 </listitem>
@@ -1210,7 +1210,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Issue warnings when the wraparound of xid and multi-xids is less then 100 million (Nathan Bossart)
+Issue warnings when the wraparound of xid and multi-xids is less than 100 million (Nathan Bossart)
 <ulink url="&commit_baseurl;48f11bfa0">&sect;</ulink>
 </para>
 
@@ -1588,7 +1588,7 @@ Add subscription option max_retention_duration to limit retain_dead_tuples reten
 </para>
 
 <para>
-When the limit is reached, dead tuple retention until manually re-enabled or a new subscription is created.
+When the limit is reached, dead tuple retention is disabled until manually re-enabled or a new subscription is created.
 </para>
 </listitem>
 
