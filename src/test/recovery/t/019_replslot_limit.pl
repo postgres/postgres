@@ -44,8 +44,12 @@ $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
 
 $node_standby->start;
 
-# Wait until standby has replayed enough data
-$node_primary->wait_for_catchup($node_standby);
+# Wait until the primary has processed standby feedback and advanced the
+# slot's restart_lsn.  For a physical slot, restart_lsn is updated from
+# the standby's reported flush position, so this waits for the primary-side
+# slot state that the following wal_status checks depend on.
+$node_primary->wait_for_slot_catchup('rep1', 'restart',
+	$node_primary->lsn('write'));
 
 # Stop standby
 $node_standby->stop;
@@ -79,7 +83,8 @@ is($result, "reserved|t", 'check that slot is working');
 # The standby can reconnect to primary
 $node_standby->start;
 
-$node_primary->wait_for_catchup($node_standby);
+$node_primary->wait_for_slot_catchup('rep1', 'restart',
+	$node_primary->lsn('write'));
 
 $node_standby->stop;
 
@@ -109,7 +114,8 @@ is($result, "reserved",
 
 # The standby can reconnect to primary
 $node_standby->start;
-$node_primary->wait_for_catchup($node_standby);
+$node_primary->wait_for_slot_catchup('rep1', 'restart',
+	$node_primary->lsn('write'));
 $node_standby->stop;
 
 # wal_keep_size overrides max_slot_wal_keep_size
@@ -128,7 +134,8 @@ $result = $node_primary->safe_psql('postgres',
 
 # The standby can reconnect to primary
 $node_standby->start;
-$node_primary->wait_for_catchup($node_standby);
+$node_primary->wait_for_slot_catchup('rep1', 'restart',
+	$node_primary->lsn('write'));
 $node_standby->stop;
 
 # Advance WAL again without checkpoint, reducing remain by 6 MB.
@@ -155,7 +162,8 @@ is($result, "unreserved|t",
 # The standby still can connect to primary before a checkpoint
 $node_standby->start;
 
-$node_primary->wait_for_catchup($node_standby);
+$node_primary->wait_for_slot_catchup('rep1', 'restart',
+	$node_primary->lsn('write'));
 
 $node_standby->stop;
 
