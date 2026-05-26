@@ -937,8 +937,16 @@ EventTriggerOnLogin(void)
 	 * lock to prevent concurrent SetDatabaseHasLoginEventTriggers(), but we
 	 * don't want to hang the connection waiting on the lock.  Thus, we are
 	 * just trying to acquire the lock conditionally.
+	 *
+	 * Skip this on a hot standby: the conditional AccessExclusiveLock on the
+	 * database object would fail with "cannot acquire lock mode ... while
+	 * recovery is in progress", which the caller would surface as a FATAL
+	 * connection error.  On a standby, we cannot (and must not) clear the
+	 * pg_database flag ourselves; it will be cleared via WAL replay once the
+	 * primary's next login event trigger run clears it on the primary.
 	 */
-	else if (ConditionalLockSharedObject(DatabaseRelationId, MyDatabaseId,
+	else if (!RecoveryInProgress() &&
+			 ConditionalLockSharedObject(DatabaseRelationId, MyDatabaseId,
 										 0, AccessExclusiveLock))
 	{
 		/*
