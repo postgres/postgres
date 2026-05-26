@@ -13281,6 +13281,9 @@ QueueFKConstraintValidation(List **wqueue, Relation conrel, Relation fkrel,
 	HeapTuple	copyTuple;
 	Form_pg_constraint copy_con;
 
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	con = (Form_pg_constraint) GETSTRUCT(contuple);
 	Assert(con->contype == CONSTRAINT_FOREIGN);
 	Assert(!con->convalidated);
