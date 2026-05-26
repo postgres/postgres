@@ -1634,7 +1634,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add slot synchronization skip information to pg_stat_replication_slots (Shlok Kyal)
+Add slot synchronization skip information to pg_stat_replication_slots and pg_replication_slots (Shlok Kyal)
 <ulink url="&commit_baseurl;76b78721c">&sect;</ulink>
 <ulink url="&commit_baseurl;e68b6adad">&sect;</ulink>
 <ulink url="&commit_baseurl;5db6a344a">&sect;</ulink>
