@@ -2784,6 +2784,7 @@ Tcl_Time
 TempNamespaceStatus
 TestDecodingData
 TestDecodingTxnData
+TestSlruSharedState
 TestSpec
 TextFreq
 TextPositionState

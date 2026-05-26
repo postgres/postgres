@@ -40,9 +40,16 @@ PG_FUNCTION_INFO_V1(test_slru_delete_all);
 /* Number of SLRU page slots */
 #define NUM_TEST_BUFFERS		16
 
-/* SLRU control lock */
-LWLock		TestSLRULock;
-#define TestSLRULock (&TestSLRULock)
+typedef struct TestSlruSharedState
+{
+	/* SLRU control lock */
+	LWLock		lock;
+} TestSlruSharedState;
+
+/* Pointer to shared-memory state. */
+static TestSlruSharedState *test_slru_state = NULL;
+
+#define TestSLRULock (&test_slru_state->lock)
 
 static SlruCtlData TestSlruCtlData;
 #define TestSlruCtl			(&TestSlruCtlData)
@@ -202,6 +209,7 @@ test_slru_shmem_request(void)
 
 	/* reserve shared memory for the test SLRU */
 	RequestAddinShmemSpace(SimpleLruShmemSize(NUM_TEST_BUFFERS, 0));
+	RequestAddinShmemSpace(MAXALIGN(sizeof(TestSlruSharedState)));
 }
 
 static bool
@@ -214,7 +222,7 @@ static void
 test_slru_shmem_startup(void)
 {
 	const char	slru_dir_name[] = "pg_test_slru";
-	int			test_tranche_id;
+	bool		found;
 
 	if (prev_shmem_startup_hook)
 		prev_shmem_startup_hook();
@@ -225,15 +233,24 @@ test_slru_shmem_startup(void)
 	 */
 	(void) MakePGDirectory(slru_dir_name);
 
-	/* initialize the SLRU facility */
-	test_tranche_id = LWLockNewTrancheId();
-	LWLockRegisterTranche(test_tranche_id, "test_slru_tranche");
-	LWLockInitialize(TestSLRULock, test_tranche_id);
+	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+	test_slru_state = ShmemInitStruct("test_slru",
+									  sizeof(TestSlruSharedState),
+									  &found);
+	if (!found)
+	{
+		/* First time through ... */
+		LWLockInitialize(&test_slru_state->lock, LWLockNewTrancheId());
+	}
 
+	LWLockRelease(AddinShmemInitLock);
+	LWLockRegisterTranche(test_slru_state->lock.tranche, "test_slru");
+
+	/* initialize the SLRU facility */
 	TestSlruCtl->PagePrecedes = test_slru_page_precedes_logically;
 	SimpleLruInit(TestSlruCtl, "TestSLRU",
 				  NUM_TEST_BUFFERS, 0, TestSLRULock, slru_dir_name,
-				  test_tranche_id, SYNC_HANDLER_NONE);
+				  test_slru_state->lock.tranche, SYNC_HANDLER_NONE);
 }
 
 void
