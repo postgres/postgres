@@ -836,6 +836,24 @@ ProcKill(int code, Datum arg)
 	/* Cancel any pending condition variable sleep, too */
 	ConditionVariableCancelSleep();
 
+	/*
+	 * Reset MyLatch to the process local one and disown the shared latch, so
+	 * that signal handlers et al can continue using the latch after the
+	 * shared latch isn't ours anymore.
+	 *
+	 * DisownLatch() must happen before our PGPROC can appear on a freelist: a
+	 * newly-forked backend that pops our slot and calls OwnLatch() would
+	 * PANIC on a still-owned latch.
+	 *
+	 * pgstat_reset_wait_event_storage() is intentionally deferred until after
+	 * the lock-group block so that wait_event_info remains visible in our
+	 * PGPROC slot while we may be observed there.  It is safe to defer
+	 * because our slot is not yet on any freelist at this point, and useful
+	 * for testing purposes.
+	 */
+	SwitchBackToLocalLatch();
+	DisownLatch(&MyProc->procLatch);
+
 	proc = MyProc;
 	procgloballist = proc->procgloballist;
 
@@ -892,20 +910,10 @@ ProcKill(int code, Datum arg)
 		LWLockRelease(leader_lwlock);
 	}
 
-	/*
-	 * Reset MyLatch to the process local one.  This is so that signal
-	 * handlers et al can continue using the latch after the shared latch
-	 * isn't ours anymore.
-	 *
-	 * Similarly, stop reporting wait events to MyProc->wait_event_info.
-	 *
-	 * After that clear MyProc and disown the shared latch.
-	 */
-	SwitchBackToLocalLatch();
+	/* See comment above, close to DisownLatch() */
 	pgstat_reset_wait_event_storage();
 
 	MyProc = NULL;
-	DisownLatch(&proc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
 	if (push_leader)
