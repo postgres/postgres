@@ -48,9 +48,7 @@
 #include <openssl/bn.h>
 #include <openssl/conf.h>
 #include <openssl/dh.h>
-#ifndef OPENSSL_NO_ECDH
 #include <openssl/ec.h>
-#endif
 #include <openssl/x509v3.h>
 
 /*
@@ -2115,7 +2113,6 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 static bool
 initialize_ecdh(SSL_CTX *context, bool isServerStart)
 {
-#ifndef OPENSSL_NO_ECDH
 	if (SSL_CTX_set1_groups_list(context, SSLECDHCurve) != 1)
 	{
 		/*
@@ -2133,7 +2130,6 @@ initialize_ecdh(SSL_CTX *context, bool isServerStart)
 				errhint("Ensure that each group name is spelled correctly and supported by the installed version of OpenSSL."));
 		return false;
 	}
-#endif
 
 	return true;
 }

@@ -52,7 +52,7 @@ bool		ssl_loaded_verify_locations = false;
 char	   *SSLCipherSuites = NULL;
 char	   *SSLCipherList = NULL;
 
-/* GUC variable for default ECHD curve. */
+/* GUC variable for default ECDH curve. */
 char	   *SSLECDHCurve;
 
 /* GUC variable: if false, prefer client ciphers */
