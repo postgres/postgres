@@ -166,7 +166,7 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       class="parameter">start_time</replaceable> <literal>TO</literal>
       <replaceable class="parameter">end_time</replaceable>.  Otherwise, it
       must be in the form <literal>(</literal><replaceable
-      class="parameter">portion</replaceable><literal>)</literal> where
+      class="parameter">portion</replaceable><literal>)</literal>, where
       <replaceable class="parameter">portion</replaceable> is an expression
       that yields a value of the same type as <replaceable
       class="parameter">range_column_name</replaceable>.
