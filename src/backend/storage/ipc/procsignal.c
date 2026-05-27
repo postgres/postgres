@@ -189,6 +189,15 @@ ProcSignalInit(const uint8 *cancel_key, int cancel_key_len)
 	MemSet(slot->pss_signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
 
 	/*
+	 * Publish the PID before reading the global barrier generation to ensure
+	 * that EmitProcSignalBarrier() doesn't skip us while we are grabbing an
+	 * older generation. We need a memory barrier here to make sure that the
+	 * update of pss_pid is ordered before the subsequent load of
+	 * psh_barrierGeneration.
+	 */
+	pg_atomic_write_membarrier_u32(&slot->pss_pid, MyProcPid);
+
+	/*
 	 * Initialize barrier state. Since we're a brand-new process, there
 	 * shouldn't be any leftover backend-private state that needs to be
 	 * updated. Therefore, we can broadcast the latest barrier generation and
@@ -207,7 +216,6 @@ ProcSignalInit(const uint8 *cancel_key, int cancel_key_len)
 	if (cancel_key_len > 0)
 		memcpy(slot->pss_cancel_key, cancel_key, cancel_key_len);
 	slot->pss_cancel_key_len = cancel_key_len;
-	pg_atomic_write_u32(&slot->pss_pid, MyProcPid);
 
 	SpinLockRelease(&slot->pss_mutex);
 
