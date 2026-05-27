@@ -432,7 +432,7 @@ pgsa_read_from_disk(void)
 
 			/* Parse the query ID. */
 			errno = 0;
-			queryId = strtoll(queryid_str, &endptr, 10);
+			queryId = strtoi64(queryid_str, &endptr, 10);
 			if (*endptr != '\0' || errno != 0 || queryid_str == endptr ||
 				queryId == 0)
 				ereport(ERROR,
