@@ -176,6 +176,16 @@ ProcSignalInit(int pss_idx)
 	MemSet(slot->pss_signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
 
 	/*
+	 * Publish the PID before reading the global barrier generation to ensure
+	 * that EmitProcSignalBarrier() doesn't skip us while we are grabbing an
+	 * older generation. We need a memory barrier here to make sure that the
+	 * update of pss_pid is ordered before the subsequent load of
+	 * psh_barrierGeneration.
+	 */
+	slot->pss_pid = MyProcPid;
+	pg_memory_barrier();
+
+	/*
 	 * Initialize barrier state. Since we're a brand-new process, there
 	 * shouldn't be any leftover backend-private state that needs to be
 	 * updated. Therefore, we can broadcast the latest barrier generation and
@@ -191,9 +201,6 @@ ProcSignalInit(int pss_idx)
 		pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration);
 	pg_atomic_write_u64(&slot->pss_barrierGeneration, barrier_generation);
 	pg_memory_barrier();
-
-	/* Mark slot with my PID */
-	slot->pss_pid = MyProcPid;
 
 	/* Remember slot location for CheckProcSignal */
 	MyProcSignalSlot = slot;
