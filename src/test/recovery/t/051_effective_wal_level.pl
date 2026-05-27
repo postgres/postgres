@@ -65,6 +65,20 @@ ok( $primary->log_contains(
 # Wait for the checkpointer to disable logical decoding.
 wait_for_logical_decoding_disabled($primary);
 
+# Test that logical decoding is disabled after repack
+$primary->safe_psql('postgres', qq[create table foo(a int primary key)]);
+$primary->safe_psql('postgres', qq[repack (concurrently) foo;]);
+ok( $primary->log_contains(
+		"logical decoding is enabled upon creating a new logical replication slot"
+	),
+	"logical decoding enabled by repack");
+
+# Wait for the checkpointer to disable logical decoding.
+wait_for_logical_decoding_disabled($primary);
+test_wal_level($primary, "replica|replica",
+	"logical decoding disabled after repack"
+);
+
 # Create a new logical slot and check that effective_wal_level must be increased
 # to 'logical'.
 $primary->safe_psql('postgres',
@@ -399,20 +413,6 @@ select pg_cancel_backend(pid) from pg_stat_activity where query ~ 'slot_canceled
 	test_wal_level($primary, "replica|replica",
 		"the activation process aborted");
 }
-
-# Test that logical decoding is disabled after repack
-$primary->safe_psql('postgres', qq[create table foo(a int primary key)]);
-$primary->safe_psql('postgres', qq[repack (concurrently) foo;]);
-ok( $primary->log_contains(
-		"logical decoding is enabled upon creating a new logical replication slot"
-	),
-	"logical decoding enabled by repack");
-
-# Wait for the checkpointer to disable logical decoding.
-wait_for_logical_decoding_disabled($primary);
-test_wal_level($primary, "replica|replica",
-	"logical decoding disabled after repack"
-);
 
 $primary->stop;
 
