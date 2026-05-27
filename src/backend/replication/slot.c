@@ -783,19 +783,10 @@ ReplicationSlotRelease(void)
 	if (slot->data.persistency == RS_EPHEMERAL)
 	{
 		/*
-		 * Delete the slot. There is no !PANIC case where this is allowed to
-		 * fail, all that may happen is an incomplete cleanup of the on-disk
-		 * data.
+		 * If slot is ephemeral, we drop it upon release, and request logical
+		 * decoding be disabled.
 		 */
-		ReplicationSlotDropAcquired();
-
-		/*
-		 * Request to disable logical decoding, even though this slot may not
-		 * have been the last logical slot. The checkpointer will verify if
-		 * logical decoding should actually be disabled.
-		 */
-		if (is_logical)
-			RequestDisableLogicalDecoding();
+		ReplicationSlotDropAcquired(is_logical);
 	}
 
 	/*
@@ -914,15 +905,13 @@ restart:
 }
 
 /*
- * Permanently drop replication slot identified by the passed in name.
+ * Permanently drop the replication slot identified by the passed-in name.
+ *
+ * If this is a logical slot, request that logical decoding be disabled.
  */
 void
 ReplicationSlotDrop(const char *name, bool nowait)
 {
-	bool		is_logical;
-
-	Assert(MyReplicationSlot == NULL);
-
 	ReplicationSlotAcquire(name, nowait, false);
 
 	/*
@@ -935,12 +924,7 @@ ReplicationSlotDrop(const char *name, bool nowait)
 				errmsg("cannot drop replication slot \"%s\"", name),
 				errdetail("This replication slot is being synchronized from the primary server."));
 
-	is_logical = SlotIsLogical(MyReplicationSlot);
-
-	ReplicationSlotDropAcquired();
-
-	if (is_logical)
-		RequestDisableLogicalDecoding();
+	ReplicationSlotDropAcquired(SlotIsLogical(MyReplicationSlot));
 }
 
 /*
@@ -1037,18 +1021,28 @@ ReplicationSlotAlter(const char *name, const bool *failover,
 
 /*
  * Permanently drop the currently acquired replication slot.
+ *
+ * If caller requests it, have checkpointer attempt to disable logical
+ * decoding.  Obviously, this should only be done if the slot is logical.
  */
 void
-ReplicationSlotDropAcquired(void)
+ReplicationSlotDropAcquired(bool try_disable)
 {
-	ReplicationSlot *slot = MyReplicationSlot;
+	ReplicationSlot *slot;
 
 	Assert(MyReplicationSlot != NULL);
+	slot = MyReplicationSlot;
+
+	/* Can only disable logical decoding if slot is logical */
+	Assert(!try_disable || SlotIsLogical(slot));
 
 	/* slot isn't acquired anymore */
 	MyReplicationSlot = NULL;
 
 	ReplicationSlotDropPtr(slot);
+
+	if (try_disable)
+		RequestDisableLogicalDecoding();
 }
 
 /*
@@ -1511,7 +1505,7 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
  * This routine isn't as efficient as it could be - but we don't drop
  * databases often, especially databases with lots of slots.
  *
- * If it drops the last logical slot in the cluster, it requests to disable
+ * If the last logical slot in the cluster is dropped, request to disable
  * logical decoding.
  */
 void
@@ -1606,7 +1600,7 @@ restart:
 		 * beginning each time we release the lock.
 		 */
 		LWLockRelease(ReplicationSlotControlLock);
-		ReplicationSlotDropAcquired();
+		ReplicationSlotDropAcquired(false);
 		dropped = true;
 		goto restart;
 	}

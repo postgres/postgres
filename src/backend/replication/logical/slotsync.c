@@ -557,7 +557,7 @@ drop_local_obsolete_slots(List *remote_slot_list)
 			 * database drop by the startup process and the creation of a new
 			 * slot by the user. This new user-created slot may end up using
 			 * the same shared memory as that of 'local_slot'. Thus check if
-			 * local_slot is still the synced one before performing actual
+			 * local_slot is still the synced one before performing the actual
 			 * drop.
 			 */
 			SpinLockAcquire(&local_slot->mutex);
@@ -566,8 +566,14 @@ drop_local_obsolete_slots(List *remote_slot_list)
 
 			if (synced_slot)
 			{
+				/*
+				 * Now acquire and drop the slot.  Note we purposely don't
+				 * request logical decoding to be disabled here: since this is
+				 * a standby, which derives its logical decoding state from
+				 * the primary, it would be wrong to do so.
+				 */
 				ReplicationSlotAcquire(NameStr(local_slot->data.name), true, false);
-				ReplicationSlotDropAcquired();
+				ReplicationSlotDropAcquired(false);
 			}
 
 			UnlockSharedObject(DatabaseRelationId, local_slot->data.database,
