@@ -924,7 +924,10 @@ static void
 ProcKill(int code, Datum arg)
 {
 	PGPROC	   *proc;
+	PGPROC	   *leader;
 	dlist_head *procgloballist;
+	bool		push_leader;
+	bool		push_self;
 
 	Assert(MyProc != NULL);
 
@@ -960,35 +963,59 @@ ProcKill(int code, Datum arg)
 	/* Cancel any pending condition variable sleep, too */
 	ConditionVariableCancelSleep();
 
+	proc = MyProc;
+	procgloballist = proc->procgloballist;
+
 	/*
-	 * Detach from any lock group of which we are a member.  If the leader
-	 * exits before all other group members, its PGPROC will remain allocated
-	 * until the last group process exits; that process must return the
-	 * leader's PGPROC to the appropriate list.
+	 * Detach from any lock group of which we are a member, deciding under
+	 * leader_lwlock whether we (via push_self) and/or the leader (via
+	 * push_leader) need to be pushed onto a freelist.  The actual pushes
+	 * happen after evaluating if any of these are required, under a single
+	 * ProcGlobal->freeProcsLock.
+	 *
+	 * The decision whether any of the freelists needs to be updated is taken
+	 * under a single leader_lwlock.
 	 */
-	if (MyProc->lockGroupLeader != NULL)
+	push_leader = false;
+	push_self = true;
+	leader = NULL;
+
+	if (proc->lockGroupLeader != NULL)
 	{
-		PGPROC	   *leader = MyProc->lockGroupLeader;
-		LWLock	   *leader_lwlock = LockHashPartitionLockByProc(leader);
+		LWLock	   *leader_lwlock;
+
+		leader = proc->lockGroupLeader;
+		leader_lwlock = LockHashPartitionLockByProc(leader);
 
 		LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
 		Assert(!dlist_is_empty(&leader->lockGroupMembers));
-		dlist_delete(&MyProc->lockGroupLink);
+		dlist_delete(&proc->lockGroupLink);
 		if (dlist_is_empty(&leader->lockGroupMembers))
 		{
 			leader->lockGroupLeader = NULL;
-			if (leader != MyProc)
+			if (leader != proc)
 			{
-				procgloballist = leader->procgloballist;
-
-				/* Leader exited first; return its PGPROC. */
-				SpinLockAcquire(&ProcGlobal->freeProcsLock);
-				dlist_push_head(procgloballist, &leader->freeProcsLink);
-				SpinLockRelease(&ProcGlobal->freeProcsLock);
+				/*
+				 * We are the last follower and the leader exited earlier; its
+				 * PGPROC is still allocated and must be pushed here.
+				 */
+				push_leader = true;
+				proc->lockGroupLeader = NULL;
 			}
 		}
-		else if (leader != MyProc)
-			MyProc->lockGroupLeader = NULL;
+		else if (leader != proc)
+		{
+			/* Non-last follower; leader still present in the group. */
+			proc->lockGroupLeader = NULL;
+		}
+		else
+		{
+			/*
+			 * We are the leader and followers remain.  Skip our own push; the
+			 * last follower to exit will push us back to the freelist.
+			 */
+			push_self = false;
+		}
 		LWLockRelease(leader_lwlock);
 	}
 
@@ -1004,7 +1031,6 @@ ProcKill(int code, Datum arg)
 	SwitchBackToLocalLatch();
 	pgstat_reset_wait_event_storage();
 
-	proc = MyProc;
 	MyProc = NULL;
 	MyProcNumber = INVALID_PROC_NUMBER;
 	DisownLatch(&proc->procLatch);
@@ -1014,16 +1040,15 @@ ProcKill(int code, Datum arg)
 	proc->vxid.procNumber = INVALID_PROC_NUMBER;
 	proc->vxid.lxid = InvalidTransactionId;
 
-	procgloballist = proc->procgloballist;
 	SpinLockAcquire(&ProcGlobal->freeProcsLock);
-
-	/*
-	 * If we're still a member of a locking group, that means we're a leader
-	 * which has somehow exited before its children.  The last remaining child
-	 * will release our PGPROC.  Otherwise, release it now.
-	 */
-	if (proc->lockGroupLeader == NULL)
+	if (push_leader)
 	{
+		/* Return leader PGPROC (and semaphore) to appropriate freelist */
+		dlist_push_head(leader->procgloballist, &leader->freeProcsLink);
+	}
+	if (push_self)
+	{
+		Assert(proc->lockGroupLeader == NULL);
 		/* Since lockGroupLeader is NULL, lockGroupMembers should be empty. */
 		Assert(dlist_is_empty(&proc->lockGroupMembers));
 
