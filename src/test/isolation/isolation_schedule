@@ -126,3 +126,4 @@ test: serializable-parallel-3
 test: matview-write-skew
 test: lock-nowait
 test: for-portion-of
+test: ddl-dependency-locking
