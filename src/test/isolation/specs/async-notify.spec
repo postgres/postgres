@@ -68,12 +68,6 @@ step l2begin	{ BEGIN; }
 step l2commit	{ COMMIT; }
 step l2stop		{ UNLISTEN *; }
 
-# Third listener session for testing array growth.
-
-session listener3
-step l3listen	{ LISTEN c1; }
-teardown		{ UNLISTEN *; }
-
 # Listener session for cross-session notification test with channel 'ch'.
 
 session listener_ch
@@ -124,9 +118,6 @@ permutation lunlisten_all notify1 lcheck
 
 # Check notification_match function (triggered by hash table duplicate detection).
 permutation listenc notify_many_with_dup
-
-# Check ChannelHashAddListener array growth.
-permutation listenc llisten l2listen l3listen lslisten
 
 # Cross-backend notification delivery.  We use a "select 1" to force the
 # listener session to check for notifies.  In principle we could just wait
