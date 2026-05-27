@@ -2866,11 +2866,12 @@ begin;
 alter table alterlock2
 add constraint alterlock2nv foreign key (f1) references alterlock (f1) NOT VALID;
 select * from my_locks order by 1;
-  relname   |     max_lockmode      
-------------+-----------------------
- alterlock  | ShareRowExclusiveLock
- alterlock2 | ShareRowExclusiveLock
-(2 rows)
+    relname     |     max_lockmode      
+----------------+-----------------------
+ alterlock      | ShareRowExclusiveLock
+ alterlock2     | ShareRowExclusiveLock
+ alterlock_pkey | AccessShareLock
+(3 rows)
 
 commit;
 begin;
