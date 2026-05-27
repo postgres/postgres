@@ -1402,7 +1402,6 @@ drop_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo,
 		{
 			pg_log_error("could not drop replication slot \"%s\" in database \"%s\": %s",
 						 slot_name, dbinfo->dbname, PQresultErrorMessage(res));
-			dbinfo->made_replslot = false;	/* don't try again. */
 		}
 
 		PQclear(res);
@@ -1665,7 +1664,6 @@ drop_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 		{
 			pg_log_error("could not drop publication \"%s\" in database \"%s\": %s",
 						 dbinfo->pubname, dbinfo->dbname, PQresultErrorMessage(res));
-			dbinfo->made_publication = false;	/* don't try again. */
 
 			/*
 			 * Don't disconnect and exit here. This routine is used by primary
