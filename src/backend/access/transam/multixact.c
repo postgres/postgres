@@ -887,8 +887,6 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 	MultiXactOffset *next_offptr;
 	MultiXactOffset next_offset;
 
-	LWLockAcquire(MultiXactOffsetSLRULock, LW_EXCLUSIVE);
-
 	/* position of this multixid in the offsets SLRU area  */
 	pageno = MultiXactIdToOffsetPage(multi);
 	entryno = MultiXactIdToOffsetEntry(multi);
@@ -950,12 +948,16 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 		{
 			elog(DEBUG1, "next offsets page is not initialized, initializing it now");
 
+			LWLockAcquire(MultiXactOffsetSLRULock, LW_EXCLUSIVE);
+
 			/* Create and zero the page */
 			slotno = SimpleLruZeroPage(MultiXactOffsetCtl, next_pageno);
 
 			/* Make sure it's written out */
 			SimpleLruWritePage(MultiXactOffsetCtl, slotno);
 			Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
+
+			LWLockRelease(MultiXactOffsetSLRULock);
 
 			/*
 			 * Remember that we initialized the page, so that we don't zero it
@@ -975,6 +977,7 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 	 * concurrently, we might race ahead and get called before the previous
 	 * multixid.
 	 */
+	LWLockAcquire(MultiXactOffsetSLRULock, LW_EXCLUSIVE);
 
 	/*
 	 * Note: we pass the MultiXactId to SimpleLruReadPage as the "transaction"
