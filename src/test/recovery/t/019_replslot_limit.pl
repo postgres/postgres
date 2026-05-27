@@ -60,7 +60,7 @@ $result = $node_primary->safe_psql('postgres',
 );
 is($result, "reserved|t", 'check the catching-up state');
 
-# Advance WAL by five segments (= 5MB) on primary
+# Advance WAL by one segment (= 1MB) on primary
 $node_primary->advance_wal(1);
 $node_primary->safe_psql('postgres', "CHECKPOINT;");
 
@@ -110,7 +110,7 @@ $node_primary->safe_psql('postgres', "CHECKPOINT;");
 $result = $node_primary->safe_psql('postgres',
 	"SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
 is($result, "reserved",
-	'check that safe_wal_size gets close to the current LSN');
+	'check that slot remains reserved after advancing WAL');
 
 # The standby can reconnect to primary
 $node_standby->start;
@@ -121,7 +121,7 @@ $node_standby->stop;
 # wal_keep_size overrides max_slot_wal_keep_size
 $result = $node_primary->safe_psql('postgres',
 	"ALTER SYSTEM SET wal_keep_size to '8MB'; SELECT pg_reload_conf();");
-# Advance WAL again then checkpoint, reducing remain by 6 MB.
+# Advance WAL again, reducing remain by 6 MB.
 $node_primary->advance_wal(6);
 $result = $node_primary->safe_psql('postgres',
 	"SELECT wal_status as remain FROM pg_replication_slots WHERE slot_name = 'rep1'"
@@ -141,7 +141,7 @@ $node_standby->stop;
 # Advance WAL again without checkpoint, reducing remain by 6 MB.
 $node_primary->advance_wal(6);
 
-# Slot gets into 'reserved' state
+# Slot gets into 'extended' state
 $result = $node_primary->safe_psql('postgres',
 	"SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
 is($result, "extended", 'check that the slot state changes to "extended"');
@@ -479,8 +479,6 @@ is( $primary4->safe_psql(
 	),
 	't',
 	'last inactive time for an inactive physical slot is updated correctly');
-
-$standby4->stop;
 
 # Testcase end: Check inactive_since property of the streaming standby's slot
 # =============================================================================
