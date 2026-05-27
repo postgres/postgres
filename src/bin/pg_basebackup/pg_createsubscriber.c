@@ -139,7 +139,7 @@ static void wait_for_end_recovery(const char *conninfo,
 static void create_publication(PGconn *conn, struct LogicalRepInfo *dbinfo);
 static bool find_publication(PGconn *conn, const char *pubname, const char *dbname);
 static void drop_publication(PGconn *conn, const char *pubname,
-							 const char *dbname, bool *made_publication);
+							 const char *dbname);
 static void check_and_drop_publications(PGconn *conn, struct LogicalRepInfo *dbinfo);
 static void create_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo);
 static void set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo,
@@ -245,8 +245,7 @@ cleanup_objects_atexit(void)
 			if (conn != NULL)
 			{
 				if (dbinfo->made_publication)
-					drop_publication(conn, dbinfo->pubname, dbinfo->dbname,
-									 &dbinfo->made_publication);
+					drop_publication(conn, dbinfo->pubname, dbinfo->dbname);
 				if (dbinfo->made_replslot)
 					drop_replication_slot(conn, dbinfo, dbinfo->replslotname);
 				disconnect_database(conn, false);
@@ -1629,7 +1628,6 @@ drop_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo,
 		{
 			pg_log_error("could not drop replication slot \"%s\" in database \"%s\": %s",
 						 slot_name, dbinfo->dbname, PQresultErrorMessage(res));
-			dbinfo->made_replslot = false;	/* don't try again. */
 		}
 
 		PQclear(res);
@@ -1871,8 +1869,7 @@ create_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
  * Drop the specified publication in the given database.
  */
 static void
-drop_publication(PGconn *conn, const char *pubname, const char *dbname,
-				 bool *made_publication)
+drop_publication(PGconn *conn, const char *pubname, const char *dbname)
 {
 	PQExpBuffer str = createPQExpBuffer();
 	PGresult   *res;
@@ -1902,7 +1899,6 @@ drop_publication(PGconn *conn, const char *pubname, const char *dbname,
 		{
 			pg_log_error("could not drop publication \"%s\" in database \"%s\": %s",
 						 pubname, dbname, PQresultErrorMessage(res));
-			*made_publication = false;	/* don't try again. */
 
 			/*
 			 * Don't disconnect and exit here. This routine is used by primary
@@ -1951,8 +1947,7 @@ check_and_drop_publications(PGconn *conn, struct LogicalRepInfo *dbinfo)
 
 		/* Drop each publication */
 		for (int i = 0; i < PQntuples(res); i++)
-			drop_publication(conn, PQgetvalue(res, i, 0), dbinfo->dbname,
-							 &dbinfo->made_publication);
+			drop_publication(conn, PQgetvalue(res, i, 0), dbinfo->dbname);
 
 		PQclear(res);
 	}
@@ -1961,8 +1956,7 @@ check_and_drop_publications(PGconn *conn, struct LogicalRepInfo *dbinfo)
 		/* Drop publication only if it was created by this tool */
 		if (dbinfo->made_publication)
 		{
-			drop_publication(conn, dbinfo->pubname, dbinfo->dbname,
-							 &dbinfo->made_publication);
+			drop_publication(conn, dbinfo->pubname, dbinfo->dbname);
 		}
 		else
 		{
