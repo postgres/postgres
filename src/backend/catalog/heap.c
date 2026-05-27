@@ -870,6 +870,9 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
+		if (attr->attisdropped)
+			continue;
+
 		/* Add dependency info */
 		ObjectAddressSubSet(myself, RelationRelationId, new_rel_oid, i + 1);
 		ObjectAddressSet(referenced, TypeRelationId, attr->atttypid);
