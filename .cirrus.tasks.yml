@@ -447,7 +447,7 @@ task:
     # print_stacktraces=1,verbosity=2, duh
     # detect_leaks=0: too many uninteresting leak errors in short-lived binaries
     UBSAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:verbosity=2
-    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0:detect_stack_use_after_return=0
+    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0
 
     # SANITIZER_FLAGS is set in the tasks below
     CFLAGS: -Og -ggdb -fno-sanitize-recover=all $SANITIZER_FLAGS

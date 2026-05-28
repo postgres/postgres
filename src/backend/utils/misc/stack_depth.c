@@ -53,7 +53,8 @@ set_stack_base(void)
 	/*
 	 * Set up reference point for stack depth checking.  On recent gcc we use
 	 * __builtin_frame_address() to avoid a warning about storing a local
-	 * variable's address in a long-lived variable.
+	 * variable's address in a long-lived variable.  This is also important
+	 * with address sanitizer, see comment in stack_is_too_deep().
 	 */
 #ifdef HAVE__BUILTIN_FRAME_ADDRESS
 	stack_base_ptr = __builtin_frame_address(0);
@@ -108,13 +109,28 @@ check_stack_depth(void)
 bool
 stack_is_too_deep(void)
 {
+#ifndef HAVE__BUILTIN_FRAME_ADDRESS
 	char		stack_top_loc;
+#endif
 	ssize_t		stack_depth;
+	char	   *stack_address;
 
 	/*
-	 * Compute distance from reference point to my local variables
+	 * With address sanitizer's stack-use-after-return check, stack variables
+	 * are moved to heap allocations, to allow to detect references to the
+	 * memory at a later time. That would break our stack-depth check. Luckily
+	 * __builtin_frame_address() works correctly, even under asan.
 	 */
-	stack_depth = (ssize_t) (stack_base_ptr - &stack_top_loc);
+#ifndef HAVE__BUILTIN_FRAME_ADDRESS
+	stack_address = &stack_top_loc;
+#else
+	stack_address = (char *) __builtin_frame_address(0);
+#endif
+
+	/*
+	 * Compute distance from reference point to my stack frame.
+	 */
+	stack_depth = (ssize_t) (stack_base_ptr - stack_address);
 
 	/*
 	 * Take abs value, since stacks grow up on some machines, down on others
