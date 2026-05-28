@@ -40,6 +40,7 @@
 #include "access/toast_internals.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -896,6 +897,14 @@ check_concurrent_repack_requirements(Relation rel, Oid *ident_idx_p)
 	char		relpersistence,
 				replident;
 	Oid			ident_idx;
+
+	if (wal_level < WAL_LEVEL_REPLICA)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("cannot execute \"%s\" in this configuration",
+					   "REPACK (CONCURRENTLY)"),
+				errdetail("%s requires \"wal_level\" to be set to \"replica\" or higher.",
+						  "REPACK (CONCURRENTLY)"));
 
 	/* Data changes in system relations are not logically decoded. */
 	if (IsCatalogRelation(rel))
