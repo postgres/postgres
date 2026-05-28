@@ -647,8 +647,9 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 			pgfdw_we_connect = WaitEventExtensionNew("PostgresFdwConnect");
 
 		/* OK to make connection */
-		start_conn = libpqsrv_connect_params_start(keywords, values,
-												    /* expand_dbname = */ false);
+		start_conn =
+			libpqsrv_connect_params_start(keywords, values,
+										   /* expand_dbname = */ false);
 		PQsetNoticeReceiver(start_conn, libpqsrv_notice_receiver,
 							"received message via remote connection");
 		libpqsrv_connect_complete(start_conn, pgfdw_we_connect);
