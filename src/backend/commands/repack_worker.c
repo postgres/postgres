@@ -432,6 +432,7 @@ decode_concurrent_changes(LogicalDecodingContext *ctx,
 				priv->end_of_wal = false;
 			else
 				ereport(ERROR,
+						errcode(ERRCODE_DATA_CORRUPTED),
 						errmsg("could not read WAL record"));
 		}
 
@@ -479,6 +480,7 @@ decode_concurrent_changes(LogicalDecodingContext *ctx,
 			if (res != WAIT_LSN_RESULT_SUCCESS &&
 				res != WAIT_LSN_RESULT_TIMEOUT)
 				ereport(ERROR,
+						errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("waiting for WAL failed"));
 		}
 	}
