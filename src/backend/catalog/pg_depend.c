@@ -741,7 +741,7 @@ isObjectPinned(const ObjectAddress *object)
  *
  * If the caller already holds a lock that conflicts with DROP
  * (AccessShareLock or stronger), this does nothing.  Callers should acquire
- * locks already when they look up the dependent objects, but many callers
+ * locks already when they look up the referenced objects, but many callers
  * currently do not.  This is a backstop to make sure that we don't record a
  * bogus reference permanently in the catalogs in that case.  In the future,
  * after we have tightened up all the callers to acquire locks earlier, this
@@ -809,7 +809,7 @@ dependencyLockAndCheckObject(Oid classId, Oid objectId)
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("dependent %s was concurrently dropped",
+					 errmsg("referenced %s was concurrently dropped",
 							get_object_class_descr(classId))));
 
 		systable_endscan(scan);
@@ -841,7 +841,7 @@ dependencyLockAndCheckObject(Oid classId, Oid objectId)
 			return;
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("dependent relation was concurrently dropped")));
+				 errmsg("referenced relation was concurrently dropped")));
 	}
 }
 
