@@ -1995,6 +1995,9 @@ dblink_fdw_validator(PG_FUNCTION_ARGS)
 							 closest_match) : 0 :
 					 errhint("There are no valid options in this context.")));
 		}
+
+		if (strcmp(def->defname, "use_scram_passthrough") == 0)
+			(void) defGetBoolean(def);	/* accept only boolean values */
 	}
 
 	PG_RETURN_VOID();
