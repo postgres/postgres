@@ -69,11 +69,6 @@ RepackWorkerMain(Datum main_arg)
 
 	am_repack_worker = true;
 
-	/*
-	 * Override the default bgworker_die() with die() so we can use
-	 * CHECK_FOR_INTERRUPTS().
-	 */
-	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
 	seg = dsm_attach(DatumGetUInt32(main_arg));
