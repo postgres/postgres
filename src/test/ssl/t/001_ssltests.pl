@@ -885,7 +885,7 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
 	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert",
-	expected_stderr => qr|SSL error: ssl[a-z0-9/]* alert certificate revoked|,
+	expected_stderr => qr!SSL error: (ssl[a-z0-9/]*|tls) alert certificate revoked!,
 	log_like => [
 		qr{Client certificate verification failed at depth 0: certificate revoked},
 		qr{Failed certificate data \(unverified\): subject "/CN=ssltestuser", serial number \d+, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
@@ -987,7 +987,7 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
 	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert with server-side CRL directory",
-	expected_stderr => qr|SSL error: ssl[a-z0-9/]* alert certificate revoked|,
+	expected_stderr => qr!SSL error: (ssl[a-z0-9/]*|tls) alert certificate revoked!,
 	log_like => [
 		qr{Client certificate verification failed at depth 0: certificate revoked},
 		qr{Failed certificate data \(unverified\): subject "/CN=ssltestuser", serial number \d+, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
@@ -998,7 +998,7 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked-utf8.crt "
 	  . sslkey('client-revoked-utf8.key'),
 	"certificate authorization fails with revoked UTF-8 client cert with server-side CRL directory",
-	expected_stderr => qr|SSL error: ssl[a-z0-9/]* alert certificate revoked|,
+	expected_stderr => qr!SSL error: (ssl[a-z0-9/]*|tls) alert certificate revoked!,
 	log_like => [
 		qr{Client certificate verification failed at depth 0: certificate revoked},
 		qr{Failed certificate data \(unverified\): subject "/CN=\\xce\\x9f\\xce\\xb4\\xcf\\x85\\xcf\\x83\\xcf\\x83\\xce\\xad\\xce\\xb1\\xcf\\x82", serial number \d+, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
