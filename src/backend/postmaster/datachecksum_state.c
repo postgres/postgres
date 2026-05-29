@@ -303,7 +303,7 @@ typedef struct DataChecksumsStateStruct
 	 * none. This is set by the worker launcher when it starts waiting for a
 	 * worker process to finish.
 	 */
-	int			worker_pid;
+	pid_t		worker_pid;
 
 	/*
 	 * These fields indicate the target state that the launcher is currently
