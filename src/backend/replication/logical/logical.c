@@ -1910,8 +1910,14 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 			SpinLockRelease(&MyReplicationSlot->mutex);
 
 			ReplicationSlotsComputeRequiredXmin(false);
-			ReplicationSlotsComputeRequiredLSN();
 		}
+
+		/*
+		 * Now that the new restart_lsn is safely on disk, recompute the
+		 * global WAL retention requirement.
+		 */
+		if (updated_restart)
+			ReplicationSlotsComputeRequiredLSN();
 	}
 	else
 	{
