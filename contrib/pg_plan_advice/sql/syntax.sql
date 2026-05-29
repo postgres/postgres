@@ -41,6 +41,7 @@ SET pg_plan_advice.advice = '123';
 -- except for JOIN_ORDER, allow at most one level of sublist. Hence, these
 -- examples should error out.
 SET pg_plan_advice.advice = 'SEQ_SCAN((x))';
+SET pg_plan_advice.advice = 'DO_NOT_SCAN((x))';
 SET pg_plan_advice.advice = 'GATHER(((x)))';
 
 -- Legal comments.

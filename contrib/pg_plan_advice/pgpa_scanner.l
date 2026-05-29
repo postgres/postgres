@@ -128,7 +128,8 @@ xcinside		[^*/]+
 					else if (tag == PGPA_TAG_SEQ_SCAN ||
 							 tag == PGPA_TAG_TID_SCAN ||
 							 tag == PGPA_TAG_BITMAP_HEAP_SCAN ||
-							 tag == PGPA_TAG_NO_GATHER)
+							 tag == PGPA_TAG_NO_GATHER ||
+							 tag == PGPA_TAG_DO_NOT_SCAN)
 						return TOK_TAG_SIMPLE;
 					else
 						return TOK_TAG_GENERIC;

@@ -126,6 +126,9 @@ DETAIL:  Could not parse advice: syntax error at or near "123"
 SET pg_plan_advice.advice = 'SEQ_SCAN((x))';
 ERROR:  invalid value for parameter "pg_plan_advice.advice": "SEQ_SCAN((x))"
 DETAIL:  Could not parse advice: syntax error at or near "("
+SET pg_plan_advice.advice = 'DO_NOT_SCAN((x))';
+ERROR:  invalid value for parameter "pg_plan_advice.advice": "DO_NOT_SCAN((x))"
+DETAIL:  Could not parse advice: syntax error at or near "("
 SET pg_plan_advice.advice = 'GATHER(((x)))';
 ERROR:  invalid value for parameter "pg_plan_advice.advice": "GATHER(((x)))"
 DETAIL:  Could not parse advice: syntax error at or near "("
