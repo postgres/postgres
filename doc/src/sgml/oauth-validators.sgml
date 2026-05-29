@@ -403,9 +403,10 @@ typedef struct ValidatorModuleResult
   <sect2 id="oauth-validator-callback-shutdown">
    <title>Shutdown Callback</title>
    <para>
-    The <function>shutdown_cb</function> callback is executed when the backend
-    process associated with the connection exits. If the validator module has
-    any allocated state, this callback should free it to avoid resource leaks.
+    The <function>shutdown_cb</function> callback is executed when the server
+    backend has finished validating tokens for the connection. If the validator
+    module has any allocated state, this callback should free it to avoid
+    resource leaks.
 <programlisting>
 typedef void (*ValidatorShutdownCB) (ValidatorModuleState *state);
 </programlisting>
