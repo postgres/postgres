@@ -32,3 +32,46 @@ SELECT * FROM rpk_missing;
 REPACK (CONCURRENTLY) rpk_missing;
 SELECT * FROM rpk_missing;
 DROP TABLE rpk_missing;
+
+-- Error cases for concurrent mode
+
+-- Doesn't like partitioned tables
+CREATE TABLE clstrpart (a int) PARTITION BY RANGE (a);
+REPACK (CONCURRENTLY) clstrpart;
+
+-- Disallowed in catalogs
+REPACK (CONCURRENTLY) pg_class;
+
+-- Doesn't support TOAST tables directly
+CREATE TABLE repack_conc_toast (t text);
+SELECT reltoastrelid::regclass AS toast_rel
+FROM pg_class WHERE oid = 'repack_conc_toast'::regclass \gset
+\set VERBOSITY sqlstate
+REPACK (CONCURRENTLY) :toast_rel;
+\set VERBOSITY default
+DROP TABLE repack_conc_toast;
+
+-- Only support permanent tables, temp and unlogged tables are not supported
+CREATE TEMP TABLE repack_conc_temp (i int PRIMARY KEY);
+REPACK (CONCURRENTLY) repack_conc_temp;
+DROP TABLE repack_conc_temp;
+CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
+REPACK (CONCURRENTLY) repack_conc_unlogged;
+DROP TABLE repack_conc_unlogged;
+
+-- Doesn't support tables with REPLICA IDENTITY NOTHING, even if they have a primary key
+CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
+ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
+-- Doesn't support tables without a primary key or replica identity index
+ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
+ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
+-- Doesn't support tables with deferrable primary keys
+ALTER TABLE repack_conc_replident ADD PRIMARY KEY (i) DEFERRABLE;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
+-- clean up
+DROP TABLE repack_conc_replident, clstrpart;

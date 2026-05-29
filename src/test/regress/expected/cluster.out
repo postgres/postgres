@@ -697,6 +697,39 @@ SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
 (4 rows)
 
 COMMIT;
+-- verify some error cases
+CREATE TABLE clstr_table_one (id int, val text);
+CREATE TABLE clstr_table_two (id int, val text);
+CREATE INDEX clstr_idx_b ON clstr_table_two (id);
+CLUSTER clstr_table_one USING clstr_idx_b;
+ERROR:  "clstr_idx_b" is not an index for table "clstr_table_one"
+CLUSTER clstr_table_one USING nonexistant;
+ERROR:  index "nonexistant" for table "clstr_table_one" does not exist
+CREATE INDEX clstr_hash_idx ON clstr_table_one USING hash (id);
+CLUSTER clstr_table_one USING clstr_hash_idx;
+ERROR:  cannot cluster on index "clstr_hash_idx" because access method does not support clustering
+CREATE INDEX clstr_partial_idx ON clstr_table_one (id) WHERE id > 0;
+CLUSTER clstr_table_one USING clstr_partial_idx;
+ERROR:  cannot cluster on partial index "clstr_partial_idx"
+REPACK pg_class USING INDEX pg_class_oid_index;
+ERROR:  permission denied: "pg_class" is a system catalog
+DETAIL:  System catalogs can only be clustered by the index they're already clustered on, if any, unless "allow_system_table_mods" is enabled.
+DROP TABLE clstr_table_one, clstr_table_two;
+-- verify that CLUSTER/REPACK don't touch a NO DATA matview
+CREATE MATERIALIZED VIEW clstr_matview AS
+    SELECT i FROM generate_series(1, 5) i
+    WITH NO DATA;
+CREATE INDEX clstr_matview_idx ON clstr_matview (i);
+SELECT relfilenode FROM pg_class WHERE oid = 'clstr_matview'::regclass \gset
+CLUSTER clstr_matview USING clstr_matview_idx;
+REPACK clstr_matview USING INDEX clstr_matview_idx;
+SELECT relfilenode = :relfilenode FROM pg_class WHERE oid = 'clstr_matview'::regclass;
+ ?column? 
+----------
+ t
+(1 row)
+
+DROP MATERIALIZED VIEW clstr_matview;
 ----------------------------------------------------------------------
 --
 -- REPACK
@@ -796,61 +829,7 @@ ORDER BY o.relname;
  clstr_3
 (2 rows)
 
---
--- Check concurrent mode requirements
---
--- Disallowed in catalogs
-REPACK (CONCURRENTLY) pg_class;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "pg_class"
-HINT:  REPACK (CONCURRENTLY) is not supported for catalog relations.
--- Doesn't like partitioned tables
-REPACK (CONCURRENTLY) clstrpart;
-ERROR:  REPACK (CONCURRENTLY) is not supported for partitioned tables
-HINT:  Consider running the command on individual partitions.
--- Doesn't support catalog tables
-REPACK (CONCURRENTLY) pg_class;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "pg_class"
-HINT:  REPACK (CONCURRENTLY) is not supported for catalog relations.
--- Only support permanent tables, temp and unlogged tables are not supported
-CREATE TEMP TABLE repack_conc_temp (i int PRIMARY KEY);
-REPACK (CONCURRENTLY) repack_conc_temp;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_temp"
-HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
-DROP TABLE repack_conc_temp;
-CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
-REPACK (CONCURRENTLY) repack_conc_unlogged;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_unlogged"
-HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
-DROP TABLE repack_conc_unlogged;
--- Doesn't support TOAST tables directly
-CREATE TABLE repack_conc_toast (t text);
-SELECT reltoastrelid::regclass AS toast_rel
-FROM pg_class WHERE oid = 'repack_conc_toast'::regclass \gset
-\set VERBOSITY sqlstate
-REPACK (CONCURRENTLY) :toast_rel;
-ERROR:  0A000
-\set VERBOSITY default
-DROP TABLE repack_conc_toast;
--- Doesn't support tables with REPLICA IDENTITY NOTHING, even if they have a primary key
-CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
-ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
-REPACK (CONCURRENTLY) repack_conc_replident;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_replident"
-DETAIL:  REPACK (CONCURRENTLY) does not support tables with REPLICA IDENTITY NOTHING.
--- Doesn't support tables without a primary key or replica identity index
-ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
-ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;
-REPACK (CONCURRENTLY) repack_conc_replident;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_replident"
-HINT:  Relation "repack_conc_replident" has no identity index.
--- Doesn't support tables with deferrable primary keys
-ALTER TABLE repack_conc_replident ADD PRIMARY KEY (i) DEFERRABLE;
-REPACK (CONCURRENTLY) repack_conc_replident;
-ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_replident"
-DETAIL:  REPACK (CONCURRENTLY) does not support deferrable primary keys.
-HINT:  Use ALTER TABLE ... REPLICA IDENTITY USING INDEX to designate another index as replica identity.
 -- clean up
-DROP TABLE repack_conc_replident;
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
 DROP TABLE clstr_2;

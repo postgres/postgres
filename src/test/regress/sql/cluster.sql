@@ -328,6 +328,34 @@ EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
 SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
 COMMIT;
 
+-- verify some error cases
+CREATE TABLE clstr_table_one (id int, val text);
+CREATE TABLE clstr_table_two (id int, val text);
+CREATE INDEX clstr_idx_b ON clstr_table_two (id);
+CLUSTER clstr_table_one USING clstr_idx_b;
+CLUSTER clstr_table_one USING nonexistant;
+
+CREATE INDEX clstr_hash_idx ON clstr_table_one USING hash (id);
+CLUSTER clstr_table_one USING clstr_hash_idx;
+
+CREATE INDEX clstr_partial_idx ON clstr_table_one (id) WHERE id > 0;
+CLUSTER clstr_table_one USING clstr_partial_idx;
+
+REPACK pg_class USING INDEX pg_class_oid_index;
+
+DROP TABLE clstr_table_one, clstr_table_two;
+
+-- verify that CLUSTER/REPACK don't touch a NO DATA matview
+CREATE MATERIALIZED VIEW clstr_matview AS
+    SELECT i FROM generate_series(1, 5) i
+    WITH NO DATA;
+CREATE INDEX clstr_matview_idx ON clstr_matview (i);
+SELECT relfilenode FROM pg_class WHERE oid = 'clstr_matview'::regclass \gset
+CLUSTER clstr_matview USING clstr_matview_idx;
+REPACK clstr_matview USING INDEX clstr_matview_idx;
+SELECT relfilenode = :relfilenode FROM pg_class WHERE oid = 'clstr_matview'::regclass;
+DROP MATERIALIZED VIEW clstr_matview;
+
 ----------------------------------------------------------------------
 --
 -- REPACK
@@ -383,52 +411,7 @@ JOIN relnodes_new n ON o.relname = n.relname
 WHERE o.relfilenode <> n.relfilenode
 ORDER BY o.relname;
 
---
--- Check concurrent mode requirements
---
-
--- Disallowed in catalogs
-REPACK (CONCURRENTLY) pg_class;
-
--- Doesn't like partitioned tables
-REPACK (CONCURRENTLY) clstrpart;
-
--- Doesn't support catalog tables
-REPACK (CONCURRENTLY) pg_class;
-
--- Only support permanent tables, temp and unlogged tables are not supported
-CREATE TEMP TABLE repack_conc_temp (i int PRIMARY KEY);
-REPACK (CONCURRENTLY) repack_conc_temp;
-DROP TABLE repack_conc_temp;
-CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
-REPACK (CONCURRENTLY) repack_conc_unlogged;
-DROP TABLE repack_conc_unlogged;
-
--- Doesn't support TOAST tables directly
-CREATE TABLE repack_conc_toast (t text);
-SELECT reltoastrelid::regclass AS toast_rel
-FROM pg_class WHERE oid = 'repack_conc_toast'::regclass \gset
-\set VERBOSITY sqlstate
-REPACK (CONCURRENTLY) :toast_rel;
-\set VERBOSITY default
-DROP TABLE repack_conc_toast;
-
--- Doesn't support tables with REPLICA IDENTITY NOTHING, even if they have a primary key
-CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
-ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
-REPACK (CONCURRENTLY) repack_conc_replident;
-
--- Doesn't support tables without a primary key or replica identity index
-ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
-ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;
-REPACK (CONCURRENTLY) repack_conc_replident;
-
--- Doesn't support tables with deferrable primary keys
-ALTER TABLE repack_conc_replident ADD PRIMARY KEY (i) DEFERRABLE;
-REPACK (CONCURRENTLY) repack_conc_replident;
-
 -- clean up
-DROP TABLE repack_conc_replident;
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
 DROP TABLE clstr_2;
