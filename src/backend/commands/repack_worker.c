@@ -391,13 +391,29 @@ decode_concurrent_changes(LogicalDecodingContext *ctx,
 			LogicalDecodingProcessRecord(ctx, ctx->reader);
 
 			/*
-			 * If WAL segment boundary has been crossed, inform the decoding
-			 * system that the catalog_xmin can advance.
+			 * We want to allow WAL to be recycled while REPACK is running.
+			 *
+			 * In normal usage of a replication slot, we need to be very
+			 * careful not to advance the LSN until it's been confirmed as
+			 * received by the remote.  In REPACK's case, this is not needed:
+			 * REPACK will never try to replay the same WAL after a crash, and
+			 * if there _is_ a crash, the whole REPACK has to be started from
+			 * scratch anyway.
+			 *
+			 * So here we disregard the careful LSN tracking and just move the
+			 * LSN locations forward to what we've processed.  Note that it
+			 * would be bogus to move the xmin forward, though, so we don't
+			 * touch that.
+			 *
+			 * This can be done on whatever schedule is convenient, but in
+			 * order not to cause unnecessary load, we only do it as we cross
+			 * each WAL segment boundary.
 			 */
 			end_lsn = ctx->reader->EndRecPtr;
 			XLByteToSeg(end_lsn, segno_new, wal_segment_size);
 			if (segno_new != repack_current_segment)
 			{
+				LogicalIncreaseRestartDecodingForSlot(end_lsn, end_lsn);
 				LogicalConfirmReceivedLocation(end_lsn);
 				elog(DEBUG1, "REPACK: confirmed receive location %X/%X",
 					 (uint32) (end_lsn >> 32), (uint32) end_lsn);
