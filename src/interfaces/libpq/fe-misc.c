@@ -1439,5 +1439,5 @@ libpq_append_grease_info(PGconn *conn)
 							"\tFor more information, including instructions on how to\n"
 							"\twork around this issue for now, visit\n"
 							"\t\t%s",
-							"https://www.postgresql.org/docs/devel/libpq-connect.html#LIBPQ-CONNECT-MAX-PROTOCOL-VERSION");
+							"https://wiki.postgresql.org/wiki/Grease");
 }
