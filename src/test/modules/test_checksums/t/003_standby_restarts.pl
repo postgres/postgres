@@ -95,7 +95,7 @@ is($result, '19998', 'ensure we can safely read all data with checksums');
 
 $result = $node_primary->poll_query_until(
 	'postgres',
-	"SELECT count(*) FROM pg_stat_activity WHERE backend_type LIKE 'datachecksum%';",
+	"SELECT count(*) FROM pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
 	'0');
 is($result, 1, 'await datachecksums worker/launcher termination');
 

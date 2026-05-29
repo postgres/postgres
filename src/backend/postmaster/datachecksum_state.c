@@ -623,8 +623,8 @@ StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 		bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;
 		snprintf(bgw.bgw_library_name, BGW_MAXLEN, "postgres");
 		snprintf(bgw.bgw_function_name, BGW_MAXLEN, "DataChecksumsWorkerLauncherMain");
-		snprintf(bgw.bgw_name, BGW_MAXLEN, "datachecksum launcher");
-		snprintf(bgw.bgw_type, BGW_MAXLEN, "datachecksum launcher");
+		snprintf(bgw.bgw_name, BGW_MAXLEN, "datachecksums launcher");
+		snprintf(bgw.bgw_type, BGW_MAXLEN, "datachecksums launcher");
 		bgw.bgw_restart_time = BGW_NEVER_RESTART;
 		bgw.bgw_notify_pid = MyProcPid;
 		bgw.bgw_main_arg = (Datum) 0;
@@ -807,8 +807,8 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 	bgw.bgw_start_time = BgWorkerStart_RecoveryFinished;
 	snprintf(bgw.bgw_library_name, BGW_MAXLEN, "postgres");
 	snprintf(bgw.bgw_function_name, BGW_MAXLEN, "%s", "DataChecksumsWorkerMain");
-	snprintf(bgw.bgw_name, BGW_MAXLEN, "datachecksum worker");
-	snprintf(bgw.bgw_type, BGW_MAXLEN, "datachecksum worker");
+	snprintf(bgw.bgw_name, BGW_MAXLEN, "datachecksums worker");
+	snprintf(bgw.bgw_type, BGW_MAXLEN, "datachecksums worker");
 	bgw.bgw_restart_time = BGW_NEVER_RESTART;
 	bgw.bgw_notify_pid = MyProcPid;
 	bgw.bgw_main_arg = ObjectIdGetDatum(db->dboid);

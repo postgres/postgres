@@ -148,7 +148,7 @@ EOQ
 			$postgresnode->poll_query_until('postgres',
 					"SELECT count(*) = 0 "
 				  . "FROM pg_catalog.pg_stat_activity "
-				  . "WHERE backend_type = 'datachecksum launcher';");
+				  . "WHERE backend_type = 'datachecksums launcher';");
 		}
 	}
 }
@@ -184,7 +184,7 @@ sub disable_data_checksums
 		$postgresnode->poll_query_until('postgres',
 				"SELECT count(*) = 0 "
 			  . "FROM pg_catalog.pg_stat_activity "
-			  . "WHERE backend_type = 'datachecksum launcher';");
+			  . "WHERE backend_type = 'datachecksums launcher';");
 	}
 }
 

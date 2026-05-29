@@ -65,7 +65,7 @@ SKIP:
 	$result = $node->poll_query_until(
 		'postgres',
 		"SELECT wait_event FROM pg_catalog.pg_stat_activity "
-		  . "WHERE backend_type = 'datachecksum worker';",
+		  . "WHERE backend_type = 'datachecksums worker';",
 		'ChecksumEnableTemptableWait');
 
 	# The datachecksumsworker waits for temporary tables to disappear for 3
@@ -76,7 +76,7 @@ SKIP:
 	# Re-check the wait event to ensure we are blocked on the right thing.
 	$result = $node->safe_psql('postgres',
 			"SELECT wait_event FROM pg_catalog.pg_stat_activity "
-		  . "WHERE backend_type = 'datachecksum worker';");
+		  . "WHERE backend_type = 'datachecksums worker';");
 	is($result, 'ChecksumEnableTemptableWait',
 		'ensure the correct wait condition is set');
 	test_checksum_state($node, 'inprogress-on');
@@ -100,7 +100,7 @@ is($result, '9999', 'ensure checksummed pages can be read back');
 
 $result = $node->poll_query_until(
 	'postgres',
-	"SELECT count(*) FROM pg_stat_activity WHERE backend_type LIKE 'datachecksum%';",
+	"SELECT count(*) FROM pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
 	'0');
 is($result, 1, 'await datachecksums worker/launcher termination');
 
