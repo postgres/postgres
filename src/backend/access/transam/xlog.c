@@ -4807,9 +4807,8 @@ SetDataChecksumsOn(void)
 
 	/*
 	 * The only allowed state transition to "on" is from "inprogress-on" since
-	 * that state ensures that all pages will have data checksums written.  No
-	 * such state transition exists, if it does happen it's likely due to a
-	 * programmer error.
+	 * that state ensures that all pages will have data checksums written. Any
+	 * other attempted state transition is likely due to a programmer error.
 	 */
 	if (XLogCtl->data_checksum_version != PG_DATA_CHECKSUM_INPROGRESS_ON)
 	{

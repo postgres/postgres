@@ -20,8 +20,8 @@
  * When enabling checksums in an online cluster, data_checksums will be set to
  * "inprogress-on" which signals that write operations MUST compute and write
  * the checksum on the data page, but during reading the checksum SHALL NOT be
- * verified. This ensures that all objects created during when checksums are
- * being enabled will have checksums set, but reads won't fail due to missing or
+ * verified. This ensures that all objects created while checksums are being
+ * enabled will have checksums set, but reads won't fail due to missing or
  * invalid checksums. Invalid checksums can be present in case the cluster had
  * checksums enabled, then disabled them and updated the page while they were
  * disabled.
@@ -299,8 +299,9 @@ typedef struct DataChecksumsStateStruct
 	bool		launcher_running;
 
 	/*
-	 * Is a worker process currently running?  This is set by the worker
-	 * launcher when it starts waiting for a worker process to finish.
+	 * PID of the worker process, if it's currently running, of InvalidPid if
+	 * none. This is set by the worker launcher when it starts waiting for a
+	 * worker process to finish.
 	 */
 	int			worker_pid;
 
@@ -320,12 +321,8 @@ typedef struct DataChecksumsStateStruct
 	int			cost_limit;
 
 	/*
-	 * Signaling between the launcher and the worker process.
-	 *
-	 * As there is only a single worker, and the launcher won't read these
-	 * until the worker exits, they can be accessed without the need for a
-	 * lock. If multiple workers are supported then this will have to be
-	 * revisited.
+	 * Signaling between the launcher and the worker process. Protected by
+	 * DataChecksumsWorkerLock.
 	 */
 
 	/* result, set by worker before exiting */
@@ -599,9 +596,9 @@ StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 	 *
 	 * If the launcher is currently busy enabling the checksums, and we want
 	 * them disabled (or vice versa), the launcher will notice that at latest
-	 * when it's about to exit, and will loop back process the new request. So
-	 * if the launcher is already running, we don't need to do anything more
-	 * here to abort it.
+	 * when it's about to exit, and will loop back to process the new request.
+	 * So if the launcher is already running, we don't need to do anything
+	 * more here to abort it.
 	 *
 	 * If you call pg_enable/disable_data_checksums() twice in a row, before
 	 * the launcher has had a chance to start up, we still end up launching it
@@ -710,10 +707,7 @@ ProcessSingleRelationFork(Relation reln, ForkNumber forkNum, BufferAccessStrateg
 
 		UnlockReleaseBuffer(buf);
 
-		/*
-		 * This is the only place where we check if we are asked to abort, the
-		 * abortion will bubble up from here.
-		 */
+		/* Check if we are asked to abort, the abortion will bubble up. */
 		Assert(operation == ENABLE_DATACHECKSUMS);
 		LWLockAcquire(DataChecksumsWorkerLock, LW_SHARED);
 		if (DataChecksumState->launch_operation == DISABLE_DATACHECKSUMS)
@@ -924,8 +918,8 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
  * performed checksum operations exits. A launcher process which is exiting due
  * to a duplicate started launcher does not need to perform any cleanup and
  * this function should not be called. Otherwise, we need to clean up the abort
- * flag to ensure that processing started again if it was previously aborted
- * (note: started again, *not* restarted from where it left off).
+ * flag to ensure that processing can be started again if it was previously
+ * aborted (note: started again, *not* restarted from where it left off).
  */
 static void
 launcher_exit(int code, Datum arg)
@@ -1434,7 +1428,7 @@ FreeDatabaseList(List *dblist)
  * BuildRelationList
  *		Compile a list of relations in the database
  *
- * Returns a list of OIDs for the request relation types. If temp_relations
+ * Returns a list of OIDs for the requested relation types. If temp_relations
  * is True then only temporary relations are returned. If temp_relations is
  * False then non-temporary relations which have data checksums are returned.
  * If include_shared is True then shared relations are included as well in a

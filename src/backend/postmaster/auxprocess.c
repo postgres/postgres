@@ -88,7 +88,7 @@ AuxiliaryProcessMainCommon(void)
 	 *
 	 * The postmaster (which is what gets forked into the new child process)
 	 * does not handle barriers, therefore it may not have the current value
-	 * of LocalDataChecksumVersion value (it'll have the value read from the
+	 * of LocalDataChecksumState value (it'll have the value read from the
 	 * control file, which may be arbitrarily old).
 	 *
 	 * NB: Even if the postmaster handled barriers, the value might still be
