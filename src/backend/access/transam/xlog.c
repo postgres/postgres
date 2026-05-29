@@ -6610,6 +6610,7 @@ StartupXLOG(void)
 		SetLocalDataChecksumState(XLogCtl->data_checksum_version);
 		SpinLockRelease(&XLogCtl->info_lck);
 
+		EmitAndWaitDataChecksumsBarrier(PG_DATA_CHECKSUM_OFF);
 		ereport(WARNING,
 				errmsg("enabling data checksums was interrupted"),
 				errhint("Data checksum processing must be manually restarted for checksums to be enabled."));
@@ -6621,7 +6622,7 @@ StartupXLOG(void)
 	 * checksums and we can move to off instead of prompting the user to
 	 * perform any action.
 	 */
-	if (XLogCtl->data_checksum_version == PG_DATA_CHECKSUM_INPROGRESS_OFF)
+	else if (XLogCtl->data_checksum_version == PG_DATA_CHECKSUM_INPROGRESS_OFF)
 	{
 		XLogChecksums(PG_DATA_CHECKSUM_OFF);
 
@@ -6629,6 +6630,8 @@ StartupXLOG(void)
 		XLogCtl->data_checksum_version = PG_DATA_CHECKSUM_OFF;
 		SetLocalDataChecksumState(XLogCtl->data_checksum_version);
 		SpinLockRelease(&XLogCtl->info_lck);
+
+		EmitAndWaitDataChecksumsBarrier(PG_DATA_CHECKSUM_OFF);
 	}
 
 	/*

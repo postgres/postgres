@@ -226,4 +226,62 @@ unlike(
 	qr/page verification failed,.+\d$/m,
 	"no checksum validation errors in standby log");
 
+# ---------------------------------------------------------------------------
+# Test that enforced state transitions during promotion (via StartupXLOG) are
+# performed as expected.  When the primary crashes during inprogress-on the
+# standby should revert to off at promotion.  In order to check the transition
+# the test will keep an open psql session with the standby during promotion.
+
+# The cluster is currently broken down from the previous test.  Start up the
+# primary as primary, disable checksums and create a new standby from that
+# state.
+$node_standby->clean_node();
+$node_primary->start();
+disable_data_checksums($node_primary, wait => 'off');
+
+# Re-create a new streaming standby linking to primary.  The replication slot
+# name is reused from earlier but a fresh backup is taken
+$backup_name = 'my_new_backup';
+$node_primary->backup($backup_name);
+$node_standby = PostgreSQL::Test::Cluster->new('standby_restarts_standby');
+$node_standby->init_from_backup($node_primary, $backup_name,
+	has_streaming => 1);
+$node_standby->append_conf(
+	'postgresql.conf', qq[
+primary_slot_name = '$slotname'
+]);
+$node_standby->start;
+$node_primary->wait_for_catchup($node_standby, 'replay');
+
+# Open a background psql connection on the primary and inject a barrier to
+# block progress on to keep the state from advancing past inprogress-on
+my $node_primary_bpsql = $node_primary->background_psql('postgres');
+$node_primary_bpsql->query_safe('CREATE TEMPORARY TABLE tt (a integer);');
+# Also open a background psql connection to the standby to make sure we have
+# an active backend during promotion.
+my $node_standby_bpsql = $node_standby->background_psql('postgres');
+
+# Start to enable checksums and wait until both primary and standby have moved
+# to the inprogress-on state.  Processing will block here as the temporary rel
+# barrier will block the primary from finishing.
+enable_data_checksums($node_primary, wait => 'inprogress-on');
+$node_primary->wait_for_catchup($node_standby, 'replay');
+test_checksum_state($node_standby, 'inprogress-on');
+
+# Crash the primary before checksums are enabled and promote the standby.  The
+# new primary node will now revert the state of 'off' since checksums weren't
+# fully enabled during the crash.
+$node_primary->teardown_node();
+$node_standby->promote;
+wait_for_checksum_state($node_standby, 'off');
+
+# Ensure that the any backend which was active before, and during, promotion
+# sees the new state.
+$result = $node_standby_bpsql->query_safe("SHOW data_checksums;");
+is($result, 'off',
+	'ensure checksums are set to off after promotion during inprogress-on');
+
+$node_standby_bpsql->quit;
+$node_standby->stop;
+
 done_testing();
