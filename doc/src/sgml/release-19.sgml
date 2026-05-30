@@ -1299,6 +1299,22 @@ This is an improved version of PQAUTHDATA_OAUTH_BEARER_TOKEN by adding the issue
 </listitem>
 
 <!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-23 [d98197602] Allow pg_{read,write}_all_data to access large objects.
+-->
+
+<listitem>
+<para>
+Allow roles pg_read_all_data and pg_write_all_data to read/write large objects (Nitin Motiani, Nathan Bossart)
+<ulink url="&commit_baseurl;d98197602">&sect;</ulink>
+</para>
+
+<para>
+These roles are designed to allow non-super users to run pg_dump.
+</para>
+</listitem>
+
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2026-01-06 [f1e251be8] Allow bgworkers to be terminated for database-related co
 -->
@@ -2262,22 +2278,6 @@ Add full text stemmers for Polish and Esperanto (Tom Lane)
 
 <para>
 The Dutch stemmer has also been updated.  The old Dutch stemmer is available via "dutch_porter".
-</para>
-</listitem>
-
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2026-02-23 [d98197602] Allow pg_{read,write}_all_data to access large objects.
--->
-
-<listitem>
-<para>
-Modify pg_read_all_data() and pg_write_all_data() to read/write large objects (Nitin Motiani, Nathan Bossart)
-<ulink url="&commit_baseurl;d98197602">&sect;</ulink>
-</para>
-
-<para>
-These functions are designed to allow non-super users to run pg_dump.
 </para>
 </listitem>
 
