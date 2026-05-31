@@ -7781,7 +7781,7 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-debug-print-parse">
+     <varlistentry id="guc-debug-print-parse" xreflabel="debug_print_raw_parse">
       <term><varname>debug_print_raw_parse</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_raw_parse</varname> configuration parameter</primary>
