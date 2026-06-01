@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-02 09:29+0300\n"
+"POT-Creation-Date: 2025-08-30 15:59+0300\n"
 "PO-Revision-Date: 2024-09-04 13:45+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -48,27 +48,27 @@ msgstr "не удалось найти запускаемый файл \"%s\""
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "не удалось преобразовать относительный путь \"%s\" в абсолютный: %m"
 
-#: ../../common/exec.c:382
+#: ../../common/exec.c:363
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "не удалось выполнить команду \"%s\": %m"
 
-#: ../../common/exec.c:394
+#: ../../common/exec.c:375
 #, c-format
 msgid "could not read from command \"%s\": %m"
 msgstr "не удалось прочитать вывод команды \"%s\": %m"
 
-#: ../../common/exec.c:397
+#: ../../common/exec.c:378
 #, c-format
 msgid "no data was returned by command \"%s\""
 msgstr "команда \"%s\" не выдала данные"
 
-#: ../../common/exec.c:424
+#: ../../common/exec.c:405
 #, c-format
 msgid "%s() failed: %m"
 msgstr "ошибка в %s(): %m"
 
-#: ../../common/exec.c:562 ../../common/exec.c:607 ../../common/exec.c:699
+#: ../../common/exec.c:543 ../../common/exec.c:588 ../../common/exec.c:680
 msgid "out of memory"
 msgstr "нехватка памяти"
 
@@ -83,7 +83,7 @@ msgstr "нехватка памяти\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: pg_config.c:74
+#: pg_config.c:73
 #, c-format
 msgid ""
 "\n"
@@ -94,12 +94,12 @@ msgstr ""
 "%s предоставляет информацию об установленной версии PostgreSQL.\n"
 "\n"
 
-#: pg_config.c:75
+#: pg_config.c:74
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: pg_config.c:76
+#: pg_config.c:75
 #, c-format
 msgid ""
 "  %s [OPTION]...\n"
@@ -108,28 +108,28 @@ msgstr ""
 "  %s [ПАРАМЕТР]...\n"
 "\n"
 
-#: pg_config.c:77
+#: pg_config.c:76
 #, c-format
 msgid "Options:\n"
 msgstr "Параметры:\n"
 
-#: pg_config.c:78
+#: pg_config.c:77
 #, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              показать расположение исполняемых файлов\n"
 
-#: pg_config.c:79
+#: pg_config.c:78
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
 msgstr "  --docdir              показать расположение файлов документации\n"
 
-#: pg_config.c:80
+#: pg_config.c:79
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
 msgstr ""
 "  --htmldir             показать расположение HTML-файлов документации\n"
 
-#: pg_config.c:81
+#: pg_config.c:80
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
@@ -138,13 +138,13 @@ msgstr ""
 "  --includedir          показать расположение файлов-заголовков (.h) для\n"
 "                        клиентских интерфейсов на языке C\n"
 
-#: pg_config.c:83
+#: pg_config.c:82
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
 msgstr ""
 "  --pkgincludedir       показать расположение других файлов-заголовков (.h)\n"
 
-#: pg_config.c:84
+#: pg_config.c:83
 #, c-format
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
@@ -152,31 +152,31 @@ msgstr ""
 "  --includedir-server   показать расположение файлов-заголовков (.h) для "
 "сервера\n"
 
-#: pg_config.c:85
+#: pg_config.c:84
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr ""
 "  --libdir              показать расположение библиотек объектного кода\n"
 
-#: pg_config.c:86
+#: pg_config.c:85
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr ""
 "  --pkglibdir           показать расположение динамически загружаемых "
 "модулей\n"
 
-#: pg_config.c:87
+#: pg_config.c:86
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
 msgstr ""
 "  --localedir           показать расположение файлов описания локалей\n"
 
-#: pg_config.c:88
+#: pg_config.c:87
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
 msgstr "  --mandir              показать расположение справочных страниц\n"
 
-#: pg_config.c:89
+#: pg_config.c:88
 #, c-format
 msgid ""
 "  --sharedir            show location of architecture-independent support "
@@ -185,7 +185,7 @@ msgstr ""
 "  --sharedir            показать расположение платформенно-независимых "
 "файлов\n"
 
-#: pg_config.c:90
+#: pg_config.c:89
 #, c-format
 msgid ""
 "  --sysconfdir          show location of system-wide configuration files\n"
@@ -193,13 +193,13 @@ msgstr ""
 "  --sysconfdir          показать расположение общесистемных файлов "
 "конфигурации\n"
 
-#: pg_config.c:91
+#: pg_config.c:90
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr ""
 "  --pgxs                показать расположение makefile для расширений\n"
 
-#: pg_config.c:92
+#: pg_config.c:91
 #, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
@@ -209,13 +209,13 @@ msgstr ""
 "которыми\n"
 "                        был собран PostgreSQL\n"
 
-#: pg_config.c:94
+#: pg_config.c:93
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr ""
 "  --cc                  показать, с каким значением CC собран PostgreSQL\n"
 
-#: pg_config.c:95
+#: pg_config.c:94
 #, c-format
 msgid ""
 "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
@@ -223,14 +223,14 @@ msgstr ""
 "  --cppflags            показать, с каким значением CPPFLAGS собран "
 "PostgreSQL\n"
 
-#: pg_config.c:96
+#: pg_config.c:95
 #, c-format
 msgid ""
 "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr ""
 "  --cflags              показать, с какими флагами C собран PostgreSQL\n"
 
-#: pg_config.c:97
+#: pg_config.c:96
 #, c-format
 msgid ""
 "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
@@ -238,7 +238,7 @@ msgstr ""
 "  --cflags_sl           показать, с каким значением CFLAGS_SL собран "
 "PostgreSQL\n"
 
-#: pg_config.c:98
+#: pg_config.c:97
 #, c-format
 msgid ""
 "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
@@ -246,7 +246,7 @@ msgstr ""
 "  --ldflags             показать, с каким значением LDFLAGS собран "
 "PostgreSQL\n"
 
-#: pg_config.c:99
+#: pg_config.c:98
 #, c-format
 msgid ""
 "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
@@ -255,7 +255,7 @@ msgstr ""
 "  --ldflags_ex          показать, с каким значением LDFLAGS_EX собран "
 "PostgreSQL\n"
 
-#: pg_config.c:100
+#: pg_config.c:99
 #, c-format
 msgid ""
 "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
@@ -264,24 +264,24 @@ msgstr ""
 "  --ldflags_sl          показать, с каким значением LDFLAGS_SL собран "
 "PostgreSQL\n"
 
-#: pg_config.c:101
+#: pg_config.c:100
 #, c-format
 msgid ""
 "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr ""
 "  --libs                показать, с каким значением LIBS собран PostgreSQL\n"
 
-#: pg_config.c:102
+#: pg_config.c:101
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
 msgstr "  --version             показать версию PostgreSQL\n"
 
-#: pg_config.c:103
+#: pg_config.c:102
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
 msgstr "  -?, --help            показать эту справку и выйти\n"
 
-#: pg_config.c:104
+#: pg_config.c:103
 #, c-format
 msgid ""
 "\n"
@@ -292,27 +292,27 @@ msgstr ""
 "При запуске без аргументов выводятся все известные значения.\n"
 "\n"
 
-#: pg_config.c:105
+#: pg_config.c:104
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "Об ошибках сообщайте по адресу <%s>.\n"
 
-#: pg_config.c:106
+#: pg_config.c:105
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
 
-#: pg_config.c:112
+#: pg_config.c:111
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_config.c:154
+#: pg_config.c:153
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: не удалось найти свой исполняемый файл\n"
 
-#: pg_config.c:181
+#: pg_config.c:180
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: неверный аргумент: %s\n"

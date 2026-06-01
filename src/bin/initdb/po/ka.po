@@ -1,14 +1,14 @@
 # Georgian message translation file for initdb
 # Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the initdb (PostgreSQL) package.
-# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022-2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: initdb (PostgreSQL) 18\n"
+"Project-Id-Version: initdb (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-03-27 22:52+0000\n"
-"PO-Revision-Date: 2025-03-28 03:57+0100\n"
+"POT-Creation-Date: 2026-05-13 06:25+0000\n"
+"PO-Revision-Date: 2026-05-13 08:59+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,84 +16,94 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "შეცდომა: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "გაფრთხილება: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "დეტალები: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
 
-#: ../../common/exec.c:174
+#: ../../common/exec.c:175
 #, c-format
 msgid "invalid binary \"%s\": %m"
 msgstr "არასწორი ბინარული ფაილი \"%s\": %m"
 
-#: ../../common/exec.c:217
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\": %m"
 msgstr "ბინარული ფაილის (%s) წაკითხვის შეცდომა: %m"
 
-#: ../../common/exec.c:225
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "გასაშვებად ფაილის \"%s\" პოვნა შეუძლებელია"
 
-#: ../../common/exec.c:252
+#: ../../common/exec.c:253
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "ბილიკის (\"%s\") აბსოლუტურ ფორმაში ამოხსნის შეცდომა: %m"
 
-#: ../../common/exec.c:363 initdb.c:753
+#: ../../common/exec.c:364 initdb.c:767
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "ბრძანების (\"%s\") შესრულების შეცდომა: %m"
 
-#: ../../common/exec.c:375
+#: ../../common/exec.c:376
 #, c-format
 msgid "could not read from command \"%s\": %m"
 msgstr "ბრძანებიდან \"%s\" წაკითხვის შეცდომა: %m"
 
-#: ../../common/exec.c:378
+#: ../../common/exec.c:379
 #, c-format
 msgid "no data was returned by command \"%s\""
 msgstr "ბრძანებამ \"%s\" მონაცემები არ დააბრუნა"
 
-#: ../../common/exec.c:405
+#: ../../common/exec.c:406
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s()-ის შეცდომა: %m"
 
-#: ../../common/exec.c:543 ../../common/exec.c:588 ../../common/exec.c:680
-#: initdb.c:375 initdb.c:411
+#: ../../common/exec.c:544 ../../common/exec.c:589 ../../common/exec.c:681
+#: initdb.c:376 initdb.c:412
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "არასწორი მეხსიერების გამოყოფის მოთხოვნის ზომა %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "არასწორი მეხსიერების გამოყოფის მოთხოვნის ზომა %zu * %zu\n"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
 #: ../../common/file_utils.c:428 ../../common/file_utils.c:502
@@ -124,7 +134,7 @@ msgid "could not open directory \"%s\": %m"
 msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
 
 #: ../../common/file_utils.c:174 ../../common/file_utils.c:338
-#: ../../common/pgfnames.c:69 ../../common/rmtree.c:106
+#: ../../common/pgfnames.c:68 ../../common/rmtree.c:106
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
@@ -139,7 +149,7 @@ msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "გადარქმევის შეცდომა %s - %s: %m"
 
-#: ../../common/pgfnames.c:74
+#: ../../common/pgfnames.c:73
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "საქაღალდის %s-ზე დახურვის შეცდომა: %m"
@@ -243,12 +253,17 @@ msgstr "%s არაა საზღვრებში %d-დან %d-მდე
 msgid "unrecognized sync method: %s"
 msgstr "უცნობი სინქრონიზაციის მეთოდი: \"%s\""
 
-#: ../../fe_utils/string_utils.c:587
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "პარამეტრებს %s და -%s ერთად ვერ გამოიყენებთ"
+
+#: ../../fe_utils/string_utils.c:581
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "გარსის ბრძანების არგუმენტი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
 
-#: ../../fe_utils/string_utils.c:760
+#: ../../fe_utils/string_utils.c:754
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "მონაცემთა ბაზის სახელი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
@@ -263,294 +278,289 @@ msgstr "\"%s\"-ისთვის შეერთების დაყენე
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "\"%s\"-ისთვის შეერთების მიღება ვერ მოხერხდა: %s\n"
 
-#: initdb.c:372
+#: initdb.c:373
 #, c-format
 msgid "_wsetlocale() failed"
 msgstr "_wsetlocale() ჩავარდა"
 
-#: initdb.c:379
+#: initdb.c:380
 #, c-format
 msgid "setlocale() failed"
 msgstr "setlocale() ჩავარდა"
 
-#: initdb.c:393
+#: initdb.c:394
 #, c-format
 msgid "failed to restore old locale"
 msgstr "ძველი ლოკალის აღდგენა ჩავარდა"
 
-#: initdb.c:396
+#: initdb.c:397
 #, c-format
 msgid "failed to restore old locale \"%s\""
 msgstr "ძველი ენის (\"%s\") აღდგენის შეცდომა"
 
-#: initdb.c:685 initdb.c:1705
+#: initdb.c:699 initdb.c:1715
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: initdb.c:729 initdb.c:1035 initdb.c:1055
+#: initdb.c:743 initdb.c:1051 initdb.c:1071
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "ფაილის (\"%s\") ჩასაწერად გახსნა შეუძლებელია: %m"
 
-#: initdb.c:733 initdb.c:1038 initdb.c:1057
+#: initdb.c:747 initdb.c:1054 initdb.c:1073
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
-#: initdb.c:737
+#: initdb.c:751
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
 
-#: initdb.c:771
+#: initdb.c:785
 #, c-format
 msgid "removing data directory \"%s\""
 msgstr "მონაცემების საქაღალდის წაშლა \"%s\""
 
-#: initdb.c:773
+#: initdb.c:787
 #, c-format
 msgid "failed to remove data directory"
 msgstr "მონაცემების საქაღალდის წაშლის შეცდომა"
 
-#: initdb.c:777
+#: initdb.c:791
 #, c-format
 msgid "removing contents of data directory \"%s\""
 msgstr "მონაცემების საქაღალდის შემცველობის წაშლა \"%s\""
 
-#: initdb.c:780
+#: initdb.c:794
 #, c-format
 msgid "failed to remove contents of data directory"
 msgstr "მონაცემების საქაღალდის შემცველობის წაშლის შეცდომა"
 
-#: initdb.c:785
+#: initdb.c:799
 #, c-format
 msgid "removing WAL directory \"%s\""
 msgstr "მიმდინარეობს WAL საქაღალდის წაშლა \"%s\""
 
-#: initdb.c:787
+#: initdb.c:801
 #, c-format
 msgid "failed to remove WAL directory"
 msgstr "შეცდომა WAL საქაღალდის წაშლისას"
 
-#: initdb.c:791
+#: initdb.c:805
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
 msgstr "მიმდინარეობს WAL საქაღალდის (\"%s\") შემცველობის წაშლა"
 
-#: initdb.c:793
+#: initdb.c:807
 #, c-format
 msgid "failed to remove contents of WAL directory"
 msgstr "შეცდომა WAL საქაღალდის შემცველობის წაშლისას"
 
-#: initdb.c:800
+#: initdb.c:814
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
 msgstr "მონაცემების საქაღალდე \"%s\" მომხმარებლის მოთხოვნისას არ წაიშლება"
 
-#: initdb.c:804
+#: initdb.c:818
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
 msgstr "WAL საქაღალდე \"%s\" მომხმარებლის მოთხოვნისას არ წაიშლება"
 
-#: initdb.c:822
+#: initdb.c:836
 #, c-format
 msgid "cannot be run as root"
 msgstr "root-ით ვერ გაეშვება"
 
-#: initdb.c:823
+#: initdb.c:837
 #, c-format
 msgid "Please log in (using, e.g., \"su\") as the (unprivileged) user that will own the server process."
 msgstr "შედით (ან გამოიყენეთ \"su\") არაპრივილეგირებული მომხმარებლით, რომელიც სერვერს პროცესის მფლობელი იქნება."
 
-#: initdb.c:855
+#: initdb.c:869
 #, c-format
 msgid "\"%s\" is not a valid server encoding name"
 msgstr "\"%s\" კოდირების სწორ სახელს არ წარმოადგენს"
 
-#: initdb.c:1001
+#: initdb.c:1017
 #, c-format
 msgid "file \"%s\" does not exist"
 msgstr "ფაილი %s არ არსებობს"
 
-#: initdb.c:1002 initdb.c:1007 initdb.c:1014
+#: initdb.c:1018 initdb.c:1023 initdb.c:1030
 #, c-format
 msgid "This might mean you have a corrupted installation or identified the wrong directory with the invocation option -L."
 msgstr "შეიძლება ნიშნავდეს, რომ თქვენი დაყენებული ვერსია გაფუჭებულია ან -L -ს არასწორი საქაღალდე მიუთითეთ."
 
-#: initdb.c:1006
+#: initdb.c:1022
 #, c-format
 msgid "could not access file \"%s\": %m"
 msgstr "ფაილის (%s) წვდომის შეცდომა: %m"
 
-#: initdb.c:1013
+#: initdb.c:1029
 #, c-format
 msgid "file \"%s\" is not a regular file"
 msgstr "ფაილ \"%s\" ჩვეულებრივი ფაილი არაა"
 
-#: initdb.c:1158
+#: initdb.c:1173
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
 msgstr "დინამიკური გაზიარებული მეხსიერების იმპლემენტაციის არჩევა ... "
 
-#: initdb.c:1168
+#: initdb.c:1183
 #, c-format
 msgid "selecting default \"max_connections\" ... "
 msgstr "ნაგულისხმევი \"max_connections\"-ის არჩევა … "
 
-#: initdb.c:1193
-#, c-format
-msgid "selecting default \"autovacuum_worker_slots\" ... %d\n"
-msgstr "მიმდინარეობს ნაგულისხმევი \"autovacuum_worker_slots\"-ის არჩევა ... %d\n"
-
-#: initdb.c:1196
+#: initdb.c:1204
 #, c-format
 msgid "selecting default \"shared_buffers\" ... "
 msgstr "ნაგულისხმევი \"shared_buffers\"-ის არჩევა … "
 
-#: initdb.c:1219
+#: initdb.c:1227
 #, c-format
 msgid "selecting default time zone ... "
 msgstr "დროის ნაგულისხმევი სარტყლის არჩევა … "
 
-#: initdb.c:1299
+#: initdb.c:1307
 msgid "creating configuration files ... "
 msgstr "კონფიგურაციის ფაილების შექმნა … "
 
-#: initdb.c:1456 initdb.c:1470 initdb.c:1537 initdb.c:1548
+#: initdb.c:1464 initdb.c:1478 initdb.c:1542 initdb.c:1553 initdb.c:1561
 #, c-format
 msgid "could not change permissions of \"%s\": %m"
 msgstr "\"%s\"-ის წვდომების შეცვლის შეცდომა: %m"
 
-#: initdb.c:1567
+#: initdb.c:1580
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "მოსამზადებელი სკრიპტის გაშვება ... "
 
-#: initdb.c:1579
+#: initdb.c:1592
 #, c-format
 msgid "input file \"%s\" does not belong to PostgreSQL %s"
 msgstr "შეყვანილი ფაილი \"%s\" PostgreSQL %s -ს არ ეკუთვნის"
 
-#: initdb.c:1581
+#: initdb.c:1594
 #, c-format
 msgid "Specify the correct path using the option -L."
 msgstr "მიუთითეთ სწორი ბილიკი -L პარამეტრით."
 
-#: initdb.c:1683
+#: initdb.c:1693
 msgid "Enter new superuser password: "
 msgstr "შეიყვანეთ ზემომხმარებლის ახალი პაროლი: "
 
-#: initdb.c:1684
+#: initdb.c:1694
 msgid "Enter it again: "
 msgstr "შეიყვანეთ კდევ ერთხელ: "
 
-#: initdb.c:1687
+#: initdb.c:1697
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "პაროლები არ ემთხვევა.\n"
 
-#: initdb.c:1711
+#: initdb.c:1721
 #, c-format
 msgid "could not read password from file \"%s\": %m"
 msgstr "პაროლის ფაილიდან (\"%s\") წაკითხვის შეცდომა: %m"
 
-#: initdb.c:1714
+#: initdb.c:1724
 #, c-format
 msgid "password file \"%s\" is empty"
 msgstr "პაროლის ფაილი (\"%s\") ცარიელია"
 
-#: initdb.c:2126
+#: initdb.c:2136
 #, c-format
 msgid "caught signal\n"
 msgstr "მიღებულია სიგნალი\n"
 
-#: initdb.c:2132
+#: initdb.c:2142
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "შვილობილი პროცესისთვის ჩაწერის შეცდომა: %s\n"
 
-#: initdb.c:2140
+#: initdb.c:2150
 #, c-format
 msgid "ok\n"
 msgstr "დიახ\n"
 
-#: initdb.c:2222 initdb.c:2268
+#: initdb.c:2232 initdb.c:2278
 #, c-format
 msgid "locale name \"%s\" contains non-ASCII characters"
 msgstr "ლოკალის სახელი \"%s\" არა-ASCII სიმბოლოებს შეიცავს"
 
-#: initdb.c:2248
+#: initdb.c:2258
 #, c-format
 msgid "invalid locale name \"%s\""
 msgstr "ენის არასწორი სახელი: \"%s\""
 
-#: initdb.c:2249
+#: initdb.c:2259
 #, c-format
 msgid "If the locale name is specific to ICU, use --icu-locale."
 msgstr "თუ ლოკალის სახელი მხოლოდ მითითებული ICU-სთვისა ხელმისაწვდომი, გამოიყენეთ --icu-locale."
 
-#: initdb.c:2262
+#: initdb.c:2272
 #, c-format
 msgid "invalid locale settings; check LANG and LC_* environment variables"
 msgstr "ენის არასწორი პარამეტრები; გადაამოწმეთ გარემოს ცვლადები: LANG და LC_*"
 
-#: initdb.c:2293 initdb.c:2317
+#: initdb.c:2303 initdb.c:2327
 #, c-format
 msgid "encoding mismatch"
 msgstr "კოდირება არ ემთხვევა"
 
-#: initdb.c:2294
+#: initdb.c:2304
 #, c-format
 msgid "The encoding you selected (%s) and the encoding that the selected locale uses (%s) do not match. This would lead to misbehavior in various character string processing functions."
 msgstr "თქვენ მიერ არჩეული კოდირება (%s) და კოდირება, რომელსაც არჩეული ენა იყენებს (%s) არ ემთხვევა. ეს სიმბოლოების სტრიქონების დამუშავების სხვადასხვა ფუნქციების არასწორ ქცევას გამოიწვევს."
 
-#: initdb.c:2299 initdb.c:2320
+#: initdb.c:2309 initdb.c:2330
 #, c-format
 msgid "Rerun %s and either do not specify an encoding explicitly, or choose a matching combination."
 msgstr "თავიდან გაუშვით %s და კოდირება ან არ მიუთითოთ, ან სწორად მიუთითეთ."
 
-#: initdb.c:2318
+#: initdb.c:2328
 #, c-format
 msgid "The encoding you selected (%s) is not supported with the ICU provider."
 msgstr "თქვენს მიერ შერჩეული კოდირება (%s) ICU -ის მომწოდებელთან ერთად მხარდაუჭერელია."
 
-#: initdb.c:2369
+#: initdb.c:2379
 #, c-format
 msgid "could not convert locale name \"%s\" to language tag: %s"
 msgstr "მდებარეობის კოდის \"%s\" ენის ჭდეში (%s) გადაყვანის შეცდომა"
 
-#: initdb.c:2375 initdb.c:2427 initdb.c:2521
+#: initdb.c:2385 initdb.c:2437 initdb.c:2531
 #, c-format
 msgid "ICU is not supported in this build"
 msgstr "ამ აგებაში ICU-ის მხარდაჭერა არ არსებბს"
 
-#: initdb.c:2398
+#: initdb.c:2408
 #, c-format
 msgid "could not get language from locale \"%s\": %s"
 msgstr "ლოკალიდან \"%s\" ენის მიღების შეცდომა: %s"
 
-#: initdb.c:2424
+#: initdb.c:2434
 #, c-format
 msgid "locale \"%s\" has unknown language \"%s\""
 msgstr "ლოკალის \"%s\" ენა \"%s\" უცნობია"
 
-#: initdb.c:2485
+#: initdb.c:2495
 #, c-format
 msgid "locale must be specified if provider is %s"
 msgstr "ლოკალის მითითება აუცილებელია, თუ მომწოდებელია %s"
 
-#: initdb.c:2498
+#: initdb.c:2508
 #, c-format
 msgid "invalid locale name \"%s\" for builtin provider"
 msgstr "არასწორი ლოკალის სახელი \"%s\" ჩაშენებული მომწოდებლისთვის"
 
-#: initdb.c:2509
+#: initdb.c:2519
 #, c-format
 msgid "Using language tag \"%s\" for ICU locale \"%s\".\n"
 msgstr "ვიყენებ ენის ჭდეს \"%s\" ICU ლოკალისთვის \"%s\".\n"
 
-#: initdb.c:2532
+#: initdb.c:2542
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -559,17 +569,17 @@ msgstr ""
 "%s PostgreSQL ბაზის კლასერის ინიციალიზაციას ახდენს.\n"
 "\n"
 
-#: initdb.c:2533
+#: initdb.c:2543
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: initdb.c:2534
+#: initdb.c:2544
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [პარამეტრი]... [მონაცემებისსაქაღალდე]\n"
 
-#: initdb.c:2535
+#: initdb.c:2545
 #, c-format
 msgid ""
 "\n"
@@ -578,57 +588,57 @@ msgstr ""
 "\n"
 "პარამეტრები:\n"
 
-#: initdb.c:2536
+#: initdb.c:2546
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=მეთოდი         ავთენტიკაციის ნაგულისხმევი მეთოდი ლოკალური შეერთებებისთვის\n"
 
-#: initdb.c:2537
+#: initdb.c:2547
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr "      --auth-host=მეთოდი    ლოკალური TCP/IP შეერთების ავთენტიკაციის ნაგულისხმევი მეთოდი\n"
 
-#: initdb.c:2538
+#: initdb.c:2548
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr "      --auth-local=მეთოდი    ლოკალური სოკეტის შეერთების ავთენტიკაციის ნაგულისხმევი მეთოდი\n"
 
-#: initdb.c:2539
+#: initdb.c:2549
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATADIR     ბაზის კლასტერის მდებარეობა\n"
 
-#: initdb.c:2540
+#: initdb.c:2550
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=კოდირება   ახალი ბაზების ნაგულისხმევი კოდირება\n"
 
-#: initdb.c:2541
+#: initdb.c:2551
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr "  -g, --allow-group-access  მონაცემების საქაღალდეზე ჯგუფის კითხვა/გაშვების წვდომის დაყენება\n"
 
-#: initdb.c:2542
+#: initdb.c:2552
 #, c-format
 msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
 msgstr "      --icu-locale=კოდირება   ICU ენის ID ახალი ბაზებისთვის\n"
 
-#: initdb.c:2543
+#: initdb.c:2553
 #, c-format
 msgid "      --icu-rules=RULES     set additional ICU collation rules for new databases\n"
 msgstr "      --icu-rules=წესები   ახალი ბაზებისთვის დამატებითი ICUკოლაციის წესების დაყენება\n"
 
-#: initdb.c:2544
+#: initdb.c:2554
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      მონაცემების გვერდის საკონტროლო ჯამების გამოყენება\n"
 
-#: initdb.c:2545
+#: initdb.c:2555
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=ენა       ახალი ბაზების ნაგულისხმევი ენის დაყენება\n"
 
-#: initdb.c:2546
+#: initdb.c:2556
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -641,12 +651,12 @@ msgstr ""
 "                            დააყენეთ ნაგულისხმევი ენა შესაბამის კატეგორიაში\n"
 "                            ახალი ბაზებისთვის (ნაგულისხმევი აღებულია გარემოდან)\n"
 
-#: initdb.c:2550
+#: initdb.c:2560
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           იგივე, რაც --locale=C\n"
 
-#: initdb.c:2551
+#: initdb.c:2561
 #, c-format
 msgid ""
 "      --builtin-locale=LOCALE\n"
@@ -655,7 +665,7 @@ msgstr ""
 "      --builtin-locale=ლოკალი\n"
 "               ჩაშენებული ლოკალის სახელის დაყენება ახალი ბაზებისთვის\n"
 
-#: initdb.c:2553
+#: initdb.c:2563
 #, c-format
 msgid ""
 "      --locale-provider={builtin|libc|icu}\n"
@@ -664,17 +674,17 @@ msgstr ""
 "      --locale-provider={builtin|libc|icu}\n"
 "                            ახალი ბაზებისთვის ლოკალის ნაგულისხმევი მიმწოდებლის დაყენება\n"
 
-#: initdb.c:2555
+#: initdb.c:2565
 #, c-format
 msgid "      --no-data-checksums   do not use data page checksums\n"
 msgstr "      --no-data-checksums   მონაცემების გვერდის საკონტროლო ჯამები გამოყენებული არ იქნება\n"
 
-#: initdb.c:2556
+#: initdb.c:2566
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FILE         ახალი ზემომხმარებლის პაროლის ფაილიდან წაკითხვა\n"
 
-#: initdb.c:2557
+#: initdb.c:2567
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -683,27 +693,27 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                            ტექსტის ძებნის ნაგულისხმევი კონფიგურაცია\n"
 
-#: initdb.c:2559
+#: initdb.c:2569
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=სახელი       ბაზის ზემომხმარებლის სახელი\n"
 
-#: initdb.c:2560
+#: initdb.c:2570
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            ზემომხმარებლის პაროლის კითხვა\n"
 
-#: initdb.c:2561
+#: initdb.c:2571
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALDIR       წინასწარ ჩაწერადი ჟურნალის (WAL) საქაღალდის მდებარეობა\n"
 
-#: initdb.c:2562
+#: initdb.c:2572
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=ზომა    WAL სეგმენტების ზომა, მეგაბაიტებში\n"
 
-#: initdb.c:2563
+#: initdb.c:2573
 #, c-format
 msgid ""
 "\n"
@@ -712,63 +722,62 @@ msgstr ""
 "\n"
 "იშვიათად გამოყენებული პარამეტრები:\n"
 
-#: initdb.c:2564
+#: initdb.c:2574
 #, c-format
 msgid "  -c, --set NAME=VALUE      override default setting for server parameter\n"
 msgstr "  -c, --set NAME=VALUE     სერვერის ნაგულისხმევი პარამეტრის გადაფარვა\n"
 
-#: initdb.c:2565
+#: initdb.c:2575
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               გასამართი ინფორმაციის გენერაცია\n"
 
-#: initdb.c:2566
+#: initdb.c:2576
 #, c-format
 msgid "      --discard-caches      set debug_discard_caches=1\n"
 msgstr "      --discard-caches      debug_discard_caches=1 დაყენება\n"
 
-#: initdb.c:2567
+#: initdb.c:2577
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L საქაღალდე              შეყვანის ფაილების შემცველი საქაღალდე\n"
 
-#: initdb.c:2568
+#: initdb.c:2578
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            შეცდომის შემთხვევაში არ გაასუფთავო\n"
 
-#: initdb.c:2569
+#: initdb.c:2579
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync             არ დაველოდო ცვლილებების დისკზე უსაფრთხოდ ჩაწერას\n"
 
-#: initdb.c:2570
+#: initdb.c:2580
 #, c-format
-#| msgid "      --no-data-checksums   do not use data page checksums\n"
 msgid "      --no-sync-data-files  do not sync files within database directories\n"
 msgstr "      --no-sync-data-files  მონაცემთა საქაღალდეებს შორის ფაილების სინქრონიზაცია არ მოხდება\n"
 
-#: initdb.c:2571
+#: initdb.c:2581
 #, c-format
 msgid "      --no-instructions     do not print instructions for next steps\n"
 msgstr "      --no-instructions     შემდეგი ნაბიჯის ინსტრუქციები ნაჩვენები არ იქნება\n"
 
-#: initdb.c:2572
+#: initdb.c:2582
 #, c-format
 msgid "  -s, --show                show internal settings, then exit\n"
 msgstr "  -s, --show                შიდა პარამეტრების ჩვენება და გასვლა\n"
 
-#: initdb.c:2573
+#: initdb.c:2583
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr "      --sync-method=მეთოდი  ფაილების დისკზე სინქრონიზაციის მეთოდის დაყენება\n"
 
-#: initdb.c:2574
+#: initdb.c:2584
 #, c-format
 msgid "  -S, --sync-only           only sync database files to disk, then exit\n"
 msgstr "  -S, --sync-only           ბაზის ფაილების დისკზე სინქრონიზაცია და გასვლა\n"
 
-#: initdb.c:2575
+#: initdb.c:2585
 #, c-format
 msgid ""
 "\n"
@@ -777,17 +786,17 @@ msgstr ""
 "\n"
 "სხვა პარამეტრები:\n"
 
-#: initdb.c:2576
+#: initdb.c:2586
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: initdb.c:2577
+#: initdb.c:2587
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: initdb.c:2578
+#: initdb.c:2588
 #, c-format
 msgid ""
 "\n"
@@ -798,7 +807,7 @@ msgstr ""
 "თუ მონაცემების საქაღალდე მითითებული არაა, გამოყენებული იქნება \n"
 "გარემოს ცვლადი PGDATA.\n"
 
-#: initdb.c:2580
+#: initdb.c:2590
 #, c-format
 msgid ""
 "\n"
@@ -807,72 +816,72 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: initdb.c:2581
+#: initdb.c:2591
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: initdb.c:2605
+#: initdb.c:2615
 #, c-format
 msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr "ავთენტიკაციის მეთოდი (\"%s\") არასწორია \"%s\" შეერთებებისთვის"
 
-#: initdb.c:2619
+#: initdb.c:2629
 #, c-format
 msgid "must specify a password for the superuser to enable password authentication"
 msgstr "პაროლით ავთენტიკაციის ჩასართავად საჭიროა ზემომხმარებლის პაროლის მითითება"
 
-#: initdb.c:2638
+#: initdb.c:2648
 #, c-format
 msgid "no data directory specified"
 msgstr "მონაცემების საქაღალდე მითითებული არაა"
 
-#: initdb.c:2639
+#: initdb.c:2649
 #, c-format
 msgid "You must identify the directory where the data for this database system will reside.  Do this with either the invocation option -D or the environment variable PGDATA."
 msgstr "უნდა დაადგინოთ საქაღლდე, სადაც ბაზის ამ სისტემის მონაცემები იქნება განთავსებული . გააკეთეთ ეს ან გამოძახების პარამეტრით -D ან გარემოს ცვლადით PGDATA."
 
-#: initdb.c:2656
+#: initdb.c:2666
 #, c-format
 msgid "could not set environment"
 msgstr "გარემოს დაყენების შეცდომა"
 
-#: initdb.c:2674
+#: initdb.c:2684
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "პროგრამა \"%s\" სჭირდება \"%s\"-ს, მაგრამ იგივე საქაღალდეში, სადაც \"%s\", ნაპოვნი არაა"
 
-#: initdb.c:2677
+#: initdb.c:2687
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "პროგრამა „%s“ ნაპოვნია „%s“-ის მიერ, მაგრამ ვერსია, იგივეა არაა, რაც %s"
 
-#: initdb.c:2692
+#: initdb.c:2702
 #, c-format
 msgid "input file location must be an absolute path"
 msgstr "შეყვანის ფაილის მდებარეობა აბსტოლუტური ბილიკი უნდა იყოს"
 
-#: initdb.c:2709
+#: initdb.c:2719
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "ბაზის კლასტერის ინიციალიზაცია ენით \"%s\".\n"
 
-#: initdb.c:2712
+#: initdb.c:2722
 #, c-format
 msgid "The database cluster will be initialized with this locale configuration:\n"
 msgstr "ბაზის კლასტერის ინიციალიზაცია ენის ამ კონფიგურაციით მოხდება:\n"
 
-#: initdb.c:2713
+#: initdb.c:2723
 #, c-format
 msgid "  locale provider:   %s\n"
 msgstr "  ლოკალის მომწოდებელი:   %s\n"
 
-#: initdb.c:2715
+#: initdb.c:2725
 #, c-format
 msgid "  default collation: %s\n"
 msgstr "  ნაგულიხმევი კოლაცია:  %s\n"
 
-#: initdb.c:2716
+#: initdb.c:2726
 #, c-format
 msgid ""
 "  LC_COLLATE:  %s\n"
@@ -889,22 +898,22 @@ msgstr ""
 "  LC_NUMERIC:  %s\n"
 "  LC_TIME:     %s\n"
 
-#: initdb.c:2746
+#: initdb.c:2756
 #, c-format
 msgid "could not find suitable encoding for locale \"%s\""
 msgstr "ენისთვის (\"%s\") შესაბამისი კოდირება ვერ ვიპოვე"
 
-#: initdb.c:2748
+#: initdb.c:2758
 #, c-format
 msgid "Rerun %s with the -E option."
 msgstr "გაუშვით %s თავიდან -E პარამეტრით."
 
-#: initdb.c:2749 initdb.c:3287 initdb.c:3413 initdb.c:3433
+#: initdb.c:2759 initdb.c:3299 initdb.c:3425 initdb.c:3445
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: initdb.c:2761
+#: initdb.c:2771
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -913,112 +922,112 @@ msgstr ""
 "ენის ნაგულისხმევი „%s“ კოდირების დაყენება, სერვერის დასაშიფრად შეუძლებელია.\n"
 "სანაცვლოდ, ბაზის ნაგულისხმევი კოდირება დაყენდება „%s“.\n"
 
-#: initdb.c:2766
+#: initdb.c:2776
 #, c-format
 msgid "locale \"%s\" requires unsupported encoding \"%s\""
 msgstr "ენას (\"%s\") მხარდაუჭერელი კოდირება (\"%s\") სჭირდება"
 
-#: initdb.c:2768
+#: initdb.c:2778
 #, c-format
 msgid "Encoding \"%s\" is not allowed as a server-side encoding."
 msgstr "%s სერვერის მხარეს კოდირება ვერ იქნება."
 
-#: initdb.c:2770
+#: initdb.c:2780
 #, c-format
 msgid "Rerun %s with a different locale selection."
 msgstr "%s-ის თავიდან გაშვება ენის სხვა არჩევანით."
 
-#: initdb.c:2778
+#: initdb.c:2788
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "ბაზის ნაგულისხმევი კოდირება შესაბამისად დაყენებულია „%s“-ზე.\n"
 
-#: initdb.c:2794
+#: initdb.c:2804
 #, c-format
 msgid "builtin provider locale \"%s\" requires encoding \"%s\""
 msgstr "ჩაშენებულ მომწოდებელს ლოკალისთვის \"%s\" ესაჭიროება კოდირება \"%s\""
 
-#: initdb.c:2856
+#: initdb.c:2868
 #, c-format
 msgid "could not find suitable text search configuration for locale \"%s\""
 msgstr "ტექსტის ძებნის ენისთვის შესაფერისი კონფიგურაციის მოძებნა შეუძლებელია: \"%s\""
 
-#: initdb.c:2867
+#: initdb.c:2879
 #, c-format
 msgid "suitable text search configuration for locale \"%s\" is unknown"
 msgstr "ტექსტის ძებნის ენისთვის შესაფერისი კონფიგურაცია არ არსებობს: \"%s\""
 
-#: initdb.c:2872
+#: initdb.c:2884
 #, c-format
 msgid "specified text search configuration \"%s\" might not match locale \"%s\""
 msgstr "ტექსტის ძებნის მითითებული კონფიგურაცია \"%s\" ენას (\"%s\") არ ემთხვევა"
 
-#: initdb.c:2877
+#: initdb.c:2889
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "ტექსტის ძებნის ნაგულისხმევი კონფიგურაცია \"%s\" იქნება.\n"
 
-#: initdb.c:2911 initdb.c:2982
+#: initdb.c:2923 initdb.c:2994
 #, c-format
 msgid "creating directory %s ... "
 msgstr "საქაღალდის (\"%s\") შექმნა .... "
 
-#: initdb.c:2916 initdb.c:2987 initdb.c:3035 initdb.c:3092
+#: initdb.c:2928 initdb.c:2999 initdb.c:3047 initdb.c:3104
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m"
 
-#: initdb.c:2925 initdb.c:2997
+#: initdb.c:2937 initdb.c:3009
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "არსებულ საქაღალდეზე (\"%s\") წვდომების ჩასწორება ... "
 
-#: initdb.c:2930 initdb.c:3002
+#: initdb.c:2942 initdb.c:3014
 #, c-format
 msgid "could not change permissions of directory \"%s\": %m"
 msgstr "საქაღალდის წვდომების შეცვლა შეუძლებელია \"%s\": %m"
 
-#: initdb.c:2942 initdb.c:3014
+#: initdb.c:2954 initdb.c:3026
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "საქაღალდე \"%s\" არსებობს, მაგრამ ცარიელი არაა"
 
-#: initdb.c:2946
+#: initdb.c:2958
 #, c-format
 msgid "If you want to create a new database system, either remove or empty the directory \"%s\" or run %s with an argument other than \"%s\"."
 msgstr "თუ გსურთ ბაზის ახალი სისტემის შექმნა, წაშალეთ ან დააცარიელეთ საქაღალდე, %s ან %s „%s“-ის გარდა არგუმენტით გაუშვით."
 
-#: initdb.c:2954 initdb.c:3024 initdb.c:3458
+#: initdb.c:2966 initdb.c:3036 initdb.c:3470
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "საქაღალდის (%s) წვდომის შეცდომა: %m"
 
-#: initdb.c:2975
+#: initdb.c:2987
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "WAL საქაღალდის მდებარეობა აბსოლუტური ბილიკი უნდა იყოს"
 
-#: initdb.c:3018
+#: initdb.c:3030
 #, c-format
 msgid "If you want to store the WAL there, either remove or empty the directory \"%s\"."
 msgstr "თუ გსურთ WAL-ის იქ შენახვა, წაშალეთ ან დააცარიელეთ საქაღალდე „%s“."
 
-#: initdb.c:3028
+#: initdb.c:3040
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "სიმბმულის შექმნის შეცდომა %s: %m"
 
-#: initdb.c:3047
+#: initdb.c:3059
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point."
 msgstr "ის შეიცავს წერტილით დაწყებულ/უხილავ ფაილს, შესაძლოა იმის გამო, რომ ის მიმაგრების წერტილია."
 
-#: initdb.c:3049
+#: initdb.c:3061
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point."
 msgstr "ის შეიცავს lost+found საქაღალდეს. ალბათ იმის გამო, რომ ის მიმაგრების წერტილია."
 
-#: initdb.c:3051
+#: initdb.c:3063
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -1027,65 +1036,65 @@ msgstr ""
 "მიმაგრების წერტილის პირდაპირ მონაცემთა საქაღალდედ გამოყენება რეკომენდებული არაა.\n"
 "შექმენით ქვესაქაღალდე მიმაგრების წერტილის ქვეშ."
 
-#: initdb.c:3078
+#: initdb.c:3090
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "ქვესაქაღალდეების შექმნა ... "
 
-#: initdb.c:3121
+#: initdb.c:3133
 msgid "performing post-bootstrap initialization ... "
 msgstr "პირველადი მომზადების შემდგომი ინიციალიზაციის შესრულება ... "
 
-#: initdb.c:3286
+#: initdb.c:3298
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s მნიშვნელობა სჭირდება"
 
-#: initdb.c:3311
+#: initdb.c:3323
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "გაშვებულია გამართვის რეჟიმში.\n"
 
-#: initdb.c:3315
+#: initdb.c:3327
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "გაშვებულია მოუწმენდავ რეჟიმში.  შეცდომები არ გაიწმინდება.\n"
 
-#: initdb.c:3388
+#: initdb.c:3400
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "ენის უცნობი მომწოდებელი: %s"
 
-#: initdb.c:3431
+#: initdb.c:3443
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
 
-#: initdb.c:3438 initdb.c:3442 initdb.c:3446
+#: initdb.c:3450 initdb.c:3454 initdb.c:3458
 #, c-format
 msgid "%s cannot be specified unless locale provider \"%s\" is chosen"
 msgstr "%s ვერ იქნება მითითებული, თუ ენის მომწოდებლად „%s“ არ არის არჩეული"
 
-#: initdb.c:3460 initdb.c:3523
+#: initdb.c:3472 initdb.c:3535
 msgid "syncing data to disk ... "
 msgstr "მონაცემების სინქრონიზაცია დისკზე ... "
 
-#: initdb.c:3468
+#: initdb.c:3480
 #, c-format
 msgid "password prompt and password file cannot be specified together"
 msgstr "პაროლის მოთხოვნისა და პაროლის ფაილის ერთდროულად მითითება შეუძებელია"
 
-#: initdb.c:3479
+#: initdb.c:3491
 #, c-format
 msgid "argument of %s must be a power of two between 1 and 1024"
 msgstr "%s-ის არგუმენტი 2-ის ხარისხი უნდა იყოს 1-1024 შუალედიდან"
 
-#: initdb.c:3492
+#: initdb.c:3504
 #, c-format
 msgid "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
 msgstr "ზემომხმარებლის სახელი \"%s\" უარყოფილია. როლის სახელებია \"pg_\"-ით ვერ დაიწყება"
 
-#: initdb.c:3494
+#: initdb.c:3506
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -1096,17 +1105,17 @@ msgstr ""
 "ეს მომხმარებელი სერვერის პროცესსაც უნდა ფლობდეს.\n"
 "\n"
 
-#: initdb.c:3510
+#: initdb.c:3522
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "მონაცემების გვერდის საკონტროლო ჯამები ჩართულია.\n"
 
-#: initdb.c:3512
+#: initdb.c:3524
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "მონაცემების გვერდის საკონტროლო ჯამები გამორთულია.\n"
 
-#: initdb.c:3529
+#: initdb.c:3541
 #, c-format
 msgid ""
 "\n"
@@ -1117,22 +1126,22 @@ msgstr ""
 "დისკთან სინქრონიზაცია გამოტოვებულია.\n"
 "ოპერაციული სისტემის სიკვდილის შემთხვევაში მონაცემების საქაღალდე შეიძლება დაზიანდეს.\n"
 
-#: initdb.c:3534
+#: initdb.c:3546
 #, c-format
 msgid "enabling \"trust\" authentication for local connections"
 msgstr "ლოკალური შეერთებებისთვის \"trust\" ავთენტიკაციის ჩართვა"
 
-#: initdb.c:3535
+#: initdb.c:3547
 #, c-format
 msgid "You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb."
 msgstr "შეცვლა შეგიძლიათ pg_hba.conf-ის რედაქტირებით ან როცა შემდეგ ჯერზე გაუშვებთ initdb-ს, -A, ან --auth-local და --auth-host-ის გამოყენებით."
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3565
+#: initdb.c:3577
 msgid "logfile"
 msgstr "ჟურნალის ფაილი"
 
-#: initdb.c:3567
+#: initdb.c:3579
 #, c-format
 msgid ""
 "\n"
@@ -1158,3 +1167,7 @@ msgstr ""
 #, c-format
 #~ msgid "argument of --wal-segsize must be a number"
 #~ msgstr "--wal-segisze -ის არგუმენტი რიცხვი უნდა იყოს"
+
+#, c-format
+#~ msgid "selecting default \"autovacuum_worker_slots\" ... %d\n"
+#~ msgstr "მიმდინარეობს ნაგულისხმევი \"autovacuum_worker_slots\"-ის არჩევა ... %d\n"

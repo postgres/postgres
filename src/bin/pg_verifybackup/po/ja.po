@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-14 09:42+0900\n"
-"PO-Revision-Date: 2025-04-14 10:32+0900\n"
+"POT-Creation-Date: 2026-05-15 13:38+0900\n"
+"PO-Revision-Date: 2026-05-15 16:43+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -17,53 +17,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:98
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み込み用にオープンできませんでした: %m"
 
-#: ../../common/controldata_utils.c:110 pg_verifybackup.c:440
-#: pg_verifybackup.c:478 pg_verifybackup.c:1025 pg_verifybackup.c:1144
+#: ../../common/controldata_utils.c:111 pg_verifybackup.c:455
+#: pg_verifybackup.c:493 pg_verifybackup.c:1047 pg_verifybackup.c:1166
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: ../../common/controldata_utils.c:119
+#: ../../common/controldata_utils.c:120
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
 
-#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: pg_verifybackup.c:1030 pg_verifybackup.c:1150
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#: pg_verifybackup.c:1052 pg_verifybackup.c:1172
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
 
-#: ../../common/controldata_utils.c:168
+#: ../../common/controldata_utils.c:169
 msgid "byte ordering mismatch"
 msgstr "バイトオーダが合っていません"
 
-#: ../../common/controldata_utils.c:170
+#: ../../common/controldata_utils.c:171
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -76,24 +76,24 @@ msgstr ""
 "されるものと一致しないようです。この場合以下の結果は不正確になります。また、\n"
 "PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
 
-#: ../../common/controldata_utils.c:230 pg_verifybackup.c:408
-#: pg_verifybackup.c:1005 pg_verifybackup.c:1113
+#: ../../common/controldata_utils.c:231 pg_verifybackup.c:423
+#: pg_verifybackup.c:1027 pg_verifybackup.c:1135
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/controldata_utils.c:249
+#: ../../common/controldata_utils.c:250
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: ../../common/controldata_utils.c:268
+#: ../../common/controldata_utils.c:269
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/jsonapi.c:2407 ../../common/parse_manifest.c:157
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
 #: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
@@ -112,114 +112,124 @@ msgstr "出力先バッファが小さすぎます"
 msgid "OpenSSL failure"
 msgstr "OpenSSLのエラー"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません (内部エラー)\n"
 
-#: ../../common/jsonapi.c:2432
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu + %zu が不正です\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
+
+#: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "再帰降下パーサーは差分字句解析器を使用できません。"
 
-#: ../../common/jsonapi.c:2434
+#: ../../common/jsonapi.c:2486
 msgid "Incremental parser requires incremental lexer."
 msgstr "差分パーサーは差分字句解析器を必要とします。"
 
-#: ../../common/jsonapi.c:2436
+#: ../../common/jsonapi.c:2488
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSONのネストが深すぎます、可能な最大の深さは6400です。"
 
-#: ../../common/jsonapi.c:2438
+#: ../../common/jsonapi.c:2490
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "エスケープシーケンス\"\\%.*s\"は不正です。"
 
-#: ../../common/jsonapi.c:2442
+#: ../../common/jsonapi.c:2494
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "0x%02x値を持つ文字はエスケープしなければなりません"
 
-#: ../../common/jsonapi.c:2446
+#: ../../common/jsonapi.c:2498
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "入力の終端を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2449
+#: ../../common/jsonapi.c:2501
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "配列要素または\"]\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2452
+#: ../../common/jsonapi.c:2504
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "\",\"または\"]\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2455
+#: ../../common/jsonapi.c:2507
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "\":\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2458
+#: ../../common/jsonapi.c:2510
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "JSON値を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2461
+#: ../../common/jsonapi.c:2513
 msgid "The input string ended unexpectedly."
 msgstr "入力文字列が予期せず終了しました。"
 
-#: ../../common/jsonapi.c:2463
+#: ../../common/jsonapi.c:2515
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "文字列または\"}\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2466
+#: ../../common/jsonapi.c:2518
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "\",\"または\"}\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2469
+#: ../../common/jsonapi.c:2521
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "文字列を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2472
+#: ../../common/jsonapi.c:2524
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "トークン\"\\%.*s\"は不正です。"
 
-#: ../../common/jsonapi.c:2478
+#: ../../common/jsonapi.c:2530
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 はテキストに変換できません。"
 
-#: ../../common/jsonapi.c:2480
+#: ../../common/jsonapi.c:2532
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\"の後には16進数の4桁が続かなければなりません。"
 
-#: ../../common/jsonapi.c:2483
+#: ../../common/jsonapi.c:2535
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "エンコーディングがUTF-8ではない場合、コードポイントの値が 007F 以上についてはUnicodeエスケープの値は使用できません。"
 
-#: ../../common/jsonapi.c:2492
+#: ../../common/jsonapi.c:2544
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Unicodeエスケープの値がサーバーエンコーディング%sに変換できませんでした。"
 
-#: ../../common/jsonapi.c:2499
+#: ../../common/jsonapi.c:2551
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodeのハイサロゲートはハイサロゲートに続いてはいけません。"
 
-#: ../../common/jsonapi.c:2501
+#: ../../common/jsonapi.c:2553
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodeのローサロゲートはハイサロゲートに続かなければなりません。"
 
-#: ../../common/jsonapi.c:2523
+#: ../../common/jsonapi.c:2575
 msgid "out of memory while constructing error description"
 msgstr "エラー記述の構築中にメモリ不足"
 
@@ -380,50 +390,174 @@ msgstr "目録チェックサムの不一致"
 msgid "could not parse backup manifest: %s"
 msgstr "バックアップ目録をパースできませんでした: %s"
 
-#: astreamer_verify.c:130
+#: ../../fe_utils/astreamer_gzip.c:115
 #, c-format
-msgid "unexpected state while parsing tar file"
-msgstr "tarファイルのパース中に想定外の状態"
+msgid "could not create compressed file \"%s\": %m"
+msgstr "圧縮ファイル\"%s\"を作成できませんでした: %m"
+
+#: ../../fe_utils/astreamer_gzip.c:127
+#, c-format
+msgid "could not duplicate stdout: %m"
+msgstr "標準出力の複製に失敗しました: %m"
+
+#: ../../fe_utils/astreamer_gzip.c:131
+#, c-format
+msgid "could not open output file: %m"
+msgstr "出力ファイルをオープンできませんでした: %m"
+
+#: ../../fe_utils/astreamer_gzip.c:135
+#, c-format
+msgid "could not set compression level %d: %s"
+msgstr "圧縮レベルを%dに設定できませんでした: %s"
+
+#: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:275
+#: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:302
+#: ../../fe_utils/astreamer_zstd.c:130 ../../fe_utils/astreamer_zstd.c:285
+#, c-format
+msgid "this build does not support compression with %s"
+msgstr "このビルドでは%sによる圧縮をサポートしていません"
+
+#: ../../fe_utils/astreamer_gzip.c:167
+#, c-format
+msgid "could not write to compressed file \"%s\": %s"
+msgstr "圧縮ファイル\"%s\"に書き込めませんでした: %s"
+
+#: ../../fe_utils/astreamer_gzip.c:191
+#, c-format
+msgid "could not close compressed file \"%s\": %m"
+msgstr "圧縮ファイル\"%s\"をクローズすることができませんでした: %m"
+
+#: ../../fe_utils/astreamer_gzip.c:271
+#, c-format
+msgid "could not initialize compression library"
+msgstr "圧縮ライブラリを初期化できませんでした"
+
+#: ../../fe_utils/astreamer_gzip.c:322 ../../fe_utils/astreamer_lz4.c:358
+#: ../../fe_utils/astreamer_zstd.c:330
+#, c-format
+msgid "could not decompress data: %s"
+msgstr "データを伸張できませんでした: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:97
+#, c-format
+msgid "could not create lz4 compression context: %s"
+msgstr "lz4圧縮コンテクストを生成できませんでした: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:142
+#, c-format
+msgid "could not write lz4 header: %s"
+msgstr "lz4ヘッダを出力できませんでした: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
+#: ../../fe_utils/astreamer_zstd.c:224
+#, c-format
+msgid "could not compress data: %s"
+msgstr "データを圧縮できませんでした: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:243
+#, c-format
+msgid "could not end lz4 compression: %s"
+msgstr "lz4圧縮を終了できませんでした: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:297
+#, c-format
+msgid "could not initialize compression library: %s"
+msgstr "圧縮ライブラリを初期化できませんでした: %s"
+
+#: ../../fe_utils/astreamer_tar.c:254 astreamer_verify.c:130
+#, c-format
+msgid "unexpected state while parsing tar archive"
+msgstr "tarアーカイブのパース中に想定外の状態"
+
+#: ../../fe_utils/astreamer_tar.c:300
+#, c-format
+msgid "input file does not appear to be a valid tar archive"
+msgstr "入力ファイルが有効なtarアーカイブではないようです"
+
+#: ../../fe_utils/astreamer_tar.c:307
+#, c-format
+msgid "tar member has empty name"
+msgstr "tarメンバーの名前が空です"
+
+#: ../../fe_utils/astreamer_tar.c:309
+#, c-format
+msgid "tar member has unsafe path name: \"%s\""
+msgstr "tarメンバーのパス名が安全ではありません: \"%s\""
+
+#: ../../fe_utils/astreamer_tar.c:332
+#, c-format
+msgid "pax extensions to tar format are not supported"
+msgstr "tar形式に対するpax拡張はサポートされていません"
+
+#: ../../fe_utils/astreamer_tar.c:361
+#, c-format
+msgid "COPY stream ended before last file was finished"
+msgstr "最後のファイルが終わる前にCOPYストリームが終了しました"
+
+#: ../../fe_utils/astreamer_zstd.c:89
+#, c-format
+msgid "could not create zstd compression context"
+msgstr "zstd圧縮コンテクストを生成できませんでした"
+
+#: ../../fe_utils/astreamer_zstd.c:95
+#, c-format
+msgid "could not set zstd compression level to %d: %s"
+msgstr "zstd圧縮レベルを%dに設定できませんでした: %s"
+
+#: ../../fe_utils/astreamer_zstd.c:109
+#, c-format
+msgid "could not set compression worker count to %d: %s"
+msgstr "圧縮ワーカー数を%dに設定できませんでした: %s"
+
+#: ../../fe_utils/astreamer_zstd.c:119
+#, c-format
+msgid "could not enable long-distance mode: %s"
+msgstr "長距離モードを有効化できませんでした: %s"
+
+#: ../../fe_utils/astreamer_zstd.c:276
+#, c-format
+msgid "could not create zstd decompression context"
+msgstr "zstd伸張コンテクストを生成できませんでした"
 
 #: astreamer_verify.c:198
 #, c-format
-msgid "\"%s\" is present in \"%s\" but not in the manifest"
-msgstr "\"%s\"は\"%s\"には存在しますが、目録には存在しません"
+msgid "file \"%s\" is present in archive \"%s\" but not in the manifest"
+msgstr "ファイル\"%s\"はアーカイブ\"%s\"には存在しますが、目録には存在しません"
 
 #: astreamer_verify.c:211
 #, c-format
-msgid "\"%s\" has size %llu in \"%s\" but size %<PRIu64> in the manifest"
-msgstr "\"%1$s\"は\"%3$s\"内でのサイズは%2$lluですが、目録上は%4$<PRIu64>となっています"
+msgid "file \"%s\" has size %llu in archive \"%s\" but size %<PRIu64> in the manifest"
+msgstr "ファル\"%1$s\"はアーカイブ\"%3$s\"内でのサイズは%2$lluですが、目録上は%4$<PRIu64>となっています"
 
 #: astreamer_verify.c:236
 #, c-format
 msgid "%s: could not initialize checksum of file \"%s\""
 msgstr "%s: ファイル\"%s\"のチェックサムの初期化ができませんでした"
 
-#: astreamer_verify.c:274 pg_verifybackup.c:1133
+#: astreamer_verify.c:274 pg_verifybackup.c:1155
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの更新ができませんでした"
 
 #: astreamer_verify.c:300
 #, c-format
-msgid "file \"%s\" in \"%s\" should contain %<PRIu64> bytes, but read %<PRIu64> bytes"
-msgstr "ファイル\"%s\"は\"%s\"内では%<PRIu64>バイトを含んでいるはずですが、%<PRIu64>バイトしか読み込まれませんでした"
+msgid "file \"%s\" in archive \"%s\" should contain %<PRIu64> bytes, but %<PRIu64> bytes were read"
+msgstr "アーカイブ\"%2$s\"内のファイル\"%1$s\"は%3$<PRIu64>バイトを含んでいるはずですが、%4$<PRIu64>バイトしか読み込まれませんでした"
 
-#: astreamer_verify.c:312 pg_verifybackup.c:1179
+#: astreamer_verify.c:312 pg_verifybackup.c:1201
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの完了ができませんでした"
 
 #: astreamer_verify.c:320
 #, c-format
-msgid "file \"%s\" in \"%s\" has checksum of length %d, but expected %d"
-msgstr "ファイル\"%s\"の\"%s\"内でのチェックサムの長さは%dですが、期待している長さは%dです"
+msgid "file \"%s\" in archive \"%s\" has checksum of length %d, but expected %d"
+msgstr "アーカイブ\"%2$s\"内のファイル\"%1$s\"のチェックサムの長さは%3$dですが、期待している長さは%4$dです"
 
 #: astreamer_verify.c:325
 #, c-format
-msgid "checksum mismatch for file \"%s\" in \"%s\""
-msgstr "\"%s\"内のファイル\"%s\"のチェックサムが一致しません"
+msgid "checksum mismatch for file \"%s\" in archive \"%s\""
+msgstr "アーカイブ\"%2$s\"内のファイル\"%1$s\"のチェックサムが一致しません"
 
 #: astreamer_verify.c:387
 #, c-format
@@ -445,167 +579,167 @@ msgstr "%s: %s: 予期しない制御ファイルバージョン"
 msgid "%s: %s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: %s: 目録のシステム識別子が%<PRIu64>ですが、制御ファイルでは%<PRIu64>です"
 
-#: pg_verifybackup.c:208
+#: pg_verifybackup.c:215
 #, c-format
 msgid "invalid backup format \"%s\", must be \"plain\" or \"tar\""
 msgstr "不正なバックアップフォーマット\"%s\"、\"plain\"か\"tar\"でなければなりません"
 
-#: pg_verifybackup.c:229 pg_verifybackup.c:238 pg_verifybackup.c:249
+#: pg_verifybackup.c:236 pg_verifybackup.c:245 pg_verifybackup.c:256
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_verifybackup.c:237
+#: pg_verifybackup.c:244
 #, c-format
 msgid "no backup directory specified"
 msgstr "バックアップディレクトリが指定されていません"
 
-#: pg_verifybackup.c:247
+#: pg_verifybackup.c:254
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます。(先頭は\"%s\")"
 
-#: pg_verifybackup.c:255
+#: pg_verifybackup.c:262
 #, c-format
 msgid "cannot specify both %s and %s"
 msgstr "%sと%sの両方を同時には指定できません"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:282
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "%2$sにはプログラム\"%1$s\"が必要ですが、\"%3$s\"と同じディレクトリにありませんでした"
 
-#: pg_verifybackup.c:278
+#: pg_verifybackup.c:285
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じバージョンではありませんでした"
 
-#: pg_verifybackup.c:304 pg_verifybackup.c:625
+#: pg_verifybackup.c:307 pg_verifybackup.c:640
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: pg_verifybackup.c:323 pg_verifybackup.c:412
+#: pg_verifybackup.c:326 pg_verifybackup.c:427
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: pg_verifybackup.c:340
+#: pg_verifybackup.c:379
 #, c-format
-msgid "pg_waldump cannot read tar files"
-msgstr "pg_waldumpはtarファイルを読めません"
+msgid "WAL archive not found"
+msgstr "WALアーカイブが見つかりません"
 
-#: pg_verifybackup.c:341
+#: pg_verifybackup.c:380
 #, c-format
-msgid "You must use -n or --no-parse-wal when verifying a tar-format backup."
-msgstr "tarフォーマットのバックアップを検証するときには -n または --no-parse-wal を使う必要があります。"
+msgid "Specify the correct path using the option -w/--wal-path.  Or you must use -n/--no-parse-wal when verifying a tar-format backup."
+msgstr "オプション -w/--wal-path で正しいパスを指定してください。または、tarフォーマットのバックアップの検証の際には -n/--no-parse-wal を使う必要があります。"
 
-#: pg_verifybackup.c:383
+#: pg_verifybackup.c:398
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "バックアップが正常に検証されました\n"
 
-#: pg_verifybackup.c:442
+#: pg_verifybackup.c:457
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$lldバイトのうち%2$dバイトを読み込みました"
 
-#: pg_verifybackup.c:480
+#: pg_verifybackup.c:495
 #, c-format
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$lldバイトのうち%2$lldバイトを読み込みました"
 
-#: pg_verifybackup.c:563
+#: pg_verifybackup.c:578
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "バックアップ目録内の重複パス名: \"%s\""
 
-#: pg_verifybackup.c:657 pg_verifybackup.c:827
+#: pg_verifybackup.c:672 pg_verifybackup.c:844
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をクローズできませんでした: %m"
 
-#: pg_verifybackup.c:678 pg_verifybackup.c:897
+#: pg_verifybackup.c:693 pg_verifybackup.c:918
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "\"%s\"というファイルまたはディレクトリの情報を取得できませんでした: %m"
 
-#: pg_verifybackup.c:701
+#: pg_verifybackup.c:716
 #, c-format
-msgid "\"%s\" is not a file or directory"
-msgstr "\"%s\"はファイルまたはディレクトリではありません"
+msgid "\"%s\" is not a regular file or directory"
+msgstr "\"%s\"は通常ファイルでもディレクトリでもありません"
 
-#: pg_verifybackup.c:711
+#: pg_verifybackup.c:726
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\"はディスクに存在しますが、目録には存在しません"
 
-#: pg_verifybackup.c:723
+#: pg_verifybackup.c:738
 #, c-format
 msgid "\"%s\" has size %llu on disk but size %llu in the manifest"
 msgstr "\"%s\"はディスク上でのサイズは%lluですが、目録上は%lluとなっています"
 
-#: pg_verifybackup.c:765
+#: pg_verifybackup.c:780
 #, c-format
 msgid "%s: CRC is incorrect"
 msgstr "%s: CRCが正しくありません"
 
-#: pg_verifybackup.c:769
+#: pg_verifybackup.c:784
 #, c-format
 msgid "%s: unexpected control file version"
 msgstr "%s: 予期しない制御ファイルバージョン"
 
-#: pg_verifybackup.c:774
+#: pg_verifybackup.c:789
 #, c-format
 msgid "%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: 目録のシステム識別子が%<PRIu64>ですが、制御ファイルでは%<PRIu64>です"
 
-#: pg_verifybackup.c:906
+#: pg_verifybackup.c:927
 #, c-format
-msgid "\"%s\" is not a plain file"
-msgstr "\"%s\"は通常ファイルではありません"
+msgid "file \"%s\" is not a regular file"
+msgstr "ファイル\"%s\"は通常のファイルではありません"
 
-#: pg_verifybackup.c:936 pg_verifybackup.c:957
+#: pg_verifybackup.c:963 pg_verifybackup.c:974
 #, c-format
 msgid "file \"%s\" is not expected in a tar format backup"
 msgstr "tar形式のバックアップではファイル\"%s\"は想定外です"
 
-#: pg_verifybackup.c:1049
+#: pg_verifybackup.c:1071
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\"は目録には存在しますが、ディスクには存在しません"
 
-#: pg_verifybackup.c:1121
+#: pg_verifybackup.c:1143
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの初期化ができませんでした"
 
-#: pg_verifybackup.c:1169
+#: pg_verifybackup.c:1191
 #, c-format
 msgid "file \"%s\" should contain %<PRIu64> bytes, but read %<PRIu64>"
 msgstr "ファイル\"%s\"は%<PRIu64>バイトを含んでいるはずですが、%<PRIu64>バイトしか読み込まれませんでした"
 
-#: pg_verifybackup.c:1187
+#: pg_verifybackup.c:1209
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "ファイル\"%s\"のチェックサムの長さは%dですが、予期されるのは%dです"
 
-#: pg_verifybackup.c:1191
+#: pg_verifybackup.c:1213
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムが一致しません"
 
-#: pg_verifybackup.c:1217
+#: pg_verifybackup.c:1239
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "タイムライン%uのWALのパースに失敗しました"
 
-#: pg_verifybackup.c:1351
+#: pg_verifybackup.c:1373
 #, c-format
 msgid "%*s/%s kB (%d%%) verified"
 msgstr "%*s/%s kB (%d%%) 検証しました"
 
-#: pg_verifybackup.c:1368
+#: pg_verifybackup.c:1390
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -614,7 +748,7 @@ msgstr ""
 "%sはバックアップ目録に対してバックアップを検証します。\n"
 "\n"
 
-#: pg_verifybackup.c:1369
+#: pg_verifybackup.c:1391
 #, c-format
 msgid ""
 "Usage:\n"
@@ -625,67 +759,72 @@ msgstr ""
 "  %s [オプション]... BACKUPDIR\n"
 "\n"
 
-#: pg_verifybackup.c:1370
+#: pg_verifybackup.c:1392
 #, c-format
 msgid "Options:\n"
 msgstr "オプション:\n"
 
-#: pg_verifybackup.c:1371
+#: pg_verifybackup.c:1393
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         エラー時に直ちに終了する\n"
 
-#: pg_verifybackup.c:1372
+#: pg_verifybackup.c:1394
 #, c-format
 msgid "  -F, --format=p|t            backup format (plain, tar)\n"
 msgstr "  -F, --format=p|t            出力フォーマット(plain, tar)\n"
 
-#: pg_verifybackup.c:1373
+#: pg_verifybackup.c:1395
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH  指示されたパスを無視\n"
 
-#: pg_verifybackup.c:1374
+#: pg_verifybackup.c:1396
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH    目録として指定したパスを使用する\n"
 
-#: pg_verifybackup.c:1375
+#: pg_verifybackup.c:1397
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          WALファイルをパースしようとしない\n"
 
-#: pg_verifybackup.c:1376
+#: pg_verifybackup.c:1398
 #, c-format
 msgid "  -P, --progress              show progress information\n"
 msgstr "  -P, --progress              進行状況を表示\n"
 
-#: pg_verifybackup.c:1377
+#: pg_verifybackup.c:1399
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 エラー以外何も出力しない\n"
 
-#: pg_verifybackup.c:1378
+#: pg_verifybackup.c:1400
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        チェックサム検証をスキップ\n"
 
-#: pg_verifybackup.c:1379
+#: pg_verifybackup.c:1401
 #, c-format
-msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
-msgstr "  -w, --wal-directory=PATH    WALファイルに指定したパスを使用する\n"
+msgid "  -w, --wal-path=PATH         use specified path for WAL files\n"
+msgstr "  -w, --wal-path=PATH         WALファイルに指定したパスを使用する\n"
 
-#: pg_verifybackup.c:1380
+#: pg_verifybackup.c:1402
+#, c-format
+msgid "      --wal-directory=PATH    (same as --wal-path, deprecated)\n"
+msgstr "      --wal-directory=PATH    (--wal-path に同じ、非推奨)\n"
+
+#: pg_verifybackup.c:1403
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               バージョン情報を表示して終了\n"
 
-#: pg_verifybackup.c:1381
+#: pg_verifybackup.c:1404
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  このヘルプを表示して終了\n"
 
-#: pg_verifybackup.c:1382
+#: pg_verifybackup.c:1405
 #, c-format
 msgid ""
 "\n"
@@ -694,7 +833,13 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_verifybackup.c:1383
+#: pg_verifybackup.c:1406
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
+
+#~ msgid "pg_waldump cannot read tar files"
+#~ msgstr "pg_waldumpはtarファイルを読めません"
+
+#~ msgid "tar file trailer exceeds 2 blocks"
+#~ msgstr "tarファイル後続ブロックが2ブロックを超えています"

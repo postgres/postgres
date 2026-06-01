@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-14 10:48+0900\n"
+"POT-Creation-Date: 2026-02-09 10:07+0900\n"
 "PO-Revision-Date: 2019-06-11 09:04+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: connect.c:243
+#: connect.c:226
 msgid "empty message text"
 msgstr "メッセージテキストが空です"
 
-#: connect.c:410 connect.c:675
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
 msgstr "<デフォルト>"
 
-#: descriptor.c:876 misc.c:119
+#: descriptor.c:874 misc.c:88
 msgid "NULL"
 msgstr "ヌル"
 
@@ -194,6 +194,6 @@ msgstr "サーバーへの接続が切れました"
 msgid "SQL error: %s\n"
 msgstr "SQLエラー: %s\n"
 
-#: execute.c:2188 execute.c:2195
+#: execute.c:2205 execute.c:2212
 msgid "<empty>"
 msgstr "<空>"

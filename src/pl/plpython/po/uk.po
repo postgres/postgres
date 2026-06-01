@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:09+0000\n"
-"PO-Revision-Date: 2024-09-23 19:38\n"
+"POT-Creation-Date: 2025-12-31 02:09+0000\n"
+"PO-Revision-Date: 2026-01-02 15:22\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,25 +14,25 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_17_STABLE/plpython.pot\n"
-"X-Crowdin-File-ID: 1014\n"
+"X-Crowdin-File: /REL_18_STABLE/plpython.pot\n"
+"X-Crowdin-File-ID: 1065\n"
 
-#: plpy_cursorobject.c:72
+#: plpy_cursorobject.c:91
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor очікував запит або план"
 
-#: plpy_cursorobject.c:155
+#: plpy_cursorobject.c:177
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.сursor приймає як другий аргумент послідовність"
 
-#: plpy_cursorobject.c:171 plpy_spi.c:205
+#: plpy_cursorobject.c:193 plpy_spi.c:200
 #, c-format
 msgid "could not execute plan"
 msgstr "не вдалося виконати план"
 
-#: plpy_cursorobject.c:174 plpy_spi.c:208
+#: plpy_cursorobject.c:196 plpy_spi.c:203
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -41,246 +41,246 @@ msgstr[1] "Очікувалась послідовність %d аргумент
 msgstr[2] "Очікувалась послідовність %d аргументів, отримано %d: %s"
 msgstr[3] "Очікувалась послідовність %d аргумента, отримано %d: %s"
 
-#: plpy_cursorobject.c:321
+#: plpy_cursorobject.c:349
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "ітерація закритого курсора"
 
-#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
+#: plpy_cursorobject.c:357 plpy_cursorobject.c:423
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "ітерація курсора в перерваній субтранзакції"
 
-#: plpy_cursorobject.c:387
+#: plpy_cursorobject.c:415
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "витяг з закритого курсору"
 
-#: plpy_cursorobject.c:430 plpy_spi.c:401
+#: plpy_cursorobject.c:458 plpy_spi.c:389
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "результат запиту має забагато рядків для передачі у список Python"
 
-#: plpy_cursorobject.c:482
+#: plpy_cursorobject.c:510
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закриття курсора в перерваній транзакції"
 
-#: plpy_elog.c:122 plpy_elog.c:123 plpy_plpymodule.c:530
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpy_exec.c:139
+#: plpy_exec.c:137
 #, c-format
 msgid "unsupported set function return mode"
 msgstr "режим не підтримується для функцій, що повертають набір"
 
-#: plpy_exec.c:140
+#: plpy_exec.c:138
 #, c-format
 msgid "PL/Python set-returning functions only support returning one value per call."
 msgstr "функції PL/Python підтримують лише одне значення на виклик, коли повертають набір."
 
-#: plpy_exec.c:153
+#: plpy_exec.c:151
 #, c-format
 msgid "returned object cannot be iterated"
 msgstr "повернутий об'єкт не підтримує ітерації"
 
-#: plpy_exec.c:154
+#: plpy_exec.c:152
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr "функції PL/Python повинні повертати об'єкт з підтримкою ітерації, коли повертають набір."
 
-#: plpy_exec.c:168
+#: plpy_exec.c:166
 #, c-format
 msgid "error fetching next item from iterator"
 msgstr "помилка отримання наступного елемента від ітератора"
 
-#: plpy_exec.c:211
+#: plpy_exec.c:209
 #, c-format
 msgid "PL/Python procedure did not return None"
 msgstr "процедура PL/Python не повернула None"
 
-#: plpy_exec.c:215
+#: plpy_exec.c:213
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "PL/Python функція з типом результату \"void\" не повернули None"
 
-#: plpy_exec.c:246
+#: plpy_exec.c:244
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
-#: plpy_exec.c:392 plpy_exec.c:416
+#: plpy_exec.c:390 plpy_exec.c:414
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "неочікуване значення процедури тригера"
 
-#: plpy_exec.c:393
+#: plpy_exec.c:391
 #, c-format
 msgid "Expected None or a string."
 msgstr "Очікувалось None або рядок."
 
-#: plpy_exec.c:406
+#: plpy_exec.c:404
 #, c-format
 msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr "Тригерна функція PL/Python повернула \"MODIFY\" в тригері DELETE -- проігноровано"
 
-#: plpy_exec.c:417
+#: plpy_exec.c:415
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Очікувалось None, \"OK\", \"SKIP\" або \"MODIFY\"."
 
-#: plpy_exec.c:468
+#: plpy_exec.c:466
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "помилка PyList_SetItem() під час встановлення параметрів"
 
-#: plpy_exec.c:472
+#: plpy_exec.c:470
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "помилка PyDict_SetItemString() під час встановлення параметрів"
 
-#: plpy_exec.c:701
+#: plpy_exec.c:699
 #, c-format
 msgid "while creating return value"
 msgstr "під час створення значення результату"
 
-#: plpy_exec.c:952
+#: plpy_exec.c:950
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] видалено, неможливо змінити рядок"
 
-#: plpy_exec.c:957
+#: plpy_exec.c:955
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] не є словником"
 
-#: plpy_exec.c:982
+#: plpy_exec.c:980
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "ключ словника TD[\"new\"] на порядковий позиції %d не є рядком"
 
-#: plpy_exec.c:989
+#: plpy_exec.c:987
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "ключ \"%s\" знайдений у TD[\"new\"] не існує як стовпець у рядку тригера"
 
-#: plpy_exec.c:994
+#: plpy_exec.c:992
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "не вдалося встановити системний атрибут \"%s\""
 
-#: plpy_exec.c:999
+#: plpy_exec.c:997
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "неможливо оновити згенерований стовпець \"%s\""
 
-#: plpy_exec.c:1057
+#: plpy_exec.c:1055
 #, c-format
 msgid "while modifying trigger row"
 msgstr "під час зміни рядка тригера"
 
-#: plpy_exec.c:1115
+#: plpy_exec.c:1107
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "примусове переривання субтранзакції, яка не вийшла"
 
-#: plpy_main.c:109
+#: plpy_main.c:112
 #, c-format
 msgid "multiple Python libraries are present in session"
 msgstr "декілька бібліотек Python присутні у сесії"
 
-#: plpy_main.c:110
+#: plpy_main.c:113
 #, c-format
 msgid "Only one Python major version can be used in one session."
 msgstr "За один сеанс може використовуватися лише одна основна версія Python."
 
-#: plpy_main.c:122
+#: plpy_main.c:125
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "неопрацьована помилка під час ініціалізації"
 
-#: plpy_main.c:145
+#: plpy_main.c:148
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "не вдалося імпортувати \"__main__\" модуль"
 
-#: plpy_main.c:154
+#: plpy_main.c:157
 #, c-format
 msgid "could not initialize globals"
 msgstr "не вдалося ініціалізувати globals"
 
-#: plpy_main.c:352
+#: plpy_main.c:353
 #, c-format
 msgid "PL/Python procedure \"%s\""
 msgstr "PL/Python процедура \"%s\""
 
-#: plpy_main.c:355
+#: plpy_main.c:356
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "PL/Python функція \"%s\""
 
-#: plpy_main.c:363
+#: plpy_main.c:364
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "анонімні коди блоку PL/Python"
 
-#: plpy_plpymodule.c:168 plpy_plpymodule.c:171
+#: plpy_plpymodule.c:165 plpy_plpymodule.c:168
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "не вдалося імпортувати \"plpy\" модуль"
 
-#: plpy_plpymodule.c:182
+#: plpy_plpymodule.c:179
 #, c-format
 msgid "could not create the spiexceptions module"
 msgstr "не вдалося створити spiexceptions модуль"
 
-#: plpy_plpymodule.c:190
+#: plpy_plpymodule.c:187
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "не вдалося додати spiexceptions модуль"
 
-#: plpy_plpymodule.c:257
+#: plpy_plpymodule.c:254
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "не вдається створити винятки SPI"
 
-#: plpy_plpymodule.c:425
+#: plpy_plpymodule.c:422
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не вдалося розпакувати аргументи в plpy.elog"
 
-#: plpy_plpymodule.c:434
+#: plpy_plpymodule.c:431
 msgid "could not parse error message in plpy.elog"
 msgstr "не вдалося проаналізувати повідомлення про помилку в plpy.elog"
 
-#: plpy_plpymodule.c:451
+#: plpy_plpymodule.c:448
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "аргумент 'повідомлення' виданий за ім'ям та розташуванням"
 
-#: plpy_plpymodule.c:478
+#: plpy_plpymodule.c:475
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' є неприпустимим ключовим словом-аргументом для цієї функції"
 
-#: plpy_plpymodule.c:489 plpy_plpymodule.c:495
+#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "неприпустимий код SQLSTATE"
 
-#: plpy_procedure.c:226
+#: plpy_procedure.c:223
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "тригер-функція може викликатися лише як тригер"
 
-#: plpy_procedure.c:230
+#: plpy_procedure.c:227
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python функції не можуть повернути тип %s"
 
-#: plpy_procedure.c:308
+#: plpy_procedure.c:305
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python функції не можуть прийняти тип %s"
@@ -295,57 +295,57 @@ msgstr "не вдалося скомпілювати функцію PL/Python \"
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не вдалося скомпілювати анонімні коди блоку PL/Python"
 
-#: plpy_resultobject.c:117 plpy_resultobject.c:143 plpy_resultobject.c:169
+#: plpy_resultobject.c:148 plpy_resultobject.c:174 plpy_resultobject.c:200
 #, c-format
 msgid "command did not produce a result set"
 msgstr "команда не створила набір результатів"
 
-#: plpy_spi.c:56
+#: plpy_spi.c:53
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "другий аргумент plpy.prepare має бути послідовністю"
 
-#: plpy_spi.c:98
+#: plpy_spi.c:94
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: ім'я на порядковий позиції %d не є рядком"
 
-#: plpy_spi.c:170
+#: plpy_spi.c:166
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute очікував запит або план"
 
-#: plpy_spi.c:189
+#: plpy_spi.c:184
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute приймає як другий аргумент послідовність"
 
-#: plpy_spi.c:297
+#: plpy_spi.c:285
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan не спрацював: %s"
 
-#: plpy_spi.c:339
+#: plpy_spi.c:327
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute не спрацював: %s"
 
-#: plpy_subxactobject.c:92
+#: plpy_subxactobject.c:102
 #, c-format
 msgid "this subtransaction has already been entered"
 msgstr "ця субтранзакція вже почалась"
 
-#: plpy_subxactobject.c:98 plpy_subxactobject.c:156
+#: plpy_subxactobject.c:108 plpy_subxactobject.c:166
 #, c-format
 msgid "this subtransaction has already been exited"
 msgstr "ця субтранзакція вже вийшла"
 
-#: plpy_subxactobject.c:150
+#: plpy_subxactobject.c:160
 #, c-format
 msgid "this subtransaction has not been entered"
 msgstr "ця субтранзакція ще не почалася"
 
-#: plpy_subxactobject.c:162
+#: plpy_subxactobject.c:172
 #, c-format
 msgid "there is no subtransaction to exit from"
 msgstr "немає субтранзакції, щоб з неї вийти"
@@ -365,87 +365,87 @@ msgstr "відсутній атрибут Decimal у модулі"
 msgid "conversion from numeric to Decimal failed"
 msgstr "не вдалося виконати перетворення з numeric на Decimal"
 
-#: plpy_typeio.c:912
+#: plpy_typeio.c:915
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "не вдалося створити байтову репрезентацію об'єкта Python"
 
-#: plpy_typeio.c:1049
+#: plpy_typeio.c:1052
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "не вдалося створити рядкову репрезентацію об'єкта Python"
 
-#: plpy_typeio.c:1060
+#: plpy_typeio.c:1063
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "не вдалося перетворити об'єкт Python на cstring: репрезентація рядка Python містить значення null-байти"
 
-#: plpy_typeio.c:1157
+#: plpy_typeio.c:1160
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "значення функції з масивом в якості результату не є послідовністю Python"
 
-#: plpy_typeio.c:1202
+#: plpy_typeio.c:1205
 #, c-format
 msgid "could not determine sequence length for function return value"
 msgstr "не вдалося визначити довжину послідовності для значення функція"
 
-#: plpy_typeio.c:1222 plpy_typeio.c:1237 plpy_typeio.c:1253
+#: plpy_typeio.c:1225 plpy_typeio.c:1240 plpy_typeio.c:1256
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "для багатовимірних масивів повинні задаватись вирази з відповідними вимірами"
 
-#: plpy_typeio.c:1227
+#: plpy_typeio.c:1230
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "кількість вимірів масиву перевищує максимально дозволену (%d)"
 
-#: plpy_typeio.c:1329
+#: plpy_typeio.c:1332
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "невірно сформований літерал запису: \"%s\""
 
-#: plpy_typeio.c:1330
+#: plpy_typeio.c:1333
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Відсутня ліва дужка."
 
-#: plpy_typeio.c:1331 plpy_typeio.c:1532
+#: plpy_typeio.c:1334 plpy_typeio.c:1535
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
 msgstr "Щоб повернути складений тип в масиві, треба повернути композитний тип як кортеж Python, наприклад, \"[('foo',)]\"."
 
-#: plpy_typeio.c:1378
+#: plpy_typeio.c:1381
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не знайдено в зіставленні"
 
-#: plpy_typeio.c:1379
+#: plpy_typeio.c:1382
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Для повернення значення null в стовпці, додайте значення None з ключом, що дорівнює імені стовпця."
 
-#: plpy_typeio.c:1432
+#: plpy_typeio.c:1435
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "довжина повернутої послідовності не відповідає кількості стовпців у рядку"
 
-#: plpy_typeio.c:1530
+#: plpy_typeio.c:1533
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "атрибут \"%s\" не існує в об'єкті Python"
 
-#: plpy_typeio.c:1533
+#: plpy_typeio.c:1536
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Щоб повернути null в стовпці, результуючий об'єкт має мати атрибут з іменем стовпця зі значенням None."
 
-#: plpy_util.c:31
+#: plpy_util.c:29
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
 msgstr "не вдалося конвертувати об'єкт Python Unicode в байти"
 
-#: plpy_util.c:37
+#: plpy_util.c:35
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "не можливо отримати байт з закодованого рядка"

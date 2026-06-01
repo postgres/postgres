@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetwal (PostgreSQL) 17\n"
+"Project-Id-Version: pg_resetwal (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-01-17 04:50+0000\n"
-"PO-Revision-Date: 2025-01-16 16:15+0900\n"
+"POT-Creation-Date: 2025-09-11 21:50+0000\n"
+"PO-Revision-Date: 2025-09-10 13:41+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -15,33 +15,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "오류: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "경고: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "상세정보: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "힌트: "
 
-#: ../../common/controldata_utils.c:97 pg_resetwal.c:370 pg_resetwal.c:525
-#: pg_resetwal.c:573
+#: ../../common/controldata_utils.c:97 pg_resetwal.c:389 pg_resetwal.c:547
+#: pg_resetwal.c:595
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "\"%s\" 파일 일기 모드로 열기 실패: %m"
 
-#: ../../common/controldata_utils.c:110 pg_resetwal.c:534 pg_resetwal.c:588
+#: ../../common/controldata_utils.c:110 pg_resetwal.c:556 pg_resetwal.c:610
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "\"%s\" 파일을 읽을 수 없음: %m"
@@ -75,20 +75,20 @@ msgstr ""
 "이럴 경우, 출력 결과가 바르지 않을 수 있고,\n"
 "설치된 PostgreSQL 프로그램과 데이터 디렉터리가 호환되지 않을 수 있습니다."
 
-#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
-#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
-#: ../../common/file_utils.c:480 pg_resetwal.c:1134
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:69
+#: ../../common/file_utils.c:370 ../../common/file_utils.c:428
+#: ../../common/file_utils.c:502 pg_resetwal.c:1158
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "\"%s\" 파일을 열 수 없음: %m"
 
-#: ../../common/controldata_utils.c:249 pg_resetwal.c:1142 pg_resetwal.c:1154
+#: ../../common/controldata_utils.c:249 pg_resetwal.c:1166 pg_resetwal.c:1178
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "\"%s\" 파일 쓰기 실패: %m"
 
-#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
-#: ../../common/file_utils.c:488
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:440
+#: ../../common/file_utils.c:510
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "\"%s\" 파일을 fsync 할 수 없음: %m"
@@ -104,35 +104,35 @@ msgstr "메모리 부족\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "널 포인터를 중복할 수 없음 (내부 오류)\n"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:75
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "\"%s\" 파일을 파일 시스템 동기화를 할 수 없음: %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "\"%s\" 파일 상태 정보를 구할 수 없음: %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "이 빌드는 \"%s\" 동기화 방법을 지원하지 않음"
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
-#: pg_resetwal.c:928 pg_resetwal.c:981 pg_resetwal.c:1016 pg_resetwal.c:1054
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_resetwal.c:952 pg_resetwal.c:1005 pg_resetwal.c:1040 pg_resetwal.c:1078
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리 열 수 없음: %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033 pg_resetwal.c:1068
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#: pg_resetwal.c:978 pg_resetwal.c:1019 pg_resetwal.c:1057 pg_resetwal.c:1092
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:520
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
@@ -183,156 +183,156 @@ msgid "unrecognized sync method: %s"
 msgstr "알 수 없는 동기화 방법: %s"
 
 #. translator: the second %s is a command line argument (-e, etc)
-#: pg_resetwal.c:164 pg_resetwal.c:177 pg_resetwal.c:190 pg_resetwal.c:203
-#: pg_resetwal.c:210 pg_resetwal.c:229 pg_resetwal.c:242 pg_resetwal.c:250
-#: pg_resetwal.c:270 pg_resetwal.c:281
+#: pg_resetwal.c:166 pg_resetwal.c:179 pg_resetwal.c:192 pg_resetwal.c:205
+#: pg_resetwal.c:212 pg_resetwal.c:231 pg_resetwal.c:244 pg_resetwal.c:252
+#: pg_resetwal.c:272 pg_resetwal.c:283 pg_resetwal.c:317
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "%s 옵션의 잘못된 인자"
 
-#: pg_resetwal.c:165 pg_resetwal.c:178 pg_resetwal.c:191 pg_resetwal.c:204
-#: pg_resetwal.c:211 pg_resetwal.c:230 pg_resetwal.c:243 pg_resetwal.c:251
-#: pg_resetwal.c:271 pg_resetwal.c:282 pg_resetwal.c:307 pg_resetwal.c:320
-#: pg_resetwal.c:327
+#: pg_resetwal.c:167 pg_resetwal.c:180 pg_resetwal.c:193 pg_resetwal.c:206
+#: pg_resetwal.c:213 pg_resetwal.c:232 pg_resetwal.c:245 pg_resetwal.c:253
+#: pg_resetwal.c:273 pg_resetwal.c:284 pg_resetwal.c:318 pg_resetwal.c:326
+#: pg_resetwal.c:339 pg_resetwal.c:346
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
 
-#: pg_resetwal.c:169
+#: pg_resetwal.c:171
 #, c-format
 msgid "transaction ID epoch (-e) must not be -1"
 msgstr "트랜잭션 ID epoch (-e) 값은 -1이 아니여야함"
 
-#: pg_resetwal.c:182
+#: pg_resetwal.c:184
 #, c-format
 msgid "oldest transaction ID (-u) must be greater than or equal to %u"
 msgstr "제일 오래된 트랜잭션 ID (-u)는 %u 보다 크거나 같아야 함"
 
-#: pg_resetwal.c:195
+#: pg_resetwal.c:197
 #, c-format
 msgid "transaction ID (-x) must be greater than or equal to %u"
 msgstr "트랜잭션 ID (-x)는 %u 보다 크거나 같아야 함"
 
-#: pg_resetwal.c:217 pg_resetwal.c:221
+#: pg_resetwal.c:219 pg_resetwal.c:223
 #, c-format
 msgid "transaction ID (-c) must be either %u or greater than or equal to %u"
 msgstr "-c 옵션으로 지정한 트랜잭션 ID는 %u이거나 %u이상이어야 함"
 
-#: pg_resetwal.c:234
+#: pg_resetwal.c:236
 #, c-format
 msgid "OID (-o) must not be 0"
 msgstr "OID (-o) 값은 0이 아니여야함"
 
-#: pg_resetwal.c:255
+#: pg_resetwal.c:257
 #, c-format
 msgid "multitransaction ID (-m) must not be 0"
 msgstr "멀티트랜잭션 ID (-m) 값은 0이 아니여야함"
 
-#: pg_resetwal.c:262
+#: pg_resetwal.c:264
 #, c-format
 msgid "oldest multitransaction ID (-m) must not be 0"
 msgstr "제일 오래된 멀티트랜잭션 ID (-m) 값은 0이 아니여야함"
 
-#: pg_resetwal.c:275
+#: pg_resetwal.c:277
 #, c-format
 msgid "multitransaction offset (-O) must not be -1"
 msgstr "멀티트랜잭션 옵셋 (-O) 값은 -1이 아니여야함"
 
-#: pg_resetwal.c:301
+#: pg_resetwal.c:303
 #, c-format
 msgid "argument of %s must be a power of two between 1 and 1024"
 msgstr "%s 값은 1부터 1024사이 2^n 값이어야 합니다"
 
-#: pg_resetwal.c:318
+#: pg_resetwal.c:337
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")"
 
-#: pg_resetwal.c:326
+#: pg_resetwal.c:345
 #, c-format
 msgid "no data directory specified"
 msgstr "데이터 디렉터리를 지정하지 않았음"
 
-#: pg_resetwal.c:340
+#: pg_resetwal.c:359
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "\"root\" 계정으로는 실행 할 수 없음"
 
-#: pg_resetwal.c:341
+#: pg_resetwal.c:360
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "PostgreSQL superuser로 %s 프로그램을 실행하십시오."
 
-#: pg_resetwal.c:351
+#: pg_resetwal.c:370
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리 읽기 권한 없음: %m"
 
-#: pg_resetwal.c:357
+#: pg_resetwal.c:376
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "\"%s\" 이름의 디렉터리로 이동할 수 없습니다: %m"
 
-#: pg_resetwal.c:375
+#: pg_resetwal.c:394
 #, c-format
 msgid "lock file \"%s\" exists"
 msgstr "\"%s\" 잠금 파일이 있음"
 
-#: pg_resetwal.c:376
+#: pg_resetwal.c:395
 #, c-format
 msgid "Is a server running?  If not, delete the lock file and try again."
 msgstr ""
 "서버가 가동중인가요? 그렇지 않다면, 이 파일을 지우고 다시 시도하십시오."
 
-#: pg_resetwal.c:475
+#: pg_resetwal.c:497
 #, c-format
 msgid "not proceeding because control file values were guessed"
 msgstr "컨트롤 파일 값들이 추정되었기에 더 이상 진행하지 않습니다."
 
-#: pg_resetwal.c:476
+#: pg_resetwal.c:498
 #, c-format
 msgid "If these values seem acceptable, use -f to force reset."
 msgstr ""
 "이 설정값들이 타당하다고 판단되면, 강제로 갱신하려면, -f 옵션을 쓰세요."
 
-#: pg_resetwal.c:485
+#: pg_resetwal.c:507
 #, c-format
 msgid "database server was not shut down cleanly"
 msgstr "데이터베이스 서버가 깔끔하게 중지 되지 못했습니다."
 
-#: pg_resetwal.c:486
+#: pg_resetwal.c:508
 #, c-format
 msgid "Resetting the write-ahead log might cause data to be lost."
 msgstr "미리 쓰기 로그를 리셋하면 자료를 잃어버릴 수 있습니다."
 
-#: pg_resetwal.c:487
+#: pg_resetwal.c:509
 #, c-format
 msgid "If you want to proceed anyway, use -f to force reset."
 msgstr "이 설정값들로 강제로 갱신하려면, -f 옵션을 쓰세요."
 
-#: pg_resetwal.c:500
+#: pg_resetwal.c:522
 #, c-format
 msgid "Write-ahead log reset\n"
 msgstr "트랜잭션 로그 재설정\n"
 
-#: pg_resetwal.c:532
+#: pg_resetwal.c:554
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "\"%s\" 파일은 예상치 않게 비었음"
 
-#: pg_resetwal.c:542
+#: pg_resetwal.c:564
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "잘못된 버전의 데이터 디렉터리입니다."
 
-#: pg_resetwal.c:543
+#: pg_resetwal.c:565
 #, c-format
 msgid ""
 "File \"%s\" contains \"%s\", which is not compatible with this program's "
 "version \"%s\"."
 msgstr "\"%s\" 파일 버전은 \"%s\", 이 프로그램 버전은 \"%s\"."
 
-#: pg_resetwal.c:576
+#: pg_resetwal.c:598
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -343,12 +343,12 @@ msgstr ""
 "보십시오.\n"
 "  touch %s"
 
-#: pg_resetwal.c:604
+#: pg_resetwal.c:626
 #, c-format
 msgid "pg_control exists but has invalid CRC; proceed with caution"
 msgstr "pg_control 파일이 있지만, CRC값이 잘못되었습니다; 경고와 함께 진행함"
 
-#: pg_resetwal.c:613
+#: pg_resetwal.c:635
 #, c-format
 msgid ""
 "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
@@ -359,12 +359,12 @@ msgstr[0] ""
 "pg_control 파일에 잘못된 WAL 조각 파일 크기(%d 바이트)가 지정됨; 경고와 함께 "
 "진행함"
 
-#: pg_resetwal.c:624
+#: pg_resetwal.c:646
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
 msgstr "pg_control 파일이 있지만, 손상되었거나 버전을 알 수 없음; 무시함"
 
-#: pg_resetwal.c:719
+#: pg_resetwal.c:741
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -373,7 +373,7 @@ msgstr ""
 "추측된 pg_control 설정값들:\n"
 "\n"
 
-#: pg_resetwal.c:721
+#: pg_resetwal.c:743
 #, c-format
 msgid ""
 "Current pg_control values:\n"
@@ -382,167 +382,180 @@ msgstr ""
 "현재 pg_control 설정값들:\n"
 "\n"
 
-#: pg_resetwal.c:723
+#: pg_resetwal.c:745
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control 버전 번호:                 %u\n"
 
-#: pg_resetwal.c:725
+#: pg_resetwal.c:747
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "카탈로그 버전 번호:                   %u\n"
 
-#: pg_resetwal.c:727
+#: pg_resetwal.c:749
 #, c-format
-msgid "Database system identifier:           %llu\n"
-msgstr "데이터베이스 시스템 식별자:           %llu\n"
+msgid "Database system identifier:           %<PRIu64>\n"
+msgstr "데이터베이스 시스템 식별자:           %<PRIu64>\n"
 
-#: pg_resetwal.c:729
+#: pg_resetwal.c:751
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "마지막 체크포인트 TimeLineID:         %u\n"
 
-#: pg_resetwal.c:731
+#: pg_resetwal.c:753
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "마지막 체크포인트 full_page_writes:   %s\n"
 
-#: pg_resetwal.c:732
+#: pg_resetwal.c:754
 msgid "off"
 msgstr "off"
 
-#: pg_resetwal.c:732
+#: pg_resetwal.c:754
 msgid "on"
 msgstr "on"
 
-#: pg_resetwal.c:733
+#: pg_resetwal.c:755
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "마지막 체크포인트 NextXID:            %u:%u\n"
 
-#: pg_resetwal.c:736
+#: pg_resetwal.c:758
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "마지막 체크포인트 NextOID:            %u\n"
 
-#: pg_resetwal.c:738
+#: pg_resetwal.c:760
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "마지막 체크포인트 NextMultiXactId:    %u\n"
 
-#: pg_resetwal.c:740
+#: pg_resetwal.c:762
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "마지막 체크포인트 NextMultiOffset:    %u\n"
 
-#: pg_resetwal.c:742
+#: pg_resetwal.c:764
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "마지막 체크포인트 제일 오래된 XID:    %u\n"
 
-#: pg_resetwal.c:744
+#: pg_resetwal.c:766
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "마지막 체크포인트 제일 오래된 XID의 DB:%u\n"
 
-#: pg_resetwal.c:746
+#: pg_resetwal.c:768
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "마지막 체크포인트 제일 오래된 ActiveXID:%u\n"
 
-#: pg_resetwal.c:748
+#: pg_resetwal.c:770
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "마지막 체크포인트 제일 오래된 MultiXid:%u\n"
 
-#: pg_resetwal.c:750
+#: pg_resetwal.c:772
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "마지막 체크포인트 제일 오래된 MultiXid의 DB:%u\n"
 
-#: pg_resetwal.c:752
+#: pg_resetwal.c:774
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "마지막 체크포인트 제일 오래된 CommitTsXid:%u\n"
 
-#: pg_resetwal.c:754
+#: pg_resetwal.c:776
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "마지막 체크포인트 최신 CommitTsXid:   %u\n"
 
-#: pg_resetwal.c:756
+#: pg_resetwal.c:778
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "최대 자료 정렬:                       %u\n"
 
-#: pg_resetwal.c:759
+#: pg_resetwal.c:781
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "데이터베이스 블록 크기:               %u\n"
 
-#: pg_resetwal.c:761
+#: pg_resetwal.c:783
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "대형 릴레이션의 세그먼트당 블럭 갯수: %u\n"
 
-#: pg_resetwal.c:763
+#: pg_resetwal.c:785
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL 블록 크기:                        %u\n"
 
-#: pg_resetwal.c:765 pg_resetwal.c:851
+#: pg_resetwal.c:787 pg_resetwal.c:875
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "WAL 세그먼트의 크기(byte):            %u\n"
 
-#: pg_resetwal.c:767
+#: pg_resetwal.c:789
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "식별자 최대 길이:                     %u\n"
 
-#: pg_resetwal.c:769
+#: pg_resetwal.c:791
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "인덱스에서 사용하는 최대 열 수:      %u\n"
 
-#: pg_resetwal.c:771
+#: pg_resetwal.c:793
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOAST 청크의 최대 크기:        %u\n"
 
-#: pg_resetwal.c:773
+#: pg_resetwal.c:795
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "대형객체 청크의 최대 크기:            %u\n"
 
-#: pg_resetwal.c:776
+#: pg_resetwal.c:798
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "날짜/시간형 자료의 저장방식:          %s\n"
 
-#: pg_resetwal.c:777
+#: pg_resetwal.c:799
 msgid "64-bit integers"
 msgstr "64-비트 정수"
 
-#: pg_resetwal.c:778
+#: pg_resetwal.c:800
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8 인수 전달:                     %s\n"
 
-#: pg_resetwal.c:779
+#: pg_resetwal.c:801
 msgid "by reference"
 msgstr "참조별"
 
-#: pg_resetwal.c:779
+#: pg_resetwal.c:801
 msgid "by value"
 msgstr "값별"
 
-#: pg_resetwal.c:780
+#: pg_resetwal.c:802
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "데이터 페이지 체크섬 버전:            %u\n"
 
-#: pg_resetwal.c:794
+#: pg_resetwal.c:804
+#, c-format
+msgid "Default char data signedness:         %s\n"
+msgstr "기본 문자 자료 부호:                  %s\n"
+
+#: pg_resetwal.c:805
+msgid "signed"
+msgstr "부호있음"
+
+#: pg_resetwal.c:805
+msgid "unsigned"
+msgstr "부호없음"
+
+#: pg_resetwal.c:818
 #, c-format
 msgid ""
 "\n"
@@ -555,82 +568,82 @@ msgstr ""
 "변경될 값:\n"
 "\n"
 
-#: pg_resetwal.c:798
+#: pg_resetwal.c:822
 #, c-format
 msgid "First log segment after reset:        %s\n"
 msgstr "리셋 뒤 첫 로그 세그먼트:             %s\n"
 
-#: pg_resetwal.c:802
+#: pg_resetwal.c:826
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
 msgstr "NextMultiXactId:                      %u\n"
 
-#: pg_resetwal.c:804
+#: pg_resetwal.c:828
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
 msgstr "OldestMultiXid:                       %u\n"
 
-#: pg_resetwal.c:806
+#: pg_resetwal.c:830
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
 msgstr "OldestMultiXid의 DB:                  %u\n"
 
-#: pg_resetwal.c:812
+#: pg_resetwal.c:836
 #, c-format
 msgid "NextMultiOffset:                      %u\n"
 msgstr "NextMultiOffset:                      %u\n"
 
-#: pg_resetwal.c:818
+#: pg_resetwal.c:842
 #, c-format
 msgid "NextOID:                              %u\n"
 msgstr "NextOID:                              %u\n"
 
-#: pg_resetwal.c:824
+#: pg_resetwal.c:848
 #, c-format
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                              %u\n"
 
-#: pg_resetwal.c:826
+#: pg_resetwal.c:850
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                            %u\n"
 
-#: pg_resetwal.c:828
+#: pg_resetwal.c:852
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "OldestXID의 DB:                       %u\n"
 
-#: pg_resetwal.c:834
+#: pg_resetwal.c:858
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "NextXID epoch:                        %u\n"
 
-#: pg_resetwal.c:840
+#: pg_resetwal.c:864
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "제일 오래된 CommitTsXid:              %u\n"
 
-#: pg_resetwal.c:845
+#: pg_resetwal.c:869
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "최근 CommitTsXid:                     %u\n"
 
-#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036 pg_resetwal.c:1071
+#: pg_resetwal.c:981 pg_resetwal.c:1022 pg_resetwal.c:1060 pg_resetwal.c:1095
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 닫을 수 없음: %m"
 
-#: pg_resetwal.c:990 pg_resetwal.c:1028 pg_resetwal.c:1063
+#: pg_resetwal.c:1014 pg_resetwal.c:1052 pg_resetwal.c:1087
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "\"%s\" 파일을 지울 수 없음: %m"
 
-#: pg_resetwal.c:1159
+#: pg_resetwal.c:1183
 #, c-format
 msgid "fsync error: %m"
 msgstr "fsync 오류: %m"
 
-#: pg_resetwal.c:1168
+#: pg_resetwal.c:1192
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -639,17 +652,17 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 트랜잭션 로그를 다시 설정합니다.\n"
 "\n"
 
-#: pg_resetwal.c:1169
+#: pg_resetwal.c:1193
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_resetwal.c:1170
+#: pg_resetwal.c:1194
 #, c-format
 msgid "  %s [OPTION]... DATADIR\n"
 msgstr "  %s [옵션]... DATADIR\n"
 
-#: pg_resetwal.c:1172
+#: pg_resetwal.c:1196
 #, c-format
 msgid ""
 "\n"
@@ -658,12 +671,12 @@ msgstr ""
 "\n"
 "옵션들:\n"
 
-#: pg_resetwal.c:1173
+#: pg_resetwal.c:1197
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]DATADIR  데이터 디렉터리\n"
 
-#: pg_resetwal.c:1174
+#: pg_resetwal.c:1198
 #, c-format
 msgid ""
 "  -f, --force            force update to be done even after unclean shutdown "
@@ -673,22 +686,22 @@ msgstr ""
 "  -f, --force            비정상적으로 종료되었거나 pg_control 값을 추측해야\n"
 "                         하는 경우에도 강제로 갱신함\n"
 
-#: pg_resetwal.c:1176
+#: pg_resetwal.c:1200
 #, c-format
 msgid "  -n, --dry-run          no update, just show what would be done\n"
 msgstr "  -n, --dry-run          갱신하지 않음, 컨트롤 값들을 보여주기만함\n"
 
-#: pg_resetwal.c:1177
+#: pg_resetwal.c:1201
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          버전 정보를 보여주고 마침\n"
 
-#: pg_resetwal.c:1178
+#: pg_resetwal.c:1202
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             이 도움말을 표시하고 종료\n"
 
-#: pg_resetwal.c:1180
+#: pg_resetwal.c:1204
 #, c-format
 msgid ""
 "\n"
@@ -697,7 +710,7 @@ msgstr ""
 "\n"
 "컨트롤 파일 값을 바꿀 옵션들:\n"
 
-#: pg_resetwal.c:1181
+#: pg_resetwal.c:1205
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -710,12 +723,12 @@ msgstr ""
 "션\n"
 "                                   ID 값 (0이면 바꾸지 않음)\n"
 
-#: pg_resetwal.c:1184
+#: pg_resetwal.c:1208
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr "  -e, --epoch=XIDEPOCH             다음 트랙잭션 ID epoch 지정\n"
 
-#: pg_resetwal.c:1185
+#: pg_resetwal.c:1209
 #, c-format
 msgid ""
 "  -l, --next-wal-file=WALFILE      set minimum starting location for new "
@@ -724,39 +737,48 @@ msgstr ""
 "  -l, --next-wal-file=WALFILE      새 트랜잭션 로그를 위한 WAL 최소 시작 위치"
 "를 강제로 지정\n"
 
-#: pg_resetwal.c:1186
+#: pg_resetwal.c:1210
 #, c-format
 msgid ""
 "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
 msgstr ""
 "  -m, --multixact-ids=MXID,MXID    다음 제일 오래된 멀티트랜잭션 ID 지정\n"
 
-#: pg_resetwal.c:1187
+#: pg_resetwal.c:1211
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID               다음 OID 지정\n"
 
-#: pg_resetwal.c:1188
+#: pg_resetwal.c:1212
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr "  -O, --multixact-offset=OFFSET    다음 멀티트랜잭션 옵셋 지정\n"
 
-#: pg_resetwal.c:1189
+#: pg_resetwal.c:1213
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
 msgstr "  -u, --oldest-transaction-id=XID  제일 오래된 트랜잭션 ID 지정\n"
 
-#: pg_resetwal.c:1190
+#: pg_resetwal.c:1214
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID    다음 트랜잭션 ID 지정\n"
 
-#: pg_resetwal.c:1191
+#: pg_resetwal.c:1215
+#, c-format
+msgid ""
+"      --char-signedness=OPTION     set char signedness to \"signed\" or "
+"\"unsigned\"\n"
+msgstr ""
+"      --char-signedness=OPTION     문자 부호를 \"signed\" 또는 \"unsigned"
+"\"로 지정\n"
+
+#: pg_resetwal.c:1216
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE           WAL 조각 파일 크기, MB 단위\n"
 
-#: pg_resetwal.c:1193
+#: pg_resetwal.c:1218
 #, c-format
 msgid ""
 "\n"
@@ -765,16 +787,14 @@ msgstr ""
 "\n"
 "문제점 보고 주소: <%s>\n"
 
-#: pg_resetwal.c:1194
+#: pg_resetwal.c:1219
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 홈페이지: <%s>\n"
 
-#, c-format
-#~ msgid "argument of --wal-segsize must be a number"
-#~ msgstr "--wal-segsize 값은 숫자여야 합니다"
+#~ msgid "  -f, --force                      force update to be done\n"
+#~ msgstr "  -f, --force                      강제로 갱신함\n"
 
-#, c-format
 #~ msgid ""
 #~ "The database server was not shut down cleanly.\n"
 #~ "Resetting the write-ahead log might cause data to be lost.\n"
@@ -784,6 +804,5 @@ msgstr "%s 홈페이지: <%s>\n"
 #~ "트랜잭션 로그를 다시 설정하는 것은 자료 손실을 야기할 수 있습니다.\n"
 #~ "그럼에도 불구하고 진행하려면, -f 옵션을 사용해서 강제 설정을 하십시오.\n"
 
-#, c-format
-#~ msgid "  -f, --force                      force update to be done\n"
-#~ msgstr "  -f, --force                      강제로 갱신함\n"
+#~ msgid "argument of --wal-segsize must be a number"
+#~ msgstr "--wal-segsize 값은 숫자여야 합니다"

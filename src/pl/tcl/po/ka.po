@@ -1,11 +1,11 @@
 # Georgian message translation file for pltcl
 # Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pltcl (PostgreSQL) package.
-# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022-2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 18\n"
+"Project-Id-Version: pltcl (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-02-27 09:39+0000\n"
 "PO-Revision-Date: 2025-02-27 12:14+0100\n"

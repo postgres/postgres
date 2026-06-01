@@ -1,95 +1,235 @@
 # Georgian message translation file for pg_test_timing
 # Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
-# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022-2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 15\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-01 03:51+0000\n"
-"PO-Revision-Date: 2022-07-04 11:40+0200\n"
-"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"POT-Creation-Date: 2026-05-19 01:54+0000\n"
+"PO-Revision-Date: 2026-05-19 04:45+0200\n"
+"Last-Translator: Temuri Doghonadze "
+"<temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+msgstr ""
+"ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
-#: pg_test_timing.c:59
+#: ../../common/fe_memutils.c:209
 #, c-format
-msgid "Usage: %s [-d DURATION]\n"
-msgstr "გამოყენება: %s [-d ხარნგრძლივობა]\n"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr ""
+"არასწორი მეხსიერების გამოყოფის მოთხოვნის ზომა %zu + %zu\n"
 
-#: pg_test_timing.c:81
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr ""
+"არასწორი მეხსიერების გამოყოფის მოთხოვნის ზომა %zu * %zu\n"
+
+#: pg_test_timing.c:79
+#, c-format
+msgid "Usage: %s [-d DURATION] [-c CUTOFF]\n"
+msgstr "გამოყენება: %s [-d ხანგრძლივობა] [-c ამოჭრა]\n"
+
+#: pg_test_timing.c:101 pg_test_timing.c:122
 #, c-format
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s: არასწორი არგუმენტი პარამეტრისთვის%s\n"
 
-#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#: pg_test_timing.c:103 pg_test_timing.c:124 pg_test_timing.c:137
+#: pg_test_timing.c:149
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'.\n"
 
-#: pg_test_timing.c:90
+#: pg_test_timing.c:110 pg_test_timing.c:130
 #, c-format
 msgid "%s: %s must be in range %u..%u\n"
 msgstr "%s: %s-ის დიაპაზონია %u..%u\n"
 
-#: pg_test_timing.c:107
+#: pg_test_timing.c:147
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")\n"
+msgstr ""
+"%s: მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია "
+"\"%s\")\n"
 
-#: pg_test_timing.c:115
+#: pg_test_timing.c:154
 #, c-format
-msgid "Testing timing overhead for %u second.\n"
-msgid_plural "Testing timing overhead for %u seconds.\n"
+msgid ""
+"Testing timing overhead for %u second.\n"
+"\n"
+msgid_plural ""
+"Testing timing overhead for %u seconds.\n"
+"\n"
 msgstr[0] "დროის აღრიცხვის ზედნადების გამოცდა %u წამით.\n"
 msgstr[1] "დროის აღრიცხვის ზედნადების გამოცდა %u წამით.\n"
 
-#: pg_test_timing.c:151
+#: pg_test_timing.c:209
+#, c-format
+msgid "TSC frequency source: %s\n"
+msgstr "TSC-ის სიხშირის წყარო: %s\n"
+
+#: pg_test_timing.c:210
+#, c-format
+msgid "TSC frequency in use: %d kHz\n"
+msgstr "TSC-ის გამოყენებული სიხშირე: %d კჰც\n"
+
+#: pg_test_timing.c:216
+#, c-format
+msgid "TSC frequency from calibration: %d kHz\n"
+msgstr "TSC-ის სიხშირე კალიბრაციიდან: %d კჰც\n"
+
+#: pg_test_timing.c:223
+#, c-format
+msgid ""
+"WARNING: Calibrated TSC frequency differs by %.1f%% from the "
+"TSC frequency in use\n"
+msgstr ""
+"გაფრთხილება: დაკალიბრებული TSC-ის სიხშირე განსხვავდება %.1f%%-"
+"ით TSC-ის სიხშირისგან, რომელიც ამჟამად გამოიყენება\n"
+
+#: pg_test_timing.c:225
+#, c-format
+msgid ""
+"HINT: Consider setting timing_clock_source to 'system'. Report "
+"bugs to <%s>.\n"
+msgstr ""
+"მინიშნება: იფიქრეთ, დააყენოთ პარამეტრი timing_clock_source "
+"მნიშვნელობაზე 'system'. შეცდომების შესახებ მოიწერეთ ელფოსტაზე "
+"<%s>.\n"
+
+#: pg_test_timing.c:230
+#, c-format
+msgid "TSC calibration did not converge\n"
+msgstr "TSC-ის კალიბრაცია არ შეიკრიბა\n"
+
+#: pg_test_timing.c:240
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will be used by default, unless "
+"timing_clock_source is set to 'system'.\n"
+msgstr ""
+"\n"
+"TSC საათის წყარო ნაგულისხმევად გამოყენებული იქნება, თუ "
+"timing_clock_source დაყენებული არაა მნიშვნელობაზე 'system'.\n"
+
+#: pg_test_timing.c:242
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will not be used by default, unless "
+"timing_clock_source is set to 'tsc'.\n"
+msgstr ""
+"\n"
+"TSC საათის წყარო ნაგულისხმევად გამოყენებული არ იქნება, თუ "
+"timing_clock_source დაყენებული არაა მნიშვნელობაზე 'tsc'.\n"
+
+#: pg_test_timing.c:245
+#, c-format
+msgid ""
+"\n"
+"TSC clock source is not usable. Likely unable to determine TSC "
+"frequency. Are you running in an unsupported virtualized "
+"environment?\n"
+msgstr ""
+"\n"
+"TSC საათის წყარო გამოყენებადი არაა. დიდი შანსია, ეს TSC-ის "
+"სიხშირის დადგენის შეუძლებლობის ბრალი იყოს. გაშვებული გაქვთ "
+"მხარდაუჭერელ ვირტუალიზებულ გარემოში?\n"
+
+#: pg_test_timing.c:270
+#, c-format
+msgid "Fast clock source: %s\n"
+msgstr "სწრაფი საათის წყარო: %s\n"
+
+#: pg_test_timing.c:272
+#, c-format
+msgid "System clock source: %s\n"
+msgstr "სისტემის საათის წყარო: %s\n"
+
+#: pg_test_timing.c:274
+#, c-format
+msgid "Clock source: %s\n"
+msgstr "საათის წყარო: %s\n"
+
+#: pg_test_timing.c:312
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "ნაპოვნია, რომ საათი უკან მიდის\n"
 
-#: pg_test_timing.c:152
+#: pg_test_timing.c:313
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "დროის ნახტომი: %d მწმ\n"
+msgid "Time warp: %<PRId64> ns\n"
+msgstr "დროის ნახტომი: %<PRId64> ნწმ\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:351
 #, c-format
-msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "თითოეული მარყუჟის დრო ზედნადების ჩათვლით: %0.2f ნწმ\n"
+msgid "Average loop time including overhead: %0.2f ns\n"
+msgstr "საშუალო მარყუჟის დრო ზედნადების ჩათვლით: %0.2f ნწმ\n"
 
-#: pg_test_timing.c:186
-msgid "< us"
-msgstr "< მკწმ"
+#: pg_test_timing.c:361
+msgid "<= ns"
+msgstr "<= ნწმ"
 
-#: pg_test_timing.c:187
+#: pg_test_timing.c:362
+msgid "ns"
+msgstr "ნწმ"
+
+#: pg_test_timing.c:363
 #, no-c-format
 msgid "% of total"
 msgstr "ჯამის %"
 
-#: pg_test_timing.c:188
+#: pg_test_timing.c:364
+#, no-c-format
+msgid "running %"
+msgstr "%s-ის გაშვება"
+
+#: pg_test_timing.c:365
 msgid "count"
 msgstr "რაოდენობა"
 
-#: pg_test_timing.c:197
+#: pg_test_timing.c:375
+#, c-format
+msgid ""
+"WARNING: No timing measurements collected. Report this as a "
+"bug to <%s>.\n"
+msgstr ""
+"გაფრთხილება. დროის ათვლის აზომვები არ მოგროვებულა. მოიწერეთ "
+"ამის, როგორც შეცდომის შესახებ ელფოსტაზე <%s>.\n"
+
+#: pg_test_timing.c:389
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "დროის ათვლის ხანგრძლივობის ჰისტოგრამა:\n"
+
+#: pg_test_timing.c:409
+#, c-format
+msgid ""
+"\n"
+"Observed timing durations up to %.4f%%:\n"
+msgstr ""
+"\n"
+"დაკვირვებულია ათვლის ხანგრძლივობები მნიშვნელობამდე %.4f%%:\n"
+
+#~ msgid "< us"
+#~ msgstr "< მკწმ"

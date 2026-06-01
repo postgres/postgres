@@ -1,11 +1,11 @@
 # Georgian message translation file for ecpg
 # Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the ecpg (PostgreSQL) package.
-# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022-2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpg (PostgreSQL) 18\n"
+"Project-Id-Version: ecpg (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-04-25 17:40+0000\n"
 "PO-Revision-Date: 2025-04-26 05:04+0200\n"

@@ -1,14 +1,14 @@
 # Georgian message translation file for pg_waldump
 # Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_waldump (PostgreSQL) package.
-# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022-2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 17\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-03-29 21:20+0000\n"
-"PO-Revision-Date: 2025-03-30 01:31+0100\n"
+"POT-Creation-Date: 2026-05-13 06:23+0000\n"
+"PO-Revision-Date: 2026-05-13 09:21+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,42 +16,52 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "შეცდომა: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "გაფრთხილება: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "დეტალები: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "არასწორი მეხსიერების გამოყოფის მოთხოვნის ზომა %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "არასწორი მეხსიერების გამოყოფის მოთხოვნის ზომა %zu * %zu\n"
+
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
-#: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_waldump.c:199
-#: pg_waldump.c:532
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_waldump.c:193
+#: pg_waldump.c:648
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
@@ -72,7 +82,7 @@ msgid "this build does not support sync method \"%s\""
 msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
 
 #: ../../common/file_utils.c:156 ../../common/file_utils.c:304
-#: pg_waldump.c:1104 pg_waldump.c:1127
+#: pg_waldump.c:1252 pg_waldump.c:1286
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
@@ -92,89 +102,151 @@ msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "გადარქმევის შეცდომა %s - %s: %m"
 
-#: pg_waldump.c:137
+#: archive_waldump.c:143 pg_waldump.c:1299 pg_waldump.c:1329
 #, c-format
-msgid "could not create directory \"%s\": %m"
-msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m"
+msgid "could not open file \"%s\""
+msgstr "შეუძლებელია ფაილის გახსნა: \"%s\""
 
-#: pg_waldump.c:146
+#: archive_waldump.c:188
 #, c-format
-msgid "directory \"%s\" exists but is not empty"
-msgstr "საქაღალდე \"%s\" არსებობს, მაგრამ ცარიელი არაა"
+msgid "could not find WAL in archive \"%s\""
+msgstr "WAL-ის აღმოჩენა არქივში \"%s\" შეუძლებელია"
 
-#: pg_waldump.c:150
+#: archive_waldump.c:205
 #, c-format
-msgid "could not access directory \"%s\": %m"
-msgstr "საქაღალდის (%s) წვდომის შეცდომა: %m"
+msgid "invalid WAL segment size in WAL file from archive \"%s\" (%u byte)"
+msgid_plural "invalid WAL segment size in WAL file from archive \"%s\" (%u bytes)"
+msgstr[0] "არასწორი WAL სეგმენტის ზომა WAL ფაილში არქივიდან \"%s\" (%u ბაიტი)"
+msgstr[1] "არასწორი WAL სეგმენტის ზომა WAL ფაილში არქივიდან \"%s\" (%u ბაიტი)"
 
-#: pg_waldump.c:256
-#, c-format
-msgid "invalid WAL segment size in WAL file \"%s\" (%d byte)"
-msgid_plural "invalid WAL segment size in WAL file \"%s\" (%d bytes)"
-msgstr[0] "არასწორი WAL სეგმენტის ზომა WAL ფაილში \"%s\" (%d ბაიტი)"
-msgstr[1] "არასწორი WAL სეგმენტის ზომა WAL ფაილში \"%s\" (%d ბაიტი)"
-
-#: pg_waldump.c:260
+#: archive_waldump.c:209 pg_waldump.c:252
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "WAL სეგმენტის ზომა ორის ხარისხი უნდა იყოს, შუალედიდან 1მბ-1გბ."
 
-#: pg_waldump.c:265
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
-
-#: pg_waldump.c:268
-#, c-format
-msgid "could not read file \"%s\": read %d of %d"
-msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %d-დან"
-
-#: pg_waldump.c:329
-#, c-format
-msgid "could not locate WAL file \"%s\""
-msgstr "wal ფაილის (\"%s\") მოძებნა შეუძლებელია"
-
-#: pg_waldump.c:331
-#, c-format
-msgid "could not find any WAL file"
-msgstr "ვერცერთი WAL ფაილი ვერ ვიპოვე"
-
-#: pg_waldump.c:372
-#, c-format
-msgid "could not find file \"%s\": %m"
-msgstr "ფაილი (%s) არ არსებობს: %m"
-
-#: pg_waldump.c:421
-#, c-format
-msgid "could not read from file \"%s\", offset %d: %m"
-msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %d: %m"
-
-#: pg_waldump.c:425
-#, c-format
-msgid "could not read from file \"%s\", offset %d: read %d of %d"
-msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %d: წაკითხულია %d %d-დან"
-
-#: pg_waldump.c:515
-#, c-format
-msgid "%s"
-msgstr "%s"
-
-#: pg_waldump.c:523
-#, c-format
-msgid "invalid fork number: %u"
-msgstr "ფორკის არასწორი ნომერი: \"%u\""
-
-#: pg_waldump.c:535
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
-
-#: pg_waldump.c:538
+#: archive_waldump.c:291 pg_waldump.c:654
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
 
-#: pg_waldump.c:758
+#: archive_waldump.c:367
+#, c-format
+msgid "WAL segment \"%s\" in archive \"%s\" is too short: read %zu of %zu bytes"
+msgstr "WAL-ის სეგმენტი \"%s\" არქივში \"%s\" მეტისმეტად მოკლეა: წაკითხულია %zu ბაიტი %zu-დან"
+
+#: archive_waldump.c:371
+#, c-format
+msgid "unexpected end of archive \"%s\" while reading \"%s\": read %zu of %zu bytes"
+msgstr "არქივის \"%s\" მოულოდნელი დასასრული \"%s\"-ის კითხვისას: წაკითხულია %zu ბაიტი %zu-დან"
+
+#: archive_waldump.c:503
+#, c-format
+msgid "could not close file \"%s/%s\": %m"
+msgstr "ვერ დაიხურა ფაილი \"%s/%s\": %m"
+
+#: archive_waldump.c:516
+#, c-format
+msgid "could not find WAL \"%s\" in archive \"%s\""
+msgstr "ვერ ვიპოვე WAL \"%s\" არქივში \"%s\""
+
+#: archive_waldump.c:548 pg_waldump.c:259
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: archive_waldump.c:595 pg_waldump.c:131
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m"
+
+#: archive_waldump.c:622
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
+
+#: archive_waldump.c:626
+#, c-format
+msgid "could not set permissions on file \"%s\": %m"
+msgstr "ფაილზე \"%s\" წვდომების დაყენების შეცდომა: %m"
+
+#: archive_waldump.c:651
+#, c-format
+msgid "could not write to file \"%s/%s\": %m"
+msgstr "ჩაწერის შეცდომა ფაილში \"%s/%s\": %m"
+
+#: archive_waldump.c:743
+#, c-format
+msgid "ignoring duplicate WAL \"%s\" found in archive \"%s\""
+msgstr "გამოტოვებულია გამეორებული WAL \"%s\" აღმოჩენილი არქივში \"%s\""
+
+#: archive_waldump.c:779
+#, c-format
+msgid "unexpected state while parsing tar file"
+msgstr "მოულოდნელი მდგომარეობა tar არქივის დამუშავებისას"
+
+#: pg_waldump.c:140
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "საქაღალდე \"%s\" არსებობს, მაგრამ ცარიელი არაა"
+
+#: pg_waldump.c:144
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წვდომის შეცდომა: %m"
+
+#: pg_waldump.c:248
+#, c-format
+msgid "invalid WAL segment size in WAL file \"%s\" (%u byte)"
+msgid_plural "invalid WAL segment size in WAL file \"%s\" (%u bytes)"
+msgstr[0] "არასწორი WAL სეგმენტის ზომა WAL ფაილში \"%s\" (%u ბაიტი)"
+msgstr[1] "არასწორი WAL სეგმენტის ზომა WAL ფაილში \"%s\" (%u ბაიტი)"
+
+#: pg_waldump.c:262
+#, c-format
+msgid "could not read file \"%s\": read %d of %d"
+msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %d-დან"
+
+#: pg_waldump.c:324
+#, c-format
+msgid "could not locate WAL file \"%s\""
+msgstr "wal ფაილის (\"%s\") მოძებნა შეუძლებელია"
+
+#: pg_waldump.c:326
+#, c-format
+msgid "could not find any WAL file"
+msgstr "ვერცერთი WAL ფაილი ვერ ვიპოვე"
+
+#: pg_waldump.c:393
+#, c-format
+msgid "could not find file \"%s\": %m"
+msgstr "ფაილი (%s) არ არსებობს: %m"
+
+#: pg_waldump.c:433
+#, c-format
+msgid "could not read from file \"%s\", offset %d: %m"
+msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %d: %m"
+
+#: pg_waldump.c:437
+#, c-format
+msgid "could not read from file \"%s\", offset %d: read %d of %d"
+msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %d: წაკითხულია %d %d-დან"
+
+#: pg_waldump.c:631
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_waldump.c:639
+#, c-format
+msgid "invalid fork number: %u"
+msgstr "ფორკის არასწორი ნომერი: \"%u\""
+
+#: pg_waldump.c:651
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: pg_waldump.c:895
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
@@ -183,17 +255,17 @@ msgstr ""
 "%s ახდენს PostgreSQL-ის წინასწარ-ჩაწერადი ჟურნალის გაშიფვრას და ჩვენებას პროგრამის გამართვისთვის.\n"
 "\n"
 
-#: pg_waldump.c:760
+#: pg_waldump.c:897
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_waldump.c:761
+#: pg_waldump.c:898
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [პარამეტრი]... [STARTSEG [ENDSEG]]\n"
 
-#: pg_waldump.c:762
+#: pg_waldump.c:899
 #, c-format
 msgid ""
 "\n"
@@ -202,27 +274,27 @@ msgstr ""
 "\n"
 " პარამეტრები\n"
 
-#: pg_waldump.c:763
+#: pg_waldump.c:900
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      დამარქაფებული ბლოკების დეტალური ინფორმაციის ჩვენება\n"
 
-#: pg_waldump.c:764
+#: pg_waldump.c:901
 #, c-format
 msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
 msgstr "  -B, --block=N          --relation -სთან ერთად, მხოლოდ იმ ჩანაწერების ჩვენება, რომელიც N ბლოკს ცვლიან\n"
 
-#: pg_waldump.c:765
+#: pg_waldump.c:902
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       კითხვის შეწყეტა WAL-ის RECPTR მდებარეობაზე \n"
 
-#: pg_waldump.c:766
+#: pg_waldump.c:903
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow            WAL ფაილის ბოლოს მიღწევის შემდეგ ცდები არ შეწყდება\n"
 
-#: pg_waldump.c:767
+#: pg_waldump.c:904
 #, c-format
 msgid ""
 "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
@@ -231,28 +303,28 @@ msgstr ""
 "  -F, --fork=ფორკი        ნაჩვენები იქნება ჩანაწერები, რომლებიც მითითებულ ფორკში ბლოკებს ცვლიან;\n"
 "                         დასაშვები სახელებია main, fsm, vm, init\n"
 
-#: pg_waldump.c:769
+#: pg_waldump.c:906
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          საჩვენებელი ჩანაწერების რაოდენობა\n"
 
-#: pg_waldump.c:770
+#: pg_waldump.c:907
 #, c-format
 msgid ""
-"  -p, --path=PATH        directory in which to find WAL segment files or a\n"
-"                         directory with a ./pg_wal that contains such files\n"
+"  -p, --path=PATH        a tar archive or a directory in which to find WAL segment files or\n"
+"                         a directory with a pg_wal subdirectory containing such files\n"
 "                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
 msgstr ""
 "  -p, --path=ბილიკი        საქაღალდე, რომელშიც უნდა ვიპოვო WAL\n"
 "                      სეგმენტის ფაილები ან საქაღალდე, რომელიც ./pg_wal-ით, რომელიც ამ \n"
-"                       ფაილებს შეიცავს (ნაგულისხმები: მიმდინარე საქაღალდე, ./pg_wal და $PGDATA/pg_wal\n"
+"                       ფაილებს შეიცავს (ნაგულისხმევი: მიმდინარე საქაღალდე, ./pg_wal და $PGDATA/pg_wal\n"
 
-#: pg_waldump.c:773
+#: pg_waldump.c:910
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            შეცდომების გარდა ეკრანზე არაფერი გამოჩნდება\n"
 
-#: pg_waldump.c:774
+#: pg_waldump.c:911
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
@@ -261,17 +333,17 @@ msgstr ""
 "  -r, --rmgr=RMGR        მხოლოდ RMGR რესურსების მმართველის მიერ გენერირებული ჩანაწერების ჩვენება. ;\n"
 "                         რესურსების მმართველების სიის მისაღებად გამოიყენეთ --rmgr=list\n"
 
-#: pg_waldump.c:776
+#: pg_waldump.c:913
 #, c-format
 msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
 msgstr "  -R, --relation=T/D/R   ნაჩვენები იქნება ჩანაწერები, რომლებიც ცვლიან ბლოკებს ურთიერთობაში T/D/R\n"
 
-#: pg_waldump.c:777
+#: pg_waldump.c:914
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     კითხვის WAL მდებარეობა RECPTR-სთან დაწყება\n"
 
-#: pg_waldump.c:778
+#: pg_waldump.c:915
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read WAL records\n"
@@ -280,22 +352,22 @@ msgstr ""
 "  -t, --timeline=TLI     დროის ხაზი, ის შემდეგაც დაიწყება WAL ჩანაწერების კითხვა\n"
 "                         (ნაგულისხმები: 1 ან STARTSEG-ში გამოყენებული მნიშვნელობა)\n"
 
-#: pg_waldump.c:780
+#: pg_waldump.c:917
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_waldump.c:781
+#: pg_waldump.c:918
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
 msgstr "  -w, --fullpage         მხოლოდ სრული გვერდის ჩაწერის მქონე ჩანაწერების ჩვენება\n"
 
-#: pg_waldump.c:782
+#: pg_waldump.c:919
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          მხოლოდ იმ ჩანაწერების ჩვენება, რომლის ტრანზაქციის ID XID-ს უდრის\n"
 
-#: pg_waldump.c:783
+#: pg_waldump.c:920
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
@@ -304,17 +376,17 @@ msgstr ""
 "  -z, --stats[=ჩანაწერი]   ჩანწერების მაგიერ სტატისტიკის ჩვენება\n"
 "                         (ასევე შესაძლებელია სათითაოდ ჩანაწერის სტატისტიკის ჩვენებაც)\n"
 
-#: pg_waldump.c:785
+#: pg_waldump.c:922
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
 msgstr "  --save-fullpage=საქაღალდეში    სრული გვერდის გამოსახულებების საქაღალდეში შენახვა\n"
 
-#: pg_waldump.c:786
+#: pg_waldump.c:923
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help                   ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_waldump.c:787
+#: pg_waldump.c:924
 #, c-format
 msgid ""
 "\n"
@@ -323,287 +395,297 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: pg_waldump.c:788
+#: pg_waldump.c:925
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: pg_waldump.c:884
+#: pg_waldump.c:1027
 #, c-format
 msgid "no arguments specified"
 msgstr "არგუმენტები მითითებული არაა"
 
-#: pg_waldump.c:900
+#: pg_waldump.c:1043
 #, c-format
 msgid "invalid block number: \"%s\""
 msgstr "ბლოკის არასწორი ნომერი: \"%s\""
 
-#: pg_waldump.c:909 pg_waldump.c:1007
+#: pg_waldump.c:1052 pg_waldump.c:1150
 #, c-format
 msgid "invalid WAL location: \"%s\""
 msgstr "wal-ის არასწორი მდებარეობა: \"%s\""
 
-#: pg_waldump.c:922
+#: pg_waldump.c:1065
 #, c-format
 msgid "invalid fork name: \"%s\""
 msgstr "ფორკის არასწორი სახელი: \"%s\""
 
-#: pg_waldump.c:930 pg_waldump.c:1033
+#: pg_waldump.c:1073 pg_waldump.c:1176
 #, c-format
 msgid "invalid value \"%s\" for option %s"
 msgstr "არასწორი მნიშვნელობა \"%s\" პარამეტრისთვის %s"
 
-#: pg_waldump.c:961
+#: pg_waldump.c:1104
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
 msgstr "რესურსების მმართველი \"%s\" არ არსებობს"
 
-#: pg_waldump.c:982
+#: pg_waldump.c:1125
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "რესურსების მმართველი \"%s\" არ არსებობს"
 
-#: pg_waldump.c:997
+#: pg_waldump.c:1140
 #, c-format
 msgid "invalid relation specification: \"%s\""
 msgstr "ურთიერთობის არასწორი სპეციფიკაცია: \"%s\""
 
-#: pg_waldump.c:998
+#: pg_waldump.c:1141
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
 msgstr "მოველოდი \"tablespace OID/database OID/relation filenode\"."
 
-#: pg_waldump.c:1040
+#: pg_waldump.c:1183
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s- %u-დან %u-მდე დიაპაზონში უნდა იყოს"
 
-#: pg_waldump.c:1055
+#: pg_waldump.c:1198
 #, c-format
 msgid "invalid transaction ID specification: \"%s\""
 msgstr "ტრანზაქციის ID-ის არასწორი სპეციფიკაცია: \"%s\""
 
-#: pg_waldump.c:1070
+#: pg_waldump.c:1213
 #, c-format
 msgid "unrecognized value for option %s: %s"
 msgstr "პარამეტრის (%s) უცნობი მნიშვნელობა: %s"
 
-#: pg_waldump.c:1087
+#: pg_waldump.c:1230
 #, c-format
 msgid "option %s requires option %s to be specified"
 msgstr "პარამეტრს %s თავის მხრივ სჭირდება პარამეტრის %s მითითება"
 
-#: pg_waldump.c:1094
+#: pg_waldump.c:1237
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
 
-#: pg_waldump.c:1133 pg_waldump.c:1163
+#: pg_waldump.c:1274
 #, c-format
-msgid "could not open file \"%s\""
-msgstr "შეუძლებელია ფაილის გახსნა: \"%s\""
+msgid "unnecessary command-line arguments specified with tar archive (first is \"%s\")"
+msgstr "tar არქივისთვის მითითებულია არასაჭირო ბრძანების-სტრიქონის არგუმენტები (პირველია \"%s\")"
 
-#: pg_waldump.c:1143
+#: pg_waldump.c:1309
 #, c-format
-msgid "start WAL location %X/%X is not inside file \"%s\""
-msgstr "საწყისი WAL მდებარეობა %X/%X ფაილის (\"%s\") შიგნით არაა"
+msgid "start WAL location %X/%08X is not inside file \"%s\""
+msgstr "საწყისი WAL მდებარეობა %X/%08X ფაილის (\"%s\") შიგნით არაა"
 
-#: pg_waldump.c:1170
+#: pg_waldump.c:1336
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s STARTSEG %s -ის წინაა"
 
-#: pg_waldump.c:1185
+#: pg_waldump.c:1350
 #, c-format
-msgid "end WAL location %X/%X is not inside file \"%s\""
-msgstr "დასასრულის WAL მდებარეობა %X/%X ფაილის (\"%s\") შიგნით არაა"
+msgid "end WAL location %X/%08X is not inside file \"%s\""
+msgstr "დასასრულის WAL მდებარეობა %X/%08X ფაილის (\"%s\") შიგნით არაა"
 
-#: pg_waldump.c:1197
+#: pg_waldump.c:1363
 #, c-format
 msgid "no start WAL location given"
 msgstr "wal-ის საწყისი მდებარეობა მითითებული არაა"
 
-#: pg_waldump.c:1211
+#: pg_waldump.c:1370
+#, c-format
+msgid "--follow is not supported when reading from a tar archive"
+msgstr "tar არქივიდან წაკითხვისას --follow მხარდაჭერილი არაა"
+
+#: pg_waldump.c:1408
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "არასაკმარისი მეხსიერება WAL-ის წამკითხავი პროცესორისთვის"
 
-#: pg_waldump.c:1217
+#: pg_waldump.c:1424
 #, c-format
-msgid "could not find a valid record after %X/%X"
-msgstr "%X/%X -ის შემდეგ სწორი ჩანაწერი არ არსებობს"
+msgid "could not find a valid record after %X/%08X: %s"
+msgstr "%X/%08X -ის შემდეგ სწორი ჩანაწერის პოვნა შეუძლებელია: %s"
 
-#: pg_waldump.c:1227
+#: pg_waldump.c:1427
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u byte"
-msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes"
-msgstr[0] "პირველი ჩანაწერი %X/%X-ის შემდეგაა, მისამართზე %X/%X-სთან. გამოტოვებული იქნება %u ბაიტი"
-msgstr[1] "პირველი ჩანაწერი %X/%X-ის შემდეგაა, მისამართზე %X/%X-სთან. გამოტოვებული იქნება %u ბაიტი"
+msgid "could not find a valid record after %X/%08X"
+msgstr "%X/%08X -ის შემდეგ სწორი ჩანაწერის პოვნა შეუძლებელია"
 
-#: pg_waldump.c:1312
+#: pg_waldump.c:1438
 #, c-format
-msgid "error in WAL record at %X/%X: %s"
-msgstr "შეცდომა WAL ჩანაწერში %X/%X: %s"
+msgid "first record is after %X/%08X, at %X/%08X, skipping over %u byte"
+msgid_plural "first record is after %X/%08X, at %X/%08X, skipping over %u bytes"
+msgstr[0] "პირველი ჩანაწერი %X/%08X-ის შემდეგაა, მისამართზე %X/%08X-სთან. გამოტოვებული იქნება %u ბაიტი"
+msgstr[1] "პირველი ჩანაწერი %X/%08X-ის შემდეგაა, მისამართზე %X/%08X-სთან. გამოტოვებული იქნება %u ბაიტი"
 
-#: pg_waldump.c:1321
+#: pg_waldump.c:1526
+#, c-format
+msgid "error in WAL record at %X/%08X: %s"
+msgstr "შეცდომა WAL ჩანაწერში %X/%08X: %s"
+
+#: pg_waldump.c:1544
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: xlogreader.c:620
+#: xlogreader.c:621
 #, c-format
-msgid "invalid record offset at %X/%X: expected at least %u, got %u"
-msgstr "ჩანაწერის არასწორი წანაცვლება მისამართზე %X/%X: მოველოდი მინიმუმ %u, მივიღე %u"
+msgid "invalid record offset at %X/%08X: expected at least %u, got %u"
+msgstr "ჩანაწერის არასწორი წანაცვლება მისამართზე %X/%08X: მოველოდი მინიმუმ %u, მივიღე %u"
 
-#: xlogreader.c:629
+#: xlogreader.c:630
 #, c-format
-msgid "contrecord is requested by %X/%X"
-msgstr "contrecord მოთხოვნილია %X/%X-ის მიერ"
+msgid "contrecord is requested by %X/%08X"
+msgstr "contrecord მოთხოვნილია %X/%08X-ის მიერ"
 
-#: xlogreader.c:670 xlogreader.c:1135
+#: xlogreader.c:671 xlogreader.c:1146
 #, c-format
-msgid "invalid record length at %X/%X: expected at least %u, got %u"
-msgstr "ჩანაწერის არასწორი სიგრძე მისამართზე %X/%X: მოველოდი მინიმუმ %u, მივიღე %u"
+msgid "invalid record length at %X/%08X: expected at least %u, got %u"
+msgstr "ჩანაწერის არასწორი სიგრძე მისამართზე %X/%08X: მოველოდი მინიმუმ %u, მივიღე %u"
 
-#: xlogreader.c:759
+#: xlogreader.c:761
 #, c-format
-msgid "there is no contrecord flag at %X/%X"
-msgstr "contrecord ალამი მისამართზე %X/%X არ არსებობს"
+msgid "there is no contrecord flag at %X/%08X"
+msgstr "contrecord ალამი მისამართზე %X/%08X არ არსებობს"
 
-#: xlogreader.c:772
+#: xlogreader.c:774
 #, c-format
-msgid "invalid contrecord length %u (expected %lld) at %X/%X"
-msgstr "contrecord -ის არასწორი სიგრძე %u (მოველოდი %lld) მისამართზე %X/%X"
+msgid "invalid contrecord length %u (expected %lld) at %X/%08X"
+msgstr "contrecord -ის არასწორი სიგრძე %u (მოველოდი %lld) მისამართზე %X/%08X"
 
-#: xlogreader.c:1143
+#: xlogreader.c:1154
 #, c-format
-msgid "invalid resource manager ID %u at %X/%X"
-msgstr "რესურსის მმართველის არასწორი ID %u მისამართზე %X/%X"
+msgid "invalid resource manager ID %u at %X/%08X"
+msgstr "რესურსის მმართველის არასწორი ID %u მისამართზე %X/%08X"
 
-#: xlogreader.c:1156 xlogreader.c:1172
+#: xlogreader.c:1167 xlogreader.c:1183
 #, c-format
-msgid "record with incorrect prev-link %X/%X at %X/%X"
-msgstr "ჩანაწერი არასწორი წინა ბმულით %X/%X მისამართზე %X/%X"
+msgid "record with incorrect prev-link %X/%08X at %X/%08X"
+msgstr "ჩანაწერი არასწორი წინა ბმულით %X/%08X მისამართზე %X/%08X"
 
-#: xlogreader.c:1210
+#: xlogreader.c:1221
 #, c-format
-msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr "რესურსის მმართველის მონაცემების არასწორი საკონტროლო რიცხვი ჩანაწერში მისამართზე %X/%X"
+msgid "incorrect resource manager data checksum in record at %X/%08X"
+msgstr "რესურსის მმართველის მონაცემების არასწორი საკონტროლო რიცხვი ჩანაწერში მისამართზე %X/%08X"
 
-#: xlogreader.c:1244
+#: xlogreader.c:1255
 #, c-format
-msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "არასწორი მაგიური რიცხვი %04X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
+msgid "invalid magic number %04X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "არასწორი მაგიური რიცხვი %04X ჟურნალის სეგმენტში %s, LSN %X/%08X, წანაცვლება %u"
 
-#: xlogreader.c:1259 xlogreader.c:1301
+#: xlogreader.c:1270 xlogreader.c:1312
 #, c-format
-msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "არასწორი საინფორმაციო ბიტები %04X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
+msgid "invalid info bits %04X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "არასწორი საინფორმაციო ბიტები %04X ჟურნალის სეგმენტში %s, LSN %X/%08X, წანაცვლება %u"
 
-#: xlogreader.c:1275
+#: xlogreader.c:1286
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
 msgstr "WAL ფაილი სხვა ბაზიდანაა: WAL ფაილის ბაზის იდენტიფიკატორია %<PRIu64>, pg_control-ის ბაზის სისტემის იდენტიფიკატორი კი %<PRIu64>"
 
-#: xlogreader.c:1283
+#: xlogreader.c:1294
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL ფაილი სხვა ბაზის სიტემიდანაა: სეგმანტის არასწორი ზომა გვერდის თავსართში"
 
-#: xlogreader.c:1289
+#: xlogreader.c:1300
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL ფაილი სხვა მონაცემთა ბაზის სისტემიდანაა: გვერდის თავსართში მითითებული XLOG_BLKSZ არასწორია"
 
-#: xlogreader.c:1321
+#: xlogreader.c:1332
 #, c-format
-msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "მოულოდნელი pageaddr %X/%X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
+msgid "unexpected pageaddr %X/%08X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "მოულოდნელი pageaddr %X/%08X ჟურნალის სეგმენტში %s, LSN %X/%08X, წანაცვლება %u"
 
-#: xlogreader.c:1347
+#: xlogreader.c:1358
 #, c-format
-msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "მიმდევრობის-გარე დროის ხაზის ID %u (%u-ის შემდეგ) ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
+msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "მიმდევრობის-გარე დროის ხაზის ID %u (%u-ის შემდეგ) ჟურნალის სეგმენტში %s, LSN %X/%08X, წანაცვლება %u"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1788
 #, c-format
-msgid "out-of-order block_id %u at %X/%X"
-msgstr "ურიგო block_id %u მისამართზე %X/%X"
+msgid "out-of-order block_id %u at %X/%08X"
+msgstr "ურიგო block_id %u მისამართზე %X/%08X"
 
-#: xlogreader.c:1783
+#: xlogreader.c:1812
 #, c-format
-msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ მონაცემები მისამართზე %X/%X არ არსებობს"
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%08X"
+msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ მონაცემები მისამართზე %X/%08X არ არსებობს"
 
-#: xlogreader.c:1790
+#: xlogreader.c:1819
 #, c-format
-msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ არსებობს მონაცემები სიგრძით %u მისამართზე %X/%X"
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %d at %X/%08X"
+msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ არსებობს მონაცემები სიგრძით %d მისამართზე %X/%08X"
 
-#: xlogreader.c:1826
+#: xlogreader.c:1855
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE დაყენებულია, მაგრამ ნახვრეტის წანაცვლება %u სიგრძე %u ბლოკის ასლის სიგრძე %u მისამართზე %X/%X"
-
-#: xlogreader.c:1842
-#, c-format
-msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE დაყენებული არაა, მაგრამ ნახვრეტის წანაცვლება %u სიგრძე %u მისანართზე %X/%X"
-
-#: xlogreader.c:1856
-#, c-format
-msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_COMPRESSED დაყენებულია, მაგრამ ბლოკის ასლის სიგრძეა %u მისამართზე %X/%X"
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %d length %d block image length %d at %X/%08X"
+msgstr "BKPIMAGE_HAS_HOLE დაყენებულია, მაგრამ ნახვრეტის წანაცვლება %d სიგრძე %d ბლოკის ასლის სიგრძე %d მისამართზე %X/%08X"
 
 #: xlogreader.c:1871
 #, c-format
-msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "არც BKPIMAGE_HAS_HOLE და არც BKPIMAGE_COMPRESSED დაყენებული არაა, მაგრამ ბლოკის ასლის სიგრძე %u-ა, მისამართზე %X/%X"
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %d length %d at %X/%08X"
+msgstr "BKPIMAGE_HAS_HOLE დაყენებული არაა, მაგრამ ნახვრეტის წანაცვლება %d სიგრძე %d მისანართზე %X/%08X"
 
-#: xlogreader.c:1887
+#: xlogreader.c:1885
 #, c-format
-msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "BKPBLOCK_SAME_REL დაყენებულია, მაგრამ წინა მნიშვნელობა მითითებული არაა მისამართზე %X/%X"
+msgid "BKPIMAGE_COMPRESSED set, but block image length %d at %X/%08X"
+msgstr "BKPIMAGE_COMPRESSED დაყენებულია, მაგრამ ბლოკის ასლის სიგრძეა %d მისამართზე %X/%08X"
 
-#: xlogreader.c:1899
+#: xlogreader.c:1900
 #, c-format
-msgid "invalid block_id %u at %X/%X"
-msgstr "არასწორი block_id %u %X/%X"
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %d at %X/%08X"
+msgstr "არც BKPIMAGE_HAS_HOLE და არც BKPIMAGE_COMPRESSED დაყენებული არაა, მაგრამ ბლოკის ასლის სიგრძე %d-ა, მისამართზე %X/%08X"
 
-#: xlogreader.c:1966
+#: xlogreader.c:1916
 #, c-format
-msgid "record with invalid length at %X/%X"
-msgstr "ჩანაწერი არასწორი სიგრძით მისამართზე %X/%X"
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%08X"
+msgstr "BKPBLOCK_SAME_REL დაყენებულია, მაგრამ წინა მნიშვნელობა მითითებული არაა მისამართზე %X/%08X"
 
-#: xlogreader.c:1992
+#: xlogreader.c:1928
+#, c-format
+msgid "invalid block_id %u at %X/%08X"
+msgstr "არასწორი block_id %u %X/%08X"
+
+#: xlogreader.c:1995
+#, c-format
+msgid "record with invalid length at %X/%08X"
+msgstr "ჩანაწერი არასწორი სიგრძით მისამართზე %X/%08X"
+
+#: xlogreader.c:2021
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "შეცდომა WAL ჩანაწერში მარქაფი ბლოკის, ID-ით %d, მოძებნისას"
 
-#: xlogreader.c:2076
+#: xlogreader.c:2105
 #, c-format
-msgid "could not restore image at %X/%X with invalid block %d specified"
-msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X, როცა მითითებულია არასწორი ბლოკი %d"
+msgid "could not restore image at %X/%08X with invalid block %d specified"
+msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%08X, როცა მითითებულია არასწორი ბლოკი %d"
 
-#: xlogreader.c:2083
+#: xlogreader.c:2112
 #, c-format
-msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X არასწორი მდგომარეობით, ბლოკი %d"
+msgid "could not restore image at %X/%08X with invalid state, block %d"
+msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%08X არასწორი მდგომარეობით, ბლოკი %d"
 
-#: xlogreader.c:2110 xlogreader.c:2127
+#: xlogreader.c:2139 xlogreader.c:2156
 #, c-format
-msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "%3$s მეთოდით შეკუმშული ასლის აღდგენა მისამართზე %1$X/%2$X, ბლოკი %4$d შეუძლებელია. მხარდაუჭერელია ამ აგების მიერ"
+msgid "could not restore image at %X/%08X compressed with %s not supported by build, block %d"
+msgstr "აღდგენის შეცდომა მისამართზე %X/%08X, შეკუმშული %s-ით მხარდაჭერილი არაა აგების მიერ. ბლოკი %d"
 
-#: xlogreader.c:2136
+#: xlogreader.c:2165
 #, c-format
-msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X, შეკუმშულია უცნობი მეთოდით, ბლოკი %d"
+msgid "could not restore image at %X/%08X compressed with unknown method, block %d"
+msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%08X, შეკუმშულია უცნობი მეთოდით, ბლოკი %d"
 
-#: xlogreader.c:2144
+#: xlogreader.c:2173
 #, c-format
-msgid "could not decompress image at %X/%X, block %d"
-msgstr "შეუძლებელია ასლის გაშლა მისამართზე %X/%X, ბლოკი %d"
+msgid "could not decompress image at %X/%08X, block %d"
+msgstr "შეუძლებელია ასლის გაშლა მისამართზე %X/%08X, ბლოკი %d"
 
 #, c-format
 #~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"

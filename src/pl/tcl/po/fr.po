@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-23 14:08+0000\n"
-"PO-Revision-Date: 2024-09-16 16:28+0200\n"
+"POT-Creation-Date: 2025-07-08 05:08+0000\n"
+"PO-Revision-Date: 2025-07-08 10:47+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,109 +19,109 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 
-#: pltcl.c:462
+#: pltcl.c:470
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "Fonction PL/Tcl à appeler une fois quand pltcl est utilisé pour la première fois."
 
-#: pltcl.c:469
+#: pltcl.c:477
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "Fonction PL/TclU à appeler une fois quand pltcl est utilisé pour la première fois."
 
-#: pltcl.c:636
+#: pltcl.c:644
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "la fonction « %s » est dans le mauvais langage"
 
-#: pltcl.c:647
+#: pltcl.c:655
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "la fonction « %s » doit être définie en SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:681
+#: pltcl.c:689
 #, c-format
 msgid "processing %s parameter"
 msgstr "traitement du paramètre %s"
 
-#: pltcl.c:834
+#: pltcl.c:841
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "la fonction renvoyant un ensemble a été appelée dans un contexte qui n'accepte pas un ensemble"
 
-#: pltcl.c:839
+#: pltcl.c:846
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "mode matérialisé requis mais interdit dans ce contexte"
 
-#: pltcl.c:1012
+#: pltcl.c:1019
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr ""
 "fonction renvoyant le type record appelée dans un contexte qui ne peut pas\n"
 "accepter le type record"
 
-#: pltcl.c:1031
+#: pltcl.c:1038
 #, c-format
 msgid "could not parse function return value: %s"
 msgstr "n'a pas pu analyser la valeur de retour de la fonction : %s"
 
-#: pltcl.c:1298
+#: pltcl.c:1304
 #, c-format
 msgid "could not parse trigger return value: %s"
 msgstr "n'a pas pu analyser la valeur de retour du trigger : %s"
 
-#: pltcl.c:1383 pltcl.c:1810
+#: pltcl.c:1404 pltcl.c:1898
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1384
+#: pltcl.c:1405
 #, c-format
 msgid ""
 "%s\n"
-"in PL/Tcl function \"%s\""
+"in PL/Tcl function %s"
 msgstr ""
 "%s\n"
 "dans la fonction PL/Tcl « %s »"
 
-#: pltcl.c:1547
+#: pltcl.c:1633
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
-#: pltcl.c:1551
+#: pltcl.c:1637
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer le type %s"
 
-#: pltcl.c:1590
+#: pltcl.c:1676
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas accepter le type %s"
 
-#: pltcl.c:1702
+#: pltcl.c:1788
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "n'a pas pu créer la procédure interne « %s » : %s"
 
-#: pltcl.c:3207
+#: pltcl.c:3298
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la liste de nom de colonne/valeur doit avoir un nombre pair d'éléments"
 
-#: pltcl.c:3225
+#: pltcl.c:3316
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "la liste de nom de colonne/valeur contient des noms de colonne inexistantes (« %s »)"
 
-#: pltcl.c:3232
+#: pltcl.c:3323
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "ne peut pas initialiser l'attribut système « %s »"
 
-#: pltcl.c:3238
+#: pltcl.c:3329
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "ne peut pas initialiser la colonne générée « %s »"

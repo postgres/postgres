@@ -620,7 +620,7 @@ msgid ""
 "      --builtin-locale=LOCALE\n"
 "                            set builtin locale name for new databases\n"
 msgstr ""
-"      —builtin-locale=LOCALE\n"
+"      --builtin-locale=LOCALE\n"
 "                            为新数据库设置内置区域环境名称\n"
 
 #: initdb.c:2467
@@ -629,7 +629,7 @@ msgid ""
 "      --locale-provider={builtin|libc|icu}\n"
 "                            set default locale provider for new databases\n"
 msgstr ""
-"      —locale-provider={builtin|libc|icu}\n"
+"      --locale-provider={builtin|libc|icu}\n"
 "                            为新数据库设置默认的区域环境支持程序\n"
 
 #: initdb.c:2469
