@@ -191,7 +191,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Change a <function>json_array()</function> call which returns no rows to return an empty <acronym>JSON</acronym> array (Richard Guo)
+Change a <link linkend="functions-json"><function>json_array()</function></link> call which returns no rows to return an empty <acronym>JSON</acronym> array (Richard Guo)
 <ulink url="&commit_baseurl;8d829f5a0">&sect;</ulink>
 </para>
 
@@ -268,7 +268,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Change index access method handlers to use a static <structname>IndexAmRoutines</structname> structure, rather than dynamically allocated ones (Matthias van de Meent)
+Change index access method handlers to use a static <link linkend="indexam"><structname>IndexAmRoutines</structname></link> structure, rather than dynamically allocated ones (Matthias van de Meent)
 <ulink url="&commit_baseurl;bc6374cd7">&sect;</ulink>
 </para>
 </listitem>
@@ -454,7 +454,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow negative values of <structname>pg_aggregate</structname>.<structfield>aggtransspace</structfield> to indicate unbounded memory usage (Richard Guo)
+Allow negative values of <link linkend="catalog-pg-aggregate"><structname>pg_aggregate</structname></link>.<link linkend="catalog-pg-aggregate"><structfield>aggtransspace</structfield></link> to indicate unbounded memory usage (Richard Guo)
 <ulink url="&commit_baseurl;185e30426">&sect;</ulink>
 </para>
 
@@ -484,7 +484,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Simplify <function>COALESCE()</function> and <literal>ROW(...) IS [NOT] NULL</literal> to avoid evaluating unnecessary arguments (Richard Guo)
+Simplify <link linkend="functions-coalesce-nvl-ifnull"><function>COALESCE()</function></link> and <literal>ROW(...) IS [NOT] NULL</literal> to avoid evaluating unnecessary arguments (Richard Guo)
 <ulink url="&commit_baseurl;10c4fe074">&sect;</ulink>
 <ulink url="&commit_baseurl;cb7b7ec7a">&sect;</ulink>
 </para>
@@ -551,7 +551,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow function <function>pg_restore_extended_stats()</function> to restore optimizer extended statistics (Corey Huinker, Michael Paquier, Chao Li)
+Allow function <link linkend="functions-admin-statsmod"><function>pg_restore_extended_stats()</function></link> to restore optimizer extended statistics (Corey Huinker, Michael Paquier, Chao Li)
 <ulink url="&commit_baseurl;0e80f3f88">&sect;</ulink>
 <ulink url="&commit_baseurl;302879bd6">&sect;</ulink>
 <ulink url="&commit_baseurl;efbebb4e8">&sect;</ulink>
@@ -566,7 +566,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add function <function>pg_clear_extended_stats()</function> to remove extended statistics (Corey Huinker, Michael Paquier)
+Add function <link linkend="functions-admin-statsmod"><function>pg_clear_extended_stats()</function></link> to remove extended statistics (Corey Huinker, Michael Paquier)
 <ulink url="&commit_baseurl;d756fa101">&sect;</ulink>
 </para>
 </listitem>
@@ -851,7 +851,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add system view <structname>pg_stat_lock</structname> and function <function>pg_stat_get_lock()</function> to report per-lock type statistics (Bertrand Drouvot)
+Add system view <link linkend="pg-stat-lock-view"><structname>pg_stat_lock</structname></link> and function <link linkend="monitoring-pg-stat-lock-view"><function>pg_stat_get_lock()</function></link> to report per-lock type statistics (Bertrand Drouvot)
 <ulink url="&commit_baseurl;4019f725f">&sect;</ulink>
 </para>
 </listitem>
@@ -865,7 +865,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add system view <structname>pg_stat_recovery</structname> to report recovery status (Xuneng Zhou, Shinya Kato)
+Add system view <link linkend="pg-stat-recovery-view"><structname>pg_stat_recovery</structname></link> to report recovery status (Xuneng Zhou, Shinya Kato)
 <ulink url="&commit_baseurl;01d485b14">&sect;</ulink>
 <ulink url="&commit_baseurl;2d4ead6f4">&sect;</ulink>
 </para>
@@ -878,7 +878,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add mem_exceeded_count column to system view <structname>pg_stat_replication_slots</structname> (Bertrand Drouvot)
+Add mem_exceeded_count column to system view <link linkend="pg-stat-replication-slots-view"><structname>pg_stat_replication_slots</structname></link> (Bertrand Drouvot)
 <ulink url="&commit_baseurl;d3b6183dd">&sect;</ulink>
 </para>
 
@@ -894,7 +894,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add stats_reset column to system views <structname>pg_stat_all_tables</structname>, <structname>pg_stat_all_indexes</structname>, and <structname>pg_statio_all_sequences</structname> (Bertrand Drouvot, Sami Imseih, Shihao Zhong)
+Add stats_reset column to system views <link linkend="pg-stat-all-tables-view"><structname>pg_stat_all_tables</structname></link>, <link linkend="pg-stat-all-indexes-view"><structname>pg_stat_all_indexes</structname></link>, and <link linkend="pg-statio-all-sequences-view"><structname>pg_statio_all_sequences</structname></link> (Bertrand Drouvot, Sami Imseih, Shihao Zhong)
 <ulink url="&commit_baseurl;a5b543258">&sect;</ulink>
 </para>
 
@@ -912,7 +912,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add stats_reset column to system views <structname>pg_stat_user_functions</structname> and <structname>pg_stat_database_conflicts</structname> (Bertrand Drouvot, Shihao Zhong)
+Add stats_reset column to system views <link linkend="pg-stat-user-functions-view"><structname>pg_stat_user_functions</structname></link> and <link linkend="pg-stat-database-conflicts-view"><structname>pg_stat_database_conflicts</structname></link> (Bertrand Drouvot, Shihao Zhong)
 <ulink url="&commit_baseurl;b71bae41a">&sect;</ulink>
 <ulink url="&commit_baseurl;8fe315f18">&sect;</ulink>
 </para>
@@ -925,7 +925,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add system view <structname>pg_stat_autovacuum_scores</structname> to report per-table autovacuum details (Sami Imseih)
+Add system view <link linkend="pg-stat-autovacuum-scores-view"><structname>pg_stat_autovacuum_scores</structname></link> to report per-table autovacuum details (Sami Imseih)
 <ulink url="&commit_baseurl;87f61f0c8">&sect;</ulink>
 </para>
 </listitem>
@@ -937,7 +937,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add vacuum initiation details to system view <structname>pg_stat_progress_vacuum</structname> (Shinya Kato)
+Add vacuum initiation details to system view <link linkend="pg-stat-progress-vacuum-view"><structname>pg_stat_progress_vacuum</structname></link> (Shinya Kato)
 <ulink url="&commit_baseurl;0d7895206">&sect;</ulink>
 </para>
 
@@ -953,7 +953,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add analyze initiation details to system view <structname>pg_stat_progress_analyze</structname> (Shinya Kato)
+Add analyze initiation details to system view <link linkend="pg-stat-progress-analyze-view"><structname>pg_stat_progress_analyze</structname></link> (Shinya Kato)
 <ulink url="&commit_baseurl;ab40db385">&sect;</ulink>
 </para>
 
@@ -969,7 +969,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add a column to system view <structname>pg_stat_progress_basebackup</structname> to report the type of backup (Shinya Kato)
+Add a column to system view <link linkend="pg-stat-progress-basebackup-view"><structname>pg_stat_progress_basebackup</structname></link> to report the type of backup (Shinya Kato)
 <ulink url="&commit_baseurl;deb674454">&sect;</ulink>
 </para>
 
@@ -990,7 +990,7 @@ Add reporting of the bytes written to <acronym>WAL</acronym> for full page image
 </para>
 
 <para>
-This is accessible via system view <structname>pg_stat_wal</structname> and function <function>pg_stat_get_backend_wal()</function>.
+This is accessible via system view <link linkend="pg-stat-wal-view"><structname>pg_stat_wal</structname></link> and function <link linkend="pg-stat-get-backend-wal"><function>pg_stat_get_backend_wal()</function></link>.
 </para>
 </listitem>
 
@@ -1001,7 +1001,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add <literal>connecting</literal> status to system view column <structname>pg_stat_wal_receiver</structname>.<structfield>status</structfield> (Xuneng Zhou)
+Add <literal>connecting</literal> status to system view column <link linkend="pg-stat-wal-receiver-view"><structname>pg_stat_wal_receiver</structname></link>.<link linkend="pg-stat-wal-receiver-view"><structfield>status</structfield></link> (Xuneng Zhou)
 <ulink url="&commit_baseurl;a36164e74">&sect;</ulink>
 </para>
 </listitem>
@@ -1013,12 +1013,12 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add columns to system views <structname>pg_stats</structname>, <structname>pg_stats_ext</structname>, and <structname>pg_stats_ext_exprs</structname> (Corey Huinker)
+Add columns to system views <link linkend="view-pg-stats"><structname>pg_stats</structname></link>, <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link>, and <link linkend="view-pg-stats-ext-exprs"><structname>pg_stats_ext_exprs</structname></link> (Corey Huinker)
 <ulink url="&commit_baseurl;3b88e50d6">&sect;</ulink>
 </para>
 
 <para>
-Adds table <type>OID</type> and attribute number columns to <structname>pg_stats</structname>, and table <type>OID</type> and statistics object <type>OID</type> columns to the other two.
+Adds table <type>OID</type> and attribute number columns to <link linkend="view-pg-stats"><structname>pg_stats</structname></link>, and table <type>OID</type> and statistics object <type>OID</type> columns to the other two.
 </para>
 </listitem>
 
@@ -1029,7 +1029,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add information about range type extended statistics to system view <structname>pg_stats_ext_exprs</structname> (Corey Huinker, Michael Paquier)
+Add information about range type extended statistics to system view <link linkend="view-pg-stats-ext-exprs"><structname>pg_stats_ext_exprs</structname></link> (Corey Huinker, Michael Paquier)
 <ulink url="&commit_baseurl;307447e6d">&sect;</ulink>
 </para>
 </listitem>
@@ -1043,7 +1043,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add system view <structname>pg_dsm_registry_allocations</structname> to report dynamic shared memory details (Florents Tselai, Nathan Bossart)
+Add system view <link linkend="view-pg-dsm-registry-allocations"><structname>pg_dsm_registry_allocations</structname></link> to report dynamic shared memory details (Florents Tselai, Nathan Bossart)
 <ulink url="&commit_baseurl;167ed8082">&sect;</ulink>
 <ulink url="&commit_baseurl;f894acb24">&sect;</ulink>
 </para>
@@ -1056,7 +1056,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Add column <literal>location</literal> to system views <structname>pg_available_extensions</structname> and <structname>pg_available_extension_versions</structname> to report the file system directory of extensions (Matheus Alcantara)
+Add column <literal>location</literal> to system views <link linkend="view-pg-available-extensions"><structname>pg_available_extensions</structname></link> and <link linkend="view-pg-available-extension-versions"><structname>pg_available_extension_versions</structname></link> to report the file system directory of extensions (Matheus Alcantara)
 <ulink url="&commit_baseurl;f3c9e341c">&sect;</ulink>
 </para>
 </listitem>
@@ -1199,7 +1199,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add function <function>pg_get_multixact_stats()</function> to report multixact activity (Naga Appani)
+Add function <link linkend="functions-info-snapshot"><function>pg_get_multixact_stats()</function></link> to report multixact activity (Naga Appani)
 <ulink url="&commit_baseurl;97b101776">&sect;</ulink>
 </para>
 </listitem>
@@ -1385,7 +1385,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Improve function <function>pg_sync_replication_slots()</function> to wait for the synchronization completion (Ajin Cherian, Zhijie Hou)
+Improve function <link linkend="pg-sync-replication-slots"><function>pg_sync_replication_slots()</function></link> to wait for the synchronization completion (Ajin Cherian, Zhijie Hou)
 <ulink url="&commit_baseurl;0d2d4a0ec">&sect;</ulink>
 </para>
 
@@ -1436,7 +1436,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add optional pid parameter to <function>pg_replication_origin_session_setup()</function> to allow parallelization of <acronym>SQL</acronym>-level replication solutions (Doruk Yilmaz, Hayato Kuroda)
+Add optional pid parameter to <link linkend="pg-replication-origin-session-setup"><function>pg_replication_origin_session_setup()</function></link> to allow parallelization of <acronym>SQL</acronym>-level replication solutions (Doruk Yilmaz, Hayato Kuroda)
 <ulink url="&commit_baseurl;5b148706c">&sect;</ulink>
 </para>
 </listitem>
@@ -1468,7 +1468,7 @@ Allow sequence values stored in subscribers to match the publisher (Vignesh C)
 
 <para>
 This is enabled during <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>, <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link>, and <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.  The latter only updates values, not sequence
-existence.  Function <function>pg_get_sequence_data()</function> allows inspection of sequence synchronization.
+existence.  Function <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data()</function></link> allows inspection of sequence synchronization.
 </para>
 </listitem>
 
@@ -1618,7 +1618,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add column <structname>pg_stat_subscription_stats</structname>.<structfield>sync_seq_error_count</structfield> to report sequence synchronization errors (Vignesh C)
+Add column <link linkend="pg-stat-subscription-stats"><structname>pg_stat_subscription_stats</structname></link>.<link linkend="pg-stat-subscription-stats"><structfield>sync_seq_error_count</structfield></link> to report sequence synchronization errors (Vignesh C)
 <ulink url="&commit_baseurl;f6a4c498d">&sect;</ulink>
 <ulink url="&commit_baseurl;3edaf29fa">&sect;</ulink>
 </para>
@@ -1631,7 +1631,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Rename column sync_error_count to sync_table_error_count in system view <structname>pg_stat_subscription_stats</structname> (Vignesh C)
+Rename column sync_error_count to sync_table_error_count in system view <link linkend="pg-stat-subscription-stats"><structname>pg_stat_subscription_stats</structname></link> (Vignesh C)
 <ulink url="&commit_baseurl;3edaf29fa">&sect;</ulink>
 </para>
 
@@ -1651,7 +1651,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add slot synchronization skip information to <structname>pg_stat_replication_slots</structname> and <structname>pg_replication_slots</structname> (Shlok Kyal)
+Add slot synchronization skip information to <link linkend="pg-stat-replication-slots-view"><structname>pg_stat_replication_slots</structname></link> and <link linkend="view-pg-replication-slots"><structname>pg_replication_slots</structname></link> (Shlok Kyal)
 <ulink url="&commit_baseurl;76b78721c">&sect;</ulink>
 <ulink url="&commit_baseurl;e68b6adad">&sect;</ulink>
 <ulink url="&commit_baseurl;5db6a344a">&sect;</ulink>
@@ -1737,7 +1737,7 @@ Allow <literal>GROUP BY</literal> to process target list subqueries that have ex
 </para>
 
 <para>
-Also fix a bug in how <function>GROUPING()</function> handles target list subquery aliases.
+Also fix a bug in how <link linkend="functions-grouping-table"><function>GROUPING()</function></link> handles target list subquery aliases.
 </para>
 </listitem>
 
@@ -2137,7 +2137,7 @@ Add more jsonpath string methods (Florents Tselai, David E. Wheeler)
 </para>
 
 <para>
-They are l/r/<function>btrim()</function>, <function>lower()</function>, <function>upper()</function>, <function>initcap()</function>, <function>replace()</function>, and <function>split_part()</function>.  These are immutable like their non-<acronym>JSON</acronym> string variants.
+They are l/r/<link linkend="functions-string"><function>btrim()</function></link>, <link linkend="functions-string"><function>lower()</function></link>, <link linkend="functions-string"><function>upper()</function></link>, <link linkend="functions-string"><function>initcap()</function></link>, <link linkend="functions-string"><function>replace()</function></link>, and <link linkend="functions-string"><function>split_part()</function></link>.  These are immutable like their non-<acronym>JSON</acronym> string variants.
 </para>
 </listitem>
 
@@ -2172,7 +2172,7 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Add functions <function>tid_block()</function> and <function>tid_offset()</function> to extract block numbers and offsets from tid values (Ayush Tiwari)
+Add functions <link linkend="functions-tid"><function>tid_block()</function></link> and <link linkend="functions-tid"><function>tid_offset()</function></link> to extract block numbers and offsets from tid values (Ayush Tiwari)
 <ulink url="&commit_baseurl;df6949ccf">&sect;</ulink>
 </para>
 </listitem>
@@ -2211,7 +2211,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Allow <function>encode()</function> and <function>decode()</function> to process data in base64url and base32hex formats (Andrey Borodin, Aleksander Alekseev, Florents Tselai)
+Allow <link linkend="functions-binarystring"><function>encode()</function></link> and <link linkend="functions-binarystring"><function>decode()</function></link> to process data in base64url and base32hex formats (Andrey Borodin, Aleksander Alekseev, Florents Tselai)
 <ulink url="&commit_baseurl;497c1170c">&sect;</ulink>
 <ulink url="&commit_baseurl;e752a2ccc">&sect;</ulink>
 <ulink url="&commit_baseurl;e1d917182">&sect;</ulink>
@@ -2234,7 +2234,7 @@ Add functions to return a set of ranges resulting from range subtraction (Paul A
 </para>
 
 <para>
-The functions are <function>range_minus_multi()</function> and <function>multirange_minus_multi()</function>.  This is useful to represent range subtraction results with gaps.
+The functions are <link linkend="range-functions-table"><function>range_minus_multi()</function></link> and <link linkend="multirange-functions-table"><function>multirange_minus_multi()</function></link>.  This is useful to represent range subtraction results with gaps.
 </para>
 </listitem>
 
@@ -2245,7 +2245,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add function <function>error_on_null()</function> to return the supplied parameter, or error on <literal>NULL</literal> input (Joel Jacobson)
+Add function <link linkend="functions-comparison-func-table"><function>error_on_null()</function></link> to return the supplied parameter, or error on <literal>NULL</literal> input (Joel Jacobson)
 <ulink url="&commit_baseurl;2b75c38b7">&sect;</ulink>
 </para>
 </listitem>
@@ -2289,7 +2289,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Add function <function>pg_get_role_ddl()</function> to output role creation commands (Mario Gonzalez, Bryan Green, Andrew Dunstan, Euler Taveira)
+Add function <link linkend="functions-get-object-ddl-table"><function>pg_get_role_ddl()</function></link> to output role creation commands (Mario Gonzalez, Bryan Green, Andrew Dunstan, Euler Taveira)
 <ulink url="&commit_baseurl;76e514ebb">&sect;</ulink>
 </para>
 </listitem>
@@ -2301,7 +2301,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Add function <function>pg_get_tablespace_ddl()</function> to output tablespace creation commands (Nishant Sharma, Manni Wood, Andrew Dunstan, Euler Taveira)
+Add function <link linkend="functions-get-object-ddl-table"><function>pg_get_tablespace_ddl()</function></link> to output tablespace creation commands (Nishant Sharma, Manni Wood, Andrew Dunstan, Euler Taveira)
 <ulink url="&commit_baseurl;b99fd9fd7">&sect;</ulink>
 </para>
 </listitem>
@@ -2313,7 +2313,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Add function <function>pg_get_database_ddl()</function> to output database creation commands (Akshay Joshi, Andrew Dunstan, Euler Taveira)
+Add function <link linkend="functions-get-object-ddl-table"><function>pg_get_database_ddl()</function></link> to output database creation commands (Akshay Joshi, Andrew Dunstan, Euler Taveira)
 <ulink url="&commit_baseurl;a4f774cf1">&sect;</ulink>
 </para>
 </listitem>
@@ -2369,7 +2369,7 @@ Author: Jacob Champion <jchampion@postgresql.org>
 
 <listitem>
 <para>
-Add libpq function <function>PQgetThreadLock()</function> to retrieve the current locking callback (Jacob Champion)
+Add libpq function <link linkend="libpq-threading"><function>PQgetThreadLock()</function></link> to retrieve the current locking callback (Jacob Champion)
 <ulink url="&commit_baseurl;b8d768583">&sect;</ulink>
 </para>
 </listitem>
@@ -2414,7 +2414,7 @@ Allow <acronym>OAUTH</acronym> validators to supply failure details (Jacob Champ
 </para>
 
 <para>
-This is done by setting the <structname>ValidatorModuleResult</structname> structure member error_detail.
+This is done by setting the <link linkend="oauth-validator-callback-validate"><structname>ValidatorModuleResult</structname></link> structure member error_detail.
 </para>
 </listitem>
 
@@ -2991,7 +2991,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Change <function>hex_encode()</function> and <function>hex_decode()</function> to use <acronym>SIMD</acronym> <acronym>CPU</acronym> instructions (Nathan Bossart, Chiranmoy Bhattacharya)
+Change <link linkend="functions-binarystring"><function>hex_encode()</function></link> and <link linkend="functions-binarystring"><function>hex_decode()</function></link> to use <acronym>SIMD</acronym> <acronym>CPU</acronym> instructions (Nathan Bossart, Chiranmoy Bhattacharya)
 <ulink url="&commit_baseurl;ec8719ccb">&sect;</ulink>
 </para>
 </listitem>
@@ -3102,12 +3102,12 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
 <listitem>
 <para>
-Add simplified and improved shared memory registration function <function>ShmemRequestStruct()</function> (Heikki Linnakangas, Ashutosh Bapat)
+Add simplified and improved shared memory registration function <link linkend="xfunc-shared-addin-at-startup"><function>ShmemRequestStruct()</function></link> (Heikki Linnakangas, Ashutosh Bapat)
 <ulink url="&commit_baseurl;283e823f9">&sect;</ulink>
 </para>
 
 <para>
-Functions <function>ShmemInitStruct()</function> and <function>ShmemInitHash()</function> remain for backward compatibility.
+Functions <link linkend="xfunc-shared-addin-at-startup"><function>ShmemInitStruct()</function></link> and <link linkend="xfunc-shared-addin-at-startup"><function>ShmemInitHash()</function></link> remain for backward compatibility.
 </para>
 </listitem>
 
