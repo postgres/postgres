@@ -438,5 +438,68 @@ SELECT 1 \bind \sendpipeline
 VACUUM psql_pipeline \bind \sendpipeline
 \endpipeline
 
+-- Deferred constraint violation at commit time in a pipeline.
+CREATE TABLE psql_pipeline_defer (a INTEGER PRIMARY KEY DEFERRABLE INITIALLY DEFERRED);
+\startpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) RETURNING * \bind 1 \sendpipeline
+\endpipeline
+
+-- Same with \syncpipeline and commands after the failing sync.
+\startpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+\syncpipeline
+SELECT $1 \bind 'after_sync_1' \sendpipeline
+\endpipeline
+
+-- More patterns with more \syncpipeline, more commands and \getresults
+\startpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+\syncpipeline
+SELECT $1 \bind 'after_sync_1' \sendpipeline
+\getresults
+SELECT $1 \bind 'after_sync_2' \sendpipeline
+\endpipeline
+\startpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+\syncpipeline
+\getresults
+SELECT $1 \bind 'after_sync_1' \sendpipeline
+\getresults
+SELECT $1 \bind 'after_sync_2' \sendpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+SELECT $1 \bind 'after_sync_3' \sendpipeline
+SELECT $1 \bind 'after_sync_4' \sendpipeline
+SELECT $1 \bind 'after_sync_5' \sendpipeline
+\endpipeline
+
+-- Deferred error combined with a regular command error after the sync.
+\startpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+\syncpipeline
+SELECT $1 \bind \sendpipeline
+SELECT $1 \bind 'after_error' \sendpipeline
+\endpipeline
+
+-- Empty sync segment followed by a deferred error.
+\startpipeline
+\syncpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+\endpipeline
+
+-- Deferred error with \getresults reading results one at a time.
+\startpipeline
+INSERT INTO psql_pipeline_defer VALUES ($1), ($1) \bind 1 \sendpipeline
+SELECT $1 \bind 'partial' \sendpipeline
+\syncpipeline
+\getresults 1
+\getresults 1
+\getresults
+\endpipeline
+
+DROP TABLE psql_pipeline_defer;
+
 -- Clean up
 DROP TABLE psql_pipeline;
