@@ -147,6 +147,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 {
 	volatile xmlBufferPtr buf = NULL;
 	xmlChar    *volatile result = NULL;
+	xmlChar    *volatile str = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	/* spin up some error handling */
@@ -172,8 +173,14 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 			{
 				if (plainsep != NULL)
 				{
-					xmlBufferWriteCHAR(buf,
-									   xmlXPathCastNodeToString(nodeset->nodeTab[i]));
+					str = xmlXPathCastNodeToString(nodeset->nodeTab[i]);
+					if (str == NULL || pg_xml_error_occurred(xmlerrcxt))
+						xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+									"could not allocate node text");
+
+					xmlBufferWriteCHAR(buf, str);
+					xmlFree(str);
+					str = NULL;
 
 					/* If this isn't the last entry, write the plain sep. */
 					if (i < (nodeset->nodeNr) - 1)
@@ -216,6 +223,10 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 	}
 	PG_CATCH();
 	{
+		if (result)
+			xmlFree(result);
+		if (str)
+			xmlFree(str);
 		if (buf)
 			xmlBufferFree(buf);
 
@@ -486,32 +497,49 @@ static xpath_workspace *
 pgxml_xpath(text *document, xmlChar *xpath, PgXmlErrorContext *xmlerrcxt)
 {
 	int32		docsize = VARSIZE_ANY_EXHDR(document);
-	xmlXPathCompExprPtr comppath;
+	xmlXPathCompExprPtr volatile comppath = NULL;
 	xpath_workspace *workspace = palloc0_object(xpath_workspace);
 
 	workspace->doctree = NULL;
 	workspace->ctxt = NULL;
 	workspace->res = NULL;
 
-	workspace->doctree = xmlReadMemory((char *) VARDATA_ANY(document),
-									   docsize, NULL, NULL,
-									   XML_PARSE_NOENT);
-	if (workspace->doctree != NULL)
+	PG_TRY();
 	{
-		workspace->ctxt = xmlXPathNewContext(workspace->doctree);
-		workspace->ctxt->node = xmlDocGetRootElement(workspace->doctree);
+		workspace->doctree = xmlReadMemory((char *) VARDATA_ANY(document),
+										   docsize, NULL, NULL,
+										   XML_PARSE_NOENT);
+		if (workspace->doctree != NULL)
+		{
+			workspace->ctxt = xmlXPathNewContext(workspace->doctree);
+			if (workspace->ctxt == NULL)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not allocate XPath context");
 
-		/* compile the path */
-		comppath = xmlXPathCtxtCompile(workspace->ctxt, xpath);
-		if (comppath == NULL || pg_xml_error_occurred(xmlerrcxt))
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
-						"XPath Syntax Error");
+			workspace->ctxt->node = xmlDocGetRootElement(workspace->doctree);
 
-		/* Now evaluate the path expression. */
-		workspace->res = xmlXPathCompiledEval(comppath, workspace->ctxt);
+			/* compile the path */
+			comppath = xmlXPathCtxtCompile(workspace->ctxt, xpath);
+			if (comppath == NULL || pg_xml_error_occurred(xmlerrcxt))
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
+							"XPath Syntax Error");
 
-		xmlXPathFreeCompExpr(comppath);
+			/* Now evaluate the path expression. */
+			workspace->res = xmlXPathCompiledEval(comppath, workspace->ctxt);
+
+			xmlXPathFreeCompExpr(comppath);
+			comppath = NULL;
+		}
 	}
+	PG_CATCH();
+	{
+		if (comppath != NULL)
+			xmlXPathFreeCompExpr(comppath);
+		cleanup_workspace(workspace);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	return workspace;
 }
@@ -634,6 +662,10 @@ xpath_table(PG_FUNCTION_ARGS)
 	StringInfoData query_buf;
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlDocPtr doctree = NULL;
+	xmlXPathContextPtr volatile ctxt = NULL;
+	xmlXPathObjectPtr volatile res = NULL;
+	xmlXPathCompExprPtr volatile comppath = NULL;
+	xmlChar    *volatile resstr = NULL;
 
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
@@ -653,7 +685,7 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	attinmeta = TupleDescGetAttInMetadata(rsinfo->setDesc);
 
-	values = (char **) palloc(rsinfo->setDesc->natts * sizeof(char *));
+	values = (char **) palloc0(rsinfo->setDesc->natts * sizeof(char *));
 	xpaths = (xmlChar **) palloc(rsinfo->setDesc->natts * sizeof(xmlChar *));
 
 	/*
@@ -723,10 +755,6 @@ xpath_table(PG_FUNCTION_ARGS)
 		{
 			char	   *pkey;
 			char	   *xmldoc;
-			xmlXPathContextPtr ctxt;
-			xmlXPathObjectPtr res;
-			xmlChar    *resstr;
-			xmlXPathCompExprPtr comppath;
 			HeapTuple	ret_tuple;
 
 			/* Extract the row data as C Strings */
@@ -771,6 +799,11 @@ xpath_table(PG_FUNCTION_ARGS)
 					had_values = false;
 					for (j = 0; j < numpaths; j++)
 					{
+						ctxt = NULL;
+						res = NULL;
+						comppath = NULL;
+						resstr = NULL;
+
 						ctxt = xmlXPathNewContext(doctree);
 						if (ctxt == NULL || pg_xml_error_occurred(xmlerrcxt))
 							xml_ereport(xmlerrcxt,
@@ -789,6 +822,7 @@ xpath_table(PG_FUNCTION_ARGS)
 						/* Now evaluate the path expression. */
 						res = xmlXPathCompiledEval(comppath, ctxt);
 						xmlXPathFreeCompExpr(comppath);
+						comppath = NULL;
 
 						if (res != NULL)
 						{
@@ -833,8 +867,16 @@ xpath_table(PG_FUNCTION_ARGS)
 							 * result tuple.
 							 */
 							values[j + 1] = (char *) resstr;
+							resstr = NULL;
+						}
+
+						if (res != NULL)
+						{
+							xmlXPathFreeObject(res);
+							res = NULL;
 						}
 						xmlXPathFreeContext(ctxt);
+						ctxt = NULL;
 					}
 
 					/* Now add the tuple to the output, if there is one. */
@@ -843,6 +885,16 @@ xpath_table(PG_FUNCTION_ARGS)
 						ret_tuple = BuildTupleFromCStrings(attinmeta, values);
 						tuplestore_puttuple(rsinfo->setResult, ret_tuple);
 						heap_freetuple(ret_tuple);
+					}
+
+					/* BuildTupleFromCStrings() has copied the values. */
+					for (j = 1; j < rsinfo->setDesc->natts; j++)
+					{
+						if (values[j] != NULL)
+						{
+							xmlFree((xmlChar *) values[j]);
+							values[j] = NULL;
+						}
 					}
 
 					rownr++;
@@ -861,6 +913,19 @@ xpath_table(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
+		if (resstr != NULL)
+			xmlFree(resstr);
+		for (j = 1; j < rsinfo->setDesc->natts; j++)
+		{
+			if (values[j] != NULL)
+				xmlFree((xmlChar *) values[j]);
+		}
+		if (res != NULL)
+			xmlXPathFreeObject(res);
+		if (comppath != NULL)
+			xmlXPathFreeCompExpr(comppath);
+		if (ctxt != NULL)
+			xmlXPathFreeContext(ctxt);
 		if (doctree != NULL)
 			xmlFreeDoc(doctree);
 
