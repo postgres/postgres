@@ -403,6 +403,11 @@ Improve the planning of semijoins (Richard Guo)
 </para>
 </listitem>
 
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+2025-07-08 [55a780e94] Consider explicit incremental sort for Append and MergeA
+-->
+
 <listitem>
 <para>
 Allow Append and MergeAppend to consider explicit incremental sorts (Richard Guo)
@@ -480,11 +485,6 @@ Simplify <literal>IS [NOT] TRUE/FALSE/UNKNOWN</literal> to plain boolean express
 <ulink url="&commit_baseurl;0aaf0de7f">&sect;</ulink>
 </para>
 </listitem>
-
-<!--
-Author: Richard Guo <rguo@postgresql.org>
-2025-07-08 [55a780e94] Consider explicit incremental sort for Append and MergeA
--->
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -2637,8 +2637,49 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Allow <link linkend="pgwaldump"><application>pg_waldump</application></link> to read <acronym>WAL</acronym> files stored in tar archives (Amul Sul)
+Allow <link linkend="pgwaldump"><application>pg_waldump</application></link> to read <acronym>WAL</acronym> files stored in <application>tar</application> archives (Amul Sul)
 <ulink url="&commit_baseurl;b15c15139">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-09-08 [3bcfcd815] pg_upgrade: Transfer pg_largeobject_metadata's files whe
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-09 [158408fef] pg_upgrade: Fix handling of pg_largeobject_metadata.
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-18 [161a3e8b6] pg_upgrade: Use COPY for large object metadata.
+Author: Nathan Bossart <nathan@postgresql.org>
+2026-02-16 [b33f75361] pg_upgrade: Use COPY for LO metadata for upgrades from
+-->
+
+<listitem>
+<para>
+Improve performance of <link linkend="pgupgrade"><application>pg_upgrade</application></link> copying large object metadata (Nathan Bossart)
+<ulink url="&commit_baseurl;3bcfcd815">&sect;</ulink>
+<ulink url="&commit_baseurl;158408fef">&sect;</ulink>
+<ulink url="&commit_baseurl;161a3e8b6">&sect;</ulink>
+<ulink url="&commit_baseurl;b33f75361">&sect;</ulink>
+</para>
+
+<para>
+Various methods are used, depending on the <productname>PostgreSQL</productname> version of the old cluster.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-30 [412036c22] Teach pg_upgrade to handle in-place tablespaces.
+-->
+
+<listitem>
+<para>
+Allow <link linkend="pgupgrade"><application>pg_upgrade</application></link> to process non-default tablespaces stored in the <envar>PGDATA</envar> directory (Nathan Bossart)
+<ulink url="&commit_baseurl;412036c22">&sect;</ulink>
+</para>
+
+<para>
+Previously such tablespaces generated an error.
 </para>
 </listitem>
 
@@ -2710,77 +2751,6 @@ Author: Michael Paquier <michael@paquier.xyz>
 <para>
 Allow <link linkend="app-pgdump"><application>pg_dump</application></link> to include restorable extended statistics (Corey Huinker)
 <ulink url="&commit_baseurl;c32fb29e9">&sect;</ulink>
-</para>
-</listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4 id="release-19-pgupgrade">
-     <title><xref linkend="pgupgrade"/></title>
-
-     <itemizedlist>
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2025-09-08 [3bcfcd815] pg_upgrade: Transfer pg_largeobject_metadata's files whe
-Author: Nathan Bossart <nathan@postgresql.org>
-2026-02-09 [158408fef] pg_upgrade: Fix handling of pg_largeobject_metadata.
--->
-
-<listitem>
-<para>
-Have <link linkend="pgupgrade"><application>pg_upgrade</application></link> copy large object metadata files rather than using <link linkend="sql-copy"><command>COPY</command></link> (Nathan Bossart)
-<ulink url="&commit_baseurl;3bcfcd815">&sect;</ulink>
-<ulink url="&commit_baseurl;158408fef">&sect;</ulink>
-</para>
-
-<para>
-This is possible when upgrading from <productname>PostgreSQL</productname> 16 and later.
-</para>
-</listitem>
-
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2025-07-18 [161a3e8b6] pg_upgrade: Use COPY for large object metadata.
--->
-
-<listitem>
-<para>
-Allow <link linkend="pgupgrade"><application>pg_upgrade</application></link> to use <link linkend="sql-copy"><command>COPY</command></link> for large object metadata (Nathan Bossart)
-<ulink url="&commit_baseurl;161a3e8b6">&sect;</ulink>
-</para>
-
-<para>
-This is used when upgrading from <productname>PostgreSQL</productname> major versions 12-15.
-</para>
-</listitem>
-
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2026-02-16 [b33f75361] pg_upgrade: Use COPY for LO metadata for upgrades from
--->
-
-<listitem>
-<para>
-Improve <link linkend="pgupgrade"><application>pg_upgrade</application></link> performance when restoring large object metadata from <productname>PostgreSQL</productname> version 11 and earlier (Nathan Bossart)
-<ulink url="&commit_baseurl;b33f75361">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2025-07-30 [412036c22] Teach pg_upgrade to handle in-place tablespaces.
--->
-
-<listitem>
-<para>
-Allow <link linkend="pgupgrade"><application>pg_upgrade</application></link> to process non-default tablespaces stored in the <envar>PGDATA</envar> directory (Nathan Bossart)
-<ulink url="&commit_baseurl;412036c22">&sect;</ulink>
-</para>
-
-<para>
-Previously such tablespaces generated an error.
 </para>
 </listitem>
 
