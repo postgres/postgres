@@ -363,6 +363,10 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-only', 'postgres' ],
 	qr/statement: ANALYZE public.parent_table/s,
 	'--analyze-only updates statistics for partitioned tables');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--analyze-in-stages', 'postgres' ],
+	qr/statement: ANALYZE public.parent_table/s,
+	'--analyze-in-stages updates statistics for partitioned tables');
 $node->issues_sql_unlike(
 	[ 'vacuumdb', '--analyze-only', 'postgres' ],
 	qr/statement:\ VACUUM/sx,

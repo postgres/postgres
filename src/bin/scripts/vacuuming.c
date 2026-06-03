@@ -650,13 +650,15 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	{
 		/*
 		 * vacuumdb should generally follow the behavior of the underlying
-		 * VACUUM and ANALYZE commands.  In MODE_ANALYZE mode, process regular
-		 * tables, materialized views, and partitioned tables, just like
-		 * ANALYZE (with no specific target tables) does. Otherwise, process
-		 * only regular tables and materialized views, since VACUUM skips
-		 * partitioned tables when no target tables are specified.
+		 * VACUUM and ANALYZE commands.  In MODE_ANALYZE or
+		 * MODE_ANALYZE_IN_STAGES modes, process regular tables, materialized
+		 * views, and partitioned tables, just like ANALYZE (with no specific
+		 * target tables) does. Otherwise, process only regular tables and
+		 * materialized views, since VACUUM skips partitioned tables when no
+		 * target tables are specified.
 		 */
-		if (vacopts->mode == MODE_ANALYZE)
+		if (vacopts->mode == MODE_ANALYZE ||
+			vacopts->mode == MODE_ANALYZE_IN_STAGES)
 			appendPQExpBufferStr(&catalog_query,
 								 " AND c.relkind OPERATOR(pg_catalog.=) ANY (array["
 								 CppAsString2(RELKIND_RELATION) ", "
