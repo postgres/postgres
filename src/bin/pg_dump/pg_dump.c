@@ -7908,8 +7908,6 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	{
 		Oid			indrelid = atooid(PQgetvalue(res, j, i_indrelid));
 		TableInfo  *tbinfo = NULL;
-		char	  **indAttNames = NULL;
-		int			nindAttNames = 0;
 		int			numinds;
 
 		/* Count rows for this table */
@@ -7943,6 +7941,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		{
 			char		contype;
 			char		indexkind;
+			char	  **indAttNames = NULL;
+			int			nindAttNames = 0;
 			RelStatsInfo *relstats;
 			int32		relpages = atoi(PQgetvalue(res, j, i_relpages));
 			int32		relallvisible = atoi(PQgetvalue(res, j, i_relallvisible));
