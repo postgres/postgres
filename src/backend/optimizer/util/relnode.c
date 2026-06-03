@@ -2846,6 +2846,32 @@ eager_aggregation_possible_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	/*
+	 * Similarly, we cannot push a partial aggregation down to a relation on
+	 * the inner (RHS) side of a semi/anti join.  A semi/anti join does not
+	 * preserve its inner rows in the join output, so a partial aggregate
+	 * computed on the inner side would not survive the join and could not be
+	 * combined by the final aggregation.
+	 *
+	 * Note that an anti join reduced from an outer join null-extends its
+	 * inner side, so that inner relation already carries nulling_relids and
+	 * is handled by the outer-join check above.  The case this check adds is
+	 * a semi/anti join that does not null-extend its inner side, such as one
+	 * formed from an EXISTS, IN, NOT EXISTS, or NOT IN sublink.
+	 */
+	foreach(lc, root->join_info_list)
+	{
+		SpecialJoinInfo *sjinfo = lfirst_node(SpecialJoinInfo, lc);
+
+		if (sjinfo->jointype != JOIN_SEMI && sjinfo->jointype != JOIN_ANTI)
+			continue;
+
+		/* rel includes inner-side rels of this join but not its outer side */
+		if (bms_overlap(rel->relids, sjinfo->min_righthand) &&
+			!bms_is_subset(sjinfo->min_lefthand, rel->relids))
+			return false;
+	}
+
+	/*
 	 * For now we don't try to support PlaceHolderVars.
 	 */
 	foreach(lc, rel->reltarget->exprs)

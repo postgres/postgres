@@ -466,6 +466,96 @@ GROUP BY t1.a ORDER BY t1.a;
                      ->  Seq Scan on eager_agg_t1 t1
 (9 rows)
 
+-- Eager aggregation must not push a partial aggregate onto the inner side of a
+-- SEMI or ANTI join
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE NOT EXISTS (SELECT 1 FROM eager_agg_t3 t3 WHERE t3.a = t2.a)
+GROUP BY t2.b ORDER BY t2.b;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sort
+   Output: t2.b, (count(*))
+   Sort Key: t2.b
+   ->  HashAggregate
+         Output: t2.b, count(*)
+         Group Key: t2.b
+         ->  Hash Anti Join
+               Output: t2.b
+               Hash Cond: (t2.a = t3.a)
+               ->  Seq Scan on public.eager_agg_t2 t2
+                     Output: t2.a, t2.b, t2.c
+               ->  Hash
+                     Output: t3.a
+                     ->  Seq Scan on public.eager_agg_t3 t3
+                           Output: t3.a
+(15 rows)
+
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE NOT EXISTS (SELECT 1 FROM eager_agg_t3 t3 WHERE t3.a = t2.a)
+GROUP BY t2.b ORDER BY t2.b;
+ b | count 
+---+-------
+ 0 |   100
+ 1 |    99
+ 2 |    99
+ 3 |    99
+ 4 |    99
+ 5 |    99
+ 6 |    99
+ 7 |    99
+ 8 |    99
+ 9 |    99
+(10 rows)
+
+-- Eager aggregation may still push a partial aggregate onto the outer side of
+-- a SEMI or ANTI join
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE EXISTS (SELECT 1 FROM eager_agg_t1 t1 WHERE t1.b = t2.b)
+GROUP BY t2.b ORDER BY t2.b;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Finalize GroupAggregate
+   Output: t2.b, count(*)
+   Group Key: t2.b
+   ->  Sort
+         Output: t2.b, (PARTIAL count(*))
+         Sort Key: t2.b
+         ->  Hash Right Semi Join
+               Output: t2.b, (PARTIAL count(*))
+               Hash Cond: (t1.b = t2.b)
+               ->  Seq Scan on public.eager_agg_t1 t1
+                     Output: t1.a, t1.b, t1.c
+               ->  Hash
+                     Output: t2.b, (PARTIAL count(*))
+                     ->  Partial HashAggregate
+                           Output: t2.b, PARTIAL count(*)
+                           Group Key: t2.b
+                           ->  Seq Scan on public.eager_agg_t2 t2
+                                 Output: t2.a, t2.b, t2.c
+(18 rows)
+
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE EXISTS (SELECT 1 FROM eager_agg_t1 t1 WHERE t1.b = t2.b)
+GROUP BY t2.b ORDER BY t2.b;
+ b | count 
+---+-------
+ 1 |   100
+ 2 |   100
+ 3 |   100
+ 4 |   100
+ 5 |   100
+ 6 |   100
+ 7 |   100
+ 8 |   100
+ 9 |   100
+(9 rows)
+
 DROP TABLE eager_agg_t1;
 DROP TABLE eager_agg_t2;
 DROP TABLE eager_agg_t3;

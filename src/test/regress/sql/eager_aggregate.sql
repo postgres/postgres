@@ -177,6 +177,32 @@ SELECT t1.a, avg(t2.c) FILTER (WHERE random() > 0.5)
   JOIN eager_agg_t2 t2 ON t1.b = t2.b
 GROUP BY t1.a ORDER BY t1.a;
 
+-- Eager aggregation must not push a partial aggregate onto the inner side of a
+-- SEMI or ANTI join
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE NOT EXISTS (SELECT 1 FROM eager_agg_t3 t3 WHERE t3.a = t2.a)
+GROUP BY t2.b ORDER BY t2.b;
+
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE NOT EXISTS (SELECT 1 FROM eager_agg_t3 t3 WHERE t3.a = t2.a)
+GROUP BY t2.b ORDER BY t2.b;
+
+-- Eager aggregation may still push a partial aggregate onto the outer side of
+-- a SEMI or ANTI join
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE EXISTS (SELECT 1 FROM eager_agg_t1 t1 WHERE t1.b = t2.b)
+GROUP BY t2.b ORDER BY t2.b;
+
+SELECT t2.b, count(*)
+  FROM eager_agg_t2 t2
+  WHERE EXISTS (SELECT 1 FROM eager_agg_t1 t1 WHERE t1.b = t2.b)
+GROUP BY t2.b ORDER BY t2.b;
+
 DROP TABLE eager_agg_t1;
 DROP TABLE eager_agg_t2;
 DROP TABLE eager_agg_t3;

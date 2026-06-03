@@ -1588,6 +1588,17 @@ aggregation.  Pushing partial aggregation in this case may result in
 the rows being grouped differently than expected, or produce incorrect
 values from the aggregate functions.
 
+Semi joins and anti joins impose a similar restriction.  Such a join
+does not preserve its inner rows in the join output, so a partial
+aggregate computed on the inner side would not survive the join and
+could not be combined by the final aggregation.  We therefore do not
+push partial aggregation down to the inner side of a semi/anti join.
+(An anti join reduced from an outer join null-extends its inner side,
+so that inner relation is already excluded by the outer-join condition
+above; the case specifically addressed here is a semi/anti join that
+does not null-extend its inner side, such as one formed from an
+EXISTS, IN, NOT EXISTS, or NOT IN sublink.)
+
 During the construction of the join tree, we evaluate each base or
 join relation to determine if eager aggregation can be applied.  If
 feasible, we create a separate RelOptInfo called a "grouped relation"
