@@ -516,6 +516,7 @@ SELECT covar_pop(1::float8,'nan'::float8), covar_samp(3::float8,'nan'::float8);
 (1 row)
 
 -- check some cases that formerly had poor roundoff-error behavior
+-- note: regr_r2() differs from corr() for a horizontal line, per spec
 SELECT corr(0.09, g), regr_r2(0.09, g)
   FROM generate_series(1, 30) g;
  corr | regr_r2 
@@ -537,38 +538,55 @@ SELECT corr(1.3 + g * 1e-16, 1.3 + g * 1e-16)
      
 (1 row)
 
-SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
+-- check some cases that formerly suffered from internal overflow/underflow
+SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105),
+       regr_r2(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
   FROM generate_series(1, 3) g;
- corr 
-------
-    1
+ corr | regr_r2 
+------+---------
+    1 |       1
 (1 row)
 
-SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
+SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105),
+       regr_r2(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
   FROM generate_series(1, 30) g;
- corr 
-------
-    1
+ corr | regr_r2 
+------+---------
+    1 |       1
+(1 row)
+
+SELECT corr(1e100 + g * 1e95, 1e100 + g * 1e95),
+       regr_r2(1e100 + g * 1e95, 1e100 + g * 1e95)
+  FROM generate_series(1, 2) g;
+ corr | regr_r2 
+------+---------
+    1 |       1
 (1 row)
 
 -- these examples pose definitional questions for NaN inputs,
 -- which we resolve by saying that an all-NaN input column is not all equal
-SELECT corr(g, 'NaN') FROM generate_series(1, 30) g;
- corr 
-------
-  NaN
+SELECT corr(g, 'NaN'), regr_r2(g, 'NaN') FROM generate_series(1, 30) g;
+ corr | regr_r2 
+------+---------
+  NaN |     NaN
 (1 row)
 
-SELECT corr(0.1, 'NaN') FROM generate_series(1, 30) g;
- corr 
-------
-     
+SELECT corr(0.1, 'NaN'), regr_r2(0.1, 'NaN') FROM generate_series(1, 30) g;
+ corr | regr_r2 
+------+---------
+      |       1
 (1 row)
 
-SELECT corr('NaN', 'NaN') FROM generate_series(1, 30) g;
- corr 
-------
-  NaN
+SELECT corr('NaN', 0.1), regr_r2('NaN', 0.1) FROM generate_series(1, 30) g;
+ corr | regr_r2 
+------+---------
+      |        
+(1 row)
+
+SELECT corr('NaN', 'NaN'), regr_r2('NaN', 'NaN') FROM generate_series(1, 30) g;
+ corr | regr_r2 
+------+---------
+  NaN |     NaN
 (1 row)
 
 -- test accum and combine functions directly

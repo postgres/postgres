@@ -141,22 +141,31 @@ SELECT covar_pop(1::float8,'inf'::float8), covar_samp(3::float8,'inf'::float8);
 SELECT covar_pop(1::float8,'nan'::float8), covar_samp(3::float8,'nan'::float8);
 
 -- check some cases that formerly had poor roundoff-error behavior
+-- note: regr_r2() differs from corr() for a horizontal line, per spec
 SELECT corr(0.09, g), regr_r2(0.09, g)
   FROM generate_series(1, 30) g;
 SELECT corr(g, 0.09), regr_r2(g, 0.09), regr_slope(g, 0.09), regr_intercept(g, 0.09)
   FROM generate_series(1, 30) g;
 SELECT corr(1.3 + g * 1e-16, 1.3 + g * 1e-16)
   FROM generate_series(1, 3) g;
-SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
+
+-- check some cases that formerly suffered from internal overflow/underflow
+SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105),
+       regr_r2(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
   FROM generate_series(1, 3) g;
-SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
+SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105),
+       regr_r2(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
   FROM generate_series(1, 30) g;
+SELECT corr(1e100 + g * 1e95, 1e100 + g * 1e95),
+       regr_r2(1e100 + g * 1e95, 1e100 + g * 1e95)
+  FROM generate_series(1, 2) g;
 
 -- these examples pose definitional questions for NaN inputs,
 -- which we resolve by saying that an all-NaN input column is not all equal
-SELECT corr(g, 'NaN') FROM generate_series(1, 30) g;
-SELECT corr(0.1, 'NaN') FROM generate_series(1, 30) g;
-SELECT corr('NaN', 'NaN') FROM generate_series(1, 30) g;
+SELECT corr(g, 'NaN'), regr_r2(g, 'NaN') FROM generate_series(1, 30) g;
+SELECT corr(0.1, 'NaN'), regr_r2(0.1, 'NaN') FROM generate_series(1, 30) g;
+SELECT corr('NaN', 0.1), regr_r2('NaN', 0.1) FROM generate_series(1, 30) g;
+SELECT corr('NaN', 'NaN'), regr_r2('NaN', 'NaN') FROM generate_series(1, 30) g;
 
 -- test accum and combine functions directly
 CREATE TABLE regr_test (x float8, y float8);

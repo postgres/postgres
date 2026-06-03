@@ -3916,7 +3916,12 @@ float8_regr_r2(PG_FUNCTION_ARGS)
 	float8		N,
 				Sxx,
 				Syy,
-				Sxy;
+				Sxy,
+				numerator,
+				denominator,
+				sqrtdenominator,
+				sqrtresult,
+				result;
 
 	transvalues = check_float8_array(transarray, "float8_regr_r2", 8);
 	N = transvalues[0];
@@ -3938,7 +3943,35 @@ float8_regr_r2(PG_FUNCTION_ARGS)
 	if (Syy == 0)
 		PG_RETURN_FLOAT8(1.0);
 
-	PG_RETURN_FLOAT8((Sxy * Sxy) / (Sxx * Syy));
+	/*
+	 * The products Sxy * Sxy and/or Sxx * Syy might underflow or overflow. If
+	 * so, we can recover by computing Sxy / (sqrt(Sxx) * sqrt(Syy)) and
+	 * squaring it instead.  However, the double sqrt() calculation is a bit
+	 * slower and less accurate, so don't do it if we don't have to.
+	 */
+	numerator = Sxy * Sxy;
+	denominator = Sxx * Syy;
+	if (numerator == 0 || isinf(numerator) ||
+		denominator == 0 || isinf(denominator))
+	{
+		sqrtdenominator = sqrt(Sxx) * sqrt(Syy);
+		sqrtresult = Sxy / sqrtdenominator;
+		result = sqrtresult * sqrtresult;
+	}
+	else
+		result = numerator / denominator;
+
+	/*
+	 * Despite all these precautions, this formula can yield results outside
+	 * [0, 1] due to roundoff error.  Clamp it to the expected range.
+	 *
+	 * Note that result is guaranteed to be non-negative becase Sxx and Syy
+	 * are non-negative, so we only need to clamp the upper end of the range.
+	 */
+	if (result > 1)
+		result = 1;
+
+	PG_RETURN_FLOAT8(result);
 }
 
 Datum
