@@ -2030,7 +2030,7 @@ hash_record_extended(PG_FUNCTION_ARGS)
 			locfcinfo->args[0].value = values[i];
 			locfcinfo->args[0].isnull = false;
 			locfcinfo->args[1].value = Int64GetDatum(seed);
-			locfcinfo->args[0].isnull = false;
+			locfcinfo->args[1].isnull = false;
 			element_hash = DatumGetUInt64(FunctionCallInvoke(locfcinfo));
 
 			/* We don't expect hash support functions to return null */
