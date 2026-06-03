@@ -587,35 +587,37 @@ ReplicationSlotRelease(void)
 		 */
 		ReplicationSlotDropAcquired();
 	}
-
-	/*
-	 * If slot needed to temporarily restrain both data and catalog xmin to
-	 * create the catalog snapshot, remove that temporary constraint.
-	 * Snapshots can only be exported while the initial snapshot is still
-	 * acquired.
-	 */
-	if (!TransactionIdIsValid(slot->data.xmin) &&
-		TransactionIdIsValid(slot->effective_xmin))
-	{
-		SpinLockAcquire(&slot->mutex);
-		slot->effective_xmin = InvalidTransactionId;
-		SpinLockRelease(&slot->mutex);
-		ReplicationSlotsComputeRequiredXmin(false);
-	}
-
-	if (slot->data.persistency == RS_PERSISTENT)
+	else
 	{
 		/*
-		 * Mark persistent slot inactive.  We're not freeing it, just
-		 * disconnecting, but wake up others that may be waiting for it.
+		 * If slot needed to temporarily restrain both data and catalog xmin
+		 * to create the catalog snapshot, remove that temporary constraint.
+		 * Snapshots can only be exported while the initial snapshot is still
+		 * acquired.
 		 */
-		SpinLockAcquire(&slot->mutex);
-		slot->active_pid = 0;
-		SpinLockRelease(&slot->mutex);
-		ConditionVariableBroadcast(&slot->active_cv);
-	}
+		if (!TransactionIdIsValid(slot->data.xmin) &&
+			TransactionIdIsValid(slot->effective_xmin))
+		{
+			SpinLockAcquire(&slot->mutex);
+			slot->effective_xmin = InvalidTransactionId;
+			SpinLockRelease(&slot->mutex);
+			ReplicationSlotsComputeRequiredXmin(false);
+		}
 
-	MyReplicationSlot = NULL;
+		if (slot->data.persistency == RS_PERSISTENT)
+		{
+			/*
+			 * Mark persistent slot inactive.  We're not freeing it, just
+			 * disconnecting, but wake up others that may be waiting for it.
+			 */
+			SpinLockAcquire(&slot->mutex);
+			slot->active_pid = 0;
+			SpinLockRelease(&slot->mutex);
+			ConditionVariableBroadcast(&slot->active_cv);
+		}
+
+		MyReplicationSlot = NULL;
+	}
 
 	/* might not have been set when we've been a plain slot */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
