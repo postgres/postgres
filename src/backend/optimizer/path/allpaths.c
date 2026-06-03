@@ -4338,7 +4338,7 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 		/* If subquery uses window functions, check point 4 */
 		if (subquery->hasWindowFuncs &&
 			(safetyInfo->unsafeFlags[tle->resno] &
-			 UNSAFE_NOTIN_DISTINCTON_CLAUSE) == 0 &&
+			 UNSAFE_NOTIN_PARTITIONBY_CLAUSE) == 0 &&
 			!targetIsInAllPartitionLists(tle, subquery))
 		{
 			/* not present in all PARTITION BY clauses, so mark it unsafe */
