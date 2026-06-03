@@ -563,6 +563,18 @@ SELECT corr(1e100 + g * 1e95, 1e100 + g * 1e95),
     1 |       1
 (1 row)
 
+SELECT regr_intercept(y, x) FROM (VALUES (-1e150, 0), (2e150, 3e150)) v(x, y);
+ regr_intercept 
+----------------
+         1e+150
+(1 row)
+
+SELECT regr_intercept(y, x) FROM (VALUES (-1e-131, 0), (2e-131, 3e-131)) v(x, y);
+ regr_intercept 
+----------------
+         1e-131
+(1 row)
+
 -- these examples pose definitional questions for NaN inputs,
 -- which we resolve by saying that an all-NaN input column is not all equal
 SELECT corr(g, 'NaN'), regr_r2(g, 'NaN') FROM generate_series(1, 30) g;

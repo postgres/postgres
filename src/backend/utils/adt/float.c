@@ -4010,7 +4010,8 @@ float8_regr_intercept(PG_FUNCTION_ARGS)
 				Sx,
 				Sxx,
 				Sy,
-				Sxy;
+				Sxy,
+				dy;
 
 	transvalues = check_float8_array(transarray, "float8_regr_intercept", 8);
 	N = transvalues[0];
@@ -4029,7 +4030,41 @@ float8_regr_intercept(PG_FUNCTION_ARGS)
 	if (Sxx == 0)
 		PG_RETURN_NULL();
 
-	PG_RETURN_FLOAT8((Sy - Sx * Sxy / Sxx) / N);
+	/*
+	 * The intercept is given by (Sy - dy) / N, where dy = Sx * Sxy / Sxx.
+	 * However, when computing dy, the intermediate product Sx * Sxy might
+	 * underflow or overflow.  If so, we can recover by decomposing Sx, Sxy,
+	 * and Sxx into normalized mantissa and integer power-of-two components,
+	 * computing the corresponding components of dy, and then recomposing dy.
+	 * We avoid doing this if Sx, Sxy, or Sxx are infinite or NaN, since the
+	 * exponent returned by frexp() is unspecified in those cases (and the
+	 * final result would be the same in any case).
+	 */
+	dy = Sx * Sxy / Sxx;
+	if ((dy == 0 || isinf(dy)) &&
+		!(isinf(Sx) || isinf(Sxy) || isinf(Sxx) ||
+		  isnan(Sx) || isnan(Sxy) || isnan(Sxx)))
+	{
+		float8		m_Sx,
+					m_Sxy,
+					m_Sxx,
+					m_dy;
+		int			n_Sx,
+					n_Sxy,
+					n_Sxx,
+					n_dy;
+
+		m_Sx = frexp(Sx, &n_Sx);
+		m_Sxy = frexp(Sxy, &n_Sxy);
+		m_Sxx = frexp(Sxx, &n_Sxx);
+
+		m_dy = m_Sx * m_Sxy / m_Sxx;
+		n_dy = n_Sx + n_Sxy - n_Sxx;
+
+		dy = ldexp(m_dy, n_dy);
+	}
+
+	PG_RETURN_FLOAT8((Sy - dy) / N);
 }
 
 
