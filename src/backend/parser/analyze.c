@@ -1549,6 +1549,7 @@ transformForPortionOfClause(ParseState *pstate,
 		List	   *funcArgs;
 		Node	   *rangeTLEExpr;
 		TargetEntry *tle;
+		RTEPermissionInfo *target_perminfo = pstate->p_target_nsitem->p_perminfo;
 
 		/*
 		 * Whatever operator is used for intersect by temporal foreign keys,
@@ -1598,14 +1599,9 @@ transformForPortionOfClause(ParseState *pstate,
 							  forPortionOf->range_name, false);
 		result->rangeTargetList = lappend(result->rangeTargetList, tle);
 
-		/*
-		 * The range column will change, but you don't need UPDATE permission
-		 * on it, so we don't add to updatedCols here. XXX: If
-		 * https://www.postgresql.org/message-id/CACJufxEtY1hdLcx%3DFhnqp-ERcV1PhbvELG5COy_CZjoEW76ZPQ%40mail.gmail.com
-		 * is merged (only validate CHECK constraints if they depend on one of
-		 * the columns being UPDATEd), we need to make sure that code knows
-		 * that we are updating the application-time column.
-		 */
+		/* Mark the range column as requiring update permissions */
+		target_perminfo->updatedCols = bms_add_member(target_perminfo->updatedCols,
+													  range_attno - FirstLowInvalidHeapAttributeNumber);
 	}
 	else
 		result->rangeTargetList = NIL;

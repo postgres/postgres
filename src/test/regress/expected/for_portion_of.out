@@ -1365,6 +1365,9 @@ $$;
 CREATE TRIGGER fpo_before_stmt
   BEFORE INSERT OR UPDATE OR DELETE ON for_portion_of_test
   FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
+CREATE TRIGGER fpo_before_stmt1
+  BEFORE UPDATE OF valid_at ON for_portion_of_test
+  FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
 CREATE TRIGGER fpo_after_insert_stmt
   AFTER INSERT ON for_portion_of_test
   FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
@@ -1377,6 +1380,9 @@ CREATE TRIGGER fpo_after_delete_stmt
 -- row triggers:
 CREATE TRIGGER fpo_before_row
   BEFORE INSERT OR UPDATE OR DELETE ON for_portion_of_test
+  FOR EACH ROW EXECUTE PROCEDURE dump_trigger(false, false);
+CREATE TRIGGER fpo_before_row1
+  BEFORE UPDATE OF valid_at ON for_portion_of_test
   FOR EACH ROW EXECUTE PROCEDURE dump_trigger(false, false);
 CREATE TRIGGER fpo_after_insert_row
   AFTER INSERT ON for_portion_of_test
@@ -1394,7 +1400,13 @@ UPDATE for_portion_of_test
 NOTICE:  fpo_before_stmt: BEFORE UPDATE STATEMENT:
 NOTICE:    old: <NULL>
 NOTICE:    new: <NULL>
+NOTICE:  fpo_before_stmt1: BEFORE UPDATE STATEMENT:
+NOTICE:    old: <NULL>
+NOTICE:    new: <NULL>
 NOTICE:  fpo_before_row: BEFORE UPDATE ROW:
+NOTICE:    old: [2019-01-01,2030-01-01)
+NOTICE:    new: [2021-01-01,2022-01-01)
+NOTICE:  fpo_before_row1: BEFORE UPDATE ROW:
 NOTICE:    old: [2019-01-01,2030-01-01)
 NOTICE:    new: [2021-01-01,2022-01-01)
 NOTICE:  fpo_before_stmt: BEFORE INSERT STATEMENT:
@@ -2024,6 +2036,7 @@ SELECT * FROM for_portion_of_test2 ORDER BY id, valid_at;
 DROP TABLE for_portion_of_test2;
 DROP TYPE mydaterange;
 -- Test FOR PORTION OF against a partitioned table.
+-- Include a GENERATED STORED column to test updatedCols column mapping.
 -- temporal_partitioned_1 has the same attnums as the root
 -- temporal_partitioned_3 has the different attnums from the root
 -- temporal_partitioned_5 has the different attnums too, but reversed
@@ -2031,29 +2044,34 @@ CREATE TABLE temporal_partitioned (
   id int4range,
   valid_at daterange,
   name text,
+  range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED,
   CONSTRAINT temporal_paritioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
 CREATE TABLE temporal_partitioned_1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
 CREATE TABLE temporal_partitioned_3 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
 CREATE TABLE temporal_partitioned_5 PARTITION OF temporal_partitioned FOR VALUES IN ('[5,6)', '[6,7)');
 ALTER TABLE temporal_partitioned DETACH PARTITION temporal_partitioned_3;
-ALTER TABLE temporal_partitioned_3 DROP COLUMN id, DROP COLUMN valid_at;
+ALTER TABLE temporal_partitioned_3 DROP COLUMN id, DROP COLUMN valid_at CASCADE;
+NOTICE:  drop cascades to column range_len of table temporal_partitioned_3
 ALTER TABLE temporal_partitioned_3 ADD COLUMN id int4range NOT NULL, ADD COLUMN valid_at daterange NOT NULL;
+ALTER TABLE temporal_partitioned_3 ADD COLUMN range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED;
 ALTER TABLE temporal_partitioned ATTACH PARTITION temporal_partitioned_3 FOR VALUES IN ('[3,4)', '[4,5)');
 ALTER TABLE temporal_partitioned DETACH PARTITION temporal_partitioned_5;
-ALTER TABLE temporal_partitioned_5 DROP COLUMN id, DROP COLUMN valid_at;
+ALTER TABLE temporal_partitioned_5 DROP COLUMN id, DROP COLUMN valid_at CASCADE;
+NOTICE:  drop cascades to column range_len of table temporal_partitioned_5
 ALTER TABLE temporal_partitioned_5 ADD COLUMN valid_at daterange NOT NULL, ADD COLUMN id int4range NOT NULL;
+ALTER TABLE temporal_partitioned_5 ADD COLUMN range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED;
 ALTER TABLE temporal_partitioned ATTACH PARTITION temporal_partitioned_5 FOR VALUES IN ('[5,6)', '[6,7)');
 INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
   ('[1,2)', daterange('2000-01-01', '2010-01-01'), 'one'),
   ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three'),
   ('[5,6)', daterange('2000-01-01', '2010-01-01'), 'five');
 SELECT * FROM temporal_partitioned;
-  id   |        valid_at         | name  
--------+-------------------------+-------
- [1,2) | [2000-01-01,2010-01-01) | one
- [3,4) | [2000-01-01,2010-01-01) | three
- [5,6) | [2000-01-01,2010-01-01) | five
+  id   |        valid_at         | name  | range_len 
+-------+-------------------------+-------+-----------
+ [1,2) | [2000-01-01,2010-01-01) | one   |      3653
+ [3,4) | [2000-01-01,2010-01-01) | three |      3653
+ [5,6) | [2000-01-01,2010-01-01) | five  |      3653
 (3 rows)
 
 -- Update without moving within partition 1
@@ -2084,54 +2102,54 @@ UPDATE temporal_partitioned FOR PORTION OF valid_at FROM '2000-06-01' TO '2000-0
       id = '[3,4)'
   WHERE id = '[5,6)';
 -- Update all partitions at once (each with leftovers)
-SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
-  id   |        valid_at         |  name   
--------+-------------------------+---------
- [1,2) | [2000-01-01,2000-03-01) | one
- [1,2) | [2000-03-01,2000-04-01) | one^1
- [1,2) | [2000-04-01,2000-06-01) | one
- [1,2) | [2000-07-01,2010-01-01) | one
- [2,3) | [2000-06-01,2000-07-01) | three^2
- [3,4) | [2000-01-01,2000-03-01) | three
- [3,4) | [2000-03-01,2000-04-01) | three^1
- [3,4) | [2000-04-01,2000-06-01) | three
- [3,4) | [2000-06-01,2000-07-01) | five^2
- [3,4) | [2000-07-01,2010-01-01) | three
- [4,5) | [2000-06-01,2000-07-01) | one^2
- [5,6) | [2000-01-01,2000-03-01) | five
- [5,6) | [2000-03-01,2000-04-01) | five^1
- [5,6) | [2000-04-01,2000-06-01) | five
- [5,6) | [2000-07-01,2010-01-01) | five
+SELECT *, upper(valid_at) - lower(valid_at) FROM temporal_partitioned ORDER BY id, valid_at;
+  id   |        valid_at         |  name   | range_len | ?column? 
+-------+-------------------------+---------+-----------+----------
+ [1,2) | [2000-01-01,2000-03-01) | one     |        60 |       60
+ [1,2) | [2000-03-01,2000-04-01) | one^1   |        31 |       31
+ [1,2) | [2000-04-01,2000-06-01) | one     |        61 |       61
+ [1,2) | [2000-07-01,2010-01-01) | one     |      3471 |     3471
+ [2,3) | [2000-06-01,2000-07-01) | three^2 |        30 |       30
+ [3,4) | [2000-01-01,2000-03-01) | three   |        60 |       60
+ [3,4) | [2000-03-01,2000-04-01) | three^1 |        31 |       31
+ [3,4) | [2000-04-01,2000-06-01) | three   |        61 |       61
+ [3,4) | [2000-06-01,2000-07-01) | five^2  |        30 |       30
+ [3,4) | [2000-07-01,2010-01-01) | three   |      3471 |     3471
+ [4,5) | [2000-06-01,2000-07-01) | one^2   |        30 |       30
+ [5,6) | [2000-01-01,2000-03-01) | five    |        60 |       60
+ [5,6) | [2000-03-01,2000-04-01) | five^1  |        31 |       31
+ [5,6) | [2000-04-01,2000-06-01) | five    |        61 |       61
+ [5,6) | [2000-07-01,2010-01-01) | five    |      3471 |     3471
 (15 rows)
 
 SELECT * FROM temporal_partitioned_1 ORDER BY id, valid_at;
-  id   |        valid_at         |  name   
--------+-------------------------+---------
- [1,2) | [2000-01-01,2000-03-01) | one
- [1,2) | [2000-03-01,2000-04-01) | one^1
- [1,2) | [2000-04-01,2000-06-01) | one
- [1,2) | [2000-07-01,2010-01-01) | one
- [2,3) | [2000-06-01,2000-07-01) | three^2
+  id   |        valid_at         |  name   | range_len 
+-------+-------------------------+---------+-----------
+ [1,2) | [2000-01-01,2000-03-01) | one     |        60
+ [1,2) | [2000-03-01,2000-04-01) | one^1   |        31
+ [1,2) | [2000-04-01,2000-06-01) | one     |        61
+ [1,2) | [2000-07-01,2010-01-01) | one     |      3471
+ [2,3) | [2000-06-01,2000-07-01) | three^2 |        30
 (5 rows)
 
 SELECT * FROM temporal_partitioned_3 ORDER BY id, valid_at;
-  name   |  id   |        valid_at         
----------+-------+-------------------------
- three   | [3,4) | [2000-01-01,2000-03-01)
- three^1 | [3,4) | [2000-03-01,2000-04-01)
- three   | [3,4) | [2000-04-01,2000-06-01)
- five^2  | [3,4) | [2000-06-01,2000-07-01)
- three   | [3,4) | [2000-07-01,2010-01-01)
- one^2   | [4,5) | [2000-06-01,2000-07-01)
+  name   |  id   |        valid_at         | range_len 
+---------+-------+-------------------------+-----------
+ three   | [3,4) | [2000-01-01,2000-03-01) |        60
+ three^1 | [3,4) | [2000-03-01,2000-04-01) |        31
+ three   | [3,4) | [2000-04-01,2000-06-01) |        61
+ five^2  | [3,4) | [2000-06-01,2000-07-01) |        30
+ three   | [3,4) | [2000-07-01,2010-01-01) |      3471
+ one^2   | [4,5) | [2000-06-01,2000-07-01) |        30
 (6 rows)
 
 SELECT * FROM temporal_partitioned_5 ORDER BY id, valid_at;
-  name  |        valid_at         |  id   
---------+-------------------------+-------
- five   | [2000-01-01,2000-03-01) | [5,6)
- five^1 | [2000-03-01,2000-04-01) | [5,6)
- five   | [2000-04-01,2000-06-01) | [5,6)
- five   | [2000-07-01,2010-01-01) | [5,6)
+  name  |        valid_at         |  id   | range_len 
+--------+-------------------------+-------+-----------
+ five   | [2000-01-01,2000-03-01) | [5,6) |        60
+ five^1 | [2000-03-01,2000-04-01) | [5,6) |        31
+ five   | [2000-04-01,2000-06-01) | [5,6) |        61
+ five   | [2000-07-01,2010-01-01) | [5,6) |      3471
 (4 rows)
 
 DROP TABLE temporal_partitioned;
@@ -2190,4 +2208,84 @@ SELECT * FROM fpo_rule ORDER BY f1;
 (2 rows)
 
 DROP TABLE fpo_rule;
+-- UPDATE FOR PORTION OF with generated stored columns
+-- The generated column depends on the range column, so it must be
+-- recomputed when FOR PORTION OF narrows the range.
+CREATE TABLE fpo_generated (
+  id int,
+  valid_at int4range,
+  range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED,
+  range_lenv int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at))
+);
+INSERT INTO fpo_generated (id, valid_at) VALUES (1, '[10,100)');
+SELECT * FROM fpo_generated ORDER BY valid_at;
+ id | valid_at | range_len | range_lenv 
+----+----------+-----------+------------
+  1 | [10,100) |        90 |         90
+(1 row)
+
+-- After the FOR PORTION OF (FPO) update, all three resulting rows
+-- (leftover-before, updated, and leftover-after) must contain the correct
+-- values for range_len and range_lenv.
+UPDATE fpo_generated
+  FOR PORTION OF valid_at FROM 30 TO 70
+  SET id = 2;
+SELECT * FROM fpo_generated ORDER BY valid_at;
+ id | valid_at | range_len | range_lenv 
+----+----------+-----------+------------
+  1 | [10,30)  |        20 |         20
+  2 | [30,70)  |        40 |         40
+  1 | [70,100) |        30 |         30
+(3 rows)
+
+-- Also test with a generated column that references both a SET column
+-- and the range column.
+DROP TABLE fpo_generated;
+CREATE TABLE fpo_generated (
+  id int,
+  valid_at int4range,
+  id_plus_len int GENERATED ALWAYS AS (id + upper(valid_at) - lower(valid_at)) STORED,
+  id_plus_lenv int GENERATED ALWAYS AS (id + upper(valid_at) - lower(valid_at))
+);
+INSERT INTO fpo_generated (id, valid_at) VALUES (1, '[10,100)');
+SELECT * FROM fpo_generated ORDER BY valid_at;
+ id | valid_at | id_plus_len | id_plus_lenv 
+----+----------+-------------+--------------
+  1 | [10,100) |          91 |           91
+(1 row)
+
+UPDATE fpo_generated
+  FOR PORTION OF valid_at FROM 30 TO 70
+  SET id = 2;
+SELECT * FROM fpo_generated ORDER BY valid_at;
+ id | valid_at | id_plus_len | id_plus_lenv 
+----+----------+-------------+--------------
+  1 | [10,30)  |          21 |           21
+  2 | [30,70)  |          42 |           42
+  1 | [70,100) |          31 |           31
+(3 rows)
+
+DROP TABLE fpo_generated;
+-- Test that UPDATE OF colname triggers fire if colname is valid_at:
+CREATE TABLE fpo_update_of_trigger (
+  id int,
+  valid_at int4range
+);
+INSERT INTO fpo_update_of_trigger (id, valid_at) VALUES (1, '[10,100)');
+CREATE TRIGGER fpo_before_row1
+  BEFORE UPDATE OF valid_at ON fpo_update_of_trigger
+  FOR EACH ROW EXECUTE PROCEDURE dump_trigger(false, false);
+CREATE TRIGGER fpo_before_row2
+  BEFORE UPDATE OF valid_at ON fpo_update_of_trigger
+  FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
+UPDATE fpo_update_of_trigger
+  FOR PORTION OF valid_at FROM 30 TO 70
+  SET id = 2;
+NOTICE:  fpo_before_row2: BEFORE UPDATE STATEMENT:
+NOTICE:    old: <NULL>
+NOTICE:    new: <NULL>
+NOTICE:  fpo_before_row1: BEFORE UPDATE ROW:
+NOTICE:    old: [10,100)
+NOTICE:    new: [30,70)
+DROP TABLE fpo_update_of_trigger;
 RESET datestyle;

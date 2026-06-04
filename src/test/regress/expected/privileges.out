@@ -1152,15 +1152,25 @@ CREATE TABLE t1 (
   valid_at tsrange,
 	CONSTRAINT t1pk PRIMARY KEY (c1, valid_at WITHOUT OVERLAPS)
 );
--- UPDATE requires select permission on the valid_at column (but not update):
+-- UPDATE requires select and update permission on the valid_at column:
 GRANT SELECT (c1) ON t1 TO regress_priv_user2;
 GRANT UPDATE (c1) ON t1 TO regress_priv_user2;
 GRANT SELECT (c1, valid_at) ON t1 TO regress_priv_user3;
 GRANT UPDATE (c1) ON t1 TO regress_priv_user3;
+GRANT SELECT (c1) ON t1 TO regress_priv_user4;
+GRANT UPDATE (c1, valid_at) ON t1 TO regress_priv_user4;
+GRANT SELECT (c1, valid_at) ON t1 TO regress_priv_user5;
+GRANT UPDATE (c1, valid_at) ON t1 TO regress_priv_user5;
 SET SESSION AUTHORIZATION regress_priv_user2;
 UPDATE t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01' SET c1 = '[2,3)';
 ERROR:  permission denied for table t1
 SET SESSION AUTHORIZATION regress_priv_user3;
+UPDATE t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01' SET c1 = '[2,3)';
+ERROR:  permission denied for table t1
+SET SESSION AUTHORIZATION regress_priv_user4;
+UPDATE t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01' SET c1 = '[2,3)';
+ERROR:  permission denied for table t1
+SET SESSION AUTHORIZATION regress_priv_user5;
 UPDATE t1 FOR PORTION OF valid_at FROM '2000-01-01' TO '2001-01-01' SET c1 = '[2,3)';
 SET SESSION AUTHORIZATION regress_priv_user1;
 -- DELETE requires select permission on the valid_at column:

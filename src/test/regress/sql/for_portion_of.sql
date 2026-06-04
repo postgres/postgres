@@ -913,6 +913,10 @@ CREATE TRIGGER fpo_before_stmt
   BEFORE INSERT OR UPDATE OR DELETE ON for_portion_of_test
   FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
 
+CREATE TRIGGER fpo_before_stmt1
+  BEFORE UPDATE OF valid_at ON for_portion_of_test
+  FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
+
 CREATE TRIGGER fpo_after_insert_stmt
   AFTER INSERT ON for_portion_of_test
   FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
@@ -929,6 +933,10 @@ CREATE TRIGGER fpo_after_delete_stmt
 
 CREATE TRIGGER fpo_before_row
   BEFORE INSERT OR UPDATE OR DELETE ON for_portion_of_test
+  FOR EACH ROW EXECUTE PROCEDURE dump_trigger(false, false);
+
+CREATE TRIGGER fpo_before_row1
+  BEFORE UPDATE OF valid_at ON for_portion_of_test
   FOR EACH ROW EXECUTE PROCEDURE dump_trigger(false, false);
 
 CREATE TRIGGER fpo_after_insert_row
@@ -1330,6 +1338,7 @@ DROP TABLE for_portion_of_test2;
 DROP TYPE mydaterange;
 
 -- Test FOR PORTION OF against a partitioned table.
+-- Include a GENERATED STORED column to test updatedCols column mapping.
 -- temporal_partitioned_1 has the same attnums as the root
 -- temporal_partitioned_3 has the different attnums from the root
 -- temporal_partitioned_5 has the different attnums too, but reversed
@@ -1338,6 +1347,7 @@ CREATE TABLE temporal_partitioned (
   id int4range,
   valid_at daterange,
   name text,
+  range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED,
   CONSTRAINT temporal_paritioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
 CREATE TABLE temporal_partitioned_1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
@@ -1345,13 +1355,15 @@ CREATE TABLE temporal_partitioned_3 PARTITION OF temporal_partitioned FOR VALUES
 CREATE TABLE temporal_partitioned_5 PARTITION OF temporal_partitioned FOR VALUES IN ('[5,6)', '[6,7)');
 
 ALTER TABLE temporal_partitioned DETACH PARTITION temporal_partitioned_3;
-ALTER TABLE temporal_partitioned_3 DROP COLUMN id, DROP COLUMN valid_at;
+ALTER TABLE temporal_partitioned_3 DROP COLUMN id, DROP COLUMN valid_at CASCADE;
 ALTER TABLE temporal_partitioned_3 ADD COLUMN id int4range NOT NULL, ADD COLUMN valid_at daterange NOT NULL;
+ALTER TABLE temporal_partitioned_3 ADD COLUMN range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED;
 ALTER TABLE temporal_partitioned ATTACH PARTITION temporal_partitioned_3 FOR VALUES IN ('[3,4)', '[4,5)');
 
 ALTER TABLE temporal_partitioned DETACH PARTITION temporal_partitioned_5;
-ALTER TABLE temporal_partitioned_5 DROP COLUMN id, DROP COLUMN valid_at;
+ALTER TABLE temporal_partitioned_5 DROP COLUMN id, DROP COLUMN valid_at CASCADE;
 ALTER TABLE temporal_partitioned_5 ADD COLUMN valid_at daterange NOT NULL, ADD COLUMN id int4range NOT NULL;
+ALTER TABLE temporal_partitioned_5 ADD COLUMN range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED;
 ALTER TABLE temporal_partitioned ATTACH PARTITION temporal_partitioned_5 FOR VALUES IN ('[5,6)', '[6,7)');
 
 INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
@@ -1396,7 +1408,7 @@ UPDATE temporal_partitioned FOR PORTION OF valid_at FROM '2000-06-01' TO '2000-0
 
 -- Update all partitions at once (each with leftovers)
 
-SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
+SELECT *, upper(valid_at) - lower(valid_at) FROM temporal_partitioned ORDER BY id, valid_at;
 SELECT * FROM temporal_partitioned_1 ORDER BY id, valid_at;
 SELECT * FROM temporal_partitioned_3 ORDER BY id, valid_at;
 SELECT * FROM temporal_partitioned_5 ORDER BY id, valid_at;
@@ -1435,5 +1447,63 @@ UPDATE fpo_rule FOR PORTION OF f2 FROM 9 TO 10 SET f1 = 3;
 SELECT * FROM fpo_rule ORDER BY f1;
 
 DROP TABLE fpo_rule;
+
+-- UPDATE FOR PORTION OF with generated stored columns
+-- The generated column depends on the range column, so it must be
+-- recomputed when FOR PORTION OF narrows the range.
+CREATE TABLE fpo_generated (
+  id int,
+  valid_at int4range,
+  range_len int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at)) STORED,
+  range_lenv int GENERATED ALWAYS AS (upper(valid_at) - lower(valid_at))
+);
+INSERT INTO fpo_generated (id, valid_at) VALUES (1, '[10,100)');
+
+SELECT * FROM fpo_generated ORDER BY valid_at;
+
+-- After the FOR PORTION OF (FPO) update, all three resulting rows
+-- (leftover-before, updated, and leftover-after) must contain the correct
+-- values for range_len and range_lenv.
+UPDATE fpo_generated
+  FOR PORTION OF valid_at FROM 30 TO 70
+  SET id = 2;
+
+SELECT * FROM fpo_generated ORDER BY valid_at;
+
+-- Also test with a generated column that references both a SET column
+-- and the range column.
+DROP TABLE fpo_generated;
+CREATE TABLE fpo_generated (
+  id int,
+  valid_at int4range,
+  id_plus_len int GENERATED ALWAYS AS (id + upper(valid_at) - lower(valid_at)) STORED,
+  id_plus_lenv int GENERATED ALWAYS AS (id + upper(valid_at) - lower(valid_at))
+);
+
+INSERT INTO fpo_generated (id, valid_at) VALUES (1, '[10,100)');
+SELECT * FROM fpo_generated ORDER BY valid_at;
+
+UPDATE fpo_generated
+  FOR PORTION OF valid_at FROM 30 TO 70
+  SET id = 2;
+SELECT * FROM fpo_generated ORDER BY valid_at;
+DROP TABLE fpo_generated;
+
+-- Test that UPDATE OF colname triggers fire if colname is valid_at:
+CREATE TABLE fpo_update_of_trigger (
+  id int,
+  valid_at int4range
+);
+INSERT INTO fpo_update_of_trigger (id, valid_at) VALUES (1, '[10,100)');
+CREATE TRIGGER fpo_before_row1
+  BEFORE UPDATE OF valid_at ON fpo_update_of_trigger
+  FOR EACH ROW EXECUTE PROCEDURE dump_trigger(false, false);
+CREATE TRIGGER fpo_before_row2
+  BEFORE UPDATE OF valid_at ON fpo_update_of_trigger
+  FOR EACH STATEMENT EXECUTE PROCEDURE dump_trigger(false, false);
+UPDATE fpo_update_of_trigger
+  FOR PORTION OF valid_at FROM 30 TO 70
+  SET id = 2;
+DROP TABLE fpo_update_of_trigger;
 
 RESET datestyle;
