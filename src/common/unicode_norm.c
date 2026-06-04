@@ -236,7 +236,7 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
 	/* Check if two current characters are LV and T */
 	else if (start >= SBASE && start < (SBASE + SCOUNT) &&
 			 ((start - SBASE) % TCOUNT) == 0 &&
-			 code >= TBASE && code < (TBASE + TCOUNT))
+			 code > TBASE && code < (TBASE + TCOUNT))
 	{
 		/* make syllable of form LVT */
 		uint32		tindex = code - TBASE;
