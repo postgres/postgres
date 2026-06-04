@@ -143,6 +143,14 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 		sql => "SELECT 'connect2_3'",
 		expected_stdout => qr/connect2_3/);
 
+	my $srvfile_empty_win_cared = $srvfile_empty;
+	$srvfile_empty_win_cared =~ s/\\/\\\\/g;
+	$dummy_node->connect_ok(
+		q{service=my_srv servicefile='} . $srvfile_empty_win_cared . q{'},
+		'SERVICEFILE updated when service is found in default pg_service.conf',
+		sql => '\echo :SERVICEFILE',
+		expected_stdout => qr/^\Q$srvfile_default\E$/);
+
 	local $ENV{PGSERVICE} = 'undefined-service';
 	$dummy_node->connect_fails(
 		'',

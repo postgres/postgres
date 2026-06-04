@@ -6050,6 +6050,18 @@ next_file:
 	if (status != 0)
 		return status;
 
+	/* Update servicefile to the file that actually supplied the service */
+	if (group_found && service_fname != NULL &&
+		conninfo_storeval(options, "servicefile", serviceFile,
+						  errorMessage, false, false) == NULL)
+	{
+		/*
+		 * conninfo_storeval already set an error message, that could be only
+		 * an OOM.
+		 */
+		return 3;
+	}
+
 last_file:
 	if (!group_found)
 	{
