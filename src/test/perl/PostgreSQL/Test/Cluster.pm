@@ -363,9 +363,8 @@ This tries to connect to the server, to test whether it works or not,,
 so the server is up and running. Otherwise this can return 0 even if
 there's nothing wrong with raw_connect() itself.
 
-Notably, raw_connect() does not work on Unix domain sockets on
-Strawberry perl 5.26.3.1 on Windows, which we use in Cirrus CI images
-as of this writing. It dies with "not implemented on this
+Notably, raw_connect() does not work on Unix domain sockets on at least
+Strawberry perl 5.26.3.1 on Windows. It dies with "not implemented on this
 architecture".
 
 =cut
