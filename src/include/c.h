@@ -1340,6 +1340,17 @@ typedef struct PGAlignedXLogBlock PGAlignedXLogBlock;
 #if (defined(__x86_64__) || defined(_M_AMD64))
 #define USE_SSE2
 
+#else							/* ! x86_64 */
+
+/*
+ * In "universal" macOS builds, it's possible for AVX-related symbols to
+ * get defined if the build host is x86_64, but we mustn't try to build
+ * that code when cross-compiling to aarch64.
+ */
+#undef USE_AVX2_WITH_RUNTIME_CHECK
+#undef USE_AVX512_CRC32C_WITH_RUNTIME_CHECK
+#undef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
+
 /*
  * We use the Neon instructions if the compiler provides access to them (as
  * indicated by __ARM_NEON) and we are on aarch64.  While Neon support is
@@ -1348,9 +1359,10 @@ typedef struct PGAlignedXLogBlock PGAlignedXLogBlock;
  * could not realistically use it there without a run-time check, which seems
  * not worth the trouble for now.
  */
-#elif defined(__aarch64__) && defined(__ARM_NEON)
+#if defined(__aarch64__) && defined(__ARM_NEON)
 #define USE_NEON
 #endif
+#endif							/* x86_64 */
 
 /* ----------------------------------------------------------------
  *				Section 9: system-specific hacks
