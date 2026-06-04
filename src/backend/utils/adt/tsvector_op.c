@@ -207,17 +207,10 @@ tsvector_length(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(ret);
 }
 
-Datum
-tsvector_setweight(PG_FUNCTION_ARGS)
+static int
+parse_weight(char cw)
 {
-	TSVector	in = PG_GETARG_TSVECTOR(0);
-	char		cw = PG_GETARG_CHAR(1);
-	TSVector	out;
-	int			i,
-				j;
-	WordEntry  *entry;
-	WordEntryPos *p;
-	int			w = 0;
+	int			w;
 
 	switch (cw)
 	{
@@ -238,9 +231,32 @@ tsvector_setweight(PG_FUNCTION_ARGS)
 			w = 0;
 			break;
 		default:
-			/* internal error */
-			elog(ERROR, "unrecognized weight: %d", cw);
+			/* Avoid printing non-ASCII bytes, else we have encoding issues */
+			if (cw >= ' ' && cw < 0x7f)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized weight: \"%c\"", cw)));
+			else				/* use \ooo format, like charout() */
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized weight: \"\\%03o\"",
+								(unsigned char) cw)));
 	}
+	return w;
+}
+
+
+Datum
+tsvector_setweight(PG_FUNCTION_ARGS)
+{
+	TSVector	in = PG_GETARG_TSVECTOR(0);
+	char		cw = PG_GETARG_CHAR(1);
+	TSVector	out;
+	int			i,
+				j;
+	WordEntry  *entry;
+	WordEntryPos *p;
+	int			w = parse_weight(cw);
 
 	out = (TSVector) palloc(VARSIZE(in));
 	memcpy(out, in, VARSIZE(in));
@@ -285,28 +301,7 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 	Datum	   *dlexemes;
 	bool	   *nulls;
 
-	switch (char_weight)
-	{
-		case 'A':
-		case 'a':
-			weight = 3;
-			break;
-		case 'B':
-		case 'b':
-			weight = 2;
-			break;
-		case 'C':
-		case 'c':
-			weight = 1;
-			break;
-		case 'D':
-		case 'd':
-			weight = 0;
-			break;
-		default:
-			/* internal error */
-			elog(ERROR, "unrecognized weight: %c", char_weight);
-	}
+	weight = parse_weight(char_weight);
 
 	tsout = (TSVector) palloc(VARSIZE(tsin));
 	memcpy(tsout, tsin, VARSIZE(tsin));
@@ -846,29 +841,7 @@ tsvector_filter(PG_FUNCTION_ARGS)
 					 errmsg("weight array may not contain nulls")));
 
 		char_weight = DatumGetChar(dweights[i]);
-		switch (char_weight)
-		{
-			case 'A':
-			case 'a':
-				mask = mask | 8;
-				break;
-			case 'B':
-			case 'b':
-				mask = mask | 4;
-				break;
-			case 'C':
-			case 'c':
-				mask = mask | 2;
-				break;
-			case 'D':
-			case 'd':
-				mask = mask | 1;
-				break;
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized weight: \"%c\"", char_weight)));
-		}
+		mask |= 1 << parse_weight(char_weight);
 	}
 
 	tsout = (TSVector) palloc0(VARSIZE(tsin));
