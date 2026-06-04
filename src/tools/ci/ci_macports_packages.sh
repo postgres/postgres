@@ -6,7 +6,8 @@
 # when packages are installed or removed.  Any package this script is
 # not instructed to install, will be removed again.
 #
-# This currently expects to be run in a macos cirrus-ci environment.
+# This currently expects to be run in a GitHub Actions or cirrus-ci
+# macOS environment.
 
 set -e
 # set -x
@@ -20,13 +21,26 @@ echo "macOS major version: $macos_major_version"
 # macOS release.
 macports_release_list_url="https://api.github.com/repos/macports/macports-base/releases"
 macports_version_pattern="2\.10\.1"
-macports_url="$( curl -s $macports_release_list_url | grep "\"https://github.com/macports/macports-base/releases/download/v$macports_version_pattern/MacPorts-$macports_version_pattern-$macos_major_version-[A-Za-z]*\.pkg\"" | sed 's/.*: "//;s/".*//' | head -1 )"
+# Authenticate the GitHub API request when a token is available (e.g. on
+# GitHub Actions). Unauthenticated requests share a 60/h/IP rate limit
+# with every other job on the runner's IP and frequently return an error
+# JSON, leaving $macports_url empty and breaking the subsequent curl.
+auth_header=""
+if [ -n "$GITHUB_TOKEN" ]; then
+    auth_header="Authorization: Bearer $GITHUB_TOKEN"
+fi
+macports_url="$( curl -fsSL ${auth_header:+-H "$auth_header"} "$macports_release_list_url" | grep "\"https://github.com/macports/macports-base/releases/download/v$macports_version_pattern/MacPorts-$macports_version_pattern-$macos_major_version-[A-Za-z]*\.pkg\"" | sed 's/.*: "//;s/".*//' | head -1 )"
 echo "MacPorts package URL: $macports_url"
+
+if [ -z "$macports_url" ]; then
+    echo "error: could not determine MacPorts package URL for macOS $macos_major_version (version pattern: $macports_version_pattern)" 1>&2
+    exit 1
+fi
 
 cache_dmg="macports.hfs.dmg"
 
-if [ "$CIRRUS_CI" != "true" ]; then
-    echo "expect to be called within cirrus-ci" 1>2
+if [ "$CIRRUS_CI" != "true" ] && [ "$GITHUB_ACTIONS" != "true" ]; then
+    echo "expect to be called within cirrus-ci or GitHub Actions" 1>&2
     exit 1
 fi
 

@@ -17,42 +17,52 @@ Postgres has two forms of CI:
 Configuring CI on personal repositories
 =======================================
 
-Currently postgres contains CI support utilizing cirrus-ci. cirrus-ci
-currently is only available for github.
+Currently postgres contains CI support utilizing GitHub Actions.
 
 
-Enabling cirrus-ci in a github repository
+Configuring CI use for a GitHub repository
+==========================================
+
+The GitHub Actions based CI workflow may or may not be active by default,
+depending on when the repository was forked.
+
+To disable the CI workflow on a repository, navigate to
+https://github.com/<username>/<reponame>/actions/workflows/pg-ci.yml
+and click on the '...' on the top right and choose 'Disable workflow'.
+
+To enable the workflow, go to the same page and click on "Enable workflow" at
+the top.
+
+However, to avoid issues with the thousands of forks of the postgres/postgres
+repository starting to run CI the next time the forks re-synchronize with the
+postgres/postgres, each repository needs to explicitly opt-in to actually run
+the full CI tests.
+
+To opt into CI, go to
+https://github.com/<username>/<reponame>/settings/variables/actions and
+create a new repository variable named PG_CI_ENABLED, with the value 1.
+
+
+Viewing CI results in a GitHub repository
 =========================================
 
-To enable cirrus-ci on a repository, go to
-https://github.com/marketplace/cirrus-ci and select "Public
-Repositories". Then "Install it for free" and "Complete order". The next page
-allows to configure which repositories cirrus-ci has access to. Choose the
-relevant repository and "Install".
+CI runs are visible at https://github.com/<username>/<reponame>/actions
 
-See also https://cirrus-ci.org/guide/quick-start/
-
-Once enabled on a repository, future commits and pull-requests in that
-repository will automatically trigger CI builds. These are visible from the
-commit history / PRs, and can also be viewed in the cirrus-ci UI at
-https://cirrus-ci.com/github/<username>/<reponame>/
-
-Hint: all build log files are uploaded to cirrus-ci and can be downloaded
-from the "Artifacts" section from the cirrus-ci UI after clicking into a
-specific task on a build's summary page.
+The high-level status of workflow runs on public repositories are visible
+without being logged into GitHub, however details including logs require being
+logged in.
 
 
-Images used for CI
-==================
+Containers / Images used for CI
+===============================
 
-To keep CI times tolerable, most platforms use pre-generated images. Some
-platforms use containers, others use full VMs. Images for both are generated
-separately from CI runs, otherwise each git repository that is being tested
-would need to build its own set of containers, which would be wasteful (both
-in space and time.
+To keep CI times tolerable, several platforms use pre-generated containers /
+images. The containers and images are generated separately from CI runs,
+otherwise each git repository that is being tested would need to build its own
+set of containers, which would be wasteful (both in space and time).
 
-These images are built, on a daily basis, from the specifications in
-github.com/anarazel/pg-vm-images/
+These containers / images are built, on a daily basis, from the specifications
+in github.com/anarazel/pg-vm-images/
 
 
 Controlling CI via commit messages
@@ -61,35 +71,7 @@ Controlling CI via commit messages
 The behavior of CI can be controlled by special content in commit
 messages. Currently the following controls are available:
 
-- ci-os-only: {(freebsd|linux|macos|mingw|netbsd|openbsd|windows)}
+- ci-os-only: {(compilerwarnings|linux|macos|mingw|sanitycheck|windows)}
 
   Only runs CI on operating systems specified. This can be useful when
   addressing portability issues affecting only a subset of platforms.
-
-
-Using custom compute resources for CI
-=====================================
-
-When running a lot of tests in a repository, cirrus-ci's free credits do not
-suffice. In those cases a repository can be configured to use other
-infrastructure for running tests. To do so, the REPO_CI_CONFIG_GIT_URL
-variable can be configured for the repository in the cirrus-ci web interface,
-at https://cirrus-ci.com/github/<user or organization>. The file referenced
-(see https://cirrus-ci.org/guide/programming-tasks/#fs) by the variable can
-overwrite the default execution method for different operating systems,
-defined in .cirrus.yml, by redefining the relevant yaml anchors.
-
-Custom compute resources can be provided using
-- https://cirrus-ci.org/guide/supported-computing-services/
-- https://cirrus-ci.org/guide/persistent-workers/
-
-
-Enabling manual tasks by default
-================================
-
-Some tasks are not triggered automatically by default, to avoid using up CI
-credits too quickly. This can be changed on the repository level, e.g. when
-custom compute resources are configured.
-
-The following repository level environment variables are recognized:
-- REPO_CI_AUTOMATIC_TRIGGER_TASKS - space-separated list of (mingw|netbsd|openbsd)
