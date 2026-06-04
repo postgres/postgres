@@ -1169,6 +1169,44 @@ SELECT * FROM for_portion_of_test WHERE id = '[4,5)' ORDER BY id, valid_at;
 
 DROP TRIGGER fpo_after_delete_row ON for_portion_of_test;
 
+-- Test that a tuple-modifying BEFORE INSERT ROW trigger acts
+-- consistently on both temporal leftovers.
+-- When FOR PORTION OF splits a row into two leftovers, both triggers
+-- should get the original row's values.
+
+DROP TABLE for_portion_of_test;
+CREATE TABLE for_portion_of_test (
+  id int,
+  valid_at daterange,
+  name text
+);
+
+CREATE FUNCTION fpo_append_name_suffix()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+$$
+BEGIN
+  NEW.name := NEW.name || '+insert';
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER fpo_before_insert_row
+  BEFORE INSERT ON for_portion_of_test
+  FOR EACH ROW EXECUTE PROCEDURE fpo_append_name_suffix();
+
+INSERT INTO for_portion_of_test VALUES (1, '[2020-01-01,2020-12-31)', 'foo');
+
+UPDATE for_portion_of_test
+  FOR PORTION OF valid_at FROM '2020-04-01' TO '2020-08-01'
+  SET name = 'bar'
+  WHERE id = 1;
+
+-- Both leftovers should have the same name: 'foo+insert+insert'.
+SELECT * FROM for_portion_of_test ORDER BY valid_at;
+
+DROP FUNCTION fpo_append_name_suffix CASCADE;
+DROP TABLE for_portion_of_test;
+
 -- Test with multiranges
 
 CREATE TABLE for_portion_of_test2 (

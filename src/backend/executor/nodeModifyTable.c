@@ -1601,6 +1601,18 @@ ExecForPortionOfLeftovers(ModifyTableContext *context,
 
 			didInit = true;
 		}
+		else
+		{
+			/*
+			 * Re-copy the original row into leftoverSlot because ExecInsert
+			 * might pass leftoverSlot to BEFORE ROW INSERT triggers, which can
+			 * modify the slot contents.
+			 */
+			if (map != NULL)
+				execute_attr_map_slot(map->attrMap, oldtupleSlot, leftoverSlot);
+			else
+				ExecForceStoreHeapTuple(oldtuple, leftoverSlot, false);
+		}
 
 		leftoverSlot->tts_values[forPortionOf->rangeVar->varattno - 1] = leftover;
 		leftoverSlot->tts_isnull[forPortionOf->rangeVar->varattno - 1] = false;
