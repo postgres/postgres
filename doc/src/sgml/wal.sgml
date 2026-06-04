@@ -276,7 +276,7 @@
 
   </sect2>
 
-  <sect2 id="checksums-online-enable-disable">
+  <sect2 id="checksums-online-enable-disable" xreflabel="Online Enabling of Checksums">
    <title>Online Enabling of Checksums</title>
 
    <para>

@@ -38,17 +38,22 @@ PostgreSQL documentation
   <para>
    <application>pg_checksums</application> checks, enables or disables data
    checksums in a <productname>PostgreSQL</productname> cluster.  The server
-   must be shut down cleanly before running
-   <application>pg_checksums</application>. When verifying checksums, the exit
+   must be shut down cleanly before running <application>pg_checksums</application>.
+   Checksums can also be enabled while the cluster is running using
+   <xref linkend="checksums-online-enable-disable"/> processing, see
+   <xref linkend="checksums"/> for further details on the different approaches.
+   When verifying checksums, the exit
    status is zero if there are no checksum errors, and nonzero if at least one
    checksum failure is detected. When enabling or disabling checksums, the
    exit status is nonzero if the operation failed.
   </para>
 
   <para>
-   When enabling checksums, if checksums were in the process of being enabled
-   when the cluster was shut down, <application>pg_checksums</application>
-   will still process all relations regardless of the online processing.
+   When enabling checksums with <application>pg_checksums</application>, if
+   checksums were in the process of being enabled using
+   <xref linkend="checksums-online-enable-disable"/>  when the cluster was shut
+   down, <application>pg_checksums</application> will still process all
+   relation files regardless of the progress of online checksum processing.
   </para>
 
   <para>
