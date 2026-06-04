@@ -1048,9 +1048,6 @@ llvm_create_types(void)
 void
 llvm_split_symbol_name(const char *name, char **modname, char **funcname)
 {
-	*modname = NULL;
-	*funcname = NULL;
-
 	/*
 	 * Module function names are pgextern.$module.$funcname
 	 */
@@ -1060,14 +1057,21 @@ llvm_split_symbol_name(const char *name, char **modname, char **funcname)
 		 * Symbol names cannot contain a ., therefore we can split based on
 		 * first and last occurrence of one.
 		 */
-		*funcname = rindex(name, '.');
-		(*funcname)++;			/* jump over . */
+		const char *lastdot;
 
-		*modname = pnstrdup(name + strlen("pgextern."),
-							*funcname - name - strlen("pgextern.") - 1);
-		Assert(funcname);
-
-		*funcname = pstrdup(*funcname);
+		name += strlen("pgextern.");
+		lastdot = strrchr(name, '.');
+		if (lastdot)
+		{
+			*modname = pnstrdup(name, lastdot - name);
+			*funcname = pstrdup(lastdot + 1);
+		}
+		else
+		{
+			/* hmm, no second dot? */
+			*modname = NULL;
+			*funcname = pstrdup(name);
+		}
 	}
 	else
 	{
