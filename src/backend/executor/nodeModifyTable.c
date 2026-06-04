@@ -1605,8 +1605,8 @@ ExecForPortionOfLeftovers(ModifyTableContext *context,
 		{
 			/*
 			 * Re-copy the original row into leftoverSlot because ExecInsert
-			 * might pass leftoverSlot to BEFORE ROW INSERT triggers, which can
-			 * modify the slot contents.
+			 * might pass leftoverSlot to BEFORE ROW INSERT triggers, which
+			 * can modify the slot contents.
 			 */
 			if (map != NULL)
 				execute_attr_map_slot(map->attrMap, oldtupleSlot, leftoverSlot);
