@@ -105,3 +105,81 @@ ORDER BY num;
 
 SELECT is_normalized('abc', 'def');  -- run-time error
 ERROR:  invalid normalization form: def
+-- Hangul NFC recomposition tests
+-- L+V -> LV composition (first and last)
+SELECT normalize(U&'\1100\1161', NFC) = U&'\AC00' COLLATE "C" AS hangul_lv_first;
+ hangul_lv_first 
+-----------------
+ t
+(1 row)
+
+SELECT normalize(U&'\1112\1175', NFC) = U&'\D788' COLLATE "C" AS hangul_lv_last;
+ hangul_lv_last 
+----------------
+ t
+(1 row)
+
+-- LV+T -> LVT composition
+SELECT normalize(U&'\AC00\11A8', NFC) = U&'\AC01' COLLATE "C" AS hangul_lvt_first_t;
+ hangul_lvt_first_t 
+--------------------
+ t
+(1 row)
+
+SELECT normalize(U&'\AC00\11C2', NFC) = U&'\AC1B' COLLATE "C" AS hangul_lvt_last_t;
+ hangul_lvt_last_t 
+-------------------
+ t
+(1 row)
+
+SELECT normalize(U&'\D788\11A8', NFC) = U&'\D789' COLLATE "C" AS hangul_lvt_last_lv;
+ hangul_lvt_last_lv 
+--------------------
+ t
+(1 row)
+
+-- L+V+T -> LVT composition
+SELECT normalize(U&'\1100\1161\11A8', NFC) = U&'\AC01' COLLATE "C" AS hangul_full_lvt;
+ hangul_full_lvt 
+-----------------
+ t
+(1 row)
+
+SELECT normalize(U&'\1112\1175\11C2', NFC) = U&'\D7A3' COLLATE "C" AS hangul_full_lvt;
+ hangul_full_lvt 
+-----------------
+ t
+(1 row)
+
+-- TBASE invalid T syllable
+SELECT normalize(U&'\AC00\11A7', NFC) = U&'\AC00\11A7' COLLATE "C" AS hangul_tbase_not_combined;
+ hangul_tbase_not_combined 
+---------------------------
+ t
+(1 row)
+
+SELECT normalize(U&'\1100\1161\11A7', NFC) = U&'\AC00\11A7' COLLATE "C" AS hangul_lv_tbase_separate;
+ hangul_lv_tbase_separate 
+--------------------------
+ t
+(1 row)
+
+-- Hangul NFD decomposition tests
+SELECT normalize(U&'\AC00', NFD) = U&'\1100\1161' COLLATE "C" AS hangul_nfd_lv;
+ hangul_nfd_lv 
+---------------
+ t
+(1 row)
+
+SELECT normalize(U&'\AC01', NFD) = U&'\1100\1161\11A8' COLLATE "C" AS hangul_nfd_lvt;
+ hangul_nfd_lvt 
+----------------
+ t
+(1 row)
+
+SELECT normalize(U&'\D7A3', NFD) = U&'\1112\1175\11C2' COLLATE "C" AS hangul_nfd_last;
+ hangul_nfd_last 
+-----------------
+ t
+(1 row)
+
