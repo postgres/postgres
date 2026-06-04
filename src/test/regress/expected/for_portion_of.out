@@ -2036,7 +2036,7 @@ SELECT * FROM for_portion_of_test2 ORDER BY id, valid_at;
 DROP TABLE for_portion_of_test2;
 DROP TYPE mydaterange;
 -- Test FOR PORTION OF against a partitioned table.
--- Include a GENERATED STORED column to test updatedCols column mapping.
+-- Include a stored generated column to test updatedCols column mapping.
 -- temporal_partitioned_1 has the same attnums as the root
 -- temporal_partitioned_3 has the different attnums from the root
 -- temporal_partitioned_5 has the different attnums too, but reversed
@@ -2208,7 +2208,7 @@ SELECT * FROM fpo_rule ORDER BY f1;
 (2 rows)
 
 DROP TABLE fpo_rule;
--- UPDATE FOR PORTION OF with generated stored columns
+-- UPDATE FOR PORTION OF with generated columns
 -- The generated column depends on the range column, so it must be
 -- recomputed when FOR PORTION OF narrows the range.
 CREATE TABLE fpo_generated (
