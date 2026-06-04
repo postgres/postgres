@@ -144,7 +144,7 @@ Change the default index opclasses for <link linkend="datatype-net-types"><type>
 </para>
 
 <para>
-The <xref linkend="btree-gist"/> inet/cidr opclasses are broken because they can exclude rows that should be returned.  <link linkend="pgupgrade"><application>pg_upgrade</application></link> will fail to upgrade if <xref linkend="btree-gist"/> inet/cidr indexes exist in the old
+The <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> opclasses are broken because they can exclude rows that should be returned.  <link linkend="pgupgrade"><application>pg_upgrade</application></link> will fail to upgrade if <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> indexes exist in the old
 server.
 </para>
 </listitem>
@@ -244,7 +244,7 @@ Change <link linkend="jit"><acronym>JIT</acronym></link> to be disabled by defau
 </para>
 
 <para>
-Previously <acronym>JIT</acronym> was enabled by default, and activated based on optimizer costs, but this costing has been determined to be unreliable.  This this change requires sites that are doing many
+Previously <acronym>JIT</acronym> was enabled by default, and activated based on optimizer costs, but this costing has been determined to be unreliable.  This change requires sites that are doing many
 large analytical queries to manually enable <acronym>JIT</acronym>.
 </para>
 </listitem>
@@ -422,7 +422,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Convert <literal>IS [NOT] DISTINCT FROM NULL</literal> to <literal>IS [NOT] NULL</literal> during constant folding (Richard Guo)
+Convert <link linkend="functions-comparison-pred-table"><literal>IS [NOT] DISTINCT FROM NULL</literal></link> to <literal>IS [NOT] NULL</literal> during constant folding (Richard Guo)
 <ulink url="&commit_baseurl;f41ab5157">&sect;</ulink>
 </para>
 
@@ -438,7 +438,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Simplify <literal>IS [NOT] DISTINCT FROM</literal> to equality/inequality operators when inputs are proven non-nullable (Richard Guo)
+Simplify <link linkend="functions-comparison-pred-table"><literal>IS [NOT] DISTINCT FROM</literal></link> to equality/inequality operators when inputs are proven non-nullable (Richard Guo)
 <ulink url="&commit_baseurl;0a3796125">&sect;</ulink>
 </para>
 </listitem>
@@ -517,7 +517,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 
 <listitem>
 <para>
-Allow extended statistics on virtual generated columns (Yugo Nagata)
+Allow <link linkend="sql-createstatistics">extended statistics</link> on virtual generated columns (Yugo Nagata)
 <ulink url="&commit_baseurl;f7f4052a4">&sect;</ulink>
 </para>
 </listitem>
@@ -1119,7 +1119,7 @@ Author: Tatsuo Ishii <ishii@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <link linkend="guc-debug-print-parse"><varname>debug_print_parse</varname></link> to log raw parse trees (Chao Li)
+Add server variable <link linkend="guc-debug-print-raw-parse"><varname>debug_print_raw_parse</varname></link> to log raw parse trees (Chao Li)
 <ulink url="&commit_baseurl;06473f5a3">&sect;</ulink>
 </para>
 
@@ -1271,7 +1271,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Add server-side report for <acronym>SNI</acronym> (Server Name Indication) (Daniel Gustafsson, Jacob Champion)
+Add server-side support for <acronym>SNI</acronym> (Server Name Indication) (Daniel Gustafsson, Jacob Champion)
 <ulink url="&commit_baseurl;4f433025f">&sect;</ulink>
 </para>
 
@@ -1857,7 +1857,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow <link linkend="sql-createschema"><command>CREATE SCHEMA</command></link> to create more types of non-schema objects (Kirill Reshke, Jian He, Tom Lane)
+Allow <link linkend="sql-createschema"><command>CREATE SCHEMA</command></link> to create more types of objects in newly-created schemas (Kirill Reshke, Jian He, Tom Lane)
 <ulink url="&commit_baseurl;d51697484">&sect;</ulink>
 </para>
 </listitem>
