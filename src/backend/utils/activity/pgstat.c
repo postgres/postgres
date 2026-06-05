@@ -97,6 +97,7 @@
 #include "lib/dshash.h"
 #include "pgstat.h"
 #include "port/atomics.h"
+#include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -509,8 +510,12 @@ pgstat_shutdown_hook(int code, Datum arg)
 
 	pgstat_report_stat(true);
 
-	/* there shouldn't be any pending changes left */
-	Assert(dlist_is_empty(&pgStatPending));
+	/*
+	 * There shouldn't be any pending changes left, unless this is a WAL
+	 * sender that would shut down after the checkpointer has flushed the
+	 * stats.
+	 */
+	Assert(dlist_is_empty(&pgStatPending) || am_walsender);
 	dlist_init(&pgStatPending);
 
 	pgstat_detach_shmem();
@@ -600,7 +605,13 @@ pgstat_report_stat(bool force)
 	 * assert that before the checks above, as there is an unconditional
 	 * pgstat_report_stat() call in pgstat_shutdown_hook() - which at least
 	 * the process that ran pgstat_before_server_shutdown() will still call.
+	 *
+	 * WAL senders would be shut down after the checkpointer and may still
+	 * have stats.  Skip them.
 	 */
+	if (pgStatLocal.shmem->is_shutdown && am_walsender)
+		return 0;
+
 	Assert(!pgStatLocal.shmem->is_shutdown);
 
 	now = GetCurrentTransactionStopTimestamp();
