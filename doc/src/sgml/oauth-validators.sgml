@@ -395,13 +395,18 @@ typedef struct ValidatorModuleResult
     token) shall be palloc'd and returned in the <structfield>result->authn_id</structfield>
     field.  Alternatively, <structfield>result->authn_id</structfield> may be set to
     NULL if the token is valid but the associated user identity cannot be
-    determined.
+    determined.  If the validator returns <literal>true</literal> and
+    set <structfield>result->authn_id</structfield> then the identity appears
+    in the server log when <xref linkend="guc-log-connections"/> includes
+    <literal>authentication</literal>.  This happens before authorization and
+    will log authentication even if the connection is later rejected due to
+    authorization.
    </para>
    <para>
     A validator may return <literal>false</literal> to signal an internal error,
-    in which case any result parameters are ignored and the connection fails.
-    Otherwise the validator should return <literal>true</literal> to indicate
-    that it has processed the token and made an authorization decision.
+    in which case the connection fails.  Otherwise the validator should return
+    <literal>true</literal> to indicate that it has processed the token and made
+    an authorization decision.
    </para>
    <para>
     In either failure case (validation error or internal error) the module may
