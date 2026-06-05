@@ -6,7 +6,7 @@
 
  <formalpara>
   <title>Release date:</title>
-  <para>2026-??-??, AS OF 2026-05-14</para>
+  <para>2026-??-??, AS OF 2026-06-05</para>
  </formalpara>
 
   <sect2 id="release-19-highlights">
@@ -1603,6 +1603,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 2025-07-23 [228c37086] Preserve conflict-relevant data during logical replicati
 Author: Amit Kapila <akapila@postgresql.org>
 2025-09-15 [0d48d393d] Resume conflict-relevant data retention automatically.
+Author: Amit Kapila <akapila@postgresql.org>
+2025-09-02 [a850be2fe] Add max_retention_duration option to subscriptions.
 -->
 
 <listitem>
@@ -1610,22 +1612,11 @@ Author: Amit Kapila <akapila@postgresql.org>
 Add <link linkend="sql-createpublication"><command>CREATE</command></link>/<link linkend="sql-alterpublication"><command>ALTER PUBLICATION</command></link> setting <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><varname>retain_dead_tuples</varname></link> to retain information needed for conflict resolution (Zhijie Hou)
 <ulink url="&commit_baseurl;228c37086">&sect;</ulink>
 <ulink url="&commit_baseurl;0d48d393d">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Amit Kapila <akapila@postgresql.org>
-2025-09-02 [a850be2fe] Add max_retention_duration option to subscriptions.
--->
-
-<listitem>
-<para>
-Add <link linkend="sql-createpublication"><command>CREATE</command></link>/<link linkend="sql-alterpublication"><command>ALTER PUBLICATION</command></link> setting <varname>max_retention_duration</varname> to limit <varname>retain_dead_tuples</varname> retention (Zhijie Hou)
 <ulink url="&commit_baseurl;a850be2fe">&sect;</ulink>
 </para>
 
 <para>
-When the limit is reached, dead tuple retention is disabled until manually re-enabled or a new subscription is created.
+Also add setting <link linkend="sql-createsubscription-params-with-max-retention-duration"><varname>max_retention_duration</varname></link> to limit <varname>retain_dead_tuples</varname> retention.
 </para>
 </listitem>
 
@@ -2578,12 +2569,15 @@ Add or improve <link linkend="app-psql"><application>psql</application></link> t
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2025-08-20 [6429e5b77] vacuumdb: Make vacuumdb - -analyze-only process partition
+Author: Fujii Masao <fujii@postgresql.org>
+2026-06-03 [95b6ec52e] vacuumdb: Fix - -analyze-in-stages skipping partitioned t
 -->
 
 <listitem>
 <para>
-Change <link linkend="app-vacuumdb"><application>vacuumdb</application></link>'s <option>--analyze-only</option> option to analyze partitioned tables when no targets are specified (Laurenz Albe, Mircea Cadariu)
+Change <link linkend="app-vacuumdb"><application>vacuumdb</application></link>'s <option>--analyze-only</option> and <option>--analyze-in-stages</option> options to analyze partitioned tables when no targets are specified (Laurenz Albe, Mircea Cadariu, Chao Li)
 <ulink url="&commit_baseurl;6429e5b77">&sect;</ulink>
+<ulink url="&commit_baseurl;95b6ec52e">&sect;</ulink>
 </para>
 
 <para>
