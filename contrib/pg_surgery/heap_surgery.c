@@ -228,8 +228,8 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 			}
 
 			/* Mark it for processing. */
-			Assert(offno < MaxHeapTuplesPerPage);
-			include_this_tid[offno] = true;
+			Assert(offno <= MaxHeapTuplesPerPage);
+			include_this_tid[offno - 1] = true;
 		}
 
 		/*
@@ -247,7 +247,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 		{
 			ItemId		itemid;
 
-			if (!include_this_tid[curoff])
+			if (!include_this_tid[curoff - 1])
 				continue;
 
 			itemid = PageGetItemId(page, curoff);
