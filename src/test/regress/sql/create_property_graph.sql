@@ -281,21 +281,30 @@ SELECT * FROM information_schema.pg_property_data_types ORDER BY property_graph_
 SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE 'regress%' ORDER BY property_graph_name, grantor, grantee, privilege_type;
 
 -- test object address functions
+CREATE TEMPORARY VIEW deps_tree AS
+    WITH RECURSIVE deps (classid, objid, objsubid, refclassid, refobjid, refobjsubid) AS (
+        SELECT classid, objid, objsubid,
+               refclassid, refobjid, refobjsubid
+        FROM pg_depend
+        WHERE refclassid = 'pg_class'::regclass AND
+              refobjid = 'create_property_graph_tests.gt'::regclass AND
+        -- eliminate this view, which is not a real dependency, from the result
+              classid <> 'pg_rewrite'::regclass
+        UNION ALL
+        SELECT d.classid, d.objid, d.objsubid,
+               d.refclassid, d.refobjid, d.refobjsubid
+        FROM pg_depend d
+        JOIN deps dp ON d.refclassid = dp.classid AND d.refobjid = dp.objid AND d.refobjsubid = dp.objsubid
+    ) SELECT DISTINCT * FROM deps;
+
 SELECT pg_describe_object(classid, objid, objsubid) as obj,
-       pg_describe_object(refclassid, refobjid, refobjsubid) as reference_graph
-    FROM pg_depend
-    WHERE refclassid = 'pg_class'::regclass AND
-          refobjid = 'create_property_graph_tests.g2'::regclass
-    ORDER BY 1, 2;
+       pg_describe_object(refclassid, refobjid, refobjsubid) as refobj
+    FROM deps_tree ORDER BY 1, 2;
 SELECT (pg_identify_object_as_address(classid, objid, objsubid)).*
-    FROM pg_depend
-    WHERE refclassid = 'pg_class'::regclass AND
-          refobjid = 'create_property_graph_tests.g2'::regclass
+    FROM (SELECT DISTINCT classid, objid, objsubid FROM deps_tree)
     ORDER BY 1, 2, 3;
 SELECT (pg_identify_object(classid, objid, objsubid)).*
-    FROM pg_depend
-    WHERE refclassid = 'pg_class'::regclass AND
-          refobjid = 'create_property_graph_tests.g2'::regclass
+    FROM (SELECT DISTINCT classid, objid, objsubid FROM deps_tree)
     ORDER BY 1, 2, 3, 4;
 
 \a\t

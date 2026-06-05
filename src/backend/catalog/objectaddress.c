@@ -896,7 +896,13 @@ static const struct object_type_map
 		"property graph element", -1
 	},
 	{
+		"property graph element label", -1
+	},
+	{
 		"property graph label", -1
+	},
+	{
+		"property graph label property", -1
 	},
 	{
 		"property graph property", -1
@@ -4897,6 +4903,14 @@ getObjectTypeDescription(const ObjectAddress *object, bool missing_ok)
 			appendStringInfoString(&buffer, "property graph property");
 			break;
 
+		case PropgraphElementLabelRelationId:
+			appendStringInfoString(&buffer, "property graph element label");
+			break;
+
+		case PropgraphLabelPropertyRelationId:
+			appendStringInfoString(&buffer, "property graph label property");
+			break;
+
 		case PublicationRelationId:
 			appendStringInfoString(&buffer, "publication");
 			break;
@@ -6209,6 +6223,81 @@ getObjectIdentityParts(const ObjectAddress *object,
 				if (objname)
 					*objname = lappend(*objname, pstrdup(NameStr(pgp->pgpname)));
 				ReleaseSysCache(tup);
+				break;
+			}
+
+		case PropgraphElementLabelRelationId:
+			{
+				Relation	ellabelDesc;
+				HeapTuple	tup;
+				Form_pg_propgraph_element_label pgelform;
+				ObjectAddress oa;
+				char	   *labelname;
+
+				ellabelDesc = table_open(PropgraphElementLabelRelationId, AccessShareLock);
+				tup = get_catalog_object_by_oid(ellabelDesc,
+												Anum_pg_propgraph_element_label_oid,
+												object->objectId);
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "could not find tuple for element label %u",
+							 object->objectId);
+
+					table_close(ellabelDesc, AccessShareLock);
+					break;
+				}
+
+				pgelform = (Form_pg_propgraph_element_label) GETSTRUCT(tup);
+
+				labelname = get_propgraph_label_name(pgelform->pgellabelid);
+				appendStringInfo(&buffer, "%s of ", quote_identifier(labelname));
+				ObjectAddressSet(oa, PropgraphElementRelationId, pgelform->pgelelid);
+				appendStringInfoString(&buffer, getObjectIdentityParts(&oa, objname,
+																	   objargs, false));
+				/* labelname is already pstrdup'ed. */
+				if (objname)
+					*objname = lappend(*objname, labelname);
+
+				table_close(ellabelDesc, AccessShareLock);
+				break;
+			}
+
+		case PropgraphLabelPropertyRelationId:
+			{
+				Relation	lblpropDesc;
+				HeapTuple	tup;
+				Form_pg_propgraph_label_property plpform;
+				ObjectAddress oa;
+				char	   *propname;
+
+				lblpropDesc = table_open(PropgraphLabelPropertyRelationId,
+										 AccessShareLock);
+				tup = get_catalog_object_by_oid(lblpropDesc,
+												Anum_pg_propgraph_label_property_oid,
+												object->objectId);
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "could not find tuple for label property %u",
+							 object->objectId);
+
+					table_close(lblpropDesc, AccessShareLock);
+					break;
+				}
+
+				plpform = (Form_pg_propgraph_label_property) GETSTRUCT(tup);
+
+				propname = get_propgraph_property_name(plpform->plppropid);
+				appendStringInfo(&buffer, "%s of ", quote_identifier(propname));
+				ObjectAddressSet(oa, PropgraphElementLabelRelationId, plpform->plpellabelid);
+				appendStringInfoString(&buffer, getObjectIdentityParts(&oa, objname,
+																	   objargs, false));
+				/* propname is already pstrdup'ed. */
+				if (objname)
+					*objname = lappend(*objname, propname);
+
+				table_close(lblpropDesc, AccessShareLock);
 				break;
 			}
 

@@ -661,93 +661,122 @@ SELECT * FROM information_schema.pg_property_graph_privileges WHERE grantee LIKE
 (2 rows)
 
 -- test object address functions
+CREATE TEMPORARY VIEW deps_tree AS
+    WITH RECURSIVE deps (classid, objid, objsubid, refclassid, refobjid, refobjsubid) AS (
+        SELECT classid, objid, objsubid,
+               refclassid, refobjid, refobjsubid
+        FROM pg_depend
+        WHERE refclassid = 'pg_class'::regclass AND
+              refobjid = 'create_property_graph_tests.gt'::regclass AND
+        -- eliminate this view, which is not a real dependency, from the result
+              classid <> 'pg_rewrite'::regclass
+        UNION ALL
+        SELECT d.classid, d.objid, d.objsubid,
+               d.refclassid, d.refobjid, d.refobjsubid
+        FROM pg_depend d
+        JOIN deps dp ON d.refclassid = dp.classid AND d.refobjid = dp.objid AND d.refobjsubid = dp.objsubid
+    ) SELECT DISTINCT * FROM deps;
 SELECT pg_describe_object(classid, objid, objsubid) as obj,
-       pg_describe_object(refclassid, refobjid, refobjsubid) as reference_graph
-    FROM pg_depend
-    WHERE refclassid = 'pg_class'::regclass AND
-          refobjid = 'create_property_graph_tests.g2'::regclass
-    ORDER BY 1, 2;
-               obj               |  reference_graph  
----------------------------------+-------------------
- edge e1 of property graph g2    | property graph g2
- edge e2 of property graph g2    | property graph g2
- label e1 of property graph g2   | property graph g2
- label e2 of property graph g2   | property graph g2
- label t1 of property graph g2   | property graph g2
- label t2 of property graph g2   | property graph g2
- label t3l1 of property graph g2 | property graph g2
- label t3l2 of property graph g2 | property graph g2
- property a of property graph g2 | property graph g2
- property b of property graph g2 | property graph g2
- property i of property graph g2 | property graph g2
- property j of property graph g2 | property graph g2
- property k of property graph g2 | property graph g2
- property t of property graph g2 | property graph g2
- property x of property graph g2 | property graph g2
- property y of property graph g2 | property graph g2
- property z of property graph g2 | property graph g2
- vertex t1 of property graph g2  | property graph g2
- vertex t2 of property graph g2  | property graph g2
- vertex t3 of property graph g2  | property graph g2
-(20 rows)
+       pg_describe_object(refclassid, refobjid, refobjsubid) as refobj
+    FROM deps_tree ORDER BY 1, 2;
+                           obj                            |                   refobj                   
+----------------------------------------------------------+--------------------------------------------
+ edge e of property graph gt                              | property graph gt
+ edge e of property graph gt                              | vertex v1 of property graph gt
+ edge e of property graph gt                              | vertex v2 of property graph gt
+ label e of edge e of property graph gt                   | edge e of property graph gt
+ label e of edge e of property graph gt                   | label e of property graph gt
+ label e of property graph gt                             | property graph gt
+ label v1 of property graph gt                            | property graph gt
+ label v1 of vertex v1 of property graph gt               | label v1 of property graph gt
+ label v1 of vertex v1 of property graph gt               | vertex v1 of property graph gt
+ label v2 of property graph gt                            | property graph gt
+ label v2 of vertex v2 of property graph gt               | label v2 of property graph gt
+ label v2 of vertex v2 of property graph gt               | vertex v2 of property graph gt
+ property a of label v1 of vertex v1 of property graph gt | label v1 of vertex v1 of property graph gt
+ property a of label v1 of vertex v1 of property graph gt | property a of property graph gt
+ property a of property graph gt                          | property graph gt
+ property b of label v1 of vertex v1 of property graph gt | label v1 of vertex v1 of property graph gt
+ property b of label v1 of vertex v1 of property graph gt | property b of property graph gt
+ property b of property graph gt                          | property graph gt
+ property c of label e of edge e of property graph gt     | label e of edge e of property graph gt
+ property c of label e of edge e of property graph gt     | property c of property graph gt
+ property c of property graph gt                          | property graph gt
+ property k1 of label e of edge e of property graph gt    | label e of edge e of property graph gt
+ property k1 of label e of edge e of property graph gt    | property k1 of property graph gt
+ property k1 of property graph gt                         | property graph gt
+ property k2 of label e of edge e of property graph gt    | label e of edge e of property graph gt
+ property k2 of label e of edge e of property graph gt    | property k2 of property graph gt
+ property k2 of property graph gt                         | property graph gt
+ property m of label v2 of vertex v2 of property graph gt | label v2 of vertex v2 of property graph gt
+ property m of label v2 of vertex v2 of property graph gt | property m of property graph gt
+ property m of property graph gt                          | property graph gt
+ property n of label v2 of vertex v2 of property graph gt | label v2 of vertex v2 of property graph gt
+ property n of label v2 of vertex v2 of property graph gt | property n of property graph gt
+ property n of property graph gt                          | property graph gt
+ vertex v1 of property graph gt                           | property graph gt
+ vertex v2 of property graph gt                           | property graph gt
+(35 rows)
 
 SELECT (pg_identify_object_as_address(classid, objid, objsubid)).*
-    FROM pg_depend
-    WHERE refclassid = 'pg_class'::regclass AND
-          refobjid = 'create_property_graph_tests.g2'::regclass
+    FROM (SELECT DISTINCT classid, objid, objsubid FROM deps_tree)
     ORDER BY 1, 2, 3;
-          type           |             object_names              | object_args 
--------------------------+---------------------------------------+-------------
- property graph element  | {create_property_graph_tests,g2,e1}   | {}
- property graph element  | {create_property_graph_tests,g2,e2}   | {}
- property graph element  | {create_property_graph_tests,g2,t1}   | {}
- property graph element  | {create_property_graph_tests,g2,t2}   | {}
- property graph element  | {create_property_graph_tests,g2,t3}   | {}
- property graph label    | {create_property_graph_tests,g2,e1}   | {}
- property graph label    | {create_property_graph_tests,g2,e2}   | {}
- property graph label    | {create_property_graph_tests,g2,t1}   | {}
- property graph label    | {create_property_graph_tests,g2,t2}   | {}
- property graph label    | {create_property_graph_tests,g2,t3l1} | {}
- property graph label    | {create_property_graph_tests,g2,t3l2} | {}
- property graph property | {create_property_graph_tests,g2,a}    | {}
- property graph property | {create_property_graph_tests,g2,b}    | {}
- property graph property | {create_property_graph_tests,g2,i}    | {}
- property graph property | {create_property_graph_tests,g2,j}    | {}
- property graph property | {create_property_graph_tests,g2,k}    | {}
- property graph property | {create_property_graph_tests,g2,t}    | {}
- property graph property | {create_property_graph_tests,g2,x}    | {}
- property graph property | {create_property_graph_tests,g2,y}    | {}
- property graph property | {create_property_graph_tests,g2,z}    | {}
-(20 rows)
+             type              |               object_names               | object_args 
+-------------------------------+------------------------------------------+-------------
+ property graph element        | {create_property_graph_tests,gt,e}       | {}
+ property graph element        | {create_property_graph_tests,gt,v1}      | {}
+ property graph element        | {create_property_graph_tests,gt,v2}      | {}
+ property graph element label  | {create_property_graph_tests,gt,e,e}     | {}
+ property graph element label  | {create_property_graph_tests,gt,v1,v1}   | {}
+ property graph element label  | {create_property_graph_tests,gt,v2,v2}   | {}
+ property graph label          | {create_property_graph_tests,gt,e}       | {}
+ property graph label          | {create_property_graph_tests,gt,v1}      | {}
+ property graph label          | {create_property_graph_tests,gt,v2}      | {}
+ property graph label property | {create_property_graph_tests,gt,e,e,c}   | {}
+ property graph label property | {create_property_graph_tests,gt,e,e,k1}  | {}
+ property graph label property | {create_property_graph_tests,gt,e,e,k2}  | {}
+ property graph label property | {create_property_graph_tests,gt,v1,v1,a} | {}
+ property graph label property | {create_property_graph_tests,gt,v1,v1,b} | {}
+ property graph label property | {create_property_graph_tests,gt,v2,v2,m} | {}
+ property graph label property | {create_property_graph_tests,gt,v2,v2,n} | {}
+ property graph property       | {create_property_graph_tests,gt,a}       | {}
+ property graph property       | {create_property_graph_tests,gt,b}       | {}
+ property graph property       | {create_property_graph_tests,gt,c}       | {}
+ property graph property       | {create_property_graph_tests,gt,k1}      | {}
+ property graph property       | {create_property_graph_tests,gt,k2}      | {}
+ property graph property       | {create_property_graph_tests,gt,m}       | {}
+ property graph property       | {create_property_graph_tests,gt,n}       | {}
+(23 rows)
 
 SELECT (pg_identify_object(classid, objid, objsubid)).*
-    FROM pg_depend
-    WHERE refclassid = 'pg_class'::regclass AND
-          refobjid = 'create_property_graph_tests.g2'::regclass
+    FROM (SELECT DISTINCT classid, objid, objsubid FROM deps_tree)
     ORDER BY 1, 2, 3, 4;
-          type           | schema | name |                identity                
--------------------------+--------+------+----------------------------------------
- property graph element  |        |      | e1 of create_property_graph_tests.g2
- property graph element  |        |      | e2 of create_property_graph_tests.g2
- property graph element  |        |      | t1 of create_property_graph_tests.g2
- property graph element  |        |      | t2 of create_property_graph_tests.g2
- property graph element  |        |      | t3 of create_property_graph_tests.g2
- property graph label    |        |      | e1 of create_property_graph_tests.g2
- property graph label    |        |      | e2 of create_property_graph_tests.g2
- property graph label    |        |      | t1 of create_property_graph_tests.g2
- property graph label    |        |      | t2 of create_property_graph_tests.g2
- property graph label    |        |      | t3l1 of create_property_graph_tests.g2
- property graph label    |        |      | t3l2 of create_property_graph_tests.g2
- property graph property |        |      | a of create_property_graph_tests.g2
- property graph property |        |      | b of create_property_graph_tests.g2
- property graph property |        |      | i of create_property_graph_tests.g2
- property graph property |        |      | j of create_property_graph_tests.g2
- property graph property |        |      | k of create_property_graph_tests.g2
- property graph property |        |      | t of create_property_graph_tests.g2
- property graph property |        |      | x of create_property_graph_tests.g2
- property graph property |        |      | y of create_property_graph_tests.g2
- property graph property |        |      | z of create_property_graph_tests.g2
-(20 rows)
+             type              | schema | name |                    identity                     
+-------------------------------+--------+------+-------------------------------------------------
+ property graph element        |        |      | e of create_property_graph_tests.gt
+ property graph element        |        |      | v1 of create_property_graph_tests.gt
+ property graph element        |        |      | v2 of create_property_graph_tests.gt
+ property graph element label  |        |      | e of e of create_property_graph_tests.gt
+ property graph element label  |        |      | v1 of v1 of create_property_graph_tests.gt
+ property graph element label  |        |      | v2 of v2 of create_property_graph_tests.gt
+ property graph label          |        |      | e of create_property_graph_tests.gt
+ property graph label          |        |      | v1 of create_property_graph_tests.gt
+ property graph label          |        |      | v2 of create_property_graph_tests.gt
+ property graph label property |        |      | a of v1 of v1 of create_property_graph_tests.gt
+ property graph label property |        |      | b of v1 of v1 of create_property_graph_tests.gt
+ property graph label property |        |      | c of e of e of create_property_graph_tests.gt
+ property graph label property |        |      | k1 of e of e of create_property_graph_tests.gt
+ property graph label property |        |      | k2 of e of e of create_property_graph_tests.gt
+ property graph label property |        |      | m of v2 of v2 of create_property_graph_tests.gt
+ property graph label property |        |      | n of v2 of v2 of create_property_graph_tests.gt
+ property graph property       |        |      | a of create_property_graph_tests.gt
+ property graph property       |        |      | b of create_property_graph_tests.gt
+ property graph property       |        |      | c of create_property_graph_tests.gt
+ property graph property       |        |      | k1 of create_property_graph_tests.gt
+ property graph property       |        |      | k2 of create_property_graph_tests.gt
+ property graph property       |        |      | m of create_property_graph_tests.gt
+ property graph property       |        |      | n of create_property_graph_tests.gt
+(23 rows)
 
 \a\t
 SELECT pg_get_propgraphdef('g2'::regclass);
