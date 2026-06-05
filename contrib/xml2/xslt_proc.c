@@ -55,6 +55,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xsltStylesheetPtr stylesheet = NULL;
 	volatile xmlDocPtr doctree = NULL;
+	volatile xmlDocPtr ssdoc = NULL;
 	volatile xmlDocPtr restree = NULL;
 	volatile xsltSecurityPrefsPtr xslt_sec_prefs = NULL;
 	volatile xsltTransformContextPtr xslt_ctxt = NULL;
@@ -78,7 +79,6 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		xmlDocPtr	ssdoc;
 		bool		xslt_sec_prefs_error;
 		int			reslen = 0;
 
@@ -100,8 +100,13 @@ xslt_process(PG_FUNCTION_ARGS)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"error parsing stylesheet as XML document");
 
-		/* After this call we need not free ssdoc separately */
+		/*
+		 * On success, the stylesheet owns ssdoc, with xsltFreeStylesheet()
+		 * calling xmlFreeDoc() on its associated doc.
+		 */
 		stylesheet = xsltParseStylesheetDoc(ssdoc);
+		if (stylesheet != NULL)
+			ssdoc = NULL;
 
 		if (stylesheet == NULL || pg_xml_error_occurred(xmlerrcxt))
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
@@ -167,6 +172,8 @@ xslt_process(PG_FUNCTION_ARGS)
 			xsltFreeSecurityPrefs(xslt_sec_prefs);
 		if (stylesheet != NULL)
 			xsltFreeStylesheet(stylesheet);
+		if (ssdoc != NULL)
+			xmlFreeDoc(ssdoc);
 		if (doctree != NULL)
 			xmlFreeDoc(doctree);
 		if (resstr != NULL)
