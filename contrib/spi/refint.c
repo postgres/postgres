@@ -12,27 +12,12 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "utils/builtins.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC_EXT(
 					.name = "refint",
 					.version = PG_VERSION
 );
-
-typedef struct
-{
-	char	   *ident;
-	int			nplans;
-	SPIPlanPtr *splan;
-} EPlan;
-
-static EPlan *FPlans = NULL;
-static int	nFPlans = 0;
-static EPlan *PPlans = NULL;
-static int	nPPlans = 0;
-
-static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
 
 /*
  * check_primary_key () -- check that key in tuple being inserted/updated
@@ -59,12 +44,12 @@ check_primary_key(PG_FUNCTION_ARGS)
 	Relation	rel;			/* triggered relation */
 	HeapTuple	tuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
-	EPlan	   *plan;			/* prepared plan */
+	SPIPlanPtr	pplan;			/* prepared plan */
 	Oid		   *argtypes = NULL;	/* key types to prepare execution plan */
 	bool		isnull;			/* to know is some column NULL or not */
-	char		ident[2 * NAMEDATALEN]; /* to identify myself */
 	int			ret;
 	int			i;
+	StringInfoData sql;
 
 #ifdef	DEBUG_QUERY
 	elog(DEBUG4, "check_primary_key: Enter Function");
@@ -123,16 +108,8 @@ check_primary_key(PG_FUNCTION_ARGS)
 	 */
 	kvals = (Datum *) palloc(nkeys * sizeof(Datum));
 
-	/*
-	 * Construct ident string as TriggerName $ TriggeredRelationId and try to
-	 * find prepared execution plan.
-	 */
-	snprintf(ident, sizeof(ident), "%s$%u", trigger->tgname, rel->rd_id);
-	plan = find_plan(ident, &PPlans, &nPPlans);
-
-	/* if there is no plan then allocate argtypes for preparation */
-	if (plan->nplans <= 0)
-		argtypes = (Oid *) palloc(nkeys * sizeof(Oid));
+	/* allocate argtypes for preparation */
+	argtypes = (Oid *) palloc(nkeys * sizeof(Oid));
 
 	/* For each column in key ... */
 	for (i = 0; i < nkeys; i++)
@@ -161,57 +138,36 @@ check_primary_key(PG_FUNCTION_ARGS)
 			return PointerGetDatum(tuple);
 		}
 
-		if (plan->nplans <= 0)	/* Get typeId of column */
-			argtypes[i] = SPI_gettypeid(tupdesc, fnumber);
+		/* Get typeId of column */
+		argtypes[i] = SPI_gettypeid(tupdesc, fnumber);
 	}
+
+	initStringInfo(&sql);
 
 	/*
-	 * If we have to prepare plan ...
+	 * Construct query: SELECT 1 FROM _referenced_relation_ WHERE Pkey1 = $1
+	 * [AND Pkey2 = $2 [...]]
 	 */
-	if (plan->nplans <= 0)
+	appendStringInfo(&sql, "select 1 from %s where ", relname);
+	for (i = 1; i <= nkeys; i++)
 	{
-		SPIPlanPtr	pplan;
-		StringInfoData sql;
-
-		initStringInfo(&sql);
-
-		/*
-		 * Construct query: SELECT 1 FROM _referenced_relation_ WHERE Pkey1 =
-		 * $1 [AND Pkey2 = $2 [...]]
-		 */
-		appendStringInfo(&sql, "select 1 from %s where ", relname);
-		for (i = 1; i <= nkeys; i++)
-		{
-			appendStringInfo(&sql, "%s = $%d ", args[i + nkeys], i);
-			if (i < nkeys)
-				appendStringInfoString(&sql, "and ");
-		}
-
-		/* Prepare plan for query */
-		pplan = SPI_prepare(sql.data, nkeys, argtypes);
-		if (pplan == NULL)
-			/* internal error */
-			elog(ERROR, "check_primary_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
-
-		/*
-		 * Remember that SPI_prepare places plan in current memory context -
-		 * so, we have to save plan in TopMemoryContext for later use.
-		 */
-		if (SPI_keepplan(pplan))
-			/* internal error */
-			elog(ERROR, "check_primary_key: SPI_keepplan failed");
-		plan->splan = (SPIPlanPtr *) MemoryContextAlloc(TopMemoryContext,
-														sizeof(SPIPlanPtr));
-		*(plan->splan) = pplan;
-		plan->nplans = 1;
-
-		pfree(sql.data);
+		appendStringInfo(&sql, "%s = $%d ", args[i + nkeys], i);
+		if (i < nkeys)
+			appendStringInfoString(&sql, "and ");
 	}
+
+	/* Prepare plan for query */
+	pplan = SPI_prepare(sql.data, nkeys, argtypes);
+	if (pplan == NULL)
+		/* internal error */
+		elog(ERROR, "check_primary_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
+
+	pfree(sql.data);
 
 	/*
 	 * Ok, execute prepared plan.
 	 */
-	ret = SPI_execp(*(plan->splan), kvals, NULL, 1);
+	ret = SPI_execp(pplan, kvals, NULL, 1);
 	/* we have no NULLs - so we pass   ^^^^   here */
 
 	if (ret < 0)
@@ -263,15 +219,15 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	HeapTuple	trigtuple = NULL;	/* tuple to being changed */
 	HeapTuple	newtuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
-	EPlan	   *plan;			/* prepared plan(s) */
+	SPIPlanPtr *splan;			/* prepared plan(s) */
 	Oid		   *argtypes = NULL;	/* key types to prepare execution plan */
 	bool		isnull;			/* to know is some column NULL or not */
 	bool		isequal = true; /* are keys in both tuples equal (in UPDATE) */
-	char		ident[2 * NAMEDATALEN]; /* to identify myself */
 	int			is_update = 0;
 	int			ret;
 	int			i,
 				r;
+	char	  **args2;
 
 #ifdef DEBUG_QUERY
 	elog(DEBUG4, "check_foreign_key: Enter Function");
@@ -350,24 +306,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	 */
 	kvals = (Datum *) palloc(nkeys * sizeof(Datum));
 
-	/*
-	 * Construct ident string as TriggerName $ TriggeredRelationId $
-	 * OperationType and try to find prepared execution plan(s).
-	 */
-	snprintf(ident, sizeof(ident), "%s$%u$%c", trigger->tgname, rel->rd_id, is_update ? 'U' : 'D');
-	plan = find_plan(ident, &FPlans, &nFPlans);
-
-	/* if there is no plan(s) then allocate argtypes for preparation */
-	if (plan->nplans <= 0)
-		argtypes = (Oid *) palloc(nkeys * sizeof(Oid));
-
-	/*
-	 * else - check that we have exactly nrefs plan(s) ready
-	 */
-	else if (plan->nplans != nrefs)
-		/* internal error */
-		elog(ERROR, "%s: check_foreign_key: # of plans changed in meantime",
-			 trigger->tgname);
+	/* allocate argtypes for preparation */
+	argtypes = (Oid *) palloc(nkeys * sizeof(Oid));
 
 	/* For each column in key ... */
 	for (i = 0; i < nkeys; i++)
@@ -415,141 +355,124 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				isequal = false;
 		}
 
-		if (plan->nplans <= 0)	/* Get typeId of column */
-			argtypes[i] = SPI_gettypeid(tupdesc, fnumber);
+		/* Get typeId of column */
+		argtypes[i] = SPI_gettypeid(tupdesc, fnumber);
 	}
 	args_temp = args;
 	nargs -= nkeys;
 	args += nkeys;
+	args2 = args;
 
-	/*
-	 * If we have to prepare plans ...
-	 */
-	if (plan->nplans <= 0)
+	splan = (SPIPlanPtr *) palloc(nrefs * sizeof(SPIPlanPtr));
+
+	for (r = 0; r < nrefs; r++)
 	{
+		StringInfoData sql;
 		SPIPlanPtr	pplan;
-		char	  **args2 = args;
 
-		plan->splan = (SPIPlanPtr *) MemoryContextAlloc(TopMemoryContext,
-														nrefs * sizeof(SPIPlanPtr));
+		initStringInfo(&sql);
 
-		for (r = 0; r < nrefs; r++)
+		relname = args2[0];
+
+		/*---------
+		 * For 'R'estrict action we construct SELECT query:
+		 *
+		 *	SELECT 1
+		 *	FROM _referencing_relation_
+		 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
+		 *
+		 *	to check is tuple referenced or not.
+		 *---------
+		 */
+		if (action == 'r')
+			appendStringInfo(&sql, "select 1 from %s where ", relname);
+
+		/*---------
+		 * For 'C'ascade action we construct DELETE query
+		 *
+		 *	DELETE
+		 *	FROM _referencing_relation_
+		 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
+		 *
+		 * to delete all referencing tuples.
+		 *---------
+		 */
+
+		/*
+		 * Max : Cascade with UPDATE query i create update query that updates
+		 * new key values in referenced tables
+		 */
+
+
+		else if (action == 'c')
 		{
-			StringInfoData sql;
-
-			initStringInfo(&sql);
-
-			relname = args2[0];
-
-			/*---------
-			 * For 'R'estrict action we construct SELECT query:
-			 *
-			 *	SELECT 1
-			 *	FROM _referencing_relation_
-			 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
-			 *
-			 *	to check is tuple referenced or not.
-			 *---------
-			 */
-			if (action == 'r')
-				appendStringInfo(&sql, "select 1 from %s where ", relname);
-
-			/*---------
-			 * For 'C'ascade action we construct DELETE query
-			 *
-			 *	DELETE
-			 *	FROM _referencing_relation_
-			 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
-			 *
-			 * to delete all referencing tuples.
-			 *---------
-			 */
-
-			/*
-			 * Max : Cascade with UPDATE query i create update query that
-			 * updates new key values in referenced tables
-			 */
-
-
-			else if (action == 'c')
+			if (is_update == 1)
 			{
-				if (is_update == 1)
-				{
-					int			fn;
-					char	   *nv;
-					int			k;
+				int			fn;
+				char	   *nv;
+				int			k;
 
-					appendStringInfo(&sql, "update %s set ", relname);
-					for (k = 1; k <= nkeys; k++)
-					{
-						fn = SPI_fnumber(tupdesc, args_temp[k - 1]);
-						Assert(fn > 0); /* already checked above */
-						nv = SPI_getvalue(newtuple, tupdesc, fn);
-
-						appendStringInfo(&sql, " %s = %s ",
-										 args2[k],
-										 nv ? quote_literal_cstr(nv) : "NULL");
-						if (k < nkeys)
-							appendStringInfoString(&sql, ", ");
-					}
-					appendStringInfoString(&sql, " where ");
-				}
-				else
-					/* DELETE */
-					appendStringInfo(&sql, "delete from %s where ", relname);
-			}
-
-			/*
-			 * For 'S'etnull action we construct UPDATE query - UPDATE
-			 * _referencing_relation_ SET Fkey1 null [, Fkey2 null [...]]
-			 * WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]] - to set key columns in
-			 * all referencing tuples to NULL.
-			 */
-			else if (action == 's')
-			{
 				appendStringInfo(&sql, "update %s set ", relname);
-				for (i = 1; i <= nkeys; i++)
+				for (k = 1; k <= nkeys; k++)
 				{
-					appendStringInfo(&sql, "%s = null", args2[i]);
-					if (i < nkeys)
+					fn = SPI_fnumber(tupdesc, args_temp[k - 1]);
+					Assert(fn > 0); /* already checked above */
+					nv = SPI_getvalue(newtuple, tupdesc, fn);
+
+					appendStringInfo(&sql, " %s = %s ",
+									 args2[k],
+									 nv ? quote_literal_cstr(nv) : "NULL");
+					if (k < nkeys)
 						appendStringInfoString(&sql, ", ");
 				}
 				appendStringInfoString(&sql, " where ");
 			}
+			else
+				/* DELETE */
+				appendStringInfo(&sql, "delete from %s where ", relname);
+		}
 
-			/* Construct WHERE qual */
+		/*
+		 * For 'S'etnull action we construct UPDATE query - UPDATE
+		 * _referencing_relation_ SET Fkey1 null [, Fkey2 null [...]] WHERE
+		 * Fkey1 = $1 [AND Fkey2 = $2 [...]] - to set key columns in all
+		 * referencing tuples to NULL.
+		 */
+		else if (action == 's')
+		{
+			appendStringInfo(&sql, "update %s set ", relname);
 			for (i = 1; i <= nkeys; i++)
 			{
-				appendStringInfo(&sql, "%s = $%d ", args2[i], i);
+				appendStringInfo(&sql, "%s = null", args2[i]);
 				if (i < nkeys)
-					appendStringInfoString(&sql, "and ");
+					appendStringInfoString(&sql, ", ");
 			}
+			appendStringInfoString(&sql, " where ");
+		}
 
-			/* Prepare plan for query */
-			pplan = SPI_prepare(sql.data, nkeys, argtypes);
-			if (pplan == NULL)
-				/* internal error */
-				elog(ERROR, "check_foreign_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
+		/* Construct WHERE qual */
+		for (i = 1; i <= nkeys; i++)
+		{
+			appendStringInfo(&sql, "%s = $%d ", args2[i], i);
+			if (i < nkeys)
+				appendStringInfoString(&sql, "and ");
+		}
 
-			/*
-			 * Remember that SPI_prepare places plan in current memory context
-			 * - so, we have to save plan in Top memory context for later use.
-			 */
-			if (SPI_keepplan(pplan))
-				/* internal error */
-				elog(ERROR, "check_foreign_key: SPI_keepplan failed");
+		/* Prepare plan for query */
+		pplan = SPI_prepare(sql.data, nkeys, argtypes);
+		if (pplan == NULL)
+			/* internal error */
+			elog(ERROR, "check_foreign_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
 
-			plan->splan[r] = pplan;
+		splan[r] = pplan;
 
-			args2 += nkeys + 1; /* to the next relation */
+		args2 += nkeys + 1;		/* to the next relation */
 
 #ifdef DEBUG_QUERY
-			elog(DEBUG4, "check_foreign_key Debug Query is :  %s ", sql.data);
+		elog(DEBUG4, "check_foreign_key Debug Query is :  %s ", sql.data);
 #endif
 
-			pfree(sql.data);
-		}
-		plan->nplans = nrefs;
+		pfree(sql.data);
 	}
 
 	/*
@@ -574,7 +497,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 		relname = args[0];
 
-		ret = SPI_execp(plan->splan[r], kvals, NULL, tcount);
+		ret = SPI_execp(splan[r], kvals, NULL, tcount);
 		/* we have no NULLs - so we pass   ^^^^  here */
 
 		if (ret < 0)
@@ -612,47 +535,4 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	SPI_finish();
 
 	return PointerGetDatum((newtuple == NULL) ? trigtuple : newtuple);
-}
-
-static EPlan *
-find_plan(char *ident, EPlan **eplan, int *nplans)
-{
-	EPlan	   *newp;
-	int			i;
-	MemoryContext oldcontext;
-
-	/*
-	 * All allocations done for the plans need to happen in a session-safe
-	 * context.
-	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
-	if (*nplans > 0)
-	{
-		for (i = 0; i < *nplans; i++)
-		{
-			if (strcmp((*eplan)[i].ident, ident) == 0)
-				break;
-		}
-		if (i != *nplans)
-		{
-			MemoryContextSwitchTo(oldcontext);
-			return (*eplan + i);
-		}
-		*eplan = (EPlan *) repalloc(*eplan, (i + 1) * sizeof(EPlan));
-		newp = *eplan + i;
-	}
-	else
-	{
-		newp = *eplan = palloc_object(EPlan);
-		(*nplans) = i = 0;
-	}
-
-	newp->ident = pstrdup(ident);
-	newp->nplans = 0;
-	newp->splan = NULL;
-	(*nplans)++;
-
-	MemoryContextSwitchTo(oldcontext);
-	return newp;
 }
