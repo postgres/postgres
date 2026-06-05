@@ -254,6 +254,20 @@ SELECT x1.a, g.* FROM x1, GRAPH_TABLE (myshop MATCH (x1 IS customers WHERE x1.ad
  2 | customer1     |   1 |        1
 (2 rows)
 
+-- lateral reference with multi-label pattern, which is rewritten as UNION of
+-- path queries
+SELECT x1.a, g.* FROM x1,
+    GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.customer_id = x1.a)-[IS customer_orders | customer_wishlists]->(l IS lists)-[IS list_items]->(p IS products)
+        COLUMNS (x1.a AS outer_id, c.name AS customer_name, p.name AS product_name, l.list_type)) g
+    ORDER BY 1, 3, 4, 5;
+ a | outer_id | customer_name | product_name | list_type 
+---+----------+---------------+--------------+-----------
+ 1 |        1 | customer1     | product1     | order
+ 1 |        1 | customer1     | product2     | order
+ 2 |        2 | customer2     | product1     | order
+ 2 |        2 | customer2     | product1     | wishlist
+(4 rows)
+
 -- non-local property references are not allowed, even if a lateral column
 -- reference is available
 SELECT x1.a, g.* FROM x1, GRAPH_TABLE (myshop MATCH (x1 IS customers)-[IS customer_orders]->(o IS orders WHERE o.order_id = x1.a) COLUMNS (x1.name AS customer_name, x1.customer_id AS cid, o.order_id)) g; -- error

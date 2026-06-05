@@ -158,6 +158,12 @@ CREATE TABLE x1 (a int, address text);
 INSERT INTO x1 VALUES (1, 'one'), (2, 'two');
 SELECT * FROM x1, GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.address = 'US' AND c.customer_id = x1.a)-[IS customer_orders]->(o IS orders) COLUMNS (c.name AS customer_name, c.customer_id AS cid));
 SELECT x1.a, g.* FROM x1, GRAPH_TABLE (myshop MATCH (x1 IS customers WHERE x1.address = 'US')-[IS customer_orders]->(o IS orders) COLUMNS (x1.name AS customer_name, x1.customer_id AS cid, o.order_id)) g;
+-- lateral reference with multi-label pattern, which is rewritten as UNION of
+-- path queries
+SELECT x1.a, g.* FROM x1,
+    GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.customer_id = x1.a)-[IS customer_orders | customer_wishlists]->(l IS lists)-[IS list_items]->(p IS products)
+        COLUMNS (x1.a AS outer_id, c.name AS customer_name, p.name AS product_name, l.list_type)) g
+    ORDER BY 1, 3, 4, 5;
 -- non-local property references are not allowed, even if a lateral column
 -- reference is available
 SELECT x1.a, g.* FROM x1, GRAPH_TABLE (myshop MATCH (x1 IS customers)-[IS customer_orders]->(o IS orders WHERE o.order_id = x1.a) COLUMNS (x1.name AS customer_name, x1.customer_id AS cid, o.order_id)) g; -- error

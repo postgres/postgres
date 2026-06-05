@@ -714,6 +714,13 @@ generate_setop_from_pathqueries(List *pathqueries, List **rtable, List **targetl
 
 	lquery = linitial_node(Query, pathqueries);
 
+	/*
+	 * Each path query will become a subquery of the UNION statement. So any
+	 * Vars that already refer outside the path query must be adjusted for
+	 * additional query level.
+	 */
+	IncrementVarSublevelsUp((Node *) lquery, 1, 1);
+
 	pni = addRangeTableEntryForSubquery(make_parsestate(NULL), lquery, NULL,
 										false, false);
 	*rtable = lappend(*rtable, pni->p_rte);
