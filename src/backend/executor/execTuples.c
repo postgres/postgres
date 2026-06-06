@@ -1074,6 +1074,13 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 		{
 			/* Otherwise all required columns are guaranteed to exist */
 			firstNullAttr = natts;
+
+			/*
+			 * Check TupleDescFinalize() didn't get confused when setting
+			 * firstNonGuaranteedAttr.  There should never be a NULL in a
+			 * guaranteed column.
+			 */
+			Assert(first_null_attr(tup->t_bits, natts) >= firstNullAttr);
 		}
 	}
 	else

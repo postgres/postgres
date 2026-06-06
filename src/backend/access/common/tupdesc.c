@@ -517,6 +517,7 @@ TupleDescFinalize(TupleDesc tupdesc)
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
 		CompactAttribute *cattr = TupleDescCompactAttr(tupdesc, i);
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 		/*
 		 * Find the highest attnum which is guaranteed to exist in all tuples
@@ -525,10 +526,18 @@ TupleDescFinalize(TupleDesc tupdesc)
 		 */
 		if (firstNonGuaranteedAttr == tupdesc->natts &&
 			(cattr->attnullability != ATTNULLABLE_VALID || !cattr->attbyval ||
-			 cattr->atthasmissing || cattr->attisdropped || cattr->attlen <= 0))
+			 cattr->atthasmissing || cattr->attisdropped ||
+			 cattr->attlen <= 0 ||
+			 attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL))
 			firstNonGuaranteedAttr = i;
 
-		if (cattr->attlen <= 0)
+		/*
+		 * Don't cache offsets beyond fixed-width attributes.  Virtual
+		 * generated attributes are stored as NULLs in the tuple, so we don't
+		 * cache offsets beyond these.
+		 */
+		if (cattr->attlen <= 0 ||
+			attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
 			break;
 
 		off = att_nominal_alignby(off, cattr->attalignby);
