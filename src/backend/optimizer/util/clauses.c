@@ -2544,7 +2544,8 @@ convert_saop_to_hashed_saop_walker(Node *node, void *context)
 	if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) node;
-		Expr	   *arrayarg = (Expr *) lsecond(saop->args);
+		Node	   *leftarg = (Node *) linitial(saop->args);
+		Node	   *arrayarg = (Node *) lsecond(saop->args);
 		Oid			lefthashfunc;
 		Oid			righthashfunc;
 
@@ -2553,7 +2554,8 @@ convert_saop_to_hashed_saop_walker(Node *node, void *context)
 		{
 			if (saop->useOr)
 			{
-				if (get_op_hash_functions(saop->opno, &lefthashfunc, &righthashfunc) &&
+				if (get_op_hash_functions_ext(saop->opno, exprType(leftarg),
+											  &lefthashfunc, &righthashfunc) &&
 					lefthashfunc == righthashfunc)
 				{
 					Datum		arrdatum = ((Const *) arrayarg)->constvalue;
@@ -2585,7 +2587,8 @@ convert_saop_to_hashed_saop_walker(Node *node, void *context)
 				 * just ensure the lookup items are not in the hash table.
 				 */
 				if (OidIsValid(negator) &&
-					get_op_hash_functions(negator, &lefthashfunc, &righthashfunc) &&
+					get_op_hash_functions_ext(negator, exprType(leftarg),
+											  &lefthashfunc, &righthashfunc) &&
 					lefthashfunc == righthashfunc)
 				{
 					Datum		arrdatum = ((Const *) arrayarg)->constvalue;

@@ -779,8 +779,9 @@ lookup_type_cache(Oid type_id, int flags)
 										  HASHSTANDARD_PROC);
 
 		/*
-		 * As above, make sure hash_array, hash_record, or hash_range will
-		 * succeed.
+		 * As above, make sure hash_array, hash_record, hash_range, or
+		 * hash_multirange will succeed.  Here we do need to check the range
+		 * cases.
 		 */
 		if (hash_proc == F_HASH_ARRAY &&
 			!array_element_has_hashing(typentry))
@@ -791,12 +792,8 @@ lookup_type_cache(Oid type_id, int flags)
 		else if (hash_proc == F_HASH_RANGE &&
 				 !range_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
-
-		/*
-		 * Likewise for hash_multirange.
-		 */
-		if (hash_proc == F_HASH_MULTIRANGE &&
-			!multirange_element_has_hashing(typentry))
+		else if (hash_proc == F_HASH_MULTIRANGE &&
+				 !multirange_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
 
 		/* Force update of hash_proc_finfo only if we're changing state */
@@ -828,8 +825,8 @@ lookup_type_cache(Oid type_id, int flags)
 												   HASHEXTENDED_PROC);
 
 		/*
-		 * As above, make sure hash_array_extended, hash_record_extended, or
-		 * hash_range_extended will succeed.
+		 * As above, make sure hash_array_extended, hash_record_extended,
+		 * hash_range_extended, or hash_multirange_extended will succeed.
 		 */
 		if (hash_extended_proc == F_HASH_ARRAY_EXTENDED &&
 			!array_element_has_extended_hashing(typentry))
@@ -840,12 +837,8 @@ lookup_type_cache(Oid type_id, int flags)
 		else if (hash_extended_proc == F_HASH_RANGE_EXTENDED &&
 				 !range_element_has_extended_hashing(typentry))
 			hash_extended_proc = InvalidOid;
-
-		/*
-		 * Likewise for hash_multirange_extended.
-		 */
-		if (hash_extended_proc == F_HASH_MULTIRANGE_EXTENDED &&
-			!multirange_element_has_extended_hashing(typentry))
+		else if (hash_extended_proc == F_HASH_MULTIRANGE_EXTENDED &&
+				 !multirange_element_has_extended_hashing(typentry))
 			hash_extended_proc = InvalidOid;
 
 		/* Force update of proc finfo only if we're changing state */

@@ -2476,7 +2476,9 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		 * hash functions for the join operator.
 		 */
 		if ((sslot1.nvalues + sslot2.nvalues) >= EQJOINSEL_MCV_HASH_THRESHOLD)
-			(void) get_op_hash_functions(operator, &hashLeft, &hashRight);
+			(void) get_op_hash_functions_ext(operator,
+											 exprType((Node *) linitial(args)),
+											 &hashLeft, &hashRight);
 	}
 	else
 		memset(&eqproc, 0, sizeof(eqproc)); /* silence uninit-var warnings */

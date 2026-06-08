@@ -3057,7 +3057,7 @@
   oprrest => 'scalargesel', oprjoin => 'scalargejoinsel' },
 
 # generic range type operators
-{ oid => '3882', descr => 'equal',
+{ oid => '3882', oid_symbol => 'RANGE_EQ_OP', descr => 'equal',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'anyrange',
   oprright => 'anyrange', oprresult => 'bool', oprcom => '=(anyrange,anyrange)',
   oprnegate => '<>(anyrange,anyrange)', oprcode => 'range_eq',
@@ -3263,7 +3263,7 @@
   oprname => '@@', oprleft => 'jsonb', oprright => 'jsonpath',
   oprresult => 'bool', oprcode => 'jsonb_path_match_opr(jsonb,jsonpath)',
   oprrest => 'matchingsel', oprjoin => 'matchingjoinsel' },
-{ oid => '2860', descr => 'equal',
+{ oid => '2860', oid_symbol => 'MULTIRANGE_EQ_OP', descr => 'equal',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't',
   oprleft => 'anymultirange', oprright => 'anymultirange', oprresult => 'bool',
   oprcom => '=(anymultirange,anymultirange)',

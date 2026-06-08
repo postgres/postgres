@@ -841,7 +841,9 @@ hash_ok_operator(OpExpr *expr)
 	if (list_length(expr->args) != 2)
 		return false;
 	if (opid == ARRAY_EQ_OP ||
-		opid == RECORD_EQ_OP)
+		opid == RECORD_EQ_OP ||
+		opid == RANGE_EQ_OP ||
+		opid == MULTIRANGE_EQ_OP)
 	{
 		/* these are strict, but must check input type to ensure hashable */
 		Node	   *leftarg = linitial(expr->args);
