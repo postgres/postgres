@@ -666,7 +666,7 @@ test_random_operations(PG_FUNCTION_ARGS)
 		CHECK_FOR_INTERRUPTS();
 
 		if (!bms_is_member(members[i], result))
-			elog(ERROR, "union missing member %d, seed " INT64_FORMAT,
+			elog(ERROR, "union missing member %d, seed " UINT64_FORMAT,
 				 members[i], seed);
 	}
 	bms_free(result);
@@ -685,7 +685,7 @@ test_random_operations(PG_FUNCTION_ARGS)
 			CHECK_FOR_INTERRUPTS();
 
 			if (!bms_is_member(member, bms1) || !bms_is_member(member, bms2))
-				elog(ERROR, "intersection contains invalid member %d, seed " INT64_FORMAT,
+				elog(ERROR, "intersection contains invalid member %d, seed " UINT64_FORMAT,
 					 member, seed);
 		}
 		bms_free(result);
@@ -736,7 +736,7 @@ test_random_operations(PG_FUNCTION_ARGS)
 
 					member = members[pos];
 					if (!bms_is_member(member, bms))
-						elog(ERROR, "expected %d to be a valid member, seed " INT64_FORMAT,
+						elog(ERROR, "expected %d to be a valid member, seed " UINT64_FORMAT,
 							 member, seed);
 
 					bms = bms_del_member(bms, member);
@@ -753,7 +753,7 @@ test_random_operations(PG_FUNCTION_ARGS)
 				for (int i = 0; i < num_members; i++)
 				{
 					if (!bms_is_member(members[i], bms))
-						elog(ERROR, "missing member %d, seed " INT64_FORMAT,
+						elog(ERROR, "missing member %d, seed " UINT64_FORMAT,
 							 members[i], seed);
 				}
 				break;
