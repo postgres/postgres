@@ -24,7 +24,6 @@ typedef struct
 {
 	char	   *in;
 	char	   *out;
-	int			outlen;
 	uint16		flags;
 } Syn;
 
@@ -189,7 +188,6 @@ dsynonym_init(PG_FUNCTION_ARGS)
 			d->syn[cur].out = str_tolower(starto, strlen(starto), DEFAULT_COLLATION_OID);
 		}
 
-		d->syn[cur].outlen = strlen(starto);
 		d->syn[cur].flags = flags;
 
 		cur++;
@@ -237,7 +235,7 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(NULL);
 
 	res = palloc0_array(TSLexeme, 2);
-	res[0].lexeme = pnstrdup(found->out, found->outlen);
+	res[0].lexeme = pstrdup(found->out);
 	res[0].flags = found->flags;
 
 	PG_RETURN_POINTER(res);
