@@ -2854,6 +2854,32 @@ execute q;
 +------------------+-------------------+
 
 deallocate q;
+-- expanded output with short-width columns
+\pset border 2
+\pset expanded on
+create table psql_short_tab(a int, b int);
+insert into psql_short_tab values(10,20),(30,40);
+\pset format aligned
+select * from psql_short_tab;
++-[ RECORD 1 ]-+
+| a | 10       |
+| b | 20       |
++-[ RECORD 2 ]-+
+| a | 30       |
+| b | 40       |
++---+----------+
+
+\pset format wrapped
+select * from psql_short_tab;
++-[ RECORD 1 ]-+
+| a | 10       |
+| b | 20       |
++-[ RECORD 2 ]-+
+| a | 30       |
+| b | 40       |
++---+----------+
+
+drop table psql_short_tab;
 \pset linestyle ascii
 \pset border 1
 -- support table for output-format tests (useful to create a footer)

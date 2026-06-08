@@ -499,6 +499,17 @@ execute q;
 
 deallocate q;
 
+-- expanded output with short-width columns
+\pset border 2
+\pset expanded on
+create table psql_short_tab(a int, b int);
+insert into psql_short_tab values(10,20),(30,40);
+\pset format aligned
+select * from psql_short_tab;
+\pset format wrapped
+select * from psql_short_tab;
+drop table psql_short_tab;
+
 \pset linestyle ascii
 \pset border 1
 
