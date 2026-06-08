@@ -7529,6 +7529,15 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * NULL if so, so without any modification of the tuple data we will get
 	 * the effect of NULL values in the new column.
 	 *
+	 * An exception occurs when the new column is of a domain type: the domain
+	 * might have a not-null constraint, or a check constraint that indirectly
+	 * rejects nulls.  If there are any domain constraints then we construct
+	 * an explicit NULL default value that will be passed through
+	 * CoerceToDomain processing.  (This is a tad inefficient, since it causes
+	 * rewriting the table which we really wouldn't have to do; but we do it
+	 * to preserve the historical behavior that such a failure will be raised
+	 * only if the table currently contains some rows.)
+	 *
 	 * Note: we use build_column_default, and not just the cooked default
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
@@ -7547,7 +7556,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		bool		has_domain_constraints;
 		bool		has_missing = false;
-		bool		has_volatile = false;
 
 		/*
 		 * For an identity column, we can't use build_column_default(),
@@ -7565,18 +7573,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		else
 			defval = (Expr *) build_column_default(rel, attribute->attnum);
 
-		has_domain_constraints =
-			DomainHasConstraints(attribute->atttypid, &has_volatile);
-
-		/*
-		 * If the domain has volatile constraints, we must do a table rewrite
-		 * since the constraint result could differ per row and cannot be
-		 * evaluated once and cached as a missing value.
-		 */
-		if (has_volatile)
-			tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
-
 		/* Build CoerceToDomain(NULL) expression if needed */
+		has_domain_constraints = DomainHasConstraints(attribute->atttypid, NULL);
 		if (!defval && has_domain_constraints)
 		{
 			Oid			baseTypeId;
@@ -7618,50 +7616,27 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			 * Attempt to skip a complete table rewrite by storing the
 			 * specified DEFAULT value outside of the heap.  This is only
 			 * allowed for plain relations and non-generated columns, and the
-			 * default expression can't be volatile (stable is OK), and the
-			 * domain constraint expressions can't be volatile (stable is OK).
-			 *
-			 * Note that contain_volatile_functions considers CoerceToDomain
-			 * immutable, so we rely on DomainHasConstraints (called above)
-			 * rather than checking defval alone.
-			 *
-			 * For domains with non-volatile constraints, we evaluate the
-			 * default using soft error handling: if the constraint check
-			 * fails (e.g., CHECK(value > 10) with DEFAULT 8), we fall back to
-			 * a table rewrite.  This preserves the historical behavior that
-			 * such a failure is only raised when the table has rows.
+			 * default expression can't be volatile (stable is OK).  Note that
+			 * contain_volatile_functions deems CoerceToDomain immutable, but
+			 * here we consider that coercion to a domain with constraints is
+			 * volatile; else it might fail even when the table is empty.
 			 */
 			if (rel->rd_rel->relkind == RELKIND_RELATION &&
 				!colDef->generated &&
-				!has_volatile &&
+				!has_domain_constraints &&
 				!contain_volatile_functions((Node *) defval))
 			{
 				EState	   *estate;
 				ExprState  *exprState;
 				Datum		missingval;
 				bool		missingIsNull;
-				ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-				/* Evaluate the default expression with soft errors */
+				/* Evaluate the default expression */
 				estate = CreateExecutorState();
-				exprState = ExecPrepareExprWithContext(defval, estate,
-													   (Node *) &escontext);
+				exprState = ExecPrepareExpr(defval, estate);
 				missingval = ExecEvalExpr(exprState,
 										  GetPerTupleExprContext(estate),
 										  &missingIsNull);
-
-				/*
-				 * If the domain constraint check failed (via errsave),
-				 * missingval is unreliable.  Fall back to a table rewrite;
-				 * Phase 3 will re-evaluate with hard errors, so the user gets
-				 * an error only if the table has rows.
-				 */
-				if (escontext.error_occurred)
-				{
-					missingIsNull = true;
-					tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
-				}
-
 				/* If it turns out NULL, nothing to do; else store it */
 				if (!missingIsNull)
 				{
