@@ -282,7 +282,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 		{
 			XLogRecPtr	old_confirmed_lsn = slot->data.confirmed_flush;
 			XLogRecPtr	old_restart_lsn = slot->data.restart_lsn;
-			XLogRecPtr	old_catalog_xmin = slot->data.catalog_xmin;
+			TransactionId old_catalog_xmin = slot->data.catalog_xmin;
 
 			LogicalSlotAdvanceAndCheckSnapState(remote_slot->confirmed_lsn,
 												found_consistent_snapshot);
