@@ -7312,7 +7312,7 @@ EXEC SQL EXECUTE IMMEDIATE :command;
 
    <refsynopsisdiv>
 <synopsis>
-GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> <replaceable class="parameter">:cvariable</replaceable> = <replaceable class="parameter">descriptor_header_item</replaceable> [, ... ]
+GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> <replaceable class="parameter">:cvariable</replaceable> = <replaceable class="parameter">descriptor_header_item</replaceable>
 GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALUE <replaceable class="parameter">column_number</replaceable> <replaceable class="parameter">:cvariable</replaceable> = <replaceable class="parameter">descriptor_item</replaceable> [, ... ]
 </synopsis>
    </refsynopsisdiv>
@@ -7331,7 +7331,7 @@ GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALU
 
     <para>
      This command has two forms: The first form retrieves
-     descriptor <quote>header</quote> items, which apply to the result
+     descriptor <quote>header</quote> item, which applies to the result
      set in its entirety.  One example is the row count.  The second
      form, which requires the column number as additional parameter,
      retrieves information about a particular column.  Examples are
@@ -7807,7 +7807,7 @@ EXEC SQL SET CONNECTION = con1;
 
    <refsynopsisdiv>
 <synopsis>
-SET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> <replaceable class="parameter">descriptor_header_item</replaceable> = <replaceable>value</replaceable> [, ... ]
+SET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> <replaceable class="parameter">descriptor_header_item</replaceable> = <replaceable>value</replaceable>
 SET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALUE <replaceable class="parameter">number</replaceable> <replaceable class="parameter">descriptor_item</replaceable> = <replaceable>value</replaceable> [, ...]
 </synopsis>
    </refsynopsisdiv>

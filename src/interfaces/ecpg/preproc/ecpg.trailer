@@ -1421,14 +1421,10 @@ ECPGDeallocateDescr: DEALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
  * manipulate a descriptor header
  */
 
-ECPGGetDescriptorHeader: SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar ECPGGetDescHeaderItems
+ECPGGetDescriptorHeader: SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar ECPGGetDescHeaderItem
 	{
 		@$ = @3;
 	}
-	;
-
-ECPGGetDescHeaderItems: ECPGGetDescHeaderItem
-	| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem
 	;
 
 ECPGGetDescHeaderItem: cvariable '=' desc_header_item
@@ -1437,14 +1433,10 @@ ECPGGetDescHeaderItem: cvariable '=' desc_header_item
 	}
 	;
 
-ECPGSetDescriptorHeader: SET SQL_DESCRIPTOR quoted_ident_stringvar ECPGSetDescHeaderItems
+ECPGSetDescriptorHeader: SET SQL_DESCRIPTOR quoted_ident_stringvar ECPGSetDescHeaderItem
 	{
 		@$ = @3;
 	}
-	;
-
-ECPGSetDescHeaderItems: ECPGSetDescHeaderItem
-	| ECPGSetDescHeaderItems ',' ECPGSetDescHeaderItem
 	;
 
 ECPGSetDescHeaderItem: desc_header_item '=' IntConstVar
