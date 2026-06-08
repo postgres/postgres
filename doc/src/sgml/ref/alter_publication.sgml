@@ -267,14 +267,14 @@ ALTER PUBLICATION mypublication SET TABLE users (user_id, firstname, lastname), 
 </programlisting></para>
 
   <para>
-   Replace the table list in the publication's EXCEPT clause:
+   Replace the table list in the publication's <literal>EXCEPT</literal> clause:
 <programlisting>
 ALTER PUBLICATION mypublication SET ALL TABLES EXCEPT (TABLE users, departments);
 </programlisting></para>
 
   <para>
-   Reset the publication to be a FOR ALL TABLES publication with no excluded
-   tables:
+   Reset the publication to be a <literal>FOR ALL TABLES</literal> publication
+   with no excluded tables:
 <programlisting>
 ALTER PUBLICATION mypublication SET ALL TABLES;
 </programlisting></para>
