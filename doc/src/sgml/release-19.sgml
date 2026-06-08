@@ -120,12 +120,12 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Prevent carriage returns and line feeds in database, role, and tablespace names (Mahendra Singh Thalor)
+Disallow carriage returns and line feeds in database, role, and tablespace names (Mahendra Singh Thalor)
 <ulink url="&commit_baseurl;b380a56a3">&sect;</ulink>
 </para>
 
 <para>
-This was changed to avoid security problems.  <link linkend="pgupgrade"><application>pg_upgrade</application></link> will also disallow upgrading of clusters that use such names.
+<link linkend="pgupgrade"><application>pg_upgrade</application></link> will also disallow upgrading of clusters that use such names.  This was changed to avoid security problems.
 </para>
 </listitem>
 
@@ -144,8 +144,7 @@ Change the default index opclasses for <link linkend="datatype-net-types"><type>
 </para>
 
 <para>
-The <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> opclasses are broken because they can exclude rows that should be returned.  <link linkend="pgupgrade"><application>pg_upgrade</application></link> will fail to upgrade if <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> indexes exist in the old
-server.
+The <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> opclasses are broken because they can exclude rows that should be returned.  <link linkend="pgupgrade"><application>pg_upgrade</application></link> will disallow upgrading of clusters with <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> indexes.
 </para>
 </listitem>
 
@@ -688,13 +687,13 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Allow <link linkend="autovacuum">autovacuum</link> to use parallel vacuum workers (Daniil Davydov)
+Allow <link linkend="autovacuum">autovacuum</link> to use <link linkend="reloption-autovacuum-parallel-workers"><varname>parallel autovacuum workers</varname></link> (Daniil Davydov)
 <ulink url="&commit_baseurl;1ff3180ca">&sect;</ulink>
 <ulink url="&commit_baseurl;2a3d2f9f6">&sect;</ulink>
 </para>
 
 <para>
-This is enabled via server variable <link linkend="guc-autovacuum-max-parallel-workers"><varname>autovacuum_max_parallel_workers</varname></link> and per-table storage parameter <varname>autovacuum_parallel_workers</varname>.
+The maximum number of workers is controlled by server variable <link linkend="guc-autovacuum-max-parallel-workers"><varname>autovacuum_max_parallel_workers</varname></link> and per-table storage parameter <varname>autovacuum_parallel_workers</varname>.
 </para>
 </listitem>
 
@@ -1160,12 +1159,12 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Add server variable <link linkend="guc-log-autoanalyze-min-duration"><varname>log_autoanalyze_min_duration</varname></link> to log long-running <link linkend="autovacuum">autoanalyze</link> operations (Shinya Kato)
+Add server variable <link linkend="guc-log-autoanalyze-min-duration"><varname>log_autoanalyze_min_duration</varname></link> to log long-running analyze operations by <link linkend="autovacuum">autovacuum</link> operations (Shinya Kato)
 <ulink url="&commit_baseurl;dd3ae3783">&sect;</ulink>
 </para>
 
 <para>
-Server variable <link linkend="guc-log-autovacuum-min-duration"><varname>log_autovacuum_min_duration</varname></link> now only controls logging of autovacuum operations.
+Server variable <link linkend="guc-log-autovacuum-min-duration"><varname>log_autovacuum_min_duration</varname></link> now only controls logging of vacuum operations by autovacuum.
 </para>
 </listitem>
 
@@ -1220,7 +1219,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add <acronym>WAL</acronym> <link linkend="guc-full-page-writes">full-page write</link> bytes reporting to <link linkend="sql-vacuum"><command>VACUUM</command></link> and <link linkend="sql-analyze"><command>ANALYZE</command></link> logging (Shinya Kato)
+Add reporting of <acronym>WAL</acronym> <link linkend="guc-full-page-writes">full-page write</link> bytes to <link linkend="sql-vacuum"><command>VACUUM</command></link> and <link linkend="sql-analyze"><command>ANALYZE</command></link> logging (Shinya Kato)
 <ulink url="&commit_baseurl;ad25744f4">&sect;</ulink>
 </para>
 </listitem>
@@ -1312,7 +1311,7 @@ Allow <link linkend="functions-admin-checksum">online enabling</link> and disabl
 </para>
 
 <para>
-Previously the checksum status could only be set at initialization and changed only while the cluster was offline using <link linkend="app-pgchecksums"><application>pg_checksums</application></link>.
+Previously the checksum status could only be changed while the cluster was offline using <link linkend="app-pgchecksums"><application>pg_checksums</application></link>.
 </para>
 </listitem>
 
@@ -1323,7 +1322,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add scoring system to control the order that tables are <link linkend="autovacuum">autovacuumed</link> (Nathan Bossart)
+Add scoring system to control the order that tables are processed by <link linkend="autovacuum">autovacuum</link> (Nathan Bossart)
 <ulink url="&commit_baseurl;d7965d65f">&sect;</ulink>
 </para>
 
@@ -1393,6 +1392,10 @@ Author: Michael Paquier <michael@paquier.xyz>
 <para>
 Allow background workers to be configured to terminate before database-level operations (Aya Iwata)
 <ulink url="&commit_baseurl;f1e251be8">&sect;</ulink>
+</para>
+
+<para>
+This allows database-level operations to complete more quickly since blocking background workers can now be terminated.
 </para>
 </listitem>
 
@@ -2021,7 +2024,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Allow <link linkend="sql-copy"><command>COPY TO</command></link> to output partitioned tables (Jian He, Ajin Cherian)
+Allow <link linkend="sql-copy"><command>COPY TO</command></link> to process partitioned tables (Jian He, Ajin Cherian)
 <ulink url="&commit_baseurl;4bea91f21">&sect;</ulink>
 <ulink url="&commit_baseurl;266543a62">&sect;</ulink>
 </para>
@@ -2063,7 +2066,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add <acronym>WAL</acronym> <link linkend="guc-full-page-writes">full-page write</link> bytes reporting to <link linkend="sql-explain"><command>EXPLAIN (ANALYZE, WAL)</command></link> output (Shinya Kato)
+Add reporting of <acronym>WAL</acronym> <link linkend="guc-full-page-writes">full-page write</link> bytes to <link linkend="sql-explain"><command>EXPLAIN (ANALYZE, WAL)</command></link> output (Shinya Kato)
 <ulink url="&commit_baseurl;5ab0b6a24">&sect;</ulink>
 </para>
 </listitem>
