@@ -34,6 +34,14 @@
    key mechanism, of course, but the module is still useful as an example.)
   </para>
 
+  <note>
+   <para>
+    <filename>refint</filename> requires a
+    <link linkend="ddl-schemas-patterns">secure schema usage pattern</link> and
+    data types where the equality operator is named <literal>=</literal>.
+   </para>
+  </note>
+
   <para>
    <function>check_primary_key()</function> checks the referencing table.
    To use, create an <literal>AFTER INSERT OR UPDATE</literal> trigger using this
@@ -44,6 +52,29 @@
    keys, create a trigger for each reference.
   </para>
 
+  <note>
+   <para>
+    The <emphasis>referenced</emphasis> table name and column name arguments to
+    <function>check_primary_key()</function> are copied as-is into internally
+    generated SQL statements and therefore must be double-quoted by the user as
+    necessary in the <command>CREATE TRIGGER</command> command.  See
+    <xref linkend="sql-syntax-identifiers"/> for more information about quoting
+    SQL identifiers.  Conversely, the <emphasis>referencing</emphasis> table
+    column name arguments should not be double quoted.  See the following mock
+    example of proper use of <function>check_primary_key()</function>:
+<programlisting>
+CREATE TRIGGER mytrigger
+AFTER INSERT OR UPDATE ON referencing_table
+FOR EACH ROW EXECUTE PROCEDURE
+check_primary_key (
+    'column A', 'column B',         -- referencing table columns
+    'myschema."referenced table"',  -- referenced table
+    '"column A"', '"column B"'      -- referenced table columns
+);
+</programlisting>
+   </para>
+  </note>
+
   <para>
    <function>check_foreign_key()</function> checks the referenced table.
    To use, create an <literal>AFTER DELETE OR UPDATE</literal> trigger using this
@@ -53,12 +84,37 @@
    (<literal>cascade</literal> &mdash; to delete the referencing row,
    <literal>restrict</literal> &mdash; to abort transaction if referencing keys
    exist, <literal>setnull</literal> &mdash; to set referencing key fields to null),
-   the triggered table's column names which form the primary/unique key, then
+   the referenced table's column names which form the primary/unique key, then
    the referencing table name and column names (repeated for as many
    referencing tables as were specified by first argument).  Note that the
    primary/unique key columns should be marked NOT NULL and should have a
    unique index.
   </para>
+
+  <note>
+   <para>
+    The <emphasis>referencing</emphasis> table name and column name arguments
+    to <function>check_foreign_key()</function> are copied as-is into
+    internally generated SQL statements and therefore must be double-quoted by
+    the user as necessary in the <command>CREATE TRIGGER</command> command.
+    See <xref linkend="sql-syntax-identifiers"/> for more information about
+    quoting SQL identifiers.  Conversely, the <emphasis>referenced</emphasis>
+    table column name arguments should not be double quoted.  See the following
+    mock example of proper use of <function>check_foreign_key()</function>:
+<programlisting>
+CREATE TRIGGER mytrigger
+AFTER DELETE OR UPDATE ON referenced_table
+FOR EACH ROW EXECUTE PROCEDURE
+check_foreign_key (
+    1,                              -- number of referencing tables
+    'cascade',                      -- action
+    'column A', 'column B',         -- referenced table columns
+    'myschema."referencing table"', -- referencing table
+    '"column A"', '"column B"'      -- referencing table columns
+);
+</programlisting>
+   </para>
+  </note>
 
   <para>
    Note that if these triggers are executed from
