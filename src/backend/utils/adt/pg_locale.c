@@ -1361,6 +1361,10 @@ lc_collate_is_c(Oid collation)
 		if (result >= 0)
 			return (bool) result;
 
+		/* should not happen: CheckMyDatabase() not yet run */
+		if (default_locale.provider == '\0')
+			elog(ERROR, "default locale not initialized");
+
 		if (default_locale.provider == COLLPROVIDER_BUILTIN)
 		{
 			result = true;
@@ -1427,6 +1431,10 @@ lc_ctype_is_c(Oid collation)
 
 		if (result >= 0)
 			return (bool) result;
+
+		/* should not happen: CheckMyDatabase() not yet run */
+		if (default_locale.provider == '\0')
+			elog(ERROR, "default locale not initialized");
 
 		if (default_locale.provider == COLLPROVIDER_BUILTIN)
 		{
@@ -1586,6 +1594,10 @@ pg_newlocale_from_collation(Oid collid)
 
 	if (collid == DEFAULT_COLLATION_OID)
 	{
+		/* should not happen: CheckMyDatabase() not yet run */
+		if (default_locale.provider == '\0')
+			elog(ERROR, "default locale not initialized");
+
 		if (default_locale.provider == COLLPROVIDER_LIBC)
 			return (pg_locale_t) 0;
 		else
