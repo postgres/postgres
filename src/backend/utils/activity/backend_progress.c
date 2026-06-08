@@ -100,8 +100,6 @@ pgstat_progress_parallel_incr_param(int index, int64 incr)
 	{
 		static StringInfoData progress_message;
 
-		initStringInfo(&progress_message);
-
 		pq_beginmessage(&progress_message, PqMsg_Progress);
 		pq_sendint32(&progress_message, index);
 		pq_sendint64(&progress_message, incr);
