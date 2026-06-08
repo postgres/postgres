@@ -1448,6 +1448,91 @@ SELECT * FROM fpo_rule ORDER BY f1;
 
 DROP TABLE fpo_rule;
 
+-- UPDATE/DELETE FOR PORTION OF with table inheritance
+-- Leftover rows must stay in the child table, preserving child-specific columns.
+CREATE TABLE fpo_inh_parent (
+  id int4range,
+  valid_at daterange,
+  name text
+);
+CREATE TABLE fpo_inh_child (
+  description text
+) INHERITS (fpo_inh_parent);
+
+-- Update targets the parent; the matching row lives in the child.
+INSERT INTO fpo_inh_child (id, valid_at, name, description) VALUES
+  ('[1,2)', '[2018-01-01,2019-01-01)', 'one', 'initial');
+UPDATE fpo_inh_parent FOR PORTION OF valid_at FROM '2018-04-01' TO '2018-10-01'
+  SET name = 'one^1';
+-- All three rows should be in the child, with description preserved.
+SELECT tableoid::regclass, * FROM fpo_inh_parent ORDER BY valid_at;
+SELECT * FROM fpo_inh_child ORDER BY valid_at;
+-- No rows should have leaked into the parent.
+SELECT * FROM ONLY fpo_inh_parent ORDER BY valid_at;
+
+-- Same test for DELETE instead of UPDATE:
+TRUNCATE fpo_inh_child, fpo_inh_parent;
+INSERT INTO fpo_inh_child (id, valid_at, name, description) VALUES
+  ('[1,2)', '[2018-01-01,2019-01-01)', 'one', 'initial');
+DELETE FROM fpo_inh_parent FOR PORTION OF valid_at FROM '2018-04-01' TO '2018-10-01';
+-- Both rows should be in the child, with description preserved.
+SELECT tableoid::regclass, * FROM fpo_inh_parent ORDER BY valid_at;
+SELECT * FROM fpo_inh_child ORDER BY valid_at;
+-- No rows should have leaked into the parent.
+SELECT * FROM ONLY fpo_inh_parent ORDER BY valid_at;
+
+DROP TABLE fpo_inh_parent CASCADE;
+
+-- UPDATE FOR PORTION OF with multiple inheritance
+-- Leftover rows must stay in the child table, even if the range column's
+-- attnum differs between the target parent and child.
+CREATE TABLE temporal_parent (
+  id int,
+  valid_at daterange,
+  name text
+);
+CREATE TABLE other_parent (
+  prefix text,
+  note text
+);
+CREATE TABLE mi_child () INHERITS (other_parent, temporal_parent);
+
+-- attnum of the range column is different in temporal_parent and mi_child
+SELECT attnum, attname
+  FROM pg_attribute
+  WHERE attrelid = 'temporal_parent'::regclass
+    AND attnum > 0 AND NOT attisdropped
+  ORDER BY attnum;
+SELECT attnum, attname
+  FROM pg_attribute
+  WHERE attrelid = 'mi_child'::regclass
+    AND attnum > 0 AND NOT attisdropped
+  ORDER BY attnum;
+
+INSERT INTO mi_child (prefix, note, id, valid_at, name) VALUES
+  ('pfx', 'memo', 1, daterange('2000-01-01', '2010-01-01'), 'old');
+
+UPDATE temporal_parent FOR PORTION OF valid_at FROM '2001-01-01' TO '2002-01-01'
+  SET name = 'new'
+  WHERE id = 1;
+
+SELECT tableoid::regclass, * FROM temporal_parent ORDER BY valid_at;
+SELECT * FROM mi_child ORDER BY valid_at;
+SELECT * FROM ONLY temporal_parent ORDER BY valid_at;
+
+TRUNCATE mi_child, other_parent, temporal_parent;
+INSERT INTO mi_child (prefix, note, id, valid_at, name) VALUES
+  ('pfx', 'memo', 1, daterange('2000-01-01', '2010-01-01'), 'old');
+
+DELETE FROM temporal_parent FOR PORTION OF valid_at FROM '2001-01-01' TO '2002-01-01'
+  WHERE id = 1;
+
+SELECT tableoid::regclass, * FROM temporal_parent ORDER BY valid_at;
+SELECT * FROM mi_child ORDER BY valid_at;
+SELECT * FROM ONLY temporal_parent ORDER BY valid_at;
+
+DROP TABLE temporal_parent CASCADE;
+
 -- UPDATE FOR PORTION OF with generated columns
 -- The generated column depends on the range column, so it must be
 -- recomputed when FOR PORTION OF narrows the range.
