@@ -130,6 +130,22 @@ env:
   # commit-message directive parsed in the `setup` job below.
   CI_OS_ONLY_JOBS: "linux macos windows mingw compilerwarnings sanitycheck"
 
+  ###
+  # A few variables to make expressions later on shorter
+  ###
+
+  ON_DEFAULT_BRANCH: ${{github.event.repository.default_branch == github.ref_name }}
+
+  # Note that we need to be careful to use a separator that can't be in branch
+  # names, otherwise e.g. caches for 'master' might be restored on the
+  # 'master-pending' branch.
+  CACHE_PREFIX_DEFAULT: >-
+    :${{ github.job }}:${{ github.event.repository.default_branch }}:
+  CACHE_PREFIX_BRANCH: >-
+    :${{ github.job }}:${{ github.ref_name }}:
+  CACHE_SUFFIX: >-
+    ${{ github.run_id }}:${{ github.run_attempt }}
+
 
 jobs:
 
@@ -277,16 +293,30 @@ jobs:
         with:
           fetch-depth: ${{ env.CLONE_DEPTH }}
 
-      - &ccache_restore_step
-        name: Restore ccache
-        id: ccache_restore
+      # We restore both the ccache from the default branch (typically master),
+      # and from the current branch. This will often allow feature branches to
+      # start out with a high cache hit ratio.
+      #
+      # With ccache it turns out to work to just restore two caches into the
+      # same directory, as it's basically a content addressed store. Stats
+      # could be corrupted, but we zero them out anyway.
+      - &ccache_restore_default_step
+        name: "ccache: Restore for default branch ${{github.event.repository.default_branch}}"
+        if: ${{ env.ON_DEFAULT_BRANCH == 'false' }}
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ github.job }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            ccache-${{ github.job }}-${{ github.ref_name }}-
-            ccache-${{ github.job }}-
+          key: ccache${{env.CACHE_PREFIX_DEFAULT}}${{env.CACHE_SUFFIX}}
+          restore-keys: ccache${{env.CACHE_PREFIX_DEFAULT}}
+
+      - &ccache_restore_branch_step
+        name: "ccache: Restore for branch ${{ github.ref_name }}"
+        id: ccache-restore-branch
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache${{env.CACHE_PREFIX_BRANCH}}${{env.CACHE_SUFFIX}}
+          restore-keys: ccache${{env.CACHE_PREFIX_BRANCH}}
 
       - &linux_prepare_workspace_step
         name: Prepare workspace
@@ -325,15 +355,30 @@ jobs:
           ninja -C build -j${{env.BUILD_JOBS}} ${{env.MBUILD_TARGET}}
           ninja -C build -t missingdeps
 
-      # TODO: As long as we use per-run ccache caches, we should probably add
-      # a step that checks if there is sufficient new content to warrant
-      # saving the new cache.
+      # Decide if it's worth uploading a new version of the ccache cache. If
+      # we always do so unconditionally, we'd very quickly go through the
+      # allowed cache space. Instead we check if the hit rate is high enough
+      # already for that not to be worth it.
+      - &ccache_decide_save_step
+        name: "ccache: Decide whether to upload"
+        id: ccache-decide
+        # Make the decision whether to upload whenever the cache has been set
+        # up, so that incrementally addressing compiler errors/warnings
+        # doesn't have to start from scratch.
+        if: |
+          always() &&
+          steps.ccache-restore-branch.conclusion == 'success'
+        run: python3 src/tools/ci/gha_ccache_decide.py
+
       - &ccache_save_step
-        name: Save ccache
+        name: "ccache: Upload cache"
         uses: actions/cache/save@v5
+        if: |
+          always() &&
+          steps.ccache-decide.outputs.should_save == 'true'
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ${{ steps.ccache_restore.outputs.cache-primary-key }}
+          key: ${{ steps.ccache-restore-branch.outputs.cache-primary-key }}
 
       # Run a minimal set of tests. The main regression tests take too long
       # for this purpose. For now this is a random quick pg_regress style
@@ -448,7 +493,8 @@ jobs:
 
       - *nix_sysinfo_step
       - *checkout_step
-      - *ccache_restore_step
+      - *ccache_restore_default_step
+      - *ccache_restore_branch_step
       - *linux_prepare_workspace_step
 
       - name: Configure
@@ -467,6 +513,7 @@ jobs:
         run: |
           make -s -j${BUILD_JOBS} world-bin
 
+      - *ccache_decide_save_step
       - *ccache_save_step
 
       - name: Test world
@@ -508,7 +555,8 @@ jobs:
 
       - *nix_sysinfo_step
       - *checkout_step
-      - *ccache_restore_step
+      - *ccache_restore_default_step
+      - *ccache_restore_branch_step
       - *linux_prepare_workspace_step
 
       - name: Configure
@@ -527,6 +575,7 @@ jobs:
         shell: *su_postgres_shell
         run: *ninja_build_cmd
 
+      - *ccache_decide_save_step
       - *ccache_save_step
 
       - name: Test world
@@ -596,7 +645,8 @@ jobs:
 
       - *nix_sysinfo_step
       - *checkout_step
-      - *ccache_restore_step
+      - *ccache_restore_default_step
+      - *ccache_restore_branch_step
       - *linux_prepare_workspace_step
 
       - name: Configure
@@ -613,6 +663,7 @@ jobs:
         shell: *su_postgres_shell
         run: *ninja_build_cmd
 
+      - *ccache_decide_save_step
       - *ccache_save_step
 
       - name: Test world
@@ -682,7 +733,6 @@ jobs:
     steps:
       - *nix_sysinfo_step
       - *checkout_step
-      - *ccache_restore_step
 
       - name: Setup core files
         run: |
@@ -745,6 +795,9 @@ jobs:
           path: ${{ env.MACPORTS_CACHE }}
           key: ${{ steps.mp-key.outputs.key }}
 
+      - *ccache_restore_default_step
+      - *ccache_restore_branch_step
+
       - name: Configure
         env:
           PKG_CONFIG_PATH: /opt/local/lib/pkgconfig/
@@ -762,6 +815,7 @@ jobs:
       - name: Build
         run: *ninja_build_cmd
 
+      - *ccache_decide_save_step
       - *ccache_save_step
 
       - name: Test world
@@ -1062,7 +1116,8 @@ jobs:
         shell: cmd
         run: mkdir ${{env.PG_REGRESS_SOCK_DIR}}
 
-      - *ccache_restore_step
+      - *ccache_restore_default_step
+      - *ccache_restore_branch_step
 
       - name: Configure
         run: |
@@ -1077,6 +1132,7 @@ jobs:
       - name: Build
         run: *ninja_build_cmd
 
+      - *ccache_decide_save_step
       - *ccache_save_step
 
       - name: Test world
@@ -1118,7 +1174,8 @@ jobs:
     steps:
       - *nix_sysinfo_step
       - *checkout_step
-      - *ccache_restore_step
+      - *ccache_restore_default_step
+      - *ccache_restore_branch_step
 
       - name: Setup workspace
         run: |
@@ -1213,5 +1270,6 @@ jobs:
             headerscheck cpluspluscheck \
             EXTRAFLAGS='-fmax-errors=10'
 
+      - *ccache_decide_save_step
       - *ccache_save_step
       - *upload_logs_step
