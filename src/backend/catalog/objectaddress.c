@@ -5502,7 +5502,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				amForm = (Form_pg_auth_members) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("membership of role %s in role %s"),
+				appendStringInfo(&buffer, "membership of role %s in role %s",
 								 GetUserNameFromId(amForm->member, false),
 								 GetUserNameFromId(amForm->roleid, false));
 
