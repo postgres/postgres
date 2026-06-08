@@ -2381,13 +2381,8 @@ main(int argc, char **argv)
 				opt.config_file = pg_strdup(optarg);
 				break;
 			case 2:
-				if (!simple_string_list_member(&opt.pub_names, optarg))
-				{
-					simple_string_list_append(&opt.pub_names, optarg);
-					num_pubs++;
-				}
-				else
-					pg_fatal("publication \"%s\" specified more than once for --publication", optarg);
+				simple_string_list_append(&opt.pub_names, optarg);
+				num_pubs++;
 				break;
 			case 3:
 				if (!simple_string_list_member(&opt.replslot_names, optarg))

@@ -74,18 +74,6 @@ command_fails(
 		'--pgdata' => $datadir,
 		'--publisher-server' => 'port=5432',
 		'--publication' => 'foo1',
-		'--publication' => 'foo1',
-		'--database' => 'pg1',
-		'--database' => 'pg2',
-	],
-	'duplicate publication name');
-command_fails(
-	[
-		'pg_createsubscriber',
-		'--verbose',
-		'--pgdata' => $datadir,
-		'--publisher-server' => 'port=5432',
-		'--publication' => 'foo1',
 		'--database' => 'pg1',
 		'--database' => 'pg2',
 	],
@@ -346,7 +334,8 @@ is($node_s->safe_psql($db1, "SELECT COUNT(*) FROM pg_publication"),
 
 $node_s->stop;
 
-# dry run mode on node S
+# dry run mode on node S. Use the same publication name for different
+# databases, since publication names are database-local.
 command_ok(
 	[
 		'pg_createsubscriber',
@@ -357,8 +346,8 @@ command_ok(
 		'--publisher-server' => $node_p->connstr($db1),
 		'--socketdir' => $node_s->host,
 		'--subscriber-port' => $node_s->port,
-		'--publication' => 'pub1',
-		'--publication' => 'pub2',
+		'--publication' => 'same_pub',
+		'--publication' => 'same_pub',
 		'--subscription' => 'sub1',
 		'--subscription' => 'sub2',
 		'--database' => $db1,
