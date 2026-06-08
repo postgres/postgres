@@ -1199,7 +1199,13 @@ pg_newlocale_from_collation(Oid collid)
 	bool		found;
 
 	if (collid == DEFAULT_COLLATION_OID)
+	{
+		/* should not happen: init_database_collation() not yet run */
+		if (default_locale == NULL)
+			elog(ERROR, "default locale not initialized");
+
 		return default_locale;
+	}
 
 	/*
 	 * Some callers expect C_COLLATION_OID to succeed even without catalog
