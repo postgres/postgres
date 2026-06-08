@@ -3831,7 +3831,7 @@ send_message_to_server_log(ErrorData *edata)
 		 * pipe).  If this is not possible, fallback to an entry written to
 		 * stderr.
 		 */
-		if (redirection_done || MyBackendType == B_LOGGER)
+		if (redirection_done || syslogger_setup_done)
 			write_csvlog(edata);
 		else
 			fallback_to_stderr = true;
@@ -3845,7 +3845,7 @@ send_message_to_server_log(ErrorData *edata)
 		 * pipe).  If this is not possible, fallback to an entry written to
 		 * stderr.
 		 */
-		if (redirection_done || MyBackendType == B_LOGGER)
+		if (redirection_done || syslogger_setup_done)
 		{
 			write_jsonlog(edata);
 		}
@@ -3885,7 +3885,7 @@ send_message_to_server_log(ErrorData *edata)
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
-	if (MyBackendType == B_LOGGER)
+	if (syslogger_setup_done)
 		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_STDERR);
 
 	/* No more need of the message formatted for stderr */

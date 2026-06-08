@@ -292,7 +292,7 @@ write_jsonlog(ErrorData *edata)
 	appendStringInfoChar(&buf, '\n');
 
 	/* If in the syslogger process, try to write messages direct to file */
-	if (MyBackendType == B_LOGGER)
+	if (syslogger_setup_done)
 		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_JSONLOG);
 	else
 		write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_JSONLOG);

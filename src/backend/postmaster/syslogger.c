@@ -77,6 +77,12 @@ bool		Log_truncate_on_rotation = false;
 int			Log_file_mode = S_IRUSR | S_IWUSR;
 
 /*
+ * Indicates to be running in the syslogger process, and that the logging
+ * file descriptor(s) have been set up.
+ */
+bool		syslogger_setup_done = false;
+
+/*
  * Private state
  */
 static pg_time_t next_rotation_time;
@@ -175,6 +181,17 @@ SysLoggerMain(const void *startup_data, size_t startup_data_len)
 	pg_time_t	now;
 	WaitEventSet *wes;
 
+#ifndef EXEC_BACKEND
+
+	/*
+	 * In !EXEC_BACKEND, syslogger is immediately ready to take over: the
+	 * output files were already opened by postmaster before forking.  For the
+	 * other case we must wait until the file descriptors have been restored,
+	 * below.
+	 */
+	syslogger_setup_done = true;
+#endif
+
 	/*
 	 * Re-open the error output files that were opened by SysLogger_Start().
 	 *
@@ -190,6 +207,8 @@ SysLoggerMain(const void *startup_data, size_t startup_data_len)
 		syslogFile = syslogger_fdopen(slsdata->syslogFile);
 		csvlogFile = syslogger_fdopen(slsdata->csvlogFile);
 		jsonlogFile = syslogger_fdopen(slsdata->jsonlogFile);
+
+		syslogger_setup_done = true;
 	}
 #else
 	Assert(startup_data_len == 0);

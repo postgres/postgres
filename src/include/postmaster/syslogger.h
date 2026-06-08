@@ -85,6 +85,7 @@ extern PGDLLIMPORT int syslogPipe[2];
 extern PGDLLIMPORT HANDLE syslogPipe[2];
 #endif
 
+extern bool syslogger_setup_done;
 
 extern int	SysLogger_Start(int child_slot);
 
