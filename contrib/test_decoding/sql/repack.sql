@@ -75,3 +75,10 @@ REPACK (CONCURRENTLY) repack_conc_replident;
 
 -- clean up
 DROP TABLE repack_conc_replident, clstrpart;
+
+-- verify that the pgrepack plugin cannot be called directly
+CREATE TABLE repack_plugin (a int);
+SELECT * FROM pg_create_logical_replication_slot('s_repack', 'pgrepack');
+INSERT INTO repack_plugin VALUES (1);
+SELECT * FROM pg_logical_slot_get_binary_changes('s_repack', NULL, NULL);
+SELECT pg_drop_replication_slot('s_repack');

@@ -39,10 +39,8 @@ typedef char ConcurrentChangeKind;
  */
 typedef struct RepackDecodingState
 {
-#ifdef	USE_ASSERT_CHECKING
 	/* The relation whose changes we're decoding. */
 	Oid			relid;
-#endif
 
 	/* Per-change memory context. */
 	MemoryContext change_cxt;

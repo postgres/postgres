@@ -101,3 +101,14 @@ DETAIL:  REPACK (CONCURRENTLY) does not support deferrable primary keys.
 HINT:  Use ALTER TABLE ... REPLICA IDENTITY USING INDEX to designate another index as replica identity.
 -- clean up
 DROP TABLE repack_conc_replident, clstrpart;
+-- verify that the pgrepack plugin cannot be called directly
+CREATE TABLE repack_plugin (a int);
+SELECT * FROM pg_create_logical_replication_slot('s_repack', 'pgrepack');
+ERROR:  unsupported use of logical decoding plugin "pgrepack"
+DETAIL:  This plugin can only be used by REPACK (CONCURRENTLY).
+CONTEXT:  slot "s_repack", output plugin "pgrepack", in the startup callback
+INSERT INTO repack_plugin VALUES (1);
+SELECT * FROM pg_logical_slot_get_binary_changes('s_repack', NULL, NULL);
+ERROR:  replication slot "s_repack" does not exist
+SELECT pg_drop_replication_slot('s_repack');
+ERROR:  replication slot "s_repack" does not exist

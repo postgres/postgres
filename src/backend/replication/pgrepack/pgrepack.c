@@ -13,6 +13,7 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
+#include "commands/repack.h"
 #include "commands/repack_internal.h"
 #include "replication/snapbuild.h"
 #include "utils/memutils.h"
@@ -47,7 +48,24 @@ static void
 repack_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			   bool is_init)
 {
-	ctx->output_plugin_private = NULL;
+	RepackDecodingState *dstate;
+
+	if (!AmRepackWorker())
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("unsupported use of logical decoding plugin \"%s\"",
+					   "pgrepack"),
+				errdetail("This plugin can only be used by %s.",
+						  "REPACK (CONCURRENTLY)"));
+
+	/* Initial setup of our private state */
+	Assert(CurrentMemoryContext == ctx->context);
+	dstate = palloc0_object(RepackDecodingState);
+	dstate->change_cxt = AllocSetContextCreate(ctx->context,
+											   "REPACK - change",
+											   ALLOCSET_DEFAULT_SIZES);
+	/* repack_setup_logical_decoding fills in the rest */
+	ctx->output_writer_private = dstate;
 
 	/* Probably unnecessary, as we don't use the SQL interface ... */
 	opt->output_type = OUTPUT_PLUGIN_BINARY_OUTPUT;
