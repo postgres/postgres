@@ -256,33 +256,19 @@ write_logical_decoding_status_update_record(bool status)
 }
 
 /*
- * A PG_ENSURE_ERROR_CLEANUP callback for activating logical decoding, resetting
- * the shared flags to revert the logical decoding activation process.
+ * A PG_ENSURE_ERROR_CLEANUP callback for activating logical decoding.
+ *
+ * Rather than directly reverting xlog_logical_info here, we request
+ * that the checkpointer handle it via the normal disable path. This
+ * avoids race conditions when multiple backends attempt concurrent
+ * activation: the checkpointer will reset xlog_logical_info when
+ * no valid logical slots exist.
  */
 static void
 abort_logical_decoding_activation(int code, Datum arg)
 {
-	Assert(MyReplicationSlot);
-	Assert(!LogicalDecodingCtl->logical_decoding_enabled);
-
 	elog(DEBUG1, "aborting logical decoding activation process");
-
-	/*
-	 * Abort the change to xlog_logical_info. We don't need to check
-	 * CheckLogicalSlotExists() as we're still holding a logical slot.
-	 */
-	LWLockAcquire(LogicalDecodingControlLock, LW_EXCLUSIVE);
-	LogicalDecodingCtl->xlog_logical_info = false;
-	LWLockRelease(LogicalDecodingControlLock);
-
-	/*
-	 * Some processes might have already started logical info WAL logging, so
-	 * tell all running processes to update their caches. We don't need to
-	 * wait for all processes to disable xlog_logical_info locally as it's
-	 * always safe to write logical information to WAL records, even when not
-	 * strictly required.
-	 */
-	EmitProcSignalBarrier(PROCSIGNAL_BARRIER_UPDATE_XLOG_LOGICAL_INFO);
+	RequestDisableLogicalDecoding();
 }
 
 /*
@@ -396,6 +382,8 @@ EnableLogicalDecoding(void)
 	 * long-running read queries, which is practically unacceptable.
 	 */
 
+	LWLockAcquire(LogicalDecodingControlLock, LW_EXCLUSIVE);
+
 	START_CRIT_SECTION();
 
 	/*
@@ -403,8 +391,6 @@ EnableLogicalDecoding(void)
 	 * This sequence ensures logical decoding becomes available on the primary
 	 * first.
 	 */
-	LWLockAcquire(LogicalDecodingControlLock, LW_EXCLUSIVE);
-
 	LogicalDecodingCtl->logical_decoding_enabled = true;
 
 	if (!in_recovery)
@@ -412,10 +398,16 @@ EnableLogicalDecoding(void)
 
 	LogicalDecodingCtl->pending_disable = false;
 
-	LWLockRelease(LogicalDecodingControlLock);
-
 	END_CRIT_SECTION();
 
+	LWLockRelease(LogicalDecodingControlLock);
+
+	/*
+	 * We log the activation message after releasing the slot lock. This is
+	 * safe because the activation is performed while holding a logical slot,
+	 * meaning, a concurrent deactivation cannot interleave its log message
+	 * ahead of ours.
+	 */
 	if (!in_recovery)
 		ereport(LOG,
 				errmsg("logical decoding is enabled upon creating a new logical replication slot"));
@@ -489,22 +481,32 @@ void
 DisableLogicalDecoding(void)
 {
 	bool		in_recovery = RecoveryInProgress();
+	bool		was_enabled;
 
 	LWLockAcquire(LogicalDecodingControlLock, LW_EXCLUSIVE);
 
 	/*
 	 * Check if we can disable logical decoding.
 	 *
-	 * Skip CheckLogicalSlotExists() check during recovery because the
-	 * existing slots will be invalidated after disabling logical decoding.
+	 * Nothing to do if both flags are already off, or if valid slots exist
+	 * (skip the slot check during recovery because the existing slots will be
+	 * invalidated after disabling logical decoding.)
 	 */
-	if (!LogicalDecodingCtl->logical_decoding_enabled ||
+	if ((!LogicalDecodingCtl->logical_decoding_enabled &&
+		 !LogicalDecodingCtl->xlog_logical_info) ||
 		(!in_recovery && CheckLogicalSlotExists()))
 	{
 		LogicalDecodingCtl->pending_disable = false;
 		LWLockRelease(LogicalDecodingControlLock);
 		return;
 	}
+
+	/*
+	 * Remember if logical decoding was enabled. An interrupted activation can
+	 * leave xlog_logical_info=true while logical_decoding_enabled remains
+	 * false.
+	 */
+	was_enabled = LogicalDecodingCtl->logical_decoding_enabled;
 
 	START_CRIT_SECTION();
 
@@ -516,7 +518,7 @@ DisableLogicalDecoding(void)
 	LogicalDecodingCtl->logical_decoding_enabled = false;
 
 	/* Write the WAL to disable logical decoding on standbys too */
-	if (!in_recovery)
+	if (!in_recovery && was_enabled)
 		write_logical_decoding_status_update_record(false);
 
 	/* Now disable logical information WAL logging */
@@ -525,7 +527,12 @@ DisableLogicalDecoding(void)
 
 	END_CRIT_SECTION();
 
-	if (!in_recovery)
+	/*
+	 * Logging under the lock guarantees our "is disabled" message appears in
+	 * the server log before its eventual "is enabled", making server log
+	 * diagnostics easy.
+	 */
+	if (!in_recovery && was_enabled)
 		ereport(LOG,
 				errmsg("logical decoding is disabled because there are no valid logical replication slots"));
 
