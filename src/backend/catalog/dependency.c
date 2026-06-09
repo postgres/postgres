@@ -2165,6 +2165,25 @@ find_expr_references_walker(Node *node,
 		add_object_address(TypeRelationId, rowexpr->row_typeid, 0,
 						   context->addrs);
 	}
+	else if (IsA(node, GraphLabelRef))
+	{
+		GraphLabelRef *glr = (GraphLabelRef *) node;
+
+		/* GRAPH_TABLE label reference depends on the property graph label */
+		add_object_address(PropgraphLabelRelationId, glr->labelid, 0,
+						   context->addrs);
+	}
+	else if (IsA(node, GraphPropertyRef))
+	{
+		GraphPropertyRef *gpr = (GraphPropertyRef *) node;
+
+		/*
+		 * GRAPH_TABLE property reference depends on the property graph
+		 * property
+		 */
+		add_object_address(PropgraphPropertyRelationId, gpr->propid, 0,
+						   context->addrs);
+	}
 	else if (IsA(node, RowCompareExpr))
 	{
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;

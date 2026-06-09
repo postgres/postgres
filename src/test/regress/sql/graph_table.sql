@@ -529,7 +529,8 @@ SELECT * FROM GRAPH_TABLE (g4 MATCH (s IS ptnv)-[e IS ptne]->(d IS ptnv) COLUMNS
 SELECT * FROM GRAPH_TABLE (g4 MATCH (s)-[e]-(d) WHERE s.id = 3 COLUMNS (s.val, e.val, d.val)) ORDER BY 1, 2, 3;
 SELECT * FROM GRAPH_TABLE (g4 MATCH (s WHERE s.id = 3)-[e]-(d) COLUMNS (s.val, e.val, d.val)) ORDER BY 1, 2, 3;
 
--- ruleutils reverse parsing
+-- GRAPH_TABLE in views
+
 -- The query in the view definition is intentionally complex to test one view with many
 -- features like label disjunction, lateral references, WHERE clauses in graph
 -- patterns.
@@ -538,8 +539,17 @@ SELECT g.* FROM x1,
                 GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.address = 'US' AND c.customer_id = x1.a)
                                           -[IS customer_orders | customer_wishlists ]->
                                           (l IS orders | wishlists)-[ IS list_items]->(p IS products)
-                                    COLUMNS (c.name AS customer_name, p.name AS product_name, x1.a AS a)) g
+                                    COLUMNS (c.name AS customer_name, p.name AS product_name, p.price, x1.a AS a)) g
            ORDER BY customer_name, product_name;
+-- Dropping properties or labels used by a view is not allowed
+-- If these DDLs succeed, the pg_get_viewdef call below will throw cache lookup
+-- error.
+ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE orders DROP LABEL orders; -- error
+ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE customers
+    ALTER LABEL customers DROP PROPERTIES (address);  -- error
+ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE products
+    ALTER LABEL products DROP PROPERTIES (price);  -- error
+-- ruleutils reverse parsing
 SELECT pg_get_viewdef('customers_us'::regclass);
 
 -- test view/graph nesting

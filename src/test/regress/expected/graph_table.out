@@ -934,7 +934,7 @@ SELECT * FROM GRAPH_TABLE (g4 MATCH (s WHERE s.id = 3)-[e]-(d) COLUMNS (s.val, e
   30 | 300 |  10
 (2 rows)
 
--- ruleutils reverse parsing
+-- GRAPH_TABLE in views
 -- The query in the view definition is intentionally complex to test one view with many
 -- features like label disjunction, lateral references, WHERE clauses in graph
 -- patterns.
@@ -943,16 +943,35 @@ SELECT g.* FROM x1,
                 GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.address = 'US' AND c.customer_id = x1.a)
                                           -[IS customer_orders | customer_wishlists ]->
                                           (l IS orders | wishlists)-[ IS list_items]->(p IS products)
-                                    COLUMNS (c.name AS customer_name, p.name AS product_name, x1.a AS a)) g
+                                    COLUMNS (c.name AS customer_name, p.name AS product_name, p.price, x1.a AS a)) g
            ORDER BY customer_name, product_name;
+-- Dropping properties or labels used by a view is not allowed
+-- If these DDLs succeed, the pg_get_viewdef call below will throw cache lookup
+-- error.
+ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE orders DROP LABEL orders; -- error
+ERROR:  cannot drop label orders of property graph myshop because other objects depend on it
+DETAIL:  view customers_us depends on label orders of property graph myshop
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE customers
+    ALTER LABEL customers DROP PROPERTIES (address);  -- error
+ERROR:  cannot drop property address of property graph myshop because other objects depend on it
+DETAIL:  view customers_us depends on property address of property graph myshop
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE products
+    ALTER LABEL products DROP PROPERTIES (price);  -- error
+ERROR:  cannot drop property price of property graph myshop because other objects depend on it
+DETAIL:  view customers_us depends on property price of property graph myshop
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- ruleutils reverse parsing
 SELECT pg_get_viewdef('customers_us'::regclass);
-                                                                                                                                        pg_get_viewdef                                                                                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  SELECT g.customer_name,                                                                                                                                                                                                                                                                    +
-     g.product_name,                                                                                                                                                                                                                                                                         +
-     g.a                                                                                                                                                                                                                                                                                     +
-    FROM x1,                                                                                                                                                                                                                                                                                 +
-     GRAPH_TABLE (myshop MATCH (c IS customers WHERE (((c.address)::text = 'US'::text) AND (c.customer_id = x1.a)))-[IS customer_orders|customer_wishlists]->(l IS orders|wishlists)-[IS list_items]->(p IS products) COLUMNS (c.name AS customer_name, p.name AS product_name, x1.a AS a)) g+
+                                                                                                                                                 pg_get_viewdef                                                                                                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  SELECT g.customer_name,                                                                                                                                                                                                                                                                                      +
+     g.product_name,                                                                                                                                                                                                                                                                                           +
+     g.price,                                                                                                                                                                                                                                                                                                  +
+     g.a                                                                                                                                                                                                                                                                                                       +
+    FROM x1,                                                                                                                                                                                                                                                                                                   +
+     GRAPH_TABLE (myshop MATCH (c IS customers WHERE (((c.address)::text = 'US'::text) AND (c.customer_id = x1.a)))-[IS customer_orders|customer_wishlists]->(l IS orders|wishlists)-[IS list_items]->(p IS products) COLUMNS (c.name AS customer_name, p.name AS product_name, p.price AS price, x1.a AS a)) g+
    ORDER BY g.customer_name, g.product_name;
 (1 row)
 
