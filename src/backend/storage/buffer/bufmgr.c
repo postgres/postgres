@@ -5831,8 +5831,6 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 {
 	BufferDesc *bufHdr;
 
-	bufHdr = GetBufferDescriptor(buffer - 1);
-
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer ID: %d", buffer);
 
@@ -5841,6 +5839,8 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		MarkLocalBufferDirty(buffer);
 		return;
 	}
+
+	bufHdr = GetBufferDescriptor(buffer - 1);
 
 	MarkSharedBufferDirtyHint(buffer, bufHdr,
 							  pg_atomic_read_u64(&bufHdr->state),
