@@ -1950,11 +1950,11 @@ describeOneTableDetails(const char *schemaname,
 						  "\n                    when " CppAsString2(PGEKIND_EDGE) " then 'edge' end AS \"%s\","
 						  "\n     s.pgealias as \"%s\","
 						  "\n     d.pgealias as \"%s\""
-						  "\n FROM pg_propgraph_element e"
-						  "\n      INNER JOIN pg_class c ON c.oid = e.pgerelid"
-						  "\n      INNER JOIN pg_namespace n ON c.relnamespace = n.oid"
-						  "\n      LEFT JOIN pg_propgraph_element s ON e.pgesrcvertexid = s.oid"
-						  "\n      LEFT JOIN pg_propgraph_element d ON e.pgedestvertexid = d.oid"
+						  "\n FROM pg_catalog.pg_propgraph_element e"
+						  "\n      INNER JOIN pg_catalog.pg_class c ON c.oid = e.pgerelid"
+						  "\n      INNER JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid"
+						  "\n      LEFT JOIN pg_catalog.pg_propgraph_element s ON e.pgesrcvertexid = s.oid"
+						  "\n      LEFT JOIN pg_catalog.pg_propgraph_element d ON e.pgedestvertexid = d.oid"
 						  "\n WHERE e.pgepgid = '%s'"
 						  "\n ORDER BY e.pgealias",
 						  gettext_noop("Element Alias"),
@@ -3189,9 +3189,9 @@ describeOneTableDetails(const char *schemaname,
 								  "WHERE pc.oid ='%s' and pg_catalog.pg_relation_is_publishable('%s')\n"
 								  "UNION\n"
 								  "SELECT pubname\n"
-								  "     , pg_get_expr(pr.prqual, c.oid)\n"
+								  "     , pg_catalog.pg_get_expr(pr.prqual, c.oid)\n"
 								  "     , (CASE WHEN pr.prattrs IS NOT NULL THEN\n"
-								  "         (SELECT string_agg(attname, ', ')\n"
+								  "         (SELECT pg_catalog.string_agg(attname, ', ')\n"
 								  "           FROM pg_catalog.generate_series(0, pg_catalog.array_upper(pr.prattrs::pg_catalog.int2[], 1)) s,\n"
 								  "                pg_catalog.pg_attribute\n"
 								  "          WHERE attrelid = pr.prrelid AND attnum = prattrs[s])\n"
@@ -6995,7 +6995,7 @@ describePublications(const char *pattern)
 			if (pset.sversion >= 150000)
 			{
 				appendPQExpBufferStr(&buf,
-									 ", pg_get_expr(pr.prqual, c.oid)");
+									 ", pg_catalog.pg_get_expr(pr.prqual, c.oid)");
 				appendPQExpBufferStr(&buf,
 									 ", (CASE WHEN pr.prattrs IS NOT NULL THEN\n"
 									 "     pg_catalog.array_to_string("
@@ -7165,7 +7165,7 @@ describeSubscriptions(const char *pattern, bool verbose)
 		if (pset.sversion >= 190000)
 		{
 			appendPQExpBuffer(&buf,
-							  ", (select srvname from pg_foreign_server where oid=subserver) AS \"%s\"\n",
+							  ", (select srvname from pg_catalog.pg_foreign_server where oid=subserver) AS \"%s\"\n",
 							  gettext_noop("Server"));
 
 			appendPQExpBuffer(&buf,
