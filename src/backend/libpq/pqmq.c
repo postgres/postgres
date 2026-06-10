@@ -140,7 +140,6 @@ mq_putmessage(char msgtype, const char *s, size_t len)
 		if (pq_mq_handle != NULL)
 		{
 			shm_mq_detach(pq_mq_handle);
-			pfree(pq_mq_handle);
 			pq_mq_handle = NULL;
 		}
 		return EOF;
