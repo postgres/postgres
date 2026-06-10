@@ -59,6 +59,8 @@ typedef struct
 	BufferCacheOsPagesRec *record;
 } BufferCacheOsPagesContext;
 
+static TupleDesc build_buffercache_pages_tupledesc(int natts);
+
 
 /*
  * Function returning data from the shared buffer cache - buffer number,
@@ -86,6 +88,8 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	expected_tupledesc;
+	TupleDesc	actual_tupledesc;
+	MemoryContext oldcontext;
 	int			i;
 
 	/*
@@ -104,6 +108,21 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		elog(ERROR, "incorrect number of output arguments");
 
 	InitMaterializedSRF(fcinfo, 0);
+
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	actual_tupledesc = build_buffercache_pages_tupledesc(expected_tupledesc->natts);
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Override the caller-supplied descriptor with the tuple descriptor that
+	 * matches the values we actually return, so executor-side
+	 * tupledesc_match() can verify the caller's row definition.
+	 *
+	 * Do not free the previous rsinfo->setDesc here: for RECORD results it
+	 * can alias rsinfo->expectedDesc, which the executor still needs to
+	 * reference.
+	 */
+	rsinfo->setDesc = actual_tupledesc;
 
 	/*
 	 * Scan through all the buffers, adding one row for each of the buffers to
@@ -203,6 +222,38 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 	}
 
 	return (Datum) 0;
+}
+
+static TupleDesc
+build_buffercache_pages_tupledesc(int natts)
+{
+	TupleDesc	tupledesc;
+
+	tupledesc = CreateTemplateTupleDesc(natts);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 1, "bufferid",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 2, "relfilenode",
+					   OIDOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 3, "reltablespace",
+					   OIDOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "reldatabase",
+					   OIDOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relforknumber",
+					   INT2OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 6, "relblocknumber",
+					   INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "isdirty",
+					   BOOLOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 8, "usagecount",
+					   INT2OID, -1, 0);
+
+	if (natts == NUM_BUFFERCACHE_PAGES_ELEM)
+		TupleDescInitEntry(tupledesc, (AttrNumber) 9, "pinning_backends",
+						   INT4OID, -1, 0);
+
+	TupleDescFinalize(tupledesc);
+
+	return BlessTupleDesc(tupledesc);
 }
 
 /*

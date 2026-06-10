@@ -34,6 +34,12 @@ SELECT count(*) > 0 FROM pg_buffercache;
 SELECT count(*) > 0 FROM pg_buffercache_os_pages;
 SELECT buffers_used + buffers_unused > 0 FROM pg_buffercache_summary();
 SELECT count(*) > 0 FROM pg_buffercache_usage_counts();
+SELECT *
+FROM pg_buffercache_pages() AS p
+	(bufferid integer, relfilenode oid, reltablespace oid, reldatabase oid,
+	 relforknumber smallint, relblocknumber bigint, isdirty text,
+	 usagecount smallint)
+LIMIT 1;
 RESET role;
 
 

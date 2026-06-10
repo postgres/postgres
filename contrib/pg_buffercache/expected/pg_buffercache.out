@@ -73,6 +73,14 @@ SELECT count(*) > 0 FROM pg_buffercache_usage_counts();
  t
 (1 row)
 
+SELECT *
+FROM pg_buffercache_pages() AS p
+	(bufferid integer, relfilenode oid, reltablespace oid, reldatabase oid,
+	 relforknumber smallint, relblocknumber bigint, isdirty text,
+	 usagecount smallint)
+LIMIT 1;
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type boolean at ordinal position 7, but query expects text.
 RESET role;
 ------
 ---- Test pg_buffercache_evict* and pg_buffercache_mark_dirty* functions
