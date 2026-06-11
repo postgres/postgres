@@ -988,6 +988,8 @@ makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType item_type,
 {
 	JsonIsPredicate *n = makeNode(JsonIsPredicate);
 
+	Assert(expr != NULL);
+
 	n->expr = expr;
 	n->format = format;
 	n->item_type = item_type;
