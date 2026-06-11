@@ -152,7 +152,7 @@ seg_out(PG_FUNCTION_ARGS)
 		{
 			/* print the upper boundary if exists */
 			p += sprintf(p, " ");
-			if (seg->u_ext == '>' || seg->u_ext == '<' || seg->l_ext == '~')
+			if (seg->u_ext == '>' || seg->u_ext == '<' || seg->u_ext == '~')
 				p += sprintf(p, "%c", seg->u_ext);
 			p += restore(p, seg->upper, seg->u_sigd);
 		}

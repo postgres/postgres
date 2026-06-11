@@ -263,7 +263,8 @@ SELECT '12.345678901234560000000000000000000000000000000000000000000000000000000
  12.3457
 (1 row)
 
--- Numbers with certainty indicators
+-- Numbers and ranges with certainty indicators.  Certainty indicators
+-- are stored and preserved on output, but ignored by operators.
 SELECT '~6.5'::seg AS seg;
  seg  
 ------
@@ -298,6 +299,48 @@ SELECT '> 6.5'::seg AS seg;
  seg  
 ------
  >6.5
+(1 row)
+
+SELECT '~1.5 .. 2.5'::seg AS seg;
+     seg     
+-------------
+ ~1.5 .. 2.5
+(1 row)
+
+SELECT '1.5 .. ~2.5'::seg AS seg;
+     seg     
+-------------
+ 1.5 .. ~2.5
+(1 row)
+
+SELECT '~1.5 .. ~2.5'::seg AS seg;
+     seg      
+--------------
+ ~1.5 .. ~2.5
+(1 row)
+
+SELECT '<1.5 .. 2.5'::seg AS seg;
+     seg     
+-------------
+ <1.5 .. 2.5
+(1 row)
+
+SELECT '1.5 .. <2.5'::seg AS seg;
+     seg     
+-------------
+ 1.5 .. <2.5
+(1 row)
+
+SELECT '>1.5 .. 2.5'::seg AS seg;
+     seg     
+-------------
+ >1.5 .. 2.5
+(1 row)
+
+SELECT '1.5 .. >2.5'::seg AS seg;
+     seg     
+-------------
+ 1.5 .. >2.5
 (1 row)
 
 -- Open intervals
