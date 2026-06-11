@@ -6120,6 +6120,8 @@ StartupXLOG(void)
 	if (ArchiveRecoveryRequested)
 		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog, newTLI);
 
+	INJECTION_POINT("promotion-after-wal-segment-cleanup");
+
 	/*
 	 * Local WAL inserts enabled, so it's time to finish initialization of
 	 * commit timestamp.
