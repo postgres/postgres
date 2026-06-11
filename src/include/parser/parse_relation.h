@@ -31,6 +31,7 @@ extern void checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 extern ParseNamespaceItem *GetNSItemByRangeTablePosn(ParseState *pstate,
 													 int varno,
 													 int sublevels_up);
+extern ParseNamespaceItem *GetNSItemByVar(ParseState *pstate, Var *var);
 extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 											 int varno,
 											 int sublevels_up);

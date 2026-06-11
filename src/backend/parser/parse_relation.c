@@ -513,6 +513,9 @@ check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
 /*
  * Given an RT index and nesting depth, find the corresponding
  * ParseNamespaceItem (there must be one).
+ *
+ * NB: Callers starting from a Var should consider using GetNSItemByVar()
+ * instead, to find the namespace item with matching varreturningtype.
  */
 ParseNamespaceItem *
 GetNSItemByRangeTablePosn(ParseState *pstate,
@@ -531,6 +534,35 @@ GetNSItemByRangeTablePosn(ParseState *pstate,
 		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(lc);
 
 		if (nsitem->p_rtindex == varno)
+			return nsitem;
+	}
+	elog(ERROR, "nsitem not found (internal error)");
+	return NULL;				/* keep compiler quiet */
+}
+
+/*
+ * Given a Var, find the corresponding ParseNamespaceItem (there must be one).
+ *
+ * Like GetNSItemByRangeTablePosn(), but uses the Var's varreturningtype in
+ * addition to its varno and varlevelsup to find the namespace item.
+ */
+ParseNamespaceItem *
+GetNSItemByVar(ParseState *pstate, Var *var)
+{
+	int			sublevels_up = var->varlevelsup;
+	ListCell   *lc;
+
+	while (sublevels_up-- > 0)
+	{
+		pstate = pstate->parentParseState;
+		Assert(pstate != NULL);
+	}
+	foreach(lc, pstate->p_namespace)
+	{
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(lc);
+
+		if (nsitem->p_rtindex == var->varno &&
+			nsitem->p_returning_type == var->varreturningtype)
 			return nsitem;
 	}
 	elog(ERROR, "nsitem not found (internal error)");
