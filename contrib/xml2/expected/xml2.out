@@ -207,6 +207,14 @@ SELECT xslt_process('<employee><name>cim</name><age>30</age><pay>400</pay></empl
  
 (1 row)
 
+-- xpath_nodeset() with namespace node
+SELECT xpath_nodeset('<root xmlns:foo="http://icl.com/saxon"/>',
+                     '//namespace::foo');
+    xpath_nodeset     
+----------------------
+ http://icl.com/saxon
+(1 row)
+
 -- possible security exploit
 SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
 $$<xsl:stylesheet version="1.0"

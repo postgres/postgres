@@ -123,6 +123,10 @@ SELECT xslt_process('<employee><name>cim</name><age>30</age><pay>400</pay></empl
   </xsl:template>
 </xsl:stylesheet>$$::text, 'n1="v1",n2="v2",n3="v3",n4="v4",n5="v5",n6="v6",n7="v7",n8="v8",n9="v9",n10="v10",n11="v11",n12="v12"'::text);
 
+-- xpath_nodeset() with namespace node
+SELECT xpath_nodeset('<root xmlns:foo="http://icl.com/saxon"/>',
+                     '//namespace::foo');
+
 -- possible security exploit
 SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
 $$<xsl:stylesheet version="1.0"
