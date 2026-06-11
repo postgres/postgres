@@ -239,7 +239,7 @@ static char *
 logicalrep_get_attrs_str(LogicalRepRelation *remoterel, Bitmapset *atts)
 {
 	StringInfoData attsbuf;
-	int			attcnt = 0;
+	bool		first = true;
 	int			i = -1;
 
 	Assert(!bms_is_empty(atts));
@@ -248,12 +248,11 @@ logicalrep_get_attrs_str(LogicalRepRelation *remoterel, Bitmapset *atts)
 
 	while ((i = bms_next_member(atts, i)) >= 0)
 	{
-		attcnt++;
-		if (attcnt > 1)
-			/* translator: This is a separator in a list of entity names. */
-			appendStringInfoString(&attsbuf, _(", "));
-
-		appendStringInfo(&attsbuf, _("\"%s\""), remoterel->attnames[i]);
+		if (first)
+			appendStringInfo(&attsbuf, _("\"%s\""), remoterel->attnames[i]);
+		else
+			appendStringInfo(&attsbuf, _(", \"%s\""), remoterel->attnames[i]);
+		first = false;
 	}
 
 	return attsbuf.data;

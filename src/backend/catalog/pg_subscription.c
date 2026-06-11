@@ -41,6 +41,10 @@ static List *textarray_to_stringlist(ArrayType *textarray);
 
 /*
  * Add a comma-separated list of publication names to the 'dest' string.
+ *
+ * If quote_literal is true, the returned list can be used to construct an SQL
+ * command, thus no translation is applied.  Otherwise, the string can be used
+ * to create a user-facing message, so translatable quote marks are added.
  */
 void
 GetPublicationsStr(List *publications, StringInfo dest, bool quote_literal)
@@ -54,19 +58,21 @@ GetPublicationsStr(List *publications, StringInfo dest, bool quote_literal)
 	{
 		char	   *pubname = strVal(lfirst(lc));
 
-		if (first)
-			first = false;
-		else
-			appendStringInfoString(dest, ", ");
-
 		if (quote_literal)
+		{
+			if (!first)
+				appendStringInfoString(dest, ", ");
 			appendStringInfoString(dest, quote_literal_cstr(pubname));
+		}
 		else
 		{
-			appendStringInfoChar(dest, '"');
-			appendStringInfoString(dest, pubname);
-			appendStringInfoChar(dest, '"');
+			if (first)
+				appendStringInfo(dest, _("\"%s\""), pubname);
+			else
+				appendStringInfo(dest, _(", \"%s\""), pubname);
 		}
+
+		first = false;
 	}
 }
 

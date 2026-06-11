@@ -20607,18 +20607,11 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 		{
 			char	   *pubname = get_publication_name(pubid, false);
 
-			if (!first)
-			{
-				/*
-				 * translator: This is a separator in a list of publication
-				 * names.
-				 */
-				appendStringInfoString(&pubnames, _(", "));
-			}
-
+			if (first)
+				appendStringInfo(&pubnames, _("\"%s\""), pubname);
+			else
+				appendStringInfo(&pubnames, _(", \"%s\""), pubname);
 			first = false;
-
-			appendStringInfo(&pubnames, _("\"%s\""), pubname);
 		}
 
 		ereport(ERROR,
