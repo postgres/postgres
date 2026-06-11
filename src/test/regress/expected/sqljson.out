@@ -1142,6 +1142,42 @@ SELECT NULL::bytea IS JSON;
 
 SELECT NULL::int IS JSON;
 ERROR:  cannot use type integer in IS JSON predicate
+-- A user-defined string-category type with no implicit cast to text must
+-- produce a clean error rather than crash for IS JSON / JSON() input
+-- (per bug #19491).
+CREATE FUNCTION sqljson_mystr_in(cstring) RETURNS sqljson_mystr
+	AS 'textin' LANGUAGE internal IMMUTABLE STRICT;
+NOTICE:  type "sqljson_mystr" is not yet defined
+DETAIL:  Creating a shell type definition.
+CREATE FUNCTION sqljson_mystr_out(sqljson_mystr) RETURNS cstring
+	AS 'textout' LANGUAGE internal IMMUTABLE STRICT;
+NOTICE:  argument type sqljson_mystr is only a shell
+CREATE TYPE sqljson_mystr (
+	INPUT = sqljson_mystr_in,
+	OUTPUT = sqljson_mystr_out,
+	LIKE = text,
+	CATEGORY = 'S'
+);
+SELECT '{"a":1}'::sqljson_mystr IS JSON;                -- error
+ERROR:  cannot cast type sqljson_mystr to text
+LINE 1: SELECT '{"a":1}'::sqljson_mystr IS JSON;
+               ^
+SELECT JSON('{"a":1}'::sqljson_mystr WITH UNIQUE KEYS); -- error
+ERROR:  cannot cast type sqljson_mystr to text
+LINE 1: SELECT JSON('{"a":1}'::sqljson_mystr WITH UNIQUE KEYS);
+                    ^
+-- An implicit cast to text lets the same query work normally.
+CREATE CAST (sqljson_mystr AS text) WITHOUT FUNCTION AS IMPLICIT;
+SELECT '{"a":1}'::sqljson_mystr IS JSON;
+ ?column? 
+----------
+ t
+(1 row)
+
+\set VERBOSITY terse
+DROP TYPE sqljson_mystr CASCADE;
+NOTICE:  drop cascades to 3 other objects
+\set VERBOSITY default
 SELECT '' IS JSON;
  ?column? 
 ----------
