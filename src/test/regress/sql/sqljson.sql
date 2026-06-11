@@ -559,6 +559,28 @@ SELECT NULL::jd5 IS JSON WITH UNIQUE KEYS; -- error
 -- domain constraint violation during cast
 SELECT a::jd2 IS JSON WITH UNIQUE KEYS as col1 FROM (VALUES('{"a": 1, "a": 2}')) s(a); -- error
 
+-- A user-defined string-category type with no implicit cast to text must
+-- produce a clean error rather than crash for IS JSON / JSON() input
+-- (per bug #19491).
+CREATE FUNCTION sqljson_mystr_in(cstring) RETURNS sqljson_mystr
+	AS 'textin' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION sqljson_mystr_out(sqljson_mystr) RETURNS cstring
+	AS 'textout' LANGUAGE internal IMMUTABLE STRICT;
+CREATE TYPE sqljson_mystr (
+	INPUT = sqljson_mystr_in,
+	OUTPUT = sqljson_mystr_out,
+	LIKE = text,
+	CATEGORY = 'S'
+);
+SELECT '{"a":1}'::sqljson_mystr IS JSON;                -- error
+SELECT JSON('{"a":1}'::sqljson_mystr WITH UNIQUE KEYS); -- error
+-- An implicit cast to text lets the same query work normally.
+CREATE CAST (sqljson_mystr AS text) WITHOUT FUNCTION AS IMPLICIT;
+SELECT '{"a":1}'::sqljson_mystr IS JSON;
+\set VERBOSITY terse
+DROP TYPE sqljson_mystr CASCADE;
+\set VERBOSITY default
+
 -- view creation and deparsing with domain IS JSON
 CREATE VIEW domain_isjson AS
 WITH cte(a) AS (VALUES('{"a": 1, "a": 2}'))
