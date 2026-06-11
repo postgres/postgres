@@ -1451,7 +1451,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		Var		   *var = (Var *) expr;
 		ParseNamespaceItem *nsitem;
 
-		nsitem = GetNSItemByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+		nsitem = GetNSItemByVar(pstate, var);
 		return ExpandSingleTable(pstate, nsitem, var->varlevelsup, var->location, make_target_entry);
 	}
 

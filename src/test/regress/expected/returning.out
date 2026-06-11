@@ -542,6 +542,31 @@ DELETE FROM foo WHERE f1 = 5
  foo      | (0,7) |  5 | ok | 42 | 100 |          |      |    |    |    |    |  5 | ok | 42 | 100
 (1 row)
 
+-- Parenthesized OLD and NEW
+INSERT INTO foo VALUES (6, 'paren-test', 60, 600)
+  RETURNING old, (old).f4, (old).*,
+            new, (new).f4, (new).*;
+ old | f4 | f1 | f2 | f3 | f4 |          new          | f4  | f1 |     f2     | f3 | f4  
+-----+----+----+----+----+----+-----------------------+-----+----+------------+----+-----
+     |    |    |    |    |    | (6,paren-test,60,600) | 600 |  6 | paren-test | 60 | 600
+(1 row)
+
+UPDATE foo SET f4 = 700 WHERE f1 = 6
+  RETURNING old, (old).f4, (old).*,
+            new, (new).f4, (new).*;
+          old          | f4  | f1 |     f2     | f3 | f4  |          new          | f4  | f1 |     f2     | f3 | f4  
+-----------------------+-----+----+------------+----+-----+-----------------------+-----+----+------------+----+-----
+ (6,paren-test,60,600) | 600 |  6 | paren-test | 60 | 600 | (6,paren-test,60,700) | 700 |  6 | paren-test | 60 | 700
+(1 row)
+
+DELETE FROM foo WHERE f1 = 6
+  RETURNING old, (old).f4, (old).*,
+            new, (new).f4, (new).*;
+          old          | f4  | f1 |     f2     | f3 | f4  | new | f4 | f1 | f2 | f3 | f4 
+-----------------------+-----+----+------------+----+-----+-----+----+----+----+----+----
+ (6,paren-test,60,700) | 700 |  6 | paren-test | 60 | 700 |     |    |    |    |    |   
+(1 row)
+
 -- RETURNING OLD and NEW from subquery
 EXPLAIN (verbose, costs off)
 INSERT INTO foo VALUES (5, 'subquery test')

@@ -1035,13 +1035,12 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	else if (node && IsA(node, Var) &&
 			 ((Var *) node)->varattno == InvalidAttrNumber)
 	{
-		int			rtindex = ((Var *) node)->varno;
-		int			sublevels_up = ((Var *) node)->varlevelsup;
-		int			vlocation = ((Var *) node)->location;
+		Var		   *var = (Var *) node;
 		ParseNamespaceItem *nsitem;
 
-		nsitem = GetNSItemByRangeTablePosn(pstate, rtindex, sublevels_up);
-		args = expandNSItemVars(pstate, nsitem, sublevels_up, vlocation, NULL);
+		nsitem = GetNSItemByVar(pstate, var);
+		args = expandNSItemVars(pstate, nsitem, var->varlevelsup,
+								var->location, NULL);
 	}
 	else
 		ereport(ERROR,

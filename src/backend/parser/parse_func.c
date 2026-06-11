@@ -2056,9 +2056,7 @@ ParseComplexProjection(ParseState *pstate, const char *funcname, Node *first_arg
 	{
 		ParseNamespaceItem *nsitem;
 
-		nsitem = GetNSItemByRangeTablePosn(pstate,
-										   ((Var *) first_arg)->varno,
-										   ((Var *) first_arg)->varlevelsup);
+		nsitem = GetNSItemByVar(pstate, (Var *) first_arg);
 		/* Return a Var if funcname matches a column, else NULL */
 		return scanNSItemForColumn(pstate, nsitem,
 								   ((Var *) first_arg)->varlevelsup,
