@@ -193,16 +193,23 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 			}
 			else
 			{
+				xmlNodePtr	node = nodeset->nodeTab[i];
+
 				if ((septagname != NULL) && (xmlStrlen(septagname) > 0))
 				{
 					xmlBufferWriteChar(buf, "<");
 					xmlBufferWriteCHAR(buf, septagname);
 					xmlBufferWriteChar(buf, ">");
 				}
-				xmlNodeDump(buf,
-							nodeset->nodeTab[i]->doc,
-							nodeset->nodeTab[i],
-							1, 0);
+
+				/*
+				 * XML_NAMESPACE_DECL nodes are xmlNs structs, that cannot
+				 * be processed by xmlNodeDump().
+				 */
+				if (node->type == XML_NAMESPACE_DECL)
+					xmlBufferWriteCHAR(buf, xmlXPathCastNodeToString(node));
+				else
+					xmlNodeDump(buf, node->doc, node, 1, 0);
 
 				if ((septagname != NULL) && (xmlStrlen(septagname) > 0))
 				{
