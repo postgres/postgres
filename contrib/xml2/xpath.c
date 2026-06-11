@@ -188,16 +188,31 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 				}
 				else
 				{
+					xmlNodePtr	node = nodeset->nodeTab[i];
+
 					if ((septagname != NULL) && (xmlStrlen(septagname) > 0))
 					{
 						xmlBufferWriteChar(buf, "<");
 						xmlBufferWriteCHAR(buf, septagname);
 						xmlBufferWriteChar(buf, ">");
 					}
-					xmlNodeDump(buf,
-								nodeset->nodeTab[i]->doc,
-								nodeset->nodeTab[i],
-								1, 0);
+
+					/*
+					 * XML_NAMESPACE_DECL nodes are xmlNs structs, that cannot
+					 * be processed by xmlNodeDump().
+					 */
+					if (node->type == XML_NAMESPACE_DECL)
+					{
+						str = xmlXPathCastNodeToString(node);
+						if (str == NULL || pg_xml_error_occurred(xmlerrcxt))
+							xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+										"could not allocate node text");
+						xmlBufferWriteCHAR(buf, str);
+						xmlFree(str);
+						str = NULL;
+					}
+					else
+						xmlNodeDump(buf, node->doc, node, 1, 0);
 
 					if ((septagname != NULL) && (xmlStrlen(septagname) > 0))
 					{

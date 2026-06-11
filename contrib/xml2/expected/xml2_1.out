@@ -175,6 +175,14 @@ SELECT xpath_nodeset(article_xml::text, '/article/author|/article/pages',
  <result><item><author>test</author></item><item><pages>37</pages></item></result>
 (1 row)
 
+-- namespace node
+SELECT xpath_nodeset('<root xmlns:foo="http://icl.com/saxon"/>',
+                     '//namespace::foo');
+    xpath_nodeset     
+----------------------
+ http://icl.com/saxon
+(1 row)
+
 -- xpath_list()
 SELECT xpath_list(article_xml::text, '/article/author|/article/pages')
   FROM articles;
