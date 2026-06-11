@@ -524,6 +524,7 @@ ConnStatusType
 ConnType
 ConnectionStateEnum
 ConnectionTiming
+ConnectionWarning
 ConsiderSplitContext
 Const
 ConstrCheck

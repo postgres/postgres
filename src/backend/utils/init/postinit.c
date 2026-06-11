@@ -74,9 +74,15 @@
 /* has this backend called EmitConnectionWarnings()? */
 static bool ConnectionWarningsEmitted;
 
-/* content of warnings to send via EmitConnectionWarnings() */
-static List *ConnectionWarningMessages;
-static List *ConnectionWarningDetails;
+typedef struct ConnectionWarning
+{
+	char	   *message;
+	char	   *detail;
+	ConnectionWarningFilter filter;
+} ConnectionWarning;
+
+/* warnings to send via EmitConnectionWarnings() */
+static List *ConnectionWarnings;
 
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
@@ -1499,15 +1505,19 @@ ThereIsAtLeastOneRole(void)
 
 /*
  * Stores a warning message to be sent later via EmitConnectionWarnings().
- * Both msg and detail must be non-NULL.
+ * Both msg and detail must be non-NULL.  If filter is non-NULL, it is called
+ * just before the warning is emitted, after startup and role/database settings
+ * have been applied.
  *
- * NB: Caller should ensure the strings are allocated in a long-lived context
- * like TopMemoryContext.
+ * NB: Caller should ensure the strings are palloc'd in a long-lived context
+ * like TopMemoryContext.  This function takes ownership of the strings, which
+ * will be pfree'd in EmitConnectionWarnings().
  */
 void
-StoreConnectionWarning(char *msg, char *detail)
+StoreConnectionWarning(char *msg, char *detail, ConnectionWarningFilter filter)
 {
 	MemoryContext oldcontext;
+	ConnectionWarning *warning;
 
 	Assert(msg);
 	Assert(detail);
@@ -1517,8 +1527,11 @@ StoreConnectionWarning(char *msg, char *detail)
 
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	ConnectionWarningMessages = lappend(ConnectionWarningMessages, msg);
-	ConnectionWarningDetails = lappend(ConnectionWarningDetails, detail);
+	warning = palloc_object(ConnectionWarning);
+	warning->message = msg;
+	warning->detail = detail;
+	warning->filter = filter;
+	ConnectionWarnings = lappend(ConnectionWarnings, warning);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -1532,22 +1545,23 @@ StoreConnectionWarning(char *msg, char *detail)
 static void
 EmitConnectionWarnings(void)
 {
-	ListCell   *lc_msg;
-	ListCell   *lc_detail;
-
 	if (ConnectionWarningsEmitted)
 		elog(ERROR, "EmitConnectionWarnings() called more than once");
 	else
 		ConnectionWarningsEmitted = true;
 
-	forboth(lc_msg, ConnectionWarningMessages,
-			lc_detail, ConnectionWarningDetails)
+	foreach_ptr(ConnectionWarning, warning, ConnectionWarnings)
 	{
-		ereport(WARNING,
-				(errmsg("%s", (char *) lfirst(lc_msg)),
-				 errdetail("%s", (char *) lfirst(lc_detail))));
+		if (warning->filter == NULL || warning->filter())
+			ereport(WARNING,
+					(errmsg("%s", warning->message),
+					 errdetail("%s", warning->detail)));
+
+		pfree(warning->message);
+		pfree(warning->detail);
+		pfree(warning);
 	}
 
-	list_free_deep(ConnectionWarningMessages);
-	list_free_deep(ConnectionWarningDetails);
+	list_free(ConnectionWarnings);
+	ConnectionWarnings = NIL;
 }

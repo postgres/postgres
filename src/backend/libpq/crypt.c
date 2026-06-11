@@ -32,6 +32,8 @@ int			password_expiration_warning_threshold = 604800;
 /* Enables deprecation warnings for MD5 passwords. */
 bool		md5_password_warnings = true;
 
+static bool md5_password_warning_enabled(void);
+
 /*
  * Fetch stored password for a user, for authentication.
  *
@@ -137,7 +139,7 @@ get_role_password(const char *role, const char **logdetail)
 				detail = psprintf(_("The password for role \"%s\" will expire in less than 1 minute."),
 								  role);
 
-			StoreConnectionWarning(warning, detail);
+			StoreConnectionWarning(warning, detail, NULL);
 
 			MemoryContextSwitchTo(oldcontext);
 		}
@@ -296,22 +298,19 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
 	if (strlen(client_pass) == strlen(crypt_pwd) &&
 		timingsafe_bcmp(client_pass, crypt_pwd, strlen(crypt_pwd)) == 0)
 	{
+		MemoryContext oldcontext;
+		char	   *warning;
+		char	   *detail;
+
 		retval = STATUS_OK;
 
-		if (md5_password_warnings)
-		{
-			MemoryContext oldcontext;
-			char	   *warning;
-			char	   *detail;
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-			oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		warning = pstrdup(_("authenticated with an MD5-encrypted password"));
+		detail = pstrdup(_("MD5 password support is deprecated and will be removed in a future release of PostgreSQL."));
+		StoreConnectionWarning(warning, detail, md5_password_warning_enabled);
 
-			warning = pstrdup(_("authenticated with an MD5-encrypted password"));
-			detail = pstrdup(_("MD5 password support is deprecated and will be removed in a future release of PostgreSQL."));
-			StoreConnectionWarning(warning, detail);
-
-			MemoryContextSwitchTo(oldcontext);
-		}
+		MemoryContextSwitchTo(oldcontext);
 	}
 	else
 	{
@@ -321,6 +320,12 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
 	}
 
 	return retval;
+}
+
+static bool
+md5_password_warning_enabled(void)
+{
+	return md5_password_warnings;
 }
 
 /*

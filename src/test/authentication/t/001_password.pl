@@ -157,6 +157,14 @@ is( $node->psql(
 	),
 	$md5_works ? 0 : 3,
 	'created user with md5 password');
+is( $node->psql(
+		'postgres',
+		"SET password_encryption='md5';
+		 CREATE ROLE md5_role_no_warnings LOGIN PASSWORD 'pass';
+		 ALTER ROLE md5_role_no_warnings SET md5_password_warnings = off;"
+	),
+	$md5_works ? 0 : 3,
+	'created user with md5 password and MD5 warnings disabled');
 # Set up a table for tests of SYSTEM_USER.
 $node->safe_psql(
 	'postgres',
@@ -504,6 +512,15 @@ SKIP:
 		expected_stderr => qr/authenticated with an MD5-encrypted password/,
 		log_like =>
 		  [qr/connection authenticated: identity="md5_role" method=md5/]);
+
+	$node->connect_ok(
+		'user=md5_role_no_warnings',
+		'md5 with warnings disabled',
+		sql => 'SHOW md5_password_warnings',
+		expected_stdout => qr/^off$/,
+		log_like => [
+			qr/connection authenticated: identity="md5_role_no_warnings" method=md5/
+		]);
 }
 
 # require_auth succeeds with SCRAM required.
