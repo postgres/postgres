@@ -518,6 +518,9 @@ DROP SUBSCRIPTION regress_testsub;
 -- fail - max_retention_duration must be integer
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = foo);
 ERROR:  max_retention_duration requires an integer value
+-- fail - max_retention_duration must be non-negative
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = -1);
+ERROR:  max_retention_duration cannot be negative
 -- ok
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = 1000);
 NOTICE:  max_retention_duration is ineffective when retain_dead_tuples is disabled
@@ -530,6 +533,9 @@ HINT:  To initiate replication, you must manually create the replication slot, e
  regress_testsub | regress_subscription_user | f       | {testpub}   | f      | parallel  | d                | f                | any    | t                 | f             | f        |        | f                  |                   1000 | f                | off                | dbname=regress_doesnotexist | -1               | 0/00000000 | 
 (1 row)
 
+-- fail - max_retention_duration must be non-negative
+ALTER SUBSCRIPTION regress_testsub SET (max_retention_duration = -1);
+ERROR:  max_retention_duration cannot be negative
 -- ok
 ALTER SUBSCRIPTION regress_testsub SET (max_retention_duration = 0);
 \dRs+

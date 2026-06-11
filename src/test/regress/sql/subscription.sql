@@ -378,10 +378,16 @@ DROP SUBSCRIPTION regress_testsub;
 -- fail - max_retention_duration must be integer
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = foo);
 
+-- fail - max_retention_duration must be non-negative
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = -1);
+
 -- ok
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = 1000);
 
 \dRs+
+
+-- fail - max_retention_duration must be non-negative
+ALTER SUBSCRIPTION regress_testsub SET (max_retention_duration = -1);
 
 -- ok
 ALTER SUBSCRIPTION regress_testsub SET (max_retention_duration = 0);

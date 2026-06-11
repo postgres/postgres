@@ -356,6 +356,11 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 
 			opts->specified_opts |= SUBOPT_MAX_RETENTION_DURATION;
 			opts->maxretention = defGetInt32(defel);
+
+			if (opts->maxretention < 0)
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("max_retention_duration cannot be negative"));
 		}
 		else if (IsSet(supported_opts, SUBOPT_ORIGIN) &&
 				 strcmp(defel->defname, "origin") == 0)
