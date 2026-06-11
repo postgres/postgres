@@ -509,15 +509,15 @@ AddRelsyncInvalidationMessage(InvalidationMsgsGroup *group,
 
 	/* Don't add a duplicate item. */
 	ProcessMessageSubGroup(group, RelCacheMsgs,
-						   if (msg->rc.id == SHAREDINVALRELSYNC_ID &&
-							   (msg->rc.relId == relId ||
-								msg->rc.relId == InvalidOid))
+						   if (msg->rs.id == SHAREDINVALRELSYNC_ID &&
+							   (msg->rs.relid == relId ||
+								msg->rs.relid == InvalidOid))
 						   return);
 
 	/* OK, add the item */
-	msg.rc.id = SHAREDINVALRELSYNC_ID;
-	msg.rc.dbId = dbId;
-	msg.rc.relId = relId;
+	msg.rs.id = SHAREDINVALRELSYNC_ID;
+	msg.rs.dbId = dbId;
+	msg.rs.relid = relId;
 	/* check AddCatcacheInvalidationMessage() for an explanation */
 	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
 
