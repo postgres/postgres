@@ -687,6 +687,11 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('root', '<root/>');
                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xpath('//namespace::foo', '<root xmlns:foo="http://127.0.0.1"/>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('//namespace::foo', '<root xmlns:foo="http://12...
+                                         ^
+DETAIL:  This functionality requires the server to be built with libxml support.
 -- Round-trip non-ASCII data through xpath().
 DO $$
 DECLARE

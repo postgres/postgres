@@ -244,6 +244,7 @@ SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
 SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
 SELECT xpath('/nosuchtag', '<root/>');
 SELECT xpath('root', '<root/>');
+SELECT xpath('//namespace::foo', '<root xmlns:foo="http://127.0.0.1"/>');
 
 -- Round-trip non-ASCII data through xpath().
 DO $$
