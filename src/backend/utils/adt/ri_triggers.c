@@ -249,6 +249,12 @@ typedef struct RI_FastPathEntry
 	 */
 	HeapTuple	batch[RI_FASTPATH_BATCH_SIZE];
 	int			batch_count;
+
+	/*
+	 * true while this entry's batch is being flushed; guards against
+	 * re-entrant ri_FastPathBatchAdd from user code run during the flush.
+	 */
+	bool		flushing;
 } RI_FastPathEntry;
 
 /*
@@ -2860,15 +2866,38 @@ ri_FastPathBatchAdd(RI_ConstraintInfo *riinfo,
 					Relation fk_rel, TupleTableSlot *newslot)
 {
 	RI_FastPathEntry *fpentry = ri_FastPathGetEntry(riinfo, fk_rel);
-	MemoryContext oldcxt;
 
-	oldcxt = MemoryContextSwitchTo(fpentry->flush_cxt);
-	fpentry->batch[fpentry->batch_count] =
-		ExecCopySlotHeapTuple(newslot);
-	fpentry->batch_count++;
-	MemoryContextSwitchTo(oldcxt);
+	/*
+	 * If this entry is already being flushed, a cast function or an operator
+	 * invoked during the flush has re-entered with DML on the same FK.  Fall
+	 * back to the per-row path rather than touching the batch array, which is
+	 * mid-flush.
+	 */
+	if (unlikely(fpentry->flushing))
+	{
+		ri_FastPathCheck(riinfo, fk_rel, newslot);
+		return;
+	}
 
-	if (fpentry->batch_count >= RI_FASTPATH_BATCH_SIZE)
+	/*
+	 * Buffer the row.  A full batch is flushed below and re-entry is handled
+	 * above, so there is always room here; the bounds check just guards the
+	 * array write.
+	 */
+	if (fpentry->batch_count < RI_FASTPATH_BATCH_SIZE)
+	{
+		MemoryContext oldcxt = MemoryContextSwitchTo(fpentry->flush_cxt);
+
+		fpentry->batch[fpentry->batch_count] =
+			ExecCopySlotHeapTuple(newslot);
+		fpentry->batch_count++;
+		MemoryContextSwitchTo(oldcxt);
+	}
+	else
+		elog(ERROR, "RI fast-path batch unexpectedly full");
+
+	/* Flush as soon as the batch is full. */
+	if (fpentry->batch_count == RI_FASTPATH_BATCH_SIZE)
 		ri_FastPathBatchFlush(fpentry, fk_rel, riinfo);
 }
 
@@ -2944,13 +2973,30 @@ ri_FastPathBatchFlush(RI_FastPathEntry *fpentry, Relation fk_rel,
 	}
 	Assert(riinfo->fpmeta);
 
-	/* Skip array overhead for single-row batches. */
-	if (riinfo->nkeys == 1 && fpentry->batch_count > 1)
-		violation_index = ri_FastPathFlushArray(fpentry, fk_slot, riinfo,
-												fk_rel, snapshot, scandesc);
-	else
-		violation_index = ri_FastPathFlushLoop(fpentry, fk_slot, riinfo,
-											   fk_rel, snapshot, scandesc);
+	/*
+	 * The probe runs user-defined cast and equality functions.  Set the
+	 * flushing flag around it so a re-entrant ri_FastPathBatchAdd on this
+	 * entry takes the per-row path, and clear it even on error so the entry
+	 * is reusable if the error is caught by a savepoint.
+	 */
+	Assert(!fpentry->flushing);
+	fpentry->flushing = true;
+	PG_TRY();
+	{
+		/* Skip array overhead for single-row batches. */
+		if (riinfo->nkeys == 1 && fpentry->batch_count > 1)
+			violation_index = ri_FastPathFlushArray(fpentry, fk_slot, riinfo,
+													fk_rel, snapshot, scandesc);
+		else
+			violation_index = ri_FastPathFlushLoop(fpentry, fk_slot, riinfo,
+												   fk_rel, snapshot, scandesc);
+	}
+	PG_FINALLY();
+	{
+		fpentry->flushing = false;
+		fpentry->batch_count = 0;
+	}
+	PG_END_TRY();
 
 	SetUserIdAndSecContext(saved_userid, saved_sec_context);
 	UnregisterSnapshot(snapshot);
@@ -2966,9 +3012,6 @@ ri_FastPathBatchFlush(RI_FastPathEntry *fpentry, Relation fk_rel,
 
 	MemoryContextReset(fpentry->flush_cxt);
 	MemoryContextSwitchTo(oldcxt);
-
-	/* Reset. */
-	fpentry->batch_count = 0;
 }
 
 /*
@@ -4307,6 +4350,9 @@ ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 			RegisterAfterTriggerBatchCallback(ri_FastPathEndBatch, NULL);
 			ri_fastpath_callback_registered = true;
 		}
+
+		entry->flushing = false;
+		entry->batch_count = 0;
 	}
 
 	return entry;

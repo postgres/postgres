@@ -3712,3 +3712,59 @@ INSERT INTO fp_pk_dup VALUES (1);
 CREATE TABLE fp_fk_dup (a int REFERENCES fp_pk_dup);
 INSERT INTO fp_fk_dup SELECT 1 FROM generate_series(1, 100);
 DROP TABLE fp_fk_dup, fp_pk_dup;
+-- Re-entrant FK fast-path: DML on the same FK table from a cast function
+-- during a full-batch flush must not corrupt the batch array.
+CREATE TABLE fp_reentry_pk (id int PRIMARY KEY);
+INSERT INTO fp_reentry_pk VALUES (1), (2);
+CREATE TYPE fp_vch AS (v int);
+CREATE FUNCTION fp_vcast(fp_vch) RETURNS int LANGUAGE plpgsql AS $$
+BEGIN
+    IF $1.v = 1 THEN
+        INSERT INTO fp_reentry_fk VALUES (row(2)::fp_vch);
+    END IF;
+    RETURN $1.v;
+END$$;
+CREATE CAST (fp_vch AS int) WITH FUNCTION fp_vcast(fp_vch) AS IMPLICIT;
+CREATE TABLE fp_reentry_fk (a fp_vch
+    REFERENCES fp_reentry_pk (id));
+-- Fill exactly one batch so the flush fires; the cast re-enters with DML
+-- on the same FK and must take the per-row path.
+INSERT INTO fp_reentry_fk SELECT row(1)::fp_vch FROM generate_series(1, 64);
+SELECT a, count(*) FROM fp_reentry_fk GROUP BY a ORDER BY a;
+  a  | count 
+-----+-------
+ (1) |    64
+ (2) |    64
+(2 rows)
+
+DROP TABLE fp_reentry_fk, fp_reentry_pk;
+DROP CAST (fp_vch AS int);
+DROP FUNCTION fp_vcast(fp_vch);
+DROP TYPE fp_vch;
+-- Flush error caught by a savepoint must leave the entry empty and reusable.
+CREATE TABLE fp_reentry_pk2 (id int PRIMARY KEY);
+INSERT INTO fp_reentry_pk2 VALUES (1);
+CREATE TABLE fp_reentry_fk2 (a int REFERENCES fp_reentry_pk2 (id));
+DO $$
+BEGIN
+    -- A batch containing a violating row; the flush reports the violation.
+    BEGIN
+        INSERT INTO fp_reentry_fk2 SELECT CASE WHEN g = 32 THEN 999 ELSE 1 END
+            FROM generate_series(1, 64) g;
+    EXCEPTION WHEN foreign_key_violation THEN
+        RAISE NOTICE 'caught fk violation';
+    END;
+
+    -- Reuse the same FK with a full batch in the same transaction.  The
+    -- entry must be empty after the caught violation: no stale rows from the
+    -- rolled-back batch (in particular no 999), and no array overflow.
+    INSERT INTO fp_reentry_fk2 SELECT 1 FROM generate_series(1, 64);
+END$$;
+NOTICE:  caught fk violation
+SELECT count(*), max(a) FROM fp_reentry_fk2;  -- 64 rows, max 1
+ count | max 
+-------+-----
+    64 |   1
+(1 row)
+
+DROP TABLE fp_reentry_fk2, fp_reentry_pk2;
