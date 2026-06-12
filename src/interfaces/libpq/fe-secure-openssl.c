@@ -64,7 +64,7 @@
 
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int	openssl_verify_peer_name_matches_certificate_name(PGconn *conn,
-															  ASN1_STRING *name,
+															  const ASN1_STRING *name,
 															  char **store_name);
 static void destroy_ssl_system(void);
 static int	initialize_SSL(PGconn *conn);
@@ -481,7 +481,8 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
  * into a plain C string.
  */
 static int
-openssl_verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
+openssl_verify_peer_name_matches_certificate_name(PGconn *conn,
+												  const ASN1_STRING *name_entry,
 												  char **store_name)
 {
 	int			len;
@@ -501,7 +502,7 @@ openssl_verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *nam
 #ifdef HAVE_ASN1_STRING_GET0_DATA
 	namedata = ASN1_STRING_get0_data(name_entry);
 #else
-	namedata = ASN1_STRING_data(name_entry);
+	namedata = ASN1_STRING_data(unconstify(ASN1_STRING *, name_entry));
 #endif
 	len = ASN1_STRING_length(name_entry);
 
@@ -570,20 +571,20 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 	 */
 	if (*names_examined == 0)
 	{
-		X509_NAME  *subject_name;
+		const X509_NAME *subject_name;
 
 		subject_name = X509_get_subject_name(conn->peer);
 		if (subject_name != NULL)
 		{
 			int			cn_index;
 
-			cn_index = X509_NAME_get_index_by_NID(subject_name,
+			cn_index = X509_NAME_get_index_by_NID(unconstify(X509_NAME *, subject_name),
 												  NID_commonName, -1);
 			if (cn_index >= 0)
 			{
 				(*names_examined)++;
 				rc = openssl_verify_peer_name_matches_certificate_name(conn,
-																	   X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subject_name, cn_index)),
+																	   X509_NAME_ENTRY_get_data(X509_NAME_get_entry(unconstify(X509_NAME *, subject_name), cn_index)),
 																	   first_name);
 			}
 		}
