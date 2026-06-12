@@ -702,20 +702,20 @@ HINT:  Execute a database-wide VACUUM in that database.
     <orderedlist>
      <listitem>
       <simpara>Resolve old prepared transactions. You can find these by checking
-       <link linkend="view-pg-prepared-xacts">pg_prepared_xacts</link> for rows where
+       <link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link> for rows where
        <literal>age(transactionid)</literal> is large. Such transactions should be
        committed or rolled back.</simpara>
      </listitem>
      <listitem>
       <simpara>End long-running open transactions. You can find these by checking
-       <link linkend="monitoring-pg-stat-activity-view">pg_stat_activity</link> for rows where
+       <link linkend="monitoring-pg-stat-activity-view"><structname>pg_stat_activity</structname></link> for rows where
        <literal>age(backend_xid)</literal> or <literal>age(backend_xmin)</literal> is
        large. Such transactions should be committed or rolled back, or the session
        can be terminated using <literal>pg_terminate_backend</literal>.</simpara>
      </listitem>
      <listitem>
       <simpara>Drop any old replication slots. Use
-       <link linkend="monitoring-pg-stat-replication-view">pg_stat_replication</link> to
+       <link linkend="view-pg-replication-slots"><structname>pg_replication_slots</structname></link> to
        find slots where <literal>age(xmin)</literal> or <literal>age(catalog_xmin)</literal>
        is large. In many cases, such slots were created for replication to servers that no
        longer exist, or that have been down for a long time. If you drop a slot for a server
