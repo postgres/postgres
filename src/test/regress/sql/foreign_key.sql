@@ -2726,3 +2726,26 @@ BEGIN
 END$$;
 SELECT count(*), max(a) FROM fp_reentry_fk2;  -- 64 rows, max 1
 DROP TABLE fp_reentry_fk2, fp_reentry_pk2;
+
+-- Subtransaction abort during after-trigger firing must not drop FK checks
+-- for rows buffered earlier in the same statement.  Batching is confined to
+-- the top transaction level and the buffered batch is no longer discarded on
+-- subxact abort, so the violating rows are detected.
+CREATE TABLE fp_subxact_pk (id int PRIMARY KEY);
+INSERT INTO fp_subxact_pk SELECT g FROM generate_series(1, 10) g;
+CREATE TABLE fp_subxact_fk (a int, tag text);
+ALTER TABLE fp_subxact_fk ADD CONSTRAINT fp_subxact_fk_fkey
+    FOREIGN KEY (a) REFERENCES fp_subxact_pk (id);
+CREATE FUNCTION fp_abort_subxact() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.tag = 'boom' THEN
+        BEGIN PERFORM 1/0; EXCEPTION WHEN division_by_zero THEN NULL; END;
+    END IF;
+    RETURN NEW;
+END$$;
+CREATE TRIGGER fp_subxact_trg AFTER INSERT ON fp_subxact_fk
+    FOR EACH ROW EXECUTE FUNCTION fp_abort_subxact();
+INSERT INTO fp_subxact_fk VALUES (999, 'bad'), (0, 'boom'), (1, 'ok');
+DROP TRIGGER fp_subxact_trg ON fp_subxact_fk;
+DROP FUNCTION fp_abort_subxact();
+DROP TABLE fp_subxact_fk, fp_subxact_pk;
