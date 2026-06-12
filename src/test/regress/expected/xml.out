@@ -944,6 +944,12 @@ SELECT xpath('root', '<root/>');
  {<root/>}
 (1 row)
 
+SELECT xpath('//namespace::foo', '<root xmlns:foo="http://127.0.0.1"/>');
+       xpath        
+--------------------
+ {http://127.0.0.1}
+(1 row)
+
 -- Round-trip non-ASCII data through xpath().
 DO $$
 DECLARE
