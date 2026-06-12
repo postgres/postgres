@@ -14,7 +14,7 @@ use File::Basename;
 use File::Copy;
 use File::Find ();
 use File::Path qw(rmtree);
-use File::Spec qw(devnull);
+use File::Spec;
 
 use FindBin;
 use lib $FindBin::RealBin;
