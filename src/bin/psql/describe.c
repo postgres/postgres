@@ -2504,18 +2504,18 @@ describeOneTableDetails(const char *schemaname,
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
 			else if (strcmp(indisunique, "t") == 0)
 			{
-				printfPQExpBuffer(&tmpbuf, _("unique"));
 				if (strcmp(indnullsnotdistinct, "t") == 0)
-					appendPQExpBufferStr(&tmpbuf, _(" nulls not distinct"));
-				appendPQExpBufferStr(&tmpbuf, _(", "));
+					printfPQExpBuffer(&tmpbuf, _("unique nulls not distinct, "));
+				else
+					printfPQExpBuffer(&tmpbuf, _("unique, "));
 			}
 			else
 				resetPQExpBuffer(&tmpbuf);
-			appendPQExpBuffer(&tmpbuf, "%s, ", indamname);
 
 			/* we assume here that index and table are in same schema */
-			appendPQExpBuffer(&tmpbuf, _("for table \"%s.%s\""),
-							  schemaname, indtable);
+			/*- translator: the first %s is an index AM name (eg. btree) */
+			appendPQExpBuffer(&tmpbuf, _("%s, for table \"%s.%s\""),
+							  indamname, schemaname, indtable);
 
 			if (strlen(indpred))
 				appendPQExpBuffer(&tmpbuf, _(", predicate (%s)"), indpred);
