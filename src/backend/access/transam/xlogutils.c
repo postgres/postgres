@@ -896,7 +896,19 @@ read_local_xlog_page_guts(XLogReaderState *state, XLogRecPtr targetPagePtr,
 		if (!RecoveryInProgress())
 			read_upto = GetFlushRecPtr(&currTLI);
 		else
+		{
+			TimeLineID	insertTLI;
+
 			read_upto = GetXLogReplayRecPtr(&currTLI);
+
+			/*
+			 * If the insertion timeline has already been set, use it. See
+			 * logical_read_xlog_page() for details.
+			 */
+			insertTLI = GetWALInsertionTimeLineIfSet();
+			if (insertTLI != 0)
+				currTLI = insertTLI;
+		}
 		tli = currTLI;
 
 		/*
