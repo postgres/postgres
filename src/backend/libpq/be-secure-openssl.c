@@ -77,7 +77,7 @@ static bool initialize_dh(SSL_CTX *context, bool isServerStart);
 static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
 
-static char *X509_NAME_to_cstring(X509_NAME *name);
+static char *X509_NAME_to_cstring(const X509_NAME *name);
 
 static SSL_CTX *SSL_context = NULL;
 static bool SSL_initialized = false;
@@ -634,18 +634,18 @@ aloop:
 	if (port->peer != NULL)
 	{
 		int			len;
-		X509_NAME  *x509name = X509_get_subject_name(port->peer);
+		const X509_NAME *x509name = X509_get_subject_name(port->peer);
 		char	   *peer_dn;
 		BIO		   *bio = NULL;
 		BUF_MEM    *bio_buf = NULL;
 
-		len = X509_NAME_get_text_by_NID(x509name, NID_commonName, NULL, 0);
+		len = X509_NAME_get_text_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, NULL, 0);
 		if (len != -1)
 		{
 			char	   *peer_cn;
 
 			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
-			r = X509_NAME_get_text_by_NID(x509name, NID_commonName, peer_cn,
+			r = X509_NAME_get_text_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, peer_cn,
 										  len + 1);
 			peer_cn[len] = '\0';
 			if (r != len)
@@ -689,7 +689,7 @@ aloop:
 		 * which make regular expression matching a bit easier. Also note that
 		 * it prints the Subject fields in reverse order.
 		 */
-		if (X509_NAME_print_ex(bio, x509name, 0, XN_FLAG_RFC2253) == -1 ||
+		if (X509_NAME_print_ex(bio, unconstify(X509_NAME *, x509name), 0, XN_FLAG_RFC2253) == -1 ||
 			BIO_get_mem_ptr(bio, &bio_buf) <= 0)
 		{
 			BIO_free(bio);
@@ -1615,14 +1615,14 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
  *
  */
 static char *
-X509_NAME_to_cstring(X509_NAME *name)
+X509_NAME_to_cstring(const X509_NAME *name)
 {
 	BIO		   *membuf = BIO_new(BIO_s_mem());
 	int			i,
 				nid,
-				count = X509_NAME_entry_count(name);
-	X509_NAME_ENTRY *e;
-	ASN1_STRING *v;
+				count = X509_NAME_entry_count(unconstify(X509_NAME *, name));
+	const X509_NAME_ENTRY *e;
+	const ASN1_STRING *v;
 	const char *field_name;
 	size_t		size;
 	char		nullterm;
@@ -1638,13 +1638,13 @@ X509_NAME_to_cstring(X509_NAME *name)
 	(void) BIO_set_close(membuf, BIO_CLOSE);
 	for (i = 0; i < count; i++)
 	{
-		e = X509_NAME_get_entry(name, i);
-		nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(e));
+		e = X509_NAME_get_entry(unconstify(X509_NAME *, name), i);
+		nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(unconstify(X509_NAME_ENTRY *, e)));
 		if (nid == NID_undef)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("could not get NID for ASN1_OBJECT object")));
-		v = X509_NAME_ENTRY_get_data(e);
+		v = X509_NAME_ENTRY_get_data(unconstify(X509_NAME_ENTRY *, e));
 		field_name = OBJ_nid2sn(nid);
 		if (field_name == NULL)
 			field_name = OBJ_nid2ln(nid);
@@ -1653,7 +1653,7 @@ X509_NAME_to_cstring(X509_NAME *name)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("could not convert NID %d to an ASN1_OBJECT structure", nid)));
 		BIO_printf(membuf, "/%s=", field_name);
-		ASN1_STRING_print_ex(membuf, v,
+		ASN1_STRING_print_ex(membuf, unconstify(ASN1_STRING *, v),
 							 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
 							  | ASN1_STRFLGS_UTF8_CONVERT));
 	}
