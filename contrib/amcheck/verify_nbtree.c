@@ -2988,7 +2988,7 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 							ItemPointerGetOffsetNumber(&(itup->t_tid)),
 							RelationGetRelationName(state->rel))));
 		else if (!VARATT_IS_COMPRESSED(DatumGetPointer(normalized[i])) &&
-				 VARSIZE(DatumGetPointer(normalized[i])) > TOAST_INDEX_TARGET &&
+				 VARSIZE_ANY(DatumGetPointer(normalized[i])) > TOAST_INDEX_TARGET &&
 				 (att->attstorage == TYPSTORAGE_EXTENDED ||
 				  att->attstorage == TYPSTORAGE_MAIN))
 		{
