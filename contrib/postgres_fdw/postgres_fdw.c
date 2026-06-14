@@ -6024,7 +6024,7 @@ remattrmap_cmp(const void *v1, const void *v2)
 	const RemoteAttributeMapping *r1 = v1;
 	const RemoteAttributeMapping *r2 = v2;
 
-	return strncmp(r1->remote_attname, r2->remote_attname, NAMEDATALEN);
+	return strcmp(r1->remote_attname, r2->remote_attname);
 }
 
 /*
