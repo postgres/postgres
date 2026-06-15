@@ -230,8 +230,9 @@ StreamLogicalLog(void)
 
 	/* Initiate the replication stream at specified location */
 	query = createPQExpBuffer();
-	appendPQExpBuffer(query, "START_REPLICATION SLOT \"%s\" LOGICAL %X/%X",
-					  replication_slot, LSN_FORMAT_ARGS(startpos));
+	appendPQExpBufferStr(query, "START_REPLICATION SLOT ");
+	AppendQuotedIdentifier(query, replication_slot);
+	appendPQExpBuffer(query, " LOGICAL %X/%X", LSN_FORMAT_ARGS(startpos));
 
 	/* print options if there are any */
 	if (noptions)
@@ -244,11 +245,14 @@ StreamLogicalLog(void)
 			appendPQExpBufferStr(query, ", ");
 
 		/* write option name */
-		appendPQExpBuffer(query, "\"%s\"", options[(i * 2)]);
+		AppendQuotedIdentifier(query, options[i * 2]);
 
 		/* write option value if specified */
-		if (options[(i * 2) + 1] != NULL)
-			appendPQExpBuffer(query, " '%s'", options[(i * 2) + 1]);
+		if (options[i * 2 + 1] != NULL)
+		{
+			appendPQExpBufferChar(query, ' ');
+			AppendQuotedLiteral(query, options[i * 2 + 1]);
+		}
 	}
 
 	if (noptions)

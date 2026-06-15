@@ -42,15 +42,20 @@ extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 							  XLogRecPtr *startpos,
 							  char **db_name);
 
+extern void AppendQuotedString(PQExpBuffer buf, const char *str, char quote);
+#define AppendQuotedIdentifier(b, s)	AppendQuotedString(b, s, '"')
+#define AppendQuotedLiteral(b, s)		AppendQuotedString(b, s, '\'')
 extern void AppendPlainCommandOption(PQExpBuffer buf,
 									 bool use_new_option_syntax,
-									 char *option_name);
+									 const char *option_name);
 extern void AppendStringCommandOption(PQExpBuffer buf,
 									  bool use_new_option_syntax,
-									  char *option_name, char *option_value);
+									  const char *option_name,
+									  const char *option_value);
 extern void AppendIntegerCommandOption(PQExpBuffer buf,
 									   bool use_new_option_syntax,
-									   char *option_name, int32 option_value);
+									   const char *option_name,
+									   int32 option_value);
 
 extern bool GetSlotInformation(PGconn *conn, const char *slot_name,
 							   XLogRecPtr *restart_lsn,

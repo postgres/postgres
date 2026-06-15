@@ -492,7 +492,8 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 		*restart_tli = tli_loc;
 
 	query = createPQExpBuffer();
-	appendPQExpBuffer(query, "READ_REPLICATION_SLOT %s", slot_name);
+	appendPQExpBufferStr(query, "READ_REPLICATION_SLOT ");
+	AppendQuotedIdentifier(query, slot_name);
 	res = PQexec(conn, query->data);
 	destroyPQExpBuffer(query);
 
@@ -588,13 +589,17 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	Assert(slot_name != NULL);
 
 	/* Build base portion of query */
-	appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\"", slot_name);
+	appendPQExpBufferStr(query, "CREATE_REPLICATION_SLOT ");
+	AppendQuotedIdentifier(query, slot_name);
 	if (is_temporary)
 		appendPQExpBufferStr(query, " TEMPORARY");
 	if (is_physical)
 		appendPQExpBufferStr(query, " PHYSICAL");
 	else
-		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
+	{
+		appendPQExpBufferStr(query, " LOGICAL ");
+		AppendQuotedIdentifier(query, plugin);
+	}
 
 	/* Add any requested options */
 	if (use_new_option_syntax)
@@ -690,8 +695,8 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	query = createPQExpBuffer();
 
 	/* Build query */
-	appendPQExpBuffer(query, "DROP_REPLICATION_SLOT \"%s\"",
-					  slot_name);
+	appendPQExpBufferStr(query, "DROP_REPLICATION_SLOT ");
+	AppendQuotedIdentifier(query, slot_name);
 	res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -720,6 +725,29 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 }
 
 /*
+ * Append a suitably-quoted identifier or string literal to buf.
+ * "quote" should be either a double-quote or single-quote character.
+ *
+ * Caution: this quoting logic is sufficient for identifiers and literals
+ * in the replication grammar, but not always in regular SQL.  Specifically,
+ * it'd fail for a string literal if standard_conforming_strings is off.
+ */
+void
+AppendQuotedString(PQExpBuffer buf, const char *str, char quote)
+{
+	appendPQExpBufferChar(buf, quote);
+	while (*str)
+	{
+		char		c = *str++;
+
+		if (c == quote)
+			appendPQExpBufferChar(buf, c);
+		appendPQExpBufferChar(buf, c);
+	}
+	appendPQExpBufferChar(buf, quote);
+}
+
+/*
  * Append a "plain" option - one with no value - to a server command that
  * is being constructed.
  *
@@ -727,10 +755,13 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
  * write things like SOME_COMMAND OPTION1 OPTION2 'opt2value' OPTION3 42. The
  * new syntax uses a comma-separated list surrounded by parentheses, so the
  * equivalent is SOME_COMMAND (OPTION1, OPTION2 'optvalue', OPTION3 42).
+ *
+ * Note: we assume option names do not require quotes.  Do not use this
+ * with option names coming from outside sources.
  */
 void
 AppendPlainCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
-						 char *option_name)
+						 const char *option_name)
 {
 	if (buf->len > 0 && buf->data[buf->len - 1] != '(')
 	{
@@ -751,30 +782,26 @@ AppendPlainCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
  */
 void
 AppendStringCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
-						  char *option_name, char *option_value)
+						  const char *option_name, const char *option_value)
 {
 	AppendPlainCommandOption(buf, use_new_option_syntax, option_name);
 
 	if (option_value != NULL)
 	{
-		size_t		length = strlen(option_value);
-		char	   *escaped_value = palloc(1 + 2 * length);
-
-		PQescapeStringConn(conn, escaped_value, option_value, length, NULL);
-		appendPQExpBuffer(buf, " '%s'", escaped_value);
-		pfree(escaped_value);
+		appendPQExpBufferChar(buf, ' ');
+		AppendQuotedLiteral(buf, option_value);
 	}
 }
 
 /*
- * Append an option with an associated integer value to a server command
+ * Append an option with an associated integer value to a server command that
  * is being constructed.
  *
  * See comments for AppendPlainCommandOption, above.
  */
 void
 AppendIntegerCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
-						   char *option_name, int32 option_value)
+						   const char *option_name, int32 option_value)
 {
 	AppendPlainCommandOption(buf, use_new_option_syntax, option_name);
 
