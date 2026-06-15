@@ -143,11 +143,13 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    </para>
 
    <para>
-    Instead of writing <literal>ONLY</literal> before the table name, you can write
-    <literal>*</literal> after the table name to explicitly specify that descendant
-    tables are included.  There is no real reason to use this syntax any more,
-    because searching descendant tables is now always the default behavior.
-    However, it is supported for compatibility with older releases.
+    You can write <literal>*</literal> after the table name to explicitly
+    specify that descendant tables are included, which is the opposite of
+    <literal>ONLY</literal>.  There is no real reason to write
+    <literal>*</literal> any more, because searching descendant tables has
+    been the default behavior since <productname>PostgreSQL</productname>
+    version 10.  However, it remains supported for compatibility with older
+    releases.
    </para>
 
    <sect3 id="queries-join">
