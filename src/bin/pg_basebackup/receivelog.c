@@ -451,8 +451,7 @@ CheckServerVersionForStreaming(PGconn *conn)
 bool
 ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 {
-	char		query[128];
-	char		slotcmd[128];
+	PQExpBuffer query;
 	PGresult   *res;
 	XLogRecPtr	stoppos;
 
@@ -477,7 +476,6 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	if (stream->replication_slot != NULL)
 	{
 		reportFlushPosition = true;
-		sprintf(slotcmd, "SLOT \"%s\" ", stream->replication_slot);
 	}
 	else
 	{
@@ -485,7 +483,6 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			reportFlushPosition = true;
 		else
 			reportFlushPosition = false;
-		slotcmd[0] = 0;
 	}
 
 	if (stream->sysidentifier != NULL)
@@ -534,8 +531,10 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 		 */
 		if (!existsTimeLineHistoryFile(stream))
 		{
-			snprintf(query, sizeof(query), "TIMELINE_HISTORY %u", stream->timeline);
-			res = PQexec(conn, query);
+			query = createPQExpBuffer();
+			appendPQExpBuffer(query, "TIMELINE_HISTORY %u", stream->timeline);
+			res = PQexec(conn, query->data);
+			destroyPQExpBuffer(query);
 			if (PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
 				/* FIXME: we might send it ok, but get an error */
@@ -571,11 +570,18 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			return true;
 
 		/* Initiate the replication stream at specified location */
-		snprintf(query, sizeof(query), "START_REPLICATION %s%X/%X TIMELINE %u",
-				 slotcmd,
-				 LSN_FORMAT_ARGS(stream->startpos),
-				 stream->timeline);
-		res = PQexec(conn, query);
+		query = createPQExpBuffer();
+		appendPQExpBufferStr(query, "START_REPLICATION");
+		if (stream->replication_slot != NULL)
+		{
+			appendPQExpBufferStr(query, " SLOT ");
+			AppendQuotedIdentifier(query, stream->replication_slot);
+		}
+		appendPQExpBuffer(query, " %X/%X TIMELINE %u",
+						  LSN_FORMAT_ARGS(stream->startpos),
+						  stream->timeline);
+		res = PQexec(conn, query->data);
+		destroyPQExpBuffer(query);
 		if (PQresultStatus(res) != PGRES_COPY_BOTH)
 		{
 			pg_log_error("could not send replication command \"%s\": %s",
