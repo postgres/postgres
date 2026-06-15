@@ -39,9 +39,7 @@ int	compute_label_target(void);
 int	count_spaces(int, char *);
 int	count_spaces_until(int, char *, char *);
 int	lexi(struct parser_state *);
-void	diag2(int, const char *);
-void	diag3(int, const char *, int);
-void	diag4(int, const char *, int, int);
+void	diag(int level, const char *msg, ...) pg_attribute_printf(2, 3);
 void	dump_line(void);
 int	lookahead(void);
 void	lookahead_reset(void);
@@ -51,3 +49,8 @@ void	pr_comment(void);
 void	set_defaults(void);
 void	set_option(char *);
 void	set_profile(const char *);
+
+/* backwards-compatibility macros */
+#define diag2(level, msg) diag(level, msg)
+#define diag3(level, msg, a) diag(level, msg, a)
+#define diag4(level, msg, a, b) diag(level, msg, a, b)
