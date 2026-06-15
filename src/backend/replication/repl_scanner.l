@@ -191,6 +191,10 @@ UPLOAD_MANIFEST		{ return K_UPLOAD_MANIFEST; }
 					return IDENT;
 				}
 
+<xd>{xddouble}	{
+					addlitchar('"');
+				}
+
 <xd>{xdinside}  {
 					addlit(yytext, yyleng);
 				}
