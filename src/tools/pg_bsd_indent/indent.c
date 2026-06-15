@@ -536,7 +536,7 @@ check_type:
 	case lparen:		/* got a '(' or '[' */
 	    /* count parens to make Healy happy */
 	    if (++ps.p_l_follow == nitems(ps.paren_indents)) {
-		diag3(0, "Reached internal limit of %d unclosed parens",
+		diag3(0, "Reached internal limit of %zu unclosed parens",
 		    nitems(ps.paren_indents));
 		ps.p_l_follow--;
 	    }
@@ -809,7 +809,7 @@ check_type:
 						 * declaration or an init */
 		di_stack[ps.dec_nest] = dec_ind;
 		if (++ps.dec_nest == nitems(di_stack)) {
-		    diag3(0, "Reached internal limit of %d struct levels",
+		    diag3(0, "Reached internal limit of %zu struct levels",
 			nitems(di_stack));
 		    ps.dec_nest--;
 		}
