@@ -498,7 +498,8 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	Assert(slot_name != NULL);
 
 	/* Build query */
-	appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\"", slot_name);
+	appendPQExpBufferStr(query, "CREATE_REPLICATION_SLOT ");
+	AppendQuotedIdentifier(query, slot_name);
 	if (is_temporary)
 		appendPQExpBufferStr(query, " TEMPORARY");
 	if (is_physical)
@@ -509,7 +510,8 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	}
 	else
 	{
-		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
+		appendPQExpBufferStr(query, " LOGICAL ");
+		AppendQuotedIdentifier(query, plugin);
 		if (PQserverVersion(conn) >= 100000)
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
 			appendPQExpBufferStr(query, " NOEXPORT_SNAPSHOT");
@@ -570,8 +572,8 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	query = createPQExpBuffer();
 
 	/* Build query */
-	appendPQExpBuffer(query, "DROP_REPLICATION_SLOT \"%s\"",
-					  slot_name);
+	appendPQExpBufferStr(query, "DROP_REPLICATION_SLOT ");
+	AppendQuotedIdentifier(query, slot_name);
 	res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -599,6 +601,29 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	return true;
 }
 
+
+/*
+ * Append a suitably-quoted identifier or string literal to buf.
+ * "quote" should be either a double-quote or single-quote character.
+ *
+ * Caution: this quoting logic is sufficient for identifiers and literals
+ * in the replication grammar, but not always in regular SQL.  Specifically,
+ * it'd fail for a string literal if standard_conforming_strings is off.
+ */
+void
+AppendQuotedString(PQExpBuffer buf, const char *str, char quote)
+{
+	appendPQExpBufferChar(buf, quote);
+	while (*str)
+	{
+		char		c = *str++;
+
+		if (c == quote)
+			appendPQExpBufferChar(buf, c);
+		appendPQExpBufferChar(buf, c);
+	}
+	appendPQExpBufferChar(buf, quote);
+}
 
 /*
  * Frontend version of GetCurrentTimestamp(), since we are not linked with

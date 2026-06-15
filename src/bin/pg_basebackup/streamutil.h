@@ -15,6 +15,7 @@
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 
 extern const char *progname;
 extern char *connection_string;
@@ -40,6 +41,11 @@ extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 							  TimeLineID *starttli,
 							  XLogRecPtr *startpos,
 							  char **db_name);
+
+extern void AppendQuotedString(PQExpBuffer buf, const char *str, char quote);
+#define AppendQuotedIdentifier(b, s)	AppendQuotedString(b, s, '"')
+#define AppendQuotedLiteral(b, s)		AppendQuotedString(b, s, '\'')
+
 extern bool RetrieveWalSegSize(PGconn *conn);
 extern TimestampTz feGetCurrentTimestamp(void);
 extern void feTimestampDifference(TimestampTz start_time, TimestampTz stop_time,
