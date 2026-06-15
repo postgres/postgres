@@ -5,7 +5,14 @@ CREATE TABLE xmltest (
 
 INSERT INTO xmltest VALUES (1, '<value>one</value>');
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
-INSERT INTO xmltest VALUES (3, '<wrong');
+INSERT INTO xmltest VALUES (3, '<value>three</wrong>  ');
+
+-- If no XML data could be inserted, skip the tests as the server has been
+-- compiled without libxml support.
+SELECT count(*) = 0 AS skip_test FROM xmltest \gset
+\if :skip_test
+\quit
+\endif
 
 SELECT * FROM xmltest;
 
@@ -30,7 +37,7 @@ SELECT xmlconcat(xmlcomment('hello'),
 
 SELECT xmlconcat('hello', 'you');
 SELECT xmlconcat(1, 2);
-SELECT xmlconcat('bad', '<syntax');
+SELECT xmlconcat('bad', '<wrong></syntax>  ');
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 SELECT xmlconcat(NULL);
@@ -75,17 +82,17 @@ SELECT xmlparse(content '<invalidentity>&</invalidentity>');
 SELECT xmlparse(content '<undefinedentity>&idontexist;</undefinedentity>');
 SELECT xmlparse(content '<invalidns xmlns=''&lt;''/>');
 SELECT xmlparse(content '<relativens xmlns=''relative''/>');
-SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
+SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>  ');
 SELECT xmlparse(content '<nosuchprefix:tag/>');
 
-SELECT xmlparse(document '   ');
+SELECT xmlparse(document '!');
 SELECT xmlparse(document 'abc');
 SELECT xmlparse(document '<abc>x</abc>');
-SELECT xmlparse(document '<invalidentity>&</abc>');
-SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>');
+SELECT xmlparse(document '<invalidentity>&</abc>  ');
+SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>  ');
 SELECT xmlparse(document '<invalidns xmlns=''&lt;''/>');
 SELECT xmlparse(document '<relativens xmlns=''relative''/>');
-SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
+SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>  ');
 SELECT xmlparse(document '<nosuchprefix:tag/>');
 
 
