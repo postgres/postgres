@@ -4,13 +4,19 @@ CREATE TABLE xmltest (
 );
 INSERT INTO xmltest VALUES (1, '<value>one</value>');
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
-INSERT INTO xmltest VALUES (3, '<wrong');
+INSERT INTO xmltest VALUES (3, '<value>three</wrong>  ');
 ERROR:  invalid XML content
-LINE 1: INSERT INTO xmltest VALUES (3, '<wrong');
+LINE 1: INSERT INTO xmltest VALUES (3, '<value>three</wrong>  ');
                                        ^
-DETAIL:  line 1: Couldn't find end of Start Tag wrong line 1
-<wrong
-      ^
+DETAIL:  line 1: Opening and ending tag mismatch: value line 1 and wrong
+<value>three</wrong>  
+                    ^
+-- If no XML data could be inserted, skip the tests as the server has been
+-- compiled without libxml support.
+SELECT count(*) = 0 AS skip_test FROM xmltest \gset
+\if :skip_test
+\quit
+\endif
 SELECT * FROM xmltest;
  id |        data        
 ----+--------------------
@@ -58,13 +64,13 @@ SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type xml, not type integer
 LINE 1: SELECT xmlconcat(1, 2);
                          ^
-SELECT xmlconcat('bad', '<syntax');
+SELECT xmlconcat('bad', '<wrong></syntax>  ');
 ERROR:  invalid XML content
-LINE 1: SELECT xmlconcat('bad', '<syntax');
+LINE 1: SELECT xmlconcat('bad', '<wrong></syntax>  ');
                                 ^
-DETAIL:  line 1: Couldn't find end of Start Tag syntax line 1
-<syntax
-       ^
+DETAIL:  line 1: Opening and ending tag mismatch: wrong line 1 and syntax
+<wrong></syntax>  
+                ^
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
   xmlconcat   
 --------------
@@ -240,13 +246,13 @@ SELECT xmlparse(content '<relativens xmlns=''relative''/>');
  <relativens xmlns='relative'/>
 (1 row)
 
-SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
+SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>  ');
 ERROR:  invalid XML content
 DETAIL:  line 1: Entity 'idontexist' not defined
-<twoerrors>&idontexist;</unbalanced>
+<twoerrors>&idontexist;</unbalanced>  
                        ^
 line 1: Opening and ending tag mismatch: twoerrors line 1 and unbalanced
-<twoerrors>&idontexist;</unbalanced>
+<twoerrors>&idontexist;</unbalanced>  
                                     ^
 SELECT xmlparse(content '<nosuchprefix:tag/>');
       xmlparse       
@@ -254,11 +260,11 @@ SELECT xmlparse(content '<nosuchprefix:tag/>');
  <nosuchprefix:tag/>
 (1 row)
 
-SELECT xmlparse(document '   ');
+SELECT xmlparse(document '!');
 ERROR:  invalid XML document
 DETAIL:  line 1: Start tag expected, '<' not found
-   
-   ^
+!
+^
 SELECT xmlparse(document 'abc');
 ERROR:  invalid XML document
 DETAIL:  line 1: Start tag expected, '<' not found
@@ -270,21 +276,21 @@ SELECT xmlparse(document '<abc>x</abc>');
  <abc>x</abc>
 (1 row)
 
-SELECT xmlparse(document '<invalidentity>&</abc>');
+SELECT xmlparse(document '<invalidentity>&</abc>  ');
 ERROR:  invalid XML document
 DETAIL:  line 1: xmlParseEntityRef: no name
-<invalidentity>&</abc>
+<invalidentity>&</abc>  
                 ^
 line 1: Opening and ending tag mismatch: invalidentity line 1 and abc
-<invalidentity>&</abc>
+<invalidentity>&</abc>  
                       ^
-SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>');
+SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>  ');
 ERROR:  invalid XML document
 DETAIL:  line 1: Entity 'idontexist' not defined
-<undefinedentity>&idontexist;</abc>
+<undefinedentity>&idontexist;</abc>  
                              ^
 line 1: Opening and ending tag mismatch: undefinedentity line 1 and abc
-<undefinedentity>&idontexist;</abc>
+<undefinedentity>&idontexist;</abc>  
                                    ^
 SELECT xmlparse(document '<invalidns xmlns=''&lt;''/>');
          xmlparse          
@@ -298,13 +304,13 @@ SELECT xmlparse(document '<relativens xmlns=''relative''/>');
  <relativens xmlns='relative'/>
 (1 row)
 
-SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
+SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>  ');
 ERROR:  invalid XML document
 DETAIL:  line 1: Entity 'idontexist' not defined
-<twoerrors>&idontexist;</unbalanced>
+<twoerrors>&idontexist;</unbalanced>  
                        ^
 line 1: Opening and ending tag mismatch: twoerrors line 1 and unbalanced
-<twoerrors>&idontexist;</unbalanced>
+<twoerrors>&idontexist;</unbalanced>  
                                     ^
 SELECT xmlparse(document '<nosuchprefix:tag/>');
       xmlparse       
