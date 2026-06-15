@@ -179,6 +179,10 @@ WAIT				{ return K_WAIT; }
 					return IDENT;
 				}
 
+<xd>{xddouble}	{
+					addlitchar('"');
+				}
+
 <xd>{xdinside}  {
 					addlit(yytext, yyleng);
 				}
