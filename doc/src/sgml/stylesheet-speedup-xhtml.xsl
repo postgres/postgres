@@ -208,7 +208,7 @@
              |ancestor::article[1]
              |ancestor::topic[1]
              |preceding::sect1[1]
-             |ancestor::sect1[1])[last()]"/>
+             |ancestor::sect1[1])[position()=last()]"/>
 
   <xsl:variable name="next"
     select="(following::book[1]
