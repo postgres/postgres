@@ -87,8 +87,8 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_restore', '-s', '-a', '-f -' ],
-	qr/\Qpg_restore: error: options -a\/--data-only and -s\/--schema-only cannot be used together\E/,
-	'pg_restore: options -a/--data-only and -s/--schema-only cannot be used together'
+	qr/\Qpg_restore: error: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
+	'pg_restore: options -s/--schema-only and -a/--data-only cannot be used together'
 );
 
 command_fails_like(
@@ -205,12 +205,7 @@ command_fails_like(
 command_fails_like(
 	[ 'pg_restore', '-f -', '-F', 'garbage' ],
 	qr/\Qpg_restore: error: unrecognized archive format "garbage";\E/,
-	'pg_restore: unrecognized archive format');
-
-command_fails_like(
-	[ 'pg_restore', '-f -', '-F', '' ],
-	qr/\Qpg_restore: error: unrecognized archive format "";\E/,
-	'pg_restore: empty archive format');
+	'pg_dump: unrecognized archive format');
 
 command_fails_like(
 	[ 'pg_dump', '--on-conflict-do-nothing' ],
@@ -251,105 +246,8 @@ command_fails_like(
 # also fails for -r and -t, but it seems pointless to add more tests for those.
 command_fails_like(
 	[ 'pg_dumpall', '--exclude-database=foo', '--globals-only' ],
-	qr/\Qpg_dumpall: error: options --exclude-database and -g\/--globals-only cannot be used together\E/,
-	'pg_dumpall: options --exclude-database and -g/--globals-only cannot be used together'
+	qr/\Qpg_dumpall: error: option --exclude-database cannot be used together with -g\/--globals-only\E/,
+	'pg_dumpall: option --exclude-database cannot be used together with -g/--globals-only'
 );
 
-command_fails_like(
-	[ 'pg_dumpall', '-a', '--no-data' ],
-	qr/\Qpg_dumpall: error: options -a\/--data-only and --no-data cannot be used together\E/,
-	'pg_dumpall: options -a\/--data-only and --no-data cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '-s', '--no-schema' ],
-	qr/\Qpg_dumpall: error: options -s\/--schema-only and --no-schema cannot be used together\E/,
-	'pg_dumpall: options -s\/--schema-only and --no-schema cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '--statistics-only', '--no-statistics' ],
-	qr/\Qpg_dumpall: error: options --statistics-only and --no-statistics cannot be used together\E/,
-	'pg_dumpall: options --statistics-only and --no-statistics cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '--statistics', '--no-statistics' ],
-	qr/\Qpg_dumpall: error: options --statistics and --no-statistics cannot be used together\E/,
-	'pg_dumpall: options --statistics-only and --no-statistics cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '--statistics', '--tablespaces-only' ],
-	qr/\Qpg_dumpall: error: options --statistics and -t\/--tablespaces-only cannot be used together\E/,
-	'pg_dumpall: options --statistics and -t\/--tablespaces-only cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '--format', 'x' ],
-	qr/\Qpg_dumpall: error: unrecognized output format "x";\E/,
-	'pg_dumpall: unrecognized output format');
-
-command_fails_like(
-	[ 'pg_dumpall', '--format', 'd', '--restrict-key=uu', '-f dumpfile' ],
-	qr/\Qpg_dumpall: error: option --restrict-key can only be used with --format=plain\E/,
-	'pg_dumpall: --restrict-key can only be used with plain dump format');
-
-command_fails_like(
-	[
-		'pg_dumpall', '--format', 'd', '--globals-only',
-		'--clean', '-f', 'dumpfile'
-	],
-	qr/\Qpg_dumpall: error: options --clean and -g\/--globals-only cannot be used together in non-text dump\E/,
-	'pg_dumpall: --clean and -g/--globals-only cannot be used together in non-text dump'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '--format', 'd' ],
-	qr/\Qpg_dumpall: error: option -F\/--format=d|c|t requires option -f\/--file\E/,
-	'pg_dumpall: non-plain format requires --file option');
-
-command_fails_like(
-	[ 'pg_restore', '--exclude-database=foo', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: options --exclude-database and -g\/--globals-only cannot be used together\E/,
-	'pg_restore: options --exclude-database and -g/--globals-only cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--data-only', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: options -a\/--data-only and -g\/--globals-only cannot be used together\E/,
-	'pg_restore: error: options -a/--data-only and -g/--globals-only cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--schema-only', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: options -g\/--globals-only and -s\/--schema-only cannot be used together\E/,
-	'pg_restore: error: options -g/--globals-only and -s/--schema-only cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--statistics-only', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: options -g\/--globals-only and --statistics-only cannot be used together\E/,
-	'pg_restore: error: options -g/--globals-only and --statistics-only cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--exclude-database=foo', '-d', 'xxx', 'dumpdir' ],
-	qr/\Qpg_restore: error: option --exclude-database can be used only when restoring an archive created by pg_dumpall\E/,
-	'When option --exclude-database is used in pg_restore with dump of pg_dump'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--globals-only', '-d', 'xxx', 'dumpdir' ],
-	qr/\Qpg_restore: error: option -g\/--globals-only can be used only when restoring an archive created by pg_dumpall\E/,
-	'When option --globals-only is used in pg_restore with the dump of pg_dump'
-);
-
-command_fails_like(
-	[
-		'pg_restore', '--globals-only', '--no-globals', '-d', 'xxx',
-		'dumpdir'
-	],
-	qr/\Qpg_restore: error: options -g\/--globals-only and --no-globals cannot be used together\E/,
-	'options --no-globals and --globals-only cannot be used together');
 done_testing();

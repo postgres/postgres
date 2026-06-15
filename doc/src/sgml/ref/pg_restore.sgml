@@ -18,9 +18,8 @@ PostgreSQL documentation
   <refname>pg_restore</refname>
 
   <refpurpose>
-   restore <productname>PostgreSQL</productname> databases from archives
-   created by <application>pg_dump</application> or
-   <application>pg_dumpall</application>
+   restore a <productname>PostgreSQL</productname> database from an
+   archive file created by <application>pg_dump</application>
   </refpurpose>
  </refnamediv>
 
@@ -39,14 +38,13 @@ PostgreSQL documentation
 
   <para>
    <application>pg_restore</application> is a utility for restoring a
-   <productname>PostgreSQL</productname> database or cluster from an archive
-   created by <xref linkend="app-pgdump"/> or
-   <xref linkend="app-pg-dumpall"/> in one of the non-plain-text
+   <productname>PostgreSQL</productname> database from an archive
+   created by <xref linkend="app-pgdump"/> in one of the non-plain-text
    formats.  It will issue the commands necessary to reconstruct the
-   database or cluster to the state it was in at the time it was saved. The
-   archives also allow <application>pg_restore</application> to
+   database to the state it was in at the time it was saved.  The
+   archive files also allow <application>pg_restore</application> to
    be selective about what is restored, or even to reorder the items
-   prior to being restored. The archive formats are designed to be
+   prior to being restored. The archive files are designed to be
    portable across architectures.
   </para>
 
@@ -54,32 +52,12 @@ PostgreSQL documentation
    <application>pg_restore</application> can operate in two modes.
    If a database name is specified, <application>pg_restore</application>
    connects to that database and restores archive contents directly into
-   the database.
-   When restoring from a dump made by <application>pg_dumpall</application>,
-   each database will be created and then the restoration will be run in that
-   database.
-
-   Otherwise, when a database name is not specified, a script containing the SQL
-   commands necessary to rebuild the database or cluster is created and written
+   the database.  Otherwise, a script containing the SQL
+   commands necessary to rebuild the database is created and written
    to a file or standard output.  This script output is equivalent to
-   the plain text output format of <application>pg_dump</application> or
-   <application>pg_dumpall</application>.
-
+   the plain text output format of <application>pg_dump</application>.
    Some of the options controlling the output are therefore analogous to
    <application>pg_dump</application> options.
-  </para>
-
-  <para>
-   A non-plain-text archive made using <application>pg_dumpall</application>
-   is a directory containing a <filename>toc.glo</filename> file with global
-   objects (roles and tablespaces), a <filename>map.dat</filename> file
-   listing the databases, and a subdirectory for each database containing
-   its archive.  When restoring such an archive,
-   <application>pg_restore</application> first restores global objects from
-   <filename>toc.glo</filename>, then processes each database listed in
-   <filename>map.dat</filename>.  Lines in <filename>map.dat</filename> can
-   be commented out with <literal>#</literal> to skip restoring specific
-   databases.
   </para>
 
   <para>
@@ -152,12 +130,6 @@ PostgreSQL documentation
         ignorable error messages will be reported,
         unless <option>--if-exists</option> is also specified.
        </para>
-       <para>
-        When restoring a <application>pg_dumpall</application> archive,
-        <option>--if-exists</option> is implied by <option>--clean</option>,
-        since global objects such as roles and tablespaces may not exist
-        in the target cluster.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -180,8 +152,6 @@ PostgreSQL documentation
         commands that mention this database.
         Access privileges for the database itself are also restored,
         unless <option>--no-acl</option> is specified.
-        <option>--create</option> is required when restoring multiple databases
-        from a non-plain-text archive made using <application>pg_dumpall</application>.
        </para>
 
        <para>
@@ -279,29 +249,6 @@ PostgreSQL documentation
          </listitem>
         </varlistentry>
        </variablelist></para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-g</option></term>
-      <term><option>--globals-only</option></term>
-      <listitem>
-       <para>
-        Restore only global objects (roles and tablespaces), no databases.
-       </para>
-       <para>
-        This option is only relevant when restoring from a non-plain-text archive made using <application>pg_dumpall</application>.
-        Note: <option>--globals-only</option> cannot be used with
-        <option>--data-only</option>,
-        <option>--schema-only</option>,
-        <option>--statistics-only</option>,
-        <option>--statistics</option>,
-        <option>--no-globals</option>,
-        <option>--exit-on-error</option>,
-        <option>--single-transaction</option>,
-        <option>--clean</option>, or
-        <option>--transaction-size</option>.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -642,28 +589,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--exclude-database=<replaceable class="parameter">pattern</replaceable></option></term>
-      <listitem>
-       <para>
-        Do not restore databases whose name matches
-        <replaceable class="parameter">pattern</replaceable>.
-        Multiple patterns can be excluded by writing multiple
-        <option>--exclude-database</option> switches.  The
-        <replaceable class="parameter">pattern</replaceable> parameter is
-        interpreted as a pattern according to the same rules used by
-        <application>psql</application>'s <literal>\d</literal>
-        commands (see <xref linkend="app-psql-patterns"/>),
-        so multiple databases can also be excluded by writing wildcard
-        characters in the pattern.  When using wildcards, be careful to
-        quote the pattern if needed to prevent shell wildcard expansion.
-       </para>
-       <para>
-        This option is only relevant when restoring from a non-plain-text archive made using <application>pg_dumpall</application>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--filter=<replaceable class="parameter">filename</replaceable></option></term>
       <listitem>
        <para>
@@ -751,9 +676,7 @@ PostgreSQL documentation
         in <option>--clean</option> mode.  This suppresses <quote>does not
         exist</quote> errors that might otherwise be reported.  This
         option is not valid unless <option>--clean</option> is also
-        specified.  This option is implied when restoring a
-        <application>pg_dumpall</application> archive with
-        <option>--clean</option>.
+        specified.
        </para>
       </listitem>
      </varlistentry>
@@ -796,21 +719,6 @@ PostgreSQL documentation
        <para>
         This option is effective only when restoring directly into a
         database, not when producing SQL script output.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--no-globals</option></term>
-      <listitem>
-       <para>
-        Do not restore global objects (roles and tablespaces).  When
-        <option>-C</option>/<option>--create</option> is not specified,
-        databases that do not already exist on the target server are skipped.
-       </para>
-       <para>
-        This option is only relevant when restoring from a non-plain-text
-        archive made using <application>pg_dumpall</application>.
        </para>
       </listitem>
      </varlistentry>
@@ -1237,21 +1145,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
       an archive contains large objects, then all large objects will be
       restored, or none of them if they are excluded via <option>-L</option>,
       <option>-t</option>, or other options.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The following options cannot be used when restoring from a non-plain-text
-      archive made using <application>pg_dumpall</application>:
-      <option>-a/--data-only</option>,
-      <option>-l/--list</option>,
-      <option>-L/--use-list</option>,
-      <option>--no-schema</option>,
-      <option>--statistics-only</option>, and
-      <option>--strict-names</option>.
-      Also, if the <option>--section</option> option is used, it must
-      include <option>pre-data</option>.
      </para>
     </listitem>
 

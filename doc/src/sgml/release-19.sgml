@@ -2689,25 +2689,6 @@ Report nanoseconds instead of microseconds.  In addition to histogram output, ou
 
      <itemizedlist>
 <!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2026-02-26 [763aaa06f] Add non-text output formats to pg_dumpall
-Author: Andrew Dunstan <andrew@dunslane.net>
-2026-03-04 [3c19983cc] pg_restore: add - -no-globals option to skip globals
--->
-
-<listitem>
-<para>
-Allow <link linkend="app-pg-dumpall"><application>pg_dumpall</application></link> to produce output in non-text formats (Mahendra Singh Thalor, Andrew Dunstan)
-<ulink url="&commit_baseurl;763aaa06f">&sect;</ulink>
-<ulink url="&commit_baseurl;3c19983cc">&sect;</ulink>
-</para>
-
-<para>
-The new output formats are <literal>custom</literal>, <literal>directory</literal>, or <literal>tar</literal>.
-</para>
-</listitem>
-
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2026-01-27 [c32fb29e9] Include extended statistics data in pg_dump
 -->
