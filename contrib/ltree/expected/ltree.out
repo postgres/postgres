@@ -8224,3 +8224,13 @@ DETAIL:  Total size of level exceeds the maximum allowed (65535 bytes).
 SELECT (repeat('a|', 65535) || 'a')::lquery;
 ERROR:  lquery level has too many variants
 DETAIL:  Number of variants exceeds the maximum allowed (65535).
+-- Test that ltree_compare() does not overflow with very deep paths.
+WITH s AS (SELECT 'a'::ltree AS v),
+     l AS (SELECT (repeat('a.', 14999) || 'a')::ltree AS v)
+SELECT (l.v > s.v) AS gt_ok, (l.v < s.v) AS lt_ok, (l.v = s.v) AS eq_ok
+  FROM s, l;
+ gt_ok | lt_ok | eq_ok 
+-------+-------+-------
+ t     | f     | f
+(1 row)
+
