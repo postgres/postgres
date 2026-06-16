@@ -261,11 +261,11 @@ ltree_penalty(PG_FUNCTION_ARGS)
 	ltree_gist *newval = (ltree_gist *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
 	int			siglen = LTREE_GET_SIGLEN();
-	int32		cmpr,
+	float		cmpr,
 				cmpl;
 
-	cmpl = ltree_compare(LTG_GETLNODE(origval, siglen), LTG_GETLNODE(newval, siglen));
-	cmpr = ltree_compare(LTG_GETRNODE(newval, siglen), LTG_GETRNODE(origval, siglen));
+	cmpl = ltree_compare_distance(LTG_GETLNODE(origval, siglen), LTG_GETLNODE(newval, siglen));
+	cmpr = ltree_compare_distance(LTG_GETRNODE(newval, siglen), LTG_GETRNODE(origval, siglen));
 
 	*penalty = Max(cmpl, 0) + Max(cmpr, 0);
 

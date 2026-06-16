@@ -206,6 +206,7 @@ bool		ltree_execute(ITEM *curitem, void *checkval,
 						  bool calcnot, bool (*chkcond) (void *checkval, ITEM *val));
 
 int			ltree_compare(const ltree *a, const ltree *b);
+float		ltree_compare_distance(const ltree *a, const ltree *b);
 bool		inner_isparent(const ltree *c, const ltree *p);
 bool		compare_subnode(ltree_level *t, char *qn, int len, bool prefix, bool ci);
 ltree	   *lca_inner(ltree **a, int len);
