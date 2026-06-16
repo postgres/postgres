@@ -2806,10 +2806,13 @@ restore_tuple(BufFile *file, Relation relation, TupleTableSlot *slot)
 			slot->tts_values[i] = PointerGetDatum(value);
 			natt_ext--;
 			if (natt_ext < 0)
-				ereport(ERROR,
-						errcode(ERRCODE_DATA_CORRUPTED),
-						errmsg("insufficient number of attributes stored separately"));
+				elog(ERROR, "insufficient number of attributes stored separately");
 		}
+
+		if (natt_ext != 0)
+			elog(ERROR,
+				 "unexpected number of attributes stored separately (%d remaining)",
+				 natt_ext);
 	}
 }
 
