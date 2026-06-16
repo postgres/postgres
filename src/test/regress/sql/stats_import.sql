@@ -1612,6 +1612,20 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'most_common_freqs', '{0.25,0.25,0.25,0.25}'::double precision[],
   'most_common_base_freqs', '{0.00390625,0.015625,0.00390625,0.015625}'::double precision[]);
 
+-- warn: more MCV items than can be handled.
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcv',
+  'inherited', false,
+  'most_common_vals', (SELECT array_agg(ARRAY[g::text, g::text])
+                       FROM generate_series(1, 10001) g),
+  'most_common_freqs', (SELECT array_agg((1.0 / 10001)::double precision)
+                        FROM generate_series(1, 10001) g),
+  'most_common_base_freqs', (SELECT array_agg((1.0 / 10001)::double precision)
+                             FROM generate_series(1, 10001) g));
+
 -- ok: mcv
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',

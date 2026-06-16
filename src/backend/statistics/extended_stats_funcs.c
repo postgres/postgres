@@ -851,6 +851,21 @@ import_mcv(const ArrayType *mcv_arr, const ArrayType *freqs_arr,
 	 * the reference array for determining their length.
 	 */
 	nitems = ARR_DIMS(mcv_arr)[0];
+
+	/*
+	 * Reject a MCV list larger than what statext_mcv_deserialize() is able to
+	 * accept.
+	 */
+	if (nitems > STATS_MCVLIST_MAX_ITEMS)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("could not parse array \"%s\": number of items (%d) exceeds maximum (%d)",
+					   extarginfo[MOST_COMMON_VALS_ARG].argname,
+					   nitems, STATS_MCVLIST_MAX_ITEMS));
+		goto mcv_error;
+	}
+
 	if (!check_mcvlist_array(freqs_arr, MOST_COMMON_FREQS_ARG, 1, nitems) ||
 		!check_mcvlist_array(base_freqs_arr, MOST_COMMON_BASE_FREQS_ARG, 1, nitems))
 	{
