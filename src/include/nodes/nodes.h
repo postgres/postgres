@@ -105,14 +105,12 @@ typedef enum NodeTag
  * - custom_query_jumble: Has custom implementation in queryjumblefuncs.c
  *   for the field of a node.  Also available as a node attribute.
  *
- * - query_jumble_ignore: Ignore the field for the query jumbling.  Note
- *   that typmod and collation information are usually irrelevant for the
- *   query jumbling.
+ * - query_jumble_ignore: Ignore the field for query jumbling.
  *
  * - query_jumble_squash: Squash multiple values during query jumbling.
  *
  * - query_jumble_location: Mark the field as a location to track.  This is
- *   only allowed for integer fields that include "location" in their name.
+ *   only used for fields of type ParseLoc, which otherwise are not jumbled.
  *
  * - read_as(VALUE): In nodeRead(), replace the field's value with VALUE.
  *

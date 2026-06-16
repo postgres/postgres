@@ -319,7 +319,10 @@ typedef struct Var
  * references).  This ensures that the Const node is self-contained and makes
  * it more likely that equal() will see logically identical values as equal.
  *
- * Only the constant type OID is relevant for the query jumbling.
+ * For query jumble, we don't want different const values changing the jumble
+ * result.  We only jumble consttype as different const types could result in
+ * very different plans and execution times, which is useful to distinguish in
+ * extensions such as pg_stat_statements.
  */
 typedef struct Const
 {
@@ -346,10 +349,7 @@ typedef struct Const
 	 */
 	bool		constbyval pg_node_attr(query_jumble_ignore);
 
-	/*
-	 * token location, or -1 if unknown.  All constants are tracked as
-	 * locations in query jumbling, to be marked as parameters.
-	 */
+	/* token location, or -1 if unknown. */
 	ParseLoc	location pg_node_attr(query_jumble_location);
 } Const;
 
@@ -452,9 +452,6 @@ typedef struct Param
  * and can share the result.  Aggregates with same 'transno' but different
  * 'aggno' can share the same transition state, only the final function needs
  * to be called separately.
- *
- * Information related to collations, transition types and internal states
- * are irrelevant for the query jumbling.
  */
 typedef struct Aggref
 {
@@ -550,9 +547,6 @@ typedef struct Aggref
  *
  * In raw parse output we have only the args list; parse analysis fills in the
  * refs list, and the planner fills in the cols list.
- *
- * All the fields used as information for an internal state are irrelevant
- * for the query jumbling.
  */
 typedef struct GroupingFunc
 {
@@ -575,13 +569,6 @@ typedef struct GroupingFunc
 } GroupingFunc;
 
 /*
- * WindowFunc
- *
- * Collation information is irrelevant for the query jumbling, as is the
- * internal state information of the node like "winstar" and "winagg".
- */
-
-/*
  * Null Treatment options. If specified, initially set to PARSER_IGNORE_NULLS
  * which is then converted to IGNORE_NULLS if the window function allows the
  * null treatment clause.
@@ -591,6 +578,11 @@ typedef struct GroupingFunc
 #define PARSER_RESPECT_NULLS 2
 #define IGNORE_NULLS 3
 
+ /*
+  * WindowFunc
+  *
+  * Node type to represent a call to a window function.
+  */
 typedef struct WindowFunc
 {
 	Expr		xpr;
@@ -703,8 +695,6 @@ typedef struct MergeSupportFunc
  * subscripting logic.  Likewise, reftypmod and refcollid will match the
  * container's properties in a store, but could be different in a fetch.
  *
- * Any internal state data is ignored for the query jumbling.
- *
  * Note: for the cases where a container is returned, if refexpr yields a R/W
  * expanded container, then the implementation is allowed to modify that
  * object in-place and return the same object.
@@ -772,9 +762,6 @@ typedef enum CoercionForm
 
 /*
  * FuncExpr - expression node for a function call
- *
- * Collation information is irrelevant for the query jumbling, only the
- * arguments and the function OID matter.
  */
 typedef struct FuncExpr
 {
@@ -839,9 +826,6 @@ typedef struct NamedArgExpr
  * of the node.  The planner makes sure it is valid before passing the node
  * tree to the executor, but during parsing/planning opfuncid can be 0.
  * Therefore, equal() will accept a zero value as being equal to other values.
- *
- * Internal state information and collation data is irrelevant for the query
- * jumbling.
  */
 typedef struct OpExpr
 {
@@ -919,9 +903,6 @@ typedef OpExpr NullIfExpr;
  * Similar to OpExpr, opfuncid, hashfuncid, and negfuncid are not necessarily
  * filled in right away, so will be ignored for equality if they are not set
  * yet.
- *
- * OID entries of the internal function types are irrelevant for the query
- * jumbling, but the operator OID and the arguments are.
  */
 typedef struct ScalarArrayOpExpr
 {
