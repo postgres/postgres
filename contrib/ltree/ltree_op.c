@@ -38,6 +38,9 @@ PG_FUNCTION_INFO_V1(ltree2text);
 PG_FUNCTION_INFO_V1(text2ltree);
 PG_FUNCTION_INFO_V1(ltreeparentsel);
 
+/*
+ * btree-comparison function.
+ */
 int
 ltree_compare(const ltree *a, const ltree *b)
 {
@@ -50,18 +53,52 @@ ltree_compare(const ltree *a, const ltree *b)
 	{
 		int			res;
 
-		if ((res = memcmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
+		res = memcmp(al->name, bl->name, Min(al->len, bl->len));
+		if (res == 0)
 		{
 			if (al->len != bl->len)
-				return (al->len - bl->len) * 10 * (an + 1);
+				return (int) al->len - (int) bl->len;
+		}
+		else
+			return res;
+
+		an--;
+		bn--;
+		al = LEVEL_NEXT(al);
+		bl = LEVEL_NEXT(bl);
+	}
+
+	return a->numlevel - b->numlevel;
+}
+
+/*
+ * Returns a "distance" between a and b.  If a < b, the distance is negative,
+ * consistent with the ltree_compare() ordering.
+ */
+float
+ltree_compare_distance(const ltree *a, const ltree *b)
+{
+	ltree_level *al = LTREE_FIRST(a);
+	ltree_level *bl = LTREE_FIRST(b);
+	int			an = a->numlevel;
+	int			bn = b->numlevel;
+
+	while (an > 0 && bn > 0)
+	{
+		int			res;
+
+		res = memcmp(al->name, bl->name, Min(al->len, bl->len));
+		if (res == 0)
+		{
+			if (al->len != bl->len)
+				return (float) (al->len - bl->len) * 10.0 * (an + 1);
 		}
 		else
 		{
 			if (res < 0)
-				res = -1;
+				return -1.0 * 10.0 * (an + 1);
 			else
-				res = 1;
-			return res * 10 * (an + 1);
+				return 1.0 * 10.0 * (an + 1);
 		}
 
 		an--;
@@ -70,7 +107,7 @@ ltree_compare(const ltree *a, const ltree *b)
 		bl = LEVEL_NEXT(bl);
 	}
 
-	return (a->numlevel - b->numlevel) * 10 * (an + 1);
+	return ((float) (a->numlevel - b->numlevel)) * 10.0 * (an + 1);
 }
 
 #define RUNCMP						\

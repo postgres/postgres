@@ -429,3 +429,9 @@ SELECT (repeat('x', 255) || repeat('|' || repeat('x', 255), 256))::lquery;
 --- Test for overflow of lquery_level.numvar, with a set of single-char
 --- variants in one level.
 SELECT (repeat('a|', 65535) || 'a')::lquery;
+
+-- Test that ltree_compare() does not overflow with very deep paths.
+WITH s AS (SELECT 'a'::ltree AS v),
+     l AS (SELECT (repeat('a.', 14999) || 'a')::ltree AS v)
+SELECT (l.v > s.v) AS gt_ok, (l.v < s.v) AS lt_ok, (l.v = s.v) AS eq_ok
+  FROM s, l;
