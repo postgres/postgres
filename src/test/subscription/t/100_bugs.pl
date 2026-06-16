@@ -598,4 +598,49 @@ $node_publisher->safe_psql('postgres', "DROP DATABASE regress_db");
 
 $node_publisher->stop('fast');
 
+# https://postgr.es/m/19c7623e882.4080fd5426212.311756747309556767%40zohocorp.com
+
+# The bug was that when an ERROR was raised while processing an INSERT ... ON
+# CONFLICT statement, the decoded change misses to be free'd. This can cause an
+# assertion failure if enabled.
+
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+# Create a publication with the zero-division row filter. It always throws an
+# ERROR before publishing changes, when the filter is evaluated.
+$node_publisher->safe_psql(
+	'postgres', qq(
+	CREATE TABLE tab_upsert (a INT PRIMARY KEY, b INT);
+	CREATE PUBLICATION pub_rowfilter_error FOR TABLE tab_upsert WHERE ((a / 0) > 0);
+	SELECT * FROM pg_create_logical_replication_slot('upsert_slot', 'pgoutput');
+	INSERT INTO tab_upsert (a, b) VALUES (1, 1)
+		ON CONFLICT(a) DO UPDATE SET b = excluded.b;
+));
+
+# Decode the changes with a publication whose row filter causes a
+# division by zero error, and verify that the logical decoder doesn't crash.
+($ret, $stdout, $stderr) = $node_publisher->psql(
+	'postgres', qq(
+	SELECT *
+	FROM pg_logical_slot_peek_binary_changes(
+		'upsert_slot',
+		NULL,
+		NULL,
+		'proto_version', '1',
+		'publication_names', 'pub_rowfilter_error'
+	);
+));
+
+ok( $stderr =~ qr/division by zero/,
+	'peek logical changes with row filter causing division by zero throws error'
+);
+
+# Clean up
+$node_publisher->safe_psql('postgres', "SELECT pg_drop_replication_slot('upsert_slot')");
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub_rowfilter_error");
+$node_publisher->safe_psql('postgres', "DROP TABLE tab_upsert");
+
+$node_publisher->stop('fast');
+
 done_testing();
