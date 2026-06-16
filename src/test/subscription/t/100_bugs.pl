@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 # Bug #15114
 
@@ -390,5 +390,46 @@ like(
 	"could not drop replication slot: error message");
 
 $node_publisher->safe_psql('postgres', "DROP DATABASE regress_db");
+
+$node_publisher->stop('fast');
+
+# https://postgr.es/m/19c7623e882.4080fd5426212.311756747309556767%40zohocorp.com
+
+# The bug was that when an ERROR was raised while processing an INSERT ... ON
+# CONFLICT statement, the decoded change misses to be free'd. This can cause an
+# assertion failure if enabled.
+
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+$node_publisher->safe_psql(
+	'postgres', qq(
+	CREATE TABLE tab_upsert (a INT PRIMARY KEY, b INT);
+	SELECT * FROM pg_create_logical_replication_slot('upsert_slot', 'pgoutput');
+	INSERT INTO tab_upsert (a, b) VALUES (1, 1)
+		ON CONFLICT(a) DO UPDATE SET b = excluded.b;
+));
+
+# Decode the changes without a publication and
+# verify that the logical decoder doesn't crash.
+($ret, $stdout, $stderr) = $node_publisher->psql(
+	'postgres', qq(
+	SELECT *
+	FROM pg_logical_slot_peek_binary_changes(
+		'upsert_slot',
+		NULL,
+		NULL,
+		'proto_version', '1',
+		'publication_names', 'pub_that_does_not_exist'
+	);
+));
+
+ok( $stderr =~ qr/publication "pub_that_does_not_exist" does not exist/,
+	'peek logical changes with non-existent publication throws error'
+);
+
+# Clean up
+$node_publisher->safe_psql('postgres', "SELECT pg_drop_replication_slot('upsert_slot')");
+$node_publisher->safe_psql('postgres', "DROP TABLE tab_upsert");
 
 $node_publisher->stop('fast');

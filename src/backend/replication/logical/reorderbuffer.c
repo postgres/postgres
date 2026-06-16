@@ -474,6 +474,9 @@ ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	/* Reset the toast hash */
 	ReorderBufferToastReset(rb, txn);
 
+	/* All changes must be deallocated */
+	Assert(txn->size == 0);
+
 	pfree(txn);
 }
 
@@ -2029,21 +2032,13 @@ static void
 ReorderBufferResetTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					  Snapshot snapshot_now,
 					  CommandId command_id,
-					  XLogRecPtr last_lsn,
-					  ReorderBufferChange *specinsert)
+					  XLogRecPtr last_lsn)
 {
 	/* Discard the changes that we just streamed */
 	ReorderBufferTruncateTXN(rb, txn, rbtxn_prepared(txn));
 
 	/* Free all resources allocated for toast reconstruction */
 	ReorderBufferToastReset(rb, txn);
-
-	/* Return the spec insert change if it is not NULL */
-	if (specinsert != NULL)
-	{
-		ReorderBufferReturnChange(rb, specinsert, true);
-		specinsert = NULL;
-	}
 
 	/*
 	 * For the streaming case, stop the stream and remember the command ID and
@@ -2303,7 +2298,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					 * CheckTableNotInUse() and locking.
 					 */
 
-					/* clear out a pending (and thus failed) speculation */
+					/* clear out a pending (= failed) speculative insertion */
 					if (specinsert != NULL)
 					{
 						ReorderBufferReturnChange(rb, specinsert, true);
@@ -2589,6 +2584,13 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		if (using_subtxn)
 			RollbackAndReleaseCurrentSubTransaction();
 
+		/* Free the specinsert change before freeing the ReorderBufferTXN */
+		if (specinsert != NULL)
+		{
+			ReorderBufferReturnChange(rb, specinsert, true);
+			specinsert = NULL;
+		}
+
 		/*
 		 * The error code ERRCODE_TRANSACTION_ROLLBACK indicates a concurrent
 		 * abort of the (sub)transaction we are streaming or preparing. We
@@ -2615,8 +2617,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 			/* Reset the TXN so that it is allowed to stream remaining data. */
 			ReorderBufferResetTXN(rb, txn, snapshot_now,
-								  command_id, prev_lsn,
-								  specinsert);
+								  command_id, prev_lsn);
 		}
 		else
 		{
