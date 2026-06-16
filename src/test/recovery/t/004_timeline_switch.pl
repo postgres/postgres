@@ -33,6 +33,10 @@ $node_standby_2->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby_2->start;
 
+# Wait for standby_1 and standby_2 connection to the primary.
+$node_primary->poll_query_until('postgres',
+	"SELECT count(1) = 2 FROM pg_stat_replication");
+
 # Create some content on primary
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
