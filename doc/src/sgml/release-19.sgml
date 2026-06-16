@@ -6,7 +6,7 @@
 
  <formalpara>
   <title>Release date:</title>
-  <para>2026-??-??, AS OF 2026-06-05</para>
+  <para>2026-??-??, AS OF 2026-06-16</para>
  </formalpara>
 
   <sect2 id="release-19-highlights">
@@ -734,22 +734,6 @@ Improve <link linkend="sql-notify"><command>NOTIFY</command></link> to only wake
 
 <para>
 Previously most backends were woken by <link linkend="sql-notify"><command>NOTIFY</command></link>.
-</para>
-</listitem>
-
-<!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2026-03-12 [a0b6ef29a] Enable fast default for domains with non-volatile constr
--->
-
-<listitem>
-<para>
-Allow the <link linkend="sql-altertable">addition of columns</link> based on domains containing constraints to usually avoid a table rewrite (Jian He)
-<ulink url="&commit_baseurl;a0b6ef29a">&sect;</ulink>
-</para>
-
-<para>
-Previously this always required a table rewrite.
 </para>
 </listitem>
 
