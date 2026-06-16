@@ -3190,17 +3190,36 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 				bool		dumpthis = false;
 
 				/*
-				 * Statistics data can be assigned for tables or indexes, so
-				 * check both.
+				 * Statistics data entries can be for tables or indexes. Check
+				 * the parent dependency to determine which type this entry
+				 * belongs to, then apply the appropriate name filter.
 				 */
-				if (ropt->selTable &&
-					(ropt->tableNames.head == NULL ||
-					 simple_string_list_member(&ropt->tableNames, te->tag)))
-					dumpthis = true;
-				if (ropt->selIndex &&
-					(ropt->indexNames.head == NULL ||
-					 simple_string_list_member(&ropt->indexNames, te->tag)))
-					dumpthis = true;
+				for (int i = 0; i < te->nDeps; i++)
+				{
+					TocEntry   *pte = getTocEntryByDumpId(AH, te->dependencies[i]);
+
+					if (!pte)
+						continue;
+
+					if (ropt->selTable &&
+						(strcmp(pte->desc, "TABLE") == 0 ||
+						 strcmp(pte->desc, "VIEW") == 0 ||
+						 strcmp(pte->desc, "FOREIGN TABLE") == 0 ||
+						 strcmp(pte->desc, "MATERIALIZED VIEW") == 0))
+					{
+						if (ropt->tableNames.head == NULL ||
+							simple_string_list_member(&ropt->tableNames, pte->tag))
+							dumpthis = true;
+					}
+
+					if (ropt->selIndex &&
+						strcmp(pte->desc, "INDEX") == 0)
+					{
+						if (ropt->indexNames.head == NULL ||
+							simple_string_list_member(&ropt->indexNames, pte->tag))
+							dumpthis = true;
+					}
+				}
 				if (!dumpthis)
 					return 0;
 			}
