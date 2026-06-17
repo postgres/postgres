@@ -954,9 +954,6 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 		byteswritten = pg_pwrite(recvFile, buf, segbytes, (pgoff_t) startoff);
 		pgstat_report_wait_end();
 
-		pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL,
-								IOOP_WRITE, start, 1, byteswritten);
-
 		if (byteswritten <= 0)
 		{
 			char		xlogfname[MAXFNAMELEN];
@@ -975,6 +972,9 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 							"at offset %d, length %d: %m",
 							xlogfname, startoff, segbytes)));
 		}
+
+		pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL,
+								IOOP_WRITE, start, 1, byteswritten);
 
 		/* Update state for write */
 		recptr += byteswritten;
