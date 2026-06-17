@@ -2687,7 +2687,7 @@ prompt_user(struct async_ctx *actx, PGconn *conn)
  * function will not try to reinitialize Curl on successive calls.
  */
 static bool
-initialize_curl(PGoauthBearerRequestV2 *req)
+initialize_curl(PGoauthBearerRequestV2 *req, uint32 debug_flags)
 {
 	/*
 	 * Don't let the compiler play tricks with this variable. In the
@@ -2696,9 +2696,7 @@ initialize_curl(PGoauthBearerRequestV2 *req)
 	 * PG_BOOL_YES/NO in cases where that's not the final answer.
 	 */
 	static volatile PGTernaryBool init_successful = PG_BOOL_UNKNOWN;
-#if HAVE_THREADSAFE_CURL_GLOBAL_INIT
 	curl_version_info_data *info;
-#endif
 
 #if !HAVE_THREADSAFE_CURL_GLOBAL_INIT
 
@@ -2744,6 +2742,8 @@ initialize_curl(PGoauthBearerRequestV2 *req)
 		goto done;
 	}
 
+	info = curl_version_info(CURLVERSION_NOW);
+
 #if HAVE_THREADSAFE_CURL_GLOBAL_INIT
 
 	/*
@@ -2753,7 +2753,6 @@ initialize_curl(PGoauthBearerRequestV2 *req)
 	 * situation), then double-check to make sure the runtime setting agrees,
 	 * to try to catch silent downgrades.
 	 */
-	info = curl_version_info(CURLVERSION_NOW);
 	if (!(info->features & CURL_VERSION_THREADSAFE))
 	{
 		/*
@@ -2769,6 +2768,22 @@ initialize_curl(PGoauthBearerRequestV2 *req)
 		goto done;
 	}
 #endif
+
+	if (debug_flags & OAUTHDEBUG_UNSAFE_TRACE)
+	{
+		/*
+		 * Record the version of libcurl and its SSL library when tracing,
+		 * since those are likely to be relevant to network debugging. Neither
+		 * of these strings should be NULL in a useful installation, but
+		 * that's no reason to crash if they are, so provide fallbacks.
+		 *
+		 * Other Curl dependency info might be helpful in the future, too;
+		 * just be sure to check info->age as needed when adding more.
+		 */
+		fprintf(stderr, "[libpq] initialized libcurl %s (%s)\n",
+				info->version ? info->version : "version unknown",
+				info->ssl_version ? info->ssl_version : "no SSL");
+	}
 
 	init_successful = PG_BOOL_YES;
 
@@ -3064,8 +3079,12 @@ pg_start_oauthbearer(PGconn *conn, PGoauthBearerRequestV2 *request)
 {
 	struct async_ctx *actx;
 	PQconninfoOption *conninfo = NULL;
+	uint32		debug_flags;
 
-	if (!initialize_curl(request))
+	/* Parse debug flags from the environment. */
+	debug_flags = oauth_parse_debug_flags();
+
+	if (!initialize_curl(request, debug_flags))
 		return -1;
 
 	/*
@@ -3093,9 +3112,7 @@ pg_start_oauthbearer(PGconn *conn, PGoauthBearerRequestV2 *request)
 	 * Now finish filling in the actx.
 	 */
 
-	/* Parse debug flags from the environment. */
-	actx->debug_flags = oauth_parse_debug_flags();
-
+	actx->debug_flags = debug_flags;
 	initPQExpBuffer(&actx->work_data);
 	initPQExpBuffer(&actx->errbuf);
 
