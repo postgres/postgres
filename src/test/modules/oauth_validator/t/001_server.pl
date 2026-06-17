@@ -436,17 +436,27 @@ like(
 	qr@Visit https://example\.com/ and enter the code: postgresuser@,
 	"call count: stderr matches");
 
-my $count_pattern = qr/\[libpq\] total number of polls: (\d+)/;
-if (like($stderr, $count_pattern, "call count: count is printed"))
+SKIP:
 {
-	# For reference, a typical flow with two retries might take between 5-15
-	# calls to the client implementation. And while this will probably continue
-	# to change across OSes and Curl updates, we're likely in trouble if we see
-	# hundreds or thousands of calls.
-	$stderr =~ $count_pattern;
-	unless (cmp_ok($1, '<', 100, "call count is reasonably small"))
+	# Curl 8.20.0 regressed this test case:
+	#
+	#     https://github.com/curl/curl/issues/21547
+	#
+	skip 'call-count test is known to fail with libcurl 8.20.0', 2
+	  if $stderr =~ m/\Qinitialized libcurl 8.20.0\E/;
+
+	my $count_pattern = qr/\[libpq\] total number of polls: (\d+)/;
+	if (like($stderr, $count_pattern, "call count: count is printed"))
 	{
-		diag "full stderr:\n$stderr";
+		# For reference, a typical flow with two retries might take between 5-15
+		# calls to the client implementation. And while this will probably
+		# continue to change across OSes and Curl updates, we're likely in
+		# trouble if we see hundreds or thousands of calls.
+		$stderr =~ $count_pattern;
+		unless (cmp_ok($1, '<', 100, "call count is reasonably small"))
+		{
+			diag "full stderr:\n$stderr";
+		}
 	}
 }
 
