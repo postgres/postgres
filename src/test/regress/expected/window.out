@@ -5764,11 +5764,11 @@ SELECT sum(orbit) OVER () FROM planets; -- succeeds
 (10 rows)
 
 SELECT sum(orbit) RESPECT NULLS OVER () FROM planets; -- fails
-ERROR:  Only window functions accept RESPECT/IGNORE NULLS
+ERROR:  only window functions accept RESPECT/IGNORE NULLS
 LINE 1: SELECT sum(orbit) RESPECT NULLS OVER () FROM planets;
                ^
 SELECT sum(orbit) IGNORE NULLS OVER () FROM planets; -- fails
-ERROR:  Only window functions accept RESPECT/IGNORE NULLS
+ERROR:  only window functions accept RESPECT/IGNORE NULLS
 LINE 1: SELECT sum(orbit) IGNORE NULLS OVER () FROM planets;
                ^
 SELECT row_number() OVER () FROM planets; -- succeeds

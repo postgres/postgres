@@ -359,7 +359,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (fdresult != FUNCDETAIL_WINDOWFUNC && ignore_nulls != NO_NULLTREATMENT)
 		ereport(ERROR,
 				errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("Only window functions accept RESPECT/IGNORE NULLS"),
+				errmsg("only window functions accept RESPECT/IGNORE NULLS"),
 				parser_errposition(pstate, location));
 
 	/*
