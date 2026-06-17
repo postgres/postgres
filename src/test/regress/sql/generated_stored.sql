@@ -368,6 +368,11 @@ INSERT INTO gtest21b (a) VALUES (NULL);  -- error
 ALTER TABLE gtest21b ALTER COLUMN b DROP NOT NULL;
 INSERT INTO gtest21b (a) VALUES (0);  -- ok now
 
+-- virtual generated columns are not physically stored, even when not null
+--CREATE TABLE gtest21c (a int NOT NULL, b int GENERATED ALWAYS AS (a * 2) VIRTUAL NOT NULL, c int NOT NULL);
+--INSERT INTO gtest21c (a, c) VALUES (10, 42);
+--SELECT a, b, c FROM gtest21c;
+--DROP TABLE gtest21c;
 -- not-null constraint with partitioned table
 CREATE TABLE gtestnn_parent (
     f1 int,
