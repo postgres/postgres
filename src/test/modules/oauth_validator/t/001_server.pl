@@ -518,7 +518,10 @@ if (like($stderr, $count_pattern, "call count: count is printed"))
 	# to change across OSes and Curl updates, we're likely in trouble if we see
 	# hundreds or thousands of calls.
 	$stderr =~ $count_pattern;
-	cmp_ok($1, '<', 100, "call count is reasonably small");
+	unless (cmp_ok($1, '<', 100, "call count is reasonably small"))
+	{
+		diag "full stderr:\n$stderr";
+	}
 }
 
 # Stress test: make sure our builtin flow operates correctly even if the client
