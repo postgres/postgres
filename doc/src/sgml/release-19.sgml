@@ -109,7 +109,14 @@ Force <link linkend="guc-standard-conforming-strings"><varname>standard_conformi
 </para>
 
 <para>
-Server variable <varname>escape_string_warning</varname> has been removed as unnecessary.  Client applications still support <literal>escape_string_warning = off</literal> for compatibility with old servers.
+Dumps created using pre-<productname>PostgreSQL</productname> 19 versions of <link linkend="app-pgdump"><application>pg_dump</application></link>
+or <link linkend="app-pg-dumpall"><application>pg_dumpall</application></link>, and using <literal>standard_conforming_strings = off</literal>,
+will not properly load into <productname>PostgreSQL</productname> 19 and later servers.  Users should create dumps using <productname>PostgreSQL</productname> 19
+or later versions of these applications, or use <literal>standard_conforming_strings = on</literal>.
+</para>
+
+<para>
+Client applications still support <literal>escape_string_warning = off</literal> for compatibility with old servers.  The server variable <varname>escape_string_warning</varname> has been removed as unnecessary.
 </para>
 </listitem>
 
