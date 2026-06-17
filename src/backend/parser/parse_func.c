@@ -354,6 +354,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
+	 * NULL TREATEMENT is only allowed for window functions per spec.
+	 */
+	if (fdresult != FUNCDETAIL_WINDOWFUNC && ignore_nulls != NO_NULLTREATMENT)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("Only window functions accept RESPECT/IGNORE NULLS"),
+				parser_errposition(pstate, location));
+
+	/*
 	 * So far so good, so do some fdresult-type-specific processing.
 	 */
 	if (fdresult == FUNCDETAIL_NORMAL || fdresult == FUNCDETAIL_PROCEDURE)
@@ -518,13 +527,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("%s is not an ordered-set aggregate, so it cannot have WITHIN GROUP",
 								NameListToString(funcname)),
-						 parser_errposition(pstate, location)));
-
-			/* It also can't treat nulls as a window function */
-			if (ignore_nulls != NO_NULLTREATMENT)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("aggregate functions do not accept RESPECT/IGNORE NULLS"),
 						 parser_errposition(pstate, location)));
 		}
 	}
