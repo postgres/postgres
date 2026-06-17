@@ -31,6 +31,7 @@
 #include "executor/executor.h"
 #include "executor/functions.h"
 #include "executor/spi.h"
+#include "foreign/foreign.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -736,6 +737,8 @@ PG_FUNCTION_INFO_V1(test_fdw_connection);
 Datum
 test_fdw_connection(PG_FUNCTION_ARGS)
 {
+	/* Ensure the test fails if no valid user mapping exists. */
+	GetUserMapping(PG_GETARG_OID(0), PG_GETARG_OID(1));
 	PG_RETURN_TEXT_P(cstring_to_text("dbname=regress_doesnotexist user=doesnotexist password=secret"));
 }
 

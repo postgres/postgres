@@ -132,18 +132,45 @@ RESET SESSION AUTHORIZATION;
 ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 
-CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = 'dummy', connect = false);
+CREATE SUBSCRIPTION regress_testsub6 SERVER test_server
+  PUBLICATION testpub WITH (slot_name = 'dummy', connect = false);
 
-DROP USER MAPPING FOR regress_subscription_user3 SERVER test_server;
 RESET SESSION AUTHORIZATION;
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 
--- fail, must connect but lacks USAGE on server, as well as user mapping
+-- ok, lacks USAGE on test_server, but replacing connection anyway
+BEGIN;
+ALTER SUBSCRIPTION regress_testsub6 CONNECTION 'dbname=regress_doesnotexist password=secret';
+ABORT;
+
+-- fails, cannot drop slot
 DROP SUBSCRIPTION regress_testsub6;
 
+RESET SESSION AUTHORIZATION;
+GRANT USAGE ON FOREIGN SERVER test_server TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
 ALTER SUBSCRIPTION regress_testsub6 SET (slot_name = NONE);
-DROP SUBSCRIPTION regress_testsub6;
+DROP SUBSCRIPTION regress_testsub6; --ok
+
+CREATE SUBSCRIPTION regress_testsub6 SERVER test_server
+  PUBLICATION testpub WITH (slot_name = 'dummy', connect = false);
+
+DROP USER MAPPING FOR regress_subscription_user3 SERVER test_server;
+
+-- ok, test_server lacks user mapping, but replacing connection anyway
+BEGIN;
+ALTER SUBSCRIPTION regress_testsub6 CONNECTION 'dbname=regress_doesnotexist password=secret';
+ABORT;
+
+CREATE USER MAPPING FOR regress_subscription_user3 SERVER test_server OPTIONS(user 'foo', password 'secret');
+
+ALTER SUBSCRIPTION regress_testsub6 DISABLE;
+ALTER SUBSCRIPTION regress_testsub6 SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_testsub6; --ok
+
+DROP USER MAPPING FOR regress_subscription_user3 SERVER test_server;
 
 SET SESSION AUTHORIZATION regress_subscription_user;
 REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
