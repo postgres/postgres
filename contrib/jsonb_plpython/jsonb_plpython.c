@@ -1,5 +1,6 @@
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "plpy_elog.h"
 #include "plpy_typeio.h"
 #include "plpython.h"
@@ -139,6 +140,9 @@ PLyObject_FromJsonbContainer(JsonbContainer *jsonb)
 	JsonbValue	v;
 	JsonbIterator *it;
 	PyObject   *result;
+
+	/* this can recurse via PLyObject_FromJsonbValue() */
+	check_stack_depth();
 
 	it = JsonbIteratorInit(jsonb);
 	r = JsonbIteratorNext(&it, &v, true);
@@ -409,6 +413,9 @@ static JsonbValue *
 PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_elem)
 {
 	JsonbValue *out;
+
+	/* this can recurse via PLyMapping_ToJsonbValue() */
+	check_stack_depth();
 
 	if (!PyUnicode_Check(obj))
 	{
