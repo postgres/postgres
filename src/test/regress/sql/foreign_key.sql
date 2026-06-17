@@ -2673,6 +2673,20 @@ INSERT INTO fp_fk_cross SELECT generate_series(1, 200);
 INSERT INTO fp_fk_cross VALUES (999);
 DROP TABLE fp_fk_cross, fp_pk_cross;
 
+-- Domain-typed FK column whose base type differs from the PK type: the
+-- fast path must look through the domain to its base type when deciding
+-- whether the cross-type comparison needs a cast.  Otherwise valid rows
+-- were wrongly rejected with "no conversion function from ... to ...".
+CREATE DOMAIN fp_int8dom AS int8;
+CREATE TABLE fp_pk_dom (a int4 PRIMARY KEY);
+INSERT INTO fp_pk_dom SELECT generate_series(1, 200);
+CREATE TABLE fp_fk_dom (a fp_int8dom REFERENCES fp_pk_dom);
+INSERT INTO fp_fk_dom SELECT generate_series(1, 200);
+INSERT INTO fp_fk_dom VALUES (999);
+INSERT INTO fp_fk_dom VALUES (NULL);
+DROP TABLE fp_fk_dom, fp_pk_dom;
+DROP DOMAIN fp_int8dom;
+
 -- Duplicate FK values: when using the batched SAOP path, every
 -- row must be recognized as satisfied, not just the first match
 CREATE TABLE fp_pk_dup (a int PRIMARY KEY);

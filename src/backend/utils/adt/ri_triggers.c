@@ -4113,10 +4113,11 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 		/*
 		 * pf_eq_oprs (used by the fast path) can be cross-type when the FK
 		 * and PK columns differ in type, e.g. int48eq for int4 PK / int8 FK.
-		 * If the FK column's type already matches what the operator expects
-		 * as its right-hand input, no cast is needed.
+		 * If the FK column's type, or the base type of a domain over it,
+		 * already matches what the operator expects as its right-hand input,
+		 * no cast is needed.
 		 */
-		if (typeid == righttype)
+		if (getBaseType(typeid) == righttype)
 			castfunc = InvalidOid;	/* simplest case */
 		else
 		{
