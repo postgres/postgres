@@ -2666,9 +2666,7 @@ initialize_curl(PGconn *conn)
 	 * PG_BOOL_YES/NO in cases where that's not the final answer.
 	 */
 	static volatile PGTernaryBool init_successful = PG_BOOL_UNKNOWN;
-#if HAVE_THREADSAFE_CURL_GLOBAL_INIT
 	curl_version_info_data *info;
-#endif
 
 #if !HAVE_THREADSAFE_CURL_GLOBAL_INIT
 
@@ -2716,6 +2714,8 @@ initialize_curl(PGconn *conn)
 		goto done;
 	}
 
+	info = curl_version_info(CURLVERSION_NOW);
+
 #if HAVE_THREADSAFE_CURL_GLOBAL_INIT
 
 	/*
@@ -2725,7 +2725,6 @@ initialize_curl(PGconn *conn)
 	 * situation), then double-check to make sure the runtime setting agrees,
 	 * to try to catch silent downgrades.
 	 */
-	info = curl_version_info(CURLVERSION_NOW);
 	if (!(info->features & CURL_VERSION_THREADSAFE))
 	{
 		/*
@@ -2741,6 +2740,22 @@ initialize_curl(PGconn *conn)
 		goto done;
 	}
 #endif
+
+	if (oauth_unsafe_debugging_enabled())
+	{
+		/*
+		 * Record the version of libcurl and its SSL library when tracing,
+		 * since those are likely to be relevant to network debugging. Neither
+		 * of these strings should be NULL in a useful installation, but
+		 * that's no reason to crash if they are, so provide fallbacks.
+		 *
+		 * Other Curl dependency info might be helpful in the future, too;
+		 * just be sure to check info->age as needed when adding more.
+		 */
+		fprintf(stderr, "[libpq] initialized libcurl %s (%s)\n",
+				info->version ? info->version : "version unknown",
+				info->ssl_version ? info->ssl_version : "no SSL");
+	}
 
 	init_successful = PG_BOOL_YES;
 
