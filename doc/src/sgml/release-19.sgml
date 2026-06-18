@@ -116,7 +116,7 @@ or later versions of these applications, or use <literal>standard_conforming_str
 </para>
 
 <para>
-Client applications still support <literal>escape_string_warning = off</literal> for compatibility with old servers.  The server variable <varname>escape_string_warning</varname> has been removed as unnecessary.
+Client applications still support operations with servers having <literal>standard_conforming_strings = off</literal>, for compatibility with old servers.  The server variable <varname>escape_string_warning</varname> has been removed as unnecessary.
 </para>
 </listitem>
 
