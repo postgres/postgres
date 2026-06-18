@@ -4367,7 +4367,7 @@ recheck_cast_function_args(List *args, Oid result_type,
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	int			nargs;
-	Oid			actual_arg_types[FUNC_MAX_ARGS];
+	Oid			actual_arg_types[FUNC_MAX_ARGS] = {0};
 	Oid			declared_arg_types[FUNC_MAX_ARGS];
 	Oid			rettype;
 	ListCell   *lc;
