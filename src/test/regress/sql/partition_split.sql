@@ -1184,6 +1184,25 @@ SELECT count(*) FROM t WHERE i = 0 AND tab_id IN (SELECT tab_id FROM t WHERE i =
 
 DROP TABLE t;
 
+-- Each new partition produced by SPLIT must get its own TOAST table so
+-- that out-of-line varlena attributes coming from the source partition
+-- can be stored.  SET STORAGE EXTERNAL forces externalization for any
+-- value over the TOAST threshold, so a string over that threshold
+-- suffices to exercise the toast-table dependency.
+CREATE TABLE t (a text) PARTITION BY RANGE(a);
+ALTER TABLE t ALTER COLUMN a SET STORAGE EXTERNAL;
+CREATE TABLE tp_all PARTITION OF t FOR VALUES FROM (MINVALUE) TO (MAXVALUE);
+INSERT INTO t SELECT repeat('1', 10000);
+ALTER TABLE t SPLIT PARTITION tp_all INTO (
+    PARTITION tp_lo FOR VALUES FROM (MINVALUE) TO ('2'),
+    PARTITION tp_hi FOR VALUES FROM ('2') TO (MAXVALUE)
+);
+SELECT relname,
+       reltoastrelid <> 0 AS has_toast,
+       pg_relation_size(reltoastrelid) > 0 AS toast_used
+  FROM pg_class WHERE relname IN ('tp_lo', 'tp_hi') ORDER BY relname;
+SELECT length(a) FROM t;
+DROP TABLE t;
 
 RESET search_path;
 

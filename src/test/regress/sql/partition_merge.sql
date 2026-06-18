@@ -781,6 +781,23 @@ SELECT count(*) FROM t WHERE i = 15 AND g IN (SELECT g + 10 FROM t WHERE i = 5);
 
 DROP TABLE t;
 
+-- A merged partition needs its own TOAST table; otherwise an out-of-line
+-- varlena value carried over from one of the merging partitions has
+-- nowhere to be stored.  SET STORAGE EXTERNAL forces externalization
+-- for any value over the TOAST threshold, so a string over that threshold
+-- suffices to exercise the toast-table dependency.
+CREATE TABLE t (a text) PARTITION BY RANGE(a);
+ALTER TABLE t ALTER COLUMN a SET STORAGE EXTERNAL;
+CREATE TABLE tp_def PARTITION OF t DEFAULT;
+CREATE TABLE tp_2_3 PARTITION OF t FOR VALUES FROM ('2') TO ('3');
+INSERT INTO t SELECT repeat('1', 10000);
+ALTER TABLE t MERGE PARTITIONS (tp_def, tp_2_3) INTO tp_merged;
+SELECT reltoastrelid <> 0 AS has_toast,
+       pg_relation_size(reltoastrelid) > 0 AS toast_used
+  FROM pg_class WHERE relname = 'tp_merged';
+SELECT length(a) FROM t;
+DROP TABLE t;
+
 
 RESET search_path;
 

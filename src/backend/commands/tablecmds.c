@@ -22816,6 +22816,15 @@ createPartitionTable(List **wqueue, RangeVar *newPartName,
 	CommandCounterIncrement();
 
 	/*
+	 * Create a TOAST table if the table needs one.  MERGE/SPLIT PARTITION
+	 * moves rows from existing partition(s) into new partition(s), which may
+	 * carry out-of-line varlena values that the new relation must be able to
+	 * store.  Also, the new partition must be able to receive out-of-line
+	 * varlena values after the DDL operation is complete.
+	 */
+	NewRelationCreateToastTable(newRelId, (Datum) 0);
+
+	/*
 	 * Open the new partition with no lock, because we already have an
 	 * AccessExclusiveLock placed there after creation.
 	 */
