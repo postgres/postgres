@@ -2130,14 +2130,15 @@ getJsonPathVariable(JsonPathExecContext *cxt, JsonPathItem *variable,
 	JsonbValue	tmp;
 	JsonbValue *v;
 
-	if (!vars)
-	{
-		value->type = jbvNull;
-		return;
-	}
-
 	Assert(variable->type == jpiVariable);
 	varName = jspGetString(variable, &varNameLength);
+
+	if (!vars)
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("could not find jsonpath variable \"%s\"",
+					pnstrdup(varName, varNameLength))));
+
 	tmp.type = jbvString;
 	tmp.val.string.val = varName;
 	tmp.val.string.len = varNameLength;

@@ -487,6 +487,13 @@ select * from jsonb_path_query('{"a": 10}', '$');
 
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)');
 ERROR:  could not find jsonpath variable "value"
+-- the @? and @@ operators supply no variables, so a variable reference
+-- must be reported as undefined rather than silently treated as NULL
+-- (the latter gave wrong results and could drive unbounded memory use)
+select jsonb '42' @? '$"no_such_var"';
+ERROR:  could not find jsonpath variable "no_such_var"
+select jsonb '42' @@ '$"no_such_var" == 1';
+ERROR:  could not find jsonpath variable "no_such_var"
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '1');
 ERROR:  "vars" argument is not an object
 DETAIL:  Jsonpath parameters should be encoded as key-value pairs of "vars" object.
