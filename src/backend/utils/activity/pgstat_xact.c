@@ -84,7 +84,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 			 * Transaction that dropped an object committed. Drop the stats
 			 * too.
 			 */
-			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid, true))
 				not_freed_count++;
 		}
 		else if (!isCommit && pending->is_create)
@@ -93,7 +93,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 			 * Transaction that created an object aborted. Drop the stats
 			 * associated with the object.
 			 */
-			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid, true))
 				not_freed_count++;
 		}
 
@@ -158,7 +158,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 			 * Subtransaction creating a new stats object aborted. Drop the
 			 * stats object.
 			 */
-			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid, true))
 				not_freed_count++;
 			pfree(pending);
 		}
@@ -320,7 +320,7 @@ pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items,
 	{
 		xl_xact_stats_item *it = &items[i];
 
-		if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+		if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid, true))
 			not_freed_count++;
 	}
 
