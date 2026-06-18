@@ -154,7 +154,7 @@ void
 pgstat_drop_replslot(ReplicationSlot *slot)
 {
 	if (!pgstat_drop_entry(PGSTAT_KIND_REPLSLOT, InvalidOid,
-						   ReplicationSlotIndex(slot)))
+						   ReplicationSlotIndex(slot), false))
 		pgstat_request_entry_refs_gc();
 }
 

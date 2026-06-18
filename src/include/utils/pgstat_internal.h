@@ -603,7 +603,8 @@ extern PgStat_EntryRef *pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid ob
 extern bool pgstat_lock_entry(PgStat_EntryRef *entry_ref, bool nowait);
 extern bool pgstat_lock_entry_shared(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_unlock_entry(PgStat_EntryRef *entry_ref);
-extern bool pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid);
+extern bool pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid,
+							  bool missing_ok);
 extern void pgstat_drop_all_entries(void);
 extern PgStat_EntryRef *pgstat_get_entry_ref_locked(PgStat_Kind kind, Oid dboid, Oid objoid,
 													bool nowait);
