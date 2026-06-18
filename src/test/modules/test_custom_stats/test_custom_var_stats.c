@@ -600,7 +600,7 @@ test_custom_stats_var_drop(PG_FUNCTION_ARGS)
 
 	/* Drop entry and request GC if the entry could not be freed */
 	if (!pgstat_drop_entry(PGSTAT_KIND_TEST_CUSTOM_VAR_STATS, InvalidOid,
-						   PGSTAT_CUSTOM_VAR_STATS_IDX(stat_name)))
+						   PGSTAT_CUSTOM_VAR_STATS_IDX(stat_name), false))
 		pgstat_request_entry_refs_gc();
 
 	PG_RETURN_VOID();
