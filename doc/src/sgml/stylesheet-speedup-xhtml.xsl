@@ -183,32 +183,32 @@
   </xsl:if>
 
   <xsl:variable name="prev"
-    select="(preceding::book[1]
-             |preceding::preface[1]
-             |preceding::chapter[1]
-             |preceding::appendix[1]
-             |preceding::part[1]
-             |preceding::reference[1]
-             |preceding::refentry[1]
-             |preceding::colophon[1]
-             |preceding::article[1]
-             |preceding::topic[1]
-             |preceding::bibliography[parent::article or parent::book or parent::part][1]
-             |preceding::glossary[parent::article or parent::book or parent::part][1]
-             |preceding::index[$generate.index != 0]
-                               [parent::article or parent::book or parent::part][1]
-             |preceding::setindex[$generate.index != 0][1]
-             |ancestor::set
-             |ancestor::book[1]
-             |ancestor::preface[1]
-             |ancestor::chapter[1]
-             |ancestor::appendix[1]
-             |ancestor::part[1]
-             |ancestor::reference[1]
-             |ancestor::article[1]
-             |ancestor::topic[1]
-             |preceding::sect1[1]
-             |ancestor::sect1[1])[position()=last()]"/>
+    select="(preceding::*[self::book
+                          or self::preface
+                          or self::chapter
+                          or self::appendix
+                          or self::part
+                          or self::reference
+                          or self::refentry
+                          or self::colophon
+                          or self::article
+                          or self::topic
+                          or self::sect1
+                          or self::bibliography[parent::article or parent::book or parent::part]
+                          or self ::glossary[parent::article or parent::book or parent::part]
+                          or self::index[$generate.index != 0]
+                                        [parent::article or parent::book or parent::part]
+                          or self::setindex[$generate.index != 0]][1]
+             |ancestor::*[self::set
+                          or self::book
+                          or self::preface
+                          or self::chapter
+                          or self::appendix
+                          or self::part
+                          or self::reference
+                          or self::article
+                          or self::topic
+                          or self::sect1][1])[last()]"/>
 
   <xsl:variable name="next"
     select="(following::book[1]
