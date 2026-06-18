@@ -1936,18 +1936,6 @@ This was previously prohibited.
 </para>
 </listitem>
 
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2025-08-22 [16a0039dc] Reduce lock level for ALTER DOMAIN ... VALIDATE CONSTRAI
--->
-
-<listitem>
-<para>
-Reduce lock level of <link linkend="sql-alterdomain"><command>ALTER DOMAIN ... VALIDATE CONSTRAINT</command></link> to match <link linkend="sql-altertable"><command>ALTER TABLE ... VALIDATE CONSTRAINT</command></link> (Jian He)
-<ulink url="&commit_baseurl;16a0039dc">&sect;</ulink>
-</para>
-</listitem>
-
      </itemizedlist>
     </sect4>
 
