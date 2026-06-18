@@ -3048,7 +3048,10 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
  * One exception to the previous paragraph is for tables nearing wraparound,
  * i.e., those that have surpassed the effective failsafe ages.  In that case,
  * the relfrozenxid/relminmxid-based score is scaled aggressively so that the
- * table has a decent chance of sorting to the front of the list.
+ * table has a decent chance of sorting to the front of the list.  Furthermore,
+ * the relminmxid-based score is scaled aggressively as
+ * effective_multixact_freeze_max_age is lowered due to high multixact member
+ * space usage.
  *
  * To adjust how strongly each component contributes to the score, the
  * following parameters can be adjusted from their default of 1.0 to anywhere
@@ -3194,13 +3197,15 @@ relation_needs_vacanalyze(Oid relid,
 
 	/*
 	 * To calculate the (M)XID age portion of the score, divide the age by its
-	 * respective *_freeze_max_age parameter.
+	 * respective *_freeze_max_age parameter.  The multixact_freeze_max_age
+	 * variable might be 0 here (i.e., a division-by-zero hazard), so in that
+	 * case we use the mxid_age as the MXID score.
 	 */
 	xid_age = TransactionIdIsNormal(relfrozenxid) ? recentXid - relfrozenxid : 0;
 	mxid_age = MultiXactIdIsValid(relminmxid) ? recentMulti - relminmxid : 0;
 
 	scores->xid = (double) xid_age / freeze_max_age;
-	scores->mxid = (double) mxid_age / multixact_freeze_max_age;
+	scores->mxid = (double) mxid_age / Max(1, multixact_freeze_max_age);
 
 	/*
 	 * To ensure tables are given increased priority once they begin

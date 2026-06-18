@@ -1112,8 +1112,10 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
        field as compared to
        <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>.  Furthermore,
        this component increases greatly once the age surpasses
-       <xref linkend="guc-vacuum-multixact-failsafe-age"/>.  The final value
-       for this component can be adjusted via
+       <xref linkend="guc-vacuum-multixact-failsafe-age"/> or when the number
+       of multixact member entries created exceeds approximately 2 billion
+       entries (see <xref linkend="vacuum-for-multixact-wraparound"/>).  The
+       final value for this component can be adjusted via
        <xref linkend="guc-autovacuum-multixact-freeze-score-weight"/>.  Note
        that increasing this parameter's value also lowers the age at which this
        component begins scaling aggressively, i.e., the scaling age is divided
