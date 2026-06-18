@@ -150,7 +150,7 @@ pgstat_drop_inj(const char *name)
 		return;
 
 	if (!pgstat_drop_entry(PGSTAT_KIND_INJECTION, InvalidOid,
-						   PGSTAT_INJ_IDX(name)))
+						   PGSTAT_INJ_IDX(name), false))
 		pgstat_request_entry_refs_gc();
 }
 
