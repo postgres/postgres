@@ -306,15 +306,13 @@ typedef struct DataChecksumsStateStruct
 	pid_t		worker_pid;
 
 	/*
-	 * These fields indicate the target state that the launcher is currently
-	 * working towards. They can be different from the corresponding launch_*
+	 * These fields indicate the target state that the worker is currently
+	 * running with.  They can be different from the corresponding launch_*
 	 * fields, if a new pg_enable/disable_data_checksums() call was made while
-	 * the launcher/worker was already running.
-	 *
-	 * The below members are set when the launcher starts, and are only
-	 * accessed read-only by the single worker. Thus, we can access these
-	 * without a lock. If multiple workers, or dynamic cost parameters, are
-	 * supported at some point then this would need to be revisited.
+	 * the launcher/worker was already running.  The worker will periodically
+	 * check if new cost settings have been requested, and if so will copy
+	 * them from the launch_* fields and reset cost throttling to match the
+	 * new values.
 	 */
 	DataChecksumsWorkerOperation operation;
 	int			cost_delay;
@@ -1509,6 +1507,7 @@ DataChecksumsWorkerMain(Datum arg)
 	BufferAccessStrategy strategy;
 	bool		aborted = false;
 	int64		rels_done;
+	bool		process_shared;
 #ifdef USE_INJECTION_POINTS
 	bool		retried = false;
 #endif
@@ -1532,10 +1531,13 @@ DataChecksumsWorkerMain(Datum arg)
 
 	/*
 	 * Get a list of all temp tables present as we start in this database. We
-	 * need to wait until they are all gone until we are done, since we cannot
-	 * access these relations and modify them.
+	 * need to wait until they are all gone before we exit.  For the list of
+	 * relations to enable checksums in, check if shared catalogs have been
+	 * processed already.
 	 */
 	InitialTempTableList = BuildRelationList(true, false);
+	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
+	process_shared = DataChecksumState->process_shared_catalogs;
 
 	/*
 	 * Enable vacuum cost delay, if any.  While this process isn't doing any
@@ -1549,6 +1551,7 @@ DataChecksumsWorkerMain(Datum arg)
 	 */
 	VacuumCostDelay = DataChecksumState->cost_delay;
 	VacuumCostLimit = DataChecksumState->cost_limit;
+	LWLockRelease(DataChecksumsWorkerLock);
 	VacuumUpdateCosts();
 	VacuumCostBalance = 0;
 
@@ -1557,8 +1560,7 @@ DataChecksumsWorkerMain(Datum arg)
 	 */
 	strategy = GetAccessStrategy(BAS_VACUUM);
 
-	RelationList = BuildRelationList(false,
-									 DataChecksumState->process_shared_catalogs);
+	RelationList = BuildRelationList(false, process_shared);
 
 	/* Update the total number of relations to be processed in this DB. */
 	{
