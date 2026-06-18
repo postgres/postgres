@@ -201,6 +201,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       publication.
      </para>
      <para>
+      Once a table is excluded, the exclusion applies to that table
+      regardless of its name or schema. Renaming the table or moving it to
+      another schema using <command>ALTER TABLE ... SET SCHEMA</command> does
+      not remove the exclusion.
+     </para>
+     <para>
       For inherited tables, if <literal>ONLY</literal> is specified before the
       table name, only that table is excluded from the publication. If
       <literal>ONLY</literal> is not specified, the table and all its descendant
