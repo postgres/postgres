@@ -1,0 +1,23 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1_lock s2_insert s3_add s3_validate s1_unlock s3_validated s3_check
+step s1_lock: DO $$ BEGIN PERFORM pg_advisory_lock(8888); END $$;
+step s2_insert: WITH wait AS MATERIALIZED (SELECT pg_advisory_lock(8888)) INSERT INTO alter_domain_validate_t SELECT (-1)::alter_domain_validate_d FROM wait; <waiting ...>
+step s3_add: ALTER DOMAIN alter_domain_validate_d ADD CONSTRAINT alter_domain_validate_d_pos CHECK (VALUE > 0) NOT VALID;
+step s3_validate: ALTER DOMAIN alter_domain_validate_d VALIDATE CONSTRAINT alter_domain_validate_d_pos; <waiting ...>
+step s1_unlock: DO $$ BEGIN PERFORM pg_advisory_unlock(8888); END $$;
+step s2_insert: <... completed>
+step s3_validate: <... completed>
+ERROR:  column "a" of table "alter_domain_validate_t" contains values that violate the new constraint
+step s3_validated: SELECT convalidated FROM pg_constraint WHERE conname = 'alter_domain_validate_d_pos';
+convalidated
+------------
+f           
+(1 row)
+
+step s3_check: SELECT count(*) FROM alter_domain_validate_t;
+count
+-----
+    1
+(1 row)
+
