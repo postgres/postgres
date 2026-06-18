@@ -2,6 +2,7 @@
 
 #include "fmgr.h"
 #include "hstore/hstore.h"
+#include "miscadmin.h"
 #include "plperl.h"
 
 PG_MODULE_MAGIC;
@@ -107,7 +108,15 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 
 	/* Dereference references recursively. */
 	while (SvROK(in))
+	{
+		/*
+		 * It's possible for circular references to make this an infinite
+		 * loop.  Checking for such a situation seems like much more trouble
+		 * than it's worth, but let's provide a way to break out of the loop.
+		 */
+		CHECK_FOR_INTERRUPTS();
 		in = SvRV(in);
+	}
 
 	/* Now we must have a hash. */
 	if (SvTYPE(in) != SVt_PVHV)
