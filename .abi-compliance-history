@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+1e9e62193c3fa66e39b50163f225388fcf6eb7d5
+#
+# Fix PANIC with track_functions due to concurrent drop of pgstats entries
+# 2026-06-18 11:49:41 +0900
+#
+# This commit has added a "missing_ok" argument to pgstat_drop_entry().  All
+# the callers of this routine are in core for v15-v17.  One custom stats kinds
+# available in the public since v18 is impacted (maintainer informed).
+
 c5824536e7ca3c5ef5a9db59bd36c4e6beb23f51
 #
 # Fix trigger transition table capture for MERGE in CTE queries.
