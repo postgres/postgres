@@ -2158,9 +2158,17 @@ GetSnapshotData(Snapshot snapshot)
 		snapshot->subxip = (TransactionId *)
 			malloc(GetMaxSnapshotSubxidCount() * sizeof(TransactionId));
 		if (snapshot->subxip == NULL)
+		{
+			/*
+			 * Clean up the Snapshot state before throwing the error, so that
+			 * a retry does not see a partially-initialized snapshot.
+			 */
+			free(snapshot->xip);
+			snapshot->xip = NULL;
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
+		}
 	}
 
 	/*
