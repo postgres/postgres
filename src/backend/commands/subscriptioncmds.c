@@ -2261,6 +2261,43 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 }
 
 /*
+ * Construct conninfo from a subscription's server. Like libpqrcv_connect(),
+ * if an error occurs, set *err to the error message and return NULL.
+ *
+ * However, failures in ForeignServerConnectionString() may ereport(ERROR),
+ * and (also like libpqrcv_connect) it's not worth adding the machinery to
+ * pass all of those back to the caller just to cover this one case.
+ */
+static char *
+construct_subserver_conninfo(Oid subserver, Oid subowner, char **err)
+{
+	AclResult	aclresult;
+	ForeignServer *server;
+
+	*err = NULL;
+
+	server = GetForeignServer(subserver);
+
+	aclresult = object_aclcheck(ForeignServerRelationId, subserver,
+								subowner, ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+	{
+		/*
+		 * Unable to generate connection string because permissions on the
+		 * foreign server have been removed. Follow the same logic as an
+		 * unusable subconninfo (which will result in an ERROR later unless
+		 * slot_name = NONE).
+		 */
+		*err = psprintf(_("subscription owner \"%s\" does not have permission on foreign server \"%s\""),
+						GetUserNameFromId(subowner, false),
+						server->servername);
+		return NULL;
+	}
+
+	return ForeignServerConnectionString(subowner, server);
+}
+
+/*
  * Drop a subscription
  */
 void
@@ -2271,10 +2308,12 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	HeapTuple	tup;
 	Oid			subid;
 	Oid			subowner;
+	Oid			subserver;
+	char	   *subconninfo = NULL;
 	Datum		datum;
 	bool		isnull;
 	char	   *subname;
-	char	   *conninfo;
+	char	   *conninfo = NULL;
 	char	   *slotname;
 	List	   *subworkers;
 	ListCell   *lc;
@@ -2313,9 +2352,15 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		return;
 	}
 
+	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
+							Anum_pg_subscription_subconninfo, &isnull);
+	if (!isnull)
+		subconninfo = TextDatumGetCString(datum);
+
 	form = (Form_pg_subscription) GETSTRUCT(tup);
 	subid = form->oid;
 	subowner = form->subowner;
+	subserver = form->subserver;
 	must_use_password = !superuser_arg(subowner) && form->subpasswordrequired;
 
 	/* must be owner */
@@ -2336,39 +2381,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
 								   Anum_pg_subscription_subname);
 	subname = pstrdup(NameStr(*DatumGetName(datum)));
-
-	/* Get conninfo */
-	if (OidIsValid(form->subserver))
-	{
-		AclResult	aclresult;
-		ForeignServer *server;
-
-		server = GetForeignServer(form->subserver);
-		aclresult = object_aclcheck(ForeignServerRelationId, form->subserver,
-									form->subowner, ACL_USAGE);
-		if (aclresult != ACLCHECK_OK)
-		{
-			/*
-			 * Unable to generate connection string because permissions on the
-			 * foreign server have been removed. Follow the same logic as an
-			 * unusable subconninfo (which will result in an ERROR later
-			 * unless slot_name = NONE).
-			 */
-			err = psprintf(_("subscription owner \"%s\" does not have permission on foreign server \"%s\""),
-						   GetUserNameFromId(form->subowner, false),
-						   server->servername);
-			conninfo = NULL;
-		}
-		else
-			conninfo = ForeignServerConnectionString(form->subowner,
-													 server);
-	}
-	else
-	{
-		datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
-									   Anum_pg_subscription_subconninfo);
-		conninfo = TextDatumGetCString(datum);
-	}
 
 	/* Get slotname */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID, tup,
@@ -2505,6 +2517,11 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * slot.
 	 */
 	load_file("libpqwalreceiver", false);
+
+	if (OidIsValid(subserver))
+		conninfo = construct_subserver_conninfo(subserver, subowner, &err);
+	else
+		conninfo = subconninfo;
 
 	if (conninfo)
 		wrconn = walrcv_connect(conninfo, true, true, must_use_password,

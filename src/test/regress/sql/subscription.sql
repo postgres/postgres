@@ -164,13 +164,12 @@ BEGIN;
 ALTER SUBSCRIPTION regress_testsub6 CONNECTION 'dbname=regress_doesnotexist password=secret';
 ABORT;
 
-CREATE USER MAPPING FOR regress_subscription_user3 SERVER test_server OPTIONS(user 'foo', password 'secret');
+-- fails, cannot drop slot
+DROP SUBSCRIPTION regress_testsub6;
 
 ALTER SUBSCRIPTION regress_testsub6 DISABLE;
 ALTER SUBSCRIPTION regress_testsub6 SET (slot_name = NONE);
 DROP SUBSCRIPTION regress_testsub6; --ok
-
-DROP USER MAPPING FOR regress_subscription_user3 SERVER test_server;
 
 SET SESSION AUTHORIZATION regress_subscription_user;
 REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
