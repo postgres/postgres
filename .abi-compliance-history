@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+2e0c61aed6241bb66547bfab7467d43f889f78ba
+#
+# Fix PANIC with track_functions due to concurrent drop of pgstats entries
+# 2026-06-18 11:49:36 +0900
+#
+# This commit has added a "missing_ok" argument to pgstat_drop_entry().  All
+# the callers of this routine are in core for v15-v17.  One custom stats kinds
+# available in the public since v18 is impacted (maintainer informed).
+
 586f4266fb4945f6ea3564b9c1bab093eb74bee4
 #
 # Fix ABI break by moving PROCSIG_SLOTSYNC_MESSAGE in ProcSignalReason
