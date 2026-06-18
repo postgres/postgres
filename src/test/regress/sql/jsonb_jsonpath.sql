@@ -98,6 +98,11 @@ select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "string")]', silent =>
 
 select * from jsonb_path_query('{"a": 10}', '$');
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)');
+-- the @? and @@ operators supply no variables, so a variable reference
+-- must be reported as undefined rather than silently treated as NULL
+-- (the latter gave wrong results and could drive unbounded memory use)
+select jsonb '42' @? '$"no_such_var"';
+select jsonb '42' @@ '$"no_such_var" == 1';
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '1');
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '[{"value" : 13}]');
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '{"value" : 13}');
