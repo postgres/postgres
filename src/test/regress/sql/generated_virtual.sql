@@ -380,6 +380,21 @@ INSERT INTO gtest21c (a, c) VALUES (10, 42);
 SELECT a, b, c FROM gtest21c;
 DROP TABLE gtest21c;
 
+-- try adding a virtual generated column to an existing table with tuples,
+-- then try adding an atthasmissing column before adding a normal nullable
+-- column.
+CREATE TABLE gtest21d (a int NOT NULL);
+INSERT INTO gtest21d (a) VALUES(10);
+ALTER TABLE gtest21d ADD COLUMN b INT GENERATED ALWAYS AS (a * 10) VIRTUAL NOT NULL;
+SELECT * FROM gtest21d ORDER BY a;
+INSERT INTO gtest21d (a) VALUES(20);
+ALTER TABLE gtest21d ADD COLUMN c INT NOT NULL DEFAULT 1234;
+SELECT * FROM gtest21d ORDER BY a;
+ALTER TABLE gtest21d ADD COLUMN d INT;
+INSERT INTO gtest21d (a, c, d) VALUES(30, 12345, 100);
+SELECT * FROM gtest21d ORDER BY a;
+DROP TABLE gtest21d;
+
 -- not-null constraint with partitioned table
 CREATE TABLE gtestnn_parent (
     f1 int,
