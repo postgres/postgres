@@ -1019,14 +1019,14 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 	lockentry = hash_search(RecoveryLockHash, &key, HASH_ENTER, &found);
 	if (!found)
 	{
-		/* It's new, so link it into the XID's list ... */
-		lockentry->next = xidentry->head;
-		xidentry->head = lockentry;
-
-		/* ... and acquire the lock locally. */
+		/* First, acquire the lock ... */
 		SET_LOCKTAG_RELATION(locktag, dbOid, relOid);
 
 		(void) LockAcquire(&locktag, AccessExclusiveLock, true, false);
+
+		/* ... and then, as it is new, link it into the XID's list. */
+		lockentry->next = xidentry->head;
+		xidentry->head = lockentry;
 	}
 }
 
