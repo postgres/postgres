@@ -163,12 +163,13 @@ SELECT setval('myseq', 42, false);    <lineannotation>Next <function>nextval</fu
         <structfield>is_called</structfield> indicates whether the sequence has
         been used. <structfield>page_lsn</structfield> is the LSN corresponding
         to the most recent WAL record that modified this sequence relation.
+        This function returns a row of NULL values if the sequence does not
+        exist or if the current user lacks privileges on it.
        </para>
        <para>
         This function is primarily intended for internal use by pg_dump and by
         logical replication to synchronize sequences. It requires
-        <literal>USAGE</literal> or <literal>SELECT</literal> privilege on the
-        sequence.
+        <literal>SELECT</literal> privilege on the sequence.
        </para></entry>
       </row>
      </tbody>
