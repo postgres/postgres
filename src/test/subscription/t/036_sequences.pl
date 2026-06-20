@@ -233,9 +233,9 @@ $node_publisher->safe_psql(
 ));
 
 ##########
-# Ensure that insufficient privileges on the publisher for a sequence do not
-# disrupt the subscriber. The subscriber should log a warning and continue
-# retrying.
+# Ensure that insufficient privileges on the publisher for a sequence
+# are reported correctly as a permission issue, not as a missing sequence.
+# The subscriber should log a warning and continue retrying.
 ##########
 
 $node_publisher->safe_psql(
@@ -253,6 +253,22 @@ $log_offset = -s $node_subscriber->logfile;
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION regress_seq_sub CONNECTION '$publisher_limited_connstr'"
 );
+
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_seq_sub REFRESH SEQUENCES");
+
+$node_subscriber->wait_for_log(
+	qr/WARNING: ( [A-Z0-9]+:)? insufficient privileges on publisher sequence \("public.regress_s2"\)/,
+	$log_offset);
+
+##########
+# Ensure that a sequence that is actually removed on the publisher is still
+# reported as missing.
+##########
+
+$node_publisher->safe_psql('postgres', qq(DROP SEQUENCE regress_s2;));
+
+$log_offset = -s $node_subscriber->logfile;
 
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION regress_seq_sub REFRESH SEQUENCES");
