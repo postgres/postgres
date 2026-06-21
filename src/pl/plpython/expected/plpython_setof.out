@@ -228,3 +228,41 @@ SELECT * FROM get_user_records2();
  willem | doe   | w_doe    |      3
 (4 rows)
 
+-- Test partial execution of a set-returning function
+SELECT get_user_records2() LIMIT 2;
+ get_user_records2  
+--------------------
+ (jane,doe,j_doe,1)
+ (john,doe,johnd,2)
+(2 rows)
+
+SELECT * FROM get_user_records2() LIMIT 2;
+ fname | lname | username | userid 
+-------+-------+----------+--------
+ jane  | doe   | j_doe    |      1
+ john  | doe   | johnd    |      2
+(2 rows)
+
+-- A set-returning function that is invalidated mid-iteration must run to
+-- completion using its original definition (bug #19480).
+CREATE OR REPLACE FUNCTION self_invalidating_srf(x int) RETURNS SETOF int AS $$
+for i in range(3):
+    if i == 1:
+        plpy.execute("CREATE OR REPLACE FUNCTION self_invalidating_srf(x int) "
+                     "RETURNS SETOF int LANGUAGE plpython3u AS 'return [-1]'")
+    yield x + i
+$$ LANGUAGE plpython3u;
+SELECT self_invalidating_srf(10); -- expect 10,11,12 (original definition)
+ self_invalidating_srf 
+-----------------------
+                    10
+                    11
+                    12
+(3 rows)
+
+SELECT self_invalidating_srf(10); -- expect -1 (replacement now in effect)
+ self_invalidating_srf 
+-----------------------
+                    -1
+(1 row)
+

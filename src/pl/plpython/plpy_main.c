@@ -6,9 +6,7 @@
 
 #include "postgres.h"
 
-#include "access/htup_details.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
@@ -17,12 +15,10 @@
 #include "plpy_exec.h"
 #include "plpy_main.h"
 #include "plpy_plpymodule.h"
-#include "plpy_procedure.h"
 #include "plpy_subxactobject.h"
 #include "plpy_util.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 
 /*
@@ -103,8 +99,6 @@ _PG_init(void)
 
 	Py_DECREF(main_mod);
 
-	init_procedure_caches();
-
 	explicit_subtransactions = NIL;
 
 	PLy_execution_contexts = NULL;
@@ -113,10 +107,15 @@ _PG_init(void)
 Datum
 plpython3_validator(PG_FUNCTION_ARGS)
 {
+	LOCAL_FCINFO(fake_fcinfo, 0);
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
 	Form_pg_proc procStruct;
 	PLyTrigType is_trigger;
+	TriggerData trigdata;
+	EventTriggerData etrigdata;
+	FmgrInfo	flinfo;
+	PLyProcedureCache *pcache;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
@@ -134,8 +133,45 @@ plpython3_validator(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(tuple);
 
-	/* We can't validate triggers against any particular table ... */
-	(void) PLy_procedure_get(funcoid, InvalidOid, is_trigger);
+	/*
+	 * Set up a fake flinfo/fcinfo with just enough info to satisfy
+	 * PLy_procedure_get().  That function derives the call context (plain
+	 * function, DML trigger, or event trigger) from the fcinfo, so we have to
+	 * construct matching context here.
+	 */
+	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
+	MemSet(&flinfo, 0, sizeof(flinfo));
+	fake_fcinfo->flinfo = &flinfo;
+	flinfo.fn_oid = funcoid;
+	flinfo.fn_mcxt = CurrentMemoryContext;
+
+	if (is_trigger == PLPY_TRIGGER)
+	{
+		MemSet(&trigdata, 0, sizeof(trigdata));
+		trigdata.type = T_TriggerData;
+		/* We can't validate triggers against any particular table ... */
+		fake_fcinfo->context = (Node *) &trigdata;
+	}
+	else if (is_trigger == PLPY_EVENT_TRIGGER)
+	{
+		MemSet(&etrigdata, 0, sizeof(etrigdata));
+		etrigdata.type = T_EventTriggerData;
+		fake_fcinfo->context = (Node *) &etrigdata;
+	}
+
+	pcache = PLy_procedure_get(fake_fcinfo, true);
+
+	/*
+	 * Release the reference count that PLy_procedure_get acquired; the
+	 * PLyProcedure object remains valid for possible future use.  (We could
+	 * leave this to be done when the calling memory context is cleaned up,
+	 * but it seems neater to do it right away.  Note we mustn't release the
+	 * pcache object, since the memory-context reset callback has a reference
+	 * to it.)
+	 */
+	Assert(pcache->proc->cfunc.use_count > 0);
+	pcache->proc->cfunc.use_count--;
+	pcache->proc = NULL;
 
 	PG_RETURN_VOID();
 }
@@ -164,8 +200,7 @@ plpython3_call_handler(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		Oid			funcoid = fcinfo->flinfo->fn_oid;
-		PLyProcedure *proc;
+		PLyProcedureCache *pcache;
 
 		/*
 		 * Setup error traceback support for ereport().  Note that the PG_TRY
@@ -178,34 +213,35 @@ plpython3_call_handler(PG_FUNCTION_ARGS)
 		plerrcontext.previous = error_context_stack;
 		error_context_stack = &plerrcontext;
 
+		/*
+		 * Look up (and if necessary compile) the procedure.  This can throw
+		 * an error, so it must happen inside the PG_TRY so that the execution
+		 * context gets popped on the way out.
+		 */
+		pcache = PLy_procedure_get(fcinfo, false);
+		exec_ctx->curr_proc = pcache->proc;
+
 		if (CALLED_AS_TRIGGER(fcinfo))
 		{
-			Relation	tgrel = ((TriggerData *) fcinfo->context)->tg_relation;
 			HeapTuple	trv;
 
-			proc = PLy_procedure_get(funcoid, RelationGetRelid(tgrel), PLPY_TRIGGER);
-			exec_ctx->curr_proc = proc;
-			trv = PLy_exec_trigger(fcinfo, proc);
+			trv = PLy_exec_trigger(fcinfo, pcache->proc);
 			retval = PointerGetDatum(trv);
 		}
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
-			proc = PLy_procedure_get(funcoid, InvalidOid, PLPY_EVENT_TRIGGER);
-			exec_ctx->curr_proc = proc;
-			PLy_exec_event_trigger(fcinfo, proc);
+			PLy_exec_event_trigger(fcinfo, pcache->proc);
 			retval = (Datum) 0;
 		}
 		else
-		{
-			proc = PLy_procedure_get(funcoid, InvalidOid, PLPY_NOT_TRIGGER);
-			exec_ctx->curr_proc = proc;
-			retval = PLy_exec_function(fcinfo, proc);
-		}
+			retval = PLy_exec_function(fcinfo, pcache);
 	}
 	PG_CATCH();
 	{
+		/* Destroy the execution context */
 		PLy_pop_execution_context();
 		PyErr_Clear();
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -223,6 +259,7 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
 	FmgrInfo	flinfo;
 	PLyProcedure proc;
+	PLyProcedureCache pcache;
 	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
 
@@ -248,6 +285,11 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 	 */
 	proc.result.typoid = VOIDOID;
 
+	/* Set up a minimal PLyProcedureCache for the inline block */
+	MemSet(&pcache, 0, sizeof(PLyProcedureCache));
+	pcache.proc = &proc;
+	pcache.fcontext = CurrentMemoryContext;
+
 	/*
 	 * Push execution context onto stack.  It is important that this get
 	 * popped again, so avoid putting anything that could throw error between
@@ -269,7 +311,7 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 
 		PLy_procedure_compile(&proc, codeblock->source_text);
 		exec_ctx->curr_proc = &proc;
-		PLy_exec_function(fake_fcinfo, &proc);
+		PLy_exec_function(fake_fcinfo, &pcache);
 	}
 	PG_CATCH();
 	{
@@ -289,6 +331,11 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/*
+ * Determine whether a function is a (DML or event) trigger from its pg_proc
+ * result type.  This is used by the validator, which has no call context to
+ * inspect; the call handler instead relies on the fcinfo's call context.
+ */
 static PLyTrigType
 PLy_procedure_is_trigger(Form_pg_proc procStruct)
 {

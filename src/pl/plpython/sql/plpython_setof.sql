@@ -107,3 +107,20 @@ $$ LANGUAGE plpython3u;
 
 SELECT get_user_records2();
 SELECT * FROM get_user_records2();
+
+-- Test partial execution of a set-returning function
+SELECT get_user_records2() LIMIT 2;
+SELECT * FROM get_user_records2() LIMIT 2;
+
+-- A set-returning function that is invalidated mid-iteration must run to
+-- completion using its original definition (bug #19480).
+CREATE OR REPLACE FUNCTION self_invalidating_srf(x int) RETURNS SETOF int AS $$
+for i in range(3):
+    if i == 1:
+        plpy.execute("CREATE OR REPLACE FUNCTION self_invalidating_srf(x int) "
+                     "RETURNS SETOF int LANGUAGE plpython3u AS 'return [-1]'")
+    yield x + i
+$$ LANGUAGE plpython3u;
+
+SELECT self_invalidating_srf(10); -- expect 10,11,12 (original definition)
+SELECT self_invalidating_srf(10); -- expect -1 (replacement now in effect)
