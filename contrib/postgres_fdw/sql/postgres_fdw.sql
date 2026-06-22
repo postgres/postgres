@@ -1732,6 +1732,40 @@ DROP FOREIGN TABLE remt2;
 DROP TABLE loct1;
 DROP TABLE loct2;
 
+-- Test that direct modify and foreign modify work with runtime pruning of
+-- result relations (bug #19484)
+create table fdw_part_update (a int not null, b int) partition by list (a);
+create table fdw_part_update_p1 partition of fdw_part_update for values in (1);
+create table fdw_part_update_remote (a int not null, b int);
+create foreign table fdw_part_update_p2 partition of fdw_part_update
+    for values in (2)
+    server loopback options (table_name 'fdw_part_update_remote');
+insert into fdw_part_update_p1 values (1, 10);
+insert into fdw_part_update_remote values (2, 20);
+set plan_cache_mode = force_generic_plan;
+
+-- Check DirectModify case
+prepare fdw_part_upd(int) as
+    update fdw_part_update set b = b + 1 where a = $1
+    returning tableoid::regclass, a, b;
+explain (verbose, costs off)
+    execute fdw_part_upd(2);
+execute fdw_part_upd(2);
+deallocate fdw_part_upd;
+
+-- Check ForeignModify case
+prepare fdw_part_upd2(int) as
+    update fdw_part_update set b = b + random()::int * 0 + 1 where a = $1
+    returning tableoid::regclass, a, b;
+explain (verbose, costs off)
+    execute fdw_part_upd2(2);
+execute fdw_part_upd2(2);
+deallocate fdw_part_upd2;
+
+reset plan_cache_mode;
+drop table fdw_part_update;
+drop table fdw_part_update_remote;
+
 -- ===================================================================
 -- test check constraints
 -- ===================================================================
