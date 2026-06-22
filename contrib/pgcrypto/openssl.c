@@ -832,7 +832,10 @@ px_find_cipher(const char *name, PX_Cipher **res)
 static void
 ResOwnerReleaseOSSLCipher(Datum res)
 {
-	free_openssl_cipher((OSSLCipher *) DatumGetPointer(res));
+	OSSLCipher *cipher = (OSSLCipher *) DatumGetPointer(res);
+
+	cipher->owner = NULL;
+	free_openssl_cipher(cipher);
 }
 
 /*
