@@ -18,15 +18,6 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
-5cc59834b860ed48d710c1baa9c50c66540c64d0
-#
-# Fix PANIC with track_functions due to concurrent drop of pgstats entries
-# 2026-06-18 11:49:34 +0900
-#
-# This commit has added a "missing_ok" argument to pgstat_drop_entry().  All
-# the callers of this routine are in core for v15-v17.  One custom stats kinds
-# available in the public since v18 is impacted (maintainer informed).
-
 8d9a97e0bb6d820dac553848f0d5d8cc3f3e219d
 #
 # Avoid name collision with NOT NULL constraints

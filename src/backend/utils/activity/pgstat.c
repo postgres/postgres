@@ -620,7 +620,7 @@ pgstat_shutdown_hook(int code, Datum arg)
 	dlist_init(&pgStatPending);
 
 	/* drop the backend stats entry */
-	if (!pgstat_drop_entry(PGSTAT_KIND_BACKEND, InvalidOid, MyProcNumber, false))
+	if (!pgstat_drop_entry_ext(PGSTAT_KIND_BACKEND, InvalidOid, MyProcNumber, false))
 		pgstat_request_entry_refs_gc();
 
 	pgstat_detach_shmem();

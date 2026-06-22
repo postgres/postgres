@@ -708,8 +708,9 @@ extern PgStat_EntryRef *pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, uint64
 extern bool pgstat_lock_entry(PgStat_EntryRef *entry_ref, bool nowait);
 extern bool pgstat_lock_entry_shared(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_unlock_entry(PgStat_EntryRef *entry_ref);
-extern bool pgstat_drop_entry(PgStat_Kind kind, Oid dboid, uint64 objid,
-							  bool missing_ok);
+extern bool pgstat_drop_entry(PgStat_Kind kind, Oid dboid, uint64 objid);
+extern bool pgstat_drop_entry_ext(PgStat_Kind kind, Oid dboid, uint64 objid,
+								  bool missing_ok);
 extern void pgstat_drop_all_entries(void);
 extern void pgstat_drop_matching_entries(bool (*do_drop) (PgStatShared_HashEntry *, Datum),
 										 Datum match_data);

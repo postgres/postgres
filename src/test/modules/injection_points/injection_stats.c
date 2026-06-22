@@ -149,8 +149,8 @@ pgstat_drop_inj(const char *name)
 	if (!inj_stats_loaded || !inj_stats_enabled)
 		return;
 
-	if (!pgstat_drop_entry(PGSTAT_KIND_INJECTION, InvalidOid,
-						   PGSTAT_INJ_IDX(name), false))
+	if (!pgstat_drop_entry_ext(PGSTAT_KIND_INJECTION, InvalidOid,
+							   PGSTAT_INJ_IDX(name), false))
 		pgstat_request_entry_refs_gc();
 }
 
