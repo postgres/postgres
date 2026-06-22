@@ -2342,6 +2342,18 @@ CREATE TEMP TABLE parted_b1 partition of parted_b for values from (0) to (10);
 explain (costs off)
 select a.* from a left join parted_b pb on a.b_id = pb.id;
 
+-- test that clauses that still embed PHVs are not referencing the removed
+-- relation when rebuilt for a partition of the kept relation
+explain (costs off)
+select 1 from (select t1.id from parted_b t1 left join parted_b t2 on t1.id = t2.id) s
+where s.id = 1 group by ();
+
+explain (costs off)
+select 1 from parted_b t1
+  join (select t2.id from parted_b t2 left join parted_b t3 on t2.id = t3.id) s
+  on t1.id = s.id
+group by ();
+
 rollback;
 
 create temp table parent (k int primary key, pd int);

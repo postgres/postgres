@@ -72,9 +72,11 @@ static void remove_leftjoinrel_from_query(PlannerInfo *root, int relid,
 										  SpecialJoinInfo *sjinfo);
 static void remove_rel_from_restrictinfo(RestrictInfo *rinfo,
 										 int relid, int ojrelid);
-static void remove_rel_from_eclass(EquivalenceClass *ec,
+static void remove_rel_from_eclass(PlannerInfo *root, EquivalenceClass *ec,
 								   SpecialJoinInfo *sjinfo,
 								   int relid, int subst);
+static Node *remove_rel_from_phvs(Node *node, int relid, int ojrelid);
+static Node *remove_rel_from_phvs_mutator(Node *node, Relids removable);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
@@ -502,9 +504,7 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(l);
 
-		if (bms_is_member(relid, ec->ec_relids) ||
-			(sjinfo == NULL || bms_is_member(sjinfo->ojrelid, ec->ec_relids)))
-			remove_rel_from_eclass(ec, sjinfo, relid, subst);
+		remove_rel_from_eclass(root, ec, sjinfo, relid, subst);
 	}
 
 	/*
@@ -520,6 +520,11 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * So, start by removing all other bits from attr_needed sets and
 	 * lateral_vars lists.  (We already did this above for ph_needed.)
+	 *
+	 * Also, for left-join removal, we strip the removed rel and join from any
+	 * PlaceHolderVar embedded in the surviving rels' restriction clauses (see
+	 * remove_rel_from_phvs); we needn't bother with the rel being removed,
+	 * nor when the query has no PlaceHolderVars.
 	 */
 	for (rti = 1; rti < root->simple_rel_array_size; rti++)
 	{
@@ -545,6 +550,16 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		if (subst > 0)
 			ChangeVarNodesExtended((Node *) otherrel->lateral_vars, relid,
 								   subst, 0, replace_relid_callback);
+
+		if (sjinfo != NULL && rti != relid && root->glob->lastPHId != 0)
+		{
+			foreach_node(RestrictInfo, rinfo, otherrel->baserestrictinfo)
+			{
+				rinfo->clause = (Expr *)
+					remove_rel_from_phvs((Node *) rinfo->clause, relid,
+										 sjinfo->ojrelid);
+			}
+		}
 	}
 }
 
@@ -741,17 +756,40 @@ remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
  * Remove any references to relid or sjinfo->ojrelid (if sjinfo != NULL)
  * from the EquivalenceClass.
  *
- * Like remove_rel_from_restrictinfo, we don't worry about cleaning out
- * any nullingrel bits in contained Vars and PHVs.  (This might have to be
- * improved sometime.)  We do need to fix the EC and EM relid sets to ensure
- * that implied join equalities will be generated at the appropriate join
- * level(s).
+ * We fix the EC and EM relid sets to ensure that implied join equalities will
+ * be generated at the appropriate join level(s).  We also strip the removed
+ * rel from PlaceHolderVars embedded in member expressions; a member's
+ * em_relids reflects ph_eval_at rather than the PHV's phrels, so the latter
+ * can still mention the removed rel even when em_relids does not.  Like
+ * remove_rel_from_restrictinfo, we don't bother with nullingrel bits in
+ * contained plain Vars.
  */
 static void
-remove_rel_from_eclass(EquivalenceClass *ec, SpecialJoinInfo *sjinfo,
+remove_rel_from_eclass(PlannerInfo *root, EquivalenceClass *ec,
+					   SpecialJoinInfo *sjinfo,
 					   int relid, int subst)
 {
 	ListCell   *lc;
+
+	/*
+	 * Strip the removed rel/join from PlaceHolderVars in member expressions.
+	 * This is needed even when the EC's relids don't mention the removed rel.
+	 * Plain Vars and Consts can't contain a PlaceHolderVar, so skip them.
+	 */
+	if (sjinfo != NULL && root->glob->lastPHId != 0)
+	{
+		foreach_node(EquivalenceMember, em, ec->ec_members)
+		{
+			if (!IsA(em->em_expr, Var) && !IsA(em->em_expr, Const))
+				em->em_expr = (Expr *)
+					remove_rel_from_phvs((Node *) em->em_expr, relid,
+										 sjinfo->ojrelid);
+		}
+	}
+
+	if (!bms_is_member(relid, ec->ec_relids) &&
+		(sjinfo == NULL || !bms_is_member(sjinfo->ojrelid, ec->ec_relids)))
+		return;
 
 	/* Fix up the EC's overall relids */
 	ec->ec_relids = adjust_relid_set(ec->ec_relids, relid, subst);
@@ -807,6 +845,69 @@ remove_rel_from_eclass(EquivalenceClass *ec, SpecialJoinInfo *sjinfo,
 	 * clauses, which we'd not need anymore anyway.)
 	 */
 	ec_clear_derived_clauses(ec);
+}
+
+/*
+ * Remove any references to the specified RT index(es) from the phrels (and
+ * phnullingrels) of every PlaceHolderVar in the given expression.
+ *
+ * remove_rel_from_query() fixes up the relid sets of RestrictInfos and
+ * EquivalenceMembers, but not the PlaceHolderVars embedded in their
+ * expressions.  That's normally fine, but such an expression may later be
+ * translated for an appendrel child and have its relids recomputed by
+ * pull_varnos().  A leftover removed relid in phrels would then make
+ * pull_varnos() reference a nonexistent rel, so we strip it here to match the
+ * canonical PlaceHolderVar.
+ */
+static Node *
+remove_rel_from_phvs(Node *node, int relid, int ojrelid)
+{
+	Relids		removable = bms_add_member(bms_make_singleton(relid), ojrelid);
+
+	return remove_rel_from_phvs_mutator(node, removable);
+}
+
+static Node *
+remove_rel_from_phvs_mutator(Node *node, Relids removable)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+		Relids		newphrels;
+
+		/* Upper-level PlaceHolderVars should be long gone at this point */
+		Assert(phv->phlevelsup == 0);
+
+		/* Copy the PlaceHolderVar and mutate what's below ... */
+		phv = (PlaceHolderVar *)
+			expression_tree_mutator(node,
+									remove_rel_from_phvs_mutator,
+									removable);
+
+		/*
+		 * ... then strip the removed rels from its relid sets.
+		 *
+		 * If stripping would empty phrels, the PHV is evaluated only at the
+		 * removed relation(s); it then belongs to an EquivalenceMember that
+		 * the caller drops immediately afterwards.  Leave such a PHV
+		 * untouched rather than build one with empty phrels, which the rest
+		 * of the planner assumes never occurs.
+		 */
+		newphrels = bms_difference(phv->phrels, removable);
+		if (!bms_is_empty(newphrels))
+		{
+			phv->phrels = newphrels;
+			phv->phnullingrels = bms_difference(phv->phnullingrels,
+												removable);
+		}
+
+		return (Node *) phv;
+	}
+	return expression_tree_mutator(node,
+								   remove_rel_from_phvs_mutator,
+								   removable);
 }
 
 /*
