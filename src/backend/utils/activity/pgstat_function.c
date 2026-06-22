@@ -112,8 +112,8 @@ pgstat_init_function_usage(FunctionCallInfo fcinfo,
 		AcceptInvalidationMessages();
 		if (!SearchSysCacheExists1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid)))
 		{
-			pgstat_drop_entry(PGSTAT_KIND_FUNCTION, MyDatabaseId,
-							  fcinfo->flinfo->fn_oid, true);
+			pgstat_drop_entry_ext(PGSTAT_KIND_FUNCTION, MyDatabaseId,
+								  fcinfo->flinfo->fn_oid, true);
 			ereport(ERROR, errcode(ERRCODE_UNDEFINED_FUNCTION),
 					errmsg("function call to dropped function"));
 		}

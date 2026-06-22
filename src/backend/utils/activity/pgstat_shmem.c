@@ -843,7 +843,7 @@ pgstat_free_entry(PgStatShared_HashEntry *shent, dshash_seq_status *hstat)
 
 /*
  * Helper for both pgstat_drop_database_and_contents() and
- * pgstat_drop_entry(). If hstat is non-null delete the shared entry using
+ * pgstat_drop_entry_ext(). If hstat is non-null delete the shared entry using
  * dshash_delete_current(), otherwise use dshash_delete_entry(). In either
  * case the entry needs to be already locked.
  */
@@ -932,6 +932,17 @@ pgstat_drop_database_and_contents(Oid dboid)
 }
 
 /*
+ * ABI-preserving wrapper around pgstat_drop_entry_ext().
+ *
+ * The original routine introduced in v15 did not include "missing_ok".
+ */
+bool
+pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
+{
+	return pgstat_drop_entry_ext(kind, dboid, objoid, false);
+}
+
+/*
  * Drop a single stats entry.
  *
  * This routine returns false if the stats entry of the dropped object could
@@ -945,8 +956,8 @@ pgstat_drop_database_and_contents(Oid dboid)
  * pgstat_gc_entry_refs().
  */
 bool
-pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid,
-				  bool missing_ok)
+pgstat_drop_entry_ext(PgStat_Kind kind, Oid dboid, Oid objoid,
+					  bool missing_ok)
 {
 	PgStat_HashKey key;
 	PgStatShared_HashEntry *shent;
