@@ -893,7 +893,6 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
    When <option>--statistics</option> is specified,
    <command>pg_dumpall</command> will include most optimizer statistics in the
    resulting dump file. This does not include all statistics, such as
-   those created explicitly with <xref linkend="sql-createstatistics"/>,
    custom statistics added by an extension, or statistics collected by the
    cumulative statistics system.  Therefore, it may still be useful to
    run <command>ANALYZE</command> on each database after restoring from a dump

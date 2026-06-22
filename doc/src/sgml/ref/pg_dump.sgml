@@ -1703,7 +1703,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    When <option>--statistics</option> is specified,
    <command>pg_dump</command> will include most optimizer statistics in the
    resulting dump file.  This does not include all statistics, such as
-   those created explicitly with <xref linkend="sql-createstatistics"/>,
    custom statistics added by an extension, or statistics collected by the
    cumulative statistics system. Therefore, it may still be useful to
    run <command>ANALYZE</command> after restoring from a dump file to ensure
