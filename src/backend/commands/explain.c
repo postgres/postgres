@@ -4821,7 +4821,7 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 			fdwroutine != NULL &&
 			fdwroutine->ExplainForeignModify != NULL)
 		{
-			List	   *fdw_private = (List *) list_nth(node->fdwPrivLists, j);
+			List	   *fdw_private = (List *) list_nth(mtstate->mt_fdwPrivLists, j);
 
 			fdwroutine->ExplainForeignModify(mtstate,
 											 resultRelInfo,
