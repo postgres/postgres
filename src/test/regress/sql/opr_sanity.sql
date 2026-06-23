@@ -360,7 +360,7 @@ AND case proargtypes[array_length(proargtypes, 1)-1]
 	ELSE (SELECT t.oid
 		  FROM pg_type t
 		  WHERE t.typarray = proargtypes[array_length(proargtypes, 1)-1])
-	END  != provariadic;
+	END IS DISTINCT FROM provariadic;
 
 -- Check that all and only those functions with a variadic type have
 -- a variadic argument.
