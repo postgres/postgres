@@ -61,6 +61,9 @@ typedef int YYSTYPE;
 
 #define ECHO psqlscan_emit(cur_state, yytext, yyleng)
 
+static void psqlscan_track_identifier(PsqlScanState state,
+									  const char *identifier);
+
 %}
 
 %option reentrant
@@ -677,11 +680,12 @@ other			.
 
 ";"				{
 					ECHO;
-					if (cur_state->paren_depth == 0 && cur_state->begin_depth == 0)
+					if (cur_state->paren_depth == 0 &&
+						cur_state->begin_depth == 0)
 					{
 						/* Terminate lexing temporarily */
 						cur_state->start_state = YY_START;
-						cur_state->identifier_count = 0;
+						cur_state->init_idents_count = 0;
 						return LEXRES_SEMI;
 					}
 				}
@@ -694,8 +698,11 @@ other			.
 "\\"[;:]		{
 					/* Force a semi-colon or colon into the query buffer */
 					psqlscan_emit(cur_state, yytext + 1, 1);
-					if (yytext[1] == ';')
-						cur_state->identifier_count = 0;
+					/* Reset BEGIN/END tracking if semi at outer level */
+					if (yytext[1] == ';' &&
+						cur_state->paren_depth == 0 &&
+						cur_state->begin_depth == 0)
+						cur_state->init_idents_count = 0;
 				}
 
 "\\"			{
@@ -921,61 +928,7 @@ other			.
 
 
 {identifier}	{
-					/*
-					 * We need to track if we are inside a BEGIN .. END block
-					 * in a function definition, so that semicolons contained
-					 * therein don't terminate the whole statement.  Short of
-					 * writing a full parser here, the following heuristic
-					 * should work.  First, we track whether the beginning of
-					 * the statement matches CREATE [OR REPLACE]
-					 * {FUNCTION|PROCEDURE|SCHEMA}.  (Allowing this in
-					 * CREATE SCHEMA, without tracking whether we're within a
-					 * CREATE FUNCTION/PROCEDURE subcommand, is a bit shaky
-					 * but should be okay with the present set of valid
-					 * subcommands.)
-					 */
-
-					if (cur_state->identifier_count == 0)
-						memset(cur_state->identifiers, 0, sizeof(cur_state->identifiers));
-
-					if (cur_state->identifier_count < sizeof(cur_state->identifiers))
-					{
-						if (pg_strcasecmp(yytext, "create") == 0 ||
-							pg_strcasecmp(yytext, "function") == 0 ||
-							pg_strcasecmp(yytext, "procedure") == 0 ||
-							pg_strcasecmp(yytext, "or") == 0 ||
-							pg_strcasecmp(yytext, "replace") == 0 ||
-							pg_strcasecmp(yytext, "schema") == 0)
-							cur_state->identifiers[cur_state->identifier_count] = pg_tolower((unsigned char) yytext[0]);
-					}
-
-					cur_state->identifier_count++;
-
-					if (cur_state->identifiers[0] == 'c' &&
-						(cur_state->identifiers[1] == 'f' || cur_state->identifiers[1] == 'p' ||
-						 (cur_state->identifiers[1] == 'o' && cur_state->identifiers[2] == 'r' &&
-						  (cur_state->identifiers[3] == 'f' || cur_state->identifiers[3] == 'p')) ||
-						 cur_state->identifiers[1] == 's') &&
-						cur_state->paren_depth == 0)
-					{
-						if (pg_strcasecmp(yytext, "begin") == 0)
-							cur_state->begin_depth++;
-						else if (pg_strcasecmp(yytext, "case") == 0)
-						{
-							/*
-							 * CASE also ends with END.  We only need to track
-							 * this if we are already inside a BEGIN.
-							 */
-							if (cur_state->begin_depth >= 1)
-								cur_state->begin_depth++;
-						}
-						else if (pg_strcasecmp(yytext, "end") == 0)
-						{
-							if (cur_state->begin_depth > 0)
-								cur_state->begin_depth--;
-						}
-					}
-
+					psqlscan_track_identifier(cur_state, yytext);
 					ECHO;
 				}
 
@@ -1001,6 +954,135 @@ other			.
 %%
 
 /* LCOV_EXCL_STOP */
+
+/*
+ * Record the first few keywords/identifiers of a statement or CREATE
+ * SCHEMA sub-statement in the idents[] array, of length idents_size.
+ * *idents_count is the number of entries filled so far.
+ *
+ * We record the interesting keywords using their first character, which
+ * works so long as those are all different.  We could switch to an enum
+ * if that stops being true, but for now this is easy and compact.
+ */
+static void
+psqlscan_record_initial_keyword(const char *identifier,
+								char *idents,
+								int idents_size,
+								int *idents_count)
+{
+	if (*idents_count < idents_size)
+	{
+		/*
+		 * What we need to recognize is CREATE [OR REPLACE] FUNCTION/PROCEDURE
+		 * and CREATE SCHEMA.  Checking for SCHEMA is useless but not harmful
+		 * in the CREATE SCHEMA sub-statement case.
+		 */
+		if (pg_strcasecmp(identifier, "create") == 0 ||
+			pg_strcasecmp(identifier, "function") == 0 ||
+			pg_strcasecmp(identifier, "procedure") == 0 ||
+			pg_strcasecmp(identifier, "or") == 0 ||
+			pg_strcasecmp(identifier, "replace") == 0 ||
+			pg_strcasecmp(identifier, "schema") == 0)
+			idents[*idents_count] = pg_tolower((unsigned char) identifier[0]);
+		/* For other keywords or identifiers, leave '\0' in the array entry */
+		(*idents_count)++;
+	}
+}
+
+/*
+ * Does the current input match CREATE [OR REPLACE] {FUNCTION|PROCEDURE}?
+ */
+static bool
+psqlscan_is_create_routine(const char *idents)
+{
+	return idents[0] == 'c' &&
+		(idents[1] == 'f' || idents[1] == 'p' ||
+		 (idents[1] == 'o' && idents[2] == 'r' &&
+		  (idents[3] == 'f' || idents[3] == 'p')));
+}
+
+/*
+ * Track whether we are inside a BEGIN .. END block in a function definition,
+ * so that semicolons contained therein don't terminate the whole statement.
+ * Short of writing a full parser here, the following heuristic should work.
+ *
+ * We track whether the beginning of the statement matches CREATE [OR REPLACE]
+ * {FUNCTION|PROCEDURE}.  For CREATE SCHEMA, track BEGIN .. END blocks only
+ * after recognizing an embedded CREATE [OR REPLACE] {FUNCTION|PROCEDURE}
+ * subcommand.  Once one of these conditions holds, count BEGIN and END
+ * pairs.  We also have to account for CASE ... END.
+ */
+static void
+psqlscan_track_identifier(PsqlScanState state, const char *identifier)
+{
+	bool		is_create_schema;
+
+	/* None of this needs to happen when we're inside parentheses */
+	if (state->paren_depth != 0)
+		return;
+
+	/* Reset all my state at the start of each new statement */
+	if (state->init_idents_count == 0)
+	{
+		memset(state->init_idents, 0, sizeof(state->init_idents));
+		state->sub_idents_count = 0;
+		memset(state->sub_idents, 0, sizeof(state->sub_idents));
+	}
+
+	/* Record initial keywords if init_idents_count is small enough */
+	psqlscan_record_initial_keyword(identifier,
+									state->init_idents,
+									lengthof(state->init_idents),
+									&state->init_idents_count);
+
+	/*
+	 * In CREATE SCHEMA, track identifiers from each top-level CREATE schema
+	 * element separately, so that BEGIN/END tracking is enabled only within
+	 * CREATE [OR REPLACE] {FUNCTION|PROCEDURE} clauses.
+	 */
+	is_create_schema = (state->init_idents[0] == 'c' &&
+						state->init_idents[1] == 's');
+	if (is_create_schema &&
+		state->begin_depth == 0)
+	{
+		/* Reset sub-clause state at each top-level CREATE keyword */
+		if (pg_strcasecmp(identifier, "create") == 0)
+		{
+			state->sub_idents_count = 0;
+			memset(state->sub_idents, 0, sizeof(state->sub_idents));
+		}
+		/* ... and record the first few keywords following that */
+		psqlscan_record_initial_keyword(identifier,
+										state->sub_idents,
+										lengthof(state->sub_idents),
+										&state->sub_idents_count);
+	}
+
+	/*
+	 * Track BEGIN/CASE/END only when within an appropriate (sub) statement.
+	 */
+	if (psqlscan_is_create_routine(state->init_idents) ||
+		(is_create_schema &&
+		 psqlscan_is_create_routine(state->sub_idents)))
+	{
+		if (pg_strcasecmp(identifier, "begin") == 0)
+			state->begin_depth++;
+		else if (pg_strcasecmp(identifier, "case") == 0)
+		{
+			/*
+			 * CASE also ends with END.  We only need to track this if we are
+			 * already inside a BEGIN.
+			 */
+			if (state->begin_depth >= 1)
+				state->begin_depth++;
+		}
+		else if (pg_strcasecmp(identifier, "end") == 0)
+		{
+			if (state->begin_depth > 0)
+				state->begin_depth--;
+		}
+	}
+}
 
 /*
  * Create a lexer working state struct.
@@ -1292,8 +1374,8 @@ psql_scan_reset(PsqlScanState state)
 	if (state->dolqstart)
 		free(state->dolqstart);
 	state->dolqstart = NULL;
-	state->identifier_count = 0;
 	state->begin_depth = 0;
+	state->init_idents_count = 0;
 }
 
 /*

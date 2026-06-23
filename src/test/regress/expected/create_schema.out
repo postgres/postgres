@@ -195,7 +195,11 @@ CREATE SCHEMA regress_schema_misc
     as 'select $1 + $2'
   CREATE OPERATOR + (function = cs_add, leftarg = int4, rightarg = int4)
   CREATE PROCEDURE cs_proc(int4, int4)
-    BEGIN ATOMIC SELECT cs_add($1,$2); END
+    BEGIN ATOMIC
+      SELECT cs_add($1,$2);
+    END
+  -- this checks that psql is not fooled by an irrelevant BEGIN
+  CREATE VIEW begin AS SELECT 1 AS one
   CREATE TEXT SEARCH CONFIGURATION cs_ts_conf (copy=english)
   CREATE TEXT SEARCH DICTIONARY cs_ts_dict (template=simple)
   CREATE TEXT SEARCH PARSER cs_ts_prs
@@ -222,7 +226,7 @@ CREATE SCHEMA regress_schema_misc
 ;
 NOTICE:  return type cs_type is only a shell
 NOTICE:  argument type cs_type is only a shell
-LINE 29:   CREATE FUNCTION cs_type_out(cs_type)
+LINE 33:   CREATE FUNCTION cs_type_out(cs_type)
                                        ^
 \df regress_schema_misc.cs_add
                               List of functions
@@ -300,13 +304,14 @@ LINE 29:   CREATE FUNCTION cs_type_out(cs_type)
 (1 row)
 
 DROP SCHEMA regress_schema_misc CASCADE;
-NOTICE:  drop cascades to 16 other objects
+NOTICE:  drop cascades to 17 other objects
 DETAIL:  drop cascades to function regress_schema_misc.cs_sum(integer)
 drop cascades to collation regress_schema_misc.cs_builtin_c
 drop cascades to type regress_schema_misc.cs_positive
 drop cascades to function regress_schema_misc.cs_add(integer,integer)
 drop cascades to operator regress_schema_misc.+(integer,integer)
 drop cascades to function regress_schema_misc.cs_proc(integer,integer)
+drop cascades to view regress_schema_misc.begin
 drop cascades to text search configuration regress_schema_misc.cs_ts_conf
 drop cascades to text search dictionary regress_schema_misc.cs_ts_dict
 drop cascades to text search parser regress_schema_misc.cs_ts_prs

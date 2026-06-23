@@ -120,7 +120,12 @@ CREATE SCHEMA regress_schema_misc
   CREATE OPERATOR + (function = cs_add, leftarg = int4, rightarg = int4)
 
   CREATE PROCEDURE cs_proc(int4, int4)
-    BEGIN ATOMIC SELECT cs_add($1,$2); END
+    BEGIN ATOMIC
+      SELECT cs_add($1,$2);
+    END
+
+  -- this checks that psql is not fooled by an irrelevant BEGIN
+  CREATE VIEW begin AS SELECT 1 AS one
 
   CREATE TEXT SEARCH CONFIGURATION cs_ts_conf (copy=english)
 
