@@ -29,7 +29,7 @@
  */
 BEGIN_CATALOG_STRUCT
 
-CATALOG(pg_parameter_acl,6243,ParameterAclRelationId) BKI_SHARED_RELATION
+CATALOG(pg_parameter_acl,6243,ParameterAclRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2173,ParameterAclRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
 	Oid			oid;			/* oid */
 

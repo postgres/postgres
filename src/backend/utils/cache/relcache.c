@@ -56,6 +56,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_shseclabel.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_subscription.h"
@@ -120,6 +121,7 @@ static const FormData_pg_attribute Desc_pg_auth_members[Natts_pg_auth_members] =
 static const FormData_pg_attribute Desc_pg_index[Natts_pg_index] = {Schema_pg_index};
 static const FormData_pg_attribute Desc_pg_shseclabel[Natts_pg_shseclabel] = {Schema_pg_shseclabel};
 static const FormData_pg_attribute Desc_pg_subscription[Natts_pg_subscription] = {Schema_pg_subscription};
+static const FormData_pg_attribute Desc_pg_parameter_acl[Natts_pg_parameter_acl] = {Schema_pg_parameter_acl};
 
 /*
  *		Hash tables that index the relation cache
@@ -4084,8 +4086,10 @@ RelationCacheInitializePhase2(void)
 				  Natts_pg_shseclabel, Desc_pg_shseclabel);
 		formrdesc("pg_subscription", SubscriptionRelation_Rowtype_Id, true,
 				  Natts_pg_subscription, Desc_pg_subscription);
+		formrdesc("pg_parameter_acl", ParameterAclRelation_Rowtype_Id, true,
+				  Natts_pg_parameter_acl, Desc_pg_parameter_acl);
 
-#define NUM_CRITICAL_SHARED_RELS	5	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_RELS	6	/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -4206,9 +4210,10 @@ RelationCacheInitializePhase3(void)
 	 * non-shared catalogs at all.  Autovacuum calls InitPostgres with a
 	 * database OID, so it instead depends on DatabaseOidIndexId.  We also
 	 * need to nail up some indexes on pg_authid and pg_auth_members for use
-	 * during client authentication.  SharedSecLabelObjectIndexId isn't
-	 * critical for the core system, but authentication hooks might be
-	 * interested in it.
+	 * during client authentication.  We need indexes on pg_parameter_acl for
+	 * ACL checks on settings specified in the startup packet for a physical
+	 * replication connection.  SharedSecLabelObjectIndexId isn't critical for
+	 * the core system, but authentication hooks might be interested in it.
 	 */
 	if (!criticalSharedRelcachesBuilt)
 	{
@@ -4224,8 +4229,12 @@ RelationCacheInitializePhase3(void)
 							AuthMemRelationId);
 		load_critical_index(SharedSecLabelObjectIndexId,
 							SharedSecLabelRelationId);
+		load_critical_index(ParameterAclParnameIndexId,
+							ParameterAclRelationId);
+		load_critical_index(ParameterAclOidIndexId,
+							ParameterAclRelationId);
 
-#define NUM_CRITICAL_SHARED_INDEXES 6	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_INDEXES 8	/* fix if you change list above */
 
 		criticalSharedRelcachesBuilt = true;
 	}
