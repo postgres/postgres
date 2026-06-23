@@ -968,10 +968,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       as a partition of the target table. The table can be attached
       as a partition for specific values using <literal>FOR VALUES</literal>
       or as a default partition by using <literal>DEFAULT</literal>.
-      For each index in the target table, a corresponding
-      one will be created in the attached table; or, if an equivalent
-      index already exists, it will be attached to the target table's index,
-      as if <command>ALTER INDEX ATTACH PARTITION</command> had been executed.
+      For each index in the target table, if a valid equivalent index
+      already exists in the partition, it will be attached to the target
+      table's index, as if ALTER INDEX ATTACH PARTITION had been executed;
+      otherwise, a new corresponding index will be created.  Invalid indexes
+      on the partition are skipped.
       Note that if the existing table is a foreign table, it is currently not
       allowed to attach the table as a partition of the target table if there
       are <literal>UNIQUE</literal> indexes on the target table.  (See also
