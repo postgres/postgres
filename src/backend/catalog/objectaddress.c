@@ -6172,7 +6172,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					break;
 				}
 				pge = (Form_pg_propgraph_element) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s of ", quote_identifier(NameStr(pge->pgealias)));
+				appendStringInfo(&buffer, "%s of property graph ", quote_identifier(NameStr(pge->pgealias)));
 
 				getRelationIdentity(&buffer, pge->pgepgid, objname, false);
 				if (objname)
@@ -6196,7 +6196,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				}
 
 				pgl = (Form_pg_propgraph_label) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s of ", quote_identifier(NameStr(pgl->pgllabel)));
+				appendStringInfo(&buffer, "%s of property graph ", quote_identifier(NameStr(pgl->pgllabel)));
 				getRelationIdentity(&buffer, pgl->pglpgid, objname, false);
 				if (objname)
 					*objname = lappend(*objname, pstrdup(NameStr(pgl->pgllabel)));
@@ -6218,7 +6218,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				}
 
 				pgp = (Form_pg_propgraph_property) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s of ", quote_identifier(NameStr(pgp->pgpname)));
+				appendStringInfo(&buffer, "%s of property graph ", quote_identifier(NameStr(pgp->pgpname)));
 				getRelationIdentity(&buffer, pgp->pgppgid, objname, false);
 				if (objname)
 					*objname = lappend(*objname, pstrdup(NameStr(pgp->pgpname)));
@@ -6251,7 +6251,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				pgelform = (Form_pg_propgraph_element_label) GETSTRUCT(tup);
 
 				labelname = get_propgraph_label_name(pgelform->pgellabelid);
-				appendStringInfo(&buffer, "%s of ", quote_identifier(labelname));
+				appendStringInfo(&buffer, "%s of element ", quote_identifier(labelname));
 				ObjectAddressSet(oa, PropgraphElementRelationId, pgelform->pgelelid);
 				appendStringInfoString(&buffer, getObjectIdentityParts(&oa, objname,
 																	   objargs, false));
@@ -6289,7 +6289,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				plpform = (Form_pg_propgraph_label_property) GETSTRUCT(tup);
 
 				propname = get_propgraph_property_name(plpform->plppropid);
-				appendStringInfo(&buffer, "%s of ", quote_identifier(propname));
+				appendStringInfo(&buffer, "%s of label ", quote_identifier(propname));
 				ObjectAddressSet(oa, PropgraphElementLabelRelationId, plpform->plpellabelid);
 				appendStringInfoString(&buffer, getObjectIdentityParts(&oa, objname,
 																	   objargs, false));

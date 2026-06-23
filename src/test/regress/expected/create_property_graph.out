@@ -751,31 +751,31 @@ SELECT (pg_identify_object_as_address(classid, objid, objsubid)).*
 SELECT (pg_identify_object(classid, objid, objsubid)).*
     FROM (SELECT DISTINCT classid, objid, objsubid FROM deps_tree)
     ORDER BY 1, 2, 3, 4;
-             type              | schema | name |                    identity                     
--------------------------------+--------+------+-------------------------------------------------
- property graph element        |        |      | e of create_property_graph_tests.gt
- property graph element        |        |      | v1 of create_property_graph_tests.gt
- property graph element        |        |      | v2 of create_property_graph_tests.gt
- property graph element label  |        |      | e of e of create_property_graph_tests.gt
- property graph element label  |        |      | v1 of v1 of create_property_graph_tests.gt
- property graph element label  |        |      | v2 of v2 of create_property_graph_tests.gt
- property graph label          |        |      | e of create_property_graph_tests.gt
- property graph label          |        |      | v1 of create_property_graph_tests.gt
- property graph label          |        |      | v2 of create_property_graph_tests.gt
- property graph label property |        |      | a of v1 of v1 of create_property_graph_tests.gt
- property graph label property |        |      | b of v1 of v1 of create_property_graph_tests.gt
- property graph label property |        |      | c of e of e of create_property_graph_tests.gt
- property graph label property |        |      | k1 of e of e of create_property_graph_tests.gt
- property graph label property |        |      | k2 of e of e of create_property_graph_tests.gt
- property graph label property |        |      | m of v2 of v2 of create_property_graph_tests.gt
- property graph label property |        |      | n of v2 of v2 of create_property_graph_tests.gt
- property graph property       |        |      | a of create_property_graph_tests.gt
- property graph property       |        |      | b of create_property_graph_tests.gt
- property graph property       |        |      | c of create_property_graph_tests.gt
- property graph property       |        |      | k1 of create_property_graph_tests.gt
- property graph property       |        |      | k2 of create_property_graph_tests.gt
- property graph property       |        |      | m of create_property_graph_tests.gt
- property graph property       |        |      | n of create_property_graph_tests.gt
+             type              | schema | name |                                   identity                                   
+-------------------------------+--------+------+------------------------------------------------------------------------------
+ property graph element        |        |      | e of property graph create_property_graph_tests.gt
+ property graph element        |        |      | v1 of property graph create_property_graph_tests.gt
+ property graph element        |        |      | v2 of property graph create_property_graph_tests.gt
+ property graph element label  |        |      | e of element e of property graph create_property_graph_tests.gt
+ property graph element label  |        |      | v1 of element v1 of property graph create_property_graph_tests.gt
+ property graph element label  |        |      | v2 of element v2 of property graph create_property_graph_tests.gt
+ property graph label          |        |      | e of property graph create_property_graph_tests.gt
+ property graph label          |        |      | v1 of property graph create_property_graph_tests.gt
+ property graph label          |        |      | v2 of property graph create_property_graph_tests.gt
+ property graph label property |        |      | a of label v1 of element v1 of property graph create_property_graph_tests.gt
+ property graph label property |        |      | b of label v1 of element v1 of property graph create_property_graph_tests.gt
+ property graph label property |        |      | c of label e of element e of property graph create_property_graph_tests.gt
+ property graph label property |        |      | k1 of label e of element e of property graph create_property_graph_tests.gt
+ property graph label property |        |      | k2 of label e of element e of property graph create_property_graph_tests.gt
+ property graph label property |        |      | m of label v2 of element v2 of property graph create_property_graph_tests.gt
+ property graph label property |        |      | n of label v2 of element v2 of property graph create_property_graph_tests.gt
+ property graph property       |        |      | a of property graph create_property_graph_tests.gt
+ property graph property       |        |      | b of property graph create_property_graph_tests.gt
+ property graph property       |        |      | c of property graph create_property_graph_tests.gt
+ property graph property       |        |      | k1 of property graph create_property_graph_tests.gt
+ property graph property       |        |      | k2 of property graph create_property_graph_tests.gt
+ property graph property       |        |      | m of property graph create_property_graph_tests.gt
+ property graph property       |        |      | n of property graph create_property_graph_tests.gt
 (23 rows)
 
 \a\t
