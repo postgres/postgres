@@ -2380,7 +2380,8 @@ match_previous_words(int pattern_id,
 					  "max_retention_duration", "origin",
 					  "password_required", "retain_dead_tuples",
 					  "run_as_owner", "slot_name", "streaming",
-					  "synchronous_commit", "two_phase");
+					  "synchronous_commit", "two_phase",
+					  "wal_receiver_timeout");
 	/* ALTER SUBSCRIPTION <name> SKIP ( */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "SKIP", "("))
 		COMPLETE_WITH("lsn");
@@ -3965,7 +3966,8 @@ match_previous_words(int pattern_id,
 					  "max_retention_duration", "origin",
 					  "password_required", "retain_dead_tuples",
 					  "run_as_owner", "slot_name", "streaming",
-					  "synchronous_commit", "two_phase");
+					  "synchronous_commit", "two_phase",
+					  "wal_receiver_timeout");
 
 /* CREATE TRIGGER --- is allowed inside CREATE SCHEMA, so use TailMatches */
 
