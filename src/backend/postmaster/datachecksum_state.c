@@ -276,6 +276,22 @@ static const ChecksumBarrierCondition checksum_barriers[9] =
 	{PG_DATA_CHECKSUM_OFF, PG_DATA_CHECKSUM_INPROGRESS_OFF},
 };
 
+/* Possible operations the DataChecksumsWorker can perform */
+typedef enum DataChecksumsWorkerOperation
+{
+	ENABLE_DATACHECKSUMS,
+	DISABLE_DATACHECKSUMS,
+} DataChecksumsWorkerOperation;
+
+/* Possible states for a database entry which has been processed */
+typedef enum
+{
+	DATACHECKSUMSWORKER_SUCCESSFUL = 0,
+	DATACHECKSUMSWORKER_ABORTED,
+	DATACHECKSUMSWORKER_FAILED,
+	DATACHECKSUMSWORKER_DROPDB,
+} DataChecksumsWorkerResult;
+
 /*
  * Signaling between backends calling pg_enable/disable_data_checksums, the
  * checksums launcher process, and the checksums worker process.
@@ -355,6 +371,9 @@ static volatile sig_atomic_t launcher_running = false;
 static DataChecksumsWorkerOperation operation;
 
 /* Prototypes */
+static void StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
+											 int cost_delay,
+											 int cost_limit);
 static void DataChecksumsShmemRequest(void *arg);
 static bool DatabaseExists(Oid dboid);
 static List *BuildDatabaseList(void);
@@ -555,12 +574,12 @@ enable_data_checksums(PG_FUNCTION_ARGS)
 
 /*
  * StartDataChecksumsWorkerLauncher
- *		Main entry point for datachecksumsworker launcher process
+ *		Start the datachecksumsworker launcher process, if not running yet
  *
- * The main entrypoint for starting data checksums processing for enabling as
- * well as disabling.
+ * This is called to start data checksums processing for enabling as well as
+ * disabling.
  */
-void
+static void
 StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 								 int cost_delay,
 								 int cost_limit)
@@ -979,9 +998,7 @@ launcher_cancel_handler(SIGNAL_ARGS)
  *		Blocks awaiting all current transactions to finish
  *
  * Returns when all transactions which are active at the call of the function
- * have ended, or if the postmaster dies while waiting. If the postmaster dies
- * the abort flag will be set to indicate that the caller of this shouldn't
- * proceed.
+ * have ended.
  *
  * NB: this will return early, if aborted by SIGINT or if the target state
  * is changed while we're running.
@@ -1015,8 +1032,8 @@ WaitForAllTransactionsToFinish(void)
 					   WAIT_EVENT_CHECKSUM_ENABLE_STARTCONDITION);
 
 		/*
-		 * If the postmaster died we won't be able to enable checksums
-		 * cluster-wide so abort and hope to continue when restarted.
+		 * If the postmaster died, bail out.  But first print a log message to
+		 * note that the checksumming didn't complete.
 		 */
 		if (rc & WL_POSTMASTER_DEATH)
 			ereport(FATAL,
