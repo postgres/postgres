@@ -1148,7 +1148,7 @@ get_perl_array_ref(SV *sv)
 			HV		   *hv = (HV *) SvRV(sv);
 			SV		  **sav = hv_fetch_string(hv, "array");
 
-			if (*sav && SvOK(*sav) && SvROK(*sav) &&
+			if (sav && *sav && SvOK(*sav) && SvROK(*sav) &&
 				SvTYPE(SvRV(*sav)) == SVt_PVAV)
 				return *sav;
 
