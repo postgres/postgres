@@ -817,6 +817,7 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 
 	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
 	DataChecksumState->success = DATACHECKSUMSWORKER_FAILED;
+	DataChecksumState->worker_pid = InvalidPid;
 	LWLockRelease(DataChecksumsWorkerLock);
 
 	memset(&bgw, 0, sizeof(bgw));
@@ -856,9 +857,6 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 		{
 			LWLockRelease(DataChecksumsWorkerLock);
 			pgstat_report_activity(STATE_IDLE, NULL);
-			LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
-			DataChecksumState->worker_pid = InvalidPid;
-			LWLockRelease(DataChecksumsWorkerLock);
 			return DataChecksumState->success;
 		}
 		LWLockRelease(DataChecksumsWorkerLock);
@@ -951,6 +949,7 @@ launcher_exit(int code, Datum arg)
 			ereport(LOG,
 					errmsg("data checksums launcher exiting while worker is still running, signalling worker"));
 			kill(DataChecksumState->worker_pid, SIGTERM);
+			DataChecksumState->worker_pid = InvalidPid;
 		}
 		LWLockRelease(DataChecksumsWorkerLock);
 	}
