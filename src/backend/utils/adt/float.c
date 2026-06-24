@@ -3965,7 +3965,7 @@ float8_regr_r2(PG_FUNCTION_ARGS)
 	 * Despite all these precautions, this formula can yield results outside
 	 * [0, 1] due to roundoff error.  Clamp it to the expected range.
 	 *
-	 * Note that result is guaranteed to be non-negative becase Sxx and Syy
+	 * Note that result is guaranteed to be non-negative because Sxx and Syy
 	 * are non-negative, so we only need to clamp the upper end of the range.
 	 */
 	if (result > 1)

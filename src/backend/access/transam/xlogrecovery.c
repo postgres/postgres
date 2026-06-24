@@ -447,7 +447,7 @@ EnableStandbyMode(void)
  * the checkpoint record.  On entry, the caller has already read the control
  * file into memory, and passes it as argument.  This function updates it to
  * reflect the recovery state, and the caller is expected to write it back to
- * disk does after initializing other subsystems, but before calling
+ * disk after initializing other subsystems, but before calling
  * PerformWalRecovery().
  *
  * This initializes some global variables like ArchiveRecoveryRequested, and

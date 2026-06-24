@@ -134,7 +134,7 @@ pgstat_assoc_relation(Relation rel)
 	Assert(rel->pgstat_enabled);
 	Assert(rel->pgstat_info == NULL);
 
-	/* Else find or make the PgStat_TableStatus entry, and update link */
+	/* find or make the PgStat_TableStatus entry, and update link */
 	rel->pgstat_info = pgstat_prep_relation_pending(RelationGetRelid(rel),
 													rel->rd_rel->relisshared);
 

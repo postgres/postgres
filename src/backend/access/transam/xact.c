@@ -6223,10 +6223,10 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		 * If a transaction completion record arrives that has as-yet
 		 * unobserved subtransactions then this will not have been fully
 		 * handled by the call to RecordKnownAssignedTransactionIds() in the
-		 * main recovery loop in xlog.c. So we need to do bookkeeping again to
-		 * cover that case. This is confusing and it is easy to think this
-		 * call is irrelevant, which has happened three times in development
-		 * already. Leave it in.
+		 * main recovery loop in PerformWalRecovery(). So we need to do
+		 * bookkeeping again to cover that case. This is confusing and it is
+		 * easy to think this call is irrelevant, which has happened three
+		 * times in development already. Leave it in.
 		 */
 		RecordKnownAssignedTransactionIds(max_xid);
 
@@ -6361,10 +6361,10 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
 		 * If a transaction completion record arrives that has as-yet
 		 * unobserved subtransactions then this will not have been fully
 		 * handled by the call to RecordKnownAssignedTransactionIds() in the
-		 * main recovery loop in xlog.c. So we need to do bookkeeping again to
-		 * cover that case. This is confusing and it is easy to think this
-		 * call is irrelevant, which has happened three times in development
-		 * already. Leave it in.
+		 * main recovery loop in PerformWalRecovery(). So we need to do
+		 * bookkeeping again to cover that case. This is confusing and it is
+		 * easy to think this call is irrelevant, which has happened three
+		 * times in development already. Leave it in.
 		 */
 		RecordKnownAssignedTransactionIds(max_xid);
 

@@ -137,7 +137,7 @@ set       toc,title
 
   <!-- pgsql-docs: added xmlns:xlink, autoidx.xsl doesn't include xlink in
        exclude-result-prefixes. Without our customization that just leads to a
-       single xmlns:xlink in this div, but because we emit it it otherwise
+       single xmlns:xlink in this div, but because we emit it, it otherwise
        gets pushed down to the elements output by autoidx.xsl -->
   <div class="index" xmlns:xlink="http://www.w3.org/1999/xlink">
     <p class="indexdiv-quicklinks">

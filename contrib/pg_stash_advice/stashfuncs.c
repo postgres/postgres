@@ -266,9 +266,9 @@ pg_get_advice_stash_contents(PG_FUNCTION_ARGS)
  * SQL-callable function to update an advice stash entry for a particular
  * query ID
  *
- * If the second argument is NULL, we delete any existing advice stash
- * entry; otherwise, we either create an entry or update it with the new
- * advice string.
+ * If the advice string (the third argument) is NULL, we delete any existing
+ * advice stash entry; otherwise, we either create an entry or update it with
+ * the new advice string.
  */
 Datum
 pg_set_stashed_advice(PG_FUNCTION_ARGS)

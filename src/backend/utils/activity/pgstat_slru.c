@@ -133,9 +133,6 @@ pgstat_get_slru_index(const char *name)
 /*
  * Flush out locally pending SLRU stats entries
  *
- * If nowait is true, this function returns false on lock failure. Otherwise
- * this function always returns true.
- *
  * If nowait is true, this function returns true if the lock could not be
  * acquired. Otherwise return false.
  */

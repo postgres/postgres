@@ -804,13 +804,14 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 
 		/*
 		 * Several callsites need to be able to read exactly one record
-		 * without any internal readahead.  Examples: xlog.c reading
-		 * checkpoint records with emode set to PANIC, which might otherwise
-		 * cause XLogPageRead() to panic on some future page, and xlog.c
-		 * determining where to start writing WAL next, which depends on the
-		 * contents of the reader's internal buffer after reading one record.
-		 * Therefore, don't even think about prefetching until the first
-		 * record after XLogPrefetcherBeginRead() has been consumed.
+		 * without any internal readahead.  Examples: PerformWalRecovery()
+		 * trying to read the first record that follows a checkpoint has emode
+		 * set to PANIC, which might otherwise cause XLogPageRead() to panic
+		 * on some future page, and FinishWalRecovery() determining where to
+		 * start writing WAL next, which depends on the contents of the
+		 * reader's internal buffer after reading one record. Therefore, don't
+		 * even think about prefetching until the first record after
+		 * XLogPrefetcherBeginRead() has been consumed.
 		 */
 		if (prefetcher->reader->decode_queue_tail &&
 			prefetcher->reader->decode_queue_tail->lsn == prefetcher->begin_ptr)

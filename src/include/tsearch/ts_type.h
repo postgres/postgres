@@ -195,7 +195,7 @@ typedef struct
 {
 	QueryItemType type;
 	int8		oper;			/* see above */
-	int16		distance;		/* distance between agrs for OP_PHRASE */
+	int16		distance;		/* distance between args for OP_PHRASE */
 	uint32		left;			/* pointer to left operand. Right operand is
 								 * item + 1, left operand is placed
 								 * item+item->left */

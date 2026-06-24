@@ -396,7 +396,7 @@ typedef struct ValidatorModuleResult
     field.  Alternatively, <structfield>result->authn_id</structfield> may be set to
     NULL if the token is valid but the associated user identity cannot be
     determined.  If the validator returns <literal>true</literal> and
-    set <structfield>result->authn_id</structfield> then the identity appears
+    sets <structfield>result->authn_id</structfield> then the identity appears
     in the server log when <xref linkend="guc-log-connections"/> includes
     <literal>authentication</literal>.  This happens before authorization and
     will log authentication even if the connection is later rejected due to
