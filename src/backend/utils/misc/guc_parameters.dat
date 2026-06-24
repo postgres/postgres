@@ -73,7 +73,6 @@
   boot_val => '""',
 },
 
-
 { name => 'archive_command', type => 'string', context => 'PGC_SIGHUP', group => 'WAL_ARCHIVING',
   short_desc => 'Sets the shell command that will be called to archive a WAL file.',
   long_desc => 'An empty string means use "archive_library".',
@@ -2627,7 +2626,6 @@
   variable => 'send_abort_for_kill',
   boot_val => 'false',
 },
-
 
 { name => 'seq_page_cost', type => 'real', context => 'PGC_USERSET', group => 'QUERY_TUNING_COST',
   short_desc => 'Sets the planner\'s estimate of the cost of a sequentially fetched disk page.',
