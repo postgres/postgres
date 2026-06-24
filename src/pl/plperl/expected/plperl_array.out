@@ -274,3 +274,10 @@ select perl_setof_array('{{1}, {2}, {3}}');
  {3}
 (3 rows)
 
+-- Test a forged PostgreSQL::InServer::ARRAY object lacking the 'array' key
+CREATE OR REPLACE FUNCTION perl_forged_array() RETURNS integer[] AS $$
+	return bless {}, "PostgreSQL::InServer::ARRAY";
+$$ LANGUAGE plperl;
+SELECT perl_forged_array();
+ERROR:  could not get array reference from PostgreSQL::InServer::ARRAY object
+CONTEXT:  PL/Perl function "perl_forged_array"
