@@ -5748,6 +5748,19 @@ WINDOW w AS (ORDER BY name ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING EXCLUDE CURR
 (10 rows)
 
 -- valid and invalid functions
+SELECT abs(1) IGNORE NULLS; -- fails
+ERROR:  RESPECT/IGNORE NULLS specified, but abs is not a window function
+LINE 1: SELECT abs(1) IGNORE NULLS;
+               ^
+SELECT no_such_window_func() IGNORE NULLS; -- fails, but not because of null treatment
+ERROR:  function no_such_window_func() does not exist
+LINE 1: SELECT no_such_window_func() IGNORE NULLS;
+               ^
+DETAIL:  There is no function of that name.
+SELECT sum(orbit) IGNORE NULLS FROM planets; -- fails
+ERROR:  aggregate functions do not accept RESPECT/IGNORE NULLS
+LINE 1: SELECT sum(orbit) IGNORE NULLS FROM planets;
+               ^
 SELECT sum(orbit) OVER () FROM planets; -- succeeds
   sum   
 --------
@@ -5764,11 +5777,11 @@ SELECT sum(orbit) OVER () FROM planets; -- succeeds
 (10 rows)
 
 SELECT sum(orbit) RESPECT NULLS OVER () FROM planets; -- fails
-ERROR:  only window functions accept RESPECT/IGNORE NULLS
+ERROR:  aggregate functions do not accept RESPECT/IGNORE NULLS
 LINE 1: SELECT sum(orbit) RESPECT NULLS OVER () FROM planets;
                ^
 SELECT sum(orbit) IGNORE NULLS OVER () FROM planets; -- fails
-ERROR:  only window functions accept RESPECT/IGNORE NULLS
+ERROR:  aggregate functions do not accept RESPECT/IGNORE NULLS
 LINE 1: SELECT sum(orbit) IGNORE NULLS OVER () FROM planets;
                ^
 SELECT row_number() OVER () FROM planets; -- succeeds

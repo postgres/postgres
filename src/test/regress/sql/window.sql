@@ -2099,6 +2099,9 @@ WINDOW w AS (ORDER BY name ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING EXCLUDE CURR
 ;
 
 -- valid and invalid functions
+SELECT abs(1) IGNORE NULLS; -- fails
+SELECT no_such_window_func() IGNORE NULLS; -- fails, but not because of null treatment
+SELECT sum(orbit) IGNORE NULLS FROM planets; -- fails
 SELECT sum(orbit) OVER () FROM planets; -- succeeds
 SELECT sum(orbit) RESPECT NULLS OVER () FROM planets; -- fails
 SELECT sum(orbit) IGNORE NULLS OVER () FROM planets; -- fails
