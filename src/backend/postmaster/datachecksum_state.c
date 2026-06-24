@@ -340,7 +340,7 @@ typedef struct DataChecksumsStateStruct
 	 */
 
 	/* result, set by worker before exiting */
-	DataChecksumsWorkerResult success;
+	DataChecksumsWorkerResult worker_result;
 
 	/*
 	 * Tells the worker process whether it should also process the shared
@@ -814,9 +814,14 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 	BgwHandleStatus status;
 	pid_t		pid;
 	char		activity[NAMEDATALEN + 64];
+	DataChecksumsWorkerResult result;
 
+	/*
+	 * Initialize result to FAILED.  The worker will change it to SUCCESSFUL
+	 * if it completes successfully.
+	 */
 	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
-	DataChecksumState->success = DATACHECKSUMSWORKER_FAILED;
+	DataChecksumState->worker_result = DATACHECKSUMSWORKER_FAILED;
 	DataChecksumState->worker_pid = InvalidPid;
 	LWLockRelease(DataChecksumsWorkerLock);
 
@@ -853,11 +858,11 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 		 * for it we can see a STOPPED status here without it being a failure.
 		 */
 		LWLockAcquire(DataChecksumsWorkerLock, LW_SHARED);
-		if (DataChecksumState->success == DATACHECKSUMSWORKER_SUCCESSFUL)
+		if (DataChecksumState->worker_result == DATACHECKSUMSWORKER_SUCCESSFUL)
 		{
 			LWLockRelease(DataChecksumsWorkerLock);
 			pgstat_report_activity(STATE_IDLE, NULL);
-			return DataChecksumState->success;
+			return DATACHECKSUMSWORKER_SUCCESSFUL;
 		}
 		LWLockRelease(DataChecksumsWorkerLock);
 
@@ -911,19 +916,17 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 					   db->dbname),
 				errhint("Restart the database and restart data checksum processing by calling pg_enable_data_checksums()."));
 
-	LWLockAcquire(DataChecksumsWorkerLock, LW_SHARED);
-	if (DataChecksumState->success == DATACHECKSUMSWORKER_ABORTED)
-		ereport(LOG,
-				errmsg("data checksums processing was aborted in database \"%s\"",
-					   db->dbname));
-	LWLockRelease(DataChecksumsWorkerLock);
-
-	pgstat_report_activity(STATE_IDLE, NULL);
 	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
+	result = DataChecksumState->worker_result;
 	DataChecksumState->worker_pid = InvalidPid;
 	LWLockRelease(DataChecksumsWorkerLock);
 
-	return DataChecksumState->success;
+	if (result == DATACHECKSUMSWORKER_ABORTED)
+		ereport(LOG,
+				errmsg("data checksums processing was aborted in database \"%s\"",
+					   db->dbname));
+	pgstat_report_activity(STATE_IDLE, NULL);
+	return result;
 }
 
 /*
@@ -1647,7 +1650,7 @@ DataChecksumsWorkerMain(Datum arg)
 	if (aborted || abort_requested)
 	{
 		LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
-		DataChecksumState->success = DATACHECKSUMSWORKER_ABORTED;
+		DataChecksumState->worker_result = DATACHECKSUMSWORKER_ABORTED;
 		LWLockRelease(DataChecksumsWorkerLock);
 		ereport(DEBUG1,
 				errmsg("data checksum processing aborted in database OID %u",
@@ -1719,7 +1722,7 @@ DataChecksumsWorkerMain(Datum arg)
 		if (aborted || abort_requested)
 		{
 			LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
-			DataChecksumState->success = DATACHECKSUMSWORKER_ABORTED;
+			DataChecksumState->worker_result = DATACHECKSUMSWORKER_ABORTED;
 			LWLockRelease(DataChecksumsWorkerLock);
 			ereport(LOG,
 					errmsg("data checksum processing aborted in database OID %u",
@@ -1734,6 +1737,6 @@ DataChecksumsWorkerMain(Datum arg)
 	pgstat_progress_end_command();
 
 	LWLockAcquire(DataChecksumsWorkerLock, LW_EXCLUSIVE);
-	DataChecksumState->success = DATACHECKSUMSWORKER_SUCCESSFUL;
+	DataChecksumState->worker_result = DATACHECKSUMSWORKER_SUCCESSFUL;
 	LWLockRelease(DataChecksumsWorkerLock);
 }
