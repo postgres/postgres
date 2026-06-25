@@ -5715,7 +5715,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    relational databases.  PostgreSQL implements SQL/PGQ<footnote><para>Here, PGQ
    stands for <quote>property graph query</quote>.  In the jargon of graph
    databases, <quote>property graph</quote> is normally abbreviated as PG, which
-   is clearly confusing for practioners of PostgreSQL, also usually abbreviated
+   is clearly confusing for practitioners of PostgreSQL, also usually abbreviated
    as PG.</para></footnote>, which is part of the SQL standard, where a property
    graph is defined as a kind of read-only view over relational tables.  So the
    actual data is still in tables or table-like objects, but is exposed as a

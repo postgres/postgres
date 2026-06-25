@@ -1588,7 +1588,7 @@ Allow <link linkend="sql-createpublication"><command>CREATE</command></link>/<li
 </para>
 
 <para>
-This is controled with the <literal>EXCEPT</literal> clause, and is useful when specifying <literal>ALL TABLES</literal>.
+This is controlled with the <literal>EXCEPT</literal> clause, and is useful when specifying <literal>ALL TABLES</literal>.
 </para>
 </listitem>
 
@@ -2484,7 +2484,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow <link linkend="app-psql"><application>psql</application></link> to more accurately determine if the <link linkend="app-psql-meta-command-pset-pager">pager</link>l is needed (Erik Wienhold)
+Allow <link linkend="app-psql"><application>psql</application></link> to more accurately determine if the <link linkend="app-psql-meta-command-pset-pager">pager</link> is needed (Erik Wienhold)
 <ulink url="&commit_baseurl;27da1a796">&sect;</ulink>
 </para>
 </listitem>
