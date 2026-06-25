@@ -62,8 +62,8 @@ static void
 handle_args(int argc, char *argv[])
 {
 	static struct option long_options[] = {
-		{"duration", required_argument, NULL, 'd'},
 		{"cutoff", required_argument, NULL, 'c'},
+		{"duration", required_argument, NULL, 'd'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -76,7 +76,7 @@ handle_args(int argc, char *argv[])
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
-			printf(_("Usage: %s [-d DURATION] [-c CUTOFF]\n"), progname);
+			printf(_("Usage: %s [-c CUTOFF] [-d DURATION]\n"), progname);
 			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
@@ -86,11 +86,31 @@ handle_args(int argc, char *argv[])
 		}
 	}
 
-	while ((option = getopt_long(argc, argv, "d:c:",
+	while ((option = getopt_long(argc, argv, "c:d:",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
 		{
+			case 'c':
+				errno = 0;
+				max_rprct = strtod(optarg, &endptr);
+
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
+				{
+					fprintf(stderr, _("%s: invalid argument for option %s\n"),
+							progname, "--cutoff");
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+
+				if (max_rprct < 0 || max_rprct > 100)
+				{
+					fprintf(stderr, _("%s: %s must be in range %u..%u\n"),
+							progname, "--cutoff", 0, 100);
+					exit(1);
+				}
+				break;
+
 			case 'd':
 				errno = 0;
 				optval = strtoul(optarg, &endptr, 10);
@@ -109,26 +129,6 @@ handle_args(int argc, char *argv[])
 				{
 					fprintf(stderr, _("%s: %s must be in range %u..%u\n"),
 							progname, "--duration", 1, UINT_MAX);
-					exit(1);
-				}
-				break;
-
-			case 'c':
-				errno = 0;
-				max_rprct = strtod(optarg, &endptr);
-
-				if (endptr == optarg || *endptr != '\0' || errno != 0)
-				{
-					fprintf(stderr, _("%s: invalid argument for option %s\n"),
-							progname, "--cutoff");
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-					exit(1);
-				}
-
-				if (max_rprct < 0 || max_rprct > 100)
-				{
-					fprintf(stderr, _("%s: %s must be in range %u..%u\n"),
-							progname, "--cutoff", 0, 100);
 					exit(1);
 				}
 				break;
