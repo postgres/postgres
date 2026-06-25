@@ -101,7 +101,7 @@ ECPGmake_struct_type(struct ECPGstruct_member *rm, enum ECPGttype type,
 
 	ne->type_name = mm_strdup(type_name);
 	ne->u.members = ECPGstruct_member_dup(rm);
-	ne->struct_sizeof = mm_strdup(struct_sizeof);
+	ne->struct_sizeof = struct_sizeof ? mm_strdup(struct_sizeof) : NULL;
 
 	return ne;
 }
