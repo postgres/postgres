@@ -2773,7 +2773,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     </listitem>
     <listitem>
      <para>
-      The output plugins referenced by the slots on the old cluster must be
+      The output plugins referenced by the slots in the old cluster must be
       installed in the new PostgreSQL executable directory.
      </para>
     </listitem>
@@ -2785,7 +2785,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     </listitem>
     <listitem>
      <para>
-      All slots on the old cluster must be usable, i.e., their
+      All slots in the old cluster must be usable, i.e., their
       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>conflicting</structfield>
       is <literal>false</literal>.
      </para>
@@ -2868,7 +2868,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      <para>
       If there are subscriptions with retain_dead_tuples enabled, the reserved
       replication slot <quote><literal>pg_conflict_detection</literal></quote>
-      must not exist on the new cluster. Additionally, the
+      must not exist in the new cluster. Additionally, the
       <link linkend="guc-wal-level"><varname>wal_level</varname></link> on the
       new cluster must be set to <literal>replica</literal> or
       <literal>logical</literal>.

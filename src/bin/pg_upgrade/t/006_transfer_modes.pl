@@ -63,7 +63,7 @@ sub test_mode
 	}
 	$new->stop;
 
-	# Create a small variety of simple test objects on the old cluster.  We'll
+	# Create a small variety of simple test objects in the old cluster.  We'll
 	# check that these reach the new version after upgrading.
 	$old->start;
 	$old->safe_psql('postgres',

@@ -2287,13 +2287,13 @@ check_new_cluster_replication_slots(void)
 	if (old_cluster.sub_retain_dead_tuples &&
 		nslots_on_old + 1 > max_replication_slots)
 		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
-				 "logical replication slots on the old cluster plus one additional slot required "
+				 "logical replication slots in the old cluster plus one additional slot required "
 				 "for retaining conflict detection information (%d)",
 				 max_replication_slots, nslots_on_old + 1);
 
 	if (nslots_on_old > max_replication_slots)
 		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
-				 "logical replication slots (%d) on the old cluster",
+				 "logical replication slots (%d) in the old cluster",
 				 max_replication_slots, nslots_on_old);
 
 	PQclear(res);
@@ -2337,7 +2337,7 @@ check_new_cluster_subscription_configuration(void)
 	max_active_replication_origins = atoi(PQgetvalue(res, 0, 0));
 	if (old_cluster.nsubs > max_active_replication_origins)
 		pg_fatal("\"max_active_replication_origins\" (%d) must be greater than or equal to the number of "
-				 "subscriptions (%d) on the old cluster",
+				 "subscriptions (%d) in the old cluster",
 				 max_active_replication_origins, old_cluster.nsubs);
 
 	PQclear(res);

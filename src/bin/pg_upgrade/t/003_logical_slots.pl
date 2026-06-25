@@ -58,7 +58,7 @@ chdir ${PostgreSQL::Test::Utils::tmp_check};
 # TEST: Confirm pg_upgrade fails when the new cluster has wrong GUC values
 
 # Preparations for the subsequent test:
-# 1. Create two slots on the old cluster
+# 1. Create two slots in the old cluster
 $oldpub->start;
 $oldpub->safe_psql(
 	'postgres', qq[
@@ -69,7 +69,7 @@ $oldpub->safe_psql(
 $oldpub->stop();
 
 # 2. Set 'max_replication_slots' to be less than the number of slots (2)
-#	 present on the old cluster.
+#	 present in the old cluster.
 $newpub->append_conf('postgresql.conf', "max_replication_slots = 1");
 
 # pg_upgrade will fail because the new cluster has insufficient
@@ -78,7 +78,7 @@ command_checks_all(
 	[@pg_upgrade_cmd],
 	1,
 	[
-		qr/"max_replication_slots" \(1\) must be greater than or equal to the number of logical replication slots \(3\) on the old cluster/
+		qr/"max_replication_slots" \(1\) must be greater than or equal to the number of logical replication slots \(3\) in the old cluster/
 	],
 	[qr//],
 	'run of pg_upgrade where the new cluster has insufficient "max_replication_slots"'
