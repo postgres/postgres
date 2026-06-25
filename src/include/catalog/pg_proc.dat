@@ -1209,8 +1209,8 @@
   prosrc => 'bytea_int8' },
 
 { oid => '6510', descr => 'convert uuid to bytea',
-  proname => 'bytea', prorettype => 'bytea', proargtypes => 'uuid',
-  prosrc => 'uuid_bytea' },
+  proname => 'bytea', proleakproof => 't', prorettype => 'bytea',
+  proargtypes => 'uuid', prosrc => 'uuid_bytea' },
 { oid => '6511', descr => 'convert bytea to uuid',
   proname => 'uuid', prorettype => 'uuid', proargtypes => 'bytea',
   prosrc => 'bytea_uuid' },
