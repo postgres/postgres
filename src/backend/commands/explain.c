@@ -4524,6 +4524,7 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 	const char *operation;
 	const char *foperation;
 	bool		labeltargets;
+	bool		nopruning;
 	int			j;
 	List	   *idxNames = NIL;
 	ListCell   *lst;
@@ -4571,6 +4572,16 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 	if (labeltargets)
 		ExplainOpenGroup("Target Tables", "Target Tables", false, es);
 
+	/*
+	 * node->fdwPrivLists is parallel to node->resultRelations, in the
+	 * original pre-pruning order.  If no result relations were pruned, the
+	 * entries in mtstate->resultRelInfo[] are in that same order and can be
+	 * matched to fdwPrivLists positionally; otherwise we have to look each
+	 * one up by range table index below.  This test is loop-invariant, so
+	 * compute it once here.
+	 */
+	nopruning = (list_length(node->resultRelations) == mtstate->mt_nrels);
+
 	for (j = 0; j < mtstate->mt_nrels; j++)
 	{
 		ResultRelInfo *resultRelInfo = mtstate->resultRelInfo + j;
@@ -4609,7 +4620,30 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 			fdwroutine != NULL &&
 			fdwroutine->ExplainForeignModify != NULL)
 		{
-			List	   *fdw_private = (List *) list_nth(mtstate->mt_fdwPrivLists, j);
+			List	   *fdw_private;
+
+			/*
+			 * Find this relation's fdw_private: index fdwPrivLists directly
+			 * when nothing was pruned, else match by range table index.
+			 */
+			if (nopruning)
+				fdw_private = (List *) list_nth(node->fdwPrivLists, j);
+			else
+			{
+				Index		rti = resultRelInfo->ri_RangeTableIndex;
+				ListCell   *lc1;
+				ListCell   *lc2;
+
+				fdw_private = NIL;
+				forboth(lc1, node->resultRelations, lc2, node->fdwPrivLists)
+				{
+					if (lfirst_int(lc1) == (int) rti)
+					{
+						fdw_private = (List *) lfirst(lc2);
+						break;
+					}
+				}
+			}
 
 			fdwroutine->ExplainForeignModify(mtstate,
 											 resultRelInfo,
