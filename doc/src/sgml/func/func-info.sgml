@@ -3020,8 +3020,9 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         vary between calls, even within a single transaction.
        </para>
        <para>
-        To use this function, you must have privileges of the
-        <literal>pg_read_all_stats</literal> role.
+        By default, all columns are shown as <literal>NULL</literal> unless
+        the user has privileges of the <literal>pg_read_all_stats</literal>
+        role.
        </para></entry>
       </row>
      </tbody>
@@ -3032,8 +3033,9 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
     The internal transaction ID type <type>xid</type> is 32 bits wide and
     wraps around every 4 billion transactions.  However,
     the functions shown in <xref linkend="functions-pg-snapshot"/>, except
-    <function>age</function>, <function>mxid_age</function>, and
-    <function>pg_get_multixact_members</function>, use a
+    <function>age</function>, <function>mxid_age</function>,
+    <function>pg_get_multixact_members</function>, and
+    <function>pg_get_multixact_stats</function>, use a
     64-bit type <type>xid8</type> that does not wrap around during the life
     of an installation and can be converted to <type>xid</type> by casting if
     required;  see <xref linkend="transaction-id"/> for details.
