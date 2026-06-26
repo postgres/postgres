@@ -93,7 +93,7 @@ like($result, qr/"regress_role-with-dash"/, 'role name requiring quoting');
 
 # Pretty-printed output
 $result = $node->safe_psql('postgres',
-	q{SELECT * FROM pg_get_role_ddl('regress_role_ddl_test2', 'pretty', 'true')}
+	q{SELECT * FROM pg_get_role_ddl('regress_role_ddl_test2', pretty => true)}
 );
 like($result, qr/\n\s+SUPERUSER/, 'role pretty-print indents attributes');
 
@@ -123,7 +123,7 @@ like($result, qr/ADMIN TRUE/, 'membership includes ADMIN TRUE');
 
 # Memberships suppressed
 $result = $node->safe_psql('postgres',
-	q{SELECT * FROM pg_get_role_ddl('regress_role_ddl_member', 'memberships', 'false')}
+	q{SELECT * FROM pg_get_role_ddl('regress_role_ddl_member', memberships => false)}
 );
 unlike($result, qr/GRANT/, 'memberships suppressed');
 
@@ -176,18 +176,18 @@ $result = $node->safe_psql('postgres',
 	q{SELECT count(*) FROM pg_get_database_ddl(NULL)});
 is($result, '0', 'NULL database returns no rows');
 
-# Invalid option
+# Invalid option (bad boolean cast)
 ($ret, $stdout, $stderr) = $node->psql('postgres',
-	q{SELECT * FROM pg_get_database_ddl('regression_ddlutils_test', 'owner', 'invalid')}
+	q{SELECT * FROM pg_get_database_ddl('regression_ddlutils_test', owner => 'invalid')}
 );
 isnt($ret, 0, 'invalid boolean option errors');
-like($stderr, qr/invalid value/, 'invalid option error message');
+like($stderr, qr/invalid input syntax for type boolean/, 'invalid option error message');
 
-# Duplicate option
+# Duplicate named argument
 ($ret, $stdout, $stderr) = $node->psql(
 	'postgres',
 	q{SELECT * FROM pg_get_database_ddl('regression_ddlutils_test',
-	  'owner', 'false', 'owner', 'true')});
+	  owner => false, owner => true)});
 isnt($ret, 0, 'duplicate option errors');
 
 # Basic output (without locale details)
@@ -218,8 +218,16 @@ $result = ddl_filter(
 		'postgres',
 		q{SELECT pg_get_database_ddl
 	  FROM pg_get_database_ddl('regression_ddlutils_test',
-	    'pretty', 'true', 'tablespace', 'false')}));
+	    pretty => true, tablespace => false)}));
 like($result, qr/\n\s+WITH TEMPLATE/, 'database DDL pretty-prints WITH');
+
+# Owner suppressed
+$result = ddl_filter(
+	$node->safe_psql(
+		'postgres',
+		q{SELECT pg_get_database_ddl
+	  FROM pg_get_database_ddl('regression_ddlutils_test', owner => false)}));
+unlike($result, qr/OWNER/, 'database DDL owner suppressed');
 
 # Permission check
 $node->safe_psql(
@@ -292,14 +300,14 @@ like($result, qr/seq_page_cost='1.5'/, 'tablespace DDL includes options');
 $result = $node->safe_psql(
 	'postgres',
 	q{SELECT * FROM pg_get_tablespace_ddl('regress_allopt_tblsp',
-	  'pretty', 'true')});
+	  pretty => true)});
 like($result, qr/\n\s+OWNER/, 'tablespace DDL pretty-prints OWNER');
 
 # Owner suppressed
 $result = $node->safe_psql(
 	'postgres',
 	q{SELECT * FROM pg_get_tablespace_ddl('regress_allopt_tblsp',
-	  'owner', 'false')});
+	  owner => false)});
 unlike($result, qr/OWNER/, 'tablespace DDL owner suppressed');
 
 # Lookup by OID

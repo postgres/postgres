@@ -33,7 +33,6 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/fmgroids.h"
@@ -46,35 +45,6 @@
 #include "utils/timestamp.h"
 #include "utils/varlena.h"
 
-/* Option value types for DDL option parsing */
-typedef enum
-{
-	DDL_OPT_BOOL,
-	DDL_OPT_TEXT,
-	DDL_OPT_INT,
-} DdlOptType;
-
-/*
- * A single DDL option descriptor: caller fills in name and type,
- * parse_ddl_options fills in isset + the appropriate value field.
- */
-typedef struct DdlOption
-{
-	const char *name;			/* option name (case-insensitive match) */
-	DdlOptType	type;			/* expected value type */
-	bool		isset;			/* true if caller supplied this option */
-	/* fields for specific option types */
-	union
-	{
-		bool		boolval;	/* filled in for DDL_OPT_BOOL */
-		char	   *textval;	/* filled in for DDL_OPT_TEXT (palloc'd) */
-		int			intval;		/* filled in for DDL_OPT_INT */
-	};
-} DdlOption;
-
-
-static void parse_ddl_options(FunctionCallInfo fcinfo, int variadic_start,
-							  DdlOption *opts, int nopts);
 static void append_ddl_option(StringInfo buf, bool pretty, int indent,
 							  const char *fmt, ...)
 			pg_attribute_printf(4, 5);
@@ -83,149 +53,10 @@ static void append_guc_value(StringInfo buf, const char *name,
 static List *pg_get_role_ddl_internal(Oid roleid, bool pretty,
 									  bool memberships);
 static List *pg_get_tablespace_ddl_internal(Oid tsid, bool pretty, bool no_owner);
-static Datum pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull);
+static Datum pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid);
 static List *pg_get_database_ddl_internal(Oid dbid, bool pretty,
 										  bool no_owner, bool no_tablespace);
 
-
-/*
- * parse_ddl_options
- * 		Parse variadic name/value option pairs
- *
- * Options are passed as alternating key/value text pairs.  The caller
- * provides an array of DdlOption descriptors specifying the accepted
- * option names and their types; this function matches each supplied
- * pair against the array, validates the value, and fills in the
- * result fields.
- */
-static void
-parse_ddl_options(FunctionCallInfo fcinfo, int variadic_start,
-				  DdlOption *opts, int nopts)
-{
-	Datum	   *args;
-	bool	   *nulls;
-	Oid		   *types;
-	int			nargs;
-
-	/* Clear all output fields */
-	for (int i = 0; i < nopts; i++)
-	{
-		opts[i].isset = false;
-		switch (opts[i].type)
-		{
-			case DDL_OPT_BOOL:
-				opts[i].boolval = false;
-				break;
-			case DDL_OPT_TEXT:
-				opts[i].textval = NULL;
-				break;
-			case DDL_OPT_INT:
-				opts[i].intval = 0;
-				break;
-		}
-	}
-
-	nargs = extract_variadic_args(fcinfo, variadic_start, true,
-								  &args, &types, &nulls);
-
-	if (nargs <= 0)
-		return;
-
-	/* Handle DEFAULT NULL case */
-	if (nargs == 1 && nulls[0])
-		return;
-
-	if (nargs % 2 != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("variadic arguments must be name/value pairs"),
-				 errhint("Provide an even number of variadic arguments that can be divided into pairs.")));
-
-	/*
-	 * For each option name/value pair, find corresponding positional option
-	 * for the option name, and assign the option value.
-	 */
-	for (int i = 0; i < nargs; i += 2)
-	{
-		char	   *name;
-		char	   *valstr;
-		DdlOption  *opt = NULL;
-
-		if (nulls[i])
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("option name at variadic position %d is null", i + 1)));
-
-		name = TextDatumGetCString(args[i]);
-
-		if (nulls[i + 1])
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("value for option \"%s\" must not be null", name)));
-
-		/* Find matching option descriptor */
-		for (int j = 0; j < nopts; j++)
-		{
-			if (pg_strcasecmp(name, opts[j].name) == 0)
-			{
-				opt = &opts[j];
-				break;
-			}
-		}
-
-		if (opt == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized option: \"%s\"", name)));
-
-		if (opt->isset)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("option \"%s\" is specified more than once",
-							name)));
-
-		valstr = TextDatumGetCString(args[i + 1]);
-
-		switch (opt->type)
-		{
-			case DDL_OPT_BOOL:
-				if (!parse_bool(valstr, &opt->boolval))
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for boolean option \"%s\": %s",
-									name, valstr)));
-				break;
-
-			case DDL_OPT_TEXT:
-				opt->textval = valstr;
-				valstr = NULL;	/* don't pfree below */
-				break;
-
-			case DDL_OPT_INT:
-				{
-					char	   *endp;
-					long		val;
-
-					errno = 0;
-					val = strtol(valstr, &endp, 10);
-					if (*endp != '\0' || errno == ERANGE ||
-						val < PG_INT32_MIN || val > PG_INT32_MAX)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("invalid value for integer option \"%s\": %s",
-										name, valstr)));
-					opt->intval = (int) val;
-				}
-				break;
-		}
-
-		opt->isset = true;
-
-		if (valstr)
-			pfree(valstr);
-		pfree(name);
-	}
-}
 
 /*
  * Helper to append a formatted string with optional pretty-printing.
@@ -590,7 +421,6 @@ pg_get_role_ddl_internal(Oid roleid, bool pretty, bool memberships)
  * Each row is a complete SQL statement.  The first row is always the
  * CREATE ROLE statement; subsequent rows are ALTER ROLE SET statements
  * and optionally GRANT statements for role memberships.
- * Returns no rows if the role argument is NULL.
  */
 Datum
 pg_get_role_ddl(PG_FUNCTION_ARGS)
@@ -602,26 +432,17 @@ pg_get_role_ddl(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext;
 		Oid			roleid;
-		DdlOption	opts[] = {
-			{"pretty", DDL_OPT_BOOL},
-			{"memberships", DDL_OPT_BOOL},
-		};
+		bool		pretty;
+		bool		memberships;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		if (PG_ARGISNULL(0))
-		{
-			MemoryContextSwitchTo(oldcontext);
-			SRF_RETURN_DONE(funcctx);
-		}
-
 		roleid = PG_GETARG_OID(0);
-		parse_ddl_options(fcinfo, 1, opts, lengthof(opts));
+		pretty = PG_GETARG_BOOL(1);
+		memberships = PG_GETARG_BOOL(2);
 
-		statements = pg_get_role_ddl_internal(roleid,
-											  opts[0].isset && opts[0].boolval,
-											  !opts[1].isset || opts[1].boolval);
+		statements = pg_get_role_ddl_internal(roleid, pretty, memberships);
 		funcctx->user_fctx = statements;
 		funcctx->max_calls = list_length(statements);
 
@@ -755,7 +576,7 @@ pg_get_tablespace_ddl_internal(Oid tsid, bool pretty, bool no_owner)
  * pg_get_tablespace_ddl_srf - common SRF logic for tablespace DDL
  */
 static Datum
-pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull)
+pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid)
 {
 	FuncCallContext *funcctx;
 	List	   *statements;
@@ -763,25 +584,16 @@ pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull)
 	if (SRF_IS_FIRSTCALL())
 	{
 		MemoryContext oldcontext;
-		DdlOption	opts[] = {
-			{"pretty", DDL_OPT_BOOL},
-			{"owner", DDL_OPT_BOOL},
-		};
+		bool		pretty;
+		bool		no_owner;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		if (isnull)
-		{
-			MemoryContextSwitchTo(oldcontext);
-			SRF_RETURN_DONE(funcctx);
-		}
+		pretty = PG_GETARG_BOOL(1);
+		no_owner = !PG_GETARG_BOOL(2);
 
-		parse_ddl_options(fcinfo, 1, opts, lengthof(opts));
-
-		statements = pg_get_tablespace_ddl_internal(tsid,
-													opts[0].isset && opts[0].boolval,
-													opts[1].isset && !opts[1].boolval);
+		statements = pg_get_tablespace_ddl_internal(tsid, pretty, no_owner);
 		funcctx->user_fctx = statements;
 		funcctx->max_calls = list_length(statements);
 
@@ -813,14 +625,9 @@ pg_get_tablespace_ddl_srf(FunctionCallInfo fcinfo, Oid tsid, bool isnull)
 Datum
 pg_get_tablespace_ddl_oid(PG_FUNCTION_ARGS)
 {
-	Oid			tsid = InvalidOid;
-	bool		isnull;
+	Oid			tsid = PG_GETARG_OID(0);
 
-	isnull = PG_ARGISNULL(0);
-	if (!isnull)
-		tsid = PG_GETARG_OID(0);
-
-	return pg_get_tablespace_ddl_srf(fcinfo, tsid, isnull);
+	return pg_get_tablespace_ddl_srf(fcinfo, tsid);
 }
 
 /*
@@ -830,19 +637,10 @@ pg_get_tablespace_ddl_oid(PG_FUNCTION_ARGS)
 Datum
 pg_get_tablespace_ddl_name(PG_FUNCTION_ARGS)
 {
-	Oid			tsid = InvalidOid;
-	Name		tspname;
-	bool		isnull;
+	Name		tspname = PG_GETARG_NAME(0);
+	Oid			tsid = get_tablespace_oid(NameStr(*tspname), false);
 
-	isnull = PG_ARGISNULL(0);
-
-	if (!isnull)
-	{
-		tspname = PG_GETARG_NAME(0);
-		tsid = get_tablespace_oid(NameStr(*tspname), false);
-	}
-
-	return pg_get_tablespace_ddl_srf(fcinfo, tsid, isnull);
+	return pg_get_tablespace_ddl_srf(fcinfo, tsid);
 }
 
 /*
@@ -1140,28 +938,20 @@ pg_get_database_ddl(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext;
 		Oid			dbid;
-		DdlOption	opts[] = {
-			{"pretty", DDL_OPT_BOOL},
-			{"owner", DDL_OPT_BOOL},
-			{"tablespace", DDL_OPT_BOOL},
-		};
+		bool		pretty;
+		bool		no_owner;
+		bool		no_tablespace;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		if (PG_ARGISNULL(0))
-		{
-			MemoryContextSwitchTo(oldcontext);
-			SRF_RETURN_DONE(funcctx);
-		}
-
 		dbid = PG_GETARG_OID(0);
-		parse_ddl_options(fcinfo, 1, opts, lengthof(opts));
+		pretty = PG_GETARG_BOOL(1);
+		no_owner = !PG_GETARG_BOOL(2);
+		no_tablespace = !PG_GETARG_BOOL(3);
 
-		statements = pg_get_database_ddl_internal(dbid,
-												  opts[0].isset && opts[0].boolval,
-												  opts[1].isset && !opts[1].boolval,
-												  opts[2].isset && !opts[2].boolval);
+		statements = pg_get_database_ddl_internal(dbid, pretty, no_owner,
+												  no_tablespace);
 		funcctx->user_fctx = statements;
 		funcctx->max_calls = list_length(statements);
 
