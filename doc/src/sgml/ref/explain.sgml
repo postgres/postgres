@@ -303,7 +303,14 @@ ROLLBACK;
     <term><literal>IO</literal></term>
     <listitem>
      <para>
-      Include information on I/O performed by scan nodes proving such information.
+      Include information on I/O performed by scan nodes providing such
+      information.
+      Specifically, include information about the prefetch queue (the average
+      and the maximum distance, and the queue capacity), and information about
+      issued I/O requests (the total number of requests, the average request
+      size, the number of I/O waits, and the average number of concurrent I/O
+      requests). The request size is reported in blocks.
+      In text format, only non-zero values are printed.
       This parameter may only be used when <literal>ANALYZE</literal> is also
       enabled.  It defaults to <literal>FALSE</literal>.
      </para>
