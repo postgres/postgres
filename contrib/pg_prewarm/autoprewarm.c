@@ -573,15 +573,22 @@ autoprewarm_database_main(Datum main_arg)
 		 * move on.
 		 */
 		while (i < apw_state->prewarm_stop_idx &&
-			   blk.tablespace == tablespace &&
-			   blk.filenumber == filenumber &&
 			   have_free_buffer())
 		{
-			ForkNumber	forknum = blk.forknum;
+			ForkNumber	forknum;
 			BlockNumber nblocks;
 			struct AutoPrewarmReadStreamData p;
 			ReadStream *stream;
 			Buffer		buf;
+
+			blk = block_info[i];
+
+			/* Stop when we reach a different relation. */
+			if (blk.tablespace != tablespace ||
+				blk.filenumber != filenumber)
+				break;
+
+			forknum = blk.forknum;
 
 			/*
 			 * smgrexists is not safe for illegal forknum, hence check whether
@@ -644,9 +651,12 @@ autoprewarm_database_main(Datum main_arg)
 
 			read_stream_end(stream);
 
-			/* Advance i past all the blocks just prewarmed. */
+			/*
+			 * Advance i past all the blocks just prewarmed. Note that the
+			 * callback might have advanced the index beyond the last valid
+			 * block, so don't access block_info[i] yet.
+			 */
 			i = p.pos;
-			blk = block_info[i];
 		}
 
 		relation_close(rel, AccessShareLock);
