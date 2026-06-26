@@ -69,6 +69,30 @@ GROUP BY v, h ORDER BY h,v
  \crosstabview v h i
 \pset null ''
 
+-- boolean display
+\pset display_true 'Aye'
+\pset display_false 'Nay'
+\pset null 'Wut'
+with rows (display_bools, col_key, val) as (values
+	(false, false, false),
+	(true, true, true),
+	(null, null, null),
+	(null, true, false),
+	(null, false, true),
+	(true, null, false),
+	(false, null, true)
+) select * from rows
+ \crosstabview display_bools col_key val
+
+with rows (tst, col, val) as (values
+	(true, null, 42), (true, null, 142857)
+) select * from rows
+ \crosstabview tst col
+
+\pset display_true 't'
+\pset display_false 'f'
+\pset null ''
+
 -- refer to columns by position
 SELECT v,h,string_agg(i::text, E'\n'), string_agg(c, E'\n')
 FROM ctv_data GROUP BY v, h ORDER BY h,v
