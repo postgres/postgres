@@ -1204,6 +1204,58 @@ SELECT relname,
 SELECT length(a) FROM t;
 DROP TABLE t;
 
+-- Tablespace selection for the new partitions mirrors
+-- CREATE TABLE ... PARTITION OF: the partitioned root's explicit
+-- tablespace wins; otherwise default_tablespace applies; otherwise the
+-- database default is used.
+CREATE TABLE t (i int) PARTITION BY RANGE(i) TABLESPACE regress_tblspace;
+CREATE TABLE tp_all PARTITION OF t FOR VALUES FROM (0) TO (10);
+INSERT INTO t SELECT generate_series(0, 9);
+ALTER TABLE t SPLIT PARTITION tp_all INTO (
+    PARTITION tp_lo FOR VALUES FROM (0) TO (5),
+    PARTITION tp_hi FOR VALUES FROM (5) TO (10)
+);
+SELECT c.relname, s.spcname FROM pg_class c LEFT JOIN pg_tablespace s
+  ON c.reltablespace = s.oid WHERE c.relname IN ('tp_lo', 'tp_hi')
+  ORDER BY c.relname;
+DROP TABLE t;
+
+-- Parent has no explicit tablespace, but default_tablespace is set: the
+-- new partitions land on default_tablespace.
+CREATE TABLE t (i int) PARTITION BY RANGE(i);
+CREATE TABLE tp_all PARTITION OF t FOR VALUES FROM (0) TO (10);
+INSERT INTO t SELECT generate_series(0, 9);
+SET default_tablespace TO regress_tblspace;
+ALTER TABLE t SPLIT PARTITION tp_all INTO (
+    PARTITION tp_lo FOR VALUES FROM (0) TO (5),
+    PARTITION tp_hi FOR VALUES FROM (5) TO (10)
+);
+RESET default_tablespace;
+SELECT c.relname, s.spcname FROM pg_class c LEFT JOIN pg_tablespace s
+  ON c.reltablespace = s.oid WHERE c.relname IN ('tp_lo', 'tp_hi')
+  ORDER BY c.relname;
+DROP TABLE t;
+
+CREATE TABLE t (i int) PARTITION BY RANGE(i);
+CREATE TABLE tp_all PARTITION OF t FOR VALUES FROM (0) TO (10);
+INSERT INTO t SELECT generate_series(0, 9);
+-- pg_global is rejected when picked up from default_tablespace.
+SET default_tablespace TO pg_global;
+ALTER TABLE t SPLIT PARTITION tp_all INTO (
+    PARTITION tp_lo FOR VALUES FROM (0) TO (5),
+    PARTITION tp_hi FOR VALUES FROM (5) TO (10)
+);	-- fails
+RESET default_tablespace;
+-- Parent has no explicit tablespace and default_tablespace is empty: new
+-- partitions use the database default (reltablespace = 0).
+ALTER TABLE t SPLIT PARTITION tp_all INTO (
+    PARTITION tp_lo FOR VALUES FROM (0) TO (5),
+    PARTITION tp_hi FOR VALUES FROM (5) TO (10)
+);
+SELECT relname, reltablespace FROM pg_class
+  WHERE relname IN ('tp_lo', 'tp_hi') ORDER BY relname;
+DROP TABLE t;
+
 RESET search_path;
 
 --

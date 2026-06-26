@@ -798,6 +798,46 @@ SELECT reltoastrelid <> 0 AS has_toast,
 SELECT length(a) FROM t;
 DROP TABLE t;
 
+-- Tablespace selection for the new merged partition mirrors
+-- CREATE TABLE ... PARTITION OF: the partitioned root's explicit
+-- tablespace wins; otherwise default_tablespace applies; otherwise the
+-- database default is used.
+CREATE TABLE t (i int) PARTITION BY RANGE(i) TABLESPACE regress_tblspace;
+CREATE TABLE tp_0_5 PARTITION OF t FOR VALUES FROM (0) TO (5);
+CREATE TABLE tp_5_10 PARTITION OF t FOR VALUES FROM (5) TO (10);
+INSERT INTO t SELECT generate_series(0, 9);
+ALTER TABLE t MERGE PARTITIONS (tp_0_5, tp_5_10) INTO tp_merged;
+SELECT spcname FROM pg_class c LEFT JOIN pg_tablespace s
+  ON c.reltablespace = s.oid WHERE c.relname = 'tp_merged';
+DROP TABLE t;
+
+-- Parent has no explicit tablespace, but default_tablespace is set: the
+-- new partition lands on default_tablespace.
+CREATE TABLE t (i int) PARTITION BY RANGE(i);
+CREATE TABLE tp_0_5 PARTITION OF t FOR VALUES FROM (0) TO (5);
+CREATE TABLE tp_5_10 PARTITION OF t FOR VALUES FROM (5) TO (10);
+INSERT INTO t SELECT generate_series(0, 9);
+SET default_tablespace TO regress_tblspace;
+ALTER TABLE t MERGE PARTITIONS (tp_0_5, tp_5_10) INTO tp_merged;
+RESET default_tablespace;
+SELECT spcname FROM pg_class c LEFT JOIN pg_tablespace s
+  ON c.reltablespace = s.oid WHERE c.relname = 'tp_merged';
+DROP TABLE t;
+
+CREATE TABLE t (i int) PARTITION BY RANGE(i);
+CREATE TABLE tp_0_5 PARTITION OF t FOR VALUES FROM (0) TO (5);
+CREATE TABLE tp_5_10 PARTITION OF t FOR VALUES FROM (5) TO (10);
+INSERT INTO t SELECT generate_series(0, 9);
+-- pg_global is rejected when picked up from default_tablespace.
+SET default_tablespace TO pg_global;
+ALTER TABLE t MERGE PARTITIONS (tp_0_5, tp_5_10) INTO tp_merged;	-- fails
+RESET default_tablespace;
+-- Parent has no explicit tablespace and default_tablespace is empty: the
+-- new partition uses the database default (reltablespace = 0).
+ALTER TABLE t MERGE PARTITIONS (tp_0_5, tp_5_10) INTO tp_merged;
+SELECT reltablespace FROM pg_class WHERE relname = 'tp_merged';
+DROP TABLE t;
+
 
 RESET search_path;
 

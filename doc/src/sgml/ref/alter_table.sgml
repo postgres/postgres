@@ -1234,8 +1234,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
        <command>ALTER TABLE MERGE PARTITION</command> uses the partitioned
        table itself as the template to construct the new partition.
-       The new partition will inherit the same table access method, persistence
-       type, and tablespace as the partitioned table.
+       The new partition inherits the table access method and persistence type
+       of the partitioned table.  Its tablespace is selected as for a
+       <command>CREATE TABLE ... PARTITION OF</command> command issued
+       without a <literal>TABLESPACE</literal> clause: if the partitioned
+       table has an explicit tablespace, the new partition uses it;
+       otherwise the value of <xref linkend="guc-default-tablespace"/> is
+       taken into account, falling back to the database's default tablespace.
 
        Constraints, column defaults, column generation expressions, identity
        columns, indexes, and triggers are copied from the partitioned table to
@@ -1332,8 +1337,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
        <command>ALTER TABLE SPLIT PARTITION</command> uses the partitioned
        table itself as the template to construct new partitions.
-       New partitions will inherit the same table access method, persistence
-       type, and tablespace as the partitioned table.
+       New partitions inherit the table access method and persistence type of
+       the partitioned table.  Their tablespace is selected as for a
+       <command>CREATE TABLE ... PARTITION OF</command> command issued
+       without a <literal>TABLESPACE</literal> clause: if the partitioned
+       table has an explicit tablespace, the new partitions use it;
+       otherwise the value of <xref linkend="guc-default-tablespace"/> is
+       taken into account, falling back to the database's default tablespace.
      </para>
 
      <para>

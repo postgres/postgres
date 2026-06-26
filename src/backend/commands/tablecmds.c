@@ -22735,6 +22735,7 @@ createPartitionTable(List **wqueue, RangeVar *newPartName,
 	Relation	newRel;
 	Oid			newRelId;
 	Oid			existingRelid;
+	Oid			tablespaceId;
 	TupleDesc	descriptor;
 	List	   *colList = NIL;
 	Oid			relamId;
@@ -22786,10 +22787,38 @@ createPartitionTable(List **wqueue, RangeVar *newPartName,
 				errmsg("cannot create a permanent relation as partition of temporary relation \"%s\"",
 					   RelationGetRelationName(parent_rel)));
 
+	/*
+	 * Select the tablespace for the new partition.  Mirror the logic that
+	 * CREATE TABLE foo PARTITION OF ... uses in DefineRelation: take the
+	 * partitioned parent's explicit tablespace if it has one, otherwise take
+	 * default_tablespace into account, and finally use the database default.
+	 */
+	tablespaceId = parent_relform->reltablespace;
+	if (!OidIsValid(tablespaceId))
+		tablespaceId = GetDefaultTablespace(newPartName->relpersistence, false);
+
+	/* Check permissions except when using database's default */
+	if (OidIsValid(tablespaceId) && tablespaceId != MyDatabaseTableSpace)
+	{
+		AclResult	aclresult;
+
+		aclresult = object_aclcheck(TableSpaceRelationId, tablespaceId,
+									GetUserId(), ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_TABLESPACE,
+						   get_tablespace_name(tablespaceId));
+	}
+
+	/* In all cases disallow placing user relations in pg_global */
+	if (tablespaceId == GLOBALTABLESPACE_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("only shared relations can be placed in pg_global tablespace")));
+
 	/* Create the relation. */
 	newRelId = heap_create_with_catalog(newPartName->relname,
 										namespaceId,
-										parent_relform->reltablespace,
+										tablespaceId,
 										InvalidOid,
 										InvalidOid,
 										InvalidOid,
