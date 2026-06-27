@@ -1063,7 +1063,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
  */
 void
 CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation,
-					OnConflictAction onConflictAction, List *mergeActions)
+					OnConflictAction onConflictAction, List *mergeActions,
+					ModifyTable *mtnode)
 {
 	Relation	resultRel = resultRelInfo->ri_RelationDesc;
 	FdwRoutine *fdwroutine;
@@ -1126,6 +1127,14 @@ CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation,
 								RelationGetRelationName(resultRel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
+			/* We don't support FOR PORTION OF FDW queries. */
+			if (mtnode && mtnode->forPortionOf)
+				ereport(ERROR,
+						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("foreign tables don't support FOR PORTION OF"),
+						errdetail("\"%s\" is a foreign table.",
+								  RelationGetRelationName(resultRel)));
+
 			/* Okay only if the FDW supports it */
 			fdwroutine = resultRelInfo->ri_FdwRoutine;
 			switch (operation)

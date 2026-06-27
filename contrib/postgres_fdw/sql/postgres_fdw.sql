@@ -1578,14 +1578,38 @@ DELETE FROM ft2 WHERE c1 = 1200 RETURNING tableoid::regclass;
 
 -- Test UPDATE FOR PORTION OF
 UPDATE ft8 FOR PORTION OF c4 FROM '2005-01-01' TO '2006-01-01'
-SET c2 = c2 + 1
-WHERE c1 = '[1,2)';
+  SET c2 = c2 + 1
+  WHERE c1 = '[1,2)'; -- error
 SELECT * FROM ft8 WHERE c1 = '[1,2)' ORDER BY c1, c4;
 
 -- Test DELETE FOR PORTION OF
 DELETE FROM ft8 FOR PORTION OF c4 FROM '2005-01-01' TO '2006-01-01'
-WHERE c1 = '[2,3)';
+  WHERE c1 = '[2,3)'; -- error
 SELECT * FROM ft8 WHERE c1 = '[2,3)' ORDER BY c1, c4;
+
+-- FOR PORTION OF fails if a child partition is a foreign table, even if the
+-- root is not. But a child partition that is pruned doesn't cause an error.
+CREATE TABLE fpo_part_parent (
+  c1 int4range NOT NULL,
+  c2 int NOT NULL,
+  c3 text,
+  c4 daterange NOT NULL
+) PARTITION BY LIST (c2);
+CREATE TABLE fpo_part_local PARTITION OF fpo_part_parent FOR VALUES IN (1);
+INSERT INTO fpo_part_local VALUES ('[1,2)', 1, 'one', '[2024-01-01,2024-12-31)');
+CREATE FOREIGN TABLE fpo_part_foreign
+  PARTITION OF fpo_part_parent FOR VALUES IN (6)
+  SERVER loopback OPTIONS (schema_name 'S 1', table_name 'T 5');
+DELETE FROM fpo_part_parent
+  FOR PORTION OF c4 FROM '2001-01-01' TO '2001-02-01' WHERE c2 = 6; -- error
+UPDATE fpo_part_parent
+  FOR PORTION OF c4 FROM '2001-01-01' TO '2001-02-01' SET c3 = 'x' WHERE c2 = 6; -- error
+UPDATE fpo_part_parent
+  FOR PORTION OF c4 FROM '2024-06-01' TO '2024-07-01' SET c3 = 'edited' WHERE c2 = 1; -- okay
+DELETE FROM fpo_part_parent
+  FOR PORTION OF c4 FROM '2024-06-01' TO '2024-06-15' WHERE c2 = 1; -- okay
+SELECT c1, c2, c3, c4 FROM fpo_part_local ORDER BY c4;
+DROP TABLE fpo_part_parent;
 
 -- Test UPDATE/DELETE with RETURNING on a three-table join
 INSERT INTO ft2 (c1,c2,c3)

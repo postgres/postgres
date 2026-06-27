@@ -1335,12 +1335,6 @@ transformForPortionOfClause(ParseState *pstate,
 	ForPortionOfExpr *result;
 	Var		   *rangeVar;
 
-	/* We don't support FOR PORTION OF FDW queries. */
-	if (targetrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("foreign tables don't support FOR PORTION OF")));
-
 	result = makeNode(ForPortionOfExpr);
 
 	/* Look up the FOR PORTION OF name requested. */
