@@ -1489,9 +1489,6 @@ transformForPortionOfClause(ParseState *pstate,
 													args,
 													InvalidOid, InvalidOid, COERCE_EXPLICIT_CALL);
 	}
-	if (contain_volatile_functions_after_planning((Expr *) result->targetRange))
-		ereport(ERROR,
-				(errmsg("FOR PORTION OF bounds cannot contain volatile functions")));
 
 	/*
 	 * Build overlapsExpr to use as an extra qual. This means we only hit rows
