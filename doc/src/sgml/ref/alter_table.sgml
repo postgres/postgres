@@ -586,8 +586,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       This form alters the attributes of a constraint that was previously
-      created. Currently <literal>FOREIGN KEY</literal> and <literal>CHECK</literal>
-      constraints may be altered in this fashion, but see below.
+      created.  Currently, the deferrability attributes can be altered only
+      for <literal>FOREIGN KEY</literal> constraints.  The enforceability
+      attribute can be altered for <literal>FOREIGN KEY</literal> and
+      <literal>CHECK</literal> constraints.
+     </para>
+
+     <para>
+      Setting a constraint to <literal>NOT ENFORCED</literal> causes the
+      database system to stop checking it for new or updated rows.  Setting
+      a constraint to <literal>ENFORCED</literal> causes the database system
+      to verify that existing rows satisfy the constraint and to check it
+      for new or updated rows.
      </para>
     </listitem>
    </varlistentry>
