@@ -73,6 +73,15 @@ copy copytest3 to stdout csv header;
 c1,"col with , comma","col with "" quote"
 1,a,1
 2,b,2
+-- testing explicit column order
+create temp table copytest_order (a int, b int, c int);
+copy copytest_order from stdin;
+copy copytest_order (c, b, a) to stdout;
+3	2	1
+copy copytest_order (c, b, a) to stdout (format csv);
+3,2,1
+copy copytest_order (c, b, a) to stdout (format json);
+{"c":3,"b":2,"a":1}
 --- test copying in JSON mode with various styles
 copy (select 1 union all select 2) to stdout with (format json);
 {"?column?":1}

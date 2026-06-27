@@ -82,6 +82,15 @@ this is just a line full of junk that would error out if parsed
 
 copy copytest3 to stdout csv header;
 
+-- testing explicit column order
+create temp table copytest_order (a int, b int, c int);
+copy copytest_order from stdin;
+1	2	3
+\.
+copy copytest_order (c, b, a) to stdout;
+copy copytest_order (c, b, a) to stdout (format csv);
+copy copytest_order (c, b, a) to stdout (format json);
+
 --- test copying in JSON mode with various styles
 copy (select 1 union all select 2) to stdout with (format json);
 copy (select 1 as foo union all select 2) to stdout with (format json);
