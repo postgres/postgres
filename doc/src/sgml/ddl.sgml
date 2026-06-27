@@ -4090,7 +4090,9 @@ VALUES ('Albany', NULL, NULL, 'NY');
    similar fashion.  Thus, for example, a merged column will be marked
    not-null if any one of the column definitions it came from is marked
    not-null.  Check constraints are merged if they have the same name,
-   and the merge will fail if their conditions are different.
+   and the merge will fail if their conditions are different.  For merged
+   check constraints, stricter enforceability is preserved: if any inherited
+   copy is enforced, the merged constraint is enforced.
   </para>
 
   <para>
@@ -4104,8 +4106,9 @@ VALUES ('Albany', NULL, NULL, 'NY');
    To do this the new child table must already include columns with
    the same names and types as the columns of the parent. It must also include
    check constraints with the same names and check expressions as those of the
-   parent. Similarly an inheritance link can be removed from a child using the
-   <literal>NO INHERIT</literal> variant of <command>ALTER TABLE</command>.
+   parent, as well as matching not-null constraints. Similarly an inheritance
+   link can be removed from a child using the <literal>NO INHERIT</literal>
+   variant of <command>ALTER TABLE</command>.
    Dynamically adding and removing inheritance links like this can be useful
    when the inheritance relationship is being used for table
    partitioning (see <xref linkend="ddl-partitioning"/>).
@@ -4124,21 +4127,23 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
   <para>
    A parent table cannot be dropped while any of its children remain. Neither
-   can columns or check constraints of child tables be dropped or altered
-   if they are inherited
-   from any parent tables. If you wish to remove a table and all of its
-   descendants, one easy way is to drop the parent table with the
-   <literal>CASCADE</literal> option (see <xref linkend="ddl-depend"/>).
+   can inherited columns or inherited check and not-null constraints of child
+   tables be dropped directly.  Some properties of inherited constraints can
+   be altered, but each resulting constraint must remain compatible with all
+   parent constraints from which it is inherited.  If you wish to remove a
+   table and all of its descendants, one easy way is to drop the parent table
+   with the <literal>CASCADE</literal> option (see <xref linkend="ddl-depend"/>).
   </para>
 
   <para>
    <command>ALTER TABLE</command> will
-   propagate any changes in column data definitions and check
-   constraints down the inheritance hierarchy.  Again, dropping
-   columns that are depended on by other tables is only possible when using
-   the <literal>CASCADE</literal> option. <command>ALTER
-   TABLE</command> follows the same rules for duplicate column merging
-   and rejection that apply during <command>CREATE TABLE</command>.
+   propagate changes in column definitions and in inheritable constraints
+   (check and not-null constraints) down the inheritance hierarchy.  Again,
+   dropping columns that are depended on by other tables is only possible
+   when using the <literal>CASCADE</literal> option. <command>ALTER
+   TABLE</command> follows the same rules for merging or rejecting duplicate
+   inherited column and constraint definitions that apply during
+   <command>CREATE TABLE</command>.
   </para>
 
   <para>
