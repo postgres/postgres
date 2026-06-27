@@ -1252,7 +1252,7 @@
   variable => 'huge_page_size',
   boot_val => '0',
   min => '0',
-  max => 'INT_MAX',
+  max => 'MAX_KILOBYTES',
   check_hook => 'check_huge_page_size',
 },
 
