@@ -535,6 +535,58 @@ where   conname = 'inh_check_constraint3' and contype = 'c'
 order by conrelid::regclass::text collate "C";
 drop table p1 cascade;
 
+-- an inherited CHECK constraint cannot be NOT ENFORCED under an ENFORCED parent
+create table p1(f1 int constraint p1_a_check check (f1 > 0) enforced);
+create table p1_c1() inherits(p1);
+alter table p1_c1 alter constraint p1_a_check not enforced; --error
+alter table p1 alter constraint p1_a_check not enforced; --ok
+alter table p1_c1 alter constraint p1_a_check not enforced; --ok
+drop table p1 cascade;
+
+-- recursive NOT ENFORCED merges with ENFORCED constraints from other parents
+create table p1(a int constraint p1_a_check check (a > 0) enforced);
+create table p2(a int constraint p1_a_check check (a > 0) enforced);
+create table p1_c1() inherits (p1, p2);
+-- make p1_c1_g2's oid smaller than p1_c1_g1's, to ensure ordering of
+-- pg_constraint rows to not impact the test results.
+create table p1_c1_g2() inherits (p1_c1);
+create table p1_c1_g1() inherits (p1_c1);
+alter table p1_c1_g2 inherit p1_c1_g1;
+create table p1_c2() inherits (p1);
+alter table p1 alter constraint p1_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'p1_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+alter table p1_c1 alter constraint p1_a_check not enforced; --error
+alter table p2 alter constraint p1_a_check not enforced; --ok
+alter table p1_c1 alter constraint p1_a_check not enforced; --ok
+drop table p1, p2 cascade;
+
+-- recursive NOT ENFORCED can change all matching enforced parents together
+create table gp(a int constraint gp_a_check check (a > 0) enforced);
+create table p1() inherits (gp);
+create table p2() inherits (gp);
+create table p1_c1() inherits (p1, p2);
+alter table gp alter constraint gp_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'gp_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+drop table gp cascade;
+
+-- recursive NOT ENFORCED can change a direct-plus-indirect diamond together
+create table gp(a int constraint gp_a_check check (a > 0) enforced);
+create table p1_c1() inherits (gp);
+create table p1() inherits (gp);
+alter table p1_c1 inherit p1;
+alter table gp alter constraint gp_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'gp_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+drop table gp cascade;
+
 --for "no inherit" check constraint, it will not recurse to child table
 create table p1(f1 int constraint p1_a_check check (f1 > 0) no inherit not enforced);
 create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) not enforced);

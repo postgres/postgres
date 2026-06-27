@@ -1479,6 +1479,98 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table p1_c1
 drop cascades to table p1_c2
 drop cascades to table p1_c3
+-- an inherited CHECK constraint cannot be NOT ENFORCED under an ENFORCED parent
+create table p1(f1 int constraint p1_a_check check (f1 > 0) enforced);
+create table p1_c1() inherits(p1);
+alter table p1_c1 alter constraint p1_a_check not enforced; --error
+ERROR:  cannot mark inherited constraint "p1_a_check" as NOT ENFORCED
+DETAIL:  The matching constraint on parent table "p1" is ENFORCED.
+alter table p1 alter constraint p1_a_check not enforced; --ok
+alter table p1_c1 alter constraint p1_a_check not enforced; --ok
+drop table p1 cascade;
+NOTICE:  drop cascades to table p1_c1
+-- recursive NOT ENFORCED merges with ENFORCED constraints from other parents
+create table p1(a int constraint p1_a_check check (a > 0) enforced);
+create table p2(a int constraint p1_a_check check (a > 0) enforced);
+create table p1_c1() inherits (p1, p2);
+NOTICE:  merging multiple inherited definitions of column "a"
+-- make p1_c1_g2's oid smaller than p1_c1_g1's, to ensure ordering of
+-- pg_constraint rows to not impact the test results.
+create table p1_c1_g2() inherits (p1_c1);
+create table p1_c1_g1() inherits (p1_c1);
+alter table p1_c1_g2 inherit p1_c1_g1;
+create table p1_c2() inherits (p1);
+alter table p1 alter constraint p1_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'p1_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+  conname   | conenforced | convalidated | conrelid 
+------------+-------------+--------------+----------
+ p1_a_check | f           | f            | p1
+ p1_a_check | t           | t            | p1_c1
+ p1_a_check | t           | t            | p1_c1_g1
+ p1_a_check | t           | t            | p1_c1_g2
+ p1_a_check | f           | f            | p1_c2
+ p1_a_check | t           | t            | p2
+(6 rows)
+
+alter table p1_c1 alter constraint p1_a_check not enforced; --error
+ERROR:  cannot mark inherited constraint "p1_a_check" as NOT ENFORCED
+DETAIL:  The matching constraint on parent table "p2" is ENFORCED.
+alter table p2 alter constraint p1_a_check not enforced; --ok
+alter table p1_c1 alter constraint p1_a_check not enforced; --ok
+drop table p1, p2 cascade;
+NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table p1_c1
+drop cascades to table p1_c1_g1
+drop cascades to table p1_c1_g2
+drop cascades to table p1_c2
+-- recursive NOT ENFORCED can change all matching enforced parents together
+create table gp(a int constraint gp_a_check check (a > 0) enforced);
+create table p1() inherits (gp);
+create table p2() inherits (gp);
+create table p1_c1() inherits (p1, p2);
+NOTICE:  merging multiple inherited definitions of column "a"
+alter table gp alter constraint gp_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'gp_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+  conname   | conenforced | convalidated | conrelid 
+------------+-------------+--------------+----------
+ gp_a_check | f           | f            | gp
+ gp_a_check | f           | f            | p1
+ gp_a_check | f           | f            | p1_c1
+ gp_a_check | f           | f            | p2
+(4 rows)
+
+drop table gp cascade;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table p1
+drop cascades to table p2
+drop cascades to table p1_c1
+-- recursive NOT ENFORCED can change a direct-plus-indirect diamond together
+create table gp(a int constraint gp_a_check check (a > 0) enforced);
+create table p1_c1() inherits (gp);
+create table p1() inherits (gp);
+alter table p1_c1 inherit p1;
+alter table gp alter constraint gp_a_check not enforced; --ok
+select  conname, conenforced, convalidated, conrelid::regclass
+from    pg_constraint
+where   conname = 'gp_a_check' and contype = 'c'
+order by conrelid::regclass::text collate "C";
+  conname   | conenforced | convalidated | conrelid 
+------------+-------------+--------------+----------
+ gp_a_check | f           | f            | gp
+ gp_a_check | f           | f            | p1
+ gp_a_check | f           | f            | p1_c1
+(3 rows)
+
+drop table gp cascade;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table p1
+drop cascades to table p1_c1
 --for "no inherit" check constraint, it will not recurse to child table
 create table p1(f1 int constraint p1_a_check check (f1 > 0) no inherit not enforced);
 create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) not enforced);

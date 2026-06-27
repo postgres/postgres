@@ -309,8 +309,9 @@ select * from check_constraint_status;
 alter table parted_ch_2 alter constraint cc_2 enforced; --error
 delete from parted_ch where a = 16;
 alter table parted_ch_2 alter constraint cc_2 enforced;
-alter table parted_ch_2 alter constraint cc not enforced;
-alter table parted_ch_2 alter constraint cc_1 not enforced;
+alter table parted_ch_2 alter constraint cc not enforced; --error
+alter table only parted_ch_2 alter constraint cc not enforced; --error
+alter table parted_ch_2 alter constraint cc_1 not enforced; --error
 alter table parted_ch_2 alter constraint cc_2 not enforced;
 
 --check these CHECK constraint status again

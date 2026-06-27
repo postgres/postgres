@@ -446,8 +446,15 @@ alter table parted_ch_2 alter constraint cc_2 enforced; --error
 ERROR:  check constraint "cc_2" of relation "parted_ch_2" is violated by some row
 delete from parted_ch where a = 16;
 alter table parted_ch_2 alter constraint cc_2 enforced;
-alter table parted_ch_2 alter constraint cc not enforced;
-alter table parted_ch_2 alter constraint cc_1 not enforced;
+alter table parted_ch_2 alter constraint cc not enforced; --error
+ERROR:  cannot mark inherited constraint "cc" as NOT ENFORCED
+DETAIL:  The matching constraint on parent table "parted_ch" is ENFORCED.
+alter table only parted_ch_2 alter constraint cc not enforced; --error
+ERROR:  cannot mark inherited constraint "cc" as NOT ENFORCED
+DETAIL:  The matching constraint on parent table "parted_ch" is ENFORCED.
+alter table parted_ch_2 alter constraint cc_1 not enforced; --error
+ERROR:  cannot mark inherited constraint "cc_1" as NOT ENFORCED
+DETAIL:  The matching constraint on parent table "parted_ch" is ENFORCED.
 alter table parted_ch_2 alter constraint cc_2 not enforced;
 --check these CHECK constraint status again
 select * from check_constraint_status;
@@ -457,12 +464,12 @@ select * from check_constraint_status;
  cc      | parted_ch_1  | t           | t
  cc      | parted_ch_11 | t           | t
  cc      | parted_ch_12 | t           | t
- cc      | parted_ch_2  | f           | f
+ cc      | parted_ch_2  | t           | t
  cc_1    | parted_ch    | t           | t
  cc_1    | parted_ch_1  | t           | t
  cc_1    | parted_ch_11 | t           | t
  cc_1    | parted_ch_12 | t           | t
- cc_1    | parted_ch_2  | f           | f
+ cc_1    | parted_ch_2  | t           | t
  cc_2    | parted_ch_2  | f           | f
 (11 rows)
 
