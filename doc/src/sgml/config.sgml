@@ -5842,7 +5842,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable-groupby-reordering" xreflabel="enable_group_by_reordering">
+     <varlistentry id="guc-enable-group-by-reordering" xreflabel="enable_group_by_reordering">
       <term><varname>enable_group_by_reordering</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_group_by_reordering</varname> configuration parameter</primary>
@@ -11894,7 +11894,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
       </listitem>
      </varlistentry>
 
-    <varlistentry id="guc-quote-all-identifiers" xreflabel="quote-all-identifiers">
+    <varlistentry id="guc-quote-all-identifiers" xreflabel="quote_all_identifiers">
       <term><varname>quote_all_identifiers</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>quote_all_identifiers</varname> configuration parameter</primary>
