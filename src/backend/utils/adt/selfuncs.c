@@ -4956,6 +4956,14 @@ convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
 			return NULL;
 	}
 
+	/*
+	 * If we don't have a collation, act as though it's "C".  This would
+	 * normally happen only for the "char" type, but perhaps there are other
+	 * cases.
+	 */
+	if (!OidIsValid(collid))
+		return val;
+
 	mylocale = pg_newlocale_from_collation(collid);
 
 	if (!mylocale->collate_is_c)
