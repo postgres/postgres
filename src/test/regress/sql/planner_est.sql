@@ -147,4 +147,10 @@ SELECT explain_mask_costs($$
 SELECT * FROM tenk1 WHERE unique1 <> ALL (ARRAY[1, 2, 98, (SELECT 99), NULL]);$$,
 false, true, false, true);
 
+-- Verify that scalarineqsel() works on "char" columns
+CREATE TEMP TABLE char_table_1 AS
+  SELECT i::"char" AS c FROM generate_series(64,96) i;
+ANALYZE char_table_1;
+EXPLAIN (COSTS OFF) SELECT * FROM char_table_1 WHERE c < 'Q';
+
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);

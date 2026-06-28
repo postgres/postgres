@@ -210,4 +210,15 @@ false, true, false, true);
      ->  Result  (cost=N..N rows=1 width=N)
 (4 rows)
 
+-- Verify that scalarineqsel() works on "char" columns
+CREATE TEMP TABLE char_table_1 AS
+  SELECT i::"char" AS c FROM generate_series(64,96) i;
+ANALYZE char_table_1;
+EXPLAIN (COSTS OFF) SELECT * FROM char_table_1 WHERE c < 'Q';
+         QUERY PLAN          
+-----------------------------
+ Seq Scan on char_table_1
+   Filter: (c < 'Q'::"char")
+(2 rows)
+
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);
