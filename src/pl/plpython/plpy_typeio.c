@@ -1210,6 +1210,10 @@ PLySequence_ToArray_recurse(PyObject *obj, ArrayBuildState **astatep,
 		/* fetch the array element */
 		PyObject   *subobj = PySequence_GetItem(obj, i);
 
+		/* PySequence_GetItem() can return NULL, with an exception set */
+		if (subobj == NULL)
+			PLy_elog(ERROR, "could not get element %d from sequence", i);
+
 		/* need PG_TRY to ensure we release the subobj's refcount */
 		PG_TRY();
 		{
@@ -1456,7 +1460,10 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 		PG_TRY();
 		{
 			value = PySequence_GetItem(sequence, idx);
-			Assert(value);
+
+			/* PySequence_GetItem() can return NULL, with an exception set */
+			if (value == NULL)
+				PLy_elog(ERROR, "could not get element %d from sequence", idx);
 
 			values[i] = att->func(att, value, &nulls[i], false);
 
