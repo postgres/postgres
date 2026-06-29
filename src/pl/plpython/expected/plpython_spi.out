@@ -464,3 +464,54 @@ SELECT plan_composite_args();
  (3,label)
 (1 row)
 
+-- A custom argument sequence whose length matches the plan but whose
+-- __getitem__ raises should be reported as an error, not crash the backend.
+CREATE FUNCTION plan_broken_arg_sequence() RETURNS void AS $$
+plan = plpy.prepare("select $1", ["int4"])
+class C:
+    def __len__(self):
+        return 1
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+plpy.execute(plan, C())
+$$ LANGUAGE plpython3u;
+SELECT plan_broken_arg_sequence();
+ERROR:  spiexceptions.ExternalRoutineException: could not get element 0 from sequence
+DETAIL:  ValueError: getitem failed
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "plan_broken_arg_sequence", line 8, in <module>
+    plpy.execute(plan, C())
+PL/Python function "plan_broken_arg_sequence"
+-- Likewise for the type-name list passed to plpy.prepare().
+CREATE FUNCTION prepare_broken_type_sequence() RETURNS void AS $$
+class C:
+    def __len__(self):
+        return 1
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+plpy.prepare("select $1", C())
+$$ LANGUAGE plpython3u;
+SELECT prepare_broken_type_sequence();
+ERROR:  spiexceptions.ExternalRoutineException: could not get element 0 from sequence
+DETAIL:  ValueError: getitem failed
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "prepare_broken_type_sequence", line 7, in <module>
+    plpy.prepare("select $1", C())
+PL/Python function "prepare_broken_type_sequence"
+-- Likewise for the argument sequence passed to plpy.cursor().
+CREATE FUNCTION cursor_broken_arg_sequence() RETURNS void AS $$
+plan = plpy.prepare("select $1", ["int4"])
+class C:
+    def __len__(self):
+        return 1
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+plpy.cursor(plan, C())
+$$ LANGUAGE plpython3u;
+SELECT cursor_broken_arg_sequence();
+ERROR:  spiexceptions.ExternalRoutineException: could not get element 0 from sequence
+DETAIL:  ValueError: getitem failed
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "cursor_broken_arg_sequence", line 8, in <module>
+    plpy.cursor(plan, C())
+PL/Python function "cursor_broken_arg_sequence"

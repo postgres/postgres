@@ -606,3 +606,19 @@ DETAIL:  Missing left parenthesis.
 HINT:  To return a composite type in an array, return the composite type as a Python tuple, e.g., "[('foo',)]".
 CONTEXT:  while creating return value
 PL/Python function "composite_type_as_list_broken"
+-- A custom sequence whose length matches the tuple but whose __getitem__
+-- raises should be reported as an error, not crash the backend.
+CREATE FUNCTION composite_type_as_broken_sequence() RETURNS type_record AS $$
+class C:
+    def __len__(self):
+        return 2
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+return C()
+$$ LANGUAGE plpython3u;
+SELECT * FROM composite_type_as_broken_sequence();
+ERROR:  could not get element 0 from sequence
+DETAIL:  ValueError: getitem failed
+CONTEXT:  Traceback (most recent call last):
+while creating return value
+PL/Python function "composite_type_as_broken_sequence"
