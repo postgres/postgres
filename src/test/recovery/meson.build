@@ -47,6 +47,7 @@ tests += {
       't/043_vacuum_horizon_floor.pl',
       't/043_no_contrecord_switch.pl',
       't/045_archive_restartpoint.pl',
+      't/054_unlogged_sequence_promotion.pl',
     ],
   },
 }

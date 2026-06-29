@@ -336,6 +336,28 @@ XLogInitBufferForRedo(XLogReaderState *record, uint8 block_id)
 }
 
 /*
+ * If a redo routine modified an init fork, flush the buffer immediately.
+ *
+ * At the end of crash recovery the init forks of unlogged relations are
+ * copied to the main fork directly from disk, without going through shared
+ * buffers. Therefore, redo routines that update init forks without
+ * restoring a full-page image must call this after setting the page LSN and
+ * marking the buffer dirty.
+ */
+void
+XLogFlushBufferForRedoIfInit(XLogReaderState *record, uint8 block_id,
+							 Buffer buffer)
+{
+	ForkNumber	forknum;
+
+	Assert(BufferIsValid(buffer));
+
+	XLogRecGetBlockTag(record, block_id, NULL, &forknum, NULL);
+	if (forknum == INIT_FORKNUM)
+		FlushOneBuffer(buffer);
+}
+
+/*
  * XLogReadBufferForRedoExtended
  *		Like XLogReadBufferForRedo, but with extra options.
  *
@@ -412,7 +434,9 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 		 * At the end of crash recovery the init forks of unlogged relations
 		 * are copied, without going through shared buffers. So we need to
 		 * force the on-disk state of init forks to always be in sync with the
-		 * state in shared buffers.
+		 * state in shared buffers. Use XLogFlushBufferForRedoIfInit() for
+		 * redo routines that dirty init-fork buffers without restoring a
+		 * full-page image.
 		 */
 		if (forknum == INIT_FORKNUM)
 			FlushOneBuffer(*buf);
