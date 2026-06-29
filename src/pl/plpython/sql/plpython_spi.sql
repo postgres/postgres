@@ -331,7 +331,7 @@ class C:
     def __getitem__(self, i):
         raise ValueError('getitem failed')
 plpy.execute(plan, C())
-$$ LANGUAGE plpython3u;
+$$ LANGUAGE plpythonu;
 
 SELECT plan_broken_arg_sequence();
 
@@ -343,7 +343,7 @@ class C:
     def __getitem__(self, i):
         raise ValueError('getitem failed')
 plpy.prepare("select $1", C())
-$$ LANGUAGE plpython3u;
+$$ LANGUAGE plpythonu;
 
 SELECT prepare_broken_type_sequence();
 
@@ -356,6 +356,6 @@ class C:
     def __getitem__(self, i):
         raise ValueError('getitem failed')
 plpy.cursor(plan, C())
-$$ LANGUAGE plpython3u;
+$$ LANGUAGE plpythonu;
 
 SELECT cursor_broken_arg_sequence();

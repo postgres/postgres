@@ -41,7 +41,7 @@ SELECT test1bad();
 -- A mapping whose items() raises should be reported as an error, not crash
 -- the backend
 CREATE FUNCTION test1broken() RETURNS hstore
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 class C(dict):
@@ -57,7 +57,7 @@ SELECT test1broken();
 
 -- Likewise for a mapping whose items() does not return key/value pairs
 CREATE FUNCTION test1malformed() RETURNS hstore
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 class C(dict):
@@ -73,7 +73,7 @@ SELECT test1malformed();
 
 -- Likewise for a mapping whose items() yields fewer pairs than its length
 CREATE FUNCTION test1short() RETURNS hstore
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 class C(dict):
@@ -89,7 +89,7 @@ SELECT test1short();
 
 -- Likewise for a mapping whose __len__() raises
 CREATE FUNCTION test1brokenlen() RETURNS hstore
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 class C(dict):

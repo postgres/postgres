@@ -426,7 +426,7 @@ class C:
     def __getitem__(self, i):
         raise ValueError('getitem failed')
 return C()
-$$ LANGUAGE plpython3u;
+$$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_getitem_fail();
 

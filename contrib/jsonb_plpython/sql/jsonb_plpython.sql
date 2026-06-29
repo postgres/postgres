@@ -185,7 +185,7 @@ SELECT test_dict1();
 -- A custom sequence whose __getitem__ raises should be reported as an error,
 -- not crash the backend
 CREATE FUNCTION test_broken_sequence() RETURNS jsonb
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 class C:
@@ -201,7 +201,7 @@ SELECT test_broken_sequence();
 -- A mapping whose items() raises should be reported as an error, not crash
 -- the backend
 CREATE FUNCTION test_broken_mapping() RETURNS jsonb
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 class C(dict):
@@ -216,7 +216,7 @@ SELECT test_broken_mapping();
 
 -- Likewise for a mapping whose items() does not return key/value pairs
 CREATE FUNCTION test_malformed_mapping() RETURNS jsonb
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 class C(dict):
@@ -231,7 +231,7 @@ SELECT test_malformed_mapping();
 
 -- Likewise for a mapping whose items() yields fewer pairs than its length
 CREATE FUNCTION test_short_mapping() RETURNS jsonb
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 class C(dict):
@@ -246,7 +246,7 @@ SELECT test_short_mapping();
 
 -- Likewise for a mapping whose __len__() raises
 CREATE FUNCTION test_broken_len_mapping() RETURNS jsonb
-LANGUAGE plpython3u
+LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 class C(dict):
