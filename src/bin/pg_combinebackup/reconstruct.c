@@ -705,6 +705,9 @@ write_reconstructed_file(char *input_filename,
 				if (wb < 0)
 					pg_fatal("error while copying file range from \"%s\" to \"%s\": %m",
 							 input_filename, output_filename);
+				else if (wb == 0)
+					pg_fatal("unexpected end of file while copying file range from \"%s\" to \"%s\"",
+							 input_filename, output_filename);
 
 				nwritten += wb;
 
