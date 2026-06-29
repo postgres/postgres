@@ -75,16 +75,19 @@ test_auth($node2, $db2, "t2",
 {
 	my $connstr = $node1->connstr($db0) . qq' user=$user';
 
-	$node1->safe_psql($db0,
+	$node1->safe_psql(
+		$db0,
 		qq'ALTER USER MAPPING FOR $user SERVER $fdw_server3 OPTIONS(add use_scram_passthrough \'false\')',
-		connstr => $connstr
-	);
+		connstr => $connstr);
 
 	$node1->safe_psql(
 		$db0,
 		qq'CREATE FOREIGN TABLE override_t (g int, col2 int) SERVER $fdw_server3 OPTIONS (table_name \'t\');',
-		connstr => $connstr );
-	$node1->safe_psql($db0, qq'GRANT SELECT ON override_t TO $user;', connstr => $connstr);
+		connstr => $connstr);
+	$node1->safe_psql(
+		$db0,
+		qq'GRANT SELECT ON override_t TO $user;',
+		connstr => $connstr);
 
 	my ($ret, $stdout, $stderr) = $node1->psql(
 		$db0,
@@ -92,10 +95,9 @@ test_auth($node2, $db2, "t2",
 		connstr => $connstr);
 
 	is($ret, 3, 'SCRAM passthrough disabled on user mapping should fail');
-	like(
-		$stderr,
-		qr/password/i,
-		'expected password-related error when scram passthrough disabled on user mapping');
+	like($stderr, qr/password/i,
+		'expected password-related error when scram passthrough disabled on user mapping'
+	);
 }
 
 SKIP:

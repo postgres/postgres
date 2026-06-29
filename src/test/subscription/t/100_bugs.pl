@@ -644,8 +644,10 @@ ok( $stderr =~ qr/division by zero/,
 );
 
 # Clean up
-$node_publisher->safe_psql('postgres', "SELECT pg_drop_replication_slot('upsert_slot')");
-$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub_rowfilter_error");
+$node_publisher->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('upsert_slot')");
+$node_publisher->safe_psql('postgres',
+	"DROP PUBLICATION pub_rowfilter_error");
 $node_publisher->safe_psql('postgres', "DROP TABLE tab_upsert");
 
 $node_publisher->stop('fast');

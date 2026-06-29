@@ -76,8 +76,7 @@ ok( $primary->log_contains(
 # Wait for the checkpointer to disable logical decoding.
 wait_for_logical_decoding_disabled($primary);
 test_wal_level($primary, "replica|replica",
-	"logical decoding disabled after repack"
-);
+	"logical decoding disabled after repack");
 
 # Create a new logical slot and check that effective_wal_level must be increased
 # to 'logical'.

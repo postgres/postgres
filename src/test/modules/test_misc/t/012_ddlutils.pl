@@ -181,7 +181,10 @@ is($result, '0', 'NULL database returns no rows');
 	q{SELECT * FROM pg_get_database_ddl('regression_ddlutils_test', owner => 'invalid')}
 );
 isnt($ret, 0, 'invalid boolean option errors');
-like($stderr, qr/invalid input syntax for type boolean/, 'invalid option error message');
+like(
+	$stderr,
+	qr/invalid input syntax for type boolean/,
+	'invalid option error message');
 
 # Duplicate named argument
 ($ret, $stdout, $stderr) = $node->psql(
