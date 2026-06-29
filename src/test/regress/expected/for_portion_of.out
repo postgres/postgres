@@ -2446,4 +2446,46 @@ NOTICE:  fpo_before_row1: BEFORE UPDATE ROW:
 NOTICE:    old: [10,100)
 NOTICE:    new: [30,70)
 DROP TABLE fpo_update_of_trigger;
+-- CURSORs
+CREATE TABLE fpo_cursed (
+  id int,
+  valid_at int4range
+);
+INSERT INTO fpo_cursed (id, valid_at) VALUES (1, '[10,100)');
+-- UPDATE FOR PORTION OF is not permitted with a CURSOR:
+BEGIN;
+DECLARE fpo_cur CURSOR FOR SELECT * FROM fpo_cursed;
+FETCH NEXT FROM fpo_cur;
+ id | valid_at 
+----+----------
+  1 | [10,100)
+(1 row)
+
+UPDATE fpo_cursed
+  FOR PORTION OF valid_at FROM 5 TO 6
+  SET id = 2
+  WHERE CURRENT OF fpo_cur;
+ERROR:  WHERE CURRENT OF with FOR PORTION OF is not implemented
+ROLLBACK;
+-- DELETE FOR PORTION OF is not permitted with a CURSOR:
+BEGIN;
+DECLARE fpo_cur CURSOR FOR SELECT * FROM fpo_cursed;
+FETCH NEXT FROM fpo_cur;
+ id | valid_at 
+----+----------
+  1 | [10,100)
+(1 row)
+
+DELETE FROM fpo_cursed
+  FOR PORTION OF valid_at FROM 8 TO 9
+  WHERE CURRENT OF fpo_cur;
+ERROR:  WHERE CURRENT OF with FOR PORTION OF is not implemented
+ROLLBACK;
+SELECT * FROM fpo_cursed;
+ id | valid_at 
+----+----------
+  1 | [10,100)
+(1 row)
+
+DROP TABLE fpo_cursed;
 RESET datestyle;

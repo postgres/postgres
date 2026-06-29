@@ -1591,4 +1591,32 @@ UPDATE fpo_update_of_trigger
   SET id = 2;
 DROP TABLE fpo_update_of_trigger;
 
+-- CURSORs
+CREATE TABLE fpo_cursed (
+  id int,
+  valid_at int4range
+);
+INSERT INTO fpo_cursed (id, valid_at) VALUES (1, '[10,100)');
+
+-- UPDATE FOR PORTION OF is not permitted with a CURSOR:
+BEGIN;
+DECLARE fpo_cur CURSOR FOR SELECT * FROM fpo_cursed;
+FETCH NEXT FROM fpo_cur;
+UPDATE fpo_cursed
+  FOR PORTION OF valid_at FROM 5 TO 6
+  SET id = 2
+  WHERE CURRENT OF fpo_cur;
+ROLLBACK;
+
+-- DELETE FOR PORTION OF is not permitted with a CURSOR:
+BEGIN;
+DECLARE fpo_cur CURSOR FOR SELECT * FROM fpo_cursed;
+FETCH NEXT FROM fpo_cur;
+DELETE FROM fpo_cursed
+  FOR PORTION OF valid_at FROM 8 TO 9
+  WHERE CURRENT OF fpo_cur;
+ROLLBACK;
+SELECT * FROM fpo_cursed;
+DROP TABLE fpo_cursed;
+
 RESET datestyle;

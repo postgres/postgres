@@ -287,10 +287,9 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       from this cursor.  The cursor must be a non-grouping
       query on the <command>UPDATE</command>'s target table.
       Note that <literal>WHERE CURRENT OF</literal> cannot be
-      specified together with a Boolean condition.  See
-      <xref linkend="sql-declare"/>
-      for more information about using cursors with
-      <literal>WHERE CURRENT OF</literal>.
+      specified together with a Boolean condition or <literal>FOR PORTION
+      OF</literal>.  See <xref linkend="sql-declare"/> for more information
+      about using cursors with <literal>WHERE CURRENT OF</literal>.
      </para>
     </listitem>
    </varlistentry>

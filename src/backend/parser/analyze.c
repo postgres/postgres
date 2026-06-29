@@ -81,6 +81,7 @@ static OnConflictExpr *transformOnConflictClause(ParseState *pstate,
 static ForPortionOfExpr *transformForPortionOfClause(ParseState *pstate,
 													 int rtindex,
 													 const ForPortionOfClause *forPortionOf,
+													 const Node *whereClause,
 													 bool isUpdate);
 static int	count_rowexpr_columns(ParseState *pstate, Node *expr);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt,
@@ -626,6 +627,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 		qry->forPortionOf = transformForPortionOfClause(pstate,
 														qry->resultRelation,
 														stmt->forPortionOf,
+														stmt->whereClause,
 														false);
 
 	qual = transformWhereClause(pstate, stmt->whereClause,
@@ -1319,6 +1321,7 @@ static ForPortionOfExpr *
 transformForPortionOfClause(ParseState *pstate,
 							int rtindex,
 							const ForPortionOfClause *forPortionOf,
+							const Node *whereClause,
 							bool isUpdate)
 {
 	Relation	targetrel = pstate->p_target_relation;
@@ -1334,6 +1337,12 @@ transformForPortionOfClause(ParseState *pstate,
 	OpExpr	   *op;
 	ForPortionOfExpr *result;
 	Var		   *rangeVar;
+
+	/* disallow FOR PORTION OF ... WHERE CURRENT OF */
+	if (whereClause && IsA(whereClause, CurrentOfExpr))
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("WHERE CURRENT OF with FOR PORTION OF is not implemented"));
 
 	result = makeNode(ForPortionOfExpr);
 
@@ -2875,6 +2884,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		qry->forPortionOf = transformForPortionOfClause(pstate,
 														qry->resultRelation,
 														stmt->forPortionOf,
+														stmt->whereClause,
 														true);
 
 	nsitem = pstate->p_target_nsitem;
