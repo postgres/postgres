@@ -1318,7 +1318,7 @@ Add scoring system to control the order that tables are processed by <link linke
 </para>
 
 <para>
-The new server variables are <link linkend="guc-autovacuum-freeze-score-weight"><varname>autovacuum_freeze_score_weight</varname></link>, <link linkend="guc-autovacuum-multixact-freeze-score-weight"><varname>autovacuum_multixact_freeze_score_weight</varname></link>, <link linkend="guc-autovacuum-vacuum-score-weight"><varname>autovacuum_vacuum_score_weight</varname></link>, <link linkend="guc-autovacuum-vacuum-insert-score-weight"><varname>vacuum_insert_score_weight</varname></link>, and
+The new server variables are <link linkend="guc-autovacuum-freeze-score-weight"><varname>autovacuum_freeze_score_weight</varname></link>, <link linkend="guc-autovacuum-multixact-freeze-score-weight"><varname>autovacuum_multixact_freeze_score_weight</varname></link>, <link linkend="guc-autovacuum-vacuum-score-weight"><varname>autovacuum_vacuum_score_weight</varname></link>, <link linkend="guc-autovacuum-vacuum-insert-score-weight"><varname>autovacuum_vacuum_insert_score_weight</varname></link>, and
 <link linkend="guc-autovacuum-analyze-score-weight"><varname>autovacuum_analyze_score_weight</varname></link>.
 </para>
 </listitem>
