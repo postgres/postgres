@@ -63,6 +63,7 @@ seq_redo(XLogReaderState *record)
 
 	memcpy(page, localpage, BufferGetPageSize(buffer));
 	MarkBufferDirty(buffer);
+	XLogFlushBufferForRedoIfInit(record, 0, buffer);
 	UnlockReleaseBuffer(buffer);
 
 	pfree(localpage);
