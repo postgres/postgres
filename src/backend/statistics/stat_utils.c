@@ -555,7 +555,7 @@ statatt_get_elem_type(Oid atttypid, char atttyptype,
 }
 
 /*
- * Build an array with element type elemtypid from a text datum, used as
+ * Build an array with element type typid from a text datum, used as
  * value of an attribute in a tuple to-be-inserted into pg_statistic.
  *
  * The typid and typmod should be derived from a previous call to
@@ -569,7 +569,6 @@ Datum
 statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 						int32 typmod, bool *ok)
 {
-	LOCAL_FCINFO(fcinfo, 8);
 	char	   *s;
 	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
@@ -578,27 +577,17 @@ statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid ty
 
 	s = TextDatumGetCString(d);
 
-	InitFunctionCallInfoData(*fcinfo, array_in, 3, InvalidOid,
-							 (Node *) &escontext, NULL);
-
-	fcinfo->args[0].value = CStringGetDatum(s);
-	fcinfo->args[0].isnull = false;
-	fcinfo->args[1].value = ObjectIdGetDatum(typid);
-	fcinfo->args[1].isnull = false;
-	fcinfo->args[2].value = Int32GetDatum(typmod);
-	fcinfo->args[2].isnull = false;
-
-	result = FunctionCallInvoke(fcinfo);
-
-	pfree(s);
-
-	if (escontext.error_occurred)
+	if (!InputFunctionCallSafe(array_in, s, typid, typmod,
+							   (Node *) &escontext, &result))
 	{
+		pfree(s);
 		escontext.error_data->elevel = WARNING;
 		ThrowErrorData(escontext.error_data);
 		*ok = false;
 		return (Datum) 0;
 	}
+
+	pfree(s);
 
 	if (ARR_NDIM(DatumGetArrayTypeP(result)) != 1)
 	{
