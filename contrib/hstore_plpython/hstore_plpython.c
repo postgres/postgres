@@ -139,7 +139,16 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 				 errmsg("not a Python mapping")));
 
 	pcount = PyMapping_Size(dict);
+	if (pcount < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("could not get size of Python mapping")));
+
 	items = PyMapping_Items(dict);
+	if (items == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("could not get items from Python mapping")));
 
 	PG_TRY();
 	{
@@ -156,6 +165,13 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 			PyObject   *value;
 
 			tuple = PyList_GetItem(items, i);
+
+			/* The mapping's items() must yield key/value pairs */
+			if (tuple == NULL || !PyTuple_Check(tuple) || PyTuple_Size(tuple) < 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("items() of a Python mapping must return key/value pairs")));
+
 			key = PyTuple_GetItem(tuple, 0);
 			value = PyTuple_GetItem(tuple, 1);
 
