@@ -166,7 +166,7 @@ pg_comp_crc32c_pmull(pg_crc32c crc, const void *data, size_t len)
 		uint64x2_t	k;
 
 		{
-			static const uint64_t pg_attribute_aligned(16) k_[] = {0x740eef02, 0x9e4addf8};
+			static const alignas(16) uint64_t k_[] = {0x740eef02, 0x9e4addf8};
 
 			k = vld1q_u64(k_);
 		}
@@ -192,14 +192,14 @@ pg_comp_crc32c_pmull(pg_crc32c crc, const void *data, size_t len)
 
 		/* Reduce x0 ... x3 to just x0. */
 		{
-			static const uint64_t pg_attribute_aligned(16) k_[] = {0xf20c0dfe, 0x493c7d27};
+			static const alignas(16) uint64_t k_[] = {0xf20c0dfe, 0x493c7d27};
 
 			k = vld1q_u64(k_);
 		}
 		y0 = clmul_lo_e(x0, k, x1), x0 = clmul_hi_e(x0, k, y0);
 		y2 = clmul_lo_e(x2, k, x3), x2 = clmul_hi_e(x2, k, y2);
 		{
-			static const uint64_t pg_attribute_aligned(16) k_[] = {0x3da6d0cb, 0xba4fc28e};
+			static const alignas(16) uint64_t k_[] = {0x3da6d0cb, 0xba4fc28e};
 
 			k = vld1q_u64(k_);
 		}
