@@ -228,7 +228,7 @@ typedef struct RI_CompareHashEntry
  * relations are held open with locks for the transaction duration, preventing
  * relcache invalidation.  The entry itself is torn down at batch end by
  * ri_FastPathEndBatch(); on abort, ResourceOwner releases the cached
- * relations and the XactCallback NULLs the static cache pointer to prevent
+ * relations and AtEOXact_RI() NULLs the static cache pointer to prevent
  * any subsequent access.
  */
 typedef struct RI_FastPathEntry
@@ -4187,8 +4187,8 @@ RI_FKey_trigger_type(Oid tgfoid)
  * Registered as an AfterTriggerBatchCallback.  Note: the flush can
  * do real work (CCI, security context switch, index probes) and can
  * throw ERROR on a constraint violation.  If that happens,
- * ri_FastPathTeardown never runs; ResourceOwner + XactCallback
- * handle resource cleanup on the abort path.
+ * ri_FastPathTeardown never runs; ResourceOwner releases the cached
+ * relations and AtEOXact_RI() resets the static state on the abort path.
  */
 static void
 ri_FastPathEndBatch(void *arg)
@@ -4273,15 +4273,47 @@ ri_FastPathTeardown(void)
 	ri_fastpath_callback_registered = false;
 }
 
-static bool ri_fastpath_xact_callback_registered = false;
-
-static void
-ri_FastPathXactCallback(XactEvent event, void *arg)
+/*
+ * AtEOXact_RI
+ *		Reset fast-path batching state at end of transaction.
+ *
+ * Called from CommitTransaction() and PrepareTransaction() with isCommit
+ * true, and from AbortTransaction() with isCommit false.
+ *
+ * By the time we get here on a clean commit or prepare, the fast-path cache
+ * has already been flushed and torn down by ri_FastPathEndBatch() (an
+ * AfterTriggerBatchCallback fired from AfterTriggerFireDeferred(), well before
+ * this point), so the static pointers are already clear and the reset below is
+ * a no-op.  A surviving cache at commit means a trigger batch was never
+ * flushed, which would have silently skipped FK checks, so we complain.
+ *
+ * On abort, ri_FastPathEndBatch()/ri_FastPathTeardown() may not have run (a
+ * flush can error out partway): the ResourceOwner releases the cached
+ * relations and the TopTransactionContext reset frees the cache memory, but
+ * the process-local static pointers below would dangle into the next
+ * transaction.  This resets them so they don't.
+ *
+ * The reset touches only backend-local static state (no relations, locks,
+ * buffers or catalog access), so it has no ordering dependency on the
+ * surrounding ResourceOwnerRelease() / AtEOXact_* steps.
+ */
+void
+AtEOXact_RI(bool isCommit)
 {
 	/*
-	 * On abort, ResourceOwner already released relations; on commit,
-	 * ri_FastPathTeardown already ran.  Either way, just NULL the static
-	 * pointers so they don't dangle into the next transaction.
+	 * The cache must be empty on a clean commit or prepare; a survivor means
+	 * a trigger batch went unflushed.  Assert for assert-enabled builds and,
+	 * since the transaction is already committed by now and FK checks may
+	 * have been skipped, also warn in production builds.
+	 */
+	Assert(ri_fastpath_cache == NULL || !isCommit);
+	if (isCommit && ri_fastpath_cache != NULL)
+		elog(WARNING, "RI fast-path cache not flushed at end of transaction");
+
+	/*
+	 * Clear the static pointers/flags.  The cache memory lives in
+	 * TopTransactionContext and is freed by the end-of-transaction
+	 * memory-context reset; here we only drop the references to it.
 	 */
 	ri_fastpath_cache = NULL;
 	ri_fastpath_callback_registered = false;
@@ -4315,12 +4347,6 @@ ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 	if (ri_fastpath_cache == NULL)
 	{
 		HASHCTL		ctl;
-
-		if (!ri_fastpath_xact_callback_registered)
-		{
-			RegisterXactCallback(ri_FastPathXactCallback, NULL);
-			ri_fastpath_xact_callback_registered = true;
-		}
 
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(RI_FastPathEntry);

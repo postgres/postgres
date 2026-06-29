@@ -310,4 +310,6 @@ extern void RegisterAfterTriggerBatchCallback(AfterTriggerBatchCallback callback
 											  void *arg);
 extern bool AfterTriggerIsActive(void);
 
+extern void AtEOXact_RI(bool isCommit);
+
 #endif							/* TRIGGER_H */
