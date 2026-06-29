@@ -57,6 +57,7 @@ tests += {
       't/047_checkpoint_physical_slot.pl',
       't/048_vacuum_horizon_floor.pl',
       't/053_standby_login_event_trigger.pl',
+      't/054_unlogged_sequence_promotion.pl',
     ],
   },
 }
