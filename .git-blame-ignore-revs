@@ -14,6 +14,12 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+99e44c3181c779ae0f3539ba7f408661983fbf8e # 2026-06-29 15:27:44 -0400
+# Run pgperltidy
+
+3f815dd11374b54deb29228dc0040179864af828 # 2026-06-29 15:16:25 -0400
+# Sync typedefs.list with the buildfarm.
+
 bd57abbb1910e51e45761b59985745d094ae9e03 # 2026-06-04 10:15:37 -0500
 # Re-pgindent nodeModifyTable.c after commit 993a7aa0e4.
 
