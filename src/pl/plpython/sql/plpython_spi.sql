@@ -320,3 +320,42 @@ SELECT cursor_fetch_next_empty();
 SELECT cursor_plan();
 SELECT cursor_plan_wrong_args();
 SELECT plan_composite_args();
+
+-- A custom argument sequence whose length matches the plan but whose
+-- __getitem__ raises should be reported as an error, not crash the backend.
+CREATE FUNCTION plan_broken_arg_sequence() RETURNS void AS $$
+plan = plpy.prepare("select $1", ["int4"])
+class C:
+    def __len__(self):
+        return 1
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+plpy.execute(plan, C())
+$$ LANGUAGE plpython3u;
+
+SELECT plan_broken_arg_sequence();
+
+-- Likewise for the type-name list passed to plpy.prepare().
+CREATE FUNCTION prepare_broken_type_sequence() RETURNS void AS $$
+class C:
+    def __len__(self):
+        return 1
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+plpy.prepare("select $1", C())
+$$ LANGUAGE plpython3u;
+
+SELECT prepare_broken_type_sequence();
+
+-- Likewise for the argument sequence passed to plpy.cursor().
+CREATE FUNCTION cursor_broken_arg_sequence() RETURNS void AS $$
+plan = plpy.prepare("select $1", ["int4"])
+class C:
+    def __len__(self):
+        return 1
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+plpy.cursor(plan, C())
+$$ LANGUAGE plpython3u;
+
+SELECT cursor_broken_arg_sequence();

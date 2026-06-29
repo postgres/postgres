@@ -38,6 +38,71 @@ $$;
 SELECT test1bad();
 
 
+-- A mapping whose items() raises should be reported as an error, not crash
+-- the backend
+CREATE FUNCTION test1broken() RETURNS hstore
+LANGUAGE plpython3u
+TRANSFORM FOR TYPE hstore
+AS $$
+class C(dict):
+    def items(self):
+        raise ValueError('items failed')
+d = C()
+d['x'] = 1
+return d
+$$;
+
+SELECT test1broken();
+
+
+-- Likewise for a mapping whose items() does not return key/value pairs
+CREATE FUNCTION test1malformed() RETURNS hstore
+LANGUAGE plpython3u
+TRANSFORM FOR TYPE hstore
+AS $$
+class C(dict):
+    def items(self):
+        return [42]
+d = C()
+d['x'] = 1
+return d
+$$;
+
+SELECT test1malformed();
+
+
+-- Likewise for a mapping whose items() yields fewer pairs than its length
+CREATE FUNCTION test1short() RETURNS hstore
+LANGUAGE plpython3u
+TRANSFORM FOR TYPE hstore
+AS $$
+class C(dict):
+    def items(self):
+        return []
+d = C()
+d['x'] = 1
+return d
+$$;
+
+SELECT test1short();
+
+
+-- Likewise for a mapping whose __len__() raises
+CREATE FUNCTION test1brokenlen() RETURNS hstore
+LANGUAGE plpython3u
+TRANSFORM FOR TYPE hstore
+AS $$
+class C(dict):
+    def __len__(self):
+        raise ValueError('len failed')
+d = C()
+d['x'] = 1
+return d
+$$;
+
+SELECT test1brokenlen();
+
+
 -- test hstore[] -> python
 CREATE FUNCTION test1arr(val hstore[]) RETURNS int
 LANGUAGE plpythonu

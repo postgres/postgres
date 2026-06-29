@@ -233,3 +233,15 @@ CREATE FUNCTION composite_type_as_list_broken()  RETURNS type_record[] AS $$
   return [['first', 1]];
 $$ LANGUAGE plpythonu;
 SELECT * FROM composite_type_as_list_broken();
+
+-- A custom sequence whose length matches the tuple but whose __getitem__
+-- raises should be reported as an error, not crash the backend.
+CREATE FUNCTION composite_type_as_broken_sequence() RETURNS type_record AS $$
+class C:
+    def __len__(self):
+        return 2
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+return C()
+$$ LANGUAGE plpython3u;
+SELECT * FROM composite_type_as_broken_sequence();

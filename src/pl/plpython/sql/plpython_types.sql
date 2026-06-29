@@ -417,6 +417,19 @@ $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_error();
 
+-- A custom sequence whose __getitem__ raises should be reported as an error,
+-- not crash the backend.
+CREATE FUNCTION test_type_conversion_array_getitem_fail() RETURNS int[] AS $$
+class C:
+    def __len__(self):
+        return 2
+    def __getitem__(self, i):
+        raise ValueError('getitem failed')
+return C()
+$$ LANGUAGE plpython3u;
+
+SELECT * FROM test_type_conversion_array_getitem_fail();
+
 
 --
 -- Domains over arrays
