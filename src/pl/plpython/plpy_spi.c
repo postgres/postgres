@@ -90,6 +90,11 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			int32		typmod;
 
 			optr = PySequence_GetItem(list, i);
+
+			/* PySequence_GetItem() can return NULL, with an exception set */
+			if (optr == NULL)
+				PLy_elog(ERROR, "could not get element %d from sequence", i);
+
 			if (PyUnicode_Check(optr))
 				sptr = PLyUnicode_AsString(optr);
 			else
@@ -252,6 +257,11 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			PyObject   *elem;
 
 			elem = PySequence_GetItem(list, j);
+
+			/* PySequence_GetItem() can return NULL, with an exception set */
+			if (elem == NULL)
+				PLy_elog(ERROR, "could not get element %d from sequence", j);
+
 			PG_TRY();
 			{
 				bool		isnull;

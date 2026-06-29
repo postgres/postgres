@@ -231,6 +231,11 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			PyObject   *elem;
 
 			elem = PySequence_GetItem(args, j);
+
+			/* PySequence_GetItem() can return NULL, with an exception set */
+			if (elem == NULL)
+				PLy_elog(ERROR, "could not get element %d from sequence", j);
+
 			PG_TRY();
 			{
 				bool		isnull;
