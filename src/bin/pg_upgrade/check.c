@@ -2635,7 +2635,7 @@ check_old_cluster_global_names(ClusterInfo *cluster)
 	{
 		fclose(script);
 		pg_log(PG_REPORT, "fatal");
-		pg_fatal("Your installation contains databases, roles, or tablespace with names\n"
+		pg_fatal("Your installation contains databases, roles, or tablespaces with names\n"
 				 "with invalid characters (newline or carriage return).  To fix this,\n"
 				 "rename these objects.\n"
 				 "A list of all objects with invalid names is in the file:\n"
