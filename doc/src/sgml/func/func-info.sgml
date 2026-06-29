@@ -3877,6 +3877,34 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_get_database_ddl</primary>
+        </indexterm>
+        <function>pg_get_database_ddl</function>
+        ( <parameter>database</parameter> <type>regdatabase</type>
+        <optional>, <parameter>pretty</parameter> <type>boolean</type>
+        <literal>DEFAULT</literal> false</optional>
+        <optional>, <parameter>owner</parameter> <type>boolean</type>
+        <literal>DEFAULT</literal> true</optional>
+        <optional>, <parameter>tablespace</parameter> <type>boolean</type>
+        <literal>DEFAULT</literal> true</optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the <link linkend="sql-createdatabase"><command>CREATE
+        DATABASE</command></link> statement for the specified database,
+        followed by <link linkend="sql-alterdatabase"><command>ALTER DATABASE
+        </command></link> statements for connection limit, template status,
+        and configuration settings.  Each statement is returned as a separate
+        row. When <parameter>pretty</parameter> is true, the output is
+        pretty-printed.  When <parameter>owner</parameter> is false, the
+        <literal>OWNER</literal> clause is omitted.  When
+        <parameter>tablespace</parameter> is false, the
+        <literal>TABLESPACE</literal> clause is omitted.
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_get_role_ddl</primary>
         </indexterm>
         <function>pg_get_role_ddl</function>
@@ -3888,14 +3916,15 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         <returnvalue>setof text</returnvalue>
        </para>
        <para>
-        Reconstructs the <command>CREATE ROLE</command> statement and any
-        <command>ALTER ROLE ... SET</command> statements for the given role.
-        Each statement is returned as a separate row.
+        Reconstructs the <link linkend="sql-createrole"><command>CREATE ROLE
+        </command></link> statement and any <link linkend="sql-alterrole">
+        <command>ALTER ROLE ... SET</command></link> statements for the given
+        role.  Each statement is returned as a separate row.
         Password information is never included in the output.
         When <parameter>pretty</parameter> is true, the output is
         pretty-printed.  When <parameter>memberships</parameter> is false,
-        <command>GRANT</command> statements for role memberships are
-        omitted.
+        <link linkend="sql-grant"><command>GRANT</command></link> statements
+        for role memberships are omitted.
        </para></entry>
       </row>
       <row>
@@ -3921,40 +3950,14 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         <returnvalue>setof text</returnvalue>
        </para>
        <para>
-        Reconstructs the <command>CREATE TABLESPACE</command> statement for
-        the specified tablespace (by OID or name).  If the tablespace has
-        options set, an <command>ALTER TABLESPACE ... SET</command> statement
-        is also returned.  Each statement is returned as a separate row.
-        When <parameter>pretty</parameter> is true, the output is
-        pretty-printed.  When <parameter>owner</parameter> is false, the
-        <literal>OWNER</literal> clause is omitted.
-       </para></entry>
-      </row>
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>pg_get_database_ddl</primary>
-        </indexterm>
-        <function>pg_get_database_ddl</function>
-        ( <parameter>database</parameter> <type>regdatabase</type>
-        <optional>, <parameter>pretty</parameter> <type>boolean</type>
-        <literal>DEFAULT</literal> false</optional>
-        <optional>, <parameter>owner</parameter> <type>boolean</type>
-        <literal>DEFAULT</literal> true</optional>
-        <optional>, <parameter>tablespace</parameter> <type>boolean</type>
-        <literal>DEFAULT</literal> true</optional> )
-        <returnvalue>setof text</returnvalue>
-       </para>
-       <para>
-        Reconstructs the <command>CREATE DATABASE</command> statement for the
-        specified database, followed by <command>ALTER DATABASE</command>
-        statements for connection limit, template status, and configuration
-        settings.  Each statement is returned as a separate row.
-        When <parameter>pretty</parameter> is true, the output is
-        pretty-printed.  When <parameter>owner</parameter> is false, the
-        <literal>OWNER</literal> clause is omitted.  When
-        <parameter>tablespace</parameter> is false, the
-        <literal>TABLESPACE</literal> clause is omitted.
+        Reconstructs the <link linkend="sql-createtablespace"><command>CREATE
+        TABLESPACE</command></link> statement for the specified tablespace (by
+        OID or name).  If the tablespace has options set, an
+        <link linkend="sql-altertablespace"><command>ALTER TABLESPACE ... SET
+        </command></link> statement is also returned.  Each statement is
+        returned as a separate row.  When <parameter>pretty</parameter> is
+        true, the output is pretty-printed.  When <parameter>owner</parameter>
+        is false, the <literal>OWNER</literal> clause is omitted.
        </para></entry>
       </row>
      </tbody>
