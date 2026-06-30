@@ -308,7 +308,7 @@ static RI_ConstraintInfo *ri_FetchConstraintInfo(Trigger *trigger,
 												 Relation trig_rel, bool rel_is_pk);
 static RI_ConstraintInfo *ri_LoadConstraintInfo(Oid constraintOid);
 static Oid	get_ri_constraint_root(Oid constrOid);
-static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
+static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, const Oid *argtypes,
 							   RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel);
 static bool ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 							RI_QueryKey *qkey, SPIPlanPtr qplan,
@@ -2605,7 +2605,7 @@ InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cacheid,
  * Prepare execution plan for a query to enforce an RI restriction
  */
 static SPIPlanPtr
-ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
+ri_PlanCheck(const char *querystr, int nargs, const Oid *argtypes,
 			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel)
 {
 	SPIPlanPtr	qplan;

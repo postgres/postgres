@@ -97,7 +97,7 @@ typedef struct _SPI_plan
 	RawParseMode parse_mode;	/* raw_parser() mode */
 	int			cursor_options; /* Cursor options used for planning */
 	int			nargs;			/* number of plan arguments */
-	Oid		   *argtypes;		/* Argument types (NULL if nargs is 0) */
+	const Oid  *argtypes;		/* Argument types (NULL if nargs is 0) */
 	ParserSetupHook parserSetup;	/* alternative parameter spec method */
 	void	   *parserSetupArg;
 } _SPI_plan;

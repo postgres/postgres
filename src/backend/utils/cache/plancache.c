@@ -393,7 +393,7 @@ void
 CompleteCachedPlan(CachedPlanSource *plansource,
 				   List *querytree_list,
 				   MemoryContext querytree_context,
-				   Oid *param_types,
+				   const Oid *param_types,
 				   int num_params,
 				   ParserSetupHook parserSetup,
 				   void *parserSetupArg,

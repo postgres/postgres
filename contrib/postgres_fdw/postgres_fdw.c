@@ -6164,12 +6164,12 @@ import_fetched_statistics(const char *schemaname,
 		Assert(PQntuples(remstats->att) >= 1);
 
 		attimport_plan = SPI_prepare(attimport_sql, ATTIMPORT_SQL_NUM_FIELDS,
-									 (Oid *) attimport_argtypes);
+									 attimport_argtypes);
 		if (attimport_plan == NULL)
 			elog(ERROR, "failed to prepare attimport_sql query");
 
 		attclear_plan = SPI_prepare(attclear_sql, ATTCLEAR_SQL_NUM_FIELDS,
-									(Oid *) attclear_argtypes);
+									attclear_argtypes);
 		if (attclear_plan == NULL)
 			elog(ERROR, "failed to prepare attclear_sql query");
 
@@ -6247,7 +6247,7 @@ import_fetched_statistics(const char *schemaname,
 
 	spirc = SPI_execute_with_args(relimport_sql,
 								  RELIMPORT_SQL_NUM_FIELDS,
-								  (Oid *) relimport_argtypes,
+								  relimport_argtypes,
 								  values, nulls, false, 1);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to execute relimport_sql query for foreign table \"%s.%s\"",

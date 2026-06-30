@@ -127,11 +127,11 @@ extern int	SPI_execute_snapshot(SPIPlanPtr plan,
 								 Snapshot crosscheck_snapshot,
 								 bool read_only, bool fire_triggers, long tcount);
 extern int	SPI_execute_with_args(const char *src,
-								  int nargs, Oid *argtypes,
+								  int nargs, const Oid *argtypes,
 								  const Datum *Values, const char *Nulls,
 								  bool read_only, long tcount);
-extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
-extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
+extern SPIPlanPtr SPI_prepare(const char *src, int nargs, const Oid *argtypes);
+extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, const Oid *argtypes,
 									 int cursorOptions);
 extern SPIPlanPtr SPI_prepare_extended(const char *src,
 									   const SPIPrepareOptions *options);
@@ -155,7 +155,7 @@ extern CachedPlan *SPI_plan_get_cached_plan(SPIPlanPtr plan);
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern HeapTupleHeader SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
-								 int *attnum, const Datum *Values, const char *Nulls);
+								 const int *attnum, const Datum *Values, const char *Nulls);
 extern int	SPI_fnumber(TupleDesc tupdesc, const char *fname);
 extern char *SPI_fname(TupleDesc tupdesc, int fnumber);
 extern char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber);
@@ -175,7 +175,7 @@ extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
 							  const Datum *Values, const char *Nulls, bool read_only);
 extern Portal SPI_cursor_open_with_args(const char *name,
 										const char *src,
-										int nargs, Oid *argtypes,
+										int nargs, const Oid *argtypes,
 										const Datum *Values, const char *Nulls,
 										bool read_only, int cursorOptions);
 extern Portal SPI_cursor_open_with_paramlist(const char *name, SPIPlanPtr plan,
