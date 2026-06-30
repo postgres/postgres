@@ -6715,24 +6715,7 @@ LockBufferForCleanup(Buffer buffer)
 		{
 			/* Successfully acquired exclusive lock with pincount 1 */
 			UnlockBufHdr(bufHdr);
-
-			/*
-			 * Emit the log message if recovery conflict on buffer pin was
-			 * resolved but the startup process waited longer than
-			 * deadlock_timeout for it.
-			 */
-			if (logged_recovery_conflict)
-				LogRecoveryConflict(RECOVERY_CONFLICT_BUFFERPIN,
-									waitStart, GetCurrentTimestamp(),
-									NULL, false);
-
-			if (waiting)
-			{
-				/* reset ps display to remove the suffix if we added one */
-				set_ps_display_remove_suffix();
-				waiting = false;
-			}
-			return;
+			goto cleanup_lock_acquired;
 		}
 		/* Failed, so mark myself as waiting for pincount 1 */
 		if (buf_state & BM_PIN_COUNT_WAITER)
@@ -6743,9 +6726,32 @@ LockBufferForCleanup(Buffer buffer)
 		}
 		bufHdr->wait_backend_pgprocno = MyProcNumber;
 		PinCountWaitBuf = bufHdr;
-		UnlockBufHdrExt(bufHdr, buf_state,
-						BM_PIN_COUNT_WAITER, 0,
-						0);
+
+		/*
+		 * Publish BM_PIN_COUNT_WAITER while retaining the buffer header lock.
+		 * The shared refcount can be decremented while BM_LOCKED is set, so
+		 * use an atomic operation that preserves concurrent refcount changes.
+		 */
+		pg_atomic_fetch_or_u64(&bufHdr->state, BM_PIN_COUNT_WAITER);
+
+		/*
+		 * Recheck the refcount after publishing the waiter flag, while shared
+		 * refcount increments are still prevented by BM_LOCKED.  If only our
+		 * pin remains, the cleanup-lock condition has already been satisfied,
+		 * so remove the waiter state and return without sleeping.
+		 */
+		buf_state = pg_atomic_read_u64(&bufHdr->state);
+
+		if (BUF_STATE_GET_REFCOUNT(buf_state) == 1)
+		{
+			UnlockBufHdrExt(bufHdr, buf_state,
+							0, BM_PIN_COUNT_WAITER,
+							0);
+			PinCountWaitBuf = NULL;
+			goto cleanup_lock_acquired;
+		}
+
+		UnlockBufHdr(bufHdr);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 		/* Wait to be signaled by UnpinBuffer() */
@@ -6816,6 +6822,26 @@ LockBufferForCleanup(Buffer buffer)
 		PinCountWaitBuf = NULL;
 		/* Loop back and try again */
 	}
+
+cleanup_lock_acquired:
+
+	/*
+	 * Emit the log message if recovery conflict on buffer pin was resolved
+	 * but the startup process waited longer than deadlock_timeout for it.
+	 */
+	if (logged_recovery_conflict)
+		LogRecoveryConflict(RECOVERY_CONFLICT_BUFFERPIN,
+							waitStart, GetCurrentTimestamp(),
+							NULL, false);
+
+	if (waiting)
+	{
+		/* reset ps display to remove the suffix if we added one */
+		set_ps_display_remove_suffix();
+		waiting = false;
+	}
+
+	return;
 }
 
 /*
