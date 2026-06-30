@@ -2086,7 +2086,7 @@ int SPI_execute_plan_with_paramlist(SPIPlanPtr <parameter>plan</parameter>,
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>, long <parameter>count</parameter>)
+int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, const Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -2191,7 +2191,7 @@ int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values<
  <refsynopsisdiv>
 <synopsis>
 Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <parameter>plan</parameter>,
-                       Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
+                       const Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
                        bool <parameter>read_only</parameter>)
 </synopsis>
  </refsynopsisdiv>
@@ -4694,7 +4694,7 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
  <refsynopsisdiv>
 <synopsis>
 HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parameter>row</parameter>, int <parameter>ncols</parameter>,
-                          int * <parameter>colnum</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>)
+                          int * <parameter>colnum</parameter>, const Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>)
 </synopsis>
  </refsynopsisdiv>
 

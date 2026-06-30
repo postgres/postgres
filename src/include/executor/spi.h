@@ -119,7 +119,7 @@ extern int	SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
 											ParamListInfo params,
 											bool read_only, long tcount);
 extern int	SPI_exec(const char *src, long tcount);
-extern int	SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
+extern int	SPI_execp(SPIPlanPtr plan, const Datum *Values, const char *Nulls,
 					  long tcount);
 extern int	SPI_execute_snapshot(SPIPlanPtr plan,
 								 const Datum *Values, const char *Nulls,
@@ -155,7 +155,7 @@ extern CachedPlan *SPI_plan_get_cached_plan(SPIPlanPtr plan);
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern HeapTupleHeader SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
-								 int *attnum, Datum *Values, const char *Nulls);
+								 int *attnum, const Datum *Values, const char *Nulls);
 extern int	SPI_fnumber(TupleDesc tupdesc, const char *fname);
 extern char *SPI_fname(TupleDesc tupdesc, int fnumber);
 extern char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber);
@@ -176,7 +176,7 @@ extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
 extern Portal SPI_cursor_open_with_args(const char *name,
 										const char *src,
 										int nargs, Oid *argtypes,
-										Datum *Values, const char *Nulls,
+										const Datum *Values, const char *Nulls,
 										bool read_only, int cursorOptions);
 extern Portal SPI_cursor_open_with_paramlist(const char *name, SPIPlanPtr plan,
 											 ParamListInfo params, bool read_only);
