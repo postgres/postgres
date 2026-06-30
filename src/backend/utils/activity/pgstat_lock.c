@@ -140,11 +140,11 @@ pgstat_count_lock_fastpath_exceeded(uint8 locktag_type)
  * like lock acquisitions.
  */
 void
-pgstat_count_lock_waits(uint8 locktag_type, long msecs)
+pgstat_count_lock_waits(uint8 locktag_type, PgStat_Counter usecs)
 {
 	Assert(locktag_type <= LOCKTAG_LAST_TYPE);
 	PendingLockStats.stats[locktag_type].waits++;
-	PendingLockStats.stats[locktag_type].wait_time += (PgStat_Counter) msecs;
+	PendingLockStats.stats[locktag_type].wait_time += usecs;
 	have_lockstats = true;
 	pgstat_report_fixed = true;
 }
