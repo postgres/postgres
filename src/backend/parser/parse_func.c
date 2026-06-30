@@ -2700,9 +2700,6 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 			break;
 		case EXPR_KIND_WINDOW_PARTITION:
 		case EXPR_KIND_WINDOW_ORDER:
-			/* okay, these are effectively GROUP BY/ORDER BY */
-			pstate->p_hasTargetSRFs = true;
-			break;
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
 		case EXPR_KIND_WINDOW_FRAME_ROWS:
 		case EXPR_KIND_WINDOW_FRAME_GROUPS:

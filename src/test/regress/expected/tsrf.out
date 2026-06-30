@@ -267,7 +267,21 @@ ERROR:  window function calls cannot contain set-returning function calls
 LINE 1: SELECT min(generate_series(1, 3)) OVER() FROM few;
                    ^
 HINT:  You might be able to move the set-returning function into a LATERAL FROM item.
--- SRFs are normally computed after window functions
+--- ... nor in window definitions
+SELECT sum(id) OVER (PARTITION BY generate_series(1, 3)) FROM few;
+ERROR:  set-returning functions are not allowed in window definitions
+LINE 1: SELECT sum(id) OVER (PARTITION BY generate_series(1, 3)) FRO...
+                                          ^
+SELECT sum(id) OVER (ORDER BY generate_series(1, 3)) FROM few;
+ERROR:  set-returning functions are not allowed in window definitions
+LINE 1: SELECT sum(id) OVER (ORDER BY generate_series(1, 3)) FROM fe...
+                                      ^
+SELECT sum(id) OVER (ROWS BETWEEN UNBOUNDED PRECEDING
+                     AND generate_series(1, 3) FOLLOWING) FROM few;
+ERROR:  set-returning functions are not allowed in window definitions
+LINE 2:                      AND generate_series(1, 3) FOLLOWING) FR...
+                                 ^
+-- SRFs are computed after window functions
 SELECT id,lag(id) OVER(), count(*) OVER(), generate_series(1,3) FROM few;
  id | lag | count | generate_series 
 ----+-----+-------+-----------------
@@ -281,15 +295,6 @@ SELECT id,lag(id) OVER(), count(*) OVER(), generate_series(1,3) FROM few;
   3 |   2 |     3 |               2
   3 |   2 |     3 |               3
 (9 rows)
-
--- unless referencing SRFs
-SELECT SUM(count(*)) OVER(PARTITION BY generate_series(1,3) ORDER BY generate_series(1,3)), generate_series(1,3) g FROM few GROUP BY g;
- sum | g 
------+---
-   3 | 1
-   3 | 2
-   3 | 3
-(3 rows)
 
 -- sorting + grouping
 SELECT few.dataa, count(*), min(id), max(id), generate_series(1,3) FROM few GROUP BY few.dataa ORDER BY 5, 1;
