@@ -3632,10 +3632,11 @@ check_av_worker_gucs(void)
 	if (autovacuum_worker_slots < autovacuum_max_workers)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"autovacuum_max_workers\" (%d) should be less than or equal to \"autovacuum_worker_slots\" (%d)",
-						autovacuum_max_workers, autovacuum_worker_slots),
-				 errdetail("The server will only start up to \"autovacuum_worker_slots\" (%d) autovacuum workers at a given time.",
-						   autovacuum_worker_slots)));
+				 errmsg("\"%s\" (%d) should be less than or equal to \"%s\" (%d)",
+						"autovacuum_max_workers", autovacuum_max_workers,
+						"autovacuum_worker_slots", autovacuum_worker_slots),
+				 errdetail("The server will only start up to \"%s\" (%d) autovacuum workers at a given time.",
+						   "autovacuum_worker_slots", autovacuum_worker_slots)));
 }
 
 /*
