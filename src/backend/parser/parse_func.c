@@ -526,7 +526,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						 errmsg("%s is not an ordered-set aggregate, so it cannot have WITHIN GROUP",
 								NameListToString(funcname)),
 						 parser_errposition(pstate, location)));
-
 		}
 
 		if (ignore_nulls != NO_NULLTREATMENT)
