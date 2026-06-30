@@ -95,7 +95,7 @@ typedef struct instr_time
  * PG_INSTR_TSC_CLOCK controls whether the TSC clock source is compiled in, and
  * potentially used based on timing_tsc_enabled.
  */
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__)
 #define PG_INSTR_TICKS_TO_NS 1
 #define PG_INSTR_TSC_CLOCK 1
 #elif defined(WIN32)

@@ -247,7 +247,7 @@ spin_delay(void)
  * We use the int-width variant of the builtin because it works on more chips
  * than other widths.
  */
-#if defined(__arm__) || defined(__arm) || defined(__aarch64__)
+#if defined(__arm__) || defined(__aarch64__)
 #ifdef HAVE_GCC__SYNC_INT32_TAS
 #define HAS_TEST_AND_SET
 
@@ -287,7 +287,7 @@ spin_delay(void)
 
 #endif	 /* __aarch64__ */
 #endif	 /* HAVE_GCC__SYNC_INT32_TAS */
-#endif	 /* __arm__ || __arm || __aarch64__ */
+#endif	 /* __arm__ || __aarch64__ */
 
 
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
@@ -391,7 +391,7 @@ do \
 
 
 /* PowerPC */
-#if defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
+#if defined(__powerpc__) || defined(__powerpc64__)
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
@@ -602,7 +602,7 @@ typedef LONG slock_t;
 
 #define SPIN_DELAY() spin_delay()
 
-#ifdef _M_ARM64
+#ifdef __aarch64__
 static __forceinline void
 spin_delay(void)
 {
@@ -633,7 +633,7 @@ spin_delay(void)
 
 #include <intrin.h>
 
-#ifdef _M_ARM64
+#ifdef __aarch64__
 
 /* _ReadWriteBarrier() is insufficient on non-TSO architectures. */
 #pragma intrinsic(_InterlockedExchange)

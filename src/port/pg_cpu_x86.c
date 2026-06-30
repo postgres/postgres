@@ -19,7 +19,7 @@
 #include "postgres_fe.h"
 #endif
 
-#if defined(USE_SSE2) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__)
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -287,10 +287,10 @@ x86_hypervisor_tsc_frequency_khz(void)
 	return 0;
 }
 
-#else							/* defined(USE_SSE2) || defined(__i386__) */
+#else							/* defined(__x86_64__) || defined(__i386__) */
 
 /* prevent linker complaints about empty module */
 extern int	pg_cpu_x86_dummy_variable;
 int			pg_cpu_x86_dummy_variable = 0;
 
-#endif							/* ! (USE_SSE2 || __i386__) */
+#endif							/* ! (__x86_64__ || __i386__) */

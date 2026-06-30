@@ -53,7 +53,7 @@
  * alignment concerns that apply elsewhere.
  */
 #if !defined(HAVE_INT128) && defined(_MSC_VER) \
-	&& !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64)
+	&& !defined(RYU_ONLY_64_BIT_OPS) && defined(__x86_64__)
 #define HAS_64_BIT_INTRINSICS
 #endif
 

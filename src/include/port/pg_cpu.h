@@ -13,7 +13,7 @@
 #ifndef PG_CPU_H
 #define PG_CPU_H
 
-#if defined(USE_SSE2) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__)
 
 typedef enum X86FeatureId
 {
@@ -58,6 +58,6 @@ x86_feature_available(X86FeatureId feature)
 
 extern uint32 x86_tsc_frequency_khz(char *source, size_t source_size);
 
-#endif							/* defined(USE_SSE2) || defined(__i386__) */
+#endif							/* defined(__x86_64__) || defined(__i386__) */
 
 #endif							/* PG_CPU_H */

@@ -32,7 +32,7 @@
  */
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#if defined(__i386__) || defined(__i386)
+#if defined(__i386__)
 #define pg_memory_barrier_impl()		\
 	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory", "cc")
 #elif defined(__x86_64__)
@@ -184,6 +184,6 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 /*
  * 8 byte reads / writes have single-copy atomicity on all x86-64 cpus.
  */
-#if defined(__x86_64__) || defined(__x86_64) || defined(_M_X64) /* gcc, msvc */
+#if defined(__x86_64__)
 #define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY
 #endif /* 8 byte single-copy atomicity */

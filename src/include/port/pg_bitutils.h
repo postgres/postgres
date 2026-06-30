@@ -82,7 +82,7 @@ pg_leftmost_one_pos64(uint64 word)
 #error "cannot find integer type of the same size as uint64_t"
 #endif
 
-#elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_ARM64))
+#elif defined(_MSC_VER) && (defined(__x86_64__) || defined(__aarch64__))
 	unsigned long result;
 	bool		non_zero;
 
@@ -155,7 +155,7 @@ pg_rightmost_one_pos64(uint64 word)
 #error "cannot find integer type of the same size as uint64_t"
 #endif
 
-#elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_ARM64))
+#elif defined(_MSC_VER) && (defined(__x86_64__) || defined(__aarch64__))
 	unsigned long result;
 	bool		non_zero;
 
