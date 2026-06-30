@@ -1761,7 +1761,7 @@ pg_stat_get_lock(PG_FUNCTION_ARGS)
 
 		values[i++] = CStringGetTextDatum(locktypename);
 		values[i++] = Int64GetDatum(lck_stats->waits);
-		values[i++] = Int64GetDatum(lck_stats->wait_time);
+		values[i++] = Float8GetDatum(pg_stat_us_to_ms(lck_stats->wait_time));
 		values[i++] = Int64GetDatum(lck_stats->fastpath_exceeded);
 		values[i] = TimestampTzGetDatum(lock_stats->stat_reset_timestamp);
 

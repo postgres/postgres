@@ -349,7 +349,7 @@ typedef struct PgStat_IO
 typedef struct PgStat_LockEntry
 {
 	PgStat_Counter waits;
-	PgStat_Counter wait_time;	/* time in milliseconds */
+	PgStat_Counter wait_time;	/* time in microseconds */
 	PgStat_Counter fastpath_exceeded;
 } PgStat_LockEntry;
 
@@ -638,7 +638,8 @@ extern bool pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 
 extern void pgstat_lock_flush(bool nowait);
 extern void pgstat_count_lock_fastpath_exceeded(uint8 locktag_type);
-extern void pgstat_count_lock_waits(uint8 locktag_type, long msecs);
+extern void pgstat_count_lock_waits(uint8 locktag_type,
+									PgStat_Counter usecs);
 extern PgStat_Lock *pgstat_fetch_stat_lock(void);
 
 /*

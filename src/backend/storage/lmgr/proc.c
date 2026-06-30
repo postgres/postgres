@@ -1608,12 +1608,13 @@ ProcSleep(LOCALLOCK *locallock)
 			TimestampDifference(get_timeout_start_time(DEADLOCK_TIMEOUT),
 								GetCurrentTimestamp(),
 								&secs, &usecs);
-			msecs = secs * 1000 + usecs / 1000;
-			usecs = usecs % 1000;
-
 			/* Increment the lock statistics counters if done waiting. */
 			if (myWaitStatus == PROC_WAIT_STATUS_OK)
-				pgstat_count_lock_waits(locallock->tag.lock.locktag_type, msecs);
+				pgstat_count_lock_waits(locallock->tag.lock.locktag_type,
+										(PgStat_Counter) secs * 1000000 + usecs);
+
+			msecs = secs * 1000 + usecs / 1000;
+			usecs = usecs % 1000;
 
 			if (log_lock_waits)
 			{
