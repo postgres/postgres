@@ -28,12 +28,6 @@
 #	define pg_write_barrier_impl pg_memory_barrier_impl
 #endif
 
-#ifndef PG_HAVE_SPIN_DELAY
-#define PG_HAVE_SPIN_DELAY
-#define pg_spin_delay_impl()	((void)0)
-#endif
-
-
 /* provide fallback */
 #if !defined(PG_HAVE_ATOMIC_FLAG_SUPPORT) && defined(PG_HAVE_ATOMIC_U32_SUPPORT)
 #define PG_HAVE_ATOMIC_FLAG_SUPPORT

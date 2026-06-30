@@ -155,11 +155,6 @@
 #define pg_write_barrier()	pg_write_barrier_impl()
 
 /*
- * Spinloop delay - Allow CPU to relax in busy loops
- */
-#define pg_spin_delay() pg_spin_delay_impl()
-
-/*
  * pg_atomic_init_flag - initialize atomic flag.
  *
  * No barrier semantics.
