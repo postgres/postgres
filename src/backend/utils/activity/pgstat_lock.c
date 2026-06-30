@@ -131,6 +131,8 @@ pgstat_count_lock_fastpath_exceeded(uint8 locktag_type)
 	PendingLockStats.stats[locktag_type].fastpath_exceeded++;
 	have_lockstats = true;
 	pgstat_report_fixed = true;
+
+	pgstat_count_backend_lock_fastpath_exceeded(locktag_type);
 }
 
 /*
@@ -147,4 +149,6 @@ pgstat_count_lock_waits(uint8 locktag_type, PgStat_Counter usecs)
 	PendingLockStats.stats[locktag_type].wait_time += usecs;
 	have_lockstats = true;
 	pgstat_report_fixed = true;
+
+	pgstat_count_backend_lock_waits(locktag_type, usecs);
 }

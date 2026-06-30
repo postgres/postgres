@@ -1740,8 +1740,8 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 /*
  * pg_stat_lock_build_tuples
  *
- * Helper routine for pg_stat_get_lock(), filling a result tuplestore with one
- * tuple for each lock type.
+ * Helper routine for pg_stat_get_lock() and pg_stat_get_backend_lock(),
+ * filling a result tuplestore with one tuple for each lock type.
  */
 static void
 pg_stat_lock_build_tuples(ReturnSetInfo *rsinfo,
@@ -1784,6 +1784,31 @@ pg_stat_get_lock(PG_FUNCTION_ARGS)
 
 	pg_stat_lock_build_tuples(rsinfo, lock_stats->stats,
 							  lock_stats->stat_reset_timestamp);
+
+	return (Datum) 0;
+}
+
+/*
+ * Returns lock statistics for a backend with given PID.
+ */
+Datum
+pg_stat_get_backend_lock(PG_FUNCTION_ARGS)
+{
+	int			pid;
+	ReturnSetInfo *rsinfo;
+	PgStat_Backend *backend_stats;
+
+	InitMaterializedSRF(fcinfo, 0);
+	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	pid = PG_GETARG_INT32(0);
+	backend_stats = pgstat_fetch_stat_backend_by_pid(pid, NULL);
+
+	if (!backend_stats)
+		return (Datum) 0;
+
+	pg_stat_lock_build_tuples(rsinfo, backend_stats->lock_stats.stats,
+							  backend_stats->stat_reset_timestamp);
 
 	return (Datum) 0;
 }

@@ -998,6 +998,11 @@ $$;
 
 SELECT fastpath_exceeded AS fastpath_exceeded_before FROM pg_stat_lock WHERE locktype = 'relation' \gset
 
+-- Test pg_stat_get_backend_lock()
+SELECT fastpath_exceeded AS backend_fastpath_exceeded_before
+  FROM pg_stat_get_backend_lock(pg_backend_pid())
+  WHERE locktype = 'relation' \gset
+
 -- Needs a lock on each partition
 SELECT count(*) FROM part_test;
 
@@ -1005,6 +1010,10 @@ SELECT count(*) FROM part_test;
 SELECT pg_stat_force_next_flush();
 
 SELECT fastpath_exceeded > :fastpath_exceeded_before FROM pg_stat_lock WHERE locktype = 'relation';
+
+SELECT fastpath_exceeded > :backend_fastpath_exceeded_before
+  FROM pg_stat_get_backend_lock(pg_backend_pid())
+  WHERE locktype = 'relation';
 
 DROP TABLE part_test;
 

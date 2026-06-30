@@ -39,6 +39,7 @@
  */
 static PgStat_BackendPending PendingBackendStats;
 static bool backend_has_iostats = false;
+static bool backend_has_lockstats = false;
 
 /*
  * WAL usage counters saved from pgWalUsage at the previous call to
@@ -83,6 +84,39 @@ pgstat_count_backend_io_op(IOObject io_object, IOContext io_context,
 	PendingBackendStats.pending_io.bytes[io_object][io_context][io_op] += bytes;
 
 	backend_has_iostats = true;
+	pgstat_report_fixed = true;
+}
+
+/*
+ * Utility routines to report lock stats for backends, kept here to avoid
+ * exposing PendingBackendStats to the outside world.
+ */
+void
+pgstat_count_backend_lock_waits(uint8 locktag_type, PgStat_Counter usecs)
+{
+	if (!pgstat_tracks_backend_bktype(MyBackendType))
+		return;
+
+	Assert(locktag_type <= LOCKTAG_LAST_TYPE);
+
+	PendingBackendStats.pending_lock.stats[locktag_type].waits++;
+	PendingBackendStats.pending_lock.stats[locktag_type].wait_time += usecs;
+
+	backend_has_lockstats = true;
+	pgstat_report_fixed = true;
+}
+
+void
+pgstat_count_backend_lock_fastpath_exceeded(uint8 locktag_type)
+{
+	if (!pgstat_tracks_backend_bktype(MyBackendType))
+		return;
+
+	Assert(locktag_type <= LOCKTAG_LAST_TYPE);
+
+	PendingBackendStats.pending_lock.stats[locktag_type].fastpath_exceeded++;
+
+	backend_has_lockstats = true;
 	pgstat_report_fixed = true;
 }
 
@@ -263,6 +297,36 @@ pgstat_flush_backend_entry_wal(PgStat_EntryRef *entry_ref)
 }
 
 /*
+ * Flush out locally pending backend lock statistics.  Locking is managed
+ * by the caller.
+ */
+static void
+pgstat_flush_backend_entry_lock(PgStat_EntryRef *entry_ref)
+{
+	PgStatShared_Backend *shbackendent;
+	PgStat_PendingLock *bktype_shstats;
+
+	if (!backend_has_lockstats)
+		return;
+
+	shbackendent = (PgStatShared_Backend *) entry_ref->shared_stats;
+	bktype_shstats = &shbackendent->stats.lock_stats;
+
+	for (int i = 0; i <= LOCKTAG_LAST_TYPE; i++)
+	{
+#define LOCKSTAT_ACC(fld) \
+	(bktype_shstats->stats[i].fld += PendingBackendStats.pending_lock.stats[i].fld)
+		LOCKSTAT_ACC(waits);
+		LOCKSTAT_ACC(wait_time);
+		LOCKSTAT_ACC(fastpath_exceeded);
+#undef LOCKSTAT_ACC
+	}
+
+	MemSet(&PendingBackendStats.pending_lock, 0, sizeof(PgStat_PendingLock));
+	backend_has_lockstats = false;
+}
+
+/*
  * Flush out locally pending backend statistics
  *
  * "flags" parameter controls which statistics to flush.  Returns true
@@ -286,6 +350,10 @@ pgstat_flush_backend(bool nowait, uint32 flags)
 		pgstat_backend_wal_have_pending())
 		has_pending_data = true;
 
+	/* Some lock data pending? */
+	if ((flags & PGSTAT_BACKEND_FLUSH_LOCK) && backend_has_lockstats)
+		has_pending_data = true;
+
 	if (!has_pending_data)
 		return false;
 
@@ -300,6 +368,9 @@ pgstat_flush_backend(bool nowait, uint32 flags)
 
 	if (flags & PGSTAT_BACKEND_FLUSH_WAL)
 		pgstat_flush_backend_entry_wal(entry_ref);
+
+	if (flags & PGSTAT_BACKEND_FLUSH_LOCK)
+		pgstat_flush_backend_entry_lock(entry_ref);
 
 	pgstat_unlock_entry(entry_ref);
 
@@ -339,6 +410,7 @@ pgstat_create_backend(ProcNumber procnum)
 
 	MemSet(&PendingBackendStats, 0, sizeof(PgStat_BackendPending));
 	backend_has_iostats = false;
+	backend_has_lockstats = false;
 
 	/*
 	 * Initialize prevBackendWalUsage with pgWalUsage so that
