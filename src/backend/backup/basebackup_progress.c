@@ -38,6 +38,7 @@
 static void bbsink_progress_begin_backup(bbsink *sink);
 static void bbsink_progress_archive_contents(bbsink *sink, size_t len);
 static void bbsink_progress_end_archive(bbsink *sink);
+static void bbsink_progress_cleanup(bbsink *sink);
 
 static const bbsink_ops bbsink_progress_ops = {
 	.begin_backup = bbsink_progress_begin_backup,
@@ -48,7 +49,7 @@ static const bbsink_ops bbsink_progress_ops = {
 	.manifest_contents = bbsink_forward_manifest_contents,
 	.end_manifest = bbsink_forward_end_manifest,
 	.end_backup = bbsink_forward_end_backup,
-	.cleanup = bbsink_forward_cleanup
+	.cleanup = bbsink_progress_cleanup
 };
 
 /*
@@ -185,6 +186,16 @@ bbsink_progress_archive_contents(bbsink *sink, size_t len)
 }
 
 /*
+ * Clean up progress reporting.
+ */
+static void
+bbsink_progress_cleanup(bbsink *sink)
+{
+	pgstat_progress_end_command();
+	bbsink_forward_cleanup(sink);
+}
+
+/*
  * Advertise that we are waiting for the start-of-backup checkpoint.
  */
 void
@@ -235,13 +246,4 @@ basebackup_progress_transfer_wal(void)
 {
 	pgstat_progress_update_param(PROGRESS_BASEBACKUP_PHASE,
 								 PROGRESS_BASEBACKUP_PHASE_TRANSFER_WAL);
-}
-
-/*
- * Advertise that we are no longer performing a backup.
- */
-void
-basebackup_progress_done(void)
-{
-	pgstat_progress_end_command();
 }
