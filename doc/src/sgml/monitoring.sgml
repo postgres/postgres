@@ -4594,7 +4594,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>xid_score</structfield> <type>double precision</type>
       </para>
       <para>
-       Transaction ID age component score.  Scores greater than or equal to
+       Transaction ID age component score.  Scores greater than
        <xref linkend="guc-autovacuum-freeze-score-weight"/> indicate that
        autovacuum would vacuum the table for transaction ID wraparound
        prevention.
@@ -4606,7 +4606,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>mxid_score</structfield> <type>double precision</type>
       </para>
       <para>
-       Multixact ID age component score.  Scores greater than or equal to
+       Multixact ID age component score.  Scores greater than
        <xref linkend="guc-autovacuum-multixact-freeze-score-weight"/> indicate
        that autovacuum would vacuum the table for multixact ID wraparound
        prevention.
@@ -4618,7 +4618,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>vacuum_score</structfield> <type>double precision</type>
       </para>
       <para>
-       Vacuum component score.  Scores greater than or equal to
+       Vacuum component score.  Scores greater than
        <xref linkend="guc-autovacuum-vacuum-score-weight"/> indicate that
        autovacuum would vacuum the table (unless autovacuum is disabled).
       </para></entry>
@@ -4629,7 +4629,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>vacuum_insert_score</structfield> <type>double precision</type>
       </para>
       <para>
-       Vacuum insert component score.  Scores greater than or equal to
+       Vacuum insert component score.  Scores greater than
        <xref linkend="guc-autovacuum-vacuum-insert-score-weight"/> indicate
        that autovacuum would vacuum the table (unless autovacuum is disabled).
       </para></entry>
@@ -4640,7 +4640,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>analyze_score</structfield> <type>double precision</type>
       </para>
       <para>
-       Analyze component score.  Scores greater than or equal to
+       Analyze component score.  Scores greater than
        <xref linkend="guc-autovacuum-analyze-score-weight"/> indicate that
        autovacuum would analyze the table (unless autovacuum is disabled).
       </para></entry>
