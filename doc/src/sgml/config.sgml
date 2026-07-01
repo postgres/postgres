@@ -3312,6 +3312,7 @@ include_dir 'conf.d'
         was compiled with <option>--with-lz4</option>) and
         <literal>zstd</literal> (if <productname>PostgreSQL</productname>
         was compiled with <option>--with-zstd</option>).
+        The value <literal>on</literal> is a historical spelling of <literal>pglz</literal>.
         The default value is <literal>off</literal>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
