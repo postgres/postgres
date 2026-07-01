@@ -138,10 +138,13 @@ extern "C++"
 #ifndef __powerpc64__
 #define __powerpc64__ 1
 #endif
-#elif defined(__riscv__)
-/* no work */
-#elif defined(__riscv64__)
-/* no work */
+#elif defined(__riscv)
+/* RISC-V doesn't follow the common naming pattern, so force it */
+#if SIZEOF_VOID_P == 8
+#define __riscv64__ 1
+#else
+#define __riscv__ 1
+#endif
 #elif defined(__s390__)
 /* no work */
 #elif defined(__s390x__)
