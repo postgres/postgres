@@ -3162,7 +3162,7 @@ sendCommand(CState *st, Command *command)
 
 		pg_log_debug("client %d sending %s", st->id, sql);
 		r = PQsendQuery(st->con, sql);
-		free(sql);
+		pg_free(sql);
 	}
 	else if (querymode == QUERY_EXTENDED)
 	{
@@ -3355,7 +3355,7 @@ readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 						}
 
 						if (*varprefix != '\0')
-							pg_free(varname);
+							pfree(varname);
 					}
 				}
 				/* otherwise the result is simply thrown away by PQclear below */

@@ -1926,8 +1926,8 @@ describeOneTableDetails(const char *schemaname,
 
 		printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
-		free(footers[0]);
-		free(footers[1]);
+		pg_free(footers[0]);
+		pg_free(footers[1]);
 
 		retval = true;
 		goto error_return;		/* not an error, just return early */
@@ -2000,8 +2000,8 @@ describeOneTableDetails(const char *schemaname,
 
 		printQuery(res, &popt, pset.queryFout, false, pset.logfile);
 
-		free(footers[0]);
-		free(footers[1]);
+		pg_free(footers[0]);
+		pg_free(footers[1]);
 
 		retval = true;
 		goto error_return;		/* not an error, just return early */
@@ -3855,7 +3855,7 @@ error_return:
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
 
-	free(view_def);
+	pg_free(view_def);
 
 	PQclear(res);
 
@@ -4063,8 +4063,8 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 	printTableCleanup(&cont);
 
 	for (i = 0; i < nrows; i++)
-		free(attr[i]);
-	free(attr);
+		pg_free(attr[i]);
+	pg_free(attr);
 
 	PQclear(res);
 	return true;

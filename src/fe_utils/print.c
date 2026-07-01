@@ -1180,21 +1180,21 @@ cleanup:
 	/* clean up */
 	for (i = 0; i < col_count; i++)
 	{
-		free(col_lineptrs[i]);
-		free(format_buf[i]);
+		pg_free(col_lineptrs[i]);
+		pg_free(format_buf[i]);
 	}
-	free(width_header);
-	free(width_average);
-	free(max_width);
-	free(width_wrap);
-	free(max_nl_lines);
-	free(curr_nl_line);
-	free(col_lineptrs);
-	free(max_bytes);
-	free(format_buf);
-	free(header_done);
-	free(bytes_output);
-	free(wrap);
+	pg_free(width_header);
+	pg_free(width_average);
+	pg_free(max_width);
+	pg_free(width_wrap);
+	pg_free(max_nl_lines);
+	pg_free(curr_nl_line);
+	pg_free(col_lineptrs);
+	pg_free(max_bytes);
+	pg_free(format_buf);
+	pg_free(header_done);
+	pg_free(bytes_output);
+	pg_free(wrap);
 
 	if (is_local_pager)
 		ClosePager(fout);
@@ -1807,10 +1807,10 @@ print_aligned_vertical(const printTableContent *cont,
 		fputc('\n', fout);
 	}
 
-	free(hlineptr->ptr);
-	free(dlineptr->ptr);
-	free(hlineptr);
-	free(dlineptr);
+	pg_free(hlineptr->ptr);
+	pg_free(dlineptr->ptr);
+	pg_free(hlineptr);
+	pg_free(dlineptr);
 
 	if (is_local_pager)
 		ClosePager(fout);
@@ -3619,7 +3619,7 @@ count_table_lines(const printTableContent *cont,
 		}
 	}
 
-	free(header_height);
+	pg_free(header_height);
 
 	return lines;
 }

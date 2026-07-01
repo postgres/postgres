@@ -1034,7 +1034,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 
 		/* Unlink file in case it is left over from a previous run. */
 		unlink(*deletion_script_file_name);
-		pg_free(*deletion_script_file_name);
+		pfree(*deletion_script_file_name);
 		*deletion_script_file_name = NULL;
 		return;
 	}
@@ -1058,7 +1058,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 
 			/* Unlink file in case it is left over from a previous run. */
 			unlink(*deletion_script_file_name);
-			pg_free(*deletion_script_file_name);
+			pfree(*deletion_script_file_name);
 			*deletion_script_file_name = NULL;
 			return;
 		}
@@ -1086,7 +1086,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 		fprintf(script, RMDIR_CMD " %c%s%s%c\n", PATH_QUOTE,
 				fix_path_separator(old_cluster.tablespaces[tblnum]),
 				old_tblspc_suffix, PATH_QUOTE);
-	pfree(old_tblspc_suffix);
+	pg_free(old_tblspc_suffix);
 
 	fclose(script);
 
@@ -1639,7 +1639,7 @@ check_for_incompatible_polymorphics(ClusterInfo *cluster)
 		check_ok();
 
 	termPQExpBuffer(&old_polymorphics);
-	pg_free(query);
+	pfree(query);
 }
 
 /*

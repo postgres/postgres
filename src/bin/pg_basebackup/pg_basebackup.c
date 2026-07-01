@@ -796,7 +796,7 @@ progress_update_filename(const char *filename)
 	/* We needn't maintain this variable if not doing verbose reports. */
 	if (showprogress && verbose)
 	{
-		free(progress_filename);
+		pg_free(progress_filename);
 		if (filename)
 			progress_filename = pg_strdup(filename);
 		else
@@ -2857,7 +2857,7 @@ main(int argc, char **argv)
 
 		if (symlink(xlog_dir, linkloc) != 0)
 			pg_fatal("could not create symbolic link \"%s\": %m", linkloc);
-		free(linkloc);
+		pfree(linkloc);
 	}
 
 	BaseBackup(compression_algorithm, compression_detail, compressloc,

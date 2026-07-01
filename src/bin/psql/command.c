@@ -2601,7 +2601,7 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 			PQclear(res);
 		}
 
-		free(user);
+		pg_free(user);
 		free(pw1);
 		free(pw2);
 		termPQExpBuffer(&buf);
@@ -2913,7 +2913,7 @@ exec_command_set(PsqlScanState scan_state, bool active_branch)
 			if (!SetVariable(pset.vars, opt0, newval))
 				success = false;
 
-			free(newval);
+			pg_free(newval);
 		}
 		free(opt0);
 	}
@@ -3881,7 +3881,7 @@ prompt_for_password(const char *username, bool *canceled)
 
 		prompt_text = psprintf(_("Password for user %s: "), username);
 		result = simple_prompt_extended(prompt_text, false, &prompt_ctx);
-		free(prompt_text);
+		pfree(prompt_text);
 	}
 
 	if (canceled)
@@ -4706,7 +4706,7 @@ editFile(const char *fname, int lineno)
 		pg_log_error("could not start editor \"%s\"", editorName);
 	else if (result == 127)
 		pg_log_error("could not start /bin/sh");
-	free(sys);
+	pfree(sys);
 
 	return result == 0;
 }
@@ -5893,7 +5893,7 @@ do_shell(const char *command)
 		sys = psprintf("\"%s\"", shellName);
 #endif
 		result = system(sys);
-		free(sys);
+		pfree(sys);
 	}
 	else
 		result = system(command);

@@ -281,8 +281,8 @@ copy_connection(PGconn *conn)
 		pg_fatal("Connection to database failed: %s",
 				 PQerrorMessage(copyConn));
 
-	pfree(keywords);
-	pfree(vals);
+	pg_free(keywords);
+	pg_free(vals);
 	PQconninfoFree(opts);
 
 	return copyConn;
@@ -1438,8 +1438,8 @@ test_protocol_version(PGconn *conn)
 
 	PQfinish(conn);
 
-	pfree(keywords);
-	pfree(vals);
+	pg_free(keywords);
+	pg_free(vals);
 	PQconninfoFree(opts);
 }
 

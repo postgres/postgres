@@ -372,9 +372,9 @@ reconstruct_from_incremental_file(char *input_filename,
 		pg_free(s->filename);
 		pg_free(s);
 	}
-	pfree(sourcemap);
-	pfree(offsetmap);
-	pfree(source);
+	pg_free(sourcemap);
+	pg_free(offsetmap);
+	pg_free(source);
 }
 
 /*
@@ -518,7 +518,7 @@ make_rfile(char *filename, bool missing_ok)
 	{
 		if (missing_ok && errno == ENOENT)
 		{
-			pg_free(rf->filename);
+			pfree(rf->filename);
 			pg_free(rf);
 			return NULL;
 		}

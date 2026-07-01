@@ -89,7 +89,7 @@ isolation_start_test(const char *testname,
 
 	appnameenv = psprintf("isolation/%s", testname);
 	setenv("PGAPPNAME", appnameenv, 1);
-	free(appnameenv);
+	pfree(appnameenv);
 
 	pid = spawn_process(psql_cmd.data);
 

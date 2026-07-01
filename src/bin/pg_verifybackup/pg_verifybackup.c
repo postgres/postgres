@@ -509,7 +509,7 @@ parse_manifest_file(char *manifest_path)
 	}
 
 	/* Done with the buffer. */
-	pfree(buffer);
+	pg_free(buffer);
 
 	return result;
 }
@@ -1109,7 +1109,7 @@ verify_backup_checksums(verifier_context *context)
 		}
 	}
 
-	pfree(buffer);
+	pg_free(buffer);
 
 	progress_report(true);
 }

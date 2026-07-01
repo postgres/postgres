@@ -229,9 +229,9 @@ ReadDataFromArchiveGzip(ArchiveHandle *AH, CompressorState *cs)
 	if (inflateEnd(zp) != Z_OK)
 		pg_fatal("could not close compression library: %s", zp->msg);
 
-	free(buf);
-	free(out);
-	free(zp);
+	pg_free(buf);
+	pg_free(out);
+	pg_free(zp);
 }
 
 /* Public routines that support gzip compressed data I/O */
@@ -421,7 +421,7 @@ Gzip_open_write(const char *path, const char *mode, CompressFileHandle *CFH)
 	ret = CFH->open_func(fname, -1, mode, CFH);
 
 	save_errno = errno;
-	pg_free(fname);
+	pfree(fname);
 	errno = save_errno;
 
 	return ret;

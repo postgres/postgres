@@ -214,7 +214,7 @@ load_backup_manifest(char *backup_directory)
 	}
 
 	/* All done. */
-	pfree(buffer);
+	pg_free(buffer);
 	return result;
 }
 

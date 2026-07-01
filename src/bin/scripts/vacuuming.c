@@ -490,7 +490,7 @@ vacuum_all_databases(ConnParams *cparams,
 		{
 			for (int i = 0; i < numdbs; i++)
 				free_retrieved_objects(found_objs[i]);
-			pg_free(found_objs);
+			pfree(found_objs);
 		}
 	}
 	else

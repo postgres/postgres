@@ -755,7 +755,7 @@ LZ4Stream_open_write(const char *path, const char *mode, CompressFileHandle *CFH
 	ret = CFH->open_func(fname, -1, mode, CFH);
 
 	save_errno = errno;
-	pg_free(fname);
+	pfree(fname);
 	errno = save_errno;
 
 	return ret;

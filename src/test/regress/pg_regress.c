@@ -811,7 +811,7 @@ initialize_environment(void)
 		new_pgoptions = psprintf("%s %s",
 								 old_pgoptions, my_pgoptions);
 		setenv("PGOPTIONS", new_pgoptions, 1);
-		free(new_pgoptions);
+		pfree(new_pgoptions);
 	}
 
 	if (temp_instance)
@@ -997,7 +997,7 @@ current_windows_user(const char **acct, const char **dom)
 			 GetLastError());
 	}
 
-	free(tokenuser);
+	pg_free(tokenuser);
 
 	*acct = accountname;
 	*dom = domainname;
@@ -1682,7 +1682,7 @@ wait_for_tests(PID_TYPE * pids, int *statuses, instr_time *stoptimes,
 	}
 
 #ifdef WIN32
-	free(active_pids);
+	pg_free(active_pids);
 #endif
 }
 

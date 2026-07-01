@@ -365,7 +365,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 		ahwrite(buf, 1, cnt, AH);
 	}
 
-	free(buf);
+	pg_free(buf);
 	if (!EndCompressFileHandle(CFH))
 		pg_fatal("could not close data file \"%s\": %m", filename);
 }

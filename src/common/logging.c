@@ -360,5 +360,5 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 		fflush(log_logfile);
 	}
 
-	free(buf);
+	pg_free(buf);
 }

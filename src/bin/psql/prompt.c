@@ -333,7 +333,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						/* strip trailing newline and carriage return */
 						(void) pg_strip_crlf(buf);
 
-						free(file);
+						pfree(file);
 						p += cmdend + 1;
 						break;
 					}
@@ -348,7 +348,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						val = GetVariable(pset.vars, name);
 						if (val)
 							strlcpy(buf, val, sizeof(buf));
-						free(name);
+						pfree(name);
 						p += nameend + 1;
 						break;
 					}

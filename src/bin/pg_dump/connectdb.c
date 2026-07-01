@@ -66,8 +66,8 @@ ConnectDatabase(const char *dbname, const char *connection_string,
 		char	   *err_msg = NULL;
 		int			i = 0;
 
-		free(keywords);
-		free(values);
+		pg_free(keywords);
+		pg_free(values);
 		PQconninfoFree(conn_opts);
 
 		/*
@@ -176,8 +176,8 @@ ConnectDatabase(const char *dbname, const char *connection_string,
 		{
 			PQfinish(conn);
 
-			free(keywords);
-			free(values);
+			pg_free(keywords);
+			pg_free(values);
 			PQconninfoFree(conn_opts);
 
 			return NULL;
@@ -191,8 +191,8 @@ ConnectDatabase(const char *dbname, const char *connection_string,
 	if (connstr)
 		*connstr = constructConnStr(keywords, values);
 
-	free(keywords);
-	free(values);
+	pg_free(keywords);
+	pg_free(values);
 	PQconninfoFree(conn_opts);
 
 	/* Check version */

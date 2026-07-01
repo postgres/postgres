@@ -357,7 +357,7 @@ readfile(const char *path, int *numlines)
 	if (len != statbuf.st_size)
 	{
 		/* oops, the file size changed between fstat and read */
-		free(buffer);
+		pg_free(buffer);
 		return NULL;
 	}
 
@@ -398,7 +398,7 @@ readfile(const char *path, int *numlines)
 	}
 	result[n] = NULL;
 
-	free(buffer);
+	pg_free(buffer);
 
 	return result;
 }
@@ -2168,12 +2168,12 @@ adjust_data_dir(void)
 		write_stderr(_("%s: could not determine the data directory using command \"%s\"\n"), progname, cmd);
 		exit(1);
 	}
-	free(my_exec_path);
+	pg_free(my_exec_path);
 
 	/* strip trailing newline and carriage return */
 	(void) pg_strip_crlf(filename);
 
-	free(pg_data);
+	pg_free(pg_data);
 	pg_data = pg_strdup(filename);
 	canonicalize_path(pg_data);
 }
@@ -2288,7 +2288,7 @@ main(int argc, char **argv)
 					 * but we do -D too for clearer postmaster 'ps' display
 					 */
 					pgdata_opt = psprintf("-D \"%s\" ", pgdata_D);
-					free(pgdata_D);
+					pg_free(pgdata_D);
 					break;
 				}
 			case 'e':

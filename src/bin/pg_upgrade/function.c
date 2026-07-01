@@ -154,7 +154,7 @@ get_loadable_libraries(void)
 	}
 
 	pg_free(state.ress);
-	pg_free(query);
+	pfree(query);
 
 	os_info.num_libraries = totaltups;
 }

@@ -485,7 +485,7 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 		ret = WaitForMultipleObjects(nrun, lpHandles, false, INFINITE);
 		Assert(ret != WAIT_FAILED);
 		hThread = (uintptr_t) lpHandles[ret - WAIT_OBJECT_0];
-		free(lpHandles);
+		pg_free(lpHandles);
 
 		/* Find dead worker's slot, and clear the hThread field */
 		for (j = 0; j < pstate->numWorkers; j++)

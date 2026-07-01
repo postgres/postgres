@@ -343,8 +343,8 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 
 	free(aclitems);
 	free(baseitems);
-	free(grantitems);
-	free(revokeitems);
+	pg_free(grantitems);
+	pg_free(revokeitems);
 
 	return ok;
 }

@@ -983,12 +983,12 @@ find_matching_ts_config(const char *lc_type)
 	{
 		if (pg_strcasecmp(tsearch_config_languages[i].langname, langname) == 0)
 		{
-			free(langname);
+			pg_free(langname);
 			return tsearch_config_languages[i].tsconfname;
 		}
 	}
 
-	free(langname);
+	pg_free(langname);
 	return NULL;
 }
 
@@ -1052,7 +1052,7 @@ write_version_file(const char *extrapath)
 	if (fprintf(version_file, "%s\n", PG_MAJORVERSION) < 0 ||
 		fclose(version_file))
 		pg_fatal("could not write file \"%s\": %m", path);
-	free(path);
+	pfree(path);
 }
 
 /*
@@ -1071,7 +1071,7 @@ set_null_conf(void)
 		pg_fatal("could not open file \"%s\" for writing: %m", path);
 	if (fclose(conf_file))
 		pg_fatal("could not write file \"%s\": %m", path);
-	free(path);
+	pfree(path);
 }
 
 /*
@@ -3048,7 +3048,7 @@ create_xlog_or_symlink(void)
 					 subdirloc);
 	}
 
-	free(subdirloc);
+	pfree(subdirloc);
 }
 
 
@@ -3103,7 +3103,7 @@ initialize_data_directory(void)
 		if (mkdir(path, pg_dir_create_mode) < 0)
 			pg_fatal("could not create directory \"%s\": %m", path);
 
-		free(path);
+		pfree(path);
 	}
 
 	check_ok();
@@ -3303,7 +3303,7 @@ main(int argc, char *argv[])
 					*equals++ = '\0';	/* terminate variable name */
 					add_stringlist_item(&extra_guc_names, buf);
 					add_stringlist_item(&extra_guc_values, equals);
-					pfree(buf);
+					pg_free(buf);
 				}
 				break;
 			case 'D':
