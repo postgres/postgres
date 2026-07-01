@@ -167,6 +167,9 @@
 { aggfnoid => 'max(bytea)', aggtransfn => 'bytea_larger',
   aggcombinefn => 'bytea_larger', aggsortop => '>(bytea,bytea)',
   aggtranstype => 'bytea' },
+{ aggfnoid => 'max(uuid)', aggtransfn => 'uuid_larger',
+  aggcombinefn => 'uuid_larger', aggsortop => '>(uuid,uuid)',
+  aggtranstype => 'uuid' },
 
 # min
 { aggfnoid => 'min(int8)', aggtransfn => 'int8smaller',
@@ -244,6 +247,9 @@
 { aggfnoid => 'min(bytea)', aggtransfn => 'bytea_smaller',
   aggcombinefn => 'bytea_smaller', aggsortop => '<(bytea,bytea)',
   aggtranstype => 'bytea' },
+{ aggfnoid => 'min(uuid)', aggtransfn => 'uuid_smaller',
+  aggcombinefn => 'uuid_smaller', aggsortop => '<(uuid,uuid)',
+  aggtranstype => 'uuid' },
 
 # count
 { aggfnoid => 'count(any)', aggtransfn => 'int8inc_any',

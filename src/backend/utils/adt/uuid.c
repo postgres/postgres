@@ -270,6 +270,24 @@ uuid_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(uuid_internal_cmp(arg1, arg2));
 }
 
+Datum
+uuid_larger(PG_FUNCTION_ARGS)
+{
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
+
+	PG_RETURN_UUID_P((uuid_internal_cmp(arg1, arg2) > 0) ? arg1 : arg2);
+}
+
+Datum
+uuid_smaller(PG_FUNCTION_ARGS)
+{
+	pg_uuid_t  *arg1 = PG_GETARG_UUID_P(0);
+	pg_uuid_t  *arg2 = PG_GETARG_UUID_P(1);
+
+	PG_RETURN_UUID_P((uuid_internal_cmp(arg1, arg2) < 0) ? arg1 : arg2);
+}
+
 /*
  * Sort support strategy routine
  */

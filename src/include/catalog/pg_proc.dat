@@ -7117,6 +7117,9 @@
 { oid => '6395', descr => 'maximum value of all bytea input values',
   proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'bytea',
   proargtypes => 'bytea', prosrc => 'aggregate_dummy' },
+{ oid => '6517', descr => 'maximum value of all UUID input values',
+  proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'uuid',
+  proargtypes => 'uuid', prosrc => 'aggregate_dummy' },
 
 { oid => '2131', descr => 'minimum value of all bigint input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'int8',
@@ -7193,6 +7196,9 @@
 { oid => '6396', descr => 'minimum value of all bytea input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'bytea',
   proargtypes => 'bytea', prosrc => 'aggregate_dummy' },
+{ oid => '6518', descr => 'minimum value of all UUID input values',
+  proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'uuid',
+  proargtypes => 'uuid', prosrc => 'aggregate_dummy' },
 
 # count has two forms: count(any) and count(*)
 { oid => '2147',
@@ -9623,6 +9629,12 @@
 { oid => '2960', descr => 'less-equal-greater',
   proname => 'uuid_cmp', proleakproof => 't', prorettype => 'int4',
   proargtypes => 'uuid uuid', prosrc => 'uuid_cmp' },
+{ oid => '6519', descr => 'larger of the two', proname => 'uuid_larger',
+  proleakproof => 't', prorettype => 'uuid', proargtypes => 'uuid uuid',
+  prosrc => 'uuid_larger' },
+{ oid => '6520', descr => 'smaller of the two', proname => 'uuid_smaller',
+  proleakproof => 't', prorettype => 'uuid', proargtypes => 'uuid uuid',
+  prosrc => 'uuid_smaller' },
 { oid => '3300', descr => 'sort support',
   proname => 'uuid_sortsupport', prorettype => 'void',
   proargtypes => 'internal', prosrc => 'uuid_sortsupport' },

@@ -4413,6 +4413,10 @@ SELECT to_tsvector( 'postgraduate' ), to_tsquery( 'postgres:*' );
     using the UUIDv4 and UUIDv7 algorithms.  Alternatively, UUID values can be generated
     outside of the database using any algorithm.  The data type <type>uuid</type> can be used
     to store any UUID, regardless of the origin and the UUID version.
+    UUIDs are compared lexicographically on their 128-bit value.  For UUIDv7 values,
+    which embed a Unix timestamp in the most significant bits, this ordering corresponds
+    to chronological order, making them suitable for use with aggregate functions such as
+    <function>min()</function> and <function>max()</function>.
    </para>
 
    <para>

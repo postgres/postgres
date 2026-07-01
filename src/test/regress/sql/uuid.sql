@@ -63,6 +63,9 @@ SELECT COUNT(*) FROM guid1 WHERE guid_field > '22222222-2222-2222-2222-222222222
 -- >= operator test
 SELECT COUNT(*) FROM guid1 WHERE guid_field >= '22222222-2222-2222-2222-222222222222';
 
+-- min() and max() aggregate test
+SELECT MIN(guid_field), MAX(guid_field) FROM guid1;
+
 -- btree and hash index creation test
 CREATE INDEX guid1_btree ON guid1 USING BTREE (guid_field);
 CREATE INDEX guid1_hash  ON guid1 USING HASH  (guid_field);
