@@ -1678,3 +1678,20 @@ select null::int[] union all select null::int[] union all select null::bigint[];
          Output: NULL::bigint[]
 (10 rows)
 
+-- Estimate a UNION's output rows as the sum of its children's distinct-group
+-- estimates, not the total input size.  Ensure we get an index nested loop
+explain (costs off)
+select * from tenk1 t
+join (select ten from tenk1 union select ten from onek) s on s.ten = t.unique1;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop
+   ->  HashAggregate
+         Group Key: tenk1.ten
+         ->  Append
+               ->  Seq Scan on tenk1
+               ->  Seq Scan on onek
+   ->  Index Scan using tenk1_unique1 on tenk1 t
+         Index Cond: (unique1 = tenk1.ten)
+(8 rows)
+

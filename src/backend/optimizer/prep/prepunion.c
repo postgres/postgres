@@ -711,6 +711,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	Path	   *gpath = NULL;
 	bool		try_sorted = false;
 	List	   *union_pathkeys = NIL;
+	double		dNumChildGroups = 0;
 
 	/*
 	 * If any of my children are identical UNION nodes (same op, all-flag, and
@@ -761,11 +762,26 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		RelOptInfo *rel = lfirst(lc);
 		bool		trivial_tlist = lfirst_int(lc2);
 		List	   *child_tlist = lfirst_node(List, lc3);
+		double		childGroups = 0;
 
 		/* only build paths for the union children */
 		if (rel->rtekind == RTE_SUBQUERY)
 			build_setop_child_paths(root, rel, trivial_tlist, child_tlist,
-									union_pathkeys, NULL);
+									union_pathkeys,
+									op->all ? NULL : &childGroups);
+		else
+			childGroups = rel->rows;
+
+		/*
+		 * For UNION (not UNION ALL), accumulate the per-child distinct-group
+		 * estimates.  This sum is the basis for the UNION's output estimate
+		 * below: since distinct(A union B) <= distinct(A) + distinct(B), the
+		 * union cannot have more distinct rows than its children do in total.
+		 * Children that are known to be empty contribute nothing, so skip
+		 * them.
+		 */
+		if (!op->all && !is_dummy_rel(rel))
+			dNumChildGroups += childGroups;
 	}
 
 	/* Build path lists and relid set. */
@@ -847,9 +863,9 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 										NIL, NULL, 0, false, -1);
 
 	/*
-	 * Estimate number of groups.  For now we just assume the output is unique
-	 * --- this is certainly true for the UNION case, and we want worst-case
-	 * estimates anyway.
+	 * Initialize the result row estimate to the total input size.  This is
+	 * correct for UNION ALL; for the UNION case it is overwritten below with
+	 * the estimated number of distinct groups.
 	 */
 	result_rel->rows = apath->rows;
 
@@ -899,40 +915,16 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 
 	if (!op->all)
 	{
-		double		dNumGroups;
 		bool		can_sort = grouping_is_sortable(groupList);
 		bool		can_hash = grouping_is_hashable(groupList);
-		Path	   *first_path = linitial(cheapest.subpaths);
 
 		/*
-		 * Estimate the number of UNION output rows.  In the case when only a
-		 * single UNION child remains, we can use estimate_num_groups() on
-		 * that child.  We must be careful not to do this when that child is
-		 * the result of some other set operation as the targetlist will
-		 * contain Vars with varno==0, which estimate_num_groups() wouldn't
-		 * like.
+		 * result_rel->rows was initialized to the total input size above,
+		 * which is the correct estimate for UNION ALL.  A UNION removes
+		 * duplicates, so override it with the estimated number of distinct
+		 * groups.
 		 */
-		if (list_length(cheapest.subpaths) == 1 &&
-			first_path->parent->reloptkind != RELOPT_UPPER_REL)
-		{
-			dNumGroups = estimate_num_groups(root,
-											 first_path->pathtarget->exprs,
-											 first_path->rows,
-											 NULL,
-											 NULL);
-		}
-		else
-		{
-			/*
-			 * Otherwise, for the moment, take the number of distinct groups
-			 * as equal to the total input size, i.e., the worst case.  This
-			 * is too conservative, but it's not clear how to get a decent
-			 * estimate of the true size.  One should note as well the
-			 * propensity of novices to write UNION rather than UNION ALL even
-			 * when they don't expect any duplicates...
-			 */
-			dNumGroups = apath->rows;
-		}
+		result_rel->rows = dNumChildGroups;
 
 		if (can_hash)
 		{
@@ -951,7 +943,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 											groupList,
 											NIL,
 											NULL,
-											dNumGroups);
+											dNumChildGroups);
 			add_path(result_rel, path);
 
 			/* Try hash aggregate on the Gather path, if valid */
@@ -967,7 +959,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 												groupList,
 												NIL,
 												NULL,
-												dNumGroups);
+												dNumChildGroups);
 				add_path(result_rel, path);
 			}
 		}
@@ -986,7 +978,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 											   result_rel,
 											   path,
 											   list_length(path->pathkeys),
-											   dNumGroups);
+											   dNumChildGroups);
 
 			add_path(result_rel, path);
 
@@ -1003,7 +995,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 												   result_rel,
 												   path,
 												   list_length(path->pathkeys),
-												   dNumGroups);
+												   dNumChildGroups);
 				add_path(result_rel, path);
 			}
 		}
@@ -1028,7 +1020,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 											   result_rel,
 											   path,
 											   list_length(tlist),
-											   dNumGroups);
+											   dNumChildGroups);
 
 			add_path(result_rel, path);
 		}
