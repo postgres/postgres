@@ -672,8 +672,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 
 	/* clean up the resource owner we created */
 	WalSndResourceCleanup(true);
-
-	basebackup_progress_done();
 }
 
 /*
