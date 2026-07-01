@@ -61,7 +61,7 @@ Windows, since we still need to match properly on older versions.
 Time Zone code
 ==============
 
-The code in this directory is currently synced with tzcode release 2020d.
+The code in this directory is currently synced with tzcode release 2026b.
 There are many cosmetic (and not so cosmetic) differences from the
 original tzcode library, but diffs in the upstream version should usually
 be propagated to our version.  Here are some notes about that.
@@ -71,9 +71,7 @@ several considerations preventing an exact match:
 
 * For readability/maintainability we reformat the code to match our own
 conventions; this includes pgindent'ing it and getting rid of upstream's
-overuse of "register" declarations.  (It used to include conversion of
-old-style function declarations to C89 style, but thank goodness they
-fixed that.)
+overuse of "register" declarations.
 
 * We need the code to follow Postgres' portability conventions; this
 includes relying on configure's results rather than hand-hacked
@@ -88,11 +86,8 @@ other exposed names.
 "lineno" in our typedefs list would cause unfortunate pgindent behavior
 in some other files where we have variables named that.
 
-* We have exposed the tzload() and tzparse() internal functions, and
-slightly modified the API of the former, in part because it now relies
-on our own pg_open_tzfile() rather than opening files for itself.
-
-* tzparse() is adjusted to never try to load the TZDEFRULES zone.
+* tzload() now relies on our own pg_open_tzfile() rather than opening
+files for itself.
 
 * There's a fair amount of code we don't need and have removed,
 including all the nonstandard optional APIs.  We have also added
@@ -109,18 +104,17 @@ to first run the tzcode source files through a sed filter like this:
     sed -r \
         -e 's/^([ \t]*)\*\*([ \t])/\1 *\2/' \
         -e 's/^([ \t]*)\*\*$/\1 */' \
-        -e 's|^\*/| */|' \
         -e 's/\bregister[ \t]//g' \
-        -e 's/\bATTRIBUTE_PURE[ \t]//g' \
         -e 's/struct[ \t]+tm\b/struct pg_tm/g' \
         -e 's/\btime_t\b/pg_time_t/g' \
         -e 's/lineno/lineno_t/g' \
+        -i *.h *.c
 
-and then run them through pgindent.  (The first three sed patterns deal
+and then run them through pgindent.  (The first two sed patterns deal
 with conversion of their block comment style to something pgindent
 won't make a hash of; the remainder address other points noted above.)
 After that, the files can be diff'd directly against our corresponding
 files.  Also, it's typically helpful to diff against the previous tzcode
-release (after processing that the same way), and then try to apply the
+release (after processing that the same way), and then try to apply that
 diff to our files.  This will take care of most of the changes
 mechanically.

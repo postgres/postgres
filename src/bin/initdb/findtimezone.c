@@ -96,23 +96,10 @@ pg_load_tz(const char *name)
 		return NULL;			/* not going to fit */
 
 	/*
-	 * "GMT" is always sent to tzparse(); see comments for pg_tzset().
+	 * Let the IANA tzdb code interpret the time zone name.
 	 */
-	if (strcmp(name, "GMT") == 0)
-	{
-		if (!tzparse(name, &tz.state, true))
-		{
-			/* This really, really should not happen ... */
-			return NULL;
-		}
-	}
-	else if (tzload(name, NULL, &tz.state, true) != 0)
-	{
-		if (name[0] == ':' || !tzparse(name, &tz.state, false))
-		{
-			return NULL;		/* unknown timezone */
-		}
-	}
+	if (!pg_tzload(name, NULL, &tz.state))
+		return NULL;			/* unknown timezone */
 
 	strcpy(tz.TZname, name);
 

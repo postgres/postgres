@@ -219,16 +219,6 @@ init_timezone_hashtable(void)
 /*
  * Load a timezone from file or from cache.
  * Does not verify that the timezone is acceptable!
- *
- * "GMT" is always interpreted as the tzparse() definition, without attempting
- * to load a definition from the filesystem.  This has a number of benefits:
- * 1. It's guaranteed to succeed, so we don't have the failure mode wherein
- * the bootstrap default timezone setting doesn't work (as could happen if
- * the OS attempts to supply a leap-second-aware version of "GMT").
- * 2. Because we aren't accessing the filesystem, we can safely initialize
- * the "GMT" zone definition before my_exec_path is known.
- * 3. It's quick enough that we don't waste much time when the bootstrap
- * default timezone setting is later overridden from postgresql.conf.
  */
 pg_tz *
 pg_tzset(const char *tzname)
@@ -249,8 +239,8 @@ pg_tzset(const char *tzname)
 	/*
 	 * Upcase the given name to perform a case-insensitive hashtable search.
 	 * (We could alternatively downcase it, but we prefer upcase so that we
-	 * can get consistently upcased results from tzparse() in case the name is
-	 * a POSIX-style timezone spec.)
+	 * can get consistently upcased results from pg_tzload() in case the name
+	 * is a POSIX-style timezone spec.)
 	 */
 	p = uppername;
 	while (*tzname)
@@ -268,27 +258,17 @@ pg_tzset(const char *tzname)
 	}
 
 	/*
-	 * "GMT" is always sent to tzparse(), as per discussion above.
+	 * Let the IANA tzdb code interpret the time zone name.
 	 */
-	if (strcmp(uppername, "GMT") == 0)
+	if (!pg_tzload(uppername, canonname, &tzstate))
 	{
-		if (!tzparse(uppername, &tzstate, true))
+		if (strcmp(uppername, "GMT") == 0)
 		{
 			/* This really, really should not happen ... */
 			elog(ERROR, "could not initialize GMT time zone");
 		}
-		/* Use uppercase name as canonical */
-		strcpy(canonname, uppername);
-	}
-	else if (tzload(uppername, canonname, &tzstate, true) != 0)
-	{
-		if (uppername[0] == ':' || !tzparse(uppername, &tzstate, false))
-		{
-			/* Unknown timezone. Fail our call instead of loading GMT! */
-			return NULL;
-		}
-		/* For POSIX timezone specs, use uppercase name as canonical */
-		strcpy(canonname, uppername);
+		/* Unknown timezone. Fail our call instead of loading GMT! */
+		return NULL;
 	}
 
 	/* Save timezone in the cache */
@@ -467,12 +447,12 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		}
 
 		/*
-		 * Load this timezone using tzload() not pg_tzset(), so we don't fill
-		 * the cache.  Also, don't ask for the canonical spelling: we already
-		 * know it, and pg_open_tzfile's way of finding it out is pretty
-		 * inefficient.
+		 * Load this timezone using pg_tzload() not pg_tzset(), so we don't
+		 * fill the cache.  Also, don't ask for the canonical spelling: we
+		 * already know it, and pg_open_tzfile's way of finding it out is
+		 * pretty inefficient.
 		 */
-		if (tzload(fullname + dir->baselen, NULL, &dir->tz.state, true) != 0)
+		if (!pg_tzload(fullname + dir->baselen, NULL, &dir->tz.state))
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;

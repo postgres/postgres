@@ -59,8 +59,6 @@ struct lc_time_T
 	const char *date_fmt;
 };
 
-#define Locale	(&C_time_locale)
-
 static const struct lc_time_T C_time_locale = {
 	{
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -80,19 +78,15 @@ static const struct lc_time_T C_time_locale = {
 	"%H:%M:%S",
 
 	/*
-	 * x_fmt
-	 *
-	 * C99 and later require this format. Using just numbers (as here) makes
-	 * Quakers happier; it's also compatible with SVR4.
+	 * x_fmt C99 and later require this format. Using just numbers (as here)
+	 * makes Quakers happier; it's also compatible with SVR4.
 	 */
 	"%m/%d/%y",
 
 	/*
-	 * c_fmt
-	 *
-	 * C99 and later require this format. Previously this code used "%D %X",
-	 * but we now conform to C99. Note that "%a %b %d %H:%M:%S %Y" is used by
-	 * Solaris 2.3.
+	 * c_fmt C99 and later require this format. Previously this code used "%D
+	 * %X", but we now conform to C99. Note that "%a %b %d %H:%M:%S %Y" is
+	 * used by Solaris 2.3.
 	 */
 	"%a %b %e %T %Y",
 
@@ -162,6 +156,8 @@ static char *
 _fmt(const char *format, const struct pg_tm *t, char *pt,
 	 const char *ptlim, enum warn *warnp)
 {
+	struct lc_time_T const *Locale = &C_time_locale;
+
 	for (; *format; ++format)
 	{
 		if (*format == '%')
@@ -169,7 +165,14 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 	label:
 			switch (*++format)
 			{
-				case '\0':
+				default:
+
+					/*
+					 * Output unknown conversion specifiers as-is, to aid
+					 * debugging.  This includes '%' at format end.  This
+					 * conforms to C23 section 7.29.3.5 paragraph 6, which
+					 * says behavior is undefined here.
+					 */
 					--format;
 					break;
 				case 'A':
@@ -478,9 +481,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 						char const *sign;
 						bool		negative;
 
-						if (t->tm_isdst < 0)
-							continue;
-						diff = t->tm_gmtoff;
+						diff = t->TM_GMTOFF;
 						negative = diff < 0;
 						if (diff == 0)
 						{
@@ -506,13 +507,6 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 							  warnp);
 					continue;
 				case '%':
-
-					/*
-					 * X311J/88-090 (4.12.3.5): if conversion char is
-					 * undefined, behavior is undefined. Print out the
-					 * character itself as printf(3) also does.
-					 */
-				default:
 					break;
 			}
 		}
@@ -555,7 +549,8 @@ _yconv(int a, int b, bool convert_top, bool convert_yy,
 	int			lead;
 	int			trail;
 
-#define DIVISOR	100
+	int			DIVISOR = 100;
+
 	trail = a % DIVISOR + b % DIVISOR;
 	lead = a / DIVISOR + b / DIVISOR + trail / DIVISOR;
 	trail %= DIVISOR;
