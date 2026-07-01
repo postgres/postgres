@@ -184,6 +184,8 @@
  */
 #define INITIALIZE(x)	((x) = 0)
 
+/* Some platforms provide unreachable(), but let's rely on our own version */
+#undef unreachable
 #define unreachable() pg_unreachable()
 
 /*
