@@ -32,8 +32,6 @@ int			password_expiration_warning_threshold = 604800;
 /* Enables deprecation warnings for MD5 passwords. */
 bool		md5_password_warnings = true;
 
-static bool md5_password_warning_enabled(void);
-
 /*
  * Fetch stored password for a user, for authentication.
  *
@@ -297,21 +295,7 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
 
 	if (strlen(client_pass) == strlen(crypt_pwd) &&
 		timingsafe_bcmp(client_pass, crypt_pwd, strlen(crypt_pwd)) == 0)
-	{
-		MemoryContext oldcontext;
-		char	   *warning;
-		char	   *detail;
-
 		retval = STATUS_OK;
-
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
-		warning = pstrdup(_("authenticated with an MD5-encrypted password"));
-		detail = pstrdup(_("MD5 password support is deprecated and will be removed in a future release of PostgreSQL."));
-		StoreConnectionWarning(warning, detail, md5_password_warning_enabled);
-
-		MemoryContextSwitchTo(oldcontext);
-	}
 	else
 	{
 		*logdetail = psprintf(_("Password does not match for user \"%s\"."),
@@ -320,12 +304,6 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
 	}
 
 	return retval;
-}
-
-static bool
-md5_password_warning_enabled(void)
-{
-	return md5_password_warnings;
 }
 
 /*

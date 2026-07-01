@@ -385,9 +385,19 @@ SKIP:
 {
 	skip "MD5 not supported" unless $md5_works;
 	test_conn($node, 'user=md5_role', 'password', 0,
+		expected_stderr => qr/authenticated with an MD5-encrypted password/,
 		log_like =>
 		  [qr/connection authenticated: identity="md5_role" method=password/]
 	);
+
+	$node->connect_ok(
+		'user=md5_role_no_warnings',
+		'password with warnings disabled',
+		sql => 'SHOW md5_password_warnings',
+		expected_stdout => qr/^off$/,
+		log_like => [
+			qr/connection authenticated: identity="md5_role_no_warnings" method=password/
+		]);
 }
 
 # require_auth succeeds here with a plaintext password.
