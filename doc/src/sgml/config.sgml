@@ -1206,7 +1206,8 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Controls whether a <literal>WARNING</literal> about MD5 password
-        deprecation is produced upon successful MD5 password authentication or
+        deprecation is produced upon successful authentication using an
+        MD5-encrypted password or
         when a <command>CREATE ROLE</command> or
         <command>ALTER ROLE</command> statement sets an MD5-encrypted password.
         The default value is <literal>on</literal>.
