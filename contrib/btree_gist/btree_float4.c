@@ -24,30 +24,36 @@ PG_FUNCTION_INFO_V1(gbt_float4_distance);
 PG_FUNCTION_INFO_V1(gbt_float4_penalty);
 PG_FUNCTION_INFO_V1(gbt_float4_same);
 
+/*
+ * Use the NaN-aware comparators from utils/float.h, so that our results
+ * will agree with standard btree indexes.  Note that penalty and distance
+ * functions below must also cope with NaNs, in particular with the policy
+ * that all NaNs are equal.
+ */
 static bool
 gbt_float4gt(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return (*((const float4 *) a) > *((const float4 *) b));
+	return float4_gt(*((const float4 *) a), *((const float4 *) b));
 }
 static bool
 gbt_float4ge(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return (*((const float4 *) a) >= *((const float4 *) b));
+	return float4_ge(*((const float4 *) a), *((const float4 *) b));
 }
 static bool
 gbt_float4eq(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return (*((const float4 *) a) == *((const float4 *) b));
+	return float4_eq(*((const float4 *) a), *((const float4 *) b));
 }
 static bool
 gbt_float4le(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return (*((const float4 *) a) <= *((const float4 *) b));
+	return float4_le(*((const float4 *) a), *((const float4 *) b));
 }
 static bool
 gbt_float4lt(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return (*((const float4 *) a) < *((const float4 *) b));
+	return float4_lt(*((const float4 *) a), *((const float4 *) b));
 }
 
 static int
@@ -55,22 +61,33 @@ gbt_float4key_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	float4KEY  *ia = (float4KEY *) (((const Nsrt *) a)->t);
 	float4KEY  *ib = (float4KEY *) (((const Nsrt *) b)->t);
+	int			res;
 
-	if (ia->lower == ib->lower)
-	{
-		if (ia->upper == ib->upper)
-			return 0;
-
-		return (ia->upper > ib->upper) ? 1 : -1;
-	}
-
-	return (ia->lower > ib->lower) ? 1 : -1;
+	res = float4_cmp_internal(ia->lower, ib->lower);
+	if (res != 0)
+		return res;
+	return float4_cmp_internal(ia->upper, ib->upper);
 }
 
 static float8
 gbt_float4_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return GET_FLOAT_DISTANCE(float4, a, b);
+	float8		arg1 = *(const float4 *) a;
+	float8		arg2 = *(const float4 *) b;
+	float8		r;
+
+	r = arg1 - arg2;
+	/* needn't consider isinf case here, must be due to input infinity */
+	if (unlikely(isnan(r)))
+	{
+		if (isnan(arg1) && isnan(arg2))
+			r = 0.0;			/* treat NaNs as equal */
+		else if (isnan(arg1) || isnan(arg2))
+			r = get_float8_infinity();	/* max dist for NaN vs non-NaN */
+		else
+			r = 0.0;			/* must be Inf - Inf case */
+	}
+	return fabs(r);
 }
 
 
@@ -99,7 +116,15 @@ float4_dist(PG_FUNCTION_ARGS)
 
 	r = a - b;
 	CHECKFLOATVAL(r, isinf(a) || isinf(b), true);
-
+	if (unlikely(isnan(r)))
+	{
+		if (isnan(a) && isnan(b))
+			r = 0.0;			/* treat NaNs as equal */
+		else if (isnan(a) || isnan(b))
+			r = get_float4_infinity();	/* max dist for NaN vs non-NaN */
+		else
+			r = 0.0;			/* must be Inf - Inf case */
+	}
 	PG_RETURN_FLOAT4(Abs(r));
 }
 
@@ -185,7 +210,7 @@ gbt_float4_penalty(PG_FUNCTION_ARGS)
 	float4KEY  *newentry = (float4KEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
-	penalty_num(result, origentry->lower, origentry->upper, newentry->lower, newentry->upper);
+	float_penalty_num(result, origentry->lower, origentry->upper, newentry->lower, newentry->upper);
 
 	PG_RETURN_POINTER(result);
 
