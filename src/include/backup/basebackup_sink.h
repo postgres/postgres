@@ -296,6 +296,5 @@ extern void basebackup_progress_wait_checkpoint(void);
 extern void basebackup_progress_estimate_backup_size(void);
 extern void basebackup_progress_wait_wal_archive(bbsink_state *);
 extern void basebackup_progress_transfer_wal(void);
-extern void basebackup_progress_done(void);
 
 #endif
