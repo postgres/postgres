@@ -5,13 +5,13 @@ SET enable_seqscan=on;
 SELECT count(*) FROM float8tmp WHERE a <  -1890.0;
  count 
 -------
-   237
+   238
 (1 row)
 
 SELECT count(*) FROM float8tmp WHERE a <= -1890.0;
  count 
 -------
-   238
+   239
 (1 row)
 
 SELECT count(*) FROM float8tmp WHERE a  = -1890.0;
@@ -23,13 +23,13 @@ SELECT count(*) FROM float8tmp WHERE a  = -1890.0;
 SELECT count(*) FROM float8tmp WHERE a >= -1890.0;
  count 
 -------
-   307
+   309
 (1 row)
 
 SELECT count(*) FROM float8tmp WHERE a >  -1890.0;
  count 
 -------
-   306
+   308
 (1 row)
 
 SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
@@ -45,13 +45,13 @@ SET enable_seqscan=off;
 SELECT count(*) FROM float8tmp WHERE a <  -1890.0::float8;
  count 
 -------
-   237
+   238
 (1 row)
 
 SELECT count(*) FROM float8tmp WHERE a <= -1890.0::float8;
  count 
 -------
-   238
+   239
 (1 row)
 
 SELECT count(*) FROM float8tmp WHERE a  = -1890.0::float8;
@@ -63,13 +63,13 @@ SELECT count(*) FROM float8tmp WHERE a  = -1890.0::float8;
 SELECT count(*) FROM float8tmp WHERE a >= -1890.0::float8;
  count 
 -------
-   307
+   309
 (1 row)
 
 SELECT count(*) FROM float8tmp WHERE a >  -1890.0::float8;
  count 
 -------
-   306
+   308
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -89,3 +89,38 @@ SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
   -1769.73634 | 120.26366000000007
 (3 rows)
 
+-- EXCLUDE constraint must block a duplicate NaN, same as it does for finite
+-- values.
+CREATE TABLE float8excl (a float8, EXCLUDE USING gist (a WITH =));
+INSERT INTO float8excl VALUES ('NaN'::float8);
+INSERT INTO float8excl VALUES ('NaN'::float8);  -- expect: violates EXCLUDE
+ERROR:  conflicting key value violates exclusion constraint "float8excl_a_excl"
+DETAIL:  Key (a)=(NaN) conflicts with existing key (a)=(NaN).
+SELECT count(*) FROM float8excl;
+ count 
+-------
+     1
+(1 row)
+
+-- Test double-column index
+CREATE INDEX float8idx2 ON float8tmp USING gist ( a, abs(a) );
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM float8tmp WHERE abs(a) = 1890.0::float8;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on float8tmp
+         Recheck Cond: (abs(a) = '1890'::double precision)
+         ->  Bitmap Index Scan on float8idx2
+               Index Cond: (abs(a) = '1890'::double precision)
+(5 rows)
+
+SELECT count(*) FROM float8tmp WHERE abs(a) = 1890.0::float8;
+ count 
+-------
+     1
+(1 row)
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
