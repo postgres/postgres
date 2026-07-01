@@ -1977,7 +1977,7 @@ AND c1.path[c2.level] = c2.path[c2.level];
       </para>
       <para>
        True if lock was taken via fast path, false if taken via main
-       lock table
+       lock table (see <xref linkend="locking-tables-fast-path"/>)
       </para></entry>
      </row>
 
@@ -2113,7 +2113,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The <structname>pg_locks</structname> view displays data from both the
    regular lock manager and the predicate lock manager, which are
    separate systems; in addition, the regular lock manager subdivides its
-   locks into regular and <firstterm>fast-path</firstterm> locks.
+   locks into regular and <firstterm>fast-path</firstterm> locks
+   (see <xref linkend="locking-tables-fast-path"/>).
    This data is not guaranteed to be entirely consistent.
    When the view is queried,
    data on fast-path locks (with <structfield>fastpath</structfield> = <literal>true</literal>)

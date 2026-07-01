@@ -11727,6 +11727,12 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
        </para>
 
        <para>
+        This parameter also determines the number of per-backend slots
+        available for <link linkend="locking-tables-fast-path">fast-path
+        locking</link>.
+       </para>
+
+       <para>
         When running a standby server, you must set this parameter to have the
         same or higher value as on the primary server. Otherwise, queries
         will not be allowed in the standby server.

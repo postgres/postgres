@@ -3378,6 +3378,9 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         Number of times a lock of this type could not be acquired via fast path
         because the fast path slot limit was exceeded. Increasing
         <xref linkend="guc-max-locks-per-transaction"/> can reduce this number.
+        See <xref linkend="locking-tables-fast-path"/> for which locks are
+        eligible for fast-path locking; for ineligible lock types this
+        counter is always zero.
        </para>
       </entry>
      </row>

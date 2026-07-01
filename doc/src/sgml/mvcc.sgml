@@ -1248,6 +1248,44 @@ ERROR:  could not serialize access due to read/write dependencies among transact
       </tbody>
      </tgroup>
     </table>
+
+    <sect3 id="locking-tables-fast-path">
+     <title>Fast-Path Locking</title>
+
+     <indexterm zone="locking-tables-fast-path">
+      <primary>fast-path locking</primary>
+     </indexterm>
+
+     <para>
+      Internally, <productname>PostgreSQL</productname> can record some
+      table-level locks using a <firstterm>fast-path locking</firstterm>
+      mechanism instead of the main lock table. This reduces the overhead of
+      acquiring and releasing locks that rarely conflict. It is an
+      implementation optimization and does not change lock semantics.
+     </para>
+
+     <para>
+      Fast-path locking can be used only for eligible relation locks in the
+      weak table-level lock modes <literal>ACCESS SHARE</literal>
+      (<literal>AccessShareLock</literal>), <literal>ROW SHARE</literal>
+      (<literal>RowShareLock</literal>), and <literal>ROW EXCLUSIVE</literal>
+      (<literal>RowExclusiveLock</literal>). It does not apply to shared
+      relations (those visible across all databases, such as
+      <structname>pg_authid</structname>). Other lock types, and stronger
+      lock modes on relations, always go through the main lock table.  Even
+      for eligible locks, fast-path is used only when a per-backend slot is
+      available; the number of slots is derived from <xref
+      linkend="guc-max-locks-per-transaction"/>. When no slot is available,
+      the lock is acquired via the main lock table instead.
+     </para>
+
+     <para>
+      Acquiring a lock via the main lock table is considerably more
+      expensive than the fast path, and under heavy concurrent lock
+      activity can become a point of contention (observable as the
+      <literal>LockManager</literal> wait event).
+     </para>
+    </sect3>
    </sect2>
 
    <sect2 id="locking-rows">
