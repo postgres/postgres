@@ -2514,8 +2514,10 @@ main(int argc, char **argv)
 	}
 
 	if (dry_run)
-		pg_log_info("Executing in dry-run mode.\n"
-					"The target directory will not be modified.");
+	{
+		pg_log_info("executing in dry-run mode");
+		pg_log_info_detail("The target directory will not be modified.");
+	}
 
 	pg_log_info("validating publisher connection string");
 	pub_base_conninfo = get_base_conninfo(opt.pub_conninfo_str,

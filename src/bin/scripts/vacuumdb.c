@@ -308,8 +308,10 @@ main(int argc, char *argv[])
 				 "missing-stats-only", "analyze-only", "analyze-in-stages");
 
 	if (vacopts.dry_run && !vacopts.quiet)
-		pg_log_info("Executing in dry-run mode.\n"
-					"No commands will be sent to the server.");
+	{
+		pg_log_info("executing in dry-run mode");
+		pg_log_info_detail("No commands will be sent to the server.");
+	}
 
 	ret = vacuuming_main(&cparams, dbname, maintenance_db, &vacopts,
 						 &objects, tbl_count,

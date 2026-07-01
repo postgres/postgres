@@ -302,8 +302,10 @@ main(int argc, char **argv)
 
 	/* Ok, we have all the options and we're ready to start. */
 	if (dry_run)
-		pg_log_info("Executing in dry-run mode.\n"
-					"The target directory will not be modified.");
+	{
+		pg_log_info("executing in dry-run mode");
+		pg_log_info_detail("The target directory will not be modified.");
+	}
 
 	/* First, connect to remote server. */
 	if (connstr_source)
