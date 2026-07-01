@@ -581,7 +581,7 @@ DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
 DROP INDEX CONCURRENTLY "concur_index4";
 DROP INDEX CONCURRENTLY "concur_index5";
 DROP INDEX CONCURRENTLY "concur_index1";
-DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
+DROP INDEX CONCURRENTLY "concur_heap_f2_f1_idx";
 
 \d concur_heap
 

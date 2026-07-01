@@ -53,6 +53,5 @@ extern List *checkInsertTargets(ParseState *pstate, List *cols,
 extern TupleDesc expandRecordVariable(ParseState *pstate, Var *var,
 									  int levelsup);
 extern char *FigureColname(Node *node);
-extern char *FigureIndexColname(Node *node);
 
 #endif							/* PARSE_TARGET_H */

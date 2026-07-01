@@ -49,7 +49,7 @@ Partitions:
 Partition of: pt FOR VALUES IN (1, 2)
 Partition constraint: ((category IS NOT NULL) AND (category = ANY (ARRAY[1, 2])))
 Indexes:
-    "pt12_expr_idx" btree ((mydouble(category) + 1))
+    "pt12_mydouble_category_1_idx" btree ((mydouble(category) + 1))
     "pt12_sdata_idx" btree (sdata)
     "pt12_tdata_idx" btree (tdata COLLATE mycollation)
 

@@ -109,7 +109,7 @@ ALTER INDEX attmp_idx ALTER COLUMN 2 SET STATISTICS 1000;
  Column |       Type       | Key? | Definition | Storage | Stats target 
 --------+------------------+------+------------+---------+--------------
  a      | integer          | yes  | a          | plain   | 
- expr   | double precision | yes  | (d + e)    | plain   | 1000
+ d_e    | double precision | yes  | (d + e)    | plain   | 1000
  b      | cstring          | yes  | b          | plain   | 
 btree, for table "public.attmp"
 
@@ -3206,7 +3206,7 @@ DROP TABLE test_tbl1;
 CREATE TABLE test_tbl1 (x int, y text);
 CREATE INDEX test_tbl1_idx ON test_tbl1((row(x,y)::test_type1));
 ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
-ERROR:  cannot alter type "test_type1" because column "test_tbl1_idx.row" uses it
+ERROR:  cannot alter type "test_type1" because column "test_tbl1_idx.x_y" uses it
 DROP TABLE test_tbl1;
 DROP TYPE test_type1;
 CREATE TYPE test_type2 AS (a int, b text);
@@ -3931,7 +3931,7 @@ ALTER TABLE ataddindex
 --------+------+-----------+----------+---------
  f1     | text |           |          | 
 Indexes:
-    "ataddindex_expr_excl" EXCLUDE USING btree ((f1 ~~ 'a'::text) WITH =)
+    "ataddindex_f1_a_excl" EXCLUDE USING btree ((f1 ~~ 'a'::text) WITH =)
 
 DROP TABLE ataddindex;
 CREATE TABLE ataddindex(id int, ref_id int);

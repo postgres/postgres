@@ -1146,9 +1146,9 @@ Number of partitions: 1 (Use \d+ to list them.)
  b      | integer |           |          | 
 Partition of: part_column_drop FOR VALUES FROM (1) TO (10)
 Indexes:
+    "part_column_drop_1_10_b_1_idx" btree ((b = 1))
     "part_column_drop_1_10_b_idx" btree (b) WHERE b = 1
+    "part_column_drop_1_10_d_2_idx" btree ((d = 2))
     "part_column_drop_1_10_d_idx" btree (d) WHERE d = 2
-    "part_column_drop_1_10_expr_idx" btree ((b = 1))
-    "part_column_drop_1_10_expr_idx1" btree ((d = 2))
 
 drop table part_column_drop;

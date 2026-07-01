@@ -821,7 +821,8 @@ typedef enum TableLikeOption
  *
  * For a plain index attribute, 'name' is the name of the table column to
  * index, and 'expr' is NULL.  For an index expression, 'name' is NULL and
- * 'expr' is the expression tree.
+ * 'expr' is the expression tree.  indexcolname is currently used only to
+ * force column name choices when cloning an index.
  */
 typedef struct IndexElem
 {

@@ -73,6 +73,13 @@
 #include "utils/syscache.h"
 
 
+/* context for ChooseIndexExpressionName_walker */
+typedef struct CIEN_context
+{
+	Relation	rel;			/* index's parent relation */
+	StringInfo	buf;			/* output string */
+} CIEN_context;
+
 /* non-export function prototypes */
 static bool CompareOpclassOptions(const Datum *opts1, const Datum *opts2, int natts);
 static void CheckPredicate(Expr *predicate);
@@ -98,7 +105,10 @@ static char *ChooseIndexName(const char *tabname, Oid namespaceId,
 							 const List *colnames, const List *exclusionOpNames,
 							 bool primary, bool isconstraint);
 static char *ChooseIndexNameAddition(const List *colnames);
-static List *ChooseIndexColumnNames(const List *indexElems);
+static List *ChooseIndexColumnNames(Relation rel, const List *indexElems);
+static char *ChooseIndexExpressionName(Relation rel, Node *indexExpr);
+static bool ChooseIndexExpressionName_walker(Node *node,
+											 CIEN_context *context);
 static void ReindexIndex(const ReindexStmt *stmt, const ReindexParams *params,
 						 bool isTopLevel);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
@@ -824,7 +834,7 @@ DefineIndex(ParseState *pstate,
 	/*
 	 * Choose the index column names.
 	 */
-	indexColNames = ChooseIndexColumnNames(allIndexParams);
+	indexColNames = ChooseIndexColumnNames(rel, allIndexParams);
 
 	/*
 	 * Select name for index if caller didn't specify
@@ -2782,13 +2792,14 @@ ChooseIndexNameAddition(const List *colnames)
 
 /*
  * Select the actual names to be used for the columns of an index, given the
- * list of IndexElems for the columns.  This is mostly about ensuring the
- * names are unique so we don't get a conflicting-attribute-names error.
+ * parent Relation and the list of IndexElems for the columns.  The logic in
+ * this function is mostly about ensuring the names are unique so we don't
+ * get a conflicting-attribute-names error.
  *
  * Returns a List of plain strings (char *, not String nodes).
  */
 static List *
-ChooseIndexColumnNames(const List *indexElems)
+ChooseIndexColumnNames(Relation rel, const List *indexElems)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -2807,7 +2818,7 @@ ChooseIndexColumnNames(const List *indexElems)
 		else if (ielem->name)
 			origname = ielem->name; /* simple column reference */
 		else
-			origname = "expr";	/* default name for expression */
+			origname = ChooseIndexExpressionName(rel, ielem->expr);
 
 		/* If it conflicts with any previous column, tweak it */
 		curname = origname;
@@ -2839,6 +2850,120 @@ ChooseIndexColumnNames(const List *indexElems)
 		result = lappend(result, pstrdup(curname));
 	}
 	return result;
+}
+
+/*
+ * Generate a suitable index-column name for an index expression.
+ *
+ * Our strategy is to collect the Var names, Const values, and function names
+ * appearing in the expression, and print them separated by underscores.
+ * We could expend a lot more effort to handle additional expression node
+ * types, but this seems sufficient to usually produce a column name distinct
+ * from other index expressions.
+ */
+static char *
+ChooseIndexExpressionName(Relation rel, Node *indexExpr)
+{
+	StringInfoData buf;
+	CIEN_context context;
+	int			nlen;
+
+	/* Prepare ... */
+	initStringInfo(&buf);
+	context.rel = rel;
+	context.buf = &buf;
+	/* Walk the tree, stopping when we have enough text */
+	(void) ChooseIndexExpressionName_walker(indexExpr, &context);
+	/* Ensure generated names are shorter than NAMEDATALEN */
+	nlen = pg_mbcliplen(buf.data, buf.len, NAMEDATALEN - 1);
+	buf.data[nlen] = '\0';
+	return buf.data;
+}
+
+/* Recursive guts of ChooseIndexExpressionName */
+static bool
+ChooseIndexExpressionName_walker(Node *node,
+								 CIEN_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		TupleDesc	tupdesc = RelationGetDescr(context->rel);
+		Form_pg_attribute att;
+
+		/* Paranoia: ignore the Var if it looks fishy */
+		if (var->varno != 1 || var->varlevelsup != 0 ||
+			var->varattno <= 0 || var->varattno > tupdesc->natts)
+			return false;
+		att = TupleDescAttr(tupdesc, var->varattno - 1);
+		if (att->attisdropped)
+			return false;		/* even more paranoia; shouldn't happen */
+
+		if (context->buf->len > 0)
+			appendStringInfoChar(context->buf, '_');
+		appendStringInfoString(context->buf, NameStr(att->attname));
+
+		/* Done if we've already reached NAMEDATALEN */
+		return (context->buf->len >= NAMEDATALEN);
+	}
+	else if (IsA(node, Const))
+	{
+		Const	   *constval = (Const *) node;
+
+		if (context->buf->len > 0)
+			appendStringInfoChar(context->buf, '_');
+		if (constval->constisnull)
+			appendStringInfoString(context->buf, "NULL");
+		else
+		{
+			Oid			typoutput;
+			bool		typIsVarlena;
+			char	   *extval;
+
+			getTypeOutputInfo(constval->consttype,
+							  &typoutput, &typIsVarlena);
+			extval = OidOutputFunctionCall(typoutput, constval->constvalue);
+
+			/*
+			 * We sanitize constant values by dropping non-alphanumeric ASCII
+			 * characters.  This is probably not really necessary, but it
+			 * reduces the odds of needing to double-quote the generated name.
+			 */
+			for (const char *ptr = extval; *ptr; ptr++)
+			{
+				if (IS_HIGHBIT_SET(*ptr) ||
+					strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+						   "abcdefghijklmnopqrstuvwxyz"
+						   "0123456789", *ptr) != NULL)
+					appendStringInfoChar(context->buf, *ptr);
+			}
+		}
+
+		/* Done if we've already reached NAMEDATALEN */
+		return (context->buf->len >= NAMEDATALEN);
+	}
+	else if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *funcexpr = (FuncExpr *) node;
+		char	   *fname = get_func_name(funcexpr->funcid);
+
+		if (fname)
+		{
+			if (context->buf->len > 0)
+				appendStringInfoChar(context->buf, '_');
+			appendStringInfoString(context->buf, fname);
+		}
+		/* fall through to examine arguments */
+	}
+
+	/* Abandon recursion once we reach NAMEDATALEN */
+	if (context->buf->len >= NAMEDATALEN)
+		return true;
+
+	return expression_tree_walker(node, ChooseIndexExpressionName_walker,
+								  context);
 }
 
 /*

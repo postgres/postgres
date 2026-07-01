@@ -264,16 +264,16 @@ create index concurrently on idxpart11 ((a/b));
 select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 -- attach the indexes; parents stay invalid
-alter index idxpart1_expr_idx attach partition idxpart11_expr_idx;
-alter index idxpart_expr_idx attach partition idxpart1_expr_idx;
-alter index idxpart_expr_idx attach partition idxpart2_expr_idx;
+alter index idxpart1_a_b_idx attach partition idxpart11_a_b_idx;
+alter index idxpart_a_b_idx attach partition idxpart1_a_b_idx;
+alter index idxpart_a_b_idx attach partition idxpart2_a_b_idx;
 select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 -- fix the index on the leaf partition
 delete from idxpart11 where b = 0;
-reindex index concurrently idxpart11_expr_idx;
+reindex index concurrently idxpart11_a_b_idx;
 -- reattach the leaf partition index; parents should now be valid
-alter index idxpart1_expr_idx attach partition idxpart11_expr_idx;
+alter index idxpart1_a_b_idx attach partition idxpart11_a_b_idx;
 select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 drop table idxpart;
@@ -292,15 +292,15 @@ create index concurrently on idxpart2 ((a/b));
 select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 -- attach both; parent stays invalid
-alter index idxpart_expr_idx attach partition idxpart1_expr_idx;
-alter index idxpart_expr_idx attach partition idxpart2_expr_idx;
+alter index idxpart_a_b_idx attach partition idxpart1_a_b_idx;
+alter index idxpart_a_b_idx attach partition idxpart2_a_b_idx;
 select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 -- fix only idxpart1's index, leave idxpart2's still invalid
 delete from idxpart1 where b = 0;
-reindex index concurrently idxpart1_expr_idx;
+reindex index concurrently idxpart1_a_b_idx;
 -- re-attach the fixed child; parent should stay invalid
-alter index idxpart_expr_idx attach partition idxpart1_expr_idx;
+alter index idxpart_a_b_idx attach partition idxpart1_a_b_idx;
 select relname, indisvalid from pg_class join pg_index on indexrelid = oid
    where relname like 'idxpart%' order by relname;
 drop table idxpart;

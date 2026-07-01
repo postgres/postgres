@@ -1442,14 +1442,14 @@ CROSS JOIN LATERAL
 WHERE s.schemaname = 'stats_import'
 AND s.tablename IN ('test', 'is_odd')
 ORDER BY s.tablename, s.attname, s.inherited;
-  schemaname  | tablename | attname | inherited | r 
---------------+-----------+---------+-----------+---
- stats_import | is_odd    | expr    | f         | t
- stats_import | test      | arange  | f         | t
- stats_import | test      | comp    | f         | t
- stats_import | test      | id      | f         | t
- stats_import | test      | name    | f         | t
- stats_import | test      | tags    | f         | t
+  schemaname  | tablename | attname  | inherited | r 
+--------------+-----------+----------+-----------+---
+ stats_import | is_odd    | comp_2_1 | f         | t
+ stats_import | test      | arange   | f         | t
+ stats_import | test      | comp     | f         | t
+ stats_import | test      | id       | f         | t
+ stats_import | test      | name     | f         | t
+ stats_import | test      | tags     | f         | t
 (6 rows)
 
 SELECT c.relname, COUNT(*) AS num_stats
