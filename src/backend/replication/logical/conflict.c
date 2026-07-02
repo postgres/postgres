@@ -173,7 +173,7 @@ create_conflict_log_table(Oid subid, char *subname, Oid subowner)
 									 ONCOMMIT_NOOP,
 									 (Datum) 0, /* reloptions */
 									 false, /* use_user_acl */
-									 false,	/* allow_system_table_mods */
+									 false, /* allow_system_table_mods */
 									 true,	/* is_internal */
 									 InvalidOid,	/* relrewrite */
 									 NULL); /* typaddress */
