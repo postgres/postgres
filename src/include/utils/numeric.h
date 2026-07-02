@@ -17,6 +17,9 @@
 #include "common/pg_prng.h"
 #include "fmgr.h"
 
+/* forward declaration to avoid node.h include */
+typedef struct Node Node;
+
 /*
  * Limits on the precision and scale specifiable in a NUMERIC typmod.  The
  * precision is strictly positive, but the scale may be positive or negative.
@@ -103,6 +106,8 @@ extern Numeric numeric_mod_opt_error(Numeric num1, Numeric num2,
 									 bool *have_error);
 extern int32 numeric_int4_opt_error(Numeric num, bool *have_error);
 extern int64 numeric_int8_opt_error(Numeric num, bool *have_error);
+extern int32 make_numeric_typmod_safe(int32 precision, int32 scale,
+									  Node *escontext);
 
 extern Numeric random_numeric(pg_prng_state *state,
 							  Numeric rmin, Numeric rmax);

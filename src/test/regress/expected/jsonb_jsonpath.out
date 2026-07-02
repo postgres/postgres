@@ -2336,6 +2336,38 @@ select jsonb_path_query('12.3', '$.decimal(12345678901,1)');
 ERROR:  precision of jsonpath item method .decimal() is out of range for type integer
 select jsonb_path_query('12.3', '$.decimal(1,12345678901)');
 ERROR:  scale of jsonpath item method .decimal() is out of range for type integer
+-- An out-of-range precision or scale does not fail in silent mode.
+select jsonb_path_query('12345.678', '$.decimal(0, 6)', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('12345.678', '$.decimal(1001, 6)', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1234.5678', '$.decimal(-6, +2)', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1234.5678', '$.decimal(6, -1001)', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1234.5678', '$.decimal(6, 1001)', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select '1234.5678'::jsonb @? '$.decimal(0)';
+ ?column? 
+----------
+ 
+(1 row)
+
 -- Test .integer()
 select jsonb_path_query('null', '$.integer()');
 ERROR:  jsonpath item method .integer() can only be applied to a string or numeric value
