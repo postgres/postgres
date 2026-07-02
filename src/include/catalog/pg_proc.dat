@@ -6078,6 +6078,14 @@
   proargnames => '{backend_pid,backend_type,object,context,reads,read_bytes,read_time,writes,write_bytes,write_time,writebacks,writeback_time,extends,extend_bytes,extend_time,hits,evictions,reuses,fsyncs,fsync_time,stats_reset}',
   prosrc => 'pg_stat_get_backend_io' },
 
+{ oid => '8683', descr => 'statistics: information about statistics kinds',
+  proname => 'pg_stat_get_kind_info', prorows => '20', proretset => 't',
+  provolatile => 'v', proparallel => 'r', prorettype => 'record',
+  proargtypes => '', proallargtypes => '{int4,text,bool,bool,bool,bool,int8}',
+  proargmodes => '{o,o,o,o,o,o,o}',
+  proargnames => '{id,name,builtin,fixed_amount,accessed_across_databases,write_to_file,entry_count}',
+  prosrc => 'pg_stat_get_kind_info' },
+
 { oid => '1136', descr => 'statistics: information about WAL activity',
   proname => 'pg_stat_get_wal', proisstrict => 'f', provolatile => 's',
   proparallel => 'r', prorettype => 'record', proargtypes => '',

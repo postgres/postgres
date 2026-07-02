@@ -510,6 +510,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_kind_info</structname><indexterm><primary>pg_stat_kind_info</primary></indexterm></entry>
+      <entry>
+       One row for each registered statistics kind, showing information
+       about each kind.
+       See <link linkend="monitoring-pg-stat-kind-info-view">
+       <structname>pg_stat_kind_info</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_lock</structname><indexterm><primary>pg_stat_lock</primary></indexterm></entry>
       <entry>
        One row for each lock type, containing cluster-wide locks statistics.
@@ -3302,6 +3312,124 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
  </sect2>
 
+
+ <sect2 id="monitoring-pg-stat-kind-info-view">
+  <title><structname>pg_stat_kind_info</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_kind_info</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_kind_info</structname> view contains one row for
+   each registered statistics kind, including both built-in and custom kinds.
+  </para>
+
+  <table id="pg-stat-kind-info-view" xreflabel="pg_stat_kind_info">
+   <title><structname>pg_stat_kind_info</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        Column Type
+       </para>
+       <para>
+        Description
+       </para>
+      </entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>id</structfield> <type>integer</type>
+       </para>
+       <para>
+        Numeric identifier of the statistics kind.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>name</structfield> <type>text</type>
+       </para>
+       <para>
+        Name of the statistics kind.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>builtin</structfield> <type>boolean</type>
+       </para>
+       <para>
+        True if this is a built-in statistics kind, false if it was registered
+        by an extension.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>fixed_amount</structfield> <type>boolean</type>
+       </para>
+       <para>
+        True if this kind tracks a fixed amount of data (a single, statically
+        allocated entry), false if it tracks a variable number of entries
+        keyed by object identifier.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>accessed_across_databases</structfield> <type>boolean</type>
+       </para>
+       <para>
+        True if entries of this kind are accessed across databases (cluster-wide
+        statistics), false if they are scoped to a single database.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>write_to_file</structfield> <type>boolean</type>
+       </para>
+       <para>
+        True if entries of this kind are persisted to the statistics file at
+        shutdown and reloaded on startup, false if they are kept only in
+        shared memory.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>entry_count</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of tracked entries for this kind. For variable-numbered kinds,
+        this is the number of objects currently tracked.
+        <literal>NULL</literal> for fixed-sized statistics kinds, or if the
+        kind does not track entry counts.
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
 
  <sect2 id="monitoring-pg-stat-lock-view">
   <title><structname>pg_stat_lock</structname></title>

@@ -113,6 +113,29 @@ walwriter|wal|init
 walwriter|wal|normal
 (95 rows)
 \a
+-- List of registered statistics kinds.
+SELECT id, name, fixed_amount,
+    accessed_across_databases AS across_db, write_to_file
+  FROM pg_stat_kind_info
+  WHERE builtin
+  ORDER BY id;
+ id |     name     | fixed_amount | across_db | write_to_file 
+----+--------------+--------------+-----------+---------------
+  1 | database     | f            | t         | t
+  2 | relation     | f            | f         | t
+  3 | function     | f            | f         | t
+  4 | replslot     | f            | t         | t
+  5 | subscription | f            | t         | t
+  6 | backend      | f            | t         | f
+  7 | archiver     | t            | f         | t
+  8 | bgwriter     | t            | f         | t
+  9 | checkpointer | t            | f         | t
+ 10 | io           | t            | f         | t
+ 11 | lock         | t            | f         | t
+ 12 | slru         | t            | f         | t
+ 13 | wal          | t            | f         | t
+(13 rows)
+
 -- ensure that both seqscan and indexscan plans are allowed
 SET enable_seqscan TO on;
 SET enable_indexscan TO on;
