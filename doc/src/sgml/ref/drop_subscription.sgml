@@ -114,6 +114,14 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    If a subscription is associated with a replication slot, then <command>DROP
    SUBSCRIPTION</command> cannot be executed inside a transaction block.
   </para>
+
+  <para>
+   If a conflict log table exists for the subscription (that is, when
+   <link linkend="sql-createsubscription-params-with-conflict-log-destination">
+   <literal>conflict_log_destination</literal></link> is set to <literal>table</literal>
+   or <literal>all</literal>), <command>DROP SUBSCRIPTION</command> automatically drops
+   the associated conflict log table.
+  </para>
  </refsect1>
 
  <refsect1>

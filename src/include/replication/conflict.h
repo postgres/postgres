@@ -79,6 +79,32 @@ typedef struct ConflictTupleInfo
 								 * conflicting local row occurred */
 } ConflictTupleInfo;
 
+/*
+ * Defines where logical replication conflict details are recorded.
+ *
+ * While stored as a text-based array/string in
+ * pg_subscription.subconflictlogdest for user readability and extensibility,
+ * we map these to an internal enum to allow for efficient checks.
+ */
+typedef enum ConflictLogDest
+{
+	CONFLICT_LOG_DEST_LOG = 0,	/* Emit to server logs */
+	CONFLICT_LOG_DEST_TABLE,	/* Insert into the conflict log table */
+	CONFLICT_LOG_DEST_ALL		/* Both log and table */
+} ConflictLogDest;
+
+#define CONFLICTS_LOGGED_TO_TABLE(dest) \
+	((dest == CONFLICT_LOG_DEST_TABLE) || (dest == CONFLICT_LOG_DEST_ALL))
+#define CONFLICTS_LOGGED_TO_LOG(dest) \
+	((dest == CONFLICT_LOG_DEST_LOG) || (dest == CONFLICT_LOG_DEST_ALL))
+
+/*
+ * Array mapping for converting internal enum to string.
+ */
+extern PGDLLIMPORT const char *const ConflictLogDestNames[];
+
+extern Oid	create_conflict_log_table(Oid subid, char *subname, Oid subowner);
+extern ConflictLogDest GetConflictLogDest(const char *dest);
 extern bool GetTupleTransactionInfo(TupleTableSlot *localslot,
 									TransactionId *xmin,
 									ReplOriginId *localorigin,

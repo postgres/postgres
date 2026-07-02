@@ -474,6 +474,240 @@ COMMIT;
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);
 DROP SUBSCRIPTION regress_testsub;
 
+--
+-- CONFLICT LOG DESTINATION TESTS
+--
+
+SET SESSION AUTHORIZATION 'regress_subscription_user';
+
+SET client_min_messages = WARNING;
+
+-- fail - unrecognized parameter value
+CREATE SUBSCRIPTION regress_conflict_fail CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, conflict_log_destination = 'invalid');
+
+-- verify subconflictlogdest is 'log' and subconflictlogrelid is 0 (InvalidOid) for default case
+CREATE SUBSCRIPTION regress_conflict_log_default CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false);
+SELECT subname, subconflictlogdest, subconflictlogrelid
+FROM pg_subscription WHERE subname = 'regress_conflict_log_default';
+
+-- fail - empty string parameter value
+CREATE SUBSCRIPTION regress_conflict_empty_str CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, conflict_log_destination = '');
+
+-- this should generate a conflict log table named pg_conflict_log_$subid$
+CREATE SUBSCRIPTION regress_conflict_test1 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, conflict_log_destination = 'table');
+
+-- check metadata in pg_subscription: destination should be 'table' and subconflictlogrelid valid
+SELECT subname, subconflictlogdest, subconflictlogrelid > 0 AS has_relid
+FROM pg_subscription WHERE subname = 'regress_conflict_test1';
+
+-- verify the physical table exists, its OID matches subconflictlogrelid,
+-- and it is located in the 'pg_conflict' namespace
+SELECT n.nspname, (c.oid = s.subconflictlogrelid) AS "oid_matches"
+FROM pg_class c
+JOIN pg_subscription s ON c.relname = 'pg_conflict_log_' || s.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE s.subname = 'regress_conflict_test1';
+
+-- check if the conflict log table has the correct schema
+SELECT a.attnum, a.attname
+FROM pg_attribute a
+JOIN pg_class c ON a.attrelid = c.oid
+JOIN pg_subscription s ON c.relname = 'pg_conflict_log_' || s.oid
+WHERE s.subname = 'regress_conflict_test1' AND a.attnum > 0
+    ORDER BY a.attnum;
+
+-- Changing the subscription owner should also update the owner
+-- of the associated conflict log table.
+ALTER SUBSCRIPTION regress_conflict_test1 OWNER TO regress_subscription_user2;
+SELECT pg_catalog.pg_get_userbyid(c.relowner) AS owner
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_subscription s
+        ON c.relname = 'pg_conflict_log_' || s.oid
+WHERE s.subname = 'regress_conflict_test1';
+
+-- Verify that a non-superuser subscription owner can truncate,
+-- delete from, and select from the associated conflict log table.
+SET ROLE 'regress_subscription_user2';
+
+SELECT format('%I.%I', n.nspname, c.relname) AS conflict_log_table
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_namespace n
+	ON n.oid = c.relnamespace
+JOIN pg_catalog.pg_subscription s
+	ON c.relname = 'pg_conflict_log_' || s.oid
+WHERE s.subname = 'regress_conflict_test1'
+\gset
+
+TRUNCATE TABLE :conflict_log_table;
+DELETE FROM :conflict_log_table;
+SELECT COUNT(*) FROM :conflict_log_table;
+
+RESET ROLE;
+
+-- Restore the original subscription owner.
+ALTER SUBSCRIPTION regress_conflict_test1 OWNER TO regress_subscription_user;
+
+--
+-- ALTER SUBSCRIPTION - conflict_log_destination state transitions
+--
+-- These tests verify the transition logic between different logging
+-- destinations, ensuring conflict log tables are created or dropped as
+-- expected
+--
+-- transition from 'log' to 'all'
+-- a new conflict log table should be created
+CREATE SUBSCRIPTION regress_conflict_test2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, conflict_log_destination = 'log');
+ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'all');
+
+-- verify metadata after ALTER (destination should be 'all')
+SELECT subname, subconflictlogdest, subconflictlogrelid > 0 AS has_relid
+FROM pg_subscription WHERE subname = 'regress_conflict_test2';
+
+-- transition from 'all' to 'table'
+-- should NOT drop the table, only change destination string
+SELECT subconflictlogrelid AS old_relid FROM pg_subscription WHERE subname = 'regress_conflict_test2' \gset
+ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'table');
+SELECT subconflictlogdest, subconflictlogrelid = :old_relid AS relid_unchanged
+FROM pg_subscription WHERE subname = 'regress_conflict_test2';
+
+-- transition from 'table' to 'log'
+-- should drop the table and clear subconflictlogrelid
+ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'log');
+SELECT subconflictlogdest, subconflictlogrelid
+FROM pg_subscription WHERE subname = 'regress_conflict_test2';
+
+-- verify the physical table is gone
+SELECT count(*)
+FROM pg_class c
+JOIN pg_subscription s ON c.relname = 'pg_conflict_log_' || s.oid
+WHERE s.subname = 'regress_conflict_test2';
+
+--
+-- PUBLICATION: Verify conflict log tables are not publishable
+--
+-- pg_relation_is_publishable should return false for conflict log tables to
+-- prevent them from being accidentally included in publications
+--
+SELECT n.nspname, pg_relation_is_publishable(c.oid)
+FROM pg_class c
+JOIN pg_namespace n ON c.relnamespace = n.oid
+JOIN pg_subscription s ON s.subconflictlogrelid = c.oid
+WHERE s.subname = 'regress_conflict_test1';
+
+--
+-- Table Protection and Lifecycle Management
+--
+-- These tests verify that:
+-- Manual DROP TABLE is disallowed
+-- DROP SUBSCRIPTION automatically reaps the table
+--
+-- re-enable table logging for verification
+ALTER SUBSCRIPTION regress_conflict_test1 SET (conflict_log_destination = 'table');
+
+-- The conflict log table name contains the subscription OID, which is
+-- non-deterministic.  Capture it into a psql variable and report only the
+-- SQLSTATE, so the expected output does not depend on the OID.
+
+-- fail - drop table not allowed due to internal dependency
+SET client_min_messages = NOTICE;
+SELECT 'pg_conflict.pg_conflict_log_' || oid AS clt1
+    FROM pg_subscription WHERE subname = 'regress_conflict_test1' \gset
+\set VERBOSITY sqlstate
+DROP TABLE :clt1;
+\set VERBOSITY default
+
+-- CLEANUP: DROP SUBSCRIPTION reaps the table
+ALTER SUBSCRIPTION regress_conflict_test1 DISABLE;
+ALTER SUBSCRIPTION regress_conflict_test1 SET (slot_name = NONE);
+
+-- Verify the table OID for reap check
+SELECT 'pg_conflict.pg_conflict_log_' || oid AS internal_tablename FROM pg_subscription WHERE subname = 'regress_conflict_test1' \gset
+
+SET client_min_messages = WARNING;
+DROP SUBSCRIPTION regress_conflict_test1;
+
+-- should return NULL, meaning the conflict log table was reaped via dependency
+SELECT to_regclass(:'internal_tablename');
+
+--
+-- Additional Namespace and Table Protection Tests
+--
+
+-- Setup: Ensure we have a subscription with a conflict log table
+CREATE SUBSCRIPTION regress_conflict_protection_test CONNECTION 'dbname=regress_doesnotexist'
+    PUBLICATION testpub WITH (connect = false, conflict_log_destination = 'table');
+
+-- The conflict log table is system-managed; its name contains the
+-- subscription OID, which is non-deterministic.  Capture the name into a psql
+-- variable and report only the SQLSTATE for the operations that must be
+-- rejected, so the expected output stays free of the dynamic OID.  Every
+-- statement in the VERBOSITY-sqlstate block below must fail with 42809
+-- (wrong_object_type), except adding the table to a publication, which fails
+-- with 22023 (invalid_parameter_value).
+SELECT 'pg_conflict.' || relname AS clt
+    FROM pg_class c JOIN pg_subscription s ON c.relname = 'pg_conflict_log_' || s.oid
+    WHERE s.subname = 'regress_conflict_protection_test' \gset
+
+-- Trigger function used by the CREATE TRIGGER check below.
+CREATE FUNCTION public.dummy_trigger_func() RETURNS trigger AS $$
+BEGIN
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+\set VERBOSITY sqlstate
+ALTER TABLE :clt ADD COLUMN extra_info text;
+INSERT INTO :clt (relname) VALUES ('mytest');
+UPDATE :clt SET relname = 'mytest';
+CREATE POLICY p1 ON :clt USING (true);
+CREATE STATISTICS s1 ON relname, schemaname FROM :clt;
+CREATE TABLE public.conflict_child () INHERITS (:clt);
+ALTER TABLE :clt RENAME COLUMN relname TO new_relname;
+CREATE TABLE public.conflict_fk (relname text REFERENCES :clt(relname));
+ALTER TABLE :clt OWNER TO regress_subscription_user_dummy;
+ALTER TABLE :clt SET SCHEMA public;
+CREATE TRIGGER t1 BEFORE INSERT ON :clt FOR EACH ROW EXECUTE FUNCTION public.dummy_trigger_func();
+ALTER TRIGGER non_existent_trigger ON :clt RENAME TO new_trigger;
+CREATE RULE r1 AS ON INSERT TO :clt DO INSTEAD NOTHING;
+ALTER RULE non_existent_rule ON :clt RENAME TO new_rule;
+CREATE INDEX idx1 ON :clt (relname);
+SELECT 1 FROM :clt FOR UPDATE;
+CREATE PUBLICATION testpub_for_clt FOR TABLE :clt;
+\set VERBOSITY default
+
+-- Clean up the trigger function used above.
+DROP FUNCTION public.dummy_trigger_func();
+
+-- TRUNCATE and DELETE are allowed so that users can prune the conflict log.
+TRUNCATE :clt;
+DELETE FROM :clt;
+
+-- Creating a table directly in the pg_conflict namespace is rejected for
+-- everyone (the schema is reserved for conflict log tables).
+CREATE TABLE pg_conflict.manual_table (id int);
+
+-- Moving a user table into the pg_conflict namespace is likewise rejected.
+CREATE TABLE public.test_move (id int);
+ALTER TABLE public.test_move SET SCHEMA pg_conflict;
+DROP TABLE public.test_move;
+
+
+SET client_min_messages = WARNING;
+
+-- Clean up remaining test subscription
+ALTER SUBSCRIPTION regress_conflict_log_default DISABLE;
+ALTER SUBSCRIPTION regress_conflict_log_default SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_conflict_log_default;
+
+
+ALTER SUBSCRIPTION regress_conflict_test2 DISABLE;
+ALTER SUBSCRIPTION regress_conflict_test2 SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_conflict_test2;
+
+ALTER SUBSCRIPTION regress_conflict_protection_test DISABLE;
+ALTER SUBSCRIPTION regress_conflict_protection_test SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_conflict_protection_test;
+
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;
 DROP ROLE regress_subscription_user2;

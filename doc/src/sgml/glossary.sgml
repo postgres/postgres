@@ -506,6 +506,18 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-conflict-schema">
+   <glossterm>Conflict schema</glossterm>
+   <glossdef>
+    <para>
+     The <literal>pg_conflict</literal> schema that contains system-managed
+     conflict log tables for logical replication. These tables are created
+     and maintained automatically by the system and are not intended for
+     direct user manipulation. See <xref linkend="ddl-schemas-conflict"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-connection">
    <glossterm>Connection</glossterm>
    <glossdef>

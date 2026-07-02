@@ -18,6 +18,9 @@
 { oid => '99', oid_symbol => 'PG_TOAST_NAMESPACE',
   descr => 'reserved schema for TOAST tables',
   nspname => 'pg_toast', nspacl => '_null_' },
+{ oid => '8988', oid_symbol => 'PG_CONFLICT_NAMESPACE',
+  descr => 'reserved schema for subscription-specific conflict log tables',
+  nspname => 'pg_conflict', nspacl => '_null_' },
 # update dumpNamespace() if changing this descr
 { oid => '2200', oid_symbol => 'PG_PUBLIC_NAMESPACE',
   descr => 'standard public schema',

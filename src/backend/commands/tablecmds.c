@@ -2464,9 +2464,11 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 	 * pg_largeobject and pg_largeobject_metadata to be truncated as part of
 	 * pg_upgrade, because we need to change its relfilenode to match the old
 	 * cluster, and allowing a TRUNCATE command to be executed is the easiest
-	 * way of doing that.
+	 * way of doing that. We also allow TRUNCATE on the conflict log tables,
+	 * to permit users to manually prune conflict data to manage disk space.
 	 */
-	if (!allowSystemTableMods && IsSystemClass(relid, reltuple)
+	if (!allowSystemTableMods && IsSystemClass(relid, reltuple) &&
+		!IsConflictLogTableClass(reltuple)
 		&& (!IsBinaryUpgrade ||
 			(relid != LargeObjectRelationId &&
 			 relid != LargeObjectMetadataRelationId)))
@@ -2754,6 +2756,18 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot inherit from partition \"%s\"",
 							RelationGetRelationName(relation))));
+
+		/*
+		 * Conflict log tables are managed by the system for logical
+		 * replication and should not be used as parent tables, as inheritance
+		 * could interfere with the logging behavior.
+		 */
+		if (IsConflictLogTableNamespace(relation->rd_rel->relnamespace))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot inherit from conflict log table \"%s\"",
+							RelationGetRelationName(relation)),
+					 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION &&
 			relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
@@ -3892,6 +3906,19 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 	if (!object_ownercheck(RelationRelationId, myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(myrelid)),
 					   NameStr(classform->relname));
+
+	/*
+	 * Conflict log tables are used internally for logical replication
+	 * conflict logging and should not be modified directly, as it could
+	 * disrupt conflict logging.
+	 */
+	if (IsConflictLogTableClass(classform))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot rename columns of conflict log table \"%s\"",
+						NameStr(classform->relname)),
+				 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
+
 	if (!allowSystemTableMods && IsSystemClass(myrelid, classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -6893,6 +6920,22 @@ ATSimplePermissions(AlterTableType cmdtype, Relation rel, int allowed_targets)
 	if (!object_ownercheck(RelationRelationId, RelationGetRelid(rel), GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 					   RelationGetRelationName(rel));
+
+	/*
+	 * Conflict log tables are used internally for logical replication
+	 * conflict logging and should not be altered directly, as it could
+	 * disrupt conflict logging. Direct ALTER commands are already rejected
+	 * during relation lookup in RangeVarCallbackForAlterRelation(), and
+	 * AlterTableMoveAll() skips these tables, so a conflict log table does
+	 * not normally reach here; this check guards any internal caller that
+	 * arrives via AlterTableInternal().
+	 */
+	if (IsConflictLogTableClass(rel->rd_rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot alter conflict log table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
@@ -10202,6 +10245,18 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("referenced relation \"%s\" is not a table",
 						RelationGetRelationName(pkrel))));
+
+	/*
+	 * Conflict log tables are used internally for logical replication
+	 * conflict logging and should not be referenced by foreign keys, as it
+	 * could disrupt conflict logging.
+	 */
+	if (IsConflictLogTableClass(pkrel->rd_rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot reference conflict log table \"%s\"",
+						RelationGetRelationName(pkrel)),
+				 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
 
 	if (!allowSystemTableMods && IsSystemRelation(pkrel))
 		ereport(ERROR,
@@ -17539,13 +17594,19 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 		 * really wishes to do so, they can issue the individual ALTER
 		 * commands directly.
 		 *
-		 * Also, explicitly avoid any shared tables, temp tables, or TOAST
-		 * (TOAST will be moved with the main table).
+		 * Also, explicitly avoid any shared tables, temp tables, TOAST (TOAST
+		 * will be moved with the main table).
+		 *
+		 * Conflict log tables are system-managed for logical replication and
+		 * cannot be altered directly, so skip them as well; otherwise a
+		 * single such table in the source tablespace would abort the whole
+		 * bulk move.
 		 */
 		if (IsCatalogNamespace(relForm->relnamespace) ||
 			relForm->relisshared ||
 			isAnyTempNamespace(relForm->relnamespace) ||
-			IsToastNamespace(relForm->relnamespace))
+			IsToastNamespace(relForm->relnamespace) ||
+			IsConflictLogTableNamespace(relForm->relnamespace))
 			continue;
 
 		/* Only move the object type requested */
@@ -20034,6 +20095,18 @@ RangeVarCallbackOwnsRelation(const RangeVar *relation,
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relId)),
 					   relation->relname);
 
+	/*
+	 * Conflict log tables are used internally for logical replication
+	 * conflict logging and should not be modified directly, as it could
+	 * disrupt conflict logging.
+	 */
+	if (IsConflictLogTableClass((Form_pg_class) GETSTRUCT(tuple)))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot change conflict log table \"%s\"",
+						relation->relname),
+				 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
+
 	if (!allowSystemTableMods &&
 		IsSystemClass(relId, (Form_pg_class) GETSTRUCT(tuple)))
 		ereport(ERROR,
@@ -20068,6 +20141,18 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 	/* Must own relation. */
 	if (!object_ownercheck(RelationRelationId, relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
+
+	/*
+	 * Conflict log tables are used internally for logical replication
+	 * conflict logging and should not be altered directly, as it could
+	 * disrupt conflict logging.
+	 */
+	if (IsConflictLogTableClass(classform))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot alter conflict log table \"%s\"",
+						rv->relname),
+				 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
 
 	/* No system table modifications unless explicitly allowed. */
 	if (!allowSystemTableMods && IsSystemClass(relid, classform))

@@ -92,6 +92,13 @@ check_publication_add_relation(PublicationRelInfo *pri)
 				 errmsg(errormsg, relname),
 				 errdetail("This operation is not supported for system tables.")));
 
+	/* Can't be conflict log table */
+	if (IsConflictLogTableNamespace(RelationGetNamespace(targetrel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg(errormsg, relname),
+				 errdetail("This operation is not supported for conflict log tables.")));
+
 	/* UNLOGGED and TEMP relations cannot be part of publication. */
 	if (targetrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 		ereport(ERROR,
@@ -113,7 +120,8 @@ static void
 check_publication_add_schema(Oid schemaid)
 {
 	/* Can't be system namespace */
-	if (IsCatalogNamespace(schemaid) || IsToastNamespace(schemaid))
+	if (IsCatalogNamespace(schemaid) || IsToastNamespace(schemaid) ||
+		IsConflictLogTableNamespace(schemaid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot add schema \"%s\" to publication",
@@ -148,7 +156,8 @@ check_publication_add_schema(Oid schemaid)
  * is really inadequate for that, since the information_schema could be
  * dropped and reloaded and then it'll be considered publishable.  The best
  * long-term solution may be to add a "relispublishable" bool to pg_class,
- * and depend on that instead of OID checks.
+ * and depend on that instead of OID checks.  IsConflictLogTableClass()
+ * excludes tables in conflict schema.
  */
 static bool
 is_publishable_class(Oid relid, Form_pg_class reltuple)
@@ -157,6 +166,7 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
 			reltuple->relkind == RELKIND_PARTITIONED_TABLE ||
 			reltuple->relkind == RELKIND_SEQUENCE) &&
 		!IsCatalogRelationOid(relid) &&
+		!IsConflictLogTableClass(reltuple) &&
 		reltuple->relpersistence == RELPERSISTENCE_PERMANENT &&
 		relid >= FirstNormalObjectId;
 }

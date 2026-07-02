@@ -3759,6 +3759,26 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    </para>
   </sect2>
 
+  <sect2 id="ddl-schemas-conflict">
+   <title>The Conflict Schema</title>
+
+   <indexterm zone="ddl-schemas-conflict">
+    <primary>conflict</primary>
+    <secondary>schema</secondary>
+   </indexterm>
+
+   <para>
+    The <literal>pg_conflict</literal> schema (sometimes referred to as the
+    <emphasis>conflict schema</emphasis>) contains system-managed conflict
+    log tables used for logical replication conflict tracking.
+    These tables are created and maintained by the system and are not intended for
+    direct user manipulation. Unlike <literal>pg_catalog</literal>, the
+    <literal>pg_conflict</literal> schema is not implicitly included in the
+    search path, so objects within it must be referenced explicitly or by
+    adjusting the search path.
+   </para>
+  </sect2>
+
   <sect2 id="ddl-schemas-patterns">
    <title>Usage Patterns</title>
 

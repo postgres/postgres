@@ -50,7 +50,7 @@ $node_subscriber->safe_psql(
 	'postgres',
 	"CREATE SUBSCRIPTION sub_tab
 	 CONNECTION '$publisher_connstr application_name=$appname'
-	 PUBLICATION pub_tab;");
+	 PUBLICATION pub_tab WITH (conflict_log_destination=all)");
 
 # Wait for initial table sync to finish
 $node_subscriber->wait_for_subscription_sync($node_publisher, $appname);
@@ -669,5 +669,70 @@ ok( $node_A->poll_query_until(
 		"SELECT count(*) = 0 FROM pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
 	),
 	"the slot 'pg_conflict_detection' has been dropped on Node A");
+
+###############################################################################
+# A conflict log table is system-managed and cannot be altered directly, so
+# moving it to another tablespace must be rejected.
+###############################################################################
+my $subid = $node_subscriber->safe_psql('postgres',
+	"SELECT oid FROM pg_subscription WHERE subname = 'sub_tab';");
+my $clt = "pg_conflict.pg_conflict_log_$subid";
+
+(undef, undef, $stderr) = $node_subscriber->psql('postgres',
+	"ALTER TABLE $clt SET TABLESPACE pg_default");
+like(
+	$stderr,
+	qr/cannot alter conflict log table "pg_conflict_log_\d+"/,
+	"moving a conflict log table with ALTER TABLE SET TABLESPACE is rejected");
+
+###############################################################################
+# ALTER TABLE ALL IN TABLESPACE must skip conflict log tables, the same way it
+# skips catalog and TOAST tables, instead of failing.  Use an isolated database
+# so the bulk move only touches the objects created here.
+###############################################################################
+$node_subscriber->safe_psql('postgres', "CREATE DATABASE clt_ts_test");
+$node_subscriber->safe_psql('clt_ts_test',
+	"CREATE SUBSCRIPTION sub_ts_test
+	     CONNECTION 'dbname=nonexistent'
+	     PUBLICATION pub
+	     WITH (connect=false, conflict_log_destination='table')");
+
+# A plain user table that should be moved, alongside the CLT that must not be.
+$node_subscriber->safe_psql('clt_ts_test', "CREATE TABLE user_tbl (i int)");
+
+# Create a tablespace backed by a directory inside the data dir.
+my $ts_dir = $node_subscriber->data_dir . '/backup_space';
+mkdir($ts_dir)
+  or die "could not create tablespace directory $ts_dir: $!";
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLESPACE backup_space LOCATION '$ts_dir'");
+
+# The bulk move succeeds: the user table is relocated while the CLT is skipped.
+$node_subscriber->safe_psql('clt_ts_test',
+	"ALTER TABLE ALL IN TABLESPACE pg_default SET TABLESPACE backup_space");
+
+is( $node_subscriber->safe_psql(
+		'clt_ts_test',
+		"SELECT reltablespace <> 0 FROM pg_class WHERE relname = 'user_tbl'"),
+	't',
+	"ALTER TABLE ALL IN TABLESPACE moves an ordinary user table");
+
+is( $node_subscriber->safe_psql(
+		'clt_ts_test',
+		"SELECT count(*) FROM pg_class c JOIN pg_subscription s
+		   ON c.relname = 'pg_conflict_log_' || s.oid
+		 WHERE s.subname = 'sub_ts_test' AND c.reltablespace <> 0"),
+	'0',
+	"ALTER TABLE ALL IN TABLESPACE skips the conflict log table");
+
+# Cleanup.  The subscription has no real publisher connection, so detach its
+# slot before dropping it.
+$node_subscriber->safe_psql('clt_ts_test',
+	"ALTER SUBSCRIPTION sub_ts_test DISABLE");
+$node_subscriber->safe_psql('clt_ts_test',
+	"ALTER SUBSCRIPTION sub_ts_test SET (slot_name = NONE)");
+$node_subscriber->safe_psql('clt_ts_test', "DROP SUBSCRIPTION sub_ts_test");
+$node_subscriber->safe_psql('postgres', "DROP DATABASE clt_ts_test");
+$node_subscriber->safe_psql('postgres', "DROP TABLESPACE backup_space");
 
 done_testing();

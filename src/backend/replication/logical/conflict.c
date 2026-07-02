@@ -17,12 +17,69 @@
 #include "access/commit_ts.h"
 #include "access/genam.h"
 #include "access/tableam.h"
+#include "catalog/heap.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_namespace.h"
+#include "catalog/toasting.h"
 #include "executor/executor.h"
 #include "pgstat.h"
 #include "replication/conflict.h"
 #include "replication/worker_internal.h"
 #include "storage/lmgr.h"
 #include "utils/lsyscache.h"
+
+/*
+ * String representations for the supported conflict logging destinations.
+ */
+const char *const ConflictLogDestNames[] = {
+	[CONFLICT_LOG_DEST_LOG] = "log",
+	[CONFLICT_LOG_DEST_TABLE] = "table",
+	[CONFLICT_LOG_DEST_ALL] = "all"
+};
+
+StaticAssertDecl(lengthof(ConflictLogDestNames) == CONFLICT_LOG_DEST_ALL + 1,
+				 "ConflictLogDestNames length mismatch");
+
+
+/* Structure to hold metadata for one column of the conflict log table */
+typedef struct ConflictLogColumnDef
+{
+	const char *attname;		/* Column name */
+	Oid			atttypid;		/* Data type OID */
+} ConflictLogColumnDef;
+
+/*
+ * Schema definition for conflict log tables.
+ *
+ * Defines the fixed schema of the per-subscription conflict log table created
+ * in the pg_conflict namespace. Each entry specifies the column name and its
+ * type OID; the table is created in this column order by
+ * create_conflict_log_table().
+ *
+ * The tuple/key columns (replica_identity, remote_tuple, local_conflicts) are
+ * typed json rather than jsonb on purpose: they hold an exact audit snapshot
+ * of the applied tuples and replica identity, and json preserves the verbatim
+ * representation whereas jsonb would normalize it. Indexing them (jsonb's main
+ * advantage) wouldn't help anyway, as the conflict log is looked up by its
+ * scalar columns (relid, conflict_type, commit timestamp) while these json
+ * columns are per-conflict payload to inspect, not search keys.
+ */
+static const ConflictLogColumnDef ConflictLogSchema[] = {
+	{.attname = "relid", .atttypid = OIDOID},
+	{.attname = "schemaname", .atttypid = TEXTOID},
+	{.attname = "relname", .atttypid = TEXTOID},
+	{.attname = "conflict_type", .atttypid = TEXTOID},
+	{.attname = "remote_xid", .atttypid = XIDOID},
+	{.attname = "remote_commit_lsn", .atttypid = LSNOID},
+	{.attname = "remote_commit_ts", .atttypid = TIMESTAMPTZOID},
+	{.attname = "remote_origin", .atttypid = TEXTOID},
+	{.attname = "replica_identity_full", .atttypid = BOOLOID},
+	{.attname = "replica_identity", .atttypid = JSONOID},
+	{.attname = "remote_tuple", .atttypid = JSONOID},
+	{.attname = "local_conflicts", .atttypid = JSONARRAYOID}
+};
+
+#define NUM_CONFLICT_ATTRS lengthof(ConflictLogSchema)
 
 static const char *const ConflictTypeNames[] = {
 	[CT_INSERT_EXISTS] = "insert_exists",
@@ -53,6 +110,121 @@ static void get_tuple_desc(EState *estate, ResultRelInfo *relinfo,
 						   Oid indexoid);
 static char *build_index_value_desc(EState *estate, Relation localrel,
 									TupleTableSlot *slot, Oid indexoid);
+
+/*
+ * Builds the TupleDesc for the conflict log table.
+ */
+static TupleDesc
+create_conflict_log_table_tupdesc(void)
+{
+	TupleDesc	tupdesc;
+
+	tupdesc = CreateTemplateTupleDesc(NUM_CONFLICT_ATTRS);
+
+	for (int i = 0; i < NUM_CONFLICT_ATTRS; i++)
+		TupleDescInitEntry(tupdesc, i + 1,
+						   ConflictLogSchema[i].attname,
+						   ConflictLogSchema[i].atttypid,
+						   -1, 0);
+
+	TupleDescFinalize(tupdesc);
+
+	return tupdesc;
+}
+
+/*
+ * Create a structured conflict log table for a subscription.
+ *
+ * The table is created within the system-managed 'pg_conflict' namespace to
+ * prevent users from manually dropping or altering it.  This also prevents
+ * accidental name collisions with user-created tables with the same name.
+ *
+ * The table name is generated automatically using the subscription's OID
+ * (e.g., "pg_conflict_log_<subid>") to ensure uniqueness within the
+ * cluster and to avoid collisions during subscription renames.
+ */
+Oid
+create_conflict_log_table(Oid subid, char *subname, Oid subowner)
+{
+	TupleDesc	tupdesc;
+	Oid			relid;
+	char		relname[NAMEDATALEN];
+
+	snprintf(relname, NAMEDATALEN, "pg_conflict_log_%u", subid);
+
+	/* Build the tuple descriptor for the new table. */
+	tupdesc = create_conflict_log_table_tupdesc();
+
+	/* Create conflict log table. */
+	relid = heap_create_with_catalog(relname,
+									 PG_CONFLICT_NAMESPACE,
+									 0, /* tablespace */
+									 InvalidOid,	/* relid */
+									 InvalidOid,	/* reltypeid */
+									 InvalidOid,	/* reloftypeid */
+									 subowner,
+									 HEAP_TABLE_AM_OID,
+									 tupdesc,
+									 NIL,
+									 RELKIND_RELATION,
+									 RELPERSISTENCE_PERMANENT,
+									 false, /* shared_relation */
+									 false, /* mapped_relation */
+									 ONCOMMIT_NOOP,
+									 (Datum) 0, /* reloptions */
+									 false, /* use_user_acl */
+									 false,	/* allow_system_table_mods */
+									 true,	/* is_internal */
+									 InvalidOid,	/* relrewrite */
+									 NULL); /* typaddress */
+	Assert(OidIsValid(relid));
+
+	/* Release tuple descriptor memory. */
+	FreeTupleDesc(tupdesc);
+
+	/*
+	 * We must bump the command counter to make the newly-created relation
+	 * tuple visible for opening.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * Create a TOAST table for the conflict log to support out-of-line
+	 * storage of large json data.
+	 */
+	NewRelationCreateToastTable(relid, (Datum) 0);
+
+	ereport(NOTICE,
+			(errmsg("created conflict log table \"%s\" for subscription \"%s\"",
+					get_qualified_objname(PG_CONFLICT_NAMESPACE, relname),
+					subname)));
+
+	return relid;
+}
+
+/*
+ * Convert the string representation of a conflict logging destination to its
+ * corresponding enum value.
+ */
+ConflictLogDest
+GetConflictLogDest(const char *dest)
+{
+	/* NULL defaults to LOG. */
+	if (dest == NULL || pg_strcasecmp(dest, "log") == 0)
+		return CONFLICT_LOG_DEST_LOG;
+
+	if (pg_strcasecmp(dest, "table") == 0)
+		return CONFLICT_LOG_DEST_TABLE;
+
+	if (pg_strcasecmp(dest, "all") == 0)
+		return CONFLICT_LOG_DEST_ALL;
+
+	/* Unrecognized string. */
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized conflict_log_destination value: \"%s\"", dest),
+			 errhint("Valid values are \"log\", \"table\", and \"all\".")));
+}
 
 /*
  * Get the xmin and commit timestamp data (origin and timestamp) associated

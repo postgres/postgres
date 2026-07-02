@@ -83,7 +83,19 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
 
-	/* Currently, we only allow plain tables or views to be locked */
+	/*
+	 * Note: Conflict log tables are deliberately NOT blocked here, even
+	 * though other direct DDL on them is rejected elsewhere. pg_dump relies
+	 * on being able to take an ACCESS SHARE lock on these tables to safely
+	 * dump their definitions during a binary upgrade, so we permit LOCK
+	 * commands on them and treat them like ordinary tables here. It's true
+	 * that a strong lock (ShareLock or above) on such a table would conflict
+	 * with the RowExclusiveLock taken by the apply worker's inserts and could
+	 * stall conflict logging as well as the apply worker for as long as it is
+	 * held. But locking a system-managed conflict log table is an unusual
+	 * thing to do, and it doesn't seem worth the trouble of filtering by lock
+	 * mode here.
+	 */
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE &&
 		relkind != RELKIND_VIEW)
 		ereport(ERROR,
@@ -196,6 +208,16 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			/* Currently, we only allow plain tables or views to be locked. */
 			if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE &&
 				relkind != RELKIND_VIEW)
+				continue;
+
+			/*
+			 * Conflict log tables only support SELECT, DELETE, and TRUNCATE.
+			 * A direct LOCK on them is permitted solely so that pg_dump can
+			 * lock them during a binary upgrade; locking one indirectly by
+			 * locking a view over it is not needed for that, so skip it here
+			 * rather than locking it.
+			 */
+			if (IsConflictLogTableNamespace(get_rel_namespace(relid)))
 				continue;
 
 			/*

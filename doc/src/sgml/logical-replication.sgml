@@ -293,6 +293,21 @@
    option of <command>CREATE SUBSCRIPTION</command> for details.
   </para>
 
+  <para>
+   <link linkend="logical-replication-conflicts">Conflicts</link> that occur
+   during replication are, by default, logged as plain text in the server log,
+   which can make automated monitoring and analysis difficult. The
+   <command>CREATE SUBSCRIPTION</command> command provides the
+   <link linkend="sql-createsubscription-params-with-conflict-log-destination">
+   <literal>conflict_log_destination</literal></link> option to record detailed
+   conflict information in a structured, queryable format. When this parameter
+   is set to <literal>table</literal> or <literal>all</literal>, the system
+   automatically manages a dedicated <firstterm>conflict log table</firstterm>,
+   which is created and dropped along with the subscription. This significantly
+   improves post-mortem analysis and operational visibility of the replication
+   setup.
+  </para>
+
   <sect2 id="logical-replication-subscription-slot">
    <title>Logical Replication Slot Management</title>
 

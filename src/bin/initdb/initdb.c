@@ -1839,6 +1839,12 @@ setup_privileges(FILE *cmdfd)
 				  "  AND relacl IS NULL;\n\n",
 				  escape_quotes(username));
 	PG_CMD_PUTS("GRANT USAGE ON SCHEMA pg_catalog, public TO PUBLIC;\n\n");
+
+	/*
+	 * Allow non-superuser subscription owners to access their associated
+	 * conflict log tables in the pg_conflict schema.
+	 */
+	PG_CMD_PUTS("GRANT USAGE ON SCHEMA pg_conflict TO PUBLIC;\n\n");
 	PG_CMD_PUTS("REVOKE ALL ON pg_largeobject FROM PUBLIC;\n\n");
 	PG_CMD_PUTS("INSERT INTO pg_init_privs "
 				"  (objoid, classoid, objsubid, initprivs, privtype)"

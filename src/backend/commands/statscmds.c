@@ -147,6 +147,20 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
 
+		/*
+		 * Conflict log tables are system-managed tables used internally for
+		 * logical replication conflict logging. Unlike user tables, they are
+		 * not expected to have complex query usage, so to keep things simple,
+		 * user-defined extended statistics are not required or supported at
+		 * present.
+		 */
+		if (IsConflictLogTableClass(rel->rd_rel))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot create statistics on conflict log table \"%s\"",
+							RelationGetRelationName(rel)),
+					 errdetail("Conflict log tables are system-managed tables for logical replication conflicts.")));
+
 		/* Creating statistics on system catalogs is not allowed */
 		if (!allowSystemTableMods && IsSystemRelation(rel))
 			ereport(ERROR,

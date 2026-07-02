@@ -28,6 +28,7 @@
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_database_d.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_type.h"
@@ -35,6 +36,7 @@
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/subscriptioncmds.h"
+#include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
@@ -79,6 +81,7 @@
 #define SUBOPT_WAL_RECEIVER_TIMEOUT			0x00010000
 #define SUBOPT_LSN					0x00020000
 #define SUBOPT_ORIGIN				0x00040000
+#define SUBOPT_CONFLICT_LOG_DEST	0x00080000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -107,6 +110,7 @@ typedef struct SubOpts
 	bool		retaindeadtuples;
 	int32		maxretention;
 	char	   *origin;
+	ConflictLogDest conflictlogdest;
 	XLogRecPtr	lsn;
 	char	   *wal_receiver_timeout;
 } SubOpts;
@@ -140,7 +144,12 @@ static List *merge_publications(List *oldpublist, List *newpublist, bool addpub,
 static void ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err);
 static void CheckAlterSubOption(Subscription *sub, const char *option,
 								bool slot_needs_update, bool isTopLevel);
-
+static bool alter_sub_conflict_log_dest(Subscription *sub,
+										ConflictLogDest oldlogdest,
+										ConflictLogDest newlogdest,
+										Oid *conflicttablerelid);
+static void drop_sub_conflict_log_table(Oid subid, char *subname,
+										Oid subconflictlogrelid);
 
 /*
  * Common option parsing function for CREATE and ALTER SUBSCRIPTION commands.
@@ -196,6 +205,8 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 		opts->maxretention = 0;
 	if (IsSet(supported_opts, SUBOPT_ORIGIN))
 		opts->origin = pstrdup(LOGICALREP_ORIGIN_ANY);
+	if (IsSet(supported_opts, SUBOPT_CONFLICT_LOG_DEST))
+		opts->conflictlogdest = CONFLICT_LOG_DEST_LOG;
 
 	/* Parse options */
 	foreach(lc, stmt_options)
@@ -436,6 +447,18 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 										 PGC_BACKEND, PGC_S_TEST, GUC_ACTION_SET,
 										 false, 0, false);
 		}
+		else if (IsSet(supported_opts, SUBOPT_CONFLICT_LOG_DEST) &&
+				 strcmp(defel->defname, "conflict_log_destination") == 0)
+		{
+			char	   *val;
+
+			if (IsSet(opts->specified_opts, SUBOPT_CONFLICT_LOG_DEST))
+				errorConflictingDefElem(defel, pstate);
+
+			val = defGetString(defel);
+			opts->conflictlogdest = GetConflictLogDest(val);
+			opts->specified_opts |= SUBOPT_CONFLICT_LOG_DEST;
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -660,6 +683,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	uint32		supported_opts;
 	SubOpts		opts = {0};
 	AclResult	aclresult;
+	Oid			logrelid = InvalidOid;
 
 	/*
 	 * Parse and check options.
@@ -674,7 +698,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_RUN_AS_OWNER | SUBOPT_FAILOVER |
 					  SUBOPT_RETAIN_DEAD_TUPLES |
 					  SUBOPT_MAX_RETENTION_DURATION |
-					  SUBOPT_WAL_RECEIVER_TIMEOUT | SUBOPT_ORIGIN);
+					  SUBOPT_WAL_RECEIVER_TIMEOUT | SUBOPT_ORIGIN |
+					  SUBOPT_CONFLICT_LOG_DEST);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -848,6 +873,21 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	values[Anum_pg_subscription_suborigin - 1] =
 		CStringGetTextDatum(opts.origin);
 
+	values[Anum_pg_subscription_subconflictlogdest - 1] =
+		CStringGetTextDatum(ConflictLogDestNames[opts.conflictlogdest]);
+
+	/*
+	 * We create the conflict log table here, if required, so that its
+	 * relation OID can be stored when inserting the pg_subscription tuple
+	 * below.
+	 */
+	if (CONFLICTS_LOGGED_TO_TABLE(opts.conflictlogdest))
+		logrelid = create_conflict_log_table(subid, stmt->subname, owner);
+
+	/* Store table OID in the catalog. */
+	values[Anum_pg_subscription_subconflictlogrelid - 1] =
+		ObjectIdGetDatum(logrelid);
+
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
@@ -866,6 +906,25 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 		ObjectAddressSet(referenced, ForeignServerRelationId, serverid);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/*
+	 * Establish an internal dependency between the conflict log table and the
+	 * subscription.
+	 *
+	 * We use DEPENDENCY_INTERNAL to signify that the table's lifecycle is
+	 * strictly tied to the subscription, similar to how a TOAST table relates
+	 * to its main table or a sequence relates to an identity column.
+	 *
+	 * This ensures the conflict log table is automatically reaped during a
+	 * DROP SUBSCRIPTION via performDeletion().
+	 */
+	if (OidIsValid(logrelid))
+	{
+		ObjectAddress cltaddr;
+
+		ObjectAddressSet(cltaddr, RelationRelationId, logrelid);
+		recordDependencyOn(&cltaddr, &myself, DEPENDENCY_INTERNAL);
 	}
 
 	/*
@@ -1438,6 +1497,71 @@ CheckAlterSubOption(Subscription *sub, const char *option,
 }
 
 /*
+ * alter_sub_conflict_log_dest
+ *
+ * When the subscription's 'conflict_log_destination' is changed, update the
+ * conflict log table if required.
+ *
+ * If the new destination no longer requires a conflict log table, the existing
+ * conflict log table associated with the subscription is removed via internal
+ * dependency cleanup to prevent orphaned relations.
+ *
+ * On success, *conflicttablerelid is set to the OID of the conflict log table
+ * that was created or validated, or to InvalidOid if no table is required.
+ *
+ * Returns true if the subscription's conflict log table reference must be
+ * updated as a result of the destination change; false otherwise.
+ */
+static bool
+alter_sub_conflict_log_dest(Subscription *sub, ConflictLogDest oldlogdest,
+							ConflictLogDest newlogdest,
+							Oid *conflicttablerelid)
+{
+	bool		want_table;
+	bool		has_oldtable;
+	bool		update_relid = false;
+	Oid			relid = InvalidOid;
+
+	want_table = CONFLICTS_LOGGED_TO_TABLE(newlogdest);
+	has_oldtable = CONFLICTS_LOGGED_TO_TABLE(oldlogdest);
+
+	if (has_oldtable)
+	{
+		/* There is a conflict log table already. */
+		if (!want_table)
+		{
+			drop_sub_conflict_log_table(sub->oid, sub->name,
+										sub->conflictlogrelid);
+			update_relid = true;
+		}
+	}
+	else
+	{
+		/* There was no previous conflict log table. */
+		if (want_table)
+		{
+			ObjectAddress cltaddr;
+			ObjectAddress subobj;
+
+			relid = create_conflict_log_table(sub->oid, sub->name, sub->owner);
+			update_relid = true;
+
+			/*
+			 * Establish an internal dependency between the conflict log table
+			 * and the subscription.  For details refer comments in
+			 * CreateSubscription function.
+			 */
+			ObjectAddressSet(cltaddr, RelationRelationId, relid);
+			ObjectAddressSet(subobj, SubscriptionRelationId, sub->oid);
+			recordDependencyOn(&cltaddr, &subobj, DEPENDENCY_INTERNAL);
+		}
+	}
+
+	*conflicttablerelid = relid;
+	return update_relid;
+}
+
+/*
  * Alter the existing subscription.
  */
 ObjectAddress
@@ -1499,7 +1623,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 							  SUBOPT_RETAIN_DEAD_TUPLES |
 							  SUBOPT_MAX_RETENTION_DURATION |
 							  SUBOPT_WAL_RECEIVER_TIMEOUT |
-							  SUBOPT_ORIGIN);
+							  SUBOPT_ORIGIN |
+							  SUBOPT_CONFLICT_LOG_DEST);
 			break;
 
 		case ALTER_SUBSCRIPTION_ENABLED:
@@ -1856,6 +1981,34 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					values[Anum_pg_subscription_subwalrcvtimeout - 1] =
 						CStringGetTextDatum(opts.wal_receiver_timeout);
 					replaces[Anum_pg_subscription_subwalrcvtimeout - 1] = true;
+				}
+
+				if (IsSet(opts.specified_opts, SUBOPT_CONFLICT_LOG_DEST))
+				{
+					ConflictLogDest old_dest =
+						GetConflictLogDest(sub->conflictlogdest);
+
+					if (opts.conflictlogdest != old_dest)
+					{
+						bool		update_relid;
+						Oid			relid = InvalidOid;
+
+						values[Anum_pg_subscription_subconflictlogdest - 1] =
+							CStringGetTextDatum(ConflictLogDestNames[opts.conflictlogdest]);
+						replaces[Anum_pg_subscription_subconflictlogdest - 1] = true;
+
+						update_relid = alter_sub_conflict_log_dest(sub,
+																   old_dest,
+																   opts.conflictlogdest,
+																   &relid);
+						if (update_relid)
+						{
+							values[Anum_pg_subscription_subconflictlogrelid - 1] =
+								ObjectIdGetDatum(relid);
+							replaces[Anum_pg_subscription_subconflictlogrelid - 1] =
+								true;
+						}
+					}
 				}
 
 				update_tuple = true;
@@ -2298,6 +2451,51 @@ construct_subserver_conninfo(Oid subserver, Oid subowner, char **err)
 }
 
 /*
+ * Drop subscription's conflict log table
+ *
+ * The conflict log table is registered as an internal dependency of the
+ * subscription. This function removes the dependency by performing a
+ * cascading deletion on the subscription object, which in turn drops the
+ * associated conflict log table.
+ *
+ * This is used to clean up conflict log tables that are no longer required,
+ * preventing accumulation of stale or orphaned relations.
+ *
+ * NOTE:
+ * Only conflict log tables are currently managed via this internal dependency
+ * mechanism.
+ */
+static void
+drop_sub_conflict_log_table(Oid subid, char *subname, Oid subconflictlogrelid)
+{
+	/* Drop any dependent conflict log table */
+	if (OidIsValid(subconflictlogrelid))
+	{
+		ObjectAddress object;
+		char	   *conflictrelname;
+
+		conflictrelname = get_rel_name(subconflictlogrelid);
+		if (conflictrelname == NULL)
+			elog(ERROR, "cache lookup failed for relation %u",
+				 subconflictlogrelid);
+
+		/*
+		 * By using PERFORM_DELETION_SKIP_ORIGINAL, we ensure that only the
+		 * conflict log table is deleted while the subscription remains.
+		 */
+		ObjectAddressSet(object, SubscriptionRelationId, subid);
+		performDeletion(&object, DROP_CASCADE,
+						PERFORM_DELETION_INTERNAL |
+						PERFORM_DELETION_SKIP_ORIGINAL);
+
+		ereport(NOTICE,
+				errmsg("dropped conflict log table \"%s\" for subscription \"%s\"",
+					   get_qualified_objname(PG_CONFLICT_NAMESPACE, conflictrelname),
+					   subname));
+	}
+}
+
+/*
  * Drop a subscription
  */
 void
@@ -2309,6 +2507,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	Oid			subid;
 	Oid			subowner;
 	Oid			subserver;
+	Oid			subconflictlogrelid;
 	char	   *subconninfo = NULL;
 	Datum		datum;
 	bool		isnull;
@@ -2361,6 +2560,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	subid = form->oid;
 	subowner = form->subowner;
 	subserver = form->subserver;
+	subconflictlogrelid = form->subconflictlogrelid;
 	must_use_password = !superuser_arg(subowner) && form->subpasswordrequired;
 
 	/* must be owner */
@@ -2477,6 +2677,9 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 										   sizeof(originname));
 		replorigin_drop_by_name(originname, true, false);
 	}
+
+	/* Drop subscription's conflict log table */
+	drop_sub_conflict_log_table(subid, subname, subconflictlogrelid);
 
 	/* Clean up dependencies */
 	deleteDependencyRecordsFor(SubscriptionRelationId, subid, false);
@@ -2721,6 +2924,11 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 	form->subowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
+
+	/* Update owner of the conflict log table if it exists. */
+	if (OidIsValid(form->subconflictlogrelid))
+		ATExecChangeOwner(form->subconflictlogrelid, newOwnerId, true,
+						  AccessExclusiveLock);
 
 	/* Update owner dependency reference */
 	changeDependencyOnOwner(SubscriptionRelationId,
