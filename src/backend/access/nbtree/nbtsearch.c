@@ -1984,6 +1984,11 @@ _bt_lock_and_validate_left(Relation rel, BlockNumber *blkno,
 {
 	BlockNumber origblkno = *blkno; /* detects circular links */
 
+#ifdef USE_INJECTION_POINTS
+	if (!IsCatalogRelation(rel))
+		INJECTION_POINT("nbtree-walk-left", NULL);
+#endif
+
 	for (;;)
 	{
 		Buffer		buf;
@@ -2018,6 +2023,12 @@ _bt_lock_and_validate_left(Relation rel, BlockNumber *blkno,
 			}
 			if (P_RIGHTMOST(opaque) || ++tries > 4)
 				break;
+
+#ifdef USE_INJECTION_POINTS
+			if (!IsCatalogRelation(rel))
+				INJECTION_POINT("nbtree-walk-left-step-right", NULL);
+#endif
+
 			/* step right */
 			*blkno = opaque->btpo_next;
 			buf = _bt_relandgetbuf(rel, buf, *blkno, BT_READ);
@@ -2035,6 +2046,11 @@ _bt_lock_and_validate_left(Relation rel, BlockNumber *blkno,
 		opaque = BTPageGetOpaque(page);
 		if (P_ISDELETED(opaque))
 		{
+#ifdef USE_INJECTION_POINTS
+			if (!IsCatalogRelation(rel))
+				INJECTION_POINT("nbtree-walk-left-deleted", NULL);
+#endif
+
 			/*
 			 * It was deleted.  Move right to first nondeleted page (there
 			 * must be one); that is the page that has acquired the deleted
@@ -2082,6 +2098,11 @@ _bt_lock_and_validate_left(Relation rel, BlockNumber *blkno,
 		/* Start from scratch with new lastcurrblkno's blkno/prev link */
 		*blkno = origblkno = opaque->btpo_prev;
 		_bt_relbuf(rel, buf);
+
+#ifdef USE_INJECTION_POINTS
+		if (!IsCatalogRelation(rel))
+			INJECTION_POINT("nbtree-walk-left-restart", NULL);
+#endif
 	}
 
 	return InvalidBuffer;

@@ -1,0 +1,304 @@
+Parsed test spec with 2 sessions
+
+starting permutation: b_attach b_scan i_insert_dups i_detach b_detach
+step b_attach: 
+  SELECT injection_points_attach('nbtree-walk-left', 'wait');
+  SELECT injection_points_attach('nbtree-walk-left-step-right', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-restart', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-deleted', 'notice');
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step b_scan: SELECT col FROM backwards_scan_tbl
+              WHERE col % 100 = 1 AND pg_backend_pid() <> 0
+              ORDER BY col DESC; <waiting ...>
+step i_insert_dups: INSERT INTO backwards_scan_tbl SELECT 100 FROM generate_series(1, 60);
+step i_detach: 
+  SELECT injection_points_detach('nbtree-walk-left');
+  SELECT injection_points_wakeup('nbtree-walk-left');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-step-right
+step b_scan: <... completed>
+col
+---
+601
+501
+401
+301
+201
+101
+  1
+(7 rows)
+
+step b_detach: 
+  SELECT injection_points_detach('nbtree-walk-left-step-right');
+  SELECT injection_points_detach('nbtree-walk-left-restart');
+  SELECT injection_points_detach('nbtree-walk-left-deleted');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+
+starting permutation: b_attach b_scan i_insert i_detach b_detach
+step b_attach: 
+  SELECT injection_points_attach('nbtree-walk-left', 'wait');
+  SELECT injection_points_attach('nbtree-walk-left-step-right', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-restart', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-deleted', 'notice');
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step b_scan: SELECT col FROM backwards_scan_tbl
+              WHERE col % 100 = 1 AND pg_backend_pid() <> 0
+              ORDER BY col DESC; <waiting ...>
+step i_insert: INSERT INTO backwards_scan_tbl SELECT i FROM generate_series(-2000, 700) i;
+step i_detach: 
+  SELECT injection_points_detach('nbtree-walk-left');
+  SELECT injection_points_wakeup('nbtree-walk-left');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-step-right
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-step-right
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-step-right
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-step-right
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-restart
+step b_scan: <... completed>
+col
+---
+601
+501
+401
+301
+201
+101
+  1
+(7 rows)
+
+step b_detach: 
+  SELECT injection_points_detach('nbtree-walk-left-step-right');
+  SELECT injection_points_detach('nbtree-walk-left-restart');
+  SELECT injection_points_detach('nbtree-walk-left-deleted');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+
+starting permutation: b_attach d_delete_left b_scan vacuum_tbl i_detach b_detach
+step b_attach: 
+  SELECT injection_points_attach('nbtree-walk-left', 'wait');
+  SELECT injection_points_attach('nbtree-walk-left-step-right', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-restart', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-deleted', 'notice');
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step d_delete_left: DELETE FROM backwards_scan_tbl WHERE col < 601;
+step b_scan: SELECT col FROM backwards_scan_tbl
+              WHERE col % 100 = 1 AND pg_backend_pid() <> 0
+              ORDER BY col DESC; <waiting ...>
+step vacuum_tbl: VACUUM backwards_scan_tbl;
+step i_detach: 
+  SELECT injection_points_detach('nbtree-walk-left');
+  SELECT injection_points_wakeup('nbtree-walk-left');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-step-right
+step b_scan: <... completed>
+col
+---
+601
+(1 row)
+
+step b_detach: 
+  SELECT injection_points_detach('nbtree-walk-left-step-right');
+  SELECT injection_points_detach('nbtree-walk-left-restart');
+  SELECT injection_points_detach('nbtree-walk-left-deleted');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+
+starting permutation: b_attach_nosr i_grow d_delete_mid b_scan_999 vacuum_tbl i_detach b_detach_nosr
+step b_attach_nosr: 
+  SELECT injection_points_attach('nbtree-walk-left', 'wait');
+  SELECT injection_points_attach('nbtree-walk-left-restart', 'notice');
+  SELECT injection_points_attach('nbtree-walk-left-deleted', 'notice');
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step i_grow: INSERT INTO backwards_scan_tbl SELECT i FROM generate_series(701, 2200) i;
+step d_delete_mid: DELETE FROM backwards_scan_tbl WHERE col BETWEEN 367 AND 2100;
+step b_scan_999: SELECT col FROM backwards_scan_tbl
+                  WHERE col <= 999 AND col % 100 = 1 AND pg_backend_pid() <> 0
+                  ORDER BY col DESC; <waiting ...>
+step vacuum_tbl: VACUUM backwards_scan_tbl;
+step i_detach: 
+  SELECT injection_points_detach('nbtree-walk-left');
+  SELECT injection_points_wakeup('nbtree-walk-left');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-deleted
+scan_session: NOTICE:  notice triggered for injection point nbtree-walk-left-restart
+step b_scan_999: <... completed>
+col
+---
+301
+201
+101
+  1
+(4 rows)
+
+step b_detach_nosr: 
+  SELECT injection_points_detach('nbtree-walk-left-restart');
+  SELECT injection_points_detach('nbtree-walk-left-deleted');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
