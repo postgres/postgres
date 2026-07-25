@@ -2817,8 +2817,9 @@ SELECT
         are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, database
         sizes, default tablespaces, and descriptions are also displayed.
-        (Size information is only available for databases that the current
-        user can connect to.)
+        Size information is available for databases on which the current user has
+        <literal>CONNECT</literal> privilege, or if the current user is a superuser
+        or has privileges of the <literal>pg_read_all_stats</literal> role.
         </para>
         </listitem>
       </varlistentry>
