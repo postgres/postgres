@@ -308,8 +308,24 @@ get_and_validate_seq_info(TupleTableSlot *slot, Relation *sequence_rel,
 	 */
 	datum = slot_getattr(slot, ++col, &isnull);
 	if (isnull)
-		return remote_has_select_priv ? COPYSEQ_SKIPPED :
-			COPYSEQ_PUBLISHER_INSUFFICIENT_PERM;
+	{
+		/*
+		 * The sequence was dropped concurrently after it was identified in
+		 * the catalog snapshot. Treat it as skipped (and, since it no longer
+		 * exists on the publisher, ultimately missing).
+		 */
+		if (remote_has_select_priv)
+			return COPYSEQ_SKIPPED;
+
+		/*
+		 * The publisher lacks the SELECT privilege required by
+		 * pg_get_sequence_data(). Since has_sequence_privilege() returned
+		 * false, not NULL, do not classify this sequence as missing on the
+		 * publisher.
+		 */
+		seqinfo_local->found_on_pub = true;
+		return COPYSEQ_PUBLISHER_INSUFFICIENT_PERM;
+	}
 
 	seqinfo_local->last_value = DatumGetInt64(datum);
 
