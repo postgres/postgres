@@ -2714,12 +2714,21 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (!BufferIsValid(so->currPos.buf))
 	{
 		/*
-		 * Empty index. Lock the whole relation, as nothing finer to lock
-		 * exists.
+		 * Empty index. Lock the whole relation using the approach explained
+		 * at the same point in the _bt_first path.
 		 */
-		PredicateLockRelation(rel, scan->xs_snapshot);
-		_bt_parallel_done(scan);
-		return false;
+		if (IsolationIsSerializable())
+		{
+			PredicateLockRelation(rel, scan->xs_snapshot);
+			so->currPos.buf = _bt_get_endpoint(rel, 0,
+											   ScanDirectionIsBackward(dir));
+		}
+
+		if (!BufferIsValid(so->currPos.buf))
+		{
+			_bt_parallel_done(scan);
+			return false;
+		}
 	}
 
 	page = BufferGetPage(so->currPos.buf);
