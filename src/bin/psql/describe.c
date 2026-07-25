@@ -1069,12 +1069,16 @@ listAllDbs(const char *pattern, bool verbose)
 	appendPQExpBufferStr(&buf, "       ");
 	printACLColumn(&buf, "d.datacl");
 	if (verbose && pset.sversion >= 80200)
+	{
 		appendPQExpBuffer(&buf,
 						  ",\n       CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')\n"
+						  "          %s"
 						  "            THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))\n"
 						  "            ELSE 'No Access'\n"
 						  "       END as \"%s\"",
+						  pset.sversion >= 100000 ? "OR pg_catalog.pg_has_role('pg_read_all_stats', 'USAGE')\n" : "",
 						  gettext_noop("Size"));
+	}
 	if (verbose && pset.sversion >= 80000)
 		appendPQExpBuffer(&buf,
 						  ",\n       t.spcname as \"%s\"",
