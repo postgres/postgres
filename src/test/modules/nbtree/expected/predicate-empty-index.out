@@ -1,0 +1,87 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_scan_first s2_scan s2_insert s2_commit s2_wakeup_first s1_insert s1_commit s2_detach
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step s1_scan_first: SELECT id FROM ssi_btree WHERE id = 2 AND pg_backend_pid() <> 0; <waiting ...>
+step s2_scan: SELECT id FROM ssi_btree;
+id
+--
+(0 rows)
+
+step s2_insert: INSERT INTO ssi_btree VALUES (2);
+step s2_commit: COMMIT;
+step s2_wakeup_first: SELECT injection_points_wakeup('nbtree-first-empty');
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step s1_scan_first: <... completed>
+id
+--
+(0 rows)
+
+step s1_insert: INSERT INTO ssi_btree VALUES (1);
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step s1_commit: COMMIT;
+step s2_detach: 
+  SELECT injection_points_detach('nbtree-first-empty');
+  SELECT injection_points_detach('nbtree-endpoint-empty');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+
+starting permutation: s1_scan_endpoint s2_scan s2_insert s2_commit s2_wakeup_endpoint s1_insert s1_commit s2_detach
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step s1_scan_endpoint: SELECT id FROM ssi_btree WHERE pg_backend_pid() <> 0 ORDER BY id; <waiting ...>
+step s2_scan: SELECT id FROM ssi_btree;
+id
+--
+(0 rows)
+
+step s2_insert: INSERT INTO ssi_btree VALUES (2);
+step s2_commit: COMMIT;
+step s2_wakeup_endpoint: SELECT injection_points_wakeup('nbtree-endpoint-empty');
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step s1_scan_endpoint: <... completed>
+id
+--
+(0 rows)
+
+step s1_insert: INSERT INTO ssi_btree VALUES (1);
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step s1_commit: COMMIT;
+step s2_detach: 
+  SELECT injection_points_detach('nbtree-first-empty');
+  SELECT injection_points_detach('nbtree-endpoint-empty');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+

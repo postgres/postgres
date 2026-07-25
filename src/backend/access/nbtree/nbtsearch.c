@@ -18,10 +18,12 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "executor/instrument_node.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/predicate.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
@@ -1516,6 +1518,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	{
 		Assert(!so->needPrimScan);
 
+#ifdef USE_INJECTION_POINTS
+		if (!IsCatalogRelation(rel))
+			INJECTION_POINT("nbtree-first-empty", NULL);
+#endif
+
 		/*
 		 * We only get here if the index is completely empty. Lock relation
 		 * because nothing finer to lock exists.  Without a buffer lock, it's
@@ -2194,6 +2201,11 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 
 	if (!BufferIsValid(so->currPos.buf))
 	{
+#ifdef USE_INJECTION_POINTS
+		if (!IsCatalogRelation(rel))
+			INJECTION_POINT("nbtree-endpoint-empty", NULL);
+#endif
+
 		/*
 		 * Empty index. Lock the whole relation using the approach explained
 		 * at the same point in the _bt_first path.

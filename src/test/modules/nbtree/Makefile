@@ -5,6 +5,8 @@ EXTRA_INSTALL = src/test/modules/injection_points contrib/amcheck
 REGRESS = nbtree_half_dead_pages \
 	nbtree_incomplete_splits
 
+ISOLATION = predicate-empty-index
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

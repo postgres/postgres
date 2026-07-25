@@ -14,4 +14,9 @@ tests += {
       'nbtree_incomplete_splits',
     ],
   },
+  'isolation': {
+    'specs': [
+      'predicate-empty-index',
+    ],
+  },
 }
