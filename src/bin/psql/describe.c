@@ -986,7 +986,8 @@ listAllDbs(const char *pattern, bool verbose)
 	printACLColumn(&buf, "d.datacl");
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n  CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')\n"
+						  ",\n  CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT') OR\n"
+						  "               pg_catalog.pg_has_role('pg_read_all_stats', 'USAGE')\n"
 						  "       THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))\n"
 						  "       ELSE 'No Access'\n"
 						  "  END as \"%s\""
