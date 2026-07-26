@@ -309,6 +309,163 @@ ORDER BY proname, proargtypes, pronamespace;
 (0 rows)
 
 --
+-- Test RowCompare handling within _bt_set_startikey, which decides whether
+-- every tuple on a page (a page beyond the scan's first) must satisfy the
+-- scan's RowCompare qual.
+--
+-- The index mixes an ASC column with a DESC column (so RowCompare members
+-- don't all use the same inequality strategy and are not marked required),
+-- uses a low fillfactor (so scans read several pages), and disables
+-- deduplication (so the "b" NULLs span more than one page).
+create temp table btree_rowcompare_tab (a int, b int, c int);
+insert into btree_rowcompare_tab
+  select a, b, b from generate_series(1, 3) a, generate_series(1, 150) b;
+insert into btree_rowcompare_tab
+  select 2, null, null from generate_series(1, 50);
+create index btree_rowcompare_idx on btree_rowcompare_tab (a, b desc, c)
+  with (fillfactor = 10, deduplicate_items = off);
+vacuum analyze btree_rowcompare_tab;
+set enable_seqscan to false;
+set enable_bitmapscan to false;
+-- RowCompare satisfied by every tuple on many pages (decided by its first
+-- member on "a = 3" pages, and by its final member on "a = 2" pages)
+explain (costs off)
+select count(*) from btree_rowcompare_tab where (a, b) >= (2, 75);
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_rowcompare_idx on btree_rowcompare_tab
+         Index Cond: (ROW(a, b) >= ROW(2, 75))
+(3 rows)
+
+select count(*) from btree_rowcompare_tab where (a, b) >= (2, 75);
+ count 
+-------
+   226
+(1 row)
+
+-- Reaches the RowCompare's unsatisfiable NULL member argument on "a = 2"
+-- pages (the "a = 2" key positions the scan within the "a = 2" group, which
+-- the RowCompare qual alone would not).  The combined quals are
+-- contradictory, but preprocessing cannot detect that.
+explain (costs off)
+select count(*) from btree_rowcompare_tab where a = 2 and (a, b) >= (2, null);
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_rowcompare_idx on btree_rowcompare_tab
+         Index Cond: ((ROW(a, b) >= ROW(2, NULL::integer)) AND (a = 2))
+(3 rows)
+
+select count(*) from btree_rowcompare_tab where a = 2 and (a, b) >= (2, null);
+ count 
+-------
+     0
+(1 row)
+
+-- RowCompare's row omits the index's second column, so on pages whose "b"
+-- values change _bt_set_startikey can't prove that every tuple satisfies the
+-- RowCompare.
+explain (costs off)
+select count(*) from btree_rowcompare_tab where (a, c) >= (2, 100);
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_rowcompare_idx on btree_rowcompare_tab
+         Index Cond: (ROW(a, c) >= ROW(2, 100))
+(3 rows)
+
+select count(*) from btree_rowcompare_tab where (a, c) >= (2, 100);
+ count 
+-------
+   201
+(1 row)
+
+-- Variant that uses the remaining inequality strategies
+explain (costs off)
+select count(*) from btree_rowcompare_tab where (a, b) < (2, 10);
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_rowcompare_idx on btree_rowcompare_tab
+         Index Cond: (ROW(a, b) < ROW(2, 10))
+(3 rows)
+
+select count(*) from btree_rowcompare_tab where (a, b) < (2, 10);
+ count 
+-------
+   159
+(1 row)
+
+drop table btree_rowcompare_tab;
+--
+-- Test SAOP array handling within _bt_set_startikey
+--
+create temp table btree_saop_tab (a int, b int, c int);
+insert into btree_saop_tab
+  select a, b, b from generate_series(1, 3) a, generate_series(1, 150) b;
+insert into btree_saop_tab
+  select 2, 0, 7 from generate_series(1, 60);
+create index btree_saop_idx on btree_saop_tab (a, b desc, c)
+  with (fillfactor = 10, deduplicate_items = off);
+vacuum analyze btree_saop_tab;
+-- SAOP on the leading column: pages beyond each primitive scan's first page
+-- have a single "a" value that a binary search finds in the array, so the
+-- scan starts past the SAOP key (forcing the nonrequired key protocol)
+explain (costs off)
+select count(*) from btree_saop_tab where a in (1, 3) and b >= 100;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_saop_idx on btree_saop_tab
+         Index Cond: ((a = ANY ('{1,3}'::integer[])) AND (b >= 100))
+(3 rows)
+
+select count(*) from btree_saop_tab where a in (1, 3) and b >= 100;
+ count 
+-------
+   102
+(1 row)
+
+-- Skip array on "b" precedes the "c" SAOP; pages whose "b" values change
+-- prevent starting past the "c" SAOP key
+explain (costs off)
+select count(*) from btree_saop_tab where a = 2 and c in (101, 105);
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_saop_idx on btree_saop_tab
+         Index Cond: ((a = 2) AND (c = ANY ('{101,105}'::integer[])))
+(3 rows)
+
+select count(*) from btree_saop_tab where a = 2 and c in (101, 105);
+ count 
+-------
+     2
+(1 row)
+
+-- "c" SAOP follows the "b" inequality; on pages that lie wholly within the
+-- duplicate "(2, 0, 7)" run, the scan starts past all of its scan keys,
+-- including the SAOP key
+explain (costs off)
+select count(*) from btree_saop_tab where a = 2 and b < 1 and c in (6, 7);
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using btree_saop_idx on btree_saop_tab
+         Index Cond: ((a = 2) AND (b < 1) AND (c = ANY ('{6,7}'::integer[])))
+(3 rows)
+
+select count(*) from btree_saop_tab where a = 2 and b < 1 and c in (6, 7);
+ count 
+-------
+    60
+(1 row)
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+drop table btree_saop_tab;
+--
 -- Performs a recheck of > key following array advancement on previous (left
 -- sibling) page that used a high key whose attribute value corresponding to
 -- the > key was -inf (due to being truncated when the high key was created).
