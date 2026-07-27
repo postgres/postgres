@@ -384,6 +384,17 @@ EnableLogicalDecoding(void)
 
 	LWLockAcquire(LogicalDecodingControlLock, LW_EXCLUSIVE);
 
+	/*
+	 * Re-check whether logical decoding got enabled while we waited for the
+	 * barrier above.
+	 */
+	if (LogicalDecodingCtl->logical_decoding_enabled)
+	{
+		LogicalDecodingCtl->pending_disable = false;
+		LWLockRelease(LogicalDecodingControlLock);
+		return;
+	}
+
 	START_CRIT_SECTION();
 
 	/*

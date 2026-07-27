@@ -326,11 +326,12 @@ $standby3->safe_psql('postgres',
 
 $standby3->stop;
 
-# Test the race condition at end of the recovery between the startup and logical
-# decoding status change. This test requires injection points enabled.
 if (   $ENV{enable_injection_points} eq 'yes'
 	&& $primary->check_extension('injection_points'))
 {
+	# Test the race condition at end of the recovery between the startup and logical
+	# decoding status change. This test requires injection points enabled.
+
 	# Initialize standby4 and start it.
 	my $standby4 = PostgreSQL::Test::Cluster->new('standby4');
 	$standby4->init_from_backup($primary, 'my_backup', has_streaming => 1);
@@ -381,9 +382,63 @@ if (   $ENV{enable_injection_points} eq 'yes'
 	test_wal_level($primary, "replica|replica",
 		"effective_wal_level got decreased to 'replica' on primary");
 
+	# Test that concurrent activations don't write redundant status-change records.
+
+	# Start a psql session and stop it in the middle of the activation process.
+	my $psql_create_slot = $primary->background_psql('postgres');
+	$psql_create_slot->query_until(
+		qr/create_slot_1/,
+		q(\echo create_slot_1
+select injection_points_set_local();
+select injection_points_attach('logical-decoding-activation', 'wait');
+select pg_create_logical_replication_slot('slot_1', 'test_decoding');
+));
+	$primary->wait_for_event('client backend', 'logical-decoding-activation');
+	note("injection_point 'logical-decoding-activation' is reached");
+
+	# A second backend concurrently enables logical decoding and finishes creating
+	# its slot, writing the status-change record. The slot reserves its decoding
+	# start point after its own status-change record.
+	$primary->safe_psql('postgres',
+		qq[select pg_create_logical_replication_slot('slot_2', 'test_decoding')]
+	);
+	test_wal_level($primary, "replica|logical",
+		"logical decoding enabled by the first of two concurrent activations"
+	);
+
+	# Resume the first backend to complete the slot creation. It must not write
+	# a second redundant status-change record as logical decoding is already
+	# enabled.
+	$primary->safe_psql('postgres',
+		qq[select injection_points_wakeup('logical-decoding-activation')]);
+
+	# Let the released backend finish creating its slot.
+	$psql_create_slot->quit;
+
+	# Decode from slot_2, whose start point precedes where a redundant
+	# status-change record would have been written; this fails in xlog_decode()
+	# if one exists.
+	is( $primary->safe_psql(
+			'postgres',
+			qq[SELECT count(*) FROM pg_logical_slot_get_changes('slot_2', NULL, NULL, 'skip-empty-xacts', '1')]
+		),
+		0,
+		'decoding a concurrently-created slot succeeds');
+
+	# Restore the disabled state for the tests that follow.
+	$primary->safe_psql(
+		'postgres',
+		qq[
+select pg_drop_replication_slot('slot_1');
+select pg_drop_replication_slot('slot_2');
+]);
+	wait_for_logical_decoding_disabled($primary);
+
+	# Test a race when logical decoding activation is concurrently interrupted.
+
 	# Start a psql session to test the case where the activation process is
 	# interrupted.
-	my $psql_create_slot = $primary->background_psql('postgres');
+	$psql_create_slot = $primary->background_psql('postgres');
 
 	# Start the logical decoding activation process upon creating the logical
 	# slot, but it will wait due to the injection point.
