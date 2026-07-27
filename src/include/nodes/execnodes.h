@@ -476,7 +476,6 @@ typedef struct ForPortionOfState
 {
 	NodeTag		type;
 
-	char	   *fp_rangeName;	/* the column named in FOR PORTION OF */
 	Oid			fp_rangeType;	/* the base type (not domain) of the FOR
 								 * PORTION OF expression */
 	int			fp_rangeAttno;	/* the attno of the range column */

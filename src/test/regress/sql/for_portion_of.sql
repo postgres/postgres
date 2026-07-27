@@ -1495,6 +1495,22 @@ SELECT * FROM fpo_rule ORDER BY f1;
 
 DROP TABLE fpo_rule;
 
+-- Deparsing FOR PORTION OF must use the range column's current name,
+-- not the name it had when the rule was created.
+CREATE TABLE fpo_rename (f1 bigint, f2 int4range);
+CREATE TABLE fpo_rename_src (x int);
+CREATE RULE fpo_rename_rule1 AS ON UPDATE TO fpo_rename_src
+  DO INSTEAD UPDATE fpo_rename FOR PORTION OF f2 FROM 3 TO 6 SET f1 = 2;
+CREATE RULE fpo_rename_rule2 AS ON DELETE TO fpo_rename_src
+  DO INSTEAD DELETE FROM fpo_rename FOR PORTION OF f2 (int4range(3, 6));
+
+\d+ fpo_rename_src
+ALTER TABLE fpo_rename RENAME COLUMN f1 TO ff1;
+ALTER TABLE fpo_rename RENAME COLUMN f2 TO ff2;
+\d+ fpo_rename_src
+
+DROP TABLE fpo_rename, fpo_rename_src;
+
 -- UPDATE/DELETE FOR PORTION OF on a GENERATED VIRTUAL range column:
 CREATE TABLE fpo_gen_virtual (
   a int,

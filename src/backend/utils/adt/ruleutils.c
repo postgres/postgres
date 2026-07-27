@@ -527,6 +527,7 @@ static void get_rte_alias(RangeTblEntry *rte, int varno, bool use_as,
 static void get_column_alias_list(deparse_columns *colinfo,
 								  deparse_context *context);
 static void get_for_portion_of(ForPortionOfExpr *forPortionOf,
+							   RangeTblEntry *rte,
 							   deparse_context *context);
 static void get_from_clause_coldeflist(RangeTblFunction *rtfunc,
 									   deparse_columns *colinfo,
@@ -7556,7 +7557,7 @@ get_update_query_def(Query *query, deparse_context *context)
 					 generate_relation_name(rte->relid, NIL));
 
 	/* Print the FOR PORTION OF, if needed */
-	get_for_portion_of(query->forPortionOf, context);
+	get_for_portion_of(query->forPortionOf, rte, context);
 
 	/* Print the relation alias, if needed */
 	get_rte_alias(rte, query->resultRelation, false, context);
@@ -7763,7 +7764,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 					 generate_relation_name(rte->relid, NIL));
 
 	/* Print the FOR PORTION OF, if needed */
-	get_for_portion_of(query->forPortionOf, context);
+	get_for_portion_of(query->forPortionOf, rte, context);
 
 	/* Print the relation alias, if needed */
 	get_rte_alias(rte, query->resultRelation, false, context);
@@ -13383,12 +13384,18 @@ get_rte_alias(RangeTblEntry *rte, int varno, bool use_as,
  * alias and SET will be on their own line with a leading space.
  */
 static void
-get_for_portion_of(ForPortionOfExpr *forPortionOf, deparse_context *context)
+get_for_portion_of(ForPortionOfExpr *forPortionOf, RangeTblEntry *rte,
+				   deparse_context *context)
 {
 	if (forPortionOf)
 	{
+		char	   *range_name;
+
+		range_name = get_attname(rte->relid,
+								 forPortionOf->rangeVar->varattno,
+								 false);
 		appendStringInfo(context->buf, " FOR PORTION OF %s",
-						 quote_identifier(forPortionOf->range_name));
+						 quote_identifier(range_name));
 
 		/*
 		 * Try to write it as FROM ... TO ... if we received it that way,
