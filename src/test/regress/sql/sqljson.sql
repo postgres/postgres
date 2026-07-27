@@ -443,6 +443,14 @@ SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING 
 
 DROP VIEW json_array_subquery_view;
 
+-- JSON_ARRAY(subquery) with an input FORMAT clause
+CREATE VIEW json_array_subquery_view AS
+SELECT JSON_ARRAY(SELECT '{"a": 1}'::text FORMAT JSON);
+
+\sv json_array_subquery_view
+
+DROP VIEW json_array_subquery_view;
+
 -- Test mutability of JSON_OBJECTAGG, JSON_ARRAYAGG, JSON_ARRAY, JSON_OBJECT
 create type comp1 as (a int, b date);
 create domain d_comp1 as comp1;
