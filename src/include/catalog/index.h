@@ -72,6 +72,7 @@ extern void index_check_primary_key(Relation heapRel,
 #define	INDEX_CREATE_PARTITIONED			(1 << 5)
 #define INDEX_CREATE_INVALID				(1 << 6)
 #define INDEX_CREATE_SUPPRESS_PROGRESS		(1 << 7)
+#define INDEX_CREATE_DEFERRABLE				(1 << 8)
 
 extern Oid	index_create(Relation heapRelation,
 						 const char *indexRelationName,

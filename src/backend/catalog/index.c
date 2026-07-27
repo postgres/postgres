@@ -717,6 +717,9 @@ UpdateIndexRelation(Oid indexoid,
  *			create a partitioned index (table must be partitioned)
  *		INDEX_CREATE_SUPPRESS_PROGRESS:
  *			don't report progress during the index build.
+ *		INDEX_CREATE_DEFERRABLE:
+ *			index supports a deferrable constraint, mark it as
+ *			non-immediate (indimmediate = false).
  *
  * constr_flags: flags passed to index_constraint_create
  *		(only if INDEX_CREATE_ADD_CONSTRAINT is set)
@@ -1051,7 +1054,8 @@ index_create(Relation heapRelation,
 						indexInfo,
 						collationIds, opclassIds, coloptions,
 						isprimary, is_exclusion,
-						(constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) == 0,
+						(constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) == 0 &&
+						(flags & INDEX_CREATE_DEFERRABLE) == 0,
 						!concurrent && !invalid,
 						!concurrent);
 
@@ -1324,6 +1328,7 @@ index_create_copy(Relation heapRelation, uint16 flags,
 	List	   *indexColNames = NIL;
 	List	   *indexExprs = NIL;
 	List	   *indexPreds = NIL;
+	Form_pg_index indexForm;
 
 	indexRelation = index_open(oldIndexId, RowExclusiveLock);
 
@@ -1343,6 +1348,13 @@ index_create_copy(Relation heapRelation, uint16 flags,
 	indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(oldIndexId));
 	if (!HeapTupleIsValid(indexTuple))
 		elog(ERROR, "cache lookup failed for index %u", oldIndexId);
+
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+	/* Old index is deferrable, do the same for the new index */
+	if (!indexForm->indimmediate)
+		flags |= INDEX_CREATE_DEFERRABLE;
+
 	indclassDatum = SysCacheGetAttrNotNull(INDEXRELID, indexTuple,
 										   Anum_pg_index_indclass);
 	indclass = (oidvector *) DatumGetPointer(indclassDatum);
@@ -1477,7 +1489,7 @@ index_create_copy(Relation heapRelation, uint16 flags,
 							  stattargets,
 							  reloptionsDatum,
 							  flags,
-							  0,
+							  0,	/* constr_flags */
 							  true, /* allow table to be a system catalog? */
 							  false,	/* is_internal? */
 							  NULL);

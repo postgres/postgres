@@ -45,6 +45,7 @@ tests += {
     'specs': [
       'basic',
       'inplace',
+      'reindex_concurrently_deferred',
       'repack',
       'repack_temporal',
       'repack_temporal_multirange',
