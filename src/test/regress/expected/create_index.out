@@ -1374,6 +1374,11 @@ ERROR:  duplicate key value violates unique constraint "func_index_index"
 DETAIL:  Key ((f1 || f2))=(ABCDEF) already exists.
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
+-- this should fail because of unsafe column type (anonymous record)
+create index on func_index_heap ((f1 || f2), (row(f1, f2)));
+ERROR:  column "f1_f21" has pseudo-type record
+-- but this is allowed:
+create index on func_index_heap ((func_index_heap.*));
 -- while we're here, see that the metadata looks sane
 \d func_index_heap
          Table "public.func_index_heap"
@@ -1382,6 +1387,7 @@ INSERT INTO func_index_heap VALUES('QWERTY');
  f1     | text |           |          | 
  f2     | text |           |          | 
 Indexes:
+    "func_index_heap_func_index_heap_idx" btree ((func_index_heap.*))
     "func_index_index" UNIQUE, btree ((f1 || f2))
 
 \d func_index_index
@@ -1391,9 +1397,13 @@ Indexes:
  f1_f2  | text | yes  | (f1 || f2)
 unique, btree, for table "public.func_index_heap"
 
--- this should fail because of unsafe column type (anonymous record)
-create index on func_index_heap ((f1 || f2), (row(f1, f2)));
-ERROR:  column "f1_f21" has pseudo-type record
+\d func_index_heap_func_index_heap_idx
+       Index "public.func_index_heap_func_index_heap_idx"
+     Column      |      Type       | Key? |     Definition      
+-----------------+-----------------+------+---------------------
+ func_index_heap | func_index_heap | yes  | (func_index_heap.*)
+btree, for table "public.func_index_heap"
+
 --
 -- Test unique index with included columns
 --

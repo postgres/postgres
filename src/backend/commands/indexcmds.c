@@ -2874,6 +2874,9 @@ ChooseIndexExpressionName(Relation rel, Node *indexExpr)
 	context.buf = &buf;
 	/* Walk the tree, stopping when we have enough text */
 	(void) ChooseIndexExpressionName_walker(indexExpr, &context);
+	/* Fall back to "expr" if the walk found nothing, to avoid an empty name */
+	if (buf.len == 0)
+		appendStringInfoString(&buf, "expr");
 	/* Ensure generated names are shorter than NAMEDATALEN */
 	nlen = pg_mbcliplen(buf.data, buf.len, NAMEDATALEN - 1);
 	buf.data[nlen] = '\0';
@@ -2891,19 +2894,29 @@ ChooseIndexExpressionName_walker(Node *node,
 	{
 		Var		   *var = (Var *) node;
 		TupleDesc	tupdesc = RelationGetDescr(context->rel);
-		Form_pg_attribute att;
+		const char *varname;
 
 		/* Paranoia: ignore the Var if it looks fishy */
 		if (var->varno != 1 || var->varlevelsup != 0 ||
-			var->varattno <= 0 || var->varattno > tupdesc->natts)
+			var->varattno < 0 || var->varattno > tupdesc->natts)
 			return false;
-		att = TupleDescAttr(tupdesc, var->varattno - 1);
-		if (att->attisdropped)
-			return false;		/* even more paranoia; shouldn't happen */
+		if (var->varattno > 0)
+		{
+			Form_pg_attribute att = TupleDescAttr(tupdesc, var->varattno - 1);
+
+			if (att->attisdropped)
+				return false;	/* even more paranoia; shouldn't happen */
+			varname = NameStr(att->attname);
+		}
+		else
+		{
+			/* Whole-row Var: use the table's name */
+			varname = RelationGetRelationName(context->rel);
+		}
 
 		if (context->buf->len > 0)
 			appendStringInfoChar(context->buf, '_');
-		appendStringInfoString(context->buf, NameStr(att->attname));
+		appendStringInfoString(context->buf, varname);
 
 		/* Done if we've already reached NAMEDATALEN */
 		return (context->buf->len >= NAMEDATALEN);

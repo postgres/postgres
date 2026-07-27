@@ -457,12 +457,16 @@ INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
 
+-- this should fail because of unsafe column type (anonymous record)
+create index on func_index_heap ((f1 || f2), (row(f1, f2)));
+
+-- but this is allowed:
+create index on func_index_heap ((func_index_heap.*));
+
 -- while we're here, see that the metadata looks sane
 \d func_index_heap
 \d func_index_index
-
--- this should fail because of unsafe column type (anonymous record)
-create index on func_index_heap ((f1 || f2), (row(f1, f2)));
+\d func_index_heap_func_index_heap_idx
 
 
 --
