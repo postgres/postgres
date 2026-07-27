@@ -1718,6 +1718,10 @@ typedef enum JsonConstructorType
  * orig_query holds the user's original subquery for JSON_ARRAY(query), used
  * only by ruleutils.c for deparsing; it is not walked because func is
  * authoritative for all other purposes.
+ *
+ * format likewise holds the input FORMAT clause of JSON_ARRAY(query), which
+ * is otherwise only represented inside func; it is used only by ruleutils.c
+ * for deparsing.
  */
 typedef struct JsonConstructorExpr
 {
@@ -1728,6 +1732,7 @@ typedef struct JsonConstructorExpr
 	Expr	   *coercion;		/* coercion to RETURNING type */
 	JsonReturning *returning;	/* RETURNING clause */
 	Node	   *orig_query;		/* original subquery for deparsing */
+	JsonFormat *format;			/* input FORMAT for JSON_ARRAY(query) */
 	bool		absent_on_null; /* ABSENT ON NULL? */
 	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
 	ParseLoc	location;

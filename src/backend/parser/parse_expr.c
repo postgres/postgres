@@ -3808,6 +3808,8 @@ transformJsonObjectConstructor(ParseState *pstate, JsonObjectConstructor *ctor)
  *  - orig_query: the transformed Query of the user's original subquery, so
  *    that ruleutils.c can deparse the original JSON_ARRAY(SELECT ...) syntax
  *    for view definitions.
+ *
+ *  - format: the input FORMAT clause, so that ruleutils.c can deparse it.
  */
 static Node *
 transformJsonArrayQueryConstructor(ParseState *pstate,
@@ -3944,6 +3946,7 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 									 false, ctor->absent_on_null,
 									 ctor->location);
 	((JsonConstructorExpr *) result)->orig_query = (Node *) query;
+	((JsonConstructorExpr *) result)->format = ctor->format;
 
 	return result;
 }
