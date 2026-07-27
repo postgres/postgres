@@ -2438,7 +2438,6 @@ typedef struct ForPortionOfExpr
 {
 	NodeTag		type;
 	Var		   *rangeVar;		/* Range column */
-	char	   *range_name;		/* Range name */
 	Node	   *targetFrom;		/* FOR PORTION OF FROM bound, if given */
 	Node	   *targetTo;		/* FOR PORTION OF TO bound, if given */
 	Node	   *targetRange;	/* FOR PORTION OF bounds as a range/multirange */
