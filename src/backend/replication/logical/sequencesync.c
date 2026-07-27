@@ -495,6 +495,7 @@ copy_sequences(WalReceiverConn *conn)
 		TupleTableSlot *slot;
 
 		StartTransactionCommand();
+		maybe_reread_subscription();
 
 		for (int idx = cur_batch_base_index; idx < n_seqinfos; idx++)
 		{
@@ -724,6 +725,7 @@ LogicalRepSyncSequences(void)
 	StringInfoData app_name;
 
 	StartTransactionCommand();
+	maybe_reread_subscription();
 
 	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 

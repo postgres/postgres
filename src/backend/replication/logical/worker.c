@@ -5985,8 +5985,18 @@ SetupApplyOrSyncWorker(int worker_slot)
 	 */
 
 	/* Initialise stats to a sanish value */
-	MyLogicalRepWorker->last_send_time = MyLogicalRepWorker->last_recv_time =
-		MyLogicalRepWorker->reply_time = GetCurrentTimestamp();
+	if (am_sequencesync_worker())
+	{
+		MyLogicalRepWorker->last_send_time =
+			MyLogicalRepWorker->last_recv_time =
+			MyLogicalRepWorker->reply_time = 0;
+	}
+	else
+	{
+		MyLogicalRepWorker->last_send_time =
+			MyLogicalRepWorker->last_recv_time =
+			MyLogicalRepWorker->reply_time = GetCurrentTimestamp();
+	}
 
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);
