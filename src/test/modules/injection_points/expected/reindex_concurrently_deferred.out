@@ -1,0 +1,41 @@
+Parsed test spec with 2 sessions
+
+starting permutation: reindex check_catalog begin2 write2 write_dup resolve_dup commit2 wakeup noop1
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step reindex: REINDEX TABLE CONCURRENTLY reind_deferred; <waiting ...>
+step check_catalog: 
+    SELECT c.relname, i.indisunique, i.indimmediate, i.indisready, i.indisvalid
+    FROM pg_class c
+    JOIN pg_index i ON i.indexrelid = c.oid
+    WHERE c.relname = 'uq_val_ccnew';
+
+relname     |indisunique|indimmediate|indisready|indisvalid
+------------+-----------+------------+----------+----------
+uq_val_ccnew|t          |f           |t         |f         
+(1 row)
+
+step begin2: BEGIN;
+step write2: INSERT INTO reind_deferred VALUES (3, 9);
+step write_dup: INSERT INTO reind_deferred VALUES (4, 9);
+step resolve_dup: UPDATE reind_deferred SET val = 10 WHERE id = 4;
+step commit2: COMMIT;
+step wakeup: 
+    SELECT injection_points_detach('reindex-conc-index-built');
+    SELECT injection_points_wakeup('reindex-conc-index-built');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step reindex: <... completed>
+step noop1: 
