@@ -145,6 +145,10 @@ command_fails_like(
 	[ 'pg_resetwal', '-O' => '-1', $node->data_dir ],
 	qr/error: invalid argument for option -O/,
 	'fails with -O value -1');
+command_fails_like(
+	[ 'pg_resetwal', '-O' => '0', $node->data_dir ],
+	qr/must not be 0/,
+	'fails with -O value 0');
 # --wal-segsize
 command_fails_like(
 	[ 'pg_resetwal', '--wal-segsize' => 'foo', $node->data_dir ],

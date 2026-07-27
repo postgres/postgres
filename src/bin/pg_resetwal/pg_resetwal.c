@@ -303,6 +303,10 @@ main(int argc, char *argv[])
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
+
+				/* offset 0 means "invalid" in pg_multixact/offsets */
+				if (next_mxoff_val == 0)
+					pg_fatal("next multitransaction offset (-O) must not be 0");
 				next_mxoff_given = true;
 				break;
 
@@ -700,7 +704,7 @@ GuessControlValues(void)
 		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
 	ControlFile.checkPointCopy.nextOid = FirstGenbkiObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
-	ControlFile.checkPointCopy.nextMultiOffset = 0;
+	ControlFile.checkPointCopy.nextMultiOffset = 1;
 	ControlFile.checkPointCopy.oldestXid = FirstNormalTransactionId;
 	ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
 	ControlFile.checkPointCopy.oldestMulti = FirstMultiXactId;
