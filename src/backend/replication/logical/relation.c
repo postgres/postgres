@@ -543,20 +543,14 @@ logicalrep_partmap_invalidate_cb(Datum arg, Oid reloid)
 
 	if (reloid != InvalidOid)
 	{
-		HASH_SEQ_STATUS status;
-
-		hash_seq_init(&status, LogicalRepPartMap);
-
-		/* TODO, use inverse lookup hashtable? */
-		while ((entry = (LogicalRepPartMapEntry *) hash_seq_search(&status)) != NULL)
-		{
-			if (entry->relmapentry.localreloid == reloid)
-			{
-				entry->relmapentry.localrelvalid = false;
-				hash_seq_term(&status);
-				break;
-			}
-		}
+		/*
+		 * LogicalRepPartMap is keyed by partition OID, matching with
+		 * entry->relmapentry.localreloid (see logicalrep_partition_open), so
+		 * we can invalidate via a direct hash lookup.
+		 */
+		entry = hash_search(LogicalRepPartMap, &reloid, HASH_FIND, NULL);
+		if (entry != NULL)
+			entry->relmapentry.localrelvalid = false;
 	}
 	else
 	{
@@ -675,6 +669,7 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	 */
 	if (found && entry->localrelvalid)
 	{
+		Assert(entry->localreloid == partOid);
 		entry->localrel = partrel;
 		return entry;
 	}
