@@ -125,6 +125,18 @@ COMMIT PREPARED 'test_toast_table_access';
 -- consume commit prepared
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
 
+-- Test that an empty prepared transaction should not be decoded, whether it
+-- is committed or rolled back.
+BEGIN;
+SELECT * FROM test_prepared1 WHERE id = 1 FOR SHARE;
+PREPARE TRANSACTION 'test_empty_transaction';
+COMMIT PREPARED 'test_empty_transaction';
+BEGIN;
+SELECT * FROM test_prepared1 WHERE id = 1 FOR SHARE;
+PREPARE TRANSACTION 'test_empty_transaction';
+ROLLBACK PREPARED 'test_empty_transaction';
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
 -- Test 8:
 -- cleanup and make sure results are also empty
 DROP TABLE test_prepared1;
