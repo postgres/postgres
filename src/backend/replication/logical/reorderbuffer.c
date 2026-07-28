@@ -2979,11 +2979,18 @@ ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid,
 						txn->prepare_time, txn->origin_id, txn->origin_lsn);
 
 	/*
-	 * Send a prepare if not already done so. This might occur if we have
-	 * detected a concurrent abort while replaying the non-streaming
-	 * transaction.
+	 * Send a prepare if not already done so. The "not already sent" case can
+	 * occur if we have detected a concurrent abort while replaying the
+	 * non-streaming transaction; we still send the prepare so that later when
+	 * rollback prepared is decoded and sent, the downstream should be able to
+	 * rollback such a xact. See comments atop DecodePrepare.
+	 *
+	 * Skip this for a transaction that made no changes to the database (i.e.
+	 * has no base snapshot), as we haven't sent any changes for it. Such a
+	 * transaction is cleaned up without invoking the commit/rollback prepared
+	 * callbacks in ReorderBufferFinishPrepared().
 	 */
-	if (!rbtxn_sent_prepare(txn))
+	if (!rbtxn_sent_prepare(txn) && txn->base_snapshot != NULL)
 	{
 		rb->prepare(rb, txn, txn->final_lsn);
 		txn->txn_flags |= RBTXN_SENT_PREPARE;
@@ -3048,6 +3055,25 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 		 */
 		ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
 							txn->prepare_time, txn->origin_id, txn->origin_lsn);
+	}
+
+	/*
+	 * If this transaction has no snapshot, it didn't make any changes to the
+	 * database, so there's nothing to decode.  Note that
+	 * ReorderBufferCommitChild will have transferred any snapshots from
+	 * subtransactions if there were any.
+	 */
+	if (txn->base_snapshot == NULL)
+	{
+		Assert(txn->ninvalidations == 0);
+		Assert(!rbtxn_sent_prepare(txn));
+
+		/*
+		 * Removing this txn before a commit might result in the computation
+		 * of an incorrect restart_lsn. See SnapBuildProcessRunningXacts.
+		 */
+		ReorderBufferCleanupTXN(rb, txn);
+		return;
 	}
 
 	txn->final_lsn = commit_lsn;
