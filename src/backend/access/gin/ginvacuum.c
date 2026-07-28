@@ -429,6 +429,13 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno)
 		if (blkno == InvalidBlockNumber)
 			break;
 
+		/*
+		 * A safe point to delay/accept interrupts: the previous page has been
+		 * unlocked and released, so we hold no buffer content lock (nor any
+		 * other LWLock) here and CHECK_FOR_INTERRUPTS() can do its job.
+		 */
+		vacuum_delay_point(false);
+
 		buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, gvs->strategy);
 		LockBuffer(buffer, GIN_EXCLUSIVE);
