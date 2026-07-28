@@ -256,7 +256,7 @@ ParsePrepareRecord(uint8 info, xl_xact_prepare *xlrec, xl_xact_parsed_prepare *p
 	parsed->nabortstats = xlrec->nabortstats;
 	parsed->nmsgs = xlrec->ninvalmsgs;
 
-	strncpy(parsed->twophase_gid, bufptr, xlrec->gidlen);
+	strlcpy(parsed->twophase_gid, bufptr, GIDSIZE);
 	bufptr += MAXALIGN(xlrec->gidlen);
 
 	parsed->subxacts = (TransactionId *) bufptr;
