@@ -2933,6 +2933,24 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 							txn->xact_time.prepare_time, txn->origin_id, txn->origin_lsn);
 	}
 
+	/*
+	 * If this transaction has no snapshot, it didn't make any changes to the
+	 * database, so there's nothing to decode.  Note that
+	 * ReorderBufferCommitChild will have transferred any snapshots from
+	 * subtransactions if there were any.
+	 */
+	if (txn->base_snapshot == NULL)
+	{
+		Assert(txn->ninvalidations == 0);
+
+		/*
+		 * Removing this txn before a commit might result in the computation
+		 * of an incorrect restart_lsn. See SnapBuildProcessRunningXacts.
+		 */
+		ReorderBufferCleanupTXN(rb, txn);
+		return;
+	}
+
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
 	txn->xact_time.commit_time = commit_time;
