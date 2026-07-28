@@ -213,7 +213,7 @@ test_role(
 
 # Create target role for \1 tests.
 my $mapped_name = "test${regex_test_string}map${regex_test_string}user";
-$node->safe_psql('postgres', "CREATE ROLE $mapped_name LOGIN");
+$node->safe_psql('postgres', "CREATE ROLE \"$mapped_name\" LOGIN");
 
 # Success as the regular expression matches and \1 is replaced in the given
 # subexpression.
