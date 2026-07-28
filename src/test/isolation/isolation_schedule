@@ -118,3 +118,4 @@ test: serializable-parallel-3
 test: matview-write-skew
 test: lock-nowait
 test: ddl-dependency-locking
+test: pub-concurrent-drop

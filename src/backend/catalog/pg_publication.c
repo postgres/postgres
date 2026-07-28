@@ -1117,14 +1117,27 @@ Datum
 pg_get_publication_tables(PG_FUNCTION_ARGS)
 {
 #define NUM_PUBLICATION_TABLES_ELEM	4
+
+	/*
+	 * State carried across SRF calls. We track the index ourselves instead of
+	 * using funcctx->call_cntr, so that concurrently dropped tables can be
+	 * skipped without emitting a row.
+	 */
+	typedef struct
+	{
+		List	   *table_infos;	/* list of published_rel */
+		int			curr_idx;	/* current index into table_infos */
+	} publication_tables_state;
+
 	FuncCallContext *funcctx;
-	List	   *table_infos = NIL;
+	publication_tables_state *ptstate = NULL;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
 		TupleDesc	tupdesc;
 		MemoryContext oldcontext;
+		List	   *table_infos = NIL;
 		ArrayType  *arr;
 		Datum	   *elems;
 		int			nelems,
@@ -1222,25 +1235,46 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 						   PG_NODE_TREEOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-		funcctx->user_fctx = table_infos;
+
+		/* Store the state to be used across SRF calls. */
+		ptstate = palloc_object(publication_tables_state);
+		ptstate->table_infos = table_infos;
+		ptstate->curr_idx = 0;
+		funcctx->user_fctx = ptstate;
 
 		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
-	table_infos = (List *) funcctx->user_fctx;
+	ptstate = (publication_tables_state *) funcctx->user_fctx;
 
-	if (funcctx->call_cntr < list_length(table_infos))
+	while (ptstate->curr_idx < list_length(ptstate->table_infos))
 	{
 		HeapTuple	pubtuple = NULL;
 		HeapTuple	rettuple;
 		Publication *pub;
-		published_rel *table_info = (published_rel *) list_nth(table_infos, funcctx->call_cntr);
+		published_rel *table_info = (published_rel *) list_nth(ptstate->table_infos,
+															   ptstate->curr_idx);
 		Oid			relid = table_info->relid;
-		Oid			schemaid = get_rel_namespace(relid);
+		Relation	rel;
+		Oid			schemaid;
 		Datum		values[NUM_PUBLICATION_TABLES_ELEM] = {0};
 		bool		nulls[NUM_PUBLICATION_TABLES_ELEM] = {0};
+
+		/* Advance the index for the next call. */
+		ptstate->curr_idx++;
+
+		/*
+		 * The table OIDs were collected earlier, so a table may have been
+		 * dropped before we get here. try_table_open() returns NULL if it is
+		 * already gone, in which case we skip it; such tables are simply
+		 * absent from the result set, which is the expected point-in-time
+		 * behavior.
+		 */
+		rel = try_table_open(relid, AccessShareLock);
+		if (rel == NULL)
+			continue;
 
 		/*
 		 * Form tuple with appropriate data.
@@ -1255,6 +1289,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		 * We don't consider row filters or column lists for FOR ALL TABLES or
 		 * FOR TABLES IN SCHEMA publications.
 		 */
+		schemaid = RelationGetNamespace(rel);
 		if (!pub->alltables &&
 			!SearchSysCacheExists2(PUBLICATIONNAMESPACEMAP,
 								   ObjectIdGetDatum(schemaid),
@@ -1284,7 +1319,6 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		/* Show all columns when the column list is not specified. */
 		if (nulls[2])
 		{
-			Relation	rel = table_open(relid, AccessShareLock);
 			int			nattnums = 0;
 			int16	   *attnums;
 			TupleDesc	desc = RelationGetDescr(rel);
@@ -1321,9 +1355,9 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 				values[2] = PointerGetDatum(buildint2vector(attnums, nattnums));
 				nulls[2] = false;
 			}
-
-			table_close(rel, AccessShareLock);
 		}
+
+		table_close(rel, AccessShareLock);
 
 		rettuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 
