@@ -128,3 +128,4 @@ test: matview-write-skew
 test: lock-nowait
 test: for-portion-of
 test: ddl-dependency-locking
+test: pub-concurrent-drop
