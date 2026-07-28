@@ -590,11 +590,19 @@ SELECT * FROM for_portion_of_test ORDER BY id, valid_at;
 
 -- UPDATE ... RETURNING returns only the updated values
 -- (not the inserted side values, which are added by a separate "statement"):
+CREATE FUNCTION fpo_returning_row(text)
+RETURNS text LANGUAGE plpgsql AS
+$$
+BEGIN
+  RAISE NOTICE 'RETURNING %', $1;
+  RETURN $1;
+END;
+$$;
 UPDATE for_portion_of_test
   FOR PORTION OF valid_at FROM '2018-02-01' TO '2018-02-15'
   SET name = 'three^3'
   WHERE id = '[3,4)'
-  RETURNING *;
+  RETURNING *, fpo_returning_row(for_portion_of_test::text);
 
 -- UPDATE ... RETURNING supports NEW and OLD valid_at
 UPDATE for_portion_of_test
@@ -629,7 +637,7 @@ DELETE FROM for_portion_of_test WHERE id = '[99,100)';
 DELETE FROM for_portion_of_test
   FOR PORTION OF valid_at FROM '2018-02-02' TO '2018-02-03'
   WHERE id = '[3,4)'
-  RETURNING *;
+  RETURNING *, fpo_returning_row(for_portion_of_test::text);
 
 -- DELETE FOR PORTION OF in a PL/pgSQL function
 INSERT INTO for_portion_of_test (id, valid_at, name) VALUES
@@ -1439,7 +1447,8 @@ UPDATE temporal_partitioned FOR PORTION OF valid_at FROM '2000-03-01' TO '2000-0
 UPDATE temporal_partitioned FOR PORTION OF valid_at FROM '2000-06-01' TO '2000-07-01'
   SET name = 'one^2',
       id = '[4,5)'
-  WHERE id = '[1,2)';
+  WHERE id = '[1,2)'
+  RETURNING id, valid_at, name, fpo_returning_row(temporal_partitioned::text);
 
 -- Move from partition 3 to partition 1
 UPDATE temporal_partitioned FOR PORTION OF valid_at FROM '2000-06-01' TO '2000-07-01'
@@ -1460,6 +1469,7 @@ SELECT * FROM temporal_partitioned_1 ORDER BY id, valid_at;
 SELECT * FROM temporal_partitioned_3 ORDER BY id, valid_at;
 SELECT * FROM temporal_partitioned_5 ORDER BY id, valid_at;
 
+DROP FUNCTION fpo_returning_row;
 DROP TABLE temporal_partitioned;
 
 -- UPDATE/DELETE FOR PORTION OF with RULEs
