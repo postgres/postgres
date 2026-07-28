@@ -385,6 +385,7 @@ static void StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 											 int cost_limit);
 static void DataChecksumsShmemRequest(void *arg);
 static bool DatabaseExists(Oid dboid);
+static void ErrorOnInvalidDatabases(void);
 static List *BuildDatabaseList(void);
 static List *BuildRelationList(bool temp_relations, bool include_shared);
 static void FreeDatabaseList(List *dblist);
@@ -582,6 +583,15 @@ enable_data_checksums(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("cost limit must be greater than zero"));
+
+	/*
+	 * An invalid database cannot be connected to, so the worker would fail to
+	 * process it, and unlike a dropped database its files stay around.  Error
+	 * out early with a hint rather than failing halfway through processing. A
+	 * database which turns invalid after this check is handled by the
+	 * launcher treating it as concurrently dropped.
+	 */
+	ErrorOnInvalidDatabases();
 
 	StartDataChecksumsWorkerLauncher(ENABLE_DATACHECKSUMS, cost_delay, cost_limit);
 
@@ -983,6 +993,17 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 	result = DataChecksumState->worker_result;
 	DataChecksumState->worker_pid = InvalidPid;
 	LWLockRelease(DataChecksumsWorkerLock);
+
+	/*
+	 * A worker which started but failed before reporting a result has most
+	 * likely FATALed in InitPostgres.  If the database was dropped, or was
+	 * invalidated by a DROP DATABASE which is bound to remove its files,
+	 * after we built the database list then that is the expected outcome and
+	 * not an error, so apply the same heuristic as when the worker failed to
+	 * start.
+	 */
+	if (result == DATACHECKSUMSWORKER_FAILED && !DatabaseExists(db->dboid))
+		result = DATACHECKSUMSWORKER_DROPDB;
 
 	if (result == DATACHECKSUMSWORKER_ABORTED)
 		ereport(LOG,
@@ -1410,6 +1431,15 @@ DatabaseExists(Oid dboid)
 
 	StartTransactionCommand();
 
+	/*
+	 * DROP DATABASE holds an exclusive lock on the database from before it
+	 * terminates the connections to it until it commits, so take a lock which
+	 * conflicts with it to wait out a drop which is in flight.  Without this
+	 * we can see a database whose worker was just killed by DROP DATABASE ...
+	 * WITH (FORCE) as still existing, and report a spurious failure.
+	 */
+	LockSharedObject(DatabaseRelationId, dboid, 0, AccessShareLock);
+
 	rel = table_open(DatabaseRelationId, AccessShareLock);
 	ScanKeyInit(&skey,
 				Anum_pg_database_oid,
@@ -1434,6 +1464,47 @@ DatabaseExists(Oid dboid)
 	CommitTransactionCommand();
 
 	return found;
+}
+
+/*
+ * ErrorOnInvalidDatabases
+ *		Error out if the cluster contains an invalid database
+ *
+ * A database left invalid by an interrupted DROP DATABASE cannot be connected
+ * to, so data checksums can never be enabled in it, while its files remain on
+ * disk where checksum verification will find them.  Report it to the caller
+ * so the user can drop it before retrying.  Called from a normal backend, so
+ * unlike DatabaseExists we are already in a transaction.
+ *
+ * A cluster can contain more than one invalid database, but only the first one
+ * found is reported; collecting them all is not worth the complexity here.  A
+ * user with several of them gets the error again for the next one after
+ * dropping the reported database, which the hint accounts for.
+ */
+static void
+ErrorOnInvalidDatabases(void)
+{
+	Relation	rel;
+	TableScanDesc scan;
+	HeapTuple	tup;
+
+	rel = table_open(DatabaseRelationId, AccessShareLock);
+	scan = table_beginscan_catalog(rel, 0, NULL);
+
+	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
+	{
+		Form_pg_database pgdb = (Form_pg_database) GETSTRUCT(tup);
+
+		if (database_is_invalid_form(pgdb))
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot enable data checksums in a cluster with invalid database \"%s\"",
+						   NameStr(pgdb->datname)),
+					errhint("Use DROP DATABASE to drop invalid databases."));
+	}
+
+	table_endscan(scan);
+	table_close(rel, AccessShareLock);
 }
 
 /*
