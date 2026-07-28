@@ -1,0 +1,16 @@
+Parsed test spec with 2 sessions
+
+starting permutation: lock list_pub_tables drop_and_commit
+step lock: BEGIN; LOCK pubdrop.dropme IN ACCESS EXCLUSIVE MODE;
+step list_pub_tables: 
+	SELECT relid::regclass AS tablename
+	FROM pg_get_publication_tables('pub_schema')
+	ORDER BY tablename;
+ <waiting ...>
+step drop_and_commit: DROP TABLE pubdrop.dropme; COMMIT;
+step list_pub_tables: <... completed>
+tablename     
+--------------
+pubdrop.keepme
+(1 row)
+
