@@ -280,9 +280,12 @@ typedef void (*walrcv_get_senderinfo_fn) (WalReceiverConn *conn,
  * Run IDENTIFY_SYSTEM on the cluster connected to and validate the
  * identity of the cluster.  Returns the system ID of the cluster
  * connected to.  'primary_tli' is the timeline ID of the sender.
+ * If 'server_lsn' is not NULL, it is set to the current WAL flush
+ * position of the sender.
  */
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
-											TimeLineID *primary_tli);
+											TimeLineID *primary_tli,
+											XLogRecPtr *server_lsn);
 
 /*
  * walrcv_get_dbname_from_conninfo_fn
@@ -441,8 +444,8 @@ extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 	WalReceiverFunctions->walrcv_get_conninfo(conn)
 #define walrcv_get_senderinfo(conn, sender_host, sender_port) \
 	WalReceiverFunctions->walrcv_get_senderinfo(conn, sender_host, sender_port)
-#define walrcv_identify_system(conn, primary_tli) \
-	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli)
+#define walrcv_identify_system(conn, primary_tli, server_lsn) \
+	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli, server_lsn)
 #define walrcv_get_dbname_from_conninfo(conninfo) \
 	WalReceiverFunctions->walrcv_get_dbname_from_conninfo(conninfo)
 #define walrcv_server_version(conn) \

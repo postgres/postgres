@@ -163,6 +163,7 @@ WAIT_FOR_WAL_FLUSH	"Waiting for WAL flush to reach a target LSN on a primary or 
 WAIT_FOR_WAL_REPLAY	"Waiting for WAL replay to reach a target LSN on a standby."
 WAIT_FOR_WAL_WRITE	"Waiting for WAL write to reach a target LSN on a standby."
 WAL_RECEIVER_EXIT	"Waiting for the WAL receiver to exit."
+WAL_RECEIVER_UPSTREAM_CATCHUP	"Waiting for upstream server WAL flush position to catch up to requested start point."
 WAL_RECEIVER_WAIT_START	"Waiting for startup process to send initial data for streaming replication."
 WAL_SUMMARY_READY	"Waiting for a new WAL summary to be generated."
 XACT_GROUP_UPDATE	"Waiting for the group leader to update transaction status at transaction end."
