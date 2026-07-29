@@ -756,6 +756,23 @@
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>getdatabaseencoding</primary>
+        </indexterm>
+        <function>getdatabaseencoding</function> ( )
+        <returnvalue>name</returnvalue>
+       </para>
+       <para>
+        Returns current database encoding name.
+       </para>
+       <para>
+        <literal>getdatabaseencoding()</literal>
+        <returnvalue>UTF8</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>left</primary>
         </indexterm>
         <function>left</function> ( <parameter>string</parameter> <type>text</type>,
