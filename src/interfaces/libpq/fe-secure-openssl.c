@@ -800,7 +800,7 @@ initialize_SSL(PGconn *conn)
 	 * complicated if connections used different certificates. So now we
 	 * create a separate context for each connection, and accept the overhead.
 	 */
-	SSL_context = SSL_CTX_new(SSLv23_method());
+	SSL_context = SSL_CTX_new(TLS_method());
 	if (!SSL_context)
 	{
 		char	   *err = SSLerrmessage(ERR_get_error());
