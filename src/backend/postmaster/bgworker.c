@@ -1442,16 +1442,20 @@ TerminateBackgroundWorkersForDatabase(Oid databaseId)
 		if (slot->in_use &&
 			(slot->worker.bgw_flags & BGWORKER_INTERRUPTIBLE))
 		{
-			PGPROC	   *proc = BackendPidGetProc(slot->pid);
+			PGPROC	   *proc;
+			pid_t		pid = slot->pid;
 
+			LWLockAcquire(ProcArrayLock, LW_SHARED);
+			proc = BackendPidGetProcWithLock(pid);
 			if (proc && proc->databaseId == databaseId)
 			{
 				slot->terminate = true;
 				signal_postmaster = true;
 
 				elog(DEBUG1, "termination requested for worker (PID %d) on database %u",
-					 (int) slot->pid, databaseId);
+					 (int) pid, databaseId);
 			}
+			LWLockRelease(ProcArrayLock);
 		}
 	}
 
