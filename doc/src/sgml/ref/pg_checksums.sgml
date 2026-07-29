@@ -23,13 +23,13 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_checksums</command>
    <arg rep="repeat" choice="opt"><replaceable class="parameter">option</replaceable></arg>
-   <group choice="opt">
+   <arg choice="opt">
     <group choice="opt">
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--pgdata</option></arg>
     </group>
     <replaceable class="parameter">datadir</replaceable>
-   </group>
+   </arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
