@@ -1209,8 +1209,16 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	ErrorContextCallback errcallback;
 
 	/*
-	 * A parallel vacuum worker must have only PROC_IN_VACUUM flag since we
-	 * don't support parallel vacuum for autovacuum as of now.
+	 * A parallel vacuum worker carries only the PROC_IN_VACUUM flag. The
+	 * leader, whether it's a backend running a VACUUM command or an
+	 * autovacuum worker, sets PROC_IN_VACUUM when it starts vacuuming the
+	 * table, and the worker inherits the flag by importing the leader's
+	 * snapshot (see ProcArrayInstallRestoredXmin). The leader's other flags
+	 * don't reach the worker: the snapshot import copies only the
+	 * PROC_XMIN_FLAGS bits, so PROC_VACUUM_FOR_WRAPAROUND isn't carried
+	 * over, and PROC_IS_AUTOVACUUM is never set on the worker in the first
+	 * place since parallel workers run as regular background workers, not
+	 * autovacuum workers.
 	 */
 	Assert(MyProc->statusFlags == PROC_IN_VACUUM);
 
