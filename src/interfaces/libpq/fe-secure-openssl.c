@@ -1991,20 +1991,22 @@ PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 static int
 ssl_protocol_version_to_openssl(const char *protocol)
 {
+#ifndef OPENSSL_NO_TLS1
 	if (pg_strcasecmp("TLSv1", protocol) == 0)
 		return TLS1_VERSION;
+#endif
 
-#ifdef TLS1_1_VERSION
+#ifndef OPENSSL_NO_TLS1_1
 	if (pg_strcasecmp("TLSv1.1", protocol) == 0)
 		return TLS1_1_VERSION;
 #endif
 
-#ifdef TLS1_2_VERSION
+#ifndef OPENSSL_NO_TLS1_2
 	if (pg_strcasecmp("TLSv1.2", protocol) == 0)
 		return TLS1_2_VERSION;
 #endif
 
-#ifdef TLS1_3_VERSION
+#ifndef OPENSSL_NO_TLS1_3
 	if (pg_strcasecmp("TLSv1.3", protocol) == 0)
 		return TLS1_3_VERSION;
 #endif

@@ -2421,21 +2421,25 @@ ssl_protocol_version_to_openssl(int v)
 		case PG_TLS_ANY:
 			return 0;
 		case PG_TLS1_VERSION:
+#ifndef OPENSSL_NO_TLS1
 			return TLS1_VERSION;
+#else
+			break;
+#endif
 		case PG_TLS1_1_VERSION:
-#ifdef TLS1_1_VERSION
+#ifndef OPENSSL_NO_TLS1_1
 			return TLS1_1_VERSION;
 #else
 			break;
 #endif
 		case PG_TLS1_2_VERSION:
-#ifdef TLS1_2_VERSION
+#ifndef OPENSSL_NO_TLS1_2
 			return TLS1_2_VERSION;
 #else
 			break;
 #endif
 		case PG_TLS1_3_VERSION:
-#ifdef TLS1_3_VERSION
+#ifndef OPENSSL_NO_TLS1_3
 			return TLS1_3_VERSION;
 #else
 			break;
