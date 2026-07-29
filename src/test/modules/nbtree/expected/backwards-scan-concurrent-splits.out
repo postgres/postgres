@@ -162,7 +162,7 @@ injection_points_detach
 (1 row)
 
 
-starting permutation: b_attach d_delete_left b_scan vacuum_tbl i_detach b_detach
+starting permutation: b_attach d_delete_left wait_prunable b_scan vacuum_tbl i_detach b_detach
 step b_attach: 
   SELECT injection_points_attach('nbtree-walk-left', 'wait');
   SELECT injection_points_attach('nbtree-walk-left-step-right', 'notice');
@@ -190,6 +190,7 @@ injection_points_attach
 (1 row)
 
 step d_delete_left: DELETE FROM backwards_scan_tbl WHERE col < 601;
+step wait_prunable: CALL wait_prunable();
 step b_scan: SELECT col FROM backwards_scan_tbl
               WHERE col % 100 = 1 AND pg_backend_pid() <> 0
               ORDER BY col DESC; <waiting ...>
@@ -236,7 +237,7 @@ injection_points_detach
 (1 row)
 
 
-starting permutation: b_attach_nosr i_grow d_delete_mid b_scan_999 vacuum_tbl i_detach b_detach_nosr
+starting permutation: b_attach_nosr i_grow d_delete_mid wait_prunable b_scan_999 vacuum_tbl i_detach b_detach_nosr
 step b_attach_nosr: 
   SELECT injection_points_attach('nbtree-walk-left', 'wait');
   SELECT injection_points_attach('nbtree-walk-left-restart', 'notice');
@@ -259,6 +260,7 @@ injection_points_attach
 
 step i_grow: INSERT INTO backwards_scan_tbl SELECT i FROM generate_series(701, 2200) i;
 step d_delete_mid: DELETE FROM backwards_scan_tbl WHERE col BETWEEN 367 AND 2100;
+step wait_prunable: CALL wait_prunable();
 step b_scan_999: SELECT col FROM backwards_scan_tbl
                   WHERE col <= 999 AND col % 100 = 1 AND pg_backend_pid() <> 0
                   ORDER BY col DESC; <waiting ...>

@@ -21,6 +21,26 @@ setup
   CREATE TABLE backwards_scan_tbl(col int4) WITH (autovacuum_enabled = off);
   CREATE INDEX ON backwards_scan_tbl(col) WITH (deduplicate_items = off);
   INSERT INTO backwards_scan_tbl SELECT i FROM generate_series(0, 700) i;
+  -- Wait until every dead tuple in the table has become removable by VACUUM.
+  -- Autovacuum can hold a snapshot open in any database at any time, which
+  -- holds back the removable cutoff.
+  CREATE PROCEDURE wait_prunable() LANGUAGE plpgsql AS $$
+    DECLARE
+      barrier xid8;
+      cutoff xid8;
+    BEGIN
+      barrier := pg_current_xact_id();
+      -- Pass a shared catalog rather than the table we'll prune, to prevent
+      -- the cutoff from moving backwards.  See comments at removable_cutoff()
+      LOOP
+        ROLLBACK;  -- release MyProc->xmin, which could be the oldest
+        cutoff := removable_cutoff('pg_database');
+        EXIT WHEN cutoff >= barrier;
+        RAISE LOG 'removable cutoff %; waiting for %', cutoff, barrier;
+        PERFORM pg_sleep(.1);
+      END LOOP;
+    END
+  $$;
 }
 setup
 {
@@ -30,6 +50,7 @@ teardown
 {
   DROP EXTENSION injection_points;
   DROP TABLE backwards_scan_tbl;
+  DROP PROCEDURE wait_prunable;
 }
 
 session scan_session
@@ -76,6 +97,7 @@ step i_insert_dups { INSERT INTO backwards_scan_tbl SELECT 100 FROM generate_ser
 step i_grow { INSERT INTO backwards_scan_tbl SELECT i FROM generate_series(701, 2200) i; }
 step d_delete_left { DELETE FROM backwards_scan_tbl WHERE col < 601; }
 step d_delete_mid { DELETE FROM backwards_scan_tbl WHERE col BETWEEN 367 AND 2100; }
+step wait_prunable { CALL wait_prunable(); }
 step vacuum_tbl { VACUUM backwards_scan_tbl; }
 step i_detach {
   SELECT injection_points_detach('nbtree-walk-left');
@@ -104,6 +126,7 @@ permutation b_attach
 # the scan has no page to the left to move to, ending the scan.
 permutation b_attach
     d_delete_left
+    wait_prunable
     b_scan
     vacuum_tbl
     i_detach
@@ -117,6 +140,7 @@ permutation b_attach
 permutation b_attach_nosr
     i_grow
     d_delete_mid
+    wait_prunable
     b_scan_999
     vacuum_tbl
     i_detach
