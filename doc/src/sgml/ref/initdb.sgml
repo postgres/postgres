@@ -23,13 +23,13 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>initdb</command>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <group choice="plain">
+   <arg choice="plain">
     <group choice="opt">
      <arg choice="plain"><option>--pgdata</option></arg>
      <arg choice="plain"><option>-D</option></arg>
     </group>
-    <replaceable> datadir</replaceable>
-   </group>
+    <replaceable>datadir</replaceable>
+   </arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

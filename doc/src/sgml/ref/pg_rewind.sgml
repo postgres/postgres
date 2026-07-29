@@ -23,17 +23,19 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_rewind</command>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <group choice="plain">
+   <arg choice="plain">
     <group choice="req">
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--target-pgdata</option></arg>
     </group>
-    <replaceable> datadir</replaceable>
-    <group choice="req">
+    <replaceable>datadir</replaceable>
+   </arg>
+   <arg choice="req">
+    <group choice="plain">
      <arg choice="plain"><option>--source-pgdata=<replaceable>datadir</replaceable></option></arg>
      <arg choice="plain"><option>--source-server=<replaceable>connstr</replaceable></option></arg>
     </group>
-   </group>
+   </arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

@@ -22,22 +22,26 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetwal</command>
-   <group choice="opt">
-    <arg choice="plain"><option>-f</option></arg>
-    <arg choice="plain"><option>--force</option></arg>
-   </group>
-   <group choice="opt">
-    <arg choice="plain"><option>-n</option></arg>
-    <arg choice="plain"><option>--dry-run</option></arg>
-   </group>
+   <arg choice="opt">
+    <group choice="plain">
+     <arg choice="plain"><option>-f</option></arg>
+     <arg choice="plain"><option>--force</option></arg>
+    </group>
+   </arg>
+   <arg choice="opt">
+    <group choice="plain">
+     <arg choice="plain"><option>-n</option></arg>
+     <arg choice="plain"><option>--dry-run</option></arg>
+    </group>
+   </arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <group choice="plain">
+   <arg choice="plain">
     <group choice="opt">
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--pgdata</option></arg>
     </group>
     <replaceable class="parameter">datadir</replaceable>
-   </group>
+   </arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
