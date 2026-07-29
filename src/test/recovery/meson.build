@@ -63,6 +63,7 @@ tests += {
       't/052_checkpoint_segment_missing.pl',
       't/053_standby_login_event_trigger.pl',
       't/054_unlogged_sequence_promotion.pl',
+      't/055_cascade_reconnect.pl',
     ],
   },
 }

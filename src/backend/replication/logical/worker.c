@@ -5732,7 +5732,7 @@ run_apply_worker(void)
 	 * We don't really use the output identify_system for anything but it does
 	 * some initializations on the upstream so let's still call it.
 	 */
-	(void) walrcv_identify_system(LogRepWorkerWalRcvConn, &startpointTLI);
+	(void) walrcv_identify_system(LogRepWorkerWalRcvConn, &startpointTLI, NULL);
 
 	set_apply_error_context_origin(originname);
 
