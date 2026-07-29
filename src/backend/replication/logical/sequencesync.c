@@ -752,7 +752,16 @@ LogicalRepSyncSequences(void)
 
 		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
 
-		sequence_rel = try_table_open(subrel->srrelid, RowExclusiveLock);
+		/*
+		 * Lock the sequence so its identity (namespace and name) cannot
+		 * change under us via a concurrent DROP, RENAME or SET SCHEMA. The
+		 * lock is released immediately rathen than at the transaction end.
+		 * The later synchronization does not depend on this captured identity
+		 * remaining valid, as it re-opens the sequence and tolerates
+		 * concurrent changes. Releasing early also avoids holding one lock
+		 * per sequence, which could exhaust the lock table.
+		 */
+		sequence_rel = try_table_open(subrel->srrelid, AccessShareLock);
 
 		/* Skip if sequence was dropped concurrently */
 		if (!sequence_rel)
@@ -761,7 +770,7 @@ LogicalRepSyncSequences(void)
 		/* Skip if the relation is not a sequence */
 		if (sequence_rel->rd_rel->relkind != RELKIND_SEQUENCE)
 		{
-			table_close(sequence_rel, NoLock);
+			table_close(sequence_rel, AccessShareLock);
 			continue;
 		}
 
@@ -779,7 +788,7 @@ LogicalRepSyncSequences(void)
 
 		MemoryContextSwitchTo(oldctx);
 
-		table_close(sequence_rel, NoLock);
+		table_close(sequence_rel, AccessShareLock);
 	}
 
 	/* Cleanup */
