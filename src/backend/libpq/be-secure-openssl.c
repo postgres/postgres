@@ -1083,22 +1083,24 @@ aloop:
 		char	   *peer_dn;
 		BIO		   *bio = NULL;
 		BUF_MEM    *bio_buf = NULL;
+		int			index;
 
-		len = X509_NAME_get_text_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, NULL, 0);
-		if (len != -1)
+		index = X509_NAME_get_index_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, -1);
+		if (index >= 0)
 		{
+			const X509_NAME_ENTRY *entry;
+			const ASN1_STRING *peer_cn_asn1;
+			const unsigned char *peer_cn_internal;
 			char	   *peer_cn;
 
+			entry = X509_NAME_get_entry(unconstify(X509_NAME *, x509name), index);
+			peer_cn_asn1 = X509_NAME_ENTRY_get_data(entry);
+			len = ASN1_STRING_length(peer_cn_asn1);
+			peer_cn_internal = ASN1_STRING_get0_data(peer_cn_asn1);
+
 			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
-			r = X509_NAME_get_text_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, peer_cn,
-										  len + 1);
+			memcpy(peer_cn, peer_cn_internal, len);
 			peer_cn[len] = '\0';
-			if (r != len)
-			{
-				/* shouldn't happen */
-				pfree(peer_cn);
-				return -1;
-			}
 
 			/*
 			 * Reject embedded NULLs in certificate common name to prevent
