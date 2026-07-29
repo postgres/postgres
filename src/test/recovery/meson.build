@@ -48,6 +48,7 @@ tests += {
       't/043_no_contrecord_switch.pl',
       't/045_archive_restartpoint.pl',
       't/054_unlogged_sequence_promotion.pl',
+      't/055_cascade_reconnect.pl',
     ],
   },
 }

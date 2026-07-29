@@ -469,6 +469,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_XACT_GROUP_UPDATE:
 			event_name = "XactGroupUpdate";
 			break;
+		case WAIT_EVENT_WAL_RECEIVER_UPSTREAM_CATCHUP:
+			event_name = "WalReceiverUpstreamCatchup";
+			break;
 			/* no default case, so that compiler will warn */
 	}
 
