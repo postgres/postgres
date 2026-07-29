@@ -54,6 +54,7 @@
 #include "access/htup_details.h"
 #include "access/timeline.h"
 #include "access/transam.h"
+#include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xlogarchive.h"
 #include "access/xlogrecovery.h"
@@ -92,6 +93,12 @@ bool		hot_standby_feedback;
 /* libpqwalreceiver connection */
 static WalReceiverConn *wrconn = NULL;
 WalReceiverFunctionsType *WalReceiverFunctions = NULL;
+
+/*
+ * Server's WAL flush position from the last IDENTIFY_SYSTEM call.
+ * Written by libpqwalreceiver, read by walreceiver main loop.
+ */
+XLogRecPtr	WalRcvIdentifySystemLsn = InvalidXLogRecPtr;
 
 /*
  * These variables are used similarly to openLogFile/SegNo,
@@ -159,6 +166,8 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 	TimeLineID	startpointTLI;
 	TimeLineID	primaryTLI;
 	bool		first_stream;
+	bool		upstream_catchup_logged = false;
+	TimestampTz upstream_catchup_deadline = 0;
 	WalRcvData *walrcv;
 	TimestampTz now;
 	char	   *err;
@@ -311,8 +320,10 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 
 		/*
 		 * Check that we're connected to a valid server using the
-		 * IDENTIFY_SYSTEM replication command.
+		 * IDENTIFY_SYSTEM replication command.  Reset the global LSN
+		 * first so we don't act on a stale value if the call fails.
 		 */
+		WalRcvIdentifySystemLsn = InvalidXLogRecPtr;
 		primary_sysid = walrcv_identify_system(wrconn, &primaryTLI);
 
 		snprintf(standby_sysid, sizeof(standby_sysid), UINT64_FORMAT,
@@ -335,6 +346,72 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("highest timeline %u of the primary is behind recovery timeline %u",
 							primaryTLI, startpointTLI)));
+
+		/*
+		 * If our requested startpoint is ahead of the upstream server's
+		 * current WAL flush position, we cannot start streaming yet.  (We say
+		 * "upstream" here and not "primary" because this condition can only
+		 * happen on a cascading standby.)  This can happen when such a
+		 * cascading standby has advanced past the upstream via archive
+		 * recovery but the intermediate standby has not caught up with that
+		 * yet.  In this case, wait for the upstream to catch up before
+		 * attempting START_REPLICATION, because that would fail with
+		 * "requested starting point is ahead of the WAL flush position".
+		 *
+		 * We only perform this check when we're on the same timeline as the
+		 * primary; when timelines differ, let START_REPLICATION handle the
+		 * timeline negotiation.
+		 *
+		 * We also only wait if the gap is within one WAL segment.  This is
+		 * the expected case because archive recovery processes whole segment
+		 * files: the cascade's next read position lands at the start of the
+		 * following segment while the upstream's flush position is still
+		 * inside the just-replayed one, producing at most a sub-segment gap.
+		 * A larger gap means the upstream is genuinely behind, so we let
+		 * START_REPLICATION fail normally and allow the startup process to
+		 * fall back to other WAL sources.
+		 *
+		 * Honor wal_receiver_timeout so the walreceiver doesn't wait
+		 * indefinitely: if the upstream hasn't caught up within the timeout,
+		 * exit and let the startup process retry normally.
+		 */
+		if (startpointTLI == primaryTLI &&
+			XLogRecPtrIsValid(WalRcvIdentifySystemLsn) &&
+			startpoint > WalRcvIdentifySystemLsn &&
+			startpoint - WalRcvIdentifySystemLsn <= wal_segment_size)
+		{
+			/* Set deadline on first iteration */
+			if (!upstream_catchup_logged && wal_receiver_timeout > 0)
+				upstream_catchup_deadline =
+					TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
+												wal_receiver_timeout);
+
+			ereport(upstream_catchup_logged ? DEBUG1 : LOG,
+					errmsg("walreceiver requested start point %X/%08X on timeline %u is ahead of the upstream server's flush position %X/%08X, waiting",
+						   LSN_FORMAT_ARGS(startpoint), startpointTLI,
+						   LSN_FORMAT_ARGS(WalRcvIdentifySystemLsn)));
+			upstream_catchup_logged = true;
+
+			(void) WaitLatch(MyLatch,
+							 WL_EXIT_ON_PM_DEATH | WL_TIMEOUT | WL_LATCH_SET,
+							 wal_retrieve_retry_interval,
+							 WAIT_EVENT_WAL_RECEIVER_UPSTREAM_CATCHUP);
+			ResetLatch(MyLatch);
+
+			if (upstream_catchup_deadline > 0 &&
+				GetCurrentTimestamp() >= upstream_catchup_deadline)
+				ereport(ERROR,
+						(errcode(ERRCODE_CONNECTION_FAILURE),
+						 errmsg("terminating walreceiver due to timeout while waiting for upstream to catch up")));
+
+			CHECK_FOR_INTERRUPTS();
+			continue;
+		}
+		else
+		{
+			upstream_catchup_logged = false;
+			upstream_catchup_deadline = 0;
+		}
 
 		/*
 		 * Get any missing history files. We do this always, even when we're

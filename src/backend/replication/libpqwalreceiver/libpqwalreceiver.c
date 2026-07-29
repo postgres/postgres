@@ -458,6 +458,20 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 	}
 	primary_sysid = pstrdup(PQgetvalue(res, 0, 0));
 	*primary_tli = pg_strtoint32(PQgetvalue(res, 0, 1));
+
+	/* Column 2 is the server's current WAL flush position */
+	{
+		uint32		hi,
+					lo;
+
+		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("could not parse WAL location \"%s\"",
+							PQgetvalue(res, 0, 2))));
+		WalRcvIdentifySystemLsn = ((uint64) hi) << 32 | lo;
+	}
+
 	PQclear(res);
 
 	return primary_sysid;

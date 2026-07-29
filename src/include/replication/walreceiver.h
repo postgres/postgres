@@ -164,6 +164,13 @@ typedef struct
 
 extern PGDLLIMPORT WalRcvData *WalRcv;
 
+/*
+ * Server's WAL flush position as reported by the last IDENTIFY_SYSTEM call.
+ * Set by walrcv_identify_system(), used by the walreceiver to avoid
+ * requesting streaming from a point ahead of the upstream's flush position.
+ */
+extern PGDLLIMPORT XLogRecPtr WalRcvIdentifySystemLsn;
+
 typedef struct
 {
 	bool		logical;		/* True if this is logical replication stream,
