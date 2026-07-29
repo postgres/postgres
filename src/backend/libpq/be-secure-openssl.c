@@ -98,7 +98,8 @@ static bool initialize_dh(SSL_CTX *context, bool isServerStart);
 static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessageExt(unsigned long ecode, const char *replacement);
 static const char *SSLerrmessage(unsigned long ecode);
-static bool init_host_context(HostsLine *host, bool isServerStart);
+static bool init_host_context(HostsLine *host, bool isServerStart, bool *hasWarned)
+			pg_attribute_nonnull(3);
 static void host_context_cleanup_cb(void *arg);
 #ifdef HAVE_SSL_CTX_SET_CLIENT_HELLO_CB
 static int	sni_clienthello_cb(SSL *ssl, int *al, void *arg);
@@ -160,6 +161,7 @@ be_tls_init(bool isServerStart)
 	int			ssl_ver_min = -1;
 	int			ssl_ver_max = -1;
 	host_cache_hash *host_cache = NULL;
+	bool		hasWarned = false;
 
 	/*
 	 * Since we don't know which host we're using until the ClientHello is
@@ -249,7 +251,7 @@ be_tls_init(bool isServerStart)
 		{
 			HostsLine  *host = lfirst(line);
 
-			if (!init_host_context(host, isServerStart))
+			if (!init_host_context(host, isServerStart, &hasWarned))
 				goto error;
 
 			/*
@@ -344,7 +346,7 @@ be_tls_init(bool isServerStart)
 		pgconf->ssl_passphrase_cmd = ssl_passphrase_command;
 		pgconf->ssl_passphrase_reload = ssl_passphrase_command_supports_reload;
 
-		if (!init_host_context(pgconf, isServerStart))
+		if (!init_host_context(pgconf, isServerStart, &hasWarned))
 			goto error;
 
 		/*
@@ -608,11 +610,24 @@ host_context_cleanup_cb(void *arg)
 		SSL_CTX_free(hosts->default_host->ssl_ctx);
 }
 
+
+/*
+ * init_host_context
+ *
+ * Creates and initializes an OpenSSL SSL_CTX structure for the host config
+ * passed in the host parameter.  The SSL_CTX will be initialized with cert,
+ * key, CA and CRL; the remaining options are copied from the main context
+ * during connection setup in case this context ends up being used.
+ *
+ * If an ssl init hook has been defined, and ssl_sni is enabled, then issue a
+ * warning since the hook won't be executed.  hasWarned will be is set to true
+ * to indicate that the warning has been issued, and passing it back as true
+ * will omit future warning to avoid flooding the logs.
+ */
 static bool
-init_host_context(HostsLine *host, bool isServerStart)
+init_host_context(HostsLine *host, bool isServerStart, bool *hasWarned)
 {
 	SSL_CTX    *ctx = SSL_CTX_new(SSLv23_method());
-	static bool init_warned = false;
 
 	if (!ctx)
 	{
@@ -634,7 +649,7 @@ init_host_context(HostsLine *host, bool isServerStart)
 		(*openssl_tls_init_hook) (ctx, isServerStart);
 	else
 	{
-		if (openssl_tls_init_hook != default_openssl_tls_init && !init_warned)
+		if (openssl_tls_init_hook != default_openssl_tls_init && !*hasWarned)
 		{
 			ereport(WARNING,
 					errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -645,7 +660,7 @@ init_host_context(HostsLine *host, bool isServerStart)
 							"that is currently installed, or remove the hook "
 							"and use per-host passphrase commands in \"%s\".",
 							"ssl_sni", HostsFileName));
-			init_warned = true;
+			*hasWarned = true;
 		}
 
 		/*
