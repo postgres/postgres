@@ -31,7 +31,8 @@
    <function>check_primary_key()</function> and
    <function>check_foreign_key()</function> are used to check foreign key constraints.
    (This functionality is long since superseded by the built-in foreign
-   key mechanism, of course, but the module is still useful as an example.)
+   key mechanism, of course, but the module is still useful as an example.
+   This module will be removed in <productname>PostgreSQL</productname> 20.)
   </para>
 
   <note>
