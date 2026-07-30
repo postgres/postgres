@@ -8745,7 +8745,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
     </row>
     <row>
      <entry><literal>smgr-md-read-done</literal></entry>
-     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, ssize_t, size_t)</literal></entry>
      <entry>Probe that fires when a block read is complete.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
@@ -8767,7 +8767,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
     </row>
     <row>
      <entry><literal>smgr-md-write-done</literal></entry>
-     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, ssize_t, size_t)</literal></entry>
      <entry>Probe that fires when a block write is complete.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs

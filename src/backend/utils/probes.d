@@ -11,8 +11,14 @@
 /*
  * Typedefs used in PostgreSQL probes.
  *
- * NOTE: Do not use system-provided typedefs (e.g. uintptr_t, uint32_t, etc)
- * in probe definitions, as they cause compilation errors on macOS.
+ * NOTE: Prefer system-supplied type names in probe definitions (e.g.
+ * uint64_t, not PostgreSQL's uint64); macOS' dtrace rejects the latter.
+ * Also avoid "long long int", as SystemTap's dtrace(1) fails on that
+ * specific spelling.
+ *
+ * But we can use some PG type aliases by #define'ing them here so that
+ * cpp expands them before dtrace sees the file.  Curiously, macOS' dtrace
+ * rejects "bool", so we handle that with a #define too.
  */
 #define LocalTransactionId unsigned int
 #define LWLockMode int
@@ -83,9 +89,9 @@ provider postgresql {
 	probe twophase__checkpoint__done();
 
 	probe smgr__md__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
-	probe smgr__md__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, long long int, long long int);
+	probe smgr__md__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, ssize_t, size_t);
 	probe smgr__md__write__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
-	probe smgr__md__write__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, long long int, long long int);
+	probe smgr__md__write__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, ssize_t, size_t);
 
 	probe wal__insert(unsigned char, unsigned char);
 	probe wal__switch();
