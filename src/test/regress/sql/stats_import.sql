@@ -365,6 +365,49 @@ SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
+-- error: reltuples must be finite (rejected with WARNING, returns false)
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', 'Infinity'::real);
+
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '-Infinity'::real);
+
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', 'NaN'::real);
+
+-- error: reltuples must not be less than -1.0 (rejected with WARNING, returns false)
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '-5'::real);
+
+-- reltuples is unchanged (still 500) after the rejected values above
+SELECT relpages, reltuples, relallvisible, relallfrozen
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
+-- ok: -1 (the "unknown" sentinel) is still accepted
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '-1'::real);
+
+SELECT relpages, reltuples, relallvisible, relallfrozen
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
+-- restore reltuples to 500 for the following tests
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '500'::real);
+
 -- ok: set just relallvisible, rest stay same
 SELECT pg_restore_relation_stats(
         'schemaname', 'stats_import',

@@ -440,6 +440,85 @@ WHERE oid = 'stats_import.test'::regclass;
        16 |       500 |             4 |            2
 (1 row)
 
+-- error: reltuples must be finite (rejected with WARNING, returns false)
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', 'Infinity'::real);
+WARNING:  argument "reltuples" must be a finite value
+ pg_restore_relation_stats 
+---------------------------
+ f
+(1 row)
+
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '-Infinity'::real);
+WARNING:  argument "reltuples" must be a finite value
+ pg_restore_relation_stats 
+---------------------------
+ f
+(1 row)
+
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', 'NaN'::real);
+WARNING:  argument "reltuples" must be a finite value
+ pg_restore_relation_stats 
+---------------------------
+ f
+(1 row)
+
+-- error: reltuples must not be less than -1.0 (rejected with WARNING, returns false)
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '-5'::real);
+WARNING:  argument "reltuples" must not be less than -1.0
+ pg_restore_relation_stats 
+---------------------------
+ f
+(1 row)
+
+-- reltuples is unchanged (still 500) after the rejected values above
+SELECT relpages, reltuples, relallvisible, relallfrozen
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+ relpages | reltuples | relallvisible | relallfrozen 
+----------+-----------+---------------+--------------
+       16 |       500 |             4 |            2
+(1 row)
+
+-- ok: -1 (the "unknown" sentinel) is still accepted
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '-1'::real);
+ pg_restore_relation_stats 
+---------------------------
+ t
+(1 row)
+
+SELECT relpages, reltuples, relallvisible, relallfrozen
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+ relpages | reltuples | relallvisible | relallfrozen 
+----------+-----------+---------------+--------------
+       16 |        -1 |             4 |            2
+(1 row)
+
+-- restore reltuples to 500 for the following tests
+SELECT pg_restore_relation_stats(
+        'schemaname', 'stats_import',
+        'relname', 'test',
+        'reltuples', '500'::real);
+ pg_restore_relation_stats 
+---------------------------
+ t
+(1 row)
+
 -- ok: set just relallvisible, rest stay same
 SELECT pg_restore_relation_stats(
         'schemaname', 'stats_import',
