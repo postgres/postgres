@@ -3004,7 +3004,9 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	}
 
 	/* If it's a subscription, maybe ignore it */
-	if (ropt->no_subscriptions && strcmp(te->desc, "SUBSCRIPTION") == 0)
+	if (ropt->no_subscriptions &&
+		(strcmp(te->desc, "SUBSCRIPTION") == 0 ||
+		 strcmp(te->desc, "SUBSCRIPTION TABLE") == 0))
 		return 0;
 
 	/* Ignore it if section is not to be dumped/restored */
