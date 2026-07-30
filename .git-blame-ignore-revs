@@ -14,6 +14,12 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+b43e8f4b3dc5b361e78f237b136c9c1f817e13c4 # 2026-07-29 22:02:57 +0200
+# pgindent fix for a84eca6627f
+
+a5422fe3bd7ecd9c64cf4a8acf5f510b8da676c5 # 2026-07-03 12:31:15 +0900
+# pgindent fix for commit 53e6f51ee
+
 fdad19e1cfe4564230092e034c0b2185e4a04909 # 2026-07-02 08:49:37 +0530
 # pgindent fix for commit a5918fddf1.
 
