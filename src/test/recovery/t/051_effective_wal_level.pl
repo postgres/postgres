@@ -438,7 +438,8 @@ select pg_drop_replication_slot('slot_2');
 
 	# Start a psql session to test the case where the activation process is
 	# interrupted.
-	$psql_create_slot = $primary->background_psql('postgres');
+	$psql_create_slot =
+	  $primary->background_psql('postgres', on_error_stop => 0);
 
 	# Start the logical decoding activation process upon creating the logical
 	# slot, but it will wait due to the injection point.
@@ -448,7 +449,6 @@ select pg_drop_replication_slot('slot_2');
 select injection_points_set_local();
 select injection_points_attach('logical-decoding-activation', 'wait');
 select pg_create_logical_replication_slot('slot_canceled', 'pgoutput');
-\q
 ));
 
 	$primary->wait_for_event('client backend', 'logical-decoding-activation');
@@ -470,7 +470,8 @@ select pg_cancel_backend(pid) from pg_stat_activity where query ~ 'slot_canceled
 	$psql_create_slot->quit;
 
 	# Test concurrent activation processes run and one is interrupted.
-	$psql_create_slot = $primary->background_psql('postgres');
+	$psql_create_slot =
+	  $primary->background_psql('postgres', on_error_stop => 0);
 
 	# Start a psql session and stops in the middle of the activation
 	# process.
@@ -480,7 +481,6 @@ select pg_cancel_backend(pid) from pg_stat_activity where query ~ 'slot_canceled
 select injection_points_set_local();
 select injection_points_attach('logical-decoding-activation', 'wait');
 select pg_create_logical_replication_slot('slot_canceled2', 'pgoutput');
-\q
 ));
 	$primary->wait_for_event('client backend', 'logical-decoding-activation');
 	note("injection_point 'logical-decoding-activation' is reached");
