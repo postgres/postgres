@@ -74,6 +74,9 @@ SKIP:
 		"SELECT injection_points_attach('datachecksumsworker-fake-temptable-wait', 'notice');"
 	);
 	enable_data_checksums($node, wait => 'on');
+	$node->safe_psql('postgres',
+		"SELECT injection_points_detach('datachecksumsworker-fake-temptable-wait');"
+	);
 }
 
 # ---------------------------------------------------------------------------
