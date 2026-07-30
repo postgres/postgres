@@ -17,6 +17,8 @@
 
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -123,7 +125,14 @@ relation_statistics_update_internal(Oid reloid, FunctionCallInfo fcinfo)
 	if (!PG_ARGISNULL(RELTUPLES_ARG))
 	{
 		reltuples = PG_GETARG_FLOAT4(RELTUPLES_ARG);
-		if (reltuples < -1.0)
+		if (isnan(reltuples) || isinf(reltuples))
+		{
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("argument \"%s\" must be a finite value", "reltuples")));
+			result = false;
+		}
+		else if (reltuples < -1.0)
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
