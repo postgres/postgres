@@ -1372,7 +1372,9 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		 * logical decoding context.
 		 */
 		EnsureLogicalDecodingEnabled();
-		Assert(IsLogicalDecodingEnabled());
+
+		/* See the comment in create_logical_replication_slot() */
+		Assert(RecoveryInProgress() || IsLogicalDecodingEnabled());
 
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL, need_full_snapshot,
 										false,
