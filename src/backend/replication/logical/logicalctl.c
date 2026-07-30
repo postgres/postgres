@@ -274,11 +274,10 @@ abort_logical_decoding_activation(int code, Datum arg)
 /*
  * Enable logical decoding if disabled.
  *
- * If this function is called during recovery, it simply returns without
- * action since the logical decoding status change is not allowed during
- * this time. The logical decoding status depends on the status on the primary.
- * The caller should use CheckLogicalDecodingRequirements() before calling this
- * function to make sure that the logical decoding status can be modified.
+ * If this function is called during recovery, it just checks that logical
+ * decoding is still enabled, since the logical decoding status cannot be
+ * changed during this time. The logical decoding status depends on the
+ * status on the primary.
  *
  * Note that there is no interlock between logical decoding activation
  * and slot creation. To ensure enabling logical decoding, the caller
@@ -298,11 +297,30 @@ EnsureLogicalDecodingEnabled(void)
 	if (RecoveryInProgress())
 	{
 		/*
-		 * CheckLogicalDecodingRequirements() must have already errored out if
-		 * logical decoding is not enabled since we cannot enable the logical
-		 * decoding status during recovery.
+		 * The caller has already checked that logical decoding is enabled via
+		 * CheckLogicalDecodingRequirements(), but the status could have been
+		 * disabled concurrently before we created our slot: either by
+		 * replaying an XLOG_LOGICAL_DECODING_STATUS_CHANGE record, or by
+		 * UpdateLogicalDecodingStatusEndOfRecovery() upon promotion. We
+		 * cannot enable logical decoding during recovery, so raise an error.
+		 *
+		 * Our slot has already been created, so its in_use flag is set and
+		 * the slot scans performed by a deactivation can see it. It
+		 * guarantees that this check doesn't miss a concurrent deactivation:
+		 * UpdateLogicalDecodingStatusEndOfRecovery() won't disable logical
+		 * decoding since CheckLogicalSlotExists() finds our valid slot, and
+		 * replaying a status change record after this check invalidates our
+		 * slot, so this slot creation fails afterwards anyway (by a recovery
+		 * conflict or the requirement re-check in
+		 * CreateInitDecodingContext()). Hence, this check only needs to catch
+		 * deactivations that completed before our slot's in_use flag was set.
 		 */
-		Assert(IsLogicalDecodingEnabled());
+		if (!IsLogicalDecodingEnabled())
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("logical decoding on standby requires \"effective_wal_level\" >= \"logical\" on the primary"),
+					 errdetail("Logical decoding was concurrently disabled during the logical replication slot creation.")));
+
 		return;
 	}
 
@@ -429,6 +447,11 @@ EnableLogicalDecoding(void)
  *
  * Note that this function does not verify whether logical slots exist. The
  * checkpointer will verify if logical decoding should actually be disabled.
+ *
+ * This may be called during recovery, for example when a standby invalidates
+ * its last valid logical slot. That is safe because the queued request is only
+ * acted upon outside recovery. See the RecoveryInProgress() check in
+ * DisableLogicalDecodingIfNecessary().
  */
 void
 RequestDisableLogicalDecoding(void)
@@ -471,6 +494,14 @@ DisableLogicalDecodingIfNecessary(void)
 	 */
 	Assert(!MyReplicationSlot);
 
+	/*
+	 * During recovery the logical decoding status follows the primary via WAL
+	 * replay, so we must not disable it here. A pending_disable request
+	 * queued during recovery, for example by a local slot invalidation, is
+	 * intentionally left for the end-of-recovery transition or the
+	 * post-promotion checkpointer to act on. See
+	 * UpdateLogicalDecodingStatusEndOfRecovery().
+	 */
 	if (RecoveryInProgress())
 		return;
 
@@ -602,10 +633,15 @@ UpdateLogicalDecodingStatusEndOfRecovery(void)
 	 * already occur due to the checkpointer's asynchronous deactivation
 	 * process.
 	 *
-	 * For 'disable' case, backend cannot create logical replication slots
-	 * during recovery (see checks in CheckLogicalDecodingRequirements()),
-	 * which prevents a race condition between disabling logical decoding and
-	 * concurrent slot creation.
+	 * For 'disable' case, a backend concurrently creating a logical slot on a
+	 * standby could have passed its CheckLogicalDecodingRequirements() check
+	 * when creating its slot only after our slot check above. Such a backend
+	 * rechecks the status after creating the slot in
+	 * EnsureLogicalDecodingEnabled() and raises an error if logical decoding
+	 * has been disabled meanwhile, so it cannot end up with a logical slot
+	 * while logical decoding remains disabled. (If recovery has already ended
+	 * by the time of the recheck, the backend instead enables logical
+	 * decoding by itself, which is fine after promotion.)
 	 */
 	if (new_status != LogicalDecodingCtl->logical_decoding_enabled)
 	{

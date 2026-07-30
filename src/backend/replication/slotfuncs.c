@@ -153,7 +153,16 @@ create_logical_replication_slot(char *name, char *plugin,
 	 * decoding context.
 	 */
 	EnsureLogicalDecodingEnabled();
-	Assert(IsLogicalDecodingEnabled());
+
+	/*
+	 * Outside of recovery, holding a valid logical slot prevents logical
+	 * decoding from being disabled. During recovery, however, replaying a
+	 * status change record can disable it at any time regardless of slot
+	 * existence, so we cannot assert that it is still enabled here. That is
+	 * harmless: such a replay invalidates slots, so this slot creation fails
+	 * afterwards.
+	 */
+	Assert(RecoveryInProgress() || IsLogicalDecodingEnabled());
 
 	/*
 	 * Create logical decoding context to find start point or, if we don't

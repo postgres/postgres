@@ -420,6 +420,8 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 					errmsg("cannot enable failover for a temporary replication slot"));
 	}
 
+	INJECTION_POINT("replication-slot-create-begin", NULL);
+
 	/*
 	 * If some other backend ran this code concurrently with us, we'd likely
 	 * both allocate the same slot, and that would be bad.  We'd also be at
