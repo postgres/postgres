@@ -145,8 +145,12 @@ retry:
 						}
 						else
 						{
+							optind++;
 							if (optstring[0] == ':')
+							{
+								place = EMSG;
 								return BADARG;
+							}
 
 							if (opterr && has_arg == required_argument)
 								fprintf(stderr,
@@ -154,7 +158,6 @@ retry:
 										argv[0], place);
 
 							place = EMSG;
-							optind++;
 
 							if (has_arg == required_argument)
 								return BADCH;
