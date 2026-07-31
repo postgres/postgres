@@ -2111,11 +2111,12 @@ llvm_compile_expr(ExprState *state)
 						LLVMPositionBuilderAtEnd(b, b_ifnullblock);
 
 						/*
-						 * In strict node, NULL inputs result in NULL.  Save
-						 * the NULL result and goto jumpdone.
+						 * In strict mode, NULL inputs result in NULL.  Save
+						 * the NULL to the ExprState's resnull/resvalue fields
+						 * directly, then goto jumpdone.
 						 */
-						LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
-						LLVMBuildStore(b, l_datum_const(0), v_resvaluep);
+						LLVMBuildStore(b, l_sbool_const(1), v_tmpisnullp);
+						LLVMBuildStore(b, l_datum_const(0), v_tmpvaluep);
 						LLVMBuildBr(b, opblocks[op->d.hashdatum.jumpdone]);
 					}
 					else
