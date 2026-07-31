@@ -3205,7 +3205,9 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <varname>object</varname> is not <literal>wal</literal>,
         or if <xref linkend="guc-track-wal-io-timing"/> is enabled
         and <varname>object</varname> is <literal>wal</literal>,
-        otherwise zero)
+        otherwise zero). This may include time spent waiting for a
+        read started by another backend. In that case
+        <structfield>reads</structfield> may still be zero.
        </para>
       </entry>
      </row>

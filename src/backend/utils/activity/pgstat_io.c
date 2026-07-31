@@ -25,9 +25,10 @@ static bool have_iostats = false;
 
 /*
  * Check that stats have not been counted for any combination of IOObject,
- * IOContext, and IOOp which are not tracked for the passed-in BackendType. If
- * stats are tracked for this combination and IO times are non-zero, counts
- * should be non-zero.
+ * IOContext, and IOOp which are not tracked for the passed-in BackendType.
+ * Non-zero time with a zero operation count is allowed as there are cases
+ * where this may be appropriate -- like when a backend is waiting on IO
+ * initiated by another backend.
  *
  * The passed-in PgStat_BktypeIO must contain stats from the BackendType
  * specified by the second parameter. Caller is responsible for locking the
@@ -43,19 +44,10 @@ pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 		{
 			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
 			{
-				/* we do track it */
-				if (pgstat_tracks_io_op(bktype, io_object, io_context, io_op))
-				{
-					/* ensure that if IO times are non-zero, counts are > 0 */
-					if (backend_io->times[io_object][io_context][io_op] != 0 &&
-						backend_io->counts[io_object][io_context][io_op] <= 0)
-						return false;
-
-					continue;
-				}
-
 				/* we don't track it, and it is not 0 */
-				if (backend_io->counts[io_object][io_context][io_op] != 0)
+				if (!pgstat_tracks_io_op(bktype, io_object, io_context, io_op) &&
+					(backend_io->counts[io_object][io_context][io_op] != 0 ||
+					 backend_io->times[io_object][io_context][io_op] != 0))
 					return false;
 			}
 		}
