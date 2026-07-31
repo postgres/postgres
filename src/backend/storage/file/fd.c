@@ -976,7 +976,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 #endif
 
 	size = 1024;
-	fd = (int *) palloc(size * sizeof(int));
+	fd = palloc_array(int, size);
 
 #ifdef HAVE_GETRLIMIT
 	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
@@ -1011,7 +1011,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 		if (used >= size)
 		{
 			size *= 2;
-			fd = (int *) repalloc(fd, size * sizeof(int));
+			fd = repalloc_array(fd, int, size);
 		}
 		fd[used++] = thisfd;
 

@@ -172,8 +172,7 @@ extendBufFile(BufFile *file)
 
 	CurrentResourceOwner = oldowner;
 
-	file->files = (File *) repalloc(file->files,
-									(file->numFiles + 1) * sizeof(File));
+	file->files = repalloc_array(file->files, File, file->numFiles + 1);
 	file->files[file->numFiles] = pfile;
 	file->numFiles++;
 }
@@ -915,8 +914,7 @@ BufFileAppend(BufFile *target, BufFile *source)
 	if (target->resowner != source->resowner)
 		elog(ERROR, "could not append BufFile with non-matching resource owner");
 
-	target->files = (File *)
-		repalloc(target->files, sizeof(File) * newNumFiles);
+	target->files = repalloc_array(target->files, File, newNumFiles);
 	for (i = target->numFiles; i < newNumFiles; i++)
 		target->files[i] = source->files[i - target->numFiles];
 	target->numFiles = newNumFiles;
