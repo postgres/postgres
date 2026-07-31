@@ -1829,8 +1829,9 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 				needed_wait = true;
 
 				/*
-				 * The IO operation itself was already counted earlier, in
-				 * AsyncReadBuffers(), this just accounts for the wait time.
+				 * This just accounts for the wait time. The IO operation
+				 * itself was already counted earlier in AsyncReadBuffers() --
+				 * either by us or by another backend if this is a foreign IO.
 				 */
 				pgstat_count_io_op_time(io_object, io_context, IOOP_READ,
 										io_start, 0, 0);
@@ -2018,8 +2019,7 @@ AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress)
 	 * A secondary benefit is that this would allow us to measure the time in
 	 * pgaio_io_acquire() without causing undue timer overhead in the common,
 	 * non-blocking, case.  However, currently the pgstats infrastructure
-	 * doesn't really allow that, as it a) asserts that an operation can't
-	 * have time without operations b) doesn't have an API to report
+	 * doesn't really allow that because it doesn't have an API to report
 	 * "accumulated" time.
 	 */
 	ioh = pgaio_io_acquire_nb(CurrentResourceOwner, &operation->io_return);
