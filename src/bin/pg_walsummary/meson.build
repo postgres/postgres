@@ -25,6 +25,7 @@ tests += {
     'tests': [
       't/001_basic.pl',
       't/002_blocks.pl',
+      't/003_tli_switch.pl',
     ],
   }
 }
