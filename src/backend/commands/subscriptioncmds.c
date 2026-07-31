@@ -3334,12 +3334,12 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
 
 		ereport(WARNING,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin",
+				errmsg("subscription \"%s\" requested origin = NONE but might synchronize sequence values that had a different origin",
 					   subname),
-				errdetail_plural("The subscription subscribes to a publication (%s) that contains sequences that are written to by other subscriptions.",
-								 "The subscription subscribes to publications (%s) that contain sequences that are written to by other subscriptions.",
+				errdetail_plural("The subscription subscribes to a publication (%s) that contains sequences that are synchronized from other subscriptions.",
+								 "The subscription subscribes to publications (%s) that contain sequences that are synchronized from other subscriptions.",
 								 list_length(publist), pubnames.data),
-				errhint("Verify that initial data copied from the publisher sequences did not come from other origins."));
+				errhint("Verify that the initial values copied from the publisher sequences did not come from other origins."));
 	}
 
 	ExecDropSingleTupleTableSlot(slot);
