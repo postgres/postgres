@@ -1841,8 +1841,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				 * ignoring NULL input values.  We've nothing more to do after
 				 * finding a NULL.
 				 */
-				*op->resnull = true;
-				*op->resvalue = (Datum) 0;
+				state->resnull = true;
+				state->resvalue = (Datum) 0;
 				EEO_JUMP(op->d.hashdatum.jumpdone);
 			}
 
@@ -1889,8 +1889,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				 * ignoring NULL input values.  We've nothing more to do after
 				 * finding a NULL.
 				 */
-				*op->resnull = true;
-				*op->resvalue = (Datum) 0;
+				state->resnull = true;
+				state->resvalue = (Datum) 0;
 				EEO_JUMP(op->d.hashdatum.jumpdone);
 			}
 			else
