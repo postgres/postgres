@@ -1054,8 +1054,8 @@ rebuild_database_list(Oid newdb)
 static int
 db_comparator(const void *a, const void *b)
 {
-	return pg_cmp_s32(((const avl_dbase *) a)->adl_score,
-					  ((const avl_dbase *) b)->adl_score);
+	return pg_cmp_s32(((const avl_dbase *) b)->adl_score,
+					  ((const avl_dbase *) a)->adl_score);
 }
 
 /*
