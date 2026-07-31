@@ -105,6 +105,8 @@ typedef struct
 	bool		historic;
 	XLogRecPtr	read_upto;
 	bool		end_of_wal;
+	int			num_descendant_tlis;
+	TimeLineID *descendant_tlis;
 } SummarizerReadLocalXLogPrivate;
 
 /* Pointer to shared memory state. */
@@ -156,10 +158,14 @@ int			wal_summary_keep_time = 10 * HOURS_PER_DAY * MINS_PER_HOUR;
 
 static void WalSummarizerShutdown(int code, Datum arg);
 static XLogRecPtr GetLatestLSN(TimeLineID *tli);
+static XLogRecPtr WalSummarizerSwitchPoint(TimeLineID current_tli, List *tles,
+										   int *num_descendant_tlis,
+										   TimeLineID **descendant_tlis);
 static void ProcessWalSummarizerInterrupts(void);
 static XLogRecPtr SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn,
 							   bool exact, XLogRecPtr switch_lsn,
-							   XLogRecPtr maximum_lsn);
+							   XLogRecPtr maximum_lsn,
+							   int num_descendant_tlis, TimeLineID *descendant_tlis);
 static void SummarizeDbaseRecord(XLogReaderState *xlogreader,
 								 BlockRefTable *brtab);
 static void SummarizeSmgrRecord(XLogReaderState *xlogreader,
@@ -168,6 +174,9 @@ static void SummarizeXactRecord(XLogReaderState *xlogreader,
 								BlockRefTable *brtab);
 static bool SummarizeXlogRecord(XLogReaderState *xlogreader,
 								bool *new_fast_forward);
+static void summarizer_wal_segment_open(XLogReaderState *state,
+										XLogSegNo nextSegNo,
+										TimeLineID *tli_p);
 static int	summarizer_read_local_xlog_page(XLogReaderState *state,
 											XLogRecPtr targetPagePtr,
 											int reqLen,
@@ -222,16 +231,19 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 	 * true if 'current_lsn' is known to be the start of a WAL record or WAL
 	 * segment, and false if it might be in the middle of a record someplace.
 	 *
-	 * 'switch_lsn' and 'switch_tli', if set, are the LSN at which we need to
-	 * switch to a new timeline and the timeline to which we need to switch.
-	 * If not set, we either haven't figured out the answers yet or we're
-	 * already on the latest timeline.
+	 * 'switch_lsn', is the LSN at which we need to switch to a new timeline.
+	 * If not set, we either haven't figured out the answer yet or we're
+	 * already on the latest timeline. 'descendant_tlis' stores an array of
+	 * future timeline IDs to which we know we'll need to switch, and
+	 * 'num_descendant_tlis' is the length of that array. The first element of
+	 * the array is the first timeline to which we will need to switch.
 	 */
 	XLogRecPtr	current_lsn;
 	TimeLineID	current_tli;
 	bool		exact;
 	XLogRecPtr	switch_lsn = InvalidXLogRecPtr;
-	TimeLineID	switch_tli = 0;
+	int			num_descendant_tlis = 0;
+	TimeLineID *descendant_tlis = NULL;
 
 	Assert(startup_data_len == 0);
 
@@ -380,11 +392,33 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		if (current_tli != latest_tli && !XLogRecPtrIsValid(switch_lsn))
 		{
 			List	   *tles = readTimeLineHistory(latest_tli);
+			int			new_num_descendant_tlis;
+			TimeLineID *new_descendant_tlis;
 
-			switch_lsn = tliSwitchPoint(current_tli, tles, &switch_tli);
+			/*
+			 * Make sure that the array of descendant TLIs get stored into
+			 * TopMemoryContext.
+			 */
+			MemoryContextSwitchTo(TopMemoryContext);
+			switch_lsn = WalSummarizerSwitchPoint(current_tli, tles,
+												  &new_num_descendant_tlis,
+												  &new_descendant_tlis);
+			MemoryContextSwitchTo(context);
+
+			/*
+			 * Free any old array of descendant TLIs and install the new
+			 * values.
+			 */
+			if (descendant_tlis != NULL)
+				pfree(descendant_tlis);
+			num_descendant_tlis = new_num_descendant_tlis;
+			descendant_tlis = new_descendant_tlis;
+
+			/* Debug message. */
 			ereport(DEBUG1,
 					errmsg_internal("switch point from TLI %u to TLI %u is at %X/%08X",
-									current_tli, switch_tli, LSN_FORMAT_ARGS(switch_lsn)));
+									current_tli, descendant_tlis[0],
+									LSN_FORMAT_ARGS(switch_lsn)));
 		}
 
 		/*
@@ -395,12 +429,15 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		if (XLogRecPtrIsValid(switch_lsn) && current_lsn >= switch_lsn)
 		{
 			/* Restart summarization from switch point. */
-			current_tli = switch_tli;
+			Assert(num_descendant_tlis > 0);
+			current_tli = descendant_tlis[0];
 			current_lsn = switch_lsn;
 
-			/* Next timeline and switch point, if any, not yet known. */
+			/* Switch point, if any, and future TLIs, not yet known. */
 			switch_lsn = InvalidXLogRecPtr;
-			switch_tli = 0;
+			num_descendant_tlis = 0;
+			pfree(descendant_tlis);
+			descendant_tlis = NULL;
 
 			/* Update (really, rewind, if needed) state in shared memory. */
 			LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
@@ -417,7 +454,8 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		maximum_lsn = XLogRecPtrIsValid(switch_lsn) ? switch_lsn : latest_lsn;
 		end_of_summary_lsn = SummarizeWAL(current_tli,
 										  current_lsn, exact,
-										  switch_lsn, maximum_lsn);
+										  switch_lsn, maximum_lsn,
+										  num_descendant_tlis, descendant_tlis);
 		Assert(XLogRecPtrIsValid(end_of_summary_lsn));
 		Assert(end_of_summary_lsn >= current_lsn);
 
@@ -854,6 +892,62 @@ GetLatestLSN(TimeLineID *tli)
 }
 
 /*
+ * Compute the LSN at which we switched from current_tli to some later timeline.
+ * 'tles' must be the timeline history of the latest timeline.
+ *
+ * As a side effect, we set *num_descendant_tlis to the number of later TLIs that
+ * appear in the timeline history, and *descendant_tlis to an array of those TLIs,
+ * starting with immediate successor of current_tli.
+ */
+static XLogRecPtr
+WalSummarizerSwitchPoint(TimeLineID current_tli, List *tles,
+						 int *num_descendant_tlis, TimeLineID **descendant_tlis)
+{
+	XLogRecPtr	switch_lsn = InvalidXLogRecPtr;
+	int			count = 0;
+
+	/*
+	 * Find the switch point and, at the same time, count the number of TLIs
+	 * in this history that are descendants of that TLI.
+	 */
+	foreach_ptr(TimeLineHistoryEntry, tle, tles)
+	{
+		if (tle->tli == current_tli)
+		{
+			switch_lsn = tle->end;
+			break;
+		}
+		++count;
+	}
+
+	/* Sanity checks. */
+	if (!XLogRecPtrIsValid(switch_lsn))
+		ereport(ERROR,
+				(errmsg("requested timeline %u is not in this server's history",
+						current_tli)));
+	if (count == 0)
+		elog(ERROR, "cannot compute switch point for current TLI %u", current_tli);
+
+	/*
+	 * Generate an array of TLIs that are part of this history and descendants
+	 * of current_tli. The TLE list starts with the newest timeline and works
+	 * backward toward older timelines; we want the opposite ordering.
+	 */
+	*num_descendant_tlis = count;
+	*descendant_tlis = palloc_array(TimeLineID, count);
+	for (int i = 0; i < count; ++i)
+	{
+		TimeLineHistoryEntry *tle;
+
+		tle = (TimeLineHistoryEntry *) list_nth(tles, count - i - 1);
+		(*descendant_tlis)[i] = tle->tli;
+	}
+
+	/* Return value is the switchpoint. */
+	return switch_lsn;
+}
+
+/*
  * Interrupt handler for main loop of WAL summarizer process.
  */
 static void
@@ -906,7 +1000,8 @@ ProcessWalSummarizerInterrupts(void)
  */
 static XLogRecPtr
 SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
-			 XLogRecPtr switch_lsn, XLogRecPtr maximum_lsn)
+			 XLogRecPtr switch_lsn, XLogRecPtr maximum_lsn,
+			 int num_descendant_tlis, TimeLineID *descendant_tlis)
 {
 	SummarizerReadLocalXLogPrivate *private_data;
 	XLogReaderState *xlogreader;
@@ -924,11 +1019,13 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	private_data->tli = tli;
 	private_data->historic = XLogRecPtrIsValid(switch_lsn);
 	private_data->read_upto = maximum_lsn;
+	private_data->num_descendant_tlis = num_descendant_tlis;
+	private_data->descendant_tlis = descendant_tlis;
 
 	/* Create xlogreader. */
 	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &summarizer_read_local_xlog_page,
-											   .segment_open = &wal_segment_open,
+											   .segment_open = &summarizer_wal_segment_open,
 											   .segment_close = &wal_segment_close),
 									private_data);
 	if (xlogreader == NULL)
@@ -1490,6 +1587,54 @@ SummarizeXlogRecord(XLogReaderState *xlogreader, bool *new_fast_forward)
 	 */
 	*new_fast_forward = (record_wal_level == WAL_LEVEL_MINIMAL);
 	return true;
+}
+
+/*
+ * Similar to wal_segment_open, but checks for a file on any descendant timelines
+ * known to us if no file is found on the requested timeline.
+ */
+static void
+summarizer_wal_segment_open(XLogReaderState *state, XLogSegNo nextSegNo,
+							TimeLineID *tli_p)
+{
+	SummarizerReadLocalXLogPrivate *private_data = state->private_data;
+	int			count = 0;
+	TimeLineID	tli = *tli_p;
+	char		path[MAXPGPATH];
+
+	for (;;)
+	{
+		XLogFilePath(path, tli, nextSegNo, state->segcxt.ws_segsize);
+		state->seg.ws_file = BasicOpenFile(path, O_RDONLY | PG_BINARY);
+		if (state->seg.ws_file >= 0)
+		{
+			*tli_p = tli;
+			return;
+		}
+
+		/*
+		 * If the error is anything other than file-not-found, complain at
+		 * once.
+		 */
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\": %m",
+							path)));
+
+		/* Try other timelines, if any remain. */
+		if (count >= private_data->num_descendant_tlis)
+			break;
+		tli = private_data->descendant_tlis[count];
+		++count;
+	}
+
+	/* Complain about the originally requested filename. */
+	XLogFilePath(path, *tli_p, nextSegNo, state->segcxt.ws_segsize);
+	ereport(ERROR,
+			(errcode_for_file_access(),
+			 errmsg("requested WAL segment %s has already been removed",
+					path)));
 }
 
 /*
