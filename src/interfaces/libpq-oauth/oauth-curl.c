@@ -28,6 +28,7 @@
 #error libpq-oauth is not supported on this platform
 #endif
 
+#include "common/int.h"
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
 #include "oauth-curl.h"
@@ -136,7 +137,7 @@ struct device_authz
 
 	/* Fields below are parsed from the corresponding string above. */
 	int			expires_in;
-	int			interval;
+	int32		interval;
 };
 
 static void
@@ -1020,7 +1021,7 @@ parse_json_number(const char *s)
  * expensive network polling loop.) Tests may remove the lower bound with
  * PGOAUTHDEBUG, for improved performance.
  */
-static int
+static int32
 parse_interval(struct async_ctx *actx, const char *interval_str)
 {
 	double		parsed;
@@ -1031,8 +1032,8 @@ parse_interval(struct async_ctx *actx, const char *interval_str)
 	if (parsed < 1)
 		return (actx->debug_flags & OAUTHDEBUG_UNSAFE_DOS_ENDPOINT) ? 0 : 1;
 
-	else if (parsed >= INT_MAX)
-		return INT_MAX;
+	else if (parsed >= INT32_MAX)
+		return INT32_MAX;
 
 	return parsed;
 }
@@ -2620,10 +2621,7 @@ handle_token_response(struct async_ctx *actx, char **token)
 	 */
 	if (strcmp(err->error, "slow_down") == 0)
 	{
-		int			prev_interval = actx->authz.interval;
-
-		actx->authz.interval += 5;
-		if (actx->authz.interval < prev_interval)
+		if (pg_add_s32_overflow(actx->authz.interval, 5, &actx->authz.interval))
 		{
 			actx_error(actx, "slow_down interval overflow");
 			goto token_cleanup;
@@ -2964,8 +2962,25 @@ pg_fe_run_oauth_flow_impl(PGconn *conn, PGoauthBearerRequestV2 *request,
 				 * Wait for the required interval before issuing the next
 				 * request.
 				 */
-				if (!set_timer(actx, actx->authz.interval * 1000))
-					goto error_return;
+				{
+					/*
+					 * Avoid overflow of long int. (By the time we reach
+					 * LONG_MAX milliseconds -- 24 days on 32-bit platforms --
+					 * continuing to honor slow_down requests seems pretty
+					 * pointless anyway.)
+					 */
+					int64		interval_ms;
+
+					if (pg_mul_s64_overflow(actx->authz.interval, 1000,
+											&interval_ms)
+						|| (interval_ms > LONG_MAX))
+					{
+						interval_ms = LONG_MAX;
+					}
+
+					if (!set_timer(actx, (long) interval_ms))
+						goto error_return;
+				}
 
 				/*
 				 * No Curl requests are running, so we can simplify by having
