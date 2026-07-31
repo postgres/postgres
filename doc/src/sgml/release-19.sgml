@@ -19,7 +19,83 @@
 
    <itemizedlist>
     <listitem>
-     <para><emphasis>fill in later</emphasis></para>
+     <para>
+      Support for
+      <link linkend="ddl-property-graphs">property graph queries</link>
+      (<acronym>SQL/PGQ</acronym>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A new <link linkend="sql-repack"><command>REPACK</command></link> command
+      that reclaims disk space and reorganizes table contents, combining the
+      functionality of the existing <command>VACUUM FULL</command> and
+      <command>CLUSTER</command> commands.  Its <literal>CONCURRENTLY</literal>
+      option allows repacking without blocking reads and writes to the table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Logical replication now
+      <link linkend="logical-replication-sequences">replicates sequence values</link>
+      and can be enabled without a server restart when
+      <xref linkend="guc-wal-level"/> is set to <literal>replica</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Autovacuum can now use
+      <link linkend="guc-autovacuum-max-parallel-workers">parallel worker processes</link>
+      to vacuum a table's indexes, and a
+      <link linkend="autovacuum-priority">new scoring system</link> prioritizes
+      the tables that most need vacuuming or analyzing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Data checksums can now be
+      <link linkend="checksums-online-enable-disable">enabled or disabled while the database server is running</link>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A new <link linkend="sql-wait-for"><command>WAIT FOR</command></link>
+      command that waits until a standby has replayed changes up to a chosen
+      point, thereby supporting <quote>read-your-writes</quote> query patterns
+      on standbys.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support for temporal updates and deletes via the new
+      <link linkend="dml-application-time-update-delete"><literal>FOR PORTION OF</literal></link>
+      clause.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A new
+      <link linkend="pgplanadvice"><application>pg_plan_advice</application></link>
+      extension for stabilizing and controlling the query planner's decisions,
+      and a companion
+      <link linkend="pgstashadvice"><application>pg_stash_advice</application></link>
+      extension that applies this advice automatically based on the query.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Better performance in many areas, including automatic scaling of the
+      number of I/O worker processes, quicker foreign-key checks, and further
+      planning and execution optimizations.
+     </para>
     </listitem>
    </itemizedlist>
 
