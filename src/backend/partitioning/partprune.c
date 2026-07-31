@@ -2989,15 +2989,9 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	 */
 	if (nvalues == 0)
 	{
-		/* ignore key space not covered by any partitions */
-		if (partindices[minoff] < 0)
-			minoff++;
-		if (partindices[maxoff] < 0)
-			maxoff--;
-
 		result->scan_default = partition_bound_has_default(boundinfo);
-		Assert(partindices[minoff] >= 0 &&
-			   partindices[maxoff] >= 0);
+		Assert(partindices[minoff] >= -1 &&
+			   partindices[maxoff] >= -1);
 		result->bound_offsets = bms_add_range(NULL, minoff, maxoff);
 
 		return result;
