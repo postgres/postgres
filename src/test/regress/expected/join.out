@@ -6707,6 +6707,17 @@ select p.* from
    One-Time Filter: false
 (3 rows)
 
+-- Ensure multiple gating quals are evaluated correctly
+select * from (
+  select c0 from
+    (select null::int as c0 from ((select 1) union all (select 2))) t1
+  full join (select 1) t2 on true
+  where c0 is not null
+) t3 where now() is not null;
+ c0 
+----
+(0 rows)
+
 -- bug 5255: this is not optimizable by join removal
 begin;
 CREATE TEMP TABLE a (id int PRIMARY KEY);
