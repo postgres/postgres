@@ -99,6 +99,26 @@ explain (costs off) select * from rlp where a > 1 and a >=15;	/* rlp3 onwards, i
 explain (costs off) select * from rlp where a = 1 and a = 3;	/* empty */
 explain (costs off) select * from rlp where (a = 1 and a = 3) or (a > 1 and a = 15);
 
+-- Test cases for range partitioned tables with IN clauses.
+create table rangepart (a int) partition by range (a);
+create table rangepart1 partition of rangepart for values from (0) to (10);
+create table rangepart2 partition of rangepart for values from (10) to (20);
+create table rangepart_def partition of rangepart default;
+
+-- Ensure we scan all apart from the default partition
+explain (costs off) select * from rangepart where a in(5,15);
+
+-- Ensure we scan only the default
+explain (costs off) select * from rangepart where a in(20,21);
+
+-- Ensure we scan only the default
+explain (costs off) select * from rangepart where a in(-1,20);
+
+-- Ensure we scan all partitions
+explain (costs off) select * from rangepart where a is not null and a in(-1,5,15,20);
+
+drop table rangepart;
+
 -- multi-column keys
 create table mc3p (a int, b int, c int) partition by range (a, abs(b), c);
 create table mc3p_default partition of mc3p default;
