@@ -23,7 +23,20 @@ link(const char *src, const char *dst)
 	 */
 	if (CreateHardLinkA(dst, src, NULL) == 0)
 	{
-		_dosmaperr(GetLastError());
+		/*
+		 * CreateHardLinkA reports ERROR_INVALID_FUNCTION if the target file
+		 * is on a filesystem that doesn't support hard links.  _dosmaperr
+		 * would map that to EINVAL by default, but we want to report ENOTSUP
+		 * because that will cause zic.c to fall back to making copies.
+		 * However, EINVAL is probably the best translation in most cases, so
+		 * tweak it here rather than changing _dosmaperr's behavior.
+		 */
+		DWORD		error = GetLastError();
+
+		if (error == ERROR_INVALID_FUNCTION)
+			errno = ENOTSUP;
+		else
+			_dosmaperr(error);
 		return -1;
 	}
 	else
