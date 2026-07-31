@@ -1033,21 +1033,22 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 							   (Node *) gating_quals, plan);
 
 	/*
-	 * We might have had a trivial Result plan already.  Stacking one Result
-	 * atop another is silly, so if that applies, just discard the input plan.
-	 * (We're assuming its targetlist is uninteresting; it should be either
-	 * the same as the result of build_path_tlist, or a simplified version.
-	 * However, we preserve the set of relids that it purports to scan and
-	 * attribute that to our replacement Result instead, and likewise for the
-	 * result_type.)
+	 * See if we can reduce down stacked Result nodes to a single node.  This
+	 * is only possible when the nested Result has no subplan and no gating
+	 * qual.  If we do remove the nested Result, we maintain the relids and
+	 * result_type for EXPLAIN.
 	 */
 	if (IsA(plan, Result))
 	{
 		Result	   *rplan = (Result *) plan;
 
-		gplan->plan.lefttree = NULL;
-		gplan->relids = rplan->relids;
-		gplan->result_type = rplan->result_type;
+		if (rplan->plan.lefttree == NULL &&
+			rplan->resconstantqual == NULL)
+		{
+			gplan->plan.lefttree = NULL;
+			gplan->relids = rplan->relids;
+			gplan->result_type = rplan->result_type;
+		}
 	}
 
 	/*

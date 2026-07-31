@@ -2487,6 +2487,14 @@ select p.* from
   (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
   where p.k = 1 and p.k = 2;
 
+-- Ensure multiple gating quals are evaluated correctly
+select * from (
+  select c0 from
+    (select null::int as c0 from ((select 1) union all (select 2))) t1
+  full join (select 1) t2 on true
+  where c0 is not null
+) t3 where now() is not null;
+
 -- bug 5255: this is not optimizable by join removal
 begin;
 
