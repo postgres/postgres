@@ -370,6 +370,10 @@ typedef enum BackendType
 	B_WAL_SUMMARIZER,
 	B_WAL_WRITER,
 
+	/*
+	 * Data checksums processes are dynamic background workers, but they use
+	 * dedicated backend types for pgstat I/O accounting.
+	 */
 	B_DATACHECKSUMSWORKER_LAUNCHER,
 	B_DATACHECKSUMSWORKER_WORKER,
 
