@@ -631,7 +631,7 @@ json_manifest_finalize_system_identifier(JsonManifestParseState *parse)
 
 	/* Parse system identifier. */
 	system_identifier = strtou64(parse->manifest_system_identifier, &ep, 10);
-	if (*ep)
+	if (ep == parse->manifest_system_identifier || *ep)
 		json_manifest_parse_failure(parse->context,
 									"system identifier in manifest not an integer");
 
@@ -688,7 +688,7 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 
 	/* Parse size. */
 	size = strtou64(parse->size, &ep, 10);
-	if (*ep)
+	if (ep == parse->size || *ep)
 		json_manifest_parse_failure(parse->context,
 									"file size is not an integer");
 
@@ -766,7 +766,7 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
 
 	/* Parse timeline. */
 	tli = strtoul(parse->timeline, &ep, 10);
-	if (*ep)
+	if (ep == parse->timeline || *ep)
 		json_manifest_parse_failure(parse->context,
 									"timeline is not an integer");
 	if (!parse_xlogrecptr(&start_lsn, parse->start_lsn))

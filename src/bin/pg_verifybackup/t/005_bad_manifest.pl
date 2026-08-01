@@ -39,6 +39,10 @@ test_parse_error('unexpected manifest version', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 9876599}
 EOM
 
+test_parse_error('system identifier in manifest not an integer', <<EOM);
+{"PostgreSQL-Backup-Manifest-Version": 1, "System-Identifier": ""}
+EOM
+
 test_parse_error('unexpected scalar', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": true}
 EOM
@@ -76,6 +80,12 @@ EOM
 test_parse_error('file size is not an integer', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": [
     {"Path": "x", "Size": "Oops"}
+]}
+EOM
+
+test_parse_error('file size is not an integer', <<EOM);
+{"PostgreSQL-Backup-Manifest-Version": 1, "Files": [
+    {"Path": "x", "Size": ""}
 ]}
 EOM
 
@@ -143,6 +153,12 @@ EOM
 test_parse_error('timeline is not an integer', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
     {"Timeline": true, "Start-LSN": "0/0", "End-LSN": "0/0"}
+]}
+EOM
+
+test_parse_error('timeline is not an integer', <<EOM);
+{"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
+    {"Timeline": "", "Start-LSN": "0/0", "End-LSN": "0/0"}
 ]}
 EOM
 
