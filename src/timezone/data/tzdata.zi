@@ -1,4 +1,4 @@
-# version 2026b
+# version 2026c
 # redo posix_only
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
@@ -135,132 +135,6 @@ R M 2025 o - F 23 3 -1 -
 R M 2025 o - Ap 6 2 0 -
 R M 2026 o - F 15 3 -1 -
 R M 2026 o - Mar 22 2 0 -
-R M 2027 o - F 7 3 -1 -
-R M 2027 o - Mar 14 2 0 -
-R M 2028 o - Ja 23 3 -1 -
-R M 2028 o - Mar 5 2 0 -
-R M 2029 o - Ja 14 3 -1 -
-R M 2029 o - F 18 2 0 -
-R M 2029 o - D 30 3 -1 -
-R M 2030 o - F 10 2 0 -
-R M 2030 o - D 22 3 -1 -
-R M 2031 o - Ja 26 2 0 -
-R M 2031 o - D 14 3 -1 -
-R M 2032 o - Ja 18 2 0 -
-R M 2032 o - N 28 3 -1 -
-R M 2033 o - Ja 9 2 0 -
-R M 2033 o - N 20 3 -1 -
-R M 2033 o - D 25 2 0 -
-R M 2034 o - N 5 3 -1 -
-R M 2034 o - D 17 2 0 -
-R M 2035 o - O 28 3 -1 -
-R M 2035 o - D 9 2 0 -
-R M 2036 o - O 19 3 -1 -
-R M 2036 o - N 23 2 0 -
-R M 2037 o - O 4 3 -1 -
-R M 2037 o - N 15 2 0 -
-R M 2038 o - S 26 3 -1 -
-R M 2038 o - O 31 2 0 -
-R M 2039 o - S 18 3 -1 -
-R M 2039 o - O 23 2 0 -
-R M 2040 o - S 2 3 -1 -
-R M 2040 o - O 14 2 0 -
-R M 2041 o - Au 25 3 -1 -
-R M 2041 o - S 29 2 0 -
-R M 2042 o - Au 10 3 -1 -
-R M 2042 o - S 21 2 0 -
-R M 2043 o - Au 2 3 -1 -
-R M 2043 o - S 13 2 0 -
-R M 2044 o - Jul 24 3 -1 -
-R M 2044 o - Au 28 2 0 -
-R M 2045 o - Jul 9 3 -1 -
-R M 2045 o - Au 20 2 0 -
-R M 2046 o - Jul 1 3 -1 -
-R M 2046 o - Au 5 2 0 -
-R M 2047 o - Jun 23 3 -1 -
-R M 2047 o - Jul 28 2 0 -
-R M 2048 o - Jun 7 3 -1 -
-R M 2048 o - Jul 19 2 0 -
-R M 2049 o - May 30 3 -1 -
-R M 2049 o - Jul 4 2 0 -
-R M 2050 o - May 15 3 -1 -
-R M 2050 o - Jun 26 2 0 -
-R M 2051 o - May 7 3 -1 -
-R M 2051 o - Jun 18 2 0 -
-R M 2052 o - Ap 28 3 -1 -
-R M 2052 o - Jun 2 2 0 -
-R M 2053 o - Ap 13 3 -1 -
-R M 2053 o - May 25 2 0 -
-R M 2054 o - Ap 5 3 -1 -
-R M 2054 o - May 10 2 0 -
-R M 2055 o - Mar 28 3 -1 -
-R M 2055 o - May 2 2 0 -
-R M 2056 o - Mar 12 3 -1 -
-R M 2056 o - Ap 23 2 0 -
-R M 2057 o - Mar 4 3 -1 -
-R M 2057 o - Ap 8 2 0 -
-R M 2058 o - F 17 3 -1 -
-R M 2058 o - Mar 31 2 0 -
-R M 2059 o - F 9 3 -1 -
-R M 2059 o - Mar 23 2 0 -
-R M 2060 o - F 1 3 -1 -
-R M 2060 o - Mar 7 2 0 -
-R M 2061 o - Ja 16 3 -1 -
-R M 2061 o - F 27 2 0 -
-R M 2062 o - Ja 8 3 -1 -
-R M 2062 o - F 12 2 0 -
-R M 2062 o - D 31 3 -1 -
-R M 2063 o - F 4 2 0 -
-R M 2063 o - D 16 3 -1 -
-R M 2064 o - Ja 27 2 0 -
-R M 2064 o - D 7 3 -1 -
-R M 2065 o - Ja 11 2 0 -
-R M 2065 o - N 22 3 -1 -
-R M 2066 o - Ja 3 2 0 -
-R M 2066 o - N 14 3 -1 -
-R M 2066 o - D 26 2 0 -
-R M 2067 o - N 6 3 -1 -
-R M 2067 o - D 11 2 0 -
-R M 2068 o - O 21 3 -1 -
-R M 2068 o - D 2 2 0 -
-R M 2069 o - O 13 3 -1 -
-R M 2069 o - N 17 2 0 -
-R M 2070 o - O 5 3 -1 -
-R M 2070 o - N 9 2 0 -
-R M 2071 o - S 20 3 -1 -
-R M 2071 o - N 1 2 0 -
-R M 2072 o - S 11 3 -1 -
-R M 2072 o - O 16 2 0 -
-R M 2073 o - Au 27 3 -1 -
-R M 2073 o - O 8 2 0 -
-R M 2074 o - Au 19 3 -1 -
-R M 2074 o - S 30 2 0 -
-R M 2075 o - Au 11 3 -1 -
-R M 2075 o - S 15 2 0 -
-R M 2076 o - Jul 26 3 -1 -
-R M 2076 o - S 6 2 0 -
-R M 2077 o - Jul 18 3 -1 -
-R M 2077 o - Au 22 2 0 -
-R M 2078 o - Jul 10 3 -1 -
-R M 2078 o - Au 14 2 0 -
-R M 2079 o - Jun 25 3 -1 -
-R M 2079 o - Au 6 2 0 -
-R M 2080 o - Jun 16 3 -1 -
-R M 2080 o - Jul 21 2 0 -
-R M 2081 o - Jun 1 3 -1 -
-R M 2081 o - Jul 13 2 0 -
-R M 2082 o - May 24 3 -1 -
-R M 2082 o - Jun 28 2 0 -
-R M 2083 o - May 16 3 -1 -
-R M 2083 o - Jun 20 2 0 -
-R M 2084 o - Ap 30 3 -1 -
-R M 2084 o - Jun 11 2 0 -
-R M 2085 o - Ap 22 3 -1 -
-R M 2085 o - May 27 2 0 -
-R M 2086 o - Ap 14 3 -1 -
-R M 2086 o - May 19 2 0 -
-R M 2087 o - Mar 30 3 -1 -
-R M 2087 o - May 11 2 0 -
 R NA 1994 o - Mar 21 0 -1 WAT
 R NA 1994 2017 - S Su>=1 2 0 CAT
 R NA 1995 2017 - Ap Su>=1 2 -1 WAT
@@ -2106,7 +1980,8 @@ Z Africa/Casablanca -0:30:20 - LMT 1913 O 26
 0 M %z 1984 Mar 16
 1 - %z 1986
 0 M %z 2018 O 28 3
-1 M %z
+1 M %z 2026 S 20 2
+0 - %z
 Z Africa/Ceuta -0:21:16 - LMT 1901 Ja 1 0u
 0 - WET 1918 May 6 23
 0 1 WEST 1918 O 7 23
@@ -2119,7 +1994,8 @@ Z Africa/Ceuta -0:21:16 - LMT 1901 Ja 1 0u
 Z Africa/El_Aaiun -0:52:48 - LMT 1934
 -1 - %z 1976 Ap 14
 0 M %z 2018 O 28 3
-1 M %z
+1 M %z 2026 S 20 2
+0 - %z
 Z Africa/Johannesburg 1:52 - LMT 1892 F 8
 1:30 - SAST 1903 Mar
 2 SA SAST
@@ -2483,7 +2359,9 @@ Z America/Detroit -5:32:11 - LMT 1905
 -5 u E%sT
 Z America/Edmonton -7:33:52 - LMT 1906 S
 -7 Ed M%sT 1987
--7 C M%sT
+-7 C M%sT 2026 Jun 18
+-7 1 MDT 2026 N 1 2
+-6 - CST
 Z America/Eirunepe -4:39:28 - LMT 1914
 -5 B %z 1988 S 12
 -5 - %z 1993 S 28
