@@ -1201,12 +1201,18 @@ getAffixFlagSet(IspellDict *Conf, char *s)
 					 errmsg("invalid affix alias \"%s\"", s)));
 
 		if (curaffix > 0 && curaffix < Conf->nAffixData)
+		{
+			if (Conf->AffixData[curaffix] == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("invalid affix alias \"%s\"", s)));
 
 			/*
 			 * Do not subtract 1 from curaffix because empty string was added
 			 * in NIImportOOAffixes
 			 */
 			return Conf->AffixData[curaffix];
+		}
 		else if (curaffix > Conf->nAffixData)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1441,6 +1447,13 @@ nextline:
 	tsearch_readline_end(&trst);
 	if (ptype)
 		pfree(ptype);
+
+	/* Reject incomplete AF alias table. */
+	if (Conf->useFlagAliases && curaffix != naffix)
+		ereport(ERROR,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("number of aliases is less than specified number %d",
+						naffix - 1)));
 }
 
 /*
@@ -1467,6 +1480,8 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 	tsearch_readline_state trst;
 	bool		oldformat = false;
 	char	   *recoded = NULL;
+
+	flag[0] = '\0';				/* no flag seen yet */
 
 	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
@@ -2013,7 +2028,8 @@ NISortAffixes(IspellDict *Conf)
 	/* Store compound affixes in the Conf->CompoundAffix array */
 	if (Conf->naffixes > 1)
 		qsort((void *) Conf->Affix, Conf->naffixes, sizeof(AFFIX), cmpaffix);
-	Conf->CompoundAffix = ptr = (CMPDAffix *) palloc(sizeof(CMPDAffix) * Conf->naffixes);
+	/* +1 for terminator */
+	Conf->CompoundAffix = ptr = palloc_array(CMPDAffix, Conf->naffixes + 1);
 	ptr->affix = NULL;
 
 	for (i = 0; i < Conf->naffixes; i++)
