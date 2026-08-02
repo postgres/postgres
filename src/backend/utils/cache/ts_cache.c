@@ -279,36 +279,49 @@ lookup_ts_dictionary_cache(Oid dictId)
 			elog(ERROR, "text search template %u has no lexize method",
 				 template->tmpllexize);
 
+		/*
+		 * OK, create or clear out the hashtable entry
+		 */
 		if (entry == NULL)
 		{
 			bool		found;
 
-			/* Now make the cache entry */
 			entry = (TSDictionaryCacheEntry *)
 				hash_search(TSDictionaryCacheHash,
 							&dictId,
 							HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 
-			/* Create private memory context the first time through */
+			memset(entry, 0, sizeof(TSDictionaryCacheEntry));
+			entry->dictId = dictId;
+			saveCtx = NULL;
+		}
+		else
+		{
+			saveCtx = entry->dictCtx;	/* could be NULL if we failed before */
+			memset(entry, 0, sizeof(TSDictionaryCacheEntry));
+			entry->dictId = dictId;
+			entry->dictCtx = saveCtx;
+		}
+
+		/*
+		 * Create or clear the entry's private memory context
+		 */
+		if (saveCtx == NULL)
+		{
 			saveCtx = AllocSetContextCreate(CacheMemoryContext,
 											"TS dictionary",
 											ALLOCSET_SMALL_SIZES);
+			entry->dictCtx = saveCtx;
 			MemoryContextCopyAndSetIdentifier(saveCtx, NameStr(dict->dictname));
 		}
 		else
 		{
-			/* Clear the existing entry's private context */
-			saveCtx = entry->dictCtx;
 			/* Don't let context's ident pointer dangle while we reset it */
 			MemoryContextSetIdentifier(saveCtx, NULL);
 			MemoryContextReset(saveCtx);
 			MemoryContextCopyAndSetIdentifier(saveCtx, NameStr(dict->dictname));
 		}
-
-		MemSet(entry, 0, sizeof(TSDictionaryCacheEntry));
-		entry->dictId = dictId;
-		entry->dictCtx = saveCtx;
 
 		entry->lexizeOid = template->tmpllexize;
 
