@@ -1600,6 +1600,9 @@ ReleaseDeletionLock(const ObjectAddress *object)
 {
 	if (object->classId == RelationRelationId)
 		UnlockRelationOid(object->objectId, AccessExclusiveLock);
+	else if (object->classId == AuthMemRelationId)
+		UnlockSharedObject(object->classId, object->objectId, 0,
+						   AccessExclusiveLock);
 	else
 		/* assume we should lock the whole object not a sub-object */
 		UnlockDatabaseObject(object->classId, object->objectId, 0,
