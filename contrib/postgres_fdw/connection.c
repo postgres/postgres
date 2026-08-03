@@ -2479,6 +2479,18 @@ postgres_fdw_connection(PG_FUNCTION_ARGS)
 	char	   *appname;
 	char	   *sep = "";
 
+	/*
+	 * SCRAM pass-through cannot work for subscriptions because the connection
+	 * happens in a worker process.
+	 */
+	if (UseScramPassthrough(server, user))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SCRAM pass-through authentication is not supported for subscription connections"),
+				 errdetail("The foreign server or user mapping for user \"%s\" has \"use_scram_passthrough\" enabled.",
+						   GetUserNameFromId(userid, false)),
+				 errhint("Store a password in the user mapping instead.")));
+
 	construct_connection_params(server, user, &keywords, &values, &appname);
 
 	initStringInfo(&str);

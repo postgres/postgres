@@ -41,7 +41,21 @@ $node_subscriber->safe_psql('postgres',
 );
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE USER MAPPING FOR PUBLIC SERVER tap_server");
+	"CREATE USER MAPPING FOR PUBLIC SERVER tap_server OPTIONS (use_scram_passthrough 'true')"
+);
+
+my ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
+	"CREATE SUBSCRIPTION tap_sub SERVER tap_server PUBLICATION tap_pub WITH (password_required=false)"
+);
+isnt($ret, 0, 'CREATE SUBSCRIPTION fails with use_scram_passthrough');
+like(
+	$stderr,
+	qr/ERROR.*SCRAM pass-through authentication is not supported for subscription connections/,
+	'CREATE SUBSCRIPTION gives correct connection error');
+
+$node_subscriber->safe_psql('postgres',
+	"ALTER USER MAPPING FOR PUBLIC SERVER tap_server OPTIONS (DROP use_scram_passthrough)"
+);
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub SERVER tap_server PUBLICATION tap_pub WITH (password_required=false)"

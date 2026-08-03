@@ -861,6 +861,13 @@ OPTIONS (ADD password_required 'false');
            This is a technical requirement of the SCRAM protocol.
           </para>
          </listitem>
+
+         <listitem>
+          <para>
+           The foreign server must not be used for subscription connections
+           (see <xref linkend="postgres-fdw-server-subscription"/>).
+          </para>
+         </listitem>
         </itemizedlist>
        </para>
       </listitem>
