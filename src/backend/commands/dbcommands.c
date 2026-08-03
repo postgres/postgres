@@ -1883,6 +1883,8 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	systable_inplace_update_finish(inplace_state, tup);
 	XLogFlush(XactLastRecEnd);
 
+	INJECTION_POINT("dropdb-after-invalid-marker", NULL);
+
 	/*
 	 * Also delete the tuple - transactionally. If this transaction commits,
 	 * the row will be gone, but if we fail, dropdb() can be invoked again.

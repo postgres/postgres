@@ -80,6 +80,69 @@ SKIP:
 }
 
 # ---------------------------------------------------------------------------
+# Test an interrupted DROP DATABASE while checksum enabling is in progress
+#
+
+disable_data_checksums($node, wait => 1);
+
+$node->safe_psql('postgres', 'CREATE DATABASE invalid_dropdb;');
+$node->safe_psql('invalid_dropdb',
+	"CREATE TABLE bad_t AS SELECT generate_series(1,1000) AS a;");
+
+# Hold the worker in "postgres", so invalid_dropdb is still waiting in the
+# launcher's database list when DROP DATABASE is interrupted.
+my $hold = $node->background_psql('postgres');
+$hold->query_safe('CREATE TEMP TABLE holdme (a int);');
+
+my $dropdb_log_offset = -s $node->logfile;
+enable_data_checksums($node);
+$node->poll_query_until(
+	'postgres', qq[
+	SELECT count(*) > 0 FROM pg_stat_activity
+	WHERE backend_type = 'datachecksums worker' AND datname = 'postgres'
+	  AND query LIKE 'Waiting for % temp tables to be removed']
+) or die "timed out waiting for worker to wait for temporary tables";
+
+my $dropdb_log =
+  PostgreSQL::Test::Utils::slurp_file($node->logfile, $dropdb_log_offset);
+unlike(
+	$dropdb_log,
+	qr/initiating data checksum processing in database "invalid_dropdb"/,
+	'invalid database has not been processed yet');
+
+# Leave the database durably marked invalid, but abort DROP DATABASE before
+# its catalog row and files are removed.
+$node->safe_psql('postgres',
+	"SELECT injection_points_attach('dropdb-after-invalid-marker','error');");
+my ($drop_ret, $drop_stdout, $drop_stderr) =
+  $node->psql('postgres', 'DROP DATABASE invalid_dropdb;');
+isnt($drop_ret, 0, 'DROP DATABASE was interrupted after invalidation');
+like(
+	$drop_stderr,
+	qr/dropdb-after-invalid-marker/,
+	'DROP DATABASE reached the invalid-marker injection point');
+$node->safe_psql('postgres',
+	"SELECT injection_points_detach('dropdb-after-invalid-marker');");
+
+my $invalid_state = $node->safe_psql('postgres',
+	"SELECT datconnlimit FROM pg_database WHERE datname = 'invalid_dropdb';");
+is($invalid_state, '-2', 'interrupted DROP left an invalid database row');
+
+# Let checksum processing continue.  The invalid database must be treated as
+# a processing failure, not as a successfully dropped database.
+$hold->query_safe('DROP TABLE holdme;');
+$hold->quit;
+$node->poll_query_until('postgres',
+		"SELECT count(*) = 0 "
+	  . "FROM pg_catalog.pg_stat_activity "
+	  . "WHERE backend_type = 'datachecksums launcher';")
+  or die "timed out waiting for datachecksums launcher to exit";
+test_checksum_state($node, 'off');
+
+# Remove the invalid database and continue with the remaining tests.
+$node->safe_psql('postgres', 'DROP DATABASE invalid_dropdb;');
+
+# ---------------------------------------------------------------------------
 # Test concurrent CREATE DATABASE which use the file_copy strategy
 #
 

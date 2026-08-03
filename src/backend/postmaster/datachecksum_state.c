@@ -588,8 +588,10 @@ enable_data_checksums(PG_FUNCTION_ARGS)
 	 * An invalid database cannot be connected to, so the worker would fail to
 	 * process it, and unlike a dropped database its files stay around.  Error
 	 * out early with a hint rather than failing halfway through processing. A
-	 * database which turns invalid after this check is handled by the
-	 * launcher treating it as concurrently dropped.
+	 * database which turns invalid after this check, for example from an
+	 * interrupted DROP DATABASE, instead makes its worker fail; the launcher
+	 * then aborts and leaves checksums disabled, since the invalid database's
+	 * files would otherwise be left without valid checksums.
 	 */
 	ErrorOnInvalidDatabases();
 
@@ -996,11 +998,9 @@ ProcessDatabase(DataChecksumsWorkerDatabase *db)
 
 	/*
 	 * A worker which started but failed before reporting a result has most
-	 * likely FATALed in InitPostgres.  If the database was dropped, or was
-	 * invalidated by a DROP DATABASE which is bound to remove its files,
-	 * after we built the database list then that is the expected outcome and
-	 * not an error, so apply the same heuristic as when the worker failed to
-	 * start.
+	 * likely FATALed in InitPostgres.  If the database was dropped after we
+	 * built the database list then that is the expected outcome and not an
+	 * error, so apply the same heuristic as when the worker failed to start.
 	 */
 	if (result == DATACHECKSUMSWORKER_FAILED && !DatabaseExists(db->dboid))
 		result = DATACHECKSUMSWORKER_DROPDB;
@@ -1415,9 +1415,9 @@ DataChecksumsShmemRequest(void *arg)
  * DatabaseExists
  *
  * Scans the system catalog to check if a database with the given Oid exists
- * and returns true if it is found and valid, else false. Note, we cannot use
- * database_is_invalid_oid here as it will ERROR out, and we want to gracefully
- * handle errors.
+ * and returns true if it is found, even if it is marked invalid.  An invalid
+ * database still has files that need checksums, so only a missing catalog row
+ * proves that a concurrent DROP DATABASE completed.
  */
 static bool
 DatabaseExists(Oid dboid)
@@ -1427,7 +1427,6 @@ DatabaseExists(Oid dboid)
 	SysScanDesc scan;
 	bool		found;
 	HeapTuple	tuple;
-	Form_pg_database pg_database_tuple;
 
 	StartTransactionCommand();
 
@@ -1449,14 +1448,6 @@ DatabaseExists(Oid dboid)
 							  1, &skey);
 	tuple = systable_getnext(scan);
 	found = HeapTupleIsValid(tuple);
-
-	/* If the Oid exists, ensure that it's not partially dropped */
-	if (found)
-	{
-		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
-		if (database_is_invalid_form(pg_database_tuple))
-			found = false;
-	}
 
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
