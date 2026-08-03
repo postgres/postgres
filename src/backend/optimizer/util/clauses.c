@@ -2163,7 +2163,8 @@ query_outputs_are_not_nullable(Query *query)
 		if (expr_is_nonnullable(&subroot, expr, NOTNULL_SOURCE_CATALOG))
 			continue;
 
-		if (IsA(expr, Var))
+		/* Note we can only prove things about this query's own Vars */
+		if (IsA(expr, Var) && ((Var *) expr)->varlevelsup == 0)
 		{
 			Var		   *var = (Var *) expr;
 

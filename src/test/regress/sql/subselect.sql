@@ -1751,4 +1751,19 @@ WHERE id NOT IN (SELECT id FROM notnull_notvalid_tab);
 SELECT * FROM not_null_tab
 WHERE id NOT IN (SELECT id FROM notnull_notvalid_tab);
 
+-- No ANTI JOIN: the sub-select's output is an upper-level Var, so the
+-- sub-select's own quals tell us nothing about its nullability
+INSERT INTO null_tab VALUES (1, NULL);
+INSERT INTO not_null_tab VALUES (2, 2);
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM null_tab t1
+WHERE COALESCE(t1.id, -1) NOT IN
+    (SELECT t1.val FROM not_null_tab t2 WHERE t2.val IS NOT NULL);
+
+-- NOT IN with NULL on inner side should return no rows
+SELECT * FROM null_tab t1
+WHERE COALESCE(t1.id, -1) NOT IN
+    (SELECT t1.val FROM not_null_tab t2 WHERE t2.val IS NOT NULL);
+
 ROLLBACK;
