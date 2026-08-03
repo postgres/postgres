@@ -8135,7 +8135,7 @@ get_graph_pattern_def(GraphPattern *graph_pattern, deparse_context *context)
 
 	if (graph_pattern->whereClause)
 	{
-		appendStringInfoString(buf, "WHERE ");
+		appendStringInfoString(buf, " WHERE ");
 		get_rule_expr(graph_pattern->whereClause, context, false);
 	}
 }
