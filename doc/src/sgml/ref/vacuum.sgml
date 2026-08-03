@@ -115,8 +115,8 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Prints a detailed vacuum activity report for each table
-      at <literal>INFO</literal> level.
+      Prints detailed information about vacuuming each table at
+      <literal>INFO</literal> level.
      </para>
     </listitem>
    </varlistentry>
@@ -419,9 +419,10 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
   <title>Outputs</title>
 
    <para>
-    When <literal>VERBOSE</literal> is specified, <command>VACUUM</command> emits
-    progress messages to indicate which table is currently being
-    processed.  Various statistics about the tables are printed as well.
+    When <literal>VERBOSE</literal> is specified, <command>VACUUM</command>
+    prints detailed information about vacuuming each table at
+    <literal>INFO</literal> level, including which table is currently
+    being processed and various statistics about the tables.
    </para>
  </refsect1>
 
@@ -501,7 +502,8 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
 
   <para>
    To clean a single table <structname>onek</structname>, analyze it for
-   the optimizer and print a detailed vacuum activity report:
+   the optimizer and print detailed information about vacuuming and
+   analyzing it:
 
 <programlisting>
 VACUUM (VERBOSE, ANALYZE) onek;

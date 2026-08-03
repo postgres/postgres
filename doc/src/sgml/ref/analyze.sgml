@@ -65,7 +65,8 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Enables display of progress messages at <literal>INFO</literal> level.
+      Prints detailed information about analyzing each table at
+      <literal>INFO</literal> level.
      </para>
     </listitem>
    </varlistentry>
@@ -167,9 +168,10 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
   <title>Outputs</title>
 
    <para>
-    When <literal>VERBOSE</literal> is specified, <command>ANALYZE</command> emits
-    progress messages to indicate which table is currently being
-    processed.  Various statistics about the tables are printed as well.
+    When <literal>VERBOSE</literal> is specified, <command>ANALYZE</command>
+    prints detailed information about analyzing each table at
+    <literal>INFO</literal> level, including which table is currently
+    being processed and various statistics about the tables.
    </para>
  </refsect1>
 
