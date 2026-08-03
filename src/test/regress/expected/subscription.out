@@ -205,6 +205,10 @@ ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;
 WARNING:  changing the foreign-data wrapper connection function can cause the options for dependent objects to become invalid
 DROP USER MAPPING FOR regress_subscription_user2 SERVER test_server;
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user2;
+-- fail, subscription depends on the server and cannot be dropped by CASCADE
+DROP SERVER test_server CASCADE;
+ERROR:  cannot drop server test_server because subscription regress_testsub6 depends on it
+HINT:  Drop subscription regress_testsub6 first.
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 -- ok, lacks USAGE on test_server, but replacing connection anyway

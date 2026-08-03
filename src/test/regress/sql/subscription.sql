@@ -150,6 +150,8 @@ ALTER SUBSCRIPTION regress_testsub6 OWNER TO regress_subscription_user2;
 ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;
 DROP USER MAPPING FOR regress_subscription_user2 SERVER test_server;
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user2;
+-- fail, subscription depends on the server and cannot be dropped by CASCADE
+DROP SERVER test_server CASCADE;
 
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
