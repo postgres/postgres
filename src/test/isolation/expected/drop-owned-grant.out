@@ -1,0 +1,8 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s1d s2d s1c
+step s1b: BEGIN;
+step s1d: DROP OWNED BY regress_dropowned_grantor;
+step s2d: DROP OWNED BY regress_dropowned_grantor; <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
