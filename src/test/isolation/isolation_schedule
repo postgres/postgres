@@ -119,3 +119,4 @@ test: matview-write-skew
 test: lock-nowait
 test: ddl-dependency-locking
 test: pub-concurrent-drop
+test: drop-owned-grant
