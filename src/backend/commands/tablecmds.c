@@ -547,7 +547,7 @@ static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid)
 static ObjectAddress ATExecDropNotNull(Relation rel, const char *colName, bool recurse,
 									   LOCKMODE lockmode);
 static void set_attnotnull(List **wqueue, Relation rel, AttrNumber attnum,
-						   bool is_valid, bool queue_validation);
+						   bool queue_validation);
 static ObjectAddress ATExecSetNotNull(List **wqueue, Relation rel,
 									  char *conName, char *colName,
 									  bool recurse, bool recursing,
@@ -1411,7 +1411,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	nncols = AddRelationNotNullConstraints(rel, stmt->nnconstraints,
 										   old_notnulls, connames);
 	foreach_int(attrnum, nncols)
-		set_attnotnull(NULL, rel, attrnum, true, false);
+		set_attnotnull(NULL, rel, attrnum, false);
 
 	ObjectAddressSet(address, RelationRelationId, relationId);
 
@@ -7979,10 +7979,9 @@ ATExecDropNotNull(Relation rel, const char *colName, bool recurse,
  */
 static void
 set_attnotnull(List **wqueue, Relation rel, AttrNumber attnum,
-			   bool is_valid, bool queue_validation)
+			   bool queue_validation)
 {
 	Form_pg_attribute attr;
-	CompactAttribute *thisatt;
 
 	Assert(!queue_validation || wqueue);
 
@@ -8007,9 +8006,6 @@ set_attnotnull(List **wqueue, Relation rel, AttrNumber attnum,
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 				 attnum, RelationGetRelid(rel));
-
-		thisatt = TupleDescCompactAttr(RelationGetDescr(rel), attnum - 1);
-		thisatt->attnullability = ATTNULLABLE_VALID;
 
 		attr = (Form_pg_attribute) GETSTRUCT(tuple);
 
@@ -8192,7 +8188,7 @@ ATExecSetNotNull(List **wqueue, Relation rel, char *conName, char *colName,
 	ObjectAddressSet(address, ConstraintRelationId, ccon->conoid);
 
 	/* Mark pg_attribute.attnotnull for the column and queue validation */
-	set_attnotnull(wqueue, rel, attnum, true, true);
+	set_attnotnull(wqueue, rel, attnum, true);
 
 	InvokeObjectPostAlterHook(RelationRelationId,
 							  RelationGetRelid(rel), attnum);
@@ -10113,7 +10109,6 @@ ATAddCheckNNConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 */
 		if (constr->contype == CONSTR_NOTNULL)
 			set_attnotnull(wqueue, rel, ccon->attnum,
-						   !constr->skip_validation,
 						   !constr->skip_validation);
 
 		ObjectAddressSet(address, ConstraintRelationId, ccon->conoid);
@@ -13826,7 +13821,7 @@ QueueNNConstraintValidation(List **wqueue, Relation conrel, Relation rel,
 	}
 
 	/* Set attnotnull appropriately without queueing another validation */
-	set_attnotnull(NULL, rel, attnum, true, false);
+	set_attnotnull(NULL, rel, attnum, false);
 
 	tab = ATGetQueueEntry(wqueue, rel);
 	tab->verify_new_notnull = true;
