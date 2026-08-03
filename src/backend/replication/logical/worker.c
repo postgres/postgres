@@ -6003,10 +6003,6 @@ SetupApplyOrSyncWorker(int worker_slot)
 
 	InitializeLogRepWorker();
 
-	/* Connect to the origin and start the replication. */
-	elog(DEBUG1, "connecting to publisher using connection string \"%s\"",
-		 MySubscription->conninfo);
-
 	/*
 	 * Setup callback for syscache so that we know when something changes in
 	 * the subscription relation state.
