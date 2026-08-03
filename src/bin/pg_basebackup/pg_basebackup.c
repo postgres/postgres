@@ -1083,8 +1083,8 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	inject_manifest = (format == 't' && strcmp(basedir, "-") == 0 && manifest);
 
 	/* Check whether it is a tar archive and its compression type */
-	is_tar = parse_tar_compress_algorithm(archive_name,
-										  &compressed_tar_algorithm);
+	is_tar = (parse_tar_compress_algorithm(archive_name,
+										   &compressed_tar_algorithm) > 0);
 
 	/* Is this any kind of compressed tar? */
 	is_compressed_tar = (is_tar &&
