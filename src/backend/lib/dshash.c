@@ -364,6 +364,17 @@ dshash_destroy(dshash_table *hash_table)
 }
 
 /*
+ * Get the DSA area used by this hash table.
+ */
+dsa_area *
+dshash_get_dsa_area(dshash_table *hash_table)
+{
+	Assert(hash_table->control->magic == DSHASH_MAGIC);
+
+	return hash_table->area;
+}
+
+/*
  * Get a handle that can be used by other processes to attach to this hash
  * table.
  */

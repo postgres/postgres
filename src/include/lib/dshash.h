@@ -89,6 +89,7 @@ extern dshash_table *dshash_attach(dsa_area *area,
 								   dshash_table_handle handle,
 								   void *arg);
 extern void dshash_detach(dshash_table *hash_table);
+extern dsa_area *dshash_get_dsa_area(dshash_table *hash_table);
 extern dshash_table_handle dshash_get_hash_table_handle(dshash_table *hash_table);
 extern void dshash_destroy(dshash_table *hash_table);
 
