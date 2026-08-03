@@ -157,7 +157,8 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 */
 	if (!vacuum_is_permitted_for_relation(RelationGetRelid(onerel),
 										  onerel->rd_rel,
-										  params->options & ~VACOPT_VACUUM))
+										  params->options & ~VACOPT_VACUUM,
+										  false))
 	{
 		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
