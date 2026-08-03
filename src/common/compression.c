@@ -42,33 +42,47 @@ static bool expect_boolean_value(char *keyword, char *value,
 								 pg_compress_specification *result);
 
 /*
- * Look up a compression algorithm by archive file extension. Returns true and
- * sets *algorithm if the extension is recognized. Otherwise returns false.
+ * Look up a compression algorithm by archive file extension. Sets *algorithm
+ * and returns the length of the non-extension portion of the filename, or -1
+ * if the filename does not end with a recognized tar extension.
  */
-bool
+int
 parse_tar_compress_algorithm(const char *fname, pg_compress_algorithm *algorithm)
 {
-	size_t		fname_len = strlen(fname);
+	int			fname_len = strlen(fname);
 
 	if (fname_len >= 4 &&
 		strcmp(fname + fname_len - 4, ".tar") == 0)
+	{
 		*algorithm = PG_COMPRESSION_NONE;
+		return fname_len - 4;
+	}
 	else if (fname_len >= 4 &&
 			 strcmp(fname + fname_len - 4, ".tgz") == 0)
+	{
 		*algorithm = PG_COMPRESSION_GZIP;
+		return fname_len - 4;
+	}
 	else if (fname_len >= 7 &&
 			 strcmp(fname + fname_len - 7, ".tar.gz") == 0)
+	{
 		*algorithm = PG_COMPRESSION_GZIP;
+		return fname_len - 7;
+	}
 	else if (fname_len >= 8 &&
 			 strcmp(fname + fname_len - 8, ".tar.lz4") == 0)
+	{
 		*algorithm = PG_COMPRESSION_LZ4;
+		return fname_len - 8;
+	}
 	else if (fname_len >= 8 &&
 			 strcmp(fname + fname_len - 8, ".tar.zst") == 0)
+	{
 		*algorithm = PG_COMPRESSION_ZSTD;
-	else
-		return false;
+		return fname_len - 8;
+	}
 
-	return true;
+	return -1;
 }
 
 /*

@@ -1242,7 +1242,7 @@ main(int argc, char **argv)
 	if (waldir != NULL)
 	{
 		/* Check whether the path looks like a tar archive by its extension */
-		if (parse_tar_compress_algorithm(waldir, &compression))
+		if (parse_tar_compress_algorithm(waldir, &compression) >= 0)
 		{
 			split_path(waldir, &private.archive_dir, &private.archive_name);
 		}
@@ -1286,7 +1286,8 @@ main(int argc, char **argv)
 				pg_fatal("could not open directory \"%s\": %m", waldir);
 		}
 
-		if (fname != NULL && parse_tar_compress_algorithm(fname, &compression))
+		if (fname != NULL &&
+			parse_tar_compress_algorithm(fname, &compression) >= 0)
 		{
 			private.archive_dir = waldir;
 			private.archive_name = fname;
