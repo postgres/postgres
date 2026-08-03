@@ -4615,10 +4615,6 @@ ApplyWorkerMain(Datum main_arg)
 
 	InitializingApplyWorker = false;
 
-	/* Connect to the origin and start the replication. */
-	elog(DEBUG1, "connecting to publisher using connection string \"%s\"",
-		 MySubscription->conninfo);
-
 	if (am_tablesync_worker())
 	{
 		start_table_sync(&origin_startpos, &myslotname);
