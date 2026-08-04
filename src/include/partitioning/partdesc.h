@@ -40,16 +40,10 @@ typedef struct PartitionDescData
 	/* Caching fields to cache lookups in get_partition_for_tuple() */
 
 	/*
-	 * Index into the PartitionBoundInfo's datum array for the last found
+	 * Index into the PartitionBoundInfo's datums array for the last found
 	 * partition or -1 if none.
 	 */
 	int			last_found_datum_index;
-
-	/*
-	 * Partition index of the last found partition or -1 if none has been
-	 * found yet.
-	 */
-	int			last_found_part_index;
 
 	/*
 	 * For LIST partitioning, this is the number of times in a row that the

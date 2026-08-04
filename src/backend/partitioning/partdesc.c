@@ -333,7 +333,6 @@ retry:
 
 		/* Initialize caching fields for speeding up ExecFindPartition */
 		partdesc->last_found_datum_index = -1;
-		partdesc->last_found_part_index = -1;
 		partdesc->last_found_count = 0;
 
 		partdesc->oids = (Oid *) palloc(nparts * sizeof(Oid));

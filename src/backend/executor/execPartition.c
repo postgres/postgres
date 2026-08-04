@@ -1529,7 +1529,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 /*
  * get_partition_for_tuple
  *		Finds partition of relation which accepts the partition key specified
- *		in values and isnull.
+ *		in 'values' and 'isnull'.
  *
  * Calling this function can be quite expensive when LIST and RANGE
  * partitioned tables have many partitions.  This is due to the binary search
@@ -1538,30 +1538,33 @@ FormPartitionKeyDatum(PartitionDispatch pd,
  * found in subsequent ExecFindPartition() calls.  This is especially true for
  * cases such as RANGE partitioned tables on a TIMESTAMP column where the
  * partition key is the current time.  When asked to find a partition for a
- * RANGE or LIST partitioned table, we record the partition index and datum
- * offset we've found for the given 'values' in the PartitionDesc (which is
- * stored in relcache), and if we keep finding the same partition
+ * RANGE or LIST partitioned table, we store the datums index into the
+ * PartitionDesc for the given 'values'.  The datums index is the index into
+ * the PartitionBoundInfo.datums array.  On subsequent calls to
+ * ExecFindPartition, if we keep finding the same datums index
  * PARTITION_CACHED_FIND_THRESHOLD times in a row, then we'll enable caching
- * logic and instead of performing a binary search to find the correct
- * partition, we'll just double-check that 'values' still belong to the last
- * found partition, and if so, we'll return that partition index, thus
- * skipping the need for the binary search.  If we fail to match the last
- * partition when double checking, then we fall back on doing a binary search.
- * In this case, unless we find 'values' belong to the DEFAULT partition,
- * we'll reset the number of times we've hit the same partition so that we
- * don't attempt to use the cache again until we've found that partition at
- * least PARTITION_CACHED_FIND_THRESHOLD times in a row.
+ * logic, and instead of performing a binary search to find the correct
+ * partition, we'll just double-check that the given 'values' match the datums
+ * for the cached datums index in the PartitionBoundInfo.datums array, and if
+ * so, we'll return the partition index for that element, thus skipping the
+ * need for the binary search.  If the current 'values' don't match, then we
+ * fall back on doing a binary search.  In this case, unless we find 'values'
+ * belong to the DEFAULT partition, we'll reset the number of times we've hit
+ * the same datums index so that we don't attempt to use the cache again until
+ * we've found the same datums index at least PARTITION_CACHED_FIND_THRESHOLD
+ * times in a row.  This prevents us from doing a lot of unnecessary
+ * comparisons when the datums index changes frequently.
  *
- * For cases where the partition changes on each lookup, the amount of
- * additional work required just amounts to recording the last found partition
- * and bound offset then resetting the found counter.  This is cheap and does
- * not appear to cause any meaningful slowdowns for such cases.
+ * For cases where the datums index changes on each lookup, the amount of
+ * additional work required just amounts to recording the last found datums
+ * index, then resetting the found counter.  This is cheap and does not appear
+ * to cause any meaningful slowdowns.
  *
  * No caching of partitions is done when the last found partition is the
  * DEFAULT or NULL partition.  For the case of the DEFAULT partition, there
- * is no bound offset storing the matching datum, so we cannot confirm the
- * indexes match.  For the NULL partition, this is just so cheap, there's no
- * sense in caching.
+ * is no datums index to cache for the lookup values, so we cannot confirm
+ * the indexes match.  For the NULL partition, this is just so cheap that
+ * there's no sense in caching.
  *
  * Return value is index of the partition (>= 0 and < partdesc->nparts) if one
  * found or -1 if none found.
@@ -1577,14 +1580,15 @@ get_partition_for_tuple(PartitionDispatch pd, const Datum *values, const bool *i
 
 	/*
 	 * In the switch statement below, when we perform a cached lookup for
-	 * RANGE and LIST partitioned tables, if we find that the last found
-	 * partition matches the 'values', we return the partition index right
-	 * away.  We do this instead of breaking out of the switch as we don't
-	 * want to execute the code about the DEFAULT partition or do any updates
-	 * for any of the cache-related fields.  That would be a waste of effort
-	 * as we already know it's not the DEFAULT partition and have no need to
-	 * increment the number of times we found the same partition any higher
-	 * than PARTITION_CACHED_FIND_THRESHOLD.
+	 * RANGE and LIST partitioned tables, if we find that PartitionBoundInfo's
+	 * datums at the last found datums index match 'values', we return the
+	 * partition index of the cached datums index right away.  We do this
+	 * instead of breaking out of the switch, as we don't want to execute the
+	 * code about the DEFAULT partition or do any updates to any of the
+	 * cache-related fields.  That would be a waste of effort, as we already
+	 * know it's not the DEFAULT partition and have no need to increment the
+	 * number of times we found the same partition any higher than
+	 * PARTITION_CACHED_FIND_THRESHOLD.
 	 */
 
 	/* Route as appropriate based on partitioning strategy. */
@@ -1621,7 +1625,7 @@ get_partition_for_tuple(PartitionDispatch pd, const Datum *values, const bool *i
 					 * be invalidating the details of the last cached
 					 * partition but there's no real need to.  Keeping those
 					 * fields set gives a chance at matching to the cached
-					 * partition on the next lookup.
+					 * datums index on the next lookup.
 					 */
 					return boundinfo->null_index;
 				}
@@ -1765,14 +1769,13 @@ get_partition_for_tuple(PartitionDispatch pd, const Datum *values, const bool *i
 	 * so bump the count by one.  If all goes well, we'll eventually reach
 	 * PARTITION_CACHED_FIND_THRESHOLD and try the cache path next time
 	 * around.  Otherwise, we'll reset the cache count back to 1 to mark that
-	 * we've found this partition for the first time.
+	 * we've landed on this datums index for the first time.
 	 */
 	if (bound_offset == partdesc->last_found_datum_index)
 		partdesc->last_found_count++;
 	else
 	{
 		partdesc->last_found_count = 1;
-		partdesc->last_found_part_index = part_index;
 		partdesc->last_found_datum_index = bound_offset;
 	}
 
