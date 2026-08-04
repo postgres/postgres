@@ -3208,6 +3208,14 @@ select * from graph_table (ptg1 match (is atest5) COLUMNS (1 as value)) limit 0;
 
 grant select on property graph ptg1 to regress_priv_user2;
 set session role regress_priv_user2;
+\dp ptg1
+                                            Access privileges
+ Schema | Name |      Type      |            Access privileges            | Column privileges | Policies 
+--------+------+----------------+-----------------------------------------+-------------------+----------
+ public | ptg1 | property graph | regress_priv_user1=r/regress_priv_user1+|                   | 
+        |      |                | regress_priv_user2=r/regress_priv_user1 |                   | 
+(1 row)
+
 select * from graph_table (ptg1 match (is atest1) COLUMNS (1 as value)) limit 0; -- ok
  value 
 -------
