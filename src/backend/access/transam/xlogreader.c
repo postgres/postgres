@@ -185,15 +185,20 @@ XLogReaderFree(XLogReaderState *state)
  * with.  (That is enough for all "normal" records, but very large commit or
  * abort records might need more space.)
  *
+ * The caller must make sure that "reclength" is valid and within the
+ * XLogRecordMaxSize limit.
+ *
  * Note: This routine should *never* be called for xl_tot_len until the header
  * of the record has been fully validated.
  */
 static void
 allocate_recordbuf(XLogReaderState *state, uint32 reclength)
 {
-	uint32		newSize = reclength;
+	uint32		newSize;
 
-	newSize += XLOG_BLCKSZ - (newSize % XLOG_BLCKSZ);
+	Assert(reclength <= XLogRecordMaxSize);
+
+	newSize = TYPEALIGN(XLOG_BLCKSZ, reclength);
 	newSize = Max(newSize, 5 * Max(BLCKSZ, XLOG_BLCKSZ));
 
 	if (state->readRecordBuf)
@@ -673,6 +678,21 @@ restart:
 								  (uint32) SizeOfXLogRecord, total_len);
 			goto err;
 		}
+
+		/*
+		 * If the record length exceeds the maximum allowed size, don't try to
+		 * reconstruct it.  The backend enforces the same limit in
+		 * XLogRecordAssemble().
+		 */
+		if (total_len > XLogRecordMaxSize)
+		{
+			report_invalid_record(state,
+								  "invalid record length at %X/%08X: expected at most %u, got %u",
+								  LSN_FORMAT_ARGS(RecPtr),
+								  XLogRecordMaxSize, total_len);
+			goto err;
+		}
+
 		/* We'll validate the header once we have the next page. */
 		gotheader = false;
 	}
@@ -1146,6 +1166,15 @@ ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 							  "invalid record length at %X/%08X: expected at least %u, got %u",
 							  LSN_FORMAT_ARGS(RecPtr),
 							  (uint32) SizeOfXLogRecord, record->xl_tot_len);
+		return false;
+	}
+
+	if (record->xl_tot_len > XLogRecordMaxSize)
+	{
+		report_invalid_record(state,
+							  "invalid record length at %X/%08X: expected at most %u, got %u",
+							  LSN_FORMAT_ARGS(RecPtr),
+							  XLogRecordMaxSize, record->xl_tot_len);
 		return false;
 	}
 	if (!RmgrIdIsValid(record->xl_rmid))
