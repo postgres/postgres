@@ -480,9 +480,9 @@ helpVariables(unsigned short int pager)
 		  "    field separator for CSV output format (default \"%c\")\n",
 		  DEFAULT_CSV_FIELD_SEP);
 	HELP0("  display_false\n"
-		  "    set the string to be printed in place of a boolean 'false'\n");
+		  "    set the string to be printed in place of a Boolean \"false\"\n");
 	HELP0("  display_true\n"
-		  "    set the string to be printed in place of a boolean 'true'\n");
+		  "    set the string to be printed in place of a Boolean \"true\"\n");
 	HELP0("  expanded (or x)\n"
 		  "    expanded output [on, off, auto]\n");
 	HELPN("  fieldsep\n"
