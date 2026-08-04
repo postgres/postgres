@@ -1892,6 +1892,7 @@ create property graph ptg1
 select * from graph_table (ptg1 match (is atest5) COLUMNS (1 as value)) limit 0; -- ok
 grant select on property graph ptg1 to regress_priv_user2;
 set session role regress_priv_user2;
+\dp ptg1
 select * from graph_table (ptg1 match (is atest1) COLUMNS (1 as value)) limit 0; -- ok
 -- select privileges on property graph but not table
 select * from graph_table (ptg1 match (is atest5) COLUMNS (1 as value)) limit 0; -- fails

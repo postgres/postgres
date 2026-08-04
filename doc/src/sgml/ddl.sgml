@@ -2615,6 +2615,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <entry><literal>r</literal> (<quote>read</quote>)</entry>
       <entry>
        <literal>LARGE OBJECT</literal>,
+       <literal>PROPERTY GRAPH</literal>,
        <literal>SEQUENCE</literal>,
        <literal>TABLE</literal> (and table-like objects),
        table column
@@ -2782,6 +2783,12 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <entry><literal>sA</literal></entry>
       <entry>none</entry>
       <entry><literal>\dconfig+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>PROPERTY GRAPH</literal></entry>
+      <entry><literal>r</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\dp</literal></entry>
      </row>
      <row>
       <entry><literal>SCHEMA</literal></entry>
