@@ -139,7 +139,6 @@ static void check_publications_origin_sequences(WalReceiverConn *wrconn,
 												Oid *subrel_local_oids,
 												int subrel_count,
 												char *subname);
-static void check_pub_dead_tuple_retention(WalReceiverConn *wrconn);
 static void check_duplicates_in_publist(List *publist, Datum *datums);
 static List *merge_publications(List *oldpublist, List *newpublist, bool addpub, const char *subname);
 static void ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err);
@@ -977,7 +976,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 												NULL, 0, stmt->subname);
 
 			if (opts.retaindeadtuples)
-				check_pub_dead_tuple_retention(wrconn);
+				CheckPubDeadTupleRetention(wrconn);
 
 			/*
 			 * Set sync state based on if we were asked to do data copy or
@@ -2084,14 +2083,6 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					ApplyLauncherWakeupAtCommit();
 
 				update_tuple = true;
-
-				/*
-				 * The subscription might be initially created with
-				 * connect=false and retain_dead_tuples=true, meaning the
-				 * remote server's status may not be checked. Ensure this
-				 * check is conducted now.
-				 */
-				check_pub_rdt = sub->retaindeadtuples && opts.enabled;
 				break;
 			}
 
@@ -2428,7 +2419,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 		PG_TRY();
 		{
 			if (retain_dead_tuples)
-				check_pub_dead_tuple_retention(wrconn);
+				CheckPubDeadTupleRetention(wrconn);
 
 			check_publications_origin_tables(wrconn, sub->publications, false,
 											 retain_dead_tuples, origin, NULL, 0,
@@ -3355,10 +3346,15 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
  * than the PG19, or if the publisher is in recovery (i.e., it is a standby
  * server).
  *
+ * This is used both at DDL time (as a convenience, when a connection to the
+ * publisher is already being made) and by the apply worker when it connects,
+ * which is the authoritative check because the publisher's version and
+ * recovery status can change after the DDL command.
+ *
  * See comments atop worker.c for a detailed explanation.
  */
-static void
-check_pub_dead_tuple_retention(WalReceiverConn *wrconn)
+void
+CheckPubDeadTupleRetention(WalReceiverConn *wrconn)
 {
 	WalRcvExecResult *res;
 	Oid			RecoveryRow[1] = {BOOLOID};

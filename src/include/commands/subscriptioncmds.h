@@ -18,6 +18,8 @@
 #include "catalog/objectaddress.h"
 #include "parser/parse_node.h"
 
+struct WalReceiverConn;			/* avoid pulling in walreceiver.h here */
+
 extern ObjectAddress CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 										bool isTopLevel);
 extern ObjectAddress AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt, bool isTopLevel);
@@ -35,5 +37,7 @@ extern void CheckSubDeadTupleRetention(bool check_guc, bool sub_disabled,
 									   bool retain_dead_tuples,
 									   bool retention_active,
 									   bool max_retention_set);
+
+extern void CheckPubDeadTupleRetention(struct WalReceiverConn *wrconn);
 
 #endif							/* SUBSCRIPTIONCMDS_H */
