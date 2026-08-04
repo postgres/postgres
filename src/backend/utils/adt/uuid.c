@@ -790,6 +790,23 @@ uuid_extract_timestamp(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(ts);
 	}
 
+	if (version == 6)
+	{
+		tms = ((uint64) uuid->data[0] << 52)
+			+ ((uint64) uuid->data[1] << 44)
+			+ ((uint64) uuid->data[2] << 36)
+			+ ((uint64) uuid->data[3] << 28)
+			+ ((uint64) uuid->data[4] << 20)
+			+ ((uint64) uuid->data[5] << 12)
+			+ (((uint64) uuid->data[6] & 0xf) << 8)
+			+ ((uint64) uuid->data[7]);
+
+		/* convert 100-ns intervals to us, then adjust */
+		ts = (TimestampTz) (tms / 10) -
+			((uint64) POSTGRES_EPOCH_JDATE - GREGORIAN_EPOCH_JDATE) * SECS_PER_DAY * USECS_PER_SEC;
+		PG_RETURN_TIMESTAMPTZ(ts);
+	}
+
 	if (version == 7)
 	{
 		tms = (uuid->data[5])

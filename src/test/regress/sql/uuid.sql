@@ -167,6 +167,7 @@ SELECT uuid_extract_version(uuidv7());  -- 7
 
 -- timestamp
 SELECT uuid_extract_timestamp('C232AB00-9414-11EC-B3C8-9F6BDECED846') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 9562 test vector for v1
+SELECT uuid_extract_timestamp('1EC9414C-232A-6B00-B3C8-9F6BDECED846') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 9562 test vector for v6
 SELECT uuid_extract_timestamp('017F22E2-79B0-7CC3-98C4-DC0C0C07398F') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 9562 test vector for v7
 SELECT uuid_extract_timestamp(gen_random_uuid());  -- null
 SELECT uuid_extract_timestamp('11111111-1111-1111-1111-111111111111');  -- null

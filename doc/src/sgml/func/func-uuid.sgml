@@ -136,7 +136,7 @@
        </para>
        <para>
         Extracts a <type>timestamp with time zone</type> from a UUID of
-        version 1 or 7.  For other versions, this function returns null.
+        version 1, 6, or 7.  For other versions, this function returns null.
         Note that the extracted timestamp is not necessarily exactly equal
         to the time the UUID was generated; this depends on the
         implementation that generated the UUID.
