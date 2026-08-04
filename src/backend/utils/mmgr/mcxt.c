@@ -1486,6 +1486,13 @@ MemoryContextAllocAligned(MemoryContext context,
 	/* perform the actual allocation */
 	unaligned = MemoryContextAllocExtended(context, alloc_size, flags);
 
+	if (unlikely(unaligned == NULL))
+	{
+		/* NULL can be returned only when using MCXT_ALLOC_NO_OOM */
+		Assert(flags & MCXT_ALLOC_NO_OOM);
+		return NULL;
+	}
+
 	/* set the aligned pointer */
 	aligned = (void *) TYPEALIGN(alignto, (char *) unaligned +
 								 sizeof(MemoryChunk));
