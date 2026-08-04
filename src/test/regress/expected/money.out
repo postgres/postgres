@@ -539,6 +539,14 @@ SELECT '-1'::money / 1.175494e-38::float4;
 ERROR:  money out of range
 SELECT '92233720368547758.07'::money * 2::int4;
 ERROR:  money out of range
+SELECT '-92233720368547758.08'::money * -1::int8;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money / -1::int8;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money / -1::int4;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money / -1::int2;
+ERROR:  money out of range
 SELECT '1'::money / 0::int2;
 ERROR:  division by zero
 SELECT '42'::money * 'inf'::float8;
