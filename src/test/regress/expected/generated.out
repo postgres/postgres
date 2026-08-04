@@ -989,6 +989,56 @@ Inherits: gtest30
 
 ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
 ERROR:  cannot drop generation expression from inherited column
+BEGIN;
+CREATE TABLE gtest30_1_1 () INHERITS (gtest30_1);
+ALTER TABLE gtest30 ALTER COLUMN b DROP EXPRESSION;
+\d gtest30_1_1
+            Table "public.gtest30_1_1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Inherits: gtest30_1
+
+ROLLBACK;
+-- test drop expression with subpartitions
+CREATE TABLE gtest_root (a int, b int, c int GENERATED ALWAYS AS (a + b) STORED) PARTITION BY LIST (a);
+CREATE TABLE gtest_node PARTITION OF gtest_root FOR VALUES IN (1) PARTITION BY LIST (b);
+CREATE TABLE gtest_leaf PARTITION OF gtest_node FOR VALUES IN (1);
+ALTER TABLE gtest_node ALTER COLUMN c DROP EXPRESSION;  -- fails
+ERROR:  cannot drop generation expression from inherited column
+ALTER TABLE ONLY gtest_root ALTER COLUMN c DROP EXPRESSION;  -- fails
+ERROR:  ALTER TABLE / DROP EXPRESSION must be applied to child tables too
+ALTER TABLE gtest_root ALTER COLUMN c DROP EXPRESSION;
+\d gtest_(root|node|leaf)
+             Table "public.gtest_leaf"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+Partition of: gtest_node FOR VALUES IN (1)
+
+       Partitioned table "public.gtest_node"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+Partition of: gtest_root FOR VALUES IN (1)
+Partition key: LIST (b)
+Number of partitions: 1 (Use \d+ to list them.)
+
+       Partitioned table "public.gtest_root"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+Partition key: LIST (a)
+Number of partitions: 1 (Use \d+ to list them.)
+
+DROP TABLE gtest_root;
 -- triggers
 CREATE TABLE gtest26 (
     a int PRIMARY KEY,
