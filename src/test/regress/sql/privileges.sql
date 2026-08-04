@@ -1890,7 +1890,7 @@ create property graph ptg1
 			label ltv properties (col1 as ltvk));
 -- select privileges on property graph as well as table
 select * from graph_table (ptg1 match (is atest5) COLUMNS (1 as value)) limit 0; -- ok
-grant select on ptg1 to regress_priv_user2;
+grant select on property graph ptg1 to regress_priv_user2;
 set session role regress_priv_user2;
 select * from graph_table (ptg1 match (is atest1) COLUMNS (1 as value)) limit 0; -- ok
 -- select privileges on property graph but not table
@@ -1904,7 +1904,7 @@ select * from graph_table (ptg1 match (is atest5) COLUMNS (1 as value)) limit 0;
 -- column privileges
 set session role regress_priv_user1;
 select * from graph_table (ptg1 match (v is lttc) COLUMNS (v.lttck)) limit 0; -- ok
-grant select on ptg1 to regress_priv_user4;
+grant select on property graph ptg1 to regress_priv_user4;
 set session role regress_priv_user4;
 select * from graph_table (ptg1 match (a is atest5) COLUMNS (a.four)) limit 0; -- ok
 select * from graph_table (ptg1 match (v is lttc) COLUMNS (v.lttck)) limit 0; -- fail
