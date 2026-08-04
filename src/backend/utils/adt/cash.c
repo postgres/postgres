@@ -160,6 +160,22 @@ cash_div_int64(Cash c, int64 i)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
+	/*
+	 * INT64_MIN / -1 is problematic, since the result can't be represented on
+	 * a two's-complement machine.  Some machines produce INT64_MIN, some
+	 * produce zero, some throw an exception.  We can dodge the problem by
+	 * recognizing that division by -1 is the same as negation.
+	 */
+	if (i == -1)
+	{
+		if (unlikely(c == PG_INT64_MIN))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("money out of range")));
+		return -c;
+	}
+
+	/* No overflow is possible */
 	return c / i;
 }
 
