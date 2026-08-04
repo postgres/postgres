@@ -8887,17 +8887,12 @@ static void
 ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing, LOCKMODE lockmode)
 {
 	/*
-	 * Reject ONLY if there are child tables.  We could implement this, but it
-	 * is a bit complicated.  GENERATED clauses must be attached to the column
-	 * definition and cannot be added later like DEFAULT, so if a child table
-	 * has a generation expression that the parent does not have, the child
-	 * column will necessarily be an attislocal column.  So to implement ONLY
-	 * here, we'd need extra code to update attislocal of the direct child
-	 * tables, somewhat similar to how DROP COLUMN does it, so that the
-	 * resulting state can be properly dumped and restored.
+	 * Reject ONLY if there are child tables -- but only, of course, at the
+	 * top of the tree, otherwise it'd be impossible to run this command with
+	 * trees deeper than two levels.  Caller already got lock.
 	 */
-	if (!recurse &&
-		find_inheritance_children(RelationGetRelid(rel), lockmode))
+	if (!recurse && !recursing &&
+		find_inheritance_children(RelationGetRelid(rel), NoLock))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ALTER TABLE / DROP EXPRESSION must be applied to child tables too")));
