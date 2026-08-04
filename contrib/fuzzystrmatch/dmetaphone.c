@@ -808,11 +808,10 @@ DoubleMetaphone(const char *str, Oid collid, char **codes)
 						MetaphAdd(primary, "KN");
 						MetaphAdd(secondary, "N");
 					}
-					else
-						/* not e.g. 'cagney' */
-						if (!StringAt(original, (current + 2), 2, "EY", "")
-							&& (GetAt(original, current + 1) != 'Y')
-							&& !SlavoGermanic(original))
+					/* not e.g. 'cagney' */
+					else if (!StringAt(original, (current + 2), 2, "EY", "")
+							 && (GetAt(original, current + 1) != 'Y')
+							 && !SlavoGermanic(original))
 					{
 						MetaphAdd(primary, "N");
 						MetaphAdd(secondary, "KN");
