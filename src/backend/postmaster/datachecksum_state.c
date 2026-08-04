@@ -841,11 +841,10 @@ ProcessSingleRelationByOid(Oid relationId, BufferAccessStrategy strategy)
 		pgstat_report_activity(STATE_IDLE, NULL);
 		return true;
 	}
-	RelationGetSmgr(rel);
 
 	for (ForkNumber fnum = 0; fnum <= MAX_FORKNUM; fnum++)
 	{
-		if (smgrexists(rel->rd_smgr, fnum))
+		if (smgrexists(RelationGetSmgr(rel), fnum))
 		{
 			if (!ProcessSingleRelationFork(rel, fnum, strategy))
 			{
