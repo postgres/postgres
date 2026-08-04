@@ -39,7 +39,7 @@ static Datum heap_force_common(FunctionCallInfo fcinfo,
 static void sanity_check_tid_array(ArrayType *ta, int *ntids);
 static void sanity_check_relation(Relation rel);
 static BlockNumber find_tids_one_page(ItemPointer tids, int ntids,
-									  OffsetNumber *next_start_ptr);
+									  int *next_start_ptr);
 
 /*-------------------------------------------------------------------------
  * heap_force_kill()
@@ -86,7 +86,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 	int			ntids,
 				nblocks;
 	Relation	rel;
-	OffsetNumber curr_start_ptr,
+	int			curr_start_ptr,
 				next_start_ptr;
 	bool		include_this_tid[MaxHeapTuplesPerPage];
 
@@ -402,7 +402,7 @@ sanity_check_relation(Relation rel)
  * ------------------------------------------------------------------------
  */
 static BlockNumber
-find_tids_one_page(ItemPointer tids, int ntids, OffsetNumber *next_start_ptr)
+find_tids_one_page(ItemPointer tids, int ntids, int *next_start_ptr)
 {
 	int			i;
 	BlockNumber prev_blkno,
