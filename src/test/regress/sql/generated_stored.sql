@@ -676,6 +676,21 @@ ALTER TABLE ONLY gtest30 ALTER COLUMN b DROP EXPRESSION;  -- error
 \d gtest30
 \d gtest30_1
 ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
+BEGIN;
+CREATE TABLE gtest30_1_1 () INHERITS (gtest30_1);
+ALTER TABLE gtest30 ALTER COLUMN b DROP EXPRESSION;
+\d gtest30_1_1
+ROLLBACK;
+
+-- test drop expression with subpartitions
+CREATE TABLE gtest_root (a int, b int, c int GENERATED ALWAYS AS (a + b) STORED) PARTITION BY LIST (a);
+CREATE TABLE gtest_node PARTITION OF gtest_root FOR VALUES IN (1) PARTITION BY LIST (b);
+CREATE TABLE gtest_leaf PARTITION OF gtest_node FOR VALUES IN (1);
+ALTER TABLE gtest_node ALTER COLUMN c DROP EXPRESSION;  -- fails
+ALTER TABLE ONLY gtest_root ALTER COLUMN c DROP EXPRESSION;  -- fails
+ALTER TABLE gtest_root ALTER COLUMN c DROP EXPRESSION;
+\d gtest_(root|node|leaf)
+DROP TABLE gtest_root;
 
 -- composite type dependencies
 CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') STORED, c text);
