@@ -8049,9 +8049,6 @@ static void
 CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 {
 	CheckPointRelationMap();
-	CheckPointReplicationSlots(flags & CHECKPOINT_IS_SHUTDOWN);
-	CheckPointSnapBuild();
-	CheckPointLogicalRewriteHeap();
 	CheckPointReplicationOrigin();
 
 	/* Write out all dirty data in SLRUs and the main buffer pool */
@@ -8071,7 +8068,17 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 	CheckpointStats.ckpt_sync_end_t = GetCurrentTimestamp();
 	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_DONE();
 
-	/* We deliberately delay 2PC checkpointing as long as possible */
+	/*
+	 * Run replication slot checkpointing after buffer writes and
+	 * ProcessSyncRequests(), so WAL removal uses a fresher slot retention
+	 * horizon and avoids retaining WAL segments that slots no longer need.
+	 * Then clean up logical snapshots and rewrite mappings based on the
+	 * updated saved restart LSNs.  Also delay 2PC checkpointing as long as
+	 * possible.
+	 */
+	CheckPointReplicationSlots(flags & CHECKPOINT_IS_SHUTDOWN);
+	CheckPointSnapBuild();
+	CheckPointLogicalRewriteHeap();
 	CheckPointTwoPhase(checkPointRedo);
 }
 
