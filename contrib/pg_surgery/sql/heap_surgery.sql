@@ -65,6 +65,14 @@ select heap_force_kill('htab2'::regclass, ARRAY[NULL]::tid[]);
 -- but we should be able to kill the one tuple we have
 select heap_force_kill('htab2'::regclass, ARRAY['(0, 3)']::tid[]);
 
+-- a tid[] larger than 65535 entries must still finish
+create temp table htab3(a int);
+insert into htab3 values (1);
+select heap_force_kill(
+	'htab3'::regclass,
+	array(select '(0,1)'::tid from generate_series(1, 65536)));
+select count(*) from htab3;
+
 -- materialized view.
 -- note that we don't commit the transaction, so autovacuum can't interfere.
 begin;
