@@ -236,6 +236,9 @@ SET ROLE regress_graph_user1;
 GRANT SELECT ON PROPERTY GRAPH g1 TO regress_graph_user2;
 GRANT UPDATE ON PROPERTY GRAPH g1 TO regress_graph_user2;  -- fail
 ERROR:  invalid privilege type UPDATE for property graph
+GRANT UPDATE ON TABLE g1 TO regress_graph_user2;  -- fail
+ERROR:  "g1" is a property graph
+HINT:  Use GRANT ... ON PROPERTY GRAPH instead.
 RESET ROLE;
 -- collation
 CREATE TABLE tc1 (a int, b text);

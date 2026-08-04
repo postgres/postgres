@@ -184,6 +184,7 @@ ALTER PROPERTY GRAPH g1 OWNER TO regress_graph_user1;
 SET ROLE regress_graph_user1;
 GRANT SELECT ON PROPERTY GRAPH g1 TO regress_graph_user2;
 GRANT UPDATE ON PROPERTY GRAPH g1 TO regress_graph_user2;  -- fail
+GRANT UPDATE ON TABLE g1 TO regress_graph_user2;  -- fail
 RESET ROLE;
 
 -- collation
