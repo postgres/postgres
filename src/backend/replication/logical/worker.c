@@ -5734,6 +5734,21 @@ run_apply_worker(void)
 	 */
 	(void) walrcv_identify_system(LogRepWorkerWalRcvConn, &startpointTLI, NULL);
 
+	/*
+	 * If retain_dead_tuples is enabled, verify that the publisher is
+	 * suitable, that is, it runs a version that supports the feature and is
+	 * not in recovery. This is the authoritative check. Although the same
+	 * validation is performed opportunistically at DDL time, the publisher's
+	 * version or recovery status may have changed since then, for example
+	 * after a failover.
+	 */
+	if (MySubscription->retaindeadtuples)
+	{
+		StartTransactionCommand();
+		CheckPubDeadTupleRetention(LogRepWorkerWalRcvConn);
+		CommitTransactionCommand();
+	}
+
 	set_apply_error_context_origin(originname);
 
 	set_stream_options(&options, slotname, &origin_startpos);
