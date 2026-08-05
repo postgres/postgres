@@ -742,15 +742,6 @@ test_fdw_connection(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text("dbname=regress_doesnotexist user=doesnotexist password=secret"));
 }
 
-PG_FUNCTION_INFO_V1(test_fdw_connection_no_password);
-Datum
-test_fdw_connection_no_password(PG_FUNCTION_ARGS)
-{
-	/* Ensure the test fails if no valid user mapping exists. */
-	GetUserMapping(PG_GETARG_OID(0), PG_GETARG_OID(1));
-	PG_RETURN_TEXT_P(cstring_to_text("dbname=regress_doesnotexist user=doesnotexist"));
-}
-
 PG_FUNCTION_INFO_V1(is_catalog_text_unique_index_oid);
 Datum
 is_catalog_text_unique_index_oid(PG_FUNCTION_ARGS)

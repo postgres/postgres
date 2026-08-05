@@ -53,13 +53,6 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
    to alter the owner, you must be able to <literal>SET ROLE</literal> to the
    new owning role. If the subscription has
    <literal>password_required=false</literal>, only superusers can modify it.
-   If the subscription uses a foreign server, the new owner must have
-   <literal>USAGE</literal> privilege on the foreign server, a user mapping
-   for the new owner or for <literal>PUBLIC</literal> must exist, and the
-   connection string generated for the new owner must be valid.  If the new
-   owner is not a superuser and the subscription has
-   <literal>password_required=true</literal>, the generated connection string
-   must include a password.
   </para>
 
   <para>
