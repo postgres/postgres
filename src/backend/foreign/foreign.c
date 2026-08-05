@@ -231,6 +231,16 @@ ForeignServerConnectionString(Oid userid, ForeignServer *server)
 UserMapping *
 GetUserMapping(Oid userid, Oid serverid)
 {
+	return GetUserMappingExtended(userid, serverid, ERROR);
+}
+
+/*
+ * Like GetUserMapping(), but allows caller to specify an elevel. If elevel is
+ * less than ERROR, returns NULL if the user mapping doesn't exist.
+ */
+UserMapping *
+GetUserMappingExtended(Oid userid, Oid serverid, int elevel)
+{
 	Datum		datum;
 	HeapTuple	tp;
 	bool		isnull;
@@ -252,10 +262,12 @@ GetUserMapping(Oid userid, Oid serverid)
 	{
 		ForeignServer *server = GetForeignServer(serverid);
 
-		ereport(ERROR,
+		ereport(elevel,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("user mapping not found for user \"%s\", server \"%s\"",
 						MappingUserName(userid), server->servername)));
+
+		return NULL;
 	}
 
 	um = palloc_object(UserMapping);

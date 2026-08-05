@@ -124,13 +124,10 @@ RESET SESSION AUTHORIZATION;
 GRANT USAGE ON FOREIGN SERVER test_server TO regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 
--- fail, need user mapping
+-- warn, need user mapping, then fail, FDW doesn't support connections
 CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = NONE, connect = false);
 
 CREATE USER MAPPING FOR regress_subscription_user3 SERVER test_server OPTIONS(user 'foo', password 'secret');
-
--- fail, need CONNECTION clause
-CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = NONE, connect = false);
 
 RESET SESSION AUTHORIZATION;
 ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;

@@ -805,8 +805,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 
-		/* make sure a user mapping exists */
-		GetUserMapping(owner, server->serverid);
+		/* check user mapping */
+		GetUserMappingExtended(owner, server->serverid, WARNING);
 
 		serverid = server->serverid;
 		conninfo = ForeignServerConnectionString(owner, server);
@@ -2157,8 +2157,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 								   GetUserNameFromId(form->subowner, false),
 								   new_server->servername));
 
-				/* make sure a user mapping exists */
-				GetUserMapping(form->subowner, new_server->serverid);
+				/* check user mapping */
+				GetUserMappingExtended(form->subowner, new_server->serverid, WARNING);
 
 				new_conninfo = ForeignServerConnectionString(form->subowner,
 															 new_server);
