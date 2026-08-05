@@ -1631,7 +1631,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	Datum		values[Natts_pg_subscription];
 	HeapTuple	tup;
 	Oid			subid;
-	bool		orig_conninfo_needed = true;
+	bool		orig_conninfo_needed = false;
 	bool		update_tuple = false;
 	bool		update_failover = false;
 	bool		update_two_phase = false;
@@ -1713,37 +1713,60 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	if (supported_opts > 0)
 		parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
-	/*
-	 * Ensure that ALTER SUBSCRIPTION commands that could be used to fix a
-	 * broken connection or prepare to drop a broken subscription don't
-	 * attempt to construct the conninfo. Otherwise, we might encounter the
-	 * error the user is trying to fix.
-	 *
-	 * Specifically, ALTER SUBSCRIPTION DISABLE, ALTER SUBSCRIPTION SERVER,
-	 * ALTER SUBSCRIPTION CONNECTION, or ALTER SUBSCRIPTION SET
-	 * (slot_name=NONE).
-	 *
-	 * NB: if the user specifies multiple SET options, then we may still need
-	 * to construct conninfo even if slot_name is set to NONE.
-	 */
-	if (stmt->kind == ALTER_SUBSCRIPTION_ENABLED)
-	{
-		if (opts.specified_opts == SUBOPT_ENABLED && !opts.enabled)
-			orig_conninfo_needed = false;
-	}
-	else if (stmt->kind == ALTER_SUBSCRIPTION_SERVER ||
-			 stmt->kind == ALTER_SUBSCRIPTION_CONNECTION)
-	{
-		orig_conninfo_needed = false;
-	}
-	else if (stmt->kind == ALTER_SUBSCRIPTION_OPTIONS)
-	{
-		/* ... SET (slot_name = NONE) with no other options */
-		if (opts.specified_opts == SUBOPT_SLOT_NAME && !opts.slot_name)
-			orig_conninfo_needed = false;
-	}
-
 	sub = GetSubscription(subid, false);
+
+	/*
+	 * Determine in advance whether we need the original conninfo or not, so
+	 * that errors are generated consistently in cases where we do need it;
+	 * and not generated at all if we don't.
+	 */
+
+	/* conninfo needed when refreshing */
+	switch (stmt->kind)
+	{
+		case ALTER_SUBSCRIPTION_REFRESH_PUBLICATION:
+		case ALTER_SUBSCRIPTION_REFRESH_SEQUENCES:
+			orig_conninfo_needed = true;
+			break;
+
+		case ALTER_SUBSCRIPTION_SET_PUBLICATION:
+		case ALTER_SUBSCRIPTION_ADD_PUBLICATION:
+		case ALTER_SUBSCRIPTION_DROP_PUBLICATION:
+			/* opts.refresh defaults to true when the option is supported */
+			orig_conninfo_needed = opts.refresh;
+			break;
+
+		case ALTER_SUBSCRIPTION_OPTIONS:
+			{
+				if (sub->slotname)
+				{
+					if (IsSet(opts.specified_opts, SUBOPT_FAILOVER))
+						orig_conninfo_needed = true;
+					if (IsSet(opts.specified_opts, SUBOPT_TWOPHASE_COMMIT) &&
+						!opts.twophase)
+						orig_conninfo_needed = true;
+				}
+
+				if (IsSet(opts.specified_opts, SUBOPT_RETAIN_DEAD_TUPLES) &&
+					opts.retaindeadtuples)
+					orig_conninfo_needed = true;
+
+				if (IsSet(opts.specified_opts, SUBOPT_ORIGIN))
+				{
+					bool		rdt;
+
+					rdt = IsSet(opts.specified_opts, SUBOPT_RETAIN_DEAD_TUPLES) ?
+						opts.retaindeadtuples : sub->retaindeadtuples;
+
+					if (rdt && pg_strcasecmp(opts.origin, LOGICALREP_ORIGIN_ANY) == 0)
+						orig_conninfo_needed = true;
+				}
+			}
+			break;
+
+		default:
+			break;
+	}
 
 	/*
 	 * Skip ACL checks on the subscription's foreign server, if any. If
