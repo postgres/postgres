@@ -79,14 +79,10 @@ GetPublicationsStr(List *publications, StringInfo dest, bool quote_literal)
 /*
  * Fetch the subscription from the syscache.
  *
- * If conninfo_needed is true, conninfo will be constructed, possibly
- * encountering errors in ForeignServerConnectionString(). Callers not
- * expecting such errors should pass false, in which case conninfo will be
- * NULL.
+ * Callers that need conninfo must call SubscriptionConninfo().
  */
 Subscription *
-GetSubscription(Oid subid, bool missing_ok, bool conninfo_needed,
-				bool conninfo_aclcheck)
+GetSubscription(Oid subid, bool missing_ok)
 {
 	HeapTuple	tup;
 	Subscription *sub;
@@ -95,8 +91,6 @@ GetSubscription(Oid subid, bool missing_ok, bool conninfo_needed,
 	bool		isnull;
 	MemoryContext cxt;
 	MemoryContext oldcxt;
-
-	Assert(conninfo_needed || !conninfo_aclcheck);
 
 	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
 
@@ -139,42 +133,6 @@ GetSubscription(Oid subid, bool missing_ok, bool conninfo_needed,
 	sub->maxretention = subform->submaxretention;
 	sub->retentionactive = subform->subretentionactive;
 	sub->conflictlogrelid = subform->subconflictlogrelid;
-
-	if (conninfo_needed)
-	{
-		if (OidIsValid(subform->subserver))
-		{
-			AclResult	aclresult;
-			ForeignServer *server;
-
-			server = GetForeignServer(subform->subserver);
-
-			if (conninfo_aclcheck)
-			{
-				/* recheck ACL if requested */
-				aclresult = object_aclcheck(ForeignServerRelationId,
-											subform->subserver,
-											subform->subowner, ACL_USAGE);
-
-				if (aclresult != ACLCHECK_OK)
-					ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
-									GetUserNameFromId(subform->subowner, false),
-									server->servername)));
-			}
-
-			sub->conninfo = ForeignServerConnectionString(subform->subowner,
-														  server);
-		}
-		else
-		{
-			datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID,
-										   tup,
-										   Anum_pg_subscription_subconninfo);
-			sub->conninfo = TextDatumGetCString(datum);
-		}
-	}
 
 	/* Get slotname */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID,
@@ -224,6 +182,65 @@ GetSubscription(Oid subid, bool missing_ok, bool conninfo_needed,
 	MemoryContextSwitchTo(oldcxt);
 
 	return sub;
+}
+
+/*
+ * Generate the connection string for a subscription.
+ *
+ * This is deliberately separate from GetSubscription() because resolving
+ * conninfo for a server-based subscription has its own error paths (foreign
+ * server USAGE, user mapping, ForeignServerConnectionString()).  Keeping it
+ * separate lets a caller load the subscription and decide whether a
+ * connection is actually needed, and check things such as whether the
+ * subscription is enabled, before risking those errors.  Callers that never
+ * connect thus never hit them, which matters during restore.
+ */
+char *
+SubscriptionConninfo(Subscription *sub, bool aclcheck)
+{
+	HeapTuple	tup;
+	Form_pg_subscription subform;
+	Datum		datum;
+	char	   *conninfo;
+
+	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(sub->oid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for subscription %u", sub->oid);
+
+	subform = (Form_pg_subscription) GETSTRUCT(tup);
+
+	if (OidIsValid(subform->subserver))
+	{
+		ForeignServer *server;
+		AclResult	aclresult;
+
+		server = GetForeignServer(subform->subserver);
+
+		if (aclcheck)
+		{
+			aclresult = object_aclcheck(ForeignServerRelationId,
+										subform->subserver,
+										sub->owner, ACL_USAGE);
+			if (aclresult != ACLCHECK_OK)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
+								GetUserNameFromId(sub->owner, false),
+								server->servername)));
+		}
+
+		conninfo = ForeignServerConnectionString(sub->owner, server);
+	}
+	else
+	{
+		datum = SysCacheGetAttrNotNull(SUBSCRIPTIONOID, tup,
+									   Anum_pg_subscription_subconninfo);
+		conninfo = TextDatumGetCString(datum);
+	}
+
+	ReleaseSysCache(tup);
+
+	return conninfo;
 }
 
 /*

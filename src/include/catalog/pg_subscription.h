@@ -173,7 +173,6 @@ typedef struct Subscription
 									 * exceeded max_retention_duration, when
 									 * defined */
 	Oid			conflictlogrelid;	/* conflict log table Oid */
-	char	   *conninfo;		/* Connection string to the publisher */
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */
 	char	   *walrcvtimeout;	/* wal_receiver_timeout setting for worker */
@@ -222,9 +221,8 @@ typedef struct Subscription
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
-extern Subscription *GetSubscription(Oid subid, bool missing_ok,
-									 bool conninfo_needed,
-									 bool conninfo_aclcheck);
+extern Subscription *GetSubscription(Oid subid, bool missing_ok);
+extern char *SubscriptionConninfo(Subscription *sub, bool aclcheck);
 extern void DisableSubscription(Oid subid);
 
 extern int	CountDBSubscriptions(Oid dbid);
