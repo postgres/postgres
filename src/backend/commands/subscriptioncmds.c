@@ -2993,25 +2993,15 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 					   get_database_name(MyDatabaseId));
 
 	/*
-	 * If the subscription uses a server, check that the new owner has USAGE
-	 * privileges on the server and that a user mapping exists. Note: does not
-	 * re-check the resulting connection string.
+	 * The privileges will be checked before the connection is actually used,
+	 * so it does not need to be done here. Avoid unnecessary risk of errors
+	 * here, which could interfere with restore.
+	 *
+	 * However, it is convenient to check if a user mapping exists, and raise
+	 * a WARNING if not.
 	 */
 	if (OidIsValid(form->subserver))
-	{
-		ForeignServer *server = GetForeignServer(form->subserver);
-
-		aclresult = object_aclcheck(ForeignServerRelationId, server->serverid, newOwnerId, ACL_USAGE);
-		if (aclresult != ACLCHECK_OK)
-			ereport(ERROR,
-					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					errmsg("new subscription owner \"%s\" does not have permission on foreign server \"%s\"",
-						   GetUserNameFromId(newOwnerId, false),
-						   server->servername));
-
-		/* make sure a user mapping exists */
-		GetUserMapping(newOwnerId, server->serverid);
-	}
+		GetUserMappingExtended(newOwnerId, form->subserver, WARNING);
 
 	form->subowner = newOwnerId;
 	CatalogTupleUpdate(rel, &tup->t_self, tup);

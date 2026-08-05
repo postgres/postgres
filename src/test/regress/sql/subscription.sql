@@ -136,6 +136,10 @@ RESET SESSION AUTHORIZATION;
 -- fail, subscription depends on the server and cannot be dropped by CASCADE
 DROP SERVER test_server CASCADE;
 
+-- ok, USAGE privilege on server not checked for OWNER TO, but warn
+-- about user mapping
+ALTER SUBSCRIPTION regress_testsub6 OWNER TO regress_subscription_user2;
+ALTER SUBSCRIPTION regress_testsub6 OWNER TO regress_subscription_user3;
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 
