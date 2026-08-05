@@ -191,6 +191,11 @@ RESET SESSION AUTHORIZATION;
 DROP SERVER test_server CASCADE;
 ERROR:  cannot drop server test_server because subscription regress_testsub6 depends on it
 HINT:  Drop subscription regress_testsub6 first.
+-- ok, USAGE privilege on server not checked for OWNER TO, but warn
+-- about user mapping
+ALTER SUBSCRIPTION regress_testsub6 OWNER TO regress_subscription_user2;
+WARNING:  user mapping not found for user "regress_subscription_user2", server "test_server"
+ALTER SUBSCRIPTION regress_testsub6 OWNER TO regress_subscription_user3;
 REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 -- ok, lacks USAGE on test_server, but replacing connection anyway
