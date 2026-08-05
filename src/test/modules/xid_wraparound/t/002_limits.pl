@@ -70,7 +70,8 @@ $node->safe_psql('postgres',
 # the warning:
 #
 #  WARNING:  database "postgres" must be vacuumed within 3000024 transactions
-#  HINT:  To avoid a database shutdown, execute a database-wide VACUUM in that database.
+#  DETAIL:  Approximately 0.14% of transaction ID space remains before wraparound.
+#  HINT:  To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.
 #  You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
 my $stderr;
 my $warn_limit = 0;
