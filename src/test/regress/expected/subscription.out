@@ -180,8 +180,8 @@ SET SESSION AUTHORIZATION regress_subscription_user3;
 -- warn, need user mapping, then fail, FDW doesn't support connections
 CREATE SUBSCRIPTION regress_testsub6 SERVER test_server PUBLICATION testpub WITH (slot_name = NONE, connect = false);
 WARNING:  user mapping not found for user "regress_subscription_user3", server "test_server"
-ERROR:  foreign data wrapper "test_fdw" does not support subscription connections
-DETAIL:  Foreign data wrapper must be defined with CONNECTION specified.
+ERROR:  foreign-data wrapper "test_fdw" does not support subscription connections
+DETAIL:  Foreign-data wrapper must be defined with CONNECTION specified.
 CREATE USER MAPPING FOR regress_subscription_user3 SERVER test_server OPTIONS(user 'foo', password 'secret');
 RESET SESSION AUTHORIZATION;
 ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;
