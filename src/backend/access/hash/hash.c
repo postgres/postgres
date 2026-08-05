@@ -516,6 +516,21 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	num_index_tuples = 0;
 
 	/*
+	 * Set up the streaming read before fetching the cached metapage as read
+	 * stream initialization may process relcache invalidation messages,
+	 * invalidating the cached metapage.  It is safe to use batchmode as
+	 * hash_bulkdelete_read_stream_cb takes no locks.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+										READ_STREAM_USE_BATCHING,
+										info->strategy,
+										rel,
+										MAIN_FORKNUM,
+										hash_bulkdelete_read_stream_cb,
+										&stream_private,
+										0);
+
+	/*
 	 * We need a copy of the metapage so that we can use its hashm_spares[]
 	 * values to compute bucket page addresses, but a cached copy should be
 	 * good enough.  (If not, we'll detect that further down and refresh the
@@ -535,19 +550,6 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	stream_private.metap = cachedmetap;
 	stream_private.next_bucket = cur_bucket;
 	stream_private.max_bucket = cur_maxbucket;
-
-	/*
-	 * It is safe to use batchmode as hash_bulkdelete_read_stream_cb takes no
-	 * locks.
-	 */
-	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
-										READ_STREAM_USE_BATCHING,
-										info->strategy,
-										rel,
-										MAIN_FORKNUM,
-										hash_bulkdelete_read_stream_cb,
-										&stream_private,
-										0);
 
 bucket_loop:
 	while (cur_bucket <= cur_maxbucket)
