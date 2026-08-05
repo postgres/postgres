@@ -676,8 +676,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	Datum		values[Natts_pg_subscription];
 	Oid			owner = GetUserId();
 	HeapTuple	tup;
-	Oid			serverid;
-	char	   *conninfo;
+	Oid			serverid = InvalidOid;
+	char	   *conninfo = NULL;
 	char		originname[NAMEDATALEN];
 	List	   *publications;
 	uint32		supported_opts;
@@ -798,29 +798,46 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		ForeignServer *server;
 
 		Assert(!stmt->conninfo);
-		conninfo = NULL;
 
 		server = GetForeignServerByName(stmt->servername, false);
-		aclresult = object_aclcheck(ForeignServerRelationId, server->serverid, owner, ACL_USAGE);
+		serverid = server->serverid;
+
+		/* check USAGE privileges on server */
+		aclresult = object_aclcheck(ForeignServerRelationId, serverid, owner, ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 
 		/* check user mapping */
 		GetUserMappingExtended(owner, server->serverid, WARNING);
 
-		serverid = server->serverid;
-		conninfo = ForeignServerConnectionString(owner, server);
+		/*
+		 * Check conninfo if connecting; otherwise only check that the
+		 * server's FDW supports connections.
+		 */
+		if (opts.connect)
+		{
+			conninfo = ForeignServerConnectionString(owner, server);
+			walrcv_check_conninfo(conninfo, opts.passwordrequired && !superuser());
+		}
+		else
+		{
+			ForeignDataWrapper *fdw = GetForeignDataWrapper(server->fdwid);
+
+			if (!OidIsValid(fdw->fdwconnection))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("foreign-data wrapper \"%s\" does not support subscription connections",
+								fdw->fdwname),
+						 errdetail("Foreign-data wrapper must be defined with CONNECTION specified.")));
+		}
 	}
 	else
 	{
 		Assert(stmt->conninfo);
 
-		serverid = InvalidOid;
 		conninfo = stmt->conninfo;
+		walrcv_check_conninfo(conninfo, opts.passwordrequired && !superuser());
 	}
-
-	/* Check the connection info string. */
-	walrcv_check_conninfo(conninfo, opts.passwordrequired && !superuser());
 
 	publications = stmt->publication;
 

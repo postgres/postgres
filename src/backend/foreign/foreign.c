@@ -209,9 +209,9 @@ ForeignServerConnectionString(Oid userid, ForeignServer *server)
 	if (!OidIsValid(fdw->fdwconnection))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("foreign data wrapper \"%s\" does not support subscription connections",
+				 errmsg("foreign-data wrapper \"%s\" does not support subscription connections",
 						fdw->fdwname),
-				 errdetail("Foreign data wrapper must be defined with CONNECTION specified.")));
+				 errdetail("Foreign-data wrapper must be defined with CONNECTION specified.")));
 
 	connection_datum = OidFunctionCall3(fdw->fdwconnection,
 										ObjectIdGetDatum(userid),
