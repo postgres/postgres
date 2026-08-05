@@ -176,6 +176,15 @@ CREATE SUBSCRIPTION regress_testsub6 SERVER test_server
 
 DROP USER MAPPING FOR regress_subscription_user3 SERVER test_server;
 
+-- ok, catalog-only forms don't construct conninfo
+ALTER SUBSCRIPTION regress_testsub6 ENABLE;
+ALTER SUBSCRIPTION regress_testsub6 DISABLE;
+ALTER SUBSCRIPTION regress_testsub6 SET (synchronous_commit = local);
+ALTER SUBSCRIPTION regress_testsub6 SET (synchronous_commit = off);
+ALTER SUBSCRIPTION regress_testsub6 SET (disable_on_error = true);
+ALTER SUBSCRIPTION regress_testsub6 SET (disable_on_error = false);
+ALTER SUBSCRIPTION regress_testsub6 SET PUBLICATION testpub WITH (refresh = false);
+
 -- ok, test_server lacks user mapping, but replacing connection anyway
 BEGIN;
 ALTER SUBSCRIPTION regress_testsub6 CONNECTION 'dbname=regress_doesnotexist password=secret';
