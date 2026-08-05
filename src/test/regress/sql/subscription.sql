@@ -161,6 +161,9 @@ BEGIN;
 ALTER SUBSCRIPTION regress_testsub6 CONNECTION 'dbname=regress_doesnotexist password=secret';
 ABORT;
 
+-- fail, connecting forms recheck USAGE on the foreign server
+ALTER SUBSCRIPTION regress_testsub6 REFRESH PUBLICATION;
+
 -- fails, cannot drop slot
 DROP SUBSCRIPTION regress_testsub6;
 

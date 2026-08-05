@@ -222,7 +222,7 @@ typedef struct Subscription
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
-extern char *SubscriptionConninfo(Subscription *sub, bool aclcheck);
+extern char *SubscriptionConninfo(Subscription *sub);
 extern void DisableSubscription(Oid subid);
 
 extern int	CountDBSubscriptions(Oid dbid);

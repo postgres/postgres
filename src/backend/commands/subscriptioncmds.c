@@ -1768,15 +1768,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 			break;
 	}
 
-	/*
-	 * Skip ACL checks on the subscription's foreign server, if any. If
-	 * changing the server (or replacing it with a raw connection), then the
-	 * old one will be removed anyway. If changing something unrelated,
-	 * there's no need to do an additional ACL check here; that will be done
-	 * by the subscription worker.
-	 */
 	if (orig_conninfo_needed)
-		orig_conninfo = SubscriptionConninfo(sub, false);
+		orig_conninfo = SubscriptionConninfo(sub);
 
 	retain_dead_tuples = sub->retaindeadtuples;
 	origin = sub->origin;

@@ -215,6 +215,9 @@ SET SESSION AUTHORIZATION regress_subscription_user3;
 BEGIN;
 ALTER SUBSCRIPTION regress_testsub6 CONNECTION 'dbname=regress_doesnotexist password=secret';
 ABORT;
+-- fail, connecting forms recheck USAGE on the foreign server
+ALTER SUBSCRIPTION regress_testsub6 REFRESH PUBLICATION;
+ERROR:  subscription owner "regress_subscription_user3" does not have permission on foreign server "test_server"
 -- fails, cannot drop slot
 DROP SUBSCRIPTION regress_testsub6;
 ERROR:  could not connect to publisher when attempting to drop replication slot "dummy": subscription owner "regress_subscription_user3" does not have permission on foreign server "test_server"

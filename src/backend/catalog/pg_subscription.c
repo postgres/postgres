@@ -196,7 +196,7 @@ GetSubscription(Oid subid, bool missing_ok)
  * connect thus never hit them, which matters during restore.
  */
 char *
-SubscriptionConninfo(Subscription *sub, bool aclcheck)
+SubscriptionConninfo(Subscription *sub)
 {
 	HeapTuple	tup;
 	Form_pg_subscription subform;
@@ -216,18 +216,15 @@ SubscriptionConninfo(Subscription *sub, bool aclcheck)
 
 		server = GetForeignServer(subform->subserver);
 
-		if (aclcheck)
-		{
-			aclresult = object_aclcheck(ForeignServerRelationId,
-										subform->subserver,
-										sub->owner, ACL_USAGE);
-			if (aclresult != ACLCHECK_OK)
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
-								GetUserNameFromId(sub->owner, false),
-								server->servername)));
-		}
+		aclresult = object_aclcheck(ForeignServerRelationId,
+									subform->subserver,
+									sub->owner, ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("subscription owner \"%s\" does not have permission on foreign server \"%s\"",
+							GetUserNameFromId(sub->owner, false),
+							server->servername)));
 
 		conninfo = ForeignServerConnectionString(sub->owner, server);
 	}
