@@ -1028,7 +1028,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 static void
 AlterSubscription_refresh(Subscription *sub, bool copy_data,
-						  List *validate_publications)
+						  List *validate_publications, char *conninfo)
 {
 	char	   *err;
 	List	   *pubrels = NIL;
@@ -1052,12 +1052,19 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 	WalReceiverConn *wrconn;
 	bool		must_use_password;
 
+	/*
+	 * Should not happen: CREATE/ALTER/DROP SUBSCRIPTION did not call
+	 * SubscriptionConninfo() in a path where it's required.
+	 */
+	if (!conninfo)
+		elog(ERROR, "no connection string provided for subscription");
+
 	/* Load the library providing us libpq calls. */
 	load_file("libpqwalreceiver", false);
 
 	/* Try to connect to the publisher. */
 	must_use_password = sub->passwordrequired && !sub->ownersuperuser;
-	wrconn = walrcv_connect(sub->conninfo, true, true, must_use_password,
+	wrconn = walrcv_connect(conninfo, true, true, must_use_password,
 							sub->name, &err);
 	if (!wrconn)
 		ereport(ERROR,
@@ -1298,19 +1305,26 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
  * Marks all sequences with INIT state.
  */
 static void
-AlterSubscription_refresh_seq(Subscription *sub)
+AlterSubscription_refresh_seq(Subscription *sub, char *conninfo)
 {
 	char	   *err = NULL;
 	WalReceiverConn *wrconn;
 	bool		must_use_password;
 	List	   *subrel_states;
 
+	/*
+	 * Should not happen: CREATE/ALTER/DROP SUBSCRIPTION did not call
+	 * SubscriptionConninfo() in a path where it's required.
+	 */
+	if (!conninfo)
+		elog(ERROR, "no connection string provided for subscription");
+
 	/* Load the library providing us libpq calls. */
 	load_file("libpqwalreceiver", false);
 
 	/* Try to connect to the publisher. */
 	must_use_password = sub->passwordrequired && !sub->ownersuperuser;
-	wrconn = walrcv_connect(sub->conninfo, true, true, must_use_password,
+	wrconn = walrcv_connect(conninfo, true, true, must_use_password,
 							sub->name, &err);
 	if (!wrconn)
 		ereport(ERROR,
@@ -1502,6 +1516,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	int			max_retention;
 	bool		retention_active;
 	char	   *new_conninfo = NULL;
+	char	   *orig_conninfo = NULL;
 	char	   *origin;
 	Subscription *sub;
 	Form_pg_subscription form;
@@ -1603,6 +1618,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 			orig_conninfo_needed = false;
 	}
 
+	sub = GetSubscription(subid, false);
+
 	/*
 	 * Skip ACL checks on the subscription's foreign server, if any. If
 	 * changing the server (or replacing it with a raw connection), then the
@@ -1610,7 +1627,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	 * there's no need to do an additional ACL check here; that will be done
 	 * by the subscription worker.
 	 */
-	sub = GetSubscription(subid, false, orig_conninfo_needed, false);
+	if (orig_conninfo_needed)
+		orig_conninfo = SubscriptionConninfo(sub, false);
 
 	retain_dead_tuples = sub->retaindeadtuples;
 	origin = sub->origin;
@@ -2065,7 +2083,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					sub->publications = stmt->publication;
 
 					AlterSubscription_refresh(sub, opts.copy_data,
-											  stmt->publication);
+											  stmt->publication,
+											  orig_conninfo);
 				}
 
 				break;
@@ -2120,7 +2139,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					sub->publications = publist;
 
 					AlterSubscription_refresh(sub, opts.copy_data,
-											  validate_publications);
+											  validate_publications,
+											  orig_conninfo);
 				}
 
 				break;
@@ -2159,7 +2179,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 				PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION ... REFRESH PUBLICATION");
 
-				AlterSubscription_refresh(sub, opts.copy_data, NULL);
+				AlterSubscription_refresh(sub, opts.copy_data, NULL,
+										  orig_conninfo);
 
 				break;
 			}
@@ -2172,7 +2193,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 							errmsg("%s is not allowed for disabled subscriptions",
 								   "ALTER SUBSCRIPTION ... REFRESH SEQUENCES"));
 
-				AlterSubscription_refresh_seq(sub);
+				AlterSubscription_refresh_seq(sub, orig_conninfo);
 
 				break;
 			}
@@ -2244,7 +2265,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 		char	   *err;
 		WalReceiverConn *wrconn;
 
-		Assert(new_conninfo || orig_conninfo_needed);
+		Assert(new_conninfo || orig_conninfo);
 
 		/* Load the library providing us libpq calls. */
 		load_file("libpqwalreceiver", false);
@@ -2254,7 +2275,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 		 * available.
 		 */
 		must_use_password = sub->passwordrequired && !sub->ownersuperuser;
-		wrconn = walrcv_connect(new_conninfo ? new_conninfo : sub->conninfo,
+		wrconn = walrcv_connect(new_conninfo ? new_conninfo : orig_conninfo,
 								true, true, must_use_password, sub->name,
 								&err);
 		if (!wrconn)

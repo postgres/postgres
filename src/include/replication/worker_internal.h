@@ -247,6 +247,7 @@ extern PGDLLIMPORT struct WalReceiverConn *LogRepWorkerWalRcvConn;
 
 /* Worker and subscription objects. */
 extern PGDLLIMPORT Subscription *MySubscription;
+extern PGDLLIMPORT char *MySubscriptionConninfo;
 extern PGDLLIMPORT LogicalRepWorker *MyLogicalRepWorker;
 
 extern PGDLLIMPORT bool in_remote_transaction;
