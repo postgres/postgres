@@ -5100,9 +5100,6 @@ maybe_reread_subscription(void)
 		proc_exit(0);
 	}
 
-	/* allocated in transaction context */
-	new_conninfo = SubscriptionConninfo(newsub, true);
-
 	/* Exit if the subscription was disabled. */
 	if (!newsub->enabled)
 	{
@@ -5112,6 +5109,13 @@ maybe_reread_subscription(void)
 
 		apply_worker_exit();
 	}
+
+	/*
+	 * May raise error, so build conninfo after checking that the subscription
+	 * is enabled. Allocated in transaction context; must be copied to
+	 * ApplyContext when we set MySubscriptionConninfo.
+	 */
+	new_conninfo = SubscriptionConninfo(newsub, true);
 
 	/* !slotname should never happen when enabled is true. */
 	Assert(newsub->slotname);
@@ -5876,13 +5880,6 @@ InitializeLogRepWorker(void)
 		proc_exit(0);
 	}
 
-	/* build conninfo in transaction context and copy to ApplyContext */
-	MySubscriptionConninfo =
-		MemoryContextStrdup(ApplyContext,
-							SubscriptionConninfo(MySubscription, true));
-
-	MySubscriptionValid = true;
-
 	if (!MySubscription->enabled)
 	{
 		ereport(LOG,
@@ -5891,6 +5888,17 @@ InitializeLogRepWorker(void)
 
 		apply_worker_exit();
 	}
+
+	/*
+	 * May raise error for server-based subscriptions, so build conninfo after
+	 * checking that the subscription is enabled. Build in transaction context
+	 * and copy to ApplyContext.
+	 */
+	MySubscriptionConninfo =
+		MemoryContextStrdup(ApplyContext,
+							SubscriptionConninfo(MySubscription, true));
+
+	MySubscriptionValid = true;
 
 	/*
 	 * Restart the worker if retain_dead_tuples was enabled during startup.
