@@ -10,6 +10,17 @@
 
 #include "postgres_fe.h"
 
+/*
+ * Disable some warnings on MSVC.  See also
+ * <https://lists.iana.org/hyperkitty/list/tz@iana.org/thread/PJBVERYHQZEXIREYIHC5OJGZMNVQC2SD/>.
+ */
+#ifdef _MSC_VER
+/* warning C4146: unary minus operator applied to unsigned type, result still unsigned */
+#pragma warning(disable: 4146)
+/* warning C5287: operands are different enum types */
+#pragma warning(disable: 5287)
+#endif
+
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
