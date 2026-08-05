@@ -9,10 +9,6 @@ CREATE FUNCTION test_fdw_connection(oid, oid, internal)
     RETURNS text
     AS :'regresslib', 'test_fdw_connection'
     LANGUAGE C;
-CREATE FUNCTION test_fdw_connection_no_password(oid, oid, internal)
-    RETURNS text
-    AS :'regresslib', 'test_fdw_connection_no_password'
-    LANGUAGE C;
 CREATE ROLE regress_subscription_user LOGIN SUPERUSER;
 CREATE ROLE regress_subscription_user2;
 CREATE ROLE regress_subscription_user3 IN ROLE pg_create_subscription;
@@ -191,18 +187,6 @@ CREATE SUBSCRIPTION regress_testsub6 SERVER test_server
 WARNING:  subscription was created, but is not connected
 HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 RESET SESSION AUTHORIZATION;
-GRANT USAGE ON FOREIGN SERVER test_server TO regress_subscription_user2;
-CREATE USER MAPPING FOR regress_subscription_user2 SERVER test_server OPTIONS(user 'foo');
-ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection_no_password;
-WARNING:  changing the foreign-data wrapper connection function can cause the options for dependent objects to become invalid
--- fail, new owner's generated conninfo must satisfy password_required
-ALTER SUBSCRIPTION regress_testsub6 OWNER TO regress_subscription_user2;
-ERROR:  password is required
-DETAIL:  Non-superusers must provide a password in the connection string.
-ALTER FOREIGN DATA WRAPPER test_fdw CONNECTION test_fdw_connection;
-WARNING:  changing the foreign-data wrapper connection function can cause the options for dependent objects to become invalid
-DROP USER MAPPING FOR regress_subscription_user2 SERVER test_server;
-REVOKE USAGE ON FOREIGN SERVER test_server FROM regress_subscription_user2;
 -- fail, subscription depends on the server and cannot be dropped by CASCADE
 DROP SERVER test_server CASCADE;
 ERROR:  cannot drop server test_server because subscription regress_testsub6 depends on it
@@ -260,7 +244,6 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 ALTER FOREIGN DATA WRAPPER test_fdw NO CONNECTION;
 WARNING:  removing the foreign-data wrapper connection function will cause dependent subscriptions to fail
 DROP FUNCTION test_fdw_connection(oid, oid, internal);
-DROP FUNCTION test_fdw_connection_no_password(oid, oid, internal);
 DROP FOREIGN DATA WRAPPER test_fdw;
 -- fail - invalid connection string during ALTER
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';

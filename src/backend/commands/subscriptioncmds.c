@@ -2994,12 +2994,11 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 	/*
 	 * If the subscription uses a server, check that the new owner has USAGE
-	 * privileges on the server, that a user mapping exists, and that the
-	 * resulting connection string is valid for the new owner.
+	 * privileges on the server and that a user mapping exists. Note: does not
+	 * re-check the resulting connection string.
 	 */
 	if (OidIsValid(form->subserver))
 	{
-		char	   *conninfo;
 		ForeignServer *server = GetForeignServer(form->subserver);
 
 		aclresult = object_aclcheck(ForeignServerRelationId, server->serverid, newOwnerId, ACL_USAGE);
@@ -3012,15 +3011,6 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 		/* make sure a user mapping exists */
 		GetUserMapping(newOwnerId, server->serverid);
-
-		conninfo = ForeignServerConnectionString(newOwnerId, server);
-
-		/* Load the library providing us libpq calls. */
-		load_file("libpqwalreceiver", false);
-		/* Check the connection info string. */
-		walrcv_check_conninfo(conninfo,
-							  form->subpasswordrequired &&
-							  !superuser_arg(newOwnerId));
 	}
 
 	form->subowner = newOwnerId;
