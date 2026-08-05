@@ -366,9 +366,8 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 
 	if (stat(xlogfpath, &statbuf) == 0)
 	{
-		char		oldpath[MAXPGPATH];
-
 #ifdef WIN32
+		char		oldpath[MAXPGPATH];
 		static unsigned int deletedcounter = 1;
 
 		/*
@@ -380,6 +379,10 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 		 * name first. Use a counter to create a unique filename, because the
 		 * same file might be restored from the archive multiple times, and a
 		 * walsender could still be holding onto an old deleted version of it.
+		 *
+		 * Note that this leaves a short window where the target name does not
+		 * exist, during which a concurrent walsender opening the segment
+		 * could fail.
 		 */
 		snprintf(oldpath, MAXPGPATH, "%s.deleted%u",
 				 xlogfpath, deletedcounter++);
@@ -390,15 +393,13 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 					 errmsg("could not rename file \"%s\" to \"%s\": %m",
 							xlogfpath, oldpath)));
 		}
-#else
-		/* same-size buffers, so this never truncates */
-		strlcpy(oldpath, xlogfpath, MAXPGPATH);
-#endif
+
 		if (unlink(oldpath) != 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m",
 							xlogfpath)));
+#endif
 		reload = true;
 	}
 
