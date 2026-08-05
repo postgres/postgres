@@ -4482,6 +4482,8 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH("GRAPH");
 	else if (Matches("DROP", "PROPERTY", "GRAPH"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_propgraphs);
+	else if (Matches("DROP", "PROPERTY", "GRAPH", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 	/* DROP RULE */
 	else if (Matches("DROP", "RULE", MatchAny))
