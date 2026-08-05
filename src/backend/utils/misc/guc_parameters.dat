@@ -3572,7 +3572,7 @@
 
 { name => 'wal_sender_shutdown_timeout', type => 'int', context => 'PGC_USERSET', group => 'REPLICATION_SENDING',
   short_desc => 'Sets the maximum time the server waits during shutdown for all WAL data to be replicated to the receiver.',
-  long_desc => '-1 disables the timeout',
+  long_desc => '-1 disables the timeout and waits for the receiver to catch up; 0 does not wait for the receiver to catch up.',
   flags => 'GUC_UNIT_MS',
   variable => 'wal_sender_shutdown_timeout',
   boot_val => '-1',
