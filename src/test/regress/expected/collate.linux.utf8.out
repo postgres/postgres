@@ -477,6 +477,24 @@ SELECT to_date('01 Şub 2010', 'DD TMMON YYYY');
 SELECT to_date('1234567890ab 2010', 'TMMONTH YYYY'); -- fail
 ERROR:  invalid value "1234567890ab" for "MONTH"
 DETAIL:  The given value did not match any of the allowed values for this field.
+SELECT to_date('01 Aralık 2010', 'DD TMMONTH YYYY');
+  to_date   
+------------
+ 12-01-2010
+(1 row)
+
+SELECT to_date('01 aralık 2010', 'DD TMMONTH YYYY');
+  to_date   
+------------
+ 12-01-2010
+(1 row)
+
+SELECT to_date('2010 01 araLık', 'YYYY DD TMMONTH');
+  to_date   
+------------
+ 12-01-2010
+(1 row)
+
 -- backwards parsing
 CREATE VIEW collview1 AS SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
 CREATE VIEW collview2 AS SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";

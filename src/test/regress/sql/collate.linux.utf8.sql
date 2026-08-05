@@ -188,6 +188,9 @@ SELECT to_date('01 ŞUB 2010', 'DD TMMON YYYY');
 SELECT to_date('01 Şub 2010', 'DD TMMON YYYY');
 SELECT to_date('1234567890ab 2010', 'TMMONTH YYYY'); -- fail
 
+SELECT to_date('01 Aralık 2010', 'DD TMMONTH YYYY');
+SELECT to_date('01 aralık 2010', 'DD TMMONTH YYYY');
+SELECT to_date('2010 01 araLık', 'YYYY DD TMMONTH');
 
 -- backwards parsing
 
