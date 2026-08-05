@@ -685,7 +685,7 @@ HINT:  To avoid XID assignment failures, execute a database-wide VACUUM in that 
     there are fewer than three million transactions left until wraparound:
 
 <programlisting>
-ERROR:  database is not accepting commands that assign new XIDs to avoid wraparound data loss in database "mydb"
+ERROR:  database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database "mydb"
 HINT:  Execute a database-wide VACUUM in that database.
 </programlisting>
 
