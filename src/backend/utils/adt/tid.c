@@ -73,7 +73,7 @@ tidin(PG_FUNCTION_ARGS)
 
 	errno = 0;
 	cvt = strtoul(coord[0], &badp, 10);
-	if (errno || *badp != DELIM)
+	if (badp == coord[0] || errno || *badp != DELIM)
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
@@ -95,8 +95,7 @@ tidin(PG_FUNCTION_ARGS)
 #endif
 
 	cvt = strtoul(coord[1], &badp, 10);
-	if (errno || *badp != RDELIM ||
-		cvt > USHRT_MAX)
+	if (badp == coord[1] || errno || *badp != RDELIM || cvt > USHRT_MAX)
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",

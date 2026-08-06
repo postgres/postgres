@@ -8,6 +8,8 @@ SELECT
 
 SELECT '(4294967296,1)'::tid;  -- error
 SELECT '(1,65536)'::tid;  -- error
+SELECT '(,1)'::tid;  -- error
+SELECT '(1,)'::tid;  -- error
 
 -- Also try it with non-error-throwing API
 SELECT pg_input_is_valid('(0)', 'tid');
