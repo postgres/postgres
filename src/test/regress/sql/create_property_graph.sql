@@ -163,6 +163,18 @@ DROP TABLE t1x, t2x;
 
 CREATE PROPERTY GRAPH gx
     VERTEX TABLES (
+        t1 KEY (a) LABEL l1 PROPERTIES (a AS p, a AS p)  -- duplicate property on label
+    );
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t2 ALTER LABEL t2 ADD PROPERTIES (k * 2 AS i_j);  -- duplicate property on label
+
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
+        t1 KEY (a) LABEL l1 LABEL l1  -- duplicate label on element
+    );
+ALTER PROPERTY GRAPH g4 ALTER VERTEX TABLE t3 ADD LABEL t3l1 NO PROPERTIES;  -- duplicate label on element
+
+CREATE PROPERTY GRAPH gx
+    VERTEX TABLES (
         t1 KEY (a) LABEL l1 PROPERTIES (a, a AS aa),
         t2 KEY (i) LABEL l1 PROPERTIES (i AS a, j AS b, k)  -- mismatching number of properties on label
     );
