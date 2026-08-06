@@ -43,8 +43,6 @@
 
 static int	lo_initialize(PGconn *conn);
 static Oid	lo_import_internal(PGconn *conn, const char *filename, Oid oid);
-static int64_t lo_hton64(int64_t host64);
-static int64_t lo_ntoh64(int64_t net64);
 
 /*
  * lo_open
@@ -213,7 +211,7 @@ lo_truncate64(PGconn *conn, int fd, int64_t len)
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
-	len = lo_hton64(len);
+	len = pg_hton64(len);
 	argv[1].isint = 0;
 	argv[1].len = 8;
 	argv[1].u.ptr = (int *) &len;
@@ -403,7 +401,7 @@ lo_lseek64(PGconn *conn, int fd, int64_t offset, int whence)
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
-	offset = lo_hton64(offset);
+	offset = pg_hton64(offset);
 	argv[1].isint = 0;
 	argv[1].len = 8;
 	argv[1].u.ptr = (int *) &offset;
@@ -417,7 +415,7 @@ lo_lseek64(PGconn *conn, int fd, int64_t offset, int whence)
 	if (PQresultStatus(res) == PGRES_COMMAND_OK && result_len == 8)
 	{
 		PQclear(res);
-		return lo_ntoh64(retval);
+		return pg_ntoh64(retval);
 	}
 	else
 	{
@@ -571,7 +569,7 @@ lo_tell64(PGconn *conn, int fd)
 	if (PQresultStatus(res) == PGRES_COMMAND_OK && result_len == 8)
 	{
 		PQclear(res);
-		return lo_ntoh64(retval);
+		return pg_ntoh64(retval);
 	}
 	else
 	{
@@ -1014,52 +1012,4 @@ lo_initialize(PGconn *conn)
 	 */
 	conn->lobjfuncs = lobjfuncs;
 	return 0;
-}
-
-/*
- * lo_hton64
- *	  converts a 64-bit integer from host byte order to network byte order
- */
-static int64_t
-lo_hton64(int64_t host64)
-{
-	union
-	{
-		int64		i64;
-		uint32		i32[2];
-	}			swap;
-	uint32		t;
-
-	/* High order half first, since we're doing MSB-first */
-	t = (uint32) (host64 >> 32);
-	swap.i32[0] = pg_hton32(t);
-
-	/* Now the low order half */
-	t = (uint32) host64;
-	swap.i32[1] = pg_hton32(t);
-
-	return swap.i64;
-}
-
-/*
- * lo_ntoh64
- *	  converts a 64-bit integer from network byte order to host byte order
- */
-static int64_t
-lo_ntoh64(int64_t net64)
-{
-	union
-	{
-		int64		i64;
-		uint32		i32[2];
-	}			swap;
-	int64		result;
-
-	swap.i64 = net64;
-
-	result = (uint32) pg_ntoh32(swap.i32[0]);
-	result <<= 32;
-	result |= (uint32) pg_ntoh32(swap.i32[1]);
-
-	return result;
 }
