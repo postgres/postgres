@@ -439,6 +439,8 @@ debug_logical_replication_streaming = buffered
 ));
 $node_subscriber->restart;
 
+$offset = -s $node_subscriber->logfile;
+
 $node_publisher->safe_psql(
 	'postgres', q{
 	BEGIN;
@@ -446,8 +448,6 @@ $node_publisher->safe_psql(
 	PREPARE TRANSACTION 'xact';
 	COMMIT PREPARED 'xact';
 	});
-
-$offset = -s $node_subscriber->logfile;
 
 # Confirm the ERROR is reported because max_prepared_transactions is zero
 $node_subscriber->wait_for_log(
