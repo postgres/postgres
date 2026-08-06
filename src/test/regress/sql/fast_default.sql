@@ -618,6 +618,16 @@ REPACK t;
 SELECT * FROM t ORDER BY id;
 DROP TABLE t;
 
+-- Ensure defaults are correctly applied during tuple deformation for whole
+-- row vars when the defaults are deformed incrementally.
+CREATE TABLE t_missing_wholerow (a int NOT NULL, b int);
+INSERT INTO t_missing_wholerow (a, b) VALUES (1, null); -- with NULL bitmap
+INSERT INTO t_missing_wholerow (a, b) VALUES (2, 3); -- without NULL bitmap
+ALTER TABLE t_missing_wholerow ADD COLUMN c int NOT NULL DEFAULT 15;
+ALTER TABLE t_missing_wholerow ADD COLUMN d bigint NOT NULL DEFAULT 25;
+SELECT a, b, c, t FROM t_missing_wholerow t;
+DROP TABLE t_missing_wholerow;
+
 -- cleanup
 DROP FOREIGN TABLE ft1;
 DROP SERVER s0;
