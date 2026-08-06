@@ -1254,7 +1254,17 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 		 * to implement a tail-call optimization
 		 */
 		*offp = off;
-		slot_getmissingattrs(slot, attnum, reqnatts);
+
+		Assert(HeapTupleHeaderGetNatts(tup) <= attnum);
+
+		/*
+		 * Fetch all missing attributes.  We pass natts rather than attnum as
+		 * if we're deforming attributes after having already deformed some
+		 * missing attributes, then the call to populate_isnull_array() may
+		 * have overwritten the previous tts_isnull values from what was
+		 * stored in the previous call to slot_getmissingattrs().
+		 */
+		slot_getmissingattrs(slot, HeapTupleHeaderGetNatts(tup), reqnatts);
 		return;
 	}
 done:
