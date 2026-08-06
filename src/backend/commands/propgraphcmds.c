@@ -784,6 +784,13 @@ insert_label_record(Oid graphid, Oid peoid, const char *label)
 	/*
 	 * Insert into pg_propgraph_element_label
 	 */
+	if (SearchSysCacheExists2(PROPGRAPHELEMENTLABELELEMENTLABEL,
+							  ObjectIdGetDatum(peoid),
+							  ObjectIdGetDatum(labeloid)))
+		ereport(ERROR,
+				errcode(ERRCODE_DUPLICATE_OBJECT),
+				errmsg("label \"%s\" already exists", label));
+	else
 	{
 		Relation	rel;
 		Datum		values[Natts_pg_propgraph_element_label] = {0};
@@ -901,12 +908,30 @@ insert_property_records(Oid graphid, Oid ellabeloid, Oid pgerelid, const PropGra
 		resolveTargetListUnknowns(pstate, tp);
 	assign_expr_collations(pstate, (Node *) tp);
 
-	foreach(lc, tp)
+	/*
+	 * When properties are derived from the table's attributes, names are
+	 * already unique. Reject duplicate property names within an explicit
+	 * PROPERTIES clause. Do this after transformTargetList() so that any
+	 * names derived by transformTargetList() are considered.
+	 */
+	if (!properties->all)
 	{
-		TargetEntry *te = lfirst_node(TargetEntry, lc);
+		List	   *seen = NIL;
 
-		insert_property_record(graphid, ellabeloid, pgerelid, te->resname, te->expr);
+		foreach_node(TargetEntry, te, tp)
+		{
+			String	   *name = makeString(te->resname);
+
+			if (list_member(seen, name))
+				ereport(ERROR,
+						errcode(ERRCODE_DUPLICATE_OBJECT),
+						errmsg("property \"%s\" specified more than once", te->resname));
+			seen = lappend(seen, name);
+		}
 	}
+
+	foreach_node(TargetEntry, te, tp)
+		insert_property_record(graphid, ellabeloid, pgerelid, te->resname, te->expr);
 }
 
 /*
@@ -1003,6 +1028,12 @@ insert_property_record(Oid graphid, Oid ellabeloid, Oid pgerelid, const char *pr
 	/*
 	 * Insert into pg_propgraph_label_property
 	 */
+	if (SearchSysCacheExists2(PROPGRAPHLABELPROP, ObjectIdGetDatum(ellabeloid),
+							  ObjectIdGetDatum(propoid)))
+		ereport(ERROR,
+				errcode(ERRCODE_DUPLICATE_OBJECT),
+				errmsg("property \"%s\" already exists", propname));
+	else
 	{
 		Relation	rel;
 		Datum		values[Natts_pg_propgraph_label_property] = {0};
