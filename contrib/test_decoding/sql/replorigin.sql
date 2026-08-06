@@ -138,6 +138,9 @@ SELECT pg_replication_origin_session_setup('regress_test_decoding: regression_sl
 
 INSERT INTO target_tbl(data) VALUES ('test data');
 
+-- invalid proto_version
+SELECT pg_logical_slot_peek_binary_changes('regression_slot', NULL, NULL, 'proto_version', '', 'publication_names', 'pub', 'origin', 'none');
+
 -- The replayed change will be filtered.
 SELECT count(*) = 0 FROM pg_logical_slot_peek_binary_changes('regression_slot', NULL, NULL, 'proto_version', '4', 'publication_names', 'pub', 'origin', 'none');
 

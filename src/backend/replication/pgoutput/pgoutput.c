@@ -316,6 +316,7 @@ parse_output_parameters(List *options, PGOutputData *data)
 		{
 			unsigned long parsed;
 			char	   *endptr;
+			const char *val = strVal(defel->arg);
 
 			if (protocol_version_given)
 				ereport(ERROR,
@@ -324,8 +325,8 @@ parse_output_parameters(List *options, PGOutputData *data)
 			protocol_version_given = true;
 
 			errno = 0;
-			parsed = strtoul(strVal(defel->arg), &endptr, 10);
-			if (errno != 0 || *endptr != '\0')
+			parsed = strtoul(val, &endptr, 10);
+			if (endptr == val || errno != 0 || *endptr != '\0')
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid proto_version")));
