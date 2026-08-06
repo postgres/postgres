@@ -766,7 +766,8 @@ HINT:  Execute a database-wide VACUUM in that database.
     </indexterm>
 
     <para>
-     <firstterm>Multixact IDs</firstterm> are used to support row locking by
+     <firstterm>Multixact IDs</firstterm> (<acronym>MXID</acronym>)
+     are used to support row locking by
      multiple transactions.  Since there is only limited space in a tuple
      header to store lock information, that information is encoded as
      a <quote>multiple transaction ID</quote>, or multixact ID for short,

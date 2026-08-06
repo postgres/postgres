@@ -495,6 +495,15 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>MXID</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="vacuum-for-multixact-wraparound">Multixact Identifier</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>NLS</acronym></term>
     <listitem>
      <para>
