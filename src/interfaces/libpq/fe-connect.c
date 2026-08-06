@@ -2059,7 +2059,6 @@ pqConnectOptions2(PGconn *conn)
 			libpq_append_conn_error(conn, "invalid SCRAM client key length: %d", len);
 			return false;
 		}
-		conn->scram_client_key_len = len;
 	}
 
 	if (conn->scram_server_key)
@@ -2082,7 +2081,6 @@ pqConnectOptions2(PGconn *conn)
 			libpq_append_conn_error(conn, "invalid SCRAM server key length: %d", len);
 			return false;
 		}
-		conn->scram_server_key_len = len;
 	}
 
 	/*

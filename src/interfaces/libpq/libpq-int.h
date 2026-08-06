@@ -544,9 +544,7 @@ struct pg_conn
 	AddrInfo   *addr;			/* the array of addresses for the currently
 								 * tried host */
 	bool		send_appname;	/* okay to send application_name? */
-	size_t		scram_client_key_len;
 	uint8	   *scram_client_key_binary;	/* binary SCRAM client key */
-	size_t		scram_server_key_len;
 	uint8	   *scram_server_key_binary;	/* binary SCRAM server key */
 	ProtocolVersion min_pversion;	/* protocol version to request */
 	ProtocolVersion max_pversion;	/* protocol version to request */
