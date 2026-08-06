@@ -102,6 +102,7 @@ extern ReadStream *read_stream_begin_smgr_relation(int flags,
 												   size_t per_buffer_data_size);
 extern BlockNumber read_stream_pause(ReadStream *stream);
 extern void read_stream_resume(ReadStream *stream);
+extern void read_stream_clear_strategy(ReadStream *stream);
 extern void read_stream_reset(ReadStream *stream);
 extern void read_stream_end(ReadStream *stream);
 extern void read_stream_enable_stats(ReadStream *stream, struct IOStats *stats);

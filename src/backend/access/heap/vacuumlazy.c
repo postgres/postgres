@@ -1385,6 +1385,15 @@ lazy_scan_heap(LVRelState *vacrel)
 										 PROGRESS_VACUUM_PHASE_SCAN_HEAP);
 		}
 
+		/*
+		 * If the wraparound failsafe has engaged -- either via the check
+		 * above or during index vacuuming invoked from this loop -- stop
+		 * using the buffer access strategy so that the rest of the vacuum may
+		 * use all of shared buffers.
+		 */
+		if (unlikely(VacuumFailsafeActive))
+			read_stream_clear_strategy(stream);
+
 		buf = read_stream_next_buffer(stream, &per_buffer_data);
 
 		/* The relation is exhausted. */
@@ -2905,9 +2914,19 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 		VacuumFailsafeActive = true;
 
 		/*
-		 * Abandon use of a buffer access strategy to allow use of all of
-		 * shared buffers.  We assume the caller who allocated the memory for
-		 * the BufferAccessStrategy will free it.
+		 * We abandon use of the strategy in failsafe mode to allow use of all
+		 * of shared buffers. vacrel->bstrategy is not the source of truth for
+		 * an ongoing heap scan, but clear it just for tidiness. Any ongoing
+		 * phase I heap scan has its own references to the strategy and clears
+		 * them separately (see lazy_scan_heap()). And none of the other
+		 * vacuum phases will read from vacrel->bstrategy once failsafe mode
+		 * is engaged. The phase I read stream clears the strategy references
+		 * held by the ReadBuffersOperations outside of this function because
+		 * lazy_check_wraparound_failsafe() may be called from any phase of
+		 * vacuum, including when the phase I stream is inactive.
+		 *
+		 * We assume the caller who allocated the memory for the
+		 * BufferAccessStrategy will free it.
 		 */
 		vacrel->bstrategy = NULL;
 
