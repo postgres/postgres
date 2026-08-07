@@ -472,6 +472,15 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 	dbstate_at_startup = ControlFile->state;
 
 	/*
+	 * A startup process always starts with an inconsistent database. Set the
+	 * flag accordingly, even if it was inherited from a postmaster that had
+	 * already marked the database as consistent. This keeps the invariant
+	 * local to the startup process without requiring every fork path to clear
+	 * the flag.
+	 */
+	reachedConsistency = false;
+
+	/*
 	 * Initialize on the assumption we want to recover to the latest timeline
 	 * that's active according to pg_control.
 	 */
