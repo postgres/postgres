@@ -3604,6 +3604,45 @@ ERROR:  insert or update on table "fp_fk_defer" violates foreign key constraint 
 DETAIL:  Key (a)=(3) is not present in table "fp_pk_defer".
 COMMIT;
 DROP TABLE fp_pk_defer, fp_fk_defer;
+-- A deferred FK check queued while firing deferred triggers at commit must
+-- not be lost.  The RI fast-path flush runs during the deferred firing loop
+-- and can run user cast/equality code whose DML queues a further deferred
+-- check; that check must still fire.  fk_defer_main's deferred fast-path check
+-- runs a cast whose function inserts a violating row into fk_defer_t2,
+-- queueing fk_defer_t2's own deferred check, which must still be reported.
+CREATE TABLE fk_defer_t2_pk (id int PRIMARY KEY);
+CREATE TABLE fk_defer_t2 (a int REFERENCES fk_defer_t2_pk(id)
+    DEFERRABLE INITIALLY DEFERRED);
+CREATE TYPE fk_defer_vch AS (v int);
+CREATE FUNCTION fk_defer_cast(fk_defer_vch) RETURNS int
+    LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO fk_defer_t2 VALUES (999);   -- 999 absent, queues deferred check
+    RETURN $1.v;
+END$$;
+CREATE CAST (fk_defer_vch AS int) WITH FUNCTION fk_defer_cast(fk_defer_vch)
+    AS IMPLICIT;
+CREATE TABLE fk_defer_main_pk (id int PRIMARY KEY);
+INSERT INTO fk_defer_main_pk VALUES (1);
+CREATE TABLE fk_defer_main (a fk_defer_vch REFERENCES fk_defer_main_pk(id)
+    DEFERRABLE INITIALLY DEFERRED);
+-- At COMMIT the queued fk_defer_t2 check must fire and report the violation,
+-- rather than being dropped (which would let the dangling row commit).
+BEGIN;
+INSERT INTO fk_defer_main VALUES (row(1)::fk_defer_vch);
+COMMIT;   -- expected: ERROR on fk_defer_t2_a_fkey
+ERROR:  insert or update on table "fk_defer_t2" violates foreign key constraint "fk_defer_t2_a_fkey"
+DETAIL:  Key (a)=(999) is not present in table "fk_defer_t2_pk".
+-- The queued check must fire at transaction end, not early: making the
+-- referenced row present in the same transaction lets the commit succeed.
+INSERT INTO fk_defer_t2_pk VALUES (999);
+BEGIN;
+INSERT INTO fk_defer_main VALUES (row(1)::fk_defer_vch);
+COMMIT;   -- expected: success
+DROP TABLE fk_defer_main, fk_defer_main_pk, fk_defer_t2, fk_defer_t2_pk;
+DROP CAST (fk_defer_vch AS int);
+DROP FUNCTION fk_defer_cast(fk_defer_vch);
+DROP TYPE fk_defer_vch;
 -- Subtransaction abort: cached state must be invalidated on ROLLBACK TO
 CREATE TABLE fp_pk_subxact (a int PRIMARY KEY);
 CREATE TABLE fp_fk_subxact (a int REFERENCES fp_pk_subxact);
