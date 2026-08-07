@@ -2795,9 +2795,6 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
  *
  * If no matching PK row exists, report the violation via ri_ReportViolation(),
  * otherwise, the function returns normally.
- *
- * Note: This is only used by the ALTER TABLE validation path. Other paths use
- * ri_FastPathBatchAdd().
  */
 static void
 ri_FastPathCheck(RI_ConstraintInfo *riinfo,
