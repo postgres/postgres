@@ -32,6 +32,7 @@
 #include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/index.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_namespace.h"
@@ -142,6 +143,7 @@ typedef struct RI_ConstraintInfo
 
 	Oid			conindid;
 	bool		pk_is_partitioned;
+	bool		pk_index_is_btree;	/* is conindid a btree index? */
 
 	FastPathMeta *fpmeta;
 } RI_ConstraintInfo;
@@ -2503,6 +2505,8 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	riinfo->conindid = conForm->conindid;
 	riinfo->pk_is_partitioned =
 		(get_rel_relkind(riinfo->pk_relid) == RELKIND_PARTITIONED_TABLE);
+	riinfo->pk_index_is_btree =
+		(get_rel_relam(riinfo->conindid) == BTREE_AM_OID);
 
 	ReleaseSysCache(tup);
 
@@ -3150,7 +3154,8 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 	 * Build scan key with SK_SEARCHARRAY.  The index AM code will internally
 	 * sort and deduplicate, then walk leaf pages in order.
 	 *
-	 * PK indexes are always btree, which supports SK_SEARCHARRAY.
+	 * ri_fastpath_is_applicable() restricts the fast path to btree indexes,
+	 * which support SK_SEARCHARRAY.
 	 *
 	 * This path handles single-column FKs only, so index_attnos[0] == 1.
 	 */
@@ -3357,6 +3362,17 @@ ri_fastpath_is_applicable(const RI_ConstraintInfo *riinfo)
 	 * reasoning, so they stay on the SPI path.
 	 */
 	if (riinfo->hasperiod)
+		return false;
+
+	/*
+	 * The fast path probes the referenced index directly and, for
+	 * single-column keys, uses SK_SEARCHARRAY.  A foreign key's referenced
+	 * index need not be a primary key; transformFkeyCheckAttrs() accepts any
+	 * unique index, so an out-of-tree amcanunique access method could reach
+	 * here.  Restrict the fast path to btree, which is what the direct probe
+	 * and SK_SEARCHARRAY assume; other access methods fall back to SPI.
+	 */
+	if (!riinfo->pk_index_is_btree)
 		return false;
 
 	return true;
