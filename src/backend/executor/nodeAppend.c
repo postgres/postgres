@@ -92,6 +92,7 @@ static void ExecAppendAsyncBegin(AppendState *node);
 static bool ExecAppendAsyncGetNext(AppendState *node, TupleTableSlot **result);
 static bool ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result);
 static void ExecAppendAsyncEventWait(AppendState *node);
+static void ExecAppendAsyncReset(AppendState *node);
 static void classify_matching_subplans(AppendState *node);
 
 /* ----------------------------------------------------------------
@@ -408,6 +409,10 @@ ExecReScanAppend(AppendState *node)
 	int			nasyncplans = node->as_nasyncplans;
 	int			i;
 
+	/* If there are any async subplans, reset async requests made for them. */
+	if (nasyncplans > 0)
+		ExecAppendAsyncReset(node);
+
 	/*
 	 * If any PARAM_EXEC Params used in pruning expressions have changed, then
 	 * we'd better unset the valid subplans so that they are reselected for
@@ -441,25 +446,6 @@ ExecReScanAppend(AppendState *node)
 		 */
 		if (subnode->chgParam == NULL)
 			ExecReScan(subnode);
-	}
-
-	/* Reset async state */
-	if (nasyncplans > 0)
-	{
-		i = -1;
-		while ((i = bms_next_member(node->as_asyncplans, i)) >= 0)
-		{
-			AsyncRequest *areq = node->as_asyncrequests[i];
-
-			areq->callback_pending = false;
-			areq->request_complete = false;
-			areq->result = NULL;
-		}
-
-		node->as_nasyncresults = 0;
-		node->as_nasyncremain = 0;
-		bms_free(node->as_needrequest);
-		node->as_needrequest = NULL;
 	}
 
 	/* Let choose_next_subplan_* function handle setting the first subplan */
@@ -1115,6 +1101,79 @@ ExecAppendAsyncEventWait(AppendState *node)
 			CHECK_FOR_INTERRUPTS();
 		}
 	}
+}
+
+/* ----------------------------------------------------------------
+ *		ExecAppendAsyncReset
+ *
+ *		Reset asynchronous requests made for async-capable subplans.
+ * ----------------------------------------------------------------
+ */
+static void
+ExecAppendAsyncReset(AppendState *node)
+{
+	int			i;
+
+	/* We should never be called when there are no async subplans. */
+	Assert(node->as_nasyncplans > 0);
+
+	/*
+	 * Drain pending async requests if any.  We force the as_syncdone flag to
+	 * be true so that ExecAppendAsyncEventWait() waits until at least one
+	 * event occurs.
+	 */
+	node->as_syncdone = true;
+	for (;;)
+	{
+		bool		found = false;
+
+		/*
+		 * When called from ExecAppendAsyncEventWait(), postgres_fdw (and
+		 * possibly other FDWs) will skip configuration of events for pending
+		 * requests in some cases if as_needrequest isn't empty.  To avoid
+		 * that, discard results we already have.  Note that we need to do
+		 * this on every iteration, as the call to that function may produce
+		 * new results.
+		 */
+		node->as_nasyncresults = 0;
+		bms_free(node->as_needrequest);
+		node->as_needrequest = NULL;
+
+		i = -1;
+		while ((i = bms_next_member(node->as_asyncplans, i)) >= 0)
+		{
+			AsyncRequest *areq = node->as_asyncrequests[i];
+
+			if (areq->callback_pending)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			break;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/* Wait or poll for async events. */
+		ExecAppendAsyncEventWait(node);
+	}
+
+	/* Reset async requests. */
+	i = -1;
+	while ((i = bms_next_member(node->as_asyncplans, i)) >= 0)
+	{
+		AsyncRequest *areq = node->as_asyncrequests[i];
+
+		Assert(!areq->callback_pending);
+		areq->request_complete = false;
+		areq->result = NULL;
+	}
+
+	/* Reset state variables. */
+	Assert(node->as_nasyncresults == 0);
+	Assert(node->as_needrequest == NULL);
+	node->as_nasyncremain = 0;
 }
 
 /* ----------------------------------------------------------------

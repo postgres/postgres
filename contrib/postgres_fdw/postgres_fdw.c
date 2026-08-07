@@ -1650,16 +1650,11 @@ postgresReScanForeignScan(ForeignScanState *node)
 		return;
 
 	/*
-	 * If the node is async-capable, and an asynchronous fetch for it has
-	 * begun, the asynchronous fetch might not have yet completed.  Check if
-	 * the node is async-capable, and an asynchronous fetch for it is still in
-	 * progress; if so, complete the asynchronous fetch before restarting the
-	 * scan.
+	 * If the node is async-capable, any asynchronous fetch made for it should
+	 * have been processed before we get here (see ExecAppendAsyncReset()).
 	 */
-	if (fsstate->async_capable &&
-		fsstate->conn_state->pendingAreq &&
-		fsstate->conn_state->pendingAreq->requestee == (PlanState *) node)
-		fetch_more_data(node);
+	Assert(!fsstate->async_capable || !fsstate->conn_state->pendingAreq ||
+		   fsstate->conn_state->pendingAreq->requestee != (PlanState *) node);
 
 	/*
 	 * If any internal parameters affecting this node have changed, we'd
