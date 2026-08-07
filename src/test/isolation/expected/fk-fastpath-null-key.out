@@ -1,0 +1,17 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s1upd_null s2ins s1c
+step s1b: BEGIN;
+step s1upd_null: UPDATE pktable SET u = NULL WHERE u = 5;
+step s2ins: INSERT INTO fktable VALUES (5); <waiting ...>
+step s1c: COMMIT;
+step s2ins: <... completed>
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_a_fkey"
+
+starting permutation: s1b s1upd_null s2ins_arr s1c
+step s1b: BEGIN;
+step s1upd_null: UPDATE pktable SET u = NULL WHERE u = 5;
+step s2ins_arr: INSERT INTO fktable VALUES (5), (6); <waiting ...>
+step s1c: COMMIT;
+step s2ins_arr: <... completed>
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_a_fkey"

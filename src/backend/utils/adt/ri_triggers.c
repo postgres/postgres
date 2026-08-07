@@ -3199,9 +3199,19 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 		if (!ri_LockPKTuple(pk_rel, pk_slot, snapshot, &concurrently_updated))
 			continue;
 
-		/* Extract the PK value from the matched and locked tuple */
+		/*
+		 * Extract the PK value from the matched and locked tuple.
+		 *
+		 * A foreign key may reference a nullable unique column, not just a
+		 * NOT NULL primary key.  If ri_LockPKTuple() chased an update chain
+		 * to a version whose referenced key is now NULL, that version cannot
+		 * equal any buffered (non-null) FK value, so skip it.  This mirrors
+		 * the SPI path, where the requalifying "pkatt = $n" yields NULL and
+		 * the row is not returned.
+		 */
 		found_val = slot_getattr(pk_slot, riinfo->pk_attnums[0], &found_null);
-		Assert(!found_null);
+		if (found_null)
+			continue;
 
 		if (concurrently_updated)
 		{
@@ -3453,9 +3463,14 @@ recheck_matched_pk_tuple(Relation idxrel, ScanKeyData *skeys, int nkeys,
 	{
 		ScanKeyData *skey = &skeys[i];
 
-		/* A PK column can never be set to NULL. */
-		Assert(!isnull[i]);
-		if (!DatumGetBool(FunctionCall2Coll(&skey->sk_func,
+		/*
+		 * A foreign key may reference a nullable unique column, so the
+		 * version we chased the update chain to may have a NULL in a key
+		 * column.  A NULL never equals the value we searched for, so treat it
+		 * as no match, as the SPI path's requalification would.
+		 */
+		if (isnull[i] ||
+			!DatumGetBool(FunctionCall2Coll(&skey->sk_func,
 											skey->sk_collation,
 											values[i],
 											skey->sk_argument)))
