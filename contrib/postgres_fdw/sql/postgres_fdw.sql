@@ -3664,8 +3664,8 @@ DROP TABLE base_tbl2;
 DROP TABLE result_tbl;
 DROP TABLE join_tbl;
 
--- Test that an asynchronous fetch is processed before restarting the scan in
--- ReScanForeignScan
+-- Test ExecAppendAsyncReset code path that drains outstanding async requests
+-- (case where subplans are re-scanned without parameter changes)
 CREATE TABLE base_tbl (a int, b int);
 INSERT INTO base_tbl VALUES (1, 11), (2, 22), (3, 33);
 CREATE FOREIGN TABLE foreign_tbl (b int)
