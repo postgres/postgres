@@ -5380,12 +5380,22 @@ AfterTriggerFireDeferred(void)
 	{
 		CommandId	firing_id = afterTriggers.firing_counter++;
 
-		if (afterTriggerInvokeEvents(events, firing_id, NULL, true))
-			break;				/* all fired */
-	}
+		(void) afterTriggerInvokeEvents(events, firing_id, NULL, true);
 
-	/* Flush any fast-path batches accumulated by the triggers just fired. */
-	FireAfterTriggerBatchCallbacks(afterTriggers.batch_callbacks);
+		/*
+		 * Flush any fast-path FK-check batches accumulated by the triggers
+		 * just fired.  A batch callback runs user-supplied cast or equality
+		 * functions, whose DML can queue further deferred trigger events.
+		 * Flush inside the loop so afterTriggerMarkEvents() sees any such
+		 * events on the next iteration and fires them; flushing after the
+		 * loop would leave them unfired, silently skipping e.g. a deferred FK
+		 * check and letting a violating row commit.  (The former "all fired"
+		 * break is therefore gone: the loop now terminates only when
+		 * afterTriggerMarkEvents() finds nothing left, including events queued
+		 * by the flush.)
+		 */
+		FireAfterTriggerBatchCallbacks(afterTriggers.batch_callbacks);
+	}
 
 	afterTriggers.firing_depth--;
 
