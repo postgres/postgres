@@ -1285,6 +1285,7 @@ lazy_scan_heap(LVRelState *vacrel)
 	BlockNumber orig_eager_scan_success_limit =
 		vacrel->eager_scan_remaining_successes; /* for logging */
 	Buffer		vmbuffer = InvalidBuffer;
+	bool		strategy_cleared = false;
 	const int	initprog_index[] = {
 		PROGRESS_VACUUM_PHASE,
 		PROGRESS_VACUUM_TOTAL_HEAP_BLKS,
@@ -1389,10 +1390,14 @@ lazy_scan_heap(LVRelState *vacrel)
 		 * If the wraparound failsafe has engaged -- either via the check
 		 * above or during index vacuuming invoked from this loop -- stop
 		 * using the buffer access strategy so that the rest of the vacuum may
-		 * use all of shared buffers.
+		 * use all of shared buffers. Failsafe mode stays engaged once
+		 * triggered, so we only need to do this once.
 		 */
-		if (unlikely(VacuumFailsafeActive))
+		if (unlikely(VacuumFailsafeActive) && !strategy_cleared)
+		{
 			read_stream_clear_strategy(stream);
+			strategy_cleared = true;
+		}
 
 		buf = read_stream_next_buffer(stream, &per_buffer_data);
 
