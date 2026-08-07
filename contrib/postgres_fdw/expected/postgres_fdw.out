@@ -10861,6 +10861,72 @@ SELECT * FROM result_tbl ORDER BY a;
 (3 rows)
 
 DELETE FROM result_tbl;
+-- Test ExecAppendAsyncReset code path that drains outstanding async requests
+-- (case where subplans are re-scanned with parameter changes)
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT o.x FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT a FROM async_pt WHERE a = o.x OR a = 1505 LIMIT 1) s ORDER BY o.x;
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: "*VALUES*".column1
+   Sort Key: "*VALUES*".column1
+   ->  Nested Loop
+         Output: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+               Output: "*VALUES*".column1
+         ->  Limit
+               Output: NULL::integer
+               ->  Append
+                     ->  Async Foreign Scan on public.async_p1 async_pt_1
+                           Output: NULL::integer
+                           Remote SQL: SELECT NULL FROM public.base_tbl1 WHERE (((a = $1::integer) OR (a = 1505)))
+                     ->  Async Foreign Scan on public.async_p2 async_pt_2
+                           Output: NULL::integer
+                           Remote SQL: SELECT NULL FROM public.base_tbl2 WHERE (((a = $1::integer) OR (a = 1505)))
+                     ->  Async Foreign Scan on public.async_p3 async_pt_3
+                           Output: NULL::integer
+                           Remote SQL: SELECT NULL FROM public.base_tbl3 WHERE (((a = $1::integer) OR (a = 1505)))
+(19 rows)
+
+SELECT o.x FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT a FROM async_pt WHERE a = o.x OR a = 1505 LIMIT 1) s ORDER BY o.x;
+  x   
+------
+ 2505
+ 3505
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT o.x FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT a FROM async_pt WHERE a = o.x OR (a = 1505 AND o.x = 2505) LIMIT 1) s ORDER BY o.x;
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: "*VALUES*".column1
+   Sort Key: "*VALUES*".column1
+   ->  Nested Loop
+         Output: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+               Output: "*VALUES*".column1
+         ->  Limit
+               Output: NULL::integer
+               ->  Append
+                     ->  Async Foreign Scan on public.async_p1 async_pt_1
+                           Output: NULL::integer
+                           Remote SQL: SELECT NULL FROM public.base_tbl1 WHERE (((a = $1::integer) OR ((a = 1505) AND ($1::integer = 2505))))
+                     ->  Async Foreign Scan on public.async_p2 async_pt_2
+                           Output: NULL::integer
+                           Remote SQL: SELECT NULL FROM public.base_tbl2 WHERE (((a = $1::integer) OR ((a = 1505) AND ($1::integer = 2505))))
+                     ->  Async Foreign Scan on public.async_p3 async_pt_3
+                           Output: NULL::integer
+                           Remote SQL: SELECT NULL FROM public.base_tbl3 WHERE (((a = $1::integer) OR ((a = 1505) AND ($1::integer = 2505))))
+(19 rows)
+
+SELECT o.x FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT a FROM async_pt WHERE a = o.x OR (a = 1505 AND o.x = 2505) LIMIT 1) s ORDER BY o.x;
+  x   
+------
+ 2505
+ 3505
+(2 rows)
+
 DROP FOREIGN TABLE async_p3;
 DROP TABLE base_tbl3;
 -- Check case where the partitioned table has local/remote partitions
@@ -11634,8 +11700,8 @@ DROP TABLE base_tbl1;
 DROP TABLE base_tbl2;
 DROP TABLE result_tbl;
 DROP TABLE join_tbl;
--- Test that an asynchronous fetch is processed before restarting the scan in
--- ReScanForeignScan
+-- Test ExecAppendAsyncReset code path that drains outstanding async requests
+-- (case where subplans are re-scanned without parameter changes)
 CREATE TABLE base_tbl (a int, b int);
 INSERT INTO base_tbl VALUES (1, 11), (2, 22), (3, 33);
 CREATE FOREIGN TABLE foreign_tbl (b int)
