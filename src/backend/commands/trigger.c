@@ -5391,8 +5391,8 @@ AfterTriggerFireDeferred(void)
 		 * loop would leave them unfired, silently skipping e.g. a deferred FK
 		 * check and letting a violating row commit.  (The former "all fired"
 		 * break is therefore gone: the loop now terminates only when
-		 * afterTriggerMarkEvents() finds nothing left, including events queued
-		 * by the flush.)
+		 * afterTriggerMarkEvents() finds nothing left, including events
+		 * queued by the flush.)
 		 */
 		FireAfterTriggerBatchCallbacks(afterTriggers.batch_callbacks);
 	}
