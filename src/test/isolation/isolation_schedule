@@ -38,6 +38,7 @@ test: fk-snapshot
 test: fk-snapshot-2
 test: fk-snapshot-3
 test: fk-concurrent-pk-upd
+test: fk-fastpath-null-key
 test: subxid-overflow
 test: eval-plan-qual
 test: eval-plan-qual-trigger
