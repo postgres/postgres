@@ -551,7 +551,23 @@ pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, uint64 objid, bool create,
 		 * lookup. If so, fall through to the same path as if we'd have if it
 		 * already had been created before the dshash_find() calls.
 		 */
-		shhashent = dshash_find_or_insert(pgStatLocal.shared_hash, &key, &shfound);
+		shhashent = dshash_find_or_insert_extended(pgStatLocal.shared_hash,
+												   &key, &shfound,
+												   DSHASH_INSERT_NO_OOM);
+		if (!shhashent)
+		{
+			/*
+			 * Clean up the local reference when failing insert into the
+			 * shared hashtable.
+			 */
+			pgstat_release_entry_ref(key, entry_ref, false);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed while inserting entry %u/%u/%" PRIu64 ".",
+							   key.kind, key.dboid, key.objid)));
+		}
+
 		if (!shfound)
 		{
 			shheader = pgstat_init_entry(kind, shhashent);
