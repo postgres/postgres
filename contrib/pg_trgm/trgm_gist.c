@@ -893,7 +893,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			else
 				size_alpha = SIGLENBIT(siglen) -
 					sizebitvec((cache[j].allistrue) ? GETSIGN(datum_l) :
-							   GETSIGN(cache[j].sign),
+							   cache[j].sign,
 							   siglen);
 		}
 		else
@@ -906,7 +906,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			else
 				size_beta = SIGLENBIT(siglen) -
 					sizebitvec((cache[j].allistrue) ? GETSIGN(datum_r) :
-							   GETSIGN(cache[j].sign),
+							   cache[j].sign,
 							   siglen);
 		}
 		else
