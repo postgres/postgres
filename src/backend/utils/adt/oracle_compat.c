@@ -936,8 +936,10 @@ ascii(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_PP(0);
 	int			encoding = GetDatabaseEncoding();
 	unsigned char *data;
+	int			len;
 
-	if (VARSIZE_ANY_EXHDR(string) <= 0)
+	len = VARSIZE_ANY_EXHDR(string);
+	if (len <= 0)
 		PG_RETURN_INT32(0);
 
 	data = (unsigned char *) VARDATA_ANY(string);
@@ -960,18 +962,31 @@ ascii(PG_FUNCTION_ARGS)
 			result = *data & 0x0F;
 			tbytes = 2;
 		}
-		else
+		else if (*data > 0xC0)
 		{
-			Assert(*data > 0xC0);
 			result = *data & 0x1f;
 			tbytes = 1;
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					 errmsg("invalid byte sequence for encoding \"%s\"",
+							GetDatabaseEncodingName())));
 
-		Assert(tbytes > 0);
+		/* All continuation bytes are present in the input */
+		if (tbytes >= len)
+			ereport(ERROR,
+					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					 errmsg("invalid byte sequence for encoding \"%s\"",
+							GetDatabaseEncodingName())));
 
 		for (i = 1; i <= tbytes; i++)
 		{
-			Assert((data[i] & 0xC0) == 0x80);
+			if (unlikely((data[i] & 0xC0) != 0x80))
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+						 errmsg("invalid byte sequence for encoding \"%s\"",
+								GetDatabaseEncodingName())));
 			result = (result << 6) + (data[i] & 0x3f);
 		}
 
