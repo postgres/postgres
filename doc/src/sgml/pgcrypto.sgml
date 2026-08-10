@@ -1243,6 +1243,11 @@ fips_mode() returns boolean
       <literal>fips</literal> disables these functions if
       <productname>OpenSSL</productname> is detected to operate in FIPS mode.
      </para>
+     <para>
+      <function>pgp_sym_encrypt()</function> and
+      <function>pgp_pub_encrypt()</function> do not use built in crypto so
+      they are not affected.
+     </para>
     </listitem>
    </varlistentry>
   </variablelist>
