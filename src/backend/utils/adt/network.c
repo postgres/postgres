@@ -451,7 +451,7 @@ network_sortsupport(PG_FUNCTION_ARGS)
 
 		ssup->ssup_extra = uss;
 
-		ssup->comparator = ssup_datum_unsigned_cmp;
+		ssup->comparator = ssup_datum_uint64_cmp;
 		ssup->abbrev_converter = network_abbrev_convert;
 		ssup->abbrev_abort = network_abbrev_abort;
 		ssup->abbrev_full_comparator = network_fast_cmp;

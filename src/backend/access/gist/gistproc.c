@@ -1750,7 +1750,7 @@ gist_point_sortsupport(PG_FUNCTION_ARGS)
 
 	if (ssup->abbreviate)
 	{
-		ssup->comparator = ssup_datum_unsigned_cmp;
+		ssup->comparator = ssup_datum_uint64_cmp;
 		ssup->abbrev_converter = gist_bbox_zorder_abbrev_convert;
 		ssup->abbrev_abort = gist_bbox_zorder_abbrev_abort;
 		ssup->abbrev_full_comparator = gist_bbox_zorder_cmp;

@@ -275,7 +275,7 @@ btint8sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = ssup_datum_signed_cmp;
+	ssup->comparator = ssup_datum_int64_cmp;
 	PG_RETURN_VOID();
 }
 
@@ -495,7 +495,7 @@ btoid8sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = ssup_datum_unsigned_cmp;
+	ssup->comparator = ssup_datum_uint64_cmp;
 	PG_RETURN_VOID();
 }
 

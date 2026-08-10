@@ -2587,9 +2587,9 @@ normalize_datum(Datum orig, SortSupport ssup)
 {
 	Datum		norm_datum1;
 
-	if (ssup->comparator == ssup_datum_signed_cmp)
+	if (ssup->comparator == ssup_datum_int64_cmp)
 		norm_datum1 = orig + (Int64GetDatum(PG_INT64_MAX)) + 1;
-	else if (ssup->comparator == ssup_datum_unsigned_cmp)
+	else if (ssup->comparator == ssup_datum_uint64_cmp)
 		norm_datum1 = orig;
 	else
 	{
@@ -3010,8 +3010,8 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 
 			/* Does it compare as an integer? */
 			if (state->memtupcount >= QSORT_THRESHOLD &&
-				(ssup->comparator == ssup_datum_unsigned_cmp ||
-				 ssup->comparator == ssup_datum_signed_cmp ||
+				(ssup->comparator == ssup_datum_uint64_cmp ||
+				 ssup->comparator == ssup_datum_int64_cmp ||
 				 ssup->comparator == ssup_datum_uint32_cmp ||
 				 ssup->comparator == ssup_datum_int32_cmp))
 			{
@@ -3449,7 +3449,7 @@ free_sort_tuple(Tuplesortstate *state, SortTuple *stup)
 }
 
 int
-ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup)
+ssup_datum_uint64_cmp(Datum x, Datum y, SortSupport ssup)
 {
 	if (x < y)
 		return -1;
@@ -3460,7 +3460,7 @@ ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup)
 }
 
 int
-ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup)
+ssup_datum_int64_cmp(Datum x, Datum y, SortSupport ssup)
 {
 	int64		xx = DatumGetInt64(x);
 	int64		yy = DatumGetInt64(y);

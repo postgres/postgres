@@ -272,8 +272,8 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
  * Datatypes that install these as their comparator or abbreviated comparator
  * are eligible for faster sorting.
  */
-extern int	ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup);
-extern int	ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup);
+extern int	ssup_datum_uint64_cmp(Datum x, Datum y, SortSupport ssup);
+extern int	ssup_datum_int64_cmp(Datum x, Datum y, SortSupport ssup);
 extern int	ssup_datum_uint32_cmp(Datum x, Datum y, SortSupport ssup);
 extern int	ssup_datum_int32_cmp(Datum x, Datum y, SortSupport ssup);
 

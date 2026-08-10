@@ -1794,7 +1794,7 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 			initHyperLogLog(&sss->abbr_card, 10);
 			initHyperLogLog(&sss->full_card, 10);
 			ssup->abbrev_full_comparator = ssup->comparator;
-			ssup->comparator = ssup_datum_unsigned_cmp;
+			ssup->comparator = ssup_datum_uint64_cmp;
 			ssup->abbrev_converter = varstr_abbrev_convert;
 			ssup->abbrev_abort = varstr_abbrev_abort;
 		}
@@ -2179,7 +2179,7 @@ done:
 	/*
 	 * Byteswap on little-endian machines.
 	 *
-	 * This is needed so that ssup_datum_unsigned_cmp() (an unsigned integer
+	 * This is needed so that ssup_datum_uint64_cmp() (an unsigned integer
 	 * 3-way comparator) works correctly on all platforms.  If we didn't do
 	 * this, the comparator would have to call memcmp() with a pair of
 	 * pointers to the first byte of each abbreviated key, which is slower.

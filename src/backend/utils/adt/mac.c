@@ -358,7 +358,7 @@ macaddr_sortsupport(PG_FUNCTION_ARGS)
 
 	if (ssup->abbreviate)
 	{
-		ssup->comparator = ssup_datum_unsigned_cmp;
+		ssup->comparator = ssup_datum_uint64_cmp;
 		ssup->abbrev_converter = macaddr_abbrev_convert;
 		ssup->abbrev_abort = macaddr_abbrev_abort;
 		ssup->abbrev_full_comparator = macaddr_fast_cmp;
@@ -419,7 +419,7 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 	/*
 	 * Byteswap on little-endian machines.
 	 *
-	 * This is needed so that ssup_datum_unsigned_cmp() (an unsigned integer
+	 * This is needed so that ssup_datum_uint64_cmp() (an unsigned integer
 	 * 3-way comparator) works correctly on all platforms. Without this, the
 	 * comparator would have to call memcmp() with a pair of pointers to the
 	 * first byte of each abbreviated key, which is slower.

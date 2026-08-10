@@ -1127,7 +1127,7 @@ bytea_abbrev_convert(Datum original, SortSupport ssup)
 	/*
 	 * Byteswap on little-endian machines.
 	 *
-	 * This is needed so that ssup_datum_unsigned_cmp() works correctly on all
+	 * This is needed so that ssup_datum_uint64_cmp() works correctly on all
 	 * platforms.
 	 */
 	res = DatumBigEndianToNative(res);
@@ -1234,7 +1234,7 @@ bytea_sortsupport(PG_FUNCTION_ARGS)
 
 		ssup->ssup_extra = bss;
 		ssup->abbrev_full_comparator = ssup->comparator;
-		ssup->comparator = ssup_datum_unsigned_cmp;
+		ssup->comparator = ssup_datum_uint64_cmp;
 		ssup->abbrev_converter = bytea_abbrev_convert;
 		ssup->abbrev_abort = bytea_abbrev_abort;
 	}
