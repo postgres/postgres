@@ -18,6 +18,30 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+d1c8aa0b09f18bba1343ce2e4aa537a17a8a972f
+#
+# Check for USAGE privilege on types used by stored expressions.
+# 2026-08-10 06:38:19 -0700
+#
+# The addition of a parameter to AlterDomainAddConstraint() breaks ABI
+# compatibility, but we are unaware of any impacted third-party code.
+
+01992176e08169b7aedf2d61be9e22518b5c6640
+#
+# Add an output_plugin_libraries GUC to bless trusted output plugins
+# 2026-08-10 06:38:18 -0700
+#
+# Addition of a new GUC enlarges ConfigureNamesString[],
+# but that is not harmful.
+
+75a03c569c761fa27ba15975f342b72ab0d28946
+#
+# Preserve the owner of extended statistics rebuilt by ALTER TABLE.
+# 2026-08-10 06:38:18 -0700
+#
+# CreateStatistics()'s signature changes and CreateStatsStmt gains a field,
+# but no known third-party code calls the former or constructs the latter.
+
 586f4266fb4945f6ea3564b9c1bab093eb74bee4
 #
 # Fix ABI break by moving PROCSIG_SLOTSYNC_MESSAGE in ProcSignalReason
