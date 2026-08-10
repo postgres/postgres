@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-07 08:57+0200\n"
-"PO-Revision-Date: 2026-02-07 09:12+0200\n"
+"POT-Creation-Date: 2026-08-08 08:46+0300\n"
+"PO-Revision-Date: 2026-08-05 07:52+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -88,16 +88,26 @@ msgstr "ошибка в %s(): %m"
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/username.c:43
 #, c-format
@@ -159,12 +169,12 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:3154
+#: ../../fe_utils/print.c:3155
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прервано\n"
 
-#: ../../fe_utils/print.c:3188
+#: ../../fe_utils/print.c:3189
 #, c-format
 msgid ""
 "Cannot print table contents: number of cells %<PRIu64> is equal to or "
@@ -173,13 +183,13 @@ msgstr ""
 "Вывести содержимое таблицы нельзя: число ячеек %<PRIu64> достигло максимума "
 "%zu.\n"
 
-#: ../../fe_utils/print.c:3229
+#: ../../fe_utils/print.c:3230
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления заголовка таблицы: превышен предел числа столбцов (%d).\n"
 
-#: ../../fe_utils/print.c:3272
+#: ../../fe_utils/print.c:3273
 #, c-format
 msgid ""
 "Cannot add cell to table content: total cell count of %<PRIu64> exceeded.\n"
@@ -187,7 +197,7 @@ msgstr ""
 "Ошибка добавления ячейки в таблицу: превышен предел числа ячеек "
 "(%<PRIu64>).\n"
 
-#: ../../fe_utils/print.c:3530
+#: ../../fe_utils/print.c:3531
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
@@ -264,15 +274,15 @@ msgstr "В данный момент вы не подключены к базе 
 msgid "Connection Information"
 msgstr "Информация о подключении"
 
-#: command.c:840 describe.c:4722
+#: command.c:840 describe.c:4726
 msgid "Parameter"
 msgstr "Параметр"
 
-#: command.c:841 describe.c:4723
+#: command.c:841 describe.c:4727
 msgid "Value"
 msgstr "Значение"
 
-#: command.c:844 describe.c:3874
+#: command.c:844 describe.c:3878
 msgid "Database"
 msgstr "БД"
 
@@ -296,7 +306,7 @@ msgstr "Узел"
 msgid "Server Port"
 msgstr "Порт сервера"
 
-#: command.c:882 describe.c:246 describe.c:3615 describe.c:3955
+#: command.c:882 describe.c:246 describe.c:3619 describe.c:3959
 msgid "Options"
 msgstr "Параметры"
 
@@ -384,7 +394,7 @@ msgstr ""
 
 #: command.c:1656 command.c:2596 command.c:4074 command.c:4272 command.c:6511
 #: common.c:233 common.c:282 common.c:455 common.c:1178 common.c:1196
-#: common.c:1264 common.c:1376 common.c:1414 common.c:1705 common.c:1785
+#: common.c:1264 common.c:1376 common.c:1414 common.c:1718 common.c:1798
 #: copy.c:486 copy.c:731 large_obj.c:157 large_obj.c:192 large_obj.c:254
 #: startup.c:309
 #, c-format
@@ -1053,7 +1063,7 @@ msgstr "Время: %.3f мс (%02d:%02d:%06.3f)\n"
 msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
 msgstr "Время: %.3f мс (%.0f д. %02d:%02d:%06.3f)\n"
 
-#: common.c:661 common.c:718 common.c:1130 describe.c:6371
+#: common.c:661 common.c:718 common.c:1130 describe.c:6375
 #, c-format
 msgid "You are currently not connected to a database."
 msgstr "В данный момент вы не подключены к базе данных."
@@ -1119,14 +1129,14 @@ msgstr "ОПЕРАТОР:  %s"
 msgid "unexpected transaction status (%d)"
 msgstr "неожиданное состояние транзакции (%d)"
 
-#: common.c:1398 describe.c:2064
+#: common.c:1398 describe.c:2068
 msgid "Column"
 msgstr "Столбец"
 
-#: common.c:1399 describe.c:176 describe.c:363 describe.c:381 describe.c:1082
-#: describe.c:1244 describe.c:1774 describe.c:1798 describe.c:2065
-#: describe.c:4058 describe.c:4322 describe.c:4569 describe.c:4729
-#: describe.c:6005
+#: common.c:1399 describe.c:176 describe.c:363 describe.c:381 describe.c:1086
+#: describe.c:1248 describe.c:1778 describe.c:1802 describe.c:2069
+#: describe.c:4062 describe.c:4326 describe.c:4573 describe.c:4733
+#: describe.c:6009
 msgid "Type"
 msgstr "Тип"
 
@@ -1135,22 +1145,22 @@ msgstr "Тип"
 msgid "The command has no result, or the result has no columns.\n"
 msgstr "Команда не выдала результат, либо в результате нет столбцов.\n"
 
-#: common.c:1670
+#: common.c:1683
 #, c-format
 msgid "No pending results to get"
 msgstr "Нет результатов, ожидающих получения"
 
-#: common.c:1748
+#: common.c:1761
 #, c-format
 msgid "fetching results in chunked mode failed"
 msgstr "получить результаты в блочном режиме не удалось"
 
-#: common.c:1797
+#: common.c:1810
 #, c-format
 msgid "Pipeline aborted, command did not run"
 msgstr "Конвейерный режим прерван, команда не была выполнена"
 
-#: common.c:1893
+#: common.c:1906
 #, c-format
 msgid "COPY in a pipeline is not supported, aborting connection"
 msgstr "COPY в конвейерном режиме не поддерживается, соединение прерывается"
@@ -1271,21 +1281,21 @@ msgstr "\\crosstabview: неоднозначное имя столбца: \"%s\"
 msgid "\\crosstabview: column name not found: \"%s\""
 msgstr "\\crosstabview: имя столбца не найдено: \"%s\""
 
-#: describe.c:94 describe.c:343 describe.c:650 describe.c:827 describe.c:1074
-#: describe.c:1231 describe.c:1307 describe.c:4047 describe.c:4309
-#: describe.c:4567 describe.c:4648 describe.c:4880 describe.c:5092
-#: describe.c:5341 describe.c:5582 describe.c:5651 describe.c:5662
-#: describe.c:5718 describe.c:6117 describe.c:6197
+#: describe.c:94 describe.c:343 describe.c:650 describe.c:827 describe.c:1078
+#: describe.c:1235 describe.c:1311 describe.c:4051 describe.c:4313
+#: describe.c:4571 describe.c:4652 describe.c:4884 describe.c:5096
+#: describe.c:5345 describe.c:5586 describe.c:5655 describe.c:5666
+#: describe.c:5722 describe.c:6121 describe.c:6201
 msgid "Schema"
 msgstr "Схема"
 
 #: describe.c:95 describe.c:173 describe.c:234 describe.c:344 describe.c:651
-#: describe.c:828 describe.c:959 describe.c:1075 describe.c:1308
-#: describe.c:4048 describe.c:4310 describe.c:4484 describe.c:4568
-#: describe.c:4649 describe.c:4810 describe.c:4881 describe.c:5093
-#: describe.c:5214 describe.c:5342 describe.c:5583 describe.c:5652
-#: describe.c:5663 describe.c:5719 describe.c:5916 describe.c:5986
-#: describe.c:6194 describe.c:6422 describe.c:6768
+#: describe.c:828 describe.c:959 describe.c:1079 describe.c:1312
+#: describe.c:4052 describe.c:4314 describe.c:4488 describe.c:4572
+#: describe.c:4653 describe.c:4814 describe.c:4885 describe.c:5097
+#: describe.c:5218 describe.c:5346 describe.c:5587 describe.c:5656
+#: describe.c:5667 describe.c:5723 describe.c:5920 describe.c:5990
+#: describe.c:6198 describe.c:6426 describe.c:6772
 msgid "Name"
 msgstr "Имя"
 
@@ -1298,13 +1308,13 @@ msgid "Argument data types"
 msgstr "Типы данных аргументов"
 
 #: describe.c:105 describe.c:112 describe.c:184 describe.c:248 describe.c:433
-#: describe.c:682 describe.c:847 describe.c:1011 describe.c:1310
-#: describe.c:2085 describe.c:3774 describe.c:4106 describe.c:4363
-#: describe.c:4508 describe.c:4581 describe.c:4658 describe.c:4823
-#: describe.c:5005 describe.c:5151 describe.c:5223 describe.c:5343
-#: describe.c:5493 describe.c:5534 describe.c:5599 describe.c:5655
-#: describe.c:5664 describe.c:5720 describe.c:5934 describe.c:6008
-#: describe.c:6131 describe.c:6198 describe.c:7304
+#: describe.c:682 describe.c:847 describe.c:1014 describe.c:1314
+#: describe.c:2089 describe.c:3778 describe.c:4110 describe.c:4367
+#: describe.c:4512 describe.c:4585 describe.c:4662 describe.c:4827
+#: describe.c:5009 describe.c:5155 describe.c:5227 describe.c:5347
+#: describe.c:5497 describe.c:5538 describe.c:5603 describe.c:5659
+#: describe.c:5668 describe.c:5724 describe.c:5938 describe.c:6012
+#: describe.c:6135 describe.c:6202 describe.c:7308
 msgid "Description"
 msgstr "Описание"
 
@@ -1321,11 +1331,11 @@ msgstr "Сервер (версия %s) не поддерживает метод�
 msgid "Index"
 msgstr "Индекс"
 
-#: describe.c:175 describe.c:4066 describe.c:4335 describe.c:6118
+#: describe.c:175 describe.c:4070 describe.c:4339 describe.c:6122
 msgid "Table"
 msgstr "Таблица"
 
-#: describe.c:183 describe.c:5918
+#: describe.c:183 describe.c:5922
 msgid "Handler"
 msgstr "Обработчик"
 
@@ -1333,11 +1343,11 @@ msgstr "Обработчик"
 msgid "List of access methods"
 msgstr "Список методов доступа"
 
-#: describe.c:235 describe.c:416 describe.c:675 describe.c:960 describe.c:1230
-#: describe.c:4059 describe.c:4311 describe.c:4485 describe.c:4812
-#: describe.c:5215 describe.c:5917 describe.c:5987 describe.c:6423
-#: describe.c:6644 describe.c:6769 describe.c:6939 describe.c:7024
-#: describe.c:7292
+#: describe.c:235 describe.c:416 describe.c:675 describe.c:960 describe.c:1234
+#: describe.c:4063 describe.c:4315 describe.c:4489 describe.c:4816
+#: describe.c:5219 describe.c:5921 describe.c:5991 describe.c:6427
+#: describe.c:6648 describe.c:6773 describe.c:6943 describe.c:7028
+#: describe.c:7296
 msgid "Owner"
 msgstr "Владелец"
 
@@ -1345,7 +1355,7 @@ msgstr "Владелец"
 msgid "Location"
 msgstr "Расположение"
 
-#: describe.c:247 describe.c:673 describe.c:1009 describe.c:4105
+#: describe.c:247 describe.c:673 describe.c:1012 describe.c:4109
 msgid "Size"
 msgstr "Размер"
 
@@ -1382,7 +1392,7 @@ msgstr "проц."
 msgid "func"
 msgstr "функ."
 
-#: describe.c:379 describe.c:1440
+#: describe.c:379 describe.c:1444
 msgid "trigger"
 msgstr "триггерная"
 
@@ -1430,19 +1440,19 @@ msgstr "вызывающего"
 msgid "Security"
 msgstr "Безопасность"
 
-#: describe.c:420 describe.c:838 describe.c:1779 describe.c:1803
-#: describe.c:1932 describe.c:4652 describe.c:4993 describe.c:5002
-#: describe.c:5140 describe.c:5145 describe.c:6927 describe.c:7126
+#: describe.c:420 describe.c:838 describe.c:1783 describe.c:1807
+#: describe.c:1936 describe.c:4656 describe.c:4997 describe.c:5006
+#: describe.c:5144 describe.c:5149 describe.c:6931 describe.c:7130
 msgid "yes"
 msgstr "да"
 
-#: describe.c:421 describe.c:839 describe.c:1780 describe.c:1804
-#: describe.c:1933 describe.c:4652 describe.c:4990 describe.c:5003
-#: describe.c:5140 describe.c:6928 describe.c:7127
+#: describe.c:421 describe.c:839 describe.c:1784 describe.c:1808
+#: describe.c:1937 describe.c:4656 describe.c:4994 describe.c:5007
+#: describe.c:5144 describe.c:6932 describe.c:7131
 msgid "no"
 msgstr "нет"
 
-#: describe.c:422 describe.c:840 describe.c:5004 describe.c:7128
+#: describe.c:422 describe.c:840 describe.c:5008 describe.c:7132
 msgid "Leakproof?"
 msgstr "Герметичная?"
 
@@ -1478,8 +1488,8 @@ msgstr "Тип правого аргумента"
 msgid "Result type"
 msgstr "Результирующий тип"
 
-#: describe.c:837 describe.c:4818 describe.c:4982 describe.c:5492
-#: describe.c:7222 describe.c:7226
+#: describe.c:837 describe.c:4822 describe.c:4986 describe.c:5496
+#: describe.c:7226 describe.c:7230
 msgid "Function"
 msgstr "Функция"
 
@@ -1495,557 +1505,557 @@ msgstr "Кодировка"
 msgid "Locale Provider"
 msgstr "Провайдер локали"
 
-#: describe.c:977 describe.c:5112
+#: describe.c:977 describe.c:5116
 msgid "Collate"
 msgstr "LC_COLLATE"
 
-#: describe.c:978 describe.c:5113
+#: describe.c:978 describe.c:5117
 msgid "Ctype"
 msgstr "LC_CTYPE"
 
-#: describe.c:982 describe.c:986 describe.c:990 describe.c:5118 describe.c:5122
-#: describe.c:5126
+#: describe.c:982 describe.c:986 describe.c:990 describe.c:5122 describe.c:5126
+#: describe.c:5130
 msgid "Locale"
 msgstr "Локаль"
 
-#: describe.c:994 describe.c:998 describe.c:5131 describe.c:5135
+#: describe.c:994 describe.c:998 describe.c:5135 describe.c:5139
 msgid "ICU Rules"
 msgstr "Правила ICU"
 
-#: describe.c:1010
+#: describe.c:1013
 msgid "Tablespace"
 msgstr "Табл. пространство"
 
-#: describe.c:1035
+#: describe.c:1039
 msgid "List of databases"
 msgstr "Список баз данных"
 
-#: describe.c:1076 describe.c:1233 describe.c:4049
+#: describe.c:1080 describe.c:1237 describe.c:4053
 msgid "table"
 msgstr "таблица"
 
-#: describe.c:1077 describe.c:4050
+#: describe.c:1081 describe.c:4054
 msgid "view"
 msgstr "представление"
 
-#: describe.c:1078 describe.c:4051
+#: describe.c:1082 describe.c:4055
 msgid "materialized view"
 msgstr "материализованное представление"
 
-#: describe.c:1079 describe.c:1235 describe.c:4053
+#: describe.c:1083 describe.c:1239 describe.c:4057
 msgid "sequence"
 msgstr "последовательность"
 
-#: describe.c:1080 describe.c:4055
+#: describe.c:1084 describe.c:4059
 msgid "foreign table"
 msgstr "сторонняя таблица"
 
-#: describe.c:1081 describe.c:4056 describe.c:4320
+#: describe.c:1085 describe.c:4060 describe.c:4324
 msgid "partitioned table"
 msgstr "секционированная таблица"
 
-#: describe.c:1097
+#: describe.c:1101
 msgid "Column privileges"
 msgstr "Права для столбцов"
 
-#: describe.c:1128 describe.c:1162
+#: describe.c:1132 describe.c:1166
 msgid "Policies"
 msgstr "Политики"
 
-#: describe.c:1190 describe.c:4735 describe.c:6884
+#: describe.c:1194 describe.c:4739 describe.c:6888
 msgid "Access privileges"
 msgstr "Права доступа"
 
-#: describe.c:1237
+#: describe.c:1241
 msgid "function"
 msgstr "функция"
 
-#: describe.c:1239
+#: describe.c:1243
 msgid "type"
 msgstr "тип"
 
-#: describe.c:1241
+#: describe.c:1245
 msgid "schema"
 msgstr "схема"
 
-#: describe.c:1243
+#: describe.c:1247
 msgid "large object"
 msgstr "большой объект"
 
-#: describe.c:1265
+#: describe.c:1269
 msgid "Default access privileges"
 msgstr "Права доступа по умолчанию"
 
-#: describe.c:1309
+#: describe.c:1313
 msgid "Object"
 msgstr "Объект"
 
-#: describe.c:1323
+#: describe.c:1327
 msgid "table constraint"
 msgstr "ограничение таблицы"
 
-#: describe.c:1347
+#: describe.c:1351
 msgid "domain constraint"
 msgstr "ограничение домена"
 
-#: describe.c:1371
+#: describe.c:1375
 msgid "operator class"
 msgstr "класс операторов"
 
-#: describe.c:1395
+#: describe.c:1399
 msgid "operator family"
 msgstr "семейство операторов"
 
-#: describe.c:1418
+#: describe.c:1422
 msgid "rule"
 msgstr "правило"
 
-#: describe.c:1463
+#: describe.c:1467
 msgid "Object descriptions"
 msgstr "Описание объекта"
 
-#: describe.c:1528
+#: describe.c:1532
 #, c-format
 msgid "Did not find any relation named \"%s\"."
 msgstr "Отношение \"%s\" не найдено."
 
-#: describe.c:1531 describe.c:4207
+#: describe.c:1535 describe.c:4211
 #, c-format
 msgid "Did not find any relations."
 msgstr "Отношения не найдены."
 
-#: describe.c:1727
+#: describe.c:1731
 #, c-format
 msgid "Did not find any relation with OID %s."
 msgstr "Отношение с OID %s не найдено."
 
-#: describe.c:1775 describe.c:1799
+#: describe.c:1779 describe.c:1803
 msgid "Start"
 msgstr "Начальное_значение"
 
-#: describe.c:1776 describe.c:1800
+#: describe.c:1780 describe.c:1804
 msgid "Minimum"
 msgstr "Минимум"
 
-#: describe.c:1777 describe.c:1801
+#: describe.c:1781 describe.c:1805
 msgid "Maximum"
 msgstr "Максимум"
 
-#: describe.c:1778 describe.c:1802
+#: describe.c:1782 describe.c:1806
 msgid "Increment"
 msgstr "Шаг"
 
-#: describe.c:1781 describe.c:1805
+#: describe.c:1785 describe.c:1809
 msgid "Cycles?"
 msgstr "Зацикливается?"
 
-#: describe.c:1782 describe.c:1806
+#: describe.c:1786 describe.c:1810
 msgid "Cache"
 msgstr "Кешируется"
 
-#: describe.c:1847
+#: describe.c:1851
 #, c-format
 msgid "Owned by: %s"
 msgstr "Владелец: %s"
 
-#: describe.c:1851
+#: describe.c:1855
 #, c-format
 msgid "Sequence for identity column: %s"
 msgstr "Последовательность для столбца идентификации: %s"
 
-#: describe.c:1859
+#: describe.c:1863
 #, c-format
 msgid "Unlogged sequence \"%s.%s\""
 msgstr "Нежурналируемая последовательность \"%s.%s\""
 
-#: describe.c:1862
+#: describe.c:1866
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Последовательность \"%s.%s\""
 
-#: describe.c:2005
+#: describe.c:2009
 #, c-format
 msgid "Unlogged table \"%s.%s\""
 msgstr "Нежурналируемая таблица \"%s.%s\""
 
-#: describe.c:2008
+#: describe.c:2012
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Таблица \"%s.%s\""
 
-#: describe.c:2012
+#: describe.c:2016
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Представление \"%s.%s\""
 
-#: describe.c:2016
+#: describe.c:2020
 #, c-format
 msgid "Materialized view \"%s.%s\""
 msgstr "Материализованное представление \"%s.%s\""
 
-#: describe.c:2021
+#: describe.c:2025
 #, c-format
 msgid "Unlogged index \"%s.%s\""
 msgstr "Нежурналируемый индекс \"%s.%s\""
 
-#: describe.c:2024
+#: describe.c:2028
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Индекс \"%s.%s\""
 
-#: describe.c:2029
+#: describe.c:2033
 #, c-format
 msgid "Unlogged partitioned index \"%s.%s\""
 msgstr "Нежурналируемый секционированный индекс \"%s.%s\""
 
-#: describe.c:2032
+#: describe.c:2036
 #, c-format
 msgid "Partitioned index \"%s.%s\""
 msgstr "Секционированный индекс \"%s.%s\""
 
-#: describe.c:2036
+#: describe.c:2040
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-таблица \"%s.%s\""
 
-#: describe.c:2040
+#: describe.c:2044
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Составной тип \"%s.%s\""
 
-#: describe.c:2044
+#: describe.c:2048
 #, c-format
 msgid "Foreign table \"%s.%s\""
 msgstr "Сторонняя таблица \"%s.%s\""
 
-#: describe.c:2049
+#: describe.c:2053
 #, c-format
 msgid "Unlogged partitioned table \"%s.%s\""
 msgstr "Нежурналируемая секционированная таблица \"%s.%s\""
 
-#: describe.c:2052
+#: describe.c:2056
 #, c-format
 msgid "Partitioned table \"%s.%s\""
 msgstr "Секционированная таблица \"%s.%s\""
 
-#: describe.c:2068 describe.c:4570
+#: describe.c:2072 describe.c:4574
 msgid "Collation"
 msgstr "Правило сортировки"
 
-#: describe.c:2069 describe.c:4571
+#: describe.c:2073 describe.c:4575
 msgid "Nullable"
 msgstr "Допустимость NULL"
 
-#: describe.c:2070 describe.c:4572
+#: describe.c:2074 describe.c:4576
 msgid "Default"
 msgstr "По умолчанию"
 
-#: describe.c:2073
+#: describe.c:2077
 msgid "Key?"
 msgstr "Ключевой?"
 
-#: describe.c:2075 describe.c:4888 describe.c:4899
+#: describe.c:2079 describe.c:4892 describe.c:4903
 msgid "Definition"
 msgstr "Определение"
 
 # well-spelled: ОСД
-#: describe.c:2077 describe.c:5933 describe.c:6007 describe.c:6072
-#: describe.c:6130
+#: describe.c:2081 describe.c:5937 describe.c:6011 describe.c:6076
+#: describe.c:6134
 msgid "FDW options"
 msgstr "Параметры ОСД"
 
-#: describe.c:2079
+#: describe.c:2083
 msgid "Storage"
 msgstr "Хранилище"
 
-#: describe.c:2081
+#: describe.c:2085
 msgid "Compression"
 msgstr "Сжатие"
 
-#: describe.c:2083
+#: describe.c:2087
 msgid "Stats target"
 msgstr "Цель для статистики"
 
-#: describe.c:2225
+#: describe.c:2229
 #, c-format
 msgid "Partition of: %s %s%s"
 msgstr "Секция: %s %s%s"
 
-#: describe.c:2238
+#: describe.c:2242
 msgid "No partition constraint"
 msgstr "Нет ограничения секции"
 
-#: describe.c:2240
+#: describe.c:2244
 #, c-format
 msgid "Partition constraint: %s"
 msgstr "Ограничение секции: %s"
 
-#: describe.c:2264
+#: describe.c:2268
 #, c-format
 msgid "Partition key: %s"
 msgstr "Ключ разбиения: %s"
 
-#: describe.c:2290
+#: describe.c:2294
 #, c-format
 msgid "Owning table: \"%s.%s\""
 msgstr "Принадлежит таблице: \"%s.%s\""
 
-#: describe.c:2363
+#: describe.c:2367
 msgid "primary key, "
 msgstr "первичный ключ, "
 
-#: describe.c:2366
+#: describe.c:2370
 msgid "unique"
 msgstr "уникальный"
 
-#: describe.c:2368
+#: describe.c:2372
 msgid " nulls not distinct"
 msgstr " null не различаются"
 
-#: describe.c:2369
+#: describe.c:2373
 msgid ", "
 msgstr ", "
 
-#: describe.c:2376
+#: describe.c:2380
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "для таблицы \"%s.%s\""
 
-#: describe.c:2380
+#: describe.c:2384
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", предикат (%s)"
 
-#: describe.c:2383
+#: describe.c:2387
 msgid ", clustered"
 msgstr ", кластеризованный"
 
-#: describe.c:2386
+#: describe.c:2390
 msgid ", invalid"
 msgstr ", нерабочий"
 
-#: describe.c:2389
+#: describe.c:2393
 msgid ", deferrable"
 msgstr ", откладываемый"
 
-#: describe.c:2392
+#: describe.c:2396
 msgid ", initially deferred"
 msgstr ", изначально отложенный"
 
-#: describe.c:2395
+#: describe.c:2399
 msgid ", replica identity"
 msgstr ", репликационный"
 
-#: describe.c:2456
+#: describe.c:2460
 msgid "Indexes:"
 msgstr "Индексы:"
 
-#: describe.c:2544
+#: describe.c:2548
 msgid "Check constraints:"
 msgstr "Ограничения-проверки:"
 
 # TO REWVIEW
-#: describe.c:2605
+#: describe.c:2609
 msgid "Foreign-key constraints:"
 msgstr "Ограничения внешнего ключа:"
 
-#: describe.c:2664
+#: describe.c:2668
 msgid "Referenced by:"
 msgstr "Ссылки извне:"
 
-#: describe.c:2713
+#: describe.c:2717
 msgid "Policies:"
 msgstr "Политики:"
 
-#: describe.c:2716
+#: describe.c:2720
 msgid "Policies (forced row security enabled):"
 msgstr "Политики (усиленная защита строк включена):"
 
-#: describe.c:2719
+#: describe.c:2723
 msgid "Policies (row security enabled): (none)"
 msgstr "Политики (защита строк включена): (Нет)"
 
-#: describe.c:2722
+#: describe.c:2726
 msgid "Policies (forced row security enabled): (none)"
 msgstr "Политики (усиленная защита строк включена): (Нет)"
 
-#: describe.c:2725
+#: describe.c:2729
 msgid "Policies (row security disabled):"
 msgstr "Политики (защита строк выключена):"
 
-#: describe.c:2785 describe.c:2890
+#: describe.c:2789 describe.c:2894
 msgid "Statistics objects:"
 msgstr "Объекты статистики:"
 
-#: describe.c:2992 describe.c:3192
+#: describe.c:2996 describe.c:3196
 msgid "Rules:"
 msgstr "Правила:"
 
-#: describe.c:2995
+#: describe.c:2999
 msgid "Disabled rules:"
 msgstr "Отключённые правила:"
 
-#: describe.c:2998
+#: describe.c:3002
 msgid "Rules firing always:"
 msgstr "Правила, срабатывающие всегда:"
 
-#: describe.c:3001
+#: describe.c:3005
 msgid "Rules firing on replica only:"
 msgstr "Правила, срабатывающие только в реплике:"
 
-#: describe.c:3080 describe.c:5276
+#: describe.c:3084 describe.c:5280
 msgid "Publications:"
 msgstr "Публикации:"
 
-#: describe.c:3127
+#: describe.c:3131
 msgid "Not-null constraints:"
 msgstr "Ограничения NOT NULL:"
 
-#: describe.c:3141
+#: describe.c:3145
 msgid " (local, inherited)"
 msgstr " (локальное, не наследуется)"
 
-#: describe.c:3142
+#: describe.c:3146
 msgid " (inherited)"
 msgstr " (наследуется)"
 
-#: describe.c:3175
+#: describe.c:3179
 msgid "View definition:"
 msgstr "Определение представления:"
 
-#: describe.c:3338
+#: describe.c:3342
 msgid "Triggers:"
 msgstr "Триггеры:"
 
-#: describe.c:3341
+#: describe.c:3345
 msgid "Disabled user triggers:"
 msgstr "Отключённые пользовательские триггеры:"
 
-#: describe.c:3344
+#: describe.c:3348
 msgid "Disabled internal triggers:"
 msgstr "Отключённые внутренние триггеры:"
 
-#: describe.c:3347
+#: describe.c:3351
 msgid "Triggers firing always:"
 msgstr "Триггеры, срабатывающие всегда:"
 
-#: describe.c:3350
+#: describe.c:3354
 msgid "Triggers firing on replica only:"
 msgstr "Триггеры, срабатывающие только в реплике:"
 
-#: describe.c:3421
+#: describe.c:3425
 #, c-format
 msgid "Server: %s"
 msgstr "Сервер: %s"
 
 # well-spelled: ОСД
-#: describe.c:3429
+#: describe.c:3433
 #, c-format
 msgid "FDW options: (%s)"
 msgstr "Параметр ОСД: (%s)"
 
-#: describe.c:3450
+#: describe.c:3454
 msgid "Inherits"
 msgstr "Наследует"
 
-#: describe.c:3515
+#: describe.c:3519
 #, c-format
 msgid "Number of partitions: %d"
 msgstr "Число секций: %d"
 
-#: describe.c:3524
+#: describe.c:3528
 #, c-format
 msgid "Number of partitions: %d (Use \\d+ to list them.)"
 msgstr "Число секций: %d (чтобы просмотреть их, введите \\d+)"
 
-#: describe.c:3526
+#: describe.c:3530
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
 msgstr "Дочерних таблиц: %d (чтобы просмотреть и их, воспользуйтесь \\d+)"
 
-#: describe.c:3533
+#: describe.c:3537
 msgid "Child tables"
 msgstr "Дочерние таблицы"
 
-#: describe.c:3533
+#: describe.c:3537
 msgid "Partitions"
 msgstr "Секции"
 
-#: describe.c:3566
+#: describe.c:3570
 #, c-format
 msgid "Typed table of type: %s"
 msgstr "Типизированная таблица типа: %s"
 
-#: describe.c:3584
+#: describe.c:3588
 msgid "Replica Identity"
 msgstr "Идентификация реплики"
 
-#: describe.c:3597
+#: describe.c:3601
 msgid "Has OIDs: yes"
 msgstr "Содержит OID: да"
 
-#: describe.c:3606
+#: describe.c:3610
 #, c-format
 msgid "Access method: %s"
 msgstr "Метод доступа: %s"
 
-#: describe.c:3683
+#: describe.c:3687
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Табличное пространство: \"%s\""
 
 #. translator: before this string there's an index description like
 #. '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:3695
+#: describe.c:3699
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr ", табл. пространство \"%s\""
 
-#: describe.c:3768
+#: describe.c:3772
 msgid "List of roles"
 msgstr "Список ролей"
 
-#: describe.c:3770 describe.c:3938
+#: describe.c:3774 describe.c:3942
 msgid "Role name"
 msgstr "Имя роли"
 
-#: describe.c:3771
+#: describe.c:3775
 msgid "Attributes"
 msgstr "Атрибуты"
 
-#: describe.c:3782
+#: describe.c:3786
 msgid "Superuser"
 msgstr "Суперпользователь"
 
-#: describe.c:3785
+#: describe.c:3789
 msgid "No inheritance"
 msgstr "Не наследуется"
 
-#: describe.c:3788
+#: describe.c:3792
 msgid "Create role"
 msgstr "Создаёт роли"
 
-#: describe.c:3791
+#: describe.c:3795
 msgid "Create DB"
 msgstr "Создаёт БД"
 
-#: describe.c:3794
+#: describe.c:3798
 msgid "Cannot login"
 msgstr "Вход запрещён"
 
-#: describe.c:3797
+#: describe.c:3801
 msgid "Replication"
 msgstr "Репликация"
 
-#: describe.c:3801
+#: describe.c:3805
 msgid "Bypass RLS"
 msgstr "Пропускать RLS"
 
-#: describe.c:3810
+#: describe.c:3814
 msgid "No connections"
 msgstr "Нет подключений"
 
-#: describe.c:3812
+#: describe.c:3816
 #, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
@@ -2053,478 +2063,478 @@ msgstr[0] "%d подключение"
 msgstr[1] "%d подключения"
 msgstr[2] "%d подключений"
 
-#: describe.c:3822
+#: describe.c:3826
 msgid "Password valid until "
 msgstr "Пароль действует до "
 
-#: describe.c:3873
+#: describe.c:3877
 msgid "Role"
 msgstr "Роль"
 
-#: describe.c:3875
+#: describe.c:3879
 msgid "Settings"
 msgstr "Параметры"
 
-#: describe.c:3899
+#: describe.c:3903
 #, c-format
 msgid "Did not find any settings for role \"%s\" and database \"%s\"."
 msgstr "Параметры для роли \"%s\" и базы данных \"%s\" не найдены."
 
-#: describe.c:3902
+#: describe.c:3906
 #, c-format
 msgid "Did not find any settings for role \"%s\"."
 msgstr "Параметры для роли \"%s\" не найдены."
 
-#: describe.c:3905
+#: describe.c:3909
 #, c-format
 msgid "Did not find any settings."
 msgstr "Никакие параметры не найдены."
 
-#: describe.c:3909
+#: describe.c:3913
 msgid "List of settings"
 msgstr "Список параметров"
 
-#: describe.c:3939
+#: describe.c:3943
 msgid "Member of"
 msgstr "Член ролей"
 
-#: describe.c:3956
+#: describe.c:3960
 msgid "Grantor"
 msgstr "Праводатель"
 
-#: describe.c:3982
+#: describe.c:3986
 msgid "List of role grants"
 msgstr "Список назначений ролей"
 
-#: describe.c:4052
+#: describe.c:4056
 msgid "index"
 msgstr "индекс"
 
-#: describe.c:4054
+#: describe.c:4058
 msgid "TOAST table"
 msgstr "TOAST-таблица"
 
-#: describe.c:4057 describe.c:4321
+#: describe.c:4061 describe.c:4325
 msgid "partitioned index"
 msgstr "секционированный индекс"
 
-#: describe.c:4081
+#: describe.c:4085
 msgid "permanent"
 msgstr "постоянное"
 
-#: describe.c:4082
+#: describe.c:4086
 msgid "temporary"
 msgstr "временное"
 
-#: describe.c:4083
+#: describe.c:4087
 msgid "unlogged"
 msgstr "нежурналируемое"
 
-#: describe.c:4084
+#: describe.c:4088
 msgid "Persistence"
 msgstr "Хранение"
 
-#: describe.c:4100 describe.c:4344
+#: describe.c:4104 describe.c:4348
 msgid "Access method"
 msgstr "Метод доступа"
 
-#: describe.c:4180
+#: describe.c:4184
 #, c-format
 msgid "Did not find any relations named \"%s\"."
 msgstr "Отношения с именем \"%s\" не найдены."
 
-#: describe.c:4183
+#: describe.c:4187
 #, c-format
 msgid "Did not find any tables named \"%s\"."
 msgstr "Таблицы с именем \"%s\" не найдены."
 
-#: describe.c:4186
+#: describe.c:4190
 #, c-format
 msgid "Did not find any indexes named \"%s\"."
 msgstr "Индексы с именем \"%s\" не найдены."
 
-#: describe.c:4189
+#: describe.c:4193
 #, c-format
 msgid "Did not find any views named \"%s\"."
 msgstr "Представления с именем \"%s\" не найдены."
 
-#: describe.c:4192
+#: describe.c:4196
 #, c-format
 msgid "Did not find any materialized views named \"%s\"."
 msgstr "Материализованные представления с именем \"%s\" не найдены."
 
-#: describe.c:4195
+#: describe.c:4199
 #, c-format
 msgid "Did not find any sequences named \"%s\"."
 msgstr "Последовательности с именем \"%s\" не найдены."
 
-#: describe.c:4198
+#: describe.c:4202
 #, c-format
 msgid "Did not find any foreign tables named \"%s\"."
 msgstr "Сторонние таблицы с именем \"%s\" не найдены."
 
-#: describe.c:4209
+#: describe.c:4213
 #, c-format
 msgid "Did not find any tables."
 msgstr "Никакие таблицы не найдены."
 
-#: describe.c:4211
+#: describe.c:4215
 #, c-format
 msgid "Did not find any indexes."
 msgstr "Никакие индексы не найдены."
 
-#: describe.c:4213
+#: describe.c:4217
 #, c-format
 msgid "Did not find any views."
 msgstr "Никакие представления не найдены."
 
-#: describe.c:4215
+#: describe.c:4219
 #, c-format
 msgid "Did not find any materialized views."
 msgstr "Никакие материализованные представления не найдены."
 
-#: describe.c:4217
+#: describe.c:4221
 #, c-format
 msgid "Did not find any sequences."
 msgstr "Никакие последовательности не найдены."
 
-#: describe.c:4219
+#: describe.c:4223
 #, c-format
 msgid "Did not find any foreign tables."
 msgstr "Никакие сторонние таблицы не найдены."
 
-#: describe.c:4227
+#: describe.c:4231
 msgid "List of relations"
 msgstr "Список отношений"
 
-#: describe.c:4228
+#: describe.c:4232
 msgid "List of tables"
 msgstr "Список таблиц"
 
-#: describe.c:4229
+#: describe.c:4233
 msgid "List of indexes"
 msgstr "Список индексов"
 
-#: describe.c:4230
+#: describe.c:4234
 msgid "List of views"
 msgstr "Список представлений"
 
-#: describe.c:4231
+#: describe.c:4235
 msgid "List of materialized views"
 msgstr "Список материализованных представлений"
 
-#: describe.c:4232
+#: describe.c:4236
 msgid "List of sequences"
 msgstr "Список последовательностей"
 
-#: describe.c:4233 describe.c:6163
+#: describe.c:4237 describe.c:6167
 msgid "List of foreign tables"
 msgstr "Список сторонних таблиц"
 
-#: describe.c:4282
+#: describe.c:4286
 #, c-format
 msgid ""
 "The server (version %s) does not support declarative table partitioning."
 msgstr ""
 "Сервер (версия %s) не поддерживает декларативное секционирование таблиц."
 
-#: describe.c:4293
+#: describe.c:4297
 msgid "List of partitioned indexes"
 msgstr "Список секционированных индексов"
 
-#: describe.c:4295
+#: describe.c:4299
 msgid "List of partitioned tables"
 msgstr "Список секционированных таблиц"
 
-#: describe.c:4299
+#: describe.c:4303
 msgid "List of partitioned relations"
 msgstr "Список секционированных отношений"
 
-#: describe.c:4330
+#: describe.c:4334
 msgid "Parent name"
 msgstr "Имя родителя"
 
-#: describe.c:4350
+#: describe.c:4354
 msgid "Leaf partition size"
 msgstr "Размер конечной секции"
 
-#: describe.c:4353 describe.c:4359
+#: describe.c:4357 describe.c:4363
 msgid "Total size"
 msgstr "Общий размер"
 
-#: describe.c:4486
+#: describe.c:4490
 msgid "Trusted"
 msgstr "Доверенный"
 
-#: describe.c:4495
+#: describe.c:4499
 msgid "Internal language"
 msgstr "Внутренний язык"
 
-#: describe.c:4496
+#: describe.c:4500
 msgid "Call handler"
 msgstr "Обработчик вызова"
 
-#: describe.c:4497 describe.c:5919
+#: describe.c:4501 describe.c:5923
 msgid "Validator"
 msgstr "Функция проверки"
 
-#: describe.c:4498
+#: describe.c:4502
 msgid "Inline handler"
 msgstr "Обработчик внедрённого кода"
 
-#: describe.c:4532
+#: describe.c:4536
 msgid "List of languages"
 msgstr "Список языков"
 
-#: describe.c:4573
+#: describe.c:4577
 msgid "Check"
 msgstr "Проверка"
 
-#: describe.c:4616
+#: describe.c:4620
 msgid "List of domains"
 msgstr "Список доменов"
 
-#: describe.c:4650
+#: describe.c:4654
 msgid "Source"
 msgstr "Источник"
 
-#: describe.c:4651
+#: describe.c:4655
 msgid "Destination"
 msgstr "Назначение"
 
-#: describe.c:4653 describe.c:6929
+#: describe.c:4657 describe.c:6933
 msgid "Default?"
 msgstr "По умолчанию?"
 
-#: describe.c:4694
+#: describe.c:4698
 msgid "List of conversions"
 msgstr "Список преобразований"
 
-#: describe.c:4730
+#: describe.c:4734
 msgid "Context"
 msgstr "Контекст"
 
-#: describe.c:4762
+#: describe.c:4766
 msgid "List of configuration parameters"
 msgstr "Список параметров конфигурации"
 
-#: describe.c:4764
+#: describe.c:4768
 msgid "List of non-default configuration parameters"
 msgstr "Список изменённых параметров конфигурации"
 
-#: describe.c:4791
+#: describe.c:4795
 #, c-format
 msgid "The server (version %s) does not support event triggers."
 msgstr "Сервер (версия %s) не поддерживает событийные триггеры."
 
-#: describe.c:4811
+#: describe.c:4815
 msgid "Event"
 msgstr "Событие"
 
-#: describe.c:4813
+#: describe.c:4817
 msgid "enabled"
 msgstr "включён"
 
-#: describe.c:4814
+#: describe.c:4818
 msgid "replica"
 msgstr "реплика"
 
-#: describe.c:4815
+#: describe.c:4819
 msgid "always"
 msgstr "всегда"
 
-#: describe.c:4816
+#: describe.c:4820
 msgid "disabled"
 msgstr "отключён"
 
-#: describe.c:4817 describe.c:6770
+#: describe.c:4821 describe.c:6774
 msgid "Enabled"
 msgstr "Включён"
 
-#: describe.c:4819
+#: describe.c:4823
 msgid "Tags"
 msgstr "Теги"
 
-#: describe.c:4842
+#: describe.c:4846
 msgid "List of event triggers"
 msgstr "Список событийных триггеров"
 
-#: describe.c:4869
+#: describe.c:4873
 #, c-format
 msgid "The server (version %s) does not support extended statistics."
 msgstr "Сервер (версия %s) не поддерживает расширенные статистики."
 
-#: describe.c:4906
+#: describe.c:4910
 msgid "Ndistinct"
 msgstr "Ndistinct"
 
-#: describe.c:4907
+#: describe.c:4911
 msgid "Dependencies"
 msgstr "Зависимости"
 
-#: describe.c:4917
+#: describe.c:4921
 msgid "MCV"
 msgstr "MCV"
 
-#: describe.c:4940
+#: describe.c:4944
 msgid "List of extended statistics"
 msgstr "Список расширенных статистик"
 
-#: describe.c:4967
+#: describe.c:4971
 msgid "Source type"
 msgstr "Исходный тип"
 
-#: describe.c:4968
+#: describe.c:4972
 msgid "Target type"
 msgstr "Целевой тип"
 
-#: describe.c:4992
+#: describe.c:4996
 msgid "in assignment"
 msgstr "в присваивании"
 
-#: describe.c:4994
+#: describe.c:4998
 msgid "Implicit?"
 msgstr "Неявное?"
 
-#: describe.c:5058
+#: describe.c:5062
 msgid "List of casts"
 msgstr "Список приведений типов"
 
-#: describe.c:5103 describe.c:5107
+#: describe.c:5107 describe.c:5111
 msgid "Provider"
 msgstr "Провайдер"
 
-#: describe.c:5141 describe.c:5146
+#: describe.c:5145 describe.c:5150
 msgid "Deterministic?"
 msgstr "Детерминированное?"
 
-#: describe.c:5185
+#: describe.c:5189
 msgid "List of collations"
 msgstr "Список правил сортировки"
 
-#: describe.c:5246
+#: describe.c:5250
 msgid "List of schemas"
 msgstr "Список схем"
 
-#: describe.c:5362
+#: describe.c:5366
 msgid "List of text search parsers"
 msgstr "Список анализаторов текстового поиска"
 
-#: describe.c:5412
+#: describe.c:5416
 #, c-format
 msgid "Did not find any text search parser named \"%s\"."
 msgstr "Анализатор текстового поиска \"%s\" не найден."
 
-#: describe.c:5415
+#: describe.c:5419
 #, c-format
 msgid "Did not find any text search parsers."
 msgstr "Никакие анализаторы текстового поиска не найдены."
 
-#: describe.c:5490
+#: describe.c:5494
 msgid "Start parse"
 msgstr "Начало разбора"
 
-#: describe.c:5491
+#: describe.c:5495
 msgid "Method"
 msgstr "Метод"
 
-#: describe.c:5495
+#: describe.c:5499
 msgid "Get next token"
 msgstr "Получение следующего фрагмента"
 
-#: describe.c:5497
+#: describe.c:5501
 msgid "End parse"
 msgstr "Окончание разбора"
 
-#: describe.c:5499
+#: describe.c:5503
 msgid "Get headline"
 msgstr "Получение выдержки"
 
-#: describe.c:5501
+#: describe.c:5505
 msgid "Get token types"
 msgstr "Получение типов фрагментов"
 
-#: describe.c:5511
+#: describe.c:5515
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Анализатор текстового поиска \"%s.%s\""
 
-#: describe.c:5514
+#: describe.c:5518
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "Анализатор текстового поиска \"%s\""
 
-#: describe.c:5533
+#: describe.c:5537
 msgid "Token name"
 msgstr "Имя фрагмента"
 
-#: describe.c:5546
+#: describe.c:5550
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "Типы фрагментов для анализатора \"%s.%s\""
 
-#: describe.c:5549
+#: describe.c:5553
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "Типы фрагментов для анализатора \"%s\""
 
-#: describe.c:5593
+#: describe.c:5597
 msgid "Template"
 msgstr "Шаблон"
 
-#: describe.c:5594
+#: describe.c:5598
 msgid "Init options"
 msgstr "Параметры инициализации"
 
-#: describe.c:5620
+#: describe.c:5624
 msgid "List of text search dictionaries"
 msgstr "Список словарей текстового поиска"
 
-#: describe.c:5653
+#: describe.c:5657
 msgid "Init"
 msgstr "Инициализация"
 
-#: describe.c:5654
+#: describe.c:5658
 msgid "Lexize"
 msgstr "Выделение лексем"
 
-#: describe.c:5685
+#: describe.c:5689
 msgid "List of text search templates"
 msgstr "Список шаблонов текстового поиска"
 
-#: describe.c:5739
+#: describe.c:5743
 msgid "List of text search configurations"
 msgstr "Список конфигураций текстового поиска"
 
-#: describe.c:5790
+#: describe.c:5794
 #, c-format
 msgid "Did not find any text search configuration named \"%s\"."
 msgstr "Конфигурация текстового поиска \"%s\" не найдена."
 
-#: describe.c:5793
+#: describe.c:5797
 #, c-format
 msgid "Did not find any text search configurations."
 msgstr "Никакие конфигурации текстового поиска не найдены."
 
-#: describe.c:5859
+#: describe.c:5863
 msgid "Token"
 msgstr "Фрагмент"
 
-#: describe.c:5860
+#: describe.c:5864
 msgid "Dictionaries"
 msgstr "Словари"
 
-#: describe.c:5871
+#: describe.c:5875
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Конфигурация текстового поиска \"%s.%s\""
 
-#: describe.c:5874
+#: describe.c:5878
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Конфигурация текстового поиска \"%s\""
 
-#: describe.c:5878
+#: describe.c:5882
 #, c-format
 msgid ""
 "\n"
@@ -2533,7 +2543,7 @@ msgstr ""
 "\n"
 "Анализатор: \"%s.%s\""
 
-#: describe.c:5881
+#: describe.c:5885
 #, c-format
 msgid ""
 "\n"
@@ -2542,273 +2552,273 @@ msgstr ""
 "\n"
 "Анализатор: \"%s\""
 
-#: describe.c:5960
+#: describe.c:5964
 msgid "List of foreign-data wrappers"
 msgstr "Список обёрток сторонних данных"
 
-#: describe.c:5988
+#: describe.c:5992
 msgid "Foreign-data wrapper"
 msgstr "Обёртка сторонних данных"
 
-#: describe.c:6006 describe.c:6195
+#: describe.c:6010 describe.c:6199
 msgid "Version"
 msgstr "Версия"
 
-#: describe.c:6036
+#: describe.c:6040
 msgid "List of foreign servers"
 msgstr "Список сторонних серверов"
 
-#: describe.c:6061 describe.c:6119
+#: describe.c:6065 describe.c:6123
 msgid "Server"
 msgstr "Сервер"
 
-#: describe.c:6062
+#: describe.c:6066
 msgid "User name"
 msgstr "Имя пользователя"
 
-#: describe.c:6091
+#: describe.c:6095
 msgid "List of user mappings"
 msgstr "Список сопоставлений пользователей"
 
-#: describe.c:6196
+#: describe.c:6200
 msgid "Default version"
 msgstr "Версия по умолчанию"
 
-#: describe.c:6217
+#: describe.c:6221
 msgid "List of installed extensions"
 msgstr "Список установленных расширений"
 
-#: describe.c:6265
+#: describe.c:6269
 #, c-format
 msgid "Did not find any extension named \"%s\"."
 msgstr "Расширение \"%s\" не найдено."
 
-#: describe.c:6268
+#: describe.c:6272
 #, c-format
 msgid "Did not find any extensions."
 msgstr "Никакие расширения не найдены."
 
-#: describe.c:6312
+#: describe.c:6316
 msgid "Object description"
 msgstr "Описание объекта"
 
-#: describe.c:6321
+#: describe.c:6325
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "Объекты в расширении \"%s\""
 
-#: describe.c:6362
+#: describe.c:6366
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "неверное полное имя (слишком много компонентов): %s"
 
-#: describe.c:6376
+#: describe.c:6380
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "ссылки между базами не реализованы: %s"
 
-#: describe.c:6407 describe.c:6543
+#: describe.c:6411 describe.c:6547
 #, c-format
 msgid "The server (version %s) does not support publications."
 msgstr "Сервер (версия %s) не поддерживает публикации."
 
-#: describe.c:6424 describe.c:6645
+#: describe.c:6428 describe.c:6649
 msgid "All tables"
 msgstr "Все таблицы"
 
-#: describe.c:6425 describe.c:6646
+#: describe.c:6429 describe.c:6650
 msgid "Inserts"
 msgstr "Добавления"
 
-#: describe.c:6426 describe.c:6647
+#: describe.c:6430 describe.c:6651
 msgid "Updates"
 msgstr "Изменения"
 
-#: describe.c:6427 describe.c:6648
+#: describe.c:6431 describe.c:6652
 msgid "Deletes"
 msgstr "Удаления"
 
-#: describe.c:6431 describe.c:6650
+#: describe.c:6435 describe.c:6654
 msgid "Truncates"
 msgstr "Опустошения"
 
-#: describe.c:6440 describe.c:6574 describe.c:6652
+#: describe.c:6444 describe.c:6578 describe.c:6656
 msgid "Generated columns"
 msgstr "Генерируемые столбцы"
 
-#: describe.c:6444 describe.c:6654
+#: describe.c:6448 describe.c:6658
 msgid "Via root"
 msgstr "Через корень"
 
-#: describe.c:6465
+#: describe.c:6469
 msgid "List of publications"
 msgstr "Список публикаций"
 
-#: describe.c:6612
+#: describe.c:6616
 #, c-format
 msgid "Did not find any publication named \"%s\"."
 msgstr "Публикация \"%s\" не найдена."
 
-#: describe.c:6615
+#: describe.c:6619
 #, c-format
 msgid "Did not find any publications."
 msgstr "Никакие публикации не найдены."
 
-#: describe.c:6641
+#: describe.c:6645
 #, c-format
 msgid "Publication %s"
 msgstr "Публикация %s"
 
-#: describe.c:6698
+#: describe.c:6702
 msgid "Tables:"
 msgstr "Таблицы:"
 
-#: describe.c:6710
+#: describe.c:6714
 msgid "Tables from schemas:"
 msgstr "Таблицы из схем:"
 
-#: describe.c:6755
+#: describe.c:6759
 #, c-format
 msgid "The server (version %s) does not support subscriptions."
 msgstr "Сервер (версия %s) не поддерживает подписки."
 
-#: describe.c:6771
+#: describe.c:6775
 msgid "Publication"
 msgstr "Публикация"
 
-#: describe.c:6780
+#: describe.c:6784
 msgid "Binary"
 msgstr "Бинарная"
 
-#: describe.c:6789 describe.c:6793
+#: describe.c:6793 describe.c:6797
 msgid "Streaming"
 msgstr "Потоковая"
 
-#: describe.c:6801
+#: describe.c:6805
 msgid "Two-phase commit"
 msgstr "Двухфазная фиксация"
 
-#: describe.c:6802
+#: describe.c:6806
 msgid "Disable on error"
 msgstr "Отключается при ошибке"
 
-#: describe.c:6809
+#: describe.c:6813
 msgid "Origin"
 msgstr "Источник"
 
-#: describe.c:6810
+#: describe.c:6814
 msgid "Password required"
 msgstr "Требуется пароль"
 
-#: describe.c:6811
+#: describe.c:6815
 msgid "Run as owner?"
 msgstr "Использовать владельца?"
 
-#: describe.c:6816
+#: describe.c:6820
 msgid "Failover"
 msgstr "Переносимая"
 
-#: describe.c:6821
+#: describe.c:6825
 msgid "Synchronous commit"
 msgstr "Синхронная фиксация"
 
-#: describe.c:6822
+#: describe.c:6826
 msgid "Conninfo"
 msgstr "Строка подключения"
 
-#: describe.c:6828
+#: describe.c:6832
 msgid "Skip LSN"
 msgstr "Пропустить LSN"
 
-#: describe.c:6854
+#: describe.c:6858
 msgid "List of subscriptions"
 msgstr "Список подписок"
 
-#: describe.c:6883
+#: describe.c:6887
 msgid "(none)"
 msgstr "(нет)"
 
-#: describe.c:6923 describe.c:7018 describe.c:7110 describe.c:7213
+#: describe.c:6927 describe.c:7022 describe.c:7114 describe.c:7217
 msgid "AM"
 msgstr "МД"
 
-#: describe.c:6924
+#: describe.c:6928
 msgid "Input type"
 msgstr "Входной тип"
 
-#: describe.c:6925
+#: describe.c:6929
 msgid "Storage type"
 msgstr "Тип хранения"
 
-#: describe.c:6926
+#: describe.c:6930
 msgid "Operator class"
 msgstr "Класс операторов"
 
-#: describe.c:6938 describe.c:7019 describe.c:7111 describe.c:7214
+#: describe.c:6942 describe.c:7023 describe.c:7115 describe.c:7218
 msgid "Operator family"
 msgstr "Семейство операторов"
 
-#: describe.c:6973
+#: describe.c:6977
 msgid "List of operator classes"
 msgstr "Список классов операторов"
 
-#: describe.c:7020
+#: describe.c:7024
 msgid "Applicable types"
 msgstr "Применимые типы"
 
-#: describe.c:7061
+#: describe.c:7065
 msgid "List of operator families"
 msgstr "Список семейств операторов"
 
-#: describe.c:7112
+#: describe.c:7116
 msgid "Operator"
 msgstr "Оператор"
 
-#: describe.c:7113
+#: describe.c:7117
 msgid "Strategy"
 msgstr "Стратегия"
 
-#: describe.c:7114
+#: describe.c:7118
 msgid "ordering"
 msgstr "сортировка"
 
-#: describe.c:7115
+#: describe.c:7119
 msgid "search"
 msgstr "поиск"
 
-#: describe.c:7116
+#: describe.c:7120
 msgid "Purpose"
 msgstr "Назначение"
 
-#: describe.c:7125
+#: describe.c:7129
 msgid "Sort opfamily"
 msgstr "Семейство для сортировки"
 
-#: describe.c:7168
+#: describe.c:7172
 msgid "List of operators of operator families"
 msgstr "Список операторов из семейств операторов"
 
-#: describe.c:7215
+#: describe.c:7219
 msgid "Registered left type"
 msgstr "Зарегистрированный левый тип"
 
-#: describe.c:7216
+#: describe.c:7220
 msgid "Registered right type"
 msgstr "Зарегистрированный правый тип"
 
-#: describe.c:7217
+#: describe.c:7221
 msgid "Number"
 msgstr "Номер"
 
-#: describe.c:7260
+#: describe.c:7264
 msgid "List of support functions of operator families"
 msgstr "Список опорных функций из семейств операторов"
 
-#: describe.c:7291
+#: describe.c:7295
 msgid "ID"
 msgstr "ID"
 
-#: describe.c:7311
+#: describe.c:7315
 msgid "Large objects"
 msgstr "Большие объекты"
 
@@ -7258,22 +7268,22 @@ msgstr ""
 "значение \"%s\" не подходит для переменной \"%s\"; оно должно быть меньше "
 "%.2f"
 
-#: variables.c:241
+#: variables.c:242
 #, c-format
 msgid "value \"%s\" is out of range for variable \"%s\""
 msgstr "значение \"%s\" вне диапазона для переменной \"%s\""
 
-#: variables.c:247
+#: variables.c:248
 #, c-format
 msgid "invalid value \"%s\" for variable \"%s\""
 msgstr "неправильное значение \"%s\" для переменной \"%s\""
 
-#: variables.c:294
+#: variables.c:295
 #, c-format
 msgid "invalid variable name: \"%s\""
 msgstr "неправильное имя переменной: \"%s\""
 
-#: variables.c:488
+#: variables.c:489
 #, c-format
 msgid ""
 "unrecognized value \"%s\" for \"%s\"\n"

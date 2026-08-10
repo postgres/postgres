@@ -1,14 +1,14 @@
 # Russian message translation file for pg_upgrade
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# SPDX-FileCopyrightText: 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <a.lakhin@postgrespro.ru>
+# SPDX-FileCopyrightText: 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Lakhin <a.lakhin@postgrespro.ru>
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2025-09-13 22:22+0300\n"
+"POT-Creation-Date: 2026-08-08 08:46+0300\n"
+"PO-Revision-Date: 2026-08-05 07:50+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -18,16 +18,26 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/restricted_token.c:168
 #, c-format
@@ -262,7 +272,7 @@ msgstr "Список проблемных столбцов приведён в �
 #: check.c:431 check.c:1038 check.c:1189 check.c:1272 check.c:1361 check.c:1452
 #: check.c:1584 check.c:1656 check.c:1757 check.c:1804 check.c:1884
 #: check.c:2194 check.c:2213 check.c:2259 check.c:2312 file.c:378 file.c:415
-#: function.c:208 option.c:519 version.c:79 version.c:162
+#: function.c:208 option.c:519 version.c:97 version.c:180
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
@@ -706,7 +716,7 @@ msgstr ""
 msgid "Checking for objects affected by Unicode update"
 msgstr "Проверка объектов, затрагиваемых обновлением Unicode"
 
-#: check.c:2038 version.c:121
+#: check.c:2038 version.c:139
 #, c-format
 msgid "warning"
 msgstr "предупреждение"
@@ -876,7 +886,7 @@ msgstr "В исходном кластере не хватает информа�
 msgid "The target cluster lacks cluster state information:"
 msgstr "В целевом кластере не хватает информации о состоянии кластера:"
 
-#: controldata.c:217 dump.c:50 exec.c:118 pg_upgrade.c:606 pg_upgrade.c:646
+#: controldata.c:217 dump.c:54 exec.c:118 pg_upgrade.c:606 pg_upgrade.c:646
 #: pg_upgrade.c:995 relfilenumber.c:610 server.c:34 util.c:337
 #, c-format
 msgid "%s"
@@ -1167,7 +1177,7 @@ msgstr "нераспознанный режим передачи данных"
 msgid "Creating dump of global objects"
 msgstr "Формирование выгрузки глобальных объектов"
 
-#: dump.c:32
+#: dump.c:33
 #, c-format
 msgid "Creating dump of database schemas"
 msgstr "Формирование выгрузки схем базы данных"
@@ -1955,7 +1965,7 @@ msgstr "не удалось создать рабочий процесс: %m"
 msgid "could not create worker thread: %m"
 msgstr "не удалось создать рабочий поток: %m"
 
-#: parallel.c:294 task.c:404
+#: parallel.c:294 task.c:406
 #, c-format
 msgid "%s() failed: %m"
 msgstr "ошибка в %s(): %m"
@@ -2234,17 +2244,17 @@ msgstr "создание ссылки на \"%s\" в \"%s\""
 msgid "should never happen"
 msgstr "невозможный случай"
 
-#: server.c:39 server.c:143 util.c:248 util.c:278
+#: server.c:39 server.c:145 util.c:248 util.c:278
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "Ошибка, выполняется выход\n"
 
-#: server.c:133
+#: server.c:135
 #, c-format
 msgid "executing: %s"
 msgstr "выполняется: %s"
 
-#: server.c:139
+#: server.c:141
 #, c-format
 msgid ""
 "SQL command failed\n"
@@ -2255,17 +2265,17 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: server.c:169
+#: server.c:171
 #, c-format
 msgid "could not open version file \"%s\": %m"
 msgstr "не удалось открыть файл с версией \"%s\": %m"
 
-#: server.c:173
+#: server.c:175
 #, c-format
 msgid "could not parse version file \"%s\""
 msgstr "не удалось разобрать файл с версией \"%s\""
 
-#: server.c:299
+#: server.c:301
 #, c-format
 msgid ""
 "\n"
@@ -2274,7 +2284,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:303
+#: server.c:305
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -2284,7 +2294,7 @@ msgstr ""
 "командой:\n"
 "%s"
 
-#: server.c:307
+#: server.c:309
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -2294,26 +2304,26 @@ msgstr ""
 "командой:\n"
 "%s"
 
-#: server.c:321
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr ""
 "программа pg_ctl не смогла запустить исходный сервер, либо к нему не удалось "
 "подключиться"
 
-#: server.c:323
+#: server.c:325
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr ""
 "программа pg_ctl не смогла запустить целевой сервер, либо к нему не удалось "
 "подключиться"
 
-#: server.c:368 task.c:195
+#: server.c:370 task.c:197
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: server.c:381
+#: server.c:383
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr ""
@@ -2344,12 +2354,12 @@ msgstr ""
 msgid "tablespace path \"%s\" is not a directory"
 msgstr "путь табличного пространства \"%s\" не указывает на каталог"
 
-#: task.c:216 task.c:267 task.c:282 task.c:293
+#: task.c:218 task.c:269 task.c:284 task.c:295
 #, c-format
 msgid "connection failure: %s"
 msgstr "ошибка подключения: %s"
 
-#: task.c:395
+#: task.c:397
 #, c-format
 msgid "invalid socket"
 msgstr "неверный сокет"
@@ -2369,12 +2379,12 @@ msgstr "ошибка при обращении к каталогу \"%s\": %m"
 msgid "ok"
 msgstr "ок"
 
-#: version.c:44
+#: version.c:62
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Проверка хеш-индексов"
 
-#: version.c:123
+#: version.c:141
 #, c-format
 msgid ""
 "\n"
@@ -2389,7 +2399,7 @@ msgstr ""
 "перестроить с помощью команды REINDEX. По завершении обновления вы получите\n"
 "инструкции по выполнению REINDEX."
 
-#: version.c:129
+#: version.c:147
 #, c-format
 msgid ""
 "\n"
@@ -2408,17 +2418,17 @@ msgstr ""
 "будучи выполненным администратором БД в psql, пересоздаст все неправильные\n"
 "индексы; до этого никакие хеш-индексы не будут использоваться."
 
-#: version.c:187
+#: version.c:205
 #, c-format
 msgid "Checking for extension updates"
 msgstr "Проверка обновлённых расширений"
 
-#: version.c:201
+#: version.c:219
 #, c-format
 msgid "notice"
 msgstr "замечание"
 
-#: version.c:202
+#: version.c:220
 #, c-format
 msgid ""
 "\n"

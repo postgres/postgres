@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-07 14:20+0000\n"
+"POT-Creation-Date: 2026-08-08 06:20+0000\n"
 "PO-Revision-Date: 2025-08-08 00:01+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -15,16 +15,26 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
 
 #: ../../common/restricted_token.c:168
 #, c-format
@@ -240,8 +250,8 @@ msgstr "Eine Liste der Problemspalten ist in der Datei:"
 
 #: check.c:431 check.c:1038 check.c:1189 check.c:1272 check.c:1361 check.c:1452
 #: check.c:1584 check.c:1656 check.c:1757 check.c:1804 check.c:1884
-#: check.c:2189 check.c:2208 check.c:2254 check.c:2307 file.c:378 file.c:415
-#: function.c:208 option.c:519 version.c:79 version.c:162
+#: check.c:2194 check.c:2213 check.c:2259 check.c:2312 file.c:378 file.c:415
+#: function.c:208 option.c:519 version.c:97 version.c:180
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
@@ -450,7 +460,7 @@ msgid "template0 must not allow connections, i.e. its pg_database.datallowconn m
 msgstr "template0 darf keine Verbindungen erlauben, d.h. ihr pg_database.datallowconn muss falsch sein"
 
 #: check.c:1203 check.c:1324 check.c:1420 check.c:1548 check.c:1624
-#: check.c:1710 check.c:1770 check.c:1853 check.c:2221 check.c:2363
+#: check.c:1710 check.c:1770 check.c:1853 check.c:2226 check.c:2368
 #: function.c:229
 #, c-format
 msgid "fatal"
@@ -656,12 +666,12 @@ msgstr ""
 msgid "Checking for objects affected by Unicode update"
 msgstr "Prüfe auf vom Unicode-Update betroffene Objekte"
 
-#: check.c:2033 version.c:121
+#: check.c:2038 version.c:139
 #, c-format
 msgid "warning"
 msgstr "Warnung"
 
-#: check.c:2034
+#: check.c:2039
 #, c-format
 msgid ""
 "Your installation contains relations that might be affected by a new version of Unicode.\n"
@@ -673,52 +683,52 @@ msgstr ""
 "betroffenen Relationen ist in der Datei:\n"
 "    %s"
 
-#: check.c:2070
+#: check.c:2075
 #, c-format
 msgid "Checking for new cluster logical replication slots"
 msgstr "Prüfe logische Replikations-Slots des neuen Clusters"
 
-#: check.c:2078
+#: check.c:2083
 #, c-format
 msgid "could not count the number of logical replication slots"
 msgstr "konnte Anzahl der logischen Replikations-Slots nicht zählen"
 
-#: check.c:2083
+#: check.c:2088
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "0 logische Replikations-Slots erwartet aber %d gefunden"
 
-#: check.c:2093 check.c:2144
+#: check.c:2098 check.c:2149
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "konnte Parametereinstellung im neuen Cluster nicht ermitteln"
 
-#: check.c:2098
+#: check.c:2103
 #, c-format
 msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
 msgstr "»wal_level« muss »logical« sein, aber es ist auf »%s« gesetzt"
 
-#: check.c:2104
+#: check.c:2109
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
 msgstr "»max_replication_slots« (%d) muss größer als oder gleich der Anzahl der logischen Replikations-Slots (%d) im alten Cluster sein"
 
-#: check.c:2136
+#: check.c:2141
 #, c-format
 msgid "Checking for new cluster configuration for subscriptions"
 msgstr "Prüfe Konfiguration für Subskriptionen im neuen Cluster"
 
-#: check.c:2148
+#: check.c:2153
 #, c-format
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgstr "»max_active_replication_origins« (%d) muss größer als oder gleich der Anzahl der Subskriptionen (%d) im alten Cluster sein"
 
-#: check.c:2170
+#: check.c:2175
 #, c-format
 msgid "Checking for valid logical replication slots"
 msgstr "Prüfe auf gültige logische Replikations-Slots"
 
-#: check.c:2222
+#: check.c:2227
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be upgraded.\n"
@@ -734,12 +744,12 @@ msgstr ""
 "Eine Liste der problematischen Slots ist in der Datei:\n"
 "    %s"
 
-#: check.c:2282
+#: check.c:2287
 #, c-format
 msgid "Checking for subscription state"
 msgstr "Prüfe Subskriptionszustand"
 
-#: check.c:2364
+#: check.c:2369
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
@@ -799,7 +809,7 @@ msgstr "Im alten Cluster fehlen Cluster-Zustandsinformationen:"
 msgid "The target cluster lacks cluster state information:"
 msgstr "Im neuen Cluster fehlen Cluster-Zustandsinformationen:"
 
-#: controldata.c:217 dump.c:50 exec.c:118 pg_upgrade.c:606 pg_upgrade.c:646
+#: controldata.c:217 dump.c:54 exec.c:118 pg_upgrade.c:606 pg_upgrade.c:646
 #: pg_upgrade.c:995 relfilenumber.c:610 server.c:34 util.c:337
 #, c-format
 msgid "%s"
@@ -1053,7 +1063,7 @@ msgstr "nicht erkannter Transfermodus"
 msgid "Creating dump of global objects"
 msgstr "Erzeuge Dump der globalen Objekte"
 
-#: dump.c:32
+#: dump.c:33
 #, c-format
 msgid "Creating dump of database schemas"
 msgstr "Erzeuge Dump der Datenbankschemas"
@@ -1740,7 +1750,7 @@ msgstr "konnte Arbeitsprozess nicht erzeugen: %m"
 msgid "could not create worker thread: %m"
 msgstr "konnte Arbeits-Thread nicht erzeugen: %m"
 
-#: parallel.c:294 task.c:404
+#: parallel.c:294 task.c:406
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() fehlgeschlagen: %m"
@@ -2012,17 +2022,17 @@ msgstr "verknüpfe »%s« nach »%s«"
 msgid "should never happen"
 msgstr "sollte nie vorkommen"
 
-#: server.c:39 server.c:143 util.c:248 util.c:278
+#: server.c:39 server.c:145 util.c:248 util.c:278
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "Fehlgeschlagen, Programm wird beendet\n"
 
-#: server.c:133
+#: server.c:135
 #, c-format
 msgid "executing: %s"
 msgstr "führe aus: %s"
 
-#: server.c:139
+#: server.c:141
 #, c-format
 msgid ""
 "SQL command failed\n"
@@ -2033,17 +2043,17 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: server.c:169
+#: server.c:171
 #, c-format
 msgid "could not open version file \"%s\": %m"
 msgstr "konnte Versionsdatei »%s« nicht öffnen: %m"
 
-#: server.c:173
+#: server.c:175
 #, c-format
 msgid "could not parse version file \"%s\""
 msgstr "konnte Versionsdatei »%s« nicht interpretieren"
 
-#: server.c:299
+#: server.c:301
 #, c-format
 msgid ""
 "\n"
@@ -2052,7 +2062,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:303
+#: server.c:305
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -2061,7 +2071,7 @@ msgstr ""
 "konnte nicht mit dem Postmaster für den alten Cluster verbinden, gestartet mit dem Befehl:\n"
 "%s"
 
-#: server.c:307
+#: server.c:309
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -2070,22 +2080,22 @@ msgstr ""
 "konnte nicht mit dem Postmaster für den neuen Cluster verbinden, gestartet mit dem Befehl:\n"
 "%s"
 
-#: server.c:321
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl konnte den Quellserver nicht starten, oder Verbindung fehlgeschlagen"
 
-#: server.c:323
+#: server.c:325
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl konnte den Zielserver nicht starten, oder Verbindung fehlgeschlagen"
 
-#: server.c:368 task.c:195
+#: server.c:370 task.c:197
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: server.c:381
+#: server.c:383
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq-Umgebungsvariable %s hat einen nicht lokalen Serverwert: %s"
@@ -2114,12 +2124,12 @@ msgstr "konnte »stat« für Tablespace-Verzeichnis »%s« nicht ausführen: %m"
 msgid "tablespace path \"%s\" is not a directory"
 msgstr "Tablespace-Pfad »%s« ist kein Verzeichnis"
 
-#: task.c:216 task.c:267 task.c:282 task.c:293
+#: task.c:218 task.c:269 task.c:284 task.c:295
 #, c-format
 msgid "connection failure: %s"
 msgstr "Verbindungsfehler: %s"
 
-#: task.c:395
+#: task.c:397
 #, c-format
 msgid "invalid socket"
 msgstr "ungültiges Socket"
@@ -2139,12 +2149,12 @@ msgstr "konnte nicht auf Verzeichnis »%s« zugreifen: %m"
 msgid "ok"
 msgstr "ok"
 
-#: version.c:44
+#: version.c:62
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Prüfe auf Hash-Indexe"
 
-#: version.c:123
+#: version.c:141
 #, c-format
 msgid ""
 "\n"
@@ -2159,7 +2169,7 @@ msgstr ""
 "daher mit dem Befehl REINDEX reindiziert werden. Nach dem Upgrade\n"
 "werden Sie Anweisungen zum REINDEX erhalten."
 
-#: version.c:129
+#: version.c:147
 #, c-format
 msgid ""
 "\n"
@@ -2179,17 +2189,17 @@ msgstr ""
 "ungültigen Indexe neu zu erzeugen. Bis dahin werden diese Indexe nicht\n"
 "verwendet werden."
 
-#: version.c:187
+#: version.c:205
 #, c-format
 msgid "Checking for extension updates"
 msgstr "Prüfe auf Aktualisierungen von Erweiterungen"
 
-#: version.c:201
+#: version.c:219
 #, c-format
 msgid "notice"
 msgstr "Hinweis"
 
-#: version.c:202
+#: version.c:220
 #, c-format
 msgid ""
 "\n"

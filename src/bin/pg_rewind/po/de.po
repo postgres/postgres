@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-03 12:24+0000\n"
-"PO-Revision-Date: 2025-04-03 16:19+0200\n"
+"POT-Creation-Date: 2026-08-08 06:23+0000\n"
+"PO-Revision-Date: 2026-08-08 09:53+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -36,18 +36,18 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
-#: ../../common/controldata_utils.c:97 file_ops.c:326 file_ops.c:330
+#: ../../common/controldata_utils.c:97 file_ops.c:349
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
 
-#: ../../common/controldata_utils.c:110 file_ops.c:341 local_source.c:102
+#: ../../common/controldata_utils.c:110 file_ops.c:364 local_source.c:102
 #: local_source.c:161 parsexlog.c:371
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht lesen: %m"
 
-#: ../../common/controldata_utils.c:119 file_ops.c:344 parsexlog.c:373
+#: ../../common/controldata_utils.c:119 file_ops.c:367 parsexlog.c:373
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
@@ -84,7 +84,7 @@ msgstr ""
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: ../../common/controldata_utils.c:249 file_ops.c:117
+#: ../../common/controldata_utils.c:249 file_ops.c:120
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht schreiben: %m"
@@ -95,16 +95,26 @@ msgstr "konnte Datei »%s« nicht schreiben: %m"
 msgid "could not fsync file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht fsyncen: %m"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
 
 #: ../../common/file_utils.c:75
 #, c-format
@@ -112,7 +122,7 @@ msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
 
 #: ../../common/file_utils.c:123 ../../common/file_utils.c:588
-#: ../../fe_utils/archive.c:86 file_ops.c:417
+#: ../../fe_utils/archive.c:86 file_ops.c:353 file_ops.c:440
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
@@ -123,12 +133,12 @@ msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 msgid "this build does not support sync method \"%s\""
 msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
 
-#: ../../common/file_utils.c:156 ../../common/file_utils.c:304 file_ops.c:388
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304 file_ops.c:411
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
 
-#: ../../common/file_utils.c:174 ../../common/file_utils.c:338 file_ops.c:462
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338 file_ops.c:485
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
@@ -250,107 +260,142 @@ msgstr "Argument des Shell-Befehls enthält Newline oder Carriage Return: »%s«
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "Datenbankname enthält Newline oder Carriage Return: »%s«\n"
 
-#: file_ops.c:67
+#: file_ops.c:52
+#, c-format
+msgid "target file path is unsafe for open: \"%s\""
+msgstr "Zieldateipfad ist zum Öffnen nicht sicher: »%s«"
+
+#: file_ops.c:70
 #, c-format
 msgid "could not open target file \"%s\": %m"
 msgstr "konnte Zieldatei »%s« nicht öffnen: %m"
 
-#: file_ops.c:81
+#: file_ops.c:84
 #, c-format
 msgid "could not close target file \"%s\": %m"
 msgstr "konnte Zieldatei »%s« nicht schließen: %m"
 
-#: file_ops.c:101
+#: file_ops.c:104
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
 msgstr "konnte Positionszeiger in Zieldatei »%s« nicht setzen: %m"
 
-#: file_ops.c:150 file_ops.c:177
+#: file_ops.c:153 file_ops.c:180
 #, c-format
 msgid "undefined file type for \"%s\""
 msgstr "undefinierter Dateityp für »%s«"
 
-#: file_ops.c:173
+#: file_ops.c:176
 #, c-format
 msgid "invalid action (CREATE) for regular file"
 msgstr "ungültige Aktion (CREATE) für normale Datei"
 
-#: file_ops.c:200
+#: file_ops.c:195
+#, c-format
+msgid "target file path is unsafe for removal: \"%s\""
+msgstr "Zieldateipfad ist zum Entfernen nicht sicher: »%s«"
+
+#: file_ops.c:206
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht löschen: %m"
 
 #: file_ops.c:218
 #, c-format
+msgid "target file path is unsafe for truncation: \"%s\""
+msgstr "Zieldateipfad ist für das Kürzen nicht sicher: »%s«"
+
+#: file_ops.c:227
+#, c-format
 msgid "could not open file \"%s\" for truncation: %m"
 msgstr "konnte Datei »%s« nicht zum Kürzen öffnen: %m"
 
-#: file_ops.c:222
+#: file_ops.c:231
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "konnte Datei »%s« nicht auf %u kürzen: %m"
 
-#: file_ops.c:238
+#: file_ops.c:243
+#, c-format
+msgid "target directory path is unsafe for directory creation: \"%s\""
+msgstr "Zielverzeichnispfad ist zum Erstellen des Verzeichnisses nicht sicher: »%s«"
+
+#: file_ops.c:251
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht erzeugen: %m"
 
-#: file_ops.c:252
+#: file_ops.c:261
+#, c-format
+msgid "target directory path is unsafe for directory removal: \"%s\""
+msgstr "Zielverzeichnispfad ist zum Entfernen des Verzeichnisses nicht sicher: »%s«"
+
+#: file_ops.c:269
 #, c-format
 msgid "could not remove directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht löschen: %m"
 
-#: file_ops.c:266
+#: file_ops.c:279
+#, c-format
+msgid "target symlink path is unsafe for creation: \"%s\""
+msgstr "Ziel-Symlink-Pfad ist zum Erstellen nicht sicher: »%s«"
+
+#: file_ops.c:286
 #, c-format
 msgid "could not create symbolic link at \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %m"
 
-#: file_ops.c:280
+#: file_ops.c:296
+#, c-format
+msgid "target symlink path is unsafe for removal: \"%s\""
+msgstr "Ziel-Symlink-Pfad ist zum Entfernen nicht sicher: »%s«"
+
+#: file_ops.c:303
 #, c-format
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht löschen: %m"
 
-#: file_ops.c:441
+#: file_ops.c:464
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
 
-#: file_ops.c:444
+#: file_ops.c:467
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "Ziel für symbolische Verknüpfung »%s« ist zu lang"
 
-#: file_ops.c:466
+#: file_ops.c:489
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht schließen: %m"
 
-#: filemap.c:297
+#: filemap.c:298
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "Datendatei »%s« in der Quelle ist keine normale Datei"
 
-#: filemap.c:302 filemap.c:335
+#: filemap.c:303 filemap.c:336
 #, c-format
 msgid "duplicate source file \"%s\""
 msgstr "doppelte Quelldatei »%s«"
 
-#: filemap.c:390
+#: filemap.c:391
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "unerwartete Seitenänderung für nicht normale Datei »%s«"
 
-#: filemap.c:743 filemap.c:845
+#: filemap.c:744 filemap.c:846
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "unbekannter Dateityp für »%s«"
 
-#: filemap.c:778
+#: filemap.c:779
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "Datei »%s« hat unterschiedlichen Typ in Quelle und Ziel"
 
-#: filemap.c:850
+#: filemap.c:851
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "konnte nicht entscheiden, was mit Datei »%s« zu tun ist"
@@ -927,147 +972,147 @@ msgstr "ungültiger Datensatz-Offset bei %X/%X: mindestens %u erwartet, %u erhal
 msgid "contrecord is requested by %X/%X"
 msgstr "Contrecord angefordert von %X/%X"
 
-#: xlogreader.c:670 xlogreader.c:1135
+#: xlogreader.c:670 xlogreader.c:1145
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "ungültige Datensatzlänge bei %X/%X: mindestens %u erwartet, %u erhalten"
 
-#: xlogreader.c:759
+#: xlogreader.c:760
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "keine Contrecord-Flag bei %X/%X"
 
-#: xlogreader.c:772
+#: xlogreader.c:773
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "ungültige Contrecord-Länge %u (erwartet %lld) bei %X/%X"
 
-#: xlogreader.c:1143
+#: xlogreader.c:1153
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ungültige Resource-Manager-ID %u bei %X/%X"
 
-#: xlogreader.c:1156 xlogreader.c:1172
+#: xlogreader.c:1166 xlogreader.c:1182
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "Datensatz mit falschem Prev-Link %X/%X bei %X/%X"
 
-#: xlogreader.c:1210
+#: xlogreader.c:1220
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "ungültige Resource-Manager-Datenprüfsumme in Datensatz bei %X/%X"
 
-#: xlogreader.c:1244
+#: xlogreader.c:1254
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ungültige magische Zahl %04X in WAL-Segment %s, LSN %X/%X, Offset %u"
 
-#: xlogreader.c:1259 xlogreader.c:1301
+#: xlogreader.c:1269 xlogreader.c:1311
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ungültige Info-Bits %04X in WAL-Segment %s, LSN %X/%X, Offset %u"
 
-#: xlogreader.c:1275
+#: xlogreader.c:1285
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
 msgstr "WAL-Datei ist von einem anderen Datenbanksystem: Datenbanksystemidentifikator in WAL-Datei ist %<PRIu64>, Datenbanksystemidentifikator in pg_control ist %<PRIu64>"
 
-#: xlogreader.c:1283
+#: xlogreader.c:1293
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL-Datei ist von einem anderen Datenbanksystem: falsche Segmentgröße im Seitenkopf"
 
-#: xlogreader.c:1289
+#: xlogreader.c:1299
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL-Datei ist von einem anderen Datenbanksystem: falsche XLOG_BLCKSZ im Seitenkopf"
 
-#: xlogreader.c:1321
+#: xlogreader.c:1331
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "unerwartete Pageaddr %X/%X in WAL-Segment %s, LSN %X/%X, Offset %u"
 
-#: xlogreader.c:1347
+#: xlogreader.c:1357
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "Zeitleisten-ID %u außer der Reihe (nach %u) in WAL-Segment %s, LSN %X/%X, Offset %u"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1771
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "block_id %u außer der Reihe bei %X/%X"
 
-#: xlogreader.c:1783
+#: xlogreader.c:1795
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA gesetzt, aber keine Daten enthalten bei %X/%X"
 
-#: xlogreader.c:1790
+#: xlogreader.c:1802
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA nicht gesetzt, aber Datenlänge ist %u bei %X/%X"
 
-#: xlogreader.c:1826
+#: xlogreader.c:1838
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE gesetzt, aber Loch Offset %u Länge %u Block-Abbild-Länge %u bei %X/%X"
 
-#: xlogreader.c:1842
+#: xlogreader.c:1854
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE nicht gesetzt, aber Loch Offset %u Länge %u bei %X/%X"
 
-#: xlogreader.c:1856
+#: xlogreader.c:1868
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED gesetzt, aber Block-Abbild-Länge %u bei %X/%X"
 
-#: xlogreader.c:1871
+#: xlogreader.c:1883
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "weder BKPIMAGE_HAS_HOLE noch BKPIMAGE_COMPRESSED gesetzt, aber Block-Abbild-Länge ist %u bei %X/%X"
 
-#: xlogreader.c:1887
+#: xlogreader.c:1899
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL gesetzt, aber keine vorangehende Relation bei %X/%X"
 
-#: xlogreader.c:1899
+#: xlogreader.c:1911
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "ungültige block_id %u bei %X/%X"
 
-#: xlogreader.c:1966
+#: xlogreader.c:1978
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "Datensatz mit ungültiger Länge bei %X/%X"
 
-#: xlogreader.c:1992
+#: xlogreader.c:2004
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "konnte Backup-Block mit ID %d nicht im WAL-Eintrag finden"
 
-#: xlogreader.c:2076
+#: xlogreader.c:2088
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "konnte Abbild bei %X/%X mit ungültigem angegebenen Block %d nicht wiederherstellen"
 
-#: xlogreader.c:2083
+#: xlogreader.c:2095
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "konnte Abbild mit ungültigem Zustand bei %X/%X nicht wiederherstellen, Block %d"
 
-#: xlogreader.c:2110 xlogreader.c:2127
+#: xlogreader.c:2122 xlogreader.c:2139
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "konnte Abbild bei %X/%X nicht wiederherstellen, komprimiert mit %s, nicht unterstützt von dieser Installation, Block %d"
 
-#: xlogreader.c:2136
+#: xlogreader.c:2148
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "konnte Abbild bei %X/%X nicht wiederherstellen, komprimiert mit unbekannter Methode, Block %d"
 
-#: xlogreader.c:2144
+#: xlogreader.c:2156
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "konnte Abbild bei %X/%X nicht dekomprimieren, Block %d"

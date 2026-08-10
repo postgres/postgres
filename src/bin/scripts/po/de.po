@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-27 00:51+0000\n"
+"POT-Creation-Date: 2026-08-08 06:22+0000\n"
 "PO-Revision-Date: 2025-04-27 15:40+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -37,16 +37,26 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
 #: ../../common/file_utils.c:428 ../../common/file_utils.c:502
@@ -168,27 +178,27 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu Zeile)"
 msgstr[1] "(%lu Zeilen)"
 
-#: ../../fe_utils/print.c:3154
+#: ../../fe_utils/print.c:3155
 #, c-format
 msgid "Interrupted\n"
 msgstr "Unterbrochen\n"
 
-#: ../../fe_utils/print.c:3188
+#: ../../fe_utils/print.c:3189
 #, c-format
 msgid "Cannot print table contents: number of cells %<PRIu64> is equal to or exceeds maximum %zu.\n"
 msgstr "Kann Tabelleninhalt nicht ausgeben: Anzahl der Zellen %<PRIu64> ist gleich oder überschreitet Maximum %zu.\n"
 
-#: ../../fe_utils/print.c:3229
+#: ../../fe_utils/print.c:3230
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "Kann keinen weiteren Spaltenkopf zur Tabelle hinzufügen: Spaltenzahl %d überschritten.\n"
 
-#: ../../fe_utils/print.c:3272
+#: ../../fe_utils/print.c:3273
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %<PRIu64> exceeded.\n"
 msgstr "Kann keine weitere Zelle zur Tabelle hinzufügen: Zellengesamtzahl %<PRIu64> überschritten.\n"
 
-#: ../../fe_utils/print.c:3530
+#: ../../fe_utils/print.c:3531
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "ungültiges Ausgabeformat (interner Fehler): %d"
@@ -216,13 +226,13 @@ msgstr "Datenbankname enthält Newline oder Carriage Return: »%s«\n"
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:149 createdb.c:168
 #: createuser.c:195 createuser.c:210 dropdb.c:104 dropdb.c:113 dropdb.c:121
 #: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97 pg_isready.c:111
-#: reindexdb.c:184 reindexdb.c:203 vacuumdb.c:291 vacuumdb.c:311
+#: reindexdb.c:184 reindexdb.c:203 vacuumdb.c:292 vacuumdb.c:312
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Versuchen Sie »%s --help« für weitere Informationen."
 
 #: clusterdb.c:130 createdb.c:166 createuser.c:208 dropdb.c:119 dropuser.c:108
-#: pg_isready.c:109 reindexdb.c:201 vacuumdb.c:309
+#: pg_isready.c:109 reindexdb.c:201 vacuumdb.c:310
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
@@ -951,9 +961,9 @@ msgstr "kann nicht mehrere Jobs verwenden, um Systemkataloge zu reindizieren"
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr "kann nicht alle Datenbanken und eine bestimmte gleichzeitig reindizieren"
 
-#: reindexdb.c:302 reindexdb.c:309 vacuumdb.c:558 vacuumdb.c:565 vacuumdb.c:572
-#: vacuumdb.c:579 vacuumdb.c:586 vacuumdb.c:593 vacuumdb.c:600 vacuumdb.c:607
-#: vacuumdb.c:614 vacuumdb.c:621 vacuumdb.c:628 vacuumdb.c:635
+#: reindexdb.c:302 reindexdb.c:309 vacuumdb.c:559 vacuumdb.c:566 vacuumdb.c:573
+#: vacuumdb.c:580 vacuumdb.c:587 vacuumdb.c:594 vacuumdb.c:601 vacuumdb.c:608
+#: vacuumdb.c:615 vacuumdb.c:622 vacuumdb.c:629 vacuumdb.c:636
 #, c-format
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "Option »%s« kann nicht mit Serverversionen älter als PostgreSQL %s verwendet werden"
@@ -1064,70 +1074,70 @@ msgstr ""
 "Für weitere Informationen lesen Sie bitte die Beschreibung des\n"
 "SQL-Befehls REINDEX.\n"
 
-#: vacuumdb.c:324 vacuumdb.c:327 vacuumdb.c:330 vacuumdb.c:333 vacuumdb.c:336
-#: vacuumdb.c:339 vacuumdb.c:342 vacuumdb.c:345 vacuumdb.c:354
+#: vacuumdb.c:325 vacuumdb.c:328 vacuumdb.c:331 vacuumdb.c:334 vacuumdb.c:337
+#: vacuumdb.c:340 vacuumdb.c:343 vacuumdb.c:346 vacuumdb.c:355
 #, c-format
 msgid "cannot use the \"%s\" option when performing only analyze"
 msgstr "kann Option »%s« nicht verwenden, wenn nur Analyze durchgeführt wird"
 
-#: vacuumdb.c:357
+#: vacuumdb.c:358
 #, c-format
 msgid "cannot use the \"%s\" option when performing full vacuum"
 msgstr "kann Option »%s« nicht verwenden, wenn volles Vacuum durchgeführt wird"
 
-#: vacuumdb.c:363 vacuumdb.c:371
+#: vacuumdb.c:364 vacuumdb.c:372
 #, c-format
 msgid "cannot use the \"%s\" option with the \"%s\" option"
 msgstr "kann Option »%s« nicht mit der Option »%s« verwenden"
 
-#: vacuumdb.c:379
+#: vacuumdb.c:380
 #, c-format
 msgid "cannot use the \"%s\" option without \"%s\" or \"%s\""
 msgstr "kann Option »%s« nicht ohne »%s« oder »%s« verwenden"
 
-#: vacuumdb.c:453
+#: vacuumdb.c:454
 #, c-format
 msgid "cannot vacuum all databases and a specific one at the same time"
 msgstr "kann nicht alle Datenbanken und eine bestimmte gleichzeitig vacuumen"
 
-#: vacuumdb.c:457
+#: vacuumdb.c:458
 #, c-format
 msgid "cannot vacuum all tables in schema(s) and specific table(s) at the same time"
 msgstr "kann nicht alle Tabellen in Schemas und bestimmte Tabellen gleichzeitig vacuumen"
 
-#: vacuumdb.c:461
+#: vacuumdb.c:462
 #, c-format
 msgid "cannot vacuum specific table(s) and exclude schema(s) at the same time"
 msgstr "kann nicht bestimmte Tabelle(n) vacuumen und gleichzeitig Schemas ausschließen"
 
-#: vacuumdb.c:465
+#: vacuumdb.c:466
 #, c-format
 msgid "cannot vacuum all tables in schema(s) and exclude schema(s) at the same time"
 msgstr "kann nicht alle Tabellen in Schemas vacuumen und gleichzeitig Schemas ausschließen"
 
-#: vacuumdb.c:478
+#: vacuumdb.c:479
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: vacuumdb.c:545
+#: vacuumdb.c:546
 msgid "Generating minimal optimizer statistics (1 target)"
 msgstr "Erzeuge minimale Optimierer-Statistiken (1 Ziel)"
 
-#: vacuumdb.c:546
+#: vacuumdb.c:547
 msgid "Generating medium optimizer statistics (10 targets)"
 msgstr "Erzeuge mittlere Optimierer-Statistiken (10 Ziele)"
 
-#: vacuumdb.c:547
+#: vacuumdb.c:548
 msgid "Generating default (full) optimizer statistics"
 msgstr "Erzeuge volle Optimierer-Statistiken"
 
-#: vacuumdb.c:645
+#: vacuumdb.c:646
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: bearbeite Datenbank »%s«: %s\n"
 
-#: vacuumdb.c:648
+#: vacuumdb.c:649
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: führe Vacuum in Datenbank »%s« aus\n"
