@@ -3044,7 +3044,7 @@ SplitDirectoriesString(char *rawstring, char separator,
  * However, it's not clear that having one function with a bunch of option
  * flags would be much better.
  *
- * XXX there is a version of this function in src/bin/pg_dump/dumputils.c.
+ * XXX there is a version of this function in src/fe_utils/string_utils.c.
  * Be sure to update that if you have to change this.
  *
  * Inputs:
