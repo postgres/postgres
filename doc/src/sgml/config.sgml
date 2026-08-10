@@ -1136,6 +1136,19 @@ include_dir 'conf.d'
         time of encryption. In order to make use of a changed value, a new
         password must be set.
        </para>
+       <note>
+        <para>
+         If a role password was created with a different iteration count than
+         the value of <literal>scram_iterations</literal> specified in the
+         <filename>postgresql.conf</filename> file or on the server command
+         line, an unauthenticated user can discern the existence of the role by
+         observing discrepancies in the server's responses to connection
+         attempts.  If you find this concerning, ensure that all role passwords
+         are created with <literal>scram_iterations</literal> set to the value
+         specified in the <filename>postgresql.conf</filename> file or on the
+         server command line.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 

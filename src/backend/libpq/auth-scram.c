@@ -722,7 +722,7 @@ mock_scram_secret(const char *username, pg_cryptohash_type *hash_type,
 	encoded_salt[encoded_len] = '\0';
 
 	*salt = encoded_salt;
-	*iterations = SCRAM_SHA_256_DEFAULT_ITERATIONS;
+	*iterations = scram_sha_256_iterations;
 
 	/* StoredKey and ServerKey are not used in a doomed authentication */
 	memset(stored_key, 0, SCRAM_MAX_KEY_LEN);
