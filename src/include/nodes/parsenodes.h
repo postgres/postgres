@@ -3491,6 +3491,7 @@ typedef struct CreateStatsStmt
 	char	   *stxcomment;		/* comment to apply to stats, or NULL */
 	bool		transformed;	/* true when transformStatsStmt is finished */
 	bool		if_not_exists;	/* do nothing if stats name already exists */
+	Oid			owner;			/* OID of owner, or InvalidOid for default */
 } CreateStatsStmt;
 
 /*
