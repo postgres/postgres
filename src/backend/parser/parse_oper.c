@@ -749,6 +749,28 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 											   opform->oprresult,
 											   false);
 
+	/*
+	 * Reject any attempt to call a function that takes or returns type
+	 * internal from SQL.  This is just like the check in ParseFuncOrColumn,
+	 * but for operator syntax.  (Despite that, we say "function" in the error
+	 * messages; doesn't seem worth having two sets of translatable strings.)
+	 */
+	for (int i = 0; i < nargs; i++)
+	{
+		if (declared_arg_types[i] == INTERNALOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("functions accepting type \"%s\" cannot be called explicitly",
+							"internal"),
+					 parser_errposition(pstate, location)));
+	}
+	if (rettype == INTERNALOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("functions returning type \"%s\" cannot be called explicitly",
+						"internal"),
+				 parser_errposition(pstate, location)));
+
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
 
