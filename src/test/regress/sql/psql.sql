@@ -1567,6 +1567,15 @@ SELECT line FROM reload_output ORDER BY lineno;
 
 DROP TABLE reload_output;
 
+-- \copy must skip in-line data, even if the issued COPY command fails.
+\copy no_such_table from stdin
+foo
+\echo this should not get output
+bar
+\echo this should not get output
+\.
+\echo this should get output
+
 --
 -- AUTOCOMMIT and combined queries
 --

@@ -5917,6 +5917,11 @@ SELECT line FROM reload_output ORDER BY lineno;
 (2 rows)
 
 DROP TABLE reload_output;
+-- \copy must skip in-line data, even if the issued COPY command fails.
+\copy no_such_table from stdin
+ERROR:  relation "no_such_table" does not exist
+\echo this should get output
+this should get output
 --
 -- AUTOCOMMIT and combined queries
 --
