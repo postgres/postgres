@@ -3859,6 +3859,11 @@ SELECT 1 \bind \sendpipeline
         <application>pg_dumpall</application>, and
         <application>pg_restore</application>, but it may be useful elsewhere.
         </para>
+        <para>
+        Unlike most other meta-commands, the entire remainder of the line is
+        always taken to be the argument of <command>\unrestrict</command>, and
+        neither variable interpolation nor backquote expansion are performed.
+        </para>
         </listitem>
       </varlistentry>
 
