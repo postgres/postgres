@@ -228,6 +228,18 @@ ALTER TABLE toast_3b_utf8 RENAME TO toast_4b_utf8;
 UPDATE toast_4b_utf8 SET c = repeat(U&'\+01F680', 3000);
 SELECT SUBSTRING(c FROM 3000 FOR 1) FROM toast_4b_utf8;
 
+-- ascii() and multibyte characters
+SELECT ascii(test_bytea_to_text('\xc3'));
+SELECT ascii(test_bytea_to_text('\xe2'));
+SELECT ascii(test_bytea_to_text('\xe282'));
+SELECT ascii(test_bytea_to_text('\xf0'));
+SELECT ascii(test_bytea_to_text('\xf09f'));
+SELECT ascii(test_bytea_to_text('\xf09f98'));
+-- invalid continuation byte
+SELECT ascii(test_bytea_to_text('\xc3ff'));
+-- invalid leading byte
+SELECT ascii(test_bytea_to_text('\x80'));
+
 DROP TABLE encoding_tests;
 DROP TABLE toast_4b_utf8;
 DROP FUNCTION test_encoding;
