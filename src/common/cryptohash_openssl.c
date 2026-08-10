@@ -67,6 +67,9 @@ struct pg_cryptohash_ctx
 	const char *errreason;
 
 	EVP_MD_CTX *evpctx;
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_MD	   *algo;
+#endif
 
 #ifndef FRONTEND
 	ResourceOwner resowner;
@@ -178,10 +181,50 @@ int
 pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 {
 	int			status = 0;
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	const char *name = NULL;
+#endif
 
 	if (ctx == NULL)
 		return -1;
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+
+	/*
+	 * Fetch the digest implementation so that it is served by the loaded
+	 * provider.
+	 */
+	switch (ctx->type)
+	{
+		case PG_MD5:
+			name = "MD5";
+			break;
+		case PG_SHA1:
+			name = "SHA1";
+			break;
+		case PG_SHA224:
+			name = "SHA224";
+			break;
+		case PG_SHA256:
+			name = "SHA256";
+			break;
+		case PG_SHA384:
+			name = "SHA384";
+			break;
+		case PG_SHA512:
+			name = "SHA512";
+			break;
+	}
+
+	/*
+	 * Call EVP_MD_fetch() only once for each context, as provider lookups can
+	 * be expensive.
+	 */
+	if (ctx->algo == NULL)
+		ctx->algo = EVP_MD_fetch(NULL, name, NULL);
+	if (ctx->algo != NULL)
+		status = EVP_DigestInit_ex(ctx->evpctx, ctx->algo, NULL);
+#else
 	switch (ctx->type)
 	{
 		case PG_MD5:
@@ -203,6 +246,7 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 			status = EVP_DigestInit_ex(ctx->evpctx, EVP_sha512(), NULL);
 			break;
 	}
+#endif
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)
@@ -329,6 +373,9 @@ pg_cryptohash_free(pg_cryptohash_ctx *ctx)
 		return;
 
 	EVP_MD_CTX_destroy(ctx->evpctx);
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_MD_free(ctx->algo);
+#endif
 
 #ifndef FRONTEND
 	if (ctx->resowner)
