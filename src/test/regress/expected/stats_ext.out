@@ -55,6 +55,10 @@ ERROR:  duplicate expression in statistics definition
 CREATE STATISTICS tst (unrecognized) ON x, y FROM ext_stats_test;
 ERROR:  unrecognized statistics kind "unrecognized"
 -- unsupported targets
+CREATE STATISTICS tst ON x, y FROM ext_stats_test, ext_stats_test;
+ERROR:  only a single relation is allowed in CREATE STATISTICS
+CREATE STATISTICS tst ON x, y FROM ext_stats_test, (SELECT * FROM ext_stats_test) AS foo;
+ERROR:  only a single relation is allowed in CREATE STATISTICS
 CREATE STATISTICS tst ON a FROM (VALUES (x)) AS foo;
 ERROR:  CREATE STATISTICS only supports relation names in the FROM clause
 CREATE STATISTICS tst ON a FROM foo NATURAL JOIN bar;
@@ -3459,3 +3463,28 @@ drop cascades to view tststats.priv_test_view
 DROP SCHEMA sts_sch1, sts_sch2 CASCADE;
 NOTICE:  drop cascades to table sts_sch1.tbl
 DROP USER regress_stats_user1;
+-- CREATE STATISTICS checks for the owner
+CREATE ROLE regress_relowner;
+CREATE ROLE regress_stxowner;
+CREATE TABLE stats_ext_tbl (a int, b int);
+ALTER TABLE stats_ext_tbl OWNER TO regress_relowner;
+CREATE STATISTICS tst ON a, b FROM stats_ext_tbl;
+ALTER STATISTICS tst OWNER TO regress_stxowner;
+SELECT stxowner::regrole FROM pg_statistic_ext WHERE stxname = 'tst';
+     stxowner     
+------------------
+ regress_stxowner
+(1 row)
+
+-- re-creating statistics via ALTER TABLE preserve the statistics owner.
+ALTER TABLE stats_ext_tbl ALTER COLUMN a TYPE bigint;
+SELECT stxowner::regrole FROM pg_statistic_ext WHERE stxname = 'tst';
+     stxowner     
+------------------
+ regress_stxowner
+(1 row)
+
+-- Tidy up
+DROP TABLE stats_ext_tbl;
+DROP ROLE regress_relowner;
+DROP ROLE regress_stxowner;
