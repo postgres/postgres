@@ -595,7 +595,8 @@ decrypt_key(PGP_Context *ctx, const uint8 *src, int len)
 	PGP_CFB    *cfb;
 
 	res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
-						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
+						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL,
+						 ctx->ignore_cipher_failure);
 	if (res < 0)
 		return res;
 
@@ -983,7 +984,8 @@ parse_symenc_data(PGP_Context *ctx, PullFilter *pkt, MBuf *dst)
 	PullFilter *pf_prefix = NULL;
 
 	res = pgp_cfb_create(&cfb, ctx->cipher_algo,
-						 ctx->sess_key, ctx->sess_key_len, 1, NULL);
+						 ctx->sess_key, ctx->sess_key_len, 1, NULL,
+						 ctx->ignore_cipher_failure);
 	if (res < 0)
 		goto out;
 
@@ -1026,7 +1028,8 @@ parse_symenc_mdc_data(PGP_Context *ctx, PullFilter *pkt, MBuf *dst)
 	}
 
 	res = pgp_cfb_create(&cfb, ctx->cipher_algo,
-						 ctx->sess_key, ctx->sess_key_len, 0, NULL);
+						 ctx->sess_key, ctx->sess_key_len, 0, NULL,
+						 ctx->ignore_cipher_failure);
 	if (res < 0)
 		goto out;
 
