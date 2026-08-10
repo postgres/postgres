@@ -186,6 +186,11 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     type name.  Otherwise, the multirange type name is formed by appending a
     <literal>_multirange</literal> suffix to the range type name.
    </para>
+
+   <para>
+    To be able to create a range type, you must have <literal>USAGE</literal>
+    privilege on the subtype.
+   </para>
   </refsect2>
 
   <refsect2>
