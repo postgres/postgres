@@ -52,45 +52,74 @@ COPY x (a, b, c, d, e) from stdin;
 
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
+\.
 
 -- redundant options
 COPY x from stdin (format CSV, FORMAT CSV);
+\.
 COPY x from stdin (freeze off, freeze on);
+\.
 COPY x from stdin (delimiter ',', delimiter ',');
+\.
 COPY x from stdin (null ' ', null ' ');
+\.
 COPY x from stdin (header off, header on);
+\.
 COPY x from stdin (quote ':', quote ':');
+\.
 COPY x from stdin (escape ':', escape ':');
+\.
 COPY x from stdin (force_quote (a), force_quote *);
+\.
 COPY x from stdin (force_not_null (a), force_not_null (b));
+\.
 COPY x from stdin (force_null (a), force_null (b));
+\.
 COPY x from stdin (convert_selectively (a), convert_selectively (b));
+\.
 COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii');
+\.
 COPY x from stdin (on_error ignore, on_error ignore);
+\.
 COPY x from stdin (log_verbosity default, log_verbosity verbose);
+\.
 
 -- incorrect options
 COPY x from stdin (format BINARY, delimiter ',');
+\.
 COPY x from stdin (format BINARY, null 'x');
+\.
 COPY x from stdin (format BINARY, on_error ignore);
+\.
 COPY x from stdin (on_error unsupported);
+\.
 COPY x from stdin (format TEXT, force_quote(a));
+\.
 COPY x from stdin (format TEXT, force_quote *);
+\.
 COPY x from stdin (format CSV, force_quote(a));
+\.
 COPY x from stdin (format CSV, force_quote *);
+\.
 COPY x from stdin (format TEXT, force_not_null(a));
+\.
 COPY x from stdin (format TEXT, force_not_null *);
+\.
 COPY x to stdout (format CSV, force_not_null(a));
 COPY x to stdout (format CSV, force_not_null *);
 COPY x from stdin (format TEXT, force_null(a));
+\.
 COPY x from stdin (format TEXT, force_null *);
+\.
 COPY x to stdout (format CSV, force_null(a));
 COPY x to stdout (format CSV, force_null *);
 COPY x to stdout (format BINARY, on_error unsupported);
 COPY x from stdin (log_verbosity unsupported);
+\.
 
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
+\.
 
 -- missing data: should fail
 COPY x from stdin;
@@ -147,14 +176,19 @@ COPY x from stdin WHERE a > 60003;
 \.
 
 COPY x from stdin WHERE f > 60003;
+\.
 
 COPY x from stdin WHERE a = max(x.b);
+\.
 
 COPY x from stdin WHERE a IN (SELECT 1 FROM x);
+\.
 
 COPY x from stdin WHERE a IN (generate_series(1,5));
+\.
 
 COPY x from stdin WHERE a = row_number() over(b);
+\.
 
 
 -- check results of copy in
@@ -351,10 +385,12 @@ ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b));
+\.
 ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b));
+\.
 ROLLBACK;
 -- should succeed with no effect ("b" remains an empty string, "c" remains NULL)
 BEGIN;
@@ -380,10 +416,12 @@ SELECT b, c FROM forcetest WHERE a = 6;
 -- should fail with "conflicting or redundant options" error
 BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL *, FORCE_NOT_NULL(b));
+\.
 ROLLBACK;
 -- should fail with "conflicting or redundant options" error
 BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL *, FORCE_NULL(b));
+\.
 ROLLBACK;
 
 \pset null ''
@@ -613,19 +651,25 @@ truncate copy_default;
 
 -- DEFAULT cannot be used in binary mode
 copy copy_default from stdin with (format binary, default '\D');
+\.
 
 -- DEFAULT cannot be new line nor carriage return
 copy copy_default from stdin with (default E'\n');
+\.
 copy copy_default from stdin with (default E'\r');
+\.
 
 -- DELIMITER cannot appear in DEFAULT spec
 copy copy_default from stdin with (delimiter ';', default 'test;test');
+\.
 
 -- CSV quote cannot appear in DEFAULT spec
 copy copy_default from stdin with (format csv, quote '"', default 'test"test');
+\.
 
 -- NULL and DEFAULT spec must be different
 copy copy_default from stdin with (default '\N');
+\.
 
 -- cannot use DEFAULT marker in column that has no DEFAULT value
 copy copy_default from stdin with (default '\D');

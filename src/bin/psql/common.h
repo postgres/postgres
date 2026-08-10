@@ -34,7 +34,7 @@ extern void SetShellResultVariables(int wait_result);
 extern PGresult *PSQLexec(const char *query);
 extern int	PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout, int min_rows);
 
-extern bool SendQuery(const char *query);
+extern bool SendQuery(const char *query, int num_copy_from_stdin);
 
 extern bool is_superuser(void);
 extern bool standard_strings(void);

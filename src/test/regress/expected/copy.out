@@ -249,13 +249,9 @@ copy oversized_column_default from stdin;
 -- error if the column is excluded
 copy oversized_column_default (col2) from stdin;
 ERROR:  value too long for type character varying(5)
-\.
-invalid command \.
 -- error if the DEFAULT option is given
 copy oversized_column_default from stdin (default '');
 ERROR:  value too long for type character varying(5)
-\.
-invalid command \.
 drop table oversized_column_default;
 --
 -- Create partitioned table that does not allow bulk insertions, to test bugs
