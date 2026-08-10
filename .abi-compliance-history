@@ -18,6 +18,22 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+6dbedd48b7c5024ef847572f073b94c3eed88042
+#
+# Check for USAGE privilege on types used by stored expressions.
+# 2026-08-10 06:38:30 -0700
+#
+# The addition of a parameter to AlterDomainAddConstraint() breaks ABI
+# compatibility, but we are unaware of any impacted third-party code.
+
+fb6d1ca8d746dc1ca0e32890a50d7b93d2fbebae
+#
+# Preserve the owner of extended statistics rebuilt by ALTER TABLE.
+# 2026-08-10 06:38:29 -0700
+#
+# CreateStatistics()'s signature changes and CreateStatsStmt gains a field,
+# but no known third-party code calls the former or constructs the latter.
+
 c5824536e7ca3c5ef5a9db59bd36c4e6beb23f51
 #
 # Fix trigger transition table capture for MERGE in CTE queries.
