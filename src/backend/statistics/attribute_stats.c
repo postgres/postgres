@@ -498,11 +498,19 @@ attribute_statistics_update_internal(Oid reloid,
 	{
 		bool		converted = false;
 		Datum		stavalues;
+		Oid			bounds_typid = atttypid;
+
+		/*
+		 * If it's a multirange, step down to the range type, as is done by
+		 * multirange_typanalyze().
+		 */
+		if (type_is_multirange(atttypid))
+			bounds_typid = get_multirange_range(atttypid);
 
 		stavalues = statatt_build_stavalues("range_bounds_histogram",
 											&array_in_fn,
 											PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
-											atttypid, atttypmod,
+											bounds_typid, atttypmod,
 											&converted);
 
 		if (converted &&

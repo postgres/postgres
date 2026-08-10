@@ -492,13 +492,6 @@ statatt_get_type(Oid reloid, AttrNumber attnum,
 	}
 	ReleaseSysCache(atup);
 
-	/*
-	 * If it's a multirange, step down to the range type, as is done by
-	 * multirange_typanalyze().
-	 */
-	if (type_is_multirange(*atttypid))
-		*atttypid = get_multirange_range(*atttypid);
-
 	/* finds the right operators even if atttypid is a domain */
 	typcache = lookup_type_cache(*atttypid, TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR);
 	*atttyptype = typcache->typtype;

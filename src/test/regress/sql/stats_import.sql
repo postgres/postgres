@@ -1057,12 +1057,26 @@ VALUES
   (2, 'red', '{[11,13),[15,19),[20,30)}'::int4multirange),
   (3, 'red', '{[21,23),[25,29),[120,130)}'::int4multirange);
 
--- ensure that we set attribute stats for a multirange
+-- warn: reject range values as ordinary multirange statistics
 SELECT pg_catalog.pg_restore_attribute_stats(
   'schemaname', 'stats_import',
   'relname', 'test_mr',
   'attname', 'mrange',
   'inherited', false,
+  'most_common_vals', ARRAY['[1,3)']::text,
+  'most_common_freqs', ARRAY[1.0]::real[]
+);
+
+-- ensure that we set attribute stats for a multirange
+-- MCVs and histograms retain the multirange type.
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_mr',
+  'attname', 'mrange',
+  'inherited', false,
+  'most_common_vals', ARRAY['{[1,3),[5,9)}', '{[11,13),[15,19)}']::text,
+  'most_common_freqs', ARRAY[0.6, 0.4]::real[],
+  'histogram_bounds', ARRAY['{[1,3)}', '{[11,13)}', '{[21,23)}']::text,
   'range_length_histogram', '{19,29,109}'::text,
   'range_empty_frac', '0'::real,
   'range_bounds_histogram', '{"[1,30)","[11,30)","[21,130)"}'::text
