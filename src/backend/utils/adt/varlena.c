@@ -6238,6 +6238,20 @@ rest_of_char_same(const char *s1, const char *s2, int len)
 	return true;
 }
 
+/*
+ * Helper function for checking return value of Levenshtein distance functions.
+ * We calculate it as an int64, but the distance functions return an int32.
+ */
+static inline int
+levenshtein_result(int64 res)
+{
+	if (unlikely(res < PG_INT32_MIN || res > PG_INT32_MAX))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("levenshtein distance out of range")));
+	return res;
+}
+
 /* Expand each Levenshtein distance variant */
 #include "levenshtein.c"
 #define LEVENSHTEIN_LESS_EQUAL
