@@ -692,6 +692,32 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 											   rettype,
 											   false);
 
+	/*
+	 * Reject any attempt to call a function that takes or returns type
+	 * internal from SQL.  (The FUNCDETAIL_COERCION case does not reach this
+	 * check because of the early return above, but that's okay because we
+	 * disallow coercions to or from type internal.)  Note that we are
+	 * checking the resolved argument and result types, so this will reject
+	 * calls to polymorphic functions that pass internal-type arguments.  The
+	 * casting rules should prevent that anyway, since we won't cast internal
+	 * to any polymorphic type, but no harm in being doubly sure.
+	 */
+	for (int i = 0; i < nargsplusdefs; i++)
+	{
+		if (declared_arg_types[i] == INTERNALOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("functions accepting type \"%s\" cannot be called explicitly",
+							"internal"),
+					 parser_errposition(pstate, location)));
+	}
+	if (rettype == INTERNALOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("functions returning type \"%s\" cannot be called explicitly",
+						"internal"),
+				 parser_errposition(pstate, location)));
+
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, fargs, actual_arg_types, declared_arg_types);
 
