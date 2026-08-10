@@ -35,7 +35,8 @@ extern Oid	AssignTypeMultirangeArrayOid(void);
 extern ObjectAddress AlterDomainDefault(List *names, Node *defaultRaw);
 extern ObjectAddress AlterDomainNotNull(List *names, bool notNull);
 extern ObjectAddress AlterDomainAddConstraint(List *names, Node *constr,
-											  ObjectAddress *constrAddr);
+											  ObjectAddress *constrAddr,
+											  bool is_readd);
 extern ObjectAddress AlterDomainValidateConstraint(List *names, const char *constrName);
 extern ObjectAddress AlterDomainDropConstraint(List *names, const char *constrName,
 											   DropBehavior behavior, bool missing_ok);
