@@ -2349,6 +2349,12 @@ exec_command_restrict(PsqlScanState scan_state, bool active_branch,
 
 		Assert(!restricted);
 
+		/*
+		 * Unlike \unrestrict, this argument may safely undergo backquote and
+		 * variable expansion: HandleSlashCmds() rejects \restrict in
+		 * restricted mode before its argument is scanned, so we only get here
+		 * when the input could execute such things anyway.
+		 */
 		opt = psql_scan_slash_option(scan_state, OT_NORMAL, NULL, true);
 		if (opt == NULL || opt[0] == '\0')
 		{
@@ -2663,13 +2669,22 @@ exec_command_unrestrict(PsqlScanState scan_state, bool active_branch,
 	if (active_branch)
 	{
 		char	   *opt;
+		size_t		len;
 
-		opt = psql_scan_slash_option(scan_state, OT_NORMAL, NULL, true);
+		opt = psql_scan_slash_option(scan_state, OT_WHOLE_LINE, NULL, true);
 		if (opt == NULL || opt[0] == '\0')
 		{
 			pg_log_error("\\%s: missing required argument", cmd);
 			return PSQL_CMD_ERROR;
 		}
+
+		/* strip any trailing spaces and semicolons */
+		len = strlen(opt);
+		while (len > 0 &&
+			   (opt[len - 1] == ';' ||
+				(isascii((unsigned char) opt[len - 1]) &&
+				 isspace((unsigned char) opt[len - 1]))))
+			opt[--len] = '\0';
 
 		if (!restricted)
 		{
@@ -2688,7 +2703,7 @@ exec_command_unrestrict(PsqlScanState scan_state, bool active_branch,
 		}
 	}
 	else
-		ignore_slash_options(scan_state);
+		ignore_slash_whole_line(scan_state);
 
 	return PSQL_CMD_SKIP_LINE;
 }
