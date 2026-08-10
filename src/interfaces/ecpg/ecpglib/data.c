@@ -529,6 +529,13 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 									src_size,
 									dec_size;
 
+						if (size < 2 || pval[0] != '\\' || pval[1] != 'x')
+						{
+							ecpg_raise(lineno, ECPG_BYTEA_FORMAT,
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return false;
+						}
+
 						dst_size = ecpg_hex_enc_len(varcharsize);
 						src_size = size - 2;	/* exclude backslash + 'x' */
 						dec_size = src_size < dst_size ? src_size : dst_size;
