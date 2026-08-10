@@ -5015,7 +5015,15 @@ numeric_combine(PG_FUNCTION_ARGS)
 	state2 = PG_ARGISNULL(1) ? NULL : (NumericAggState *) PG_GETARG_POINTER(1);
 
 	if (state2 == NULL)
+	{
+		/*
+		 * NULL state2 is easy, just return state1, which we know is already
+		 * in the agg_context
+		 */
+		if (state1 == NULL)
+			PG_RETURN_NULL();
 		PG_RETURN_POINTER(state1);
+	}
 
 	/* manually copy all fields from state2 to state1 */
 	if (state1 == NULL)
@@ -5107,7 +5115,15 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 	state2 = PG_ARGISNULL(1) ? NULL : (NumericAggState *) PG_GETARG_POINTER(1);
 
 	if (state2 == NULL)
+	{
+		/*
+		 * NULL state2 is easy, just return state1, which we know is already
+		 * in the agg_context
+		 */
+		if (state1 == NULL)
+			PG_RETURN_NULL();
 		PG_RETURN_POINTER(state1);
+	}
 
 	/* manually copy all fields from state2 to state1 */
 	if (state1 == NULL)
@@ -5571,7 +5587,15 @@ numeric_poly_combine(PG_FUNCTION_ARGS)
 	state2 = PG_ARGISNULL(1) ? NULL : (Int128AggState *) PG_GETARG_POINTER(1);
 
 	if (state2 == NULL)
+	{
+		/*
+		 * NULL state2 is easy, just return state1, which we know is already
+		 * in the agg_context
+		 */
+		if (state1 == NULL)
+			PG_RETURN_NULL();
 		PG_RETURN_POINTER(state1);
+	}
 
 	/* manually copy all fields from state2 to state1 */
 	if (state1 == NULL)
@@ -5732,7 +5756,15 @@ int8_avg_combine(PG_FUNCTION_ARGS)
 	state2 = PG_ARGISNULL(1) ? NULL : (Int128AggState *) PG_GETARG_POINTER(1);
 
 	if (state2 == NULL)
+	{
+		/*
+		 * NULL state2 is easy, just return state1, which we know is already
+		 * in the agg_context
+		 */
+		if (state1 == NULL)
+			PG_RETURN_NULL();
 		PG_RETURN_POINTER(state1);
+	}
 
 	/* manually copy all fields from state2 to state1 */
 	if (state1 == NULL)
