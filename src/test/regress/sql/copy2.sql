@@ -52,23 +52,37 @@ COPY x (a, b, c, d, e) from stdin;
 
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
+\.
 
 -- redundant options
 COPY x from stdin (format CSV, FORMAT CSV);
+\.
 COPY x from stdin (freeze off, freeze on);
+\.
 COPY x from stdin (delimiter ',', delimiter ',');
+\.
 COPY x from stdin (null ' ', null ' ');
+\.
 COPY x from stdin (header off, header on);
+\.
 COPY x from stdin (quote ':', quote ':');
+\.
 COPY x from stdin (escape ':', escape ':');
+\.
 COPY x from stdin (force_quote (a), force_quote *);
+\.
 COPY x from stdin (force_not_null (a), force_not_null (b));
+\.
 COPY x from stdin (force_null (a), force_null (b));
+\.
 COPY x from stdin (convert_selectively (a), convert_selectively (b));
+\.
 COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii');
+\.
 
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
+\.
 
 -- missing data: should fail
 COPY x from stdin;
@@ -125,14 +139,19 @@ COPY x from stdin WHERE a > 60003;
 \.
 
 COPY x from stdin WHERE f > 60003;
+\.
 
 COPY x from stdin WHERE a = max(x.b);
+\.
 
 COPY x from stdin WHERE a IN (SELECT 1 FROM x);
+\.
 
 COPY x from stdin WHERE a IN (generate_series(1,5));
+\.
 
 COPY x from stdin WHERE a = row_number() over(b);
+\.
 
 
 -- check results of copy in
@@ -329,10 +348,12 @@ ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b));
+\.
 ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b));
+\.
 ROLLBACK;
 \pset null ''
 

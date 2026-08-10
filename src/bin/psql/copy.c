@@ -369,7 +369,7 @@ do_copy(const char *args)
 
 	/* run it like a user command, but with copystream as data source/sink */
 	pset.copyStream = copystream;
-	success = SendQuery(query.data);
+	success = SendQuery(query.data, options->from ? 1 : 0);
 	pset.copyStream = NULL;
 	termPQExpBuffer(&query);
 
@@ -497,11 +497,13 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
  * sends data to complete a COPY ... FROM STDIN command
  *
  * conn should be a database connection that you just issued COPY FROM on
- * and got back a PGRES_COPY_IN result.
+ * and got back a PGRES_COPY_IN result.  Alternatively, if conn is NULL,
+ * we read and discard the appropriate amount of data from copystream.
  * copystream is the file stream to read the data from.
  * isbinary can be set from PQbinaryTuples().
- * The final status for the COPY is returned into *res (but note
- * we already reported the error, if it's not a success result).
+ * The final status for the COPY is returned into *res; but note
+ * we already reported the error, if it's not a success result.
+ * Also, if conn is NULL then *res is not touched.
  *
  * result is true if successful, false if not.
  */
@@ -516,6 +518,12 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 	char		buf[COPYBUFSIZ];
 	bool		showprompt;
 
+	/* We want to prompt if interactive input ... */
+	showprompt = isatty(fileno(copystream));
+	/* ... but if we're just discarding data, don't bother the user at all */
+	if (showprompt && !conn)
+		return true;
+
 	/*
 	 * Establish longjmp destination for exiting from wait-for-input. (This is
 	 * only effective while sigint_interrupt_enabled is TRUE.)
@@ -525,24 +533,19 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		/* got here with longjmp */
 
 		/* Terminate data transfer */
-		PQputCopyEnd(conn,
-					 (PQprotocolVersion(conn) < 3) ? NULL :
-					 _("canceled by user"));
+		if (conn)
+			PQputCopyEnd(conn,
+						 (PQprotocolVersion(conn) < 3) ? NULL :
+						 _("canceled by user"));
 
 		OK = false;
 		goto copyin_cleanup;
 	}
 
-	/* Prompt if interactive input */
-	if (isatty(fileno(copystream)))
-	{
-		showprompt = true;
-		if (!pset.quiet)
-			puts(_("Enter data to be copied followed by a newline.\n"
-				   "End with a backslash and a period on a line by itself, or an EOF signal."));
-	}
-	else
-		showprompt = false;
+	/* Issue initial prompt if interactive input */
+	if (showprompt && !pset.quiet)
+		puts(_("Enter data to be copied followed by a newline.\n"
+			   "End with a backslash and a period on a line by itself, or an EOF signal."));
 
 	OK = true;
 
@@ -571,7 +574,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 			if (buflen <= 0)
 				break;
 
-			if (PQputCopyData(conn, buf, buflen) <= 0)
+			if (conn && PQputCopyData(conn, buf, buflen) <= 0)
 			{
 				OK = false;
 				break;
@@ -659,7 +662,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 			 */
 			if (buflen >= COPYBUFSIZ - 5 || (copydone && buflen > 0))
 			{
-				if (PQputCopyData(conn, buf, buflen) <= 0)
+				if (conn && PQputCopyData(conn, buf, buflen) <= 0)
 				{
 					OK = false;
 					break;
@@ -680,7 +683,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 	 * keep the version checks just in case you're using a pre-v14 libpq.so at
 	 * runtime)
 	 */
-	if (PQputCopyEnd(conn,
+	if (conn &&
+		PQputCopyEnd(conn,
 					 (OK || PQprotocolVersion(conn) < 3) ? NULL :
 					 _("aborted because of read failure")) <= 0)
 		OK = false;
@@ -696,6 +700,10 @@ copyin_cleanup:
 	 * set.  This also clears the error flag, but we already checked that.
 	 */
 	clearerr(copystream);
+
+	/* Done if we don't have a connection to clean up */
+	if (!conn)
+		return OK;
 
 	/*
 	 * Check command status and return to normal libpq state.

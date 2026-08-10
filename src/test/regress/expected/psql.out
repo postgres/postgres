@@ -5517,6 +5517,11 @@ CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
 
 \set SHOW_ALL_RESULTS on
 DROP FUNCTION warn(TEXT);
+-- \copy must skip in-line data, even if the issued COPY command fails.
+\copy no_such_table from stdin
+ERROR:  relation "no_such_table" does not exist
+\echo this should get output
+this should get output
 --
 -- AUTOCOMMIT and combined queries
 --

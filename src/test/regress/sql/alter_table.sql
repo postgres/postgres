@@ -1146,7 +1146,9 @@ copy attest from stdin;
 \.
 select * from attest;
 copy attest(a) from stdin;
+\.
 copy attest("........pg.dropped.1........") from stdin;
+\.
 copy attest(b,c) from stdin;
 31	32
 \.
