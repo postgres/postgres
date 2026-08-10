@@ -1168,6 +1168,10 @@ get_perl_array_ref(SV *sv)
  * if we didn't do it like that, we'd need some other convention for knowing
  * whether we'd already found any scalars (and thus the number of dimensions
  * is frozen).
+ *
+ * Caller is required to have set dims[cur_depth - 1] to the length of the
+ * input array, i.e., av_len(av) + 1.  We make this requirement so as to
+ * avoid reading av_len() twice, which is hazardous for tied arrays.
  */
 static void
 array_to_datum_internal(AV *av, ArrayBuildState **astatep,
@@ -1177,7 +1181,7 @@ array_to_datum_internal(AV *av, ArrayBuildState **astatep,
 {
 	dTHX;
 	int			i;
-	int			len = av_len(av) + 1;
+	int			len = dims[cur_depth - 1];
 
 	for (i = 0; i < len; i++)
 	{
