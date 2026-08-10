@@ -1171,6 +1171,15 @@ select 1/(15-unique2) from tenk1 order by unique2 limit 19;
 
 \unset FETCH_COUNT
 
+-- \copy must skip in-line data, even if the issued COPY command fails.
+\copy no_such_table from stdin
+foo
+\echo this should not get output
+bar
+\echo this should not get output
+\.
+\echo this should get output
+
 create schema testpart;
 create role regress_partitioning_role;
 

@@ -4807,6 +4807,11 @@ last error message: division by zero
 \echo 'last error code:' :LAST_ERROR_SQLSTATE
 last error code: 22012
 \unset FETCH_COUNT
+-- \copy must skip in-line data, even if the issued COPY command fails.
+\copy no_such_table from stdin
+ERROR:  relation "no_such_table" does not exist
+\echo this should get output
+this should get output
 create schema testpart;
 create role regress_partitioning_role;
 alter schema testpart owner to regress_partitioning_role;

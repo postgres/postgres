@@ -116,12 +116,14 @@ typedef struct PsqlScanStateData
 	char	   *dolqstart;		/* current $foo$ quote start string */
 
 	/*
-	 * State to track boundaries of BEGIN ... END blocks in function
-	 * definitions, so that semicolons do not send query too early.
+	 * State used to track boundaries of BEGIN ... END blocks in function
+	 * definitions, so that semicolons do not send query too early.  We also
+	 * use this state to detect and count COPY FROM STDIN commands.
 	 */
-	int			identifier_count;	/* identifiers since start of statement */
-	char		identifiers[4]; /* records the first few identifiers */
 	int			begin_depth;	/* depth of begin/end pairs */
+	int			copy_stdin_count;	/* number of COPY FROM STDIN commands */
+	int			init_idents_count;	/* # identifiers since start of statement */
+	char		init_idents[8]; /* records the first few identifiers */
 
 	/*
 	 * Callback functions provided by the program making use of the lexer,
@@ -144,8 +146,9 @@ struct PsqlScanStateSave
 {
 	int			paren_depth;	/* depth of nesting in parentheses */
 	int			begin_depth;	/* depth of begin/end pairs */
-	int			identifier_count;	/* identifiers since start of statement */
-	char		identifiers[4]; /* records the first few identifiers */
+	int			copy_stdin_count;	/* number of COPY FROM STDIN commands */
+	int			init_idents_count;	/* # identifiers since start of statement */
+	char		init_idents[8]; /* records the first few identifiers */
 };
 
 

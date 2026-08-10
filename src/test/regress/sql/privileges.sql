@@ -149,6 +149,7 @@ BEGIN;
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
 COMMIT;
 COPY atest2 FROM stdin; -- fail
+\.
 GRANT ALL ON atest1 TO PUBLIC; -- fail
 
 -- checks in subquery, both ok
@@ -192,6 +193,7 @@ BEGIN;
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COMMIT;
 COPY atest2 FROM stdin; -- fail
+\.
 
 -- checks in subquery, both fail
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
@@ -424,6 +426,7 @@ SELECT one, two FROM atest5 NATURAL JOIN atest6; -- ok now
 -- test column-level privileges for INSERT and UPDATE
 INSERT INTO atest5 (two) VALUES (3); -- ok
 COPY atest5 FROM stdin; -- fail
+\.
 COPY atest5 (two) FROM stdin; -- ok
 1
 \.
