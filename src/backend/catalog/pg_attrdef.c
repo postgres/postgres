@@ -32,6 +32,9 @@
  * Store a default expression for column attnum of relation rel.
  *
  * Returns the OID of the new pg_attrdef tuple.
+ *
+ * NB: Caller is responsible for ensuring the user has USAGE on all types expr
+ * depends on.
  */
 Oid
 StoreAttrDefault(Relation rel, AttrNumber attnum,

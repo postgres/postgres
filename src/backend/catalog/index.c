@@ -728,6 +728,9 @@ UpdateIndexRelation(Oid indexoid,
  * constraintId: if not NULL, receives OID of created constraint
  *
  * Returns the OID of the created index.
+ *
+ * NB: Caller is responsible for ensuring the user has USAGE on all types
+ * indexInfo->ii_{Expressions,Predicate} depend on.
  */
 Oid
 index_create(Relation heapRelation,

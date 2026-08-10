@@ -31,12 +31,14 @@
 #include "commands/defrem.h"
 #include "commands/propgraphcmds.h"
 #include "commands/tablecmds.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -959,6 +961,7 @@ insert_property_record(Oid graphid, Oid ellabeloid, Oid pgerelid, const char *pr
 		HeapTuple	tup;
 		ObjectAddress myself;
 		ObjectAddress referenced;
+		AclResult	aclresult;
 
 		rel = table_open(PropgraphPropertyRelationId, RowExclusiveLock);
 
@@ -979,6 +982,9 @@ insert_property_record(Oid graphid, Oid ellabeloid, Oid pgerelid, const char *pr
 
 		ObjectAddressSet(referenced, RelationRelationId, graphid);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+		aclresult = object_aclcheck(TypeRelationId, exprtypid, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error_type(aclresult, exprtypid);
 		ObjectAddressSet(referenced, TypeRelationId, exprtypid);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		if (OidIsValid(exprcollation) && exprcollation != DEFAULT_COLLATION_OID)
@@ -1063,6 +1069,7 @@ insert_property_record(Oid graphid, Oid ellabeloid, Oid pgerelid, const char *pr
 		ObjectAddressSet(referenced, PropgraphElementLabelRelationId, ellabeloid);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
+		CheckUsageOnTypesInSingleRelExpr((Node *) expr, pgerelid, GetUserId());
 		recordDependencyOnSingleRelExpr(&myself, (Node *) copyObject(expr), pgerelid, DEPENDENCY_NORMAL, DEPENDENCY_NORMAL, false);
 
 		table_close(rel, NoLock);
