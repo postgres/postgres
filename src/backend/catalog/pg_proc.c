@@ -662,11 +662,17 @@ ProcedureCreate(const char *procedureName,
 
 	/* dependencies appearing in new-style SQL routine body */
 	if (languageObjectId == SQLlanguageId && prosqlbody)
+	{
+		CheckUsageOnTypesInExpr(prosqlbody, NIL, GetUserId());
 		collectDependenciesOfExpr(addrs, prosqlbody, NIL);
+	}
 
 	/* dependency on parameter default expressions */
 	if (parameterDefaults)
+	{
+		CheckUsageOnTypesInExpr((Node *) parameterDefaults, NIL, GetUserId());
 		collectDependenciesOfExpr(addrs, (Node *) parameterDefaults, NIL);
+	}
 
 	/*
 	 * Now that we have all the normal dependencies, thumb through them and

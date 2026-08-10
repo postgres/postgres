@@ -1370,7 +1370,8 @@ ProcessUtilitySlow(ParseState *pstate,
 							address =
 								AlterDomainAddConstraint(stmt->typeName,
 														 stmt->def,
-														 &secondaryObject);
+														 &secondaryObject,
+														 false);
 							break;
 						case AD_DropConstraint:
 							address =

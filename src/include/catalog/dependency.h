@@ -125,6 +125,10 @@ extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 											DependencyType self_behavior,
 											bool reverse_self);
 
+extern void CheckUsageOnTypesInExpr(Node *expr, List *rtable, Oid roleid);
+
+extern void CheckUsageOnTypesInSingleRelExpr(Node *expr, Oid relId, Oid roleid);
+
 extern bool find_temp_object(const ObjectAddresses *addrs,
 							 bool local_temp_okay,
 							 ObjectAddress *foundobj);

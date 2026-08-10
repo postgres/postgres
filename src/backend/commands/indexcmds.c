@@ -959,6 +959,22 @@ DefineIndex(ParseState *pstate,
 					  &root_save_nestlevel);
 
 	/*
+	 * The below call to index_create() creates the dependencies on types.  We
+	 * are responsible for checking USAGE.
+	 */
+	if (check_rights)
+	{
+		if (indexInfo->ii_Expressions)
+			CheckUsageOnTypesInSingleRelExpr((Node *) indexInfo->ii_Expressions,
+											 tableId,
+											 root_save_userid);
+		if (indexInfo->ii_Predicate)
+			CheckUsageOnTypesInSingleRelExpr((Node *) indexInfo->ii_Predicate,
+											 tableId,
+											 root_save_userid);
+	}
+
+	/*
 	 * Extra checks when creating a PRIMARY KEY index.
 	 */
 	if (stmt->primary)

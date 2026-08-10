@@ -1793,6 +1793,82 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 }
 
 /*
+ * We require USAGE on a type to store a dependency on it.  This helper
+ * function does the appropriate privilege checks.
+ *
+ * NB: Other objects have privileges of their own, but recording those
+ * dependencies doesn't require holding them.  For example, an expression may
+ * reference a function for which the user lacks EXECUTE.  Instead, EXECUTE is
+ * checked when the function is executed.
+ */
+static void
+check_usage_on_types(ObjectAddresses *addrs, Oid roleid)
+{
+	for (int i = 0; i < addrs->numrefs; i++)
+	{
+		ObjectAddress *ref = &addrs->refs[i];
+		AclResult	aclresult;
+
+		if (ref->classId != TypeRelationId)
+			continue;
+
+		/* we don't record dependencies on pinned types */
+		if (IsPinnedObject(ref->classId, ref->objectId))
+			continue;
+
+		aclresult = object_aclcheck(ref->classId, ref->objectId,
+									roleid, ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error_type(aclresult, ref->objectId);
+	}
+}
+
+/*
+ * CheckUsageOnTypesInExpr - require USAGE on all types named by an expression
+ *
+ * rtable is the rangetable for interpreting Vars (or NIL if none are
+ * expected).  roleid is the role whose USAGE is required.
+ */
+void
+CheckUsageOnTypesInExpr(Node *expr, List *rtable, Oid roleid)
+{
+	ObjectAddresses *addrs = new_object_addresses();
+
+	collectDependenciesOfExpr(addrs, expr, rtable);
+	eliminate_duplicate_dependencies(addrs);
+	check_usage_on_types(addrs, roleid);
+	free_object_addresses(addrs);
+}
+
+/*
+ * CheckUsageOnTypesInSingleRelExpr - as above, for a single-rel expression
+ *
+ * Like recordDependencyOnSingleRelExpr(), this handles expressions whose Vars
+ * all refer to one relation.  roleid is the role whose USAGE is required.
+ */
+void
+CheckUsageOnTypesInSingleRelExpr(Node *expr, Oid relId, Oid roleid)
+{
+	find_expr_references_context context;
+	RangeTblEntry rte = {0};
+
+	context.addrs = new_object_addresses();
+
+	/* We gin up a rather bogus rangetable list to handle Vars */
+	rte.type = T_RangeTblEntry;
+	rte.rtekind = RTE_RELATION;
+	rte.relid = relId;
+	rte.relkind = RELKIND_RELATION;
+	rte.rellockmode = AccessShareLock;
+	context.rtables = list_make1(list_make1(&rte));
+
+	find_expr_references_walker(expr, &context);
+	eliminate_duplicate_dependencies(context.addrs);
+	check_usage_on_types(context.addrs, roleid);
+	free_object_addresses(context.addrs);
+}
+
+/*
  * Recursively search an expression tree for object references.
  *
  * Note: in many cases we do not need to create dependencies on the datatypes
